@@ -25,6 +25,9 @@ from holdspeak.principals import AgentCredentialStore
 
 from .glass_infra import _api, _boot, _ensure_build, _settle
 from .settings_rig import _navigate_to_settings_hub, _open_system_module
+from tests._evidence import evidence_dir
+from .glass_infra import _assert_clean, _normal_chair
+from .material_rig import MATERIAL_JS
 
 pytest.importorskip("playwright.sync_api", reason="the Settings glass needs Playwright")
 
@@ -122,3 +125,124 @@ class TestRemoteAccessGlass:
             _pointer_owned(page, issue.first, f"Issue credential, minimally scrolled, at {width}", scrolled=True)
             assert errors == [], errors
             browser.close()
+
+
+# ═══ merged from the e2e-high-2 lane ═══
+# The Settings app, AS RENDERED: what only a real browser proves of Settings.
+#
+# Owner, 2026-10-12 (push 2 of the test diet): a browser test only for drag,
+# focus, keys, touch, hover or an exact geometry relation (or a computed style
+# jsdom cannot compute). Through the real hub on an isolated HOME, at 1440 and
+# 393 (PHILO-14 B2, the material pass):
+#
+# * a plated library Button pressed by the mouse sinks (`:active`: --bevel-sunken,
+#   or --wb-sunken on the Steel plate);
+# * Settings -> People under the environment override holds the access: every
+#   token of the strip is flat (no shadow) on the window's own disabled ground,
+#   and the held value READ is the active one.
+#
+# The material of every window and wing at rest is the desk sweep's `material`
+# fence (tests/e2e/test_desk_sweep.py, through tests/e2e/material_rig.py).
+pytest.importorskip("playwright.sync_api", reason="the Settings glass needs Playwright")
+
+
+M_TOKEN = "settings-glass"
+SHOTS = evidence_dir("")
+SIZES = {1440: 900, 393: 852}
+T = 20_000
+
+
+@pytest.mark.timeout(240)
+@pytest.mark.parametrize("width", list(SIZES))
+def test_a_pressed_button_sinks(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
+    """replaces: tests/e2e/test_philo14_b2_material_glass.py::test_the_material_on_six_faces
+    (the pressed leg; the six faces at rest are the sweep's `material` fence)."""
+    _ensure_build()
+    server, url = _boot(tmp_path, monkeypatch, token=M_TOKEN)
+    errors: list[str] = []
+    try:
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": width, "height": SIZES[width]}, reduced_motion="reduce")
+            page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+            page.goto(f"{url}/?token={M_TOKEN}", wait_until="load")
+            _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=M_TOKEN)
+            page.goto(f"{url}/settings", wait_until="load")
+            _normal_chair(page)
+            settings = page.locator(".desk-window[aria-label='Settings']")
+            settings.wait_for(timeout=T)
+            _settle(page)
+            verb = settings.locator(".btn:not(:disabled)").first
+            box = verb.bounding_box()
+            assert box is not None
+            page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+            page.mouse.down()
+            pressed = verb.evaluate("(el) => getComputedStyle(el).boxShadow")
+            page.mouse.up()
+            m = page.evaluate(MATERIAL_JS, None)
+            # Phase 16 (the kit Verb is the Steel plate): on the Steel the
+            # grammar rides --wb-raised / --wb-sunken (contract.md "The
+            # bevel grammar"), so a pressed Verb sinks to --wb-sunken.
+            assert pressed.startswith((m["sunken"], m["wbSunken"])), (pressed, m["sunken"], m["wbSunken"])
+            _assert_clean(page, errors)
+            browser.close()
+    finally:
+        server.stop()
+
+
+@pytest.mark.timeout(240)
+@pytest.mark.parametrize("width", list(SIZES))
+def test_a_held_filter_strip_is_flat(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
+    """replaces: tests/e2e/test_philo14_b2_material_glass.py::test_a_held_filter_strip_is_flat
+
+    Astra r1 on #958: Settings -> People under the environment override
+    holds the access (the strip is the disabled Button state): every token
+    is flat, the held value has no tint, through the real settings API."""
+    _ensure_build()
+    monkeypatch.setenv("HOLDSPEAK_MCP_PEOPLE_ACCESS", "read")
+    server, url = _boot(tmp_path, monkeypatch, token=M_TOKEN)
+    errors: list[str] = []
+    try:
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": width, "height": SIZES[width]}, reduced_motion="reduce")
+            page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+            page.goto(f"{url}/?token={M_TOKEN}", wait_until="load")
+            _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=M_TOKEN)
+            wire = _api(page, "GET", "/api/settings/people-access", token=M_TOKEN)
+            assert wire["source"] == "env" and wire["effective"] == "read", wire
+            page.goto(f"{url}/settings", wait_until="load")
+            _normal_chair(page)
+            page.locator("[data-testid='settings-more']").click()  # PHILO-17 REFIT: People folds under More settings
+            row = page.locator(".surface-ledger-row", has=page.locator(".surface-ledger-primary", has_text="People"))
+            row.get_by_role("button", name="Open", exact=True).click()
+            strip = page.get_by_role("group", name="People MCP access", exact=True)
+            strip.wait_for(timeout=T)
+            _settle(page)
+            strip.scroll_into_view_if_needed()
+            tokens = strip.locator("button").evaluate_all("""bs => bs.map((b) => {
+                const s = getComputedStyle(b);
+                const probe = document.createElement('div');
+                probe.style.background = 'var(--disabled-bg)';
+                // The disabled ground as the strip's own window reads it:
+                // A1's interior remap sets --disabled-bg per window, so a
+                // probe on <body> read the page's dark ground instead.
+                b.parentElement.appendChild(probe);
+                const ground = getComputedStyle(probe).backgroundColor;
+                probe.remove();
+                return {text: b.innerText.trim(), disabled: b.disabled, active: b.hasAttribute('data-filter-active'),
+                        shadow: s.boxShadow, bg: s.backgroundColor, ground};
+            })""")
+            page.screenshot(path=str(SHOTS / f"B2-held-filters-{width}.png"))
+            assert len(tokens) == 3 and all(t["disabled"] for t in tokens), tokens
+            assert all(t["shadow"] == "none" for t in tokens), tokens
+            assert all(t["bg"] == t["ground"] for t in tokens), tokens
+            assert [t["text"] for t in tokens if t["active"]] == ["READ"], tokens
+            _assert_clean(page, errors)
+            browser.close()
+    finally:
+        server.stop()

@@ -49,6 +49,7 @@ from scripts.graph_walk import TOKEN, Hub
 from tests._evidence import evidence_dir
 from tests.e2e.chair_windows import open_chair_window
 from tests.e2e.glass_infra import _normal_chair
+from .glass_infra import _api as _gi_api, _boot as _gi_boot, _ensure_build, _settle  # the e2e-high-2 section
 
 pytestmark = [pytest.mark.e2e, pytest.mark.timeout(300, method="thread")]
 
@@ -862,3 +863,100 @@ def test_thought_workbench_real_glass(tmp_path: Path, monkeypatch: pytest.Monkey
             browser.close()
     finally:
         server.stop()
+
+
+# ═══ merged from the e2e-high-2 lane ═══
+# The Thought app, AS RENDERED: what only a real browser proves of a thought.
+#
+# Owner, 2026-10-12 (push 2 of the test diet): a browser test only for drag,
+# focus, keys, touch, hover or an exact geometry relation. Through the real hub
+# on an isolated HOME at 1440x900 (keyboard):
+#
+# * ⌃T from a body window (focus on its title bar, in no field) opens a new
+#   Thought window: one key press, one POST /api/notes.
+# * The key does not fire inside a text field that owns it: with focus in the
+#   Thought window's note (⌃T is the editor's own key) and in the palette's
+#   search field, ⌃T writes no note. (jsdom lies about focus, so this fence is
+#   on glass.)
+#
+# Cheaper successors of the rest of PHILO-13-16 (C6): the verb, its ⌃T keycap
+# and the title rule in web/src/desk/__tests__/philo1316Capture.test.tsx; the
+# 393 menu row in web/src/desk/components/window/phoneRing.test.tsx; a thought
+# found by its own words in web/src/desk/__tests__/palette.philo1314.test.tsx;
+# clip and overlap of the Thought window in the desk sweep.
+pytest.importorskip("playwright.sync_api", reason="the Thought glass needs Playwright")
+
+
+K_TOKEN = "thought-glass"
+THOUGHT = ".desk-window.thought-workspace-window"
+
+
+class TestThoughtKeys:
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        _ensure_build()
+        server, base = _gi_boot(tmp_path, monkeypatch, token=K_TOKEN)
+        self.base = base
+        try:
+            yield
+        finally:
+            server.stop()
+
+    def test_ctrl_t_opens_one_thought_and_never_inside_a_field(self) -> None:
+        """replaces: tests/e2e/test_philo13_16_capture_glass.py::TestCaptureFromAnywhere::test_a_thought_from_anywhere_titled_by_its_words
+        (the key and focus legs, 1440)."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True, args=["--disable-smooth-scrolling"])
+            page = browser.new_context(viewport={"width": 1440, "height": 900}, device_scale_factor=1).new_page()
+            page.set_default_timeout(30_000)
+            errors: list[str] = []
+            notes: list[str] = []
+            page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+            page.on("request", lambda r: notes.append(r.url)
+                    if r.method == "POST" and r.url.split("?")[0].endswith("/api/notes") else None)
+            try:
+                page.goto(f"{self.base}/?token={K_TOKEN}", wait_until="load")
+                _gi_api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=K_TOKEN)
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                page.wait_for_timeout(1200)
+                _settle(page)
+
+                # A body window first: Today from the Dock, focus on its title bar.
+                page.locator(".desk-dock-launch[aria-label^='Today']").click()
+                today = page.locator(".desk-window[aria-label='Today']")
+                today.wait_for()
+                page.wait_for_timeout(600)
+                today.locator(".desk-window-title").first.click()
+                focus = page.evaluate("() => document.activeElement.matches('input,textarea,[contenteditable=true]')")
+                assert not focus, "focus is in a field before the key"
+                page.keyboard.press("Control+t")  # ONE key press
+                page.locator(THOUGHT).wait_for()
+                assert len(notes) == 1, ("one press, one note", notes)
+
+                # Inside the note ⌃T is the editor's own key (it swaps two letters).
+                field = page.locator(f"{THOUGHT} .thought-note-body .cm-content").first
+                field.wait_for()
+                field.click()
+                page.keyboard.type("Ask Priya about the ledger ADR")
+                page.locator(f"{THOUGHT} .thought-note-title", has_text="Ask Priya about the ledger ADR").wait_for(timeout=15_000)
+                assert page.evaluate("() => document.activeElement.closest('.cm-content') !== null"), "focus is not in the note"
+                page.keyboard.press("Control+t")
+                page.wait_for_timeout(1200)
+                assert len(notes) == 1 and page.locator(THOUGHT).count() == 1, ("⌃T inside the note opened a thought", notes)
+                page.locator(f"{THOUGHT} .desk-gadget-close").first.click()
+                page.locator(THOUGHT).wait_for(state="detached")
+                _settle(page)
+
+                # Inside the palette's search field.
+                page.locator("[aria-controls=desk-tool-shelf]").first.click()
+                page.locator("[aria-controls=desk-palette-listbox]").focus()
+                page.keyboard.press("Control+t")
+                page.wait_for_timeout(1200)
+                assert len(notes) == 1 and page.locator(THOUGHT).count() == 0, (
+                    "⌃T inside the palette search opened a thought", notes)
+                assert not [e for e in errors if "ResizeObserver" not in e], errors
+            finally:
+                browser.close()
