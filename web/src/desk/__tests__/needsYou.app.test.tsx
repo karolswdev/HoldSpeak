@@ -11,7 +11,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { apiFetch } from "../../lib/api";
+import { ApiError, apiFetch } from "../../lib/api";
 import { asHub } from "../../test/hubNeedsYou";
 import { ChairHome } from "../chair/ChairHome";
 import { openChairWindows } from "../chair/__tests__/fixtures/openChairWindows";
@@ -404,5 +404,36 @@ describe("Needs you: a failed Evaluate is one grouped GitHub row", () => {
     expect(detail.querySelectorAll("li")).toHaveLength(2);
     const shown = screen.getByTestId("needs-drawer").textContent ?? "";
     expect(secrets.filter((x: string) => shown.includes(x))).toEqual([]);
+  });
+});
+
+// ── HS-144: a failed Door read never throws and never draws a row ─────────
+// The recorded quiet desk (scripts/record_needs_you_fixture.py `calendar`),
+// with the one Door read refused by the hub (a 500, as DoorService.get raising
+// answers it).
+describe("Needs you: the Door read fails", () => {
+  it("the Door answers 500: the head still reads Nothing needs you; the drawer draws, with no row", async () => {
+    // replaces: tests/e2e/test_hs144_door_glass.py::test_hs144_door_empty_and_error_shots (the Door 500 leg)
+    const errors: unknown[] = [];
+    const onError = (event: PromiseRejectionEvent | ErrorEvent) => errors.push(event);
+    window.addEventListener("unhandledrejection", onError as EventListener);
+    window.addEventListener("error", onError as EventListener);
+    try {
+      vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+        if (String(path) === "/api/door") throw new ApiError(500, "controlled Door refusal", { error: "controlled Door refusal" });
+        return recordedGet(RECORDED.calendar.quiet.gets, path) as never;
+      });
+      render(<ChairHome />);
+      await waitFor(() => expect(vi.mocked(apiFetch).mock.calls.some(([p]) => String(p) === "/api/door")).toBe(true));
+      await waitFor(() => expect(head()).toBe("Nothing needs you"), { timeout: 3000 });
+      await screen.findByTestId("needs-drawer", undefined, { timeout: 3000 });
+      await act(async () => { await new Promise((r) => setTimeout(r, 50)); });
+      expect(needsRows()).toEqual([]);
+      expect(head()).toBe("Nothing needs you");
+      expect(errors).toEqual([]);
+    } finally {
+      window.removeEventListener("unhandledrejection", onError as EventListener);
+      window.removeEventListener("error", onError as EventListener);
+    }
   });
 });

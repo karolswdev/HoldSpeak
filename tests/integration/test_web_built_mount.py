@@ -67,3 +67,23 @@ def test_missing_build_has_one_honest_fallback(monkeypatch: pytest.MonkeyPatch) 
     response = pages._react_shell()
     assert response.status_code == 200
     assert b"npm run build" in response.body
+
+
+@pytest.mark.skipif(not _BUILT_INDEX.is_file(), reason="run `cd web && npm run build`")
+def test_the_six_desk_sounds_answer_under_the_bundle_base(test_client: TestClient) -> None:
+    """replaces: tests/e2e/test_hs201_one_thing_glass.py::TestQuietDesk::test_cold_arrival_is_quiet
+    (the six desk sounds leg: the URL the BUILT bundle asks for answers 200;
+    the rehearsal's eight 404s were a root-relative `/desk/sfx/`)."""
+    import re
+
+    bases: set[str] = set()
+    for path in (_BUILT_ROOT / "assets").glob("*.js"):
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        bases.update(re.findall(r"""["'`]([^"'`]*)desk/sfx/["'`]""", text))
+    assert bases == {"/_built/"}, bases
+    for name in ("key-down", "key-up", "latch", "land", "file", "error"):
+        for extension in ("ogg", "wav"):
+            url = f"/_built/desk/sfx/{name}.{extension}"
+            response = test_client.get(url)
+            assert response.status_code == 200, (response.status_code, url)
+            assert response.content, url

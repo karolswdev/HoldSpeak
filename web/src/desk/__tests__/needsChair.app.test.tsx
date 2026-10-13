@@ -179,3 +179,32 @@ describe("Chair app: a Default for AI work asks nothing about summaries", () => 
     expect(document.body.textContent).not.toContain("Summary failed");
   });
 });
+
+// ── HS-201-01: the SETUP row's verb opens Runs on at its job ──────────────
+describe("Chair app: the SETUP verb on the cold row", () => {
+  it("Choose an engine on the recorded cold row opens Runs on (open-concierge) scoped to the row's key", async () => {
+    // replaces: tests/e2e/test_hs201_one_thing_glass.py::TestOneThing::test_chair_names_the_blocker (the Button opens Runs on)
+    const blockers = RECORDED.cold.gets["/api/desk/needs-you?fresh=1"].blockers as Array<{ key: string; verb: string }>;
+    expect(blockers.map((b) => b.key)).toEqual(["summary"]);
+    vi.resetModules();
+    const { openChairWindows } = await import("../chair/__tests__/fixtures/openChairWindows");
+    openChairWindows();
+    const { ChairHome } = await import("../chair/ChairHome");
+    const { SurfaceWindows } = await import("../components/SurfaceWindows");
+    const { useDesk } = await import("../store");
+    useDesk.setState({ windowsById: {} } as never);
+    render(<><SurfaceWindows /><ChairHome /></>);
+    const row = await waitFor(() => {
+      const found = region("Needs you")!.querySelector<HTMLElement>('[data-testid="needs-row"][data-object-id="blocker:summary"]');
+      expect(found).toBeTruthy();
+      return found!;
+    }, { timeout: 3000 });
+    const verbs = within(row).getAllByRole("button");
+    expect(verbs).toHaveLength(1);
+    expect(verbs[0].getAttribute("data-verb")).toBe("setup");
+    expect(verbs[0].textContent).toBe(blockers[0].verb);
+    fireEvent.click(verbs[0]);
+    await waitFor(() => expect(useDesk.getState().windowsById["surface-concierge"]?.scope).toBe("summary"));
+    await waitFor(() => expect(region("Runs on")).toBeTruthy(), { timeout: 3000 });
+  });
+});

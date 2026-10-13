@@ -31,7 +31,7 @@ from .glass_infra import (
     assign_engine, engine_profile,
 )
 from .engine_stub_rig import _StubHandler
-from .test_hs201_one_thing_glass import _quiet_concierge
+from .concierge_rig import _quiet_concierge
 from .meeting_rig import _FixtureImportTranscriber, _chip_label, _wait_record_host
 from tests._evidence import evidence_dir
 from .chair_windows import go_group, open_chair_window

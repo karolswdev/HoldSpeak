@@ -661,3 +661,94 @@ def test_a_failed_evaluate_is_stored_and_reaches_needs_you_without_a_secret(
     finally:
         reset_database()
         composition.install(composition.bare(label="pytest"))
+
+
+# ── HS-144: the Door's action items on the arrival (sync push seed) ───────
+
+
+def _seed_door_sync(hub: Hub) -> None:
+    """The browser test's seed, through the same routes: one synced meeting
+    with four accepted action items (overdue, today, next week, no owner),
+    then an active thought."""
+    from datetime import date
+
+    now = datetime.now(timezone.utc)
+    today = date.today()
+    rows = [
+        ("hs144-overdue", "Unblock the overdue Door proof", "Ada", today - timedelta(days=1)),
+        ("hs144-now", "Review the front door today", "Bea", today),
+        ("hs144-waiting", "Prepare next week's review", "Cy", today + timedelta(days=5)),
+        ("hs144-unassigned", "Name an owner for the glass walk", None, None),
+    ]
+    meeting_id = "hs144-door-glass-meeting"
+    pushed = _ok(hub.client.post("/api/sync/push", json={"meetings": [{
+        "meta": {"id": meeting_id, "kind": "meeting", "last_modified": now.isoformat(), "deleted": False},
+        "value": {
+            "id": meeting_id, "started_at": (now - timedelta(minutes=30)).isoformat(),
+            "ended_at": now.isoformat(), "title": "Door glass planning", "tags": [], "segments": [],
+            "bookmarks": [], "capture_status": "finalized", "transcription_status": "active",
+            "provenance": "native",
+            "intel": {
+                "timestamp": now.timestamp(), "topics": ["Door board"],
+                "summary": "Production sync ingestion for the Door proof.",
+                "action_items": [
+                    {"id": item_id, "task": task, "owner": owner,
+                     "due": due.isoformat() if due else None, "status": "pending",
+                     "review_state": "accepted", "created_at": now.isoformat()}
+                    for item_id, task, owner, due in rows
+                ],
+            },
+        },
+    }]}))
+    assert pushed["received"]["meetings"] == 1
+    _ok(hub.client.post("/api/desk/seed"))
+    created = hub.client.post("/api/thoughts", json={
+        "request_id": str(uuid.uuid4()), "raw_text": "Keep the Door board honest on glass.",
+        "source": {"kind": "typed"},
+        "initial_note": {"title": "Door active thought",
+                         "body_markdown": "Keep the Door board honest on glass.", "tags": []},
+    })
+    assert created.status_code in (200, 201), created.text
+
+
+def test_the_overdue_door_item_ranks_first_and_an_active_thought_is_no_member(hub: Hub) -> None:
+    """replaces: tests/e2e/test_hs144_door_glass.py::test_hs144_door_populated_glass_action_refusal_and_shots
+    (the hub half: the overdue item is the first Door row with its OVERDUE why;
+    the active thought is no member)."""
+    _seed_door_sync(hub)
+    answer = _needs(hub)
+    door_rows = [row for row in answer["items"] if str(row.get("ref") or "").startswith("hs144-")]
+    # The hub ranks overdue, due today, unassigned, then the one that waits
+    # (an owned item due next week waits on its owner; the hub's own count).
+    assert [row["ref"] for row in door_rows] == ["hs144-overdue", "hs144-now", "hs144-unassigned", "hs144-waiting"]
+    assert door_rows[0]["title"] == "Unblock the overdue Door proof"
+    # "OVERDUE · <n>D": n counts from the hub's day, so only the word is pinned.
+    assert str(door_rows[0]["why"]).startswith("OVERDUE"), door_rows[0]
+    assert door_rows[3]["why"] == "WAITING ON CY" and door_rows[3]["waiting"] is True
+    members = {m["ref"] for m in answer["members"]}
+    assert {"hs144-overdue", "hs144-now", "hs144-unassigned"} <= members
+    assert "hs144-waiting" not in members
+    titles = [str(row.get("title") or "") for row in answer["items"]]
+    assert not any("active thought" in title.lower() for title in titles), titles
+    assert not any(str(m.get("ref") or "").startswith("thought") for m in answer["members"]), answer["members"]
+
+
+# ── HS-201-01: an unreadable roster is its own row, never a clear desk ────
+
+
+def test_an_unreadable_roster_is_the_unknown_blocker_and_the_answer_is_incomplete(
+    hub: Hub, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """replaces: tests/e2e/test_hs201_one_thing_glass.py::TestOneThing::test_unknown_setup_is_its_own_row
+    (the hub half; the face half is web/src/desk/chair/arrivalOneThing.test.tsx)."""
+    import holdspeak.services.needs_you_membership as membership
+
+    def roster_unreadable(db: Any, principal: Any) -> dict[str, Any]:
+        raise RuntimeError("the roster read failed")
+
+    monkeypatch.setattr(membership, "_read_assignments", roster_unreadable)
+    answer = _needs(hub)
+    assert answer["blockers"] == [{"key": "unknown", "label": "Could not read setup", "verb": "Try again"}]
+    assert {"ref": "blocker:unknown", "kind": "blocker"} in answer["members"]
+    assert "assignments" in answer["sourceErrors"]
+    assert answer["complete"] is False
