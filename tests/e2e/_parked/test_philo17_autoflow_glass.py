@@ -36,7 +36,7 @@ from .glass_infra import (
     clear_hub_windows,
     seed_meeting_engines,
 )
-from .test_hs201_summary_face_glass import FIXTURE_WAV, _chip_label, _FixtureImportTranscriber, _wait_record_host
+from .meeting_rig import FIXTURE_WAV, _chip_label, _FixtureImportTranscriber, _wait_record_host
 
 pytestmark = [pytest.mark.timeout(600, method="thread"), pytest.mark.chair_windows_open]
 

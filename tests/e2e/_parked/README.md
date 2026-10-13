@@ -352,3 +352,18 @@ beside it.
   `tests/e2e/test_thought_glass.py`.
 - `test_philo9_07_project_grant_glass.py`: three cases in `tests/e2e/test_settings_glass.py`; the other three in
   `settings.app.test.tsx:478-545`.
+# Parked by the diet, push 2: lane e2e-high-1, meetings and first use (2026-10-12)
+
+- `test_hs201_summary_face_glass.py`: every station has a successor:
+  `meetings.app.test.tsx`, `web/src/meetings/__tests__/summaryRun.test.tsx`
+  (the disclosure, the record's and the ledger's Retry with the disclosed
+  hash, the 409 refusal beside the executed receipt), `meetingReview.test.tsx`
+  (SUMMARY · RAN), `tests/integration/test_desk_meetings.py` (the imported
+  run with the disclosed hash; the summary and receipt after a restart),
+  `tests/integration/test_meeting_intel_recovery.py`. Its shared helpers are
+  `tests/e2e/meeting_rig.py`.
+- `test_hs202_first_use_smoke.py` -> `tests/e2e/test_first_use_smoke.py`
+  (renamed, unchanged; `scripts/glass_for.py` SMOKE names the new file).
+- `test_firstrun_heard_glass.py` -> `tests/e2e/test_firstrun_glass.py` (the real
+  local-AI walk and the live-mic tracks); the blocked-mic leg is `FirstRun.test.tsx`.
+- `test_hs202_03_species_glass.py` -> `tests/e2e/test_menus_glass.py` (whole).
