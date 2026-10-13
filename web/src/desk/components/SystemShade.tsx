@@ -118,12 +118,18 @@ export function SystemShade({
   const [denyingId, setDenyingId] = useState<string | null>(null);
   const [denyReason, setDenyReason] = useState("");
   const panel = useRef<HTMLDivElement>(null);
+  // PHILO-17 (the Missed sweep): the shade draws its Finished rows from the
+  // cached projections at once; its first reads (needs-you, the brief, the
+  // held proposals, the corrections, fresh projections) land 100-200 ms
+  // later and put Projects and Brief ABOVE them (264 px). Until those reads
+  // end the shade says it is reading (aria-busy), so nothing reads it as
+  // settled while it still moves.
+  const [firstRead, setFirstRead] = useState(false);
 
   // A held proposal is a BLOCKED agent: poll while the shade is open
   // so a decision (or an expiry) resolves on glass without a reopen.
   useEffect(() => {
     if (!open) return;
-    void useGate.getState().refresh();
     const timer = window.setInterval(() => {
       void useGate.getState().refresh();
     }, 3000);
@@ -131,9 +137,15 @@ export function SystemShade({
   }, [open]);
 
   useEffect(() => {
-    if (!open) return;
-    void store.refresh(true);
-    void apiFetch<JsonRecord>("/api/dictation/corrections")
+    if (!open) {
+      setFirstRead(false);
+      return;
+    }
+    let cancelled = false;
+    const reads: Promise<unknown>[] = [];
+    reads.push(store.refresh(true));
+    reads.push(useGate.getState().refresh());
+    reads.push(apiFetch<JsonRecord>("/api/dictation/corrections")
       .then((data) => {
         const rows = Array.isArray(data.items)
           ? data.items
@@ -142,13 +154,13 @@ export function SystemShade({
             : [];
         setCorrections(rows as Correction[]);
       })
-      .catch(() => setCorrections([]));
+      .catch(() => setCorrections([])));
     // HS-171-04: fetch needs-you aggregate (initial; polling below)
-    void apiFetch<NeedsYouAggregate>("/api/desk/needs-you")
+    reads.push(apiFetch<NeedsYouAggregate>("/api/desk/needs-you")
       .then((data) => { setNeedsYou(data); setNeedsYouUnread(false); })
-      .catch(() => { setNeedsYou(null); setNeedsYouUnread(true); });
+      .catch(() => { setNeedsYou(null); setNeedsYouUnread(true); }));
     // HS-171-04: fetch brief latest for the shade row
-    void apiFetch<Record<string, unknown> | null>("/api/brief/latest")
+    reads.push(apiFetch<Record<string, unknown> | null>("/api/brief/latest")
       .then((data) => {
         if (!data || data.is_empty) { setBrief(null); return; }
         const sections = (data.sections ?? {}) as Record<string, unknown[]>;
@@ -161,7 +173,13 @@ export function SystemShade({
           : "";
         setBrief(itemCount > 0 ? { itemCount, date, hasThisWeek: thisWeekItems.length > 0 } : null);
       })
-      .catch(() => setBrief(null));
+      .catch(() => setBrief(null)));
+    void Promise.allSettled(reads).then(() => {
+      if (!cancelled) setFirstRead(true);
+    });
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
@@ -223,6 +241,7 @@ export function SystemShade({
 
   return (
     <div className="desk-shade" id="desk-system-shade" ref={panel} role="group" aria-label="Missed">
+      {firstRead ? null : <span hidden aria-busy="true" data-testid="shade-reading" />}
       <div className="desk-shade-head">
         <span className="desk-shade-title">Missed</span>
         <Button
@@ -735,6 +754,9 @@ function ShadePeople({
   open: boolean;
 }) {
   const [roomPeople, setRoomPeople] = useState<ShadeRoomPeople[]>([]);
+  // The Rooms whose people the shade last read: a new set of Rooms is a
+  // read still out, and its rows land above Needs attention and Finished.
+  const [readKey, setReadKey] = useState("");
 
   // Derive distinct Room ids from the needs-you aggregate
   const roomIds = needsYou
@@ -742,6 +764,7 @@ function ShadePeople({
         .filter((r) => !r.muted)
         .map((r) => ({ id: r.projectId, name: r.projectName }))
     : [];
+  const roomKey = roomIds.map((r) => r.id).join(",");
 
   useEffect(() => {
     if (!shadeOpen || roomIds.length === 0) {
@@ -769,6 +792,7 @@ function ShadePeople({
       ).then((results) => {
         if (!cancelled) {
           setRoomPeople(results.filter((r) => r.people.length > 0));
+          setReadKey(roomKey);
         }
       });
     };
@@ -780,13 +804,16 @@ function ShadePeople({
       window.clearInterval(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shadeOpen, roomIds.map((r) => r.id).join(",")]);
+  }, [shadeOpen, roomKey]);
 
+  const reading = shadeOpen && roomKey !== "" && readKey !== roomKey;
+  const busy = reading ? <span hidden aria-busy="true" data-testid="shade-people-reading" /> : null;
   // Absent when no people
-  if (roomPeople.length === 0) return null;
+  if (roomPeople.length === 0) return busy;
 
   return (
     <>
+      {busy}
       {roomPeople.map((room) => (
         <section
           className="desk-shade-group"

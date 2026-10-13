@@ -199,6 +199,28 @@ describe("the shade on a quiet desk with a brief (HS-171-04)", () => {
   });
 });
 
+describe("the shade says it is reading until its first reads land (PHILO-17 Missed sweep)", () => {
+  it("a held brief read keeps the shade busy; the Brief row lands, then the shade is still", async () => {
+    // The sweep's `missed` case: Finished drew from the cached projections,
+    // then Projects and Brief landed above it (264 px) after it read as settled.
+    const misses: string[] = [];
+    let release: () => void = () => undefined;
+    const held = new Promise<void>((resolve) => { release = resolve; });
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/brief/latest")) await held;
+      return recordedGet({ ...QUIET, "/api/brief/latest": BRIEF }, path, misses) as never;
+    });
+    render(<SystemShade open onClose={() => undefined} onOpenMemory={() => undefined} />);
+    expect(document.querySelector('#desk-system-shade [aria-busy="true"]')).not.toBeNull();
+    await act(async () => { await Promise.resolve(); });
+    expect(screen.queryByTestId("shade-brief-row")).toBeNull();
+    expect(document.querySelector('#desk-system-shade [aria-busy="true"]')).not.toBeNull();
+    await act(async () => { release(); await held; });
+    await screen.findByTestId("shade-brief-row");
+    await waitFor(() => expect(document.querySelector('#desk-system-shade [aria-busy="true"]')).toBeNull());
+  });
+});
+
 describe("a remote write in the shade's Finished rows (HS-174-04)", () => {
   it("the remote sweep wears REMOTE · <caller> in the accent scope", async () => {
     // replaces: tests/e2e/test_hs174_receipts_glass.py::test_shade_remote_receipts_1440 (the 393 twin drew the same rows)
