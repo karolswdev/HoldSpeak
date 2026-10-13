@@ -3086,7 +3086,7 @@ def _install_import_transcriber(path: Path) -> str:
 
 
 #: PHILO-16 (C): the LAN address a replayed case types into Runs on. It is
-#: the address the Runs on glass rig doubles (tests/e2e/test_hs170_concierge_glass.py
+#: the address the Runs on glass rig doubles (tests/e2e/test_runs_on_glass.py
 #: `LAN_BASE`). Inside a replay hub, endpoint discovery and the Check's tool
 #: question for this host:port go to the loopback provider above; the product
 #: still sees a LAN engine (its emblem, its host on the route). No byte leaves
