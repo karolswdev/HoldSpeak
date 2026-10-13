@@ -44,7 +44,7 @@ import pytest
 from .glass_infra import _api, _api_allow_error, _boot, _ensure_build, _normal_chair, _settle
 from .chair_windows import open_chair_window
 from tests._evidence import evidence_dir
-from tests.e2e.test_hs202_05_button_hit_ownership import OWNERSHIP_JS, PROBES, _overlap
+from tests.e2e.test_kit_glass import OWNERSHIP_JS, PROBES, _overlap
 
 pytest.importorskip("playwright.sync_api", reason="the desk glass needs Playwright")
 
