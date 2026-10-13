@@ -1730,6 +1730,7 @@ class TestDatabaseShape:
         duplicates = {name: locs for name, locs in methods.items() if len(locs) > 1}
         assert duplicates == {}
 
+    @pytest.mark.real_schema  # a fresh build, never the template copy
     def test_fresh_schema_matches_canonical_snapshot(self, tmp_path, project_root: Path):
         """HS-31-04: the migration ladder was squashed to one canonical schema.
         A fresh build must match the committed snapshot exactly — any intended

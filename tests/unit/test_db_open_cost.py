@@ -10,8 +10,13 @@ from __future__ import annotations
 
 import sqlite3
 
+import pytest
+
 from holdspeak.db import reconcile
 from holdspeak.db.core import Database
+
+# Measures the real open path, never the template copy (tests/_template_db.py).
+pytestmark = pytest.mark.real_schema
 
 
 def test_a_second_database_builds_no_reference_schema(tmp_path, monkeypatch) -> None:

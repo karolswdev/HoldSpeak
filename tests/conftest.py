@@ -433,6 +433,11 @@ _CHAIR_WINDOWS_OPEN = {"on": False}
 def pytest_runtest_setup(item):
     # Before any fixture of the item (a class- or module-scoped context too).
     _CHAIR_WINDOWS_OPEN["on"] = item.get_closest_marker("chair_windows_open") is not None
+    # A new test database is a copy of one schema template (tests/_template_db.py).
+    from tests import _template_db
+
+    _template_db.install()
+    _template_db.set_real_schema(item.get_closest_marker("real_schema") is not None)
     yield
 
 
@@ -641,6 +646,9 @@ def pytest_unconfigure(config):
     import shutil
     import subprocess
 
+    from tests import _template_db
+
+    _template_db.cleanup()
     tmux_dir = os.environ.get("TMUX_TMPDIR", "")
     if not os.path.basename(tmux_dir).startswith("hs-tmux-"):
         return
@@ -665,6 +673,10 @@ def pytest_configure(config):
     # (its path constants freeze at import) and before the xdist rewrite below
     # turns HOME into a subdirectory of whatever it was.
     _enforce_isolated_home(config)
+    config.addinivalue_line(
+        "markers",
+        "real_schema: a new database runs the real schema script and reconcile, never the template copy (tests/_template_db.py)",
+    )
     config.addinivalue_line(
         "markers",
         "chair_windows_open: the browser spec reads a Chair window; its pages start with the four open (PHILO-14 A1)",
