@@ -6,7 +6,11 @@ because each check needs a real browser:
 * the slash popover: typed `/`, Enter picks, Escape closes (keys);
 * the guardrail decision box: Deny is the focused primary (focus);
 * the annotation popover: a mouse selection in an answer, the popover
-  anchored inside the window (selection, geometry).
+  anchored inside the window (selection, geometry);
+* the Thread composer (HS-200-41 lane F, was in
+  tests/e2e/test_hs200_task_resume_glass.py): an empty draft's Send READS
+  refused (computed cursor and contrast), and the ref chip's x paints no
+  hover background but keeps its focus ring (hover, focus).
 
 Was tests/e2e/test_hs153_practice_glass.py. Its other legs moved:
 the mode tabs to web/src/desk/__tests__/ModeTabs.test.tsx and
@@ -24,7 +28,8 @@ from typing import Any
 
 import pytest
 
-from .glass_infra import _normal_chair, _settle
+from .glass_infra import _api as _infra_api
+from .glass_infra import _assert_clean, _boot, _ensure_build, _normal_chair, _settle
 from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="Glass needs Playwright")
@@ -763,3 +768,298 @@ def test_annotation_popover_and_chips(hub: dict) -> None:
             page.close()
 
         browser.close()
+
+
+# ══ the Thread composer (was tests/e2e/test_hs200_task_resume_glass.py, leg 7) ══
+
+COMPOSER_REPO = Path(__file__).resolve().parents[2]
+
+COMPOSER_SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-41-shots")
+
+COMPOSER_TOKEN = "hs200-41-glass"
+
+def _composer_init_desk(page: Any, url: str) -> None:
+    page.goto(f"{url}/?token={COMPOSER_TOKEN}", wait_until="load")
+    _infra_api(page, "POST", "/api/desk/seed", token=COMPOSER_TOKEN)
+    _infra_api(page, "PUT", "/api/setup/onboarding",
+         {"disposition": "completed"}, token=COMPOSER_TOKEN)
+
+def _composer_shot_element(page: Any, locator: Any, name: str, *, pad: int = 0) -> Path:
+    """Shoot one element (optionally with padding around it).
+
+    The element is scrolled into view first. Without that the clip is taken at
+    whatever scroll position the previous leg left, and the Room's STICKY ask
+    foot — which floats over the body by design — lands in the middle of the
+    specimen. The block shots at 1440 and 393 were showing the composer sitting
+    across the row they were meant to show.
+    """
+    try:
+        locator.scroll_into_view_if_needed(timeout=5000)
+    except Exception:
+        pass  # a shot is never worth failing a leg over
+    page.wait_for_timeout(150)
+    _settle(page)
+    COMPOSER_SHOTS.mkdir(parents=True, exist_ok=True)
+    path = COMPOSER_SHOTS / f"{name}.png"
+    if pad:
+        box = locator.bounding_box()
+        assert box, f"{name}: element has no box"
+        view = page.viewport_size
+        clip = {
+            "x": max(0.0, box["x"] - pad),
+            "y": max(0.0, box["y"] - pad),
+            "width": min(view["width"] - max(0.0, box["x"] - pad), box["width"] + 2 * pad),
+            "height": min(view["height"] - max(0.0, box["y"] - pad), box["height"] + 2 * pad),
+        }
+        page.screenshot(path=str(path), clip=clip)
+    else:
+        locator.screenshot(path=str(path))
+    assert path.stat().st_size > 1_000, f"Shot {name} too small"
+    return path
+
+def _composer_open_thread(page: Any, url: str, thread_id: str) -> None:
+    page.goto(f"{url}/?token={COMPOSER_TOKEN}&open=thread:{thread_id}", wait_until="load")
+    page.locator(".thread-composer-input").wait_for(timeout=20000)
+    _settle(page)
+
+_composer_SWATCH_JS = """(sel) => {
+    const el = document.querySelector(sel);
+    if (!el) return null;
+    const rgb = (value) => {
+      const m = String(value).match(/[\\d.]+/g) || [];
+      return {r: +m[0] || 0, g: +m[1] || 0, b: +m[2] || 0, a: m.length > 3 ? +m[3] : 1};
+    };
+    // The colour actually behind the element: the first ancestor that
+    // paints something opaque.
+    let backdrop = 'rgb(255, 255, 255)';
+    for (let node = el.parentElement; node; node = node.parentElement) {
+      const bg = getComputedStyle(node).backgroundColor;
+      if (rgb(bg).a >= 0.999) { backdrop = bg; break; }
+    }
+    const lin = (c) => {
+      const s = c / 255;
+      return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+    };
+    const lum = (value) => {
+      const c = rgb(value);
+      return 0.2126 * lin(c.r) + 0.7152 * lin(c.g) + 0.0722 * lin(c.b);
+    };
+    const contrast = (a, b) => {
+      const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
+      return Math.round(((x + 0.05) / (y + 0.05)) * 100) / 100;
+    };
+    const cs = getComputedStyle(el);
+    // The button's own fill, composited over whatever is behind it.
+    const own = rgb(cs.backgroundColor);
+    const back = rgb(backdrop);
+    const over = own.a >= 0.999 ? cs.backgroundColor : `rgb(${
+      Math.round(own.r * own.a + back.r * (1 - own.a))}, ${
+      Math.round(own.g * own.a + back.g * (1 - own.a))}, ${
+      Math.round(own.b * own.a + back.b * (1 - own.a))})`;
+    return {
+      background: cs.backgroundColor,
+      effectiveBackground: over,
+      backdrop,
+      color: cs.color,
+      border: cs.borderTopColor,
+      cursor: cs.cursor,
+      opacity: cs.opacity,
+      disabled: el.disabled === true,
+      labelContrast: contrast(cs.color, over),
+      fillVsBackdrop: contrast(over, backdrop),
+    };
+}"""
+
+def _composer_swatch(page: Any, selector: str) -> dict[str, Any]:
+    return page.evaluate(_composer_SWATCH_JS, selector)
+
+@pytest.mark.timeout(300)
+@pytest.mark.parametrize("width", [1440, 393])
+def test_a_refused_send_reads_as_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
+) -> None:
+    """An empty draft: Send must READ refused, not merely BE `disabled`."""
+    _ensure_build()
+    server, url = _boot(tmp_path, monkeypatch, token=COMPOSER_TOKEN)
+    errors: list[str] = []
+    try:
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(
+                viewport={"width": width, "height": 900 if width >= 1440 else 852}
+            )
+            page.on("pageerror", lambda e: errors.append(str(e)))
+            _composer_init_desk(page, url)
+            created = _infra_api(page, "POST", "/api/threads",
+                           {"title": "The migration"}, token=COMPOSER_TOKEN)
+            thread_id = created["id"]
+            _composer_open_thread(page, url, thread_id)
+
+            send = page.locator('[data-testid="composer-send"]')
+            send.wait_for(timeout=10000)
+            assert send.is_disabled(), "an empty draft must refuse Send"
+            refused = _composer_swatch(page, '[data-testid="composer-send"]')
+            print(f"[hs200-41] refused Send @{width}: {json.dumps(refused)}")
+            assert refused["cursor"] == "not-allowed", refused
+
+            _composer_shot_element(
+                page, page.locator('[data-testid="thread-composer"]'),
+                f"composer-send-refused-{width}", pad=24,
+            )
+
+            # The comparison the reasoning was never checked against: the
+            # SAME button with a live draft.
+            page.locator(".thread-composer-input").fill("Ready to send")
+            page.wait_for_timeout(150)
+            assert not send.is_disabled()
+            live = _composer_swatch(page, '[data-testid="composer-send"]')
+            print(f"[hs200-41] live Send    @{width}: {json.dumps(live)}")
+            _composer_shot_element(
+                page, page.locator('[data-testid="thread-composer"]'),
+                f"composer-send-live-{width}", pad=24,
+            )
+
+            # The refusal must be visible, not merely semantic: SOMETHING
+            # about the paint has to differ from the live verb.
+            assert (
+                refused["background"] != live["background"]
+                or refused["color"] != live["color"]
+                or refused["border"] != live["border"]
+            ), (
+                "a refused Send paints EXACTLY like a live one — the only "
+                f"difference is the DOM `disabled` attribute: {refused} vs {live}"
+            )
+
+            # WHERE the refusal actually reads, measured.  LANE-F FINDING:
+            # `--disabled-bg` is `--surface-1`, and against the composer's
+            # well the FILL barely moves (~1.1:1) — the whole visible signal
+            # is the dimmed LABEL (14.8:1 -> 4.4:1) plus the not-allowed
+            # cursor.  Recorded for the orchestrator's eye, not fixed here.
+            print(
+                f"[hs200-41] FINDING refused-vs-live @{width}: "
+                f"fill {refused['effectiveBackground']} vs {live['effectiveBackground']} "
+                f"(refused fill vs its backdrop = {refused['fillVsBackdrop']}:1); "
+                f"label contrast {refused['labelContrast']}:1 vs "
+                f"{live['labelContrast']}:1; border identical="
+                f"{refused['border'] == live['border']}"
+            )
+            assert refused["labelContrast"] < live["labelContrast"], (
+                f"the refused label is not dimmer than the live one: {refused} {live}"
+            )
+            # The refused verb must still be READABLE, not erased (A.8's
+            # sibling: a refusal is a statement, not a disappearance).
+            assert refused["labelContrast"] >= 3.0, (
+                f"the refused Send is below 3:1 and cannot be read: {refused}"
+            )
+
+            _assert_clean(page, errors)
+            browser.close()
+    finally:
+        server.stop()
+
+@pytest.mark.timeout(300)
+@pytest.mark.parametrize("width", [1440, 393])
+def test_the_ref_chip_x_paints_no_hover_background(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
+) -> None:
+    """The library's hover grammar was neutralised on the chip's `x`.
+
+    Hovered: no background, no border, no lift.  Focused: the ring the
+    swap to the library `Button` gained must still be there.
+    """
+    _ensure_build()
+    server, url = _boot(tmp_path, monkeypatch, token=COMPOSER_TOKEN)
+    errors: list[str] = []
+    try:
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(
+                viewport={"width": width, "height": 900 if width >= 1440 else 852}
+            )
+            page.on("pageerror", lambda e: errors.append(str(e)))
+            _composer_init_desk(page, url)
+            created = _infra_api(page, "POST", "/api/threads",
+                           {"title": "The migration"}, token=COMPOSER_TOKEN)
+            thread_id = created["id"]
+            _composer_open_thread(page, url, thread_id)
+
+            # A chip through the composer's OWN seam: type `@`, take a match.
+            field = page.locator(".thread-composer-input")
+            field.click()
+            field.type("@", delay=40)
+            page.wait_for_selector(".inlet-autocomplete", timeout=10000)
+            options = page.locator(".inlet-autocomplete [role='option'], "
+                                   ".inlet-autocomplete .surface-row")
+            assert options.count() > 0, "the desk seed offered nothing to attach"
+            options.first.click()
+            page.wait_for_selector('[data-testid="composer-chips"]', timeout=10000)
+            _settle(page)
+
+            remove = page.locator(".thread-ref-chip-remove").first
+            remove.wait_for(timeout=5000)
+            name = remove.get_attribute("aria-label") or ""
+            assert name.startswith("Remove "), f"the x needs a name: {name!r}"
+
+            resting = _composer_swatch(page, ".thread-ref-chip-remove")
+            remove.hover()
+            page.wait_for_timeout(200)
+            hovered = _composer_swatch(page, ".thread-ref-chip-remove")
+            print(f"[hs200-41] chip x @{width} resting={json.dumps(resting)}")
+            print(f"[hs200-41] chip x @{width} hovered={json.dumps(hovered)}")
+            assert hovered["background"] in ("rgba(0, 0, 0, 0)", "transparent"), (
+                f"the chip's x paints a hover background: {hovered}"
+            )
+            assert hovered["border"] in ("rgba(0, 0, 0, 0)", "transparent"), (
+                f"the chip's x paints a hover border: {hovered}"
+            )
+            assert hovered["color"] != resting["color"], (
+                "hover must still SAY something — the colour shift is the "
+                f"whole remaining affordance: {resting} vs {hovered}"
+            )
+            _composer_shot_element(
+                page, page.locator('[data-testid="composer-chips"]'),
+                f"composer-refchip-hover-{width}", pad=28,
+            )
+
+            # The focus ring survived the neutralisation.  It must be reached
+            # by a REAL Tab — a scripted `.focus()` leaves Chromium in mouse
+            # modality, where `:focus-visible` does not apply and an absent
+            # ring would prove nothing.
+            page.locator(".thread-composer-input").focus()
+            page.keyboard.press("Shift+Tab")
+            page.wait_for_timeout(120)
+            ring = page.evaluate(
+                """() => {
+                    const el = document.activeElement;
+                    const cs = getComputedStyle(el);
+                    return {
+                      onTheX: el.classList.contains('thread-ref-chip-remove'),
+                      name: (el.getAttribute('aria-label') || el.textContent || '').trim(),
+                      outlineStyle: cs.outlineStyle,
+                      outlineWidth: cs.outlineWidth,
+                      outlineColor: cs.outlineColor,
+                      focusVisible: el.matches(':focus-visible'),
+                    };
+                }"""
+            )
+            print(f"[hs200-41] chip x focus ring @{width}: {json.dumps(ring)}")
+            if ring["onTheX"]:
+                _composer_shot_element(
+                    page, page.locator('[data-testid="composer-chips"]'),
+                    f"composer-refchip-focus-{width}", pad=28,
+                )
+                assert ring["focusVisible"], "Tab did not make the x focus-visible"
+                assert ring["outlineStyle"] != "none" and ring["outlineWidth"] != "0px", (
+                    f"the focus ring did NOT survive the library swap: {ring}"
+                )
+                hovered_focus = _composer_swatch(page, ".thread-ref-chip-remove")
+                assert hovered_focus["background"] in (
+                    "rgba(0, 0, 0, 0)", "transparent",
+                ), hovered_focus
+
+            _assert_clean(page, errors)
+            browser.close()
+    finally:
+        server.stop()
