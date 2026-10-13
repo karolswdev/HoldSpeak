@@ -1,6 +1,6 @@
 """The PHILO-13-06 open-grammar seed (moved out of test_philo13_06_open_glass.py).
 
-The canvas week (test_philo13_11_chair_glass._seed), then the calendar and
+The canvas week (tests/e2e/chair_rig.py `_seed`), then the calendar and
 Priya's request, all through the real producers on a booted hub. Used by
 tests/e2e/test_philo13_07_remembers_glass.py and the open-grammar successor
 tests/integration/test_desk_chair.py.
@@ -13,7 +13,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-from .test_philo13_11_chair_glass import _seed as _canvas_seed
+from .chair_rig import _seed as _canvas_seed
 
 TOKEN = "philo13-06-open"
 COMMITMENT = "Review the rollout plan before Friday"

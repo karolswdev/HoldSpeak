@@ -31,7 +31,7 @@ from typing import Any, Callable
 import pytest
 
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _room_opened, _settle
-from .test_philo13_11_frame_glass import ROOM, _seed
+from .frame_rig import ROOM, _seed
 from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="the windows glass needs Playwright")

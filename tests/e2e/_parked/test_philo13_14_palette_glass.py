@@ -44,7 +44,7 @@ from typing import Any
 import pytest
 
 from .glass_infra import _boot, _ensure_build, _normal_chair, _rendered_text_faults, _settle, park_builtin_folder
-from .test_philo13_11_chair_glass import _seed as _canvas_seed
+from .chair_rig import _seed as _canvas_seed
 from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="the palette glass needs Playwright")

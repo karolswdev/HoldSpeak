@@ -399,3 +399,17 @@ runners, `_open_door`) and `tests/e2e/concierge_rig.py` (`_quiet_concierge`).
   sounds), `arrivalOneThing.test.tsx`, `historyHeadline.test.ts`.
 - `test_philo9_03_room_face_glass.py`: 11 cases moved whole to `tests/e2e/test_room_glass.py` (T2 owed for the
   word cases); the three F1 cases are `projectRoomKey.test.ts` and `openGrammar.philo1306.test.tsx:248`.
+# Parked by the diet, push 2: lane e2e-high-1, the window cluster (2026-10-12)
+
+Every check in these files needs a real browser (drag, hover, keys, touch,
+hit-testing, exact geometry); they moved whole into app files, and the seeds
+and measures other files import moved into rig modules (`chair_rig.py`,
+`frame_rig.py`, `remembers_rig.py`), so no test module imports a test module.
+
+- `test_philo13_11_chair_glass.py` -> `tests/e2e/test_chair_glass.py`.
+- `test_philo13_11_frame_glass.py`, `test_philo13_11_titlebar_glass.py`,
+  `test_philo13_12_gadgets_glass.py` -> `tests/e2e/test_frame_glass.py`.
+- `test_philo13_05_close_glass.py`, `test_philo13_07_remembers_glass.py` ->
+  `tests/e2e/test_windows_glass.py`. Remembers' other legs (a closed window
+  stays gone; every family and draft; an emptied Room draft; the Thought's
+  words) are `deskRemembers.philo1307.test.tsx` and `deskRemembers2.philo1307.test.tsx`.

@@ -31,7 +31,7 @@ import pytest
 pytest.importorskip("playwright.sync_api", reason="the reader fences need Playwright")
 
 from .glass_infra import _rendered_text_faults  # noqa: E402
-from .test_philo13_11_frame_glass import FRAME_JS  # noqa: E402
+from .frame_rig import FRAME_JS  # noqa: E402
 from .type_floor_rig import _MEASURE  # noqa: E402
 
 PICTURE = (

@@ -42,7 +42,7 @@ from typing import Any
 import pytest
 
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _rendered_text_faults, _settle
-from .test_philo13_11_frame_glass import _seed as _frame_seed
+from .frame_rig import _seed as _frame_seed
 from tests._evidence import evidence_dir
 
 # PHILO-14 A1: the Chair is the screen of objects; these specs read its windows (tests/conftest.py).
@@ -502,7 +502,7 @@ class TestThePhoneDesk:
         keeps the opening order and the Room keeps its name. A second tap on the
         switcher closes its menu."""
         from playwright.sync_api import sync_playwright
-        from .test_philo13_11_frame_glass import ROOM, _stage
+        from .frame_rig import ROOM, _stage
 
         width = 393
         facts: dict[str, Any] = {"width": width}
