@@ -27,7 +27,7 @@ from typing import Any
 import pytest
 
 from .glass_infra import _api, _settle, clear_hub_windows
-from .test_firstrun_heard_glass import TOKEN, _ready_hub
+from .test_firstrun_glass import TOKEN, _ready_hub
 
 pytest.importorskip("playwright.sync_api", reason="first-run glass needs Playwright")
 from playwright.sync_api import expect, sync_playwright  # noqa: E402
@@ -203,7 +203,7 @@ def test_first_words_recovery_doors_open_on_glass(
     # No on_transcribe on this hub: the speech socket answers
     # "transcription_unavailable" (the missing_model failure).
     server, base, source = _ready_hub(tmp_path, monkeypatch)
-    from .test_firstrun_heard_glass import WAV
+    from .test_firstrun_glass import WAV
 
     if mode == "reopened":
         from holdspeak.db import get_database
@@ -281,7 +281,7 @@ def test_waiting_runs_on_comes_back_through_its_alias(
     server, base, source = _ready_hub(tmp_path, monkeypatch)
     from holdspeak.db import get_database
 
-    from .test_firstrun_heard_glass import WAV
+    from .test_firstrun_glass import WAV
 
     get_database().onboarding.set_disposition("dismissed")
     fails: dict[str, Any] = {}
