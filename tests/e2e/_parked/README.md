@@ -272,3 +272,39 @@ one row per retired check.
   rows' words in `tests/unit/test_monday_brief_service.py` (B58, B59, B73).
 - `test_philo17_doors_glass.py`: D6 and D7 in `tests/e2e/test_menus_glass.py`; the menus in
   `DeskMenuBar.test.tsx` and `menus.app.test.tsx`; the doors' windows in the desk sweep.
+# Parked by push 2 of the test diet: lane e2e-low-2, part 3 (2026-10-12)
+
+Every check below already had a cheaper successor; the browser file still ran
+beside it.
+
+- `test_philo10_04_send_face_glass.py` (12 tests): the Send face is
+  `web/src/desk/surface/send/__tests__/SendWell.test.tsx` and
+  `web/src/features/channels/__tests__/SendWell.test.tsx` (no destination, the
+  pick and preview, SAVED with the path, one send for a double click, FAILED,
+  UNKNOWN, PREPARED first, a lost answer keeps the key, unread reads named,
+  history and list chips, SENDING); the destinations group, the remote forms
+  and email setup are `web/src/desk/__tests__/destinations.app.test.tsx`; the
+  Add destination door is `windowSend.philo1315.test.tsx`. The hub side is
+  `tests/unit/test_channel_send_contract.py` (file states, destination changed
+  and parked, prepare), `test_philo10_send_restart.py` (board 25, unknown after
+  a restart), `test_philo10_cli_channels.py` (GitHub, Jira, Confluence),
+  `test_philo10_email_channel.py`, `tests/integration/test_desk_send.py` (the
+  held acli lock) and `test_desk_destinations.py`.
+- `test_philo11_05b_meeting_faces_glass.py`: `web/src/features/channels/__tests__/slackDestination.test.tsx`,
+  `tests/integration/test_slack_channel.py`, `tests/integration/test_desk_settings.py`
+  (no legacy Slack row) and the SendWell vitest files above (the wells, G2 over the limit).
+- `test_philo15_18_rest_of_day_glass.py` (6 tests): `web/src/desk/__tests__/restOfDay.philo1518.test.tsx`
+  (B31, B33, B36, B40, B56), `connections.app.test.tsx`, `settings.app.test.tsx`,
+  `firstrun/__tests__/OneScreen.test.tsx` and `conductor/__tests__/conductor.test.tsx`
+  (B34/B35 Install hooks with its receipt). The Conductor row title's ellipsis
+  is the sweep's `clipped` fence; the Project drawer it also read is parked (PHILO-17 U30).
+- `test_philo17_autoflow_glass.py`: `tests/unit/test_finish_defaults.py::test_an_import_with_an_engine_queues_its_summary`,
+  `tests/integration/test_desk_meetings.py` (the run reaches the summary and its
+  receipt) and `meetings.app.test.tsx` ("an open record ... catches up ... on the
+  hub's frame").
+- `test_philo17_conductor_plates_glass.py`: `web/src/desk/conductor/__tests__/conductor.test.tsx`
+  (the ask plate, Answer opens the lane, Approve on the plate, a cut call opens
+  the lane) and `tests/integration/test_desk_agents_wire.py` (the gate decides).
+- `test_philo4_02_generated_clearance.py`: no successor, because the sticky
+  capture bar it fenced left the Brief in PHILO-13-11 (the capture bar is its
+  own window); the Brief row now sits in an ordinary scroller.
