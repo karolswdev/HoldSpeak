@@ -93,7 +93,7 @@ from .glass_infra import (  # noqa: E402
 from .type_floor_rig import _FAINT_JS, _MEASURE, GATED_CONTRAST  # noqa: E402
 from .material_rig import LAMP_WORDS, MATERIAL_JS  # noqa: E402
 from .conductor_rig import _seed as _seed_agents  # noqa: E402
-from .test_philo17_meeting_window_glass import _save_meeting  # noqa: E402
+from .meetings_rig import _save_meeting  # noqa: E402
 from tests.unit.test_route_preflight import PAGE_ROUTES  # noqa: E402  (the e2e preflight is parked; the sweep fences every route)
 
 pytestmark = [pytest.mark.e2e]
