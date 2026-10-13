@@ -82,3 +82,30 @@ the file name to find them. Seed helpers that live tests still import moved to
 Relocated whole (they never opened a browser): `test_dogfood_plumbing_e2e.py`
 is `tests/unit/test_dogfood_fixtures.py`; the five `test_hs201_*` backend files
 are in `tests/integration/`.
+
+# Parked by push 2 of the test diet: lane e2e-low-2 (2026-10-12)
+
+Each file below is kept, not run. Its successor is named; a check with no
+successor says why.
+
+- `test_hs202_05_first_use_type_floor.py`: the 12 px floor and the faint and
+  ember contrast on the first-use screens. Successor: the desk sweep's `floor`
+  and `contrast` fences (`test_desk_sweep.py`), which read every window at 1440
+  and 393 with the same reader, now in `tests/e2e/type_floor_rig.py`. Its 44 px
+  hit contract on the live screens at 393 has no sweep fence; the kit's 44 px
+  target is `tests/e2e/test_kit_glass.py`.
+- `test_meeting_transcription.py`: a real-metal Whisper and LLM run on
+  `tests/fixtures/mock_meeting.wav`, which is gitignored and on no machine, so
+  every test skipped. Real Whisper is `tests/e2e/test_metal.py`.
+- `test_memory_faces_glass.py`: every fact has a successor:
+  `tests/unit/test_desk_memory.py`, `web/src/desk/__tests__/memory.app.test.tsx`
+  and `web/src/desk/__tests__/memoryChanges.test.tsx` (the bus and the
+  discarded refresh).
+- `test_philo9_06_seen_collector.py`: it fenced the face collector of the
+  Phase 9 closing-run script `scripts/philo9_room_job.py`, a history script
+  whose own unit test is parked.
+- `test_philo13_11_folded_word_reader.py`, `test_philo13_18_scroll_reach_reader.py`:
+  moved whole to `tests/e2e/test_sweep_readers_glass.py`.
+- `test_p16_kit_verb_glass.py`: moved whole to `tests/e2e/test_kit_glass.py`.
+- `test_philo304_thought_foot_reflow.py`: moved to `tests/e2e/test_thought_glass.py`
+  (the 600 px window and 393; 700 px and the default width only relax the 600 px bound).
