@@ -409,7 +409,7 @@ export function SystemShade({
                 <small>
                   {row.outcome || row.subject_label}
                   {egress.label ? (
-                    <> <EgressChip label={egress.label} scope={egress.scope} data-testid="shade-finished-egress" /></>
+                    <> <span data-testid="shade-finished-egress"><EgressChip label={egress.label} scope={egress.scope} /></span></>
                   ) : null}
                   {" "}&middot; {humanTime(row.timestamp)}
                 </small>
