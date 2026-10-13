@@ -131,3 +131,31 @@ Each check has a successor, or the PR that parked it says why it has none.
 - `test_dictation_learning_digest_spoken_e2e.py`: opt-in (macOS `say` and Whisper). The digest is
   `tests/unit/test_dictation_learning_digest.py` and
   `tests/integration/test_web_dictation_learning_digest.py`.
+# Parked by the diet, push 2: lane e2e-high-1 (2026-10-12)
+
+Owner, 2026-10-12: "we've been trimming some fat on useless testing. I need
+that to be pushed and pushed more." Each file below is parked because every
+check in it has a successor (a hub test, a vitest file, or the desk sweep) or
+proved nothing. The PR that parks a file has the table: check, verdict,
+successor.
+
+- `test_hs145_door_polish_glass.py`: the scroll hint always skipped (its board
+  is parked, HS-170-04); the calendar offer is `tests/unit/test_desk_calendar.py`
+  and `web/src/desk/__tests__/needsYou.app.test.tsx`.
+- `test_hs200_continuity_glass.py`: `tests/unit/test_desk_memory.py` and
+  `web/src/desk/__tests__/memory.app.test.tsx`; fit and the 393 filter strip
+  are the sweep's.
+- `test_palette_memory_glass.py`, `test_palette_two_line_glass.py`:
+  `tests/unit/test_desk_palette.py`, `palette.app.test.tsx`,
+  `paletteMemory.test.tsx`, `paletteTwoLine.test.tsx`; the in-shelf and 4.5:1
+  plate facts are the sweep's `palette` fence.
+- `test_philo13_04_faces_glass.py`: `philo13FacesDoNotLie.test.tsx`,
+  `railSummaryStored.philo13.test.tsx`, `retryKeepsNewerWords.test.tsx`,
+  `recordingSlice.test.ts`, `tests/integration/test_desk_capture.py`. Its
+  `_outcome_meeting` seed now lives in `scripts/philo13_meetings_headline_fixture.py`.
+- `test_philo13_08_decide_glass.py`: `tests/integration/test_desk_meetings.py`,
+  `decision.app.test.tsx`, `philo1308Decide.test.tsx`.
+- `test_hs162_update_glass.py`: `tests/integration/test_update_routes.py`,
+  `UpdatePosture.test.tsx` (draft, edit, save, publish, copy Markdown, no engine).
+- `test_hs169_room_glass.py`: `room169.test.tsx`; overlap, clip and fit are the
+  sweep's; its pixel ratios pinned an old beauty round.

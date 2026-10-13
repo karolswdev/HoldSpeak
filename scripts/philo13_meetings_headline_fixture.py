@@ -4,7 +4,7 @@
 The meetings are saved and enqueued by the stop-handoff producer, and the REAL
 intel queue executor (``process_next_intel_job``) runs, fails, retries or
 holds each summary: the deferred-queue rig of
-``tests/e2e/test_philo13_04_faces_glass.py`` (only the provider's completion
+``tests/e2e/_parked/test_philo13_04_faces_glass.py`` (only the provider's completion
 text and the plugin route are doubles). Each case is read back through the
 real ``GET /api/meetings`` list route, so the rows are the wire the Meetings
 window reads.
@@ -59,10 +59,32 @@ def _rows(db: Any) -> list[dict[str, Any]]:
         return list(response.json()["meetings"])
 
 
+def _outcome_meeting(db: Any, meeting_id: str, title: str) -> None:
+    """The HS-200-12 meeting (`test_phase200_meeting_outcomes._meeting`) with
+    its own title: saved, linked to a Project, enqueued at stop handoff.
+    (Was in tests/e2e/test_philo13_04_faces_glass.py, parked by the test diet.)"""
+    from datetime import datetime, timedelta
+
+    from holdspeak.meeting_session import MeetingState, TranscriptSegment
+    from tests.unit.test_hs172_loop_wire import _link_meeting_project, _seed_project
+    from tests.unit.test_phase200_meeting_outcomes import SEGMENTS
+
+    state = MeetingState(
+        id=meeting_id, started_at=datetime.now() - timedelta(hours=2),
+        ended_at=datetime.now() - timedelta(hours=1), title=title,
+        segments=[TranscriptSegment(text=text, speaker=speaker, start_time=start, end_time=end)
+                  for start, end, speaker, text in SEGMENTS],
+    )
+    db.meetings.save_meeting(state)
+    _seed_project(db, "prj-cutover")
+    _link_meeting_project(db, meeting_id, "prj-cutover")
+    db.intel.enqueue_intel_job(meeting_id, transcript_hash=state.transcript_hash(),
+                               reason="stop handoff")
+
+
 def _case(home: Path, name: str, steps: Any) -> list[dict[str, Any]]:
     import pytest
 
-    from tests.e2e.test_philo13_04_faces_glass import _outcome_meeting
     from tests.unit.test_phase200_meeting_outcomes import _rig
 
     rig = home / name
