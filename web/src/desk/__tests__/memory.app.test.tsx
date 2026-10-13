@@ -293,6 +293,23 @@ function replayRecall() {
   return { misses, presses };
 }
 
+describe("Desk memory: the quiet open read says busy (PHILO-17 held read)", () => {
+  it("busy while the recent read is out; the mark goes when it lands and the display line is drawn", async () => {
+    // The sweep's held first read: the recent read landed after the window
+    // read as settled and the display line moved the well 30 px.
+    let land: (v: unknown) => void = () => {};
+    apiFetch.mockImplementation((url: string) => String(url).startsWith("/api/memory/recall")
+      ? new Promise((r) => { land = r; }) : Promise.resolve(hub(String(url))));
+    const { container } = render(<ProjectMemoryCore />);
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith(expect.stringContaining("recent=1")));
+    expect(container.querySelector('[data-testid=recall-reading][aria-busy="true"]')).not.toBeNull();
+    expect(screen.queryByTestId("recall-display")).toBeNull();
+    land(QUASAR);
+    await screen.findByTestId("recall-display");
+    expect(screen.queryByTestId("recall-reading")).toBeNull();
+  });
+});
+
 describe("Desk memory (HS-200-13): the current decision first, carried; the owed commitment named", () => {
   it("recent on open; the search: CURRENT first with its why and source, SUPERSEDED under it, OWED with typed unknowns; Carry; Name an owner; the miss", async () => {
     // replaces: tests/e2e/test_hs200_continuity_glass.py::TestContinuityGlass::test_recall_1440 (every leg but

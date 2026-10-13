@@ -373,6 +373,9 @@ export function RecallFace({ initialQuery = "" }: { initialQuery?: string } = {}
   return (
     <>
       <div className="room-body desk-memory-body recall-face" data-testid="desk-memory-body" data-status={status}>
+        {/* The quiet recent read is out: busy until it lands (it adds the
+            display line above the well). */}
+        {ctrl.reading ? <span hidden aria-busy="true" data-testid="recall-reading" /> : null}
         <header className="recall-head">
           {searched ? (
             <div
