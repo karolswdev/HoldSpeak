@@ -23,6 +23,17 @@ asked for rendered geometry, not presence:
 
 The frame is the hub's own (``build_aftercare_ready_event`` over a seeded
 meeting with open items, sent with ``MeetingWebServer.broadcast``).
+
+Also kept here by lane e2e-high-1:
+
+The Chair windows in a real browser: their exact places.
+
+Kept by the test diet (push 2, 2026-10-12), one file for the Chair app:
+
+* a Chair window zoomed, unzoomed, closed and opened again from
+  Window > Chair comes back at its tile place (it came back 12 px low,
+  clamped into the shell band; was the Chair leg of
+  tests/e2e/test_finish_face_polish_glass.py).
 """
 from __future__ import annotations
 
@@ -36,6 +47,8 @@ import pytest
 
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
 from tests._evidence import evidence_dir
+
+from .finish_rig import SHOTS as FINISH_SHOTS, FinishRig
 
 pytest.importorskip("playwright.sync_api", reason="the Chair glass needs Playwright")
 
@@ -550,6 +563,49 @@ class TestTheBriefCarriesTheDay:
                 unread.scroll_into_view_if_needed()
                 _settle(page)
                 page.screenshot(path=str(BRIEF_SHOTS / f"brief-full-not-read-{width}.png"))
+                assert not errors, errors
+            finally:
+                browser.close()
+
+
+# ══ lane e2e-high-1 (the finish-polish and Dock-tap fences) ═══════════
+
+class TestChairWindowPlaces(FinishRig):
+    @pytest.mark.e2e
+    def test_a_chair_window_reopens_at_its_tile_place_after_a_zoom(self) -> None:
+        from playwright.sync_api import sync_playwright
+
+        rect = """() => { const b = document.querySelector(".desk-window-shell.chair-window[aria-label='Brief']").getBoundingClientRect();
+                          return [Math.round(b.left), Math.round(b.top), Math.round(b.width), Math.round(b.height)]; }"""
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, 1440)
+            try:
+                shell = page.locator(".desk-window-shell.chair-window[aria-label='Brief']")
+
+                def open_brief() -> None:
+                    page.locator(".desk-verbbar-item[data-menu-id='window'] button").click()
+                    page.locator(".desk-verbbar-menu").wait_for()
+                    page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Desk')").hover()
+                    page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')").click()
+                    shell.wait_for()
+                    page.wait_for_timeout(600)
+                    _settle(page)
+
+                # Phase 14 A1: Chair windows start closed. Open the Brief at
+                # its tile place first; that place is what a zoom must return to.
+                if not shell.count():
+                    open_brief()
+                home = page.evaluate(rect)
+                shell.get_by_role("button", name="Zoom Brief").click()
+                page.wait_for_timeout(500)
+                shell.get_by_role("button", name="Zoom Brief").click()
+                page.wait_for_timeout(500)
+                assert page.evaluate(rect) == home
+                shell.get_by_role("button", name="Close Brief").click()
+                shell.wait_for(state="detached")
+                open_brief()
+                page.screenshot(path=str(FINISH_SHOTS / "chair-reopened-1440.png"))
+                assert page.evaluate(rect) == home, (page.evaluate(rect), home)
                 assert not errors, errors
             finally:
                 browser.close()

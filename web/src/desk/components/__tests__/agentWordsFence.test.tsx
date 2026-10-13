@@ -105,7 +105,7 @@ describe("the agent-words surfaces render markdown", () => {
 
   // The PLAIN cut (a tooltip, `agentWordsPlain`). The RENDERED compact cut
   // is measured in a real browser at 393, one line and two lines:
-  // tests/e2e/test_phase16_agent_words_glass.py::test_a_compact_line_at_393_keeps_its_ellipsis_in_the_box
+  // tests/e2e/test_agents_glass.py::test_a_compact_line_at_393_keeps_its_ellipsis_in_the_box
   // (jsdom has no layout; Astra r1 on #1026).
   it("the plain cut (tooltip) never ends inside a word", () => {
     for (const max of [20, 37, 64, 101, 150]) {

@@ -308,3 +308,22 @@ beside it.
 - `test_philo4_02_generated_clearance.py`: no successor, because the sticky
   capture bar it fenced left the Brief in PHILO-13-11 (the capture bar is its
   own window); the Brief row now sits in an ordinary scroller.
+# Parked by the diet, push 2: lane e2e-high-1, app files 2 (2026-10-12)
+
+- `test_finish_face_polish_glass.py` (and its `finish_polish_1px.png`): its
+  rig is `tests/e2e/finish_rig.py`; the Dock pages leg is
+  `tests/e2e/test_dock_glass.py`, the Chair zoom leg `test_chair_glass.py`,
+  the Processes leg `test_processes_glass.py`, the Roadmap rows leg
+  `test_roadmap_glass.py`. The palette legs are `paletteSendNoise.test.ts`
+  and `builtinFolder.test.tsx`; the roadmap ref `roadmapRef.test.ts`; the
+  SEND well, calendar and paths legs were already `SendWell.test.tsx`,
+  `CalendarSnapshotReviewCore.test.tsx` and `tests/unit/test_face_paths_short.py`.
+- `test_philo13_01_dock_tap_glass.py` -> `tests/e2e/test_dock_glass.py` (whole).
+- `test_hs200_voice_custody_glass.py` -> `tests/e2e/test_speak_glass.py` (the
+  geometry walk); the wire test is `tests/unit/test_desk_speak.py`.
+- `test_phase16_agent_words_glass.py` -> `tests/e2e/test_agents_glass.py` (the
+  393 ellipsis); the render leg is `AgentWords.test.tsx`.
+- `test_hs200_attention_glass.py`, `test_philo13_03_needs_you_glass.py` ->
+  `tests/e2e/test_needs_you_glass.py` (the 393 long row; one number). The
+  rest: `tests/unit/test_attention.py`, `NeedsDrawer.test.tsx`,
+  `arrivalAttention.test.tsx`, `meetingsHeadline.philo1303.test.ts`.
