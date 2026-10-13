@@ -1217,6 +1217,13 @@
   .desk-next .desk-work-menu :is([role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"]) {
     min-height: var(--desk-button-hit-size);
   }
+  /* PHILO-17 (the desk sweep's target fence): a palette row is a choice too;
+     at the narrow desk it owns the 44 px, as the work-menu rows do. */
+  .desk-next .desk-deck-row,
+  .desk-next .desk-deck-row[data-wrap] {
+    height: auto;
+    min-height: var(--desk-button-hit-size);
+  }
   /* The clock's date is redundant on the narrowest bar; its accessible name
      still carries both date and time. This preserves the search and privacy
      actions without making the fixed bar wider than the viewport. */
