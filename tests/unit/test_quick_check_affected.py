@@ -43,9 +43,9 @@ def test_a_changed_script_maps_to_its_tests() -> None:
 def test_changed_uat_and_e2e_test_files_are_included_directly() -> None:
     uat = next(p for p in sorted((ROOT / "tests" / "uat").rglob("test_*.py")) if "_parked" not in p.as_posix())
     rel = uat.relative_to(ROOT).as_posix()
-    rc, tests, _ = _affected([rel, "tests/e2e/test_philo17_today_glass.py"])
+    rc, tests, _ = _affected([rel, "tests/e2e/test_today_glass.py"])
     assert rc == 0
-    assert rel in tests and "tests/e2e/test_philo17_today_glass.py" in tests
+    assert rel in tests and "tests/e2e/test_today_glass.py" in tests
 
 
 def test_quick_tests_adds_files_and_a_missing_one_is_an_error() -> None:

@@ -91,3 +91,53 @@ class TestTheTodayWindowSize(FitRig):
                 assert not errors, errors
             finally:
                 browser.close()
+
+
+# ── PHILO-17 Today on the sweep's seeded desk (its own hub): Today opens from
+#    the Dock between the desk's icon columns and covers no icon of either.
+#    Moved from test_philo17_today_glass.py (push 2 of the test diet, lane
+#    e2e-low-2); its presses are TodayView.test.tsx. ──
+
+from typing import Any  # noqa: E402
+
+from tests._evidence import evidence_dir  # noqa: E402
+
+from .glass_infra import clear_hub_windows_http  # noqa: E402
+from .test_desk_sweep import SETTLED_JS, T as SWEEP_T, TOKEN as SWEEP_TOKEN, _page, desk, pw_browser  # noqa: E402,F401
+
+TODAY = '[id="pullout:intelligence:desk"]'
+
+
+def _open_today(pw_browser: Any, base: str, width: int) -> tuple[Any, Any]:
+    clear_hub_windows_http(base, SWEEP_TOKEN)
+    ctx, page, _errors, _requests = _page(pw_browser, width, base)
+    page.goto(f"{base}/?token={SWEEP_TOKEN}", wait_until="load")
+    _normal_chair(page)
+    page.wait_for_function(SETTLED_JS, arg=None, timeout=SWEEP_T)
+    page.locator(".desk-dock-launch[aria-label^='Today']").first.click()
+    page.locator(f"{TODAY} [data-testid=today-day]").wait_for(timeout=SWEEP_T)
+    return ctx, page
+
+
+@pytest.mark.timeout(240)
+def test_today_opens_between_the_icon_columns(desk: dict[str, Any], pw_browser: Any) -> None:
+    ctx, page = _open_today(pw_browser, desk["base"], 1440)
+    try:
+        page.wait_for_function(SETTLED_JS, arg="pullout:intelligence:desk", timeout=SWEEP_T)
+        box = page.locator(TODAY).bounding_box()
+        assert box, "Today is not drawn"
+        icons = page.evaluate("""() => [...document.querySelectorAll('.desk-icon')]
+          .filter((e) => !e.closest('.desk-window, .desk-dock'))
+          .map((e) => { const r = e.getBoundingClientRect();
+            return {name: (e.textContent || '').trim().slice(0, 30), left: r.left, right: r.right, top: r.top, bottom: r.bottom,
+                    placed: Boolean(e.closest('.desk-screen-placed'))}; })
+          .filter((r) => r.right > r.left)""")
+        columns = [i for i in icons if i["right"] <= 160 or (i["placed"] and i["left"] >= 1440 * 0.75)]
+        assert any(i["left"] >= 1440 * 0.75 for i in columns), icons
+        covered = [i["name"] for i in columns
+                   if i["left"] < box["x"] + box["width"] and i["right"] > box["x"]
+                   and i["top"] < box["y"] + box["height"] and i["bottom"] > box["y"]]
+        assert not covered, (box, covered)
+        page.screenshot(path=str(evidence_dir("today") / "today-seat-1440.png"))
+    finally:
+        ctx.close()

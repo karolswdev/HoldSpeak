@@ -887,3 +887,222 @@ def test_a_grant_after_continue_later_leaves_no_live_mic(
     finally:
         server.stop()
         source.close()
+
+
+# ── PHILO-17 firstrun F4 and F5: the recovery doors open their windows ON
+#    GLASS over first run (a real fake-device microphone; which window is on
+#    top at a point). Moved from test_philo17_firstrun_glass.py (push 2 of
+#    the test diet, lane e2e-low-2); its F1-F3 are vitest:
+#    surface/__tests__/materialDoors.test.tsx, pages/cores/__tests__/setupCoreInfo.test.tsx,
+#    firstrun/__tests__/OneScreen.test.tsx. ──
+
+from .glass_infra import _settle, clear_hub_windows  # noqa: E402
+
+
+def _row(page: Any, label: str) -> Any:
+    """The menu row whose label is `label` (its name also carries a keycap)."""
+    return page.locator("[role^=menuitem]").filter(
+        has=page.locator(".desk-menu-label", has_text=re.compile(f"^{re.escape(label)}$"))).last
+
+
+def _desk(page: Any, base: str, query: str = "") -> None:
+    if not page.url.startswith(base):
+        page.goto(f"{base}/?token={TOKEN}", wait_until="load")
+    clear_hub_windows(page, TOKEN)
+    page.goto(f"{base}/?token={TOKEN}{query}", wait_until="load")
+    page.locator(".chair:not(.chair-first-value)").wait_for(timeout=30_000)
+    _settle(page)
+
+
+# ── F4 (Astra r1 on #1085): First words' two recovery doors open a window ON
+#    GLASS, on a fresh first run and on one opened again from Setup. ──
+
+_TOGGLE_MIC = """(() => {
+  const media = navigator.mediaDevices;
+  const real = media.getUserMedia.bind(media);
+  media.getUserMedia = async (c) => {
+    if (window.__denyMic) throw new DOMException("Requested device not found", "NotFoundError");
+    return real(c);
+  };
+})()"""
+
+# The window is painted, and the topmost element at its centre is inside it
+# (not under the first-run face).
+_ON_TOP = """(el) => {
+  const r = el.getBoundingClientRect();
+  if (r.width < 2 || r.height < 2) return false;
+  const x = Math.min(innerWidth - 1, Math.max(0, r.left + r.width / 2));
+  const y = Math.min(innerHeight - 1, Math.max(0, r.top + Math.min(r.height / 2, 40)));
+  const top = document.elementFromPoint(x, y);
+  return !!top && el.contains(top);
+}"""
+
+
+def _on_glass(page: Any, selector: str) -> bool:
+    loc = page.locator(selector).first
+    try:
+        loc.wait_for(state="visible", timeout=15_000)
+    except Exception:  # noqa: BLE001
+        return False
+    page.wait_for_timeout(400)
+    return bool(loc.evaluate(_ON_TOP))
+
+
+@pytest.mark.parametrize("mode", ["fresh", "reopened"])
+@pytest.mark.parametrize("width,height", [(1440, 900), (393, 852)])
+def test_first_words_recovery_doors_open_on_glass(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int, height: int, mode: str,
+) -> None:
+    # No on_transcribe on this hub: the speech socket answers
+    # "transcription_unavailable" (the missing_model failure).
+    server, base, source = _ready_hub(tmp_path, monkeypatch)
+
+    if mode == "reopened":
+        from holdspeak.db import get_database
+
+        get_database().onboarding.set_disposition("dismissed")
+    fails: dict[str, Any] = {}
+    out = Path(os.environ.get("FIRSTRUN_SHOTS") or tmp_path / "shots")
+    out.mkdir(parents=True, exist_ok=True)
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(args=[
+                "--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream",
+                "--use-file-for-fake-audio-capture=" + str(WAV),
+            ])
+            page = browser.new_page(viewport={"width": width, "height": height}, device_scale_factor=2)
+            page.set_default_timeout(10_000)
+            page.add_init_script(_TOGGLE_MIC)
+            if mode == "reopened":
+                _desk(page, base)
+                page.locator(".desk-mark").click()
+                page.locator(".desk-menu-list").first.wait_for()
+                _row(page, "Setup").click()
+                page.locator("#surface-setup").get_by_role("button", name="Get ready", exact=True).click()
+            else:
+                page.goto(f"{base}/?token={TOKEN}", wait_until="load")
+            page.get_by_test_id("firstrun").wait_for(timeout=30_000)
+            local_ai = page.get_by_test_id("firstrun-local-ai")
+            local_ai.get_by_role("button", name=re.compile(r"^Set up local AI")).click()
+            words = page.get_by_test_id("firstrun-first-words")
+            dictate = words.get_by_role("button", name="◖ Dictate one sentence", exact=True)
+            expect(dictate).to_be_enabled(timeout=60_000)
+
+            # 1. No microphone -> "Check the microphone" -> the Setup window.
+            page.evaluate("window.__denyMic = true")
+            dictate.click()
+            check = words.get_by_role("button", name="Check the microphone", exact=True)
+            check.wait_for()
+            check.click()
+            if not _on_glass(page, "#surface-setup"):
+                fails[f"F4 {mode} {width} Check the microphone opens Setup on glass"] = "not on glass"
+            page.screenshot(path=str(out / f"P17-firstrun-{mode}-mic-{width}.png"))
+            closer = page.get_by_role("button", name="Close Setup", exact=True)
+            if closer.count():
+                closer.first.click()
+
+            # 2. No speech model on the hub -> "Runs on" -> the Runs on window.
+            page.evaluate("window.__denyMic = false")
+            words.get_by_role("button", name="Again", exact=True).click()
+            runs_on = words.get_by_role("button", name="Runs on", exact=True)
+            try:
+                runs_on.wait_for(timeout=20_000)
+                runs_on.click()
+                if not _on_glass(page, "[data-testid='switchboard']"):
+                    fails[f"F4 {mode} {width} Runs on opens on glass"] = "not on glass"
+            except Exception as exc:  # noqa: BLE001
+                fails[f"F4 {mode} {width} the missing model offers Runs on"] = str(exc)[:200]
+            page.screenshot(path=str(out / f"P17-firstrun-{mode}-runson-{width}.png"))
+            # The first run is still there behind the recovery window.
+            if not page.get_by_test_id("firstrun").count():
+                fails[f"F4 {mode} {width} first run stays"] = "gone"
+            browser.close()
+    finally:
+        server.stop()
+        source.close()
+    assert not fails, fails
+
+
+# ── F5 (Astra r2 on #1085): Runs on open BEFORE Get ready waits off glass;
+#    pressing "Runs on" (the configure-runs-on alias) brings it back; leaving
+#    first run keeps every window, on glass and in the hub's rows. ──
+@pytest.mark.parametrize("width,height", [(1440, 900), (393, 852)])
+def test_waiting_runs_on_comes_back_through_its_alias(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int, height: int,
+) -> None:
+    server, base, source = _ready_hub(tmp_path, monkeypatch)
+    from holdspeak.db import get_database
+
+
+    get_database().onboarding.set_disposition("dismissed")
+    fails: dict[str, Any] = {}
+    out = Path(os.environ.get("FIRSTRUN_SHOTS") or tmp_path / "shots")
+    out.mkdir(parents=True, exist_ok=True)
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(args=[
+                "--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream",
+                "--use-file-for-fake-audio-capture=" + str(WAV),
+            ])
+            page = browser.new_page(viewport={"width": width, "height": height}, device_scale_factor=2)
+            page.set_default_timeout(10_000)
+            _desk(page, base)
+            # Runs on first (HoldSpeak ▸ Runs on), then Setup ▸ Get ready.
+            page.locator(".desk-mark").click()
+            page.locator(".desk-menu-list").first.wait_for()
+            _row(page, "Runs on").click()
+            page.get_by_test_id("switchboard").wait_for(timeout=15_000)
+            page.locator(".desk-mark").click()
+            page.locator(".desk-menu-list").first.wait_for()
+            _row(page, "Setup").click()
+            page.locator("#surface-setup").get_by_role("button", name="Get ready", exact=True).click()
+            page.get_by_test_id("firstrun").wait_for(timeout=30_000)
+            page.wait_for_timeout(400)
+            if page.get_by_test_id("switchboard").count() or page.locator("#surface-setup").count():
+                fails[f"F5 {width} his windows wait off glass"] = "on glass"
+            local_ai = page.get_by_test_id("firstrun-local-ai")
+            local_ai.get_by_role("button", name=re.compile(r"^Set up local AI")).click()
+            words = page.get_by_test_id("firstrun-first-words")
+            dictate = words.get_by_role("button", name="◖ Dictate one sentence", exact=True)
+            expect(dictate).to_be_enabled(timeout=60_000)
+            dictate.click()
+            runs_on = words.get_by_role("button", name="Runs on", exact=True)
+            runs_on.wait_for(timeout=20_000)
+            runs_on.click()
+            if not _on_glass(page, "[data-testid='switchboard']"):
+                fails[f"F5 {width} the waiting Runs on comes back on glass"] = "not on glass"
+            page.screenshot(path=str(out / f"P17-firstrun-waiting-runson-{width}.png"))
+
+            # Leave first run: every window is kept, on glass and in the hub.
+            page.get_by_role("button", name="Close Runs on", exact=True).first.click()
+            page.get_by_role("button", name="Continue later", exact=True).click()
+            page.get_by_test_id("firstrun").wait_for(state="detached", timeout=15_000)
+            page.wait_for_timeout(800)
+            hub = page.evaluate(
+                """async (t) => (await (await fetch('/api/desk/windows',
+                    {headers: {Authorization: 'Bearer ' + t}})).json())""", TOKEN)
+            ids = {w.get("id") for w in hub.get("windows") or []}
+            if "surface-setup" not in ids:
+                fails[f"F5 {width} Setup (open before Get ready) is in the hub's rows"] = sorted(ids)
+            if page.locator("#surface-setup").count() == 0:
+                fails[f"F5 {width} Setup comes back on the desk"] = "absent"
+            if "surface-concierge" in ids:
+                fails[f"F5 {width} Runs on, closed in first run, stays closed"] = sorted(ids)
+            # Runs on again from the desk: the same window id, on glass.
+            page.locator(".desk-mark").click()
+            page.locator(".desk-menu-list").first.wait_for()
+            _row(page, "Runs on").click()
+            if not _on_glass(page, "[data-testid='switchboard']"):
+                fails[f"F5 {width} Runs on opens again on the desk"] = "not on glass"
+            hub = page.evaluate(
+                """async (t) => (await (await fetch('/api/desk/windows',
+                    {headers: {Authorization: 'Bearer ' + t}})).json())""", TOKEN)
+            ids = {w.get("id") for w in hub.get("windows") or []}
+            if not {"surface-setup", "surface-concierge"} <= ids:
+                fails[f"F5 {width} hub rows hold the retained and the new window"] = sorted(ids)
+            page.screenshot(path=str(out / f"P17-firstrun-after-leave-{width}.png"))
+            browser.close()
+    finally:
+        server.stop()
+        source.close()
+    assert not fails, fails
