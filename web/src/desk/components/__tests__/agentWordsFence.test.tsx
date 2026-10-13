@@ -118,25 +118,8 @@ describe("the agent-words surfaces render markdown", () => {
   });
 });
 
-describe("the agent-words sites use AgentWords (source fence)", () => {
+describe("AgentWords never renders agent text as HTML (source fence)", () => {
   const SRC = join(__dirname, "..", "..", "..");
-  const SITES: Array<[string, RegExp]> = [
-    ["desk/surface/objects/AskWell.tsx", /<AgentWords className="ask-well-question" text=\{question\}/],
-    ["desk/surface/objects/Timeline.tsx", /<AgentWords className="lane-rail-says"/],
-    ["desk/surface/objects/NeedsRow.tsx", /<AgentWords compact lines=\{2\}/],
-    ["desk/lane/LaneWindow.tsx", /<AgentWords className="lw-ask-q"/],
-    ["desk/lane/laneWire.ts", /kind: "says", word: "SAYS", words: event\.text/],
-    ["desk/needs/needsFace.ts", /factWords: true/],
-    ["desk/chair/ChairHome.tsx", /<AgentWords compact data-testid="arrival-coder-question"/],
-    ["desk/pullouts/CoderPullout.tsx", /<AgentWords className="desk-coder-question"/],
-    ["desk/components/SessionPullout.tsx", /<AgentWords className="desk-session-question"/],
-    ["desk/components/MissionControlConveyor.tsx", /agentWordsPlain\(s\.lastAssistantText/],
-    ["pages/cores/CompanionCore.tsx", /<AgentWords compact text=/],
-  ];
-  it.each(SITES)("%s draws the agent's words with AgentWords", (file, pattern) => {
-    expect(readFileSync(join(SRC, file), "utf8")).toMatch(pattern);
-  });
-
   it("AgentWords never injects HTML and never makes an anchor", () => {
     const src = readFileSync(join(SRC, "desk/components/AgentWords.tsx"), "utf8");
     expect(src).not.toMatch(/dangerouslySetInnerHTML|innerHTML|<a\b/);

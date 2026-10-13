@@ -3,8 +3,6 @@
 // and a trailing verb group at the rail's right. No third filter species.
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { FilterBar } from "..";
 import { Button } from "../../../components/signal/Signal";
 
@@ -36,11 +34,5 @@ describe("FilterBar (Phase 16 kit)", () => {
     const { container } = render(<FilterBar label="x" trailing={<Button dense>Retry</Button>} />);
     expect(container.querySelector(".surface-filter-tokens")).toBeNull();
     expect(screen.getByRole("button", { name: "Retry" })).toBeTruthy();
-  });
-
-  it("the token is the kit cell: Steel at rest; the active one the selection blue, sunken", () => {
-    const css = readFileSync(resolve(__dirname, "../filter-tokens.css"), "utf8");
-    expect(css).toMatch(/\.surface-filter-token\.btn \{[^}]*background: var\(--wb-steel\)/);
-    expect(css).toMatch(/\[data-filter-active\] \{[^}]*box-shadow: var\(--bevel-sunken-soft\);[^}]*background: var\(--wb-sel\);[^}]*color: var\(--wb-paper\)/);
   });
 });

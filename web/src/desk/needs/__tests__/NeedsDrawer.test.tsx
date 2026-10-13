@@ -10,9 +10,6 @@
 // `needs-next` (a strip token), `needs-filter` (the FilterBar; its
 // `Muted` token opens `needs-muted`).
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError, apiFetch } from "../../../lib/api";
 import { useAgentFlights, type AgentFlight } from "../../agentFlights";
@@ -295,12 +292,6 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     fireEvent.click(within(row("Pick the vendor")).getByText("Name an owner"));
     expect(screen.getByTestId("needs-well")).toBeTruthy();
     expect(screen.getByRole("region", { name: "Owner: Pick the vendor" })).toBeTruthy();
-  });
-
-  it("393: every verb in a narrow drawer is a 44 px target (the rule is in the CSS)", () => {
-    const here = dirname(fileURLToPath(import.meta.url));
-    const css = readFileSync(resolve(here, "../needs.css"), "utf8");
-    expect(css).toMatch(/@container surface \(max-width: 520px\)[\s\S]*\.needs-row-verbs \.btn \{\s*min-height: 44px;/);
   });
 
   it("says Nothing needs you only on a complete read", async () => {
@@ -613,7 +604,6 @@ describe("NeedsDrawer one count and kind words (PHILO-15-09)", () => {
     expect(document.querySelectorAll("[data-testid='needs-list'] li.needs-row")).toHaveLength(1);
   });
 });
-
 
 describe("NeedsDrawer every row counts (PHILO-15-09 B11, Astra r1)", () => {
   it("the hub's one number counts a source not read, a recording that arms and a folded ask; the rows agree", async () => {

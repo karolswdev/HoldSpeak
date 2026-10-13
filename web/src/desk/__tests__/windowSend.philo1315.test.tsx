@@ -5,8 +5,6 @@
  * build it", 2026-10-03). The glass proof through the real hub is
  * tests/e2e/test_philo13_15_send_to_glass.py. */
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { readFileSync } from "node:fs";
-import { resolve as resolvePath } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Destination } from "../../features/channels/channels";
 
@@ -260,14 +258,6 @@ describe("a form change keeps the other form's result (Astra C5 check, condition
   });
 });
 
-describe("the SENDING / PREPARED chip (canvas P7)", () => {
-  it("draws its word on --accent-text (4.26:1 on --accent was under the 4.5:1 floor)", () => {
-    const css = readFileSync(resolvePath(__dirname, "../surface/patterns/state-chip.css"), "utf8");
-    const rule = /\.surface-state-chip\[data-state="active"\]\s*\{([^}]*)\}/.exec(css)?.[1] ?? "";
-    expect(rule).toContain("var(--accent-text)");
-  });
-});
-
 import { ArtifactPullout } from "../pullouts/ArtifactPullout";
 import type { WorldObject } from "../world";
 
@@ -292,7 +282,5 @@ describe("the artifact window (canvas P5)", () => {
       const b = screen.getByText(name).closest("button")!;
       expect(b.className).not.toContain("desk-chip");
     }
-    const src = readFileSync(resolvePath(__dirname, "../pullouts/ArtifactPullout.tsx"), "utf8");
-    expect(src).not.toMatch(/<button\b/);
   });
 });

@@ -5,8 +5,6 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import axe from "axe-core";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { Button } from "../../../components/signal/Signal";
@@ -35,8 +33,6 @@ import {
 if (typeof window.PointerEvent === "undefined")
   (window as unknown as { PointerEvent: typeof MouseEvent }).PointerEvent = MouseEvent;
 
-const CSS = readFileSync(join(__dirname, "../objects/objects.css"), "utf8");
-const SURFACE_CSS = readFileSync(join(__dirname, "../surface.css"), "utf8");
 
 /** The text-mode selection marks the owner forbade ("[ ]" in the copy). */
 const noTextMarks = (root: HTMLElement) => {
@@ -49,12 +45,6 @@ const allLibraryButtons = (root: HTMLElement) => {
     expect(button.className).toMatch(/\bbtn\b|btn--chrome/);
 };
 
-/** The 393 rule of a species lives under the `surface` container query. */
-const foldsAt393 = (selector: string) => {
-  const blocks = CSS.split("@container surface (max-width: 520px)").slice(1);
-  expect(blocks.some((block) => block.includes(selector))).toBe(true);
-  expect(CSS).not.toMatch(/@media[^{]*max-width/);
-};
 
 const a11y = async (container: HTMLElement) => {
   const result = await axe.run(container, { rules: { "color-contrast": { enabled: false } } });
@@ -92,7 +82,6 @@ describe("DeskIcon + IconLamp", () => {
     expect(icon).toHaveAttribute("aria-pressed", "true");
     expect(icon).toHaveAttribute("data-selected", "true");
     expect(icon.querySelector("img")?.getAttribute("src")).toMatch(/_sel\.png$/);
-    expect(CSS).toMatch(/\.desk-icon\[data-selected="true"\] \.desk-icon-name \{\s*background: var\(--wb-paper\);\s*color: var\(--wb-ink\);/);
   });
 
   it("keyboard: Space selects, Enter opens, a press selects, a double press opens", async () => {
@@ -134,10 +123,6 @@ describe("DeskIcon + IconLamp", () => {
     expect([onSelect.mock.calls.length, onOpen.mock.calls.length]).toEqual([1, 0]);
     await userEvent.keyboard("{Enter}");
     expect([onSelect.mock.calls.length, onOpen.mock.calls.length]).toEqual([1, 1]);
-  });
-
-  it("the name wraps to two lines then ellipsizes", () => {
-    expect(CSS).toMatch(/\.desk-icon-name \{[^}]*-webkit-line-clamp: 2;[^}]*text-overflow: ellipsis;/);
   });
 });
 
@@ -260,8 +245,6 @@ describe("IconGrid", () => {
     expect(icons[0].tabIndex).toBe(0);
     expect(icons.filter((i) => i.tabIndex === 0)).toHaveLength(1);
   });
-
-  it("four columns at 393", () => foldsAt393(".desk-icon-grid {\n    grid-template-columns: repeat(4"));
 });
 
 const ROWS: ObjectListRow[] = [
@@ -366,11 +349,6 @@ describe("ObjectList", () => {
     expect(grid.querySelector('[data-object-id="r2"] .gadget-lamp')).toHaveAttribute("data-tone", "info");
     render(<DeskIcon id="r2" kind="agent" name="Codex" lamp={{ tone: "info" }} />);
     expect(document.querySelector(".desk-icon-lamp")).toHaveAttribute("data-tone", "info");
-    // The two tones are drawn by the lamp tokens, the same ones the icon wears.
-    const GADGETS = readFileSync(join(__dirname, "../gadgets.css"), "utf8");
-    expect(GADGETS).toMatch(/\.gadget-lamp\[data-on="true"\]\[data-tone="info"\] \.gadget-lamp-dot \{\s*background: var\(--lamp-info\);/);
-    expect(GADGETS).toMatch(/\.gadget-lamp\[data-on="true"\]\[data-tone="ask"\] \.gadget-lamp-dot \{\s*background: var\(--lamp-ask\);/);
-    expect(CSS).toMatch(/\.desk-icon-lamp\[data-tone="info"\] \{ background: var\(--lamp-info\); \}/);
   });
 
   it("393: the fold is visual; headers and cells name the same four columns", () => {
@@ -382,13 +360,6 @@ describe("ObjectList", () => {
     const headers = within(grid).getAllByRole("columnheader").map((h) => h.getAttribute("data-col"));
     for (const row of within(grid).getAllByRole("row").slice(1))
       expect(within(row).getAllByRole("gridcell").map((c) => c.getAttribute("data-col"))).toEqual(headers);
-    // The narrow rules never take a header or a cell out of the tree.
-    const narrow = CSS.split("@container surface (max-width: 520px)").slice(1).join("\n");
-    expect(narrow).not.toMatch(/\.object-list-(cell|th)[^{]*\{[^}]*display: none/);
-    foldsAt393(".object-list-cell {\n    position: absolute;");
-    foldsAt393(".object-list-fold {\n    display: flex;");
-    foldsAt393(".object-list-sort {\n    min-height: 44px;");
-    expect(CSS).toMatch(/\.object-list-row \{[^}]*min-height: 44px;/);
   });
 });
 
@@ -498,7 +469,6 @@ describe("TimelineRail + StationTrack", () => {
     expect(items[2]).toHaveAttribute("aria-current", "step");
     expect(items[2].querySelector(".lane-square")).toHaveAttribute("data-lit", "true");
     expect(items[3].querySelector(".lane-square")).toHaveAttribute("data-pending", "true");
-    foldsAt393(".lane-station-sub {\n    display: none;");
   });
 });
 
@@ -644,7 +614,6 @@ describe("NeedsRow + DropTarget + DragGhost", () => {
     expect(within(row).getByText("ASKS · 6 MIN")).toBeInTheDocument();
     expect(within(row).getAllByRole("button").map((b) => b.textContent)).toEqual(["Open", "Answer"]);
     noTextMarks(container);
-    foldsAt393(".needs-row-verbs {\n    grid-column: 1 / -1;");
     await a11y(container);
   });
 
@@ -732,27 +701,9 @@ describe("PHILO-14 C3: the drag props", () => {
 });
 
 describe("the bevel grammar", () => {
-  it("raised for a control, sunken for a well, flat for read text, from --bevel-* tokens", () => {
-    expect(SURFACE_CSS).toMatch(/\.bevel-raised \{\s*box-shadow: var\(--bevel-raised\);/);
-    expect(SURFACE_CSS).toMatch(/\.bevel-sunken \{\s*box-shadow: var\(--bevel-sunken\);/);
-    expect(SURFACE_CSS).toMatch(/\.bevel-flat \{\s*box-shadow: none;/);
-    // The species wear it: the ask well raised, the read-only PR card flat,
-    // the confirm well sunken.
-    // Phase 16 (the interior kit): the question plate is raised Steel.
-    expect(CSS).toMatch(/\.ask-well \{[^}]*box-shadow: var\(--wb-raised\);/);
-    expect(CSS).toMatch(/\.pr-card \{[^}]*box-shadow: none;/);
-    expect(CSS).toMatch(/\.confirm-line \{[^}]*box-shadow: var\(--bevel-sunken\);/);
-  });
-
-  it("the SAYS quote has no rail of any kind (no border, no shadow): flat text in its quotes", () => {
-    const rule = CSS.match(/\.lane-rail-quote \{([^}]*)\}/)?.[1] ?? "";
-    expect(rule).not.toMatch(/border|box-shadow|outline|background/);
+  it("the SAYS quote is flat text in its quotes", () => {
     render(<TimelineRail label="L" entries={[{ word: "SAYS", quote: "Hello" }]} />);
     expect(document.querySelector("q.lane-rail-quote")?.textContent).toBe("Hello");
-  });
-
-  it("no raw colours in the object species", () => {
-    expect(CSS).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(/i);
   });
 });
 

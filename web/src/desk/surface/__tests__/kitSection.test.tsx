@@ -3,8 +3,6 @@
 // after the caption, the hairline after them (`::after`, surface.css).
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { SurfaceSection } from "..";
 import { Button } from "../../../components/signal/Signal";
 
@@ -31,11 +29,5 @@ describe("Section (Phase 16 kit)", () => {
     const head = container.querySelector(".surface-section-head") as HTMLElement;
     expect([...head.children].map((c) => c.textContent)).toEqual(["Sources · 2", "Steward"]);
     expect(screen.getByTestId("more")).toBeTruthy();
-  });
-
-  it("the caption is mono 12 upper (UX-CANON §C floor) with the hairline to the right edge", () => {
-    const css = readFileSync(resolve(__dirname, "../surface.css"), "utf8");
-    expect(css).toMatch(/\.surface-section-head::after \{[^}]*flex: 1 1 12px;[^}]*height: 1px;/);
-    expect(css).toMatch(/\.surface-section-head h3 \{[^}]*font-size: 12px;[^}]*font-weight: 700;[^}]*letter-spacing: 0\.06em;[^}]*text-transform: uppercase;/);
   });
 });

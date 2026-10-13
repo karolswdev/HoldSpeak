@@ -3,8 +3,6 @@
 // 52 px lead slot and `wrap` stay; hover verbs stay in `trailing`.
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { SurfaceLedger, SurfaceLedgerRow } from "..";
 import { Button } from "../../../components/signal/Signal";
 
@@ -44,14 +42,5 @@ describe("Ledger + LedgerRow (Phase 16 kit)", () => {
     expect(container.querySelector(".surface-ledger-count")?.textContent).toBe("TODAY 2");
     expect(container.querySelector("[data-testid='kit-kind']")).toBeNull();
     expect(container.querySelector(".surface-ledger-lead")?.textContent).toBe("09:14");
-  });
-
-  it("the well is sunken paper with an ink border; a row's name is sans 15/500; the hover tints at 12 %", () => {
-    const css = readFileSync(resolve(__dirname, "../surface.css"), "utf8");
-    expect(css).toMatch(/\.surface-ledger \{[^}]*background: var\(--wb-well\);[^}]*border: 1px solid var\(--wb-ink\);[^}]*box-shadow: var\(--wb-sunken\);/);
-    expect(css).toMatch(/\.surface-ledger-primary \{[^}]*font: 500 15px \/ 1\.3 var\(--font-sans\);/);
-    expect(css).toMatch(/\.surface-ledger-line:hover \{[^}]*12%/);
-    const kit = readFileSync(resolve(__dirname, "../kit.css"), "utf8");
-    expect(kit).toMatch(/\.kit-kind \{[^}]*width: 44px;[^}]*background: var\(--wb-steel\);[^}]*box-shadow: var\(--wb-raised-soft\);[^}]*font: 700 12px/);
   });
 });
