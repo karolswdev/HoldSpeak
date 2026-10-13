@@ -293,6 +293,12 @@ def hub(monkeypatch, tmp_path):
         WebRuntimeCallbacks(on_bookmark=lambda *_: None, on_stop=lambda: None, get_state=lambda: {}),
     )
     server.start()
+    # These tests sweep the index themselves (`_built`). The hub's memory
+    # conductor starts a full sweep at boot; two sweeps at once fail with
+    # "database is locked" (seen in FAST, 2026-10-12). The test owns the sweep.
+    from holdspeak.memory_conductor import stop_memory_conductor
+
+    stop_memory_conductor()
     try:
         db = get_database()
         db.projects.create_project(project_id="atlas", name="Atlas")
