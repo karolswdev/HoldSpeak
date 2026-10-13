@@ -129,9 +129,9 @@ uv run python scripts/dictation_enrichment_demo.py
 Use `--spoken "..."` for your own dictation. Use `--project /path/to/repo` for
 your own repository. Use `--passes N` to set the rewrite passes.
 
-The same flow runs as an end-to-end test,
-[`tests/e2e/test_dictation_enrichment_e2e.py`](../tests/e2e/test_dictation_enrichment_e2e.py).
-It skips when no endpoint is set.
+The demo script
+[`scripts/dictation_enrichment_demo.py`](../scripts/dictation_enrichment_demo.py)
+runs the same flow against a real endpoint.
 
 ## See also
 

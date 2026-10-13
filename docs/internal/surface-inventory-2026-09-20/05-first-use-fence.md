@@ -1,6 +1,6 @@
 # 05 — The first-use fence
 
-[The smoke](../../../tests/e2e/test_hs202_first_use_smoke.py) runs one fixture
+[The smoke](../../../tests/e2e/test_first_use_smoke.py) runs one fixture
 walk at 1440×900 and 393×852 on a real hub in a temporary HOME.
 
 1. **Speak:** Chromium supplies the fixture WAV through a fake audio device.
