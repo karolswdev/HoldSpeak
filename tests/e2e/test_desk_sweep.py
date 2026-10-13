@@ -103,6 +103,15 @@ from .type_floor_rig import _FAINT_JS, _MEASURE, GATED_CONTRAST, HIT_PROBE_JS, O
 from .material_rig import LAMP_WORDS, MATERIAL_JS  # noqa: E402
 from .conductor_rig import _seed as _seed_agents  # noqa: E402
 from .meetings_rig import _save_meeting  # noqa: E402
+from .door_rig import (  # noqa: E402
+    _GH_AUTH_CONNECTED,
+    _GH_PR_SNAPSHOT,
+    _GH_REPO_LIST,
+    _GH_RUN_LIST,
+    _make_gh_runner,
+    _make_jira_runner,
+    _write_gh_fixture,
+)
 from tests.unit.test_route_preflight import PAGE_ROUTES  # noqa: E402  (the e2e preflight is parked; the sweep fences every route)
 
 pytestmark = [pytest.mark.e2e]
@@ -210,6 +219,14 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
         # PHILO-17 (concept C): the Today window, the day as a timeline. The
         # hub does not hold it (NOT_ON_HUB), so the dock opens it.
         ("today", "pullout:intelligence:desk", None),
+        # PHILO-17 (sweep cases): the System shade's Missed drawer (opened as
+        # the Dock's Missed icon opens it); the seed gives it a needs row, a
+        # remote Finished receipt (its egress chip) and a local one ...
+        ("missed", "desk-system-shade", None),
+        # ... and the New Project Door with BOTH sources picked (GitHub
+        # karolswdev/HoldSpeak and Jira KAN, their counts in): the hub's gh
+        # and acli are the door_rig fixture runners, signed in at the seed.
+        ("door-picked", "surface-project-setup", None),
     ]
     return cases, refused
 
@@ -372,7 +389,14 @@ def desk(tmp_path_factory: pytest.TempPathFactory, pw_browser: Any) -> Any:
         # The reused seed helpers speak to the hub with their own module token.
         mp.setattr(open13, "TOKEN", TOKEN)
         mp.setattr(hs158, "TOKEN", TOKEN)
-        server, base = _boot(tmp, mp, token=TOKEN)
+        # The Door's sources: gh and acli are fixture runners, signed in.
+        gh_fixture = tmp / "gh_fixture.json"
+        _write_gh_fixture(gh_fixture, auth=_GH_AUTH_CONNECTED,
+                          repo_list={"stdout": _GH_REPO_LIST, "returncode": 0},
+                          pr_list={"stdout": _GH_PR_SNAPSHOT, "returncode": 0},
+                          run_list={"stdout": _GH_RUN_LIST, "returncode": 0})
+        server, base = _boot(tmp, mp, token=TOKEN, gh_runner=_make_gh_runner(gh_fixture),
+                             acli_runner=_make_jira_runner())
         try:
             home = tmp / "home"
             week = open13._seed(home, base)  # canvas week, 1:1 Priya, calendar, brief
@@ -391,10 +415,47 @@ def desk(tmp_path_factory: pytest.TempPathFactory, pw_browser: Any) -> Any:
             folder.mkdir(parents=True, exist_ok=True)
             _api(page, "POST", "/api/channels/destinations",
                  {"name": "Team updates", "channel": "file", "folder": str(folder)}, token=TOKEN)
+            # The Door's two sources, signed in (the Connections list is a
+            # cached read: a check stores the state).
+            _api(page, "POST", "/api/connections/github/recheck", token=TOKEN)
+            _api(page, "POST", "/api/providers/jira/connections",
+                 {"site": "alpha.atlassian.net", "email": "user@example.com"}, token=TOKEN)
+            jira_ref = urllib.parse.quote("alpha.atlassian.net|user@example.com", safe="")
+            _api(page, "POST", f"/api/providers/jira/connections/{jira_ref}/recheck", token=TOKEN)
             ctx.close()
+            _seed_finished_receipts()
             yield {"base": base, "room": room, "meeting": "m-standup", "person": week["priya"]}
         finally:
             server.stop()
+
+
+def _seed_finished_receipts() -> None:
+    """The Missed shade's Finished rows: a sweep a LAN agent ran (origin
+    remote: its REMOTE egress chip) and a local Steward run, seeded as
+    tests/integration/test_face_wire_fences.py::test_shade_finished_remote_receipt
+    seeds them."""
+    import time
+    import uuid
+
+    from holdspeak.db import get_database
+
+    with get_database()._connection() as conn:
+        for n, (service, method, origin, caller, summary) in enumerate((
+            ("HeartbeatService", "run_sweep", "remote", "studio.local", '{"watches":4,"rooms":2,"held":false}'),
+            ("StewardService", "project_run_steward", "local", "", "{}"),
+        )):
+            conn.execute(
+                """INSERT INTO pipeline_events
+                   (event_id, timestamp, service, method,
+                    principal_kind, principal_identity, args_summary,
+                    result_summary, error, error_code, duration_ms,
+                    correlation_id, is_async, origin, caller, caller_identity)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (f"ev-sweep-{n}", time.time() - n, service, method, "agent", "sweep-runner", "{}",
+                 summary, None, None, 42.0, str(uuid.uuid4()), 0, origin, caller,
+                 "sweep-runner" if origin == "remote" else ""),
+            )
+        conn.commit()
 
 
 # ── the page measures ──────────────────────────────────────────────────────
@@ -981,7 +1042,8 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
     clear_hub_windows_http(base, TOKEN)
     palette = case_id == "palette"
     today = case_id == "today"
-    if wid and not palette and not today:
+    missed = case_id == "missed"
+    if wid and not palette and not today and not missed:
         # Opened on the hub before the page loads: the page seeds its windows
         # from the hub's rows (a view that is live follows the same rows by
         # its desk_changed frame; that follow is fenced in the PHILO-16 glass).
@@ -999,6 +1061,25 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             launch = page.locator(".desk-dock-launch[aria-label^='Today']").first
             launch.click()
             page.locator(f'[id="{wid}"] [data-testid=today-day]').wait_for(timeout=T)
+            page.mouse.move(2, 2)
+        if missed:
+            # What the Dock's Missed icon does (AttentionDrawer: the launcher's
+            # activate and this event open the same shade); the icon sits on
+            # the Dock's second page at 393.
+            page.wait_for_function(SETTLED_JS, arg=None, timeout=T)
+            page.evaluate("window.dispatchEvent(new Event('hs-open-system-shade'))")
+            page.locator(f'[id="{wid}"] .desk-shade-group[aria-label=Finished]').wait_for(timeout=T)
+            page.mouse.move(2, 2)
+        if case_id == "door-picked":
+            page.wait_for_function(SETTLED_JS, arg=wid, timeout=T)
+            for provider, pick in (("github", "karolswdev/HoldSpeak"), ("jira", "KAN")):
+                page.get_by_test_id(f"door-trigger-{provider}").click()
+                page.get_by_test_id(f"door-pick-{pick}").click()
+                # Picked and checked: the row names the pick, and its check is done.
+                page.wait_for_function("""([p, pick]) => { const r = document.querySelector(`[data-testid=door-row-${p}]`);
+                  return r && r.textContent.includes(pick) && !/CHECKING/.test(r.textContent); }""",
+                                       arg=[provider, pick.split("/")[-1]], timeout=T)
+            page.get_by_test_id("door-counts-github").wait_for(timeout=T)
             page.mouse.move(2, 2)
         if palette:
             page.wait_for_function(SETTLED_JS, arg=None, timeout=T)
