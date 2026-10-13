@@ -59,12 +59,18 @@ def main() -> int:
     modules = {m for m in (module_of(p) for p in changed) if m}
     scripts = {Path(p).stem for p in changed if p.startswith("scripts/") and p.endswith(".py") and "/" not in p[len("scripts/"):]}
     if modules or scripts:
+        # Every import that can match has the module's last name (or the
+        # script's name) in its text, so a file without one of these words is
+        # never parsed (the scan parsed every test file: about 4 s a run).
+        words = {m.rpartition(".")[2] for m in modules} | scripts
         for top in SEARCH:
             for test in sorted((ROOT / top).rglob("test_*.py")):
                 rel = test.relative_to(ROOT).as_posix()
                 if "/_parked/" in rel:
                     continue
                 source = test.read_text(encoding="utf-8", errors="replace")
+                if not any(word in source for word in words):
+                    continue
                 mods, tops = imports_of(source)
                 if modules & mods:
                     out.add(rel)
