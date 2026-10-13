@@ -994,12 +994,69 @@ def files17(name: str) -> dict[str, Any]:
         mp.undo()
 
 
+# ── HS-169-02: the Streamlined Door, GitHub and Jira picked, Create ──
+
+
+# The face's own bodies (useDoorController.ts: GITHUB_DEFAULTS OPEN PRS + CI on,
+# JIRA_DEFAULTS OVERDUE + DUE 7 DAYS on, adjust {base: "main"}); the face test
+# asserts the face sends exactly these.
+JIRA_REF = "alpha.atlassian.net|user@example.com"
+DOOR169_GH = {"provider": "github", "scope": "karolswdev/HoldSpeak", "watches": ["open_prs", "ci"],
+              "adjust": {"base": "main"}}
+DOOR169_JIRA = {"provider": "jira", "scope": {"connection_ref": JIRA_REF, "projects": ["KAN"]},
+                "watches": ["overdue", "due_7_days"], "adjust": {"base": "main"}}
+DOOR169_OUTCOME = "Ship Q4 Payments Platform on time"
+
+
+def _door169_runners() -> dict[str, Any]:
+    """The browser test's gh and acli runners (tests/e2e/door_rig.py), connected."""
+    sys.path.insert(0, str(REPO / "tests" / "e2e"))
+    from tests.e2e import door_rig as door
+
+    fixture = Path(tempfile.mkdtemp(prefix="room-wires-door169-gh-")) / "gh_fixture.json"
+    door._write_gh_fixture(
+        fixture, auth=door._GH_AUTH_CONNECTED,
+        repo_list={"stdout": door._GH_REPO_LIST, "returncode": 0},
+        pr_list={"stdout": door._GH_PR_SNAPSHOT, "returncode": 0},
+        run_list={"stdout": door._GH_RUN_LIST, "returncode": 0},
+    )
+    return {"gh_runner": door._make_gh_runner(fixture), "acli_runner": door._make_jira_runner()}
+
+
+def door169(hub: Any, _mp: pytest.MonkeyPatch) -> dict[str, Any]:
+    """The browser test's seed (test_hs169_door_glass.py::test_door_connected):
+    GitHub rechecked, the Jira connection saved and rechecked; then the reads the
+    Door makes, the two counts, the Create, the repository register, and the
+    Room's reads for the new project."""
+    from urllib.parse import quote, urlencode
+
+    hub.ok("POST", "/api/connections/github/recheck", {})
+    hub.ok("POST", "/api/providers/jira/connections", {"site": "alpha.atlassian.net", "email": "user@example.com"})
+    recheck = hub.ok("POST", f"/api/providers/jira/connections/{quote(JIRA_REF, safe='')}/recheck", {})
+    assert recheck.get("state") == "connected", recheck
+    jira_discover = "/api/providers/jira/discover?" + urlencode({"connection_ref": JIRA_REF, "kind": "projects"})
+    gets = {
+        "/api/connections": _answer(hub.client.get("/api/connections")),
+        "/api/providers/github/discover": _answer(hub.client.get("/api/providers/github/discover")),
+        jira_discover: _answer(hub.client.get(jira_discover)),
+    }
+    counts = {
+        "github": _call(hub, "POST", "/api/projects/door/count", DOOR169_GH),
+        "jira": _call(hub, "POST", "/api/projects/door/count", DOOR169_JIRA),
+    }
+    create = _call(hub, "POST", "/api/projects/door", {"outcome": DOOR169_OUTCOME, "sources": [DOOR169_GH, DOOR169_JIRA]})
+    pid = create["answer"]["projectId"]
+    register = _call(hub, "POST", f"/api/projects/{pid}/repository", {"repository": DOOR169_GH["scope"]})
+    room = _gets(hub, pid, ROOM_GETS)
+    return {"pid": pid, "gets": gets, "counts": counts, "create": create, "register": register, "room": room}
+
+
 def main() -> int:
     ROOM_DIR.mkdir(parents=True, exist_ok=True)
     STEWARD_DIR.mkdir(parents=True, exist_ok=True)
     DOOR_DIR.mkdir(parents=True, exist_ok=True)
     wanted = set(sys.argv[1:])
-    jobs: list[tuple[Path, str, Callable[..., dict[str, Any]], dict[str, Any]]] = [
+    jobs: list[tuple[Path, str, Callable[..., dict[str, Any]], Any]] = [
         (ROOM_DIR, "update173", update173, {}),
         (ROOM_DIR, "claims200", claims200, {}),
         (ROOM_DIR, "nudge10", nudge10, {}),
@@ -1008,6 +1065,7 @@ def main() -> int:
         (DOOR_DIR, "door174", door174, {"acli_runner": _fake_acli_runner}),
         (ROOM_DIR, "sources17", sources17, {"gh_runner": rig._gh_signed_in}),
         (ROOM_DIR, "receipts174", receipts174, {}),
+        (DOOR_DIR, "door169", door169, _door169_runners),
     ]
     for name, folder, job in (("hs164_gate", STEWARD_DIR, hs164), ("hs164_circuit", STEWARD_DIR, hs164),
                               ("files17", ROOM_DIR, files17)):
@@ -1020,6 +1078,8 @@ def main() -> int:
     for folder, name, job, kwargs in jobs:
         if wanted and name not in wanted:
             continue
+        if callable(kwargs):  # runners made per run (door169's gh fixture file)
+            kwargs = kwargs()
         data = {"schema": "room-recorded@1", "recordedBy": "scripts/record_room_wires.py", **_run(name, job, **kwargs)}
         out = folder / f"{name}.json"
         out.write_text(json.dumps(data, indent=1, sort_keys=True, default=str) + "\n", encoding="utf-8")

@@ -21,6 +21,7 @@ import { ApiError } from "../../../../lib/api";
 // hub through TestClient on each browser test's own seed; nothing typed).
 import D174 from "./room-door-wires/door174.json";
 import S17 from "../../__tests__/room-wires/sources17.json";
+import D169 from "./room-door-wires/door169.json";
 
 const apiFetch = vi.fn();
 vi.mock("../../../../lib/api", async () => {
@@ -187,4 +188,74 @@ describe("PHILO-17 U30: Go ▸ Projects ▸ <name> opens the project's Room", ()
     expect(Object.keys(useDesk.getState().windowsById).filter((id) => id.includes("drawer"))).toEqual([]);
     expect(document.querySelector(".drawer-window")).toBeNull();
   });
+});
+
+describe("HS-169-02: the Streamlined Door with GitHub and Jira", () => {
+  // replaces: tests/e2e/test_hs169_door_glass.py::test_door_connected (the Jira pick, its counts, the receipt and the
+  //   Create with both sources; the GitHub picker and counts are room.app.test.tsx and DoorCore.test.tsx; the 393
+  //   unpicked Door is the sweep's surface-project-setup case)
+  type Call = { method: string; path: string; request: Record<string, unknown>; status: number; answer: unknown };
+
+  function replay169() {
+    misses.length = 0;
+    const room = D169.room as Record<string, unknown>;
+    const counts = D169.counts as Record<string, Call>;
+    apiFetch.mockImplementation((url: string, init: { method?: string; json?: Record<string, unknown> } = {}) => {
+      const method = init.method ?? "GET";
+      const clone = (v: unknown) => Promise.resolve(JSON.parse(JSON.stringify(v)));
+      if (method === "GET" && url in D169.gets) return clone((D169.gets as Record<string, unknown>)[url]);
+      if (method === "POST" && url === "/api/projects/door/count") {
+        const call = counts[String(init.json?.provider)];
+        if (call) return clone(call.answer);
+      }
+      if (method === "POST" && url === "/api/projects/door") return clone(D169.create.answer);
+      if (method === "POST" && url === D169.register.path) return clone(D169.register.answer);
+      const key = method === "GET" ? url : `${method} ${url}`;
+      if (key in room) return clone(room[key]);
+      misses.push(`${method} ${url}`);
+      return Promise.reject(new ApiError(404, `not recorded: ${method} ${url}`, {}));
+    });
+  }
+
+  const countPosts = () => apiFetch.mock.calls
+    .filter(([url, init]) => String(url) === "/api/projects/door/count" && (init as { method?: string })?.method === "POST")
+    .map(([, init]) => (init as { json: unknown }).json);
+
+  it("Jira: pick KAN, its counts arrive, the receipt names sources and watches; Create sends both sources, closes the Door, opens the Room", async () => {
+    replay169();
+    await openTheDoor();
+    fireEvent.change(screen.getByTestId("door-outcome-input"), { target: { value: D169.create.request.outcome } });
+
+    fireEvent.click(await screen.findByTestId("door-trigger-github"));
+    fireEvent.click(await screen.findByTestId("door-pick-karolswdev/HoldSpeak", undefined, { timeout: 5000 }));
+    await screen.findByTestId("door-counts-github", undefined, { timeout: 5000 });
+
+    fireEvent.click(screen.getByTestId("door-trigger-jira"));
+    await screen.findByTestId("door-picker-jira", undefined, { timeout: 5000 });
+    fireEvent.click(await screen.findByTestId("door-pick-KAN", undefined, { timeout: 5000 }));
+    // The Jira count lands: the row leaves CHECKING and names the hub's host. The
+    // recorded answer is live with an empty plain line (0 overdue, 0 due this
+    // week), so the row draws no count line, as the hub says.
+    const jiraRow = screen.getByTestId("door-row-jira");
+    await waitFor(() => expect(jiraRow.textContent).toContain(D169.counts.jira.answer.host), { timeout: 5000 });
+    expect(D169.counts.jira.answer.state).toBe("live");
+    expect(jiraRow.textContent).not.toContain("CHECKING");
+    expect(jiraRow.textContent).not.toContain("CAN'T CHECK");
+    expect(screen.getByTestId("door-trigger-jira").textContent).toContain("KAN");
+    if (D169.counts.jira.answer.plain) expect(within(jiraRow).getByTestId("door-counts-jira").textContent).toBe(D169.counts.jira.answer.plain);
+    else expect(within(jiraRow).queryByTestId("door-counts-jira")).toBeNull();
+
+    // The face sent the recorded count bodies, Jira scoped to the connected account and KAN.
+    expect(countPosts()).toEqual([D169.counts.github.request, D169.counts.jira.request]);
+    const receipt = screen.getByTestId("door-receipt").textContent?.toUpperCase() ?? "";
+    expect(receipt).toContain("SOURCE");
+    expect(receipt).toContain("WATCH");
+
+    await act(async () => { fireEvent.click(screen.getByTestId("door-create")); });
+    await waitFor(() => expect(screen.queryByTestId("door-root")).toBeNull(), { timeout: 5000 });
+    expect(doorPosts()).toHaveLength(1);
+    expect(doorPosts()[0][1].json).toEqual(D169.create.request);
+    expect(useDesk.getState().windowsById[DOOR_WINDOW]).toBeUndefined();
+    expect(useDesk.getState().windowsById["surface-project-memory"]?.scope).toBe(`project:${D169.pid}`);
+  }, 20000);
 });

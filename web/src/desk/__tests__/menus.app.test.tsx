@@ -109,3 +109,27 @@ describe.each([[1440, false], [393, true]] as const)("the HoldSpeak menu at %i",
     banned("HoldSpeak menu open");
   });
 });
+
+// ── HS-201-01: an off-loopback hub with no token is its own chrome token ──
+// The hub's own status for that bind (tests/integration/test_desk_trust.py
+// `test_the_open_to_network_wire`), set in the desk store the chrome reads.
+import { useDesk } from "../store";
+import statusOpen from "./fixtures/trust-wire/status-open.json";
+
+describe.each([[1440, false], [393, true]] as const)("the chrome over an open hub at %i", (_width, isPhone) => {
+  it("draws OPEN TO NETWORK beside the egress chip, which still reads This device", async () => {
+    // replaces: tests/e2e/test_hs201_one_thing_glass.py::TestOneThing::test_open_to_network_is_its_own_token (the chrome half; the Trust line is components/__tests__/trustInbound.test.tsx)
+    phone(isPhone);
+    expect(statusOpen.trust.web_bind).toBe("192.168.1.43");
+    expect(statusOpen.trust.auth_token_set).toBe(false);
+    useDesk.setState({ setup: structuredClone(statusOpen) } as never);
+    render(<MemoryRouter><DeskChrome /></MemoryRouter>);
+    await act(async () => { await Promise.resolve(); });
+    const token = screen.getByTestId("chrome-inbound");
+    expect(token.getAttribute("aria-label")).toBe("OPEN TO NETWORK");
+    expect(token.textContent?.toUpperCase()).toContain("OPEN TO NETWORK");
+    const chip = document.querySelector(".egress-badge") as HTMLElement;
+    expect(chip.textContent?.toUpperCase()).toContain("THIS DEVICE");
+    useDesk.setState({ setup: null } as never);
+  });
+});

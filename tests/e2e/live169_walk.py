@@ -192,7 +192,7 @@ def _boot_isolated(
     from tests.e2e.glass_infra import _ensure_build
     _ensure_build()
 
-    from tests.e2e.test_hs169_door_glass import (
+    from tests.e2e.door_rig import (
         _make_gh_runner,
         _write_gh_fixture,
         _make_jira_runner,

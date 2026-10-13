@@ -93,6 +93,18 @@ def test_a_synced_folder_is_an_external_destination(hub: Hub, home: Path) -> Non
     assert trust["summary"] == "1 external destination enabled."
 
 
+def test_a_virgin_desk_has_no_destination_and_keeps_data_here(hub: Hub) -> None:
+    """replaces: tests/e2e/test_hs201_one_thing_glass.py::TestOneThing::test_chip_and_trust_agree
+    (the hub half: zero destinations enabled while the actuator permission is on;
+    the one saved row is the built-in HoldSpeak folder, on this device)."""
+    trust = _trust(hub)
+    assert not [d for d in trust["destinations"] if d["enabled"]], trust["destinations"]
+    saved = [d for d in trust["destinations"] if d.get("saved")]
+    assert [(d["name"], d["boundary"]) for d in saved] == [("HoldSpeak folder", "This device")], saved
+    assert trust["actuators_enabled"] is True, trust
+    assert trust["transcript_egress"] == "none"
+
+
 # ── the wire fixtures the Trust vitest reads ─────────────────────────
 
 
@@ -131,10 +143,38 @@ def _invented(fixture: Any, live: Any, path: str = "$") -> list[str]:
 
 def test_the_trust_wire_fixtures_carry_no_invented_field(hub: Hub, home: Path, tmp_path: Path) -> None:
     """The vitest doubles are the live hub's own answers (scar law)."""
+    wire = {"status-virgin.json": {"trust": _trust(hub)}}
     _save(hub, "Team updates", home / "Documents" / "HoldSpeak" / "Team updates")
-    wire = {"status-local.json": {"trust": _trust(hub)}}
+    wire["status-local.json"] = {"trust": _trust(hub)}
     _save(hub, "Synced updates", home / "Dropbox" / "Team updates", synced=True)
     wire["status-synced.json"] = {"trust": _trust(hub)}
+    _check_wire(wire, tmp_path)
+
+
+def test_the_open_to_network_wire(hub: Hub, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """menus.app.test.tsx (the chrome's OPEN TO NETWORK token): the status the
+    hub states for an off-loopback bind with no token.
+
+    replaces: tests/e2e/test_hs201_one_thing_glass.py::TestOneThing::test_open_to_network_is_its_own_token
+    (the hub half). The route reads ``_trust_block`` with its loopback default
+    (setup_status.py ``get_setup_status``), so the bind is stated the way the
+    browser test stated it: the real block with ``web_bind`` off the loopback."""
+    import holdspeak.setup_status as setup_status
+
+    real_trust_block = setup_status._trust_block
+
+    def open_hub(config: Any, *, web_bind: str = "127.0.0.1", database: Any = None) -> dict[str, Any]:
+        return real_trust_block(config, web_bind="192.168.1.43", database=database)
+
+    monkeypatch.setattr(setup_status, "_trust_block", open_hub)
+    trust = _trust(hub)
+    assert trust["web_bind"] == "192.168.1.43", trust
+    assert trust["auth_token_set"] is False, trust
+    assert not [d for d in trust["destinations"] if d["enabled"]], trust["destinations"]
+    _check_wire({"status-open.json": {"trust": trust}}, tmp_path)
+
+
+def _check_wire(wire: dict[str, Any], tmp_path: Path) -> None:
     if os.environ.get("HOLDSPEAK_WRITE_WIRE_FIXTURES") == "1":
         FIXTURES.mkdir(parents=True, exist_ok=True)
         for name, body in wire.items():

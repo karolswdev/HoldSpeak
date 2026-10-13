@@ -356,3 +356,21 @@ def test_shade_finished_remote_receipt(hub: Any, tmp_path: Path) -> None:
     remote = [row for row in answer["projections"] if row.get("origin") == "remote"]
     assert remote and remote[0]["caller"] == "192.168.1.43", answer["projections"]
     _fence("desk-projections.remote-receipt", answer, tmp_path, hub)
+
+
+def test_schedule_create_reads(hub: Any, tmp_path: Path) -> None:
+    """chair.app.test.tsx (the capture bar's Schedule window): the create
+    answer and the list after it.
+
+    replaces: tests/e2e/test_hs144_door_glass.py::test_upcoming_rail_schedule_create_round_trip_and_form_cancel
+    (the hub half: Cancel saved nothing; Create saved one row with its title)."""
+    assert _ok(hub.client.get("/api/scheduled-recordings"))["schedules"] == []
+    created = _ok(hub.client.post("/api/scheduled-recordings", json={
+        "title": "Rail form recording", "cron_expr": "0 9 1 1 *", "tz": "UTC",
+        "one_shot": True, "duration_minutes": 60, "enabled": True,
+    }))
+    assert created["schedule"]["title"] == "Rail form recording"
+    _fence("scheduled-recordings.create", created, tmp_path, hub)
+    listed = _ok(hub.client.get("/api/scheduled-recordings"))
+    assert [row["title"] for row in listed["schedules"]] == ["Rail form recording"]
+    _fence("scheduled-recordings.list", listed, tmp_path, hub)

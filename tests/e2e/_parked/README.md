@@ -373,3 +373,27 @@ beside it.
   (the Chair's meeting wells and the 44 px picker at 393). The brief,
   decision and record wells: `SendWell.test.tsx`, `room172proposals.test.tsx`;
   the brief to Slack: `tests/unit/test_brief_send_carries_no_people.py`.
+
+
+
+The Door board, the Streamlined Door and the one thing (push 2, e2e-low-1 C).
+Their shared helpers moved to `tests/e2e/door_rig.py` (the gh and acli fixture
+runners, `_open_door`) and `tests/e2e/concierge_rig.py` (`_quiet_concierge`).
+
+- `test_hs144_door_glass.py`: `tests/unit/test_desk_needs_you.py` (the overdue
+  row ranks first; an active thought is no member), `needsYou.app.test.tsx`
+  (a Door 500 still reads Nothing needs you), `chair.app.test.tsx` and
+  `tests/integration/test_face_wire_fences.py` (Schedule: Cancel posts nothing,
+  Create posts the title), `test_desk_settings.py`, `menus.app.test.tsx`,
+  `surface-windows.test.tsx` and the sweep's `/meetings` route.
+- `test_hs169_door_glass.py`: `door/__tests__/newProject.app.test.tsx` on the
+  recorded `door169` wire (`scripts/record_room_wires.py`), `DoorCore.test.tsx`,
+  `room.app.test.tsx`, `tests/integration/test_provider_routes.py`, and the
+  sweep's `surface-project-setup` case (the unpicked Door at 393).
+- `test_hs201_one_thing_glass.py`: `needsChair.app.test.tsx` (the SETUP verb
+  opens Runs on at its key), `tests/unit/test_philo15_01_summaries_blocker.py`,
+  `tests/unit/test_desk_needs_you.py` (an unreadable roster),
+  `trust.app.test.tsx` and `tests/integration/test_desk_trust.py` (virgin Trust;
+  the open-hub status), `menus.app.test.tsx` (OPEN TO NETWORK),
+  `tests/integration/test_web_built_mount.py` and `sfx.test.ts` (the six
+  sounds), `arrivalOneThing.test.tsx`, `historyHeadline.test.ts`.

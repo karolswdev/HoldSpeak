@@ -1,0 +1,34 @@
+{
+  "_": "The hub's own answer, captured by tests/integration/test_face_wire_fences.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
+  "captured_at": "2026-10-13T02:14:35.059682Z",
+  "wire": {
+    "schedules": [
+      {
+        "armed_at": null,
+        "born_from": "",
+        "calendar_event_id": "",
+        "calendar_source_id": "",
+        "calendar_starts_at": "",
+        "calendar_uid": "",
+        "created_at": "2026-10-13T02:14:35Z",
+        "cron_expr": "0 9 1 1 *",
+        "deadline_at": null,
+        "delegation_receipt_id": "sr_rcpt_f036bf399091",
+        "duration_minutes": 60,
+        "enabled": true,
+        "id": "sr_f2c203802d64",
+        "last_fired_at": null,
+        "last_outcome": "",
+        "last_receipt_id": "",
+        "next_fire_at": "2027-01-01T09:00:00Z",
+        "one_shot": true,
+        "owner_cancelled_at": null,
+        "revision": 1,
+        "state": "idle",
+        "title": "Rail form recording",
+        "tz": "UTC"
+      }
+    ],
+    "success": true
+  }
+}

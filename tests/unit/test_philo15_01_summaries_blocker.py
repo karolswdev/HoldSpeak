@@ -238,3 +238,13 @@ def test_concierge_off_press_holds_over_a_default(db: Database) -> None:
     assert summary_assignment_projection(
         assignment_service=service, principal=OWNER, db=db)["status"] == "off"
     assert _summary_row(service.assignment_summary(OWNER))["queue"]["status"] == "off"
+
+
+def test_summary_assigned_without_speech_names_speech_alone(db: Database) -> None:
+    """replaces: tests/e2e/test_hs201_one_thing_glass.py::TestOneThing::test_chair_names_the_blocker
+    (the hub half: with exactly the summary half assigned, the one row names speech)."""
+    service = InferenceAssignmentService(db)
+    _set(service, "set-exact", {"kind": "capability", "capability_id": SUMMARY})
+    roster = service.assignment_summary(OWNER)
+    assert _summary_row(roster)["effective"]["status"] == "assigned"
+    assert _keys(roster) == ["speech"]

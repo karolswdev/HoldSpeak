@@ -10,6 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TrustWindow, useTrustWindow } from "../components/TrustWindow";
 import statusLocal from "./fixtures/trust-wire/status-local.json";
 import statusSynced from "./fixtures/trust-wire/status-synced.json";
+import statusVirgin from "./fixtures/trust-wire/status-virgin.json";
 
 function answer(body: unknown) {
   vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
@@ -64,5 +65,21 @@ describe("Trust counts a saved destination and says where data goes", () => {
     expect(settingValue(window, "Current scope")).toContain("this device + external");
     const lamp = within(section("Synced updates")).getByText("SENDS OUT");
     expect(lamp.closest(".gadget-lamp")).toHaveAttribute("data-on", "true");
+  });
+});
+
+describe("Trust on a virgin desk", () => {
+  it("zero enabled destinations: all data stays on this device; the one in use is the built-in HoldSpeak folder", async () => {
+    // replaces: tests/e2e/test_hs201_one_thing_glass.py::TestOneThing::test_chip_and_trust_agree (the Trust half; the chip half is setup.test.ts and trustWindow.app.test.tsx)
+    answer(statusVirgin);
+    const { container } = render(<TrustWindow />);
+    await waitFor(() => expect(container.querySelector(".desk-trust-window")?.textContent).toContain("All data stays on this device"));
+    const window = container.querySelector(".desk-trust-window") as HTMLElement;
+    // The virgin hub saves its built-in folder, so the count is 1, never None
+    // (the browser test's "None" matched the folder's "None recorded" receipt).
+    expect(settingValue(window, "Enabled destinations")).toBe("1");
+    expect(settingValue(window, "Current scope")).toBe("this device");
+    expect(within(section("HoldSpeak folder")).getByText("THIS DEVICE")).toBeTruthy();
+    expect(window.textContent).not.toContain("External destinations configured");
   });
 });
