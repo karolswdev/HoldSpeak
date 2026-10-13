@@ -127,8 +127,8 @@ def test_gate1_a_document_with_the_clis_error_phrase_keeps_the_named_code(hub: H
 
 
 @pytest.mark.timeout(240)
-@pytest.mark.parametrize("transport", ["http", "mcp"])
-def test_gate2_the_hub_answers_a_read_during_a_slow_send(tmp_path: Path, transport: str) -> None:
+def test_gate2_the_hub_answers_a_read_during_a_slow_send(tmp_path: Path) -> None:
+    """One hub process serves both transports, one send each (fast diet 2026-10-12: one boot, not two)."""
     from test_philo10_send_restart import HubProcess
 
     home, folder = tmp_path / "home", tmp_path / "out"
@@ -149,25 +149,26 @@ def test_gate2_the_hub_answers_a_read_during_a_slow_send(tmp_path: Path, transpo
         baseline = time.perf_counter()
         assert hub.call("GET", "/api/channels/destinations")[0] == 200
         baseline = time.perf_counter() - baseline
-        status, prepared = hub.call("POST", "/api/channels/sends", {"document_ref": f"project_update:{update}", "destination_id": dest})
-        body = {"send_id": prepared["send"]["id"]}
+        for transport in ("http", "mcp"):
+            status, prepared = hub.call("POST", "/api/channels/sends", {"document_ref": f"project_update:{update}", "destination_id": dest})
+            body = {"send_id": prepared["send"]["id"]}
 
-        def press() -> Any:
-            if transport == "http":
-                return hub.call("POST", "/api/channels/send", body)
-            return hub.call("POST", "/api/mcp", {"jsonrpc": "2.0", "id": 1, "method": "tools/call",
-                                                 "params": {"name": "channel.send", "arguments": body}})
+            def press(transport: str = transport, body: dict = body) -> Any:
+                if transport == "http":
+                    return hub.call("POST", "/api/channels/send", body)
+                return hub.call("POST", "/api/mcp", {"jsonrpc": "2.0", "id": 1, "method": "tools/call",
+                                                     "params": {"name": "channel.send", "arguments": body}})
 
-        thread, answer = in_thread(press)
-        _started(home)
-        started = time.perf_counter()
-        status, _listed = hub.call("GET", "/api/channels/destinations")
-        read = time.perf_counter() - started
-        thread.join(30)
-        assert status == 200
-        assert answer and answer[0][0] == 200, answer
-        # The dispatch sleeps 1.5 s; the concurrent read must not wait for it.
-        assert read < 0.5, f"the read waited {read:.3f} s during the send (baseline {baseline:.3f} s)"
+            thread, answer = in_thread(press)
+            _started(home)
+            started = time.perf_counter()
+            status, _listed = hub.call("GET", "/api/channels/destinations")
+            read = time.perf_counter() - started
+            thread.join(30)
+            assert status == 200
+            assert answer and answer[0][0] == 200, (transport, answer)
+            # The dispatch sleeps 1.5 s; the concurrent read must not wait for it.
+            assert read < 0.5, f"{transport}: the read waited {read:.3f} s during the send (baseline {baseline:.3f} s)"
     finally:
         hub.kill()
 
@@ -744,8 +745,9 @@ def test_a_real_kill_during_a_gh_create_ends_unknown_once_and_the_replay_never_r
 # ── GATE 2, round two: every call that can run a CLI answers off the loop ──
 
 _SLOW_GH = """#!/bin/sh
-# A slow fake gh (1.5 s at the process edge, no account).
-sleep 1.5
+# A slow fake gh (1 s at the process edge, no account); it notes its start first.
+echo started >> "$SLOW_GH_LOG"
+sleep 1
 if [ "$1" = "api" ] && [ "$2" = "user" ]; then echo '{"login":"octo-owner"}'; exit 0; fi
 if [ "$1" = "auth" ] && [ "$2" = "status" ]; then echo "Logged in to github.com account octo-owner"; exit 0; fi
 exit 1
@@ -753,9 +755,10 @@ exit 1
 
 
 @pytest.mark.timeout(240)
-@pytest.mark.parametrize("call", ["mcp-save-destination", "http-save-destination", "mcp-recheck", "http-recheck"])
-def test_gate2_a_slow_cli_read_in_setup_or_recheck_never_blocks_the_hub(tmp_path: Path, call: str) -> None:
-    """Codex Astra r1 finding 2: MCP channel.save_destination's identity read blocked a read 1.73 s."""
+def test_gate2_a_slow_cli_read_in_setup_or_recheck_never_blocks_the_hub(tmp_path: Path) -> None:
+    """Codex Astra r1 finding 2: MCP channel.save_destination's identity read blocked a read 1.73 s.
+    One hub process serves the four calls in turn (fast diet 2026-10-12: one boot, not four); each
+    read starts once the fake gh has noted its start, so it lands inside the 1 s gh call."""
     from test_philo10_send_restart import HubProcess
 
     home, bin_dir = tmp_path / "home", tmp_path / "bin"
@@ -764,32 +767,35 @@ def test_gate2_a_slow_cli_read_in_setup_or_recheck_never_blocks_the_hub(tmp_path
     fake = bin_dir / "gh"
     fake.write_text(_SLOW_GH)
     fake.chmod(0o755)
-    hub = HubProcess(home, extra_env={"PATH": f"{bin_dir}:{os.environ.get('PATH', '')}"})
+    gh_log = tmp_path / "gh.log"
+    hub = HubProcess(home, extra_env={"PATH": f"{bin_dir}:{os.environ.get('PATH', '')}", "SLOW_GH_LOG": str(gh_log)})
     try:
-        destination = {"name": "Scratch issue", "channel": "github", "repo": "acme/scratch", "kind": "issue",
-                       "number": 1}
+        for call in ("mcp-save-destination", "http-save-destination", "mcp-recheck", "http-recheck"):
+            gh_log.unlink(missing_ok=True)
+            destination = {"name": f"Scratch issue {call}", "channel": "github", "repo": "acme/scratch", "kind": "issue",
+                           "number": 1}
 
-        def slow() -> Any:
-            if call == "http-save-destination":
-                return hub.call("POST", "/api/channels/destinations", destination)
-            if call == "http-recheck":
-                return hub.call("POST", "/api/connections/github/recheck", {})
-            name, args = (("channel.save_destination", destination) if call == "mcp-save-destination"
-                          else ("connection.recheck", {"provider_id": "github"}))
-            return hub.call("POST", "/api/mcp", {"jsonrpc": "2.0", "id": 1, "method": "tools/call",
-                                                 "params": {"name": name, "arguments": args}})
+            def slow(call: str = call, destination: dict = destination) -> Any:
+                if call == "http-save-destination":
+                    return hub.call("POST", "/api/channels/destinations", destination)
+                if call == "http-recheck":
+                    return hub.call("POST", "/api/connections/github/recheck", {})
+                name, args = (("channel.save_destination", destination) if call == "mcp-save-destination"
+                              else ("connection.recheck", {"provider_id": "github"}))
+                return hub.call("POST", "/api/mcp", {"jsonrpc": "2.0", "id": 1, "method": "tools/call",
+                                                     "params": {"name": name, "arguments": args}})
 
-        thread, answer = in_thread(slow)
-        time.sleep(0.4)  # the call is inside its 1.5 s gh read
-        started = time.perf_counter()
-        status, _listed = hub.call("GET", "/api/channels/destinations")
-        read = time.perf_counter() - started
-        thread.join(30)
-        assert status == 200
-        assert answer and answer[0][0] == 200, answer
-        if call.startswith("mcp"):
-            assert answer[0][1]["result"]["isError"] is False, answer
-        assert read < 0.5, f"{call}: the read waited {read:.3f} s during the slow gh call"
+            thread, answer = in_thread(slow)
+            until(lambda: gh_log.exists() and gh_log.read_text().strip())  # the call is inside its 1 s gh read
+            started = time.perf_counter()
+            status, _listed = hub.call("GET", "/api/channels/destinations")
+            read = time.perf_counter() - started
+            thread.join(30)
+            assert status == 200
+            assert answer and answer[0][0] == 200, answer
+            if call.startswith("mcp"):
+                assert answer[0][1]["result"]["isError"] is False, answer
+            assert read < 0.5, f"{call}: the read waited {read:.3f} s during the slow gh call"
     finally:
         hub.kill()
 
