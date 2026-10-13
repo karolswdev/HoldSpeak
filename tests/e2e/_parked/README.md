@@ -327,3 +327,13 @@ beside it.
   `tests/e2e/test_needs_you_glass.py` (the 393 long row; one number). The
   rest: `tests/unit/test_attention.py`, `NeedsDrawer.test.tsx`,
   `arrivalAttention.test.tsx`, `meetingsHeadline.philo1303.test.ts`.
+# Parked by the diet, push 2: lane e2e-high-1, the Room (2026-10-12)
+
+- `test_hs160_delta_glass.py`, `test_hs168_window_wings_glass.py`,
+  `test_hs200_people_preparation_glass.py`, `test_hs200_task_resume_glass.py`
+  -> `tests/e2e/test_room_glass.py` (the keyboard review loop, the wings
+  geometry, People's return focus, the unfinished-asks container rule, roving
+  keys and full-list geometry); the Thread composer legs of the task-resume
+  file -> `tests/e2e/test_askai_glass.py`. The rest: `tests/unit/test_frozen_review.py`,
+  `roomPeople200.test.tsx`, `taskResume.test.tsx`, `room200TaskResume.test.tsx`,
+  `tests/unit/test_phase200_task_resume.py`.
