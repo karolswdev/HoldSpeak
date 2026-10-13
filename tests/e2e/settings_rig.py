@@ -4,7 +4,7 @@ Moved verbatim from ``test_hs174_remote_settings_glass.py`` (the test diet,
 2026-10-11: that file is parked; its checks moved to
 ``web/src/desk/__tests__/settings.app.test.tsx`` and
 ``tests/integration/test_desk_settings.py``). The grant glasses
-(``test_philo7_02_grant_glass.py``, ``test_philo9_07_project_grant_glass.py``)
+(``test_settings_glass.py``, ``test_philo9_07_project_grant_glass.py``)
 still drive the System module through these.
 """
 from __future__ import annotations

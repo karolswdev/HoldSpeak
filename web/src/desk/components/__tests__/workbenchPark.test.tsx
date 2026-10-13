@@ -196,6 +196,23 @@ describe("PHILO-13-02 the Workbench window's Park", () => {
     expect(screen.getByText("First item")).toBeTruthy();
   });
 
+  it("a refused Park frees the item: the next Park is sent, says PARKED with Restore, and Restore keeps it", async () => {
+    // replaces: tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_workbench_park_works_again_after_a_refusal
+    // and ::test_a_workbench_park_after_a_refusal_offers_restore
+    const hub = mockHub();
+    hub.claimed.add("i1");
+    render(<WorkbenchWindow workbenchId="wb1" />);
+    await parkItem("First item");
+    expect(within(await receipt()).getByRole("status").textContent).toBe("NOT PARKED · CLAIMED BY A RUN");
+    hub.claimed.delete("i1");
+    fireEvent.click(await screen.findByRole("button", { name: "Park" }));
+    await waitFor(() => expect(hub.requests.filter((r) => r.method === "DELETE")).toHaveLength(2));
+    await waitFor(async () => expect(within(await receipt()).getByRole("status").textContent).toMatch(/^PARKED \d\d:\d\d$/));
+    fireEvent.click(within(await receipt()).getByRole("button", { name: "Restore" }));
+    await waitFor(async () => expect((await receipt()).textContent).toMatch(/^RESTORED \d\d:\d\d$/));
+    expect(await screen.findByText("First item")).toBeTruthy();
+  });
+
   it("Clear done parks every done item at once: one bulk request, PARKED 2 · hh:mm, Restore restores all", async () => {
     const hub = mockHub({ i1: "done", i3: "dismissed" });
     render(<WorkbenchWindow workbenchId="wb1" />);

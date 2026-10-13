@@ -488,3 +488,62 @@ def test_the_lane_draft_inherits_the_default_for_ai_work(hub: str, tmp_path: Pat
     assert lane["wait"]["draft"]["text"], lane["wait"]
     _keep("agents-default", "lane", lane, tmp_path, hub)
     _keep("agents-default", "coders-sessions", _get(hub, "/api/coders/sessions?include_ended=false"), tmp_path, hub)
+
+
+# ── the lane's answer and Stop (the hub halves) ────────────────────────
+
+
+def _hook(seed: dict, kind: str, **data: Any) -> Any:
+    """What the agent's hook sends for its session (the lane rig's own path)."""
+    import holdspeak.agent_context as agent_context_pkg
+    from holdspeak.agent_context import event_log
+    from tests.e2e.agents_lane_rig import SESSION_ID
+
+    return agent_context_pkg.ingest_agent_hook_event(
+        agent="claude",
+        payload={"session_id": SESSION_ID, "cwd": seed["worktree"], "hook_event_name": kind, **data},
+        state_path=agent_context_pkg.AGENT_CONTEXT_FILE, events_spool_dir=event_log.default_spool_dir(),
+    )
+
+
+def test_an_answer_to_a_cleared_or_unnamed_wait_is_refused(hub: str, tmp_path: Path) -> None:
+    """replaces: tests/e2e/test_philo14_c2_lane_actions_glass.py::test_stale_wait_is_not_answerable
+    (the hub half: an answer that names the wait a later prompt cleared, or
+    names no wait at all, is 409 ``wait_not_current`` before any arm or pane;
+    the face half is laneWindow.c2.test.tsx "an answer to a wait the hub no
+    longer holds is refused and said")."""
+    from tests.e2e.agents_lane_rig import KEY, QUESTION, TOKEN, _http, _seed
+
+    seed = _seed(tmp_path / "home")
+    _hook(seed, "Notification", message=QUESTION)
+    before = _get(hub, "/api/agent/launches/launch_c2_runbook/lane")["wait"]
+    assert before and before["wait_id"], before
+    _hook(seed, "UserPromptSubmit", prompt="Already answered elsewhere.")
+    for body in ({"text": "A second answer.", "submit": True, "wait_id": before["wait_id"]},
+                 {"text": "A third answer.", "submit": True, "kind": "answer"}):
+        status, answer = _http(hub, "POST", f"/api/coders/{KEY}/steer", TOKEN, body)
+        assert status == 409, (status, answer)
+        assert json.loads(answer)["status"] == "wait_not_current", answer
+    assert _get(hub, "/api/agent/launches/launch_c2_runbook/lane")["wait"] is None
+
+
+def test_an_owner_stop_ends_the_launch_and_its_wait(hub: str, tmp_path: Path) -> None:
+    """replaces: tests/e2e/test_philo14_c2_lane_actions_glass.py::test_stop_records_a_stopped_launch
+    (the hub half: what the kill route records once the pane is killed,
+    ``launch_lane.record_owner_stop``: the launch reads ``stopped_by_owner``
+    with the audit row, and the session's wait ends. The face half is
+    laneWindow.c2.test.tsx "Stop: Normal unarmed never arms by itself" and
+    "a stopped launch shows its receipt and withdraws Answer, Re-brief and
+    Stop")."""
+    from holdspeak.services.launch_lane import record_owner_stop
+    from tests.e2e.agents_lane_rig import KEY, QUESTION, _seed
+
+    seed = _seed(tmp_path / "home")
+    session = _hook(seed, "Notification", message=QUESTION)
+    assert _get(hub, "/api/agent/launches/launch_c2_runbook/lane")["wait"], "the seed asks"
+    assert record_owner_stop(KEY, session, audit_id=41, scope="session") == "launch_c2_runbook"
+    lane = _get(hub, "/api/agent/launches/launch_c2_runbook/lane")
+    assert lane["launch"]["state"] == "stopped_by_owner", lane["launch"]
+    stopped = lane["launch"]["stopped"]
+    assert (stopped["by"], stopped["audit_id"], stopped["scope"]) == ("owner", 41, "session"), stopped
+    assert lane["wait"] is None, lane["wait"]
