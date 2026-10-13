@@ -13,7 +13,7 @@ page.route; the hub never sees the faulted request):
 For each of Retry and OK: nine points (center, four edge midpoints, four
 corners) of the area the verb must own -- 44 x 44 px at 393 (the library
 Button's halo, global.css HS-202-05), the painted face at 1440 (no halo
-there) -- under both instruments of test_hs202_05_button_hit_ownership.py:
+there) -- under both instruments of test_kit_glass.py:
 `elementFromPoint` (the shared classifier) and a real pointer that must
 reach exactly this Button. The two verbs' areas must not intersect. The
 label and verbs obey the 12 px floor.
@@ -29,7 +29,7 @@ from pathlib import Path
 import pytest
 from playwright.sync_api import sync_playwright
 
-from tests.e2e.test_hs202_05_button_hit_ownership import OWNERSHIP_JS, PROBES, _overlap
+from tests.e2e.test_kit_glass import OWNERSHIP_JS, PROBES, _overlap
 from tests._evidence import evidence_dir
 
 pytestmark = [pytest.mark.e2e, pytest.mark.timeout(600, method="thread")]
