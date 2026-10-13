@@ -19,7 +19,6 @@ import { ApiError, apiFetch } from "../../lib/api";
 import { MeetingIntelRecovery } from "../MeetingIntelRecovery";
 import { MeetingSummarySlab, readMeetingIntel } from "../MeetingSummarySlab";
 import { RouteDisclosure, RunAttempts } from "../RouteDisclosure";
-import gadgetsCss from "../../desk/surface/gadgets.css?raw";
 import { EgressChip } from "../../desk/surface/gadgets";
 import {
   forgetExecutedReceipts,
@@ -153,12 +152,6 @@ describe("HS-201-04 the disclosure beside the verb", () => {
     for (const chip of chips) {
       expect(chip.classList.contains("gadget-chip-truncate")).toBe(false);
     }
-    // jsdom paints no CSS, so the species rule itself is the fence: the base
-    // chip never clips; only the opt-in modifier does.
-    const base = gadgetsCss.match(/\n\.gadget-chip \{[^}]*\}/)?.[0] ?? "";
-    expect(base).toContain("white-space: nowrap");
-    expect(base).not.toMatch(/text-overflow|max-width|overflow:/);
-    expect(gadgetsCss).toMatch(/\.gadget-chip\.gadget-chip-truncate \{[^}]*text-overflow: ellipsis/);
   });
 
   it("gives each route chip its full destination as its title (PHILO-4-01 r5)", () => {

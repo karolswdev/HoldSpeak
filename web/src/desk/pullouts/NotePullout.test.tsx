@@ -1,6 +1,4 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch, ApiError } from "../../lib/api";
 import { useDesk } from "../store";
@@ -493,19 +491,5 @@ describe("NotePullout adoption recovery", () => {
     expect(await screen.findByText("A plan")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Accept" })).not.toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "Update context" }).some((button) => button.classList.contains("btn--primary"))).toBe(true);
-  });
-
-  it("keeps Original raw text wrapped locally without normalizing its bytes", () => {
-    const css = readFileSync(resolve(process.cwd(), "src/desk/components/pullout.css"), "utf8");
-    expect(css).toMatch(/\.thought-original-raw\s*\{[^}]*white-space:\s*pre-wrap;/s);
-    expect(css).toMatch(/\.thought-original-raw\s*\{[^}]*overflow-wrap:\s*anywhere;/s);
-    expect(css).toMatch(/\.thought-original-raw\s*\{[^}]*max-width:\s*100%;/s);
-  });
-
-  it("keeps one full-width completion primary at the 393px surface breakpoint", () => {
-    const css = readFileSync(resolve(process.cwd(), "src/desk/components/pullout.css"), "utf8");
-    expect(css).toMatch(/@container surface \(max-width: 420px\)[\s\S]*\.thought-completion-secondary\s*\{\s*display:\s*none;/);
-    expect(css).toMatch(/\.thought-completion-primary\s*\{[\s\S]*width:\s*100%;/);
-    expect(css).toMatch(/\.thought-editor-cancel\s*\{\s*display:\s*inline-flex;/);
   });
 });

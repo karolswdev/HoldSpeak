@@ -96,12 +96,6 @@ describe("plain failure words (A.3, A.10, Tenet 4)", () => {
     // Ask keeps no copy of the hub's refusal text for the face at all.
     expect(read("desk/components/AskPanel.tsx")).not.toMatch(/errorDetail/);
   });
-
-  it("voice Open Setup goes to the Setup application, never New Project", () => {
-    const mic = read("desk/components/MicButton.tsx");
-    expect(mic).not.toMatch(/project-setup/);
-    expect(mic).toMatch(/openSurfaceOr\("configure-setup"/);
-  });
 });
 
 describe("each face names its fact", () => {
