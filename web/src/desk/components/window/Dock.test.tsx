@@ -118,7 +118,8 @@ vi.mock("./windowRegistry", () => ({
   useOpenWindows: () => [],
   chipEls: { set: vi.fn(), delete: vi.fn() },
 }));
-vi.mock("./launcherRegistry", () => ({ useLaunchers: () => [] }));
+const dockLaunchers = vi.hoisted(() => ({ list: [] as Array<{ id: string; label: string; glyph: string; open: boolean; activate: () => void }> }));
+vi.mock("./launcherRegistry", () => ({ useLaunchers: () => dockLaunchers.list }));
 vi.mock("./Expose", () => ({ toggleExpose: vi.fn() }));
 vi.mock("./VerbGlyph", () => ({ VerbGlyph: () => null }));
 vi.mock("./ShortcutSheet", () => ({ ShortcutSheet: () => null }));
@@ -375,5 +376,30 @@ describe("C3-W the AppIcon face (boards C1-1, C1-8a-c)", () => {
     expect(offline.parentElement?.firstElementChild).toBe(offline);
     expect(screen.queryByTestId("desk-dock-send-state")).toBeNull();
     expect(screen.queryByText("1")).toBeNull();
+  });
+});
+
+describe("the Missed launcher (HS-200-07)", () => {
+  beforeEach(() => {
+    mocks.apiFetch.mockReset();
+    mocks.apiFetch.mockImplementation(mocks.defaultApiFetch);
+    __resetSurfaces();
+  });
+
+  it("a press on [data-launcher=attention] runs the launcher the shade announced", () => {
+    // replaces: tests/e2e/test_hs200_coverage_glass.py::TestCoverageGlass::test_shade_coverage_1440 (the open-the-shade leg;
+    // AttentionDrawer announces `activate: () => setShadeOpen(true)`, and
+    // shadeCoverage.test.tsx draws the shade that activation opens)
+    const activate = vi.fn();
+    dockLaunchers.list = [{ id: "attention", label: "Missed", glyph: "◎", open: false, activate }];
+    try {
+      render(<Dock />);
+      const launcher = document.querySelector<HTMLElement>("[data-launcher='attention']");
+      expect(launcher?.textContent).toContain("Missed");
+      fireEvent.click(launcher!);
+      expect(activate).toHaveBeenCalledTimes(1);
+    } finally {
+      dockLaunchers.list = [];
+    }
   });
 });

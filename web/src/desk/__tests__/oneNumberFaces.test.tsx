@@ -29,6 +29,11 @@ vi.mock("../../runtime/RuntimeBus", () => ({
 }));
 vi.mock("../thoughts", () => ({ unfinishedThoughts: async () => ({ items: [] }) }));
 vi.mock("../components/MicButton", () => ({ MicButton: () => null }));
+const shell = vi.hoisted(() => ({ openProjectRoom: vi.fn() }));
+vi.mock("../shell", async (original) => ({
+  ...(await original<typeof import("../shell")>()),
+  openProjectRoom: shell.openProjectRoom,
+}));
 vi.mock("../projections", () => ({
   useProjections: () => ({
     projections: [], counts: {}, refresh: vi.fn().mockResolvedValue(undefined), present: vi.fn(),
@@ -79,6 +84,7 @@ afterAll(() => {
 
 beforeEach(() => {
   resetNeedsYou();
+  shell.openProjectRoom.mockReset();
   usePalette.setState({ open: false });
   mocks.apiFetch.mockReset();
   mocks.apiFetch.mockImplementation(async (path: string) => {
@@ -129,6 +135,41 @@ describe("one needs-you number on every face (one seeded desk, real producers)",
     const mutedRow = rows.find((row) => row.textContent?.includes(muted.name))!;
     expect(mutedRow.textContent).toContain("MUTED");
     expect(mutedRow.textContent).not.toMatch(/\d+ OPEN/);
+  });
+
+  it("Open on a Room row closes the shade and opens that Room", async () => {
+    // replaces: tests/e2e/test_hs171_shade_glass.py::test_shade_projects_1440 (the Open leg; the 393 twin is the same DOM)
+    const room = projectsOf(desk.projects).find((p) => p.name === "A2 oracle room")!;
+    const onClose = vi.fn();
+    render(<SystemShade open onClose={onClose} onOpenMemory={() => {}} />);
+    const section = await screen.findByTestId("shade-projects");
+    const row = within(section).getAllByTestId("shade-project-row").find((r) => r.textContent?.includes(room.name))!;
+    fireEvent.click(within(row).getByRole("button", { name: "Open" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(shell.openProjectRoom).toHaveBeenCalledWith(room.id);
+  });
+
+  it("the palette's PROJECTS rows: the hub's counted Room first, the rest by name", async () => {
+    // replaces: tests/e2e/test_hs171_command_deck_glass.py::test_command_deck_projects_1440 (the order leg; the 393 twin is the same DOM)
+    const hub = desk.needsYou as Json;
+    const real = projectsOf(desk.projects);
+    const counted = real.filter((p) => (hub.projectCounts[p.id] ?? 0) > 0);
+    expect(counted.map((p) => p.name)).toEqual(["A2 oracle room"]);
+    // One more Room the hub does not count, named to sort before the counted one.
+    useDesk.setState({ projects: [...real, { id: "proj-a1", name: "A1 quiet room" }] as never });
+    render(
+      <MemoryRouter>
+        <DeskToolShelf />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Search/ }));
+    await screen.findByText("Open A2 oracle room");
+    await waitFor(() => {
+      const labels = screen.queryAllByRole("option")
+        .filter((o) => o.id.startsWith("desk-palette-option-project.open."))
+        .map((o) => o.querySelector(".desk-deck-label")?.textContent);
+      expect(labels).toEqual(["Open A2 oracle room", "Open A1 quiet room", "Open M1 muted room"]);
+    });
   });
 
   it("the palette's project badge says the hub's members of that Project", async () => {

@@ -208,3 +208,23 @@ originals are parked here, whole.
 - `test_hs201_12_thought_note_glass.py`, `test_hs141_thought_workbench_glass.py`
   -> `tests/e2e/test_thought_glass.py`. The draft-append leg:
   `ThoughtWorkspaceWindow.test.tsx`.
+
+# Push 2, lane e2e-low-1 A: the shade, the deck, receipts, coverage (2026-10-12)
+
+- `test_hs171_command_deck_glass.py`: `web/src/desk/__tests__/palette.app.test.tsx`
+  (the PROJECTS limit, filter and press), `oneNumberFaces.test.tsx` (badge and
+  order on the real producers' desk), `tests/integration/test_project_routes_characterization.py`
+  (archived Rooms); fit, 393 and egress are the desk sweep's palette case.
+- `test_hs171_shade_glass.py`: `oneNumberFaces.test.tsx` (Projects rows, MUTED,
+  Open opens the Room), `web/src/desk/__tests__/bell.app.test.tsx` (quiet desk,
+  the Brief row, the 5 s poll that stops on close), `tests/unit/test_needs_you.py`
+  (the cache). The Dock badge legs were stale (the Dock draws no needs-you badge).
+- `test_hs174_receipts_glass.py`: `bell.app.test.tsx` (the shade's REMOTE chip,
+  over `web/src/test/wire/desk-projections.remote-receipt.wire.json`),
+  `web/src/features/project-room/__tests__/room.app.test.tsx` (History ▸ Writes,
+  over `room-wires/receipts174.json`), `tests/unit/test_reach_wire.py`.
+- `test_hs200_coverage_glass.py`: the arrival legs were already in
+  `tests/unit/test_desk_needs_you.py`, `tests/integration/test_attention_coverage.py`,
+  `needsYou.app.test.tsx`, `NeedsDrawer.test.tsx` and `arrivalCoverage.test.tsx`;
+  the shade leg is `web/src/desk/components/__tests__/shadeCoverage.test.tsx` and
+  `web/src/desk/components/window/Dock.test.tsx` (the Missed launcher).

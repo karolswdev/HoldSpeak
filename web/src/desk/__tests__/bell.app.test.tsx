@@ -14,15 +14,26 @@
 // web/src/pages/cores/__tests__/peoplePrepB4.test.tsx pins it.
 process.env.TZ = "America/Denver";
 
-import { render, screen } from "@testing-library/react";
-import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../lib/api";
 import { SystemShade } from "../components/SystemShade";
 import { useProjections } from "../projections";
+import { recordedGet, type Gets } from "../../test/recordedHub";
+import recorded from "./fixtures/needsYou.recorded.json";
+import briefWire from "../../test/wire/brief-latest.generated.wire.json";
+import remoteReceiptWire from "../../test/wire/desk-projections.remote-receipt.wire.json";
 
 vi.mock("../../lib/api", async (original) => ({
   ...(await original<typeof import("../../lib/api")>()),
   apiFetch: vi.fn(),
+}));
+
+const shell = vi.hoisted(() => ({ openSurfaceOr: vi.fn(), openProjectRoom: vi.fn() }));
+vi.mock("../shell", async (original) => ({
+  ...(await original<typeof import("../shell")>()),
+  openSurfaceOr: shell.openSurfaceOr,
+  openProjectRoom: shell.openProjectRoom,
 }));
 
 /** `ProjectionRepository._artifacts` for a draft artifact of meeting m-zone. */
@@ -123,5 +134,89 @@ describe("Bell: a new artifact reads as new in the owner's zone", () => {
     // replaces (part): tests/e2e/test_times_local_zone_glass.py::test_bell_reads_a_new_artifact_as_new
     hub(new Date().toISOString().replace(/\.\d+Z$/, "Z"));
     expect(await stampWords()).toMatch(/· (just now|[0-5]m ago)$/);
+  });
+});
+
+/* ── HS-171-04 / HS-174-04: the shade's sections over the hub's recorded answers ──
+ * Each read is a recorded hub answer: needsYou.recorded.json
+ * (scripts/record_needs_you_fixture.py), brief-latest.generated and
+ * desk-projections.remote-receipt (tests/integration/test_face_wire_fences.py). */
+
+const QUIET = (recorded as unknown as { calendar: { quiet: { gets: Gets } } }).calendar.quiet.gets;
+const BRIEF = (briefWire as { wire: { sections: Record<string, unknown[]>; generated_at: string } }).wire;
+
+function replayShade(gets: Gets): string[] {
+  const misses: string[] = [];
+  vi.mocked(apiFetch).mockImplementation(async (path: string) => recordedGet(gets, path, misses) as never);
+  return misses;
+}
+
+const needsYouReads = () =>
+  vi.mocked(apiFetch).mock.calls.filter(([path]) => String(path).startsWith("/api/desk/needs-you")).length;
+
+describe("the shade on a quiet desk with a brief (HS-171-04)", () => {
+  afterEach(() => {
+    shell.openSurfaceOr.mockReset();
+    vi.useRealTimers();
+  });
+
+  it("no Room has items: no Projects section; the Brief row says its kind, its count and its day", async () => {
+    // replaces: tests/e2e/test_hs171_shade_glass.py::test_shade_quiet_1440 (the 393 twin is the same DOM)
+    // replaces: tests/e2e/test_hs171_shade_glass.py::test_shade_brief_row_1440
+    replayShade({ ...QUIET, "/api/brief/latest": BRIEF });
+    const onClose = vi.fn();
+    render(<SystemShade open onClose={onClose} onOpenMemory={() => undefined} />);
+    const row = await screen.findByTestId("shade-brief-row");
+    expect(screen.queryByTestId("shade-projects")).toBeNull();
+    const things = Object.values(BRIEF.sections).flat().length;
+    const kind = (BRIEF.sections.this_week ?? []).length > 0 ? "Weekly brief" : "Daily brief";
+    expect(row.querySelector("strong")?.textContent).toBe(kind);
+    const chip = row.querySelector(".surface-token")?.textContent ?? "";
+    expect(chip).toBe(`${things} THING${things === 1 ? "" : "S"}`);
+    // The hub's generated_at in the owner's zone, as MON DD.
+    const day = new Date(BRIEF.generated_at).toLocaleDateString("en-US", { month: "short", day: "2-digit" }).toUpperCase();
+    expect(row.querySelector(".desk-shade-why")?.textContent).toBe(day);
+    expect(day).toMatch(/^[A-Z]{3} \d{2}$/);
+    fireEvent.click(within(row).getByRole("button", { name: "Open" }));
+    expect(onClose).toHaveBeenCalled();
+    expect(shell.openSurfaceOr).toHaveBeenCalledWith("open-intelligence", "/");
+  });
+
+  it("the shade reads needs-you every 5 s while open, and never after it closes", async () => {
+    // replaces: tests/e2e/test_hs171_shade_glass.py::test_shade_polling_stops_on_close
+    vi.useFakeTimers();
+    replayShade(QUIET);
+    const view = render(<SystemShade open onClose={() => undefined} onOpenMemory={() => undefined} />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    const atOpen = needsYouReads();
+    expect(atOpen).toBe(1);
+    await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
+    expect(needsYouReads()).toBe(atOpen + 1);
+    view.rerender(<SystemShade open={false} onClose={() => undefined} onOpenMemory={() => undefined} />);
+    const atClose = needsYouReads();
+    await act(async () => { await vi.advanceTimersByTimeAsync(15000); });
+    expect(needsYouReads()).toBe(atClose);
+  });
+});
+
+describe("a remote write in the shade's Finished rows (HS-174-04)", () => {
+  it("the remote sweep wears REMOTE · <caller> in the accent scope", async () => {
+    // replaces: tests/e2e/test_hs174_receipts_glass.py::test_shade_remote_receipts_1440 (the 393 twin drew the same rows)
+    // The hub projects the remote sweep; it does not project the local steward run
+    // the rig also seeded (the recorded answer holds one row).
+    const wire = (remoteReceiptWire as { wire: { projections: Array<{ origin: string | null; caller: string | null }> } }).wire;
+    const remote = wire.projections.find((row) => row.origin === "remote")!;
+    replayShade({ ...QUIET, "/api/desk/projections?offset=0&limit=50": wire });
+    render(<SystemShade open onClose={() => undefined} onOpenMemory={() => undefined} />);
+    const finished = await waitFor(() => {
+      const node = document.querySelector<HTMLElement>('section[aria-label="Finished"]');
+      expect(node).not.toBeNull();
+      return node!;
+    });
+    // EgressChip does not pass `data-testid` on (SystemShade.tsx: `shade-finished-egress`
+    // never reaches the DOM), so the chip is read by its own class and scope.
+    const chips = Array.from(finished.querySelectorAll(".gadget-chip-egress"));
+    expect(chips.map((c) => [c.textContent, c.getAttribute("data-scope")])).toEqual([[`REMOTE · ${remote.caller}`, "remote"]]);
+    expect(finished.textContent).not.toContain("Service.");
   });
 });
