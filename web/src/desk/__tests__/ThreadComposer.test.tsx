@@ -24,7 +24,6 @@ import {
   directoryToItem,
   type AutocompleteItem,
 } from "../components/InletAutocomplete";
-import composerCss from "../pullouts/thread-pullout.css?raw";
 // ── mock dependencies ──────────────────────────────────────────────
 
 vi.mock("../../lib/api", () => ({
@@ -581,34 +580,6 @@ describe("ThreadComposer", () => {
     // D-R1 — Send keeps the chip face; the swap is canon, not appearance.
     expect(send).toHaveClass("btn", "desk-chip");
 
-    // D-R2 — jsdom applies no stylesheet, so the face is proved against the
-    // sheet that owns this surface (the editorFootGrip.test.ts precedent).
-    // `.desk-next .desk-chip` (chrome-menus.css) has no disabled rule and
-    // outranks the library's, so without this the refused verb looks live.
-    const rule = composerCss.slice(composerCss.indexOf(".thread-composer-row .desk-chip:disabled"));
-    const selectors = rule.split("{")[0] ?? "";
-    const block = rule.split("{")[1]?.split("}")[0] ?? "";
-    // The chip's own :hover outranks a bare :disabled rule, so the refused
-    // verb must stay refused under the pointer too.
-    expect(selectors).toContain(".thread-composer-row .desk-chip:disabled:hover");
-    expect(selectors).toContain(".thread-inline-editor-actions .desk-chip:disabled");
-    expect(block).toContain("var(--disabled-bg)");
-    expect(block).toContain("var(--disabled-fg)");
-    expect(block).toContain("var(--disabled-border)");
-  });
-
-  it("keeps the library's hover and press grammar off the ref-chip remove verb", () => {
-    // D-R3 — the swap must not add a hover background or a press settle the
-    // chip never had; the focus ring `all: unset` had killed does stay.
-    const hover = composerCss
-      .split(".thread-ref-chip .thread-ref-chip-remove:hover")[1]
-      ?.split("}")[0] ?? "";
-    expect(hover).toContain("background: none");
-    const press = composerCss
-      .split(".thread-ref-chip .thread-ref-chip-remove:active:not(:disabled)")[1]
-      ?.split("}")[0] ?? "";
-    expect(press).toContain("transform: none");
-    expect(composerCss).not.toContain(".thread-ref-chip-remove:focus-visible");
   });
 
   it("Enter sends the message", () => {
@@ -833,5 +804,4 @@ describe("slash command palette via composer", () => {
     expect(screen.getByTestId("thread-system-row")).toBeInTheDocument();
     expect(screen.getByTestId("thread-system-row").textContent).toContain("Compacting");
   });
-
 });

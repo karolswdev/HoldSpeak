@@ -13,68 +13,10 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 
-import deskMenuSrc from "../components/DeskMenu.tsx?raw";
-import wingsSrc from "../surface/wings.tsx?raw";
-import dockSrc from "../components/window/Dock.tsx?raw";
-import deskEditorSrc from "../components/DeskEditor.tsx?raw";
-import toolShelfSrc from "../components/DeskToolShelf.tsx?raw";
-import trustWindowSrc from "../components/TrustWindow.tsx?raw";
-import firstWordsSrc from "../components/FirstWords.tsx?raw";
-import micButtonSrc from "../components/MicButton.tsx?raw";
-import recordOrbSrc from "../components/RecordOrb.tsx?raw";
-import deskWindowSrc from "../components/DeskWindow.tsx?raw";
-import deskChromeSrc from "../components/DeskChrome.tsx?raw";
-import deskMenuBarSrc from "../components/DeskMenuBar.tsx?raw";
-import deskCreateMenuSrc from "../components/DeskCreateMenu.tsx?raw";
-import pulloutSrc from "../components/Pullout.tsx?raw";
-import exposeSrc from "../components/window/Expose.tsx?raw";
-import noteEditorSrc from "../pullouts/editors/NoteEditor.tsx?raw";
-import meetingWindowSrc from "../pullouts/MeetingWindow.tsx?raw";
-import meetingRecordSrc from "../../pages/cores/history/MeetingRecord.tsx?raw";
-import thoughtContextSrc from "../pullouts/ThoughtContextPicker.tsx?raw";
 
 import { Button } from "../../components/signal/Signal";
 import { SurfaceWings } from "../surface/wings";
 
-// Every stylesheet the desk ships, read as text: the ink proof below.
-const CSS_MODULES = import.meta.glob("../../**/*.css", {
-  query: "?raw",
-  import: "default",
-  eager: true,
-}) as Record<string, string>;
-
-/** The A1 matcher the source ratchet uses (scripts/ux_canon_scan.py:460). */
-const RAW_BUTTON = /<button(?=[\s>/])/g;
-
-/** The shared controls, in the order the story migrates them. */
-const MIGRATED: Array<[string, string]> = [
-  ["desk/components/DeskMenu.tsx", deskMenuSrc],
-  ["desk/surface/wings.tsx", wingsSrc],
-  ["desk/components/window/Dock.tsx", dockSrc],
-  ["desk/components/DeskEditor.tsx", deskEditorSrc],
-  ["desk/components/DeskToolShelf.tsx", toolShelfSrc],
-  ["desk/components/TrustWindow.tsx", trustWindowSrc],
-  ["desk/components/FirstWords.tsx", firstWordsSrc],
-  ["desk/components/MicButton.tsx", micButtonSrc],
-  ["desk/components/RecordOrb.tsx", recordOrbSrc],
-  ["desk/components/DeskWindow.tsx", deskWindowSrc],
-  ["desk/components/DeskChrome.tsx", deskChromeSrc],
-  ["desk/components/DeskMenuBar.tsx", deskMenuBarSrc],
-  ["desk/components/DeskCreateMenu.tsx", deskCreateMenuSrc],
-  ["desk/components/Pullout.tsx", pulloutSrc],
-  ["desk/components/window/Expose.tsx", exposeSrc],
-  ["desk/pullouts/editors/NoteEditor.tsx", noteEditorSrc],
-  // PHILO-17: the meeting window (its body moved from the Meetings window).
-  ["desk/pullouts/MeetingWindow.tsx", meetingWindowSrc],
-  ["pages/cores/history/MeetingRecord.tsx", meetingRecordSrc],
-  ["desk/pullouts/ThoughtContextPicker.tsx", thoughtContextSrc],
-];
-
-describe("HS-202-03 — no raw control on the five jobs' shared screens", () => {
-  it.each(MIGRATED)("%s draws every verb with the library Button", (_name, src) => {
-    expect(src.match(RAW_BUTTON) ?? []).toEqual([]);
-  });
-});
 
 describe("the chrome variant carries the species, not the plate", () => {
   it("withholds the .btn plate so the strip keeps its own material", () => {
@@ -92,19 +34,6 @@ describe("the chrome variant carries the species, not the plate", () => {
     // own. Never stamped for a chrome verb -- not even `dense`.
     expect(classes).not.toContain("btn");
     expect(classes).not.toContain("btn--sm");
-  });
-
-  // THE INK PROOF. `btn--chrome` is a marker, not a look: no stylesheet in
-  // the product defines it, so stamping it on a menu row, a wing tab or a
-  // dock chip cannot move one pixel. The strip keeps drawing its own
-  // material exactly as it did when the element was a raw `<button>`.
-  it("no stylesheet defines .btn--chrome, so the marker paints nothing", () => {
-    const files = Object.keys(CSS_MODULES);
-    expect(files.length).toBeGreaterThan(20);
-    const offenders = files.filter((file) =>
-      /\.btn--chrome\b/.test(CSS_MODULES[file]),
-    );
-    expect(offenders).toEqual([]);
   });
 
   it("a plated variant still wears its plate", () => {

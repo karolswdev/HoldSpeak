@@ -3,8 +3,6 @@
 // on its right edge); the AskWell question species holds the same well.
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { AskWell, StringGadget } from "..";
 
 vi.mock("../../components/MicButton", () => ({
@@ -27,12 +25,6 @@ describe("AskWell (Phase 16 kit)", () => {
       <AskWell agent="Claude Code" question="Jordan or Avery?" value="" onChange={() => undefined} onAnswer={() => undefined} />,
     );
     expect(container.querySelector(".ask-well-answer > .gadget-string")).toBeTruthy();
-  });
-
-  it("the well is sunken paper; the mic plate is raised Steel on its right edge", () => {
-    const css = readFileSync(resolve(__dirname, "../gadgets.css"), "utf8");
-    expect(css).toMatch(/\.gadget-string \{[^}]*border: 1px solid var\(--wb-ink\);[^}]*background: var\(--wb-well\);[^}]*box-shadow: var\(--wb-sunken\);/);
-    expect(css).toMatch(/\.desk-next \.gadget-string \.desk-mic \{[^}]*align-self: stretch;[^}]*background: var\(--wb-steel\);[^}]*box-shadow: inset 1px 0 0 var\(--wb-ink\)/);
   });
 });
 

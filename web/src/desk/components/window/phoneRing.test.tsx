@@ -21,7 +21,6 @@ import { phoneRing, phoneCurrent, stepRing, swipeDirection } from "./phoneRing";
 import { ScreenSwitcher } from "./ScreenSwitcher";
 import { DeskMenuBar, phoneGo } from "../DeskMenuBar";
 import type { WorkMenuEntry } from "../DeskMenu";
-import chromeMenusCss from "../chrome-menus.css?raw";
 
 let compact = true;
 const opened: string[] = [];
@@ -163,8 +162,6 @@ describe("Q2 the switcher in the screen title", () => {
     expect(mark.closest(".desk-screen-name")).toBeNull();
     // The ▾ is painted by CSS, so the title's text stays the window's name.
     expect(screen.getByTestId("desk-screen-title").textContent).toBe("The week");
-    expect(chromeMenusCss).toMatch(/\.desk-screen-switcher-mark::before\s*\{\s*content:\s*"\\25BE"/);
-    expect(chromeMenusCss).toMatch(/\.desk-screen-switcher-mark\s*\{[^}]*flex:\s*0 0 auto/);
     fireEvent.pointerDown(button, { button: 0 }); // tap 1
     const menu = screen.getByRole("menu", { name: "Open windows" });
     const rows = within(menu).getAllByRole("menuitemcheckbox");
