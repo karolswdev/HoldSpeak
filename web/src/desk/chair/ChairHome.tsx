@@ -491,8 +491,11 @@ function Arrival() {
 
   // ── door wire (owner's action items) ──
   const [door, setDoor] = useState<DoorProjection | null>(null);
+  // The first Door read has ended (read or failed): until then The week says
+  // it is reading, since the strip and THIS WEEK it draws land above the rows.
+  const [doorRead, setDoorRead] = useState(false);
   useEffect(() => {
-    void apiFetch<DoorProjection>("/api/door").then(setDoor).catch(() => null);
+    void apiFetch<DoorProjection>("/api/door").then(setDoor).catch(() => null).finally(() => setDoorRead(true));
   }, []);
 
   // ── thoughts ──
@@ -1366,6 +1369,12 @@ function Arrival() {
       }
       week={
         <>
+          {/* Reading until the Door read and the top meetings' detail reads end:
+              what they draw lands above rows already drawn and moved them
+              140 px at 393 (the desk sweep's still fence). */}
+          {!doorRead || meetingDetailKey.split("|").some((id) => id !== "" && !(id in meetingDetails)) ? (
+            <span hidden aria-busy="true" data-testid="arrival-week-reading" />
+          ) : null}
           {/* ── Week Strip (HS-175-02) ── */}
           {week && week.has_calendar && week.total > 0 ? (
             <WeekStripSection week={week} />

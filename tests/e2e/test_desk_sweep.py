@@ -41,7 +41,7 @@ each, in place of one "this face renders cleanly" file per phase.
               without a scroller (a single-line ellipsis is lawful, A.6)
     overlap   no two interactive controls overlap (painted boxes)
     library   every verb is a library Button: no raw <button>
-    material  the bevel grammar (test_philo14_b2_material_glass._assert_material)
+    material  the bevel grammar (material_rig._assert_material)
     still     nothing interactive moves for 1.5 s after the window settles
     egress    every request goes to the hub's own origin (data:, blob: allowed)
   The bare desk (no window) is one more case, read over the whole screen.
@@ -91,7 +91,7 @@ from .glass_infra import (  # noqa: E402
     clear_hub_windows_http,
 )
 from .type_floor_rig import _FAINT_JS, _MEASURE, GATED_CONTRAST  # noqa: E402
-from .test_philo14_b2_material_glass import LAMP_WORDS, MATERIAL_JS  # noqa: E402
+from .material_rig import LAMP_WORDS, MATERIAL_JS  # noqa: E402
 from .conductor_rig import _seed as _seed_agents  # noqa: E402
 from .test_philo17_meeting_window_glass import _save_meeting  # noqa: E402
 from tests.unit.test_route_preflight import PAGE_ROUTES  # noqa: E402  (the e2e preflight is parked; the sweep fences every route)
@@ -191,6 +191,11 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
         # Not applications, opened the same way: the Chair's Needs-you window
         # (its seed rows: accepted requests, a failed summary) ...
         ("needs", "chair:needs", None),
+        # ... the Chair's other three windows (the 12 px floor walk of
+        # PHILO-13-18 read them; tests/e2e/_parked/test_philo13_18_type_floor_glass.py) ...
+        ("brief", "chair:brief", None),
+        ("week", "chair:week", None),
+        ("capture", "chair:capture", None),
         # ... and the ⌘K palette, open on a query that hits several sections.
         ("palette", "desk-tool-shelf", PALETTE_QUERY),
         # PHILO-17 (concept C): the Today window, the day as a timeline. The
@@ -531,7 +536,7 @@ OVERLAP_JS = r"""(sel) => {""" + _COMMON_JS + r"""
     // an inset by design: a control drawn inside a text entry (the in-well mic)
     const inside = (x, y) => x.p.L >= y.p.L - 1 && x.p.R <= y.p.R + 1 && x.p.T >= y.p.T - 1 && x.p.B <= y.p.B + 1;
     if ((inside(a, b) && b.c.matches('textarea, input')) || (inside(b, a) && a.c.matches('textarea, input'))) continue;
-    // the one ratified waiver (test_philo13_13_dock_glass._read; the species
+    // the one ratified waiver (tests/e2e/_parked/test_philo13_13_dock_glass.py _read; the species
     // glass `pager`): at the phone width ONLY (the gadget is the phone's,
     // dock.css), the next page of the Dock's shelf (an AppIcon of the shelf
     // itself) scrolls under its sticky More AppIcons gadget, drawn over it on
@@ -620,7 +625,7 @@ PALETTE_JS = r"""() => {
 
 
 def _material_faults(page: Any, face: str, root: str | None) -> list[str]:
-    """test_philo14_b2_material_glass._assert_material, every observation
+    """material_rig._assert_material, every observation
     (that helper stops at the first): the same reads, the same rules."""
     m = page.evaluate(MATERIAL_JS, root)
     if m is None:

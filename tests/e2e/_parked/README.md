@@ -228,3 +228,30 @@ originals are parked here, whole.
   `needsYou.app.test.tsx`, `NeedsDrawer.test.tsx` and `arrivalCoverage.test.tsx`;
   the shade leg is `web/src/desk/components/__tests__/shadeCoverage.test.tsx` and
   `web/src/desk/components/window/Dock.test.tsx` (the Missed launcher).
+# Parked by push 2 of the test diet: lane e2e-high-2 (PHILO-17, 2026-10-12)
+
+Owner, 2026-10-12: "we've been trimming some fat on useless testing. I need that
+to be pushed and pushed more." A browser test stays only for drag, focus, keys,
+touch, hover or an exact geometry relation, in ONE file per app. Each kept test
+names the test it replaces in a `replaces:` line; the PR that parked a file has
+one row per retired check.
+
+- `test_philo13_13_dock_glass.py`: kept legs in `tests/e2e/test_dock_glass.py`.
+- `test_philo13_14_palette_glass.py`: every leg has a vitest or hub successor
+  (`palette.philo1314.test.tsx`, `palette.app.test.tsx`, `tests/unit/test_desk_palette_send.py`).
+- `test_philo13_15_send_to_glass.py`: kept legs in `tests/e2e/test_send_glass.py`.
+- `test_philo13_16_capture_glass.py`: kept legs in `tests/e2e/test_thought_glass.py`.
+- `test_philo13_17_phone_desk_glass.py`, `test_philo13_18_strip_escape_glass.py`:
+  kept legs in `tests/e2e/test_windows_glass.py`.
+- `test_philo13_18_editor_wrap_glass.py`: moved whole to `tests/e2e/test_room_glass.py`.
+- `test_philo13_18_type_floor_glass.py`: the desk sweep (`floor`, `clipped`,
+  `overlap`), which now also opens the Chair's Brief, The week and Capture.
+- `test_philo14_a1_fresh_arrival_glass.py`: `needsChair.app.test.tsx`, `tests/unit/test_desk_windows.py`.
+- `test_philo14_a1c_aftercare_capture_glass.py`: moved whole to `tests/e2e/test_chair_glass.py`.
+- `test_philo14_b2_material_glass.py`: the material at rest is the desk sweep's
+  `material` fence (its reader is `tests/e2e/material_rig.py` now); the pressed
+  Button and the held filter strip are in `tests/e2e/test_settings_glass.py`.
+- `test_philo14_a2_drawer_glass.py`: the Project drawer is parked (PHILO-17 U30,
+  `web/src/lib/primitives.ts`: "no product opener names it"); its face is fenced
+  in `web/src/desk/drawer/__tests__/drawer.test.tsx`, and the Needs-you Project
+  button opening the Room in `web/src/desk/__tests__/openGrammar.philo1306.test.tsx`.
