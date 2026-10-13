@@ -40,6 +40,16 @@ def broadcasts() -> list[tuple[str, dict]]:
     return []
 
 
+def _await_done(broadcasts: list, count: int, timeout: float = 5.0) -> None:
+    """Wait for the background turn(s) to broadcast ``thread_turn_done``
+    (fast diet 2026-10-12: was a fixed 0.5 s sleep per turn)."""
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if sum(1 for ft, _ in broadcasts if ft == "thread_turn_done") >= count:
+            return
+        time.sleep(0.01)
+
+
 @pytest.fixture
 def broadcast_fn(broadcasts):
     def _broadcast(msg_type: str, data: Any) -> None:
@@ -196,7 +206,7 @@ def test_turn_returns_ids_immediately(service: ThreadService, broadcasts) -> Non
     assert result["thread_id"] == t["id"]
 
     # Wait for streaming to complete.
-    time.sleep(0.5)
+    _await_done(broadcasts, 1)
 
     # Check frames were broadcast in order: started -> deltas -> done.
     frame_types = [ft for ft, _ in broadcasts]
@@ -213,7 +223,7 @@ def test_turn_yields_at_least_3_deltas_with_monotonic_seq(service: ThreadService
     """The fake yields one delta per word of 'Hello from assistant' (3 words)."""
     t = service.create(title="Delta count test")
     result = asyncio.run(service.start_turn(OWNER, t["id"], "Go"))
-    time.sleep(0.5)
+    _await_done(broadcasts, 1)
 
     delta_frames = [d for ft, d in broadcasts if ft == "thread_delta"]
     assert len(delta_frames) >= 3, f"Expected >= 3 deltas, got {len(delta_frames)}"
@@ -225,7 +235,7 @@ def test_turn_yields_at_least_3_deltas_with_monotonic_seq(service: ThreadService
 def test_turn_db_text_equals_streamed_concatenation(service: ThreadService, db, broadcasts) -> None:
     t = service.create(title="DB match test")
     result = asyncio.run(service.start_turn(OWNER, t["id"], "Question"))
-    time.sleep(0.5)
+    _await_done(broadcasts, 1)
 
     # Concatenate the text from delta frames.
     delta_texts = [d["text"] for ft, d in broadcasts if ft == "thread_delta" and d.get("kind") == "text"]
@@ -243,7 +253,7 @@ def test_turn_db_text_equals_streamed_concatenation(service: ThreadService, db, 
 def test_turn_broadcasts_started_with_correct_data(service: ThreadService, broadcasts) -> None:
     t = service.create(title="Broadcast test")
     result = asyncio.run(service.start_turn(OWNER, t["id"], "Check broadcasts"))
-    time.sleep(0.5)
+    _await_done(broadcasts, 1)
 
     started_frames = [(t, d) for t, d in broadcasts if t == "thread_turn_started"]
     assert len(started_frames) == 1
@@ -256,7 +266,7 @@ def test_turn_broadcasts_started_with_correct_data(service: ThreadService, broad
 def test_turn_broadcasts_done_with_receipt(service: ThreadService, broadcasts) -> None:
     t = service.create(title="Done test")
     result = asyncio.run(service.start_turn(OWNER, t["id"], "Check done"))
-    time.sleep(0.5)
+    _await_done(broadcasts, 1)
 
     done_frames = [(t, d) for t, d in broadcasts if t == "thread_turn_done"]
     assert len(done_frames) == 1
@@ -311,7 +321,7 @@ def test_abort_semantics(db, broadcast_fn, broadcasts) -> None:
     abort_seen.set()
 
     # Wait for the background thread to finish and broadcast done.
-    time.sleep(0.5)
+    _await_done(broadcasts, 1)
 
     # Check the done frame.
     done_frames = [d for ft, d in broadcasts if ft == "thread_turn_done"]
@@ -332,14 +342,14 @@ def test_abort_semantics(db, broadcast_fn, broadcasts) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_branch_creates_sibling(service: ThreadService) -> None:
+def test_branch_creates_sibling(service: ThreadService, broadcasts) -> None:
     t = service.create(title="Branch test")
     r1 = asyncio.run(service.start_turn(OWNER, t["id"], "Original"))
-    time.sleep(0.5)
+    _await_done(broadcasts, 1)
 
     # Branch from the user message.
     r2 = asyncio.run(service.branch(OWNER, t["id"], r1["user_message_id"], "Edited"))
-    time.sleep(0.5)
+    _await_done(broadcasts, 2)
 
     assert r2["thread_id"] == t["id"]
     assert r2["user_message_id"] != r1["user_message_id"]
@@ -350,13 +360,13 @@ def test_branch_creates_sibling(service: ThreadService) -> None:
     assert "messages" in got
 
 
-def test_regenerate_creates_sibling_assistant(service: ThreadService) -> None:
+def test_regenerate_creates_sibling_assistant(service: ThreadService, broadcasts) -> None:
     t = service.create(title="Regen test")
     r1 = asyncio.run(service.start_turn(OWNER, t["id"], "Regenerate me"))
-    time.sleep(0.5)
+    _await_done(broadcasts, 1)
 
     r2 = asyncio.run(service.regenerate(OWNER, t["id"], r1["assistant_message_id"]))
-    time.sleep(0.5)
+    _await_done(broadcasts, 2)
 
     assert r2["thread_id"] == t["id"]
     assert r2["assistant_message_id"] != r1["assistant_message_id"]
@@ -446,10 +456,10 @@ def test_unknown_ref_refuses_with_id(service: ThreadService, db) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_keep_mints_artifact(service: ThreadService, db) -> None:
+def test_keep_mints_artifact(service: ThreadService, db, broadcasts) -> None:
     t = service.create(title="Keep test")
     result = asyncio.run(service.start_turn(OWNER, t["id"], "Keep this"))
-    time.sleep(0.5)
+    _await_done(broadcasts, 1)
 
     # Manually insert text for the assistant message to keep.
     msg = db.threads.get_message(result["assistant_message_id"])

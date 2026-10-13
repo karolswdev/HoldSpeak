@@ -907,7 +907,10 @@ class TestGuardrailRunsOncePerPass:
             broadcast=lambda t, d: broadcasts.append((t, d)),
             broker=_GuardrailToolCallBroker(tool_calls=tool_calls),
             tool_dispatch_fn=_fake_dispatch,
-            control_mode_fn=lambda: "safe",
+            # Fast diet 2026-10-12: yolo, as the sibling tests, so the turn
+            # ENDS; under safe the three calls waited for a decision and the
+            # test waited out its 10 s deadline every run.
+            control_mode_fn=lambda: "yolo",
         )
 
         thread = svc.create(title="Multi-call test", recipe_id="hs-seed-mode-chase")
@@ -924,6 +927,7 @@ class TestGuardrailRunsOncePerPass:
                     break
                 time.sleep(0.1)
 
+            assert any(t == "thread_turn_done" for t, _ in broadcasts), "the pass never ended"
             # The guardrail should have been called exactly once
             assert mock_rga.call_count == 1, (
                 f"Expected 1 guardrail call, got {mock_rga.call_count}"

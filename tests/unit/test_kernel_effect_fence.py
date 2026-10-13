@@ -10,6 +10,7 @@ a rule.
 from __future__ import annotations
 
 import ast
+import functools
 import fnmatch
 import json
 import re
@@ -852,10 +853,17 @@ def _classify_call(
     return None
 
 
+@functools.lru_cache(maxsize=None)
+def _parsed(relative_path: str, source: str) -> ast.Module:
+    """One parse per source text in this process (fast diet 2026-10-12: four
+    tests here each parsed the whole tree). The walkers only read the tree."""
+    return ast.parse(source, filename=relative_path)
+
+
 def _classify_source(
     relative_path: str, source: str, *, include_migrated: bool = False
 ) -> list[EffectSite]:
-    tree = ast.parse(source, filename=relative_path)
+    tree = _parsed(relative_path, source)
     visitor = _EffectVisitor(relative_path, include_migrated=include_migrated)
     visitor.visit(tree)
     return visitor.sites
@@ -1173,7 +1181,7 @@ def test_terminal_transport_has_only_the_process_input_executor_as_caller() -> N
     direct_calls: set[tuple[str, str]] = set()
     for path in _source_paths():
         relative = path.relative_to(_REPO).as_posix()
-        tree = ast.parse(path.read_text(encoding="utf-8"), filename=relative)
+        tree = _parsed(relative, path.read_text(encoding="utf-8"))
         module_aliases = {"coder_steering"}
         function_aliases: dict[str, str] = {}
         for node in ast.walk(tree):
@@ -1248,7 +1256,7 @@ def test_delivery_command_adapter_cannot_bypass_process_input() -> None:
         if path == commands_path:
             continue
         relative = path.relative_to(_REPO).as_posix()
-        source_tree = ast.parse(path.read_text(encoding="utf-8"), filename=relative)
+        source_tree = _parsed(relative, path.read_text(encoding="utf-8"))
         for node in ast.walk(source_tree):
             if (
                 isinstance(node, ast.Call)

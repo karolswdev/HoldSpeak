@@ -244,6 +244,7 @@ class FakeLLM:
         self.reply: Any = "{}"
         self.delay_s = 0.0
         self.status = 200
+        self.answered = threading.Event()  # a POST's answer was written (or its caller had gone)
         probe = self
 
         class H(BaseHTTPRequestHandler):
@@ -268,17 +269,20 @@ class FakeLLM:
                 probe.requests.append({"method": "POST", "path": self.path, "body": body})
                 if probe.delay_s:
                     time.sleep(probe.delay_s)
-                if probe.status != 200:
-                    self._send({"error": {"message": "server exploded"}}, probe.status)
-                    return
-                text = probe.reply(body) if callable(probe.reply) else str(probe.reply)
-                self._send({
-                    "id": "cmpl-1", "object": "chat.completion", "model": "qwen3-35b",
-                    "choices": [{"index": 0, "message": {"role": "assistant", "content": text},
-                                 "finish_reason": "stop"}],
-                    "content": text,
-                    "usage": {"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2},
-                })
+                try:
+                    if probe.status != 200:
+                        self._send({"error": {"message": "server exploded"}}, probe.status)
+                        return
+                    text = probe.reply(body) if callable(probe.reply) else str(probe.reply)
+                    self._send({
+                        "id": "cmpl-1", "object": "chat.completion", "model": "qwen3-35b",
+                        "choices": [{"index": 0, "message": {"role": "assistant", "content": text},
+                                     "finish_reason": "stop"}],
+                        "content": text,
+                        "usage": {"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2},
+                    })
+                finally:
+                    probe.answered.set()
 
         self.server = HTTPServer(("127.0.0.1", 0), H)
         self.port = self.server.server_address[1]
@@ -550,14 +554,15 @@ def test_a_hosted_endpoint_without_its_key_is_key_not_set_before_a_byte_leaves(
 def test_stop_cancels_the_run_and_leaves_no_orphan_draft(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, llm: FakeLLM,
 ) -> None:
-    """The model takes 8 s; Stop lands at 1 s. The run comes back STOPPED with
+    """The model takes 3 s; Stop lands at 0.5 s. The run comes back STOPPED with
     a receipt that the request had left, and no draft is written, also after
-    the slow answer arrives.
+    the slow answer arrives (fast diet 2026-10-12: was 8 s and 1 s, waited out
+    by a fixed sleep; now the test waits for the answer itself).
 
     replaces: tests/e2e/test_hs200_preparation_brief_glass.py::test_stop_leaves_no_orphan_draft
     """
     llm.reply = _board_reply
-    llm.delay_s = 8.0
+    llm.delay_s = 3.0
     with _hub(tmp_path, monkeypatch) as hub:
         project_id = _seed_brief_room(hub, "room-brief-stop")
         _define_route(hub.home, llm.endpoint, "probe-llm")
@@ -573,7 +578,7 @@ def test_stop_cancels_the_run_and_leaves_no_orphan_draft(
         while not llm.posts and time.monotonic() < deadline:
             time.sleep(0.05)
         assert llm.posts, "the request never left"
-        time.sleep(1.0)
+        time.sleep(0.5)
         stopped = hub.ok("POST", f"/api/projects/{project_id}/briefs/stop", {"attempt_id": "att_stop"})
         assert stopped["stopped"] is True and stopped["attempt_id"] == "att_stop", stopped
         run.join(30)
@@ -581,7 +586,8 @@ def test_stop_cancels_the_run_and_leaves_no_orphan_draft(
         refused = _refused(answer["resp"])["route"]
         assert refused["state"] == "stopped", refused
         assert refused["invoke"]["sent"] is True, "the face says the request had left"
-        time.sleep(max(0.0, 8.5 - 1.0))  # the slow answer lands after the stop
+        assert llm.answered.wait(10), "the slow answer never left the model"
+        time.sleep(0.5)  # the slow answer lands after the stop
         listed = hub.ok("GET", f"/api/projects/{project_id}/briefs")["briefs"]
         assert listed == [], [(b["id"], b["lifecycle"]) for b in listed]
 
@@ -719,7 +725,7 @@ def test_the_hubs_poll_closes_the_item_on_merge_and_the_sent_update_carries_it(
     launches = tmp_path / "home" / ".holdspeak" / "agent_launches.json"
     github = FakeGitHub()
     monkeypatch.setattr(factory_launch, "DEFAULT_LAUNCHES_PATH", launches)
-    monkeypatch.setattr(follow_through, "POLL_SECONDS", 1)
+    monkeypatch.setattr(follow_through, "POLL_SECONDS", 0.3)  # fast diet: was 1 s
     monkeypatch.setattr(follow_through, "default_follow_through", lambda db: follow_through.FollowThroughObserver(
         db, ledger=LaunchLedger(launches), registry=SimpleNamespace(get=lambda _id: None), receipts=github,
         attempts=WorkAttemptService(db.work_attempts), control_mode=lambda: "yolo",
@@ -770,7 +776,7 @@ def test_the_merge_poll_tells_the_open_room_once_the_pr_merges_and_not_before(
     """The mounted Room re-reads on a ``desk_changed`` frame whose changes are
     not windows only (web/src/desk/useDeskChangedRefresh.ts; the consumer half
     is roomInFlight.f2.test.tsx "the merge lands while the Room stays open").
-    The hub's own PR poll (HeartbeatService.poll_open_prs) runs every 1 s:
+    The hub's own PR poll (HeartbeatService.poll_open_prs) runs every 0.3 s:
     while PR #1 is open it sends no frame; once GitHub merges it, the poll
     sends ONE ``desk_changed`` frame. Frames are captured at the hub's
     WebSocket fan-out (``WebSocketManager.broadcast``), as every client gets them.
@@ -786,7 +792,7 @@ def test_the_merge_poll_tells_the_open_room_once_the_pr_merges_and_not_before(
     launches = tmp_path / "home" / ".holdspeak" / "agent_launches.json"
     github = FakeGitHub()
     monkeypatch.setattr(factory_launch, "DEFAULT_LAUNCHES_PATH", launches)
-    monkeypatch.setattr(follow_through, "POLL_SECONDS", 1)
+    monkeypatch.setattr(follow_through, "POLL_SECONDS", 0.3)  # fast diet: was 1 s
     monkeypatch.setattr(follow_through, "default_follow_through", lambda db: follow_through.FollowThroughObserver(
         db, ledger=LaunchLedger(launches), registry=SimpleNamespace(get=lambda _id: None), receipts=github,
         attempts=WorkAttemptService(db.work_attempts), control_mode=lambda: "yolo",
@@ -821,7 +827,7 @@ def test_the_merge_poll_tells_the_open_room_once_the_pr_merges_and_not_before(
 
         github.merge()
         assert _wait(lambda: bool(desk_changed()), timeout=10), frames
-        time.sleep(2.5)  # two more polls: the closed flight is not announced again
+        time.sleep(1.0)  # three more polls: the closed flight is not announced again
         [frame] = desk_changed()
         data = frame["data"]
         changes = data["changes"]

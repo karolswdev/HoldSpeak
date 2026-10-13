@@ -71,7 +71,7 @@ class _FetchHandler(BaseHTTPRequestHandler):
             self.end_headers()
             return
         if self.path == "/slow":
-            time.sleep(10.2)
+            time.sleep(1.5)  # past the reader's timeout in the test below
         body = (
             b"BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nUID:basic-1\r\n"
             b"DTSTART:20260827T100000Z\r\nDTEND:20260827T110000Z\r\n"
@@ -159,9 +159,11 @@ def test_reader_rejects_redirect_timeout_and_oversize_before_projection(
     db: Database, local_http_server: str
 ) -> None:
     reader = CalendarSourceReader()
-    # This is the production 10-second socket timeout against a live delayed
-    # local socket, not a mocked transport timeout.
+    # The production timeout is 10 s. The same socket timeout runs against a
+    # live delayed local socket (not a mocked transport timeout), shortened
+    # on this reader so the test does not wait out 10 s (fast diet 2026-10-12).
     assert reader.timeout_seconds == 10.0
+    reader.timeout_seconds = 0.5
 
     with pytest.raises(CalendarSourceError) as redirect:
         reader._read_https(f"{local_http_server}/redirect")
