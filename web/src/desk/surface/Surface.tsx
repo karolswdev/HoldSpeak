@@ -241,9 +241,12 @@ export function SurfaceState({
   actionLabel?: string;
   children?: ReactNode;
 }) {
+  // aria-busy: the region is still reading. The desk sweep (and a screen
+  // reader) waits on it; without it a window that showed only this glyph read
+  // as settled, and what drew in after its read moved under load.
   if (loading)
     return (
-      <div className="surface-state" data-kind="loading" role="status">
+      <div className="surface-state" data-kind="loading" role="status" aria-busy="true">
         <span className="surface-state-glyph" aria-hidden>
           ◌
         </span>

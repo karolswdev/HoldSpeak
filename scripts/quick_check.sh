@@ -104,7 +104,12 @@ swept="$(grep -oE '[0-9]+ passed' "$H/sweep.log" | tail -1 | grep -oE '[0-9]+' |
 if grep -qiE 'skipped' "$H/sweep.log"; then
   echo "   the desk sweep SKIPPED (is Playwright installed?): RED"; fail=1
 elif [ "$src" != 0 ]; then
-  echo "   the desk sweep failed (rc=$src): RED"; fail=1
+  # A red gate says why: the first error lines here, the whole log kept
+  # (the scratch HOME is removed on exit; "92 errors" once left no trace).
+  kept=".tmp/quick-check/sweep-$(date +%Y%m%d-%H%M%S).log"
+  mkdir -p .tmp/quick-check && cp "$H/sweep.log" "$kept"
+  grep -E '^E  ' "$H/sweep.log" | head -15 | cut -c1-220 | sed 's/^/   /'
+  echo "   the desk sweep failed (rc=$src): RED (log: $kept)"; fail=1
 elif [ "${swept:-0}" -lt "$SWEEP_MIN" ]; then
   echo "   the desk sweep ran ${swept:-0} cases, under the floor of $SWEEP_MIN: RED"; fail=1
 fi

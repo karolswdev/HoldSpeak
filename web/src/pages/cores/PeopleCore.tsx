@@ -263,14 +263,19 @@ export function PeopleCore({ hero, scope }: CoreProps) {
   const personOpen = Boolean(selectedId || requestedRelationshipId);
   const rosterKey = relationships.map((row) => row.id).join("|");
   const [nextByPerson, setNextByPerson] = useState<Record<string, RosterNext> | null>(null);
+  // The roster whose next-1:1 read has ended (read or failed). Until it ends
+  // the roster says it is reading: the Next 1:1 plate it adds lands above the
+  // rows and reorders them (rows moved 153 px under load: the desk sweep).
+  const [nextReadFor, setNextReadFor] = useState<string | null>(null);
   useEffect(() => {
     if (personOpen || !rosterKey) return;
     let live = true;
     void apiFetch<{ upcoming?: Array<Record<string, unknown>> }>("/api/door")
-      .then((door) => { if (live) setNextByPerson(nextOneOnOnes(door.upcoming ?? [])); })
-      .catch(() => { if (live) setNextByPerson(null); });
+      .then((door) => { if (live) { setNextByPerson(nextOneOnOnes(door.upcoming ?? [])); setNextReadFor(rosterKey); } })
+      .catch(() => { if (live) { setNextByPerson(null); setNextReadFor(rosterKey); } });
     return () => { live = false; };
   }, [rosterKey, personOpen]);
+  const nextReading = !personOpen && Boolean(rosterKey) && nextReadFor !== rosterKey;
   const rowFacts = useMemo<Record<string, RowFacts>>(() => Object.fromEntries(relationships.map((row) => [row.id, {
     next: nextByPerson?.[row.id]?.startsAt ?? null,
     known: nextByPerson !== null,
@@ -434,6 +439,7 @@ export function PeopleCore({ hero, scope }: CoreProps) {
         empty band above it); a person's page has no head verb. */}
     {renderHeroSlot(hero, peopleHead ? null : verbs, failureRow)}
     {peopleHead}
+    {nextReading ? <span hidden aria-busy="true" data-testid="people-next-reading" /> : null}
     {nextPlate}
     <SurfaceSplit
       detailOpen={Boolean(selected)}
