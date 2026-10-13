@@ -367,3 +367,9 @@ beside it.
 - `test_firstrun_heard_glass.py` -> `tests/e2e/test_firstrun_glass.py` (the real
   local-AI walk and the live-mic tracks); the blocked-mic leg is `FirstRun.test.tsx`.
 - `test_hs202_03_species_glass.py` -> `tests/e2e/test_menus_glass.py` (whole).
+# Parked by the diet, push 2: lane e2e-high-1, Send (2026-10-12)
+
+- `test_philo11_05a_brief_decision_send_glass.py` -> `tests/e2e/test_send_glass.py`
+  (the Chair's meeting wells and the 44 px picker at 393). The brief,
+  decision and record wells: `SendWell.test.tsx`, `room172proposals.test.tsx`;
+  the brief to Slack: `tests/unit/test_brief_send_carries_no_people.py`.

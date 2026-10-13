@@ -32,6 +32,42 @@ STAND-INS: `Slack #leads` and `PAY-118` are destinations added to the read by
 a Playwright route; their preview is the hub's real render through the FILE
 destination. NOTHING LEAVES THE MACHINE. `Team updates` is a REAL FILE
 destination in a scratch folder.
+
+Also here (lane e2e-high-1):
+
+The SEND well in a real browser: the Chair's meeting rows, at 393 by touch.
+
+Kept by the test diet (push 2, 2026-10-12), one file for the Send species.
+What stays needs a real browser: at 393 the form picker is a 44 px target
+and owns all nine points of it (touch geometry); the send from the Chair's
+meeting row is pressed through to the hub's row and the kernel receipt.
+Was tests/e2e/test_philo11_05a_brief_decision_send_glass.py; its brief,
+decision and decision-record wells are
+web/src/desk/surface/send/__tests__/SendWell.test.tsx (each face sends its
+own document_ref) and room172proposals.test.tsx; the brief to Slack carries
+no People data in tests/unit/test_brief_send_carries_no_people.py.
+
+PHILO-11-05a -- the SEND well on the brief and decision faces, fenced AS
+RENDERED through the real hub on an isolated HOME at 1440x900 and 393x852.
+
+Built to the owner's ratified canvases (phase-11 story 03, "Yes..."): boards
+A1-A6 (the brief on the Chair and in Intelligence -> BRIEF), B1-B5 (the
+decision window, the Room's DECISIONS & COMMITMENTS rows, Intelligence ->
+DECISIONS), T2 (PREVIEW CHANGED -> a fresh preview -> another press) and T3
+(the Chair after its last brief item is triaged). Each face sends its OWN
+``document_ref``; each fence reads the hub's send row and compares the face's
+outcome with it in the same test.
+
+Every fixture comes from a real producer: the brief from
+``POST /api/brief/generate``; the desk decision from ``POST /api/decisions``
+and its change from ``PUT /api/decisions/<id>``; the meeting-proposal record
+from the decision_capture artifact through ``ProposalBridgeService`` (what the
+intel queue runs) and ``POST /api/proposals/<id>/confirm``; a plain record from
+``DecisionRecordService.create``; the prepared sends from ``channel.prepare``
+(``POST /api/channels/sends``) by a remote agent credential issued through the
+real Settings route. The recorded meeting itself is written through the
+product's DB layer (no route records a meeting without audio; the canvas did
+the same). Destinations are folders: nothing leaves the machine.
 """
 from __future__ import annotations
 
@@ -46,6 +82,8 @@ import pytest
 
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _rendered_text_faults, _settle, park_builtin_folder
 from tests._evidence import evidence_dir
+from ._doc_send_glass import Boards
+from .chair_windows import open_chair_window
 
 pytest.importorskip("playwright.sync_api", reason="the send glass needs Playwright")
 
@@ -505,3 +543,375 @@ class TestSendGlass:
         self._glass("C5-17b")
         self._shot("C5-17b-room-second-read-retry")
         assert self._db_sends("project_update:upd-ledger-1") == []
+
+
+# ══ lane e2e-high-1 ════════════════════════════════════════
+
+H1_TOKEN = "philo11-05a-doc-send"
+
+H1_SHOTS = evidence_dir("pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-05a-proof/shots")
+
+H1_SIZES = {1440: 900, 393: 852}
+
+WIDTHS = list(H1_SIZES)
+
+H1_T = 20_000
+
+PROJECT = "Payments ledger cutover"
+
+REMOTE_HOST = "192.0.2.123"  # TEST-NET-1: never loopback
+
+AGENT_ID = "remote-project-agent"
+
+# PHILO-13-11 (slice two): the Chair is four windows (.chair-window); the
+# Intelligence and decision seats are the OTHER windows.
+DD = ".desk-window:not(.chair-window) [data-seat=desk-decision]"         # the decision window
+
+# The species' stamp (features/channels/channels.ts `stamp`), in the page's zone.
+STAMP_JS = """(iso) => { const M = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+  const d = new Date(iso); const p = (n) => String(n).padStart(2, "0");
+  return `${M[d.getMonth()]} ${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`; }"""
+
+def row(scope: str, name: str) -> str:
+    return f"{scope} [data-testid=destination-row]:has([data-destination='{name}'])"
+
+def opened(scope: str, name: str) -> str:
+    return f"{scope} [data-testid=send-open][data-destination='{name}']"
+
+WEBHOOK = "https://hooks.slack.com/services/T0P11/B0P11/philo11-05a-synthetic-credential"
+
+SLACK = "Slack #leads"
+
+class _Edge:
+    """The recording HTTPS edge: every request is recorded, then answered with Slack's exact `200 ok`."""
+
+    def __init__(self) -> None:
+        self.requests: list[dict[str, Any]] = []
+
+    def handler(self) -> Any:
+        import http.client
+        import io
+        import urllib.request
+        import urllib.response
+
+        edge = self
+
+        class Recording(urllib.request.BaseHandler):
+            def https_open(self, req: Any) -> Any:
+                edge.requests.append({"host": req.host, "url": req.full_url, "method": req.get_method(),
+                                      "body": bytes(req.data or b"")})
+                result = urllib.response.addinfourl(io.BytesIO(b"ok"), http.client.parse_headers(io.BytesIO(b"\r\n")),
+                                                    req.full_url, 200)
+                result.msg = "recorded"
+                return result
+
+        return Recording()
+
+class _Rig:
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        _ensure_build()
+        self.tmp = tmp_path
+        # The People store on a file key in this HOME (no macOS Keychain in an isolated HOME).
+        keyfile = tmp_path / "people.key"
+        keyfile.write_text("{}")
+        keyfile.chmod(0o600)
+        monkeypatch.setenv("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(keyfile))
+        # Slack's transport seams only, in the hub's own process (part B's pattern): a MEMORY
+        # key store and a recording HTTPS edge that answers Slack's exact `200 ok`. The kernel
+        # admission, the egress child and the real opener run; the OS keychain is never
+        # reached (a guard fails the test if it is); nothing leaves the machine.
+        import keyring
+        from holdspeak.services import channel_slack
+
+        self.keys = channel_slack.MemorySlackKeyStore()
+        self.edge = _Edge()
+        monkeypatch.setattr(channel_slack, "KEY_STORE", lambda: self.keys)
+        monkeypatch.setattr(channel_slack, "HTTPS_HANDLER", self.edge.handler)
+        monkeypatch.setattr(keyring, "get_keyring", lambda: (_ for _ in ()).throw(
+            AssertionError("the glass reached the real keychain")))
+        server, base = _boot(tmp_path, monkeypatch, token=H1_TOKEN)
+        park_builtin_folder()  # the desk these boards were drawn on (glass_infra.park_builtin_folder)
+        self.server, self.base = server, base
+        try:
+            yield
+        finally:
+            server.stop()
+
+    # ── the rig ──────────────────────────────────────────────────────────
+
+    def _open(self, pw: Any, width: int) -> tuple[Any, Any, list[str]]:
+        # The wheel moves the page in one step (no smooth-scroll animation under the probe).
+        browser = pw.chromium.launch(headless=True, args=["--disable-smooth-scrolling"])
+        ctx = browser.new_context(viewport={"width": width, "height": H1_SIZES[width]}, device_scale_factor=1)
+        page = ctx.new_page()
+        page.set_default_timeout(45_000)
+        errors: list[str] = []
+        page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+        page.goto(f"{self.base}/?token={H1_TOKEN}", wait_until="load")
+        _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=H1_TOKEN)
+        return browser, page, errors
+
+    def _reload(self, page: Any, chair: str | None = None) -> None:
+        page.reload(wait_until="load")
+        _normal_chair(page)
+        page.wait_for_timeout(1200)
+        # PHILO-14 A1 (#939): the Chair is the screen; its windows start closed.
+        # The seat under test (Brief, The week) opens by the owner's gesture:
+        # Window ▸ Chair ▸ <name> at 1440, Go ▸ <name> at 393.
+        if chair:
+            open_chair_window(page, chair)
+            page.wait_for_timeout(600)
+        _settle(page)
+
+    def _dest(self, page: Any, name: str) -> tuple[str, Path]:
+        folder = (self.tmp / "Reports" / name.replace(" ", "")).resolve()
+        folder.mkdir(parents=True, exist_ok=True)
+        did = _api(page, "POST", "/api/channels/destinations",
+                   {"name": name, "channel": "file", "folder": str(folder)}, token=H1_TOKEN)["destination"]["id"]
+        return did, folder
+
+    @staticmethod
+    def _sends(page: Any, ref: str) -> list[dict[str, Any]]:
+        return _api(page, "GET", f"/api/channels/sends?document_ref={ref}", token=H1_TOKEN)["sends"]
+
+    @staticmethod
+    def _kernel(operation_id: str) -> dict[str, Any]:
+        """The kernel's own record of an operation: its row and its ONE terminal receipt."""
+        from holdspeak.db import get_database
+
+        with get_database()._connection() as conn:
+            row = conn.execute(
+                "SELECT o.operation_id, o.name, o.state, o.principal_kind, o.principal_identity, o.target_ref,"
+                " r.state AS receipt_state, r.outcome AS receipt_outcome, r.result_ref,"
+                " (SELECT COUNT(*) FROM kernel_receipts x WHERE x.operation_id = o.operation_id) AS receipts"
+                " FROM kernel_operations o LEFT JOIN kernel_receipts r ON r.operation_id = o.operation_id"
+                " WHERE o.operation_id = ?", (operation_id,)).fetchone()
+        assert row is not None, operation_id
+        return dict(row)
+
+    @staticmethod
+    def _kernel_refusals(name: str, outcome: str) -> list[dict[str, Any]]:
+        from holdspeak.db import get_database
+
+        with get_database()._connection() as conn:
+            return [dict(r) for r in conn.execute(
+                "SELECT o.operation_id, o.name, o.state, o.target_ref, r.state AS receipt_state, r.outcome AS receipt_outcome"
+                " FROM kernel_operations o JOIN kernel_receipts r ON r.operation_id = o.operation_id"
+                " WHERE o.name = ? AND r.outcome = ?", (name, outcome))]
+
+    def _face_row_receipt(self, send: dict[str, Any], ref: str, *, principal: str = "owner") -> dict[str, Any]:
+        """face = row = receipt: the hub's send row and the kernel's receipt of its send
+        operation agree (sent -> succeeded, the same document, one receipt)."""
+        k = self._kernel(send["send_operation_id"])
+        assert k["name"] == "channel.send" and k["receipts"] == 1, k
+        assert (send["state"], k["state"], k["receipt_state"]) == ("sent", "succeeded", "succeeded"), (send, k)
+        assert k["result_ref"] == f"channel_send:{send['id']}", (k, send["id"])
+        assert k["target_ref"] in (f"document:{ref}", f"channel_send:{send['id']}"), (k, ref)
+        assert k["principal_kind"] == principal, k
+        return k
+
+    @staticmethod
+    def _slack(page: Any) -> str:
+        """A Slack destination through the real routes: the held webhook save, then the destination."""
+        key_ref = _api(page, "POST", "/api/channels/slack-webhooks", {"webhook_url": WEBHOOK}, token=H1_TOKEN)["key_ref"]
+        return _api(page, "POST", "/api/channels/destinations",
+                    {"name": SLACK, "channel": "slack", "key_ref": key_ref, "channel_label": "#leads"},
+                    token=H1_TOKEN)["destination"]["id"]
+
+    @staticmethod
+    def _focus(page: Any) -> None:
+        page.evaluate("window.dispatchEvent(new Event('focus'))")
+        page.wait_for_timeout(800)
+
+    @staticmethod
+    def _stamp(page: Any, iso: str) -> str:
+        return page.evaluate(STAMP_JS, iso)
+
+    def _agent(self) -> Any:
+        from starlette.testclient import TestClient
+
+        client = TestClient(self.server.app, client=(REMOTE_HOST, 50000))
+        headers = {"Authorization": f"Bearer {H1_TOKEN}"}
+        assert client.put("/api/settings/remote", json={"enabled": True}, headers=headers).status_code == 200
+        issued = client.post("/api/settings/remote/credentials", json={"identity": AGENT_ID, "palette": "PROJECT"},
+                             headers=headers)
+        assert issued.status_code == 200, issued.text
+        agent = TestClient(self.server.app, client=(REMOTE_HOST, 50001))
+        agent.headers.pop("x-holdspeak-token", None)
+        agent.headers.update({"Authorization": f"Bearer {issued.json()['token']}"})
+        return agent
+
+    @staticmethod
+    def _pick(page: Any, scope: str, name: str) -> None:
+        if not page.locator(opened(scope, name)).count():
+            page.locator(row(scope, name)).first.click()
+        page.locator(f"{opened(scope, name)} [data-testid=send-preview], {opened(scope, name)} [data-testid=preview-refused], "
+                     f"{opened(scope, name)} [data-testid=preview-failed]").first.wait_for(timeout=H1_T)
+        page.wait_for_timeout(400)
+
+    @staticmethod
+    def _unpick(page: Any, scope: str, name: str) -> None:
+        if page.locator(opened(scope, name)).count():
+            page.locator(row(scope, name)).first.click()
+            page.locator(opened(scope, name)).wait_for(state="detached", timeout=H1_T)
+            page.wait_for_timeout(300)
+
+    @staticmethod
+    def _press(page: Any, scope: str, name: str, expect: str = "[data-receipt=latest][data-state=sent]") -> None:
+        sel = f"{opened(scope, name)} [data-testid=send-verb]"
+        page.wait_for_function("(s) => { const b = document.querySelector(s); return b && !b.disabled; }", arg=sel, timeout=H1_T)
+        page.locator(sel).first.click()
+        page.locator(f"{opened(scope, name)} {expect}").first.wait_for(timeout=H1_T)
+        page.wait_for_timeout(700)
+
+    @staticmethod
+    def _text(page: Any, sel: str) -> str:
+        return " ".join(page.locator(sel).first.inner_text().split())
+
+    @staticmethod
+    def _close_windows(page: Any) -> None:
+        for _ in range(6):
+            btn = page.locator(".desk-window:not(.chair-window) [aria-label^='Close ']")
+            if not btn.count():
+                break
+            btn.last.click()
+            page.wait_for_timeout(500)
+
+    @staticmethod
+    def _open_decision(page: Any, title: str, decision_id: str) -> None:
+        page.locator("[aria-controls=desk-tool-shelf]").first.click()
+        page.locator("[aria-controls=desk-palette-listbox]").fill(title)
+        page.locator(f"[id='desk-palette-option-decision:{decision_id}']").click()
+        page.locator(f"{DD} [data-testid=send-well]").wait_for(timeout=H1_T)
+        page.wait_for_timeout(800)
+        _settle(page)
+
+    @staticmethod
+    def _open_intelligence(page: Any, tab: str | None = None) -> None:
+        page.locator("button.desk-dock-app").first.click()
+        page.locator(".desk-window .intelligence-pullout").first.wait_for(timeout=H1_T)
+        # PHILO-17: the window opens on Day; the Brief is a tab, and its Send
+        # well starts folded (one row; Send opens it).
+        page.locator(".intelligence-segment", has_text=tab or "Brief").first.click()
+        if not tab:
+            page.get_by_test_id("brief-send-toggle").first.click()
+        page.wait_for_timeout(900)
+        _settle(page)
+
+class TestChairMeetingWells(_Rig):
+    # ── C6b: the Chair's MEETINGS rows (both branches) ──
+
+    @pytest.mark.e2e
+    @pytest.mark.timeout(900)
+    @pytest.mark.parametrize("width", WIDTHS)
+    def test_the_chair_meeting_wells(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+
+        from holdspeak.db import get_database
+        from holdspeak.meeting_session.models import IntelSnapshot, MeetingState, TranscriptSegment
+
+        shots = Boards(H1_SHOTS, width)
+        with sync_playwright() as pw:
+            browser, page, errors = self._open(pw, width)
+            try:
+                db = get_database()
+                now = datetime.now().replace(microsecond=0)
+                seg = [TranscriptSegment(text="Two write paths still hit the old ledger.", speaker="Me", start_time=4.0, end_time=9.0)]
+                # The healthy branch: a recorded meeting with its stored summary.
+                db.meetings.save_meeting(MeetingState(
+                    id="c6-sync", started_at=now - timedelta(hours=2), ended_at=now - timedelta(hours=1, minutes=15),
+                    title="Ledger cutover sync", segments=seg, intel_status="completed",
+                    intel=IntelSnapshot(timestamp=0.0, summary="The team agreed to freeze the old ledger on Nov 3.",
+                                        topics=["cutover"])))
+                # The retained-summary branch: a stored summary, then a re-run that failed (the
+                # intel queue's own enqueue -> claim -> fail); the Chair keeps the summary with its
+                # status facts.
+                db.meetings.save_meeting(MeetingState(
+                    id="c6-retry", started_at=now - timedelta(hours=1), ended_at=now - timedelta(minutes=30),
+                    title="Vendor escalation", segments=seg, intel_status="completed",
+                    intel=IntelSnapshot(timestamp=0.0, summary="The vendor owes a fix for the export by Friday.",
+                                        topics=["vendor"])))
+                db.intel.enqueue_intel_job("c6-retry", transcript_hash="c6-retry-hash")
+                claimed = db.intel.claim_next_intel_job(include_scheduled=True)
+                assert claimed is not None and claimed.meeting_id == "c6-retry", claimed
+                db.intel.fail_intel_job("c6-retry", "engine answered 500")
+                team, team_dir = self._dest(page, "Team folder")
+                self._reload(page, "The week")
+
+                ok_row = "li.surface-ledger-row:has(> [data-testid=arrival-meeting-row]):has([data-send=well][data-doc$=':c6-sync'])"
+                rt_row = "li.surface-ledger-row:has(> [data-testid=arrival-meeting-row]):has([data-send=well][data-doc$=':c6-retry'])"
+                OK = f"{ok_row} [data-seat=meeting]"
+                RT = f"{rt_row} [data-seat=meeting]"
+                page.locator(f"{OK} [data-testid=destination-row]").first.wait_for(timeout=H1_T)
+                page.locator(f"{RT} [data-testid=destination-row]").first.wait_for(timeout=H1_T)
+                page.wait_for_timeout(600)
+
+                # PHILO-13-11 (slice two): at 1440 The week is 36 % of the right column;
+                # the meeting well is read with the window zoomed (board C1-4b).
+                if width > 720:
+                    page.get_by_role("button", name="Zoom The week").click()
+                    page.wait_for_timeout(600)
+                # C6b, the healthy branch: SUMMARY, then SEND with the form picker (44 px at 393).
+                picker = f"{OK} [data-testid=doc-forms] select, {OK} [data-testid=doc-forms] .btn"
+                c6 = shots.shoot(page, "C6b-chair-meetings-row-well", OK,
+                                 [f"{ok_row} .meeting-summary-slab, {ok_row} [data-testid=meeting-summary-text]",
+                                  f"{OK} [data-testid=doc-forms]", f"{OK} [data-testid=destination-row]"],
+                                 seat=f"{ok_row} [data-testid=arrival-meeting-row]")
+                assert "meeting_summary:c6-sync" in c6["wells"], c6["wells"]
+                pick_box = page.evaluate("(s) => { const e = document.querySelector(s); const r = e.getBoundingClientRect(); return [r.width, r.height, e.tagName]; }", picker)
+                c6["picker_box"] = pick_box
+                picker_probe = [o for o in c6["pointer"]["owned"] if o["text"].startswith("Summary") or o["text"] == "Document"]
+                c6["picker_owned"] = picker_probe
+                assert picker_probe, c6["pointer"]
+                if width == 393:
+                    # G4 on the Chair: the picker is 44 px tall and owns all nine points of its target.
+                    assert pick_box[1] >= 44, pick_box
+                    assert all(min(o["target"]) >= 44 for o in picker_probe), picker_probe
+                    # PHILO-13-11 (slice two, R2): the old law here scrolled the picker UNDER
+                    # the Chair's sticky capture bar and proved the wheel brought it out. The
+                    # capture bar is its own window now (on demand from Speak at 393): no bar
+                    # floats over The week, so nothing can sit under it. Proven structurally,
+                    # and the picker still owns all nine points of its 44 x 44 target.
+                    bars_over_week = page.locator(".chair-window--week [data-testid=arrival-capture-bar]").count()
+                    owned_nine = page.evaluate("""(sel) => { const p = document.querySelector(sel); p.scrollIntoView({block: 'center'});
+                          const r = p.getBoundingClientRect();
+                          const cx = r.left + r.width / 2, cy = r.top + r.height / 2, w = Math.max(44, r.width), h = Math.max(44, r.height);
+                          const L = cx - w / 2 + 1, R = cx + w / 2 - 1, H1_T = cy - h / 2 + 1, B = cy + h / 2 - 1;
+                          return [[cx, cy], [cx, H1_T], [R, cy], [cx, B], [L, cy], [L, H1_T], [R, H1_T], [L, B], [R, B]]
+                            .map(([x, y]) => { const e = document.elementFromPoint(x, y); return !!e && p.contains(e); }); }""", picker)
+                    c6["picker_after_scroll"] = {"capture_bars_over_the_week": bars_over_week, "nine_points_owned": owned_nine}
+                    assert bars_over_week == 0 and all(owned_nine), c6["picker_after_scroll"]
+                    shots.shoot(page, "C6f-chair-picker-scrolled-clear-393".replace("-393", ""), OK, [f"{OK} [data-testid=doc-forms]"], seat=None)
+
+                # The send leg from the Chair row: face = hub row = kernel receipt.
+                self._pick(page, OK, "Team folder")
+                self._press(page, OK, "Team folder")
+                mref = "meeting_summary:c6-sync"
+                hub = self._sends(page, mref)
+                assert [(s["document_ref"], s["state"]) for s in hub] == [(mref, "sent")], hub
+                mpath = hub[0]["proof"]["path"]
+                assert Path(mpath).parent == team_dir and "freeze the old ledger" in Path(mpath).read_text()
+                c6s = shots.shoot(page, "C6c-chair-meetings-row-saved", OK,
+                                  [f"{opened(OK, 'Team folder')} [data-receipt=latest]"], block="center")
+                assert c6s["receipts"] == [{"text": f"✓ SAVED {mpath}", "state": "sent", "code": None}], c6s["receipts"]
+                c6s["kernel_send"] = self._face_row_receipt(hub[0], mref)
+                self._unpick(page, OK, "Team folder")
+
+                # C6b, the retained-summary branch: the summary with its status facts, then SEND.
+                c6r = shots.shoot(page, "C6e-chair-retained-summary-well", RT,
+                                  [f"{rt_row} [data-testid=arrival-summary-status]", f"{RT} [data-testid=doc-forms]",
+                                   f"{RT} [data-testid=destination-row]"],
+                                  seat=f"{rt_row} [data-testid=arrival-meeting-row]")
+                assert "meeting_summary:c6-retry" in c6r["wells"], c6r["wells"]
+                assert "FAILED" in self._text(page, f"{rt_row} [data-testid=arrival-summary-status]")
+
+                if width > 720:   # PHILO-13-11: the Chair's screen again (The week un-zoomed)
+                    page.get_by_role("button", name="Zoom The week").click()
+                    page.wait_for_timeout(400)
+                shots.write("chair-meetings-slack", {"hub_sends": {"meeting": hub},
+                                                     "edge_requests": len(self.edge.requests)})
+                shots.assert_clean()
+                assert not errors, errors
+            finally:
+                browser.close()
