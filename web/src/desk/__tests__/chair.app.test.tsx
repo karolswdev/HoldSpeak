@@ -22,6 +22,9 @@ import { ChairHome } from "../chair/ChairHome";
 import { openChairWindows } from "../chair/__tests__/fixtures/openChairWindows";
 import { nextWord } from "../needs/needsFace";
 import WEEK_STRIP from "./wire/door.week-strip.wire.json";
+import { unfinishedThoughts } from "../thoughts";
+import THOUGHTS_ONE from "../../test/wire/thoughts-unfinished.one.wire.json";
+import THOUGHTS_NONE from "../../test/wire/thoughts-unfinished.none.wire.json";
 
 vi.mock("../../lib/api", async (original) => ({
   ...(await original<typeof import("../../lib/api")>()),
@@ -31,7 +34,8 @@ vi.mock("../../runtime/RuntimeBus", () => ({
   useRuntimeBus: () => ({ state: "connected", lastFrame: null, subscribe: () => () => undefined }),
   useRuntimeFrame: () => null,
 }));
-vi.mock("../thoughts", () => ({ unfinishedThoughts: async () => ({ items: [] }) }));
+// The THOUGHTS block below swaps in the hub's recorded answer; every other test reads none.
+vi.mock("../thoughts", () => ({ unfinishedThoughts: vi.fn(async () => ({ items: [] })) }));
 vi.mock("../components/MicButton", () => ({ MicButton: () => null }));
 
 // Wednesday 2026-10-07 10:00 in Denver (16:00 UTC).
@@ -518,5 +522,48 @@ describe("The capture bar: Schedule", () => {
     expect(posts[0][1].json.title).toBe("Rail form recording");
     await waitFor(() =>
       expect(useDesk.getState().scheduledRecordings.map((r) => r.title)).toEqual(["Rail form recording"]));
+  });
+});
+
+// HS-170-04 (the arrival glass) and HS-141 (the Chair geometry): The week
+// lists an unfinished thought in THOUGHTS, and has no THOUGHTS section with
+// none. The hub's own answers to GET /api/thoughts?state=unfinished&limit=3
+// before and after one typed thought (tests/integration/test_face_wire_fences.py).
+describe("The week: THOUGHTS on the recorded hub", () => {
+  afterEach(() => {
+    vi.mocked(unfinishedThoughts).mockImplementation(async () => ({ items: [], next_cursor: null }));
+  });
+
+  it("an unfinished thought is a THOUGHTS row with Continue; the press opens its note", async () => {
+    // replaces: tests/e2e/test_hs170_arrival_glass.py::TestArrivalGlass::test_arrival_needs_you_1440 (the THOUGHTS leg)
+    // replaces: tests/e2e/test_hs141_chair_geometry.py::test_normal_chair_stays_inside_chrome_at_all_owner_widths (the thought-row leg)
+    const answer = structuredClone(THOUGHTS_ONE.wire) as any;
+    vi.mocked(unfinishedThoughts).mockImplementation(async () => structuredClone(answer));
+    hub(door([], week({}, false)));
+    const openPullout = vi.fn();
+    const realOpen = useDesk.getState().openPullout;
+    useDesk.setState({ openPullout } as never);
+    try {
+      render(<ChairHome />);
+      const section = await within(weekBody()).findByTestId("arrival-thoughts");
+      expect(section.textContent).toContain("THOUGHTS");
+      const rows = within(section).getAllByTestId("arrival-thought-row");
+      expect(rows).toHaveLength(1);
+      expect(rows[0].textContent).toContain("Migrate the auth service");
+      fireEvent.click(within(rows[0]).getByRole("button", { name: "Continue" }));
+      expect(openPullout).toHaveBeenCalledWith(`note:${answer.items[0].working_note_id}`);
+    } finally {
+      useDesk.setState({ openPullout: realOpen } as never);
+    }
+  });
+
+  it("no unfinished thought: no THOUGHTS section", async () => {
+    // replaces: tests/e2e/test_hs170_arrival_glass.py::TestArrivalGlass::test_arrival_quiet_1440 (the THOUGHTS leg)
+    vi.mocked(unfinishedThoughts).mockImplementation(async () => structuredClone(THOUGHTS_NONE.wire) as any);
+    hub(door([], week({}, false)));
+    render(<ChairHome />);
+    await waitFor(() => expect(vi.mocked(unfinishedThoughts)).toHaveBeenCalled());
+    await waitFor(() => expect(weekBody()).toBeTruthy());
+    expect(screen.queryByTestId("arrival-thoughts")).toBeNull();
   });
 });

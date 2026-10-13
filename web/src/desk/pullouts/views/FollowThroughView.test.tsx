@@ -4,6 +4,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FollowThroughView } from "./FollowThroughView";
+import HONEST_BOARD from "../../../test/wire/follow-through-board.honest-faces.wire.json";
 
 // ---------------------------------------------------------------------------
 // mocks
@@ -132,5 +133,20 @@ describe("FollowThroughView", () => {
 
     // Only one person chip (the mapped one).
     expect(screen.queryAllByTestId("follow-through-person-chip")).toHaveLength(1);
+  });
+});
+
+// Honest faces (inventory 2026-10-03): a lane name is a state, not a counted
+// noun. The hub's own board for the honest-faces seed: two unowned meeting
+// actions in To review (tests/integration/test_face_wire_fences.py).
+describe("FollowThroughView lane counts on the recorded hub", () => {
+  it("two cards to review read 2 TO REVIEW, never TO REVIEWS or NOWS", async () => {
+    // replaces: tests/e2e/test_honest_faces_glass.py::test_intelligence_lane_names_and_decision_rows (the Follow-through leg)
+    apiFetch.mockResolvedValue(structuredClone(HONEST_BOARD.wire));
+    const { container } = render(<FollowThroughView />);
+    await screen.findByText("Write the rollback runbook");
+    expect(screen.getByText("Pilot OTel in billing")).toBeTruthy();
+    expect(screen.getByText("2 TO REVIEW")).toBeTruthy();
+    expect(container.textContent ?? "").not.toMatch(/\b\d+ (NOWS|TO REVIEWS|UNASSIGNEDS|WAITINGS|OVERDUES)\b/);
   });
 });

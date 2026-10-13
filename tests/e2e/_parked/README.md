@@ -429,3 +429,23 @@ and measures other files import moved into rig modules (`chair_rig.py`,
 - `test_philo17_phonepass_glass.py`: the rows-hold-still cases moved to
   `tests/e2e/test_room_glass.py`; the People caption check is the desk sweep's
   `overlap` fence on the bare desk, which names that defect in `KNOWN_REDS`.
+
+## Push 2, lane e2e-low-1-faces (2026-10-12)
+
+- `test_honest_faces_glass.py`: `tests/unit/test_desk_needs_you.py` (Room rows
+  OWNER · UNKNOWN; one Door card per action), `tests/unit/test_desk_memory.py`
+  (LINKED, never NO SOURCE), `tests/unit/test_desk_palette.py` (the decision is a
+  `decision:` hit), `tests/integration/test_face_wire_fences.py` (the recorded
+  answers), `roomInFlight.f2.test.tsx` (Open goes to Follow-through),
+  `FollowThroughView.test.tsx` (2 TO REVIEW), `DecisionsView.test.tsx` (no D-hex
+  id), `paletteMemory.test.tsx` (a decision hit opens Decisions on it),
+  `settings.app.test.tsx`, `trust.app.test.tsx`, `meetingsHeadlineDefault.philo1501.test.ts`,
+  `meetingKit.phase16.test.tsx`, `memory.app.test.tsx`.
+- `test_hs170_arrival_glass.py`: `chair.app.test.tsx` (THOUGHTS with one thought and
+  with none), `NeedsDrawer.test.tsx` (the muted dim), the drawer, NEXT, meetings and
+  Brief tests it cites (needsYou.app, chairWindows.philo1311, arrivalSummary*,
+  briefLoadAndDate.philo303, triagedHeadline.philo404), and the desk sweep
+  (`chair:needs`: library Button, fit, clipped).
+- `test_hs141_chair_geometry.py`: `tests/e2e/test_philo16_compositor_glass.py`
+  (windows inside the work band), the desk sweep (drawn, fit, overlap), and
+  `chair.app.test.tsx` (the thought row).

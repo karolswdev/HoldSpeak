@@ -1040,3 +1040,24 @@ describe("A2b: a proposal row in Needs you opens the Room with the proposal sele
     expect(useDrawers.getState().drawers).toEqual([]);
   });
 });
+
+// HS-171 (the arrival glass, muted leg): the muted are listed dimmed. The dim
+// is needs.css's `.needs-drawer-muted.surface-section` rule (CSS values are not
+// pinned in vitest: push 2's vitest-scan); this checks the rendered Muted
+// section wears that class.
+describe("NeedsDrawer muted rows are dimmed", () => {
+  it("the Muted section wears needs-drawer-muted", async () => {
+    // replaces: tests/e2e/test_hs170_arrival_glass.py::TestArrivalGlass::test_arrival_muted_1440 (the dim)
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you"))
+        return { ...ANSWER, items: [...ITEMS, { ...ITEMS[4], id: "decision:d-muted", ref: "decision:d-muted", openRef: "decision:d-muted", title: "A muted decision", muted: true }] } as never;
+      return { upcoming: [], calendar_configured: true } as never;
+    });
+    await mount();
+    fireEvent.click(within(screen.getByTestId("needs-filter")).getByRole("button", { name: "Muted" }));
+    const muted = screen.getByTestId("needs-muted");
+    expect(muted.classList.contains("needs-drawer-muted")).toBe(true);
+    expect(muted.classList.contains("surface-section")).toBe(true);
+    expect(within(muted).getByText("A muted decision")).toBeTruthy();
+  });
+});

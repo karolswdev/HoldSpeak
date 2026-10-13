@@ -370,3 +370,38 @@ describe("Conductor F2 K6 on a mounted Room (Astra finding 5)", () => {
     await waitFor(() => expect(screen.queryByText("Write the rollback runbook", { selector: ".surface-primary" })).toBeNull());
   });
 });
+
+// Honest faces (UX-CANON A.10): a Room never says "Clear here" while its
+// meetings hold an action with no owner. The rows' hub fields (kind, why
+// OWNER · UNKNOWN, verb open, action_item_id) are pinned against the real hub
+// in tests/unit/test_desk_needs_you.py::test_a_rooms_meeting_actions_are_its_open_rows_with_owner_unknown.
+describe("Honest faces: a meeting's unowned action is an OPEN HERE row with its Open", () => {
+  beforeEach(() => useAgentFlights.setState({ sessions: [], flights: [], loaded: false }));
+
+  it("Open on a row opens Follow-through on that action", async () => {
+    // replaces: tests/e2e/test_honest_faces_glass.py::test_room_shows_its_meeting_action_as_open
+    // (the press; Follow-through drawing ON the card is needsYou.app.test.tsx "Review's destination")
+    wire([]);
+    const navigations: unknown[] = [];
+    const listen = (e: Event) => navigations.push((e as CustomEvent).detail);
+    window.addEventListener("holdspeak:intelligence-navigate", listen);
+    const openPullout = vi.fn();
+    const realOpen = useDesk.getState().openPullout;
+    useDesk.setState({ openPullout } as never);
+    try {
+      render(<WindowHarness scope="project:p1" />);
+      const rows = await screen.findAllByTestId("needs-you-row", {}, DRAWN);
+      expect(rows).toHaveLength(3);
+      for (const row of rows) expect(row.textContent).toContain("OWNER · UNKNOWN");
+      expect(screen.queryByTestId("needs-you-empty")).toBeNull();
+      expect(screen.getByTestId("room-headline").textContent).toBe("3 open here");
+      const target = rows.find((r) => r.textContent?.includes("Shard the reconciliation job"))!;
+      fireEvent.click(within(target).getByTestId("needs-you-open-action"));
+      expect(openPullout).toHaveBeenCalledWith("intelligence:desk");
+      await waitFor(() => expect(navigations).toEqual([{ view: "follow-through", followThroughId: "ai-recon" }]));
+    } finally {
+      useDesk.setState({ openPullout: realOpen } as never);
+      window.removeEventListener("holdspeak:intelligence-navigate", listen);
+    }
+  });
+});

@@ -277,3 +277,22 @@ def test_the_no_note_made_check_sees_a_thought_made_in_the_gap(hub: Hub) -> None
                                                   "raw_text": "A thought made elsewhere"})
     assert made.status_code in (200, 201), made.text
     assert len(_note_ids(hub)) == len(held) + 1, "the injected thought made no note: the check would be blind"
+
+
+# ── honest faces: a decision is a search hit of its own ───────────────────
+
+
+def test_a_meeting_decision_is_found_by_its_words_as_a_decision(hub: Hub) -> None:
+    """replaces: tests/e2e/test_honest_faces_glass.py::test_a_decision_search_hit_opens_the_decision_and_adds_no_floor_icon (hub half)
+
+    ⌘K asks /api/memory/search; the decision a meeting recorded comes back as
+    a `decision:<id>` hit with its own words (the palette opens it in
+    Intelligence → Decisions: paletteMemory.test.tsx)."""
+    from test_desk_needs_you import _seed_honest_faces
+
+    _seed_honest_faces(hub)
+    lifecycle = hub.db.decisions.list(meeting_id="m-standup")[0]
+    hits = _search(hub, "Freeze the old ledger")
+    decision = [h for h in hits if h["kind"] == "decision"]
+    assert [h["source_ref"] for h in decision] == [f"decision:{lifecycle.id}"], hits
+    assert decision[0]["title"] == "Freeze the old ledger on Nov 5", decision

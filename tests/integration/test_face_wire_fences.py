@@ -374,3 +374,45 @@ def test_schedule_create_reads(hub: Any, tmp_path: Path) -> None:
     listed = _ok(hub.client.get("/api/scheduled-recordings"))
     assert [row["title"] for row in listed["schedules"]] == ["Rail form recording"]
     _fence("scheduled-recordings.list", listed, tmp_path, hub)
+
+
+def test_honest_faces_and_arrival_reads(hub: Any, tmp_path: Path) -> None:
+    """The honest faces' seed (tests/unit/test_desk_needs_you.py::_seed_honest_faces):
+    the Follow-through board (FollowThroughView.test.tsx), every decision
+    (DecisionsView.test.tsx), the ⌘K search hit and its decision read
+    (paletteMemory.test.tsx). The arrival's unfinished thoughts before and after
+    one typed thought (chair.app.test.tsx, the THOUGHTS section).
+
+    replaces: tests/e2e/test_honest_faces_glass.py::test_intelligence_lane_names_and_decision_rows (the hub's answers)
+    replaces: tests/e2e/test_honest_faces_glass.py::test_a_decision_search_hit_opens_the_decision_and_adds_no_floor_icon (the hub's answers)
+    replaces: tests/e2e/test_hs170_arrival_glass.py::TestArrivalGlass (the THOUGHTS section's hub answers)
+    """
+    import uuid
+
+    seeds._seed_honest_faces(hub)
+    _fence("follow-through-board.honest-faces", _ok(hub.client.get("/api/follow-through/board")), tmp_path, hub)
+    _fence("decisions.honest-faces",
+           _ok(hub.client.get("/api/decisions?scope=all&limit=100&offset=0")), tmp_path, hub)
+    # ⌘K: the search hit, and the decision read its opener makes (paletteMemory.test.tsx).
+    _fence("memory-search.honest-faces",
+           _ok(hub.client.get("/api/memory/search", params={"query": "Freeze the old ledger"})), tmp_path, hub)
+    lifecycle = hub.db.decisions.list(meeting_id="m-standup")[0]
+    _fence("decision.honest-faces", _ok(hub.client.get(f"/api/decisions/{lifecycle.id}")), tmp_path, hub)
+
+    from holdspeak.db.seed import apply_seed
+
+    apply_seed(hub.db)  # a fresh desk's Inbox, where a new thought's note lands
+    unfinished = "/api/thoughts?state=unfinished&limit=3"
+    none = _ok(hub.client.get(unfinished))
+    assert none["items"] == [], none
+    _fence("thoughts-unfinished.none", none, tmp_path, hub)
+    _ok(hub.client.post("/api/thoughts", json={
+        "request_id": str(uuid.uuid4()),
+        "raw_text": "Plan to migrate authentication.",
+        "source": {"kind": "typed"},
+        "initial_note": {"title": "Migrate the auth service",
+                         "body_markdown": "Plan to migrate authentication.", "tags": []},
+    }))
+    one = _ok(hub.client.get(unfinished))
+    assert [t["title"] for t in one["items"]] == ["Migrate the auth service"], one
+    _fence("thoughts-unfinished.one", one, tmp_path, hub)

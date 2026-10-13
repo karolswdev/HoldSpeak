@@ -752,3 +752,25 @@ def test_an_unreadable_roster_is_the_unknown_blocker_and_the_answer_is_incomplet
     assert {"ref": "blocker:unknown", "kind": "blocker"} in answer["members"]
     assert "assignments" in answer["sourceErrors"]
     assert answer["complete"] is False
+
+
+# ── honest faces: the Room names its meetings' unowned actions ───────────
+
+
+def test_a_rooms_meeting_actions_are_its_open_rows_with_owner_unknown(hub: Hub) -> None:
+    """replaces: tests/e2e/test_honest_faces_glass.py::test_room_shows_its_meeting_action_as_open (hub half)
+
+    The Room never says "Clear here" while its meetings hold an action with
+    no owner: its needs-you answer holds both actions, each OWNER · UNKNOWN,
+    each with an `open` verb on its own action item; the count is the rows."""
+    _seed_honest_faces(hub)
+    needs = _ok(hub.client.get("/api/projects/p-ledger/room"))["needsYou"]
+    assert needs["state"] == "ok", needs
+    assert needs["count"] == 2 == len(needs["items"]), needs
+    rows = {row["title"]: row for row in needs["items"]}
+    assert set(rows) == {"Write the rollback runbook", "Pilot OTel in billing"}, rows
+    for row in rows.values():
+        assert (row["kind"], row["why"], row["verb"], row["owner"]) == (
+            "action_item", "OWNER · UNKNOWN", "open", None), row
+    assert rows["Write the rollback runbook"]["action_item_id"] == "m-standup-a1"
+    assert rows["Pilot OTel in billing"]["action_item_id"] == "m-arch-a1"

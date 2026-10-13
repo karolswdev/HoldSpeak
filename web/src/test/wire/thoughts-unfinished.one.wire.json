@@ -1,0 +1,24 @@
+{
+  "_": "The hub's own answer, captured by tests/integration/test_face_wire_fences.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
+  "captured_at": "2026-10-13T02:38:29.647493Z",
+  "wire": {
+    "items": [
+      {
+        "aggregate_revision": 1,
+        "attachment_revision": 0,
+        "body_preview": "Plan to migrate authentication.",
+        "continuity_state": "idle",
+        "filing_status": "filed",
+        "id": "thought_9ef1212f9077",
+        "lifecycle_revision": 1,
+        "source_kind": "typed",
+        "state": "working",
+        "title": "Migrate the auth service",
+        "updated_at": "2026-10-13T02:38:29Z",
+        "working_note_id": "note_thought_7290eaf6cb5ae003",
+        "working_revision": 1
+      }
+    ],
+    "next_cursor": null
+  }
+}

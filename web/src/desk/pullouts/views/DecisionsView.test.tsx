@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DecisionsView } from "./DecisionsView";
 import { useDesk } from "../../store";
+import HONEST_DECISIONS from "../../../test/wire/decisions.honest-faces.wire.json";
 
 const apiFetch = vi.hoisted(() => vi.fn());
 
@@ -254,5 +255,25 @@ describe("Intelligence → Decisions (PHILO-17: every decision, its date and its
     await step(50);
     expect(screen.getByText("Beta decision")).toBeTruthy();
     expect(screen.queryByText("Alpha decision")).toBeNull();
+  });
+});
+
+// Honest faces (inventory 2026-10-03): a raw decision id once cut the
+// decision's words on its row. The hub's own answer for the honest-faces seed
+// (tests/integration/test_face_wire_fences.py): one meeting decision with a record.
+describe("Decisions rows on the recorded hub", () => {
+  beforeEach(() => apiFetch.mockReset());
+
+  it("a row shows the decision's words and its meeting, never a D-hex id", async () => {
+    // replaces: tests/e2e/test_honest_faces_glass.py::test_intelligence_lane_names_and_decision_rows (the Decisions leg)
+    apiFetch.mockImplementation(async () => structuredClone(HONEST_DECISIONS.wire));
+    const { container } = render(<DecisionsView />);
+    await screen.findByText("Freeze the old ledger on Nov 5");
+    const rows = container.querySelectorAll("[data-testid=decisions-row]");
+    expect(rows).toHaveLength(1);
+    const text = rows[0].textContent ?? "";
+    expect(text).toContain("Ledger cutover sync");
+    expect(text).not.toMatch(/D-[0-9a-f]{6,}/i);
+    expect(text).not.toMatch(/dec-[0-9a-f]{6,}|record-[0-9a-f]{6,}/);
   });
 });
