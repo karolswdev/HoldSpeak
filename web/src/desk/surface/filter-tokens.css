@@ -41,10 +41,10 @@
 .surface-filter-token.btn + .surface-filter-token.btn {
   margin-left: -1px;
 }
-/* PHILO-17 (the desk sweep's target fence): at the narrow desk each token
+/* PHILO-17 (the desk sweep's target fence): in a narrow window each token
    owns its whole 44 px area (global.css, the halo), so a token does not
    lend its edge to the next one. */
-@media (max-width: 420px) {
+@container surface (max-width: 420px) {
   .surface-filter-token.btn + .surface-filter-token.btn {
     margin-left: 0;
   }
