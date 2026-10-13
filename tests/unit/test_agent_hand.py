@@ -281,6 +281,9 @@ def _rig(
     # K6: the per-launch --mcp-config files stay in this test's directory.
     monkeypatch.setattr("holdspeak.delivery.agent_mcp.mcp_config_dir", lambda: tmp_path / "mcp")
     monkeypatch.setattr("holdspeak.delivery.first_message.LAUNCH_POLL_SECONDS", 0.05)
+    # The settle lets a REAL shell that exits at once be seen; the fake tmux
+    # answers list-panes at once, so the wait proves nothing here.
+    monkeypatch.setattr(coder_factory, "START_SETTLE_SECONDS", 0.0)
     monkeypatch.setattr("holdspeak.delivery.first_message.TRUST_WAIT_SECONDS", 1.0)
     if screen is not None:
         tmux.screen = lambda: screen(worktree)

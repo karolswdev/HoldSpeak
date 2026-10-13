@@ -300,7 +300,13 @@ def real_pane(monkeypatch):
                     f"stty raw -echo; exec cat > {out}"], check=True)
     pane = subprocess.run(["tmux", "list-panes", "-t", "r1t", "-F", "#{pane_id}"],
                           capture_output=True, text=True, check=True).stdout.strip()
-    time.sleep(0.5)  # stty has run
+    # stty has run once the pane's shell exec'd cat (fast diet 2026-10-12:
+    # this read replaced a fixed 0.5 s sleep).
+    deadline = time.monotonic() + 10
+    while subprocess.run(["tmux", "display-message", "-p", "-t", pane, "#{pane_current_command}"],
+                         capture_output=True, text=True).stdout.strip() != "cat":
+        assert time.monotonic() < deadline, "the pane never reached cat"
+        time.sleep(0.02)
     yield SimpleNamespace(pane=pane, out=out)
     subprocess.run(["tmux", "kill-server"], check=False)
     shutil.rmtree(sock, ignore_errors=True)
@@ -332,12 +338,16 @@ def test_a_real_pane_gets_exactly_the_plain_text(real_pane) -> None:
     "x\x7fy",                         # DEL
     "x\u009by",                       # C1 CSI
 ])
-def test_a_control_in_the_text_is_refused_and_nothing_reaches_the_pane(real_pane, text) -> None:
+def test_a_control_in_the_text_is_refused_and_nothing_reaches_the_pane(real_pane, text, monkeypatch) -> None:
+    ran: list = []
+    real_run = tmux_transport.subprocess.run
+    monkeypatch.setattr(tmux_transport.subprocess, "run", lambda cmd, **kw: ran.append(cmd) or real_run(cmd, **kw))
     with pytest.raises(tmux_transport.TmuxTransportError, match="terminal control"):
         tmux_transport.send_text_to_pane(pane=real_pane.pane, text=text, submit=True)
     with pytest.raises(tmux_transport.TmuxTransportError, match="terminal control"):
         tmux_transport.send_keys_to_pane(pane=real_pane.pane, keys=[("named", "Down"), ("literal", text)])
-    time.sleep(0.5)
+    assert ran == [], "no tmux command ran: the refusal is before the pane"
+    time.sleep(0.2)
     assert real_pane.out.read_bytes() == b""
 
 

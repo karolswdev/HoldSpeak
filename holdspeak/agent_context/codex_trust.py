@@ -138,6 +138,10 @@ def _problems(hooks: list[dict[str, Any]], specs: list[dict[str, Any]]) -> tuple
     return found, problems
 
 
+#: How long a closed app-server has to exit before it is killed.
+APP_SERVER_STOP_SECONDS = 2.0
+
+
 class _AppServer:
     """One short ``codex app-server`` process: initialize, a few calls, exit."""
 
@@ -185,7 +189,7 @@ class _AppServer:
         except OSError:
             pass
         try:
-            proc.wait(timeout=2)
+            proc.wait(timeout=APP_SERVER_STOP_SECONDS)
         except subprocess.TimeoutExpired:
             proc.kill()
             proc.wait(timeout=2)

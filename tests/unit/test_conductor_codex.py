@@ -364,14 +364,27 @@ def test_codex_trust_is_answered_once_and_the_brief_goes_on_the_composer(tmp_pat
     assert len(rig.typed) == 1 and record["session_key"] == "codex:smoke-session"
 
 
+def _looks(rig, more: int, timeout: float = 10.0) -> None:
+    """Wait until the launch watcher has read the pane ``more`` more times
+    (fast diet 2026-10-12: a fixed sleep stood in for these reads)."""
+    import time
+
+    def count() -> int:
+        return sum(1 for call in list(rig.tmux.calls) if call[:2] == ["tmux", "capture-pane"])
+
+    want = count() + more
+    deadline = time.monotonic() + timeout
+    while count() < want:
+        assert time.monotonic() < deadline, f"the watcher read the pane {count()} times, want {want}"
+        time.sleep(0.02)
+
+
 def test_hooks_review_is_never_answered(tmp_path, db, monkeypatch) -> None:  # noqa: F811
     rig = _rig(tmp_path, db, monkeypatch, agent="codex", screen=lambda worktree: HOOKS_REVIEW,
                register_when=lambda tmux: False)
     result = rig.hand.hand(OWNER, "action", "ai_1", profile="codex-default")
     record = _wait_for(lambda: rig.launches.get(result["launch_id"]), "trust_state", "hooks_review")
-    import time
-
-    time.sleep(0.3)
+    _looks(rig, 3)  # the watcher read the same screen again and pressed nothing
     rig.tmux.ended = True
     assert rig.keys_sent == [] and rig.typed == []
     assert record["instruction_state"] == "pending"
@@ -642,6 +655,7 @@ def test_a_failed_app_server_start_releases_the_selector_and_the_child(
 
     monkeypatch.setattr(codex_trust.subprocess, "Popen", popen)
     monkeypatch.setattr(codex_trust.selectors, "DefaultSelector", selector)
+    monkeypatch.setattr(codex_trust, "APP_SERVER_STOP_SECONDS", 0.2)  # the kill still ends it
     with pytest.raises(codex_trust.CodexTrustError) as caught:
         codex_trust._AppServer([], cwd=str(tmp_path), executable=str(exe), timeout=0.5)
     assert caught.value.reason == reason
@@ -947,9 +961,7 @@ def test_a_space_the_wrap_may_hide_is_never_guessed(tmp_path, db, monkeypatch) -
                register_when=lambda tmux: False)
     monkeypatch.setattr(rig.service, "_worktree_path", lambda record: expected)
     result = rig.hand.hand(OWNER, "action", "ai_1", profile="codex-default")
-    import time
-
-    time.sleep(1.0)
+    _looks(rig, 5)  # the watcher read the wrapped screen five times and pressed nothing
     record = rig.launches.get(result["launch_id"])
     rig.tmux.ended = True
     assert rig.keys_sent == [] and rig.typed == []
