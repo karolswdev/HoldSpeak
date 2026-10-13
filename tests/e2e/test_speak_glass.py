@@ -13,6 +13,54 @@ learned rule): at 393 the Learned row wraps and its children never intersect
 the loop runs once, at 393, on one hub session, through the real routes.
 
 Kept from tests/e2e/_parked/test_hs176_loop_glass.py::test_speak_loop_393.
+
+The Speak window in a real browser: the hotkey custody block's geometry.
+
+Kept by the test diet (push 2, 2026-10-12), one file for the Speak app. The
+words and rows of each state are web/src/desk/__tests__/speak.app.test.tsx
+(over the hub's recorded readiness answers); the five wires are
+tests/unit/test_desk_speak.py. What stays here needs a real browser: in each
+state the block never leaves the window, and every state chip shares ONE
+right edge (an exact geometry relation), at 1440 and 393.
+Was tests/e2e/test_hs200_voice_custody_glass.py.
+
+HS-200-05 — the hotkey's custody block, on glass.
+
+The defect this face answers: `web_runtime.py:538-559` recorded whether the
+global hotkey listener installed and NOTHING read it (the curated status
+payload at `runtime/activity.py:171` dropped both keys), so the owner pressed
+Right Option, got silence, and had no way to learn the cause.
+
+Everything below runs against a REAL booted hub under an isolated HOME, and
+every row drawn is rendered by the real `SpeakFace` from the real
+`GET /api/dictation/readiness` payload built by the real
+`_helpers._hotkey_custody`.
+
+Exactly two things are substituted, both at the PLATFORM seam, because a test
+runner cannot revoke a macOS grant:
+
+* the three permission probes (`_ax_is_process_trusted`,
+  `_iohid_check_access`, `_av_authorization_status`) — the same seam the unit
+  suite uses; each returns what macOS would have returned;
+* the runtime's `on_get_status`, which on a real hub is
+  `WebRuntime._get_runtime_status` — here a dict carrying the two keys that
+  method now exposes.
+
+Nothing about the route, the payload shape, the derivation
+(`hotkeyCustody.ts`) or the face is faked.
+
+The five states, at 1440 and 393:
+
+1. **all-denied** — the full block: three rows, three paths.
+2. **one-denied** — only the non-granted row draws; no decorative all-clear.
+3. **not-asked** — `NOT ASKED`, the first-installer state (the app is not
+   even listed in the pane yet).
+4. **listener-failed** — the classified reason token beside a granted set.
+5. **all-granted** — the block is ABSENT, reached by pressing the one verb
+   (`Re-check`) after the grant was given, which is the ratified flow.
+
+Shots land in
+``pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-05-shots``.
 """
 from __future__ import annotations
 
@@ -31,23 +79,27 @@ from .glass_infra import (
 )
 from tests._evidence import evidence_dir
 
-pytest.importorskip("playwright.sync_api", reason="Loop glass needs Playwright")
+pytest.importorskip("playwright.sync_api", reason="this glass needs Playwright")
+
+
+
+# ══ the learned loop (Speak) ═══════════════════════════════════════
 
 SHOTS = evidence_dir("speak-glass")
+
 SHOTS.mkdir(parents=True, exist_ok=True)
 
 TOKEN = "speak-glass"
 
 #: The Tuesday sentence and the one word the transcript got wrong.
 HEARD = "Ship the queue for platform on schedule"
+
 SAID = "Ship the Q4 platform on schedule"
+
 #: The next utterance carrying the same phrase — the rule must fire.
 AGAIN = "Ship the queue for platform in October"
+
 APPLIED_TEXT = "Ship the Q4 platform in October"
-
-
-# ── the hub ────────────────────────────────────────────────────────
-
 
 def _boot(tmp_path: Path, monkeypatch: Any) -> tuple[Any, str]:
     """A DURABLE hub in an isolated HOME.
@@ -93,7 +145,6 @@ def _boot(tmp_path: Path, monkeypatch: Any) -> tuple[Any, str]:
     )
     return server, server.start()
 
-
 def _enable_corrections() -> None:
     """Beat 0 of the walk, paid here: every read of `corrections_enabled`
     falls back to False, so a hub whose config was never written makes the
@@ -104,12 +155,10 @@ def _enable_corrections() -> None:
     cfg.dictation.pipeline.corrections_enabled = True
     cfg.save(path=config_module.CONFIG_FILE)
 
-
 def _init_desk(page: Any, url: str) -> None:
     page.goto(f"{url}/?token={TOKEN}", wait_until="load")
     _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
     _normal_chair(page)
-
 
 def _stage_speak(page: Any) -> None:
     page.evaluate(
@@ -127,7 +176,6 @@ def _stage_speak(page: Any) -> None:
     page.locator(".speak-face").wait_for(timeout=15000)
     _settle(page)
 
-
 def _shot(page: Any, name: str, width: int) -> Path:
     _settle(page)
     path = SHOTS / f"{name}-{width}.png"
@@ -139,11 +187,9 @@ def _shot(page: Any, name: str, width: int) -> Path:
     assert path.stat().st_size > 2_000, f"Shot {name} too small ({path.stat().st_size})"
     return path
 
-
 def _dry_run_on(page: Any) -> None:
     """Latch DRY RUN so a landing PREVIEWS and types nothing on the host."""
     page.locator(".gadget-check-token").filter(has_text="DRY RUN").click()
-
 
 def _land(page: Any, text: str) -> Any:
     well = page.locator(".speak-well textarea")
@@ -167,16 +213,13 @@ def _land(page: Any, text: str) -> Any:
     _settle(page)
     return result
 
-
 def _wing(page: Any, name: str) -> None:
     pick_wing(page, name)
-
 
 def _folded(page: Any) -> Any:
     """The one strip menu Button a wing strip folds into at 393 (PHILO-13-11,
     C1 §3a: a strip that does not fit the head's 44 px row). Tabs at 1440."""
     return page.locator(".desk-wings .surface-strip-menu")
-
 
 def _wing_names(page: Any) -> list[str]:
     """Every face of the window, in order: the tabs, or the rows of the menu."""
@@ -191,7 +234,6 @@ def _wing_names(page: Any) -> list[str]:
     page.locator(".desk-menu-list").first.wait_for(state="detached")
     return names
 
-
 def _wing_is_on(page: Any, name: str) -> bool:
     """The named face is the current one: the selected tab, or the strip
     menu Button that names it."""
@@ -199,10 +241,6 @@ def _wing_is_on(page: Any, name: str) -> bool:
     if strip.count():
         return strip.first.get_attribute("aria-label") == f"Window faces: {name}"
     return page.get_by_role("tab", name=name).get_attribute("aria-selected") == "true"
-
-
-# ── the artboard assertions ────────────────────────────────────────
-
 
 def _assert_learned_board(page: Any) -> None:
     """The `Learned` board, element by element (design D2(c))."""
@@ -273,7 +311,6 @@ def _assert_learned_board(page: Any) -> None:
     )
     assert overlaps == [], overlaps
 
-
 def _assert_learned_quiet(page: Any) -> None:
     """The `LearnedQuiet` board: ONE token, no zero, no sentence."""
     wing = page.locator(".speak-learned")
@@ -284,10 +321,6 @@ def _assert_learned_quiet(page: Any) -> None:
     assert "0" not in body, body
     # no prose: the empty state is one token, never a sentence (A.3)
     assert "." not in body, body
-
-
-# ── the loop ───────────────────────────────────────────────────────
-
 
 def _loop(page: Any, width: int) -> None:
     _dry_run_on(page)
@@ -358,10 +391,6 @@ def _loop(page: Any, width: int) -> None:
     # not the Configure door — that stays the gear's job
     assert page.locator(".surface-door").count() == 0
 
-
-# ── Tests ──────────────────────────────────────────────────────────
-
-
 def _run(tmp_path, monkeypatch, width: int, height: int) -> None:
     _ensure_build()
     server, url = _boot(tmp_path, monkeypatch)
@@ -389,9 +418,301 @@ def _run(tmp_path, monkeypatch, width: int, height: int) -> None:
     finally:
         server.stop()
 
-
 @pytest.mark.e2e
 @pytest.mark.requires_meeting
 def test_the_learned_row_wraps_without_overlap_at_393(tmp_path, monkeypatch):
     """The loop at 393: the Learned row wraps; its children never intersect."""
     _run(tmp_path, monkeypatch, 393, 852)
+
+
+# ══ the hotkey custody block (was test_hs200_voice_custody_glass.py) ═══
+
+CUSTODY_SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-05-shots")
+
+CUSTODY_SHOTS.mkdir(parents=True, exist_ok=True)
+
+CUSTODY_TOKEN = "hs200-05-custody"
+
+#: The platform values each state is built from — the real constants.
+AX_TRUSTED, AX_NOT_TRUSTED = True, False
+
+HID_GRANTED, HID_DENIED, HID_NEVER_ASKED = 0, 1, 2
+
+AV_NEVER_ASKED, AV_DENIED, AV_GRANTED = 0, 2, 3
+
+class _Platform:
+    """The machine's answers, swappable between legs."""
+
+    def __init__(self) -> None:
+        self.ax = AX_TRUSTED
+        self.hid = HID_GRANTED
+        self.av = AV_GRANTED
+        self.status: dict[str, Any] = {
+            "global_hotkey_available": True,
+            "global_hotkey_error": "",
+        }
+
+    def all_denied(self) -> None:
+        self.ax, self.hid, self.av = AX_NOT_TRUSTED, HID_DENIED, AV_DENIED
+        self.status = {"global_hotkey_available": False,
+                       "global_hotkey_error": "OSError: permission denied by the operating system"}
+
+    def one_denied(self) -> None:
+        self.ax, self.hid, self.av = AX_TRUSTED, HID_DENIED, AV_GRANTED
+        self.status = {"global_hotkey_available": True, "global_hotkey_error": ""}
+
+    def never_asked(self) -> None:
+        self.ax, self.hid, self.av = AX_NOT_TRUSTED, HID_NEVER_ASKED, AV_NEVER_ASKED
+        self.status = {"global_hotkey_available": False, "global_hotkey_error": ""}
+
+    def listener_failed(self) -> None:
+        self.ax, self.hid, self.av = AX_TRUSTED, HID_GRANTED, AV_GRANTED
+        self.status = {"global_hotkey_available": False,
+                       "global_hotkey_error": "RuntimeError: pynput is not available."}
+
+    def all_granted(self) -> None:
+        self.ax, self.hid, self.av = AX_TRUSTED, HID_GRANTED, AV_GRANTED
+        self.status = {"global_hotkey_available": True, "global_hotkey_error": ""}
+
+def _custody_boot(tmp_path: Path, monkeypatch: Any) -> tuple[Any, str, _Platform]:
+    """A real hub whose PLATFORM answers (only) are ours to script."""
+    import os
+
+    import holdspeak.config as config_module
+    import holdspeak.db.core as db_core
+    from holdspeak import desktop_permissions as perms
+    from holdspeak.db import reset_database
+    from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+
+    home = tmp_path / "home"
+    home.mkdir(exist_ok=True)
+    browser_cache = Path(
+        os.environ.get(
+            "PLAYWRIGHT_BROWSERS_PATH", Path.home() / "Library/Caches/ms-playwright"
+        )
+    )
+    monkeypatch.setenv("PLAYWRIGHT_BROWSERS_PATH", str(browser_cache))
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setattr(config_module, "CONFIG_FILE", home / ".holdspeak" / "config.json")
+    monkeypatch.setattr(db_core, "DEFAULT_DB_PATH", tmp_path / "holdspeak.db")
+    reset_database()
+
+    machine = _Platform()
+    # The platform seam, and ONLY the platform seam.
+    monkeypatch.setattr(perms, "_is_macos", lambda: True)
+    monkeypatch.setattr(perms, "_ax_is_process_trusted", lambda: machine.ax)
+    monkeypatch.setattr(perms, "_iohid_check_access", lambda: machine.hid)
+    monkeypatch.setattr(perms, "_av_authorization_status", lambda: machine.av)
+
+    server = MeetingWebServer(
+        WebRuntimeCallbacks(
+            on_bookmark=lambda *_: None,
+            on_stop=lambda: None,
+            get_state=lambda: {},
+            # On the owner's desk this is `WebRuntime._get_runtime_status`.
+            on_get_status=lambda: dict(machine.status),
+        ),
+        auth_token=CUSTODY_TOKEN,
+    )
+    return server, server.start(), machine
+
+def _custody_init_desk(page: Any, url: str) -> None:
+    page.goto(f"{url}/?token={CUSTODY_TOKEN}", wait_until="load")
+    _api(page, "POST", "/api/desk/seed", token=CUSTODY_TOKEN)
+    _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=CUSTODY_TOKEN)
+    _normal_chair(page)
+
+def _custody_stage_speak(page: Any) -> None:
+    page.evaluate(
+        """([key]) => {
+          localStorage.removeItem("hs.desk.workspace.v1");
+          sessionStorage.setItem(
+            "hs.desk.staged-surface-open", JSON.stringify({key})
+          );
+        }""",
+        ["dictate"],
+    )
+    page.reload(wait_until="load")
+    _normal_chair(page)
+    page.locator(".speak-face").wait_for(timeout=20000)
+    _settle(page)
+
+def _custody_shot(page: Any, name: str, width: int) -> Path:
+    _settle(page)
+    path = CUSTODY_SHOTS / f"{name}-{width}.png"
+    target = page.locator(".desk-surface-window").first
+    if target.count() > 0:
+        target.screenshot(path=str(path))
+    else:
+        page.screenshot(path=str(path), full_page=False)
+    assert path.stat().st_size > 2_000, f"Shot {name} too small ({path.stat().st_size})"
+    return path
+
+def _no_overflow(block: Any, width: int) -> None:
+    """Nothing in the block may scroll sideways — the 393 law.
+
+    Three path tokens plus a state chip on one row is exactly the shape that
+    clips, so every row is measured, not eyeballed.
+    """
+    assert block.evaluate("el => el.scrollWidth <= el.clientWidth + 1"), (
+        f"the HOTKEY block overflows horizontally at {width}"
+    )
+    rows = block.locator(".speak-hotkey-row, .speak-hotkey-head")
+    for i in range(rows.count()):
+        row = rows.nth(i)
+        assert row.evaluate("el => el.scrollWidth <= el.clientWidth + 1"), (
+            f"a HOTKEY row overflows horizontally at {width}: "
+            f"{row.inner_text()!r}"
+        )
+
+def _one_grammar(block: Any, width: int) -> None:
+    """The same object is never drawn two ways (UX canon D, first rule).
+
+    The first draft flex-wrapped the row, and the shots caught what no unit
+    test could: at 640 the state chip sat right on the first row and wrapped
+    to the LEFT on the next two, and at 393 the last row's chip fell out of
+    the block entirely.  Every row's chip must exist, and every row's chip
+    must share one right edge.
+    """
+    rows = block.locator(".speak-hotkey-row")
+    edges: list[float] = []
+    for i in range(rows.count()):
+        row = rows.nth(i)
+        chip = row.locator(".surface-state-chip")
+        assert chip.count() == 1, (
+            f"row {row.locator('.speak-hotkey-name').inner_text()!r} "
+            f"has {chip.count()} state chips at {width}"
+        )
+        box = chip.bounding_box()
+        row_box = row.bounding_box()
+        assert box is not None and row_box is not None
+        # Inside its own row, not spilled past it.
+        assert box["x"] + box["width"] <= row_box["x"] + row_box["width"] + 1, (
+            f"a state chip spills out of its row at {width}"
+        )
+        edges.append(round(box["x"] + box["width"], 1))
+    if edges:
+        assert max(edges) - min(edges) <= 1.0, (
+            f"the state chips are drawn at {len(set(edges))} different right "
+            f"edges at {width}: {edges}"
+        )
+
+def _walk(page: Any, machine: _Platform, width: int) -> None:
+    """The five states, in the order a first-time installer meets them."""
+
+    # ── 1. every grant refused: the full block ──
+    machine.all_denied()
+    _custody_stage_speak(page)
+    block = page.locator('[data-testid="speak-hotkey"]')
+    block.wait_for(timeout=15000)
+    for pid in ("microphone", "input_monitoring", "accessibility"):
+        row = page.locator(f'[data-testid="speak-permission-{pid}"]')
+        assert row.count() == 1, f"{pid} row missing"
+        text = row.inner_text()
+        assert "SYSTEM SETTINGS" in text and "PRIVACY & SECURITY" in text, text
+        assert "DENIED" in text.upper(), text
+    assert "UNAVAILABLE" in block.inner_text().upper()
+    # never a modal, never a sentence
+    assert page.locator('[role="dialog"]').count() == 0
+    _no_overflow(block, width)
+    _one_grammar(block, width)
+    _custody_shot(page, "all-denied", width)
+
+    # ── 2. one refused: the granted two stay silent ──
+    machine.one_denied()
+    _custody_stage_speak(page)
+    block = page.locator('[data-testid="speak-hotkey"]')
+    block.wait_for(timeout=15000)
+    assert page.locator('[data-testid="speak-permission-input_monitoring"]').count() == 1
+    assert page.locator('[data-testid="speak-permission-microphone"]').count() == 0
+    assert page.locator('[data-testid="speak-permission-accessibility"]').count() == 0
+    # The listener DID install, and the key still will not work. The head chip
+    # must not claim ACTIVE over a DENIED row (the shots caught that green).
+    head = block.locator(".speak-hotkey-head")
+    assert "BLOCKED" in head.inner_text().upper(), head.inner_text()
+    assert "ACTIVE" not in head.inner_text().upper(), head.inner_text()
+    _no_overflow(block, width)
+    _one_grammar(block, width)
+    _custody_shot(page, "one-denied", width)
+
+    # ── 3. never asked: the first-installer state ──
+    machine.never_asked()
+    _custody_stage_speak(page)
+    block = page.locator('[data-testid="speak-hotkey"]')
+    block.wait_for(timeout=15000)
+    assert "NOT ASKED" in block.inner_text().upper(), block.inner_text()
+    # Accessibility has no not-determined answer; it reads DENIED beside them.
+    assert "DENIED" in page.locator(
+        '[data-testid="speak-permission-accessibility"]'
+    ).inner_text().upper()
+    _no_overflow(block, width)
+    _one_grammar(block, width)
+    _custody_shot(page, "not-asked", width)
+
+    # ── 4. the listener itself failed, with every grant in hand ──
+    machine.listener_failed()
+    _custody_stage_speak(page)
+    block = page.locator('[data-testid="speak-hotkey"]')
+    block.wait_for(timeout=15000)
+    reason = page.locator('[data-testid="speak-hotkey-reason"]')
+    assert reason.inner_text() == "PYNPUT MISSING", reason.inner_text()
+    # The raw exception never reaches the face (UX canon A10).
+    assert "pynput is not available" not in block.inner_text()
+    # A granted set draws no permission rows at all.
+    assert page.locator('[data-testid^="speak-permission-"]').count() == 0
+    _no_overflow(block, width)
+    _one_grammar(block, width)
+    _custody_shot(page, "listener-failed", width)
+
+    # ── 5. he grants it and presses the ONE verb: the block goes away ──
+    machine.all_granted()
+    page.locator('[data-testid="speak-hotkey-recheck"]').click()
+    page.locator('[data-testid="speak-hotkey"]').wait_for(state="detached", timeout=15000)
+    assert page.locator('[data-testid="speak-hotkey"]').count() == 0
+    # ...and nothing green took its place.
+    assert "HOTKEY" not in page.locator(".speak-face").inner_text()
+    _custody_shot(page, "all-granted", width)
+
+@pytest.mark.e2e
+@pytest.mark.requires_meeting
+def test_hotkey_custody_block_1440(tmp_path, monkeypatch):
+    """The five custody states at 1440."""
+    _ensure_build()
+    server, url, machine = _custody_boot(tmp_path, monkeypatch)
+    errors: list[str] = []
+    try:
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page()
+            page.on("pageerror", lambda e: errors.append(str(e)))
+            page.set_viewport_size({"width": 1440, "height": 900})
+            _custody_init_desk(page, url)
+            _walk(page, machine, 1440)
+            _assert_clean(page, errors)
+            browser.close()
+    finally:
+        server.stop()
+
+@pytest.mark.e2e
+@pytest.mark.requires_meeting
+def test_hotkey_custody_block_393(tmp_path, monkeypatch):
+    """The same five at 393, where the path tokens fight for room."""
+    _ensure_build()
+    server, url, machine = _custody_boot(tmp_path, monkeypatch)
+    errors: list[str] = []
+    try:
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page()
+            page.on("pageerror", lambda e: errors.append(str(e)))
+            page.set_viewport_size({"width": 393, "height": 852})
+            _custody_init_desk(page, url)
+            _walk(page, machine, 393)
+            _assert_clean(page, errors)
+            browser.close()
+    finally:
+        server.stop()
