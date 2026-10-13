@@ -255,3 +255,20 @@ one row per retired check.
   `web/src/lib/primitives.ts`: "no product opener names it"); its face is fenced
   in `web/src/desk/drawer/__tests__/drawer.test.tsx`, and the Needs-you Project
   button opening the Room in `web/src/desk/__tests__/openGrammar.philo1306.test.tsx`.
+- `test_philo14_b1_object_species_glass.py`: moved whole to `tests/e2e/test_components_glass.py`.
+- `test_philo14_c3_drop_to_hand_glass.py`: the real drag is in `tests/e2e/test_conductor_glass.py`;
+  every other leg is in `web/src/desk/hand/__tests__/hand.test.tsx`.
+- `test_philo15_04_small_gaps_glass.py`: `parked.app.test.tsx`, `firstrun.app.test.tsx`,
+  `tests/integration/test_desk_firstrun.py`.
+- `test_philo15_11_phone_menus_glass.py`: the fit is in `tests/e2e/test_menus_glass.py`; the rows in
+  `phoneRing.test.tsx` and `phoneKeycaps.philo1511.test.tsx`.
+- `test_philo15_12_ugly_glass.py`: its rig is `tests/e2e/fit_rig.py`; B22 in `test_meetings_glass.py`,
+  B27 in `test_runs_on_glass.py`, B24 in `test_today_glass.py`; the rest in `philo15Ugly.test.tsx`,
+  `systemSprites.test.ts` and the desk sweep.
+- `test_philo15_16_project_repo_glass.py`: the Project drawer is parked (U30); the hand's clone and
+  flip in `hand.test.tsx`, Add to Project in `addToProject.test.tsx`, the repository in
+  `tests/unit/test_project_repository.py` and `room.app.test.tsx`.
+- `test_philo15_19_brief_day_glass.py`: the 1440 walk is in `tests/e2e/test_chair_glass.py`; the
+  rows' words in `tests/unit/test_monday_brief_service.py` (B58, B59, B73).
+- `test_philo17_doors_glass.py`: D6 and D7 in `tests/e2e/test_menus_glass.py`; the menus in
+  `DeskMenuBar.test.tsx` and `menus.app.test.tsx`; the doors' windows in the desk sweep.
