@@ -1,7 +1,7 @@
 {
   "trust": {
     "actuators_enabled": true,
-    "auth_token_set": false,
+    "auth_token_set": true,
     "configured_endpoints": [],
     "destinations": [
       {
@@ -116,7 +116,7 @@
         "data_class": "The document you send",
         "destination": "~/Documents/HoldSpeak/Team updates",
         "enabled": false,
-        "id": "channel:chd_498be4e50e48f3feffd1a761",
+        "id": "channel:chd_2c950737b07c4f851ca4c8c8",
         "last_receipt": null,
         "name": "Team updates",
         "operation": "Send a document",

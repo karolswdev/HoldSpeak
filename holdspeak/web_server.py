@@ -1289,7 +1289,12 @@ class MeetingWebServer:
                 # Conductor R1: a held call of a launch notifies at once.
                 on_launch_hold=lambda key: _coder_awaiting_edge([key]),
             ),
-            setup_service=SetupService(get_database(), observer=obs),
+            # The Trust read states the bind and the token this runtime REALLY
+            # serves with; the config alone cannot say where the hub listens.
+            setup_service=SetupService(
+                get_database(), observer=obs,
+                web_bind=self.host, auth_token_set=bool(self.auth_token),
+            ),
             inference_setup_service=inference_setup_service,
             local_ai_setup_service=local_ai_setup_service,
             inference_acquisition_service=inference_acquisition_service,

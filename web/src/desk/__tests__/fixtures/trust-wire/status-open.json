@@ -1,7 +1,7 @@
 {
   "trust": {
     "actuators_enabled": true,
-    "auth_token_set": false,
+    "auth_token_set": true,
     "configured_endpoints": [],
     "destinations": [
       {
@@ -114,7 +114,7 @@
     "last_egress": null,
     "summary": "No listed destination is enabled.",
     "transcript_egress": "none",
-    "web_bind": "192.168.1.43",
+    "web_bind": "0.0.0.0",
     "webhook_allowed_hosts": [
       "*"
     ]

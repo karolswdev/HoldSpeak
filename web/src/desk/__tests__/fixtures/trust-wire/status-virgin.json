@@ -1,7 +1,7 @@
 {
   "trust": {
     "actuators_enabled": true,
-    "auth_token_set": false,
+    "auth_token_set": true,
     "configured_endpoints": [],
     "destinations": [
       {

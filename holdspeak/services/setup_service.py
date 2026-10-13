@@ -11,14 +11,28 @@ from .errors import NotFound, ValidationError
 
 @observe_service
 class SetupService:
-    def __init__(self, db: Database, *, observer: PipelineObserver | None = None) -> None:
+    def __init__(
+        self,
+        db: Database,
+        *,
+        observer: PipelineObserver | None = None,
+        web_bind: str = "127.0.0.1",
+        auth_token_set: bool | None = None,
+    ) -> None:
         self._db = db
         self._observer = observer or NullObserver()
+        # The runtime's real bind host and token (web_server.py composes them).
+        self._web_bind = web_bind
+        self._auth_token_set = auth_token_set
 
     def status(self, principal: Principal) -> dict[str, Any]:
         from ..setup_status import build_setup_status
 
-        return build_setup_status(database=self._db)
+        return build_setup_status(
+            database=self._db,
+            web_bind=self._web_bind,
+            auth_token_set=self._auth_token_set,
+        )
 
     def test_runtime(self, principal: Principal, payload: dict[str, Any] | None = None) -> dict[str, Any]:
         from ..config import Config
