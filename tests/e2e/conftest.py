@@ -38,7 +38,7 @@ def _web_bundle_is_fresh() -> None:
 #
 # Seen on the macOS runner (run 34059711954) and reproduced locally:
 # `tests/e2e/test_hs175_arrival_glass.py` then
-# `tests/e2e/test_hs141_thought_workbench_glass.py::…[1440]` fails at
+# `tests/e2e/test_thought_glass.py::test_thought_workbench_real_glass[1440]` (then test_hs141_thought_workbench_glass.py) fails at
 # `assert engine.started.wait(5)` with llama.cpp trying to load the rig's
 # empty placeholder .gguf. Traced to two `_build` calls on the same
 # database object: one from the test's own `_configure`, one from the

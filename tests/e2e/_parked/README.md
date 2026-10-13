@@ -192,3 +192,19 @@ successor.
   `tests/unit/test_philo14_c0_launch_lane.py` (not_read, no secret) and
   `tests/unit/test_web_routes_coders_steer.py` (unarmed 409, delivery). The
   12 px at 393 check is `tests/unit/test_philo13_18_type_floor_static.py`.
+# Parked by the diet, push 2: lane e2e-high-1, app files (2026-10-12)
+
+The checks that need a real browser moved into one file per app; the
+originals are parked here, whole.
+
+- `test_hs153_practice_glass.py` -> `tests/e2e/test_askai_glass.py` (slash
+  keys, the focused Deny, the annotation selection). Mode tabs:
+  `ModeTabs.test.tsx`, `tests/unit/test_thread_practice_route.py`; /compact:
+  `threadCompaction.test.tsx`, `tests/unit/test_thread_compaction.py`; /todo:
+  `tests/unit/test_thread_todo.py` (its Door card chip is parked).
+- `test_hs170_concierge_glass.py` -> `tests/e2e/test_runs_on_glass.py` (the
+  drag cases). The non-drag cases: `web/src/features/runson/__tests__/runsOn.test.tsx`.
+- `test_new_verbs_open_glass.py` -> `tests/e2e/test_creation_glass.py` (whole).
+- `test_hs201_12_thought_note_glass.py`, `test_hs141_thought_workbench_glass.py`
+  -> `tests/e2e/test_thought_glass.py`. The draft-append leg:
+  `ThoughtWorkspaceWindow.test.tsx`.
