@@ -32,6 +32,10 @@ from holdspeak.db.reconcile import (
     _add_missing_columns,
 )
 
+# A new file runs the real schema script and reconcile (tests/_template_db.py).
+pytestmark = pytest.mark.real_schema
+
+
 
 @pytest.fixture()
 def fresh_conn(tmp_path: Path):

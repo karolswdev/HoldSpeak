@@ -24,6 +24,9 @@ import pytest
 from holdspeak.db import Database, SCHEMA_VERSION, reset_database
 from holdspeak.db import core as db_core
 
+# These prove the real create and reconcile path on new files (tests/_template_db.py).
+pytestmark = pytest.mark.real_schema
+
 
 @pytest.fixture
 def db_path(tmp_path) -> Path:
