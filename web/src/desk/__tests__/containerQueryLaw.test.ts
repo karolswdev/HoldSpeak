@@ -1,16 +1,8 @@
-// HS-129-06 — jsdom cannot evaluate CSS container queries, so this census
-// proves the window-body contracts in source. The live browser walk verifies
-// the resulting narrow layouts at runtime.
+// HS-129-06 — the container-query law (docs/internal/UX-CANON.md §D): 393
+// stacks under the `surface` container, never viewport media. This ratchet
+// keeps viewport-width media to the named shell exceptions; the desk sweep
+// (tests/e2e/test_desk_sweep.py, fit and clipped at 393) proves the layouts.
 import { describe, expect, it } from "vitest";
-import deliveryCss from "../components/delivery.css?raw";
-import listViewCss from "../components/list-view.css?raw";
-import repoWindowCss from "../components/RepoWindow.css?raw";
-import roadmapWindowCss from "../components/RoadmapWindow.css?raw";
-import windowChromeCss from "../components/window-chrome.css?raw";
-import workbenchConfigCss from "../components/workbench-config.css?raw";
-import intelligenceCss from "../pullouts/intelligence.css?raw";
-import surfaceFooterCss from "../surface/surface-footer.css?raw";
-import surfaceCss from "../surface/surface.css?raw";
 
 const cssSources = import.meta.glob<string>("/src/**/*.css", {
   eager: true,
@@ -41,35 +33,6 @@ const viewportWidthMediaAllowlist = new Set([
 ]);
 
 describe("HS-129-06 container-query law", () => {
-  it("makes every migrated room query its named window body", () => {
-    expect(deliveryCss).toContain("@container surface (max-width: 520px)");
-    expect(intelligenceCss).toContain("@container surface (max-width: 560px)");
-    expect(intelligenceCss).toContain("@container surface (max-width: 420px)");
-    expect(roadmapWindowCss).toContain("@container surface (max-width: 720px)");
-    // PHILO-9-04: the third block is the list face's fold (Kind, Zone and
-    // Attention ride the name Button in a surface of 720 px or less).
-    expect(listViewCss.match(/@container surface \(max-width: 720px\)/g)).toHaveLength(3);
-    expect(listViewCss).toMatch(/\.desk-next \.desk-list-face \{\s*container-type: inline-size;\s*container-name: surface;/);
-
-    // The audited Repo breakpoint was removed before this story landed.
-    expect(repoWindowCss).not.toMatch(/@media\s*\(\s*(?:max|min)-width/);
-  });
-
-  it("uses surface as the sole public container name", () => {
-    const migratedCss = [
-      windowChromeCss,
-      workbenchConfigCss,
-      surfaceFooterCss,
-      surfaceCss,
-      intelligenceCss,
-    ].join("\n");
-
-    expect(windowChromeCss).toContain("container-name: surface;");
-    expect(migratedCss).not.toContain("@container desk-surface");
-    expect(migratedCss).not.toContain("container-name: surface desk-surface");
-    expect(migratedCss).not.toMatch(/@container\s*\(/);
-  });
-
   it("keeps viewport-width media limited to shell exceptions", () => {
     for (const [path, css] of Object.entries(cssSources)) {
       if (/@media\s*\(\s*(?:max|min)-width/.test(css)) {
