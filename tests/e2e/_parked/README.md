@@ -131,6 +131,11 @@ Each check has a successor, or the PR that parked it says why it has none.
 - `test_dictation_learning_digest_spoken_e2e.py`: opt-in (macOS `say` and Whisper). The digest is
   `tests/unit/test_dictation_learning_digest.py` and
   `tests/integration/test_web_dictation_learning_digest.py`.
+- `test_hs202_05_button_hit_ownership.py`, `test_hs202_05_disabled_stays_distinct.py`: moved whole
+  (T4: `elementFromPoint` and a real pointer; the cascade's computed colours) into the library
+  Button's file, `tests/e2e/test_kit_glass.py`. `OWNERSHIP_JS`, `PROBES` and `_overlap` are
+  imported from there now.
+
 # Parked by the diet, push 2: lane e2e-high-1 (2026-10-12)
 
 Owner, 2026-10-12: "we've been trimming some fat on useless testing. I need
