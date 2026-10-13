@@ -48,7 +48,7 @@ from .glass_infra import (
     _rendered_text_faults,
     _settle,
 )
-from .test_hs202_05_first_use_type_floor import _FAINT_JS, _MEASURE
+from .type_floor_rig import _FAINT_JS, _MEASURE
 from .test_philo13_11_chair_glass import _seed as _canvas_seed
 from tests._evidence import evidence_dir
 

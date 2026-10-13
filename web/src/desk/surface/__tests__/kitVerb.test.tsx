@@ -2,7 +2,7 @@
 // plate with ink; primary the selection blue, danger the Workbench red, both
 // with paper; pressed it sinks). Here: every plated variant IS the `.btn`
 // plate. The heights are RENDERED in a real browser, not read from the
-// stylesheet: tests/e2e/test_p16_kit_verb_glass.py (28 px at 1440, a 44 px
+// stylesheet: tests/e2e/test_kit_glass.py (28 px at 1440, a 44 px
 // target at 393).
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
