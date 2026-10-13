@@ -39,6 +39,8 @@ pytest.importorskip("websockets", reason="needs a websocket client")
 pytestmark = [pytest.mark.requires_meeting]
 
 TOKEN = "every-write-announces-owner-token"
+#: The walk's own frame type: not ``desk_changed``, so no window reads it.
+MARK = "every_write_walk_mark"
 
 
 class Hub:
@@ -61,6 +63,9 @@ class Hub:
 
         self.root = composition.installed()
         self.frames: list[dict[str, Any]] = []
+        self.marks: list[tuple[Any, int]] = []
+        self._mark_n = 0
+        self.last_seen = 0
         self._lock = threading.Lock()
         self._stop = threading.Event()
         self._ready = threading.Event()
@@ -92,6 +97,9 @@ class Hub:
                 if isinstance(frame, dict) and frame.get("type") == "desk_changed":
                     with self._lock:
                         self.frames.append(frame.get("data") or {})
+                elif isinstance(frame, dict) and frame.get("type") == MARK:
+                    with self._lock:
+                        self.marks.append(((frame.get("data") or {}).get("n"), len(self.frames)))
 
     def call(self, method: str, path: str, body: Any = None) -> tuple[int, Any]:
         data = None if body is None else json.dumps(body).encode()
@@ -124,6 +132,29 @@ class Hub:
         time.sleep(0.15)  # a second frame for the same write would land here
         with self._lock:
             return list(self.frames)
+
+    def frames_until_mark(self, write: Callable[[], Any], wait_s: float = 5.0) -> list[dict[str, Any]]:
+        """Run *write* (it announces in this thread, before it returns), then
+        send a marker frame down the same socket; the ``desk_changed`` frames
+        before the marker are the write's. Fast diet 2026-10-12: no fixed
+        sleep per write (0.3 s x every write op was 26 s); the walk's last
+        check proves no frame arrived after its marker."""
+        with self._lock:
+            self.frames.clear()
+            self.marks.clear()
+        write()
+        self._mark_n += 1
+        n = self._mark_n
+        self.server.broadcast(MARK, {"n": n})
+        deadline = time.monotonic() + wait_s
+        while time.monotonic() < deadline:
+            with self._lock:
+                for mark, seen in self.marks:
+                    if mark == n:
+                        self.last_seen = seen
+                        return list(self.frames[:seen])
+            time.sleep(0.005)
+        raise AssertionError(f"the walk marker {n} never came back on /ws")
 
     def stop(self) -> None:
         self._stop.set()
@@ -390,6 +421,7 @@ def test_no_registered_write_is_silent(hub: Hub, seeded: dict[str, str]) -> None
         "windows.arrange": {"rects": {"workbench:walk": {"x": "-1/2", "y": "-1/2", "w": "1/2", "h": "100%"}}},
         "windows.seat": {"window_id": "chair:capture", "seated": True},
     }
+    hub.frames_until_mark(lambda: None)  # the four opens' frames land before the walk
     for name in writes:
         bound = registry.operations[name]
         if bound.descriptor.announces_changes:
@@ -401,7 +433,7 @@ def test_no_registered_write_is_silent(hub: Hub, seeded: dict[str, str]) -> None
                 except Exception as exc:  # noqa: BLE001 - reported by name below
                     failed[name] = f"{type(exc).__name__}: {exc}"
 
-            counts[name] = len(hub.frames_from(real_write, wait_s=1.0))
+            counts[name] = len(hub.frames_until_mark(real_write))
             continue
         # The kernel path of an admitted operation needs real rows (a project
         # revision, a watch). The root under test is the same line for both
@@ -420,10 +452,14 @@ def test_no_registered_write_is_silent(hub: Hub, seeded: dict[str, str]) -> None
                 except Exception as exc:  # noqa: BLE001 - reported by name below
                     failed[name] = f"{type(exc).__name__}: {exc}"
 
-            frames = hub.frames_from(write, wait_s=1.0)
+            frames = hub.frames_until_mark(write)
         finally:
             registry.operations[name] = bound
         counts[name] = len(frames)
+    time.sleep(0.3)  # a late frame of the last write would land here
+    with hub._lock:
+        late = list(hub.frames[hub.last_seen:])
+    assert not late, f"a frame came after its write's marker, so a count above is wrong: {late}"
     assert not failed, f"the walk could not call: {failed}"
     silent = [name for name, count in counts.items() if count == 0]
     assert not silent, f"these write operations sent no desk_changed frame: {silent}"

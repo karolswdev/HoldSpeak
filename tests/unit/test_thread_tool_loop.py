@@ -456,13 +456,16 @@ class TestAbortDuringExecute:
 
     def test_abort_discards_in_flight(self, db, broadcast_fn, broadcasts):
         execute_entered = threading.Event()
+        aborted = threading.Event()
 
         def slow_dispatch(name: str, args: dict, principal: Principal) -> Any:
             execute_entered.set()
             # Simulate a slow tool; check cancel inside the executor
             # (the real executor checks handle._cancel, but our loop
-            # checks cancel_event before and after).
-            time.sleep(5.0)
+            # checks cancel_event before and after). Fast diet 2026-10-12:
+            # the tool is still running when the abort lands, and returns
+            # right after it (a fixed 5 s sleep was waited out every run).
+            aborted.wait(5.0)
             return {"ok": True}
 
         svc = ThreadService(
@@ -479,6 +482,7 @@ class TestAbortDuringExecute:
         # Abort
         t0 = time.monotonic()
         svc.abort(t["id"])
+        aborted.set()
 
         _wait_done(broadcasts, timeout=6.0)
         elapsed = time.monotonic() - t0
@@ -490,7 +494,7 @@ class TestAbortDuringExecute:
 
         # The abort should complete quickly (the executor may be blocking
         # in dispatch, but the turn ends as aborted regardless).
-        # Note: the slow_dispatch sleeps 5s, but _run_streaming_turn
+        # Note: the slow_dispatch blocks until the abort, but _run_streaming_turn
         # checks cancel AFTER execute returns. The test verifies the
         # turn ends aborted; the 250ms bound applies to the cancel
         # propagation within the loop, not the tool's own blocking.

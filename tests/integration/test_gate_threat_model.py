@@ -143,13 +143,18 @@ def _armed(cwd: str) -> GateConfig:
 
 
 @pytest.mark.integration
-def test_item1_and_6_restart_mid_hold_and_fail_closed_two_process(tmp_path) -> None:
+def test_item1_and_6_restart_mid_hold_and_fail_closed_two_process(tmp_path, monkeypatch) -> None:
     """Checklist 1 + 6, one continuous two-process run: the hub dies
     with a proposal held (SIGKILL, a real crash) and stays down — the
     polling hook DENIES once its restart grace is spent (Conductor R2: it
     waits HUB_RESTART_GRACE_SECONDS for a restart, never allows); on
     restart the proposal is invalidated with an audit row and no longer
     renders as held."""
+    # Fast diet 2026-10-12: the hook runs in this process, so its grace and
+    # poll are shortened here (20 s and 1 s waited out cost 26 s); the claim
+    # is the same: the grace is spent, then a deny, never an allow.
+    monkeypatch.setattr(coder_gate, "HUB_RESTART_GRACE_SECONDS", 2.0)
+    monkeypatch.setattr(coder_gate, "POLL_INTERVAL_SECONDS", 0.2)
     hub = RealHub(tmp_path)
     hub.start()
     try:
@@ -204,12 +209,13 @@ def test_item1_and_6_restart_mid_hold_and_fail_closed_two_process(tmp_path) -> N
 
 
 @pytest.mark.integration
-def test_a_hub_restart_mid_hold_is_survived_two_process(tmp_path) -> None:
+def test_a_hub_restart_mid_hold_is_survived_two_process(tmp_path, monkeypatch) -> None:
     """Conductor R2 (R1's real walk): the hub dies with a call held and
     comes back within the grace. The agent's credential survived the
     restart; the old hold is invalidated (never resumed); the hook proposes
     the same call again as ``<id>~r1``; the owner approves it and the
     waiting hook runs the call."""
+    monkeypatch.setattr(coder_gate, "POLL_INTERVAL_SECONDS", 0.2)  # fast diet: the hook polls faster
     hub = RealHub(tmp_path)
     hub.start()
     try:

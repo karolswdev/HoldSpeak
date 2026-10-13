@@ -92,7 +92,24 @@ class _FakeBroker:
 
 
 def _thread_service(db: Database) -> ThreadService:
-    return ThreadService(db, broadcast=lambda *_: None, broker=_FakeBroker())
+    done: list[Any] = []
+    service = ThreadService(
+        db, broadcast=lambda kind, data: done.append(data) if kind == "thread_turn_done" else None,
+        broker=_FakeBroker())
+    service._test_turns_done = done  # type: ignore[attr-defined]
+    service._test_turns_waited = 0  # type: ignore[attr-defined]
+    return service
+
+
+def _wait_turn(service: ThreadService, timeout: float = 5.0) -> None:
+    """Wait for the next background turn to end (fast diet 2026-10-12: was
+    a fixed 0.5 s sleep per turn)."""
+    service._test_turns_waited += 1  # type: ignore[attr-defined]
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if len(service._test_turns_done) >= service._test_turns_waited:  # type: ignore[attr-defined]
+            return
+        time.sleep(0.01)
 
 
 def _insert_promotion(
@@ -163,7 +180,7 @@ def _replay(service: ThreadService, db: Database, thread_id: str) -> str:
 
 def _run_relevance_turn(service: ThreadService, thread_id: str) -> None:
     asyncio.run(service.start_turn(OWNER, thread_id, QUERY))
-    time.sleep(0.5)
+    _wait_turn(service)
 
 
 # ── the defect ───────────────────────────────────────────────────────────
@@ -287,7 +304,7 @@ def test_a_promoted_note_attached_by_reference_still_reaches_the_model(
     thread = service.create(title="Explicit attach")
     asyncio.run(service.start_turn(OWNER, thread["id"], "What does this mean?",
                                    refs=["note:promoted"]))
-    time.sleep(0.5)
+    _wait_turn(service)
 
     frozen = _frozen_texts(db, thread["id"])
     assert any(PROMOTED_TOKEN in text for text in frozen), frozen
@@ -333,7 +350,7 @@ def test_the_relevance_pass_stamps_relevance_and_an_attach_stamps_reference(
     asyncio.run(service.start_turn(OWNER, reference_thread["id"],
                                    "What does this mean?",
                                    refs=["note:control"]))
-    time.sleep(0.5)
+    _wait_turn(service)
     assert _origins(db, reference_thread["id"]) == {"control": "reference"}
 
 
@@ -356,7 +373,7 @@ def test_a_row_written_before_the_column_existed_is_unknown_and_fences(
     thread = service.create(title="Legacy rows")
     # A real user message so `_assemble_payload` has a path to walk.
     asyncio.run(service.start_turn(OWNER, thread["id"], "hello"))
-    time.sleep(0.5)
+    _wait_turn(service)
 
     body = json.dumps({"kind": "note", "title": "Rollback rehearsal",
                        "subtitle": "", "text": f"{CONSTRAINT} {PROMOTED_TOKEN}"},
@@ -399,7 +416,7 @@ def test_the_origin_stamp_rests_on_groundings_own_switch(tmp_path: Path) -> None
     # The text matches BOTH notes; only `control` is attached.
     asyncio.run(service.start_turn(OWNER, thread["id"], QUERY,
                                    refs=["note:control"]))
-    time.sleep(0.5)
+    _wait_turn(service)
     # `promoted` is absent because the global pass did not run at all.
     assert _origins(db, thread["id"]) == {"control": "reference"}
 
@@ -685,7 +702,7 @@ def test_after_a_real_sync_a_promoted_note_attached_by_reference_still_arrives(
     thread = service.create(title="He attached it himself")
     asyncio.run(service.start_turn(OWNER, thread["id"], "What does this mean?",
                                    refs=["note:standing"]))
-    time.sleep(0.5)
+    _wait_turn(service)
     assert _origins(b, thread["id"]) == {"standing": "reference"}
     with b._connection() as conn:
         froze_at = float(conn.execute(

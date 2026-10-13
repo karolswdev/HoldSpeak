@@ -49,17 +49,17 @@ if sys.argv[2] == "broken":  # the mutation: no tool can run at all
     mcp_server.dispatch = unavailable
     mcp_server.dispatch_for_palette = unavailable
 
-if sys.argv[2] == "slow":  # ask.run (a long tool) takes 8 s; every other tool is real
+if sys.argv[2] == "slow":  # ask.run (a long tool) takes 4 s; every other tool is real
     from holdspeak.mcp import server as mcp_server
 
     def slow(real):
         def wrapped(name, *args, **kwargs):
             if name == "ask.run":
-                time.sleep(8)
-                return {"slept": 8}
+                time.sleep(4)
+                return {"slept": 4}
             if name == "workbench.run":  # a long tool with a key
-                time.sleep(3)
-                return {"slept": 3}
+                time.sleep(1.5)
+                return {"slept": 1.5}
             return real(name, *args, **kwargs)
         return wrapped
 
@@ -269,51 +269,57 @@ def test_concurrent_edits_of_one_note_lose_no_change(tmp_path: Path) -> None:
 
 
 @pytest.mark.timeout(300)
-def test_a_long_tool_does_not_hold_the_others(tmp_path: Path) -> None:
-    """``ask.run`` sleeps 8 s (a model call); a ``desk.list`` sent during it answers at once.
-
-    With every tool on the one ordered worker (main before 2026-10-05) the
-    ``desk.list`` waited the full 8 s behind ``ask.run``.
-    """
-    import time
-
-    home = tmp_path / "home"
+@pytest.fixture(scope="module")
+def slow_hub(tmp_path_factory: pytest.TempPathFactory) -> Any:
+    """One hub in the "slow" mode for both long-tool tests (fast diet
+    2026-10-12: one boot, and the long tools sleep 4 s and 1.5 s, not 8 and 3)."""
+    home = tmp_path_factory.mktemp("slow-hub") / "home"
     home.mkdir()
     hub = _Hub(home, "slow")
     try:
-        long_answer: list[Any] = []
-        started = threading.Event()
-
-        def long_call() -> None:
-            started.set()
-            long_answer.append(hub.mcp("tools/call", {"name": "ask.run", "arguments": {}}))
-
-        caller = threading.Thread(target=long_call)
-        caller.start()
-        started.wait(5)
-        time.sleep(0.5)  # ask.run is now inside its sleep
-        began = time.monotonic()
-        status, answer = hub.mcp("tools/call", {"name": "desk.list", "arguments": {"kind": "notes"}})
-        waited = time.monotonic() - began
-        caller.join(30)
+        yield hub
     finally:
         hub.kill()
+
+
+def test_a_long_tool_does_not_hold_the_others(slow_hub: Any) -> None:
+    """``ask.run`` sleeps 4 s (a model call); a ``desk.list`` sent during it answers at once.
+
+    With every tool on the one ordered worker (main before 2026-10-05) the
+    ``desk.list`` waited the full 4 s behind ``ask.run``.
+    """
+    import time
+
+    hub = slow_hub
+    long_answer: list[Any] = []
+    started = threading.Event()
+
+    def long_call() -> None:
+        started.set()
+        long_answer.append(hub.mcp("tools/call", {"name": "ask.run", "arguments": {}}))
+
+    caller = threading.Thread(target=long_call)
+    caller.start()
+    started.wait(5)
+    time.sleep(0.5)  # ask.run is now inside its sleep
+    began = time.monotonic()
+    status, answer = hub.mcp("tools/call", {"name": "desk.list", "arguments": {"kind": "notes"}})
+    waited = time.monotonic() - began
+    caller.join(30)
     assert status == 200 and "result" in answer, answer
-    assert waited < 4, f"desk.list waited {waited:.1f} s behind ask.run"
+    assert waited < 2, f"desk.list waited {waited:.1f} s behind ask.run"
     assert long_answer and long_answer[0][0] == 200, long_answer
 
 
 @pytest.mark.timeout(300)
-def test_long_tools_on_one_key_run_one_at_a_time_and_on_two_keys_in_parallel(tmp_path: Path) -> None:
-    """Per-key locks (Astra on #867): ``workbench.run`` sleeps 3 s on the hub.
+def test_long_tools_on_one_key_run_one_at_a_time_and_on_two_keys_in_parallel(slow_hub: Any) -> None:
+    """Per-key locks (Astra on #867): ``workbench.run`` sleeps 1.5 s on the hub.
 
-    Two calls on one workbench take about 6 s; on two workbenches, about 3 s.
+    Two calls on one workbench take about 3 s; on two workbenches, about 1.5 s.
     """
     import time
 
-    home = tmp_path / "home"
-    home.mkdir()
-    hub = _Hub(home, "slow")
+    hub = slow_hub
 
     def pair(first: str, second: str) -> float:
         gate = threading.Barrier(2)
@@ -333,10 +339,7 @@ def test_long_tools_on_one_key_run_one_at_a_time_and_on_two_keys_in_parallel(tmp
         assert len(answers) == 2 and all(status == 200 for status, _ in answers), answers
         return time.monotonic() - began
 
-    try:
-        same = pair("wb-one", "wb-one")
-        different = pair("wb-one", "wb-two")
-    finally:
-        hub.kill()
-    assert same >= 5.5, f"two calls on one key overlapped ({same:.1f} s)"
-    assert different < 5.5, f"two calls on two keys did not overlap ({different:.1f} s)"
+    same = pair("wb-one", "wb-one")
+    different = pair("wb-one", "wb-two")
+    assert same >= 2.9, f"two calls on one key overlapped ({same:.1f} s)"
+    assert different < 2.9, f"two calls on two keys did not overlap ({different:.1f} s)"

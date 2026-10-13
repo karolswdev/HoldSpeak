@@ -290,7 +290,7 @@ def test_thread_grounding_is_a_copy_and_this_design_does_not_change_it(
     thread = service.create(title="Architecture")
     asyncio.run(service.start_turn(OWNER, thread["id"], "rollback rehearsal cutover",
                                    refs=["note:shared"]))
-    time.sleep(0.5)
+    _wait_turn(service)
     frozen_before = _frozen_texts(db, thread["id"])
     assert any(CONTROL_TOKEN in text for text in frozen_before), frozen_before
 
@@ -961,7 +961,24 @@ def test_an_empty_desk_backfills_zero_rows(tmp_path: Path) -> None:
 
 
 def _thread_service(db: Database) -> ThreadService:
-    return ThreadService(db, broadcast=lambda *_: None, broker=_FakeBroker())
+    done: list[Any] = []
+    service = ThreadService(
+        db, broadcast=lambda kind, data: done.append(data) if kind == "thread_turn_done" else None,
+        broker=_FakeBroker())
+    service._test_turns_done = done  # type: ignore[attr-defined]
+    service._test_turns_waited = 0  # type: ignore[attr-defined]
+    return service
+
+
+def _wait_turn(service: ThreadService, timeout: float = 5.0) -> None:
+    """Wait for the next background turn to end (fast diet 2026-10-12: was
+    a fixed 0.5 s sleep per turn)."""
+    service._test_turns_waited += 1  # type: ignore[attr-defined]
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if len(service._test_turns_done) >= service._test_turns_waited:  # type: ignore[attr-defined]
+            return
+        time.sleep(0.01)
 
 
 class _FakeAdoption:
@@ -1023,7 +1040,7 @@ def test_a_frozen_thread_ref_never_carries_a_promoted_body(tmp_path: Path) -> No
     service = _thread_service(db)
     thread = service.create(title="Plain chat")
     asyncio.run(service.start_turn(OWNER, thread["id"], QUERY))
-    time.sleep(0.5)
+    _wait_turn(service)
 
     texts = _frozen_texts(db, thread["id"])
     # The pass RAN and the control was frozen -- otherwise this proves nothing.
@@ -1053,7 +1070,7 @@ def test_a_frozen_thread_ref_predating_the_promotion_is_not_replayed(
     service = _thread_service(db)
     thread = service.create(title="Pre-promotion")
     asyncio.run(service.start_turn(OWNER, thread["id"], QUERY))
-    time.sleep(0.5)
+    _wait_turn(service)
 
     frozen = _frozen_texts(db, thread["id"])
     assert any(PROMOTED_TOKEN in text for text in frozen), frozen
@@ -1090,7 +1107,7 @@ def test_the_replay_fence_keys_on_existence_so_a_revocation_cannot_reopen_it(
     service = _thread_service(db)
     thread = service.create(title="Revoked")
     asyncio.run(service.start_turn(OWNER, thread["id"], QUERY))
-    time.sleep(0.5)
+    _wait_turn(service)
     with db._connection() as conn:
         _insert_promotion(conn, "note:promoted", disclosure_state="revoked")
 
@@ -1115,7 +1132,7 @@ def test_an_explicitly_attached_note_still_reaches_the_model(tmp_path: Path) -> 
     thread = service.create(title="Explicit")
     asyncio.run(service.start_turn(OWNER, thread["id"], "What does this mean?",
                                    refs=["note:promoted"]))
-    time.sleep(0.5)
+    _wait_turn(service)
     frozen = _frozen_texts(db, thread["id"])
     assert any(PROMOTED_TOKEN in text for text in frozen), frozen
     # And it REPLAYS: the row was frozen after the promotion, so it can only

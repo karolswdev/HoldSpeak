@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import time
 from pathlib import Path
 
 import pytest
@@ -26,8 +27,12 @@ IDENTITY = f"codex:{SESSION}"
 BRANCH = "hs/action-yolo"
 
 
-@pytest.fixture
-def hub(tmp_path: Path):
+@pytest.fixture(scope="module")
+def hub(tmp_path_factory: pytest.TempPathFactory):
+    """One real hub for the module (fast diet 2026-10-12: a boot per case
+    cost ~6 s x 30). Every case uses its own proposal id, so no case reads
+    another's state."""
+    tmp_path = tmp_path_factory.mktemp("yolo-hub")
     worktree = tmp_path / "wt"
     (worktree / "tests").mkdir(parents=True)
     subprocess.run(["git", "init", "-q", "-b", BRANCH, str(worktree)], check=True)
@@ -58,6 +63,15 @@ def hub(tmp_path: Path):
         real.stop()
 
 
+#: A held call waits out a short hold and polls fast (the real hook, the real
+#: hub; only the hook's own sleep is shorter). "expired" still proves it waited.
+HOLD_TTL = 0.4
+
+
+def _fast_poll(_seconds: float) -> None:
+    time.sleep(0.05)
+
+
 def _hook(hub: RealHub, command: str, key: str, *, ttl: float = 3.0):
     payload = {
         "session_id": SESSION, "tool_name": "Bash", "tool_use_id": key,
@@ -66,7 +80,7 @@ def _hook(hub: RealHub, command: str, key: str, *, ttl: float = 3.0):
     config = GateConfig(armed=True, repos={str(hub.worktree): ["Bash"]}, armed_paths=[str(hub.worktree)])
     return run_hook(
         payload, config=config, hub_url=hub.base, agent_credential=hub.agent_token,
-        agent="codex", ttl_seconds=ttl,
+        agent="codex", ttl_seconds=ttl, sleep=_fast_poll,
     )
 
 
@@ -87,7 +101,7 @@ def test_a_heredoc_in_the_worktree_passes_and_a_tmp_write_waits_with_its_reason(
     assert approved["operation"]["tool_call"]["scope"] == "inside"
 
     probe = 'echo "test write" > /tmp/hs_write_probe.txt && cat /tmp/hs_write_probe.txt'
-    held = _hook(hub, probe, "toolu_tmp", ttl=2.0)
+    held = _hook(hub, probe, "toolu_tmp", ttl=HOLD_TTL)
     assert held.deny and "expired" in held.deny  # it waited; nobody approved it
     proposal = _proposal(hub, "toolu_tmp")
     assert proposal["operation"]["tool_call"]["scope"] == "outside"
@@ -97,10 +111,10 @@ def test_a_heredoc_in_the_worktree_passes_and_a_tmp_write_waits_with_its_reason(
 def test_a_heredoc_pipe_and_an_unresolved_cd_wait_with_their_reasons(hub: RealHub) -> None:
     """Astra r1 on #998: both escapes, through the real hook and hub."""
     pipe = "tee local.py <<'EOF' | python3\nopen('../outside-pipe', 'w').write('review')\nEOF"
-    assert "expired" in (_hook(hub, pipe, "toolu_pipe", ttl=2.0).deny or "")
+    assert "expired" in (_hook(hub, pipe, "toolu_pipe", ttl=HOLD_TTL).deny or "")
     assert _proposal(hub, "toolu_pipe")["hold_reason"] == "RUNS CODE · python3"
     cd = "cd missing || cat > ../outside <<'EOF'\nx\nEOF"
-    assert "expired" in (_hook(hub, cd, "toolu_cd", ttl=2.0).deny or "")
+    assert "expired" in (_hook(hub, cd, "toolu_cd", ttl=HOLD_TTL).deny or "")
     assert _proposal(hub, "toolu_cd")["hold_reason"] == "FOLDER NOT RESOLVED · missing"
     assert not (hub.worktree.parent / "outside-pipe").exists()
     assert not (hub.worktree.parent / "outside").exists()
@@ -133,7 +147,7 @@ def test_a_branch_past_the_head_is_never_the_target(hub: RealHub) -> None:
     filtered too: a branch name past char 120 is omitted, never stored."""
     branch = "other-ExampleCredential-k3y9Q"
     command = "PAD=" + "p" * 130 + f" git push origin {branch}"
-    held = _hook(hub, command, "toolu_push_pad", ttl=2.0)
+    held = _hook(hub, command, "toolu_push_pad", ttl=HOLD_TTL)
     assert "expired" in (held.deny or "")
     stored = _proposal(hub, "toolu_push_pad")
     assert stored["operation"]["tool_call"]["rule"] == "git_push_other_branch"
@@ -164,7 +178,7 @@ ESCAPE_PROBES = [
 
 @pytest.mark.parametrize("key, command, secret", SECRET_PROBES, ids=[k for k, _c, _s in SECRET_PROBES])
 def test_astra_secret_probes(hub: RealHub, key: str, command: str, secret: str) -> None:
-    held = _hook(hub, command, key, ttl=2.0)
+    held = _hook(hub, command, key, ttl=HOLD_TTL)
     assert "expired" in (held.deny or "")
     stored = _proposal(hub, key)
     assert secret not in json.dumps(stored), "not in args_head, operation.tool_call.target or the reason"
@@ -173,7 +187,7 @@ def test_astra_secret_probes(hub: RealHub, key: str, command: str, secret: str) 
 @pytest.mark.parametrize("key, command, marker", ESCAPE_PROBES, ids=[k for k, _c, _m in ESCAPE_PROBES])
 def test_astra_escape_probes(hub: RealHub, key: str, command: str, marker: str) -> None:
     (hub.worktree / "out").symlink_to(hub.worktree.parent) if not (hub.worktree / "out").exists() else None
-    held = _hook(hub, command, key, ttl=2.0)
+    held = _hook(hub, command, key, ttl=HOLD_TTL)
     assert "expired" in (held.deny or ""), "held, never passed"
     assert _proposal(hub, key)["operation"]["tool_call"]["scope"] in ("outside", "unparsed")
     assert not (hub.worktree.parent / marker).exists()
@@ -232,7 +246,7 @@ def test_yolo_passes_the_agents_reads_and_its_own_test_run(hub: RealHub, command
 ])
 def test_yolo_still_holds_writes_pushes_and_the_outside(hub: RealHub, command: str, reason: str) -> None:
     key = "toolu_hold_" + "".join(ch if ch.isalnum() else "_" for ch in command)[:48]
-    held = _hook(hub, command, key, ttl=2.0)
+    held = _hook(hub, command, key, ttl=HOLD_TTL)
     assert held.deny and "expired" in held.deny  # it waited; nobody approved it
     assert _proposal(hub, key)["hold_reason"] == reason
 
@@ -419,6 +433,6 @@ def test_a_substitution_after_cd_is_read_where_it_runs(hub: RealHub, tmp_path) -
     outside.write_text("outside content\n", encoding="utf-8")
     (hub.worktree / "sub").mkdir()
     (hub.worktree / "sub" / "secret").symlink_to(outside)
-    held = _hook(hub, 'cd sub && echo "$(cat secret)"', "toolu_cd_subst", ttl=2.0)
+    held = _hook(hub, 'cd sub && echo "$(cat secret)"', "toolu_cd_subst", ttl=HOLD_TTL)
     assert held.deny and "expired" in held.deny
     assert _proposal(hub, "toolu_cd_subst")["hold_reason"] == "UNRESOLVED TARGET · $(cat secret)"
