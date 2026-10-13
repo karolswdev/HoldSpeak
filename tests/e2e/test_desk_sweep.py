@@ -927,6 +927,11 @@ HELD = 2500
     ("surface-dictation", ["/api/setup/local-ai"]),
     ("surface-settings@integration:destinations", ["/api/channels/destinations"]),
     ("desk", ["/api/people/readiness"]),
+    # The quick check's sweep (2026-10-12): a held desk read let Memory settle
+    # before its open focus scrolled it 180 px; People drew its rows before
+    # the Door read added the Next 1:1 plate above them (153 px).
+    ("surface-project-memory", ["/api/kbs"]),
+    ("surface-people", ["/api/door"]),
 ])
 def test_a_held_first_read_moves_nothing(desk: dict[str, Any], pw_browser: Any, case_id: str, held: list[str]) -> None:
     [(_, wid, scope)] = [c for c in CASES if c[0] == case_id]

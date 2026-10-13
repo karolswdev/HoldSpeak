@@ -319,15 +319,17 @@ export function RecallFace({ initialQuery = "" }: { initialQuery?: string } = {}
   const filtersRef = useRef<HTMLDivElement | null>(null);
   useRovingRows(resultsRef, { selector: "button, [role='button']", rowSelector: "[data-recall-row]" });
 
-  // Search moves focus to the results region (design: focus return).
-  const lastSearched = useRef("");
+  // Search moves focus to the results region (design: focus return): only a
+  // search he ran (searching -> ready). The quiet reads (the zero-query recent
+  // read on open, a re-read after a desk change) never move focus: that focus
+  // scrolled the window 180 px under him after it was drawn (the desk sweep's
+  // still fence, under load).
+  const lastStatus = useRef(status);
   useEffect(() => {
-    if (status !== "ready") return;
-    const key = `${result.query}|${result.filter}|${result.searched_at}`;
-    if (key === lastSearched.current) return;
-    lastSearched.current = key;
-    resultsRef.current?.focus();
-  }, [status, result.query, result.filter, result.searched_at]);
+    const was = lastStatus.current;
+    lastStatus.current = status;
+    if (status === "ready" && was === "searching") resultsRef.current?.focus();
+  }, [status]);
 
   const searched = status === "ready" || (status === "searching" && result.searched_at !== "");
   const dimmed = status === "searching" && result.searched_at !== "";

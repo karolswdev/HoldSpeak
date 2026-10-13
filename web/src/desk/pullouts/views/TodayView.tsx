@@ -414,7 +414,9 @@ export function TodayView({ header }: { header: ReactNode }) {
   const ahead = events.length;
   return (
     <>
-      <div className="desk-pullout-body desk-surface-body intelligence-pullout today">
+      {/* Busy until the first load ends: the day's rows land after it and
+          move what is drawn (the desk sweep's still fence, under load). */}
+      <div className="desk-pullout-body desk-surface-body intelligence-pullout today" aria-busy={loaded ? undefined : true}>
         {header}
         <div className="today-head">
           <h2 className="today-day" data-testid="today-day">{DAY_NAMES[now.getDay()]}</h2>
