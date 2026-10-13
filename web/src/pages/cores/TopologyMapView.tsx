@@ -436,7 +436,7 @@ function AddNodePanel({
           <span className="topology-add-title">Define endpoint</span>
           <StringGadget label="Name" value={endpoint.label} onChange={(v) => setEndpoint((c) => ({ ...c, label: v }))} placeholder="My server" />
           <MicButton draftScope="topo-endpoint-name" onText={(t: string) => setEndpoint((c) => ({ ...c, label: t }))} />
-          <StringGadget label="Endpoint" value={endpoint.url} onChange={(v) => setEndpoint((c) => ({ ...c, url: v }))} placeholder="http://192.168.1.43:8080/v1" />
+          <StringGadget label="Endpoint" value={endpoint.url} onChange={(v) => setEndpoint((c) => ({ ...c, url: v }))} placeholder="http://server.local:8080/v1" />
           <StringGadget label="Model" value={endpoint.model} onChange={(v) => setEndpoint((c) => ({ ...c, model: v }))} placeholder="model-name" />
           <label className="surface-gadget-label">Provider key<input ref={secretRef} className="hs-control" type="password" autoComplete="new-password" placeholder="Key (optional)" /></label>
           {error ? <ActionNotice tone="danger">{error}</ActionNotice> : null}
