@@ -176,3 +176,19 @@ f7f34c279, with the complete observation read after each invocation. Evidence:
 and real CLI fixture ingestion. Provenance reports dirty=true: the untracked
 node_modules link and the subsequent test-only readiness fix remained; product
 source was frozen. These observations do not establish live agent delivery.
+
+## Final combined check — GREEN
+
+`scripts/quick_check.sh 6e86c666ae15c23241f427ca98981a83c5978d92`
+passed on the frozen candidate, including the two diagnosed meeting test fixes:
+
+- Production web build passed.
+- Related web checks: 395 files, 3,581 passed.
+- Affected Python checks: nine files, 641 passed.
+- Generic desktop/phone desk sweep: 107 passed, two existing xfails.
+- Canon guards: 15 passed; final TypeScript check also passed.
+
+Logs: `.tmp/surface-audit/quick-final-5/`. Extra affected files were the graph
+atlas and architecture/API metadata guards. Six canvases were separately
+rendered at both widths because they live outside web/src. No product source
+changed after this run. The full main tape and owner acceptance remain open.
