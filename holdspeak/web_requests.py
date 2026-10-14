@@ -95,9 +95,13 @@ class _MeetingStartRequest(BaseModel):
     ``devices`` is an optional list of currently-registered
     AIPI-Lite-class device ids that should contribute audio to the
     meeting. Default empty means legacy local-mic + system-audio only.
+    ``calendar_event_id`` is the exact projected calendar occurrence that
+    opened the recording gesture. It is optional so generic recording keeps
+    its legacy contract.
     """
 
     devices: Optional[list[str]] = None
+    calendar_event_id: Optional[str] = None
 
 
 class _GlobalActionItemUpdateRequest(BaseModel):

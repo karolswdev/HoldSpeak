@@ -14,8 +14,15 @@ import { deskEditorTheme, deskMarkdownHighlighting } from "./deskEditorTheme";
 
 export interface DeskEditorHandle {
   insertAtCursor(text: string): void;
+  getSelection(): DeskEditorSelection;
   revealRange(from: number, to: number, options?: { focus?: boolean }): boolean;
   clearReveal(): void;
+}
+
+export interface DeskEditorSelection {
+  from: number;
+  to: number;
+  text: string;
 }
 
 const setReveal = StateEffect.define<{ from: number; to: number } | null>();
@@ -46,6 +53,7 @@ interface DeskEditorProps {
   ariaLabel?: string;
   onModEnter?: () => void;
   onViewChange?: (view: EditorView) => void;
+  onSelectionChange?: (selection: DeskEditorSelection) => void;
   onAIBarToggle?: () => void;
   /** The formatting rail is on by default; compact embeds may opt out. */
   showToolbar?: boolean;
@@ -175,6 +183,7 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
       ariaLabel,
       onModEnter,
       onViewChange,
+      onSelectionChange,
       onAIBarToggle,
       showToolbar = true,
       editable = true,
@@ -188,12 +197,14 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
     const onEscapeRef = useRef(onEscape);
     const onModEnterRef = useRef(onModEnter);
     const onAIBarToggleRef = useRef(onAIBarToggle);
+    const onSelectionChangeRef = useRef(onSelectionChange);
     const editableCompartment = useRef(new Compartment());
 
     onChangeRef.current = onChange;
     onEscapeRef.current = onEscape;
     onModEnterRef.current = onModEnter;
     onAIBarToggleRef.current = onAIBarToggle;
+    onSelectionChangeRef.current = onSelectionChange;
 
     useImperativeHandle(
       forwardedRef,
@@ -206,6 +217,12 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
           // (typed or spoken) continue it.
           view.dispatch({ changes: { from, to, insert: text }, selection: { anchor: from + text.length } });
           view.focus();
+        },
+        getSelection() {
+          const view = viewRef.current;
+          if (!view) return { from: 0, to: 0, text: "" };
+          const { from, to } = view.state.selection.main;
+          return { from, to, text: view.state.doc.sliceString(from, to) };
         },
         revealRange(from, to, options) {
           const view = viewRef.current;
@@ -283,6 +300,10 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
             EditorView.updateListener.of((update) => {
               if (update.docChanged && !update.transactions.some((transaction) => transaction.annotation(authoritativeSync)))
                 onChangeRef.current(update.state.doc.toString());
+              if (update.docChanged || update.selectionSet) {
+                const { from, to } = update.state.selection.main;
+                onSelectionChangeRef.current?.({ from, to, text: update.state.doc.sliceString(from, to) });
+              }
             }),
             ...(ariaLabel
               ? [EditorView.contentAttributes.of({ "aria-label": ariaLabel })]
@@ -294,6 +315,8 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
       });
       viewRef.current = view;
       onViewChange?.(view);
+      const { from, to } = view.state.selection.main;
+      onSelectionChangeRef.current?.({ from, to, text: view.state.doc.sliceString(from, to) });
       if (autoFocus) view.focus();
 
       return () => {

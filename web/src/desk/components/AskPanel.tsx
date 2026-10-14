@@ -19,8 +19,13 @@ import {
   ASK_LENSES,
   askContexts,
   askLineageLine,
+  latchAskSelection,
   keepAsk,
+  selectionPrompt,
+  takeAskSelection,
+  ASK_SELECTION_EVENT_NAME,
   runAsk,
+  type AskSelectionHandoff,
   type AskRunResult,
 } from "../ask";
 import {
@@ -70,6 +75,7 @@ import { humanizeWireValue } from "../../lib/productLanguage";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { useEngine, refreshEngine } from "../hooks/useEngine";
 import { EngineLine, RunLine, reasonVerb, reasonWords } from "../surface";
+import { openRef } from "../openObject";
 import { openSurfaceOr } from "../shell";
 
 /** The budget figure the audit names: 0.3K / 16.4K. */
@@ -96,6 +102,7 @@ export function AskPanel() {
     prompt: string;
     lens: string;
     ctx: number;
+    selection: AskSelectionHandoff | null;
   } | null>(null);
   const [result, setResult] = useState<AskRunResult | null>(null);
   const [failedRun, setFailedRun] = useState<AskRunResult | null>(null);
@@ -125,6 +132,26 @@ export function AskPanel() {
     () => askContexts(items, selectedIds),
     [items, selectedIds],
   );
+  const [selectedPassage, setSelectedPassage] = useState<AskSelectionHandoff | null>(() => takeAskSelection());
+  useEffect(() => {
+    const onSelection = (event: Event) => {
+      const next = (event as CustomEvent<AskSelectionHandoff | null>).detail;
+      // The mounted composer owns this handoff now. Clear the module latch so
+      // a later mount cannot replay a quote already shown in this composer.
+      takeAskSelection();
+      setSelectedPassage(next && next.text.trim() ? next : null);
+    };
+    window.addEventListener(ASK_SELECTION_EVENT_NAME, onSelection);
+    return () => window.removeEventListener(ASK_SELECTION_EVENT_NAME, onSelection);
+  }, []);
+  useEffect(() => {
+    const noteItems = items.note || [];
+    const noteKnown = noteItems.length > 0;
+    const noteStillExists = noteItems.some((item) => qualifiedRef("note", item.id) === selectedPassage?.noteRef);
+    if (selectedPassage && (!selectedIds.includes(selectedPassage.noteRef) || (noteKnown && !noteStillExists) || (context.length > 0 && !context.some((entry) => entry.ref === selectedPassage.noteRef)))) {
+      setSelectedPassage(null);
+    }
+  }, [context, items.note, selectedIds, selectedPassage]);
   useEffect(() => {
     apiRequest("/api/projects")
       .then((response) => response.json())
@@ -177,7 +204,10 @@ export function AskPanel() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && phase !== "routing") closeAsk();
+      if (e.key === "Escape" && phase !== "routing") {
+        latchAskSelection(null);
+        closeAsk();
+      }
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
@@ -185,6 +215,10 @@ export function AskPanel() {
 
   const ask = async () => {
     if (!prompt.trim() || phase === "routing" || overBudget) return;
+    const requestSelection = selectedPassage && context.some((entry) => entry.ref === selectedPassage.noteRef)
+      ? selectedPassage
+      : null;
+    const requestPrompt = selectionPrompt(prompt, requestSelection);
     setPhase("routing");
     setError("");
     setResult(null);
@@ -193,7 +227,7 @@ export function AskPanel() {
     const startedAt = Date.now();
     setRunStartedAt(startedAt);
     setFinishedElapsedSeconds(undefined);
-    setSent({ prompt: prompt.trim(), lens, ctx: context.length });
+    setSent({ prompt: requestPrompt, lens, ctx: context.length, selection: requestSelection });
     // Receipts: the grounding rows ride the pinned context so keep names them.
     printedContext.current = [
       ...context,
@@ -202,7 +236,7 @@ export function AskPanel() {
         .map((g) => ({ id: g.id, kind: g.kind, ref: g.ref, title: g.title })),
     ];
     const r = await runAsk({
-      prompt: prompt.trim(),
+      prompt: requestPrompt,
       lens,
       context,
       grounding: buildGrounding(grounding, rails),
@@ -233,6 +267,7 @@ export function AskPanel() {
       // The kept card is a REAL artifact — it lands on the desk wearing the
       // NEW beat (the HS-73-06 grammar), like every other run-born output.
       clearSelection();
+      latchAskSelection(null);
       closeAsk();
       await refresh();
       markNew(artifactId);
@@ -243,6 +278,7 @@ export function AskPanel() {
   };
 
   const bin = () => {
+    latchAskSelection(null);
     clearSelection();
     closeAsk();
   };
@@ -265,6 +301,7 @@ export function AskPanel() {
   const refusedRoute = Boolean(error && printedRoute && !result);
 
   const turnCount = (sent ? 1 : 0) + (result || failedRun ? 1 : 0);
+  const hasTraffic = Boolean(sent || failedRun || result || phase === "routing");
 
   // The footer receipt bar's one status line (audit §3.5): fault > routing
   // > run receipt > the compose budget tokens.
@@ -282,7 +319,6 @@ export function AskPanel() {
           ? String(placement?.model || result.model || "")
           : [
             promptRecovered ? "DRAFT · RECOVERED" : "",
-            `CTX ${fmtK(groundTokens)}/${fmtK(limitTokens)}`,
             overBudget ? "PAST THE WINDOW" : "USES ASSIGNMENT",
           ]
             .filter(Boolean)
@@ -305,21 +341,18 @@ export function AskPanel() {
           : "Ask AI"
       }
       open
+      defaultW={520}
+      defaultH={600}
       onClose={() => {
         if (phase !== "routing") bin();
       }}
     >
       <div className="desk-pullout-body desk-ask-body">
-        <SurfaceTraffic
-          /* HS-202-04 (UX-CANON A.8) — a freshly opened Ask headed itself
-             `SESSION · 0 TURNS` on every desk and both widths
-             (`01-measured-walk.md:150`). `countToken` withholds the zero
-             (`desk/surface/count.ts:39`), so the head names the session
-             and counts only once there is something to count. */
+        {hasTraffic ? <SurfaceTraffic
           head={["SESSION", countToken(turnCount, "TURN")]
             .filter(Boolean)
             .join(" · ")}
-          showEmpty={!sent && phase !== "routing"}
+          showEmpty={false}
         >
           {sent ? (
             <SurfaceTrafficTurn
@@ -328,7 +361,7 @@ export function AskPanel() {
                 <>
                   <span className="surface-token">{sent.lens}</span>
                   {sent.ctx > 0 ? (
-                    <span className="surface-token">CTX {sent.ctx}</span>
+                    <span className="surface-token">Context {sent.ctx}</span>
                   ) : null}
                 </>
               }
@@ -452,7 +485,7 @@ export function AskPanel() {
             </SurfaceTrafficTurn>
           ) : null}
           <div ref={endRef} />
-        </SurfaceTraffic>
+        </SurfaceTraffic> : null}
 
         {phase !== "printed" && (
           <>
@@ -461,6 +494,20 @@ export function AskPanel() {
               onChoose={() => openSurfaceOr("configure-runs-on", "/settings", "models")}
               onRetry={() => void refreshEngine("ask.answer")}
             />
+            {selectedPassage ? (
+              <div className="desk-ask-selected" data-testid="ask-selected-passage">
+                <p className="desk-ground-sect">Selected text</p>
+                <blockquote>{selectedPassage.text}</blockquote>
+                <div className="desk-ask-selection-verbs">
+                  <Button dense variant="ghost" onClick={() => openRef(selectedPassage.noteRef)}>
+                    Back to note
+                  </Button>
+                  <Button dense variant="ghost" onClick={() => { latchAskSelection(null); setSelectedPassage(null); }}>
+                    Remove
+                  </Button>
+                </div>
+              </div>
+            ) : null}
             <div className="desk-chat-well">
               <div className="desk-chat-composer">
                 <MicButton
@@ -510,14 +557,6 @@ export function AskPanel() {
                   if (picked) setPrompt(picked.instruction);
                 }}
               />
-              <div className="desk-chat-well-foot">
-                {context.length > 0 && (
-                  <span className="surface-token">
-                    CTX · {context.length}{" "}
-                    {context.length === 1 ? "CARD" : "CARDS"}
-                  </span>
-                )}
-              </div>
             </div>
 
             {/* HS-111-05 — the grounding rack: one etched rack, both
@@ -525,16 +564,25 @@ export function AskPanel() {
             <GadgetGroup label="GROUNDING">
               {context.length > 0 && (
                 <div className="desk-ask-ctx">
-                  <p className="desk-ground-sect">
-                    CONTEXT · {context.length}
-                  </p>
+                  <p className="desk-ground-sect desk-ask-context-label">Context</p>
                   <ul className="desk-ground-list">
                     {context.map((c) => (
                       <li key={c.id} className="desk-ground-row">
-                        <div className="desk-ground-line is-fact">
-                          <span className="desk-rails-kind">{c.kind}</span>
-                          <span className="desk-ground-name">{c.title}</span>
-                        </div>
+                        {c.ref ? (
+                          <Button
+                            variant="chrome"
+                            className="desk-ground-line is-fact"
+                            onClick={() => openRef(c.ref!)}
+                          >
+                            <span className="desk-rails-kind">{c.kind}</span>
+                            <span className="desk-ground-name">{c.title}</span>
+                          </Button>
+                        ) : (
+                          <div className="desk-ground-line is-fact">
+                            <span className="desk-rails-kind">{c.kind}</span>
+                            <span className="desk-ground-name">{c.title}</span>
+                          </div>
+                        )}
                       </li>
                     ))}
                   </ul>
@@ -560,7 +608,7 @@ export function AskPanel() {
               />
               <div className="desk-ask-rack-lip">
                 <LedMeter
-                  label={`CTX ${fmtK(groundTokens)}/${fmtK(limitTokens)}`}
+                  label={`Budget ${fmtK(groundTokens)}/${fmtK(limitTokens)}`}
                   value={limitTokens > 0 ? groundTokens / limitTokens : 0}
                 />
               </div>

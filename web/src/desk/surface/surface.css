@@ -4162,6 +4162,86 @@ button.surface-edit-in-place:hover {
 .meetings-detail-facts [data-tone="warn"] { color: var(--warning); }
 .meetings-detail-facts [data-tone="danger"] { color: var(--danger); }
 
+/* PHILO-17 Outcomes: Decisions and commitments share one quiet row shape.
+   The kind plates belonged to the retired split review face; the outcome
+   face names the work in the section and leaves the row for its fact and
+   verbs. */
+.surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-row > .surface-ledger-line,
+.surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-row > .surface-ledger-line[data-has-trailing] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 40%);
+  align-items: start;
+  gap: 4px 10px;
+}
+.surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-primary {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+}
+.surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-meta {
+  grid-column: 1;
+  grid-row: 2;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-trailing {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  min-width: 0;
+  max-width: 100%;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-self: center;
+}
+.surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-trailing > .btn {
+  flex: 0 0 auto;
+}
+.meeting-outcome-gap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 6px;
+  min-width: 0;
+  padding: 8px 10px 10px;
+}
+.meeting-outcome-gap .gadget-string {
+  flex: 1 1 12rem;
+  min-width: min(10rem, 100%);
+  max-width: 100%;
+}
+.meeting-outcome-gap .gadget-cycle {
+  flex: 1 1 12rem;
+  min-width: min(10rem, 100%);
+  max-width: 100%;
+}
+@container surface (max-width: 559.9px) {
+  .surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-row > .surface-ledger-line,
+  .surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-row > .surface-ledger-line[data-has-trailing] {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    gap: 2px 0;
+  }
+  .surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-line > .surface-ledger-meta {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-row[data-wrap]
+    > .surface-ledger-line[data-has-trailing] > .surface-ledger-trailing {
+    grid-column: 1;
+    grid-row: 3;
+    display: flex;
+    flex: none;
+    width: auto;
+    max-width: none;
+    margin: 0;
+    justify-content: flex-end;
+    align-items: center;
+    align-self: stretch;
+    flex-wrap: wrap;
+  }
+}
+
 /* HS-170-04 — NEEDS YOU section in detail */
 .meetings-detail-needs {
   display: flex;

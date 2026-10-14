@@ -1,0 +1,16 @@
+.canvas { min-height: 100vh; padding-bottom: 24px; }
+.canvas-bar { display:flex; flex-wrap:wrap; gap:16px; padding:12px 20px; background:var(--desk-window-fill); color:var(--text); font:12px var(--font-mono); }
+.canvas nav { display:flex; gap:8px; padding:16px 20px; }
+.canvas-window { position:relative; width:min(760px, calc(100% - 40px)); margin:12px auto; background:var(--desk-window-fill); border:2px solid var(--desk-ink, currentColor); }
+.canvas-title { padding:8px 14px; font:600 15px var(--font-mono); background:var(--desk-title-fill, var(--surface-2)); }
+.canvas-body { display:flex; flex-direction:column; gap:20px; padding:20px; }
+.canvas-copy, .canvas-body blockquote { font:13px/1.6 var(--font-sans); margin:0; }
+.canvas-body blockquote { padding:12px; background:var(--surface-2); }
+.canvas-verbs { display:flex; flex-wrap:wrap; gap:8px; }
+.canvas-edit { display:flex; flex-wrap:wrap; align-items:center; gap:12px; padding:12px; }
+.canvas-question { padding:16px; min-height:80px; background:var(--surface-2); font:13px var(--font-sans); }
+.canvas-foot { padding:12px 20px; font:12px var(--font-mono); background:var(--surface-2); }
+@media (max-width: 420px) { .canvas-window { width:calc(100% - 16px); } .canvas-body { padding:14px; } }
+
+.canvas-window { display:block; height:auto; max-height:none; overflow:visible; color:var(--text); }
+.canvas-bar { color:var(--wb-text); }

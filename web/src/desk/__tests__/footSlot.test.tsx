@@ -1,7 +1,7 @@
 // HS-129-01 — hosted cores publish their foot into the frame, while direct
 // windows retain their in-place footer.
 import { lazy } from "react";
-import { render, waitFor } from "@testing-library/react";
+import { act, render, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   SurfaceWindowHost,
@@ -10,6 +10,8 @@ import {
 import { EMPTY_ITEMS } from "../api";
 import { useDesk } from "../store";
 import { SurfaceFooter } from "../surface/SurfaceFooter";
+import { keepPlace } from "../deskMemory";
+import { surfaceScrollPlaceKey } from "../hooks/useSurfaceScrollPlace";
 import "../components/window-chrome.css";
 import "../components/dock.css";
 
@@ -43,6 +45,7 @@ beforeEach(() => {
 
 afterEach(() => {
   window.matchMedia = defaultMatchMedia;
+  vi.useRealTimers();
   vi.restoreAllMocks();
 });
 
@@ -77,6 +80,23 @@ describe("HS-129-01 foot slot", () => {
     const body = container.querySelector(".desk-surface-body") as HTMLElement;
     expect(getComputedStyle(shell).overflow).not.toBe("auto");
     expect(getComputedStyle(body).overflow).toBe("auto");
+  });
+
+  it("restores the hosted body's place for the window scope", async () => {
+    vi.useFakeTimers();
+    keepPlace(surfaceScrollPlaceKey(hostedRow.id), "72");
+    const { container } = render(
+      <div className="desk-next">
+        <SurfaceWindowHost row={hostedRow} scope={undefined} items={EMPTY_ITEMS} />
+      </div>,
+    );
+
+    const body = container.querySelector(".desk-surface-body") as HTMLElement;
+    expect(body).toBeTruthy();
+    Object.defineProperty(body, "scrollHeight", { configurable: true, value: 420 });
+    Object.defineProperty(body, "clientHeight", { configurable: true, value: 180 });
+    act(() => vi.runOnlyPendingTimers());
+    expect(body.scrollTop).toBe(72);
   });
 
   it("keeps a compact sheet's scroll path in the body", async () => {

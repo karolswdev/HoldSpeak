@@ -1250,6 +1250,43 @@
   color: var(--wb-ink);
 }
 
+/* The selected Note passage is the reason this Ask opened. Keep the quote
+   compact and give its two exits one quiet verb row. */
+.desk-next .desk-ask .desk-ask-selected {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  background: var(--desk-window-well);
+}
+.desk-next .desk-ask .desk-ask-selected .desk-ground-sect {
+  margin: 0;
+}
+.desk-next .desk-ask .desk-ask-selected blockquote {
+  max-height: 8rem;
+  margin: 0;
+  overflow: auto;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+.desk-next .desk-ask .desk-ask-selection-verbs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.desk-next .desk-ask .desk-ask-context-label {
+  letter-spacing: 0;
+  text-transform: none;
+}
+.desk-next .desk-ask button.desk-ground-line {
+  cursor: pointer;
+}
+
 /* PHILO-13-08 (B3): the deck asks a create's name (New Decision); Save
    sits under the well. */
 .desk-tool-name { display: flex; padding: 6px 2px 2px; }

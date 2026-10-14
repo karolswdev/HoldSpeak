@@ -94,7 +94,9 @@ export function meetingSteps(
   const recording = token.label === "REC";
   const summarised = token.label === "RAN" || stored;
   const summaryFailed = !summarised && (token.tone === "danger" || token.label === "FAILED");
-  const pending = (data.ftProposals ?? []).some((p) => p.state === "proposed");
+  const pending = (data.ftProposals ?? []).some(
+    (p) => p.state === "proposed" && !p.deferred_until,
+  );
   const summary: Step["state"] = recording ? "later" : summarised ? "done" : summaryFailed ? "failed" : "now";
   const decide: Step["state"] = !summarised ? "later" : pending ? "now" : "done";
   const send: Step["state"] = summarised && !pending ? "now" : "later";
@@ -104,6 +106,40 @@ export function meetingSteps(
     { key: "decide", label: "Decide", state: decide },
     { key: "send", label: "Send follow-up", state: send },
   ];
+}
+
+/** The saved review face keeps the window name in its title bar. This is the
+ * one useful fact in the body: pending work, or the current summary state. */
+export function meetingOutcomeFact(
+  meeting: Record<string, unknown>,
+  data: Pick<MeetingData, "detail" | "ftProposals" | "needsCount">,
+): string {
+  const legacyPending = Number(data.needsCount ?? 0);
+  const pending = (Number.isFinite(legacyPending) ? Math.max(0, legacyPending) : 0)
+    + (data.ftProposals ?? []).filter(
+      (proposal) => proposal.state === "proposed" && !proposal.deferred_until,
+    ).length;
+  if (pending > 0) return `${pending} to review`;
+
+  const token = stateToken(data.detail ?? meeting);
+  if (token.axis && ["OFF", "SKIPPED", "FAILED", "PARTIAL"].includes(token.label)) {
+    return `${token.axis} ${token.label}`;
+  }
+  if (["CAPTURE FAILED", "RECOVERABLE", "INTERRUPTED", "IMPORT FAILED"].includes(token.label)) {
+    return token.label;
+  }
+  return "Outcomes";
+}
+
+/** Steps describe work in progress. A settled Outcomes record uses the
+ * compact strip and does not present a static progress ladder. */
+export function meetingPipelineActive(
+  meeting: Record<string, unknown>,
+  data: Pick<MeetingData, "detail">,
+): boolean {
+  return ["REC", "TRANSCRIBING", "QUEUED", "RUNNING", "IMPORTING"].includes(
+    stateToken(data.detail ?? meeting).label,
+  );
 }
 
 export function MeetingHeader({
@@ -124,11 +160,7 @@ export function MeetingHeader({
   const title = String(data.detail?.title ?? meeting.title ?? "Meeting");
   const strip = <StatusStrip className="meetings-detail-facts" items={meetingStripItems(meeting, data, saidOnFace)} />;
   if (compact) {
-    return (
-      <div className="meetings-detail-head" data-compact>
-        {strip}
-      </div>
-    );
+    return strip;
   }
   return (
     <>

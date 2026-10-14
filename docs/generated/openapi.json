@@ -1114,8 +1114,19 @@
         "type": "object"
       },
       "_MeetingStartRequest": {
-        "description": "Optional body for ``POST /api/meeting/start`` (HS-14-06).\n\n``devices`` is an optional list of currently-registered\nAIPI-Lite-class device ids that should contribute audio to the\nmeeting. Default empty means legacy local-mic + system-audio only.",
+        "description": "Optional body for ``POST /api/meeting/start`` (HS-14-06).\n\n``devices`` is an optional list of currently-registered\nAIPI-Lite-class device ids that should contribute audio to the\nmeeting. Default empty means legacy local-mic + system-audio only.\n``calendar_event_id`` is the exact projected calendar occurrence that\nopened the recording gesture. It is optional so generic recording keeps\nits legacy contract.",
         "properties": {
+          "calendar_event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calendar Event Id"
+          },
           "devices": {
             "anyOf": [
               {

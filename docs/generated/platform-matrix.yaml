@@ -3614,6 +3614,61 @@
       "status": "built_unreleased"
     },
     {
+      "availability": "unknown",
+      "capability_id": "people.prep.record",
+      "id": "people.prep.record@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/services/meeting_service.py",
+        "web/src/pages/cores/PeopleCore.tsx"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "people.prep.record",
+      "id": "people.prep.record@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/services/meeting_service.py",
+        "web/src/pages/cores/PeopleCore.tsx"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "people.prep.record",
+      "id": "people.prep.record@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/services/meeting_service.py",
+        "web/src/pages/cores/PeopleCore.tsx"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "people.prep.record",
+      "id": "people.prep.record@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/services/meeting_service.py",
+        "web/src/pages/cores/PeopleCore.tsx"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "people.prep.record",
+      "id": "people.prep.record@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/services/meeting_service.py",
+        "web/src/pages/cores/PeopleCore.tsx"
+      ],
+      "status": "built_unreleased"
+    },
+    {
       "availability": "not_applicable",
       "capability_id": "agents.thread_persistent",
       "id": "agents.thread_persistent@aipi",

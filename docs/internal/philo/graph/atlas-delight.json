@@ -1,0 +1,923 @@
+{
+  "schema_version": 1,
+  "atlas_version": "delight-daily-journeys",
+  "extends": "docs/internal/philo/graph/atlas-productivity.json",
+  "source_commit": "8d6ee083da88b23c629cc1cdbac911e246bbafee",
+  "states": [
+    {
+      "id": "state.desk_presentation.delight_note_task",
+      "family": "desk_presentation",
+      "values": {
+        "note": "saved",
+        "passage": "selected",
+        "handoff": "task"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
+          "symbol": "function WorkspaceReady({",
+          "claim": "The note saves before handing its selected passage to the useful action."
+        }
+      ],
+      "reachable_by": [
+        "case.delight.note.task"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.delight_note_ask",
+      "family": "desk_presentation",
+      "values": {
+        "note": "saved",
+        "passage": "selected",
+        "handoff": "ask"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
+          "symbol": "function WorkspaceReady({",
+          "claim": "The note saves before handing its selected passage to the useful action."
+        }
+      ],
+      "reachable_by": [
+        "case.delight.note.ask"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.delight_prep",
+      "family": "desk_presentation",
+      "values": {
+        "person": "linked",
+        "agenda": "kept",
+        "record": "available"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/pages/cores/PeopleCore.tsx",
+          "symbol": "function PrepPane({",
+          "claim": "Prep retains the agenda and starts recording through the actual linked calendar event."
+        }
+      ],
+      "reachable_by": [
+        "case.delight.prep.draft",
+        "case.delight.prep.refusal"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.delight_outcomes",
+      "family": "desk_presentation",
+      "values": {
+        "meeting": "saved",
+        "outcome": "corrected and confirmed"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/pages/cores/history/MeetingDetail.tsx",
+          "symbol": "export function MeetingOutcomes({",
+          "claim": "Outcomes corrects the populated task, owner and date in an inline well and confirms once."
+        }
+      ],
+      "reachable_by": [
+        "case.delight.outcomes.confirm"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "case.delight.note.task",
+      "job": "j11",
+      "edge_ids": [
+        "edge.face.note_task"
+      ],
+      "state_id": "state.desk_presentation.delight_note_task",
+      "applicability": "applicable",
+      "preconditions": [
+        "The real Note producer creates a two-line note; keyboard selection chooses only its last line; no task is injected."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "Wait for the real first-run dismissal before reload."
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/thoughts",
+          "body": {
+            "request_id": "delight-selected-note",
+            "raw_text": "Migration notes\nWrite the rollback runbook",
+            "initial_note": {
+              "title": "Rollback note",
+              "body_markdown": "Migration notes\nWrite the rollback runbook"
+            }
+          },
+          "capture_as": "note_id",
+          "capture_path": "thought.working_note.id",
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "button[aria-controls=desk-tool-shelf]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "input[aria-controls=desk-palette-listbox]",
+          "value": "Rollback note",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "button.desk-deck-row:has-text(\"Rollback note\")",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": ".thought-note-foot",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "focus",
+          "selector": ".thought-note-body .cm-content",
+          "adapter": "ui-keyboard"
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "selector": ".thought-note-body .cm-content",
+          "key": "ControlOrMeta+End",
+          "adapter": "ui-keyboard"
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "selector": ".thought-note-body .cm-content",
+          "key": "Shift+Home",
+          "adapter": "ui-keyboard"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".thought-note-foot button[aria-label=\"More actions\"]",
+          "adapter": "ui-by-viewport",
+          "at_width": 393,
+          "why": "The phone keeps one primary; Task is in its More actions menu."
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "selector": ".thought-note-foot button:has-text(\"Task\"), button[role=menuitem]:has-text(\"Task\")",
+        "adapter": "ui-by-viewport",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "selector": "[data-testid=thought-task-well]",
+            "adapter": "ui-pointer"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "selector": "[data-testid=thought-task-well] button:has-text(\"Add\")",
+            "adapter": "ui-by-viewport"
+          }
+        ]
+      },
+      "expected": {
+        "observe_at": "protocol: GET /api/door",
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_field",
+              "path": "/board/waiting/0/text",
+              "value": "Write the rollback runbook"
+            },
+            {
+              "kind": "protocol_field",
+              "path": "/board/waiting/0/source_ref",
+              "value": "note:{note_id}"
+            }
+          ]
+        },
+        "words": "The actual Task/Add gesture creates the accepted task on the Door with the saved note as its source."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.delight.note.ask",
+      "job": "j11",
+      "edge_ids": [
+        "edge.face.note_task"
+      ],
+      "state_id": "state.desk_presentation.delight_note_ask",
+      "applicability": "applicable",
+      "preconditions": [
+        "The real Note producer creates a two-line note; keyboard selection chooses only its last line; no task is injected."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "Wait for the real first-run dismissal before reload."
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/thoughts",
+          "body": {
+            "request_id": "delight-selected-note",
+            "raw_text": "Migration notes\nWrite the rollback runbook",
+            "initial_note": {
+              "title": "Rollback note",
+              "body_markdown": "Migration notes\nWrite the rollback runbook"
+            }
+          },
+          "capture_as": "note_id",
+          "capture_path": "thought.working_note.id",
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "button[aria-controls=desk-tool-shelf]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "input[aria-controls=desk-palette-listbox]",
+          "value": "Rollback note",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "button.desk-deck-row:has-text(\"Rollback note\")",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": ".thought-note-foot",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "focus",
+          "selector": ".thought-note-body .cm-content",
+          "adapter": "ui-keyboard"
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "selector": ".thought-note-body .cm-content",
+          "key": "ControlOrMeta+End",
+          "adapter": "ui-keyboard"
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "selector": ".thought-note-body .cm-content",
+          "key": "Shift+Home",
+          "adapter": "ui-keyboard"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".thought-note-foot button[aria-label=\"More actions\"]",
+          "adapter": "ui-by-viewport",
+          "at_width": 393,
+          "why": "The phone keeps one primary; Task is in its More actions menu."
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "selector": "button[aria-label=\"Ask about this note\"]:visible, button[role=menuitem]:has-text(\"Ask about this note\")",
+        "adapter": "ui-by-viewport",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "selector": "#ask [data-testid=ask-selected-passage]",
+            "adapter": "ui-pointer"
+          },
+          {
+            "kind": "ui",
+            "action": "fill",
+            "selector": "#ask textarea[placeholder=\"Ask about your work\"]",
+            "value": "What is missing from this plan?",
+            "adapter": "ui-pointer"
+          }
+        ]
+      },
+      "expected": {
+        "observe_at": "#ask",
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "text_contains",
+              "value": "SELECTED TEXT"
+            },
+            {
+              "kind": "text_contains",
+              "value": "Write the rollback runbook"
+            },
+            {
+              "kind": "text_contains",
+              "value": "Rollback note"
+            },
+            {
+              "kind": "input_value",
+              "selector": "#ask textarea[placeholder=\"Ask about your work\"]",
+              "equals": "What is missing from this plan?"
+            }
+          ]
+        },
+        "words": "The real Note selection opens as a visible quote with the canonical Note context and the owner's unsent question. No model run is claimed."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.delight.prep.draft",
+      "job": "j7",
+      "edge_ids": [
+        "edge.face.people_prep"
+      ],
+      "state_id": "state.desk_presentation.delight_prep",
+      "applicability": "applicable",
+      "preconditions": [
+        "Real calendar and People producers in the run-owned HOME; no microphone, owner keychain or external calendar."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "The real arrival dismissal is durable before the People producer."
+        },
+        {
+          "kind": "cli",
+          "action": "seed_people_prep",
+          "capture_as": "people",
+          "adapter": "people-prep-producer",
+          "why": "Mint the calendar, meeting, People, project, alias, and agenda through their real producers in the run-owned HOME."
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/people/relationships/{relationship_id}/brief",
+          "adapter": "http-route",
+          "capture_as": "people_suggestion_uid",
+          "capture_path": "brief.calendar_link_suggestions",
+          "capture_match": {
+            "uid": "{people_event_uid}",
+            "source_id": "{people_event_source_id}"
+          },
+          "capture_field": "uid",
+          "expect_status": 200,
+          "body": null
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/people/relationships/{relationship_id}/calendar-links",
+          "adapter": "http-route",
+          "body": {
+            "uid": "{people_event_uid}",
+            "source_id": "{people_event_source_id}",
+            "label": "{people_event_title}"
+          },
+          "expect_status": 200
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/?open=people:{relationship_id}",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[id=\"pullout:people:{relationship_id}\"] [data-testid=prep-record-meeting]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "input#people-agenda-{relationship_id}",
+          "value": "Review the rollback checkpoint",
+          "adapter": "ui-pointer"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "goto",
+        "url": "/",
+        "adapter": "ui-navigation"
+      },
+      "expected": {
+        "observe_at": "[id=\"pullout:people:{relationship_id}\"]",
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "selector_presence",
+              "selector": "[id=\"pullout:people:{relationship_id}\"] [data-testid=prep-record-meeting]",
+              "present": true
+            },
+            {
+              "kind": "input_value",
+              "selector": "#people-agenda-{relationship_id}",
+              "equals": "Review the rollback checkpoint"
+            },
+            {
+              "kind": "text_contains",
+              "value": "Send the dry-run report"
+            }
+          ]
+        },
+        "words": "Reload retains the linked person, the unsent agenda and the useful direct recording action."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.delight.prep.refusal",
+      "job": "j7",
+      "edge_ids": [
+        "edge.face.people_prep"
+      ],
+      "state_id": "state.desk_presentation.delight_prep",
+      "applicability": "applicable",
+      "preconditions": [
+        "Real calendar and People producers in the run-owned HOME; no microphone, owner keychain or external calendar."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "The real arrival dismissal is durable before the People producer."
+        },
+        {
+          "kind": "cli",
+          "action": "seed_people_prep",
+          "capture_as": "people",
+          "adapter": "people-prep-producer",
+          "why": "Mint the calendar, meeting, People, project, alias, and agenda through their real producers in the run-owned HOME."
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/people/relationships/{relationship_id}/brief",
+          "adapter": "http-route",
+          "capture_as": "people_suggestion_uid",
+          "capture_path": "brief.calendar_link_suggestions",
+          "capture_match": {
+            "uid": "{people_event_uid}",
+            "source_id": "{people_event_source_id}"
+          },
+          "capture_field": "uid",
+          "expect_status": 200,
+          "body": null
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/people/relationships/{relationship_id}/calendar-links",
+          "adapter": "http-route",
+          "body": {
+            "uid": "{people_event_uid}",
+            "source_id": "{people_event_source_id}",
+            "label": "{people_event_title}"
+          },
+          "expect_status": 200
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/?open=people:{relationship_id}",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[id=\"pullout:people:{relationship_id}\"] [data-testid=prep-record-meeting]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "input#people-agenda-{relationship_id}",
+          "value": "Review the rollback checkpoint",
+          "adapter": "ui-pointer"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "selector": "[id=\"pullout:people:{relationship_id}\"] [data-testid=prep-record-meeting]",
+        "adapter": "ui-pointer"
+      },
+      "expected": {
+        "observe_at": "[id=\"pullout:people:{relationship_id}\"]",
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "selector_presence",
+              "selector": "[id=\"pullout:people:{relationship_id}\"] [data-testid=prep-record-meeting]",
+              "present": true
+            },
+            {
+              "kind": "input_value",
+              "selector": "#people-agenda-{relationship_id}",
+              "equals": "Review the rollback checkpoint"
+            },
+            {
+              "kind": "text_contains",
+              "value": "NO RECORDER ON THIS HUB"
+            }
+          ]
+        },
+        "words": "The real recorder-free hub refuses honestly in Prep and leaves the unsent agenda intact. This does not claim microphone capture."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.delight.outcomes.confirm",
+      "job": "j3",
+      "edge_ids": [
+        "edge.face.meeting_outcomes"
+      ],
+      "state_id": "state.desk_presentation.delight_outcomes",
+      "applicability": "applicable",
+      "preconditions": [
+        "The real import and bound summary producers run against the existing recorded loopback provider; this is controlled engine evidence, not a real LAN model."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "adapter": "http-route",
+          "body": {
+            "base_url": "{replay_provider_url}"
+          },
+          "expect_status": 200,
+          "capture_as": "engine_model",
+          "capture_path": "models.0"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "adapter": "http-route",
+          "body": {
+            "draft": {
+              "request_id": "p11-06-model",
+              "profile_id": "p11-recorded-engine",
+              "expected_profile_revision": 0,
+              "label": "Recorded loopback provider",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "{replay_provider_url}",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "expect_status": 200,
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/concierge/summary-selection",
+          "adapter": "http-route",
+          "body": {
+            "commandId": "p11-06-summary",
+            "expectedAssignmentRevision": 0,
+            "profileId": "{profile_id}",
+            "profileRevision": 1
+          },
+          "expect_status": 200
+        },
+        {
+          "kind": "boundary",
+          "label": "recorded meeting intelligence provider",
+          "substitute": "engine_reply",
+          "reply": "tests/fixtures/philo11_documents/meeting_summary_reply.json",
+          "adapter": "hub-engine-boundary"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.import",
+          "args": {
+            "path": "tests/fixtures/philo11_documents/meeting_transcript.vtt",
+            "title": "Document source review"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "meeting_id",
+          "capture_path": "meeting_id"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "transcription_status",
+            "value": "complete"
+          },
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "segments",
+            "nonempty": true
+          },
+          "timeout_s": 30
+        },
+        {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "{meeting_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "selection_hash",
+          "capture_path": "planned_route.selection_hash"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.summary.run",
+          "args": {
+            "meeting_id": "{meeting_id}",
+            "expected_selection_hash": "{selection_hash}"
+          },
+          "adapter": "mcp-http"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "intel.summary",
+            "nonempty": true
+          },
+          "timeout_s": 60
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/history?meeting={meeting_id}",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "#surface-meetings [data-testid=meeting-commitments-row] [data-testid=proposal-more-btn]",
+          "adapter": "ui-pointer",
+          "timeout_s": 45
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "#surface-meetings [data-testid=meeting-commitments-row] [data-testid=proposal-more-btn]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "button[role=menuitem]:has-text(\"Edit\")",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "#surface-meetings [data-testid=outcome-gap] input:not([type=date])",
+          "value": "Check the rollback bytes before review",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "select_option",
+          "selector": "#surface-meetings [data-testid=outcome-gap] select",
+          "value": "Me",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "#surface-meetings [data-testid=outcome-gap] input[type=date]",
+          "value": "2026-10-20",
+          "adapter": "ui-pointer"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "selector": "#surface-meetings [data-testid=meeting-commitments-row] [data-testid=proposal-confirm-btn]",
+        "adapter": "ui-pointer"
+      },
+      "expected": {
+        "observe_at": "protocol: GET /api/meetings/{meeting_id}/outcome-review",
+        "predicate": {
+          "kind": "protocol_rows",
+          "collection": "proposals",
+          "match": {
+            "kind": "action",
+            "state": "confirmed",
+            "owner": "Me",
+            "due": "2026-10-20",
+            "text": "Check the rollback bytes before review"
+          },
+          "min_new": 1,
+          "max_new": 1
+        },
+        "words": "Inline Task/Who/When correction followed by one Confirm produces the durable corrected action proposal."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ],
+  "clocks": [
+    {
+      "id": "clock.browser_date",
+      "source": "The isolated browser Date and event loop.",
+      "mechanism": "Real browser clock; these cases do not advance it.",
+      "status": "available",
+      "used_by": []
+    }
+  ],
+  "excluded": [],
+  "council_readings": []
+}

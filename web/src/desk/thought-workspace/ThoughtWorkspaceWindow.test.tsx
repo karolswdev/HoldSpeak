@@ -14,6 +14,7 @@ import {
   type ThoughtWorkspaceProjection,
 } from "../thoughts";
 import { ThoughtWorkspaceWindow } from "./ThoughtWorkspaceWindow";
+import { latchAskSelection, takeAskSelection } from "../ask";
 
 /* HS-201-12 — doctrine (a) for the tests this file lost.
  *
@@ -31,7 +32,7 @@ vi.mock("../components/DeskWindow", () => ({
   DeskWindowFrame: ({ children, onClose, label }: { children: React.ReactNode; onClose: () => void; label?: string }) => <section aria-label="Thought" data-window-name={label}><button onClick={onClose}>Close window</button>{children}</section>,
 }));
 vi.mock("./ThoughtDocumentPane", () => ({
-  ThoughtDocumentPane: ({ draft, onEdit, lockedReason }: { draft: { title: string; body: string }; onEdit: (patch: { body: string }) => void; lockedReason?: string }) => <section aria-label="Note"><span data-testid="note-title">{draft.title}</span>{lockedReason ? <span data-testid="note-locked">{lockedReason}</span> : null}<textarea aria-label="Note body" value={draft.body} onChange={(event) => onEdit({ body: event.target.value })} /></section>,
+  ThoughtDocumentPane: ({ draft, onEdit, onSelectionChange, lockedReason }: { draft: { title: string; body: string }; onEdit: (patch: { body: string }) => void; onSelectionChange?: (selection: { from: number; to: number; text: string }) => void; lockedReason?: string }) => <section aria-label="Note"><span data-testid="note-title">{draft.title}</span>{lockedReason ? <span data-testid="note-locked">{lockedReason}</span> : null}<textarea aria-label="Note body" value={draft.body} onChange={(event) => { onEdit({ body: event.target.value }); onSelectionChange?.({ from: 0, to: 0, text: "" }); }} /><button type="button" data-testid="select-second-line" onClick={() => { const text = draft.body.split(/\r?\n/)[1] || draft.body.split(/\r?\n/)[0] || ""; const from = draft.body.indexOf(text); onSelectionChange?.({ from, to: from + text.length, text }); }}>Select second line</button></section>,
 }));
 vi.mock("./ThoughtReadsWell", () => ({
   ThoughtReadsWell: ({ thought }: { thought: Thought }) => <div role="region" aria-label="Add notes">{thought.working_note.body_markdown}</div>,
@@ -113,16 +114,19 @@ function deferred<T>() {
 
 beforeEach(() => {
   sessionStorage.clear();
-  useDesk.setState({ editingId: null, closeEditor: vi.fn() });
+  latchAskSelection(null);
+  useDesk.setState({ editingId: null, closeEditor: vi.fn(), askOpen: false, selectedIds: [] });
   engineMock.useEngine.mockReturnValue({ state: "unread", model: "", place: "" });
 });
 afterEach(() => {
+  latchAskSelection(null);
   cleanup();
   if (vi.isFakeTimers()) {
     vi.clearAllTimers();
     vi.useRealTimers();
   }
   vi.clearAllMocks();
+  vi.unstubAllGlobals();
   Object.defineProperty(window, "matchMedia", { configurable: true, writable: true, value: originalMatchMedia });
 });
 
@@ -165,6 +169,79 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     fireEvent.click(screen.getByRole("button", { name: "Ask about this note" }));
     await waitFor(() => expect(useDesk.getState().askOpen).toBe(true));
     expect(useDesk.getState().selectedIds).toEqual(["note:note-1"]);
+  });
+
+  it("carries an exact non-first-line selection into Task and posts the note source", async () => {
+    const body = "First line\nSend the exact second line";
+    const selected = { ...thought, working_note: { ...thought.working_note, body_markdown: "First line" } };
+    const saved = { ...selected, aggregate_revision: 4, working_revision: 3, working_note: { ...selected.working_note, body_markdown: body } };
+    const savedCursor = { ...cursor, aggregate_revision: 4, continuity_revision: 5 };
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection({ thought: selected }));
+    vi.mocked(saveThoughtWorkingInWorkspace).mockImplementation(async (current, patch) => ({ thought: { ...current, ...saved, working_note: { ...current.working_note, ...saved.working_note, body_markdown: patch.body_markdown ?? current.working_note.body_markdown } }, workbench: projection({ thought: saved, workspace_cursor: savedCursor }) }));
+    const requests: Array<{ url: string; init?: RequestInit }> = [];
+    vi.stubGlobal("fetch", vi.fn((url: string, init?: RequestInit) => {
+      requests.push({ url, init });
+      const payload = url.endsWith("/api/people/relationships") ? { relationships: [] } : { item: { id: "task-1" } };
+      return Promise.resolve({ ok: true, status: 200, headers: { get: () => "application/json" }, json: () => Promise.resolve(payload), text: () => Promise.resolve(JSON.stringify(payload)) } as unknown as Response);
+    }));
+    render(<ThoughtWorkspaceWindow object={object} thought={selected} onClose={vi.fn()} />);
+
+    const noteBody = await screen.findByRole("textbox", { name: "Note body" });
+    fireEvent.change(noteBody, { target: { value: body } });
+    fireEvent.click(screen.getByTestId("select-second-line"));
+    fireEvent.click(screen.getByRole("button", { name: "Task" }));
+
+    await screen.findByTestId("thought-task-well");
+    expect(screen.getByRole("textbox", { name: "Task" })).toHaveValue("Send the exact second line");
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    await waitFor(() => expect(requests.some((request) => request.url.endsWith("/api/door/items"))).toBe(true));
+    const addRequest = requests.find((request) => request.url.endsWith("/api/door/items"));
+    expect(addRequest?.init?.method).toBe("POST");
+    expect(JSON.parse(String(addRequest?.init?.body))).toMatchObject({
+      task: "Send the exact second line",
+      source_type: "thought",
+      source_ref: "note:note-1",
+    });
+    await waitFor(() => expect(screen.queryByTestId("thought-task-well")).toBeNull());
+  });
+
+  it("opens neither action well when the authoritative Note save fails", async () => {
+    const body = "First line\nA selected passage";
+    const selected = { ...thought, working_note: { ...thought.working_note, body_markdown: "First line" } };
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection({ thought: selected }));
+    vi.mocked(saveThoughtWorkingInWorkspace).mockRejectedValue(new Error("offline"));
+    render(<ThoughtWorkspaceWindow object={object} thought={selected} onClose={vi.fn()} />);
+
+    const noteBody = await screen.findByRole("textbox", { name: "Note body" });
+    fireEvent.change(noteBody, { target: { value: body } });
+    fireEvent.click(screen.getByTestId("select-second-line"));
+    fireEvent.click(screen.getByRole("button", { name: "Task" }));
+    await waitFor(() => expect(saveThoughtWorkingInWorkspace).toHaveBeenCalledTimes(1));
+    expect(screen.queryByTestId("thought-task-well")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Ask about this note" }));
+    await waitFor(() => expect(useDesk.getState().askOpen).toBe(false));
+    expect(saveThoughtWorkingInWorkspace).toHaveBeenCalledTimes(1);
+    expect(useDesk.getState().askOpen).toBe(false);
+    expect(screen.queryByTestId("thought-task-well")).toBeNull();
+  });
+
+  it("hands Ask the canonical Note and the selected passage after a successful save", async () => {
+    const body = "First line\nAsk about this exact passage";
+    const selected = { ...thought, working_note: { ...thought.working_note, body_markdown: "First line" } };
+    const saved = { ...selected, aggregate_revision: 4, working_revision: 3, working_note: { ...selected.working_note, body_markdown: body } };
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection({ thought: selected }));
+    vi.mocked(saveThoughtWorkingInWorkspace).mockImplementation(async (current, patch) => ({ thought: { ...current, ...saved, working_note: { ...current.working_note, ...saved.working_note, body_markdown: patch.body_markdown ?? current.working_note.body_markdown } }, workbench: projection({ thought: saved }) }));
+    render(<ThoughtWorkspaceWindow object={object} thought={selected} onClose={vi.fn()} />);
+
+    const noteBody = await screen.findByRole("textbox", { name: "Note body" });
+    fireEvent.change(noteBody, { target: { value: body } });
+    fireEvent.click(screen.getByTestId("select-second-line"));
+    fireEvent.click(screen.getByRole("button", { name: "Ask about this note" }));
+
+    await waitFor(() => expect(useDesk.getState().askOpen).toBe(true));
+    expect(useDesk.getState().selectedIds).toEqual(["note:note-1"]);
+    expect(takeAskSelection()).toEqual({ noteRef: "note:note-1", text: "Ask about this exact passage" });
   });
 
   it("never renders a heading over an empty question", async () => {

@@ -251,11 +251,13 @@ describe("the hosted meeting record returns to its list", () => {
 
 describe("the meeting window over the HS-170 seed", () => {
   /* replaces: tests/e2e/test_hs170_meetings_glass.py::TestMeetingsGlass::test_meetings_face (the detail half) */
-  it("one display, TO REVIEW 3, three rows with Decide and Dismiss, the proposal text, speaker tokens", async () => {
+  it("one review fact, no static step ladder, three rows with Decide and Dismiss, the proposal text, speaker tokens", async () => {
     at(hs170 as Fixture);
     hub(hs170 as Fixture);
     render(<Shell><MeetingRecord meetingId="m-saved-outcomes" onClose={() => undefined} /></Shell>);
-    await waitFor(() => expect(document.querySelector(".meetings-detail-head .surface-display")?.textContent).toBe("Design review"));
+    await waitFor(() => expect(document.querySelector(".meetings-detail-head .surface-display")?.textContent).toBe("3 to review"));
+    expect(document.querySelectorAll(".meetings-detail-head .surface-display")).toHaveLength(1);
+    expect(screen.queryByTestId("meeting-steps")).toBeNull();
     const head = await screen.findByText("TO REVIEW 3");
     expect(head.closest(".meetings-detail-needs-head")).toBeTruthy();
     const rows = document.querySelectorAll(".meetings-detail-outcome-row");
@@ -300,8 +302,8 @@ describe("the meeting after a run (HS-172 seed)", () => {
     expect(commitments.querySelector("h3")?.textContent).toBe("Who owes what · 2");
     expect(screen.getAllByTestId("proposal-confirm-btn")).toHaveLength(3);
     expect(screen.getAllByTestId("proposal-more-btn")).toHaveLength(3);
-    screen.getAllByTestId("proposal-more-btn").forEach((button) => fireEvent.click(button));
-    expect(screen.getAllByTestId("proposal-dismiss-btn")).toHaveLength(3);
+    fireEvent.click(screen.getAllByTestId("proposal-more-btn")[0]);
+    expect(screen.getByRole("menuitem", { name: "Dismiss" })).toBeTruthy();
     const ledgers = `${decisions.textContent}${commitments.textContent}`;
     expect(ledgers).toContain("Marek owns the PostgreSQL migration");
     expect(ledgers).toContain("no owner · by Fri");

@@ -18,6 +18,7 @@ vi.mock("../../../desk/openObject", async (importOriginal) => {
 });
 
 import { PeopleCore } from "../PeopleCore";
+import { useDesk } from "../../../desk/store";
 
 const ISO = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/;
 const SOON = new Date(Date.now() + 25 * 3_600_000).toISOString();
@@ -28,6 +29,7 @@ function json(body: unknown, status = 200) {
 
 type Call = { url: string; method: string; body?: string };
 const calls: Call[] = [];
+const realStartRecording = useDesk.getState().startRecording;
 
 function stub(state: { linked: boolean; brief: Record<string, unknown>; briefFails?: number; record?: Record<string, unknown> }) {
   vi.stubGlobal("fetch", vi.fn(async (input: string, opts?: { method?: string; body?: string }) => {
@@ -81,7 +83,12 @@ const FULL = {
   projects: [{ id: "p-dry", name: "Dry-run project" }],
 };
 
-afterEach(() => { vi.unstubAllGlobals(); calls.length = 0; opened.length = 0; });
+afterEach(() => {
+  vi.unstubAllGlobals();
+  calls.length = 0;
+  opened.length = 0;
+  useDesk.setState({ recording: "idle", recordingStartedAt: null, startRecording: realStartRecording } as never);
+});
 
 describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
   it("formats the Next 1:1 plate's time: no raw ISO", async () => {
@@ -92,6 +99,18 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
     expect(label).toMatch(/^(TODAY|TOMORROW|[A-Z]{3}) /);
     expect(screen.getByTestId("people-next-plate").textContent).toContain("1:1 Priya / Karol");
     expect(document.body.textContent).not.toMatch(ISO);
+  });
+
+  it("Prep records the exact linked calendar event", async () => {
+    stub({ linked: true, brief: {} });
+    const startRecording = vi.fn().mockResolvedValue(undefined);
+    useDesk.setState({ startRecording } as never);
+    render(<PeopleCore scope="people:r1:prep" />);
+
+    const record = await screen.findByTestId("prep-record-meeting");
+    fireEvent.click(record);
+
+    expect(startRecording).toHaveBeenCalledWith({ calendarEventId: "ev1" });
   });
 
   it("Prep shows the agenda, what Priya owes (opens its meeting) and her projects", async () => {

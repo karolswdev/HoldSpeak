@@ -2,7 +2,7 @@
  * started-at timestamp, and the three recording actions. */
 import { apiRequest } from "../../lib/api";
 import { clearWriteFailure, reportWriteFailure } from "../hooks/useWriteReceipt";
-import type { DeskState, SliceCreator } from "./types";
+import type { DeskState, RecordingStartContext, SliceCreator } from "./types";
 
 /** Meetings on the desk when a local recording started (NEW-beat diff). */
 let meetingsBeforeRecording = new Set<string>();
@@ -17,6 +17,7 @@ export function recordStartRefusal(status: number | null): {
 } {
   if (status === null) return { reason: "HUB UNREACHABLE", retry: true };
   if (status === 501) return { reason: "NO RECORDER ON THIS HUB", retry: false };
+  if (status === 409) return { reason: "MEETING CONTEXT EXPIRED", retry: false };
   if (status === 404) return { reason: "MICROPHONE NOT FOUND", retry: false };
   return { reason: "THE HUB DID NOT START IT", retry: true };
 }
@@ -79,8 +80,9 @@ export const createRecordingSlice: SliceCreator<RecordingSlice> = (set, get) => 
     }
   },
 
-  async startRecording() {
+  async startRecording(context?: RecordingStartContext) {
     if (get().recording !== "idle") return;
+    const calendarEventId = context?.calendarEventId.trim() || "";
     move({ recording: "busy", recordingStartedAt: Date.now() });
     meetingsBeforeRecording = new Set(
       get().items.meeting.map((m) => String(m.id)),
@@ -91,14 +93,22 @@ export const createRecordingSlice: SliceCreator<RecordingSlice> = (set, get) => 
       reportWriteFailure(
         "START RECORDING",
         cause,
-        why.retry ? () => void get().startRecording() : undefined,
+        why.retry ? () => void get().startRecording(context) : undefined,
         undefined,
         `NOT RECORDING · ${why.reason}`,
       );
     };
     let res: Response;
     try {
-      res = await apiRequest("/api/meeting/start", { method: "POST" });
+      res = await apiRequest("/api/meeting/start", {
+        method: "POST",
+        ...(calendarEventId
+          ? {
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ calendar_event_id: calendarEventId }),
+            }
+          : {}),
+      });
     } catch (error) {
       refuse(null, error);
       return;
@@ -109,9 +119,8 @@ export const createRecordingSlice: SliceCreator<RecordingSlice> = (set, get) => 
       return;
     }
     clearWriteFailure();
-    // PHILO-17 (owner 2026-10-10, "A meeting opens in one window"): the new
-    // meeting opens in its own window, the live room while it records; on
-    // Stop the same window shows the saved meeting.
+    // The canonical meeting opener hosts this record inside Meetings with
+    // Back (owner decision 2026-10-13). Stop keeps the same saved record.
     let meetingId = "";
     try {
       const body = (await res.json()) as { meeting?: { id?: unknown; meeting_id?: unknown } | null };

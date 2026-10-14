@@ -95,10 +95,15 @@ def build_live_router(ctx: WebContext) -> APIRouter:
     ) -> Any:
         try:
             meeting = _service(ctx).start_capture(
-                _principal(request), {"devices": list(payload.devices) if payload and payload.devices else []}
+                _principal(request),
+                {
+                    "devices": list(payload.devices) if payload and payload.devices else [],
+                    "calendar_event_id": payload.calendar_event_id if payload else None,
+                },
             )
         except ValidationError as exc:
-            return JSONResponse({"success": False, "error": str(exc)}, status_code=501)
+            status = 409 if exc.code == "calendar_event_unavailable" else 501
+            return JSONResponse({"success": False, "error": str(exc)}, status_code=status)
         except _UnknownDeviceError as exc:
             return JSONResponse(
                 {"success": False, "error": str(exc), "device_id": exc.device_id},

@@ -3799,7 +3799,7 @@
       "sources": [
         {
           "path": "holdspeak/web/routes/meetings/live.py",
-          "symbol": "status_code=501",
+          "symbol": "status = 409 if exc.code == \"calendar_event_unavailable\" else 501",
           "claim": "a hub with no recorder refuses the start with 501"
         },
         {

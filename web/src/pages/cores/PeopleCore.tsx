@@ -14,7 +14,9 @@ import { composePeoplePrep, readPeoplePrep, type PeoplePrepData, type PrepCalend
 import { announceTaskReturn, taskFocusPending } from "../../desk/returnToTask";
 import { useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
 import { keepPlace, keptPlace, useDeskDraft } from "../../desk/deskMemory";
-import { CycleGadget, EgressChip, PadGadget, StringGadget } from "../../desk/surface/gadgets";
+import { useDesk } from "../../desk/store";
+import { useDeskWriteReceipt } from "../../desk/hooks/useWriteReceipt";
+import { CycleGadget, PadGadget, StringGadget } from "../../desk/surface/gadgets";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import {
   ConfirmVerb,
@@ -748,6 +750,8 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onPickCalendar 
   const [attempt, setAttempt] = useState(0);
   const [concern, setConcern] = useState<NowConcern>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const recordingState = useDesk((state) => state.recording);
+  const { failure: recordingFailure, receipt: recordingReceipt } = useDeskWriteReceipt();
   const [selectedCommitment, setSelectedCommitment] = useState<Commitment | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [preparedAt] = useState(() => new Date().toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false }));
@@ -878,6 +882,14 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onPickCalendar 
             <span className="people-next-title">{nextTitle}</span>
             {nextEvent?.source_label ? <span className="people-plate-meta"><span>{nextEvent.source_label}</span></span> : null}
           </span>
+          {nextEvent?.id && recordingState !== "recording" ? <Button
+            dense
+            variant="primary"
+            loading={recordingState === "busy"}
+            disabled={recordingState !== "idle"}
+            onClick={() => void useDesk.getState().startRecording({ calendarEventId: nextEvent.id })}
+            data-testid="prep-record-meeting"
+          >Record meeting</Button> : null}
         </div> : suggestions.length && prep ? <LinkSuggestions relationship={relationship} prep={prep} onLinked={onRefresh} onProtectedFailure={onProtectedFailure} testId="prep-link-suggestion" />
           : brief ? <div className="people-next-none"><span>No 1:1 planned</span><Button dense variant="ghost" onClick={onPickCalendar}>Pick from calendar</Button></div> : null}
         {prep?.projects.length ? <span className="people-plate-meta" data-testid="prep-projects">
@@ -898,7 +910,7 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onPickCalendar 
 
         <div className="people-add people-agenda-add">
           <StringGadget label="Add to the agenda" value={agendaDraft} onChange={setAgendaDraft} placeholder="What to raise" inputProps={{ id: `people-agenda-${relationship.id}` }} onKeyDown={(event) => { if (event.key === "Enter") addAgenda(); }} />
-          <Button dense variant={lead === "agenda" ? "primary" : "secondary"} disabled={busy === "agenda"} loading={busy === "agenda"} onClick={() => { if (agendaDraft.trim()) addAgenda(); else document.getElementById(`people-agenda-${relationship.id}`)?.focus(); }} data-testid="people-add-agenda">Add to agenda</Button>
+          <Button dense variant={nextEvent?.id ? "secondary" : lead === "agenda" ? "primary" : "secondary"} disabled={busy === "agenda"} loading={busy === "agenda"} onClick={() => { if (agendaDraft.trim()) addAgenda(); else document.getElementById(`people-agenda-${relationship.id}`)?.focus(); }} data-testid="people-add-agenda">Add to agenda</Button>
         </div>
       </div>
     </section>
@@ -984,8 +996,7 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onPickCalendar 
     </div> : null}
 
     <SurfaceFooter
-      egress={<EgressChip label="THIS DEVICE" />}
-      receipt={<span className="people-prep-receipt" data-testid="prep-receipt">PREPARED {preparedAt}</span>}
+      receipt={recordingFailure ? recordingReceipt : <span className="people-prep-receipt" data-testid="prep-receipt">PREPARED {preparedAt}</span>}
     />
   </div>;
 }

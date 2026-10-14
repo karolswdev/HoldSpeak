@@ -112,6 +112,12 @@ def test_all_of_hands_its_input_value_selector_to_the_snapshot() -> None:
         {"kind": "input_value", "selector": "input.desk-zone-rename", "equals": "New zone 2"}]}
     assert gw._value_selector(pred) == "input.desk-zone-rename"
     assert gw._value_selector({"kind": "input_value", "selector": "input.x"}) == "input.x"
+    mixed = {"kind": "all_of", "predicates": [
+        {"kind": "selector_presence", "selector": "button.record", "present": True},
+        {"kind": "input_value", "selector": "input.agenda", "equals": "Keep this draft"},
+    ]}
+    assert gw._value_selector(mixed) == "input.agenda"
+    assert gw._value_selector({"kind": "all_of", "predicates": [mixed["predicates"][0]]}) is None
 
 
 # ──────────────────────────── the right-click ────────────────────────────

@@ -576,6 +576,12 @@ function Arrival() {
   );
   const [meetingDetails, setMeetingDetails] = useState<Record<string, ArrivalMeetingDetail>>({});
   const meetingReadGeneration = useRef(0);
+  // A refresh keeps the last successful detail on the glass, but it still
+  // has a read in flight. The Week marker follows this count rather than the
+  // retained map so a late replacement cannot move the ledger after settle.
+  const [meetingDetailsPending, setMeetingDetailsPending] = useState(
+    () => meetingDetailKey ? meetingDetailKey.split("|").filter(Boolean).length : 0,
+  );
   useEffect(() => {
     const ids = meetingDetailKey ? meetingDetailKey.split("|") : [];
     const generation = ++meetingReadGeneration.current;
@@ -592,8 +598,13 @@ function Arrival() {
         ? current
         : retained;
     });
+    setMeetingDetailsPending(ids.length);
     if (ids.length === 0) return;
     let active = true;
+    const finish = () => {
+      if (!active || generation !== meetingReadGeneration.current) return;
+      setMeetingDetailsPending((pending) => Math.max(0, pending - 1));
+    };
     for (const id of ids) {
       void apiFetch<unknown>(`/api/meetings/${encodeURIComponent(id)}`)
         .then((wire) => {
@@ -627,7 +638,10 @@ function Arrival() {
             ...current,
             [id]: { meeting: null, error: readableError(cause) },
           }));
-        });
+        })
+        .finally(finish);
+      // Keep the marker until this ID has answered, including a failed or
+      // malformed detail. Older generations are ignored by `finish`.
     }
     return () => { active = false; };
   }, [meetingDetailKey, deskUpdatedAt]);
@@ -1372,7 +1386,7 @@ function Arrival() {
           {/* Reading until the Door read and the top meetings' detail reads end:
               what they draw lands above rows already drawn and moved them
               140 px at 393 (the desk sweep's still fence). */}
-          {!doorRead || meetingDetailKey.split("|").some((id) => id !== "" && !(id in meetingDetails)) ? (
+          {!doorRead || meetingDetailsPending > 0 ? (
             <span hidden aria-busy="true" data-testid="arrival-week-reading" />
           ) : null}
           {/* ── Week Strip (HS-175-02) ── */}

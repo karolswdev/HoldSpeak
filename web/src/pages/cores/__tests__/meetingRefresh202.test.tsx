@@ -37,6 +37,7 @@ import { announceTaskReturn } from "../../../desk/returnToTask";
 import { HistoryCore } from "../HistoryCore";
 import { MeetingRecord } from "../history/MeetingRecord";
 import { openPrimitive, openSurfaceOr } from "../../../desk/shell";
+import { TitleSlotContext } from "../../../desk/surface/title";
 
 vi.mock("../../../desk/shell", async (original) => ({
   ...(await original<typeof import("../../../desk/shell")>()),
@@ -115,7 +116,15 @@ function wire() {
   });
 }
 
-const openRecord = (id = "m-1") => render(<MeetingRecord meetingId={id} onClose={() => undefined} />);
+const openRecord = (id = "m-1") => {
+  const windowTitle = { value: "" };
+  const view = render(
+    <TitleSlotContext.Provider value={(title) => { windowTitle.value = title ?? ""; }}>
+      <MeetingRecord meetingId={id} onClose={() => undefined} />
+    </TitleSlotContext.Provider>,
+  );
+  return { ...view, windowTitle };
+};
 
 describe("the open meeting record re-reads itself (HS-202-02)", () => {
   beforeEach(() => {
@@ -177,6 +186,8 @@ describe("a slow refresh never restores a record the owner left", () => {
   it("a stalled read of one meeting never lands in another meeting's window", async () => {
     let releaseA: ((value: unknown) => void) | null = null;
     let stall = false;
+    const titleA = { value: "" };
+    const titleB = { value: "" };
     vi.mocked(apiFetch).mockImplementation(async (path: string) => {
       const url = String(path);
       if (isDetail(url) && stall)
@@ -187,9 +198,19 @@ describe("a slow refresh never restores a record the owner left", () => {
       if (isDetail(url, "m-2")) return { ...detail(), id: "m-2", title: "The other meeting" } as never;
       return {} as never;
     });
-    render(<><MeetingRecord meetingId="m-1" onClose={() => undefined} /><MeetingRecord meetingId="m-2" onClose={() => undefined} /></>);
-    const titles = () => [...document.querySelectorAll(".meetings-detail-head .surface-display")].map((e) => e.textContent);
-    await waitFor(() => expect(titles()).toEqual(["Imported meeting", "The other meeting"]));
+    render(
+      <>
+        <TitleSlotContext.Provider value={(title) => { titleA.value = title ?? ""; }}>
+          <MeetingRecord meetingId="m-1" onClose={() => undefined} />
+        </TitleSlotContext.Provider>
+        <TitleSlotContext.Provider value={(title) => { titleB.value = title ?? ""; }}>
+          <MeetingRecord meetingId="m-2" onClose={() => undefined} />
+        </TitleSlotContext.Provider>
+      </>,
+    );
+    const bodyFacts = () => [...document.querySelectorAll(".meetings-detail-head .surface-display")].map((e) => e.textContent);
+    await waitFor(() => expect([titleA.value, titleB.value]).toEqual(["Imported meeting", "The other meeting"]));
+    await waitFor(() => expect(bodyFacts()).toEqual(["SUMMARY OFF", "SUMMARY OFF"]));
     // A refresh for A starts and stalls.
     stall = true;
     act(() => {
@@ -199,7 +220,8 @@ describe("a slow refresh never restores a record the owner left", () => {
     await act(async () => {
       releaseA?.({ ...detail(), title: "Imported meeting, read again" });
     });
-    await waitFor(() => expect(titles()).toEqual(["Imported meeting, read again", "The other meeting"]));
+    await waitFor(() => expect([titleA.value, titleB.value]).toEqual(["Imported meeting, read again", "The other meeting"]));
+    expect(bodyFacts()).toEqual(["SUMMARY OFF", "SUMMARY OFF"]);
   });
 });
 
@@ -270,9 +292,10 @@ describe("the open record follows the hub", () => {
     };
     vi.mocked(apiFetch).mockImplementation(async (path: string) =>
       (isDetail(String(path)) ? current : {}) as never);
-    openRecord();
-    const openTitle = () => document.querySelector(".meetings-detail-head .surface-display")?.textContent ?? "";
-    await waitFor(() => expect(openTitle()).toBe("Still importing"));
+    const { windowTitle } = openRecord();
+    const bodyFact = () => document.querySelector(".meetings-detail-head .surface-display")?.textContent ?? "";
+    await waitFor(() => expect(windowTitle.value).toBe("Still importing"));
+    expect(bodyFact()).toBe("Still importing");
     current = {
       ...detail(), title: "The transcribed meeting", intel_status: "disabled", transcriptWords: 9, planned_route: READY_ROUTE,
       segments: [{ text: "The quick brown fox.", speaker: "Me", start_time: 0, end_time: 1 }],
@@ -280,7 +303,8 @@ describe("the open record follows the hub", () => {
     act(() => {
       window.dispatchEvent(new Event("focus"));
     });
-    await waitFor(() => expect(openTitle()).toBe("The transcribed meeting"));
+    await waitFor(() => expect(windowTitle.value).toBe("The transcribed meeting"));
+    expect(bodyFact()).toBe("SUMMARY OFF");
     await waitFor(() => expect(screen.getByTestId("detail-run-intelligence-btn")).toBeVisible(), { timeout: 4000 });
   });
 });

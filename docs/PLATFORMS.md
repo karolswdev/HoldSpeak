@@ -328,6 +328,11 @@ Missing shards: **none**.
 | `desk.note.task` | `linux_wayland` | unknown | built_unreleased |
 | `desk.note.task` | `linux_x11` | unknown | built_unreleased |
 | `desk.note.task` | `macos` | unknown | built_unreleased |
+| `people.prep.record` | `aipi` | unknown | built_unreleased |
+| `people.prep.record` | `ipad` | unknown | built_unreleased |
+| `people.prep.record` | `linux_wayland` | unknown | built_unreleased |
+| `people.prep.record` | `linux_x11` | unknown | built_unreleased |
+| `people.prep.record` | `macos` | unknown | built_unreleased |
 | `agents.thread_persistent` | `aipi` | not_applicable | experimental |
 | `agents.thread_persistent` | `ipad` | best_effort | experimental |
 | `agents.thread_persistent` | `linux_wayland` | degraded | experimental |

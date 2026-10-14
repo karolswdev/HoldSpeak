@@ -20,6 +20,7 @@ import pytest
 pytest.importorskip("fastapi")
 
 from fastapi.testclient import TestClient
+from fastapi import FastAPI
 
 from holdspeak.db import Database
 from holdspeak.device_audio import DeviceDescriptor, DeviceRegistry
@@ -30,7 +31,10 @@ from holdspeak.meeting_session import (
     MeetingState,
 )
 from holdspeak.principals import Principal, PrincipalKind
+from holdspeak.services.meeting_service import MeetingService
 from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+from holdspeak.web.context import WebContext
+from holdspeak.web.routes.meetings.live import build_live_router
 
 #: The authenticated identity an owner-started desktop meeting runs under. These
 #: tests model exactly that start, so they carry it instead of relying on a
@@ -313,6 +317,34 @@ class TestMeetingStartDevicesApi:
         body = response.json()
         assert body["success"] is True
         assert captured["devices"] == ["aipi-1"]
+
+    def test_meeting_start_passes_calendar_event_id_to_on_start(self) -> None:
+        captured: dict[str, object] = {}
+
+        class StubMeetingService(MeetingService):
+            def __init__(self) -> None:
+                pass
+
+            def start_capture(self, _principal, config=None):
+                captured.update(config or {})
+                return {"id": "m1", "started_at": datetime.now().isoformat()}
+
+        # The live route deliberately receives a service double here. The
+        # service-level calendar projection validation is covered separately;
+        # this test proves the existing HTTP start contract carries the exact
+        # public event key to that service.
+        service = StubMeetingService()
+        app = FastAPI()
+        app.include_router(build_live_router(WebContext(
+            get_state=lambda: {},
+            broadcast=lambda _kind, _data: None,
+            meeting_service=service,
+        )))
+        client = TestClient(app)
+
+        response = client.post("/api/meeting/start", json={"calendar_event_id": "event-1"})
+        assert response.status_code == 200, response.text
+        assert captured["calendar_event_id"] == "event-1"
 
     def test_meeting_start_unknown_device_returns_404(self) -> None:
         from holdspeak.web.runtime_support import _UnknownDeviceError

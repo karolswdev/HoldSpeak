@@ -15,6 +15,36 @@ export interface AskContext {
   ref?: string;
 }
 
+export interface AskSelectionHandoff {
+  noteRef: string;
+  text: string;
+}
+
+const ASK_SELECTION_EVENT = "holdspeak:ask-selection";
+let pendingAskSelection: AskSelectionHandoff | null = null;
+
+/** A transient Note → Ask handoff. The Note remains the canonical context. */
+export function latchAskSelection(selection: AskSelectionHandoff | null): void {
+  pendingAskSelection = selection && selection.text.trim() ? { ...selection } : null;
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent<AskSelectionHandoff | null>(ASK_SELECTION_EVENT, { detail: pendingAskSelection }));
+  }
+}
+
+export function takeAskSelection(): AskSelectionHandoff | null {
+  const selection = pendingAskSelection;
+  pendingAskSelection = null;
+  return selection;
+}
+
+export function selectionPrompt(question: string, selection: AskSelectionHandoff | null): string {
+  if (!selection) return question.trim();
+  const quote = selection.text.split("\n").map((line) => `> ${line}`).join("\n");
+  return [question.trim(), `Selected text:\n${quote}`].filter(Boolean).join("\n\n");
+}
+
+export const ASK_SELECTION_EVENT_NAME = ASK_SELECTION_EVENT;
+
 /** The prompt presets — the iPad's `RouteLenses.all`, verbatim. */
 export const ASK_LENSES: Array<{ name: string; instruction: string }> = [
   {

@@ -4,9 +4,10 @@
 // `Commitments · n`, each a Section over a Ledger of kind-plated rows.
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { MeetingHeader, meetingStripItems, peopleCount } from "../MeetingHeader";
+import { MeetingHeader, meetingOutcomeFact, meetingStripItems, peopleCount } from "../MeetingHeader";
 import { MeetingOutcomes, meetingOutcomes } from "../MeetingDetail";
-import { useMeetingData } from "../useMeetingData";
+import { useMeetingData, type FollowThroughProposal } from "../useMeetingData";
+import { MEETING_OPEN_EVENT } from "../../../../desk/objectWindows";
 
 const apiFetch = vi.fn();
 vi.mock("../../../../lib/api", async () => {
@@ -37,6 +38,30 @@ describe("the meeting on the interior kit", () => {
     expect(screen.getByTestId("meeting-summary-state").textContent).toBe("SUMMARISED");
     expect(screen.getByTestId("meeting-summary-state").querySelector(".kit-sq")?.getAttribute("data-tone")).toBe("ok");
     expect(strip.textContent).toContain("2 PEOPLE");
+  });
+
+  it("saved Outcomes use one review fact and the compact strip, without a static step ladder", () => {
+    const meeting = { id: "m-saved", title: "Cutover sync", intel_status: "complete", intel: { summary: "We froze the ledger." } };
+    const data = {
+      detail: meeting,
+      needsCount: 0,
+      ftProposals: [{ id: "p1", meeting_id: "m-saved", kind: "action" as const, text: "Write the runbook", state: "proposed" as const, created_at: "" }],
+      startedAt: "2026-10-06T14:00:00",
+      durationS: 42 * 60,
+      segments: [],
+    };
+    const { container } = render(
+      <MeetingHeader meeting={meeting} data={data as never} compact />,
+    );
+    expect(meetingOutcomeFact(meeting, data as never)).toBe("1 to review");
+    expect(container.querySelector(".meetings-detail-facts")).toBeTruthy();
+    expect(container.querySelector(".meetings-detail-head")).toBeNull();
+    expect(screen.queryByTestId("meeting-steps")).toBeNull();
+  });
+
+  it("does not expose a zero review counter when the saved record is settled", () => {
+    const meeting = { id: "m-done", title: "Cutover sync", intel_status: "complete", intel: { summary: "We froze the ledger." } };
+    expect(meetingOutcomeFact(meeting, { detail: meeting, needsCount: 0, ftProposals: [] })).toBe("Outcomes");
   });
 
   it("no people token at zero; a failed summary keeps its word with the fail lamp", () => {
@@ -126,6 +151,25 @@ describe("the meeting on the interior kit", () => {
 // Astra r1 M2: the rendered transition. A confirmed decision stays in
 // Decisions · n (TO DECIDE → its owner); a dismissed one leaves.
 describe("the meeting's Decisions through Confirm (the hook and the ledger, rendered)", () => {
+  it("opens owner and date wells automatically when a proposed action has gaps", async () => {
+    apiFetch.mockResolvedValue({ relationships: [] });
+    const data = {
+      ftProposals: [{
+        id: "p-gap", meeting_id: "m-gap", kind: "action" as const, text: "Name the owner",
+        state: "proposed" as const, created_at: "", owner: null, due: null,
+      }],
+      openActions: [], settledActions: [], segments: [], busy: false,
+      outcomeRefreshFailed: false, retryOutcomeReview: async () => undefined,
+      confirmProposal: async () => undefined, dismissProposal: async () => undefined,
+      deferProposal: async () => undefined, confirmAll: async () => undefined,
+      completeAction: async () => undefined,
+    };
+    render(<MeetingOutcomes data={data as never} meeting={{ id: "m-gap" }} />);
+    expect(await screen.findByTestId("outcome-gap")).toBeTruthy();
+    expect(screen.getByLabelText("Who?")).toBeTruthy();
+    expect(screen.getByLabelText("When?")).toBeTruthy();
+  });
+
   it("Confirm keeps the decision on the record, decided; Dismiss removes it", async () => {
     const meeting = {
       id: "m1", title: "Cutover sync", intel_status: "complete",
@@ -137,7 +181,10 @@ describe("the meeting's Decisions through Confirm (the hook and the ledger, rend
       { id: "p3", meeting_id: "m1", kind: "action", text: "Write the rollback runbook", state: "proposed", created_at: "", action_item_id: "ai-1" },
     ];
     apiFetch.mockImplementation(async (url: string, init?: { method?: string }) => {
-      if (init?.method === "POST") return {};
+      if (init?.method === "POST") {
+        if (url.endsWith("/confirm")) proposals = proposals.map((p) => (p.id === "p1" ? { ...p, state: "confirmed" } : p));
+        return {};
+      }
       if (url.includes("/follow-through-proposals")) return { proposals };
       if (url === "/api/meetings/m1") return meeting;
       return {};
@@ -161,8 +208,282 @@ describe("the meeting's Decisions through Confirm (the hook and the ledger, rend
       .getByText("Run reconciliation nightly")
       .closest(".surface-ledger-line") as HTMLElement;
     fireEvent.click(within(secondDecision).getByTestId("proposal-more-btn"));
-    fireEvent.click(within(secondDecision).getByRole("button", { name: "Dismiss: Run reconciliation nightly" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Dismiss" }));
     await waitFor(() => expect(screen.getByTestId("meeting-decisions").querySelector("h3")?.textContent).toBe("Decided · 1"));
+  });
+
+  it("edits a populated row through More and keeps a grounded source", async () => {
+    const meeting = {
+      id: "m-outcomes", title: "Cutover sync", intel_status: "complete", segments: [{ text: "Jordan owns the runbook" }],
+    };
+    let proposals: FollowThroughProposal[] = [{
+      id: "p-action", meeting_id: "m-outcomes", kind: "action" as const, text: "Write the runbook",
+      owner: "Jordan", due: "2026-11-05", state: "proposed" as const, created_at: "",
+      support: "source_linked", unknowns: [], project_id: "prj-cutover", segment_index: 0,
+      action_item_id: null,
+    }];
+    const calls: Array<{ url: string; init?: { method?: string; json?: Record<string, unknown> } }> = [];
+    apiFetch.mockImplementation(async (url: string, init?: { method?: string; json?: Record<string, unknown> }) => {
+      calls.push({ url, init });
+      if (init?.method === "POST" && url.includes("/confirm")) {
+        proposals = proposals.map((proposal) => ({
+          ...proposal,
+          ...init.json,
+          state: "confirmed" as const,
+          action_item_id: "action-1",
+        }));
+        return { proposal: proposals[0] };
+      }
+      if (url === "/api/people/relationships") return { relationships: [{ id: "rel-jordan", display_name: "Jordan" }] };
+      if (url === "/api/door") return {
+        board: { now: [{ id: "action-1", source: "action_item", person_relationship_id: "rel-jordan" }] },
+      };
+      if (url.includes("/outcome-review") || url.includes("/follow-through-proposals")) return { proposals, revision: "r1" };
+      if (url === "/api/meetings/m-outcomes") return meeting;
+      return {};
+    });
+    const opened: unknown[] = [];
+    const onOpen = (event: Event) => opened.push((event as CustomEvent).detail);
+    window.addEventListener(MEETING_OPEN_EVENT, onOpen);
+    function Harness() {
+      const data = useMeetingData(meeting, () => undefined);
+      return <MeetingOutcomes data={data} meeting={meeting} />;
+    }
+    render(<Harness />);
+
+    const row = await screen.findByText("Write the runbook");
+    const line = row.closest(".surface-ledger-line") as HTMLElement;
+    fireEvent.click(within(line).getByTestId("proposal-more-btn"));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Show in transcript" }));
+    expect(opened.at(-1)).toMatchObject({ meetingId: "m-outcomes", view: "outcomes", segment: 0 });
+    fireEvent.click(within(line).getByTestId("proposal-more-btn"));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Edit" }));
+    fireEvent.change(screen.getByLabelText("Task"), { target: { value: "Ship the runbook" } });
+    fireEvent.change(screen.getByLabelText("Who?"), { target: { value: "Jordan" } });
+    fireEvent.change(screen.getByLabelText("When?"), { target: { value: "2026-11-12" } });
+    fireEvent.click(within(line).getByRole("button", { name: "Confirm: Ship the runbook" }));
+    await waitFor(() => expect(calls.some((call) => call.url === "/api/proposals/p-action/confirm" && call.init?.json)).toBe(true));
+    expect(calls.find((call) => call.url === "/api/proposals/p-action/confirm")?.init?.json).toEqual({
+      text: "Ship the runbook", owner: "Jordan", due: "2026-11-12",
+    });
+
+    await waitFor(() => expect(screen.getByTestId("proposal-follow-through-btn")).toBeTruthy());
+    const confirmedLine = screen.getByText("Ship the runbook").closest(".surface-ledger-line") as HTMLElement;
+    fireEvent.click(within(confirmedLine).getByTestId("proposal-more-btn"));
+    expect(screen.getByRole("menuitem", { name: "Project" })).toBeTruthy();
+    await waitFor(() => expect(screen.getByRole("menuitem", { name: "People" })).toBeTruthy());
+    expect(calls.filter((call) => call.url === "/api/door")).toHaveLength(1);
+    expect(screen.queryByLabelText("Task")).toBeNull();
+    window.removeEventListener(MEETING_OPEN_EVENT, onOpen);
+  });
+
+  it("holds Confirm all until an edited proposal is confirmed individually", async () => {
+    const first: FollowThroughProposal = {
+      id: "p-one", meeting_id: "m-bulk", kind: "action", text: "Write the runbook",
+      owner: "Jordan", due: "2026-11-05", state: "proposed", created_at: "",
+      support: "source_linked", unknowns: [], extraction_revision: "r1",
+    };
+    const second: FollowThroughProposal = {
+      id: "p-two", meeting_id: "m-bulk", kind: "action", text: "Review the runbook",
+      owner: "Avery", due: "2026-11-06", state: "proposed", created_at: "",
+      support: "source_linked", unknowns: [], extraction_revision: "r1",
+    };
+    const confirmProposal = vi.fn(async () => undefined);
+    const confirmAll = vi.fn(async () => undefined);
+    const meeting = { id: "m-bulk", title: "Bulk review" };
+    const data = {
+      detail: meeting, ftProposals: [first, second], openActions: [], settledActions: [], segments: [], busy: false,
+      reviewRevision: "r1", outcomeRefreshFailed: false, retryOutcomeReview: async () => undefined,
+      confirmProposal, confirmAll, dismissProposal: async () => undefined, deferProposal: async () => undefined,
+      completeAction: async () => undefined,
+    };
+    apiFetch.mockResolvedValue({ relationships: [] });
+    const { rerender } = render(<MeetingOutcomes data={data as never} meeting={meeting} />);
+
+    const all = await screen.findByTestId("proposal-confirm-all-btn");
+    expect(all).not.toBeDisabled();
+    const line = screen.getByText("Write the runbook").closest(".surface-ledger-line") as HTMLElement;
+    fireEvent.click(within(line).getByTestId("proposal-more-btn"));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Edit" }));
+    fireEvent.change(screen.getByLabelText("Task"), { target: { value: "Ship the runbook" } });
+    fireEvent.change(screen.getByLabelText("Who?"), { target: { value: "Me" } });
+    fireEvent.change(screen.getByLabelText("When?"), { target: { value: "2026-11-12" } });
+    fireEvent.click(within(line).getByTestId("proposal-more-btn"));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Close edit" }));
+
+    expect(within(line).getByText("Ship the runbook")).toBeTruthy();
+    expect(within(line).getByText("Me · by 2026-11-12")).toBeTruthy();
+    expect(screen.getByTestId("proposal-confirm-all-btn")).toBeDisabled();
+    expect(confirmAll).not.toHaveBeenCalled();
+    fireEvent.click(within(line).getByTestId("proposal-more-btn"));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Edit" }));
+    fireEvent.change(screen.getByLabelText("Task"), { target: { value: "" } });
+    expect(within(line).getByTestId("proposal-confirm-btn")).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Task"), { target: { value: "Ship the runbook" } });
+    fireEvent.change(screen.getByLabelText("Who?"), { target: { value: "" } });
+    fireEvent.change(screen.getByLabelText("When?"), { target: { value: "" } });
+    expect(within(line).getByRole("button", { name: "Confirm: Ship the runbook" })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Who?"), { target: { value: "Me" } });
+    fireEvent.change(screen.getByLabelText("When?"), { target: { value: "2026-11-12" } });
+    fireEvent.click(within(line).getByRole("button", { name: "Confirm: Ship the runbook" }));
+    await waitFor(() => expect(confirmProposal).toHaveBeenCalledWith("p-one", {
+      text: "Ship the runbook", owner: "Me", due: "2026-11-12",
+    }));
+
+    const settled = { ...first, text: "Durable runbook", owner: "Avery", due: "2026-11-13", state: "confirmed" as const };
+    rerender(<MeetingOutcomes data={{ ...data, ftProposals: [settled, second] } as never} meeting={meeting} />);
+    expect(screen.getByText("Durable runbook")).toBeTruthy();
+    expect(screen.getByText("Avery · by 2026-11-13")).toBeTruthy();
+    expect(screen.queryByText("Ship the runbook")).toBeNull();
+    const restored = await screen.findByTestId("proposal-confirm-all-btn");
+    expect(restored).not.toBeDisabled();
+    fireEvent.click(restored);
+    await waitFor(() => expect(confirmAll).toHaveBeenCalledTimes(1));
+  });
+
+  it("withholds People when the Door has no unambiguous read-time relationship", async () => {
+    apiFetch.mockImplementation(async (url: string) => {
+      if (url === "/api/people/relationships") {
+        return {
+          relationships: [
+            { id: "rel-one", display_name: "Jordan" },
+            { id: "rel-two", display_name: "Jordan" },
+          ],
+        };
+      }
+      if (url === "/api/door") {
+        return { board: { now: [{ id: "action-ambiguous", source: "action_item" }] } };
+      }
+      return {};
+    });
+    const data = {
+      ftProposals: [{
+        id: "p-ambiguous", meeting_id: "m-ambiguous", kind: "action" as const,
+        text: "Resolve the owner", owner: "Jordan", due: "2026-11-05", state: "confirmed" as const,
+        created_at: "", action_item_id: "action-ambiguous",
+      }],
+      openActions: [], settledActions: [], segments: [], busy: false,
+      outcomeRefreshFailed: false, retryOutcomeReview: async () => undefined,
+      confirmProposal: async () => undefined, dismissProposal: async () => undefined,
+      deferProposal: async () => undefined, confirmAll: async () => undefined,
+      completeAction: async () => undefined,
+    };
+    render(<MeetingOutcomes data={data as never} meeting={{ id: "m-ambiguous" }} />);
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/api/door"));
+    expect(screen.queryByTestId("proposal-person-btn")).toBeNull();
+  });
+
+  it("withholds People when the Door projection is unavailable", async () => {
+    apiFetch.mockImplementation(async (url: string) => {
+      if (url === "/api/people/relationships") {
+        return { relationships: [{ id: "rel-jordan", display_name: "Jordan" }] };
+      }
+      if (url === "/api/door") throw new Error("door unavailable");
+      return {};
+    });
+    const data = {
+      ftProposals: [{
+        id: "p-unavailable", meeting_id: "m-unavailable", kind: "action" as const,
+        text: "Keep the destination grounded", owner: "Jordan", due: "2026-11-05", state: "confirmed" as const,
+        created_at: "", action_item_id: "action-unavailable",
+      }],
+      openActions: [], settledActions: [], segments: [], busy: false,
+      outcomeRefreshFailed: false, retryOutcomeReview: async () => undefined,
+      confirmProposal: async () => undefined, dismissProposal: async () => undefined,
+      deferProposal: async () => undefined, confirmAll: async () => undefined,
+      completeAction: async () => undefined,
+    };
+    render(<MeetingOutcomes data={data as never} meeting={{ id: "m-unavailable" }} />);
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/api/door"));
+    expect(screen.queryByTestId("proposal-person-btn")).toBeNull();
+  });
+
+  it("keeps a confirmed row and the next row draft when the follow-up read fails", async () => {
+    const meeting = { id: "m-retry", title: "Release sync", intel_status: "complete" };
+    let proposals: FollowThroughProposal[] = [
+      {
+        id: "p-confirm", meeting_id: "m-retry", kind: "action" as const, text: "Ship release",
+        owner: "Jordan", due: "2026-11-05", state: "proposed" as const, created_at: "",
+        action_item_id: "action-confirm",
+      },
+      {
+        id: "p-next", meeting_id: "m-retry", kind: "action" as const, text: "Prepare announcement",
+        owner: null, due: null, state: "proposed" as const, created_at: "", action_item_id: "action-next",
+      },
+    ];
+    let rereadFailed = false;
+    apiFetch.mockImplementation(async (url: string, init?: { method?: string; json?: Record<string, unknown> }) => {
+      if (init?.method === "POST" && url.endsWith("/confirm")) {
+        proposals = proposals.map((proposal) => proposal.id === "p-confirm"
+          ? { ...proposal, ...init.json, state: "confirmed" as const }
+          : proposal);
+        rereadFailed = true;
+        return { proposal: proposals[0] };
+      }
+      if (url === "/api/people/relationships") return { relationships: [{ id: "rel-jordan", display_name: "Jordan" }] };
+      if (url === "/api/door") return { board: { now: [] } };
+      if (url.includes("/outcome-review") || url.includes("/follow-through-proposals")) {
+        if (rereadFailed) throw new Error("temporary outcome read failure");
+        return { proposals, revision: "r1" };
+      }
+      if (url === "/api/meetings/m-retry") return meeting;
+      return {};
+    });
+    function Harness() {
+      const data = useMeetingData(meeting, () => undefined);
+      return <MeetingOutcomes data={data} meeting={meeting} />;
+    }
+    render(<Harness />);
+
+    const nextOwner = await screen.findByLabelText("Who?");
+    fireEvent.change(nextOwner, { target: { value: "Jordan" } });
+    const firstLine = screen.getByText("Ship release").closest(".surface-ledger-line") as HTMLElement;
+    fireEvent.click(within(firstLine).getByRole("button", { name: "Confirm: Ship release" }));
+    await waitFor(() => expect(screen.getByTestId("outcome-refresh-retry-btn")).toBeTruthy());
+    expect(screen.getByText("Ship release")).toBeTruthy();
+    const nextLine = screen.getByText("Prepare announcement").closest(".surface-ledger-line") as HTMLElement;
+    fireEvent.click(within(nextLine).getByTestId("proposal-more-btn"));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Edit" }));
+    expect(screen.getByLabelText("Who?")).toHaveValue("Jordan");
+  });
+
+  it("keeps bulk confirmation after a successful write when its reread fails", async () => {
+    const meeting = { id: "m-bulk-retry", title: "Bulk review" };
+    let proposals: FollowThroughProposal[] = [{
+      id: "p-bulk", meeting_id: "m-bulk-retry", kind: "action", text: "Ship release",
+      owner: "Jordan", due: "2026-11-05", state: "proposed", created_at: "",
+      support: "source_linked", unknowns: [], action_item_id: "action-bulk",
+    }];
+    let rereadFailed = false;
+    const receipts: Array<{ text?: string; tone?: string }> = [];
+    apiFetch.mockImplementation(async (url: string, init?: { method?: string }) => {
+      if (url === "/api/people/relationships") return { relationships: [] };
+      if (init?.method === "POST" && url.endsWith("/accept-reviewed")) {
+        proposals = proposals.map((proposal) => ({ ...proposal, state: "confirmed" as const }));
+        rereadFailed = true;
+        return { accepted_count: 1 };
+      }
+      if (url.includes("/outcome-review") || url.includes("/follow-through-proposals")) {
+        if (rereadFailed) throw new Error("temporary outcome read failure");
+        return { proposals, revision: "r1" };
+      }
+      return {};
+    });
+    function Harness() {
+      const data = useMeetingData(meeting, (receipt) => { receipts.push(receipt); });
+      return <MeetingOutcomes data={data} meeting={meeting} />;
+    }
+    render(<Harness />);
+
+    fireEvent.click(await screen.findByTestId("proposal-confirm-all-btn"));
+    await waitFor(() => expect(receipts.some((receipt) => receipt.text === "CONFIRMED 1")).toBe(true));
+    expect(receipts.some((receipt) => receipt.text?.startsWith("REFUSED"))).toBe(false);
+    expect(await screen.findByTestId("outcome-refresh-retry-btn")).toBeTruthy();
+
+    rereadFailed = false;
+    fireEvent.click(screen.getByTestId("outcome-refresh-retry-btn"));
+    await waitFor(() => expect(screen.getByTestId("action-done-btn")).toBeTruthy());
+    expect(receipts.at(-1)?.text).toBe("REFRESHED");
   });
 });
 
