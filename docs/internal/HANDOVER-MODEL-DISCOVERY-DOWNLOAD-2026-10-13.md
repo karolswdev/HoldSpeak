@@ -1,6 +1,7 @@
 # Model discovery and download repair — 2026-10-13
 
 Branch: `fix/model-discovery-download`. Base: `bcd1178b0` (#1198).
+PR: [#1199](https://github.com/karolswdev/HoldSpeak/pull/1199).
 One combined repair for the owner's two reported blockers. Luna workers built
 discovery, acquisition, and browser proof; Sol integrated and verified.
 The settled direction is [DESIGN-model-discovery-download.md](philo/phase-17/DESIGN-model-discovery-download.md).
@@ -52,7 +53,9 @@ without the new storage bound continue after restart using their signed size.
 
 ## Observations and verification
 
-Final integrated quick check is recorded at SHIP. Final composed captures
+Final integrated quick check **GREEN** (`quick-r3.log`): **3,472 web / 1,707 Python (2 existing availability skips) / 106 sweep (3 existing xfails) / 15 canon**.
+Final typecheck passed (`typecheck-final-r2.log`); architecture validation and
+API/capability generation passed (`generators-final.log`). Final composed captures
 were refreshed after the footer correction and inspected at both widths.
 Evidence is retained under `.tmp/models/` in the implementation worktree.
 
@@ -117,7 +120,7 @@ The shared lazy fallback now reports its actual pending chunk, and SendWell
 reports its existing readiness calculation for destinations, sends, and
 selected preview through `aria-busy`. Initial loading remains initial loading;
 the surface no longer reports itself settled before those reads end. Final
-regression and sweep results are recorded above at SHIP.
+regression and sweep results are recorded above.
 
 ## Settings engine footer found during integration
 
