@@ -36,6 +36,8 @@ import { burstTimer } from "../../../desk/burstTimer";
 import { onReturnToTask } from "../../../desk/returnToTask";
 import { useWindowTitle } from "../../../desk/surface/title";
 import { useDesk } from "../../../desk/store";
+import { useWindowId } from "../../../desk/components/window/windowIdContext";
+import { SEND_OPEN, windowDoc } from "../../../desk/windowSend";
 import { MEETING_OPEN_EVENT, peekMeetingRequest, takeMeetingRequest, type MeetingOpenRequest } from "../../../desk/objectWindows";
 import { useCoreWings } from "../core-hooks";
 import type { MeetingDetailResponse } from "../core-types";
@@ -75,6 +77,7 @@ function RecordMore({ entries }: { entries: WorkMenuEntry[] }) {
 }
 
 export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClose(): void }) {
+  const winId = useWindowId();
   // The place a door asked for (an Outcomes face or transcript row), once.
   // Peeked in render (a render may run again), taken once it is shown.
   const [request] = useState<MeetingOpenRequest | null>(() => peekMeetingRequest(meetingId));
@@ -126,6 +129,21 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
 
   // A door asks an open window for a place: the window moves to it.
   const setView = wings.setView;
+  const requestWell = useCallback((well: "send" | "decide" | "project") => {
+    setView("outcomes");
+    setRequestedWell(well);
+    window.requestAnimationFrame(() => revealOnRecord(`meeting-${meetingId}-${well}`, true));
+  }, [meetingId, setView]);
+  useEffect(() => {
+    const onSend = (event: Event) => {
+      if (!winId || (event as CustomEvent<{ winId?: string }>).detail?.winId !== winId) return;
+      const doc = windowDoc(winId);
+      if (doc?.kind !== "meeting" || doc.id !== meetingId) return;
+      requestWell("send");
+    };
+    window.addEventListener(SEND_OPEN, onSend);
+    return () => window.removeEventListener(SEND_OPEN, onSend);
+  }, [meetingId, requestWell, winId]);
   useEffect(() => {
     const onOpen = (event: Event) => {
       const next = (event as CustomEvent<MeetingOpenRequest>).detail;
@@ -280,11 +298,6 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
   }
 
   const view = wings.view as DetailView;
-  const requestWell = (well: "send" | "decide" | "project") => {
-    wings.setView("outcomes");
-    setRequestedWell(well);
-    window.requestAnimationFrame(() => revealOnRecord(`meeting-${meetingId}-${well}`, true));
-  };
   const moreEntries: WorkMenuEntry[] = [
     { type: "item", id: "transcript", label: "Open transcript", onSelect: () => {
       wings.setView("outcomes");

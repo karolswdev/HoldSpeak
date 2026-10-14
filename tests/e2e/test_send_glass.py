@@ -91,7 +91,7 @@ TOKEN = "send-glass"
 SHOTS = evidence_dir("pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-15-shots")
 SIZES = {1440: 900, 393: 852}
 T = 20_000
-MEET = "pullout:meeting:m-standup"
+MEET = "surface-meetings"  # the saved record is inside Meetings, with Back
 BARE = "pullout:meeting:m-bare"
 FREEZE = "pullout:decision:d-freeze"
 OTEL = "pullout:decision:d-otel"
@@ -368,10 +368,10 @@ class TestSendGlass:
         else:
             self.page.mouse.click(x, y, button="right")
             self._wait(500)
-        self.page.locator("[role=menu]").first.wait_for(timeout=10_000)
+        self.page.locator(".desk-work-menu[role=menu]").first.wait_for(timeout=10_000)
 
     def _sub_row(self) -> Any:
-        return self.page.locator("[role=menu] [role=menuitem][aria-haspopup=menu]:has-text('Send to')").first
+        return self.page.locator(".desk-work-menu[role=menu] [role=menuitem][aria-haspopup=menu]:has-text('Send to')").first
 
     def _open_send_to(self) -> str:
         sub = self._sub_row()
@@ -388,16 +388,16 @@ class TestSendGlass:
     def _send_to(self, win: str) -> str:
         self._window_menu(win)
         # The menu leads with Send to ▸, its own group.
-        first = self.page.locator("[role=menu] [role^=menuitem]").first.inner_text()
+        first = self.page.locator(".desk-work-menu[role=menu] [role^=menuitem]").first.inner_text()
         assert first.startswith("Send to"), first
         return self._open_send_to()
 
     def _rows(self) -> list[str]:
-        sel = "[role=menu].desk-work-submenu [role^=menuitem]" if not self.phone else "[role=menu] [role^=menuitem]:not(.desk-menu-back)"
+        sel = ".desk-work-menu[role=menu].desk-work-submenu [role^=menuitem]" if not self.phone else ".desk-work-menu[role=menu] [role^=menuitem]:not(.desk-menu-back)"
         return [x.strip() for x in self.page.locator(sel).all_inner_texts()]
 
     def _pick(self, text: str) -> None:
-        self._tap(self.page.locator(f"[role=menu] [role^=menuitem]:has-text('{text}')").last, 900)
+        self._tap(self.page.locator(f".desk-work-menu[role=menu] [role^=menuitem]:has-text('{text}')").last, 900)
 
     def _escape(self) -> None:
         self.page.keyboard.press("Escape")
@@ -418,11 +418,30 @@ class TestSendGlass:
     def _glass(self, board: str) -> None:
         """The on-glass reader over every open menu and every SEND well: zero clipped, zero overlaps."""
         _settle(self.page)
-        for sel in ("[role=menu]", "[data-testid=send-well]"):
+        for sel in (".desk-work-menu[role=menu]", "[data-testid=send-well]"):
             f = _rendered_text_faults(self.page, sel, on_glass=True)
             assert not f["clipped"] and not f["overlaps"], f"{board}-{self.width} {sel}: {f}"
         if self.phone:
             small = self._ev(TARGETS44)
+            if small:
+                # A scrolled control can be behind its own sticky host bar.
+                # The shared pointer rig must reach it by an ordinary wheel
+                # and then prove all nine points; unrelated misses stay red.
+                from ._doc_send_glass import pointer_pass
+
+                recovery = pointer_pass(self.page, self.width, "[data-testid=send-well]")
+                assert not recovery["missed"], recovery
+                reached = {item["text"] for item in recovery["reached_by_scroll"]}
+                small = [item for item in small if item["name"] not in reached]
+                (SHOTS / f"{board}-scroll-targets-{self.width}.json").write_text(json.dumps(recovery, indent=2) + "\n")
+            if small:
+                self._shot(f"{board}-target-failure")
+                owners = self._ev("""() => [...document.querySelectorAll('[data-testid=send-add-destination]')].map(e => {
+                    const r=e.getBoundingClientRect(), h=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
+                    return {rect:{x:r.x,y:r.y,w:r.width,h:r.height},owner:h?.outerHTML.slice(0,1200),
+                        ancestors:[...function*(e){while(e){yield e;e=e.parentElement}}(e)].slice(0,8).map(a=>({class:a.className,overflow:getComputedStyle(a).overflowY,position:getComputedStyle(a).position}))};
+                })""")
+                print("Send target owners:", owners)
             assert not small, f"{board}-393 targets under 44 x 44: {small}"
 
     def _whole(self, win: str, board: str, *, field: bool = True) -> None:
@@ -802,6 +821,29 @@ class _Rig:
 class TestChairMeetingWells(_Rig):
     # ── C6b: the Chair's MEETINGS rows (both branches) ──
 
+    @staticmethod
+    def _raise_week(page: Any, width: int) -> None:
+        """The existing Week window can be behind the open Meetings record."""
+        menu = "window" if width > 720 else "go"
+        page.locator(f".desk-verbbar-item[data-menu-id='{menu}'] button").click()
+        if width > 720:
+            page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Desk')").click()
+        page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('The week')").click()
+        page.locator(".chair-window--week").wait_for(timeout=H1_T)
+        _settle(page)
+
+    @staticmethod
+    def _open_from_week(page: Any, title: str, meeting_id: str) -> str:
+        row = page.locator(".chair-window--week [data-testid=arrival-meeting-row]").filter(has_text=title)
+        row.locator("[data-testid=arrival-meeting-open]").click()
+        record = page.locator(f"[id='{MEET}']")
+        record.locator("[data-testid=meeting-summary-text]").wait_for(timeout=H1_T)
+        record.locator("[data-testid=meeting-send]").click()
+        scope = f"[id='{MEET}'] [data-testid=meeting-send-well]:has([data-send=well][data-doc='meeting_summary:{meeting_id}'])"
+        page.locator(f"{scope} [data-testid=destination-row]").first.wait_for(timeout=H1_T)
+        _settle(page)
+        return scope
+
     @pytest.mark.e2e
     @pytest.mark.timeout(900)
     @pytest.mark.parametrize("width", WIDTHS)
@@ -839,25 +881,22 @@ class TestChairMeetingWells(_Rig):
                 team, team_dir = self._dest(page, "Team folder")
                 self._reload(page, "The week")
 
-                ok_row = "li.surface-ledger-row:has(> [data-testid=arrival-meeting-row]):has([data-send=well][data-doc$=':c6-sync'])"
-                rt_row = "li.surface-ledger-row:has(> [data-testid=arrival-meeting-row]):has([data-send=well][data-doc$=':c6-retry'])"
-                OK = f"{ok_row} [data-seat=meeting]"
-                RT = f"{rt_row} [data-seat=meeting]"
-                page.locator(f"{OK} [data-testid=destination-row]").first.wait_for(timeout=H1_T)
-                page.locator(f"{RT} [data-testid=destination-row]").first.wait_for(timeout=H1_T)
-                page.wait_for_timeout(600)
+                record = f"[id='{MEET}']"
+                OK = self._open_from_week(page, "Ledger cutover sync", "c6-sync")
+                assert self._text(page, f"{record} [data-testid=meeting-summary-text]") == \
+                    "The team agreed to freeze the old ledger on Nov 3."
 
-                # PHILO-13-11 (slice two): at 1440 The week is 36 % of the right column;
-                # the meeting well is read with the window zoomed (board C1-4b).
+                # The Chair's Open now lands in the existing Meetings record.
+                # Read its Send well in the same zoomed desktop posture.
                 if width > 720:
-                    page.get_by_role("button", name="Zoom The week").click()
+                    page.locator(f"{record} .desk-gadget-zoom").click()
                     page.wait_for_timeout(600)
                 # C6b, the healthy branch: SUMMARY, then SEND with the form picker (44 px at 393).
                 picker = f"{OK} [data-testid=doc-forms] select, {OK} [data-testid=doc-forms] .btn"
                 c6 = shots.shoot(page, "C6b-chair-meetings-row-well", OK,
-                                 [f"{ok_row} .meeting-summary-slab, {ok_row} [data-testid=meeting-summary-text]",
+                                 [f"{record} [data-testid=meeting-summary-text]",
                                   f"{OK} [data-testid=doc-forms]", f"{OK} [data-testid=destination-row]"],
-                                 seat=f"{ok_row} [data-testid=arrival-meeting-row]")
+                                 seat=f"{record} [data-testid=meeting-summary-text]")
                 assert "meeting_summary:c6-sync" in c6["wells"], c6["wells"]
                 pick_box = page.evaluate("(s) => { const e = document.querySelector(s); const r = e.getBoundingClientRect(); return [r.width, r.height, e.tagName]; }", picker)
                 c6["picker_box"] = pick_box
@@ -882,7 +921,9 @@ class TestChairMeetingWells(_Rig):
                             .map(([x, y]) => { const e = document.elementFromPoint(x, y); return !!e && p.contains(e); }); }""", picker)
                     c6["picker_after_scroll"] = {"capture_bars_over_the_week": bars_over_week, "nine_points_owned": owned_nine}
                     assert bars_over_week == 0 and all(owned_nine), c6["picker_after_scroll"]
-                    shots.shoot(page, "C6f-chair-picker-scrolled-clear-393".replace("-393", ""), OK, [f"{OK} [data-testid=doc-forms]"], seat=None)
+                    # This record fits without scrolling, so centering the picker keeps the board still.
+                    shots.shoot(page, "C6f-chair-picker-scrolled-clear-393".replace("-393", ""), OK,
+                                [f"{OK} [data-testid=doc-forms]"], seat=None, same_as="C6b-chair-meetings-row-well")
 
                 # The send leg from the Chair row: face = hub row = kernel receipt.
                 self._pick(page, OK, "Team folder")
@@ -892,22 +933,38 @@ class TestChairMeetingWells(_Rig):
                 assert [(s["document_ref"], s["state"]) for s in hub] == [(mref, "sent")], hub
                 mpath = hub[0]["proof"]["path"]
                 assert Path(mpath).parent == team_dir and "freeze the old ledger" in Path(mpath).read_text()
+                with db._connection() as conn:
+                    frozen_payload = conn.execute("SELECT payload FROM channel_sends WHERE id=?", (hub[0]["id"],)).fetchone()[0]
+                assert Path(mpath).read_bytes() == frozen_payload
                 c6s = shots.shoot(page, "C6c-chair-meetings-row-saved", OK,
                                   [f"{opened(OK, 'Team folder')} [data-receipt=latest]"], block="center")
                 assert c6s["receipts"] == [{"text": f"✓ SAVED {mpath}", "state": "sent", "code": None}], c6s["receipts"]
                 c6s["kernel_send"] = self._face_row_receipt(hub[0], mref)
                 self._unpick(page, OK, "Team folder")
 
-                # C6b, the retained-summary branch: the summary with its status facts, then SEND.
-                c6r = shots.shoot(page, "C6e-chair-retained-summary-well", RT,
-                                  [f"{rt_row} [data-testid=arrival-summary-status]", f"{RT} [data-testid=doc-forms]",
-                                   f"{RT} [data-testid=destination-row]"],
-                                  seat=f"{rt_row} [data-testid=arrival-meeting-row]")
-                assert "meeting_summary:c6-retry" in c6r["wells"], c6r["wells"]
-                assert "FAILED" in self._text(page, f"{rt_row} [data-testid=arrival-summary-status]")
+                # Return, raise The week, and use the failed record's actual Open.
+                if width > 720:
+                    page.locator(f"{record} [data-testid=meeting-record-back]").click()
+                else:
+                    page.locator(f"{record} .desk-gadget-close").click()
+                self._raise_week(page, width)
+                failed_row = page.locator(".chair-window--week [data-testid=arrival-meeting-row]").filter(has_text="Vendor escalation")
+                assert "FAILED" in failed_row.inner_text()
+                RT = self._open_from_week(page, "Vendor escalation", "c6-retry")
+                assert self._text(page, f"{record} [data-testid=meeting-summary-text]") == \
+                    "The vendor owes a fix for the export by Friday."
 
-                if width > 720:   # PHILO-13-11: the Chair's screen again (The week un-zoomed)
-                    page.get_by_role("button", name="Zoom The week").click()
+                # The retained summary keeps its failed-run fact beside the record.
+                c6r = shots.shoot(page, "C6e-chair-retained-summary-well", RT,
+                                  [f"{record} [data-testid=meeting-summary-state]", f"{record} [data-testid=meeting-summary-text]",
+                                   f"{RT} [data-testid=doc-forms]",
+                                   f"{RT} [data-testid=destination-row]"],
+                                  seat=f"{record} [data-testid=meeting-summary-state]")
+                assert "meeting_summary:c6-retry" in c6r["wells"], c6r["wells"]
+                assert "FAILED" in self._text(page, f"{record} [data-testid=meeting-summary-state]")
+
+                if width > 720:
+                    page.locator(f"{record} .desk-gadget-zoom").click()
                     page.wait_for_timeout(400)
                 shots.write("chair-meetings-slack", {"hub_sends": {"meeting": hub},
                                                      "edge_requests": len(self.edge.requests)})

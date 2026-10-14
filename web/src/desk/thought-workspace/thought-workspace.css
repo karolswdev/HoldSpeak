@@ -25,6 +25,17 @@
   container-name: surface;
 }
 
+.desk-next .thought-workspace-window.is-sending {
+  height: 520px;
+  min-height: 520px;
+}
+
+.desk-next .desk-pullout.thought-workspace-window:where(:not(.is-sending):has(.thought-reads-well, .thought-note-ask-open)) {
+  /* A restored sticky can pin 360px. Open material needs room, within the
+     existing cap; larger owner-arranged heights still win. */
+  min-height: min(640px, calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom)));
+}
+
 .desk-next .thought-workspace-window > .desk-pullout-head {
   flex: none;
 }
@@ -275,15 +286,17 @@
   background: var(--surface-2);
 }
 
-/* PHILO-17 U08: the SEND well under the note; it scrolls, the note keeps its room. */
+/* Send owns the body while its writer stays mounted. */
+.desk-next .thought-send-scroll {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
 .desk-next .thought-send-well {
-  /* It gives up height before the foot does: the foot keeps every line. */
-  flex: 0 1 auto;
-  min-height: 72px;
-  max-height: 45%;
+  height: 100%;
+  min-height: 0;
   overflow-y: auto;
-  padding: 6px clamp(22px, 3.4vw, 44px);
-  border-top: 1px solid var(--border-subtle);
+  padding: 12px 18px;
 }
 
 .desk-next .thought-send-wait {

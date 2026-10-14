@@ -13,7 +13,7 @@
  *   line 1  [lead 16 px] [name]
  *   line 2              [chips: channel · target · account · last send · egress]
  * (destination rows, prepared rows and history rows alike). An open row's
- * preview sits under it at the name's indent.
+ * preview spans the row's content width, without another leading indent.
  */
 
 /* The well's own base: the UI face at 14 px; a host's text-transform and
@@ -39,7 +39,7 @@
    10 px h3 rule does not reach the species' head). */
 .desk-next .desk-pullout-body :is([data-send="well"], [data-send="history"][data-species="send"]) .surface-section-head h3,
 :is([data-send="well"], [data-send="history"][data-species="send"]) .surface-section-head h3 {
-  margin: 0 0 6px;
+  margin: 0;
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 600;
@@ -93,7 +93,25 @@
   min-width: 0;
 }
 :is([data-send="well"], [data-send="history"][data-species="send"]) .surface-ledger-open {
-  padding-left: 26px;
+  padding: 8px 10px 12px;
+}
+
+/* Send refinement: one outer scroll owner. Frozen fields stay plain; the
+   payload alone wears the existing well. Dispatch and receipt sit after it. */
+[data-send="well"] .send-open { padding: 0; }
+[data-send="well"] .send-preview { margin-top: 0; }
+[data-send="well"] .send-preview > .surface-section { margin-bottom: 0; }
+[data-send="well"] .send-preview .surface-well-body {
+  max-height: none;
+  overflow: visible;
+  padding: 10px 12px;
+}
+[data-send="well"] .send-preview > .send-verbs { margin: 12px 0 0; }
+[data-send="well"] .surface-section-head { gap: 12px; }
+
+@container surface (max-width: 560px) {
+  [data-send="well"] .surface-section-head { min-height: 44px; }
+  [data-send="well"] .send-verbs { gap: 16px 12px; padding-block: 6px; }
 }
 
 /* The preview: the document in the UI face (a Markdown body with its own

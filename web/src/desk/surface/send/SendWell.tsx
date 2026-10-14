@@ -32,7 +32,7 @@
  */
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
-import { ConfirmVerb, SurfaceLedger, SurfaceLedgerRow, SurfaceSection, SurfaceWell } from "../Surface";
+import { ConfirmVerb, SurfaceLedger, SurfaceLedgerRow, SurfaceSection, SurfaceState, SurfaceWell } from "../Surface";
 import { EgressChip } from "../gadgets";
 import { Material } from "../Material";
 import { StateChip } from "../patterns";
@@ -209,12 +209,12 @@ export function accountChip(
 
 /* ── pieces ────────────────────────────────────────────────────────── */
 
-/** The preview: its fields, then the verbs, then the body. The verbs sit
- *  above the body so Send and its result are in view at 393. */
+/** The frozen fields and payload, then dispatch and its receipt. The host
+ *  owns scrolling; the payload well never traps the Send action. */
 export function PreviewWell({ preview, testid, verbs }: { preview: Preview; testid: string; verbs: ReactNode }) {
   return (
     <div className="send-preview" data-testid={testid}>
-      <SurfaceWell>
+      <SurfaceSection label="Preview">
         <dl className="send-fields">
           {preview.fields.map((f) => (
             <div key={f.label} className="send-field" data-testid="send-preview-field">
@@ -223,11 +223,13 @@ export function PreviewWell({ preview, testid, verbs }: { preview: Preview; test
             </div>
           ))}
         </dl>
-        {verbs}
-        <div className="send-preview-body" data-testid="send-preview-body">
-          {preview.body_kind === "markdown" ? <Material>{preview.body}</Material> : <div className="send-preview-text">{preview.body}</div>}
-        </div>
-      </SurfaceWell>
+        <SurfaceWell>
+          <div className="send-preview-body" data-testid="send-preview-body">
+            {preview.body_kind === "markdown" ? <Material>{preview.body}</Material> : <div className="send-preview-text">{preview.body}</div>}
+          </div>
+        </SurfaceWell>
+      </SurfaceSection>
+      {verbs}
     </div>
   );
 }
@@ -543,13 +545,20 @@ export function SendWell({ doc, sendsRead, onSettled, head }: {
   const waiting = prepared.filter((s) => s.state === "prepared");
   const openPrepared = store.preparedOpen.has(ref) ? store.preparedOpen.get(ref) : waiting[0]?.id ?? null;
   const destinations = dests.data;
+  const pendingReads = (destinations === null && !dests.failed) || (sendsRead.data === null && !sendsRead.failed);
 
   return (
     <div data-send="well" data-testid="send-well" data-doc={ref}
       aria-busy={wellRead ? undefined : "true"}
       aria-label={`${SEND_WORDS.send} ${doc.title}`} role="group">
-      <SurfaceSection label={SEND_WORDS.section}>
+      <SurfaceSection label={SEND_WORDS.section} actions={
+        <Button dense variant="ghost" data-testid="send-add-destination"
+          onClick={() => { requestDestinationsFocus(); useDesk.getState().openSurfaceWindow("configure-settings", "integrations"); }}>
+          {SEND_WORDS.addDestination}
+        </Button>
+      }>
         {head}
+        {pendingReads ? <div data-testid="send-read-loading"><SurfaceState loading /></div> : null}
         {sendsRead.failed ? (
           <Unreadable what="SENDS" testid="sends-unreadable" onRetry={reload} />
         ) : prepared.length > 0 ? (
@@ -570,10 +579,6 @@ export function SendWell({ doc, sendsRead, onSettled, head }: {
         ) : destinations === null ? null : destinations.length === 0 ? (
           <div className="send-line" data-testid="send-none">
             <span className="surface-token" data-chip>{SEND_WORDS.noDestination}</span>
-            <Button dense variant="primary" data-testid="send-add-destination"
-              onClick={() => { requestDestinationsFocus(); useDesk.getState().openSurfaceWindow("configure-settings", "integrations"); }}>
-              {SEND_WORDS.addDestination}
-            </Button>
           </div>
         ) : (
           <SurfaceLedger count="" cols="room">
@@ -629,10 +634,10 @@ export function SendWell({ doc, sendsRead, onSettled, head }: {
                       store.picked.set(ref, open ? null : d.id); keepPlace(`send/pick/${ref}`, open ? "" : d.id); bump();
                     }}
                     lead={<span className="send-pick" aria-hidden="true">{open ? "●" : "○"}</span>}
-                    primary={<span className="surface-primary" data-destination={d.name}>{d.name}</span>}
+                    primary={<span className="surface-primary" data-destination={d.name} title={targetToken(d.channel, d.target)}>{d.name}</span>}
                     cells={<span className="send-cells">
                       <span className="surface-token" data-chip>{CHANNEL_WORD[d.channel] ?? d.channel}</span>
-                      <span className="surface-token send-literal send-wrap send-target" data-chip title={targetToken(d.channel, d.target)}>{targetName(d.channel, d.target)}</span>
+                      {!open ? <span className="surface-token send-literal send-wrap send-target" data-chip title={targetToken(d.channel, d.target)}>{targetName(d.channel, d.target)}</span> : null}
                       {acc ? <StateChip state={acc.state} label={acc.label} /> : null}
                       {open ? <LastChip s={last} /> : <ClosedReceipt o={o} last={last} />}
                       <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
@@ -640,6 +645,7 @@ export function SendWell({ doc, sendsRead, onSettled, head }: {
                   >
                     {open ? (
                       <div className="send-open" data-testid="send-open" data-destination={d.name}>
+                        {!pv && !pendingReads ? <div data-testid="send-preview-loading"><SurfaceState loading /></div> : null}
                         {pv && !("failed" in pv)
                           ? <PreviewWell preview={previewOf(d.channel, d.target, d.account, pv.preview)} testid="send-preview" verbs={verbs} />
                           : null}

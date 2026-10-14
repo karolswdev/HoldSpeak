@@ -1,0 +1,20 @@
+.canvas { container:artboard / inline-size; min-height:100vh; padding-bottom:24px; }
+.canvas-bar { padding:12px 20px; background:var(--desk-window-fill); color:var(--text); font:12px var(--font-mono); }
+.canvas-window { container:surface / inline-size; position:relative; display:flex; flex-direction:column; width:min(520px, calc(100% - 24px)); height:520px; margin:32px auto; overflow:hidden; background:var(--desk-window-fill); color:var(--text); border:2px solid var(--wb-ink); }
+.canvas-title { flex:none; padding:8px 12px; font:600 15px var(--font-sans); background:var(--wb-steel); border-bottom:1px solid var(--wb-ink); }
+.canvas-body { min-height:0; flex:1; overflow-y:auto; padding:12px; }
+.canvas-return { display:flex; margin-bottom:12px; }
+.canvas-foot { flex:none; display:flex; align-items:center; gap:12px; min-height:44px; padding:8px 12px; border-top:1px solid var(--wb-ink); background:var(--wb-steel); }
+.canvas [data-send="well"] .surface-ledger-open { padding:8px 10px 12px; }
+.canvas [data-send="well"] .send-open { padding:0; }
+.canvas [data-send="well"] .send-preview { margin:0; }
+.canvas [data-send="well"] .surface-section-head { margin-bottom:8px; }
+.canvas [data-send="well"] .surface-section-head h3 { margin:0; }
+.canvas [data-send="well"] .surface-well-body { max-height:none; overflow:visible; padding:10px 12px; }
+.canvas [data-send="well"] .send-preview .surface-section { margin-bottom:0; }
+.canvas [data-send="well"] .send-preview .send-verbs { margin:12px 0 0; }
+@container surface (max-width:560px) {
+ .canvas [data-send="well"] .surface-section-head { gap:12px; min-height:44px; }
+ .canvas [data-send="well"] .send-verbs { gap:16px 12px; padding-block:6px; }
+}
+@container artboard (max-width:560px) { .canvas-window { height:calc(100dvh - 105px); margin-top:12px; } }

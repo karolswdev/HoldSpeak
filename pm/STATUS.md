@@ -4,9 +4,25 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-14 (surface audit and repair: #1200)
+**Last updated:** 2026-10-14 (Note and shared Send refinement: #1201)
 
 ## Current phase
+
+**Note and shared Send refinement — #1201 (2026-10-14).** The owner
+opened a Note and rejected Send. Send now owns the body with full-width frozen
+preview, visible Add destination, one outer scroll region and separate dispatch/
+receipt. Back returns to the same Note; the mounted writer saves first and
+retains revision/conflict/Close fences. Meetings Send to unfolds the actual
+scoped record’s well. Retained Note checks exposed desktop question/context
+clipping and phone Reads return focus; bounded host fixes cover both. Final
+quick check GREEN: 3,537 web / 546 Python/browser / 107 sweep (two existing
+xfails) / 15 canon; production build and TypeScript passed. Actual isolated
+Note/Meeting file bytes match frozen DB payloads at 1440/393; revision, receipt,
+pointer, custody, focus and restart checks remain. Owner judgment, actual
+email/Slack delivery, real model/LAN inference, microphone, physical devices,
+full main tape and postmerge review remain open. Deterministic interview
+fixtures do not prove the owner’s engine.
+[Refinement and verification](../docs/internal/SEND-REFINEMENT-2026-10-14.md).
 
 **Surface audit and repair — #1200 (2026-10-14).** One substantial PR,
 requested after the owner rejected Conductor's session screen. Three bounded

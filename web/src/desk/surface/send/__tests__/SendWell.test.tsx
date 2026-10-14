@@ -20,6 +20,7 @@ vi.mock("../../../../pages/cores/connections/api", async () => {
 import { ApiError } from "../../../../lib/api";
 import { PreparedChip, SendWells, resetSendStore, type DocRef } from "..";
 import { BriefSendWells, DecisionRecordSendWells, DeskDecisionSendWells } from "../../../documentSends";
+import { useDesk } from "../../../store";
 
 const REF = "monday_brief:b1";
 const BRIEF: DocRef = { ref: REF, title: "Brief Sep 29", label: "BRIEF SEP 29" };
@@ -82,10 +83,70 @@ describe("the SEND well species on a brief (not an update)", () => {
     render(<SendWells doc={BRIEF} />);
     const none = await screen.findByTestId("send-none");
     expect(none.textContent).toContain("NO DESTINATION");
-    expect(within(none).getByTestId("send-add-destination").textContent).toBe("Add destination");
+    expect(screen.getByTestId("send-add-destination").textContent).toBe("Add destination");
     expect(screen.getByTestId("send-well").getAttribute("data-doc")).toBe(REF);
     expect(screen.queryByTestId("send-history")).toBeNull();
     noManualRow();
+  });
+
+  it("keeps Add destination beside SEND with the built-in folder and opens the existing Settings door", async () => {
+    routes["GET /api/channels/destinations"] = () => ({ destinations: [folder({ builtin: true })] });
+    const openSettings = vi.spyOn(useDesk.getState(), "openSurfaceWindow").mockImplementation(() => {});
+    try {
+      render(<SendWells doc={{ ...BRIEF, ref: "note:add-destination" }} />);
+      await screen.findByTestId("send-preview");
+      const add = screen.getByTestId("send-add-destination");
+      expect(add.closest(".surface-section-head")?.textContent).toContain("SEND");
+      fireEvent.click(add);
+      expect(openSettings).toHaveBeenCalledWith("configure-settings", "integrations");
+      expect(apiFetch.mock.calls.some(([path]) => path === "/api/channels/send")).toBe(false);
+    } finally { openSettings.mockRestore(); }
+  });
+
+  it("shows one shared loading state while destination and send reads wait, then removes it", async () => {
+    let destinationsReady!: (value: unknown) => void;
+    let sendsReady!: (value: unknown) => void;
+    routes["GET /api/channels/destinations"] = () => new Promise((resolve) => { destinationsReady = resolve; });
+    routes["GET /api/channels/sends"] = () => new Promise((resolve) => { sendsReady = resolve; });
+    render(<SendWells doc={BRIEF} />);
+    expect(within(screen.getByTestId("send-read-loading")).getByRole("status").getAttribute("aria-busy")).toBe("true");
+    expect(screen.getByTestId("send-add-destination")).toBeTruthy();
+    expect(screen.queryByTestId("send-none")).toBeNull();
+    expect(screen.queryByTestId("send-verb")).toBeNull();
+    await act(async () => { destinationsReady({ destinations: [folder()] }); sendsReady({ sends: [] }); });
+    await screen.findByTestId("destination-row");
+    expect(screen.queryByTestId("send-read-loading")).toBeNull();
+  });
+
+  it("names the waiting preview and keeps frozen fields, payload and dispatch in order outside the payload well", async () => {
+    let previewReady!: (value: unknown) => void;
+    routes["GET /api/channels/destinations"] = () => ({ destinations: [slack()] });
+    routes["POST /api/channels/preview"] = () => new Promise((resolve) => { previewReady = resolve; });
+    render(<SendWells doc={BRIEF} />);
+    await pick("Slack #leads");
+    const loading = await screen.findByTestId("send-preview-loading");
+    expect(within(loading).getByRole("status").getAttribute("aria-busy")).toBe("true");
+    expect(screen.queryByTestId("send-verb")).toBeNull();
+    await act(async () => { previewReady({ payload_digest: "frozen-digest", preview: { text: "Exact frozen words\nSecond line." } }); });
+    const preview = await screen.findByTestId("send-preview");
+    expect(within(preview).getByRole("heading", { name: "Preview" })).toBeTruthy();
+    expect(screen.queryByTestId("send-preview-loading")).toBeNull();
+    const fields = within(preview).getAllByTestId("send-preview-field");
+    expect(fields.map((field) => field.textContent)).toEqual(["Channel#leads", "Webhookhooks.slack.com"]);
+    expect(fields[0].closest(".surface-well")).toBeNull();
+    const body = screen.getByTestId("send-preview-body");
+    expect(body.textContent).toBe("Exact frozen words\nSecond line.");
+    expect(body.closest(".surface-well")).toBeTruthy();
+    const verb = screen.getByTestId("send-verb");
+    expect(verb.closest(".surface-well")).toBeNull();
+    expect(body.compareDocumentPosition(verb) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const row = screen.getByTestId("destination-row");
+    expect(row.querySelector(".send-target")).toBeNull();
+    expect(row.querySelector(".send-cells")?.textContent).toContain("SLACK");
+    expect(row.querySelector(".send-cells")?.textContent).toContain("WEBHOOK SET");
+    expect(within(screen.getByTestId("send-verbs")).getByText("HOOKS.SLACK.COM")).toBeTruthy();
+    fireEvent.click(within(row).getByText("Slack #leads"));
+    expect(row.querySelector(".send-target")?.textContent).toBe("#leads");
   });
 
   it("picked: the preview of THIS document opens with Send; the row keeps the one grammar", async () => {

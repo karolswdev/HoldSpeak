@@ -54,6 +54,69 @@ beforeEach(() => {
 const sub = (e: WorkMenuEntry | null) => e as Extract<WorkMenuEntry, { type: "sub" }>;
 const labels = (e: WorkMenuEntry | null) => sub(e).entries.map((x) => (x.type === "sep" ? "—" : x.label));
 const settle = () => act(async () => { await new Promise((r) => setTimeout(r, 0)); });
+const scopeMeeting = (id: string) => useDesk.setState({ windowsById: {
+  "surface-meetings": { id: "surface-meetings", kind: "surface", applicationKey: "meetings", scope: `meeting:${id}`, persistence: "workspace" },
+} } as never);
+
+describe("Send to from the canonical Meetings record before its Send well mounts", () => {
+  it("uses the actual meeting scope and checks its summary before offering Send to", async () => {
+    scopeMeeting("scoped-ready");
+    let answer!: (value: unknown) => void;
+    routes["GET /api/meetings/scoped-ready"] = () => new Promise((resolve) => { answer = resolve; });
+    await readDestinations();
+    expect(windowDoc("surface-meetings")).toEqual({ kind: "meeting", id: "scoped-ready", form: "summary", summary: { state: "unread" } });
+    primeSendTo("surface-meetings");
+    expect(sub(sendToEntry("surface-meetings")).label).toBe(SEND_TO.checking);
+    expect(screen.queryByTestId("meeting-send-well")).toBeNull();
+    answer({ id: "scoped-ready", intel: { summary: "Saved summary." } });
+    await settle();
+    expect(sub(sendToEntry("surface-meetings")).label).toBe(SEND_TO.label);
+    expect(labels(sendToEntry("surface-meetings"))).toEqual(["Team updates · FILE", "PAY-118 · JIRA"]);
+  });
+
+  it("withholds Send to for a scoped meeting whose stored summary is empty", async () => {
+    scopeMeeting("scoped-empty");
+    routes["GET /api/meetings/scoped-empty"] = () => ({ id: "scoped-empty", intel: { summary: "" } });
+    await readDestinations();
+    primeSendTo("surface-meetings");
+    await settle();
+    expect(windowDoc("surface-meetings")).toMatchObject({ summary: { state: "known", value: false } });
+    expect(sendToEntry("surface-meetings")).toBeNull();
+  });
+
+  it("retains the announced chosen form and drops an old meeting's form when the actual scope changes", () => {
+    function Seat() { useAnnounceWindowDocument({ kind: "meeting", id: "scoped-form", form: "digest" }); return null; }
+    scopeMeeting("scoped-form");
+    render(<WindowIdContext.Provider value="surface-meetings"><Seat /></WindowIdContext.Provider>);
+    expect(windowDoc("surface-meetings")).toEqual({ kind: "meeting", id: "scoped-form", form: "digest", summary: { state: "unread" } });
+    act(() => scopeMeeting("scoped-next"));
+    expect(windowDoc("surface-meetings")).toEqual({ kind: "meeting", id: "scoped-next", form: "summary", summary: { state: "unread" } });
+  });
+
+  it("opens the scoped record before pushing the chosen destination without sending", async () => {
+    scopeMeeting("scoped-pick");
+    routes["GET /api/meetings/scoped-pick"] = () => ({ id: "scoped-pick", intel: { summary: "Saved summary." } });
+    await readDestinations();
+    primeSendTo("surface-meetings");
+    await settle();
+    const beforePick: (string | null)[] = [];
+    const opened = vi.fn((_event: Event) => { beforePick.push(pickedDestination("meeting_summary:scoped-pick")); });
+    window.addEventListener(SEND_OPEN, opened);
+    const focus = vi.spyOn(useDesk.getState(), "restorePanel").mockImplementation(() => {});
+    try {
+      pickFor("surface-meetings", "chd_f");
+      expect(opened).toHaveBeenCalledTimes(1);
+      expect((opened.mock.calls[0][0] as CustomEvent).detail).toEqual({ winId: "surface-meetings" });
+      expect(beforePick).toEqual([null]);
+      await waitFor(() => expect(pickedDestination("meeting_summary:scoped-pick")).toBe("chd_f"));
+      expect(pickedDestination("meeting_summary:scoped-next")).toBeNull();
+      expect(apiFetch.mock.calls.some(([path]) => path === "/api/channels/send")).toBe(false);
+    } finally {
+      window.removeEventListener(SEND_OPEN, opened);
+      focus.mockRestore();
+    }
+  });
+});
 
 describe("one composition: Send to ▸ with the saved destinations", () => {
   it("a decision window: `Send to` with the ACTIVE destinations as `<name> · <CHANNEL>`", async () => {

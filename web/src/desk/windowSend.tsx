@@ -166,10 +166,14 @@ export function windowDoc(winId: string | null): WindowDoc | null {
   }
   if (BRIEF_WINDOWS.has(winId)) return announced?.kind === "brief" ? announced : null;
   if (winId === MEETINGS_WINDOW) {
-    // The open record's well names its meeting; it mounts only with a summary.
-    return announced?.kind === "meeting"
-      ? { ...announced, summary: { state: "known", value: true } }
-      : null;
+    // The canonical record exists before its requested Send well mounts.
+    // A scope change also wins over an old well's announcement until unmount.
+    const scope = String(useDesk.getState().windowsById?.[winId]?.scope ?? "");
+    const scoped = /^meeting:(.+)$/.exec(scope);
+    const id = scoped?.[1] ?? (announced?.kind === "meeting" ? announced.id : null);
+    if (!id) return null;
+    const form = announced?.kind === "meeting" && announced.id === id ? announced.form : "summary";
+    return { kind: "meeting", id, form, summary: factOfKey<boolean>(factKey("meeting", id)) };
   }
   if (winId === ROOM_WINDOW) {
     const scope = String(useDesk.getState().windowsById?.[winId]?.scope ?? "");
@@ -186,7 +190,7 @@ const docFact = (d: WindowDoc): Fact<unknown> | null =>
 export function primeSendTo(winId: string | null) {
   void readDestinations();
   const d = windowDoc(winId);
-  if (d?.kind === "meeting" && winId !== MEETINGS_WINDOW) void readFact("meeting", d.id);
+  if (d?.kind === "meeting") void readFact("meeting", d.id);
   if (d?.kind === "project") void readFact("project", d.id);
 }
 
@@ -290,6 +294,7 @@ export function pickFor(winId: string, destinationId: string, waited = 0): void 
       if (!("ref" in b)) return;
       ref = b.ref;
     }
+    window.dispatchEvent(new CustomEvent(SEND_OPEN, { detail: { winId } }));
   } else {
     const b = resolve(d.kind === "brief" ? { kind: "brief", briefId: d.id, destination } : { kind: d.kind, id: d.id, destination });
     if (!("ref" in b)) return;

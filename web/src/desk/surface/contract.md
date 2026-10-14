@@ -499,13 +499,21 @@ Rules the species holds (they are not the host's business):
   shows the receipt under Send and keeps the one-chip summary on its line.
 - **The egress chip** rides every destination row, every open preview and
   every waiting prepared row (UX-CANON: egress where egress happens).
+- **The Send composition** keeps Add destination in the SEND section head,
+  including when the built-in folder is present. Pending reads and previews
+  use SurfaceState. PREVIEW names the frozen fields and payload; only the
+  payload sits in SurfaceWell, without an inner scrolling cap. Dispatch and
+  its receipt follow outside that well. The host owns the one scroll region
+  and its Back action.
 - **Its own look** (`send/send-well.css`, G3): the UI face at 14 px; the
   preview's headings in the display face; mono only for fields, paths and
   chips; the `SEND` / `SENDS` head at 12 px in every host (a
   pullout's 10 px `h3` rule does not reach it). ONE row grammar in every
   host at every width: line 1 the lead (16 px) and the name, line 2 the
-  chips (`.send-cells`) under the name; an open row's preview at the name's
-  indent. No host rule for `section`, `h3`, `ul`, `p` or monospace reaches in.
+  chips (`.send-cells`) under the name; an open row's preview uses the content
+  width. The closed row carries the short target; the open row leaves it to
+  the exact preview fields and retains channel, account, result and egress.
+  No host rule for `section`, `h3`, `ul`, `p` or monospace reaches in.
 - **The 44 px narrow target in every host** (G4, implemented; its proof on
   the Chair and the meeting's picker is owed by story 05): the well is itself a
   `surface` container (`container: surface / inline-size`), so every narrow

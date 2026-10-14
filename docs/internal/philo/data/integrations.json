@@ -2295,16 +2295,17 @@
     {
       "id": "channels.document_sources",
       "name": "Send a stored document",
-      "purpose": "Send an update, brief, decision, meeting summary, or artifact to a saved destination.",
+      "purpose": "Send a stored note, update, brief, decision, meeting summary, or artifact to a saved destination.",
       "domain": "channels",
       "status": "built_unreleased",
-      "status_reason": "Nine stored sources run through the channel contract. The artifact reads stored text and removes only its lineage-matched synthesis footer. Floor face integration and owner use are not claimed.",
+      "status_reason": "Stored document sources run through the shared channel contract. Note Send uses the same stored-source and digest checks. The surface refinement is recorded separately; external delivery and owner acceptance are not claimed.",
       "exposure": "integration",
       "surfaces": [
         "HTTP channel operations",
         "MCP channel tools",
         "Thread preparation",
-        "Project update Send well"
+        "Project update Send well",
+        "Note Send"
       ],
       "entry_points": [
         "holdspeak/services/channel_service.py::ChannelService",
@@ -2318,7 +2319,7 @@
         "aipi": "not_applicable"
       },
       "inputs": [
-        "document_ref: project_update, monday_brief, desk_decision, meeting_decision, decision_record, meeting_summary, meeting_digest, meeting_followup, or artifact",
+        "document_ref: project_update, monday_brief, desk_decision, meeting_decision, decision_record, meeting_summary, meeting_digest, meeting_followup, artifact, or note",
         "saved destination id",
         "preview digest or prepared send id"
       ],
@@ -2365,13 +2366,19 @@
           "path": "holdspeak/services/document_sources.py",
           "symbol": "render_document",
           "line": 557,
-          "claim": "One table resolves nine stored document kinds; artifact text comes from its durable producer."
+          "claim": "One registry resolves stored document kinds; artifact and Note text come from their durable producers."
         },
         {
           "path": "holdspeak/services/channel_service.py",
           "symbol": "ChannelService",
           "line": 65,
           "claim": "The shared channel service previews, freezes, sends, and lists document references."
+        },
+        {
+          "path": "holdspeak/services/document_sources.py",
+          "symbol": "_NoteSource",
+          "claim": "The Note source renders the current saved note by identity; a draft is not the send source.",
+          "line": 572
         }
       ],
       "tests": [
@@ -2407,11 +2414,23 @@
             "run": "2026-10-01",
             "cases": 1
           }
+        },
+        {
+          "path": "tests/e2e/test_thought_glass.py",
+          "node": "test_write_a_thought_then_send_it_to_a_folder",
+          "assertion": "The real stored Note opens Send with keyboard focus and Back at both widths; held or failed saves do not dispatch. The saved file bytes equal the frozen channel_sends payload, with one sent row and its path receipt.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/internal/SEND-REFINEMENT-2026-10-14.md",
+            "run": "2026-10-14",
+            "cases": 2
+          }
         }
       ],
       "docs": [
         "pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/design/document-sources.md",
-        "pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/design/floor-send.md"
+        "pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/design/floor-send.md",
+        "docs/internal/SEND-REFINEMENT-2026-10-14.md"
       ],
       "limitations": [
         "The Floor artifact window and menu/drop integration belong to Phase 12 stories 03 and 04.",
@@ -2550,7 +2569,7 @@
       "evidence_level": "source_and_assertions_inspected",
       "release_availability": "unreleased",
       "owner_observed": false,
-      "implementation_revision": "PHILO-11-02 on base3552be416; built artifact awaits Muad’Dib counsel."
+      "implementation_revision": "PHILO-11-02 on base3552be416; built artifact awaits Muad\u2019Dib counsel."
     }
   ],
   "components": [],

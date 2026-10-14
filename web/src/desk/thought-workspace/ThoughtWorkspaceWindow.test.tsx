@@ -1,4 +1,5 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../lib/api";
 import { useDesk } from "../store";
@@ -28,14 +29,26 @@ import { latchAskSelection, takeAskSelection } from "../ask";
  * papered over: every test below runs against the real reducer.
  */
 
-vi.mock("../components/DeskWindow", () => ({
-  DeskWindowFrame: ({ children, onClose, label }: { children: React.ReactNode; onClose: () => void; label?: string }) => <section aria-label="Thought" data-window-name={label}><button onClick={onClose}>Close window</button>{children}</section>,
-}));
+vi.mock("../components/DeskWindow", async () => {
+  const { useState } = await import("react");
+  const { FootSlotContext } = await import("../surface/foot");
+  return {
+    DeskWindowFrame: ({ children, onClose, onBack, label, minH, className }: { children: React.ReactNode; onClose: () => void; onBack?: () => void; label?: string; minH?: number; className?: string }) => {
+      const [foot, setFoot] = useState<HTMLElement | null>(null);
+      return <section aria-label="Thought" className={className} data-window-name={label} data-frame-min-height={minH}>
+        <button onClick={onClose}>Close window</button>
+        {onBack ? <button onClick={onBack}>Frame Back</button> : null}
+        <FootSlotContext.Provider value={foot}>{children}</FootSlotContext.Provider>
+        <footer ref={setFoot} className="surface-footer" data-testid="frame-foot" />
+      </section>;
+    },
+  };
+});
 vi.mock("./ThoughtDocumentPane", () => ({
   ThoughtDocumentPane: ({ draft, onEdit, onSelectionChange, lockedReason }: { draft: { title: string; body: string }; onEdit: (patch: { body: string }) => void; onSelectionChange?: (selection: { from: number; to: number; text: string }) => void; lockedReason?: string }) => <section aria-label="Note"><span data-testid="note-title">{draft.title}</span>{lockedReason ? <span data-testid="note-locked">{lockedReason}</span> : null}<textarea aria-label="Note body" value={draft.body} onChange={(event) => { onEdit({ body: event.target.value }); onSelectionChange?.({ from: 0, to: 0, text: "" }); }} /><button type="button" data-testid="select-second-line" onClick={() => { const text = draft.body.split(/\r?\n/)[1] || draft.body.split(/\r?\n/)[0] || ""; const from = draft.body.indexOf(text); onSelectionChange?.({ from, to: from + text.length, text }); }}>Select second line</button></section>,
 }));
 vi.mock("./ThoughtReadsWell", () => ({
-  ThoughtReadsWell: ({ thought }: { thought: Thought }) => <div role="region" aria-label="Add notes">{thought.working_note.body_markdown}</div>,
+  ThoughtReadsWell: ({ thought, onClose }: { thought: Thought; onClose: () => void }) => <div role="region" aria-label="Add notes">{thought.working_note.body_markdown}<button onClick={onClose}>Close reads</button></div>,
 }));
 vi.mock("../documentSendsLazy", () => ({
   NoteSendWells: ({ id, title, version }: { id: string; title?: string; version?: number }) => <div data-testid="send-well" data-doc={`note:${id}`} data-title={title} data-version={String(version)} />,
@@ -756,7 +769,7 @@ describe("ThoughtWorkspaceWindow: the name follows the draft across a save", () 
 });
 
 describe("ThoughtWorkspaceWindow — PHILO-17 U08: the thought is sendable", () => {
-  it("has Copy and Send in the foot; Send opens the SEND well on the working note", async () => {
+  it("lets Send own the body and returns through Back to the same note and Send focus", async () => {
     vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
@@ -772,13 +785,23 @@ describe("ThoughtWorkspaceWindow — PHILO-17 U08: the thought is sendable", () 
     const well = await screen.findByTestId("send-well");
     expect(well).toHaveAttribute("data-doc", "note:note-1");
     expect(well).toHaveAttribute("data-version", "2");
-    expect(send).toHaveAttribute("aria-expanded", "true");
-    // Nothing is sent from the foot: the press is in the well.
-    fireEvent.click(send);
+    expect(screen.queryByRole("textbox", { name: "Note body" })).not.toBeInTheDocument();
+    expect(document.querySelector(".thought-note-foot")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Finish" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Copy" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Send" })).not.toBeInTheDocument();
+    expect(document.querySelector(".thought-send-foot")).toHaveTextContent("Back");
+    expect(screen.getByRole("region", { name: "Thought" })).toHaveAttribute("data-frame-min-height", "520");
+    expect(well.closest(".thought-send-body")).not.toHaveAttribute("inert");
+
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
     await waitFor(() => expect(screen.queryByTestId("send-well")).not.toBeInTheDocument());
+    expect(screen.getByRole("textbox", { name: "Note body" })).toHaveValue(thought.working_note.body_markdown);
+    expect(screen.getByRole("region", { name: "Thought" })).toHaveAttribute("data-frame-min-height", "360");
+    await waitFor(() => expect(screen.getByRole("button", { name: "Send" })).toHaveFocus());
   });
 
-  it("an edit after Send opens holds the well until it is saved; the save re-reads the preview", async () => {
+  it("Back, edit, reopen waits for the saved revision before mounting the send body", async () => {
     vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
     const save = deferred<Awaited<ReturnType<typeof saveThoughtWorkingInWorkspace>>>();
     vi.mocked(saveThoughtWorkingInWorkspace).mockImplementation(() => save.promise);
@@ -786,35 +809,136 @@ describe("ThoughtWorkspaceWindow — PHILO-17 U08: the thought is sendable", () 
 
     fireEvent.click(await screen.findByRole("button", { name: "Send" }));
     const well = await screen.findByTestId("send-well");
-    const body = well.closest(".thought-send-body")!;
-    expect(body).not.toHaveAttribute("inert");
+    expect(well).toHaveAttribute("data-version", "2");
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
 
     fireEvent.change(screen.getByRole("textbox", { name: "Note body" }), { target: { value: "The revised words" } });
-    // At once (before the save even starts): the well cannot be pressed.
-    expect(body).toHaveAttribute("inert");
-    expect(screen.getByText("SAVING… · SEND WAITS")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
     await waitFor(() => expect(saveThoughtWorkingInWorkspace).toHaveBeenCalledTimes(1));
-    expect(body).toHaveAttribute("inert");
+    expect(screen.queryByTestId("send-well")).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Note body" })).toHaveValue("The revised words");
 
     await act(async () => {
       save.resolve({ thought: { ...thought, aggregate_revision: 4, working_revision: 3, working_note: { ...thought.working_note, body_markdown: "The revised words" } } });
     });
-    await waitFor(() => expect(body).not.toHaveAttribute("inert"));
-    expect(screen.queryByText(/SEND WAITS/)).not.toBeInTheDocument();
-    expect(screen.getByTestId("send-well")).toHaveAttribute("data-version", "3");
+    expect(await screen.findByTestId("send-well")).toHaveAttribute("data-version", "3");
+    expect(screen.getByTestId("send-well").closest(".thought-send-body")).not.toHaveAttribute("inert");
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(screen.getByRole("textbox", { name: "Note body" })).toHaveValue("The revised words");
   });
 
-  it("a failed save keeps the well held, with a plain word", async () => {
+  it("a failed save refuses Send and Close while keeping the draft and repair verb", async () => {
     vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
     vi.mocked(saveThoughtWorkingInWorkspace).mockRejectedValue(new Error("offline"));
-    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+    const onClose = vi.fn();
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={onClose} />);
 
     fireEvent.click(await screen.findByRole("button", { name: "Send" }));
-    const body = (await screen.findByTestId("send-well")).closest(".thought-send-body")!;
+    await screen.findByTestId("send-well");
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Note body" }), { target: { value: "An edit that cannot land" } });
-    await screen.findByText("NOT SAVED · SEND WAITS");
-    expect(body).toHaveAttribute("inert");
-    expect(screen.getByTestId("send-well")).toHaveAttribute("data-version", "2");
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await screen.findByRole("button", { name: "Retry" });
+    expect(screen.queryByTestId("send-well")).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Note body" })).toHaveValue("An edit that cannot land");
+    fireEvent.click(screen.getByRole("button", { name: "Close window" }));
+    expect(onClose).not.toHaveBeenCalled();
+    expect(saveThoughtWorkingInWorkspace).toHaveBeenCalledTimes(1);
+  });
+
+  it("keyboard Send focuses its region without firing hidden Note commands", async () => {
+    const user = userEvent.setup();
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    (await screen.findByRole("button", { name: "Send" })).focus();
+    await user.keyboard("{Enter}");
+    const send = await screen.findByRole("region", { name: "Send note" });
+    await waitFor(() => expect(send).toHaveFocus());
+    expect(screen.queryByRole("textbox", { name: "Note body" })).not.toBeInTheDocument();
+    await user.keyboard("{Meta>}{Enter}{/Meta}");
+    expect(completeThought).not.toHaveBeenCalled();
+    expect(refineThought).not.toHaveBeenCalled();
+    expect(send).toHaveFocus();
+  });
+
+  it("frame Back returns from Send without closing or firing hidden Note shortcuts", async () => {
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
+    const onClose = vi.fn();
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={onClose} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Send" }));
+    const well = await screen.findByTestId("send-well");
+    fireEvent.keyDown(well, { key: "Enter", metaKey: true });
+    expect(completeThought).not.toHaveBeenCalled();
+    expect(refineThought).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Frame Back" }));
+    expect(await screen.findByRole("textbox", { name: "Note body" })).toHaveValue(thought.working_note.body_markdown);
+    expect(onClose).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.getByRole("button", { name: "Send" })).toHaveFocus());
+
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await screen.findByTestId("send-well");
+    fireEvent.click(screen.getByRole("button", { name: "Close window" }));
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+  });
+
+  it("Send replaces open context and Task wells and does not restore them on Back", async () => {
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, status: 200, headers: { get: () => "application/json" }, json: async () => ({ relationships: [] }) }));
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Add a note" }));
+    await screen.findByRole("region", { name: "Add notes" });
+    fireEvent.click(screen.getByRole("button", { name: "Task" }));
+    await screen.findByTestId("thought-task-well");
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await screen.findByTestId("send-well");
+    expect(screen.queryByRole("region", { name: "Add notes" })).not.toBeInTheDocument();
+    expect(screen.queryByTestId("thought-task-well")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(screen.queryByRole("region", { name: "Add notes" })).not.toBeInTheDocument();
+    expect(screen.queryByTestId("thought-task-well")).not.toBeInTheDocument();
+  });
+
+  it("unmounts engine and answer bands during Send and retains the answer on Back", async () => {
+    engineMock.useEngine.mockReturnValue({ state: "set", model: "Thought Qwen", place: "LAN" });
+    vi.mocked(thoughtWorkbench).mockResolvedValue(questionProjection("Which report?"));
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    fireEvent.change(await screen.findByRole("textbox", { name: "Your answer" }), { target: { value: "Tuesday report" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await screen.findByTestId("send-well");
+    expect(screen.queryByRole("textbox", { name: "Your answer" })).not.toBeInTheDocument();
+    expect(document.querySelector(".thought-note-ask")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(screen.getByRole("textbox", { name: "Your answer" })).toHaveValue("Tuesday report");
+  });
+
+  it("phone frame Back finds the portaled More door and returns with its Send menu closed", async () => {
+    vi.stubGlobal("matchMedia", () => ({ matches: true, media: "(max-width: 720px)", addEventListener: () => {}, removeEventListener: () => {} }));
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
+    const onClose = vi.fn();
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={onClose} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "More actions" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Send" }));
+    await screen.findByTestId("send-well");
+    expect(screen.queryByRole("button", { name: "Finish" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Frame Back" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "More actions" })).toHaveFocus());
+    expect(screen.getByRole("button", { name: "More actions" }).closest(".thought-note-window")).toBeNull();
+    expect(screen.getByTestId("frame-foot")).toContainElement(screen.getByRole("button", { name: "More actions" }));
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "More actions" })).toHaveAttribute("aria-expanded", "false");
+    expect(onClose).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "More actions" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Add a note" }));
+    await screen.findByRole("region", { name: "Add notes" });
+    fireEvent.click(screen.getByRole("button", { name: "Close reads" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "More actions" })).toHaveFocus());
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 
   it("a finished thought keeps Copy and Send beside Resume", async () => {
@@ -826,5 +950,8 @@ describe("ThoughtWorkspaceWindow — PHILO-17 U08: the thought is sendable", () 
     expect(screen.getByRole("button", { name: "Copy" })).toBeEnabled();
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
     expect(await screen.findByTestId("send-well")).toHaveAttribute("data-doc", "note:note-1");
+    expect(screen.queryByRole("button", { name: "Resume" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(screen.getByRole("button", { name: "Resume" })).toBeInTheDocument();
   });
 });

@@ -1,7 +1,7 @@
 import { publishThoughtDraft, seatThoughtDraft, useThoughtDraftWords } from "../thoughtDrafts";
 import { windowName } from "../windowName";
 import { NEW_THOUGHT_TITLE } from "../thoughtTitle";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { ApiError, readableError } from "../../lib/api";
 import { spriteUrl } from "../sprites";
 import { useDesk } from "../store";
@@ -22,7 +22,7 @@ import {
 } from "../thoughts";
 import type { WorldObject } from "../world";
 import { Button } from "../../components/signal/Signal";
-import { EgressChip, EngineLine, PadGadget, SurfaceFooter } from "../surface";
+import { EgressChip, EngineLine, PadGadget, ScrollHint, SurfaceFooter } from "../surface";
 import { refreshEngine, useEngine } from "../hooks/useEngine";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { ThoughtSaveFault, useThoughtNoteWriter } from "../pullouts/editors/useThoughtNoteWriter";
@@ -114,6 +114,8 @@ function WorkspaceReady({
   reload,
   onClose,
   registerClose,
+  sending,
+  setSending,
 }: {
   initialThought: Thought;
   projection: ThoughtWorkspaceProjection;
@@ -121,6 +123,8 @@ function WorkspaceReady({
   reload: (adoptRestartedHub?: boolean) => Promise<ThoughtWorkspaceProjection>;
   onClose: () => void;
   registerClose: (handler: () => void) => () => void;
+  sending: boolean;
+  setSending: (sending: boolean) => void;
 }) {
   const thoughtEngine = useEngine("thought.interview");
   const [documentThought, setDocumentThought] = useState(projection.thought || initialThought);
@@ -134,10 +138,6 @@ function WorkspaceReady({
      SAVE / CHANGED ELSEWHERE), never again as prose on the message line. */
   const sayFault = (cause: unknown) => say(cause instanceof ThoughtSaveFault ? "" : readableError(cause));
   const [reads, setReads] = useState(false);
-  /* PHILO-17 U08: the thought is sendable. Send opens the SEND well on its
-     working note (he picks the destination and presses Send there); Copy
-     copies the working text. */
-  const [sending, setSending] = useState(false);
   const [actionWell, setActionWell] = useState<"task" | "project" | null>(null);
   const [selectedPassage, setSelectedPassage] = useState<{ from: number; to: number; text: string; body: string } | null>(null);
   const [actionPassage, setActionPassage] = useState<string | null>(null);
@@ -151,6 +151,27 @@ function WorkspaceReady({
   const answerRef = useRef<HTMLLabelElement | null>(null);
   const focusAnswer = () => answerRef.current?.querySelector("textarea")?.focus();
   const readsRef = useRef<HTMLButtonElement | null>(null);
+  const sendRef = useRef<HTMLButtonElement | null>(null);
+  const noteWindowRef = useRef<HTMLDivElement | null>(null);
+  const sendScrollRef = useRef<HTMLDivElement | null>(null);
+  const focusDoor = (door: RefObject<HTMLButtonElement | null>) => {
+    const frameRoot = noteWindowRef.current?.closest(".thought-workspace-window");
+    const target = door.current ?? frameRoot?.querySelector<HTMLButtonElement>(".thought-note-foot button[aria-label='More actions']");
+    target?.focus();
+  };
+  useEffect(() => {
+    if (!sending) return;
+    const frame = requestAnimationFrame(() => sendScrollRef.current?.focus());
+    return () => cancelAnimationFrame(frame);
+  }, [sending]);
+  const wasSending = useRef(sending);
+  useEffect(() => {
+    const returning = wasSending.current && !sending;
+    wasSending.current = sending;
+    if (!returning) return;
+    const frame = requestAnimationFrame(() => focusDoor(sendRef));
+    return () => cancelAnimationFrame(frame);
+  }, [sending]);
   const reloading = useRef(false);
   const writer = useThoughtNoteWriter({
     thought: documentThought,
@@ -191,7 +212,7 @@ function WorkspaceReady({
 
   useEffect(() => {
     const onOpen = (event: Event) => {
-      if ((event as CustomEvent<{ winId?: string }>).detail?.winId === winId) void openSend(true);
+      if ((event as CustomEvent<{ winId?: string }>).detail?.winId === winId) void openSend();
     };
     window.addEventListener(SEND_OPEN, onOpen);
     return () => window.removeEventListener(SEND_OPEN, onOpen);
@@ -490,12 +511,14 @@ function WorkspaceReady({
     finally { writer.release(); setBusy(false); }
   };
   /* The well sends the stored note, so the sole writer saves first. */
-  const openSend = async (open = !sending) => {
-    if (!open) { setSending(false); return; }
+  const openSend = async () => {
     if (busy) return;
     setBusy(true); say("");
     try {
       await writer.flush({ fence: true });
+      setReads(false);
+      setActionWell(null);
+      setActionPassage(null);
       setSending(true);
     } catch (cause) { sayFault(cause); }
     finally { writer.release(); setBusy(false); }
@@ -534,7 +557,8 @@ function WorkspaceReady({
     else void reload();
   };
 
-  return <div className="thought-note-window" onKeyDown={(event) => {
+  return <div ref={noteWindowRef} className="thought-note-window" onKeyDown={(event) => {
+    if (sending) return;
     if (!(event.metaKey || event.ctrlKey) || event.nativeEvent.isComposing) return;
     if (event.key.toLowerCase() === "s") {
       event.preventDefault();
@@ -550,6 +574,7 @@ function WorkspaceReady({
     if (askRow) { askRow.act(); return; }
     void finish();
   }}>
+    {!sending ? <>
     <ThoughtDocumentPane
       noteId={documentThought.working_note.id}
       draft={writer.draft}
@@ -622,22 +647,8 @@ function WorkspaceReady({
       cursor={projection.workspace_cursor}
       disabled={busy}
       onApplied={readsResult}
-      onClose={() => { setReads(false); requestAnimationFrame(() => readsRef.current?.focus()); }}
+      onClose={() => { setReads(false); requestAnimationFrame(() => focusDoor(readsRef)); }}
     /> : null}
-
-    {sending ? <div className="thought-send-well" data-testid="thought-send" data-unsaved={unsaved || undefined}>
-      {/* Astra r1 MUST: the well sends the STORED note, so it waits while an
-          edit is not saved; the save re-reads the preview (version). */}
-      {unsaved ? <p className="thought-send-wait" role="status">
-        <span className="surface-token" data-chip data-tone={writer.failed || writer.conflicted ? "danger" : undefined}>
-          {writer.failed || writer.conflicted ? "NOT SAVED · SEND WAITS" : "SAVING… · SEND WAITS"}
-        </span>
-      </p> : null}
-      <div className="thought-send-body" inert={unsaved} aria-hidden={unsaved || undefined}>
-        <NoteSendWells id={draftNoteId} title={writer.draft.title || documentThought.working_note.title}
-          version={documentThought.working_revision} />
-      </div>
-    </div> : null}
 
     {actionWell === "task" ? <TaskWell
       noteId={draftNoteId}
@@ -669,12 +680,38 @@ function WorkspaceReady({
         {!open && !completed ? <Button dense aria-label="Ask about this note" disabled={busy} onClick={() => void askFromNote()}>Ask</Button> : null}
         <Button dense disabled={busy || !taskText} aria-expanded={actionWell === "task"} onClick={() => void openActionWell("task")}>Task</Button>
         {hasProjects ? <Button dense disabled={busy} aria-expanded={actionWell === "project"} onClick={() => void openActionWell("project")}>Project</Button> : null}
-        <Button dense aria-expanded={sending} disabled={busy} onClick={() => void openSend()}>Send</Button>
+        <Button ref={sendRef} dense disabled={busy} onClick={() => void openSend()}>Send</Button>
         {completed
           ? <Button variant="primary" className="thought-note-primary" disabled={busy} onClick={() => void resume()}>Resume</Button>
           : <Button variant="primary" className="thought-note-primary" disabled={busy} onClick={() => void finish()}>Finish</Button>}
       </span>}
     />
+    </> : <>
+      <ScrollHint axis="y" scrollRef={sendScrollRef} className="thought-send-scroll">
+        <div ref={sendScrollRef} className="thought-send-well" role="region" aria-label="Send note" tabIndex={-1} data-testid="thought-send" data-unsaved={unsaved || undefined}>
+          {/* The writer stays mounted: only its saved revision can send. */}
+          {unsaved ? <p className="thought-send-wait" role="status">
+            <span className="surface-token" data-chip data-tone={writer.failed || writer.conflicted ? "danger" : undefined}>
+              {writer.failed || writer.conflicted ? "NOT SAVED · SEND WAITS" : "SAVING… · SEND WAITS"}
+            </span>
+          </p> : null}
+          <div className="thought-send-body" inert={unsaved} aria-hidden={unsaved || undefined}>
+            <NoteSendWells id={draftNoteId} title={writer.draft.title || documentThought.working_note.title}
+              version={documentThought.working_revision} />
+          </div>
+        </div>
+      </ScrollHint>
+      <SurfaceFooter
+        className="thought-send-foot"
+        receipt={message || writeLine?.danger ? <span className="surface-footer-receipt-line" role="status" data-wrap="" data-tone="danger">{message || writeLine?.text}</span> : null}
+        verbs={<>
+          <Button dense variant="ghost" onClick={() => setSending(false)}>Back</Button>
+          {writer.conflicted
+            ? <Button dense disabled={busy} onClick={() => void reloadNote()}>Reload</Button>
+            : writer.failed ? <Button dense onClick={writer.retry}>Retry</Button> : null}
+        </>}
+      />
+    </>}
   </div>;
 }
 
@@ -693,6 +730,7 @@ export function ThoughtWorkspaceWindow({
   onClose: () => void;
 }) {
   const controller = useThoughtWorkspaceController(thought);
+  const [sending, setSending] = useState(false);
   const closeHandler = useRef(onClose);
   closeHandler.current = onClose;
   const registerClose = (handler: () => void) => {
@@ -718,19 +756,20 @@ export function ThoughtWorkspaceWindow({
     kindWord="Thought"
     icon={<img src={spriteUrl("note", object.id)} alt="" width={24} height={24} />}
     title={name}
-    className="desk-pullout thought-workspace-window"
+    className={`desk-pullout thought-workspace-window${sending ? " is-sending" : ""}`}
     minW={520}
-    minH={360}
+    minH={sending ? 520 : 360}
     defaultW={520}
     defaultH={360}
     fitContent
     origin={origin}
     open
     onClose={() => closeHandler.current()}
+    onBack={sending ? () => setSending(false) : undefined}
   >
     {controller.opening ? <div className="thought-workspace-opening" aria-busy="true"><span>Opening Thought…</span></div> : controller.error || !controller.projection ? <div className="thought-workspace-opening" role="alert"><span className="surface-token">Could not open. Note unchanged.</span><Button variant="primary" onClick={() => void controller.reload(true)}>Try again</Button></div> : <>
       <div className="thought-workspace-preserved" inert={controller.restartDetected} aria-hidden={controller.restartDetected || undefined}>
-        <WorkspaceReady key={thought.id} initialThought={thought} projection={controller.projection} install={controller.install} reload={controller.reload} onClose={onClose} registerClose={registerClose} />
+        <WorkspaceReady key={thought.id} initialThought={thought} projection={controller.projection} install={controller.install} reload={controller.reload} onClose={onClose} registerClose={registerClose} sending={sending} setSending={setSending} />
       </div>
       {controller.restartDetected ? <div className="thought-workspace-opening thought-workspace-restart" role="alert"><span className="surface-token">Hub restarted. Reload to continue.</span><Button variant="primary" onClick={() => void controller.reload(true)}>Reload Thought</Button></div> : null}
     </>}

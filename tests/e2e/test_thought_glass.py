@@ -65,6 +65,7 @@ GEOMETRY_JS = """() => {
   return {
     window: {left: win.left, right: win.right, width: win.width},
     reads: box('.thought-note-foot .surface-footer-egress'),
+    reads_text: document.querySelector('.thought-note-reads')?.textContent,
     receipt: box('.thought-note-foot .surface-footer-receipt'),
     verbs_left: Math.min(...verbs.map((r) => r.left)),
     verbs_right: Math.max(...verbs.map((r) => r.right)),
@@ -82,7 +83,8 @@ def _assert_geometry(geo: dict, label: str) -> None:
     assert geo["receipt"]["right"] <= right + 0.5, f"{label}: receipt ends past the window: {geo}"
     assert not geo["clipped"], f"{label}: receipt text is clipped, not wrapped: {geo['clipped']}"
     assert geo["lines"][0] == CAUSE, f"{label}: {geo['lines']}"
-    assert geo["lines"][1] == f"IN {DRAWER.upper()}", f"{label}: {geo['lines']}"
+    assert len(geo["lines"]) == 1, f"{label}: {geo['lines']}"
+    assert DRAWER in geo["reads_text"], f"{label}: context was not attached: {geo}"
 
 
 # The 600 px window is the narrow bound that failed (the receipt pushed the
@@ -106,17 +108,32 @@ def test_the_receipt_yields_to_the_verbs(viewport: int, window_width: int | None
             # (glass_infra._normal_chair): a fixed 8 s try missed a late gate
             # under load, and the gate then hid the menu bar and the Dock.
             _normal_chair(page)
-            # The capture verbs are in the Capture window. At 393 it opens on
-            # demand from the Speak AppIcon (PHILO-13-11 R2); since PHILO-14 A1
-            # (#939) the Chair's windows start closed at 1440 too, so he opens
-            # it the same way at both widths.
-            page.locator(".chair").wait_for()
-            open_chair_window(page, "Capture")
-            # The desk seeds its Inbox on first load; the thought is filed there.
-            page.locator("[data-testid=arrival-develop-thought]").wait_for()
-            status, answer = hub.api("PUT", "/api/directories/hs-seed-inbox", {"name": DRAWER})
+            # Use the current Note producer. Capture's old Speak dock icon
+            # is no longer a door on the four-tile phone dock.
+            menu = "desk" if viewport > 720 else "go"
+            page.locator(f".desk-verbbar-item[data-menu-id='{menu}'] button").click()
+            if viewport <= 720:
+                go_group(page, "New")
+            label = "Write a thought" if viewport > 720 else "Note"
+            page.locator(".desk-verbbar-menu [role='menuitem']").filter(has_text=label).first.click()
+            page.locator('.thought-note-document').wait_for()
+            status, listing = hub.api("GET", "/api/thoughts")
+            assert status == 200 and len(listing["items"]) == 1, (status, listing)
+            status, answer = hub.api("GET", f"/api/thoughts/{listing['items'][0]['id']}")
             assert status == 200, (status, answer)
-            page.locator("[data-testid=arrival-develop-thought]").click()
+            thought = answer["thought"]
+            # The Reads slot exists only for real context. Give it the long
+            # name whose width must survive the failed-save receipt.
+            status, note = hub.api("POST", "/api/notes", {"title": DRAWER, "body_markdown": "The cutover holds.", "tags": []})
+            assert status == 201, (status, note)
+            status, attached = hub.api("POST", f"/api/thoughts/{thought['id']}/context/attach", {
+                "request_id": str(uuid.uuid4()), "ref": f"note:{note['note']['id']}",
+                "expected_aggregate_revision": thought["aggregate_revision"],
+                "expected_working_revision": thought["working_revision"],
+                "expected_attachment_revision": thought["attachment_revision"],
+            })
+            assert status == 200, (status, attached)
+            page.goto(f"{hub.url}/?token={TOKEN}&open=note%3A{thought['working_note']['id']}", wait_until="load")
             body = page.locator('[aria-label="Note body"]')
             body.wait_for()
             if window_width:
@@ -127,7 +144,7 @@ def test_the_receipt_yields_to_the_verbs(viewport: int, window_width: int | None
             page.wait_for_function(
                 "([sel, want]) => { const e = document.querySelector(sel); return !!e && e.innerText === want; }",
                 arg=[WRITE, CAUSE], timeout=15000)
-            page.wait_for_timeout(250)
+            _reads_full(page.locator('.thought-note-reads'), DRAWER)
             geo = page.evaluate(GEOMETRY_JS)
             if window_width:
                 assert abs(geo["window"]["width"] - window_width) < 1, geo
@@ -143,12 +160,10 @@ def test_the_receipt_yields_to_the_verbs(viewport: int, window_width: int | None
 
 NOTE_TOKEN = "hs201-12-thought-glass"
 SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-12-shots")
-# PHILO-3-04 (canvas ratified 2026-09-23) split the foot's receipt in two:
-# line 1 is the write (`KEPT · <time>`, role=status), line 2 the filing
-# state (`data-line="filing"`). The kept state is the WRITE line.
+# The write receipt carries the hub's timestamp. Filing is no longer a
+# second decorative line on the Note face (PHILO-17 words).
 KEPT_LINE = '.thought-note-foot .surface-footer-receipt-line[role="status"]'
-FILING_LINE = '.thought-note-foot .surface-footer-receipt-line[data-line="filing"]'
-KEPT_WORDS = re.compile(r"^KEPT · \d{1,2}:\d{2}( [AP]M)?$")
+KEPT_WORDS = re.compile(r"^Saved \d{1,2}:\d{2}( [AP]M)?$")
 # The owner's own shot (2026-09-20): a dictated note, a mid-sentence title.
 OWNER_TITLE = "Well, there's just a little bit of misunderstanding here, I believe my team…"
 OWNER_BODY = "Yeah, I have it that way and what about you?"
@@ -201,6 +216,34 @@ def _seed(page: Any, title: str, body: str) -> dict[str, Any]:
         "initial_note": {"title": title, "body_markdown": body, "tags": ["team"]},
     })
     return created["thought"]
+
+
+def _note_action(page: Any, workspace: Any, name: str) -> Any:
+    """Press a real Note footer verb, through More on the phone."""
+    button = workspace.get_by_role("button", name=name, exact=True)
+    if button.count() and button.is_visible():
+        button.click()
+        return button
+    workspace.get_by_role("button", name="More actions", exact=True).click()
+    action = page.get_by_role("menuitem", name=name, exact=True)
+    action.click()
+    return action
+
+
+def _refine_note(page: Any, thought_id: str) -> None:
+    """Seed an active deterministic interview through its real producer.
+
+    Idle Note Ask now opens Ask AI. This geometry test needs the distinct
+    interview continuation rendered in the Note, not the Ask AI window.
+    """
+    thought = _api(page, "GET", f"/api/thoughts/{thought_id}")["thought"]
+    _api(page, "POST", f"/api/thoughts/{thought_id}/refine", {
+        "request_id": str(uuid.uuid4()),
+        "expected_aggregate_revision": thought["aggregate_revision"],
+        "expected_working_revision": thought["working_revision"],
+        "expected_attachment_revision": thought["attachment_revision"],
+    })
+    page.reload(wait_until="load")
 
 
 def _no_empty_heading(page: Any) -> None:
@@ -258,8 +301,16 @@ def _boot(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, *, engine: Any = None
     monkeypatch.setattr("holdspeak.intel.providers.configured_local_meeting_model_path", lambda: provider["path"])
     reset_database()
     database = db_core.get_database()
+    from tests.unit.test_phase143_inference_assignments import OWNER, _profile, _result_claim
+    from types import SimpleNamespace
+
+    _profile(database, "thought-glass-engine", claims=("language", "structured_output", _result_claim("thought.interview"), _result_claim("speech.intent_classify")), boundary="same_device")
     engine = engine or _OneQuestionEngine()
     broker = _configure(database)
+    broker.inference_adoption_service.migrate_legacy_config(OWNER, SimpleNamespace(
+        thoughts=SimpleNamespace(inference_target_id="thought-glass-engine"),
+        dictation=SimpleNamespace(runtime=SimpleNamespace(profile_id="thought-glass-engine")),
+    ))
     monkeypatch.setattr(broker.inference_runner, "_engine_factory", lambda _revision, **_kw: engine)
     callbacks = WebRuntimeCallbacks(on_bookmark=lambda *_: None, on_stop=lambda: None, get_state=lambda: {})
     server = MeetingWebServer(callbacks, auth_token=NOTE_TOKEN)
@@ -288,17 +339,21 @@ def test_thought_note_is_one_clean_note(tmp_path: Path, monkeypatch: pytest.Monk
             page.goto(f"{url}/?token={NOTE_TOKEN}", wait_until="load")
             _api(page, "POST", "/api/desk/seed")
             _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
+            _api(page, "POST", "/api/notes", {"title": "Team context", "body_markdown": "The team owns the freeze date.", "tags": []})
             thought = _seed(page, OWNER_TITLE, OWNER_BODY)
             note_id = thought["working_note"]["id"]
             page.goto(f"{url}/?token={NOTE_TOKEN}&open=note%3A{note_id}", wait_until="load")
 
             workspace = page.locator(".desk-window.thought-workspace-window")
             workspace.wait_for(timeout=15000)
-            band = page.get_by_role("region", name="One question", exact=True)
-            band.wait_for(timeout=15000)
+            workspace.get_by_role("region", name="Note", exact=True).wait_for()
 
-            # ── Band 3 is folded to one row; nothing else is on the screen ──
-            assert band.get_by_role("button", name="Ask", exact=True).is_visible()
+            # An idle ready Note is plain; Ask is a footer action.
+            assert workspace.get_by_role("region", name="Ask about this note", exact=True).count() == 0
+            if width > 720:
+                assert workspace.get_by_role("button", name="Ask about this note", exact=True).is_visible()
+            else:
+                assert workspace.get_by_role("button", name="More actions", exact=True).is_visible()
             assert page.get_by_role("textbox", name="Your answer").count() == 0
             assert workspace.get_by_role("toolbar", name="Markdown formatting").count() == 0
             assert workspace.get_by_role("button", name="Info", exact=True).count() == 0
@@ -323,24 +378,29 @@ def test_thought_note_is_one_clean_note(tmp_path: Path, monkeypatch: pytest.Monk
             assert title.evaluate("el => el.scrollWidth <= el.clientWidth + 1")
             assert OWNER_TITLE[-12:] in title.inner_text()
 
-            # The context fact is said ONCE, in the Reads line of the foot.
+            # Empty context emits no invented Reads fact.
             reads = workspace.locator(".thought-note-reads")
-            assert reads.count() == 1
+            assert reads.count() == 0
             assert page.get_by_text("Attached", exact=False).count() == 0
             page.screenshot(path=str(SHOTS / f"after-{width}.png"), full_page=False)
 
-            # ── Change: an in-window well, and the Reads line is the receipt ──
-            change = workspace.get_by_role("button", name="Change", exact=True)
-            change.click()
-            well = page.get_by_role("region", name="What the AI reads")
+            # Add a note opens an in-window context well.
+            if width < 720:
+                workspace.get_by_role("button", name="More actions", exact=True).click()
+                assert page.get_by_role("menuitem", name="Ask about this note", exact=True).is_visible()
+                page.get_by_role("menuitem", name="Add a note", exact=True).click()
+            else:
+                _note_action(page, workspace, "Add a note")
+            well = page.get_by_role("region", name="Add notes", exact=True)
             well.wait_for(timeout=10000)
             assert well.evaluate("el => el.closest('.thought-workspace-window') !== null")
             assert well.evaluate(
                 "el => [...el.querySelectorAll('button')].filter(node => "
                 "!node.matches('.btn, [class*=\"desk-\"], [class*=\"surface-\"], [class*=\"gadget-\"]')).length"
             ) == 0
-            token = well.get_by_role("checkbox").first
-            token.wait_for(timeout=10000)
+            well.get_by_role("textbox", name="Add notes", exact=True).fill("Team context")
+            token = well.get_by_role("checkbox", name="Team context", exact=True)
+            token.wait_for(state="attached", timeout=10000)
             chosen = token.get_attribute("aria-label")
             assert chosen, "the well drew a control with no name"
             # The token variant's own face takes the click (the input is its
@@ -363,15 +423,17 @@ def test_thought_note_is_one_clean_note(tmp_path: Path, monkeypatch: pytest.Monk
             _in_frame(kept_box, workspace.bounding_box(), "kept receipt")
             assert page.get_by_text(f"Attached {chosen}", exact=True).count() == 0
             well.press("Escape")
-            assert page.get_by_role("region", name="What the AI reads").count() == 0
+            assert page.get_by_role("region", name="Add notes", exact=True).count() == 0
             _no_horizontal_escape(page)
             page.screenshot(path=str(SHOTS / f"after-change-{width}.png"), full_page=False)
 
             # ── Ask: the question and its pad are in frame, no tab to find ──
-            band.get_by_role("button", name="Ask", exact=True).click()
+            _refine_note(page, thought["id"])
+            band = page.get_by_role("region", name="Ask about this note", exact=True)
             page.get_by_text(QUESTION, exact=True).wait_for(timeout=20000)
             answer = page.get_by_role("textbox", name="Your answer")
             answer.wait_for()
+            page.screenshot(path=str(SHOTS / f"after-ask-{width}.png"), full_page=False)
             window_box = workspace.bounding_box()
             assert window_box
             _in_frame(answer.bounding_box(), window_box, "answer pad")
@@ -380,11 +442,11 @@ def test_thought_note_is_one_clean_note(tmp_path: Path, monkeypatch: pytest.Monk
             # must not need scrolling to reach the pad and its one verb.
             assert band.evaluate("el => el.scrollHeight <= el.clientHeight + 1")
             _in_frame(workspace.locator(".surface-footer").bounding_box(), window_box, "foot")
+            assert band.get_by_test_id("engine-line").inner_text().startswith("Thought Glass Engine")
             assert workspace.locator(".gadget-chip-egress").count() >= 1
             assert workspace.locator(".btn--primary:visible").count() == 1
             _no_empty_heading(page)
             _no_horizontal_escape(page)
-            page.screenshot(path=str(SHOTS / f"after-ask-{width}.png"), full_page=False)
 
             # ── One verb under the pad: the answer joins the note ──
             assert band.get_by_role("button", name="Add to note", exact=True).count() == 1
@@ -394,8 +456,8 @@ def test_thought_note_is_one_clean_note(tmp_path: Path, monkeypatch: pytest.Monk
             workspace.get_by_role("region", name="Note", exact=True).get_by_text(
                 "Mina reads the plan differently.", exact=False
             ).wait_for(timeout=20000)
-            # Band 3 folds back to its one row, and no chip is left behind.
-            band.get_by_role("button", name="Ask", exact=True).wait_for(timeout=20000)
+            # The question band disappears after its answer joins the note.
+            band.wait_for(state="detached", timeout=20000)
             assert page.get_by_role("textbox", name="Your answer").count() == 0
             assert page.get_by_text("Added to Note", exact=False).count() == 0
             assert workspace.locator(".cm-thought-answer-reveal").count() >= 1
@@ -404,7 +466,7 @@ def test_thought_note_is_one_clean_note(tmp_path: Path, monkeypatch: pytest.Monk
 
             # ── Astra finding 2 on the real hub: Finish with an UNADDED
             #    answer adds it first and then keeps, with no cursor conflict ──
-            band.get_by_role("button", name="Ask", exact=True).click()
+            _refine_note(page, thought["id"])
             page.get_by_text(QUESTION, exact=True).wait_for(timeout=20000)
             second = page.get_by_role("textbox", name="Your answer")
             second.fill("The freeze date is the fact that settles it.")
@@ -422,11 +484,10 @@ def test_thought_note_is_one_clean_note(tmp_path: Path, monkeypatch: pytest.Monk
             page.goto(f"{url}/?token={NOTE_TOKEN}&open=note%3A{note_id}", wait_until="load")
             workspace = page.locator(".desk-window.thought-workspace-window")
             workspace.wait_for(timeout=15000)
-            # PHILO-3-04's two lines: the write says KEPT · <time>, the
-            # filing line carries FINISHED.
+            # The hub's write time remains visible; Resume carries state.
             assert KEPT_WORDS.match(workspace.locator(KEPT_LINE).inner_text().strip())
-            assert workspace.locator(FILING_LINE).inner_text().strip().endswith("· FINISHED")
-            assert page.get_by_role("region", name="One question", exact=True).count() == 0
+            assert workspace.locator('.surface-footer-receipt-line[data-line="filing"]').count() == 0
+            assert page.get_by_role("region", name="Ask about this note", exact=True).count() == 0
             workspace.get_by_role("region", name="Note", exact=True).get_by_text(
                 "Mina reads the plan differently.", exact=False
             ).wait_for(timeout=15000)
@@ -440,14 +501,18 @@ def test_thought_note_is_one_clean_note(tmp_path: Path, monkeypatch: pytest.Monk
             assert workspace.get_by_role("button", name="Edit Title", exact=True).count() == 1
 
             # ── No engine: one row, one true token, one verb ──
-            provider["path"] = None
+            _api(page, "POST", "/api/inference/assignments/clear", {
+                "command_id": str(uuid.uuid4()), "expected_revision": 1,
+                "scope": {"kind": "capability", "capability_id": "thought.interview"},
+                "capability_id": "thought.interview",
+            })
             page.goto(f"{url}/?token={NOTE_TOKEN}&open=note%3A{note_id}", wait_until="load")
             workspace = page.locator(".desk-window.thought-workspace-window")
             workspace.wait_for(timeout=15000)
-            band = page.get_by_role("region", name="One question", exact=True)
+            band = page.get_by_role("region", name="Ask about this note", exact=True)
             band.wait_for(timeout=15000)
-            band.get_by_role("button", name="Choose an engine", exact=True).wait_for(timeout=15000)
-            assert "NO ENGINE YET" in band.inner_text()
+            band.get_by_role("button", name="Choose engine", exact=True).wait_for(timeout=15000)
+            assert "No engine" in band.inner_text()
             assert band.get_by_role("button", name="Ask", exact=True).count() == 0
             assert workspace.locator(".btn--primary:visible").count() == 1
             _no_empty_heading(page)
@@ -488,11 +553,10 @@ def test_thought_note_long_note_and_long_question_never_clip(
 
             workspace = page.locator(".desk-window.thought-workspace-window")
             workspace.wait_for(timeout=15000)
-            band = page.get_by_role("region", name="One question", exact=True)
-            band.wait_for(timeout=15000)
+            workspace.get_by_role("region", name="Note", exact=True).wait_for()
+            assert workspace.get_by_role("region", name="Ask about this note", exact=True).count() == 0
             window_box = workspace.bounding_box()
             assert window_box
-            _in_frame(band.bounding_box(), window_box, "band 3 under a long note")
             _in_frame(workspace.locator(".surface-footer").bounding_box(), window_box, "foot under a long note")
             title = workspace.locator(".thought-note-title")
             assert title.evaluate("el => el.scrollHeight <= el.clientHeight + 1")
@@ -502,15 +566,15 @@ def test_thought_note_long_note_and_long_question_never_clip(
             )
             _no_horizontal_escape(page)
 
-            band.get_by_role("button", name="Ask", exact=True).click()
+            _refine_note(page, thought["id"])
+            band = page.get_by_role("region", name="Ask about this note", exact=True)
             page.get_by_text(LONG_QUESTION, exact=True).wait_for(timeout=20000)
             answer = page.get_by_role("textbox", name="Your answer")
             answer.wait_for()
-            deadline = time.time() + 2
-            while time.time() < deadline and not answer.bounding_box():
-                time.sleep(0.05)
+            assert answer.is_visible()
             window_box = workspace.bounding_box()
             assert window_box
+            page.screenshot(path=str(SHOTS / f"long-question-{width}.png"), full_page=False)
             _in_frame(answer.bounding_box(), window_box, "answer pad under a long question")
             _in_frame(workspace.locator(".surface-footer").bounding_box(), window_box, "foot under a long question")
             assert band.evaluate("el => el.scrollHeight <= el.clientHeight + 1")
@@ -553,12 +617,12 @@ def test_thought_note_long_context_and_open_well_never_clip(
 
             workspace = page.locator(".desk-window.thought-workspace-window")
             workspace.wait_for(timeout=15000)
-            workspace.get_by_role("button", name="Change", exact=True).click()
-            well = page.get_by_role("region", name="What the AI reads")
+            _note_action(page, workspace, "Add a note")
+            well = page.get_by_role("region", name="Add notes", exact=True)
             well.wait_for(timeout=10000)
 
             # The well SEARCHES the desk, not just six recent notes.
-            find = well.get_by_role("textbox", name="Find a note")
+            find = well.get_by_role("textbox", name="Add notes", exact=True)
             find.fill("standing decisions")
             token = well.locator("label.gadget-check-token", has_text="standing decisions")
             token.first.wait_for(timeout=10000)
@@ -571,8 +635,10 @@ def test_thought_note_long_context_and_open_well_never_clip(
 
             window_box = workspace.bounding_box()
             assert window_box
+            page.screenshot(path=str(SHOTS / f"long-context-open-well-{width}.png"), full_page=False)
             # Nothing the owner must press leaves the window…
-            for name in ("Change", "Finish"):
+            visible_verbs = ("Add a note", "Finish") if width > 720 else ("More actions", "Finish")
+            for name in visible_verbs:
                 box = workspace.get_by_role("button", name=name, exact=True).bounding_box()
                 assert box, name
                 assert box["x"] + box["width"] <= window_box["x"] + window_box["width"] + 1, (name, box, window_box)
@@ -594,16 +660,15 @@ def test_thought_note_long_context_and_open_well_never_clip(
             assert well.evaluate("el => el.scrollWidth <= el.clientWidth + 1")
             _in_frame(well_box, window_box, "open well")
             _no_horizontal_escape(page)
-            page.screenshot(path=str(SHOTS / f"long-context-open-well-{width}.png"), full_page=False)
 
             # …and with the well closed, the ordinary face keeps the whole
             # name readable in the foot, with the verbs in their places.
             well.press("Escape")
-            assert page.get_by_role("region", name="What the AI reads").count() == 0
+            assert page.get_by_role("region", name="Add notes", exact=True).count() == 0
             _reads_full(workspace.locator(".thought-note-reads"), LONG_CONTEXT)
             window_box = workspace.bounding_box()
             assert window_box
-            for name in ("Change", "Finish"):
+            for name in visible_verbs:
                 _in_frame(workspace.get_by_role("button", name=name, exact=True).bounding_box(), window_box, name)
             kept_box = workspace.locator(KEPT_LINE).bounding_box()
             assert kept_box and kept_box["width"] > 20, kept_box
@@ -668,12 +733,16 @@ def _workbench_api(page: Any, method: str, path: str, body: dict[str, Any] | Non
 @pytest.mark.requires_meeting
 @pytest.mark.parametrize("width", [1440, 393])
 def test_thought_workbench_real_glass(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
+    _ensure_build()
     from playwright.sync_api import sync_playwright
+    import json
     import holdspeak.config as config_module
     import holdspeak.db.core as db_core
     from holdspeak.db import reset_database
     from holdspeak.kernel.runtime import _configure
     from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+    from types import SimpleNamespace
+    from tests.unit.test_phase143_inference_assignments import OWNER, _profile, _result_claim
 
     home = tmp_path / "home"
     home.mkdir()
@@ -691,6 +760,13 @@ def test_thought_workbench_real_glass(tmp_path: Path, monkeypatch: pytest.Monkey
     engine = _InterviewEngine()
     broker = _configure(database)
     monkeypatch.setattr(broker.inference_runner, "_engine_factory", lambda _revision, **_kw: engine)
+    _profile(database, "workbench-interview", claims=(
+        "language", "structured_output", _result_claim("thought.interview"), _result_claim("speech.intent_classify"),
+    ), boundary="same_device")
+    broker.inference_adoption_service.migrate_legacy_config(OWNER, SimpleNamespace(
+        thoughts=SimpleNamespace(inference_target_id="workbench-interview"),
+        dictation=SimpleNamespace(runtime=SimpleNamespace(profile_id="workbench-interview")),
+    ))
     callbacks = WebRuntimeCallbacks(on_bookmark=lambda *_: None, on_stop=lambda: None, get_state=lambda: {})
     server = MeetingWebServer(callbacks, auth_token=WORKBENCH_TOKEN)
     url = server.start()
@@ -735,10 +811,27 @@ def test_thought_workbench_real_glass(tmp_path: Path, monkeypatch: pytest.Monkey
                 raise AssertionError({"body": page.locator("body").inner_text(), "errors": errors,
                                       "console": console_errors, "requests": requests})
             page.get_by_role("region", name="Note", exact=True).wait_for()
-            band = page.get_by_role("region", name="One question", exact=True)
+
+            def start_refinement() -> dict[str, Any]:
+                latest = _workbench_api(page, "GET", f"/api/thoughts/{thought['id']}")["thought"]
+                projection = _workbench_api(page, "GET", f"/api/thoughts/{thought['id']}/workbench")
+                _workbench_api(page, "POST", f"/api/thoughts/{thought['id']}/refine", {
+                    "request_id": str(uuid.uuid4()),
+                    "expected_aggregate_revision": latest["aggregate_revision"],
+                    "expected_working_revision": latest["working_revision"],
+                    "expected_attachment_revision": latest["attachment_revision"],
+                    "workspace_cursor": projection["workspace_cursor"],
+                })
+                return projection["workspace_cursor"]
+
+            # Idle Note Ask opens Ask AI. The real refinement producer seeds
+            # this retained in-note continuation, whose live UI owns Stop/answer.
+            engine.block_next = True
+            prior_cursor = start_refinement()
+            page.reload(wait_until="load")
+            band = page.get_by_role("region", name="Ask about this note", exact=True)
             band.wait_for(timeout=10000)
-            ask = band.get_by_role("button", name="Ask", exact=True)
-            ask.wait_for()
+            band.get_by_role("button", name="Stop", exact=True).wait_for(timeout=10000)
             assert workspace.locator(".btn--primary:visible").count() == 1
             assert workspace.locator(".btn--primary:visible").inner_text().strip() == "Finish"
             assert page.get_by_text("Good enough").count() == 0
@@ -767,14 +860,27 @@ def test_thought_workbench_real_glass(tmp_path: Path, monkeypatch: pytest.Monkey
 
             # A real durable Note edit while ASKING must suppress the frozen
             # result. The stale question never reaches owner-visible state.
-            engine.block_next = True
-            ask.click()
             page.wait_for_function(
                 "el => el?.textContent?.trim() === 'Stop'",
-                arg=band.get_by_role("button").first.element_handle(),
+                arg=band.get_by_role("button", name="Stop", exact=True).element_handle(),
                 timeout=10000,
             )
             assert engine.started.wait(5)
+            # Replay the real pre-turn cursor once. The hub rejects that
+            # cursor itself; the writer must re-read and save the same edit.
+            stale_cursor_sent = False
+
+            def stale_first_save(route: Any) -> None:
+                nonlocal stale_cursor_sent
+                if stale_cursor_sent:
+                    route.continue_()
+                    return
+                stale_cursor_sent = True
+                body = route.request.post_data_json
+                body["workspace_cursor"] = prior_cursor
+                route.continue_(post_data=json.dumps(body))
+
+            page.route(f"**/api/thoughts/{thought['id']}/working", stale_first_save)
             note_editor = page.get_by_role("textbox", name="Note body")
             assert note_editor.get_attribute("contenteditable") == "true"
             note_editor.click()
@@ -792,12 +898,21 @@ def test_thought_workbench_real_glass(tmp_path: Path, monkeypatch: pytest.Monkey
             working_statuses = [status for path, status in responses if path.endswith(f"/api/thoughts/{thought['id']}/working")]
             assert working_statuses[-2:] == [409, 200], working_statuses
             engine.release.set()
-            band.get_by_role("button", name="Ask", exact=True).wait_for(timeout=20000)
+            page.wait_for_function("""async ([id, token]) => {
+              const response = await fetch(`/api/thoughts/${id}/workbench`, {headers:{authorization:`Bearer ${token}`}});
+              const projection = await response.json();
+              return !['reserved','in_flight','awaiting_projection'].includes(projection.workspace_state);
+            }""", arg=[thought["id"], WORKBENCH_TOKEN], timeout=20000)
             assert page.get_by_text("STALE QUESTION MUST NOT APPEAR", exact=True).count() == 0
 
             # ── The one question, answered with the one verb ──
-            band.get_by_role("button", name="Ask", exact=True).click()
-            page.get_by_text("Who owns the launch?", exact=True).wait_for(timeout=20000)
+            start_refinement()
+            page.reload(wait_until="load")
+            try:
+                page.get_by_text("Who owns the launch?", exact=True).wait_for(timeout=20000)
+            except Exception as cause:
+                raise AssertionError({"calls": engine.calls, "workbench": _workbench_api(page, "GET", f"/api/thoughts/{thought['id']}/workbench"),
+                                      "body": workspace.inner_text(), "errors": errors}) from cause
             answer = page.get_by_role("textbox", name="Your answer")
             answer.fill("Mina owns the launch.")
             page.screenshot(path=f"/tmp/holdspeak-thought-workbench-question-{width}.png", full_page=False)
@@ -816,17 +931,33 @@ def test_thought_workbench_real_glass(tmp_path: Path, monkeypatch: pytest.Monkey
             assert not any(path.endswith(f"/api/thoughts/{thought['id']}/original") for path in requests)
 
             # The Reads well is in-window (no portal overlay) and Escape-safe.
-            change = workspace.get_by_role("button", name="Change", exact=True)
+            if width < 720:
+                workspace.get_by_role("button", name="More actions", exact=True).click()
+                change = page.get_by_role("menu", name="More actions", exact=True).get_by_role("menuitem", name="Add a note", exact=True)
+            else:
+                change = workspace.get_by_role("button", name="Add a note", exact=True)
             change.click()
-            well = page.get_by_role("region", name="What the AI reads")
+            well = page.get_by_role("region", name="Add notes", exact=True)
             well.wait_for(timeout=10000)
             assert well.evaluate("el => el.closest('.thought-workspace-window') !== null")
+            window_box = workspace.bounding_box()
+            assert window_box and window_box["y"] >= 48
+            assert window_box["y"] + window_box["height"] <= 900
             well_box = well.bounding_box()
             assert well_box and well_box["y"] + well_box["height"] <= window_box["y"] + window_box["height"] + 1
             page.screenshot(path=f"/tmp/holdspeak-thought-context-well-{width}.png", full_page=False)
             well.press("Escape")
-            assert page.get_by_role("region", name="What the AI reads").count() == 0
-            page.wait_for_function("el => el === document.activeElement", arg=change.element_handle(), timeout=5000)
+            assert page.get_by_role("region", name="Add notes", exact=True).count() == 0
+            return_name = "More actions" if width < 720 else "Add a note"
+            return_door = workspace.get_by_role("button", name=return_name, exact=True)
+            try:
+                page.wait_for_function("el => el.isConnected && el === document.activeElement", arg=return_door.element_handle(), timeout=5000)
+            except Exception as cause:
+                active = page.evaluate("() => ({tag:document.activeElement?.tagName, name:document.activeElement?.getAttribute('aria-label'), class:document.activeElement?.className})")
+                page.screenshot(path=f"/tmp/holdspeak-thought-context-return-failure-{width}.png", full_page=False)
+                raise AssertionError({"expected_focus": return_name, "active": active}) from cause
+            assert return_door.is_visible()
+            assert page.get_by_role("menu", name="More actions", exact=True).count() == 0
 
             unexpected_before_restart = [
                 message for message in console_errors
@@ -1038,7 +1169,7 @@ class TestTheThoughtOpensAtOnce:
         self._press(page, page.locator(f".desk-verbbar-item[data-menu-id='{menu}'] button"), width)
         if width < 720:  # PHILO-15 11 (B21): Go ▸ New ▸ Thought at 393
             go_group(page, "New", lambda loc: self._press(page, loc, width))
-        label = "Write a thought" if width >= 720 else "Thought"
+        label = "Write a thought" if width >= 720 else "Note"
         item = page.locator(f".desk-verbbar-menu [role='menuitem']:has-text('{label}')").first
         item.wait_for()
         self._press(page, item, width)
@@ -1183,6 +1314,10 @@ class TestTheThoughtSends:
         _ensure_build()
         server, base = _gi_boot(tmp_path, monkeypatch, token=SEND_TOKEN)
         self.base = base
+        self.home = tmp_path / "home"
+        from holdspeak.db import get_database
+
+        self.db = get_database()
         try:
             yield
         finally:
@@ -1193,7 +1328,7 @@ class TestTheThoughtSends:
         page.locator(f".desk-verbbar-item[data-menu-id='{menu}'] button").click()
         if width < 720:
             go_group(page, "New", lambda loc: loc.click())
-        label = "Write a thought" if width >= 720 else "Thought"
+        label = "Write a thought" if width >= 720 else "Note"
         item = page.locator(f".desk-verbbar-menu [role='menuitem']:has-text('{label}')").first
         item.wait_for()
         item.click()
@@ -1207,9 +1342,92 @@ class TestTheThoughtSends:
         if box:
             page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
 
+    def _db_sends(self, note_ref: str) -> list[dict[str, Any]]:
+        """The real isolated hub's rows, including its frozen transport bytes."""
+        import json
+
+        with self.db._connection() as conn:
+            rows = conn.execute(
+                "SELECT id, state, payload, proof_json FROM channel_sends WHERE document_ref=? ORDER BY rowid",
+                (note_ref,),
+            ).fetchall()
+        return [{"id": r[0], "state": r[1], "payload": r[2], "proof": json.loads(r[3] or "{}")} for r in rows]
+
+    def _saved_note(self, note_ref: str) -> tuple[int, str]:
+        with self.db._connection() as conn:
+            row = conn.execute(
+                "SELECT t.working_revision, n.body_markdown FROM refinement_thoughts t "
+                "JOIN notes n ON n.id=t.working_note_id WHERE t.working_note_id=?",
+                (note_ref.removeprefix("note:"),),
+            ).fetchone()
+        assert row, note_ref
+        return row[0], row[1]
+
+    def _note_action(self, page: Any, win: Any, width: int, name: str) -> Any:
+        foot = win.locator(".thought-note-foot")
+        if width < 720:
+            self._tap(page, foot.get_by_role("button", name="More actions", exact=True))
+            action = page.get_by_role("menu", name="More actions", exact=True).get_by_role("menuitem", name=name, exact=True)
+        else:
+            action = foot.get_by_role("button", name=name, exact=True)
+        action.wait_for(timeout=T)
+        return action
+
+    def _back(self, page: Any, win: Any, width: int, *, keyboard: bool = False) -> None:
+        """Use the phone's actual frame Back, or the desktop host's Back."""
+        back = (win.locator(".desk-gadget-close") if width < 720
+                else win.locator(".thought-send-foot").get_by_role("button", name="Back", exact=True))
+        if keyboard:
+            back.focus()
+            page.keyboard.press("Enter")
+        else:
+            self._tap(page, back)
+        win.locator(".thought-note-body .cm-content").wait_for(timeout=T)
+        assert win.locator("[data-testid=thought-send]").count() == 0
+        name = "More actions" if width < 720 else "Send"
+        door = win.locator(".thought-note-foot").get_by_role("button", name=name, exact=True)
+        page.wait_for_function("(el) => el.isConnected && el === document.activeElement", arg=door.element_handle(), timeout=T)
+        assert door.is_visible()
+        assert not page.get_by_role("menu", name="More actions", exact=True).count()
+
+    @staticmethod
+    def _send_geometry(page: Any, win: Any, width: int) -> None:
+        from tests.e2e.test_send_glass import TARGETS44
+
+        geo = win.evaluate("""(win) => {
+          const well = win.querySelector('[data-testid=thought-send]');
+          const outer = well.getBoundingClientRect();
+          const box = (sel) => { const r = well.querySelector(sel).getBoundingClientRect();
+            return {top:r.top, bottom:r.bottom, left:r.left, right:r.right, width:r.width, height:r.height}; };
+          const payload = well.querySelector('[data-testid=send-preview-body]');
+          return {outer:{top:outer.top, bottom:outer.bottom, left:outer.left, right:outer.right},
+            preview:box('[data-testid=send-preview-body]'), verb:box('[data-testid=send-verb]'),
+            overflow:getComputedStyle(well).overflowY,
+            payloadOverflow:getComputedStyle(payload).overflowY, payloadMax:getComputedStyle(payload).maxHeight,
+            nested:[...well.querySelectorAll('*')].filter((el) =>
+              ['auto','scroll'].includes(getComputedStyle(el).overflowY) && el.scrollHeight > el.clientHeight + 1)
+              .map((el) => el.className)};
+        }""")
+        assert geo["overflow"] in ("auto", "scroll"), geo
+        assert not geo["nested"], geo
+        assert geo["payloadOverflow"] not in ("auto", "scroll") and geo["payloadMax"] == "none", geo
+        for name in ("preview", "verb"):
+            box, outer = geo[name], geo["outer"]
+            assert box["height"] > 0 and box["width"] > 0, geo
+            assert outer["top"] - 1 <= box["top"] < box["bottom"] <= outer["bottom"] + 1, geo
+            assert outer["left"] - 1 <= box["left"] < box["right"] <= outer["right"] + 1, geo
+        if width < 720:
+            # The existing nine-point probe also covers the host's Back control.
+            targets = TARGETS44.replace(
+                "[data-testid=send-well] button,",
+                ".thought-send-foot button, .thought-workspace-window .desk-gadget-close, [data-testid=send-well] button,",
+            )
+            assert not page.evaluate(targets), "Send or Back loses part of its 44px target"
+        assert not page.evaluate("document.documentElement.scrollWidth > window.innerWidth"), "page scrolls sideways"
+
     @pytest.mark.parametrize("width", list(SIZES))
     def test_write_a_thought_then_send_it_to_a_folder(self, width: int) -> None:
-        """replaces: tests/e2e/test_philo17_thought_send_glass.py::TestTheThoughtSends::test_write_a_thought_then_send_it_to_a_folder (moved whole: the clipboard, a real pointer press at an inert well)."""
+        """Clipboard, Back focus, exact saved revision, target geometry and real folder dispatch."""
         from playwright.sync_api import sync_playwright
 
         with sync_playwright() as pw:
@@ -1234,28 +1452,43 @@ class TestTheThoughtSends:
                 page.keyboard.type(SEND_WORDS)  # no wait: Send saves the note first
 
                 foot = win.locator(".thought-note-foot")
-                verbs = [" ".join(t.split()) for t in foot.locator(".btn").all_inner_texts()]
-                assert verbs[-4:] == ["Change", "Copy", "Send", "Finish"], verbs
+                door = foot.get_by_role("button", name="More actions" if width < 720 else "Send", exact=True)
+                assert door.is_visible()
 
                 # Copy copies the working text.
-                foot.get_by_role("button", name="Copy").click()
+                self._note_action(page, win, width, "Copy").click()
                 foot.get_by_text("COPIED").wait_for(timeout=T)
                 assert SEND_WORDS in page.evaluate("navigator.clipboard.readText()")
 
-                # Send opens the SEND well on the working note; nothing is sent yet.
-                foot.get_by_role("button", name="Send").click()
+                # Keyboard Send saves first, then owns the body. No dispatch yet.
+                send = self._note_action(page, win, width, "Send")
+                send.focus()
+                page.keyboard.press("Enter")
                 well = win.locator("[data-testid=send-well][data-doc^='note:']")
                 well.wait_for(timeout=T)
                 note_ref = well.get_attribute("data-doc")
+                assert note_ref
+                win_id = win.get_attribute("id")
                 opened = well.locator("[data-testid=send-open][data-destination='HoldSpeak folder']")
                 opened.locator("[data-testid=send-preview]").wait_for(timeout=T)
+                assert win.get_by_role("region", name="Send note", exact=True).evaluate(
+                    "el => el === document.activeElement || el.contains(document.activeElement)"
+                ), "keyboard Send left focus outside its body"
                 preview = " ".join(opened.locator("[data-testid=send-preview]").inner_text().split())
                 assert "Monday" in preview, preview
-                assert not _gi_api(page, "GET", f"/api/channels/sends?document_ref={note_ref}", token=SEND_TOKEN)["sends"]
+                assert not self._db_sends(note_ref)
+                assert win.locator(".thought-note-body, .thought-note-ask, .thought-note-foot, .thought-reads-well, .thought-action-well").count() == 0
+                assert win.get_by_role("button", name=re.compile(r"^(Finish|Resume|Copy|Task|Project)$")).count() == 0
+                self._send_geometry(page, win, width)
                 page.screenshot(path=str(SEND_SHOTS / f"thought-send-picked-{width}.png"))
 
-                # Astra r1 MUST: an edit after the well opened, its save held. The
-                # well waits (inert, a plain word); a press on it sends nothing.
+                # Pointer Back returns to this note and restores its visible Send door.
+                self._back(page, win, width)
+                assert win.get_attribute("id") == win_id
+                revision, saved_body = self._saved_note(note_ref)
+                assert saved_body.strip() == SEND_WORDS, saved_body
+
+                # Back -> edit -> Send: a held save cannot reopen an old preview.
                 held: list[Any] = []
                 mode = {"saves": "hold"}
 
@@ -1272,55 +1505,66 @@ class TestTheThoughtSends:
                 note.click()
                 page.keyboard.press("End")
                 page.keyboard.type(" REVISED")
-                verb = opened.locator("[data-testid=send-verb]")
-                self._tap(page, verb)
+                self._tap(page, self._note_action(page, win, width, "Send"))
                 for _ in range(100):  # the writer's held save reaches the route
                     if held:
                         break
                     page.wait_for_timeout(50)
                 assert held, "the edit was never saved"
-                assert not _gi_api(page, "GET", f"/api/channels/sends?document_ref={note_ref}", token=SEND_TOKEN)["sends"], \
-                    "the well sent while the edit was not saved"
-                assert win.locator(".thought-send-body[inert]").count() == 1
-                win.get_by_text("SAVING… · SEND WAITS").wait_for(timeout=T)
+                assert not self._db_sends(note_ref), "Send dispatched while the edit was not saved"
+                assert win.locator("[data-testid=thought-send], [data-testid=send-preview], [data-testid=send-verb]").count() == 0
+                if width >= 720:
+                    assert foot.get_by_role("button", name="Send", exact=True).is_disabled()
+                else:
+                    assert foot.get_by_role("button", name="More actions", exact=True).get_attribute("aria-expanded") == "false"
+                assert self._saved_note(note_ref) == (revision, saved_body)
                 page.screenshot(path=str(SEND_SHOTS / f"thought-send-waits-{width}.png"))
                 mode["saves"] = "pass"
                 for route in held:
                     route.continue_()
-                # The save lands: the well opens again on a preview of the revised words.
-                win.locator(".thought-send-body:not([inert])").wait_for(timeout=T)
+                # Only the successfully saved revision opens a fresh preview.
+                well.wait_for(timeout=T)
                 page.wait_for_function(
                     "(sel) => (document.querySelector(sel)?.innerText || '').includes('REVISED')",
                     arg=f"{THOUGHT} [data-testid=send-open][data-destination='HoldSpeak folder'] [data-testid=send-preview]",
                     timeout=T)
+                revised_body = f"{SEND_WORDS} REVISED"
+                assert self._saved_note(note_ref) == (revision + 1, revised_body)
+                self._send_geometry(page, win, width)
 
                 # His press: the file is saved, the receipt names the path.
+                verb = opened.locator("[data-testid=send-verb]")
                 page.wait_for_function("(e) => e && !e.disabled", arg=verb.element_handle(), timeout=T)
-                verb.click()
+                self._tap(page, verb)
                 receipt = opened.locator("[data-receipt=latest][data-state=sent]")
                 receipt.wait_for(timeout=T)
-                sends = _gi_api(page, "GET", f"/api/channels/sends?document_ref={note_ref}", token=SEND_TOKEN)["sends"]
+                sends = self._db_sends(note_ref)
                 sent = [s for s in sends if s["state"] == "sent"]
-                assert len(sent) == 1, sends
+                assert len(sent) == len(sends) == 1, sends
                 path = Path(sent[0]["proof"]["path"])
-                assert path.is_file() and f"{SEND_WORDS} REVISED" in path.read_text(), path
+                assert path.is_relative_to(self.home) and path.is_file(), path
+                assert path.read_bytes() == sent[0]["payload"] and revised_body in path.read_text(), path
                 text = " ".join(receipt.inner_text().split())
                 # The built-in folder names its path from HOME (~).
                 assert text == f"✓ SAVED ~/Documents/HoldSpeak/Sent/{path.name}", text
                 receipt.scroll_into_view_if_needed()
                 page.screenshot(path=str(SEND_SHOTS / f"thought-send-saved-{width}.png"))
 
-                # A failed save: the well stays held with a plain word; nothing more is sent.
+                # Keyboard Back returns too. A failed revision cannot reopen Send.
+                self._back(page, win, width, keyboard=True)
+                assert win.get_attribute("id") == win_id
                 mode["saves"] = "fail"
                 note.click()
                 page.keyboard.press("End")
                 page.keyboard.type(" LOST")
-                win.get_by_text("NOT SAVED · SEND WAITS").wait_for(timeout=T)
-                assert win.locator(".thought-send-body[inert]").count() == 1
-                self._tap(page, opened.locator("[data-testid=send-verb]"))
+                foot.locator("[data-tone=danger]").first.wait_for(timeout=T)
+                self._tap(page, self._note_action(page, win, width, "Send"))
                 page.wait_for_timeout(600)
-                after = _gi_api(page, "GET", f"/api/channels/sends?document_ref={note_ref}", token=SEND_TOKEN)["sends"]
-                assert len(after) == 1, after
+                after = self._db_sends(note_ref)
+                assert len(after) == 1 and after[0]["id"] == sent[0]["id"], after
+                assert win.locator("[data-testid=thought-send], [data-testid=send-preview], [data-testid=send-verb]").count() == 0
+                assert self._saved_note(note_ref) == (revision + 1, revised_body)
+                page.screenshot(path=str(SEND_SHOTS / f"thought-send-save-failed-{width}.png"))
                 mode["saves"] = "pass"
 
                 assert not page.evaluate("document.documentElement.scrollWidth > window.innerWidth"), "page scrolls sideways"

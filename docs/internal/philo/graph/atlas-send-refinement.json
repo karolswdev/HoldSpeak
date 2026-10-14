@@ -1,0 +1,181 @@
+{
+  "schema_version": 1,
+  "atlas_version": "send-refinement-20261014",
+  "extends": "docs/internal/philo/graph/atlas-delight.json",
+  "source_commit": "821578c2bc830dce7c54286e00e0dcf5f04eec62",
+  "states": [
+    {
+      "id": "state.desk_presentation.refinement_send",
+      "family": "desk_presentation",
+      "values": {
+        "note": "saved",
+        "send": "preview"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
+          "symbol": "const openSend = async () => {",
+          "claim": "Send saves and opens the working Note preview."
+        }
+      ],
+      "reachable_by": [
+        "case.refinement.note.send"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "case.refinement.note.send",
+      "job": "j11",
+      "edge_ids": [
+        "edge.face.channel_send"
+      ],
+      "state_id": "state.desk_presentation.refinement_send",
+      "applicability": "applicable",
+      "preconditions": [
+        "Real Note producer, real preview, isolated HOME and hub; no engine, microphone or dispatch."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "Wait for the real first-run dismissal before reload."
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/thoughts",
+          "body": {
+            "request_id": "refinement-send-note",
+            "raw_text": "Migration plan\n\nUse the rollback runbook before the Friday cutover.",
+            "initial_note": {
+              "title": "Migration plan",
+              "body_markdown": "Migration plan\n\nUse the rollback runbook before the Friday cutover."
+            }
+          },
+          "capture_as": "note_id",
+          "capture_path": "thought.working_note.id",
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "button[aria-controls=desk-tool-shelf]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "input[aria-controls=desk-palette-listbox]",
+          "value": "Migration plan",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "button.desk-deck-row:has-text(\"Migration plan\")",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": ".thought-note-foot",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".thought-note-foot button[aria-label=\"More actions\"]",
+          "adapter": "ui-by-viewport",
+          "at_width": 393
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "selector": ".thought-note-foot button:has-text(\"Send\"), button[role=menuitem]:has-text(\"Send\")",
+        "adapter": "ui-by-viewport",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "selector": "[data-testid=thought-send] [data-testid=send-preview]",
+            "adapter": "ui-observation",
+            "timeout_s": 20
+          }
+        ]
+      },
+      "expected": {
+        "observe_at": "[data-testid=thought-send] [data-testid=send-preview-body]",
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "selector_presence",
+              "selector": "[data-testid=thought-send] [data-testid=send-preview]",
+              "present": true
+            },
+            {
+              "kind": "readable_text",
+              "value": "Use the rollback runbook before the Friday cutover."
+            },
+            {
+              "kind": "selector_presence",
+              "selector": ".thought-note-document",
+              "present": false
+            },
+            {
+              "kind": "selector_presence",
+              "selector": ".thought-note-foot",
+              "present": false
+            }
+          ]
+        },
+        "words": "The actual saved Note Send door shows its real payload in a body-owned Send posture without editor or competing Note footer. No dispatch occurs in this case."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ],
+  "clocks": [
+    {
+      "id": "clock.browser_wall",
+      "source": "Browser Date",
+      "mechanism": "none: these cases use browser wall time without moving a clock",
+      "status": "available",
+      "used_by": []
+    }
+  ],
+  "excluded": [],
+  "council_readings": []
+}

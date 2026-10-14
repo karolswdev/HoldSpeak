@@ -5,11 +5,16 @@
 // (audits/rehearsal-07-opus.md, LANGUAGE row; shot
 // assets/story-07-rehearsal/03-meetings-list-393.png). A filter that can
 // match nothing says nothing.
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../../../lib/api";
 import { HistoryCore } from "../../HistoryCore";
 import { hasOpenMeetingActions } from "../helpers";
+import { MeetingRecord } from "../MeetingRecord";
+import { WindowIdContext } from "../../../../desk/components/window/windowIdContext";
+import { useDesk } from "../../../../desk/store";
+import { SEND_OPEN, resetSendTo } from "../../../../desk/windowSend";
+import { resetSendStore } from "../../../../desk/surface/send";
 
 vi.mock("../../../../lib/api", async (original) => ({
   ...(await original<typeof import("../../../../lib/api")>()),
@@ -18,6 +23,10 @@ vi.mock("../../../../lib/api", async (original) => ({
 vi.mock("../../../../runtime/RuntimeBus", () => ({
   useRuntimeBus: () => ({ state: "connected", lastFrame: null, subscribe: () => () => undefined }),
   useRuntimeFrame: () => null,
+}));
+vi.mock("../../connections/api", async (original) => ({
+  ...(await original<typeof import("../../connections/api")>()),
+  fetchConnections: () => Promise.resolve({ tools: [] }),
 }));
 
 const mockedApiFetch = vi.mocked(apiFetch);
@@ -101,5 +110,44 @@ describe("HS-201-11 the open-actions filter is drawn only when it can find one",
     view.rerender(<HistoryCore />);
     await screen.findByTestId("meeting-row-m-1");
     expect(screen.getByTestId("meeting-row-m-1").getAttribute("data-selected")).toBe("true");
+  });
+
+  it("opens the requested Send well only on the event's scoped meeting record", async () => {
+    resetSendTo();
+    resetSendStore();
+    useDesk.setState({ windowsById: {
+      "surface-meetings": { id: "surface-meetings", kind: "surface", applicationKey: "meetings", scope: "meeting:m-1", persistence: "workspace" },
+    } } as never);
+    mockedApiFetch.mockImplementation(async (path: string) => {
+      const url = String(path);
+      const record = /^\/api\/meetings\/(m-[12])(?:\?|$)/.exec(url);
+      if (record) return { ...MEETING, id: record[1], intel: { summary: "Saved summary." } } as never;
+      if (url.startsWith("/api/meetings?")) return { meetings: [MEETING] } as never;
+      if (url === "/api/all-action-items") return { action_items: [] } as never;
+      if (url === "/api/channels/destinations") return { destinations: [{
+        id: "holdspeak-folder", name: "HoldSpeak folder", channel: "file", account: {},
+        target: { folder: "/tmp/canvas-sent", display: "~/Documents/HoldSpeak/Sent" },
+        builtin: true, synced: false, state: "active", created_at: "2026-10-14T12:00:00Z", parked_at: null,
+      }] } as never;
+      if (url.startsWith("/api/channels/sends")) return { sends: [] } as never;
+      if (url === "/api/channels/preview") return { payload_digest: "saved-digest", preview: { text: "Saved summary." } } as never;
+      return {} as never;
+    });
+    render(<>
+      <WindowIdContext.Provider value="surface-meetings"><div data-testid="current-record"><HistoryCore scope="meeting:m-1" /></div></WindowIdContext.Provider>
+      <WindowIdContext.Provider value="pullout:meeting:m-2"><div data-testid="other-record"><MeetingRecord meetingId="m-2" onClose={() => {}} /></div></WindowIdContext.Provider>
+    </>);
+    const current = within(screen.getByTestId("current-record"));
+    const other = within(screen.getByTestId("other-record"));
+    await current.findByTestId("meeting-record-back");
+    await other.findByTestId("meeting-record-back");
+    expect(screen.queryByTestId("meeting-send-well")).toBeNull();
+    act(() => window.dispatchEvent(new CustomEvent(SEND_OPEN, { detail: { winId: "surface-unrelated" } })));
+    expect(screen.queryByTestId("meeting-send-well")).toBeNull();
+    act(() => window.dispatchEvent(new CustomEvent(SEND_OPEN, { detail: { winId: "surface-meetings" } })));
+    await current.findByTestId("meeting-send-well");
+    await waitFor(() => expect(current.getByTestId("send-well").getAttribute("data-doc")).toBe("meeting_summary:m-1"));
+    expect(other.queryByTestId("meeting-send-well")).toBeNull();
+    expect(screen.getAllByTestId("meeting-send-well")).toHaveLength(1);
   });
 });
