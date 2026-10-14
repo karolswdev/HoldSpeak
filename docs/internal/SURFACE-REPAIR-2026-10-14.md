@@ -192,3 +192,7 @@ Logs: `.tmp/surface-audit/quick-final-5/`. Extra affected files were the graph
 atlas and architecture/API metadata guards. Six canvases were separately
 rendered at both widths because they live outside web/src. No product source
 changed after this run. The full main tape and owner acceptance remain open.
+
+Release PR: [#1200](https://github.com/karolswdev/HoldSpeak/pull/1200).
+One combined audit and implementation PR; pm/STATUS.md carries the remaining
+work. The local hub is updated after merge when runtime capture is idle.
