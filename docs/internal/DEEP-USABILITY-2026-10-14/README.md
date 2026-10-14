@@ -2,6 +2,7 @@
 
 Owner correction: Send was an example. The job is to discover pressing issues
 across HoldSpeak through actual use, then repair the affected jobs together.
+Release: [#1202](https://github.com/karolswdev/HoldSpeak/pull/1202).
 Base: main eb9a3266e (#1201). Three bounded Sol xhigh audit/build lanes; root
 owns source/shot checks, integration, verification and one release.
 
