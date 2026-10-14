@@ -72,7 +72,8 @@ Missing shards: **none**.
 | `desk.dock.live` | Read live Dock state | Read meeting, send, recording and connection state from Dock AppIcons. | partial | user | tests_executed | no | local |
 | `project.update.linked_week` | Draft a project update | Draft a project update in one press from linked meetings, decisions and open actions. Retry with a plain draft if the chosen model fails. | built_unreleased | user | tests_executed | no | possible |
 | `people.prep.read` | Read 1:1 preparation | Read a report’s next 1:1, agenda, projects and confirmed open actions, matched by an unambiguous People identity. | built_unreleased | user | tests_executed | no | local |
-| `desk.note.task` | Make a task from a note | Add a confirmed open task from a saved note and keep a link to its source. | built_unreleased | user | tests_executed | no | local |
+| `desk.note.task` | Make a task from a note | Add a confirmed open task from selected text in a saved note and keep a link to its source. | built_unreleased | user | tests_executed | no | local |
+| `people.prep.record` | Record from 1:1 preparation | Start a meeting from its linked calendar event while keeping the person and unsent agenda in place. | built_unreleased | user | tests_executed | no | possible |
 | `agents.thread_persistent` | Persistent Thread chat | Save a multi-turn assistant conversation with branches, drafts, refs and kept results. | experimental | user | source_and_assertions_inspected | no | possible |
 | `agents.thread_tool_loop` | Persistent Thread tool loop | Offer a bounded MCP tool palette inside a Thread turn and retain tool results and receipts. | experimental | user | source_and_assertions_inspected | no | possible |
 | `agents.interview` | Interview conversation | Use one owner-only Thread mode to record sourced facts and reviewable suggestions. | experimental | user | source_and_assertions_inspected | no | possible |

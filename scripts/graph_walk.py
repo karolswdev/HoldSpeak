@@ -1209,7 +1209,7 @@ def _value_selector(predicate: Any) -> str | None:
         return None
     if predicate.get("kind") == "all_of":
         for part in predicate.get("predicates") or []:
-            if isinstance(part, dict) and part.get("selector"):
+            if isinstance(part, dict) and part.get("kind") == "input_value" and part.get("selector"):
                 return part["selector"]
         return None
     return predicate.get("selector")

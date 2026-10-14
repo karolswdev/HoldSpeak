@@ -84,14 +84,29 @@ class MovableClock:
 
 
 class Hub:
-    def __init__(self, server: Any, root: Any, client: Any, frames: list[tuple[str, Any]]) -> None:
-        self.server, self.root, self.client, self.frames = server, root, client, frames
+    def __init__(
+        self,
+        server: Any,
+        root: Any,
+        client: Any,
+        frames: list[tuple[str, Any]],
+        db: Any = None,
+    ) -> None:
+        self.server, self.root, self.client, self.frames, self._db = (
+            server,
+            root,
+            client,
+            frames,
+            db,
+        )
 
     @property
     def db(self) -> Any:
-        from holdspeak.db import get_database
+        if self._db is None:
+            from holdspeak.db import get_database
 
-        return get_database()
+            return get_database()
+        return self._db
 
     def mcp(self, name: str, arguments: dict[str, Any]) -> tuple[bool, Any]:
         resp = self.client.post("/api/mcp", json={
@@ -115,12 +130,23 @@ class Hub:
 def _boot(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, *, clock: Any = None) -> Hub:
     import holdspeak.db.core as db_core
     from holdspeak.db import reset_database
+    from holdspeak.services.sqlite_observer import SQLiteObserver
     from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
     from starlette.testclient import TestClient
 
-    monkeypatch.setattr(db_core, "DEFAULT_DB_PATH", tmp_path / "hub.db")
     monkeypatch.setenv("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(tmp_path / "people.key"))
     reset_database()
+    # The template database is a process-wide optimisation.  Build this hub's
+    # own real schema first (an existing empty file takes the real reconcile
+    # path), then bind both singleton slots to that same handle.  This keeps
+    # the observer, HTTP routes, MCP registry, and the fixture's reads on one
+    # isolated database when another test has left a default path behind.
+    db_path = tmp_path / "hub.db"
+    db_path.touch()
+    db = db_core.Database(db_path)
+    observer = SQLiteObserver(db._connection)
+    db_core._db = db
+    db_core._observer = observer
     server = MeetingWebServer(
         WebRuntimeCallbacks(on_bookmark=MagicMock(), on_stop=MagicMock(),
                             get_state=MagicMock(return_value={})),
@@ -134,7 +160,7 @@ def _boot(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, *, clock: Any = None)
     assert root is not None and root.bare_root is False, "the hub installed no root"
     client = TestClient(server.app, client=("127.0.0.1", 50000))
     client.headers.update({"Authorization": f"Bearer {TOKEN}"})
-    hub = Hub(server, root, client, frames)
+    hub = Hub(server, root, client, frames, db)
     assert Path(str(hub.db.db_path)).parent == tmp_path, "the hub is not on the isolated database"
     hub.db.directories.upsert(directory_id="hs-seed-inbox", name="Inbox")
     return hub

@@ -1,9 +1,9 @@
 // HS-170-04 — the meeting detail pane (the board's right side).
 // Display title + tokens, NEEDS YOU section, TRANSCRIPT well, settled list.
 import { NO_TRANSCRIPT_SPEECH, speechWasMissing } from "../../../desk/firstrun/speechTruth";
-import { useCallback, useEffect, useLayoutEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
-import { SurfaceLedger, SurfaceLedgerRow, SurfaceSection, SurfaceState } from "../../../desk/surface";
+import { AppHead, SurfaceLedger, SurfaceLedgerRow, SurfaceSection, SurfaceState } from "../../../desk/surface";
 import { MeetingConflictRecovery } from "../../../meetings/MeetingConflictRecovery";
 import { MeetingIntelRecovery } from "../../../meetings/MeetingIntelRecovery";
 import {
@@ -27,7 +27,7 @@ import {
   type MeetingData,
   type MeetingDecision,
 } from "./useMeetingData";
-import { MeetingHeader } from "./MeetingHeader";
+import { MeetingHeader, meetingOutcomeFact, meetingPipelineActive } from "./MeetingHeader";
 import { CaptureSlab } from "./CaptureSlab";
 import { ArtifactsLibrary } from "./ArtifactsLibrary";
 import { MeetingSendWellLazy as MeetingSendWell } from "../../../meetings/MeetingSendWellLazy";
@@ -37,6 +37,10 @@ import { NeedsYouTable, showsRunSummary } from "./NeedsYouTable";
 import { TranscriptWell } from "./TranscriptWell";
 import { AudioOnlyVerb } from "./TranscribeVerb";
 import { CycleGadget, StringGadget } from "../../../desk/surface/gadgets";
+import { WorkMenu, type WorkMenuEntry } from "../../../desk/components/DeskMenu";
+import { openPerson, openRef } from "../../../desk/openObject";
+import { openProjectRoom } from "../../../desk/shell";
+import { openSourceRef } from "../../../desk/surface/citations";
 
 
 /** PHILO-17: the meeting window's foot asks its record to open the
@@ -55,6 +59,9 @@ type OutcomeRow = {
   actionStatus?: string | null;
   owner?: string;
   due?: string;
+  projectId?: string | null;
+  personRelationshipId?: string | null;
+  segmentIndex?: number | null;
   gap?: boolean;
   deferredUntil?: string | null;
   verbs?: ReactNode;
@@ -70,8 +77,8 @@ function deferredToken(value: unknown): string {
 }
 
 /** Phase 16 (the interior kit; the canvas window "Cutover sync"): the
- *  meeting's Decisions and Commitments, each a Section over a Ledger of
- *  kind-plated rows. A proposed decision carries Confirm and Dismiss; a
+ *  meeting's Decisions and Commitments, each a Section over a Ledger. A
+ *  proposed decision carries Confirm and Dismiss; a
  *  confirmed one names its owner.
  *
  *  Commitments are OBLIGATIONS, one row each (Astra r1 M1): an action
@@ -115,7 +122,10 @@ export function meetingOutcomes(
   for (const p of live) {
     if (p.kind !== "decision") continue;
     if (p.state === "proposed") {
-      decisions.push({ key: `ft-${p.id}`, plate: "DEC", text: p.text, meta: "", tone: "ask" });
+      decisions.push({
+        key: `ft-${p.id}`, plate: "DEC", text: p.text, meta: "", tone: "ask",
+        proposalId: p.id, projectId: p.project_id, segmentIndex: p.segment_index,
+      });
       continue;
     }
     const paired = recorded.find((d) => same(p, d));
@@ -123,6 +133,7 @@ export function meetingOutcomes(
     decisions.push({
       key: `ft-${p.id}`, plate: "DEC", text: p.text,
       meta: stateOf(paired) || owner(p.owner) || owner(p.owner_hint) || owner(p.speaker_label) || "DECIDED",
+      proposalId: p.id, projectId: p.project_id, segmentIndex: p.segment_index,
     });
   }
   const decisionProposals = live.filter((p) => p.kind === "decision");
@@ -140,6 +151,8 @@ export function meetingOutcomes(
     owner: owner(p.owner ?? p.owner_hint), due: String(p.due ?? p.due_hint ?? "").trim(),
     gap: !owner(p.owner ?? p.owner_hint) || !String(p.due ?? p.due_hint ?? "").trim(),
     deferredUntil: p.deferred_until,
+    projectId: p.project_id,
+    segmentIndex: p.segment_index,
   });
   const commitments: OutcomeRow[] = [];
   const itemIds = new Set<string>();
@@ -165,6 +178,10 @@ export function meetingOutcomes(
       actionItemId: id || undefined,
       proposalId: proposal.id,
       actionStatus: linkedStatus || null,
+      owner: who,
+      due: String(due ?? "").trim(),
+      projectId: proposal.project_id,
+      segmentIndex: proposal.segment_index,
     });
   }
   const items = data.openActions.length || data.settledActions.length
@@ -187,6 +204,9 @@ export function meetingOutcomes(
       tone: done ? "ok" : undefined,
       actionItemId: id || undefined,
       actionStatus: status || null,
+      owner: who,
+      due: String(due ?? "").trim(),
+      projectId: typeof row.project_id === "string" ? row.project_id : null,
     });
   }
   return { decisions, commitments };
@@ -195,20 +215,19 @@ export function meetingOutcomes(
 function OutcomeLedger({ label, rows, testId, controls }: { label: string; rows: OutcomeRow[]; testId: string; controls?: ReactNode }) {
   if (!rows.length) return null;
   return (
-    <SurfaceSection label={label} count={rows.length || null} data-testid={testId}>
-      <SurfaceLedger label={label} cols="kit" controls={controls}>
+    <SurfaceSection label={label} count={rows.length || null} data-testid={testId} className="meeting-outcome-section">
+      <SurfaceLedger label={label} cols="meeting-outcomes" controls={controls}>
         <ul className="surface-ledger-rows">
           {rows.map((row) => (
             <SurfaceLedgerRow
               key={row.key}
               data-testid={`${testId}-row`}
-              kind={row.plate}
-              kindTitle={row.plate === "DEC" ? "Decision" : "Action"}
               primary={row.text}
               meta={row.meta}
               metaTone={row.tone}
               trailing={row.verbs}
               wrap
+              open={Boolean(row.children)}
               expands={false}
             >{row.children}</SurfaceLedgerRow>
           ))}
@@ -224,18 +243,78 @@ export function MeetingOutcomes({ data, meeting }: { data: MeetingData; meeting:
     ? (intel!.action_items as unknown[]).filter((a): a is Record<string, unknown> => Boolean(a) && typeof a === "object")
     : [];
   const { decisions, commitments } = meetingOutcomes(data, intelActions);
-  // The proposals' verbs: Confirm (the plate) and Dismiss. Never the filled
+  // The proposals' verbs: Confirm and Dismiss. Never the filled
   // primary: the meeting's one primary is Send (the foot).
-  const [people, setPeople] = useState<Array<{ display_name?: string }>>([]);
-  const [drafts, setDrafts] = useState<Record<string, { owner: string; due: string }>>({});
-  const [more, setMore] = useState<Record<string, boolean>>({});
+  type Person = { id?: string; display_name?: string; owner_aliases?: string[] | null };
+  type Draft = { text: string; owner: string; due: string };
+  type MoreMenu = { x: number; y: number; autoFocus: boolean };
+  const [people, setPeople] = useState<Person[]>([]);
+  const [drafts, setDrafts] = useState<Record<string, Draft>>({});
+  const [more, setMore] = useState<Record<string, MoreMenu>>({});
+  const [editing, setEditing] = useState<Record<string, boolean>>({});
+  const [doorPeople, setDoorPeople] = useState<Record<string, string>>({});
+  const doorRead = useRef<{ key: string; promise: Promise<Record<string, string>> } | null>(null);
+  const moreRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   useEffect(() => {
     let live = true;
-    void apiFetch<{ relationships?: Array<{ display_name?: string }> }>("/api/people/relationships")
+    void apiFetch<{ relationships?: Person[] }>("/api/people/relationships")
       .then((body) => { if (live) setPeople(body.relationships ?? []); })
       .catch(() => undefined);
     return () => { live = false; };
   }, []);
+  // People is a read-time projection of the Door. Resolve a destination by
+  // the durable action item id only; the owner label on a meeting row is not
+  // enough to guess a relationship (aliases can be ambiguous or unavailable).
+  const confirmedActionIds = data.ftProposals
+    .filter((proposal) => proposal.kind === "action" && proposal.state === "confirmed" && proposal.action_item_id)
+    .map((proposal) => String(proposal.action_item_id).trim())
+    .filter(Boolean)
+    .sort()
+    .join("|");
+  const doorReadKey = `${data.reviewRevision ?? ""}:${confirmedActionIds}`;
+  useEffect(() => {
+    let live = true;
+    if (!confirmedActionIds) {
+      doorRead.current = null;
+      setDoorPeople({});
+      return () => { live = false; };
+    }
+    const wanted = new Set(confirmedActionIds.split("|"));
+    const existing = doorRead.current?.key === doorReadKey ? doorRead.current.promise : null;
+    const promise = existing ?? apiFetch<{ board?: Record<string, Array<{
+      id?: unknown;
+      source?: unknown;
+      person_relationship_id?: unknown;
+    }>> }>("/api/door").then((body) => {
+      const found: Record<string, string> = {};
+      const ambiguous = new Set<string>();
+      for (const cards of Object.values(body.board ?? {})) {
+        for (const card of cards ?? []) {
+          if (String(card.source ?? "") !== "action_item") continue;
+          const actionId = String(card.id ?? "").trim();
+          const relationshipId = String(card.person_relationship_id ?? "").trim();
+          if (!wanted.has(actionId) || !relationshipId || ambiguous.has(actionId)) continue;
+          if (found[actionId] && found[actionId] !== relationshipId) {
+            delete found[actionId];
+            ambiguous.add(actionId);
+            continue;
+          }
+          found[actionId] = relationshipId;
+        }
+      }
+      return found;
+    });
+    doorRead.current = { key: doorReadKey, promise };
+    void promise
+      .then((found) => {
+        if (live) setDoorPeople(found);
+      })
+      .catch(() => {
+        if (doorRead.current?.key === doorReadKey) doorRead.current = null;
+        if (live) setDoorPeople({});
+      });
+    return () => { live = false; };
+  }, [confirmedActionIds, doorReadKey]);
   const ownerOptions = [
     { value: "", label: "Who?" },
     { value: "Me", label: "Me" },
@@ -244,80 +323,194 @@ export function MeetingOutcomes({ data, meeting }: { data: MeetingData; meeting:
       .filter(Boolean)
       .map((name) => ({ value: name, label: name })),
   ];
-  const verbsFor = (row: OutcomeRow) => {
-    const id = row.key.startsWith("ft-") ? row.key.slice(3) : "";
-    const pending = id && data.ftProposals.some((p) => p.id === id && p.state === "proposed");
-    if (!pending && row.actionItemId) {
-      const actionId = row.actionItemId;
-      if (row.actionStatus === "done") {
-        return (
-          <Button dense variant="secondary" loading={data.busy} data-testid="action-reopen-btn"
-            aria-label={`Reopen: ${row.text}`} onClick={() => void data.completeAction?.(actionId, "reopen")}>
-            Reopen
-          </Button>
-        );
-      }
-      if (row.actionStatus !== "dismissed") {
-        return (
-          <Button dense variant="secondary" loading={data.busy} data-testid="action-done-btn"
-            aria-label={`Done: ${row.text}`} onClick={() => void data.completeAction?.(actionId)}>
-            Done
-          </Button>
-        );
-      }
-    }
-    if (!pending) return undefined;
-    const draft = drafts[id] ?? { owner: row.owner ?? "", due: row.due ?? "" };
-    const setDraft = (field: "owner" | "due", value: string) => {
-      setDrafts((current) => ({ ...current, [id]: { ...draft, [field]: value } }));
-    };
+  const draftFor = (row: OutcomeRow, id: string): Draft =>
+    drafts[id] ?? { text: row.text, owner: row.owner ?? "", due: row.due ?? "" };
+  const setDraft = (row: OutcomeRow, field: keyof Draft, value: string) => {
+    const id = row.proposalId ?? row.key;
+    setDrafts((current) => {
+      const draft = current[id] ?? { text: row.text, owner: row.owner ?? "", due: row.due ?? "" };
+      return { ...current, [id]: { ...draft, [field]: value } };
+    });
+  };
+  const hasSource = (row: OutcomeRow) => {
+    const index = Number(row.segmentIndex);
+    return Number.isInteger(index) && index >= 0 && index < data.segments.length;
+  };
+  const sourceFor = (row: OutcomeRow) => {
+    const index = Number(row.segmentIndex);
+    if (!hasSource(row)) return;
+    openSourceRef(`meeting:${String(meeting.id)}?view=outcomes&segment=${index}`);
+  };
+  const destinationVerbs = (row: OutcomeRow, durable: boolean) => {
+    if (!durable) return null;
+    const actionId = row.actionItemId?.trim();
     return (
       <>
-        <Button dense variant="secondary" loading={data.busy} data-testid="proposal-confirm-btn"
-          aria-label={`Confirm: ${row.text}`} onClick={() => void data.confirmProposal(id, {
-            owner: draft.owner || undefined,
-            due: draft.due || undefined,
-          })}>
-          Confirm
-        </Button>
-        <Button dense variant="ghost" loading={data.busy} data-testid="proposal-more-btn"
-          aria-expanded={more[id] || undefined} onClick={() => setMore((current) => ({ ...current, [id]: !current[id] }))}>
-          More
-        </Button>
-        {more[id] ? (
-          <>
-            <Button dense variant="ghost" loading={data.busy} data-testid="proposal-defer-btn"
-              aria-label={`Not now: ${row.text}`} onClick={() => void data.deferProposal(id)}>
-              Not now
-            </Button>
-            <Button dense variant="ghost" loading={data.busy} data-testid="proposal-dismiss-btn"
-              aria-label={`Dismiss: ${row.text}`} onClick={() => void data.dismissProposal(id)}>
-              Dismiss
-            </Button>
-          </>
+        {actionId ? (
+          <Button dense variant="primary" data-testid="proposal-follow-through-btn"
+            aria-label={`Open follow-through: ${row.text}`} onClick={() => openRef(`action_item:${actionId}`)}>
+            Follow-through
+          </Button>
         ) : null}
       </>
     );
   };
+  const closeMore = (id: string) => {
+    setMore((current) => {
+      if (!current[id]) return current;
+      const next = { ...current };
+      delete next[id];
+      return next;
+    });
+  };
+  const verbsFor = (row: OutcomeRow, original: OutcomeRow = row) => {
+    const id = row.proposalId ?? (row.key.startsWith("ft-") ? row.key.slice(3) : "");
+    const pending = id && data.ftProposals.some((p) => p.id === id && p.state === "proposed");
+    const draft = draftFor(original, id);
+    const editable = Boolean(pending && row.plate === "ACT");
+    const menuEntries: WorkMenuEntry[] = [];
+    const menuBusy = data.busy ? "Busy" : undefined;
+    if (hasSource(row)) {
+      menuEntries.push({
+        type: "item", id: `show-transcript-${id}`, label: "Show in transcript", ghost: menuBusy,
+        onSelect: () => sourceFor(row),
+      });
+    }
+    if (editable) {
+      menuEntries.push({
+        type: "item", id: `edit-${id}`, label: editing[id] ? "Close edit" : "Edit", ghost: menuBusy,
+        onSelect: () => setEditing((current) => ({ ...current, [id]: !current[id] })),
+      });
+    }
+    if (pending) {
+      menuEntries.push(
+        {
+          type: "item", id: `defer-${id}`, label: "Not now", ghost: menuBusy,
+          onSelect: () => void data.deferProposal(id),
+        },
+        {
+          type: "item", id: `dismiss-${id}`, label: "Dismiss", ghost: menuBusy,
+          onSelect: () => void data.dismissProposal(id),
+        },
+      );
+    }
+    if (!pending && row.projectId) {
+      menuEntries.push({
+        type: "item", id: `project-${id}`, label: "Project", ghost: menuBusy,
+        onSelect: () => openProjectRoom(row.projectId!),
+      });
+    }
+    if (!pending && row.personRelationshipId) {
+      menuEntries.push({
+        type: "item", id: `people-${id}`, label: "People", ghost: menuBusy,
+        onSelect: () => openPerson(row.personRelationshipId!, "prep"),
+      });
+    }
+    const hasMenu = menuEntries.length > 0;
+    const menu = hasMenu ? (
+      <>
+        <Button
+          ref={(element) => { moreRefs.current[id] = element; }}
+          dense
+          variant="ghost"
+          loading={data.busy}
+          data-testid="proposal-more-btn"
+          aria-haspopup="menu"
+          aria-expanded={Boolean(more[id])}
+          onClick={(event) => {
+            const rect = event.currentTarget.getBoundingClientRect();
+            if (more[id]) closeMore(id);
+            else setMore((current) => ({ ...current, [id]: { x: rect.left, y: rect.bottom, autoFocus: event.detail === 0 } }));
+          }}
+        >
+          More
+        </Button>
+        {more[id] ? (
+          <WorkMenu
+            label={`More actions for ${row.text}`}
+            x={more[id].x}
+            y={more[id].y}
+            entries={menuEntries}
+            autoFocus={more[id].autoFocus}
+            returnFocus={() => moreRefs.current[id]?.focus()}
+            onClose={() => closeMore(id)}
+          />
+        ) : null}
+      </>
+    ) : null;
+    const confirmBlocked = !draft.text.trim()
+      || (Boolean(original.owner?.trim()) && !draft.owner.trim())
+      || (Boolean(original.due?.trim()) && !draft.due.trim());
+    const lifecycle = pending ? (
+      <Button dense variant="secondary" loading={data.busy} data-testid="proposal-confirm-btn"
+        disabled={confirmBlocked}
+        aria-label={`Confirm: ${draft.text}`} onClick={() => {
+          setEditing((current) => ({ ...current, [id]: false }));
+          void data.confirmProposal(id, {
+            text: draft.text.trim() && (editing[id] || draft.text.trim() !== original.text) ? draft.text.trim() : undefined,
+            owner: draft.owner || undefined,
+            due: draft.due || undefined,
+          });
+        }}>
+        Confirm
+      </Button>
+    ) : null;
+    const actionLifecycle = !pending && row.actionItemId ? (
+      row.actionStatus === "done" ? (
+        <Button dense variant="secondary" loading={data.busy} data-testid="action-reopen-btn"
+          aria-label={`Reopen: ${row.text}`} onClick={() => void data.completeAction?.(row.actionItemId!, "reopen")}>
+          Reopen
+        </Button>
+      ) : row.actionStatus !== "dismissed" ? (
+        <Button dense variant="secondary" loading={data.busy} data-testid="action-done-btn"
+          aria-label={`Done: ${row.text}`} onClick={() => void data.completeAction?.(row.actionItemId!)}>
+          Done
+        </Button>
+      ) : null
+    ) : null;
+    return <>{lifecycle}{actionLifecycle}{destinationVerbs(row, !pending)}{menu}</>;
+  };
   const gapFor = (row: OutcomeRow) => {
-    if (!row.gap || !row.proposalId) return undefined;
+    if (!row.proposalId) return undefined;
     const id = row.proposalId;
-    const draft = drafts[id] ?? { owner: row.owner ?? "", due: row.due ?? "" };
-    const setDraft = (field: "owner" | "due", value: string) => {
-      setDrafts((current) => ({ ...current, [id]: { ...draft, [field]: value } }));
-    };
+    if (row.plate !== "ACT" && editing[id]) return undefined;
+    if (!row.gap && !editing[id]) return undefined;
+    const draft = draftFor(row, id);
+    const editableAction = row.plate === "ACT";
+    const showOwner = editableAction && (editing[id] || !draft.owner);
+    const showDue = editableAction && (editing[id] || !draft.due);
+    if (!editing[id] && !showOwner && !showDue) return undefined;
     return (
       <div className="meeting-outcome-gap" data-testid="outcome-gap">
-        {!draft.owner ? <CycleGadget label="Who?" value={draft.owner} options={ownerOptions} onChange={(value) => setDraft("owner", value)} disabled={data.busy} /> : null}
-        {!draft.due ? <StringGadget label="When?" type="date" value={draft.due} onChange={(value) => setDraft("due", value)} disabled={data.busy} /> : null}
+        {editing[id] ? <StringGadget label="Task" value={draft.text} onChange={(value) => setDraft(row, "text", value)} disabled={data.busy} /> : null}
+        {showOwner ? <CycleGadget label="Who?" value={draft.owner} options={ownerOptions} onChange={(value) => setDraft(row, "owner", value)} disabled={data.busy} /> : null}
+        {showDue ? <StringGadget label="When?" type="date" value={draft.due} onChange={(value) => setDraft(row, "due", value)} disabled={data.busy} /> : null}
       </div>
     );
   };
-  const withVerbs = (rows: OutcomeRow[]) => rows.map((row) => ({
-    ...row,
-    verbs: verbsFor(row),
-    children: gapFor(row),
-  }));
+  const withVerbs = (rows: OutcomeRow[]) => rows.map((row) => {
+    const id = row.proposalId ?? row.key;
+    const draft = draftFor(row, id);
+    const pending = Boolean(data.ftProposals.find((proposal) => proposal.id === id)?.state === "proposed");
+    const draftChanged = Boolean(pending && drafts[id]
+      && (draft.text !== row.text || draft.owner !== (row.owner ?? "") || draft.due !== (row.due ?? "")));
+    const actionId = row.actionItemId?.trim();
+    const decorated = { ...row, personRelationshipId: actionId ? doorPeople[actionId] ?? null : null };
+    const display = {
+      ...decorated,
+      text: draftChanged ? draft.text : row.text,
+      owner: draftChanged ? draft.owner : row.owner,
+      due: draftChanged ? draft.due : row.due,
+      meta: draftChanged
+        ? `${draft.owner || "no owner"} · ${draft.due ? `by ${draft.due}` : "no date"}`
+        : row.meta,
+    };
+    return {
+      ...display,
+      verbs: verbsFor(display, row),
+      children: gapFor(display),
+    };
+  });
   const eligible = commitments.filter((row) => {
     const id = row.proposalId;
     if (!id || row.gap) return false;
@@ -329,14 +522,37 @@ export function MeetingOutcomes({ data, meeting }: { data: MeetingData; meeting:
       && proposal.extraction_revision !== data.reviewRevision) return false;
     return true;
   });
-  const controls = eligible.length ? (
-    <Button dense variant="primary" loading={data.busy} data-testid="proposal-confirm-all-btn" onClick={() => void data.confirmAll()}>
-      Confirm all {eligible.length}
+  const bulkBlocked = commitments.some((row) => {
+    const id = row.proposalId;
+    if (!id || data.ftProposals.find((proposal) => proposal.id === id)?.state !== "proposed") return false;
+    if (editing[id]) return true;
+    const draft = drafts[id];
+    return Boolean(draft && (draft.text !== row.text || draft.owner !== (row.owner ?? "") || draft.due !== (row.due ?? "")));
+  });
+  const controls = (
+    <>
+      {eligible.length ? (
+        <Button dense variant={bulkBlocked ? "ghost" : "primary"} disabled={bulkBlocked} loading={data.busy} data-testid="proposal-confirm-all-btn" onClick={() => void data.confirmAll()}>
+          Confirm all {eligible.length}
+        </Button>
+      ) : null}
+      {data.outcomeRefreshFailed ? (
+        <Button dense variant="ghost" loading={data.busy} data-testid="outcome-refresh-retry-btn"
+          aria-label="Retry outcome refresh" onClick={() => void data.retryOutcomeReview()}>
+          Retry
+        </Button>
+      ) : null}
+    </>
+  );
+  const decisionsControls = !commitments.length && data.outcomeRefreshFailed ? (
+    <Button dense variant="ghost" loading={data.busy} data-testid="outcome-refresh-retry-btn"
+      aria-label="Retry outcome refresh" onClick={() => void data.retryOutcomeReview()}>
+      Retry
     </Button>
   ) : null;
   return (
     <>
-      <OutcomeLedger label="Decided" rows={withVerbs(decisions)} testId="meeting-decisions" />
+      <OutcomeLedger label="Decided" rows={withVerbs(decisions)} testId="meeting-decisions" controls={decisionsControls} />
       <OutcomeLedger label="Who owes what" rows={withVerbs(commitments)} testId="meeting-commitments" controls={controls} />
     </>
   );
@@ -439,10 +655,21 @@ export function MeetingDetail({
   const hasTranscript = segments.length > 0 || (
     meeting.transcriptWords != null && Number(meeting.transcriptWords) > 0
   );
+  const compactSavedOutcome = view === "outcomes" && !meetingPipelineActive(meeting, data);
 
   return (
     <SurfaceSection>
-      <MeetingHeader meeting={meeting} data={data} compact={false} saidOnFace={saidOnFace} />
+      {compactSavedOutcome ? (
+        <AppHead
+          className="meetings-detail-head"
+          fact={meetingOutcomeFact(meeting, data)}
+          as="div"
+        >
+          <MeetingHeader meeting={meeting} data={data} compact saidOnFace={saidOnFace} />
+        </AppHead>
+      ) : (
+        <MeetingHeader meeting={meeting} data={data} compact={false} saidOnFace={saidOnFace} />
+      )}
       {/* PHILO-17 (the desk sweep): the record's body is mounted at once
           (its wells start their reads) but drawn only when its first reads
           end, the Send well's included, or at the cap: a late read never

@@ -55,21 +55,27 @@ class ActionItemTriageUnavailable(ServiceError):
         )
 
 
-def _accepts_principal(callback: Any) -> bool:
-    """Whether a bound capture-start callback takes the authenticated principal.
+def _accepts_kwarg(callback: Any, name: str) -> bool:
+    """Whether a bound capture-start callback accepts a named keyword."""
 
-    The runtime's ``_start_meeting`` does; partial test/adapter bindings need not,
-    and must not be handed an argument they cannot name.
-    """
     import inspect
 
     try:
         parameters = inspect.signature(callback).parameters
     except (TypeError, ValueError):
         return False
-    if "principal" in parameters:
+    if name in parameters:
         return True
     return any(p.kind is inspect.Parameter.VAR_KEYWORD for p in parameters.values())
+
+
+def _accepts_principal(callback: Any) -> bool:
+    """Whether a bound capture-start callback takes the authenticated principal.
+
+    The runtime's ``_start_meeting`` does; partial test/adapter bindings need not,
+    and must not be handed an argument they cannot name.
+    """
+    return _accepts_kwarg(callback, "principal")
 
 
 class _MeetingPersonRedactor:
@@ -782,12 +788,38 @@ class MeetingService:
     ) -> dict[str, Any] | Any:
         if self._on_start is None:
             raise ValidationError("Meeting start control not supported")
-        devices = list((config or {}).get("devices") or [])
+        config = config or {}
+        devices = list(config.get("devices") or [])
+        # The People handoff carries only the public calendar projection key.
+        # Validate it before capture starts, so a stale Prep window cannot put
+        # an old event id on a new meeting. The relationship and agenda remain
+        # in the encrypted People sidecar and never cross this boundary.
+        calendar_event_id = str(config.get("calendar_event_id") or "").strip()
+        if calendar_event_id:
+            try:
+                event = self._db.calendar_events.get(calendar_event_id)
+            except Exception as exc:
+                raise ValidationError(
+                    "Calendar event is no longer available",
+                    code="calendar_event_unavailable",
+                ) from exc
+            if event is None:
+                raise ValidationError(
+                    "Calendar event is no longer available",
+                    code="calendar_event_unavailable",
+                )
         # HS-131-08: the AUTHENTICATED caller reaches capture start, because live
         # meeting intelligence is admitted under exactly this principal.
         kwargs: dict[str, Any] = {"principal": principal} if _accepts_principal(self._on_start) else {}
         if devices:
             kwargs["devices"] = devices
+        if calendar_event_id:
+            if not _accepts_kwarg(self._on_start, "calendar_event_id"):
+                raise ValidationError(
+                    "Meeting start control cannot carry calendar context",
+                    code="calendar_event_unavailable",
+                )
+            kwargs["calendar_event_id"] = calendar_event_id
         result = self._on_start(**kwargs)
         return self._callback_payload(result)
 

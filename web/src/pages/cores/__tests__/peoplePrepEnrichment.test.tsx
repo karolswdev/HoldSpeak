@@ -158,7 +158,7 @@ describe("People Prep enrichment HS-172-05", () => {
     expect(within(meetingRow).getByTestId("prep-meeting-open-count")).toHaveTextContent("2 OPEN");
 
     // Footer.
-    expect(screen.getByText("THIS DEVICE")).toBeTruthy();
+    expect(screen.queryByText("THIS DEVICE")).toBeNull();
     expect(screen.getByTestId("prep-receipt").textContent).toMatch(/^PREPARED \d{2}:\d{2}$/);
   });
 

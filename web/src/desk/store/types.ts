@@ -99,6 +99,11 @@ export interface ScheduledRecording {
   created_at: string;
 }
 
+/** Context for a recording started from an exact calendar event. */
+export interface RecordingStartContext {
+  calendarEventId: string;
+}
+
 /** HS-175 C2: the outcome of an owner's Cancel on a scheduled recording.
  *  A refusal carries the hub's plain reason (never a stack) and its code
  *  (`already_recording`, `not_armed`, ...) so the face can name it. */
@@ -377,7 +382,7 @@ export interface DeskState {
    * transition happened since. */
   applyRecordingSnapshot(activity: unknown, askedAt: number, liveMeetingId?: string | null): void;
   /** Start the hub recorder in place (never a browser mic). */
-  startRecording(): Promise<void>;
+  startRecording(context?: RecordingStartContext): Promise<void>;
   /** Stop the hub recorder; the finished meeting materializes NEW. */
   stopRecording(): Promise<void>;
   /** Resize a zone tray; persist=true saves the width. */

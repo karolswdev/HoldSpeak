@@ -31,6 +31,7 @@ import { windowName } from "../windowName";
 import { WingSlotContext } from "../surface/wings";
 import type { CoreProps } from "../../pages/cores/core-types";
 import { ApplicationBoundary } from "./ApplicationBoundary";
+import { useSurfaceScrollPlace } from "../hooks/useSurfaceScrollPlace";
 
 export interface SurfaceRow {
   key: string;
@@ -212,6 +213,7 @@ export function SurfaceWindowHost({
       ? objectByRef(items, scope)
       : null;
   const scopedName = project ? windowName({ kind: "project", name: project.title }, project.id) : null;
+  const bodyRef = useSurfaceScrollPlace(row.id, scope);
   return (
     <DeskWindowFrame
       id={row.id}
@@ -239,7 +241,7 @@ export function SurfaceWindowHost({
       }
     >
       <FootSlotContext.Provider value={foot}>
-        <div className="desk-surface-body">
+        <div ref={bodyRef} className="desk-surface-body">
           <div data-aftercare-window-slot="top" />
           <TitleSlotContext.Provider value={setTitleOverride}>
             <WingSlotContext.Provider value={setWings}>

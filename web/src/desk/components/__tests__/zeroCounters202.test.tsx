@@ -73,12 +73,9 @@ beforeEach(() => {
 // are parked with the Floor (desk/_parked/floor/); no face draws a zone.
 
 describe("Ask AI opens without counting its turns to zero (A.8)", () => {
-  it("heads a fresh session with SESSION, not SESSION · 0 TURNS", () => {
+  it("starts with the composer instead of an empty session traffic card", () => {
     render(<AskPanel />);
-    const head = document.querySelector(
-      ".desk-ask-body .surface-well-head",
-    )?.textContent;
-    expect(head, "the Ask session well draws its head").toBeTruthy();
-    expect(head).toBe("SESSION");
+    expect(document.querySelector(".desk-ask-body .surface-traffic")).toBeNull();
+    expect(document.querySelector(".desk-ask-body .surface-well-head")).toBeNull();
   });
 });

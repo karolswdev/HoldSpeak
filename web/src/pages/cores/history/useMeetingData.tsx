@@ -55,6 +55,12 @@ export interface FollowThroughProposal {
   action_item_status?: string | null;
   action_completed_at?: string | null;
   extraction_revision?: string | null;
+  /** The transcript moment that grounded this proposal, when the extractor
+   *  kept one.  The outcome face uses the row's existing meeting opener. */
+  segment_index?: number | null;
+  segment_timestamp?: number | null;
+  span_start?: number | null;
+  span_end?: number | null;
 }
 
 export interface OutcomeReviewResponse {
@@ -111,7 +117,10 @@ export interface MeetingData {
   /** HS-172: follow-through proposals for this meeting. */
   ftProposals: FollowThroughProposal[];
   reviewRevision: string | null;
-  confirmProposal: (id: string, fields?: { owner?: string; due?: string }) => Promise<void>;
+  /** A confirmed write stays visible when its follow-up read is unavailable. */
+  outcomeRefreshFailed: boolean;
+  retryOutcomeReview: () => Promise<void>;
+  confirmProposal: (id: string, fields?: { text?: string; owner?: string; due?: string }) => Promise<void>;
   dismissProposal: (id: string) => Promise<void>;
   deferProposal: (id: string) => Promise<void>;
   confirmAll: () => Promise<void>;
@@ -165,12 +174,17 @@ export function useMeetingData(
   const [authority, setAuthority] = useState<Record<string, unknown>>({});
   const [ftProposals, setFtProposals] = useState<FollowThroughProposal[]>([]);
   const [reviewRevision, setReviewRevision] = useState<string | null>(null);
+  const [outcomeRefreshFailed, setOutcomeRefreshFailed] = useState(false);
   const [meetingDecisions, setMeetingDecisions] = useState<MeetingDecision[]>([]);
   const [completedActionIds, setCompletedActionIds] = useState<ReadonlySet<string>>(new Set());
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const recordsSeq = useRef(0);
+  const outcomeReadSeq = useRef(0);
   useEffect(() => {
     setCompletedActionIds(new Set());
+    setOutcomeRefreshFailed(false);
+    outcomeReadSeq.current += 1;
   }, [id]);
   // PHILO-17 (the desk sweep; Astra r1 on #1108): each first read, by name,
   // for this meeting. A read counts once it ended (read or failed); a records
@@ -188,7 +202,22 @@ export function useMeetingData(
   // PHILO-17 (Astra r2): ONE freshness rule for the meeting's own records
   // (aftercare, proposals, follow-through proposals, decisions), read by the
   // first read and again on every revision: only the newest request writes.
-  const recordsSeq = useRef(0);
+  const refreshOutcomeReview = useCallback(async (): Promise<boolean> => {
+    const read = ++outcomeReadSeq.current;
+    try {
+      const refreshed = await readOutcomeReview(id);
+      if (read !== outcomeReadSeq.current) return false;
+      setFtProposals(refreshed.proposals ?? []);
+      setReviewRevision(refreshed.revision ?? null);
+      setOutcomeRefreshFailed(false);
+      return true;
+    } catch {
+      // The confirm already committed. Keep the last known projection and
+      // leave a Retry verb on the face instead of reporting a false refusal.
+      if (read === outcomeReadSeq.current) setOutcomeRefreshFailed(true);
+      return false;
+    }
+  }, [id]);
   useEffect(() => {
     if (!id) return;
     const records = ++recordsSeq.current;
@@ -242,12 +271,17 @@ export function useMeetingData(
       .then(mine(setAuthority))
       .catch(() => { if (live) setAuthority({}); })
       .finally(end("authority"));
+    const outcomeRead = ++outcomeReadSeq.current;
     void readOutcomeReview(id)
       .then(mine(newest((res: OutcomeReviewResponse) => {
+        if (outcomeRead !== outcomeReadSeq.current) return;
         setFtProposals(res.proposals ?? []);
         setReviewRevision(res.revision ?? null);
+        setOutcomeRefreshFailed(false);
       })))
-      .catch(() => { if (live && records === recordsSeq.current) setFtProposals([]); })
+      .catch(() => {
+        if (live && records === recordsSeq.current && outcomeRead === outcomeReadSeq.current) setFtProposals([]);
+      })
       .finally(endNewest("ftProposals"));
     void apiFetch<{ decisions?: MeetingDecision[] }>(
       `/api/decisions?scope=all&limit=500&meeting_id=${encodeURIComponent(id)}`,
@@ -281,9 +315,12 @@ export function useMeetingData(
       .then(mine(setAftercare)).catch(() => undefined).finally(endNewest("aftercare"));
     void apiFetch<MeetingProposalsResponse>(`/api/meetings/${encodeURIComponent(id)}/proposals`)
       .then(mine(setProposals)).catch(() => undefined).finally(endNewest("proposals"));
+    const outcomeRead = ++outcomeReadSeq.current;
     void readOutcomeReview(id).then(mine((res: OutcomeReviewResponse) => {
+      if (outcomeRead !== outcomeReadSeq.current) return;
       setFtProposals(res.proposals ?? []);
       setReviewRevision(res.revision ?? null);
+      setOutcomeRefreshFailed(false);
     }))
       .catch(() => undefined).finally(endNewest("ftProposals"));
     void apiFetch<{ decisions?: MeetingDecision[] }>(
@@ -343,27 +380,45 @@ export function useMeetingData(
   // HS-172: confirm/dismiss follow-through proposals.
   const confirmProposal = async (
     proposalId: string,
-    fields: { owner?: string; due?: string } = {},
+    fields: { text?: string; owner?: string; due?: string } = {},
   ) => {
     setBusy(true);
     try {
-      await apiFetch(`/api/proposals/${encodeURIComponent(proposalId)}/confirm`, {
-        method: "POST",
-        json: fields,
-      });
+      const result = await apiFetch<{ proposal?: Partial<FollowThroughProposal> }>(
+        `/api/proposals/${encodeURIComponent(proposalId)}/confirm`, {
+          method: "POST",
+          json: fields,
+        },
+      ) ?? {};
       // Phase 16 (Astra r1 M2): the confirmed proposal stays on the record
       // (Decisions · n keeps it, now decided), never vanishing until a reload.
       setFtProposals((prev) => prev.map((p) => (
         p.id === proposalId
-          ? { ...p, state: "confirmed", owner: fields.owner ?? p.owner, due: fields.due ?? p.due }
+          ? {
+            ...p,
+            ...(result.proposal ?? {}),
+            state: "confirmed",
+            text: result.proposal?.text ?? fields.text ?? p.text,
+            owner: result.proposal?.owner ?? fields.owner ?? p.owner,
+            due: result.proposal?.due ?? fields.due ?? p.due,
+          }
           : p
       )));
       onReceipt({ text: "CONFIRMED" });
+      await refreshOutcomeReview();
     } catch (reason) {
       onReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
     } finally {
       setBusy(false);
     }
+  };
+
+  const retryOutcomeReview = async () => {
+    setBusy(true);
+    const refreshed = await refreshOutcomeReview();
+    if (refreshed) onReceipt({ text: "REFRESHED" });
+    else onReceipt({ text: "CONFIRMED · RETRY" });
+    setBusy(false);
   };
 
   const deferProposal = async (proposalId: string) => {
@@ -391,14 +446,12 @@ export function useMeetingData(
         `/api/meetings/${encodeURIComponent(id)}/proposals/accept-reviewed`,
         { method: "POST", json: {} },
       );
-      const refreshed = await readOutcomeReview(id);
-      setFtProposals(refreshed.proposals ?? []);
-      setReviewRevision(refreshed.revision ?? null);
       const accepted = Number(result.accepted_count ?? 0);
       // The eligible guard belongs to the face, but a concurrent read can
       // still leave the hub with nothing to accept. Never print a counter of
       // zero; the receipt's useful fact is simply that confirmation finished.
       onReceipt({ text: accepted > 0 ? `CONFIRMED ${accepted}` : "CONFIRMED" });
+      await refreshOutcomeReview();
     } catch (reason) {
       onReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
     } finally {
@@ -583,6 +636,8 @@ export function useMeetingData(
     durationS,
     ftProposals,
     reviewRevision,
+    outcomeRefreshFailed,
+    retryOutcomeReview,
     confirmProposal,
     dismissProposal,
     deferProposal,

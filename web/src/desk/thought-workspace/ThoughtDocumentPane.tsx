@@ -2,7 +2,7 @@ import { NEW_THOUGHT_TITLE } from "../thoughtTitle";
 import { useEffect, useRef } from "react";
 import { EditInPlace } from "../surface";
 import { MicButton } from "../components/MicButton";
-import { DeskEditor, type DeskEditorHandle } from "../components/DeskEditor";
+import { DeskEditor, type DeskEditorHandle, type DeskEditorSelection } from "../components/DeskEditor";
 import type { ThoughtDraft } from "../pullouts/editors/useThoughtNoteWriter";
 import { claimThoughtKeys } from "../thoughtKeys";
 
@@ -20,6 +20,7 @@ export function ThoughtDocumentPane({
   disabled,
   lockedReason,
   revealRange,
+  onSelectionChange,
 }: {
   /** The thought's note. With it, the field takes the keys typed between
    *  `Write a thought` and this window (thoughtKeys.ts). */
@@ -31,6 +32,7 @@ export function ThoughtDocumentPane({
    *  dead field without a reason — the EditInPlace contract. */
   lockedReason?: string;
   revealRange?: { start: number; end: number; focus?: boolean } | null;
+  onSelectionChange?: (selection: DeskEditorSelection) => void;
 }) {
   const bodyRef = useRef<DeskEditorHandle | null>(null);
 
@@ -72,6 +74,7 @@ export function ThoughtDocumentPane({
         showToolbar={false}
         lineWrapping
         onChange={(body) => onEdit({ body })}
+        onSelectionChange={onSelectionChange}
       />
       <span className="thought-note-field-mic">
         <MicButton label="Speak the note" onText={(text) => bodyRef.current?.insertAtCursor(text)} />

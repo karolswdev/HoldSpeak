@@ -4,9 +4,23 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-13 (productive desk: #1197)
+**Last updated:** 2026-10-13 (daily journeys: #1198)
 
 ## Current phase
+
+**Daily journeys — #1198 (2026-10-13).** One substantial follow-through PR
+on #1197: linked People Prep → Record with validated calendar provenance;
+Outcomes → corrected task/owner/date → durable accepted work; selected Note
+text → Task or visible Ask quote with its canonical source. More uses the
+shared menu, phone rows remain readable, Ask is quieter, and hosted surfaces
+keep scroll by scope. Pending edits cannot be bypassed by Confirm all; both
+single and bulk confirmations keep success when only the reread fails.
+Week detail refreshes keep their reading marker while retaining current rows.
+Final quick check GREEN: 3,508 web, 1,302 Python, 106 sweep (3 existing
+known reds xfailed), 15 canon. Typecheck and architecture/API generation green;
+10 isolated real-hub journey walks at 1440/393 passed. Owner desk judgment,
+real microphone/LAN model, and the intermittent Week movement remain open.
+[Handover](../docs/internal/HANDOVER-DAILY-JOURNEYS-2026-10-13.md).
 
 **Productivity implementation — #1197 (2026-10-13).** One combined PR at the
 owner’s request, built from the October 13 verbs/windows/words/attention
@@ -41,6 +55,15 @@ Now: the fast-lane change (owner ruling 2026-10-03): remove the commit gate; sto
 committing generated docs and line-number test maps; split the tests.
 
 ## Open work
+
+**From #1198:** two intermediate full sweeps observed a Week 1440 layout
+movement (166 / 118 px). Six focused checks, three complete diagnostic sweeps,
+the unchanged #1197 baseline, and the final unmodified quick check passed;
+the original movement's cause remains unproven. No fence or known-red
+allowance was relaxed. Owner usability, real microphone/calendar capture,
+LAN model quality/latency, full main tape, and Astra's postmerge review remain
+unobserved/due. Automatic Finish extraction remains later work with the real
+subject-aware durable producer; see the handover for exact boundaries.
 
 **From #1197:** owner desk judgment and real LAN latency remain unobserved;
 the reported 122-second Ask delay has no verified runtime cause. Automatic
@@ -98,6 +121,12 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 
 ## Last merged (newest first)
 
+- **#1198 — Daily journeys, one combined PR (2026-10-13).** Prep → Record;
+  inline Outcomes correction and durable destinations; selected Note → Task /
+  Ask; draft-safe bulk confirmation, honest reread Retry, scoped scroll place,
+  quieter Ask and readable desktop/phone rows. Quick check GREEN (3,508 web /
+  1,302 Python / 106 sweep / 15 canon), final typecheck green, 10 real isolated
+  hub walks passed. Remaining observations are explicit above and in handover.
 - **#1197 — Productive desk, one substantial PR (2026-10-13).** Meetings record
   inside its app with Back and reload; one Outcomes review and durable Done;
   accepted actions in People prep; Note → Task/Project/Ask with saved source;

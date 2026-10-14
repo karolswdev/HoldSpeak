@@ -27,6 +27,7 @@ import { refreshEngine, useEngine } from "../hooks/useEngine";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { ThoughtSaveFault, useThoughtNoteWriter } from "../pullouts/editors/useThoughtNoteWriter";
 import { ThoughtDocumentPane } from "./ThoughtDocumentPane";
+import { latchAskSelection } from "../ask";
 import { ThoughtReadsWell, type ReadsResult } from "./ThoughtReadsWell";
 import { TaskWell } from "./TaskWell";
 import { ProjectWell } from "./ProjectWell";
@@ -138,6 +139,9 @@ function WorkspaceReady({
      copies the working text. */
   const [sending, setSending] = useState(false);
   const [actionWell, setActionWell] = useState<"task" | "project" | null>(null);
+  const [selectedPassage, setSelectedPassage] = useState<{ from: number; to: number; text: string; body: string } | null>(null);
+  const [actionPassage, setActionPassage] = useState<string | null>(null);
+  const ignoreSelectionAfterEdit = useRef(false);
   const hasProjects = useDesk((state) => state.projects.some((project) => !project.is_archived));
   const { copy, receipt: copyReceipt } = useCopyReceipt();
   const winId = useWindowId();
@@ -167,6 +171,9 @@ function WorkspaceReady({
   const draftNoteId = documentThought.working_note.id;
   const taskText = writer.draft.body.trim().split(/\r?\n/, 1)[0]
     || (writer.draft.title.trim() !== NEW_THOUGHT_TITLE ? writer.draft.title.trim() : "");
+  useEffect(() => {
+    setSelectedPassage((current) => current && current.body === writer.draft.body ? current : null);
+  }, [writer.draft.body]);
   useAnnounceWindowDocument({ kind: "note", id: draftNoteId });
   useEffect(() => seatThoughtDraft(draftNoteId, {
     words: () => draftSeat.current.words(),
@@ -220,6 +227,8 @@ function WorkspaceReady({
 
   const installMutation = async (result: WorkspaceMutation, reveal: boolean) => {
     if (result.workbench && !install(result.workbench)) return false;
+    setSelectedPassage(null);
+    setActionPassage(null);
     setDocumentThought(result.thought);
     if (!result.workbench) await reload();
     const effect = appendEffect(result.receipt);
@@ -458,6 +467,8 @@ function WorkspaceReady({
       const fresh = await reload(false);
       const note = fresh.thought.working_note;
       setDocumentThought(fresh.thought);
+      setSelectedPassage(null);
+      setActionPassage(null);
       setRevealRange(null);
       writer.edit({ title: note.title, body: note.body_markdown, tags: note.tags.join(", ") });
     } catch (cause) {
@@ -493,7 +504,9 @@ function WorkspaceReady({
     if (busy) return;
     setBusy(true); say("");
     try {
-      await writer.flush({ fence: true });
+      const selected = selectedPassage;
+      const latest = await writer.flush({ fence: true });
+      setActionPassage(selected && selected.text.trim() && selected.body === latest.working_note.body_markdown ? selected.text : null);
       setActionWell((current) => current === kind ? null : kind);
     } catch (cause) { sayFault(cause); }
     finally { writer.release(); setBusy(false); }
@@ -502,7 +515,11 @@ function WorkspaceReady({
     if (busy) return;
     setBusy(true); say("");
     try {
-      await writer.flush({ fence: true });
+      const selected = selectedPassage;
+      const latest = await writer.flush({ fence: true });
+      latchAskSelection(selected && selected.text.trim() && selected.body === latest.working_note.body_markdown
+        ? { noteRef: `note:${draftNoteId}`, text: selected.text }
+        : null);
       useDesk.getState().setSelected([`note:${draftNoteId}`]);
       useDesk.getState().openAsk();
       say("Ask opened");
@@ -510,6 +527,8 @@ function WorkspaceReady({
     finally { writer.release(); setBusy(false); }
   };
   const readsResult = (result: ReadsResult) => {
+    setSelectedPassage(null);
+    setActionPassage(null);
     setDocumentThought(result.thought);
     if (result.workbench) install(result.workbench);
     else void reload();
@@ -528,15 +547,34 @@ function WorkspaceReady({
     if (busy) return;
     if (question && answer.trim()) { void addAnswer(); return; }
     if (draftBody) { void addDraft(); return; }
-    askRow?.act();
+    if (askRow) { askRow.act(); return; }
+    void finish();
   }}>
     <ThoughtDocumentPane
       noteId={documentThought.working_note.id}
       draft={writer.draft}
-      onEdit={(patch) => { setRevealRange(null); writer.edit(patch); }}
+      onEdit={(patch) => {
+        setRevealRange(null);
+        if (patch.body !== undefined) {
+          ignoreSelectionAfterEdit.current = true;
+          setSelectedPassage(null);
+          setActionPassage(null);
+        }
+        writer.edit(patch);
+      }}
       disabled={busy || documentThought.state !== "working"}
       lockedReason={completed ? "FINISHED" : undefined}
       revealRange={revealRange}
+      onSelectionChange={(selection) => {
+        if (ignoreSelectionAfterEdit.current) {
+          ignoreSelectionAfterEdit.current = false;
+          setSelectedPassage(null);
+          return;
+        }
+        setSelectedPassage(selection.text.trim()
+          ? { from: selection.from, to: selection.to, text: selection.text, body: writer.draft.body }
+          : null);
+      }}
     />
 
     {showAskBand ? <section className="thought-note-ask" aria-label="Ask about this note">
@@ -603,13 +641,13 @@ function WorkspaceReady({
 
     {actionWell === "task" ? <TaskWell
       noteId={draftNoteId}
-      initialText={taskText}
+      initialText={actionPassage || taskText}
       onAdded={say}
-      onClose={() => setActionWell(null)}
+      onClose={() => { setActionWell(null); setActionPassage(null); }}
     /> : actionWell === "project" ? <ProjectWell
       noteId={draftNoteId}
       onAdded={say}
-      onClose={() => setActionWell(null)}
+      onClose={() => { setActionWell(null); setActionPassage(null); }}
     /> : null}
 
     <SurfaceFooter

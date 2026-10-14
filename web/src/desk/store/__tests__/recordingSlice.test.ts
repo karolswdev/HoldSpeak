@@ -74,6 +74,32 @@ describe("recordingSlice", () => {
     expect(state.recording).toBe("recording");
   });
 
+  it("keeps the calendar event context on an explicit retry", async () => {
+    request.mockRejectedValueOnce(new TypeError("offline")).mockResolvedValueOnce(new Response());
+    const state = makeSlice();
+    const context = { calendarEventId: "event-1" };
+
+    await state.startRecording(context);
+
+    expect(request).toHaveBeenNthCalledWith(1, "/api/meeting/start", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ calendar_event_id: "event-1" }),
+    });
+    const refusal = currentWriteFailure();
+    expect(refusal?.retry).toEqual(expect.any(Function));
+
+    refusal?.retry?.();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+    expect(request).toHaveBeenNthCalledWith(2, "/api/meeting/start", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ calendar_event_id: "event-1" }),
+    });
+    expect(state.recording).toBe("recording");
+  });
+
   // PHILO-13-04 (A3) — a refused start is not a recording. The hub answers
   // 501 when it has no recorder (holdspeak/web/routes/meetings/live.py); the
   // fetch resolves, so the slice must read `res.ok`.
@@ -106,6 +132,17 @@ describe("recordingSlice", () => {
     expect(state.recording).toBe("idle");
     expect(currentWriteFailure()?.label).toBe("NOT RECORDING · THE HUB DID NOT START IT");
     expect(currentWriteFailure()?.retry).toEqual(expect.any(Function));
+  });
+
+  it("a stale calendar context stays idle without a retry", async () => {
+    request.mockResolvedValueOnce(new Response("{}", { status: 409 }));
+    const state = makeSlice();
+
+    await state.startRecording({ calendarEventId: "event-gone" });
+
+    expect(state.recording).toBe("idle");
+    expect(currentWriteFailure()?.label).toBe("NOT RECORDING · MEETING CONTEXT EXPIRED");
+    expect(currentWriteFailure()?.retry).toBeNull();
   });
 
   it("a network failure says Not recording + Hub unreachable", async () => {

@@ -838,7 +838,26 @@ def test_device_voice_reply_uses_waiting_agent_target_profile(
     monkeypatch.setattr(web_runtime, "TextTyper", FakeTextTyper)
 
     import holdspeak.agent_context as agent_context
+    import holdspeak.activity_context as activity_context
     import holdspeak.plugins.dictation.assembly as assembly
+
+    class FakeActivityRepository:
+        """The activity context provider's bounded read contract for this test."""
+
+        def list_activity_records(self, *, project_id=None, limit=20):
+            _ = project_id, limit
+            return []
+
+        def get_activity_record(self, _record_id):
+            return None
+
+    class FakeActivityDb:
+        activity = FakeActivityRepository()
+
+    # build_activity_context imports this provider directly. Bind that exact
+    # seam so a concurrent test's process-wide DB singleton cannot turn a
+    # successful dictation run into a raw-text fallback.
+    monkeypatch.setattr(activity_context, "get_database", lambda: FakeActivityDb())
 
     monkeypatch.setattr(
         agent_context,

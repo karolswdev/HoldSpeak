@@ -10,6 +10,7 @@ from __future__ import annotations
 import threading
 import time
 from datetime import datetime
+from types import SimpleNamespace
 from typing import Any, Optional
 from unittest.mock import MagicMock
 
@@ -19,6 +20,7 @@ from holdspeak.db import Database
 from holdspeak.meeting_session import MeetingState
 from holdspeak.scheduled_recording_conductor import ScheduledRecordingConductor
 from holdspeak.services.meeting_service import MeetingService
+from holdspeak.services.errors import ValidationError
 from holdspeak.principals import Principal, PrincipalKind
 
 
@@ -64,6 +66,163 @@ def make_conductor(
 
 
 OWNER = Principal(PrincipalKind.OWNER, "test-owner")
+
+
+def _meeting_glue_harness(monkeypatch: pytest.MonkeyPatch, *, active: Any = None) -> Any:
+    """Small real-glue harness for pending-context admission tests."""
+    from holdspeak.runtime import meeting_glue
+
+    class _State:
+        id = "m-glue-real"
+        title: Optional[str] = None
+        tags: list[str] = []
+        web_url = None
+        calendar_event_id: Optional[str] = None
+        devices: list[Any] = []
+
+        def to_dict(self) -> dict[str, Any]:
+            return {
+                "id": self.id,
+                "title": self.title,
+                "tags": list(self.tags),
+                "calendar_event_id": self.calendar_event_id,
+            }
+
+    class _Session:
+        def __init__(self, **_kwargs: Any) -> None:
+            self._state = _State()
+
+        @property
+        def is_active(self) -> bool:
+            return True
+
+        @property
+        def state(self) -> _State:
+            return self._state
+
+        def start(self) -> _State:
+            return self._state
+
+        def set_title(self, title: str) -> None:
+            self._state.title = title
+
+        def set_tags(self, tags: list[str]) -> None:
+            self._state.tags = list(tags)
+
+        def attach_device(self, *_args: Any, **_kwargs: Any) -> None:
+            return None
+
+    class _Floor:
+        active_owner = None
+
+        def acquire(self, _owner: str) -> bool:
+            return True
+
+        def release(self, _owner: str) -> None:
+            return None
+
+    meeting_config = SimpleNamespace(
+        intent_segment_probe_enabled=False,
+        mic_label="Me",
+        remote_label="Remote",
+        mic_device=None,
+        system_audio_device=None,
+        intel_realtime_model="",
+        intel_provider="local",
+        intel_cloud_reasoning_effort=None,
+        intel_cloud_store=False,
+        intel_deferred_enabled=True,
+        diarization_enabled=False,
+        diarize_mic=False,
+        cross_meeting_recognition=False,
+    )
+    harness = meeting_glue.MeetingGlueMixin.__new__(meeting_glue.MeetingGlueMixin)
+    harness.meeting_lock = threading.Lock()
+    harness.meeting_session = active
+    harness.transcriber = object()
+    harness.config = SimpleNamespace(
+        meeting=meeting_config,
+        model=SimpleNamespace(backend="auto", name="base"),
+    )
+    harness.device_registry = SimpleNamespace(get=lambda _id: None)
+    harness.voice_session = _Floor()
+    harness.runtime_url = None
+    harness.state_lock = threading.Lock()
+    harness.pending_title = None
+    harness.pending_calendar_event_id = None
+    harness.pending_tags = None
+    harness.pending_intent_windows = []
+    harness.pending_plugin_runs = []
+    harness.preview_window_seq = 0
+    harness.runtime_status = {"last_error": ""}
+    harness._ensure_transcriber_loaded = lambda **_kwargs: harness.transcriber
+    harness._set_runtime_activity = lambda *_args, **_kwargs: None
+    harness._broadcast_intel_status = lambda: None
+    harness._apply_updated_config = lambda: None
+    harness._on_meeting_segment = lambda *_args, **_kwargs: None
+    harness._on_meeting_intel = lambda *_args, **_kwargs: None
+    harness._on_meeting_broadcast = lambda *_args, **_kwargs: None
+    harness._emit_audio_level = lambda *_args, **_kwargs: None
+    harness.device_status = SimpleNamespace(broadcast=lambda *_args, **_kwargs: None)
+    harness.recording_ticker = SimpleNamespace(start=lambda **_kwargs: None)
+    monkeypatch.setattr(meeting_glue, "MeetingSession", _Session)
+    monkeypatch.setattr(
+        "holdspeak.intel.providers.effective_intel_cloud",
+        lambda _config: SimpleNamespace(
+            reason="", model="", api_key_env="OPENAI_API_KEY", base_url=None
+        ),
+    )
+    return harness
+
+
+class _CalendarEventsForStart:
+    def __init__(self, event_id: str | None):
+        self.event_id = event_id
+
+    def get(self, event_id: str):
+        return object() if event_id == self.event_id else None
+
+
+class _StartDb:
+    def __init__(self, event_id: str | None):
+        self.calendar_events = _CalendarEventsForStart(event_id)
+
+
+class TestDirectStartCalendarContext:
+    """The existing start service carries and validates the public event key."""
+
+    def test_start_capture_forwards_exact_event_id(self):
+        captured: dict[str, object] = {}
+
+        def on_start(*, principal=None, calendar_event_id=None):
+            captured["principal"] = principal
+            captured["calendar_event_id"] = calendar_event_id
+            return {"id": "m-direct"}
+
+        service = MeetingService(_StartDb("ce-direct"))
+        service.bind_lifecycle(on_start=on_start)
+
+        result = service.start_capture(OWNER, {"calendar_event_id": "ce-direct"})
+
+        assert result == {"id": "m-direct"}
+        assert captured["calendar_event_id"] == "ce-direct"
+
+    def test_stale_event_is_refused_before_capture(self):
+        called = False
+
+        def on_start(*, principal=None, calendar_event_id=None):
+            nonlocal called
+            called = True
+            return {"id": "wrong"}
+
+        service = MeetingService(_StartDb(None))
+        service.bind_lifecycle(on_start=on_start)
+
+        with pytest.raises(ValidationError, match="no longer available") as raised:
+            service.start_capture(OWNER, {"calendar_event_id": "ce-gone"})
+
+        assert raised.value.code == "calendar_event_unavailable"
+        assert called is False
 
 
 # -- schema: calendar_event_id column on meetings --
@@ -262,6 +421,48 @@ class TestPendingCalendarEventIdGlue:
         loaded = db.meetings.get_meeting("m-glue-02")
         assert loaded is not None
         assert loaded.calendar_event_id is None
+
+    def test_real_start_clears_pending_context_when_active_start_is_refused(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        harness = _meeting_glue_harness(
+            monkeypatch,
+            active=SimpleNamespace(is_active=True),
+        )
+        harness.pending_title = "Scheduler title"
+        harness.pending_calendar_event_id = "ce-scheduler"
+        harness.pending_tags = ["scheduler"]
+
+        with pytest.raises(RuntimeError, match="Meeting already active"):
+            harness._start_meeting(principal=OWNER)
+
+        assert harness.pending_title is None
+        assert harness.pending_calendar_event_id is None
+        assert harness.pending_tags is None
+
+    def test_direct_owner_does_not_apply_scheduler_metadata_but_keeps_idle_title(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        harness = _meeting_glue_harness(monkeypatch)
+        harness.pending_title = "Scheduler title"
+        harness.pending_calendar_event_id = "ce-scheduler"
+        harness.pending_tags = ["scheduler"]
+
+        refused_scheduler_context = harness._start_meeting(principal=OWNER)
+
+        assert refused_scheduler_context["title"] is None
+        assert refused_scheduler_context["tags"] == []
+        assert refused_scheduler_context["calendar_event_id"] is None
+
+        # An owner edit made while idle remains valid when no calendar context
+        # is parked, preserving the existing direct-recording contract.
+        harness.meeting_session = None
+        harness.pending_title = "Owner title"
+        harness.pending_tags = ["owner"]
+        owner_context = harness._start_meeting(principal=OWNER)
+
+        assert owner_context["title"] == "Owner title"
+        assert owner_context["tags"] == ["owner"]
 
 
 # -- read side: MeetingState.to_dict and service payloads expose the field --

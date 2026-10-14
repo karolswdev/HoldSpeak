@@ -4,8 +4,41 @@ import { describe, expect, it, vi } from "vitest";
 import type { EditorView } from "@codemirror/view";
 import { utf8OffsetToIndex } from "../thought-workspace/ThoughtWorkspaceWindow";
 import { DeskEditor, type DeskEditorHandle } from "./DeskEditor";
+import { latchAskSelection, selectionPrompt, takeAskSelection } from "../ask";
 
 describe("DeskEditor authoritative append reveal", () => {
+  it("latches one Note passage and puts the same quote in the run prompt", () => {
+    latchAskSelection({ noteRef: "note-1", text: "Keep this passage" });
+
+    const selection = takeAskSelection();
+    expect(selection).toEqual({ noteRef: "note-1", text: "Keep this passage" });
+    expect(selectionPrompt("What should I do?", selection)).toBe(
+      "What should I do?\n\nSelected text:\n> Keep this passage",
+    );
+    expect(takeAskSelection()).toBeNull();
+  });
+
+  it("reports the exact selected passage and exposes it through the handle", () => {
+    const onSelectionChange = vi.fn();
+    const ref = createRef<DeskEditorHandle>();
+    let view: EditorView | null = null;
+    render(
+      <DeskEditor
+        ref={ref}
+        value="Keep this passage"
+        onChange={vi.fn()}
+        showToolbar={false}
+        onViewChange={(next) => { view = next; }}
+        onSelectionChange={onSelectionChange}
+      />,
+    );
+
+    act(() => { view!.dispatch({ selection: { anchor: 5, head: 9 } }); });
+
+    expect(onSelectionChange).toHaveBeenLastCalledWith({ from: 5, to: 9, text: "this" });
+    expect(ref.current?.getSelection()).toEqual({ from: 5, to: 9, text: "this" });
+  });
+
   it("exposes the document formatting rail and inserts a valid underline pair", () => {
     const onChange = vi.fn();
     render(<DeskEditor value="" onChange={onChange} />);

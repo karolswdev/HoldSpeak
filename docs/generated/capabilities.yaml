@@ -7440,7 +7440,8 @@
         "FollowThroughService"
       ],
       "docs": [
-        "docs/internal/philo/phase-17/IMPLEMENTATION-PRODUCTIVITY.md"
+        "docs/internal/philo/phase-17/IMPLEMENTATION-PRODUCTIVITY.md",
+        "docs/internal/philo/phase-17/DESIGN-daily-journeys.md"
       ],
       "domain": "desk",
       "egress": "Making the task sends no data off this Mac.",
@@ -7485,7 +7486,7 @@
         "linux_x11": "unknown",
         "macos": "unknown"
       },
-      "purpose": "Add a confirmed open task from a saved note and keep a link to its source.",
+      "purpose": "Add a confirmed open task from selected text in a saved note and keep a link to its source.",
       "release_availability": "unverified",
       "replacement": null,
       "side_effect": "local_reversible",
@@ -7504,7 +7505,7 @@
         }
       ],
       "status": "built_unreleased",
-      "status_reason": "An actual note-to-Task/Add browser gesture produced the task and its note source on an isolated hub; focused tests cover owner authority.",
+      "status_reason": "Real desktop and phone Note selection -> Task/Add walks produced the exact selected task and its note source on isolated hubs; focused tests cover save-before-action and owner authority.",
       "surfaces": [
         "Note",
         "Follow-through"
@@ -7518,6 +7519,100 @@
         }
       ],
       "trust_boundary": "Only the authenticated owner can add the task through this web route. Task creation writes to the local desk database."
+    },
+    {
+      "apis": [
+        "POST /api/meeting/start"
+      ],
+      "authority": "The authenticated owner presses Record meeting.",
+      "configuration": [],
+      "dependencies": [
+        "MeetingService",
+        "recording runtime",
+        "calendar projection"
+      ],
+      "docs": [
+        "docs/internal/philo/phase-17/DESIGN-daily-journeys.md"
+      ],
+      "domain": "desk",
+      "egress": "Recording and subsequent analysis use the existing disclosed speech and meeting routes; no new destination is chosen.",
+      "egress_possible": true,
+      "entry_points": [
+        "holdspeak/services/meeting_service.py::MeetingService.start_capture"
+      ],
+      "evidence_level": "tests_executed",
+      "exposure": "user",
+      "failure_states": [
+        "Calendar event unavailable",
+        "Recorder unavailable",
+        "Capture admission refused"
+      ],
+      "id": "people.prep.record",
+      "inputs": [
+        "linked calendar occurrence id",
+        "owner recording gesture"
+      ],
+      "kernel_operations": [],
+      "limitations": [
+        "Real microphone and owner calendar capture remain unobserved.",
+        "Graph rigs deliberately have no audio recorder; their refusal is not successful capture evidence."
+      ],
+      "model_requirements": [],
+      "name": "Record from 1:1 preparation",
+      "network_requirements": [],
+      "outputs": [
+        "meeting capture with calendar provenance"
+      ],
+      "owner_observed": false,
+      "persistence": [
+        "meetings.calendar_event_id"
+      ],
+      "platforms": {
+        "aipi": "unknown",
+        "ipad": "unknown",
+        "linux_wayland": "unknown",
+        "linux_x11": "unknown",
+        "macos": "unknown"
+      },
+      "purpose": "Start a meeting from its linked calendar event while keeping the person and unsent agenda in place.",
+      "release_availability": "unverified",
+      "replacement": null,
+      "side_effect": "local_reversible",
+      "sources": [
+        {
+          "claim": "The existing start contract validates and carries only the exact calendar event key.",
+          "line": 786,
+          "path": "holdspeak/services/meeting_service.py",
+          "symbol": "MeetingService.start_capture"
+        },
+        {
+          "claim": "The linked Next 1:1 offers the real recording action and keeps its agenda draft.",
+          "line": 747,
+          "path": "web/src/pages/cores/PeopleCore.tsx",
+          "symbol": "PrepPane"
+        }
+      ],
+      "status": "built_unreleased",
+      "status_reason": "Focused HTTP/service/store tests verify exact calendar identity, stale-event refusal and explicit retry. Isolated graph walks inspect Prep and keep its draft; real microphone capture remains unobserved.",
+      "surfaces": [
+        "People Prep",
+        "Meetings"
+      ],
+      "tests": [
+        {
+          "assertion": "The capture callback receives the validated exact calendar event identifier.",
+          "execution": "passed",
+          "node": "test_start_capture_forwards_exact_event_id",
+          "path": "tests/unit/test_event_linked_provenance.py"
+        },
+        {
+          "assertion": "A missing calendar occurrence refuses before invoking capture.",
+          "execution": "passed",
+          "node": "test_stale_event_is_refused_before_capture",
+          "path": "tests/unit/test_event_linked_provenance.py"
+        }
+      ],
+      "trust_boundary": "Only the public calendar occurrence key crosses into meeting capture. Private People notes, agenda and relationship content remain in the encrypted store."
     },
     {
       "apis": [

@@ -315,7 +315,7 @@ describe("PeopleCore HS-149-04 Prep lens", () => {
     // LAST MEETING summary row
     expect(screen.getByTestId("prep-meeting-row")).toBeTruthy();
     // Footer
-    expect(screen.getByText("THIS DEVICE")).toBeTruthy();
+    expect(screen.queryByText("THIS DEVICE")).toBeNull();
   });
 
   it("renders Owner aliases section on the Context lens with add and two-beat remove", async () => {
