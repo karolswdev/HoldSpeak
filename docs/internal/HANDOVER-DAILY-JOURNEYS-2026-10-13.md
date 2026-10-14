@@ -1,5 +1,6 @@
 # Daily journeys — 2026-10-13
 
+PR: [#1198](https://github.com/karolswdev/HoldSpeak/pull/1198).
 Branch: `feat/delight-daily-journeys`. Base: `8d6ee083d` (#1197).
 One combined PR at the owner's request. Builders: Luna workers; integration
 and verification: Sol. This extends the October 13 designs and the owner's
