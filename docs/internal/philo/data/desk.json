@@ -1323,6 +1323,107 @@
       "evidence_level": "tests_executed",
       "release_availability": "unverified",
       "owner_observed": false
+    },
+    {
+      "id": "desk.engines.find_lan",
+      "name": "Find model servers on LAN",
+      "purpose": "Find nearby OpenAI-compatible model servers and offer their models in the existing engine picker.",
+      "domain": "desk",
+      "status": "built_unreleased",
+      "status_reason": "Focused scanner, route and picker tests passed; a read-only production scan found the owner-named server without an entered address. Owner UI use and inference remain unobserved.",
+      "exposure": "user",
+      "surfaces": [
+        "Settings Engines",
+        "Runs on"
+      ],
+      "entry_points": [
+        "holdspeak/services/lan_engine_discovery.py::scan_lan_engines"
+      ],
+      "platforms": {
+        "macos": "supported_with_setup",
+        "linux_x11": "unknown",
+        "linux_wayland": "unknown",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "owner Find on LAN gesture",
+        "attached private IPv4 interfaces"
+      ],
+      "outputs": [
+        "transient reachable model choices"
+      ],
+      "persistence": [],
+      "apis": [
+        "POST /api/concierge/discover-lan"
+      ],
+      "configuration": [],
+      "dependencies": [
+        "LAN interface discovery",
+        "OpenAI-compatible /v1/models",
+        "existing Use it endpoint adoption"
+      ],
+      "model_requirements": [],
+      "network_requirements": [
+        "attached private IPv4 network",
+        "reachable server on a supported engine port"
+      ],
+      "trust_boundary": "Owner-only explicit read. No private work, prompts, saved keys or assignment mutations accompany the scan.",
+      "egress_possible": true,
+      "egress": "Keyless GET /v1/models requests go to bounded attached private IPv4 addresses.",
+      "side_effect": "none",
+      "authority": "The authenticated owner presses Find on LAN.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "holdspeak/services/lan_engine_discovery.py",
+          "symbol": "scan_lan_engines",
+          "line": 250,
+          "claim": "Bounded network discovery returns transient actual model IDs."
+        },
+        {
+          "path": "holdspeak/web/routes/concierge.py",
+          "symbol": "post_discover_lan",
+          "line": 138,
+          "claim": "Owner-only scan runs outside the hub event loop."
+        },
+        {
+          "path": "web/src/features/runson/RunsOnCore.tsx",
+          "symbol": "runson-find-lan",
+          "line": 382,
+          "claim": "The existing picker offers Find on LAN beside Add an engine."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_lan_engine_discovery.py",
+          "node": "test_scan_stays_inside_a_narrow_attached_network",
+          "assertion": "Discovery stays within the attached subnet and excludes this host.",
+          "execution": "passed"
+        },
+        {
+          "path": "tests/unit/test_lan_engine_discovery.py",
+          "node": "test_scan_returns_real_model_ids_and_excludes_self_and_broadcast",
+          "assertion": "Parsed model identities become transient LAN choices.",
+          "execution": "passed"
+        }
+      ],
+      "docs": [
+        "docs/internal/philo/phase-17/DESIGN-model-discovery-download.md"
+      ],
+      "limitations": [
+        "IPv4 only, common engine ports only, bounded attached subnet windows; larger searches are reported partial.",
+        "Owner UI use and real model inference remain unobserved."
+      ],
+      "failure_states": [
+        "LAN interface unavailable",
+        "Search partial",
+        "Endpoint unavailable"
+      ],
+      "replacement": null,
+      "evidence_level": "tests_executed",
+      "release_availability": "unverified",
+      "owner_observed": false
     }
   ],
   "components": [

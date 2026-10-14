@@ -7,9 +7,11 @@ POST /api/concierge/probe     -- reachability for an engine, or `task: true` for
 POST /api/concierge/apply     -- write the assignment set
 POST /api/concierge/summary-selection -- select one summary engine
 POST /api/concierge/download  -- start a preset download
+POST /api/concierge/discover-lan -- find transient private-LAN engines
 """
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 from fastapi import APIRouter, Request
@@ -131,6 +133,25 @@ def build_concierge_router(ctx: WebContext) -> APIRouter:
             return _safe_error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to detect engines")
+
+    @router.post("/discover-lan")
+    async def post_discover_lan(request: Request) -> Any:
+        """Find private-LAN OpenAI-compatible engines for this one owner press.
+
+        This route intentionally does not load the database.  The scanner only
+        reads ``/v1/models`` and returns transient Found rows; the existing
+        ``Use it`` verb is the separate owner action that defines a profile.
+        """
+        try:
+            _owner(request)
+            from ...services.lan_engine_discovery import checked_at, scan_lan_engines
+
+            result = await asyncio.to_thread(scan_lan_engines)
+            return JSONResponse({**result, "checkedAt": checked_at()})
+        except ServiceError as exc:
+            return _safe_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to discover LAN engines")
 
     @router.post("/propose")
     async def post_propose(request: Request) -> Any:

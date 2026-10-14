@@ -53,6 +53,7 @@
 }
 .runson-add-verbs, .runson-add-answer { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .runson-add-answer .surface-token { overflow-wrap: anywhere; }
+.runson-engine-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .runson-add-open { align-self: flex-start; }
 
 .runson-meaning { margin: 0; padding: 0; list-style: none; }
@@ -67,7 +68,8 @@
 
 @container (max-width: 719px) {
   .runson-root .btn { min-height: 44px; }
-  .runson-add-open { align-self: stretch; }
+  .runson-engine-actions { align-items: stretch; }
+  .runson-engine-actions .btn { flex: 1 1 12rem; }
 }
 
 /* The foot is portaled into the frame's foot, itself a `surface`

@@ -173,6 +173,16 @@ describe("every declared settings module has a door", () => {
     fireEvent.click(screen.getByTestId("settings-hub-choose"));
     await waitFor(() => expect(container.querySelector(".prefs-module .gadget-pane-title")?.textContent).toBe("Engines"));
   });
+
+  it("Engines lets Runs on own the one footer slot", async () => {
+    const { container } = await openHub();
+    fireEvent.click(screen.getByTestId("settings-hub-choose"));
+    await screen.findByTestId("runson-root");
+    expect(container.querySelectorAll(".surface-footer-layout")).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+    await waitFor(() => expect(container.querySelector(".prefs-hub")).toBeTruthy());
+    expect(container.querySelector(".prefs-back")).toBeNull();
+  });
 });
 
 describe("Settings › People: his name and the other names for him", () => {

@@ -478,3 +478,231 @@ def test_one_active_claim_and_range_resume_converge_on_one_artifact(
         assert conn.execute(
             "SELECT count(*) FROM inference_model_artifacts"
         ).fetchone()[0] == 1
+
+
+def test_corrected_catalog_reuses_matching_integrity_quarantine_without_network(
+    tmp_path: Path, monkeypatch
+):
+    _llama_runtime_ready(monkeypatch)
+    db, service, config, preset = _fixture(tmp_path)
+    hash_calls = []
+    original_hash = service._hash_file
+
+    def tracked_hash(path):
+        hash_calls.append(path)
+        return original_hash(path)
+
+    monkeypatch.setattr(service, "_hash_file", tracked_hash)
+    body = b"GGUF" + b"tiny-safe-model"
+    old_file_sha = "sha256:" + ("0" * 64)
+    old_manifest = {
+        "files": [{
+            "path": preset["source"]["filename"],
+            "sha256": old_file_sha,
+            "size": len(body),
+        }]
+    }
+    old_manifest_sha = "sha256:" + hashlib.sha256(
+        json.dumps(old_manifest, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    old_preset = {
+        **preset,
+        "source": {
+            **preset["source"],
+            "file_sha256": old_file_sha,
+            "manifest_sha256": old_manifest_sha,
+        },
+    }
+    service._catalog_provider = lambda: {"catalog_revision": 6, "entries": (old_preset,)}
+    old_body = {
+        "request_id": "old-integrity-job",
+        "preset_id": preset["id"],
+        "catalog_revision": 6,
+        "context_choice": 8192,
+        "expected_route_revision": service.route_revision(config),
+    }
+    old = service.download_and_use(OWNER, old_body)["acquisition"]
+    quarantine = service._root / "quarantine" / f"{old['id']}.invalid"
+    quarantine.parent.mkdir(parents=True, exist_ok=True)
+    quarantine.write_bytes(body)
+    with db._connection() as conn:
+        conn.execute(
+            """UPDATE inference_model_acquisitions
+                  SET state='failed', error_code='model_download_integrity',
+                      error_message='old catalog checksum', resumable=0
+                WHERE job_id=?""",
+            (old["id"],),
+        )
+
+    service._catalog_provider = lambda: {"catalog_revision": 7, "entries": (preset,)}
+    service._opener = lambda *_args, **_kwargs: pytest.fail("recovery must not download")
+    retry = service.download_and_use(
+        OWNER,
+        {
+            **old_body,
+            "request_id": "corrected-integrity-retry",
+            "catalog_revision": 7,
+        },
+    )["acquisition"]
+    assert hash_calls == []
+    service._run(retry["id"])
+    complete = service.get_acquisition(OWNER, retry["id"])["acquisition"]
+
+    assert hash_calls
+    assert complete["state"] == "ready"
+    assert complete["verified_bytes"] == len(body)
+    assert complete["artifact_id"].endswith(
+        hashlib.sha256(
+            json.dumps(
+                {"files": [{
+                    "path": preset["source"]["filename"],
+                    "sha256": preset["source"]["file_sha256"],
+                    "size": len(body),
+                }]},
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode()
+        ).hexdigest()
+    )
+    with db._connection() as conn:
+        old_row = conn.execute(
+            "SELECT state,error_code,source_plan_json FROM inference_model_acquisitions WHERE job_id=?",
+            (old["id"],),
+        ).fetchone()
+    assert old_row["state"] == "failed"
+    assert old_row["error_code"] == "model_download_integrity"
+    assert json.loads(old_row["source_plan_json"])["sha256"] == old_file_sha
+    assert not quarantine.exists()
+
+
+def test_legacy_pending_plan_without_peak_bound_continues_after_restart(
+    tmp_path: Path, monkeypatch
+):
+    _llama_runtime_ready(monkeypatch)
+    db, service, config, preset = _fixture(tmp_path)
+    started = service.download_and_use(OWNER, {
+        "request_id": "legacy-pending-plan",
+        "preset_id": preset["id"],
+        "catalog_revision": 7,
+        "context_choice": 8192,
+        "expected_route_revision": service.route_revision(config),
+    })["acquisition"]
+    with db._connection() as conn:
+        row = conn.execute(
+            "SELECT source_plan_json FROM inference_model_acquisitions WHERE job_id=?",
+            (started["id"],),
+        ).fetchone()
+        legacy_plan = json.loads(row["source_plan_json"])
+        legacy_plan.pop("peak_free_bytes")
+        legacy_json = json.dumps(legacy_plan, sort_keys=True, separators=(",", ":"))
+        legacy_sha = "sha256:" + hashlib.sha256(legacy_json.encode()).hexdigest()
+        conn.execute(
+            """UPDATE inference_model_acquisitions
+                  SET source_plan_json=?, source_plan_sha256=?, state='requested'
+                WHERE job_id=?""",
+            (legacy_json, legacy_sha, started["id"]),
+        )
+
+    restarted = InferenceAcquisitionApplicationService(
+        db,
+        setup_service=_Setup(),
+        model_root=tmp_path / "models",
+        config_provider=lambda: config,
+        config_saver=lambda _config: None,
+        opener=lambda *_args, **_kwargs: _Response(b"GGUF" + b"tiny-safe-model"),
+        catalog_provider=lambda: {"catalog_revision": 7, "entries": (preset,)},
+        source_url_builder=lambda _plan: "http://models.test/model.gguf",
+        allowed_download_host=lambda host: host == "models.test",
+        auto_recover=False,
+    )
+    restarted._run(started["id"])
+    complete = restarted.get_acquisition(OWNER, started["id"])["acquisition"]
+
+    assert complete["state"] == "ready"
+    assert complete["verified_bytes"] == preset["source"]["download_bytes"]
+    assert complete["artifact_id"]
+
+
+@pytest.mark.parametrize("case", ["wrong_bytes", "wrong_identity"])
+def test_integrity_quarantine_recovery_rejects_wrong_candidate_without_network(
+    tmp_path: Path, monkeypatch, case: str
+):
+    _llama_runtime_ready(monkeypatch)
+    db, service, config, preset = _fixture(tmp_path)
+    body = b"GGUF" + b"tiny-safe-model"
+    free_bytes = [10_000_000_000]
+    monkeypatch.setattr(
+        "holdspeak.services.inference_acquisition_service.shutil.disk_usage",
+        lambda *_args: SimpleNamespace(free=free_bytes[0]),
+    )
+    old_source = dict(preset["source"])
+    if case == "wrong_bytes":
+        old_source["file_sha256"] = "sha256:" + ("0" * 64)
+        old_manifest = {
+            "files": [{
+                "path": old_source["filename"],
+                "sha256": old_source["file_sha256"],
+                "size": old_source["download_bytes"],
+            }]
+        }
+        old_source["manifest_sha256"] = "sha256:" + hashlib.sha256(
+            json.dumps(old_manifest, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+    else:
+        old_source["repository"] = "other/model"
+    old_preset = {**preset, "source": old_source}
+    service._catalog_provider = lambda: {"catalog_revision": 6, "entries": (old_preset,)}
+    old_body = {
+        "request_id": f"old-{case}",
+        "preset_id": preset["id"],
+        "catalog_revision": 6,
+        "context_choice": 8192,
+        "expected_route_revision": service.route_revision(config),
+    }
+    old = service.download_and_use(OWNER, old_body)["acquisition"]
+    quarantine = service._root / "quarantine" / f"{old['id']}.invalid"
+    quarantine.parent.mkdir(parents=True, exist_ok=True)
+    candidate_body = body if case == "wrong_identity" else body[:-1] + b"X"
+    quarantine.write_bytes(candidate_body)
+    with db._connection() as conn:
+        conn.execute(
+            """UPDATE inference_model_acquisitions
+                  SET state='failed', error_code='model_download_integrity',
+                      error_message='old catalog checksum', resumable=0
+                WHERE job_id=?""",
+            (old["id"],),
+        )
+
+    service._catalog_provider = lambda: {"catalog_revision": 7, "entries": (preset,)}
+    hash_calls = []
+    original_hash = service._hash_file
+
+    def tracked_hash(path):
+        hash_calls.append(path)
+        return original_hash(path)
+
+    monkeypatch.setattr(service, "_hash_file", tracked_hash)
+    retry = service.download_and_use(
+        OWNER,
+        {
+            **old_body,
+            "request_id": f"corrected-{case}",
+            "catalog_revision": 7,
+        },
+    )["acquisition"]
+    assert hash_calls == []
+    free_bytes[0] = 0
+    opener_called = []
+
+    def no_network(*_args, **_kwargs):
+        opener_called.append(True)
+        pytest.fail("invalid quarantine must not trigger a fresh download")
+
+    service._opener = no_network
+    service._run(retry["id"])
+    failed = service.get_acquisition(OWNER, retry["id"])["acquisition"]
+
+    assert failed["state"] == "failed"
+    assert failed["error"]["code"] == "model_download_disk"
+    assert opener_called == []
+    assert quarantine.exists()

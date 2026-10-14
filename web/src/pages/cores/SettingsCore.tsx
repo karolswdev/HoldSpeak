@@ -1583,6 +1583,11 @@ function SettingsFace({
     setModuleId(id);
     setHighlight("");
   };
+  const backToSettings = () => {
+    setModuleId(null);
+    setHighlight("");
+    onModuleBack?.();
+  };
 
   /* ── gadget bindings (plain function helpers — never components
         defined in render, which would remount and drop focus) ── */
@@ -2379,7 +2384,7 @@ function SettingsFace({
          Opening models/assignments redirects to the Concierge surface. ── */
       case "models":
       case "assignments": {
-        return <RunsOnCore scope={parsed.focus} title="Settings" />;
+        return <RunsOnCore scope={parsed.focus} title="Settings" onBack={backToSettings} />;
       }
       /* ── Connections: tools + credentials + RAW ── */
       case "integrations": {
@@ -2514,15 +2519,11 @@ function SettingsFace({
             <span className="prefs-receipt">NOT CHECKED</span>
           )}
         </>} />
-      ) : (
+      ) : moduleId === "models" ? null : (
         <PrefStatusBar
           onBack={
             module
-              ? () => {
-                  setModuleId(null);
-                  setHighlight("");
-                  onModuleBack?.();
-                }
+              ? backToSettings
               : undefined
           }
           receipt={receipt}

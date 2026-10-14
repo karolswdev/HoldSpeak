@@ -26,5 +26,12 @@ const Well = lazy(() => import("./MeetingSendWell").then((m) => ({ default: m.Me
 export function MeetingSendWellLazy(props: ComponentProps<typeof Well>) {
   // Loaded ahead: drawn at once, never through a Suspense frame.
   if (Loaded) return <Loaded {...props} />;
-  return <Suspense fallback={null}><Well {...props} /></Suspense>;
+  // The host's read gate must cover the code split too. A hidden busy marker
+  // has no layout, but keeps a Chair/record from settling while the well's
+  // first real frame is still unavailable.
+  return (
+    <Suspense fallback={<span hidden aria-busy="true" data-testid="meeting-send-well-reading" />}>
+      <Well {...props} />
+    </Suspense>
+  );
 }

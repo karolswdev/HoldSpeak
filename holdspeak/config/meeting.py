@@ -33,7 +33,7 @@ class MeetingConfig:
     intel_provider: str = "local"
     # The local starter model "Set up local AI" downloads (owner ruling
     # 2026-10-05). Bring your own GGUF by setting a path (see docs/MODELS.md).
-    intel_realtime_model: str = "~/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf"
+    intel_realtime_model: str = "~/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf"
     intel_temperature: float = 0.2
     intel_summary_model: Optional[str] = None  # Falls back to realtime if None
     intel_deferred_enabled: bool = True  # Queue intel when no suitable local model is available

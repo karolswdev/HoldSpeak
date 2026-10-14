@@ -333,6 +333,11 @@ Missing shards: **none**.
 | `people.prep.record` | `linux_wayland` | unknown | built_unreleased |
 | `people.prep.record` | `linux_x11` | unknown | built_unreleased |
 | `people.prep.record` | `macos` | unknown | built_unreleased |
+| `desk.engines.find_lan` | `aipi` | unknown | built_unreleased |
+| `desk.engines.find_lan` | `ipad` | unknown | built_unreleased |
+| `desk.engines.find_lan` | `linux_wayland` | unknown | built_unreleased |
+| `desk.engines.find_lan` | `linux_x11` | unknown | built_unreleased |
+| `desk.engines.find_lan` | `macos` | supported_with_setup | built_unreleased |
 | `agents.thread_persistent` | `aipi` | not_applicable | experimental |
 | `agents.thread_persistent` | `ipad` | best_effort | experimental |
 | `agents.thread_persistent` | `linux_wayland` | degraded | experimental |

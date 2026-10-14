@@ -225,6 +225,32 @@ export async function readDetection(): Promise<Detection> {
   };
 }
 
+export interface LanDiscovery {
+  engines: RunsOnEngine[];
+  checkedAt: string;
+  partial: boolean;
+  unavailable: boolean;
+  reason?: string;
+  hostsChecked: number;
+}
+
+export async function discoverLan(): Promise<LanDiscovery> {
+  const raw = await apiFetch<Record<string, unknown>>("/api/concierge/discover-lan", {
+    method: "POST",
+    json: {},
+  });
+  return {
+    engines: Array.isArray(raw.engines)
+      ? (raw.engines as Record<string, unknown>[]).map(decodeEngine)
+      : [],
+    checkedAt: String(raw.checkedAt ?? ""),
+    partial: raw.partial === true,
+    unavailable: raw.unavailable === true,
+    reason: str(raw.reason),
+    hostsChecked: typeof raw.hostsChecked === "number" ? raw.hostsChecked : 0,
+  };
+}
+
 /* ── writes ── */
 
 export type AssignmentScope = { kind: "global" } | { kind: "group"; group_id: string };

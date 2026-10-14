@@ -14,7 +14,7 @@ from typing import Optional
 #: never one nobody has (fence: tests/unit/test_local_ai_setup.py).
 DEFAULT_INTEL_MODEL_PATH = (
     "~/.local/share/holdspeak/models/artifacts/"
-    "artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/"
+    "artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/"
     "Qwen3.5-4B-Q4_K_M.gguf"
 )
 

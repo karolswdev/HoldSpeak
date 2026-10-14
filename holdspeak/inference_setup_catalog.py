@@ -23,12 +23,15 @@ _EXPERIENCES = frozenset({"quick", "balanced", "deep"})
 
 
 PACKAGED_CATALOG_SCHEMA_VERSION = 1
-PACKAGED_CATALOG_MIN_REVISION = 4
-_PACKAGED_CATALOG_KEY_ID = "holdspeak_catalog_2026_08_02"
+PACKAGED_CATALOG_MIN_REVISION = 5
+_PACKAGED_CATALOG_KEY_ID = "holdspeak_catalog_2026_10_13"
 _PACKAGED_CATALOG_TRUST_ROOTS = {
-    _PACKAGED_CATALOG_KEY_ID: bytes.fromhex(
+    "holdspeak_catalog_2026_08_02": bytes.fromhex(
         "dc6956be38eb49dc0c0f4c1e993bfc911ccea50632f8e742231e5cade38d809c"
-    )
+    ),
+    _PACKAGED_CATALOG_KEY_ID: bytes.fromhex(
+        "b6c0d32ff01baf7df5b403f83f68965af5fb87a1586ca1912e695d9ba9324605"
+    ),
 }
 _PACKAGED_PRESETS_SOURCE: tuple[dict[str, Any], ...] = (
     {
@@ -47,8 +50,8 @@ _PACKAGED_PRESETS_SOURCE: tuple[dict[str, Any], ...] = (
             "repository": "unsloth/Qwen3.5-4B-GGUF",
             "revision": "e87f176479d0855a907a41277aca2f8ee7a09523",
             "filename": "Qwen3.5-4B-Q4_K_M.gguf",
-            "file_sha256": "sha256:1d203c2196991da08bc5b191ab4727516f476f3167e3276f75a0c5257493aadb",
-            "manifest_sha256": "sha256:8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8",
+            "file_sha256": "sha256:00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4",
+            "manifest_sha256": "sha256:b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a",
             "download_bytes": 2_740_937_888,
             "installed_bytes": 2_740_937_888,
             "peak_free_bytes": 5_750_000_000,
@@ -350,13 +353,13 @@ def validate_catalog(entries: Iterable[dict[str, Any]]) -> tuple[dict[str, Any],
 
 _PACKAGED_CATALOG_BODY = {
     "schema_version": 1,
-    "catalog_revision": 4,
-    "generated_at": "2026-08-21T00:00:00Z",
-    "expires_at": "2036-08-01T00:00:00Z",
+    "catalog_revision": 5,
+    "generated_at": "2026-10-13T00:00:00Z",
+    "expires_at": "2036-10-13T00:00:00Z",
     "signing_key_id": _PACKAGED_CATALOG_KEY_ID,
     "entries": _PACKAGED_PRESETS_SOURCE,
 }
-_PACKAGED_CATALOG_SIGNATURE = "e11fe6bb369cc7ead21771c655fd45ed29e5b9606bfe23ad4d90a9e93aa02983e16c69b219ca9c1f444b38c3a23e267cc896d468f255809d9c6352a7cf7c2109"
+_PACKAGED_CATALOG_SIGNATURE = "49cf2c7d81b22f93c8ebad794e86661c4027f13128c418431f76fd53d93f6da8d515afcee50d76f05d1da1573f856f992b649c3c181e7a6a582ee499ef5b2a0e"
 _PACKAGED_CATALOG_JSON = json.dumps(
     {**_PACKAGED_CATALOG_BODY, "signature": _PACKAGED_CATALOG_SIGNATURE},
     sort_keys=True,

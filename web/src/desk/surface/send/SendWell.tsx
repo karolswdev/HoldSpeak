@@ -545,7 +545,9 @@ export function SendWell({ doc, sendsRead, onSettled, head }: {
   const destinations = dests.data;
 
   return (
-    <div data-send="well" data-testid="send-well" data-doc={ref} aria-label={`${SEND_WORDS.send} ${doc.title}`} role="group">
+    <div data-send="well" data-testid="send-well" data-doc={ref}
+      aria-busy={wellRead ? undefined : "true"}
+      aria-label={`${SEND_WORDS.send} ${doc.title}`} role="group">
       <SurfaceSection label={SEND_WORDS.section}>
         {head}
         {sendsRead.failed ? (
