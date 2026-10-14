@@ -78,7 +78,7 @@ describe("the SEND well", () => {
     render(<Well />);
     const none = await screen.findByTestId("send-none");
     expect(none.textContent).toContain("NO DESTINATION");
-    expect(within(none).getByTestId("send-add-destination").textContent).toBe("Add destination");
+    expect(screen.getByTestId("send-add-destination").textContent).toBe("Add destination");
   });
 
   it("a destinations read with no answer is named, never the empty state", async () => {

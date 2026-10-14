@@ -146,10 +146,11 @@ describe("the built-in HoldSpeak folder on a fresh desk (owner ruling 2026-10-05
       expect(words).toContain("FILE");
       expect(words).not.toContain("THIS DEVICE");
       expect(words.includes("ICLOUD")).toBe(icloud);
-      // PHILO-15 lane 12 (B23): the folder reads by its name, the ~ token on hover.
-      expect(words).toContain("HoldSpeak/Sent");
+      // The open destination leaves its target to the exact preview field.
+      expect(pv.textContent).toContain("HoldSpeak/Sent");
       expect(words).not.toContain("~/");
-      expect(row.querySelector(".send-target")?.getAttribute("title")).toBe("~/Documents/HoldSpeak/Sent");
+      expect(row.querySelector(".send-target")).toBeNull();
+      expect(screen.getByTestId("send-add-destination").textContent).toBe("Add destination");
 
       const receipt = await press(NAME);
       expect(posted).toEqual([expect.objectContaining({ document_ref: REF, destination_id: "holdspeak-folder", preview_digest: DIGEST })]);

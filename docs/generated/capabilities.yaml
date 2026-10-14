@@ -10024,7 +10024,8 @@
       ],
       "docs": [
         "pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/design/document-sources.md",
-        "pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/design/floor-send.md"
+        "pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/design/floor-send.md",
+        "docs/internal/SEND-REFINEMENT-2026-10-14.md"
       ],
       "domain": "channels",
       "egress": "The owner sends the rendered document to the saved destination. The brief includes People sections; meeting forms omit the transcript.",
@@ -10049,7 +10050,7 @@
       "id": "channels.document_sources",
       "implementation_revision": "PHILO-12-01 on base 27d8bf1acffa2a93637e42724949f0426b1dd9b6; the inventory snapshot above remains its historical census baseline.",
       "inputs": [
-        "document_ref: project_update, monday_brief, desk_decision, meeting_decision, decision_record, meeting_summary, meeting_digest, meeting_followup, or artifact",
+        "document_ref: project_update, monday_brief, desk_decision, meeting_decision, decision_record, meeting_summary, meeting_digest, meeting_followup, artifact, or note",
         "saved destination id",
         "preview digest or prepared send id"
       ],
@@ -10085,13 +10086,13 @@
         "linux_x11": "unknown",
         "macos": "supported_with_setup"
       },
-      "purpose": "Send an update, brief, decision, meeting summary, or artifact to a saved destination.",
+      "purpose": "Send a stored note, update, brief, decision, meeting summary, or artifact to a saved destination.",
       "release_availability": "unreleased",
       "replacement": null,
       "side_effect": "external_irreversible",
       "sources": [
         {
-          "claim": "One table resolves nine stored document kinds; artifact text comes from its durable producer.",
+          "claim": "One registry resolves stored document kinds; artifact and Note text come from their durable producers.",
           "line": 557,
           "path": "holdspeak/services/document_sources.py",
           "symbol": "render_document"
@@ -10101,15 +10102,22 @@
           "line": 65,
           "path": "holdspeak/services/channel_service.py",
           "symbol": "ChannelService"
+        },
+        {
+          "claim": "The Note source renders the current saved note by identity; a draft is not the send source.",
+          "line": 572,
+          "path": "holdspeak/services/document_sources.py",
+          "symbol": "_NoteSource"
         }
       ],
       "status": "built_unreleased",
-      "status_reason": "Nine stored sources run through the channel contract. The artifact reads stored text and removes only its lineage-matched synthesis footer. Floor face integration and owner use are not claimed.",
+      "status_reason": "Stored document sources run through the shared channel contract. Note Send uses the same stored-source and digest checks. The surface refinement is recorded separately; external delivery and owner acceptance are not claimed.",
       "surfaces": [
         "HTTP channel operations",
         "MCP channel tools",
         "Thread preparation",
-        "Project update Send well"
+        "Project update Send well",
+        "Note Send"
       ],
       "tests": [
         {
@@ -10144,6 +10152,17 @@
           },
           "node": "test_artifact_preview_equals_frozen_payload_and_is_read_only",
           "path": "tests/unit/test_philo12_artifact_lifecycle.py"
+        },
+        {
+          "assertion": "The real stored Note opens Send with keyboard focus and Back at both widths; held or failed saves do not dispatch. The saved file bytes equal the frozen channel_sends payload, with one sent row and its path receipt.",
+          "execution": {
+            "cases": 2,
+            "record": "docs/internal/SEND-REFINEMENT-2026-10-14.md",
+            "run": "2026-10-14",
+            "status": "passed"
+          },
+          "node": "test_write_a_thought_then_send_it_to_a_folder",
+          "path": "tests/e2e/test_thought_glass.py"
         }
       ],
       "trust_boundary": "The service reads the stored source by id. A prepared send freezes its bytes and names; inline Send checks the preview digest before dispatch."

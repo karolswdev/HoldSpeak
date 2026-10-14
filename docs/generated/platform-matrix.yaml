@@ -4735,7 +4735,8 @@
       "platform": "aipi",
       "source_ids": [
         "holdspeak/services/document_sources.py",
-        "holdspeak/services/channel_service.py"
+        "holdspeak/services/channel_service.py",
+        "holdspeak/services/document_sources.py"
       ],
       "status": "built_unreleased"
     },
@@ -4746,7 +4747,8 @@
       "platform": "ipad",
       "source_ids": [
         "holdspeak/services/document_sources.py",
-        "holdspeak/services/channel_service.py"
+        "holdspeak/services/channel_service.py",
+        "holdspeak/services/document_sources.py"
       ],
       "status": "built_unreleased"
     },
@@ -4757,7 +4759,8 @@
       "platform": "linux_wayland",
       "source_ids": [
         "holdspeak/services/document_sources.py",
-        "holdspeak/services/channel_service.py"
+        "holdspeak/services/channel_service.py",
+        "holdspeak/services/document_sources.py"
       ],
       "status": "built_unreleased"
     },
@@ -4768,7 +4771,8 @@
       "platform": "linux_x11",
       "source_ids": [
         "holdspeak/services/document_sources.py",
-        "holdspeak/services/channel_service.py"
+        "holdspeak/services/channel_service.py",
+        "holdspeak/services/document_sources.py"
       ],
       "status": "built_unreleased"
     },
@@ -4779,7 +4783,8 @@
       "platform": "macos",
       "source_ids": [
         "holdspeak/services/document_sources.py",
-        "holdspeak/services/channel_service.py"
+        "holdspeak/services/channel_service.py",
+        "holdspeak/services/document_sources.py"
       ],
       "status": "built_unreleased"
     },

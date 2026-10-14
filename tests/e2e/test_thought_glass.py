@@ -1183,6 +1183,10 @@ class TestTheThoughtSends:
         _ensure_build()
         server, base = _gi_boot(tmp_path, monkeypatch, token=SEND_TOKEN)
         self.base = base
+        self.home = tmp_path / "home"
+        from holdspeak.db import get_database
+
+        self.db = get_database()
         try:
             yield
         finally:
@@ -1193,7 +1197,7 @@ class TestTheThoughtSends:
         page.locator(f".desk-verbbar-item[data-menu-id='{menu}'] button").click()
         if width < 720:
             go_group(page, "New", lambda loc: loc.click())
-        label = "Write a thought" if width >= 720 else "Thought"
+        label = "Write a thought" if width >= 720 else "Note"
         item = page.locator(f".desk-verbbar-menu [role='menuitem']:has-text('{label}')").first
         item.wait_for()
         item.click()
@@ -1207,9 +1211,92 @@ class TestTheThoughtSends:
         if box:
             page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
 
+    def _db_sends(self, note_ref: str) -> list[dict[str, Any]]:
+        """The real isolated hub's rows, including its frozen transport bytes."""
+        import json
+
+        with self.db._connection() as conn:
+            rows = conn.execute(
+                "SELECT id, state, payload, proof_json FROM channel_sends WHERE document_ref=? ORDER BY rowid",
+                (note_ref,),
+            ).fetchall()
+        return [{"id": r[0], "state": r[1], "payload": r[2], "proof": json.loads(r[3] or "{}")} for r in rows]
+
+    def _saved_note(self, note_ref: str) -> tuple[int, str]:
+        with self.db._connection() as conn:
+            row = conn.execute(
+                "SELECT t.working_revision, n.body_markdown FROM refinement_thoughts t "
+                "JOIN notes n ON n.id=t.working_note_id WHERE t.working_note_id=?",
+                (note_ref.removeprefix("note:"),),
+            ).fetchone()
+        assert row, note_ref
+        return row[0], row[1]
+
+    def _note_action(self, page: Any, win: Any, width: int, name: str) -> Any:
+        foot = win.locator(".thought-note-foot")
+        if width < 720:
+            self._tap(page, foot.get_by_role("button", name="More actions", exact=True))
+            action = page.get_by_role("menu", name="More actions", exact=True).get_by_role("menuitem", name=name, exact=True)
+        else:
+            action = foot.get_by_role("button", name=name, exact=True)
+        action.wait_for(timeout=T)
+        return action
+
+    def _back(self, page: Any, win: Any, width: int, *, keyboard: bool = False) -> None:
+        """Use the phone's actual frame Back, or the desktop host's Back."""
+        back = (win.locator(".desk-gadget-close") if width < 720
+                else win.locator(".thought-send-foot").get_by_role("button", name="Back", exact=True))
+        if keyboard:
+            back.focus()
+            page.keyboard.press("Enter")
+        else:
+            self._tap(page, back)
+        win.locator(".thought-note-body .cm-content").wait_for(timeout=T)
+        assert win.locator("[data-testid=thought-send]").count() == 0
+        name = "More actions" if width < 720 else "Send"
+        door = win.locator(".thought-note-foot").get_by_role("button", name=name, exact=True)
+        page.wait_for_function("(el) => el.isConnected && el === document.activeElement", arg=door.element_handle(), timeout=T)
+        assert door.is_visible()
+        assert not page.get_by_role("menu", name="More actions", exact=True).count()
+
+    @staticmethod
+    def _send_geometry(page: Any, win: Any, width: int) -> None:
+        from tests.e2e.test_send_glass import TARGETS44
+
+        geo = win.evaluate("""(win) => {
+          const well = win.querySelector('[data-testid=thought-send]');
+          const outer = well.getBoundingClientRect();
+          const box = (sel) => { const r = well.querySelector(sel).getBoundingClientRect();
+            return {top:r.top, bottom:r.bottom, left:r.left, right:r.right, width:r.width, height:r.height}; };
+          const payload = well.querySelector('[data-testid=send-preview-body]');
+          return {outer:{top:outer.top, bottom:outer.bottom, left:outer.left, right:outer.right},
+            preview:box('[data-testid=send-preview-body]'), verb:box('[data-testid=send-verb]'),
+            overflow:getComputedStyle(well).overflowY,
+            payloadOverflow:getComputedStyle(payload).overflowY, payloadMax:getComputedStyle(payload).maxHeight,
+            nested:[...well.querySelectorAll('*')].filter((el) =>
+              ['auto','scroll'].includes(getComputedStyle(el).overflowY) && el.scrollHeight > el.clientHeight + 1)
+              .map((el) => el.className)};
+        }""")
+        assert geo["overflow"] in ("auto", "scroll"), geo
+        assert not geo["nested"], geo
+        assert geo["payloadOverflow"] not in ("auto", "scroll") and geo["payloadMax"] == "none", geo
+        for name in ("preview", "verb"):
+            box, outer = geo[name], geo["outer"]
+            assert box["height"] > 0 and box["width"] > 0, geo
+            assert outer["top"] - 1 <= box["top"] < box["bottom"] <= outer["bottom"] + 1, geo
+            assert outer["left"] - 1 <= box["left"] < box["right"] <= outer["right"] + 1, geo
+        if width < 720:
+            # The existing nine-point probe also covers the host's Back control.
+            targets = TARGETS44.replace(
+                "[data-testid=send-well] button,",
+                ".thought-send-foot button, .thought-workspace-window .desk-gadget-close, [data-testid=send-well] button,",
+            )
+            assert not page.evaluate(targets), "Send or Back loses part of its 44px target"
+        assert not page.evaluate("document.documentElement.scrollWidth > window.innerWidth"), "page scrolls sideways"
+
     @pytest.mark.parametrize("width", list(SIZES))
     def test_write_a_thought_then_send_it_to_a_folder(self, width: int) -> None:
-        """replaces: tests/e2e/test_philo17_thought_send_glass.py::TestTheThoughtSends::test_write_a_thought_then_send_it_to_a_folder (moved whole: the clipboard, a real pointer press at an inert well)."""
+        """Clipboard, Back focus, exact saved revision, target geometry and real folder dispatch."""
         from playwright.sync_api import sync_playwright
 
         with sync_playwright() as pw:
@@ -1234,28 +1321,43 @@ class TestTheThoughtSends:
                 page.keyboard.type(SEND_WORDS)  # no wait: Send saves the note first
 
                 foot = win.locator(".thought-note-foot")
-                verbs = [" ".join(t.split()) for t in foot.locator(".btn").all_inner_texts()]
-                assert verbs[-4:] == ["Change", "Copy", "Send", "Finish"], verbs
+                door = foot.get_by_role("button", name="More actions" if width < 720 else "Send", exact=True)
+                assert door.is_visible()
 
                 # Copy copies the working text.
-                foot.get_by_role("button", name="Copy").click()
+                self._note_action(page, win, width, "Copy").click()
                 foot.get_by_text("COPIED").wait_for(timeout=T)
                 assert SEND_WORDS in page.evaluate("navigator.clipboard.readText()")
 
-                # Send opens the SEND well on the working note; nothing is sent yet.
-                foot.get_by_role("button", name="Send").click()
+                # Keyboard Send saves first, then owns the body. No dispatch yet.
+                send = self._note_action(page, win, width, "Send")
+                send.focus()
+                page.keyboard.press("Enter")
                 well = win.locator("[data-testid=send-well][data-doc^='note:']")
                 well.wait_for(timeout=T)
                 note_ref = well.get_attribute("data-doc")
+                assert note_ref
+                win_id = win.get_attribute("id")
                 opened = well.locator("[data-testid=send-open][data-destination='HoldSpeak folder']")
                 opened.locator("[data-testid=send-preview]").wait_for(timeout=T)
+                assert win.get_by_role("region", name="Send note", exact=True).evaluate(
+                    "el => el === document.activeElement || el.contains(document.activeElement)"
+                ), "keyboard Send left focus outside its body"
                 preview = " ".join(opened.locator("[data-testid=send-preview]").inner_text().split())
                 assert "Monday" in preview, preview
-                assert not _gi_api(page, "GET", f"/api/channels/sends?document_ref={note_ref}", token=SEND_TOKEN)["sends"]
+                assert not self._db_sends(note_ref)
+                assert win.locator(".thought-note-body, .thought-note-ask, .thought-note-foot, .thought-reads-well, .thought-action-well").count() == 0
+                assert win.get_by_role("button", name=re.compile(r"^(Finish|Resume|Copy|Task|Project)$")).count() == 0
+                self._send_geometry(page, win, width)
                 page.screenshot(path=str(SEND_SHOTS / f"thought-send-picked-{width}.png"))
 
-                # Astra r1 MUST: an edit after the well opened, its save held. The
-                # well waits (inert, a plain word); a press on it sends nothing.
+                # Pointer Back returns to this note and restores its visible Send door.
+                self._back(page, win, width)
+                assert win.get_attribute("id") == win_id
+                revision, saved_body = self._saved_note(note_ref)
+                assert saved_body.strip() == SEND_WORDS, saved_body
+
+                # Back -> edit -> Send: a held save cannot reopen an old preview.
                 held: list[Any] = []
                 mode = {"saves": "hold"}
 
@@ -1272,55 +1374,66 @@ class TestTheThoughtSends:
                 note.click()
                 page.keyboard.press("End")
                 page.keyboard.type(" REVISED")
-                verb = opened.locator("[data-testid=send-verb]")
-                self._tap(page, verb)
+                self._tap(page, self._note_action(page, win, width, "Send"))
                 for _ in range(100):  # the writer's held save reaches the route
                     if held:
                         break
                     page.wait_for_timeout(50)
                 assert held, "the edit was never saved"
-                assert not _gi_api(page, "GET", f"/api/channels/sends?document_ref={note_ref}", token=SEND_TOKEN)["sends"], \
-                    "the well sent while the edit was not saved"
-                assert win.locator(".thought-send-body[inert]").count() == 1
-                win.get_by_text("SAVING… · SEND WAITS").wait_for(timeout=T)
+                assert not self._db_sends(note_ref), "Send dispatched while the edit was not saved"
+                assert win.locator("[data-testid=thought-send], [data-testid=send-preview], [data-testid=send-verb]").count() == 0
+                if width >= 720:
+                    assert foot.get_by_role("button", name="Send", exact=True).is_disabled()
+                else:
+                    assert foot.get_by_role("button", name="More actions", exact=True).get_attribute("aria-expanded") == "false"
+                assert self._saved_note(note_ref) == (revision, saved_body)
                 page.screenshot(path=str(SEND_SHOTS / f"thought-send-waits-{width}.png"))
                 mode["saves"] = "pass"
                 for route in held:
                     route.continue_()
-                # The save lands: the well opens again on a preview of the revised words.
-                win.locator(".thought-send-body:not([inert])").wait_for(timeout=T)
+                # Only the successfully saved revision opens a fresh preview.
+                well.wait_for(timeout=T)
                 page.wait_for_function(
                     "(sel) => (document.querySelector(sel)?.innerText || '').includes('REVISED')",
                     arg=f"{THOUGHT} [data-testid=send-open][data-destination='HoldSpeak folder'] [data-testid=send-preview]",
                     timeout=T)
+                revised_body = f"{SEND_WORDS} REVISED"
+                assert self._saved_note(note_ref) == (revision + 1, revised_body)
+                self._send_geometry(page, win, width)
 
                 # His press: the file is saved, the receipt names the path.
+                verb = opened.locator("[data-testid=send-verb]")
                 page.wait_for_function("(e) => e && !e.disabled", arg=verb.element_handle(), timeout=T)
-                verb.click()
+                self._tap(page, verb)
                 receipt = opened.locator("[data-receipt=latest][data-state=sent]")
                 receipt.wait_for(timeout=T)
-                sends = _gi_api(page, "GET", f"/api/channels/sends?document_ref={note_ref}", token=SEND_TOKEN)["sends"]
+                sends = self._db_sends(note_ref)
                 sent = [s for s in sends if s["state"] == "sent"]
-                assert len(sent) == 1, sends
+                assert len(sent) == len(sends) == 1, sends
                 path = Path(sent[0]["proof"]["path"])
-                assert path.is_file() and f"{SEND_WORDS} REVISED" in path.read_text(), path
+                assert path.is_relative_to(self.home) and path.is_file(), path
+                assert path.read_bytes() == sent[0]["payload"] and revised_body in path.read_text(), path
                 text = " ".join(receipt.inner_text().split())
                 # The built-in folder names its path from HOME (~).
                 assert text == f"✓ SAVED ~/Documents/HoldSpeak/Sent/{path.name}", text
                 receipt.scroll_into_view_if_needed()
                 page.screenshot(path=str(SEND_SHOTS / f"thought-send-saved-{width}.png"))
 
-                # A failed save: the well stays held with a plain word; nothing more is sent.
+                # Keyboard Back returns too. A failed revision cannot reopen Send.
+                self._back(page, win, width, keyboard=True)
+                assert win.get_attribute("id") == win_id
                 mode["saves"] = "fail"
                 note.click()
                 page.keyboard.press("End")
                 page.keyboard.type(" LOST")
-                win.get_by_text("NOT SAVED · SEND WAITS").wait_for(timeout=T)
-                assert win.locator(".thought-send-body[inert]").count() == 1
-                self._tap(page, opened.locator("[data-testid=send-verb]"))
+                foot.locator("[data-tone=danger]").first.wait_for(timeout=T)
+                self._tap(page, self._note_action(page, win, width, "Send"))
                 page.wait_for_timeout(600)
-                after = _gi_api(page, "GET", f"/api/channels/sends?document_ref={note_ref}", token=SEND_TOKEN)["sends"]
-                assert len(after) == 1, after
+                after = self._db_sends(note_ref)
+                assert len(after) == 1 and after[0]["id"] == sent[0]["id"], after
+                assert win.locator("[data-testid=thought-send], [data-testid=send-preview], [data-testid=send-verb]").count() == 0
+                assert self._saved_note(note_ref) == (revision + 1, revised_body)
+                page.screenshot(path=str(SEND_SHOTS / f"thought-send-save-failed-{width}.png"))
                 mode["saves"] = "pass"
 
                 assert not page.evaluate("document.documentElement.scrollWidth > window.innerWidth"), "page scrolls sideways"
