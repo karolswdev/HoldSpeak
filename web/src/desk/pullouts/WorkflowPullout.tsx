@@ -9,10 +9,12 @@ import { DeskFilingStrip } from "../components/DeskFilingStrip";
 import { INLINE_EDITOR_CONTENT } from "./editors";
 import { CapabilitySection } from "./shared/CapabilitySection";
 import type { PulloutContentProps } from "./types";
+import { useEditorSession } from "./editors/useDebouncedSave";
 
-export function WorkflowPullout({ object: o }: PulloutContentProps) {
+export function WorkflowPullout({ object: o, registerClose }: PulloutContentProps) {
   const editing = useDesk((s) => s.editingId === o.id);
   const { openEditor, closeEditor } = useDesk.getState();
+  const session = useEditorSession(closeEditor, editing ? registerClose : undefined);
   if (o.ref.kind !== "workflow") return null;
   const ir = o.ref;
   const Content = INLINE_EDITOR_CONTENT[o.kind];
@@ -28,7 +30,7 @@ export function WorkflowPullout({ object: o }: PulloutContentProps) {
   return (
     <>
       <div className="desk-pullout-body desk-surface-body desk-editor-body">
-        {editing && Content ? <Content object={o} onClose={closeEditor} /> : <>
+        {editing && Content ? <Content object={o} onClose={() => void session.done()} onWriter={session.onWriter} /> : <>
           <section>
             <h3>Steps</h3>
             <ol className="desk-pullout-steps">
@@ -45,10 +47,7 @@ export function WorkflowPullout({ object: o }: PulloutContentProps) {
           />
         </>}
       </div>
-      <SurfaceFooter verbs={editing ? <>
-        <Button dense variant="ghost" onClick={closeEditor}>Cancel</Button>
-        <Button dense variant="primary" onClick={closeEditor}>Save</Button>
-      </> : <>
+      <SurfaceFooter receipt={editing ? session.receipt : null} verbs={editing ? session.verbs : <>
         <Button
           dense
           variant="ghost"

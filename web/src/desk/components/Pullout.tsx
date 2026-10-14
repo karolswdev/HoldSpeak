@@ -7,8 +7,6 @@ import { spriteVariantKey } from "../../lib/spriteVariants";
 import { spriteStateCssClass } from "../../lib/spriteStates";
 import { Button } from "../../components/signal/Signal";
 import { useDesk } from "../store";
-import { openSurfaceOr } from "../shell";
-import { qualifiedRef } from "../api";
 import { objGlow, type WorldObject } from "../world";
 import { inferenceEgressLamp } from "../inferenceEgress";
 import { DeskWindowFrame } from "./DeskWindow";
@@ -16,7 +14,8 @@ import { kindWord, primitiveName } from "../windowName";
 import { useThreadStore } from "../threads";
 import { PULLOUT_CONTENT } from "../pullouts";
 import { PULLOUT_SIZE } from "../pullouts/size";
-import { useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import type { RegisterCloseGuard } from "../pullouts/types";
 import { thoughtForNote, type NoteThoughtStatus, type Thought } from "../thoughts";
 import { NotePullout } from "../pullouts/NotePullout";
 import { ThoughtWorkspaceWindow } from "../thought-workspace/ThoughtWorkspaceWindow";
@@ -42,9 +41,16 @@ function PulloutFrame({
   overrideContent?: ReactNode;
 }) {
   const profiles = useDesk((s) => s.profiles);
-  const { closePullout } = useDesk.getState();
+  const editing = useDesk((s) => s.editingId === o.id);
+  const { closePullout, openEditor } = useDesk.getState();
+  const closeGuard = useRef<(() => Promise<boolean>) | null>(null);
+  const registerClose = useCallback<RegisterCloseGuard>((guard) => {
+    closeGuard.current = guard;
+    return () => { if (closeGuard.current === guard) closeGuard.current = null; };
+  }, []);
+  const flushBeforeClose = useCallback(async () => closeGuard.current ? closeGuard.current() : true, []);
+  const close = () => closePullout(pulloutId);
 
-  const resourceRef = qualifiedRef(o.kind, o.id);
   const profileId = "profileId" in o.ref ? String(o.ref.profileId || "") : "";
   const profile = profiles.find((p) => p.id === profileId);
   const egress = profile
@@ -100,7 +106,8 @@ function PulloutFrame({
       icon={<img src={spriteUrl(o.kind, o.id, "rest", refAgent(o.ref))} alt="" width={30} height={30} className={spriteStateCssClass((o as { spriteState?: string }).spriteState ?? null) || undefined} data-sprite-variant={spriteVariantKey(o.kind, (o as { spriteState?: string }).spriteState ?? null)} />}
       title={name}
       open
-      onClose={() => closePullout(pulloutId)}
+      beforeClose={editing && ["note", "kb", "recipe", "workflow"].includes(o.kind) ? flushBeforeClose : undefined}
+      onClose={close}
       actions={
         <>
           {egress && (
@@ -112,9 +119,7 @@ function PulloutFrame({
             <Button
               dense
               variant="ghost"
-              onClick={() =>
-                openSurfaceOr("open-workbenches", "/workbenches", resourceRef)
-              }
+              onClick={() => openEditor(o.id)}
             >
               Edit Workflow
             </Button>
@@ -131,15 +136,15 @@ function PulloutFrame({
             {o.kind === "meeting" ? <div data-aftercare-window-slot="top" data-meeting-id={o.id} /> : null}
             <TitleSlotContext.Provider value={setTitleOverride}>
               <WingSlotContext.Provider value={setWings}>
-                <Content object={o} onClose={() => closePullout(pulloutId)} />
+                <Content object={o} onClose={() => void close()} registerClose={registerClose} />
               </WingSlotContext.Provider>
             </TitleSlotContext.Provider>
           </div>
           <footer ref={setFoot} className="desk-surface-foot surface-footer" />
         </FootSlotContext.Provider>
       ) : overrideContent ?? (o.kind === "note"
-        ? <NotePullout object={o} onClose={() => closePullout(pulloutId)} initialStatus={noteStatus} onThoughtOwned={onThoughtOwned} />
-        : <Content object={o} onClose={() => closePullout(pulloutId)} />)}
+        ? <NotePullout object={o} onClose={() => void close()} registerClose={registerClose} initialStatus={noteStatus} onThoughtOwned={onThoughtOwned} />
+        : <Content object={o} onClose={() => void close()} registerClose={registerClose} />)}
     </DeskWindowFrame>
   );
 }

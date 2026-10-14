@@ -110,7 +110,7 @@ describe("HS-135-15 Run button ghosting", () => {
     mockHub({ recipeId: null });
     render(<WorkbenchWindow workbenchId="wb1" />);
 
-    // Wait for the config panel to load (it auto-opens when no agent)
+    // Setup stays folded; the missing agent and its action stay visible.
     await waitFor(() =>
       expect(screen.getByRole("button", { name: /Run.*Bind an agent first/ })).toBeInTheDocument(),
     );
@@ -119,8 +119,9 @@ describe("HS-135-15 Run button ghosting", () => {
       name: /Run.*Bind an agent first/,
     });
     expect(runButton).toBeDisabled();
-    // The visible reason label should be present
-    expect(runButton.textContent).toContain("Bind an agent first");
+    await waitFor(() => expect(screen.getByText("No agent", { exact: true })).toBeVisible());
+    expect(screen.getByRole("button", { name: "Choose agent" })).toBeVisible();
+    expect(screen.queryByLabelText("Search agents")).toBeNull();
   });
 
   it("Run button is enabled when an agent is bound", async () => {
@@ -156,7 +157,7 @@ describe("HS-135-15 AGENT section empty vs filtered labels", () => {
     mockHub({ recipeId: null, recipes: [] });
     render(<WorkbenchWindow workbenchId="wb1" />);
 
-    // The config panel auto-opens when no agent is bound
+    fireEvent.click(await screen.findByRole("button", { name: "Choose agent" }));
     await waitFor(() =>
       expect(screen.getByText("No agents yet")).toBeInTheDocument(),
     );
@@ -172,7 +173,8 @@ describe("HS-135-15 AGENT section empty vs filtered labels", () => {
     });
     render(<WorkbenchWindow workbenchId="wb1" />);
 
-    // Wait for config panel with the agent listed
+    fireEvent.click(await screen.findByRole("button", { name: "Choose agent" }));
+    // Configuration is requested before its agent list appears.
     await waitFor(() =>
       expect(screen.getByText("Test Agent")).toBeInTheDocument(),
     );

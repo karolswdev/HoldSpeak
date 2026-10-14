@@ -1,0 +1,14 @@
+.create-canvas { min-height:100vh; padding-bottom:24px; }
+.create-canvas-bar { display:flex; flex-wrap:wrap; gap:16px; padding:12px 20px; background:var(--desk-window-fill); color:var(--wb-text); font:12px var(--font-mono); }
+.create-canvas nav { display:flex; flex-wrap:wrap; gap:8px; padding:16px 20px; }
+.create-canvas-window { position:relative; display:block; width:min(560px, calc(100% - 32px)); height:auto; max-height:none; margin:12px auto; overflow:visible; container:surface / inline-size; color:var(--text); background:var(--desk-window-fill); border:2px solid var(--desk-ink,currentColor); }
+.create-canvas-title { padding:8px 14px; font:600 15px var(--font-mono); background:var(--desk-title-fill,var(--surface-2)); }
+.create-canvas-body { display:flex; flex-direction:column; gap:20px; padding:16px; min-width:0; }
+.create-canvas-steps { display:flex; flex-direction:column; gap:12px; }
+.create-canvas-step { display:flex; flex-direction:column; gap:8px; min-width:0; }
+.create-canvas-step-head { display:flex; align-items:center; flex-wrap:wrap; gap:8px; min-width:0; }
+.create-canvas-step-head strong { flex:1; font:600 15px var(--font-sans); }
+.create-canvas-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.create-canvas-copy { margin:0 0 12px; font:13px/1.5 var(--font-sans); }
+.create-canvas-foot { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px; padding:12px 16px; background:var(--surface-2); font:12px var(--font-mono); }
+@container surface (max-width:420px) { .create-canvas-body { padding:12px; } .create-canvas-step-head strong { flex-basis:100%; } }

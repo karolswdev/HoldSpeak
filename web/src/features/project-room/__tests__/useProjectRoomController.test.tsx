@@ -6,6 +6,7 @@
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useProjectRoomController, type LoadStatus } from "../useProjectRoomController";
+import { ApiError } from "../../../lib/api";
 
 const apiFetchMock = vi.fn();
 vi.mock("../../../lib/api", async () => {
@@ -93,6 +94,34 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.clearAllMocks();
+});
+
+describe("proposal confirmation result belongs to its write", () => {
+  it("returns a named refusal for a rejected write", async () => {
+    const { result } = renderHook(() => useProjectRoomController("project:p1", "Test"));
+    await waitFor(() => expect(result.current.extrasStatus).toBe("ready"));
+    apiFetchMock.mockImplementation((url: string) => url === "/api/proposals/prop1/confirm"
+      ? Promise.reject(new ApiError(409, "private server detail", {})) : Promise.resolve(response(url)));
+    let outcome: unknown;
+    await act(async () => { outcome = await result.current.handleConfirmProposal("prop1", { owner: "Jordan" }); });
+    expect(outcome).toEqual({ ok: false, error: "NOT DONE · CHANGED ELSEWHERE" });
+    expect(result.current.proposalBusy).toBe("");
+  });
+
+  it("returns success when the write is accepted even if the following Room read fails", async () => {
+    const { result } = renderHook(() => useProjectRoomController("project:p1", "Test"));
+    await waitFor(() => expect(result.current.extrasStatus).toBe("ready"));
+    apiFetchMock.mockImplementation((url: string) => url === "/api/projects/p1/room"
+      ? Promise.reject(new ApiError(503, "read unavailable", {})) : Promise.resolve(response(url)));
+    let outcome: unknown;
+    await act(async () => { outcome = await result.current.handleConfirmProposal("prop1"); });
+    expect(outcome).toEqual({ ok: true });
+    await waitFor(() => expect(result.current.loadStatus).toBe("ready"));
+    expect(result.current.error).toBe("ROOM DID NOT LOAD · NOT AVAILABLE NOW");
+    expect(result.current.readError).toBe("ROOM DID NOT LOAD · NOT AVAILABLE NOW");
+    expect(result.current.error).not.toContain("NOT DONE");
+    expect(result.current.room).not.toBeNull();
+  });
 });
 
 describe("useProjectRoomController — loadStatus discrimination", () => {

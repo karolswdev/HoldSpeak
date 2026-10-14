@@ -613,6 +613,12 @@
           "symbol": "hydrate_rails_refs",
           "line": 100,
           "claim": "Rails refs use Workbench-named paths and refuse unknown/unreachable files."
+        },
+        {
+          "path": "web/src/desk/components/GroundingSection.tsx",
+          "symbol": "changeSelection",
+          "line": 55,
+          "claim": "Async source reads merge into current choices; existing checkbox controls own selection."
         }
       ],
       "tests": [
@@ -637,6 +643,28 @@
             "run": "full-python-suite",
             "cases": 1
           }
+        },
+        {
+          "path": "web/src/desk/components/__tests__/groundingSelection.test.tsx",
+          "node": "keeps both choices when their async reads resolve in reverse order",
+          "assertion": "Two controlled resource reads resolving in reverse order retain both refs and checked controls.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/internal/DEEP-USABILITY-2026-10-14/root.md",
+            "run": "deep-usability-grounding-2026-10-14",
+            "cases": 1
+          }
+        },
+        {
+          "path": "web/src/desk/components/__tests__/groundingSelection.test.tsx",
+          "node": "offers one keyboard control per choice without nesting an input inside a button",
+          "assertion": "Grounding choices contain no checkbox nested inside an outer button.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/internal/DEEP-USABILITY-2026-10-14/root.md",
+            "run": "deep-usability-grounding-2026-10-14",
+            "cases": 1
+          }
         }
       ],
       "docs": [
@@ -644,7 +672,7 @@
         "docs/KERNEL.md"
       ],
       "limitations": [
-        "No live source hydration or model call was run.",
+        "Isolated Ask walks at 1440 and 393 resolved two real Notes through the production route; no owner-desk, remote source or model call was run.",
         "The resolver does not prove semantic truth of source text."
       ],
       "failure_states": [

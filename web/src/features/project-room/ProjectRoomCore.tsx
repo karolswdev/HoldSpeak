@@ -736,6 +736,8 @@ function ProposalRow({
   const [editText, setEditText] = useState("");
   const [editOwner, setEditOwner] = useState("");
   const [editDue, setEditDue] = useState("");
+  const [failure, setFailure] = useState("");
+  const [accepted, setAccepted] = useState<{ text: string; owner: string; due: string } | null>(null);
 
   const proposalId = item.proposalId || "";
   const kind = item.proposalKind || "action";
@@ -757,17 +759,27 @@ function ProposalRow({
     setEditing(true);
   };
 
-  const handleSaveConfirm = () => {
+  const confirm = async (edits?: { text?: string; owner?: string; due?: string }) => {
+    setFailure("");
+    const result = await ctrl.handleConfirmProposal(proposalId, edits);
+    if (!result.ok) setFailure(result.error);
+    else setAccepted({ text: edits?.text ?? proposal?.text ?? item.title, owner: edits?.owner ?? ownerHint, due: edits?.due ?? dueHint ?? "" });
+    return result.ok;
+  };
+
+  const handleSaveConfirm = async () => {
     const edits: { text?: string; owner?: string; due?: string } = {};
     const origText = proposal?.originalText || proposal?.text || item.title;
     if (editText && editText !== origText) edits.text = editText;
     if (editOwner) edits.owner = editOwner;
     if (editDue) edits.due = editDue;
-    void ctrl.handleConfirmProposal(proposalId, edits);
-    setEditing(false);
+    if (await confirm(edits)) setEditing(false);
   };
 
   const cancelEdit = () => setEditing(false);
+
+  // A successful write remains successful while its follow-up read recovers.
+  if (accepted) return <SurfaceLedgerRow data-testid="proposal-accepted" lead="MTG" wrap primary={accepted.text} cells={<>{accepted.owner ? <span className="surface-token">{accepted.owner}</span> : null}{accepted.due ? <span className="surface-token">BY {formatDueShort(accepted.due)}</span> : null}<StateChip state="success" label="Confirmed" /></>} />;
 
   if (editing) {
     // Board: RoomProposalEdit — text StringGadget + OWNER + DUE + was: caption + Save & confirm + Cancel
@@ -785,22 +797,23 @@ function ProposalRow({
         </div>
         <div className="surface-ledger-open room-proposal-edit-well" data-testid="proposal-edit-well">
           <div className="room-proposal-edit-fields">
-            <StringGadget label="Text" value={editText} onChange={setEditText} autoFocus />
+            <StringGadget label="Text" value={editText} onChange={setEditText} disabled={ctrl.proposalBusy === proposalId} autoFocus />
             <label className="room-proposal-edit-label">
               <span className="room-proposal-edit-label-text">OWNER</span>
-              <StringGadget label="Owner" value={editOwner} onChange={setEditOwner} placeholder="Owner" />
+              <StringGadget label="Owner" value={editOwner} onChange={setEditOwner} placeholder="Owner" disabled={ctrl.proposalBusy === proposalId} />
             </label>
             <label className="room-proposal-edit-label">
               <span className="room-proposal-edit-label-text">DUE</span>
-              <StringGadget label="Due" value={editDue} onChange={setEditDue} placeholder="Due" />
+              <StringGadget label="Due" value={editDue} onChange={setEditDue} placeholder="Due" disabled={ctrl.proposalBusy === proposalId} />
             </label>
           </div>
           <p className="room-proposal-was-caption" data-testid="proposal-was-caption">{wasCaption}</p>
+          {failure ? <SurfaceState error={failure} /> : null}
           <div className="room-proposal-edit-verbs">
-            <Button dense variant="primary" loading={ctrl.proposalBusy === proposalId} onClick={handleSaveConfirm} data-testid="proposal-save-confirm">
-              Save & confirm
+            <Button dense variant="primary" loading={ctrl.proposalBusy === proposalId} disabled={ctrl.proposalBusy === proposalId} onClick={() => void handleSaveConfirm()} data-testid="proposal-save-confirm">
+              {failure ? "Try again" : "Save & confirm"}
             </Button>
-            <Button dense variant="ghost" onClick={cancelEdit} data-testid="proposal-cancel-edit">
+            <Button dense variant="ghost" disabled={ctrl.proposalBusy === proposalId} onClick={cancelEdit} data-testid="proposal-cancel-edit">
               Cancel
             </Button>
           </div>
@@ -851,12 +864,13 @@ function ProposalRow({
           {host ? (
             <EgressChip label={egressFor(host).label} scope={egressFor(host).scope} />
           ) : null}
+          {failure ? <span className="surface-token" role="alert">{failure}</span> : null}
         </>
       }
       trailing={
         <span className="room-proposal-verbs" data-testid="proposal-verbs">
-          <Button dense variant="secondary" loading={ctrl.proposalBusy === proposalId} onClick={() => void ctrl.handleConfirmProposal(proposalId)} data-testid="proposal-confirm">
-            Confirm
+          <Button dense variant="secondary" loading={ctrl.proposalBusy === proposalId} disabled={ctrl.proposalBusy === proposalId} onClick={() => void confirm()} data-testid="proposal-confirm">
+            {failure ? "Try again" : "Confirm"}
           </Button>
           <Button dense variant="ghost" onClick={() => void ctrl.handleDismissProposal(proposalId)} data-testid="proposal-dismiss">
             Dismiss
@@ -2934,6 +2948,7 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
           data-settling={shown ? undefined : "true"} aria-busy={shown ? undefined : true}>
           {shown ? null : <p className="room-empty-line room-settling-line">Loading…</p>}
           {sendFailure}
+          {ctrl.readError ? <SurfaceState error={ctrl.readError} onRetry={handleRefresh} /> : null}
           {ctrl.view === "room" ? (
             <>
               <div className="room-section-rise" style={{ animationDelay: "0ms" }}>

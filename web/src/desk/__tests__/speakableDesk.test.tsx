@@ -24,6 +24,7 @@ vi.mock("../store", () => ({
 
 vi.mock("../pullouts/editors/useDebouncedSave", () => ({
   useDebouncedSave: () => save,
+  usePublishEditorWriter: () => undefined,
 }));
 
 vi.mock("../components/DeskEditor", () => ({
@@ -104,8 +105,9 @@ describe("HS-129-07 speakable desk", () => {
     // (product-copy `legacy-product-nouns`).
     fireEvent.click(screen.getByRole("button", { name: "Speak Knowledge name" }));
     expect(screen.getByRole("textbox", { name: "Knowledge name" })).toHaveValue("spoken");
-    fireEvent.click(screen.getAllByRole("button", { name: "Speak" })[1]);
-    expect(screen.getAllByTestId("desk-editor")[1]).toHaveTextContent("reference spoken");
+    // Knowledge is a collection; only the Note offers document-body input.
+    expect(screen.getAllByTestId("desk-editor")).toHaveLength(1);
+    expect(screen.queryByText("reference")).not.toBeInTheDocument();
   });
 
   it("fills receipt search and both composer variants through their mics", () => {

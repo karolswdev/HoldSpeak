@@ -5,7 +5,7 @@
 // what the payload under the cursor will really do, RUN names what is
 // missing instead of standing bare, and the empty runs ledger offers the
 // step that ends it.
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_ITEMS } from "../../api";
@@ -180,6 +180,74 @@ describe("HS-132-07 item body draft", () => {
   });
 });
 
+describe("Workbench inlet draft custody", () => {
+  beforeEach(() => { localStorage.clear(); clearWriteFailure(); });
+  afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+
+  const inletKey = "workbench/wb1/inlet";
+  const instruction = "Review release ownership with the team and keep the complete source instruction after returning.";
+
+  it("keeps the successful detail and composer when an aggregate read loses the workbench bucket", async () => {
+    await openWindow();
+    fireEvent.change(screen.getByRole("combobox", { name: "New item instruction" }), { target: { value: instruction } });
+    act(() => useDesk.setState({ items: { ...useDesk.getState().items, workbench: [] } }));
+    expect(screen.getByText("Draft the brief")).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "New item instruction" })).toHaveValue(instruction);
+    expect(screen.getByRole("button", { name: "Edit Workbench name" })).toHaveTextContent("Daily");
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    await waitFor(() => expect(screen.getByRole("combobox", { name: "New item instruction" })).toHaveValue(""));
+    expect(screen.getByText("Draft the brief")).toBeInTheDocument();
+  });
+
+  it("keeps the full instruction, priority and source references across close and reopen without submitting", async () => {
+    const { fetchMock, unmount } = await openWindow();
+    fireEvent.change(screen.getByRole("combobox", { name: "New item instruction" }), { target: { value: instruction } });
+    fireEvent.click(screen.getByRole("button", { name: "P3" }));
+    act(() => {
+      const draft = JSON.parse(useDesk.getState().drafts[inletKey]);
+      useDesk.getState().setDraft(inletKey, JSON.stringify({ ...draft, refs: [{ id: "dir-release", kind: "zone", ref: "zone:dir-release", name: "Release sources" }] }));
+    });
+    unmount();
+    await mount();
+    expect(screen.getByRole("combobox", { name: "New item instruction" })).toHaveValue(instruction);
+    await waitFor(() => expect(screen.getByRole("button", { name: "P1" })).toBeVisible());
+    await waitFor(() => expect(screen.getByText("Release sources")).toBeVisible());
+    expect(fetchMock.mock.calls.filter(([input, init]) => String(input).endsWith("/items") && init?.method === "POST")).toHaveLength(0);
+  });
+
+  it("keeps a refused Add and its references, then clears only after Retry accepts that snapshot", async () => {
+    const { fetchMock } = await openWindow();
+    const read = fetchMock.getMockImplementation()!;
+    let accepted = false;
+    fetchMock.mockImplementation(async (input, init) => String(input).endsWith("/items") && init?.method === "POST"
+      ? new Response(JSON.stringify({ error: "Unavailable" }), { status: accepted ? 200 : 503, headers: { "content-type": "application/json" } }) : read(input, init));
+    fireEvent.change(screen.getByRole("combobox", { name: "New item instruction" }), { target: { value: instruction } });
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    await waitFor(() => expect(receiptText()).toContain("ADD ITEM FAILED"));
+    expect(screen.getByRole("combobox", { name: "New item instruction" })).toHaveValue(instruction);
+    expect(useDesk.getState().drafts[inletKey]).toContain(instruction);
+    accepted = true;
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(screen.getByRole("combobox", { name: "New item instruction" })).toHaveValue(""));
+    expect(useDesk.getState().drafts[inletKey]).toBeUndefined();
+  });
+
+  it("does not erase the next instruction typed while Add is in flight", async () => {
+    const { fetchMock } = await openWindow();
+    const read = fetchMock.getMockImplementation()!;
+    let release!: (response: Response) => void;
+    fetchMock.mockImplementation((input, init) => String(input).endsWith("/items") && init?.method === "POST"
+      ? new Promise<Response>((resolve) => { release = resolve; }) : read(input, init));
+    fireEvent.change(screen.getByRole("combobox", { name: "New item instruction" }), { target: { value: instruction } });
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    await waitFor(() => expect(release).toBeTypeOf("function"));
+    fireEvent.change(screen.getByRole("combobox", { name: "New item instruction" }), { target: { value: "Keep this next instruction" } });
+    await act(async () => { release(new Response("{}", { status: 200, headers: { "content-type": "application/json" } })); });
+    expect(screen.getByRole("combobox", { name: "New item instruction" })).toHaveValue("Keep this next instruction");
+    expect(useDesk.getState().drafts[inletKey]).toContain("Keep this next instruction");
+  });
+});
+
 describe("HS-132-07 drop-target honesty", () => {
   beforeEach(() => {
     localStorage.clear();
@@ -276,7 +344,7 @@ describe("HS-143-13 canonical workbench assignments", () => {
 
   it("mounts the two exact workbench subject summaries instead of target pickers", async () => {
     const { container } = await openWindow();
-    await userEvent.setup().click(screen.getByRole("button", { name: "Expand configuration" }));
+    await userEvent.setup().click(screen.getByRole("button", { name: "Configure" }));
     expect(container.querySelector('[data-capability="workbench.item"]')).toBeInTheDocument();
     expect(container.querySelector('[data-capability="voice.reference_resolve"]')).toBeInTheDocument();
     expect(screen.queryByRole("combobox", { name: /runs on|resolves with/i })).toBeNull();

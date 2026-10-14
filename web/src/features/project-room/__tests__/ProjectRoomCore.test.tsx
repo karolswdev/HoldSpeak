@@ -9,7 +9,7 @@
 //   - counters (Meetings 0 · Resources 0 · …) → removed (D1 cut)
 //   - identity dedup → the name is said once (title bar); no orientation band
 
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_ITEMS } from "../../../desk/api";
@@ -17,6 +17,7 @@ import { TitleSlotContext } from "../../../desk/surface/title";
 import { WingSlotContext } from "../../../desk/surface/wings";
 import { useDesk } from "../../../desk/store";
 import { ProjectRoomCore } from "../ProjectRoomCore";
+import { ApiError } from "../../../lib/api";
 
 vi.mock("../../../desk/ask", async () => {
   const actual =
@@ -136,6 +137,68 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.clearAllMocks();
+});
+
+describe("Room proposal correction retains a refused write", () => {
+  it("shows the accepted correction while a failed reread offers a read retry", async () => {
+    let accepted = false;
+    apiFetch.mockImplementation((url: string) => {
+      if (url === "/api/proposals/prop1/confirm") { accepted = true; return Promise.resolve({}); }
+      if (url === "/api/projects/p1/room") return accepted
+        ? Promise.reject(new ApiError(503, "read unavailable", {}))
+        : Promise.resolve(roomResponse({ needsYou: { state: "ok", count: 1, items: [{ source: "meeting", title: "Write the rollback runbook", proposal_id: "prop1", proposal_kind: "action", owner_hint: "Priya", due_hint: "2026-10-20", verb: "confirm" }] } }));
+      return Promise.resolve(response(url));
+    });
+    render(<WindowHarness scope="project:p1" />);
+    fireEvent.click(await screen.findByTestId("proposal-edit"));
+    fireEvent.change(screen.getByLabelText("Text"), { target: { value: "Write the release rollback runbook" } });
+    fireEvent.change(screen.getByLabelText("Owner"), { target: { value: "Jordan" } });
+    fireEvent.click(screen.getByTestId("proposal-save-confirm"));
+    expect(await screen.findByText("ROOM DID NOT LOAD · NOT AVAILABLE NOW")).toBeTruthy();
+    expect(screen.getByTestId("proposal-accepted")).toHaveTextContent("Write the release rollback runbook");
+    expect(screen.getByTestId("proposal-accepted")).toHaveTextContent("Confirmed");
+    expect(screen.queryByTestId("proposal-edit-well")).toBeNull();
+    expect(screen.queryByTestId("proposal-confirm")).toBeNull();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeTruthy();
+  });
+
+  it("keeps the editor and all fields while pending and refused, then closes only after the retry is accepted", async () => {
+    let accepted = false;
+    let attempts = 0;
+    let refuse: (cause: Error) => void = () => {};
+    const proposal = { id: "prop1", meeting_id: "m1", project_id: "p1", kind: "action", text: "Write the rollback runbook", owner_hint: "Priya", due_hint: "2026-10-20", state: "proposed" };
+    apiFetch.mockImplementation((url: string) => {
+      if (url === "/api/proposals/prop1/confirm") {
+        attempts += 1;
+        if (attempts === 1) return new Promise((_resolve, reject) => { refuse = reject; });
+        accepted = true;
+        return Promise.resolve({ proposal: { ...proposal, state: "confirmed" } });
+      }
+      if (url.includes("/proposals?")) return Promise.resolve({ proposals: accepted ? [] : [proposal] });
+      if (url === "/api/projects/p1/room") return Promise.resolve(roomResponse({ needsYou: { state: "ok", count: accepted ? 0 : 1, items: accepted ? [] : [{ source: "meeting", title: proposal.text, proposal_id: proposal.id, proposal_kind: "action", owner_hint: "Priya", due_hint: "2026-10-20", verb: "confirm" }] } }));
+      return Promise.resolve(response(url));
+    });
+    render(<WindowHarness scope="project:p1" />);
+    fireEvent.click(await screen.findByTestId("proposal-edit"));
+    fireEvent.change(screen.getByLabelText("Text"), { target: { value: "Write the release rollback runbook" } });
+    fireEvent.change(screen.getByLabelText("Owner"), { target: { value: "Jordan" } });
+    fireEvent.change(screen.getByLabelText("Due"), { target: { value: "2026-10-22" } });
+    fireEvent.click(screen.getByTestId("proposal-save-confirm"));
+    await waitFor(() => expect(screen.getByLabelText("Owner")).toBeDisabled());
+    expect(screen.getByTestId("proposal-edit-well")).toBeTruthy();
+    await act(async () => { refuse(new ApiError(409, "private hub text", {})); });
+    expect(await screen.findByText("NOT DONE · CHANGED ELSEWHERE")).toBeTruthy();
+    expect(screen.queryByText("private hub text")).toBeNull();
+    expect(screen.getByLabelText("Text")).toHaveValue("Write the release rollback runbook");
+    expect(screen.getByLabelText("Owner")).toHaveValue("Jordan");
+    expect(screen.getByLabelText("Due")).toHaveValue("2026-10-22");
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(screen.queryByTestId("proposal-edit-well")).toBeNull());
+    expect(attempts).toBe(2);
+    const writes = apiFetch.mock.calls.filter(([url]) => url === "/api/proposals/prop1/confirm");
+    expect(writes[0][1].json).toEqual({ text: "Write the release rollback runbook", owner: "Jordan", due: "2026-10-22" });
+    expect(writes[1][1].json).toEqual(writes[0][1].json);
+  });
 });
 
 // HS-169-03 SELECTOR EDIT: orientation band → room head.

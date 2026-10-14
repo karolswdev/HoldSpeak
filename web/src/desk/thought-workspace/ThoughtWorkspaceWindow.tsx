@@ -1,7 +1,7 @@
 import { publishThoughtDraft, seatThoughtDraft, useThoughtDraftWords } from "../thoughtDrafts";
 import { windowName } from "../windowName";
 import { NEW_THOUGHT_TITLE } from "../thoughtTitle";
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import { ApiError, readableError } from "../../lib/api";
 import { spriteUrl } from "../sprites";
 import { useDesk } from "../store";
@@ -112,7 +112,6 @@ function WorkspaceReady({
   projection,
   install,
   reload,
-  onClose,
   registerClose,
   sending,
   setSending,
@@ -121,8 +120,7 @@ function WorkspaceReady({
   projection: ThoughtWorkspaceProjection;
   install: (projection: ThoughtWorkspaceProjection) => boolean;
   reload: (adoptRestartedHub?: boolean) => Promise<ThoughtWorkspaceProjection>;
-  onClose: () => void;
-  registerClose: (handler: () => void) => () => void;
+  registerClose: (handler: () => Promise<boolean>) => () => void;
   sending: boolean;
   setSending: (sending: boolean) => void;
 }) {
@@ -224,15 +222,19 @@ function WorkspaceReady({
     }
   }, [documentThought.aggregate_revision, documentThought.id, projection.thought]);
 
-  useEffect(() => registerClose(() => {
-    if (busy) return;
+  useEffect(() => registerClose(async () => {
+    if (busy) return false;
     setBusy(true); say("");
-    void writer.flush({ fence: true }).then(() => onClose()).catch((cause) => {
+    try {
+      await writer.flush({ fence: true });
+      return true;
+    } catch (cause) {
       sayFault(cause);
       writer.release();
       setBusy(false);
-    });
-  }), [busy, onClose, registerClose, writer]);
+      return false;
+    }
+  }), [busy, registerClose, writer]);
 
   useEffect(() => {
     if (!["reserved", "in_flight", "awaiting_projection"].includes(projection.workspace_state) || writer.dirty || writer.saving) return;
@@ -731,12 +733,11 @@ export function ThoughtWorkspaceWindow({
 }) {
   const controller = useThoughtWorkspaceController(thought);
   const [sending, setSending] = useState(false);
-  const closeHandler = useRef(onClose);
-  closeHandler.current = onClose;
-  const registerClose = (handler: () => void) => {
+  const closeHandler = useRef<() => Promise<boolean>>(async () => true);
+  const registerClose = useCallback((handler: () => Promise<boolean>) => {
     closeHandler.current = handler;
-    return () => { closeHandler.current = onClose; };
-  };
+    return () => { if (closeHandler.current === handler) closeHandler.current = async () => true; };
+  }, []);
   useEffect(() => {
     if (useDesk.getState().editingId === thought.working_note.id) useDesk.getState().closeEditor();
   }, [thought.working_note.id]);
@@ -764,12 +765,13 @@ export function ThoughtWorkspaceWindow({
     fitContent
     origin={origin}
     open
-    onClose={() => closeHandler.current()}
+    beforeClose={() => closeHandler.current()}
+    onClose={onClose}
     onBack={sending ? () => setSending(false) : undefined}
   >
     {controller.opening ? <div className="thought-workspace-opening" aria-busy="true"><span>Opening Thought…</span></div> : controller.error || !controller.projection ? <div className="thought-workspace-opening" role="alert"><span className="surface-token">Could not open. Note unchanged.</span><Button variant="primary" onClick={() => void controller.reload(true)}>Try again</Button></div> : <>
       <div className="thought-workspace-preserved" inert={controller.restartDetected} aria-hidden={controller.restartDetected || undefined}>
-        <WorkspaceReady key={thought.id} initialThought={thought} projection={controller.projection} install={controller.install} reload={controller.reload} onClose={onClose} registerClose={registerClose} sending={sending} setSending={setSending} />
+        <WorkspaceReady key={thought.id} initialThought={thought} projection={controller.projection} install={controller.install} reload={controller.reload} registerClose={registerClose} sending={sending} setSending={setSending} />
       </div>
       {controller.restartDetected ? <div className="thought-workspace-opening thought-workspace-restart" role="alert"><span className="surface-token">Hub restarted. Reload to continue.</span><Button variant="primary" onClick={() => void controller.reload(true)}>Reload Thought</Button></div> : null}
     </>}

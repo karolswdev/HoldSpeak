@@ -1,0 +1,18 @@
+.deep-operate { min-height: 100vh; background: var(--wb-backdrop); padding: 16px; }
+.canvas-bar { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; color: var(--wb-paper); font-size: 12px; }
+.canvas-nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+.canvas-window { position: relative !important; width: min(640px, 100%); height: 510px; margin: 40px auto; display: flex; flex-direction: column; background: var(--wb-field); border: 1px solid var(--wb-ink); box-shadow: var(--wb-drop); container-type: inline-size; container-name: surface; }
+.canvas-title { flex: none; padding: 7px 12px; background: var(--wb-blue); color: var(--wb-ink); font: 600 15px var(--font-ui); border-bottom: 1px solid var(--wb-rule); }
+.canvas-wings { display: flex; gap: 1px; padding: 4px 12px; border-bottom: 1px solid var(--wb-rule-soft); }
+.canvas-wings button { padding: 6px 12px; color: var(--wb-text); font: 600 12px var(--font-mono); background: var(--wb-steel); }
+.canvas-body { flex: 1; min-height: 0; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+.canvas-setup, .canvas-actions, .canvas-foot, .canvas-refusal { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.canvas-setup { justify-content: space-between; font: 12px var(--font-mono); }
+.canvas-inlet { display: flex; gap: 6px; align-items: center; }
+.canvas-inlet input { flex: 1; min-width: 0; padding: 8px; border: 1px solid var(--wb-rule); background: var(--wb-well); color: var(--wb-text); font: 13px var(--font-mono); }
+.canvas-empty { color: var(--wb-muted); font-size: 13px; padding: 12px 0; }
+.canvas-fields .surface-section { display: grid; gap: 12px; }
+.canvas-refusal { color: var(--danger-signal); font-size: 12px; }
+.canvas-foot { flex: none; min-height: 38px; padding: 6px 12px; border-top: 1px solid var(--wb-rule); background: var(--wb-steel); font: 12px var(--font-mono); }
+.canvas-foot span { margin-left: auto; }
+@media(max-width: 420px) { .deep-operate { padding: 8px; } .canvas-window { height: 600px; margin: 20px auto; } .canvas-inlet { flex-wrap: wrap; } .canvas-inlet input { flex-basis: calc(100% - 54px); } .canvas-wings button { min-height: 44px; } }

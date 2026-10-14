@@ -1,6 +1,5 @@
 // HS-129-08 — editors are desk windows, never a modal layer.
 import "./inline-editor.css";
-import { Button } from "../../components/signal/Signal";
 import { useDesk } from "../store";
 import type { WorldObject } from "../world";
 import type { UnitPos } from "../store";
@@ -8,7 +7,7 @@ import { INLINE_EDITOR_CONTENT, EDITOR_LABELS } from "../pullouts/editors";
 import { SurfaceFooter } from "../surface/SurfaceFooter";
 import { DeskWindowFrame } from "./DeskWindow";
 import { qualifiedRef } from "../api";
-import { keptReceipt } from "../keptReceipt";
+import { useEditorSession } from "../pullouts/editors/useDebouncedSave";
 
 export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
   // Pullouts may arrive from older raw-id paths or the canonical qualified
@@ -18,11 +17,8 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
   ));
   const editorOrigin = useDesk((s) => s.editorOrigin);
   const isNew = useDesk((s) => s.newIds.includes(o.id));
-  /* HS-202-02 — the editor writes through a debounce, so the object is
-     kept as the owner types. The foot states WHEN; before this, a saved
-     note gave no sign at all (04-sober-eye.md, rank 5). */
-  const kept = useDesk((s) => s.keptAt[o.id]);
   const { closeEditor } = useDesk.getState();
+  const session = useEditorSession(closeEditor);
   const Content = INLINE_EDITOR_CONTENT[o.kind];
   const label = EDITOR_LABELS[o.kind] || o.kind;
   const origin = editorOrigin ?? {
@@ -44,29 +40,15 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
       origin={origin}
       title={`Edit ${o.title}`}
       open
+      beforeClose={session.flush}
       onClose={closeEditor}
     >
       <div className="desk-pullout-body desk-surface-body desk-editor-body">
-        <Content object={o} onClose={closeEditor} autoFocusName={isNew} />
+        <Content object={o} onClose={() => void session.done()} onWriter={session.onWriter} autoFocusName={isNew} />
       </div>
       <SurfaceFooter
-        receipt={
-          keptReceipt(kept) ? (
-            <span className="surface-footer-receipt-line" role="status">
-              {keptReceipt(kept)}
-            </span>
-          ) : null
-        }
-        verbs={
-          <>
-            <Button dense variant="ghost" onClick={closeEditor}>
-              Cancel
-            </Button>
-            <Button dense variant="primary" onClick={closeEditor}>
-              Save
-            </Button>
-          </>
-        }
+        receipt={session.receipt}
+        verbs={session.verbs}
       />
     </DeskWindowFrame>
   );

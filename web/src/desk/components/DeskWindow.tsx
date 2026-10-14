@@ -765,6 +765,8 @@ export interface DeskWindowFrameProps {
   escapeCloses?: boolean;
   open: boolean;
   onClose: () => void;
+  /** Await a mounted editor's write before any close motion hides its face. */
+  beforeClose?: () => Promise<boolean>;
   /** On a scoped surface, Back clears the detail scope. At compact width the
    * shared head always says Back; without this callback it closes the pane. */
   onBack?: () => void;
@@ -812,6 +814,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     escapeCloses = true,
     open,
     onClose,
+    beforeClose,
     onBack,
     unmountOnMinimize,
     entrance = true,
@@ -871,6 +874,9 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
 
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+  const beforeCloseRef = useRef(beforeClose);
+  beforeCloseRef.current = beforeClose;
+  const checkingClose = useRef(false);
 
   // PHILO-16: the frame is counted by the compositor before the first paint
   // (a layout effect), so a new window and the old front never both read
@@ -963,7 +969,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
       fill: "forwards",
     });
   };
-  const requestClose = () => {
+  const leaveWindow = () => {
     const el = shellRef.current;
     if (leavingRef.current) return;
     if (!el || typeof el.animate !== "function" || reducedMotion) {
@@ -1009,6 +1015,15 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
       leavingRef.current = false;
       closeRef.current();
     };
+  };
+  const requestClose = () => {
+    if (checkingClose.current || leavingRef.current) return;
+    const guard = beforeCloseRef.current;
+    if (!guard) { leaveWindow(); return; }
+    checkingClose.current = true;
+    void Promise.resolve().then(guard).then((accepted) => {
+      if (accepted) leaveWindow();
+    }).catch(() => undefined).finally(() => { checkingClose.current = false; });
   };
   const requestMinimize = () => {
     const el = shellRef.current;

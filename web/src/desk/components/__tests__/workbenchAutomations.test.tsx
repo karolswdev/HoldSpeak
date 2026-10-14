@@ -80,7 +80,7 @@ async function open(automations: Record<string, unknown>[] = []) {
   const calls = mockHub(automations);
   render(<WorkbenchWindow workbenchId="wb1" />);
   await screen.findByText("Review the plan");
-  await userEvent.setup().click(screen.getByRole("button", { name: "Expand configuration" }));
+  await userEvent.setup().click(screen.getByRole("button", { name: "Configure" }));
   return calls;
 }
 

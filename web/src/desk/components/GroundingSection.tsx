@@ -48,6 +48,15 @@ export function GroundingSection(props: {
   } = props;
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
+  const latestSelection = useRef(selection);
+  latestSelection.current = selection;
+  // Reads can finish out of order. Merge into the choices that exist now,
+  // including changes published in this same render interval.
+  const changeSelection = (apply: (current: GroundingSelection) => GroundingSelection) => {
+    const next = apply(latestSelection.current);
+    latestSelection.current = next;
+    onChange(next);
+  };
   // HS-101 B7 — the well lights while a desk object is in flight and
   // receives it through the glass (the engine dispatches the drop).
   const rootRef = useRef<HTMLDivElement>(null);
@@ -78,38 +87,39 @@ export function GroundingSection(props: {
     title: string;
     startedAt?: string;
   }) => {
-    if (picked(row.id)) {
-      onChange({ ...selection, meetings: selection.meetings.filter((m) => m.id !== row.id) });
+    if (latestSelection.current.meetings.some((m) => m.id === row.id)) {
+      changeSelection((current) => ({ ...current, meetings: current.meetings.filter((m) => m.id !== row.id) }));
       return;
     }
     setLoading(row.id);
     const m = await fetchGroundingMeeting(row.id, row.title, row.startedAt);
     setLoading(null);
-    onChange({ ...selection, meetings: [...selection.meetings, m] });
+    changeSelection((current) => current.meetings.some((entry) => entry.id === row.id)
+      ? current : { ...current, meetings: [...current.meetings, m] });
   };
 
   const toggleResource = async (row: { ref: string; kind: string; id: string; title: string }) => {
-    const current = selection.resources || [];
-    if (current.some((resource) => resource.ref === row.ref)) {
-      onChange({ ...selection, resources: current.filter((resource) => resource.ref !== row.ref) });
+    if ((latestSelection.current.resources || []).some((resource) => resource.ref === row.ref)) {
+      changeSelection((current) => ({ ...current, resources: (current.resources || []).filter((resource) => resource.ref !== row.ref) }));
       return;
     }
     setLoading(row.ref);
     const resolved = await fetchGroundingResource(row.ref, row.kind, row.id, row.title);
     setLoading(null);
-    if (resolved) onChange({ ...selection, resources: [...current, resolved] });
+    if (resolved) changeSelection((current) => (current.resources || []).some((entry) => entry.ref === row.ref)
+      ? current : { ...current, resources: [...(current.resources || []), resolved] });
   };
 
   const mutate = (
     id: string,
     change: (m: GroundingMeeting) => GroundingMeeting,
   ) => {
-    onChange({
-      ...selection,
-      meetings: selection.meetings.map((m) =>
+    changeSelection((current) => ({
+      ...current,
+      meetings: current.meetings.map((m) =>
         m.id === id ? change({ ...m }) : m,
       ),
-    });
+    }));
   };
 
   useEffect(() => {
@@ -202,8 +212,7 @@ export function GroundingSection(props: {
                   key={row.id}
                   className={"desk-ground-row" + (sel ? " is-picked" : "")}
                 >
-                  <button
-                    type="button"
+                  <div
                     className="desk-ground-line is-press"
                     onClick={bandPress(() => void toggleMeeting(row))}
                   >
@@ -219,11 +228,10 @@ export function GroundingSection(props: {
                     {sel?.day && (
                       <span className="desk-ground-fig">{sel.day}</span>
                     )}
-                  </button>
+                  </div>
                   {sel && (
                     <div className="desk-ground-sub">
-                      <button
-                        type="button"
+                      <div
                         className={
                           "desk-ground-line is-sub" +
                           (sel.hasIntel ? " is-press" : " is-off")
@@ -255,9 +263,8 @@ export function GroundingSection(props: {
                             {fmt(tok(sel.intelChars))} tok
                           </span>
                         )}
-                      </button>
-                      <button
-                        type="button"
+                      </div>
+                      <div
                         className={
                           "desk-ground-line is-sub" +
                           (sel.transcriptLines === 0 ? " is-off" : " is-press")
@@ -291,11 +298,10 @@ export function GroundingSection(props: {
                             {fmt(tok(sel.transcriptChars))} tok
                           </span>
                         )}
-                      </button>
+                      </div>
                       {sel.artifacts.map((a) => (
-                        <button
+                        <div
                           key={a.id}
-                          type="button"
                           className="desk-ground-line is-sub is-press"
                           data-on={a.on || undefined}
                           onClick={bandPress(() =>
@@ -323,7 +329,7 @@ export function GroundingSection(props: {
                           <span className="desk-ground-fig">
                             {fmt(tok(a.chars))} tok
                           </span>
-                        </button>
+                        </div>
                       ))}
                     </div>
                   )}
@@ -347,8 +353,7 @@ export function GroundingSection(props: {
                       key={row.ref}
                       className={`desk-ground-row${selected ? " is-picked" : ""}`}
                     >
-                      <button
-                        type="button"
+                      <div
                         className="desk-ground-line is-press"
                         onClick={bandPress(() => void toggleResource(row))}
                       >
@@ -367,7 +372,7 @@ export function GroundingSection(props: {
                             {fmt(tok(priced.chars))} tok
                           </span>
                         )}
-                      </button>
+                      </div>
                     </li>
                   );
                 })}

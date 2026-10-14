@@ -13,6 +13,7 @@ vi.mock("../../lib/api", async () => {
 });
 
 import { loadAll } from "../api";
+import { ApiError, SIGN_IN_SENTENCE } from "../../lib/api";
 
 describe("loadAll with the hub unreachable", () => {
   it("names Meetings whatever read rejects first", async () => {
@@ -26,6 +27,39 @@ describe("loadAll with the hub unreachable", () => {
       const result = await loadAll();
       expect(result.failed?.label).toBe("Meetings");
       expect(result.error.startsWith("Meetings:")).toBe(true);
+      expect(result.transientFailures).toMatchObject({ meeting: true, note: true, workbench: true });
     }
+  });
+
+  it("classifies each failed read without letting an earlier 503 mask a later 403", async () => {
+    apiFetch.mockReset();
+    apiFetch.mockImplementation((path: string) => {
+      if (path.startsWith("/api/meetings")) return Promise.reject(new ApiError(503, "meetings unavailable", {}));
+      if (path === "/api/decisions") return Promise.reject(new ApiError(403, "access refused", {}));
+      if (path === "/api/workbenches") return Promise.reject(new Error("unknown read failure"));
+      return Promise.resolve({});
+    });
+
+    const result = await loadAll();
+
+    expect(result.transientFailures).toEqual({ meeting: true, workbench: true });
+    expect(result.status).toMatchObject({ meeting: "unreachable", decision: "unreachable", workbench: "unreachable" });
+    expect(result.failed?.label).toBe("Meetings");
+    expect(result.error).toBe("Meetings: meetings unavailable");
+  });
+
+  it("does not classify a 401 as transient and keeps the sign-in error", async () => {
+    apiFetch.mockReset();
+    apiFetch.mockImplementation((path: string) => {
+      if (path === "/api/decisions") return Promise.reject(new ApiError(401, SIGN_IN_SENTENCE, {}));
+      return Promise.resolve({});
+    });
+
+    const result = await loadAll();
+
+    expect(result.transientFailures).toEqual({});
+    expect(result.status.decision).toBe("unreachable");
+    expect(result.failed?.label).toBe("Decisions");
+    expect(result.error).toBe(SIGN_IN_SENTENCE);
   });
 });

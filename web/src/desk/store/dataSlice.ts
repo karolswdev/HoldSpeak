@@ -17,6 +17,7 @@ import {
   loadAll,
   qualifiedRef,
   type Items,
+  type LoadResult,
 } from "../api";
 import { buildLinearGraph } from "../graph";
 import { loadSetup } from "../setup";
@@ -188,10 +189,17 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
     current: Items,
     snapshot: ReadonlyMap<string, PrimitiveWriteState>,
     status: DeskState["status"],
+    transientFailures: LoadResult["transientFailures"],
     rollbackProtection?: RollbackProtection,
   ): Items => {
     const merged = { ...incoming } as Items;
     for (const kind of Object.keys(incoming) as Array<keyof Items>) {
+      // A transient read has no new collection truth. Keep the latest
+      // bucket; successful empty reads and HTTP 4xx refusals still stand.
+      if (transientFailures?.[kind]) {
+        replaceItemsBucket(merged, kind, current[kind] ?? incoming[kind]);
+        continue;
+      }
       const incomingBucket = (incoming[kind] ?? []) as unknown as IdentifiedItem[];
       // A kind the store has not loaded yet has no current bucket: nothing
       // there is protected, and the incoming bucket stands as read.
@@ -240,7 +248,7 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
     set({ loading: true, error: "" });
     let setupCause: unknown = null;
     const [
-      { items, profiles, projects, inferenceTargets, models, status, error, failed: collectionFailed },
+      { items, profiles, projects, inferenceTargets, models, status, error, failed: collectionFailed, transientFailures },
       setup,
     ] = await Promise.all([loadAll(), loadSetup((cause) => { setupCause = cause; })]);
     // PHILO-13-13 C3-W: a Desk that keeps its frame through a lost setup read
@@ -263,6 +271,7 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       get().items,
       refreshSnapshot,
       status,
+      transientFailures,
       rollbackProtection,
     );
     set({

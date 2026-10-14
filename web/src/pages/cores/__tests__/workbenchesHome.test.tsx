@@ -1,8 +1,9 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { WorkbenchesHomeCore } from "../WorkbenchesHomeCore";
 
-const mocks = vi.hoisted(() => ({ apiFetch: vi.fn(), open: vi.fn() }));
+const mocks = vi.hoisted(() => ({ apiFetch: vi.fn(), open: vi.fn(), reload: null as (() => void) | null }));
+vi.mock("../../../desk/useDeskChangedRefresh", () => ({ useOnDeskChanged: (reload: () => void) => { mocks.reload = reload; } }));
 vi.mock("../../../lib/api", () => ({
   apiFetch: mocks.apiFetch,
   readableError: (error: unknown) => error instanceof Error ? error.message : "Failed",
@@ -19,6 +20,24 @@ const RUN = { id: "run-alpha", workbench_id: "alpha", started_at: "2026-10-14T13
 beforeEach(() => { vi.clearAllMocks(); });
 
 describe("Workbenches read truth", () => {
+  it("updates the still-open list after a Desk write and keeps the last rows on a failed reread", async () => {
+    let workbenches: typeof ALPHA[] = [];
+    let fail = false;
+    mocks.apiFetch.mockImplementation((path: string) => path === "/api/workbenches"
+      ? fail ? Promise.reject(new Error("Hub unavailable")) : Promise.resolve({ workbenches })
+      : Promise.resolve({ runs: [] }));
+    render(<WorkbenchesHomeCore />);
+    await screen.findByText("No workbenches yet");
+    workbenches = [ALPHA];
+    act(() => mocks.reload?.());
+    await screen.findByRole("button", { name: /Alpha.*PENDING/ });
+    expect(screen.queryByText("No workbenches yet")).toBeNull();
+    fail = true;
+    act(() => mocks.reload?.());
+    expect(await screen.findByRole("alert")).toHaveTextContent("Workbenches not loaded · Hub unavailable");
+    expect(screen.getByRole("button", { name: /Alpha.*PENDING/ })).toBeVisible();
+  });
+
   it("shows a failed list read with Retry, then the actual empty collection", async () => {
     mocks.apiFetch.mockRejectedValueOnce(new Error("Hub unavailable")).mockResolvedValue({ workbenches: [] });
     render(<WorkbenchesHomeCore />);

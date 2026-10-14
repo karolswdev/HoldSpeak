@@ -18,6 +18,7 @@ import type { PulloutContentProps } from "./types";
 import { actOnReview, adoptThought, completeThought, detachThoughtContext, listThoughtContext, originalThought, reconcileThought, refineThought, refreshThoughtContext, resumeThought, reviewThought, sourceLabel, stopRefinement, thoughtForNote, type NoteThoughtStatus, type Thought, type ThoughtAttachment, type ThoughtCompletionReceipt, type ThoughtContextReceipt, type ThoughtDefaultApplicationReceipt, type ThoughtDefaultContext, type ThoughtDefaultContextReceipt, type ThoughtNote, type ThoughtReview, type ThoughtUsedContextReceipt } from "../thoughts";
 import { apiFetch, ApiError } from "../../lib/api";
 import { ThoughtContextPicker } from "./ThoughtContextPicker";
+import { useEditorSession } from "./editors/useDebouncedSave";
 
 const REFINING_STATES = ["reserved", "in_flight", "awaiting_projection"];
 function isRefining(state?: string): boolean { return !!state && REFINING_STATES.includes(state); }
@@ -50,6 +51,7 @@ export function NotePullout({
   object: o,
   initialStatus,
   onThoughtOwned,
+  registerClose,
 }: PulloutContentProps & {
   initialStatus?: NoteThoughtStatus;
   onThoughtOwned?: (thought: Thought) => void;
@@ -100,6 +102,7 @@ export function NotePullout({
     return () => { live = false; };
   }, [initialStatus, o.id]);
   const thought = status?.ownership === "thought" ? status.thought : null;
+  const session = useEditorSession(closeEditor, editing && !thought ? registerClose : undefined);
   useEffect(() => { if (thought) onThoughtOwned?.(thought); }, [onThoughtOwned, thought]);
   useEffect(() => { latestThought.current = thought; }, [thought]);
   useEffect(() => {
@@ -421,7 +424,7 @@ export function NotePullout({
         {editing && thought ? (
           <ThoughtNoteEditor ref={thoughtEditor} thought={thought} finishing={finishing} onThought={(next) => setStatus({ ownership: "thought", thought: next })} />
         ) : editing && Content ? (
-          <Content object={o} onClose={closeEditor} />
+          <Content object={o} onClose={() => void session.done()} onWriter={session.onWriter} />
         ) : body ? (
           <section>
             <Material>{body}</Material>
@@ -445,13 +448,10 @@ export function NotePullout({
         )}
       </div>
       {/* UX-CANON: needs redesign (HS-170-04) — footer verb chain */}
-      <SurfaceFooter receipt={editing ? null : completionReceipt ? <>Done</> : copyReceipt} verbs={editing && thought ? <div className="thought-completion-verbs">
+      <SurfaceFooter receipt={editing ? (thought ? null : session.receipt) : completionReceipt ? <>Done</> : copyReceipt} verbs={editing && thought ? <div className="thought-completion-verbs">
         <Button variant="ghost" dense className="thought-completion-secondary thought-editor-cancel" onClick={closeEditor}>Cancel</Button>
         <Button variant="primary" dense className="thought-completion-primary" disabled={finishing} onClick={() => void complete()}>{finishing ? "Finishing…" : "Finish Thought"}</Button>
-      </div> : editing ? <>
-        <Button variant="ghost" dense onClick={closeEditor}>Cancel</Button>
-        <Button variant="primary" dense onClick={closeEditor}>Save</Button>
-      </> : thought ? <>
+      </div> : editing ? session.verbs : thought ? <>
         {thought.state === "completed" ? <>
           <div className="thought-completion-verbs"><Button variant="ghost" dense className="thought-completion-secondary" onClick={() => void copy(body)}>Copy</Button>
           <Button variant="primary" dense className="thought-completion-primary" disabled={finishing} onClick={() => void resume()}>{finishing ? "Resuming…" : "Resume refining"}</Button></div>

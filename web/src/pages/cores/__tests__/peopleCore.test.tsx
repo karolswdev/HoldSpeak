@@ -1,6 +1,7 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { PeopleCore } from "../PeopleCore";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { PeopleCore, RelationshipPane } from "../PeopleCore";
+import { useDesk } from "../../../desk/store";
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -18,6 +19,93 @@ function stub(handlers: Record<string, (input: string, opts?: { method?: string;
 }
 
 afterEach(() => vi.unstubAllGlobals());
+
+describe("Context keeps the report's working note", () => {
+  beforeEach(() => useDesk.setState({ drafts: {}, places: {} }));
+  afterEach(() => useDesk.setState({ drafts: {}, places: {} }));
+  const relationship = { id: "context-r1", display_name: "Priya", notes: [{ id: "saved", topic: "Career plan", body: "Lead the ledger cutover next month.", visibility: "leader_private" as const }] };
+  function mount(id = relationship.id, onRefresh = vi.fn()) {
+    return render(<RelationshipPane relationship={{ ...relationship, id }} initialLens="context" onRefresh={onRefresh} onProtectedFailure={vi.fn()} onArchived={vi.fn()} />);
+  }
+  function readers(post?: (opts?: { method?: string; body?: string }) => Response | Promise<Response>) {
+    stub({
+      "/api/projects": () => json({ projects: [] }),
+      "/api/door": () => json({ upcoming: [] }),
+      "/api/people/relationships/context-r1/notes": (_url, opts) => post?.(opts) ?? json({}, 201),
+    });
+  }
+  function typeNote() {
+    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
+    fireEvent.change(screen.getByLabelText("Topic"), { target: { value: "Release feedback" } });
+    fireEvent.change(screen.getByLabelText("Note"), { target: { value: "Priya can lead the release after the rollback review." } });
+    fireEvent.change(screen.getByLabelText("Visibility"), { target: { value: "shared_intent" } });
+  }
+
+  it("leads with saved context and keeps a closed draft through tab return, remount and another person", async () => {
+    readers();
+    let view = mount();
+    expect(screen.getByText("Lead the ledger cutover next month.")).toBeTruthy();
+    expect(screen.queryByLabelText("Note")).toBeNull();
+    expect(screen.queryByTestId("people-link-event")).toBeNull();
+    typeNote();
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(screen.queryByLabelText("Note")).toBeNull();
+    fireEvent.click(screen.getByRole("tab", { name: "History" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Context" }));
+    expect(screen.getByLabelText("Note")).toHaveValue("Priya can lead the release after the rollback review.");
+    expect(screen.getByLabelText("Visibility")).toHaveValue("shared_intent");
+    view.unmount();
+    view = mount("context-r2");
+    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
+    expect(screen.getByLabelText("Note")).toHaveValue("");
+    expect(screen.getByLabelText("Visibility")).toHaveValue("leader_private");
+    view.unmount();
+    mount();
+    expect(screen.getByLabelText("Topic")).toHaveValue("Release feedback");
+    expect(screen.getByLabelText("Note")).toHaveValue("Priya can lead the release after the rollback review.");
+    expect(screen.getByLabelText("Visibility")).toHaveValue("shared_intent");
+  });
+
+  it("keeps a refused draft and clears it only after a successful retry with the same private/shared authority", async () => {
+    let attempts = 0;
+    const submitted: unknown[] = [];
+    readers((opts) => {
+      submitted.push(JSON.parse(String(opts?.body)));
+      return ++attempts === 1 ? json({ error: "revision_conflict" }, 409) : json({}, 201);
+    });
+    const refresh = vi.fn();
+    mount(relationship.id, refresh);
+    typeNote();
+    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
+    await waitFor(() => expect(attempts).toBe(1));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Add note" })).not.toBeDisabled());
+    expect(screen.getByLabelText("Note")).toHaveValue("Priya can lead the release after the rollback review.");
+    expect(refresh).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
+    await waitFor(() => expect(refresh).toHaveBeenCalledOnce());
+    expect(submitted[1]).toEqual(submitted[0]);
+    expect(submitted[1]).toMatchObject({ visibility: "shared_intent" });
+    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
+    expect(screen.getByLabelText("Topic")).toHaveValue("");
+    expect(screen.getByLabelText("Note")).toHaveValue("");
+    expect(screen.getByLabelText("Visibility")).toHaveValue("leader_private");
+  });
+
+  it("does not clear a newer note typed while the submitted snapshot is pending", async () => {
+    let accept: (response: Response) => void = () => {};
+    readers(() => new Promise<Response>((resolve) => { accept = resolve; }));
+    const refresh = vi.fn();
+    mount(relationship.id, refresh);
+    typeNote();
+    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
+    fireEvent.change(screen.getByLabelText("Note"), { target: { value: "Next note: discuss the rollout owners." } });
+    await act(async () => { accept(json({}, 201)); });
+    expect(refresh).toHaveBeenCalledOnce();
+    expect(screen.getByLabelText("Note")).toHaveValue("Next note: discuss the rollout owners.");
+    expect(screen.getByLabelText("Topic")).toHaveValue("Release feedback");
+    expect(screen.getByLabelText("Visibility")).toHaveValue("shared_intent");
+  });
+});
 
 describe("PeopleCore encrypted local plane", () => {
   it("names an unconfigured store with the joy pattern leading with the act", async () => {
@@ -67,6 +155,8 @@ describe("PeopleCore encrypted local plane", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Context" }));
     expect(await screen.findByRole("button", { name: /Platform/ })).toBeTruthy();
     expect(screen.getByText("Prefers written context")).toBeTruthy();
+    expect(screen.queryByLabelText("Note")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
     expect(screen.getByLabelText("Note")).toBeTruthy();
     // HS-176-04 — the voice law (Article IV.1): People's wells carry the
     // mic like every other text input.  This assertion used to require the
@@ -113,6 +203,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
     render(<PeopleCore scope="people:r1" />);
     await waitFor(() => expect(screen.getByRole("tab", { name: "Context" })).toBeTruthy());
     fireEvent.click(screen.getByRole("tab", { name: "Context" }));
+    fireEvent.click(screen.getByRole("button", { name: "Links" }));
     // Open picker
     fireEvent.click(await screen.findByTestId("people-link-event"));
     expect(screen.getByTestId("people-event-picker")).toBeTruthy();
@@ -149,6 +240,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
     render(<PeopleCore scope="people:r1" />);
     await waitFor(() => expect(screen.getByRole("tab", { name: "Context" })).toBeTruthy());
     fireEvent.click(screen.getByRole("tab", { name: "Context" }));
+    fireEvent.click(screen.getByRole("button", { name: "Links" }));
     await screen.findByTestId("people-link-event");
     // Pin: no link POST was made without clicking a picker row
     const linkCalls = fetchSpy.mock.calls.filter(([url]: [string]) => String(url).includes("calendar-links"));
@@ -178,6 +270,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
     render(<PeopleCore scope="people:r1" />);
     await waitFor(() => expect(screen.getByRole("tab", { name: "Context" })).toBeTruthy());
     fireEvent.click(screen.getByRole("tab", { name: "Context" }));
+    fireEvent.click(screen.getByRole("button", { name: "Links" }));
     fireEvent.click(await screen.findByTestId("people-link-event"));
     // Click the event row to link
     fireEvent.click(screen.getByRole("button", { name: /1:1 w\/ Ewa/ }));
@@ -212,6 +305,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
     render(<PeopleCore scope="people:r1" />);
     await waitFor(() => expect(screen.getByRole("tab", { name: "Context" })).toBeTruthy());
     fireEvent.click(screen.getByRole("tab", { name: "Context" }));
+    fireEvent.click(screen.getByRole("button", { name: "Links" }));
     // Beat 1: "Unlink" button
     const unlinkBtn = await screen.findByRole("button", { name: "Unlink" });
     fireEvent.click(unlinkBtn);
@@ -279,6 +373,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
     render(<PeopleCore scope="people:r1" />);
     await waitFor(() => expect(screen.getByRole("tab", { name: "Context" })).toBeTruthy());
     fireEvent.click(screen.getByRole("tab", { name: "Context" }));
+    fireEvent.click(screen.getByRole("button", { name: "Links" }));
     fireEvent.click(await screen.findByTestId("people-link-event"));
     // "1:1 w/ EWA" should be SUGGESTED even though name is lowercase "ewa"
     expect(screen.getByText("SUGGESTED")).toBeTruthy();
@@ -342,6 +437,7 @@ describe("PeopleCore HS-149-04 Prep lens", () => {
     render(<PeopleCore scope="people:r1" />);
     await waitFor(() => expect(screen.getByRole("tab", { name: "Context" })).toBeTruthy());
     fireEvent.click(screen.getByRole("tab", { name: "Context" }));
+    fireEvent.click(screen.getByRole("button", { name: "Links" }));
     // Section renders with existing aliases
     const section = await screen.findByTestId("people-owner-aliases");
     expect(section).toBeTruthy();
