@@ -162,3 +162,7 @@ product build. The owner’s real HOME/DB was not used by any test or walk.
 Open: owner judgment on the running desk, actual email/Slack delivery, real
 model/LAN inference, microphone and physical devices; the full main tape and
 postmerge review. These are not inferred from deterministic browser fixtures.
+
+Release: [PR #1201](https://github.com/karolswdev/HoldSpeak/pull/1201),
+branch `feat/send-refinement-20261014`. Main checkout and its owner artifacts
+remain untouched; local redeploy uses this verified worktree.
