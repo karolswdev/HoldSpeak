@@ -1,4 +1,4 @@
-import { keptDraft } from "../../deskMemory";
+import { forgetDraft, keepDraft, keptDraft } from "../../deskMemory";
 
 /* PHILO-13-07 (B2): the edit the hub has not kept yet (inside the 450 ms
    wait, or a write that did not land) is kept in the workspace document per
@@ -22,5 +22,13 @@ export function keptField(patch: Record<string, unknown>, wire: string, fallback
   const value = patch[wire];
   if (Array.isArray(value)) return value.join(", ");
   return typeof value === "string" ? value : fallback;
+}
+
+/** Recovery updates only its own fields, preserving newer editor work. */
+export function updateKeptEditorFields(kind: string, id: string, patch: Record<string, unknown>, remove: string[] = []) {
+  const next = { ...keptEditorPatch(kind, id), ...patch };
+  for (const key of remove) delete next[key];
+  if (Object.keys(next).length) keepDraft(editorDraftKey(kind, id), JSON.stringify(next));
+  else forgetDraft(editorDraftKey(kind, id));
 }
 

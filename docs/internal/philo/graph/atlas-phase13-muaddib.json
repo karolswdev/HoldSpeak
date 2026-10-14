@@ -3775,7 +3775,7 @@
         },
         {
           "path": "web/src/desk/components/Pullout.tsx",
-          "symbol": "open onClose={() => closePullout(pulloutId)}",
+          "symbol": "const close = () => closePullout(pulloutId);",
           "claim": "Close removes exactly the store's entry"
         },
         {
@@ -4230,7 +4230,7 @@
       "sources": [
         {
           "path": "web/src/desk/pullouts/editors/useDebouncedSave.ts",
-          "symbol": "if (inFlight.current[key] === value) delete inFlight.current[key];",
+          "symbol": "for (const key of Object.keys(body)) { delete failed.current[key]; }",
           "claim": "a landed write forgets only the fields it carried"
         },
         {

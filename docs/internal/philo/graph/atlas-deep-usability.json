@@ -1,0 +1,200 @@
+{
+  "schema_version": 1,
+  "atlas_version": "deep-usability-20261014",
+  "extends": "docs/internal/philo/graph/atlas-send-refinement.json",
+  "source_commit": "eb9a3266ed9baf45c27470e5705d6e062947809a",
+  "states": [
+    {
+      "id": "state.desk_presentation.deep_grounding",
+      "family": "desk_presentation",
+      "values": {
+        "application": "Ask AI",
+        "sources": "two notes selected"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/components/GroundingSection.tsx",
+          "symbol": "const latestSelection = useRef(selection);",
+          "claim": "Concurrent read completions merge into the current choices."
+        }
+      ],
+      "reachable_by": [
+        "case.deep.ask.sources"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "case.deep.ask.sources",
+      "job": "j11",
+      "edge_ids": [
+        "edge.route.grounding_resolve"
+      ],
+      "state_id": "state.desk_presentation.deep_grounding",
+      "applicability": "applicable",
+      "preconditions": [
+        "Two real Note producers; actual Search \u2192 Ask \u2192 Add notes. No engine or Ask run."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "body": {
+            "title": "Audit rollback owner",
+            "body_markdown": "Jordan owns the rollback.",
+            "tags": []
+          },
+          "expect_status": 201,
+          "adapter": "http-route"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "body": {
+            "title": "Audit release risk",
+            "body_markdown": "Verify the fallback before Friday.",
+            "tags": []
+          },
+          "expect_status": 201,
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "button[aria-controls=desk-tool-shelf]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "input[aria-controls=desk-palette-listbox]",
+          "value": "Ask AI"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "button[id=\"desk-palette-option-go.ask\"]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "textarea[placeholder=\"Ask about your work\"]"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Add notes"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-ground-fold > summary"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-ground-line:has(input[aria-label=\"Audit rollback owner\"])"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "input[aria-label=\"Audit rollback owner\"]:checked"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": ".desk-ground-line:has(input[aria-label=\"Audit release risk\"])",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-pointer",
+            "selector": "input[aria-label=\"Audit release risk\"]:checked"
+          }
+        ]
+      },
+      "expected": {
+        "observe_at": ".desk-ground",
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "selector_presence",
+              "selector": "input[aria-label=\"Audit rollback owner\"]:checked",
+              "present": true
+            },
+            {
+              "kind": "selector_presence",
+              "selector": "input[aria-label=\"Audit release risk\"]:checked",
+              "present": true
+            },
+            {
+              "kind": "selector_presence",
+              "selector": ".desk-ground button:has(input)",
+              "present": false
+            }
+          ]
+        },
+        "words": "Both real resources remain selected after their grounding reads; each choice uses its existing checkbox without an enclosing button. This walk does not execute inference or claim the controlled reversed-read timing."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ],
+  "clocks": [
+    {
+      "id": "clock.browser_wall",
+      "source": "Browser Date",
+      "mechanism": "none: these cases use browser wall time without moving a clock",
+      "status": "available",
+      "used_by": []
+    }
+  ],
+  "excluded": [],
+  "council_readings": []
+}

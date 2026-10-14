@@ -123,6 +123,8 @@ export interface LoadResult {
   error: string;
   /** PHILO-3-01 — the first collection that did not load, and why. */
   failed: { label: string; cause: unknown } | null;
+  /** Reads that can retain their last known bucket; HTTP 4xx refusals cannot. */
+  transientFailures?: Partial<Record<PrimitiveKind | "profile", true>>;
 }
 
 /** Canonical identity shared with the hub and native Desk. */
@@ -722,6 +724,7 @@ export async function loadAll(): Promise<LoadResult> {
   let pulledArtifacts: unknown[] = [];
   const items: TypedItems = { ...EMPTY_ITEMS };
   const status: Status = {};
+  const transientFailures: NonNullable<LoadResult["transientFailures"]> = {};
   let profiles: Array<Record<string, unknown>> = [];
   let projects: ProjectSummary[] = [];
   let inferenceTargets: InferenceTarget[] = [];
@@ -740,6 +743,7 @@ export async function loadAll(): Promise<LoadResult> {
   };
   const fail = (kind: PrimitiveKind | "profile" | "project", label: string, e: unknown) => {
     status[kind] = "unreachable";
+    if (!(e instanceof ApiError) || e.status >= 500) transientFailures[kind] = true;
     const rank = rankOf(kind);
     if (rank < failedRank) {
       failedRank = rank;
@@ -953,7 +957,7 @@ export async function loadAll(): Promise<LoadResult> {
     }));
   status.profile = inferenceTargets.length > 0 ? "live" : (status.profile || "unreachable");
 
-  return { items, profiles, projects, inferenceTargets, models, status, error, failed };
+  return { items, profiles, projects, inferenceTargets, models, status, error, failed, transientFailures };
 }
 
 /** PHILO-13-02 — parking uses the existing Meeting delete route. */

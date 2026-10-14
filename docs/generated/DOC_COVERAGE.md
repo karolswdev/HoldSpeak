@@ -13,11 +13,11 @@ Validation errors at generation: **0**.
 
 | Measure | Present / total or count |
 | --- | ---: |
-| Source paths | 276 / 276 |
-| Test paths | 214 / 214 |
+| Source paths | 277 / 277 |
+| Test paths | 216 / 216 |
 | Documentation paths | 236 / 236 |
-| Assertions inspected | 214 |
-| Tests executed | 176 |
+| Assertions inspected | 216 |
+| Tests executed | 178 |
 | Records with an executed assertion | 79 |
 | Semantic records unresolved | 76 |
 
@@ -103,7 +103,7 @@ Validation errors at generation: **0**.
 | `agents.thread_tool_loop` | capabilities | 3/3 | 3/3 | 3 | 0 | 0 | unresolved |
 | `agents.interview` | capabilities | 3/3 | 3/3 | 3 | 3 | 0 | partially_evidenced |
 | `agents.mcp_http` | capabilities | 3/3 | 2/2 | 2 | 2 | 0 | partially_evidenced |
-| `knowledge.grounding` | capabilities | 2/2 | 2/2 | 2 | 2 | 0 | partially_evidenced |
+| `knowledge.grounding` | capabilities | 3/3 | 4/4 | 4 | 4 | 0 | partially_evidenced |
 | `knowledge.memory_search` | capabilities | 3/3 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `workflows.linear_run` | capabilities | 2/2 | 3/3 | 3 | 3 | 0 | partially_evidenced |
 | `coder.observation` | capabilities | 3/3 | 3/3 | 3 | 3 | 0 | partially_evidenced |

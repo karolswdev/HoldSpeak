@@ -58,6 +58,35 @@ describe("DeskWindowFrame (the one chrome)", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it("normal close motion waits for its guard, deduplicates presses and remains available after refusal", async () => {
+    let resolve!: (value: boolean) => void;
+    const guard = vi.fn().mockImplementationOnce(() => new Promise<boolean>((done) => { resolve = done; })).mockResolvedValueOnce(true);
+    const onClose = vi.fn();
+    const original = HTMLElement.prototype.animate;
+    const animation = { onfinish: null as null | (() => void), cancel: vi.fn(), finished: Promise.resolve() };
+    const animate = vi.fn(() => animation);
+    HTMLElement.prototype.animate = animate as unknown as typeof HTMLElement.prototype.animate;
+    try {
+      render(<DeskWindowFrame id="guard-motion" title="Guarded editor" open entrance={false} beforeClose={guard} onClose={onClose}>Working material</DeskWindowFrame>);
+      const before = animate.mock.calls.length;
+      const button = screen.getByRole("button", { name: "Close Guarded editor" });
+      fireEvent.click(button);
+      fireEvent.click(button);
+      await act(async () => undefined);
+      expect(guard).toHaveBeenCalledTimes(1);
+      expect(animate).toHaveBeenCalledTimes(before);
+      expect(onClose).not.toHaveBeenCalled();
+      await act(async () => { resolve(false); });
+      expect(animate).toHaveBeenCalledTimes(before);
+      expect(screen.getByText("Working material")).toBeVisible();
+      await act(async () => { fireEvent.click(button); });
+      expect(guard).toHaveBeenCalledTimes(2);
+      expect(animate).toHaveBeenCalledTimes(before + 1);
+      act(() => animation.onfinish?.());
+      expect(onClose).toHaveBeenCalledTimes(1);
+    } finally { HTMLElement.prototype.animate = original; }
+  });
+
   it("minimize parks the window (mounted but hidden) and the dock restores it from its seat", () => {
     // PHILO-16 (A1) §5: seated windows live in the dock. A window with no
     // application tile gets its own seat tile (the window chips are parked).

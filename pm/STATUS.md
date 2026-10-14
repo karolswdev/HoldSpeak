@@ -4,9 +4,33 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-14 (Note and shared Send refinement: #1201)
+**Last updated:** 2026-10-14 (Deep usability audit and repair: #1202)
 
 ## Current phase
+
+**Deep usability audit and repair — #1202 (2026-10-14).** The owner clarified
+that Send was an example and requested a deep pass across existing surfaces.
+Three bounded Sol audit/build lanes, shared-read repair, independent actual
+1440/393 verification, and one implementation review plus fix recheck. People
+leads with readable context and keeps private/shared note drafts. Room retains
+refused corrections and confirmed work through read failure. Workbenches lead
+with work, keep full inlet drafts and phone source selection, and refresh the
+chooser after creation. Schedule keeps the whole operation and protects newer
+edits/reopened forms from older acceptance. Knowledge edits real membership;
+retained unsupported text can become a Note. Editors flush before Done/Close
+motion, report actual saving/refusal and retry; Workflow prompt/step editing
+fits, and its title-bar Edit opens the actual editor. Ask merges async source
+choices. Transient collection reads keep known buckets;401/403 and successful
+empty reads remain authoritative. Final quick check GREEN:3717 web /550
+Python /107 sweep (2 existing xfails) /15 canon; build, frozen TypeScript,
+metadata generation and actual corrected Ask walks at both widths passed.
+Initial audit metadata failures were fixed and the whole quick check rerun.
+Independent recheck RATIFY; no Muad'Dib or postmerge review claimed. Open:
+existing Workbench item-body timer/unmount custody, compact Grounding heading,
+Settings phone inner poses, populated runs and successful Delivery dossier;
+owner judgment, real model/agent/terminal/microphone, external dispatch,
+physical devices, schedule firing, full main tape and postmerge review.
+[Deep audit, repair and evidence limits](../docs/internal/DEEP-USABILITY-2026-10-14/README.md).
 
 **Note and shared Send refinement — #1201 (2026-10-14).** The owner
 opened a Note and rejected Send. Send now owns the body with full-width frozen

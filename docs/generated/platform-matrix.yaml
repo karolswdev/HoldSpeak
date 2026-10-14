@@ -3975,7 +3975,8 @@
       "platform": "aipi",
       "source_ids": [
         "holdspeak/grounding.py",
-        "holdspeak/grounding_rails.py"
+        "holdspeak/grounding_rails.py",
+        "web/src/desk/components/GroundingSection.tsx"
       ],
       "status": "experimental"
     },
@@ -3986,7 +3987,8 @@
       "platform": "ipad",
       "source_ids": [
         "holdspeak/grounding.py",
-        "holdspeak/grounding_rails.py"
+        "holdspeak/grounding_rails.py",
+        "web/src/desk/components/GroundingSection.tsx"
       ],
       "status": "experimental"
     },
@@ -3997,7 +3999,8 @@
       "platform": "linux_wayland",
       "source_ids": [
         "holdspeak/grounding.py",
-        "holdspeak/grounding_rails.py"
+        "holdspeak/grounding_rails.py",
+        "web/src/desk/components/GroundingSection.tsx"
       ],
       "status": "experimental"
     },
@@ -4008,7 +4011,8 @@
       "platform": "linux_x11",
       "source_ids": [
         "holdspeak/grounding.py",
-        "holdspeak/grounding_rails.py"
+        "holdspeak/grounding_rails.py",
+        "web/src/desk/components/GroundingSection.tsx"
       ],
       "status": "experimental"
     },
@@ -4019,7 +4023,8 @@
       "platform": "macos",
       "source_ids": [
         "holdspeak/grounding.py",
-        "holdspeak/grounding_rails.py"
+        "holdspeak/grounding_rails.py",
+        "web/src/desk/components/GroundingSection.tsx"
       ],
       "status": "experimental"
     },

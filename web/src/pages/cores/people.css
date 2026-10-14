@@ -4,6 +4,9 @@
 .people-new .gadget-string, .people-agenda-add .gadget-pad, .people-context-add .gadget-pad { flex: 1; min-width: 0; }
 .people-context-add { align-items: end; flex-wrap: wrap; }
 .people-context-add .gadget-pad { flex-basis: 100%; }
+.people-context-note { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.people-context-note-topic { font: 600 15px/1.4 var(--font-sans); }
+.people-context-note-body { font: 400 13px/1.5 var(--font-sans); white-space: pre-wrap; overflow-wrap: anywhere; }
 .people-project-link > :first-child { flex: 1; min-width: 0; }
 .people-detail-head { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
 .people-lenses { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: var(--desk-surface-section-gap); }

@@ -19,7 +19,6 @@ import {
   CycleGadget,
 } from "../surface/gadgets";
 import { Button } from "../../components/signal/Signal";
-import { MicButton } from "./MicButton";
 
 /** Build a cron expression from a JS Date for one-shot mode. */
 function dateToCron(d: Date): string {
@@ -72,7 +71,8 @@ function ScheduleCreateForm({
   // a close; a landed save clears them. The window is for a NEW record, so
   // the key is the one create window.
   const [title, setTitle, forgetTitle] = useDeskDraft("schedule/new/title");
-  const [mode, setMode] = useState("one-shot");
+  const [keptMode, setMode, forgetMode] = useDeskDraft("schedule/new/mode");
+  const mode = keptMode || "one-shot";
   const [keptTime, keepTime, forgetTime] = useDeskDraft("schedule/new/time");
   const [defaultTime] = useState(() => {
     const d = new Date();
@@ -84,8 +84,11 @@ function ScheduleCreateForm({
   const hasKeptTime = useDesk((s) => "schedule/new/time" in s.drafts);
   const dateTime = hasKeptTime ? keptTime : defaultTime;
   const setDateTime = keepTime;
-  const [cronExpr, setCronExpr] = useState("0 9 * * 1-5");
-  const [duration, setDuration] = useState("60");
+  const [keptCron, setCronExpr, forgetCron] = useDeskDraft("schedule/new/cron");
+  const hasKeptCron = useDesk((s) => "schedule/new/cron" in s.drafts);
+  const cronExpr = hasKeptCron ? keptCron : "0 9 * * 1-5";
+  const [keptDuration, setDuration, forgetDuration] = useDeskDraft("schedule/new/duration");
+  const duration = keptDuration || "60";
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -112,7 +115,10 @@ function ScheduleCreateForm({
       }
     }
 
-    const ok = await useDesk.getState().createSchedule({
+    const submittedDesk = useDesk.getState();
+    const submittedDraft = submittedDesk.drafts;
+    const submittedWindow = submittedDesk.scheduleCreateWindow;
+    const ok = await submittedDesk.createSchedule({
       title: title.trim() || "Scheduled recording",
       cron_expr: cron,
       tz: localTz(),
@@ -123,9 +129,19 @@ function ScheduleCreateForm({
 
     setSubmitting(false);
     if (ok) {
+      const current = useDesk.getState();
+      const unchanged = ["title", "time", "mode", "cron", "duration"].every(
+        (field) => current.drafts[`schedule/new/${field}`] === submittedDraft[`schedule/new/${field}`],
+      );
+      // A changed draft is the next operation. A reopened form is a new
+      // interaction even when its fields still match the submitted draft.
+      if (!unchanged || (current.scheduleCreateWindow && current.scheduleCreateWindow !== submittedWindow)) return;
       forgetTitle();
       forgetTime();
-      onClose();
+      forgetMode();
+      forgetCron();
+      forgetDuration();
+      if (current.scheduleCreateWindow === submittedWindow) onClose();
     } else {
       setError("Could not save. Your entries are kept. Check the time and try again.");
     }
@@ -153,9 +169,9 @@ function ScheduleCreateForm({
               value={title}
               onChange={setTitle}
               placeholder="Scheduled recording"
+              micDraftScope="schedule-title"
               autoFocus
             />
-            <MicButton draftScope="schedule-title" onText={setTitle} />
           </GadgetRow>
           <GadgetRow label="Mode">
             <CycleGadget

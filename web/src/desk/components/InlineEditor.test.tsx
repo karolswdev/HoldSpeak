@@ -89,7 +89,7 @@ describe("HS-129-08 editor windows", () => {
     const { container } = render(<Pullout object={o} onClose={vi.fn()} />);
 
     expect(screen.getByTestId(`editor-${kind}`)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Done" })).toBeInTheDocument();
     expect(container.querySelector(".desk-vignette")).toBeNull();
   });
 

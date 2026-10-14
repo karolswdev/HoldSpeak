@@ -33,10 +33,10 @@ vi.mock("../components/DeskWindow", async () => {
   const { useState } = await import("react");
   const { FootSlotContext } = await import("../surface/foot");
   return {
-    DeskWindowFrame: ({ children, onClose, onBack, label, minH, className }: { children: React.ReactNode; onClose: () => void; onBack?: () => void; label?: string; minH?: number; className?: string }) => {
+    DeskWindowFrame: ({ children, onClose, beforeClose, onBack, label, minH, className }: { children: React.ReactNode; onClose: () => void; beforeClose?: () => Promise<boolean>; onBack?: () => void; label?: string; minH?: number; className?: string }) => {
       const [foot, setFoot] = useState<HTMLElement | null>(null);
-      return <section aria-label="Thought" className={className} data-window-name={label} data-frame-min-height={minH}>
-        <button onClick={onClose}>Close window</button>
+      return <section aria-label="Thought" className={className} data-window-name={label} data-frame-min-height={minH} data-frame-close-guard={Boolean(beforeClose)}>
+        <button onClick={() => { void (async () => { if (!beforeClose || await beforeClose()) onClose(); })(); }}>Close window</button>
         {onBack ? <button onClick={onBack}>Frame Back</button> : null}
         <FootSlotContext.Provider value={foot}>{children}</FootSlotContext.Provider>
         <footer ref={setFoot} className="surface-footer" data-testid="frame-foot" />
@@ -832,6 +832,7 @@ describe("ThoughtWorkspaceWindow — PHILO-17 U08: the thought is sendable", () 
     vi.mocked(saveThoughtWorkingInWorkspace).mockRejectedValue(new Error("offline"));
     const onClose = vi.fn();
     render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={onClose} />);
+    expect(screen.getByRole("button", { name: "Close window" }).closest("section")).toHaveAttribute("data-frame-close-guard", "true");
 
     fireEvent.click(await screen.findByRole("button", { name: "Send" }));
     await screen.findByTestId("send-well");

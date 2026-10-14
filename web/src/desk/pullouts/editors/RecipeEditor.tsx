@@ -4,14 +4,15 @@ import { useDesk } from "../../store";
 import { MicButton } from "../../components/MicButton";
 import { AgentAvatar } from "../../components/AgentAvatar";
 import { CycleGadget, PadGadget, StringGadget } from "../../surface/gadgets";
+import { Button } from "../../../components/signal/Signal";
 import type { Persona } from "../../../lib/primitives";
 import { useDebouncedSave } from "./useDebouncedSave";
 import { keptEditorPatch, keptField } from "./editorDraft";
 import type { InlineEditorContentProps } from "./types";
 
-export function RecipeEditor({ object: o, autoFocusName }: InlineEditorContentProps) {
+export function RecipeEditor({ object: o, autoFocusName, onWriter }: InlineEditorContentProps) {
   const items = useDesk((s) => s.items);
-  const save = useDebouncedSave("recipe", o.id);
+  const save = useDebouncedSave("recipe", o.id, onWriter);
   const [more, setMore] = useState(false);
 
   const live = useMemo(
@@ -65,10 +66,10 @@ export function RecipeEditor({ object: o, autoFocusName }: InlineEditorContentPr
         onChange={(value) => set("role", "role", value)}
       />
       <PadGadget
-        label="System prompt"
+        label="Instructions"
         rows={4}
         value={f.systemPrompt}
-        placeholder="System prompt"
+        placeholder="Instructions"
         onChange={(value) => set("systemPrompt", "system_prompt", value)}
       />
       {more ? (
@@ -106,13 +107,12 @@ export function RecipeEditor({ object: o, autoFocusName }: InlineEditorContentPr
           />
         </>
       ) : (
-        <button
-          type="button"
-          className="desk-chip quiet"
+        <Button
+          dense variant="ghost"
           onClick={() => setMore(true)}
         >
           More
-        </button>
+        </Button>
       )}
       <div className="desk-inline-editor-foot">
         <MicButton

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { apiFetch, readableError } from "../../lib/api";
 import { useDesk } from "../../desk/store";
+import { useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
 import { boundaryEgressLamp } from "../../desk/inferenceEgress";
 import { spriteUrl } from "../../desk/sprites";
 import { AgentAvatar } from "../../desk/components/AgentAvatar";
@@ -42,15 +43,18 @@ export function WorkbenchesHomeCore({ hero }: CoreProps) {
   const [loadError, setLoadError] = useState("");
   const [runsError, setRunsError] = useState("");
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setLoadError("");
-    setRunsError("");
+  const load = useCallback(async (quiet = false) => {
+    if (!quiet) {
+      setLoading(true);
+      setLoadError("");
+      setRunsError("");
+    }
     try {
       const res = await apiFetch<WorkbenchesListResponse>("/api/workbenches");
       const wbs = (res.workbenches || []) as WbSummary[];
       setWorkbenches(wbs);
       setLoaded(true);
+      setLoadError("");
 
       const allRuns: RunSummary[] = [];
       const failedIds = new Set<string>();
@@ -70,7 +74,7 @@ export function WorkbenchesHomeCore({ hero }: CoreProps) {
         ...allRuns,
         ...previous.filter((run) => failedIds.has(run.workbench_id)),
       ].sort((a, b) => (b.started_at || "").localeCompare(a.started_at || "")).slice(0, 10));
-      if (failures.length) setRunsError(`Runs not loaded · ${failures.join("; ")}`);
+      setRunsError(failures.length ? `Runs not loaded · ${failures.join("; ")}` : "");
     } catch (error) {
       setLoadError(`Workbenches not loaded · ${readableError(error)}`);
     } finally {
@@ -79,6 +83,7 @@ export function WorkbenchesHomeCore({ hero }: CoreProps) {
   }, []);
 
   useEffect(() => { void load(); }, [load]);
+  useOnDeskChanged(() => void load(true));
 
   const createWorkbench = () => void useDesk.getState().createPrimitive("workbench");
 

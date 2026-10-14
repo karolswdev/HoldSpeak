@@ -16,9 +16,9 @@ import { keptEditorPatch, keptField } from "./editorDraft";
 import type { InlineEditorContentProps } from "./types";
 import { Button } from "../../../components/signal/Signal";
 
-export function NoteEditor({ object: o, onClose, autoFocusName }: InlineEditorContentProps) {
+export function NoteEditor({ object: o, onClose, autoFocusName, onWriter }: InlineEditorContentProps) {
   const items = useDesk((s) => s.items);
-  const save = useDebouncedSave("note", o.id);
+  const save = useDebouncedSave("note", o.id, onWriter);
   const [editorView, setEditorView] = useState<EditorView | null>(null);
   const [aiBarForced, setAIBarForced] = useState(false);
   const [proposal, setProposal] = useState<EditorAIProposal | null>(null);

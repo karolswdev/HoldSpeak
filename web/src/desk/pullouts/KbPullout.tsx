@@ -8,8 +8,8 @@ import { openSurfaceOr } from "../shell";
 import { qualifiedRef } from "../api";
 import { objectByRef } from "../world";
 import { DeskFilingStrip } from "../components/DeskFilingStrip";
-import { productLabel } from "../../lib/productLanguage";
-import { Material } from "../surface/Material";
+import { KIND_LABEL } from "../tools";
+import { kindWord } from "../windowName";
 import {
   SurfaceRow,
   SurfaceRows,
@@ -18,18 +18,19 @@ import {
 import { INLINE_EDITOR_CONTENT } from "./editors";
 import type { PulloutContentProps } from "./types";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
+import { useEditorSession } from "./editors/useDebouncedSave";
 
-export function KbPullout({ object: o }: PulloutContentProps) {
+export function KbPullout({ object: o, registerClose }: PulloutContentProps) {
   const items = useDesk((s) => s.items);
   const editing = useDesk((s) => s.editingId === o.id);
   const { openPullout, openEditor, closeEditor } = useDesk.getState();
+  const session = useEditorSession(closeEditor, editing ? registerClose : undefined);
   if (o.ref.kind !== "kb") return null;
   const ir = o.ref;
   const Content = INLINE_EDITOR_CONTENT[o.kind];
   const resourceRef = qualifiedRef(o.kind, o.id);
   const { copy, receipt: copyReceipt } = useCopyReceipt();
 
-  const body = String("bodyMarkdown" in ir ? ir.bodyMarkdown || "" : "");
   const members = (ir.memberIds || [])
     .map((m) => ({ ref: m, member: objectByRef(items, m) }))
     .filter(({ member }) => member);
@@ -38,11 +39,7 @@ export function KbPullout({ object: o }: PulloutContentProps) {
     <>
       <div className="desk-pullout-body desk-surface-body desk-editor-body">
         {editing && Content ? (
-          <Content object={o} onClose={closeEditor} />
-        ) : body ? (
-          <section>
-            <Material>{body}</Material>
-          </section>
+          <Content object={o} onClose={() => void session.done()} onWriter={session.onWriter} />
         ) : members.length ? (
           <section>
             <SurfaceRows>
@@ -58,8 +55,8 @@ export function KbPullout({ object: o }: PulloutContentProps) {
                     />
                   }
                   title={member!.title}
-                  detail={productLabel(member!.kind)}
-                  onOpen={() => openPullout(member!.id)}
+                  detail={KIND_LABEL[member!.kind] || kindWord(member!.kind)}
+                  onOpen={() => openPullout(ref)}
                 />
               ))}
             </SurfaceRows>
@@ -77,14 +74,11 @@ export function KbPullout({ object: o }: PulloutContentProps) {
           />
         )}
       </div>
-      <SurfaceFooter receipt={editing ? null : copyReceipt} verbs={editing ? <>
-        <Button dense variant="ghost" onClick={closeEditor}>Cancel</Button>
-        <Button dense variant="primary" onClick={closeEditor}>Save</Button>
-      </> : <>
+      <SurfaceFooter receipt={editing ? session.receipt : copyReceipt} verbs={editing ? session.verbs : <>
         <Button
           dense
           variant="ghost"
-          onClick={() => void copy(body || members.map(({ member }) => member!.title).join("\n"))}
+          onClick={() => void copy(members.map(({ member }) => member!.title).join("\n"))}
         >
           Copy
         </Button>

@@ -6,13 +6,26 @@
 }
 .desk-next .desk-wf-step {
   display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 8px;
+}
+.desk-next .desk-wf-step-head {
+  display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  min-width: 0;
   gap: 6px;
 }
 .desk-next .desk-wf-step-label {
-  font-size: var(--font-size-xs);
-  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font: 600 var(--desk-surface-primary-size, 15px)/1.4 var(--font-sans);
   color: var(--text-muted);
+}
+@container surface (max-width: 420px) {
+  .desk-next .desk-wf-step-head .desk-wf-step-label { flex-basis: 100%; }
 }
 .desk-next .desk-wf-step input {
   flex: 1;

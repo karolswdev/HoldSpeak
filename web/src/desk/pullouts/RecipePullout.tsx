@@ -17,10 +17,12 @@ import { ContextualAssignment } from "../../pages/cores/ContextualAssignment";
 import { INLINE_EDITOR_CONTENT } from "./editors";
 import { CapabilitySection } from "./shared/CapabilitySection";
 import type { PulloutContentProps } from "./types";
+import { useEditorSession } from "./editors/useDebouncedSave";
 
-export function RecipePullout({ object: o }: PulloutContentProps) {
+export function RecipePullout({ object: o, registerClose }: PulloutContentProps) {
   const editing = useDesk((s) => s.editingId === o.id);
   const { openEditor, closeEditor, openPullout, refresh } = useDesk.getState();
+  const session = useEditorSession(closeEditor, editing ? registerClose : undefined);
   const [threadBusy, setThreadBusy] = useState(false);
   const { attempt, receipt } = useWriteReceipt();
   if (o.ref.kind !== "recipe") return null;
@@ -41,7 +43,7 @@ export function RecipePullout({ object: o }: PulloutContentProps) {
     <>
       <div className="desk-pullout-body desk-surface-body desk-editor-body">
         {editing && Content ? (
-          <Content object={o} onClose={closeEditor} />
+          <Content object={o} onClose={() => void session.done()} onWriter={session.onWriter} />
         ) : <>
           <section className="desk-pullout-agent">
             <div className="desk-chat-hello">
@@ -84,10 +86,7 @@ export function RecipePullout({ object: o }: PulloutContentProps) {
           />
         </>}
       </div>
-      <SurfaceFooter receipt={receipt} verbs={editing ? <>
-        <Button dense variant="ghost" onClick={closeEditor}>Cancel</Button>
-        <Button dense variant="primary" onClick={closeEditor}>Save</Button>
-      </> : <>
+      <SurfaceFooter receipt={editing ? session.receipt : receipt} verbs={editing ? session.verbs : <>
         <Button
           dense
           variant="ghost"

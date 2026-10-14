@@ -87,6 +87,12 @@
   display: flex;
   gap: var(--space-2);
 }
+
+.editor-save-receipt {
+  font: var(--desk-surface-detail-size, 12px)/1.4 var(--font-mono);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
 .desk-next .desk-inline-editor-row .desk-inline-editor-avatar {
   width: 52px;
   flex: none;

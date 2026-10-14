@@ -1,7 +1,8 @@
 /** Workflow inline editor content (HS-117-15). */
 import { useMemo, useState } from "react";
 import { useDesk } from "../../store";
-import { StringGadget } from "../../surface/gadgets";
+import { PadGadget, StringGadget } from "../../surface/gadgets";
+import { Button } from "../../../components/signal/Signal";
 import {
   buildLinearGraph,
   parseLinearGraph,
@@ -14,9 +15,9 @@ import { useDebouncedSave } from "./useDebouncedSave";
 import { keptEditorPatch, keptField } from "./editorDraft";
 import type { InlineEditorContentProps } from "./types";
 
-export function WorkflowEditor({ object: o, autoFocusName }: InlineEditorContentProps) {
+export function WorkflowEditor({ object: o, autoFocusName, onWriter }: InlineEditorContentProps) {
   const items = useDesk((s) => s.items);
-  const save = useDebouncedSave("workflow", o.id);
+  const save = useDebouncedSave("workflow", o.id, onWriter);
 
   const live = useMemo(
     () => (items.workflow || []).find((x) => x.id === o.id) || o.ref as Workflow,
@@ -26,7 +27,10 @@ export function WorkflowEditor({ object: o, autoFocusName }: InlineEditorContent
   const [kept] = useState(() => keptEditorPatch("workflow", o.id));
   const [f, setF] = useState<Record<string, string>>(() => ({
     name: keptField(kept, "name", String(live.name || "")),
+    prompt: keptField(kept, "prompt", String(live.prompt || "")),
   }));
+  const graph = kept.graph_json ?? live.graphJson;
+  const promptOnly = !graph || (typeof graph === "object" && !Object.keys(graph).length);
 
   const [steps, setSteps] = useState<LinearStep[] | null>(() =>
     parseLinearGraph(kept.graph_json ?? live.graphJson),
@@ -65,11 +69,19 @@ export function WorkflowEditor({ object: o, autoFocusName }: InlineEditorContent
           }
         }}
       />
-      {steps ? (
+      {promptOnly ? <PadGadget label="Prompt" value={f.prompt} rows={5} onChange={(prompt) => {
+        setF((prev) => ({ ...prev, prompt })); save({ prompt });
+      }} /> : steps ? (
         <div className="desk-wf-steps">
           {steps.map((s, i) => (
             <div key={i} className="desk-wf-step">
-              <span className="desk-wf-step-label">{stepLabel(s)}</span>
+              <div className="desk-wf-step-head">
+              <span className="desk-wf-step-label">{s.kind === "llm" ? "AI prompt" : stepLabel(s)}</span>
+              <Button dense variant="ghost" aria-label="Move step up" disabled={i === 0} onClick={() => {
+                const next = [...steps]; [next[i - 1], next[i]] = [next[i], next[i - 1]]; commitGraph(next);
+              }}>Move up</Button>
+              <Button dense variant="ghost" aria-label="Remove step" onClick={() => commitGraph(steps.filter((_, j) => j !== i))}>Remove</Button>
+              </div>
               {s.kind === "rewrite" && (
                 <StringGadget
                   label="Tone"
@@ -87,53 +99,29 @@ export function WorkflowEditor({ object: o, autoFocusName }: InlineEditorContent
                 />
               )}
               {s.kind === "llm" && (
-                <StringGadget
+                <PadGadget
                   label="Prompt"
                   value={s.prompt}
                   placeholder="Prompt (selected text is substituted at run time)"
                   onChange={(prompt) => setStepParam(i, { prompt })}
                 />
               )}
-              <button
-                type="button"
-                className="desk-chip quiet"
-                aria-label="Move step up"
-                disabled={i === 0}
-                onClick={() => {
-                  const next = [...steps];
-                  [next[i - 1], next[i]] = [next[i], next[i - 1]];
-                  commitGraph(next);
-                }}
-              >
-                ↑
-              </button>
-              <button
-                type="button"
-                className="desk-chip quiet"
-                aria-label="Remove step"
-                onClick={() =>
-                  commitGraph(steps.filter((_, j) => j !== i))
-                }
-              >
-                <span aria-hidden="true">{String.fromCodePoint(0x2715)}</span>
-              </button>
             </div>
           ))}
           <div className="desk-wf-palette">
             {STEP_PALETTE.map((p) => (
-              <button
+              <Button
                 key={p.label}
-                type="button"
-                className="desk-chip quiet"
+                dense variant="ghost"
                 onClick={() => commitGraph([...steps, p.make()])}
               >
-                + {p.label}
-              </button>
+                + {p.label === "LLM prompt" ? "AI prompt" : p.label}
+              </Button>
             ))}
           </div>
         </div>
       ) : (
-        <p className="quiet">Graphed on iPad</p>
+        <span className="quiet">Graph editing · iPad</span>
       )}
     </>
   );

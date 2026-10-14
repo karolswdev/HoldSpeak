@@ -55,6 +55,7 @@ export function useProjectRoomController(
   // resolved once; the Room is not drawn before it (rows land in NEEDS YOU).
   const [extrasStatus, setExtrasStatus] = useState<"idle" | "loading" | "ready">("idle");
   const [error, setError] = useState("");
+  const [readError, setReadError] = useState("");
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [searchHits, setSearchHits] = useState<Record<string, unknown>[]>([]);
   const [searched, setSearched] = useState(false);
@@ -102,6 +103,7 @@ export function useProjectRoomController(
     if (!quiet) {
       setLoadStatus("loading");
       setError("");
+      setReadError("");
       fullLoads.current += 1;
       try {
         await loadOnce(false);
@@ -148,7 +150,9 @@ export function useProjectRoomController(
       }
     } catch (reason) {
       if (quiet) return;
-      setError(plainFailure("ROOM DID NOT LOAD", reason));
+      const failure = plainFailure("ROOM DID NOT LOAD", reason);
+      setError(failure);
+      setReadError(failure);
     } finally {
       if (!quiet) setLoadStatus("ready");
     }
@@ -171,7 +175,11 @@ export function useProjectRoomController(
       setSince(sinceBody);
     } catch (reason) {
       // Detail failure does not blank the room face (WEB-STA-002)
-      if (!error && !quiet) setError(plainFailure("ROOM DID NOT LOAD", reason));
+      if (!error && !quiet) {
+        const failure = plainFailure("ROOM DID NOT LOAD", reason);
+        setError(failure);
+        setReadError(failure);
+      }
     } finally {
       if (!quiet) setDetailStatus("ready");
     }
@@ -269,12 +277,16 @@ export function useProjectRoomController(
     edits?: { text?: string; owner?: string; due?: string },
   ) => {
     setProposalBusy(proposalId);
+    setError("");
     try {
       await api.confirmProposal(proposalId, edits);
       // Reload to pick up the confirmed state and new D&C row
       void load();
+      return { ok: true as const };
     } catch (reason) {
-      setError(plainFailure("NOT DONE", reason));
+      const failure = plainFailure("NOT DONE", reason);
+      setError(failure);
+      return { ok: false as const, error: failure };
     } finally {
       setProposalBusy("");
     }
@@ -349,6 +361,7 @@ export function useProjectRoomController(
     detailStatus,
     extrasStatus,
     error,
+    readError,
     // Data
     project,
     room,

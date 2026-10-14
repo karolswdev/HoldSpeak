@@ -11,6 +11,10 @@ const requests = vi.hoisted(() => ({
   deferDecisionRead: false,
   resolveDecisionRead: null as (() => void) | null,
   failDecisionRead: false,
+  decisionReadStatus: 200,
+  emptyDecisionRead: false,
+  failMeetingRead: false,
+  failWorkbenchRead: false,
   deferPut: false,
   putResolvers: [] as Array<(status?: number) => void>,
   calls: [] as Array<{ input: string; method: string }>,
@@ -18,7 +22,7 @@ const requests = vi.hoisted(() => ({
 }));
 
 vi.mock("../../lib/api", async (importOriginal) => {
-  const real = await importOriginal<Record<string, unknown>>();
+  const real = await importOriginal<typeof import("../../lib/api")>();
   const wireDecision = {
     id: "decision_probe",
     title: "New decision",
@@ -70,7 +74,13 @@ vi.mock("../../lib/api", async (importOriginal) => {
       return Promise.resolve(response({}));
     }),
     apiFetch: vi.fn((input: string) => {
+      if (input.startsWith("/api/meetings") && requests.failMeetingRead) {
+        return Promise.reject(new real.ApiError(503, "meeting read unavailable", {}));
+      }
       if (input === "/api/decisions") {
+        if (requests.decisionReadStatus !== 200) {
+          return Promise.reject(new real.ApiError(requests.decisionReadStatus, "decision access refused", {}));
+        }
         if (requests.failDecisionRead) {
           return Promise.reject(new Error("decision read unavailable"));
         }
@@ -79,7 +89,10 @@ vi.mock("../../lib/api", async (importOriginal) => {
             requests.resolveDecisionRead = () => resolve({ decisions: [wireDecision] });
           });
         }
-        return Promise.resolve({ decisions: [wireDecision] });
+        return Promise.resolve({ decisions: requests.emptyDecisionRead ? [] : [wireDecision] });
+      }
+      if (input === "/api/workbenches" && requests.failWorkbenchRead) {
+        return Promise.reject(new real.ApiError(503, "workbench read unavailable", {}));
       }
       if (input === "/api/inference-targets") return Promise.resolve({ targets: [] });
       if (input === "/api/setup/status") return Promise.resolve({});
@@ -138,6 +151,10 @@ beforeEach(() => {
   requests.deferDecisionRead = false;
   requests.resolveDecisionRead = null;
   requests.failDecisionRead = false;
+  requests.decisionReadStatus = 200;
+  requests.emptyDecisionRead = false;
+  requests.failMeetingRead = false;
+  requests.failWorkbenchRead = false;
   requests.deferPut = false;
   requests.putResolvers = [];
   requests.calls = [];
@@ -147,6 +164,86 @@ beforeEach(() => {
     newIds: [decision.id],
     pullouts: [],
     editingId: null,
+    status: {},
+    error: "",
+  });
+});
+
+describe("shared collection read truth", () => {
+  it("keeps every known workbench through a failed collection read and names Retry", async () => {
+    const workbenches = [
+      { kind: "workbench" as const, id: "workbench_probe", name: "Ledger", createdAt: "" },
+      { kind: "workbench" as const, id: "workbench_other", name: "Reports", createdAt: "" },
+    ];
+    useDesk.setState({ items: { ...EMPTY_ITEMS, decision: [decision], workbench: workbenches } });
+    requests.failWorkbenchRead = true;
+
+    await useDesk.getState().refresh();
+
+    expect(useDesk.getState().items.workbench).toEqual(workbenches);
+    expect(useDesk.getState().status.workbench).toBe("unreachable");
+    expect(useDesk.getState().error).toBe("Workbenches: workbench read unavailable");
+    expect(currentWriteFailure()?.verb).toBe("READ WORKBENCHES");
+    expect(currentWriteFailure()?.reason).toBe("HTTP 503");
+    expect(currentWriteFailure()?.retry).toBeTypeOf("function");
+    expect(useDesk.getState().status.decision).toBe("live");
+    expect(useDesk.getState().loading).toBe(false);
+  });
+
+  it("keeps an ordinary saved decision when its collection is unavailable", async () => {
+    const saved = { ...decision, decisionMarkdown: "Keep the ledger local" };
+    useDesk.setState({ items: { ...EMPTY_ITEMS, decision: [saved] } });
+    requests.failDecisionRead = true;
+
+    await useDesk.getState().refresh();
+
+    expect(useDesk.getState().items.decision).toEqual([saved]);
+    expect(useDesk.getState().status.decision).toBe("unreachable");
+    expect(useDesk.getState().error).toBe("Decisions: decision read unavailable");
+    expect(currentWriteFailure()?.verb).toBe("READ DECISIONS");
+  });
+
+  it.each([401, 403])("keeps HTTP %s authorization refusals authoritative", async (status) => {
+    requests.decisionReadStatus = status;
+
+    await useDesk.getState().refresh();
+
+    expect(useDesk.getState().items.decision).toEqual([]);
+    expect(useDesk.getState().status.decision).toBe("unreachable");
+    expect(currentWriteFailure()?.verb).toBe("READ DECISIONS");
+    expect(currentWriteFailure()?.reason).toBe(`HTTP ${status}`);
+  });
+
+  it("retains a transient bucket without retaining a refused bucket when the first failure is HTTP 503", async () => {
+    const workbench = { kind: "workbench" as const, id: "mixed_probe", name: "Ledger", createdAt: "" };
+    useDesk.setState({ items: { ...EMPTY_ITEMS, decision: [decision], workbench: [workbench] } });
+    requests.failMeetingRead = true;
+    requests.failWorkbenchRead = true;
+    requests.decisionReadStatus = 403;
+
+    await useDesk.getState().refresh();
+
+    expect(useDesk.getState().items.workbench).toEqual([workbench]);
+    expect(useDesk.getState().items.decision).toEqual([]);
+    expect(useDesk.getState().status).toMatchObject({ meeting: "unreachable", workbench: "unreachable", decision: "unreachable" });
+    expect(useDesk.getState().error).toBe("Meetings: meeting read unavailable");
+    expect(currentWriteFailure()?.verb).toBe("READ MEETINGS");
+    expect(currentWriteFailure()?.reason).toBe("HTTP 503");
+  });
+
+  it("clears a retained bucket after an authoritative successful empty read", async () => {
+    requests.failDecisionRead = true;
+    await useDesk.getState().refresh();
+    expect(useDesk.getState().items.decision).toEqual([decision]);
+
+    requests.failDecisionRead = false;
+    requests.emptyDecisionRead = true;
+    await useDesk.getState().refresh();
+
+    expect(useDesk.getState().items.decision).toEqual([]);
+    expect(useDesk.getState().status.decision).toBe("live");
+    expect(useDesk.getState().error).toBe("");
+    expect(currentWriteFailure()).toBeNull();
   });
 });
 

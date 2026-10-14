@@ -10,6 +10,7 @@
 .desk-next .wb-config-strip {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   padding: 6px var(--desk-window-pad-x);
   border: none;
@@ -18,15 +19,12 @@
   color: var(--text);
   font-family: var(--font-mono);
   font-size: var(--desk-surface-label-size);
-  cursor: pointer;
   text-align: left;
   width: 100%;
   box-shadow: var(--desk-window-bevel);
   transition: background var(--duration-short) var(--ease-standard);
 }
-.desk-next .wb-config-strip:hover {
-  background: var(--accent-tint);
-}
+.desk-next .wb-config-strip > .btn { margin-left: auto; }
 .desk-next .wb-config-strip-agent {
   display: inline-flex;
   align-items: center;
@@ -57,7 +55,8 @@
 .desk-next .wb-config-panel {
   border-bottom: 1px solid var(--border);
   overflow-y: auto;
-  max-height: 50%;
+  flex: 1;
+  max-height: none;
   position: relative;
 }
 .desk-next .wb-config-collapse {
@@ -251,6 +250,7 @@
   flex: 1;
   overflow-y: auto;
 }
+.desk-next .wb-items > .surface-state { padding: 12px var(--desk-window-pad-x); align-items: flex-start; }
 
 /* ── item card (HS-116-11) ── */
 .desk-next .wb-card {
@@ -299,7 +299,8 @@
   font-size: var(--desk-surface-body-size);
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .desk-next .wb-card-head .gadget-ledmeter {
   flex-shrink: 0;
@@ -395,8 +396,15 @@
 
 /* ── inlet (HS-118-03/04, cleaned HS-135-13) ── */
 .desk-next .wb-inlet {
-  border-top: 1px solid var(--border);
+  position: relative;
+  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
+}
+.desk-next .wb-inlet .inlet-autocomplete {
+  top: 100%;
+  bottom: auto;
+  margin-top: 4px;
+  margin-bottom: 0;
 }
 .desk-next .wb-inlet-egress {
   display: flex;
@@ -689,6 +697,8 @@
 /* ── narrow workbench (container query) ── */
 /* HS-129-06 — Workbench uses the public window-body container name. */
 @container surface (max-width: 560px) {
+  .desk-next .wb-inlet-row { flex-wrap: wrap; }
+  .desk-next .wb-inlet-input { flex-basis: calc(100% - 54px); min-height: var(--desk-button-hit-size); }
   .wb-config-strip {
     flex-wrap: wrap;
   }

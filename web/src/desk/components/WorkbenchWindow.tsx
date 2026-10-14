@@ -6,9 +6,11 @@ import {
   useReducer,
   useRef,
   useState,
+  type SetStateAction,
 } from "react";
 import { spriteUrl } from "../sprites";
 import { useDesk } from "../store";
+import { keptDraft, useDeskDraft } from "../deskMemory";
 import type {
   WorkbenchDetail,
   WorkbenchItem,
@@ -185,6 +187,7 @@ const PRIORITY_LABELS = ["", "P1", "P2", "P3", "P4", "P5"];
 
 function ConfigStrip({
   recipe,
+  bound,
   schedule,
   scheduleEnabled,
   startSummary,
@@ -192,6 +195,7 @@ function ConfigStrip({
   onClick,
 }: {
   recipe: any;
+  bound: boolean;
   schedule: string | null;
   scheduleEnabled: boolean;
   startSummary: string | null;
@@ -199,12 +203,7 @@ function ConfigStrip({
   onClick: () => void;
 }) {
   return (
-    <Button
-      variant="chrome"
-      className="wb-config-strip"
-      onClick={onClick}
-      aria-label="Expand configuration"
-    >
+    <div className="wb-config-strip">
       {recipe ? (
         <span className="wb-config-strip-agent">
           <AgentAvatar
@@ -217,7 +216,7 @@ function ConfigStrip({
         </span>
       ) : (
         <span className="wb-config-strip-agent wb-config-strip-empty">
-          No agent
+          {bound ? "Agent bound" : "No agent"}
         </span>
       )}
       <span className="wb-config-strip-sep" aria-hidden="true">
@@ -231,8 +230,10 @@ function ConfigStrip({
           {skillCount} {skillCount === 1 ? "skill" : "skills"}
         </span>
       ) : null}
-      <span className="wb-config-strip-chevron" aria-hidden="true">▾</span>
-    </Button>
+      <Button dense variant="ghost" onClick={onClick}>
+        {bound ? "Configure" : "Choose agent"}
+      </Button>
+    </div>
   );
 }
 
@@ -343,14 +344,14 @@ function ConfigPanel({
   return (
     <div className="wb-config-panel">
       {/* ── collapse affordance ─────────────────────────────────────── */}
-      <button
+      <Button variant="chrome"
         type="button"
         className="wb-config-collapse desk-chip quiet"
         onClick={onCollapse}
         aria-label="Collapse configuration"
       >
         ▴ Collapse
-      </button>
+      </Button>
 
       {/* ── agent ───────────────────────────────────────────────────── */}
       <SurfaceSection label="AGENT">
@@ -447,7 +448,7 @@ function ConfigPanel({
       {/* ── start condition ───────────────────────────────────────── */}
       <SurfaceSection label="STARTS WHEN">
         <div className="wb-start-mode" role="radiogroup" aria-label="Workbench start condition">
-          <button
+          <Button variant="chrome"
             type="button"
             role="radio"
             aria-checked={startMode === "manual"}
@@ -455,8 +456,8 @@ function ConfigPanel({
             onClick={() => selectStartMode("manual")}
           >
             Manual
-          </button>
-          <button
+          </Button>
+          <Button variant="chrome"
             type="button"
             role="radio"
             aria-checked={startMode === "schedule"}
@@ -464,8 +465,8 @@ function ConfigPanel({
             onClick={() => selectStartMode("schedule")}
           >
             Schedule
-          </button>
-          <button
+          </Button>
+          <Button variant="chrome"
             type="button"
             role="radio"
             aria-checked={startMode === "event"}
@@ -473,8 +474,8 @@ function ConfigPanel({
             onClick={() => selectStartMode("event")}
           >
             Event
-          </button>
-          <button
+          </Button>
+          <Button variant="chrome"
             type="button"
             role="radio"
             aria-checked={startMode === "idle"}
@@ -482,7 +483,7 @@ function ConfigPanel({
             onClick={() => selectStartMode("idle")}
           >
             Idle
-          </button>
+          </Button>
         </div>
         {startMode === "manual" ? (
           <p className="wb-start-mode-copy">Starts only when you press Run.</p>
@@ -490,7 +491,7 @@ function ConfigPanel({
         {startMode === "schedule" ? (
           <div className="wb-schedule-row">
             {SCHEDULE_PRESETS.filter((preset) => preset.cron !== null).map((preset) => (
-              <button
+              <Button variant="chrome"
                 key={preset.label}
                 type="button"
                 className="desk-chip"
@@ -498,7 +499,7 @@ function ConfigPanel({
                 onClick={() => onUpdateSchedule(preset.cron)}
               >
                 {preset.label}
-              </button>
+              </Button>
             ))}
             {/* HS-132-07 — a disabled control names why (AC 4). */}
             <span className="wb-schedule-toggle" title={detail.schedule ? undefined : "Pick a schedule first"}>
@@ -564,7 +565,7 @@ function ConfigPanel({
           />
         )}
         {detail.recipe_id ? (
-          <button
+          <Button variant="chrome"
             type="button"
             className="desk-chip quiet"
             onClick={() =>
@@ -572,7 +573,7 @@ function ConfigPanel({
             }
           >
             Edit in Agent
-          </button>
+          </Button>
         ) : null}
       </SurfaceSection>
 
@@ -819,13 +820,13 @@ function WorkbenchItemCard({
                 <span className="wb-card-result-label">
                   {item.status === "failed" ? "FAILED" : "RESULT"}
                 </span>
-                <button
+                <Button variant="chrome"
                   type="button"
                   className="desk-chip quiet"
                   onClick={() => onCopy(item.result!)}
                 >
                   Copy
-                </button>
+                </Button>
                 {egressLamp ? (
                   <EgressChip
                     label={`⌂ ${egressLamp.label}`}
@@ -902,45 +903,45 @@ function WorkbenchItemCard({
           <div className="wb-card-verbs">
             {/* Minted artifact: inline expand (Issue 5: no desk pullout for pending-review) */}
             {hasMintedArtifact ? (
-              <button
+              <Button variant="chrome"
                 type="button"
                 className="desk-chip"
                 onClick={() => setArtifactExpanded(!artifactExpanded)}
                 aria-expanded={artifactExpanded}
               >
                 {artifactExpanded ? "Collapse" : "Open"}
-              </button>
+              </Button>
             ) : null}
             {/* Mint failed: show Retry mint verb */}
             {mintFailed ? (
-              <button
+              <Button variant="chrome"
                 type="button"
                 className="desk-chip"
                 disabled={minting}
                 onClick={() => void handleRetryMint()}
               >
                 {minting ? "Minting…" : "Retry mint"}
-              </button>
+              </Button>
             ) : null}
             {/* Legacy Keep: only for pre-Phase-118 items (mint never attempted) */}
             {legacyKeep && recipeId ? (
-              <button
+              <Button variant="chrome"
                 type="button"
                 className="desk-chip quiet"
                 disabled={keeping}
                 onClick={() => void handleKeep()}
               >
                 {keeping ? "Keeping…" : "Keep"}
-              </button>
+              </Button>
             ) : null}
             {item.status === "done" || item.status === "failed" ? (
-              <button
+              <Button variant="chrome"
                 type="button"
                 className="desk-chip"
                 onClick={rerunItem}
               >
                 Re-run
-              </button>
+              </Button>
             ) : null}
             {item.status === "pending" ? (
               <Button dense variant="ghost" onClick={dismissItem}>
@@ -962,6 +963,31 @@ function WorkbenchItemCard({
 }
 
 /* ── main component ────────────────────────────────────────────────── */
+
+type InletDraft = {
+  instruction: string;
+  priority: number;
+  grounding: GroundingSelection;
+  refs: ResolvedRef[];
+};
+
+function readInletDraft(raw: string | null): InletDraft {
+  const empty = { instruction: "", priority: 3, grounding: emptyGrounding(), refs: [] };
+  try {
+    const value = JSON.parse(raw || "null");
+    if (!value || typeof value !== "object") return empty;
+    return {
+      instruction: typeof value.instruction === "string" ? value.instruction : "",
+      priority: [1, 2, 3].includes(value.priority) ? value.priority : 3,
+      grounding: value.grounding && Array.isArray(value.grounding.meetings)
+        ? value.grounding : emptyGrounding(),
+      refs: Array.isArray(value.refs)
+        ? value.refs.filter((ref: ResolvedRef) => ref && typeof ref.ref === "string") : [],
+    };
+  } catch {
+    return empty;
+  }
+}
 
 export function WorkbenchWindow({
   workbenchId,
@@ -1045,12 +1071,26 @@ export function WorkbenchWindow({
 
   const [expanded, setExpanded] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
-  const [configOpen, setConfigOpen] = useState<boolean | null>(null);
-  const [newTitle, setNewTitle] = useState("");
-  const [newBody, setNewBody] = useState("");
-  const [newPriority, setNewPriority] = useState(3);
-  const [grounding, setGrounding] = useState<GroundingSelection>(emptyGrounding);
-  const [groundingRefs, setGroundingRefs] = useState<ResolvedRef[]>([]);
+  const [configOpen, setConfigOpen] = useState(false);
+  const inletKey = `workbench/${workbenchId}/inlet`;
+  const [keptInlet, keepInlet, forgetInlet] = useDeskDraft(inletKey);
+  const inlet = useMemo(() => readInletDraft(keptInlet), [keptInlet]);
+  const changeInlet = useCallback((change: (draft: InletDraft) => InletDraft) => {
+    keepInlet(JSON.stringify(change(readInletDraft(keptDraft(inletKey)))));
+  }, [inletKey, keepInlet]);
+  const newTitle = inlet.instruction;
+  const newPriority = inlet.priority;
+  const grounding = inlet.grounding;
+  const groundingRefs = inlet.refs;
+  const setNewTitle = useCallback((next: SetStateAction<string>) => changeInlet((draft) => ({
+    ...draft, instruction: typeof next === "function" ? next(draft.instruction) : next,
+  })), [changeInlet]);
+  const setNewPriority = (next: SetStateAction<number>) => changeInlet((draft) => ({
+    ...draft, priority: typeof next === "function" ? next(draft.priority) : next,
+  }));
+  const setGroundingRefs = useCallback((next: SetStateAction<ResolvedRef[]>) => changeInlet((draft) => ({
+    ...draft, refs: typeof next === "function" ? next(draft.refs) : next,
+  })), [changeInlet]);
   const [runLifecycle, dispatchRun] = useReducer(
     workbenchRunReducer,
     initialWorkbenchRunState,
@@ -1066,7 +1106,6 @@ export function WorkbenchWindow({
   const [resolving, setResolving] = useState(false);
   const [resolverError, setResolverError] = useState<string | null>(null);
   const generationRef = useRef(0);
-  const configAutoExpanded = useRef(false);
   const runTimeoutRef = useRef<number | null>(null);
 
   const clearRunTimeout = useCallback(() => {
@@ -1119,11 +1158,11 @@ export function WorkbenchWindow({
       if (prev.some((r) => r.ref === ref.ref)) return prev;
       return [...prev, ref];
     });
-  }, []);
+  }, [setGroundingRefs]);
 
   const removeGroundingRef = useCallback((ref: string) => {
     setGroundingRefs((prev) => prev.filter((r) => r.ref !== ref));
-  }, []);
+  }, [setGroundingRefs]);
 
   const selectAutocompleteZone = useCallback((zone: typeof zones[number]) => {
     const ref = zoneToRef(zone);
@@ -1186,13 +1225,6 @@ export function WorkbenchWindow({
         if (generationRef.current === gen) setResolving(false);
       });
   }, [addGroundingRef, detail, newTitle, workbenchId]);
-
-  useEffect(() => {
-    if (detail && configOpen === null && !configAutoExpanded.current) {
-      configAutoExpanded.current = true;
-      setConfigOpen(!detail.recipe_id);
-    }
-  }, [detail, configOpen]);
 
   /* ── WebSocket subscription for live run feedback ─────────────── */
   /* HS-132-03: these five subscriptions had no emitter — the conductor's
@@ -1365,14 +1397,13 @@ export function WorkbenchWindow({
     }
     // The inlet keeps the typed instruction until the hub takes it, so a
     // refused add can be re-issued by RETRY (which replays this whole body).
+    const submittedDraft = keptInlet;
     await write("ADD ITEM", async () => {
       await addWorkbenchItem(workbenchId, payload);
-      setNewTitle("");
+      // An accepted snapshot clears only itself. Text entered while the
+      // request was in flight belongs to the next item (including Retry).
+      if (keptDraft(inletKey) === submittedDraft) forgetInlet();
       setResolverError(null);
-      setNewBody("");
-      setNewPriority(3);
-      setGrounding(emptyGrounding());
-      setGroundingRefs([]);
       setCursorPos(0);
       typedAtPosRef.current = null;
       load();
@@ -1548,13 +1579,15 @@ export function WorkbenchWindow({
 
   /* ── render ─────────────────────────────────────────────────────── */
 
-  if (!wb) return null;
-  const name = String(wb.name || "Workbench");
+  // A failed aggregate read can omit this bucket. The successful object
+  // read still names the open workbench and keeps its work on the glass.
+  if (!wb && !detail) return null;
+  const name = String(wb?.name || detail?.name || "Workbench");
   const items = detail?.items || [];
   const doneCount = items.filter((i) => i.status === "done" || i.status === "dismissed").length;
   const lastRun = detail?.last_run;
   const isConfigured = !!detail?.recipe_id;
-  const showConfig = configOpen ?? !isConfigured;
+  const showConfig = configOpen;
   const boundSkillCount = detail?.recipe_id
     ? skills.filter((s) => s.recipe_ids.includes(detail.recipe_id!)).length
     : 0;
@@ -1622,7 +1655,7 @@ export function WorkbenchWindow({
         <SurfaceWings
           wings={WINGS}
           active={activeWing}
-          onChange={setActiveWing}
+          onChange={(wing) => { setActiveWing(wing); setConfigOpen(false); }}
         />
       }
       actions={
@@ -1640,9 +1673,6 @@ export function WorkbenchWindow({
           }
         >
           {runButtonLabel}
-          {runDisabledReason && !running ? (
-            <small className="quiet"> · {runDisabledReason}</small>
-          ) : null}
         </Button>
       }
       minW={480}
@@ -1678,6 +1708,7 @@ export function WorkbenchWindow({
         {detail && !showConfig ? (
           <ConfigStrip
             recipe={recipe}
+            bound={isConfigured}
             schedule={detail.schedule}
             scheduleEnabled={detail.schedule_enabled}
             startSummary={startSummary}
@@ -1706,117 +1737,24 @@ export function WorkbenchWindow({
         ) : null}
 
         {/* ── items wing ─────────────────────────────────────────── */}
-        {activeWing === "items" ? (
+        {activeWing === "items" && !showConfig ? (
           <>
-            <div className="wb-items">
-              {/* HS-130-09 — the template picker is a PRE-persistence chooser
-                 (NewWorkbenchChooser); a persisted blank Workbench shows the
-                 empty state, never another picker (which would create yet
-                 another record). */}
-              {items.length === 0 && !error ? (
-                <SurfaceState
-                  empty
-                  emptyLabel="No items yet"
-                  emptyGlyph="○"
-                  actionLabel="Add an item"
-                  onAction={() => inletInputRef.current?.focus()}
-                />
-              ) : null}
-
-              <ParkedStrip
-                rows={parked}
-                on={parkedOn}
-                onToggle={setParkedOn}
-                onRestore={(ids) => void restoreParked(ids)}
-                data-testid="wb-parked"
-              />
-              {(parkedOn ? [] : items).map((item) => (
-                <WorkbenchItemCard
-                  key={item.id}
-                  restored={restoredId === item.id}
-                  item={item}
-                  expanded={expanded === item.id}
-                  recipeId={detail?.recipe_id || null}
-                  workbenchId={workbenchId}
-                  workbenchName={name}
-                  onToggle={() =>
-                    setExpanded(expanded === item.id ? null : item.id)
-                  }
-                  onReload={load}
-                  onRemove={handleRemove}
-                  onCopy={(text) => void copy(text)}
-                  write={write}
-                />
-              ))}
-            </div>
-
-            {/* PHILO-13-02: the voice intent "Clear done", also a visible
-                verb while done items exist; it parks them all (C1-5j). */}
-            {doneCount > 0 && !parkedOn ? (
-              <div className="wb-clear-done">
-                <Button
-                  dense
-                  variant="ghost"
-                  onClick={() =>
-                    void parkItems(
-                      items.filter((i) => i.status === "done" || i.status === "dismissed"),
-                      "CLEAR DONE",
-                    )
-                  }
-                >
-                  Clear done
-                </Button>
-              </div>
-            ) : null}
-            {/* ── voice proposal strip ───────────────────────────────── */}
-            {voiceProposal ? (
-              <div className="wb-proposal-strip">
-                <span className="wb-proposal-text">
-                  {voiceProposal.intentId === "add-item"
-                    ? `Add: "${(voiceProposal.params as Record<string, unknown>).title}" P${(voiceProposal.params as Record<string, unknown>).priority || 3}`
-                    : voiceProposal.intentId === "run"
-                      ? "Run this workbench"
-                      : voiceProposal.intentId === "clear-done"
-                        ? "Clear done items"
-                        : voiceProposal.intentId === "set-agent"
-                          ? `Set agent: ${(voiceProposal.params as Record<string, unknown>).agentName}`
-                          : voiceProposal.intentId === "dismiss"
-                            ? `Dismiss: ${(voiceProposal.params as Record<string, unknown>).query}`
-                            : voiceProposal.transcript}
-                </span>
-                <button
-                  type="button"
-                  className="desk-chip"
-                  onClick={() => void handleVoiceProposal(voiceProposal)}
-                >
-                  Confirm
-                </button>
-                <button
-                  type="button"
-                  className="desk-chip quiet"
-                  onClick={() => setVoiceProposal(null)}
-                >
-                  Cancel
-                </button>
-              </div>
-            ) : null}
-
             {/* ── inlet (HS-118-03/04) ─────────────────────────────── */}
-            <div className="wb-inlet">
+            <SurfaceSection label="Add item" className="wb-inlet">
               {/* grounding tray */}
               {groundingRefs.length > 0 ? (
                 <div className="wb-inlet-tray">
                   {groundingRefs.map((r) => (
                     <span key={r.ref} className="desk-chip quiet">
                       {r.name}
-                      <button
+                      <Button variant="chrome"
                         type="button"
                         className="wb-inlet-chip-remove"
                         onClick={() => removeGroundingRef(r.ref)}
                         aria-label={`Remove ${r.name}`}
                       >
                         &times;
-                      </button>
+                      </Button>
                     </span>
                   ))}
                 </div>
@@ -1965,12 +1903,105 @@ export function WorkbenchWindow({
                   Add
                 </Button>
               </div>
+            </SurfaceSection>
+
+            <div className="wb-items">
+              {/* HS-130-09 — the template picker is a PRE-persistence chooser
+                 (NewWorkbenchChooser); a persisted blank Workbench shows the
+                 empty state, never another picker (which would create yet
+                 another record). */}
+              {items.length === 0 && !error ? (
+                <SurfaceState
+                  empty
+                  emptyLabel="No items yet"
+                  emptyGlyph="○"
+                />
+              ) : null}
+
+              <ParkedStrip
+                rows={parked}
+                on={parkedOn}
+                onToggle={setParkedOn}
+                onRestore={(ids) => void restoreParked(ids)}
+                data-testid="wb-parked"
+              />
+              {(parkedOn ? [] : items).map((item) => (
+                <WorkbenchItemCard
+                  key={item.id}
+                  restored={restoredId === item.id}
+                  item={item}
+                  expanded={expanded === item.id}
+                  recipeId={detail?.recipe_id || null}
+                  workbenchId={workbenchId}
+                  workbenchName={name}
+                  onToggle={() =>
+                    setExpanded(expanded === item.id ? null : item.id)
+                  }
+                  onReload={load}
+                  onRemove={handleRemove}
+                  onCopy={(text) => void copy(text)}
+                  write={write}
+                />
+              ))}
             </div>
+
+            {/* PHILO-13-02: the voice intent "Clear done", also a visible
+                verb while done items exist; it parks them all (C1-5j). */}
+            {doneCount > 0 && !parkedOn ? (
+              <div className="wb-clear-done">
+                <Button
+                  dense
+                  variant="ghost"
+                  onClick={() =>
+                    void parkItems(
+                      items.filter((i) => i.status === "done" || i.status === "dismissed"),
+                      "CLEAR DONE",
+                    )
+                  }
+                >
+                  Clear done
+                </Button>
+              </div>
+            ) : null}
+            {/* ── voice proposal strip ───────────────────────────────── */}
+            {voiceProposal ? (
+              <div className="wb-proposal-strip">
+                <span className="wb-proposal-text">
+                  {voiceProposal.intentId === "add-item"
+                    ? `Add: "${(voiceProposal.params as Record<string, unknown>).title}" P${(voiceProposal.params as Record<string, unknown>).priority || 3}`
+                    : voiceProposal.intentId === "run"
+                      ? "Run this workbench"
+                      : voiceProposal.intentId === "clear-done"
+                        ? "Clear done items"
+                        : voiceProposal.intentId === "set-agent"
+                          ? `Set agent: ${(voiceProposal.params as Record<string, unknown>).agentName}`
+                          : voiceProposal.intentId === "dismiss"
+                            ? `Dismiss: ${(voiceProposal.params as Record<string, unknown>).query}`
+                            : voiceProposal.transcript}
+                </span>
+                <Button variant="chrome"
+                  type="button"
+                  className="desk-chip"
+                  onClick={() => void handleVoiceProposal(voiceProposal)}
+                >
+                  Confirm
+                </Button>
+                <Button variant="chrome"
+                  type="button"
+                  className="desk-chip quiet"
+                  onClick={() => setVoiceProposal(null)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            ) : null}
+
+
           </>
         ) : null}
 
         {/* ── runs wing ────────────────────────────────────────────── */}
-        {activeWing === "runs" ? (
+        {activeWing === "runs" && !showConfig ? (
           <WorkbenchRunsWing
             runs={runs}
             configured={isConfigured}
@@ -1985,7 +2016,7 @@ export function WorkbenchWindow({
         ) : null}
 
         {/* ── memory wing ──────────────────────────────────────────── */}
-        {activeWing === "memory" ? (
+        {activeWing === "memory" && !showConfig ? (
           <div className="wb-memory-wing">
             <SurfaceLedger
               count={countLabel("MEMORIES", memoryEntries.length)}
@@ -2033,7 +2064,7 @@ export function WorkbenchWindow({
                         <span className="wb-memory-source">from: {itemTitle}</span>
                       ) : null; })()}
                       <div className="wb-memory-verbs">
-                        <button
+                        <Button variant="chrome"
                           type="button"
                           className="desk-chip"
                           onClick={async () => {
@@ -2044,7 +2075,7 @@ export function WorkbenchWindow({
                           }}
                         >
                           Promote to skill
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   </SurfaceLedgerRow>

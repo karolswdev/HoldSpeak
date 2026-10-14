@@ -8295,7 +8295,7 @@
       ],
       "kernel_operations": [],
       "limitations": [
-        "No live source hydration or model call was run.",
+        "Isolated Ask walks at 1440 and 393 resolved two real Notes through the production route; no owner-desk, remote source or model call was run.",
         "The resolver does not prove semantic truth of source text."
       ],
       "model_requirements": [],
@@ -8335,6 +8335,12 @@
           "line": 100,
           "path": "holdspeak/grounding_rails.py",
           "symbol": "hydrate_rails_refs"
+        },
+        {
+          "claim": "Async source reads merge into current choices; existing checkbox controls own selection.",
+          "line": 55,
+          "path": "web/src/desk/components/GroundingSection.tsx",
+          "symbol": "changeSelection"
         }
       ],
       "status": "experimental",
@@ -8367,6 +8373,28 @@
           },
           "node": "test_unknown_id_refuses_by_name",
           "path": "tests/unit/test_grounding_rails.py"
+        },
+        {
+          "assertion": "Two controlled resource reads resolving in reverse order retain both refs and checked controls.",
+          "execution": {
+            "cases": 1,
+            "record": "docs/internal/DEEP-USABILITY-2026-10-14/root.md",
+            "run": "deep-usability-grounding-2026-10-14",
+            "status": "passed"
+          },
+          "node": "keeps both choices when their async reads resolve in reverse order",
+          "path": "web/src/desk/components/__tests__/groundingSelection.test.tsx"
+        },
+        {
+          "assertion": "Grounding choices contain no checkbox nested inside an outer button.",
+          "execution": {
+            "cases": 1,
+            "record": "docs/internal/DEEP-USABILITY-2026-10-14/root.md",
+            "run": "deep-usability-grounding-2026-10-14",
+            "status": "passed"
+          },
+          "node": "offers one keyboard control per choice without nesting an input inside a button",
+          "path": "web/src/desk/components/__tests__/groundingSelection.test.tsx"
         }
       ],
       "trust_boundary": "Only resolved, named and capped source material enters a model-bearing payload; an unknown ref is returned for refusal."
