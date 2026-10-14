@@ -21,8 +21,9 @@
  * (tests/e2e/test_desk_sweep.py). The menu fold is a DOM fact and is rendered.
  */
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { DeskMenuBar } from "../components/DeskMenuBar";
+import { GoHome } from "../screen/GoHome";
 
 describe("the phone menu bar has one door that carries every verb", () => {
   let compact = true;
@@ -40,6 +41,7 @@ describe("the phone menu bar has one door that carries every verb", () => {
     }));
   });
   afterEach(() => {
+    cleanup();
     vi.unstubAllGlobals();
   });
 
@@ -65,8 +67,8 @@ describe("the phone menu bar has one door that carries every verb", () => {
 
   // PHILO-15 11 (B21, owner ruling 2026-10-07; supersedes C7 Q3): Go at 393
   // is Needs you / Brief / The week / Capture, the Dock's places, the
-  // projects, then New ▸ Thought / Meeting / Project / Person. No ⌘ hint.
-  it("carries a new thought (owner job 3's door) at Go ▸ New ▸ Thought at phone width", () => {
+  // projects, then New ▸ Note / Meeting / Project / Person. No ⌘ hint.
+  it("carries a new note (owner job 3's door) at Go ▸ New ▸ Note at phone width", () => {
     compact = true;
     render(<DeskMenuBar />);
     fireEvent.click(screen.getByRole("button", { name: "Go" }), { detail: 0 });
@@ -74,6 +76,15 @@ describe("the phone menu bar has one door that carries every verb", () => {
     expect(
       screen.getAllByRole("menuitem").map((el) => el.querySelector(".desk-menu-label")?.textContent)
         .slice(-4),
-    ).toEqual(["Thought", "Meeting", "Project", "Person"]);
+    ).toEqual(["Note", "Meeting", "Project", "Person"]);
+  });
+
+  it("renders the same phoneGo rows on the phone home face", () => {
+    compact = true;
+    render(<GoHome />);
+    expect(screen.getByRole("menuitem", { name: "Meetings" })).toBeTruthy();
+    expect(screen.getByRole("menuitem", { name: "Ask AI" })).toBeTruthy();
+    expect(screen.getByRole("menuitem", { name: "Note" })).toBeTruthy();
+    expect(screen.queryByText("Today")).toBeNull();
   });
 });

@@ -296,13 +296,8 @@ class SpeechSession:
 
     def freeze_assigned_provider_routes(self) -> None:
         """Freeze assignment routes while this session is still admitting."""
-        with self.broker.database._connection() as conn:
-            active = conn.execute(
-                "SELECT 1 FROM inference_assignment_migrations "
-                "WHERE family='thoughts-writing-route-assignments'"
-            ).fetchone() is not None
-        if not active:
-            return
+        from ..services.inference_assignment_service import InferenceAssignmentService
+
         aliases = {
             CAPABILITY_INTENT_CLASSIFY: "speech.intent_classify",
             "rewrite": "speech.rewrite",
@@ -311,12 +306,23 @@ class SpeechSession:
             {"key": legacy, "capability_id": canonical, "invocation_id": self.plan.session_id}
             for legacy, canonical in aliases.items() if self.plan.has(legacy)
         ]
-        if requested:
+        assignments = InferenceAssignmentService(self.broker.database)
+        # Each provider capability owns its own assignment authority.  A
+        # missing intent route must not erase an explicit rewrite choice; leave
+        # only genuinely unassigned capabilities on the legacy session path.
+        routed = [
+            item
+            for item in requested
+            if assignments.routed(
+                item["capability_id"], invocation_id=self.plan.session_id,
+            )
+        ]
+        if routed:
             self._routed_routes.update(
                 self.broker.inference_adoption_service.freeze_route_set(
                     self.principal,
                     command_id=f"speechroutes-{self.plan.session_id}",
-                    routes=requested,
+                    routes=routed,
                 )
             )
 

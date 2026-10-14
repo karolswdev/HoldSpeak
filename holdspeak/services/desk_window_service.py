@@ -109,6 +109,15 @@ WINDOW_FAMILIES: dict[str, str] = {
 #: Retired families: their rows still close, a new window is refused.
 RETIRED_APPS: dict[str, str] = {
     "zone": "no face draws a zone (PHILO-17, one desk)",
+    "open-concierge": "the Engines section is hosted by Settings (PHILO-17)",
+}
+
+#: Retired static windows: their saved rows still close, a new window is
+#: refused.  Keep this keyed by id as well as RETIRED_APPS: the browser and
+#: the hub both need to retire the old Concierge row without retiring the
+#: canonical Settings window that now hosts Engines.
+RETIRED_WINDOWS: dict[str, str] = {
+    "surface-concierge": "Runs on is the Engines section of Settings (PHILO-17)",
 }
 
 _WINDOW_ID = re.compile(r"^[A-Za-z0-9:_-]{1,200}$")
@@ -142,8 +151,9 @@ def window_app(window_id: str) -> tuple[str, Optional[str]]:
 
 def registry() -> dict[str, Any]:
     """The registry as data (the browser reads it with the window list)."""
+    retired = {**RETIRED_APPS, **RETIRED_WINDOWS}
     return {"static": dict(STATIC_WINDOWS), "families": dict(WINDOW_FAMILIES),
-            "not_on_hub": dict(NOT_ON_HUB)}
+            "not_on_hub": dict(NOT_ON_HUB), "retired": retired}
 
 
 # ── L5: share+px values (geometry.ts ``parseValue``, ported) ────────────────
@@ -312,12 +322,13 @@ class DeskWindowService:
         """Open a window on top. Idempotent: an open window returns its row,
         shown (restored) and raised to the front."""
         known_app, known_ref = window_app(window_id)
-        if known_app in RETIRED_APPS:
+        if window_id in RETIRED_WINDOWS or known_app in RETIRED_APPS:
             # PHILO-17 (owner 2026-10-10, "Yes, everything must become one
             # desk"): no face draws a zone. A new zone window is refused, so an
             # older view cannot reopen one; a saved row still closes.
+            reason = RETIRED_WINDOWS.get(window_id) or RETIRED_APPS[known_app]
             raise ValidationError(
-                f"The window {window_id} is retired: {RETIRED_APPS[known_app]}",
+                f"The window {window_id} is retired: {reason}",
                 code="window_retired",
                 context={"window_id": window_id, "app": known_app},
             )

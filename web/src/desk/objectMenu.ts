@@ -3,8 +3,43 @@
  * parked floorMenu.ts (PHILO-17, one desk): the Screen uses it. */
 import { menuVerbs, verbLabel, type Verb, type VerbContext } from "./verbRegistry";
 import type { WorkMenuEntry } from "./components/DeskMenu";
-import { objectByRef } from "./world";
+import { objectByRef, type WorldObject } from "./world";
 import { useDesk } from "./store";
+import { primitiveCan } from "../lib/primitives";
+import { handKindOf } from "./agentHand";
+import { deleteSeatShown } from "./deleteSeat";
+
+/** Object menus only list verbs the selected kind can run. State conditions
+ * (for example a missing delete receipt) use the registry's ghost reason;
+ * kind conditions are removed from this menu so every remaining row acts. */
+function offeredForKind(v: Verb, kind: WorldObject["kind"]): boolean {
+  switch (v.id) {
+    case "object.open":
+    case "object.file":
+      return kind !== "directory";
+    case "object.ask-project":
+    case "object.draft-update":
+      return kind === "project";
+    case "object.ask":
+      return primitiveCan(kind, "ask");
+    case "object.hand-to-agent":
+      return primitiveCan(kind, "hand") && handKindOf(kind) !== null;
+    case "object.continue-in-thread":
+      return new Set(["meeting", "note", "artifact", "decision", "recipe", "people"]).has(kind);
+    case "object.edit":
+      return primitiveCan(kind, "edit");
+    case "object.rename":
+      return kind !== "directory" && primitiveCan(kind, "rename");
+    case "object.duplicate":
+      return primitiveCan(kind, "duplicate");
+    case "object.delete":
+      return primitiveCan(kind, "delete") && deleteSeatShown();
+    case "object.archive":
+      return kind === "project" && primitiveCan(kind, "archive");
+    default:
+      return true;
+  }
+}
 
 function item(v: Verb, ctx: VerbContext): WorkMenuEntry {
   return {
@@ -22,8 +57,12 @@ function item(v: Verb, ctx: VerbContext): WorkMenuEntry {
 export function objectMenuEntries(target: { ref: string }): WorkMenuEntry[] {
   const ctx: VerbContext = { selectedRef: target.ref };
   const verbs = menuVerbs("object");
-  const ordinary = verbs.filter((v) => v.group !== "danger");
-  const danger = verbs.filter((v) => v.group === "danger");
+  const object = objectByRef(useDesk.getState().items, target.ref);
+  const offered = object
+    ? verbs.filter((v) => offeredForKind(v, object.kind))
+    : verbs;
+  const ordinary = offered.filter((v) => v.group !== "danger");
+  const danger = offered.filter((v) => v.group === "danger");
   return [
     ...ordinary.map((v) => item(v, ctx)),
     ...(danger.length ? [{ type: "sep" as const, id: "object.danger-sep" }] : []),

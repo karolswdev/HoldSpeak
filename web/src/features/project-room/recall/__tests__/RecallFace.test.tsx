@@ -174,7 +174,8 @@ describe("RecallFace (HS-200-13)", () => {
     await search();
     fireEvent.click(screen.getByRole("button", { name: "Open source: MTG 09-07" }));
     // PHILO-17: the meeting's own window, at the moment (row 2).
-    expect(openPrimitive).toHaveBeenCalledWith("meeting:m-sun");
+    expect(openSurfaceOr).toHaveBeenCalledWith("review-meetings", "/history", "meeting:m-sun?segment=2");
+    expect(openPrimitive).not.toHaveBeenCalledWith("meeting:m-sun");
     expect(takeMeetingRequest("m-sun")?.segment).toBe(2);
     void openSurfaceOr;
     fireEvent.click(screen.getAllByRole("button", { name: "Open the Project: Q4 platform" })[0]);

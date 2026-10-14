@@ -54,7 +54,7 @@ export function loadPanelLayout(): PanelLayout {
 
 const initialWorkspace = loadDeskWorkspace();
 const initialPanelLayout = initialWorkspace.panel;
-const initialPanelRects = initialPanelLayout.rects;
+const initialPanelRects: Record<string, PanelRect> = { ...initialPanelLayout.rects };
 const surfaceByAction = new Map(
   SURFACE_APPLICATIONS.map((application) => [application.action, application]),
 );
@@ -67,26 +67,47 @@ const initialWindowsByIdRaw = Object.fromEntries(
     return application?.action === instance.applicationKey;
   }),
 );
-// PHILO-17 (owner 2026-10-10, "A meeting opens in one window"): a saved
-// Meetings window scoped to one meeting held that meeting's record. The
-// record is the meeting's own window now: the saved window comes back as
-// `pullout:meeting:<id>` (the hub's row migrates the same way, hubWindows.ts).
-const bootMeetingWindows: string[] = [];
-const initialWindowsById = Object.fromEntries(
-  Object.entries(initialWindowsByIdRaw).filter(([, instance]) => {
-    if (instance.applicationKey !== "review-meetings") return true;
-    const meeting = meetingOfScope(instance.scope);
-    if (!meeting) return true;
-    bootMeetingWindows.push(`meeting:${meeting}`);
-    return false;
-  }),
-);
+const initialWindowsById = initialWindowsByIdRaw;
 
 // PHILO-13-07 (B2) — the open object windows come back after a reload, each
 // through its own family's array (the same openers then raise and close it).
 const initialWindowLists = initialWorkspace.windows ?? {
   pullouts: [], info: [], roadmap: [], repository: [], workbench: [],
 };
+// PHILO-17 (owner answer): meeting records live inside the Meetings surface.
+// Older workspaces held them as `pullout:meeting:<id>` rows. Rename the one
+// authoritative surface row and its saved presentation once, preserving its
+// rect, depth and maximized/minimized state. A surface has one scope, so the
+// newest saved meeting wins when an old desk contains several pullouts.
+const meetingRefFromPullout = (id: string): string | null =>
+  id.startsWith("meeting:") ? meetingOfScope(id) : null;
+const migratedMeetingRef = [...initialWindowLists.pullouts]
+  .reverse()
+  .find((id) => meetingRefFromPullout(id) !== null);
+const migratedMeetingId = migratedMeetingRef ? meetingRefFromPullout(migratedMeetingRef) : null;
+const migratedMeetingPanelId = migratedMeetingId ? `pullout:${migratedMeetingRef}` : null;
+if (migratedMeetingPanelId && initialPanelRects[migratedMeetingPanelId]) {
+  initialPanelRects["surface-meetings"] ??= initialPanelRects[migratedMeetingPanelId];
+  delete initialPanelRects[migratedMeetingPanelId];
+}
+const migratePanelId = (id: string): string => id === migratedMeetingPanelId ? "surface-meetings" : id;
+const initialPanelDepth = Object.fromEntries(
+  Object.entries(initialPanelLayout.depth ?? {}).map(([id, depth]) => [migratePanelId(id), depth]),
+);
+const migratedMax = (initialPanelLayout.max ?? []).map(migratePanelId);
+const migratedMin = (initialPanelLayout.min ?? []).map(migratePanelId);
+const migratedZoom = Object.fromEntries(
+  Object.entries(initialPanelLayout.zoom ?? {}).map(([id, rect]) => [migratePanelId(id), rect]),
+);
+if (migratedMeetingId && !initialWindowsById["surface-meetings"]) {
+  initialWindowsById["surface-meetings"] = {
+    id: "surface-meetings",
+    kind: "surface",
+    applicationKey: "review-meetings",
+    scope: `meeting:${migratedMeetingId}`,
+    persistence: "workspace",
+  };
+}
 const reopened = <K extends string>(key: K, values: string[]) =>
   values.map((value) => ({ [key]: value, origin: null }) as Record<K, string> & {
     origin: null;
@@ -99,14 +120,14 @@ const reopened = <K extends string>(key: K, values: string[]) =>
 // or a close ends that state (idempotent, so a double-run effect agrees).
 const returningIds = new Set<string>([
   ...Object.keys(initialWindowsById),
-  ...initialWindowLists.pullouts.map((id) => `pullout:${id}`),
+  ...initialWindowLists.pullouts.filter((id) => !meetingRefFromPullout(id)).map((id) => `pullout:${id}`),
   ...initialWindowLists.info.map((ref) => `info:${ref}`),
   ...initialWindowLists.roadmap.map((slug) => `roadmap:${slug}`),
   ...initialWindowLists.repository.map((id) => `repository:${id}`),
   ...initialWindowLists.workbench.map((id) => `workbench:${id}`),
   // PHILO-17: zone windows are retired; a saved one does not return.
 ]);
-const initialPanelMin = (initialPanelLayout.min ?? []).filter(
+const initialPanelMin = migratedMin.filter(
   (id) => returningIds.has(id) || id.startsWith("chair:"),
 );
 const rehydratedMinimized = new Set(initialPanelMin);
@@ -197,15 +218,14 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
   panelRects: initialPanelRects,
   panelSaved: Object.keys(initialPanelRects),
   // PHILO-17: a saved zone window is retired at boot (no face draws a zone).
-  ...stack(Object.fromEntries(Object.entries(initialPanelLayout.depth ?? {}).filter(([id]) => !id.startsWith("zone:")))),
+  ...stack(Object.fromEntries(Object.entries(initialPanelDepth).filter(([id]) => !id.startsWith("zone:")))),
   stageShelf: initialPanelLayout.shelf ?? "left",
   panelMin: initialPanelMin,
-  panelMax: initialPanelLayout.max,
-  panelZoom: initialPanelLayout.zoom ?? {},
+  panelMax: migratedMax,
+  panelZoom: migratedZoom,
   windowsById: initialWindowsById,
   pullouts: reopened("id", [
-    ...initialWindowLists.pullouts,
-    ...bootMeetingWindows.filter((ref) => !initialWindowLists.pullouts.includes(ref)),
+    ...initialWindowLists.pullouts.filter((id) => !meetingRefFromPullout(id)),
   ]),
   zoneWindows: [],
   zoneViewPrefs: initialWorkspace.zoneViewPrefs,
@@ -261,12 +281,11 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
       // the desk windows), never a press that leaves it hidden.
       get().restorePanel(`pullout:${key}`);
     };
-    // PHILO-17 (owner 2026-10-10, "A meeting opens in one window"): a
-    // meeting and a person each have ONE window, `pullout:meeting:<id>` and
-    // `pullout:people:<id>`, whatever id form the door gave (a bare id, a
-    // qualified ref). A second door brings the open window to the front.
+    // PHILO-17 (owner answer): a meeting record lives in the Meetings
+    // surface. A second door updates that surface's scope and brings it to
+    // the front; People keeps its one-object pullout.
     if (resolved.kind === "meeting") {
-      openCard(`meeting:${resolved.resolvedId}`);
+      get().openSurfaceWindow("review-meetings", `meeting:${resolved.resolvedId}`);
       return;
     }
     if (resolved.kind === "people" && resolved.resolvedId !== "people" && !resolved.resolvedId.startsWith("project:")) {
@@ -372,23 +391,20 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
   // ---- static applications (one normalized lifecycle authority) --------
 
   openSurfaceWindow(key, scope) {
-    // PHILO-17: the Meetings application scoped to one meeting is that
-    // meeting's window; the People application scoped to one person is that
-    // person's window. The applications themselves are the list and the
-    // roster.
-    const objectRef =
-      key === "review-meetings" ? meetingWindowRef(scope)
-        : key === "open-people" ? personWindowRef(scope)
-          : null;
+    // PHILO-17 (owner answer): Meetings keeps one surface window. Its
+    // meeting ref is its scope, so the same rect/title survive a deep link,
+    // reload and Back. People still uses an object pullout.
+    const meetingScope = key === "review-meetings" ? meetingWindowRef(scope) : null;
+    const objectRef = key === "open-people" ? personWindowRef(scope) : null;
     if (objectRef) {
       get().openPullout(objectRef);
       return;
     }
-    // PHILO-17: while this desk records a meeting, the Live meeting door is
-    // that meeting's window.
+    // PHILO-17 (owner answer): while this desk records a meeting, its live
+    // meeting door still lands in the single scoped Meetings surface.
     const liveId = get().liveMeetingId;
     if (key === "record-live" && liveId && get().recording !== "idle") {
-      get().openPullout(`meeting:${liveId}`);
+      get().openSurfaceWindow("review-meetings", `meeting:${liveId}`);
       return;
     }
     const application = surfaceByAction.get(key);
@@ -400,7 +416,7 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
       id: application.windowId,
       kind: "surface" as const,
       applicationKey: application.action,
-      scope: scope ?? null,
+      scope: meetingScope ?? scope ?? null,
       persistence: "workspace" as const,
     };
     set({

@@ -453,7 +453,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
       const chairSeat = id.startsWith("chair:");
       const placed = chairSeat
         ? clampIntoBand(seed, vw, vh, minW, minH)
-        : placeWindow(seed, others, vw, vh, minW, minH, iconColumnRight(), iconColumnLeft());
+        : placeWindow(seed, others, vw, vh, minW, minH, iconColumnRight(), iconColumnLeft(), others.at(-1));
       // PHILO-17 (U28c): the first seat is kept (saved, and sent to the hub
       // with the open), so a reload and every other view show the window
       // where it opened. Not for a content-sized card (its height stays the
@@ -765,6 +765,9 @@ export interface DeskWindowFrameProps {
   escapeCloses?: boolean;
   open: boolean;
   onClose: () => void;
+  /** On a scoped surface, Back clears the detail scope. At compact width the
+   * shared head always says Back; without this callback it closes the pane. */
+  onBack?: () => void;
   /** Heavy content may unmount while minimized (default: stays mounted). */
   unmountOnMinimize?: boolean;
   /** Entrance spring (the Phase 93 slide-in). Default true. */
@@ -809,6 +812,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     escapeCloses = true,
     open,
     onClose,
+    onBack,
     unmountOnMinimize,
     entrance = true,
     rootStyle,
@@ -1243,11 +1247,11 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
           <Button
             variant="chrome"
             className="desk-gadget desk-gadget-close"
-            aria-label={`Close ${name}`}
-            title={`Close ${name}`}
-            onClick={requestClose}
+            aria-label={compact ? `Back from ${name}` : `Close ${name}`}
+            title={compact ? "Back" : `Close ${name}`}
+            onClick={compact ? (onBack ?? requestClose) : requestClose}
           >
-            <GadgetGlyph kind="close" />
+            {compact ? "‹ Back" : <GadgetGlyph kind="close" />}
           </Button>
         </span>
         {leading}

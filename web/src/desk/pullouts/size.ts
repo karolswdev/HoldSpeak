@@ -10,9 +10,16 @@
  * The width keeps the Intelligence tabs on one row: they stack when the
  * window body is 420 px or less (intelligence.css). */
 export const PULLOUT_SIZE: Partial<Record<string, { w: number; h: number }>> = {
+  // PHILO-17 (windows): a note opens as a small sticky and grows with its
+  // material until the Thought window's 820 x 640 cap.
+  note: { w: 520, h: 360 },
   intelligence: { w: 880, h: 700 },
   // PHILO-17: a meeting is a whole window (its record, its wings, its foot).
-  meeting: { w: 720, h: 680 },
+  meeting: { w: 720, h: 600 },
   // PHILO-17 (2b): a person is a whole window (the six lenses on one row).
-  people: { w: 640, h: 640 },
+  people: { w: 640, h: 560 },
+  room: { w: 760, h: 480 },
+  // Settings is hosted by SurfaceWindows, but stays in this table so the
+  // first-open matrix has one source of truth for every desk room.
+  settings: { w: 640, h: 600 },
 };

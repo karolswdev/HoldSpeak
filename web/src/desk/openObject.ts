@@ -49,6 +49,26 @@ export function openProjectUpdates(projectId: string): void {
   }
 }
 
+/** PHILO-17 words: a Project's Rename verb opens its Room and focuses the
+ * existing name field. The Room consumes this request once after mounting. */
+export const ROOM_RENAME_EVENT = "holdspeak:room-rename";
+const roomRenames = new Set<string>();
+
+export function openProjectRename(projectId: string): void {
+  const id = projectId.trim();
+  if (!id) return;
+  roomRenames.add(id);
+  openProjectRoom(id);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent<string>(ROOM_RENAME_EVENT, { detail: id }));
+  }
+}
+
+/** The Room takes a rename request once. */
+export function takeRoomRenameRequest(projectId: string | null | undefined): boolean {
+  return !!projectId && roomRenames.delete(projectId);
+}
+
 /** PHILO-14 A2b (Astra r1 on #945) — a proposal is an object: its row opens
  *  the destination that contains it, the Room with that proposal selected.
  *  The Room takes the request once (a reload does not replay it). */

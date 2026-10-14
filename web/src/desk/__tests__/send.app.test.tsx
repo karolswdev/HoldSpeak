@@ -144,7 +144,7 @@ describe("the built-in HoldSpeak folder on a fresh desk (owner ruling 2026-10-05
       const words = line(row);
       expect(words).toContain(NAME);
       expect(words).toContain("FILE");
-      expect(words.includes("THIS DEVICE")).toBe(!icloud);
+      expect(words).not.toContain("THIS DEVICE");
       expect(words.includes("ICLOUD")).toBe(icloud);
       // PHILO-15 lane 12 (B23): the folder reads by its name, the ~ token on hover.
       expect(words).toContain("HoldSpeak/Sent");
@@ -174,7 +174,7 @@ describe("a Phase 11 brief send to a saved folder with the built-in present", ()
     await press("Team folder");
     expect(posted.map((p) => p.destination_id)).toEqual(["chd_team"]);
     const builtinLine = line(await rowOf(NAME));
-    expect(builtinLine).toContain("THIS DEVICE");
+    expect(builtinLine).not.toContain("THIS DEVICE");
     expect(builtinLine).not.toContain("SAVED");
 
     fireEvent.click(within(await rowOf(NAME)).getByText(NAME));

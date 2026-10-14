@@ -271,9 +271,16 @@ class SettingsService:
                 "SELECT 1 FROM inference_assignment_migrations WHERE family=?", (family,)
             ).fetchone() is not None
 
-    def _routed_assignments_active(self) -> bool:
-        """Compatibility name for the pre-existing Thought/writing gate."""
-        return self._assignment_migration_active("thoughts-writing-route-assignments")
+    def _routed_assignments_active(self, capability_id: str = "ask.answer") -> bool:
+        """Compatibility name for the pre-existing Thought/writing gate.
+
+        An owner assignment is authoritative before the one-way migration
+        marker is written.  This keeps Settings from reopening the legacy
+        selector while Ask already has a chosen route.
+        """
+        from .inference_assignment_service import InferenceAssignmentService
+
+        return InferenceAssignmentService(self._db).routed(capability_id)
 
     def update_settings(
         self, principal: Principal, patch: dict[str, Any]

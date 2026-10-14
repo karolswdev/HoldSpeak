@@ -48,6 +48,7 @@ function wire(actionItems: Record<string, unknown>[]) {
   mockedApiFetch.mockImplementation(async (path: string) => {
     const url = String(path);
     if (url.startsWith("/api/meetings?")) return { meetings: [MEETING] } as never;
+    if (/^\/api\/meetings\/m-1(?:\?|$)/.test(url)) return MEETING as never;
     if (url === "/api/all-action-items") return { action_items: actionItems } as never;
     return {} as never;
   });
@@ -81,5 +82,23 @@ describe("HS-201-11 the open-actions filter is drawn only when it can find one",
     await screen.findByTestId("meetings-headline");
     await waitFor(() => expect(screen.getByTestId("meetings-facets")).toBeTruthy());
     expect(screen.getByText("HAS OPEN ACTIONS")).toBeTruthy();
+  });
+
+  it("mounts the real meeting record for a canonical scope and returns to the selected row", async () => {
+    wire([]);
+    const view = render(<HistoryCore />);
+    await screen.findByTestId("meeting-row-m-1");
+
+    // This is the same scope transition SurfaceWindows gives the real core;
+    // the host and MeetingRecord are not replaced with a test double.
+    view.rerender(<HistoryCore scope="meeting:m-1" />);
+    await screen.findByTestId("meeting-decide");
+    expect(screen.queryByTestId("meeting-row-m-1")).toBeNull();
+
+    // Desktop Back clears the canonical scope. The list's row selection is
+    // retained in HistoryCore so the owner returns to the same meeting.
+    view.rerender(<HistoryCore />);
+    await screen.findByTestId("meeting-row-m-1");
+    expect(screen.getByTestId("meeting-row-m-1").getAttribute("data-selected")).toBe("true");
   });
 });

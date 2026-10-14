@@ -7,7 +7,7 @@ Capitalized product names identify specific records, modes, or controls.
 | --- | --- |
 | agent | A saved persona with instructions and selected context. It is distinct from a live Coder session. |
 | Artifact | A saved output record with information about its source or creator. |
-| arrival | The Desk home screen for work that needs you, Thoughts, a brief, and recent Meetings. |
+| arrival | The Desk home screen for work that needs you, Notes, a brief, and recent Meetings. |
 | assignment | A model selection for a capability, group, or eligible saved item. |
 | automation | Work started by a configured trigger and executed through a supported path. A suggestion alone is not an automation. |
 | Automations | The product surface for watch/reaction configuration outside Project-scoped Watches. |
@@ -16,7 +16,8 @@ Capitalized product names identify specific records, modes, or controls.
 | capability | A registered kind of work with model and execution requirements. |
 | Chair | The Desk view that contains the arrival. |
 | Coder session | A live coding session that HoldSpeak can observe or steer through supported controls. |
-| Concierge | The model setup window opened through Settings > Models. |
+| Accounts | The Settings section for connections to services. |
+| Concierge | The former name of model setup. Use Settings > Engines. |
 | connector | A component that obtains context from a configured source. Its permissions and data boundary depend on that source. |
 | Control mode | The Secure, Normal, or YOLO policy preset for future operations. |
 | correction | A stored dictation rule. A text correction rewrites a heard phrase in the transcript. A routing correction nudges the block or the delivery target of a similar utterance. |
@@ -25,7 +26,8 @@ Capitalized product names identify specific records, modes, or controls.
 | dictation journal | One row per dictation run on this device, with the transcript, the delivered text, the route, the latency, and the corrections that fired. |
 | dictation pipeline | The stages that route or transform dictated text before delivery. |
 | egress | Transfer of data outside the current machine or applicable execution boundary. |
-| engine | A detected or configured model runtime, endpoint, or model option shown by the Concierge. |
+| engine | A model runtime, endpoint, or model option shown in Settings > Engines. |
+| Engines | The Settings section where you select the model for each job. |
 | Everyday context | The editable starter prompts that you can explicitly attach as AI context. |
 | Floor | The spatial Desk view where records appear as objects. |
 | grant | Bounded authority for an operation, destination, and scope, with expiry and use limits. |
@@ -39,7 +41,7 @@ Capitalized product names identify specific records, modes, or controls.
 | Model Library | The service that records model availability, deployment information, and readiness. |
 | Note | An editable text record. |
 | People | The protected surface for confidential relationship records and permitted shared intent. |
-| Places | The environment picker for the Floor. |
+| Places | The former name of the wallpaper picker. Use Settings > Wallpaper. |
 | Project | A record that groups an outcome and related sources or work. |
 | Project facts | Exact values from the `kb:` map in `.holdspeak/project.yaml`, inserted into applicable dictation templates. |
 | Project context | The separate `.hs/` files that can guide an optional model rewrite. |
@@ -55,7 +57,8 @@ Capitalized product names identify specific records, modes, or controls.
 | Steward | The Project component that evaluates observed work and produces supported results under its configured policy. |
 | suggestion | An Interview idea with a basis, feasibility, and recorded user choice. It is distinct from an executed action. |
 | sweep | One Heartbeat evaluation pass. |
-| Thought | A Note under development through the Thought Workbench. |
+| Thought | The former interface name for a Note being worked on. The interface uses Note. |
+| Wallpaper | The still background selected in Settings. |
 | Thread | A saved conversation with model turns, references, and applicable tools. |
 | tool | A named callable operation. Its existence does not grant execution authority. |
 | Watch | A Project-scoped configuration that observes a source population and evaluates specified conditions. |

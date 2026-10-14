@@ -89,12 +89,15 @@
   gap: 4px;
 }
 
-/* The LedgerRow kind plate: raised Steel, 44 px, mono 12/700, ink. */
+/* The LedgerRow kind plate: raised Steel, wide enough for the full uppercase
+   word, mono 12/700, ink. The inner padding gives DECISION its readable
+   edge room instead of clipping the final letter. */
 .kit-kind {
   display: inline-block;
   box-sizing: border-box;
-  width: 44px;
-  padding: 4px 0;
+  width: 9ch;
+  min-width: 9ch;
+  padding: 4px 2px;
   border: 1px solid var(--wb-ink);
   background: var(--wb-steel);
   box-shadow: var(--wb-raised-soft);
@@ -128,7 +131,7 @@
 .surface-ledger[data-cols="kit"] .surface-ledger-row > .surface-ledger-line,
 .surface-ledger[data-cols="kit"] .surface-ledger-row > .surface-ledger-line[data-has-trailing] {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) auto auto;
+  grid-template-columns: 9ch minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 4px 10px;
 }
@@ -138,7 +141,7 @@
 @container surface (max-width: 559.9px) {
   .surface-ledger[data-cols="kit"] .surface-ledger-row > .surface-ledger-line,
   .surface-ledger[data-cols="kit"] .surface-ledger-row > .surface-ledger-line[data-has-trailing] {
-    grid-template-columns: 44px minmax(0, 1fr);
+    grid-template-columns: 9ch minmax(0, 1fr);
   }
   .surface-ledger[data-cols="kit"] .surface-ledger-line > .surface-ledger-meta,
   .surface-ledger[data-cols="kit"] .surface-ledger-line > .surface-ledger-trailing {

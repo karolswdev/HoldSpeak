@@ -91,7 +91,7 @@ describe("the SEND well species on a brief (not an update)", () => {
   it("picked: the preview of THIS document opens with Send; the row keeps the one grammar", async () => {
     render(<SendWells doc={BRIEF} />);
     const row = await pick("Team folder");
-    expect(row.querySelector(".send-cells")?.textContent).toContain("THIS DEVICE");
+    expect(row.querySelector(".send-cells")?.textContent).not.toContain("THIS DEVICE");
     const preview = await screen.findByTestId("send-preview");
     expect(preview.textContent).toContain("Priya Nair: they owe 1");
     expect(previews).toEqual([REF]);
@@ -387,7 +387,7 @@ describe("the receipt survives the click that leaves the row (Astra r2 F1)", () 
     expect(row.textContent).toContain("FAILED");
     expect(row.textContent).toContain("NO PERMISSION");
     expect(row.textContent).toContain("NOTHING SENT");
-    expect(row.textContent).toContain("THIS DEVICE");
+    expect(row.textContent).not.toContain("THIS DEVICE");
   });
 
   it("REFUSED, then another row is picked: the refusal word and NOTHING SENT stay on the first row", async () => {

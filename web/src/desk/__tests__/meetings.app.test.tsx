@@ -18,14 +18,17 @@
  * route/409 behaviour of the hub itself (T1, sub-worker M2).
  */
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { useState, type ReactNode } from "react";
+import { lazy, useEffect, useState, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../lib/api";
 import { forgetExecutedReceipts } from "../../meetings/summaryRoute";
 import { HistoryCore } from "../../pages/cores/HistoryCore";
 import { MeetingRecord } from "../../pages/cores/history/MeetingRecord";
 import { WingSlotContext } from "../surface/wings";
-import { openPrimitive } from "../shell";
+import { openPrimitive, openSurfaceOr } from "../shell";
+import { SurfaceWindowHost, type SurfaceRow } from "../components/SurfaceWindows";
+import { EMPTY_ITEMS } from "../api";
+import { useDesk } from "../store";
 import hs170 from "./fixtures/meetings-hub/hs170.json";
 import hs172 from "./fixtures/meetings-hub/hs172.json";
 import p17t from "./fixtures/meetings-hub/p17t.json";
@@ -34,6 +37,7 @@ import p17tReady from "./fixtures/meetings-hub/p17t-ready.json";
 vi.mock("../shell", async (original) => ({
   ...(await original<typeof import("../shell")>()),
   openPrimitive: vi.fn(),
+  openSurfaceOr: vi.fn(),
 }));
 vi.mock("../../lib/api", async (original) => ({
   ...(await original<typeof import("../../lib/api")>()),
@@ -100,6 +104,33 @@ function Shell({ children }: { children: ReactNode }) {
   );
 }
 
+const hostedMeetingsRow: SurfaceRow = {
+  key: "review-meetings",
+  id: "surface-meetings",
+  title: "Meetings",
+  glyph: "M",
+  eyebrow: "Meetings",
+  Core: lazy(async () => ({ default: HistoryCore })),
+};
+
+/** The actual SurfaceWindowHost is part of this fence. A MeetingRecord-only
+ * render misses the host's wing slot and the scope round-trip that desktop
+ * Back must perform. */
+function HostedMeetings() {
+  const scope = useDesk((state) => state.windowsById[hostedMeetingsRow.id]?.scope ?? undefined);
+  useEffect(() => {
+    vi.mocked(openSurfaceOr).mockImplementation((key, _href, nextScope) => {
+      useDesk.getState().openSurfaceWindow(key, nextScope);
+    });
+    useDesk.getState().openSurfaceWindow("review-meetings", "meeting:m-saved-outcomes");
+  }, []);
+  return (
+    <div className="desk-next">
+      <SurfaceWindowHost row={hostedMeetingsRow} scope={scope} items={EMPTY_ITEMS} />
+    </div>
+  );
+}
+
 /** Every <button> that is not the library Button (UX-CANON A.1); the rig's
  *  own probe: `.btn`, `.btn--chrome` or the library MicButton `.desk-mic`. */
 function rawButtons(root: ParentNode = document): string[] {
@@ -113,6 +144,8 @@ const stateTokens = () => [...document.querySelectorAll("[data-testid='state-tok
 beforeEach(() => {
   vi.mocked(apiFetch).mockReset();
   vi.mocked(openPrimitive).mockReset();
+  vi.mocked(openSurfaceOr).mockReset();
+  useDesk.setState({ windowsById: {} } as never);
   frameListeners.clear();
   forgetExecutedReceipts();
 });
@@ -155,14 +188,15 @@ describe("the Meetings list over the HS-170 seed", () => {
   });
 
   /* replaces: tests/e2e/test_hs170_meetings_glass.py::TestMeetingsGlass::test_meetings_face (S-3: host chip + the run POST) */
-  it("the row discloses THIS DEVICE before the click; Run summary POSTs the run route with the row's hash", async () => {
+  it("the row keeps same-device work quiet; Run summary POSTs the disclosed route", async () => {
     at(hs170 as Fixture);
     const calls = hub(hs170 as Fixture);
     render(<Shell><HistoryCore /></Shell>);
     const row = await screen.findByTestId("meeting-row-m-off-words");
     const chip = () => within(row).getByTestId("row-route").querySelector(".gadget-chip-egress");
-    // The wire word is `same_device`; the face says THIS DEVICE, never the wire word.
-    expect(chip()?.textContent).toContain("THIS DEVICE");
+    // Same-device work has no egress to disclose. The route remains bound to
+    // the run and never leaks its wire enum.
+    expect(chip()).toBeNull();
     expect(row.textContent).not.toContain("same_device");
     fireEvent.click(within(row).getByTestId("run-intelligence-btn"));
     const listed = (hs170 as Fixture)["/api/meetings?limit=100"] as { meetings: Array<{ id: string; planned_route: { selection_hash: string } }> };
@@ -177,8 +211,8 @@ describe("the Meetings list over the HS-170 seed", () => {
     // path, not the missing-route fallback of summaryRoute.ts).
     const answer = (hs170 as Fixture)["POST /api/meetings/m-off-words/intelligence/run"] as { planned_route: { selection_hash: string; status: string } };
     expect(answer.planned_route).toMatchObject({ status: "ready", selection_hash: hash });
-    // The chip stays through the run.
-    await waitFor(() => expect(chip()?.textContent).toContain("THIS DEVICE"));
+    // The row remains quiet through the run.
+    await waitFor(() => expect(chip()).toBeNull());
   });
 
   /* replaces: tests/e2e/test_hs170_meetings_glass.py::TestMeetingsGlass::test_meetings_face (row → the meeting's own window) */
@@ -188,9 +222,30 @@ describe("the Meetings list over the HS-170 seed", () => {
     render(<Shell><HistoryCore /></Shell>);
     const row = await screen.findByTestId("meeting-row-m-saved-outcomes");
     fireEvent.click(row.querySelector(".meetings-stream-row-body")!);
-    // `openSourceRef` hands the shell the meeting ref; the shell routes it to
-    // the meeting's own window (meetingRefresh202.test.tsx asserts the same).
-    expect(openPrimitive).toHaveBeenCalledWith("meeting:m-saved-outcomes");
+    // `openSourceRef` hands the shell the meeting scope. The one Meetings
+    // surface owns the record and its Back control returns to this list.
+    expect(openSurfaceOr).toHaveBeenCalledWith(
+      "review-meetings", "/history", "meeting:m-saved-outcomes",
+    );
+  });
+});
+
+describe("the hosted meeting record returns to its list", () => {
+  it("desktop Back clears the real host scope and keeps the selected list row", async () => {
+    at(hs170 as Fixture);
+    hub(hs170 as Fixture);
+    render(<HostedMeetings />);
+    const back = await screen.findByTestId("meeting-record-back");
+    expect(back).toBeVisible();
+    expect(screen.getByTestId("meeting-record-back").closest(".desk-surface-window")?.querySelector(".meetings-detail-head")).toBeTruthy();
+
+    fireEvent.click(back);
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("meeting-record-back")).toBeNull();
+      expect(screen.getByTestId("meetings-headline")).toBeTruthy();
+    });
+    expect(screen.getByTestId("meeting-row-m-saved-outcomes")).toHaveAttribute("data-selected", "true");
   });
 });
 
@@ -231,7 +286,7 @@ describe("the meeting after a run (HS-172 seed)", () => {
   });
 
   /* replaces: tests/e2e/test_hs172_meeting_glass.py::TestMeetingAfterRun::test_meeting_ran_with_proposals[1440] (the detail) */
-  it("SUMMARISED, 41 S and the host; Decisions · 1 and Commitments · 2; three Confirm and three Dismiss; TO DECIDE and TO CONFIRM", async () => {
+  it("SUMMARISED, 41 S and the host; Decisions · 1 and Commitments · 2; three Confirm and three Dismiss with owner facts", async () => {
     at(hs172 as Fixture);
     hub(hs172 as Fixture);
     render(<Shell><MeetingRecord meetingId="m-ran" onClose={() => undefined} /></Shell>);
@@ -244,10 +299,13 @@ describe("the meeting after a run (HS-172 seed)", () => {
     expect(decisions.querySelector("h3")?.textContent).toBe("Decided · 1");
     expect(commitments.querySelector("h3")?.textContent).toBe("Who owes what · 2");
     expect(screen.getAllByTestId("proposal-confirm-btn")).toHaveLength(3);
+    expect(screen.getAllByTestId("proposal-more-btn")).toHaveLength(3);
+    screen.getAllByTestId("proposal-more-btn").forEach((button) => fireEvent.click(button));
     expect(screen.getAllByTestId("proposal-dismiss-btn")).toHaveLength(3);
     const ledgers = `${decisions.textContent}${commitments.textContent}`;
-    expect(ledgers).toContain("TO DECIDE");
-    expect(ledgers).toContain("TO CONFIRM");
+    expect(ledgers).toContain("Marek owns the PostgreSQL migration");
+    expect(ledgers).toContain("no owner · by Fri");
+    expect(ledgers).not.toMatch(/TO (DECIDE|CONFIRM)/);
     expect(rawButtons()).toEqual([]);
   });
 
@@ -273,7 +331,7 @@ describe("the summary face (HS-201-04 seed shapes)", () => {
     const calls = hub(hs170 as Fixture);
     render(<Shell><MeetingRecord meetingId="m-off-words" onClose={() => undefined} /></Shell>);
     const route = await screen.findByTestId("detail-route");
-    expect(route.textContent).toContain("THIS DEVICE");
+    expect(route.textContent).not.toContain("THIS DEVICE");
     const detail = (hs170 as Fixture)["/api/meetings/m-off-words?include_parked=true"] as { planned_route: { selection_hash: string } };
     fireEvent.click(screen.getByTestId("detail-run-intelligence-btn"));
     await waitFor(() =>
@@ -291,7 +349,7 @@ describe("the summary face (HS-201-04 seed shapes)", () => {
     const first = render(<Shell><HistoryCore /></Shell>);
     await screen.findByTestId("meeting-row-m-off-words");
     const footerChip = () => (document.querySelector(".surface-footer .gadget-chip-egress")?.textContent ?? "").trim();
-    await waitFor(() => expect(footerChip()).toContain("THIS DEVICE"));
+    await waitFor(() => expect(footerChip()).toBe(""));
     first.unmount();
     // The same rows with the route's lead leg on a LAN host (the shape is the
     // captured one; only the host value differs): the chip follows it.
@@ -307,7 +365,7 @@ describe("the summary face (HS-201-04 seed shapes)", () => {
     render(<Shell><HistoryCore /></Shell>);
     await screen.findByTestId("meeting-row-m-off-words");
     await waitFor(() => expect(footerChip()).toContain("192.168.1.43"));
-    expect(footerChip()).not.toContain("THIS DEVICE");
+    expect(footerChip()).toContain("192.168.1.43");
   });
 
   /* replaces: tests/e2e/test_hs201_summary_face_glass.py::test_import_transcribes_then_queues_the_disclosed_summary (station 1: the Import door) */

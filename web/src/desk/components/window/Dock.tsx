@@ -1,6 +1,5 @@
 // Dock — the application launcher + running window toolbar.
 // Extracted from DeskWindow.tsx (HS-117-04).
-import { needYouWords } from "../../surface/count";
 import { useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch } from "../../../lib/api";
@@ -16,14 +15,13 @@ import { WorkMenu } from "../DeskMenu";
 import { dockChipMenuEntries } from "../../windowMenuAdapter";
 import { useOpenWindows, useShownName, chipEls } from "./windowRegistry";
 import { windowIcons } from "./seatIcons";
-import { useLaunchers } from "./launcherRegistry";
 import { toggleExpose } from "./Expose";
 import { VerbGlyph } from "./VerbGlyph";
 import { ShortcutSheet } from "./ShortcutSheet";
 import { DOCK_APPLICATIONS } from "../../applications";
-import { RoomActions } from "./RoomActions";
+import { useCompactViewport } from "../../useCompactViewport";
+import { openChairWindow, useChairWindows } from "../../chair/chairWindows";
 import {
-  dockStateLabel,
   EMPTY_DOCK_LIVE,
   deskChanges,
   formatDockTime,
@@ -84,7 +82,6 @@ async function readUnreadReadyMeetings(): Promise<string[]> {
 const DOCK_APP_IDS = new Set<string>(
   DOCK_APPLICATIONS.map((application) => application.windowId),
 );
-const ACTIONABLE_LAUNCHERS = new Set(["attention", "delivery-board"]);
 /** PHILO-16 (A1): parked, seats live in the dock (§5). The window chips
  * after the separator (one per open window that is not an application) are
  * not drawn; a seated window shows on its tile as the seat lamp instead.
@@ -260,7 +257,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   const recordingState = useDesk((s) => s.recording);
   const recordingStartedAt = useDesk((s) => s.recordingStartedAt);
   const windows = useOpenWindows();
-  const launchers = useLaunchers();
+  const compact = useCompactViewport();
   // HS-111-07 — the HS-101 B8 keyboard grammar (Cmd+1-Cmd+4, Cmd+W, Cmd+M, Ctrl+`,
   // Cmd+/) moved into desk/keymap.ts, driven by the registry's key
   // fields: ONE binder (refcounted -- the chrome mounts it too). The
@@ -268,13 +265,13 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   // verb can draw it.
   useKeymap();
   const sheetOpen = useShortcutSheet((s) => s.open);
+  const chair = useChairWindows();
   // PHILO-13-03 / C3: every Desk face reads the same membership snapshot.
   // The Dock opts out of the hook's minute poll; RuntimeBus invalidations
   // call the explicit refresh path in useDockLiveReads.
   const { live, reads, offline, lastSuccessfulAt } = useDockLiveReads();
   // PHILO-17 (needsyou, walker TAXES): the one number is on the Needs-you
   // icon and the bell only; the Intelligence tile carries no copy of it.
-  const intelligenceBadge: string | null = null;
   // HS-99-04 — the dock chip menu (one menu vocabulary).
   const [chipMenu, setChipMenu] = useState<{
     id: string;
@@ -390,13 +387,6 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   // it only renders as a launcher while its surface is closed.
   // PHILO-16 (A1): with the chips parked the launcher stays; it is the
   // window's seat.
-  const shown = NUB_CHIPS
-    ? launchers.filter((l) => !windows.some((w) => w.id === l.id))
-    : launchers;
-  const readyMeetingIds = new Set([...live.readyMeetingIds, ...reads.readyMeetingIds]);
-  const readyMeetingBadge = !offline && readyMeetingIds.size > 0
-    ? `READY ${readyMeetingIds.size}`
-    : null;
   // A3 sets "recording" only after res.ok or the hub's meeting_live read.
   // That shared read also covers a Dock mounted after the start frame.
   // The optimistic press is "busy", so it cannot create REC here.
@@ -407,13 +397,6 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   const recordingLabel = recording
     ? `REC${recording.startedAt ? ` ${formatDockTime(recording.startedAt)}` : ""}`
     : null;
-  const sendOutcome = live.sendOutcome || reads.sendOutcome;
-  // C3-W (C1-8a): SENT carries the settle time of the durable read; a frame
-  // newer than that read shows its outcome alone until the read lands.
-  const sendLabel = !offline
-    ? dockStateLabel(sendOutcome, sendOutcome === reads.sendOutcome ? reads.sendSettledAt : null)
-    : null;
-  const sendTone = sendOutcome === "sent" ? "ok" : sendOutcome === "failed" ? "fail" : "warn";
   // PHILO-17 (doors): projects left the Dock (they are desk drawers and
   // Go ▸ Projects); an open Room is a window like any other, so iconified it
   // has its own seat tile.
@@ -422,7 +405,6 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   // opened as a pullout, a launcher, or a project already has its tile).
   const tiledIds = new Set<string>([
     ...DOCK_FACE_APPLICATIONS.map((application) => `pullout:${application.windowId}`),
-    ...launchers.map((launcher) => launcher.id),
   ]);
   const seatedWithoutTile = NUB_CHIPS
     ? []
@@ -440,7 +422,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
           OFFLINE · AS OF {formatDockTime(lastSuccessfulAt)}
         </span>
       ) : null}
-      {DOCK_FACE_APPLICATIONS.map((application) => {
+        {!compact && DOCK_FACE_APPLICATIONS.map((application) => {
         // PHILO-16 (A1): an application that opens as a pullout (Intelligence)
         // has the window id `pullout:<windowId>`; its tile is that window's seat.
         const pulloutId = `pullout:${application.windowId}`;
@@ -452,11 +434,6 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
           ? Boolean(windowsById[application.windowId])
           : Boolean(win);
         const minimized = running && panelMin.includes(winId);
-        const badge =
-            application.windowId === "intelligence:desk"
-            ? intelligenceBadge
-            : null;
-        const needsYouBadge = badge !== null && badge !== "•";
         return (
           <Button
             key={application.windowId}
@@ -468,15 +445,9 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
               (running && !minimized ? " is-run" : "") +
               (minimized ? " is-seated" : "") +
               (running && winId === front && !minimized ? " is-front" : "") +
-              (needsYouBadge ? " is-attention" : "")
+              ""
             }
-            aria-label={
-              (badge ? `${application.label}, ${needsYouBadge ? needYouWords(badge) : "brief ready"}` : application.label) +
-              (minimized ? ", iconified" : "")
-            }
-            aria-describedby={application.windowId === "intelligence:desk" && sendLabel === "SEND FAILED"
-              ? "desk-dock-send-failed-desc"
-              : undefined}
+            aria-label={`${application.label}${minimized ? ", iconified" : ""}`}
             onClick={() => {
               const s = useDesk.getState();
               if (running && minimized) s.restorePanel(winId);
@@ -513,38 +484,48 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
             )}
             <span className="desk-dock-label">{application.label}</span>
             {minimized ? seatLamp : null}
-            {badge ? (
-              <span className="desk-chip desk-dock-badge" data-tone={needsYouBadge ? "warn" : undefined}>
-                {badge}
-              </span>
-            ) : null}
-            {application.windowId === "surface-meetings" && (recordingLabel || readyMeetingBadge) ? (
+            {application.windowId === "surface-meetings" && recordingLabel ? (
               <span
                 className="desk-dock-state"
                 data-testid="desk-dock-meetings-state"
-                data-tone={recordingLabel ? "rec" : "ok"}
+                data-tone="rec"
               >
-                {recordingLabel || readyMeetingBadge}
+                {recordingLabel}
               </span>
-            ) : null}
-            {application.windowId === "intelligence:desk" && sendLabel ? (
-              <span className="desk-dock-state" data-testid="desk-dock-send-state" data-tone={sendTone}>
-                {/* 393 reads the ratified short label FAILED (C1-8b); both
-                    labels are whole words, one shown per width. */}
-                {sendLabel === "SEND FAILED" ? (
-                  <>
-                    <span className="desk-dock-state-wide">SEND FAILED</span>
-                    <span className="desk-dock-state-short">FAILED</span>
-                  </>
-                ) : sendLabel}
-              </span>
-            ) : null}
-            {application.windowId === "intelligence:desk" && sendLabel === "SEND FAILED" ? (
-              <span id="desk-dock-send-failed-desc" hidden>Send failed</span>
             ) : null}
           </Button>
         );
-      })}
+        })}
+      {compact ? (
+        <>
+          {/* The phone has four doors: Today, Capture, Meetings and People. */}
+          {[
+            { id: "intelligence:desk", label: "Today", glyph: "◈", click: () => openIntelligence({ view: "today" }), running: Boolean(windowsById["intelligence:desk"]), minimized: panelMin.includes("intelligence:desk") },
+            { id: "chair:capture", label: "Capture", glyph: "●", click: () => openChairWindow("chair:capture"), running: !chair.closed["chair:capture"], minimized: panelMin.includes("chair:capture") },
+            { id: "surface-meetings", label: "Meetings", glyph: "▣", click: () => void import("../../shell").then((m) => m.openSurfaceOr("review-meetings", "/history", undefined, { origin: "dock" })), running: Boolean(windowsById["surface-meetings"]), minimized: panelMin.includes("surface-meetings") },
+            { id: "surface-people", label: "People", glyph: "♧", click: () => void import("../../shell").then((m) => m.openSurfaceOr("open-people", "/", undefined, { origin: "dock" })), running: Boolean(windowsById["surface-people"]), minimized: panelMin.includes("surface-people") },
+          ].map((tile) => (
+            <Button
+              key={tile.id}
+              ref={seatRef(tile.id)}
+              variant="chrome"
+              data-app={tile.id}
+              className={`desk-dock-launch desk-dock-app${tile.running && !tile.minimized ? " is-run" : ""}${tile.minimized ? " is-seated" : ""}`}
+              aria-label={`${tile.label}${tile.minimized ? ", iconified" : ""}`}
+              onClick={() => {
+                if (tile.running && tile.minimized) useDesk.getState().restorePanel(tile.id);
+                else if (tile.running) useDesk.getState().focusPanel(tile.id);
+                else if (tile.id === "chair:capture") tile.click();
+                else tile.click();
+              }}
+            >
+              <span aria-hidden="true">{tile.glyph}</span>
+              <span className="desk-dock-label">{tile.label}</span>
+              {tile.minimized ? seatLamp : null}
+            </Button>
+          ))}
+        </>
+      ) : null}
       {/* PHILO-16 (A1) §5: a seated window always has a seat. One whose
           application has no tile here gets its own. */}
       {seatedWithoutTile.map((w) => (
@@ -559,51 +540,6 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
       ))}
       {/* PHILO-17 (owner 2026-10-10, "everything must become one desk"):
           the Chair/Floor toggle is gone; the Screen is the one desk. */}
-      {shown.map((launcher) => {
-        const actionable = ACTIONABLE_LAUNCHERS.has(launcher.id);
-        const seated = windows.some((w) => w.id === launcher.id) && panelMin.includes(launcher.id);
-        return (
-          <Button
-            key={launcher.id}
-            ref={seatRef(launcher.id)}
-            variant="chrome"
-            data-launcher={launcher.id}
-            className={
-              "desk-dock-launch" +
-              (launcher.open && !seated ? " is-run" : "") +
-              (seated ? " is-seated" : "") +
-              (launcher.badge && actionable ? " is-attention" : "")
-            }
-            aria-label={
-              launcher.badge
-                ? `${launcher.label}, ${launcher.badge} ${actionable ? "need attention" : "items"}`
-                : launcher.label
-            }
-            onClick={() => {
-              // PHILO-16 (A1): a seated window comes back from its seat.
-              if (seated) useDesk.getState().restorePanel(launcher.id);
-              else launcher.activate();
-            }}
-          >
-            {DOCK_SPRITES[launcher.id] ? (
-              <img src={DOCK_SPRITES[launcher.id]} alt="" width={32} height={32} className="desk-dock-sprite" draggable={false} />
-            ) : (
-              <span aria-hidden="true">{launcher.glyph}</span>
-            )}
-            <span className="desk-dock-label">{launcher.label}</span>
-            {seated ? seatLamp : null}
-            {launcher.badge ? (
-              <span
-                className="desk-chip desk-dock-badge"
-                data-tone={actionable ? "warn" : undefined}
-              >
-                {launcher.badge}
-              </span>
-            ) : null}
-          </Button>
-        );
-      })}
-      <RoomActions />
       {center}
       {NUB_CHIPS && visibleWindowChips.length > 0 ? (
         <span className="desk-dock-sep" aria-hidden="true" />
@@ -682,7 +618,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
       ) : null}
       {/* C1 (393): the shelf ends on a whole icon; this gadget moves one
           page. The stylesheet shows it at phone width only. */}
-      <Button
+      {!compact ? <Button
         variant="chrome"
         className="desk-dock-more"
         aria-label="More AppIcons"
@@ -696,7 +632,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
         }}
       >
         <span aria-hidden="true">▸</span>
-      </Button>
+      </Button> : null}
       {!settled && chipMenu ? (
         <WorkMenu
           className="desk-dock-menu"

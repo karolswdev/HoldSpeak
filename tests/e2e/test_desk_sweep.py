@@ -83,7 +83,7 @@ import pytest
 
 pytest.importorskip("playwright.sync_api", reason="the desk sweep needs Playwright")
 
-from holdspeak.services.desk_window_service import window_app  # noqa: E402
+from holdspeak.services.desk_window_service import RETIRED_APPS, RETIRED_WINDOWS, window_app  # noqa: E402
 from holdspeak.services.errors import ValidationError  # noqa: E402
 
 from tests._evidence import evidence_dir  # noqa: E402
@@ -145,7 +145,7 @@ _MANIFEST_JS = """
 import(process.argv[1]).then((m) => {
   process.stdout.write(JSON.stringify(m.DESK_APPLICATIONS.map((a) => ({
     action: a.action, windowId: a.windowId, label: a.label, href: a.href,
-    subjectRef: a.subjectRef ?? null,
+    subjectRef: a.subjectRef ?? null, parked: a.parked ?? null,
     scopes: (a.aliases ?? []).map((x) => x.scope).filter(Boolean),
     aliases: (a.aliases ?? []).map((x) => ({key: x.key, scope: x.scope ?? null})),
   }))));
@@ -191,10 +191,18 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
     cases: list[tuple[str, str, str | None]] = [("desk", "", None)]
     refused: dict[str, str] = {}
     seen: set[tuple[str, str | None]] = set()
+    live_windows = {app["windowId"] for app in _manifest() if not app["parked"]}
     for app in _manifest():
         wid = app["windowId"]
         if not window_app_on_hub(wid):  # any refusal but window_not_on_hub fails collection
             refused[wid] = NOT_ON_HUB_CODE
+            continue
+        if app["parked"] and wid not in live_windows:
+            known_app, _ = window_app(wid)
+            assert known_app in RETIRED_APPS or wid in RETIRED_WINDOWS, (
+                f"{wid} is parked in the manifest but the hub still opens its old host"
+            )
+            refused[wid] = "window_retired"
             continue
         for scope in [None, app["subjectRef"], *app["scopes"]]:
             if (wid, scope) in seen:
@@ -204,14 +212,15 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
     # The seeded subjects: their ids are known after the seed ({...} below).
     cases += [
         ("room", "surface-project-memory", "project:{room}"),
-        ("meeting", "pullout:meeting:{meeting}", None),
+        ("meeting", "surface-meetings", "meeting:{meeting}"),
+        ("note", "pullout:note:{note}", None),
         ("person", "pullout:people:{person}", None),
         # Not applications, opened the same way: the Chair's Needs-you window
         # (its seed rows: accepted requests, a failed summary) ...
         ("needs", "chair:needs", None),
         # ... the Chair's other three windows (the 12 px floor walk of
         # PHILO-13-18 read them; tests/e2e/_parked/test_philo13_18_type_floor_glass.py) ...
-        ("brief", "chair:brief", None),
+        ("brief", "pullout:intelligence:desk", None),
         ("week", "chair:week", None),
         ("capture", "chair:capture", None),
         # ... and the ⌘K palette, open on a query that hits several sections.
@@ -219,11 +228,8 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
         # PHILO-17 (concept C): the Today window, the day as a timeline. The
         # hub does not hold it (NOT_ON_HUB), so the dock opens it.
         ("today", "pullout:intelligence:desk", None),
-        # PHILO-17 (sweep cases): the System shade's Missed drawer (opened as
-        # the Dock's Missed icon opens it); the seed gives it a needs row, a
-        # remote Finished receipt (its egress chip) and a local one ...
-        ("missed", "desk-system-shade", None),
-        # ... and the New Project Door with BOTH sources picked (GitHub
+        # The parked Missed shade is replaced by Needs you above. The New
+        # Project Door has BOTH sources picked (GitHub
         # karolswdev/HoldSpeak and Jira KAN, their counts in): the hub's gh
         # and acli are the door_rig fixture runners, signed in at the seed.
         ("door-picked", "surface-project-setup", None),
@@ -422,9 +428,15 @@ def desk(tmp_path_factory: pytest.TempPathFactory, pw_browser: Any) -> Any:
                  {"site": "alpha.atlassian.net", "email": "user@example.com"}, token=TOKEN)
             jira_ref = urllib.parse.quote("alpha.atlassian.net|user@example.com", safe="")
             _api(page, "POST", f"/api/providers/jira/connections/{jira_ref}/recheck", token=TOKEN)
+            thought = _api(page, "POST", "/api/thoughts", {
+                "request_id": "desk-sweep-note",
+                "raw_text": "Write the ledger rollback runbook before Friday.",
+                "initial_note": {"title": "Ledger rollback", "body_markdown": "Write the ledger rollback runbook before Friday."},
+            }, token=TOKEN)
+            note_id = thought["thought"]["working_note"]["id"]
             ctx.close()
             _seed_finished_receipts()
-            yield {"base": base, "room": room, "meeting": "m-standup", "person": week["priya"]}
+            yield {"base": base, "room": room, "meeting": "m-standup", "person": week["priya"], "note": note_id}
         finally:
             server.stop()
 
@@ -470,6 +482,18 @@ SETTLED_JS = r"""(id) => {
   if ([...document.images].some((i) => i.getBoundingClientRect().width > 0 && !(i.complete && i.naturalWidth > 0))) return false;
   return !document.getAnimations().some((a) => a.playState === 'running'
     && (a.effect && a.effect.getTiming().iterations !== Infinity));
+}"""
+
+# The Brief has one face-local read after its first paint: a stale seeded
+# brief makes itself again.  That generation keeps the body visible, so the
+# generic settled predicate sees no busy marker while the rows are replaced.
+# Wait for the actual completion state before taking the still measurement.
+BRIEF_SETTLED_JS = r"""(id) => {
+  const w = document.getElementById(id);
+  if (!w) return false;
+  if (w.querySelector('[data-testid=brief-no-changes]')) return true;
+  const refresh = w.querySelector('[data-testid=brief-refresh]');
+  return Boolean(refresh && !refresh.disabled && refresh.textContent.trim() === 'Refresh');
 }"""
 
 UNSETTLED_JS = r"""(id) => {
@@ -1041,9 +1065,8 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
     baseline = _baseline(pw_browser, base, width) if wid else (set(), set())
     clear_hub_windows_http(base, TOKEN)
     palette = case_id == "palette"
-    today = case_id == "today"
-    missed = case_id == "missed"
-    if wid and not palette and not today and not missed:
+    today = case_id in {"today", "brief"}
+    if wid and not palette and not today:
         # Opened on the hub before the page loads: the page seeds its windows
         # from the hub's rows (a view that is live follows the same rows by
         # its desk_changed frame; that follow is fenced in the PHILO-16 glass).
@@ -1061,14 +1084,10 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             launch = page.locator(".desk-dock-launch[aria-label^='Today']").first
             launch.click()
             page.locator(f'[id="{wid}"] [data-testid=today-day]').wait_for(timeout=T)
-            page.mouse.move(2, 2)
-        if missed:
-            # What the Dock's Missed icon does (AttentionDrawer: the launcher's
-            # activate and this event open the same shade); the icon sits on
-            # the Dock's second page at 393.
-            page.wait_for_function(SETTLED_JS, arg=None, timeout=T)
-            page.evaluate("window.dispatchEvent(new Event('hs-open-system-shade'))")
-            page.locator(f'[id="{wid}"] .desk-shade-group[aria-label=Finished]').wait_for(timeout=T)
+            if case_id == "brief":
+                page.locator(f'[id="{wid}"]').get_by_role("button", name="Brief", exact=True).click()
+                page.locator(f'[id="{wid}"] [data-testid=brief-period-label], [id="{wid}"] [data-testid=brief-no-changes]').first.wait_for(timeout=T)
+                page.wait_for_function(BRIEF_SETTLED_JS, arg=wid, timeout=T)
             page.mouse.move(2, 2)
         if case_id == "door-picked":
             page.wait_for_function(SETTLED_JS, arg=wid, timeout=T)

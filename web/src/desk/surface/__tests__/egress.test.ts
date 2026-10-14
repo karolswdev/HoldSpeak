@@ -10,11 +10,11 @@ describe("egressFor", () => {
     expect(egressFor("")).toEqual({ label: "", scope: undefined });
   });
 
-  it("maps local/LOCAL/this_device to THIS DEVICE + local", () => {
-    expect(egressFor("local")).toEqual({ label: "THIS DEVICE", scope: "local" });
-    expect(egressFor("LOCAL")).toEqual({ label: "THIS DEVICE", scope: "local" });
-    expect(egressFor("this_device")).toEqual({ label: "THIS DEVICE", scope: "local" });
-    expect(egressFor("THIS DEVICE")).toEqual({ label: "THIS DEVICE", scope: "local" });
+  it("silences same-device routes", () => {
+    expect(egressFor("local")).toEqual({ label: "", scope: undefined });
+    expect(egressFor("LOCAL")).toEqual({ label: "", scope: undefined });
+    expect(egressFor("this_device")).toEqual({ label: "", scope: undefined });
+    expect(egressFor("THIS DEVICE")).toEqual({ label: "", scope: undefined });
   });
 
   it("maps RFC-1918 IPs to <ip> + LAN + local", () => {
@@ -90,9 +90,9 @@ describe("hostPlace — the one helper for host words (PHILO-17 U16)", () => {
     expect(hostPlace("https://api.openai.com/v1")).toEqual({ place: "cloud", host: "api.openai.com", words: "api.openai.com" });
   });
 
-  it("egressFor reads it: 127.0.0.1 is THIS DEVICE, never a cloud host", () => {
-    expect(egressFor("127.0.0.1")).toEqual({ label: "THIS DEVICE", scope: "local" });
-    expect(egressFor("localhost")).toEqual({ label: "THIS DEVICE", scope: "local" });
+  it("egressFor silences loopback, never turning it into a cloud host", () => {
+    expect(egressFor("127.0.0.1")).toEqual({ label: "", scope: undefined });
+    expect(egressFor("localhost")).toEqual({ label: "", scope: undefined });
   });
 });
 
@@ -109,7 +109,7 @@ describe("egressForEvent", () => {
 
   it("falls through to egressFor for local origin", () => {
     const result = egressForEvent({ origin: "local", host: "local" });
-    expect(result).toEqual({ label: "THIS DEVICE", scope: "local" });
+    expect(result).toEqual({ label: "", scope: undefined });
   });
 
   it("falls through to egressFor when origin is missing", () => {

@@ -64,6 +64,16 @@ _CANONICAL_GROUP_IDS = frozenset(group_id for group_id, _label in _CANONICAL_GRO
 #: Who made an assignment revision (the ``made_by`` column).
 MADE_BY = frozenset({"owner", "holdspeak_default"})
 
+# A marker is a cutover for one legacy route family.  Most of the original
+# desk capabilities share the thoughts/writing family; transcription has its
+# own migration because its assignment and fallback are independent.  Keep
+# this map explicit so a marker for one family cannot silently activate an
+# unrelated capability.
+_MIGRATION_FAMILY_BY_CAPABILITY = {
+    "speech.transcribe": "speech-recognition-route-assignments",
+}
+_DEFAULT_MIGRATION_FAMILY = "thoughts-writing-route-assignments"
+
 
 def _now() -> str:
     return (
@@ -955,6 +965,46 @@ class InferenceAssignmentService:
                 subject_id=subject_id,
             )
 
+    def routed(
+        self,
+        capability_id: str,
+        *,
+        invocation_id: str | None = None,
+        subject_kind: str | None = None,
+        subject_id: str | None = None,
+    ) -> bool:
+        """Whether this capability is owned by the assignment route.
+
+        The family marker is the durable cutover for the older route family.
+        Before that marker exists, an effective assignment is already the
+        owner's choice and must be authoritative.  Keep the assignment even
+        when its model is currently incompatible: that state needs a repair
+        from the assignment surface, never a jump to the legacy local target.
+
+        Invocation and subject selectors are part of the same precedence
+        chain as execution.  Callers that have them must pass them here so a
+        scoped assignment cannot accidentally fall through to Config.
+        """
+        capability = self._require_assignable(capability_id)
+        with self._db._connection() as conn:
+            resolved = self._resolve(
+                conn,
+                capability,
+                invocation_id=invocation_id,
+                subject_kind=subject_kind,
+                subject_id=subject_id,
+            )
+            if resolved["status"] in {"assigned", "no_compatible_assignment"}:
+                return True
+            family = _MIGRATION_FAMILY_BY_CAPABILITY.get(
+                capability.id, _DEFAULT_MIGRATION_FAMILY
+            )
+            return conn.execute(
+                "SELECT 1 FROM inference_assignment_migrations "
+                "WHERE family=?",
+                (family,),
+            ).fetchone() is not None
+
     def starter_bundle_preview(
         self, principal: Principal, body: Mapping[str, Any]
     ) -> dict[str, Any]:
@@ -1230,7 +1280,7 @@ class InferenceAssignmentService:
         *,
         family: str,
         source_sha256: str,
-        capability_entries: Mapping[str, Mapping[str, Any]],
+        capability_entries: Mapping[str, Mapping[str, Any] | list[Mapping[str, Any]]],
         _prelude: Callable[[Any], None] | None = None,
     ) -> dict[str, Any]:
         """Install missing capability defaults and the cutover marker together.
@@ -1276,16 +1326,17 @@ class InferenceAssignmentService:
                         projection = resolved["assignment"]
                         assignment_key = self._scope(projection["scope"])["assignment_key"]
                     elif resolved["status"] == "no_compatible_assignment":
-                        raise ValidationError(
-                            "Existing owner assignment is incompatible with migration.",
-                            code="inference_assignment_incompatible",
-                            context={"capability_id": capability_id},
-                        )
+                        # The owner chose this assignment.  Its incompatibility
+                        # is a repair state, not permission to replace it with
+                        # the legacy local target while the family cuts over.
+                        projection = resolved["assignment"]
+                        assignment_key = self._scope(projection["scope"])["assignment_key"]
                     else:
                         scope = self._scope(
                             {"kind": "capability", "capability_id": capability_id}
                         )
-                        entries = self._validate_entries(conn, [raw_entry], scope)
+                        raw_entries = raw_entry if isinstance(raw_entry, list) else [raw_entry]
+                        entries = self._validate_entries(conn, raw_entries, scope)
                         issues = self._compatibility_issues(conn, entries, (capability,))
                         blockers = self._save_blockers(scope, entries, (capability,), issues)
                         if blockers:

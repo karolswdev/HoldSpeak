@@ -203,7 +203,7 @@ describe("FirstRun", () => {
     });
     const note = calls.find((c) => c.path === "/api/notes");
     expect(note?.method).toBe("POST");
-    expect(note?.json).toMatchObject({ title: "First dictation", body_markdown: "Send the cutover plan to Priya before Friday." });
+    expect(note?.json).toMatchObject({ title: "Send the cutover plan to Priya", body_markdown: "Send the cutover plan to Priya before Friday." });
     await screen.findByRole("heading", { name: "Get ready" });
     // The card head and the quote both say HEARD (artboard onb-A-cal).
     expect(screen.getAllByRole("status", { name: "HEARD" })).toHaveLength(2);

@@ -772,12 +772,10 @@ export function TransportRow({ children }: { children: ReactNode }) {
 /* ── the ONE egress badge chip: a token, never prose ── */
 
 export function EgressChip({
-  /* HS-202-02 — a badge given nothing states NOTHING. The old defaults
-     ("⌂ This device" + the on-device promise) turned every forgotten prop
-     into a reassurance on a face whose verbs reach the network
-     (03-interaction-walk.md Appendix B.2). A caller that knows the route
-     passes it; a caller that has not read one says NOT SET. */
-  label = "NOT SET",
+  /* PHILO-17 — a badge without a route states nothing. Passive same-device
+     work also has no egress to disclose; LAN hosts remain visible even though
+     they use the local tone. */
+  label = "",
   title,
   scope,
   className,
@@ -798,9 +796,15 @@ export function EgressChip({
    * (the one tap into Privacy and Trust); a plain fact chip stays a span. */
   onClick?: () => void;
 }) {
+  const word = String(label ?? "").trim();
+  const passiveSameDevice =
+    scope === "local" && /^(?:THIS DEVICE|THIS MAC)$/i.test(word);
+  /* PHILO-17 — blank/default chips and passive same-device badges take no
+   * space. A local chip with an onClick remains a working chrome control. */
+  if (!word || word === "NOT SET" || (passiveSameDevice && !onClick)) return null;
+
   /* PHILO-4-01 r5 — a chip that names its destination carries that full
-     text as its title; the unset sentence stays only on a chip that is
-     truly unset (no label, or NOT SET). */
+     text as its title. */
   const tip = title ?? (label && label !== "NOT SET" ? label : "The route for this face is not set.");
   const cls =
     "gadget-chip gadget-chip-egress" + (className ? ` ${className}` : "");

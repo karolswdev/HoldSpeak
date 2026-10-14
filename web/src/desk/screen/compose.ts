@@ -78,6 +78,32 @@ const NOT_READ = { tone: "fail" as const, label: "NOT READ" };
 /** The kinds that lie loose on the screen (the brief's list). */
 const LOOSE_KINDS = new Set(["meeting", "note", "decision", "artifact", "repository", "thread"]);
 
+function hasUserOwnedContent(object: { kind: string; ref: unknown }): boolean {
+  const value = (object.ref ?? {}) as Record<string, unknown>;
+  if (object.kind === "artifact") {
+    // Meeting artifacts stay reachable from their meeting record. They do
+    // not become a second loose object on the Floor.
+    return !value.meetingId && !value.meeting_id;
+  }
+  if (object.kind === "thread") {
+    if (value.has_user_turn === false || value.hasUserTurn === false) return false;
+    const turns = Array.isArray(value.turns) ? value.turns : Array.isArray(value.messages) ? value.messages : null;
+    if (turns) {
+      return turns.some((turn) => {
+        const row = (turn ?? {}) as Record<string, unknown>;
+        return row.role === "user" || row.speaker === "user" || row.author === "user";
+      });
+    }
+    return Number(value.tokenIn ?? value.token_in ?? 0) > 0 || Boolean(value.lastTurnAt ?? value.last_turn_at);
+  }
+  if (object.kind === "note") {
+    const title = String(value.title ?? "").trim();
+    const body = String(value.bodyMarkdown ?? value.body_markdown ?? "").trim();
+    return Boolean(title || body);
+  }
+  return true;
+}
+
 /** A Project's ref names its resources by more than one name: one name here. */
 export function normalizeRef(ref: string): string {
   const clean = ref.trim();
@@ -194,7 +220,10 @@ export function composeScreen(input: ScreenInputs): ScreenObject[] {
     kind: "smart",
     name: "Needs you",
     ...sprites("smart", "needs-you"),
-    lamp: input.needsCount > 0 ? { tone: "ask", count: input.needsCount } : undefined,
+    // Needs you has one number in its head. The Desk lamp only says that it
+    // asks; duplicating the number here made the same membership read look
+    // like two separate queues.
+    lamp: input.needsCount > 0 ? { tone: "ask" } : undefined,
     ariaExtra: input.needsCount > 0 ? needYouWords(input.needsCount) : undefined,
     target: { type: "needs" },
   });
@@ -213,6 +242,7 @@ export function composeScreen(input: ScreenInputs): ScreenObject[] {
   if (input.membersLoaded && !input.unknownAll) {
     for (const o of allObjects(input.items)) {
       if (!LOOSE_KINDS.has(o.kind)) continue;
+      if (!hasUserOwnedContent(o)) continue;
       if (o.kind === "meeting" && input.unknownMeetings) continue;
       const ref = qualifiedRef(o.kind, o.id);
       if (input.filed.has(normalizeRef(ref))) continue;
@@ -228,6 +258,7 @@ export function composeScreen(input: ScreenInputs): ScreenObject[] {
       });
     }
     for (const person of input.persons) {
+      if (!person.name.trim()) continue;
       const ref = `people:${person.id}`;
       if (input.filed.has(ref)) continue;
       out.push({

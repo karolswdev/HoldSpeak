@@ -1,8 +1,7 @@
 // HS-170-04 — the Meetings face, rewritten to the settled design.
 // PHILO-17 (owner 2026-10-10, "A meeting opens in one window"): the Meetings
-// window is the LIST (headline, Record/Import, search, filters, the stream).
-// A row opens the meeting in its own window (`pullout:meeting:<id>`), which
-// holds the whole record (history/MeetingRecord.tsx).
+// window owns the list and the selected meeting record. A row selects the
+// record inside Meetings; its Back control returns to this list.
 import { SPEECH_SETUP_EVENT } from "../../desk/firstrun/SpeechSetup";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -44,6 +43,7 @@ import {
 import { useSummaryRun } from "./history/useSummaryRun";
 import { leadRunRowId } from "./history/CatalogRail";
 import { AppTile, FigureStrip, type Figure } from "../../desk/surface/kit";
+import { MeetingRecord } from "./history/MeetingRecord";
 
 /** PHILO-17: the list window's faces: the list, and Record (import). */
 const LIST_WINGS = [
@@ -51,21 +51,33 @@ const LIST_WINGS = [
   { id: "record", label: "Record" },
 ];
 
-/** A row opens its meeting's own window (an open one comes to the front). */
-function openMeetingWindow(row: Record<string, unknown> | null): void {
-  if (row?.id) openSourceRef(`meeting:${String(row.id)}`);
-}
-
 export function HistoryCore({ hero, scope }: CoreProps) {
+  const scopedMeetingId = scope?.startsWith("meeting:")
+    ? scope.slice("meeting:".length).split(/[?#]/, 1)[0] || null
+    : null;
+  const [selectedMeeting, setSelectedMeeting] = useState<Record<string, unknown> | null>(null);
   // PHILO-17: a meeting scope belongs to the meeting's own window (the store
   // routes it there); one that reaches this list is passed on, once.
   const forwarded = useRef<string | null>(null);
   useEffect(() => {
-    if (!scope?.startsWith("meeting:") || forwarded.current === scope) return;
+    if (!scope?.startsWith("meeting:")) return;
+    // SurfaceWindows now owns the canonical `meeting:<id>` scope. Forward
+    // only an old scoped request; sending the canonical scope back through
+    // the opener remounts this list and can loop.
+    if (!scope.includes("?")) return;
+    if (forwarded.current === scope) return;
     forwarded.current = scope;
     openSourceRef(scope);
   }, [scope]);
-  const wings = useCoreWings(LIST_WINGS, "outcomes", "Meeting plumbing");
+  // The record owns its own wings and footer. Clearing the list wings while a
+  // canonical meeting scope is active prevents two wing sets from competing
+  // in the same Meetings window.
+  const wings = useCoreWings(
+    scopedMeetingId ? [] : LIST_WINGS,
+    "outcomes",
+    scopedMeetingId ? undefined : "Meeting plumbing",
+    !scopedMeetingId,
+  );
   // PHILO-13-02: Restore of a parked meeting; the outcome is a receipt in
   // the footer's receipt slot.
   const [parkOutcome, setParkOutcome] = useState<ParkOutcome | null>(null);
@@ -123,6 +135,16 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     () => asRows(meetings.data, ["meetings"]),
     [meetings.data],
   );
+  useEffect(() => {
+    if (!scopedMeetingId) return;
+    const row = meetingRows.find((item) => String(item.id ?? "") === scopedMeetingId);
+    if (row) setSelectedMeeting(row);
+  }, [meetingRows, scopedMeetingId]);
+
+  const selectMeeting = useCallback((row: Record<string, unknown> | null) => {
+    setSelectedMeeting(row);
+    if (row?.id) openSourceRef(`meeting:${String(row.id)}`);
+  }, []);
 
   // PHILO-13-02: the parked meetings, read through H-A1's client.
   const loadParked = useCallback(async () => {
@@ -261,6 +283,19 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     );
   }, [faceRoute]);
 
+  // SurfaceWindows routes `meeting:<id>` into this real core. Keep the list
+  // mounted in the host, but draw the selected record in place so Back can
+  // clear the scope and reveal the same list selection/state.
+  if (scopedMeetingId) {
+    return (
+      <MeetingRecord
+        key={scopedMeetingId}
+        meetingId={scopedMeetingId}
+        onClose={() => openSurfaceOr("review-meetings", "/history")}
+      />
+    );
+  }
+
   // The headline
   const headline = meetingsHeadline(
     meetingRows, meetings.loading,
@@ -357,8 +392,8 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       meetingRows={meetingRows}
       restoredId={restoredId}
       meetings={meetings}
-      selected={null}
-      setSelected={openMeetingWindow}
+      selected={selectedMeeting}
+      setSelected={selectMeeting}
       onRunIntelligence={(id, route) => void summary.run(id, route)}
       runningId={runningId}
       drainerAbsent={drainerAbsent}

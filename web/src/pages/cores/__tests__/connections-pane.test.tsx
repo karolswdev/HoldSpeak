@@ -424,18 +424,18 @@ describe("ConnectionsPane", () => {
   /* ── Labels ── */
 
   describe("Labels", () => {
-    it("the integrations tile is labeled Connections in the roster", async () => {
+    it("the integrations tile is labeled Accounts in the roster", async () => {
       const { PREF_MODULES } = await import("../settingsPrefs");
       const tile = PREF_MODULES.find((m) => m.id === "integrations");
-      expect(tile?.label).toBe("Connections");
+      expect(tile?.label).toBe("Accounts");
     });
 
-    it("the applications entry is labeled Connections", async () => {
+    it("the applications entry is labeled Accounts", async () => {
       const { DESK_APPLICATIONS } = await import("../../../desk/applications");
       const entry = DESK_APPLICATIONS.find(
         (a: { action: string }) => a.action === "configure-integrations",
       );
-      expect((entry as { label: string }).label).toBe("Connections");
+      expect((entry as { label: string }).label).toBe("Accounts");
     });
   });
 

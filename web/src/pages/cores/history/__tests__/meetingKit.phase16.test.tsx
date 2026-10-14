@@ -47,7 +47,7 @@ describe("the meeting on the interior kit", () => {
     expect(items[0]).toMatchObject({ lamp: "fail", text: "SUMMARY FAILED" });
   });
 
-  it("Decisions and Commitments: proposed ones ask, confirmed ones name their owner, settled ones are DONE", () => {
+  it("Decisions and Commitments: proposed rows leave gaps visible, confirmed rows name their owner, settled rows are Done", () => {
     const { decisions, commitments } = meetingOutcomes({
       ftProposals: [
         { id: "p1", meeting_id: "m1", kind: "decision", text: "Freeze the old ledger on Nov 5", state: "proposed", created_at: "" },
@@ -58,12 +58,12 @@ describe("the meeting on the interior kit", () => {
       settledActions: [{ id: "a2", text: "Add the ledger freeze flag", owner: "Jordan", status: "done" }],
     });
     expect(decisions.map((d) => [d.plate, d.text, d.meta, d.tone])).toEqual([
-      ["DEC", "Freeze the old ledger on Nov 5", "TO DECIDE", "ask"],
-      ["DEC", "Reconciliation runs nightly", "AVERY", undefined],
+      ["DEC", "Freeze the old ledger on Nov 5", "", "ask"],
+      ["DEC", "Reconciliation runs nightly", "Avery", undefined],
     ]);
     expect(commitments.map((c) => [c.plate, text(c.text), c.meta, c.tone])).toEqual([
-      ["ACT", "Shard the reconciliation job", "UNASSIGNED", undefined],
-      ["ACT", "Add the ledger freeze flag", "DONE · JORDAN", "ok"],
+      ["ACT", "Shard the reconciliation job", "no owner · no date", undefined],
+      ["ACT", "Add the ledger freeze flag", "Jordan · Done", "ok"],
     ]);
   });
 
@@ -95,10 +95,10 @@ describe("the meeting on the interior kit", () => {
       items,
     );
     expect(commitments.map((c) => [text(c.text), c.meta])).toEqual([
-      ["Write the rollback runbook", "TO CONFIRM"],
-      ["Shard the reconciliation job", "SAM"],
-      ["Close the old ledger", "DONE · JORDAN"],
-      ["Book the cutover window", "TO CONFIRM"],
+      ["Write the rollback runbook", "no owner · no date"],
+      ["Shard the reconciliation job", "no owner · no date"],
+      ["Book the cutover window", "no owner · no date"],
+      ["Close the old ledger", "Jordan · Done"],
     ]);
     expect(commitments.filter((c) => text(c.text) === "Write the rollback runbook")).toHaveLength(1);
   });
@@ -110,11 +110,16 @@ describe("the meeting on the interior kit", () => {
     ];
     const none = meetingOutcomes({ ftProposals: [], openActions: [], settledActions: [] }, own);
     expect(none.commitments.map((c) => [c.text, c.meta, c.tone])).toEqual([
-      ["Write the rollback runbook", "UNASSIGNED", undefined],
-      ["Add the ledger freeze flag", "DONE · SAM", "ok"],
+      ["Write the rollback runbook", "no owner · no date", undefined],
+      ["Add the ledger freeze flag", "Sam · Done", "ok"],
     ]);
     const both = meetingOutcomes({ ftProposals: [], openActions: [{ id: "x", text: "Open one" }], settledActions: [] }, own);
     expect(both.commitments.map((c) => c.text)).toEqual(["Open one"]);
+    const afterDone = meetingOutcomes(
+      { ftProposals: [], openActions: [], settledActions: [], completedActionIds: new Set(["a1"]) },
+      own,
+    );
+    expect(afterDone.commitments[0]).toMatchObject({ text: "Write the rollback runbook", meta: "Done", tone: "ok" });
   });
 });
 
@@ -148,11 +153,15 @@ describe("the meeting's Decisions through Confirm (the hook and the ledger, rend
     fireEvent.click(within(decisions).getByRole("button", { name: "Confirm: Freeze the old ledger on Nov 5" }));
     await waitFor(() => {
       const row = within(screen.getByTestId("meeting-decisions")).getByText("Freeze the old ledger on Nov 5").closest(".surface-ledger-line");
-      expect(row?.querySelector(".surface-ledger-meta")?.textContent).toBe("JORDAN");
+      expect(row?.querySelector(".surface-ledger-meta")?.textContent).toBe("Jordan");
     });
     expect(screen.getByTestId("meeting-decisions").querySelector("h3")?.textContent).toBe("Decided · 2");
     proposals = proposals.map((p) => (p.id === "p1" ? { ...p, state: "confirmed" } : p));
-    fireEvent.click(within(screen.getByTestId("meeting-decisions")).getByRole("button", { name: "Dismiss: Run reconciliation nightly" }));
+    const secondDecision = within(screen.getByTestId("meeting-decisions"))
+      .getByText("Run reconciliation nightly")
+      .closest(".surface-ledger-line") as HTMLElement;
+    fireEvent.click(within(secondDecision).getByTestId("proposal-more-btn"));
+    fireEvent.click(within(secondDecision).getByRole("button", { name: "Dismiss: Run reconciliation nightly" }));
     await waitFor(() => expect(screen.getByTestId("meeting-decisions").querySelector("h3")?.textContent).toBe("Decided · 1"));
   });
 });
@@ -180,7 +189,7 @@ describe("the meeting's recorded decisions (PHILO-17)", () => {
       ],
     });
     expect(decisions.map((d) => [d.text, d.meta])).toEqual([
-      ["Run reconciliation nightly", "AVERY"],
+      ["Run reconciliation nightly", "Avery"],
       ["Freeze the old ledger on Nov 5", "DECIDED"],
       ["Run reconciliation nightly", "DECIDED"],
       ["Keep the old ledger", "REPLACED"],
@@ -212,7 +221,7 @@ describe("the meeting's recorded decisions (PHILO-17)", () => {
     expect(decisions.map((d) => [d.key, d.text, d.meta])).toEqual([
       ["ft-p1", "Freeze the old ledger on Nov 5", "REPLACED"],
       ["ft-p2", "Run reconciliation nightly", "DISPUTED"],
-      ["ft-p3", "Shard the ledger", "AVERY"],
+      ["ft-p3", "Shard the ledger", "Avery"],
     ]);
   });
 

@@ -59,6 +59,9 @@ export function placeWindow(
    *  desk's right icon column: Needs you, Archive), when the window fits
    *  between the two columns. */
   rightCeiling: number = vw,
+  /** The front window's head; new windows cascade from it before scanning
+   * the band for a clear seat. */
+  front?: PanelRect,
 ): PanelRect {
   const { top, bottom } = workBand();
   const w = Math.max(minW, Math.min(seed.w, vw - MARGIN * 2));
@@ -68,8 +71,11 @@ export function placeWindow(
   const maxX = Math.max(MARGIN, ceiling - w);
   const maxY = Math.max(top, vh - bottom - h);
   const left = Math.min(Math.max(MARGIN, leftFloor), maxX);
-  const sx = Math.min(Math.max(seed.x, left), maxX);
-  const sy = Math.min(Math.max(seed.y, top), maxY);
+  const home = front
+    ? { x: front.x + CASCADE_STEP, y: front.y + CASCADE_STEP }
+    : { x: seed.x, y: seed.y };
+  const sx = Math.min(Math.max(home.x, left), maxX);
+  const sy = Math.min(Math.max(home.y, top), maxY);
   const overlap = (
     ax: number,
     ay: number,

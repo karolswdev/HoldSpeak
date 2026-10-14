@@ -58,11 +58,11 @@ export function routeLamp(word: string | null | undefined): EgressLamp | null {
 /** The footer's host chip for a route: where the bytes went. */
 export function routeEgress(route: TurnRoute): {
   label: string;
-  scope: "local" | "cloud" | "remote";
+  scope: "local" | "cloud" | "remote" | undefined;
 } {
   switch (route.lamp.label) {
     case "LOCAL":
-      return { label: "THIS DEVICE", scope: "local" };
+      return { label: "", scope: undefined };
     case "CLOUD":
       return { label: route.host || "CLOUD", scope: "cloud" };
     case "LAN":

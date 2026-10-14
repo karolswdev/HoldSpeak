@@ -73,7 +73,7 @@ describe("a brief: UNKNOWN and no answer survive the click that leaves the row (
     const row = rowOf("Team folder");
     expect(row.textContent).toContain("LAST SEND UNKNOWN");
     expect(row.textContent).toContain("NO ANSWER");
-    expect(row.textContent).toContain("THIS DEVICE");
+    expect(row.textContent).not.toContain("THIS DEVICE");
   });
 
   // A lost answer HOLDS its press (Retry sends the same key), so its own row does not close on a
@@ -88,6 +88,6 @@ describe("a brief: UNKNOWN and no answer survive the click that leaves the row (
     await waitFor(() => expect(screen.getByTestId("send-open").getAttribute("data-destination")).toBe("Other folder"));
     const row = rowOf("Team folder");
     expect(row.textContent).toContain("NO ANSWER · RESULT UNKNOWN");
-    expect(row.textContent).toContain("THIS DEVICE");
+    expect(row.textContent).not.toContain("THIS DEVICE");
   });
 });

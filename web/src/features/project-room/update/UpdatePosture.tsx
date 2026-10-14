@@ -21,6 +21,8 @@ import {
   ActionNotice,
   CitationChips,
   ClaimAxes as LibraryClaimAxes,
+  EngineLine,
+  RunLine,
   countLabel,
   humanTime,
   type ChipState,
@@ -43,8 +45,8 @@ import {
 } from "./model";
 import "./update-posture.css";
 import { ListChips, PublishedWells } from "../../channels/SendWell";
-import { useDraftEgress } from "../../../desk/lane/LaneWindow";
 import { openSurfaceOr } from "../../../desk/shell";
+import { useEngine, refreshEngine } from "../../../desk/hooks/useEngine";
 
 /** The capability that drafts a project update (`project_update_service`). */
 const UPDATE_DRAFT_CAPABILITY = "project.update_draft";
@@ -500,10 +502,7 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
   const onOpenRef = useCallback((ref: string) => {
     openRef(ref);
   }, []);
-  // PHILO-15 B53: Draft update names the host of the model assigned
-  // to update drafts (`192.168.1.43 · LAN`, `THIS DEVICE`, a cloud host),
-  // never a fixed LOCAL + CLOUD.
-  const modelEgress = useDraftEgress(ctrl.posture === "list", UPDATE_DRAFT_CAPABILITY);
+  const engine = useEngine(UPDATE_DRAFT_CAPABILITY);
 
   // ── Loading / error ──
   if (ctrl.loading && ctrl.posture === "off") {
@@ -518,60 +517,43 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
           <Button dense variant="ghost" onClick={ctrl.exitUpdates}>
             Close
           </Button>
-          {/* PHILO-17 U31: ONE Draft update verb. With an engine set for
-              update drafts it drafts with that engine (its host on the chip);
-              with none it drafts from the Room's own facts, and the chip says
-              so with Choose (Runs on). */}
-          <span className="update-draft-model-action" data-testid="update-draft-model-action">
-            {/* Astra r1 (#1084): while the engine is not read, Draft waits; a
-                failed read says so with Try again. Never silently deterministic. */}
-            <Button
-              dense
-              variant="primary"
-              loading={ctrl.draftBusy}
-              disabled={modelEgress.assigned === undefined}
-              onClick={() => {
-                if (modelEgress.assigned === undefined) return;
-                void ctrl.draft(modelEgress.assigned ? "model" : "deterministic");
-              }}
-              data-testid={modelEgress.assigned ? "update-verb-draft-model" : "update-verb-draft-deterministic"}
-              data-verb="draft-update"
-            >
-              Draft update
-            </Button>
-            {modelEgress.assigned ? (
-              <EgressChip
-                label={modelEgress.label}
-                scope={modelEgress.scope}
-                title={`UPDATE DRAFTS · ${modelEgress.label}`}
-              />
-            ) : modelEgress.failed ? (
-              <>
-                <span className="surface-token" data-chip data-tone="fail" role="status" data-testid="update-engine-not-read">ENGINE NOT READ</span>
-                <Button dense variant="ghost" data-testid="update-engine-retry" onClick={() => modelEgress.retry?.()}>
-                  Try again
-                </Button>
-              </>
-            ) : modelEgress.assigned === undefined ? (
-              <span className="surface-token" data-chip data-testid="update-engine-checking">CHECKING ENGINE…</span>
-            ) : modelEgress.assigned === false ? (
-              <>
-                <span className="surface-token" data-chip data-testid="update-no-engine">No engine for drafts</span>
-                <Button
-                  dense
-                  variant="ghost"
-                  data-testid="update-choose-engine"
-                  onClick={() => openSurfaceOr("configure-runs-on", "/settings", "models")}
-                >
-                  Choose
-                </Button>
-              </>
-            ) : null}
-          </span>
+          <Button
+            dense
+            variant="primary"
+            loading={ctrl.draftBusy}
+            disabled={engine.state === "unread"}
+            onClick={() => void ctrl.draft(engine.state === "set" ? "model" : "deterministic")}
+            data-testid="update-verb-draft"
+            data-verb="draft-update"
+          >
+            Draft update
+          </Button>
         </SurfaceVerbs>
 
         {ctrl.error ? (
           <SurfaceState error={ctrl.error} onRetry={() => void ctrl.enterUpdates()} />
+        ) : null}
+
+        <EngineLine
+          engine={engine}
+          onChoose={() => openSurfaceOr("configure-runs-on", "/settings", "models")}
+          onRetry={() => void refreshEngine(UPDATE_DRAFT_CAPABILITY)}
+        />
+        <RunLine
+          phase={ctrl.draftRun.phase}
+          verb="Drafting"
+          pastVerb="Drafted"
+          model={engine.model}
+          place={engine.place}
+          startedAt={ctrl.draftRun.startedAt}
+          elapsedSeconds={ctrl.draftRun.elapsedSeconds}
+          reason={ctrl.draftRun.reason}
+          onRetry={ctrl.draftRun.generator ? () => void ctrl.draft(ctrl.draftRun.generator!) : undefined}
+        />
+        {ctrl.draftRun.phase === "failure" && ctrl.draftRun.generator === "model" ? (
+          <Button dense variant="ghost" onClick={() => void ctrl.draft("deterministic")}>
+            Draft from the Room's facts
+          </Button>
         ) : null}
 
         {ctrl.updates.length === 0 && !ctrl.loading ? (
@@ -601,6 +583,22 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
       <div className="update-posture" data-testid="update-posture" data-phase="editor">
         {ctrl.error ? (
           <SurfaceState error={ctrl.error} onRetry={ctrl.retryFailed ?? undefined} />
+        ) : null}
+
+        {ctrl.draftRun.phase !== "idle" ? (
+          <>
+            <EngineLine engine={engine} />
+            <RunLine
+              phase={ctrl.draftRun.phase}
+              verb="Drafting"
+              pastVerb="Drafted"
+              model={engine.model}
+              place={engine.place}
+              startedAt={ctrl.draftRun.startedAt}
+              elapsedSeconds={ctrl.draftRun.elapsedSeconds}
+              reason={ctrl.draftRun.reason}
+            />
+          </>
         ) : null}
 
         <UpdateEditor ctrl={ctrl} onOpenRef={onOpenRef} />

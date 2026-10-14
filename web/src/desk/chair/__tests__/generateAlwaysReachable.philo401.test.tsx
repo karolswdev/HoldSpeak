@@ -107,10 +107,8 @@ function expectHeadVerbs() {
   expect(head).toBeTruthy();
   const chip = head!.querySelector(".gadget-chip-egress");
   const verb = within(head as HTMLElement).getByTestId("arrival-brief-generate");
-  expect(chip?.textContent).toBe("THIS DEVICE");
+  expect(chip).toBeNull();
   expect(verb.textContent).toBe("Generate");
-  // badge BEFORE the verb (UX-CANON A.9)
-  expect(chip!.compareDocumentPosition(verb) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 }
 
 /** Every <button> in the section is the library Button (no raw button). */

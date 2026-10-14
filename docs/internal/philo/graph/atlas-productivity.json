@@ -1,0 +1,508 @@
+{
+  "schema_version": 1,
+  "atlas_version": "productivity-overhaul",
+  "extends": "docs/internal/philo/graph/atlas.json",
+  "source_commit": "1e3bce495b57b2e572999cdfb3952825c190a09c",
+  "states": [
+    {
+      "id": "state.desk_presentation.productivity_settings",
+      "family": "desk_presentation",
+      "values": {
+        "application": "Settings",
+        "section": "Engines",
+        "separate_engine_window": false
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/pages/cores/SettingsCore.tsx",
+          "symbol": "function SettingsFace({",
+          "claim": "Settings hosts the Engines section inside its application window."
+        }
+      ],
+      "reachable_by": [
+        "case.productivity.engines.settings",
+        "case.productivity.settings.closed"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.productivity_note_task",
+      "family": "desk_presentation",
+      "values": {
+        "note": "saved",
+        "task": "added",
+        "source": "note"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/thought-workspace/TaskWell.tsx",
+          "symbol": "export function TaskWell({",
+          "claim": "The note task well invokes the real Door task producer."
+        }
+      ],
+      "reachable_by": [
+        "case.productivity.note.task"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.productivity_meeting",
+      "family": "desk_presentation",
+      "values": {
+        "window": "surface-meetings",
+        "record": "inside Meetings",
+        "back": "selected list"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/pages/cores/HistoryCore.tsx",
+          "symbol": "export function HistoryCore(",
+          "claim": "The canonical meeting scope mounts the record and retains its selected list row."
+        },
+        {
+          "path": "web/src/pages/cores/history/MeetingRecord.tsx",
+          "symbol": "export function MeetingRecord(",
+          "claim": "The meeting record lives in the Meetings host; its Back returns to the list."
+        }
+      ],
+      "reachable_by": [
+        "case.productivity.meeting.back"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "case.productivity.engines.settings",
+      "job": "j3",
+      "edge_ids": [
+        "edge.face.settings_engines"
+      ],
+      "state_id": "state.desk_presentation.productivity_settings",
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME and a real hub; no owner data or external provider."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "Wait for the real first-run dismissal before reload."
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "goto",
+        "url": "/models",
+        "adapter": "ui-navigation"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "window_titled",
+              "value": "Settings"
+            },
+            {
+              "kind": "selector_presence",
+              "selector": "#surface-settings [data-testid=switchboard]",
+              "present": true
+            },
+            {
+              "kind": "selector_presence",
+              "selector": "#surface-concierge",
+              "present": false
+            }
+          ]
+        },
+        "observe_at": "[data-testid=chair-desk]",
+        "words": "The real production UI and hub agree on the job result."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.productivity.settings.closed",
+      "job": "j3",
+      "edge_ids": [
+        "edge.face.settings_engines"
+      ],
+      "state_id": "state.desk_presentation.productivity_settings",
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME and a real hub; no owner data or external provider."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "Wait for the real first-run dismissal before reload."
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/models",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "#surface-settings [data-testid=switchboard]",
+          "adapter": "ui-pointer"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "selector": "#surface-settings .desk-gadget-close",
+        "adapter": "ui-by-viewport",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "click",
+            "selector": "#surface-settings .desk-gadget-close",
+            "adapter": "ui-by-viewport",
+            "at_width": 393,
+            "why": "The first phone Back leaves Engines; the second leaves Settings for Go."
+          },
+          {
+            "kind": "ui",
+            "action": "goto",
+            "url": "/",
+            "adapter": "ui-navigation"
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "selector_presence",
+              "selector": "#surface-settings",
+              "present": false
+            },
+            {
+              "kind": "selector_presence",
+              "selector": "#surface-concierge",
+              "present": false
+            }
+          ]
+        },
+        "observe_at": "[data-testid=chair-desk]",
+        "words": "The real production UI and hub agree on the job result."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.productivity.note.task",
+      "job": "j11",
+      "edge_ids": [
+        "edge.face.note_task"
+      ],
+      "state_id": "state.desk_presentation.productivity_note_task",
+      "applicability": "applicable",
+      "preconditions": [
+        "The note is made by the real thought producer in a fresh isolated HOME; no finished task is injected."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "Wait for the real first-run dismissal before reload."
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/thoughts",
+          "body": {
+            "request_id": "productivity-note-task",
+            "raw_text": "Write the rollback runbook",
+            "initial_note": {
+              "title": "Rollback note",
+              "body_markdown": "Write the rollback runbook"
+            }
+          },
+          "capture_as": "note_id",
+          "capture_path": "thought.working_note.id",
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "button[aria-controls=desk-tool-shelf]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "input[aria-controls=desk-palette-listbox]",
+          "value": "Rollback note",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "button.desk-deck-row:has-text(\"Rollback note\")",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": ".thought-note-foot",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".thought-note-foot button[aria-label=\"More actions\"]",
+          "adapter": "ui-by-viewport",
+          "at_width": 393,
+          "why": "The phone keeps one primary; Task is in its More actions menu."
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "selector": ".thought-note-foot button:has-text(\"Task\"), button[role=menuitem]:has-text(\"Task\")",
+        "adapter": "ui-by-viewport",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "selector": "[data-testid=thought-task-well]",
+            "adapter": "ui-pointer"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "selector": "[data-testid=thought-task-well] button:has-text(\"Add\")",
+            "adapter": "ui-by-viewport"
+          }
+        ]
+      },
+      "expected": {
+        "observe_at": "protocol: GET /api/door",
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_field",
+              "path": "/board/waiting/0/text",
+              "value": "Write the rollback runbook"
+            },
+            {
+              "kind": "protocol_field",
+              "path": "/board/waiting/0/source_ref",
+              "value": "note:{note_id}"
+            }
+          ]
+        },
+        "words": "The actual Task/Add gesture creates the accepted task on the Door with the saved note as its source."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.productivity.meeting.back",
+      "job": "j3",
+      "edge_ids": [
+        "edge.face.meeting_back"
+      ],
+      "state_id": "state.desk_presentation.productivity_meeting",
+      "applicability": "applicable",
+      "preconditions": [
+        "A synthetic transcript enters the real importer in an isolated HOME. No model result, saved meeting or owner data is injected."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "Wait for the real first-run dismissal before reload."
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/philo3_architect_meeting.txt",
+          "sha256": "7cc627789bd2114088916e0940bb8f66c2fd42f5dd7cfe5185929f472f98b3fc",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "form": {
+            "title": "Rollback review"
+          },
+          "capture_as": "meeting_id",
+          "capture_path": "meeting_id",
+          "expect_status": 202,
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/history?meeting={meeting_id}",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "#surface-meetings .meetings-detail-head",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "#surface-meetings .meetings-detail-head",
+          "adapter": "ui-pointer"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "selector": "#surface-meetings [data-testid=meeting-record-back], #surface-meetings .desk-gadget-close[title=\"Back\"]",
+        "adapter": "ui-by-viewport"
+      },
+      "expected": {
+        "observe_at": "[data-testid=chair-desk]",
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "selector_presence",
+              "selector": "#surface-meetings [data-testid=meetings-headline]",
+              "present": true
+            },
+            {
+              "kind": "selector_presence",
+              "selector": "#surface-meetings [data-testid=\"meeting-row-{meeting_id}\"][data-selected=true]",
+              "present": true
+            },
+            {
+              "kind": "selector_presence",
+              "selector": "[id^=\"pullout:meeting:\"]",
+              "present": false
+            }
+          ]
+        },
+        "words": "The real imported record survives reload inside Meetings; Back returns the same selected row without another window."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ],
+  "clocks": [
+    {
+      "id": "clock.browser_date",
+      "source": "The isolated browser Date and event loop.",
+      "mechanism": "Real browser clock; these cases do not advance it.",
+      "status": "available",
+      "used_by": []
+    }
+  ],
+  "excluded": [],
+  "council_readings": []
+}

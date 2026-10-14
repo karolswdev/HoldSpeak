@@ -444,7 +444,7 @@
       ],
       "entry_points": [
         "web/src/desk/dropMatrix.ts::DROP_MATRIX",
-        "web/src/desk/components/GlassDropLayer.tsx::GlassDropLayer"
+        "web/src/desk/_parked/floor/components/GlassDropLayer.tsx::GlassDropLayer"
       ],
       "platforms": {
         "macos": "supported_with_setup",
@@ -503,7 +503,7 @@
           "claim": "The matrix enumerates supported kind pairs and named effects."
         },
         {
-          "path": "web/src/desk/components/GlassDropLayer.tsx",
+          "path": "web/src/desk/_parked/floor/components/GlassDropLayer.tsx",
           "symbol": "GlassDropLayer",
           "line": 17,
           "claim": "External files are accepted only over a release target."
@@ -528,7 +528,8 @@
       ],
       "limitations": [
         "No keyboard equivalent for every effect.",
-        "No multi-select or cross-window contract."
+        "No multi-select or cross-window contract.",
+        "The historical Floor drop layer is parked. Its source citation is retained; current owner drop behavior remains unverified."
       ],
       "failure_states": [
         "unsupported pair",
@@ -929,10 +930,10 @@
     {
       "id": "project.update.linked_week",
       "name": "Draft a project update",
-      "purpose": "Draft an update from linked meeting summaries, decisions and owned actions. Find the latest published update.",
+      "purpose": "Draft a project update in one press from linked meetings, decisions and open actions. Retry with a plain draft if the chosen model fails.",
       "domain": "desk",
       "status": "built_unreleased",
-      "status_reason": "Implemented in the PHILO-13-10 candidate; the paired producer tests passed. Muad'Dib has not checked this candidate.",
+      "status_reason": "Focused backend and Room tests verify direct drafting, typed manual model refusal and deliberate deterministic retry; no real provider or owner use is claimed.",
       "exposure": "user",
       "surfaces": [
         "Project Room",
@@ -972,11 +973,15 @@
         "ProjectService",
         "ProjectUpdateService"
       ],
-      "model_requirements": [],
-      "network_requirements": [],
-      "trust_boundary": "The deterministic generator reads stored project and meeting data. It does not call a model.",
-      "egress_possible": false,
-      "egress": "Draft creation writes locally. Send is a separate action.",
+      "model_requirements": [
+        "A configured model route for model drafting; the explicit plain draft needs no model."
+      ],
+      "network_requirements": [
+        "A network model route must be reachable when selected."
+      ],
+      "trust_boundary": "A model draft can send linked project material to the selected model route. A plain draft reads local stored material. Sending the finished draft is a separate action.",
+      "egress_possible": true,
+      "egress": "The selected model route determines drafting egress; the plain generator stays on this Mac.",
       "side_effect": "local_reversible",
       "authority": "The existing project.draft_update operation admits the write.",
       "kernel_operations": [
@@ -1026,13 +1031,21 @@
           "node": "test_published_at_beats_later_rowid",
           "assertion": "The greater publication timestamp wins over a greater rowid; the filtered draft-only read has no latest publication.",
           "execution": "passed"
+        },
+        {
+          "path": "tests/integration/test_desk_project_room.py",
+          "node": "test_manual_model_draft_refuses_then_deliberate_retry_and_steward_falls_back",
+          "assertion": "Manual model failure returns 409; explicit plain retry creates the draft; background service calls preserve their fallback.",
+          "execution": "passed"
         }
       ],
       "docs": [
-        "pm/roadmap/holdspeak-philo/phase-13-the-desk/story-10-b5-the-update-writes-the-week.md"
+        "pm/roadmap/holdspeak-philo/phase-13-the-desk/story-10-b5-the-update-writes-the-week.md",
+        "docs/internal/philo/phase-17/IMPLEMENTATION-PRODUCTIVITY.md"
       ],
       "limitations": [
-        "Pending Muad'Dib counsel and merge; no owner sitting is claimed."
+        "No real network model was called in this branch’s tests.",
+        "Owner use and public release remain unverified."
       ],
       "failure_states": [
         "Named source-coverage caveats when a stored source cannot be read."
@@ -1045,13 +1058,13 @@
     {
       "id": "people.prep.read",
       "name": "Read 1:1 preparation",
-      "purpose": "Read a report's linked 1:1, agenda, project and owned meeting actions.",
+      "purpose": "Read a report’s next 1:1, agenda, projects and confirmed open actions, matched by an unambiguous People identity.",
       "domain": "desk",
-      "status": "partial",
-      "status_reason": "H-B4 data is implemented and tested; B4-W face wiring remains with the faces lane.",
+      "status": "built_unreleased",
+      "status_reason": "The productive-desk branch wires People Prep and verifies accepted-action ownership and terminal-state exclusion with focused tests; owner use remains unobserved.",
       "exposure": "user",
       "surfaces": [
-        "People Prep data"
+        "People Prep"
       ],
       "entry_points": [
         "holdspeak/services/people_service.py::PeopleService.one_on_one_brief"
@@ -1065,7 +1078,7 @@
       },
       "inputs": [
         "relationship id",
-        "saved aliases",
+        "display name and saved aliases",
         "calendar links"
       ],
       "outputs": [
@@ -1097,7 +1110,7 @@
           "path": "holdspeak/services/people_service.py",
           "symbol": "PeopleService.one_on_one_brief",
           "line": 373,
-          "claim": "The transient brief includes the linked calendar event, saved agenda, alias-owned meeting actions and projects."
+          "claim": "The brief combines saved agenda, calendar links, projects and accepted open actions through the ambiguity-safe People owner resolver."
         }
       ],
       "tests": [
@@ -1109,15 +1122,107 @@
         }
       ],
       "docs": [
-        "pm/roadmap/holdspeak-philo/phase-13-the-desk/story-09-b4-the-one-on-one-finds-its-person.md"
+        "pm/roadmap/holdspeak-philo/phase-13-the-desk/story-09-b4-the-one-on-one-finds-its-person.md",
+        "docs/internal/philo/phase-17/IMPLEMENTATION-PRODUCTIVITY.md"
       ],
       "limitations": [
-        "B4-W must wire PeopleCore before the story is done.",
-        "Muad'Dib has not checked this candidate."
+        "Verification uses isolated fixtures, not the owner’s reports or calendar.",
+        "Owner use and public release remain unverified."
       ],
       "failure_states": [
         "People store unavailable",
         "Plaintext context unavailable"
+      ],
+      "replacement": null,
+      "evidence_level": "tests_executed",
+      "release_availability": "unverified",
+      "owner_observed": false
+    },
+    {
+      "id": "desk.note.task",
+      "name": "Make a task from a note",
+      "purpose": "Add a confirmed open task from a saved note and keep a link to its source.",
+      "domain": "desk",
+      "status": "built_unreleased",
+      "status_reason": "An actual note-to-Task/Add browser gesture produced the task and its note source on an isolated hub; focused tests cover owner authority.",
+      "exposure": "user",
+      "surfaces": [
+        "Note",
+        "Follow-through"
+      ],
+      "entry_points": [
+        "holdspeak/services/door_service.py::DoorService.add_item"
+      ],
+      "platforms": {
+        "macos": "unknown",
+        "linux_x11": "unknown",
+        "linux_wayland": "unknown",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "saved note",
+        "task text",
+        "owner",
+        "optional due date"
+      ],
+      "outputs": [
+        "accepted open task",
+        "source note link"
+      ],
+      "persistence": [
+        "action_items"
+      ],
+      "apis": [
+        "POST /api/door/items",
+        "GET /api/door"
+      ],
+      "configuration": [],
+      "dependencies": [
+        "DoorService",
+        "FollowThroughService"
+      ],
+      "model_requirements": [],
+      "network_requirements": [],
+      "trust_boundary": "Only the authenticated owner can add the task through this web route. Task creation writes to the local desk database.",
+      "egress_possible": false,
+      "egress": "Making the task sends no data off this Mac.",
+      "side_effect": "local_reversible",
+      "authority": "The owner presses Add on the Note Task well.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "holdspeak/web/routes/door.py",
+          "symbol": "build_door_router",
+          "claim": "The owner-only task route preserves source_type and the saved note ref.",
+          "line": 15
+        },
+        {
+          "path": "web/src/desk/thought-workspace/TaskWell.tsx",
+          "symbol": "TaskWell",
+          "claim": "The Task well writes the accepted task from the saved note and reports the result.",
+          "line": 8
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_desk_thought.py",
+          "node": "test_owner_can_file_a_thought_as_an_accepted_open_task",
+          "assertion": "The task is accepted and open, and the Door projection retains the note source ref.",
+          "execution": "passed"
+        }
+      ],
+      "docs": [
+        "docs/internal/philo/phase-17/IMPLEMENTATION-PRODUCTIVITY.md"
+      ],
+      "limitations": [
+        "Automatic task extraction on Finish is deferred.",
+        "Browser evidence uses an isolated synthetic note, not owner data.",
+        "Owner use and public release remain unverified."
+      ],
+      "failure_states": [
+        "Note save did not complete",
+        "Task write refused"
       ],
       "replacement": null,
       "evidence_level": "tests_executed",

@@ -849,6 +849,11 @@
   min-height: 52px;
   border-bottom: 1px solid var(--wb-rule-soft);
 }
+/* A full kind word uses the same column as its plate. Keep the fact and
+   verbs clear when the row changes from an icon to Decision/Action. */
+.needs-row:has(> .kit-kind) {
+  grid-template-columns: 9ch minmax(0, 1fr) minmax(0, 160px) auto;
+}
 .needs-row:last-child {
   border-bottom: 0;
 }
@@ -927,6 +932,9 @@
     grid-column: 1 / -1;
     justify-content: flex-start;
     flex-wrap: wrap;
+  }
+  .needs-row:has(> .kit-kind) {
+    grid-template-columns: 9ch minmax(0, 1fr);
   }
 }
 

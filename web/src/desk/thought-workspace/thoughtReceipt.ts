@@ -1,7 +1,7 @@
 /* PHILO-3-04 — the thought's receipt (canvas ratified 2026-09-23,
  * pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-04-canvas).
  *
- * Line 1 is the write: KEPT · <time> from the hub's stamp on the last kept
+ * Line 1 is the write: Saved <time> from the hub's stamp on the last kept
  * write, SAVING… from an edit until the write lands, DID NOT SAVE · <cause>,
  * or CHANGED ELSEWHERE. Line 2 is the filing state. */
 import { wireDate } from "../surface/format";
@@ -32,7 +32,7 @@ export function thoughtWriteLine(state: ThoughtWriteState): { text: string; dang
   if (state.failure) return { text: `DID NOT SAVE · ${SAVE_FAILURE_CAUSE[state.failure]}`, danger: true };
   if (state.pending || state.saving) return { text: "SAVING…", danger: false };
   const kept = keptReceipt(hubStampMs(state.keptAt));
-  return kept ? { text: kept.toUpperCase(), danger: false } : null;
+  return kept ? { text: kept.replace(/^Kept · /, "Saved "), danger: false } : null;
 }
 
 export function thoughtFilingLine(thought: Thought, finished: boolean): string {

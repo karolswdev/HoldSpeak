@@ -716,6 +716,19 @@
   color: var(--accent);
 }
 
+.follow-through-done-receipt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border-strong);
+  background: var(--desk-window-well);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+}
+
 .follow-through-expanded {
   display: grid;
   gap: var(--space-2);
@@ -779,7 +792,7 @@
   .intelligence-segments { width: 100%; }
   .follow-through-view { gap: var(--space-2); }
   .surface-ledger[data-cols="follow-through"] .surface-ledger-line {
-    grid-template-columns: minmax(0, 1fr) auto auto 1.25rem;
+    grid-template-columns: minmax(0, 1fr) auto auto 44px;
     gap: var(--space-1);
   }
   .follow-through-verbs { flex-wrap: wrap; }
@@ -797,9 +810,14 @@
   .intelligence-brief-group:focus-within .gadget-fold-body,
   .intelligence-brief-group[open] .gadget-fold-body { max-height: none; }
   .surface-ledger[data-cols="follow-through"] .surface-ledger-line {
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0, 1fr) auto auto 44px;
   }
-  .follow-through-source { display: none; }
+  .follow-through-source {
+    display: grid;
+    width: 44px;
+    min-width: 44px;
+    min-height: 44px;
+  }
   .follow-through-verbs { padding-top: var(--space-1); border-top: 1px solid var(--border); }
   .receipts-search-actions { align-items: flex-start; flex-direction: column; }
   .receipt-fields { grid-template-columns: 5rem minmax(0, 1fr); }
@@ -811,11 +829,14 @@
 /* HS-129-06 — Name the window body that governs Follow-Through density. */
 @container surface (max-width: 380px) {
   .surface-ledger[data-cols="follow-through"] .surface-ledger-line {
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0, 1fr) auto auto 44px;
   }
 
   .follow-through-source {
-    display: none;
+    display: grid;
+    width: 44px;
+    min-width: 44px;
+    min-height: 44px;
   }
 }
 

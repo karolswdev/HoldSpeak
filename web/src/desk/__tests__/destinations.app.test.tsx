@@ -76,11 +76,11 @@ describe("the Destinations group", () => {
     expect(screen.queryByTestId("dest-list")).toBeNull();
   });
 
-  it("a synced folder is SYNCED FOLDER (cloud), never THIS DEVICE", async () => {
+  it("a synced folder is SYNCED FOLDER (cloud), with no same-device chip", async () => {
     render(<Destinations />);
     await screen.findByTestId("dest-form");
     fireEvent.change(screen.getByTestId("dest-folder"), { target: { value: "/Users/owner/Drive" } });
-    expect(egress().textContent).toBe("THIS DEVICE");
+    expect(screen.getByTestId("dest-form-verbs").querySelector(".gadget-chip-egress")).toBeNull();
     fireEvent.click(within(screen.getByTestId("dest-form")).getByText("SYNCED"));
     expect(egress().textContent).toBe("SYNCED FOLDER");
     expect(egress()).toHaveAttribute("data-scope", "cloud");

@@ -45,7 +45,6 @@ import {
 } from "../../desk/surface";
 import { SurfaceSection } from "../../desk/surface/Surface";
 import { useWindowTitle } from "../../desk/surface/title";
-import { windowName } from "../../desk/windowName";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { egressFor } from "../../desk/surface/egress";
 import { openSurface } from "../../desk/shell";
@@ -63,6 +62,7 @@ import { RuntimeDocsCore } from "./RuntimeDocsCore";
 import { useCoreWings } from "./core-hooks";
 import { ConnectionsPane, type ConnectionsFoot } from "./connections";
 import { Destinations } from "./connections/Destinations";
+import { RunsOnCore } from "../../features/runson/RunsOnCore";
 // HS-139-05: activateLauncher removed (Delivery tile absorbed).
 import {
   CADENCE_PRESSURE_OPTIONS,
@@ -239,8 +239,20 @@ function title(key: string) {
 
 const SETTINGS_WINGS = [
   { id: "settings", label: "Settings" },
+  { id: "models", label: "Engines" },
+  { id: "integrations", label: "Accounts" },
   { id: "guide", label: "Guide" },
 ];
+
+function settingsScope(scope?: string): { module: string | null; focus?: string } {
+  const [head, ...tail] = (scope ?? "").split("::");
+  if (!head) return { module: null };
+  if (head.startsWith("integration:")) {
+    return { module: "integrations", focus: [head.slice("integration:".length), ...tail].filter(Boolean).join("::") };
+  }
+  const module = MODULE_ALIASES[head] ?? (PREF_MODULES.some((entry) => entry.id === head) ? head : null);
+  return { module, focus: tail.length ? tail.join("::") : undefined };
+}
 
 /* ── HS-174-02/03: Remote Access — the credential ledger + issue well ── */
 
@@ -1227,21 +1239,38 @@ export function RemoteAccessModule({
 export function SettingsCore({ hero, scope }: CoreProps) {
   // HS-100-10 — the Runtime guide is the Guide wing (the standalone
   // doc-window died; deep links land here via the registry alias).
-  const wings = useCoreWings(
-    SETTINGS_WINGS,
-    scope === "guide" ? "guide" : "settings",
-  );
+  const parsed = settingsScope(scope);
+  const wings = useCoreWings(SETTINGS_WINGS, parsed.module ?? "settings");
+  useEffect(() => {
+    wings.setView(parsed.module ?? "settings");
+  }, [parsed.module]);
   if (wings.view === "guide") return <RuntimeDocsCore />;
-  return <SettingsFace hero={hero} scope={scope} />;
+  return (
+    <SettingsFace
+      hero={hero}
+      scope={scope}
+      moduleOverride={wings.view === "settings" ? null : wings.view}
+      onModuleBack={() => wings.setView("settings")}
+    />
+  );
 }
 
-function SettingsFace({ hero, scope }: CoreProps) {
+function SettingsFace({
+  hero,
+  scope,
+  moduleOverride,
+  onModuleBack,
+}: CoreProps & {
+  moduleOverride?: string | null;
+  onModuleBack?: () => void;
+}) {
+  const parsed = settingsScope(scope);
   const integrationSubject =
-    scope && scope.startsWith("integration:")
-      ? scope.slice("integration:".length)
+    parsed.module === "integrations"
+      ? parsed.focus
       : null;
   // HS-139-05: resolve aliases from the retired roster to its successor.
-  const resolvedScope = scope ? (MODULE_ALIASES[scope] ?? scope) : scope;
+  const resolvedScope = parsed.module;
   const scopedModule = PREF_MODULES.some(
     (module) => module.id === resolvedScope,
   )
@@ -1546,7 +1575,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
   useEffect(() => {
     if (integrationSubject) setModuleId("integrations");
     else if (scopedModule) setModuleId(scopedModule);
-  }, [integrationSubject, scopedModule]);
+    else if (moduleOverride !== undefined) setModuleId(moduleOverride);
+  }, [integrationSubject, scopedModule, moduleOverride]);
 
   // HS-139-05: deep-index and filter removed — all tiles stay visible at once.
   const openModule = (id: string) => {
@@ -2349,10 +2379,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
          Opening models/assignments redirects to the Concierge surface. ── */
       case "models":
       case "assignments": {
-        import("../../desk/shell").then(({ openSurface }) => {
-          openSurface("open-concierge");
-        });
-        return null;
+        return <RunsOnCore scope={parsed.focus} title="Settings" />;
       }
       /* ── Connections: tools + credentials + RAW ── */
       case "integrations": {
@@ -2445,8 +2472,6 @@ function SettingsFace({ hero, scope }: CoreProps) {
   const module = moduleId
     ? PREF_MODULES.find((entry) => entry.id === moduleId)
     : null;
-  // The window is named by the open section: `Settings · Connections`.
-  useWindowTitle(module ? windowName({ kind: "settings", section: module.label }) : null, [module?.label]);
   const receipt = { saving, writtenAt, refusal };
   return (
     <>
@@ -2496,6 +2521,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
               ? () => {
                   setModuleId(null);
                   setHighlight("");
+                  onModuleBack?.();
                 }
               : undefined
           }

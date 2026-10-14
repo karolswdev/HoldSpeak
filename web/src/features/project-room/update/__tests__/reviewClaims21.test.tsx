@@ -11,6 +11,7 @@ import { WingSlotContext } from "../../../../desk/surface/wings";
 import { useDesk } from "../../../../desk/store";
 import { EMPTY_ITEMS } from "../../../../desk/api";
 import { ProjectRoomCore } from "../../ProjectRoomCore";
+import { clearEngineCache } from "../../../../desk/hooks/useEngine";
 
 vi.mock("../../../../desk/ask", async () => {
   const actual =
@@ -122,6 +123,7 @@ function roomResponse() {
 }
 
 beforeEach(() => {
+  clearEngineCache();
   useDesk.setState({
     windowsById: {},
     items: { ...EMPTY_ITEMS },
@@ -147,9 +149,6 @@ function chipLabels(testId: string): (string | null)[] {
 async function openEditor() {
   const btn = await screen.findByTestId("updates-verb");
   fireEvent.click(btn);
-  await waitFor(() => screen.getByTestId("update-posture"));
-  const items = await screen.findAllByTestId("update-list-item");
-  fireEvent.click(items[0]);
   await waitFor(() => screen.getByTestId("update-editor"));
 }
 
@@ -190,6 +189,7 @@ function setup() {
     if (url.includes("/room/read")) return Promise.resolve({ read_at: new Date().toISOString() });
     if (url.includes("/room")) return Promise.resolve(roomResponse());
     if (url.match(/\/api\/projects\/[^/]+\/updates(\?|$)/)) return Promise.resolve({ updates: [draft(state)] });
+    if (url.includes("/updates/draft")) return Promise.resolve({ success: true, update: draft(state) });
     if (url.includes("/meetings")) return Promise.resolve({ meetings: [] });
     if (url.startsWith("/api/decisions")) return Promise.resolve({ decisions: [] });
     if (url.includes("/artifacts")) return Promise.resolve({ artifacts: [] });

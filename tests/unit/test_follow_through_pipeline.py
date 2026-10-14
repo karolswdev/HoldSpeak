@@ -44,6 +44,11 @@ def test_walk_follow_through_pipeline(db: Database, monkeypatch: pytest.MonkeyPa
     observer = SQLiteObserver(db._connection)
     follow_through = FollowThroughService(db, observer=observer)
     aftercare = MeetingAftercareService(db, observer=observer)
+    desk_events: list[tuple[str, str, str]] = []
+    monkeypatch.setattr(
+        "holdspeak.runtime.composition.notify_desk_changed",
+        lambda kind, object_id, operation: desk_events.append((kind, object_id, operation)),
+    )
 
     with db._connection() as conn:
         conn.execute(
@@ -145,6 +150,7 @@ def test_walk_follow_through_pipeline(db: Database, monkeypatch: pytest.MonkeyPa
     assert all(card.id != "overdue" for card in board.overdue), (
         "Done card must no longer appear on the follow-through board"
     )
+    assert ("action_item", "overdue", "done") in desk_events
 
     delegated = follow_through.complete(
         OWNER, commitment["action_item_id"], "delegate", {"to": "maya"}

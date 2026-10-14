@@ -2478,10 +2478,13 @@ function ArrivalMeetingWells({
   const wellHead = importFailed ? "IMPORT" : "SUMMARY";
   const cause = importFailed ? meeting.intelStatusDetail : job?.lastError;
   const hasFailureFact = badge === "RETRYING" || badge === "FAILED" || Boolean(job?.lastError);
+  const lastAttemptHost = egressFor(
+    receipt?.attempts[receipt.attempts.length - 1]?.host ?? "",
+  ).label;
   const statusFacts = [
     hasFailureFact ? badge : "",
     hasFailureFact && job?.attempts && job.attempts > 0 && receipt
-      ? `LAST ATTEMPT · ${egressFor(receipt.attempts[receipt.attempts.length - 1]?.host ?? "").label}`
+      ? `LAST ATTEMPT${lastAttemptHost ? ` · ${lastAttemptHost}` : ""}`
       : "",
     cause ? `LAST ERROR · ${cause}` : "",
   ].filter(Boolean);

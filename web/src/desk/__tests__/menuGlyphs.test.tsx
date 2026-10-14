@@ -170,15 +170,12 @@ describe("variant matrix — root attribute gating (HS-148-02)", () => {
 });
 
 describe("Go menu grouping separator (HS-148-02)", () => {
-  // PHILO-17 (doors): Go is seven applications, then Tools ▸ with six.
-  // Settings, Runs on, Connections, Setup and Change places are not in Go.
-  it("Go menu verbs: six ride Tools ▸, the setup verbs are not in Go", () => {
+  // PHILO-17 (doors): Go is the live application index. Setup owns the
+  // configuration rows; the retired Tools submenu has no registry rows.
+  it("Go menu verbs: no retired Tools submenu or setup rows", () => {
     const goVerbs = menuVerbs("go");
-    expect(goVerbs.filter((v) => v.submenu === "Tools").map((v) => v.id).sort()).toEqual([
-      "go.configure-cadence", "go.configure-commands", "go.inspect-activity",
-      "go.inspect-processes", "go.open-constitutional-context", "go.open-workbenches",
-    ]);
-    expect(goVerbs.filter((v) => !v.submenu)).toHaveLength(7);
+    expect(goVerbs.filter((v) => v.submenu === "Tools")).toEqual([]);
+    expect(goVerbs.filter((v) => !v.submenu)).toHaveLength(6);
     for (const id of ["go.configure-settings", "go.configure-runs-on", "go.configure-integrations", "go.configure-setup", "go.change-places"])
       expect(goVerbs.some((v) => v.id === id), id).toBe(false);
   });

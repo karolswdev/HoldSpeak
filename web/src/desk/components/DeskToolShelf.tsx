@@ -50,11 +50,11 @@ export { DESK_TOOLS, KIND_LABEL };
 const SECTIONS = [
   "PROJECTS",
   "PEOPLE",
+  "OBJECTS",
+  "MEETINGS",
   "VERBS",
   "PROGRAMS",
-  "OBJECTS",
   "SETTINGS",
-  "MEETINGS",
   "MEMORY",
 ] as const;
 type Section = (typeof SECTIONS)[number];
@@ -84,6 +84,8 @@ interface DeckRow {
   /** A MEMORY row (⌘K option B, ratified 2026-10-05): the second line
    * under the title — the snippet with the match marked, FoundBy, the day. */
   hit?: PaletteHit;
+  /** A contextual Send row stays visible but does not steal the first press. */
+  preselect?: boolean;
   run(): void;
 }
 
@@ -205,6 +207,7 @@ export function rankRow(
  * VERBS or PROGRAMS).
  */
 const OBJECT_SECTIONS = new Set(["OBJECTS", "MEETINGS", "PROJECTS", "PEOPLE", "SETTINGS"]);
+const FIRST_PRESS_OBJECT_SECTIONS = new Set(["OBJECTS", "MEETINGS", "PROJECTS", "PEOPLE"]);
 
 function isObjectRow(row: { section?: string }): boolean {
   return OBJECT_SECTIONS.has(String(row.section ?? ""));
@@ -318,7 +321,10 @@ export function DeskToolShelf() {
   // PHILO-13-08 (B3): a create that asks its name first (New Decision).
   const prompt = useNamePrompt((s) => s.prompt);
   const [query, setQuery] = useState("");
-  const [sel, setSel] = useState(0);
+  // -1 means the palette has not received an arrow press yet. The first
+  // runnable object then wins, while contextual Send rows remain reachable
+  // by arrows without stealing Enter on an object.
+  const [sel, setSel] = useState(-1);
   const rootRef = useRef<HTMLElement | null>(null);
   const launchRef = useRef<HTMLButtonElement | null>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
@@ -416,7 +422,7 @@ export function DeskToolShelf() {
   useEffect(() => {
     if (open) searchRef.current?.focus();
     setQuery("");
-    setSel(0);
+    setSel(-1);
   }, [open]);
 
   // PHILO-13-14 (C4): each opening reads the people and primes the front
@@ -453,7 +459,7 @@ export function DeskToolShelf() {
   useEffect(() => () => usePalette.getState().setOpen(false), []);
 
   useEffect(() => {
-    setSel(0);
+    setSel(-1);
     setPendingEnter(false);
   }, [query]);
 
@@ -564,6 +570,7 @@ export function DeskToolShelf() {
           kind: "VERB",
           terms: verb.keywords,
           wrap: true,
+          preselect: !verb.id.startsWith("week.send"),
           run: verb.run,
         });
     }
@@ -850,9 +857,19 @@ export function DeskToolShelf() {
   // The runnable list the selection index walks (ghosts stay visible
   // but are never selected, never run).
   const runnable = rows.filter((r) => !r.ghost);
-  const selected = runnable.length
-    ? runnable[Math.min(sel, runnable.length - 1)]
-    : null;
+  // Objects own the first press whenever a query found one. With only verbs
+  // in the result (for example a front-note Send destination), the first
+  // ranked verb remains the useful default.
+  // A named program is an explicit command ("People" opens People), so keep
+  // that exact app match ahead of an object whose title merely contains the
+  // word. Other queries retain the objects-first default.
+  const exactNamed = normalized
+    ? runnable.findIndex((row) => row.name?.toLocaleLowerCase() === normalized)
+    : -1;
+  const firstObject = runnable.findIndex((row) => FIRST_PRESS_OBJECT_SECTIONS.has(row.section));
+  const defaultIndex = exactNamed >= 0 ? exactNamed : firstObject >= 0 ? firstObject : 0;
+  const selectedIndex = sel < 0 ? defaultIndex : Math.min(sel, runnable.length - 1);
+  const selected = runnable.length ? runnable[selectedIndex] : null;
   const activeId = selected ? `desk-palette-option-${selected.id}` : undefined;
 
   const submitName = () => {
@@ -884,7 +901,7 @@ export function DeskToolShelf() {
       // While the list waits for its ranking, there is nothing to move to.
       if (!ranked || !runnable.length) return;
       setSel((now) => {
-        const at = Math.min(now, runnable.length - 1);
+        const at = now < 0 ? defaultIndex : Math.min(now, runnable.length - 1);
         return event.key === "ArrowDown"
           ? Math.min(at + 1, runnable.length - 1)
           : Math.max(at - 1, 0);

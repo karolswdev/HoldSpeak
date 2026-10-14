@@ -201,7 +201,7 @@ describe("Concierge repair states (HS-200-04)", () => {
       ).toHaveLength(1);
     }
     expect(screen.getByText("API.OPENAI.COM")).toBeInTheDocument();
-    expect(screen.getAllByText("THIS DEVICE").length).toBeGreaterThan(0);
+    expect(screen.queryAllByText("THIS DEVICE")).toHaveLength(0);
   });
 
   it("the credential verb opens the Connections door", async () => {

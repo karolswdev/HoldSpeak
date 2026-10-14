@@ -256,12 +256,18 @@ def test_confirm_preserves_meeting_span_and_extraction_provenance(tmp_path, monk
     db, _engine = _rig(tmp_path, monkeypatch)
     _meeting(db, "m-prov")
     _drain()
+    desk_events: list[tuple[str, str, str]] = []
+    monkeypatch.setattr(
+        "holdspeak.runtime.composition.notify_desk_changed",
+        lambda kind, object_id, operation: desk_events.append((kind, object_id, operation)),
+    )
     job = _latest_job(db, "m-prov")
     rows = _proposals(db, "m-prov")
     cut = _by_text(rows, "read replica")
 
     result = ProposalBridgeService(db).confirm_proposal(OWNER, cut["id"])
     assert "error" not in result and result["replayed"] is False
+    assert ("proposal", cut["id"], "confirm") in desk_events
     with db._connection() as conn:
         decision = conn.execute("SELECT * FROM decisions WHERE id = ?", (result["decision_id"],)).fetchone()
         assert decision["source_meeting_id"] == "m-prov"
@@ -296,6 +302,51 @@ def test_confirm_preserves_meeting_span_and_extraction_provenance(tmp_path, monk
     assert [p["id"] for p in kept] == [cut["id"]]
     assert kept[0]["decision_record_id"] == result["decision_record_id"]
     assert kept[0]["acceptance"] == "accepted"
+
+
+def test_confirm_keeps_a_completed_linked_action_closed_until_explicit_reopen(tmp_path, monkeypatch):
+    """Confirm accepts review; it does not silently turn Done back into open."""
+    from holdspeak.services.proposal_bridge_service import ProposalBridgeService
+
+    db, _engine = _rig(tmp_path, monkeypatch)
+    _meeting(db, "m-confirm-done")
+    # Seed the producer's pending action row so the bridge links this proposal
+    # to an existing action item instead of minting a new row on Confirm.
+    with db._connection() as conn:
+        conn.execute(
+            """INSERT INTO action_items
+               (id, meeting_id, task, owner, due, status, review_state, created_at)
+               VALUES ('linked-done', 'm-confirm-done', ?, NULL, NULL,
+                       'pending', 'pending', ?)""",
+            ("Confirm the freeze window with the payments team", "2026-09-07T12:00:00"),
+        )
+    _drain()
+    svc = ProposalBridgeService(db)
+    proposal = _by_text(_proposals(db, "m-confirm-done"), "payments team")
+    action_id = proposal["action_item_id"]
+    assert action_id
+    with db._connection() as conn:
+        conn.execute(
+            "UPDATE action_items SET status = 'done', completed_at = ? WHERE id = ?",
+            ("2026-09-08T12:00:00+00:00", action_id),
+        )
+
+    result = svc.confirm_proposal(OWNER, proposal["id"])
+    assert "error" not in result
+    with db._connection() as conn:
+        row = conn.execute(
+            "SELECT status, completed_at, review_state FROM action_items WHERE id = ?",
+            (action_id,),
+        ).fetchone()
+        commitment = conn.execute(
+            "SELECT status FROM decision_commitments WHERE id = ?",
+            (result["commitment_id"],),
+        ).fetchone()
+    assert row["status"] == "done"
+    assert row["completed_at"] == "2026-09-08T12:00:00+00:00"
+    assert row["review_state"] == "accepted"
+    assert commitment["status"] == "closed"
+
 
 
 # ── AC3: unknowns stay unknown until supplied ─────────────────────────
@@ -390,12 +441,22 @@ def test_dismiss_returns_the_durable_state_and_writes_no_record(tmp_path, monkey
     db, _engine = _rig(tmp_path, monkeypatch)
     _meeting(db, "m-dismiss")
     _drain()
+    desk_events: list[tuple[str, str, str]] = []
+    monkeypatch.setattr(
+        "holdspeak.runtime.composition.notify_desk_changed",
+        lambda kind, object_id, operation: desk_events.append((kind, object_id, operation)),
+    )
     svc = ProposalBridgeService(db)
     war_room = _by_text(_proposals(db, "m-dismiss"), "war room")
+    read_replica = _by_text(_proposals(db, "m-dismiss"), "read replica")
     result = svc.dismiss_proposal(OWNER, war_room["id"])
     assert result["state"] == "dismissed" and result["replayed"] is False
+    assert ("proposal", war_room["id"], "dismiss") in desk_events
     assert result["proposal"]["acceptance"] == "rejected"
     assert _count(db, "decision_records") == 0
+    deferred = svc.defer_proposal(OWNER, read_replica["id"], until="2099-01-01T00:00:00+00:00")
+    assert deferred["deferred_until"] == "2099-01-01T00:00:00+00:00"
+    assert ("proposal", read_replica["id"], "defer") in desk_events
     again = svc.dismiss_proposal(OWNER, war_room["id"])
     assert again["state"] == "dismissed" and again["replayed"] is True
     assert svc.confirm_proposal(OWNER, war_room["id"])["code"] == "dismissed"
@@ -601,10 +662,18 @@ def test_accept_reviewed_confirms_only_supported_rows_without_unknowns(tmp_path,
     db, _engine = _rig(tmp_path, monkeypatch)
     _meeting(db, "m-bulk")
     _drain()
+    desk_events: list[tuple[str, str, str]] = []
+    monkeypatch.setattr(
+        "holdspeak.runtime.composition.notify_desk_changed",
+        lambda kind, object_id, operation: desk_events.append((kind, object_id, operation)),
+    )
     svc = ProposalBridgeService(db)
     result = svc.accept_reviewed(OWNER, "m-bulk")
     assert result["accepted_count"] == 2 and result["left_count"] == 3, result
     assert result["unsupported"] == 1 and result["unknown"] == 2 and result["prior"] == 0
+    # Each confirmed row emits after its own commit, so the record window can
+    # refresh while the bulk receipt still names the aggregate result.
+    assert sum(1 for kind, _id, op in desk_events if kind == "proposal" and op == "confirm") == 2
     assert {r["reason"] for r in result["left"]} == {"unsupported", "unknown"}
     rows = _proposals(db, "m-bulk")
     assert {p["text"] for p in rows if p["state"] == "confirmed"} == {

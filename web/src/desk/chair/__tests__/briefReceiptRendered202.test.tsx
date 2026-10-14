@@ -94,7 +94,7 @@ describe("Generate receipt transition (PHILO-5-04 / HS-202-02)", () => {
   it("names the destination on the row before the press", async () => {
     render(<ChairHome />);
     const section = await screen.findByTestId("arrival-brief");
-    expect(section.querySelector(".gadget-chip-egress")?.textContent).toBe("THIS DEVICE");
+    expect(section.querySelector(".gadget-chip-egress")).toBeNull();
   });
 
   it("keeps the receipt when the generated response has no countable rows", async () => {

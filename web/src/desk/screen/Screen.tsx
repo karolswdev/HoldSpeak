@@ -31,6 +31,7 @@ import { openTarget } from "./open";
 import { SCREEN_HOST, HandConfirmSlot, handOriginOfRef, handSourceProps, handTargetProps, useDropHand } from "../hand";
 import { useAtmospherePreference } from "../gl/atmospherePreference";
 import { resolveAtmosphere } from "../gl/atmosphereRegistry";
+import { GoHome } from "./GoHome";
 import "./screen.css";
 
 /** The A-1 screen measured at 1440 × 900 (a screen that has not laid out yet). */
@@ -144,7 +145,7 @@ export function Screen() {
       data-place-still={still ? "" : undefined}
       style={still ? ({ "--desk-place-still": `url("${still}")` } as React.CSSProperties) : undefined}
     >
-      <IconGrid
+      {compact ? <GoHome /> : <IconGrid
         label="Desk"
         marquee={marquee}
         onMarquee={(rect, grid) => {
@@ -214,7 +215,7 @@ export function Screen() {
             </div>
           );
         })}
-      </IconGrid>
+      </IconGrid>}
       {menu ? (
         <WorkMenu
           className="desk-world-menu"

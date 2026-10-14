@@ -17,10 +17,13 @@ vi.mock("../../lib/api", async () => {
   return { ...actual, apiFetch: (...args: unknown[]) => apiFetch(...args) };
 });
 const openProjectRoom = vi.fn();
+const openedSurfaces = vi.hoisted(() => ({ calls: [] as Array<[string, string | undefined]> }));
 vi.mock("../shell", async () => {
   const actual = await vi.importActual<typeof import("../shell")>("../shell");
   return {
-    ...actual, openSurface: () => true, openSurfaceOr: () => {},
+    ...actual,
+    openSurface: () => true,
+    openSurfaceOr: (key: string, _href: string, scope?: string) => { openedSurfaces.calls.push([key, scope]); },
     openProjectRoom: (...args: unknown[]) => openProjectRoom(...args),
   };
 });
@@ -83,6 +86,7 @@ beforeEach(() => {
   routes = {};
   apiFetch.mockReset();
   openProjectRoom.mockReset();
+  openedSurfaces.calls = [];
   apiFetch.mockImplementation((path: string) => {
     const hit = routes[path] ?? routes[path.split("?")[0]];
     return Promise.resolve(hit ? hit() : {});
@@ -174,8 +178,10 @@ describe("the palette finds the right row and opens it", () => {
     const input = await deck();
     await type(input, "numbat", MEMORY_DEBOUNCE_MS + 60);
     fireEvent.click(screen.getByRole("option", { name: /Finance migration sync/ }));
-    await vi.waitFor(() => expect(useDesk.getState().openPullout).toHaveBeenCalledWith("meeting:m-old-00"));
-    expect(order).toEqual(["refresh", "open"]);
+    await vi.waitFor(() => expect(openedSurfaces.calls).toContainEqual([
+      "review-meetings", "meeting:m-old-00",
+    ]));
+    expect(order).toEqual(["refresh"]);
     const held = useDesk.getState().items.meeting.find((m) => m.id === "m-old-00");
     // The window draws the object's own words.
     expect(held?.segments?.map((s) => s.text)).toEqual(["The numbat migration waits for finance."]);
@@ -249,6 +255,12 @@ describe("Enter on the first row opens the note it names", () => {
     unrouted.length = 0;
     apiFetch.mockImplementation((path: string, init?: RequestInit) => {
       const method = (init?.method ?? "GET").toUpperCase();
+      // The developed Thought window now reads the canonical Engines
+      // assignment while it paints its run line. This read is part of the
+      // open, and carries no write or new object.
+      if (method === "GET" && path === "/api/inference/assignments") {
+        return Promise.resolve({ rows: [], task_overrides: [] });
+      }
       const hit = method === "GET" ? table[path] ?? table[path.split("?")[0]] : undefined;
       if (!hit) {
         unrouted.push(`${method} ${path}`);

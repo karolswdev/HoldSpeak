@@ -49,16 +49,18 @@ const MENUS: { id: MenuId; label: string }[] = [
 
 /** PHILO-15 11 (B21, owner ruling 2026-10-07) — Go at 393. Rehearsal 1A
  * counted 22 rows with ⌘ keycaps on a phone and nine New kinds. Go is now
- * the Chair's four windows, then the Dock's places, then the projects, then
- * New ▸ with four kinds. Desk ▸, Object ▸ and Window ▸ are not on the phone:
- * the rest is in each window's own menu. 1440 keeps its four menus.
- * (Supersedes PHILO-13-17 C7 Q3, `Desk ▸ Object ▸ Window ▸`.) */
-export const PHONE_GO_CHAIR = [
-  "chair.window.needs",
-  "chair.window.brief",
-  "chair.window.week",
-  "chair.window.capture",
-] as const;
+ * the Chair's live rows, then the Dock's places, then the projects, then
+ * New ▸ with four kinds. Brief is the Today intelligence view; its old Chair
+ * window remains available to the desktop Window menu. Desk ▸, Object ▸ and
+ * Window ▸ are not on the phone: the rest is in each window's own menu. 1440
+ * keeps its four menus. (Supersedes PHILO-13-17 C7 Q3, `Desk ▸ Object ▸
+ * Window ▸`.) */
+export const PHONE_GO_CHAIR: readonly (readonly [string, string?])[] = [
+  ["chair.window.needs"],
+  ["desk.intelligence-brief", "Brief"],
+  ["chair.window.week"],
+  ["chair.window.capture"],
+];
 // PHILO-17 (doors): Settings left Go; it is in the HoldSpeak menu. Ask AI
 // is here because a phone has no ⌘I and no keyboard for ⌘K.
 export const PHONE_GO_PLACES: readonly (readonly [string, string])[] = [
@@ -68,7 +70,7 @@ export const PHONE_GO_PLACES: readonly (readonly [string, string])[] = [
   ["go.open-conductor", "Conductor"],
 ];
 export const PHONE_NEW: readonly (readonly [string, string])[] = [
-  ["desk.new-thought", "Thought"],
+  ["desk.new-thought", "Note"],
   ["desk.new-meeting", "Meeting"],
   ["desk.new-project", "Project"],
   ["desk.new-person", "Person"],
@@ -85,7 +87,7 @@ export function phoneGo(
   const rows = (ids: readonly (readonly [string, string?])[]) =>
     ids.map(([id, label]) => row(id, label)).filter((e): e is WorkMenuEntry => e !== null);
   const out: WorkMenuEntry[] = [
-    ...rows(PHONE_GO_CHAIR.map((id) => [id] as const)),
+    ...rows(PHONE_GO_CHAIR),
     { type: "sep", id: "go-places-sep" },
     ...rows(PHONE_GO_PLACES),
   ];
@@ -135,8 +137,10 @@ export function deskGo(
       })),
     });
   }
-  out.push({ type: "sep", id: "go-tools-sep" });
-  out.push({ type: "sub", id: "go-tools", label: "Tools", entries: rows(GO_TOOL_APPLICATIONS) });
+  if (GO_TOOL_APPLICATIONS.length) {
+    out.push({ type: "sep", id: "go-tools-sep" });
+    out.push({ type: "sub", id: "go-tools", label: "Tools", entries: rows(GO_TOOL_APPLICATIONS) });
+  }
   return out;
 }
 

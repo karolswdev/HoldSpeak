@@ -11,6 +11,7 @@ import { WingSlotContext } from "../../../../desk/surface/wings";
 import { useDesk } from "../../../../desk/store";
 import { EMPTY_ITEMS } from "../../../../desk/api";
 import { ProjectRoomCore } from "../../ProjectRoomCore";
+import { clearEngineCache } from "../../../../desk/hooks/useEngine";
 
 vi.mock("../../../../desk/ask", async () => {
   const actual =
@@ -260,6 +261,7 @@ function setupUpdatePosture(draft: Record<string, unknown>) {
 }
 
 beforeEach(() => {
+  clearEngineCache();
   useDesk.setState({
     windowsById: {},
     items: { ...EMPTY_ITEMS },
@@ -285,9 +287,6 @@ function chipLabels(testId: string): (string | null)[] {
 async function openEditor() {
   const btn = await screen.findByTestId("updates-verb");
   fireEvent.click(btn);
-  await waitFor(() => screen.getByTestId("update-posture"));
-  const items = await screen.findAllByTestId("update-list-item");
-  fireEvent.click(items[0]);
   await waitFor(() => screen.getByTestId("update-editor"));
 }
 

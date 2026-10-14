@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 761 (plus static mounts). iOS-consumed: 89. Web-consumed: 593.
+Routes: 763 (plus static mounts). iOS-consumed: 89. Web-consumed: 593.
 
 ## device_audio_ws
 
@@ -247,7 +247,7 @@ Routes: 761 (plus static mounts). iOS-consumed: 89. Web-consumed: 593.
 | GET | `/api/decision-records` | server only |
 | GET | `/api/decision-records/review` | web |
 | GET | `/api/decision-records/search` | web |
-| GET | `/api/decision-records/source/{source_type}/{source_id}` | web |
+| GET | `/api/decision-records/source/{source_type}/{source_id}` | server only |
 | GET | `/api/decision-records/work/{work_type}/{work_ref}` | web |
 | GET | `/api/decision-records/{record_id}` | web |
 | POST | `/api/decision-records/{record_id}/carry` | web |
@@ -448,6 +448,7 @@ Routes: 761 (plus static mounts). iOS-consumed: 89. Web-consumed: 593.
 | Method | Path | Consumers |
 |---|---|---|
 | GET | `/api/door` | web |
+| POST | `/api/door/items` | web |
 
 ## web.routes.follow_through
 
@@ -669,6 +670,7 @@ Routes: 761 (plus static mounts). iOS-consumed: 89. Web-consumed: 593.
 | GET | `/history` | server only |
 | GET | `/live` | server only |
 | GET | `/meetings` | server only |
+| GET | `/models` | server only |
 | GET | `/presence` | server only |
 | GET | `/profiles` | server only |
 | GET | `/settings` | server only |

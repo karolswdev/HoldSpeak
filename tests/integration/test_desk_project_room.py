@@ -645,6 +645,44 @@ def test_a_file_send_the_os_refuses_by_name_length_settles_unknown_not_delivered
             ("Team folder", "sent"), ("Long path folder", "unknown")], history
 
 
+def test_manual_model_draft_refuses_then_deliberate_retry_and_steward_falls_back(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The owner's press is strict; steward service calls keep the fallback."""
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.runtime import composition
+    from holdspeak.services.project_update_service import (
+        ProjectUpdateService, _ModelDraftFailed,
+    )
+
+    with _hub(tmp_path, monkeypatch) as hub:
+        pid = hub.ok("POST", "/api/projects", {"name": "Strict draft"})["project"]["id"]
+
+        def fail_model(self: Any, *args: Any, **kwargs: Any) -> Any:
+            raise _ModelDraftFailed("fixture model failure")
+
+        monkeypatch.setattr(ProjectUpdateService, "_draft_with_model", fail_model)
+        refused = hub.client.post(
+            f"/api/projects/{pid}/updates/draft",
+            json={"generator": "model", "command_id": "manual-strict-model"},
+        )
+        assert refused.status_code == 409, refused.text
+        assert refused.json()["code"] == "project_update_model_failed"
+
+        retried = hub.client.post(
+            f"/api/projects/{pid}/updates/draft",
+            json={"generator": "deterministic", "command_id": "manual-deterministic-retry"},
+        )
+        assert retried.status_code == 200, retried.text
+        assert retried.json()["update"]["generator"] == "deterministic"
+
+        fallback = composition.current().project_update_service.draft_update(
+            Principal(PrincipalKind.OWNER, TOKEN), pid, generator="model",
+        )
+        assert fallback["generator"] == "deterministic"
+        assert fallback["fallback_reason"] == "model_unavailable"
+
+
 # ── the merge receipt (PHILO-15 lane 17): the hub's own poll ─────────
 
 MERGE_PROJECT = "proj-philo1517abcd"
@@ -833,8 +871,11 @@ def test_the_merge_poll_tells_the_open_room_once_the_pr_merges_and_not_before(
         changes = data["changes"]
         # Not windows only, so the Room re-reads (isWindowsOnlyFrame is false).
         assert changes and all(c["kind"] != "windows" for c in changes), data
-        assert (data["kind"], data["op"], data["origin"]) == ("heartbeat", "pr_poll", "hub"), data
-        assert changes == [{"kind": "heartbeat", "id": "", "op": "pr_poll"}], changes
+        assert data["origin"] == "hub", data
+        # Completion names the actual changed row inside the poll's announce
+        # scope. That suppresses its generic heartbeat fallback; one frame
+        # still tells the open Room to re-read the merged flight.
+        assert changes == [{"kind": "action_item", "id": "action_philo15_17", "op": "done"}], changes
         assert next(f for f in hub.ok("GET", "/api/coders/sessions?include_ended=false")["flights"])["close"] == "closed"
 
 

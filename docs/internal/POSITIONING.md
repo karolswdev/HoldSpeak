@@ -182,13 +182,15 @@ left column is the name; do not alternate with the synonyms.
 | coders (live coding sessions awaiting you) | "agents" for this concept, "companions" (the word is retired: an agent is a persona you author; a coder is a live Claude or Codex session) |
 | the iPad app | "the companion", "the companion app" |
 | Interview (repeatable Thread mode) | "the onboarding wizard" for the entire capability; distinguish the Thought Workbench Interview pane |
-| Places (Floor environment picker) | "desktop themes" for this surface |
+| Note (editable work on the desk) | "Thought" for the same record |
+| Wallpaper (Settings background picker) | "Places", "Change places", "Environments" for this setting |
+| Accounts (Settings connections) | "Connections" for this setting |
 | Settle in (temporary quiet Desk view) | "saved focus layout" |
 | Threads (multi-turn desk conversations) | "chat", "chat app", "PersonaChat" |
 | Automations (the watch/reaction surface) | "event triggers", "webhooks", "watches" (except the Project-scoped Watches of Project Rooms) |
 | Watches (Project-scoped) | "event triggers", "monitors", "subscriptions" |
 | Resourceful (overnight bounded maintenance) | "maintenance mode", "idle work", "overnight tasks" |
-| the Concierge (Settings, Models) | "the door", "the packs", "model setup wizard" |
+| Engines (Settings model choices) | "Runs on", "the Concierge", "model setup wizard" |
 | the arrival (the desk's home screen) | "the Chair Door", "the board", "the dashboard" |
 | Speak (the voice-typing window) | "DictationCore", "the cockpit", "the voice panel" |
 | Meetings (the meetings window) | "HistoryCore", "the history page" |

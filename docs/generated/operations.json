@@ -2928,6 +2928,10 @@
               "null"
             ],
             "description": "Optional idempotency key. The same key with the same arguments returns the first result again; the same key with different arguments is refused with idempotency_conflict."
+          },
+          "strict_model_failure": {
+            "type": "boolean",
+            "description": "Refuse a manual model draft when model generation fails."
           }
         },
         "required": [

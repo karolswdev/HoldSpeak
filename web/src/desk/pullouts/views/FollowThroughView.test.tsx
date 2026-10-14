@@ -1,7 +1,7 @@
 // HS-150-07 -- FollowThroughView: person chip + staleness for mapped owners,
 // bare initials for unmapped.
 
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FollowThroughView } from "./FollowThroughView";
 import HONEST_BOARD from "../../../test/wire/follow-through-board.honest-faces.wire.json";
@@ -11,6 +11,7 @@ import HONEST_BOARD from "../../../test/wire/follow-through-board.honest-faces.w
 // ---------------------------------------------------------------------------
 
 const apiFetch = vi.hoisted(() => vi.fn());
+const openSourceRef = vi.hoisted(() => vi.fn());
 
 vi.mock("../../../lib/api", () => ({
   apiFetch,
@@ -30,6 +31,10 @@ vi.mock("../../intelligenceAttention", async () => {
 
 vi.mock("../../shell", () => ({
   openSurfaceOr: vi.fn(),
+}));
+
+vi.mock("../../surface/citations", () => ({
+  openSourceRef,
 }));
 
 // ---------------------------------------------------------------------------
@@ -75,6 +80,7 @@ function makeBoard({
 describe("FollowThroughView", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.localStorage.removeItem("hs.follow-through.done-receipt");
   });
 
   it("shows person chip with display name for mapped owner", async () => {
@@ -133,6 +139,65 @@ describe("FollowThroughView", () => {
 
     // Only one person chip (the mapped one).
     expect(screen.queryAllByTestId("follow-through-person-chip")).toHaveLength(1);
+  });
+
+  it("opens a verified note source and keeps a decision id as a decision", async () => {
+    const note = {
+      id: "card-note", text: "Update the note", owner: null, due: null, source: "action_item",
+      open_ref: "note:note-7", decision_id: null,
+      provenance: { available: false, meeting_id: null, segment_text: null, segment_speaker: null, segment_start: null },
+    };
+    const decision = {
+      id: "card-decision", text: "Use the new plan", owner: null, due: null, source: "decision",
+      decision_id: "decision-7",
+      provenance: { available: false, meeting_id: "meeting-7", segment_text: null, segment_speaker: null, segment_start: null, moment: { segment_index: 3 } },
+    };
+    const meeting = {
+      id: "card-meeting", text: "Confirm the date", owner: null, due: null, source: "action_item",
+      provenance: { available: false, meeting_id: "meeting-8", segment_text: null, segment_speaker: null, segment_start: null, moment: { segment_index: 4 } },
+    };
+    apiFetch.mockResolvedValueOnce({ now: [note, decision, meeting], waiting: [], unassigned: [], overdue: [] });
+    render(<FollowThroughView />);
+
+    await screen.findByText("Update the note");
+    fireEvent.click(screen.getByRole("button", { name: "Open source note for Update the note" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open decision for Use the new plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open meeting for Confirm the date" }));
+
+    expect(openSourceRef).toHaveBeenNthCalledWith(1, "note:note-7");
+    expect(openSourceRef).toHaveBeenNthCalledWith(2, "decision:decision-7");
+    expect(openSourceRef).toHaveBeenNthCalledWith(3, "meeting:meeting-8?view=review&segment=4");
+    expect(apiFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the completed card id in the Done receipt and reopens that card on Undo", async () => {
+    const card = {
+      id: "card-done", text: "Publish the update", owner: null, due: null, source: "action_item",
+      provenance: { available: false, meeting_id: "meeting-3", segment_text: null, segment_speaker: null, segment_start: null },
+    };
+    const board = { now: [card], waiting: [], unassigned: [], overdue: [] };
+    const empty = { now: [], waiting: [], unassigned: [], overdue: [] };
+    apiFetch
+      .mockResolvedValueOnce(board)
+      .mockResolvedValueOnce({ card_id: card.id, verb: "done" })
+      .mockResolvedValueOnce(empty)
+      .mockResolvedValueOnce(empty)
+      .mockResolvedValueOnce({ card_id: card.id, verb: "reopen" })
+      .mockResolvedValueOnce(board);
+    const view = render(<FollowThroughView />);
+
+    const row = await screen.findByRole("button", { name: "Publish the update. meeting follow-through." });
+    fireEvent.click(row);
+    fireEvent.click(screen.getByRole("button", { name: "Mark done" }));
+
+    await waitFor(() => expect(screen.getByTestId("follow-through-done-receipt")).toHaveTextContent("Publish the update"));
+    view.unmount();
+    render(<FollowThroughView />);
+    await screen.findByTestId("follow-through-done-receipt");
+    fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/api/follow-through/complete", {
+      method: "POST", json: { card_id: card.id, verb: "reopen", payload: {} },
+    }));
   });
 });
 

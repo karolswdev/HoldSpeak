@@ -189,12 +189,12 @@ describe("Go at 393 is the owner's short list (PHILO-15 11, B21; supersedes C7 Q
     const row = (id: string, label?: string): WorkMenuEntry => ({ type: "item", id, label: label ?? id, onSelect: () => {} });
     const out = phoneGo(row, [{ id: "p-1", name: "Ledger cutover" }], () => {});
     expect(out.map((e) => (e.type === "sep" ? "—" : e.label))).toEqual([
-      "chair.window.needs", "chair.window.brief", "chair.window.week", "chair.window.capture", "—",
+      "chair.window.needs", "Brief", "chair.window.week", "chair.window.capture", "—",
       // PHILO-17 (doors): Settings is in the HoldSpeak menu, not Go.
       "Meetings", "Ask AI", "People", "Conductor", "—",
       "Ledger cutover", "—", "New"]);
     const nu = out[out.length - 1] as Extract<WorkMenuEntry, { type: "sub" }>;
-    expect(nu.entries.map((e) => (e.type === "sep" ? "—" : e.label))).toEqual(["Thought", "Meeting", "Project", "Person"]);
+    expect(nu.entries.map((e) => (e.type === "sep" ? "—" : e.label))).toEqual(["Note", "Meeting", "Project", "Person"]);
   });
 
   it("renders on the real menu bar: no Desk ▸ Object ▸ Window ▸, and New opens as a menu", () => {
@@ -203,11 +203,11 @@ describe("Go at 393 is the owner's short list (PHILO-15 11, B21; supersedes C7 Q
     const menu = screen.getByRole("menu", { name: "Go menu" });
     const rows = within(menu).getAllByRole("menuitemcheckbox").slice(0, 4);
     expect(rows.map((h) => h.querySelector(".desk-menu-label")?.textContent?.trim())).toEqual(
-      ["Needs you", "Brief", "The week", "Capture"]);
+      ["Needs you", "The week", "Capture"]);
     const heads = within(menu).getAllByRole("menuitem").filter((h) => h.getAttribute("aria-haspopup") === "menu");
     expect(heads.map((h) => h.querySelector(".desk-menu-label")?.textContent?.trim())).toEqual(["New"]);
     fireEvent.click(heads[0]);
-    expect(within(menu).getByRole("menuitem", { name: /Thought/ })).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: /Note/ })).toBeInTheDocument();
   });
 
   it("keeps all four menus flat at 1440 (the control)", () => {

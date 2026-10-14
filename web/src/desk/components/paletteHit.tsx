@@ -73,7 +73,21 @@ function questionMarks(plain: string, query: string): boolean[] {
  * then the marks, only outside a marker. A marker is always whole and never
  * marked. */
 export function snippetParts(snippet: string | undefined, query: string, title = ""): SnippetPart[] {
-  const flat = String(snippet ?? "").replace(/\s+/g, " ").trim();
+  let flat = String(snippet ?? "").replace(/\s+/g, " ").trim();
+  // Memory sources can return a serialized result object. The palette is an
+  // object surface, so show its useful text field instead of leaking the raw
+  // JSON shape into the row.
+  if (flat.startsWith("{") && flat.endsWith("}")) {
+    try {
+      const parsed = JSON.parse(flat) as Record<string, unknown>;
+      const value = ["text", "summary", "snippet", "body", "body_markdown", "decision_markdown"]
+        .map((key) => parsed[key])
+        .find((candidate): candidate is string => typeof candidate === "string" && candidate.trim().length > 0);
+      if (value) flat = value.replace(/\s+/g, " ").trim();
+    } catch {
+      // A plain snippet which only begins with a brace remains searchable.
+    }
+  }
   if (!flat) return [];
   let { plain, served } = readServed(flat);
   // A memory chunk opens with its source's title (the chunker writes it);

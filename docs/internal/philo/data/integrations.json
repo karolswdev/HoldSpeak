@@ -508,7 +508,7 @@
           }
         },
         {
-          "path": "tests/unit/test_mcp_phase133_ask.py",
+          "path": "tests/unit/test_mcp_ask.py",
           "node": "test_dispatch_ask_run",
           "assertion": "Ask dispatch returns output, model and egress receipt fields.",
           "execution": {
@@ -751,7 +751,7 @@
           }
         },
         {
-          "path": "tests/unit/test_mcp_phase133_coder_memory.py",
+          "path": "tests/unit/test_mcp_coder_memory.py",
           "node": "test_memory_search_dispatches",
           "assertion": "The MCP memory family dispatches the query under the owner principal.",
           "execution": {
@@ -2506,7 +2506,7 @@
       ],
       "tests": [
         {
-          "path": "tests/unit/test_philo11_slack_channel.py",
+          "path": "tests/unit/test_channel_slack.py",
           "node": "test_multibyte_text_limit_counts_characters_in_serialize_and_plan",
           "assertion": "The real serializer and plan accept 39,000 characters and refuse 39,001 with size and limit."
         },

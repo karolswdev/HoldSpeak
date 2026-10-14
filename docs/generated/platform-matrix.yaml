@@ -1130,7 +1130,7 @@
         "web/src/components/AmbientLayer.tsx",
         "web/src/desk/chair/ChairHome.tsx",
         "web/src/desk/components/SurfaceWindows.tsx",
-        "web/src/desk/components/DeskListView.tsx",
+        "web/src/desk/_parked/floor/components/DeskListView.tsx",
         "web/src/styles/react-app.css",
         "web/src/desk/chair/chair.css"
       ],
@@ -1148,7 +1148,7 @@
         "web/src/components/AmbientLayer.tsx",
         "web/src/desk/chair/ChairHome.tsx",
         "web/src/desk/components/SurfaceWindows.tsx",
-        "web/src/desk/components/DeskListView.tsx",
+        "web/src/desk/_parked/floor/components/DeskListView.tsx",
         "web/src/styles/react-app.css",
         "web/src/desk/chair/chair.css"
       ],
@@ -1166,7 +1166,7 @@
         "web/src/components/AmbientLayer.tsx",
         "web/src/desk/chair/ChairHome.tsx",
         "web/src/desk/components/SurfaceWindows.tsx",
-        "web/src/desk/components/DeskListView.tsx",
+        "web/src/desk/_parked/floor/components/DeskListView.tsx",
         "web/src/styles/react-app.css",
         "web/src/desk/chair/chair.css"
       ],
@@ -1184,7 +1184,7 @@
         "web/src/components/AmbientLayer.tsx",
         "web/src/desk/chair/ChairHome.tsx",
         "web/src/desk/components/SurfaceWindows.tsx",
-        "web/src/desk/components/DeskListView.tsx",
+        "web/src/desk/_parked/floor/components/DeskListView.tsx",
         "web/src/styles/react-app.css",
         "web/src/desk/chair/chair.css"
       ],
@@ -1202,7 +1202,7 @@
         "web/src/components/AmbientLayer.tsx",
         "web/src/desk/chair/ChairHome.tsx",
         "web/src/desk/components/SurfaceWindows.tsx",
-        "web/src/desk/components/DeskListView.tsx",
+        "web/src/desk/_parked/floor/components/DeskListView.tsx",
         "web/src/styles/react-app.css",
         "web/src/desk/chair/chair.css"
       ],
@@ -3190,7 +3190,7 @@
       "platform": "aipi",
       "source_ids": [
         "web/src/desk/dropMatrix.ts",
-        "web/src/desk/components/GlassDropLayer.tsx"
+        "web/src/desk/_parked/floor/components/GlassDropLayer.tsx"
       ],
       "status": "partial"
     },
@@ -3201,7 +3201,7 @@
       "platform": "ipad",
       "source_ids": [
         "web/src/desk/dropMatrix.ts",
-        "web/src/desk/components/GlassDropLayer.tsx"
+        "web/src/desk/_parked/floor/components/GlassDropLayer.tsx"
       ],
       "status": "partial"
     },
@@ -3212,7 +3212,7 @@
       "platform": "linux_wayland",
       "source_ids": [
         "web/src/desk/dropMatrix.ts",
-        "web/src/desk/components/GlassDropLayer.tsx"
+        "web/src/desk/_parked/floor/components/GlassDropLayer.tsx"
       ],
       "status": "partial"
     },
@@ -3223,7 +3223,7 @@
       "platform": "linux_x11",
       "source_ids": [
         "web/src/desk/dropMatrix.ts",
-        "web/src/desk/components/GlassDropLayer.tsx"
+        "web/src/desk/_parked/floor/components/GlassDropLayer.tsx"
       ],
       "status": "partial"
     },
@@ -3234,7 +3234,7 @@
       "platform": "macos",
       "source_ids": [
         "web/src/desk/dropMatrix.ts",
-        "web/src/desk/components/GlassDropLayer.tsx"
+        "web/src/desk/_parked/floor/components/GlassDropLayer.tsx"
       ],
       "status": "partial"
     },
@@ -3516,7 +3516,7 @@
       "source_ids": [
         "holdspeak/services/people_service.py"
       ],
-      "status": "partial"
+      "status": "built_unreleased"
     },
     {
       "availability": "unknown",
@@ -3526,7 +3526,7 @@
       "source_ids": [
         "holdspeak/services/people_service.py"
       ],
-      "status": "partial"
+      "status": "built_unreleased"
     },
     {
       "availability": "unknown",
@@ -3536,7 +3536,7 @@
       "source_ids": [
         "holdspeak/services/people_service.py"
       ],
-      "status": "partial"
+      "status": "built_unreleased"
     },
     {
       "availability": "unknown",
@@ -3546,7 +3546,7 @@
       "source_ids": [
         "holdspeak/services/people_service.py"
       ],
-      "status": "partial"
+      "status": "built_unreleased"
     },
     {
       "availability": "unknown",
@@ -3556,7 +3556,62 @@
       "source_ids": [
         "holdspeak/services/people_service.py"
       ],
-      "status": "partial"
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "desk.note.task",
+      "id": "desk.note.task@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/web/routes/door.py",
+        "web/src/desk/thought-workspace/TaskWell.tsx"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "desk.note.task",
+      "id": "desk.note.task@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/web/routes/door.py",
+        "web/src/desk/thought-workspace/TaskWell.tsx"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "desk.note.task",
+      "id": "desk.note.task@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/web/routes/door.py",
+        "web/src/desk/thought-workspace/TaskWell.tsx"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "desk.note.task",
+      "id": "desk.note.task@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/web/routes/door.py",
+        "web/src/desk/thought-workspace/TaskWell.tsx"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "desk.note.task",
+      "id": "desk.note.task@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/web/routes/door.py",
+        "web/src/desk/thought-workspace/TaskWell.tsx"
+      ],
+      "status": "built_unreleased"
     },
     {
       "availability": "not_applicable",

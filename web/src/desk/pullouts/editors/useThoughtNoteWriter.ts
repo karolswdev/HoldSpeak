@@ -344,6 +344,10 @@ export function useThoughtNoteWriter({
     draft: draftState,
     edit,
     flush,
+    /** The cursor belonging to the last authoritative write. Commands that
+     * follow a flush must read this ref instead of the projection captured
+     * when the window rendered. */
+    getWorkspaceCursor: () => cursor.current,
     release,
     retry,
     pause,

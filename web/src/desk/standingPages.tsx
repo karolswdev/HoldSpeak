@@ -152,7 +152,7 @@ export function StandingPagesSection({
   return (
     <div data-testid="standing-pages">
       <SurfaceSection
-        label={`Standing pages · ${pages.length}`}
+        label={pages.length > 0 ? `Standing pages · ${pages.length}` : "Standing pages"}
         className="standing-pages-section"
         actions={by ? <span className="standing-pages-model" data-testid="standing-pages-model">{by}</span> : undefined}
       >

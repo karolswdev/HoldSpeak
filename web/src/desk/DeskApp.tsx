@@ -23,7 +23,6 @@ import { DeliveryDossierWindow } from "./components/DeliveryDossierWindow";
 import { DeliveryTerminalWindow } from "./components/DeliveryTerminalWindow";
 import { NewWorkbenchChooser } from "./components/NewWorkbenchChooser";
 import { ScheduleCreateWindow } from "./components/ScheduleCreateWindow";
-import { AttentionDrawer } from "./components/AttentionDrawer";
 import { AskPanel } from "./components/AskPanel";
 import { HandSheet } from "./components/HandSheet";
 import { DragLayer } from "./hand";
@@ -275,7 +274,6 @@ function DeskFaces() {
       {!arrivalRequired && <DrawerWindows />}
       {!arrivalRequired && <ConductorWindows />}
       {!arrivalRequired && <LaneWindow />}
-      {!arrivalRequired && <AttentionDrawer />}
       {/* PHILO-17 (Astra r2): the delete receipt's seat (the Floor's, #665)
           is desk-level, fixed above the dock and above every window, so its
           Undo is in view wherever Delete was pressed (a Chair window or a

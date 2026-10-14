@@ -22,11 +22,14 @@ export type PrepAgendaItem = {
 
 export type PrepMeetingAction = {
   id: string;
-  meeting_id: string;
+  meeting_id: string | null;
   task: string;
   owner: string | null;
   due: string | null;
   delegated_at: string | null;
+  status?: string | null;
+  source_type?: string | null;
+  source_ref?: string | null;
   meeting_title?: string | null;
   meeting_started_at?: string;
   calendar_event_id?: string | null;

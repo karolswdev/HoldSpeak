@@ -1,24 +1,18 @@
-import { createPortal } from "react-dom";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { apiFetch, readableError, type JsonRecord } from "../lib/api";
 import { useRuntimeBus, useRuntimeFrame } from "../runtime/RuntimeBus";
 import { useProjections } from "../desk/projections";
 import {
-  dismissAftercare,
   publishAftercare,
   publishAftercareHost,
   refreshAftercare,
   useAftercare,
   type AftercareHost,
 } from "../desk/intelligenceAttention";
-import { useChairWindows } from "../desk/chair/chairWindows";
-import { openSourceRef } from "../desk/surface/citations";
 import { humanizeWireValue } from "../lib/productLanguage";
 import { Button } from "./signal/Signal";
-import { AddToProject } from "../desk/AddToProject";
 import { LampGadget } from "../desk/surface/gadgets";
 import { SurfaceState } from "../desk/surface/Surface";
-import { useCompactViewport } from "../desk/useCompactViewport";
 import { useOnDeskChanged } from "../desk/useDeskChangedRefresh";
 import {
   handleWorkbenchRunStart,
@@ -166,21 +160,10 @@ function QueueHud() {
 function AftercareNote() {
   const { subscribe } = useRuntimeBus();
   const signal = useAftercare();
-  const compact = useCompactViewport();
   const aftercareSlot = useAftercareSlot(Boolean(signal), signal?.meetingId ?? null);
-  // PHILO-14 A1c: the Chair says itself that it is the screen of objects.
-  const chairScreen = useChairWindows((state) => state.screenMounted);
-  const host: AftercareHost = !signal
-    ? null
-    : aftercareSlot
-      ? aftercareSlot.dataset.aftercareSlot === "before-capture"
-        ? "capture"
-        : aftercareSlot.dataset.aftercareWindowSlot
-          ? "window"
-          : "floor"
-      : compact || chairScreen
-        ? null
-        : "fixed";
+  // PHILO-17: aftercare is a transient bell line. It never inserts a card
+  // over the current work or claims a Chair/window slot.
+  const host: AftercareHost = null;
   useLayoutEffect(() => {
     publishAftercareHost(host);
   }, [host]);
@@ -228,58 +211,7 @@ function AftercareNote() {
     scrolledSlot.current = { signalKey, slot: aftercareSlot };
     aftercareSlot.scrollIntoView?.({ block: "nearest", behavior: "auto" });
   }, [aftercareSlot, signal]);
-  if (!signal) return null;
-  const countLine = [
-    signal.proposalTotal > 0 ? `${signal.proposalTotal} to review` : null,
-    signal.openTotal > 0 ? `${signal.openTotal} open` : null,
-    signal.decidedTotal > 0 ? `${signal.decidedTotal} decided` : null,
-  ].filter((part): part is string => part !== null).join(" · ");
-  const card = (
-    <aside
-      className={`ambient-preview ambient-aftercare ${
-        aftercareSlot ? "ambient-aftercare-flow" : "ambient-aftercare-fixed"
-      }`}
-      aria-label="Meeting aftercare"
-    >
-      <span className="signal-eyebrow">Meeting ready</span>
-      <strong>{signal.title}</strong>
-      {countLine ? <p>{countLine}</p> : null}
-      {/* PHILO-15 B56 (Astra r1): the hub could not count; the card stays. */}
-      {signal.countUnread ? (
-        <span className="surface-token" data-chip data-testid="aftercare-count-unread">COUNT · NOT READ</span>
-      ) : null}
-      <div className="button-row">
-        {/* PHILO-15 08 (B13): the verb opens the meeting's Review wing,
-            where the proposals are; with none, it is not offered. */}
-        {signal.proposalTotal > 0 ? (
-          <Button
-            dense
-            variant="primary"
-            data-testid="aftercare-open-proposals"
-            onClick={() => {
-              openSourceRef(`meeting:${signal.meetingId}?view=review`);
-              dismissAftercare();
-            }}
-          >
-            Open proposals
-          </Button>
-        ) : null}
-        {/* PHILO-15 16 (B37): the ready meeting joins a Project here. */}
-        <AddToProject meetingId={signal.meetingId} />
-        <Button dense variant="ghost" onClick={() => dismissAftercare()}>
-          Dismiss
-        </Button>
-      </div>
-    </aside>
-  );
-  if (aftercareSlot) return createPortal(card, aftercareSlot);
-  // PHILO-13-17 (C7, Q4b): at 393 on the Chair a card with no slot waits for
-  // its Capture window (in the ring until closed); it never floats over work.
-  // PHILO-14 A1c (Muad'Dib's ruling): the same at 1440 on the Chair screen —
-  // Capture opens for the card (ChairDesk), and a card whose Capture he
-  // closed waits for it; it never floats over another window.
-  if (compact || chairScreen) return null;
-  return card;
+  return null;
 }
 
 /** The FRONT desk window's own aftercare slot, or null. PHILO-13-17 (C7;

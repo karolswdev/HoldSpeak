@@ -9,6 +9,12 @@
 /** The name a new thought carries before it has words. */
 export const NEW_THOUGHT_TITLE = "Thought";
 
+/** The first dictation belongs to its owner. Give it the first six words so
+ * it has a useful name when it enters the Desk. */
+export function firstSixWords(body: string): string {
+  return body.trim().split(/\s+/).filter(Boolean).slice(0, 6).join(" ");
+}
+
 const MAX_TITLE = 60;
 const LINE_MARK = /^\s*(?:#{1,6}\s+|[-*+>]\s+|\d+[.)]\s+|\[[ xX]\]\s+)*/;
 

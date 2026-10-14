@@ -1849,6 +1849,7 @@ PROJECT_DRAFT_UPDATE = OperationDescriptor(
             "project_id": _PROJECT_ID,
             "generator": {"type": ["string", "null"], "description": "Optional: deterministic (default) or model."},
             "command_id": _COMMAND_ID,
+            "strict_model_failure": {"type": "boolean", "description": "Refuse a manual model draft when model generation fails."},
         },
         "required": ["project_id"],
         "additionalProperties": False,

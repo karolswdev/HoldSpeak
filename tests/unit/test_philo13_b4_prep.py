@@ -105,6 +105,11 @@ def _save_meeting(
             ),
         )
     )
+    # This prep fixture represents reviewed obligations. Extraction alone is
+    # deliberately insufficient for an action to appear in a person's prep.
+    from holdspeak.services.meeting_service import MeetingService
+    for item in db.meetings.list_action_items(meeting_id=meeting_id):
+        MeetingService(db).review_action_item(OWNER, item.id, {"review_state": "accepted"})
 
 
 def test_brief_suggests_alias_event_without_linking_and_returns_next_prep_data(

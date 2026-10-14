@@ -807,10 +807,10 @@ describe("NeedsDrawer on the interior kit (Phase 16)", () => {
       .toEqual(["Vendor call"]);
   });
 
-  it("every row wears its kind plate (CC, CX, PR, ACT, DEC, MTG)", async () => {
+  it("every row wears its kind plate in plain words", async () => {
     await mount();
     const plates = [...document.querySelectorAll("li.needs-row [data-testid='kit-kind']")].map((n) => n.textContent);
-    expect(plates).toEqual(["CC", "CX", "PR", "ACT", "DEC", "ACT", "ACT", "MTG"]);
+    expect(plates).toEqual(["CC", "CX", "PR", "Action", "Decision", "Action", "Action", "Meeting"]);
   });
 });
 

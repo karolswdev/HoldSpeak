@@ -95,6 +95,8 @@ export function humanizeError(err: unknown): string {
 export interface AskRunResult {
   ok: boolean;
   output: string;
+  /** Closed route reason for a failed run; empty on success. */
+  reason?: string;
   /** HS-200-41: the identity this run was journaled under. The hub has always
    * returned it (the kernel's materializer stamps it onto the published
    * projection); the client simply never read it. It is the key back to a
@@ -166,22 +168,26 @@ export async function runAsk(opts: {
    * answer can be found again after a restart. Absent, the hub mints one. */
   invocationId?: string;
 }): Promise<AskRunResult> {
-  const fail = (output: string, refusalCode = "", route: unknown = null): AskRunResult => ({
-    ok: false,
-    output,
-    route,
-    invocationId: "",
-    refusalCode,
-    egress: null,
-    model: "",
-    profileId: null,
-    inferenceTarget: null,
-    actualPlacement: null,
-    contextIds: [],
-    contextTitles: [],
-    groundingClaims: [],
-    groundingReceipt: null,
-  });
+  const fail = (output: string, refusalCode = "", route: unknown = null, reason = ""): AskRunResult => {
+    const result: AskRunResult = {
+      ok: false,
+      output,
+      route,
+      invocationId: "",
+      refusalCode,
+      egress: null,
+      model: "",
+      profileId: null,
+      inferenceTarget: null,
+      actualPlacement: null,
+      contextIds: [],
+      contextTitles: [],
+      groundingClaims: [],
+      groundingReceipt: null,
+    };
+    if (reason) result.reason = reason;
+    return result;
+  };
   try {
     const res = await apiRequest("/api/ask", {
       method: "POST",
@@ -221,6 +227,10 @@ export async function runAsk(opts: {
         data && typeof data === "object" && typeof data.code === "string"
           ? data.code
           : "";
+      const reason =
+        data && typeof data === "object" && typeof data.reason === "string"
+          ? data.reason
+          : "did_not_answer";
       return fail(
         error
           ? unknownIds.length
@@ -229,6 +239,7 @@ export async function runAsk(opts: {
           : humanizeError(res),
         code,
         data && typeof data === "object" ? data.route ?? null : null,
+        reason,
       );
     }
     return parseAskResult(data);

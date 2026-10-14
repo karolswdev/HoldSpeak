@@ -87,11 +87,7 @@ function renderList() {
 }
 
 describe("PHILO-13-05 close means gone", () => {
-  for (const [opener, title] of [
-    ["meeting:m1", "Q3 kickoff"],
-    ["persona:r1", "Scout"],
-    ["m1", "Q3 kickoff"],
-  ] as const) {
+  for (const [opener, title] of [["persona:r1", "Scout"]] as const) {
     it(`a window opened as "${opener}" leaves the store and the DOM on Close`, () => {
       renderList();
       act(() => useDesk.getState().openPullout(opener));
@@ -102,16 +98,14 @@ describe("PHILO-13-05 close means gone", () => {
     });
   }
 
-  it("the store, the frame and the stacking order agree on one id", () => {
-    renderList();
+  it("a meeting ref opens the hosted Meetings surface instead of a pullout", () => {
     act(() => useDesk.getState().openPullout("meeting:m1"));
-    expect(screen.getByRole("button", { name: "Close Q3 kickoff" })).toBeTruthy();
-    expect(useDesk.getState().panelOrder).toContain("pullout:meeting:m1");
-    expect(useDesk.getState().panelOrder).not.toContain("pullout:m1");
-    // Escape-style close (no id) closes the front card, which is this one.
-    act(() => useDesk.getState().closePullout());
     expect(useDesk.getState().pullouts).toEqual([]);
-    expect(screen.queryByRole("button", { name: "Close Q3 kickoff" })).toBeNull();
+    expect(useDesk.getState().windowsById["surface-meetings"]).toMatchObject({
+      applicationKey: "review-meetings",
+      scope: "meeting:m1",
+    });
+    expect(useDesk.getState().panelOrder).toContain("surface-meetings");
   });
 
   it("deleting an object opened by its qualified ref drops its card", async () => {
@@ -138,13 +132,11 @@ describe("PHILO-13-05 close means gone", () => {
     expect(screen.queryByRole("button", { name: "Close Refactor run" })).toBeNull();
   });
 
-  it("a meeting resolved as deleted closes its card opened as meeting:m1", async () => {
-    renderList();
+  it("closing a hosted meeting surface removes its scoped record", () => {
     act(() => useDesk.getState().openPullout("meeting:m1"));
-    // PHILO-17: the meeting window reads its record first (lazy body).
-    fireEvent.click(await screen.findByRole("button", { name: "Resolve as deleted" }, { timeout: 4000 }));
+    act(() => useDesk.getState().closeSurfaceWindow("review-meetings"));
     expect(useDesk.getState().pullouts).toEqual([]);
-    expect(screen.queryByRole("button", { name: "Close Q3 kickoff" })).toBeNull();
+    expect(useDesk.getState().windowsById["surface-meetings"]).toBeUndefined();
   });
 });
 

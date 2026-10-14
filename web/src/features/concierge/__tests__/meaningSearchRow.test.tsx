@@ -42,7 +42,7 @@ describe("MeaningSearchRow", () => {
     mocks.apiFetch.mockResolvedValue(status({ egress: null, model: { ...status({}).model, on_device: true } }));
     render(<ul><MeaningSearchRow /></ul>);
     const row = await screen.findByTestId("concierge-meaning-search");
-    expect(row.textContent).toContain("THIS DEVICE");
+    expect(row.textContent).not.toContain("THIS DEVICE");
     expect(row.textContent).not.toContain("HUGGINGFACE.CO");
     expect(row.textContent).not.toContain("DOWNLOAD");
   });

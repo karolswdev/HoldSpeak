@@ -132,3 +132,39 @@ Keep it to three sections, one paragraph each.
 
 Desks seeded before this change keep their notes (the seed never changes an
 object it made, except through Reset to seed).
+
+## PHILO-17 words seed reduction (2026-10-13)
+
+The fresh desk now carries `Start here` and the `Weekly update` prompt only.
+These records were in earlier fresh-desk manifests. They remain additive and
+are never removed by ordinary seed. Their original IDs and text are kept here
+for old desks and for a deliberate restore decision.
+
+```yaml
+- id: hs-seed-about-me
+  title: About me
+  body_markdown: |
+    What would be useful to share when you explicitly attach this context?
+
+    - Name or form of address: [example: ]
+    - Work or life context: [example: ]
+- id: hs-seed-current-priorities
+  title: Current priorities
+  body_markdown: |
+    What deserves attention right now?
+
+    - Priority: [example: ]
+    - Why it matters: [example: ]
+    - Next step: [example: ]
+- id: hs-seed-prompt-one-on-one-prep
+  title: 1:1 prep
+  body_markdown: |
+    Before a 1:1, open the person in People and select Prep. Prep shows the agenda, the open actions and the next 1:1.
+
+    - [Open People](door:open-people)
+- id: hs-seed-everyday-context
+  name: Everyday context
+  member_ids:
+    - hs-seed-about-me
+    - hs-seed-current-priorities
+```

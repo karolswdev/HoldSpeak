@@ -48,7 +48,7 @@ TOOLS: list[dict[str, Any]] = [
                 },
                 "source_type": {
                     "type": "string",
-                    "enum": ["meeting", "thread"],
+                    "enum": ["meeting", "thread", "thought"],
                     "description": "Source kind; chat defaults to thread.",
                 },
                 "source_ref": {

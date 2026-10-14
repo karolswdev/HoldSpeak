@@ -630,6 +630,8 @@ def fit_reflect(
     operation_id: str,
     reserved_output_tokens: int,
     build: Callable[[MemoryContext], Mapping[str, Any]],
+    subject_kind: str | None = None,
+    subject_id: str | None = None,
 ) -> MemoryContext:
     """The largest leading part of ``memory`` whose payload (``build``) fits
     the route admission would freeze for this operation now: memory never
@@ -643,6 +645,8 @@ def fit_reflect(
         payload=build(candidate),
         reserved_output_tokens=reserved_output_tokens,
         invocation_id=operation_id,
+        subject_kind=subject_kind,
+        subject_id=subject_id,
     ) >= 0)
 
 

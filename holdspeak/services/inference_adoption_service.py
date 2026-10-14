@@ -857,6 +857,8 @@ class RoutedInferenceCoordinator:
         payload: Mapping[str, Any],
         reserved_output_tokens: int,
         invocation_id: str | None = None,
+        subject_kind: str | None = None,
+        subject_id: str | None = None,
     ) -> int:
         """``payload_room`` against the route admission would freeze NOW.
 
@@ -865,7 +867,11 @@ class RoutedInferenceCoordinator:
         their memory before they admit.
         """
         route = self.plans.resolve_route_plan(
-            ROUTE_PLANNING_AUTHORITY, capability_id=capability_id, invocation_id=invocation_id,
+            ROUTE_PLANNING_AUTHORITY,
+            capability_id=capability_id,
+            invocation_id=invocation_id,
+            subject_kind=subject_kind,
+            subject_id=subject_id,
         )
         return self._room(route, capability_id, operation_id, payload, reserved_output_tokens)
 
@@ -3018,6 +3024,54 @@ class RoutedInferenceCoordinator:
         existing = assignments.migration_marker(principal, family=MIGRATION_FAMILY)
         if existing is not None:
             return {**existing, "status": "migrated", "legacy_config_read": False}
+
+        # An owner may have selected all four routes in the assignment surface
+        # before the family marker was written.  That selection is already the
+        # authority: migrate its effective entries and do not infer a local
+        # target from Config.  Incompatible selections remain in place so the
+        # owner can repair them from the same surface.
+        assigned_routes: dict[str, dict[str, Any]] = {}
+        for capability_id in (
+            "thought.interview", "ask.answer", "speech.intent_classify", "speech.rewrite",
+        ):
+            resolved = assignments.resolve_effective(
+                principal, capability_id=capability_id,
+            )
+            if resolved.get("status") not in {"assigned", "no_compatible_assignment"}:
+                assigned_routes = {}
+                break
+            entries = ((resolved.get("assignment") or {}).get("entries") or [])
+            if not entries:
+                assigned_routes = {}
+                break
+            assigned_routes[capability_id] = {
+                "entries": [
+                    {
+                        "profile_id": str(entry.get("profile_id") or ""),
+                        "profile_revision": int(entry.get("profile_revision") or 0),
+                    }
+                    for entry in entries
+                ],
+                "status": str(resolved.get("status") or ""),
+            }
+        if len(assigned_routes) == 4 and all(
+            item["entries"] and all(
+                entry["profile_id"] and entry["profile_revision"] > 0
+                for entry in item["entries"]
+            )
+            for item in assigned_routes.values()
+        ):
+            marker = assignments.migrate_capability_assignments_atomically(
+                principal,
+                family=MIGRATION_FAMILY,
+                source_sha256=_sha256({"assignments": assigned_routes}),
+                capability_entries={
+                    capability_id: item["entries"]
+                    for capability_id, item in assigned_routes.items()
+                },
+            )
+            return {**marker, "status": "migrated", "legacy_config_read": False}
+
         thoughts = str(
             getattr(getattr(config, "thoughts", None), "inference_target_id", "") or ""
         ).strip()

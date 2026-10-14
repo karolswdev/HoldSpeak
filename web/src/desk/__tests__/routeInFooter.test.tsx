@@ -112,14 +112,14 @@ describe("chat: a lamp per turn, the route of the last turn in the footer", () =
     expect(text).not.toContain("qwen3.8-27b");
   });
 
-  it("a LAN last turn shows host · LAN; a LOCAL one THIS DEVICE", () => {
+  it("a LAN last turn shows host · LAN; a LOCAL turn has no passive chip", () => {
     seed([you("u1", "q"), LAN]);
     const lan = renderThread();
     expect(footer(lan.container)!.querySelector(".gadget-chip-egress")!.textContent).toBe("192.168.1.43 · LAN");
     lan.unmount();
     seed([you("u1", "q"), LOCAL]);
     const local = renderThread();
-    expect(footer(local.container)!.querySelector(".gadget-chip-egress")!.textContent).toBe("THIS DEVICE");
+    expect(footer(local.container)!.querySelector(".gadget-chip-egress")).toBeNull();
   });
 
   it("a scope with no receipt provenance wears no lamp (the plan is not a receipt)", () => {
@@ -212,7 +212,7 @@ describe("Ask: the lamp on the turn, the route once in the footer", () => {
     const view = render(<AskPanel />);
     fireEvent.change(view.container.querySelector("textarea")!, { target: { value: "What did we decide about the cutover date?" } });
     fireEvent.keyDown(view.container.querySelector("textarea")!, { key: "Enter" });
-    if (status >= 400) await waitFor(() => expect(view.container.querySelector("[data-testid=ask-failure]")).toBeTruthy());
+    if (status >= 400) await waitFor(() => expect(view.container.querySelector("[data-testid=run-line][data-state=failure]")).toBeTruthy());
     else await waitFor(() => expect(screen.getByText("The cutover is on 17 October.")).toBeTruthy());
     return view;
   }
@@ -237,7 +237,7 @@ describe("Ask: the lamp on the turn, the route once in the footer", () => {
     // #855: a loopback engine stored as private_network runs LOCAL.
     const { container } = await askWith({ ...LAN_ASK, route: { lamp: "local", host: "", model: "qwen3.8-27b", receipt: "exec-0000a91f" } });
     expect(container.querySelector(".surface-traffic .gadget-lamp")!.textContent).toBe("LOCAL");
-    expect(container.querySelector(".gadget-chip-egress")!.textContent).toBe("THIS DEVICE");
+    expect(container.querySelector(".gadget-chip-egress")).toBeNull();
   });
 
   it("an answer with no receipt route wears no lamp", async () => {
@@ -262,5 +262,25 @@ describe("Ask: the lamp on the turn, the route once in the footer", () => {
     const { container } = await askWith({ error: "No assigned model completed this request", route: { lamp: "", host: "", model: "", receipt: "exec-1" } }, 409);
     expect(container.querySelector(".surface-traffic .gadget-lamp")).toBeNull();
     expect(container.querySelector(".gadget-chip-egress")).toBeNull();
+  });
+
+  it("prints the fallback receipt place and freezes the finished elapsed time", async () => {
+    const clock = vi.spyOn(Date, "now").mockReturnValue(1_000);
+    try {
+      const fallback = {
+        ...LAN_ASK,
+        model: "assigned-model",
+        route: { lamp: "private_network", host: "fallback-box", model: "fallback-model", receipt: "exec-fallback", fallback: true },
+      };
+      const view = await askWith(fallback);
+      expect(view.container.querySelector(".surface-footer-egress .gadget-chip-egress")?.textContent).toBe("fallback-box · LAN");
+      expect(view.container.querySelector("[data-testid=run-line]")?.textContent).toBe("Answered in 0 s");
+
+      clock.mockReturnValue(9_000);
+      view.rerender(<AskPanel />);
+      expect(view.container.querySelector("[data-testid=run-line]")?.textContent).toBe("Answered in 0 s");
+    } finally {
+      clock.mockRestore();
+    }
   });
 });

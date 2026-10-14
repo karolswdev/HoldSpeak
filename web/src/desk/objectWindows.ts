@@ -1,11 +1,8 @@
-/** PHILO-17 (owner 2026-10-10, "A meeting opens in one window") — the
- * per-object windows.
+/** PHILO-17 — compatibility identity helpers for per-object windows.
  *
- * A meeting opens in ONE window, the hub-owned pull-out `pullout:meeting:<id>`
- * (the record while it is saved; the live room while it records). A person
- * opens in their own window, `pullout:people:<relationship id>`. Every door
- * reaches these windows through the store's one opener (`openPullout`), and
- * an open window comes to the front instead of opening twice.
+ * Meetings now live inside the one `surface-meetings` window. The old
+ * `meeting:<id>` identity remains here so retired saved pullouts can migrate
+ * and old adapters can close cleanly. People still opens in its own pullout.
  *
  * The old doors spoke a scope to the Meetings and People applications
  * (`meeting:<id>?view=review&segment=3`, `people:<id>:prep`). This module

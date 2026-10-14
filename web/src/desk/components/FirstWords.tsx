@@ -23,6 +23,7 @@ import {
   type StreamSession,
 } from "../../lib/micStreamSession";
 import { useDesk } from "../store";
+import { firstSixWords } from "../thoughtTitle";
 import {
   clearFirstValueKeepNoteId,
   firstValueKeepNoteId,
@@ -269,7 +270,7 @@ export function FirstWords({
         noteId = firstValueKeepNoteId();
         await apiFetch("/api/notes", {
           method: "POST",
-          json: { id: noteId, title: "First dictation", body_markdown: text, tags: ["dictation"] },
+          json: { id: noteId, title: firstSixWords(text), body_markdown: text, tags: ["dictation"] },
         });
         stageFirstValueNoteOpen(`note:${noteId}`);
         setKeptNoteId(noteId);
@@ -297,7 +298,7 @@ export function FirstWords({
         method: "POST",
         json: {
           id: noteId,
-          title: "First dictation",
+          title: firstSixWords(text),
           body_markdown: text,
           tags: ["dictation"],
         },

@@ -30,9 +30,9 @@ def _front(svc: DeskWindowService) -> list[str]:
 # web/src/desk/chair/__tests__/chairWindows.philo1311.test.tsx:294-321.
 
 
-def test_chair_brief_opens_in_front_of_settings_and_runs_on(windows: DeskWindowService) -> None:
-    # His rehearsal desk: Needs you, Runs on (the Concierge window) and Settings open.
-    for window_id in ("chair:needs", "surface-concierge", "surface-settings"):
+def test_chair_brief_opens_in_front_of_settings(windows: DeskWindowService) -> None:
+    # Engines is hosted inside Settings; there is no separate Concierge window.
+    for window_id in ("chair:needs", "surface-settings"):
         windows.open(window_id)
     assert _front(windows) == ["surface-settings"]
 
@@ -47,4 +47,4 @@ def test_chair_brief_opens_in_front_of_settings_and_runs_on(windows: DeskWindowS
     windows.open("chair:brief")
     assert _front(windows) == ["chair:brief"]
     depths = {w["id"]: w["depth"] for w in windows.list()["windows"]}
-    assert depths["chair:brief"] > max(depths["surface-settings"], depths["surface-concierge"])
+    assert depths["chair:brief"] > depths["surface-settings"]

@@ -299,9 +299,10 @@ describe("the lane's draft chip names the Default for AI work (PHILO-15 05)", ()
     expect(draft.textContent).not.toContain("NOT SET");
   });
 
-  it("with no default at all the same chip says NOT SET (the fence can fail)", async () => {
+  it("with no default at all the draft has no egress chip", async () => {
     await openLane(fixtureWire("lane").wire);
     const draft = screen.getByTestId("lane-ask").querySelector(".ask-well-draft")!;
-    await waitFor(() => expect(draft.textContent).toContain("NOT SET"));
+    await waitFor(() => expect(draft.querySelector(".gadget-chip-egress")).toBeNull());
+    expect(draft.textContent).not.toContain("NOT SET");
   });
 });

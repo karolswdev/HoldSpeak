@@ -28,13 +28,15 @@ vi.mock("./ThoughtDocumentPane", () => ({
 vi.mock("./ThoughtReadsWell", () => ({ ThoughtReadsWell: () => null }));
 vi.mock("../sprites", () => ({ spriteUrl: () => "note.png" }));
 vi.mock("../shell", () => ({ openSurfaceOr: vi.fn() }));
+const engineMock = vi.hoisted(() => ({ useEngine: vi.fn(), refreshEngine: vi.fn() }));
+vi.mock("../hooks/useEngine", () => engineMock);
 
 const LOADED = "2026-09-22T09:05:00Z";
 const WRITTEN = "2026-09-22T17:41:00Z";
 /* The client clock sits far from both hub stamps: a receipt read from the
    clock cannot pass these assertions. */
 const CLIENT_CLOCK = new Date("2031-03-03T23:59:00Z");
-const receiptOf = (stamp: string) => keptReceipt(Date.parse(stamp))!.toUpperCase();
+const receiptOf = (stamp: string) => keptReceipt(Date.parse(stamp))!.replace(/^Kept · /, "Saved ");
 
 const thought: Thought = {
   id: "thought-1", source: { kind: "typed" }, raw_captured_at: "2026-09-22T09:00:00Z", state: "working",
@@ -95,6 +97,7 @@ beforeEach(() => {
   vi.setSystemTime(CLIENT_CLOCK);
   sessionStorage.clear();
   useDesk.setState({ editingId: null, closeEditor: vi.fn() });
+  engineMock.useEngine.mockReturnValue({ state: "unread", model: "", place: "" });
 });
 afterEach(() => {
   cleanup();
@@ -103,19 +106,19 @@ afterEach(() => {
 });
 
 describe("PHILO-3-04 the thought's receipt", () => {
-  it("KEPT: opens on the loaded note's stamp, with the drawer on its own line", async () => {
+  it("Saved: opens on the loaded note's stamp, with no filing line", async () => {
     wire(async () => ({ thought: written(), workbench: projection(written()) }));
     render(<ThoughtWorkspaceWindow object={{ id: "note-1", kind: "note", title: "Thought" } as never} thought={thought} onClose={vi.fn()} />);
     await screen.findByRole("textbox", { name: "Note body" });
     expect(writeLine()).toHaveTextContent(receiptOf(LOADED));
-    expect(writeLine().textContent).toMatch(/^KEPT · /);
+    expect(writeLine().textContent).toMatch(/^Saved /);
     expect(writeLine()).toHaveAttribute("role", "status");
     expect(writeLine()).not.toHaveAttribute("data-tone");
-    expect(filingLine()).toHaveTextContent(/^IN PLANNING$/);
+    expect(filingLine()).toBeNull();
     expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
   });
 
-  it("SAVING… from the edit through the 450 ms wait and the PATCH, then KEPT at the HUB's stamp", async () => {
+  it("SAVING… from the edit through the 450 ms wait and the PATCH, then Saved at the HUB's stamp", async () => {
     const answer = deferred<unknown>();
     wire(() => answer.promise);
     await openAndEdit();
@@ -130,7 +133,7 @@ describe("PHILO-3-04 the thought's receipt", () => {
     // The time is the response's last_modified — never the loaded stamp, never the client clock.
     expect(receiptOf(WRITTEN)).not.toBe(receiptOf(LOADED));
     expect(writeLine().textContent).not.toBe(keptReceipt(CLIENT_CLOCK.getTime())!.toUpperCase());
-    expect(filingLine()).toHaveTextContent(/^IN PLANNING$/);
+    expect(filingLine()).toBeNull();
   });
 
   it("DID NOT SAVE · THE HUB DID NOT ANSWER when the write gets no response, and Retry keeps it", async () => {
@@ -158,7 +161,7 @@ describe("PHILO-3-04 the thought's receipt", () => {
     await waitFor(() => expect(writeLine()).toHaveTextContent(/^DID NOT SAVE · THE HUB DID NOT ACCEPT THE CHANGE$/));
     expect(writeLine()).toHaveAttribute("data-tone", "danger");
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
-    expect(filingLine()).toHaveTextContent(/^IN PLANNING$/);
+    expect(filingLine()).toBeNull();
   });
 
   it("CHANGED ELSEWHERE on a conflict, with Reload and no Retry", async () => {
@@ -172,11 +175,11 @@ describe("PHILO-3-04 the thought's receipt", () => {
     expect(screen.queryByText(/changed elsewhere\.|unsaved edits/i)).not.toBeInTheDocument();
   });
 
-  it("NOT IN A DRAWER when the note is not filed", async () => {
+  it("does not render a filing line when the note is not filed", async () => {
     const loose: Thought = { ...thought, filing_status: "missing", directory_id: undefined, directory_name: undefined };
     wire(async () => ({ thought: loose }), loose);
     render(<ThoughtWorkspaceWindow object={{ id: "note-1", kind: "note", title: "Thought" } as never} thought={loose} onClose={vi.fn()} />);
     await screen.findByRole("textbox", { name: "Note body" });
-    expect(filingLine()).toHaveTextContent(/^NOT IN A DRAWER$/);
+    expect(filingLine()).toBeNull();
   });
 });

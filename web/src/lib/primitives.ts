@@ -63,6 +63,8 @@ export type PrimitiveCapability =
   | "duplicate"
   | "delete"
   | "send"
+  /** Archive a Project into the restorable Parked drawer. */
+  | "archive"
   /** Hand to coder (Conductor K2): a kind `agent.hand` takes (agent_brief BRIEF_KINDS). */
   | "hand";
 
@@ -538,7 +540,7 @@ export const PRIMITIVES = {
     blurb: "A body of work with meetings, decisions, and cited memory.",
     icon: "M4 4h16v16H4zM8 2v4M16 2v4M8 10h8M8 14h5",
     authorable: false,
-    capabilities: ["send"],
+    capabilities: ["send", "rename", "archive"],
     // PHILO-17 U30: a Project opens its Room (one home). The drawer's key
     // (`open-project-drawer`, drawer/DrawerWindows.tsx) is parked: no
     // product opener names it.

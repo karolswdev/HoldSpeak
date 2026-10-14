@@ -375,7 +375,7 @@
         {
           "path": "web/src/desk/__tests__/keymap.test.ts",
           "line": 16,
-          "symbol": "\u2318 means the primary modifier (meta OR ctrl, never both)",
+          "symbol": "⌘ means the primary modifier (meta OR ctrl, never both)",
           "claim": "The test asserts primary modifier matching for meta or ctrl and rejection of both. Dispatch tests separately assert registry actions."
         }
       ],
@@ -457,7 +457,7 @@
       "rationale": "Egress and destructive or consequential actions need visible destination feedback.",
       "sources": [
         {
-          "path": "web/src/desk/components/GlassDropLayer.tsx",
+          "path": "web/src/desk/_parked/floor/components/GlassDropLayer.tsx",
           "line": 9,
           "symbol": "GlassDropLayer",
           "claim": "External file drops are accepted only over a registered release target."

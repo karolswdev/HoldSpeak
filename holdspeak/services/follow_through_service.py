@@ -77,6 +77,10 @@ class CardProvenance:
     available: bool
     # HS-153-05: thread provenance for action items sourced from a chat thread.
     thread_id: str | None = None
+    # The source object that created the action, when it is not a meeting
+    # moment. This is an existing Desk ref (for example note:<id>), not a
+    # second persistence identity.
+    source_ref: str | None = None
 
 
 @dataclass(frozen=True)
@@ -396,6 +400,7 @@ class FollowThroughService:
 
         data = payload or {}
         now = utc_now_iso()
+        changed = False
 
         with self._db._connection() as conn:
             action = conn.execute(
@@ -427,6 +432,11 @@ class FollowThroughService:
                     "replayed": True,
                 }
 
+            # All remaining paths perform a committed mutation. Announce only
+            # after the transaction closes so MeetingRecord and the Door never
+            # re-read a half committed action projection.
+            changed = True
+
             loop_rows = conn.execute(
                 "SELECT id FROM cadence_loops WHERE source_id = ?", (card_id,)
             ).fetchall()
@@ -450,6 +460,22 @@ class FollowThroughService:
                     "UPDATE decision_commitments SET status = 'closed', updated_at = ? WHERE action_item_id = ?",
                     (now, card_id),
                 )
+                # Keep the meeting projection honest when a Follow-through
+                # row is completed from another face.  `confirmed` is the
+                # proposal decision; `action_status` below remains the fact
+                # that distinguishes an open commitment from a done one.
+                if normalized_verb == "done":
+                    conn.execute(
+                        "UPDATE follow_through_proposals SET state = 'confirmed', decided_at = COALESCE(decided_at, ?) "
+                        "WHERE action_item_id = ? AND state = 'proposed'",
+                        (now, card_id),
+                    )
+                else:
+                    conn.execute(
+                        "UPDATE follow_through_proposals SET state = 'dismissed', decided_at = COALESCE(decided_at, ?) "
+                        "WHERE action_item_id = ? AND state = 'proposed'",
+                        (now, card_id),
+                    )
                 # HS-200-13 (AC4): completion is an EXPLICIT act with a
                 # receipt (Article XI).  Nothing else in this service --
                 # naming an owner, setting a date, linking work -- ever
@@ -552,6 +578,13 @@ class FollowThroughService:
                     facts={"previous_status": current_status},
                 )
 
+        if changed:
+            try:
+                from holdspeak.runtime.composition import notify_desk_changed
+                notify_desk_changed("action_item", card_id, normalized_verb)
+            except Exception:
+                pass
+
         return {
             "card_id": card_id,
             "verb": normalized_verb,
@@ -625,6 +658,21 @@ class FollowThroughService:
                 moment=None,
                 available=True,
                 thread_id=thread_id,
+                source_ref=source_ref,
+            )
+
+        # Thought tasks have no transcript moment to resolve. Keep the note
+        # identity so every board can still open the source object; the
+        # unavailable flag remains honest about the missing moment.
+        if source_type == "thought" and source_ref:
+            return CardProvenance(
+                meeting_id=None,
+                segment_text=None,
+                segment_speaker=None,
+                segment_start=None,
+                moment=None,
+                available=False,
+                source_ref=source_ref,
             )
 
         unavailable = CardProvenance(

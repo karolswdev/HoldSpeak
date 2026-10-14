@@ -2,6 +2,23 @@
    plate); the existing species are restyled in place below. */
 @import "./kit.css";
 
+.surface-engine-line,
+.surface-run-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+  color: var(--text-muted);
+  font: 600 12px / 1.25 var(--font-mono);
+}
+.surface-engine-line[data-state="failed"],
+.surface-run-line[data-state="failure"] {
+  color: var(--danger, #a33);
+}
+.surface-run-line[data-state="success"] {
+  color: var(--success, #276749);
+}
+
 /* ── HS-98-01: the surface idiom (docs/internal/DESIGN_SYSTEM.md) ──
    Window interiors on the ONE material: no nested cards, no page
    grids. Density rides the --desk-surface-* component tokens; layout
@@ -2957,13 +2974,12 @@ button.surface-edit-in-place:hover {
   display: none;
 }
 
-/* ── HS-139 beauty pass — Models is a workbench, not a utility strip. ──
-   Settings earns a purpose-sized default at desktop widths. The desk still
-   owns resize/maximize and sheets own narrow screens; this only replaces the
-   inherited 46vw seed for the one configuration room with a real matrix. */
+/* ── PHILO-17 (windows) — Settings uses its manifest's 640 x 600 first-open
+   seat. Keep this surface from forcing a viewport-sized or 820 px minimum
+   seat; DeskWindow owns the saved rect and the resize floor. */
 .desk-next .desk-surface-window.desk-settings-window {
-  width: calc(100vw - 48px);
-  min-width: 820px;
+  width: auto;
+  min-width: 0;
 }
 /* The sheet contract is already selected by the window host at narrow
    viewports. Keep that host-owned shape authoritative without reintroducing

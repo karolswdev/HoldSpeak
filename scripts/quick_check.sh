@@ -43,7 +43,16 @@ if [ -n "$uncovered" ]; then
   printf '%s\n' "$uncovered" | sed 's/^/   /'
 fi
 
-HOME_REAL="$HOME"; H="$(mktemp -d)"; trap 'rm -rf "$H"' EXIT
+HOME_REAL="$HOME"; H="$(mktemp -d)"
+log_dir="${QUICK_LOG_DIR:-.tmp/quick-check/$(date +%Y%m%d-%H%M%S)}"
+keep_logs() {
+  mkdir -p "$log_dir"
+  for log in "$H"/*.log; do
+    [ -f "$log" ] && cp "$log" "$log_dir/"
+  done
+  rm -rf "$H"
+}
+trap keep_logs EXIT
 export PLAYWRIGHT_BROWSERS_PATH="$HOME_REAL/Library/Caches/ms-playwright" npm_config_cache="$HOME_REAL/.npm"
 lock() { HOME="$H" uv run python scripts/test_lock.py -- "$@"; }
 fail=0
@@ -59,6 +68,7 @@ web="$(printf '%s\n' "$web" | while read -r f; do [ -n "$f" ] && [ -f "web/$f" ]
 if [ -n "$web" ]; then
   echo "== vitest related ($(printf '%s\n' "$web" | wc -l | tr -d ' ') files)"
   out="$(cd web && HOME="$H" uv run --project .. python ../scripts/test_lock.py -- ./node_modules/.bin/vitest related --run $web 2>&1)"; rc=$?
+  printf '%s\n' "$out" >"$H/vitest.log"
   printf '%s\n' "$out" | grep -E '^ FAIL|×|Test Files|Tests |Errors ' | sort -u | sed 's/^/   /'
   # The unhandled-error blocks: each starts with "⎯ Unhandled Error ⎯" or
   # "⎯ Unhandled Rejection ⎯"; its first line is the error.

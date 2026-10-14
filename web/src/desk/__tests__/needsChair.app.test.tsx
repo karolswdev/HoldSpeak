@@ -115,8 +115,8 @@ describe("Chair app: the cold roster through meetingPathBlockers", () => {
     const { meetingPathBlockers, SUMMARY_CAPABILITY } = await import("../chair/meetingPathBlocker");
     const roster = RECORDED.cold.gets["/api/inference/assignments"];
     const summary = roster.task_overrides.find((t: { id: string }) => t.id === SUMMARY_CAPABILITY);
-    expect(summary.effective.status).toBe("no_assignment");
-    expect(summary.queue.status).toBe("no_assignment");
+    expect(summary?.effective.status).toBe("no_assignment");
+    expect(summary?.queue?.status).toBe("no_assignment");
     expect(meetingPathBlockers(roster as never)).toEqual([
       { key: "summary", label: "No engine for summaries", verb: "Choose an engine" },
     ]);
@@ -182,7 +182,7 @@ describe("Chair app: a Default for AI work asks nothing about summaries", () => 
 
 // ── HS-201-01: the SETUP row's verb opens Runs on at its job ──────────────
 describe("Chair app: the SETUP verb on the cold row", () => {
-  it("Choose an engine on the recorded cold row opens Runs on (open-concierge) scoped to the row's key", async () => {
+  it("Choose an engine on the recorded cold row opens Settings · Engines scoped to the row's key", async () => {
     // replaces: tests/e2e/test_hs201_one_thing_glass.py::TestOneThing::test_chair_names_the_blocker (the Button opens Runs on)
     const blockers = RECORDED.cold.gets["/api/desk/needs-you?fresh=1"].blockers as Array<{ key: string; verb: string }>;
     expect(blockers.map((b) => b.key)).toEqual(["summary"]);
@@ -204,7 +204,8 @@ describe("Chair app: the SETUP verb on the cold row", () => {
     expect(verbs[0].getAttribute("data-verb")).toBe("setup");
     expect(verbs[0].textContent).toBe(blockers[0].verb);
     fireEvent.click(verbs[0]);
-    await waitFor(() => expect(useDesk.getState().windowsById["surface-concierge"]?.scope).toBe("summary"));
-    await waitFor(() => expect(region("Runs on")).toBeTruthy(), { timeout: 3000 });
+    // Engines is the Settings wing. The composed scope keeps the wing name
+    // (`models`) and the job that asked for it (`summary`).
+    await waitFor(() => expect(useDesk.getState().windowsById["surface-settings"]?.scope).toBe("models::summary"));
   });
 });

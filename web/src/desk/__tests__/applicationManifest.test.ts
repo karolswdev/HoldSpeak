@@ -9,6 +9,7 @@ import {
   SURFACE_APPLICATIONS,
 } from "../applications";
 import { DESK_TOOLS } from "../tools";
+import { PULLOUT_SIZE } from "../pullouts/size";
 
 describe("DeskOS application manifest", () => {
   it("has stable, unique application actions", () => {
@@ -36,18 +37,34 @@ describe("DeskOS application manifest", () => {
   });
 
   it("keeps Dock order and shortcuts declarative", () => {
-    // PHILO-17 (doors): one primary door per application. The Conductor
-    // and People are desk drawers; Settings is in the HoldSpeak menu.
+    // PHILO-17 (doors): the five primary Dock applications.
     expect(DOCK_APPLICATIONS.map((application) => application.label)).toEqual([
       "Today",
       "Speak",
       "Meetings",
+      "People",
+      "Conductor",
     ]);
     expect(
       DESK_APPLICATIONS.filter((application) => application.shortcut).map(
         (application) => application.shortcut,
       ),
     ).toEqual(["⌘⇧P", "⌃1", "⌃2", "⌃3", "⌃4"]); // PHILO-17 U27
+  });
+
+  it("keeps the PHILO-17 first-open size matrix declarative", () => {
+    expect(PULLOUT_SIZE).toMatchObject({
+      note: { w: 520, h: 360 },
+      meeting: { w: 720, h: 600 },
+      people: { w: 640, h: 560 },
+      room: { w: 760, h: 480 },
+      settings: { w: 640, h: 600 },
+    });
+
+    const meetings = DESK_APPLICATIONS.find((application) => application.action === "review-meetings");
+    const settings = DESK_APPLICATIONS.find((application) => application.action === "configure-settings");
+    expect(meetings?.surface).toMatchObject({ defaultW: 720, defaultH: 600 });
+    expect(settings?.surface).toMatchObject({ defaultW: 640, defaultH: 600 });
   });
 
   it("PHILO-14 C4: the old Agents application is parked: route alive, in no Dock, Go list, shortcut or mark", () => {
@@ -60,7 +77,7 @@ describe("DeskOS application manifest", () => {
     expect(DOCK_APPLICATIONS.some((application) => application.windowId === "surface-companion")).toBe(false);
     const conductor = DESK_APPLICATIONS.find((application) => application.action === "open-conductor");
     expect(conductor).toMatchObject({ windowId: "conductor", label: "Conductor", href: "/conductor", shortcut: "⌃3" });
-    expect(conductor?.dock).toBeUndefined();
+    expect(conductor?.dock).toMatchObject({ order: 4, launch: "surface" });
   });
 
   it("derives mark-menu application commands", () => {
@@ -75,11 +92,9 @@ describe("DeskOS application manifest", () => {
 
   it("PHILO-17 (doors): Go is the application index, then Tools", () => {
     expect(GO_APPLICATIONS.map((application) => application.label)).toEqual([
-      "Speak", "Meetings", "Today", "Ask AI", "People", "Conductor", "Memory",
+      "Speak", "Meetings", "Today", "Ask AI", "People", "Conductor",
     ]);
-    expect(GO_TOOL_APPLICATIONS.map((application) => application.label)).toEqual([
-      "Workbenches", "Activity", "Processes", "Rhythm", "Commands", "Context",
-    ]);
+    expect(GO_TOOL_APPLICATIONS).toEqual([]);
     // A setup application has one door: the HoldSpeak menu.
     for (const action of ["configure-settings", "configure-runs-on", "configure-integrations", "configure-setup"]) {
       const application = DESK_APPLICATIONS.find((a) => a.action === action);

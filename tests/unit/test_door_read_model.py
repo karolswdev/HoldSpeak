@@ -715,13 +715,58 @@ def test_board_person_index_memoizes_one_resolve_per_owner_string(
     _insert_action(db, "card-3", owner="Grace")
 
     with patch.object(
-        people, "resolve_relationship_by_owner",
-        wraps=people.resolve_relationship_by_owner,
+        people, "resolve_owner_candidates",
+        wraps=people.resolve_owner_candidates,
     ) as spy:
         _door(db, people_service=people).get(OWNER)
 
     # One call per distinct owner string: "Ada" and "Grace".
     assert spy.call_count == 2
+
+
+def test_board_person_projection_resolves_unique_display_name_without_alias(
+    db: Database, tmp_path: Path,
+) -> None:
+    """A unique People display name is safe owner metadata for the Door."""
+    from holdspeak.people import EncryptedPeopleStore, MemoryKeyStore
+
+    store = EncryptedPeopleStore(tmp_path / "people-unique-display.sqlite3", MemoryKeyStore())
+    store.initialize()
+    people = PeopleService(store)
+    rel = people.create_relationship(OWNER, {"display_name": "Unique Owner"})
+    _insert_action(db, "unique-display-card", owner="Unique Owner")
+
+    projection = _door(db, people_service=people).get(OWNER)
+    card = next(
+        card for lane in ("now", "waiting", "unassigned", "overdue")
+        for card in projection["board"][lane]
+        if card["id"] == "unique-display-card"
+    )
+    assert card["person_label"] == "Unique Owner"
+    assert card["person_relationship_id"] == rel["id"]
+
+
+def test_board_person_projection_omits_ambiguous_display_name(
+    db: Database, tmp_path: Path,
+) -> None:
+    """An ambiguous display name never puts guessed People metadata on a card."""
+    from holdspeak.people import EncryptedPeopleStore, MemoryKeyStore
+
+    store = EncryptedPeopleStore(tmp_path / "people-ambiguous-display.sqlite3", MemoryKeyStore())
+    store.initialize()
+    people = PeopleService(store)
+    people.create_relationship(OWNER, {"display_name": "Shared Owner"})
+    people.create_relationship(OWNER, {"display_name": "Shared Owner"})
+    _insert_action(db, "ambiguous-display-card", owner="Shared Owner")
+
+    projection = _door(db, people_service=people).get(OWNER)
+    card = next(
+        card for lane in ("now", "waiting", "unassigned", "overdue")
+        for card in projection["board"][lane]
+        if card["id"] == "ambiguous-display-card"
+    )
+    assert "person_label" not in card
+    assert "person_relationship_id" not in card
 
 
 def test_board_card_carries_created_at_for_staleness(db: Database) -> None:

@@ -597,14 +597,14 @@ class MeetingService:
         cannot resolve, so the admission would refuse too."""
         from ..config import Config
 
-        with self._db._connection() as conn:
-            families = {
-                str(row[0]) for row in conn.execute(
-                    "SELECT family FROM inference_assignment_migrations WHERE family IN "
-                    "('speech-recognition-route-assignments', 'thoughts-writing-route-assignments')"
-                ).fetchall()
-            }
-        if len(families) < 2:
+        from .inference_assignment_service import InferenceAssignmentService
+
+        assignments = InferenceAssignmentService(self._db)
+        # Transcription has its own assignment family and authority.  A missing
+        # dictation rewrite assignment must not make an explicit transcription
+        # route fall back to the mutable legacy local construction.
+        speech_routing = assignments.routed("speech.transcribe")
+        if not speech_routing:
             return _speech_construction(None, Config.load())
         try:
             from .inference_route_plan_service import ROUTE_PLANNING_AUTHORITY, InferenceRoutePlanService

@@ -103,13 +103,13 @@ function Shell() {
   return (
     <WingSlotContext.Provider value={setWings}>
       {wings}
-      {/* PHILO-17: the meeting's own window holds its record and Review. */}
+      {/* PHILO-17: the meeting's own window holds its record and Outcomes. */}
       <MeetingRecord meetingId="a" onClose={() => undefined} />
     </WingSlotContext.Provider>
   );
 }
 
-it("the full parent → Review transition shows QUEUED then RAN in Review, and Review reads again", async () => {
+it("the full parent → Outcomes transition shows QUEUED then RAN, and Outcomes reads again", async () => {
   const states: Record<string, string> = { a: "disabled" };
   let reviewReads = 0;
   vi.mocked(apiFetch).mockImplementation(async (path: string) => {
@@ -134,17 +134,74 @@ it("the full parent → Review transition shows QUEUED then RAN in Review, and R
     return {} as never;
   });
   render(<Shell />);
-  fireEvent.click(await screen.findByRole("tab", { name: /Review/i }));
-  fireEvent.click(await screen.findByRole("button", { name: "Re-read: Transcript" }));
-  await waitFor(() => expect(screen.getByTestId("review-receipt")).toHaveTextContent(/^QUEUED /));
+  expect(screen.getByRole("tab", { name: "Outcomes" })).toBeTruthy();
+  expect(screen.queryByRole("tab", { name: /Review/i })).toBeNull();
+  fireEvent.click(await screen.findByTestId("detail-run-intelligence-btn"));
+  await waitFor(() => expect(screen.getByTestId("meetings-run-receipt")).toHaveTextContent(/^QUEUED /));
   const readsBefore = reviewReads;
   states.a = "ready";
+  await act(async () => {
+    window.dispatchEvent(new Event("focus"));
+  });
   await waitFor(
-    () => expect(screen.getByTestId("review-receipt")).toHaveTextContent(/^RAN · \d/),
+    () => expect(screen.getByTestId("meetings-run-receipt")).toHaveTextContent(/^RAN · \d/),
     { timeout: 6000 },
   );
   await waitFor(() => expect(reviewReads).toBeGreaterThan(readsBefore));
 }, 12000);
+
+it("a completed action survives reload and can be reopened", async () => {
+  let actionStatus = "open";
+  const completeCalls: unknown[] = [];
+  const meeting = {
+    ...row("a", "disabled"),
+    intel: { summary: "The team agreed on the migration." },
+    segments: [{ text: "Mira owns the migration.", start_time: 0, end_time: 8 }],
+  };
+  const proposal = () => ({
+    id: "p-action", meeting_id: "a", kind: "action", text: "Mira owns the migration",
+    owner: "Mira", due: "Fri", owner_hint: null, due_hint: "Fri", state: "confirmed",
+    action_item_id: "ai-migration", action_status: actionStatus, action_item_status: actionStatus,
+    support: "supported", unknowns: [], extraction_revision: null,
+  });
+  vi.mocked(apiFetch).mockImplementation(async (path: string, init?: { method?: string; json?: unknown }) => {
+    if (path === "/api/meetings/a" || path === "/api/meetings/a?include_parked=true") return meeting as never;
+    if (path === "/api/meetings/a/aftercare") {
+      return {
+        meeting_id: "a", action_items: [{ id: "ai-migration", task: "Mira owns the migration", owner: "Mira", due: "Fri", status: actionStatus }],
+      } as never;
+    }
+    if (path === "/api/meetings/a/outcome-review") return { proposals: [proposal()], revision: "r1" } as never;
+    if (path === "/api/meetings/a/follow-through-proposals") return { proposals: [proposal()], revision: "r1" } as never;
+    if (path === "/api/meetings/a/artifacts") return { artifacts: [] } as never;
+    if (path === "/api/meetings/a/intent-timeline") return { timeline: [] } as never;
+    if (path === "/api/authority/policy") return {} as never;
+    if (path.startsWith("/api/decisions?")) return { decisions: [] } as never;
+    if (path === "/api/follow-through/complete" && init?.method === "POST") {
+      completeCalls.push(init.json);
+      actionStatus = String((init.json as { verb?: string }).verb ?? "");
+      return { card_id: "ai-migration", verb: actionStatus } as never;
+    }
+    return {} as never;
+  });
+
+  render(<MeetingRecord meetingId="a" onClose={() => undefined} />);
+  const done = await screen.findByTestId("action-done-btn");
+  fireEvent.click(done);
+  await waitFor(() => expect(screen.getByTestId("meetings-run-receipt")).toHaveTextContent("DONE"));
+  expect(screen.getByTestId("action-reopen-btn")).toBeTruthy();
+
+  // A real window refresh must retain the server's completed state and the
+  // one action row must offer Reopen again.
+  await act(async () => {
+    window.dispatchEvent(new Event("focus"));
+  });
+  await waitFor(() => expect(screen.getByTestId("action-reopen-btn")).toBeTruthy());
+  fireEvent.click(screen.getByTestId("action-reopen-btn"));
+  await waitFor(() => expect(screen.getByTestId("meetings-run-receipt")).toHaveTextContent("REOPENED"));
+  expect(completeCalls).toContainEqual({ card_id: "ai-migration", verb: "done", payload: {} });
+  expect(completeCalls).toContainEqual({ card_id: "ai-migration", verb: "reopen", payload: {} });
+});
 
 type WireCase = { state: string; list: Record<string, unknown>; detail: Record<string, unknown> };
 const wires = Object.fromEntries(

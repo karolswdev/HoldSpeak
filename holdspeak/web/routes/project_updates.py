@@ -101,6 +101,7 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
             cmd_id = payload.get("command_id")
             result = ops().invoke(principal(request), "project.draft_update", {
                 "project_id": project_id, "generator": generator, "command_id": cmd_id,
+                "strict_model_failure": True,
             })
             return JSONResponse({"success": True, "update": _enrich_update(result)})
         except OperationRefused as exc:
@@ -114,6 +115,16 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
             return JSONResponse(
                 {"success": False, "code": exc.code, "message": exc.detail},
                 status_code=400,
+            )
+        except ServiceError as exc:
+            return JSONResponse(
+                {
+                    "success": False,
+                    "code": exc.code,
+                    "message": exc.detail,
+                    "reason": exc.context.get("reason"),
+                },
+                status_code=int(exc.context.get("status") or 409),
             )
         except Exception as exc:
             return error_500(exc, log, "Failed to draft update")
@@ -149,6 +160,16 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
                 {"success": False, "code": exc.code, "message": exc.detail},
                 status_code=400,
             )
+        except ServiceError as exc:
+            return JSONResponse(
+                {
+                    "success": False,
+                    "code": exc.code,
+                    "message": exc.detail,
+                    "reason": exc.context.get("reason"),
+                },
+                status_code=int(exc.context.get("status") or 409),
+            )
         except Exception as exc:
             return error_500(exc, log, "Failed to save update")
 
@@ -181,6 +202,16 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
             return JSONResponse(
                 {"success": False, "code": exc.code, "message": exc.detail},
                 status_code=400,
+            )
+        except ServiceError as exc:
+            return JSONResponse(
+                {
+                    "success": False,
+                    "code": exc.code,
+                    "message": exc.detail,
+                    "reason": exc.context.get("reason"),
+                },
+                status_code=int(exc.context.get("status") or 409),
             )
         except Exception as exc:
             return error_500(exc, log, "Failed to regenerate update")
