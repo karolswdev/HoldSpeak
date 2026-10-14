@@ -163,3 +163,16 @@ queue and waits for the intended Settings reread. The meeting Send fixture used
 a two-second delay that could expire before the pending-state assertion under
 load; it now releases the real request explicitly after observing pending. No
 product timeout or assertion was weakened. TypeScript's final check passed.
+
+A final initial-read race in the new Transcript test was also corrected: the
+summary can render before independent record reads finish. The test now awaits
+the initial Transcript door. Its pending-refresh assertions remain synchronous;
+the full file and four related meeting files passed (48 checks).
+
+Conductor's final graph walks also passed at 1440 and 393 on product commit
+f7f34c279, with the complete observation read after each invocation. Evidence:
+`.tmp/graph-walk/surface-repair/final-session-1440/` and
+`.tmp/graph-walk/surface-repair/final-session-393/`. They used isolated HOME/DB
+and real CLI fixture ingestion. Provenance reports dirty=true: the untracked
+node_modules link and the subsequent test-only readiness fix remained; product
+source was frozen. These observations do not establish live agent delivery.

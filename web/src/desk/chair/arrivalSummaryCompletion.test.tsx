@@ -591,7 +591,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     });
     render(<MeetingRecord meetingId={ready.detail.id} onClose={() => undefined} />);
     expect(await screen.findByTestId("meeting-summary-text")).toHaveTextContent("The team reviewed the budget.");
-    fireEvent.click(screen.getByRole("button", { name: /Transcript/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Transcript/ }));
     expect(screen.getByRole("button", { name: /Transcript/ })).toHaveAttribute("aria-expanded", "true");
     pending = true;
     window.dispatchEvent(new Event("focus"));
