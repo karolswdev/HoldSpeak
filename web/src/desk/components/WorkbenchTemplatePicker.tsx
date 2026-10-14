@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { apiFetch } from "../../lib/api";
+import { apiFetch, readableError } from "../../lib/api";
+import { Button } from "../../components/signal/Signal";
 import { useDesk } from "../store";
 import { SurfaceSection, SurfaceState } from "../surface/Surface";
 import { useRovingRows } from "../surface/roving";
@@ -23,6 +24,10 @@ export function WorkbenchTemplatePicker({
   const [templates, setTemplates] = useState<Template[]>([]);
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [createError, setCreateError] = useState("");
+  const [readError, setReadError] = useState("");
+  const [created, setCreated] = useState<{ id: string; name: string } | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   useRovingRows(gridRef, { selector: ".wb-picker-card" });
 
@@ -37,49 +42,57 @@ export function WorkbenchTemplatePicker({
     void loadTemplates();
   }, [loadTemplates]);
 
-  const instantiate = async (templateId: string) => {
+  const refreshCreated = async (id: string, name: string) => {
     setBusy(true);
+    setReadError("");
     try {
-      const res = await apiFetch<any>(
-        `/api/workbench-templates/${templateId}/instantiate`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({}),
-        },
-      );
       await useDesk.getState().refresh();
-      const wbId = res.workbench?.id;
-      if (wbId) {
-        useDesk.getState().openWorkbenchWindow(wbId);
-        onCreated?.(wbId);
-      }
-    } catch { /* honest failure on next refresh */ }
-    setBusy(false);
+      const error = useDesk.getState().error;
+      if (error) throw new Error(error);
+      onCreated?.(id);
+    } catch (error) {
+      setReadError(`${name} created · Desk read failed · ${readableError(error)}`);
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const createBlank = async () => {
+  const create = async (templateId: string | null) => {
+    if (busy || created) return;
+    const name = templates.find((t) => t.id === templateId)?.name ?? "Blank";
+    setSelected(templateId ?? "blank");
     setBusy(true);
+    setCreateError("");
     try {
-      const res = await apiFetch<any>("/api/workbenches", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: "New Workbench",
-        }),
-      });
-      await useDesk.getState().refresh();
+      const res = await apiFetch<any>(
+        templateId ? `/api/workbench-templates/${templateId}/instantiate` : "/api/workbenches",
+        {
+          method: "POST",
+          json: templateId ? {} : { name: "New Workbench" },
+        },
+      );
       const wbId = res.workbench?.id;
       if (wbId) {
+        // The POST saved this object. Its window reads by ID, so a desk
+        // refresh failure must not prevent opening or repeat the create.
+        setCreated({ id: wbId, name });
         useDesk.getState().openWorkbenchWindow(wbId);
-        onCreated?.(wbId);
+        await refreshCreated(wbId, name);
+      } else {
+        setCreateError(`${name} result missing · Reload workbenches`);
       }
-    } catch { /* */ }
-    setBusy(false);
+    } catch (error) {
+      setCreateError(`${name} not created · ${readableError(error)}`);
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
     <div className="wb-picker">
+      {createError ? <SurfaceState error={createError} /> : null}
+      {readError ? <SurfaceState error={readError} onRetry={busy || !created ? undefined : () => void refreshCreated(created.id, created.name)} /> : null}
+      {created ? <Button dense variant="ghost" onClick={() => useDesk.getState().openWorkbenchWindow(created.id)}>Open workbench</Button> : null}
       <SurfaceSection label="START FROM A TEMPLATE">
         {error ? (
           <SurfaceState
@@ -91,12 +104,13 @@ export function WorkbenchTemplatePicker({
         ) : (
           <div ref={gridRef} className="wb-picker-grid">
             {templates.map((t) => (
-              <button
+              <Button
                 key={t.id}
-                type="button"
+                variant="chrome"
                 className="wb-picker-card"
-                disabled={busy}
-                onClick={() => void instantiate(t.id)}
+                aria-pressed={selected === t.id}
+                disabled={busy || Boolean(created)}
+                onClick={() => void create(t.id)}
               >
                 <span className="wb-picker-card-icon">{t.icon + "︎"}</span>
                 <span className="wb-picker-card-name">{t.name}</span>
@@ -106,18 +120,19 @@ export function WorkbenchTemplatePicker({
                   {t.starter_items.length ? ` · ${t.starter_items.length} items` : ""}
                   {t.skill_names?.length ? ` · ${t.skill_names.length} skills` : ""}
                 </span>
-              </button>
+              </Button>
             ))}
-            <button
-              type="button"
+            <Button
+              variant="chrome"
               className="wb-picker-card wb-picker-card-blank"
-              disabled={busy}
-              onClick={() => void createBlank()}
+              aria-pressed={selected === "blank"}
+              disabled={busy || Boolean(created)}
+              onClick={() => void create(null)}
             >
               <span className="wb-picker-card-icon">○</span>
               <span className="wb-picker-card-name">Blank</span>
               <span className="wb-picker-card-desc">Start from scratch</span>
-            </button>
+            </Button>
           </div>
         )}
       </SurfaceSection>

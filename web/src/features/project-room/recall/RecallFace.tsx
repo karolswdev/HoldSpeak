@@ -19,8 +19,8 @@
  *   SUPERSEDED: the same object dimmed, `SUPERSEDED BY DEC 09-07`,
  *               discoverable, never current (story 13 AC2).
  *   DISPUTED : the same object, `DISPUTED`, never accented.
- *   OWED     : `CMT` rows with `DUE …` / `OWNER · UNKNOWN` typed, and ONE
- *               verb each: `Name an owner`, `Set a date`, or `Mark done`
+ *   OWED     : library rows with owner/date and recorded source, and ONE
+ *               next action: `Name an owner`, `Set a date`, or `Done`
  *               (only when owner and date are known: AC3/AC4).  Naming and
  *               dating unfold a well under the row (no modals, A.4).
  *   the miss : `Nothing matches`, the glyph and one true line; the
@@ -37,7 +37,8 @@ import { Button } from "../../../components/signal/Signal";
 import { openSourceRef } from "../../../desk/surface/citations";
 import {
   FilterTokens,
-  SurfaceFooter,
+  SurfaceLedger,
+  SurfaceLedgerRow,
   SurfaceRow,
   SurfaceRows,
   SurfaceSection,
@@ -189,7 +190,7 @@ function DecisionCardView({
   );
 }
 
-/* ── an owed row: CMT, the typed unknowns, ONE verb ── */
+/* ── an owed row: work, recorded identity, one next action ── */
 
 function OwedRowView({ row, ctrl }: { row: OwedRow; ctrl: RecallController }) {
   const [well, setWell] = useState<"owner" | "date" | null>(null);
@@ -215,40 +216,41 @@ function OwedRowView({ row, ctrl }: { row: OwedRow; ctrl: RecallController }) {
   };
 
   return (
-    <div className="recall-owed" data-recall-row data-testid="recall-owed-row" data-next-action={row.next_action}>
-      <div className="recall-owed-line">
-        <span className="recall-emblem" aria-hidden="true">CMT</span>
-        <span className="surface-primary recall-owed-title" data-testid="recall-owed-title">
-          {row.text}
-        </span>
-        <span className="recall-owed-meta">
-          <span className="surface-token" data-tone={row.due_tone} data-testid="recall-due-token">
-            {row.due_token}
+    <div className="recall-owed" data-recall-row data-next-action={row.next_action}>
+      <SurfaceLedgerRow
+        lead="Action"
+        wrap
+        primary={<span data-testid="recall-owed-title">{row.text}</span>}
+        meta={
+          <span className="recall-owed-meta">
+            <span data-testid="recall-owner-token">{row.owner || "No owner"}</span>
+            <span aria-hidden="true">·</span>
+            <span data-tone={row.due_tone} data-testid="recall-due-token">
+              {row.due_at ? row.due_token : "No date"}
+            </span>
           </span>
-          {row.unknowns.includes("owner") ? (
-            <span className="surface-token" data-testid="recall-owner-token">{row.owner_token}</span>
-          ) : null}
-          {row.project ? (
-            <ProjectButton
-              name={row.project.name}
-              onOpen={() => openProject(row.project!.id)}
-              data-testid="recall-project"
-            />
-          ) : null}
-          <Button
-            dense
-            variant="ghost"
-            disabled={busy}
-            aria-label={`${verb}: ${row.text}`}
-            aria-expanded={well ? true : undefined}
-            data-testid="recall-owed-verb"
-            onClick={act}
-          >
-            {busy ? "..." : verb}
-          </Button>
-        </span>
-      </div>
-      {well ? (
+        }
+        trailing={
+          <span className="recall-owed-verbs">
+            {row.source ? (
+              <Button dense variant="ghost" className="recall-owed-source"
+                aria-label={`Open source: ${row.source.title || "Meeting"}`}
+                data-testid="recall-owed-source"
+                onClick={() => openSourceRef(row.source!.scope)}>
+                From {row.source.title || "Meeting"}
+              </Button>
+            ) : null}
+            <Button dense variant="ghost" disabled={busy}
+              aria-label={`${verb}: ${row.text}`}
+              aria-expanded={well ? true : undefined}
+              data-testid="recall-owed-verb" onClick={act}>
+              {busy ? "..." : verb}
+            </Button>
+          </span>
+        }
+        open={Boolean(well)}
+        data-testid="recall-owed-row"
+      >
         <div className="recall-owed-well" data-testid="recall-owed-well">
           <StringGadget
             label={well === "owner" ? "Owner" : "Due"}
@@ -267,7 +269,7 @@ function OwedRowView({ row, ctrl }: { row: OwedRow; ctrl: RecallController }) {
             Save
           </Button>
         </div>
-      ) : null}
+      </SurfaceLedgerRow>
     </div>
   );
 }
@@ -383,7 +385,7 @@ export function RecallFace({ initialQuery = "" }: { initialQuery?: string } = {}
               data-accent={remembered > 0 || undefined}
               data-testid="recall-display"
             >
-              {displayLine(remembered)}
+              {result.recent ? "Recent work" : displayLine(remembered)}
             </div>
           ) : null}
           <div className="recall-head-tokens">
@@ -392,8 +394,10 @@ export function RecallFace({ initialQuery = "" }: { initialQuery?: string } = {}
             ) : null}
             {searched ? (
               <>
-                <span className="surface-token" data-testid="recall-ref-token">REF · {result.query.toUpperCase()}</span>
-                <span className="surface-token recall-dot" aria-hidden="true">·</span>
+                {result.query.trim() ? <>
+                  <span className="surface-token" data-testid="recall-ref-token">REF · {result.query.toUpperCase()}</span>
+                  <span className="surface-token recall-dot" aria-hidden="true">·</span>
+                </> : null}
                 <span className="surface-token" data-testid="recall-searched-token">{searchedToken(result.searched_at)}</span>
               </>
             ) : null}
@@ -496,9 +500,11 @@ export function RecallFace({ initialQuery = "" }: { initialQuery?: string } = {}
             ) : null}
             {sections.owed ? (
               <SurfaceSection label={countLabel("OWED", sections.owed)} className="recall-section">
-                {result.owed.map((row) => (
-                  <OwedRowView key={row.id} row={row} ctrl={ctrl} />
-                ))}
+                <SurfaceLedger cols="recall">
+                  {result.owed.map((row) => (
+                    <OwedRowView key={row.ref} row={row} ctrl={ctrl} />
+                  ))}
+                </SurfaceLedger>
               </SurfaceSection>
             ) : null}
             {sections.meetings ? (
@@ -519,13 +525,6 @@ export function RecallFace({ initialQuery = "" }: { initialQuery?: string } = {}
           </div>
         ) : null}
       </div>
-      <SurfaceFooter
-        receipt={
-          <span className="surface-footer-receipt-line" role="status" data-testid="room-footer-receipt">
-            THIS DEVICE
-          </span>
-        }
-      />
     </>
   );
 }

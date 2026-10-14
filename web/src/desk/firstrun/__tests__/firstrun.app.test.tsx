@@ -1,5 +1,5 @@
 /* First run, the app: the real FirstRun (every card, the Concierge controller
- * of "Use a server on my network") on the hub's OWN recorded answers.
+ * of "Use a server") on the hub's OWN recorded answers.
  *
  * The test diet (PHILO-17 final lane A, 2026-10-11): successors of the first-run
  * browser walks. Only `apiFetch` (the wire) is replaced. Every answer was
@@ -37,6 +37,14 @@ vi.mock("../../../lib/micStreamSession", async (importOriginal) => ({
 
 import { ApiError } from "../../../lib/api";
 import { FirstRun } from "../FirstRun";
+
+// These behavior tests enter the optional setup and chat wells explicitly.
+function renderExpandedFirstRun() {
+ const view = render(<FirstRun />);
+ view.container.querySelectorAll<HTMLDetailsElement>(".firstrun-chat, .firstrun-optional").forEach((fold) => { fold.open = true; });
+ return view;
+}
+
 
 const RECORDED = import.meta.glob("../../__tests__/fixtures/firstrun-*/*.json", { eager: true, import: "default" }) as Record<
   string,
@@ -88,7 +96,7 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks());
 
 describe("First run — a LAN box as the default keeps the speech download (recorded hub)", () => {
-  it("Use a server on my network: TOOLS, NOW THE DEFAULT, THIS DEVICE (never LAN); Set up speech stays; First words is not lit", async () => {
+  it("Use a server: TOOLS, NOW THE DEFAULT, THIS DEVICE (never LAN); Set up speech stays; First words is not lit", async () => {
     // replaces: tests/e2e/test_philo15_10_engine_truth_glass.py::TestColdFirstRun::test_the_lan_box_keeps_the_speech_download
     // (hub half: tests/integration/test_desk_firstrun.py::test_a_lan_box_as_default_keeps_the_speech_download)
     hub = new RecordedHub("lan", "0-cold", {
@@ -96,7 +104,7 @@ describe("First run — a LAN box as the default keeps the speech download (reco
       "POST /api/inference/model-library/define-endpoint": ["define", null],
       "POST /api/concierge/summary-selection": ["select", "1-used"],
     });
-    render(<FirstRun />);
+    renderExpandedFirstRun();
     const card = await screen.findByTestId("firstrun-local-ai");
     fireEvent.click(await within(card).findByTestId("firstrun-lan-verb"));
     const speech = await screen.findByTestId("firstrun-speech-verb");
@@ -131,7 +139,7 @@ describe("First run — a denied calendar has a way forward (recorded hub)", () 
     hub = new RecordedHub("calendar-denied", "0-denied", {
       "POST /api/onboarding/calendar/macos/settings": ["open-settings", "1-allowed"],
     });
-    render(<FirstRun />);
+    renderExpandedFirstRun();
     const denied = await screen.findByTestId("firstrun-calendar-denied");
     expect(denied.textContent).toContain("CALENDAR · NOT ALLOWED");
     expect(within(denied).getAllByRole("button").map((b) => b.textContent)).toEqual(["Open System Settings", "Check again"]);

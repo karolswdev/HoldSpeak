@@ -40,6 +40,14 @@ vi.mock("../../../lib/micStreamSession", async (importOriginal) => ({
 }));
 
 import { FirstRun } from "../FirstRun";
+
+// These behavior tests enter the optional setup and chat wells explicitly.
+function renderExpandedFirstRun() {
+ const view = render(<FirstRun />);
+ view.container.querySelectorAll<HTMLDetailsElement>(".firstrun-chat, .firstrun-optional").forEach((fold) => { fold.open = true; });
+ return view;
+}
+
 import { inventedFields, recorded } from "../../../test/wireShape";
 import LOCAL_AI_WIRE from "../../../test/wire/setup-local-ai.wire.json";
 import SETTINGS_WIRE from "../../../test/wire/settings.owner.wire.json";
@@ -141,6 +149,19 @@ describe("planSteps / speechReady", () => {
 });
 
 describe("FirstRun", () => {
+  it("starts with speech alone and folds the optional decisions", async () => {
+    const view = render(<FirstRun />);
+    const speech = await screen.findByTestId("firstrun-speech-verb");
+    expect(speech.className).toContain("btn--primary");
+    expect(speech.textContent).toBe("Set up speech · 144 MB");
+    expect(view.container.querySelector<HTMLDetailsElement>(".firstrun-chat")?.open).toBe(false);
+    expect(view.container.querySelector<HTMLDetailsElement>(".firstrun-optional")?.open).toBe(false);
+    expect(screen.getByRole("textbox", { name: "Your name" }).closest("details")?.open).toBe(false);
+    expect(screen.getByRole("button", { name: "Continue later" })).toBeTruthy();
+    fireEvent.click(speech);
+    await waitFor(() => expect(calls.find((call) => call.path === "/api/setup/local-ai" && call.method === "POST")?.json).toEqual({ only: ["whisper"] }));
+  });
+
   it("walks before -> running -> speech lands -> heard -> kept", async () => {
     const audio = new ArrayBuffer(44 + 32000 * 4);
     mocks.start.mockResolvedValue({
@@ -149,11 +170,11 @@ describe("FirstRun", () => {
       retained: vi.fn().mockResolvedValue(false),
       audio: () => audio,
     });
-    render(<FirstRun />);
+    renderExpandedFirstRun();
 
     // before: the one press with its size; First words waits for speech.
     const press = await screen.findByRole("button", { name: "Set up local AI · 3.0 GB" });
-    expect(screen.getByText("HUGGINGFACE.CO")).toBeTruthy();
+    expect(screen.getAllByText("HUGGINGFACE.CO").length).toBeGreaterThan(0);
     expect(screen.getByRole("status", { name: "WAITS FOR SPEECH" })).toBeTruthy();
     expect((screen.getByRole("button", { name: "Dictate one sentence" }) as HTMLButtonElement).disabled).toBe(true);
     expect(screen.getByRole("heading", { name: "Get ready" }).className).toContain("surface-display");
@@ -220,7 +241,7 @@ describe("FirstRun", () => {
       retained: vi.fn().mockResolvedValue(false),
       audio: () => null,
     });
-    render(<FirstRun />);
+    renderExpandedFirstRun();
     fireEvent.click(await screen.findByRole("button", { name: "◖ Dictate one sentence" }));
     const stop = await screen.findByRole("button", { name: "Stop listening" });
     await act(async () => {
@@ -236,7 +257,7 @@ describe("FirstRun", () => {
       if (path === "/api/setup/local-ai") throw new Error("Not Found");
       return { owner: { name: "", aliases: [] } };
     });
-    render(<FirstRun />);
+    renderExpandedFirstRun();
     expect(await screen.findByRole("status", { name: "CAN'T CHECK" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "◖ Dictate one sentence" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Continue later" })).toBeTruthy();
@@ -249,7 +270,7 @@ describe("FirstRun", () => {
       speech: { model: "large-v3", backend: "mlx", state: "not_covered" },
       error: "Set up local AI cannot get the selected Whisper model. Select the base model, or add the model yourself.",
     };
-    render(<FirstRun />);
+    renderExpandedFirstRun();
     expect(await screen.findByRole("status", { name: "NO SPEECH MODEL" })).toBeTruthy();
     expect(screen.getByText(/cannot get the selected Whisper model/)).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
@@ -261,7 +282,7 @@ describe("FirstRun", () => {
     let grant: (session: unknown) => void = () => undefined;
     mocks.start.mockReturnValue(new Promise((resolve) => { grant = resolve; }));
     const cancel = vi.fn();
-    render(<FirstRun />);
+    renderExpandedFirstRun();
     fireEvent.click(await screen.findByRole("button", { name: "◖ Dictate one sentence" }));
     // Permission is pending (the acquisition has started): the owner leaves.
     await waitFor(() => expect(mocks.start).toHaveBeenCalled());
@@ -284,7 +305,7 @@ describe("FirstRun", () => {
   it("says a blocked mic as tokens with the verbs that work, no paragraph (Astra #859 P2)", async () => {
     local = status({ all: true, state: "ready" });
     mocks.start.mockRejectedValue(new DOMException("Permission denied", "NotAllowedError"));
-    render(<FirstRun />);
+    renderExpandedFirstRun();
     fireEvent.click(await screen.findByRole("button", { name: "◖ Dictate one sentence" }));
     const failure = await screen.findByTestId("firstrun-take-failure");
     expect(screen.getByRole("status", { name: "MIC BLOCKED" })).toBeTruthy();
@@ -303,7 +324,7 @@ describe("PHILO-17: First words' missing speech model is fixed in place", () => 
       local = status(); // the hub's read now: the Whisper files are not here
       throw new ApiError(503, "transcription unavailable", null);
     });
-    render(<FirstRun />);
+    renderExpandedFirstRun();
     fireEvent.click(await screen.findByRole("button", { name: "◖ Dictate one sentence" }));
     const verb = await screen.findByTestId("firstrun-words-speech-verb");
     expect(verb.textContent).toBe("Set up speech · 144 MB");
@@ -322,7 +343,7 @@ describe("PHILO-17: First words' missing speech model is fixed in place", () => 
   it("speech on this device by the hub's read: the door is Runs on, not New Project", async () => {
     local = status({ all: true, state: "ready" });
     mocks.start.mockRejectedValue(new ApiError(503, "transcription unavailable", null));
-    render(<FirstRun />);
+    renderExpandedFirstRun();
     fireEvent.click(await screen.findByRole("button", { name: "◖ Dictate one sentence" }));
     await screen.findByTestId("firstrun-take-failure");
     const shell = await import("../../shell");
@@ -337,7 +358,7 @@ describe("PHILO-17: First words' missing speech model is fixed in place", () => 
 // add-engine row. Astra r1 (finding 2): with no Whisper on this device the
 // card keeps the speech download beside it, and the press also sets the
 // Default for AI work.
-describe("FirstRun — Use a server on my network", () => {
+describe("FirstRun — Use a server", () => {
   function lanFakes(speechOnDevice: boolean) {
     local = status({ landed: speechOnDevice });
     const base = mocks.apiFetch.getMockImplementation()!;
@@ -373,7 +394,7 @@ describe("FirstRun — Use a server on my network", () => {
 
   it("Whisper here: the box finishes the card, and sets the default", async () => {
     lanFakes(true);
-    render(<FirstRun />);
+    renderExpandedFirstRun();
     await screen.findByRole("button", { name: /^Set up local AI · / });
     const receipt = await useTheBox();
     expect(receipt.textContent).toContain("USING · QWEN3.8-27B · SUMMARIES · NOW THE DEFAULT");
@@ -386,7 +407,7 @@ describe("FirstRun — Use a server on my network", () => {
 
   it("no Whisper here: the card keeps the speech download, named and sized", async () => {
     lanFakes(false);
-    render(<FirstRun />);
+    renderExpandedFirstRun();
     await screen.findByRole("button", { name: /^Set up local AI · / });
     fireEvent.click(screen.getByTestId("firstrun-lan-verb"));
     // Beside the server row: the speech model alone (the recorded two Whisper files, 144 MB).

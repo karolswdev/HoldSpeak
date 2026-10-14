@@ -19,6 +19,7 @@ import { onStateChange as ttsOnStateChange, stop as ttsStop, type TtsState } fro
 import { wireCallLoop, type CallLoopWiring } from "../callLoopWiring";
 import { bargeIn as autoSpeakBargeIn } from "../autoSpeak";
 import { patchThread } from "../threads";
+import { Button } from "../../components/signal/Signal";
 
 // ── types ────────────────────────────────────────────────────────────
 
@@ -132,7 +133,8 @@ export function CallChip({ threadId, callMode, isStreaming, onReload }: CallChip
   );
 
   return (
-    <button
+    <Button
+      variant="chrome"
       type="button"
       className={`thread-call-chip thread-call-chip--${chipState}`}
       data-testid="call-chip"
@@ -143,6 +145,6 @@ export function CallChip({ threadId, callMode, isStreaming, onReload }: CallChip
       tabIndex={0}
     >
       {LABELS[chipState]}
-    </button>
+    </Button>
   );
 }

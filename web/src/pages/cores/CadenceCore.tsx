@@ -36,7 +36,7 @@ import {
   SurfaceRow,
   SurfaceState,
 } from "../../desk/surface/Surface";
-import { apiFetch } from "../../lib/api";
+import { apiFetch, readableError } from "../../lib/api";
 import { useResource, asRows, rowId } from "../pageSupport";
 import { useAction } from "./core-hooks";
 import { renderHeroSlot } from "./core-layout";
@@ -98,11 +98,6 @@ const NOTIFY_OPTIONS = [
   { value: "off", label: "OFF" },
   { value: "edge", label: "ON THE EDGE" },
   { value: "every_sweep", label: "EVERY SWEEP" },
-];
-
-const CONTENT_OPTIONS = [
-  { value: "count_only", label: "COUNT ONLY" },
-  { value: "room_names", label: "ROOM NAMES" },
 ];
 
 /* ── Helpers ────────────────────────────────────────────────────── */
@@ -217,8 +212,10 @@ export function CadenceCore({ hero }: CoreProps) {
   const [generating, setGenerating] = useState(false);
   const [receipt, setReceipt] = useState<SweepReceipt | null>(null);
   const [writtenAt, setWrittenAt] = useState<number | null>(null);
-  // Notify content preference (not yet a server setting -- local only)
-  const [notifyContent, setNotifyContent] = useState("count_only");
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [sweepError, setSweepError] = useState("");
+  const [briefError, setBriefError] = useState("");
 
   // Defensive: the wire may return a partial shape (especially in tests
   // where the fetch stub returns a catch-all).
@@ -241,14 +238,23 @@ export function CadenceCore({ hero }: CoreProps) {
 
   // ── Heartbeat mutations ──
   const putSetting = useCallback(async (patch: Partial<HeartbeatSettings>) => {
-    const now = Date.now() / 1000;
-    setWrittenAt(now);
-    await apiFetch("/api/settings/heartbeat", { method: "PUT", json: patch });
-    await heartbeat.reload();
+    setSaving(true);
+    setSaveError("");
+    try {
+      await apiFetch("/api/settings/heartbeat", { method: "PUT", json: patch });
+      setWrittenAt(Date.now() / 1000);
+      await heartbeat.reload();
+    } catch (error) {
+      setSaveError(`Settings not saved · ${readableError(error)}`);
+    } finally {
+      setSaving(false);
+    }
   }, [heartbeat]);
 
   const runNow = useCallback(async () => {
     setSweeping(true);
+    setSweepError("");
+    setReceipt(null);
     try {
       const result = await apiFetch<SweepReceipt>("/api/settings/heartbeat/run-now", {
         method: "POST",
@@ -256,6 +262,8 @@ export function CadenceCore({ hero }: CoreProps) {
       });
       setReceipt(result);
       await heartbeat.reload();
+    } catch (error) {
+      setSweepError(`Sweep failed · ${readableError(error)}`);
     } finally {
       setSweeping(false);
     }
@@ -263,9 +271,12 @@ export function CadenceCore({ hero }: CoreProps) {
 
   const generateBrief = useCallback(async () => {
     setGenerating(true);
+    setBriefError("");
     try {
       await apiFetch("/api/brief/generate", { method: "POST", json: {} });
       await briefRes.reload();
+    } catch (error) {
+      setBriefError(`Brief not generated · ${readableError(error)}`);
     } finally {
       setGenerating(false);
     }
@@ -328,6 +339,8 @@ export function CadenceCore({ hero }: CoreProps) {
       {renderHeroSlot(hero, null, null)}
       <div className="cadence-body" data-settling={shown ? undefined : "true"} aria-busy={shown ? undefined : true}>
       {shown ? null : <div className="cadence-settling-line"><SurfaceState loading /></div>}
+      {saveError ? <SurfaceState error={saveError} /> : null}
+      {heartbeat.error ? <SurfaceState error={`Rhythm settings not loaded · ${heartbeat.error}`} onRetry={() => void heartbeat.reload()} /> : null}
 
       {/* Display headline: accent when the sweep runs, muted when not */}
       <span
@@ -350,7 +363,7 @@ export function CadenceCore({ hero }: CoreProps) {
             <Button
               variant="ghost"
               dense
-              disabled={sweeping}
+              disabled={sweeping || saving}
               onClick={() => void runNow()}
               data-testid="rhythm-run-now"
             >
@@ -362,6 +375,7 @@ export function CadenceCore({ hero }: CoreProps) {
               label="Sweep interval"
               value={String(settings.sweep_every_minutes)}
               options={SWEEP_OPTIONS}
+              disabled={saving || sweeping}
               onChange={(v) => void putSetting({ sweep_every_minutes: parseInt(v, 10) })}
             />
           }
@@ -409,6 +423,7 @@ export function CadenceCore({ hero }: CoreProps) {
           </>
         )}
       </div>
+      {sweepError ? <SurfaceState error={sweepError} /> : null}
       </div>{/* /rhythm-section sweep */}
 
       {/* ── RUNS ON row (HS-174-08) ────────────────────────────── */}
@@ -422,6 +437,7 @@ export function CadenceCore({ hero }: CoreProps) {
             <CycleGadget
               label="Runner host"
               value={settings.runs_on || "local"}
+              disabled={saving || sweeping}
               options={[
                 { value: "local", label: "THIS DEVICE" },
                 ...(settings.remote_hosts ?? []).map((h) => ({ value: h, label: h })),
@@ -524,6 +540,8 @@ export function CadenceCore({ hero }: CoreProps) {
           </span>
         ) : null}
       </div>
+      {briefError ? <SurfaceState error={briefError} /> : null}
+      {briefRes.error ? <SurfaceState error={`Brief not loaded · ${briefRes.error}`} onRetry={() => void briefRes.reload()} /> : null}
       </div>{/* /rhythm-section brief */}
 
       {/* ── NOTIFY row ─────────────────────────────────────────── */}
@@ -532,7 +550,7 @@ export function CadenceCore({ hero }: CoreProps) {
         <SurfaceLedgerRow
           primary="Notify"
           expands={false}
-          // PHILO-17: in quiet hours the HELD pill joins two gadgets; at a
+          // PHILO-17: in quiet hours the HELD pill joins the gadget; at a
           // phone width the row wraps (it squeezed "Notify" to 14 px).
           wrap
           data-testid="rhythm-notify-row"
@@ -542,13 +560,8 @@ export function CadenceCore({ hero }: CoreProps) {
                 label="Notification mode"
                 value={settings.notify}
                 options={NOTIFY_OPTIONS}
+                disabled={saving || sweeping}
                 onChange={(v) => void putSetting({ notify: v })}
-              />
-              <CycleGadget
-                label="Notification content"
-                value={notifyContent}
-                options={CONTENT_OPTIONS}
-                onChange={setNotifyContent}
               />
             </>
           }
@@ -571,6 +584,7 @@ export function CadenceCore({ hero }: CoreProps) {
                 label={name}
                 variant="token"
                 checked={!muted}
+                disabled={saving || sweeping}
                 onChange={(on) => {
                   const list = settings.muted_projects.filter((id: string) => id !== p.id);
                   if (!on) list.push(p.id);
@@ -671,13 +685,11 @@ export function CadenceCore({ hero }: CoreProps) {
       {/* ── Footer ─────────────────────────────────────────────── */}
       <SurfaceFooter
         egress={<EgressChip />}
-        receipt={
-          <span className="surface-token" data-chip data-muted>
-            WRITTEN {writtenAt
-              ? fmtEpoch(writtenAt)
-              : fmtTime(settings.last_sweep_at) ?? new Date().toTimeString().slice(0, 5)}
+        receipt={saving || saveError || writtenAt ? (
+          <span className="surface-token" data-chip data-muted={!saveError || undefined} data-tone={saveError ? "fail" : undefined} role="status">
+            {saving ? "Saving" : saveError ? "Not saved" : `Saved ${fmtEpoch(writtenAt)}`}
           </span>
-        }
+        ) : null}
       />
     </>
   );

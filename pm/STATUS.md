@@ -4,9 +4,28 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-13 (model discovery and download repair: #1199)
+**Last updated:** 2026-10-14 (surface audit and repair: #1200)
 
 ## Current phase
+
+**Surface audit and repair — #1200 (2026-10-14).** One substantial PR,
+requested after the owner rejected Conductor's session screen. Three bounded
+Sol audits and six Sol implementation lanes reused the current component and
+service framework. Sessions lead with work/project, state, captured report and
+one answer well; terminal and management controls open on request. Meetings
+retains live Record/Stop inside Meetings with Back. Week scans closed rows;
+Send/Decide and optional Ask context open on request. First use, Engines and
+phone Settings are clearer. Memory carries actual owners and recorded sources;
+History searches titles and opens the existing item. Failed actions retain
+context and receipts; Thread controls support ordinary keyboard entry.
+Final quick check GREEN: 3,581 web / 641 Python / 107 sweep (two existing
+xfails) / 15 canon. Production build, TypeScript and focused actual-open graph
+walks at 1440/393 passed. Open: owner judgment, real agent answer delivery,
+terminal keys, microphone, model inference, external dispatch, main tape and
+postmerge review. Memory source has component opener coverage; its live click
+remains unobserved. Unseen audit-tail surfaces receive no usability claim.
+[Audit](../docs/internal/SURFACE-AUDIT-2026-10-14/README.md) ·
+[Repair and verification](../docs/internal/SURFACE-REPAIR-2026-10-14.md).
 
 **Model discovery and download repair — #1199 (2026-10-13).** Settings →
 Engines → Find on LAN returns actual model choices; Use it adds a library

@@ -202,7 +202,7 @@ describe("Needs you: the head counts what needs him; Waiting lists the rest", ()
     expect(waitingRows.some((t) => t.includes("A4 assign the owner"))).toBe(false);
     expect(head()).toMatch(/^6 need you/);
 
-    fireEvent.click(within(screen.getByTestId("needs-filter")).getByRole("button", { name: "Ranked" }));
+    fireEvent.click(within(screen.getByTestId("needs-filter")).getByRole("button", { name: "All" }));
     const decision = rowNamed("R1 adopt the release checklist")!;
     fireEvent.click(within(decision).getByRole("button", { name: "Review: R1 adopt the release checklist" }));
     // The real opener (shell.ts openPrimitive) runs against the real desk store:
@@ -307,11 +307,12 @@ describe("Needs you: Confirm and Defer on a meeting in no Project", () => {
       .find((r) => r.querySelector(".needs-row-name")?.textContent === action);
     expect(held, "the confirmed action is listed under Waiting").toBeTruthy();
     expect(held!.textContent).toMatch(/WAITING ON PRIYA/i);
-    fireEvent.click(within(screen.getByTestId("needs-filter")).getByRole("button", { name: "Ranked" }));
+    fireEvent.click(within(screen.getByTestId("needs-filter")).getByRole("button", { name: "All" }));
 
     // Defer: the decision leaves the face.
     await waitFor(() => expect(rowNamed(decision)).toBeTruthy());
-    fireEvent.click(within(rowNamed(decision)!).getByRole("button", { name: `Defer: ${decision}` }));
+    fireEvent.click(within(rowNamed(decision)!).getByRole("button", { name: `More: ${decision}` }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Defer" }));
     await waitFor(() => expect(rowNamed(decision)).toBeUndefined());
     expect(posted).toEqual([steps[1].post, steps[2].post]);
   });

@@ -9,7 +9,7 @@ import { SurfaceFooter } from "../surface/SurfaceFooter";
 // the typed-refusal rendering, the grant re-sync); only the RENDER moved
 // to the gadget grammar — transport keys, lamps, LedMeters, facts tokens.
 import "./session-pullout.css";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { MicButton } from "./MicButton";
 import { GroundingSection } from "./GroundingSection";
@@ -29,11 +29,17 @@ import { flipTargetForStory, useMissionControl } from "../missioncontrol";
 import { mmss, useSteering } from "../steering";
 import { useDurableDraft } from "../../lib/durableDraft";
 import { controlModeLabel, humanizeWireValue } from "../../lib/productLanguage";
-import { PaneWell, ScrollHint, SurfaceFacts } from "../surface/Surface";
+import { PaneWell, SurfaceFacts, SurfaceSection } from "../surface/Surface";
+import { AskWell, FoldGadget } from "../surface";
+import { AppHead, StatusStrip } from "../surface/kit";
+import { wireClock } from "../surface/format";
+import { useAgentFlights } from "../agentFlights";
+import { agentName } from "../lane/laneWire";
 import {
   CycleGadget,
   LampGadget,
   LedMeter,
+  PadGadget,
   StringGadget,
   TransportKey,
   TransportRow,
@@ -46,6 +52,7 @@ import {
 import { spriteUrl } from "../sprites";
 import { AgentWords } from "./AgentWords";
 import { useLaneOwnsSteering } from "../lane/laneStore";
+import { useOnCoderFrame } from "../useDeskChangedRefresh";
 
 // The steer's context budget mirrors the hub's 8 KB cap (≈2000 tokens
 // at 4 chars/token); the gauge refuses past it before any send.
@@ -434,9 +441,8 @@ function FactoryControls() {
 }
 
 /** The voice-first composer (HS-87-03), available under resolved authority. */
-function SteerComposer({ listenSignal = 0 }: { listenSignal?: number } = {}) {
+function SteerComposer({ listenSignal = 0, available = true }: { listenSignal?: number; available?: boolean } = {}) {
   const steerState = useSteering((s) => s.steerState);
-  const steerDetail = useSteering((s) => s.steerDetail);
   const openKey = useSteering((s) => s.openKey);
   const meetings = useDesk((s) => s.items.meeting);
   const {
@@ -450,6 +456,7 @@ function SteerComposer({ listenSignal = 0 }: { listenSignal?: number } = {}) {
   const [rails, setRails] = useState<RailsPick[]>([]);
 
   const send = async () => {
+    if (!available) return;
     const delivered = await useSteering
       .getState()
       .steer(text, submitOn, buildGrounding(grounding, rails));
@@ -465,19 +472,15 @@ function SteerComposer({ listenSignal = 0 }: { listenSignal?: number } = {}) {
   return (
     <div className="desk-steer">
       <div className="desk-steer-row">
-        <MicButton
-          label="Speak"
-          startSignal={listenSignal}
-          draftScope={`steer:${openKey || "unattached"}`}
-          onText={(t) => setText((prev) => (prev ? `${prev} ${t}` : t))}
-        />
-        {/* UX-CANON: needs redesign (HS-170-04) — raw textarea; no multiline gadget species */}
-        <textarea
-          className="desk-steer-input"
+        <PadGadget
+          label="Direct"
+          micLabel="Speak"
+          micStartSignal={listenSignal}
+          micDraftScope={`steer:${openKey || "unattached"}`}
           value={text}
           rows={2}
-          placeholder="Steer"
-          onChange={(e) => setText(e.target.value)}
+          placeholder="Direct the agent"
+          onChange={setText}
           onKeyDown={(event) => {
             // Conductor F2 (K5c): Enter sends; Shift+Enter is a new line.
             if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
@@ -503,13 +506,14 @@ function SteerComposer({ listenSignal = 0 }: { listenSignal?: number } = {}) {
           compact
           label="SEND"
           glyph="▸"
-          disabled={steerState === "sending" || !text.trim()}
+          disabled={!available || steerState === "sending" || !text.trim()}
           onClick={() => void send()}
         />
       </div>
       {textRecovered ? (
         <span className="quiet">Recovered local steer draft.</span>
       ) : null}
+      <FoldGadget title="Context">
       <GroundingSection
         meetings={(meetings || []).map((m) => ({
           id: m.id,
@@ -536,12 +540,7 @@ function SteerComposer({ listenSignal = 0 }: { listenSignal?: number } = {}) {
           <span className="surface-token">CAP 8 KB</span>
         </span>
       )}
-      {steerState === "refused" && (
-        <span className="desk-arm-refusal"><span aria-hidden="true">{GLYPH_CLOSE}</span> {steerDetail}</span>
-      )}
-      {steerState === "sent" && (
-        <span className="desk-steer-sent"><span aria-hidden="true">{GLYPH_CHECK}</span> {/* Conductor F2 (K5c): the word is `sent`; the receipt follows it. */}{!steerDetail || steerDetail === "sent" ? "sent" : `sent · ${steerDetail}`}</span>
-      )}
+      </FoldGadget>
     </div>
   );
 }
@@ -664,6 +663,34 @@ function ClassifySection({ sessionKey }: { sessionKey: string }) {
   );
 }
 
+/** The same ask well as a launched lane, through the existing steering route. */
+function SessionAnswerWell({ question, agent, available }: { question: string; agent: string; available: boolean }) {
+  const openKey = useSteering((s) => s.openKey);
+  const answerOpen = useSteering((s) => s.answerOpen);
+  const answerSeq = useSteering((s) => s.answerSeq);
+  const sending = useSteering((s) => s.steerState === "sending");
+  const armed = useSteering((s) => s.armed);
+  const direct = useSteering((s) => s.postureAuthorized);
+  const { value, setDraft } = useDurableDraft(`steer:${openKey || "unattached"}`);
+  const answer = async (text: string) => {
+    if (await useSteering.getState().steer(text, true, null)) setDraft("");
+  };
+  return <div className="desk-session-answer" data-testid="session-answer-well">
+    <AskWell
+      agent={agent}
+      question={question}
+      value={value}
+      onChange={setDraft}
+      onAnswer={(text) => void answer(text)}
+      draftScope={`steer:${openKey || "unattached"}`}
+      listenSignal={answerOpen ? answerSeq : 0}
+      busy={sending}
+      disabled={!available}
+      arm={available ? armed || direct ? <SteeringPolicyFacts /> : <ArmStrip /> : <span className="surface-token">Terminal unavailable</span>}
+    />
+  </div>;
+}
+
 export function SessionPullout() {
   const openKey = useSteering((s) => s.openKey);
   const session = useSteering((s) => s.session);
@@ -679,12 +706,26 @@ export function SessionPullout() {
   const answerSeq = useSteering((s) => s.answerSeq);
   const paneId = useSteering((s) => s.paneId);
   const targetNode = useSteering((s) => s.targetNode);
+  const steerState = useSteering((s) => s.steerState);
+  const steerDetail = useSteering((s) => s.steerDetail);
+  const row = useAgentFlights((s) => s.sessions.find((r) => r.key === openKey));
+  const [terminal, setTerminal] = useState(false);
+  const [directing, setDirecting] = useState(false);
   const { closeSession } = useSteering.getState();
-  const controlsRef = useRef<HTMLDivElement>(null);
   // PHILO-14 C2: a session that belongs to a launch has the agent's lane
   // window as its face (lane/LaneWindow.tsx); this window is for a plain one
   // (a pane opened from Panes keeps it while a lane is open).
   const laneLaunchId = useLaneOwnsSteering();
+  const refresh = useCallback(() => {
+    if (openKey) void useAgentFlights.getState().load();
+  }, [openKey]);
+  useOnCoderFrame(refresh);
+
+  useEffect(() => {
+    setTerminal(Boolean(openKey?.startsWith("pane:")));
+    setDirecting(false);
+    if (openKey && !useAgentFlights.getState().loaded) void useAgentFlights.getState().load();
+  }, [openKey]);
 
   useEffect(() => {
     if (!openKey || laneLaunchId) return;
@@ -709,28 +750,37 @@ export function SessionPullout() {
 
   if (!openKey || laneLaunchId) return null;
 
-  const sessionId = openKey.split(":", 2)[1] || openKey;
+  const sessionId = openKey.slice(openKey.indexOf(":") + 1);
   const live = paneStatus === "live";
-  // The window is named by the session's project (the last part of its
-  // folder), else its agent. The session id is not a name.
-  const coder = useDesk.getState().items.coder?.find((c) => c.sessionId === sessionId || c.id === sessionId);
+  const available = live && Boolean(paneId);
+  const raw = (row?.raw?.session ?? row?.raw ?? {}) as Record<string, unknown>;
+  const agent = agentName(row?.agent || session?.agent || openKey.split(":", 1)[0]);
+  const question = (session?.blocked || session?.awaitingResponse || row?.blocked) ? session?.question || row?.question || "" : "";
+  const report = String(raw.last_assistant_text ?? "").trim();
+  const tool = String(raw.last_tool_name ?? "").trim();
+  const updated = String(raw.last_assistant_text_at || raw.updated_at || session?.updatedAt || "");
+  const state = session?.stale ? "Stale session" : question ? row?.idle ? "Idle" : "Needs your answer" : humanizeWireValue(row?.state || "working");
+  // The all-session projection retains working sessions that the awaiting
+  // desk bucket deliberately omits. Compound identity keeps agents separate.
   const sessionName = windowName({
     kind: "session",
-    project: String(coder?.project ?? "").replace(/[\\/]+$/, "").split(/[\\/]/).pop(),
-    agent: session?.agent || openKey.split(":", 2)[0],
+    project: row?.flight?.title || row?.flight?.projectName || row?.name,
+    agent,
   }, sessionId);
 
   return (
     <DeskWindowFrame
       id="session"
       glyph="▮"
-      minW={420}
+      minW={360}
+      defaultW={760}
+      fitContent
       label={sessionName}
       kindWord="Agent session"
       className="desk-pullout is-session"
       icon={
         <img
-          src={spriteUrl("agent", sessionId, "rest", session?.agent || coder?.agent || openKey.split(":", 2)[0])}
+          src={spriteUrl("agent", openKey, "rest", row?.agent || session?.agent || openKey.split(":", 1)[0])}
           alt=""
           width={16}
           height={16}
@@ -742,37 +792,29 @@ export function SessionPullout() {
       actions={
         <>
           {live && <LampGadget label="LIVE" on tone="ok" />}
-          <NodeCycle />
         </>
       }
       open={Boolean(openKey)}
       onClose={closeSession}
     >
 
-      <div className="desk-pullout-body">
-        <SurfaceFacts
-          value={{
-            pane: paneId || "",
-            node: targetNode || "this Mac",
-            state: session?.stale ? "stale" : "",
-          }}
-        />
-        {(session?.awaitingResponse || session?.blocked) && session.question ? (
-          <AgentWords className="desk-session-question" text={String(session.question)} />
-        ) : null}
-        {/* Conductor F2 (K5b): Speak answer opens the answer well here, in
-            the body under the question: the steer composer, its mic
-            already recording. The footer does not draw it twice. */}
-        {answerOpen ? (
+      <div className="desk-pullout-body desk-session-body">
+        <AppHead fact={state} data-testid="session-head">
+          <StatusStrip items={[{ text: agent }, updated ? { text: wireClock(updated) } : null, raw.model ? { text: String(raw.model) } : null]} />
+        </AppHead>
+        {question ? <SessionAnswerWell key={openKey} question={question} agent={agent} available={available} /> : null}
+        {report && report !== question ? (
+          <SurfaceSection label="Latest report"><AgentWords text={report} /></SurfaceSection>
+        ) : tool ? (
+          <SurfaceSection label="Latest activity"><span className="surface-token">{tool}</span></SurfaceSection>
+        ) : !question ? <p className="desk-session-state">No report yet</p> : null}
+        {!question && (answerOpen || directing) ? (
           <div className="desk-session-answer" data-testid="session-answer-well">
-            {/* Keyed by the session: a switch unmounts the old composer and
-                its mic cancels any capture it holds. */}
-            <SteerComposer key={openKey} listenSignal={answerSeq} />
+            {available ? armed || postureAuthorized ? <SteeringPolicyFacts /> : <ArmStrip /> : <span className="surface-token">Terminal unavailable</span>}
+            <SteerComposer key={openKey} listenSignal={answerSeq} available={available} />
           </div>
         ) : null}
-        {/* HS-111-06/11 — the shared PaneWell seam: the raw stream
-            renders through xterm; a stripped-only hub falls back to
-            the pre face, named honestly. Read-only either way. */}
+        {terminal ? <div className="desk-session-terminal" data-testid="session-terminal">
         <PaneWell
           live={live}
           lines={paneLines}
@@ -781,59 +823,42 @@ export function SessionPullout() {
           changedAt={paneChangedAt}
           absence={
             <>
-              <span aria-hidden="true">{GLYPH_CLOSE}</span> {PANE_STATE_LABEL[paneStatus] || humanizeWireValue(paneStatus)}
+              <span>Terminal unavailable · {PANE_STATE_LABEL[paneStatus] || humanizeWireValue(paneStatus)}</span>
+              {paneDetail ? <span className="desk-session-pane-detail">{paneDetail}</span> : null}
             </>
           }
         />
+        {!live ? <div className="desk-session-terminal-verbs">
+          <Button dense variant="ghost" onClick={() => void useSteering.getState().poll()}>Retry</Button>
+          <Button dense variant="ghost" onClick={() => setTerminal(false)}>Back to session</Button>
+        </div> : null}
+        </div> : null}
+        <FoldGadget title="Details" className="desk-session-details">
+          <SurfaceFacts value={{ session: sessionId, project: row?.name || "", node: targetNode || "this Mac", pane: paneId || "", folder: String(raw.cwd || "") }} />
+          <NodeCycle />
+          <div className="desk-session-controls" data-testid="session-controls">
+            {available ? <>
+              {!question && !answerOpen && !directing ? <ArmStrip /> : null}
+              {(armed || postureAuthorized) ? <>
+                <KeyPalette />
+                {armed ? <FactoryControls /> : <span className="desk-session-arm" data-testid="session-arm-control">
+                  <span className="surface-token" data-testid="session-arm-pane">{`PANE · ${paneId}`}</span>
+                  <Button dense variant="ghost" className="desk-chip quiet" aria-label={`Arm rename/kill: pane ${paneId}`} data-testid="session-arm-verb" onClick={() => void useSteering.getState().arm()}>Arm rename/kill</Button>
+                </span>}
+              </> : null}
+            </> : null}
+            <ClassifySection sessionKey={openKey} />
+          </div>
+        </FoldGadget>
       </div>
 
       <SurfaceFooter
-        // Conductor F2: one wrapping row (session-pullout.css), never a
-        // squeezed column.
         className="desk-session-footer"
-        // The session id is not in the title (the window is named by its
-        // project); it stays findable here, a quiet token.
-        egress={<span className="surface-token desk-session-id" title="Session id" data-testid="session-id-token">SESSION · {sessionId}</span>}
-        receipt={<ReceiptLine sessionKey={openKey} />}
-        verbs={
-          // Conductor F2: the controls wrap on one row; on a phone they are
-          // capped and scroll, and the well announces it (ScrollHint).
-          <ScrollHint axis="y" scrollRef={controlsRef} className="desk-session-controls-hint">
-            <div ref={controlsRef} className="desk-session-controls" data-testid="session-controls">
-              <ArmStrip />
-              {(armed || postureAuthorized) && (
-                <>
-                  <SteeringPolicyFacts />
-                  <KeyPalette />
-                  {answerOpen ? null : <SteerComposer />}
-                  {armed ? (
-                    <FactoryControls />
-                  ) : (
-                    // Conductor R6: the session-control grant (rename,
-                    // kill) is a library verb plus the pane as a token,
-                    // never a sentence (UX-CANON A.1, A.3).
-                    <span className="desk-session-arm" data-testid="session-arm-control">
-                      <span className="surface-token" data-testid="session-arm-pane">
-                        {`PANE · ${paneId || "UNRESOLVED"}`}
-                      </span>
-                      <Button
-                        dense
-                        variant="ghost"
-                        className="desk-chip quiet"
-                        aria-label={`Arm rename/kill: pane ${paneId || "unresolved"}`}
-                        data-testid="session-arm-verb"
-                        onClick={() => void useSteering.getState().arm()}
-                      >
-                        Arm rename/kill
-                      </Button>
-                    </span>
-                  )}
-                </>
-              )}
-              <ClassifySection sessionKey={openKey} />
-            </div>
-          </ScrollHint>
-        }
+        receipt={steerState === "sent" || steerState === "refused" ? <span className={steerState === "refused" ? "desk-arm-refusal" : "desk-steer-sent"}>{steerState === "sent" ? "sent" : "Not sent"}{steerDetail ? ` · ${steerDetail}` : ""}</span> : <ReceiptLine sessionKey={openKey} />}
+        verbs={<>
+          <Button dense variant="ghost" data-testid="session-open-terminal" aria-pressed={terminal} onClick={() => setTerminal(!terminal)}>{terminal ? "Back to session" : "Open terminal"}</Button>
+          {!question && available ? <Button dense variant="secondary" aria-pressed={directing} onClick={() => setDirecting(!directing)}>Direct</Button> : null}
+        </>}
       />
     </DeskWindowFrame>
   );

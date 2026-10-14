@@ -16,8 +16,21 @@ import { apiFetch, readableError } from "../../lib/api";
 import { asRows, useResource } from "../pageSupport";
 import { SpeechSetup, useSpeechSetup } from "../../desk/firstrun/SpeechSetup";
 import { CommandWell } from "./connections/ConnectionsPane";
-import { sortChecks } from "./SetupCore";
+import { openFirstRun } from "../../desk/firstrun/reopen";
 import "./settings.css";
+
+const CHECK_RANK: Record<string, number> = { fail: 0, warn: 1 };
+
+/** PHILO-17 U19: failing checks first, then warnings; a stable sort keeps
+ *  the doctor's order inside each rank. */
+export function sortChecks<T extends { status?: unknown }>(sections: T[]): T[] {
+  return sections
+    .map((section, index) => ({ section, index }))
+    .sort((a, b) =>
+      (CHECK_RANK[String(a.section.status)] ?? 2) - (CHECK_RANK[String(b.section.status)] ?? 2)
+      || a.index - b.index)
+    .map(({ section }) => section);
+}
 
 type Check = { id?: string; label?: string; status?: string; detail?: string; raw?: string; fix?: unknown };
 
@@ -55,11 +68,12 @@ export function commandOf(fix: unknown): string | null {
   return null;
 }
 
-function GuideRow({ check, lead, speech, onReady }: {
+function GuideRow({ check, lead, speech, onReady, speechTestId }: {
   check: Check;
   lead: boolean;
   speech: ReturnType<typeof useSpeechSetup>;
   onReady: () => void;
+  speechTestId: string;
 }) {
   const [open, setOpen] = useState(false);
   // The technical fact (`raw`) unfolds under the row's name.
@@ -72,7 +86,7 @@ function GuideRow({ check, lead, speech, onReady }: {
   const command = commandOf(fix);
   let verb: ReactNode = null;
   if (needs && id === "speech-model") {
-    verb = <SpeechSetup setup={speech} bare primary={lead} onReady={onReady} testId="guide-speech-setup" />;
+    verb = <SpeechSetup setup={speech} bare primary={lead} onReady={onReady} testId={speechTestId} />;
   } else if (needs && ENGINE_CHECKS.has(id)) {
     verb = (
       <Button dense variant={lead ? "primary" : "secondary"} onClick={() => openSurfaceOr("open-concierge", "/models")}>
@@ -115,7 +129,7 @@ function needWords(n: number): string {
   return n === 1 ? "1 thing needs you" : `${n} things need you`;
 }
 
-export function RuntimeDocsCore({ hero }: CoreProps) {
+export function RuntimeDocsCore({ hero, speechTestId = "guide-speech-setup" }: CoreProps & { speechTestId?: string }) {
   const resource = useResource<SetupStatus>("/api/setup/status", {});
   const speech = useSpeechSetup();
   const [testing, setTesting] = useState(false);
@@ -154,6 +168,7 @@ export function RuntimeDocsCore({ hero }: CoreProps) {
         <div className="settings-head">
           <h2 className="settings-title" data-warning={needs.length ? "" : undefined} data-testid="guide-headline">{headline}</h2>
           <span className="guide-head-sp" />
+          <Button dense variant="ghost" onClick={openFirstRun}>Get ready</Button>
           <Button dense variant={leadCheck ? "secondary" : "primary"} loading={testing} onClick={() => void testRuntime()} data-testid="guide-test">
             Test runtime
           </Button>
@@ -162,7 +177,7 @@ export function RuntimeDocsCore({ hero }: CoreProps) {
         {needs.length ? (
           <ul className="guide-list" aria-label="Needs you">
             {needs.map((check, index) => (
-              <GuideRow key={String(check.id ?? index)} check={check} lead={check === leadCheck} speech={speech} onReady={() => void resource.reload()} />
+              <GuideRow key={String(check.id ?? index)} check={check} lead={check === leadCheck} speech={speech} speechTestId={speechTestId} onReady={() => void resource.reload()} />
             ))}
           </ul>
         ) : null}
@@ -170,7 +185,7 @@ export function RuntimeDocsCore({ hero }: CoreProps) {
           <FoldGadget title="Ready" token={String(fine.length)}>
             <ul className="guide-list">
               {fine.map((check, index) => (
-                <GuideRow key={String(check.id ?? index)} check={check} lead={false} speech={speech} onReady={() => void resource.reload()} />
+                <GuideRow key={String(check.id ?? index)} check={check} lead={false} speech={speech} speechTestId={speechTestId} onReady={() => void resource.reload()} />
               ))}
             </ul>
           </FoldGadget>

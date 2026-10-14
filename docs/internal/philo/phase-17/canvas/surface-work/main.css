@@ -1,0 +1,13 @@
+.canvas { min-height:100vh; padding-bottom:24px; }
+.canvas-bar { display:flex; flex-wrap:wrap; padding:12px 20px; background:var(--desk-window-fill); color:var(--text); font:12px var(--font-mono); }
+.canvas nav { display:flex; flex-wrap:wrap; gap:8px; padding:16px 20px; }
+.canvas-window { container:surface / inline-size; position:relative; display:block; width:min(760px, calc(100% - 32px)); height:auto; max-height:none; margin:12px auto; overflow:visible; background:var(--desk-window-fill); color:var(--text); border:2px solid var(--desk-ink, currentColor); }
+.canvas-title { padding:8px 14px; font:600 15px var(--font-mono); background:var(--desk-title-fill, var(--surface-2)); }
+.canvas-body { display:flex; flex-direction:column; gap:16px; padding:16px; }
+.canvas-copy { font:13px/1.6 var(--font-sans); margin:0; }
+.canvas-verbs { display:flex; flex-wrap:wrap; gap:8px; }
+.canvas-question { padding:16px; min-height:80px; background:var(--surface-2); font:13px var(--font-sans); }
+.canvas-foot { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:12px 16px; font:12px var(--font-mono); background:var(--surface-2); }
+@container surface (max-width:520px) { .canvas-body { padding:12px; } }
+
+.canvas .surface-ledger-meta { white-space:normal; overflow-wrap:anywhere; }

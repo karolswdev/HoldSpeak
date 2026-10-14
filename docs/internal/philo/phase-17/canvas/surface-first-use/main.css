@@ -1,0 +1,6 @@
+.canvas { min-height:100vh; padding:12px; color:var(--text); background:var(--desk-window-fill); }
+.canvas-note { font:12px var(--font-mono); color:var(--wb-text); }
+.canvas-window { position:relative; display:block; width:min(760px,100%); height:auto; max-height:none; margin:16px auto; overflow:visible; border:2px solid var(--wb-ink); background:var(--desk-window-fill); container:surface / inline-size; }
+.canvas-title { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; padding:12px 16px; font:600 15px var(--font-sans); background:var(--surface-2); }
+.canvas-body { display:flex; flex-direction:column; gap:16px; padding:16px; }
+.canvas-controls { display:flex; flex-wrap:wrap; align-items:center; gap:12px; }

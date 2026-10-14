@@ -8658,7 +8658,8 @@
       ],
       "docs": [
         "docs/CODER_INTEGRATION.md",
-        "docs/AGENT_HOOK_INSTALL.md"
+        "docs/AGENT_HOOK_INSTALL.md",
+        "docs/internal/SURFACE-REPAIR-2026-10-14.md"
       ],
       "domain": "coder",
       "egress": "Pane observation is local to the Coder host; companion transport may carry the bounded projection to an authenticated client.",
@@ -8668,7 +8669,7 @@
         "holdspeak/coder_steering.py::peek_pane",
         "holdspeak/web/routes/system/coders.py::build_coders_router"
       ],
-      "evidence_level": "source_and_assertions_inspected",
+      "evidence_level": "tests_executed",
       "exposure": "user",
       "failure_states": [
         "tmux_absent",
@@ -8686,7 +8687,8 @@
       "kernel_operations": [],
       "limitations": [
         "No real tmux pane, hook or owner Coder session was used.",
-        "Observation is bounded and may omit full transcript context."
+        "Observation is bounded and may omit full transcript context.",
+        "Latest report requires the existing opt-in message capture; otherwise the recorded tool/state is shown. No capture default was changed."
       ],
       "model_requirements": [],
       "name": "Coder session observation",
@@ -8735,10 +8737,10 @@
         }
       ],
       "status": "experimental",
-      "status_reason": "Session routes and bounded tmux observation are implemented; a live coder pane was not observed in this audit.",
+      "status_reason": "Session routes and bounded pane observation are implemented. The October 14 session repair passed isolated real-hub Open checks and graph walks at 1440 and 393; live owner pane/control actions remain unverified.",
       "surfaces": [
-        "Coder board",
-        "Companion board",
+        "Conductor",
+        "Agent session",
         "MCP coder.get"
       ],
       "tests": [
@@ -8763,6 +8765,17 @@
           },
           "node": "test_peek_dead_pane_is_pane_gone_not_an_exception",
           "path": "tests/unit/test_coder_steering.py"
+        },
+        {
+          "assertion": "Actual Conductor Open retains the project and captured report, presents one question, opens terminal on request, and fills the phone frame. External process leaves are fixtures.",
+          "execution": {
+            "cases": 2,
+            "record": "docs/internal/SURFACE-REPAIR-2026-10-14.md",
+            "run": "root-session-final",
+            "status": "passed"
+          },
+          "node": "test_open_keeps_work_and_phone_frame_then_focuses_one_answer",
+          "path": "tests/e2e/test_conductor_glass.py"
         }
       ],
       "trust_boundary": "Observation reads a bounded terminal projection; it does not grant process input or effect authority."

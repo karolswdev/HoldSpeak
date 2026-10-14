@@ -54,6 +54,12 @@
 .runson-add-verbs, .runson-add-answer { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .runson-add-answer .surface-token { overflow-wrap: anywhere; }
 .runson-engine-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.runson-choice { min-width:0; }
+.runson-catalog > .switchboard { grid-template-columns:minmax(0,1fr); }
+.runson-catalog > .switchboard > .switchboard-jobs,
+.runson-catalog > .switchboard > .switchboard-wires { display:none; }
+.runson-catalog > .switchboard.is-list > .switchboard-cap { display:none; }
+.runson-catalog:has(.switchboard-engines:empty) { display:none; }
 .runson-add-open { align-self: flex-start; }
 
 .runson-meaning { margin: 0; padding: 0; list-style: none; }

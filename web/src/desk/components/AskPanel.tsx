@@ -13,6 +13,8 @@ import { SurfaceFooter } from "../surface/SurfaceFooter";
 // server's grounding receipt (GROUNDED ON N OF M + openable citations)
 // finally reaches this glass.
 import "./chrome-menus.css";
+import "./ask-panel.css";
+import { Disclosure } from "../surface/patterns/Disclosure";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useDesk } from "../store";
 import {
@@ -56,9 +58,7 @@ import { Material } from "../surface/Material";
 import { SurfaceTraffic, SurfaceTrafficTurn } from "../surface/Surface";
 import { countToken } from "../surface/count";
 import {
-  GadgetGroup,
   LedMeter,
-  MxRadio,
   TransportKey,
 } from "../surface/gadgets";
 import {
@@ -86,7 +86,8 @@ export function AskPanel() {
   const selectedIds = useDesk((s) => s.selectedIds);
   const { closeAsk, clearSelection, refresh, markNew } = useDesk.getState();
 
-  const [lens, setLens] = useState(ASK_LENSES[0].name);
+  // The desk lens strip is parked; its default still names the run.
+  const lens = ASK_LENSES[0].name;
   const {
     value: prompt,
     setDraft: setPrompt,
@@ -319,7 +320,7 @@ export function AskPanel() {
           ? String(placement?.model || result.model || "")
           : [
             promptRecovered ? "DRAFT · RECOVERED" : "",
-            overBudget ? "PAST THE WINDOW" : "USES ASSIGNMENT",
+            overBudget ? "Too many notes" : "",
           ]
             .filter(Boolean)
             .join(" · ");
@@ -489,11 +490,6 @@ export function AskPanel() {
 
         {phase !== "printed" && (
           <>
-            <EngineLine
-              engine={engine}
-              onChoose={() => openSurfaceOr("configure-runs-on", "/settings", "models")}
-              onRetry={() => void refreshEngine("ask.answer")}
-            />
             {selectedPassage ? (
               <div className="desk-ask-selected" data-testid="ask-selected-passage">
                 <p className="desk-ground-sect">Selected text</p>
@@ -536,7 +532,7 @@ export function AskPanel() {
                   }
                   title={
                     overBudget
-                      ? "Grounding is past the window: pick less"
+                      ? "Too many notes"
                       : phase === "routing"
                         ? "Routing"
                         : undefined
@@ -544,50 +540,22 @@ export function AskPanel() {
                   onClick={() => void ask()}
                 />
               </div>
-              <MxRadio
-                label="Lens"
-                value={lens}
-                options={ASK_LENSES.map((l) => ({
-                  value: l.name,
-                  label: l.name.toUpperCase(),
-                }))}
-                onChange={(next) => {
-                  setLens(next);
-                  const picked = ASK_LENSES.find((l) => l.name === next);
-                  if (picked) setPrompt(picked.instruction);
-                }}
-              />
             </div>
 
-            {/* HS-111-05 — the grounding rack: one etched rack, both
-                pickers, the shared budget on the rack lip. */}
-            <GadgetGroup label="GROUNDING">
-              {context.length > 0 && (
-                <div className="desk-ask-ctx">
-                  <p className="desk-ground-sect desk-ask-context-label">Context</p>
-                  <ul className="desk-ground-list">
-                    {context.map((c) => (
-                      <li key={c.id} className="desk-ground-row">
-                        {c.ref ? (
-                          <Button
-                            variant="chrome"
-                            className="desk-ground-line is-fact"
-                            onClick={() => openRef(c.ref!)}
-                          >
-                            <span className="desk-rails-kind">{c.kind}</span>
-                            <span className="desk-ground-name">{c.title}</span>
-                          </Button>
-                        ) : (
-                          <div className="desk-ground-line is-fact">
-                            <span className="desk-rails-kind">{c.kind}</span>
-                            <span className="desk-ground-name">{c.title}</span>
-                          </div>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+            <EngineLine
+              engine={engine}
+              onChoose={() => openSurfaceOr("configure-runs-on", "/settings", "models")}
+              onRetry={() => void refreshEngine("ask.answer")}
+            />
+            {context.length > 0 ? (
+              <div className="desk-ask-sources" data-testid="ask-context">
+                <span>With:</span>
+                {context.map((source) => source.ref ? (
+                  <Button key={source.id} dense variant="ghost" onClick={() => openRef(source.ref!)}>{source.title}</Button>
+                ) : <span key={source.id}>{source.title}</span>)}
+              </div>
+            ) : null}
+            <Disclosure label="Add notes">
               <GroundingSection
                 meetings={(items.meeting || []).map((m) => ({
                   id: m.id,
@@ -606,13 +574,13 @@ export function AskPanel() {
                 limitTokens={limitTokens}
                 meter={false}
               />
-              <div className="desk-ask-rack-lip">
+              {overBudget ? <div className="desk-ask-rack-lip">
                 <LedMeter
                   label={`Budget ${fmtK(groundTokens)}/${fmtK(limitTokens)}`}
                   value={limitTokens > 0 ? groundTokens / limitTokens : 0}
                 />
-              </div>
-            </GadgetGroup>
+              </div> : null}
+            </Disclosure>
           </>
         )}
       </div>

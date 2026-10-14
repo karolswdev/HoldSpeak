@@ -179,61 +179,47 @@
   overflow-wrap: anywhere;
 }
 
-/* ── an owed row ── */
-.recall-owed {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-  padding: 8px 0;
+/* ── owed: the library row, with identity beneath the work ── */
+.recall-owed { min-width: 0; }
+.surface-ledger[data-cols="recall"] .surface-ledger-line {
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  gap: 6px 10px;
 }
-.recall-owed-line {
-  display: grid;
-  grid-template-columns: 52px minmax(0, 1fr);
-  gap: 0 8px;
-  align-items: center;
-  min-width: 0;
-}
-.recall-emblem {
-  padding-top: 1px;
-  text-align: center;
-  font: 700 13px/1 var(--font-mono);
+.surface-ledger[data-cols="recall"] .surface-ledger-lead {
+  grid-column: 1;
+  grid-row: 1 / 3;
   color: var(--text-muted);
 }
-.recall-owed-title {
-  min-width: 0;
-  font-weight: 600;
-  line-height: 1.4;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.recall-owed-meta {
+.surface-ledger[data-cols="recall"] .surface-ledger-primary {
   grid-column: 2;
+  overflow-wrap: anywhere;
+}
+.surface-ledger[data-cols="recall"] .surface-ledger-meta {
+  grid-column: 2;
+  white-space: normal;
+}
+.surface-ledger[data-cols="recall"] .surface-ledger-trailing {
+  grid-column: 3;
+  grid-row: 1 / 3;
+  min-width: 0;
+}
+.recall-owed-meta, .recall-owed-verbs {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 6px 8px;
   min-width: 0;
 }
-.recall-owed-meta .surface-token {
-  font-size: var(--font-size-xs);
-}
+.recall-owed-verbs { justify-content: flex-end; }
+.recall-owed-source { max-width: 28ch; white-space: normal; overflow-wrap: anywhere; }
 .recall-owed-well {
-  grid-column: 2;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   min-width: 0;
-  margin-left: 60px;
-  padding: 8px 10px;
-  background: var(--desk-window-well);
-  box-shadow: var(--desk-window-etch);
 }
-.recall-owed-well .gadget-string {
-  flex: 1;
-  min-width: 0;
-}
+.recall-owed-well .gadget-string { flex: 1; min-width: 0; }
 
 /* ── the miss ── */
 .recall-miss {
@@ -256,20 +242,25 @@
 
 /* ── 393: the title line keeps its verb; the meta wraps beneath ── */
 @container surface (max-width: 480px) {
-  .recall-owed-line {
-    grid-template-columns: 36px minmax(0, 1fr);
+  .surface-ledger[data-cols="recall"] .surface-ledger-line {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr);
+    gap: 8px 10px;
   }
-  .recall-owed-well {
+  .surface-ledger[data-cols="recall"] .surface-ledger-trailing {
+    grid-column: 2;
+    grid-row: 3;
     margin-left: 0;
-    flex-wrap: wrap;
+    justify-content: flex-start;
   }
+  .recall-owed-verbs { justify-content: flex-start; gap: 8px 12px; }
+  .recall-owed-source { max-width: 100%; }
   .recall-card[data-state="current"] {
     padding: 8px;
   }
   /* The decision text is the object of the face: at 393 it WRAPS, never
      ellipsises (counsel P2; the board wraps). */
-  .recall-card-title,
-  .recall-owed-title {
+  .recall-card-title {
     white-space: normal;
     overflow: visible;
     text-overflow: clip;

@@ -78,7 +78,7 @@ describe("Desk memory draws what memory finds", () => {
     await search("quillfeather");
     const row = screen.getByTestId("recall-owed-row");
     expect(within(row).getByTestId("recall-owed-title").textContent).toBe("Draft the quillfeather rollout checklist");
-    fireEvent.click(within(row).getByRole("button", { name: "Mark done: Draft the quillfeather rollout checklist" }));
+    fireEvent.click(within(row).getByRole("button", { name: "Done: Draft the quillfeather rollout checklist" }));
     await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/api/follow-through/complete", {
       method: "POST", json: { card_id: "act-1", verb: "done", payload: {} },
     }));

@@ -53,9 +53,10 @@ describe("the session footer's arm verb (Conductor R6)", () => {
     expect(document.body.textContent).not.toMatch(/Arm pane .* for rename and kill/);
   });
 
-  it("an unresolved pane reads as a token", () => {
+  it("an unresolved pane offers no session-control grant", () => {
     open(null);
-    expect(screen.getByTestId("session-arm-pane").textContent).toBe("PANE · UNRESOLVED");
+    expect(screen.queryByTestId("session-arm-pane")).toBeNull();
+    expect(screen.queryByTestId("session-arm-verb")).toBeNull();
   });
 
   it("the press makes the same arming call: useSteering.arm(), once, no arguments", () => {

@@ -1,0 +1,158 @@
+{
+  "schema_version": 1,
+  "atlas_version": "surface-repair-20261014",
+  "extends": "docs/internal/philo/graph/atlas-models.json",
+  "source_commit": "6e86c666ae15c23241f427ca98981a83c5978d92",
+  "states": [
+    {
+      "id": "state.desk_presentation.surface_session",
+      "family": "desk_presentation",
+      "values": {
+        "session": "asking",
+        "terminal": "not requested",
+        "details": "folded"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/components/SessionPullout.tsx",
+          "symbol": "function SessionAnswerWell(",
+          "claim": "The existing session face presents one question and answer well before advanced controls."
+        }
+      ],
+      "reachable_by": [
+        "case.surface.session.open"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "case.surface.session.open",
+      "job": "j3",
+      "edge_ids": [
+        "edge.face.coder_pullout"
+      ],
+      "state_id": "state.desk_presentation.surface_session",
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME and real hub; existing coder transcript INPUT ingested through the real CLI. No real agent, pane, microphone or terminal action."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10
+        },
+        {
+          "kind": "cli",
+          "action": "create_repository_fixture",
+          "capture_as": "repo",
+          "adapter": "repository-fixture-producer"
+        },
+        {
+          "kind": "cli",
+          "action": "ingest_coder_fixture",
+          "capture_as": "coder",
+          "adapter": "agent-hook-cli"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/conductor",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": ".conductor-window [data-object-id=\"coder:codex:{coder_session_id}\"] button.cw-row-title",
+          "state": "visible",
+          "timeout_s": 20,
+          "adapter": "ui-observation"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": ".conductor-window [data-object-id=\"coder:codex:{coder_session_id}\"] button.cw-row-title",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "click",
+            "selector": ".conductor-window button:has-text(\"Get Info\")",
+            "adapter": "ui-by-viewport"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "selector": ".conductor-info-window button:has-text(\"Open\")",
+            "adapter": "ui-by-viewport"
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "readable_text",
+              "value": "Should I run the full suite now?"
+            },
+            {
+              "kind": "selector_presence",
+              "selector": ".is-session [data-testid=session-answer-well]",
+              "present": true
+            },
+            {
+              "kind": "selector_presence",
+              "selector": ".is-session [data-testid=session-terminal]",
+              "present": false
+            },
+            {
+              "kind": "selector_presence",
+              "selector": ".is-session details.desk-session-details[open]",
+              "present": false
+            }
+          ]
+        },
+        "observe_at": ".is-session",
+        "words": "Conductor Open shows the recorded question and one answer well, with terminal and advanced details unopened. This does not verify answer delivery or a live pane."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ],
+  "clocks": [
+    {
+      "id": "clock.browser_wall",
+      "source": "Browser Date",
+      "mechanism": "none: these cases use browser wall time without moving a clock",
+      "status": "available",
+      "used_by": []
+    }
+  ],
+  "excluded": [],
+  "council_readings": []
+}

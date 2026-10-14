@@ -345,6 +345,8 @@ export function PadGadget({
   rows = 3,
   mic = true,
   micLabel,
+  micStartSignal,
+  micDraftScope,
   autoGrow,
   disabled,
   autoFocus,
@@ -362,6 +364,9 @@ export function PadGadget({
    *  (`Speak your answer`); default `Speak <label>` — StringGadget's
    *  documented prop, now on both text species. */
   micLabel?: string;
+  /** The same capture-start and recovery hooks as StringGadget. */
+  micStartSignal?: number;
+  micDraftScope?: string;
   /** Grow with the content instead of scrolling. */
   autoGrow?: boolean;
   disabled?: boolean;
@@ -392,6 +397,8 @@ export function PadGadget({
       {mic ? (
         <MicButton
           label={micLabel ?? `Speak ${label}`}
+          startSignal={micStartSignal}
+          draftScope={micDraftScope}
           onText={(text) =>
             onChange(
               value && !/\s$/.test(value) ? `${value} ${text}` : value + text,

@@ -2,7 +2,19 @@ import { describe, expect, it } from "vitest";
 import {
   mergeSettingsChanges,
   projectPendingSettingsChanges,
+  settingsScope,
 } from "../SettingsCore";
+
+describe("Settings registered wing deep links", () => {
+  it.each(["settings", "models", "guide"])("keeps the registered %s wing", (wing) => {
+    expect(settingsScope(wing).module).toBe(wing);
+  });
+
+  it("keeps a wing's requested repair and refuses an unknown wing", () => {
+    expect(settingsScope("models::writing_dictation")).toEqual({ module: "models", focus: "writing_dictation" });
+    expect(settingsScope("not-a-wing").module).toBeNull();
+  });
+});
 
 describe("SettingsCore atomic settings writer", () => {
   it("creates a newly introduced settings section in an older payload", () => {

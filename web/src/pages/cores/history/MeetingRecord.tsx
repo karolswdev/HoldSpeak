@@ -6,6 +6,8 @@
 // window's wings, and its foot verbs (Open transcript, Send, Add to
 // project, MD, SRT, Park).
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { WorkMenu, type WorkMenuEntry } from "../../../desk/components/DeskMenu";
+import { SurfaceWell } from "../../../desk/surface/Surface";
 import { AddToProject } from "../../../desk/AddToProject";
 import { Button } from "../../../components/signal/Signal";
 import { useCompactViewport } from "../../../desk/useCompactViewport";
@@ -59,6 +61,19 @@ function revealOnRecord(anchorId: string, focus = false): void {
   if (focus) el.querySelector<HTMLElement>("button:not(:disabled), input, textarea")?.focus({ preventScroll: true });
 }
 
+/** The existing menu species carries the record's secondary actions. */
+function RecordMore({ entries }: { entries: WorkMenuEntry[] }) {
+  const ref = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+  return <>
+    <Button ref={ref} dense variant="ghost" aria-label="More actions" aria-haspopup="menu" aria-expanded={open}
+      onClick={() => setOpen((value) => !value)}>More</Button>
+    {open && ref.current ? <WorkMenu label="More actions" anchor="above"
+      x={ref.current.getBoundingClientRect().left} y={ref.current.getBoundingClientRect().top}
+      entries={entries} autoFocus onClose={() => setOpen(false)} returnFocus={() => ref.current?.focus()} /> : null}
+  </>;
+}
+
 export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClose(): void }) {
   // The place a door asked for (an Outcomes face or transcript row), once.
   // Peeked in render (a render may run again), taken once it is shown.
@@ -77,6 +92,8 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
   // PHILO-17 (Astra r1): the meeting's own records (decisions, proposals)
   // read again on every signal, even when the meeting row did not change.
   const [revision, setRevision] = useState(0);
+  const [requestedWell, setRequestedWell] = useState<"send" | "decide" | "project" | null>(null);
+  const projects = useDesk((state) => state.projects);
 
   const load = useCallback(async () => {
     try {
@@ -263,6 +280,23 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
   }
 
   const view = wings.view as DetailView;
+  const requestWell = (well: "send" | "decide" | "project") => {
+    wings.setView("outcomes");
+    setRequestedWell(well);
+    window.requestAnimationFrame(() => revealOnRecord(`meeting-${meetingId}-${well}`, true));
+  };
+  const moreEntries: WorkMenuEntry[] = [
+    { type: "item", id: "transcript", label: "Open transcript", onSelect: () => {
+      wings.setView("outcomes");
+      window.dispatchEvent(new CustomEvent(MEETING_TRANSCRIPT_OPEN, { detail: meetingId }));
+      window.requestAnimationFrame(() => revealOnRecord(`meeting-${meetingId}-transcript`));
+    } },
+    { type: "item", id: "decide", label: "Decide", onSelect: () => requestWell("decide") },
+    ...(projects.some((project) => !project.is_archived) ? [{ type: "item" as const, id: "project", label: "Add to Project", onSelect: () => requestWell("project") }] : []),
+    { type: "item", id: "markdown", label: "Export MD", onSelect: () => void exportMeeting("markdown") },
+    { type: "item", id: "srt", label: "Export SRT", onSelect: () => void exportMeeting("srt") },
+    { type: "item", id: "park", label: "Park", ghost: parking ? "Busy" : undefined, onSelect: () => void park() },
+  ];
   const hasSummary = meeting.has_summary === true || String(readMeetingIntel(meeting)?.summary ?? "").trim() !== "";
 
   return (
@@ -279,6 +313,8 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
         </Button>
       ) : null}
       <MeetingDetail
+        sendRequested={requestedWell === "send"}
+        decideRequested={requestedWell === "decide"}
         saidOnFace={footerHost}
         meeting={meeting}
         onTranscribe={async (id: string) => {
@@ -305,6 +341,10 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
             : undefined
         }
       />
+      {requestedWell === "project" ? <div id={`meeting-${meetingId}-project`}>
+        <SurfaceWell head="Project"><AddToProject meetingId={meetingId}
+          onReceipt={(next) => setReceipt(next.tone === "danger" ? { text: next.text, tone: "danger" } : { text: next.text })} /></SurfaceWell>
+      </div> : null}
       <>
         <SurfaceFooter
           egress={footerEgress}
@@ -319,37 +359,10 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
           }
           verbs={
             <span className="surface-footer-verbs-group">
-              {/* Phase 16 (the canvas window "Cutover sync"): the foot's
-                  Open transcript and Send (the meeting's one filled
-                  primary) bring their wells into view on the record. */}
-              {view === "outcomes" ? (
-                <>
-                  <Button dense variant="ghost" data-testid="meeting-open-transcript"
-                    onClick={() => {
-                      window.dispatchEvent(new CustomEvent(MEETING_TRANSCRIPT_OPEN, { detail: meetingId }));
-                      window.requestAnimationFrame(() => revealOnRecord(`meeting-${meetingId}-transcript`));
-                    }}>
-                    Open transcript
-                  </Button>
-                  {hasSummary ? (
-                    <Button dense variant="primary" data-testid="meeting-send"
-                      onClick={() => revealOnRecord(`meeting-${meetingId}-send`, true)}>
-                      Send
-                    </Button>
-                  ) : null}
-                </>
+              {view === "outcomes" && hasSummary ? (
+                <Button dense variant="primary" data-testid="meeting-send" onClick={() => requestWell("send")}>Send</Button>
               ) : null}
-              {/* PHILO-15 16 (B37): the meeting joins a Project. */}
-              <AddToProject meetingId={meetingId} onReceipt={(next) => setReceipt(next.tone === "danger" ? { text: next.text, tone: "danger" } : { text: next.text })} />
-              <Button dense variant="ghost" onClick={() => void exportMeeting("markdown")}>
-                MD
-              </Button>
-              <Button dense variant="ghost" onClick={() => void exportMeeting("srt")}>
-                SRT
-              </Button>
-              <Button dense variant="ghost" disabled={parking} onClick={() => void park()}>
-                Park
-              </Button>
+              <RecordMore entries={moreEntries} />
             </span>
           }
         />

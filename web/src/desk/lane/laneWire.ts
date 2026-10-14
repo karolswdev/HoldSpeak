@@ -442,7 +442,10 @@ export function laneEntries(lane: LaneWire, events: readonly LaneEvent[]): LaneE
     text: [brief.state === "sent" ? "" : brief.word, briefFacts].filter(Boolean).join(" · ") || undefined,
     ...(brief.state === "sent" ? {} : { pending: true }),
   });
-  timed.push(...eventEntries(events));
+  // The current question/report is already whole in the work well. Its
+  // captured Stop event must not ask the owner a second time in Activity.
+  const currentWords = lane.wait && !isNotRead(lane.wait) ? lane.wait.question?.trim() : "";
+  timed.push(...eventEntries(events).filter((entry) => !currentWords || entry.words?.trim() !== currentWords));
   for (const receipt of Array.isArray(launch.rebriefs) ? launch.rebriefs : []) timed.push(rebriefEntry(receipt));
   const worktree = lane.worktree;
   if (!isNotRead(worktree)) {
@@ -490,27 +493,10 @@ export function laneEntries(lane: LaneWire, events: readonly LaneEvent[]): LaneE
     ordered.forEach((e, i) => { if (e.kind === "commit") index = i; });
     ordered.splice(index >= 0 ? index + 1 : ordered.length, 0, entry);
   }
-  const wait = lane.wait;
-  if (wait && !isNotRead(wait) && wait.question) {
-    const turn = turnWord(wait);
-    ordered.push({
-      id: "asks",
-      at: at(wait.started),
-      time: wireClock(wait.started),
-      kind: "asks",
-      word: turn.word,
-      tone: turn.tone,
-      // Phase 16: the agent's words, one line (the well above holds them whole).
-      words: wait.question,
-      wordsCompact: true,
-    });
-  }
   const merged = lane.follow_through?.merged;
   if (merged) {
     const when = merged.merged_at ?? merged.mergedAt ?? merged.at ?? null;
     ordered.push({ id: "merge", at: at(when), time: wireClock(when), kind: "merge", word: "MERGED", tone: "ok", text: wireClock(when) ? undefined : "Merged" });
-  } else {
-    ordered.push({ id: "merge", at: null, time: "", kind: "merge", word: "MERGE", pending: true, text: "Your press in GitHub" });
   }
   return ordered;
 }

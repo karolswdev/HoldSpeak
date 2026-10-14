@@ -38,6 +38,7 @@ interface DecideWellProps {
    *  filled primary (surface/contract.md), so `Decide` and `Save` are ghost
    *  then. Without it they are filled, as ratified next to SEND (Phase 13 B3). */
   runSummaryOnFace?: boolean;
+  defaultOpen?: boolean;
 }
 
 /** One well per meeting: keyed by the meeting, so no state crosses meetings. */
@@ -45,7 +46,7 @@ export function MeetingDecideWell(props: DecideWellProps) {
   return <DecideWellFor key={props.meetingId} {...props} />;
 }
 
-function DecideWellFor({ meetingId, title, startedAt, summary, runSummaryOnFace }: DecideWellProps) {
+function DecideWellFor({ meetingId, title, startedAt, summary, runSummaryOnFace, defaultOpen = false }: DecideWellProps) {
   // PHILO-17 (one filled primary per window): with a summary, the meeting's
   // primary is Send (the foot); Decide is a quieter steel verb then.
   const weight = runSummaryOnFace ? "ghost" : String(summary ?? "").trim() ? "secondary" : "primary";
@@ -54,7 +55,7 @@ function DecideWellFor({ meetingId, title, startedAt, summary, runSummaryOnFace 
   // PHILO-13-07 (B2): the unfinished title is also kept in the workspace
   // document, per meeting, so it returns after a reload and a close.
   const draftKey = `meeting/decide/${meetingId}`;
-  const [naming, setNaming] = useState(() => drafts.has(meetingId) || keptDraft(draftKey) !== null);
+  const [naming, setNaming] = useState(() => defaultOpen || drafts.has(meetingId) || keptDraft(draftKey) !== null);
   const [draft, setDraftState] = useState(() => drafts.get(meetingId) ?? keptDraft(draftKey) ?? "");
   const setDraft = (next: string) => {
     drafts.set(meetingId, next);

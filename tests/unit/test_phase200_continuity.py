@@ -251,6 +251,50 @@ def test_a_decision_kind_chain_row_is_never_owed_and_an_action_is_never_a_decisi
 # ── AC3 ──────────────────────────────────────────────────────────────
 
 
+
+def test_owed_commitments_keep_identical_titles_with_their_recorded_owner_and_meeting(tmp_path: Path) -> None:
+    db = _db(tmp_path)
+    _seed_room(db)
+    for meeting_id, title, owner in (("m-first", "Ledger cutover sync", "Jordan"),
+                                     ("m-second", "Platform review", "Priya")):
+        _seed_meeting(db, meeting_id, SUN, title)
+        _confirm(db, _propose(db, meeting_id, "action", "Write the rollback runbook",
+                            segment_index=3, owner=owner).id)
+    rows = RecallService(db).recall(OWNER, "rollback runbook", filter="commitments")["owed"]
+    assert len(rows) == 2
+    assert {row["owner"]: (row["source"]["meeting_id"], row["source"]["title"])
+            for row in rows} == {
+        "Jordan": ("m-first", "Ledger cutover sync"),
+        "Priya": ("m-second", "Platform review"),
+    }
+    assert len({row["action_item_id"] for row in rows}) == 2
+    assert all(row["source"]["scope"] == f"meeting:{row['source']['meeting_id']}" for row in rows)
+
+
+def test_owed_actions_preserve_source_identity_and_leave_unrecorded_sources_absent(tmp_path: Path) -> None:
+    db = _db(tmp_path)
+    _seed_room(db)
+    _seed_meeting(db, "m-first", SUN, "Ledger cutover sync")
+    _seed_meeting(db, "m-second", SUN, "Platform review")
+    with db._connection() as conn:
+        for action_id, meeting_id, owner in (("a-first", "m-first", "Jordan"),
+                                              ("a-second", "m-second", "Priya"),
+                                              ("a-no-source", None, "Dana")):
+            conn.execute("INSERT INTO action_items (id, meeting_id, task, owner) VALUES (?, ?, ?, ?)",
+                         (action_id, meeting_id, "Write the rollback runbook", owner))
+    rows, committed = RecallService(db)._owed_actions(
+        [{"kind": "action", "source_ref": f"action:{action_id}"}
+         for action_id in ("a-first", "a-second", "a-no-source")], datetime.now())
+    assert not committed
+    by_id = {row["id"]: row for row in rows}
+    assert by_id["a-first"]["owner"] == "Jordan"
+    assert by_id["a-first"]["source"]["scope"] == "meeting:m-first"
+    assert by_id["a-second"]["owner"] == "Priya"
+    assert by_id["a-second"]["source"]["title"] == "Platform review"
+    assert by_id["a-no-source"]["source"] is None
+    assert all("segment" not in row["source"] for row in rows if row["source"])
+
+
 def test_an_owed_row_has_typed_unknowns_and_one_lawful_next_action(tmp_path: Path) -> None:
     db = _db(tmp_path)
     chain = _chain(db)

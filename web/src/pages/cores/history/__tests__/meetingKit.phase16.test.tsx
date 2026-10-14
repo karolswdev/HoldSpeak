@@ -195,21 +195,44 @@ describe("the meeting's Decisions through Confirm (the hook and the ledger, rend
     }
     render(<Harness />);
     const decisions = await screen.findByTestId("meeting-decisions");
-    expect(decisions.querySelector("h3")?.textContent).toBe("Decided · 2");
+    expect(decisions.querySelector("h3")?.textContent).toBe("Decisions · 2");
     expect(screen.getByTestId("meeting-commitments").querySelector("h3")?.textContent).toBe("Who owes what · 1");
     fireEvent.click(within(decisions).getByRole("button", { name: "Confirm: Freeze the old ledger on Nov 5" }));
     await waitFor(() => {
       const row = within(screen.getByTestId("meeting-decisions")).getByText("Freeze the old ledger on Nov 5").closest(".surface-ledger-line");
       expect(row?.querySelector(".surface-ledger-meta")?.textContent).toBe("Jordan");
     });
-    expect(screen.getByTestId("meeting-decisions").querySelector("h3")?.textContent).toBe("Decided · 2");
+    expect(screen.getByTestId("meeting-decisions").querySelector("h3")?.textContent).toBe("Decisions · 2");
     proposals = proposals.map((p) => (p.id === "p1" ? { ...p, state: "confirmed" } : p));
     const secondDecision = within(screen.getByTestId("meeting-decisions"))
       .getByText("Run reconciliation nightly")
       .closest(".surface-ledger-line") as HTMLElement;
     fireEvent.click(within(secondDecision).getByTestId("proposal-more-btn"));
     fireEvent.click(screen.getByRole("menuitem", { name: "Dismiss" }));
-    await waitFor(() => expect(screen.getByTestId("meeting-decisions").querySelector("h3")?.textContent).toBe("Decided · 1"));
+    await waitFor(() => expect(screen.getByTestId("meeting-decisions").querySelector("h3")?.textContent).toBe("Decisions · 1"));
+  });
+
+
+  it.each([
+    [null, false], [undefined, false], [-1, false], [1, false], [0.5, false], ["0", false], [0, true],
+  ])("only stored segment %s offers an exact transcript destination", async (segment, expected) => {
+    const meeting = { id: "m-source", title: "Source check", segments: [{ text: "Move the cutover to Friday." }] };
+    const proposal = { id: "p-source", meeting_id: "m-source", kind: "decision", text: "Freeze on Nov 12", state: "proposed", segment_index: segment, support: "unknown" };
+    apiFetch.mockImplementation(async (url: string) => {
+      if (url.includes("/outcome-review") || url.includes("/follow-through-proposals")) return { proposals: [proposal] };
+      if (url === "/api/meetings/m-source") return meeting;
+      return {};
+    });
+    function Harness() {
+      const data = useMeetingData(meeting, () => undefined);
+      return <MeetingOutcomes data={data} meeting={meeting} />;
+    }
+    render(<Harness />);
+    const decisions = await screen.findByTestId("meeting-decisions");
+    expect(decisions.querySelector("h3")?.textContent).toBe("Decisions · 1");
+    fireEvent.click(within(decisions).getByTestId("proposal-more-btn"));
+    expect(Boolean(screen.queryByRole("menuitem", { name: "Show in transcript" }))).toBe(expected);
+    if (!expected) expect(decisions).toHaveTextContent("Not in the transcript");
   });
 
   it("edits a populated row through More and keeps a grounded source", async () => {
@@ -564,7 +587,7 @@ describe("the meeting's recorded decisions (PHILO-17)", () => {
     }
     const { container } = render(<Harness />);
     const decisions = await screen.findByTestId("meeting-decisions");
-    expect(decisions.querySelector("h3")?.textContent).toBe("Decided · 1");
+    expect(decisions.querySelector("h3")?.textContent).toBe("Decisions · 1");
     expect(decisions.textContent).toContain("Freeze the old ledger on Nov 5");
     const order = [...container.querySelectorAll("[data-testid=meeting-decisions], [data-testid=meeting-commitments]")]
       .map((el) => el.getAttribute("data-testid"));

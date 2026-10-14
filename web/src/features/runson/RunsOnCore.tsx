@@ -10,6 +10,7 @@ import { useContext, useEffect, useMemo, useRef, type ReactNode } from "react";
 import {
   CheckGadget,
   EgressChip,
+  FoldGadget,
   StateChip,
   StringGadget,
   SurfaceFooter,
@@ -199,10 +200,9 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
   };
   const onBoard = (engineId: string) => engines.some((e) => !e.found && e.detectId === engineId);
 
-  // PHILO-17 REFIT: ONE filled primary. With no engine yet it is the first
-  // engine to download; with engines and no speech model, Set up speech.
+  // A cold desk leads with discovery. Assignment follows a saved engine;
+  // optional local downloads stay in their own fold.
   const noEngine = !have.some((e) => e.profileId);
-  const leadDownload = noEngine ? have.find((e) => e.kind === "preset" && ctrl.downloads[e.key] == null)?.key : undefined;
 
   /* ── the jobs ── */
   const jobs: SwitchJob[] = [];
@@ -281,7 +281,7 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
           Try again
         </Button>
       ) : job === SPEECH_JOB && speech.notSetUp ? (
-        <SpeechSetup setup={speech} primary={!leadDownload} testId="runson-speech-setup" />
+        <SpeechSetup setup={speech} primary={false} testId="runson-speech-setup" />
       ) : result ? (
         <span data-tone={result.tone === "danger" ? "danger" : result.tone === "idle" ? "idle" : undefined}>{result.tokens.join(" · ")}</span>
       ) : jobRepair ? (
@@ -338,7 +338,7 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
         // The file comes from the internet: the chip names that host.
         egress = <EgressChip label={(engine.downloadHost ?? "huggingface.co").toUpperCase()} scope="cloud" />;
         verb = (
-          <Button dense variant={engine.key === leadDownload ? "primary" : "secondary"} data-testid={`runson-download-${engine.key}`} onClick={() => void ctrl.download(engine.key)}>
+          <Button dense variant="secondary" data-testid={`runson-download-${engine.key}`} onClick={() => void ctrl.download(engine.key)}>
             Download
           </Button>
         );
@@ -357,7 +357,8 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
     };
   };
 
-  const haveEngines = have.map(plate);
+  const haveEngines = have.filter((engine) => engine.kind !== "preset").map(plate);
+  const localDownloads = have.filter((engine) => engine.kind === "preset").map(plate);
   const foundEngines: SwitchEngine[] = found.map((engine) => {
     const endpoint = engine.baseUrl ? endpointHostPort(engine.baseUrl).toUpperCase() : "";
     let host = "";
@@ -391,7 +392,7 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
     <span className="runson-engine-actions">
       <Button
         dense
-        variant="secondary"
+        variant={noEngine ? "primary" : "secondary"}
         className="runson-find-lan"
         data-testid="runson-find-lan"
         onClick={() => void ctrl.findOnLan()}
@@ -442,12 +443,19 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
         </ul>
       </div>
 
+      <div className="runson-choice" data-testid="runson-engine-choice">{engineFoot}</div>
+      {foundEngines.length ? (
+        <div className="runson-catalog" data-testid="runson-found-engines">
+          <SurfaceSwitchboard layout="board" jobs={[]} engines={[]} found={foundEngines} wires={[]} captions={{ found: "Found" }} />
+        </div>
+      ) : null}
+      {noEngine && speech.notSetUp ? <SpeechSetup setup={speech} primary={false} testId="runson-speech-setup" /> : null}
       {roster ? (
+        <div className={noEngine ? "runson-catalog" : undefined} data-testid="runson-assignments">
         <SurfaceSwitchboard
           layout={layout}
-          jobs={jobs}
+          jobs={noEngine ? [] : jobs}
           engines={haveEngines}
-          found={foundEngines}
           wires={wires}
           selected={ctrl.selected}
           onSelect={ctrl.select}
@@ -455,21 +463,22 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
           accepts={ctrl.accepts}
           onPatch={(job, key, fallback) => void ctrl.patch(job, key, fallback)}
           onRefuse={ctrl.refuse}
-          captions={{ jobs: "What HoldSpeak does", engines: "What you have", found: "Found", or: "Or", others: "Other jobs" }}
-          engineFoot={engineFoot}
+          captions={{ jobs: noEngine ? undefined : "What HoldSpeak does", engines: "What you have", or: "Or", others: noEngine ? "" : "Other jobs" }}
         />
+        </div>
       ) : ctrl.error ? (
         <span className="surface-token" data-tone="danger" role="alert">NOT READ</span>
       ) : null}
 
-      {roster ? (
-        // The row keeps the ledger context it was built in (the Concierge's
-        // set list), so its cells lay out exactly as before.
-        <div className="concierge-root runson-meaning-host">
-          <ul className="concierge-set-list runson-meaning">
-            <MeaningSearchRow />
-          </ul>
-        </div>
+      {localDownloads.length || roster ? (
+        <FoldGadget title="Download a local model" className="runson-downloads">
+          {localDownloads.length ? <div className="runson-catalog">
+            <SurfaceSwitchboard layout="board" jobs={[]} engines={localDownloads} wires={[]} />
+          </div> : null}
+          {roster ? <div className="concierge-root runson-meaning-host">
+            <ul className="concierge-set-list runson-meaning"><MeaningSearchRow /></ul>
+          </div> : null}
+        </FoldGadget>
       ) : null}
 
       <SurfaceFooter

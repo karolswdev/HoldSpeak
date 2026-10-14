@@ -1,0 +1,12 @@
+.canvas { min-height:100vh; padding-bottom:24px; }
+.canvas-bar { padding:12px 20px; background:var(--desk-window-fill); color:var(--text); font:12px var(--font-mono); }
+.canvas nav { display:flex; flex-wrap:wrap; gap:8px; padding:16px 20px; }
+.canvas-window { container:surface / inline-size; position:relative; display:block; width:min(760px, calc(100% - 32px)); height:auto; max-height:none; margin:12px auto; overflow:visible; background:var(--desk-window-fill); color:var(--text); border:2px solid var(--desk-ink, currentColor); }
+.canvas-title { padding:8px 14px; font:600 15px var(--font-mono); background:var(--desk-title-fill, var(--surface-2)); }
+.canvas-body { display:flex; flex-direction:column; gap:16px; padding:16px; }
+.canvas-choice { display:block; padding:16px; min-height:88px; width:100%; margin-bottom:16px; text-align:left; border:1px solid currentColor; font:15px var(--font-sans); }
+.canvas-foot { min-height:44px; padding:12px 16px; font:12px var(--font-mono); background:var(--surface-2); }
+@container surface (max-width:520px) { .canvas-body { padding:12px; } }
+
+.canvas-memory-meta { display:flex; flex-wrap:wrap; gap:6px; }
+.canvas-memory-verbs { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }

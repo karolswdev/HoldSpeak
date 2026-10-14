@@ -222,7 +222,7 @@ afterEach(() => {
 
 async function open() {
   render(<RunsOnCore />);
-  await screen.findByTestId("switchboard");
+  await screen.findByTestId("runson-assignments");
   await waitFor(() => expect(hub.calls.some((c) => c.path === "/api/concierge/detect")).toBe(true));
 }
 
@@ -294,7 +294,7 @@ describe("Runs on — each repair state is drawn on its job with one verb", () =
     // No prose: a token, never the service's sentence.
     const words = (said.textContent ?? "").replace(verbs[0].textContent ?? "", "").trim();
     expect(words.length).toBeLessThanOrEqual(40);
-    if (repair.detail) expect(screen.getByTestId("switchboard").textContent).not.toContain(repair.detail);
+    if (repair.detail) expect(screen.getByTestId("runson-assignments").querySelector(".switchboard")!.textContent).not.toContain(repair.detail);
   });
 });
 
@@ -511,7 +511,7 @@ function replay(hub: RecordedHub) {
 async function openRecorded(rec: RecordedHub) {
   replay(rec);
   render(<RunsOnCore />);
-  await screen.findByTestId("switchboard");
+  await screen.findByTestId("runson-assignments");
   await waitFor(() => expect(rec.calls.some((c) => c.path === "/api/concierge/detect")).toBe(true));
 }
 
@@ -554,7 +554,7 @@ describe("Runs on — the engine tells the truth (recorded hub)", () => {
     await waitFor(() => expect(agents.getAttribute("data-state")).toBe("limited"));
     expect(agents.textContent?.toUpperCase()).toContain("WITHOUT AGENTS");
     expect(screen.getByTestId("switchboard-job-thoughts_notes").getAttribute("data-state")).toBe("ready");
-    expect(screen.getByTestId("switchboard").textContent).not.toContain("structured result");
+    expect(screen.getByTestId("runson-assignments").querySelector(".switchboard")!.textContent).not.toContain("structured result");
     expect(screen.queryByTestId("switchboard-job-chat_practice")).toBeNull();
     expect(rec.misses).toEqual([]);
   });
@@ -592,7 +592,7 @@ describe("Runs on — a record-less engine is refused on the drop (recorded hub)
     try {
       const rec = new RecordedHub("no-record", "0-open");
       await openRecorded(rec);
-      await waitFor(() => expect(screen.getByTestId("switchboard").getAttribute("data-layout")).toBe("list"));
+      await waitFor(() => expect(screen.getByTestId("runson-assignments").querySelector(".switchboard")!.getAttribute("data-layout")).toBe("list"));
       for (const job of ["thoughts_notes", "agents_tools"]) {
         fireEvent.click(screen.getByTestId(`switchboard-job-${job}`));
         await screen.findByText(/ · runs on$/i); // the job's card is open
@@ -629,7 +629,7 @@ describe("Runs on — Anthropic reads NOT SUPPORTED YET (recorded hub)", () => {
     try {
       const rec = new RecordedHub("anthropic", "0-open");
       await openRecorded(rec);
-      await waitFor(() => expect(screen.getByTestId("switchboard").getAttribute("data-layout")).toBe("list"));
+      await waitFor(() => expect(screen.getByTestId("runson-assignments").querySelector(".switchboard")!.getAttribute("data-layout")).toBe("list"));
       fireEvent.click(screen.getByTestId("switchboard-job-thoughts_notes"));
       await screen.findByText(/ · runs on$/i); // the job's card is open
       expect(screen.queryByTestId("switchboard-tap-cloud-anthropic")).toBeNull();

@@ -186,8 +186,7 @@ describe("the station track (C-4's borrow)", () => {
     const by = Object.fromEntries(laneStations(lane, lane.events as never).map((s) => [s.word, s]));
     expect(by.DONE).toMatchObject({ state: "reached", tone: "ok" });
     expect(by.ASKS).toBeUndefined();
-    const done = laneEntries(lane, lane.events as never).find((e) => e.word === "DONE");
-    expect(done?.words).toBe("PR #413 is open; both tests pass.");
+    expect(laneEntries(lane, lane.events as never).find((e) => e.word === "DONE")).toBeUndefined();
   });
 
   it("PHILO-15 15 (B43): a held call's rail entry says why it waits", () => {
@@ -245,10 +244,10 @@ describe("the timeline words", () => {
     expect(run.code).toBe("pytest -q · 6 passed");
   });
 
-  it("orders BRIEF, the work, COMMIT, PR, HELD, ASKS and the hollow MERGE", () => {
+  it("orders only recorded activity; the current question is in its well and Merge requires a receipt", () => {
     const lane = fixture();
     expect(laneEntries(lane, lane.events as never).map((e) => e.word)).toEqual([
-      "BRIEF", "READ", "SAYS", "WRITE", "RUN", "COMMIT", "PR", "HELD", "ASKS", "MERGE",
+      "BRIEF", "READ", "SAYS", "WRITE", "RUN", "COMMIT", "PR", "HELD",
     ]);
     const pr = laneEntries(lane, lane.events as never).find((e) => e.word === "PR");
     expect(pr?.text).toBe("#413 opened · checks 6 of 7 · review none yet");
@@ -267,7 +266,9 @@ describe("the agent's window", () => {
     const rail = screen.getByTestId("lane-rail");
     expect(within(rail).getByText("COMMIT")).toBeTruthy();
     expect(within(rail).getByText("a1c9e02 Draft the ledger rollback runbook")).toBeTruthy();
-    expect(within(rail).getByText("Your press in GitHub")).toBeTruthy();
+    expect(within(rail).queryByText("Your press in GitHub")).toBeNull();
+    expect(within(rail).queryByText(QUESTION)).toBeNull();
+    expect(screen.getByTestId("lane-track").closest("details")?.open).toBe(false);
     const pr = screen.getByTestId("lane-pr");
     expect(pr.textContent).toContain("#413 Write the rollback runbook");
     expect(pr.textContent).toContain("CHECKS 6 OF 7");
@@ -516,12 +517,13 @@ describe("the agent's window", () => {
     expect(screen.queryByTestId("lane-pr")).toBeNull();
   });
 
-  it("Raw puts the terminal pane in place of the lane, and back", async () => {
+  it("terminal opens beside the session's work, and returns without losing the question", async () => {
     await openLane(fixture());
     const raw = screen.getByTestId("lane-raw");
     fireEvent.click(raw);
     expect(screen.getByTestId("lane-raw-pane")).toBeTruthy();
-    expect(screen.queryByTestId("lane-rail")).toBeNull();
+    expect(screen.getByTestId("lane-rail")).toBeTruthy();
+    expect(screen.getByTestId("lane-ask")).toBeTruthy();
     expect(raw.getAttribute("aria-pressed")).toBe("true");
     fireEvent.click(raw);
     expect(screen.queryByTestId("lane-raw-pane")).toBeNull();
@@ -813,7 +815,7 @@ describe("Phase 16: the lane draws the agent's words with AgentWords", () => {
     expect(ask.querySelector(".ask-well-question ol")?.children).toHaveLength(3);
     const rail = screen.getByTestId("lane-rail");
     noLiteralMarks(rail.textContent ?? "");
-    expect(rail.querySelector(".lane-rail-says strong")?.textContent).toBe("project.list");
+    expect(rail.querySelector(".lane-rail-says")).toBeNull(); // the current question is shown once, whole, above
     const receipt = screen.getByTestId("lane-receipt").textContent ?? "";
     expect(receipt).toMatch(/^SENT · \d\d:\d\d · HoldSpeak hands you one item: /);
     expect(receipt.endsWith('line". …')).toBe(true);

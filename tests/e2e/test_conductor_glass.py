@@ -226,3 +226,134 @@ class TestDropToHandGlass:
                 assert not errors, errors
             finally:
                 browser.close()
+
+
+class TestSessionOpenGlass:
+    """Actual Conductor Open: phone frame geometry, folded controls and answer focus.
+
+    The registry, launch projection and terminal absence are real product reads.
+    No model, terminal process, key send or microphone action is performed.
+    """
+
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        import holdspeak.agent_context as agent_context
+        import holdspeak.delivery.factory_launch as factory_launch
+        from holdspeak.agent_context import event_log, ingest_agent_hook_event
+        from .conductor_rig import _seed as seed_sessions
+
+        _ensure_build()
+        state = tmp_path / "home/.holdspeak"
+        state.mkdir(parents=True, exist_ok=True)
+        monkeypatch.setattr(factory_launch, "DEFAULT_LAUNCHES_PATH", state / "agent_launches.json")
+        monkeypatch.setattr(agent_context, "AGENT_CONTEXT_FILE", state / "agent_sessions.json")
+        monkeypatch.setattr(event_log, "default_spool_dir", lambda: state / "agent-events")
+        server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+        self.base = base
+        seed_sessions(tmp_path / "home")
+        repo = tmp_path / "home/dev/payments-ledger"
+        (repo / ".git").mkdir(parents=True)
+        report = "Added the rollback checkpoint. Checking the migration tests."
+        transcript = tmp_path / "working-transcript.jsonl"
+        transcript.write_text(json.dumps({"role": "assistant", "content": report}) + "\n")
+        spool = {"state_path": agent_context.AGENT_CONTEXT_FILE, "events_spool_dir": event_log.default_spool_dir()}
+        for event in (
+            {"hook_event_name": "Stop", "last_assistant_message": report, "transcript_path": str(transcript)},
+            {"hook_event_name": "PreToolUse", "tool_name": "Bash"},
+        ):
+            recorded = ingest_agent_hook_event(agent="codex", payload={"session_id": "surface-working", "cwd": str(repo), **event}, capture_messages=True, **spool)
+        assert recorded.last_assistant_text == report
+        ingest_agent_hook_event(agent="claude", payload={"session_id": "surface-asking", "cwd": str(repo),
+            "hook_event_name": "Notification", "message": "Who owns the rollback: Jordan or Avery?"}, **spool)
+        try:
+            yield
+        finally:
+            server.stop()
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_open_keeps_work_and_phone_frame_then_focuses_one_answer(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+        from .glass_infra import clear_hub_windows
+
+        shots = evidence_dir("surface-repair-sessions")
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            page = browser.new_page(viewport={"width": width, "height": SIZES[width]}, reduced_motion="reduce")
+            page.set_default_timeout(T)
+            errors: list[str] = []
+            page.on("pageerror", lambda e: errors.append(str(e)))
+            try:
+                page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+                _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+                clear_hub_windows(page, TOKEN)
+                page.goto(f"{self.base}/conductor", wait_until="load")
+                _normal_chair(page)
+                _settle(page)
+                conductor = page.locator(".conductor-window")
+
+                def shot(name: str, face: Any) -> None:
+                    face.wait_for(state="visible")
+                    _settle(page)
+                    page.screenshot(path=str(shots / f"{name}-{width}.png"))
+                    if width == 393:
+                        bounds = face.bounding_box()
+                        assert abs(bounds["x"]) < 1 and abs(bounds["width"] - width) < 1, bounds
+                    assert face.locator(".desk-pullout-body").evaluate("el => el.scrollWidth <= el.clientWidth + 1")
+
+                conductor.locator("[data-object-id='coder:codex:surface-working']").get_by_test_id("conductor-open").click()
+                session = page.locator(".is-session")
+                session.get_by_test_id("session-head").wait_for()
+                shot("plain-working", session)
+                assert "payments-ledger" in session.locator(".desk-window-title").inner_text()
+                assert "Added the rollback checkpoint. Checking the migration tests." in session.inner_text()
+                assert session.get_by_test_id("session-terminal").count() == 0
+                assert not session.locator("details.desk-session-details").evaluate("el => el.open")
+                session.get_by_test_id("session-open-terminal").click()
+                terminal = session.get_by_test_id("session-terminal")
+                terminal.get_by_text("Terminal unavailable", exact=False).wait_for()
+                shot("plain-terminal-unavailable", session)
+                assert terminal.get_by_role("button", name="Retry", exact=True).is_visible()
+                terminal.get_by_role("button", name="Back to session", exact=True).click()
+                assert terminal.count() == 0
+                session.locator(".desk-gadget-close").click()
+
+                # Asking rows lead with Answer; Get Info's existing Open is
+                # the read-only door, so this test never starts capture.
+                def open_asking(ref: str) -> None:
+                    conductor.locator(f"[data-object-id='{ref}'] .cw-row-title").click()
+                    conductor.get_by_role("button", name="Get Info", exact=True).click()
+                    info = page.locator(".conductor-info-window")
+                    info.get_by_role("button", name="Open", exact=True).click()
+
+                open_asking("coder:claude:surface-asking")
+                field = session.get_by_role("textbox", name="Answer", exact=True)
+                field.click()
+                assert field.evaluate("el => document.activeElement === el")
+                shot("plain-asking", session)
+                assert session.locator(".ask-well-question").count() == 1
+                assert "is-listening" not in session.inner_html()
+                session.locator(".desk-gadget-close").click()
+                page.locator(".conductor-info-window .desk-gadget-close").click()
+
+                conductor.locator("[data-object-id='launch:launch_c4_recon']").get_by_test_id("conductor-open").click()
+                lane = page.locator(".is-lane")
+                lane.get_by_test_id("lane-rail").wait_for()
+                shot("lane-working", lane)
+                assert not lane.get_by_test_id("lane-track").is_visible()
+                assert "Your press in GitHub" not in lane.inner_text()
+                lane.get_by_test_id("lane-raw").click()
+                shot("lane-terminal-unavailable", lane)
+                assert lane.get_by_test_id("lane-head").is_visible()
+                assert lane.get_by_test_id("lane-raw-pane").get_by_role("button", name="Retry", exact=True).is_visible()
+                assert lane.locator(".lw-keys").count() == 0
+                lane.locator(".desk-gadget-close").click()
+
+                open_asking("launch:launch_c4_runbook")
+                lane.get_by_test_id("lane-ask").wait_for()
+                shot("lane-asking", lane)
+                assert lane.locator(".ask-well-question").count() == 1
+                assert "The runbook needs a rollback owner" not in lane.get_by_test_id("lane-rail").inner_text()
+                assert not errors, errors
+            finally:
+                browser.close()

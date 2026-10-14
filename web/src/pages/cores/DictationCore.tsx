@@ -12,7 +12,7 @@ import { useCoreWings } from "./core-hooks";
 import { renderHeroSlot } from "./core-layout";
 import { Button } from "../../components/signal/Signal";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
-import { countToken } from "../../desk/surface";
+import { countToken, FoldGadget } from "../../desk/surface";
 import { useResource } from "../pageSupport";
 import {
   SpeakFace,
@@ -51,11 +51,13 @@ function Configure() {
   return (
     <div className="surface-door">
       <Readiness />
+      <FoldGadget title="More diagnostics">
       <Memory />
       <Knowledge />
       <Runtime />
       <Hooks />
       <Nudges />
+      </FoldGadget>
     </div>
   );
 }

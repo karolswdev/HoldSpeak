@@ -1,0 +1,8 @@
+.canvas { min-height:100vh; color:var(--text); }
+.canvas-bar { display:flex; flex-wrap:wrap; gap:16px; padding:12px 20px; background:var(--desk-window-fill); font:12px var(--font-mono); }
+.canvas nav { display:flex; gap:8px; padding:16px 20px; }
+.canvas-window { position:relative; display:flex; flex-direction:column; width:min(760px, calc(100% - 40px)); height:min(720px, calc(100vh - 140px)); margin:12px auto; background:var(--desk-window-fill); border:2px solid var(--wb-ink); overflow:hidden; }
+.canvas-title { flex:none; padding:8px 14px; font:600 15px var(--font-mono); background:var(--surface-2); }
+.canvas-body { display:flex; flex-direction:column; gap:18px; padding:18px; overflow-y:auto; flex:1; min-height:0; }
+.canvas-body p { font:14px/1.5 var(--font-sans); margin:0; }
+@media (max-width:720px) { .canvas-window { width:100%; height:calc(100vh - 130px); margin:0; border-inline:0; } .canvas-body { padding:14px; } }

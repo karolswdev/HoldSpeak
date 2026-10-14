@@ -238,6 +238,55 @@ describe("PHILO-13-06: a Room activity row opens its object", () => {
   });
 });
 
+describe("Room History preserves the recorded item", () => {
+  const changes = {
+    state: "ok",
+    recent: [
+      { id: "c-cutover", change_kind: "project.updated", target_ref: "project:p1", created_at: new Date().toISOString(),
+        summary_json: JSON.stringify({ action: "item.created", item_id: "cutover", item_type: "milestone", title: "Production cutover" }) },
+      { id: "c-other", change_kind: "project.updated", target_ref: "project:p1", created_at: new Date().toISOString(),
+        summary_json: JSON.stringify({ action: "item.created", item_id: "other", item_type: "milestone", title: "Quiet launch" }) },
+      { id: "c-missing", change_kind: "project.updated", target_ref: "project:p1", created_at: new Date().toISOString(),
+        summary_json: JSON.stringify({ action: "item.created", item_id: "missing", item_type: "risk", title: "Retired risk" }) },
+    ],
+  };
+
+  beforeEach(() => {
+    apiFetch.mockImplementation((url: string) => {
+      if (url.includes("/room/read")) return Promise.resolve({ read_at: new Date().toISOString() });
+      if (url.includes("/items?")) return Promise.resolve({ items: [
+        { id: "cutover", item_type: "milestone", title: "Production cutover", lifecycle: "open", due_at: null, severity: null },
+        { id: "other", item_type: "milestone", title: "Quiet launch", lifecycle: "open", due_at: null, severity: null },
+      ] });
+      if (url.includes("/room")) return Promise.resolve(roomResponse({ changes }));
+      return Promise.resolve(detailResponse(url));
+    });
+  });
+
+  it("finds the stored title, then Open reveals and focuses that exact Plan item", async () => {
+    render(<WindowHarness scope="project:p1" />);
+    await screen.findByTestId("items-section");
+    fireEvent.click(within(screen.getByTestId("wing-slot")).getByRole("tab", { name: "History" }));
+    await screen.findByTestId("room-history");
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search history" }), { target: { value: "Production cutover" } });
+    expect(screen.getAllByTestId("history-entry").map((row) => row.textContent)).toEqual(["Added milestone · Production cutover"]);
+    fireEvent.click(screen.getByRole("button", { name: "Open: Added milestone · Production cutover" }));
+    await screen.findByTestId("items-section");
+    await waitFor(() => expect(document.activeElement?.getAttribute("data-item-id")).toBe("cutover"));
+    expect(screen.queryByTestId("room-history")).toBeNull();
+  });
+
+  it("withholds Open for an item no longer in this Room", async () => {
+    render(<WindowHarness scope="project:p1" />);
+    await screen.findByTestId("items-section");
+    fireEvent.click(within(screen.getByTestId("wing-slot")).getByRole("tab", { name: "History" }));
+    await screen.findByTestId("room-history");
+    expect(screen.getByText("Added risk · Retired risk")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Open: Added risk · Retired risk" })).toBeNull();
+    expect(screen.getAllByTestId("history-entry-open")).toHaveLength(2);
+  });
+});
+
 describe("PHILO-13-06: the Room's load failure in plain words", () => {
   it("names the failure, offers Try again, never the hub's text", async () => {
     let fail = true;

@@ -9,6 +9,7 @@ import { EMPTY_ITEMS, fromWireMeeting } from "../api";
 import { useDesk } from "../store";
 import { DeskChangedRefresh } from "../useDeskChangedRefresh";
 import { ChairHome } from "./ChairHome";
+import { MeetingRecord } from "../../pages/cores/history/MeetingRecord";
 import { asHub } from "../../test/hubNeedsYou";
 import { openChairWindows } from "./__tests__/fixtures/openChairWindows";
 
@@ -62,6 +63,7 @@ function withTestIdentity(candidate: SummaryCase, id: string): SummaryCase {
     ...candidate,
     list: { ...candidate.list, id },
     detail: { ...candidate.detail, id },
+    recovery: { ...candidate.recovery, meeting_id: id },
   } as SummaryCase;
 }
 
@@ -79,7 +81,9 @@ function commonWire(candidates: SummaryCase[]) {
   const details = detailsFor(...candidates);
   mockedApiFetch.mockImplementation(asHub(async (path: string) => {
     const value = String(path);
-    const detailId = value.match(/^\/api\/meetings\/([^/?]+)$/)?.[1];
+    const recoveryId = value.match(/^\/api\/meetings\/([^/?]+)\/intel-recovery$/)?.[1];
+    if (recoveryId) return candidates.find((candidate) => candidate.detail.id === decodeURIComponent(recoveryId))?.recovery as never;
+    const detailId = value.match(/^\/api\/meetings\/([^/?]+)(?:\?include_parked=true)?$/)?.[1];
     if (detailId) return details[decodeURIComponent(detailId)] as never;
     if (value.startsWith("/api/meetings?")) {
       return { meetings: candidates.map((candidate) => candidate.list) } as never;
@@ -110,8 +114,10 @@ function detailCalls() {
 
 function expectProducerCause(candidate: SummaryCase) {
   const cause = String(candidate.detail.intel_job?.last_error ?? "").trim();
-  const status = screen.getByTestId("arrival-summary-status");
-  expect(status).toHaveTextContent("LAST ERROR · PROVIDER FAILED");
+  const status = screen.getByTestId("arrival-meeting-row");
+  expect(status).toHaveTextContent("PROVIDER FAILED");
+  expect(status.parentElement).not.toHaveAttribute("data-open");
+  expect(screen.getByTestId("arrival-attempts")).toBeInTheDocument();
   expect(cause).toBe("PROVIDER FAILED");
   expect(status.textContent ?? "").not.toMatch(/ATTEMPT\(S\)|DEFERRED INTEL|BOUND ANALYSIS|PUBLISH/i);
 }
@@ -147,25 +153,15 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     seat(ready);
     render(<ChairHome />);
 
-    expect(await screen.findByTestId("meeting-summary-text")).toHaveTextContent(
-      "The team reviewed the budget.",
-    );
-    expect(screen.getByTestId("meeting-summary-topics")).toHaveTextContent("BUDGET");
+    const row = await screen.findByTestId("arrival-meeting-row");
+    await waitFor(() => expect(row).toHaveTextContent("The team reviewed the budget."));
     expect(screen.getByTestId("arrival-attempts")).not.toHaveTextContent("THIS DEVICE");
-    expect(screen.queryByTestId("arrival-summary-status")).toBeNull();
-    expect(screen.getAllByTestId("meeting-summary-text")).toHaveLength(1);
-    expect(screen.getAllByText("The team reviewed the budget.")).toHaveLength(1);
-    expect(screen.getByTestId("arrival-meeting-row")).toHaveTextContent("16 WORDS");
-    const transcriptFold = screen.getByRole("button", { name: /Transcript.*16 WORDS/ });
-    expect(transcriptFold).toHaveAttribute("aria-expanded", "false");
-    expect(screen.queryAllByText("We will ship the boundary change on Tuesday.")).toHaveLength(0);
-    fireEvent.click(transcriptFold);
-    expect(screen.getAllByText("We will ship the boundary change on Tuesday.")).toHaveLength(2);
-    expect(
-      within(screen.getByTestId("arrival-meeting-row")).getByRole("button", {
-        name: /^Open$/,
-      }),
-    ).toBeInTheDocument();
+    expect(row).toHaveTextContent("16 WORDS");
+    expect(row.parentElement).not.toHaveAttribute("data-open");
+    expect(screen.queryByRole("button", { name: /Transcript/ })).toBeNull();
+    expect(screen.queryByTestId("meeting-summary-text")).toBeNull();
+    expect(screen.queryByTestId("meeting-send-well")).toBeNull();
+    expect(within(row).getByRole("button", { name: "Open" })).toBeInTheDocument();
   });
 
   it("keeps a failed lineage as RETRYING after its scheduled time and names the producer cause", async () => {
@@ -176,9 +172,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
 
     await waitFor(() => expect(screen.getByTestId("arrival-meeting-badge")).toHaveTextContent("RETRYING"));
     expect(screen.getByTestId("arrival-display")).toHaveTextContent("1 needs you");
-    expect(screen.getByTestId("arrival-summary-status")).toHaveTextContent(
-      "LAST ATTEMPT",
-    );
+    expect(screen.getByTestId("arrival-attempts")).toBeInTheDocument();
     expectProducerCause(retry);
     expect(screen.queryByText("Nothing needs you")).toBeNull();
   });
@@ -190,9 +184,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     render(<ChairHome />);
 
     await waitFor(() => expect(screen.getByTestId("arrival-meeting-badge")).toHaveTextContent("FAILED"));
-    expect(screen.getByTestId("arrival-summary-status")).toHaveTextContent(
-      "LAST ATTEMPT",
-    );
+    expect(screen.getByTestId("arrival-attempts")).toBeInTheDocument();
     expectProducerCause(failed);
     expect(screen.getByTestId("arrival-display")).toHaveTextContent("1 needs you");
     expect(screen.queryByText("Nothing needs you")).toBeNull();
@@ -210,19 +202,12 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     seat(mixed);
     render(<ChairHome />);
 
-    expect(await screen.findByTestId("meeting-summary-text")).toHaveTextContent(
-      "The team reviewed the budget.",
-    );
-    expect(screen.getByTestId("arrival-summary-status")).toHaveTextContent("FAILED");
+    await waitFor(() => expect(screen.getByTestId("arrival-meeting-row")).toHaveTextContent("The team reviewed the budget."));
+    expect(screen.getByTestId("arrival-meeting-badge")).toHaveTextContent("FAILED");
     expectProducerCause(mixed);
-    expect(screen.getByTestId("summary-record-attempts")).not.toHaveTextContent("THIS DEVICE");
-    // PHILO-15-03: the slab owns the summary; the Chair draws it once, the
-    // run's facts inside the same well.
-    expect(screen.getAllByTestId("meeting-summary-text")).toHaveLength(1);
-    expect(screen.getAllByText("The team reviewed the budget.")).toHaveLength(1);
-    expect(screen.getAllByTestId("summary-record-attempts")).toHaveLength(1);
-    expect(screen.getByTestId("meeting-summary-text").closest(".surface-well"))
-      .toContainElement(screen.getByTestId("arrival-summary-status"));
+    expect(screen.getByTestId("arrival-attempts")).not.toHaveTextContent("THIS DEVICE");
+    expect(screen.queryByTestId("meeting-summary-text")).toBeNull();
+    expect(screen.getByTestId("arrival-meeting-row").parentElement).not.toHaveAttribute("data-open");
   });
 
   it("reads only the top three visible meeting details per desk refresh", async () => {
@@ -264,13 +249,14 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     render(<ChairHome />);
     seat(running);
 
-    await waitFor(() => expect(screen.getByRole("button", { name: /Transcript.*16 WORDS/ })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByTestId("arrival-meeting-badge")).toHaveTextContent("RUNNING"));
+    expect(screen.getByTestId("arrival-meeting-row")).toHaveTextContent("16 WORDS");
     resolveFirst(ready.detail);
     await waitFor(() => expect(screen.queryByText("The team reviewed the budget.")).toBeNull());
     expect(screen.queryByText("MEETING DETAIL IDENTITY CHANGED")).toBeNull();
   });
 
-  it("keeps the open summary and user-open transcript through an unresolved desk refresh", async () => {
+  it("keeps the closed summary excerpt through an unresolved desk refresh", async () => {
     const ready = withTestIdentity(caseFor("success"), "m-refresh-stable");
     const refreshed = {
       ...ready,
@@ -298,12 +284,9 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     seat(ready);
     render(<ChairHome />);
 
-    expect(await screen.findByTestId("meeting-summary-text")).toHaveTextContent(
-      "The team reviewed the budget.",
-    );
-    const transcriptFold = screen.getByRole("button", { name: /Transcript.*16 WORDS/ });
-    fireEvent.click(transcriptFold);
-    expect(screen.getAllByText("We will ship the boundary change on Tuesday.")).toHaveLength(2);
+    await waitFor(() => expect(screen.getByTestId("arrival-meeting-row")).toHaveTextContent("The team reviewed the budget."));
+    expect(screen.queryByRole("button", { name: /Transcript/ })).toBeNull();
+    expect(screen.queryAllByText("We will ship the boundary change on Tuesday.")).toHaveLength(0);
 
     const updatedAt = Number(useDesk.getState().updatedAt ?? 0) + 1;
     useDesk.setState({
@@ -311,19 +294,14 @@ describe("PHILO-3-02 Arrival summary completion", () => {
       updatedAt,
     } as never);
     await waitFor(() => expect(detailReads).toBe(2));
-    expect(screen.getByTestId("meeting-summary-text")).toHaveTextContent(
-      "The team reviewed the budget.",
-    );
-    expect(screen.getAllByText("We will ship the boundary change on Tuesday.")).toHaveLength(2);
-    expect(screen.getByRole("button", { name: /Transcript.*16 WORDS/ }))
-      .toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByTestId("arrival-meeting-row")).toHaveTextContent("The team reviewed the budget.");
+    expect(screen.getByTestId("arrival-meeting-row").parentElement).not.toHaveAttribute("data-open");
+    expect(screen.queryAllByText("We will ship the boundary change on Tuesday.")).toHaveLength(0);
 
     resolveRefresh(refreshed.detail);
-    await waitFor(() => expect(screen.getByTestId("meeting-summary-text")).toHaveTextContent(
-      "The team reviewed the launch.",
-    ));
-    expect(screen.getAllByText("We will ship the boundary change on Tuesday.")).toHaveLength(2);
-    expect(screen.getByTestId("arrival-meeting-row").parentElement).toHaveAttribute("data-open", "true");
+    await waitFor(() => expect(screen.getByTestId("arrival-meeting-row")).toHaveTextContent("The team reviewed the launch."));
+    expect(screen.getByTestId("arrival-meeting-row").parentElement).not.toHaveAttribute("data-open");
+    expect(screen.queryByTestId("meeting-send-well")).toBeNull();
   });
 
   it("names a response whose identity does not match the requested meeting", async () => {
@@ -343,8 +321,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     render(<ChairHome />);
 
     expect(await screen.findByTestId("arrival-detail-error")).toHaveTextContent("SUMMARY READ FAILED");
-    expect(screen.getByText("SUMMARY · READ FAILED")).toBeInTheDocument();
-    expect(screen.getByTestId("arrival-detail-retained")).toHaveTextContent("MEETING SAVED");
+    expect(screen.queryByTestId("arrival-detail-retained")).toBeNull();
     expect(screen.queryByText(ready.detail.id)).toBeNull();
     expect(screen.queryByText(running.detail.id)).toBeNull();
     const retainedRow = screen.getByTestId("arrival-meeting-row");
@@ -410,7 +387,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
 
     emitRuntime("desk_changed");
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(2));
-    await waitFor(() => expect(screen.getByTestId("meeting-summary-text")).toHaveTextContent(
+    await waitFor(() => expect(screen.getByTestId("arrival-meeting-row")).toHaveTextContent(
       "The team reviewed the budget.",
     ));
     expect(
@@ -544,20 +521,87 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     current = 1;
     emitRuntime("desk_changed");
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1), { timeout: 1000 });
-    await waitFor(() => expect(screen.getByTestId("meeting-summary-text")).toHaveTextContent("The team reviewed the budget."));
+    await waitFor(() => expect(screen.getByTestId("arrival-meeting-row")).toHaveTextContent("The team reviewed the budget."));
     expect(screen.getByTestId("arrival-attempts")).not.toHaveTextContent("THIS DEVICE");
 
     current = 2;
     emitRuntime("desk_changed");
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(2), { timeout: 1000 });
     await waitFor(() => expect(screen.getByTestId("arrival-meeting-badge")).toHaveTextContent("RETRYING"));
-    expect(screen.getByTestId("arrival-summary-status")).toHaveTextContent("LAST ATTEMPT");
+    expect(screen.getByTestId("arrival-attempts")).toBeInTheDocument();
+    expectProducerCause(snapshots[current]);
 
     current = 3;
     emitRuntime("desk_changed");
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(3), { timeout: 1000 });
     await waitFor(() => expect(screen.getByTestId("arrival-meeting-badge")).toHaveTextContent("FAILED"));
-    expect(screen.getByTestId("arrival-summary-status")).toHaveTextContent("LAST ATTEMPT");
+    expect(screen.getByTestId("arrival-attempts")).toBeInTheDocument();
+    expectProducerCause(snapshots[current]);
     expect(detailPaths).toHaveLength(4);
   });
+
+  it("the actual Meeting record owns the full producer summary, topics and user-open transcript", async () => {
+    const ready = caseFor("success");
+    commonWire([ready]);
+    render(<MeetingRecord meetingId={ready.detail.id} onClose={() => undefined} />);
+    expect(await screen.findByTestId("meeting-summary-text")).toHaveTextContent("The team reviewed the budget.");
+    expect(screen.getByTestId("meeting-summary-topics")).toHaveTextContent("BUDGET");
+    expect(screen.getAllByTestId("meeting-summary-text")).toHaveLength(1);
+    expect(screen.getAllByText("The team reviewed the budget.")).toHaveLength(1);
+    expect(screen.getByTestId("summary-record-attempts")).not.toHaveTextContent("THIS DEVICE");
+    const transcript = await screen.findByRole("button", { name: /Transcript/ });
+    expect(transcript).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(transcript);
+    expect(screen.getAllByText("We will ship the boundary change on Tuesday.")).toHaveLength(2);
+    expect(transcript).toHaveAttribute("aria-expanded", "true");
+    expect(screen.queryByTestId("meeting-send-well")).toBeNull();
+  });
+
+  it.each(["retry", "terminal_failure"] as const)("the actual Meeting record retains %s producer cause, recovery and run receipt", async (state) => {
+    const snapshot = caseFor(state);
+    commonWire([snapshot]);
+    render(<MeetingRecord meetingId={snapshot.detail.id} onClose={() => undefined} />);
+    if (state === "retry") {
+      expect(await screen.findByTestId("meeting-summary-state")).toHaveTextContent("SUMMARY QUEUED");
+      expect(await screen.findByTestId("meetings-run-receipt")).toHaveTextContent(/^QUEUED \d/);
+      expect(screen.queryByRole("region", { name: "Meeting intelligence recovery" })).toBeNull();
+      expect(snapshot.recovery.remaining.detail).toBe("PROVIDER FAILED");
+      return;
+    }
+    const cause = await screen.findByTitle("PROVIDER FAILED");
+    expect(cause).toHaveTextContent("NOT DONE");
+    const recovery = screen.getByRole("region", { name: "Meeting intelligence recovery" });
+    expect(recovery).toHaveTextContent("KEPT 2 SEGMENTS");
+    expect(within(recovery).getByTestId("recovery-attempts")).not.toHaveTextContent("THIS DEVICE");
+    expect(within(recovery).getByRole("button", { name: "Retry" })).toBeEnabled();
+    expect(within(recovery).getByRole("button", { name: "Skip" })).toBeEnabled();
+  });
+
+  it("the actual Meeting record keeps the user's transcript open while a producer refresh is pending", async () => {
+    const ready = caseFor("success");
+    const refreshed = { ...ready.detail, intel: { ...ready.detail.intel, summary: "The team reviewed the launch." } };
+    commonWire([ready]);
+    const base = mockedApiFetch.getMockImplementation()!;
+    let pending = false;
+    let release!: (value: unknown) => void;
+    const refresh = new Promise((resolve) => { release = resolve; });
+    mockedApiFetch.mockImplementation(async (path, init) => {
+      if (pending && new RegExp(`^/api/meetings/${ready.detail.id}(?:\\?|$)`).test(String(path))) return refresh as never;
+      return base(path, init);
+    });
+    render(<MeetingRecord meetingId={ready.detail.id} onClose={() => undefined} />);
+    expect(await screen.findByTestId("meeting-summary-text")).toHaveTextContent("The team reviewed the budget.");
+    fireEvent.click(await screen.findByRole("button", { name: /Transcript/ }));
+    expect(screen.getByRole("button", { name: /Transcript/ })).toHaveAttribute("aria-expanded", "true");
+    pending = true;
+    window.dispatchEvent(new Event("focus"));
+    await waitFor(() => expect(mockedApiFetch.mock.calls.filter(([path]) => String(path).includes("include_parked=true")).length).toBeGreaterThan(1));
+    expect(screen.getByTestId("meeting-summary-text")).toHaveTextContent("The team reviewed the budget.");
+    expect(screen.getByRole("button", { name: /Transcript/ })).toHaveAttribute("aria-expanded", "true");
+    release(refreshed);
+    await waitFor(() => expect(screen.getByTestId("meeting-summary-text")).toHaveTextContent("The team reviewed the launch."));
+    expect(screen.getByRole("button", { name: /Transcript/ })).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getAllByText("We will ship the boundary change on Tuesday.")).toHaveLength(2);
+  });
+
 });

@@ -6,7 +6,7 @@
 //   - Ask wing → replaced by the ask well at the foot
 //   - "No project memory yet" → removed; no empty timeline
 //   - Error state → still works (generic error rendering)
-//   - No-scope state → still "Open a Project"
+//   - No-scope state → Desk memory recall
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState, type ReactNode } from "react";
@@ -341,6 +341,8 @@ describe("Project Memory", () => {
         expect.stringMatching(/^\/api\/memory\/recall\?query=connected\+evidence&filter=all$/),
       ),
     );
-    expect(screen.getByText("THIS DEVICE")).toBeTruthy();
+    expect(screen.getByTestId("desk-memory-body")).toBeTruthy();
+    expect((input as HTMLInputElement).value).toBe("connected evidence");
+    expect(screen.queryByText("THIS DEVICE")).toBeNull();
   });
 });

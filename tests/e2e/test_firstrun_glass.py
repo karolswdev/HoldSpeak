@@ -88,6 +88,60 @@ import pytest
 
 from .glass_infra import SPEECH_CAPABILITY, _api, _boot, _ensure_build, assign_engine, engine_profile
 
+
+def _expand_first_use_setup(page: Any) -> None:
+    """Existing media/account flows explicitly enter the optional setup wells."""
+    page.locator(".firstrun-chat, .firstrun-optional").evaluate_all("els => els.forEach(el => { el.open = true; })")
+
+
+@pytest.mark.parametrize("width,height", [(1440, 900), (393, 852)])
+def test_speech_and_first_words_stay_in_reach(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int, height: int) -> None:
+    """First-use composition and pointer ownership, without capture/download."""
+    from playwright.sync_api import sync_playwright
+    from tests._evidence import evidence_dir
+    from .test_settings_glass import _pointer_owned
+    from .type_floor_rig import _MEASURE
+
+    _ensure_build()
+    server, base = _boot(tmp_path, monkeypatch, token="first-use-layout")
+    out = evidence_dir("surface-repair-first-use")
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": width, "height": height}, reduced_motion="reduce")
+            errors: list[str] = []
+            page.on("pageerror", lambda error: errors.append(str(error)))
+            page.goto(f"{base}/welcome?token=first-use-layout", wait_until="load")
+            speech = page.get_by_test_id("firstrun-speech-verb")
+            speech.wait_for(timeout=20_000)
+            page.wait_for_timeout(600)
+            exit_verb = page.get_by_role("button", name="Continue later", exact=True)
+            words = page.get_by_test_id("firstrun-first-words")
+            initial = page.locator(".firstrun").evaluate("""el => {
+              const r = name => el.querySelector(name).getBoundingClientRect().toJSON();
+              return {speech:r('[data-testid="firstrun-speech-card"]'), words:r('[data-testid="firstrun-first-words"]'),
+                folds:[...el.querySelectorAll('.firstrun-chat,.firstrun-optional')].map(x=>x.open)};
+            }""")
+            page.screenshot(path=str(out / f"first-use-{width}.png"))
+            assert initial["words"]["bottom"] < height, initial
+            assert initial["folds"] == [False, False], initial
+            assert "144 MB" in speech.inner_text(), speech.inner_text()
+            # First use is outside the window host; it must still use the
+            # readable Workbench ink for the download's egress badge.
+            ink = page.evaluate(_MEASURE, "#8b93a3")
+            egress_faults = [row for row in ink["contrast"] if "gadget-chip-egress" in row["path"]]
+            assert not egress_faults, egress_faults
+            _pointer_owned(page, speech, "Set up speech", scrolled=True)
+            _pointer_owned(page, exit_verb, "Continue later", scrolled=True)
+            page.locator(".firstrun-optional > summary").click()
+            page.get_by_test_id("firstrun-agents").scroll_into_view_if_needed()
+            _pointer_owned(page, exit_verb, "Continue later after optional setup scroll", scrolled=True)
+            page.screenshot(path=str(out / f"first-use-optional-{width}.png"))
+            assert errors == [], errors
+            browser.close()
+    finally:
+        server.stop()
+
 pytest.importorskip("playwright.sync_api", reason="first-run glass needs Playwright")
 from playwright.sync_api import expect, sync_playwright  # noqa: E402
 import functools
@@ -277,13 +331,14 @@ def test_first_run_one_screen(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, w
 
             page.goto(f"{base}/?token={TOKEN}")
             page.get_by_test_id("firstrun").wait_for(timeout=30_000)
+            _expand_first_use_setup(page)
             cal = page.get_by_test_id("firstrun-calendar")
             conn = page.get_by_test_id("firstrun-connections")
 
             # ── load: the detect reads only; no prompt, no link read, no probe ──
             ask = cal.get_by_role("button", name="Allow calendar access", exact=True)
             expect(ask).to_be_visible()
-            expect(cal.get_by_test_id("firstrun-calendar-ask").locator(".gadget-chip-egress")).to_have_text("THIS DEVICE")
+            expect(cal.get_by_test_id("firstrun-calendar-ask").locator(".gadget-chip-egress")).to_have_count(0)  # passive same-device work has no egress badge
             expect(conn.get_by_role("status", name="SIGNED IN · 3")).to_be_visible()
             assert eventkit.prompts == 0 and ics.requests == [] and runner.calls == []
             chips = conn.locator(".gadget-chip-egress").all_inner_texts()
@@ -314,13 +369,13 @@ def test_first_run_one_screen(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, w
             assert eventkit.prompts == 1
             work = cal.locator("li", has_text="Work")
             expect(work).to_contain_text(EMAIL)
-            expect(work.locator(".gadget-chip-egress")).to_have_text("THIS DEVICE")
+            expect(work.locator(".gadget-chip-egress")).to_have_count(0)
 
             # a link the hub cannot read: CAN'T READ · SERVER REFUSED
             field = cal.get_by_role("textbox", name="Calendar URL", exact=True)
             field.fill(f"{ics.base}/gone.ics")
             # PHILO-17 runsonwords (#1083): a loopback host is THIS DEVICE.
-            expect(cal.locator(".firstrun-field .gadget-chip-egress")).to_have_text("THIS DEVICE")
+            expect(cal.locator(".firstrun-field .gadget-chip-egress")).to_have_count(0)
             shot("cal", cal)
             cal.get_by_role("button", name="Add", exact=True).click()
             failed = cal.get_by_test_id("firstrun-calendar-cant-read")
@@ -438,6 +493,7 @@ def test_a_reload_after_keep_never_replaces_the_kept_note(
             page.set_default_timeout(15_000)
             page.goto(f"{base}/?token={TOKEN}")
             page.get_by_test_id("firstrun").wait_for(timeout=30_000)
+            _expand_first_use_setup(page)
             page.get_by_test_id("firstrun-local-ai").get_by_role(
                 "button", name="Set up local AI · 149 MB", exact=True).click()
 
@@ -456,9 +512,10 @@ def test_a_reload_after_keep_never_replaces_the_kept_note(
             keep_one(WORDS)
             page.reload()
             page.get_by_test_id("firstrun").wait_for(timeout=30_000)
+            _expand_first_use_setup(page)
             keep_one("Book the room for the Atlas review.")
             notes = _api(page, "GET", "/api/notes", token=TOKEN)["notes"]
-            bodies = sorted(n["body_markdown"] for n in notes if n.get("title") == "First dictation")
+            bodies = sorted(n["body_markdown"] for n in notes if "dictation" in (n.get("tags") or []))
             assert bodies == sorted([WORDS, "Book the room for the Atlas review."]), notes
             browser.close()
     finally:
@@ -660,7 +717,17 @@ def test_first_run_heard_first(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, 
     source = Source()
     _real_local_ai(monkeypatch, source)
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
-    engine_profile()
+    # This profile becomes the global AI default below. Qualify the fixture
+    # for the provider routes the speech-session admission freezes too.
+    from holdspeak.db import get_database
+    from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
+    from .glass_infra import ENGINE_PROFILE, SUMMARY_CAPABILITY
+
+    _profile(get_database(), ENGINE_PROFILE, claims=(
+        "language", "structured_output", _result_claim(SUMMARY_CAPABILITY),
+        _result_claim(SPEECH_CAPABILITY), _result_claim("speech.intent_classify"),
+        _result_claim("speech.rewrite"),
+    ), modalities=("language", "text", "audio"))
     assign_engine(SPEECH_CAPABILITY, 1)
     proposal_id = _seed_lan_proposal(monkeypatch)
     out = Path(os.environ.get("FIRSTRUN_SHOTS") or tmp_path / "shots")
@@ -683,6 +750,7 @@ def test_first_run_heard_first(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, 
             page.goto(f"{base}/?token={TOKEN}")
             face = page.get_by_test_id("firstrun")
             face.wait_for(timeout=30_000)
+            _expand_first_use_setup(page)
             local_ai = page.get_by_test_id("firstrun-local-ai")
             words = page.get_by_test_id("firstrun-first-words")
 
@@ -774,7 +842,10 @@ def test_first_run_heard_first(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, 
                 dictate.scroll_into_view_if_needed()
             dictate.click()
             stop = words.get_by_role("button", name="Stop listening", exact=True)
-            expect(stop).to_be_visible()
+            try:
+                expect(stop).to_be_visible()
+            except AssertionError as error:
+                raise AssertionError(f"First words after Dictate: {words.inner_text()}") from error
             expect(words.get_by_text("LISTENING")).to_be_visible()
             page.wait_for_timeout(1500)
             shot("done-1")
@@ -807,7 +878,7 @@ def test_first_run_heard_first(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, 
                 words.get_by_role("button", name="Keep as note", exact=True).click()
             assert made.value.ok, made.value.text()
             note = made.value.json()["note"]
-            assert note["body_markdown"] == WORDS and note["title"] == "First dictation"
+            assert note["body_markdown"] == WORDS and note["title"] == "Send the cutover plan to Priya"
             expect(page.get_by_role("heading", name="Get ready")).to_be_visible()
             expect(words.get_by_role("button", name="Keep as note", exact=True)).to_have_count(0)
             # PHILO-17: the C1 cards are done, so the exit is "Open my desk".
@@ -852,6 +923,7 @@ def _ready_hub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Any, st
 def _speech_ready(page: Any, base: str) -> Any:
     page.goto(f"{base}/?token={TOKEN}")
     page.get_by_test_id("firstrun").wait_for(timeout=30_000)
+    _expand_first_use_setup(page)
     local_ai = page.get_by_test_id("firstrun-local-ai")
     local_ai.get_by_role("button", name="Set up local AI · 149 MB", exact=True).click()
     dictate = page.get_by_test_id("firstrun-first-words").get_by_role("button", name="◖ Dictate one sentence")
@@ -982,6 +1054,7 @@ def test_first_words_recovery_doors_open_on_glass(
             else:
                 page.goto(f"{base}/?token={TOKEN}", wait_until="load")
             page.get_by_test_id("firstrun").wait_for(timeout=30_000)
+            _expand_first_use_setup(page)
             local_ai = page.get_by_test_id("firstrun-local-ai")
             local_ai.get_by_role("button", name=re.compile(r"^Set up local AI")).click()
             words = page.get_by_test_id("firstrun-first-words")
@@ -997,7 +1070,7 @@ def test_first_words_recovery_doors_open_on_glass(
             if not _on_glass(page, "#surface-setup"):
                 fails[f"F4 {mode} {width} Check the microphone opens Setup on glass"] = "not on glass"
             page.screenshot(path=str(out / f"P17-firstrun-{mode}-mic-{width}.png"))
-            closer = page.get_by_role("button", name="Close Setup", exact=True)
+            closer = page.get_by_role("button", name=re.compile(r"^(Close|Back from) Setup$"))
             if closer.count():
                 closer.first.click()
 
@@ -1008,7 +1081,7 @@ def test_first_words_recovery_doors_open_on_glass(
             try:
                 runs_on.wait_for(timeout=20_000)
                 runs_on.click()
-                if not _on_glass(page, "[data-testid='switchboard']"):
+                if not _on_glass(page, "[data-testid='runson-root']"):
                     fails[f"F4 {mode} {width} Runs on opens on glass"] = "not on glass"
             except Exception as exc:  # noqa: BLE001
                 fails[f"F4 {mode} {width} the missing model offers Runs on"] = str(exc)[:200]
@@ -1050,16 +1123,18 @@ def test_waiting_runs_on_comes_back_through_its_alias(
             # Runs on first (HoldSpeak ▸ Runs on), then Setup ▸ Get ready.
             page.locator(".desk-mark").click()
             page.locator(".desk-menu-list").first.wait_for()
-            _row(page, "Runs on").click()
-            page.get_by_test_id("switchboard").wait_for(timeout=15_000)
+            _row(page, "Engines").click()
+            page.get_by_test_id("runson-root").wait_for(timeout=15_000)
             page.locator(".desk-mark").click()
             page.locator(".desk-menu-list").first.wait_for()
             _row(page, "Setup").click()
             page.locator("#surface-setup").get_by_role("button", name="Get ready", exact=True).click()
             page.get_by_test_id("firstrun").wait_for(timeout=30_000)
+            _expand_first_use_setup(page)
             page.wait_for_timeout(400)
-            if page.get_by_test_id("switchboard").count() or page.locator("#surface-setup").count():
+            if page.get_by_test_id("runson-root").count() or page.locator("#surface-setup").count():
                 fails[f"F5 {width} his windows wait off glass"] = "on glass"
+            _expand_first_use_setup(page)
             local_ai = page.get_by_test_id("firstrun-local-ai")
             local_ai.get_by_role("button", name=re.compile(r"^Set up local AI")).click()
             words = page.get_by_test_id("firstrun-first-words")
@@ -1069,12 +1144,19 @@ def test_waiting_runs_on_comes_back_through_its_alias(
             runs_on = words.get_by_role("button", name="Runs on", exact=True)
             runs_on.wait_for(timeout=20_000)
             runs_on.click()
-            if not _on_glass(page, "[data-testid='switchboard']"):
+            if not _on_glass(page, "[data-testid='runson-root']"):
                 fails[f"F5 {width} the waiting Runs on comes back on glass"] = "not on glass"
             page.screenshot(path=str(out / f"P17-firstrun-waiting-runson-{width}.png"))
 
             # Leave first run: every window is kept, on glass and in the hub.
-            page.get_by_role("button", name="Close Runs on", exact=True).first.click()
+            page.get_by_role("button", name=re.compile(r"^(Close|Back from) Settings$")).first.click()
+            if width < 720:
+                # The first Back leaves the scoped engine choice; the second
+                # closes Settings. Both presses use the frame's real control.
+                page.get_by_test_id("runson-root").wait_for(state="detached")
+                if page.locator("#surface-settings").count():
+                    page.locator("#surface-settings").get_by_role("button", name="Back from Settings", exact=True).click()
+            page.locator("#surface-settings").wait_for(state="detached")
             page.get_by_role("button", name="Continue later", exact=True).click()
             page.get_by_test_id("firstrun").wait_for(state="detached", timeout=15_000)
             page.wait_for_timeout(800)
@@ -1086,19 +1168,19 @@ def test_waiting_runs_on_comes_back_through_its_alias(
                 fails[f"F5 {width} Setup (open before Get ready) is in the hub's rows"] = sorted(ids)
             if page.locator("#surface-setup").count() == 0:
                 fails[f"F5 {width} Setup comes back on the desk"] = "absent"
-            if "surface-concierge" in ids:
-                fails[f"F5 {width} Runs on, closed in first run, stays closed"] = sorted(ids)
+            if "surface-settings" in ids or "surface-concierge" in ids:
+                fails[f"F5 {width} Engines, closed in first run, stays closed"] = sorted(ids)
             # Runs on again from the desk: the same window id, on glass.
             page.locator(".desk-mark").click()
             page.locator(".desk-menu-list").first.wait_for()
-            _row(page, "Runs on").click()
-            if not _on_glass(page, "[data-testid='switchboard']"):
+            _row(page, "Engines").click()
+            if not _on_glass(page, "[data-testid='runson-root']"):
                 fails[f"F5 {width} Runs on opens again on the desk"] = "not on glass"
             hub = page.evaluate(
                 """async (t) => (await (await fetch('/api/desk/windows',
                     {headers: {Authorization: 'Bearer ' + t}})).json())""", TOKEN)
             ids = {w.get("id") for w in hub.get("windows") or []}
-            if not {"surface-setup", "surface-concierge"} <= ids:
+            if not {"surface-setup", "surface-settings"} <= ids or "surface-concierge" in ids:
                 fails[f"F5 {width} hub rows hold the retained and the new window"] = sorted(ids)
             page.screenshot(path=str(out / f"P17-firstrun-after-leave-{width}.png"))
             browser.close()

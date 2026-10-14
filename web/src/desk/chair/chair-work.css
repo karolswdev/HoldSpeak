@@ -1,0 +1,10 @@
+.chair-window [data-testid="arrival-meeting-row"] > .surface-ledger-meta {
+  flex:1 1 100%;
+  min-width:0;
+  max-width:100%;
+  margin-left:0;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  text-transform:none;
+  font:13px/1.4 var(--font-sans);
+}

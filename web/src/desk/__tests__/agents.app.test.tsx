@@ -135,17 +135,19 @@ describe("the agent's lane on the hub's lane answer", () => {
     await openLane(LANE.wire);
     expect(screen.getAllByText("Claude Code: Write the rollback runbook").length).toBeGreaterThan(0);
     const track = screen.getByTestId("lane-track").textContent ?? "";
-    for (const word of ["BRIEF", "WORK", "COMMIT", "PR", "HELD", "ASKS", "MERGE"]) expect(track).toContain(word);
+    for (const word of ["BRIEF", "WORK", "COMMIT", "PR", "HELD", "ASKS"]) expect(track).toContain(word);
+    expect(track).not.toContain("MERGE");
     expect(track).toContain("#413");
     expect(track).toContain("1 HELD · 1 WAITING");
     expect(track).toContain("now");
     expect(screen.getByTestId("lane-ask").querySelector(".ask-well-question")?.textContent).toBe(QUESTION);
     expect(screen.getByTestId("lane-ask").querySelector(".ask-well-draft")?.textContent).toContain("Jordan owns it. Avery reviews.");
     const rail = screen.getByTestId("lane-rail").textContent ?? "";
-    for (const word of ["BRIEF", "READ", "SAYS", "WRITE", "RUN", "COMMIT", "PR", "HELD", "ASKS", "MERGE"]) expect(rail).toContain(word);
+    for (const word of ["BRIEF", "READ", "SAYS", "WRITE", "RUN", "COMMIT", "PR", "HELD"]) expect(rail).toContain(word);
     expect(rail).toContain("Draft the ledger rollback runbook");
     expect(rail).toContain("psql -h staging-ledger");
-    expect(rail).toContain("Your press in GitHub");
+    expect(rail).not.toContain("Your press in GitHub");
+    expect(rail).not.toContain(QUESTION);
     const pr = screen.getByTestId("lane-pr").textContent ?? "";
     expect(pr).toContain("#413");
     expect(pr).toContain("CHECKS 6 OF 7");
@@ -155,7 +157,7 @@ describe("the agent's lane on the hub's lane answer", () => {
     expect(files).toContain("freeze.py");
     expect(screen.getAllByText("GITHUB.COM").length).toBeGreaterThan(0);
     expect(screen.getByTestId("lane-open-pr")).toBeTruthy();
-    expect(screen.getByTestId("lane-stop")).toBeTruthy();
+    expect(screen.queryByTestId("lane-stop")).toBeNull(); // this recorded hub answer has no pane
   });
 
   /** replaces: tests/e2e/test_philo14_c2_lane_glass.py::test_the_agents_lane_window_at_1440_and_393 (Raw) */
@@ -163,7 +165,7 @@ describe("the agent's lane on the hub's lane answer", () => {
     await openLane(LANE.wire);
     fireEvent.click(screen.getByTestId("lane-raw"));
     expect(screen.getByTestId("lane-raw-pane")).toBeTruthy();
-    expect(screen.queryByTestId("lane-rail")).toBeNull();
+    expect(screen.getByTestId("lane-rail")).toBeTruthy();
     fireEvent.click(screen.getByTestId("lane-raw"));
     expect(screen.getByTestId("lane-rail")).toBeTruthy();
   });

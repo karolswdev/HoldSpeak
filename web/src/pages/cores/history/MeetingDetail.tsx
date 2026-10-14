@@ -332,13 +332,10 @@ export function MeetingOutcomes({ data, meeting }: { data: MeetingData; meeting:
       return { ...current, [id]: { ...draft, [field]: value } };
     });
   };
-  const hasSource = (row: OutcomeRow) => {
-    const index = Number(row.segmentIndex);
-    return Number.isInteger(index) && index >= 0 && index < data.segments.length;
-  };
+  const hasSource = (row: OutcomeRow) => validMeetingSegment(row.segmentIndex, data.segments.length);
   const sourceFor = (row: OutcomeRow) => {
-    const index = Number(row.segmentIndex);
     if (!hasSource(row)) return;
+    const index = row.segmentIndex;
     openSourceRef(`meeting:${String(meeting.id)}?view=outcomes&segment=${index}`);
   };
   const destinationVerbs = (row: OutcomeRow, durable: boolean) => {
@@ -503,7 +500,9 @@ export function MeetingOutcomes({ data, meeting }: { data: MeetingData; meeting:
       due: draftChanged ? draft.due : row.due,
       meta: draftChanged
         ? `${draft.owner || "no owner"} · ${draft.due ? `by ${draft.due}` : "no date"}`
-        : row.meta,
+        : pending && !hasSource(row) && data.ftProposals.find((proposal) => proposal.id === id)?.support === "unknown"
+          ? [row.meta, "Not in the transcript"].filter(Boolean).join(" · ")
+          : row.meta,
     };
     return {
       ...display,
@@ -552,10 +551,15 @@ export function MeetingOutcomes({ data, meeting }: { data: MeetingData; meeting:
   ) : null;
   return (
     <>
-      <OutcomeLedger label="Decided" rows={withVerbs(decisions)} testId="meeting-decisions" controls={decisionsControls} />
+      <OutcomeLedger label="Decisions" rows={withVerbs(decisions)} testId="meeting-decisions" controls={decisionsControls} />
       <OutcomeLedger label="Who owes what" rows={withVerbs(commitments)} testId="meeting-commitments" controls={controls} />
     </>
   );
+}
+
+/** A source destination requires a stored numeric segment, including valid zero. */
+export function validMeetingSegment(index: unknown, length: number): index is number {
+  return typeof index === "number" && Number.isInteger(index) && index >= 0 && index < length;
 }
 
 export function MeetingDetail({
@@ -570,8 +574,12 @@ export function MeetingDetail({
   onTranscribe,
   saidOnFace,
   revision = 0,
+  sendRequested = false,
+  decideRequested = false,
 }: {
   meeting: Record<string, unknown> | null;
+  sendRequested?: boolean;
+  decideRequested?: boolean;
   /** PHILO-17 (U16): the engine host the window's foot already names. */
   saidOnFace?: string | null;
   /** PHILO-17 transcribe: start Transcribe on this audio-only meeting. */
@@ -597,7 +605,14 @@ export function MeetingDetail({
   // PHILO-17 (the desk sweep): the body is drawn once (per meeting) when
   // the record's first reads and its Send well's have ended, or at the cap.
   const [wellRead, setWellRead] = useState<{ id: string; read: boolean } | null>(null);
-  const reportWell = useCallback((read: boolean) => setWellRead({ id, read }), [id]);
+  const reportWell = useCallback((read: boolean) => {
+    setWellRead({ id, read });
+    if (read && sendRequested) window.requestAnimationFrame(() => {
+      const well = document.getElementById(`meeting-${id}-send`);
+      well?.scrollIntoView?.({ block: "start", behavior: "smooth" });
+      well?.querySelector<HTMLElement>("button:not(:disabled), input, textarea")?.focus({ preventScroll: true });
+    });
+  }, [id, sendRequested]);
   const [cappedFor, setCappedFor] = useState("");
   useEffect(() => {
     const timer = window.setTimeout(() => setCappedFor(id), MEETING_READS_CAP_MS);
@@ -605,7 +620,7 @@ export function MeetingDetail({
   }, [id]);
   const [drawnFor, setDrawnFor] = useState("");
   // The Send well is drawn on the outcomes face of a meeting with a summary.
-  const wellAsked = view === "outcomes" && Boolean(readMeetingIntel(data.detail ?? meeting)?.summary?.trim());
+  const wellAsked = sendRequested && view === "outcomes" && Boolean(readMeetingIntel(data.detail ?? meeting)?.summary?.trim());
   const wellDone = !wellAsked || (wellRead?.id === id && wellRead.read);
   const ready = cappedFor === id || (data.firstRead && wellDone);
   useLayoutEffect(() => {
@@ -752,20 +767,24 @@ export function MeetingDetail({
           {/* PHILO-11-05 (canvas C1, C4): SUMMARY, then SEND; no summary, no well.
               The old aftercare Slack rows are gone (R7): the digest and the
               follow-up are forms of this one well. */}
-          {summaryIntel?.summary?.trim() ? (
+          {sendRequested ? (
             <div id={`meeting-${id}-send`} className="meetings-detail-anchor">
-              <MeetingSendWell meetingId={id} title={meetingTitle}
-                startedAt={String((detail ?? meeting)?.started_at ?? "") || null} />
+              {summaryIntel?.summary?.trim() ? (
+                <MeetingSendWell meetingId={id} title={meetingTitle}
+                  startedAt={String((detail ?? meeting)?.started_at ?? "") || null} />
+              ) : (
+                <div role="status">Summary unavailable <Button dense variant="ghost" onClick={onDeleted}>Retry</Button></div>
+              )}
             </div>
           ) : null}
           {/* PHILO-13-08 (B3): Decide, next to SEND; with or without a summary. */}
-          <MeetingDecideWell meetingId={id} title={meetingTitle}
+          {decideRequested ? <div id={`meeting-${id}-decide`} className="meetings-detail-anchor"><MeetingDecideWell defaultOpen meetingId={id} title={meetingTitle}
             startedAt={String((detail ?? meeting)?.started_at ?? "") || null}
             summary={summaryIntel?.summary ?? null}
             runSummaryOnFace={showsRunSummary({
               intelOff, hasTranscript, plannedRoute: displayedRoute,
               onRunIntelligence: onRunIntelligence ? () => undefined : undefined,
-            })} />
+            })} /></div> : null}
           <div id={`meeting-${id}-transcript`} className="meetings-detail-anchor">
             <TranscriptWell
               id={id}

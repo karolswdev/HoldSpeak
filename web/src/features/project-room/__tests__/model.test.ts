@@ -5,6 +5,7 @@
 import { describe, expect, it } from "vitest";
 import {
   composeProjectTimeline,
+  decodeChangeRow,
   decodeDecision,
   decodeMeeting,
   decodeProject,
@@ -470,5 +471,23 @@ describe("decodeRoomSnapshot", () => {
     expect(snap.decisions.state).toBe("absent");
     expect(snap.commitments.state).toBe("absent");
     expect(snap.target.state).toBe("absent");
+  });
+});
+
+
+describe("Room item change identity", () => {
+  it("keeps the stored title and item identity in an added milestone", () => {
+    const row = decodeChangeRow({ id: "change-1", change_kind: "project.updated", target_ref: "project:p1",
+      summary_json: JSON.stringify({ action: "item.created", item_id: "milestone-1", item_type: "milestone", title: "Production cutover" }) });
+    expect(row.label).toBe("Added milestone · Production cutover");
+    expect(row.itemId).toBe("milestone-1");
+    expect(row.itemType).toBe("milestone");
+    expect(row.targetRef).toBe("project:p1");
+  });
+
+  it("does not invent an item identity for older changes", () => {
+    const row = decodeChangeRow({ id: "change-older", change_kind: "project.updated", summary_json: "{}" });
+    expect(row.itemId).toBeNull();
+    expect(row.itemType).toBeNull();
   });
 });

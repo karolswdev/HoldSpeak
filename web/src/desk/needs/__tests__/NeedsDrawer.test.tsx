@@ -554,20 +554,22 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
       kind: "action",
       fact: "from philo3_architect_meeting",
       lamps: ["TO CONFIRM"],
-      verbs: ["Decline", "Defer", "Confirm"],
+      verbs: ["Confirm", "More"],
     });
     // No glyph-only control: every verb carries its word.
     for (const button of action.querySelectorAll(".needs-row-verbs button")) {
       expect((button.textContent ?? "").trim()).toMatch(/^[A-Z][a-z]+$/);
     }
-    expect(face(row("Use SQLite for the local meeting ledger")).verbs).toEqual(["Decline", "Defer", "Confirm"]);
+    expect(face(row("Use SQLite for the local meeting ledger")).verbs).toEqual(["Confirm", "More"]);
     expect(action.getAttribute("data-opens")).toBe("true");
 
     fireEvent.click(within(action).getByRole("button", { name: "Confirm: Add the named failure fence before ship" }));
     await waitFor(() => expect(posted).toContain("/api/proposals/prop-priya/confirm"));
-    fireEvent.click(within(row("Use SQLite for the local meeting ledger")).getByRole("button", { name: /^Defer:/ }));
+    fireEvent.click(within(row("Use SQLite for the local meeting ledger")).getByRole("button", { name: /^More:/ }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Defer" }));
     await waitFor(() => expect(posted).toContain("/api/proposals/prop-sqlite/defer"));
-    fireEvent.click(within(row("Use SQLite for the local meeting ledger")).getByRole("button", { name: /^Decline:/ }));
+    fireEvent.click(within(row("Use SQLite for the local meeting ledger")).getByRole("button", { name: /^More:/ }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Decline" }));
     await waitFor(() => expect(posted).toContain("/api/proposals/prop-sqlite/dismiss"));
   });
 });
@@ -585,12 +587,15 @@ describe("NeedsDrawer one count and kind words (PHILO-15-09)", () => {
     const rows = Array.from(document.querySelectorAll<HTMLElement>("[data-testid='needs-list'] li.needs-row"));
     expect(screen.getByTestId("arrival-display").textContent).toBe(`${rows.length} need you`);
     const word = (title: string) =>
-      rows.find((r) => r.textContent?.includes(title))?.querySelector("[data-testid='needs-row-kind']")?.textContent;
-    expect(word("Run a second ops interview")).toBe("DECISION");
-    expect(word("Pick the vendor")).toBe("ACTION");
-    expect(word("Vendor call")).toBe("MEETING");
-    expect(word("Jordan or Avery")).toBe("AGENT");
-    for (const row of rows) expect(row.querySelector("[data-testid='needs-row-kind']")).not.toBeNull();
+      rows.find((r) => r.textContent?.includes(title))?.querySelector("[data-testid='kit-kind']")?.textContent;
+    expect(word("Run a second ops interview")).toBe("Decision");
+    expect(word("Pick the vendor")).toBe("Action");
+    expect(word("Vendor call")).toBe("Meeting");
+    expect(word("Jordan or Avery")).toBe("CC");
+    for (const row of rows) {
+      expect(row.querySelector("[data-testid='kit-kind']")).not.toBeNull();
+      expect(row.querySelector("[data-testid='needs-row-kind']")).toBeNull();
+    }
   });
 
   it("one thing says `1 needs you`", async () => {
@@ -755,7 +760,7 @@ describe("NeedsDrawer on the interior kit (Phase 16)", () => {
     await screen.findByText("8 need you");
     const list = screen.getByTestId("needs-list");
     expect(list.querySelectorAll("li.needs-row")).toHaveLength(8);
-    expect(list.querySelector("h3")?.textContent).toBe("Actions · 8");
+    expect(list.querySelector("h3")?.textContent).toBe("Work · 8");
     expect(list.querySelector(".surface-scroll-hint[data-axis='y']")).toBeTruthy();
     expect(screen.queryByText(/more$/)).toBeNull();
     expect(screen.queryByRole("button", { name: "Show all" })).toBeNull();
@@ -777,11 +782,13 @@ describe("NeedsDrawer on the interior kit (Phase 16)", () => {
     render(<NeedsDrawer />);
     await screen.findByText("8 need you");
     const strip = screen.getByTestId("arrival-headline").querySelector(".kit-strip") as HTMLElement;
-    expect(strip.textContent).toContain("1 of 1 available");
-    expect(strip.textContent).toContain("Checked just now");
+    const coverage = screen.getByRole("button", { name: "Coverage" });
+    expect(coverage).toHaveTextContent("1 of 1 available");
+    expect(coverage).toHaveAttribute("aria-expanded", "false");
+    expect(strip.textContent).not.toContain("Checked");
     await waitFor(() => expect(strip.textContent).toContain("NO CALENDAR"));
     expect(within(strip).getByRole("button", { name: "Connect calendar" })).toBeTruthy();
-    expect(screen.getByTestId("needs-ranked").textContent).toMatch(/^RANKED \d{2}:\d{2}$/);
+    expect(screen.getByTestId("needs-checked").textContent).toMatch(/^Checked \d{2}:\d{2}$/);
   });
 
   it("the FilterBar narrows the ledger; a filter that matches nothing is not drawn", async () => {
@@ -797,8 +804,8 @@ describe("NeedsDrawer on the interior kit (Phase 16)", () => {
     const bar = screen.getByTestId("needs-filter");
     const tokens = within(bar).getAllByRole("button").map((b) => b.textContent);
     // Overdue matches nothing here; Waiting and Muted hold no rows.
-    expect(tokens).toEqual(["Ranked", "Due today", "Not run", "No due date"]);
-    expect(within(bar).getByRole("button", { name: "Ranked" }).getAttribute("aria-pressed")).toBe("true");
+    expect(tokens).toEqual(["All", "Due today", "Not run", "No due date"]);
+    expect(within(bar).getByRole("button", { name: "All" }).getAttribute("aria-pressed")).toBe("true");
     fireEvent.click(within(bar).getByRole("button", { name: "Due today" }));
     const names = [...screen.getByTestId("needs-list").querySelectorAll(".needs-row-name")].map((n) => n.textContent);
     expect(names).toEqual(["Sam: send the status by Thursday"]);

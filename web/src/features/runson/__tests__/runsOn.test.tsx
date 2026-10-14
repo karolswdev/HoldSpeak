@@ -186,7 +186,7 @@ afterEach(() => {
 
 async function board(scope?: string) {
   render(<RunsOnCore scope={scope} />);
-  await screen.findByTestId("switchboard");
+  await screen.findByTestId("runson-assignments");
   await waitFor(() => expect(screen.getByTestId("switchboard-engine-openrouter")).toBeTruthy());
 }
 
@@ -195,7 +195,7 @@ describe("Runs on — paint and words", () => {
     let finish: (value: Detection) => void = () => {};
     m.readDetection.mockReturnValue(new Promise<Detection>((resolve) => (finish = resolve)));
     render(<RunsOnCore />);
-    await screen.findByTestId("switchboard");
+    await screen.findByTestId("runson-assignments");
     expect(screen.getAllByTestId(/^switchboard-job-/)).toHaveLength(7);
     expect(screen.getByTestId("runson-fact").textContent).toBe("3 engines");
     expect(screen.queryByTestId("switchboard-engine-openrouter")).toBeNull();
@@ -240,7 +240,7 @@ describe("Runs on — paint and words", () => {
     // Task ids leave the face for the card's details.
     const meetings = screen.getByTestId("switchboard-job-meetings");
     expect(meetings.getAttribute("title")).toBe("Deferred meeting analysis · Meeting title · Live meeting analysis");
-    const face = screen.getByTestId("switchboard").textContent ?? "";
+    const face = screen.getByTestId("runson-assignments").querySelector(".switchboard")!.textContent ?? "";
     for (const gone of ["TASKS", "FOLLOWS DEFAULT", "EVERY JOB WITHOUT ITS OWN WIRE", "Default for AI work", "DEFERRED MEETING ANALYSIS", "THIS DEVICE ONLY"]) {
       expect(face).not.toContain(gone);
     }
@@ -279,7 +279,7 @@ describe("Runs on — paint and words", () => {
     let fail: (reason: unknown) => void = () => {};
     m.readDetection.mockReturnValueOnce(new Promise<Detection>((_, reject) => (fail = reject)));
     render(<RunsOnCore />);
-    await screen.findByTestId("switchboard");
+    await screen.findByTestId("runson-assignments");
     const lead = () => screen.getByTestId("switchboard-job-meetings").querySelector(".switchboard-job-name")?.textContent;
     expect(lead()).toBe("Meeting summaries → checking…");
     await act(async () => fail(new Error("offline")));
@@ -625,6 +625,23 @@ describe("Runs on — speech not set up (PHILO-17)", () => {
 });
 
 describe("Runs on — FOUND, downloads, the add row", () => {
+  it("a cold desk offers discovery before downloads and job assignment", async () => {
+    const cold = roster();
+    cold.rows = cold.rows.map((item) => ({ ...item, status: "unassigned", assignment: { revision: 0, entries: [], issues: [] } }));
+    m.readRoster.mockResolvedValue(cold);
+    const det = detection();
+    det.engines = det.engines.filter((engine) => engine.kind === "preset");
+    m.readDetection.mockResolvedValue(det);
+    const view = render(<RunsOnCore />);
+    await screen.findByText("No engine yet");
+    const find = screen.getByRole("button", { name: "Find on LAN" });
+    expect(find.className).toContain("btn--primary");
+    expect(screen.getByRole("button", { name: "Add an engine" })).toBeTruthy();
+    await screen.findByTestId("runson-download-preset:vision");
+    expect(view.container.querySelector<HTMLDetailsElement>(".runson-downloads")?.open).toBe(false);
+    expect(view.container.querySelectorAll("[data-job-id]")).toHaveLength(0);
+    expect(m.discoverLan).not.toHaveBeenCalled();
+  });
   it("Find on LAN adds transient Found rows and leaves adoption to Use it", async () => {
     m.discoverLan.mockResolvedValue({
       engines: [{
@@ -690,7 +707,7 @@ describe("Runs on — FOUND, downloads, the add row", () => {
       checkedAt: "2026-10-13T10:00:00Z", partial: false, unavailable: false, hostsChecked: 254,
     });
     render(<RunsOnCore />);
-    await screen.findByTestId("switchboard");
+    await screen.findByTestId("runson-assignments");
     fireEvent.click(screen.getByTestId("runson-find-lan"));
     await waitFor(() => expect(m.discoverLan).toHaveBeenCalledTimes(1));
     await act(async () => finish(detection()));
