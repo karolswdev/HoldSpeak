@@ -64,16 +64,17 @@ describe("the built-in HoldSpeak folder in the SEND well", () => {
   it("alone, it is one row, picked: the preview and Send are open with no click", async () => {
     render(<Well />);
     const row = await screen.findByTestId("destination-row");
+    const preview = await screen.findByTestId("send-preview");
     expect(screen.getAllByTestId("destination-row")).toHaveLength(1);
     expect(row.textContent).toContain("HoldSpeak folder");
-    // PHILO-15 lane 12 (B23): the folder reads by its name; the ~ token is its hover title.
-    expect(row.textContent).toContain("HoldSpeak/Sent");
+    // B23: the open row leaves its target to the preview; the destination
+    // name preserves the complete token on hover.
+    expect(row.querySelector(".send-target")).toBeNull();
     expect(row.textContent).not.toContain("~/");
-    expect(row.querySelector(".send-target")?.getAttribute("title")).toBe("~/Documents/HoldSpeak/Sent");
+    expect(row.querySelector("[data-destination]")?.getAttribute("title")).toBe("~/Documents/HoldSpeak/Sent");
     expect(row.textContent).not.toContain("THIS DEVICE");
     expect(screen.queryByTestId("send-none")).toBeNull();
-    const preview = await screen.findByTestId("send-preview");
-    expect(preview.textContent).toContain("HoldSpeak/Sent");
+    expect(within(preview).getByTestId("send-preview-field").querySelector("dd")?.textContent).toBe("HoldSpeak/Sent");
     expect(preview.textContent).not.toContain(SENT);
     await waitFor(() => expect((screen.getByTestId("send-verb") as HTMLButtonElement).disabled).toBe(false));
     expect(previews).toEqual(["holdspeak-folder"]);

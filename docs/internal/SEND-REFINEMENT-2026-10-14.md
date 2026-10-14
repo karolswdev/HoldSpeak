@@ -48,7 +48,7 @@ Tenets 3, 5 and 6: simplify the job using the existing component framework.
 Root owns this record, graph cases, integration, final verification and ship.
 Workers hold for SHIP, never stage/commit. One coherent PR and local hub update.
 Every test/build/browser command uses test_lock, isolated HOME; Vitest2workers,
-pytest-n8. No metal, owner port/DB/mic, inference or external dispatch.
+pytest-n8. No metal, owner port/DB/mic, real model inference or external dispatch.
 
 ## Integration findings
 
@@ -105,3 +105,60 @@ The Room recovery was executed and read: one wheel step, Add destination owns
 `.tmp/evidence-shots/pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-15-shots/C5-17b-scroll-targets-393.json`.
 Final TypeScript passed after removing unsupported test-only exact options.
 The graph source anchor follows the new non-toggle openSend declaration.
+
+## Combined check and retained Note coverage
+
+The first combined quick check was RED: 3,536 web passed with one obsolete
+Folder target-chip assertion; 534 Python passed with 12 old Note checks
+failing. Sweep passed 107 with two existing xfails; canon passed 15.
+No failure was waived. Folder preview coverage now asserts the exact field,
+absence of the duplicate open-row chip and the full destination hover path
+(40 focused checks passed). Current phone New → Note coverage passed four.
+
+Retained Note checks now use the actual Add a note / Add notes / More doors
+and Saved receipt. Their deterministic interview fixture uses the canonical
+capability assignment migration. Idle Ask opens Ask AI, so the distinct retained
+in-note continuation is seeded through its real refine producer. One captured
+pre-turn cursor is replayed in the browser request to obtain the real hub's
+409, followed by the writer's actual retry and 200; no response is fabricated.
+These checks retain custody, exact model-call count, stale-result suppression,
+answer append, Finish, Resume and failed-write assertions. This is fixture
+inference, not observation of the owner's model or LAN engine.
+
+The retained checks exposed two real host defects: desktop long-question/context
+content can extend below the 360px Note frame, and phone Reads Escape returns
+focus to BODY because its action is inside More. The measured frame carried
+a restored inline height of 360px, with 491px of child material. The bounded design gives ordinary Note an expanded minimum
+up to its existing 640px/work-band cap while a Reads well or question is open.
+Collapsed Note remains 360; Send remains 520; phone keeps its existing shell.
+This minimum constrains manual shrinking while expanded material is present;
+it does not override the user’s height with an intrinsic !important rule.
+Focus uses one local visible-door fallback shared with Send. The host unit
+recheck passed all 40 tests in 4.62s, including portaled phone Reads return
+focus; final TypeScript passed. The final retained browser checks passed:
+eight receipt/clean-note/long-note/
+long-question/long-context cases in 14.05s, and two workbench custody/focus/
+restart cases in 15.77s. Root read both log tails and the expanded desktop
+context shot. No geometry, custody, receipt, pointer or focus assertion was
+waived. Logs: `.tmp/send-refinement/legacy-note-final.log` and
+`.tmp/send-refinement/workbench-browser-final.log`.
+
+A fresh Sol source/shot review of the Send implementation returned RATIFY,
+with no confirmed blocker. This was an independent implementation review,
+not Muad'Dib's check or the postmerge Astra review. It covered saved-revision
+fences, mounted writer, Back/Close authority, digest, scoped meeting routing,
+actual file/DB comparisons and Room's nine-point wheel recovery.
+
+## Final release check
+
+Combined quick check GREEN against main821578c2b: production build; 3,537
+web tests in 392 files; 546 affected Python/browser checks in four files;
+107 desk sweep checks with two existing xfails; 15 canon guards. No new skip,
+waiver or ratchet allowance. Logs: `.tmp/send-refinement/quick-final-2/`.
+Final TypeScript passed in `.tmp/send-refinement/final-types-last.log`.
+The canvas files outside web/src were built and captured separately before
+product build. The owner’s real HOME/DB was not used by any test or walk.
+
+Open: owner judgment on the running desk, actual email/Slack delivery, real
+model/LAN inference, microphone and physical devices; the full main tape and
+postmerge review. These are not inferred from deterministic browser fixtures.

@@ -634,7 +634,7 @@ export function SendWell({ doc, sendsRead, onSettled, head }: {
                       store.picked.set(ref, open ? null : d.id); keepPlace(`send/pick/${ref}`, open ? "" : d.id); bump();
                     }}
                     lead={<span className="send-pick" aria-hidden="true">{open ? "●" : "○"}</span>}
-                    primary={<span className="surface-primary" data-destination={d.name}>{d.name}</span>}
+                    primary={<span className="surface-primary" data-destination={d.name} title={targetToken(d.channel, d.target)}>{d.name}</span>}
                     cells={<span className="send-cells">
                       <span className="surface-token" data-chip>{CHANNEL_WORD[d.channel] ?? d.channel}</span>
                       {!open ? <span className="surface-token send-literal send-wrap send-target" data-chip title={targetToken(d.channel, d.target)}>{targetName(d.channel, d.target)}</span> : null}

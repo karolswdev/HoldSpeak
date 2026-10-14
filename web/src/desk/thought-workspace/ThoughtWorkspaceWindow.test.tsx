@@ -48,7 +48,7 @@ vi.mock("./ThoughtDocumentPane", () => ({
   ThoughtDocumentPane: ({ draft, onEdit, onSelectionChange, lockedReason }: { draft: { title: string; body: string }; onEdit: (patch: { body: string }) => void; onSelectionChange?: (selection: { from: number; to: number; text: string }) => void; lockedReason?: string }) => <section aria-label="Note"><span data-testid="note-title">{draft.title}</span>{lockedReason ? <span data-testid="note-locked">{lockedReason}</span> : null}<textarea aria-label="Note body" value={draft.body} onChange={(event) => { onEdit({ body: event.target.value }); onSelectionChange?.({ from: 0, to: 0, text: "" }); }} /><button type="button" data-testid="select-second-line" onClick={() => { const text = draft.body.split(/\r?\n/)[1] || draft.body.split(/\r?\n/)[0] || ""; const from = draft.body.indexOf(text); onSelectionChange?.({ from, to: from + text.length, text }); }}>Select second line</button></section>,
 }));
 vi.mock("./ThoughtReadsWell", () => ({
-  ThoughtReadsWell: ({ thought }: { thought: Thought }) => <div role="region" aria-label="Add notes">{thought.working_note.body_markdown}</div>,
+  ThoughtReadsWell: ({ thought, onClose }: { thought: Thought; onClose: () => void }) => <div role="region" aria-label="Add notes">{thought.working_note.body_markdown}<button onClick={onClose}>Close reads</button></div>,
 }));
 vi.mock("../documentSendsLazy", () => ({
   NoteSendWells: ({ id, title, version }: { id: string; title?: string; version?: number }) => <div data-testid="send-well" data-doc={`note:${id}`} data-title={title} data-version={String(version)} />,
@@ -932,6 +932,13 @@ describe("ThoughtWorkspaceWindow — PHILO-17 U08: the thought is sendable", () 
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "More actions" })).toHaveAttribute("aria-expanded", "false");
     expect(onClose).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "More actions" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Add a note" }));
+    await screen.findByRole("region", { name: "Add notes" });
+    fireEvent.click(screen.getByRole("button", { name: "Close reads" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "More actions" })).toHaveFocus());
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 
   it("a finished thought keeps Copy and Send beside Resume", async () => {

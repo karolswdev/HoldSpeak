@@ -30,6 +30,12 @@
   min-height: 520px;
 }
 
+.desk-next .desk-pullout.thought-workspace-window:where(:not(.is-sending):has(.thought-reads-well, .thought-note-ask-open)) {
+  /* A restored sticky can pin 360px. Open material needs room, within the
+     existing cap; larger owner-arranged heights still win. */
+  min-height: min(640px, calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom)));
+}
+
 .desk-next .thought-workspace-window > .desk-pullout-head {
   flex: none;
 }

@@ -1,7 +1,7 @@
 import { publishThoughtDraft, seatThoughtDraft, useThoughtDraftWords } from "../thoughtDrafts";
 import { windowName } from "../windowName";
 import { NEW_THOUGHT_TITLE } from "../thoughtTitle";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { ApiError, readableError } from "../../lib/api";
 import { spriteUrl } from "../sprites";
 import { useDesk } from "../store";
@@ -154,6 +154,11 @@ function WorkspaceReady({
   const sendRef = useRef<HTMLButtonElement | null>(null);
   const noteWindowRef = useRef<HTMLDivElement | null>(null);
   const sendScrollRef = useRef<HTMLDivElement | null>(null);
+  const focusDoor = (door: RefObject<HTMLButtonElement | null>) => {
+    const frameRoot = noteWindowRef.current?.closest(".thought-workspace-window");
+    const target = door.current ?? frameRoot?.querySelector<HTMLButtonElement>(".thought-note-foot button[aria-label='More actions']");
+    target?.focus();
+  };
   useEffect(() => {
     if (!sending) return;
     const frame = requestAnimationFrame(() => sendScrollRef.current?.focus());
@@ -164,12 +169,7 @@ function WorkspaceReady({
     const returning = wasSending.current && !sending;
     wasSending.current = sending;
     if (!returning) return;
-    const frame = requestAnimationFrame(() => {
-      // At phone width Send lives under the library footer's More door.
-      const frameRoot = noteWindowRef.current?.closest(".thought-workspace-window");
-      const target = sendRef.current ?? frameRoot?.querySelector<HTMLButtonElement>(".thought-note-foot button[aria-label='More actions']");
-      target?.focus();
-    });
+    const frame = requestAnimationFrame(() => focusDoor(sendRef));
     return () => cancelAnimationFrame(frame);
   }, [sending]);
   const reloading = useRef(false);
@@ -647,7 +647,7 @@ function WorkspaceReady({
       cursor={projection.workspace_cursor}
       disabled={busy}
       onApplied={readsResult}
-      onClose={() => { setReads(false); requestAnimationFrame(() => readsRef.current?.focus()); }}
+      onClose={() => { setReads(false); requestAnimationFrame(() => focusDoor(readsRef)); }}
     /> : null}
 
     {actionWell === "task" ? <TaskWell
