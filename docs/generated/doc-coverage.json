@@ -1765,6 +1765,33 @@
         "operational": 0,
         "security": 0
       },
+      "id": "desk.engines.find_lan",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          3,
+          3
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
       "id": "agents.thread_persistent",
       "kind": "capabilities",
       "path_presence": {
@@ -4164,28 +4191,28 @@
   ],
   "snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8",
   "totals": {
-    "assertions_inspected": 210,
+    "assertions_inspected": 212,
     "doc_paths": [
-      233,
-      233
+      234,
+      234
     ],
     "docs": {
       "api": 0,
       "operational": 65,
       "security": 19
     },
-    "records": 154,
-    "records_with_executed_assertions": 78,
+    "records": 155,
+    "records_with_executed_assertions": 79,
     "semantics_unresolved": 76,
     "source_paths": [
-      272,
-      272
+      275,
+      275
     ],
     "test_paths": [
-      210,
-      210
+      212,
+      212
     ],
-    "tests_executed": 172
+    "tests_executed": 174
   },
   "validation_errors": 0
 }

@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "atlas_version": "models-lan-download",
+  "extends": "docs/internal/philo/graph/atlas-delight.json",
+  "source_commit": "bcd1178b0ac9d35d3ab45c83cba7697ae01469aa",
+  "states": [
+    {
+      "id": "state.desk_presentation.models_lan_entry",
+      "family": "desk_presentation",
+      "values": {
+        "application": "Settings",
+        "section": "Engines",
+        "separate_engine_window": false,
+        "lan_action": "Find on LAN"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/features/runson/RunsOnCore.tsx",
+          "symbol": "data-testid=\"runson-find-lan\"",
+          "claim": "The existing Engines picker exposes an explicit LAN search."
+        }
+      ],
+      "reachable_by": [
+        "case.models.lan.entry"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "case.models.lan.entry",
+      "job": "j3",
+      "edge_ids": [
+        "edge.face.settings_engines"
+      ],
+      "state_id": "state.desk_presentation.models_lan_entry",
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME and real hub; discovery is not triggered, so no LAN scan occurs."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "Wait for the real first-run dismissal before reload."
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "goto",
+        "url": "/models",
+        "adapter": "ui-navigation"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "window_titled",
+              "value": "Settings"
+            },
+            {
+              "kind": "selector_presence",
+              "selector": "#surface-settings [data-testid=switchboard]",
+              "present": true
+            },
+            {
+              "kind": "selector_presence",
+              "selector": "#surface-concierge",
+              "present": false
+            },
+            {
+              "kind": "selector_presence",
+              "selector": "#surface-settings [data-testid=runson-find-lan]",
+              "present": true
+            }
+          ]
+        },
+        "observe_at": "[data-testid=chair-desk]",
+        "words": "Settings exposes Find on LAN inside the real Engines picker. This case does not claim a scan or inference."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ],
+  "clocks": [
+    {
+      "id": "clock.browser_date",
+      "source": "The isolated browser Date and event loop.",
+      "mechanism": "Real browser clock; these cases do not advance it.",
+      "status": "available",
+      "used_by": []
+    }
+  ],
+  "excluded": [],
+  "council_readings": []
+}

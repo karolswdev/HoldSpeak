@@ -156,7 +156,7 @@ function AddEngineRow({ ctrl }: { ctrl: RunsOnController }) {
   );
 }
 
-export function RunsOnCore({ scope, title }: CoreProps & { title?: string }) {
+export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: string; onBack?: () => void }) {
   const ctrl = useRunsOn(scope);
   const setTitle = useContext(TitleSlotContext);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -358,25 +358,52 @@ export function RunsOnCore({ scope, title }: CoreProps & { title?: string }) {
   };
 
   const haveEngines = have.map(plate);
-  const foundEngines: SwitchEngine[] = found.map((engine) => ({
-    id: engine.key,
-    emblem: engine.emblem,
-    name: engine.name,
-    tokens: [engine.baseUrl ? endpointHostPort(engine.baseUrl).toUpperCase() : "", ...engine.tokens].filter(Boolean),
-    lamp: lampFor(engine, false),
-    verb: (
-      <Button dense variant="secondary" disabled={ctrl.busy} data-testid={`runson-use-${engine.key}`} onClick={() => void ctrl.useFound(engine.key)}>
-        Use it
-      </Button>
-    ),
-  }));
+  const foundEngines: SwitchEngine[] = found.map((engine) => {
+    const endpoint = engine.baseUrl ? endpointHostPort(engine.baseUrl).toUpperCase() : "";
+    let host = "";
+    if (engine.baseUrl) {
+      try {
+        host = new URL(engine.baseUrl).hostname.toUpperCase();
+      } catch {
+        host = engine.host.toUpperCase();
+      }
+    }
+    const tokens = engine.baseUrl
+      ? [endpoint, ...engine.tokens.filter((token) => token.trim().toUpperCase() !== host)].filter(Boolean)
+      : engine.tokens;
+    return {
+      id: engine.key,
+      emblem: engine.emblem,
+      name: engine.name,
+      tokens,
+      lamp: lampFor(engine, false),
+      verb: (
+        <Button dense variant="secondary" disabled={ctrl.busy} data-testid={`runson-use-${engine.key}`} onClick={() => void ctrl.useFound(engine.key)}>
+          Use it
+        </Button>
+      ),
+    };
+  });
 
   const engineFoot = ctrl.add.open ? (
     <AddEngineRow ctrl={ctrl} />
   ) : (
-    <Button dense variant="ghost" className="runson-add-open" data-testid="concierge-add-engine" onClick={() => ctrl.add.openRow()}>
-      Add an engine
-    </Button>
+    <span className="runson-engine-actions">
+      <Button
+        dense
+        variant="secondary"
+        className="runson-find-lan"
+        data-testid="runson-find-lan"
+        onClick={() => void ctrl.findOnLan()}
+        disabled={ctrl.busy || ctrl.lanDiscovery === "CHECKING"}
+        loading={ctrl.lanDiscovery === "CHECKING"}
+      >
+        Find on LAN
+      </Button>
+      <Button dense variant="ghost" className="runson-add-open" data-testid="concierge-add-engine" onClick={() => ctrl.add.openRow()}>
+        Add an engine
+      </Button>
+    </span>
   );
 
   /* ── the AppHead ── */
@@ -477,6 +504,11 @@ export function RunsOnCore({ scope, title }: CoreProps & { title?: string }) {
             {ctrl.canUndo ? (
               <Button dense variant="secondary" disabled={ctrl.busy} data-testid="runson-undo" onClick={() => void ctrl.undo()}>
                 Undo
+              </Button>
+            ) : null}
+            {onBack ? (
+              <Button dense variant="secondary" className="prefs-back" onClick={onBack}>
+                <span aria-hidden="true">«</span> Settings
               </Button>
             ) : null}
           </>

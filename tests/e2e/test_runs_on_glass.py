@@ -22,6 +22,7 @@ web/src/features/runson/__tests__/runsOn.test.tsx.
 """
 from __future__ import annotations
 
+import ipaddress
 import json
 import threading
 import time
@@ -93,7 +94,13 @@ def _serve(model: str = _FakeOpenAI.MODEL) -> ThreadingHTTPServer:
     return server
 
 
-def _doubles(monkeypatch: Any, lan_port: int, found_port: int) -> dict[str, int]:
+def _doubles(
+    monkeypatch: Any,
+    lan_port: int,
+    found_port: int,
+    *,
+    include_loopback: bool = True,
+) -> dict[str, int]:
     """The network doubles: the LAN address answers from the fake server; the
     loopback scan finds one more; a catalog download advances in place."""
     import holdspeak.inference_setup_catalog as catalog
@@ -115,10 +122,15 @@ def _doubles(monkeypatch: Any, lan_port: int, found_port: int) -> dict[str, int]
     real_detect = cs.detect
 
     def detect(**kwargs: Any) -> Any:
-        kwargs["loopback_scan"] = lambda: [{
-            "id": f"local:ollama:{found_port}:llama3.3", "model": "llama3.3",
-            "base_url": f"http://127.0.0.1:{found_port}/v1", "engine": "ollama", "port": found_port,
-        }]
+        if include_loopback:
+            kwargs["loopback_scan"] = lambda: [{
+                "id": f"local:ollama:{found_port}:llama3.3", "model": "llama3.3",
+                "base_url": f"http://127.0.0.1:{found_port}/v1", "engine": "ollama", "port": found_port,
+            }]
+        else:
+            # The LAN case must get its Found row from discover-lan, not from
+            # the normal loopback detection read that opens the board.
+            kwargs["loopback_scan"] = lambda: []
         result = real_detect(**kwargs)
         if ticks.get("moved"):
             # The same engine id, answered at another LAN address (a
@@ -204,6 +216,20 @@ def _open_runs_on(page: Any) -> None:
     page.get_by_test_id("switchboard").wait_for(timeout=15_000)
 
 
+def _ensure_wide_runs_on(page: Any) -> None:
+    """Use the window's Zoom verb before asserting the three column board."""
+    board = page.get_by_test_id("switchboard")
+    if board.get_attribute("data-layout") == "board":
+        return
+    zoom = _window(page).locator("button[aria-label^='Zoom ']")
+    zoom.wait_for(timeout=15_000)
+    zoom.click()
+    page.wait_for_function(
+        "() => document.querySelector('[data-testid=switchboard]')?.getAttribute('data-layout') === 'board'",
+        timeout=15_000,
+    )
+
+
 def _window(page: Any) -> Any:
     return page.locator(".desk-surface-window").filter(has=page.get_by_test_id("runson-root")).first
 
@@ -218,9 +244,19 @@ def _shot(page: Any, name: str, width: int) -> Path:
     return path
 
 
-def _rig(tmp_path: Path, monkeypatch: Any) -> tuple[Any, str, list[ThreadingHTTPServer], dict[str, int]]:
+def _rig(
+    tmp_path: Path,
+    monkeypatch: Any,
+    *,
+    include_loopback: bool = True,
+) -> tuple[Any, str, list[ThreadingHTTPServer], dict[str, int]]:
     lan, found, local = _serve(), _serve("llama3.3"), _serve("qwen3.5-4b")
-    ticks = _doubles(monkeypatch, lan.server_address[1], found.server_address[1])
+    ticks = _doubles(
+        monkeypatch,
+        lan.server_address[1],
+        found.server_address[1],
+        include_loopback=include_loopback,
+    )
     server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
     return server, url, [lan, found, local], ticks
 
@@ -240,6 +276,75 @@ def _no_raw_buttons(page: Any) -> None:
     assert raw.count() == 0, f"raw <button>: {raw.count()}"
 
 
+def _assignment_snapshot(payload: dict[str, Any]) -> str:
+    """Keep the durable assignment facts comparable across the adoption read."""
+    rows = []
+    for row in payload.get("rows", []):
+        assignment = row.get("assignment") or {}
+        rows.append({
+            "id": row.get("id"),
+            "inherited_from": row.get("inherited_from"),
+            "expected_revision": row.get("expected_revision"),
+            "assignment_revision": assignment.get("revision"),
+            "entries": [
+                (entry.get("profile_id"), entry.get("profile_revision"))
+                for entry in assignment.get("entries", [])
+            ],
+        })
+    tasks = [
+        (task.get("id"), task.get("has_override"))
+        for task in payload.get("task_overrides", [])
+    ]
+    return json.dumps({"rows": rows, "tasks": tasks}, sort_keys=True)
+
+
+def _library_profile_ids(page: Any) -> list[str]:
+    library = _api(page, "GET", "/api/inference/model-library", token=TOKEN)
+    return sorted(
+        str(row.get("id"))
+        for row in library.get("rows", [])
+        if str(row.get("id", "")).startswith("profile:")
+    )
+
+
+def _install_lan_scanner_double(monkeypatch: Any) -> tuple[str, list[str], list[str]]:
+    """Run the production LAN scanner against one injected fake target."""
+    from holdspeak.services import lan_engine_discovery
+    import holdspeak.setup_runtime as setup_runtime
+
+    expected_url = "http://192.168.77.44:8080/v1"
+    probe_urls: list[str] = []
+    discover_urls: list[str] = []
+    real_scan = lan_engine_discovery.scan_lan_engines
+    real_discover = setup_runtime.discover_endpoint_models
+
+    def probe(url: str) -> dict[str, Any]:
+        probe_urls.append(url)
+        # Every candidate is handled by this injected probe. Only the target
+        # is allowed to call the existing /v1/models double; all other hosts
+        # are refused without opening a socket.
+        if url != expected_url:
+            return {"ok": False, "models": []}
+        discover_urls.append(url)
+        return real_discover(url, timeout_seconds=1.0)
+
+    def scan() -> dict[str, Any]:
+        return real_scan(
+            interfaces=[
+                lan_engine_discovery.LanInterface(
+                    ipaddress.IPv4Address("192.168.77.45"),
+                    ipaddress.IPv4Network("192.168.77.40/29"),
+                )
+            ],
+            ports=[(8080, "openai-compatible")],
+            probe=probe,
+            max_workers=8,
+        )
+
+    monkeypatch.setattr(lan_engine_discovery, "scan_lan_engines", scan)
+    return expected_url, probe_urls, discover_urls
+
+
 @pytest.mark.parametrize("width", [1440, 393], ids=["desktop", "phone"])
 def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> None:
     server, url, fakes, ticks = _rig(tmp_path, monkeypatch)
@@ -256,6 +361,8 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
             _normal_chair(page)
             _seed(page, fakes[2].server_address[1])
             _open_runs_on(page)
+            if width == 1440:
+                _ensure_wide_runs_on(page)
             # The engines fill in once detection lands.
             page.get_by_test_id("switchboard-found-cap").wait_for(timeout=15_000)
             assert page.locator('[role="dialog"]').count() == 0
@@ -269,8 +376,14 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
             # the lead still reads whole as text.
             lead = page.locator("[data-testid='switchboard-job-meetings'] .switchboard-job-name").text_content() or ""
             if width == 1440:
+                # The board draws the route in a soft pill. The arrow remains
+                # in the lead's text content while the pill gives the visual
+                # route its own bounded cell.
                 assert lead.startswith("Meeting summaries → ") and " · on " in lead, lead
-                assert "Everything else → " in (page.locator("[data-testid='switchboard-job-default'] .switchboard-job-name").text_content() or "")
+                where = page.locator("[data-testid='switchboard-job-meetings'] .switchboard-job-pill").inner_text()
+                assert "Qwen3.8 27B" in where and " · ON " in where.upper() and "192.168.77.43" in where, where
+                default_name = page.locator("[data-testid='switchboard-job-default'] .switchboard-job-name").text_content() or ""
+                assert default_name.startswith("Everything else → ") and " · on " in default_name, default_name
             else:
                 # The phone list: the outcome name, its engine and place under it.
                 assert lead == "Meeting summaries", lead
@@ -384,13 +497,34 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
                 # Open Meetings and tap an engine to patch it.
                 page.get_by_test_id("switchboard-job-meetings").click()
                 page.get_by_text("Meeting summaries · runs on").wait_for()
-                tap = page.locator("[data-testid^='switchboard-tap-']").first
+                # The list opens on the selected job's alternatives. Choose
+                # the known loopback engine explicitly; the first tap is not
+                # a stable contract because the list can contain other jobs.
+                tap = page.get_by_test_id("switchboard-tap-glass-mac-4b")
                 with page.expect_response(lambda r: r.url.endswith("/api/inference/assignments/set")) as written:
                     tap.click()
                 assert written.value.ok, written.value.text()
-                page.get_by_test_id("runson-undo").wait_for()
-                assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+                body = written.value.request.post_data_json
+                assert body["scope"] == {"kind": "group", "group_id": "meetings"}
+                assert body["entries"][0]["profile_id"] == "glass-mac-4b"
                 _shot(page, "c2-list-patched", width)
+                # At phone width SurfaceFooter keeps Undo under its real More
+                # menu. Prove the menu action performs the durable inverse.
+                more = page.locator(".runson-foot").get_by_role("button", name="More actions", exact=True)
+                more.wait_for()
+                more.click()
+                undo_menu = page.get_by_role("menu", name="More actions")
+                undo_menu.get_by_role("menuitem", name="Undo", exact=True).wait_for()
+                undo_menu.get_by_role("menuitem", name="Undo", exact=True).click()
+                page.wait_for_function(
+                    "() => /^UNDONE /.test(document.querySelector('[data-testid=runson-receipt]')?.textContent || '')"
+                )
+                after = _api(page, "GET", "/api/inference/assignments", token=TOKEN)
+                meetings = next(row for row in after["rows"] if row["id"] == "meetings")
+                assert meetings["inherited_from"] == "global", meetings
+                summaries = next(task for task in after["task_overrides"] if task["id"] == "meeting.deferred_analysis")
+                assert summaries["has_override"] is False, summaries
+                assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
             # Meaning search (ratified: a row under the board) scrolls into
             # the body, clear of the window's foot.
             meaning = page.locator(".runson-meaning > *").first
@@ -434,6 +568,7 @@ def test_astra_review_real_producer(tmp_path: Path, monkeypatch: Any, case: str)
             _normal_chair(page)
             lan, local = _seed(page, fakes[2].server_address[1])
             _open_runs_on(page)
+            _ensure_wide_runs_on(page)
             page.get_by_test_id("switchboard-found-cap").wait_for(timeout=15_000)
             receipt = "() => document.querySelector('[data-testid=runson-receipt]')?.textContent || ''"
 
@@ -544,8 +679,14 @@ class TestTheRunsOnFooter(FitRig):
                 wait_board(page)
                 patch(page, "default", "lane12-second-engine")
                 receipt = page.get_by_test_id("runson-receipt")
-                undo = page.get_by_test_id("runson-undo")
-                undo.wait_for(timeout=T)
+                if width == 393:
+                    # SurfaceFooter keeps the primary Try verb visible and
+                    # puts Undo in its real More menu on the phone.
+                    undo = page.locator(".runson-foot").get_by_role("button", name="More actions", exact=True)
+                    undo.wait_for(timeout=T)
+                else:
+                    undo = page.get_by_test_id("runson-undo")
+                    undo.wait_for(timeout=T)
                 page.wait_for_timeout(600)
                 _settle(page)
                 rb, cb = receipt.evaluate(BOX_JS), undo.evaluate(BOX_JS)
@@ -563,7 +704,127 @@ class TestTheRunsOnFooter(FitRig):
                 footer = page.locator(".surface-footer-layout.runson-foot").first
                 self._shot(page, "B27-runson-footer", width, footer)
                 self._shot(page, "B27-runson", width)
+                if width == 393:
+                    undo.click()
+                    menu = page.get_by_role("menu", name="More actions")
+                    menu.get_by_role("menuitem", name="Undo", exact=True).click()
+                    page.wait_for_function(
+                        "() => /^UNDONE /.test(document.querySelector('[data-testid=runson-receipt]')?.textContent || '')"
+                    )
                 self._write("runson", width)
                 assert not errors, errors
             finally:
                 browser.close()
+
+
+@pytest.mark.parametrize("width", [1440, 393], ids=["desktop", "phone"])
+def test_runs_on_find_on_lan_found_then_use_it_real_scanner(
+    tmp_path: Path,
+    monkeypatch: Any,
+    width: int,
+) -> None:
+    """The owner can find a new LAN model and add it without rewiring jobs."""
+    server, url, fakes, _ticks = _rig(tmp_path, monkeypatch, include_loopback=False)
+    expected_url, probe_urls, discover_urls = _install_lan_scanner_double(monkeypatch)
+    expected_model = "qwen3.8-27b"
+    expected_key = "lan:192.168.77.44:8080:qwen3.8-27b"
+    expected_profile_id = "engine-192-168-77-44-8080"
+    errors: list[str] = []
+    try:
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": width, "height": 900 if width == 1440 else 852})
+            page.on("pageerror", lambda error: errors.append(str(error)))
+            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+            _api(page, "POST", "/api/desk/seed", token=TOKEN)
+            _normal_chair(page)
+            _seed(page, fakes[2].server_address[1])
+            before_assignments = _assignment_snapshot(
+                _api(page, "GET", "/api/inference/assignments", token=TOKEN)
+            )
+            before_profiles = _library_profile_ids(page)
+            assert "profile:glass-lan-27b" in before_profiles
+            _open_runs_on(page)
+            if width == 1440:
+                _ensure_wide_runs_on(page)
+
+            # Detection found no new LAN row. The row below must come from the
+            # explicit scanner request and its real model response.
+            assert page.get_by_test_id(f"switchboard-engine-{expected_key}").count() == 0
+            with page.expect_response(
+                lambda response: response.url.endswith("/api/concierge/discover-lan"),
+                timeout=30_000,
+            ) as discovery:
+                page.get_by_test_id("runson-find-lan").click()
+            discovery_response = discovery.value
+            assert discovery_response.ok, discovery_response.text()
+
+            found = page.get_by_test_id(f"switchboard-engine-{expected_key}")
+            found.wait_for(timeout=30_000)
+            found_text = found.inner_text()
+            assert expected_model in found_text, found_text
+            assert "192.168.77.44:8080" in found_text, found_text
+            assert page.get_by_test_id("runson-receipt").inner_text() == "FOUND ON LAN"
+            assert expected_url in probe_urls
+            assert discover_urls == [expected_url]
+            assert all(url.startswith("http://192.168.77.") and url.endswith(":8080/v1") for url in probe_urls)
+            assert _assignment_snapshot(_api(page, "GET", "/api/inference/assignments", token=TOKEN)) == before_assignments
+            assert _library_profile_ids(page) == before_profiles
+            _shot(page, "p17-lan-found", width)
+
+            with page.expect_response(
+                lambda response: response.url.endswith("/api/inference/model-library/define-endpoint"),
+                timeout=30_000,
+            ) as used:
+                found.get_by_role("button", name="Use it", exact=True).click()
+            used_response = used.value
+            assert used_response.ok, used_response.text()
+            request_body = used_response.request.post_data_json
+            assert request_body["draft"]["endpoint"] == expected_url
+            assert request_body["draft"]["model"] == expected_model
+            assert request_body["draft"]["profile_id"] == expected_profile_id
+            page.wait_for_function(
+                "() => /^ADDED /.test(document.querySelector('[data-testid=runson-receipt]')?.textContent || '')",
+                timeout=30_000,
+            )
+            found.wait_for(state="detached", timeout=30_000)
+
+            after_assignments = _assignment_snapshot(
+                _api(page, "GET", "/api/inference/assignments", token=TOKEN)
+            )
+            assert after_assignments == before_assignments
+            after_profiles = _library_profile_ids(page)
+            assert len(after_profiles) == len(before_profiles) + 1
+            assert after_profiles.count(f"profile:{expected_profile_id}") == 1
+            assert after_profiles.count("profile:glass-lan-27b") == 1
+
+            # The route's durable profile is the source of the next detection
+            # read. Canonical profile identity and its private endpoint target
+            # are both persisted in the isolated database.
+            from holdspeak.db import get_database
+
+            with get_database()._connection() as connection:
+                profile = connection.execute(
+                    "SELECT profile_id,model_or_artifact_identity FROM model_profile_revisions "
+                    "WHERE profile_id=? ORDER BY revision DESC LIMIT 1",
+                    (expected_profile_id,),
+                ).fetchone()
+                target = connection.execute(
+                    "SELECT base_url,model FROM profiles WHERE id=? AND deleted=0",
+                    (f"library_provider_{expected_profile_id}",),
+                ).fetchone()
+            assert profile is not None
+            assert profile["profile_id"] == expected_profile_id
+            assert profile["model_or_artifact_identity"] == expected_model
+            assert target is not None
+            assert target["base_url"] == expected_url
+            assert target["model"] == expected_model
+            _shot(page, "p17-lan-after-use-it", width)
+            _assert_clean(page, errors)
+            browser.close()
+    finally:
+        server.stop()
+        for fake in fakes:
+            fake.shutdown()

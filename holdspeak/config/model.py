@@ -61,7 +61,7 @@ class LLMRuntimeConfig:
     # builds llama.cpp instead (plan._local_dictation_engine,
     # runtime.resolve_backend(mlx_model_set=False)).
     mlx_model: str = ""
-    llama_cpp_model_path: str = "~/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf"
+    llama_cpp_model_path: str = "~/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf"
     # DEAD legacy fallbacks (HS-112-01): read only by the one-time migration
     # in `migrate_legacy_endpoints`, never by feature code.
     openai_compatible_model: str = "qwen3.5-8b-instruct"

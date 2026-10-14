@@ -53,6 +53,39 @@ def test_detect_carries_a_repair_list_and_a_cold_machine_needs_nothing(cold) -> 
     assert payload["repairs"] == []
 
 
+def test_find_on_lan_returns_transient_found_rows_without_writing(cold, monkeypatch) -> None:
+    monkeypatch.setattr(
+        "holdspeak.services.lan_engine_discovery.scan_lan_engines",
+        lambda: {
+            "engines": [{
+                "id": "lan:192.168.1.43:8080:qwen3.8-27b",
+                "kind": "lan",
+                "name": "qwen3.8-27b",
+                "legacyLabel": "qwen3.8-27b",
+                "host": "192.168.1.43",
+                "state": "READY",
+                "baseUrl": "http://192.168.1.43:8080/v1",
+                "found": True,
+            }],
+            "partial": False,
+            "unavailable": False,
+            "hostsChecked": 254,
+            "portsChecked": 4,
+        },
+    )
+    before = cold.profiles.list()
+    denied = _client().post("/api/concierge/discover-lan", headers={"X-HoldSpeak-Token": "not-the-owner"})
+    assert denied.status_code in {401, 403}
+    response = _client().post("/api/concierge/discover-lan")
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["engines"][0]["name"] == "qwen3.8-27b"
+    assert payload["engines"][0]["found"] is True
+    assert payload["engines"][0]["host"] == "192.168.1.43"
+    assert payload["partial"] is False
+    assert cold.profiles.list() == before
+
+
 def test_a_detected_endpoint_carries_the_address_its_probe_needs(cold) -> None:
     """The probe reaches an endpoint only if detect told it where the endpoint is."""
     cold.profiles.upsert(

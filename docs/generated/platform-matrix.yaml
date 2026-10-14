@@ -3669,6 +3669,66 @@
       "status": "built_unreleased"
     },
     {
+      "availability": "unknown",
+      "capability_id": "desk.engines.find_lan",
+      "id": "desk.engines.find_lan@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/services/lan_engine_discovery.py",
+        "holdspeak/web/routes/concierge.py",
+        "web/src/features/runson/RunsOnCore.tsx"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "desk.engines.find_lan",
+      "id": "desk.engines.find_lan@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/services/lan_engine_discovery.py",
+        "holdspeak/web/routes/concierge.py",
+        "web/src/features/runson/RunsOnCore.tsx"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "desk.engines.find_lan",
+      "id": "desk.engines.find_lan@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/services/lan_engine_discovery.py",
+        "holdspeak/web/routes/concierge.py",
+        "web/src/features/runson/RunsOnCore.tsx"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "desk.engines.find_lan",
+      "id": "desk.engines.find_lan@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/services/lan_engine_discovery.py",
+        "holdspeak/web/routes/concierge.py",
+        "web/src/features/runson/RunsOnCore.tsx"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "supported_with_setup",
+      "capability_id": "desk.engines.find_lan",
+      "id": "desk.engines.find_lan@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/services/lan_engine_discovery.py",
+        "holdspeak/web/routes/concierge.py",
+        "web/src/features/runson/RunsOnCore.tsx"
+      ],
+      "status": "built_unreleased"
+    },
+    {
       "availability": "not_applicable",
       "capability_id": "agents.thread_persistent",
       "id": "agents.thread_persistent@aipi",

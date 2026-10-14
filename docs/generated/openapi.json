@@ -7937,6 +7937,28 @@
         ]
       }
     },
+    "/api/concierge/discover-lan": {
+      "post": {
+        "description": "Find private-LAN OpenAI-compatible engines for this one owner press.\n\nThis route intentionally does not load the database.  The scanner only\nreads ``/v1/models`` and returns transient Found rows; the existing\n``Use it`` verb is the separate owner action that defines a profile.",
+        "operationId": "post_discover_lan_api_concierge_discover_lan_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Post Discover Lan Api Concierge Discover Lan Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Post Discover Lan",
+        "tags": [
+          "concierge"
+        ]
+      }
+    },
     "/api/concierge/download": {
       "post": {
         "operationId": "post_download_api_concierge_download_post",

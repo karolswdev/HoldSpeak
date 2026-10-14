@@ -196,6 +196,29 @@ describe("the reads: CHECKING, CAN'T CHECK, OFFLINE, a known absence", () => {
 });
 
 describe("the push seam and the pick", () => {
+  it("keeps SEND busy until its initial read settles, including a failed read", async () => {
+    let failDestinations!: (error: unknown) => void;
+    routes["GET /api/channels/destinations"] = () => new Promise((_, reject) => { failDestinations = reject; });
+    render(<SendWells doc={{ ref: "desk_decision:held-read", title: "Decision", label: "DECISION HELD" }} />);
+    const well = await screen.findByTestId("send-well");
+    expect(well).toHaveAttribute("aria-busy", "true");
+    await act(async () => { failDestinations(new TypeError("offline")); });
+    await waitFor(() => expect(well).not.toHaveAttribute("aria-busy"));
+  });
+
+  it("keeps SEND busy until the picked destination preview settles", async () => {
+    let finishPreview!: (value: unknown) => void;
+    routes["POST /api/channels/preview"] = () => new Promise((resolve) => { finishPreview = resolve; });
+    act(() => pickDestination("desk_decision:held-preview", "chd_f"));
+    render(<SendWells doc={{ ref: "desk_decision:held-preview", title: "Decision", label: "DECISION PREVIEW" }} />);
+    const well = await screen.findByTestId("send-well");
+    await screen.findAllByTestId("destination-row");
+    expect(well).toHaveAttribute("aria-busy", "true");
+    await waitFor(() => expect(finishPreview).toBeTypeOf("function"));
+    await act(async () => { finishPreview({ payload_digest: "dig", preview: { text: "# Doc" } }); });
+    await waitFor(() => expect(well).not.toHaveAttribute("aria-busy"));
+  });
+
   it("a pick sets an OPEN well in place (no remount); a second pick changes it in place", async () => {
     render(<SendWells doc={{ ref: "desk_decision:dec-1", title: "Decision", label: "DECISION DEC1" }} />);
     const well = await screen.findByTestId("send-well");

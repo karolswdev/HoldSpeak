@@ -40,7 +40,7 @@ from holdspeak.services.setup_service import SetupService
 
 OWNER = Principal(PrincipalKind.OWNER, "owner")
 AGENT = Principal(PrincipalKind.AGENT, "agent")
-NOW = datetime(2026, 8, 21, 12, 30, tzinfo=timezone.utc)
+NOW = datetime(2026, 10, 13, 12, 30, tzinfo=timezone.utc)
 
 
 def _service(tmp_path: Path, *, config: Config | None = None):
@@ -82,7 +82,7 @@ def test_projection_is_closed_redacted_and_preserves_v1_identity(tmp_path: Path)
         "installed_model_artifacts", "acquisitions", "presets", "limitations",
     }
     assert value["schema_version"] == 1
-    assert value["observed_at"] == "2026-08-21T12:30:00Z"
+    assert value["observed_at"] == "2026-10-13T12:30:00Z"
     current = value["current_thought_deployment"]
     assert set(current) == {"source", "configured_target_id", "target", "readiness", "execution_support", "execution_revision"}
     assert current["readiness"] == {"state": "ready", "available": True, "reason": None}
@@ -98,10 +98,10 @@ def test_projection_is_closed_redacted_and_preserves_v1_identity(tmp_path: Path)
     assert value["artifact_detection"] == {"state": "complete", "reason": None}
     assert value["preset_catalog"] == {
         "schema_version": 1,
-            "catalog_revision": 4,
-        "generated_at": "2026-08-21T00:00:00Z",
-        "expires_at": "2036-08-01T00:00:00Z",
-            "signing_key_id": "holdspeak_catalog_2026_08_02",
+        "catalog_revision": 5,
+        "generated_at": "2026-10-13T00:00:00Z",
+        "expires_at": "2036-10-13T00:00:00Z",
+        "signing_key_id": "holdspeak_catalog_2026_10_13",
         "sha256": PACKAGED_CATALOG_SHA256,
     }
     assert value["detected_local_artifacts"][0]["label"] == model.name
@@ -235,7 +235,7 @@ def test_catalog_expiry_is_rechecked_on_every_projection(tmp_path: Path):
         db, config_provider=Config, home_provider=lambda: tmp_path,
         clock=lambda: current[0],
     )
-    assert service.get_inference_setup(OWNER)["preset_catalog"]["catalog_revision"] == 4
+    assert service.get_inference_setup(OWNER)["preset_catalog"]["catalog_revision"] == 5
     current[0] = datetime(2037, 1, 1, tzinfo=timezone.utc)
     with pytest.raises(ValueError, match="validity period"):
         service.get_inference_setup(OWNER)

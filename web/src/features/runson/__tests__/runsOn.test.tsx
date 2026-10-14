@@ -14,6 +14,7 @@ import type { Detection, Roster, RosterRow } from "../api";
 const m = vi.hoisted(() => ({
   readRoster: vi.fn(),
   readDetection: vi.fn(),
+  discoverLan: vi.fn(),
   writeChain: vi.fn(),
   clearChain: vi.fn(),
   readAcquisition: vi.fn(),
@@ -35,6 +36,7 @@ vi.mock("../api", async () => {
     ...actual,
     readRoster: m.readRoster,
     readDetection: m.readDetection,
+    discoverLan: m.discoverLan,
     writeChain: m.writeChain,
     clearChain: m.clearChain,
     readAcquisition: m.readAcquisition,
@@ -169,6 +171,7 @@ beforeEach(() => {
   for (const fn of Object.values(m)) fn.mockReset();
   m.readRoster.mockResolvedValue(roster());
   m.readDetection.mockResolvedValue(detection());
+  m.discoverLan.mockResolvedValue({ engines: [], checkedAt: "2026-10-09T09:14:00Z", partial: false, unavailable: false, hostsChecked: 0 });
   m.writeChain.mockResolvedValue({ revision: 7 });
   m.clearChain.mockResolvedValue({ revision: 8 });
   m.summary.mockResolvedValue({
@@ -622,6 +625,86 @@ describe("Runs on — speech not set up (PHILO-17)", () => {
 });
 
 describe("Runs on — FOUND, downloads, the add row", () => {
+  it("Find on LAN adds transient Found rows and leaves adoption to Use it", async () => {
+    m.discoverLan.mockResolvedValue({
+      engines: [{
+        id: "lan:192.168.1.43:8080:qwen3.8-27b", kind: "lan", name: "qwen3.8-27b",
+        host: "192.168.1.43", state: "READY", legacyLabel: "qwen3.8-27b",
+        baseUrl: "http://192.168.1.43:8080/v1", found: true,
+      }],
+      checkedAt: "2026-10-13T10:00:00Z", partial: false, unavailable: false, hostsChecked: 254,
+    });
+    m.define.mockResolvedValue({ profileId: "engine-192-168-1-43-8080", profileRevision: 1 });
+    await board();
+    fireEvent.click(screen.getByTestId("runson-find-lan"));
+    await waitFor(() => expect(m.discoverLan).toHaveBeenCalledTimes(1));
+    const found = await screen.findByTestId("switchboard-engine-lan:192.168.1.43:8080:qwen3.8-27b");
+    expect(found.textContent).toContain("192.168.1.43:8080");
+    expect(found.textContent?.match(/192\.168\.1\.43/g)).toHaveLength(1);
+    expect(screen.getByTestId("runson-receipt").textContent).toBe("FOUND ON LAN");
+    fireEvent.click(within(found).getByRole("button", { name: "Use it" }));
+    await waitFor(() => expect(m.define).toHaveBeenCalledWith(expect.objectContaining({
+      endpoint: "http://192.168.1.43:8080/v1", model: "qwen3.8-27b",
+    })));
+  });
+
+  it("Find on LAN says when the bounded scan finds no engine", async () => {
+    m.discoverLan.mockResolvedValue({ engines: [], checkedAt: "2026-10-13T10:00:00Z", partial: true, unavailable: false, hostsChecked: 254 });
+    await board();
+    fireEvent.click(screen.getByTestId("runson-find-lan"));
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toBe("NO ENGINE FOUND ON LAN · PARTIAL"));
+  });
+
+  it("Find on LAN does not duplicate a saved endpoint with the same URL and model", async () => {
+    const saved = detection();
+    saved.engines = [...saved.engines, {
+      id: "lan:saved-qwen", kind: "lan", name: "Qwen3.8 27B", legacyLabel: "My LAN server",
+      host: "192.168.1.43", state: "READY", profileId: "saved-qwen", profileRevision: 1,
+      baseUrl: "http://192.168.1.43:8080/v1/",
+    }];
+    m.readDetection.mockResolvedValue(saved);
+    m.discoverLan.mockResolvedValue({
+      engines: [{
+        id: "lan:192.168.1.43:8080:qwen3.8-27b", kind: "lan", name: "qwen3.8-27b",
+        host: "192.168.1.43", state: "READY", legacyLabel: "qwen3.8-27b",
+        baseUrl: "http://192.168.1.43:8080/v1", found: true,
+      }],
+      checkedAt: "2026-10-13T10:00:00Z", partial: false, unavailable: false, hostsChecked: 254,
+    });
+    await board();
+    fireEvent.click(screen.getByTestId("runson-find-lan"));
+    await waitFor(() => expect(m.discoverLan).toHaveBeenCalledTimes(1));
+    expect(screen.queryByTestId("switchboard-engine-lan:192.168.1.43:8080:qwen3.8-27b")).toBeNull();
+    expect(screen.getByTestId("switchboard-engine-saved-qwen")).toBeTruthy();
+  });
+
+  it("Find on LAN keeps rows when the initial detection read finishes later", async () => {
+    let finish: (value: Detection) => void = () => {};
+    m.readDetection.mockReturnValue(new Promise<Detection>((resolve) => { finish = resolve; }));
+    m.discoverLan.mockResolvedValue({
+      engines: [{
+        id: "lan:192.168.1.43:8080:qwen3.8-27b", kind: "lan", name: "qwen3.8-27b",
+        host: "192.168.1.43", state: "READY", legacyLabel: "qwen3.8-27b",
+        baseUrl: "http://192.168.1.43:8080/v1", found: true,
+      }],
+      checkedAt: "2026-10-13T10:00:00Z", partial: false, unavailable: false, hostsChecked: 254,
+    });
+    render(<RunsOnCore />);
+    await screen.findByTestId("switchboard");
+    fireEvent.click(screen.getByTestId("runson-find-lan"));
+    await waitFor(() => expect(m.discoverLan).toHaveBeenCalledTimes(1));
+    await act(async () => finish(detection()));
+    expect(await screen.findByTestId("switchboard-engine-lan:192.168.1.43:8080:qwen3.8-27b")).toBeTruthy();
+  });
+
+  it("Find on LAN names a failed discovery", async () => {
+    m.discoverLan.mockRejectedValue(new Error("offline"));
+    await board();
+    fireEvent.click(screen.getByTestId("runson-find-lan"));
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toBe("LAN DISCOVERY FAILED"));
+    expect(screen.getByTestId("runson-receipt").getAttribute("data-tone")).toBe("danger");
+  });
+
   it("FOUND → Use it adds the engine through the Model Library; it joins with no wire", async () => {
     m.define.mockResolvedValue({ profileId: "engine-127-0-0-1-11434", profileRevision: 1 });
     await board();

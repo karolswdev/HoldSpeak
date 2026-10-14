@@ -4,9 +4,24 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-13 (daily journeys: #1198)
+**Last updated:** 2026-10-13 (model discovery and download repair: #1199)
 
 ## Current phase
+
+**Model discovery and download repair — #1199 (2026-10-13).** Settings →
+Engines → Find on LAN returns actual model choices; Use it adds a library
+profile without changing job assignments. The production scanner found the
+owner's 192.168.1.43:8080 / qwen3.8-27b from interface addresses (read only).
+Qwen 4B used the publisher's Xet identifier as its file checksum; catalog
+revision 5 corrects it, and retry can reuse a fully verified rejected file.
+Initial Send reads now report pending honestly, closing the traced Week
+settling gap. Engines owns one footer; off-machine confirmations stay clear
+of the Dock and the Settings return remains available. Quick check GREEN:
+3,472 web / 1,707 Python (2 existing availability skips) / 106 sweep (3 existing xfails) / 15 canon. Typecheck and architecture/API generation green; 9 engine
+browser cases passed, including both LAN cases and actual More → Undo.
+Open: owner browser acceptance, actual model installation/inference, Linux
+hardware, full main tape and postmerge review.
+[Handover](../docs/internal/HANDOVER-MODEL-DISCOVERY-DOWNLOAD-2026-10-13.md).
 
 **Daily journeys — #1198 (2026-10-13).** One substantial follow-through PR
 on #1197: linked People Prep → Record with validated calendar provenance;
@@ -19,7 +34,8 @@ Week detail refreshes keep their reading marker while retaining current rows.
 Final quick check GREEN: 3,508 web, 1,302 Python, 106 sweep (3 existing
 known reds xfailed), 15 canon. Typecheck and architecture/API generation green;
 10 isolated real-hub journey walks at 1440/393 passed. Owner desk judgment,
-real microphone/LAN model, and the intermittent Week movement remain open.
+real microphone/LAN inference remain open. The Week settling gap was traced
+to the lazy Send well and corrected in #1199.
 [Handover](../docs/internal/HANDOVER-DAILY-JOURNEYS-2026-10-13.md).
 
 **Productivity implementation — #1197 (2026-10-13).** One combined PR at the
@@ -120,6 +136,14 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 | Runs on (16c): a per-object wire on the board (thought/workbench/agent/recipe/project overrides; the parked AssignmentEditor sheet edited them; the contextual atom now only reads them and opens Runs on); FOUND model files and an unrecorded Whisper (add-to-library needs a detected_artifact_id detect does not carry); Try it through the route for jobs other than Thoughts & notes (route_probe accepts only ask.answer); the phone list cannot pin an inherited engine as a job's own; 25 atlas cases still drive the Concierge flow (Add = use for summaries; the window closes) | — | — |
 
 ## Last merged (newest first)
+
+- **#1199 — Model discovery and download repair (2026-10-13).** Bounded
+  Find on LAN; corrected signed Qwen catalog and default artifact locators;
+  fully verified quarantine reuse; Week Send readiness; one engine footer
+  with reachable confirmation and Settings return. Quick check GREEN
+  (3,472 web / 1,707 Python (2 existing availability skips) / 106 sweep (3 existing xfails) / 15 canon); final typecheck green, 9 engine browser cases and 2 isolated
+  graph entry walks passed. Owner installation/inference remain unobserved.
+  [Handover](../docs/internal/HANDOVER-MODEL-DISCOVERY-DOWNLOAD-2026-10-13.md).
 
 - **#1198 — Daily journeys, one combined PR (2026-10-13).** Prep → Record;
   inline Outcomes correction and durable destinations; selected Note → Task /

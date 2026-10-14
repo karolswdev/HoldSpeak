@@ -248,8 +248,6 @@ class InferenceAcquisitionApplicationService:
         }
         if _sha(signed_manifest) != source["manifest_sha256"]:
             raise ServiceError("inference_catalog_integrity", "The signed model manifest is inconsistent.", context={"status": 409})
-        if shutil.disk_usage(self._root.parent if self._root.parent.exists() else Path.home()).free < source["peak_free_bytes"]:
-            raise ServiceError("model_download_disk", _safe_error("model_download_disk")[0], context={"status": 409})
         plan = {
             "kind": "huggingface_file",
             "repository": source["repository"],
@@ -257,6 +255,7 @@ class InferenceAcquisitionApplicationService:
             "filename": source["filename"],
             "sha256": source["file_sha256"],
             "size": source["download_bytes"],
+            "peak_free_bytes": source["peak_free_bytes"],
             "manifest_sha256": source["manifest_sha256"],
             "license": source["license"],
             "runtime_id": preset["runtime_id"],
@@ -265,6 +264,12 @@ class InferenceAcquisitionApplicationService:
             "model_identity": preset["label"],
             "context_ceiling": int(body["context_choice"]),
         }
+        disk_free = shutil.disk_usage(self._root.parent if self._root.parent.exists() else Path.home()).free
+        if (
+            disk_free < int(plan["peak_free_bytes"])
+            and not self._integrity_quarantine_metadata_candidate(plan)
+        ):
+            raise ServiceError("model_download_disk", _safe_error("model_download_disk")[0], context={"status": 409})
         plan_sha = _sha(plan)
         source_claim_sha = _sha({
             key: plan[key]
@@ -711,7 +716,42 @@ class InferenceAcquisitionApplicationService:
             staging = self._root / "staging" / job_id
             staging.mkdir(parents=True, exist_ok=True)
             part = staging / (str(plan["filename"]) + ".part")
-            self._transition(job_id, "downloading")
+            reused = self._adopt_verified_integrity_quarantine(job_id, plan)
+            if not reused:
+                peak_free_bytes = plan.get("peak_free_bytes")
+                if type(peak_free_bytes) is not int or peak_free_bytes <= 0:
+                    legacy_size = plan.get("size")
+                    if type(legacy_size) is not int or legacy_size <= 0:
+                        self._transition(
+                            job_id,
+                            "indeterminate",
+                            error_code="source_plan_integrity",
+                            error_message="The saved download plan has no valid storage size.",
+                        )
+                        return
+                    # Pre-revision-5 plans carried no peak bound. Their
+                    # positive signed size still gives a conservative
+                    # download-plus-install bound.
+                    peak_free_bytes = legacy_size * 2
+                if peak_free_bytes <= 0:
+                    self._transition(
+                        job_id,
+                        "indeterminate",
+                        error_code="source_plan_integrity",
+                        error_message="The saved download plan has no valid storage bound.",
+                    )
+                    return
+                disk_free = shutil.disk_usage(self._root.parent if self._root.parent.exists() else Path.home()).free
+                if disk_free < peak_free_bytes:
+                    self._fail(job_id, "model_download_disk")
+                    return
+            if reused:
+                self._transition(
+                    job_id, "downloading",
+                    transport_bytes=int(plan["size"]), resumable=0,
+                )
+            else:
+                self._transition(job_id, "downloading")
             self._download(job_id, plan, part)
             if self._cancelled(job_id):
                 raise _Cancelled
@@ -843,8 +883,13 @@ class InferenceAcquisitionApplicationService:
         self._activate(job_id, artifact_id, path, execution_plan)
 
     def _download(self, job_id: str, plan: dict[str, Any], part: Path) -> None:
-        url = self._source_url_builder(plan)
         offset = part.stat().st_size if part.is_file() else 0
+        expected_size = int(plan["size"])
+        if offset > expected_size:
+            raise OSError("staged bytes exceeded signed size")
+        if offset == expected_size:
+            return
+        url = self._source_url_builder(plan)
         headers = {"User-Agent": "HoldSpeak/HS-142-02"}
         if offset:
             headers["Range"] = f"bytes={offset}-"
@@ -872,11 +917,11 @@ class InferenceAcquisitionApplicationService:
                     if not chunk:
                         break
                     total += len(chunk)
-                    if total > int(plan["size"]):
+                    if total > expected_size:
                         raise OSError("download exceeded signed size")
                     output.write(chunk)
                     self._transition(job_id, "downloading", transport_bytes=total, resumable=1 if append else 0)
-            if total != int(plan["size"]):
+            if total != expected_size:
                 raise OSError("download ended before signed size")
 
     @staticmethod
@@ -1001,6 +1046,103 @@ class InferenceAcquisitionApplicationService:
             return next(path for path in staging.iterdir() if path.name.endswith(".part") and path.is_file())
         except (OSError, StopIteration):
             return None
+
+    def _adopt_verified_integrity_quarantine(self, job_id: str, plan: dict[str, Any]) -> bool:
+        """Reuse a verified byte-for-byte quarantine after catalog correction.
+
+        An integrity failure normally remains quarantined and non-resumable. A
+        corrected catalog can make those bytes valid, so a fresh acquisition may
+        transfer one bounded candidate into its staging directory. The old job
+        row remains failed; the candidate is accepted only after its immutable
+        source identity, size, SHA-256, and GGUF header all match the new plan.
+        """
+        expected_size = plan.get("size")
+        if type(expected_size) is not int or expected_size <= 0:
+            return False
+        quarantine = self._integrity_quarantine_candidate(plan)
+        if quarantine is None:
+            return False
+        try:
+            staging = self._root / "staging" / job_id
+            staging.mkdir(parents=True, exist_ok=True)
+            os.replace(quarantine, staging / f"{plan['filename']}.part")
+            return True
+        except OSError:
+            return False
+
+    def _integrity_quarantine_metadata_candidate(self, plan: dict[str, Any]) -> bool:
+        """Find a bounded candidate without reading its contents."""
+        expected_size = plan.get("size")
+        if str(plan.get("format")) != "gguf" or type(expected_size) is not int or expected_size <= 0:
+            return False
+        immutable = ("kind", "repository", "revision", "filename", "format", "size")
+        with self._db._connection() as conn:
+            candidates = conn.execute(
+                """SELECT job_id, source_plan_json
+                     FROM inference_model_acquisitions
+                    WHERE state='failed' AND error_code='model_download_integrity'
+                    ORDER BY updated_at DESC LIMIT 5"""
+            ).fetchall()
+        for candidate in candidates:
+            try:
+                prior_plan = json.loads(str(candidate["source_plan_json"]))
+            except (TypeError, ValueError):
+                continue
+            if not isinstance(prior_plan, dict):
+                continue
+            if any(prior_plan.get(key) != plan.get(key) for key in immutable):
+                continue
+            quarantine = self._root / "quarantine" / f"{candidate['job_id']}.invalid"
+            try:
+                if not quarantine.is_symlink() and quarantine.is_file() and quarantine.stat().st_size == expected_size:
+                    return True
+            except OSError:
+                continue
+        return False
+
+    def _integrity_quarantine_candidate(self, plan: dict[str, Any]) -> Path | None:
+        if str(plan.get("format")) != "gguf":
+            return None
+        expected_size = plan.get("size")
+        if type(expected_size) is not int or expected_size <= 0:
+            return None
+        expected_sha = str(plan.get("sha256", "")).removeprefix("sha256:")
+        if len(expected_sha) != 64:
+            return None
+        try:
+            bytes.fromhex(expected_sha)
+        except ValueError:
+            return None
+        immutable = ("kind", "repository", "revision", "filename", "format", "size")
+        with self._db._connection() as conn:
+            candidates = conn.execute(
+                """SELECT job_id, source_plan_json
+                     FROM inference_model_acquisitions
+                    WHERE state='failed' AND error_code='model_download_integrity'
+                    ORDER BY updated_at DESC LIMIT 5"""
+            ).fetchall()
+        for candidate in candidates:
+            try:
+                prior_plan = json.loads(str(candidate["source_plan_json"]))
+            except (TypeError, ValueError):
+                continue
+            if not isinstance(prior_plan, dict):
+                continue
+            if any(prior_plan.get(key) != plan.get(key) for key in immutable):
+                continue
+            quarantine = self._root / "quarantine" / f"{candidate['job_id']}.invalid"
+            try:
+                if quarantine.is_symlink() or not quarantine.is_file() or quarantine.stat().st_size != expected_size:
+                    continue
+                if self._hash_file(quarantine) != expected_sha:
+                    continue
+                with quarantine.open("rb") as handle:
+                    if handle.read(4) != b"GGUF":
+                        continue
+                return quarantine
+            except OSError:
+                continue
+        return None
 
     def _adopt_resumable_prefix(
         self, job_id: str, source_claim_sha: str, total: int, filename: str,

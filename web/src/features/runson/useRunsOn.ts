@@ -31,10 +31,12 @@ import {
   readDetection,
   readRoster,
   writeChain,
+  discoverLan,
   type AssignmentScope,
   type Detection,
   type Roster,
   type RosterEntry,
+  type RunsOnEngine,
 } from "./api";
 import {
   DEFAULT_JOB,
@@ -105,6 +107,7 @@ export interface PendingTry {
 }
 
 export type AddState = "IDLE" | "CHECKING" | "READY" | "UNREACHABLE" | "KEY_REQUIRED" | "KEY_INVALID" | "NOT_ADDED";
+export type LanDiscoveryState = "IDLE" | "CHECKING";
 
 function clock(): string {
   return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
@@ -150,6 +153,40 @@ function codeToken(err: unknown): string {
   return "NOT SAVED";
 }
 
+function endpointKey(url: string | undefined): string {
+  return String(url ?? "").trim().replace(/\/+$/, "").toLowerCase();
+}
+
+function modelKey(value: unknown): string {
+  return String(value || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+function modelKeys(engine: RunsOnEngine): Set<string> {
+  return new Set(
+    [engine.legacyLabel, engine.name]
+      .map(modelKey)
+      .filter(Boolean),
+  );
+}
+
+function sameLanEndpointModel(left: RunsOnEngine, right: RunsOnEngine): boolean {
+  const leftModels = modelKeys(left);
+  return (
+    Boolean(left.baseUrl) &&
+    endpointKey(left.baseUrl) === endpointKey(right.baseUrl) &&
+    [...modelKeys(right)].some((model) => leftModels.has(model))
+  );
+}
+
+function mergeLanFound(base: RunsOnEngine[], transient: RunsOnEngine[]): RunsOnEngine[] {
+  const rows = [...base];
+  for (const candidate of transient) {
+    if (rows.some((existing) => existing.profileId && sameLanEndpointModel(existing, candidate))) continue;
+    if (!rows.some((existing) => existing.id === candidate.id)) rows.push(candidate);
+  }
+  return rows;
+}
+
 function isConflict(err: unknown): boolean {
   return (
     err instanceof ApiError &&
@@ -176,6 +213,8 @@ export function useRunsOn(scope?: string) {
   const [failedDownloads, setFailedDownloads] = useState<Record<string, string>>({});
   const [undoStack, setUndoStack] = useState<UndoStep[]>([]);
   const [busy, setBusy] = useState(false);
+  const [lanDiscovery, setLanDiscovery] = useState<LanDiscoveryState>("IDLE");
+  const [lanFound, setLanFound] = useState<RunsOnEngine[]>([]);
   const mounted = useRef(true);
   const detectionRef = useRef<Promise<Detection | null> | null>(null);
   const timers = useRef(new Map<string, ReturnType<typeof setInterval>>());
@@ -233,7 +272,11 @@ export function useRunsOn(scope?: string) {
     if (job) setSelected(job);
   }, [roster, scope]);
 
-  const engines = useMemo(() => buildEngines(roster, detection), [roster, detection]);
+  const displayedDetection = useMemo(
+    () => (detection ? { ...detection, engines: mergeLanFound(detection.engines, lanFound) } : detection),
+    [detection, lanFound],
+  );
+  const engines = useMemo(() => buildEngines(roster, displayedDetection), [roster, displayedDetection]);
   const engineByKey = useCallback((key: string) => engines.find((e) => e.key === key), [engines]);
   const rowOf = useCallback(
     (job: string) => roster?.rows.find((row) => row.id === rosterId(job)),
@@ -690,6 +733,31 @@ export function useRunsOn(scope?: string) {
     [engineByKey, engines, loadDetection, loadRoster],
   );
 
+  /* ── Find on LAN (one owner press, transient rows only) ── */
+
+  const findOnLan = useCallback(async () => {
+    if (lanDiscovery === "CHECKING") return;
+    setLanDiscovery("CHECKING");
+    setReceipt({ text: "SEARCHING LAN…" });
+    try {
+      const answer = await discoverLan();
+      if (!mounted.current) return;
+      setLanFound(answer.engines);
+      const suffix = answer.partial ? " · PARTIAL" : "";
+      if (answer.unavailable) {
+        setReceipt({ text: "LAN DISCOVERY UNAVAILABLE", tone: "danger" });
+      } else if (answer.engines.length) {
+        setReceipt({ text: `FOUND ON LAN${suffix}` });
+      } else {
+        setReceipt({ text: `NO ENGINE FOUND ON LAN${suffix}` });
+      }
+    } catch (_error) {
+      if (mounted.current) setReceipt({ text: "LAN DISCOVERY FAILED", tone: "danger" });
+    } finally {
+      if (mounted.current) setLanDiscovery("IDLE");
+    }
+  }, [lanDiscovery]);
+
   /* ── Add an engine (address + key + Check, inline) ── */
 
   const [addOpen, setAddOpen] = useState(false);
@@ -808,6 +876,8 @@ export function useRunsOn(scope?: string) {
     failedDownloads,
     download,
     useFound,
+    findOnLan,
+    lanDiscovery,
     busy,
     add: {
       open: addOpen,

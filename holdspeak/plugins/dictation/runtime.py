@@ -146,7 +146,7 @@ def build_runtime(
     *,
     backend: str = "auto",
     mlx_model: str = "",
-    llama_cpp_model_path: str = "~/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+    llama_cpp_model_path: str = "~/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
     endpoint_model: str = "qwen3.5-8b-instruct",
     endpoint_base_url: str = "http://127.0.0.1:8000/v1",
     endpoint_api_key_env: str = "OPENAI_API_KEY",
