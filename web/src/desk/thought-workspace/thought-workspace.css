@@ -4,12 +4,15 @@
    Phase 141/153 left this window with the owner's first-use verdict. */
 
 .desk-next .desk-pullout.thought-workspace-window {
-  width: min(860px, calc(100vw - 48px));
-  height: min(660px, calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom) - 24px));
-  min-width: 560px;
-  min-height: 520px;
-  max-width: calc(100vw - 24px);
-  max-height: calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom));
+  /* Thought opens as a 520 x 360 sticky. DeskWindow's fit-content mode
+     leaves height to the material; these caps keep growth useful on a desk. */
+  width: min(820px, calc(100vw - 48px));
+  height: auto;
+  bottom: auto;
+  min-width: 520px;
+  min-height: 360px;
+  max-width: min(820px, calc(100vw - 24px));
+  max-height: min(640px, calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom)));
   overflow: hidden;
   /* HS-201-12 counsel round — UX-CANON D: this window's bands reflow
      against the WINDOW, never the viewport.  `surface` is the one public
@@ -287,6 +290,34 @@
   margin: 4px 0;
 }
 
+/* Manual note filing stays in the note's own lower band.  The gadgets keep
+   their real inputs and the library Button carries every verb. */
+.desk-next .thought-action-well {
+  flex: none;
+  display: grid;
+  gap: 10px;
+  padding: 10px clamp(22px, 3.4vw, 44px);
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface-2);
+}
+
+.desk-next .thought-action-well-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(130px, 0.6fr);
+  gap: 10px;
+}
+
+.desk-next .thought-action-well .gadget-string,
+.desk-next .thought-action-well .gadget-cycle {
+  min-width: 0;
+}
+
+.desk-next .thought-action-well-verbs {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .desk-next .thought-reads-find {
   flex: 1 0 100%;
   display: block;
@@ -387,14 +418,16 @@
   min-height: 30px;
 }
 
-/* PHILO-3-04 (canvas ratified 2026-09-23) — the receipt slot carries two
-   receipt lines: line 1 the write, line 2 the filing state. No new
-   species, colour or font. */
+/* PHILO-3-04 — the write receipt keeps its sentence case. */
 .desk-next .thought-note-foot .surface-footer-receipt {
   flex-direction: column;
   align-items: flex-end;
   justify-content: center;
   gap: 2px;
+}
+
+.desk-next .thought-note-foot .surface-footer-receipt > .surface-footer-receipt-line {
+  text-transform: none;
 }
 
 .desk-next .thought-note-foot .surface-footer-receipt > .surface-footer-receipt-line[data-line="filing"] {
@@ -450,15 +483,57 @@
     padding: 18px 18px 12px;
   }
 
+  /* Chrome Buttons do not carry the global `.btn` touch halo. The title is
+     still a library Button, so its painted target owns the complete 44 px
+     area at the phone width. */
+  .desk-next .thought-note-title.btn--chrome {
+    min-height: var(--desk-button-hit-size);
+    min-inline-size: var(--desk-button-hit-size);
+    margin-block: 0;
+  }
+
   .desk-next .thought-note-title {
     font-size: 23px;
   }
 
+  /* Give the note mic its own grid column. The previous absolute placement
+     sat over CodeMirror's sibling content, so the left side of its target
+     lost hit points at 393 px. */
+  .desk-next .thought-note-field {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--desk-button-hit-size);
+    column-gap: 8px;
+  }
+
+  .desk-next .thought-note-field > .desk-editor {
+    grid-column: 1;
+    min-width: 0;
+  }
+
+  .desk-next .thought-note-field-mic {
+    position: static;
+    grid-column: 2;
+    align-self: end;
+    justify-self: end;
+    width: var(--desk-button-hit-size);
+    height: var(--desk-button-hit-size);
+  }
+
+  .desk-next .thought-note-field-mic .desk-mic {
+    width: var(--desk-button-hit-size);
+    height: var(--desk-button-hit-size);
+  }
+
   .desk-next .thought-note-ask,
   .desk-next .thought-note-line,
-  .desk-next .thought-reads-well {
+  .desk-next .thought-reads-well,
+  .desk-next .thought-action-well {
     padding-left: 18px;
     padding-right: 18px;
+  }
+
+  .desk-next .thought-action-well-row {
+    grid-template-columns: 1fr;
   }
 
   .desk-next .thought-note-ask-row > .btn,

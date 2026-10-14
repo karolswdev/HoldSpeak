@@ -10,24 +10,23 @@
  * (holdspeak/web/routes/monday_brief.py:110-115) read the database, the
  * People sidecar and the follow-through service — SQL and local files, no
  * model, no network (neither module imports an inference path). So the
- * honest badge names THIS DEVICE, and the honest receipt names what was
- * built.
+ * passive local badge is omitted, and a network host remains visible when
+ * one is present.
  */
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { BriefEgress, briefReceipt } from "../briefEgress";
+import { EgressChip } from "../../surface/gadgets";
 
 describe("the brief's badge (HS-202-02)", () => {
-  it("names the destination the hub actually uses", () => {
-    render(<BriefEgress />);
-    expect(screen.getByText("THIS DEVICE")).toBeVisible();
+  it("omits a passive same-device destination", () => {
+    const { container } = render(<BriefEgress />);
+    expect(container.querySelector(".gadget-chip-egress")).toBeNull();
   });
 
-  it("carries the local scope, not a bare chip", () => {
-    const { container } = render(<BriefEgress />);
-    expect(
-      container.querySelector(".gadget-chip-egress")?.getAttribute("data-scope"),
-    ).toBe("local");
+  it("keeps a LAN host visible", () => {
+    render(<EgressChip label="192.168.1.43 · LAN" scope="local" />);
+    expect(screen.getByText("192.168.1.43 · LAN")).toBeVisible();
   });
 });
 

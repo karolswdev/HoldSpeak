@@ -65,7 +65,7 @@ describe("the dock", () => {
     for (const app of ["Today", "Speak", "Meetings"]) {
       expect(screen.getByRole("button", { name: app })).toBeTruthy();
     }
-    for (const gone of ["Conductor", "Settings", "People"]) {
+    for (const gone of ["Settings"]) {
       expect(screen.queryByRole("button", { name: gone })).toBeNull();
     }
     expect(screen.queryByRole("button", { name: /Focus / })).toBeNull();

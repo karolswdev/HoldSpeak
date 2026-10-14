@@ -5,7 +5,7 @@ import { objectMenuEntries, windowObjectEntry } from "../objectMenu";
 import { seatMounted, seatUnmounted } from "../deleteSeat";
 import { OBJECT_DELETE_REQUEST } from "../verbRegistry";
 import { EMPTY_ITEMS } from "../api";
-import type { Note } from "../../lib/primitives";
+import type { Note, Project } from "../../lib/primitives";
 import { useDesk } from "../store";
 import type { WorkMenuEntry } from "../components/DeskMenu";
 
@@ -25,7 +25,7 @@ beforeEach(() => {
 });
 
 describe("objectMenuEntries (registry-derived, parallel list #4 dead)", () => {
-  it("derives Open / Get Info / Ask AI / Ask this project / Edit with honest ghosts", () => {
+  it("offers the Note's live object verbs without kind ghosts", () => {
     const entries = objectMenuEntries({ ref: "note:n1" });
     const byId = Object.fromEntries(
       entries.map((e) => [e.id, e as Extract<WorkMenuEntry, { type: "item" }>]),
@@ -33,7 +33,7 @@ describe("objectMenuEntries (registry-derived, parallel list #4 dead)", () => {
     expect(byId["object.open"].ghost).toBeNull();
     expect(byId["object.edit"].ghost).toBeNull();
     expect(byId["object.ask"].ghost).toBeNull();
-    expect(byId["object.ask-project"].ghost).toBe("Select a Project");
+    expect(byId["object.ask-project"]).toBeUndefined();
     byId["object.ask"].onSelect();
     expect(useDesk.getState().selectedIds).toEqual(["note:n1"]);
     expect(useDesk.getState().openAsk).toHaveBeenCalledOnce();
@@ -43,11 +43,32 @@ describe("objectMenuEntries (registry-derived, parallel list #4 dead)", () => {
     expect(useDesk.getState().openInfoWindow).toHaveBeenCalledWith("note:n1");
   });
 
-  it("puts Delete after a separator, its own danger group", () => {
+  it("offers the Project rows, including Draft update and Archive", () => {
+    useDesk.setState({
+      items: {
+        ...EMPTY_ITEMS,
+        project: [{ kind: "project", id: "p1", name: "Ledger migration" } as Project],
+      },
+    });
+    const entries = objectMenuEntries({ ref: "project:p1" });
+    expect(entries.filter((entry) => entry.type === "item").map((entry) => entry.id)).toEqual([
+      "object.open",
+      "object.info",
+      "object.ask-project",
+      "object.draft-update",
+      "object.rename",
+      "object.file",
+      "object.archive",
+    ]);
+    const archive = entries.find((entry) => entry.id === "object.archive");
+    expect(archive?.type === "item" && archive.ghost).toBeNull();
+  });
+
+  it("withholds Delete until the object has a mounted delete seat", () => {
     const entries = objectMenuEntries({ ref: "note:n1" });
     const sep = entries.findIndex((e) => e.type === "sep");
-    expect(sep).toBeGreaterThan(0);
-    expect(entries.slice(sep + 1).map((e) => e.id)).toEqual(["object.delete"]);
+    expect(sep).toBe(-1);
+    expect(entries.some((e) => e.id === "object.delete")).toBe(false);
   });
 });
 

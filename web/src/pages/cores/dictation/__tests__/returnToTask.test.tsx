@@ -88,12 +88,11 @@ describe("return to the task after configuring a model (HS-200-04)", () => {
   });
 
   it("the Models handoff has a hosted surface, so it opens in world", () => {
-    // Before this story `configure-runs-on` had no hosted surface, so every
-    // "Set up AI" handoff fell back to navigate("/settings") and unmounted the
-    // task that asked for it.
+    // The Engines alias is a scoped Settings surface, so the task stays in
+    // the hosted window while its setup wing opens.
     const alias = DESK_APPLICATION_ALIASES["configure-runs-on"];
     expect(alias).toBeDefined();
-    expect(alias.target).toBe("open-concierge");
+    expect(alias.target).toBe("configure-settings");
     expect(
       SURFACE_APPLICATIONS.some((app) => app.action === alias.target),
     ).toBe(true);

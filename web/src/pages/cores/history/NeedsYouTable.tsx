@@ -37,7 +37,6 @@ export function NeedsYouTable({
   plannedRoute,
   refusal,
   durableRefusal,
-  onReview,
   onRunIntelligence,
   onRetryIntelligence,
   onSkipIntelligence,
@@ -54,8 +53,6 @@ export function NeedsYouTable({
   refusal?: SummaryRefusal | null;
   /** HS-201-04 — the hub's own durable `last_refusal` receipt. */
   durableRefusal?: RunReceipt | null;
-  /** HS-200-12 — proposals are reviewed on the Review wing; this is the way there. */
-  onReview?: () => void;
   onRunIntelligence?: () => void;
   onRetryIntelligence?: () => void;
   onSkipIntelligence?: () => void;
@@ -70,11 +67,10 @@ export function NeedsYouTable({
   const showRunIntel = showsRunSummary({ intelOff, hasTranscript, plannedRoute, onRunIntelligence });
   const showRetry = wantsRetry && canRun;
   const showSkip = (isFailed || isQueued) && Boolean(onSkipIntelligence);
-  const showReview = needsRows.length > 0 && Boolean(onReview);
   // The disclosure rides beside the verb the gesture WOULD use.
   const showRoute = wantsRun || wantsRetry;
   const hasVerbs =
-    showRunIntel || showRetry || showSkip || showReview || showRoute ||
+    showRunIntel || showRetry || showSkip || showRoute ||
     Boolean(refusal) || Boolean(durableRefusal);
 
   if (needsRows.length === 0 && !hasVerbs) return null;
@@ -86,16 +82,6 @@ export function NeedsYouTable({
           {/* PHILO-13-03: this meeting's proposals, narrower than "needs you". */}
           {countLabel("TO REVIEW", needsCount)}
         </span>
-        {showReview ? (
-          <Button
-            dense
-            variant="ghost"
-            onClick={onReview}
-            data-testid="detail-review-btn"
-          >
-            Review
-          </Button>
-        ) : null}
         {showRoute ? (
           <RouteDisclosure route={plannedRoute} testId="detail-route" />
         ) : null}

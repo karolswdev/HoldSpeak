@@ -415,7 +415,7 @@ describe("Needs you: the Door read fails", () => {
   it("the Door answers 500: the head still reads Nothing needs you; the drawer draws, with no row", async () => {
     // replaces: tests/e2e/test_hs144_door_glass.py::test_hs144_door_empty_and_error_shots (the Door 500 leg)
     const errors: unknown[] = [];
-    const onError = (event: PromiseRejectionEvent | ErrorEvent) => errors.push(event);
+    const onError: EventListener = (event) => { errors.push(event); };
     window.addEventListener("unhandledrejection", onError as EventListener);
     window.addEventListener("error", onError as EventListener);
     try {

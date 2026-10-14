@@ -428,7 +428,7 @@ describe("FirstWords", () => {
     expect(await screen.findByRole("button", { name: "Retry finishing your Desk" })).toBeEnabled();
     expect(notePosts).toHaveLength(1);
     expect(notePosts[0]).toMatchObject({
-      title: "First dictation",
+      title: "A sentence that stays editable.",
       body_markdown: "A sentence that stays editable.",
       tags: ["dictation"],
     });

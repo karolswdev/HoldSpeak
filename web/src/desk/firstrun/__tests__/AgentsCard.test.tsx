@@ -61,7 +61,7 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("the Agents card", () => {
-  it("K1a: rows with the version and the three lamps, a tmux row, one Install hooks on THIS DEVICE", async () => {
+  it("K1a: rows with the version and the three lamps, a tmux row, one Install hooks", async () => {
     state = detect([agent("claude"), agent("codex")]);
     render(<Harness />);
     const card = await screen.findByTestId("firstrun-agents");
@@ -75,7 +75,7 @@ describe("the Agents card", () => {
     const tmux = within(card).getAllByTestId("firstrun-agent-row").find((r) => r.dataset.agent === "tmux")!;
     expect(tmux.textContent).toContain("TMUX 3.5A");
     expect(within(tmux).getByTestId("firstrun-tool-token").textContent).toBe("TOOL");
-    expect(within(card).getByText("THIS DEVICE")).toBeTruthy();
+    expect(within(card).queryByText("THIS DEVICE")).toBeNull();
     expect(within(card).getByRole("button", { name: "Install hooks: Claude Code and Codex" })).toBeTruthy();
     expect(within(card).queryByText("Check again")).toBeNull();
   });

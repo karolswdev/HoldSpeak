@@ -205,19 +205,18 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
                 # migration (AskService._routed_assignments_active); before it
                 # the answer is unknown and the face names no engine.
                 try:
-                    asn_db = getattr(ctx.inference_assignment_service, "_db", None)
-                    with asn_db._connection() as _conn:
-                        routed = _conn.execute(
-                            "SELECT 1 FROM inference_assignment_migrations "
-                            "WHERE family='thoughts-writing-route-assignments'"
-                        ).fetchone() is not None
+                    routed = ctx.inference_assignment_service.routed("ask.answer")
                     if routed:
                         resolved = ctx.inference_assignment_service.resolve_effective(
                             p, capability_id="ask.answer")
-                        answers_fact["engineSet"] = resolved.get("status") == "assigned"
+                        answers_fact["engineSet"] = resolved.get("status") in {
+                            "assigned", "no_compatible_assignment",
+                        }
                         entries = ((resolved.get("assignment") or {}).get("entries") or [])
                         if answers_fact["engineSet"] and entries:
-                            answers_fact["engine"] = str(entries[0].get("label") or "") or None
+                            answers_fact["engine"] = str(
+                                entries[0].get("label") or entries[0].get("profile_id") or ""
+                            ) or None
                 except Exception:
                     pass  # unknown: the face makes no engine claim
 

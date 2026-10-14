@@ -81,7 +81,7 @@ describe("the update: UNKNOWN and no answer survive the click that leaves the ro
     const row = rowOf("Folder Payments");
     expect(row.textContent).toContain("LAST SEND UNKNOWN");
     expect(row.textContent).toContain("NO ANSWER");
-    expect(row.textContent).toContain("THIS DEVICE");
+    expect(row.textContent).not.toContain("THIS DEVICE");
   });
 
   // A lost answer HOLDS its press (the Phase 10 press rule: Retry sends the same key), so its own
@@ -96,6 +96,6 @@ describe("the update: UNKNOWN and no answer survive the click that leaves the ro
     await waitFor(() => expect(screen.getByTestId("send-open").getAttribute("data-destination")).toBe("Folder Other"));
     const row = rowOf("Folder Payments");
     expect(row.textContent).toContain("NO ANSWER · RESULT UNKNOWN");
-    expect(row.textContent).toContain("THIS DEVICE");
+    expect(row.textContent).not.toContain("THIS DEVICE");
   });
 });

@@ -1639,9 +1639,7 @@
         "GET"
       ],
       "module": "web.routes.decision_records",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/decision-records/work/{work_type}/{work_ref}",
@@ -2864,6 +2862,16 @@
       "path": "/api/door",
       "methods": [
         "GET"
+      ],
+      "module": "web.routes.door",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/door/items",
+      "methods": [
+        "POST"
       ],
       "module": "web.routes.door",
       "consumers": [
@@ -7274,6 +7282,14 @@
     },
     {
       "path": "/meetings",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.pages",
+      "consumers": []
+    },
+    {
+      "path": "/models",
       "methods": [
         "GET"
       ],

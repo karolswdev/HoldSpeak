@@ -70,7 +70,7 @@ describe("the built-in HoldSpeak folder in the SEND well", () => {
     expect(row.textContent).toContain("HoldSpeak/Sent");
     expect(row.textContent).not.toContain("~/");
     expect(row.querySelector(".send-target")?.getAttribute("title")).toBe("~/Documents/HoldSpeak/Sent");
-    expect(row.textContent).toContain("THIS DEVICE");
+    expect(row.textContent).not.toContain("THIS DEVICE");
     expect(screen.queryByTestId("send-none")).toBeNull();
     const preview = await screen.findByTestId("send-preview");
     expect(preview.textContent).toContain("HoldSpeak/Sent");
@@ -107,10 +107,10 @@ describe("the built-in HoldSpeak folder in an iCloud Drive Documents folder", ()
     expect(chip.closest(".gadget-chip-egress")?.getAttribute("data-scope")).toBe("cloud");
   });
 
-  it("plain Documents: THIS DEVICE", async () => {
+  it("plain Documents: no same-device egress chip", async () => {
     render(<Well />);
     const row = await screen.findByTestId("destination-row");
-    expect(row.textContent).toContain("THIS DEVICE");
+    expect(row.textContent).not.toContain("THIS DEVICE");
     expect(row.textContent).not.toContain("ICLOUD");
   });
 

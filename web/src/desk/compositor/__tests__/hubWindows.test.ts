@@ -5,7 +5,7 @@
 // never an id with a request in flight. Rects travel as share+px. A read
 // older than what this view applied is dropped (Astra r1 M1); an adopted
 // empty desk stays empty (M2); a Project drawer follows (M4).
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../../lib/api";
 import { useChairWindows } from "../../chair/chairWindows";
 import { useDrawers } from "../../drawer/store";
@@ -25,10 +25,29 @@ import {
 } from "../hubWindows";
 
 const VIEW: Rect = { x: 10, y: 38, w: 1420, h: 772 };
+beforeAll(() => {
+  if (typeof window !== "undefined" && typeof window.matchMedia !== "function") {
+    Object.defineProperty(window, "matchMedia", {
+      configurable: true,
+      writable: true,
+      value: vi.fn((query: string) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: () => {},
+        removeListener: () => {},
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        dispatchEvent: () => false,
+      })),
+    });
+  }
+});
 const REGISTRY = {
   static: { "chair:needs": "chair", "chair:brief": "chair", "chair:week": "chair", "chair:capture": "chair", lane: "lane", conductor: "conductor",
-    "surface-project-memory": "surface", "surface-calendar-snapshot": "surface" },
+    "surface-project-memory": "surface", "surface-calendar-snapshot": "surface", "surface-concierge": "open-concierge" },
   families: { "zone:": "zone", "drawer:project:": "drawer", "pullout:": "pullout" },
+  retired: { zone: "no face", "surface-concierge": "Settings owns Engines", "open-concierge": "Settings owns Engines" },
   // (lane is static on the hub)
 };
 
@@ -210,15 +229,29 @@ describe("hubWindows", () => {
       expect(useChairWindows.getState().phone).toBe("chair:needs");
     });
 
-    it("waits behind an active meeting window: its plane stays below", async () => {
+    it("waits behind an active Meetings detail window: its plane stays below", async () => {
       phoneWidth(true);
       const { fake, hub } = start([row("pullout:meeting:m-1", { app: "pullout", depth: 2, revision: 2 })]);
       await hub.start();
-      expect(front()).toBe("pullout:meeting:m-1");
+      expect(front()).toBe("surface-meetings");
       await hubOpensNeeds(fake, hub);
       expect(useChairWindows.getState().closed["chair:needs"]).toBe(false);
-      expect(front()).toBe("pullout:meeting:m-1");
-      expect(order(["pullout:meeting:m-1", "chair:needs"])).toEqual(["chair:needs", "pullout:meeting:m-1"]);
+      expect(front()).toBe("surface-meetings");
+      expect(order(["surface-meetings", "chair:needs"])).toEqual(["chair:needs", "surface-meetings"]);
+    });
+
+    it("keeps generic pullouts out of the Meetings migration", async () => {
+      const { fake, hub } = start([
+        row("pullout:intelligence:desk", { app: "pullout", depth: 1, revision: 2 }),
+        row("pullout:people:rel-1", { app: "pullout", depth: 2, revision: 3 }),
+      ]);
+      await hub.start();
+      expect(useDesk.getState().windowsById["surface-meetings"]).toBeUndefined();
+      expect(useDesk.getState().pullouts.map((pullout) => pullout.id)).toEqual([
+        "intelligence:desk",
+        "people:rel-1",
+      ]);
+      expect(fake.calls.some((call) => call.verb === "close")).toBe(false);
     });
 
     it("waits behind an active application window", async () => {
@@ -684,5 +717,16 @@ describe("PHILO-17: retired zone windows", () => {
     for (let i = 0; i < 6; i += 1) await flush(hub);
     expect(closes(fake)).toHaveLength(3);
     expect(useDesk.getState().zoneWindows).toEqual([]);
+  });
+
+  it("closes a parked static application by its registry app name", async () => {
+    const { fake, hub } = start([
+      row("surface-concierge", { app: "open-concierge", depth: 1, revision: 2 }),
+    ]);
+    await hub.start();
+    await flush(hub);
+    expect(fake.calls.filter((call) => call.verb === "close" && call.id === "surface-concierge")).toHaveLength(1);
+    expect(fake.state.windows.map((window) => window.id)).not.toContain("surface-concierge");
+    expect(useDesk.getState().windowsById["surface-concierge"]).toBeUndefined();
   });
 });

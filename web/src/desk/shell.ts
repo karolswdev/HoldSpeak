@@ -5,7 +5,7 @@
  * legacy route until every surface lives in-world (HS-95-08 removes the
  * fallbacks and the guard keeps them out). */
 
-import { objectWindowStandIn } from "./objectWindows";
+import { meetingWindowRef, objectWindowStandIn } from "./objectWindows";
 
 export type SurfaceOpenOptions = { origin?: "dock" | "menu" | "route" };
 
@@ -134,6 +134,10 @@ export function openProjectRoom(projectId: string | null | undefined): void {
 /** Open a desk primitive's pull-out. On the desk this opens in place; on
  * a flat route it walks home first (`/?open=<ref>` is the arrival path). */
 export function openPrimitive(ref: string): void {
+  if (ref.startsWith("meeting:") && meetingWindowRef(ref)) {
+    openSurfaceOr("review-meetings", "/history", ref);
+    return;
+  }
   if (window.location.pathname === "/") {
     // PHILO-17: a meeting or a person window reads its own object; it opens
     // at once, with no desk refresh first.

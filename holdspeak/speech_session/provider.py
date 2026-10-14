@@ -351,11 +351,12 @@ class ProviderAdmission:
                 )
             raise SpeechProviderFailure(contract, reason=state)
         if self.routed_routes or self.transcription_route is not None:
-            # Bundle authority is all-or-nothing.  This includes routed
-            # synthetic-text parents, which have provider members but no
-            # transcription member.  Falling through would create a plain legacy
-            # provider child under a parent that already froze speech authority.
-            raise SpeechSessionRefused(ROUTED_PROVIDER_ROUTE_MISSING, capability)
+            # A bundle owns each selected capability independently.  A legacy
+            # plan may still carry an unassigned provider stage while another
+            # stage or transcription is routed; only a capability absent from
+            # both authorities is a named refusal.
+            if self.plan is None or not self.plan.has(capability):
+                raise SpeechSessionRefused(ROUTED_PROVIDER_ROUTE_MISSING, capability)
         outcome, result = run_admitted_speech_child(
             broker=self.broker,
             principal=self.principal,

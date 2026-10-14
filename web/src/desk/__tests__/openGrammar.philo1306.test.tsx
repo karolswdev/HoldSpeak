@@ -139,8 +139,10 @@ describe("PHILO-13-06: the Chair rows open their objects", () => {
 
     const meeting = rows.find((r) => r.textContent?.includes("Ledger cutover sync"))!;
     fireEvent.click(meeting);
-    // PHILO-17: a meeting opens in its own window.
-    expect(openPrimitive).toHaveBeenCalledWith("meeting:p13-cutover-sync");
+    // PHILO-17: the meeting record is inside the Meetings surface.
+    expect(openSurfaceOr).toHaveBeenCalledWith(
+      "review-meetings", "/history", "meeting:p13-cutover-sync",
+    );
 
     const coverage = rows.find((r) => r.textContent?.includes("Coverage line"))!;
     expect(coverage.getAttribute("role")).toBeNull();

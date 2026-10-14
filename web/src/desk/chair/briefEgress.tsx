@@ -9,20 +9,15 @@
  * (holdspeak/web/routes/monday_brief.py:110-115) calls
  * `MondayBriefService.generate` and `_compose_overlay`, which read the
  * database, the People sidecar and the follow-through service. Neither
- * module imports an inference path; nothing is sent anywhere. The badge
- * names THIS DEVICE because that is true, not because it is the default.
+ * module imports an inference path; nothing is sent anywhere. A passive local
+ * route has no host to disclose, so the badge is omitted.
  */
-import { EgressChip } from "../surface";
 import { parseLocal } from "../pullouts/views/BriefView";
 
 export function BriefEgress() {
-  return (
-    <EgressChip
-      label="THIS DEVICE"
-      scope="local"
-      title="The brief is built from this desk's own records."
-    />
-  );
+  // PHILO-17: the brief reads this desk's own records. There is no egress
+  // host to disclose, so the passive local badge stays off the face.
+  return null;
 }
 
 export type GeneratedBrief = {

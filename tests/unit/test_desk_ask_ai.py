@@ -20,6 +20,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from holdspeak.principals import Principal, PrincipalKind
+from holdspeak.services.errors import ServiceError
 
 OWNER = Principal(PrincipalKind.OWNER, "ask-ai-owner")
 
@@ -97,6 +98,35 @@ def _assign(db: Any, capability: str, profile_ids: list[str], command: str) -> N
         "command_id": command,
         "expected_revision": int(row["revision"]) if row is not None else 0,
         "scope": {"kind": "capability", "capability_id": capability},
+        "entries": [{"profile_id": p, "profile_revision": 1} for p in profile_ids],
+    })
+
+
+def _assign_subject(
+    db: Any,
+    capability: str,
+    subject_kind: str,
+    subject_id: str,
+    profile_ids: list[str],
+    command: str,
+) -> None:
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+
+    key = f"subject:{subject_kind}:{subject_id}:capability:{capability}"
+    with db._connection() as conn:
+        row = conn.execute(
+            "SELECT revision FROM inference_assignment_heads WHERE assignment_key=?",
+            (key,),
+        ).fetchone()
+    InferenceAssignmentService(db).set_assignment(OWNER, {
+        "command_id": command,
+        "expected_revision": int(row["revision"]) if row is not None else 0,
+        "scope": {
+            "kind": "subject",
+            "subject_kind": subject_kind,
+            "subject_id": subject_id,
+            "capability_id": capability,
+        },
         "entries": [{"profile_id": p, "profile_revision": 1} for p in profile_ids],
     })
 
@@ -398,6 +428,101 @@ def test_a_lan_ask_carries_the_lan_route_the_footer_prints(hub) -> None:
     [execution] = _executions(hub.db)
     assert result["route"] == {"lamp": "private_network", "host": "192.168.1.43", "model": "qwen3.8-27b",
                                "receipt": execution, "fallback": False}
+
+
+def test_subject_assignment_wins_without_family_marker(hub) -> None:
+    """A project route is authority even while the family marker is absent."""
+    from holdspeak.services.ask_service import AskService
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+
+    _seed_routes(hub.db)
+    _assign(hub.db, "ask.answer", ["glass-cloud"], "ask-subject-global")
+    _assign_subject(hub.db, "ask.answer", "project", "project-17", ["glass-lan"], "ask-subject-project")
+    hub.broker.inference_runner._engine_factory = lambda rev, **_kw: _TextEngine(
+        str(rev.model), "The project route answered this ask."
+    )
+
+    result = asyncio.run(AskService(hub.db, broker=hub.broker).ask(
+        OWNER,
+        "Which route should answer?",
+        subject_kind="project",
+        subject_id="project-17",
+    ))
+
+    [execution] = _executions(hub.db)
+    assert result["route"] == {
+        "lamp": "private_network",
+        "host": "192.168.1.43",
+        "model": "qwen3.8-27b",
+        "receipt": execution,
+        "fallback": False,
+    }
+    assert InferenceAssignmentService(hub.db).migration_marker(
+        OWNER, family="thoughts-writing-route-assignments"
+    ) is None
+
+
+def test_incompatible_chosen_assignment_is_named_and_never_uses_legacy_download(hub) -> None:
+    """An incompatible owner choice stays a repair refusal, without fallback."""
+    from holdspeak.services.ask_service import AskService
+    from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
+
+    _seed_routes(hub.db)
+    _profile(
+        hub.db,
+        "glass-too-small",
+        model="too-small",
+        ready=False,
+        claims=("language", _result_claim("ask.answer")),
+    )
+    _assign(hub.db, "ask.answer", ["glass-too-small"], "ask-incompatible")
+    hub.broker.inference_runner._engine_factory = lambda *_args, **_kw: pytest.fail(
+        "a rejected assignment must not fall through to a legacy local engine"
+    )
+
+    with pytest.raises(ServiceError) as refused:
+        asyncio.run(AskService(hub.db, broker=hub.broker).ask(OWNER, "This must refuse"))
+
+    assert refused.value.code == "inference_route_failed"
+    assert refused.value.context.get("reason") == "no_engine"
+    # Admission records the refused route receipt, but never reaches the
+    # runner (the engine factory above would fail if a legacy fallback ran).
+    assert len(_executions(hub.db)) == 1
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    assert InferenceAssignmentService(hub.db).migration_marker(
+        OWNER, family="thoughts-writing-route-assignments"
+    ) is None
+
+
+def test_family_cutover_keeps_effective_assignment_chains_and_other_choices(hub) -> None:
+    """The marker records a cutover while existing choices and chains remain."""
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+
+    _seed_routes(hub.db)
+    routes = {
+        "thought.interview": ["glass-lan", "glass-cloud"],
+        "ask.answer": ["glass-cloud", "glass-local"],
+        "speech.intent_classify": ["glass-local", "glass-lan"],
+        "speech.rewrite": ["glass-lan", "glass-local"],
+    }
+    for ordinal, (capability, profiles) in enumerate(routes.items(), 1):
+        _assign(hub.db, capability, profiles, f"cutover-{ordinal}")
+
+    result = hub.broker.inference_adoption_service.migrate_legacy_config(
+        OWNER,
+        SimpleNamespace(
+            thoughts=SimpleNamespace(inference_target_id="this_machine"),
+            dictation=SimpleNamespace(runtime=SimpleNamespace(profile_id="this_machine")),
+        ),
+    )
+
+    assert result["status"] == "migrated"
+    assert result["legacy_config_read"] is False
+    for capability, profiles in routes.items():
+        resolved = InferenceAssignmentService(hub.db).resolve_effective(
+            OWNER, capability_id=capability,
+        )
+        assert [entry["profile_id"] for entry in resolved["assignment"]["entries"]] == profiles
 
 
 def test_a_chat_with_lan_local_cloud_turns_keeps_each_turns_route(hub) -> None:

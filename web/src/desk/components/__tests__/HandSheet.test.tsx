@@ -459,7 +459,7 @@ describe("R4 (Astra #912): the issue body read is egress, named at the fetch", (
     previewAnswer = () => ({ status: 200, body: null });
     const pending = new Promise<Answer>((resolve) => { release = resolve; });
     const fetchMock = globalThis.fetch as unknown as ReturnType<typeof vi.fn>;
-    const base = fetchMock.getMockImplementation()!;
+    const base = fetchMock.getMockImplementation()! as typeof fetch;
     fetchMock.mockImplementation((url: string, init?: RequestInit) => {
       if (!String(url).endsWith("/api/agent/hand/preview")) return base(url, init);
       return pending.then((answer) => ({

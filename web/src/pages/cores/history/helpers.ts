@@ -10,13 +10,10 @@ import type { ReactNode } from "react";
 
 export const WINGS = [
   { id: "outcomes", label: "Outcomes" },
-  { id: "review", label: "Review" },
-  { id: "record", label: "Record" },
   { id: "artifacts", label: "Artifacts" },
 ];
-/** HS-200-12 — the detail pane's faces: the outcomes face, the review
- *  wing (posture 4), the artifacts wing. */
-export type DetailView = "outcomes" | "artifacts" | "review";
+/** The meeting record's faces: Outcomes owns review; Artifacts holds files. */
+export type DetailView = "outcomes" | "artifacts";
 // Door sections (ids are part of the phase-91 archive lock).
 export const DOOR_SECTIONS = ["actions", "speakers", "projects", "queues"] as const;
 // Receipt sections inside a meeting ("transcript", "aftercare",

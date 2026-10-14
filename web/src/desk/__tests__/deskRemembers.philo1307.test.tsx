@@ -48,16 +48,16 @@ afterEach(() => {
 });
 
 describe("B2: every open window returns after a reload", () => {
-  it("pullouts return in open order; a closed one stays gone", async () => {
+  it("object pullouts return in open order; Meetings use the hosted surface", async () => {
     const { useDesk } = await import("../store");
     useDesk.getState().openPullout("decision:d1");
     useDesk.getState().openPullout("note:n1");
     useDesk.getState().openPullout("meeting:m1");
     useDesk.getState().closePullout("note:n1");
-    expect(stored().windows.pullouts).toEqual(["decision:d1", "meeting:m1"]);
+    expect(stored().windows.pullouts).toEqual(["decision:d1"]);
 
     const fresh = await reload();
-    expect(fresh.useDesk.getState().pullouts.map((p) => p.id)).toEqual(["decision:d1", "meeting:m1"]);
+    expect(fresh.useDesk.getState().pullouts.map((p) => p.id)).toEqual(["decision:d1"]);
   });
 
   it("Info, Roadmap, Repository and Workbench windows return; a closed one stays gone", async () => {

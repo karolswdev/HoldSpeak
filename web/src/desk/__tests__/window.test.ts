@@ -139,30 +139,30 @@ describe("desk windows", () => {
 
   it("object cards coexist; reopening focuses; close targets one card", () => {
     useDesk.getState().openPullout("note:n1", { x: 100, y: 200 });
-    useDesk.getState().openPullout("meeting:m1", { x: 500, y: 300 });
+    useDesk.getState().openPullout("decision:d1", { x: 500, y: 300 });
     expect(useDesk.getState().pullouts.map((p) => p.id)).toEqual([
       "note:n1",
-      "meeting:m1",
+      "decision:d1",
     ]);
     expect(useDesk.getState().panelOrder).toEqual([
       "pullout:note:n1",
-      "pullout:meeting:m1",
+      "pullout:decision:d1",
     ]);
 
     // Reopening an open object focuses its card — never a duplicate.
     useDesk.getState().openPullout("note:n1");
     expect(useDesk.getState().pullouts).toHaveLength(2);
     expect(useDesk.getState().panelOrder).toEqual([
-      "pullout:meeting:m1",
+      "pullout:decision:d1",
       "pullout:note:n1",
     ]);
 
     // An id-less close takes the FRONT card (note:n1 after the refocus).
     useDesk.getState().closePullout();
     expect(useDesk.getState().pullouts.map((p) => p.id)).toEqual([
-      "meeting:m1",
+      "decision:d1",
     ]);
-    useDesk.getState().closePullout("meeting:m1");
+    useDesk.getState().closePullout("decision:d1");
     expect(useDesk.getState().pullouts).toEqual([]);
   });
 

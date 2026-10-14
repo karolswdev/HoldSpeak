@@ -183,7 +183,7 @@ class AskService:
         return {"refs": refs, "titles": titles, "chars": sum(len(block) for block in blocks),
                 "blocks": [{"ref": ref, "title": title, "chars": len(block)} for ref, title, block in zip(refs, titles, blocks)]}
 
-    async def ask(self, principal: Principal, question: str, grounding: Any = None, *, lens: str = "Ask", context: list[dict[str, Any]] | None = None, model: str | None = None, inference_target_id: str | None = None, profile_id: str | None = None, max_tokens: Any = None, temperature: Any = None, invocation_id: str | None = None, before_physical_dispatch: Any = None, before_compatibility_retry: Any = None, frozen_grounding: FrozenGroundingSnapshot | None = None, frozen_admission_claim: dict[str, Any] | None = None, operation_capability: str = "ask.answer", routed_execution_id: str | None = None, memory_exclude_refs: Sequence[str] = ()) -> dict[str, Any]:
+    async def ask(self, principal: Principal, question: str, grounding: Any = None, *, lens: str = "Ask", context: list[dict[str, Any]] | None = None, model: str | None = None, inference_target_id: str | None = None, profile_id: str | None = None, max_tokens: Any = None, temperature: Any = None, invocation_id: str | None = None, before_physical_dispatch: Any = None, before_compatibility_retry: Any = None, frozen_grounding: FrozenGroundingSnapshot | None = None, frozen_admission_claim: dict[str, Any] | None = None, operation_capability: str = "ask.answer", routed_execution_id: str | None = None, memory_exclude_refs: Sequence[str] = (), subject_kind: str | None = None, subject_id: str | None = None) -> dict[str, Any]:
         prompt = str(question or "").strip()
         if not prompt: raise ValidationError("prompt is required")
         lens = str(lens or "Ask").strip() or "Ask"
@@ -240,7 +240,12 @@ class AskService:
         capability_id = str(operation_capability or "")
         if capability_id not in {"ask.answer", "thought.interview"}:
             raise ValidationError("Ask operation capability is invalid", code="ask_capability_invalid")
-        if self._routed_assignments_active():
+        if self._routed_assignments_active(
+            capability_id=capability_id,
+            invocation_id=invocation_id,
+            subject_kind=subject_kind,
+            subject_id=subject_id,
+        ):
             if model is not None or inference_target_id is not None or profile_id is not None:
                 raise ValidationError(
                     "Legacy model selectors are unavailable after assignment migration.",
@@ -276,6 +281,8 @@ class AskService:
                     capability_id=capability_id, operation_id=invocation_id,
                     reserved_output_tokens=int(max_tokens) if max_tokens is not None else 512,
                     build=_payload,
+                    subject_kind=subject_kind,
+                    subject_id=subject_id,
                 )
             payload = _payload(reflect)
             self._emit("running", kind="ask", ref="ask", name=lens)
@@ -302,50 +309,63 @@ class AskService:
                     )
                 admitted = {"execution": execution, "operation_request_plan": operation, "route_plan": route}
             else:
-                admitted = await asyncio.to_thread(
-                    self._broker.inference_adoption_service.admit,
+                try:
+                    admitted = await asyncio.to_thread(
+                        self._broker.inference_adoption_service.admit,
+                        principal,
+                        command_id=f"admit-{invocation_id}",
+                        capability_id=capability_id,
+                        operation_id=invocation_id,
+                        payload=payload,
+                        invocation_id=invocation_id,
+                        subject_kind=subject_kind,
+                        subject_id=subject_id,
+                        reserved_output_tokens=int(max_tokens) if max_tokens is not None else 512,
+                    )
+                except ServiceError as exc:
+                    raise self._with_route_reason(exc) from exc
+            try:
+                routed = await asyncio.to_thread(
+                    self._broker.inference_adoption_service.execute,
                     principal,
-                    command_id=f"admit-{invocation_id}",
-                    capability_id=capability_id,
-                    operation_id=invocation_id,
-                    payload=payload,
-                    invocation_id=invocation_id,
-                    reserved_output_tokens=int(max_tokens) if max_tokens is not None else 512,
+                    execution_id=admitted["execution"]["id"],
+                    adapter=adapter,
+                    publish=lambda output, reservation: self._broker.projection_stager.stage(
+                        str(reservation["child_invocation_id"]),
+                        "ask-result",
+                        self._routed_projection(
+                            dict(output), payload, None, admitted["route_plan"],
+                            route_leg_ordinal=int(reservation["route_leg_ordinal"]),
+                        ),
+                        result_sha256=(
+                            result_sha256 := "sha256:" + hashlib.sha256(
+                                json.dumps(
+                                    output,
+                                    sort_keys=True,
+                                    separators=(",", ":"),
+                                    ensure_ascii=True,
+                                    allow_nan=False,
+                                ).encode()
+                            ).hexdigest()
+                        ),
+                        receipt_result_ref=(
+                            f"inference-result:{reservation['child_invocation_id']}/{result_sha256}"
+                        ),
+                    ).result_ref,
+                    before_physical_dispatch=before_physical_dispatch,
                 )
-            routed = await asyncio.to_thread(
-                self._broker.inference_adoption_service.execute,
-                principal,
-                execution_id=admitted["execution"]["id"],
-                adapter=adapter,
-                publish=lambda output, reservation: self._broker.projection_stager.stage(
-                    str(reservation["child_invocation_id"]),
-                    "ask-result",
-                    self._routed_projection(
-                        dict(output), payload, None, admitted["route_plan"],
-                        route_leg_ordinal=int(reservation["route_leg_ordinal"]),
-                    ),
-                    result_sha256=(
-                        result_sha256 := "sha256:" + hashlib.sha256(
-                            json.dumps(
-                                output,
-                                sort_keys=True,
-                                separators=(",", ":"),
-                                ensure_ascii=True,
-                                allow_nan=False,
-                            ).encode()
-                        ).hexdigest()
-                    ),
-                    receipt_result_ref=(
-                        f"inference-result:{reservation['child_invocation_id']}/{result_sha256}"
-                    ),
-                ).result_ref,
-                before_physical_dispatch=before_physical_dispatch,
-            )
+            except ServiceError as exc:
+                raise self._with_route_reason(exc) from exc
             if routed["outcome"] != "succeeded" or not isinstance(routed["result"], dict):
                 # A failed Ask keeps where its bytes went (Astra, #875).
                 raise ServiceError(
                     "inference_route_failed", "No assigned model completed this request",
-                    context={"receipt": routed["receipt"], "route": self._receipt_route(routed["receipt"]), "status": 409},
+                    context={
+                        "receipt": routed["receipt"],
+                        "route": self._receipt_route(routed["receipt"]),
+                        "reason": self._route_reason(routed["receipt"]),
+                        "status": 409,
+                    },
                 )
             winner = str(routed["winning_reservation"]["child_invocation_id"])
             result = self._broker.projection_stager.finalize(winner)
@@ -389,7 +409,15 @@ class AskService:
             offer = advertised or "no model"
             raise ValidationError(f"model {override!r} is not available on destination '{target.name}' (id {requested!r}); it runs {offer!r}. Address the destination that advertises {override!r} by its inference_target_id — Ask does not retarget by model name.", code="model_not_advertised", context={"inference_target_id": requested, "target_name": target.name, "requested_model": override, "available_models": [advertised] if advertised else [], "status": 400})
         if not target.ready:
-            raise ServiceError("target_unavailable", target.readiness_reason, context={**target_refusal(target), "status": 409})
+            raise ServiceError(
+                "target_unavailable",
+                target.readiness_reason,
+                context={
+                    **target_refusal(target),
+                    "reason": "no_engine",
+                    "status": 409,
+                },
+            )
         if prof is not None and prof.kind == "meshNode":
             from ..intel.mesh_relay import DEFAULT_LIVENESS_WINDOW_SECONDS
             node = str(getattr(prof, "node", "") or ""); last = self._db.mesh_relay.worker_last_seen(node) if node else None
@@ -412,10 +440,25 @@ class AskService:
             )
         except KernelRefused as exc:
             self._emit("error", kind="ask", ref="ask", name=lens, error=exc.reason)
-            raise self._outcome_error(None, exc)
+            failure = self._outcome_error(None, exc)
+            failure.context["reason"] = self._route_reason(
+                {"terminal_disposition": exc.reason}
+            )
+            raise failure
         if outcome.outcome != "succeeded":
             self._emit("error", kind="ask", ref="ask", name=lens, error=outcome.outcome)
-            raise self._outcome_error(outcome, None, target=target)
+            failure = self._outcome_error(outcome, None, target=target)
+            failure.context["reason"] = self._route_reason(
+                {
+                    "attempts": [
+                        {
+                            "runner_signal": getattr(outcome, "runner_signal", ""),
+                            "send_phase": getattr(outcome, "send_phase", ""),
+                        }
+                    ]
+                }
+            )
+            raise failure
         result = self._broker.projection_stager.finalize(invocation_id)
         if result is None:
             raise ServiceError("projection_not_published", "Ask result is awaiting receipt reconciliation", context={"invocation_id": invocation_id, "operation_id": outcome.operation_id, "receipt": dict(outcome.receipt), "result_ref": outcome.result_ref, "status": 409})
@@ -428,11 +471,84 @@ class AskService:
         with self._db._connection() as conn:
             return served_route(conn, receipt)
 
-    def _routed_assignments_active(self) -> bool:
-        with self._db._connection() as conn:
-            return conn.execute(
-                "SELECT 1 FROM inference_assignment_migrations WHERE family='thoughts-writing-route-assignments'"
-            ).fetchone() is not None
+    def _routed_assignments_active(
+        self,
+        *,
+        capability_id: str = "ask.answer",
+        invocation_id: str | None = None,
+        subject_kind: str | None = None,
+        subject_id: str | None = None,
+    ) -> bool:
+        from .inference_assignment_service import InferenceAssignmentService
+
+        return InferenceAssignmentService(self._db).routed(
+            capability_id,
+            invocation_id=invocation_id,
+            subject_kind=subject_kind,
+            subject_id=subject_id,
+        )
+
+    @staticmethod
+    def _route_reason(receipt: Any) -> str:
+        """Map the closed runner disposition to the one face reason token."""
+        reasons = {
+            "local_capacity_unavailable": "engine_busy",
+            "inference_local_runtime_busy": "engine_busy",
+            "preflight_unavailable": "no_engine",
+            "tool_unavailable_or_stale": "no_engine",
+            "known_no_generation_transient": "did_not_answer",
+            "compatibility_no_generation": "did_not_answer",
+            "provider_permanent_no_generation": "refused",
+            "provider_permanent": "refused",
+            "permission_denied": "refused",
+            "policy_refused": "refused",
+            "kernel_refused": "refused",
+            "invalid_typed_output": "not_usable",
+            "invalid_tool_call": "not_usable",
+            "context_overflow": "too_long",
+            "deadline_exhausted": "timed_out",
+            "timed_out": "timed_out",
+            "owner_cancelled": "stopped",
+            "cancelled": "stopped",
+        }
+        if isinstance(receipt, dict):
+            attempts = receipt.get("attempts")
+            if isinstance(attempts, list):
+                for attempt in reversed(attempts):
+                    if not isinstance(attempt, dict):
+                        continue
+                    signal = str(
+                        attempt.get("runner_signal")
+                        or attempt.get("failure_class")
+                        or attempt.get("disposition")
+                        or ""
+                    )
+                    if signal in reasons:
+                        return reasons[signal]
+            for key in ("terminal_disposition", "disposition", "reason_code", "outcome"):
+                value = str(receipt.get(key) or "")
+                if value in reasons:
+                    return reasons[value]
+        return "did_not_answer"
+
+    @classmethod
+    def _with_route_reason(cls, exc: ServiceError) -> ServiceError:
+        if "reason" not in exc.context:
+            exc.context["reason"] = {
+                "no_assignment": "no_engine",
+                "no_compatible_assignment": "no_engine",
+                "inference_route_profile_unavailable": "no_engine",
+                "inference_route_binding_unavailable": "no_engine",
+                "inference_route_deployment_unavailable": "no_engine",
+                "inference_route_deployment_missing": "no_engine",
+                "inference_route_leg_unavailable": "no_engine",
+                "inference_route_boundary_unsupported": "no_engine",
+                "tool_required_unavailable": "no_engine",
+                "context_overflow": "too_long",
+                "deadline_exhausted": "timed_out",
+                "owner_cancelled": "stopped",
+            }.get(exc.code, "did_not_answer")
+        return exc
 
     def _routed_projection(
         self, output: dict[str, Any], payload: dict[str, Any], receipt: dict[str, Any] | None,

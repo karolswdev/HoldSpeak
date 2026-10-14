@@ -14,6 +14,7 @@ import {
 } from "react";
 import {
   DESK_APPLICATION_ALIASES,
+  composeApplicationScope,
   SURFACE_APPLICATIONS,
 } from "../applications";
 import {
@@ -44,10 +45,13 @@ export interface SurfaceRow {
   defaultH?: number;
   /** Open maximized (full stage) — the canvas-sized surfaces want it. */
   maximized?: boolean;
+  parked?: string;
   Core: LazyExoticComponent<ComponentType<CoreProps & { scope?: string }>>;
 }
 
-const SURFACES: SurfaceRow[] = SURFACE_APPLICATIONS.map((application) => ({
+const SURFACES: SurfaceRow[] = SURFACE_APPLICATIONS
+  .filter((application) => !application.parked)
+  .map((application) => ({
   key: application.action,
   id: application.windowId,
   title: application.label,
@@ -57,8 +61,9 @@ const SURFACES: SurfaceRow[] = SURFACE_APPLICATIONS.map((application) => ({
   defaultW: application.surface.defaultW,
   defaultH: application.surface.defaultH,
   maximized: application.surface.maximized,
+  parked: application.parked,
   Core: lazy(application.surface.load),
-}));
+  }));
 
 /** Alias keys open an existing window with a default scope (e.g. the
  * shelf's Integrations entry is the Settings window scoped to
@@ -74,7 +79,7 @@ const SURFACES: SurfaceRow[] = SURFACE_APPLICATIONS.map((application) => ({
    here, so neither falls back to a route recovery never consumes (the
    /models fallback reloaded the page and lost the card). Runs on's hosted
    surface is `open-concierge`; `configure-runs-on` is its alias. */
-const FIRST_VALUE_RECOVERY_KEYS = new Set(["project-setup", "configure-setup", "open-concierge"]);
+const FIRST_VALUE_RECOVERY_KEYS = new Set(["project-setup", "configure-setup", "configure-settings"]);
 const FIRST_VALUE_RECOVERY_SURFACES = SURFACES.filter((row) =>
   FIRST_VALUE_RECOVERY_KEYS.has(row.key),
 );
@@ -130,7 +135,8 @@ export function SurfaceWindows({
     const aliasOffs = Object.entries(DESK_APPLICATION_ALIASES)
       .map(([key, alias]) => [key, alias, rows.find((row) => row.key === alias.target)] as const)
       .filter(([, , row]) => Boolean(row))
-      .map(([key, alias, row]) => registerSurface(key, (scope) => reveal(row!, scope ?? alias.scope)));
+      .map(([key, alias, row]) => registerSurface(key, (scope) =>
+        reveal(row!, composeApplicationScope(alias.scope, scope))));
     // This runs only after every normal row and applicable alias is present in
     // the dispatcher. Consume a demoted-route intent only here, then publish
     // the fact the /meetings proof awaits; first-value recovery has no normal
@@ -221,6 +227,11 @@ export function SurfaceWindowHost({
       open
       unmountOnMinimize
       onClose={() => useDesk.getState().closeSurfaceWindow(row.key)}
+      onBack={
+        scope
+          ? () => useDesk.getState().openSurfaceWindow(row.key, undefined)
+          : undefined
+      }
       className={
         row.key === "configure-settings"
           ? "desk-surface-window desk-settings-window"

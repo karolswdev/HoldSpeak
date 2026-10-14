@@ -223,17 +223,17 @@ describe("PHILO-13-11 slice two — the Chair as windows", () => {
     await waitFor(() => expect(region("Capture")).toBeTruthy());
     expect(region("Needs you")).toBeNull();
     // closing Capture gives the work area back to the next Chair window
-    fireEvent.click(within(region("Capture")!).getByRole("button", { name: "Close Capture" }));
+    fireEvent.click(within(region("Capture")!).getByRole("button", { name: "Back from Capture" }));
     await waitFor(() => expect(region("Needs you")).toBeTruthy());
     // Window ▸ Chair at 393 has no Capture row (Speak opens it)
     expect(verbById("chair.window.capture")!.wide).toBe(true);
     // with every Chair window closed, the screen of objects (PHILO-14 A1;
     // board A-1-393), not a reopen list
-    fireEvent.click(within(region("Needs you")!).getByRole("button", { name: "Close Needs you" }));
+    fireEvent.click(within(region("Needs you")!).getByRole("button", { name: "Back from Needs you" }));
     await waitFor(() => expect(region("Brief")).toBeTruthy());
-    fireEvent.click(within(region("Brief")!).getByRole("button", { name: "Close Brief" }));
+    fireEvent.click(within(region("Brief")!).getByRole("button", { name: "Back from Brief" }));
     await waitFor(() => expect(region("The week")).toBeTruthy());
-    fireEvent.click(within(region("The week")!).getByRole("button", { name: "Close The week" }));
+    fireEvent.click(within(region("The week")!).getByRole("button", { name: "Back from The week" }));
     await waitFor(() => expect(screen.getByTestId("chair-desk").getAttribute("data-phone-shown")).toBeNull());
     expect(screen.queryByTestId("chair-reopen-list")).toBeNull();
     expect(screen.getByTestId("desk-screen").getAttribute("data-layout")).toBe("grid");

@@ -36,7 +36,7 @@ vi.mock("../../pageSupport", () => ({
   }),
 }));
 vi.mock("../core-hooks", () => ({
-  useCoreWings: () => ({ view: "settings" }),
+  useCoreWings: () => ({ view: "settings", setView: vi.fn() }),
 }));
 vi.mock("../ContextualAssignment", () => ({
   ContextualAssignment: () => null,

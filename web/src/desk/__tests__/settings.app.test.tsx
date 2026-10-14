@@ -163,7 +163,7 @@ describe("the Settings hub on a cold hub", () => {
 });
 
 describe("every declared settings module has a door", () => {
-  it("Runs on and Connections lead on their plates; every other module is a ledger row; Choose engines opens Runs on", async () => {
+  it("Engines and Accounts lead on their plates; every other module is a ledger row; Choose engines opens Engines", async () => {
     // replaces: web/src/pages/cores/__tests__/assignmentsDoor202.test.tsx (a source scan, parked)
     const { container } = await openHub();
     const plated = new Set(["models", "integrations"]);
@@ -171,7 +171,7 @@ describe("every declared settings module has a door", () => {
       expect(ledgerRow(module.label), module.id).toBeTruthy();
     expect(screen.getByTestId("settings-hub-accounts")).toBeTruthy();
     fireEvent.click(screen.getByTestId("settings-hub-choose"));
-    await waitFor(() => expect(container.querySelector(".prefs-module .gadget-pane-title")?.textContent).toBe("Runs on"));
+    await waitFor(() => expect(container.querySelector(".prefs-module .gadget-pane-title")?.textContent).toBe("Engines"));
   });
 });
 

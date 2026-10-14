@@ -31,6 +31,14 @@ function Harness() {
   return <input aria-label="Title" value={writer.draft.title} onChange={(event) => writer.edit({ title: event.target.value })} />;
 }
 
+function FlushHarness({ onCursor }: { onCursor: (value: ThoughtWorkspaceCursor | undefined) => void }) {
+  const writer = useThoughtNoteWriter({ thought, workspaceCursor: cursor, onThought: vi.fn(), onProjection: vi.fn() });
+  return <>
+    <input aria-label="Flush title" value={writer.draft.title} onChange={(event) => writer.edit({ title: event.target.value })} />
+    <button type="button" onClick={() => void writer.flush({ fence: true }).then(() => onCursor(writer.getWorkspaceCursor()))}>Finish</button>
+  </>;
+}
+
 function deferred<T>() {
   let resolve!: (value: T) => void;
   const promise = new Promise<T>((done) => { resolve = done; });
@@ -40,6 +48,20 @@ function deferred<T>() {
 afterEach(() => { vi.useRealTimers(); vi.clearAllMocks(); });
 
 describe("useThoughtNoteWriter workspace cursor", () => {
+  it("exposes the cursor installed by a flushed write to the next command", async () => {
+    const saved = { ...thought, aggregate_revision: 2, working_revision: 2, working_note: { ...thought.working_note, title: "After flush" } };
+    const cursorAfterFlush = { ...cursor, aggregate_revision: 2, continuity_revision: 5 };
+    vi.mocked(saveThoughtWorkingInWorkspace).mockResolvedValue({ thought: saved, workbench: workbench(saved, cursorAfterFlush) });
+    const onCursor = vi.fn();
+    render(<FlushHarness onCursor={onCursor} />);
+
+    fireEvent.change(screen.getByLabelText("Flush title"), { target: { value: "After flush" } });
+    fireEvent.click(screen.getByRole("button", { name: "Finish" }));
+
+    await act(async () => { await Promise.resolve(); });
+    expect(onCursor).toHaveBeenCalledWith(cursorAfterFlush);
+  });
+
   it("installs A's returned cursor synchronously before queued B drains", async () => {
     vi.useFakeTimers();
     const first = deferred<{ thought: Thought; workbench: ThoughtWorkspaceProjection }>();

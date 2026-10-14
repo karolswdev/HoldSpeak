@@ -36,6 +36,8 @@ export interface DemotedRoute {
   subjectKind?: "meeting" | "integration" | "workflow";
   /** Legacy bare query param carrying the same subject id. */
   legacyParam?: string;
+  /** Fixed wing for routes whose old page had no object subject. */
+  scope?: string;
 }
 
 export const DEMOTED_ROUTES: DemotedRoute[] = [
@@ -66,7 +68,8 @@ export const DEMOTED_ROUTES: DemotedRoute[] = [
     path: "/workbenches",
     surface: "open-workbenches",
   },
-  { path: "/profiles", surface: "configure-runs-on" },
+  { path: "/profiles", surface: "configure-settings", scope: "models" },
+  { path: "/models", surface: "configure-settings", scope: "models" },
   // HS-100-10 — Studio died; its address lands on Settings (the tools
   // it launched are search-reachable).
   { path: "/studio", surface: "configure-settings" },

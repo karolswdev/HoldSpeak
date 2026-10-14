@@ -457,8 +457,7 @@ class TestPublishImmutability:
 
 
 class TestModelFallback:
-    """When broker is None, model draft falls back to deterministic
-    with an honest fallback_reason on the envelope."""
+    """Manual model failure names the repair; plain retry is explicit."""
 
     def test_model_fallback_reason_surfaces(self, rig) -> None:
         db, client = rig
@@ -468,12 +467,19 @@ class TestModelFallback:
             f"/api/projects/{pid}/updates/draft",
             json={"generator": "model"},
         )
-        assert resp.status_code == 200, resp.text
+        assert resp.status_code == 409, resp.text
         body = resp.json()
-        assert body["success"] is True
-        update = body["update"]
+        assert body["success"] is False
+        assert body["code"] == "project_update_model_failed"
+        assert body["reason"] == "no_engine"
+        retry = client.post(
+            f"/api/projects/{pid}/updates/draft",
+            json={"generator": "deterministic"},
+        )
+        assert retry.status_code == 200, retry.text
+        update = retry.json()["update"]
         assert update["generator"] == "deterministic"
-        assert update.get("fallback_reason") == "model_unavailable"
+        assert not update.get("fallback_reason")
 
 
 # ── command_id replay ────────────────────────────────────────────────

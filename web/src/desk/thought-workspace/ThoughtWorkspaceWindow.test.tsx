@@ -34,13 +34,14 @@ vi.mock("./ThoughtDocumentPane", () => ({
   ThoughtDocumentPane: ({ draft, onEdit, lockedReason }: { draft: { title: string; body: string }; onEdit: (patch: { body: string }) => void; lockedReason?: string }) => <section aria-label="Note"><span data-testid="note-title">{draft.title}</span>{lockedReason ? <span data-testid="note-locked">{lockedReason}</span> : null}<textarea aria-label="Note body" value={draft.body} onChange={(event) => onEdit({ body: event.target.value })} /></section>,
 }));
 vi.mock("./ThoughtReadsWell", () => ({
-  ThoughtReadsWell: ({ thought }: { thought: Thought }) => <div role="region" aria-label="What the AI reads">{thought.working_note.body_markdown}</div>,
+  ThoughtReadsWell: ({ thought }: { thought: Thought }) => <div role="region" aria-label="Add notes">{thought.working_note.body_markdown}</div>,
 }));
 vi.mock("../documentSendsLazy", () => ({
   NoteSendWells: ({ id, title, version }: { id: string; title?: string; version?: number }) => <div data-testid="send-well" data-doc={`note:${id}`} data-title={title} data-version={String(version)} />,
 }));
 vi.mock("../sprites", () => ({ spriteUrl: () => "note.png" }));
 vi.mock("../shell", () => ({ openSurfaceOr: vi.fn() }));
+vi.mock("../hooks/useEngine", () => engineMock);
 vi.mock("../thoughts", async (importOriginal) => {
   const original = await importOriginal<typeof import("../thoughts")>();
   return {
@@ -76,6 +77,7 @@ const thought: Thought = {
 
 const cursor = { hub_id: "hub-1", thought_id: thought.id, aggregate_revision: 3, continuity_revision: 4 };
 const originalMatchMedia = window.matchMedia;
+const engineMock = vi.hoisted(() => ({ useEngine: vi.fn(), refreshEngine: vi.fn() }));
 
 function projection(overrides: Partial<ThoughtWorkspaceProjection> = {}): ThoughtWorkspaceProjection {
   return {
@@ -112,6 +114,7 @@ function deferred<T>() {
 beforeEach(() => {
   sessionStorage.clear();
   useDesk.setState({ editingId: null, closeEditor: vi.fn() });
+  engineMock.useEngine.mockReturnValue({ state: "unread", model: "", place: "" });
 });
 afterEach(() => {
   cleanup();
@@ -124,35 +127,44 @@ afterEach(() => {
 });
 
 describe("ThoughtWorkspaceWindow — the four bands", () => {
-  it("folds band 3 to one row, says the context once, and holds one filled primary", async () => {
+  it("keeps an idle note plain, says the context once, and holds one filled primary", async () => {
     vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
     render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
 
-    const ask = await screen.findByRole("button", { name: "Ask" });
-    const band = screen.getByRole("region", { name: "One question" });
-    expect(band).toHaveTextContent("ONE QUESTION");
-    expect(band.querySelectorAll(".thought-note-ask-open")).toHaveLength(0);
+    const ask = await screen.findByRole("button", { name: "Ask about this note" });
+    expect(screen.queryByRole("region", { name: "Ask about this note" })).not.toBeInTheDocument();
+    expect(screen.queryByText("ONE QUESTION")).not.toBeInTheDocument();
     expect(screen.queryByRole("textbox", { name: "Your answer" })).not.toBeInTheDocument();
     expect(ask).not.toHaveClass("btn--primary");
 
     // The context fact is stated ONCE, in the Reads line of the foot.
     expect(screen.getAllByText(/Everyday context/)).toHaveLength(1);
-    expect(screen.getByText(/READS · Everyday context · 5 NOTES/)).toBeInTheDocument();
+    expect(screen.getByText("Reads: Everyday context")).toBeInTheDocument();
     expect(screen.queryByText(/^Attached/)).not.toBeInTheDocument();
 
-    // One filled primary, and it is Finish. "Kept", never "Filed"/"Saved".
+    // One filled primary, and it is Finish. The foot has no filing line.
     const primaries = document.querySelectorAll(".btn--primary");
     expect(primaries).toHaveLength(1);
     expect(primaries[0]).toHaveTextContent("Finish");
-    // PHILO-3-04: the filing state is its own line; KEPT carries a time
-    // and needs a hub stamp, which this fixture's note does not have.
-    expect(screen.getByText("IN A DRAWER")).toBeInTheDocument();
+    expect(screen.queryByText(/IN A DRAWER|NOT IN A DRAWER|FINISHED/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Filed|Saved/)).not.toBeInTheDocument();
 
     // The window that was two features is one: no tabs, no rail, no rack.
     expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Interview/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Interview" })).not.toBeInTheDocument();
+  });
+
+  it("keeps an idle ready note plain and puts Ask in the foot", async () => {
+    engineMock.useEngine.mockReturnValue({ state: "set", model: "Thought Qwen", place: "LAN" });
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    expect(await screen.findByRole("button", { name: "Ask about this note" })).toBeEnabled();
+    expect(screen.queryByRole("region", { name: "Ask about this note" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Ask about this note" }));
+    await waitFor(() => expect(useDesk.getState().askOpen).toBe(true));
+    expect(useDesk.getState().selectedIds).toEqual(["note:note-1"]);
   });
 
   it("never renders a heading over an empty question", async () => {
@@ -164,7 +176,7 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     const headings = [...document.querySelectorAll("h1, h2, h3, h4, h5, h6")];
     expect(headings.filter((node) => !node.textContent?.trim())).toHaveLength(0);
     expect(headings).toHaveLength(0);
-    await screen.findByRole("region", { name: "One question" });
+    expect(screen.queryByRole("region", { name: "Ask about this note" })).not.toBeInTheDocument();
     const texts = document.querySelectorAll(".thought-note-ask-text");
     expect(texts).toHaveLength(0);
     for (const node of document.querySelectorAll(".thought-note-ask *")) {
@@ -172,17 +184,31 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     }
   });
 
-  it("names the engine before the ask and shows the question with one verb", async () => {
+  it("names the thought engine before the ask and shows the question with one verb", async () => {
     vi.mocked(thoughtWorkbench).mockResolvedValue(questionProjection("Who is misunderstanding what?"));
     render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
 
-    const band = await screen.findByRole("region", { name: "One question" });
+    const band = await screen.findByRole("region", { name: "Ask about this note" });
     expect(band).toHaveTextContent("Who is misunderstanding what?");
-    expect(band.querySelector(".gadget-chip-egress")).toHaveTextContent("THIS DEVICE");
+    expect(band.querySelector(".gadget-chip-egress")).toBeNull();
+    expect(engineMock.useEngine).toHaveBeenCalledWith("thought.interview");
     expect(screen.getByRole("textbox", { name: "Your answer" })).toBeVisible();
     expect(screen.getAllByRole("button", { name: "Add to note" })).toHaveLength(1);
     expect(screen.queryByRole("button", { name: /ask next/i })).not.toBeInTheDocument();
     expect(document.querySelectorAll(".btn--primary")).toHaveLength(1);
+  });
+
+  it("uses the thought assignment when Ask has a different engine", async () => {
+    engineMock.useEngine.mockImplementation((capability: string) => capability === "thought.interview"
+      ? { state: "set", model: "Thought Qwen", place: "LAN" }
+      : { state: "set", model: "Ask Cloud", place: "CLOUD" });
+    vi.mocked(thoughtWorkbench).mockResolvedValue(questionProjection("Which engine should continue this note?"));
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    const band = await screen.findByRole("region", { name: "Ask about this note" });
+    expect(band).toHaveTextContent("Thought Qwen · LAN");
+    expect(band).not.toHaveTextContent("Ask Cloud");
+    expect(engineMock.useEngine).toHaveBeenCalledWith("thought.interview");
   });
 
   it("keeps the answer and reuses one request id when Add to note fails", async () => {
@@ -234,6 +260,26 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     expect(completion.thought.working_revision).toBe(3);
   });
 
+  it("finishes a note edit against the cursor returned by that edit", async () => {
+    const saved = { ...thought, aggregate_revision: 4, working_revision: 3, working_note: { ...thought.working_note, body_markdown: "The latest words" } };
+    const savedCursor = { ...cursor, aggregate_revision: 4, continuity_revision: 7 };
+    const savedProjection = projection({ thought: saved, workspace_cursor: savedCursor });
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
+    vi.mocked(saveThoughtWorkingInWorkspace).mockResolvedValue({ thought: saved, workbench: savedProjection });
+    vi.mocked(completeThought).mockResolvedValue({
+      thought: { ...saved, state: "completed" },
+      receipt: { id: "receipt-saved", kind: "thought_completed", thought_id: thought.id, note_ref: "note:note-1", aggregate_revision: 5, lifecycle_revision: 2, created_at: "2026-09-20T09:50:00Z" },
+      workbench: savedProjection,
+    });
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    fireEvent.change(await screen.findByRole("textbox", { name: "Note body" }), { target: { value: "The latest words" } });
+    fireEvent.click(screen.getByRole("button", { name: "Finish" }));
+
+    await waitFor(() => expect(completeThought).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(completeThought).mock.calls[0][0].workspace_cursor).toEqual(savedCursor);
+  });
+
   it("appends a returned draft to the note instead of replacing it", async () => {
     vi.mocked(thoughtWorkbench).mockResolvedValue(projection({
       workspace_state: "synthesis",
@@ -246,7 +292,7 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     }));
     render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
 
-    const band = await screen.findByRole("region", { name: "One question" });
+    const band = await screen.findByRole("region", { name: "Ask about this note" });
     expect(band).toHaveTextContent("A draft from your note");
     expect(band).toHaveTextContent("Mina owns the launch date.");
     expect(screen.queryByRole("textbox", { name: "Your answer" })).not.toBeInTheDocument();
@@ -305,26 +351,27 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
 
     expect(await screen.findByTestId("note-title")).toHaveTextContent(thought.working_note.title);
     expect(screen.getByTestId("note-locked")).toHaveTextContent("FINISHED");
-    // PHILO-3-04: FINISHED joins the filing line (canvas, state 1).
-    expect(screen.getByText("IN A DRAWER · FINISHED")).toBeInTheDocument();
+    expect(screen.queryByText(/IN A DRAWER|NOT IN A DRAWER/)).not.toBeInTheDocument();
     const primaries = document.querySelectorAll(".btn--primary");
     expect(primaries).toHaveLength(1);
     expect(primaries[0]).toHaveTextContent("Resume");
-    expect(screen.queryByRole("region", { name: "One question" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Ask about this note" })).not.toBeInTheDocument();
   });
 
   it("separates no engine at all from an engine that cannot be reached", async () => {
+    engineMock.useEngine.mockReturnValue({ state: "none", model: "", place: "" });
     vi.mocked(thoughtWorkbench).mockResolvedValue(projection({
       actions: { primary: { kind: "configure_ai" }, state: [{ kind: "configure_ai" }], ambient: ["update_working", "attach_context", "complete"] },
       inference: { availability: "unavailable", continuation_admission: "unavailable", intended_placement: null },
     }));
     const { unmount } = render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
-
-    const band = await screen.findByRole("region", { name: "One question" });
-    expect(band).toHaveTextContent("NO ENGINE YET");
+    const band = await screen.findByRole("region", { name: "Ask about this note" });
+    expect(band).toHaveTextContent("No engine");
+    expect(band).not.toHaveTextContent("NO ENGINE YET");
     expect(band.querySelector(".gadget-chip-egress")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Choose an engine" }));
-    expect(openSurfaceOr).toHaveBeenCalledWith("configure-runs-on", "/settings", "models");
+    fireEvent.click(screen.getByRole("button", { name: "Choose engine" }));
+    expect(openSurfaceOr).toHaveBeenCalledWith("configure-runs-on", "/settings", "thought.interview");
+    expect(screen.getAllByRole("button", { name: "Choose engine" })).toHaveLength(1);
     expect(document.querySelectorAll(".btn--primary")).toHaveLength(1);
     unmount();
 
@@ -334,7 +381,7 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     }));
     render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
     expect(await screen.findByRole("button", { name: "Check" })).toBeEnabled();
-    expect(screen.getByRole("region", { name: "One question" })).toHaveTextContent("ENGINE NOT REACHABLE");
+    expect(screen.getByRole("region", { name: "Ask about this note" })).toHaveTextContent("ENGINE NOT REACHABLE");
     expect(screen.getByText("WORKSTATION")).toBeInTheDocument();
     // …and no destination chip stands beside "no engine yet" (nowhere to go).
     expect(document.querySelectorAll(".gadget-chip-egress")).toHaveLength(1);
@@ -354,14 +401,15 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     }));
     render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
 
-    const band = await screen.findByRole("region", { name: "One question" });
+    const band = await screen.findByRole("region", { name: "Ask about this note" });
     expect(band).toHaveTextContent("ENGINE BUSY");
     expect(band).not.toHaveTextContent("NO ENGINE YET");
     expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
-    expect(screen.queryByRole("button", { name: "Choose an engine" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Choose engine" })).not.toBeInTheDocument();
   });
 
   it("rechecks the engine after Settings saves", async () => {
+    engineMock.useEngine.mockReturnValue({ state: "none", model: "", place: "" });
     vi.mocked(thoughtWorkbench)
       .mockResolvedValueOnce(projection({
         actions: { primary: { kind: "configure_ai" }, state: [{ kind: "configure_ai" }], ambient: ["complete"] },
@@ -369,10 +417,9 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
       }))
       .mockResolvedValueOnce(projection());
     render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
-
-    await screen.findByRole("button", { name: "Choose an engine" });
+    await screen.findByRole("button", { name: "Choose engine" });
     window.dispatchEvent(new Event("holdspeak:settings-updated"));
-    expect(await screen.findByRole("button", { name: "Ask" })).toBeEnabled();
+    expect(await screen.findByRole("button", { name: "Ask about this note" })).toBeEnabled();
   });
 
   // PHILO-15 10 (Astra r2, finding 1): the hub's REAL terminal projection
@@ -380,6 +427,7 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
   // retryable and, for a named failure, a token. It never sends `message`;
   // this test used to invent one.
   it("offers Try again beside Finish for a plain failed ask", async () => {
+    engineMock.useEngine.mockReturnValue({ state: "set", model: "Thought Qwen", place: "" });
     vi.mocked(thoughtWorkbench).mockResolvedValue(projection({
       workspace_state: "named_failure",
       actions: { primary: { kind: "refine" }, state: [{ kind: "refine" }], ambient: ["complete"] },
@@ -389,7 +437,7 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
 
     expect(await screen.findByRole("button", { name: "Try again" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Finish" })).toBeEnabled();
-    expect(screen.queryByRole("button", { name: "Ask" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Ask about this note" })).toBeInTheDocument();
   });
 
   it("names a malformed structured result and the engine it came from", async () => {
@@ -404,7 +452,7 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
 
     expect(await screen.findByRole("button", { name: "Try again" })).toBeEnabled();
-    const region = screen.getByRole("region", { name: "One question" });
+    const region = screen.getByRole("region", { name: "Ask about this note" });
     expect(region).toHaveTextContent(/STRUCTURED RESULT · NOT USABLE · \S/);
   });
 
@@ -418,21 +466,24 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     }));
     render(<ThoughtWorkspaceWindow object={object} thought={staleThought} onClose={vi.fn()} />);
 
-    expect(await screen.findByText(/READS · Everyday context · 5 NOTES · CHANGED/)).toBeInTheDocument();
+    expect(await screen.findByText("Reads: Everyday context")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Update it" })).toBeEnabled();
   });
 
   it("keeps the mounted workspace behind a restart gate until explicit hub adoption", async () => {
     const foreignThought = { ...thought, aggregate_revision: 4, working_revision: 3, working_note: { ...thought.working_note, body_markdown: "Foreign authority" } };
     const foreign = projection({ thought: foreignThought, workspace_cursor: { ...cursor, hub_id: "hub-2", aggregate_revision: 4, continuity_revision: 1 } });
-    vi.mocked(thoughtWorkbench).mockResolvedValueOnce(projection());
+    vi.mocked(thoughtWorkbench).mockResolvedValueOnce(projection({
+      workspace_state: "named_failure",
+      terminal_status: { category: "retryable", code: "failed", retryable: true },
+    }));
     vi.mocked(refineThought).mockResolvedValue({
       thought: foreignThought,
       continuity: { state: "reserved", invocation_id: "rinv-foreign" },
       workbench: foreign,
     });
     render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
-    fireEvent.click(await screen.findByRole("button", { name: "Ask" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Try again" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Hub restarted");
     expect(screen.getByRole("textbox", { name: "Note body", hidden: true })).toHaveValue(thought.working_note.body_markdown);
@@ -502,9 +553,9 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
 
     fireEvent.change(await screen.findByRole("textbox", { name: "Note body" }), { target: { value: "Saved before context" } });
-    fireEvent.click(screen.getByRole("button", { name: "Change" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add a note" }));
 
-    expect(await screen.findByRole("region", { name: "What the AI reads" })).toHaveTextContent("Saved before context");
+    expect(await screen.findByRole("region", { name: "Add notes" })).toHaveTextContent("Saved before context");
     expect(saveThoughtWorkingInWorkspace).toHaveBeenCalledWith(thought, expect.objectContaining({ body_markdown: "Saved before context" }), cursor);
   });
 
@@ -525,7 +576,7 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     fireEvent.click(screen.getByRole("button", { name: "Stop" }));
 
     await waitFor(() => expect(stopRefinement).toHaveBeenCalledWith(liveThought, "invocation-1", cursor));
-    await waitFor(() => expect(screen.getByRole("button", { name: "Ask" })).toBeEnabled());
+    await waitFor(() => expect(screen.getByRole("button", { name: "Ask about this note" })).toBeEnabled());
     expect(body).toHaveValue("Dirty while AI runs");
   });
 

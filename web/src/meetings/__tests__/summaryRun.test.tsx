@@ -172,12 +172,13 @@ describe("HS-201-04 the disclosure beside the verb", () => {
     }
   });
 
-  it("keeps the unset sentence only on a chip that is truly unset", () => {
+  it("omits passive same-device egress and keeps a known destination", () => {
     render(<><EgressChip /><EgressChip label="GITHUB.COM" scope="cloud" /></>);
-    const [unset, known] = [...document.querySelectorAll(".gadget-chip")];
-    expect(unset.textContent).toBe("NOT SET");
-    expect(unset.getAttribute("title")).toBe("The route for this face is not set.");
+    const chips = [...document.querySelectorAll(".gadget-chip")];
+    expect(chips).toHaveLength(1);
+    const [known] = chips;
     expect(known.getAttribute("title")).toBe("GITHUB.COM");
+    expect(known.textContent).toBe("GITHUB.COM");
   });
 
   it("says the reason in plain words when no route resolves", () => {
@@ -200,17 +201,16 @@ describe("HS-201-04 the disclosure beside the verb", () => {
     expect(text).toContain("FAILED");
   });
 
-  it("does not say again the host the face's foot already names; a failure still shows (PHILO-17 U16)", () => {
+  it("does not repeat a same-device host that has no visible foot badge (PHILO-17 U16)", () => {
     const loopback = {
       ...SUCCEEDED_RECEIPT,
       attempts: [{ leg_ordinal: 1, host: "127.0.0.1", outcome: "succeeded", operation_id: "op_1" }],
     };
     const { rerender } = render(<RunAttempts receipt={readRunReceipt({ run_receipt: loopback })} saidOnFace="THIS DEVICE" />);
-    expect(screen.queryByTestId("summary-attempts")).toBeNull();
-    // Without the foot's word the loopback host reads THIS DEVICE, never 127.0.0.1.
+    expect(screen.getByTestId("summary-attempts").textContent).toBe("");
+    // Passive same-device transport is also withheld when no foot is present.
     rerender(<RunAttempts receipt={readRunReceipt({ run_receipt: loopback })} />);
-    expect(screen.getByTestId("summary-attempts").textContent).toContain("THIS DEVICE");
-    expect(screen.getByTestId("summary-attempts").textContent).not.toContain("127.0.0.1");
+    expect(screen.getByTestId("summary-attempts").textContent).toBe("");
     rerender(<RunAttempts receipt={readRunReceipt({ run_receipt: SUCCEEDED_RECEIPT })} saidOnFace="api.example.com" />);
     const text = screen.getByTestId("summary-attempts").textContent ?? "";
     expect(text).toContain("192.168.1.43");

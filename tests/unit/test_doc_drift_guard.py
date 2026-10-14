@@ -110,12 +110,32 @@ def _all_docs_and_readme() -> list[Path]:
     return [_REPO / "README.md", *sorted((_REPO / "docs").rglob("*.md"))]
 
 
+def _legacy_config_citation(path: Path, lines: list[str], index: int) -> bool:
+    """Internal diagnosis may cite the qualified identifier it is retiring."""
+    return (
+        path.is_relative_to(_REPO / "docs" / "internal")
+        and re.search(r"`(?:[A-Za-z_][A-Za-z0-9_]*\.)+inference_target_id`", lines[index]) is not None
+        and "legacy" in " ".join(lines[max(0, index - 5):index + 1]).lower()
+    )
+
+
+def test_legacy_source_citation_is_not_setup_advice() -> None:
+    lines = ["The legacy placement is retired:", "`Config.thoughts.inference_target_id`."]
+    assert _legacy_config_citation(_REPO / "docs/internal/design.md", lines, 1)
+    assert not _legacy_config_citation(_REPO / "README.md", lines, 1)
+    assert not _legacy_config_citation(_REPO / "docs/internal/design.md", [lines[1]], 0)
+    assert not _legacy_config_citation(_REPO / "docs/internal/design.md", [lines[0], "Set inference_target_id."], 1)
+
+
 def test_docs_do_not_restore_retired_inference_setup_vocabulary() -> None:
     offenders: list[str] = []
     for path in _all_docs_and_readme():
-        for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        lines = path.read_text(encoding="utf-8").splitlines()
+        for lineno, line in enumerate(lines, 1):
             match = _RETIRED_INFERENCE_VOCAB.search(line)
             if match:
+                if match.group(0) == "inference_target_id" and _legacy_config_citation(path, lines, lineno - 1):
+                    continue
                 offenders.append(f"{path.relative_to(_REPO)}:{lineno}: {match.group(0)!r}")
 
     assert not offenders, (
@@ -257,11 +277,18 @@ def _archived_paths() -> tuple[set[str], set[str]]:
     return files, dirs
 
 
+def test_link_guard_reads_prose_but_not_literal_fenced_examples(tmp_path: Path) -> None:
+    text = "[Live](live.md)\n```yaml\n[Note door](door:open-people)\n```\n[Missing](missing.md)"
+    path = tmp_path / "example.md"
+    path.write_text(text)
+    assert list(_prose_lines(path)) == [(1, "[Live](live.md)"), (5, "[Missing](missing.md)")]
+
+
 def test_no_live_doc_has_a_dangling_relative_link() -> None:
     offenders: list[str] = []
     archived_files, archived_dirs = _archived_paths()
     for path in _maintained_docs():
-        for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        for lineno, line in _prose_lines(path):
             for target in _MD_LINK.findall(line):
                 target = target.strip()
                 # Skip external, anchor-only, and non-doc targets.

@@ -107,6 +107,17 @@
   display: none;
 }
 
+@container surface (max-width: 720px) {
+  .desk-next .surface-footer-layout {
+    grid-template-columns: minmax(0, 1fr) max-content;
+    grid-template-areas: "egress egress" "receipt verbs";
+  }
+  .desk-next .surface-footer-verbs {
+    justify-content: flex-end;
+    min-width: 0;
+  }
+}
+
 /* HS-129-05 — footer center states are one shared receipt species. */
 .desk-next .surface-footer-readiness {
   min-width: 0;
@@ -506,4 +517,10 @@
 }
 .desk-next .surface-footer-layout:has(.write-receipt) .surface-footer-receipt {
   justify-content: flex-start;
+}
+
+.desk-next .surface-footer-opaque-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }

@@ -422,6 +422,11 @@ def test_with_no_page_and_no_observation_the_chat_payload_is_byte_identical(hub,
     tools = [t for t in admitted["tools"] if t["function"]["name"] != "memory.page"]
     assert len(tools) == len(admitted["tools"]) - 1
     expected_tools = json.loads(json.dumps(main["default_tools"]).replace(json.dumps(MCP_ACCESS_NOTE)[1:-1], ""))
+    # The note-to-task path adds one source kind to the existing Door tool.
+    # Keep the historical capture unchanged and name this schema delta here;
+    # every other tool and every non-tool prompt byte must still match it.
+    door = next(tool for tool in expected_tools if tool["function"]["name"] == "door.add_item")
+    door["function"]["parameters"]["properties"]["source_type"]["enum"].append("thought")
     assert json.dumps(tools, sort_keys=True) == json.dumps(expected_tools, sort_keys=True)
 
 

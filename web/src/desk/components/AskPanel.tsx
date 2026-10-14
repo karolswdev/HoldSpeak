@@ -41,16 +41,11 @@ import { apiRequest } from "../../lib/api";
  * hub's own text (a model path, a refusal sentence) never reaches the face,
  * its title included. A failure that can be asked again names the kept ask
  * and the next step (the product-copy failure facts). */
-export function askFailureLabel(output: string): { label: string; canAskAgain: boolean } {
-  if (/model file not found|no default model|no model|model .*not (found|available)/i.test(output))
-    return { label: "NOT ANSWERED · NO MODEL TO RUN IT", canAskAgain: false };
-  if (/unreachable|network|failed to fetch|could not be reached/i.test(output))
-    return { label: "NOT ANSWERED · HUB UNREACHABLE · ASK KEPT · CHECK THE HUB", canAskAgain: true };
-  return { label: "NOT ANSWERED · THE HUB REFUSED IT · ASK KEPT · EDIT THE ASK", canAskAgain: true };
+export function askFailureLabel(_output: string, reason = "did_not_answer"): { label: string; canAskAgain: boolean } {
+  return { label: reasonWords(reason), canAskAgain: Boolean(reasonVerb(reason)) };
 }
 import { useDurableDraft } from "../../lib/durableDraft";
 import { qualifiedRef } from "../api";
-import { ContextualAssignment } from "../../pages/cores/ContextualAssignment";
 import { DeskWindowFrame } from "./DeskWindow";
 import { Material } from "../surface/Material";
 import { SurfaceTraffic, SurfaceTrafficTurn } from "../surface/Surface";
@@ -66,12 +61,16 @@ import {
   TurnLamp,
   lastTurnLine,
   routeFromWire,
+  routeEgress,
   type TurnRoute,
 } from "../turnRoute";
 import { CitationChips, groundedMatchCount } from "../surface/citations";
 import { Button } from "../../components/signal/Signal";
 import { humanizeWireValue } from "../../lib/productLanguage";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
+import { useEngine, refreshEngine } from "../hooks/useEngine";
+import { EngineLine, RunLine, reasonVerb, reasonWords } from "../surface";
+import { openSurfaceOr } from "../shell";
 
 /** The budget figure the audit names: 0.3K / 16.4K. */
 const fmtK = (n: number): string => `${(n / 1000).toFixed(1)}K`;
@@ -86,7 +85,8 @@ export function AskPanel() {
     value: prompt,
     setDraft: setPrompt,
     recovered: promptRecovered,
-  } = useDurableDraft("desk-ask", ASK_LENSES[0].instruction);
+  } = useDurableDraft("desk-ask", "");
+  const engine = useEngine("ask.answer");
   const [phase, setPhase] = useState<"compose" | "routing" | "printed">(
     "compose",
   );
@@ -98,10 +98,12 @@ export function AskPanel() {
     ctx: number;
   } | null>(null);
   const [result, setResult] = useState<AskRunResult | null>(null);
+  const [failedRun, setFailedRun] = useState<AskRunResult | null>(null);
+  const [runStartedAt, setRunStartedAt] = useState<number | undefined>();
+  const [finishedElapsedSeconds, setFinishedElapsedSeconds] = useState<number | undefined>();
   // The run's receipt route (success or refusal): the lamp needs one.
   const [route, setRoute] = useState<TurnRoute | null>(null);
   const [error, setError] = useState("");
-  const [canAskAgain, setCanAskAgain] = useState(false);
   const [kept, setKept] = useState(false);
   const [grounding, setGrounding] =
     useState<GroundingSelection>(emptyGrounding());
@@ -186,7 +188,11 @@ export function AskPanel() {
     setPhase("routing");
     setError("");
     setResult(null);
+    setFailedRun(null);
     setRoute(null);
+    const startedAt = Date.now();
+    setRunStartedAt(startedAt);
+    setFinishedElapsedSeconds(undefined);
     setSent({ prompt: prompt.trim(), lens, ctx: context.length });
     // Receipts: the grounding rows ride the pinned context so keep names them.
     printedContext.current = [
@@ -202,10 +208,11 @@ export function AskPanel() {
       grounding: buildGrounding(grounding, rails),
     });
     setRoute(routeFromWire(r.route));
+    const elapsedSeconds = Math.max(0, Math.round((Date.now() - startedAt) / 1000));
+    setFinishedElapsedSeconds(elapsedSeconds);
     if (!r.ok) {
-      const failed = askFailureLabel(r.output);
-      setError(failed.label);
-      setCanAskAgain(failed.canAskAgain);
+      setFailedRun(r);
+      setError(reasonWords(r.reason, engine.model));
       setPhase("compose");
       return;
     }
@@ -250,11 +257,14 @@ export function AskPanel() {
   // route, on an answer and on a refusal that sent bytes (Astra, #875).
   const printedRoute = sent && (result || error) ? route : null;
   const printedLamp = printedRoute?.lamp ?? null;
+  const printedPlace = printedRoute
+    ? routeEgress(printedRoute).label || "This device"
+    : engine.place;
   // A refusal that sent bytes: the failure is on the HUB> turn; the
   // footer names where they went.
   const refusedRoute = Boolean(error && printedRoute && !result);
 
-  const turnCount = (sent ? 1 : 0) + (result || (error && sent) ? 1 : 0);
+  const turnCount = (sent ? 1 : 0) + (result || failedRun ? 1 : 0);
 
   // The footer receipt bar's one status line (audit §3.5): fault > routing
   // > run receipt > the compose budget tokens.
@@ -328,21 +338,26 @@ export function AskPanel() {
           ) : null}
           {phase === "routing" ? (
             <SurfaceTrafficTurn prefix="HUB>">
-              <LedMeter label="RX" value={0} scanning />
+              <RunLine phase="running" verb="Asking" model={engine.model} place={engine.place} startedAt={runStartedAt} />
             </SurfaceTrafficTurn>
           ) : null}
-          {sent && error && !result ? (
+          {sent && failedRun ? (
             <SurfaceTrafficTurn
               prefix="HUB>"
               error
               meta={<TurnLamp lamp={printedLamp} />}
-              verbs={canAskAgain ? (
-                <Button dense variant="ghost" onClick={() => void ask()}>
-                  Ask again
-                </Button>
-              ) : undefined}
             >
-              <span data-testid="ask-failure">{error}</span>
+              <RunLine
+                phase="failure"
+                reason={failedRun.reason}
+                model={engine.model}
+                place={printedPlace}
+                elapsedSeconds={finishedElapsedSeconds}
+                onAction={failedRun.reason === "no_engine"
+                  ? () => openSurfaceOr("configure-runs-on", "/settings", "models")
+                  : undefined}
+                onRetry={failedRun.reason !== "no_engine" && reasonVerb(failedRun.reason) ? () => void ask() : undefined}
+              />
             </SurfaceTrafficTurn>
           ) : null}
           {phase === "printed" && result ? (
@@ -371,6 +386,13 @@ export function AskPanel() {
                 </>
               }
             >
+              <RunLine
+                phase="success"
+                pastVerb="Answered"
+                model={result.model || engine.model}
+                place={printedPlace}
+                elapsedSeconds={finishedElapsedSeconds}
+              />
               <div
                 className="desk-ask-answer"
                 /* HS-101 B7 — the result drags OUT through the glass:
@@ -434,6 +456,11 @@ export function AskPanel() {
 
         {phase !== "printed" && (
           <>
+            <EngineLine
+              engine={engine}
+              onChoose={() => openSurfaceOr("configure-runs-on", "/settings", "models")}
+              onRetry={() => void refreshEngine("ask.answer")}
+            />
             <div className="desk-chat-well">
               <div className="desk-chat-composer">
                 <MicButton
@@ -443,7 +470,7 @@ export function AskPanel() {
                 <textarea
                   rows={3}
                   value={prompt}
-                  placeholder="Instruction"
+                  placeholder="Ask about your work"
                   autoFocus
                   onChange={(e) => setPrompt(e.target.value)}
                   onKeyDown={(e) => {
@@ -484,11 +511,6 @@ export function AskPanel() {
                 }}
               />
               <div className="desk-chat-well-foot">
-                <ContextualAssignment
-                  label="Ask"
-                  capabilityId="ask.answer"
-                  scope={{ kind: "capability", capability_id: "ask.answer" }}
-                />
                 {context.length > 0 && (
                   <span className="surface-token">
                     CTX · {context.length}{" "}

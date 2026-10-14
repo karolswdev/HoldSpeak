@@ -66,6 +66,7 @@ import {
 } from "../../desk/ask";
 import { onReturnToTask, rememberTaskFocus } from "../../desk/returnToTask";
 import { useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
+import { useEngine } from "../../desk/hooks/useEngine";
 import { StandingPagesSection, useStandingPagesRead } from "../../desk/standingPages";
 import { apiFetch } from "../../lib/api";
 import type { InferenceTarget } from "../../desk/api";
@@ -358,6 +359,7 @@ function RoomHead({
   /** PHILO-17 refit: the late milestones (null while the items read is out). */
   lateItems?: ItemRow[] | null;
 }) {
+  const updateEngine = useEngine("project.update_draft");
   const health = room.health.state === "ok" ? (room.health as RoomHealthData & { state: "ok" }) : null;
   const healthWord = roomHealthWord(room);
   const target = room.target.state === "ok" ? (room.target as RoomTargetData & { state: "ok" }) : null;
@@ -428,8 +430,9 @@ function RoomHead({
           <Button
             dense
             variant={quiet ? "secondary" : "primary"}
-            loading={updateCtrl.loading}
-            onClick={() => void updateCtrl.enterUpdates()}
+            loading={updateCtrl.loading || updateCtrl.draftBusy}
+            disabled={updateEngine.state === "unread"}
+            onClick={() => void updateCtrl.draft(updateEngine.state === "set" ? "model" : "deterministic")}
             data-testid="updates-verb"
           >
             Draft update

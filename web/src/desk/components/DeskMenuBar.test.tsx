@@ -4,9 +4,35 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { __resetSurfaces, registerSurface } from "../shell";
 import { useDesk } from "../store";
 import { DeskMenuBar } from "./DeskMenuBar";
+import { DeskChrome } from "./DeskChrome";
+import { dismissAftercare, publishAftercare } from "../intelligenceAttention";
+
+vi.mock("../../runtime/RuntimeBus", () => ({
+  useRuntimeBus: () => ({ state: "offline", lastFrame: null, subscribe: () => () => undefined }),
+  useOptionalRuntimeBus: () => ({ state: "offline", lastFrame: null, subscribe: () => () => undefined }),
+}));
 
 beforeEach(__resetSurfaces);
-afterEach(__resetSurfaces);
+afterEach(() => {
+  dismissAftercare();
+  __resetSurfaces();
+});
+
+it("routes a ready meeting through the one attention bell", async () => {
+  publishAftercare({
+    meeting_id: "meeting-ready",
+    title: "Weekly review",
+    proposal_total: 1,
+  });
+  render(<DeskChrome />);
+
+  const bell = await screen.findByRole("button", {
+    name: "Meeting ready: Weekly review",
+  });
+  expect(document.querySelectorAll('[data-testid="desk-bell"]')).toHaveLength(1);
+  expect(bell).toHaveTextContent("READY");
+  expect(document.querySelector(".ambient-aftercare")).toBeNull();
+});
 
 describe("DeskMenuBar", () => {
   it("marks the registry-derived Go title and launches Meetings through its real menu", () => {
@@ -30,9 +56,8 @@ describe("DeskMenuBar", () => {
   });
 });
 
-/* PHILO-17 (doors): Go at 1440 is the application index. Seven
- * applications, Projects ▸, Tools ▸; the setup applications are in the
- * HoldSpeak menu; the Desk menu does not open People or Intelligence. */
+/* PHILO-17 (doors): Go at 1440 is the application index. Its six live
+ * applications are followed by Projects ▸; setup lives in HoldSpeak. */
 describe("DeskMenuBar Go at 1440 (PHILO-17 doors)", () => {
   const PROJECT = (id: string, name: string) => ({ kind: "project" as const, id, name, description: "", keywords: [], teamMembers: [], meetingCount: 0, createdAt: "", updatedAt: "" });
   afterEach(() => {
@@ -41,7 +66,7 @@ describe("DeskMenuBar Go at 1440 (PHILO-17 doors)", () => {
   const top = (menu: HTMLElement) =>
     Array.from(menu.querySelectorAll(":scope [role^=menuitem] .desk-menu-label"), (e) => e.textContent?.trim());
 
-  it("Go is seven applications, Projects ▸ and Tools ▸", () => {
+  it("Go is the live applications and Projects ▸", () => {
     useDesk.setState((s) => ({
       items: { ...s.items, project: [PROJECT("p-1", "Alpha"), PROJECT("p-2", "Beta"), PROJECT("p-3", "Gamma")] },
     }));
@@ -49,8 +74,8 @@ describe("DeskMenuBar Go at 1440 (PHILO-17 doors)", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Go$/ }), { detail: 0 });
     const menu = screen.getByRole("menu", { name: "Go menu" });
     expect(top(menu)).toEqual([
-      "Speak", "Meetings", "Today", "Ask AI", "People", "Conductor", "Memory",
-      "Projects", "Tools",
+      "Speak", "Meetings", "Today", "Ask AI", "People", "Conductor",
+      "Projects",
     ]);
     expect(menu.textContent).not.toMatch(/Settings|Runs on|Connections|Setup|Desk memory|List view/);
     // The ⌃ keys stay on their rows (PHILO-17 U27).
@@ -60,16 +85,13 @@ describe("DeskMenuBar Go at 1440 (PHILO-17 doors)", () => {
     expect(top(screen.getAllByRole("menu").at(-1)!)).toEqual(["Alpha", "Beta", "Gamma"]);
   });
 
-  it("Tools ▸ holds the six tools", () => {
+  it("does not offer a retired empty Tools ▸", () => {
     render(<DeskMenuBar />);
     fireEvent.click(screen.getByRole("button", { name: /^Go$/ }), { detail: 0 });
     const menu = screen.getByRole("menu", { name: "Go menu" });
     // No projects: no Projects ▸ row (no empty submenu).
     expect(top(menu)).not.toContain("Projects");
-    fireEvent.click(within(menu).getByRole("menuitem", { name: /^Tools\W*$/ }));
-    expect(top(screen.getAllByRole("menu").at(-1)!)).toEqual([
-      "Workbenches", "Activity", "Processes", "Rhythm", "Commands", "Context",
-    ]);
+    expect(top(menu)).not.toContain("Tools");
   });
 
   it("the Desk menu does not open People or Intelligence", () => {
@@ -133,7 +155,7 @@ describe("DeskMenuBar at 393", () => {
     const menu = screen.getByRole("menu", { name: "Go menu" });
     fireEvent.click(within(menu).getByRole("menuitem", { name: /^New\W*$/ }));
     const sub = screen.getByRole("menu");
-    expect(labels(sub)).toEqual(["New", "Thought", "Meeting", "Project", "Person"]);
+    expect(labels(sub)).toEqual(["New", "Note", "Meeting", "Project", "Person"]);
     expect(sub.querySelectorAll(".desk-menu-keycaps, kbd")).toHaveLength(0);
   });
 

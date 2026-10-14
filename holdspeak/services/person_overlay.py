@@ -77,7 +77,9 @@ def compose_person_overlay(
             continue
 
         # THEY-OWE: board cards whose owner matches any alias.
-        they_owe_cards = _cards_by_aliases(all_cards, aliases)
+        they_owe_cards = _cards_by_aliases(
+            all_cards, aliases, people_service=people_service, relationship_id=rel_id,
+        )
         they_owe_count = len(they_owe_cards)
         stalest_age = _stalest_age(they_owe_cards) if they_owe_cards else None
 
@@ -125,15 +127,38 @@ def compose_person_overlay(
 
 
 def _cards_by_aliases(
-    cards: list[Any], aliases: list[str],
+    cards: list[Any],
+    aliases: list[str],
+    *,
+    people_service: Any | None = None,
+    relationship_id: str | None = None,
 ) -> list[Any]:
-    """Filter board cards whose owner string matches any alias (case-insensitive)."""
-    if not aliases:
+    """Filter cards through the People resolver without a plaintext fallback."""
+    if not aliases and people_service is None:
         return []
+    alias_keys = {alias.casefold() for alias in aliases}
+    resolved: dict[str, bool] = {}
     result = []
     for card in cards:
         owner = getattr(card, "owner", None)
-        if owner is not None and str(owner).casefold() in aliases:
+        owner_key = str(owner or "").strip().casefold()
+        if not owner_key:
+            continue
+        if owner_key not in resolved and people_service is not None:
+            try:
+                match = people_service.resolve_owner_candidates(str(owner))
+                resolved[owner_key] = (
+                    match.get("state") == "ready"
+                    and match.get("link") == "linked"
+                    and str((match.get("relationship") or {}).get("id") or "")
+                    == str(relationship_id or "")
+                )
+            except Exception:
+                # A locked or failed encrypted store cannot authorize a
+                # plaintext owner match. Preserve custody and ambiguity.
+                resolved[owner_key] = False
+        matches = resolved.get(owner_key, owner_key in alias_keys if people_service is None else False)
+        if matches:
             result.append(card)
     return result
 

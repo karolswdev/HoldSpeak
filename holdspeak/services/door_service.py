@@ -96,6 +96,19 @@ class DoorService:
                     source_ref,
                 ),
             )
+        # The browser's Door and Needs you projections are cached.  Keep the
+        # same live desk refresh path for a note-created task as for every
+        # other Door writer; outside a hub this is a harmless no-op.
+        try:
+            from holdspeak.runtime.composition import notify_desk_changed
+            notify_desk_changed("action_item", item_id, "create")
+        except Exception:
+            pass
+        try:
+            from .needs_you_aggregate import mark_needs_you_dirty
+            mark_needs_you_dirty(self._db)
+        except Exception:
+            pass
         return {
             "id": item_id,
             "task": task.strip(),
@@ -217,6 +230,12 @@ class DoorService:
         result = asdict(card)
         if card.source == "action_item":
             result["target_ref"] = f"action_item:{card.id}"
+            source_ref = card.provenance.source_ref if card.provenance else None
+            if source_ref:
+                # `open_ref` is the board's source opener; `source_ref` keeps
+                # the producer's identity visible for projections and walks.
+                result["open_ref"] = source_ref
+                result["source_ref"] = source_ref
             verbs = DoorService._action_verbs(card.id) + [DoorService._hand_verb("action", card.id)]
         elif card.source in {"cadence_loop", "decision"}:
             result["target_ref"] = f"cadence_loop:{card.id}"
@@ -414,10 +433,11 @@ class DoorService:
         """HS-150-02: resolve person labels for mapped owner strings on board cards.
 
         Returns a map from ``owner_string`` to ``(display_name, relationship_id)``
-        for every mapped owner.  One ``resolve_relationship_by_owner`` call per
-        distinct owner string -- memoized in-request only, never cached across
-        requests.  The sidecar being unavailable silently produces no entry
-        (the Door never blocks on the sidecar).
+        for every uniquely mapped owner. Resolution accepts a unique display
+        name as well as an alias, while ambiguous names produce no metadata.
+        Results are memoized in-request only, never cached across requests. The
+        sidecar being unavailable silently produces no entry (the Door never
+        blocks on the sidecar).
         """
         from holdspeak.people.key_free import people_reads_allowed
 
@@ -429,11 +449,11 @@ class DoorService:
             if not card.owner or card.owner in seen:
                 continue
             try:
-                result = self._people_service.resolve_relationship_by_owner(card.owner)
+                result = self._people_service.resolve_owner_candidates(card.owner)
             except Exception:
                 seen[card.owner] = None
                 continue
-            if result.get("state") != "ready":
+            if result.get("state") != "ready" or result.get("link") != "linked":
                 seen[card.owner] = None
                 continue
             rel = result.get("relationship")

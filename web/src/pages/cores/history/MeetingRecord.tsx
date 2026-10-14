@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AddToProject } from "../../../desk/AddToProject";
 import { Button } from "../../../components/signal/Signal";
+import { useCompactViewport } from "../../../desk/useCompactViewport";
 import { apiBlob, apiFetch, readableError } from "../../../lib/api";
 import { SurfaceState } from "../../../desk/surface/Surface";
 import { SurfaceFooter } from "../../../desk/surface/SurfaceFooter";
@@ -46,7 +47,6 @@ import { useSummaryRun } from "./useSummaryRun";
 /** The meeting window's faces (the Meetings window's detail wings). */
 export const MEETING_WINGS = [
   { id: "outcomes", label: "Outcomes" },
-  { id: "review", label: "Review" },
   { id: "artifacts", label: "Artifacts" },
 ];
 
@@ -60,15 +60,17 @@ function revealOnRecord(anchorId: string, focus = false): void {
 }
 
 export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClose(): void }) {
-  // The place a door asked for (a Review wing, a transcript row), once.
+  // The place a door asked for (an Outcomes face or transcript row), once.
   // Peeked in render (a render may run again), taken once it is shown.
   const [request] = useState<MeetingOpenRequest | null>(() => peekMeetingRequest(meetingId));
   useEffect(() => { takeMeetingRequest(meetingId); }, [meetingId]);
-  const wings = useCoreWings(MEETING_WINGS, request?.view ?? "outcomes");
+  // Old deep links may still say `view=review`; Outcomes is now the one
+  // review face and receives that request after the migration.
+  const initialView = request?.view === "artifacts" ? "artifacts" : "outcomes";
+  const wings = useCoreWings(MEETING_WINGS, initialView);
   const [meeting, setMeeting] = useState<Record<string, unknown> | null>(null);
   const [loadError, setLoadError] = useState("");
-  // HS-200-12: `Open evidence` on the review wing lands on the outcomes face
-  // scrolled to the proposal's segment.
+  // A source span opens on the Outcomes face and expands its transcript.
   const [segment, setSegment] = useState<number | null>(request?.segment ?? null);
   const [parking, setParking] = useState(false);
   const [parkOutcome, setParkOutcome] = useState<ParkOutcome | null>(null);
@@ -112,7 +114,7 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
       const next = (event as CustomEvent<MeetingOpenRequest>).detail;
       if (!next || next.meetingId !== meetingId) return;
       takeMeetingRequest(meetingId);
-      setView(next.view);
+      setView(next.view === "artifacts" ? "artifacts" : "outcomes");
       setSegment(next.segment);
     };
     window.addEventListener(MEETING_OPEN_EVENT, onOpen);
@@ -185,15 +187,13 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
   }, [receipt]);
 
   const title = String(meeting?.title ?? "").trim();
-  // The Review wing publishes its own title and clears it as it leaves: the
-  // record publishes again on every face change.
+  const compact = useCompactViewport();
+  // The record publishes its title again on every face change.
   useWindowTitle(title || null, [title, wings.view]);
 
-  // PHILO-17 (U16, #1083): the window's foot names the summary engine; the
-  // record does not say the same host again (one chip per face). Only while
-  // that foot is mounted: the Review wing draws its own.
+  // PHILO-17 (U16, #1083): the window's foot names the summary engine.
   const footerHost =
-    wings.view !== "review" && route && routeReady(route) ? egressFor(route.legs[0].host).label : null;
+    route && routeReady(route) ? egressFor(route.legs[0].host).label : null;
   // HS-201-04 (UX-CANON A.9): the foot says where this meeting's summary runs.
   const footerEgress = useMemo(() => {
     if (!route) return null;
@@ -263,13 +263,21 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
   }
 
   const view = wings.view as DetailView;
-  // HS-200-12: the review wing draws its own footer (egress where the
-  // extraction happened, the receipt, `Accept reviewed`).
-  const reviewOwnsFooter = view === "review";
   const hasSummary = meeting.has_summary === true || String(readMeetingIntel(meeting)?.summary ?? "").trim() !== "";
 
   return (
     <>
+      {!compact ? (
+        <Button
+          dense
+          variant="ghost"
+          className="meeting-record-back"
+          data-testid="meeting-record-back"
+          onClick={onClose}
+        >
+          Back
+        </Button>
+      ) : null}
       <MeetingDetail
         saidOnFace={footerHost}
         meeting={meeting}
@@ -287,23 +295,17 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
         }}
         revision={revision}
         onReceipt={setReceipt}
-        footerRunReceipt={receipt?.run && receipt.run.meetingId === meetingId ? receipt : null}
         runRefusal={summary.runRefusal?.meetingId === meetingId ? summary.runRefusal.refusal : null}
         onRunIntelligence={
           // HS-201-04: a FAILED record's Retry is owned by the summary slab;
           // the record offers a run only when the summary is OFF (and on the
-          // review wing).
-          summaryIsOff(meeting) || view === "review"
+          // Outcomes face).
+          summaryIsOff(meeting)
             ? (displayed) => void summary.run(meetingId, displayed)
             : undefined
         }
-        onReview={() => wings.setView("review")}
-        onOpenEvidence={(segmentIndex) => {
-          setSegment(segmentIndex);
-          wings.setView("outcomes");
-        }}
       />
-      {reviewOwnsFooter ? null : (
+      <>
         <SurfaceFooter
           egress={footerEgress}
           receipt={
@@ -351,7 +353,7 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
             </span>
           }
         />
-      )}
+      </>
     </>
   );
 }

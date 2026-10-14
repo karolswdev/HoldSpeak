@@ -96,7 +96,7 @@ describe("the SEND well", () => {
     expect(row.textContent).toContain("Reports/Payments");
     expect(row.textContent).not.toContain("~/");
     expect(row.querySelector(".send-target")?.getAttribute("title")).toBe("~/Reports/Payments");
-    expect(row.textContent).toContain("THIS DEVICE");
+    expect(row.textContent).not.toContain("THIS DEVICE");
     fireEvent.click(within(row).getByText("Folder Payments"));
     const preview = await screen.findByTestId("send-preview");
     expect(preview.textContent).toContain("Folder");

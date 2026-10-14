@@ -799,6 +799,7 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onPickCalendar 
     void run("owed", () => apiFetch(`${base}/owed`, { method: "POST", json: { body, visibility: "shared_intent" } }), forgetOwed);
   };
   const done = (id: string) => void run(`done:${id}`, () => apiFetch(`/api/people/commitments/${encodeURIComponent(id)}/transition`, { method: "POST", json: { verb: "done" } }));
+  const completeAction = (id: string) => void run(`action-done:${id}`, () => apiFetch("/api/follow-through/complete", { method: "POST", json: { card_id: id, verb: "done", payload: {} } }));
   const removeAgenda = (id: string) => void run(`remove:${id}`, () => apiFetch(`/api/people/agenda/${encodeURIComponent(id)}/transition`, { method: "POST", json: { to: "removed" } }));
   const accept = (id: string) => void run(`accept:${id}`, () => apiFetch(`/api/people/requests/${encodeURIComponent(id)}/accept`, { method: "POST", json: {} }));
 
@@ -927,9 +928,16 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onPickCalendar 
           {owedRows.map((item) => <PlateRow key={item.id} title={item.body}
             meta={item.due ? <DuePill due={item.due} /> : undefined}
             verb={<Button dense variant="ghost" loading={busy === `done:${item.id}`} onClick={() => done(item.id)}>Done</Button>} />)}
-          {actions.map((action) => <PlateRow key={action.id} title={action.task}
-            onTitle={refOpener(`meeting:${action.meeting_id}`) ?? undefined}
-            meta={<>{action.meeting_title ? <span>{action.meeting_title}</span> : null}{action.due ? <DuePill due={action.due} /> : null}</>} />)}
+          {actions.map((action) => {
+            const sourceRef = action.source_ref || (action.meeting_id ? `meeting:${action.meeting_id}` : null);
+            const sourceName = action.meeting_title
+              ? `from ${action.meeting_title}`
+              : action.source_type === "thought" ? "from Note" : action.source_type === "meeting" ? "from Meeting" : null;
+            return <PlateRow key={action.id} title={action.task}
+              onTitle={refOpener(sourceRef) ?? undefined}
+              meta={<>{sourceName ? <span>{sourceName}</span> : null}{action.due ? <DuePill due={action.due} /> : null}</>}
+              verb={<Button dense variant="ghost" loading={busy === `action-done:${action.id}`} onClick={() => completeAction(action.id)}>Done</Button>} />;
+          })}
         </ul> : null}
         <div className="people-add">
           <StringGadget label="They owe you" value={owedDraft} onChange={setOwedDraft} placeholder="What they owe you" onKeyDown={(event) => { if (event.key === "Enter") addOwed(); }} />
@@ -976,7 +984,7 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onPickCalendar 
     </div> : null}
 
     <SurfaceFooter
-      egress={<EgressChip label="THIS DEVICE" scope="local" />}
+      egress={<EgressChip label="THIS DEVICE" />}
       receipt={<span className="people-prep-receipt" data-testid="prep-receipt">PREPARED {preparedAt}</span>}
     />
   </div>;

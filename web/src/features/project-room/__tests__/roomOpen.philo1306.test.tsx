@@ -229,8 +229,12 @@ describe("PHILO-13-06: a Room activity row opens its object", () => {
     expect(opens).toHaveLength(1);
     fireEvent.click(opens[0]);
     // PHILO-17: the meeting opens in its own window.
-    expect(openPrimitive).toHaveBeenCalledWith("meeting:p13-cutover-sync");
-    void openSurfaceOr;
+    expect(openSurfaceOr).toHaveBeenCalledWith(
+      "review-meetings",
+      "/history",
+      "meeting:p13-cutover-sync",
+    );
+    expect(openPrimitive).not.toHaveBeenCalledWith("meeting:p13-cutover-sync");
   });
 });
 

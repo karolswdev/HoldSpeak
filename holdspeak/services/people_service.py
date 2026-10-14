@@ -500,7 +500,9 @@ class PeopleService:
             for alias in relationship.get("owner_aliases") or []
             if isinstance(alias, str) and str(alias).strip()
         ]
-        open_meeting_actions = self._brief_owned_actions(db, owner_aliases)
+        open_meeting_actions = self._brief_owned_actions(
+            db, relationship_id=relationship_id,
+        )
 
         # HS-172-05: Watch-derived summary from persisted snapshots.
         # Reads are free (Article V.5); never triggers an evaluation.
@@ -682,41 +684,67 @@ class PeopleService:
         except Exception as exc:
             raise PeopleServiceError("people_plaintext_unavailable") from exc
 
-    @staticmethod
-    def _brief_owned_actions(db: Any, aliases: list[str]) -> list[dict[str, Any]]:
-        """Read pending actions owned by a saved alias from active meetings."""
-        if db is None or not aliases:
+    def _brief_owned_actions(
+        self,
+        db: Any,
+        *,
+        relationship_id: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Read accepted open actions through the one People owner resolver.
+
+        The action table is plaintext and the relationship is encrypted.  The
+        join therefore stays read-time and in memory.  Display names and
+        aliases use the same ambiguity rules as Room; an ambiguous first name
+        never appears in a person's prep.
+        """
+        if db is None:
             return []
-        alias_keys = {alias.casefold() for alias in aliases}
         try:
             with db._connection() as conn:
                 rows = conn.execute(
                     """SELECT ai.id, ai.task, ai.owner, ai.due, ai.delegated_at,
+                               ai.status, ai.source_type, ai.source_ref,
                                m.id AS meeting_id, m.title AS meeting_title,
                                m.started_at AS meeting_started_at,
                                m.calendar_event_id
                         FROM action_items ai
-                        JOIN meetings m ON m.id = ai.meeting_id
-                        WHERE m.parked = 0
-                          AND ai.status = 'pending'
+                        LEFT JOIN meetings m ON m.id = ai.meeting_id
+                        WHERE COALESCE(m.parked, 0) = 0
+                          AND ai.status NOT IN ('done', 'dismissed', 'completed')
+                          AND ai.review_state = 'accepted'
                           AND TRIM(COALESCE(ai.owner, '')) <> ''
                         ORDER BY ai.created_at, ai.id""",
                 ).fetchall()
-                return [
-                    {
+                result: list[dict[str, Any]] = []
+                for row in rows:
+                    owner = str(row["owner"] or "").strip()
+                    resolved = self.resolve_owner_candidates(owner)
+                    linked = (
+                        resolved.get("state") == "ready"
+                        and resolved.get("link") == "linked"
+                        and str((resolved.get("relationship") or {}).get("id") or "")
+                        == str(relationship_id or "")
+                    )
+                    # An unavailable encrypted store never authorizes a
+                    # plaintext alias match. A ready-but-ambiguous resolver
+                    # also remains nobody's row.
+                    if not linked:
+                        continue
+                    result.append({
                         "id": str(row["id"]),
                         "task": str(row["task"]),
                         "owner": row["owner"],
                         "due": row["due"],
+                        "status": row["status"],
                         "delegated_at": row["delegated_at"],
-                        "meeting_id": str(row["meeting_id"]),
+                        "meeting_id": str(row["meeting_id"] or ""),
                         "meeting_title": row["meeting_title"],
-                        "meeting_started_at": str(row["meeting_started_at"]),
+                        "meeting_started_at": str(row["meeting_started_at"] or ""),
                         "calendar_event_id": row["calendar_event_id"],
-                    }
-                    for row in rows
-                    if str(row["owner"] or "").strip().casefold() in alias_keys
-                ]
+                        "source_type": row["source_type"],
+                        "source_ref": row["source_ref"],
+                    })
+                return result
         except Exception as exc:
             raise PeopleServiceError("people_plaintext_unavailable") from exc
 
@@ -1000,11 +1028,17 @@ class PeopleService:
             for row in meeting_rows:
                 meeting_id = str(row["id"])
 
-                # Open action items BY REFERENCE (never copied).
+                # Open action items BY REFERENCE (never copied). Pending
+                # extraction rows stay out until the owner accepts them in
+                # Needs you; the linked meeting projection uses the same
+                # accepted gate as the owner-specific prep lane.
                 action_rows = conn.execute(
-                    """SELECT id, task, owner, due, delegated_at
+                    """SELECT id, task, owner, due, delegated_at, status,
+                              source_type, source_ref
                        FROM action_items
-                       WHERE meeting_id = ? AND status = 'pending'
+                       WHERE meeting_id = ?
+                         AND review_state = 'accepted'
+                         AND status NOT IN ('done', 'dismissed', 'completed')
                        ORDER BY created_at""",
                     (meeting_id,),
                 ).fetchall()
@@ -1014,7 +1048,10 @@ class PeopleService:
                         "task": str(r["task"]),
                         "owner": r["owner"],
                         "due": r["due"],
+                        "status": r["status"],
                         "delegated_at": r["delegated_at"],
+                        "source_type": r["source_type"],
+                        "source_ref": r["source_ref"],
                     }
                     for r in action_rows
                 ]

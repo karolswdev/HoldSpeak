@@ -41,6 +41,7 @@ export function useCoreWings(
   wings: WingSpec[],
   initial: string,
   door?: string,
+  publish = true,
 ) {
   const [view, setView] = useState(initial);
   const [doorOpen, setDoorOpen] = useState(false);
@@ -61,7 +62,11 @@ export function useCoreWings(
     <SurfaceWings wings={wings} active={view} onChange={setView} />
   );
 
-  useWindowWings(wingNode, door ? [view, doorOpen] : [view]);
+  useWindowWings(
+    publish ? wingNode : null,
+    publish ? (door ? [view, doorOpen] : [view]) : [],
+    publish,
+  );
 
   return { view, setView, doorOpen, setDoorOpen };
 }

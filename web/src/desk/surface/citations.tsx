@@ -5,7 +5,7 @@
 // window, PHILO-17). Ask and Project Memory both speak
 // this species; a third rendering is a defect.
 import { openRef } from "../openObject";
-import { openPrimitive } from "../shell";
+import { openPrimitive, openSurfaceOr } from "../shell";
 import { meetingWindowRef } from "../objectWindows";
 import { Button } from "../../components/signal/Signal";
 
@@ -44,12 +44,10 @@ export function sourceLabel(ref: string): string {
 
 export function openSourceRef(ref: string) {
   if (!refOpensWindow(ref)) return;
-  // PHILO-17 (owner 2026-10-10, "A meeting opens in one window"): a meeting
-  // opens its own window, `pullout:meeting:<id>`; an open one comes to the
-  // front. A view or a transcript row in the ref is the window's place.
+  // PHILO-17 (owner answer): a meeting is a scoped detail in the Meetings
+  // surface. A view or transcript row rides in the scope request.
   if (ref.startsWith("meeting:")) {
-    const windowRef = meetingWindowRef(ref);
-    if (windowRef) openPrimitive(windowRef);
+    if (meetingWindowRef(ref)) openSurfaceOr("review-meetings", "/history", ref);
     return;
   }
   // Thread search hits carry a fragment: thread:<id>#<message_id>.

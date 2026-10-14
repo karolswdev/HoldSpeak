@@ -1,7 +1,7 @@
 // PHILO-17 meetingwin, Astra r1 on #1082 — three fences on the meeting's own
 // window (history/MeetingRecord.tsx, desk/pullouts/MeetingWindow.tsx):
-//  1. a proposal confirmed elsewhere (Review, an agent) leaves Outcomes on the
-//     next signal, though the meeting row itself did not change;
+//  1. a proposal confirmed elsewhere (an agent) leaves Outcomes on the next
+//     signal, though the meeting row itself did not change;
 //  2. the window adopts the durable summary run (QUEUED) and settles it (RAN)
 //     when the meeting's own state goes final;
 //  3. a Stop is final: a slow first `/api/state` that answers after recording
@@ -42,7 +42,7 @@ beforeEach(() => {
 });
 
 describe("Astra r1: the meeting window's own records follow the hub", () => {
-  it("a proposal confirmed elsewhere leaves TO DECIDE on the next signal (the meeting row unchanged)", async () => {
+  it("a proposal confirmed elsewhere updates the Outcomes row on the next signal (the meeting row unchanged)", async () => {
     let state = "proposed";
     vi.mocked(apiFetch).mockImplementation(async (path: string) => {
       const url = String(path);
@@ -53,13 +53,13 @@ describe("Astra r1: the meeting window's own records follow the hub", () => {
       return {} as never;
     });
     render(<MeetingRecord meetingId="m-1" onClose={() => undefined} />);
-    expect(await screen.findByText("TO DECIDE")).toBeTruthy();
+    expect(await screen.findByText("Freeze the old ledger")).toBeTruthy();
     state = "confirmed";
     await act(async () => {
       emit("desk_changed");
       await new Promise((r) => setTimeout(r, 400));
     });
-    await waitFor(() => expect(screen.queryByText("TO DECIDE")).toBeNull());
+    await waitFor(() => expect(screen.queryByText("DECIDED")).toBeTruthy());
     expect(screen.getByText("Freeze the old ledger")).toBeTruthy();
   });
 

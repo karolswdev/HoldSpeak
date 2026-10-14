@@ -23,6 +23,7 @@ describe("Ledger + LedgerRow (Phase 16 kit)", () => {
     const plate = rows[0].querySelector(".surface-ledger-lead [data-testid='kit-kind']") as HTMLElement;
     expect(plate.textContent).toBe("GH");
     expect(plate.getAttribute("title")).toBe("GITHUB");
+    expect(rows[1].querySelector("[data-testid='kit-kind']")?.textContent).toBe("Meeting");
     expect(rows[0].querySelector(".surface-ledger-meta")?.getAttribute("data-tone")).toBe("ok");
     // name, then meta, then the verbs (the row's own grid slot)
     expect([...rows[1].children].map((c) => c.className)).toEqual([
@@ -42,5 +43,20 @@ describe("Ledger + LedgerRow (Phase 16 kit)", () => {
     expect(container.querySelector(".surface-ledger-count")?.textContent).toBe("TODAY 2");
     expect(container.querySelector("[data-testid='kit-kind']")).toBeNull();
     expect(container.querySelector(".surface-ledger-lead")?.textContent).toBe("09:14");
+  });
+
+  it("uses plain words for mixed meeting outcome kinds", () => {
+    const { container } = render(
+      <SurfaceLedger>
+        <ul className="surface-ledger-rows">
+          <SurfaceLedgerRow kind="DEC" primary="Decision" />
+          <SurfaceLedgerRow kind="ACT" primary="Action" />
+          <SurfaceLedgerRow kind="CMT" primary="Commitment" />
+        </ul>
+      </SurfaceLedger>,
+    );
+    expect([...container.querySelectorAll("[data-testid='kit-kind']")].map((node) => node.textContent)).toEqual([
+      "Decision", "Action", "Action",
+    ]);
   });
 });

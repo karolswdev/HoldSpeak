@@ -136,7 +136,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     expect(await screen.findByText("35 S")).toBeInTheDocument();
     expect(screen.getByTestId("arrival-meeting-row")).toHaveTextContent("16 WORDS");
     expect(screen.queryAllByText("We will ship the boundary change on Tuesday.")).toHaveLength(0);
-    expect(screen.getByTestId("arrival-route")).toHaveTextContent("THIS DEVICE");
+    expect(screen.getByTestId("arrival-route")).not.toHaveTextContent("THIS DEVICE");
     expect(screen.getByTestId("arrival-run-intel")).toBeInTheDocument();
     expect(screen.queryByTestId("meeting-summary-text")).toBeNull();
   });
@@ -151,7 +151,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
       "The team reviewed the budget.",
     );
     expect(screen.getByTestId("meeting-summary-topics")).toHaveTextContent("BUDGET");
-    expect(screen.getByTestId("arrival-attempts")).toHaveTextContent("THIS DEVICE");
+    expect(screen.getByTestId("arrival-attempts")).not.toHaveTextContent("THIS DEVICE");
     expect(screen.queryByTestId("arrival-summary-status")).toBeNull();
     expect(screen.getAllByTestId("meeting-summary-text")).toHaveLength(1);
     expect(screen.getAllByText("The team reviewed the budget.")).toHaveLength(1);
@@ -177,7 +177,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     await waitFor(() => expect(screen.getByTestId("arrival-meeting-badge")).toHaveTextContent("RETRYING"));
     expect(screen.getByTestId("arrival-display")).toHaveTextContent("1 needs you");
     expect(screen.getByTestId("arrival-summary-status")).toHaveTextContent(
-      "LAST ATTEMPT · THIS DEVICE",
+      "LAST ATTEMPT",
     );
     expectProducerCause(retry);
     expect(screen.queryByText("Nothing needs you")).toBeNull();
@@ -191,7 +191,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
 
     await waitFor(() => expect(screen.getByTestId("arrival-meeting-badge")).toHaveTextContent("FAILED"));
     expect(screen.getByTestId("arrival-summary-status")).toHaveTextContent(
-      "LAST ATTEMPT · THIS DEVICE",
+      "LAST ATTEMPT",
     );
     expectProducerCause(failed);
     expect(screen.getByTestId("arrival-display")).toHaveTextContent("1 needs you");
@@ -215,7 +215,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     );
     expect(screen.getByTestId("arrival-summary-status")).toHaveTextContent("FAILED");
     expectProducerCause(mixed);
-    expect(screen.getByTestId("summary-record-attempts")).toHaveTextContent("THIS DEVICE");
+    expect(screen.getByTestId("summary-record-attempts")).not.toHaveTextContent("THIS DEVICE");
     // PHILO-15-03: the slab owns the summary; the Chair draws it once, the
     // run's facts inside the same well.
     expect(screen.getAllByTestId("meeting-summary-text")).toHaveLength(1);
@@ -418,7 +418,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
         name: /^Open$/,
       }),
     ).toBeInTheDocument();
-    expect(screen.getByTestId("arrival-attempts")).toHaveTextContent("THIS DEVICE");
+    expect(screen.getByTestId("arrival-attempts")).not.toHaveTextContent("THIS DEVICE");
     expect(screen.queryAllByTestId("arrival-run-intel")).toHaveLength(0);
     expect(mockedApiFetch.mock.calls.filter(([path]) => String(path).endsWith("/intelligence/run"))).toHaveLength(1);
   });
@@ -482,13 +482,13 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     fireEvent.click(await screen.findByTestId("arrival-run-intel"));
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(screen.getByTestId("arrival-meeting-badge")).toHaveTextContent("RETRYING"));
-    expect(screen.getByTestId("arrival-attempts")).toHaveTextContent("THIS DEVICE");
+    expect(screen.getByTestId("arrival-attempts")).not.toHaveTextContent("THIS DEVICE");
     expectProducerCause(snapshots[1]);
 
     emitRuntime("desk_changed");
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(screen.getByTestId("arrival-meeting-badge")).toHaveTextContent("FAILED"));
-    expect(screen.getByTestId("arrival-attempts")).toHaveTextContent("THIS DEVICE");
+    expect(screen.getByTestId("arrival-attempts")).not.toHaveTextContent("THIS DEVICE");
     expectProducerCause(snapshots[2]);
     // PHILO-13-03: the head is the one needs-you snapshot, which re-reads on
     // the same debounced desk_changed frame; it follows within the wait.
@@ -545,19 +545,19 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     emitRuntime("desk_changed");
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1), { timeout: 1000 });
     await waitFor(() => expect(screen.getByTestId("meeting-summary-text")).toHaveTextContent("The team reviewed the budget."));
-    expect(screen.getByTestId("arrival-attempts")).toHaveTextContent("THIS DEVICE");
+    expect(screen.getByTestId("arrival-attempts")).not.toHaveTextContent("THIS DEVICE");
 
     current = 2;
     emitRuntime("desk_changed");
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(2), { timeout: 1000 });
     await waitFor(() => expect(screen.getByTestId("arrival-meeting-badge")).toHaveTextContent("RETRYING"));
-    expect(screen.getByTestId("arrival-summary-status")).toHaveTextContent("LAST ATTEMPT · THIS DEVICE");
+    expect(screen.getByTestId("arrival-summary-status")).toHaveTextContent("LAST ATTEMPT");
 
     current = 3;
     emitRuntime("desk_changed");
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(3), { timeout: 1000 });
     await waitFor(() => expect(screen.getByTestId("arrival-meeting-badge")).toHaveTextContent("FAILED"));
-    expect(screen.getByTestId("arrival-summary-status")).toHaveTextContent("LAST ATTEMPT · THIS DEVICE");
+    expect(screen.getByTestId("arrival-summary-status")).toHaveTextContent("LAST ATTEMPT");
     expect(detailPaths).toHaveLength(4);
   });
 });

@@ -73,7 +73,7 @@ from .memory_grounding import memory_for, project_pages
 
 #: The marked block the project's memory travels in, inside the draft prompt.
 MEMORY_BLOCK_HEADING = "PROJECT MEMORY"
-from .errors import ConflictError, NotFound, ValidationError
+from .errors import ConflictError, NotFound, ServiceError, ValidationError
 from .service_event_ledger import ServiceEventLedger
 
 _log = get_logger("services.project_update_service")
@@ -102,6 +102,18 @@ FALLBACK_RECEIPT_TOKENS: dict[str, str] = {
     FALLBACK_NO_OUTPUT: "DETERMINISTIC · NO OUTPUT",
     FALLBACK_UNPARSEABLE_OUTPUT: "DETERMINISTIC · OUTPUT UNUSABLE",
 }
+
+MODEL_DRAFT_REASON: dict[str, str] = {
+    FALLBACK_ROUTE_UNRESOLVED: "no_engine",
+    FALLBACK_MODEL_UNAVAILABLE: "no_engine",
+    FALLBACK_NO_OUTPUT: "did_not_answer",
+    FALLBACK_UNPARSEABLE_OUTPUT: "not_usable",
+}
+
+
+def model_draft_reason(code: str | None) -> str:
+    """Map internal model failure codes to the closed face vocabulary."""
+    return MODEL_DRAFT_REASON.get(str(code or ""), "did_not_answer")
 
 
 def fallback_receipt_token(code: str | None) -> str | None:
@@ -1927,6 +1939,7 @@ class ProjectUpdateService:
         project_id: str,
         *,
         generator: str = "deterministic",
+        strict_model_failure: bool = False,
     ) -> dict[str, Any]:
         """Draft a project update.
 
@@ -1941,6 +1954,9 @@ class ProjectUpdateService:
             project_id: the project to draft for.
             generator: ``"deterministic"`` (default) or ``"model"``
                        (HS-162-03).
+            strict_model_failure: when true, refuse a requested model draft
+                       if the model cannot produce a valid result. The normal
+                       service path keeps its deterministic fallback.
 
         Returns:
             The persisted draft as a dict (from the updates repo).
@@ -2084,17 +2100,26 @@ class ProjectUpdateService:
                         "memory_refs": memory.refs,
                     }, sort_keys=True, separators=(",", ":"))
             except _ModelDraftFailed as exc:
+                if strict_model_failure:
+                    reason = model_draft_reason(exc.code)
+                    raise ServiceError(
+                        "project_update_model_failed",
+                        "The update engine did not make a draft.",
+                        context={
+                            "status": 409,
+                            "reason": reason,
+                            "generator": "model",
+                            "failure_code": exc.code,
+                        },
+                    ) from exc
                 _log.warning(
-                    "Model drafter failed (%s); falling back to deterministic.",
-                    exc.reason,
+                    "Project update model draft failed; retaining deterministic fallback",
+                    extra={"project_id": project_id, "failure_code": exc.code},
                 )
                 body_md = det_body_md
                 claims_json = det_claims_json
-                # HS-200-08: the fallback NAMES its reason on the row, so the
-                # face shows a token instead of a log line nobody reads.
                 actual_generator = FALLBACK_GENERATOR_PREFIX + exc.code
-                actual_host = None
-                actual_model = None
+                actual_host = actual_model = None
         else:
             body_md = det_body_md
             claims_json = det_claims_json
@@ -2205,6 +2230,7 @@ class ProjectUpdateService:
         *,
         generator: str = "deterministic",
         command_id: str | None = None,
+        strict_model_failure: bool = False,
     ) -> dict[str, Any]:
         """Draft an update with optional command_id replay guard.
 
@@ -2217,6 +2243,7 @@ class ProjectUpdateService:
         req_hash = _request_hash({
             "project_id": project_id,
             "generator": generator,
+            "strict_model_failure": bool(strict_model_failure),
         })
         if command_id is not None:
             existing = self._claim_draft_command(command_id, project_id, req_hash)
@@ -2224,7 +2251,12 @@ class ProjectUpdateService:
                 return existing
 
         try:
-            result = self.draft_update(principal, project_id, generator=generator)
+            result = self.draft_update(
+                principal,
+                project_id,
+                generator=generator,
+                strict_model_failure=strict_model_failure,
+            )
         except BaseException:
             if command_id is not None:
                 # The claim is released: the same command_id may try again.

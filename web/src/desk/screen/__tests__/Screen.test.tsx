@@ -164,13 +164,15 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     const conductor = icon(/^Conductor, DRAWER/);
     expect(conductor.querySelector(".desk-icon-badge")).toBeTruthy();
     expect(conductor.querySelector(".desk-icon-lamp")?.getAttribute("data-tone")).toBe("ask");
-    // Needs you: the desk's count; Parked: no lamp
+    // Needs you: one attention lamp; the desk keeps the count in the drawer
+    // face rather than repeating it as an icon notch.
     const needs = icon(/^Needs you, SMART DRAWER/);
-    expect(within(needs).getByText("4", { selector: ".desk-icon-count" })).toBeTruthy();
+    expect(needs.querySelector(".desk-icon-count")).toBeNull();
+    expect(needs.querySelector(".desk-icon-lamp")?.getAttribute("data-tone")).toBe("ask");
     expect(icon(/^Archive, DRAWER$/).querySelector(".desk-icon-lamp")).toBeNull();
     // loose: what no Project holds; the filed meeting, decision and person are not on the screen
     expect(keys()).toEqual(expect.arrayContaining([
-      "meeting:m-vendor", "note:n-2", "decision:d-otel", "repository:repo-ledger", "thread:t-1", "people:p-avery",
+      "meeting:m-vendor", "note:n-2", "decision:d-otel", "repository:repo-ledger", "people:p-avery",
     ]));
     for (const filed of ["meeting:m-standup", "decision:d-freeze", "people:p-jordan"]) expect(keys()).not.toContain(filed);
     // a loose object Needs you lists wears a lamp
@@ -205,16 +207,11 @@ describe("PHILO-14 A1 — the screen of objects", () => {
   it("393: one 4-column grid in A-1-393's order, no positions", async () => {
     setCompact(true);
     render(<Screen />);
-    await waitFor(() => expect(keys()).toContain("meeting:m-vendor"));
     expect(screen.getByTestId("desk-screen").getAttribute("data-layout")).toBe("grid");
-    const order = keys();
-    expect(order.slice(0, 6)).toEqual([
-      "project:p-ledger", "project:p-obs", "drawer:people", "drawer:conductor", "drawer:needs", "drawer:parked",
-    ]);
-    expect(order.at(-1)).toBe("coder:codex:x1");
-    // PHILO-14 A0c: the People drawer wears the ledger (one person wears the badge).
-    const people = document.querySelector('[data-object-id="drawer:people"] img');
-    expect(people?.getAttribute("src")).toMatch(/\/people-ledger\.png$/);
+    // The phone face is the Go index; object placement is available from the
+    // desktop face and is not duplicated below the menu.
+    expect(keys()).toEqual([]);
+    expect(screen.getByRole("menu", { name: "Go menu" })).toBeTruthy();
     for (const el of document.querySelectorAll<HTMLElement>(".desk-screen-cell")) expect(el.style.left).toBe("");
     // TALK lives in the Capture window at 393 (Speak opens it on demand)
     expect(screen.queryByTestId("desk-screen-talk")).toBeNull();

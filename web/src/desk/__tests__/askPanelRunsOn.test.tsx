@@ -1,5 +1,5 @@
-// PHILO-16 (C), Astra r1 M7: the retired assignment sheet is not reachable
-// from the live Ask face. Its Change opens Runs on at Ask's job.
+// Phase 17: the live Ask face names its effective engine and sends engine
+// setup to the shared Runs on surface.
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AskPanel } from "../components/AskPanel";
@@ -37,11 +37,11 @@ beforeEach(() => {
   })));
 });
 
-describe("AskPanel's assignment atom (PHILO-16 C)", () => {
-  it("Change opens Runs on at Ask's job, never the parked sheet", async () => {
+describe("AskPanel's engine line", () => {
+  it("Choose engine opens Runs on, never the parked assignment sheet", async () => {
     render(<AskPanel />);
-    fireEvent.click(await screen.findByRole("button", { name: "Change" }));
-    expect(shell.openSurfaceOr).toHaveBeenCalledWith("open-concierge", "/models", "ask.answer");
+    fireEvent.click(await screen.findByRole("button", { name: "Choose engine" }));
+    expect(shell.openSurfaceOr).toHaveBeenCalledWith("configure-runs-on", "/settings", "models");
     expect(screen.queryByRole("button", { name: "Save assignment" })).toBeNull();
   });
 });

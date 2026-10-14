@@ -45,14 +45,14 @@ export const WingSlotContext = createContext<
  * the SAME paint at every width. The desk is client-only; there is no SSR
  * pass for this to warn in.
  */
-export function useWindowWings(node: ReactNode, deps: unknown[]) {
+export function useWindowWings(node: ReactNode, deps: unknown[], enabled = true) {
   const setSlot = useContext(WingSlotContext);
   useLayoutEffect(() => {
-    if (!setSlot) return;
+    if (!setSlot || !enabled) return;
     setSlot(node);
     return () => setSlot(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setSlot, ...deps]);
+  }, [setSlot, enabled, ...deps]);
 }
 
 /** The segmented wing control + the one configuration door (gear). */

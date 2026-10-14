@@ -5,7 +5,7 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { dispatchKey } from "../keymap";
 import { menuVerbs, verbById } from "../verbRegistry";
-import { firstWords, thoughtTitle, NEW_THOUGHT_TITLE } from "../thoughtTitle";
+import { firstSixWords, firstWords, thoughtTitle, NEW_THOUGHT_TITLE } from "../thoughtTitle";
 import { useThoughtNoteWriter } from "../pullouts/editors/useThoughtNoteWriter";
 import { saveThoughtWorking, type Thought } from "../thoughts";
 import { openNewThought } from "../newThought";
@@ -69,6 +69,10 @@ describe("the pop-key verb", () => {
 });
 
 describe("the title rule", () => {
+  it("names the first dictation with its first six words", () => {
+    expect(firstSixWords("One two three four five six seven eight")).toBe("One two three four five six");
+    expect(firstSixWords("  One\n two  ")).toBe("One two");
+  });
   it("takes the first words of the first line with words", () => {
     expect(firstWords("\n\n# Ask Priya about the ADR\nmore")).toBe("Ask Priya about the ADR");
     expect(firstWords("- [ ] Hire a second SRE")).toBe("Hire a second SRE");

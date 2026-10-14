@@ -37,6 +37,51 @@
 .desk-screen .desk-icon {
   color: var(--wb-paper);
 }
+.desk-go-home {
+  min-height: 100%;
+  padding: 12px 12px calc(var(--desk-dock-h, 76px) + 16px);
+  box-sizing: border-box;
+  overflow: auto;
+}
+.desk-go-home-group-title {
+  margin: 0;
+  font: 700 var(--font-size-xs) / 1.4 var(--font-mono);
+  letter-spacing: 0.04em;
+  color: var(--wb-paper);
+}
+.desk-go-home-group-title {
+  margin: 8px 0 4px;
+  color: var(--text-muted);
+}
+.desk-go-home-list {
+  display: grid;
+  gap: 2px;
+}
+.desk-go-home-row {
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-start;
+  text-align: left;
+}
+.desk-go-home-glyph {
+  width: 20px;
+  flex: 0 0 20px;
+  text-align: center;
+}
+.desk-go-home-reason {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+}
+.desk-go-home-sep {
+  display: block;
+  height: 1px;
+  margin: 8px 0;
+  background: var(--line-subtle);
+}
 /* 393: one 4-column grid in DOM order (A-1-393). */
 .desk-screen[data-layout="grid"] > .desk-icon-grid {
   display: grid;

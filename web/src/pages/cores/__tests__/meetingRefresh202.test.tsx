@@ -36,11 +36,12 @@ import { apiFetch } from "../../../lib/api";
 import { announceTaskReturn } from "../../../desk/returnToTask";
 import { HistoryCore } from "../HistoryCore";
 import { MeetingRecord } from "../history/MeetingRecord";
-import { openPrimitive } from "../../../desk/shell";
+import { openPrimitive, openSurfaceOr } from "../../../desk/shell";
 
 vi.mock("../../../desk/shell", async (original) => ({
   ...(await original<typeof import("../../../desk/shell")>()),
   openPrimitive: vi.fn(),
+  openSurfaceOr: vi.fn(),
 }));
 vi.mock("../../../lib/api", async (original) => ({
   ...(await original<typeof import("../../../lib/api")>()),
@@ -122,6 +123,8 @@ describe("the open meeting record re-reads itself (HS-202-02)", () => {
     frameListeners.clear();
     route = NO_ROUTE;
     detailReads = 0;
+    vi.mocked(openPrimitive).mockReset();
+    vi.mocked(openSurfaceOr).mockReset();
     wire();
   });
 
@@ -301,7 +304,7 @@ describe("C1 readiness acknowledgement", () => {
       return found as Element;
     });
     fireEvent.click(rowBody);
-    expect(openPrimitive).toHaveBeenCalledWith("meeting:m-1");
+    expect(openSurfaceOr).toHaveBeenCalledWith("review-meetings", "/history", "meeting:m-1");
   });
 
   it("ACKs readiness when the meeting's window opens (every door)", async () => {

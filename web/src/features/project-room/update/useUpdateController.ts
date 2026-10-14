@@ -15,6 +15,13 @@ import type { ProjectUpdate, UpdateLifecycle } from "./model";
 import * as updateApi from "./api";
 
 export type UpdatePosture = "off" | "list" | "editor";
+export type DraftRun = {
+  phase: "idle" | "running" | "success" | "failure";
+  startedAt?: number;
+  elapsedSeconds?: number;
+  reason?: string;
+  generator?: "deterministic" | "model";
+};
 
 /* PHILO-13-07 (B2) — the Room's update place (`list` or `editor:<update>`)
    per project, and the unsaved body per update (never per project, so the
@@ -59,6 +66,7 @@ export function useUpdateController(
 
   // ── Verb busy states ──
   const [draftBusy, setDraftBusy] = useState(false);
+  const [draftRun, setDraftRun] = useState<DraftRun>({ phase: "idle" });
   const [saveBusy, setSaveBusy] = useState(false);
   const [publishBusy, setPublishBusy] = useState(false);
   const [regenerateBusy, setRegenerateBusy] = useState(false);
@@ -196,6 +204,16 @@ export function useUpdateController(
   // ── Draft verb ──
   const draft = useCallback(async (generator: "deterministic" | "model") => {
     if (!projectId) return;
+    // A proposal request can step aside while an editor is dirty or holding a
+    // failed save.  The next Draft update press returns to that same editor;
+    // it does not mint a second draft or discard the owner's words.
+    if (posture === "off" && current) {
+      setPosture("editor");
+      keepPlace(updatePlaceKey(projectId), `editor:${current.id}`);
+      return;
+    }
+    const startedAt = Date.now();
+    setDraftRun({ phase: "running", startedAt, generator });
     setDraftBusy(true);
     setError("");
     try {
@@ -205,14 +223,30 @@ export function useUpdateController(
       setDirty(false);
       setPosture("editor");
       keepPlace(updatePlaceKey(projectId), `editor:${update.id}`);
+      setDraftRun({
+        phase: "success",
+        startedAt,
+        elapsedSeconds: Math.max(0, Math.round((Date.now() - startedAt) / 1000)),
+        generator,
+      });
       // Refresh list in background
       updateApi.fetchUpdates(projectId).then(setUpdates).catch(() => {});
     } catch (reason) {
+      const payload = reason instanceof ApiError && reason.payload && typeof reason.payload === "object"
+        ? reason.payload as Record<string, unknown>
+        : null;
+      setDraftRun({
+        phase: "failure",
+        startedAt,
+        elapsedSeconds: Math.max(0, Math.round((Date.now() - startedAt) / 1000)),
+        reason: String(payload?.reason || "did_not_answer"),
+        generator,
+      });
       fail("DRAFT NOT MADE", reason, () => void draft(generator));
     } finally {
       setDraftBusy(false);
     }
-  }, [projectId]);
+  }, [current, posture, projectId]);
 
   // ── Save verb (draft only) ──
   const save = useCallback(async () => {
@@ -446,6 +480,7 @@ export function useUpdateController(
 
     // Busy states
     draftBusy,
+    draftRun,
     saveBusy,
     publishBusy,
     regenerateBusy,

@@ -39,6 +39,7 @@ SPA_ROUTES = (
     "/studio",
     "/workbench",
     "/profiles",
+    "/models",
     "/companion",
     # PHILO-14 C4: the Conductor drawer's address.
     "/conductor",

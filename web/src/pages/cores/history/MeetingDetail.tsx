@@ -4,7 +4,6 @@ import { NO_TRANSCRIPT_SPEECH, speechWasMissing } from "../../../desk/firstrun/s
 import { useCallback, useEffect, useLayoutEffect, useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { SurfaceLedger, SurfaceLedgerRow, SurfaceSection, SurfaceState } from "../../../desk/surface";
-import { presentValue } from "../../../desk/surface/format";
 import { MeetingConflictRecovery } from "../../../meetings/MeetingConflictRecovery";
 import { MeetingIntelRecovery } from "../../../meetings/MeetingIntelRecovery";
 import {
@@ -21,7 +20,6 @@ import {
 } from "../../../meetings/summaryRoute";
 import { apiFetch } from "../../../lib/api";
 import type { DetailView, Receipt } from "./helpers";
-import { MeetingReview } from "./MeetingReview";
 import {
   MEETING_READS_CAP_MS,
   useMeetingData,
@@ -38,6 +36,7 @@ import { MeetingDecideWell } from "../../../meetings/MeetingDecideWell";
 import { NeedsYouTable, showsRunSummary } from "./NeedsYouTable";
 import { TranscriptWell } from "./TranscriptWell";
 import { AudioOnlyVerb } from "./TranscribeVerb";
+import { CycleGadget, StringGadget } from "../../../desk/surface/gadgets";
 
 
 /** PHILO-17: the meeting window's foot asks its record to open the
@@ -51,29 +50,50 @@ type OutcomeRow = {
   text: string;
   meta: string;
   tone?: "ask" | "ok";
+  actionItemId?: string;
+  proposalId?: string;
+  actionStatus?: string | null;
+  owner?: string;
+  due?: string;
+  gap?: boolean;
+  deferredUntil?: string | null;
   verbs?: ReactNode;
+  children?: ReactNode;
 };
+
+function deferredToken(value: unknown): string {
+  const stamp = String(value ?? "").trim();
+  if (!stamp) return "";
+  const date = new Date(stamp);
+  if (Number.isNaN(date.getTime())) return `NOT NOW · UNTIL ${stamp}`;
+  return `NOT NOW · UNTIL ${date.toLocaleDateString(undefined, { weekday: "short" }).toUpperCase()}`;
+}
 
 /** Phase 16 (the interior kit; the canvas window "Cutover sync"): the
  *  meeting's Decisions and Commitments, each a Section over a Ledger of
- *  kind-plated rows. A decision the meeting proposed asks to be decided
- *  (`TO DECIDE`, Confirm / Dismiss); a confirmed one names its owner.
+ *  kind-plated rows. A proposed decision carries Confirm and Dismiss; a
+ *  confirmed one names its owner.
  *
  *  Commitments are OBLIGATIONS, one row each (Astra r1 M1): an action
  *  proposal names its action item (`action_item_id`, the producer's link in
- *  proposal_bridge_service.py), so the item and its proposal are ONE row,
- *  `TO CONFIRM` while the proposal waits. A dismissed proposal or item is
+ *  proposal_bridge_service.py), so the item and its proposal are ONE row
+ *  while the proposal waits. A dismissed proposal or item is
  *  never drawn. The items are the aftercare's rows, else the meeting's own
  *  (`intel.action_items`). A Section with no rows is not drawn (A.8). */
 export function meetingOutcomes(
-  data: Pick<MeetingData, "ftProposals" | "openActions" | "settledActions">
+  data: Pick<MeetingData, "ftProposals" | "openActions" | "settledActions"> &
+    { completedActionIds?: ReadonlySet<string> }
     & { meetingDecisions?: readonly MeetingDecision[] },
   intelActions: readonly Record<string, unknown>[] = [],
 ): {
   decisions: OutcomeRow[];
   commitments: OutcomeRow[];
 } {
-  const owner = (value: unknown) => presentValue(value).toUpperCase();
+  const owner = (value: unknown) => String(value ?? "").trim();
+  const when = (value: unknown) => {
+    const text = String(value ?? "").trim();
+    return text ? `by ${text}` : "no date";
+  };
   const live = data.ftProposals.filter((p) => p.state !== "dismissed");
   // PHILO-17 ("what did we decide yesterday?"): the decisions the meeting
   // recorded are on its record too (the ledger: never a confirmed action).
@@ -95,7 +115,7 @@ export function meetingOutcomes(
   for (const p of live) {
     if (p.kind !== "decision") continue;
     if (p.state === "proposed") {
-      decisions.push({ key: `ft-${p.id}`, plate: "DEC", text: p.text, meta: "TO DECIDE", tone: "ask" });
+      decisions.push({ key: `ft-${p.id}`, plate: "DEC", text: p.text, meta: "", tone: "ask" });
       continue;
     }
     const paired = recorded.find((d) => same(p, d));
@@ -113,65 +133,84 @@ export function meetingOutcomes(
   }
 
   const actionProposals = data.ftProposals.filter((p) => p.kind === "action");
-  const proposalOf = (itemId: string) => actionProposals.find((p) => p.action_item_id && p.action_item_id === itemId);
   const toConfirm = (p: FollowThroughProposal): OutcomeRow => ({
     key: `ft-${p.id}`, plate: "ACT", text: p.text,
-    meta: p.due_hint ? `TO CONFIRM · BY ${String(p.due_hint).toUpperCase()}` : "TO CONFIRM", tone: "ask",
+    meta: deferredToken(p.deferred_until) || `${owner(p.owner ?? p.owner_hint) || "no owner"} · ${when(p.due ?? p.due_hint)}`,
+    tone: "ask", proposalId: p.id,
+    owner: owner(p.owner ?? p.owner_hint), due: String(p.due ?? p.due_hint ?? "").trim(),
+    gap: !owner(p.owner ?? p.owner_hint) || !String(p.due ?? p.due_hint ?? "").trim(),
+    deferredUntil: p.deferred_until,
   });
-  const items = data.openActions.length || data.settledActions.length
-    ? [...data.openActions, ...data.settledActions]
-    : [...intelActions];
-  const itemIds = new Set<string>();
   const commitments: OutcomeRow[] = [];
-  for (const [index, row] of items.entries()) {
-    const id = String(row.id ?? "");
+  const itemIds = new Set<string>();
+  // Outcomes is a single projection.  Every linked action carries both the
+  // proposal decision and the action completion fact from the server.
+  for (const proposal of actionProposals) {
+    if (proposal.state === "dismissed") continue;
+    const id = String(proposal.action_item_id ?? "");
     if (id) itemIds.add(id);
-    const status = String(row.status ?? "").toLowerCase();
-    if (status === "dismissed") continue;
-    const proposal = id ? proposalOf(id) : undefined;
-    if (proposal?.state === "dismissed") continue;
-    if (proposal?.state === "proposed") {
+    if (proposal.state === "proposed") {
       commitments.push(toConfirm(proposal));
       continue;
     }
-    const text = String(row.task ?? row.text ?? row.title ?? proposal?.text ?? "Action item");
-    const who = owner(row.owner) || owner(proposal?.owner);
+    const text = proposal.text || "Action item";
+    const who = owner(proposal.owner) || owner(proposal.owner_hint);
+    const due = proposal.due ?? proposal.due_hint;
+    const linkedStatus = String(proposal.action_status ?? proposal.action_item_status ?? "open").toLowerCase();
+    const done = linkedStatus === "done" || linkedStatus === "dismissed";
+    commitments.push({
+      key: `item-${id || proposal.id}`, plate: "ACT", text,
+      meta: done ? (who ? `${who} · Done` : "Done") : `${who || "no owner"} · ${when(due)}`,
+      tone: done ? "ok" : undefined,
+      actionItemId: id || undefined,
+      proposalId: proposal.id,
+      actionStatus: linkedStatus || null,
+    });
+  }
+  const items = data.openActions.length || data.settledActions.length
+    ? [...data.openActions, ...data.settledActions]
+    : [...intelActions];
+  for (const [index, row] of items.entries()) {
+    const id = String(row.id ?? "");
+    if (id && itemIds.has(id)) continue;
+    const status = data.completedActionIds?.has(id)
+      ? "done"
+      : String(row.status ?? "").toLowerCase();
+    if (status === "dismissed") continue;
+    const text = String(row.task ?? row.text ?? row.title ?? "Action item");
+    const who = owner(row.owner);
+    const due = row.due;
     const done = status === "done";
     commitments.push({
       key: `item-${id || index}`, plate: "ACT", text,
-      meta: done ? (who ? `DONE · ${who}` : "DONE") : who || "UNASSIGNED",
+      meta: done ? (who ? `${who} · Done` : "Done") : `${who || "no owner"} · ${when(due)}`,
       tone: done ? "ok" : undefined,
+      actionItemId: id || undefined,
+      actionStatus: status || null,
     });
-  }
-  // An action proposal whose item this face did not read is its own row.
-  for (const p of live) {
-    if (p.kind !== "action" || (p.action_item_id && itemIds.has(p.action_item_id))) continue;
-    commitments.push(p.state === "proposed"
-      ? toConfirm(p)
-      : { key: `ft-${p.id}`, plate: "ACT", text: p.text, meta: owner(p.owner) || owner(p.owner_hint) || "UNASSIGNED" });
   }
   return { decisions, commitments };
 }
 
-function OutcomeLedger({ label, rows, testId }: { label: string; rows: OutcomeRow[]; testId: string }) {
+function OutcomeLedger({ label, rows, testId, controls }: { label: string; rows: OutcomeRow[]; testId: string; controls?: ReactNode }) {
   if (!rows.length) return null;
   return (
     <SurfaceSection label={label} count={rows.length || null} data-testid={testId}>
-      <SurfaceLedger label={label} cols="kit">
+      <SurfaceLedger label={label} cols="kit" controls={controls}>
         <ul className="surface-ledger-rows">
           {rows.map((row) => (
             <SurfaceLedgerRow
               key={row.key}
               data-testid={`${testId}-row`}
               kind={row.plate}
-              kindTitle={row.plate === "DEC" ? "DECISION" : "ACTION"}
+              kindTitle={row.plate === "DEC" ? "Decision" : "Action"}
               primary={row.text}
               meta={row.meta}
               metaTone={row.tone}
               trailing={row.verbs}
               wrap
               expands={false}
-            />
+            >{row.children}</SurfaceLedgerRow>
           ))}
         </ul>
       </SurfaceLedger>
@@ -187,28 +226,118 @@ export function MeetingOutcomes({ data, meeting }: { data: MeetingData; meeting:
   const { decisions, commitments } = meetingOutcomes(data, intelActions);
   // The proposals' verbs: Confirm (the plate) and Dismiss. Never the filled
   // primary: the meeting's one primary is Send (the foot).
+  const [people, setPeople] = useState<Array<{ display_name?: string }>>([]);
+  const [drafts, setDrafts] = useState<Record<string, { owner: string; due: string }>>({});
+  const [more, setMore] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    let live = true;
+    void apiFetch<{ relationships?: Array<{ display_name?: string }> }>("/api/people/relationships")
+      .then((body) => { if (live) setPeople(body.relationships ?? []); })
+      .catch(() => undefined);
+    return () => { live = false; };
+  }, []);
+  const ownerOptions = [
+    { value: "", label: "Who?" },
+    { value: "Me", label: "Me" },
+    ...people
+      .map((person) => String(person.display_name ?? "").trim())
+      .filter(Boolean)
+      .map((name) => ({ value: name, label: name })),
+  ];
   const verbsFor = (row: OutcomeRow) => {
     const id = row.key.startsWith("ft-") ? row.key.slice(3) : "";
     const pending = id && data.ftProposals.some((p) => p.id === id && p.state === "proposed");
+    if (!pending && row.actionItemId) {
+      const actionId = row.actionItemId;
+      if (row.actionStatus === "done") {
+        return (
+          <Button dense variant="secondary" loading={data.busy} data-testid="action-reopen-btn"
+            aria-label={`Reopen: ${row.text}`} onClick={() => void data.completeAction?.(actionId, "reopen")}>
+            Reopen
+          </Button>
+        );
+      }
+      if (row.actionStatus !== "dismissed") {
+        return (
+          <Button dense variant="secondary" loading={data.busy} data-testid="action-done-btn"
+            aria-label={`Done: ${row.text}`} onClick={() => void data.completeAction?.(actionId)}>
+            Done
+          </Button>
+        );
+      }
+    }
     if (!pending) return undefined;
+    const draft = drafts[id] ?? { owner: row.owner ?? "", due: row.due ?? "" };
+    const setDraft = (field: "owner" | "due", value: string) => {
+      setDrafts((current) => ({ ...current, [id]: { ...draft, [field]: value } }));
+    };
     return (
       <>
         <Button dense variant="secondary" loading={data.busy} data-testid="proposal-confirm-btn"
-          aria-label={`Confirm: ${row.text}`} onClick={() => void data.confirmProposal(id)}>
+          aria-label={`Confirm: ${row.text}`} onClick={() => void data.confirmProposal(id, {
+            owner: draft.owner || undefined,
+            due: draft.due || undefined,
+          })}>
           Confirm
         </Button>
-        <Button dense variant="ghost" loading={data.busy} data-testid="proposal-dismiss-btn"
-          aria-label={`Dismiss: ${row.text}`} onClick={() => void data.dismissProposal(id)}>
-          Dismiss
+        <Button dense variant="ghost" loading={data.busy} data-testid="proposal-more-btn"
+          aria-expanded={more[id] || undefined} onClick={() => setMore((current) => ({ ...current, [id]: !current[id] }))}>
+          More
         </Button>
+        {more[id] ? (
+          <>
+            <Button dense variant="ghost" loading={data.busy} data-testid="proposal-defer-btn"
+              aria-label={`Not now: ${row.text}`} onClick={() => void data.deferProposal(id)}>
+              Not now
+            </Button>
+            <Button dense variant="ghost" loading={data.busy} data-testid="proposal-dismiss-btn"
+              aria-label={`Dismiss: ${row.text}`} onClick={() => void data.dismissProposal(id)}>
+              Dismiss
+            </Button>
+          </>
+        ) : null}
       </>
     );
   };
-  const withVerbs = (rows: OutcomeRow[]) => rows.map((row) => ({ ...row, verbs: verbsFor(row) }));
+  const gapFor = (row: OutcomeRow) => {
+    if (!row.gap || !row.proposalId) return undefined;
+    const id = row.proposalId;
+    const draft = drafts[id] ?? { owner: row.owner ?? "", due: row.due ?? "" };
+    const setDraft = (field: "owner" | "due", value: string) => {
+      setDrafts((current) => ({ ...current, [id]: { ...draft, [field]: value } }));
+    };
+    return (
+      <div className="meeting-outcome-gap" data-testid="outcome-gap">
+        {!draft.owner ? <CycleGadget label="Who?" value={draft.owner} options={ownerOptions} onChange={(value) => setDraft("owner", value)} disabled={data.busy} /> : null}
+        {!draft.due ? <StringGadget label="When?" type="date" value={draft.due} onChange={(value) => setDraft("due", value)} disabled={data.busy} /> : null}
+      </div>
+    );
+  };
+  const withVerbs = (rows: OutcomeRow[]) => rows.map((row) => ({
+    ...row,
+    verbs: verbsFor(row),
+    children: gapFor(row),
+  }));
+  const eligible = commitments.filter((row) => {
+    const id = row.proposalId;
+    if (!id || row.gap) return false;
+    const proposal = data.ftProposals.find((item) => item.id === id);
+    if (!proposal || proposal.state !== "proposed") return false;
+    if (!(proposal.support === "supported" || proposal.support === "source_linked")) return false;
+    if (Array.isArray(proposal.unknowns) && proposal.unknowns.length > 0) return false;
+    if (data.reviewRevision && proposal.extraction_revision
+      && proposal.extraction_revision !== data.reviewRevision) return false;
+    return true;
+  });
+  const controls = eligible.length ? (
+    <Button dense variant="primary" loading={data.busy} data-testid="proposal-confirm-all-btn" onClick={() => void data.confirmAll()}>
+      Confirm all {eligible.length}
+    </Button>
+  ) : null;
   return (
     <>
       <OutcomeLedger label="Decided" rows={withVerbs(decisions)} testId="meeting-decisions" />
-      <OutcomeLedger label="Who owes what" rows={withVerbs(commitments)} testId="meeting-commitments" />
+      <OutcomeLedger label="Who owes what" rows={withVerbs(commitments)} testId="meeting-commitments" controls={controls} />
     </>
   );
 }
@@ -221,10 +350,7 @@ export function MeetingDetail({
   onDeleted,
   onReceipt,
   onRunIntelligence,
-  onReview,
-  onOpenEvidence,
   runRefusal,
-  footerRunReceipt,
   onTranscribe,
   saidOnFace,
   revision = 0,
@@ -234,7 +360,7 @@ export function MeetingDetail({
   saidOnFace?: string | null;
   /** PHILO-17 transcribe: start Transcribe on this audio-only meeting. */
   onTranscribe?: (id: string) => Promise<unknown>;
-  /** "outcomes" (the face), "review" (HS-200-12, posture 4) or "artifacts". */
+  /** "outcomes" (the face) or "artifacts". */
   view: DetailView;
   /** HS-109-02/05: a resolved decision moment seeks this transcript row. */
   momentSegmentIndex?: number | null;
@@ -245,15 +371,8 @@ export function MeetingDetail({
   /** HS-201-04 — called with the route this RECORD displays, so the
    *  disclosure and the request are the same object. */
   onRunIntelligence?: (route: PlannedRoute | null) => void;
-  /** HS-200-12 — the way to the review wing from NEEDS YOU. */
-  onReview?: () => void;
-  /** HS-200-12 — `Open evidence`: the outcomes face, scrolled to a segment. */
-  onOpenEvidence?: (segmentIndex: number | null) => void;
   /** HS-201-04 — the hub's 409 on this record's last run gesture. */
   runRefusal?: SummaryRefusal | null;
-  /** PHILO-15-07 (B15): this meeting's summary-run receipt (QUEUED → RAN);
-   *  the Review wing draws its own footer, so it shows it there. */
-  footerRunReceipt?: Receipt | null;
   /** PHILO-17: bumped by the meeting window when its records may have moved. */
   revision?: number;
 }) {
@@ -323,7 +442,7 @@ export function MeetingDetail({
 
   return (
     <SurfaceSection>
-      <MeetingHeader meeting={meeting} data={data} compact={view === "review"} saidOnFace={saidOnFace} />
+      <MeetingHeader meeting={meeting} data={data} compact={false} saidOnFace={saidOnFace} />
       {/* PHILO-17 (the desk sweep): the record's body is mounted at once
           (its wells start their reads) but drawn only when its first reads
           end, the Send well's included, or at the cap: a late read never
@@ -361,17 +480,6 @@ export function MeetingDetail({
           artifactRows={artifactRows}
           meetingTitle={meetingTitle}
         />
-      ) : view === "review" ? (
-        <MeetingReview
-          meetingId={id}
-          onOpenEvidence={(segmentIndex) => onOpenEvidence?.(segmentIndex)}
-          onOpenTranscript={() => onOpenEvidence?.(null)}
-          onRunIntelligence={
-            onRunIntelligence ? () => onRunIntelligence(displayedRoute) : undefined
-          }
-          onChanged={onDeleted}
-          runReceipt={footerRunReceipt ?? null}
-        />
       ) : (
         <>
           {/* PHILO-17 (the Today language): what was said first (the
@@ -388,7 +496,6 @@ export function MeetingDetail({
             plannedRoute={displayedRoute}
             refusal={runRefusal}
             durableRefusal={readLastRefusal(detail ?? meeting)}
-            onReview={onReview}
             onRunIntelligence={
               onRunIntelligence ? () => onRunIntelligence(displayedRoute) : undefined
             }

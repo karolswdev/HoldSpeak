@@ -506,8 +506,8 @@ describe("HS-200-11: the Prepare face states coverage, sources and the route bef
     const route = await screen.findByTestId("prepare-route");
     expect(route.getAttribute("data-state")).toBe("ready");
     expect(screen.getByTestId("prepare-route-model").textContent?.trim()).toBe("QWEN3 35B");
-    expect(route.textContent).toContain("THIS DEVICE");
-    expect(route.textContent).not.toContain("127.0.0.1");
+    // Same-device work has no passive egress badge on the face.
+    expect(route.textContent).not.toContain("THIS DEVICE");
 
     const captions = Array.from(posture.querySelectorAll(".surface-section-head h3")).map((h) => h.textContent?.trim());
     expect(captions[0]).toBe("SOURCES 4");
@@ -634,6 +634,7 @@ describe("PHILO-14 A5b: a proposal request over the Room", () => {
     [room(pid)]: () => clone(P172_ROOM_BEFORE),
     [`GET /api/projects/${pid}/proposals`]: () => clone(P172_PROPOSALS),
     [`GET /api/projects/${pid}/updates`]: () => ({ updates: [draft()], latest_published_update_id: null }),
+    [`POST /api/projects/${pid}/updates/draft`]: () => ({ success: true, update: draft() }),
   });
   const puts = () => calls.filter((c) => c.key === `PUT /api/updates/${DRAFT.update.id}`);
   // The row is the `li` (data-selected); its line carries the testid and is what scrolls
@@ -641,8 +642,8 @@ describe("PHILO-14 A5b: a proposal request over the Room", () => {
   const selected = () => document.querySelector(".surface-ledger-row[data-selected] [data-testid=proposal-row]");
 
   async function openEditor() {
+    await waitFor(() => expect(screen.getByTestId("updates-verb")).not.toBeDisabled());
     fireEvent.click(await screen.findByTestId("updates-verb"));
-    fireEvent.click((await screen.findAllByTestId("update-list-item"))[0]);
     return (await screen.findByTestId("update-body-textarea")) as HTMLTextAreaElement;
   }
 
@@ -708,6 +709,7 @@ describe("PHILO-14 A5b: a proposal request over the Room", () => {
           fireEvent.click(within(wings).getByRole("tab", { name: "History" }));
           await screen.findByTestId("room-history");
         } else {
+          await waitFor(() => expect(screen.getByTestId("updates-verb")).not.toBeDisabled());
           fireEvent.click(screen.getByRole("button", { name: "Draft update" }));
           await screen.findByTestId("update-posture");
         }
@@ -818,7 +820,7 @@ describe("HS-200-11: Prepare pressed — sent, kept, refused and stopped as the 
     expect(screen.getByTestId("prepare-head-name").textContent?.trim()).toBe("Brief ready");
     const lifecycle = () => screen.getByTestId("prepare-lifecycle").querySelector(".surface-state-chip")?.getAttribute("aria-label");
     expect(lifecycle()).toBe("DRAFT");
-    expect(screen.getByTestId("prepare-footer-egress").textContent?.trim()).toBe("THIS DEVICE");
+    expect(screen.getByTestId("prepare-footer-egress").textContent?.trim()).toBe("");
     const receipt = screen.getByTestId("prepare-footer-receipt").textContent?.trim() ?? "";
     expect(receipt.startsWith("QWEN3 35B")).toBe(true);
     expect(screen.getByTestId("prepare-head").textContent).not.toContain("NOTHING SENT");
@@ -844,7 +846,7 @@ describe("HS-200-11: Prepare pressed — sent, kept, refused and stopped as the 
     const sent = await screen.findByTestId("prepare-sent-token");
     expect(screen.getByTestId("prepare-head").textContent).not.toContain("NOTHING SENT");
     expect(sent.textContent?.trim()).toBe("SENT · 127.0.0.1 · NOTHING USABLE RECEIVED");
-    expect(screen.getByTestId("prepare-footer-egress").textContent?.trim()).toBe("THIS DEVICE");
+    expect(screen.getByTestId("prepare-footer-egress").textContent?.trim()).toBe("127.0.0.1");
     expect(screen.getByTestId("prepare-footer-receipt").textContent?.trim()).toBe("SENT · 127.0.0.1 · NOTHING USABLE RECEIVED");
     expect(screen.getByTestId("prepare-route").querySelector(".surface-state-chip")?.getAttribute("aria-label")).toBe("OUTPUT UNUSABLE");
     expect(screen.getByTestId("prepare-purpose-kept").textContent?.trim()).toBe("PURPOSE KEPT");
@@ -942,6 +944,7 @@ type Gets = Record<string, unknown>;
 type Press = (init: Init) => unknown;
 const misses: string[] = [];
 let hubGets: Gets = {};
+let assignmentConfigured = false;
 
 function hubAnswer(value: unknown): Promise<unknown> {
   if (value && typeof value === "object" && "__status" in (value as Record<string, unknown>)) {
@@ -951,14 +954,36 @@ function hubAnswer(value: unknown): Promise<unknown> {
   return Promise.resolve(clone(value));
 }
 
-function replay(gets: Gets, presses: Record<string, Press> = {}) {
+function replay(gets: Gets, presses: Record<string, Press> = {}, configured = false) {
   hubGets = gets;
+  assignmentConfigured = configured;
   misses.length = 0;
   apiFetch.mockImplementation((url: string, init: Init = {}) => {
+    const path = url.split("?")[0];
     const method = init.method ?? "GET";
-    calls.push({ key: `${method} ${url.split("?")[0]}`, json: init.json });
+    calls.push({ key: `${method} ${path}`, json: init.json });
+    if (path === "/api/inference/assignments") {
+      return hubAnswer(assignmentConfigured ? {
+        task_overrides: [{
+          id: "project.update_draft",
+          effective: {
+            status: "assigned",
+            assignment: { entries: [{ label: "QWEN3 32B Q6", profile_id: "qwen", boundary: "private_network" }] },
+          },
+        }],
+      } : { task_overrides: [] });
+    }
     const press = presses[`${method} ${url}`];
     if (press) return Promise.resolve(press(init)).then(hubAnswer);
+    if (method === "POST" && path.endsWith("/updates/draft")) {
+      const updates = hubGets[path.slice(0, -"/draft".length)] as { updates?: unknown[] } | undefined;
+      const recorded = Array.isArray(updates?.updates) ? updates.updates[0] : null;
+      const projectId = path.split("/")[3] || "";
+      return hubAnswer({
+        success: true,
+        update: recorded ?? { ...clone(DRAFT.update), project_id: projectId },
+      });
+    }
     const key = method === "GET" ? url : `${method} ${url}`;
     if (key in hubGets) return hubAnswer(hubGets[key]);
     misses.push(`${method} ${url}`);
@@ -972,10 +997,9 @@ const tokenTexts = (testId: string) =>
   Array.from(document.querySelectorAll(`[data-testid="${testId}"]`)).map((el) => (el.textContent ?? "").trim());
 
 async function openFirstUpdate() {
+  await waitFor(() => expect(screen.getByTestId("updates-verb")).not.toBeDisabled());
   fireEvent.click(await screen.findByTestId("updates-verb"));
   await screen.findByTestId("update-posture");
-  const items = await screen.findAllByTestId("update-list-item");
-  fireEvent.click(items[0]);
   return screen.findByTestId("update-editor");
 }
 
@@ -984,7 +1008,7 @@ describe("HS-173-02: the Update editor names who drafted it", () => {
   // replaces: tests/e2e/test_hs173_update_glass.py::test_model_draft_footer_393 (the same DOM fact; the rig's 393 leg asserted the model token only)
   it("a model draft: the footer names QWEN3 32B Q6 and the LAN host; 1 UNSUPPORTED, 3 LINKED · MIGRATED; PR #612, KAN-7, MTG 09-05", async () => {
     const { pid, gets } = U173.model;
-    replay(gets);
+    replay(gets, {}, true);
     render(<WindowHarness scope={`project:${pid}`} />);
     await openFirstUpdate();
     expect(screen.getByTestId("update-footer-model").textContent).toContain("QWEN3 32B Q6");

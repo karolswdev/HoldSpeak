@@ -922,6 +922,15 @@ plate (dense or not), with the 44 px halo at the narrow desk.
 
 ## SurfaceSwitchboard (PHILO-16 C, the Runs on board)
 
+## EngineLine and RunLine (Phase 17)
+
+`useEngine(capabilityId)` reads the assignment roster and returns the shared
+engine fact `{ state: "set" | "none" | "unread" | "failed", model, place }`.
+`EngineLine` renders that fact before a run and owns the Choose engine or Try
+again verb. `RunLine` renders one run state (`idle`, `running`, `success`, or
+`failure`) and takes its closed reason from `runWords.ts`. Faces pass route
+facts into these components; they do not map server sentences with regexes.
+
 The picture of what runs on what (COMPOSITOR.md §12, canvas Board 2). It
 replaces the parked HS-101 list switchboard (`Surface.tsx`, rendered
 nowhere). It decides nothing: the app answers `accepts` and writes in

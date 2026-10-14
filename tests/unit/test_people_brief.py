@@ -61,10 +61,13 @@ def _make_plain_db(tmp_path: Path) -> Any:
         started_at TEXT NOT NULL, ended_at TEXT,
         title TEXT, calendar_event_id TEXT)""")
     conn.execute("""CREATE TABLE action_items (
-        id TEXT PRIMARY KEY, meeting_id TEXT NOT NULL, task TEXT NOT NULL,
+        id TEXT PRIMARY KEY, meeting_id TEXT, task TEXT NOT NULL,
         owner TEXT, due TEXT, status TEXT NOT NULL DEFAULT 'pending',
+        review_state TEXT NOT NULL DEFAULT 'accepted',
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
-        delegated_at TEXT)""")
+        delegated_at TEXT,
+        source_type TEXT NOT NULL DEFAULT 'meeting',
+        source_ref TEXT NOT NULL DEFAULT '')""")
     conn.execute("""CREATE TABLE decision_records (
         id TEXT PRIMARY KEY, decision_text TEXT NOT NULL, rationale TEXT,
         lifecycle TEXT NOT NULL DEFAULT 'active',
@@ -649,6 +652,15 @@ class TestBriefEnrichment:
                 "INSERT INTO action_items (id, meeting_id, task, owner, status) VALUES "
                 "('ai-1', 'm-1', 'Ship it', 'Jan', 'pending'), "
                 "('ai-2', 'm-1', 'Done', 'Jan', 'completed')",
+            )
+            # The plaintext fixture models the review gate explicitly. Add a
+            # pending extraction row so this test proves it is excluded.
+            conn.execute(
+                "INSERT INTO action_items (id, meeting_id, task, owner, status, review_state) "
+                "VALUES ('ai-pending', 'm-1', 'Not accepted', 'Jan', 'open', 'pending')",
+            )
+            conn.execute(
+                "UPDATE action_items SET review_state = 'accepted' WHERE id IN ('ai-1', 'ai-2')",
             )
 
         brief = service.one_on_one_brief(OWNER, rel["id"], db=plain_db)

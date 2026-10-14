@@ -13,13 +13,13 @@ Validation errors at generation: **0**.
 
 | Measure | Present / total or count |
 | --- | ---: |
-| Source paths | 268 / 268 |
-| Test paths | 210 / 210 |
-| Documentation paths | 228 / 228 |
-| Assertions inspected | 210 |
-| Tests executed | 178 |
+| Source paths | 270 / 270 |
+| Test paths | 208 / 208 |
+| Documentation paths | 231 / 231 |
+| Assertions inspected | 208 |
+| Tests executed | 170 |
 | Records with an executed assertion | 77 |
-| Semantic records unresolved | 75 |
+| Semantic records unresolved | 76 |
 
 ## Documentation classes
 
@@ -52,7 +52,7 @@ Validation errors at generation: **0**.
 | `meeting.capture` | capabilities | 3/3 | 2/2 | 2 | 2 | 1 | partially_evidenced |
 | `meeting.import` | capabilities | 2/2 | 3/3 | 3 | 3 | 1 | partially_evidenced |
 | `meeting.intelligence` | capabilities | 5/5 | 8/8 | 8 | 8 | 0 | partially_evidenced |
-| `meeting.aftercare` | capabilities | 9/9 | 11/11 | 11 | 11 | 0 | partially_evidenced |
+| `meeting.aftercare` | capabilities | 9/9 | 8/8 | 8 | 3 | 0 | partially_evidenced |
 | `model.registry` | capabilities | 2/2 | 1/1 | 1 | 1 | 1 | partially_evidenced |
 | `model.assignment` | capabilities | 5/5 | 2/2 | 2 | 2 | 1 | partially_evidenced |
 | `model.route_plan` | capabilities | 3/3 | 2/2 | 2 | 2 | 2 | partially_evidenced |
@@ -65,7 +65,7 @@ Validation errors at generation: **0**.
 | `voice.prebrief_selection` | capabilities | 1/1 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `voice.symbol_settings` | capabilities | 1/1 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `voice.language_settings` | capabilities | 1/1 | 1/1 | 1 | 0 | 0 | unresolved |
-| `voice.wake` | capabilities | 1/1 | 2/2 | 2 | 2 | 0 | partially_evidenced |
+| `voice.wake` | capabilities | 1/1 | 2/2 | 2 | 1 | 0 | partially_evidenced |
 | `voice.browser_remote_dictation` | capabilities | 2/2 | 2/2 | 2 | 2 | 2 | partially_evidenced |
 | `meeting.decision_lifecycle` | capabilities | 3/3 | 8/8 | 8 | 8 | 0 | partially_evidenced |
 | `meeting.action_lifecycle` | capabilities | 1/1 | 1/1 | 1 | 1 | 0 | partially_evidenced |
@@ -94,8 +94,9 @@ Validation errors at generation: **0**.
 | `desk.runtime` | capabilities | 2/2 | 2/2 | 2 | 0 | 1 | unresolved |
 | `desk.native_host` | capabilities | 1/1 | 0/0 | 0 | 0 | 0 | unresolved |
 | `desk.dock.live` | capabilities | 1/1 | 1/1 | 1 | 1 | 0 | partially_evidenced |
-| `project.update.linked_week` | capabilities | 3/3 | 4/4 | 4 | 4 | 0 | partially_evidenced |
+| `project.update.linked_week` | capabilities | 3/3 | 5/5 | 5 | 5 | 0 | partially_evidenced |
 | `people.prep.read` | capabilities | 1/1 | 1/1 | 1 | 1 | 0 | partially_evidenced |
+| `desk.note.task` | capabilities | 2/2 | 1/1 | 1 | 1 | 0 | partially_evidenced |
 | `agents.thread_persistent` | capabilities | 3/3 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `agents.thread_tool_loop` | capabilities | 3/3 | 3/3 | 3 | 0 | 0 | unresolved |
 | `agents.interview` | capabilities | 3/3 | 3/3 | 3 | 3 | 0 | partially_evidenced |
@@ -112,7 +113,7 @@ Validation errors at generation: **0**.
 | `integration.actuators` | capabilities | 3/3 | 3/3 | 3 | 2 | 0 | partially_evidenced |
 | `companion.ipad_client` | capabilities | 3/3 | 2/2 | 2 | 0 | 0 | unresolved |
 | `companion.aipi_audio_control` | capabilities | 3/3 | 2/2 | 2 | 0 | 0 | unresolved |
-| `companion.qlippy_presence` | capabilities | 2/2 | 2/2 | 2 | 1 | 0 | partially_evidenced |
+| `companion.qlippy_presence` | capabilities | 2/2 | 1/1 | 1 | 0 | 0 | unresolved |
 | `channels.document_sources` | capabilities | 2/2 | 3/3 | 3 | 3 | 0 | partially_evidenced |
 | `channels.slack` | capabilities | 2/2 | 2/2 | 2 | 0 | 0 | unresolved |
 | `runtime.kernel` | components | 2/2 | 0/0 | 0 | 0 | 0 | unresolved |

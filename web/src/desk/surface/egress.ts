@@ -2,7 +2,7 @@
 // Maps a model host string to the label the EgressChip shows and the
 // scope colour it wears.  Four callers (ProjectRoomCore, MeetingHeader,
 // SettingsCore, SystemShade) collapsed here; the vocabulary is:
-//   THIS DEVICE        (local/LOCAL/this_device, and loopback: 127.x, localhost)
+//   (empty)            (local/LOCAL/this_device, and loopback: 127.x, localhost)
 //   <ip> · LAN         (RFC-1918 private IPs)
 //   REMOTE · <ip>      (origin=remote with a caller IP)
 //   <host>             (everything else — cloud hosts show as-is)
@@ -142,8 +142,8 @@ export function hostPlace(
 
 /**
  * Derive the egress label and scope for an EgressChip from a raw host
- * string.  Never returns "LOCAL" (the vocabulary is THIS DEVICE / LAN /
- * REMOTE / the host name).
+ * string. Never returns "LOCAL"; same-device routes are blank, while LAN,
+ * remote and external routes name the host.
  */
 export function egressFor(host: string | null | undefined): {
   label: string;
@@ -154,9 +154,9 @@ export function egressFor(host: string | null | undefined): {
   // (holdspeak/deployment_revisions.py:97), the value a bound intel job
   // records as its host when the model runs here; it read as a cloud host.
   // PHILO-17 (U16): a loopback address (`127.0.0.1`) is this machine too;
-  // it read as a cloud host on the meeting, four times.
+  // it used to read as a cloud host on the meeting, four times.
   const place = hostPlace(host);
-  if (place.place === "mac") return { label: "THIS DEVICE", scope: "local" };
+  if (place.place === "mac") return { label: "", scope: undefined };
   if (place.place === "lan") return { label: `${host} · LAN`, scope: "local" };
   return { label: host, scope: "cloud" };
 }

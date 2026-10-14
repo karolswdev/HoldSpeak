@@ -29,7 +29,9 @@ vi.mock("../../pageSupport", () => ({
     setData: vi.fn(), loading: false, error: "", setError: vi.fn(), reload: vi.fn(),
   }),
 }));
-vi.mock("../core-hooks", () => ({ useCoreWings: () => ({ view: "settings" }) }));
+vi.mock("../core-hooks", () => ({
+  useCoreWings: () => ({ view: "settings", setView: vi.fn() }),
+}));
 vi.mock("../ContextualAssignment", () => ({ ContextualAssignment: () => null }));
 
 const puts = () => apiFetch.mock.calls.filter(([url, init]) => url === "/api/settings" && init?.method === "PUT");

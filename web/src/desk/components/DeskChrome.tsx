@@ -19,9 +19,10 @@ import { subscribeMicPhase, type MicPhase } from "../../lib/micSession";
 import { DeskToolShelf } from "./DeskToolShelf";
 import { DeskMenuBar } from "./DeskMenuBar";
 import { useFrontWindowId, useAllOpenWindows } from "./window/windowRegistry";
-import { ScreenSwitcher } from "./window/ScreenSwitcher";
 import { useNeedsYou } from "../needsYou";
 import { openNeedsYouDrawer } from "../screen/open";
+import { useAftercare } from "../intelligenceAttention";
+import { openSourceRef } from "../surface/citations";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import { useDeskWriteReceipt } from "../hooks/useWriteReceipt";
 import { useCompactViewport } from "../useCompactViewport";
@@ -40,18 +41,31 @@ const MARK_VERBS = ["desk.refresh"];
  * number counts (not the system shade). */
 function AttentionBell() {
   const { count } = useNeedsYou();
+  const aftercare = useAftercare();
+  const [readyVisible, setReadyVisible] = useState(Boolean(aftercare));
+  useEffect(() => {
+    if (!aftercare) {
+      setReadyVisible(false);
+      return;
+    }
+    setReadyVisible(true);
+    const timer = window.setTimeout(() => setReadyVisible(false), 6000);
+    return () => window.clearTimeout(timer);
+  }, [aftercare?.meetingId, aftercare?.title]);
   const badge = count > 0 ? count : 0;
+  const ready = readyVisible && aftercare;
   return (
     <Button
       variant="chrome"
       className="desk-bell"
-      aria-label={badge ? `Needs you: ${needYouWords(badge)}` : "Needs you"}
-      title="Needs you"
+      aria-label={ready ? `Meeting ready: ${ready.title}` : badge ? `Needs you: ${needYouWords(badge)}` : "Needs you"}
+      title={ready ? "Meeting ready" : "Needs you"}
       data-testid="desk-bell"
-      onClick={() => openNeedsYouDrawer()}
+      onClick={() => ready ? openSourceRef(`meeting:${ready.meetingId}?view=review`) : openNeedsYouDrawer()}
     >
       {/* HS-111-09 — 16px source renders at 16 CSS px (integer-true). */}
       <img src={SYSTEM.menuBell} alt="" width={16} height={16} className="desk-chrome-sprite" draggable={false} />
+      {ready ? <span className="desk-bell-ready" role="status">READY</span> : null}
       {badge ? <strong>{badge}</strong> : null}
     </Button>
   );
@@ -91,9 +105,6 @@ function ScreenTitle() {
   const front = useFrontWindowId();
   const open = useAllOpenWindows();
   const name = (front ? open.find((w) => w.id === front)?.label : null) ?? "Desk";
-  // PHILO-13-17 (C7, Q2): at 393 the title is the window switcher.
-  const compact = useCompactViewport();
-  if (compact) return <ScreenSwitcher name={name} />;
   return (
     <span className="desk-screen-title" data-testid="desk-screen-title">
       <span className="desk-screen-name" title={name}>{name}</span>

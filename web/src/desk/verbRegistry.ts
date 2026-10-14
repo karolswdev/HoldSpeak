@@ -13,7 +13,8 @@
 import { useDesk } from "./store";
 import { openIntelligence } from "./intelligenceNavigation";
 import { openSurfaceOr } from "./shell";
-import { openPerson, openProjectUpdates } from "./openObject";
+import { openPerson, openProjectRename, openProjectUpdates } from "./openObject";
+import { apiFetch } from "../lib/api";
 import { objectByRef } from "./world";
 import { DESK_TOOLS, KIND_GLYPH } from "./tools";
 import { applicationForAction } from "./applications";
@@ -467,6 +468,22 @@ export const VERBS: Verb[] = [
     },
   },
   {
+    id: "object.draft-update",
+    label: "Draft update",
+    menu: "object",
+    scope: "object",
+    glyph: "✦",
+    keywords: ["draft", "update", "project"],
+    ghost: (ctx) => {
+      const o = selected(ctx);
+      return o?.kind === "project" ? null : "Select a Project";
+    },
+    run: (ctx) => {
+      const o = selected(ctx);
+      if (o?.kind === "project") openProjectUpdates(o.id);
+    },
+  },
+  {
     id: "object.ask",
     label: "Ask AI",
     menu: "object",
@@ -562,7 +579,11 @@ export const VERBS: Verb[] = [
     run: (ctx) => {
       const o = selected(ctx);
       if (!o) return;
-      if (o.kind !== "directory" && primitiveCan(o.kind, "rename")) useDesk.getState().openEditor(o.id, ctx.origin);
+      if (o.kind === "project" && primitiveCan(o.kind, "rename")) {
+        openProjectRename(o.id);
+      } else if (o.kind !== "directory" && primitiveCan(o.kind, "rename")) {
+        useDesk.getState().openEditor(o.id, ctx.origin);
+      }
     },
   },
   {
@@ -627,6 +648,27 @@ export const VERBS: Verb[] = [
       window.dispatchEvent(
         new CustomEvent(OBJECT_DELETE_REQUEST, { detail: { ref: ctx.selectedRef } }),
       );
+    },
+  },
+  {
+    id: "object.archive",
+    label: "Archive",
+    menu: "object",
+    scope: "object",
+    group: "danger",
+    glyph: "⌫",
+    ghost: (ctx) => {
+      const o = selected(ctx);
+      return o?.kind === "project" && primitiveCan(o.kind, "archive")
+        ? null
+        : "Select a Project";
+    },
+    run: (ctx) => {
+      const o = selected(ctx);
+      if (o?.kind !== "project" || !primitiveCan(o.kind, "archive")) return;
+      void apiFetch(`/api/projects/${encodeURIComponent(o.id)}`, { method: "DELETE" })
+        .then(() => useDesk.getState().refresh())
+        .catch(() => undefined);
     },
   },
   // ── Go (the applications - DESK_TOOLS is the data truth) ────────────

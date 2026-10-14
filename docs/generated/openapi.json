@@ -13269,6 +13269,28 @@
         ]
       }
     },
+    "/api/door/items": {
+      "post": {
+        "description": "Create an owner-confirmed task from a Desk object.\n\nMCP keeps its broader Door write contract for agents.  The web face is\ndeliberately owner-only: pressing Add is the owner's consent and the\ntask is already accepted for Follow-through.",
+        "operationId": "add_door_item_api_door_items_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Add Door Item Api Door Items Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Add Door Item",
+        "tags": [
+          "door"
+        ]
+      }
+    },
     "/api/follow-through/board": {
       "get": {
         "operationId": "board_api_follow_through_board_get",

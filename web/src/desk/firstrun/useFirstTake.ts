@@ -27,6 +27,7 @@ import {
   FirstValueTracker,
   stageFirstValueNoteOpen,
 } from "../firstValue";
+import { firstSixWords } from "../thoughtTitle";
 
 /** The retain scope FirstWords uses: a failed take is retried from it. */
 const SCOPE = "first-words";
@@ -217,7 +218,7 @@ export function useFirstTake({
     const noteId = firstValueKeepNoteId();
     const result = await apiFetch<{ note?: { id?: string } }>("/api/notes", {
       method: "POST",
-      json: { id: noteId, title: "First dictation", body_markdown: text, tags: ["dictation"] },
+      json: { id: noteId, title: firstSixWords(text), body_markdown: text, tags: ["dictation"] },
     });
     return `note:${String(result.note?.id || noteId)}`;
   }, []);

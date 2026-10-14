@@ -47,6 +47,36 @@ export interface FollowThroughProposal {
    *  (PHILO-17: a recorded decision is the same one only by identity). */
   decision_record_id?: string | null;
   source_artifact_id?: string | null;
+  support?: string | null;
+  unknowns?: Array<{ type?: string; value?: string }>;
+  deferred_until?: string | null;
+  /** The linked action's lifecycle; proposal state is confirmation only. */
+  action_status?: string | null;
+  action_item_status?: string | null;
+  action_completed_at?: string | null;
+  extraction_revision?: string | null;
+}
+
+export interface OutcomeReviewResponse {
+  proposals?: FollowThroughProposal[];
+  revision?: string | null;
+}
+
+async function readOutcomeReview(id: string): Promise<OutcomeReviewResponse> {
+  try {
+    const current = await apiFetch<OutcomeReviewResponse>(
+      `/api/meetings/${encodeURIComponent(id)}/outcome-review`,
+    );
+    // A rolling hub can answer the new route with an empty envelope while
+    // the old projection is still available. Treat that as an absent read so
+    // the meeting remains readable during the transition.
+    if (Array.isArray(current?.proposals)) return current;
+  } catch {
+    // Older hubs expose only the list route.
+  }
+  return apiFetch<OutcomeReviewResponse>(
+    `/api/meetings/${encodeURIComponent(id)}/follow-through-proposals`,
+  );
 }
 
 export interface MeetingData {
@@ -60,6 +90,8 @@ export interface MeetingData {
   proposalRows: Record<string, unknown>[];
   openActions: Record<string, unknown>[];
   settledActions: Record<string, unknown>[];
+  /** Action ids completed from this record before the detail projection catches up. */
+  completedActionIds: ReadonlySet<string>;
   authority: Record<string, unknown>;
   aftercare: Record<string, unknown>;
   busy: boolean;
@@ -78,8 +110,12 @@ export interface MeetingData {
   durationS: number;
   /** HS-172: follow-through proposals for this meeting. */
   ftProposals: FollowThroughProposal[];
-  confirmProposal: (id: string) => Promise<void>;
+  reviewRevision: string | null;
+  confirmProposal: (id: string, fields?: { owner?: string; due?: string }) => Promise<void>;
   dismissProposal: (id: string) => Promise<void>;
+  deferProposal: (id: string) => Promise<void>;
+  confirmAll: () => Promise<void>;
+  completeAction: (id: string, verb?: "done" | "reopen") => Promise<void>;
   /** PHILO-17: the decisions the meeting recorded (the `decisions` table,
    *  `GET /api/decisions?meeting_id=`), not only its proposals. */
   meetingDecisions: MeetingDecision[];
@@ -128,9 +164,14 @@ export function useMeetingData(
   const [proposals, setProposals] = useState<Record<string, unknown>>({});
   const [authority, setAuthority] = useState<Record<string, unknown>>({});
   const [ftProposals, setFtProposals] = useState<FollowThroughProposal[]>([]);
+  const [reviewRevision, setReviewRevision] = useState<string | null>(null);
   const [meetingDecisions, setMeetingDecisions] = useState<MeetingDecision[]>([]);
+  const [completedActionIds, setCompletedActionIds] = useState<ReadonlySet<string>>(new Set());
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    setCompletedActionIds(new Set());
+  }, [id]);
   // PHILO-17 (the desk sweep; Astra r1 on #1108): each first read, by name,
   // for this meeting. A read counts once it ended (read or failed); a records
   // read superseded by a newer one (a desk change) counts when the newer one
@@ -201,11 +242,11 @@ export function useMeetingData(
       .then(mine(setAuthority))
       .catch(() => { if (live) setAuthority({}); })
       .finally(end("authority"));
-    void apiFetch<{ proposals: FollowThroughProposal[] }>(
-      `/api/meetings/${encodeURIComponent(id)}/follow-through-proposals`,
-    )
-      .then(mine(newest((res: { proposals?: FollowThroughProposal[] }) =>
-        setFtProposals(res.proposals ?? []))))
+    void readOutcomeReview(id)
+      .then(mine(newest((res: OutcomeReviewResponse) => {
+        setFtProposals(res.proposals ?? []);
+        setReviewRevision(res.revision ?? null);
+      })))
       .catch(() => { if (live && records === recordsSeq.current) setFtProposals([]); })
       .finally(endNewest("ftProposals"));
     void apiFetch<{ decisions?: MeetingDecision[] }>(
@@ -221,7 +262,7 @@ export function useMeetingData(
   }, [id, meeting, markEnded]);
   // PHILO-17 (Astra r1): Confirm in Review writes proposal and decision
   // records, not the meeting row, so the reads above (keyed on the meeting
-  // object) never re-ran and Outcomes still said TO DECIDE. These reads
+  // object) never re-ran and Outcomes still showed stale proposal state. These reads
   // follow the host's revision on their own; the meeting object (and the
   // Send well's form) stays as it is.
   useEffect(() => {
@@ -240,9 +281,10 @@ export function useMeetingData(
       .then(mine(setAftercare)).catch(() => undefined).finally(endNewest("aftercare"));
     void apiFetch<MeetingProposalsResponse>(`/api/meetings/${encodeURIComponent(id)}/proposals`)
       .then(mine(setProposals)).catch(() => undefined).finally(endNewest("proposals"));
-    void apiFetch<{ proposals: FollowThroughProposal[] }>(
-      `/api/meetings/${encodeURIComponent(id)}/follow-through-proposals`,
-    ).then(mine((res: { proposals?: FollowThroughProposal[] }) => setFtProposals(res.proposals ?? [])))
+    void readOutcomeReview(id).then(mine((res: OutcomeReviewResponse) => {
+      setFtProposals(res.proposals ?? []);
+      setReviewRevision(res.revision ?? null);
+    }))
       .catch(() => undefined).finally(endNewest("ftProposals"));
     void apiFetch<{ decisions?: MeetingDecision[] }>(
       `/api/decisions?scope=all&limit=500&meeting_id=${encodeURIComponent(id)}`,
@@ -299,16 +341,64 @@ export function useMeetingData(
   };
 
   // HS-172: confirm/dismiss follow-through proposals.
-  const confirmProposal = async (proposalId: string) => {
+  const confirmProposal = async (
+    proposalId: string,
+    fields: { owner?: string; due?: string } = {},
+  ) => {
     setBusy(true);
     try {
       await apiFetch(`/api/proposals/${encodeURIComponent(proposalId)}/confirm`, {
         method: "POST",
+        json: fields,
       });
       // Phase 16 (Astra r1 M2): the confirmed proposal stays on the record
       // (Decisions · n keeps it, now decided), never vanishing until a reload.
-      setFtProposals((prev) => prev.map((p) => (p.id === proposalId ? { ...p, state: "confirmed" } : p)));
+      setFtProposals((prev) => prev.map((p) => (
+        p.id === proposalId
+          ? { ...p, state: "confirmed", owner: fields.owner ?? p.owner, due: fields.due ?? p.due }
+          : p
+      )));
       onReceipt({ text: "CONFIRMED" });
+    } catch (reason) {
+      onReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const deferProposal = async (proposalId: string) => {
+    setBusy(true);
+    try {
+      const result = await apiFetch<{ deferred_until?: string }>(
+        `/api/proposals/${encodeURIComponent(proposalId)}/defer`,
+        { method: "POST", json: {} },
+      );
+      setFtProposals((prev) => prev.map((p) => (
+        p.id === proposalId ? { ...p, deferred_until: result.deferred_until ?? null } : p
+      )));
+      onReceipt({ text: "NOT NOW" });
+    } catch (reason) {
+      onReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const confirmAll = async () => {
+    setBusy(true);
+    try {
+      const result = await apiFetch<{ accepted_count?: number }>(
+        `/api/meetings/${encodeURIComponent(id)}/proposals/accept-reviewed`,
+        { method: "POST", json: {} },
+      );
+      const refreshed = await readOutcomeReview(id);
+      setFtProposals(refreshed.proposals ?? []);
+      setReviewRevision(refreshed.revision ?? null);
+      const accepted = Number(result.accepted_count ?? 0);
+      // The eligible guard belongs to the face, but a concurrent read can
+      // still leave the hub with nothing to accept. Never print a counter of
+      // zero; the receipt's useful fact is simply that confirmation finished.
+      onReceipt({ text: accepted > 0 ? `CONFIRMED ${accepted}` : "CONFIRMED" });
     } catch (reason) {
       onReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
     } finally {
@@ -324,6 +414,46 @@ export function useMeetingData(
       });
       setFtProposals((prev) => prev.map((p) => (p.id === proposalId ? { ...p, state: "dismissed" } : p)));
       onReceipt({ text: "DISMISSED" });
+    } catch (reason) {
+      onReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const completeAction = async (actionItemId: string, verb: "done" | "reopen" = "done") => {
+    setBusy(true);
+    try {
+      await apiFetch("/api/follow-through/complete", {
+        method: "POST",
+        json: { card_id: actionItemId, verb, payload: {} },
+      });
+      setFtProposals((prev) => prev.map((p) => (
+        p.action_item_id === actionItemId
+          ? { ...p, action_status: verb === "done" ? "done" : "open", action_item_status: verb === "done" ? "done" : "open" }
+          : p
+      )));
+      setCompletedActionIds((current) => {
+        const next = new Set(current);
+        if (verb === "done") next.add(actionItemId);
+        else next.delete(actionItemId);
+        return next;
+      });
+      setAftercare((current) => {
+        const keys = ["action_items", "actions", "items"];
+        const key = keys.find((candidate) => Array.isArray(current[candidate]));
+        if (!key) return current;
+        return {
+          ...current,
+          [key]: (current[key] as unknown[]).map((row) => {
+            if (!row || typeof row !== "object" || String((row as Record<string, unknown>).id ?? "") !== actionItemId) return row;
+            return verb === "done"
+              ? { ...(row as Record<string, unknown>), status: "done", completed_at: new Date().toISOString() }
+              : { ...(row as Record<string, unknown>), status: "open", completed_at: null };
+          }),
+        };
+      });
+      onReceipt({ text: verb === "done" ? "DONE" : "REOPENED" });
     } catch (reason) {
       onReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
     } finally {
@@ -438,6 +568,7 @@ export function useMeetingData(
     proposalRows,
     openActions,
     settledActions,
+    completedActionIds,
     authority,
     aftercare,
     busy,
@@ -451,8 +582,12 @@ export function useMeetingData(
     startedAt,
     durationS,
     ftProposals,
+    reviewRevision,
     confirmProposal,
     dismissProposal,
+    deferProposal,
+    confirmAll,
+    completeAction,
     meetingDecisions,
     firstRead,
   };

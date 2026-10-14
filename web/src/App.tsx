@@ -34,7 +34,9 @@ function SurfaceRedirect({ route }: { route: DemotedRoute }) {
           : null);
       if (id) scope = `${route.subjectKind}:${id}`;
     }
-    stageSurfaceOpen(route.surface, scope);
+    stageSurfaceOpen(route.surface, route.scope
+      ? (scope ? `${route.scope}::${scope}` : route.scope)
+      : scope);
     setQueued(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [route.path]);

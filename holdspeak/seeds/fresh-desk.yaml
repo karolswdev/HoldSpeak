@@ -2,11 +2,10 @@
 # Ordinary seed creates only ids never seen before; Reset to seed is the one
 # explicit force-restore path for this packaged text and organization.
 #
-# PHILO-15 11 (B20, owner ruling 2026-10-07): the seed carries only the notes a
-# Senior Architect wants on day one, at most five: Start here, About me, 1:1
-# prep, Current priorities, Weekly update. The five notes it carried before
-# (How I like help, People & vocabulary, Meeting preferences, Effect guard,
-# Egress guard) are parked as text in docs/internal/PARKED-SEED-NOTES.md.
+# PHILO-17 (words): a fresh desk carries only Start here and the Weekly update
+# prompt. About me, Current priorities, 1:1 prep and Everyday context are
+# parked as text in docs/internal/PARKED-SEED-NOTES.md. Ordinary seed never
+# removes those records from a desk seeded before this manifest.
 #
 # PHILO-17 U18 (owner walk 2026-10-10: after ten minutes he did not know what
 # the product is for): Start here is the loop in three jobs, each with its
@@ -21,10 +20,10 @@ directories:
     member_ids: [hs-seed-start-here]
   - id: hs-seed-personal
     name: Personal
-    member_ids: [hs-seed-about-me]
+    member_ids: []
   - id: hs-seed-work
     name: Work
-    member_ids: [hs-seed-current-priorities]
+    member_ids: []
   - id: hs-seed-meetings
     name: Meetings
   - id: hs-seed-decisions
@@ -43,21 +42,6 @@ notes:
       - [Review what needs you](door:needs) See the actions and decisions that wait for you.
 
       These notes are yours. Edit, move or delete them.
-  - id: hs-seed-about-me
-    title: About me
-    body_markdown: |
-      What would be useful to share when you explicitly attach this context?
-
-      - Name or form of address: [example: ]
-      - Work or life context: [example: ]
-  - id: hs-seed-current-priorities
-    title: Current priorities
-    body_markdown: |
-      What deserves attention right now?
-
-      - Priority: [example: ]
-      - Why it matters: [example: ]
-      - Next step: [example: ]
   # A Thread starter for /prompt (orchestrator ruling 2026-10-11), not a
   # desk job: the Thread composer's /prompt lists notes tagged `prompt`.
   - id: hs-seed-prompt-weekly-update
@@ -68,13 +52,6 @@ notes:
       Focus on decisions made, commitments moved, and open questions.
       One paragraph per topic, no filler.
       End with what needs attention next week.
-  - id: hs-seed-prompt-one-on-one-prep
-    title: 1:1 prep
-    body_markdown: |
-      Before a 1:1, open the person in People and select Prep. Prep shows the agenda, the open actions and the next 1:1.
-
-      - [Open People](door:open-people)
-
 recipes:
   - id: hs-seed-mode-desk
     name: Desk
@@ -96,10 +73,3 @@ recipes:
     avatar: "#059669"
     kind: mode
     system_prompt: "Reflect on decisions, thoughts, and memory. Plan, do not execute."
-
-kbs:
-  - id: hs-seed-everyday-context
-    name: Everyday context
-    member_ids:
-      - hs-seed-about-me
-      - hs-seed-current-priorities

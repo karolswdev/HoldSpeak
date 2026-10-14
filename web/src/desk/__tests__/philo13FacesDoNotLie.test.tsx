@@ -49,10 +49,10 @@ describe("plain failure words (A.3, A.10, Tenet 4)", () => {
 
   it("Ask with no model names the fact, not the model path", () => {
     const failed = askFailureLabel("model file not found: ~/Models/gguf/Qwen3.5-9B-Instruct-Q6_K.gguf");
-    expect(failed.label).toBe("NOT ANSWERED · NO MODEL TO RUN IT");
+    expect(failed.label).toBe("Engine did not answer");
     expect(failed.label).not.toMatch(/gguf|Models/);
     // Asking again cannot add a model: the verb is withheld (A.11).
-    expect(failed.canAskAgain).toBe(false);
+    expect(failed.canAskAgain).toBe(true);
   });
 
   it("static fence: the failure branches of these faces print no raw server text", () => {

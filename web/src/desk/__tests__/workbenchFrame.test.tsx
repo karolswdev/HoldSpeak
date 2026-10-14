@@ -85,7 +85,7 @@ describe("the gadget set (§3)", () => {
     render(<Frame id="g2" title="People" />);
     const head = screen.getByRole("region", { name: "People" }).querySelector("header")!;
     expect(Array.from(head.querySelectorAll("button")).map((b) => b.getAttribute("aria-label"))).toEqual([
-      "Close People",
+      "Back from People",
       "To back People",
     ]);
   });

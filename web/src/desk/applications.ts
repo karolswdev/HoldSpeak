@@ -36,7 +36,9 @@ export interface DeskApplication {
   subjectRef?: string;
   surface?: DeskSurfaceSpec;
   aliases?: readonly DeskApplicationAlias[];
-  dock?: { order: number; launch: "surface" | "intelligence" };
+  dock?: { order: number; launch: "surface" | "intelligence"; phone?: number };
+  /** Parked surfaces keep their manifest and hub id without a live host. */
+  parked?: string;
   /** PHILO-17 (doors): the row in the menu bar's Go. `app` rows lead Go in
    * `order`; `tools` rows ride Go ▸ Tools. No `go`: not in Go (the palette
    * still finds a grouped application). */
@@ -76,7 +78,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     description: "Briefs, follow-through, receipts, and reasons.",
     glyph: "◈",
     href: "/",
-    dock: { order: 0, launch: "intelligence" },
+    dock: { order: 0, launch: "intelligence", phone: 0 },
     go: { order: 3, section: "app" },
   },
   {
@@ -118,16 +120,15 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     glyph: "▣",
     href: "/history",
     group: "app",
-    dock: { order: 2, launch: "surface" },
+    dock: { order: 2, launch: "surface", phone: 2 },
     go: { order: 2, section: "app" },
     shortcut: "⌃2",
     surface: {
       eyebrow: "Meeting memory",
       minW: 640,
-      // PHILO-17 (U24): the list strip, the record and the six footer verbs
-      // need more than 640 x 600 (the footer took three rows).
-      defaultW: 920,
-      defaultH: 720,
+      // PHILO-17 (windows): the canonical first-open meeting room size.
+      defaultW: 720,
+      defaultH: 600,
       load: () =>
         import("../pages/cores/HistoryCore").then((module) => ({
           default: module.HistoryCore,
@@ -147,7 +148,8 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     glyph: "◉",
     href: "/conductor",
     group: "tool",
-    // PHILO-17 (doors): the Conductor's door is its desk drawer and Go.
+    // PHILO-17 (doors): the Conductor's door is its desk drawer, Dock and Go.
+    dock: { order: 4, launch: "surface" },
     go: { order: 6, section: "app" },
     shortcut: "⌃3",
   },
@@ -185,13 +187,14 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     aliases: [
       { key: "configure-integrations", scope: "integration:destinations" },
       { key: "configure-integration" },
-      // PARKED (HS-170-03): configure-runs-on now opens the Concierge window directly.
-      // { key: "configure-runs-on", scope: "models" },
+      { key: "configure-runs-on", scope: "models" },
+      { key: "open-concierge", scope: "models" },
       { key: "read-runtime-docs", scope: "guide" },
     ],
     surface: {
       eyebrow: "Configuration",
       minW: 560,
+      defaultW: 640,
       defaultH: 600,
       load: () =>
         import("../pages/cores/SettingsCore").then((module) => ({
@@ -223,7 +226,6 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     glyph: "◷",
     href: "/cadence",
     group: "tool",
-    go: { order: 4, section: "tools" },
     surface: {
       eyebrow: "Follow-through",
       minW: 520,
@@ -272,7 +274,6 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     glyph: "§",
     href: "/context",
     group: "tool",
-    go: { order: 6, section: "tools" },
     surface: {
       eyebrow: "Owner",
       minW: 480,
@@ -290,7 +291,6 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     glyph: "⚒",
     href: "/workbenches",
     group: "tool",
-    go: { order: 1, section: "tools" },
     surface: {
       eyebrow: "Work",
       minW: 560,
@@ -325,7 +325,6 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     glyph: "⊙",
     href: "/activity",
     group: "tool",
-    go: { order: 2, section: "tools" },
     surface: {
       eyebrow: "This-device context",
       minW: 480,
@@ -344,7 +343,6 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     glyph: "▤",
     href: "/project-memory",
     group: "tool",
-    go: { order: 7, section: "app" },
     surface: {
       eyebrow: "Long memory",
       minW: 800,
@@ -359,29 +357,15 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
     action: "open-concierge",
     windowId: "surface-concierge",
-    // PHILO-16 (C): one name, Runs on (product-language.json); the window id
-    // and the /models href stay so every caller and saved desk still opens it.
-    label: "Runs on",
+    // PHILO-17: the id remains for old saved rows; the live face is the
+    // Engines wing of Settings and this surface is parked.
+    label: "Engines",
     description: "What HoldSpeak does, wired to what you have.",
     glyph: "▣",
     href: "/models",
-    // HS-200-04 (return-to-task): `configure-runs-on` had no hosted surface, so
-    // every "Set up AI" handoff fell back to navigate("/settings") — which
-    // unmounts the calling face and loses an unfinished Thought answer. As an
-    // alias of the hosted Concierge it opens in-world instead: the task stays
-    // mounted underneath and is still there when the window closes.
-    aliases: [{ key: "configure-runs-on" }],
-    surface: {
-      eyebrow: "Settings",
-      // The board's three columns (canvas Board 2); a phone draws the list.
-      minW: 900,
-      defaultH: 680,
-      // PHILO-16 (C): the Switchboard replaces the Concierge (parked).
-      load: () =>
-        import("../features/runson/RunsOnCore").then((module) => ({
-          default: module.RunsOnCore,
-        })),
-    },
+    parked: "settings:models",
+    // Compatibility row only. Settings owns the live Engines host; saved
+    // rows are retired by the hub and new callers use its alias.
   },
   {
     action: "project-setup",
@@ -408,7 +392,6 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     glyph: "∷",
     href: "/#processes",
     group: "tool",
-    go: { order: 3, section: "tools" },
     surface: {
       eyebrow: "Kernel",
       minW: 520,
@@ -426,7 +409,6 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     glyph: "⌘",
     href: "/commands",
     group: "tool",
-    go: { order: 5, section: "tools" },
     surface: {
       eyebrow: "Voice commands",
       minW: 460,
@@ -443,6 +425,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     description: "Relationships, commitments, and follow-through.",
     glyph: "♧",
     href: "/",
+    dock: { order: 3, launch: "surface", phone: 3 },
     // PHILO-17 (doors): the People drawer on the desk, and Go.
     go: { order: 5, section: "app" },
     surface: {
@@ -474,23 +457,25 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
     action: "configure-runs-on",
     windowId: "surface-concierge",
-    label: "Runs on",
+    label: "Engines",
     description: "What HoldSpeak does, wired to what you have.",
     glyph: "▣",
     href: "/models",
     group: "tool",
     mark: 2,
+    parked: "settings:models",
   },
   {
     action: "configure-integrations",
     windowId: "surface-settings",
-    label: "Connections",
+    label: "Accounts",
     description: "Configure connected destinations and credentials.",
     glyph: "↗",
     href: "/settings",
     group: "tool",
     mark: 3,
     subjectRef: "integration:destinations",
+    parked: "settings:integrations",
   },
 ] as const;
 
@@ -544,6 +529,21 @@ export const DESK_APPLICATION_ALIASES = Object.fromEntries(
     ]),
   ),
 ) as Record<string, { target: string; scope?: string }>;
+
+/** Compose a wing scope with the object/job that opened it. The first
+ * segment selects the hosted face; the remaining segments survive the handoff
+ * and reload. `::` is deliberately explicit so a model/job or account/door
+ * can never overwrite the Settings wing selection. */
+export function composeApplicationScope(
+  defaultScope?: string,
+  requestedScope?: string,
+): string | undefined {
+  const base = defaultScope?.trim();
+  const request = requestedScope?.trim();
+  if (!base) return request || undefined;
+  if (!request || request === base) return base;
+  return `${base}::${request}`;
+}
 
 export function applicationForAction(action: string): DeskApplication | undefined {
   return DESK_APPLICATIONS.find((application) => application.action === action);

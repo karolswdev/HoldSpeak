@@ -17,7 +17,7 @@ export type ReadsResult = { thought: Thought; receipt: ThoughtContextReceipt; wo
 
 const CANDIDATE_CAP = 6;
 
-/* HS-201-12 — band 4's `Change`: what the AI may read for THIS note, as an
+/* HS-201-12 — band 4's `Add a note`: what the AI may read for THIS note, as an
    in-window well under the foot.  Library species only, no portal overlay,
    no prose, no raw elements (the Phase 141 picker has all three, and
    keeps them for the Note pullout, where default-context policy lives). */
@@ -42,7 +42,7 @@ export function ThoughtReadsWell({
   const wellRef = useRef<HTMLDivElement | null>(null);
 
   // The well takes focus when it opens, so Escape always lands in it and
-  // the caller can send focus back to Change when it closes.
+  // the caller can send focus back to Add a note when it closes.
   useEffect(() => { wellRef.current?.focus(); }, []);
 
   useEffect(() => {
@@ -124,9 +124,9 @@ export function ThoughtReadsWell({
     </div>;
   };
 
-  return <div ref={wellRef} className="thought-reads-well" role="region" aria-label="What the AI reads" tabIndex={-1}>
+  return <div ref={wellRef} className="thought-reads-well" role="region" aria-label="Add notes" tabIndex={-1}>
     <span className="thought-reads-find">
-      <StringGadget label="Find a note" micLabel="Speak the note name" value={query} onChange={setQuery} placeholder="Find a note…" />
+      <StringGadget label="Add notes" micLabel="Speak a note to add" value={query} onChange={setQuery} placeholder="Find a note…" />
     </span>
     <span className="thought-reads-rows">
       {attachments.map((item) => row(item.ref, item.title, item.leaf_count, true))}

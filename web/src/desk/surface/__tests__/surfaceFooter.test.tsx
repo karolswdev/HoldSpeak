@@ -1,6 +1,7 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { SurfaceFooter } from "../SurfaceFooter";
+import { Button } from "../../../components/signal/Signal";
 
 describe("SurfaceFooter", () => {
   it("renders three slots", () => {
@@ -11,9 +12,9 @@ describe("SurfaceFooter", () => {
         verbs={<button type="button">Copy</button>}
       />,
     );
-    expect(screen.getByText("egress")).toBeInTheDocument();
-    expect(screen.getByText("receipt")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Copy" })).toBeInTheDocument();
+    expect(screen.getByText("egress")).toBeTruthy();
+    expect(screen.getByText("receipt")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Copy" })).toBeTruthy();
     expect(container.querySelector("footer.surface-footer")).toBeTruthy();
     expect(container.querySelector(".surface-footer-egress")).toBeTruthy();
     expect(container.querySelector(".surface-footer-receipt")).toBeTruthy();
@@ -39,7 +40,7 @@ describe("SurfaceFooter", () => {
     const { container } = render(
       <SurfaceFooter receipt={<span>Copied</span>} />,
     );
-    expect(screen.getByText("Copied")).toBeInTheDocument();
+    expect(screen.getByText("Copied")).toBeTruthy();
     expect(container.querySelector(".surface-footer-egress")?.textContent).toBe(
       "",
     );
@@ -47,4 +48,47 @@ describe("SurfaceFooter", () => {
       "",
     );
   });
+
+  it("keeps the primary and More actions at phone width", () => {
+    vi.stubGlobal("matchMedia", () => ({
+      matches: true,
+      media: "(max-width: 720px)",
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      onchange: null,
+      dispatchEvent: () => false,
+    }));
+    const copy = vi.fn();
+    const custom = vi.fn();
+    function CustomAction() {
+      return <Button variant="ghost" onClick={custom}>Custom action</Button>;
+    }
+    render(
+      <SurfaceFooter
+        verbs={
+          <span className="surface-footer-verbs-group">
+            <Button variant="primary" onClick={() => {}}>Send</Button>
+            <Button variant="ghost" onClick={copy}>Copy</Button>
+            <CustomAction />
+            <Button type="submit">Submit</Button>
+            <span>Material</span>
+          </span>
+        }
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Send" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "More actions" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Custom action" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Submit" })).toBeTruthy();
+    expect(screen.getByText("Material")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "More actions" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Copy" }));
+    expect(copy).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole("button", { name: "Custom action" }));
+    expect(custom).toHaveBeenCalledOnce();
+  });
+
+  afterEach(() => vi.unstubAllGlobals());
 });

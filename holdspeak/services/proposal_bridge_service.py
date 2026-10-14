@@ -274,6 +274,16 @@ class ProposalBridgeService:
     def __init__(self, db: Database) -> None:
         self._db = db
 
+    def _notify_changed(self, proposal: Proposal, operation: str) -> None:
+        """Refresh desk projections after a proposal transaction commits."""
+        try:
+            from holdspeak.runtime.composition import notify_desk_changed
+            notify_desk_changed("proposal", proposal.id, operation)
+        except Exception:
+            # Service unit tests and standalone workers may not install the
+            # runtime bus. The durable write remains the source of truth.
+            pass
+
     # ── bridge: artifacts -> proposals ──────────────────────────────
 
     def bridge_meeting_artifacts(
@@ -924,17 +934,23 @@ class ProposalBridgeService:
             #    Confirm accepts THAT row (no second copy of one obligation).
             delegated_at = now if final_owner else None
             linked = None
+            linked_status = ""
             if not is_action:
                 action_id = None
             elif proposal.action_item_id:
                 linked = conn.execute(
-                    "SELECT id FROM action_items WHERE id = ?", (proposal.action_item_id,),
+                    "SELECT id, status FROM action_items WHERE id = ?", (proposal.action_item_id,),
                 ).fetchone()
             if linked is not None:
                 action_id = str(linked["id"])
+                linked_status = str(linked["status"] or "").lower()
+                # Confirm accepts review. Reopen uses the existing explicit
+                # Follow-through action; confirmation preserves terminal work.
                 conn.execute(
                     """UPDATE action_items SET task = ?, owner = ?, due = ?,
-                       status = 'open', review_state = 'accepted', reviewed_at = ?,
+                       status = CASE WHEN status IN ('done', 'dismissed', 'completed')
+                         THEN status ELSE 'open' END,
+                       review_state = 'accepted', reviewed_at = ?,
                        delegated_at = COALESCE(delegated_at, ?),
                        source_timestamp = COALESCE(source_timestamp, ?)
                        WHERE id = ?""",
@@ -962,12 +978,17 @@ class ProposalBridgeService:
             # 5. decision_commitments linking the record to the action (an
             #    action only: the Room reaches its commitments this way).
             if is_action:
+                commitment_status = (
+                    "open"
+                    if linked_status not in {"done", "dismissed", "completed"}
+                    else "closed"
+                )
                 conn.execute(
                     """INSERT INTO decision_commitments
                        (id, decision_id, action_item_id, owner, due_at, status,
                         created_at, updated_at)
-                       VALUES (?, ?, ?, ?, ?, 'open', ?, ?)""",
-                    (commitment_id, decision_id, action_id, final_owner, final_due, now, now),
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (commitment_id, decision_id, action_id, final_owner, final_due, commitment_status, now, now),
                 )
 
             # Kernel receipt (Article XI).
@@ -1007,6 +1028,7 @@ class ProposalBridgeService:
             mark_needs_you_dirty(self._db)
         except Exception:
             pass
+        self._notify_changed(flipped, "confirm")
 
         return {
             "proposal_id": proposal_id,
@@ -1078,6 +1100,7 @@ class ProposalBridgeService:
             mark_needs_you_dirty(self._db)
         except Exception:
             pass
+        self._notify_changed(dismissed, "dismiss")
 
         return {
             "proposal_id": proposal_id, "state": "dismissed", "replayed": False,
@@ -1122,6 +1145,7 @@ class ProposalBridgeService:
             mark_needs_you_dirty(self._db)
         except Exception:
             pass
+        self._notify_changed(deferred, "defer")
         return {
             "proposal_id": proposal_id, "state": "proposed", "deferred_until": stamp,
             "proposal": self._serialize(deferred),
@@ -1228,6 +1252,39 @@ class ProposalBridgeService:
         ]
         # Oldest first: the order they were extracted in.
         proposals.sort(key=lambda p: (str(p.get("created_at") or ""), str(p.get("id"))))
+        # A proposal's state answers "did I confirm it?".  The linked action
+        # answers the separate question "is the work done?".  Carry both facts
+        # in this projection so Outcomes can survive Confirm -> Done -> reload
+        # without turning a completed action back into a live Done affordance.
+        action_ids = [
+            str(p.get("action_item_id") or "")
+            for p in proposals
+            if str(p.get("action_item_id") or "")
+        ]
+        action_status: dict[str, tuple[str, Any]] = {}
+        if action_ids:
+            placeholders = ",".join("?" for _ in action_ids)
+            try:
+                with self._db._connection() as conn:
+                    rows = conn.execute(
+                        f"SELECT id, status, completed_at FROM action_items WHERE id IN ({placeholders})",
+                        action_ids,
+                    ).fetchall()
+                action_status = {
+                    str(row["id"]): (str(row["status"] or ""), row["completed_at"])
+                    for row in rows
+                }
+            except Exception:
+                action_status = {}
+        for proposal in proposals:
+            action_id = str(proposal.get("action_item_id") or "")
+            if not action_id:
+                continue
+            status, completed_at = action_status.get(action_id, ("", None))
+            proposal["action_status"] = status or None
+            proposal["action_completed_at"] = completed_at
+            # Alias retained for clients that call this a completion fact.
+            proposal["action_item_status"] = status or None
 
         project: Optional[dict[str, Any]] = None
         try:

@@ -196,5 +196,9 @@ export {
 
 export { countToken, countLabel, needYouWords } from "./count";
 
+export { EngineLine } from "./EngineLine";
+export { RunLine, type RunPhase } from "./RunLine";
+export { reasonWords, reasonVerb, type RunFailureReason } from "./runWords";
+
 // PHILO-14 B1 — the object species (DeskIcon, ObjectList, TimelineRail, ...).
 export * from "./objects";

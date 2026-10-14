@@ -12,6 +12,7 @@ import { WingSlotContext } from "../../../../desk/surface/wings";
 import { useDesk } from "../../../../desk/store";
 import { EMPTY_ITEMS } from "../../../../desk/api";
 import { ProjectRoomCore } from "../../ProjectRoomCore";
+import { clearEngineCache } from "../../../../desk/hooks/useEngine";
 
 // ── Mocks ──
 
@@ -223,6 +224,7 @@ function modelFallbackFixture() {
 // ── Lifecycle ──
 
 beforeEach(() => {
+  clearEngineCache();
   useDesk.setState({
     windowsById: {},
     items: { ...EMPTY_ITEMS },
@@ -299,6 +301,23 @@ function setupUpdatePosture(opts: {
   });
 }
 
+/** The Room's first press now performs the Draft update action.  Tests that
+ * inspect the ledger press Back after that action so they still exercise the
+ * list posture explicitly. */
+async function openUpdateList() {
+  fireEvent.click(await screen.findByTestId("updates-verb"));
+  await waitFor(() => screen.getByTestId("update-editor"));
+  fireEvent.click(screen.getByTestId("update-verb-back"));
+  await waitFor(() => {
+    expect(screen.getByTestId("update-posture").getAttribute("data-phase")).toBe("list");
+  });
+}
+
+async function draftFromRoom() {
+  fireEvent.click(await screen.findByTestId("updates-verb"));
+  await waitFor(() => screen.getByTestId("update-editor"));
+}
+
 // ── MOUNT PROOF: The posture opens from the Room by real clicks ──
 
 describe("Mount proof: Updates verb in Room chrome", () => {
@@ -311,18 +330,15 @@ describe("Mount proof: Updates verb in Room chrome", () => {
     expect(btn.textContent).toContain("update");
   });
 
-  it("clicking 'Updates' enters the update list posture", async () => {
+  it("clicking 'Draft update' drafts and opens the editor", async () => {
     setupUpdatePosture();
     render(<WindowHarness scope="project:p1" />);
 
     const btn = await screen.findByTestId("updates-verb");
     fireEvent.click(btn);
 
-    await waitFor(() => {
-      expect(screen.getByTestId("update-posture")).toBeTruthy();
-    });
-
-    expect(screen.getByTestId("update-posture").getAttribute("data-phase")).toBe("list");
+    await waitFor(() => expect(screen.getByTestId("update-editor")).toBeTruthy());
+    expect(screen.getByTestId("update-posture").getAttribute("data-phase")).toBe("editor");
   });
 });
 
@@ -333,25 +349,8 @@ describe("Mounted-path: full draft-to-publish walk", () => {
     setupUpdatePosture({ listUpdates: [] });
     render(<WindowHarness scope="project:p1" />);
 
-    // Enter update posture
-    const btn = await screen.findByTestId("updates-verb");
-    fireEvent.click(btn);
-
-    await waitFor(() => {
-      expect(screen.getByTestId("update-posture")).toBeTruthy();
-    });
-
-    // Click "Draft" to create a deterministic draft. Draft waits for the
-    // engine read (#1084): wait until that read answers "no engine".
-    await screen.findByTestId("update-no-engine");
-    const draftBtn = screen.getByTestId("update-verb-draft-deterministic") as HTMLButtonElement;
-    expect(draftBtn.disabled).toBe(false);
-    fireEvent.click(draftBtn);
-
-    // Editor opens with DeskEditor (mocked as textarea)
-    await waitFor(() => {
-      expect(screen.getByTestId("update-editor")).toBeTruthy();
-    });
+    // The Room button performs the deterministic draft when no engine is set.
+    await draftFromRoom();
 
     expect(screen.getByTestId("update-posture").getAttribute("data-phase")).toBe("editor");
 
@@ -399,8 +398,7 @@ describe("Source rows: deduplicated refs and open source", () => {
     setupUpdatePosture();
     render(<WindowHarness scope="project:p1" />);
 
-    fireEvent.click(await screen.findByTestId("updates-verb"));
-    await waitFor(() => screen.getByTestId("update-posture"));
+    await openUpdateList();
 
     const items = await screen.findAllByTestId("update-list-item");
     fireEvent.click(items[0]);
@@ -437,8 +435,7 @@ describe("Source rows: deduplicated refs and open source", () => {
     setupUpdatePosture();
     render(<WindowHarness scope="project:p1" />);
 
-    fireEvent.click(await screen.findByTestId("updates-verb"));
-    await waitFor(() => screen.getByTestId("update-posture"));
+    await openUpdateList();
 
     const items = await screen.findAllByTestId("update-list-item");
     fireEvent.click(items[0]);
@@ -463,8 +460,7 @@ describe("Source rows: deduplicated refs and open source", () => {
     setupUpdatePosture();
     render(<WindowHarness scope="project:p1" />);
 
-    fireEvent.click(await screen.findByTestId("updates-verb"));
-    await waitFor(() => screen.getByTestId("update-posture"));
+    await openUpdateList();
 
     const items = await screen.findAllByTestId("update-list-item");
     fireEvent.click(items[0]);
@@ -492,8 +488,7 @@ describe("Source rows: deduplicated refs and open source", () => {
     setupUpdatePosture();
     render(<WindowHarness scope="project:p1" />);
 
-    fireEvent.click(await screen.findByTestId("updates-verb"));
-    await waitFor(() => screen.getByTestId("update-posture"));
+    await openUpdateList();
 
     const items = await screen.findAllByTestId("update-list-item");
     fireEvent.click(items[0]);
@@ -509,15 +504,15 @@ describe("Source rows: deduplicated refs and open source", () => {
     fireEvent.click(meetingChip!);
 
     // PHILO-17: the meeting opens in its own window.
-    expect(mockOpenPrimitive).toHaveBeenCalledWith("meeting:m-01");
+    expect(mockOpenSurfaceOr).toHaveBeenCalledWith("review-meetings", "/history", "meeting:m-01");
+    expect(mockOpenPrimitive).not.toHaveBeenCalledWith("meeting:m-01");
   });
 
   it("clicking a decision ref opens the primitive", async () => {
     setupUpdatePosture();
     render(<WindowHarness scope="project:p1" />);
 
-    fireEvent.click(await screen.findByTestId("updates-verb"));
-    await waitFor(() => screen.getByTestId("update-posture"));
+    await openUpdateList();
 
     const items = await screen.findAllByTestId("update-list-item");
     fireEvent.click(items[0]);
@@ -543,8 +538,7 @@ describe("Unverified claims: banner in document view", () => {
     setupUpdatePosture();
     render(<WindowHarness scope="project:p1" />);
 
-    fireEvent.click(await screen.findByTestId("updates-verb"));
-    await waitFor(() => screen.getByTestId("update-posture"));
+    await openUpdateList();
 
     const items = await screen.findAllByTestId("update-list-item");
     fireEvent.click(items[0]);
@@ -568,8 +562,7 @@ describe("Published view: rendered document", () => {
     });
     render(<WindowHarness scope="project:p1" />);
 
-    fireEvent.click(await screen.findByTestId("updates-verb"));
-    await waitFor(() => screen.getByTestId("update-posture"));
+    await openUpdateList();
 
     const items = await screen.findAllByTestId("update-list-item");
     fireEvent.click(items[0]);
@@ -607,31 +600,23 @@ describe("Published view: rendered document", () => {
 // ── FIVE VERBS: Draft, Regenerate, Save, Copy Markdown, Publish ──
 
 describe("Five verbs as separate controls", () => {
-  // PHILO-17 U31: ONE Draft update verb; no engine: it drafts from the
-  // Room's facts and the chip says No engine for drafts with Choose.
-  it("shows one Draft update verb; with no engine, No engine for drafts · Choose", async () => {
+  // PHILO-17 U31: ONE Draft update verb; no engine means a deterministic
+  // draft, with the engine/run receipt visible in the editor.
+  it("drafts deterministically when no engine is assigned", async () => {
     setupUpdatePosture({ listUpdates: [] });
     render(<WindowHarness scope="project:p1" />);
 
-    fireEvent.click(await screen.findByTestId("updates-verb"));
-    await waitFor(() => screen.getByTestId("update-posture"));
-
-    const noEngine = await screen.findByTestId("update-no-engine");
-    expect(noEngine.textContent).toBe("No engine for drafts");
-    const verbs = screen.getAllByRole("button", { name: "Draft update" }).filter((b) => b.closest("[data-testid=update-posture]"));
-    expect(verbs).toHaveLength(1);
-    expect(verbs[0].getAttribute("data-testid")).toBe("update-verb-draft-deterministic");
-    expect(screen.queryByText("Draft with model")).toBeNull();
-    fireEvent.click(screen.getByTestId("update-choose-engine"));
-    expect(mockOpenSurfaceOr).toHaveBeenCalledWith("configure-runs-on", "/settings", "models");
+    await draftFromRoom();
+    expect(screen.getByTestId("engine-line").textContent).toContain("No engine");
+    expect(screen.getByTestId("update-generator-label").textContent).toBe("Deterministic");
+    expect(screen.getByTestId("run-line").getAttribute("data-state")).toBe("success");
   });
 
   it("shows Save, Regenerate, Copy Markdown, Publish in the editor for a draft", async () => {
     setupUpdatePosture();
     render(<WindowHarness scope="project:p1" />);
 
-    fireEvent.click(await screen.findByTestId("updates-verb"));
-    await waitFor(() => screen.getByTestId("update-posture"));
+    await openUpdateList();
 
     const items = await screen.findAllByTestId("update-list-item");
     fireEvent.click(items[0]);
@@ -648,8 +633,7 @@ describe("Five verbs as separate controls", () => {
     setupUpdatePosture();
     render(<WindowHarness scope="project:p1" />);
 
-    fireEvent.click(await screen.findByTestId("updates-verb"));
-    await waitFor(() => screen.getByTestId("update-posture"));
+    await openUpdateList();
 
     const items = await screen.findAllByTestId("update-list-item");
     fireEvent.click(items[0]);
@@ -667,7 +651,15 @@ describe("Egress badge on model drafting", () => {
   // PHILO-15 B53: the chip names the host of the model assigned to update
   // drafts (a LAN box here), never a fixed LOCAL + CLOUD.
   it("names the update-draft model's host next to Draft update", async () => {
-    setupUpdatePosture({ listUpdates: [] });
+    setupUpdatePosture({
+      listUpdates: [],
+      modelDraftResult: draftUpdateFixture({
+        id: "pupd-model-01",
+        generator: "model:qwen",
+        generatorHost: "192.168.1.43",
+        generatorModel: "QWEN",
+      }),
+    });
     const base = apiFetch.getMockImplementation()!;
     apiFetch.mockImplementation((url: string, init?: Record<string, unknown>) => {
       if (url.includes("/api/inference/assignments")) {
@@ -683,21 +675,9 @@ describe("Egress badge on model drafting", () => {
     useDesk.setState({ inferenceTargets: [{ id: "lan", profile_id: "lan", endpoint: "http://192.168.1.43:8080/v1" }] } as never);
     render(<WindowHarness scope="project:p1" />);
 
-    fireEvent.click(await screen.findByTestId("updates-verb"));
-    await waitFor(() => screen.getByTestId("update-posture"));
-
-    const modelAction = screen.getByTestId("update-draft-model-action");
-    // The chip shows once the assignment read lands (PHILO-17 U31).
-    const egressChip = await waitFor(() => {
-      const chip = modelAction.querySelector(".gadget-chip-egress");
-      expect(chip).toBeTruthy();
-      return chip;
-    });
-    await waitFor(() => expect(egressChip!.textContent).toContain("192.168.1.43"));
-    expect(egressChip!.textContent).not.toMatch(/cloud/i);
-    // PHILO-17 U31: with an engine set, the one Draft update verb drafts with it.
-    expect(screen.getByTestId("update-verb-draft-model").textContent).toBe("Draft update");
-    expect(screen.queryByTestId("update-no-engine")).toBeNull();
+    await draftFromRoom();
+    expect(screen.getByTestId("engine-line").textContent).toContain("qwen");
+    expect(document.querySelector(".surface-footer-egress")?.textContent).toContain("192.168.1.43");
     expect(apiFetch.mock.calls.some(([u]) => String(u).includes("/api/inference/assignments"))).toBe(true);
   });
 });
@@ -725,10 +705,7 @@ describe("Draft update picks its generator from the engine read", () => {
     setupUpdatePosture({ listUpdates: [] });
     withAssignment(() => Promise.resolve({ task_overrides: [] }));
     render(<WindowHarness scope="project:p1" />);
-    fireEvent.click(await screen.findByTestId("updates-verb"));
-    await screen.findByTestId("update-no-engine");
-    fireEvent.click(screen.getByTestId("update-verb-draft-deterministic"));
-    await waitFor(() => screen.getByTestId("update-editor"));
+    await draftFromRoom();
     expect((draftCall()![1] as { json: { generator: string } }).json.generator).toBe("deterministic");
     expect(screen.getByTestId("update-generator-label").textContent).toBe("Deterministic");
   });
@@ -737,35 +714,19 @@ describe("Draft update picks its generator from the engine read", () => {
     setupUpdatePosture({ listUpdates: [] });
     withAssignment(LAN);
     render(<WindowHarness scope="project:p1" />);
-    fireEvent.click(await screen.findByTestId("updates-verb"));
-    const verb = await screen.findByTestId("update-verb-draft-model");
-    expect(verb.textContent).toBe("Draft update");
-    fireEvent.click(verb);
-    await waitFor(() => screen.getByTestId("update-editor"));
+    await draftFromRoom();
     expect((draftCall()![1] as { json: { generator: string } }).json.generator).toBe("model");
     expect(screen.getByTestId("update-generator-label").textContent).toMatch(/^Model/);
   });
 
-  it("while the engine is not read, Draft waits; a failed read says so with Try again", async () => {
+  it("a failed engine read uses the deterministic draft", async () => {
     setupUpdatePosture({ listUpdates: [] });
-    let fail = true;
-    let release: (v: unknown) => void = () => {};
-    withAssignment(() => (fail ? Promise.reject(new Error("hub down")) : new Promise((r) => { release = r; })));
+    withAssignment(() => Promise.reject(new Error("hub down")));
     render(<WindowHarness scope="project:p1" />);
-    fireEvent.click(await screen.findByTestId("updates-verb"));
-    await screen.findByTestId("update-engine-not-read");
-    const verb = screen.getByRole("button", { name: "Draft update" });
-    expect(verb).toBeDisabled();
-    fireEvent.click(verb);
-    expect(draftCall()).toBeUndefined();
-    // Try again: the read is pending, Draft still waits.
-    fail = false;
-    fireEvent.click(screen.getByTestId("update-engine-retry"));
-    await screen.findByTestId("update-engine-checking");
-    expect(screen.getByRole("button", { name: "Draft update" })).toBeDisabled();
-    await act(async () => { release(await LAN()); });
-    await waitFor(() => expect(screen.getByTestId("update-verb-draft-model")).not.toBeDisabled());
-    expect(draftCall()).toBeUndefined();
+    const verb = await screen.findByTestId("updates-verb");
+    await waitFor(() => expect(verb).not.toBeDisabled());
+    await draftFromRoom();
+    expect((draftCall()![1] as { json: { generator: string } }).json.generator).toBe("deterministic");
   });
 });
 
@@ -776,8 +737,7 @@ describe("Generator provenance", () => {
     setupUpdatePosture();
     render(<WindowHarness scope="project:p1" />);
 
-    fireEvent.click(await screen.findByTestId("updates-verb"));
-    await waitFor(() => screen.getByTestId("update-posture"));
+    await openUpdateList();
 
     const items = await screen.findAllByTestId("update-list-item");
     fireEvent.click(items[0]);
@@ -795,8 +755,7 @@ describe("Generator provenance", () => {
     });
     render(<WindowHarness scope="project:p1" />);
 
-    fireEvent.click(await screen.findByTestId("updates-verb"));
-    await waitFor(() => screen.getByTestId("update-posture"));
+    await openUpdateList();
 
     const items = await screen.findAllByTestId("update-list-item");
     fireEvent.click(items[0]);
@@ -815,8 +774,7 @@ describe("Generator provenance", () => {
     });
     render(<WindowHarness scope="project:p1" />);
 
-    fireEvent.click(await screen.findByTestId("updates-verb"));
-    await waitFor(() => screen.getByTestId("update-posture"));
+    await openUpdateList();
 
     const items = await screen.findAllByTestId("update-list-item");
     fireEvent.click(items[0]);
@@ -841,8 +799,7 @@ describe("Draft list: lifecycle-honest", () => {
     });
     render(<WindowHarness scope="project:p1" />);
 
-    fireEvent.click(await screen.findByTestId("updates-verb"));
-    await waitFor(() => screen.getByTestId("update-posture"));
+    await openUpdateList();
 
     const items = screen.getAllByTestId("update-list-item");
     expect(items.length).toBe(3);
@@ -867,8 +824,7 @@ describe("Draft list: lifecycle-honest", () => {
     });
     render(<WindowHarness scope="project:p1" />);
 
-    fireEvent.click(await screen.findByTestId("updates-verb"));
-    await waitFor(() => screen.getByTestId("update-posture"));
+    await openUpdateList();
 
     const items = screen.getAllByTestId("update-list-item");
     expect(items.length).toBe(2);
@@ -884,8 +840,7 @@ describe("Draft list: lifecycle-honest", () => {
     });
     render(<WindowHarness scope="project:p1" />);
 
-    fireEvent.click(await screen.findByTestId("updates-verb"));
-    await waitFor(() => screen.getByTestId("update-posture"));
+    await openUpdateList();
 
     const items = screen.getAllByTestId("update-list-item");
     const row = items[0].querySelector(".update-list-row");
@@ -902,8 +857,7 @@ describe("Draft list: lifecycle-honest", () => {
     });
     render(<WindowHarness scope="project:p1" />);
 
-    fireEvent.click(await screen.findByTestId("updates-verb"));
-    await waitFor(() => screen.getByTestId("update-posture"));
+    await openUpdateList();
 
     // Chevron present in the row
     const chevron = screen.getByTestId("update-list-chevron");
@@ -940,8 +894,7 @@ describe("Superseded readonly label", () => {
     });
     render(<WindowHarness scope="project:p1" />);
 
-    fireEvent.click(await screen.findByTestId("updates-verb"));
-    await waitFor(() => screen.getByTestId("update-posture"));
+    await openUpdateList();
 
     const items = await screen.findAllByTestId("update-list-item");
     fireEvent.click(items[0]);
@@ -964,8 +917,7 @@ describe("Copy Markdown verb", () => {
     setupUpdatePosture();
     render(<WindowHarness scope="project:p1" />);
 
-    fireEvent.click(await screen.findByTestId("updates-verb"));
-    await waitFor(() => screen.getByTestId("update-posture"));
+    await openUpdateList();
 
     const items = await screen.findAllByTestId("update-list-item");
     fireEvent.click(items[0]);
@@ -998,8 +950,7 @@ describe("Mic on the DeskEditor", () => {
     setupUpdatePosture();
     render(<WindowHarness scope="project:p1" />);
 
-    fireEvent.click(await screen.findByTestId("updates-verb"));
-    await waitFor(() => screen.getByTestId("update-posture"));
+    await openUpdateList();
 
     const items = await screen.findAllByTestId("update-list-item");
     fireEvent.click(items[0]);

@@ -22,17 +22,20 @@ import {
 } from "../thoughts";
 import type { WorldObject } from "../world";
 import { Button } from "../../components/signal/Signal";
-import { countToken, EgressChip, PadGadget, SurfaceFooter } from "../surface";
+import { EgressChip, EngineLine, PadGadget, SurfaceFooter } from "../surface";
+import { refreshEngine, useEngine } from "../hooks/useEngine";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { ThoughtSaveFault, useThoughtNoteWriter } from "../pullouts/editors/useThoughtNoteWriter";
 import { ThoughtDocumentPane } from "./ThoughtDocumentPane";
 import { ThoughtReadsWell, type ReadsResult } from "./ThoughtReadsWell";
+import { TaskWell } from "./TaskWell";
+import { ProjectWell } from "./ProjectWell";
 import { useThoughtWorkspaceController } from "./useThoughtWorkspaceController";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { NoteSendWells } from "../documentSendsLazy";
 import { SEND_OPEN, useAnnounceWindowDocument } from "../windowSend";
 import { useWindowId } from "../components/window/windowIdContext";
-import { thoughtFilingLine, thoughtWriteLine } from "./thoughtReceipt";
+import { thoughtWriteLine } from "./thoughtReceipt";
 import "./thought-workspace.css";
 
 function stableId(key: string): string {
@@ -118,6 +121,7 @@ function WorkspaceReady({
   onClose: () => void;
   registerClose: (handler: () => void) => () => void;
 }) {
+  const thoughtEngine = useEngine("thought.interview");
   const [documentThought, setDocumentThought] = useState(projection.thought || initialThought);
   const [answer, setAnswer] = useState("");
   const [busy, setBusy] = useState(false);
@@ -133,6 +137,8 @@ function WorkspaceReady({
      working note (he picks the destination and presses Send there); Copy
      copies the working text. */
   const [sending, setSending] = useState(false);
+  const [actionWell, setActionWell] = useState<"task" | "project" | null>(null);
+  const hasProjects = useDesk((state) => state.projects.some((project) => !project.is_archived));
   const { copy, receipt: copyReceipt } = useCopyReceipt();
   const winId = useWindowId();
   const [revealRange, setRevealRange] = useState<{ start: number; end: number; focus?: boolean } | null>(null);
@@ -159,6 +165,8 @@ function WorkspaceReady({
     flush: () => writer.flush(),
   };
   const draftNoteId = documentThought.working_note.id;
+  const taskText = writer.draft.body.trim().split(/\r?\n/, 1)[0]
+    || (writer.draft.title.trim() !== NEW_THOUGHT_TITLE ? writer.draft.title.trim() : "");
   useAnnounceWindowDocument({ kind: "note", id: draftNoteId });
   useEffect(() => seatThoughtDraft(draftNoteId, {
     words: () => draftSeat.current.words(),
@@ -268,7 +276,7 @@ function WorkspaceReady({
     if (!reviewId || !answer.trim()) return false;
     const key = `hs.thought.review.${reviewId}.answer`;
     const succeeded = await afterFlush(async (latest) => {
-      const result = await actOnReview({ thought: latest, reviewId, action: "answer", request_id: stableId(key), answer, workspace_cursor: projection.workspace_cursor });
+      const result = await actOnReview({ thought: latest, reviewId, action: "answer", request_id: stableId(key), answer, workspace_cursor: writer.getWorkspaceCursor() ?? projection.workspace_cursor });
       sessionStorage.removeItem(key);
       return result;
     }, true);
@@ -311,7 +319,7 @@ function WorkspaceReady({
 
   const ask = () => afterFlush(async (latest) => {
     const key = `hs.thought.refine.${latest.id}`;
-    const result = await refineThought(latest, stableId(key), projection.workspace_cursor);
+    const result = await refineThought(latest, stableId(key), writer.getWorkspaceCursor() ?? projection.workspace_cursor);
     sessionStorage.removeItem(key);
     return result;
   });
@@ -325,7 +333,7 @@ function WorkspaceReady({
     const result = await completeThought({
       thought: source,
       request_id: stableId(key),
-      workspace_cursor: fresh?.workspace_cursor ?? projection.workspace_cursor,
+      workspace_cursor: fresh?.workspace_cursor ?? writer.getWorkspaceCursor() ?? projection.workspace_cursor,
     });
     sessionStorage.removeItem(key);
     return result;
@@ -343,7 +351,7 @@ function WorkspaceReady({
     await keep(await reload(false).catch(() => null));
   };
 
-  const resume = () => afterFlush(async (latest) => ({ thought: await resumeThought(latest, projection.workspace_cursor) }));
+  const resume = () => afterFlush(async (latest) => ({ thought: await resumeThought(latest, writer.getWorkspaceCursor() ?? projection.workspace_cursor) }));
 
   const stop = async () => {
     if (!projection.thought.continuity?.invocation_id || busy) return;
@@ -363,8 +371,8 @@ function WorkspaceReady({
     const action = attachment.state === "missing" ? "detach" : "refresh";
     const key = `hs.thought.context.${action}.${latest.id}.${attachment.ref}`;
     const result = action === "detach"
-      ? await detachThoughtContext(latest, attachment.ref, stableId(key), projection.workspace_cursor)
-      : await refreshThoughtContext(latest, attachment.ref, stableId(key), projection.workspace_cursor);
+      ? await detachThoughtContext(latest, attachment.ref, stableId(key), writer.getWorkspaceCursor() ?? projection.workspace_cursor)
+      : await refreshThoughtContext(latest, attachment.ref, stableId(key), writer.getWorkspaceCursor() ?? projection.workspace_cursor);
     sessionStorage.removeItem(key);
     return result;
   });
@@ -373,7 +381,7 @@ function WorkspaceReady({
     // HS-200-41: remember the verb he left before the handoff, so the
     // Apply on the other side can send focus back here (design D2(a)).
     rememberTaskFocus();
-    openSurfaceOr("configure-runs-on", "/settings", "models");
+    openSurfaceOr("configure-runs-on", "/settings", "thought.interview");
   };
 
   const attachments = documentThought.attachments || [];
@@ -383,10 +391,22 @@ function WorkspaceReady({
   const placement = projection.inference.intended_placement;
   const engine = engineEgress(placement);
   const remoteEngine = Boolean(placement && placement.target_kind !== "this_device" && placement.boundary !== "same_device");
-  const ready = projection.inference.availability === "ready";
+  const projectionReady = projection.inference.availability === "ready";
+  // The Thought assignment is authoritative once its shared roster read has
+  // completed. While that read is still unread, the workbench projection is
+  // the only useful destination hint available to this window; it must not
+  // override an explicit none/failed roster state.
+  const thoughtConfigured = thoughtEngine.state === "set";
+  const rosterUnread = thoughtEngine.state === "unread";
+  const ready = rosterUnread ? projectionReady : thoughtConfigured;
+  // The assignment gives the pre-run model and place. A remote destination
+  // still comes from the projection's host, so the face does not replace a
+  // LAN/cloud egress with a local model badge.
+  const visibleEngine = (rosterUnread || thoughtConfigured || remoteEngine) ? engine : null;
   const open = Boolean(question || draftBody);
 
-  // Band 3's one row: the state token and the ONE verb it owns.
+  // Band 3 owns only an active continuation or a live run. An idle note's
+  // Ask action belongs in the foot; EngineLine owns engine setup.
   const askRow: { token: string; label: string; act: () => void } | null = completed
     ? null
     : running
@@ -394,40 +414,31 @@ function WorkspaceReady({
       : projection.workspace_state === "stale" && stale
         ? { token: stale.state === "missing" ? "CONTEXT MISSING" : "CONTEXT CHANGED", label: stale.state === "missing" ? "Remove it" : "Update it", act: () => void repair(stale) }
         : !ready
-          /* HS-201-12 (design condition 5, corrected by Astra finding 4) —
-             three truthful states, and the projection distinguishes all
-             three: a READY target with unavailable inference is the
-             coordinator, not the engine (refinement_application_service.py:80);
-             THIS DEVICE is never unreachable, only missing its model
-             (`_this_machine_readiness`, inference_targets.py:243); a target
-             on another machine that is not ready cannot be reached. */
+          /* The no-engine reason belongs to EngineLine. These two states
+             remain the run's truthful target states when a route exists. */
           ? placement?.readiness === "ready"
             ? { token: "ENGINE BUSY", label: "Try again", act: () => void ask() }
             : remoteEngine
               ? { token: "ENGINE NOT REACHABLE", label: "Check", act: setupAI }
-              : { token: "NO ENGINE YET", label: "Choose an engine", act: setupAI }
+              : null
           : projection.workspace_state === "named_failure"
             /* PHILO-15 10 (Astra r2, finding 1): a named failure says what
                failed and on which engine (STRUCTURED RESULT · NOT USABLE ·
                192.168.1.43:8080), from the hub's own terminal token. */
             ? {
                 token: projection.terminal_status?.token
-                  ? [projection.terminal_status.token, engine?.label].filter(Boolean).join(" · ")
+                  ? [projection.terminal_status.token, visibleEngine?.label].filter(Boolean).join(" · ")
                   : "",
                 label: projection.terminal_status?.retryable === false ? "Ask" : "Try again",
                 act: () => void ask(),
               }
             : open
               ? null
-              : { token: "", label: "Ask", act: () => void ask() };
+              : null;
 
-  const readsToken = attachments.length
-    ? attachments.map((item) => {
-      const count = countToken(item.leaf_count, "NOTE");
-      const state = item.state === "current" ? "" : item.state === "missing" ? " · MISSING" : " · CHANGED";
-      return `${item.title}${count ? ` · ${count}` : ""}${state}`;
-    }).join(" · ")
-    : "NOTHING";
+  const readsToken = attachments.length ? attachments.map((item) => item.title).join(" · ") : null;
+  const engineNeedsSetup = thoughtEngine.state === "none" || thoughtEngine.state === "failed";
+  const showAskBand = !completed && Boolean(open || askRow || engineNeedsSetup);
 
   const writeLine = thoughtWriteLine(writer);
   const unsaved = Boolean(writer.pending || writer.saving || writer.failed || writer.conflicted);
@@ -478,6 +489,26 @@ function WorkspaceReady({
     } catch (cause) { sayFault(cause); }
     finally { writer.release(); setBusy(false); }
   };
+  const openActionWell = async (kind: "task" | "project") => {
+    if (busy) return;
+    setBusy(true); say("");
+    try {
+      await writer.flush({ fence: true });
+      setActionWell((current) => current === kind ? null : kind);
+    } catch (cause) { sayFault(cause); }
+    finally { writer.release(); setBusy(false); }
+  };
+  const askFromNote = async () => {
+    if (busy) return;
+    setBusy(true); say("");
+    try {
+      await writer.flush({ fence: true });
+      useDesk.getState().setSelected([`note:${draftNoteId}`]);
+      useDesk.getState().openAsk();
+      say("Ask opened");
+    } catch (cause) { sayFault(cause); }
+    finally { writer.release(); setBusy(false); }
+  };
   const readsResult = (result: ReadsResult) => {
     setDocumentThought(result.thought);
     if (result.workbench) install(result.workbench);
@@ -508,13 +539,21 @@ function WorkspaceReady({
       revealRange={revealRange}
     />
 
-    {completed ? null : <section className="thought-note-ask" aria-label="One question">
+    {showAskBand ? <section className="thought-note-ask" aria-label="Ask about this note">
       <div className="thought-note-ask-row">
-        <span className="thought-note-ask-label">ONE QUESTION</span>
         {askRow?.token ? <span className="surface-token" data-chip>{askRow.token}</span> : null}
         {/* The destination before dispatch (A.9) — and never beside the
             no-engine token, which already says there is nowhere to go. */}
-        {engine && (ready || remoteEngine) ? <EgressChip label={engine.label} scope={engine.scope} title={`The ask reaches ${engine.label}.`} /> : null}
+        {visibleEngine && visibleEngine.label !== "THIS DEVICE" && (ready || remoteEngine) ? <EgressChip
+          label={visibleEngine.label}
+          scope={visibleEngine.scope}
+          title={`The ask reaches ${visibleEngine.label}.`}
+        /> : null}
+        {!completed ? <EngineLine
+          engine={thoughtEngine}
+          onChoose={setupAI}
+          onRetry={() => void refreshEngine("thought.interview")}
+        /> : null}
         {askRow ? <Button dense disabled={busy} onClick={askRow.act}>{askRow.label}</Button> : null}
       </div>
       {projection.workspace_state === "named_failure" && projection.terminal_status?.message
@@ -533,7 +572,7 @@ function WorkspaceReady({
           <Button dense disabled={busy} onClick={() => void addDraft()}>Add to note</Button>
         </div>}
       </div> : null}
-    </section>}
+    </section> : null}
 
     {message ? <p className="thought-note-line" role="status">
       {message}
@@ -562,23 +601,36 @@ function WorkspaceReady({
       </div>
     </div> : null}
 
+    {actionWell === "task" ? <TaskWell
+      noteId={draftNoteId}
+      initialText={taskText}
+      onAdded={say}
+      onClose={() => setActionWell(null)}
+    /> : actionWell === "project" ? <ProjectWell
+      noteId={draftNoteId}
+      onAdded={say}
+      onClose={() => setActionWell(null)}
+    /> : null}
+
     <SurfaceFooter
       className="thought-note-foot"
-      egress={<span className="thought-note-reads" title={`Reads ${readsToken}`}>READS · {readsToken}</span>}
+      egress={readsToken ? <span className="thought-note-reads" title={`Reads: ${readsToken}`}>Reads: {readsToken}</span> : null}
       receipt={<>
         {/* PHILO-3-04: the receipt keeps its whole words and wraps; the
             library's wrap token ([data-wrap], surface-footer.css) lifts the
             one-line clip a plain foot receipt wears (B27). */}
         {writeLine ? <span className="surface-footer-receipt-line" role="status" data-wrap="" data-tone={writeLine.danger ? "danger" : undefined}>{writeLine.text}</span> : null}
-        <span className="surface-footer-receipt-line" data-wrap="" data-line="filing">{thoughtFilingLine(documentThought, completed)}</span>
         {copyReceipt}
       </>}
       verbs={<span className="surface-footer-verbs-group">
         {writer.conflicted
           ? <Button dense disabled={busy} onClick={() => void reloadNote()}>Reload</Button>
           : writer.failed ? <Button dense onClick={writer.retry}>Retry</Button> : null}
-        <Button ref={readsRef} dense aria-expanded={reads} disabled={busy} onClick={() => void openReads()}>Change</Button>
+        <Button ref={readsRef} dense aria-expanded={reads} disabled={busy} onClick={() => void openReads()}>Add a note</Button>
         <Button dense disabled={!writer.draft.body.trim()} onClick={() => void copy(writer.draft.body)}>Copy</Button>
+        {!open && !completed ? <Button dense aria-label="Ask about this note" disabled={busy} onClick={() => void askFromNote()}>Ask</Button> : null}
+        <Button dense disabled={busy || !taskText} aria-expanded={actionWell === "task"} onClick={() => void openActionWell("task")}>Task</Button>
+        {hasProjects ? <Button dense disabled={busy} aria-expanded={actionWell === "project"} onClick={() => void openActionWell("project")}>Project</Button> : null}
         <Button dense aria-expanded={sending} disabled={busy} onClick={() => void openSend()}>Send</Button>
         {completed
           ? <Button variant="primary" className="thought-note-primary" disabled={busy} onClick={() => void resume()}>Resume</Button>
@@ -629,10 +681,11 @@ export function ThoughtWorkspaceWindow({
     icon={<img src={spriteUrl("note", object.id)} alt="" width={24} height={24} />}
     title={name}
     className="desk-pullout thought-workspace-window"
-    minW={560}
-    minH={520}
-    defaultW={820}
-    defaultH={640}
+    minW={520}
+    minH={360}
+    defaultW={520}
+    defaultH={360}
+    fitContent
     origin={origin}
     open
     onClose={() => closeHandler.current()}

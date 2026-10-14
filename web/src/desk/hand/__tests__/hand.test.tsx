@@ -16,7 +16,7 @@ import { DrawerWindow } from "../../drawer/DrawerWindow";
 import { useDrawers } from "../../drawer/store";
 import { Screen } from "../../screen/Screen";
 import { resetScreenMembers } from "../../screen/members";
-import { HandSheet } from "../../components/HandSheet";
+import { HandSheet, type HandPreview } from "../../components/HandSheet";
 import { DragLayer, useDropHand, agentOfTarget, handOriginOfRef } from "..";
 
 const apiFetch = vi.fn();
@@ -63,7 +63,7 @@ const ROOM = {
   receipts: { state: "ok", items: [] },
 };
 
-const PREVIEW = {
+const PREVIEW: HandPreview = {
   text: "Write the cutover comms.\n\nChecks: the comms name the Nov 5 window.",
   refs: ["action:a-comms"],
   bytes: 2048,
@@ -457,7 +457,8 @@ describe("PHILO-14 C3 at 393: no drag; the verb reaches the line", () => {
     // The verb is withheld until a handable object is selected.
     expect(within(drawer()).queryByRole("button", { name: "Hand to coder" })).toBeNull();
     fireEvent.click(row);
-    fireEvent.click(within(drawer()).getByRole("button", { name: "Hand to coder" }));
+    fireEvent.click(within(drawer()).getByRole("button", { name: "More actions" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Hand to coder" }));
     const line = await within(drawer()).findByTestId("hand-confirm");
     await factIs(line, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
     // Over the list (the line comes before it).
@@ -493,7 +494,8 @@ describe("PHILO-15 16 B39: the line's agent is a token the owner flips", () => {
     setCompact(true);
     render(<DrawerWindow drawer={{ projectId: "p-ledger", origin: null }} />);
     fireEvent.click(await within(drawer()).findByRole("button", { name: /^Write the cutover comms, ACTION ITEM/ }));
-    fireEvent.click(within(drawer()).getByRole("button", { name: "Hand to coder" }));
+    fireEvent.click(within(drawer()).getByRole("button", { name: "More actions" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Hand to coder" }));
     const line = await within(drawer()).findByTestId("hand-confirm");
     await factIs(line, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
     fireEvent.click(within(line).getByTestId("hand-confirm-agent"));

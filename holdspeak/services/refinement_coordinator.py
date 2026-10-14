@@ -119,9 +119,13 @@ class RefinementCoordinator:
                 "Refinement is not accepting work",
                 context={"status": 503},
             )
-        admission_claim = self._admission_claim()
+        admission_claim = self._admission_claim(subject_kind="thought", subject_id=thought_id)
         routed_admission = None
-        if self._uses_default_ask and self._ask_factory()._routed_assignments_active():
+        if self._uses_default_ask and self._ask_factory()._routed_assignments_active(
+            capability_id="thought.interview",
+            subject_kind="thought",
+            subject_id=thought_id,
+        ):
             frozen_thought = await asyncio.to_thread(self._thoughts.get, principal, thought_id)
             frozen_note = frozen_thought.get("working_note") or {}
             sealed_prompt = self._sealed_prompt(str(frozen_note.get("body_markdown") or ""))
@@ -236,7 +240,7 @@ class RefinementCoordinator:
         if not self._accepting:
             raise ServiceError("refinement_continuation_unavailable",
                                "The next turn is unavailable", context={"status": 503})
-        admission_claim = self._admission_claim()
+        admission_claim = self._admission_claim(subject_kind="thought", subject_id=thought_id)
         if admission_claim["readiness"] != "ready":
             raise ServiceError(
                 "refinement_continuation_unavailable",
@@ -245,7 +249,11 @@ class RefinementCoordinator:
                          "reason":admission_claim["reason"]},
             )
         routed_admission = None
-        if self._uses_default_ask and self._ask_factory()._routed_assignments_active():
+        if self._uses_default_ask and self._ask_factory()._routed_assignments_active(
+            capability_id="thought.interview",
+            subject_kind="thought",
+            subject_id=thought_id,
+        ):
             frozen_thought = await asyncio.to_thread(self._thoughts.get, principal, thought_id)
             frozen_grounding = None
             if expected_attachment_revision > 0:
@@ -289,18 +297,29 @@ class RefinementCoordinator:
                 thought = await asyncio.to_thread(self._thoughts.get, principal, thought_id)
         return thought, receipt
 
-    def _admission_claim(self) -> dict[str, Any]:
+    def _admission_claim(
+        self,
+        *,
+        invocation_id: str | None = None,
+        subject_kind: str | None = None,
+        subject_id: str | None = None,
+    ) -> dict[str, Any]:
         if not self._uses_default_ask:
             return {"target_id":"test","target_kind":"this_device","boundary":"same_device",
                     "engine":"scripted","model":"scripted","readiness":"ready","reason":""}
-        with self._database._connection() as conn:
-            routed = conn.execute(
-                "SELECT 1 FROM inference_assignment_migrations WHERE family='thoughts-writing-route-assignments'"
-            ).fetchone() is not None
+        routed = self._ask_factory()._routed_assignments_active(
+            capability_id="thought.interview",
+            invocation_id=invocation_id,
+            subject_kind=subject_kind,
+            subject_id=subject_id,
+        )
         if routed:
             summary = self._ask_factory()._broker.inference_adoption_service.next_run_summary(
                 Principal(PrincipalKind.OWNER, "refinement-route-inspector"),
                 capability_id="thought.interview",
+                invocation_id=invocation_id,
+                subject_kind=subject_kind,
+                subject_id=subject_id,
             )
             if summary["status"] != "ready" or not summary["chain"]:
                 return {"target_id":"","target_kind":"assigned_profile","boundary":"",
@@ -418,7 +437,13 @@ class RefinementCoordinator:
                 )
             ask_service = self._ask_factory()
             routed = bool(
-                self._uses_default_ask and ask_service._routed_assignments_active()
+                self._uses_default_ask
+                and ask_service._routed_assignments_active(
+                    capability_id="thought.interview",
+                    invocation_id=ask_id,
+                    subject_kind="thought",
+                    subject_id=thought_id,
+                )
             )
             await self._ask_factory().ask(
                 principal,
@@ -436,6 +461,11 @@ class RefinementCoordinator:
                     invocation_id
                 ) if not invocation.get("route_execution_id") else None,
                 routed_execution_id=invocation.get("route_execution_id"),
+                **(
+                    {"subject_kind": "thought", "subject_id": thought_id}
+                    if self._uses_default_ask
+                    else {}
+                ),
                 # The Thought's own note stays out of its memory (the real
                 # AskService only; an injected test Ask has no memory).
                 **({"memory_exclude_refs": self._own_refs(thought)} if self._uses_default_ask else {}),

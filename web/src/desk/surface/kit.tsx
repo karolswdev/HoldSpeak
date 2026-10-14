@@ -147,14 +147,25 @@ export function FilterBar({
   );
 }
 
-/** The kind plate of a LedgerRow: a raised Steel plate (44 px) with the
- *  kind's short word (`CC`, `DEC`, `MTG`, `GH`). Its accessible word is the
- *  caller's (`title`); the plate itself is aria-hidden when `label` is set
- *  elsewhere. */
+const KIND_WORDS: Record<string, string> = {
+  meeting: "Meeting",
+  mtg: "Meeting",
+  decision: "Decision",
+  dec: "Decision",
+  action: "Action",
+  act: "Action",
+  commitment: "Action",
+  cmt: "Action",
+};
+
+/** The kind plate of a LedgerRow: a raised Steel plate with a plain word on
+ * mixed lists. Unknown kinds keep their existing short token because they
+ * are not part of this shared words table. */
 export function KindPlate({ kind, title }: { kind: string; title?: string }) {
+  const word = KIND_WORDS[kind.trim().toLowerCase()] ?? kind;
   return (
     <span className="kit-kind" title={title} data-testid="kit-kind">
-      {kind}
+      {word}
     </span>
   );
 }

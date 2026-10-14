@@ -52,12 +52,9 @@ export const PREF_MODULES: PrefModule[] = [
   { id: "meetings", label: "Meetings", glyph: "meeting", sprite: "meetings", keys: ["meeting", "calendar"] },
   // Rhythm: cadence user-facing + Telegram + RAW.
   { id: "rhythm", label: "Rhythm", glyph: "cadence", sprite: "rhythm", keys: ["cadence", "cadence_telegram"] },
-  // PHILO-16 (C): ONE tile, Runs on. The Models and Assignments tiles only
-  // redirected to the same window; both ids still open it (`assignments`
-  // is an alias below).
-  { id: "models", label: "Runs on", glyph: "models", sprite: "models", keys: ["rails_observer"] },
-  // Connections: tool connections + credentials + RAW.
-  { id: "integrations", label: "Connections", glyph: "secret", sprite: "integrations", keys: [] },
+  // PHILO-17: Settings names the two hosted sections Engines and Accounts.
+  { id: "models", label: "Engines", glyph: "models", sprite: "models", keys: ["rails_observer"] },
+  { id: "integrations", label: "Accounts", glyph: "secret", sprite: "integrations", keys: [] },
   // System: device name, desk reset, devices RAW.
   { id: "system", label: "System", glyph: "system", sprite: "system", keys: ["device", "mesh"] },
   // Conductor R7 (canvas K7a, ratified 2026-10-07): People MCP access.
@@ -516,9 +513,9 @@ export function PrefsFace({
         </span>
       </div>
       <div className="settings-leads">
-        <section className="settings-plate" data-focus={lead === "engines" || undefined} data-testid="settings-lead-engines" aria-label="Runs on">
+        <section className="settings-plate" data-focus={lead === "engines" || undefined} data-testid="settings-lead-engines" aria-label="Engines">
           <header className="settings-plate-bar">
-            <span className="settings-plate-label">RUNS ON</span>
+            <span className="settings-plate-label">ENGINES</span>
           </header>
           <div className="settings-plate-body">
             <span className="settings-plate-sprite" aria-hidden="true"><SettingSprite name="models" /></span>

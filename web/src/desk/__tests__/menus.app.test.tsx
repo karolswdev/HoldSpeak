@@ -21,7 +21,7 @@ vi.mock("../../runtime/RuntimeBus", () => ({
   useOptionalRuntimeBus: () => ({ state: "offline", subscribe: () => () => undefined }),
 }));
 
-const MARK_ROWS = ["Refresh from hub", "Settings", "Runs on", "Connections", "Setup"];
+const MARK_ROWS = ["Refresh from hub", "Settings", "Engines", "Accounts", "Setup"];
 
 function phone(on: boolean) {
   if (!on) return;
@@ -78,7 +78,7 @@ describe.each([[1440, false], [393, true]] as const)("the HoldSpeak menu at %i",
     await act(async () => { await Promise.resolve(); });
 
     expect(labels(openMark())).toEqual(MARK_ROWS);
-    for (const row of ["Settings", "Runs on", "Connections", "Setup"]) {
+    for (const row of ["Settings", "Engines", "Accounts", "Setup"]) {
       const menu = screen.queryByRole("menu", { name: "HoldSpeak" }) ?? openMark();
       fireEvent.click(within(menu).getByRole("menuitem", { name: new RegExp(`^${row}`) }));
     }

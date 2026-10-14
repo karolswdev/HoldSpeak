@@ -84,9 +84,9 @@ describe("a prepared send to the iCloud HoldSpeak folder", () => {
     expect(t.after).not.toContain("THIS DEVICE");
   });
 
-  it("a plain Documents folder: THIS DEVICE while waiting, no ICLOUD after", async () => {
+  it("a plain Documents folder: no same-device chip while waiting, no ICLOUD after", async () => {
     const t = await pressPrepared(plain());
-    expect(t.before).toContain("THIS DEVICE");
+    expect(t.before).not.toContain("THIS DEVICE");
     expect(t.after).not.toContain("ICLOUD");
     expect(t.history).not.toContain("ICLOUD");
   });

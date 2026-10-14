@@ -1,13 +1,12 @@
 // PHILO-17 (U16, Astra r1 M3): the meeting names its summary engine ONCE.
 // A rendered fence over the composed Meetings face: list → open meeting →
-// Review. The window foot names the host; the row, the record's strip and
-// its summary slab do not repeat a succeeded run on that host. A failed
-// attempt and a different host stay. Under Review the window foot is not
-// mounted, so nothing is suppressed against it.
+// Outcomes. The window foot names an external host; the row, the record's
+// strip and its summary slab do not repeat a succeeded run on that host. A
+// failed attempt and a different host stay. Same-device work has no badge.
 //
 // PHILO-17 meetingwin: the open meeting is its own window (MeetingRecord);
 // its foot is the window foot. The list and the window are fenced apart.
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { useState, type ReactNode } from "react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { WingSlotContext } from "../../../../desk/surface/wings";
@@ -83,20 +82,20 @@ function chips(): string[] {
   return Array.from(document.querySelectorAll(".gadget-chip-egress")).map((el) => (el.textContent ?? "").trim());
 }
 
-it("list and open meeting: a succeeded loopback run is one THIS DEVICE chip, never 127.0.0.1", async () => {
+it("list and open meeting: same-device work has no egress chip or loopback address", async () => {
   hub(meeting([{ leg_ordinal: 1, host: "127.0.0.1", outcome: "succeeded", operation_id: "op_1" }], "127.0.0.1"));
   render(<Shell />);
   await screen.findByTestId("meeting-row-a");
-  await waitFor(() => expect(chips().filter((c) => c.includes("THIS DEVICE"))).toHaveLength(1));
+  await waitFor(() => expect(chips()).toHaveLength(0));
   expect(chips().join(" ")).not.toContain("127.0.0.1");
-  expect(screen.queryByTestId("row-attempts")).toBeNull();
+  expect(screen.queryByTestId("row-attempts")?.querySelector(".gadget-chip-egress")).toBeNull();
   cleanup();
 
   // The meeting's own window: its strip and summary slab do not say it again.
   render(<Shell open />);
   await screen.findByTestId("meeting-summary-text");
-  expect(chips().filter((c) => c.includes("THIS DEVICE"))).toHaveLength(1);
-  expect(screen.queryByTestId("summary-record-attempts")).toBeNull();
+  expect(chips()).toHaveLength(0);
+  expect(screen.queryByTestId("summary-record-attempts")?.querySelector(".gadget-chip-egress")).toBeNull();
   expect(chips().join(" ")).not.toContain("127.0.0.1");
 });
 
@@ -108,22 +107,22 @@ it("a failed leg and a different host stay on the open meeting", async () => {
   render(<Shell open />);
   await screen.findByTestId("meeting-summary-text");
   const slab = screen.getByTestId("summary-record-attempts").textContent ?? "";
-  expect(slab).toContain("THIS DEVICE");
+  expect(slab).not.toContain("THIS DEVICE");
   expect(slab).toContain("FAILED");
   expect(slab).toContain("api.example.com");
   // The strip names the other host too: it is not the foot's.
   expect(chips().filter((c) => c === "api.example.com").length).toBeGreaterThanOrEqual(2);
 });
 
-it("Review: the window foot is not mounted, so nothing is suppressed against it", async () => {
+it("Outcomes is the one review face and reads its own records", async () => {
   hub(meeting([{ leg_ordinal: 1, host: "127.0.0.1", outcome: "succeeded", operation_id: "op_1" }], "127.0.0.1"));
   render(<Shell open />);
   await screen.findByTestId("meeting-summary-text");
-  fireEvent.click(screen.getByRole("tab", { name: /Review/i }));
-  await screen.findByTestId("review-receipt");
-  // Review's own foot names the host; the strip keeps its own chip because
-  // the foot it was checked against is gone. Never the raw IP.
+  expect(screen.getByRole("tab", { name: "Outcomes" })).toBeTruthy();
+  expect(screen.queryByRole("tab", { name: /Review/i })).toBeNull();
+  await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/api/meetings/a/outcome-review"));
+  // The strip has no same-device chip. Never the raw IP.
   const strip = document.querySelector(".meetings-detail-facts");
-  expect(strip?.querySelector(".gadget-chip-egress")?.textContent).toContain("THIS DEVICE");
+  expect(strip?.querySelector(".gadget-chip-egress")).toBeNull();
   expect(chips().join(" ")).not.toContain("127.0.0.1");
 });

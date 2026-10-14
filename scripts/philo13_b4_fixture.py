@@ -206,6 +206,10 @@ def seed_people_prep(
         store.initialize()
         people = PeopleService(store)
         owner = Principal(PrincipalKind.OWNER, OWNER_NAME)
+        # Prep contains obligations the owner accepted, not raw extraction.
+        # Use the same review service as the meeting face after save_meeting.
+        from holdspeak.services.meeting_service import MeetingService
+        MeetingService(db).review_action_item(owner, ACTION_ID, {"review_state": "accepted"})
         project = ProjectService(db).create_project(
             owner, {"name": "B4 Dry-run project", "description": "B4 report context"},
         )

@@ -156,15 +156,15 @@ function AddEngineRow({ ctrl }: { ctrl: RunsOnController }) {
   );
 }
 
-export function RunsOnCore({ scope }: CoreProps) {
+export function RunsOnCore({ scope, title }: CoreProps & { title?: string }) {
   const ctrl = useRunsOn(scope);
   const setTitle = useContext(TitleSlotContext);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const layout = useSwitchboardLayout(rootRef);
 
   useEffect(() => {
-    setTitle?.("Runs on");
-  }, [setTitle]);
+    setTitle?.(title ?? "Runs on");
+  }, [setTitle, title]);
 
   const { roster, detection, engines } = ctrl;
   // PHILO-17 speech: with no speech model on this device the Speech job says

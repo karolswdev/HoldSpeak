@@ -376,6 +376,17 @@ def test_windows_no_view_can_open_from_a_row_are_refused(svc: Any) -> None:
     assert svc.list()["registry"]["not_on_hub"]["inspector"]
 
 
+def test_retired_concierge_window_is_refused_and_listed(svc: Any) -> None:
+    """PHILO-17: the old Runs on row is retired by static id while Settings
+    remains the live host for the Engines wing."""
+    with pytest.raises(ValidationError) as refused:
+        svc.open("surface-concierge")
+    assert refused.value.code == "window_retired"
+    registry = svc.list()["registry"]
+    assert registry["retired"]["surface-concierge"]
+    assert svc.open("surface-settings")["app"] == "configure-settings"
+
+
 def test_a_project_drawer_row_names_its_project(svc: Any) -> None:
     row = svc.open("drawer:project:p-ledger")
     assert row["app"] == "drawer" and row["object_ref"] == "project:p-ledger"

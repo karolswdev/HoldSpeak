@@ -288,14 +288,14 @@ describe("calendar helpers", () => {
 });
 
 describe("Calendar card", () => {
-  it("found: one Use it per calendar on THIS DEVICE; IN USE is the hub's fact; the receipt follows", async () => {
+  it("found: one Use it per calendar; IN USE is the hub's fact; the receipt follows", async () => {
     hub.calendar = { macos: { state: "full_access", can_request: false }, candidates: [MAC_CAL], sources: 0 };
     render(<FirstRun />);
     const cal = await screen.findByTestId("firstrun-calendar");
     await within(cal).findByRole("status", { name: "FOUND · 1" });
     // Speech is not on the device: First words cannot be the next press, so the Calendar is lit.
     expect(cal.getAttribute("data-lit")).toBe("true");
-    expect(within(cal).getByText("THIS DEVICE")).toBeTruthy();
+    expect(within(cal).queryByText("THIS DEVICE")).toBeNull();
     expect(within(cal).getByText("karol@acme.com")).toBeTruthy();
     hub.door = { upcoming: [{ id: "e1", source: "calendar_event", title: "Atlas weekly", starts_at: soon() }], week: { total: 14 } };
     await act(async () => {
@@ -381,7 +381,7 @@ describe("Calendar card", () => {
     expect(within(denied).getAllByRole("button").map((b) => b.textContent)).toEqual([
       "Open System Settings", "Check again",
     ]);
-    expect(within(denied).getByText("THIS DEVICE")).toBeTruthy();
+    expect(within(denied).queryByText("THIS DEVICE")).toBeNull();
     expect(within(cal).queryByRole("button", { name: "Allow calendar access" })).toBeNull();
     // A link still works.
     expect(within(cal).getByRole("textbox", { name: "Calendar URL" })).toBeTruthy();
@@ -431,7 +431,7 @@ describe("Calendar card", () => {
     render(<FirstRun />);
     const cal = await screen.findByTestId("firstrun-calendar");
     const allow = await within(cal).findByRole("button", { name: "Allow calendar access" });
-    expect(within(cal).getByText("THIS DEVICE")).toBeTruthy();
+    expect(within(cal).queryByText("THIS DEVICE")).toBeNull();
     expect(calls.some((c) => c.path === "/api/onboarding/calendar/macos/access")).toBe(false);
     await act(async () => {
       fireEvent.click(allow);

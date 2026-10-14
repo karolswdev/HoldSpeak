@@ -2,8 +2,8 @@
 // model that drafts answers. Drafts are OWNER work and inherit the Default for
 // AI work (tests/unit/test_philo15_05_default_feeds_drafts.py), so with only a
 // default the chip names the default's host, never NOT SET; a default made
-// after the first read shows at the next open; a this-device default reads
-// THIS DEVICE, not its model label as a cloud host. No cache (Astra r1): a
+// after the first read shows at the next open; a this-device default has no
+// egress chip. No cache (Astra r1): a
 // changed default shows at the next open, and an open lane re-reads on
 // `desk_changed`.
 import { act, render, screen, waitFor } from "@testing-library/react";
@@ -28,10 +28,15 @@ vi.mock("../../../runtime/RuntimeBus", () => ({
 
 import { useDraftEgress, __resetDraftEgress } from "../LaneWindow";
 import { useDesk } from "../../store";
+import { EgressChip } from "../../surface";
 
 function Chip() {
   const egress = useDraftEgress(true);
-  return <span data-testid="chip" data-scope={egress.scope ?? ""}>{egress.label}</span>;
+  return (
+    <span data-testid="chip" data-scope={egress.scope ?? ""} data-assigned={String(egress.assigned ?? "")}>
+      <EgressChip label={egress.label} scope={egress.scope} />
+    </span>
+  );
 }
 
 /** The roster as GET /api/inference/assignments answers it: `effective` is
@@ -77,24 +82,24 @@ describe("the draft chip reads the Default for AI work", () => {
     expect(screen.getByTestId("chip").dataset.scope).toBe("local");
   });
 
-  it("a this-device default with no endpoint reads THIS DEVICE, not its label as a cloud host", async () => {
+  it("a this-device default with no endpoint has no egress chip", async () => {
     api.fetch.mockResolvedValue(roster({ profile_id: "this-machine", label: "Qwen3 8B", boundary: "local" }));
     render(<Chip />);
-    await waitFor(() => expect(screen.getByTestId("chip").textContent).toBe("THIS DEVICE"));
-    expect(screen.getByTestId("chip").dataset.scope).toBe("local");
+    await waitFor(() => expect(screen.getByTestId("chip").textContent).toBe(""));
+    expect(screen.getByTestId("chip").dataset.scope).toBe("");
   });
 
-  it("no default and no assignment: NOT SET; a default made later shows at the next open", async () => {
+  it("no default and no assignment: no chip; a default made later stays blank when local", async () => {
     api.fetch.mockResolvedValueOnce(roster(null));
     const first = render(<Chip />);
     await waitFor(() => expect(api.fetch).toHaveBeenCalledTimes(1));
-    expect(screen.getByTestId("chip").textContent).toBe("NOT SET");
+    expect(screen.getByTestId("chip").textContent).toBe("");
     first.unmount();
 
     // Set up local AI made the default; the lane opens again.
     api.fetch.mockResolvedValueOnce(roster({ profile_id: "this-machine", label: "Qwen3 8B", boundary: "local" }));
     render(<Chip />);
-    await waitFor(() => expect(screen.getByTestId("chip").textContent).toBe("THIS DEVICE"));
+    await waitFor(() => expect(screen.getByTestId("chip").textContent).toBe(""));
     expect(api.fetch).toHaveBeenCalledTimes(2);
   });
 
@@ -103,10 +108,10 @@ describe("the draft chip reads the Default for AI work", () => {
   const LOCAL = { profile_id: "this-machine", label: "This Machine", boundary: "local", readiness: "ready" };
   const CLOUD = { profile_id: "cloud-default", label: "OpenRouter Qwen", boundary: "cloud", readiness: "ready" };
 
-  it("local default, then an OpenRouter default, then reopen: the OpenRouter name, not THIS DEVICE", async () => {
+  it("local default, then an OpenRouter default, then reopen: the OpenRouter name", async () => {
     api.fetch.mockResolvedValueOnce(roster(LOCAL));
     const first = render(<Chip />);
-    await waitFor(() => expect(screen.getByTestId("chip").textContent).toBe("THIS DEVICE"));
+    await waitFor(() => expect(screen.getByTestId("chip").textContent).toBe(""));
     first.unmount();
 
     api.fetch.mockResolvedValueOnce(roster(CLOUD));
@@ -118,7 +123,8 @@ describe("the draft chip reads the Default for AI work", () => {
   it("an open lane re-reads after a desk write (desk_changed): the new default shows without a reopen", async () => {
     api.fetch.mockResolvedValueOnce(roster(LOCAL));
     render(<Chip />);
-    await waitFor(() => expect(screen.getByTestId("chip").textContent).toBe("THIS DEVICE"));
+    await waitFor(() => expect(screen.getByTestId("chip").textContent).toBe(""));
+    await waitFor(() => expect(screen.getByTestId("chip")).toHaveAttribute("data-assigned", "true"));
 
     api.fetch.mockResolvedValueOnce(roster(CLOUD));
     act(() => bus.handlers.forEach((handler) => handler({ type: "desk_changed", data: {} })));

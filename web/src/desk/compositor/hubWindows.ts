@@ -60,6 +60,7 @@ export interface HubWindowRow {
 export interface HubRegistry {
   static: Record<string, string>;
   families: Record<string, string>;
+  retired?: Record<string, string>;
 }
 
 export interface HubWindowList {
@@ -96,16 +97,24 @@ export const httpTransport: HubTransport = {
       method: "POST", json: { side, expected_revision: expected }, keepalive: true }),
 };
 
-/** PHILO-17: the meeting a saved Meetings window row was scoped to (it
- * migrates to that meeting's own window), or null. */
+/** PHILO-17: the meeting a legacy pullout row was scoped to. It migrates to
+ * the Meetings surface once; an already scoped Meetings row is authoritative
+ * and stays in place. */
 export function migratedMeeting(row: { id: string; object_ref: string | null }): string | null {
-  const meetings = SURFACE_APPLICATIONS.find((a) => a.action === "review-meetings")?.windowId;
-  if (row.id === meetings) return meetingOfScope(row.object_ref);
-  // A meeting window saved under its bare id (the parked Floor's
-  // `pullout:<id>`), once the desk knows the id is a meeting.
   if (row.id.startsWith("pullout:")) {
     const bare = row.id.slice("pullout:".length);
-    if (bare && !bare.includes(":") && (useDesk.getState().items.meeting ?? []).some((m) => m.id === bare)) return bare;
+    // Explicit historical meeting refs are authoritative even before the
+    // world snapshot arrives. Older bare ids need a verified meeting row so
+    // generic pullouts such as intelligence:desk and people:<id> never move
+    // into Meetings during boot.
+    const explicit = meetingOfScope(bare);
+    if (explicit) return explicit;
+    if (
+      bare &&
+      !bare.includes(":") &&
+      (useDesk.getState().items.meeting ?? []).some((m) => m.id === bare)
+    )
+      return bare;
   }
   return null;
 }
@@ -355,8 +364,19 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
     return row ? { depth: row.depth, minimized: row.minimized } : undefined;
   });
 
+  const retiredReason = (id: string): string | undefined => {
+    const retired = registry?.retired;
+    if (!retired) return undefined;
+    if (retired[id]) return retired[id];
+    const app = registry?.static[id];
+    if (app && retired[app]) return retired[app];
+    const family = Object.keys(retired).find((prefix) => id.startsWith(`${prefix}:`));
+    return family ? retired[family] : undefined;
+  };
+
   const known = (id: string): boolean => {
     if (!registry) return false;
+    if (retiredReason(id)) return false;
     if (id in registry.static) return true;
     return Object.keys(registry.families).some((p) => id.startsWith(p) && id.length > p.length);
   };
@@ -455,11 +475,9 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
     // PHILO-17 (owner 2026-10-10, "Yes, everything must become one desk"):
     // zone windows are retired; no face draws a zone. A saved `zone:*` row
     // is closed on the hub once and never opens or counts here.
-    // PHILO-17 (owner 2026-10-10, "A meeting opens in one window"): a saved
-    // Meetings window scoped to one meeting held that meeting's record; the
-    // record is the meeting's own window now. The hub's row migrates once:
-    // it is closed at its revision (as a retired row) and the meeting's
-    // window opens here, which goes to the hub as its own row.
+    // PHILO-17 (owner answer): old meeting pullouts migrate once into the
+    // scoped Meetings surface. The surface keeps its existing row and rect;
+    // only the retired pullout row is closed.
     const migrating = list.windows.filter((r) => migratedMeeting(r) !== null);
     for (const r of migrating) {
       const meeting = migratedMeeting(r)!;
@@ -468,12 +486,21 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
       const first = !migratedOpen.has(r.id) && !retiredDone.has(r.id) && (retireTries.get(r.id) ?? 0) < RETIRE_TRIES;
       if (first) migratedOpen.add(r.id);
       if (first) {
-        migratedTo.add(`pullout:meeting:${meeting}`);
-        useDesk.getState().openPullout(`meeting:${meeting}`);
+        migratedTo.add("surface-meetings");
+        useDesk.getState().openSurfaceWindow("review-meetings", `meeting:${meeting}`);
+        const rect = rectOf(r);
+        if (rect) useDesk.getState().setPanelRect("surface-meetings", rect, true);
       }
     }
-    const retired = list.windows.filter((r) => r.id.startsWith(RETIRED_PREFIX) || migratedMeeting(r) !== null);
-    for (const r of retired) retire(r);
+    const retired = list.windows.filter((r) =>
+      r.id.startsWith(RETIRED_PREFIX) || migratedMeeting(r) !== null || Boolean(retiredReason(r.id)),
+    );
+    for (const r of retired) {
+      // The hub close is authoritative; this view also drops the old local
+      // presentation so a parked face cannot remain over the live surface.
+      if (migratedMeeting(r) !== null || retiredReason(r.id)) adapterFor(r.id)?.close();
+      retire(r);
+    }
     if (retired.length) list = { ...list, windows: list.windows.filter((r) => !retired.includes(r)) };
     const byId = new Map(list.windows.map((r) => [r.id, r]));
     // A migrated meeting window is protected only until the hub holds it.
