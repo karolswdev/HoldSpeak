@@ -94,7 +94,7 @@ it("A: a second press while the last answer transcribes waits; the old final nev
   // The first answer lands; then the queued capture starts and STAYS listening.
   await waitFor(() => expect(mic().className).toContain("is-listening"));
   expect(Socket.all).toHaveLength(2);
-  expect((document.querySelector("[data-testid=session-answer-well] .desk-steer-input") as HTMLTextAreaElement).value).toBe("First answer");
+  expect((document.querySelector("[data-testid=session-answer-well] textarea[aria-label=Direct]") as HTMLTextAreaElement).value).toBe("First answer");
   await act(async () => { await new Promise((r) => setTimeout(r, 50)); });
   expect(mic().className).toContain("is-listening");
   expect(micPhase()).toBe("held");

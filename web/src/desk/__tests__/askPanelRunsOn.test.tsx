@@ -172,3 +172,23 @@ describe("AskPanel's Note passage handoff", () => {
     expect(payload.context).toEqual([expect.objectContaining({ ref: "note:note-2" })]);
   });
 });
+
+
+describe("daily work: the question leads Ask", () => {
+  it("keeps the draft while optional notes fold and states the selected source once", async () => {
+    useDesk.setState({ items: { ...EMPTY_ITEMS, note: [note] }, selectedIds: ["note:note-1"], askOpen: true });
+    render(<AskPanel />);
+    const prompt = await screen.findByPlaceholderText("Ask about your work");
+    fireEvent.change(prompt, { target: { value: "Keep this question" } });
+    expect(screen.getByTestId("ask-context")).toHaveTextContent("With:Canonical note");
+    expect(screen.queryByText("USES ASSIGNMENT")).toBeNull();
+    expect(screen.queryByRole("radiogroup", { name: "Lens" })).toBeNull();
+    expect(screen.queryByText(/^Budget /)).toBeNull();
+    const notes = screen.getByRole("button", { name: "Add notes" });
+    expect(notes).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(notes);
+    expect(notes).toHaveAttribute("aria-expanded", "true");
+    fireEvent.click(notes);
+    expect(prompt).toHaveValue("Keep this question");
+  });
+});

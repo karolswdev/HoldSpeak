@@ -8,10 +8,10 @@ import { AgentAvatar } from "../components/AgentAvatar";
 import { SurfaceRow, SurfaceRows, SurfaceState } from "../surface/Surface";
 import { CapabilitySection } from "./shared/CapabilitySection";
 import type { PulloutContentProps } from "./types";
+import { Button } from "../../components/signal/Signal";
 
 export function ChainPullout({ object: o }: PulloutContentProps) {
   const recipes = useDesk((s) => s.items.recipe);
-  const { openEditor } = useDesk.getState();
   if (o.ref.kind !== "chain") return null;
   const ir = o.ref;
   const resourceRef = qualifiedRef(o.kind, o.id);
@@ -43,13 +43,6 @@ export function ChainPullout({ object: o }: PulloutContentProps) {
               empty
               emptyLabel="No steps"
               emptyGlyph="○"
-              /* HS-202-04 (F08) — the object is a Sequence on its own
-                 window (`lib/primitives.ts:531` draws
-                 `productLabel("sequence")`), and `chain` is the registry's
-                 LEGACY ALIAS for it (`docs/product-language.json`
-                 legacy_aliases). The verb said the alias. */
-              actionLabel="Edit Sequence"
-              onAction={() => openEditor(o.id)}
             />
           )}
         </section>
@@ -60,22 +53,16 @@ export function ChainPullout({ object: o }: PulloutContentProps) {
           objectId={o.id}
         />
       </div>
-      <SurfaceFooter verbs={<> <button
-          type="button"
-          className="desk-chip quiet"
+      {/* Edit is parked until the existing registry supplies a Sequence editor. */}
+      <SurfaceFooter verbs={<Button
+          dense
+          variant="ghost"
           onClick={() =>
             openSurfaceOr("dictate", "/dictation", resourceRef)
           }
         >
           Dictate about this
-        </button>
-        <button
-          type="button"
-          className="desk-chip is-primary"
-          onClick={() => openEditor(o.id)}
-        >
-          Edit
-        </button> </>} />
+        </Button>} />
     </>
   );
 }

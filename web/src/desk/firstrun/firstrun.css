@@ -8,11 +8,32 @@
   max-width: 1120px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding: clamp(20px, 4vw, 36px);
+  gap: 14px;
+  padding: 16px;
   border: 1px solid var(--surface-3);
   border-radius: 2px;
-  background: color-mix(in srgb, var(--surface-1) 92%, transparent);
+  background: var(--wb-field);
+  --surface-1: var(--wb-field);
+  --surface-2: var(--wb-well);
+  --surface-3: var(--wb-steel-2);
+  --text: var(--wb-text);
+  --text-muted: var(--wb-muted);
+  --text-faint: var(--wb-muted);
+  /* Standalone first use shares the window's readable state/egress inks. */
+  --accent: var(--wb-ember-ink);
+  --accent-hover: var(--wb-ember-ink);
+  --ok: var(--wb-ok-ink);
+  --warn: var(--wb-warn-ink);
+  --danger: var(--wb-danger-ink);
+  --field-bg: var(--wb-well);
+  --field-border: var(--wb-rule);
+  --desk-window-well: var(--wb-well);
+  --gadget-fill: var(--wb-steel);
+  --gadget-fill-hover: var(--wb-steel-2);
+  --wash-2: var(--wb-steel);
+  --gleam-2: var(--wb-steel-2);
+  --shade-1: var(--wb-ink);
+  color: var(--wb-text);
   box-shadow: 0 24px 80px var(--shadow-ink-1);
 }
 
@@ -313,4 +334,15 @@
 
 .firstrun-signin-well .connections-command-code {
   overflow-wrap: anywhere;
+}
+
+/* First use stays in the desk material. The exit remains in reach while
+   optional setup unfolds inside the chair's body scroller. */
+.firstrun-head { position:sticky; top:0; z-index:2; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; padding-block:8px; background:var(--wb-field); }
+.firstrun-primary,
+.firstrun[data-heard] .firstrun-primary { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+.firstrun-optional .gadget-fold-body { display:flex; flex-direction:column; gap:12px; }
+.firstrun-chat .firstrun-card { border:0; box-shadow:none; padding:0; }
+@container surface (max-width:720px) {
+ .firstrun-primary, .firstrun[data-heard] .firstrun-primary { grid-template-columns:minmax(0,1fr); }
 }

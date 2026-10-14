@@ -1,12 +1,13 @@
-/** HS-153-01 -- Mode tabs in the composer HEAD.
+/** HS-153-01 -- Mode tabs beside the composer.
  *
  * Renders: Desk . Chase . Draft . Plan . <custom modes>
  * Coloured dot from avatar, active tab marked (aria-pressed).
- * Arrow-key + Enter reachable, no horizontal overflow at 393
- * (tabs scroll inside overflow-x container). */
+ * One Tab entry, arrow-key focus and Enter selection. The strip wraps
+ * within its surface at 393. */
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { apiFetch } from "../../lib/api";
 import type { ThreadMode } from "../threads";
+import { Button } from "../../components/signal/Signal";
 
 export interface ModeTabItem {
   id: string;
@@ -73,17 +74,26 @@ export function resetModeCache(): void {
 
 export function ModeTabs({ activeMode, onSelect, disabled }: ModeTabsProps) {
   const [modes, setModes] = useState<ModeTabItem[]>([]);
+  const [focusedModeId, setFocusedModeId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     void fetchModes().then(setModes);
   }, []);
 
+  useEffect(() => {
+    setFocusedModeId(activeMode?.id ?? null);
+  }, [activeMode?.id]);
+
+  const tabStopId = modes.find((mode) => mode.id === focusedModeId)?.id
+    ?? modes.find((mode) => mode.id === activeMode?.id)?.id
+    ?? modes[0]?.id;
+
   const handleKey = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
       if (disabled) return;
       const btns = scrollRef.current?.querySelectorAll<HTMLButtonElement>(
-        "[data-mode-tab]",
+        "[data-mode-tab]:not(:disabled)",
       );
       if (!btns || btns.length === 0) return;
       const arr = Array.from(btns);
@@ -118,7 +128,8 @@ export function ModeTabs({ activeMode, onSelect, disabled }: ModeTabsProps) {
       {modes.map((m) => {
         const isActive = activeMode?.id === m.id;
         return (
-          <button
+          <Button
+            variant="chrome"
             key={m.id}
             type="button"
             role="tab"
@@ -127,9 +138,12 @@ export function ModeTabs({ activeMode, onSelect, disabled }: ModeTabsProps) {
             aria-selected={isActive}
             aria-pressed={isActive}
             className={`thread-mode-tab${isActive ? " thread-mode-tab--active" : ""}`}
-            tabIndex={isActive ? 0 : -1}
+            tabIndex={!disabled && m.id === tabStopId ? 0 : -1}
             disabled={disabled}
-            onClick={() => onSelect(isActive ? "" : m.id)}
+            onFocus={() => setFocusedModeId(m.id)}
+            onClick={() => {
+              if (!disabled) onSelect(isActive ? "" : m.id);
+            }}
             data-testid={`mode-tab-${m.name.toLowerCase()}`}
           >
             <span
@@ -137,7 +151,7 @@ export function ModeTabs({ activeMode, onSelect, disabled }: ModeTabsProps) {
               style={{ backgroundColor: m.avatar }}
             />
             <span className="thread-mode-label">{m.name}</span>
-          </button>
+          </Button>
         );
       })}
     </div>

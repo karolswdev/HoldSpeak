@@ -14,10 +14,10 @@ Validation errors at generation: **0**.
 | Measure | Present / total or count |
 | --- | ---: |
 | Source paths | 275 / 275 |
-| Test paths | 212 / 212 |
-| Documentation paths | 234 / 234 |
-| Assertions inspected | 212 |
-| Tests executed | 174 |
+| Test paths | 213 / 213 |
+| Documentation paths | 235 / 235 |
+| Assertions inspected | 213 |
+| Tests executed | 175 |
 | Records with an executed assertion | 79 |
 | Semantic records unresolved | 76 |
 
@@ -106,7 +106,7 @@ Validation errors at generation: **0**.
 | `knowledge.grounding` | capabilities | 2/2 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `knowledge.memory_search` | capabilities | 3/3 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `workflows.linear_run` | capabilities | 2/2 | 3/3 | 3 | 3 | 0 | partially_evidenced |
-| `coder.observation` | capabilities | 3/3 | 2/2 | 2 | 2 | 0 | partially_evidenced |
+| `coder.observation` | capabilities | 3/3 | 3/3 | 3 | 3 | 0 | partially_evidenced |
 | `coder.reply_and_draft` | capabilities | 2/2 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `coder.gate` | capabilities | 3/3 | 4/4 | 4 | 4 | 0 | partially_evidenced |
 | `integration.activity_connectors` | capabilities | 4/4 | 3/3 | 3 | 3 | 0 | partially_evidenced |

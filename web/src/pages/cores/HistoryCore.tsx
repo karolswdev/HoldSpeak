@@ -43,7 +43,8 @@ import {
 import { useSummaryRun } from "./history/useSummaryRun";
 import { leadRunRowId } from "./history/CatalogRail";
 import { AppTile, FigureStrip, type Figure } from "../../desk/surface/kit";
-import { MeetingRecord } from "./history/MeetingRecord";
+import { MeetingWindow } from "../../desk/pullouts/MeetingWindow";
+import { objectWindowStandIn } from "../../desk/objectWindows";
 
 /** PHILO-17: the list window's faces: the list, and Record (import). */
 const LIST_WINGS = [
@@ -288,9 +289,9 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   // clear the scope and reveal the same list selection/state.
   if (scopedMeetingId) {
     return (
-      <MeetingRecord
+      <MeetingWindow
         key={scopedMeetingId}
-        meetingId={scopedMeetingId}
+        object={objectWindowStandIn(`meeting:${scopedMeetingId}`)!}
         onClose={() => openSurfaceOr("review-meetings", "/history")}
       />
     );

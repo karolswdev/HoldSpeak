@@ -90,6 +90,8 @@ describe("the cold Desk memory window", () => {
 
     const results = await screen.findByTestId("recall-results");
     expect(results.getAttribute("aria-label")).toBe("Recent on this desk");
+    expect(screen.getByTestId("recall-display").textContent).toBe("Recent work");
+    expect(screen.queryByTestId("recall-ref-token")).toBeNull();
   });
 
   it("does not bury a resumed search under the recent read", async () => {

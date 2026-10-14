@@ -283,6 +283,9 @@ describe("PHILO-13-11 slice two — the Chair as windows", () => {
     render(<ChairHome />);
     await waitFor(() => expect(screen.getByTestId("arrival-meeting-badge").textContent).toBe("SUMMARY STORED"));
     const row = screen.getByTestId("arrival-meeting-row");
+    expect(row).toHaveTextContent("Dual-write is stable.");
+    expect(row.closest("li")).not.toHaveAttribute("data-open");
+    expect(screen.queryByTestId("meeting-send-well")).toBeNull();
     expect(within(row).queryByTestId("arrival-run-intel")).toBeNull();
     expect(within(row).getByRole("button", { name: "Open" })).toBeTruthy();
   });

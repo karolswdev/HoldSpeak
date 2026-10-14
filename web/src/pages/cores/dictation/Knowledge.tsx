@@ -16,6 +16,7 @@ import type {
 import {
   ConfirmVerb,
   EditInPlace,
+  SurfaceState,
 } from "../../../desk/surface/Surface";
 import {
   GadgetGroup,
@@ -25,6 +26,45 @@ import {
 } from "../../../desk/surface/gadgets";
 import { clockNow, useAnnounce } from "./shared";
 
+function ProjectInstructions({ root }: { root: string }) {
+  const announce = useAnnounce();
+  const url = `/api/dictation/project-hs?project_root=${encodeURIComponent(root)}`;
+  const hs = useResource<DictationProjectHsResponse>(url, {});
+  const instructionsFile = (
+    ((hs.data.files ?? {}) as Record<string, unknown>)["instructions.md"] ?? {}
+  ) as Record<string, unknown>;
+  const saveInstructions = async (content: string) => {
+    announce("Saving…");
+    try {
+      await apiFetch(url, {
+        method: "PUT",
+        json: { files: { "instructions.md": content } },
+      });
+    } catch (error) {
+      announce(readableError(error), "warn");
+      return;
+    }
+    announce(`Written ${clockNow()}`);
+    await hs.reload();
+  };
+  return (
+    <GadgetGroup label="Instructions">
+      <SurfaceState
+        loading={hs.loading}
+        error={hs.error ? `Instructions not loaded · ${hs.error}` : ""}
+        onRetry={() => void hs.reload()}
+      >
+        <EditInPlace
+          value={String(instructionsFile.content ?? "") || "No instructions yet. Click to add."}
+          label="Project instructions"
+          multiline
+          onCommit={(next) => void saveInstructions(next)}
+        />
+      </SurfaceState>
+    </GadgetGroup>
+  );
+}
+
 export function Knowledge() {
   const announce = useAnnounce();
   const [root, setRoot] = useState(
@@ -32,15 +72,13 @@ export function Knowledge() {
   );
   const query = root ? `?project_root=${encodeURIComponent(root)}` : "";
   const kb = useResource<DictationProjectKbResponse>(`/api/dictation/project-kb${query}`, {});
-  const hs = useResource<DictationProjectHsResponse>(`/api/dictation/project-hs${query}`, {});
   const [drafting, setDrafting] = useState(false);
   const [draftKey, setDraftKey] = useState("");
   const [draftValue, setDraftValue] = useState("");
   const kbFacts = (kb.data.kb ?? {}) as Record<string, unknown>;
   const kbEntries = Object.entries(kbFacts);
-  const instructionsFile = (
-    ((hs.data.files ?? {}) as Record<string, unknown>)["instructions.md"] ?? {}
-  ) as Record<string, unknown>;
+  const detected = kb.data.detected as { root?: unknown } | null | undefined;
+  const detectedRoot = typeof detected?.root === "string" ? detected.root : "";
   const putKb = async (next: Record<string, unknown>) => {
     announce("Saving…");
     try {
@@ -72,19 +110,6 @@ export function Knowledge() {
     setDraftValue("");
     setDrafting(false);
   };
-  const saveInstructions = async (content: string) => {
-    announce("Saving…");
-    try {
-      await apiFetch(`/api/dictation/project-hs${query}`, {
-        method: "PUT",
-        json: { files: { "instructions.md": content } },
-      });
-      announce(`Written ${clockNow()}`);
-      await hs.reload();
-    } catch (error) {
-      announce(readableError(error), "warn");
-    }
-  };
   return (
     <>
       <GadgetGroup label="Project scope">
@@ -100,7 +125,6 @@ export function Knowledge() {
             onClick={() => {
               localStorage.setItem("holdspeak.projectRootOverride", root);
               void kb.reload();
-              void hs.reload();
             }}
           >
             Use
@@ -164,17 +188,11 @@ export function Knowledge() {
           </div>
         ) : null}
       </GadgetGroup>
-      <GadgetGroup label="Instructions">
-        <EditInPlace
-          value={
-            String(instructionsFile.content ?? "") ||
-            "No instructions yet. Click to add."
-          }
-          label="Project instructions"
-          multiline
-          onCommit={(next) => void saveInstructions(next)}
-        />
-      </GadgetGroup>
+      {kb.loading || kb.error ? (
+        <SurfaceState loading={kb.loading} error={kb.error} onRetry={() => void kb.reload()} />
+      ) : detectedRoot ? (
+        <ProjectInstructions key={detectedRoot} root={detectedRoot} />
+      ) : <span className="surface-token">No project selected</span>}
     </>
   );
 }

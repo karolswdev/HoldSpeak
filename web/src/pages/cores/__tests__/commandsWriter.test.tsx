@@ -78,4 +78,34 @@ describe("CommandsCore is one honest items-writer (HS-130-07)", () => {
     });
     expect(put.json.dictation.macros).not.toHaveProperty("enabled");
   });
+
+  it("keeps every draft field after a rejected save and retries the same command", async () => {
+    let puts = 0;
+    mocks.apiFetch.mockImplementation((path: string, init?: Init) => {
+      if (path === "/api/settings" && init?.method === "PUT") {
+        puts += 1;
+        if (puts === 1) return Promise.reject(new Error("Settings unavailable"));
+        return Promise.resolve({ settings: { ...SETTINGS, dictation: { macros: { enabled: true, items: init.json.dictation.macros.items } } } });
+      }
+      return Promise.resolve(SETTINGS);
+    });
+    render(<CommandsCore />);
+    await screen.findByText("“docs”");
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Spoken keyword" }), { target: { value: "type ledger" } });
+    fireEvent.change(screen.getByLabelText("Command behavior"), { target: { value: "type_text" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Payload" }), { target: { value: "Ledger is ready." } });
+    fireEvent.click(screen.getByRole("button", { name: "Save command" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Command not saved · Settings unavailable");
+    expect(screen.getByRole("textbox", { name: "Spoken keyword" })).toHaveValue("type ledger");
+    expect(screen.getByLabelText("Command behavior")).toHaveValue("type_text");
+    expect(screen.getByRole("textbox", { name: "Payload" })).toHaveValue("Ledger is ready.");
+    fireEvent.click(screen.getByRole("button", { name: "Save command" }));
+    await waitFor(() => expect(screen.queryByRole("textbox", { name: "Payload" })).toBeNull());
+    const writes = callsTo("/api/settings").filter((c) => c.method === "PUT");
+    expect(writes).toHaveLength(2);
+    expect(writes[1].json).toEqual(writes[0].json);
+    expect(screen.getByText("“type ledger”")).toBeVisible();
+  });
 });

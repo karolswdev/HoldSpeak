@@ -1,0 +1,17 @@
+/* Meetings' Summary is a multi-control setting. Its complete target height
+   belongs to the row, before the Capture + export section starts. */
+.prefs-summary-controls { display:flex; flex-wrap:wrap; align-items:center; gap:12px; width:100%; min-width:0; }
+.gadget-row:has(> .gadget-row-gadget > .prefs-summary-controls) { flex-shrink:0; min-height:max-content; }
+@container surface (max-width:419px) {
+ .prefs-summary-controls { flex-direction:column; align-items:flex-start; gap:12px; padding-block:8px; }
+ .prefs-summary-controls > .btn,
+ .prefs-summary-controls > .gadget-cycle { min-height:44px; }
+}
+
+/* A grant receipt remains a working footer control. Its target clears the
+   frame's bottom resize edge and the receipt slot does not clip it. */
+.desk-next .surface-footer:has(.settings-grant-receipt) { height:auto; padding-block:4px; }
+.desk-next .surface-footer-receipt:has(> .settings-grant-receipt) { overflow:visible; min-height:32px; }
+@container surface (max-width:420px) {
+ .desk-next .surface-footer-receipt:has(> .settings-grant-receipt) { min-height:44px; }
+}

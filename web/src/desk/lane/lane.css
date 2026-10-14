@@ -52,6 +52,8 @@
 /* the two columns (C-4): the rail, then the PR and its files */
 .lw-cols { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 16px; align-items: start; }
 .lw-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.lw-details .gadget-fold-body { display: flex; flex-direction: column; gap: 12px; }
+.lw-pane-detail { display: block; font-size: var(--font-size-xs); }
 
 /* Raw: the terminal pane behind the title-bar gadget */
 .lw-raw { display: flex; flex-direction: column; gap: 10px; min-height: 0; flex: 1 1 auto; }
@@ -90,11 +92,11 @@
 @container surface (max-width: 520px) {
   .desk-next .surface-footer-layout.lw-footer {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "egress" "verbs";
+    grid-template-areas: "egress" "receipt" "verbs";
     row-gap: 4px;
     padding: 4px 0;
   }
-  .desk-next .lw-footer .surface-footer-receipt { display: none; }
+  .desk-next .lw-footer .surface-footer-receipt { display: block; }
   .desk-next .lw-footer .surface-footer-verbs { flex-wrap: wrap; justify-content: flex-end; row-gap: 4px; }
 }
 

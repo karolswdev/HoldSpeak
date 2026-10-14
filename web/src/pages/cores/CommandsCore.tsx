@@ -71,8 +71,10 @@ export function CommandsCore({ hero }: CoreProps) {
         ),
       });
       resource.setData(value.settings ?? resource.data);
+      return true;
     } catch (error) {
-      setMessage({ error: true, text: readableError(error) });
+      setMessage({ error: true, text: `Command not saved · ${readableError(error)}` });
+      return false;
     } finally {
       setBusy(false);
     }
@@ -103,14 +105,14 @@ export function CommandsCore({ hero }: CoreProps) {
     const next = [...items];
     if (editing.index < 0) next.push(editing.macro);
     else next[editing.index] = editing.macro;
-    await persist(next);
-    setEditing(null);
+    if (await persist(next)) setEditing(null);
   };
 
   const verbs = (
     <>
       <Button
         dense
+        disabled={busy}
         onClick={() => setEditing({ index: -1, macro: blank() })}
       >
         Add command
@@ -184,6 +186,7 @@ export function CommandsCore({ hero }: CoreProps) {
                       <Button
                         dense
                         variant="ghost"
+                        disabled={busy}
                         onClick={() =>
                           setEditing({ index, macro: structuredClone(macro) })
                         }
@@ -209,7 +212,7 @@ export function CommandsCore({ hero }: CoreProps) {
           <SurfaceSection
             label={editing.index === -1 ? "New command" : "Edit command"}
             actions={
-              <Button dense variant="ghost" onClick={() => setEditing(null)}>
+              <Button dense variant="ghost" disabled={busy} onClick={() => setEditing(null)}>
                 Close
               </Button>
             }
@@ -297,7 +300,7 @@ export function CommandsCore({ hero }: CoreProps) {
               >
                 Save command
               </Button>
-              <Button dense onClick={() => void test(editing.macro)}>
+              <Button dense disabled={busy} onClick={() => void test(editing.macro)}>
                 Test without saving
               </Button>
             </div>

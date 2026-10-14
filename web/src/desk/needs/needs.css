@@ -97,3 +97,22 @@
 .needs-drawer[data-settling] > :not(.needs-drawer-settling) {
   visibility: hidden;
 }
+
+/* A proposal's Confirm already states the act; the kind plate names it once. */
+.needs-drawer .needs-row[data-proposal="true"] .needs-row-lamp { display:none; }
+.needs-drawer .needs-row[data-proposal="true"] { grid-template-columns:9ch minmax(0, 1fr) auto; }
+.needs-drawer .needs-row-fact:not(.is-code) { white-space:normal; overflow-wrap:anywhere; }
+.needs-coverage-details { margin:0; padding-left:20px; font:12px var(--font-mono); }
+
+@container surface (max-width:520px) {
+  .needs-drawer .needs-row[data-proposal="true"] { grid-template-columns:9ch minmax(0, 1fr); }
+}
+
+/* The coverage fold owns one 44 px row; extra disclosure margins add no reach. */
+.needs-drawer > .surface-disclosure { flex:none; }
+@container surface (max-width:520px) {
+  .desk-next .chair-window--needs .needs-drawer > .surface-disclosure .surface-disclosure-trigger {
+    min-height:44px;
+    margin-block:0;
+  }
+}

@@ -113,6 +113,9 @@ function deferred<T>() {
 }
 
 beforeEach(() => {
+  // clearAllMocks keeps unused once responses. Each projection scenario
+  // must start with its own response queue, even after an async reread.
+  vi.mocked(thoughtWorkbench).mockReset();
   sessionStorage.clear();
   latchAskSelection(null);
   useDesk.setState({ editingId: null, closeEditor: vi.fn(), askOpen: false, selectedIds: [] });
@@ -496,6 +499,7 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
     await screen.findByRole("button", { name: "Choose engine" });
     window.dispatchEvent(new Event("holdspeak:settings-updated"));
+    await waitFor(() => expect(thoughtWorkbench).toHaveBeenCalledTimes(2));
     expect(await screen.findByRole("button", { name: "Ask about this note" })).toBeEnabled();
   });
 

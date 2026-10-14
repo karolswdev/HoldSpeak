@@ -219,10 +219,10 @@ describe("RecallFace (HS-200-13)", () => {
     render(<RecallFace />);
     await search();
     const row = screen.getByTestId("recall-owed-row");
-    expect(within(row).getByTestId("recall-due-token").textContent).toBe("DUE · UNKNOWN");
-    expect(within(row).getByTestId("recall-owner-token").textContent).toBe("OWNER · UNKNOWN");
+    expect(within(row).getByTestId("recall-due-token").textContent).toBe("No date");
+    expect(within(row).getByTestId("recall-owner-token").textContent).toBe("No owner");
     expect(within(row).getAllByRole("button").map((b) => b.getAttribute("aria-label"))).toEqual([
-      "Open the Project: Q4 platform", "Name an owner: Priya confirms the freeze window",
+      "Name an owner: Priya confirms the freeze window",
     ]);
     expect(within(row).queryByRole("button", { name: /Mark done/ })).toBeNull();
 
@@ -236,10 +236,10 @@ describe("RecallFace (HS-200-13)", () => {
       method: "POST", json: { card_id: "action-1", verb: "delegate", payload: { to: "Priya" } },
     }));
     await waitFor(() => expect(screen.getByTestId("recall-owed-verb").textContent).toBe("Set a date"));
-    expect(screen.queryByTestId("recall-owner-token")).toBeNull();
+    expect(screen.getByTestId("recall-owner-token").textContent).toBe("Priya");
   });
 
-  it("Mark done is the verb only when owner and date are known, and it is the explicit act", async () => {
+  it("Done is the verb only when owner and date are known, and it is the explicit act", async () => {
     const known = { ...OWED, owner: "Priya", owner_token: "OWNER · PRIYA", due_at: "2026-09-07",
       due_token: "DUE TODAY", due_tone: "warn", unknowns: [], next_action: "mark_done" };
     let owed: unknown[] = [known];
@@ -248,13 +248,38 @@ describe("RecallFace (HS-200-13)", () => {
     await search();
     const row = screen.getByTestId("recall-owed-row");
     expect(within(row).getByTestId("recall-due-token").textContent).toBe("DUE TODAY");
-    expect(within(row).queryByTestId("recall-owner-token")).toBeNull();
+    expect(within(row).getByTestId("recall-owner-token").textContent).toBe("Priya");
     owed = [];
-    fireEvent.click(within(row).getByRole("button", { name: "Mark done: Priya confirms the freeze window" }));
+    fireEvent.click(within(row).getByRole("button", { name: "Done: Priya confirms the freeze window" }));
     await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/api/follow-through/complete", {
       method: "POST", json: { card_id: "action-1", verb: "done", payload: {} },
     }));
     await waitFor(() => expect(screen.queryByTestId("recall-owed-row")).toBeNull());
+  });
+
+  it("keeps identical work distinct by its known owner and actual source", async () => {
+    wire(result({ current: [], superseded: [], owed: [
+      { ...OWED, owner: "Jordan", source: { kind: "meeting", meeting_id: "m-first", title: "Ledger cutover sync", scope: "meeting:m-first" } },
+      { ...OWED, id: "cmt-2", ref: "commitment:cmt-2", action_item_id: "action-2", owner: "Priya",
+        source: { kind: "meeting", meeting_id: "m-second", title: "Platform review", scope: "meeting:m-second" } },
+    ] }));
+    render(<RecallFace />);
+    await search();
+    const rows = screen.getAllByTestId("recall-owed-row");
+    expect(rows).toHaveLength(2);
+    expect(rows.map((row) => within(row).getByTestId("recall-owner-token").textContent)).toEqual(["Jordan", "Priya"]);
+    expect(rows.every((row) => row.closest(".surface-ledger-row")?.getAttribute("data-wrap") === "true")).toBe(true);
+    fireEvent.click(within(rows[1]).getByRole("button", { name: "Open source: Platform review" }));
+    expect(openSurfaceOr).toHaveBeenCalledWith("review-meetings", "/history", "meeting:m-second");
+  });
+
+  it("withholds a source opener when no source is recorded", async () => {
+    wire(result({ current: [], superseded: [], owed: [OWED] }));
+    render(<RecallFace />);
+    await search();
+    expect(screen.queryByTestId("recall-owed-source")).toBeNull();
+    expect(screen.getByTestId("recall-owed-row").textContent).not.toContain("CMT");
+    expect(screen.queryByText("THIS DEVICE")).toBeNull();
   });
 
   it("the miss: Nothing matches, one true line, the filters kept, no Clear", async () => {

@@ -63,6 +63,7 @@ import { useCoreWings } from "./core-hooks";
 import { ConnectionsPane, type ConnectionsFoot } from "./connections";
 import { Destinations } from "./connections/Destinations";
 import { RunsOnCore } from "../../features/runson/RunsOnCore";
+import "./settingsSurfaceRepair.css";
 // HS-139-05: activateLauncher removed (Delivery tile absorbed).
 import {
   CADENCE_PRESSURE_OPTIONS,
@@ -244,13 +245,13 @@ const SETTINGS_WINGS = [
   { id: "guide", label: "Guide" },
 ];
 
-function settingsScope(scope?: string): { module: string | null; focus?: string } {
+export function settingsScope(scope?: string): { module: string | null; focus?: string } {
   const [head, ...tail] = (scope ?? "").split("::");
   if (!head) return { module: null };
   if (head.startsWith("integration:")) {
     return { module: "integrations", focus: [head.slice("integration:".length), ...tail].filter(Boolean).join("::") };
   }
-  const module = MODULE_ALIASES[head] ?? (PREF_MODULES.some((entry) => entry.id === head) ? head : null);
+  const module = MODULE_ALIASES[head] ?? (SETTINGS_WINGS.some((entry) => entry.id === head) || PREF_MODULES.some((entry) => entry.id === head) ? head : null);
   return { module, focus: tail.length ? tail.join("::") : undefined };
 }
 
@@ -484,6 +485,7 @@ export function GrantFootReceipt({ act, open, onToggle }: { act: GrantAct; open:
       variant="ghost"
       dense
       aria-expanded={open}
+      className="settings-grant-receipt"
       aria-label={`Receipt ${word.toLowerCase()} ${act.time}`}
       data-testid="foot-receipt"
       data-operation-id={act.operation_id}
@@ -2034,6 +2036,7 @@ function SettingsFace({
                 is Summary on every face (`docs/product-language.json:23`);
                 `intelligence` stays the wire key underneath. */}
             <GadgetRow label="Summary">
+              <span className="prefs-summary-controls" data-testid="settings-summary-controls">
               <CycleGadget
                 label="Auto-run the summary"
                 value={autoVal}
@@ -2058,6 +2061,7 @@ function SettingsFace({
               {lastRunReceipt ? (
                 <span className="gadget-fact" data-testid="settings-last-ran">{lastRunReceipt}</span>
               ) : null}
+              </span>
             </GadgetRow>
             <div className="prefs-rule" aria-hidden="true" />
             <GadgetGroup label="Capture + export">

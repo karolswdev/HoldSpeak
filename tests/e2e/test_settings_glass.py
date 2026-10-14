@@ -81,6 +81,47 @@ def _remote(page: Any) -> Any:
     return page.locator(".gadget-group", has=page.locator(".gadget-group-label", has_text="Remote access")).last
 
 
+@pytest.mark.parametrize("width", [1440, 393])
+def test_summary_controls_own_the_row_height(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
+    """The Summary controls must finish above Capture + export at both widths."""
+    from playwright.sync_api import sync_playwright
+
+    _ensure_build()
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    out = evidence_dir("surface-repair-first-use")
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": width, "height": 900 if width == 1440 else 852}, reduced_motion="reduce")
+            errors: list[str] = []
+            page.on("pageerror", lambda error: errors.append(str(error)))
+            _navigate_to_settings_hub(page, base)
+            more = page.get_by_test_id("settings-more")
+            if more.get_attribute("aria-expanded") == "false":
+                more.click()
+            row = page.locator(".surface-ledger-row", has=page.locator(".surface-ledger-primary", has_text="Meetings"))
+            row.get_by_role("button", name="Open", exact=True).click()
+            controls = page.get_by_test_id("settings-summary-controls")
+            controls.wait_for()
+            _settle(page)
+            controls.scroll_into_view_if_needed()
+            geometry = controls.evaluate("""el => {
+              const row = el.closest('.gadget-row').getBoundingClientRect();
+              const next = [...document.querySelectorAll('.gadget-group-label')].find(e => e.textContent === 'Capture + export').getBoundingClientRect();
+              const children = [...el.children].map(e=>e.getBoundingClientRect()).filter(r=>r.width&&r.height);
+              return {row:row.toJSON(),next:next.toJSON(),children:children.map(r=>r.toJSON())};
+            }""")
+            page.screenshot(path=str(out / f"settings-meetings-{width}.png"))
+            assert geometry["next"]["top"] >= geometry["row"]["bottom"], geometry
+            assert all(child["bottom"] <= geometry["row"]["bottom"] + 1 for child in geometry["children"]), geometry
+            choose = page.get_by_test_id("settings-choose-model")
+            _pointer_owned(page, choose, f"Choose model at {width}")
+            assert errors == [], errors
+            browser.close()
+    finally:
+        server.stop()
+
+
 
 class TestRemoteAccessGlass:
     @pytest.fixture(autouse=True)
@@ -352,7 +393,7 @@ _WINDOW_FACTS = """() => {
     small, low,
     raw: [...win.querySelectorAll('button')].filter(b => !String(b.className).includes('btn') && !b.closest('.gadget-cycle, select')).map(b => txt(b)),
     overflow: document.documentElement.scrollWidth > window.innerWidth || (body ? body.scrollWidth > body.clientWidth + 1 : false),
-    dialogs: document.querySelectorAll('[role=dialog], .modal, .surface-popover, [role=menu]').length,
+    dialogs: win.querySelectorAll('[role=dialog], .modal, .surface-popover, [role=menu]').length,
     top: win.getBoundingClientRect().top,
   };
 }"""

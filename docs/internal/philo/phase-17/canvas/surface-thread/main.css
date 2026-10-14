@@ -1,0 +1,12 @@
+.canvas { min-height:100vh; padding-bottom:24px; }
+.canvas-bar { padding:12px 20px; background:var(--desk-window-fill); color:var(--text); font:12px var(--font-mono); }
+.canvas nav { display:flex; gap:8px; padding:16px 20px; }
+.canvas-window { container:surface / inline-size; position:relative; display:flex; flex-direction:column; width:min(760px, calc(100% - 24px)); min-height:460px; margin:12px auto; background:var(--desk-window-fill); color:var(--text); border:2px solid var(--desk-ink, currentColor); }
+.canvas-title { padding:8px 14px; font:600 15px var(--font-mono); background:var(--desk-title-fill, var(--surface-2)); }
+.canvas-body { display:flex; flex:1; flex-direction:column; gap:12px; padding:12px; }
+.canvas-tools { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.canvas-foot { display:flex; flex-direction:column; gap:8px; padding:8px 12px; background:var(--surface-2); }
+.canvas-modes { display:flex; flex-wrap:wrap; gap:2px; }
+.canvas-mode { padding:8px; font:500 12px var(--font-mono); border:1px solid var(--border); border-radius:2px; color:var(--text-muted); background:transparent; }
+.canvas-mode.is-active { background:var(--surface-selected); color:var(--text); }
+@container surface (max-width:520px) { .canvas-mode { min-height:44px; } }

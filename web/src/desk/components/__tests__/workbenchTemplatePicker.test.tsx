@@ -13,6 +13,7 @@ import { WorkbenchTemplatePicker } from "../WorkbenchTemplatePicker";
 
 vi.mock("../../../lib/api", () => ({
   apiFetch: vi.fn(),
+  readableError: (error: unknown) => error instanceof Error ? error.message : "Failed",
 }));
 
 const TEMPLATE = {
@@ -60,6 +61,7 @@ function createCalls() {
 describe("WorkbenchTemplatePicker — one record per exit", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    refresh.mockReset().mockResolvedValue(undefined);
     mockApi();
     useDesk.setState({
       inferenceTargets: [
@@ -74,6 +76,7 @@ describe("WorkbenchTemplatePicker — one record per exit", () => {
       ],
       openWorkbenchWindow,
       refresh,
+      error: "",
     });
   });
 
@@ -102,5 +105,75 @@ describe("WorkbenchTemplatePicker — one record per exit", () => {
     expect(createCalls()[0][0]).toBe("/api/workbenches");
     expect(openWorkbenchWindow).toHaveBeenCalledTimes(1);
     expect(openWorkbenchWindow).toHaveBeenCalledWith("wb-blank");
+  });
+
+  it.each(["Daily Brief", "Blank"])("keeps %s selected on POST failure and retries that choice", async (name) => {
+    const api = apiFetch as unknown as ReturnType<typeof vi.fn>;
+    let failed = false;
+    api.mockImplementation((url: string, opts?: { method?: string }) => {
+      if (url === "/api/workbench-templates") return Promise.resolve({ templates: [TEMPLATE] });
+      if (opts?.method === "POST" && !failed) {
+        failed = true;
+        return Promise.reject(new Error("Hub unavailable"));
+      }
+      return Promise.resolve({ workbench: { id: "wb-retry" } });
+    });
+    const onCreated = vi.fn();
+    render(<WorkbenchTemplatePicker onCreated={onCreated} />);
+    const card = (await screen.findByText(name)).closest("button")!;
+    fireEvent.click(card);
+    expect(await screen.findByRole("alert")).toHaveTextContent(`${name} not created · Hub unavailable`);
+    expect(card).toHaveAttribute("aria-pressed", "true");
+    expect(card).toBeEnabled();
+    expect(openWorkbenchWindow).not.toHaveBeenCalled();
+    expect(refresh).not.toHaveBeenCalled();
+    fireEvent.click(card);
+    await waitFor(() => expect(onCreated).toHaveBeenCalledWith("wb-retry"));
+    expect(createCalls()).toHaveLength(2);
+    expect(createCalls()[1][0]).toBe(createCalls()[0][0]);
+  });
+
+  it.each(["Daily Brief", "Blank"])("opens the saved %s before a failed refresh and Retry only reads", async (name) => {
+    refresh.mockRejectedValueOnce(new Error("Read unavailable")).mockResolvedValue(undefined);
+    const onCreated = vi.fn();
+    render(<WorkbenchTemplatePicker onCreated={onCreated} />);
+    const card = (await screen.findByText(name)).closest("button")!;
+    fireEvent.click(card);
+    expect(await screen.findByRole("alert")).toHaveTextContent(`${name} created · Desk read failed · Read unavailable`);
+    const id = name === "Blank" ? "wb-blank" : "wb-from-template";
+    expect(openWorkbenchWindow).toHaveBeenCalledWith(id);
+    expect(card).toHaveAttribute("aria-pressed", "true");
+    expect(card).toBeDisabled();
+    expect(onCreated).not.toHaveBeenCalled();
+    fireEvent.click(card);
+    fireEvent.click(screen.getByRole("button", { name: "Open workbench" }));
+    expect(openWorkbenchWindow).toHaveBeenLastCalledWith(id);
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(onCreated).toHaveBeenCalledWith(id));
+    expect(createCalls()).toHaveLength(1);
+    expect(refresh).toHaveBeenCalledTimes(2);
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("treats a resolved refresh with a desk read error as a read failure", async () => {
+    refresh.mockImplementationOnce(async () => { useDesk.setState({ error: "Workbenches unavailable" }); });
+    render(<WorkbenchTemplatePicker />);
+    fireEvent.click(await screen.findByText("Blank"));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Blank created · Desk read failed · Workbenches unavailable");
+    expect(createCalls()).toHaveLength(1);
+    expect(openWorkbenchWindow).toHaveBeenCalledWith("wb-blank");
+  });
+
+  it("keeps template cards in the library and the existing keyboard rover", async () => {
+    render(<WorkbenchTemplatePicker />);
+    const card = (await screen.findByText("Daily Brief")).closest("button")!;
+    const blank = screen.getByText("Blank").closest("button")!;
+    await waitFor(() => expect(card).toHaveAttribute("tabindex", "0"));
+    expect(card).toHaveClass("btn--chrome");
+    expect(blank).toHaveAttribute("tabindex", "-1");
+    card.focus();
+    fireEvent.keyDown(card, { key: "ArrowDown" });
+    expect(blank).toHaveFocus();
+    expect(blank).toHaveAttribute("tabindex", "0");
   });
 });

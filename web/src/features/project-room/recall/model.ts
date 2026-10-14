@@ -78,6 +78,8 @@ export interface OwedRow {
   unknowns: ("owner" | "due")[];
   next_action: NextAction;
   project: RecallProject | null;
+  /** The actual linked meeting; no transcript span is inferred. */
+  source?: Pick<RecallSource, "kind" | "meeting_id" | "title" | "started_at" | "scope"> | null;
   decision_record_id: string | null;
   decision_state: DecisionState | null;
 }
@@ -158,7 +160,7 @@ export interface RecallResult {
 export const NEXT_ACTION_VERB: Record<NextAction, string> = {
   name_owner: "Name an owner",
   set_date: "Set a date",
-  mark_done: "Mark done",
+  mark_done: "Done",
 };
 
 /** The tone an axis chip wears. */

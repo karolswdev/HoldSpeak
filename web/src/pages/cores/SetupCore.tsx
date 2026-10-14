@@ -19,24 +19,15 @@ import {
 import { CoreResourceGuard, renderHeroSlot } from "./core-layout";
 import { deSnake, presentValue } from "../../desk/surface/format";
 import { SpeechSetup, useSpeechSetup } from "../../desk/firstrun/SpeechSetup";
+import { RuntimeDocsCore, sortChecks } from "./RuntimeDocsCore";
 
 /** The doctor's "Speech model" check (holdspeak/commands/doctor.py). */
 const SPEECH_SECTION = "speech-model";
 
-const CHECK_RANK: Record<string, number> = { fail: 0, warn: 1 };
+export { sortChecks } from "./RuntimeDocsCore";
 
-/** PHILO-17 U19: failing checks first, then warnings; a stable sort keeps
- *  the doctor's order inside each rank. */
-export function sortChecks<T extends { status?: unknown }>(sections: T[]): T[] {
-  return sections
-    .map((section, index) => ({ section, index }))
-    .sort((a, b) =>
-      (CHECK_RANK[String(a.section.status)] ?? 2) - (CHECK_RANK[String(b.section.status)] ?? 2)
-      || a.index - b.index)
-    .map(({ section }) => section);
-}
-
-export function SetupCore({ hero }: CoreProps) {
+/** Parked duplicate body. Setup and the compatibility route now use Guide. */
+export function ParkedSetupCore({ hero }: CoreProps) {
   const resource = useResource<SetupStatus>("/api/setup/status", {});
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{
@@ -203,4 +194,8 @@ export function SetupCore({ hero }: CoreProps) {
       <SurfaceFooter />
     </>
   );
+}
+
+export function SetupCore(props: CoreProps) {
+  return <RuntimeDocsCore {...props} speechTestId="setup-speech-setup" />;
 }

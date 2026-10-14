@@ -31,11 +31,11 @@ describe("SetupCore info lamp", () => {
       ),
     );
     render(<SetupCore />);
-    const info = await screen.findByTitle("info");
-    expect(info.getAttribute("data-on")).toBe("false");
-    const warn = screen.getByTitle("warn");
-    expect(warn.getAttribute("data-on")).toBe("true");
-    expect(warn.getAttribute("data-tone")).toBe("warn");
+    const info = await screen.findByTestId("guide-check-coding-agents");
+    expect(info.querySelector(".kit-pill")?.getAttribute("data-tone")).toBeNull();
+    expect(info.closest("details")?.open).toBe(false);
+    const warn = screen.getByTestId("guide-check-ffmpeg");
+    expect(warn.querySelector(".kit-pill")?.getAttribute("data-tone")).toBe("warn");
   });
 });
 
@@ -75,7 +75,7 @@ describe("PHILO-17 U19: Setup leads with the failing check", () => {
     );
     render(<SetupCore />);
     await screen.findByText("Speech model");
-    const titles = Array.from(document.querySelectorAll(".surface-row-text > strong")).map((n) => n.textContent);
+    const titles = Array.from(document.querySelectorAll(".guide-row-name")).map((n) => n.textContent);
     expect(titles).toEqual(["Speech model", "ffmpeg", "Python", "Database"]);
   });
 });

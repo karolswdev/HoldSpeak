@@ -107,3 +107,13 @@ sign-in, notification delivery, touch and owner acceptance remain unobserved.
 Source and screenshot checks establish this audit snapshot. Implementation
 recommendations remain proposals pending the normal design review. No PR,
 merge, owner-session action or deployment was performed for this audit.
+
+## Subsequent implementation
+
+The owner subsequently approved implementation. See
+[Surface repair](../SURFACE-REPAIR-2026-10-14.md) for changes, verification and
+delivery. This audit remains the original main snapshot. The generic
+`.tmp/evidence-shots/desk-sweep/` cache is reused by later quick checks and now
+contains their current shots; do not read those as immutable before pictures.
+The dedicated audit Conductor, tools and work capture directories remain the
+original supplementary observations.

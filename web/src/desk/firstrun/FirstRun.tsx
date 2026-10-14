@@ -1,21 +1,11 @@
-/* First run — "C1 · Heard first" (owner ratified 2026-10-05, canvas
- * FzBum28aTJQbsqwBvLuP16 v2). Three cards on one screen: Local AI · You ·
- * First words. One press downloads every local model; First words lights
- * when the speech model lands, so he can speak while the chat model still
- * downloads; his sentence comes back at the display step.
- *
- * Option A "One screen" (owner ratified 2026-10-05, canvas
- * YDTpkaJqFs3hyrZ4g581Mx §1): Calendar and Connections are two more cards
- * on the same screen. One card at a time is lit (the next press). When
- * every step is done, Ready goes to the top: "Ready, <his name>", the
- * success chips, and three verbs; every card stays, selected.
- *
- * The Conductor canvas K1 (ratified 2026-10-06): an Agents card after
- * Connections. It is optional, so it does not join `ready`. */
+/* First use: speech alone, then First words. Chat engines and optional
+ * identity/calendar/account/agent setup unfold on request. Existing reads,
+ * downloads, custody and handoff own their behavior. */
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import {
   EgressChip,
+  FoldGadget,
   HeardQuote,
   LampGadget,
   LedMeter,
@@ -64,7 +54,7 @@ const FAILURE_TOKENS: Record<DictationFailure, { chip: string; reason: string }>
   permission_denied: { chip: "MIC BLOCKED", reason: "ALLOW IN BROWSER" },
   no_microphone: { chip: "NO MIC", reason: "NO DEVICE FOUND" },
   microphone_unavailable: { chip: "MIC BUSY", reason: "IN USE ELSEWHERE" },
-  missing_model: { chip: "NO SPEECH MODEL", reason: "SET UP LOCAL AI" },
+  missing_model: { chip: "NO SPEECH MODEL", reason: "SET UP SPEECH" },
   rejected_token: { chip: "NOT HEARD", reason: "TOKEN REFUSED" },
   unreachable_hub: { chip: "NOT HEARD", reason: "HUB OFFLINE" },
   delivery_conflict: { chip: "NOT HEARD", reason: "TAKE CONFLICT" },
@@ -142,8 +132,7 @@ function LocalAiCard({
   const speechMissing = Boolean(whisper && !whisper.onDevice);
   return (
     <Card
-      title="Local AI"
-      line="Puts the speech model and the summary model on this Mac."
+      title="Server or local chat"
       testId="firstrun-local-ai"
       selected={ready || Boolean(lanUsed)}
       state={
@@ -152,15 +141,6 @@ function LocalAiCard({
         : null
       }
     >
-      {ai.read.kind === "unread" ? (
-        <div className="firstrun-fail" role="alert">
-          <StateChip state="unreachable" label="CAN'T CHECK" />
-          <span className="firstrun-reason">{ai.read.reason}</span>
-          <Button dense variant="secondary" onClick={() => void ai.refresh()}>
-            Try again
-          </Button>
-        </div>
-      ) : null}
       {status && (running || state === "failed") ? (
         <ProgressPlan compact steps={planSteps(status, ai.rate, ai.only)} ariaLabel="Local AI download" />
       ) : status && !(folded && ready) ? (
@@ -197,7 +177,7 @@ function LocalAiCard({
           ) : null}
           {state === "not_started" && !lanUsed && !(lanOpen && speechMissing) ? (
             <Button
-              variant={lanOpen ? "secondary" : "primary"}
+              variant="secondary"
               loading={ai.busy}
               disabled={ai.busy}
               onClick={() => void ai.start()}
@@ -209,20 +189,7 @@ function LocalAiCard({
               already runs on his network, with no download. */}
           {state === "not_started" && !lanOpen && !lanUsed ? (
             <Button variant="secondary" onClick={onLan} data-testid="firstrun-lan-verb">
-              Use a server on my network
-            </Button>
-          ) : null}
-          {/* Astra r1 (finding 2): beside the server choice, the speech
-              model alone, named and sized, when it is not on this device. */}
-          {state === "not_started" && (lanOpen || lanUsed) && speechMissing && whisper ? (
-            <Button
-              variant={lanUsed ? "primary" : "secondary"}
-              loading={ai.busy}
-              disabled={ai.busy}
-              onClick={() => void ai.startSpeech()}
-              data-testid="firstrun-speech-verb"
-            >
-              {`Set up speech · ${formatBytes(whisper.bytes)}`}
+              Use a server
             </Button>
           ) : null}
           {running ? (
@@ -241,7 +208,6 @@ function YouCard({ owner, folded }: { owner: ReturnType<typeof useOwnerName>; fo
   return (
     <Card
       title="You"
-      line="Your name, so summaries know which person is you."
       testId="firstrun-you"
       selected={owner.isSet}
       state={owner.isSet ? <StateChip state="success" label="SET" icon="●" /> : null}
@@ -313,7 +279,6 @@ function FirstWordsCard({
   return (
     <Card
       title="First words"
-      line="Say one sentence to test the microphone and speech."
       testId="firstrun-first-words"
       className="firstrun-words"
       disabled={!ready}
@@ -435,6 +400,7 @@ function FirstWordsCard({
 export function FirstRun() {
   const ai = useLocalAi();
   const owner = useOwnerName();
+  const speechSetup = speechSetupOf(ai);
   // Speech on this device lights First words. A read that failed leaves it
   // open: the dictation path names its own failure (honest, never stuck).
   const speech = ai.read.kind === "unread" || (ai.read.kind === "ok" && speechReady(ai.read.status));
@@ -443,8 +409,6 @@ export function FirstRun() {
   const [lanOpen, setLanOpen] = useState(false);
   const [lanUsed, setLanUsed] = useState<LanUsed | null>(null);
   const onLanUsed = useCallback((used: LanUsed) => setLanUsed(used), []);
-  const aiReady =
-    (ai.read.kind === "ok" && ai.read.status.state === "ready") || (Boolean(lanUsed) && speech);
   const handoff = useCallback(async (disposition: "completed" | "dismissed") => {
     await apiFetch("/api/desk/seed", { method: "POST" });
     await apiFetch("/api/setup/onboarding", { method: "PUT", json: { disposition } });
@@ -461,9 +425,9 @@ export function FirstRun() {
   // The Agents card (Conductor K1): optional. No agent installed never
   // blocks Ready; it lights only when it holds the next press.
   const agents = useAgentsStep();
-  // The C1 part is done: models here, his name, his words kept. Its three
-  // cards fold to their receipts (canvas A: "the three C1 cards, finished").
-  const c1Done = aiReady && owner.isSet && (take.kept || wordsBefore);
+  // Speech and a kept sentence complete first use. Chat and optional
+  // setup do not hold the exit.
+  const c1Done = speech && (take.kept || wordsBefore);
   // While the ingest still reads a source just added, the Door's next
   // meeting may change: Ready waits for the read (calendarStep `follow`).
   const ready = c1Done && calendar.inUse && !calendar.following && connections.done;
@@ -486,6 +450,7 @@ export function FirstRun() {
       {/* One display element per face: the heading until his words come
           back; then his words are the display fact; when every step is
           done, "Ready, <his name>". */}
+      <div className="firstrun-head">
       {ready ? (
         <Ready
           name={owner.name}
@@ -500,43 +465,9 @@ export function FirstRun() {
           {heard ? "Heard" : "Get ready"}
         </h1>
       )}
-      <div className="firstrun-cards">
-        <LocalAiCard
-          ai={ai}
-          folded={c1Done}
-          lanOpen={lanOpen}
-          onLan={() => setLanOpen(true)}
-          lanUsed={lanUsed}
-          onLanUsed={onLanUsed}
-        />
-        <YouCard owner={owner} folded={c1Done} />
-        <FirstWordsCard ready={speech} take={take} ai={ai} done={wordsBefore} />
-      </div>
-      <div className="firstrun-cards firstrun-cards-two">
-        <CalendarCard step={calendar} lit={calendarLit} />
-        <ConnectionsCard step={connections} lit={connectionsLit} />
-      </div>
-      <div className="firstrun-cards firstrun-cards-one">
-        <AgentsCard step={agents} lit={agentsLit} />
-      </div>
-      <Found proposals={proposals} />
-      {take.message && ready ? (
-        <div className="firstrun-fail" role="alert">
-          <StateChip state="failure" label="NOT KEPT" />
-          <span className="firstrun-reason">{take.message}</span>
-        </div>
-      ) : null}
-      {/* PHILO-17: the cards are done -> "Open my desk"; else Continue later.
-          On Ready its three start verbs hold the primary. */}
       <div className="firstrun-foot">
         {c1Done && !heard ? (
-          <Button
-            variant={ready ? "secondary" : "primary"}
-            dense={ready}
-            disabled={take.keeping}
-            loading={take.keeping}
-            onClick={() => void take.finish()}
-          >
+          <Button variant={ready ? "secondary" : "primary"} dense disabled={take.keeping} loading={take.keeping} onClick={() => void take.finish()}>
             Open my desk
           </Button>
         ) : (
@@ -545,6 +476,41 @@ export function FirstRun() {
           </Button>
         )}
       </div>
+      </div>
+      <div className="firstrun-cards firstrun-primary">
+        <Card title="Speech" testId="firstrun-speech-card" selected={speechSetup.ready} state={speechSetup.ready ? <StateChip state="success" label="ON DEVICE" /> : undefined}>
+          <SpeechSetup setup={speechSetup} bare testId="firstrun-speech" />
+          {ai.read.kind === "unread" ? <div className="firstrun-fail" role="alert"><StateChip state="unreachable" label="CAN'T CHECK" /><Button dense variant="secondary" onClick={() => void ai.refresh()}>Try again</Button></div> : null}
+        </Card>
+        <FirstWordsCard ready={speech} take={take} ai={ai} done={wordsBefore} />
+      </div>
+      <FoldGadget title="Chat engines" className="firstrun-chat">
+        <LocalAiCard
+          ai={ai}
+          folded={c1Done}
+          lanOpen={lanOpen}
+          onLan={() => setLanOpen(true)}
+          lanUsed={lanUsed}
+          onLanUsed={onLanUsed}
+        />
+      </FoldGadget>
+      <FoldGadget title="Optional setup" className="firstrun-optional">
+      <div className="firstrun-cards firstrun-cards-one"><YouCard owner={owner} folded={c1Done && owner.isSet} /></div>
+      <div className="firstrun-cards firstrun-cards-two">
+        <CalendarCard step={calendar} lit={calendarLit} />
+        <ConnectionsCard step={connections} lit={connectionsLit} />
+      </div>
+      <div className="firstrun-cards firstrun-cards-one">
+        <AgentsCard step={agents} lit={agentsLit} />
+      </div>
+      <Found proposals={proposals} />
+      </FoldGadget>
+      {take.message && ready ? (
+        <div className="firstrun-fail" role="alert">
+          <StateChip state="failure" label="NOT KEPT" />
+          <span className="firstrun-reason">{take.message}</span>
+        </div>
+      ) : null}
     </section>
   );
 }

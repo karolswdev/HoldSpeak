@@ -258,7 +258,7 @@ describe("PHILO-17 U30: every generic open of a Project opens its Room (one home
     expect(useDrawers.getState().drawers).toEqual([]);
   });
 
-  it("a proposal row opens the Room with that proposal selected; its verb says Room", async () => {
+  it("a proposal row opens the Room with that proposal selected; More carries Open", async () => {
     chairNeeds = {
       ...twoProjects,
       items: [...twoProjects.items, { id: "pr1", projectId: "proj-ledger", projectName: "Payments ledger cutover",
@@ -278,7 +278,8 @@ describe("PHILO-17 U30: every generic open of a Project opens its Room (one home
     expect(useDrawers.getState().drawers).toEqual([]);
     // The row's Room verb is the explicit Room path, with the proposal.
     vi.mocked(openProjectRoom).mockClear();
-    fireEvent.click(within(row).getByRole("button", { name: "Room: Run the dry run" }));
+    fireEvent.click(within(row).getByRole("button", { name: "More: Run the dry run" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Open" }));
     expect(openProjectRoom).toHaveBeenCalledWith("proj-ledger");
     expect(takeRoomProposalRequest("proj-ledger")).toBe("prop-7");
     expect(useDrawers.getState().drawers).toEqual([]);

@@ -11,10 +11,11 @@
  * owner's ruling: debug hides behind RAW). The FACE row is what this fence
  * governs.
  */
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ apiFetch: vi.fn() }));
+const mocks = vi.hoisted(() => ({ apiFetch: vi.fn(), open: vi.fn() }));
+vi.mock("../../../../desk/shell", () => ({ openSurfaceOr: mocks.open }));
 
 vi.mock("../../../../lib/api", () => ({
   apiFetch: mocks.apiFetch,
@@ -37,6 +38,19 @@ beforeEach(() => {
 });
 
 describe("the gear door's Runs fact (A.8)", () => {
+  it("names a missing model and opens the dictation engine choice; raw paths fold", async () => {
+    const raw = "Model file missing: /temporary/artifact/hash/model.gguf";
+    mocks.apiFetch.mockResolvedValue({ ...readiness(0), warnings: [{ code: "runtime_model_missing", message: raw }] });
+    render(<Readiness />);
+    expect(await screen.findByText("Model missing")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Choose engine" }));
+    expect(mocks.open).toHaveBeenCalledWith("open-concierge", "/models", "writing_dictation");
+    expect(screen.queryByText(raw)).toBeNull();
+    const rawFold = screen.getByText("RAW · READINESS").closest("details")!;
+    expect(rawFold.open).toBe(false);
+    fireEvent.click(rawFold.querySelector("summary")!);
+    expect(rawFold.textContent).toContain(raw);
+  });
   it("withholds the row when the pipeline has never run", async () => {
     mocks.apiFetch.mockResolvedValue(readiness(0));
     render(<Readiness />);

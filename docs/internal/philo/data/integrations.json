@@ -932,11 +932,11 @@
       "purpose": "Show active Claude/Codex sessions and bounded, hash-gated pane output.",
       "domain": "coder",
       "status": "experimental",
-      "status_reason": "Session routes and bounded tmux observation are implemented; a live coder pane was not observed in this audit.",
+      "status_reason": "Session routes and bounded pane observation are implemented. The October 14 session repair passed isolated real-hub Open checks and graph walks at 1440 and 393; live owner pane/control actions remain unverified.",
       "exposure": "user",
       "surfaces": [
-        "Coder board",
-        "Companion board",
+        "Conductor",
+        "Agent session",
         "MCP coder.get"
       ],
       "entry_points": [
@@ -1032,15 +1032,28 @@
             "run": "full-python-suite",
             "cases": 1
           }
+        },
+        {
+          "path": "tests/e2e/test_conductor_glass.py",
+          "node": "test_open_keeps_work_and_phone_frame_then_focuses_one_answer",
+          "assertion": "Actual Conductor Open retains the project and captured report, presents one question, opens terminal on request, and fills the phone frame. External process leaves are fixtures.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/internal/SURFACE-REPAIR-2026-10-14.md",
+            "run": "root-session-final",
+            "cases": 2
+          }
         }
       ],
       "docs": [
         "docs/CODER_INTEGRATION.md",
-        "docs/AGENT_HOOK_INSTALL.md"
+        "docs/AGENT_HOOK_INSTALL.md",
+        "docs/internal/SURFACE-REPAIR-2026-10-14.md"
       ],
       "limitations": [
         "No real tmux pane, hook or owner Coder session was used.",
-        "Observation is bounded and may omit full transcript context."
+        "Observation is bounded and may omit full transcript context.",
+        "Latest report requires the existing opt-in message capture; otherwise the recorded tool/state is shown. No capture default was changed."
       ],
       "failure_states": [
         "tmux_absent",
@@ -1050,7 +1063,7 @@
         "not_modified"
       ],
       "replacement": null,
-      "evidence_level": "source_and_assertions_inspected",
+      "evidence_level": "tests_executed",
       "release_availability": "unverified",
       "owner_observed": false
     },

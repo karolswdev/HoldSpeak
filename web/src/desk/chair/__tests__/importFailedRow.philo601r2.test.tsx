@@ -42,7 +42,7 @@ describe("PHILO-6-01 round 2: the failed import's row names the IMPORT", () => {
     );
   });
 
-  it("badge FAILED, well head IMPORT, the import's cause, and no summary claim", async () => {
+  it("the closed scan row names the failed import and its cause, with Open", async () => {
     const meeting = fromWireMeeting(wire.list_row);
     expect(meeting).not.toBeNull();
     useDesk.setState({ items: { ...EMPTY_ITEMS, meeting: [meeting] } as never });
@@ -51,23 +51,13 @@ describe("PHILO-6-01 round 2: the failed import's row names the IMPORT", () => {
     await waitFor(() =>
       expect(within(row).getByTestId("arrival-meeting-badge").textContent).toBe("FAILED"),
     );
-    // The complete row: the ledger line and its open well.
     const item = (row.closest("li") ?? row) as HTMLElement;
-    const status = await within(item).findByTestId("arrival-summary-status");
+    await waitFor(() => expect(row).toHaveTextContent(`Import · ${CAUSE}`));
     const text = item.textContent ?? "";
-    // The well names what failed: the import.
-    expect(text).toContain("IMPORT");
-    expect(within(item).getByTestId("arrival-status-well-head").textContent).toBe("IMPORT");
-    // The cause line is the import worker's.
-    expect(status.textContent).toContain(CAUSE);
-    // Round 3 (UX-CANON A.3; Astra's round-two check, finding 3): the cause
-    // is the SHORT class -- never the worker's temp file, a path, a sentence.
-    const errorFact = Array.from(status.querySelectorAll("*"))
-      .map((node) => node.textContent ?? "")
-      .find((line) => line.startsWith("LAST ERROR · "));
-    expect(errorFact).toBe("LAST ERROR · NO TRANSCRIPT LINES");
-    expect((errorFact ?? "").length).toBeLessThanOrEqual(60);
-    expect(status.textContent ?? "").not.toMatch(/tmp|\.(vtt|srt|txt|wav)\b|[/\\]/i);
+    expect(item).not.toHaveAttribute("data-open");
+    expect(within(item).queryByTestId("arrival-summary-status")).toBeNull();
+    expect(within(row).getByRole("button", { name: "Open" })).toBeTruthy();
+    expect(row.textContent ?? "").not.toMatch(/tmp|\.(vtt|srt|txt|wav)\b|[/\\]/i);
     // No summary claim anywhere in the row.
     expect(text).not.toContain("SUMMARY");
     expect(text).not.toContain("SAVED");

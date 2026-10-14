@@ -1,7 +1,7 @@
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "../../components/signal/Signal";
-import { apiFetch } from "../../lib/api";
+import { apiFetch, readableError } from "../../lib/api";
 import { useDesk } from "../../desk/store";
 import { boundaryEgressLamp } from "../../desk/inferenceEgress";
 import { spriteUrl } from "../../desk/sprites";
@@ -38,26 +38,44 @@ export function WorkbenchesHomeCore({ hero }: CoreProps) {
   const [workbenches, setWorkbenches] = useState<WbSummary[]>([]);
   const [recentRuns, setRecentRuns] = useState<RunSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const [runsError, setRunsError] = useState("");
 
   const load = useCallback(async () => {
+    setLoading(true);
+    setLoadError("");
+    setRunsError("");
     try {
       const res = await apiFetch<WorkbenchesListResponse>("/api/workbenches");
       const wbs = (res.workbenches || []) as WbSummary[];
       setWorkbenches(wbs);
+      setLoaded(true);
 
       const allRuns: RunSummary[] = [];
+      const failedIds = new Set<string>();
+      const failures: string[] = [];
       for (const wb of wbs.slice(0, 10)) {
         try {
           const runsRes = await apiFetch<WorkbenchRunsResponse>(`/api/workbenches/${wb.id}/runs`);
           for (const run of (runsRes.runs || []).slice(0, 5)) {
             allRuns.push({ ...run, workbench_name: wb.name });
           }
-        } catch { /* */ }
+        } catch (error) {
+          failedIds.add(wb.id);
+          failures.push(`${wb.name} · ${readableError(error)}`);
+        }
       }
-      allRuns.sort((a, b) => (b.started_at || "").localeCompare(a.started_at || ""));
-      setRecentRuns(allRuns.slice(0, 10));
-    } catch { /* */ }
-    setLoading(false);
+      setRecentRuns((previous) => [
+        ...allRuns,
+        ...previous.filter((run) => failedIds.has(run.workbench_id)),
+      ].sort((a, b) => (b.started_at || "").localeCompare(a.started_at || "")).slice(0, 10));
+      if (failures.length) setRunsError(`Runs not loaded · ${failures.join("; ")}`);
+    } catch (error) {
+      setLoadError(`Workbenches not loaded · ${readableError(error)}`);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { void load(); }, [load]);
@@ -70,13 +88,16 @@ export function WorkbenchesHomeCore({ hero }: CoreProps) {
     </Button>
   );
 
-  if (loading) return <SurfaceState loading />;
+  if (loading && !loaded) return <SurfaceState loading />;
 
   return (
     <>
       {renderHeroSlot(hero, verbs)}
+      {loadError ? <SurfaceState error={loadError} onRetry={loading ? undefined : () => void load()} /> : null}
+      {runsError ? <SurfaceState error={runsError} onRetry={loading ? undefined : () => void load()} /> : null}
+      {loading ? <SurfaceState loading /> : null}
 
-      {workbenches.length === 0 ? (
+      {loaded && workbenches.length === 0 ? (
         <SurfaceState
           empty
           emptyLabel="No workbenches yet"
@@ -89,9 +110,9 @@ export function WorkbenchesHomeCore({ hero }: CoreProps) {
             const assignment = wb.assignment_summary;
             const needsYou = wb.pending_count > 0 || (wb.last_run?.status === "failed");
             return (
-              <button
+              <Button
                 key={wb.id}
-                type="button"
+                variant="chrome"
                 className="wb-home-card"
                 data-needs={needsYou ? "true" : undefined}
                 onClick={() => useDesk.getState().openWorkbenchWindow(wb.id)}
@@ -128,7 +149,7 @@ export function WorkbenchesHomeCore({ hero }: CoreProps) {
                     {wb.schedule_enabled ? humanSchedule(wb.schedule) : "Manual"}
                   </span>
                 </div>
-              </button>
+              </Button>
             );
           })}
         </div>

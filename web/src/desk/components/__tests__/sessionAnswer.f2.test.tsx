@@ -32,7 +32,8 @@ function open(answer: boolean, wire: Record<string, unknown> = {}) {
         key: "claude:c1", agent: "claude", question: QUESTION,
         awaiting_response: false, blocked: true, ...wire,
       }),
-      paneStatus: "no_pane",
+      paneStatus: "live",
+      paneId: "%0",
       armed: false,
       postureAuthorized: false,
       steerState: "idle",
@@ -52,24 +53,22 @@ describe("Speak answer: the answer well (K5b, K5c)", () => {
     open(true);
     render(<SessionPullout />);
     // Phase 16: the question is the agent's words (AgentWords), not a <pre>.
-    expect(document.querySelector(".desk-session-question.agent-words")?.textContent).toBe(QUESTION);
+    expect(document.querySelector(".ask-well-question.agent-words")?.textContent).toBe(QUESTION);
     const well = screen.getByTestId("session-answer-well");
-    expect(well.querySelector(".desk-steer-input")).toBeTruthy();
+    expect(well.querySelector("input[aria-label=Answer]")).toBeTruthy();
     expect(well.querySelector("[data-testid=mic]")?.getAttribute("data-auto")).toBe("true");
     // The composer moved into the body: the window draws it once.
-    expect(document.querySelectorAll(".desk-steer-input")).toHaveLength(1);
+    expect(document.querySelectorAll("input[aria-label=Answer]")).toHaveLength(1);
     // The question sits above the well.
-    const pre = document.querySelector(".desk-session-question") as HTMLElement;
-    expect(pre.compareDocumentPosition(well) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const question = well.querySelector(".ask-well-question") as HTMLElement;
+    expect(question.compareDocumentPosition(well.querySelector("input")!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  it("Enter sends; the composer empties and says sent; Shift+Enter does not send", async () => {
+  it("Enter sends through the existing route; the draft clears only on delivery and says sent", async () => {
     const steer = open(true);
     render(<SessionPullout />);
-    const input = screen.getByTestId("session-answer-well").querySelector(".desk-steer-input") as HTMLTextAreaElement;
+    const input = screen.getByTestId("session-answer-well").querySelector("input[aria-label=Answer]") as HTMLInputElement;
     fireEvent.change(input, { target: { value: "Jordan owns the rollback." } });
-    fireEvent.keyDown(input, { key: "Enter", shiftKey: true });
-    expect(steer).not.toHaveBeenCalled();
     fireEvent.keyDown(input, { key: "Enter" });
     await waitFor(() => expect(steer).toHaveBeenCalledWith("Jordan owns the rollback.", true, null));
     await waitFor(() => expect(input.value).toBe(""));
@@ -80,7 +79,7 @@ describe("Speak answer: the answer well (K5b, K5c)", () => {
     open(true);
     act(() => { useSteering.setState({ steerState: "sent", steerDetail: "Receipt steering:1 · %0" }); });
     render(<SessionPullout />);
-    expect(screen.getByTestId("session-answer-well").querySelector(".desk-steer-sent")?.textContent).toContain("sent · Receipt steering:1 · %0");
+    expect(screen.getByText("sent · Receipt steering:1 · %0")).toBeTruthy();
   });
 
   it("Open (no answer) draws no answer well and no recording mic; a session that does not wait shows no question", () => {

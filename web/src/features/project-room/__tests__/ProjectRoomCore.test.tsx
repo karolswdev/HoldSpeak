@@ -316,7 +316,9 @@ describe("ProjectRoomCore — no-scope states", () => {
     expect(screen.getByRole("searchbox", { name: "Search the Desk" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Search memory" })).toBeTruthy();
     expect(screen.getByText("SEARCH THE DESK")).toBeTruthy();
-    expect(screen.getByText("THIS DEVICE")).toBeTruthy();
+    expect(screen.queryByText("THIS DEVICE")).toBeNull();
+    expect(screen.getByTestId("desk-memory-body")).toBeTruthy();
+    expect(apiFetch).toHaveBeenCalledWith(expect.stringContaining("recent=1"));
   });
 });
 

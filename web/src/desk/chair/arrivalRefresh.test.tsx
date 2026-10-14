@@ -185,7 +185,10 @@ describe("HS-201-01 the row clears on the OPEN desk", () => {
 
     const line = await screen.findAllByTestId("arrival-meeting-row").then((rows) => rows[0]);
     const row = line.parentElement!;
-    const transcriptFold = within(row).getByRole("button", { name: /Transcript/ });
+    await waitFor(() => expect(line).toHaveTextContent("Summary for m-refresh-a"));
+    const open = within(row).getByRole("button", { name: "Open" });
+    expect(row).not.toHaveAttribute("data-open");
+    expect(within(row).queryByRole("button", { name: /Transcript/ })).toBeNull();
     await waitFor(() => expect(screen.queryByTestId("arrival-week-reading")).toBeNull());
 
     // A desk refresh starts two replacement reads, but the last details stay
@@ -194,7 +197,9 @@ describe("HS-201-01 the row clears on the OPEN desk", () => {
     await waitFor(() => expect(detailCalls).toBe(4));
     expect(screen.getByTestId("arrival-week-reading")).toBeInTheDocument();
     expect(screen.getAllByTestId("arrival-meeting-row")[0]).toBe(line);
-    expect(within(row).getByRole("button", { name: /Transcript/ })).toBe(transcriptFold);
+    expect(within(row).getByRole("button", { name: "Open" })).toBe(open);
+    expect(line).toHaveTextContent("Summary for m-refresh-a");
+    expect(row).not.toHaveAttribute("data-open");
 
     // Replace that generation before it answers. Completing the stale reads
     // must not lower the pending count for the current generation.

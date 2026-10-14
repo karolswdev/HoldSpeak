@@ -311,6 +311,12 @@ def test_the_recall_minute_reads_the_current_decision_carries_it_and_names_an_ow
     assert [r["id"] for r in searched["owed"]] == [chain["cmt"]["commitment_id"]]
     assert searched["current"][0]["rationale"] == NEW_WHY
     assert searched["current"][0]["carried"] is False
+    recorded_source = {
+        "kind": "meeting", "meeting_id": "m-sun", "title": "Architecture review",
+        "started_at": f"{SUN}T11:00:00", "scope": "meeting:m-sun",
+    }
+    assert searched["owed"][0]["source"] == recorded_source
+    assert recent["owed"][0]["source"] == recorded_source
 
     carry_body = {"project_id": chain["project_id"]}
     carried = _ok(hub.client.post(f"/api/decision-records/{chain['new']['decision_record_id']}/carry",
@@ -318,12 +324,15 @@ def test_the_recall_minute_reads_the_current_decision_carries_it_and_names_an_ow
     assert carried["replayed"] is False and carried["project_id"] == chain["project_id"]
     after_carry = _recall_read(hub, query="freeze window", filter="all")
     assert after_carry["current"][0]["carried"] is True
+    assert after_carry["owed"][0]["source"] == recorded_source
 
     owed = after_carry["owed"][0]
     name_body = {"card_id": owed["action_item_id"], "verb": "delegate", "payload": {"to": "Priya"}}
     named = _ok(hub.client.post("/api/follow-through/complete", json=name_body))
     after_name = _recall_read(hub, query="freeze window", filter="all")
     assert after_name["owed"][0]["next_action"] == "set_date", after_name["owed"]
+    assert after_name["owed"][0]["owner"] == "Priya"
+    assert after_name["owed"][0]["source"] == recorded_source
     # Naming an owner does not complete the commitment (AC4).
     board = _ok(hub.client.get("/api/follow-through/board"))
     cards = [c for lane in board.values() if isinstance(lane, list) for c in lane

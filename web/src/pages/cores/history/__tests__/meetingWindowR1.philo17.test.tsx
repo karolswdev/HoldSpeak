@@ -6,7 +6,7 @@
 //     when the meeting's own state goes final;
 //  3. a Stop is final: a slow first `/api/state` that answers after recording
 //     went idle never brings the live room back.
-import { act, render, renderHook, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, renderHook, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../../../lib/api";
 import { useDesk } from "../../../../desk/store";
@@ -146,13 +146,16 @@ describe("PHILO-17 desk sweep: the record holds still while its first reads land
     const { container } = render(<MeetingRecord meetingId="m-1" onClose={() => undefined} />);
     // Mounted (its wells start their reads) but not drawn: the body is busy.
     await waitFor(() => expect(container.querySelector("[aria-busy='true'][data-settling]")).toBeTruthy());
-    expect(container.querySelector("[data-settling] [data-testid='meeting-decide']")).toBeTruthy();
+    expect(container.querySelector("[data-testid='meeting-decide']")).toBeNull();
     await act(async () => {
       release(meeting("ready"));
       await new Promise((r) => setTimeout(r, 0));
     });
     await waitFor(() => expect(container.querySelector("[data-settling]")).toBeNull());
-    expect(screen.getByTestId("meeting-decide")).toBeTruthy();
+    expect(screen.queryByTestId("meeting-decide")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "More actions" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Decide" }));
+    expect(await screen.findByTestId("meeting-decide-well")).toBeTruthy();
     expect(container.querySelector("[aria-busy='true']:not(button)")).toBeNull();
   });
 });
@@ -203,3 +206,28 @@ describe("PHILO-17 (Astra r1 on #1108): each first read ends on its own", () => 
     await waitFor(() => expect(container.querySelector("[data-settling]")).toBeNull());
   });
 });
+
+
+describe("daily work: Send opens on request", () => {
+  it("does not mount Send or Decide on first open; More opens the existing title form", async () => {
+    vi.mocked(apiFetch).mockImplementation(async (path: string) =>
+      (isDetail(String(path)) ? { ...meeting("ready"), intel: { summary: "Move the cutover to Friday." }, has_summary: true } : {}) as never);
+    render(<MeetingRecord meetingId="m-1" onClose={() => undefined} />);
+    await screen.findByTestId("meeting-send");
+    expect(screen.queryByTestId("meeting-send-well")).toBeNull();
+    expect(screen.queryByTestId("meeting-decide-well")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "More actions" }));
+    expect(screen.getByRole("menuitem", { name: "Export MD" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Decide" }));
+    expect(await screen.findByPlaceholderText("Decision title")).toBeTruthy();
+  });
+});
+
+  it("requested Send mounts its well and names an unavailable stored summary with Retry", async () => {
+    vi.mocked(apiFetch).mockImplementation(async (path: string) =>
+      (isDetail(String(path)) ? { ...meeting("ready"), has_summary: true } : {}) as never);
+    render(<MeetingRecord meetingId="m-1" onClose={() => undefined} />);
+    fireEvent.click(await screen.findByTestId("meeting-send"));
+    expect(await screen.findByText("Summary unavailable")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeTruthy();
+  });

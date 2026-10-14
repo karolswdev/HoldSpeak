@@ -1,7 +1,8 @@
 /** HS-151-05 — ThreadPullout rendering tests: rows render streaming, done,
  * error, crashed+Retry, sibling picker. */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import * as threads from "../threads";
 import { useThreadStore, type ThreadMessage, type ThreadDetail } from "../threads";
 import { ThreadPullout } from "../pullouts/ThreadPullout";
 import { RuntimeBusProvider } from "../../runtime/RuntimeBus";
@@ -16,7 +17,10 @@ beforeEach(() => {
     readyState = 3; // CLOSED
   });
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
 function makeMsg(overrides: Partial<ThreadMessage> = {}): ThreadMessage {
   return {
@@ -90,6 +94,47 @@ function renderPullout() {
     </RuntimeBusProvider>,
   );
 }
+
+describe("ThreadPullout title", () => {
+  beforeEach(() => {
+    seedStore([]);
+    vi.spyOn(useThreadStore.getState(), "loadThread").mockResolvedValue(undefined);
+  });
+
+  it("names the thread only in its window and keeps a library Rename action", () => {
+    const detail = useThreadStore.getState().threads["t-1"];
+    detail.thread.mode = { id: "hs-seed-mode-desk", name: "Desk", avatar: "#666" };
+    const { container } = renderPullout();
+    expect(screen.queryByText("Test Thread")).toBeNull();
+    expect(screen.getByRole("button", { name: "Rename thread" }).classList.contains("btn")).toBe(true);
+    expect(container.querySelector(".thread-mode-badge")).toBeNull();
+  });
+
+  it("opens the current title and mic; Escape restores Rename focus without a write", async () => {
+    const patch = vi.spyOn(threads, "patchThread");
+    renderPullout();
+    fireEvent.click(screen.getByRole("button", { name: "Rename thread" }));
+    const input = screen.getByRole("textbox", { name: "Thread title" });
+    expect((input as HTMLInputElement).value).toBe("Test Thread");
+    expect(document.activeElement).toBe(input);
+    expect(screen.getByRole("button", { name: /^Speak thread title/ })).toBeTruthy();
+    fireEvent.change(input, { target: { value: "Discard this" } });
+    fireEvent.keyDown(input, { key: "Escape" });
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "Rename thread" })));
+    expect(patch).not.toHaveBeenCalled();
+  });
+
+  it("Enter commits the title and restores Rename focus", async () => {
+    const patch = vi.spyOn(threads, "patchThread").mockResolvedValue(useThreadStore.getState().threads["t-1"].thread);
+    renderPullout();
+    fireEvent.click(screen.getByRole("button", { name: "Rename thread" }));
+    const input = screen.getByRole("textbox", { name: "Thread title" });
+    fireEvent.change(input, { target: { value: "Architecture review" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    await waitFor(() => expect(patch).toHaveBeenCalledExactlyOnceWith("t-1", { title: "Architecture review" }));
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Rename thread" }));
+  });
+});
 
 describe("ThreadPullout rows", () => {
   it("renders a done assistant row with text through Material", () => {

@@ -129,6 +129,20 @@ def next_action_for(owner: str | None, due_at: str | None) -> str:
     return "mark_done"
 
 
+def _owed_meeting(row: Any) -> dict[str, Any] | None:
+    """The recorded meeting identity, without an inferred transcript span."""
+    meeting_id = row["source_meeting_id"]
+    if not meeting_id:
+        return None
+    return {
+        "kind": "meeting",
+        "meeting_id": str(meeting_id),
+        "title": str(row["source_meeting_title"] or ""),
+        "started_at": row["source_meeting_started_at"],
+        "scope": f"meeting:{meeting_id}",
+    }
+
+
 class RecallService:
     def __init__(self, db: Any) -> None:
         self._db = db
@@ -440,6 +454,8 @@ class RecallService:
                 placeholders = ",".join("?" * len(record_ids))
                 fetched.extend(conn.execute(
                     f"""SELECT c.*, ai.task AS text, ai.status AS action_status, r.id AS record_id,
+                               m.id AS source_meeting_id, m.title AS source_meeting_title,
+                               m.started_at AS source_meeting_started_at,
                                (SELECT p.kind FROM follow_through_proposals p WHERE p.commitment_id = c.id LIMIT 1) AS proposal_kind
                         FROM decision_commitments c
                         JOIN decision_records r ON r.source_id = c.decision_id AND r.deleted = 0
@@ -462,6 +478,8 @@ class RecallService:
                 )
                 fetched.extend(conn.execute(
                     f"""SELECT c.*, ai.task AS text, ai.status AS action_status, r.id AS record_id,
+                               m.id AS source_meeting_id, m.title AS source_meeting_title,
+                               m.started_at AS source_meeting_started_at,
                                (SELECT p.kind FROM follow_through_proposals p WHERE p.commitment_id = c.id LIMIT 1) AS proposal_kind
                         FROM decision_commitments c
                         JOIN action_items ai ON ai.id = c.action_item_id
@@ -513,6 +531,7 @@ class RecallService:
                     "unknowns": unknowns,
                     "next_action": next_action_for(owner, due_at),
                     "project": project,
+                    "source": _owed_meeting(row) or (card["source"] if card else None),
                     "decision_record_id": record_id,
                     "decision_state": card["state"] if card else None,
                 })
@@ -554,6 +573,8 @@ class RecallService:
                     continue
                 row = conn.execute(
                     """SELECT a.id, a.task, a.owner, a.due, a.status,
+                              m.id AS source_meeting_id, m.title AS source_meeting_title,
+                              m.started_at AS source_meeting_started_at,
                               (SELECT mp.project_id FROM meeting_projects mp
                                WHERE mp.meeting_id = a.meeting_id
                                ORDER BY mp.project_id LIMIT 1) AS project_id
@@ -591,6 +612,7 @@ class RecallService:
                     "unknowns": [k for k, v in (("owner", owner), ("due", due_at)) if not v],
                     "next_action": next_action_for(owner, due_at),
                     "project": project,
+                    "source": _owed_meeting(row),
                     "decision_record_id": None,
                     "decision_state": None,
                 })

@@ -4,6 +4,7 @@
 // The lane vocabulary is PARKED; the arrival composes directly from
 // the surface library and the needs-you wire.
 
+import "./chair-work.css";
 import { HandRowVerb } from "../components/HandRowVerb";
 import { wireDate } from "../surface/format";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -2637,6 +2638,12 @@ function MeetingsSection({
               key={m.id}
               time={ledgerDate(m.startedAt)}
               primary={m.title || "Meeting with no title"}
+              meta={detailState?.error ? <span data-testid="arrival-detail-error">SUMMARY READ FAILED</span> : [
+                rowMeeting.intelSummary?.trim().split(/\s+/).slice(0, 24).join(" "),
+                rowMeeting.intelStatus === "import_failed"
+                  ? `Import · ${rowMeeting.intelStatusDetail || "failed"}`
+                  : rowMeeting.intelJob?.lastError,
+              ].filter(Boolean).join(" · ") || undefined}
               cells={
                 <>
                   {durationMin(rowMeeting.durationSeconds) ? (
@@ -2706,7 +2713,7 @@ function MeetingsSection({
                       </Button>
                     ) : null}
                   </>
-                ) : isComplete || stored ? (
+                ) : isComplete || stored || badge === "FAILED" ? (
                   <Button
                     variant="ghost"
                     dense
@@ -2722,7 +2729,7 @@ function MeetingsSection({
               onToggle={() =>
                 openSourceRef(`meeting:${m.id}`)
               }
-              open={Boolean(detailState)}
+              open={false}
               expands={false}
               wrap
               children={

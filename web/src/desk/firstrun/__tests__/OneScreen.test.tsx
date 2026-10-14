@@ -51,6 +51,14 @@ vi.mock("../../../lib/micStreamSession", async (importOriginal) => ({
 
 import { ApiError } from "../../../lib/api";
 import { FirstRun } from "../FirstRun";
+
+// These behavior tests enter the optional setup and chat wells explicitly.
+function renderExpandedFirstRun() {
+ const view = render(<FirstRun />);
+ view.container.querySelectorAll<HTMLDetailsElement>(".firstrun-chat, .firstrun-optional").forEach((fold) => { fold.open = true; });
+ return view;
+}
+
 import { calendarReceipt } from "../CalendarCard";
 import { cantReadReason, hostOf, meetingClock, nextMeeting } from "../calendarStep";
 import { readyItems } from "../Ready";
@@ -290,7 +298,7 @@ describe("calendar helpers", () => {
 describe("Calendar card", () => {
   it("found: one Use it per calendar; IN USE is the hub's fact; the receipt follows", async () => {
     hub.calendar = { macos: { state: "full_access", can_request: false }, candidates: [MAC_CAL], sources: 0 };
-    render(<FirstRun />);
+    renderExpandedFirstRun();
     const cal = await screen.findByTestId("firstrun-calendar");
     await within(cal).findByRole("status", { name: "FOUND · 1" });
     // Speech is not on the device: First words cannot be the next press, so the Calendar is lit.
@@ -311,7 +319,7 @@ describe("Calendar card", () => {
   });
 
   it("none: no FOUND chip, no prompt verb; a typed link names its host before Add", async () => {
-    render(<FirstRun />);
+    renderExpandedFirstRun();
     const cal = await screen.findByTestId("firstrun-calendar");
     const field = await within(cal).findByRole("textbox", { name: "Calendar URL" });
     expect(within(cal).queryByRole("status", { name: /FOUND/ })).toBeNull();
@@ -333,7 +341,7 @@ describe("Calendar card", () => {
       const hubCheck = recorded<Record<string, any>>(CHECK_OK_WIRE);
       return { ...hubCheck, url: u, candidate: { ...hubCheck.candidate, id: u }, events_next_days: 9 };
     };
-    render(<FirstRun />);
+    renderExpandedFirstRun();
     const cal = await screen.findByTestId("firstrun-calendar");
     fireEvent.change(await within(cal).findByRole("textbox", { name: "Calendar URL" }), { target: { value: url } });
     await act(async () => {
@@ -349,7 +357,7 @@ describe("Calendar card", () => {
 
   it("failed: CAN'T READ and the plain reason, as tokens; a bad link is named too", async () => {
     hub.check = () => ({ ...recorded<Record<string, unknown>>(CHECK_FAILED_WIRE), redirect_target: "https://login.example.com/x" });
-    render(<FirstRun />);
+    renderExpandedFirstRun();
     const cal = await screen.findByTestId("firstrun-calendar");
     const field = await within(cal).findByRole("textbox", { name: "Calendar URL" });
     fireEvent.change(field, { target: { value: "https://cal.example.com/a.ics" } });
@@ -373,7 +381,7 @@ describe("Calendar card", () => {
 
   it("denied: CALENDAR · NOT ALLOWED, then Open System Settings and Check again (PHILO-15 04)", async () => {
     hub.calendar = { macos: { state: "denied", can_request: false }, candidates: [], sources: 0 };
-    render(<FirstRun />);
+    renderExpandedFirstRun();
     const cal = await screen.findByTestId("firstrun-calendar");
     const denied = await within(cal).findByTestId("firstrun-calendar-denied");
     expect(within(denied).getByRole("status", { name: "CALENDAR · NOT ALLOWED" })).toBeTruthy();
@@ -411,7 +419,7 @@ describe("Calendar card", () => {
       }
       return base(path, init);
     });
-    render(<FirstRun />);
+    renderExpandedFirstRun();
     const denied = await screen.findByTestId("firstrun-calendar-denied");
     await act(async () => {
       fireEvent.click(within(denied).getByRole("button", { name: "Open System Settings" }));
@@ -428,7 +436,7 @@ describe("Calendar card", () => {
     hub.useCalendar = () => {
       throw new ApiError(409, "HoldSpeak cannot read your calendars yet.", { code: "calendar_permission_required" });
     };
-    render(<FirstRun />);
+    renderExpandedFirstRun();
     const cal = await screen.findByTestId("firstrun-calendar");
     const allow = await within(cal).findByRole("button", { name: "Allow calendar access" });
     expect(within(cal).queryByText("THIS DEVICE")).toBeNull();
@@ -450,7 +458,7 @@ describe("Connections card", () => {
   it("found: each row names its host; Use it -> CONNECTED only when the hub says so", async () => {
     hub.connections = { candidates: [gh(), jira()], tools: toolsBlock({ gh: true, acli: true }) };
     hub.sources = [source("eventkit:CAL-1")];
-    render(<FirstRun />);
+    renderExpandedFirstRun();
     const conn = await screen.findByTestId("firstrun-connections");
     await within(conn).findByRole("status", { name: "SIGNED IN · 2" });
     expect(conn.getAttribute("data-lit")).toBe("true");
@@ -474,7 +482,7 @@ describe("Connections card", () => {
   it("refused: the probe failed -> NOT CONNECTED and its reason; no CONNECTED", async () => {
     hub.connections = { candidates: [gh()], tools: toolsBlock({ gh: true }) };
     hub.useConnection = () => ({ candidate: "x", provider: "github", entry: { state: "owner_action_required", error_detail: "gh is not signed in." } });
-    render(<FirstRun />);
+    renderExpandedFirstRun();
     const conn = await screen.findByTestId("firstrun-connections");
     await act(async () => {
       fireEvent.click(await within(conn).findByRole("button", { name: "Use GitHub karolswdev" }));
@@ -485,7 +493,7 @@ describe("Connections card", () => {
   });
 
   it("none: NO SIGN-IN FOUND and why, as tokens; a row with no verb says why", async () => {
-    const view = render(<FirstRun />);
+    const view = renderExpandedFirstRun();
     let conn = await screen.findByTestId("firstrun-connections");
     await within(conn).findByRole("status", { name: "NO SIGN-IN FOUND" });
     expect(conn.textContent).toContain("GH NOT INSTALLED");
@@ -498,7 +506,7 @@ describe("Connections card", () => {
     view.unmount();
 
     hub.connections = { candidates: [gh({ active: false, verb: null, id: "github:github.com:other" })], tools: toolsBlock({ gh: true }) };
-    render(<FirstRun />);
+    renderExpandedFirstRun();
     conn = await screen.findByTestId("firstrun-connections");
     await within(conn).findByText("NOT ACTIVE IN GH");
     expect(within(conn).queryByRole("button", { name: /Use GitHub/ })).toBeNull();
@@ -506,7 +514,7 @@ describe("Connections card", () => {
 
   it("PHILO-17: an installed tool with no sign-in shows its sign-in command with Copy, then Check again", async () => {
     hub.connections = { candidates: [], tools: toolsBlock({ gh: true }) };
-    render(<FirstRun />);
+    renderExpandedFirstRun();
     const conn = await screen.findByTestId("firstrun-connections");
     const well = await within(conn).findByTestId("firstrun-signin-gh");
     expect(well.textContent).toContain("gh auth login");
@@ -525,7 +533,7 @@ describe("Connections card", () => {
 async function finishC1() {
   hub.ai = aiStatus(true);
   hub.owner = { name: "Karol Sane", aliases: ["Karol", "KS"] };
-  render(<FirstRun />);
+  renderExpandedFirstRun();
   const dictate = await screen.findByRole("button", { name: "◖ Dictate one sentence" });
   // Every first read has landed (the name, the detect reads) before his press.
   await screen.findByRole("status", { name: "SET" });
@@ -635,7 +643,7 @@ describe("Astra #876 review fences", () => {
     cleanup(); // the reload: the page and its memory are gone; storage stays
 
     calls.length = 0;
-    render(<FirstRun />);
+    renderExpandedFirstRun();
     const dictate = await screen.findByRole("button", { name: "◖ Dictate one sentence" });
     await screen.findByRole("status", { name: "SET" });
     await act(async () => {
@@ -742,7 +750,7 @@ describe("PHILO-17 U17/U18 — first run opened again, plain card words", () => 
     hub.ai = aiStatus(true);
     hub.owner = { name: "Karol Sane", aliases: [] };
     openFirstRun();
-    render(<FirstRun />);
+    renderExpandedFirstRun();
     const open = await screen.findByRole("button", { name: "Open my desk" });
     expect(open.className).toContain("btn--primary");
     expect(screen.queryByRole("button", { name: "Continue later" })).toBeNull();
@@ -759,21 +767,22 @@ describe("PHILO-17 U17/U18 — first run opened again, plain card words", () => 
   });
 
   it("not done: the exit stays Continue later", async () => {
-    render(<FirstRun />);
+    renderExpandedFirstRun();
     await screen.findByRole("heading", { name: "Get ready" });
     expect(screen.getByRole("button", { name: "Continue later" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Open my desk" })).toBeNull();
   });
 
-  it("every card says what it does in one plain line, with no unexplained token", async () => {
+  it("first use leads with plain labels and keeps optional setup copy in its fold", async () => {
     hub.connections = { candidates: [], tools: toolsBlock({ gh: true, acli: true }) };
-    render(<FirstRun />);
+    renderExpandedFirstRun();
     await screen.findByTestId("firstrun-signin-acli");
-    for (const id of ["firstrun-local-ai", "firstrun-you", "firstrun-first-words", "firstrun-calendar", "firstrun-connections", "firstrun-agents"]) {
+    for (const id of ["firstrun-calendar", "firstrun-connections", "firstrun-agents"]) {
       const lines = card(id).querySelectorAll(".firstrun-card-line");
       expect(lines, id).toHaveLength(1);
       expect((lines[0].textContent ?? "").length, id).toBeGreaterThan(10);
     }
+    for (const id of ["firstrun-local-ai", "firstrun-you", "firstrun-first-words"]) expect(card(id).querySelector(".firstrun-card-line")).toBeNull();
     expect(card("firstrun-agents").textContent).toContain("Hooks tell HoldSpeak");
     const face = screen.getByTestId("firstrun").textContent ?? "";
     for (const token of ["MY SERVER", "TOOLS UNKNOWN", "DEFAULT SET", "· NO SIGN-IN", "arrival"]) {
@@ -782,13 +791,13 @@ describe("PHILO-17 U17/U18 — first run opened again, plain card words", () => 
   });
 
   it("Calendar says OR only when another choice is on the card", async () => {
-    const view = render(<FirstRun />);
+    const view = renderExpandedFirstRun();
     let cal = await screen.findByTestId("firstrun-calendar");
     expect(within(cal).getByText("CALENDAR URL")).toBeTruthy();
     expect(cal.textContent).not.toContain("OR A CALENDAR URL");
     view.unmount();
     hub.calendar = { macos: { state: "full_access", can_request: false }, candidates: [MAC_CAL], sources: 0 };
-    render(<FirstRun />);
+    renderExpandedFirstRun();
     cal = await screen.findByTestId("firstrun-calendar");
     await within(cal).findByText("OR A CALENDAR URL");
   });

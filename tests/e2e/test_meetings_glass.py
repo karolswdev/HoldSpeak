@@ -52,9 +52,9 @@ class TestTheMeetingRecord(FitRig):
                 # PHILO-17 ("A meeting opens in one window"): the record is the
                 # meeting's own window; it takes the window body's whole width.
                 self._stage(page, "review-meetings", "meeting:p15-12-m")
-                win = page.locator("[id='pullout:meeting:p15-12-m']")
+                win = page.locator("#surface-meetings")
                 detail = win.locator(".desk-surface-body > .surface-section").first
-                detail.locator(".surface-display").first.wait_for(timeout=T)
+                detail.locator(".kit-disp").first.wait_for(timeout=T)
                 page.wait_for_timeout(800)
                 _settle(page)
 
@@ -217,13 +217,13 @@ class TestOneMeetingOneWindow:
 
     def _one_front(self, meeting_id: str, door: str) -> None:
         """Exactly one window for the meeting, on the glass and on the hub, in front."""
-        wid = f"pullout:meeting:{meeting_id}"
+        wid = "surface-meetings"
         page = self.page
         page.wait_for_function(
             "(id) => { const w = document.getElementById(id); return !!w && w.classList.contains('is-front'); }",
             arg=wid, timeout=T)
         on_glass = page.evaluate(
-            "() => [...document.querySelectorAll('[id^=\"pullout:meeting:\"]')].map((w) => w.id)")
+            "() => [...document.querySelectorAll('#surface-meetings')].map((w) => w.id)")
         assert on_glass.count(wid) == 1, f"{door}-{self.width}: {on_glass}"
         # Never a second form of the same meeting's window (a bare id).
         assert page.locator(f"[id='pullout:{meeting_id}']").count() == 0, door
@@ -237,8 +237,9 @@ class TestOneMeetingOneWindow:
         # The hub holds it as the FRONT window, as this view shows it.
         assert mine[0]["front"], f"{door}-{self.width}: hub front {[(r['id'], r['front']) for r in rows]}"
         assert f"pullout:{meeting_id}" not in [r["id"] for r in rows], rows
-        # The Meetings window is the list: it holds no record.
-        assert page.locator("#surface-meetings [data-testid=meeting-open-transcript]").count() == 0, door
+        assert mine[0]["object_ref"] == f"meeting:{meeting_id}", mine
+        assert page.locator("[id^='pullout:meeting:']").count() == 0, door
+        assert page.locator("#surface-meetings .meetings-detail-body").count() == 1, door
 
     def _shot(self, board: str) -> None:
         _settle(self.page)
@@ -271,21 +272,31 @@ class TestOneMeetingOneWindow:
             browser, page, errors = self._page(pw, width)
             try:
                 # 1. The Needs-you row (the failed summary): Summarize opens the meeting.
-                self._open_icon("drawer:needs")
+                self._press(page.get_by_test_id("desk-bell"))
                 row = page.locator("[data-testid='needs-row']", has_text="Platform sync").first
                 row.wait_for(timeout=T)
                 self._press(row.locator("[data-verb=summarize]"))
                 self._one_front(ONE, "needs")
-                win = page.locator(f"[id='pullout:meeting:{ONE}']")
-                # The whole record: the wings, the transcript, the foot verbs.
-                for verb in ("Open transcript", "MD", "SRT", "Park"):
-                    assert win.get_by_role("button", name=verb, exact=True).count() >= 1, verb
-                assert win.get_by_role("tab", name="Review").count() + win.locator(".desk-wing", has_text="Review").count() >= 1
+                win = page.locator("#surface-meetings")
+                self._press(win.get_by_role("button", name="More actions", exact=True))
+                for verb in ("Open transcript", "Export MD", "Export SRT", "Park"):
+                    assert page.get_by_role("menuitem", name=verb, exact=True).count() == 1, verb
+                page.keyboard.press("Escape")
+                assert win.get_by_role("tab", name="Outcomes").count() + win.locator(".desk-wing", has_text="Outcomes").count() >= 1
                 assert "Platform sync" in (win.get_attribute("aria-label") or win.inner_text())
                 self._shot("meeting-window-needs")
 
-                # 2. The desk icon: the open window comes to the front, never twice.
-                self._open_icon(f"meeting:{ONE}")
+                # 2. The saved meeting's desk icon opens its current host.
+                # Phone Back returns to the list, then the desk before the icon.
+                if self.phone:
+                    self._press(win.get_by_role("button", name=re.compile(r"^Back from ")))
+                    win.get_by_test_id(f"meeting-row-{ONE}").wait_for(timeout=T)
+                    self._press(win.get_by_role("button", name="Back from Meetings", exact=True))
+                    self._press(page.get_by_role("button", name="Go", exact=True))
+                    self._press(page.locator(".desk-menu-list").get_by_role("menuitem", name="Meetings", exact=True))
+                    self._press(win.locator(f"[data-testid='meeting-row-{ONE}'] .meetings-stream-row-body"))
+                else:
+                    self._open_icon(f"meeting:{ONE}")
                 self._one_front(ONE, "icon")
 
                 # 3. The ⌘K hit (the Search tap at 393).
@@ -333,7 +344,7 @@ class TestOneMeetingOneWindow:
             browser, page, errors = self._page(pw, width)
             try:
                 self._press(page.get_by_role("button", name="Record a meeting"))
-                wid = f"pullout:meeting:{LIVE}"
+                wid = "surface-meetings"
                 win = page.locator(f"[id='{wid}']")
                 win.wait_for(timeout=T)
                 # The live room in the meeting's own window (the hub says live).
@@ -345,19 +356,20 @@ class TestOneMeetingOneWindow:
                     self._press(page.get_by_role("button", name="Stop recording"))
                 # The SAME window shows the saved record, its final transcript,
                 # and stays the record (a late live reply never brings the room back).
-                win.get_by_role("button", name="Open transcript").wait_for(timeout=T)
+                win.get_by_role("button", name="More actions", exact=True).wait_for(timeout=T)
                 win.get_by_text("We move the cutover to Friday.").first.wait_for(timeout=T)
                 page.wait_for_timeout(2500)
                 assert win.get_by_role("button", name="Stop meeting").count() == 0
-                ids = page.evaluate("() => [...document.querySelectorAll('[id^=\"pullout:meeting:\"]')].map((w) => w.id)")
+                ids = page.evaluate("() => [...document.querySelectorAll('#surface-meetings, [id^=\"pullout:meeting:\"]')].map((w) => w.id)")
                 assert ids == [wid], ids
                 assert page.locator("#surface-live").count() == 0
-                rows = [r for r in self._hub_rows() if r["id"].startswith("pullout:meeting:")]
+                rows = [r for r in self._hub_rows() if r["id"] == wid or r["id"].startswith("pullout:meeting:")]
                 assert [r["id"] for r in rows] == [wid] and rows[0]["front"], rows
+                assert rows[0]["object_ref"] == f"meeting:{LIVE}", rows
                 # A reload keeps the record (the hub is idle; nothing reads live).
                 page.reload(wait_until="load")
                 _normal_chair(page)
-                win.get_by_role("button", name="Open transcript").wait_for(timeout=T)
+                win.get_by_role("button", name="More actions", exact=True).wait_for(timeout=T)
                 assert win.get_by_role("button", name="Stop meeting").count() == 0
                 self._shot(f"meeting-window-stopped-{stop}")
                 assert not errors, errors
@@ -378,27 +390,28 @@ class TestOneMeetingOneWindow:
 
         _http(self.base, "POST", "/api/desk/windows/surface-meetings/open", {"object_ref": f"meeting:{ONE}"})
         _http(self.base, "POST", f"/api/desk/windows/pullout:{ONE}/open", {})
-        wid = f"pullout:meeting:{ONE}"
+        wid = "surface-meetings"
         with sync_playwright() as pw:
             browser, page, errors = self._page(pw, width)
             try:
                 page.locator(f"[id='{wid}']").wait_for(timeout=T)
                 for _ in range(40):
                     ids = self._hub_ids()
-                    if wid in ids and "surface-meetings" not in ids and f"pullout:{ONE}" not in ids:
+                    if wid in ids and f"pullout:meeting:{ONE}" not in ids and f"pullout:{ONE}" not in ids:
                         break
                     page.wait_for_timeout(250)
-                assert wid in ids and "surface-meetings" not in ids and f"pullout:{ONE}" not in ids, ids
-                assert page.locator("#surface-meetings").count() == 0
+                assert ids.count(wid) == 1 and f"pullout:meeting:{ONE}" not in ids and f"pullout:{ONE}" not in ids, ids
+                assert next(row for row in self._hub_rows() if row["id"] == wid)["object_ref"] == f"meeting:{ONE}"
+                assert page.locator("[id^='pullout:meeting:']").count() == 0
                 assert page.locator(f"[id='pullout:{ONE}']").count() == 0
                 # A second view (no cache) shows the same desk.
                 other = browser.new_context(viewport={"width": width, "height": SIZES[width]}).new_page()
                 other.goto(f"{self.base}/?token={MW_TOKEN}", wait_until="load")
                 _normal_chair(other)
                 other.locator(f"[id='{wid}']").wait_for(state="attached", timeout=T)
-                assert other.locator("#surface-meetings").count() == 0
+                assert other.locator("[id^='pullout:meeting:']").count() == 0
                 # Closed, it stays closed after a reload, in both views.
-                self._press(page.get_by_role("button", name=re.compile(r"^Close Platform sync")))
+                self._press(page.locator("#surface-meetings").get_by_role("button", name=re.compile(r"^Close (Platform sync|Meetings)$")))
                 for _ in range(40):
                     if wid not in self._hub_ids():
                         break
@@ -438,18 +451,19 @@ class TestOneMeetingOneWindow:
             finally:
                 browser.close()
 
-    # PHILO-17 (the desk sweep; Astra r1 on #1108): a recorded meeting WITH a
-    # summary draws its Send well, and the well picks the built-in folder on
-    # its own and reads its preview. The record's body is drawn only once that
-    # preview has landed (held 2 s here): nothing above Decide moves after.
+    # Daily work repair: the saved record is drawn without Send. Its footer
+    # opens Send on request; the built-in folder then reads a real preview
+    # (released after the pending assertion). The well receives focus after
+    # that real read completes.
     _HOLD_PREVIEW_JS = """(() => {
       window.__preview = {asked: 0, done: null};
+      const gate = new Promise((resolve) => { window.__releasePreview = resolve; });
       const f = window.fetch.bind(window);
       window.fetch = (input, init) => {
         const u = typeof input === 'string' ? input : (input && input.url) || '';
         if (!u.includes('/api/channels/preview')) return f(input, init);
         window.__preview.asked += 1;
-        return new Promise((r) => setTimeout(r, 2000)).then(() => f(input, init))
+        return gate.then(() => f(input, init))
           .finally(() => { window.__preview.done = performance.now(); });
       };
     })()"""
@@ -480,7 +494,8 @@ class TestOneMeetingOneWindow:
     @pytest.mark.parametrize("width", list(SIZES))
     def test_a_meeting_with_a_summary_holds_still_while_its_send_preview_lands(self, width: int) -> None:
         """replaces: tests/e2e/test_philo17_meeting_window_glass.py::TestOneMeetingOneWindow::test_a_meeting_with_a_summary_holds_still_while_its_send_preview_lands
-        (moved whole: the preview held 2 s, a timing the sweep's still fence cannot force)."""
+        Updated for requested Send: absent on first open, no send before the
+        held preview, focus inside its existing well when ready."""
         from playwright.sync_api import sync_playwright
 
         from holdspeak.db import get_database
@@ -493,8 +508,8 @@ class TestOneMeetingOneWindow:
             segments=[TranscriptSegment(text="We move the cutover to Friday.", speaker="Me", start_time=1.0, end_time=4.0)],
             intel=IntelSnapshot(timestamp=1.0, topics=["cutover"], summary="The cutover moves to Friday.", action_items=[]),
             intel_status="completed"))
-        wid = f"pullout:meeting:{mid}"
-        _http(self.base, "POST", f"/api/desk/windows/{urllib.request.quote(wid, safe='')}/open", {})
+        wid = "surface-meetings"
+        _http(self.base, "POST", f"/api/desk/windows/{urllib.request.quote(wid, safe='')}/open", {"object_ref": f"meeting:{mid}"})
         with sync_playwright() as pw:
             browser = pw.chromium.launch(headless=True)
             try:
@@ -505,12 +520,23 @@ class TestOneMeetingOneWindow:
                 page.goto(f"{self.base}/?token={MW_TOKEN}", wait_until="load")
                 _normal_chair(page)
                 page.locator(f"[id='{wid}']").wait_for(timeout=T)
-                seen = page.evaluate(self._WATCH_JS, [wid, 6000])
+                win = page.locator(f"[id='{wid}']")
+                page.wait_for_function("id => { const w=document.getElementById(id); return w && !w.querySelector('[data-settling]'); }", arg=wid, timeout=T)
+                assert win.get_by_test_id("meeting-send-well").count() == 0
+                assert page.evaluate("window.__preview.asked") == 0
+                page.screenshot(path=str(MW_SHOTS / f"summary-meeting-closed-{width}.png"))
+                win.get_by_test_id("meeting-send").click()
+                win.get_by_test_id("meeting-send-well").wait_for(timeout=T)
+                page.wait_for_function("() => window.__preview.asked >= 1", timeout=T)
+                assert win.get_by_test_id("send-verb").count() == 0
+                page.screenshot(path=str(MW_SHOTS / f"summary-meeting-preview-pending-{width}.png"))
+                page.evaluate("window.__releasePreview()")
+                page.wait_for_function("() => window.__preview.done !== null", timeout=T)
+                win.get_by_test_id("send-preview").wait_for(timeout=T)
+                page.wait_for_function("() => { const well=document.querySelector('[data-testid=meeting-send-well]'); return well && well.contains(document.activeElement); }", timeout=T)
                 page.screenshot(path=str(MW_SHOTS / f"summary-meeting-preview-held-{width}.png"))
+                seen = page.evaluate("window.__preview")
             finally:
                 browser.close()
-        assert seen["asked"] >= 1, f"the well picked no destination on its own: {seen}"
-        assert seen["shownAt"] is not None, f"the record body was never drawn: {seen}"
-        assert seen["previewDone"] is not None and seen["shownAt"] >= seen["previewDone"] - 50, (
-            f"the body was drawn before its Send preview landed: {seen}")
-        assert not seen["moved"], f"rows above Decide moved after the body was drawn: {seen}"
+        assert seen["asked"] >= 1, f"requested Send read no preview: {seen}"
+        assert seen["done"] is not None, f"requested preview did not finish: {seen}"

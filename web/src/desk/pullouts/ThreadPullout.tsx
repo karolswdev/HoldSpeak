@@ -1218,6 +1218,15 @@ function ThreadPulloutInner({
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(initialTitle);
   const titleRef = useRef<HTMLInputElement>(null);
+  const renameRef = useRef<HTMLButtonElement>(null);
+  const restoreRenameFocus = useRef(false);
+
+  useEffect(() => {
+    if (!editingTitle && restoreRenameFocus.current) {
+      renameRef.current?.focus();
+      restoreRenameFocus.current = false;
+    }
+  }, [editingTitle]);
 
   // HS-151-06: track turn_done for focus restore
   const [restoreFocus, setRestoreFocus] = useState(false);
@@ -1632,7 +1641,7 @@ function ThreadPulloutInner({
           const body = event.currentTarget;
           followTail.current = body.scrollHeight - body.scrollTop - body.clientHeight < 40;
         }}>
-        {/* Head: title, egress, status, token meter */}
+        {/* The window names the thread. Rename keeps its in-place editor. */}
         <div className="thread-head">
           {editingTitle ? (
             // HS-176-04 — the voice law: the title is spoken or typed.
@@ -1652,8 +1661,14 @@ function ThreadPulloutInner({
                 onChange={(e) => setTitleDraft(e.target.value)}
                 onBlur={commitTitle}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") void commitTitle();
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    restoreRenameFocus.current = true;
+                    void commitTitle();
+                  }
                   if (e.key === "Escape") {
+                    e.preventDefault();
+                    restoreRenameFocus.current = true;
                     setTitleDraft(initialTitle);
                     setEditingTitle(false);
                   }
@@ -1665,31 +1680,22 @@ function ThreadPulloutInner({
                 onText={(spoken) => setTitleDraft(spoken)}
               />
             </span>
-          ) : (
-            <button
-              type="button"
-              className="thread-title"
-              onClick={() => {
-                setEditingTitle(true);
-                setTitleDraft(detail.thread?.title || initialTitle);
-              }}
-            >
-              {detail.thread?.title || initialTitle}
-            </button>
-          )}
+          ) : null}
           <div className="thread-head-instruments">
-            {detail.thread?.mode && (
-              <span
-                className="thread-mode-badge"
-                data-testid="mode-badge"
-                style={{ borderColor: detail.thread.mode.avatar }}
+            {!editingTitle && (
+              <Button
+                ref={renameRef}
+                dense
+                variant="ghost"
+                className="thread-rename"
+                aria-label="Rename thread"
+                onClick={() => {
+                  setEditingTitle(true);
+                  setTitleDraft(detail.thread?.title || initialTitle);
+                }}
               >
-                <span
-                  className="thread-mode-dot"
-                  style={{ backgroundColor: detail.thread.mode.avatar }}
-                />
-                {detail.thread.mode.name}
-              </span>
+                Rename
+              </Button>
             )}
             <CallChip
               threadId={threadId}

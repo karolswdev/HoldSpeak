@@ -320,6 +320,8 @@ describe("Desk memory (HS-200-13): the current decision first, carried; the owed
     // Opened with no query, the face reads the desk's recent memory.
     const results = await screen.findByTestId("recall-results");
     expect(results.getAttribute("aria-label")).toBe("Recent on this desk");
+    expect(screen.getByTestId("recall-display").textContent).toBe("Recent work");
+    expect(screen.queryByTestId("recall-ref-token")).toBeNull();
 
     fireEvent.change(screen.getByRole("searchbox", { name: "Search the Desk" }), { target: { value: "freeze window" } });
     fireEvent.click(screen.getByRole("button", { name: "Search memory" }));
@@ -348,10 +350,13 @@ describe("Desk memory (HS-200-13): the current decision first, carried; the owed
 
     const owed = screen.getByTestId("recall-owed-row");
     expect(within(owed).getByTestId("recall-owed-title").textContent).toBe(CMT_TEXT);
-    expect(within(owed).getByTestId("recall-due-token").textContent).toBe("DUE · UNKNOWN");
-    expect(within(owed).getByTestId("recall-owner-token").textContent).toBe("OWNER · UNKNOWN");
+    expect(within(owed).getByTestId("recall-due-token").textContent).toBe("No date");
+    expect(within(owed).getByTestId("recall-owner-token").textContent).toBe("No owner");
+    expect(owed.closest(".surface-ledger-row")?.getAttribute("data-wrap")).toBe("true");
+    expect(within(owed).getByRole("button", { name: "Open source: Architecture review" })).toBeTruthy();
+    expect(within(owed).getByTestId("recall-owed-source").textContent).toBe("From Architecture review");
     expect((within(owed).getByTestId("recall-owed-verb").textContent ?? "").trim()).toBe("Name an owner");
-    expect(within(owed).queryByRole("button", { name: `Mark done: ${CMT_TEXT}` })).toBeNull();
+    expect(within(owed).queryByRole("button", { name: `Done: ${CMT_TEXT}` })).toBeNull();
     const body = screen.getByTestId("desk-memory-body").textContent ?? "";
     for (const section of ["CURRENT 1", "SUPERSEDED 1", "OWED 1", "MEETINGS 2"]) expect(body).toContain(section);
 
@@ -370,8 +375,9 @@ describe("Desk memory (HS-200-13): the current decision first, carried; the owed
     expect(screen.queryByRole("dialog")).toBeNull();
     fireEvent.change(screen.getByRole("textbox", { name: "Owner" }), { target: { value: "Priya" } });
     fireEvent.click(screen.getByRole("button", { name: `Save owner: ${CMT_TEXT}` }));
-    await waitFor(() => expect(screen.getByTestId("recall-owed-row").getAttribute("data-next-action")).toBe("set_date"));
-    expect(screen.queryByTestId("recall-owner-token")).toBeNull();
+    await waitFor(() => expect(screen.getByTestId("recall-owed-verb").textContent).toBe("Set a date"));
+    expect(screen.getByTestId("recall-owner-token").textContent).toBe("Priya");
+    expect(screen.getByTestId("recall-owed-source").textContent).toBe("From Architecture review");
     expect(presses[1]).toEqual({ path: "/api/follow-through/complete", body: RECALL.name_owner.body });
 
     // ── the miss: one true line, the five filters kept, no Clear, no card ──

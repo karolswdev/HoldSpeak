@@ -10,7 +10,7 @@ import { presentValue } from "../../../desk/surface/format";
 import { countToken } from "../../../desk/surface";
 import { SurfaceFooter } from "../../../desk/surface/SurfaceFooter";
 import {
-  SurfaceFacts,
+  SurfaceCode,
   SurfaceState,
 } from "../../../desk/surface/Surface";
 import {
@@ -19,7 +19,7 @@ import {
   GadgetRow,
   LampGadget,
 } from "../../../desk/surface/gadgets";
-import { readableValue, type Receipt } from "./shared";
+import type { Receipt } from "./shared";
 
 /* HS-111-02 — the gear door's Pipeline/Delivery sheet: axis-named
    check, fact tokens, the KB verb at the point of the fact. The
@@ -60,12 +60,35 @@ export function Readiness() {
   const otherWarnings = warnings.filter(
     (w) => w.code !== "pipeline_disabled" && w.code !== "missing_project_kb",
   );
+  const modelMissing = otherWarnings.some((warning) => warning.code === "runtime_model_missing");
+  const warningNames: Record<string, string> = {
+    no_project: "No project",
+    no_blocks: "No blocks",
+    invalid_blocks: "Blocks invalid",
+    invalid_project_kb: "Project KB invalid",
+    runtime_unavailable: "Engine unavailable",
+  };
   return (
     <SurfaceState
       loading={resource.loading}
       error={resource.error}
       onRetry={() => void resource.reload()}
     >
+      {modelMissing ? (
+        <GadgetGroup label="Engine">
+          <GadgetRow label="Model missing">
+            <Button dense variant="secondary" onClick={() => openSurfaceOr("open-concierge", "/models", "writing_dictation")}>
+              Choose engine
+            </Button>
+          </GadgetRow>
+        </GadgetGroup>
+      ) : null}
+      {otherWarnings.filter((warning) => warning.code !== "runtime_model_missing").map((warning, index) => (
+        <p className="speak-token-line" data-tone="warn" key={String(warning.code ?? index)}>
+          {warningNames[String(warning.code)] ?? "Readiness needs a check"}
+        </p>
+      ))}
+      <FoldGadget title="Pipeline + delivery">
       <GadgetGroup label="Pipeline">
         {/* HS-130-07: the pipeline's ON/OFF is a Settings-owned preference
             (one writer). This readiness sheet shows the EFFECTIVE state and
@@ -101,15 +124,6 @@ export function Readiness() {
             </Button>
           </GadgetRow>
         ) : null}
-        {otherWarnings.map((warning, index) => (
-          <p
-            className="speak-token-line"
-            data-tone="warn"
-            key={String(warning.code ?? index)}
-          >
-            {presentValue(warning.message) || readableValue(warning)}
-          </p>
-        ))}
       </GadgetGroup>
       <GadgetGroup label="Delivery">
         <GadgetRow label="Delivery target">
@@ -137,14 +151,13 @@ export function Readiness() {
           </GadgetRow>
         ) : null}
       </GadgetGroup>
+      </FoldGadget>
       {/* HS-202-04 — this fold shows the readiness WIRE verbatim, zeros
           and all; a raw fold that edits the wire is a lie. It now says so
           in the owner's own word (debug hides behind RAW), which is the
           same title grammar Live uses (`LiveCore.tsx` RAW · ROUTE). */}
       <FoldGadget title="RAW · READINESS">
-        <SurfaceFacts value={config} />
-        <SurfaceFacts value={target} />
-        <SurfaceFacts value={depth} />
+        <SurfaceCode>{JSON.stringify(resource.data, null, 2)}</SurfaceCode>
       </FoldGadget>
     </SurfaceState>
   );

@@ -94,7 +94,8 @@ function hubChanged() {
 
 async function selectAndPark(title: string) {
   await screen.findAllByText(title);
-  fireEvent.click(await screen.findByRole("button", { name: "Park" }));
+  fireEvent.click(await screen.findByRole("button", { name: "More actions" }));
+  fireEvent.click(await screen.findByRole("menuitem", { name: "Park" }));
   const receipt = await screen.findByTestId("meeting-park-receipt");
   hubChanged();
   return receipt;

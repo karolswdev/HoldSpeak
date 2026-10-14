@@ -156,6 +156,13 @@ name the screen reader says. HS-201-12 gave `PadGadget` the same prop with
 the same default, so both text species answer to one rule (the Thought
 window's answer pad names its mic `Speak your answer`).
 
+## PadGadget capture hooks (surface repair, 2026-10-14)
+
+`micStartSignal?: number` and `micDraftScope?: string` mirror StringGadget.
+They pass to the pad's existing MicButton. A direct agent message uses this
+single mic for capture start, pending-answer sequencing and draft recovery.
+No second mic or voice-law opt-out is needed.
+
 ## StringGadget.caption (PHILO-15 02)
 
 `caption` shows the well's `label` as a visible caption above it (caption

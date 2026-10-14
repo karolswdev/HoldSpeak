@@ -45,6 +45,8 @@ import {
   type NeedsFilter,
 } from "./needsFace";
 import { cancelArming, useArmingOutcome } from "./arming";
+import { WorkMenu, type WorkMenuEntry } from "../components/DeskMenu";
+import { Disclosure } from "../surface/patterns/Disclosure";
 import { AddToProject } from "../AddToProject";
 import "./needs.css";
 
@@ -70,7 +72,7 @@ export function faceOpener(face: NeedFace): Opener | null {
   return refOpener(face.openRef);
 }
 
-type Well = "owner" | "date" | "detail";
+type Well = "owner" | "date" | "detail" | "project";
 
 /** PHILO-15 B61: the receipt a source Retry leaves in the drawer. */
 type SourceReceipt = { tone: "ok" | "fail"; text: string };
@@ -105,6 +107,9 @@ function NeedVerbsView({ face, primary, onWell, well }: {
   onWell(next: Well | null): void;
 }) {
   const [busy, setBusy] = useState(false);
+  const moreRef = useRef<HTMLButtonElement>(null);
+  const [more, setMore] = useState(false);
+  const projects = useDesk((state) => state.projects);
   const setSourceReceipt = useSourceReceipt((st) => st.set);
   const lead = primary ? "primary" : "secondary";
   const v = face.verbs;
@@ -208,32 +213,33 @@ function NeedVerbsView({ face, primary, onWell, well }: {
             else if (v.openRef) useDesk.getState().openPullout(v.openRef);
           }}>Name an owner</Button>
       );
-    case "confirm":
-      return (
-        <>
-          {/* A2b: the explicit Room path, with this proposal selected (the
-              row body opens the same; the verb carries the keyboard). */}
-          {v.projectId ? (
-            <Button dense variant="ghost" aria-label={named("Room")} data-testid="needs-row-verb" data-verb="room"
-              onClick={() => openProjectProposal(v.projectId, v.proposalId)}>Room</Button>
-          ) : null}
-          {/* PHILO-15 16 (B37): a meeting in no Project joins one here. */}
-          {!v.projectId && v.meetingId ? <AddToProject meetingId={v.meetingId} /> : null}
-          {/* PHILO-15 08 (B03): three verbs with words, Project or not. */}
-          <Button dense variant="ghost" disabled={busy} aria-label={named("Decline")} data-testid="needs-row-verb" data-verb="decline"
-            onClick={() => void act("Decline", () => apiFetch(
-              `/api/proposals/${encodeURIComponent(v.proposalId)}/dismiss`, { method: "POST" },
-            ), `proposal:${v.proposalId}`)}>Decline</Button>
-          <Button dense variant="ghost" disabled={busy} aria-label={named("Defer")} data-testid="needs-row-verb" data-verb="defer"
-            onClick={() => void act("Defer", () => apiFetch(
-              `/api/proposals/${encodeURIComponent(v.proposalId)}/defer`, { method: "POST", json: {} },
-            ), `proposal:${v.proposalId}`)}>Defer</Button>
-          <Button dense variant={lead} disabled={busy} aria-label={named("Confirm")} data-testid="needs-row-verb" data-verb="confirm"
-            onClick={() => void act("Confirm", () => apiFetch(
-              `/api/proposals/${encodeURIComponent(v.proposalId)}/confirm`, { method: "POST" },
-            ), `proposal:${v.proposalId}`)}>Confirm</Button>
-        </>
-      );
+    case "confirm": {
+      const opener = faceOpener(face);
+      const entries: WorkMenuEntry[] = [
+        ...(opener ? [{ type: "item" as const, id: "open", label: "Open", onSelect: opener }] : []),
+        ...(!v.projectId && v.meetingId && projects.some((project) => !project.is_archived)
+          ? [{ type: "item" as const, id: "project", label: "Add to Project", onSelect: () => onWell("project") }] : []),
+        { type: "item", id: "defer", label: "Defer", ghost: busy ? "Busy" : undefined,
+          onSelect: () => void act("Defer", () => apiFetch(
+            `/api/proposals/${encodeURIComponent(v.proposalId)}/defer`, { method: "POST", json: {} },
+          ), `proposal:${v.proposalId}`) },
+        { type: "item", id: "decline", label: "Decline", ghost: busy ? "Busy" : undefined,
+          onSelect: () => void act("Decline", () => apiFetch(
+            `/api/proposals/${encodeURIComponent(v.proposalId)}/dismiss`, { method: "POST" },
+          ), `proposal:${v.proposalId}`) },
+      ];
+      return <>
+        <Button dense variant={lead} disabled={busy} aria-label={named("Confirm")} data-testid="needs-row-verb" data-verb="confirm"
+          onClick={() => void act("Confirm", () => apiFetch(
+            `/api/proposals/${encodeURIComponent(v.proposalId)}/confirm`, { method: "POST" },
+          ), `proposal:${v.proposalId}`)}>Confirm</Button>
+        <Button ref={moreRef} dense variant="ghost" aria-label={named("More")} aria-haspopup="menu" aria-expanded={more}
+          data-testid="needs-row-verb" data-verb="more" onClick={() => setMore((value) => !value)}>More</Button>
+        {more && moreRef.current ? <WorkMenu label={named("More")} x={moreRef.current.getBoundingClientRect().left}
+          y={moreRef.current.getBoundingClientRect().bottom} entries={entries} autoFocus onClose={() => setMore(false)}
+          returnFocus={() => moreRef.current?.focus()} /> : null}
+      </>;
+    }
     case "door": {
       const verb = (v.card.lawful_verbs ?? []).find((x) => supportsDoorVerb(x as DoorVerb)) as DoorVerb | undefined;
       const cmd = verb ? commandForDoorVerb(verb) : null;
@@ -405,7 +411,6 @@ function NeedRow({ face, primary, projects }: { face: NeedFace; primary: boolean
         factWords={face.factWords}
         lamp={face.lamp}
         sprite={needsRowSprite(face)}
-        kindWord={face.kindWord}
         plate={plateOf(face)}
         // A2b: the Project button is a generic open: the Project's drawer.
         project={project ? { name: project.name, onOpen: () => openProjectRoom(project.id) } : undefined}
@@ -418,7 +423,7 @@ function NeedRow({ face, primary, projects }: { face: NeedFace; primary: boolean
           </>
         )}
       />
-      {well === "detail" ? <DetailWell face={face} /> : well ? <CommitWell face={face} which={well} onDone={() => setWell(null)} /> : null}
+      {well === "project" && face.verbs.kind === "confirm" ? <li className="needs-drawer-well"><AddToProject meetingId={face.verbs.meetingId} /></li> : well === "detail" ? <DetailWell face={face} /> : well === "owner" || well === "date" ? <CommitWell face={face} which={well} onDone={() => setWell(null)} /> : null}
     </>
   );
 }
@@ -445,6 +450,7 @@ function useRowMarks(
       // A row the hub counts (one member): the head, the Dock and the notch
       // say the number of these rows.
       li.setAttribute("data-counted", members.has(face.memberRef ?? face.id) ? "true" : "false");
+      if (face.verbs.kind === "confirm") li.setAttribute("data-proposal", "true");
       if (faceOpener(face)) li.setAttribute("data-opens", "true");
       else li.removeAttribute("data-opens");
     }
@@ -462,7 +468,7 @@ export function checkedWord(at: string | null | undefined, now: Date = new Date(
 }
 
 const FILTERS: Array<{ value: NeedsFilter; label: string }> = [
-  { value: "ranked", label: "Ranked" },
+  { value: "ranked", label: "All" },
   { value: "overdue", label: "Overdue" },
   { value: "today", label: "Due today" },
   { value: "not-run", label: "Not run" },
@@ -607,7 +613,7 @@ export function NeedsDrawer() {
     ? { label: upcoming.title, at: upcoming.starts_at }
     : (needs.room?.next as { label?: string; at?: string } | null | undefined));
   const ranked = computedAt ? new Date(computedAt) : null;
-  const rankedWord = ranked && !Number.isNaN(ranked.getTime()) ? `RANKED ${hhmm(ranked)}` : null;
+  const checked = ranked && !Number.isNaN(ranked.getTime()) ? `Checked ${hhmm(ranked)}` : null;
 
   // The row body is the Open (the verb Open stays for the keyboard and 393).
   const onRowPress = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -618,7 +624,7 @@ export function NeedsDrawer() {
     if (face) faceOpener(face)?.();
   };
 
-  const caption = filter === "waiting" ? "Waiting" : filter === "muted" ? "Muted" : "Actions";
+  const caption = filter === "waiting" ? "Waiting" : filter === "muted" ? "Muted" : "Work";
   const sectionTestId = filter === "waiting" ? "needs-waiting" : filter === "muted" ? "needs-muted" : undefined;
   const listed = filter === "waiting" || filter === "muted";
 
@@ -631,10 +637,6 @@ export function NeedsDrawer() {
       <AppHead fact={head} data-testid="arrival-headline" factTestId="arrival-display">
         <StatusStrip
           items={[
-            coverage.expected > 0
-              ? { key: "coverage", lamp: coverage.complete ? "ok" : "warn", text: `${coverage.available} of ${coverage.expected} available` }
-              : null,
-            checkedWord(computedAt, now) ? { key: "checked", text: checkedWord(computedAt, now) } : null,
             next ? { key: "next", text: <span data-testid="needs-next">{next}</span> } : null,
             // The offer is ONE token: its word and its verb (PHILO-15-09 B11:
             // an offer, never a row).
@@ -653,6 +655,12 @@ export function NeedsDrawer() {
           ]}
         />
       </AppHead>
+      {coverage.expected > 0 ? <Disclosure label={`${coverage.available} of ${coverage.expected} available`} ariaLabel="Coverage">
+        <StatusStrip items={[{ lamp: coverage.complete ? "ok" : "warn", text: coverage.complete ? "All sources checked" : "Sources need a check" }]} />
+        {coverage.gaps.length + coverage.quiet.length > 0 ? <ul className="needs-coverage-details">
+          {[...coverage.gaps, ...coverage.quiet].map((source, index) => <li key={index}>{source.label || source.source_id}</li>)}
+        </ul> : null}
+      </Disclosure> : null}
       {faces.length + waiting.length + muted.length > 0 ? (
         <FilterBar
           label="Needs you filter"
@@ -688,8 +696,8 @@ export function NeedsDrawer() {
               data-tone={sourceReceipt.tone === "fail" ? "danger" : undefined}>
               {sourceReceipt.text}
             </span>
-          ) : rankedWord ? (
-            <span className="surface-footer-receipt-line" data-testid="needs-ranked">{rankedWord}</span>
+          ) : checked ? (
+            <span className="surface-footer-receipt-line" data-testid="needs-checked">{checked}</span>
           ) : null
         }
       />

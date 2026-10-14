@@ -95,6 +95,9 @@ export type RoomChangeRow = {
   occurredAt: string | null;
   /** PHILO-13-06 (B1): the object the change touched (`meeting:<id>`, …). */
   targetRef?: string | null;
+  /** The Room item identity recorded in the change summary. */
+  itemId?: string | null;
+  itemType?: string | null;
 };
 
 const CHANGE_KIND_LABELS: Record<string, string> = {
@@ -147,10 +150,11 @@ function humanizeFieldList(summary: Record<string, unknown>): string {
 function changeLabel(kind: string, summary: Record<string, unknown>): string {
   // Action-shaped summaries (item mutations): the VALUES are the story.
   if (typeof summary.action === "string" && summary.action) {
-    const action = humanizeValue(summary.action);
+    const action = summary.action === "item.created" ? "Added" : humanizeValue(summary.action);
     const itemType = typeof summary.item_type === "string" && summary.item_type
-      ? ` · ${String(summary.item_type)}` : "";
-    return `${action}${itemType}`;
+      ? `${summary.action === "item.created" ? " " : " · "}${String(summary.item_type)}` : "";
+    const title = typeof summary.title === "string" && summary.title.trim() ? ` · ${summary.title.trim()}` : "";
+    return `${action}${itemType}${title}`;
   }
   const base = CHANGE_KIND_LABELS[kind]
     ?? (kind.split(".").pop() ?? "Change").replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
@@ -175,6 +179,8 @@ export function decodeChangeRow(raw: Record<string, unknown>): RoomChangeRow {
     label: changeLabel(kind, summary),
     occurredAt: raw.created_at ? String(raw.created_at) : null,
     targetRef: raw.target_ref ? String(raw.target_ref) : null,
+    itemId: typeof summary.item_id === "string" && summary.item_id ? summary.item_id : null,
+    itemType: typeof summary.item_type === "string" && summary.item_type ? summary.item_type : null,
   };
 }
 

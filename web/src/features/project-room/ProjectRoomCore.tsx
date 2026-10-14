@@ -1284,7 +1284,7 @@ function PlanNode({ item, focus }: { item: ItemRow; focus: boolean }) {
   const late = daysLate(item);
   if (focus) {
     return (
-      <li className="room-plan-node" data-kind="focus" data-testid="item-row">
+      <li className="room-plan-node" data-kind="focus" data-testid="item-row" data-item-id={item.id} tabIndex={-1} aria-label={item.title}>
         <span className="room-plan-time">{railDate(item.due_at)}</span>
         <span className="room-plan-bead" data-tone="danger" aria-hidden="true" />
         <article className="room-focus" aria-label={`Late: ${item.title}`} data-testid="room-late-plate">
@@ -1301,7 +1301,7 @@ function PlanNode({ item, focus }: { item: ItemRow; focus: boolean }) {
     );
   }
   return (
-    <li className="room-plan-node" data-kind={itemBead(item)} data-testid="item-row">
+    <li className="room-plan-node" data-kind={itemBead(item)} data-testid="item-row" data-item-id={item.id} tabIndex={-1} aria-label={item.title}>
       <span className="room-plan-time">{railDate(item.due_at)}</span>
       <span className="room-plan-bead" data-tone={itemBead(item)} aria-hidden="true" />
       <div className="room-plan-row">
@@ -2340,6 +2340,8 @@ interface HistoryEntry {
   source: string;
   occurredAt: string;
   targetRef: string | null;
+  itemId: string | null;
+  itemType: string | null;
 }
 
 const HISTORY_FILTERS = [
@@ -2361,6 +2363,8 @@ function changeToHistoryEntry(c: RoomChangeRow): HistoryEntry {
     source,
     occurredAt: c.occurredAt || "",
     targetRef: c.targetRef ?? null,
+    itemId: c.itemId ?? null,
+    itemType: c.itemType ?? null,
   };
 }
 
@@ -2383,10 +2387,14 @@ function HistoryWing({
   room,
   todayCount,
   weekCount,
+  itemIds,
+  onOpenItem,
 }: {
   room: RoomSnapshot;
   todayCount: number;
   weekCount: number;
+  itemIds: string[];
+  onOpenItem: (id: string) => void;
 }) {
   const changes = room.changes.state === "ok" ? room.changes.recent : [];
   const allEntries = useMemo(() => changes.map(changeToHistoryEntry), [changes]);
@@ -2442,7 +2450,7 @@ function HistoryWing({
         {days.map((day) => (
           <SurfaceStreamDay key={day.label} label={day.label}>
             {day.entries.map((entry) => (
-              <HistoryEntryRow key={entry.id} entry={entry} />
+              <HistoryEntryRow key={entry.id} entry={entry} itemIds={itemIds} onOpenItem={onOpenItem} />
             ))}
           </SurfaceStreamDay>
         ))}
@@ -2453,9 +2461,16 @@ function HistoryWing({
 
 /** PHILO-13-06 (B1): an activity row opens the object it touched; a row
  *  about the Room itself names nothing to open and draws no verb. */
-function HistoryEntryRow({ entry }: { entry: HistoryEntry }) {
-  // A change to the Room itself (`project:<id>`) opens what is already open.
-  const open = entry.targetRef?.startsWith("project:") ? null : refOpener(entry.targetRef);
+function HistoryEntryRow({ entry, itemIds, onOpenItem }: {
+  entry: HistoryEntry;
+  itemIds: string[];
+  onOpenItem: (id: string) => void;
+}) {
+  // Item changes name the recorded item inside this Room. A parked/missing
+  // item has no destination; other object refs keep their existing opener.
+  const open = entry.itemId
+    ? (itemIds.includes(entry.itemId) ? () => onOpenItem(entry.itemId!) : null)
+    : entry.targetRef?.startsWith("project:") ? null : refOpener(entry.targetRef);
   return (
     <SurfaceStreamEntry
       when={entry.time}
@@ -2699,6 +2714,22 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
     return () => window.removeEventListener(ROOM_PROPOSAL_EVENT, take);
   }, [ctrl.projectId]);
   const roomBodyRef = useRef<HTMLDivElement | null>(null);
+  const [itemRequest, setItemRequest] = useState({ id: "", seq: 0 });
+  const revealedItemSeq = useRef(0);
+  const openHistoryItem = (id: string) => {
+    if (!itemsRead.items?.some((item) => item.id === id)) return;
+    ctrl.setView("room");
+    setItemRequest((previous) => ({ id, seq: previous.seq + 1 }));
+  };
+  useEffect(() => {
+    if (ctrl.view !== "room" || !itemRequest.seq || revealedItemSeq.current === itemRequest.seq) return;
+    const row = Array.from(roomBodyRef.current?.querySelectorAll<HTMLElement>("[data-item-id]") ?? [])
+      .find((node) => node.dataset.itemId === itemRequest.id);
+    if (!row) return;
+    revealedItemSeq.current = itemRequest.seq;
+    row.scrollIntoView?.({ block: "center" });
+    row.focus({ preventScroll: true });
+  });
   // PHILO-17 (phonepass): the body is not drawn until its sections' reads
   // stop moving its rows (a tap never lands on a row that moved under it).
   // Astra r1/r2: an explicit gate, not a timer. Each read registers when
@@ -2992,7 +3023,8 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
             </>
           ) : (
             <>
-              <HistoryWing room={ctrl.room} todayCount={historyCounts.todayCount} weekCount={historyCounts.weekCount} />
+              <HistoryWing room={ctrl.room} todayCount={historyCounts.todayCount} weekCount={historyCounts.weekCount}
+                itemIds={itemsRead.items?.map((item) => item.id) ?? []} onOpenItem={openHistoryItem} />
               {/* PHILO-17 U31: the writes are what happened: History holds
                   them, folded under the stream (PHILO-17 refit). */}
               <div className="room-folds room-history-folds">

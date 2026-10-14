@@ -1,7 +1,7 @@
 // HS-132-11 — the answer reaches the waiting agent, and the desk says so.
 // The Send reply verb posts to the real reply route; a send leaves an in-flow
 // receipt naming the pane, a refusal names why in-flow and delivers nothing.
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CadenceCore } from "../CadenceCore";
 
@@ -172,5 +172,96 @@ describe("PHILO-17 desk sweep: Rhythm holds still while its first reads land", (
     releaseLoops();
     await waitFor(() => expect(container.querySelector(".cadence-body[data-settling]")).toBeNull());
     expect(container.querySelector("[aria-busy='true']:not(button)")).toBeNull();
+  });
+});
+
+describe("Rhythm action receipts", () => {
+  const settings = {
+    sweep_every_minutes: 15, quiet_hours: { start: 22, end: 8 }, notify: "edge",
+    muted_projects: [], last_sweep_at: "2026-10-14T12:00:00Z", next_sweep_at: null,
+  };
+
+  function reads(url: string) {
+    if (url === "/api/settings/heartbeat") return json(settings);
+    if (url === "/api/brief/latest") return json(null);
+    if (url === "/api/projects") return json({ projects: [] });
+    return json({});
+  }
+
+  it("has no invented save receipt or local-only notification choice", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => reads(String(url))));
+    const { container } = render(<CadenceCore />);
+    await waitFor(() => expect(container.querySelector(".cadence-body[data-settling]")).toBeNull());
+    expect(screen.queryByText(/WRITTEN|Saved \d|Saving|Not saved/)).toBeNull();
+    expect(screen.queryByLabelText("Notification content")).toBeNull();
+  });
+
+  it("shows Saving while PUT is pending, Not saved on failure, then Saved after a successful retry", async () => {
+    let finish: (response: Response) => void = () => undefined;
+    let current = { ...settings };
+    let puts = 0;
+    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
+      const url = String(input);
+      if (init?.method === "PUT") {
+        puts += 1;
+        if (puts === 1) return new Promise<Response>((resolve) => { finish = resolve; });
+        current = { ...current, ...JSON.parse(String(init.body)) };
+        return json({});
+      }
+      return url === "/api/settings/heartbeat" ? json(current) : reads(url);
+    }));
+    render(<CadenceCore />);
+    const interval = screen.getByLabelText("Sweep interval");
+    fireEvent.change(interval, { target: { value: "30" } });
+    expect(await screen.findByText("Saving")).toBeVisible();
+    expect(interval).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Run now" })).toBeDisabled();
+    expect(screen.queryByText(/Saved \d|WRITTEN/)).toBeNull();
+    await act(async () => finish(json({ detail: "Write refused" }, 409)));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Settings not saved · Write refused");
+    expect(screen.getByText("Not saved")).toBeVisible();
+    expect(interval).toHaveValue("15");
+    expect(interval).toBeEnabled();
+    fireEvent.change(interval, { target: { value: "30" } });
+    expect(await screen.findByText(/^Saved \d{2}:\d{2}$/)).toBeVisible();
+    await waitFor(() => expect(interval).toHaveValue("30"));
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("keeps Saved after a successful PUT when its read fails", async () => {
+    let saved = false;
+    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
+      const url = String(input);
+      if (init?.method === "PUT") { saved = true; return json({}); }
+      if (url === "/api/settings/heartbeat" && saved) return json({ detail: "Read unavailable" }, 503);
+      return reads(url);
+    }));
+    const { container } = render(<CadenceCore />);
+    await waitFor(() => expect(container.querySelector(".cadence-body[data-settling]")).toBeNull());
+    fireEvent.change(screen.getByLabelText("Notification mode"), { target: { value: "off" } });
+    expect(await screen.findByText(/^Saved \d{2}:\d{2}$/)).toBeVisible();
+    expect(await screen.findByRole("alert")).toHaveTextContent("Rhythm settings not loaded · Read unavailable");
+    expect(screen.queryByText("Not saved")).toBeNull();
+  });
+
+  it.each([
+    ["Run now", "/api/settings/heartbeat/run-now", "Sweep failed"],
+    ["Generate", "/api/brief/generate", "Brief not generated"],
+  ])("names a failed %s and releases its busy action", async (name, path, failure) => {
+    let finish: (response: Response) => void = () => undefined;
+    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
+      const url = String(input);
+      if (url === path && init?.method === "POST") return new Promise<Response>((resolve) => { finish = resolve; });
+      return reads(url);
+    }));
+    const { container } = render(<CadenceCore />);
+    await waitFor(() => expect(container.querySelector(".cadence-body[data-settling]")).toBeNull());
+    const button = screen.getByRole("button", { name });
+    fireEvent.click(button);
+    expect(button).toBeDisabled();
+    await act(async () => finish(json({ detail: "Hub unavailable" }, 503)));
+    expect(await screen.findByRole("alert")).toHaveTextContent(`${failure} · Hub unavailable`);
+    expect(button).toBeEnabled();
+    expect(screen.queryByText(/Saved \d|WRITTEN|\d MS/)).toBeNull();
   });
 });

@@ -83,7 +83,6 @@ export const LANE_WINDOW_ID = "lane";
 /** The capability whose model drafts an answer (`agent_responder.CAPABILITY`). */
 const DRAFT_CAPABILITY = "background.cadence_draft";
 const REBRIEF_PREFIX = "Re-brief: ";
-const GLYPH_CLOSE = String.fromCodePoint(0x2715);
 
 /** The lane window host: mounted once on the Desk. It opens on a launch by
  * id, or on the launch of the open coder session; a coder object of a launch
@@ -170,19 +169,19 @@ function LaneFrame({ launchId }: { launchId: string }) {
           dense
           variant="ghost"
           aria-pressed={raw}
-          aria-label="Raw: the terminal pane"
+          aria-label={raw ? "Back to session" : "Open terminal"}
           data-testid="lane-raw"
           disabled={!sessionKey}
           onClick={() => useLane.getState().setRaw(!raw)}
         >
-          Raw
+          {raw ? "Back to session" : "Open terminal"}
         </Button>
       }
       open
       onClose={() => useLane.getState().close()}
     >
       <LaneBody lane={lane} error={error} raw={raw} agent={agent} compact={compact} itemTitle={flight?.title ?? ""} />
-      {lane ? <LaneFooter lane={lane} compact={compact} /> : null}
+      {lane ? <LaneFooter lane={lane} /> : null}
     </DeskWindowFrame>
   );
 }
@@ -210,15 +209,6 @@ function LaneBody({
     if (el.scrollTop + el.clientHeight >= el.scrollHeight - 120) void useLane.getState().load();
   };
 
-  if (raw) {
-    return (
-      <div className="desk-pullout-body lw-body" data-testid="lane-body">
-        {/* PHILO-15 20 (Astra r1 on #1011): a decision made in Raw leaves its receipt here. */}
-        {lane ? <LaneReceipts lane={lane} /> : null}
-        <RawPane />
-      </div>
-    );
-  }
   if (!lane) {
     return (
       <div className="desk-pullout-body lw-body" data-testid="lane-body">
@@ -253,7 +243,7 @@ function LaneBody({
     <div className="lw-col">
       {eventsNotRead ? <NotReadLine part="TIMELINE" reason={eventsNotRead} testId="lane-events-not-read" /> : null}
       {isNotRead(lane.gated) ? <NotReadLine part="HELD" reason={lane.gated.not_read} /> : null}
-      <TimelineRail data-testid="lane-rail" label="Lane" entries={railEntries(lane, events, briefOpen, () => setBriefOpen((v) => !v))} />
+      <TimelineRail data-testid="lane-rail" label="Activity" entries={railEntries(lane, events, briefOpen, () => setBriefOpen((v) => !v))} />
       {briefOpen && lane.launch.brief_text ? (
         <pre className="lw-brief" data-testid="lane-brief-text">{lane.launch.brief_text}</pre>
       ) : null}
@@ -267,33 +257,40 @@ function LaneBody({
 
   return (
     <div className="desk-pullout-body lw-body" data-testid="lane-body" ref={bodyRef} onScroll={onScroll}>
-      <LaneHead lane={lane} agent={agent} itemTitle={itemTitle} branch={branch ?? null} />
-      <StationTrack data-testid="lane-track" label="Lane stations" stations={stations} />
-      <LaneReceipts lane={lane} />
+      <LaneHead lane={lane} agent={agent} itemTitle={itemTitle} />
       {unreadParts(lane).map(([part, reason]) => (
         <NotReadLine key={part} part={part} reason={reason} testId={`lane-not-read-${part.toLowerCase()}`} />
       ))}
       {lane.launch.stopped ? null : rebrief ? <RebriefWell /> : (
         <>
-          <HeldPlate lane={lane} agent={agent} />
+          {!raw ? <HeldPlate lane={lane} agent={agent} /> : null}
           <WaitWell lane={lane} agent={agent} />
         </>
       )}
+      {raw ? <RawPane /> : null}
       {compact ? (
         <div className="lw-col">
           {prCard}
           {rail}
-          {files}
         </div>
       ) : (
         <div className="lw-cols">
           {rail}
           <div className="lw-col">
             {prCard}
-            {files}
           </div>
         </div>
       )}
+      <FoldGadget title="Details" className="lw-details">
+        <StationTrack data-testid="lane-track" label="Recorded stages" stations={stations.filter((s) => s.state !== "ahead")} />
+        {branch ? <span className="lw-footer-branch" data-testid="lane-branch">{branch}</span> : null}
+        {files}
+        {lane.launch.session_key && !lane.launch.stopped && (!lane.control || isNotRead(lane.control) || lane.control.pane !== false) ? <div className="lw-verbs">
+          {/* Stop retains its own session-control grant and confirmation. */}
+          {rebrief || !lane.wait || isNotRead(lane.wait) || lane.wait.kind !== "TO ANSWER" || !lane.wait.question ? <ArmLine lane={lane} compact /> : null}
+          <StopVerb />
+        </div> : null}
+      </FoldGadget>
     </div>
   );
 }
@@ -426,11 +423,11 @@ function AnswerWell({ lane, wait, agent }: { lane: LaneWire; wait: LaneWait; age
       }}
       draftEgress={draft ? draftEgress : undefined}
       busy={sending}
-      disabled={!key}
+      disabled={!key || Boolean(lane.control && !isNotRead(lane.control) && lane.control.pane === false)}
       listenSignal={answerSeq}
       draftScope={scope}
       inputRef={inputRef}
-      arm={<ArmLine lane={lane} />}
+      arm={lane.control && !isNotRead(lane.control) && lane.control.pane === false ? <span className="surface-token">Terminal unavailable</span> : <ArmLine lane={lane} />}
     />
   );
 }
@@ -439,7 +436,7 @@ function AnswerWell({ lane, wait, agent }: { lane: LaneWire; wait: LaneWait; age
  * Absent when the session is armed or the policy lets the owner type (YOLO). */
 function ArmLine({ lane, compact = false }: { lane: LaneWire; compact?: boolean }) {
   const control = lane.control;
-  if (!control || isNotRead(control) || control.direct || control.armed || !laneSessionKey(lane)) return null;
+  if (!control || isNotRead(control) || control.pane === false || control.direct || control.armed || !laneSessionKey(lane)) return null;
   return (
     <span className="lw-arm" data-testid={compact ? "lane-arm-footer" : "lane-arm"}>
       <span className="lw-fact">{`${controlModeLabel(control.mode).toUpperCase()} · ARM FIRST`}</span>
@@ -565,7 +562,7 @@ export function laneDoing(lane: LaneWire, agent: string): { word: string; tone: 
   return { word: `${name} is working`, tone: "info" };
 }
 
-function LaneHead({ lane, agent, itemTitle, branch }: { lane: LaneWire; agent: string; itemTitle: string; branch: string | null }) {
+function LaneHead({ lane, agent, itemTitle }: { lane: LaneWire; agent: string; itemTitle: string }) {
   const doing = laneDoing(lane, agent);
   return (
     <div className="lw-head" data-testid="lane-head">
@@ -576,7 +573,6 @@ function LaneHead({ lane, agent, itemTitle, branch }: { lane: LaneWire; agent: s
         <h2 className="lw-head-title" data-tone={doing.tone}>{doing.word}</h2>
         <span className="lw-head-meta">
           {itemTitle ? <span>{itemTitle}</span> : null}
-          {branch ? <span className="lw-head-mono">{branch}</span> : null}
         </span>
       </div>
     </div>
@@ -756,6 +752,8 @@ function RawPane() {
   const gated = lane && Array.isArray(lane.gated) ? lane.gated : [];
   const cut = gated.filter((g) => g.args_cut && (g.state === "held" || g.state === "pending"));
   const paneStatus = useSteering((s) => s.paneStatus);
+  const paneDetail = useSteering((s) => s.paneDetail);
+  const paneId = useSteering((s) => s.paneId);
   const paneLines = useSteering((s) => s.paneLines);
   const paneRaw = useSteering((s) => s.paneRaw);
   const paneGeom = useSteering((s) => s.paneGeom);
@@ -775,32 +773,36 @@ function RawPane() {
         changedAt={paneChangedAt}
         absence={
           <>
-            <span aria-hidden="true">{GLYPH_CLOSE}</span> {PANE_STATE_LABEL[paneStatus] || paneStatus}
+            <span>Terminal unavailable · {PANE_STATE_LABEL[paneStatus] || paneStatus}</span>
+            {paneDetail ? <span className="lw-pane-detail">{paneDetail}</span> : null}
           </>
         }
       />
       {/* PHILO-17 THE REFIT: the pane's controls fold until asked for. */}
-      <FoldGadget title="Keys" className="lw-keys">
+      {paneStatus !== "live" ? <div className="lw-verbs">
+        <Button dense variant="ghost" onClick={() => void useSteering.getState().poll()}>Retry</Button>
+        <Button dense variant="ghost" onClick={() => useLane.getState().setRaw(false)}>Back to session</Button>
+      </div> : null}
+      {paneStatus === "live" && paneId ? <FoldGadget title="Keys" className="lw-keys">
         <ArmStrip />
         {armed || postureAuthorized ? <KeyPalette /> : null}
-      </FoldGadget>
+      </FoldGadget> : null}
     </div>
   );
 }
 
 /* ── the footer ───────────────────────────────────────────────────── */
 
-function LaneFooter({ lane, compact }: { lane: LaneWire; compact: boolean }) {
+function LaneFooter({ lane }: { lane: LaneWire }) {
   const pr = lane.follow_through?.pr;
   const prUrl = pr?.number != null && pr.url ? pr.url : null;
-  const sessionKey = lane.launch.stopped ? null : lane.launch.session_key;
-  const branch = lane.launch.branch ?? (isNotRead(lane.worktree) ? null : lane.worktree.branch);
+  const sessionKey = lane.launch.stopped || (lane.control && !isNotRead(lane.control) && lane.control.pane === false) ? null : lane.launch.session_key;
   const rebrief = useLane((s) => s.rebrief);
   return (
     <SurfaceFooter
       className="lw-footer"
       egress={prUrl ? <EgressChip label="GITHUB.COM" scope="cloud" /> : undefined}
-      receipt={!compact && branch ? <span className="lw-footer-branch" data-testid="lane-branch">{branch}</span> : undefined}
+      receipt={<LaneReceipts lane={lane} />}
       verbs={
         <>
           {sessionKey ? (
@@ -814,8 +816,6 @@ function LaneFooter({ lane, compact }: { lane: LaneWire; compact: boolean }) {
               Re-brief
             </Button>
           ) : null}
-          {sessionKey ? <ArmLine lane={lane} compact /> : null}
-          {sessionKey ? <StopVerb /> : null}
           {prUrl ? (
             <Button
               dense

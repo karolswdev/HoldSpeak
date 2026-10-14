@@ -307,11 +307,6 @@ KNOWN_REDS: dict[tuple[str, int], list[Red]] = {
         Red("target", r"^'Speak Search tools and Desk[^']*' @\[[^\]]*\] loses \d/9 points .*->INPUT\)$",
             "the palette's in-well mic owns under 44 px at 393 (the search field takes its area)"),
     ],
-    # A table cell's edit-in-place Button is narrower than 44 px at 393.
-    ("surface-dictation", 393): [
-        Red("target@Configure dictation", r"^'Edit stack value' @\[[^\]]*\] loses \d/9 points .*->gadget-table-row\)$",
-            "Dictation, Configure: the stack table's Edit value Button owns under 44 px at 393"),
-    ],
     ("desk", 1440): [
         Red("overlap", r"^People, DRAWER, 1:1 [\d:]+ x Conductor, DRAWER, ", "the People drawer icon overlaps the "
             "Conductor icon by 5 px when its `1:1 HH:MM` caption is wide (depends on the clock)", maybe=True),

@@ -92,7 +92,8 @@ describe("HS-201-11 the open-actions filter is drawn only when it can find one",
     // This is the same scope transition SurfaceWindows gives the real core;
     // the host and MeetingRecord are not replaced with a test double.
     view.rerender(<HistoryCore scope="meeting:m-1" />);
-    await screen.findByTestId("meeting-decide");
+    await screen.findByTestId("meeting-record-back");
+    expect(screen.queryByTestId("meeting-decide-well")).toBeNull();
     expect(screen.queryByTestId("meeting-row-m-1")).toBeNull();
 
     // Desktop Back clears the canonical scope. The list's row selection is
