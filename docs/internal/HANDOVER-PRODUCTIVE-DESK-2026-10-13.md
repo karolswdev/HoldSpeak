@@ -1,5 +1,6 @@
 # Productive desk — 2026-10-13
 
+PR: [#1197](https://github.com/karolswdev/HoldSpeak/pull/1197).
 Branch: `feat/desk-productivity-overhaul`. Base: `1e3bce495` (design index,
 PR #1196). One integrated PR, at the owner's request. Builders: Luna workers;
 integration and verification: Sol. Merge follows `CLAUDE.md`'s October 12
@@ -72,8 +73,9 @@ Real graph walks, each at 1440 and 393, are declared in
 | `case.productivity.note.task` | UI Add writes the task and its note source to the real isolated hub | `note-task-1440-final`, `note-task-393-final` |
 | `case.productivity.meeting.back` | actual text import → record → reload → Back to selected list; no separate meeting host | `meeting-back-1440`, `meeting-back-393` |
 
-Each directory contains the observation, before/after shots, provenance and
-an isolated DB snapshot. These are production UI and hub observations with
+Each directory contains the observation, before/after shots and provenance.
+Protocol readings are retained in the observation; the rig removes its
+temporary DB on cleanup. These are production UI and hub observations with
 synthetic input, not observations of the owner's desk. Failed intermediate
 runs remain in scratch. Generated API/operation and capability docs were
 refreshed; obsolete historical test citations were marked as parked or
