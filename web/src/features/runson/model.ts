@@ -28,11 +28,20 @@ export const JOB_ORDER = [
 export const JOB_NAMES: Record<string, string> = {
   [SPEECH_JOB]: "Speech to text",
   writing_dictation: "Dictation clean-up",
-  [THOUGHTS_JOB]: "Answers and thoughts",
+  [THOUGHTS_JOB]: "Answers and notes",
   [MEETINGS_JOB]: "Meeting summaries",
-  agents_tools: "Agents and recipes",
-  background: "Drafts, nudges and memory",
-  [DEFAULT_JOB]: "Everything else",
+  agents_tools: "Custom tasks",
+  background: "Background work",
+  [DEFAULT_JOB]: "Default engine",
+};
+
+/** One bounded sample through an actual task route. The default is not a task. */
+export const JOB_PROBE_CAPABILITIES: Readonly<Record<string, string>> = {
+  writing_dictation: "speech.rewrite",
+  [THOUGHTS_JOB]: "ask.answer",
+  [MEETINGS_JOB]: "meeting.deferred_analysis",
+  agents_tools: "recipe.run",
+  background: "background.rails_summary",
 };
 
 /** The job's outcome name; an unknown group keeps the roster's label. */
@@ -94,9 +103,9 @@ export function emblemFor(kind: string, boundary?: string): "MAC" | "LAN" | "API
   return "MAC";
 }
 
-/** Off this machine: a probe there waits for the owner's press (Article III). */
+/** Off this machine: disclose its destination before the owner's press. */
 export function offMachine(engine: BoardEngine): boolean {
-  return engine.emblem !== "MAC";
+  return enginePlace(engine).place !== "mac";
 }
 
 /** Where one engine runs, from the one host helper (desk/surface/egress.ts
@@ -144,6 +153,7 @@ export function leadEngine(
   return {
     key: summary.profileId,
     profileId: summary.profileId,
+    profileRevision: summary.profileRevision ?? undefined,
     name: summary.label || summary.profileId,
     kind: emblem === "API" ? "cloud" : emblem === "LAN" ? "lan" : "local",
     host: "",
@@ -343,6 +353,6 @@ export function taskDetail(job: string, roster: Roster | null): string {
 /** The token line under the lead: only what the lead cannot say. */
 export function taskLine(job: string, _roster: Roster | null, row: RosterRow | undefined): string {
   const parts: string[] = [];
-  if (row && row.inherited_from === "global") parts.push("SAME AS EVERYTHING ELSE");
+  if (row && row.inherited_from === "global") parts.push("Uses default engine");
   return parts.join(" · ");
 }

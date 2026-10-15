@@ -6,7 +6,7 @@
 // chain with CAS, 409 redraws, Undo, Meetings writes the summary row, Try it
 // (local, off-machine behind the press, speech), FOUND → Use it, the bar.
 
-import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, renderHook, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../../lib/api";
 import type { Detection, Roster, RosterRow } from "../api";
@@ -231,12 +231,12 @@ describe("Runs on — paint and words", () => {
     const lead = (id: string) =>
       screen.getByTestId(`switchboard-job-${id}`).querySelector(".switchboard-job-name")?.textContent;
     // An own wire on this Mac; a LAN engine by its address; the default.
-    expect(lead("thoughts_notes")).toBe("Answers and thoughts → Qwen 3.5 4B · on this Mac");
+    expect(lead("thoughts_notes")).toBe("Answers and notes → Qwen 3.5 4B · on this Mac");
     expect(lead("speech_recognition")).toBe("Speech to text → Whisper small · on this Mac");
     expect(lead("meetings")).toBe("Meeting summaries → qwen3.8 27B · on 192.168.1.43");
-    expect(lead("default")).toBe("Everything else → qwen3.8 27B · on 192.168.1.43");
+    expect(lead("default")).toBe("Default engine → qwen3.8 27B · on 192.168.1.43");
     expect(lead("writing_dictation")).toBe("Dictation clean-up → qwen3.8 27B · on 192.168.1.43");
-    expect(lead("background")).toContain("Drafts, nudges and memory → ");
+    expect(lead("background")).toContain("Background work → ");
     // Task ids leave the face for the card's details.
     const meetings = screen.getByTestId("switchboard-job-meetings");
     expect(meetings.getAttribute("title")).toBe("Deferred meeting analysis · Meeting title · Live meeting analysis");
@@ -245,8 +245,8 @@ describe("Runs on — paint and words", () => {
       expect(face).not.toContain(gone);
     }
     // A job that rides the default says so in plain words.
-    expect(meetings.textContent).toContain("SAME AS EVERYTHING ELSE");
-    expect(screen.getByTestId("switchboard-job-thoughts_notes").textContent).not.toContain("SAME AS EVERYTHING ELSE");
+    expect(meetings.textContent).toContain("Uses default engine");
+    expect(screen.getByTestId("switchboard-job-thoughts_notes").textContent).not.toContain("Uses default engine");
   });
 
   it("the summaries lead names the summary route, not the Meetings wire (Astra r1 M2)", async () => {
@@ -306,6 +306,15 @@ describe("Runs on — paint and words", () => {
     await board("summary");
     expect(screen.getByTestId("switchboard-job-meetings").className).toContain("is-selected");
   });
+
+  it("the selected job's Details fold stays selected when opened", async () => {
+    await board("thoughts_notes");
+    const row = screen.getByTestId("switchboard-job-thoughts_notes");
+    const fold = within(row).getByText("Details").closest("details")!;
+    fireEvent.click(fold.querySelector("summary")!);
+    expect(row.className).toContain("is-selected");
+    expect(fold.isConnected).toBe(true);
+  });
 });
 
 describe("Runs on — a drop writes", () => {
@@ -323,7 +332,7 @@ describe("Runs on — a drop writes", () => {
       ],
     });
     const receipt = await screen.findByTestId("runson-receipt");
-    expect(receipt.textContent).toMatch(/^PATCHED \d\d:\d\d · Answers and thoughts → qwen3.8 27B$/);
+    expect(receipt.textContent).toMatch(/^PATCHED \d\d:\d\d · Answers and notes → qwen3.8 27B$/);
     expect(screen.getByTestId("runson-egress").textContent).toContain("192.168.1.43");
     fireEvent.click(screen.getByTestId("runson-undo"));
     await waitFor(() => expect(m.writeChain).toHaveBeenCalledTimes(2));
@@ -457,7 +466,7 @@ describe("Runs on — a drop writes", () => {
       new ApiError(409, "Assignment changed.", { code: "inference_assignment_revision_conflict" }),
     );
     fireEvent.click(await screen.findByTestId("runson-undo"));
-    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toBe("CHANGED ELSEWHERE · Answers and thoughts"));
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toBe("CHANGED ELSEWHERE · Answers and notes"));
     expect(m.writeChain.mock.calls[1][0].expectedRevision).toBe(7);
     // The entry is gone: no second Undo can overwrite the other writer.
     expect(screen.queryByTestId("runson-undo")).toBeNull();
@@ -484,123 +493,241 @@ describe("Runs on — a drop writes", () => {
     expect((await screen.findByTestId("runson-receipt")).textContent).toBe("REFUSED · SPEECH TO TEXT · SPEECH ENGINES ONLY");
     fireEvent.click(screen.getByTestId("switchboard-job-agents_tools"));
     fireEvent.keyDown(screen.getByTestId("switchboard-engine-q4b"), { key: "Enter" });
-    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toBe("REFUSED · AGENTS AND RECIPES · WITHOUT AGENTS"));
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toBe("REFUSED · CUSTOM TASKS · WITHOUT AGENTS"));
     expect(m.writeChain).not.toHaveBeenCalled();
   });
 });
 
+// Recorded through the real MeetingWebServer ASGI HTTP route, adopted kernel
+// and a controlled provider leaf (2026-10-14, record_probe.py). This is a wire
+// replay for the face; it does not claim physical model inference.
+const completedProbe = {
+  "state": "READY",
+  "ok": true,
+  "capabilityId": "ask.answer",
+  "group": "thoughts_notes",
+  "testedTask": "Answers",
+  "sampleInput": "What is 2 + 2?",
+  "sampleOutput": "4",
+  "emptyOutput": false,
+  "outcome": "succeeded",
+  "reasonCode": "",
+  "engine": "configured_local_engine",
+  "model": "protocol-provider",
+  "boundary": "local",
+  "host": "THIS DEVICE",
+  "latencyMs": 84,
+  "routePlanId": "irp_e8bb2f643ad5289e19f52fe528103323b044663f4377f4545a58f8465efebc5c",
+  "executionId": "ire_b805ab8bcb94451c644173a89eed2f7a",
+  "operationId": "routeprobed158b5bf697eefcf66792371",
+  "legs": [
+    {
+      "ordinal": 1,
+      "profileId": "protocol-provider",
+      "deploymentRevisionId": "dep2_660d3f8ef6f5318ddbecbb96175012f6514a1533d44ccd3fe122d4e1b3db7ff8",
+      "boundary": "local",
+      "status": "attempted",
+      "disposition": ""
+    }
+  ],
+  "allModelsFailed": false
+};
+const blankProbe = {
+  "state": "READY",
+  "ok": true,
+  "capabilityId": "ask.answer",
+  "group": "thoughts_notes",
+  "testedTask": "Answers",
+  "sampleInput": "What is 2 + 2?",
+  "sampleOutput": "",
+  "emptyOutput": true,
+  "outcome": "succeeded",
+  "reasonCode": "",
+  "engine": "configured_local_engine",
+  "model": "protocol-provider",
+  "boundary": "local",
+  "host": "THIS DEVICE",
+  "latencyMs": 72,
+  "routePlanId": "irp_4582b839c9be7be85ddf467be97aa8c9188c910fe22d7b6ed14805251e8b3d26",
+  "executionId": "ire_93675ab93f4f4ea05349d0a5b107f4ba",
+  "operationId": "routeprobe901507777ce89b366c467522",
+  "legs": [
+    {
+      "ordinal": 1,
+      "profileId": "protocol-provider",
+      "deploymentRevisionId": "dep2_660d3f8ef6f5318ddbecbb96175012f6514a1533d44ccd3fe122d4e1b3db7ff8",
+      "boundary": "local",
+      "status": "attempted",
+      "disposition": ""
+    }
+  ],
+  "allModelsFailed": false
+};
+
 describe("Runs on — Try it", () => {
-  it("runs the real route on a local job and lands the answer on the job", async () => {
-    m.taskProbe.mockResolvedValue({ state: "READY", ok: true, model: "Qwen 3.5 4B", latencyMs: 412, host: "THIS DEVICE", legs: [] });
+  it("the first local press runs its task and lands the actual sample on the job", async () => {
+    m.taskProbe.mockResolvedValue(completedProbe);
     await board();
     fireEvent.click(screen.getByTestId("runson-try-thoughts_notes"));
-    await waitFor(() => expect(screen.getByTestId("switchboard-result-thoughts_notes").textContent).toBe("READY · Qwen 3.5 4B · 412 MS"));
-    expect(m.taskProbe).toHaveBeenCalledWith("ask.answer", undefined);
+    await waitFor(() => expect(screen.getByTestId("runson-trial-state-thoughts_notes").textContent).toBe("Completed · Answers · protocol-provider · 84 MS"));
+    expect(m.taskProbe).toHaveBeenCalledWith("ask.answer", undefined, ["q4b"]);
+    expect(screen.getByTestId("runson-trial-input-thoughts_notes").textContent).toBe(completedProbe.sampleInput);
+    expect(screen.getByTestId("runson-trial-output-thoughts_notes").textContent).toBe(completedProbe.sampleOutput);
+    expect(m.probe).not.toHaveBeenCalled();
   });
 
-  it("an off-machine Try waits for the press that names the host (Article III)", async () => {
-    m.probe.mockResolvedValue({ state: "READY", host: "192.168.1.43", latencyMs: 410 });
+  it("the first remote press names its destination and starts the real job, without a footer confirmation", async () => {
+    m.taskProbe.mockResolvedValue(completedProbe);
+    await board();
+    const row = screen.getByTestId("switchboard-job-meetings");
+    expect(within(row).getByTestId("runson-trial-egress-meetings").textContent).toBe("192.168.1.43");
+    fireEvent.click(within(row).getByTestId("runson-try-meetings"));
+    await waitFor(() => expect(m.taskProbe).toHaveBeenCalledWith("meeting.deferred_analysis", true, ["q27"]));
+    expect(screen.queryByTestId("runson-try-confirm")).toBeNull();
+    expect(m.probe).not.toHaveBeenCalled();
+    expect(screen.queryByTestId("runson-egress")).toBeNull();
+    expect(await screen.findByTestId("runson-trial-output-meetings")).toBeTruthy();
+  });
+
+  it.each([
+    ["writing_dictation", "speech.rewrite"],
+    ["thoughts_notes", "ask.answer"],
+    ["meetings", "meeting.deferred_analysis"],
+    ["agents_tools", "recipe.run"],
+    ["background", "background.rails_summary"],
+  ])("%s tests its bounded real task %s", async (job, capability) => {
+    m.taskProbe.mockResolvedValue(completedProbe);
+    await board();
+    fireEvent.click(screen.getByTestId(`runson-try-${job}`));
+    await waitFor(() => expect(m.taskProbe).toHaveBeenCalledTimes(1));
+    expect(m.taskProbe.mock.calls[0][0]).toBe(capability);
+    expect(m.probe).not.toHaveBeenCalled();
+  });
+
+  it("shows every known remote fallback before the press and binds the full chain", async () => {
+    m.taskProbe.mockResolvedValue(completedProbe);
+    const routed = roster();
+    routed.rows[1].assignment!.entries = [Q4B, Q27, { ...Q27, profile_id: "openrouter", label: "OpenRouter", boundary: "cloud" }];
+    m.readRoster.mockResolvedValue(routed);
+    await board();
+    const row = screen.getByTestId("switchboard-job-thoughts_notes");
+    expect(within(row).getAllByTestId("runson-trial-egress-thoughts_notes").map((chip) => chip.textContent)).toEqual(["192.168.1.43", "OPENROUTER.AI"]);
+    fireEvent.click(within(row).getByTestId("runson-try-thoughts_notes"));
+    await waitFor(() => expect(m.taskProbe).toHaveBeenCalledWith("ask.answer", true, ["q4b", "q27", "openrouter"]));
+  });
+
+  it("the Meetings trial binds the actual summary head instead of the group's wire", async () => {
+    m.taskProbe.mockResolvedValue(completedProbe);
+    const det = detection();
+    det.summaryAssignment = { ...det.summaryAssignment!, profileId: "openrouter", profileRevision: 1, label: "OpenRouter", boundary: "cloud" };
+    m.readDetection.mockResolvedValue(det);
+    await board();
+    expect(screen.getByTestId("runson-trial-egress-meetings").textContent).toBe("OPENROUTER.AI");
+    fireEvent.click(screen.getByTestId("runson-try-meetings"));
+    await waitFor(() => expect(m.taskProbe).toHaveBeenCalledWith("meeting.deferred_analysis", true, ["openrouter"]));
+  });
+
+  it("a server refusal stays on the job and never asks for another confirmation", async () => {
+    m.taskProbe.mockResolvedValue({ state: "REFUSED", ok: false, reasonCode: "route_probe_assignment_changed", legs: [] });
     await board();
     fireEvent.click(screen.getByTestId("runson-try-meetings"));
-    const confirm = await screen.findByTestId("runson-try-confirm");
-    expect(confirm.textContent).toBe("Try on 192.168.1.43");
-    expect(m.probe).not.toHaveBeenCalled();
-    fireEvent.click(confirm);
-    await waitFor(() => expect(m.probe).toHaveBeenCalledWith("lan:q27", false));
-    await waitFor(() =>
-      expect(screen.getByTestId("switchboard-result-meetings").textContent).toBe("REACHED · qwen3.8 27B · 410 MS · WITHOUT CALENDAR"),
-    );
-    expect(screen.getByTestId("runson-egress").textContent).toContain("192.168.1.43");
+    await waitFor(() => expect(screen.getByTestId("runson-trial-state-meetings").textContent).toBe("Not tried · Route changed"));
+    expect(m.taskProbe).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId("runson-try-confirm")).toBeNull();
   });
 
-  it("a pending consent is bound to its engine: a re-patch voids it and asks for the new host (C3)", async () => {
-    // The cloud branch's real answer (concierge_service.probe, no getter):
-    // NOT_SET, no latency; never a READY.
-    m.probe.mockResolvedValue({ state: "NOT_SET", host: "openrouter.ai", latencyMs: null, keySet: true });
-    await board();
-    fireEvent.click(screen.getByTestId("runson-try-meetings"));
-    expect((await screen.findByTestId("runson-try-confirm")).textContent).toBe("Try on 192.168.1.43");
-    // Meetings is patched to another engine while the press is pending.
-    const moved = roster();
-    moved.rows[4] = { ...moved.rows[4], inherited_from: "group", expected_revision: 1,
-      assignment: { revision: 1, entries: [{ ...Q27, profile_id: "openrouter", label: "OpenRouter", boundary: "cloud" }], issues: [] } };
-    m.readRoster.mockResolvedValue(moved);
-    // (Try it already selected Meetings.)
-    expect(screen.getByTestId("switchboard-job-meetings").className).toContain("is-selected");
-    fireEvent.keyDown(screen.getByTestId("switchboard-engine-openrouter"), { key: "Enter" });
-    await waitFor(() => expect(screen.getByTestId("runson-try-confirm").textContent).toBe("Try on OPENROUTER.AI"));
-    expect(m.probe).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByTestId("runson-try-confirm"));
-    await waitFor(() => expect(m.probe).toHaveBeenCalledTimes(1));
-    expect(m.probe).toHaveBeenCalledWith("cloud:openrouter", true);
-    expect(m.probe).not.toHaveBeenCalledWith("lan:q27", expect.anything());
-    await waitFor(() => expect(screen.getByTestId("switchboard-result-meetings").textContent).toBe("NOT CHECKED · OpenRouter"));
-  });
-
-  it("a refreshed detection that moves the SAME engine to another host voids the press (C3 r2)", async () => {
-    m.probe.mockResolvedValue({ state: "READY", host: "192.168.1.99", latencyMs: 12 });
-    m.define.mockResolvedValue({ profileId: "engine-x", profileRevision: 1 });
-    await board();
-    fireEvent.click(screen.getByTestId("runson-try-meetings"));
-    expect((await screen.findByTestId("runson-try-confirm")).textContent).toBe("Try on 192.168.1.43");
-    // The next detection answers the same engine id at another address
-    // (a re-defined endpoint); any refresh of the board reads it.
-    const moved = detection();
-    moved.engines = moved.engines.map((e) =>
-      e.id === "lan:q27" ? { ...e, host: "192.168.1.99", baseUrl: "http://192.168.1.99:8080/v1" } : e,
-    );
-    m.readDetection.mockResolvedValue(moved);
-    fireEvent.click(within(screen.getByTestId("switchboard-engine-local:ollama:11434:llama3.3")).getByRole("button", { name: "Use it" }));
-    await waitFor(() => expect(screen.getByTestId("runson-try-confirm").textContent).toBe("Try on 192.168.1.99"));
-    expect(m.probe).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByTestId("runson-try-confirm"));
-    await waitFor(() => expect(m.probe).toHaveBeenCalledTimes(1));
-  });
-
-  it("consentHolds compares the job, the engine id AND the destination", async () => {
+  it("the displayed binding compares job, engine, destination and revision", async () => {
     const { consentHolds, consentHost } = await import("../useRunsOn");
-    const engine = { key: "q27", host: "192.168.1.43", baseUrl: "http://192.168.1.43:8080/v1" } as never;
-    const consent = { job: "meetings", engineKey: "q27", engineHost: consentHost(engine), host: "192.168.1.43", scope: "local" as const };
+    const engine = { key: "q27", host: "192.168.1.43", baseUrl: "http://192.168.1.43:8080/v1", profileRevision: 2 } as never;
+    const consent = { job: "meetings", engineKey: "q27", engineHost: consentHost(engine), engineRevision: 2, host: "192.168.1.43", scope: "local" as const };
     expect(consentHolds(consent, "meetings", engine)).toBe(true);
-    expect(consentHolds(consent, "meetings", { ...(engine as object), host: "192.168.1.99" } as never)).toBe(false);
-    expect(consentHolds(consent, "meetings", { ...(engine as object), baseUrl: "http://10.0.0.9/v1" } as never)).toBe(false);
-    expect(consentHolds(consent, "meetings", { ...(engine as object), key: "other" } as never)).toBe(false);
+    for (const changed of [{ host: "192.168.1.99" }, { baseUrl: "http://10.0.0.9/v1" }, { key: "other" }, { profileRevision: 3 }]) {
+      expect(consentHolds(consent, "meetings", { ...(engine as object), ...changed } as never)).toBe(false);
+    }
     expect(consentHolds(consent, "agents_tools", engine)).toBe(false);
   });
 
-  it("a cloud Try that probes nothing says NOT CHECKED, never READY (V2)", async () => {
-    m.probe.mockResolvedValue({ state: "NOT_SET", host: "openrouter.ai", latencyMs: null, keySet: true });
-    const det = detection();
-    const routed = roster();
-    routed.rows[5] = { ...routed.rows[5], inherited_from: "group",
-      assignment: { revision: 1, entries: [{ ...Q27, profile_id: "openrouter", label: "OpenRouter", boundary: "cloud" }], issues: [] } };
-    m.readRoster.mockResolvedValue(routed);
-    m.readDetection.mockResolvedValue(det);
+  it("a remote address is disclosed even when the engine was labelled local", async () => {
+    const { offMachine } = await import("../model");
+    expect(offMachine({ kind: "local", emblem: "MAC", host: "127.0.0.1.", baseUrl: "http://127.0.0.1.:8080/v1" } as never)).toBe(true);
+    expect(offMachine({ kind: "local", emblem: "MAC", host: "THIS DEVICE", baseUrl: "http://127.0.0.1:8080/v1" } as never)).toBe(false);
+  });
+
+  it("a stale displayed destination refuses before dispatch", async () => {
+    const { useRunsOn } = await import("../useRunsOn");
+    const view = renderHook(() => useRunsOn());
+    await waitFor(() => expect(view.result.current.trialBindingsForJob("meetings")[0]?.host).toBe("192.168.1.43"));
+    const shown = view.result.current.trialBindingsForJob("meetings");
+    const moved = detection();
+    moved.engines = moved.engines.map((engine) => engine.profileId === "q27" ? { ...engine, host: "192.168.1.99", baseUrl: "http://192.168.1.99:8080/v1" } : engine);
+    m.readDetection.mockResolvedValue(moved);
+    act(() => view.result.current.readAgain());
+    await waitFor(() => expect(view.result.current.trialBindingsForJob("meetings")[0]?.host).toBe("192.168.1.99"));
+    act(() => view.result.current.tryJob("meetings", shown));
+    expect(m.taskProbe).not.toHaveBeenCalled();
+    expect(view.result.current.results.meetings.tokens).toEqual(["Not tried", "Route changed"]);
+  });
+
+  it("a successful empty output is neutral Completed, never Broken / inference succeeded", async () => {
+    m.taskProbe.mockResolvedValue(blankProbe);
     await board();
-    fireEvent.click(screen.getByTestId("runson-try-agents_tools"));
-    fireEvent.click(await screen.findByTestId("runson-try-confirm"));
-    await waitFor(() => expect(screen.getByTestId("switchboard-result-agents_tools").textContent).toBe("NOT CHECKED · OpenRouter"));
-    expect(screen.getByTestId("switchboard-result-agents_tools").textContent).not.toContain("READY");
+    fireEvent.click(screen.getByTestId("runson-try-thoughts_notes"));
+    await waitFor(() => expect(screen.getByTestId("runson-trial-state-thoughts_notes").textContent).toContain("No text returned"));
+    const result = screen.getByTestId("runson-trial-state-thoughts_notes");
+    expect(result.textContent).toContain("Completed");
+    expect(result.textContent).not.toMatch(/BROKEN|inference succeeded/i);
+    expect(result.closest("[data-tone]")?.getAttribute("data-tone")).toBe("idle");
+  });
+
+  it.each(["board", "list"])("%s keeps loading and one request in the same job row", async (layout) => {
+    const rect = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({ width: layout === "list" ? 393 : 1000, height: 600, top: 0, left: 0, right: 1000, bottom: 600, x: 0, y: 0, toJSON: () => ({}) });
+    let finish!: (value: typeof completedProbe) => void;
+    m.taskProbe.mockReturnValue(new Promise((resolve) => { finish = resolve; }));
+    try {
+      render(<RunsOnCore scope="thoughts_notes" />);
+      const button = await screen.findByTestId("runson-try-thoughts_notes");
+      fireEvent.click(button);
+      expect(button.closest(".switchboard-job")?.getAttribute("data-job-id")).toBe("thoughts_notes");
+      expect(button.getAttribute("aria-busy")).toBe("true");
+      expect(button.hasAttribute("disabled")).toBe(true);
+      expect(screen.getByTestId("runson-trial-state-thoughts_notes").textContent).toBe("Trying");
+      fireEvent.click(button);
+      expect(m.taskProbe).toHaveBeenCalledTimes(1);
+      await act(async () => finish(completedProbe));
+      expect(button.getAttribute("aria-busy")).toBeNull();
+      expect(screen.getByTestId("runson-trial-output-thoughts_notes").textContent).toBe(completedProbe.sampleOutput);
+    } finally { rect.mockRestore(); }
+  });
+
+  it("the default engine has no trial", async () => {
+    await board();
+    expect(screen.queryByTestId("runson-try-default")).toBeNull();
   });
 
   it("a probe with no latency shows no ms token (A.8)", async () => {
-    m.taskProbe.mockResolvedValue({ state: "READY", ok: true, model: "Qwen 3.5 4B", latencyMs: 0, host: "THIS DEVICE", legs: [] });
+    m.taskProbe.mockResolvedValue({ ...completedProbe, latencyMs: 0 });
     await board();
     fireEvent.click(screen.getByTestId("runson-try-thoughts_notes"));
-    await waitFor(() => expect(screen.getByTestId("switchboard-result-thoughts_notes").textContent).toBe("READY · Qwen 3.5 4B"));
+    await waitFor(() => expect(screen.getByTestId("runson-trial-state-thoughts_notes").textContent).toBe("Completed · Answers · protocol-provider"));
   });
 
-  it("Speech: you speak, it shows what it heard", async () => {
+  it("Speech keeps its Stop action, then shows Transcribing until the actual text returns", async () => {
+    let finish!: (text: string) => void;
     m.startCapture.mockResolvedValue(undefined);
-    m.stopAndTranscribe.mockResolvedValue("freeze the old ledger on nov 5");
+    m.stopAndTranscribe.mockReturnValue(new Promise((resolve) => { finish = resolve; }));
     await board();
-    fireEvent.click(screen.getByTestId("runson-try-speech_recognition"));
-    await waitFor(() => expect(screen.getByTestId("runson-try-speech_recognition").textContent).toBe("Stop"));
-    fireEvent.click(screen.getByTestId("runson-try-speech_recognition"));
-    await waitFor(() =>
-      expect(screen.getByTestId("switchboard-result-speech_recognition").textContent).toMatch(/^HEARD: "freeze the old ledger on nov 5"( · \d+ MS)?$/),
-    );
+    const button = screen.getByTestId("runson-try-speech_recognition");
+    fireEvent.click(button);
+    await waitFor(() => expect(button.textContent).toBe("Stop"));
+    fireEvent.click(button);
+    expect(button.getAttribute("aria-busy")).toBe("true");
+    expect(screen.getByTestId("runson-trial-state-speech_recognition").textContent).toBe("Transcribing");
+    fireEvent.click(button);
+    expect(m.startCapture).toHaveBeenCalledTimes(1);
+    await act(async () => finish("freeze the old ledger on nov 5"));
+    expect(screen.getByTestId("runson-trial-state-speech_recognition").textContent).toMatch(/^HEARD: "freeze the old ledger on nov 5"( · \d+ MS)?$/);
     expect(m.probe).not.toHaveBeenCalled();
+    expect(m.taskProbe).not.toHaveBeenCalled();
   });
 });
 

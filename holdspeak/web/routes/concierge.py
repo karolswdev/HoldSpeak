@@ -225,6 +225,16 @@ def build_concierge_router(ctx: WebContext) -> APIRouter:
                         "capabilityId is not probeable.",
                         context={"status": 400},
                     )
+                expected_profiles = body.get("expectedProfileIds")
+                if "expectedProfileIds" in body and (
+                    not isinstance(expected_profiles, list)
+                    or any(not isinstance(item, str) or not item.strip() for item in expected_profiles)
+                ):
+                    raise ServiceError(
+                        "concierge_probe_invalid",
+                        "expectedProfileIds must be a list of profile IDs.",
+                        context={"status": 400},
+                    )
                 setup_svc = ctx.inference_setup_service
                 db = setup_svc._db if setup_svc is not None else None
                 if db is None:
@@ -238,6 +248,7 @@ def build_concierge_router(ctx: WebContext) -> APIRouter:
                     db=db,
                     capability_id=capability_id,
                     allow_off_machine=bool(body.get("confirmOffMachine", False)),
+                    expected_profile_ids=expected_profiles,
                 )
                 return JSONResponse(result)
 

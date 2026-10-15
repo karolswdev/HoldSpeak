@@ -14,6 +14,7 @@ import {
   StateChip,
   StringGadget,
   SurfaceFooter,
+  SurfaceWell,
   SurfaceSwitchboard,
   useSwitchboardLayout,
   wireDate,
@@ -30,6 +31,7 @@ import { MeaningSearchRow } from "../concierge/MeaningSearchRow";
 import {
   DEFAULT_JOB,
   JOB_ORDER,
+  JOB_PROBE_CAPABILITIES,
   MEETINGS_JOB,
   SPEECH_JOB,
   enginePlace,
@@ -208,6 +210,7 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
   const jobs: SwitchJob[] = [];
   const wires: SwitchWire[] = [];
   const words: Record<string, ReturnType<typeof stateWord>> = {};
+  const detailJob = ctrl.selected ?? (layout === "list" ? JOB_ORDER.find((job) => roster?.rows.some((row) => jobOf(row.id) === job)) : null);
   for (const job of JOB_ORDER) {
     const row = roster?.rows.find((r) => jobOf(r.id) === job);
     if (!row) continue;
@@ -234,19 +237,45 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
     const result = ctrl.results[job];
     const jobRepair = repairs.find((r) => r.groups.includes(job));
     const listening = job === SPEECH_JOB && ctrl.listening;
-    // A Try it only where something runs (no verb that does nothing).
-    const canTry = Boolean(effective) && (job === SPEECH_JOB || Boolean(effective?.detectId) || job === "thoughts_notes");
+    const bindings = ctrl.trialBindingsForJob(job);
+    const canTry = bindings.length > 0 && (job === SPEECH_JOB || Boolean(JOB_PROBE_CAPABILITIES[job]));
     const tryVerb: ReactNode = canTry ? (
+      <span className="runson-trial-action">
+      {bindings.filter((binding) => binding.host !== "THIS DEVICE").filter((binding, index, all) => all.findIndex((other) => other.host === binding.host) === index).map((binding) => (
+        <span key={binding.host} data-testid={`runson-trial-egress-${job}`}><EgressChip label={binding.host} scope={binding.scope} /></span>
+      ))}
       <Button
         dense
         variant="secondary"
         loading={ctrl.trying?.job === job && !listening}
-        onClick={() => ctrl.tryJob(job)}
+        disabled={Boolean(ctrl.trying && ctrl.trying.job !== job)}
+        onClick={() => ctrl.tryJob(job, bindings)}
         data-testid={`runson-try-${job}`}
       >
         {listening ? "Stop" : "Try it"}
       </Button>
+      </span>
     ) : undefined;
+    const feedback: ReactNode = result ? (
+      <span className="runson-trial-result" data-tone={result.tone === "ok" ? undefined : result.tone}>
+        <span role="status" aria-live="polite" aria-busy={result.tone === "busy" || undefined} data-testid={`runson-trial-state-${job}`}>{result.tokens.join(" · ")}</span>
+        {result.egress ? <EgressChip label={result.egress.label} scope={result.egress.scope} /> : null}
+        {result.sampleInput || result.sampleOutput ? <SurfaceWell>
+          {result.sampleInput ? <span className="runson-trial-sample"><span className="runson-trial-caption">Sample</span><span data-testid={`runson-trial-input-${job}`}>{result.sampleInput}</span></span> : null}
+          {result.sampleOutput ? <span className="runson-trial-sample"><span className="runson-trial-caption">Result</span><span data-testid={`runson-trial-output-${job}`}>{result.sampleOutput}</span></span> : null}
+        </SurfaceWell> : null}
+      </span>
+    ) : lead === "unknown" ? (
+      <Button dense variant="secondary" data-testid="runson-read-again" onClick={ctrl.readAgain}>Try again</Button>
+    ) : jobRepair ? (
+      <span data-tone="danger" data-testid={`runson-job-repair-${job}`}>
+        {jobRepair.token}
+        {jobRepair.groups[0] === job && !(jobRepair.engineId && onBoard(jobRepair.engineId)) ? repairButton(jobRepair, `runson-repair-job-${job}`) : null}
+      </span>
+    ) : word === "LIMITED" && limitTokens(job, effective).length ? (
+      <span data-tone="warn">{limitTokens(job, effective).join(" · ")}</span>
+    ) : undefined;
+    const details = detailJob === job && job !== DEFAULT_JOB ? taskDetail(job, roster) : "";
     jobs.push({
       id: job,
       // PHILO-17 (U16): the card leads with what he gets and where it runs;
@@ -270,29 +299,19 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
         row.inherited_from === "global" &&
         job !== DEFAULT_JOB &&
         !(job === MEETINGS_JOB && roster?.tasks.find((t) => t.id === "meeting.deferred_analysis")?.has_override)
-          ? "SAME AS EVERYTHING ELSE"
+          ? "Uses default engine"
           : undefined,
       // The limitation is a token on the job (§12 rule 6), until a Try
       // answers in its place; a repair names itself there too.
       // Astra r1 (finding 5): the setup stays while speech is not ready, also
       // after a Try it answered (its answer cannot repair a missing model).
-      result: lead === "unknown" ? (
-        <Button dense variant="secondary" data-testid="runson-read-again" onClick={ctrl.readAgain}>
-          Try again
-        </Button>
-      ) : job === SPEECH_JOB && speech.notSetUp ? (
-        <SpeechSetup setup={speech} primary={false} testId="runson-speech-setup" />
-      ) : result ? (
-        <span data-tone={result.tone === "danger" ? "danger" : result.tone === "idle" ? "idle" : undefined}>{result.tokens.join(" · ")}</span>
-      ) : jobRepair ? (
-        <span data-tone="danger" data-testid={`runson-job-repair-${job}`}>
-          {jobRepair.token}
-          {jobRepair.groups[0] === job && !(jobRepair.engineId && onBoard(jobRepair.engineId))
-            ? repairButton(jobRepair, `runson-repair-job-${job}`)
-            : null}
+      result: (layout === "list" && tryVerb) || feedback || details || (job === SPEECH_JOB && speech.notSetUp) ? (
+        <span className="runson-job-content">
+          {layout === "list" ? tryVerb : null}
+          {feedback}
+          {job === SPEECH_JOB && speech.notSetUp ? <SpeechSetup setup={speech} primary={false} testId="runson-speech-setup" /> : null}
+          {details ? <span onClick={(event) => event.stopPropagation()}><FoldGadget title="Details"><span className="runson-job-details">{details}</span></FoldGadget></span> : null}
         </span>
-      ) : word === "LIMITED" && limitTokens(job, effective).length ? (
-        <span data-tone="warn">{limitTokens(job, effective).join(" · ")}</span>
       ) : undefined,
     });
     ownEntries(row).forEach((entry, order) => {
@@ -421,12 +440,6 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
   const hw = hardwareToken(detection);
 
   /* ── the foot ── */
-  const selectedJob = ctrl.selected ?? (layout === "list" ? jobs[0]?.id ?? null : null);
-  const footTry =
-    layout === "list" && selectedJob
-      ? jobs.find((j) => j.id === selectedJob)
-      : undefined;
-
   return (
     <div className="runson-root" ref={rootRef} data-testid="runson-root">
       <div className="runson-apphead">
@@ -484,9 +497,7 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
       <SurfaceFooter
         className="runson-foot"
         egress={
-          ctrl.pending ? (
-            <EgressChip label={ctrl.pending.host} scope={ctrl.pending.scope} />
-          ) : ctrl.egress ? (
+          ctrl.egress ? (
             <span data-testid="runson-egress">
               <EgressChip label={ctrl.egress.label} scope={ctrl.egress.scope} />
             </span>
@@ -501,15 +512,6 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
         }
         verbs={
           <>
-            {ctrl.pending ? (
-              <Button dense variant="primary" data-testid="runson-try-confirm" onClick={ctrl.confirmTry}>
-                {`Try on ${ctrl.pending.host}`}
-              </Button>
-            ) : footTry && footTry.verb === undefined && ctrl.engineForJob(footTry.id) ? (
-              <Button dense variant="secondary" data-testid={`runson-try-${footTry.id}`} onClick={() => ctrl.tryJob(footTry.id)}>
-                {footTry.id === SPEECH_JOB && ctrl.listening ? "Stop" : "Try it"}
-              </Button>
-            ) : null}
             {ctrl.canUndo ? (
               <Button dense variant="secondary" disabled={ctrl.busy} data-testid="runson-undo" onClick={() => void ctrl.undo()}>
                 Undo

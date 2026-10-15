@@ -185,6 +185,10 @@ export interface TaskProbeResponse {
   group: string;
   outcome?: string;
   reasonCode: string;
+  testedTask?: string;
+  sampleInput?: string;
+  sampleOutput?: string;
+  emptyOutput?: boolean;
   engine?: string;
   model?: string;
   boundary?: string;
@@ -385,6 +389,7 @@ export async function conciergeProbe(
 export async function conciergeTaskProbe(
   capabilityId?: string,
   confirmOffMachine?: boolean,
+  expectedProfileIds?: string[],
 ): Promise<TaskProbeResponse> {
   const raw = await apiFetch<Record<string, unknown>>("/api/concierge/probe", {
     method: "POST",
@@ -392,6 +397,7 @@ export async function conciergeTaskProbe(
       task: true,
       ...(capabilityId ? { capabilityId } : {}),
       ...(confirmOffMachine ? { confirmOffMachine: true } : {}),
+      ...(expectedProfileIds ? { expectedProfileIds } : {}),
     },
   });
   return {

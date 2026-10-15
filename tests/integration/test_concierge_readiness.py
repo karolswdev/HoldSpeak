@@ -118,3 +118,26 @@ def test_the_task_probe_refuses_an_unprobeable_capability(cold) -> None:
     )
     assert response.status_code == 400, response.text
     assert response.json()["code"] == "concierge_probe_invalid"
+
+
+@pytest.mark.parametrize("capability_id", [
+    "speech.rewrite", "ask.answer", "meeting.deferred_analysis", "recipe.run", "background.rails_summary",
+])
+def test_each_bounded_job_sample_is_accepted_on_the_existing_wire(cold, capability_id: str) -> None:
+    response = _client().post("/api/concierge/probe", json={
+        "task": True, "capabilityId": capability_id, "expectedProfileIds": ["shown-profile"],
+    })
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["capabilityId"] == capability_id
+    assert payload["ok"] is False and payload["reasonCode"]
+    assert payload["testedTask"] and payload["sampleInput"]
+
+
+@pytest.mark.parametrize("expected_profiles", ["quick", [1], [""], None])
+def test_the_task_probe_rejects_malformed_displayed_profile_chains(cold, expected_profiles) -> None:
+    response = _client().post("/api/concierge/probe", json={
+        "task": True, "expectedProfileIds": expected_profiles,
+    })
+    assert response.status_code == 400, response.text
+    assert response.json()["code"] == "concierge_probe_invalid"

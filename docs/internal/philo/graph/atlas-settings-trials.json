@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "atlas_version": "settings-trials-20261014",
+  "extends": "docs/internal/philo/graph/atlas-deep-usability.json",
+  "source_commit": "a9f07971d36aee661a3a4061fa9c69eb890b225a",
+  "states": [
+    {
+      "id": "state.desk_presentation.settings_accounts",
+      "family": "desk_presentation",
+      "values": {
+        "application": "Settings",
+        "section": "Accounts",
+        "entry": "scoped Engines"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/pages/cores/SettingsCore.tsx",
+          "symbol": "function SettingsFace({ hero, scope }: CoreProps) {",
+          "claim": "One module selection drives the native wings and the retained Settings writer."
+        }
+      ],
+      "reachable_by": [
+        "case.settings.wing.accounts"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "case.settings.wing.accounts",
+      "job": "j3",
+      "edge_ids": [
+        "edge.face.settings_accounts"
+      ],
+      "state_id": "state.desk_presentation.settings_accounts",
+      "applicability": "applicable",
+      "preconditions": [
+        "Real /models alias enters scoped Settings; no connector write or inference."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/setup/status",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "timeout_s": 10
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/models"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "#surface-settings [data-testid=runson-root]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "#surface-settings .desk-wings-menu",
+          "optional": true
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": "button[role=tab]:has-text(\"Accounts\"), button[role=menuitemcheckbox]:has-text(\"Accounts\")"
+      },
+      "expected": {
+        "observe_at": "#surface-settings",
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "selector_presence",
+              "selector": "#surface-settings [data-testid=connections-calendar]",
+              "present": true
+            },
+            {
+              "kind": "selector_presence",
+              "selector": "#surface-settings [data-testid=runson-root]",
+              "present": false
+            },
+            {
+              "kind": "text_contains",
+              "value": "Accounts"
+            }
+          ]
+        },
+        "words": "The Accounts wing opens Accounts content after the real scoped Engines entry. No account connection or model run occurs."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ],
+  "clocks": [
+    {
+      "id": "clock.browser_wall",
+      "source": "Browser Date",
+      "mechanism": "none: these cases use browser wall time without moving a clock",
+      "status": "available",
+      "used_by": []
+    }
+  ],
+  "excluded": [],
+  "council_readings": []
+}
