@@ -2012,12 +2012,12 @@
       "kind": "capabilities",
       "path_presence": {
         "docs": [
-          3,
-          3
+          4,
+          4
         ],
         "sources": [
-          3,
-          3
+          4,
+          4
         ],
         "tests": [
           3,
@@ -2282,12 +2282,12 @@
       "kind": "capabilities",
       "path_presence": {
         "docs": [
-          3,
-          3
+          4,
+          4
         ],
         "sources": [
-          3,
-          3
+          4,
+          4
         ],
         "tests": [
           4,
@@ -4220,8 +4220,8 @@
   "totals": {
     "assertions_inspected": 223,
     "doc_paths": [
-      239,
-      239
+      241,
+      241
     ],
     "docs": {
       "api": 0,
@@ -4232,8 +4232,8 @@
     "records_with_executed_assertions": 80,
     "semantics_unresolved": 76,
     "source_paths": [
-      280,
-      280
+      282,
+      282
     ],
     "test_paths": [
       223,

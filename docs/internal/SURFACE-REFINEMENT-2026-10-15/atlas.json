@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "atlas_version": "surface-refinement-20261015",
+  "extends": "docs/internal/VISUAL-REFINEMENT-2026-10-15/atlas.json",
+  "source_commit": "a81364a0d2457c7cc6827d26283814fe0ce3d82e",
+  "states": [
+    {
+      "id": "state.desk_presentation.knowledge_unavailable_member",
+      "family": "desk_presentation",
+      "values": {
+        "application": "Knowledge",
+        "member": "stored but unavailable"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/pullouts/KbPullout.tsx",
+          "symbol": "export function KbPullout({ object: o, registerClose }: PulloutContentProps) {",
+          "claim": "The collection reader retains stored member refs instead of silently filtering unavailable items."
+        }
+      ],
+      "reachable_by": [
+        "case.knowledge.open.unavailable_member"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "case.knowledge.open.unavailable_member",
+      "job": "j3",
+      "edge_ids": [
+        "edge.face.kb_member"
+      ],
+      "state_id": "state.desk_presentation.knowledge_unavailable_member",
+      "applicability": "applicable",
+      "preconditions": [
+        "Isolated HOME/DB. Real accepted Knowledge create with a qualified unavailable ref. Canonical object URL opens membership reader. No hardware, external provider or clipboard."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/setup/status",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "timeout_s": 10
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/kbs",
+          "body": {
+            "name": "Graph knowledge",
+            "member_ids": [
+              "note:unavailable-audit-member"
+            ]
+          },
+          "expect_status": 201,
+          "adapter": "http-route",
+          "capture_as": "kb_id",
+          "capture_path": "kb.id"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "goto",
+        "adapter": "ui-navigation",
+        "url": "/?open=knowledge:{kb_id}"
+      },
+      "expected": {
+        "observe_at": ".desk-pullout[aria-label=\"Graph knowledge\"]",
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "text_contains",
+              "value": "Item unavailable"
+            },
+            {
+              "kind": "text_absent",
+              "value": "No entries"
+            }
+          ]
+        },
+        "words": "Opening the stored collection shows its unavailable member, not a false-empty collection."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ],
+  "clocks": [
+    {
+      "id": "clock.browser_wall",
+      "source": "Browser Date",
+      "mechanism": "none: real wall time, no clock advance",
+      "status": "available",
+      "used_by": []
+    }
+  ],
+  "excluded": [],
+  "council_readings": []
+}

@@ -82,6 +82,47 @@ describe("Speak answer: the answer well (K5b, K5c)", () => {
     expect(screen.getByText("sent · Receipt steering:1 · %0")).toBeTruthy();
   });
 
+  it("terminal unmounts the question and preserves its unsent answer on Back", () => {
+    const steer = open(false);
+    render(<SessionPullout />);
+    const input = screen.getByRole("textbox", { name: "Answer" });
+    fireEvent.change(input, { target: { value: "Jordan owns the rollback." } });
+    fireEvent.click(screen.getByTestId("session-open-terminal"));
+    expect(screen.queryByTestId("session-answer-well")).toBeNull();
+    expect(screen.queryByText(QUESTION)).toBeNull();
+    expect(screen.queryByTestId("session-controls")).toBeNull();
+    fireEvent.click(screen.getByTestId("session-open-terminal"));
+    expect(screen.getByRole("textbox", { name: "Answer" })).toHaveValue("Jordan owns the rollback.");
+    expect(document.querySelector(".ask-well-question")?.textContent).toBe(QUESTION);
+    expect(steer).not.toHaveBeenCalled();
+  });
+
+  it("Direct returns from terminal with its unsent draft and send choice", async () => {
+    const steer = open(false, { blocked: false, awaiting_response: false });
+    render(<SessionPullout />);
+    const direct = () => screen.getByRole("button", { name: "Direct" });
+    fireEvent.click(direct());
+    fireEvent.change(screen.getByRole("textbox", { name: "Direct" }), { target: { value: "Check the rollback owner." } });
+    fireEvent.click(screen.getByTitle("Enter after send"));
+    fireEvent.click(screen.getByTestId("session-open-terminal"));
+    expect(screen.queryByRole("textbox", { name: "Direct" })).toBeNull();
+    fireEvent.click(direct());
+    expect(screen.queryByTestId("session-terminal")).toBeNull();
+    expect(screen.getByRole("textbox", { name: "Direct" })).toHaveValue("Check the rollback owner.");
+    expect(screen.getByTitle("no Enter: text only")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("session-open-terminal"));
+    fireEvent.click(screen.getByTestId("session-open-terminal"));
+    expect(screen.getByRole("textbox", { name: "Direct" })).toHaveValue("Check the rollback owner.");
+    expect(screen.getByTitle("no Enter: text only")).toBeTruthy();
+    fireEvent.click(direct());
+    fireEvent.click(screen.getByTestId("session-open-terminal"));
+    fireEvent.click(direct());
+    expect(screen.queryByTestId("session-terminal")).toBeNull();
+    expect(screen.getByRole("textbox", { name: "Direct" })).toHaveValue("Check the rollback owner.");
+    fireEvent.click(screen.getByRole("button", { name: "SEND" }));
+    await waitFor(() => expect(steer).toHaveBeenCalledWith("Check the rollback owner.", false, null));
+  });
+
   it("Open (no answer) draws no answer well and no recording mic; a session that does not wait shows no question", () => {
     open(false, { blocked: false, awaiting_response: false });
     render(<SessionPullout />);

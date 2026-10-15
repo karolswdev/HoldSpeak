@@ -990,6 +990,10 @@ button.gadget-chip-egress {
   color: var(--text);
   resize: vertical;
 }
+/* Keep text clear of the docked mic after the Desk's textarea skin. */
+.desk-next .gadget-pad textarea {
+  padding-right: calc(var(--size-icon-md) + var(--space-2));
+}
 .gadget-pad[data-grow] textarea {
   resize: none;
   overflow: hidden;
@@ -1140,6 +1144,9 @@ button.gadget-chip-egress {
    22 px with a 20 px input, the docked mic 20 px, the token check 22 px,
    the cycle select 22 px. The 393 pointer pass failed each of them. */
 @container surface (max-width: 419px) {
+  .desk-next .gadget-pad textarea {
+    padding-right: calc(var(--desk-button-hit-size) + var(--space-2));
+  }
   .gadget-string,
   .desk-next .gadget-string { min-height: 46px; }
   .gadget-string input,

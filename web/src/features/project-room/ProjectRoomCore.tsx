@@ -2403,13 +2403,16 @@ function HistoryWing({
   weekCount,
   itemIds,
   onOpenItem,
+  onRetry,
 }: {
   room: RoomSnapshot;
   todayCount: number;
   weekCount: number;
   itemIds: string[];
   onOpenItem: (id: string) => void;
+  onRetry: () => void;
 }) {
+  const available = room.changes.state === "ok";
   const changes = room.changes.state === "ok" ? room.changes.recent : [];
   const allEntries = useMemo(() => changes.map(changeToHistoryEntry), [changes]);
 
@@ -2423,16 +2426,20 @@ function HistoryWing({
   const [searchQuery, setSearchQuery] = useState("");
   const searchFiltered = useMemo(() => {
     if (!searchQuery.trim()) return filtered;
-    const q = searchQuery.toLowerCase();
+    const q = searchQuery.trim().toLowerCase();
     return filtered.filter((e) => e.phrase.toLowerCase().includes(q));
   }, [filtered, searchQuery]);
 
   const days = useMemo(() => groupByDay(searchFiltered), [searchFiltered]);
+  const clearFilters = () => {
+    setSourceFilter("ALL");
+    setSearchQuery("");
+  };
 
   return (
     <div className="room-history" data-testid="room-history">
       <SurfaceStream
-        count={todayCount > 0 ? `${todayCount} today` : "Nothing today"}
+        count={!available || !allEntries.length ? "History" : todayCount > 0 ? `${todayCount} today` : "Nothing today"}
         controls={
           <div className="room-history-controls">
             {/* PHILO-17 (the desk sweep): the library's filter strip (it was
@@ -2446,22 +2453,27 @@ function HistoryWing({
               onChange={setSourceFilter}
             />
             <div className="room-history-search">
-              <input // UX-CANON: needs redesign (HS-170-04)
+              <StringGadget
                 type="search"
-                aria-label="Search history"
+                label="Search history"
                 placeholder="Search history…"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <MicButton
-                draftScope="room-history-search"
-                onText={(text) => setSearchQuery((v) => (v ? `${v} ${text}` : text))}
+                onChange={setSearchQuery}
+                micDraftScope="room-history-search"
               />
             </div>
           </div>
         }
       >
-        {days.map((day) => (
+        {!available ? (
+          <SurfaceState error="History unavailable" onRetry={onRetry} />
+        ) : !allEntries.length ? (
+          <SurfaceState empty emptyLabel="No history yet" />
+        ) : !searchFiltered.length ? (
+          <SurfaceState empty
+            emptyLabel={searchQuery.trim() ? "No matching changes" : `No changes from ${sourceFilter}`}
+            actionLabel="Clear filters" onAction={clearFilters} />
+        ) : days.map((day) => (
           <SurfaceStreamDay key={day.label} label={day.label}>
             {day.entries.map((entry) => (
               <HistoryEntryRow key={entry.id} entry={entry} itemIds={itemIds} onOpenItem={onOpenItem} />
@@ -2909,6 +2921,7 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
 
   // S-1: footer receipt omits zero parts — "Nothing today" / "Nothing this week"
   const historyReceipt = (() => {
+    if (ctrl.room?.changes.state !== "ok") return "History unavailable";
     const { todayCount: t, weekCount: w } = historyCounts;
     if (t === 0 && w === 0) return "NOTHING THIS WEEK";
     if (t === 0) return `NOTHING TODAY · ${w} THIS WEEK`;
@@ -3039,7 +3052,7 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
           ) : (
             <>
               <HistoryWing room={ctrl.room} todayCount={historyCounts.todayCount} weekCount={historyCounts.weekCount}
-                itemIds={itemsRead.items?.map((item) => item.id) ?? []} onOpenItem={openHistoryItem} />
+                itemIds={itemsRead.items?.map((item) => item.id) ?? []} onOpenItem={openHistoryItem} onRetry={handleRefresh} />
               {/* PHILO-17 U31: the writes are what happened: History holds
                   them, folded under the stream (PHILO-17 refit). */}
               <div className="room-folds room-history-folds">

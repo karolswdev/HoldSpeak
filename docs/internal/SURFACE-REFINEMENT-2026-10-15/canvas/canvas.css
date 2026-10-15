@@ -1,0 +1,9 @@
+body { margin: 0; }
+.canvas-desk { min-height: 100vh; padding: 24px; background: var(--desk-floor); }
+.canvas-body { padding: 20px; display: flex; flex-direction: column; gap: 18px; }
+.canvas-body p { margin: 0; font: 400 13px / 1.5 var(--font-sans); }
+.canvas-facts, .canvas-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.canvas-facts strong { font: 600 15px var(--font-sans); }
+.canvas-question { font-size: 15px !important; }
+.canvas-body > .gadget-group > .gadget-sheet > .gadget-string, .canvas-body > .gadget-group > .gadget-sheet > .gadget-pad { width: 100%; }
+@media(max-width:420px) { .canvas-desk { padding: 0; } .canvas-body { padding: 14px; } }

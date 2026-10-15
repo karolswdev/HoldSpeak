@@ -1,0 +1,134 @@
+{
+  "source": "Isolated hook ingestion (env={}), before-final-393, 2026-10-15. Only scratch paths normalized to /isolated; sessions and peek envelopes are otherwise unchanged.",
+  "gets": {
+    "/api/coders/sessions?include_ended=false": {
+      "sessions": [
+        {
+          "session": {
+            "agent": "codex",
+            "session_id": "surface-working",
+            "cwd": "/isolated/dev/architecture-cutover",
+            "updated_at": "2026-10-15T07:51:26.811671Z",
+            "hook_event_name": "PreToolUse",
+            "repo_root": "/isolated/dev/architecture-cutover",
+            "repo_anchor": "git",
+            "project_name": "architecture-cutover",
+            "transcript_path": "/isolated/working-transcript.jsonl",
+            "model": null,
+            "last_prompt": null,
+            "last_tool_name": "Bash",
+            "last_assistant_text": "Review checkpoint 1: confirmed rollback ownership, release gate and migration dependencies. Review checkpoint 2: confirmed rollback ownership, release gate and migration dependencies. Review checkpoint 3: confirmed rollback ownership, release gate and migration dependencies. Review checkpoint 4: confirmed rollback ownership, release gate and migration dependencies. Review checkpoint 5: confirmed rollback ownership, release gate and migration dependencies. Review checkpoint 6: confirmed rollback ownership, release gate and migration dependencies. Review checkpoint 7: confirmed rollback ownership, release gate and migration dependencies. Review checkpoint 8: confirmed rollback ownership, release gate and migration dependencies. Review checkpoint 9: confirmed rollback ownership, release gate and migration dependencies. Review checkpoint 10: confirmed rollback ownership, release gate and migration dependencies. Review checkpoint 11: confirmed rollback ownership, release gate and migration dependencies. Review checkpoint 12: confirmed rollback ownership, release gate and migration dependencies. Review checkpoint 13: confirmed rollback ownership, release gate and migration dependencies. Review checkpoint 14: confirmed rollback ownership, release gate and migration dependencies. Review checkpoint 15: confirmed rollback ownership, release gate and migration dependencies. Review checkpoint 16: confirmed rollback ownership, release gate and migration dependencies. Review checkpoint 17: confirmed rollback ownership, release gate and migration dependencies. Review checkpoint 18: confirmed rollback ownership, release gate and migration dependencies. Review checkpoint 19: confirmed rollback ownership, release gate and migration dependencies. Review checkpoint 20: confirmed rollback ownership, release gate and migration dependencies. Review checkpoint 21: confirmed rollback ownership, release gate and migration dependencies. Review checkpoint 22: confirmed rollback ownership, release gate and migration dependencies. Review checkpoint 23: confirmed rollback ownership, release gate and migration dependencies. Review checkpoint 24: confirmed rollback ownership, release gate and migration dependencies. Review checkpoint 25: confirmed rollback ownership, release gate and migration dependencies. Review checkpoint 26: confirmed rollback ownership, release gate and migration dependencies. Review checkpoint 27: confirmed rollback ownership, release gate and migration dependencies.",
+            "last_assistant_text_at": "2026-10-15T07:51:26.807449Z",
+            "summary": null,
+            "tmux_pane": null,
+            "tmux_session": null,
+            "tmux_window": null,
+            "tmux_pane_index": null,
+            "tmux_pane_current_path": null,
+            "awaiting_response": false,
+            "capture_messages": true,
+            "created_at": "2026-10-15T07:51:26.807449Z",
+            "event_count": 2,
+            "pinned": false,
+            "lifecycle": "working",
+            "question": null,
+            "notification_type": null,
+            "wait_started_at": null,
+            "wait_id": null,
+            "state": "working"
+          },
+          "age_seconds": 1,
+          "identity": {
+            "agent_label": "Codex",
+            "project_label": "architecture-cuto>",
+            "tmux_label": null,
+            "compact_label": "Codex | architecture-cuto> | no tmux",
+            "target_transport": "unknown",
+            "target_confidence": "low",
+            "confidence_reason": "no tmux pane was reported and text injection status is unknown",
+            "session_id": "surface-working",
+            "cwd": "/isolated/dev/architecture-cutover",
+            "repo_root": "/isolated/dev/architecture-cutover"
+          }
+        }
+      ],
+      "count": 1,
+      "flights": [],
+      "history": [],
+      "launches": {
+        "live": 0,
+        "cap": 3
+      }
+    },
+    "/api/coders/codex%3Asurface-working/peek?lines=200&raw=1": {
+      "key": "codex:surface-working",
+      "agent": "codex",
+      "stale": false,
+      "awaiting_response": false,
+      "question": null,
+      "blocked": false,
+      "updated_at": "2026-10-15T07:51:26.811671Z",
+      "grant": {
+        "armed": false,
+        "expires_in_seconds": null
+      },
+      "operation": {
+        "operation_id": "coder:codex:surface-working:type_text_and_keys",
+        "family": "coder_steering",
+        "effect_class": "terminal/type_text_and_keys",
+        "actor": "owner",
+        "destination": "unresolved_pane",
+        "data_classes": [
+          "typed_text",
+          "key_events"
+        ],
+        "project_scope": null,
+        "resource_scope": "codex:surface-working",
+        "fixed_destination": false,
+        "consequence": "execute_now",
+        "version": 2
+      },
+      "policy": {
+        "mode": "yolo",
+        "source": "config",
+        "precedence": [
+          "hard_invariants",
+          "revocation",
+          "scoped_grant",
+          "control_mode",
+          "feature_default"
+        ],
+        "outcome": "refused",
+        "reason_code": "registered_steering_destination_required",
+        "consequence": "execute_now",
+        "authority_basis": "none",
+        "next_state": "refused",
+        "eligible": false,
+        "requires_review": false,
+        "requires_authorization": false,
+        "requires_grant": false,
+        "hard_invariants": [
+          "authentication",
+          "secret_custody",
+          "destination_binding",
+          "payload_binding",
+          "pane_identity",
+          "audit_receipt",
+          "configuration_integrity",
+          "schema_safety"
+        ],
+        "policy_version": "operation-policy/v2"
+      },
+      "commitment": {
+        "effect": "Send text or allowed keys",
+        "destination": "unresolved_pane",
+        "authority_basis": "none",
+        "next_state": "refused",
+        "receipt": "A Receipt is recorded after every attempt."
+      },
+      "peek": {
+        "status": "no_pane"
+      }
+    }
+  }
+}

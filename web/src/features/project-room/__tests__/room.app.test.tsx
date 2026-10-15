@@ -1298,3 +1298,75 @@ describe("HS-174-04: the Room's writes under History carry egress where egress h
     expect(misses).toEqual([]);
   });
 });
+
+describe("History reader states", () => {
+  const pid = BARE_ROOM.project_id;
+  async function openHistory() {
+    render(<WindowHarness scope={`project:${pid}`} />);
+    await screen.findByTestId("room-body");
+    fireEvent.click(within(screen.getByTestId("wing-slot")).getByRole("tab", { name: "History" }));
+    return screen.findByTestId("room-history");
+  }
+
+  for (const changes of [
+    // ProjectService._room_section's exact fault shape; the existing service
+    // fence is test_project_room_read.py::TestFaultIsolation::test_changes_fault_degrades_only_changes.
+    { state: "degraded", error_code: "changes_read_failed" },
+    { state: "absent", reason: "missing" },
+  ]) {
+    it(`names ${changes.state} history without false quiet claims and retries into the same wing`, async () => {
+      let failed = true;
+      wire({ [room(pid)]: () => failed ? roomWith({ changes }) : clone(BARE_ROOM) });
+      const history = await openHistory();
+      expect(within(history).getByText("History unavailable")).toBeInTheDocument();
+      expect(history).not.toHaveTextContent("Nothing today");
+      expect(screen.getByTestId("room-footer-receipt")).toHaveTextContent("History unavailable");
+      expect(screen.getByTestId("room-footer-receipt")).not.toHaveTextContent(/NOTHING (?:TODAY|THIS WEEK)/);
+      const before = calls.filter((c) => c.key === room(pid)).length;
+      failed = false;
+      fireEvent.click(within(history).getByRole("button", { name: "Try again" }));
+      await waitFor(() => expect(calls.filter((c) => c.key === room(pid)).length).toBeGreaterThan(before));
+      expect(await within(history).findByTestId("history-entry")).toHaveTextContent("Created");
+      expect(within(history).queryByText("History unavailable")).toBeNull();
+      expect(within(screen.getByTestId("wing-slot")).getByRole("tab", { name: "History" })).toHaveAttribute("aria-selected", "true");
+      expect(screen.getByTestId("room-fold-writes")).toBeInTheDocument();
+    });
+  }
+
+  it("shows true empty history after a successful read", async () => {
+    wire({ [room(pid)]: () => roomWith({ changes: { state: "ok", recent: [] } }) });
+    const history = await openHistory();
+    expect(within(history).getByText("No history yet")).toBeInTheDocument();
+    expect(within(history).queryByText("History unavailable")).toBeNull();
+    expect(within(history).queryByRole("button", { name: "Clear filters" })).toBeNull();
+  });
+
+  it("names a source miss and clears it back to the recorded changes", async () => {
+    wire({ [room(pid)]: () => clone(BARE_ROOM) });
+    const history = await openHistory();
+    fireEvent.click(within(history).getByRole("button", { name: "JIRA" }));
+    expect(within(history).getByText("No changes from JIRA")).toBeInTheDocument();
+    expect(within(history).queryByText("No history yet")).toBeNull();
+    fireEvent.click(within(history).getByRole("button", { name: "Clear filters" }));
+    expect(within(history).getByTestId("history-entry")).toHaveTextContent("Created");
+    expect(within(history).queryByText("No changes from JIRA")).toBeNull();
+  });
+
+  it("uses the library search with its mic, names a query miss and clears query and source", async () => {
+    wire({ [room(pid)]: () => clone(BARE_ROOM) });
+    const history = await openHistory();
+    const search = within(history).getByRole("searchbox", { name: "Search history" });
+    expect(search.closest(".gadget-string")).not.toBeNull();
+    expect(within(history).getByRole("button", { name: /^Speak Search history/ })).toBeInTheDocument();
+    fireEvent.click(within(history).getByRole("button", { name: "ROOM" }));
+    fireEvent.change(search, { target: { value: "zz-no-such-migration" } });
+    expect(within(history).getByText("No matching changes")).toBeInTheDocument();
+    fireEvent.click(within(history).getByRole("button", { name: "Clear filters" }));
+    expect(search).toHaveValue("");
+    expect(within(history).getByRole("button", { name: "ALL" })).toHaveAttribute("aria-pressed", "true");
+    expect(within(history).getByTestId("history-entry")).toHaveTextContent("Created");
+    expect(rawButtons(history)).toEqual([]);
+    expect(calls.filter((c) => c.key === room(pid))).toHaveLength(1);
+    expect(calls.filter((c) => c.key.startsWith(`POST /api/projects/${pid}/`) && !c.key.endsWith("/room/read"))).toEqual([]);
+  });
+});

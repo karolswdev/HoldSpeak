@@ -13,9 +13,9 @@ Validation errors at generation: **0**.
 
 | Measure | Present / total or count |
 | --- | ---: |
-| Source paths | 280 / 280 |
+| Source paths | 282 / 282 |
 | Test paths | 223 / 223 |
-| Documentation paths | 239 / 239 |
+| Documentation paths | 241 / 241 |
 | Assertions inspected | 223 |
 | Tests executed | 185 |
 | Records with an executed assertion | 80 |
@@ -107,7 +107,7 @@ Validation errors at generation: **0**.
 | `knowledge.grounding` | capabilities | 3/3 | 4/4 | 4 | 4 | 0 | partially_evidenced |
 | `knowledge.memory_search` | capabilities | 3/3 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `workflows.linear_run` | capabilities | 2/2 | 3/3 | 3 | 3 | 0 | partially_evidenced |
-| `coder.observation` | capabilities | 3/3 | 3/3 | 3 | 3 | 0 | partially_evidenced |
+| `coder.observation` | capabilities | 4/4 | 3/3 | 3 | 3 | 0 | partially_evidenced |
 | `coder.reply_and_draft` | capabilities | 2/2 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `coder.gate` | capabilities | 3/3 | 4/4 | 4 | 4 | 0 | partially_evidenced |
 | `integration.activity_connectors` | capabilities | 4/4 | 3/3 | 3 | 3 | 0 | partially_evidenced |
@@ -117,7 +117,7 @@ Validation errors at generation: **0**.
 | `companion.ipad_client` | capabilities | 3/3 | 2/2 | 2 | 0 | 0 | unresolved |
 | `companion.aipi_audio_control` | capabilities | 3/3 | 2/2 | 2 | 0 | 0 | unresolved |
 | `companion.qlippy_presence` | capabilities | 2/2 | 1/1 | 1 | 0 | 0 | unresolved |
-| `channels.document_sources` | capabilities | 3/3 | 4/4 | 4 | 4 | 0 | partially_evidenced |
+| `channels.document_sources` | capabilities | 4/4 | 4/4 | 4 | 4 | 0 | partially_evidenced |
 | `channels.slack` | capabilities | 2/2 | 2/2 | 2 | 0 | 0 | unresolved |
 | `runtime.kernel` | components | 2/2 | 0/0 | 0 | 0 | 0 | unresolved |
 | `runtime.inference` | components | 1/1 | 0/0 | 0 | 0 | 1 | unresolved |

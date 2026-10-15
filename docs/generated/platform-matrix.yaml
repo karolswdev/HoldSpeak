@@ -4211,7 +4211,8 @@
       "source_ids": [
         "holdspeak/coder_steering.py",
         "holdspeak/services/coder_service.py",
-        "holdspeak/web/routes/system/coders.py"
+        "holdspeak/web/routes/system/coders.py",
+        "web/src/desk/components/SessionPullout.tsx"
       ],
       "status": "experimental"
     },
@@ -4223,7 +4224,8 @@
       "source_ids": [
         "holdspeak/coder_steering.py",
         "holdspeak/services/coder_service.py",
-        "holdspeak/web/routes/system/coders.py"
+        "holdspeak/web/routes/system/coders.py",
+        "web/src/desk/components/SessionPullout.tsx"
       ],
       "status": "experimental"
     },
@@ -4235,7 +4237,8 @@
       "source_ids": [
         "holdspeak/coder_steering.py",
         "holdspeak/services/coder_service.py",
-        "holdspeak/web/routes/system/coders.py"
+        "holdspeak/web/routes/system/coders.py",
+        "web/src/desk/components/SessionPullout.tsx"
       ],
       "status": "experimental"
     },
@@ -4247,7 +4250,8 @@
       "source_ids": [
         "holdspeak/coder_steering.py",
         "holdspeak/services/coder_service.py",
-        "holdspeak/web/routes/system/coders.py"
+        "holdspeak/web/routes/system/coders.py",
+        "web/src/desk/components/SessionPullout.tsx"
       ],
       "status": "experimental"
     },
@@ -4259,7 +4263,8 @@
       "source_ids": [
         "holdspeak/coder_steering.py",
         "holdspeak/services/coder_service.py",
-        "holdspeak/web/routes/system/coders.py"
+        "holdspeak/web/routes/system/coders.py",
+        "web/src/desk/components/SessionPullout.tsx"
       ],
       "status": "experimental"
     },
@@ -4801,7 +4806,8 @@
       "source_ids": [
         "holdspeak/services/document_sources.py",
         "holdspeak/services/channel_service.py",
-        "holdspeak/services/document_sources.py"
+        "holdspeak/services/document_sources.py",
+        "web/src/pages/cores/connections/Destinations.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -4813,7 +4819,8 @@
       "source_ids": [
         "holdspeak/services/document_sources.py",
         "holdspeak/services/channel_service.py",
-        "holdspeak/services/document_sources.py"
+        "holdspeak/services/document_sources.py",
+        "web/src/pages/cores/connections/Destinations.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -4825,7 +4832,8 @@
       "source_ids": [
         "holdspeak/services/document_sources.py",
         "holdspeak/services/channel_service.py",
-        "holdspeak/services/document_sources.py"
+        "holdspeak/services/document_sources.py",
+        "web/src/pages/cores/connections/Destinations.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -4837,7 +4845,8 @@
       "source_ids": [
         "holdspeak/services/document_sources.py",
         "holdspeak/services/channel_service.py",
-        "holdspeak/services/document_sources.py"
+        "holdspeak/services/document_sources.py",
+        "web/src/pages/cores/connections/Destinations.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -4849,7 +4858,8 @@
       "source_ids": [
         "holdspeak/services/document_sources.py",
         "holdspeak/services/channel_service.py",
-        "holdspeak/services/document_sources.py"
+        "holdspeak/services/document_sources.py",
+        "web/src/pages/cores/connections/Destinations.tsx"
       ],
       "status": "built_unreleased"
     },
