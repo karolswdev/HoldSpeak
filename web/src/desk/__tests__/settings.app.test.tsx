@@ -51,6 +51,13 @@ function hubDouble() {
     switch (key) {
       case "GET /api/settings": return answer(200, state.settings);
       case "PUT /api/settings": {
+        // Mirror the producer's required symbol fields instead of accepting
+        // the invalid blank row that Add used to send to the live hub.
+        const symbols = body?.dictation?.spoken_symbols;
+        if (Array.isArray(symbols)) {
+          const invalid = symbols.findIndex((entry: Json) => !String(entry.spoken ?? "").trim() || !String(entry.symbol ?? ""));
+          if (invalid >= 0) return answer(400, { error: `spoken_symbols[${invalid}]: the spoken phrase and symbol must not be empty` });
+        }
         for (const [k, v] of Object.entries(body ?? {})) {
           if (k.startsWith("_")) continue;
           state.settings[k] = typeof v === "object" && v && !Array.isArray(v) ? { ...state.settings[k], ...v } : v;
@@ -423,7 +430,7 @@ describe("Settings repair: ordinary choices and recoverable writes", () => {
   it("composes Meetings into related columns while keeping all ordinary groups present", async () => {
     const { container } = render(<SettingsCore scope="meetings" />);
     await screen.findByRole("combobox", { name: "Auto-run the summary" });
-    const columns = container.querySelectorAll('.prefs-module[data-settings-module="meetings"] .prefs-groups > .prefs-column');
+    const columns = container.querySelectorAll('.prefs-module[data-settings-module="meetings"] .surface-columns[data-variant="preferences"] > div');
     expect(columns).toHaveLength(2);
     expect(columns[0].textContent).toContain("Summary");
     expect(columns[0].textContent).toContain("Recording");
@@ -432,13 +439,103 @@ describe("Settings repair: ordinary choices and recoverable writes", () => {
     expect(screen.getByRole("checkbox", { name: "Auto export" })).toBeInTheDocument();
   });
 
-  it("keeps the empty spoken-symbol dictionary to its Add action", async () => {
+  it("keeps incomplete symbols local, then sends complete fields and armed Forget through the writer", async () => {
     const { container } = render(<SettingsCore scope="voice" />);
     await screen.findByRole("combobox", { name: "Language" });
+    vi.useFakeTimers();
+    const puts = () => hub.state.calls.filter((call) => call.method === "PUT" && call.path === "/api/settings");
+    const symbols = screen.getByRole("region", { name: "Spoken symbols" });
+    expect(within(symbols).getAllByRole("button", { name: "Add symbol" })).toHaveLength(1);
+    expect(within(symbols).getByRole("button", { name: "Add symbol" }).closest(".gadget-group-actions")).toBeTruthy();
     expect(container.querySelector(".gadget-table-head")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Add symbol" }));
     expect(screen.getByRole("textbox", { name: "Spoken phrase 1" })).toBeInTheDocument();
-    expect(container.querySelector(".gadget-table-head")).toBeInTheDocument();
+    expect(container.querySelector('.gadget-table[data-layout="fields"]')).toBeTruthy();
+    await act(async () => { await vi.advanceTimersByTimeAsync(800); });
+    expect(puts()).toHaveLength(0);
+    expect(within(symbols).getByText("Draft")).toBeInTheDocument();
+    fireEvent.change(screen.getByRole("textbox", { name: "Spoken phrase 1" }), { target: { value: "right arrow" } });
+    await act(async () => { await vi.advanceTimersByTimeAsync(800); });
+    expect(puts()).toHaveLength(0);
+    fireEvent.change(screen.getByRole("textbox", { name: "Symbol 1" }), { target: { value: "→" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "Attachment 1" }), { target: { value: "right" } });
+    await act(async () => { await vi.advanceTimersByTimeAsync(800); });
+    expect(puts().at(-1)?.body?.dictation).toEqual({ spoken_symbols: [{ spoken: "right arrow", symbol: "→", attach: "right" }] });
+    expect(hub.state.settings.dictation.spoken_symbols).toEqual([{ spoken: "right arrow", symbol: "→", attach: "right" }]);
+    expect(within(symbols).queryByText("Draft")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Add symbol" }));
+    expect(within(symbols).getAllByRole("button", { name: "Add symbol" })).toHaveLength(1);
+    expect(screen.getByRole("textbox", { name: "Spoken phrase 1" })).toHaveValue("right arrow");
+    expect(screen.getByRole("textbox", { name: "Symbol 2" })).toHaveValue("");
+    expect(screen.getByRole("combobox", { name: "Attachment 2" })).toHaveValue("none");
+    const forgetBlank = screen.getByRole("button", { name: "Forget symbol 2" });
+    fireEvent.click(forgetBlank);
+    expect(forgetBlank).toHaveTextContent("Forget?");
+    expect(screen.getByRole("textbox", { name: "Spoken phrase 2" })).toBeInTheDocument();
+    fireEvent.click(forgetBlank);
+    expect(screen.queryByRole("textbox", { name: "Spoken phrase 2" })).toBeNull();
+    const forgetSaved = screen.getByRole("button", { name: "Forget symbol 1" });
+    fireEvent.click(forgetSaved);
+    fireEvent.click(forgetSaved);
+    await act(async () => { await vi.advanceTimersByTimeAsync(800); });
+    expect(hub.state.settings.dictation.spoken_symbols).toEqual([]);
+    expect(puts().at(-1)?.body?.dictation).toEqual({ spoken_symbols: [] });
+    expect(within(symbols).queryByText("Draft")).toBeNull();
+  });
+
+  it("keeps newer incomplete symbols through another write, refusal, Back, and Retry", async () => {
+    const base = hub.fetchStub;
+    let refuseSymbols = true;
+    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
+      const path = new URL(String(input), "http://hub.test").pathname;
+      const body = init?.body ? JSON.parse(String(init.body)) as Json : undefined;
+      if (refuseSymbols && init?.method === "PUT" && path === "/api/settings" && body?.dictation?.spoken_symbols) throw new TypeError("Symbols connection lost");
+      return base(input, init);
+    }));
+    render(<SettingsCore scope="voice" />);
+    await screen.findByRole("combobox", { name: "Language" });
+    fireEvent.click(screen.getByRole("button", { name: "Add symbol" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Spoken phrase 1" }), { target: { value: "right arrow" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "Language" }), { target: { value: "pl" } });
+    await waitFor(() => expect(hub.state.settings.model.language).toBe("pl"));
+    expect(screen.getByRole("textbox", { name: "Spoken phrase 1" })).toHaveValue("right arrow");
+    expect(screen.getByRole("textbox", { name: "Symbol 1" })).toHaveValue("");
+    fireEvent.change(screen.getByRole("textbox", { name: "Symbol 1" }), { target: { value: "→" } });
+    await screen.findByTestId("settings-save-failure", {}, { timeout: 3000 });
+    fireEvent.change(screen.getByRole("textbox", { name: "Symbol 1" }), { target: { value: "" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Spoken phrase 1" }), { target: { value: "new arrow" } });
+    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+    fireEvent.click(within(ledgerRow("Voice")!).getByRole("button", { name: "Open" }));
+    expect(screen.getByRole("textbox", { name: "Spoken phrase 1" })).toHaveValue("new arrow");
+    expect(screen.getByRole("textbox", { name: "Symbol 1" })).toHaveValue("");
+    refuseSymbols = false;
+    fireEvent.click(within(screen.getByTestId("settings-save-failure")).getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(hub.state.settings.dictation.spoken_symbols).toEqual([{ spoken: "right arrow", symbol: "→", attach: "none" }]));
+    expect(screen.getByRole("textbox", { name: "Spoken phrase 1" })).toHaveValue("new arrow");
+    expect(screen.getByRole("textbox", { name: "Symbol 1" })).toHaveValue("");
+    expect(within(screen.getByRole("region", { name: "Spoken symbols" })).getByText("Draft")).toBeInTheDocument();
+    fireEvent.change(screen.getByRole("textbox", { name: "Symbol 1" }), { target: { value: "⇒" } });
+    await waitFor(() => expect(hub.state.settings.dictation.spoken_symbols).toEqual([{ spoken: "new arrow", symbol: "⇒", attach: "none" }]));
+    await waitFor(() => expect(within(screen.getByRole("region", { name: "Spoken symbols" })).queryByText("Draft")).toBeNull());
+  });
+
+  it("keeps hold-key capture active through a preference rerender and Escape cancels it", async () => {
+    render(<SettingsCore scope="voice" />);
+    await screen.findByRole("combobox", { name: "Language" });
+    const typing = screen.getByRole("region", { name: "Voice typing" });
+    expect(within(typing).getByRole("checkbox", { name: "Preview before type" })).toBeInTheDocument();
+    expect(within(typing).getByRole("checkbox", { name: "Voice commands" })).toBeInTheDocument();
+    const key = within(typing).getByRole("button", { name: /^Push-to-talk key:/ });
+    const before = key.getAttribute("aria-label");
+    fireEvent.click(key);
+    fireEvent.change(within(typing).getByRole("combobox", { name: "Language" }), { target: { value: "pl" } });
+    expect(within(typing).getByRole("button", { name: "Listening for the hold key. Esc cancels." })).toBe(key);
+    fireEvent.keyDown(window, { key: "Escape", code: "Escape" });
+    expect(key).toHaveAttribute("aria-label", before);
+    fireEvent.click(key);
+    fireEvent.keyDown(window, { key: "F8", code: "F8" });
+    expect(key).toHaveTextContent("F8");
+    await waitFor(() => expect(hub.state.settings.hotkey.key).toBe("f8"));
   });
 
   it("shows ordinary modules without an extra disclosure", async () => {

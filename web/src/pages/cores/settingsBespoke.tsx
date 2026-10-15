@@ -44,11 +44,14 @@ export function HotkeyCapture({
   value,
   onCommit,
   onRefuse,
+  grouped = true,
 }: {
   value: Record<string, unknown>;
   onCommit: (next: { key: string; display: string }) => void;
   /** The refusal (names the accepted set) — lands in the status bar. */
   onRefuse?: (refusal: string) => void;
+  /** Compose the existing row into a containing preference sheet. */
+  grouped?: boolean;
 }) {
   const [listening, setListening] = useState(false);
   useEffect(() => {
@@ -74,9 +77,8 @@ export function HotkeyCapture({
     return () => window.removeEventListener("keydown", onKey, true);
   }, [listening, onCommit, onRefuse]);
   const current = String(value.display || value.key || "unset");
-  return (
-    <GadgetGroup>
-      <GadgetRow label="Push-to-talk key" fact="hold · release types">
+  const row = (
+      <GadgetRow label="Push-to-talk key" fact="hold · release types" controlWidth={grouped ? undefined : "short"}>
         <Button
           variant="chrome"
           className={"gadget-keycap" + (listening ? " is-listening" : "")}
@@ -93,6 +95,6 @@ export function HotkeyCapture({
           {listening ? "" : current}
         </Button>
       </GadgetRow>
-    </GadgetGroup>
   );
+  return grouped ? <GadgetGroup>{row}</GadgetGroup> : row;
 }

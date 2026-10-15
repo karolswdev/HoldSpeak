@@ -304,10 +304,7 @@ export function DeskModule() {
     setReceipt(`CLEARED ${counts.tombstoned} · ADDED ${counts.seeded}`);
   };
   return (
-    <GadgetGroup label="Desk">
-      {/* PHILO-17 U35: plain words (was RESET TO SEED · TOMBSTONES
-          EXISTING DESK OBJECTS); the consequence is one token each. */}
-      <div className="prefs-reset-controls">
+    <GadgetGroup label="Desk" material="inset" actions={<>
         <ConfirmVerb
           label="Reset desk to defaults"
           confirmLabel="Reset the desk?"
@@ -324,7 +321,9 @@ export function DeskModule() {
             {receipt}
           </span>
         ) : null}
-      </div>
+      </>}>
+      {/* PHILO-17 U35: plain words (was RESET TO SEED · TOMBSTONES
+          EXISTING DESK OBJECTS); the consequence is one token each. */}
       <FoldGadget title="Reset details">
         <div className="prefs-reset-details">
           <span className="gadget-fact" data-testid="desk-reset-clears">

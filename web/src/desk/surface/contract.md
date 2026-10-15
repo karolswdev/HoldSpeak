@@ -33,6 +33,47 @@ Patterns respond to the surface container (@container surface). They push layout
 - ProgressPlan and ChoiceCardGroup are section-level patterns
 - Disclosure wraps any content as a collapsible section
 
+## Native preference sheets (2026-10-14)
+
+These opt-in variants extend the current gadget kit. Their defaults keep the
+existing material and layout. They add no schema, form state, or save behavior.
+
+- `GadgetGroup({ label?, material?: "default" | "inset", actions?, children })`:
+  `inset` is a paper control sheet with a sunken outline and quiet engraved
+  legend. A supplied label names the section through `aria-labelledby` and its
+  heading ID. Content remains in a block `div.gadget-sheet`; actions render in
+  a sibling `footer.gadget-group-actions` after the content. Pass library
+  Buttons to actions; each keeps its intrinsic width. The group adds no window
+  bar, toolbar, card shadow, or form behavior.
+- `GadgetRow.controlWidth?: "standard" | "short" | "full"`: the opt-in
+  preference row uses a 118–160 px label column beside a value column capped
+  at 190 px. At 559.9 px or less the cap is 172 px and labels can wrap. `short`
+  keeps small values at 84 px inside the aligned value column; `full` spans
+  the row for longer editors. Opt-in rows use a block gadget slot. `wide`
+  retains its existing span behavior. An inset group supplies the shared row
+  rhythm to nested gadget rows too.
+- `GadgetDivider()`: an exported semantic `hr` with the native etched rule.
+  Use it between related rows within one sheet.
+- `CheckGadget.variant="state"`: the same real checkbox and square well plus
+  a visible On/Off word in its label. The native input covers the whole label,
+  including decorations and word; at a narrow width the target is at least
+  44 px high. The word is `aria-hidden` so the native checkbox retains one
+  accessible name. Focus, disabled state, keyboard operation, and change
+  callbacks remain native. `default` and `token` retain their current faces.
+- `GadgetTable.layout?: "table" | "fields"`: `fields` retains the existing
+  native cells, row identity, armed delete/verbs slots, and roving behavior.
+  It derives repeated visual labels from `head` beside each cell below
+  560 px; native input names remain the caller's. Fields and row actions
+  have 44 px narrow targets. Omit `onAdd` when a containing group owns the
+  Add action. The default table is unchanged.
+- `SurfaceColumns.variant?: "default" | "preferences"`: `preferences`
+  retains the current `main` and `side` slots, uses equal columns bounded at
+  960 px with a 24 px gap, and stacks at 920 px or less in a column bounded
+  at 620 px. The default 3:2 split remains unchanged.
+
+All reflow responds to the named `surface` container. These are control
+sheets inside the existing window; the window remains the only chrome.
+
 ## ChoiceCardShell (HS-159)
 The card visual language without an interaction model. Owns all `surface-choice-card-*` CSS classes: shell, head (emblem + label), description, summary anchor, fact chips, cost, fold (behind Disclosure), selected/recommended/disabled presence.
 - `as` — wrapper element tag (default "div"); ChoiceCard passes "label", features may pass any semantic element

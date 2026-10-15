@@ -4,9 +4,34 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-14 (Settings usability and Workbench revision: #1204)
+**Last updated:** 2026-10-14 (Shared Settings primitives: #1205)
 
 ## Current phase
+
+**Shared Settings primitives — #1205 (2026-10-14).** The owner rejected
+Voice's flat form and requested a reusable foundation. Existing library
+species now provide inset sheets with named headings and local actions,
+explicit row widths, native On/Off checks, narrow labelled table fields,
+balanced preference columns and etched dividers. Voice, Meetings, Rhythm,
+Sounds, People and System adopt them. Real producer verification caught
+Add symbol sending an invalid blank array and poisoning unrelated writes;
+incomplete entries now remain local drafts, while valid values use the
+existing writer. Normalization, unrelated saves, refusal/Retry and armed
+Forget pass. Final quick GREEN: 3650 web /651 affected Python /107 desk
+sweeps (2 existing xfails) /15 canon; build and TypeScript pass. Root read
+canvas and production faces at1440/393, symbol loops, full/bounded fields,
+phone hit ownership and calendar-save graph cases. Independent Sol source
+review RATIFY after one correction/recheck; no Muad'Dib check or owner
+visual acceptance claimed. Remote address and optional TTS missing-model
+reads are declared layout substitutions, not hardware/connection proof.
+Open existing P2: compact native Calendar chooser can have no controls
+with an in-use source and unavailable discovery. Desktop matrix retains
+17 states before this failure; phone visibility is not chooser completion.
+Add feed remains the explicit URL entry. Owner live judgment, real native
+devices, remote connection, speech/model quality and external dispatch
+remain open; incomplete symbols persist only in the Settings instance.
+Full main tape and postmerge review remain separate.
+[Implementation, exact proof and limits](../docs/internal/SETTINGS-PRIMITIVES-2026-10-14/README.md).
 
 **Settings usability and Workbench revision — #1204 (2026-10-14).** One
 substantial release audits every Settings module and nested account/calendar/

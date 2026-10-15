@@ -1,0 +1,130 @@
+/* DRAFT — opt-in control-sheet material, not nested window chrome.
+   Canvas adapters stand in for the exact library props in README.md. */
+.primitives-canvas { min-height:100vh; background:var(--desk-floor); }
+.desk-next .primitives-body { padding:20px 24px 24px; }
+.primitives-voice { width:100%; max-width:960px; min-width:0; color:var(--text); font:13px/1.4 var(--font-sans); }
+.primitives-module-head { display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; min-width:0; margin-bottom:22px; }
+.primitives-module-sprite { width:32px; height:32px; image-rendering:pixelated; }
+.primitives-module-head h2 { margin:0; font:600 15px/1.4 var(--font-sans); }
+
+/* One composition primitive; one column at a narrow window width. */
+.prototype-gadget-columns { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; gap:24px; min-width:0; }
+.prototype-gadget-column { display:flex; flex-direction:column; gap:22px; min-width:0; }
+
+/* GadgetGroup material="inset": engraved legend in one sunken sheet.
+   No header plate, toolbar, outer drop shadow, rounded card, or blue bar. */
+.prototype-gadget-group { min-width:0; padding-top:8px; }
+.prototype-gadget-group > .gadget-group {
+  position:relative;
+  min-width:0;
+  margin:0;
+  border:1px solid var(--wb-rule);
+  border-radius:0;
+  background:var(--wb-well);
+  box-shadow:var(--wb-sunken);
+}
+.prototype-gadget-group > .gadget-group > .gadget-group-label {
+  position:absolute;
+  top:0;
+  left:10px;
+  transform:translateY(-50%);
+  margin:0;
+  padding:0 6px;
+  background:var(--wb-field-hi);
+  color:var(--wb-text);
+  font:700 12px/1.4 var(--font-mono);
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  text-shadow:0 1px 0 var(--wb-hi);
+}
+.prototype-gadget-group > .gadget-group > .gadget-group-label::after { display:none; }
+.prototype-gadget-group > .gadget-group > .gadget-sheet { min-width:0; padding:16px 12px 10px; }
+.prototype-gadget-group .gadget-sheet > .gadget-group { margin:0; }
+.prototype-gadget-group .gadget-row {
+  grid-template-columns:minmax(118px,160px) minmax(0,190px);
+  align-items:center;
+  min-height:40px;
+  padding:4px 6px;
+  gap:6px 12px;
+}
+.prototype-gadget-group .gadget-row:hover,
+.prototype-gadget-group .gadget-row:focus-within { background:var(--surface-hover); }
+.prototype-gadget-group .gadget-row-label { font:400 13px/1.4 var(--font-sans); }
+.prototype-gadget-group .gadget-fact { color:var(--text-muted); font:400 12px/1.4 var(--font-mono); }
+.prototype-gadget-group .gadget-row-gadget { justify-content:flex-start; min-width:0; gap:8px; }
+.prototype-gadget-group .gadget-row-gadget > .gadget-cycle,
+.prototype-gadget-group .gadget-row-gadget > .gadget-string:not(.gadget-stepper) { width:190px; max-width:100%; }
+.prototype-gadget-group .gadget-cycle select { width:100%; min-height:28px; }
+.prototype-gadget-group .gadget-keycap { width:84px; min-height:28px; height:28px; margin:0; font:650 15px/1 var(--font-mono); }
+.prototype-gadget-rule { height:2px; margin:8px 6px; border-top:1px solid var(--wb-rule-soft); box-shadow:0 1px 0 var(--wb-hi); }
+
+/* CheckGadget variant="state": the checkbox still owns the target. */
+.prototype-check-state { position:relative; display:inline-flex; flex:none; width:84px; min-height:32px; }
+.prototype-check-state .gadget-check { width:84px; min-height:32px; padding:6px 8px; }
+.prototype-check-state .gadget-check input { width:100%; height:100%; z-index:1; }
+.prototype-check-state .gadget-check-well,
+.prototype-check-state .gadget-check-well * { pointer-events:none; }
+.prototype-check-state .gadget-check-well { width:18px; height:18px; background:var(--wb-well); }
+.prototype-check-word { position:absolute; inset:0 0 0 36px; display:flex; align-items:center; pointer-events:none; color:var(--text-muted); font:600 12px/1 var(--font-mono); }
+.prototype-check-state[data-on] .prototype-check-word { color:var(--wb-ok-ink); }
+.prototype-check-state:has(input:focus-visible) { outline:2px solid var(--wb-sel); outline-offset:1px; }
+
+/* GadgetGroup.actions: every Button keeps its own bounded face. */
+.prototype-gadget-actions { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-start; gap:8px; min-height:40px; padding:8px 6px 0; }
+.prototype-gadget-actions > .btn { flex:0 0 auto; width:auto; max-width:100%; margin:0; }
+.prototype-gadget-empty { padding:9px 6px 5px; color:var(--text-muted); font:400 13px/1.4 var(--font-sans); }
+
+/* GadgetTable layout="fields": same table producer, native controls,
+   roving focus, stable row keys and armed row verbs. */
+.prototype-gadget-table { min-width:0; padding:0 4px; }
+.prototype-gadget-table .gadget-table-head,
+.prototype-gadget-table .gadget-table[data-verbs] .gadget-table-row {
+  grid-template-columns:minmax(132px,1.5fr) minmax(80px,0.8fr) minmax(72px,0.85fr) max-content;
+  gap:8px;
+}
+.prototype-gadget-table .gadget-table-head { min-height:24px; padding:0 0 6px; }
+.prototype-gadget-table .gadget-table-head span { color:var(--text-muted); font:600 12px/1.3 var(--font-mono); letter-spacing:0.04em; }
+.prototype-gadget-table .gadget-table-row { min-height:44px; padding:8px 0; border-bottom:1px solid var(--wb-rule-soft); }
+.prototype-gadget-table .gadget-table-row:last-child { border-bottom:0; }
+.prototype-gadget-table .gadget-table-cell { overflow:visible; white-space:normal; }
+.prototype-field-cell { display:block; min-width:0; }
+.prototype-field-label { display:none; }
+.prototype-gadget-table .gadget-string { width:100%; max-width:100%; min-height:30px; }
+.prototype-gadget-table .gadget-string input { min-width:0; font:400 13px/1.4 var(--font-sans); }
+.prototype-gadget-table .gadget-cycle { width:100%; }
+.prototype-gadget-table .gadget-cycle select { width:100%; padding-right:6px; }
+.prototype-gadget-table .gadget-table-verbs .btn { min-width:64px; margin:0; }
+
+.primitives-advanced { margin-top:18px; }
+.primitives-advanced > summary { min-height:32px; padding-inline:4px; }
+.primitives-advanced > .gadget-fold-body { padding:12px 0 0; }
+.primitives-advanced .gadget-stepper { width:140px; max-width:100%; }
+
+@container surface (max-width:920px) {
+  .prototype-gadget-columns { grid-template-columns:minmax(0,1fr); gap:22px; max-width:620px; }
+}
+@container surface (max-width:559.9px) {
+  .primitives-module-head { margin-bottom:18px; gap:8px; }
+  .prototype-gadget-column { gap:18px; }
+  .prototype-gadget-group > .gadget-group > .gadget-sheet { padding:14px 8px 8px; }
+  .prototype-gadget-group .gadget-row { grid-template-columns:minmax(118px,1fr) minmax(0,172px); min-height:52px; padding:4px; gap:8px; }
+  .prototype-gadget-group .gadget-row-gadget > .gadget-cycle,
+  .prototype-gadget-group .gadget-row-gadget > .gadget-string:not(.gadget-stepper) { width:172px; }
+  .prototype-gadget-group .gadget-cycle select { min-height:44px; }
+  .prototype-gadget-group .gadget-keycap { height:44px; min-height:44px; }
+  .prototype-check-state,
+  .prototype-check-state .gadget-check { min-height:44px; }
+  .prototype-gadget-actions { min-height:52px; padding-top:8px; }
+  .prototype-gadget-actions > .btn { min-height:44px; }
+  .prototype-gadget-table { padding:0 4px; }
+  .prototype-gadget-table .gadget-table-head { display:none; }
+  .prototype-gadget-table .gadget-table[data-verbs] .gadget-table-row { grid-template-columns:minmax(0,1fr); gap:8px; padding:10px 0 12px; }
+  .prototype-field-cell { display:grid; grid-template-columns:minmax(68px,1fr) minmax(0,172px); align-items:center; gap:8px; min-height:44px; }
+  .prototype-field-label { display:block; font:400 13px/1.4 var(--font-sans); }
+  .prototype-gadget-table .gadget-string { min-height:46px; }
+  .prototype-gadget-table .gadget-string input { min-height:44px; }
+  .prototype-gadget-table .gadget-string .desk-mic { width:44px; height:44px; }
+  .prototype-gadget-table .gadget-table-verbs { justify-content:flex-end; min-height:44px; }
+  .prototype-gadget-table .gadget-table-verbs .btn { min-height:44px; min-width:80px; }
+  .primitives-advanced > summary { min-height:44px; }
+}

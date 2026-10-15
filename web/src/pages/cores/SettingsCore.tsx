@@ -39,11 +39,13 @@ import {
   countToken,
   humanTime,
   StateChip,
+  ConfirmVerb,
+  GadgetDivider,
+  SurfaceColumns,
   SurfaceLedger,
   SurfaceLedgerRow,
   SurfaceWell,
 } from "../../desk/surface";
-import { SurfaceSection } from "../../desk/surface/Surface";
 import { useWindowTitle } from "../../desk/surface/title";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { egressFor, hostPlace } from "../../desk/surface/egress";
@@ -76,6 +78,7 @@ import {
   PREF_MODULES,
   PrefsFace,
   PrefStatusBar,
+  SettingSprite,
   WAKE_ACTION_OPTIONS,
   type SettingsHubWire,
 } from "./settingsPrefs";
@@ -611,7 +614,7 @@ export function RuntimeIdentityModule({ children }: { children?: ReactNode } = {
         </div>
       ) : null}
       <FoldGadget title="Advanced">
-        <GadgetGroup label="Diagnostics">
+        <GadgetGroup material="inset" label="Diagnostics">
           <GadgetRow label="Backend">
             <span className="surface-token" data-chip data-testid="runtime-backend">
               {`${id.backend_version ?? "unknown"} · ${shortToken(id.backend_revision ?? "unknown")}`}
@@ -699,20 +702,15 @@ function SystemModule({
       <div className="prefs-hub-chips" data-testid="system-hub-chips">
         <span className="surface-token" data-chip data-testid="system-display">{hubSystem.host}</span>
       </div>
-      <div className="prefs-groups">
-      <div className="prefs-column">
-        <RemoteAccessModule
-          grantAct={grantAct}
-          receiptOpen={receiptOpen}
-          onGrantAct={onGrantAct}
-        />
-      </div>
-      <div className="prefs-column">{deskModule}</div>
-      </div>
+      <SurfaceColumns
+        variant="preferences"
+        main={<RemoteAccessModule grantAct={grantAct} receiptOpen={receiptOpen} onGrantAct={onGrantAct} />}
+        side={deskModule}
+      />
       {/* PHILO-17 U35: one RAW fold holds the diagnostics (build hashes,
           schema), the mesh name, and the device rows. */}
       <RuntimeIdentityModule>
-        <GadgetGroup label="Mesh">
+        <GadgetGroup material="inset" label="Mesh">
           {deviceName}
         </GadgetGroup>
         {rawWell}
@@ -952,7 +950,9 @@ export function RemoteAccessModule({
     : null;
 
   return (
-    <GadgetGroup label="Remote access">
+    <GadgetGroup material="inset" label="Remote access" actions={enabled && !issueOpen ? (
+      <Button variant="ghost" onClick={() => { setOneTimeToken(null); setIssueOpen(true); }} data-testid="issue-credential-btn">Issue credential</Button>
+    ) : undefined}>
       {/* The toggle row */}
       {/* PHILO-17 U35: plain words (was "Streamable HTTP", the transport's
           name); the select keeps its "Remote transport" name. */}
@@ -1187,7 +1187,7 @@ export function RemoteAccessModule({
           {/* Issue credential verb + well */}
           {issueOpen ? (
             <SurfaceWell>
-              <GadgetRow label="Name">
+              <GadgetRow label="Name" controlWidth="full">
                 <StringGadget
                   label="Credential name"
                   value={issueName}
@@ -1221,17 +1221,7 @@ export function RemoteAccessModule({
                 </Button>
               </div>
             </SurfaceWell>
-          ) : (
-            <div className="prefs-issue-start">
-              <Button
-                variant="ghost"
-                onClick={() => { setOneTimeToken(null); setIssueOpen(true); }}
-                data-testid="issue-credential-btn"
-              >
-                Issue credential
-              </Button>
-            </div>
-          )}
+          ) : null}
         </>
       ) : null}
 
@@ -1298,6 +1288,10 @@ function SettingsFace({ hero, scope }: CoreProps) {
   }, []);
   const [authorityBusy, setAuthorityBusy] = useState(false);
   const secrets = (resource.data._secrets ?? {}) as Record<string, SecretState>;
+  type SpokenSymbol = { spoken?: string; symbol?: string; attach?: string };
+  // An unfinished dictionary row stays on this face, outside the settings
+  // document, until its required fields can pass the producer's validation.
+  const [spokenSymbolsDraft, setSpokenSymbolsDraft] = useState<SpokenSymbol[] | null>(null);
 
   // HS-175-03: calendar sources facts for the CALENDAR section.
   const [calSources, setCalSources] = useState<{
@@ -1373,6 +1367,25 @@ function SettingsFace({ hero, scope }: CoreProps) {
     authoritativeBaseRef.current = resource.data;
     revisionRef.current = resource.data._revision;
   }, [resource.data]);
+  useEffect(() => {
+    if (spokenSymbolsDraft === null) return;
+    const writesSymbols = ([path]: [string[], unknown]) =>
+      path.length === 2 && path[0] === "dictation" && path[1] === "spoken_symbols";
+    if (
+      debouncedChangesRef.current.some(writesSymbols) ||
+      failedChangesRef.current.some(writesSymbols) ||
+      pendingJobsRef.current.some((job) => job.changes.some(writesSymbols))
+    ) return;
+    const confirmed = (authoritativeBaseRef.current.dictation as { spoken_symbols?: SpokenSymbol[] } | undefined)?.spoken_symbols ?? [];
+    if (
+      confirmed.length === spokenSymbolsDraft.length &&
+      confirmed.every((entry, index) =>
+        entry.spoken === spokenSymbolsDraft[index].spoken?.trim() &&
+        entry.symbol === spokenSymbolsDraft[index].symbol &&
+        (entry.attach ?? "none") === (spokenSymbolsDraft[index].attach ?? "none").trim().toLowerCase(),
+      )
+    ) setSpokenSymbolsDraft(null);
+  }, [resource.data, spokenSymbolsDraft]);
   const readAuthoritativeBase = async () => {
     const authoritative = await apiFetch<SettingsResponse>("/api/settings");
     authoritativeBaseRef.current = authoritative;
@@ -1628,8 +1641,10 @@ function SettingsFace({ hero, scope }: CoreProps) {
       label={label}
       fact={fact}
       highlight={hl(path)}
+      controlWidth="short"
     >
       <CheckGadget
+        variant="state"
         label={label}
         checked={Boolean(val(path))}
         onChange={(next) => update(path, next)}
@@ -1646,6 +1661,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
       label={label}
       fact={opts?.fact}
       highlight={hl(path)}
+      controlWidth="full"
     >
       <StringGadget
         label={label}
@@ -1660,7 +1676,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
     label: string,
     opts?: { unit?: string; step?: number; min?: number; max?: number },
   ) => (
-    <GadgetRow key={path.join(".")} label={label} highlight={hl(path)}>
+    <GadgetRow key={path.join(".")} label={label} highlight={hl(path)} controlWidth="short">
       <StepperGadget
         label={label}
         value={Number(val(path) ?? 0)}
@@ -1683,6 +1699,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
       label={label}
       fact={fact}
       highlight={hl(path)}
+      controlWidth="standard"
     >
       <CycleGadget
         label={label}
@@ -1702,6 +1719,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
       label={label}
       fact={opts?.fact}
       highlight={hl(path)}
+      controlWidth="full"
     >
       <PropGadget
         label={label}
@@ -1719,6 +1737,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
       label={label}
       fact={fact}
       highlight={hl(path)}
+      controlWidth="full"
     >
       <StringGadget
         label={label}
@@ -1747,7 +1766,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
       const nextPath = [...path, key];
       if (item !== null && typeof item === "object" && !Array.isArray(item))
         return (
-          <GadgetGroup key={nextPath.join(".")} label={title(key)}>
+          <GadgetGroup material="inset" key={nextPath.join(".")} label={title(key)}>
             {walkerRows(item as Record<string, unknown>, nextPath)}
           </GadgetGroup>
         );
@@ -1763,15 +1782,16 @@ function SettingsFace({ hero, scope }: CoreProps) {
     switch (id) {
       /* ── Voice: hotkey + language + voice typing + wake word ── */
       case "voice": {
-        const symbols = (val(["dictation", "spoken_symbols"]) ?? []) as Array<{
-          spoken?: string;
-          symbol?: string;
-          attach?: string;
-        }>;
+        const symbols = spokenSymbolsDraft ?? (val(["dictation", "spoken_symbols"]) ?? []) as SpokenSymbol[];
         const symbolsPath = ["dictation", "spoken_symbols"];
+        const writeSymbols = (next: SpokenSymbol[]) => {
+          setSpokenSymbolsDraft(next);
+          if (next.every((entry) => entry.spoken?.trim() && (entry.symbol?.length ?? 0) > 0)) {
+            update(symbolsPath, next);
+          }
+        };
         const patchSymbol = (index: number, patch: Record<string, string>) =>
-          update(
-            symbolsPath,
+          writeSymbols(
             symbols.map((entry, row) =>
               row === index ? { ...entry, ...patch } : entry,
             ),
@@ -1780,102 +1800,95 @@ function SettingsFace({ hero, scope }: CoreProps) {
           []) as unknown[];
         return (
           <>
-            <div className="prefs-groups">
-            <div className="prefs-column">
-              <HotkeyCapture
-                value={(data.hotkey ?? {}) as Record<string, unknown>}
-                onCommit={(next) =>
-                  update(["hotkey"], {
-                    ...(data.hotkey as Record<string, unknown>),
-                    ...next,
-                  })
-                }
-                onRefuse={setRefusal}
-              />
-              <GadgetGroup label="Transcription">
-                {cyc(["model", "language"], "Language", LANGUAGE_OPTIONS)}
-              </GadgetGroup>
-              <GadgetGroup label="Typing">
-                {check(
-                  ["dictation", "preview_before_type"],
-                  "Preview before type",
-                )}
-                {check(
-                  ["dictation", "macros", "enabled"],
-                  "Voice commands",
-                  countToken(macroItems.length, "CONFIGURED") ?? undefined,
-                )}
-              </GadgetGroup>
-            </div>
-            <div className="prefs-column">
-              <GadgetGroup label="Spoken symbols">
-                {symbols.length ? <GadgetRow wide label="Dictionary" highlight={hl(symbolsPath)}>
-                  <GadgetTable
-                    head={["SPOKEN", "SYMBOL", "ATTACH"]}
-                    addLabel="Add symbol"
-                    deleteLabel="FORGET?"
-                    onDelete={(index) =>
-                      update(
-                        symbolsPath,
-                        symbols.filter((_, row) => row !== index),
-                      )
+            <SurfaceColumns
+              variant="preferences"
+              main={<>
+                <GadgetGroup label="Voice typing" material="inset">
+                  <HotkeyCapture
+                    grouped={false}
+                    value={(data.hotkey ?? {}) as Record<string, unknown>}
+                    onCommit={(next) =>
+                      update(["hotkey"], {
+                        ...(data.hotkey as Record<string, unknown>),
+                        ...next,
+                      })
                     }
-                    onAdd={() =>
-                      update(symbolsPath, [
-                        ...symbols,
-                        { spoken: "", symbol: "", attach: "none" },
-                      ])
-                    }
-                    rows={symbols.map((entry, index) => [
-                      <StringGadget
-                        key="spoken"
-                        label={`Spoken phrase ${index + 1}`}
-                        value={entry.spoken ?? ""}
-                        placeholder="arrow"
-                        onChange={(next) => patchSymbol(index, { spoken: next })}
-                      />,
-                      <StringGadget
-                        key="symbol"
-                        label={`Symbol ${index + 1}`}
-                        value={entry.symbol ?? ""}
-                        placeholder="→"
-                        mic={false}
-                        onChange={(next) => patchSymbol(index, { symbol: next })}
-                      />,
-                      <CycleGadget
-                        key="attach"
-                        label={`Attachment ${index + 1}`}
-                        value={entry.attach ?? "none"}
-                        options={[
-                          { value: "none" },
-                          { value: "left" },
-                          { value: "right" },
-                          { value: "both" },
-                        ]}
-                        onChange={(next) => patchSymbol(index, { attach: next })}
-                      />,
-                    ])}
+                    onRefuse={setRefusal}
                   />
-                </GadgetRow> : <Button dense variant="secondary" onClick={() => update(symbolsPath, [{ spoken: "", symbol: "", attach: "none" }])}>Add symbol</Button>}
-              </GadgetGroup>
-              <GadgetGroup label="Wake word">
-                {check(
-                  ["wake_word", "enabled"],
-                  "Enabled",
-                  "models download once",
-                )}
-                {cyc(
-                  ["wake_word", "action"],
-                  "Action",
-                  WAKE_ACTION_OPTIONS,
-                  "type lands in the focused app",
-                )}
-              </GadgetGroup>
-            </div>
-            </div>
+                  {cyc(["model", "language"], "Language", LANGUAGE_OPTIONS)}
+                  <GadgetDivider />
+                  {check(["dictation", "preview_before_type"], "Preview before type")}
+                  {check(
+                    ["dictation", "macros", "enabled"],
+                    "Voice commands",
+                    countToken(macroItems.length, "CONFIGURED") ?? undefined,
+                  )}
+                </GadgetGroup>
+                <GadgetGroup label="Wake word" material="inset">
+                  {check(["wake_word", "enabled"], "Enabled")}
+                  {cyc(
+                    ["wake_word", "action"],
+                    "Action",
+                    WAKE_ACTION_OPTIONS,
+                  )}
+                </GadgetGroup>
+              </>}
+              side={
+                <GadgetGroup
+                  label="Spoken symbols"
+                  material="inset"
+                  actions={<>
+                    <Button dense variant="secondary" onClick={() => setSpokenSymbolsDraft([...symbols, { spoken: "", symbol: "", attach: "none" }])}>Add symbol</Button>
+                    {spokenSymbolsDraft !== null ? <span className="gadget-fact" role="status">Draft</span> : null}
+                  </>}
+                >
+                  {symbols.length ? (
+                    <GadgetTable
+                      layout="fields"
+                      head={["Spoken", "Symbol", "Attach"]}
+                      verbs={(index) => <ConfirmVerb
+                        label="Forget"
+                        confirmLabel="Forget?"
+                        ariaLabel={`Forget symbol ${index + 1}`}
+                        onConfirm={() => writeSymbols(symbols.filter((_, row) => row !== index))}
+                      />}
+                      rows={symbols.map((entry, index) => [
+                        <StringGadget
+                          key="spoken"
+                          label={`Spoken phrase ${index + 1}`}
+                          value={entry.spoken ?? ""}
+                          placeholder="arrow"
+                          onChange={(next) => patchSymbol(index, { spoken: next })}
+                        />,
+                        <StringGadget
+                          key="symbol"
+                          label={`Symbol ${index + 1}`}
+                          value={entry.symbol ?? ""}
+                          placeholder="→"
+                          mic={false}
+                          onChange={(next) => patchSymbol(index, { symbol: next })}
+                        />,
+                        <CycleGadget
+                          key="attach"
+                          label={`Attachment ${index + 1}`}
+                          value={entry.attach ?? "none"}
+                          options={[
+                            { value: "none" },
+                            { value: "left" },
+                            { value: "right" },
+                            { value: "both" },
+                          ]}
+                          onChange={(next) => patchSymbol(index, { attach: next })}
+                        />,
+                      ])}
+                    />
+                  ) : <span className="gadget-fact">No spoken symbols</span>}
+                </GadgetGroup>
+              }
+            />
             {/* HS-139-04/05: all voice RAW wells merged. */}
             <FoldGadget title="Advanced">
-              <GadgetGroup label="Transcription">
+              <GadgetGroup material="inset" label="Transcription">
                 {num(
                   ["model", "transcribe_timeout_seconds"],
                   "Transcribe timeout",
@@ -1886,7 +1899,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
                   },
                 )}
               </GadgetGroup>
-              <GadgetGroup label="Pipeline">
+              <GadgetGroup material="inset" label="Pipeline">
                 {csv(["dictation", "pipeline", "stages"], "Stages")}
                 {num(
                   ["dictation", "pipeline", "max_total_latency_ms"],
@@ -1911,7 +1924,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
                   { min: 0, max: 1, step: 0.05 },
                 )}
               </GadgetGroup>
-              <GadgetGroup label="Wake word">
+              <GadgetGroup material="inset" label="Wake word">
                 {str(["wake_word", "model"], "Model", {
                   placeholder: "hey_jarvis",
                 })}
@@ -1933,14 +1946,15 @@ function SettingsFace({ hero, scope }: CoreProps) {
       /* ── Sounds & Presence: desk sounds + presence + mascot ── */
       case "sounds":
         return (
-          <div className="prefs-groups">
-            <div className="prefs-column">
-              <GadgetGroup label="Sounds">
+          <SurfaceColumns variant="preferences" main={<>
+              <GadgetGroup material="inset" label="Sounds">
                 <GadgetRow
                   label="Desk sounds"
                   highlight={hl(["ui", "desk_sounds"])}
+                  controlWidth="short"
                 >
                   <CheckGadget
+                    variant="state"
                     label="DESK SOUNDS"
                     checked={Boolean(val(["ui", "desk_sounds"]) ?? true)}
                     onChange={(next) => {
@@ -1950,13 +1964,11 @@ function SettingsFace({ hero, scope }: CoreProps) {
                   />
                 </GadgetRow>
               </GadgetGroup>
-              <GadgetGroup label="Presence">
+              <GadgetGroup material="inset" label="Presence">
                 {check(["presence", "enabled"], "Presence")}
                 {check(["presence", "mascot"], "Mascot")}
               </GadgetGroup>
-            </div>
-            <div className="prefs-column"><TtsSettingsBlock /></div>
-          </div>
+          </>} side={<TtsSettingsBlock />} />
         );
       case "wallpaper":
         return <WallpaperModule />;
@@ -2076,13 +2088,12 @@ function SettingsFace({ hero, scope }: CoreProps) {
         );
         return (
           <>
-            <div className="prefs-groups">
-            <div className="prefs-column">
-              <GadgetGroup label="Summary">
+            <SurfaceColumns variant="preferences" main={<>
+              <GadgetGroup material="inset" label="Summary">
                 <GadgetRow label="Make summary">
                   <CycleGadget label="Auto-run the summary" value={autoVal} options={INTELLIGENCE_AUTO_OPTIONS} onChange={(next) => update(["meeting", "intelligence_auto"], next)} />
                 </GadgetRow>
-                <GadgetRow label="Engine">
+                <GadgetRow label="Engine" controlWidth="full">
                   <span className="prefs-summary-controls" data-testid="settings-summary-controls">
                     {summariesOff ? <StateChip state="idle" label="SUMMARIES OFF" data-testid="settings-summaries-off" />
                       : hasModel ? <>
@@ -2095,7 +2106,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
                   </span>
                 </GadgetRow>
               </GadgetGroup>
-              <GadgetGroup label="Recording">
+              <GadgetGroup material="inset" label="Recording">
                 <GadgetRow label="Microphone">
                   <span className="prefs-value">
                     {String(val(["meeting", "mic_device"]) || "System default")}
@@ -2108,7 +2119,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
                 </GadgetRow>
                 <div data-testid="settings-auto-record"><GadgetRow label="Auto-record">{autoRecordControls}</GadgetRow></div>
                 <FoldGadget title="Audio devices">
-                  <GadgetRow wide label="Mic device" fact="Custom name">
+                  <GadgetRow wide label="Mic device" fact="Custom name" controlWidth="full">
                     <StringGadget
                       label="Mic device"
                       placeholder="System default"
@@ -2116,7 +2127,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
                       onChange={(next) => update(["meeting", "mic_device"], next || null)}
                     />
                   </GadgetRow>
-                  <GadgetRow wide label="System audio name" fact="Custom name">
+                  <GadgetRow wide label="System audio name" fact="Custom name" controlWidth="full">
                     <StringGadget
                       label="System audio device"
                       placeholder="Auto"
@@ -2126,11 +2137,27 @@ function SettingsFace({ hero, scope }: CoreProps) {
                   </GadgetRow>
                 </FoldGadget>
               </GadgetGroup>
-            </div>
-            <div className="prefs-column">
+            </>} side={<>
               {/* HS-175-03: CALENDAR section replaces the 146 Calendar GadgetGroup.
                   Source rows, the Connect calendar well, Auto-record, Snapshot. */}
-              <SurfaceSection label="Calendar" className="prefs-calendar-section">
+              <div className="prefs-calendar-section"><GadgetGroup label="Calendar" material="inset" actions={
+                  <div data-testid="calendar-connect-row" className="prefs-inline-controls">
+                    <Button dense variant={failedChangesRef.current.length ? "secondary" : "primary"} onClick={() => setNavigation({ module: "integrations", focus: "calendar" })}>Add calendar</Button>
+                    <Button variant="secondary" dense onClick={() => openCalWell("new", "")} data-testid="calendar-add-btn">Add feed</Button>
+                    {(() => { const chip = snapshotEgressChip(calSources?.snapshot_egress); return chip ? <EgressChip label={chip.label} scope={chip.scope} title={chip.title} /> : null; })()}
+                    <Button variant="secondary" dense data-testid="calendar-snapshot-btn" onClick={() => {
+                      const input = document.createElement("input");
+                      input.type = "file"; input.accept = ".png,.jpg,.jpeg,.webp"; input.multiple = true;
+                      input.onchange = async () => {
+                        if (!input.files?.length) return;
+                        const fd = new FormData();
+                        for (let i = 0; i < Math.min(input.files.length, 3); i++) fd.append("files", input.files[i]);
+                        try { openSurface("review-calendar-snapshot", JSON.stringify(await apiFetch<Record<string, unknown>>("/api/calendar/snapshot", { method: "POST", body: fd }))); }
+                        catch (error) { setRefusal(readableError(error)); }
+                      }; input.click();
+                    }}>Import image</Button>
+                  </div>
+                }>
                 {calLoading && !calSources ? <span className="gadget-fact" role="status">Reading calendars…</span> : null}
                 {calReadError ? <div className="prefs-read-failure" role="alert"><span>Could not read calendars</span><Button dense variant="ghost" disabled={calLoading} onClick={() => void loadCalSources()}>Retry</Button></div> : null}
                 {sources.length ? <SurfaceLedger count={null} cols="settings-calendar" label="Calendar sources">
@@ -2195,30 +2222,13 @@ function SettingsFace({ hero, scope }: CoreProps) {
                 })}
               </SurfaceLedger> : null}
                 {/* Add feed reuses the existing source editor. */}
-                <div className="prefs-calendar-add" data-testid="calendar-connect-row">
-                  <div className="prefs-calendar-well-actions">
-                    <Button dense variant={failedChangesRef.current.length ? "secondary" : "primary"} onClick={() => setNavigation({ module: "integrations", focus: "calendar" })}>Add calendar</Button>
-                    <Button variant="secondary" dense onClick={() => openCalWell("new", "")} data-testid="calendar-add-btn">Add feed</Button>
-                    {(() => { const chip = snapshotEgressChip(calSources?.snapshot_egress); return chip ? <EgressChip label={chip.label} scope={chip.scope} title={chip.title} /> : null; })()}
-                    <Button variant="secondary" dense data-testid="calendar-snapshot-btn" onClick={() => {
-                      const input = document.createElement("input");
-                      input.type = "file"; input.accept = ".png,.jpg,.jpeg,.webp"; input.multiple = true;
-                      input.onchange = async () => {
-                        if (!input.files?.length) return;
-                        const fd = new FormData();
-                        for (let i = 0; i < Math.min(input.files.length, 3); i++) fd.append("files", input.files[i]);
-                        try { openSurface("review-calendar-snapshot", JSON.stringify(await apiFetch<Record<string, unknown>>("/api/calendar/snapshot", { method: "POST", body: fd }))); }
-                        catch (error) { setRefusal(readableError(error)); }
-                      }; input.click();
-                    }}>Import image</Button>
-                  </div>
-                  {calWellFor === "new" ? calWell : null}
-                </div>
+                {calWellFor === "new" ? calWell : null}
                 {/* PARKED (Settings audit): a full Connect row repeated Add. */}
-            </SurfaceSection>
-            <GadgetGroup label="Export">
-              <GadgetRow label="Auto export">
+            </GadgetGroup></div>
+            <GadgetGroup material="inset" label="Export">
+              <GadgetRow label="Auto export" controlWidth="short">
                 <CheckGadget
+                  variant="state"
                   label="Auto export"
                   checked={Boolean(val(["meeting", "auto_export"]))}
                   onChange={(next) => update(["meeting", "auto_export"], next)}
@@ -2240,14 +2250,13 @@ function SettingsFace({ hero, scope }: CoreProps) {
                 </GadgetRow>
               ) : null}
             </GadgetGroup>
-            </div>
-            </div>
+            </>} />
             {/* HS-139-04: all operator knobs fold behind one RAW well.
                 PHILO-17 U35: Allow actuators is one of them (it sat on the
                 face), and the fold carries no hand-kept count. */}
             <FoldGadget title="Advanced">
               {lastRunReceipt ? <span className="gadget-fact" data-testid="settings-last-ran">{lastRunReceipt}</span> : null}
-              <GadgetGroup label="Capture">
+              <GadgetGroup material="inset" label="Capture">
                 {check(["meeting", "diarization_enabled"], "Diarization")}
                 {check(["meeting", "diarize_mic"], "Diarize mic")}
                 {prop(["meeting", "similarity_threshold"], "Similarity", {
@@ -2257,10 +2266,10 @@ function SettingsFace({ hero, scope }: CoreProps) {
                 })}
               </GadgetGroup>
               {/* HS-202-04 (F06): same rule, the advanced sheet. */}
-              <GadgetGroup label="Summary">
+              <GadgetGroup material="inset" label="Summary">
                 {check(["meeting", "intel_cloud_store"], "Cloud store")}
               </GadgetGroup>
-              <GadgetGroup label="Deferred queue">
+              <GadgetGroup material="inset" label="Deferred queue">
                 {num(["meeting", "intel_retry_base_seconds"], "Retry base", {
                   unit: "s",
                   min: 1,
@@ -2280,7 +2289,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
                 )}
                 {/* PARKED: alert webhook header is not persisted by this writer. */}
               </GadgetGroup>
-              <GadgetGroup label="Routing">
+              <GadgetGroup material="inset" label="Routing">
                 {cyc(
                   ["meeting", "routing_profile"],
                   "Routing profile",
@@ -2317,7 +2326,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
                 )}
                 {csv(["meeting", "disabled_plugins"], "Disabled plugins")}
               </GadgetGroup>
-              <GadgetGroup label="Actuators">
+              <GadgetGroup material="inset" label="Actuators">
                 {check(["meeting", "allow_actuators"], "Allow actuators")}
                 {csv(["meeting", "allowed_actuators"], "Allowed actuators")}
                 {csv(["meeting", "webhook_allowed_hosts"], "Webhook hosts")}
@@ -2330,9 +2339,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
       case "rhythm":
         return (
           <>
-            <div className="prefs-groups">
-            <div className="prefs-column">
-              <GadgetGroup label="Cadence">
+            <SurfaceColumns variant="preferences" main={<>
+              <GadgetGroup material="inset" label="Cadence">
                 {check(["cadence", "enabled"], "Enabled")}
                 {cyc(
                   ["cadence", "pressure"],
@@ -2354,10 +2362,9 @@ function SettingsFace({ hero, scope }: CoreProps) {
                   min: 0,
                 })}
               </GadgetGroup>
-            </div>
-            <div className="prefs-column">
+            </>} side={<>
               {/* PHILO-15 05: the morning Brief job, ON by default; its own setting. */}
-              <GadgetGroup label="Morning brief">
+              <GadgetGroup material="inset" label="Morning brief">
                 {check(["cadence", "brief_enabled"], "Enabled")}
                 {num(["cadence", "brief_hour"], "Make at", {
                   unit: "h",
@@ -2365,14 +2372,13 @@ function SettingsFace({ hero, scope }: CoreProps) {
                   max: 23,
                 })}
               </GadgetGroup>
-              <GadgetGroup label="Telegram">
+              <GadgetGroup material="inset" label="Telegram">
                 {check(["cadence_telegram", "enabled"], "Enabled")}
               </GadgetGroup>
-            </div>
-            </div>
+            </>} />
             {/* HS-139-04: operator knobs fold behind RAW. */}
             <FoldGadget title="Advanced">
-              <GadgetGroup>
+              <GadgetGroup material="inset">
                 {check(["cadence", "use_llm"], "Use LLM")}
                 {num(["cadence", "tick_interval_seconds"], "Tick interval", {
                   unit: "s",
@@ -2458,7 +2464,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
           deviceName={str(["mesh", "device_name"], "Device name")}
           deskModule={<DeskModule />}
           rawWell={deviceCount ? (
-            <GadgetGroup label="Device">
+            <GadgetGroup material="inset" label="Device">
               {walkerRows(device, ["device"])}
             </GadgetGroup>
           ) : null}
@@ -2471,10 +2477,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
             {/* PHILO-15 B57: his name and the other names for him, after
                 first run (the reopened You card shows them without an edit;
                 Astra r1 on #1090: this is the place he looks). */}
-            <div className="prefs-groups">
-              <div className="prefs-column"><OwnerNameGroup /></div>
-              <div className="prefs-column"><PeopleAccessModule /></div>
-            </div>
+            <SurfaceColumns variant="preferences" main={<OwnerNameGroup />} side={<PeopleAccessModule />} />
           </>
         );
       default:
@@ -2485,11 +2488,12 @@ function SettingsFace({ hero, scope }: CoreProps) {
   const module = moduleId
     ? PREF_MODULES.find((entry) => entry.id === moduleId)
     : null;
+  const insetModule = ["voice", "meetings", "rhythm", "sounds", "people", "system"].includes(moduleId ?? "");
   const receipt = { saving: saving || Boolean(secretBusy), writtenAt, refusal };
   return (
     <>
       {hero ? hero(null) : null}
-      <div ref={contentRef} className="settings-content" data-settings-view={moduleId || "home"}>
+      <div ref={contentRef} className="settings-content" data-settings-view={moduleId || "home"} data-settings-material={insetModule ? "inset" : undefined}>
       {refusal ? <SurfaceWell><div className="prefs-read-failure" role="alert" data-testid="settings-save-failure"><span>{refusal}</span>{failedChangesRef.current.length ? <Button dense variant="ghost" disabled={saving} onClick={() => void retryFailedChanges()}>Retry</Button> : null}</div></SurfaceWell> : null}
       <SurfaceState
         loading={resource.loading}
@@ -2499,8 +2503,13 @@ function SettingsFace({ hero, scope }: CoreProps) {
         {moduleId === "guide" ? (
             <RuntimeDocsCore />
         ) : module ? (
-          <div className="prefs-module" data-settings-module={module.id}>
-            <h2 className="gadget-pane-title">{module.label}</h2>
+          <div className="prefs-module" data-settings-module={module.id} data-settings-material={insetModule ? "inset" : undefined}>
+            {!insetModule ? <h2 className="gadget-pane-title">{module.label}</h2> : (
+              <header className="prefs-module-head">
+                <SettingSprite name={module.sprite} />
+                <h2 className="gadget-pane-title">{module.label}</h2>
+              </header>
+            )}
             {renderModule(module.id)}
           </div>
         ) : (<>

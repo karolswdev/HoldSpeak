@@ -40,6 +40,7 @@ export {
 
 export {
   GadgetGroup,
+  GadgetDivider,
   GadgetRow,
   CheckGadget,
   CycleGadget,

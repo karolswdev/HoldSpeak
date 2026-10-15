@@ -71,10 +71,10 @@ export function usePeopleAccess() {
  * one-letter mishearing of the name ("Carol" for "Karol") still counts. */
 export function OwnerNameGroup() {
   const owner = useOwnerName();
-  if (owner.loading || owner.readError) return <GadgetGroup label="You"><SurfaceState loading={owner.loading} error={owner.readError} onRetry={() => void owner.reload()} /></GadgetGroup>;
+  if (owner.loading || owner.readError) return <GadgetGroup material="inset" label="You"><SurfaceState loading={owner.loading} error={owner.readError} onRetry={() => void owner.reload()} /></GadgetGroup>;
   return (
-    <GadgetGroup label="You">
-      <GadgetRow wide label="Your name">
+    <GadgetGroup material="inset" label="You">
+      <GadgetRow wide label="Your name" controlWidth="full">
         <span className="prefs-text-field" data-testid="settings-owner-name">
           <StringGadget
             label="Your name"
@@ -85,7 +85,7 @@ export function OwnerNameGroup() {
           />
         </span>
       </GadgetRow>
-      <GadgetRow wide label="Also called">
+      <GadgetRow wide label="Also called" controlWidth="full">
         <span className="prefs-text-field" data-testid="settings-owner-aliases">
           <OwnerAliasField owner={owner} />
         </span>
@@ -134,7 +134,7 @@ export function PeopleAccessModule() {
   if (!access && !readError && !receipt) return null;
   const held = access?.source === "env";
   return (
-    <GadgetGroup label="Agents">
+    <GadgetGroup material="inset" label="Agents">
       {readError ? (
         <GadgetRow label="Access">
           <span data-testid="people-access-read-failed" data-code={readError}>
@@ -145,7 +145,7 @@ export function PeopleAccessModule() {
         </GadgetRow>
       ) : null}
       {access ? (<>
-      <GadgetRow label="Agent access" wide>
+      <GadgetRow label="Agent access" wide controlWidth="full">
         <span data-testid="people-access">
           <FilterTokens
             label="Agent access"

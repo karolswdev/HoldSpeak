@@ -1152,3 +1152,173 @@ button.gadget-chip-egress {
   .gadget-check-token-face,
   .desk-next .gadget-check-token-face { height: 44px; }
 }
+
+/* SETTINGS-PRIMITIVES 2026-10-14 — opt-in native control sheets.
+   One paper well with an engraved legend; the window keeps all chrome. */
+.gadget-group[data-material="inset"] {
+  --gadget-value-width: 190px;
+  position: relative;
+  min-width: 0;
+  margin: 8px 0 0;
+  border: 1px solid var(--wb-rule);
+  border-radius: 0;
+  background: var(--wb-well);
+  box-shadow: var(--wb-sunken);
+}
+.gadget-group[data-material="inset"] > .gadget-group-label {
+  position: absolute;
+  top: 0;
+  left: 10px;
+  transform: translateY(-50%);
+  max-width: calc(100% - 20px);
+  margin: 0;
+  padding: 0 6px;
+  background: var(--wb-field-hi);
+  color: var(--wb-text);
+  font: 700 12px / 1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-shadow: 0 1px 0 var(--wb-hi);
+}
+.gadget-group[data-material="inset"] > .gadget-group-label::after { display: none; }
+.gadget-group[data-material="inset"] > .gadget-sheet {
+  display: block;
+  min-width: 0;
+  padding: 16px 12px 10px;
+}
+.gadget-group[data-material="inset"] > .gadget-sheet > .gadget-group { margin: 0; }
+.gadget-group[data-material="inset"] .gadget-row,
+.gadget-row[data-control-width] {
+  grid-template-columns: minmax(118px, 160px) minmax(0, var(--gadget-value-width, 190px));
+  min-height: 40px;
+  padding: 4px 6px;
+  gap: 6px 12px;
+}
+.gadget-group[data-material="inset"] .gadget-row:hover,
+.gadget-group[data-material="inset"] .gadget-row:focus-within,
+.gadget-row[data-control-width]:hover,
+.gadget-row[data-control-width]:focus-within { background: var(--surface-hover); }
+.gadget-group[data-material="inset"] .gadget-row-label,
+.gadget-row[data-control-width] .gadget-row-label { font: 400 13px / 1.4 var(--font-sans); }
+.gadget-group[data-material="inset"] .gadget-row-gadget,
+.gadget-row[data-control-width] .gadget-row-gadget { justify-content: flex-start; flex-wrap: wrap; min-width: 0; gap: 8px; }
+:is(.gadget-group[data-material="inset"], .gadget-row[data-control-width]) .gadget-row-gadget > .gadget-cycle,
+:is(.gadget-group[data-material="inset"], .gadget-row[data-control-width]) .gadget-row-gadget > .gadget-string:not(.gadget-stepper) {
+  width: var(--gadget-value-width, 190px);
+  max-width: 100%;
+}
+:is(.gadget-group[data-material="inset"], .gadget-row[data-control-width]) .gadget-cycle select { width: 100%; min-height: 28px; letter-spacing: 0; }
+:is(.gadget-group[data-material="inset"], .gadget-row[data-control-width]) .gadget-keycap {
+  width: 84px;
+  min-height: 28px;
+  height: 28px;
+  margin: 0;
+  font: 650 15px / 1 var(--font-mono);
+}
+.gadget-row[data-control-width="short"] .gadget-row-gadget > :is(.gadget-cycle, .gadget-string) { width: 84px; }
+.gadget-group[data-material="inset"] .gadget-row:is([data-wide], [data-control-width="full"]),
+.gadget-row[data-control-width="full"] { grid-template-columns: minmax(0, 1fr); }
+.gadget-row[data-control-width="full"] .gadget-row-gadget { width: 100%; }
+/* Match the standard text-well selector's specificity, then override it. */
+.gadget-row[data-control-width="full"] .gadget-row-gadget > :is(.gadget-string, .gadget-cycle),
+.gadget-row[data-control-width="full"] .gadget-row-gadget > .gadget-string:not(.gadget-stepper) { width: 100%; }
+.gadget-group-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 6px 0;
+}
+.gadget-group[data-material="inset"] > .gadget-group-actions { padding: 0 18px 10px; }
+.gadget-group-actions > .btn { flex: 0 0 auto; width: auto; max-width: 100%; margin: 0; }
+.gadget-divider {
+  height: 2px;
+  margin: 8px 6px;
+  border: 0;
+  border-top: 1px solid var(--wb-rule-soft);
+  box-shadow: 0 1px 0 var(--wb-hi);
+}
+
+/* The checkbox, square and value are one native target. */
+.gadget-check[data-variant="state"] {
+  flex: none;
+  width: 84px;
+  min-height: 32px;
+  padding: 6px 8px;
+  gap: 10px;
+  color: var(--text-muted);
+}
+.gadget-check[data-variant="state"] input {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+.gadget-check[data-variant="state"] .gadget-check-well {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  background: var(--wb-well);
+}
+.gadget-check[data-variant="state"] .gadget-check-well,
+.gadget-check[data-variant="state"] .gadget-check-well *,
+.gadget-check-state-word { pointer-events: none; }
+.gadget-check-state-word { font: 600 12px / 1 var(--font-mono); }
+.gadget-check[data-variant="state"]:has(input:checked) { color: var(--wb-ok-ink); }
+.gadget-check[data-variant="state"]:has(input:focus-visible) {
+  outline: var(--focus-outline-width) solid var(--wb-sel);
+  outline-offset: var(--focus-outline-offset);
+}
+.gadget-check[data-variant="state"]:has(input:disabled) { color: var(--disabled-fg); cursor: not-allowed; }
+.gadget-check[data-variant="state"] input:disabled + .gadget-check-well { box-shadow: none; background: var(--disabled-bg); }
+
+/* The field variant keeps the producer and rover; heads name each field. */
+.gadget-table-field-label { display: none; }
+.gadget-table[data-layout="fields"] .gadget-table-head,
+.gadget-table[data-layout="fields"][data-verbs] .gadget-table-row {
+  grid-template-columns: repeat(var(--gadget-cols, 3), minmax(0, 1fr)) max-content;
+  gap: 8px;
+}
+.gadget-table[data-layout="fields"] .gadget-table-head { min-height: 24px; padding: 0 0 6px; }
+.gadget-table[data-layout="fields"] .gadget-table-head span { color: var(--text-muted); font: 600 12px / 1.3 var(--font-mono); }
+.gadget-table[data-layout="fields"] .gadget-table-row { min-height: 44px; padding: 8px 0; border-bottom: 1px solid var(--wb-rule-soft); }
+.gadget-table[data-layout="fields"] .gadget-table-row:last-child { border-bottom: 0; }
+.gadget-table[data-layout="fields"] .gadget-table-cell { overflow: visible; white-space: normal; }
+.gadget-table[data-layout="fields"] .gadget-string { width: 100%; max-width: 100%; min-height: 30px; }
+.gadget-table[data-layout="fields"] .gadget-string input { min-width: 0; font: 400 13px / 1.4 var(--font-sans); }
+.gadget-table[data-layout="fields"] .gadget-cycle { width: 100%; }
+.gadget-table[data-layout="fields"] .gadget-cycle select { width: 100%; padding-right: 6px; }
+.gadget-table[data-layout="fields"] .gadget-table-verbs .btn { min-width: 64px; margin: 0; }
+
+@container surface (max-width: 559.9px) {
+  .gadget-group[data-material="inset"],
+  .gadget-row[data-control-width] { --gadget-value-width: 172px; }
+  .gadget-group[data-material="inset"] > .gadget-sheet { padding: 14px 8px 8px; }
+  .gadget-group[data-material="inset"] .gadget-row,
+  .gadget-row[data-control-width] {
+    grid-template-columns: minmax(118px, 1fr) minmax(0, var(--gadget-value-width));
+    min-height: 52px;
+    padding: 4px;
+    gap: 8px;
+  }
+  .gadget-group[data-material="inset"] .gadget-row:is([data-wide], [data-control-width="full"]),
+  .gadget-row[data-control-width="full"] { grid-template-columns: minmax(0, 1fr); }
+  :is(.gadget-group[data-material="inset"], .gadget-row[data-control-width]) .gadget-cycle select { min-height: 44px; }
+  :is(.gadget-group[data-material="inset"], .gadget-row[data-control-width]) .gadget-keycap { height: 44px; min-height: 44px; }
+  .gadget-check[data-variant="state"] { min-height: 44px; }
+  .gadget-group-actions { min-height: 52px; }
+  .gadget-group[data-material="inset"] > .gadget-group-actions { padding: 0 12px 8px; }
+  .gadget-group-actions > .btn { min-height: 44px; }
+  .gadget-table[data-layout="fields"] .gadget-table-head { display: none; }
+  .gadget-table[data-layout="fields"] .gadget-table-row,
+  .gadget-table[data-layout="fields"][data-verbs] .gadget-table-row { grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 10px 0 12px; }
+  .gadget-table[data-layout="fields"] .gadget-table-cell { display: grid; grid-template-columns: minmax(68px, 1fr) minmax(0, 172px); align-items: center; gap: 8px; min-height: 44px; }
+  .gadget-table[data-layout="fields"] .gadget-table-field-label { display: block; font: 400 13px / 1.4 var(--font-sans); }
+  .gadget-table[data-layout="fields"] .gadget-string { min-height: 46px; }
+  .gadget-table[data-layout="fields"] .gadget-string input { min-height: 44px; }
+  .gadget-table[data-layout="fields"] .gadget-string .desk-mic { width: 44px; height: 44px; }
+  .gadget-table[data-layout="fields"] .gadget-cycle select { min-height: 44px; }
+  .gadget-table[data-layout="fields"] .gadget-table-verbs { justify-content: flex-end; min-height: 44px; }
+  .gadget-table[data-layout="fields"] .gadget-table-verbs .btn { min-height: 44px; min-width: 80px; }
+}
