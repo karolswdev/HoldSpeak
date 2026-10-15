@@ -5,7 +5,7 @@
 // proposal text wraps, confirmed token in success color, suggested source
 // rows above existing sources.
 
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent, within } from "@testing-library/react";
 import { useState, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TitleSlotContext } from "../../../desk/surface/title";
@@ -493,7 +493,7 @@ describe("HS-172: No violations", () => {
 // (the Room's DECISIONS & COMMITMENTS row unfolds in place and holds its
 // record's well; the well's send is fenced in desk/surface/send/__tests__/SendWell.test.tsx)
 describe("PHILO-11-05a: a Room decision row holds its record's SEND well", () => {
-  it("the row unfolds in place; its well's document is decision_record:<the row's record id>", async () => {
+  it("the row unfolds in place; explicit Send opens one well for its decision_record", async () => {
     // The row's id is the record id (project_service.py: decisions items `id: rid`).
     const record = {
       id: "record-85f927aa", text: "Freeze the old ledger on Nov 3", at: "2026-09-05T09:41:00", url: null,
@@ -513,9 +513,16 @@ describe("PHILO-11-05a: a Room decision row holds its record's SEND well", () =>
     const row = await screen.findByTestId("decision-row");
     expect(document.querySelector("[data-seat=decision-record]")).toBeNull();
     fireEvent.click(row);
+    const fold = await screen.findByTestId("send-fold");
+    expect(fold.getAttribute("data-doc")).toBe("decision_record:record-85f927aa");
+    expect(screen.queryByTestId("send-well")).toBeNull();
+    expect(apiFetch.mock.calls.some(([url]) => String(url).startsWith("/api/channels/destinations"))).toBe(false);
+    fireEvent.click(within(fold).getByRole("button", { name: /^Send$/ }));
     await waitFor(() => expect(document.querySelector("[data-seat=decision-record] [data-testid=send-well]")).not.toBeNull(), { timeout: 5000 });
     expect(document.querySelector("[data-seat=decision-record] [data-testid=send-well]")?.getAttribute("data-doc"))
       .toBe("decision_record:record-85f927aa");
     expect(document.querySelectorAll("[data-testid=send-well]")).toHaveLength(1);
+    fireEvent.click(within(fold).getByRole("button", { name: /^Hide$/ }));
+    expect(screen.queryByTestId("send-well")).toBeNull();
   });
 });

@@ -107,3 +107,17 @@ The current graph join check passes with its 14 existing subtype notes.
 [Next surface findings](NEXT-SURFACES.md) records duplicate speech controls,
 repeated Send headings and weak record-context fact hierarchy. They remain
 open; the remaining product is not declared fully audited.
+
+## Wider release check
+
+The first complete quick check was red on one older Room test: **3763 web
+passed / 1 failed**, **651 Python passed**, **107 sweeps passed (2 existing
+xfails)**, **17 canon passed**. The shared record adapter also appears inside
+an expanded Room decision row; the old test expected its preview immediately.
+Root updated that test to assert the same exact record id, no destination read
+or preview before explicit Send, one well after Send, and Hide unmounting it.
+No product change, removed identity assertion, timeout increase or waiver.
+The exact Room file collected 16 cases and passed all 16 in 2.95s
+(`room-send-{collect,green}.log`). A final complete quick run follows.
+The Room host behavior is covered by these transport tests; no actual Room
+producer/browser navigation is claimed by the decision-reader walks.
