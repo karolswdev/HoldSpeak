@@ -4,9 +4,32 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-14 (Settings navigation and direct trials: #1203)
+**Last updated:** 2026-10-14 (Settings usability and Workbench revision: #1204)
 
 ## Current phase
+
+**Settings usability and Workbench revision — #1204 (2026-10-14).** One
+substantial release audits every Settings module and nested account/calendar/
+destination flow. The owner rejected the first visual pass; the revised build
+keeps native Workbench material with a uniform Work/Desk directory, readable
+type, paired wide groups, proportioned controls and paired phone choices.
+Accounts names providers/sites and opens setup commands explicitly. Drafts
+survive refusal and sign-in detours; parked paths wrap fully. Calendar names,
+identities, disabled sources and multiple calendars survive ordinary edits;
+assignment-aware GET/PUT avoids retired-selector refusal. Changed-path writes
+retain newest failed edits and Retry. Rhythm, Telegram and device preferences
+persist; read failures remain unknown rather than empty/ready.
+Final quick GREEN:3647web /1131affected Python /107desk sweeps (2existing xfails)
+/15canon; production build and frontend TypeScript pass. Root inspected actual
+18-state main and6-state Accounts/destination walks at1440/393, production
+calendar graph saves, long paths and phone hit ownership in isolated HOME/DB.
+Sol workers built; independent Sol source reviews RATIFY after bounded fixes.
+No Muad'Dib check or postmerge review is claimed. Open: owner live acceptance,
+real EventKit/provider sign-in/audio/model quality/external sends/scheduled
+firing. Already dropped calendars cannot be reconstructed; explicit native
+selection can refresh a blank name. Calendar refresh health still needs a
+latest-read fact; no framework was added. Full main tape remains separate.
+[Audit, rejection history, visual revision and exact proof](../docs/internal/SETTINGS-AUDIT-2026-10-14/README.md).
 
 **Settings navigation and direct trials — #1203 (2026-10-14).** The owner
 found Accounts/Engines could not open, a second Try confirmation, contradictory
