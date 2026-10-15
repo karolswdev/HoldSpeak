@@ -15,6 +15,7 @@ import {
   StringGadget,
   countToken,
   SurfaceLedgerRow,
+  SurfaceState,
 } from "../surface";
 import { apiFetch } from "../../lib/api";
 import { DICTATION_FAILURES, needsMicrophoneDoctor, type DictationFailure } from "../../lib/dictationRecovery";
@@ -212,7 +213,7 @@ function YouCard({ owner, folded }: { owner: ReturnType<typeof useOwnerName>; fo
       selected={owner.isSet}
       state={owner.isSet ? <StateChip state="success" label="SET" icon="●" /> : null}
     >
-      {folded ? (
+      {owner.loading || owner.readError ? <SurfaceState loading={owner.loading} error={owner.readError} onRetry={() => void owner.reload()} /> : folded ? (
         <>
           <span className="firstrun-owner">{owner.name}</span>
           {owner.aliases.length ? (
@@ -247,6 +248,7 @@ function YouCard({ owner, folded }: { owner: ReturnType<typeof useOwnerName>; fo
         <div className="firstrun-fail" role="alert">
           <StateChip state="failure" label="NOT SAVED" />
           <span className="firstrun-reason">{owner.error}</span>
+          <Button dense variant="secondary" onClick={() => void owner.flush()}>Retry</Button>
         </div>
       ) : null}
     </Card>

@@ -1,0 +1,49 @@
+.v2 { min-height:100vh; background:var(--desk-floor); }
+.v2-canvas-note { position:fixed; inset:auto 16px 10px; font:12px var(--font-mono); color:var(--text); }
+.desk-next .v2-body { padding:24px; }
+.v2-content { min-width:0; color:var(--text); font:13px/1.4 var(--font-sans); }
+.v2-content { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(280px,1fr); align-items:start; gap:20px 28px; width:100%; max-width:960px; margin:0; }
+.v2-content > h2 { grid-column:1 / -1; }
+.v2-account-column, .v2-destination-column { display:flex; flex-direction:column; min-width:0; gap:20px; }
+.v2-content > h2 { margin:0; font:600 15px/1.4 var(--font-sans); }
+.v2-content .surface-section, .v2-content .gadget-group { margin:0; }
+.v2-content .surface-ledger { margin:0; }
+.v2 .surface-ledger[data-cols="room"] .surface-ledger-row > .surface-ledger-line { display:grid; grid-template-columns:24px minmax(0,1fr) max-content max-content; gap:10px; padding:10px; min-height:72px; align-items:center; }
+.v2 .surface-ledger[data-cols="room"] .surface-ledger-line > .surface-ledger-lead { grid-column:1; grid-row:1; min-width:0; width:auto; }
+.v2 .surface-ledger[data-cols="room"] .surface-ledger-line > .surface-ledger-primary { grid-column:2; grid-row:1; min-width:0; width:auto; white-space:normal; }
+.v2 .surface-ledger[data-cols="room"] .surface-ledger-line > .surface-ledger-cells { grid-column:3; grid-row:1; min-width:0; margin:0; }
+.v2 .surface-ledger[data-cols="room"] .surface-ledger-line > .surface-ledger-trailing { grid-column:4; grid-row:1; margin:0; min-width:0; }
+.v2-identity { display:flex; flex-direction:column; gap:5px; min-width:0; }
+.v2-identity > strong { font:600 15px/1.3 var(--font-sans); }
+.v2-account { font:400 12px/1.4 var(--font-mono); color:var(--text-muted); overflow-wrap:anywhere; white-space:normal; }
+.v2-kind { font:400 12px/1.4 var(--font-mono); color:var(--text-muted); }
+.v2-initial { font:600 12px/1.4 var(--font-mono); color:var(--text-muted); }
+.v2-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; min-width:0; }
+.v2-section-actions { padding-top:10px; }
+.v2-well-head { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px; font:600 13px/1.4 var(--font-sans); }
+.v2-content .surface-ledger-open { padding:12px; }
+.v2-content .surface-well { margin:0; }
+.v2-content .gadget-row { grid-template-columns:108px minmax(0,1fr); min-height:40px; gap:12px; padding:6px 0; background:transparent; }
+.v2-content .gadget-row-label { font:400 13px/1.4 var(--font-sans); text-transform:none; letter-spacing:0; }
+.v2-content .gadget-row-gadget { min-width:0; width:100%; }
+.v2-content .gadget-string, .v2-content .gadget-pad { width:100%; max-width:none; }
+.v2-content .gadget-row-gadget > .gadget-string { flex:1; }
+.v2-command { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-block:8px 12px; }
+.v2-command > code { flex:1 1 200px; min-width:0; overflow-wrap:anywhere; font:400 12px/1.5 var(--font-mono); }
+.v2-outcome { margin-block:10px; font:400 13px/1.4 var(--font-sans); }
+.v2 .gadget-chip-egress { min-width:0; max-width:100%; white-space:normal; overflow-wrap:anywhere; }
+@container surface (max-width:920px) { .v2-content { grid-template-columns:minmax(0,1fr); } }
+@container surface (max-width:560px) {
+ .v2-content { gap:18px; }
+ .v2 .surface-ledger[data-cols="room"] .surface-ledger-row > .surface-ledger-line { grid-template-columns:24px minmax(0,1fr) max-content; gap:4px 8px; padding:6px 8px; }
+ .v2 .surface-ledger[data-cols="room"] .surface-ledger-line > .surface-ledger-lead { grid-column:1; grid-row:1; align-self:start; }
+ .v2 .surface-ledger[data-cols="room"] .surface-ledger-line > .surface-ledger-primary { grid-column:2 / -1; grid-row:1; }
+ .v2 .surface-ledger[data-cols="room"] .surface-ledger-line > .surface-ledger-cells { grid-column:2; grid-row:2; }
+ .v2 .surface-ledger[data-cols="room"] .surface-ledger-line > .surface-ledger-trailing { grid-column:3; grid-row:2; justify-self:end; }
+ .v2 .btn { min-height:44px; margin-block:0; }
+ .v2-identity { gap:2px; }
+ .v2-account { line-height:1.3; }
+ .v2-content .gadget-row { grid-template-columns:minmax(0,1fr); gap:5px; padding-block:8px; }
+ .v2-content .gadget-row:has(.gadget-check) { grid-template-columns:minmax(0,1fr) auto; }
+ .v2-well-head { align-items:flex-start; }
+}

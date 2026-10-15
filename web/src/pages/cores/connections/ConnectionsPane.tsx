@@ -6,12 +6,15 @@ import { wireDate } from "../../../desk/surface/format";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   GadgetGroup,
+  GadgetRow,
+  FoldGadget,
+  SurfaceLedger,
+  SurfaceLedgerRow,
+  SurfaceSection,
   StateChip,
   EgressChip,
-  Receipt,
   SurfaceWell,
   SurfaceState,
-  TransportKey,
   StringGadget,
   type ChipState,
 } from "../../../desk/surface";
@@ -22,8 +25,11 @@ import type {
   ConnectionState,
   JiraSubConnection,
 } from "./api";
-import { addAtlassianAccount, fetchConnections, recheckProvider } from "./api";
+import { ACCOUNTS_CHANGED, addAtlassianAccount, fetchConnections, recheckProvider } from "./api";
 import "./connections.css";
+import { CalendarCard as CalendarSetupCard } from "../../../desk/firstrun/CalendarCard";
+import { useCalendarStep } from "../../../desk/firstrun/calendarStep";
+import "../../../desk/firstrun/firstrun.css";
 
 /* ── State mapping (D1 + D6) ── */
 
@@ -99,15 +105,9 @@ export function stateWords(
   return age ? `${label} · ${age}` : label;
 }
 
-function toolTier(state: ConnectionState): string | undefined {
-  if (state === "connected") return "ok";
-  if (state === "owner_action_required") return "warn";
-  return undefined;
-}
-
-/** PHILO-17 U29: every row that is not ready shows its exact command and Copy. */
-function foldOpen(state: ConnectionState): boolean {
-  return state !== "connected" && state !== "signed_in";
+/** A producer-named sign-in or missing tool opens its details on request. */
+function needsDetails(state: ConnectionState): boolean {
+  return state === "owner_action_required" || state === "unavailable";
 }
 
 function formatTime(iso: string | undefined | null): string {
@@ -117,10 +117,6 @@ function formatTime(iso: string | undefined | null): string {
   } catch {
     return "";
   }
-}
-
-function siteInitial(site: string): string {
-  return (site[0] ?? "?").toUpperCase();
 }
 
 /* ── Calendar emblem: inline SVG outline, never emoji (HS-148-05 law) ── */
@@ -155,18 +151,21 @@ export function CommandWell({
 }: {
   hint: string;
 }) {
+  const [copy, setCopy] = useState<"Copy" | "Copied" | "Copy failed">("Copy");
   return (
     <SurfaceWell>
       <div className="connections-command-row">
         <code className="connections-command-code">{hint}</code>
-        <TransportKey
-          label="Copy"
-          glyph="C"
-          compact
+        <Button
+          dense
+          variant="secondary"
           onClick={() => {
-            try { void navigator.clipboard.writeText(hint); } catch { /* noop */ }
+            void (async () => {
+              try { await navigator.clipboard.writeText(hint); setCopy("Copied"); }
+              catch { setCopy("Copy failed"); }
+            })();
           }}
-        />
+        >{copy}</Button>
       </div>
     </SurfaceWell>
   );
@@ -184,7 +183,7 @@ export function SignInWell({
   tool: ConnectionTool;
   busy: boolean;
   onRecheck: () => void;
-  onAddAccount: (site: string, email: string) => void;
+  onAddAccount: (site: string, email: string) => void | Promise<void>;
 }) {
   const provider = tool.provider_id;
   const atlassian = provider === "jira" || provider === "confluence";
@@ -214,136 +213,52 @@ export function SignInWell({
 
 /* ── Tool cards ── */
 
-function GitHubCard({
-  tool,
-  onRecheck,
-  busy,
-  lead = false,
-}: {
-  tool: ConnectionTool;
-  onRecheck: () => void;
-  busy: boolean;
-  /** PHILO-17 REFIT: this row holds the window's one primary. */
-  lead?: boolean;
+function GitHubCard({ tool, onRecheck, busy, lead = false }: {
+  tool: ConnectionTool; onRecheck: () => void; busy: boolean; lead?: boolean;
 }) {
   const state = tool.state;
-  const showFold = foldOpen(state);
+  const details = needsDetails(state);
   const hint = tool.recovery_hint ?? "gh auth login";
   const [shown, setShown] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const copyHint = () => {
-    try { void navigator.clipboard.writeText(hint); } catch { /* noop */ }
-    setCopied(true);
+  const [copy, setCopy] = useState("Copy command");
+  const copyHint = async () => {
+    try { await navigator.clipboard.writeText(hint); setCopy("Copied"); }
+    catch { setCopy("Copy failed"); }
   };
-
-  return (
-    <div className="connections-tool-row" data-testid="connections-github" data-tier={toolTier(state)}>
-      <span className="connections-tool-identity">
-        <span className="connections-tool-emblem">GH</span>
-        <span className="connections-tool-label">GitHub</span>
-      </span>
-      {state === "connected" && tool.account?.login ? (
-        <span className="connections-tool-summary">{tool.account.login}</span>
-      ) : null}
-      <div className="connections-tool-chips">
-        <span title={state === "degraded" ? (tool.error_detail ?? undefined) : undefined}>
-          <StateChip
-            state={chipState(state)}
-            label={stateWords(state, "github", tool)}
-          />
-        </span>
-      </div>
-      {showFold ? (
-        <span className="connections-signin-word" data-testid="connections-github-signin">
-          {state === "unavailable" ? "Install gh" : "Sign in to GitHub"}
-        </span>
-      ) : null}
-      <div className="connections-tool-actions">
-        {showFold ? (
-          <>
-            {/* PHILO-17 REFIT: the sign-in is one compact row; the command
-                is copied by a verb and drawn only on demand. */}
-            <Button dense variant="ghost" onClick={copyHint} data-testid="connections-github-copy">
-              {copied ? "Copied" : "Copy command"}
-            </Button>
-            <Button dense variant="ghost" aria-expanded={shown} onClick={() => setShown((value) => !value)} data-testid="connections-github-show">
-              {shown ? "Hide" : "Show"}
-            </Button>
-          </>
-        ) : null}
-        <Button dense variant={showFold && lead ? "primary" : showFold ? "secondary" : "ghost"} onClick={onRecheck} loading={busy}>
-          Recheck
-        </Button>
-        <EgressChip label="GITHUB.COM" scope="cloud" />
-      </div>
-      {showFold && shown ? (
-        <code className="connections-signin-code" data-testid="connections-github-command">{hint}</code>
-      ) : null}
-    </div>
-  );
+  const check = <span className="connections-check-action"><EgressChip label="GITHUB.COM" scope="cloud"/><Button dense variant={lead ? "primary" : "secondary"} onClick={onRecheck} loading={busy}>{state === "degraded" ? "Retry" : "Recheck"}</Button></span>;
+  return <SurfaceLedgerRow data-testid="connections-github" wrap expands={false} open={details && shown}
+    lead={<span className="connections-tool-emblem">GH</span>}
+    primary={<span className="connections-tool-identity"><strong className="connections-tool-label">GitHub</strong>{tool.account?.login ? <span className="connections-tool-summary">{tool.account.login}</span> : null}</span>}
+    cells={<span className="surface-ledger-cells connections-tool-chips" title={state === "degraded" ? tool.error_detail : undefined}><StateChip state={chipState(state)} label={stateWords(state, "github", tool)}/></span>}
+    trailing={details ? <Button dense variant={lead ? "primary" : "secondary"} aria-expanded={shown} onClick={() => setShown(value => !value)} data-testid="connections-github-show">{shown ? "Close" : state === "owner_action_required" ? "Sign in" : "Details"}</Button> : check}>
+    <SurfaceWell><div className="connections-well-head"><strong>{state === "unavailable" ? "Install gh" : "Sign in to GitHub"}</strong></div><div className="connections-command-row"><code className="connections-command-code" data-testid="connections-github-command">{hint}</code><Button dense variant="secondary" onClick={() => void copyHint()} data-testid="connections-github-copy">{copy}</Button></div><div className="connections-fold-actions">{check}</div></SurfaceWell>
+  </SurfaceLedgerRow>;
 }
 
-/* PHILO-4-01 r4: an acli host chip. The row label shows the full host, so
-   this chip (and only this kind) may truncate; title carries the full host
-   so the chip never inherits EgressChip's "route not set" default. */
 function HostChip({ site }: { site: string }) {
-  return (
-    <EgressChip
-      label={site.toUpperCase()}
-      scope="cloud"
-      className="gadget-chip-truncate"
-      title={site}
-    />
-  );
+  return <EgressChip label={site.toUpperCase()} scope="cloud" title={site}/>;
 }
 
-function JiraConnectionRow({
-  conn,
-  onRecheck,
-  busy,
-}: {
-  conn: JiraSubConnection;
-  onRecheck: () => void;
-  busy: boolean;
+function AccountEmail({ email }: { email: string }) {
+  const at = email.indexOf("@");
+  return <span className="connections-tool-summary">{at < 0 ? email : <>{email.slice(0, at + 1)}<wbr/>{email.slice(at + 1)}</>}</span>;
+}
+
+function AtlassianConnectionRow({ provider, conn, onRecheck, busy, open, onToggle }: {
+  provider: "jira" | "confluence"; conn: JiraSubConnection; onRecheck: () => void; busy: boolean; open: boolean; onToggle: () => void;
 }) {
   const state = conn.state;
-  const showFold = foldOpen(state);
-  const hint = conn.recovery_hint ?? `acli jira auth login --site ${conn.account.site} --email ${conn.account.email} --token`;
-  const site = conn.account.site;
-
-  return (
-    <div className="connections-tool-row" data-testid={`connections-jira-conn-${conn.connection_ref}`} data-tier={toolTier(state)}>
-      <span className="connections-tool-identity">
-        <span className="connections-tool-emblem">{siteInitial(site)}</span>
-        <span className="connections-tool-label">{site}</span>
-      </span>
-      <span className="connections-tool-summary">{conn.account.email}</span>
-      <div className="connections-tool-chips">
-        <StateChip state={chipState(state)} label={stateWords(state, "jira", conn)} />
-      </div>
-      <div className="connections-tool-actions">
-        {!showFold ? (
-          <>
-            <Button dense variant="ghost" onClick={onRecheck} loading={busy}>
-              Recheck
-            </Button>
-            <HostChip site={site} />
-          </>
-        ) : null}
-      </div>
-      {showFold ? (
-        <div className="connections-fold">
-          <CommandWell hint={hint} />
-          <div className="connections-fold-actions">
-            <Button dense variant="secondary" onClick={onRecheck} loading={busy}>
-              Recheck
-            </Button>
-            <HostChip site={site} />
-          </div>
-        </div>
-      ) : null}
-    </div>
-  );
+  const details = needsDetails(state);
+  const name = provider === "jira" ? "Jira" : "Confluence";
+  const hint = conn.recovery_hint ?? `acli ${provider} auth login --site ${conn.account.site} --email ${conn.account.email} --token`;
+  const check = <span className="connections-check-action"><HostChip site={conn.account.site}/><Button dense variant="secondary" onClick={onRecheck} loading={busy}>{state === "degraded" ? "Retry" : "Recheck"}</Button></span>;
+  return <SurfaceLedgerRow data-testid={`connections-${provider}-conn-${conn.connection_ref}`} wrap expands={false} open={details && open}
+    lead={<span className="connections-tool-emblem">{name[0]}</span>}
+    primary={<span className="connections-tool-identity"><strong className="connections-tool-label">{name}</strong><AccountEmail email={conn.account.email}/>{details && !open ? <span className="connections-tool-summary">{conn.account.site}</span> : null}</span>}
+    cells={<span className="surface-ledger-cells connections-tool-chips"><StateChip state={chipState(state)} label={stateWords(state, provider, conn)}/></span>}
+    trailing={details ? <Button dense variant="secondary" aria-expanded={open} onClick={onToggle}>{open ? "Close" : state === "owner_action_required" ? "Sign in" : "Details"}</Button> : check}>
+    <SurfaceWell><div className="connections-well-head"><strong>{state === "unavailable" ? "Install acli" : `Sign in to ${name}`}</strong></div><CommandWell hint={hint}/><div className="connections-fold-actions">{check}</div></SurfaceWell>
+  </SurfaceLedgerRow>;
 }
 
 /** PHILO-17 U29: the Add for a Jira or Confluence account: Site, Email, the
@@ -353,23 +268,33 @@ export function AddAccountFields({
   provider,
   onAdd,
   busy = false,
+  compact = false,
+  onCancel,
 }: {
   provider: "jira" | "confluence";
-  onAdd: (site: string, email: string) => void;
+  onAdd: (site: string, email: string) => void | Promise<void>;
   busy?: boolean;
+  compact?: boolean;
+  onCancel?: () => void;
 }) {
   const [site, setSite] = useState("");
   const [email, setEmail] = useState("");
+  const [failed, setFailed] = useState(false);
+  const [saving, setSaving] = useState(false);
   const s = site.trim();
   const e = email.trim();
-  const add = () => {
-    if (!s || !e) return;
-    onAdd(s, e);
-    setSite("");
-    setEmail("");
+  const add = async () => {
+    if (!s || !e || saving) return;
+    setSaving(true); setFailed(false);
+    try {
+      await onAdd(s, e);
+      setSite(""); setEmail("");
+    } catch { setFailed(true); }
+    finally { setSaving(false); }
   };
   return (
     <div className="connections-jira-ghost-fields" data-testid={`connections-add-${provider}`}>
+      {compact ? <GadgetGroup><GadgetRow wide label="Site"><StringGadget label="Site" value={site} onChange={setSite} placeholder="site.atlassian.net"/></GadgetRow><GadgetRow wide label="Email"><StringGadget label="Email" value={email} onChange={setEmail} placeholder="you@example.com"/></GadgetRow></GadgetGroup> : <>
       <label className="connections-field-label">
         <span className="connections-field-label-text">Site</span>
         <StringGadget label="Site" value={site} onChange={setSite} placeholder="site.atlassian.net" />
@@ -379,209 +304,69 @@ export function AddAccountFields({
         <StringGadget label="Email" value={email} onChange={setEmail} placeholder="email" />
       </label>
       <CommandWell hint={`acli ${provider} auth login --site ${s || "<site>"} --email ${e || "<email>"} --token`} />
+      </>}
       <div className="connections-jira-add-row">
-        <Button dense variant="ghost" disabled={!s || !e} loading={busy} onClick={add}>
-          Add
+        <Button dense variant="secondary" disabled={!s || !e || busy} loading={saving} onClick={() => void add()}>
+          {failed ? "Retry" : "Add"}
         </Button>
+        {onCancel ? <Button dense variant="ghost" onClick={onCancel}>Cancel</Button> : null}
+        {failed ? <StateChip state="failure" label="Account not added" /> : null}
       </div>
+      {compact ? <FoldGadget title="Sign-in command"><CommandWell hint={`acli ${provider} auth login --site ${s || "<site>"} --email ${e || "<email>"} --token`}/></FoldGadget> : null}
     </div>
   );
 }
 
-/** PHILO-17 REFIT: an account with no row yet shows one verb, Add account;
- *  the Site and Email fields and the sign-in command unfold under it. */
-function AddAccountFold({
-  provider,
-  onAdd,
-  busy,
-}: {
-  provider: "jira" | "confluence";
-  onAdd: (site: string, email: string) => void;
-  busy: boolean;
+function AtlassianCards({ tool, onRecheck, onAddAccount, busyRef }: {
+  tool: ConnectionTool; onRecheck: (ref?: string) => void;
+  onAddAccount: (site: string, email: string) => void | Promise<void>; busyRef: string | null;
 }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <>
-      <div className="connections-tool-actions">
-        <Button dense variant="ghost" aria-expanded={open} onClick={() => setOpen((value) => !value)} data-testid={`connections-add-open-${provider}`}>
-          {open ? "Cancel" : "Add account"}
-        </Button>
-      </div>
-      {open ? <AddAccountFields provider={provider} onAdd={onAdd} busy={busy} /> : null}
-    </>
-  );
-}
-
-function JiraCards({
-  tool,
-  onRecheck,
-  onAddAccount,
-  busyRef,
-}: {
-  tool: ConnectionTool;
-  onRecheck: (ref?: string) => void;
-  onAddAccount: (site: string, email: string) => void;
-  busyRef: string | null;
-}) {
+  const provider = tool.provider_id as "jira" | "confluence";
+  const name = provider === "jira" ? "Jira" : "Confluence";
   const connections = tool.connections ?? [];
-  const hasConnections = connections.length > 0;
-
-  // With zero connections: the ghost "Add account" card IS the Jira card
-  if (!hasConnections) {
-    return (
-      <div className="connections-tool-row connections-jira-ghost" data-testid="connections-jira" data-tier={undefined}>
-        <span className="connections-tool-identity">
-          <span className="connections-tool-emblem">J</span>
-          <span className="connections-tool-label">Jira</span>
-        </span>
-        <div className="connections-tool-chips">
-          {/* PHILO-9-02 B1 (Codex Astra r1 finding 7): the empty card says the tool's own state. */}
-          <StateChip state={chipState(tool.state)} label={stateWords(tool.state, "jira", tool)} />
-        </div>
-        <AddAccountFold provider="jira" busy={busyRef === "jira"} onAdd={onAddAccount} />
-      </div>
-    );
-  }
-
-  // With connections: one row per connection
-  return (
-    <>
-      {connections.map((conn) => (
-        <JiraConnectionRow
-          key={conn.connection_ref}
-          conn={conn}
-          onRecheck={() => onRecheck(conn.connection_ref)}
-          busy={busyRef === conn.connection_ref}
-        />
-      ))}
-    </>
-  );
-}
-
-/* ── HS-174-07: Confluence connection rows (same grammar as Jira) ── */
-
-function ConfluenceConnectionRow({
-  conn,
-  onRecheck,
-  busy,
-}: {
-  conn: JiraSubConnection;
-  onRecheck: () => void;
-  busy: boolean;
-}) {
-  const state = conn.state;
-  const showFold = foldOpen(state);
-  const hint = conn.recovery_hint ?? `acli confluence auth login --site ${conn.account.site} --email ${conn.account.email} --token`;
-  const site = conn.account.site;
-
-  return (
-    <div className="connections-tool-row" data-testid={`connections-confluence-conn-${conn.connection_ref}`} data-tier={toolTier(state)}>
-      <span className="connections-tool-identity">
-        <span className="connections-tool-emblem">{siteInitial(site)}</span>
-        <span className="connections-tool-label">{site}</span>
-      </span>
-      <span className="connections-tool-summary">{conn.account.email}</span>
-      <div className="connections-tool-chips">
-        <StateChip state={chipState(state)} label={stateWords(state, "confluence", conn)} />
-      </div>
-      <div className="connections-tool-actions">
-        {!showFold ? (
-          <>
-            <Button dense variant="ghost" onClick={onRecheck} loading={busy}>
-              Recheck
-            </Button>
-            <HostChip site={site} />
-          </>
-        ) : null}
-      </div>
-      {showFold ? (
-        <div className="connections-fold">
-          <CommandWell hint={hint} />
-          <div className="connections-fold-actions">
-            <Button dense variant="secondary" onClick={onRecheck} loading={busy}>
-              Recheck
-            </Button>
-            <HostChip site={site} />
-          </div>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function ConfluenceCards({
-  tool,
-  onRecheck,
-  onAddAccount,
-  busyRef,
-}: {
-  tool: ConnectionTool;
-  onRecheck: (ref?: string) => void;
-  onAddAccount: (site: string, email: string) => void;
-  busyRef: string | null;
-}) {
-  const connections = tool.connections ?? [];
-
-  if (connections.length === 0) {
-    return (
-      <div className="connections-tool-row connections-jira-ghost" data-testid="connections-confluence" data-tier={undefined}>
-        <span className="connections-tool-identity">
-          <span className="connections-tool-emblem">C</span>
-          <span className="connections-tool-label">Confluence</span>
-        </span>
-        <div className="connections-tool-chips">
-          <StateChip state={chipState(tool.state)} label={stateWords(tool.state, "confluence", tool)} />
-        </div>
-        <AddAccountFold provider="confluence" busy={busyRef === "confluence"} onAdd={onAddAccount} />
-      </div>
-    );
-  }
-
-  return (
-    <>
-      {connections.map((conn) => (
-        <ConfluenceConnectionRow
-          key={conn.connection_ref}
-          conn={conn}
-          onRecheck={() => onRecheck(conn.connection_ref)}
-          busy={busyRef === conn.connection_ref}
-        />
-      ))}
-    </>
-  );
+  const [well, setWell] = useState<string | null>(null);
+  const addButton = <Button dense variant="ghost" aria-expanded={well === "add"} onClick={() => setWell(value => value === "add" ? null : "add")} data-testid={`connections-add-open-${provider}`}>{well === "add" ? "Cancel" : connections.length ? `Add ${name} account` : "Add account"}</Button>;
+  const form = <SurfaceWell><div className="connections-well-head"><strong>Add {name} account</strong></div><AddAccountFields compact provider={provider} onAdd={onAddAccount} busy={busyRef === provider} onCancel={() => setWell(null)}/></SurfaceWell>;
+  if (!connections.length) return <SurfaceLedgerRow data-testid={`connections-${provider}`} wrap expands={false} open={well === "add"}
+    lead={<span className="connections-tool-emblem">{name[0]}</span>}
+    primary={<span className="connections-tool-identity"><strong className="connections-tool-label">{name}</strong></span>}
+    cells={<span className="surface-ledger-cells connections-tool-chips"><StateChip state={chipState(tool.state)} label={stateWords(tool.state, provider, tool)}/></span>}
+    trailing={addButton}>{form}</SurfaceLedgerRow>;
+  return <>
+    {connections.map(conn => <AtlassianConnectionRow key={conn.connection_ref} provider={provider} conn={conn} onRecheck={() => onRecheck(conn.connection_ref)} busy={busyRef === conn.connection_ref} open={well === conn.connection_ref} onToggle={() => setWell(value => value === conn.connection_ref ? null : conn.connection_ref)}/>)}
+    <li className="connections-add-account">{addButton}<div hidden={well !== "add"} style={{ flex: "1 0 100%", minWidth: 0 }}>{form}</div></li>
+  </>;
 }
 
 function CalendarCard({
   tool,
   onOpen,
+  onChoose,
 }: {
   tool: ConnectionTool | undefined;
   onOpen: () => void;
+  onChoose: () => void;
 }) {
   const sources = tool?.account?.sources;
   const isConnected = tool?.state === "connected";
   const state: ChipState = isConnected ? "success" : "idle";
   const label = isConnected ? "Connected" : "Not set up";
-  const summary = isConnected && sources != null ? `${sources} sources` : undefined;
+  const summary = isConnected && sources ? `${sources} sources` : undefined;
   const verb = isConnected ? "Sources" : "Set up";
 
-  return (
-    <div className="connections-tool-row" data-testid="connections-calendar">
-      <span className="connections-tool-identity">
-        <CalendarEmblem />
-        <span className="connections-tool-label">Calendar</span>
-      </span>
-      {summary ? <span className="connections-tool-summary">{summary}</span> : null}
-      <div className="connections-tool-chips">
-        <StateChip state={state} label={label} />
-      </div>
-      <div className="connections-tool-actions">
-        <Button dense variant="ghost" onClick={onOpen}>
-          {verb}
-        </Button>
-      </div>
-    </div>
-  );
+  return <SurfaceLedgerRow data-testid="connections-calendar" wrap expands={false}
+    lead={<CalendarEmblem/>}
+    primary={<span className="connections-tool-identity"><strong className="connections-tool-label">Calendar</strong>{summary ? <span className="connections-tool-summary">{summary}</span> : null}</span>}
+    cells={<span className="surface-ledger-cells connections-tool-chips"><StateChip state={state} label={label}/></span>}
+    trailing={<span className="connections-tool-actions">{isConnected ? <Button dense variant="ghost" onClick={onOpen}>{verb}</Button> : null}<Button dense variant="secondary" onClick={onChoose}>Choose calendar</Button></span>}/>;
+}
+
+function CalendarChooser({ onCalendarChanged, onBeforeCalendarChange }: {
+  onCalendarChanged?: () => Promise<void>;
+  onBeforeCalendarChange?: () => Promise<boolean>;
+}) {
+  const step = useCalendarStep();
+  return <div className="connections-calendar-setup"><CalendarSetupCard step={step} lit={false} reselectNative onUsed={onCalendarChanged} beforeUse={onBeforeCalendarChange} /></div>;
 }
 
 function ModelsCard({
@@ -606,24 +391,7 @@ function ModelsCard({
       ? `Summaries · ${summaryHost}`
       : "Unassigned";
 
-  return (
-    <div className="connections-tool-row" data-testid="connections-models">
-      <span className="connections-tool-identity">
-        <span className="connections-tool-emblem">M</span>
-        {/* PHILO-17 REFIT: one name for the engines window, Runs on. */}
-        <span className="connections-tool-label">Runs on</span>
-      </span>
-      {summary !== label ? <span className="connections-tool-summary">{summary}</span> : null}
-      <div className="connections-tool-chips">
-        <StateChip state={state} label={label} />
-      </div>
-      <div className="connections-tool-actions">
-        <Button dense variant="ghost" onClick={onOpen}>
-          Choose engines
-        </Button>
-      </div>
-    </div>
-  );
+  return <div className="connections-engines" data-testid="connections-models"><span className="connections-tool-label">Runs on</span>{summary !== label ? <span className="connections-tool-summary">{summary}</span> : <StateChip state={state} label={label}/>}<Button dense variant="ghost" onClick={onOpen}>Choose engines</Button></div>;
 }
 
 /* ── ConnectionsPane ── */
@@ -637,6 +405,8 @@ export function ConnectionsPane({
   onFooterUpdate,
   onOpenModule,
   focusProvider,
+  onCalendarChanged,
+  onBeforeCalendarChange,
 }: {
   /** Lifts the connections receipt to the parent footer. */
   onFooterUpdate: (foot: ConnectionsFoot) => void;
@@ -645,11 +415,16 @@ export function ConnectionsPane({
   /** PHILO-17 (needsyou): the provider to bring into view and focus
    *  (`github`, `jira`, `confluence`): Needs you's Reconnect lands here. */
   focusProvider?: string | null;
+  onCalendarChanged?: () => Promise<void>;
+  onBeforeCalendarChange?: () => Promise<boolean>;
 }) {
   const [data, setData] = useState<ConnectionsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | undefined>(undefined);
   const [recheckBusy, setRecheckBusy] = useState<string | null>(null);
+  const [checkFailed, setCheckFailed] = useState<string | null>(null);
+  const [calendarOpen, setCalendarOpen] = useState(focusProvider === "calendar");
+  useEffect(() => { if (focusProvider === "calendar") setCalendarOpen(true); }, [focusProvider]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -671,18 +446,19 @@ export function ConnectionsPane({
         egressHost: lastEgress,
         checkedAt: lastChecked ? formatTime(lastChecked) : undefined,
       });
-    } catch (err) {
-      setError(
-        err instanceof Error && err.message
-          ? `Connections did not load from this hub (${err.message}). Nothing changed. Retry.`
-          : "Connections did not load from this hub. Nothing changed. Retry.",
-      );
+    } catch {
+      setError("Accounts could not be read");
     } finally {
       setLoading(false);
     }
   }, [onFooterUpdate]);
 
   useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    const read = () => void load();
+    window.addEventListener(ACCOUNTS_CHANGED, read);
+    return () => window.removeEventListener(ACCOUNTS_CHANGED, read);
+  }, [load]);
 
   // PHILO-17 (needsyou): Reconnect opens on the provider's row, focused.
   const anchorRef = useRef<HTMLSpanElement>(null);
@@ -700,21 +476,25 @@ export function ConnectionsPane({
 
   const handleRecheck = useCallback(async (providerId: string, subRef?: string) => {
     setRecheckBusy(subRef ?? providerId);
+    setCheckFailed(null);
     try {
       const updated = await recheckProvider(providerId);
-      if (updated && data) {
-        setData({
-          tools: data.tools.map((t) =>
+      if (!updated) throw new Error("No check result");
+      if (data) {
+        setData((current) => current ? ({
+          tools: current.tools.map((t) =>
             t.provider_id === providerId ? updated : t
           ),
-        });
+        }) : current);
         const checkedAt = updated.last_checked_at ? formatTime(updated.last_checked_at) : undefined;
         onFooterUpdate({
           egressHost: updated.egress_host,
           checkedAt,
         });
       }
-    } finally {
+      window.dispatchEvent(new Event(ACCOUNTS_CHANGED));
+    } catch { setCheckFailed(providerId); }
+    finally {
       setRecheckBusy(null);
     }
   }, [data, onFooterUpdate]);
@@ -722,11 +502,12 @@ export function ConnectionsPane({
   // PHILO-17 U29: an added account is checked at once (never left NEVER CHECKED).
   const handleAddAccount = useCallback(async (provider: "jira" | "confluence", site: string, email: string) => {
     setRecheckBusy(provider);
+    setCheckFailed(null);
     try {
       await addAtlassianAccount(provider, site, email);
-      await recheckProvider(provider);
-    } catch {
-      // The add failed; the card shows the state unchanged.
+      window.dispatchEvent(new Event(ACCOUNTS_CHANGED));
+      try { await recheckProvider(provider); }
+      catch { setCheckFailed(provider); }
     } finally {
       setRecheckBusy(null);
       void load();
@@ -748,44 +529,50 @@ export function ConnectionsPane({
   const calendar = tools.find((t) => t.provider_id === "calendar");
   const models = tools.find((t) => t.provider_id === "models");
 
-  const toolCount = tools.length || 5; // D1: always 5 if the wire returns them (GH, Jira, Confluence, Calendar, Models)
-
-  void toolCount;
   return (
-    <GadgetGroup label="Accounts">
+    <div className="connections-pane prefs-column">
       <span ref={anchorRef} hidden />
+      {error ? <SurfaceState error={error} onRetry={() => void load()} /> : null}
+      {checkFailed ? <div className="connections-check-failed" role="alert"><span>{checkFailed === "github" ? "GitHub" : checkFailed === "jira" ? "Jira" : "Confluence"}</span><StateChip state="failure" label="Check failed" /><Button dense variant="secondary" onClick={() => void handleRecheck(checkFailed)}>Retry</Button></div> : null}
+      <SurfaceSection label="Services"><SurfaceLedger cols="accounts"><ul className="surface-ledger-rows connections-services">
       {github ? (
         <GitHubCard
           tool={github}
           onRecheck={() => void handleRecheck("github")}
           busy={recheckBusy === "github"}
-          lead={foldOpen(github.state)}
+          lead={github.state !== "connected" && github.state !== "signed_in"}
         />
       ) : null}
       {jira ? (
-        <JiraCards
+        <AtlassianCards
           tool={jira}
           onRecheck={(ref) => void handleRecheck("jira", ref)}
-          onAddAccount={(site, email) => void handleAddAccount("jira", site, email)}
+          onAddAccount={(site, email) => handleAddAccount("jira", site, email)}
           busyRef={recheckBusy}
         />
       ) : null}
       {confluence ? (
-        <ConfluenceCards
+        <AtlassianCards
           tool={confluence}
           onRecheck={(ref) => void handleRecheck("confluence", ref)}
-          onAddAccount={(site, email) => void handleAddAccount("confluence", site, email)}
+          onAddAccount={(site, email) => handleAddAccount("confluence", site, email)}
           busyRef={recheckBusy}
         />
       ) : null}
+      </ul></SurfaceLedger></SurfaceSection>
+      <SurfaceSection label="Calendar"><SurfaceLedger cols="accounts"><ul className="surface-ledger-rows">
       <CalendarCard
         tool={calendar}
         onOpen={() => onOpenModule("meetings")}
+        onChoose={() => setCalendarOpen((value) => !value)}
       />
+      </ul></SurfaceLedger>
+      {calendarOpen ? <CalendarChooser onCalendarChanged={async () => { await onCalendarChanged?.(); await load(); }} onBeforeCalendarChange={onBeforeCalendarChange} /> : null}
+      </SurfaceSection>
       <ModelsCard
         tool={models}
         onOpen={() => onOpenModule("models")}
       />
-    </GadgetGroup>
+    </div>
   );
 }

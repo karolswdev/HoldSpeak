@@ -3,6 +3,8 @@
 
 import { apiFetch } from "../../../lib/api";
 
+export const ACCOUNTS_CHANGED = "holdspeak:accounts-changed";
+
 /* ── Wire types (D6) ── */
 
 export type ConnectionState =
@@ -156,12 +158,11 @@ export function decodeConnectionsResponse(raw: unknown): ConnectionsResponse {
 /* ── API calls ── */
 
 export async function fetchConnections(): Promise<ConnectionsResponse> {
-  try {
-    const raw = await apiFetch("/api/connections");
-    return decodeConnectionsResponse(raw);
-  } catch {
-    return { tools: [] };
+  const raw = await apiFetch("/api/connections");
+  if (!raw || typeof raw !== "object" || !Array.isArray((raw as { tools?: unknown }).tools)) {
+    throw new Error("Accounts could not be read");
   }
+  return decodeConnectionsResponse(raw);
 }
 
 /** PHILO-17 U29: add a Jira or Confluence account (site, email); the caller
@@ -171,12 +172,8 @@ export async function addAtlassianAccount(providerId: "jira" | "confluence", sit
 }
 
 export async function recheckProvider(providerId: string): Promise<ConnectionTool | null> {
-  try {
-    const raw = await apiFetch(`/api/connections/${providerId}/recheck`, {
-      method: "POST",
-    });
-    return decodeTool(raw) ?? null;
-  } catch {
-    return null;
-  }
+  const raw = await apiFetch(`/api/connections/${providerId}/recheck`, { method: "POST" });
+  const tool = decodeTool(raw);
+  if (!tool) throw new Error("Check returned no account");
+  return tool;
 }

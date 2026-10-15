@@ -45,9 +45,9 @@ vi.mock("../ContextualAssignment", () => ({
 const WELL_INPUT = { name: "Calendar URL or file path" };
 
 // HS-175-03: the 146-era GadgetTable became SurfaceLedgerRows (one per
-// source: StateChip · label · ICS/SNAPSHOT · host EgressChip or THIS
-// DEVICE · verbs Edit / Disable|Enable / Remove) with ONE connect well
-// under the Connect calendar row (Add) or under a source row (Edit).
+// source: StateChip · label · Calendar feed / Snapshot · external host.
+// Edit unfolds Name and a feed URL; Enable/Disable and Remove live in that
+// well. Add feed uses the same well; Import image retains the snapshot path.
 // Every behaviour the old group protected is asserted below on the new DOM.
 //
 // replaces: tests/e2e/test_hs175_settings_meetings_glass.py::TestSettingsCalendarSection::test_calendar_section
@@ -66,11 +66,13 @@ describe("Meetings calendar source rows", () => {
     render(<SettingsCore scope="meetings" />);
     const work = screen.getByTestId("calendar-source-src-work");
     expect(within(work).getByText("Work")).toBeInTheDocument();
-    expect(within(work).getByText("ICS")).toBeInTheDocument();
+    expect(within(work).getByText("Calendar feed")).toBeInTheDocument();
     expect(within(work).getByRole("status")).toHaveAttribute("data-state", "idle");
     expect(within(work).getByRole("button", { name: "Edit" })).toBeInTheDocument();
-    expect(within(work).getByRole("button", { name: "Disable" })).toBeInTheDocument();
-    expect(within(work).getByRole("button", { name: "Remove" })).toBeInTheDocument();
+    fireEvent.click(within(work).getByRole("button", { name: "Edit" }));
+    const workRow = work.closest(".surface-ledger-row") as HTMLElement;
+    expect(within(workRow).getByRole("button", { name: "Disable" })).toBeInTheDocument();
+    expect(within(workRow).getByRole("button", { name: "Remove" })).toBeInTheDocument();
 
     const personal = screen.getByTestId("calendar-source-src-personal");
     expect(within(personal).getByText("Personal")).toBeInTheDocument();
@@ -79,7 +81,8 @@ describe("Meetings calendar source rows", () => {
     // A disabled source: idle StateChip, muted label, Enable verb.
     expect(within(personal).getByRole("status")).toHaveAttribute("data-state", "idle");
     expect(within(personal).getByText("Personal")).toHaveAttribute("data-muted", "true");
-    expect(within(personal).getByRole("button", { name: "Enable" })).toBeInTheDocument();
+    fireEvent.click(within(personal).getByRole("button", { name: "Edit" }));
+    expect(within(personal.closest(".surface-ledger-row") as HTMLElement).getByRole("button", { name: "Enable" })).toBeInTheDocument();
 
     // The one text well carries the mic (the voice law).
     fireEvent.click(screen.getByTestId("calendar-add-btn"));
@@ -89,8 +92,7 @@ describe("Meetings calendar source rows", () => {
 
   it("names the host on the HTTPS source's egress chip and wears NO chip on the file source (absence is the signal)", () => {
     // HS-175 counsel C9 (H2-2): egress where egress happens; a file source
-    // carries no reassurance chip -- THIS DEVICE belongs to the SNAPSHOT
-    // verb, where a model runs.
+    // carries no reassurance chip; local snapshot models also omit it.
     render(<SettingsCore scope="meetings" />);
     const chip = screen.getByText("work.example");
     expect(chip).toHaveClass("gadget-chip-egress");
@@ -177,14 +179,16 @@ describe("Meetings calendar source rows", () => {
       await vi.advanceTimersByTimeAsync(700);
     });
     const stillOpen = screen.getByTestId("calendar-well");
-    expect(within(stillOpen).getByRole("status")).toHaveAttribute("data-state", "failure");
-    expect(stillOpen.textContent).toContain("must be a file path or HTTPS URL");
+    expect(within(stillOpen).getByRole("alert")).toHaveTextContent("Not saved");
+    expect(within(stillOpen).getByRole("textbox", WELL_INPUT)).toHaveValue("ftp://nope.example/cal.ics");
+    expect(screen.getByTestId("settings-save-failure")).toHaveTextContent("must be a file path or HTTPS URL");
   });
 
   it("removes a source after the in-world confirm step (never a modal)", async () => {
     render(<SettingsCore scope="meetings" />);
     const work = screen.getByTestId("calendar-source-src-work");
-    fireEvent.click(within(work).getByRole("button", { name: "Remove" }));
+    fireEvent.click(within(work).getByRole("button", { name: "Edit" }));
+    fireEvent.click(within(work.closest(".surface-ledger-row") as HTMLElement).getByRole("button", { name: "Remove" }));
     const confirm = screen.getByTestId("calendar-remove-confirm");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(within(confirm).getByRole("button", { name: "Cancel" })).toBeInTheDocument();
@@ -205,7 +209,8 @@ describe("Meetings calendar source rows", () => {
   it("toggles a source's enabled state through the sources wire", async () => {
     render(<SettingsCore scope="meetings" />);
     const personal = screen.getByTestId("calendar-source-src-personal");
-    fireEvent.click(within(personal).getByRole("button", { name: "Enable" }));
+    fireEvent.click(within(personal).getByRole("button", { name: "Edit" }));
+    fireEvent.click(within(personal.closest(".surface-ledger-row") as HTMLElement).getByRole("button", { name: "Enable" }));
     await act(async () => {
       await vi.advanceTimersByTimeAsync(700);
     });
@@ -231,7 +236,7 @@ describe("Snapshot verb refusal (HS-147-05)", () => {
 
   afterEach(() => vi.useRealTimers());
 
-  it("surfaces a 422 upload refusal in the status bar", async () => {
+  it("surfaces a 422 upload refusal in the body with a short footer outcome", async () => {
     render(<SettingsCore scope="meetings" />);
 
     // Intercept the dynamically created file input
@@ -254,8 +259,7 @@ describe("Snapshot verb refusal (HS-147-05)", () => {
       return Promise.resolve({ settings: { ...settings, _revision: "calendar-r2" } });
     });
 
-    // Click the Snapshot verb on the Connect calendar row
-    fireEvent.click(screen.getByRole("button", { name: "Snapshot" }));
+    fireEvent.click(screen.getByRole("button", { name: "Import image" }));
 
     expect(capturedInput).not.toBeNull();
     expect(capturedInput!.type).toBe("file");
@@ -274,9 +278,11 @@ describe("Snapshot verb refusal (HS-147-05)", () => {
       await vi.advanceTimersByTimeAsync(100);
     });
 
-    // The refusal should appear in the status bar (role="alert")
-    const alert = screen.getByRole("alert");
+    const alert = screen.getByTestId("settings-save-failure");
+    expect(alert).toHaveAttribute("role", "alert");
     expect(alert.textContent).toContain("unsupported type");
+    expect(document.querySelector(".surface-footer-receipt")?.textContent).toContain("Not saved");
+    expect(document.querySelector(".surface-footer-receipt")?.textContent).not.toContain("unsupported type");
   });
 });
 
@@ -313,8 +319,8 @@ describe("calendarSourceEgressChips", () => {
 });
 
 // HS-175 counsel C8 / C9(b) / C10 on the Settings rows: N EVENTS, LAST READ in
-// the viewer's clock, the snapshot's egress chip beside Snapshot, Edit
-// withheld on the SNAPSHOT row.
+// the viewer's clock, the snapshot's egress chip beside Import image,
+// and an editable snapshot name with its generated path kept read-only.
 describe("HS-175 counsel: honest tokens on the calendar rows", () => {
   const snapshotSettings: SettingsResponse = {
     ...settings,
@@ -363,24 +369,40 @@ describe("HS-175 counsel: honest tokens on the calendar rows", () => {
     expect(within(work).getByTestId("calendar-source-last-read").textContent).toBe(`LAST READ ${expected}`);
   });
 
-  it("wears the vision model's egress chip beside Snapshot BEFORE any upload", async () => {
+  it("wears the vision model's egress chip beside Import image BEFORE any upload", async () => {
     render(<SettingsCore scope="meetings" />);
     await act(async () => { await vi.advanceTimersByTimeAsync(10); });
-    const chip = screen.getByTestId("calendar-snapshot-egress").querySelector(".gadget-chip-egress") as HTMLElement;
+    const importAction = screen.getByRole("button", { name: "Import image" });
+    const chip = within(importAction.parentElement!).getByText("192.168.1.43");
     expect(chip).not.toBeNull();
+    expect(chip).toHaveClass("gadget-chip-egress");
     expect(chip).toHaveAttribute("data-scope", "mixed");
     expect(chip.textContent).toBe("192.168.1.43");
     expect(screen.getByTestId("calendar-snapshot-btn")).toBeInTheDocument();
   });
 
-  it("withholds Edit on the SNAPSHOT row (its path is generated) and keeps Disable / Remove", async () => {
+  it("edits the Snapshot name while keeping its generated path read-only and Disable / Remove available", async () => {
     render(<SettingsCore scope="meetings" />);
     await act(async () => { await vi.advanceTimersByTimeAsync(10); });
     const snap = screen.getByTestId("calendar-source-src-snap");
-    expect(within(snap).queryByRole("button", { name: "Edit" })).toBeNull();
-    expect(within(snap).getByRole("button", { name: "Disable" })).toBeInTheDocument();
-    expect(within(snap).getByRole("button", { name: "Remove" })).toBeInTheDocument();
-    expect(within(snap).getByText("SNAPSHOT")).toBeInTheDocument();
+    expect(within(snap).getByText("Snapshot")).toBeInTheDocument();
+    fireEvent.click(within(snap).getByRole("button", { name: "Edit" }));
+    const snapRow = snap.closest(".surface-ledger-row") as HTMLElement;
+    expect(within(snapRow).getByRole("button", { name: "Disable" })).toBeInTheDocument();
+    expect(within(snapRow).getByRole("button", { name: "Remove" })).toBeInTheDocument();
+    const well = screen.getByTestId("calendar-well");
+    expect(within(well).queryByRole("textbox", WELL_INPUT)).toBeNull();
+    fireEvent.click(within(well).getByText("Details"));
+    const path = "/home/user/.local/share/holdspeak/calendar-snapshots/x.ics";
+    expect(within(well).getByText(path).tagName).toBe("CODE");
+    fireEvent.change(within(well).getByRole("textbox", { name: "Calendar name" }), { target: { value: "Imported schedule" } });
+    fireEvent.click(within(well).getByRole("button", { name: "Save" }));
+    await act(async () => { await vi.advanceTimersByTimeAsync(10); });
+    expect(apiFetch).toHaveBeenCalledWith("/api/settings", {
+      method: "PUT", json: expect.objectContaining({ calendar: { sources: expect.arrayContaining([
+        expect.objectContaining({ id: "src-snap", label: "Imported schedule", url: path, enabled: true }),
+      ]) } }),
+    });
     const work = screen.getByTestId("calendar-source-src-work");
     expect(within(work).getByRole("button", { name: "Edit" })).toBeInTheDocument();
   });
@@ -401,8 +423,9 @@ describe("formatLocalClock (C8)", () => {
 });
 
 describe("snapshotEgressChip (C10)", () => {
-  it("is THIS DEVICE when the vision model runs locally", () => {
-    expect(snapshotEgressChip({ scope: "local" })).toMatchObject({ label: "THIS DEVICE", scope: "local" });
+  it("omits a chip when the vision model runs locally", () => {
+    expect(snapshotEgressChip({ scope: "local" })).toBeNull();
+    expect(snapshotEgressChip({ scope: "cloud", host: "127.0.0.1" })).toBeNull();
   });
   it("names the LAN / paired / cloud host", () => {
     expect(snapshotEgressChip({ scope: "private_network", host: "192.168.1.43" })).toMatchObject({ label: "192.168.1.43", scope: "mixed" });

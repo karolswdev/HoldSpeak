@@ -3,10 +3,7 @@ import { ATMOSPHERES } from "../../desk/gl/atmosphereRegistry";
 import { useAtmospherePreference } from "../../desk/gl/atmospherePreference";
 import {
   GadgetGroup,
-  GadgetRow,
-  CheckGadget,
 } from "../../desk/surface";
-import { useAtmosphereControls } from "../../desk/gl/atmosphereControls";
 import { useAtmosphereFavorites } from "../../desk/gl/atmosphereFavorites";
 
 export function WallpaperModule({
@@ -14,7 +11,6 @@ export function WallpaperModule({
   favoritesOnly = false,
 }: { showFavorites?: boolean; favoritesOnly?: boolean } = {}) {
   const [selectedId, select] = useAtmospherePreference();
-  const controls = useAtmosphereControls();
   const { favorites, toggle } = useAtmosphereFavorites();
   const choices = favoritesOnly
     ? ATMOSPHERES.filter((entry) => favorites.includes(entry.id))
@@ -24,7 +20,7 @@ export function WallpaperModule({
     : choices[0]?.id;
 
   return (
-    <GadgetGroup label="Environments">
+    <GadgetGroup label="Wallpaper">
       <div
         className="prefs-wallpaper-grid"
         role="radiogroup"
@@ -82,10 +78,9 @@ export function WallpaperModule({
                 </span>
                 <span className="prefs-wallpaper-copy">
                   <strong>{atmosphere.name}</strong>
-                  <span>{atmosphere.description}</span>
                 </span>
                 <span className="prefs-wallpaper-state">
-                  {selected ? "IN USE" : "CHOOSE"}
+                  {selected ? "In use" : "Choose"}
                 </span>
               </Button>
               {showFavorites && (
@@ -125,23 +120,6 @@ export function WallpaperModule({
           );
         })}
       </div>
-      <GadgetRow label="Animation" fact="RESPECTS REDUCED MOTION">
-        <CheckGadget
-          label="Environment animation"
-          checked={controls.motion}
-          onChange={controls.setMotion}
-        />
-      </GadgetRow>
-      <GadgetRow label="Room sound" fact="QUIET DURING CAPTURE">
-        <CheckGadget
-          label="Environment sound"
-          checked={controls.sound}
-          onChange={controls.setSound}
-        />
-      </GadgetRow>
-      <p className="prefs-wallpaper-fact">
-        SAVED ON THIS BROWSER · APPLIES LIVE TO THE FLOOR
-      </p>
     </GadgetGroup>
   );
 }

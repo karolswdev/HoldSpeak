@@ -296,6 +296,46 @@ describe("calendar helpers", () => {
 });
 
 describe("Calendar card", () => {
+  it("calendar URL use refusal keeps the typed link for retry", async () => {
+    hub.check = () => recorded<Record<string, unknown>>(CHECK_OK_WIRE);
+    hub.useCalendar = () => { throw new Error("Calendar use refused"); };
+    renderExpandedFirstRun();
+    const calendar = await screen.findByTestId("firstrun-calendar");
+    const field = await within(calendar).findByRole("textbox", { name: "Calendar URL" });
+    const url = recorded<{ url: string }>(CHECK_OK_WIRE).url;
+    fireEvent.change(field, { target: { value: url } });
+    fireEvent.click(within(calendar).getByRole("button", { name: "Add" }));
+    expect(await within(calendar).findByText("Calendar use refused")).toBeTruthy();
+    expect(field).toHaveValue(url);
+  });
+
+  it("first-use native permission guards stay unchanged when a feed is in use", async () => {
+    hub.calendar = { ...hub.calendar, macos: { state: "denied", can_request: false }, candidates: [] };
+    hub.sources = [source(recorded<{ url: string }>(CHECK_OK_WIRE).url)];
+    renderExpandedFirstRun();
+    const calendar = await screen.findByTestId("firstrun-calendar");
+    await within(calendar).findByRole("status", { name: "IN USE" });
+    expect(within(calendar).queryByRole("button", { name: "Allow calendar access" })).toBeNull();
+    expect(within(calendar).queryByRole("button", { name: "Open System Settings" })).toBeNull();
+  });
+  it("first use shows unread owner identity and retries before editing", async () => {
+    const base = mocks.apiFetch.getMockImplementation()!;
+    let unread = true;
+    hub.owner = { name: "Karol", aliases: ["Carol"] };
+    mocks.apiFetch.mockImplementation(async (path: string, options: { method?: string; json?: unknown } = {}) => {
+      if (path === "/api/settings" && (options.method ?? "GET") === "GET" && unread) throw new Error("Unavailable");
+      return base(path, options);
+    });
+    renderExpandedFirstRun();
+    const you = await screen.findByTestId("firstrun-you");
+    const retry = await within(you).findByRole("button", { name: "Try again" });
+    expect(within(you).queryByRole("textbox")).toBeNull();
+    expect(calls.filter((call) => call.path === "/api/settings" && call.method === "PUT")).toHaveLength(0);
+    unread = false;
+    fireEvent.click(retry);
+    await within(you).findByText("Carol");
+    expect(within(you).getByRole("textbox", { name: "Your name" })).toHaveValue("Karol");
+  });
   it("found: one Use it per calendar; IN USE is the hub's fact; the receipt follows", async () => {
     hub.calendar = { macos: { state: "full_access", can_request: false }, candidates: [MAC_CAL], sources: 0 };
     renderExpandedFirstRun();
@@ -311,6 +351,7 @@ describe("Calendar card", () => {
     });
     expect(calls.find((c) => c.path === "/api/onboarding/calendar/use")?.json).toEqual({ id: "eventkit:CAL-1", label: "Work" });
     await waitFor(() => expect(within(cal).getAllByRole("status", { name: "IN USE" })).toHaveLength(2));
+    expect(within(cal).queryByRole("button", { name: /Refresh .* name/ })).toBeNull();
     expect(cal.getAttribute("data-selected")).toBe("true");
     expect(cal.getAttribute("data-lit")).toBeNull();
     await waitFor(() => expect(cal.textContent).toContain("14 EVENTS · NEXT ATLAS WEEKLY"), { timeout: 3000 });

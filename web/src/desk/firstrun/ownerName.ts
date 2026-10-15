@@ -33,6 +33,9 @@ export function useOwnerName() {
   const [aliases, setAliases] = useState<string[]>([]);
   const [saved, setSaved] = useState<OwnerSetting>({ name: "", aliases: [] });
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [readError, setReadError] = useState("");
+  const loaded = useRef(false);
   const timer = useRef(0);
   const latest = useRef<OwnerSetting>({ name: "", aliases: [] });
   const touched = useRef(false);
@@ -46,6 +49,7 @@ export function useOwnerName() {
   const again = useRef(false);
 
   const send = useCallback(async () => {
+    if (!loaded.current) return;
     window.clearTimeout(timer.current);
     if (inFlight.current) {
       again.current = true;
@@ -74,6 +78,7 @@ export function useOwnerName() {
             continue;
           }
           setError(readableError(caught));
+          pending.current = true;
           break;
         }
       }
@@ -91,6 +96,7 @@ export function useOwnerName() {
    *  revision, so it applies; an older save in flight carries the old revision
    *  and the hub refuses it if it lands later (newest wins either way). */
   const sendNow = useCallback(() => {
+    if (!loaded.current) return;
     if (!pending.current && !again.current) return;
     window.clearTimeout(timer.current);
     pending.current = false;
@@ -103,12 +109,15 @@ export function useOwnerName() {
     }).catch(() => undefined);
   }, []);
 
-  useEffect(() => {
-    let live = true;
-    void apiFetch<{ owner?: Partial<OwnerSetting>; _revision?: string }>("/api/settings")
-      .then((settings) => {
-        if (!live) return;
+  const live = useRef(true);
+  const reload = useCallback(async () => {
+    setLoading(true);
+    try {
+        const settings = await apiFetch<{ owner?: Partial<OwnerSetting>; _revision?: string }>("/api/settings");
+        if (!live.current) return;
         if (!revision.current && settings._revision) revision.current = settings._revision;
+        loaded.current = true;
+        setReadError("");
         if (touched.current) return;
         const owner = {
           name: String(settings.owner?.name ?? ""),
@@ -118,14 +127,20 @@ export function useOwnerName() {
         setNameState(owner.name);
         setAliases(owner.aliases);
         setSaved(owner);
-      })
-      .catch(() => undefined);
+    } catch {
+      if (live.current) setReadError("Your name could not be read");
+    } finally { if (live.current) setLoading(false); }
+  }, []);
+
+  useEffect(() => {
+    live.current = true;
+    void reload();
     return () => {
-      live = false;
+      live.current = false;
       // Astra r2: leaving the editor (« Settings) inside the delay sent nothing.
       sendNow();
     };
-  }, [sendNow]);
+  }, [reload, sendNow]);
 
   const save = send;
 
@@ -134,6 +149,7 @@ export function useOwnerName() {
 
   const schedule = useCallback(
     (owner: OwnerSetting) => {
+      if (!loaded.current) return;
       touched.current = true;
       latest.current = owner;
       pending.current = true;
@@ -145,6 +161,7 @@ export function useOwnerName() {
 
   const setName = useCallback(
     (next: string) => {
+      if (!loaded.current) return;
       setNameState(next);
       schedule({ name: next, aliases: latest.current.aliases });
     },
@@ -153,6 +170,7 @@ export function useOwnerName() {
 
   const addAliases = useCallback(
     (raw: string) => {
+      if (!loaded.current) return;
       const added = splitAliases(raw, latest.current.aliases, latest.current.name);
       if (!added.length) return;
       const next = [...latest.current.aliases, ...added];
@@ -163,6 +181,7 @@ export function useOwnerName() {
   );
 
   const removeLastAlias = useCallback(() => {
+    if (!loaded.current) return;
     if (!latest.current.aliases.length) return;
     const next = latest.current.aliases.slice(0, -1);
     setAliases(next);
@@ -174,6 +193,9 @@ export function useOwnerName() {
     aliases,
     isSet: Boolean(saved.name.trim()),
     error,
+    loading,
+    readError,
+    reload,
     setName,
     addAliases,
     removeLastAlias,

@@ -45,7 +45,7 @@ If you edit the Note during a turn, the edit replaces that question.
 A late result cannot overwrite your text.
 
 If no model can run, Interview shows **Set up AI**.
-It opens **Settings > Models**.
+It opens **Settings > Engines**.
 After you save a model, the Workbench checks readiness again and shows **Ask AI**.
 Before each turn, Interview shows where the turn will run.
 After the turn, it shows the receipt.
@@ -318,7 +318,7 @@ For the full setup, read [Dictation Pipeline Setup](DICTATION_PIPELINE_GUIDE.md)
 Use `openai_compatible` when another host serves the model.
 Examples are llama.cpp server, LM Studio, the Ollama OpenAI bridge, vLLM, LiteLLM, and hosted APIs.
 
-1. Add the endpoint in **Settings > Models**.
+1. Add the endpoint in **Settings > Engines**.
 2. Select it for **Writing & dictation** in the Concierge set.
 3. Select **Use these**.
 
@@ -417,13 +417,13 @@ For meeting details, read [Meeting mode](MEETING_MODE_GUIDE.md) and [Meeting int
 ### The auto-run setting
 
 Open **Settings > Meetings**.
-The **Intelligence** row has three positions and a model host chip.
+The **Make summary** control has three positions. The engine row shows the chosen engine.
 
 | Position | Behavior |
 | --- | --- |
-| **OFF** | Nothing runs by itself. Use **Run summary**. |
-| **AFTER ROOM MEETINGS** | Intelligence runs after each meeting linked to a Room. |
-| **AFTER EVERY MEETING** (default) | Intelligence runs after every meeting with a transcript. |
+| **Manual** | Nothing runs by itself. Use **Run summary**. |
+| **After room meetings** | A summary runs after each meeting linked to a Room. |
+| **After every meeting** (default) | A summary runs after every meeting with a transcript. |
 
 If no model is assigned, the chip reads **NO MODEL** and auto-run jobs queue with a named failure.
 
@@ -433,7 +433,7 @@ Meeting intelligence runs locally or on an OpenAI-compatible endpoint.
 Transcripts, artifacts, and queues stay on this device.
 No external system receives a write unless a connector or export does it.
 Meeting text can go to the primary or fallback hosts in its capability assignments.
-Add the endpoint in **Settings > Models**.
+Add the endpoint in **Settings > Engines**.
 Select it for **Meetings** and apply **Use these**.
 The `intel_cloud_*` fields only migrate old settings.
 `holdspeak doctor` checks the endpoint and names the model each pipeline uses.
@@ -714,23 +714,31 @@ The capture bar at the foot has **Talk**, **Develop a thought**, and **Record me
 ## The clock
 
 The clock is the calendar on the Desk.
-Your calendar is one or more ICS sources, either file paths or HTTPS URLs.
+Your calendar can use the Mac Calendar app, ICS files or HTTPS feeds.
 HoldSpeak reads the next 14 days from every enabled source.
 The hub refreshes each source at boot and every 15 minutes.
 A source that fails keeps its last good events and leaves a named receipt.
 
 ### Connect a calendar
 
-1. Open **Settings > Meetings**.
-   You can also select **Connect calendar** on the arrival.
-2. In the **CALENDAR** section, select **Add** on the **Connect calendar** row.
-3. Enter an ICS URL or a local file path.
-4. Select **Save**.
+1. Open **Settings > Meetings** and select **Add calendar**.
+2. In Accounts, select **Choose calendar**.
+3. Allow access if asked, then select the calendar to use.
 
-Each source gets a row with **Edit**, **Disable** (or **Enable**), and **Remove**.
-An HTTPS source shows an egress chip with the host.
-A file source shows no chip because nothing leaves the machine.
-If two feeds hold the same event, it shows twice with its source label.
+To add an ICS URL or a local file, select **Add feed** in Meetings.
+Enter the name and feed location, then select **Save**.
+
+Each calendar keeps its name, source type and enabled state. **Edit** changes
+its name; a feed also has an editable URL or file path. Native calendar IDs
+stay internal. Use **Disable** to pause a source.
+
+If an older Settings save erased a native calendar's name, open **Choose
+calendar** and select **Refresh name**. This uses the detected calendar title
+and preserves its saved identity and enabled state. A name you entered is kept.
+
+An HTTPS source shows its host beside the fetch action. A local source has no
+external host chip. If two feeds hold the same event, it appears with each
+source's label.
 
 ### Import from a screenshot
 
@@ -739,7 +747,7 @@ Use a screenshot when your calendar has no ICS feed.
 1. Take a screenshot of the week view.
    PNG, JPEG, and WebP work.
    You can merge up to three screenshots of one week.
-2. In **Settings > Meetings**, select **Snapshot** on the **Connect calendar** row.
+2. In **Settings > Meetings**, select **Import image** in the **Calendar** section.
    You can also drop the image on the Desk.
 3. The hub sends the image to the vision model assigned to `calendar.snapshot_extract`.
    If none is assigned, the import is refused with a receipt.
@@ -782,8 +790,8 @@ The **Auto-record** row has three states.
 | State | What it does |
 | --- | --- |
 | `OFF` (default) | Creates no event recordings. |
-| `ARM ROOM MEETINGS ONLY` | Arms events that match a Room. |
-| `ARM ALL CALENDAR MEETINGS` | Arms every event with a meeting URL. |
+| **Room meetings** | Arms events that match a Room. |
+| **All calendar meetings** | Arms every event with a meeting URL. |
 
 An armed recording starts five minutes before the event.
 The setting is your standing consent to record.
@@ -799,15 +807,15 @@ In **Settings > Rhythm**, the brief row regenerates daily at 06:00.
 
 ## Connect your tools
 
-Open **Settings > Connections**.
+Open **Settings > Accounts**.
 Each tool has a card with a readiness state and one verb.
 
 | Tool | States | Recovery |
 | --- | --- | --- |
 | **GitHub** | `Connected`, `Sign in`, `gh missing`, `Unreachable`, `Off` | `gh auth login` |
 | **Jira** | `Connected`, `Sign in`, `acli missing`, `Not set up` | `acli jira auth login --site <site> --email <email> --token` |
-| **Calendar** | `Connected`, `Not set up` | Opens **Settings > Meetings** |
-| **Models** | `Assigned`, `Unassigned` | Opens **Settings > Models** |
+| **Calendar** | `Connected`, `Not set up` | **Choose calendar** connects a calendar; **Sources** opens Meetings preferences |
+| **Models** | `Assigned`, `Unassigned` | Opens **Settings > Engines** |
 
 `gh` and `acli` hold the credentials on this machine.
 HoldSpeak stores no token and uses no relay.
@@ -840,7 +848,7 @@ Each connected tool (GitHub, Jira) has a row in **SOURCES**.
    Jira has `ISSUE TYPES` and `JQL`.
 5. Select `Create Project`.
 
-A tool that is not connected shows `Connect`, which opens **Settings > Connections**.
+A tool that is not connected shows `Connect`, which opens **Settings > Accounts**.
 You can create a project with no sources.
 Create builds the project and its Watches, then opens the Room.
 
@@ -929,7 +937,7 @@ In the command deck (Cmd+K), type a project name to open its Room.
 
 ## Models: the Concierge
 
-Open **Settings > Models**.
+Open **Settings > Engines**.
 The Concierge shows what engines exist, what each capability uses, and whether all are ready.
 The full reference is [Models](MODELS.md).
 

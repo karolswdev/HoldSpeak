@@ -273,7 +273,9 @@ def test_install_follows_codex_home_and_reads_back_ready(hub, tmp_path, monkeypa
 
     fake = make_fake_codex(tmp_path, monkeypatch)
     home = tmp_path / "home"
-    env = {"CODEX_HOME": str(tmp_path / "codex-home")}
+    # This service reads only the fake's temporary agent state. Preserve its
+    # CODEX_HOME when the enclosing rig disables reads of real agent state.
+    env = {"CODEX_HOME": str(fake.home), "HOLDSPEAK_AGENT_STATE": "on"}
     service = _seat(hub, home, "codex", env=env)
     service._which = lambda name: fake.exe if name == "codex" else None
     answer = hub.client.post("/api/onboarding/agents/use", json={"agent": "codex"})
@@ -285,8 +287,10 @@ def test_install_follows_codex_home_and_reads_back_ready(hub, tmp_path, monkeypa
     assert _rows(answer.json())["codex"]["ready"] is True
     readback = hub.client.get("/api/onboarding/agents").json()
     assert _rows(readback)["codex"]["hooks"] == "installed"
-    # The fake ran with the service's CODEX_HOME.
-    assert fake.read()["runs"]
+    # The fake read and trusted the installed hooks in the service's CODEX_HOME.
+    state = fake.read()
+    assert state["runs"]
+    assert any(key.startswith(f"{fake.home}/hooks.json:") for key in state["state"])
 
 
 def test_codex_hooks_codex_does_not_trust_are_not_ready(hub, tmp_path) -> None:

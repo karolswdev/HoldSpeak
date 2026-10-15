@@ -15,6 +15,7 @@ import { Destinations } from "../../pages/cores/connections/Destinations";
 import checkEmail from "./fixtures/destinations-wire/check-email.json";
 import checkReady from "./fixtures/destinations-wire/check-ready.json";
 import connections from "./fixtures/destinations-wire/connections.json";
+import checkedConnections from "./fixtures/connections-wire/connections-checked.json";
 import emailKeyRefused from "./fixtures/destinations-wire/email-key-refused.json";
 import emailKeySaved from "./fixtures/destinations-wire/email-key-saved.json";
 import listEmail from "./fixtures/destinations-wire/list-email.json";
@@ -68,6 +69,25 @@ async function pickChannel(value: string) {
 }
 
 describe("the Destinations group", () => {
+  it("keeps a parked long target and date together in the ledger facts slot", async () => {
+    const destination = structuredClone(listTwo.destinations[0]);
+    destination.state = "parked";
+    destination.parked_at = "2026-10-14T12:00:00Z";
+    destination.target.folder = "/Architecture/Research-and-platform-delivery/Quarterly-reports-and-owner-review";
+    destination.target.display = destination.target.folder;
+    listing({ destinations: [destination] });
+    render(<Destinations />);
+    const row = await screen.findByTestId("dest-parked-row");
+    fireEvent.click(screen.getByText("PARKED", { exact: true }));
+    const cells = row.querySelector(":scope > .surface-ledger-cells");
+    expect(cells).not.toBeNull();
+    expect(cells).toContainElement(within(row).getByText("FILE", { exact: true }));
+    expect(cells).toContainElement(row.querySelector(".send-target"));
+    expect(cells?.textContent).toContain("PARKED");
+    expect(row.querySelector(".send-target")?.textContent).toContain("Quarterly-reports-and-owner-review");
+    expect(within(row).queryByRole("button", { name: /Remove|Delete/ })).toBeNull();
+  });
+
   // replaces: tests/e2e/test_philo10_04_send_face_glass.py::TestSendFaceGlass::test_the_destinations_group
   it("with no destination the add form is the group, with no counter", async () => {
     render(<Destinations />);
@@ -152,8 +172,40 @@ describe("the Destinations group", () => {
 });
 
 describe("the remote destination forms", () => {
+  it("an account read failure keeps the draft, names the failed read and retries without blocking folders", async () => {
+    routes["GET /api/connections"] = () => "no answer";
+    render(<Destinations />);
+    let form = await pickChannel("jira");
+    fireEvent.change(screen.getByTestId("dest-key"), { target: { value: "PAY-118" } });
+    expect(await within(form).findByText("Could not read accounts")).toBeTruthy();
+    expect(within(form).queryByRole("button", { name: "Set up account" })).toBeNull();
+    expect(within(form).queryByText("No Jira account")).toBeNull();
+    expect(screen.getByTestId("dest-save")).toBeDisabled();
+    routes["GET /api/connections"] = () => ok(checkedConnections);
+    fireEvent.click(within(form).getByRole("button", { name: "Retry" }));
+    await within(form).findByRole("combobox", { name: "Jira account" });
+    expect(screen.getByTestId("dest-key")).toHaveValue("PAY-118");
+    expect(screen.getByTestId("dest-save")).toBeEnabled();
+    routes["GET /api/connections"] = () => "no answer";
+    act(() => window.dispatchEvent(new Event("focus")));
+    form = await pickChannel("file");
+    fireEvent.change(screen.getByTestId("dest-folder"), { target: { value: "/Reports" } });
+    expect(within(form).getByRole("button", { name: "Save" })).toBeEnabled();
+  });
+  it("missing accounts offer the real Accounts control and keep the destination draft", async () => {
+    routes["GET /api/connections"] = () => ok({ tools: connections.tools.filter((t) => t.provider_id !== "jira") });
+    const add = vi.fn();
+    render(<div className="prefs-module"><div data-testid="connections-jira"><button data-testid="connections-add-open-jira" onClick={add}>Add account</button></div><Destinations /></div>);
+    const form = await pickChannel("jira");
+    fireEvent.change(screen.getByTestId("dest-key"), { target: { value: "PAY-118" } });
+    expect(within(form).getByRole("button", { name: "Save" })).toBeDisabled();
+    fireEvent.click(within(form).getByRole("button", { name: "Set up account" }));
+    expect(add).toHaveBeenCalledOnce();
+    expect(screen.getByTestId("dest-key")).toHaveValue("PAY-118");
+  });
   // replaces: tests/e2e/test_philo10_04_send_face_glass.py::TestSendChannelsGlass::test_the_remote_destination_forms_save
   it("Jira takes one key: two keys are REFUSED by name, nothing is listed", async () => {
+    routes["GET /api/connections"] = () => ok(checkedConnections);
     routes["POST /api/channels/destinations"] = () => ({ status: 400, body: saveRefusedJira });
     render(<Destinations />);
     await pickChannel("jira");
@@ -167,6 +219,7 @@ describe("the remote destination forms", () => {
   });
 
   it("GitHub saves the repository and number the owner typed", async () => {
+    routes["GET /api/connections"] = () => ok(checkedConnections);
     routes["POST /api/channels/destinations"] = () => ok({ destination: listTwo.destinations[1] });
     render(<Destinations />);
     await pickChannel("github");

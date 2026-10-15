@@ -386,3 +386,107 @@ def test_the_calendar_sources_wire_names_each_sources_kind_and_egress(hub: Any, 
     fact = put_sources([{"id": "hs144-egress", "label": "", "url": str(tmp_path / "calendar.ics"), "enabled": True}])
     assert fact[0]["egress"] is False
     assert put_sources([]) == []
+
+
+@pytest.mark.parametrize("migrated", [False, True], ids=["assignment-before-marker", "family-markers"])
+def test_successive_ordinary_settings_saves_keep_retired_selectors_out(hub: Any, migrated: bool) -> None:
+    """GET and accepted PUT share the authority that refuses old selectors."""
+    from holdspeak.config import Config
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_phase143_inference_assignments import OWNER, _profile, _result_claim, _set
+
+    capabilities = ["ask.answer", "meeting.live_analysis", "background.rails_summary"]
+    _profile(hub.db, "settings-route", claims=("language", *(_result_claim(cap) for cap in capabilities)))
+    assignments = InferenceAssignmentService(hub.db)
+    families = [
+        ("thoughts-writing-route-assignments", "ask.answer"),
+        ("meeting-route-assignments", "meeting.live_analysis"),
+        ("rails-observer-route-assignments", "background.rails_summary"),
+    ]
+    for family, capability in families if migrated else families[:1]:
+        assigned = _set(assignments, f"settings-{capability}", {"kind": "capability", "capability_id": capability}, "settings-route")
+        if migrated:
+            assignments.commit_migration_marker(OWNER, {
+                "family": family, "marker_revision": 1, "source_sha256": "sha256:" + "a" * 64,
+                "assignments": [{
+                    "assignment_key": f"capability:{capability}", "assignment_id": assigned["id"],
+                    "revision": assigned["revision"], "sha256": assigned["sha256"],
+                }],
+            })
+    before = Config.load()
+    before.thoughts.inference_target_id = "retained-thought"
+    before.dictation.runtime.profile_id = "retained-writing"
+    before.meeting.intel_profile_id = "retained-meeting"
+    before.rails_observer.profile_id = "retained-rails"
+    before.save()
+
+    def assert_projection(wire: dict) -> None:
+        assert "inference_target_id" not in wire["thoughts"]
+        assert "profile_id" not in wire["dictation"]["runtime"]
+        if migrated:
+            assert "intel_profile_id" not in wire["meeting"]
+            assert "intel_provider" not in wire["meeting"]
+            assert "profile_id" not in wire["rails_observer"]
+            assert "_placement" not in wire
+        else:
+            assert wire["meeting"]["intel_profile_id"] == "retained-meeting"
+            assert wire["rails_observer"]["profile_id"] == "retained-rails"
+
+    assert_projection(_get(hub, "/api/settings"))
+    first = hub.client.put("/api/settings", json={"ui": {"desk_sounds": False}})
+    assert first.status_code == 200, first.text
+    saved = first.json()["settings"]
+    assert_projection(saved)
+    saved["meeting"]["auto_export"] = True
+    second = hub.client.put("/api/settings", json=saved)
+    assert second.status_code == 200, second.text
+    assert_projection(second.json()["settings"])
+    persisted = Config.load()
+    assert persisted.ui.desk_sounds is False and persisted.meeting.auto_export is True
+    assert persisted.thoughts.inference_target_id == "retained-thought"
+    assert persisted.dictation.runtime.profile_id == "retained-writing"
+    assert persisted.meeting.intel_profile_id == "retained-meeting"
+    assert persisted.rails_observer.profile_id == "retained-rails"
+
+    retired = [
+        {"thoughts": {"inference_target_id": "obsolete"}},
+        {"dictation": {"runtime": {"profile_id": "obsolete"}}},
+    ]
+    if migrated:
+        retired += [
+            {"meeting": {"intel_profile_id": "obsolete"}},
+            {"meeting": {"intel_provider": "cloud"}},
+            {"rails_observer": {"profile_id": "obsolete"}},
+        ]
+    for patch in retired:
+        refused = hub.client.put("/api/settings", json=patch)
+        assert refused.status_code == 400, refused.text
+    assert Config.load().to_dict() == persisted.to_dict()
+
+
+def test_rhythm_telegram_and_device_name_settings_persist_without_changing_secrets(hub: Any) -> None:
+    from holdspeak.config import Config
+
+    before = Config.load()
+    before.cadence_telegram.bot_token = "isolated-existing-token"
+    before.cadence_telegram.pairing_code = "isolated-existing-pairing"
+    before.save()
+    patch = {
+        "cadence": {"enabled": True, "pressure": "gentle", "quiet_hours_start": 21,
+                    "quiet_hours_end": 7, "max_nudges_per_day": 3, "brief_enabled": False,
+                    "brief_hour": 8, "use_llm": True, "tick_interval_seconds": 600},
+        "cadence_telegram": {"enabled": True, "allowed_chat_ids": ["123", "456"]},
+        "mesh": {"device_name": "  Studio desk  "},
+    }
+    response = hub.client.put("/api/settings", json=patch)
+    assert response.status_code == 200, response.text
+    saved = response.json()["settings"]
+    persisted = Config.load()
+    assert saved["cadence"] == persisted.to_dict()["cadence"] == {**before.to_dict()["cadence"], **patch["cadence"]}
+    assert saved["cadence_telegram"]["enabled"] is True
+    assert persisted.cadence_telegram.allowed_chat_ids == ["123", "456"]
+    assert persisted.cadence_telegram.bot_token == "isolated-existing-token"
+    assert persisted.cadence_telegram.pairing_code == "isolated-existing-pairing"
+    assert "bot_token" not in saved["cadence_telegram"] and "pairing_code" not in saved["cadence_telegram"]
+    assert saved["mesh"]["device_name"] == persisted.mesh.device_name == "Studio desk"
+    assert _get(hub, "/api/settings")["cadence"] == saved["cadence"]

@@ -132,26 +132,28 @@ describe("Slack in the Destination form", () => {
     expect(document.body.textContent).not.toContain("example.com/hooks");
   });
 
-  it("Save without a webhook refuses NO WEBHOOK and sends nothing", async () => {
+  it("Save without a webhook is disabled, names NO WEBHOOK and sends nothing", async () => {
     await slackForm();
     fireEvent.change(screen.getByTestId("dest-slack-label"), { target: { value: "#leads" } });
     fireEvent.click(screen.getByTestId("dest-save"));
-    const refused = await screen.findByTestId("dest-refused");
-    expect(refused).toHaveAttribute("data-code", "slack_webhook_missing");
-    expect(refused.textContent).toContain("NO WEBHOOK");
+    expect(screen.getByTestId("dest-save")).toBeDisabled();
+    expect(screen.getByTestId("dest-key-missing").textContent).toContain("NO WEBHOOK");
     expect(calls.some((c) => c.method === "POST")).toBe(false);
   });
 
-  it("D3: the row carries SLACK, the label and HOOKS.SLACK.COM; Check says WEBHOOK SET · HOST OK and posts nothing", async () => {
+  it("D3: the row names Slack; Details shows the Check host, and Check says WEBHOOK SET · HOST OK without sending", async () => {
     rows = [slackRow("chd_slack")];
     render(<Destinations />);
     const row = await screen.findByTestId("dest-row");
     expect(row.textContent).toContain("SLACK");
     expect(row.textContent).toContain("#leads");
-    expect(row.textContent).toContain("HOOKS.SLACK.COM");
-    fireEvent.click(within(row).getByText("Slack #leads"));
+    expect(within(row).getByText("Slack #leads")).toBeVisible();
+    expect(within(row).queryByText("HOOKS.SLACK.COM")).toBeNull();
+    fireEvent.click(within(row).getByRole("button", { name: "Details" }));
     const open = await screen.findByTestId("dest-open");
     expect(open.textContent).toContain("Channel name");
+    expect(within(screen.getByTestId("dest-verbs")).getByText("HOOKS.SLACK.COM")).toBeVisible();
+    expect(document.body.textContent).not.toContain("synthetic-secret");
     fireEvent.click(screen.getByTestId("dest-check"));
     const result = await screen.findByTestId("dest-check-result");
     expect(result.textContent).toContain("WEBHOOK SET · HOST OK");
@@ -188,9 +190,9 @@ describe("Slack in the Destination form", () => {
     const missing = await screen.findByTestId("dest-key-missing");
     expect(missing.textContent).toContain("NO WEBHOOK");
     expect(within(screen.getByTestId("dest-key-row")).queryByText("SET")).toBeNull();
-    // Save now refuses by name and sends nothing.
+    // Save remains unavailable while its required webhook is missing.
     fireEvent.click(screen.getByTestId("dest-save"));
-    expect((await screen.findByTestId("dest-refused")).getAttribute("data-code")).toBe("slack_webhook_missing");
+    expect(screen.getByTestId("dest-save")).toBeDisabled();
     expect(calls.filter((c) => c.method === "POST" && c.path === "/api/channels/destinations")).toEqual([]);
   });
 

@@ -28,7 +28,8 @@ def _navigate_to_settings_hub(page: Any, url: str) -> None:
         );
     }""")
     page.goto(f"{url}/?token={TOKEN}", wait_until="load")
-    page.locator(".prefs-hub-headline").wait_for(timeout=10_000)
+    # The directory is the arrival; the technical routing headline is parked.
+    page.locator(".prefs-hub").wait_for(timeout=10_000)
 
 
 def _open_system_module(page: Any) -> None:

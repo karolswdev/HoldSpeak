@@ -1,0 +1,187 @@
+{
+  "schema_version": 1,
+  "atlas_version": "settings-audit-20261014",
+  "extends": "docs/internal/philo/graph/atlas-settings-trials.json",
+  "source_commit": "eef72f98753dff22c0209d71685f3efe79c9a5e8",
+  "states": [
+    {
+      "id": "state.desk_presentation.settings_calendar_identity",
+      "family": "desk_presentation",
+      "values": {
+        "application": "Settings",
+        "section": "Meetings",
+        "calendar": "two named disabled sources"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/pages/cores/SettingsCore.tsx",
+          "symbol": "function SettingsFace({ hero, scope }: CoreProps) {",
+          "claim": "A changed-path preference save preserves the canonical calendar list and visible names."
+        }
+      ],
+      "reachable_by": [
+        "case.settings.save.calendar_identity"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "case.settings.save.calendar_identity",
+      "job": "j3",
+      "edge_ids": [
+        "edge.face.settings_auto_export"
+      ],
+      "state_id": "state.desk_presentation.settings_calendar_identity",
+      "applicability": "applicable",
+      "preconditions": [
+        "Isolated HOME/DB; disabled native and local-file calendar sources; no EventKit read, external provider or recording."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/setup/status",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "timeout_s": 10
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/settings",
+          "body": {
+            "meeting": {
+              "auto_export": false
+            },
+            "calendar": {
+              "sources": [
+                {
+                  "id": "audit-native",
+                  "label": "Work",
+                  "url": "eventkit:AUDIT-WORK",
+                  "enabled": false
+                },
+                {
+                  "id": "audit-feed",
+                  "label": "Personal",
+                  "url": "/tmp/holdspeak-audit-personal.ics",
+                  "enabled": false
+                }
+              ]
+            }
+          },
+          "expect_status": 200,
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/models"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "#surface-settings [data-testid=runson-root]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "#surface-settings .desk-wings-menu",
+          "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "button[role=tab]:has-text(\"Settings\"), button[role=menuitemcheckbox]:has-text(\"Settings\")"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "#surface-settings .surface-ledger-row:has(.surface-ledger-primary:text-is(\"Meetings\")) button:text-is(\"Open\")"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "#surface-settings input[type=checkbox][aria-label=\"Auto export\"]"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": "#surface-settings input[type=checkbox][aria-label=\"Auto export\"]"
+      },
+      "expected": {
+        "observe_at": "protocol: GET /api/settings",
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_field",
+              "path": "meeting.auto_export",
+              "value": true
+            },
+            {
+              "kind": "protocol_field",
+              "path": "calendar.sources",
+              "value": [
+                {
+                  "id": "audit-native",
+                  "label": "Work",
+                  "url": "eventkit:AUDIT-WORK",
+                  "enabled": false
+                },
+                {
+                  "id": "audit-feed",
+                  "label": "Personal",
+                  "url": "/tmp/holdspeak-audit-personal.ics",
+                  "enabled": false
+                }
+              ]
+            }
+          ]
+        },
+        "words": "Auto export changes through the actual checkbox and HTTP writer. Both names, IDs, locations and disabled states remain exact."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ],
+  "clocks": [
+    {
+      "id": "clock.browser_wall",
+      "source": "Browser Date",
+      "mechanism": "none: real wall time, no clock advance",
+      "status": "available",
+      "used_by": []
+    }
+  ],
+  "excluded": [],
+  "council_readings": []
+}

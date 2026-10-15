@@ -136,7 +136,8 @@ export function RuntimeDocsCore({ hero, speechTestId = "guide-speech-setup" }: C
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
   const checks = sortChecks(asRows(resource.data.sections, []) as Check[]);
   const needs = checks.filter((c) => c.status === "fail" || c.status === "warn");
-  const fine = checks.filter((c) => !(c.status === "fail" || c.status === "warn"));
+  const fine = checks.filter((c) => c.status === "pass" || c.status === "info");
+  const unknown = checks.filter((c) => !["pass", "info", "fail", "warn"].includes(c.status ?? ""));
   const fixable = (c: Check) => c.id === "speech-model" || ENGINE_CHECKS.has(String(c.id ?? "")) || Boolean(commandOf(c.fix));
   const leadCheck = needs.find(fixable);
   const loaded = !resource.loading || checks.length > 0;
@@ -153,18 +154,20 @@ export function RuntimeDocsCore({ hero, speechTestId = "guide-speech-setup" }: C
     }
   };
 
-  const headline = !loaded
+  const headline = resource.error
+    ? "Readiness not known"
+    : !loaded
     ? "Checking"
     : needs.length
       ? needWords(needs.length)
-      : "Everything is ready";
+      : unknown.length || !checks.length ? "Readiness not known" : "Everything is ready";
   // ONE filled primary: the first row that needs him, else Test runtime.
   return (
     <>
       {renderHeroSlot(hero, null)}
       {/* Busy while it says "Checking": the checks land after the head and
           the speech row grows after them (rows moved 74 px at 393 under load). */}
-      <div className="settings-home guide" data-testid="guide" aria-busy={loaded ? undefined : true}>
+      <div className="settings-home prefs-module guide guide-module" data-settings-module="guide" data-testid="guide" aria-busy={loaded ? undefined : true}>
         <div className="settings-head">
           <h2 className="settings-title" data-warning={needs.length ? "" : undefined} data-testid="guide-headline">{headline}</h2>
           <span className="guide-head-sp" />
@@ -181,6 +184,7 @@ export function RuntimeDocsCore({ hero, speechTestId = "guide-speech-setup" }: C
             ))}
           </ul>
         ) : null}
+        {unknown.length ? <ul className="guide-list" aria-label="Not known">{unknown.map((check, index) => <GuideRow key={String(check.id ?? index)} check={check} lead={false} speech={speech} speechTestId={speechTestId} onReady={() => void resource.reload()} />)}</ul> : null}
         {fine.length ? (
           <FoldGadget title="Ready" token={String(fine.length)}>
             <ul className="guide-list">

@@ -199,6 +199,34 @@ def test_use_it_on_a_macos_calendar_needs_the_permission(tmp_path, settings) -> 
     assert caught.value.code == "calendar_permission_required"
 
 
+@pytest.mark.parametrize("existing_label", ["", "My work calendar"], ids=["repair-blank", "keep-custom"])
+def test_native_calendar_reselection_repairs_only_a_blank_name_without_changing_sources(
+    tmp_path, settings, existing_label: str
+) -> None:
+    from holdspeak.config import Config
+
+    sources = [
+        {"id": "saved-native-id", "label": existing_label, "url": "eventkit:CAL-1", "enabled": False},
+        {"id": "saved-other-id", "label": "Personal", "url": "https://calendar.example.test/personal.ics", "enabled": True},
+    ]
+    settings.update_settings(OWNER, {"calendar": {"sources": sources}})
+    mac = FakeMac("full_access", [{"id": "CAL-1", "title": "Work", "account": "iCloud", "kind": "caldav"}])
+    service = _service(tmp_path, mac=mac, settings=settings)
+    detected = service.calendar_detect(OWNER)
+    assert detected["candidates"][0]["label"] == "Work"
+    assert detected["candidates"][0]["in_use"] is True
+    assert Config.load().to_dict()["calendar"]["sources"] == sources  # detection never repairs
+
+    selected = service.calendar_use(OWNER, {"id": "eventkit:CAL-1", "label": "Stale client label"})
+
+    expected_label = existing_label or "Work"
+    assert selected["added"] is False
+    assert selected["source"]["label"] == expected_label
+    assert Config.load().to_dict()["calendar"]["sources"] == [
+        {**sources[0], "label": expected_label}, sources[1],
+    ]
+
+
 def test_check_reads_an_ics_url_once_and_names_its_host(tmp_path, settings) -> None:
     reader = Reader(_ics(_event("a", 3), _event("b", 30), name="Team calendar"))
     service = _service(tmp_path, reader=reader, settings=settings)

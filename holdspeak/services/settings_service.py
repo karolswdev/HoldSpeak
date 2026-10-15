@@ -238,15 +238,20 @@ class SettingsService:
         return self.get_redacted(principal)
 
     def get_redacted(self, principal: Principal) -> dict[str, Any]:
-        thought_routes = self._assignment_migration_active(
-            "thoughts-writing-route-assignments"
-        )
+        return self._project_settings(Config.load())
+
+    def _project_settings(self, config: Config) -> dict[str, Any]:
+        # A successful write is the next client's read base. Use the same
+        # authority as the write guard, including owner assignments before
+        # their migration marker, so an ordinary edit cannot echo a retired
+        # selector back into the following write.
+        thought_routes = self._routed_assignments_active()
         meeting_routes = self._assignment_migration_active("meeting-route-assignments")
         rails_routes = self._assignment_migration_active(
             "rails-observer-route-assignments"
         )
         result = redacted_settings(
-            Config.load(), include_meeting_placement=not meeting_routes
+            config, include_meeting_placement=not meeting_routes
         )
         if thought_routes:
             result.get("thoughts", {}).pop("inference_target_id", None)
@@ -339,6 +344,7 @@ class SettingsService:
             Config,
             CalendarConfig,
             CalendarSource,
+            CadenceConfig,
             DeviceConfig,
             DictationConfig,
             DictationConfigError,
@@ -350,10 +356,12 @@ class SettingsService:
             MacrosConfig,
             MeetingConfig,
             ModelConfig,
+            MeshConfig,
             OwnerConfig,
             PresenceConfig,
             RailsObserverConfig,
             ThoughtsConfig,
+            TelegramConfig,
             UIConfig,
             VoiceMacroError,
             WakeWordConfig,
@@ -931,8 +939,14 @@ class SettingsService:
         calendar_data = merged.get("calendar", {}) or {}
         if not isinstance(calendar_data, dict):
             return {"success": False, "error": "calendar must be an object"}
+        calendar_patch = patch.get("calendar")
+        legacy_subscription = (
+            isinstance(calendar_patch, dict)
+            and "subscription" in calendar_patch
+            and "sources" not in calendar_patch
+        )
         try:
-            if "sources" in calendar_data and "subscription" not in calendar_data:
+            if "sources" in calendar_data and not legacy_subscription:
                 raw_sources = calendar_data["sources"]
                 if not isinstance(raw_sources, list):
                     return {"success": False, "error": "calendar.sources must be a list"}
@@ -970,13 +984,11 @@ class SettingsService:
                         enabled=bool(entry.get("enabled", True)),
                     ))
                 calendar_cfg = CalendarConfig(sources=validated_sources)
-            elif "subscription" in calendar_data:
+            elif legacy_subscription:
                 # HS-146-04 handoff: the e2e seeds and walk script still post the
                 # old single-key wire shape; accepted as a single-source translation
                 # until story 04 flips them to the sources wire.
-                old_sub = calendar_data.get("subscription", "")
-                if not old_sub and current.calendar.sources:
-                    old_sub = current.calendar.sources[0].url
+                old_sub = calendar_patch["subscription"]
                 validated = validate_calendar_subscription(old_sub)
                 if validated:
                     existing_id = (
@@ -1008,6 +1020,13 @@ class SettingsService:
             name=str(owner_data.get("name", "") or ""), aliases=raw_aliases,
         )
 
+        try:
+            cadence_cfg = CadenceConfig(**merged.get("cadence", {}))
+            telegram_cfg = TelegramConfig(**merged.get("cadence_telegram", {}))
+            mesh_cfg = MeshConfig(**merged.get("mesh", {}))
+        except (TypeError, ValueError) as exc:
+            return {"success": False, "error": f"Invalid preference: {exc}"}
+
         updated = replace(
             current,
             owner=owner_cfg,
@@ -1022,6 +1041,9 @@ class SettingsService:
             rails_observer=RailsObserverConfig(**rails_data),
             thoughts=ThoughtsConfig(**thoughts_data),
             calendar=calendar_cfg,
+            cadence=cadence_cfg,
+            cadence_telegram=telegram_cfg,
+            mesh=mesh_cfg,
         )
         updated.save()
 
@@ -1052,4 +1074,4 @@ class SettingsService:
 
                 logging.getLogger(__name__).error("on_settings_applied failed: %s", exc)
 
-        return {"success": True, "settings": redacted_settings(updated)}
+        return {"success": True, "settings": self._project_settings(updated)}

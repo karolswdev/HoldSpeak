@@ -49,7 +49,8 @@ describe("Settings leave send", () => {
   it("a save in flight + a newer edit + pagehide: the leave PUT goes out in the same tick", async () => {
     render(<SettingsCore scope="meetings" />);
     const work = screen.getByTestId("calendar-source-src-work");
-    fireEvent.click(within(work).getByRole("button", { name: "Disable" }));
+    fireEvent.click(within(work).getByRole("button", { name: "Edit" }));
+    fireEvent.click(within(work.closest(".surface-ledger-row") as HTMLElement).getByRole("button", { name: "Disable" }));
     await act(async () => { await vi.advanceTimersByTimeAsync(700); });
     expect(puts()).toHaveLength(1); // in flight, never answers
 

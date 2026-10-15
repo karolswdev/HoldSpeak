@@ -36,7 +36,7 @@ describe("the hub headline is a plain state of what he gets", () => {
     expect(hubHeadline(hub({ meetings: { intelligence: true, engineSet: false, summariesOff: true } })).text)
       .toBe("Summaries: off · Answers: Qwen 27B");
   });
-  it("with no engine for any work: No engine yet, and Choose opens Runs on", () => {
+  it("with no assigned job: Engines keeps its inventory and Open reaches Runs on", () => {
     const onOpen = vi.fn();
     render(
       <PrefsFace
@@ -47,7 +47,8 @@ describe("the hub headline is a plain state of what he gets", () => {
         precedence={[]}
       />,
     );
-    expect(screen.getByText("No engine yet")).toBeTruthy();
+    expect(screen.getByText("1 engine")).toBeTruthy();
+    expect(screen.getByText("SUMMARY · NO ENGINE")).toBeTruthy();
     expect(screen.queryByText("No default model")).toBeNull();
     fireEvent.click(screen.getByTestId("settings-hub-choose"));
     expect(onOpen).toHaveBeenCalledWith("models");
@@ -75,13 +76,11 @@ describe("the hub headline is a plain state of what he gets", () => {
 describe("the hub rows say who can do what", () => {
   it("System: Other devices: off (was MESH OFF · REMOTE OFF)", () => {
     render(<PrefsFace onOpen={vi.fn()} hub={hub()} posture="neutral" onPosture={vi.fn()} precedence={[]} />);
-    fireEvent.click(screen.getByTestId("settings-more")); // PHILO-17 REFIT: System folds under More settings
     expect(screen.getByText("Other devices: off")).toBeTruthy();
     expect(document.body.textContent ?? "").not.toMatch(/MESH|REMOTE OFF/);
   });
   it("System: Other devices: on when remote access is on", () => {
     render(<PrefsFace onOpen={vi.fn()} hub={hub({ system: { host: "THIS DEVICE", mesh: true, remote: true } })} posture="neutral" onPosture={vi.fn()} precedence={[]} />);
-    fireEvent.click(screen.getByTestId("settings-more"));
     expect(screen.getByRole("status", { name: "Other devices: on" })).toBeTruthy();
   });
 });

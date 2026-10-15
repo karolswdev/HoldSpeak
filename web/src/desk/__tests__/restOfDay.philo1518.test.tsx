@@ -3,7 +3,7 @@
  * B36 the known-sign-in default, B40 a drawer label is two lines, B56 a live
  * aftercare card. The Conductor's B34/B35 fences live in
  * conductor/__tests__/conductor.test.tsx; B36's line in hand/__tests__/hand.test.tsx. */
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ apiFetch: vi.fn() }));
@@ -68,26 +68,32 @@ const hub = (patch: Partial<SettingsHubWire> = {}): SettingsHubWire => ({
 });
 const face = (wire: SettingsHubWire) => {
   const view = render(<PrefsFace onOpen={vi.fn()} hub={wire} posture="neutral" onPosture={vi.fn()} precedence={[]} />);
-  // PHILO-17 REFIT: the Meetings row folds under More settings.
-  fireEvent.click(screen.getByTestId("settings-more"));
+  // The module rows are direct choices in Work and Desk.
   return view;
 };
 
 describe("B33: the Settings hub reads the summary route", () => {
-  it("summaries on the LAN box with no default: All set, no SUMMARY · NO ENGINE, NO DEFAULT is a quiet fact", () => {
-    face(hub());
-    expect(screen.getByText("All set")).toBeTruthy();
+  it("summaries on the LAN box with no default: the route is set and Engines keeps its inventory", () => {
+    const wire = hub();
+    expect(wire.models).toMatchObject({ engines: 1, defaultSet: false });
+    face(wire);
+    const engines = screen.getByTestId("settings-lead-engines");
+    expect(within(engines).getByText("1 engine")).toBeInTheDocument();
+    expect(engines.textContent).not.toContain("Default set");
+    expect(screen.getByText("SUMMARY SET ON · AFTER EVERY MEETING")).toBeInTheDocument();
     expect(screen.queryByText("No default model")).toBeNull();
     expect(screen.queryByText("SUMMARY · NO ENGINE")).toBeNull();
-    // PHILO-17 REFIT: the default is the Runs on plate's Everything else pill.
-    expect(screen.getByTestId("settings-job-default").getAttribute("data-tone")).toBeNull(); // neutral kit pill
   });
-  it("no route and no default: the warning stays", () => {
-    face(hub({ meetings: { intelligence: true, engineSet: false, auto: "every" } }));
-    // PHILO-17 U35: the warning is a plain state, "No engine yet" (was "No default model").
-    expect(screen.getByText("No engine yet")).toBeTruthy();
-    expect(screen.getByText("SUMMARY · NO ENGINE")).toBeTruthy();
-    expect(screen.getByTestId("settings-job-default").getAttribute("data-tone")).toBe("warn");
+  it("no summary route and no default: the job warns without erasing the installed engine inventory", () => {
+    const wire = hub({ meetings: { intelligence: true, engineSet: false, auto: "every" } });
+    expect(wire.models).toMatchObject({ engines: 1, defaultSet: false });
+    face(wire);
+    const engines = screen.getByTestId("settings-lead-engines");
+    expect(within(engines).getByText("1 engine")).toBeInTheDocument();
+    expect(engines.textContent).not.toContain("Default set");
+    expect(screen.queryByText("No engine yet")).toBeNull();
+    expect(screen.getByText("SUMMARY · NO ENGINE")).toHaveAttribute("data-state", "warning");
+    expect(screen.queryByText("SUMMARY SET ON · AFTER EVERY MEETING")).toBeNull();
   });
   it("the owner's OFF reads SUMMARIES OFF, not a missing engine", () => {
     face(hub({ meetings: { intelligence: true, engineSet: false, summariesOff: true, auto: "every" } }));

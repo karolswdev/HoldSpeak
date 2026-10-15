@@ -12,7 +12,7 @@ import { Button } from "../../components/signal/Signal";
 import { CONTROL_MODES, controlModeLabel } from "../../lib/productLanguage";
 import {
   CycleGadget,
-  EgressChip,
+  FoldGadget,
   GadgetGroup,
 } from "../../desk/surface/gadgets";
 import {
@@ -22,7 +22,7 @@ import {
   countToken,
   Receipt,
 } from "../../desk/surface";
-import { ConfirmVerb } from "../../desk/surface/Surface";
+import { ConfirmVerb, SurfaceSection } from "../../desk/surface/Surface";
 import { useDesk } from "../../desk/store";
 import "./settings.css";
 import { useAtmospherePreference } from "../../desk/gl/atmospherePreference";
@@ -307,17 +307,7 @@ export function DeskModule() {
     <GadgetGroup label="Desk">
       {/* PHILO-17 U35: plain words (was RESET TO SEED · TOMBSTONES
           EXISTING DESK OBJECTS); the consequence is one token each. */}
-      <div className="prefs-egress-line">
-        <span className="gadget-fact" data-testid="desk-reset-clears">
-          CLEARS THE DESK · PUTS BACK THE DEFAULT ITEMS
-        </span>
-      </div>
-      <div className="prefs-egress-line">
-        <span className="gadget-fact" data-testid="desk-reset-keeps">
-          KEEPS · MEETINGS · JOURNAL · SETTINGS · RUNS ON
-        </span>
-      </div>
-      <div className="prefs-egress-line">
+      <div className="prefs-reset-controls">
         <ConfirmVerb
           label="Reset desk to defaults"
           confirmLabel="Reset the desk?"
@@ -335,6 +325,16 @@ export function DeskModule() {
           </span>
         ) : null}
       </div>
+      <FoldGadget title="Reset details">
+        <div className="prefs-reset-details">
+          <span className="gadget-fact" data-testid="desk-reset-clears">
+            CLEARS THE DESK · PUTS BACK THE DEFAULT ITEMS
+          </span>
+          <span className="gadget-fact" data-testid="desk-reset-keeps">
+            KEEPS · MEETINGS · JOURNAL · SETTINGS · RUNS ON
+          </span>
+        </div>
+      </FoldGadget>
     </GadgetGroup>
   );
 }
@@ -389,9 +389,9 @@ export function autoDisplayFact(auto: string | undefined): string {
 }
 
 export const INTELLIGENCE_AUTO_OPTIONS = [
-  { value: "off", label: "OFF" },
-  { value: "room_linked", label: "AFTER ROOM MEETINGS" },
-  { value: "every", label: "AFTER EVERY MEETING" },
+  { value: "off", label: "Manual" },
+  { value: "room_linked", label: "After room meetings" },
+  { value: "every", label: "After every meeting" },
 ];
 
 /* ── the drawer face ── */
@@ -442,8 +442,8 @@ export function jobPills(hub: SettingsHubWire): Array<{ key: string; word: strin
   else if (hub.answers?.engineSet === true) pills.push({ key: "answers", word: "Answers", tone: "ok", title: hub.answers.engine ?? undefined });
   // The default (Everything else): a quiet fact while some work has an
   // engine of its own (PHILO-15 B33), amber when nothing has one.
-  if (hub.models.defaultSet) pills.push({ key: "default", word: "Everything else", tone: "ok" });
-  else pills.push({ key: "default", word: "Everything else", tone: workHasEngine(hub) ? "idle" : "warn", title: "No default" });
+  if (hub.models.defaultSet) pills.push({ key: "default", word: "Default engine", tone: "ok" });
+  else pills.push({ key: "default", word: "Default engine", tone: workHasEngine(hub) ? "idle" : "warn", title: "No default" });
   return pills;
 }
 
@@ -480,232 +480,94 @@ export function PrefsFace({
     .toUpperCase();
 
   const [atmosphereId] = useAtmospherePreference();
-  const headline = hubHeadline(hub);
-  const [more, setMore] = useState(false);
-  const writtenAt = formatWrittenAt(hub.writtenAt);
-
-  // Module rows — each opens the module face (the hub is the truth table).
-  const openVerb = (moduleId: string) => (
-    <Button variant="ghost" dense onClick={() => onOpen(moduleId)}>Open</Button>
+  const connected = hub.connections.connected;
+  const engines = hub.models.engines;
+  const engineFact = engines > 0
+    ? `${engines} ${engines === 1 ? "engine" : "engines"}${hub.models.defaultSet ? " · Default set" : ""}`
+    : workHasEngine(hub) || hub.models.defaultSet || hub.answers?.engineSet === true
+      ? "Engine assigned"
+      : "No engine yet";
+  const summaryFact = hub.meetings.intelligence && hub.meetings.summariesOff
+    ? <StateChip state="idle" label="SUMMARIES OFF" />
+    : hub.meetings.intelligence && hub.meetings.engineSet === false
+      ? <StateChip state="warning" label="SUMMARY · NO ENGINE" />
+      : hub.meetings.intelligence
+        ? <StateChip
+            state="idle"
+            icon={hub.meetings.auto && hub.meetings.auto !== "off" ? "✓" : undefined}
+            label={`SUMMARY SET ON${hub.meetings.auto && hub.meetings.auto !== "off" ? ` · ${autoLabel(hub.meetings.auto)}` : ""}`}
+            data-testid="settings-hub-summary-chip"
+          />
+        : <StateChip state="warning" label="SUMMARY SET OFF" />;
+  const voiceFact = hub.voice.live && hub.voice.engineSet === false
+    ? <StateChip state="warning" label="NO ENGINE" />
+    : hub.voice.live
+      ? <><StateChip state="success" label="LIVE" />{hub.voice.target ? <span>{hub.voice.target.toUpperCase()}</span> : null}</>
+      : <span>Voice typing off</span>;
+  const rhythmFact = <>
+    {hub.rhythm.sweepEveryMinutes != null
+      ? <span>{hub.rhythm.sweepEveryMinutes >= 60
+          ? `EVERY ${Math.round(hub.rhythm.sweepEveryMinutes / 60)} HR`
+          : `EVERY ${hub.rhythm.sweepEveryMinutes} MIN`}</span>
+      : hub.rhythm.loops > 0
+        ? <span>{countToken(hub.rhythm.loops, "LOOP", "LOOPS")}</span>
+        : <span>No loops</span>}
+    {hub.rhythm.nextSweepAt ? <span>NEXT {wireClock(hub.rhythm.nextSweepAt)}</span> : null}
+  </>;
+  const work = [
+    { id: "voice", label: "Voice", sprite: "voice", fact: voiceFact },
+    { id: "meetings", label: "Meetings", sprite: "meetings", fact: summaryFact },
+    { id: "rhythm", label: "Rhythm", sprite: "rhythm", fact: rhythmFact },
+    { id: "models", label: "Engines", sprite: "models", fact: engineFact },
+    { id: "integrations", label: "Accounts", sprite: "integrations", fact: connected > 0 ? `${connected} connected` : "None connected" },
+  ];
+  const desk = [
+    { id: "sounds", label: "Sounds & Presence", sprite: "sounds", fact: hub.sounds.on ? "Desk sounds on" : "Desk sounds off" },
+    { id: "wallpaper", label: "Wallpaper", sprite: "wallpaper", fact: resolveAtmosphere(atmosphereId).name },
+    { id: "people", label: "People", sprite: "system", fact: <PeopleHubCells /> },
+    { id: "system", label: "System", sprite: "system", fact: <OtherDevicesChip on={Boolean(hub.system.remote)} /> },
+  ];
+  const directory = (entries: typeof work, label: string) => (
+    <SurfaceLedger count={null} cols="settings-directory" label={label}>
+      {entries.map((entry) => (
+        <SurfaceLedgerRow
+          key={entry.id}
+          lead={<SettingSprite name={entry.sprite} />}
+          primary={entry.label}
+          meta={<span className="settings-directory-fact">{entry.fact}</span>}
+          data-testid={entry.id === "models" ? "settings-lead-engines" : entry.id === "integrations" ? "settings-lead-accounts" : undefined}
+          expands={false}
+          onToggle={() => onOpen(entry.id)}
+          trailing={
+            <Button
+              variant="secondary"
+              dense
+              onClick={() => onOpen(entry.id)}
+              data-testid={entry.id === "models" ? "settings-hub-choose" : entry.id === "integrations" ? "settings-hub-accounts" : undefined}
+            >Open</Button>
+          }
+        />
+      ))}
+    </SurfaceLedger>
   );
 
-  // PHILO-17 REFIT: the two things he does here lead the window, each on a
-  // raised plate: pick which engine does which job, and connect an account.
-  // Everything else folds under More settings. ONE filled primary: Choose
-  // engines while a job has no engine, else Connect an account while none is
-  // connected, else Choose engines.
-  const connected = hub.connections.connected;
-  const lead: "engines" | "accounts" = !headline.choose && connected === 0 ? "accounts" : "engines";
-  const jobs = jobPills(hub);
   return (
     <div className="prefs-face prefs-hub settings-home">
-      <div className="settings-head">
-        <h2
-          className="surface-display prefs-hub-headline settings-title"
-          data-warning={headline.warning || undefined}
-        >
-          {headline.text}
-        </h2>
-        <span className="settings-strip">
-          <span>{hub.system.host}</span>
-          {hub.models.engines > 0 ? <span><b>{hub.models.engines}</b> {hub.models.engines === 1 ? "engine" : "engines"}</span> : null}
-          {connected > 0 ? <span><b>{connected}</b> connected</span> : null}
-        </span>
+      {/* PARKED: oversized lead plates, routing headline and More toggle. */}
+      <div className="settings-directory-grid">
+        <SurfaceSection label="Work">{directory(work, "Work preferences")}</SurfaceSection>
+        <SurfaceSection label="Desk">{directory(desk, "Desk preferences")}</SurfaceSection>
       </div>
-      <div className="settings-leads">
-        <section className="settings-plate" data-focus={lead === "engines" || undefined} data-testid="settings-lead-engines" aria-label="Engines">
-          <header className="settings-plate-bar">
-            <span className="settings-plate-label">ENGINES</span>
-          </header>
-          <div className="settings-plate-body">
-            <span className="settings-plate-sprite" aria-hidden="true"><SettingSprite name="models" /></span>
-            <div className="settings-plate-text">
-              <span className="settings-plate-title">Which engine does each job</span>
-              <span className="settings-pills" data-testid="settings-job-pills">
-                {jobs.map((job) => (
-                  <span key={job.key} className="kit-pill" data-dot="" data-tone={job.tone === "idle" ? undefined : job.tone} title={job.title} data-testid={`settings-job-${job.key}`}>{job.word}</span>
-                ))}
-              </span>
-            </div>
-          </div>
-          <div className="settings-plate-verbs">
-            <Button dense variant={lead === "engines" ? "primary" : "secondary"} onClick={() => onOpen("models")} data-testid="settings-hub-choose">
-              Choose engines
-            </Button>
-          </div>
-        </section>
-        <section className="settings-plate" data-focus={lead === "accounts" || undefined} data-testid="settings-lead-accounts" aria-label="Accounts">
-          <header className="settings-plate-bar">
-            <span className="settings-plate-label">ACCOUNTS</span>
-          </header>
-          <div className="settings-plate-body">
-            <span className="settings-plate-sprite" aria-hidden="true"><SettingSprite name="integrations" /></span>
-            <div className="settings-plate-text">
-              <span className="settings-plate-title">GitHub, Jira, Confluence, calendar</span>
-              <span className="settings-pills">
-                {connected > 0
-                  ? <span className="kit-pill" data-dot="" data-tone="ok">{connected} connected</span>
-                  : <span className="kit-pill" data-dot="">None connected</span>}
-              </span>
-            </div>
-          </div>
-          <div className="settings-plate-verbs">
-            <Button dense variant={lead === "accounts" ? "primary" : "secondary"} onClick={() => onOpen("integrations")} data-testid="settings-hub-accounts">
-              {connected > 0 ? "Open accounts" : "Connect an account"}
-            </Button>
-          </div>
-        </section>
-      </div>
-      <Button
-        variant="ghost"
-        dense
-        className="settings-more"
-        aria-expanded={more}
-        onClick={() => setMore((open) => !open)}
-        data-testid="settings-more"
-      >
-        <span className="settings-more-caret" aria-hidden="true">{more ? "▾" : "▸"}</span> More settings
-      </Button>
-      {more ? (<>
-      <SurfaceLedger count="" cols="hub">
-        {/* Voice: LIVE green + target, or nothing */}
-        <SurfaceLedgerRow
-          primary={<span className="settings-row-name"><SettingSprite name="voice" />Voice</span>}
-          expands={false}
-          onToggle={() => onOpen("voice")}
-          trailing={openVerb("voice")}
-          cells={<>
-            {/* Inventory 2026-10-03: this row said LIVE with no speech engine
-                while Speak said NOT SET. LIVE needs the switch and an engine. */}
-            {hub.voice.live && hub.voice.engineSet === false
-              ? <StateChip state="warning" label="NO ENGINE" />
-              : hub.voice.live
-                ? <StateChip state="success" label="LIVE" />
-                : null}
-            {hub.voice.live && hub.voice.engineSet !== false && hub.voice.target
-              ? <span className="surface-token" data-chip>{hub.voice.target.toUpperCase()}</span>
-              : null}
-          </>}
-        />
-        {/* Meetings: SUMMARY ON · AFTER ROOM MEETINGS / OFF.
-            HS-202-04 (F06): the registry rules that every face says
-            Summary for a meeting's result (`docs/product-language.json:23`);
-            the hub row said the wire's word while the Meetings face two
-            windows over said Summary on the same setting. */}
-        <SurfaceLedgerRow
-          primary={<span className="settings-row-name"><SettingSprite name="meetings" />Meetings</span>}
-          expands={false}
-          onToggle={() => onOpen("meetings")}
-          trailing={openVerb("meetings")}
-          cells={<>
-            {/* PHILO-13-04 (A3): this row reads the CONFIGURED switch, so it
-                says SET; whether an engine can run now is the Chair's fact
-                ("No engine for summaries"), and a stored summary is the
-                record's. No green: a setting is not a result (A.10). */}
-            {/* Inventory 2026-10-03: with the switch on and no engine the row
-                said SET ON beside the headline "No default model". The row
-                names the missing engine, as the Chair does. */}
-            {hub.meetings.intelligence && hub.meetings.summariesOff
-              ? <StateChip state="idle" label="SUMMARIES OFF" />
-              : hub.meetings.intelligence && hub.meetings.engineSet === false
-              ? <StateChip state="warning" label="SUMMARY · NO ENGINE" />
-              : hub.meetings.intelligence
-              ? (
-                // PHILO-17: the idle lamp's empty ring read as an empty
-                // checkbox beside "AFTER EVERY MEETING". A summary that runs
-                // by itself shows a check; by hand only, the ring stays.
-                <StateChip
-                  state="idle"
-                  icon={hub.meetings.auto && hub.meetings.auto !== "off" ? "✓" : undefined}
-                  label={`SUMMARY SET ON${hub.meetings.auto && hub.meetings.auto !== "off" ? ` · ${autoLabel(hub.meetings.auto)}` : ""}`}
-                  data-testid="settings-hub-summary-chip"
-                />
-              )
-              : <StateChip state="warning" label="SUMMARY SET OFF" />}
-          </>}
-        />
-        {/* Rhythm: EVERY N MIN · NEXT HH:MM when sweep runs; NO LOOPS only at zero + no sweep */}
-        <SurfaceLedgerRow
-          primary={<span className="settings-row-name"><SettingSprite name="rhythm" />Rhythm</span>}
-          expands={false}
-          onToggle={() => onOpen("rhythm")}
-          trailing={openVerb("rhythm")}
-          cells={<>
-            {hub.rhythm.sweepEveryMinutes != null
-              ? <span className="surface-token" data-chip>
-                  {hub.rhythm.sweepEveryMinutes >= 60
-                    ? `EVERY ${Math.round(hub.rhythm.sweepEveryMinutes / 60)} HR`
-                    : `EVERY ${hub.rhythm.sweepEveryMinutes} MIN`}
-                </span>
-              : null}
-            {hub.rhythm.nextSweepAt
-              ? <span className="surface-token" data-chip data-muted>
-                  NEXT {wireClock(hub.rhythm.nextSweepAt)}
-                </span>
-              : null}
-            {hub.rhythm.sweepEveryMinutes == null && hub.rhythm.loops > 0
-              ? <span className="surface-token" data-chip>{countToken(hub.rhythm.loops, "LOOP", "LOOPS")}</span>
-              : null}
-            {hub.rhythm.sweepEveryMinutes == null && hub.rhythm.loops === 0
-              ? <span className="surface-token" data-chip data-muted>NO LOOPS</span>
-              : null}
-          </>}
-        />
-        {/* Sounds & Presence: ON green or OFF */}
-        <SurfaceLedgerRow
-          primary={<span className="settings-row-name"><SettingSprite name="sounds" />Sounds & Presence</span>}
-          expands={false}
-          onToggle={() => onOpen("sounds")}
-          trailing={openVerb("sounds")}
-          cells={<>
-            {hub.sounds.on
-              ? <StateChip state="success" label="ON" />
-              : <span className="surface-token" data-chip data-muted>OFF</span>}
-          </>}
-        />
-        <SurfaceLedgerRow
-          primary={<span className="settings-row-name"><SettingSprite name="wallpaper" />Wallpaper</span>}
-          expands={false}
-          onToggle={() => onOpen("wallpaper")}
-          trailing={openVerb("wallpaper")}
-          cells={<span className="surface-token" data-chip>{resolveAtmosphere(atmosphereId).name}</span>}
-        />
-        {/* People: Agents can read People | Agents: off (Conductor R7, K7a; PHILO-17 U35). */}
-        <SurfaceLedgerRow
-          primary={<span className="settings-row-name"><SettingSprite name="system" />People</span>}
-          expands={false}
-          onToggle={() => onOpen("people")}
-          trailing={openVerb("people")}
-          cells={<PeopleHubCells />}
-        />
-        {/* System: THIS DEVICE + Other devices: off|on (PHILO-17 U35: was
-            MESH OFF · REMOTE OFF; the mesh name is a RAW fact now). */}
-        <SurfaceLedgerRow
-          primary={<span className="settings-row-name"><SettingSprite name="system" />System</span>}
-          expands={false}
-          onToggle={() => onOpen("system")}
-          trailing={openVerb("system")}
-          cells={<>
-            <span className="surface-token" data-chip>{hub.system.host}</span>
-            <OtherDevicesChip on={Boolean(hub.system.remote)} />
-          </>}
-        />
-      </SurfaceLedger>
-      <div className="prefs-rule" aria-hidden="true" />
       <div className="prefs-posture" title={precedenceText}>
         <span className="prefs-posture-label">Posture</span>
         <CycleGadget
           label="Control posture"
           value={posture}
           disabled={postureBusy}
-          options={CONTROL_MODES.map((mode) => ({
-            value: mode,
-            label: controlModeLabel(mode),
-          }))}
+          options={CONTROL_MODES.map((mode) => ({ value: mode, label: controlModeLabel(mode) }))}
           onChange={onPosture}
         />
       </div>
-      </>) : null}
     </div>
   );
 }
@@ -731,6 +593,8 @@ export function PrefStatusBar({
   receipt,
   grantReceipt,
   hubWrittenAt,
+  idleReceipt,
+  onRetry,
 }: {
   /** Absent on the drawer face — the egress badge sits there instead. */
   onBack?: () => void;
@@ -741,44 +605,44 @@ export function PrefStatusBar({
   /** HS-170-04: writtenAt from the hub wire (epoch seconds), shown on
    *  the drawer face as WRITTEN HH:MM; module-level receipt overrides. */
   hubWrittenAt?: string | null;
+  idleReceipt?: ReactNode;
+  onRetry?: () => void;
 }) {
   let center: ReactNode;
   if (receipt.refusal)
     center = (
       <span className="prefs-receipt" data-tone="danger" role="alert">
         <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" style={{ flexShrink: 0 }}><path d="M8 2 1.5 13.5h13Z" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" /><line x1="8" y1="6.5" x2="8" y2="9.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" /><circle cx="8" cy="11.5" r="0.7" fill="currentColor" /></svg>{" "}
-        REFUSED · {receipt.refusal}
+        Not saved
       </span>
     );
   else if (receipt.saving)
     center = (
       <span className="prefs-receipt" role="status">
-        SAVING…
+        Saving…
       </span>
     );
   else if (receipt.writtenAt)
     center = (
       <span className="prefs-receipt" role="status">
-        WRITTEN {receipt.writtenAt}
+        Saved {receipt.writtenAt}
       </span>
     );
   else if (!onBack && hubWrittenAt)
     center = (
       <span className="prefs-receipt" role="status">
-        WRITTEN {hubWrittenAt}
+        Saved {hubWrittenAt}
       </span>
     );
-  else center = null; /* HS-139-07: no dangling "USING" when idle */
+  else center = idleReceipt ?? null;
   return (
-    <SurfaceFooter receipt={grantReceipt ?? undefined} verbs={<>
+    <SurfaceFooter receipt={receipt.refusal || receipt.saving ? center : grantReceipt ?? center} verbs={<>
+      {onRetry ? <Button variant="primary" dense disabled={receipt.saving} onClick={onRetry}>Retry</Button> : null}
       {onBack ? (
-        <Button variant="ghost" dense className="prefs-back" onClick={onBack}>
+        <Button variant="secondary" dense onClick={onBack}>
           <span aria-hidden="true">«</span> Settings
         </Button>
-      ) : (
-        <EgressChip />
-      )}
-      {center}
+      ) : null}
     </>} />
   );
 }

@@ -338,6 +338,11 @@ Missing shards: **none**.
 | `desk.engines.find_lan` | `linux_wayland` | unknown | built_unreleased |
 | `desk.engines.find_lan` | `linux_x11` | unknown | built_unreleased |
 | `desk.engines.find_lan` | `macos` | supported_with_setup | built_unreleased |
+| `desk.preferences` | `aipi` | not_applicable | experimental |
+| `desk.preferences` | `ipad` | unknown | experimental |
+| `desk.preferences` | `linux_wayland` | unknown | experimental |
+| `desk.preferences` | `linux_x11` | unknown | experimental |
+| `desk.preferences` | `macos` | supported_with_setup | experimental |
 | `agents.thread_persistent` | `aipi` | not_applicable | experimental |
 | `agents.thread_persistent` | `ipad` | best_effort | experimental |
 | `agents.thread_persistent` | `linux_wayland` | degraded | experimental |

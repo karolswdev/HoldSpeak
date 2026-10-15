@@ -8,6 +8,9 @@ import { checkedAgo, stateWords } from "../connections/ConnectionsPane";
 // The hub's own /api/connections on a fresh HOME (scripts/record_needs_you_fixture.py,
 // the "grouped" boot): the test diet's SCAR LAW, no typed state.
 import RECORDED from "../../../desk/__tests__/fixtures/needsYou.recorded.json";
+import CALENDAR_WIRE from "../../../test/wire/onboarding-calendar.wire.json";
+import CALENDAR_USE_WIRE from "../../../test/wire/onboarding-calendar.use.wire.json";
+import CALENDAR_CHECK_WIRE from "../../../test/wire/onboarding-calendar.check.wire.json";
 
 const RECORDED_CONNECTIONS = RECORDED.grouped.gets["/api/connections"] as unknown as ConnectionsResponse;
 function recordedTool(id: string): ConnectionTool {
@@ -26,7 +29,8 @@ vi.mock("../connections/api", async (importOriginal) => {
   };
 });
 
-vi.mock("../../../lib/api", () => ({
+vi.mock("../../../lib/api", async (importOriginal) => ({
+  ApiError: (await importOriginal<typeof import("../../../lib/api")>()).ApiError,
   apiFetch: vi.fn(),
   readableError: (e: unknown) => String(e),
 }));
@@ -195,7 +199,7 @@ describe("ConnectionsPane", () => {
   describe("GitHub connected", () => {
     it("shows Connected chip, login summary, and quiet Recheck verb", async () => {
       renderPane();
-      const card = await screen.findByTestId("connections-github");
+      const card = (await screen.findByTestId("connections-github")).closest("li")!;
       expect(within(card).getByText("GitHub")).toBeInTheDocument();
       expect(within(card).getByText("karolswdev")).toBeInTheDocument();
       // PHILO-9-02 B1: the chip carries the row's own check age.
@@ -205,18 +209,18 @@ describe("ConnectionsPane", () => {
   });
 
   describe("GitHub owner_action_required", () => {
-    it("shows Not signed in chip with open fold and COPY transport key", async () => {
+    it("shows Not signed in with an explicit sign-in command well", async () => {
       const response: ConnectionsResponse = {
         tools: [signInGithub(), emptyJira(), connectedCalendar(), connectedModels()],
       };
       renderPane(response);
-      const card = await screen.findByTestId("connections-github");
+      const card = (await screen.findByTestId("connections-github")).closest("li")!;
       // PHILO-17 U29: the cause in plain words.
       expect(within(card).getByText("Not signed in")).toBeInTheDocument();
-      // PHILO-17 REFIT: one compact sign-in row; Show draws the command.
+      expect(within(card).queryByText("Copy command")).toBeNull();
+      fireEvent.click(within(card).getByRole("button", { name: "Sign in" }));
       expect(within(card).getByText("Sign in to GitHub")).toBeInTheDocument();
       expect(within(card).getByText("Copy command")).toBeInTheDocument();
-      fireEvent.click(within(card).getByTestId("connections-github-show"));
       expect(within(card).getByText("gh auth login")).toBeInTheDocument();
       // Primary Recheck in the fold
       const recheckButtons = within(card).getAllByText("Recheck");
@@ -230,10 +234,11 @@ describe("ConnectionsPane", () => {
         tools: [unavailableGithub(), emptyJira(), connectedCalendar(), connectedModels()],
       };
       renderPane(response);
-      const card = await screen.findByTestId("connections-github");
+      const card = (await screen.findByTestId("connections-github")).closest("li")!;
       expect(within(card).getByText("gh missing")).toBeInTheDocument();
+      expect(within(card).queryByText("Install gh")).toBeNull();
+      fireEvent.click(within(card).getByRole("button", { name: "Details" }));
       expect(within(card).getByText("Install gh")).toBeInTheDocument();
-      fireEvent.click(within(card).getByTestId("connections-github-show"));
       expect(within(card).getByText("brew install gh")).toBeInTheDocument();
     });
   });
@@ -244,11 +249,11 @@ describe("ConnectionsPane", () => {
         tools: [degradedGithub(), emptyJira(), connectedCalendar(), connectedModels()],
       };
       renderPane(response);
-      const card = await screen.findByTestId("connections-github");
+      const card = (await screen.findByTestId("connections-github")).closest("li")!;
       // PHILO-9-02 B1: the chip carries the row's own check age.
       expect(within(card).getByText(/^Unreachable · Checked /)).toBeInTheDocument();
-      // Quiet Recheck verb (no fold)
-      expect(within(card).getByText("Recheck")).toBeInTheDocument();
+      expect(within(card).getByText("Retry")).toBeInTheDocument();
+      expect(within(card).queryByText("gh auth login")).toBeNull();
     });
   });
 
@@ -258,7 +263,7 @@ describe("ConnectionsPane", () => {
         tools: [neverCheckedGithub(), emptyJira(), connectedCalendar(), connectedModels()],
       };
       renderPane(response);
-      const card = await screen.findByTestId("connections-github");
+      const card = (await screen.findByTestId("connections-github")).closest("li")!;
       expect(within(card).getByText("Never checked")).toBeInTheDocument();
       expect(within(card).getByText("Recheck")).toBeInTheDocument();
     });
@@ -272,7 +277,7 @@ describe("ConnectionsPane", () => {
         tools: [connectedGithub(), emptyJira(), connectedCalendar(), connectedModels()],
       };
       renderPane(response);
-      const card = await screen.findByTestId("connections-jira");
+      const card = (await screen.findByTestId("connections-jira")).closest("li")!;
       expect(within(card).getByText("Jira")).toBeInTheDocument();
       // PHILO-9-02 B1: the empty card says the tool's own state; the hub's
       // empty Jira is `never_checked` (the old typed `not_configured` row
@@ -291,9 +296,8 @@ describe("ConnectionsPane", () => {
     it("shows the connection row with site and email", async () => {
       renderPane();
       const conn = await screen.findByTestId("connections-jira-conn-alpha-user");
-      // Site appears as both label and provenance boundary
-      const siteTexts = within(conn).getAllByText("alpha.atlassian.net");
-      expect(siteTexts.length).toBeGreaterThanOrEqual(1);
+      expect(within(conn).getByText("Jira")).toBeInTheDocument();
+      expect(within(conn).getByText("ALPHA.ATLASSIAN.NET")).toBeInTheDocument();
       expect(within(conn).getByText("user@example.com")).toBeInTheDocument();
       const chips = within(conn).getAllByText("Connected");
       expect(chips.length).toBeGreaterThanOrEqual(1);
@@ -301,16 +305,16 @@ describe("ConnectionsPane", () => {
   });
 
   describe("Jira host chip (PHILO-4-01 r4)", () => {
-    it("truncates only the host chip, whose title is the full host", async () => {
+    it("names the provider and keeps the full host at the check action", async () => {
       renderPane();
       const conn = await screen.findByTestId("connections-jira-conn-alpha-user");
       const chip = within(conn).getByText("ALPHA.ATLASSIAN.NET");
       expect(chip.classList.contains("gadget-chip")).toBe(true);
-      expect(chip.classList.contains("gadget-chip-truncate")).toBe(true);
+      expect(chip.classList.contains("gadget-chip-truncate")).toBe(false);
       // Never the inherited "route not set" default on a known destination.
       expect(chip.getAttribute("title")).toBe("alpha.atlassian.net");
-      // The row label shows the full host, so the chip may truncate.
-      expect(conn.querySelector(".connections-tool-label")?.textContent).toBe("alpha.atlassian.net");
+      expect(conn.querySelector(".connections-tool-label")?.textContent).toBe("Jira");
+      expect(within(conn).getAllByText("ALPHA.ATLASSIAN.NET")).toHaveLength(1);
     });
   });
 
@@ -372,11 +376,15 @@ describe("ConnectionsPane", () => {
     it("calls recheckProvider and updates the footer", async () => {
       const updated = connectedGithub();
       updated.last_checked_at = "2026-09-04T14:00:00Z";
-      mockRecheckProvider.mockResolvedValue(updated);
+      const response = fullResponse();
+      mockRecheckProvider.mockImplementation(async (provider) => {
+        response.tools = response.tools.map((tool) => tool.provider_id === provider ? updated : tool);
+        return updated;
+      });
       const onFooter = vi.fn();
-      renderPane(fullResponse(), { onFooter });
+      renderPane(response, { onFooter });
 
-      const card = await screen.findByTestId("connections-github");
+      const card = (await screen.findByTestId("connections-github")).closest("li")!;
       fireEvent.click(within(card).getByText("Recheck"));
 
       await waitFor(() => {
@@ -388,6 +396,7 @@ describe("ConnectionsPane", () => {
         expect(lastCall.egressHost).toBe("github.com");
         expect(lastCall.checkedAt).toBeTruthy();
       });
+      expect(mockFetchConnections.mock.calls.length).toBeGreaterThan(1);
     });
   });
 
@@ -555,23 +564,23 @@ describe("ConnectionsPane", () => {
         last_checked_at: "2026-09-04T13:00:00Z", egress_host: "github.com",
       };
       renderPane({ tools: [degraded, emptyJira(), connectedCalendar(), connectedModels()] });
-      const card = await screen.findByTestId("connections-github");
+      const card = (await screen.findByTestId("connections-github")).closest("li")!;
       expect(within(card).getByText(/^Unreachable · Checked /)).toBeInTheDocument();
-      // Every row that is not ready offers its command (Copy, and Show).
-      expect(within(card).getByText("Copy command")).toBeInTheDocument();
-      fireEvent.click(within(card).getByTestId("connections-github-show"));
-      expect(within(card).getByText("gh auth login")).toBeInTheDocument();
+      expect(within(card).queryByText("Copy command")).toBeNull();
+      expect(within(card).getByRole("button", { name: "Retry" })).toBeInTheDocument();
     });
 
     it("Jira Add posts the account and checks it at once", async () => {
       vi.mocked(apiFetch).mockResolvedValue({});
       mockRecheckProvider.mockResolvedValue(null);
       renderPane({ tools: [connectedGithub(), emptyJira(), connectedCalendar(), connectedModels()] });
-      const card = await screen.findByTestId("connections-jira");
+      const card = (await screen.findByTestId("connections-jira")).closest("li")!;
       fireEvent.click(within(card).getByTestId("connections-add-open-jira"));
       const inputs = card.querySelectorAll("input");
       fireEvent.change(inputs[0], { target: { value: "acme.atlassian.net" } });
       fireEvent.change(inputs[1], { target: { value: "me@acme.com" } });
+      expect(within(card).getByText(/acli jira auth login/)).not.toBeVisible();
+      fireEvent.click(within(card).getByText("Sign-in command"));
       expect(within(card).getByText("acli jira auth login --site acme.atlassian.net --email me@acme.com --token")).toBeInTheDocument();
       fireEvent.click(within(card).getByText("Add"));
       await waitFor(() => expect(apiFetch).toHaveBeenCalledWith(
@@ -582,9 +591,11 @@ describe("ConnectionsPane", () => {
     it("Confluence with no account has its Add", async () => {
       const conf: ConnectionTool = { provider_id: "confluence", state: "never_checked", account: {}, connections: [] };
       renderPane({ tools: [connectedGithub(), emptyJira(), conf, connectedCalendar(), connectedModels()] });
-      const card = await screen.findByTestId("connections-confluence");
+      const card = (await screen.findByTestId("connections-confluence")).closest("li")!;
       fireEvent.click(within(card).getByTestId("connections-add-open-confluence"));
       expect(within(card).getByText("Add")).toBeInTheDocument();
+      expect(within(card).getByText(/acli confluence auth login/)).not.toBeVisible();
+      fireEvent.click(within(card).getByText("Sign-in command"));
       expect(within(card).getByText(/acli confluence auth login/)).toBeInTheDocument();
     });
   });
@@ -600,10 +611,208 @@ describe("ConnectionsPane focusProvider", () => {
     render(
       <ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} focusProvider="github" />,
     );
-    const card = await screen.findByTestId("connections-github");
+    const card = (await screen.findByTestId("connections-github")).closest("li")!;
     await waitFor(() => {
       expect(document.activeElement).not.toBeNull();
       expect(card.contains(document.activeElement)).toBe(true);
     });
+  });
+});
+
+describe("Accounts recovery", () => {
+  it.each(["jira", "confluence"] as const)("keeps a new %s account draft and refusal across an existing sign-in detour", async (provider) => {
+    const tool = connectedJira();
+    tool.provider_id = provider;
+    tool.connections![0].state = "owner_action_required";
+    renderPane({ tools: [tool] });
+    fireEvent.click(await screen.findByTestId(`connections-add-open-${provider}`));
+    const form = screen.getByTestId(`connections-add-${provider}`);
+    fireEvent.change(within(form).getByRole("textbox", { name: "Site" }), { target: { value: "next.atlassian.net" } });
+    fireEvent.change(within(form).getByRole("textbox", { name: "Email" }), { target: { value: "next@example.com" } });
+    const detour = () => {
+      fireEvent.click(within(screen.getByTestId(`connections-${provider}-conn-alpha-user`)).getByRole("button", { name: "Sign in" }));
+      expect(form).not.toBeVisible();
+      fireEvent.click(screen.getByTestId(`connections-add-open-${provider}`));
+      expect(screen.getByTestId(`connections-add-${provider}`)).toBe(form);
+      expect(within(form).getByRole("textbox", { name: "Site" })).toHaveValue("next.atlassian.net");
+      expect(within(form).getByRole("textbox", { name: "Email" })).toHaveValue("next@example.com");
+    };
+    detour();
+    vi.mocked(apiFetch).mockRejectedValue(new Error("Account refused"));
+    fireEvent.click(within(form).getByRole("button", { name: "Add" }));
+    await within(form).findByText("Account not added");
+    detour();
+    expect(within(form).getByText("Account not added")).toBeVisible();
+    expect(within(form).getByRole("button", { name: "Retry" })).toBeVisible();
+  });
+
+  it.each([
+    ["jira", "owner_action_required"], ["jira", "unavailable"],
+    ["confluence", "owner_action_required"], ["confluence", "unavailable"],
+  ] as const)("distinguishes collapsed %s %s accounts with the same email by site", async (provider, state) => {
+    const tool = twoJiraConnections();
+    tool.provider_id = provider;
+    for (const conn of tool.connections!) { conn.state = state; conn.account.email = "same@example.com"; }
+    renderPane({ tools: [tool] });
+    const rows = await Promise.all(tool.connections!.map(conn => screen.findByTestId(`connections-${provider}-conn-${conn.connection_ref}`)));
+    rows.forEach((row, index) => {
+      expect(within(row).getByText(tool.connections![index].account.site)).toBeVisible();
+      expect(within(row).getByText("same@example.com")).toBeVisible();
+      expect(row.querySelector(".gadget-chip-egress")).toBeNull();
+    });
+  });
+
+  it("leads populated rows with their provider and keeps commands closed until requested", async () => {
+    const jira = connectedJira();
+    const confluence = { ...structuredClone(jira), provider_id: "confluence" } as ConnectionTool;
+    renderPane({ tools: [neverCheckedGithub(), jira, confluence] });
+    const jiraRow = await screen.findByTestId("connections-jira-conn-alpha-user");
+    const confluenceRow = await screen.findByTestId("connections-confluence-conn-alpha-user");
+    expect(jiraRow.querySelector(".connections-tool-label")?.textContent).toBe("Jira");
+    expect(confluenceRow.querySelector(".connections-tool-label")?.textContent).toBe("Confluence");
+    screen.queryAllByText(/acli .* auth login/).forEach(command => expect(command).not.toBeVisible());
+    const github = screen.getByTestId("connections-github");
+    expect(within(github).queryByText(/Sign in to GitHub/)).toBeNull();
+    fireEvent.click(within(github).getByRole("button", { name: "Recheck" }));
+    await waitFor(() => expect(mockRecheckProvider).toHaveBeenCalledWith("github"));
+  });
+
+  it("opens a sign-in well only for a producer-named missing sign-in", async () => {
+    renderPane({ tools: [signInGithub()] });
+    const row = (await screen.findByTestId("connections-github")).closest("li")!;
+    expect(within(row).queryByText("gh auth login")).toBeNull();
+    fireEvent.click(within(row).getByRole("button", { name: "Sign in" }));
+    expect(within(row).getByText("gh auth login")).toBeInTheDocument();
+    expect(within(row).getAllByText("GITHUB.COM")).toHaveLength(1);
+  });
+
+  it.each([{ state: "not_determined", can_request: true, verb: "Allow calendar access" }, { state: "denied", can_request: false, verb: "Open System Settings" }])("Settings calendar $state access remains available with an existing feed", async ({ state, can_request, verb }) => {
+    vi.mocked(apiFetch).mockImplementation(async (path) => {
+      if (path === "/api/onboarding/calendar") return { ...CALENDAR_WIRE.wire, macos: { state, can_request }, candidates: [] };
+      if (path === "/api/settings") return { calendar: { sources: [{ id: "feed", url: CALENDAR_CHECK_WIRE.wire.url, enabled: true }] } };
+      if (path === "/api/door") return { calendar_configured: true };
+      return {};
+    });
+    mockFetchConnections.mockResolvedValue(fullResponse());
+    render(<ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} focusProvider="calendar" />);
+    fireEvent.click(await screen.findByRole("button", { name: verb }));
+    const destination = can_request ? "/api/onboarding/calendar/macos/access" : "/api/onboarding/calendar/macos/settings";
+    await waitFor(() => expect(vi.mocked(apiFetch).mock.calls.some(([path, init]) => path === destination && init?.method === "POST")).toBe(true));
+  });
+
+  it("Settings calendar URL Add waits for the save gate and reconciles the accepted use", async () => {
+    let allowed = false;
+    const before = vi.fn(async () => allowed);
+    const changed = vi.fn(async () => {});
+    vi.mocked(apiFetch).mockImplementation(async (path) => {
+      if (path === "/api/onboarding/calendar") return { ...CALENDAR_WIRE.wire, candidates: [] };
+      if (path === "/api/settings") return { calendar: { sources: [] } };
+      if (path === "/api/onboarding/calendar/check") return CALENDAR_CHECK_WIRE.wire;
+      if (path === "/api/onboarding/calendar/use") return CALENDAR_USE_WIRE.wire;
+      return {};
+    });
+    mockFetchConnections.mockResolvedValue(fullResponse());
+    render(<ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} focusProvider="calendar" onCalendarChanged={changed} onBeforeCalendarChange={before} />);
+    const field = await screen.findByRole("textbox", { name: "Calendar URL" });
+    fireEvent.change(field, { target: { value: CALENDAR_CHECK_WIRE.wire.url } });
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    await waitFor(() => expect(before).toHaveBeenCalledOnce());
+    expect(vi.mocked(apiFetch).mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
+    expect(field).toHaveValue(CALENDAR_CHECK_WIRE.wire.url);
+    allowed = true;
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    await waitFor(() => expect(changed).toHaveBeenCalledOnce());
+    expect(vi.mocked(apiFetch).mock.calls.filter(([, init]) => init?.method === "POST").map(([path]) => path)).toEqual(["/api/onboarding/calendar/check", "/api/onboarding/calendar/use"]);
+    expect(field).toHaveValue("");
+  });
+  it.each([true, false])("Settings refreshes a configured native calendar name with enabled=%s and reconciles only accepted writes", async (enabled) => {
+    const candidate = CALENDAR_WIRE.wire.candidates[0];
+    const changed = vi.fn(async () => {});
+    const before = vi.fn(async () => true);
+    let accepted = false;
+    vi.mocked(apiFetch).mockImplementation(async (path) => {
+      if (path === "/api/onboarding/calendar") {
+        if (accepted && !enabled) throw new Error("Refresh unavailable");
+        return CALENDAR_WIRE.wire;
+      }
+      if (path === "/api/settings") return { calendar: { sources: [{ id: "saved", url: candidate.id, enabled }] } };
+      if (path === "/api/door") return { calendar_configured: true };
+      if (path === "/api/onboarding/calendar/use") { accepted = true; return CALENDAR_USE_WIRE.wire; }
+      return {};
+    });
+    mockFetchConnections.mockResolvedValue(fullResponse());
+    render(<ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} focusProvider="calendar" onCalendarChanged={changed} onBeforeCalendarChange={before} />);
+    const refresh = await screen.findByRole("button", { name: `Refresh ${candidate.label} name` });
+    fireEvent.click(refresh);
+    await waitFor(() => expect(changed).toHaveBeenCalledOnce());
+    expect(before).toHaveBeenCalledOnce();
+    expect(apiFetch).toHaveBeenCalledWith("/api/onboarding/calendar/use", { method: "POST", json: { id: candidate.id, label: candidate.label } });
+  });
+
+  it("a refused pending Settings save prevents the calendar write", async () => {
+    const before = vi.fn(async () => false);
+    vi.mocked(apiFetch).mockImplementation(async (path) => {
+      if (path === "/api/onboarding/calendar") return CALENDAR_WIRE.wire;
+      if (path === "/api/settings") return { calendar: { sources: [] } };
+      return {};
+    });
+    mockFetchConnections.mockResolvedValue(fullResponse());
+    render(<ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} focusProvider="calendar" onBeforeCalendarChange={before} />);
+    fireEvent.click(await screen.findByRole("button", { name: `Use ${CALENDAR_WIRE.wire.candidates[0].label}` }));
+    await waitFor(() => expect(before).toHaveBeenCalledOnce());
+    expect(vi.mocked(apiFetch).mock.calls.some(([path]) => path === "/api/onboarding/calendar/use")).toBe(false);
+  });
+
+  it("a refused native calendar use keeps the chooser and does not reconcile", async () => {
+    const changed = vi.fn(async () => {});
+    vi.mocked(apiFetch).mockImplementation(async (path) => {
+      if (path === "/api/onboarding/calendar") return CALENDAR_WIRE.wire;
+      if (path === "/api/settings") return { calendar: { sources: [] } };
+      if (path === "/api/door") return {};
+      if (path === "/api/onboarding/calendar/use") throw new Error("Calendar refused");
+      return {};
+    });
+    mockFetchConnections.mockResolvedValue(fullResponse());
+    render(<ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} focusProvider="calendar" onCalendarChanged={changed} />);
+    fireEvent.click(await screen.findByRole("button", { name: `Use ${CALENDAR_WIRE.wire.candidates[0].label}` }));
+    expect(await screen.findByText(/Calendar refused/)).toBeInTheDocument();
+    expect(changed).not.toHaveBeenCalled();
+  });
+
+  it("the API rejects failed reads and checks instead of returning empty setup", async () => {
+    const real = await vi.importActual<typeof import("../connections/api")>("../connections/api");
+    vi.mocked(apiFetch).mockRejectedValue(new Error("Hub unavailable"));
+    await expect(real.fetchConnections()).rejects.toThrow("Hub unavailable");
+    await expect(real.recheckProvider("github")).rejects.toThrow("Hub unavailable");
+  });
+
+  it("keeps failed Add inputs and offers another account after an existing one", async () => {
+    renderPane({ tools: [connectedJira()] });
+    fireEvent.click(await screen.findByTestId("connections-add-open-jira"));
+    const form = screen.getByTestId("connections-add-jira");
+    fireEvent.change(within(form).getByRole("textbox", { name: "Site" }), { target: { value: "next.atlassian.net" } });
+    fireEvent.change(within(form).getByRole("textbox", { name: "Email" }), { target: { value: "next@example.com" } });
+    vi.mocked(apiFetch).mockRejectedValue(new Error("Account refused"));
+    fireEvent.click(within(form).getByRole("button", { name: "Add" }));
+    await within(form).findByText("Account not added");
+    expect(within(form).getByRole("textbox", { name: "Site" })).toHaveValue("next.atlassian.net");
+    expect(within(form).getByRole("textbox", { name: "Email" })).toHaveValue("next@example.com");
+  });
+
+  it("names a failed Recheck without presenting it as accepted", async () => {
+    renderPane({ tools: [connectedGithub()] });
+    const row = (await screen.findByTestId("connections-github")).closest("li")!;
+    mockRecheckProvider.mockRejectedValue(new Error("Hub unavailable"));
+    fireEvent.click(within(row).getByRole("button", { name: "Recheck" }));
+    expect(await screen.findByText("Check failed")).toBeInTheDocument();
+  });
+
+  it("says Copy failed when the clipboard refuses", async () => {
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: vi.fn().mockRejectedValue(new Error("Refused")) } });
+    renderPane({ tools: [signInGithub()] });
+    fireEvent.click(await screen.findByRole("button", { name: "Sign in" }));
+    fireEvent.click(screen.getByTestId("connections-github-copy"));
+    expect(await screen.findByText("Copy failed")).toBeInTheDocument();
+    expect(screen.queryByText("Copied")).toBeNull();
   });
 });
