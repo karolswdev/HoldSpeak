@@ -97,4 +97,3 @@ owner DB, quick-check, merge, or deployment verification. The root-reported
 offscreen-error shot was cited as root evidence and was not independently
 opened by this reviewer. Controlled web responses prove face dispatch and
 rendered state; the saved passing logs do not establish those live facts.
-

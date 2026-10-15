@@ -4,9 +4,31 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-15 (Opened Workbench and Accounts: #1209)
+**Last updated:** 2026-10-15 (Follow-through and attention surfaces: #1210)
 
 ## Current phase
+
+**Follow-through and attention surfaces — #1210 (2026-10-15).** The owner's
+confusing Follow-through report drove a substantive Workbench pass: readable
+populated date/review ledgers, full owner/date/source facts, direct actions and
+inline assignment/date controls. Canonical Snooze works before collection;
+represented decision/action mirrors are suppressed, including filtered reads.
+Newer drafts and exact Retry survive refresh/lane moves; newly refused writes
+scroll into view. People receipts stay in memory. Cadence rows use actual loop
+writers. Brief keeps the latest selection and names late Retry subjects;
+decision status uses explicit library choices, and paper readers show the
+requested-record failure/recovery. Final quick GREEN: 365 web / 1335 affected
+Python / 107 sweeps (2 existing xfails) / 17 canon; TypeScript passes.
+Root read 14-state Follow and 11-state neighbor walks at each width, actual
+isolated task/status writers, and official Snooze pointer/touch graph cases.
+Independent source review RATIFY after the two neighbor fixes; root corrected
+offscreen refusal feedback. An unchanged Engines stillness case moved 54px
+once; exact replay and the final full sweep passed without a waiver. No owner
+acceptance, provider/model execution, encrypted People store, full main tape or
+postmerge review inferred. [Proof and limits](../docs/internal/FOLLOW-THROUGH-2026-10-15/README.md).
+[Next targets](../docs/internal/FOLLOW-THROUGH-2026-10-15/NEXT-SURFACES.md): shared
+divider overpaint, automatic Send preview, editor save/refusal and preview
+freshness. These inherited findings remain open for the next pass.
 
 **Opened Workbench and Accounts — #1209 (2026-10-15).** The owner's
 opened-workbench/controls report drove a complete bounded pass: multiline

@@ -5,8 +5,10 @@ called Follow-through confusing and asked for continued substantive surface
 refinement. This pass covers Follow-through, Brief selection, the Decisions
 reader and the decision window with existing Workbench components and writers.
 
-Final quick check GREEN; PR and normal local deployment recorded at release.
-Owner judges it live.
+Release: [PR #1210](https://github.com/karolswdev/HoldSpeak/pull/1210),
+product commit `d0fc53240`. Final quick check GREEN. The following status/link
+commit changes docs only; the verified product and bundle stay identical.
+Normal local deployment is recorded separately after merge. Owner judges it live.
 
 ## Direction and changes
 
