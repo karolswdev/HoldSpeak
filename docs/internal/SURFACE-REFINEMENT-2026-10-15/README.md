@@ -1,5 +1,7 @@
 # Continued surface refinement
 
+Release [#1208](https://github.com/karolswdev/HoldSpeak/pull/1208).
+
 The owner asked to continue after #1207 with the remaining concrete audit
 targets. Base `a81364a0d`; isolated worktree
 `wt-surface-refinement-20261015`. This pass keeps the Workbench material and

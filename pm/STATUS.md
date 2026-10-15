@@ -4,9 +4,25 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-15 (Continued visual refinement: #1207)
+**Last updated:** 2026-10-15 (Continued surface refinement: #1208)
 
 ## Current phase
+
+**Continued surface refinement — #1208 (2026-10-15).** The five
+remaining ranked targets now use the existing Workbench kit: Schedule,
+email recipient editing, Room History, Knowledge membership and plain
+session terminal handoff. Failed reads differ from empty results; real retry
+restores work. Recipient edits keep saved keys and provider-specific presence;
+full-width multiline fields clear their mic. Terminal replaces the long
+report, restores unsent work on Back and handles new Speak requests directly.
+Root inspected18-state production walks at1440/393, actual isolated Schedule
+and destination saves, local key Check/Retry, History recovery and Knowledge
+member opening; graph Knowledge cases pass at both widths. Final quick GREEN:
+3712web /651affected Python /107desk sweeps (2existing xfails) /17canon; build and release TypeScript pass. Independent Sol source review
+RATIFY after two P2 fixes/recheck; root live corrections cover row specificity,
+receipt clipping and shared Pad text clearance. No Muad'Dib check or owner
+acceptance inferred. Full main tape/postmerge review remain separate.
+[Design, focused proof, live verification and limits](../docs/internal/SURFACE-REFINEMENT-2026-10-15/README.md).
 
 **Continued visual refinement — #1207 (2026-10-15).** After the shared
 picker release, two bounded audits and actual production captures drove a
@@ -242,15 +258,14 @@ committing generated docs and line-number test maps; split the tests.
 
 ## Open work
 
-**From #1207:** continue live inspection of the ranked source candidates:
-Schedule recording, Room History degraded/no-match state, Knowledge unavailable
-membership, long recipient lists and session terminal action geometry. Exact
-opening paths are in the two audit reports. These are not live-confirmed
-repairs. Thread question controls have UI contract coverage; a production
-elicitation emitter remains unestablished. No live artifact-arrival, clipboard,
-failed-mint recovery, actual model quality or native hardware claim. Owner desk
-judgment, full main tape and Astra postmerge review remain due. The former
-Calendar chooser P2 is closed; no source-review findings remain open.
+**From #1208:** the five #1207 source candidates are repaired and
+observed on isolated production faces at1440/393. Continue bounded inspection
+of existing surfaces; plain no-pane terminal still repeats Back in its body
+and footer, a visual follow-up. OS clipboard, owner tmux/control, microphone,
+external email dispatch, native calendar, model quality and scheduled firing
+remain unverified. Thread has focused question-control coverage but no
+established production elicitation emitter. Owner live judgment, full main
+tape and Astra postmerge review remain due. No source-review P2 remains open.
 
 **From #1198:** two intermediate full sweeps observed a Week 1440 layout
 movement (166 / 118 px). Six focused checks, three complete diagnostic sweeps,
@@ -316,6 +331,11 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 | Runs on (16c): a per-object wire on the board (thought/workbench/agent/recipe/project overrides; the parked AssignmentEditor sheet edited them; the contextual atom now only reads them and opens Runs on); FOUND model files and an unrecorded Whisper (add-to-library needs a detected_artifact_id detect does not carry); Try it through the route for jobs other than Thoughts & notes (route_probe accepts only ask.answer); the phone list cannot pin an inherited engine as a job's own; 25 atlas cases still drive the Concierge flow (Add = use for summaries; the window closes) | — | — |
 
 ## Last merged (newest first)
+
+- **#1208 — Continued surface refinement.** Schedule, email recipients/key
+  reuse, History recovery, Knowledge unavailable members and terminal handoff;
+  shared Pad mic clearance. Quick GREEN,1440/393 production walks and one
+  independent source review/recheck. [Record](../docs/internal/SURFACE-REFINEMENT-2026-10-15/README.md).
 
 - **#1207 — Continued visual refinement.** Shared Workbench composition across
   Inspector/Thread/Agent/Workbench/Calendar; honest recovery, one result reader,

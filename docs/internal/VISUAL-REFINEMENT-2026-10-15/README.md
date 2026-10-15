@@ -96,7 +96,7 @@ Calendar chooser and false-empty Workbench reads at1440/393.
 Further candidates have concrete opening paths in those reports: Schedule
 recording, long recipient lists, Room History degraded/no-match state,
 Knowledge unavailable membership, and session terminal actions below a long
-report. They remain open work. The Workbench hypothesis about a missing
+report. They are repaired by [the next surface pass](../SURFACE-REFINEMENT-2026-10-15/README.md). The Workbench hypothesis about a missing
 `error_reason` was withdrawn: actual producer failures already carry their
 reason in the result. It is not included as a repaired bug.
 
