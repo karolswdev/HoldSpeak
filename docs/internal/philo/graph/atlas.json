@@ -19201,7 +19201,7 @@
         },
         {
           "path": "web/src/desk/pullouts/views/BriefView.tsx",
-          "symbol": "<Button dense disabled={addingAgenda} onClick={() => void addToAgenda(selectedPerson.relationship_id)} data-testid=\"verb-add-agenda\">",
+          "symbol": "<Button dense disabled={addingAgenda} onClick={() => void addToAgenda(selectedPerson.relationship_id, selectedPerson.display_name)} data-testid=\"verb-add-agenda\">",
           "claim": "the selection decides which verbs the foot carries"
         }
       ],

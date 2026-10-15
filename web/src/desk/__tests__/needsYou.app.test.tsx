@@ -133,8 +133,10 @@ describe("Needs you: Name an owner and Review on a meeting's action items", () =
       act(() => openIntelligence({ view: "follow-through", followThroughId: "ai-owned" }));
       expect(openPullout).toHaveBeenCalledWith("intelligence:desk");
       const verbs = await screen.findByLabelText(`Verbs for ${OWNED}`);
-      expect(within(verbs).getByRole("button", { name: "Mark done" })).toBeTruthy();
-      expect(within(verbs).getByRole("button", { name: "Delegate" })).toBeTruthy();
+      const task = screen.getByText(OWNED).closest(".surface-ledger-row") as HTMLElement;
+      expect(within(task).getByRole("button", { name: "Mark done" })).toBeTruthy();
+      expect(within(task).getByRole("button", { name: `Details for ${OWNED}` })).toHaveAttribute("aria-expanded", "true");
+      expect(within(verbs).getByRole("button", { name: "Assign" })).toBeTruthy();
       // Only that card is open.
       expect(screen.queryByLabelText("Verbs for Book the room")).toBeNull();
     } finally {

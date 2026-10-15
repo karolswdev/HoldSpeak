@@ -23,7 +23,10 @@ vi.mock("../../../runtime/RuntimeBus", () => ({
 }));
 
 const openRef = vi.hoisted(() => vi.fn());
-vi.mock("../../openObject", () => ({ openRef }));
+vi.mock("../../openObject", async (importOriginal) => ({
+  ...await importOriginal<typeof import("../../openObject")>(),
+  openRef,
+}));
 
 vi.mock("../../../lib/api", () => ({
   apiFetch,
@@ -174,12 +177,35 @@ describe("Intelligence → Decisions (PHILO-17: every decision, its date and its
 
     expect(await screen.findByText(receipt.rationale)).toBeInTheDocument();
     expect(screen.getByText(/Receipts must explain the decision/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "story: HS-128-04" })).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Evidence", { selector: ".gadget-fold-title" }));
+    expect(screen.getByRole("button", { name: "Open story · HS-128-04" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Open meeting" }));
+    expect(openRef).toHaveBeenCalledWith("meeting:meeting-1");
+    fireEvent.click(screen.getByText("History", { selector: ".gadget-fold-title" }));
+    expect(screen.getByRole("button", { name: "Previous decision" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Next decision" })).toBeInTheDocument();
     expect(screen.getByText(/Old rationale/)).toBeInTheDocument();
     expect(screen.getByText("CURRENT")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "← RESULTS" }));
+    fireEvent.click(screen.getByRole("button", { name: "Results" }));
     expect(screen.getByText(receipt.decision_text)).toBeInTheDocument();
+  });
+
+  it("a meeting-derived record opens its source decision and keeps meeting evidence identity", async () => {
+    // DecisionRecordService.create_from_meeting: top-level source_id is the
+    // decision id; sources[].meeting_id/source_ref names the actual meeting.
+    const meetingRecord = { ...detail, source_type: "meeting", source_id: "decision-from-meeting" };
+    apiFetch.mockImplementation((path: string) => path === `/api/decision-records/${receipt.id}`
+      ? Promise.resolve(meetingRecord) : hub(path));
+    render(<DecisionsView receiptId={receipt.id} />);
+    await screen.findByText(receipt.rationale);
+    fireEvent.click(screen.getByRole("button", { name: "Open decision" }));
+    expect(openRef).toHaveBeenCalledWith("decision:decision-from-meeting");
+
+    fireEvent.click(screen.getByText("Evidence", { selector: ".gadget-fold-title" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open meeting" }));
+    expect(openRef).toHaveBeenCalledWith("meeting:meeting-1");
+    expect(openRef).not.toHaveBeenCalledWith("meeting:decision-from-meeting");
   });
 
   it("a meeting's decision with no record opens itself; Open meeting goes through the loading opener", async () => {
@@ -207,12 +233,48 @@ describe("Intelligence → Decisions (PHILO-17: every decision, its date and its
     expect((await screen.findByTestId("decision-detail")).textContent).toContain("Freeze the old ledger on Nov 5");
     expect(apiFetch).toHaveBeenCalledWith("/api/decisions?scope=all&decision_id=dec-2&limit=1");
 
-    fireEvent.click(screen.getByRole("button", { name: "← RESULTS" }));
+    fireEvent.click(screen.getByRole("button", { name: "Results" }));
     await screen.findByText("Keep the old ledger");
     expect(screen.queryByTestId("decision-detail")).toBeNull();
 
     view.rerender(<DecisionsView decisionId="dec-2" decisionNonce={2} />);
     expect((await screen.findByTestId("decision-detail")).textContent).toContain("Freeze the old ledger on Nov 5");
+  });
+
+  it("a failed requested record shows its own failure, exact Retry and Results", async () => {
+    render(<DecisionsView receiptId={receipt.id} />);
+    await screen.findByText(receipt.rationale);
+    apiFetch.mockImplementation((path: string) => path === "/api/decision-records/receipt-new"
+      ? Promise.reject(new Error("Record did not load")) : hub(path));
+    fireEvent.click(screen.getByText("History", { selector: ".gadget-fold-title" }));
+    fireEvent.click(screen.getByRole("button", { name: "Next decision" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Record did not load");
+    expect(screen.queryByText(receipt.decision_text)).not.toBeInTheDocument();
+    apiFetch.mockImplementation((path: string) => path === "/api/decision-records/receipt-new"
+      ? Promise.resolve({ ...detail, id: "receipt-new", decision_text: "Use the revised rollout" }) : hub(path));
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(await screen.findByText("Use the revised rollout")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /RESULTS/i }));
+    expect(await screen.findByRole("searchbox", { name: "Search decisions" })).toBeInTheDocument();
+  });
+
+  it("a late record response cannot replace a later destination or Results", async () => {
+    let release!: (body: unknown) => void;
+    apiFetch.mockImplementation((path: string) => path === "/api/decision-records/slow-record"
+      ? new Promise((resolve) => { release = resolve; }) : hub(path));
+    const view = render(<DecisionsView receiptId="slow-record" />);
+    await waitFor(() => expect(release).toBeTypeOf("function"));
+    view.rerender(<DecisionsView receiptId={receipt.id} />);
+    await screen.findByText(receipt.rationale);
+    await act(async () => release({ ...detail, decision_text: "Obsolete record" }));
+    expect(screen.queryByText("Obsolete record")).not.toBeInTheDocument();
+
+    view.rerender(<DecisionsView receiptId="slow-record" />);
+    await waitFor(() => expect(screen.getByRole("button", { name: /RESULTS/i })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: /RESULTS/i }));
+    await act(async () => release({ ...detail, decision_text: "Returned after Back" }));
+    expect(screen.queryByText("Returned after Back")).not.toBeInTheDocument();
+    expect(screen.getByRole("searchbox", { name: "Search decisions" })).toBeInTheDocument();
   });
 
   // Astra, #785 finding 2 (kept): a slow bus re-read for an older search must

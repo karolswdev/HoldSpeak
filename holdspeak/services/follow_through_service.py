@@ -163,17 +163,34 @@ class FollowThroughService:
         with self._db._connection() as conn:
             actions = self._action_rows(conn, project_id=project_id, owner=owner)
             loops = self._loop_rows(conn, project_id=project_id, owner=owner)
+            # Action lifecycle facts belong to the source even when a loop's
+            # display fields have not caught up with ownership/project changes.
+            enrichment_loops = (
+                self._loop_rows(conn, project_id=None, owner=None)
+                if project_id or owner else loops
+            )
             decisions = self._decision_rows(conn, project_id=project_id)
             deferred = self._deferred_action_ids(conn)
+            # Source identity governs mirror suppression, including actions
+            # excluded by this read's filters or already completed.
+            canonical_actions = conn.execute(
+                "SELECT a.id, dc.decision_id FROM action_items a "
+                "LEFT JOIN decision_commitments dc ON dc.action_item_id = a.id"
+            ).fetchall()
 
         # A cadence loop whose source is an action enriches the action card;
         # it is not a second card for the same obligation.
         action_loops = {
             str(row["source_id"]): row
-            for row in loops
+            for row in enrichment_loops
             if row["source_type"] == "meeting_action"
         }
-        action_ids = {str(row["id"]) for row in actions}
+        action_ids = {str(row["id"]) for row in canonical_actions}
+        represented_decisions = {
+            str(row["decision_id"])
+            for row in canonical_actions
+            if row["decision_id"] is not None
+        }
 
         for action in actions:
             status = str(action["status"])
@@ -219,6 +236,8 @@ class FollowThroughService:
         # loop retains decision provenance when its source still exists.
         for loop in loops:
             if loop["source_type"] == "meeting_action" and str(loop["source_id"]) in action_ids:
+                continue
+            if loop["source_type"] == "meeting_decision" and str(loop["source_id"]) in represented_decisions:
                 continue
             status = str(loop["status"])
             if status.lower() in _TERMINAL_STATES:
@@ -438,7 +457,7 @@ class FollowThroughService:
             changed = True
 
             loop_rows = conn.execute(
-                "SELECT id FROM cadence_loops WHERE source_id = ?", (card_id,)
+                "SELECT id, source_type FROM cadence_loops WHERE source_id = ?", (card_id,)
             ).fetchall()
             commitment_rows = conn.execute(
                 "SELECT id FROM decision_commitments WHERE action_item_id = ?", (card_id,)
@@ -496,6 +515,21 @@ class FollowThroughService:
                 until = data.get("until")
                 if not isinstance(until, str) or not until.strip():
                     raise ValueError("snooze requires payload['until']")
+                # A Door task is live before the collector sees it. Its first
+                # snooze creates the same source identity in this transaction.
+                if not any(row["source_type"] == "meeting_action" for row in loop_rows):
+                    conn.execute(
+                        """INSERT INTO cadence_loops
+                           (id, source_type, source_id, title, owner, due_at, created_at, updated_at)
+                           VALUES (?, 'meeting_action', ?, ?, ?, ?, ?, ?)
+                           ON CONFLICT(source_type, source_id) DO NOTHING""",
+                        (uuid.uuid4().hex, card_id, action["task"], action["owner"], action["due"], now, now),
+                    )
+                    loop = conn.execute(
+                        "SELECT id FROM cadence_loops WHERE source_type = 'meeting_action' AND source_id = ?",
+                        (card_id,),
+                    ).fetchone()
+                    loop_ids.append(str(loop["id"]))
                 conn.execute(
                     """UPDATE cadence_loops
                        SET status = 'snoozed', snoozed_until = ?, updated_at = ?

@@ -40,16 +40,6 @@ vi.mock("../../shell", () => ({
   openPrimitive,
 }));
 
-vi.mock("../../hooks/useWriteReceipt", () => ({
-  useWriteReceipt: () => ({
-    attempt: vi.fn(async (_verb: string, run: () => Promise<unknown>) => ({
-      ok: true,
-      value: await run(),
-    })),
-    receipt: null,
-  }),
-}));
-
 // ---------------------------------------------------------------------------
 // fixtures
 // ---------------------------------------------------------------------------
@@ -293,6 +283,91 @@ describe("BriefView person sections", () => {
     });
     expect(screen.getByText("Defer")).toBeInTheDocument();
     expect(screen.getByText("Speak")).toBeInTheDocument();
+  });
+
+  it("the latest person or item selection owns the row and footer", async () => {
+    mockBrief();
+    renderBriefView();
+    fireEvent.click(await screen.findByText("Ewa"));
+    expect(screen.getByTestId("verb-add-agenda")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Standup"));
+    expect(screen.getByText("SELECTED · MEETING RECORDED · Standup")).toBeInTheDocument();
+    expect(screen.queryByTestId("verb-add-agenda")).not.toBeInTheDocument();
+    expect(screen.getByText("Standup").closest("[data-selected]")).not.toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Acknowledge" }));
+    await waitFor(() => expect(screen.getByText("acknowledged")).toBeInTheDocument());
+    expect(apiFetch).toHaveBeenCalledWith("/api/brief/items/item-1/shelf", {
+      method: "POST", json: { state: "acknowledged" },
+    });
+
+    fireEvent.click(screen.getByText("Ewa"));
+    expect(screen.getByText("PERSON · Ewa")).toBeInTheDocument();
+    expect(screen.getByTestId("verb-add-agenda")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Acknowledge" })).not.toBeInTheDocument();
+    expect(screen.getByText("Standup").closest("[data-selected]")).toBeNull();
+  });
+
+  it("a late agenda refusal names its original person while the item keeps the footer and Retry target", async () => {
+    mockBrief();
+    const answer = apiFetch.getMockImplementation()!;
+    let refuse!: (cause: unknown) => void;
+    apiFetch.mockImplementation((path: string, init?: unknown) => path === "/api/people/one-on-ones/session-1/agenda"
+      ? new Promise((_resolve, reject) => { refuse = reject; }) : answer(path, init));
+    renderBriefView();
+    fireEvent.click(await screen.findByText("Ewa"));
+    fireEvent.click(screen.getByRole("button", { name: "Add to 1:1 agenda" }));
+    await waitFor(() => expect(refuse).toBeTypeOf("function"));
+    fireEvent.click(screen.getByText("Standup"));
+    await act(async () => refuse({ status: 503 }));
+
+    expect(screen.getByText("SELECTED · MEETING RECORDED · Standup")).toBeInTheDocument();
+    expect(screen.getByText(/EWA · ADD TO 1:1 AGENDA FAILED · HTTP 503/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Acknowledge" })).toBeInTheDocument();
+    expect(screen.queryByTestId("verb-add-agenda")).not.toBeInTheDocument();
+    apiFetch.mockImplementation(answer);
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument());
+    expect(apiFetch.mock.calls.filter(([path]) => path === "/api/people/relationships/rel-ewa/one-on-ones")).toHaveLength(2);
+    expect(apiFetch.mock.calls.filter(([path]) => path === "/api/people/one-on-ones/session-1/agenda")).toHaveLength(2);
+    expect(screen.getByText("SELECTED · MEETING RECORDED · Standup")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Ewa"));
+    expect(screen.getByText("PERSON · Ewa")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Ewa"));
+    expect(screen.queryByText("PERSON · Ewa")).not.toBeInTheDocument();
+    expect(screen.getByTestId("brief-refresh")).toBeInTheDocument();
+  });
+
+  it("a late shelf refusal after person selection clears names the original item and preserves exact Retry", async () => {
+    mockBrief();
+    const answer = apiFetch.getMockImplementation()!;
+    let refuse!: (cause: unknown) => void;
+    apiFetch.mockImplementation((path: string, init?: unknown) => path === "/api/brief/items/item-1/shelf"
+      ? new Promise((_resolve, reject) => { refuse = reject; }) : answer(path, init));
+    renderBriefView();
+    fireEvent.click(await screen.findByText("Standup"));
+    fireEvent.click(screen.getByRole("button", { name: "Defer" }));
+    await waitFor(() => expect(refuse).toBeTypeOf("function"));
+    fireEvent.click(screen.getByText("Ewa"));
+    expect(screen.getByText("PERSON · Ewa")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Ewa"));
+    await act(async () => refuse({ status: 409 }));
+
+    expect(screen.getByText(/STANDUP · DEFERRED FAILED · HTTP 409/)).toBeInTheDocument();
+    expect(screen.queryByText("PERSON · Ewa")).not.toBeInTheDocument();
+    expect(screen.queryByText("SELECTED · MEETING RECORDED · Standup")).not.toBeInTheDocument();
+    expect(screen.getByTestId("brief-refresh")).toBeInTheDocument();
+    apiFetch.mockImplementation(answer);
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument());
+    const shelfCalls = apiFetch.mock.calls.filter(([path]) => path === "/api/brief/items/item-1/shelf");
+    expect(shelfCalls).toHaveLength(2);
+    expect(shelfCalls.map(([, init]) => init)).toEqual([
+      { method: "POST", json: { state: "deferred" } },
+      { method: "POST", json: { state: "deferred" } },
+    ]);
+    expect(apiFetch.mock.calls.some(([path]) => String(path).includes("/agenda"))).toBe(false);
   });
 
   it("renders L2 unavailable line when sidecar is closed", async () => {

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { apiFetch, readableError } from "../../../lib/api";
 import { Button } from "../../../components/signal/Signal";
 import { holdObject, qualifiedRef } from "../../api";
-import { openRef } from "../../openObject";
+import { decisionRecordSourceRef, openRef } from "../../openObject";
 import { allObjects } from "../../world";
 import { useDesk } from "../../store";
 import { useOnDeskChanged } from "../../useDeskChangedRefresh";
@@ -12,6 +12,10 @@ import { countLabel } from "../../surface/count";
 import { MicButton } from "../../surface";
 import { StringGadget } from "../../surface/gadgets";
 import { DecisionRecordSendWells } from "../../documentSendsLazy";
+import { Material } from "../../surface/Material";
+import { FoldGadget, GadgetGroup, GadgetRow } from "../../surface/gadgets";
+import { StateChip } from "../../surface";
+import "../attention-records.css";
 
 type ReceiptSource = {
   source_type: string;
@@ -43,6 +47,8 @@ type Receipt = {
   revisions?: ReceiptRevision[];
   predecessor_id?: string | null;
   successor_id?: string | null;
+  source_type?: string;
+  source_id?: string;
 };
 
 function receiptStatus(receipt: Receipt): "governing" | "superseded" | "related" {
@@ -102,10 +108,6 @@ function openDeskDecision(id: string): void {
   void useDesk.getState().refresh().then(open, open);
 }
 
-function shortId(id: string): string {
-  return id.replace(/^record-/, "").slice(0, 12);
-}
-
 function humanDate(value: string | null | undefined): string {
   if (!value) return "—";
   const date = wireDate(value);
@@ -142,7 +144,11 @@ export function DecisionsView({
   const [loading, setLoading] = useState(true);
   const [more, setMore] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [requested, setRequested] = useState<{ kind: "record" | "decision"; id: string; label: string } | null>(null);
+  const [detailError, setDetailError] = useState("");
+  const detailReads = useRef(0);
   const [error, setError] = useState("");
+  useEffect(() => () => { detailReads.current += 1; }, []);
 
   useEffect(() => {
     setQuery(initialQuery);
@@ -239,14 +245,26 @@ export function DecisionsView({
       .finally(() => setMore(false));
   };
 
-  const openReceipt = (receiptId: string) => {
+  const showResults = () => {
+    detailReads.current += 1;
+    setSelected(null);
     setChosen(null);
+    setRequested(null);
+    setDetailLoading(false);
+    setDetailError("");
+  };
+
+  const openReceipt = (receiptId: string, label = "Decision record") => {
+    const order = ++detailReads.current;
+    setChosen(null);
+    setSelected(null);
+    setRequested({ kind: "record", id: receiptId, label });
     setDetailLoading(true);
-    setError("");
+    setDetailError("");
     void apiFetch<Receipt>(`/api/decision-records/${encodeURIComponent(receiptId)}`)
-      .then(setSelected)
-      .catch((reason) => setError(readableError(reason)))
-      .finally(() => setDetailLoading(false));
+      .then((receipt) => { if (order === detailReads.current) setSelected(receipt); })
+      .catch((reason) => { if (order === detailReads.current) setDetailError(readableError(reason)); })
+      .finally(() => { if (order === detailReads.current) setDetailLoading(false); });
   };
 
   useEffect(() => {
@@ -255,30 +273,42 @@ export function DecisionsView({
 
   const openRow = (row: DeskDecision) => {
     if (row.record_id) openReceipt(row.record_id);
-    else if (row.source === "desk") openDeskDecision(row.id);
-    else { setSelected(null); setChosen(row); }
+    else {
+      showResults();
+      if (row.source === "desk") openDeskDecision(row.id);
+      else setChosen(row);
+    }
   };
 
   // PHILO-17: a decision asked for by id (a ⌘K hit, a Brief row) is read by
   // its id, never looked up in the loaded page; each request opens it again.
-  useEffect(() => {
-    if (!decisionId) return;
-    let live = true;
-    const params = new URLSearchParams({ scope: "all", decision_id: decisionId, limit: "1" });
+  const readDecision = (id: string) => {
+    const order = ++detailReads.current;
+    setSelected(null);
+    setChosen(null);
+    setRequested({ kind: "decision", id, label: "Decision" });
+    setDetailError("");
+    setDetailLoading(true);
+    const params = new URLSearchParams({ scope: "all", decision_id: id, limit: "1" });
     void apiFetch<{ decisions?: DeskDecision[] }>(`/api/decisions?${params}`)
       .then((body) => {
-        if (!live) return;
+        if (order !== detailReads.current) return;
         const row = Array.isArray(body?.decisions) ? body.decisions[0] : undefined;
         if (row) openRow(row);
-        else setError("This decision is not on the desk.");
+        else setDetailError("This decision is not on the desk.");
       })
-      .catch((reason) => { if (live) setError(readableError(reason)); });
-    return () => { live = false; };
+      .catch((reason) => { if (order === detailReads.current) setDetailError(readableError(reason)); })
+      .finally(() => { if (order === detailReads.current) setDetailLoading(false); });
+  };
+  useEffect(() => {
+    if (decisionId) readDecision(decisionId);
   }, [decisionId, decisionNonce]);
 
   const openSource = (source: ReceiptSource) => {
     const meetingId = source.meeting_id ?? (source.source_type === "meeting" ? source.source_ref : "");
-    if (meetingId) openRef(`meeting:${meetingId}`);
+    if (meetingId) openRef(`meeting:${meetingId.replace(/^meeting:/, "")}`);
+    else if (source.source_type === "desk") openDeskDecision(source.source_ref.replace(/^desk_decision:/, ""));
+    else if (source.source_type === "artifact") openRef(`artifact:${source.source_ref.replace(/^artifact:/, "")}`);
   };
 
   // A page of rows, never zero where the Show more verb is drawn.
@@ -288,22 +318,24 @@ export function DecisionsView({
     return (
       <MeetingDecisionDetail
         decision={chosen}
-        onBack={() => setChosen(null)}
+        onBack={showResults}
         onOpenMeeting={(meetingId) => openRef(`meeting:${meetingId}`)}
       />
     );
   }
 
-  if (selected || detailLoading) {
+  if (selected || detailLoading || requested) {
     return (
       <ReceiptDetail
         receipt={selected}
         loading={detailLoading}
-        error={error}
-        onBack={() => {
-          setSelected(null);
-          setError("");
+        error={detailError}
+        requestedLabel={requested?.label ?? "Decision record"}
+        onRetry={() => {
+          if (requested?.kind === "record") openReceipt(requested.id, requested.label);
+          else if (requested) readDecision(requested.id);
         }}
+        onBack={showResults}
         onOpenReceipt={openReceipt}
         onOpenSource={openSource}
         onOpenWork={(work) => openPullout(qualifiedRef(work.work_type, work.work_ref))}
@@ -396,20 +428,20 @@ function MeetingDecisionDetail({
   const word = stateWord(decision);
   const meetingId = decision.meeting_id ?? "";
   return (
-    <article className="receipt-detail" data-testid="decision-detail">
-      <Button variant="ghost" dense className="receipt-back" onClick={onBack}>← RESULTS</Button>
-      <header className="receipt-detail-head">
-        {word ? <span className="surface-token" data-tone="muted">{word}</span> : null}
-        <h3>{decision.text}</h3>
-      </header>
-      <dl className="receipt-fields">
-        <ReceiptField label="Rationale" value={decision.rationale} />
-        <ReceiptField label="Decided" value={humanDate(decision.decided_at)} />
-        <ReceiptField label="Meeting" value={decision.meeting_title || (meetingId ? "Meeting" : null)} />
-      </dl>
-      {meetingId ? (
-        <Button variant="secondary" dense onClick={() => onOpenMeeting(meetingId)}>Open meeting</Button>
-      ) : null}
+    <article className="receipt-detail attention-record" data-testid="decision-detail">
+      <div className="attention-record-verbs">
+        <Button variant="ghost" dense onClick={onBack}>Results</Button>
+        {word ? <StateChip state="idle" label={word} wrap /> : null}
+      </div>
+      <GadgetGroup label="Decision" material="inset"><Material>{decision.text}</Material></GadgetGroup>
+      <GadgetGroup label="Context" material="inset">
+        {decision.rationale ? <GadgetRow label="Rationale" controlWidth="full"><Material>{decision.rationale}</Material></GadgetRow> : null}
+        {decision.decided_at ? <GadgetRow label="Decided">{humanDate(decision.decided_at)}</GadgetRow> : null}
+        {decision.meeting_title || meetingId ? <GadgetRow label="Meeting" controlWidth="full">
+          <span>{decision.meeting_title || "Meeting"}</span>
+          {meetingId ? <Button variant="ghost" dense onClick={() => onOpenMeeting(meetingId)}>Open meeting</Button> : null}
+        </GadgetRow> : null}
+      </GadgetGroup>
     </article>
   );
 }
@@ -418,6 +450,8 @@ function ReceiptDetail({
   receipt,
   loading,
   error,
+  requestedLabel,
+  onRetry,
   onBack,
   onOpenReceipt,
   onOpenSource,
@@ -426,70 +460,74 @@ function ReceiptDetail({
   receipt: Receipt | null;
   loading: boolean;
   error: string;
+  requestedLabel: string;
+  onRetry: () => void;
   onBack: () => void;
-  onOpenReceipt: (id: string) => void;
+  onOpenReceipt: (id: string, label?: string) => void;
   onOpenSource: (source: ReceiptSource) => void;
   onOpenWork: (work: ReceiptWork) => void;
 }) {
-  if (loading) return <SurfaceState loading />;
-  if (!receipt) return <SurfaceState error={error || "Decision unavailable."} />;
+  const back = <Button variant="ghost" dense onClick={onBack}>Results</Button>;
+  if (loading || error || !receipt) return (
+    <article className="receipt-detail attention-record">
+      <div className="attention-record-verbs">{back}</div>
+      <GadgetGroup label={requestedLabel} material="inset">
+        {loading ? <SurfaceState loading /> : <SurfaceState error={error || "Decision unavailable."} onRetry={onRetry} />}
+      </GadgetGroup>
+    </article>
+  );
 
-  const provenance = receipt.sources?.find((source) => source.source_type === "segment");
+  const sourceLabel = (source: ReceiptSource): string | null => source.meeting_id || source.source_type === "meeting"
+    ? "Open meeting" : source.source_type === "desk" ? "Open decision" : source.source_type === "artifact" ? "Open artifact" : null;
+  const sources = receipt.sources?.filter((source) => source.source_type !== "predecessor" && source.source_type !== "successor"
+    && (source.text || sourceLabel(source))) ?? [];
+  const origin = decisionRecordSourceRef(receipt.source_type, receipt.source_id);
   const decisionText = receipt.decision_text;
   const predecessorId = receipt.predecessor_id;
   const successorId = receipt.successor_id;
+  const history = Boolean(predecessorId || successorId || receipt.revisions?.length);
+  const evidence = Boolean(sources.length || receipt.work?.length);
   return (
-    <article className="receipt-detail">
-      <Button variant="ghost" dense className="receipt-back" onClick={onBack}>← RESULTS</Button>
-      <header className="receipt-detail-head">
-        <span className="receipts-id">D-{shortId(receipt.id)}</span>
-        <span className="surface-token" data-tone={receiptStatus(receipt) === "superseded" ? "muted" : "ok"}>
-          {RECEIPT_WORD[receiptStatus(receipt)]}
-        </span>
-        <h3>{decisionText}</h3>
-      </header>
-      <dl className="receipt-fields">
-        <ReceiptField label="Rationale" value={receipt.rationale} />
-        <ReceiptField label="Alternatives" value={receipt.alternatives} />
-        <ReceiptField label="Owner" value={receipt.owner} />
-        <ReceiptField label="Review" value={humanDate(receipt.review_date)} />
-      </dl>
+    <article className="receipt-detail attention-record">
+      <div className="attention-record-verbs">
+        {back}
+        <StateChip wrap state={receiptStatus(receipt) === "governing" ? "success" : "idle"} label={RECEIPT_WORD[receiptStatus(receipt)]} />
+      </div>
+      <GadgetGroup label="Decision" material="inset"><Material>{decisionText}</Material></GadgetGroup>
+      {receipt.rationale || receipt.alternatives || receipt.owner || receipt.review_date || origin ? (
+        <GadgetGroup label="Context" material="inset">
+          {receipt.rationale ? <GadgetRow label="Rationale" controlWidth="full"><Material>{receipt.rationale}</Material></GadgetRow> : null}
+          {receipt.alternatives ? <GadgetRow label="Alternatives" controlWidth="full"><Material>{receipt.alternatives}</Material></GadgetRow> : null}
+          {receipt.owner ? <GadgetRow label="Owner" controlWidth="full">{receipt.owner}</GadgetRow> : null}
+          {receipt.review_date ? <GadgetRow label="Review">{humanDate(receipt.review_date)}</GadgetRow> : null}
+          {origin ? <GadgetRow label="Source" controlWidth="full">
+            <Button variant="ghost" dense onClick={() => openRef(origin)}>Open decision</Button>
+          </GadgetRow> : null}
+        </GadgetGroup>
+      ) : null}
       {/* PHILO-11-05a (canvas B5): the record's SEND well, after its fields. */}
       <DecisionRecordSendWells id={receipt.id} text={decisionText} />
-      <section className="receipt-provenance" aria-label="Provenance">
-        <h4>PROVENANCE</h4>
-        {provenance?.text ? (
-          <blockquote>
-            <p>“{provenance.text}”</p>
-            <footer>{provenance.speaker || "Meeting segment"}</footer>
-          </blockquote>
-        ) : <p className="quiet">No meeting-segment quote retained.</p>}
-        {provenance?.meeting_id || receipt.sources?.some((source) => source.source_type === "meeting") ? (
-          <Button variant="ghost" dense className="receipt-go" onClick={() => onOpenSource(provenance ?? receipt.sources!.find((source) => source.source_type === "meeting")!)}>
-            [GO]
-          </Button>
-        ) : null}
-      </section>
-      <section className="receipt-work" aria-label="Affected work">
-        <h4>AFFECTED WORK</h4>
-        {receipt.work?.length ? receipt.work.map((work) => (
-          <Button key={work.id} variant="ghost" dense className="receipt-work-chip" onClick={() => onOpenWork(work)}>
-            {work.work_type}: {work.work_ref}
-          </Button>
-        )) : <p className="quiet">No affected work linked.</p>}
-      </section>
-      <section className="receipt-chain" aria-label="Supersession history">
-        <h4>SUPERSESSION</h4>
-        <div>
-          {predecessorId ? <Button variant="ghost" dense onClick={() => onOpenReceipt(predecessorId!)}>← D-{shortId(predecessorId)}</Button> : <span>← ORIGIN</span>}
-          <strong>THIS</strong>
-          {successorId ? <Button variant="ghost" dense onClick={() => onOpenReceipt(successorId!)}>D-{shortId(successorId)} →</Button> : <span>CURRENT →</span>}
-        </div>
-      </section>
-      <section className="receipt-revisions" aria-label="Revision timeline">
-        <h4>REVISIONS</h4>
-        {receipt.revisions?.length ? (
-          <ol>
+      {evidence ? <FoldGadget title="Evidence">
+        {sources.map((source, index) => <GadgetGroup key={`${source.source_type}-${source.source_ref}-${index}`}
+          label={source.speaker || "Source"} material="inset">
+          {source.text ? <Material>{source.text}</Material> : null}
+          {sourceLabel(source) ? <Button variant="ghost" dense onClick={() => onOpenSource(source)}>{sourceLabel(source)}</Button> : null}
+        </GadgetGroup>)}
+        {receipt.work?.length ? <GadgetGroup label="Affected work" material="inset">
+          <div className="attention-record-verbs">{receipt.work.map((work) => (
+            <Button key={work.id} variant="ghost" dense onClick={() => onOpenWork(work)}>
+              Open {workName(work.work_type)} · {work.work_ref}
+            </Button>
+          ))}</div>
+        </GadgetGroup> : null}
+      </FoldGadget> : null}
+      {history ? <FoldGadget title="History">
+        {predecessorId || successorId ? <div className="attention-record-verbs">
+          {predecessorId ? <Button variant="ghost" dense onClick={() => onOpenReceipt(predecessorId, "Previous decision")}>Previous decision</Button> : null}
+          {successorId ? <Button variant="ghost" dense onClick={() => onOpenReceipt(successorId, "Next decision")}>Next decision</Button> : null}
+        </div> : null}
+        {receipt.revisions?.length ? <GadgetGroup label="Revisions" material="inset">
+          <ol className="attention-record-revisions">
             {receipt.revisions.map((revision) => {
               const revDate = revision.created_at;
               const fieldName = revision.field_name.replace(/_/g, " ");
@@ -502,12 +540,12 @@ function ReceiptDetail({
               </li>;
             })}
           </ol>
-        ) : <p className="quiet">No revisions recorded.</p>}
-      </section>
+        </GadgetGroup> : null}
+      </FoldGadget> : null}
     </article>
   );
 }
 
-function ReceiptField({ label, value }: { label: string; value: string | null | undefined }) {
-  return <><dt>{label}</dt><dd>{value || "—"}</dd></>;
+function workName(type: string): string {
+  return ({ story: "story", project: "project", meeting: "meeting", decision: "decision", note: "note", workbench: "Workbench", thread: "thread" } as Record<string, string>)[type] ?? "work";
 }

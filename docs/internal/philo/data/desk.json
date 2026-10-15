@@ -1561,6 +1561,134 @@
         }
       ],
       "replacement": null
+    },
+    {
+      "id": "desk.follow_through",
+      "name": "Act on follow-through",
+      "purpose": "Read tasks by date and review state, assign owners and dates, complete or snooze work, and open its recorded source.",
+      "domain": "desk",
+      "status": "built_unreleased",
+      "status_reason": "Focused service and rendered tests cover canonical Snooze, duplicate suppression, exact Retry and draft custody; isolated production walks and release are recorded in the October 15 pass.",
+      "exposure": "user",
+      "surfaces": [
+        "Follow-through"
+      ],
+      "entry_points": [
+        "holdspeak/services/follow_through_service.py::FollowThroughService"
+      ],
+      "platforms": {
+        "macos": "unknown",
+        "linux_x11": "unknown",
+        "linux_wayland": "unknown",
+        "ipad": "unknown",
+        "aipi": "unknown"
+      },
+      "inputs": [
+        "confirmed action item or existing cadence loop",
+        "owner",
+        "due date",
+        "explicit lifecycle action"
+      ],
+      "outputs": [
+        "updated local task or loop",
+        "source window",
+        "visible result or exact Retry"
+      ],
+      "persistence": [
+        "action_items",
+        "decision_commitments",
+        "cadence_loops",
+        "ordinary eight-second Done receipt in browser storage; People receipt only in memory"
+      ],
+      "apis": [
+        "GET /api/follow-through/board",
+        "POST /api/follow-through/complete",
+        "POST /api/cadence/loops/{loop_id}/close",
+        "POST /api/cadence/loops/{loop_id}/kill",
+        "POST /api/cadence/loops/{loop_id}/snooze"
+      ],
+      "configuration": [],
+      "dependencies": [
+        "FollowThroughService",
+        "CadenceService",
+        "existing People projection"
+      ],
+      "model_requirements": [],
+      "network_requirements": [],
+      "trust_boundary": "Owner-only local action writers retain canonical action/loop identity. People text is not saved in the browser Done receipt.",
+      "egress_possible": false,
+      "egress": "These lifecycle writers update local rows; they do not send task content.",
+      "side_effect": "local_reversible",
+      "authority": "Authenticated owner action and existing People/cadence authorities.",
+      "kernel_operations": [],
+      "sources": [
+        {
+          "path": "holdspeak/services/follow_through_service.py",
+          "symbol": "FollowThroughService",
+          "line": 146,
+          "claim": "Board composition and transactional commands preserve canonical action identity and Snooze facts."
+        },
+        {
+          "path": "web/src/desk/pullouts/views/FollowThroughView.tsx",
+          "symbol": "FollowThroughView",
+          "line": 130,
+          "claim": "Existing authorities are rendered as populated ledgers, named controls, guarded writes and exact Retry."
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/unit/test_follow_through_service.py",
+          "node": "test_new_note_task_snooze_creates_one_durable_canonical_loop",
+          "assertion": "Snooze creates one source-keyed loop, hides the open task before collection, and preserves action fields and lifecycle on upsert.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/internal/FOLLOW-THROUGH-2026-10-15/BUILD-BACKEND.md",
+            "run": "backend-enrichment-green",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_follow_through_service.py",
+          "node": "test_snooze_survives_owner_filter_until_expiry_after_delegate",
+          "assertion": "Owner-filtered reads preserve Snooze despite stale loop owner fields, then return the canonical action at expiry.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/internal/FOLLOW-THROUGH-2026-10-15/BUILD-BACKEND.md",
+            "run": "backend-enrichment-green",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_follow_through_service.py",
+          "node": "test_collected_decision_is_represented_by_its_action_not_a_second_loop",
+          "assertion": "A represented decision has one action card; standalone and unrelated equal-text loops remain independent.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/internal/FOLLOW-THROUGH-2026-10-15/BUILD-BACKEND.md",
+            "run": "backend-enrichment-green",
+            "cases": 1
+          }
+        }
+      ],
+      "docs": [
+        "docs/internal/FOLLOW-THROUGH-2026-10-15/README.md",
+        "docs/internal/FOLLOW-THROUGH-2026-10-15/BUILD-FOLLOW.md",
+        "docs/internal/FOLLOW-THROUGH-2026-10-15/BUILD-BACKEND.md"
+      ],
+      "limitations": [
+        "Groups reflect dates and review state, not two-way ownership classification.",
+        "No model run, encrypted People store or owner-desk acceptance is claimed by isolated tests.",
+        "Public release and owner observation remain unverified."
+      ],
+      "failure_states": [
+        "board_read_failed",
+        "task_write_failed",
+        "source_unavailable"
+      ],
+      "replacement": null,
+      "evidence_level": "tests_executed",
+      "release_availability": "unverified",
+      "owner_observed": false
     }
   ],
   "components": [

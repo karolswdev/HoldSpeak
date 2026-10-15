@@ -343,6 +343,11 @@ Missing shards: **none**.
 | `desk.preferences` | `linux_wayland` | unknown | experimental |
 | `desk.preferences` | `linux_x11` | unknown | experimental |
 | `desk.preferences` | `macos` | supported_with_setup | experimental |
+| `desk.follow_through` | `aipi` | unknown | built_unreleased |
+| `desk.follow_through` | `ipad` | unknown | built_unreleased |
+| `desk.follow_through` | `linux_wayland` | unknown | built_unreleased |
+| `desk.follow_through` | `linux_x11` | unknown | built_unreleased |
+| `desk.follow_through` | `macos` | unknown | built_unreleased |
 | `agents.thread_persistent` | `aipi` | not_applicable | experimental |
 | `agents.thread_persistent` | `ipad` | best_effort | experimental |
 | `agents.thread_persistent` | `linux_wayland` | degraded | experimental |

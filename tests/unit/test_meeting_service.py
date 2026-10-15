@@ -2520,8 +2520,8 @@ def test_follow_through_decision_commitment_hides_parked_source_and_restores_it(
             (decision_id,),
         ).fetchone()[0])
     # The real collector produces the meeting-decision and source-meeting
-    # action cadence cards. The board must hide both loops and the open
-    # commitment when the source meeting is parked, without a refresh.
+    # action cadence loops. The board shows canonical actions and must hide
+    # the whole obligation when the source meeting is parked, without a refresh.
     loops = LoopCollector(db).collect()
     decision_loop = next(
         loop for loop in loops
@@ -2559,13 +2559,14 @@ def test_follow_through_decision_commitment_hides_parked_source_and_restores_it(
     before = decision_cards()
     before_ids = {card.id for card in before}
     assert action_item_ids <= before_ids
-    assert decision_loop_id in before_ids
+    assert before_ids.isdisjoint(action_loop_ids | {decision_loop_id})
     assert db.meetings.delete_meeting(state.id) is True
     parked_ids = {card.id for card in decision_cards()}
     assert parked_ids.isdisjoint(action_item_ids | action_loop_ids | {decision_loop_id})
     assert db.meetings.restore_meeting(state.id) is True
     restored_ids = {card.id for card in decision_cards()}
-    assert action_item_ids | {decision_loop_id} <= restored_ids
+    assert action_item_ids <= restored_ids
+    assert restored_ids.isdisjoint(action_loop_ids | {decision_loop_id})
     with db._connection() as conn:
         restored_loop_ids = {
             str(row["id"])

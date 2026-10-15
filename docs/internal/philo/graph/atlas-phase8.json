@@ -2988,7 +2988,7 @@
       "sources": [
         {
           "path": "web/src/desk/pullouts/DecisionPullout.tsx",
-          "symbol": "Decision context",
+          "symbol": "[\"context_markdown\", \"Context\"],",
           "claim": "the read view's context heading, drawn only with text under it"
         }
       ],

@@ -13,12 +13,12 @@ Validation errors at generation: **0**.
 
 | Measure | Present / total or count |
 | --- | ---: |
-| Source paths | 282 / 282 |
-| Test paths | 223 / 223 |
-| Documentation paths | 241 / 241 |
-| Assertions inspected | 223 |
-| Tests executed | 185 |
-| Records with an executed assertion | 80 |
+| Source paths | 284 / 284 |
+| Test paths | 226 / 226 |
+| Documentation paths | 244 / 244 |
+| Assertions inspected | 226 |
+| Tests executed | 188 |
+| Records with an executed assertion | 81 |
 | Semantic records unresolved | 76 |
 
 ## Documentation classes
@@ -100,6 +100,7 @@ Validation errors at generation: **0**.
 | `people.prep.record` | capabilities | 2/2 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `desk.engines.find_lan` | capabilities | 3/3 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `desk.preferences` | capabilities | 2/2 | 4/4 | 4 | 4 | 0 | partially_evidenced |
+| `desk.follow_through` | capabilities | 2/2 | 3/3 | 3 | 3 | 0 | partially_evidenced |
 | `agents.thread_persistent` | capabilities | 3/3 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `agents.thread_tool_loop` | capabilities | 3/3 | 3/3 | 3 | 0 | 0 | unresolved |
 | `agents.interview` | capabilities | 3/3 | 3/3 | 3 | 3 | 0 | partially_evidenced |

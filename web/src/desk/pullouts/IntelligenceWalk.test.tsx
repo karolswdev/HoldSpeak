@@ -125,13 +125,12 @@ describe("HS-128-10 Desk Intelligence walk", () => {
     render(<IntelligencePullout object={object} onClose={() => {}} />);
     fireEvent.click(screen.getByRole("button", { name: "Follow-through" }));
 
-    expect(await screen.findByText("Now")).toBeInTheDocument();
-    expect(screen.getByText("Waiting")).toBeInTheDocument();
-    // Inventory gap 11: the lane is named for what it holds (an item not
-    // reviewed yet can have an owner).
-    expect(screen.getByText("To review")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Due soon · 1" })).toBeInTheDocument();
+    expect(screen.queryByText("Later")).toBeNull();
+    // Only populated groups draw their heading and ledger.
+    expect(screen.queryByText("To review")).toBeNull();
     expect(screen.queryByText("Unassigned")).toBeNull();
-    expect(screen.getByText("Overdue")).toBeInTheDocument();
+    expect(screen.queryByText("Overdue")).toBeNull();
     expect(screen.getByText(board.now[0].text)).toBeInTheDocument();
   });
 

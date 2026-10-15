@@ -5,18 +5,11 @@ import { refreshIntelligenceAttention } from "../../intelligenceAttention";
 import { useOnDeskChanged } from "../../useDeskChangedRefresh";
 import { openSurfaceOr } from "../../shell";
 import { openSourceRef } from "../../surface/citations";
-import {
-  SurfaceLedger,
-  SurfaceLedgerRow,
-  SurfaceSection,
-  SurfaceState,
-} from "../../surface/Surface";
-import { StringGadget } from "../../surface/gadgets";
-import { countToken } from "../../surface/count";
+import { SurfaceLedger, SurfaceLedgerRow, SurfaceSection, SurfaceState } from "../../surface/Surface";
+import { ActionNotice, StateChip } from "../../surface";
+import { GadgetGroup, GadgetRow, StringGadget } from "../../surface/gadgets";
 
-type FollowThroughVerb = "done" | "dismiss" | "snooze" | "delegate" | "reopen";
 type Lane = "now" | "waiting" | "unassigned" | "overdue";
-
 type Provenance = {
   meeting_id: string | null;
   segment_text: string | null;
@@ -27,135 +20,115 @@ type Provenance = {
   source_ref?: string | null;
   thread_id?: string | null;
 };
-
 type FollowThroughCard = {
   id: string;
   text: string;
   owner: string | null;
   due: string | null;
   source: string;
+  meeting_id?: string | null;
   decision_id?: string | null;
-  /** Opaque People relationship ref supplied only by the Follow-through API. */
   target_ref?: string | null;
-  /** Source object ref for action items filed from a Desk note. */
   open_ref?: string | null;
   source_ref?: string | null;
   provenance: Provenance | null;
-  /** HS-150-07: person projection for mapped owner strings (route-adapter enrichment). */
   person_label?: string;
   person_relationship_id?: string;
   delegated_at?: string | null;
   created_at?: string | null;
 };
-
 type FollowThroughBoard = Record<Lane, FollowThroughCard[]>;
+type Draft = { owner: string; due: string; ownerDirty: boolean; dueDirty: boolean };
+type DoneReceipt = { cardId: string; label: string; createdAt: number };
+type WriteRequest = {
+  cardId: string;
+  label: string;
+  verb: string;
+  path: string;
+  json?: Record<string, unknown>;
+  result: string;
+  done?: boolean;
+  reopen?: boolean;
+  field?: "owner" | "due";
+  value?: string;
+};
 
 const LANES: ReadonlyArray<{ id: Lane; label: string }> = [
-  { id: "now", label: "Now" },
-  { id: "waiting", label: "Waiting" },
-  // Inventory gap 11 (2026-10-03): this lane holds the items with no owner
-  // AND the items not reviewed yet (those can have an owner). One true name.
-  { id: "unassigned", label: "To review" },
   { id: "overdue", label: "Overdue" },
+  { id: "unassigned", label: "To review" },
+  { id: "now", label: "Due soon" },
+  { id: "waiting", label: "Later" },
 ];
-
-function initials(owner: string | null): string {
-  if (!owner?.trim()) return "—";
-  return owner
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
-}
-
-function dueLabel(due: string | null): string {
-  if (!due) return "—";
-  const dueAt = new Date(`${due.slice(0, 10)}T00:00:00`);
-  if (Number.isNaN(dueAt.getTime())) return due;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const days = Math.round((dueAt.getTime() - today.getTime()) / 86_400_000);
-  if (days === 0) return "today";
-  if (days < 0) return `overdue ${Math.abs(days)}d`;
-  return `${days}d`;
-}
-
-function isOverdue(due: string | null): boolean {
-  return dueLabel(due).startsWith("overdue");
-}
-
-const GLYPH_PEOPLE = String.fromCodePoint(0x2667);
-function sourceFor(card: FollowThroughCard): { glyph: string; label: string } {
-  const refs = [card.open_ref, card.provenance?.source_ref, card.source_ref];
-  if (refs.some((ref) => ref?.startsWith("note:"))) {
-    return { glyph: "○", label: "note" };
-  }
-  if (refs.some((ref) => ref?.startsWith("thread:"))) {
-    return { glyph: "⌁", label: "thread" };
-  }
-  if (card.source === "people_commitment") return { glyph: GLYPH_PEOPLE, label: "people" };
-  if (card.source === "decision" || card.decision_id) return { glyph: "◇", label: "decision" };
-  return { glyph: "⌁", label: "meeting" };
-}
-
-function verifiedSourceRef(card: FollowThroughCard): string | null {
-  const refs = [card.open_ref, card.provenance?.source_ref, card.source_ref];
-  const source = refs.find((ref) => /^(note|thread|meeting):/.test(ref ?? ""));
-  if (source) return source;
-  // A decision id names the decision row. It is not a meeting id, so never
-  // send it through the meeting-records route.
-  if (card.decision_id) return `decision:${card.decision_id}`;
-  const meetingId = card.provenance?.meeting_id;
-  if (!meetingId) return null;
-  const segmentIndex = card.provenance?.moment?.segment_index;
-  const segment = Number.isInteger(segmentIndex) ? `?view=review&segment=${segmentIndex}` : "?view=review";
-  return `meeting:${meetingId}${segment}`;
-}
-
-type DoneReceipt = { cardId: string; label: string; createdAt: number };
+const WRITE_LABELS: Record<string, string> = { done: "Done", dismiss: "Dismiss", snooze: "Tomorrow", delegate: "Assign", due: "Save date", reopen: "Undo", close: "Close", kill: "Stop" };
 const DONE_RECEIPT_KEY = "hs.follow-through.done-receipt";
 const DONE_RECEIPT_WINDOW_MS = 8_000;
 
+function forgetDoneReceipt() {
+  try { window.localStorage.removeItem(DONE_RECEIPT_KEY); } catch { /* Storage is optional. */ }
+}
 function readDoneReceipt(): DoneReceipt | null {
   if (typeof window === "undefined") return null;
   try {
     const parsed = JSON.parse(window.localStorage.getItem(DONE_RECEIPT_KEY) || "null") as Partial<DoneReceipt> | null;
+    // People text and opaque People identities belong only to the encrypted
+    // authority. Discard receipts persisted by the old face before rendering.
+    if (parsed?.cardId?.startsWith("people:")) { forgetDoneReceipt(); return null; }
     if (!parsed || typeof parsed.cardId !== "string" || typeof parsed.label !== "string" || typeof parsed.createdAt !== "number") return null;
-    if (Date.now() - parsed.createdAt >= DONE_RECEIPT_WINDOW_MS) {
-      window.localStorage.removeItem(DONE_RECEIPT_KEY);
-      return null;
-    }
+    if (Date.now() - parsed.createdAt >= DONE_RECEIPT_WINDOW_MS) { forgetDoneReceipt(); return null; }
     return { cardId: parsed.cardId, label: parsed.label, createdAt: parsed.createdAt };
-  } catch {
-    return null;
-  }
+  } catch { return null; }
 }
-
-/** HS-150-07: staleness from delegated_at ?? created_at (same logic as DoorBoardLane). */
-function stalenessLabel(card: FollowThroughCard): string | null {
-  const ts = card.delegated_at || card.created_at;
-  if (!ts) return null;
-  const then = new Date(ts).getTime();
-  if (!Number.isFinite(then)) return null;
-  const days = Math.max(0, Math.floor((Date.now() - then) / 86_400_000));
-  return `waiting ${days}d`;
+function dayText(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
-
 function tomorrow(): string {
   const date = new Date();
   date.setDate(date.getDate() + 1);
-  return date.toISOString().slice(0, 10);
+  return dayText(date);
+}
+function dueLabel(due: string | null): { label: string; overdue: boolean } {
+  if (!due) return { label: "No date", overdue: false };
+  const dueAt = new Date(`${due.slice(0, 10)}T00:00:00`);
+  if (!Number.isFinite(dueAt.getTime())) return { label: due, overdue: false };
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const days = Math.round((dueAt.getTime() - today.getTime()) / 86_400_000);
+  const amount = Math.abs(days);
+  return {
+    label: days === 0 ? "Today" : days === 1 ? "Tomorrow" : days < 0
+      ? `${amount} ${amount === 1 ? "day" : "days"} overdue` : `Due in ${days} days`,
+    overdue: days < 0,
+  };
+}
+function ageLabel(card: FollowThroughCard): string | null {
+  const timestamp = card.delegated_at || card.created_at;
+  if (!timestamp) return null;
+  const days = Math.floor((Date.now() - new Date(timestamp).getTime()) / 86_400_000);
+  if (!Number.isFinite(days) || days < 1) return null;
+  return `${card.delegated_at ? "Assigned" : "Added"} ${days} ${days === 1 ? "day" : "days"} ago`;
+}
+function sourceFor(card: FollowThroughCard): { ref: string; label: string; kind: string; people?: boolean } | null {
+  if (card.source === "people_commitment") return /^people:.+/.test(card.target_ref ?? "")
+    ? { ref: card.target_ref!, label: "Open People", kind: "people", people: true } : null;
+  const refs = [card.open_ref, card.provenance?.source_ref, card.source_ref];
+  const ref = refs.find((value) => /^(note|thread|meeting|decision):.+/.test(value ?? ""));
+  if (ref) {
+    const kind = ref.split(":")[0];
+    return { ref, label: `Open ${kind}`, kind };
+  }
+  if (card.decision_id) return { ref: `decision:${card.decision_id}`, label: "Open decision", kind: "decision" };
+  const meetingId = card.provenance?.meeting_id || card.meeting_id;
+  if (!meetingId) return null;
+  const index = card.provenance?.moment?.segment_index;
+  const segment = Number.isInteger(index) ? `?view=review&segment=${index}` : "?view=review";
+  return { ref: `meeting:${meetingId}${segment}`, label: "Open meeting", kind: "meeting" };
+}
+function draftFor(card: FollowThroughCard): Draft {
+  return { owner: card.owner ?? "", due: card.due?.slice(0, 10) ?? "", ownerDirty: false, dueDirty: false };
 }
 
-/** Execution lanes rendered directly from FollowThroughService's board read model. */
-export function FollowThroughView({
-  overdueOnly = false,
-  focusCardId,
-  onOpenReceipts,
-  onClearFilter,
-}: {
+/** Existing board authorities, expressed as readable task rows and in-place controls. */
+export function FollowThroughView({ overdueOnly = false, focusCardId, onClearFilter }: {
   overdueOnly?: boolean;
   focusCardId?: string;
   onOpenReceipts?: (receiptId: string) => void;
@@ -163,254 +136,222 @@ export function FollowThroughView({
 }) {
   const [board, setBoard] = useState<FollowThroughBoard | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [readError, setReadError] = useState("");
+  const [writeError, setWriteError] = useState<{ request: WriteRequest; message: string } | null>(null);
+  const writeNoticeRef = useRef<HTMLDivElement>(null);
+  const [pending, setPending] = useState<WriteRequest | null>(null);
+  const pendingRef = useRef<WriteRequest | null>(null);
+  const [outcome, setOutcome] = useState<{ text: string; label: string } | null>(null);
   const [openCardId, setOpenCardId] = useState<string | null>(null);
-  const [delegatingCardId, setDelegatingCardId] = useState<string | null>(null);
-  const [delegateTo, setDelegateTo] = useState("");
-  const [busyCardId, setBusyCardId] = useState<string | null>(null);
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const focusPending = useRef(focusCardId);
+  const [drafts, setDrafts] = useState<Record<string, Draft>>({});
+  const draftsRef = useRef(drafts);
   const [doneReceipt, setDoneReceipt] = useState<DoneReceipt | null>(readDoneReceipt);
-
-  const reads = useRef({ started: 0, landed: 0 });
-  const reload = useCallback(async (quiet = false) => {
-    if (!quiet) {
-      setLoading(true);
-      setError("");
-    }
-    const order = ++reads.current.started;
+  const reads = useRef(0);
+  const reload = useCallback(async () => {
+    const order = ++reads.current;
     try {
       const next = await apiFetch<FollowThroughBoard>("/api/follow-through/board");
-      // A read that started earlier and answers later never replaces a newer one.
-      if (order < reads.current.landed) return;
-      reads.current.landed = order;
+      if (order !== reads.current) return;
       setBoard(next);
+      setReadError("");
+      // A refresh updates untouched fields, never the owner's draft. Keep
+      // drafts above lane rows so moving a task to another lane loses nothing.
+      const updated = { ...draftsRef.current };
+      for (const lane of LANES) for (const card of next[lane.id]) {
+        const prior = updated[card.id];
+        if (prior) updated[card.id] = {
+          ...prior,
+          owner: prior.ownerDirty ? prior.owner : card.owner ?? "",
+          due: prior.dueDirty ? prior.due : card.due?.slice(0, 10) ?? "",
+        };
+      }
+      draftsRef.current = updated;
+      setDrafts(updated);
     } catch (cause) {
-      // A quiet re-read (the bus) that fails keeps the last board.
-      if (!quiet) setError(readableError(cause));
+      if (order === reads.current) setReadError(readableError(cause));
     } finally {
-      if (!quiet) setLoading(false);
+      if (order === reads.current) setLoading(false);
     }
   }, []);
-  // A write in another window (an action item done, a decision) moves this board.
-  useOnDeskChanged(() => { void reload(true); });
-
+  useOnDeskChanged(() => { void reload(); });
+  useEffect(() => { void reload(); }, [reload]);
   useEffect(() => {
-    void reload();
-  }, [reload]);
-
+    if (writeError) writeNoticeRef.current?.scrollIntoView?.({ block: "nearest" });
+  }, [writeError]);
   useEffect(() => {
-    if (focusCardId) setOpenCardId(focusCardId);
+    focusPending.current = focusCardId;
+    setSelectedCardId(null);
   }, [focusCardId]);
-
   useEffect(() => {
-    if (!doneReceipt) return undefined;
-    const remaining = Math.max(0, DONE_RECEIPT_WINDOW_MS - (Date.now() - doneReceipt.createdAt));
+    const target = focusPending.current;
+    if (!target || !board || !LANES.some((lane) => board[lane.id].some((card) => card.id === target))) return;
+    setOpenCardId(target);
+    setSelectedCardId(target);
+    focusPending.current = undefined;
+  }, [board, focusCardId]);
+  useEffect(() => {
+    if (!doneReceipt) return;
     const timer = window.setTimeout(() => {
-      setDoneReceipt((current) => current?.createdAt === doneReceipt.createdAt ? null : current);
-      if (readDoneReceipt()?.createdAt === doneReceipt.createdAt) window.localStorage.removeItem(DONE_RECEIPT_KEY);
-    }, remaining);
+      setDoneReceipt((current) => current === doneReceipt ? null : current);
+      const persisted = readDoneReceipt();
+      if (persisted?.cardId === doneReceipt.cardId && persisted.createdAt === doneReceipt.createdAt) forgetDoneReceipt();
+    }, Math.max(0, DONE_RECEIPT_WINDOW_MS - (Date.now() - doneReceipt.createdAt)));
     return () => window.clearTimeout(timer);
   }, [doneReceipt]);
 
-  const complete = async (
-    cardId: string,
-    verb: FollowThroughVerb,
-    payload: Record<string, string> = {},
-    label = "",
-  ) => {
-    setBusyCardId(cardId);
-    setError("");
+  const edit = (card: FollowThroughCard, field: "owner" | "due", value: string) => {
+    const current = draftsRef.current[card.id] ?? draftFor(card);
+    const next = { ...draftsRef.current, [card.id]: { ...current, [field]: value, [`${field}Dirty`]: true } };
+    draftsRef.current = next;
+    setDrafts(next);
+  };
+  const submit = async (request: WriteRequest) => {
+    // The ref closes the same-event gap before React paints disabled controls.
+    if (pendingRef.current) return;
+    pendingRef.current = request;
+    setPending(request);
+    setWriteError(null);
+    setOutcome(null);
     try {
-      await apiFetch("/api/follow-through/complete", {
-        method: "POST",
-        json: { card_id: cardId, verb, payload },
-      });
-      if (verb === "done") {
-        const receipt = { cardId, label: label || "follow-through", createdAt: Date.now() };
-        window.localStorage.setItem(DONE_RECEIPT_KEY, JSON.stringify(receipt));
+      await apiFetch(request.path, { method: "POST", ...(request.json ? { json: request.json } : {}) });
+      if (request.done) {
+        const receipt = { cardId: request.cardId, label: request.label, createdAt: Date.now() };
+        if (request.cardId.startsWith("people:")) forgetDoneReceipt();
+        else {
+          try { window.localStorage.setItem(DONE_RECEIPT_KEY, JSON.stringify(receipt)); } catch { /* Memory receipt remains usable. */ }
+        }
         setDoneReceipt(receipt);
-      } else if (verb === "reopen" && doneReceipt?.cardId === cardId) {
-        window.localStorage.removeItem(DONE_RECEIPT_KEY);
+      } else if (request.reopen) {
+        forgetDoneReceipt();
         setDoneReceipt(null);
       }
-      setDelegatingCardId(null);
-      setDelegateTo("");
+      if (request.field) {
+        const current = draftsRef.current[request.cardId];
+        if (current && current[request.field] === request.value) {
+          const next = { ...draftsRef.current, [request.cardId]: { ...current, [`${request.field}Dirty`]: false } };
+          draftsRef.current = next;
+          setDrafts(next);
+        }
+      }
+      if (!request.done) setOutcome({ text: request.result, label: request.label });
       await reload();
       refreshIntelligenceAttention();
     } catch (cause) {
-      setError(readableError(cause));
+      setWriteError({ request, message: readableError(cause) });
     } finally {
-      setBusyCardId(null);
+      pendingRef.current = null;
+      setPending(null);
     }
   };
-
-  const openDecision = (card: FollowThroughCard) => {
-    if (card.source === "people_commitment") {
-      openSurfaceOr("open-people", "/", card.target_ref ?? undefined);
-      return;
-    }
-    const sourceRef = verifiedSourceRef(card);
-    if (!sourceRef) {
-      setError("No source recorded for this follow-through.");
-      return;
-    }
-    openSourceRef(sourceRef);
+  const action = (card: FollowThroughCard, verb: string, payload: Record<string, string> = {}) => {
+    const result = verb === "delegate" ? `Assigned to ${payload.to}` : verb === "due" ? `Date saved: ${payload.due_at}`
+      : verb === "snooze" ? `Until ${payload.until}` : verb === "dismiss" ? "Dismissed" : verb === "reopen" ? "Reopened" : "Done";
+    void submit({ cardId: card.id, label: card.text, verb, path: "/api/follow-through/complete",
+      json: { card_id: card.id, verb, payload }, result, done: verb === "done", reopen: verb === "reopen",
+      ...(verb === "delegate" ? { field: "owner" as const, value: payload.to } : verb === "due" ? { field: "due" as const, value: payload.due_at } : {}),
+    });
   };
-
+  const cadence = (card: FollowThroughCard, verb: "close" | "kill" | "snooze") => {
+    const until = tomorrow();
+    void submit({ cardId: card.id, label: card.text, verb,
+      path: `/api/cadence/loops/${encodeURIComponent(card.id)}/${verb}`,
+      ...(verb === "snooze" ? { json: { until } } : {}),
+      result: verb === "close" ? "Closed" : verb === "kill" ? "Stopped" : `Until ${until}`,
+    });
+  };
   const doneReceiptNode = doneReceipt ? (
     <div className="follow-through-done-receipt" role="status" data-testid="follow-through-done-receipt">
-      <span>Done: {doneReceipt.label}</span>
-      <Button
-        dense
-        variant="ghost"
-        disabled={busyCardId === doneReceipt.cardId}
-        onClick={() => void complete(doneReceipt.cardId, "reopen")}
-      >Undo</Button>
+      <StateChip state="success" label="Done" />
+      <span>{doneReceipt.label}</span>
+      <Button dense variant="ghost" disabled={!!pending} onClick={() => void submit({
+        cardId: doneReceipt.cardId, label: doneReceipt.label, verb: "reopen", path: "/api/follow-through/complete",
+        json: { card_id: doneReceipt.cardId, verb: "reopen", payload: {} }, result: "Reopened", reopen: true,
+      })}>Undo</Button>
     </div>
   ) : null;
-
-  if (loading) return <>{doneReceiptNode}<SurfaceState loading /></>;
-  if (error && !board) return <>{doneReceiptNode}<SurfaceState error={error} onRetry={() => void reload()} /></>;
-  if (!board) return null;
-
-  const visibleLanes = overdueOnly ? LANES.filter((lane) => lane.id === "overdue") : LANES;
-  // HS-132-08 — the board's emptiness is a fact about the BOARD, never about
-  // the current filter. Counting only the visible lanes let a dispatched
-  // overdue filter print a clear board while real commitments stood open.
-  const boardTotal = LANES.reduce((count, lane) => count + board[lane.id].length, 0);
-  const visibleTotal = visibleLanes.reduce((count, lane) => count + board[lane.id].length, 0);
-  if (!boardTotal) {
-    return <>{doneReceiptNode}<SurfaceState empty emptyLabel="No follow-through yet" /></>;
-  }
-  if (!visibleTotal) {
-    return (
-      <>{doneReceiptNode}<SurfaceState
-          empty
-          emptyLabel="No overdue follow-through. Other lanes hold work."
-          onAction={onClearFilter}
-          actionLabel="Show all lanes"
-        /></>
-    );
-  }
+  const visibleLanes = (overdueOnly ? LANES.filter((lane) => lane.id === "overdue") : LANES)
+    .filter((lane) => (board?.[lane.id].length ?? 0) > 0);
+  const boardTotal = board ? LANES.reduce((count, lane) => count + board[lane.id].length, 0) : 0;
 
   return (
     <div className="follow-through-view">
       {doneReceiptNode}
-      {error ? <SurfaceState error={error} onRetry={() => void reload()} /> : null}
-      {visibleLanes.map((lane) => {
-        const cards = board[lane.id];
-        return (
-          <SurfaceSection
-            key={lane.id}
-            label={lane.label}
-            actions={cards.length > 0 ? <span className="follow-through-count">{cards.length}</span> : undefined}
-            className={`follow-through-lane${lane.id === "overdue" ? " is-overdue" : ""}`}
-          >
-            {cards.length ? (
-              <SurfaceLedger count={
-                  /* A lane name is a state, not a counted noun: `3 NOW`,
-                     never `3 NOWS` (inventory 2026-10-03). */
-                  countToken(cards.length, lane.label.toUpperCase(), lane.label.toUpperCase()) ?? lane.label.toUpperCase()
-                } cols="follow-through">
-                {cards.map((card) => {
-                  const open = openCardId === card.id;
-                  const source = sourceFor(card);
-                  const sourceAction = source.label === "note"
-                    ? "Open source note"
-                    : source.label === "thread"
-                      ? "Open source thread"
-                      : source.label === "people"
-                        ? "Open People"
-                        : source.label === "decision"
-                          ? "Open decision"
-                          : "Open meeting";
-                  const overdue = isOverdue(card.due);
-                  const peopleCommitment = card.source === "people_commitment";
-                  return (
-                    <SurfaceLedgerRow
-                      key={card.id}
-                      primary={card.text}
-                      open={open}
-                      onToggle={() => setOpenCardId(open ? null : card.id)}
-                      lineLabel={`${card.text}. ${source.label} follow-through.`}
-                      cells={
-                        <>
-                          {card.person_label ? (
-                            <span className="follow-through-owner follow-through-person-chip" title={card.owner ?? "Unassigned"} data-testid="follow-through-person-chip">
-                              {card.person_label}
-                              {stalenessLabel(card) ? <span className="follow-through-staleness" data-testid="follow-through-staleness">{stalenessLabel(card)}</span> : null}
-                            </span>
-                          ) : (
-                            <span className="follow-through-owner" title={card.owner ?? "Unassigned"}>
-                              {initials(card.owner)}
-                            </span>
-                          )}
-                          <span
-                            className="follow-through-due"
-                            data-overdue={overdue || undefined}
-                          >
-                            {dueLabel(card.due)}
-                          </span>
-                          <Button
-                            dense
-                            variant="ghost"
-                            className="follow-through-source"
-                            title={sourceAction}
-                            aria-label={`${sourceAction} for ${card.text}`}
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              openDecision(card);
-                            }}
-                          >
-                            {source.glyph}
-                          </Button>
-                        </>
-                      }
-                    >
-                      <div className="follow-through-expanded">
-                        <div className="follow-through-verbs" aria-label={`Verbs for ${card.text}`}>
-                          {/* PHILO-15 08 (B03): every verb says its word (UX-CANON: no glyph-only controls). */}
-                          <Button dense variant="ghost" disabled={busyCardId === card.id} onClick={() => void complete(card.id, "done", {}, card.text)} aria-label="Mark done">Done</Button>
-                          <Button dense variant="ghost" disabled={busyCardId === card.id} onClick={() => void complete(card.id, "dismiss")} aria-label="Dismiss">Dismiss</Button>
-                          {!peopleCommitment ? <Button dense variant="ghost" disabled={busyCardId === card.id} onClick={() => void complete(card.id, "snooze", { until: tomorrow() })} aria-label="Snooze until tomorrow">Snooze</Button> : null}
-                          {!peopleCommitment ? <Button dense variant="ghost" disabled={busyCardId === card.id} onClick={() => setDelegatingCardId(delegatingCardId === card.id ? null : card.id)} aria-label="Delegate">Delegate</Button> : null}
-                        </div>
-                        {delegatingCardId === card.id ? (
-                          <div className="follow-through-delegate">
-                            <StringGadget label={`Delegate ${card.text} to`} value={delegateTo} onChange={setDelegateTo} placeholder="OWNER" />
-                            <Button dense disabled={!delegateTo.trim() || busyCardId === card.id} onClick={() => void complete(card.id, "delegate", { to: delegateTo.trim() })}>Assign</Button>
-                          </div>
-                        ) : null}
-                        {card.provenance?.available ? (() => {
-                          const speaker = card.provenance.segment_speaker;
-                          const segText = card.provenance.segment_text;
-                          return (
-                          <blockquote className="follow-through-provenance">
-                            {speaker ? <cite>{speaker}</cite> : null}
-                            <span>{segText ?? "Source moment unavailable"}</span>
-                          </blockquote>
-                          );
-                        })() : card.provenance?.meeting_id ? (
-                          // PHILO-15 08: the meeting is there, only the moment
-                          // is not pinned: its transcript is one press away.
-                          <div className="follow-through-provenance">
-                            <Button dense variant="ghost" aria-label={`Open transcript: ${card.text}`}
-                              data-testid="follow-through-open-transcript"
-                              onClick={() => openSourceRef(`meeting:${card.provenance?.meeting_id}`)}>Open transcript</Button>
-                          </div>
-                        ) : (
-                          <div className="follow-through-provenance is-unavailable">SOURCE MOMENT UNAVAILABLE</div>
-                        )}
-                      </div>
-                    </SurfaceLedgerRow>
-                  );
-                })}
-              </SurfaceLedger>
-            ) : (
-              <div className="follow-through-lane-empty">No items</div>
-            )}
-          </SurfaceSection>
-        );
-      })}
+      {pending ? <ActionNotice><StateChip state="working" label={`${WRITE_LABELS[pending.verb]} pending`} /><span>{pending.label}</span></ActionNotice> : null}
+      {outcome ? <ActionNotice tone="ok"><StateChip state="success" label={outcome.text} wrap /><span>{outcome.label}</span></ActionNotice> : null}
+      {writeError ? (
+        <div ref={writeNoticeRef}>
+          <ActionNotice role="alert" tone="danger" action={{ label: "Retry", onClick: () => void submit(writeError.request) }}>
+            <StateChip state="failure" label={`${WRITE_LABELS[writeError.request.verb]} failed`} />
+            <span>{writeError.request.label}</span>
+            <span>{writeError.message}</span>
+          </ActionNotice>
+        </div>
+      ) : null}
+      {readError ? <ActionNotice role="alert" tone="danger" action={{ label: "Retry read", onClick: () => void reload() }}><StateChip state="failure" label="Read failed" /><span>{readError}</span></ActionNotice> : null}
+      {loading && !board ? <SurfaceState loading /> : !board ? null : !boardTotal ? <SurfaceState empty emptyLabel="No follow-through yet" /> : !visibleLanes.length ? (
+        <SurfaceState empty emptyLabel="No overdue follow-through. Other lanes hold work." onAction={onClearFilter} actionLabel="Show all lanes" />
+      ) : visibleLanes.map((lane) => (
+        <SurfaceSection key={lane.id} label={lane.label} count={board[lane.id].length} className="follow-through-lane">
+          <SurfaceLedger cols="follow-through">
+            {board[lane.id].map((card) => {
+              const source = sourceFor(card);
+              const due = dueLabel(card.due);
+              const draft = drafts[card.id] ?? draftFor(card);
+              const people = card.source === "people_commitment";
+              const loop = card.source === "decision" || card.source === "cadence_loop";
+              const open = openCardId === card.id;
+              const age = ageLabel(card);
+              return (
+                <SurfaceLedgerRow key={card.id} wrap open={open} selected={selectedCardId === card.id}
+                  onToggle={() => setOpenCardId(open ? null : card.id)}
+                  lineLabel={`${card.text}. ${source?.kind ?? "source unavailable"} follow-through.`}
+                  primary={<span className="follow-through-identity"><strong>{card.text}</strong>
+                    <span className="follow-through-owner" data-testid={card.person_label ? "follow-through-person-chip" : undefined}>{card.person_label || card.owner || "No owner"}</span>
+                    {age ? <span className="follow-through-staleness" data-testid="follow-through-staleness">{age}</span> : null}
+                  </span>}
+                  cells={<span className="follow-through-facts"><StateChip state={due.overdue ? "warning" : "idle"} label={due.label} wrap />
+                    {card.due ? <time dateTime={card.due.slice(0, 10)}>{card.due.slice(0, 10)}</time> : null}
+                    {!source ? <span>Source unavailable</span> : null}
+                  </span>}
+                  trailing={<>
+                    {source ? <Button dense variant="ghost" aria-label={`${source.label} for ${card.text}`} onClick={() => {
+                      if (source.people) openSurfaceOr("open-people", "/", source.ref);
+                      else openSourceRef(source.ref);
+                    }}>{source.label}</Button> : null}
+                    <Button dense disabled={!!pending} aria-label={loop ? "Close loop" : "Mark done"}
+                      onClick={() => loop ? cadence(card, "close") : action(card, "done")}>{loop ? "Close" : "Done"}</Button>
+                    <Button dense variant="ghost" aria-label={`Details for ${card.text}`} aria-expanded={open}
+                      onClick={() => setOpenCardId(open ? null : card.id)}>Details</Button>
+                  </>}
+                >
+                  <div className="follow-through-expanded" aria-label={`Verbs for ${card.text}`}>
+                    <GadgetGroup material="inset" label="Manage" actions={<>
+                      {!people ? <Button dense disabled={!!pending} onClick={() => loop ? cadence(card, "snooze") : action(card, "snooze", { until: tomorrow() })}>Tomorrow</Button> : null}
+                      <Button dense variant="ghost" disabled={!!pending} onClick={() => loop ? cadence(card, "kill") : action(card, "dismiss")}>{loop ? "Stop" : "Dismiss"}</Button>
+                      <Button dense variant="ghost" onClick={() => setOpenCardId(null)}>Cancel</Button>
+                    </>}>
+                      {!people && !loop ? <>
+                        <GadgetRow label="Owner" controlWidth="full"><StringGadget label="Owner" value={draft.owner} onChange={(value) => edit(card, "owner", value)} placeholder="Name" />
+                          <Button dense disabled={!!pending || !draft.owner.trim()} onClick={() => action(card, "delegate", { to: draft.owner.trim() })}>Assign</Button>
+                        </GadgetRow>
+                        <GadgetRow label="Due date" controlWidth="full"><StringGadget label="Due date" inputProps={{ inputMode: "numeric" }} value={draft.due} onChange={(value) => edit(card, "due", value)} placeholder="YYYY-MM-DD" />
+                          <Button dense disabled={!!pending || !draft.due} onClick={() => action(card, "due", { due_at: draft.due })}>Save date</Button>
+                        </GadgetRow>
+                      </> : null}
+                      {card.provenance?.segment_text ? <blockquote className="follow-through-provenance">
+                        {card.provenance.segment_speaker ? <cite>{card.provenance.segment_speaker}</cite> : null}
+                        <span>{card.provenance.segment_text}</span>
+                      </blockquote> : null}
+                    </GadgetGroup>
+                  </div>
+                </SurfaceLedgerRow>
+              );
+            })}
+          </SurfaceLedger>
+        </SurfaceSection>
+      ))}
     </div>
   );
 }
