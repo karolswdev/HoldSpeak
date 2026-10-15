@@ -537,6 +537,15 @@ so it stays out of the main barrel, which is wire-free.
     gets `SendHistory`.
 - `SendWell({ doc, sendsRead, onSettled?, head? })` — the well alone, for a
   host that shares one sends read (`useSends(ref)`).
+- `SendWellsFold({ doc, head?, onSettled?, history? })` — a compact Send/Hide
+  host over one `useSends` read. Prepared and running work, past sends, read
+  failures with Retry and refused outcomes stay discoverable while folded.
+  Destinations and the ordinary preview mount on Send. An unresolved held
+  press keeps the well open and disables Hide, so its exact Retry stays in
+  view. Decision windows and decision records compose this host.
+  `doc.version` is an opaque stable signature of the known saved document:
+  a changed signature refreshes the ordinary preview; prepared payloads
+  keep the bytes stored at preparation.
 - `SendHistory({ sends })` — `SENDS N` over the ended sends (N = sent rows;
   `SENDS` with no number when only UNKNOWN rows; nothing at all when none).
 - `PreparedChip({ docRef })` — `◆ PREPARED ×K` for a host head or row;

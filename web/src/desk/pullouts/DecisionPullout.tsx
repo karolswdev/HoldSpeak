@@ -1,6 +1,6 @@
 import { SurfaceFooter } from "../surface/SurfaceFooter";
 /** Decision pullout content (HS-117-15). */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { apiRequest } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import { useDesk } from "../store";
@@ -15,8 +15,8 @@ import {
 } from "../surface/Surface";
 import { humanTime } from "../surface/format";
 import { CycleGadget, FoldGadget, GadgetGroup, GadgetRow, PadGadget } from "../surface/gadgets";
-import { StateChip } from "../surface";
-import { writeFailureReason } from "../hooks/useWriteReceipt";
+import { ActionNotice, StateChip } from "../surface";
+import { currentWriteFailure, subscribeWriteFailure, writeFailureReason } from "../hooks/useWriteReceipt";
 import type { PulloutContentProps } from "./types";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { DeskDecisionSendWells } from "../documentSendsLazy";
@@ -58,6 +58,10 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
     useDesk.getState().newIds.includes(o.id),
   );
   const [decisionDraft, setDecisionDraft] = useState(draftFromRecord);
+  const [savingDecision, setSavingDecision] = useState(false);
+  const decisionWrite = useRef({ pending: false, generation: 0 });
+  const draftVersion = useRef(0);
+  const writeFailure = useSyncExternalStore(subscribeWriteFailure, currentWriteFailure, currentWriteFailure);
   const [savedStatus, setSavedStatus] = useState<string | null>(null);
   const [savingStatus, setSavingStatus] = useState(false);
   const [statusFailure, setStatusFailure] = useState("");
@@ -67,13 +71,24 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
     setSavedStatus(null);
   }, [o.id, ir.status]);
   useEffect(() => () => { statusWrite.current.generation += 1; }, [o.id]);
+  useEffect(() => () => { decisionWrite.current.generation += 1; }, [o.id]);
   const status = savedStatus ?? String(ir.status || "proposed");
+  const documentVersion = JSON.stringify([
+    o.title, status, ir.deciders, ir.contextMarkdown, ir.decisionMarkdown,
+    ir.consequencesMarkdown, ir.alternatives,
+  ]);
 
   const startDecisionEdit = () => {
+    draftVersion.current += 1;
     setDecisionDraft(draftFromRecord());
     setEditingDecision(true);
   };
-  const commitDecisionEdit = () => {
+  const commitDecisionEdit = async () => {
+    if (decisionWrite.current.pending || statusWrite.current.pending) return;
+    decisionWrite.current.pending = true;
+    const generation = decisionWrite.current.generation;
+    const submittedVersion = draftVersion.current;
+    setSavingDecision(true);
     // PHILO-3-01 — the default title yields to the first line of the
     // decision text, so the brief says "Review decision: <that line>".
     const firstLine = decisionDraft.decision_markdown
@@ -85,11 +100,17 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
       firstLine && (!title || title === DEFAULT_DECISION_TITLE)
         ? { ...decisionDraft, title: firstLine.slice(0, 120) }
         : decisionDraft;
-    void useDesk.getState().updatePrimitive("decision", o.id, patch);
-    setEditingDecision(false);
+    try {
+      const accepted = await useDesk.getState().updatePrimitive("decision", o.id, patch);
+      if (generation !== decisionWrite.current.generation) return;
+      if (accepted && submittedVersion === draftVersion.current) setEditingDecision(false);
+    } finally {
+      decisionWrite.current.pending = false;
+      if (generation === decisionWrite.current.generation) setSavingDecision(false);
+    }
   };
   const writeStatus = async (next: string) => {
-    if (statusWrite.current.pending || next === status) return;
+    if (statusWrite.current.pending || decisionWrite.current.pending || next === status) return;
     statusWrite.current.pending = true;
     const generation = statusWrite.current.generation;
     setSavingStatus(true);
@@ -123,12 +144,12 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
           <GadgetGroup label="State" material="inset">
             <GadgetRow label="Status" controlWidth="standard">
               <CycleGadget label="Decision status" value={status} options={DECISION_STATES}
-                disabled={savingStatus} onChange={(next) => void writeStatus(next)} />
+                disabled={savingStatus || savingDecision} onChange={(next) => void writeStatus(next)} />
             </GadgetRow>
-            {savingStatus ? <StateChip state="idle" label="Saving status" /> : null}
+            {savingStatus ? <StateChip state="working" label="Saving status" /> : null}
             {statusFailure ? <div className="attention-record-feedback">
               <SurfaceState error={statusFailure} />
-              <Button dense variant="ghost" disabled={savingStatus} onClick={() => retryStatus && void writeStatus(retryStatus)}>Retry</Button>
+              <Button dense variant="ghost" disabled={savingStatus || savingDecision} onClick={() => retryStatus && void writeStatus(retryStatus)}>Retry</Button>
             </div> : null}
           </GadgetGroup>
           <div className="desk-pullout-facts">
@@ -139,6 +160,10 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
           </div>
           {editingDecision ? (
             <div className="desk-decision-editor">
+              {savingDecision ? <StateChip state="working" label="Saving decision" /> : null}
+              {writeFailure?.subject === resourceRef && writeFailure.verb === "SAVE" ? (
+                <ActionNotice tone="danger" role="alert"><StateChip state="failure" label="Save failed" /><span>{o.title}</span></ActionNotice>
+              ) : null}
               {([
                 ["context_markdown", "Context"],
                 ["decision_markdown", "Decision"],
@@ -149,7 +174,10 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
                     label={label}
                     value={decisionDraft[field]}
                     rows={5}
-                    onChange={(value) => setDecisionDraft((current) => ({ ...current, [field]: value }))}
+                    onChange={(value) => {
+                      draftVersion.current += 1;
+                      setDecisionDraft((current) => ({ ...current, [field]: value }));
+                    }}
                   />
                 </GadgetGroup>
               ))}
@@ -185,10 +213,7 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
                 ? ` · ${items.decision.find((candidate) => candidate.id === ir.supersededBy)!.title}` : ""}
             </Button>
           ) : null}
-          {/* PHILO-11-05a (canvas B1-B3, T2): the decision's SEND well,
-              under the record. Not while it is edited: the well sends the
-              stored decision. The footer's Copy, Dictate and Edit stay (R8). */}
-          {!editingDecision ? <DeskDecisionSendWells id={o.id} title={o.title} /> : null}
+          {!editingDecision ? <DeskDecisionSendWells id={o.id} title={o.title} version={documentVersion} /> : null}
         </section>
         <DeskFilingStrip
           objectRef={resourceRef}
@@ -215,8 +240,8 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
         </Button>
         {editingDecision ? (
           <>
-            <Button variant="ghost" dense onClick={() => setEditingDecision(false)}>Cancel</Button>
-            <Button variant="primary" dense onClick={commitDecisionEdit}>Done</Button>
+            <Button variant="ghost" dense disabled={savingDecision || savingStatus} onClick={() => setEditingDecision(false)}>Cancel</Button>
+            <Button variant="primary" dense disabled={savingDecision || savingStatus} onClick={() => void commitDecisionEdit()}>Done</Button>
           </>
         ) : (
           <Button variant="primary" dense onClick={startDecisionEdit}>Edit</Button>

@@ -10365,7 +10365,8 @@
         "pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/design/document-sources.md",
         "pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/design/floor-send.md",
         "docs/internal/SEND-REFINEMENT-2026-10-14.md",
-        "docs/internal/SURFACE-REFINEMENT-2026-10-15/README.md"
+        "docs/internal/SURFACE-REFINEMENT-2026-10-15/README.md",
+        "docs/internal/DECISION-DELIGHT-2026-10-15/README.md"
       ],
       "domain": "channels",
       "egress": "The owner sends the rendered document to the saved destination. The brief includes People sections; meeting forms omit the transcript.",
@@ -10454,16 +10455,30 @@
           "line": 119,
           "path": "web/src/pages/cores/connections/Destinations.tsx",
           "symbol": "function DestForm({"
+        },
+        {
+          "claim": "The folded host shares the existing sends read and exposes prepared, failed, running and held state before explicit opening.",
+          "line": 859,
+          "path": "web/src/desk/surface/send/SendWell.tsx",
+          "symbol": "export function SendWellsFold("
+        },
+        {
+          "claim": "Decision and decision-record adapters use the shared fold; decision versions refresh ordinary preview only.",
+          "line": 78,
+          "path": "web/src/desk/documentSends.tsx",
+          "symbol": "export function DeskDecisionSendWells("
         }
       ],
       "status": "built_unreleased",
-      "status_reason": "Stored document sources run through the shared channel contract. Note Send retains stored-source/digest checks. October 15 isolated real-hub recipient edits preserve the stored key ref and park the prior destination; local key Check/Retry is exercised. External delivery and owner acceptance are not claimed.",
+      "status_reason": "Stored document sources run through the shared channel contract. Note Send retains stored-source/digest checks. October 15 isolated real-hub recipient edits preserve the stored key ref and park the prior destination; local key Check/Retry is exercised. External delivery and owner acceptance are not claimed. Decision and governing-record readers now fold Send until requested. Focused UI tests exercise folded reads, nonzero prepared discovery, held Retry and ordinary-preview refresh while prepared bytes remain frozen. These tests use HTTP substitutions; actual isolated runtime observations and limits are recorded separately.",
       "surfaces": [
         "HTTP channel operations",
         "MCP channel tools",
         "Thread preparation",
         "Project update Send well",
-        "Note Send"
+        "Note Send",
+        "Decision reader Send fold",
+        "Governing decision record Send fold"
       ],
       "tests": [
         {
@@ -10509,6 +10524,17 @@
           },
           "node": "test_write_a_thought_then_send_it_to_a_folder",
           "path": "tests/e2e/test_thought_glass.py"
+        },
+        {
+          "assertion": "Both adapters defer destination and preview reads until Send; read Retry, prepared frozen bytes, version changes and held command identity remain reachable.",
+          "execution": {
+            "cases": 5,
+            "record": "docs/internal/DECISION-DELIGHT-2026-10-15/BUILD-DECISION.md",
+            "run": "2026-10-15",
+            "status": "passed"
+          },
+          "node": "decision document hosts unfold Send only on request",
+          "path": "web/src/desk/surface/send/__tests__/SendWell.test.tsx"
         }
       ],
       "trust_boundary": "The service reads the stored source by id. A prepared send freezes its bytes and names; inline Send checks the preview digest before dispatch."

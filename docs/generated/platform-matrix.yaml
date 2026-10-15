@@ -4862,7 +4862,9 @@
         "holdspeak/services/document_sources.py",
         "holdspeak/services/channel_service.py",
         "holdspeak/services/document_sources.py",
-        "web/src/pages/cores/connections/Destinations.tsx"
+        "web/src/pages/cores/connections/Destinations.tsx",
+        "web/src/desk/surface/send/SendWell.tsx",
+        "web/src/desk/documentSends.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -4875,7 +4877,9 @@
         "holdspeak/services/document_sources.py",
         "holdspeak/services/channel_service.py",
         "holdspeak/services/document_sources.py",
-        "web/src/pages/cores/connections/Destinations.tsx"
+        "web/src/pages/cores/connections/Destinations.tsx",
+        "web/src/desk/surface/send/SendWell.tsx",
+        "web/src/desk/documentSends.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -4888,7 +4892,9 @@
         "holdspeak/services/document_sources.py",
         "holdspeak/services/channel_service.py",
         "holdspeak/services/document_sources.py",
-        "web/src/pages/cores/connections/Destinations.tsx"
+        "web/src/pages/cores/connections/Destinations.tsx",
+        "web/src/desk/surface/send/SendWell.tsx",
+        "web/src/desk/documentSends.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -4901,7 +4907,9 @@
         "holdspeak/services/document_sources.py",
         "holdspeak/services/channel_service.py",
         "holdspeak/services/document_sources.py",
-        "web/src/pages/cores/connections/Destinations.tsx"
+        "web/src/pages/cores/connections/Destinations.tsx",
+        "web/src/desk/surface/send/SendWell.tsx",
+        "web/src/desk/documentSends.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -4914,7 +4922,9 @@
         "holdspeak/services/document_sources.py",
         "holdspeak/services/channel_service.py",
         "holdspeak/services/document_sources.py",
-        "web/src/pages/cores/connections/Destinations.tsx"
+        "web/src/pages/cores/connections/Destinations.tsx",
+        "web/src/desk/surface/send/SendWell.tsx",
+        "web/src/desk/documentSends.tsx"
       ],
       "status": "built_unreleased"
     },

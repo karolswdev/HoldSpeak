@@ -8,7 +8,6 @@ import { useDesk } from "../store";
 import { useCompactViewport } from "../useCompactViewport";
 import { boundaries, resizeBoundary, type Boundary, type ResizeWindow } from "./sharedResize";
 import { computePlanes, liveVersion, subscribeLive, zOfWindow } from "./live";
-import { Z } from "./layers";
 import { bandNow, minOf, stillUnderPointer, useCompositor, useMode } from "./useCompositor";
 import { shellEls } from "../components/window/windowRegistry";
 
@@ -90,9 +89,9 @@ export function CompositorLayer() {
   return (
     <>
       {found.map((b) => {
-        // Above both windows (Astra M3: z from the shown order); the divider
-        // renders after every window, so a tie at the band's top still paints it.
-        const z = Math.min(Z.windowTop, Math.max(...[...b.before, ...b.after].map((id) => zOfWindow(id, live))) + 1);
+        // Rendered after its participants at their highest z, the divider
+        // stays usable while higher windows cover its paint and pointer target.
+        const z = Math.max(...[...b.before, ...b.after].map((id) => zOfWindow(id, live)));
         return (
           <Divider
             key={`${b.axis}:${[...b.before].sort().join(",")}|${[...b.after].sort().join(",")}`}

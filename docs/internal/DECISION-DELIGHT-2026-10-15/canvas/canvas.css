@@ -1,0 +1,3 @@
+html,body,#root{margin:0;min-height:100%;background:var(--wb-desk)}
+.direction-desk{padding:24px;min-height:100vh}.direction-body{padding:18px;display:grid;gap:16px;container-type:inline-size;container-name:surface}.direction-verbs,.direction-send{display:flex;flex-wrap:wrap;align-items:center;gap:8px}.direction-send{padding-block:12px;border-top:1px solid var(--border)}.direction-send>span:first-child{font:500 13px/1.5 var(--font-sans)}.direction-body .surface-material{margin:0}.direction-body .gadget-row-gadget{min-width:0}.direction-body>.gadget-group,.direction-body .gadget-pad{min-width:0;max-width:100%}
+@container surface(max-width:560px){.direction-body{padding:14px}}

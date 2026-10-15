@@ -29,6 +29,8 @@ import { useDesk } from "../store";
 import { objectByRef } from "../world";
 import { DecisionPullout } from "../pullouts/DecisionPullout";
 import { MeetingDecideWell } from "../../meetings/MeetingDecideWell";
+import { DeskReceiptRow } from "../components/DeskReceiptRow";
+import { dismissWriteFailure } from "../hooks/useWriteReceipt";
 
 type Wire = Record<string, unknown>;
 
@@ -54,6 +56,7 @@ function hubFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Respons
   const url = String(input);
   const method = (init?.method ?? "GET").toUpperCase();
   const body = init?.body ? (JSON.parse(String(init.body)) as Wire) : {};
+  if (url.startsWith("/api/channels/sends")) return Promise.resolve(json({ sends: [] }));
   if (url === "/api/decisions" && method === "POST") {
     hub.posts.push(body);
     const decision = decisionWire({
@@ -65,6 +68,14 @@ function hubFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Respons
   }
   if (url === "/api/decisions") return Promise.resolve(json({ decisions: hub.decisions }));
   const one = /^\/api\/decisions\/([^/?]+)$/.exec(url);
+  if (one && method === "PUT") {
+    hub.puts.push({ url, body });
+    const decision = hub.decisions.find((d) => d.id === decodeURIComponent(one[1]));
+    if (!decision) return Promise.resolve(json({ error: "Unknown decision" }, 404));
+    const saved = { ...decision, ...body };
+    hub.decisions = hub.decisions.map((d) => d.id === saved.id ? saved : d);
+    return Promise.resolve(json({ decision: saved }));
+  }
   if (one && method === "GET") {
     const decision = hub.decisions.find((d) => d.id === decodeURIComponent(one[1]));
     return Promise.resolve(decision ? json({ decision }) : json({ error: "Unknown decision" }, 404));
@@ -79,6 +90,7 @@ function hubFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Respons
 }
 
 beforeEach(() => {
+  dismissWriteFailure();
   hub.decisions = [];
   hub.posts = [];
   hub.puts = [];
@@ -91,6 +103,127 @@ beforeEach(() => {
   };
   vi.stubGlobal("fetch", vi.fn(hubFetch));
   useDesk.setState({ pullouts: [], editingId: null, newIds: [] });
+});
+
+describe("the decision editor keeps its draft until the save is accepted", () => {
+  const ref = "decision:body-decision";
+  const path = "/api/decisions/body-decision";
+  const initial = { context_markdown: "Current context", decision_markdown: "Current decision", consequences_markdown: "Current consequences" };
+
+  async function renderEditor() {
+    hub.decisions = [decisionWire({ id: "body-decision", title: "Use the shared runners", ...initial })];
+    await act(async () => { await useDesk.getState().refresh(); });
+    function Face() {
+      const items = useDesk((state) => state.items);
+      const object = objectByRef(items, ref);
+      return <>{object ? <DecisionPullout object={object} onClose={() => {}} /> : null}<DeskReceiptRow /></>;
+    }
+    render(<Face />);
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+  }
+
+  function fillDraft(suffix: string) {
+    for (const name of ["Context", "Decision", "Consequences"]) {
+      fireEvent.change(screen.getByRole("textbox", { name }), { target: { value: `${name} ${suffix}` } });
+    }
+  }
+
+  function expectDraft(suffix: string) {
+    for (const name of ["Context", "Decision", "Consequences"]) {
+      expect(screen.getByRole("textbox", { name })).toHaveValue(`${name} ${suffix}`);
+    }
+  }
+
+  it("Done waits for one write and disables conflicting status, Retry and cancel presses", async () => {
+    await renderEditor();
+    fillDraft("to keep");
+    let complete!: () => void;
+    let statusWrites = 0;
+    vi.mocked(fetch).mockImplementation((input, init) => {
+      if (String(input).endsWith("/status")) {
+        statusWrites += 1;
+        return Promise.resolve(json({ error: "state_refused" }, 403));
+      }
+      if (String(input) === path && init?.method === "PUT") {
+        hub.puts.push({ url: path, body: JSON.parse(String(init.body)) });
+        return new Promise((resolve) => { complete = () => {
+          hub.decisions = [{ ...hub.decisions[0], ...hub.puts[0].body }];
+          resolve(json({ decision: hub.decisions[0] }));
+        }; });
+      }
+      return hubFetch(input, init);
+    });
+    fireEvent.pointerDown(screen.getByRole("combobox", { name: "Decision status" }), { button: 0 });
+    fireEvent.click(within(screen.getByRole("listbox", { name: "Decision status" })).getByRole("option", { name: "Retired" }));
+    await screen.findByText(/STATUS FAILED.*HTTP 403/);
+    const statusRetry = screen.getByRole("button", { name: "Retry" });
+    expect(statusRetry).not.toBeDisabled();
+    const done = screen.getByRole("button", { name: "Done" });
+    act(() => { fireEvent.click(done); fireEvent.click(done); });
+    expect(hub.puts).toHaveLength(1);
+    expectDraft("to keep");
+    expect(done).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeDisabled();
+    expect(screen.getByRole("combobox", { name: "Decision status" })).toBeDisabled();
+    expect(statusRetry).toBeDisabled();
+    fireEvent.click(statusRetry);
+    expect(statusWrites).toBe(1);
+    await act(async () => complete());
+    await waitFor(() => expect(screen.queryByRole("textbox", { name: "Decision" })).toBeNull());
+    expect(document.querySelector(".desk-decision-card")?.textContent).toContain("Decision to keep");
+  });
+
+  it("a refusal keeps all fields; the existing exact Retry cannot replace a newer draft", async () => {
+    await renderEditor();
+    fillDraft("refused");
+    let refuse = true;
+    vi.mocked(fetch).mockImplementation((input, init) => {
+      if (String(input) === path && init?.method === "PUT" && refuse) {
+        hub.puts.push({ url: path, body: JSON.parse(String(init.body)) });
+        return Promise.resolve(json({ error: "save_refused" }, 403));
+      }
+      return hubFetch(input, init);
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    await screen.findByText(/SAVE FAILED.*HTTP 403/);
+    expectDraft("refused");
+    await waitFor(() => expect(screen.getByRole("button", { name: "Done" })).not.toBeDisabled());
+    expect(screen.getByText("Save failed")).toBeInTheDocument();
+    fillDraft("typed later");
+    refuse = false;
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(hub.puts).toHaveLength(2));
+    expect(hub.puts[1].body).toEqual(hub.puts[0].body);
+    expectDraft("typed later");
+    await waitFor(() => expect(screen.queryByText("Save failed")).toBeNull());
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Done" })); });
+    expect(hub.puts.at(-1)?.body.decision_markdown).toBe("Decision typed later");
+    expect(screen.queryByRole("textbox", { name: "Decision" })).toBeNull();
+  });
+
+  it("a successful older save keeps fields typed while it was pending", async () => {
+    await renderEditor();
+    fillDraft("submitted");
+    let complete!: () => void;
+    vi.mocked(fetch).mockImplementation((input, init) => {
+      if (String(input) === path && init?.method === "PUT") {
+        const body = JSON.parse(String(init.body));
+        hub.puts.push({ url: path, body });
+        return new Promise((resolve) => { complete = () => {
+          hub.decisions = [{ ...hub.decisions[0], ...body }];
+          resolve(json({ decision: hub.decisions[0] }));
+        }; });
+      }
+      return hubFetch(input, init);
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    expectDraft("submitted");
+    fillDraft("typed later");
+    await act(async () => complete());
+    expectDraft("typed later");
+    expect(screen.getByRole("button", { name: "Done" })).not.toBeDisabled();
+    expect(useDesk.getState().items.decision.find((d) => d.id === "body-decision")?.decisionMarkdown).toBe("Decision submitted");
+  });
 });
 
 afterEach(() => {

@@ -13,7 +13,7 @@
  *   `decision_record`, never the lifecycle kind (design 6a).
  */
 import type { ReactNode } from "react";
-import { PreparedChip, SendWells, mergeKnown, useSends, type DocRef } from "./surface/send";
+import { PreparedChip, SendWells, SendWellsFold, mergeKnown, useSends, type DocRef } from "./surface/send";
 import { stamp } from "../features/channels/channels";
 import { useAnnounceWindowDocument } from "./windowSend";
 import "./documentSends.css";
@@ -35,8 +35,9 @@ export const briefDoc = (b: BriefLike): DocRef => {
   };
 };
 
-export const deskDecisionDoc = (id: string, title?: string | null): DocRef => ({
+export const deskDecisionDoc = (id: string, title?: string | null, version?: string): DocRef => ({
   ref: `desk_decision:${id}`, title: String(title || "Decision"), label: `DECISION ${short(id)}`,
+  version,
 });
 
 export const decisionRecordDoc = (id: string, text?: string | null): DocRef => ({
@@ -74,13 +75,13 @@ export function BriefHeadVerbs({ brief, children }: { brief: BriefLike; children
 }
 
 /** The decision window's well (B1-B3, T2). */
-export function DeskDecisionSendWells({ id, title }: { id: string; title?: string | null }) {
-  return <div data-seat="desk-decision"><SendWells doc={deskDecisionDoc(id, title)} /></div>;
+export function DeskDecisionSendWells({ id, title, version }: { id: string; title?: string | null; version?: string }) {
+  return <div data-seat="desk-decision"><SendWellsFold doc={deskDecisionDoc(id, title, version)} /></div>;
 }
 
 /** A decision record's well (B4b, B5). */
 export function DecisionRecordSendWells({ id, text }: { id: string; text?: string | null }) {
-  return <div data-seat="decision-record"><SendWells doc={decisionRecordDoc(id, text)} /></div>;
+  return <div data-seat="decision-record"><SendWellsFold doc={decisionRecordDoc(id, text)} /></div>;
 }
 
 /** PHILO-17 U08: a note (a Thought's working note) on `note:<id>`. The

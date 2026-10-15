@@ -5,6 +5,7 @@
 export {
   SendWell,
   SendWells,
+  SendWellsFold,
   SendHistory,
   PreparedChip,
   PreviewWell,

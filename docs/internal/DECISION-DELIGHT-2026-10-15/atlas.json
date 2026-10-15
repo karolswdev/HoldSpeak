@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "atlas_version": "decision-delight-20261015",
+  "extends": "docs/internal/FOLLOW-THROUGH-2026-10-15/atlas.json",
+  "source_commit": "c910cd580852bd73049f999eca309a57426c1509",
+  "states": [
+    {
+      "id": "state.desk_presentation.decision_saved_reader",
+      "family": "desk_presentation",
+      "values": {
+        "application": "Decision",
+        "task": "Save multiline decision text from the editor"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/pullouts/DecisionPullout.tsx",
+          "symbol": "const commitDecisionEdit = async () => {",
+          "claim": "Done awaits the real writer and closes only an accepted unchanged draft."
+        }
+      ],
+      "reachable_by": [
+        "case.decision.save.reader"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "case.decision.save.reader",
+      "job": "j3",
+      "edge_ids": [
+        "edge.http.put.api_decisions_decision_id"
+      ],
+      "state_id": "state.desk_presentation.decision_saved_reader",
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME/DB. Real decision creation and text PUT. No model, capture, clipboard or send dispatch."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/setup/status",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "timeout_s": 10
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Graph decision rollout",
+            "decision_markdown": "Keep the current deployment."
+          },
+          "expect_status": 201,
+          "adapter": "http-route",
+          "capture_as": "decision_id",
+          "capture_path": "decision.id"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/?open=decision:{decision_id}"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Edit"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": ".desk-decision-editor textarea[aria-label=\"Decision\"]",
+          "value": "Deploy in small stages.\nKeep fallback ready."
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-by-viewport",
+        "role": "button",
+        "name": "Done"
+      },
+      "expected": {
+        "observe_at": "protocol: GET /api/decisions/{decision_id}",
+        "predicate": {
+          "kind": "protocol_field",
+          "path": "decision.decision_markdown",
+          "value": "Deploy in small stages.\nKeep fallback ready."
+        },
+        "words": "Done writes the exact multiline draft through the existing decision writer."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ],
+  "clocks": [],
+  "excluded": [],
+  "council_readings": []
+}
