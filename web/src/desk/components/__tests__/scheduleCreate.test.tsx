@@ -26,6 +26,22 @@ function pendingCreate() {
 }
 
 describe("new schedule draft custody", () => {
+  it("keeps microphone controls in both time modes and rejects a past time without losing it", async () => {
+    render(<ScheduleCreateWindow />);
+    expect(screen.getByRole("button", { name: /^Speak When(?: ·|$)/ })).toBeTruthy();
+    const when = screen.getByLabelText("When");
+    expect(when).toHaveAttribute("type", "datetime-local");
+    fireEvent.change(when, { target: { value: "2001-01-01T09:00" } });
+    fireEvent.click(screen.getByTestId("schedule-create-submit"));
+    const refusal = await screen.findByRole("alert");
+    expect(refusal.textContent).toContain("Time must be future");
+    expect(refusal.closest(".surface-footer-receipt")).toBeTruthy();
+    expect(when).toHaveValue("2001-01-01T09:00");
+    expect(create).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText("Mode"), { target: { value: "recurring" } });
+    expect(screen.getByRole("button", { name: /^Speak Cron expression(?: ·|$)/ })).toBeTruthy();
+  });
+
   it("keeps edited operation B open when pending operation A succeeds", async () => {
     render(<ScheduleCreateWindow />);
     fireEvent.change(screen.getByLabelText("When"), { target: { value: "2099-10-14T09:00" } });
@@ -98,7 +114,9 @@ describe("new schedule draft custody", () => {
     create.mockResolvedValueOnce(false).mockResolvedValueOnce(true);
     render(<ScheduleCreateWindow />); recurring();
     fireEvent.click(screen.getByTestId("schedule-create-submit"));
-    await screen.findByRole("alert");
+    const refusal = await screen.findByRole("alert");
+    expect(refusal.textContent).toBe("Not saved · Kept");
+    expect(refusal.closest(".surface-footer-receipt")).toBeTruthy();
     expect(screen.getByLabelText("Mode", { exact: true })).toHaveValue("recurring");
     expect(screen.getByLabelText("Cron expression", { exact: true })).toHaveValue("30 14 * * 2");
     expect(screen.getByLabelText("Duration", { exact: true })).toHaveValue("90");

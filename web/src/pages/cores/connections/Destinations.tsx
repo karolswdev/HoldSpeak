@@ -33,6 +33,7 @@ import {
   FoldGadget,
   GadgetGroup,
   GadgetRow,
+  PadGadget,
   SecretRow,
   StateChip,
   StringGadget,
@@ -67,13 +68,13 @@ type Draft = {
   repo: string; kind: "issue" | "pr"; number: string;
   jiraAccount: string; key: string;
   confAccount: string; space: string;
-  provider: EmailProvider; fromEmail: string; fromName: string; to: string; cc: string;
+  provider: EmailProvider; fromEmail: string; fromName: string; emailRef: string; to: string; cc: string;
   /** Slack: his channel label, and the key_ref the webhook save returned (empty until he types it). */
   slackLabel: string; slackRef: string;
 };
 const EMPTY: Draft = {
   channel: "file", name: "", nameTouched: false, folder: "", synced: false, repo: "", kind: "issue", number: "",
-  jiraAccount: "", key: "", confAccount: "", space: "", provider: DEFAULT_EMAIL_PROVIDER, fromEmail: "", fromName: "", to: "", cc: "",
+  jiraAccount: "", key: "", confAccount: "", space: "", provider: DEFAULT_EMAIL_PROVIDER, fromEmail: "", fromName: "", emailRef: "", to: "", cc: "",
   slackLabel: "", slackRef: "",
 };
 
@@ -86,8 +87,8 @@ function fromDestination(d: Destination): Draft {
     jiraAccount: d.channel === "jira" ? `${a.site}|${a.email}` : "", key: String(t.key ?? ""),
     confAccount: d.channel === "confluence" ? `${a.site}|${a.email}` : "", space: String(t.space_id ?? ""),
     provider: a.provider === "resend" ? "resend" : "sendgrid",
-    fromEmail: String(a.from_email ?? ""), fromName: String(a.from_name ?? ""),
-    to: [t.to as unknown].flat().filter(Boolean).join(", "), cc: [t.cc as unknown].flat().filter(Boolean).join(", "),
+    fromEmail: String(a.from_email ?? ""), fromName: String(a.from_name ?? ""), emailRef: String(a.key_ref ?? ""),
+    to: [t.to as unknown].flat().filter(Boolean).join("\n"), cc: [t.cc as unknown].flat().filter(Boolean).join("\n"),
     // A new webhook is a new destination: Edit keeps this key_ref until he types a new URL (design section 5).
     slackLabel: String(t.channel_label ?? ""), slackRef: d.channel === "slack" ? String(a.key_ref ?? "") : "",
   };
@@ -100,7 +101,10 @@ export function autoName(d: Pick<Draft, "channel" | "folder" | "repo" | "kind" |
     case "github": return d.repo && d.number ? `${d.repo} ${d.kind === "pr" ? "PR " : ""}#${d.number}` : "";
     case "jira": return d.key ? `Jira ${d.key}` : "";
     case "confluence": return d.space ? `Confluence space ${d.space}` : "";
-    case "email": return d.to ? `Email ${d.to.split(",")[0].trim()}` : "";
+    case "email": {
+      const first = addresses(d.to)[0];
+      return first ? `Email ${first}` : "";
+    }
     case "slack": return d.slackLabel?.trim() ? `Slack ${d.slackLabel.trim()}` : "";
     default: return "";
   }
@@ -108,16 +112,18 @@ export function autoName(d: Pick<Draft, "channel" | "folder" | "repo" | "kind" |
 /** The keychain item's name for a sender, per provider (story 03's key_ref: letters, digits, `_ . @ -`). */
 export const keyRef = (fromEmail: string, provider: EmailProvider = DEFAULT_EMAIL_PROVIDER) =>
   `${provider}-${fromEmail.trim().toLowerCase().replace(/[^a-z0-9_.@-]/g, "-")}`.slice(0, 100);
-const addresses = (text: string) => text.split(",").map((a) => a.trim()).filter(Boolean);
+/** Presence follows the hub's provider/ref key slot, including legacy refs. */
+const emailKeyIdentity = (provider: string, ref: string) => `email:${provider}:${ref}`;
+const addresses = (text: string) => text.split(/[,\r\n]/).map((a) => a.trim()).filter(Boolean);
 
-function DestForm({ conns, accountsLoading, accountsReadError, onAccountsRetry, initial, replaces, keys, onKey, onSlackKey, onSlackKnown, onDone, onCancel }: {
+function DestForm({ conns, accountsLoading, accountsReadError, onAccountsRetry, initial, replaces, keys, onKey, onSlackKey, onKeyKnown, onDone, onCancel }: {
   conns: ConnectionsResponse | null; initial: Draft; replaces?: string; keys: Record<string, boolean>;
   accountsLoading: boolean; accountsReadError: boolean; onAccountsRetry: () => void;
   onKey: (ref: string, v: string, provider: EmailProvider) => Promise<string | null>;
   /** The webhook save: the minted key_ref, or the refusal code. */
   onSlackKey: (url: string) => Promise<{ keyRef: string } | { code: string }>;
-  /** What a Check found about a key_ref: present or absent. */
-  onSlackKnown: (ref: string, present: boolean) => void;
+  /** What a Check found about a key's cache identity: present or absent. */
+  onKeyKnown: (ref: string, present: boolean) => void;
   onDone: () => void; onCancel?: () => void;
 }) {
   const [keyRefused, setKeyRefused] = useState<string | null>(null);
@@ -125,13 +131,52 @@ function DestForm({ conns, accountsLoading, accountsReadError, onAccountsRetry, 
   const [d, setD] = useState<Draft>(initial);
   const [busy, setBusy] = useState(false);
   const [refused, setRefused] = useState<string | null>(null);
+  const [emailCheck, setEmailCheck] = useState<{ identity: string; busy: boolean; code?: string } | null>(null);
+  const emailRequest = useRef(0);
   const set = (patch: Partial<Draft>) => { setRefused(null); setD((x) => ({ ...x, ...patch })); };
   const name = d.nameTouched ? d.name : autoName(d);
   // The webhook is SET only when a save or a Check in this session confirmed it (Astra counsel r1 F1):
   // unknown is never SET. Edit on a saved row starts unknown and offers Check.
   const slackKnown: boolean | undefined = d.slackRef ? keys[d.slackRef] : false;
   const slackSet = slackKnown === true;
-  const ref = keyRef(d.fromEmail, d.provider);
+  // A saved key name is an identity, including names from older versions.
+  // A changed sender/provider uses the current naming rule for its new key.
+  const savedEmailIdentity = d.channel === "email" && initial.emailRef !== ""
+    && d.provider === initial.provider
+    && d.fromEmail.trim().toLowerCase() === initial.fromEmail.trim().toLowerCase();
+  const ref = savedEmailIdentity ? initial.emailRef : keyRef(d.fromEmail, d.provider);
+  const emailKey = emailKeyIdentity(d.provider, ref);
+  const emailIdentity = `${d.channel}:${d.provider}:${d.fromEmail.trim().toLowerCase()}:${ref}`;
+  const currentEmailIdentity = useRef(emailIdentity);
+  currentEmailIdentity.current = emailIdentity;
+  const checkEmailKey = useCallback(async () => {
+    // Check names the saved destination, so it can establish only that
+    // destination's original sender/provider/key identity.
+    if (!replaces || !savedEmailIdentity) return;
+    const request = ++emailRequest.current;
+    setEmailCheck({ identity: emailIdentity, busy: true });
+    try {
+      const result = await wire.check(replaces);
+      if (request !== emailRequest.current || currentEmailIdentity.current !== emailIdentity) return;
+      const state = result.check.state;
+      if (["ready", "sender_accepted", "sender_not_verified", "key_changed"].includes(state)) {
+        onKeyKnown(emailKey, true);
+        setEmailCheck(null);
+      } else {
+        // Locked/unavailable reads do not say that a key is absent.
+        if (state === "email_key_missing") onKeyKnown(emailKey, false);
+        setEmailCheck({ identity: emailIdentity, busy: false, code: state });
+      }
+    } catch (error) {
+      if (request !== emailRequest.current || currentEmailIdentity.current !== emailIdentity) return;
+      setEmailCheck({ identity: emailIdentity, busy: false, code: error instanceof Refusal ? error.code : "no_answer" });
+    }
+  }, [replaces, savedEmailIdentity, emailIdentity, emailKey, onKeyKnown]);
+  const emailKnown = keys[emailKey];
+  useEffect(() => {
+    if (replaces && savedEmailIdentity && emailKnown === undefined) void checkEmailKey();
+    return () => { emailRequest.current += 1; };
+  }, [replaces, savedEmailIdentity, emailKnown, checkEmailKey]);
   const gh = conns?.tools.find((t) => t.provider_id === "github");
   const jiraConns = conns?.tools.find((t) => t.provider_id === "jira")?.connections ?? [];
   const confConns = conns?.tools.find((t) => t.provider_id === "confluence")?.connections ?? [];
@@ -142,7 +187,7 @@ function DestForm({ conns, accountsLoading, accountsReadError, onAccountsRetry, 
     d.channel === "github" ? { host: "github.com", login: String(gh?.account?.login ?? "") }
     : d.channel === "jira" ? pick(jiraAcc)
     : d.channel === "confluence" ? pick(confAcc)
-    : d.channel === "email" ? { provider: d.provider, from_email: d.fromEmail, from_name: d.fromName, key_ref: ref, key_present: !!keys[ref] }
+    : d.channel === "email" ? { provider: d.provider, from_email: d.fromEmail, from_name: d.fromName, key_ref: ref, key_present: emailKnown === true }
     : d.channel === "slack" ? { key_ref: d.slackRef, ...(slackKnown === undefined ? {} : { key_present: slackKnown }) }
     : {};
   const eg = egressOf({ channel: d.channel, account, synced: d.synced });
@@ -158,7 +203,7 @@ function DestForm({ conns, accountsLoading, accountsReadError, onAccountsRetry, 
     : d.channel === "github" ? Boolean(d.repo.trim()) && Number.isInteger(Number(d.number)) && Number(d.number) > 0
     : d.channel === "jira" ? Boolean(d.key.trim())
     : d.channel === "confluence" ? Boolean(d.space.trim())
-    : d.channel === "email" ? Boolean(d.fromEmail.trim()) && addresses(d.to).length > 0 && keys[ref] === true
+    : d.channel === "email" ? Boolean(d.fromEmail.trim()) && addresses(d.to).length > 0 && emailKnown === true
     : Boolean(d.slackLabel.trim()) && Boolean(d.slackRef) && slackKnown !== false
   );
   // Accounts and Destinations share this module. Open the existing control
@@ -199,29 +244,42 @@ function DestForm({ conns, accountsLoading, accountsReadError, onAccountsRetry, 
   };
   return (
     <div className="dest-form" data-testid="dest-form" data-channel={d.channel}>
+      <GadgetGroup label={replaces ? "Edit destination" : "New destination"} material="inset" actions={
+        <div className="send-verbs" data-testid="dest-form-verbs">
+          <Button dense variant="primary" disabled={!valid} loading={busy} onClick={() => void save()} data-testid="dest-save">Save</Button>
+          {onCancel ? <Button dense variant="ghost" onClick={onCancel} data-testid="dest-cancel">Cancel</Button> : null}
+          <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
+          {refused ? (
+            <span className="send-line" data-testid="dest-refused" data-code={refused}>
+              <StateChip state="failure" label="REFUSED" />
+              <span className="surface-token" data-chip>{refusedWord(refused)}</span>
+            </span>
+          ) : null}
+        </div>
+      }>
       {replaces ? null : (
-        <GadgetRow label="Channel">
+        <GadgetRow label="Channel" controlWidth="standard">
           <CycleGadget label="Channel" value={d.channel} options={CHANNELS} onChange={(v) => set({ ...EMPTY, channel: v as Channel })} />
         </GadgetRow>
       )}
       {d.channel === "file" ? (<>
-        <GadgetRow wide label="Folder"><StringGadget label="Folder" value={d.folder} onChange={(v) => set({ folder: v })} placeholder="/Users/you/Reports" inputProps={{ "data-testid": "dest-folder" } as never} /></GadgetRow>
-        <GadgetRow label="Synced"><CheckGadget variant="token" label="SYNCED" checked={d.synced} onChange={(v) => set({ synced: v })} /></GadgetRow>
+        <GadgetRow wide controlWidth="full" label="Folder"><StringGadget label="Folder" value={d.folder} onChange={(v) => set({ folder: v })} placeholder="/Users/you/Reports" inputProps={{ "data-testid": "dest-folder" } as never} /></GadgetRow>
+        <GadgetRow controlWidth="standard" label="Synced"><CheckGadget variant="token" label="SYNCED" checked={d.synced} onChange={(v) => set({ synced: v })} /></GadgetRow>
       </>) : null}
       {d.channel === "github" ? (<>
-        <GadgetRow wide label="Account">
+        <GadgetRow wide controlWidth="full" label="Account">
           <span className="send-line">
             {accountsUnavailable ? accountReadState : <><span className="surface-token send-literal" data-chip>{gh?.account?.login ? `@${gh.account.login}` : "—"}</span>
             {acc ? <StateChip state={acc.state} label={acc.label} /> : null}
             {missingAccount ? <Button dense variant="secondary" onClick={setUpAccount}>Set up account</Button> : null}</>}
           </span>
         </GadgetRow>
-        <GadgetRow wide label="Repository"><StringGadget label="Repository" value={d.repo} onChange={(v) => set({ repo: v })} placeholder="owner/repo" inputProps={{ "data-testid": "dest-repo" } as never} /></GadgetRow>
-        <GadgetRow label="Kind"><CycleGadget label="Kind" value={d.kind} options={[{ value: "issue", label: "Issue" }, { value: "pr", label: "Pull request" }]} onChange={(v) => set({ kind: v as "issue" | "pr" })} /></GadgetRow>
-        <GadgetRow label="Number"><StringGadget label="Number" value={d.number} onChange={(v) => set({ number: v })} placeholder="42" inputProps={{ "data-testid": "dest-number", inputMode: "numeric" } as never} /></GadgetRow>
+        <GadgetRow wide controlWidth="full" label="Repository"><StringGadget label="Repository" value={d.repo} onChange={(v) => set({ repo: v })} placeholder="owner/repo" inputProps={{ "data-testid": "dest-repo" } as never} /></GadgetRow>
+        <GadgetRow controlWidth="standard" label="Kind"><CycleGadget label="Kind" value={d.kind} options={[{ value: "issue", label: "Issue" }, { value: "pr", label: "Pull request" }]} onChange={(v) => set({ kind: v as "issue" | "pr" })} /></GadgetRow>
+        <GadgetRow controlWidth="short" label="Number"><StringGadget label="Number" value={d.number} onChange={(v) => set({ number: v })} placeholder="42" inputProps={{ "data-testid": "dest-number", inputMode: "numeric" } as never} /></GadgetRow>
       </>) : null}
       {d.channel === "jira" ? (<>
-        <GadgetRow wide label="Account">
+        <GadgetRow wide controlWidth="full" label="Account">
           <span className="send-line">
             {accountsUnavailable ? accountReadState : jiraConns.length ? (
               <CycleGadget label="Jira account" value={jiraAcc} onChange={(v) => set({ jiraAccount: v })}
@@ -230,10 +288,10 @@ function DestForm({ conns, accountsLoading, accountsReadError, onAccountsRetry, 
             {!accountsUnavailable && acc && jiraConns.length ? <StateChip state={acc.state} label={acc.label} /> : null}
           </span>
         </GadgetRow>
-        <GadgetRow label="Work item"><StringGadget label="Work item" value={d.key} onChange={(v) => set({ key: v })} placeholder="PAY-118" inputProps={{ "data-testid": "dest-key" } as never} /></GadgetRow>
+        <GadgetRow controlWidth="standard" label="Work item"><StringGadget label="Work item" value={d.key} onChange={(v) => set({ key: v })} placeholder="PAY-118" inputProps={{ "data-testid": "dest-key" } as never} /></GadgetRow>
       </>) : null}
       {d.channel === "confluence" ? (<>
-        <GadgetRow wide label="Account">
+        <GadgetRow wide controlWidth="full" label="Account">
           <span className="send-line">
             {accountsUnavailable ? accountReadState : confConns.length ? (
               <CycleGadget label="Confluence account" value={confAcc} onChange={(v) => set({ confAccount: v })}
@@ -242,15 +300,31 @@ function DestForm({ conns, accountsLoading, accountsReadError, onAccountsRetry, 
             {!accountsUnavailable && acc && confConns.length ? <StateChip state={acc.state} label={acc.label} /> : null}
           </span>
         </GadgetRow>
-        <GadgetRow wide label="Space id"><StringGadget label="Space id" value={d.space} onChange={(v) => set({ space: v })} placeholder="98304" inputProps={{ "data-testid": "dest-space", inputMode: "numeric" } as never} /></GadgetRow>
+        <GadgetRow wide controlWidth="full" label="Space id"><StringGadget label="Space id" value={d.space} onChange={(v) => set({ space: v })} placeholder="98304" inputProps={{ "data-testid": "dest-space", inputMode: "numeric" } as never} /></GadgetRow>
       </>) : null}
       {d.channel === "email" ? (<>
-        <GadgetRow label="Provider"><CycleGadget label="Provider" value={d.provider} options={PROVIDERS} onChange={(v) => { setKeyRefused(null); set({ provider: v as EmailProvider }); }} /></GadgetRow>
-        <GadgetRow label="From"><StringGadget label="From" value={d.fromEmail} onChange={(v) => set({ fromEmail: v })} placeholder="you@company.com" inputProps={{ "data-testid": "dest-from" } as never} /></GadgetRow>
-        <GadgetRow wide label="From name"><StringGadget label="From name" value={d.fromName} onChange={(v) => set({ fromName: v })} placeholder="Your name" /></GadgetRow>
+        <GadgetRow controlWidth="standard" label="Provider"><CycleGadget label="Provider" value={d.provider} options={PROVIDERS} onChange={(v) => { setKeyRefused(null); set({ provider: v as EmailProvider }); }} /></GadgetRow>
+        <GadgetRow wide controlWidth="full" label="From"><StringGadget label="From" value={d.fromEmail} onChange={(v) => set({ fromEmail: v })} placeholder="you@company.com" inputProps={{ "data-testid": "dest-from" } as never} /></GadgetRow>
+        <GadgetRow wide controlWidth="full" label="From name"><StringGadget label="From name" value={d.fromName} onChange={(v) => set({ fromName: v })} placeholder="Your name" /></GadgetRow>
         <div className="dest-secret" data-testid="dest-key-row">
-          <SecretRow label={`${EMAIL_PROVIDERS[d.provider].label} key`} configured={!!keys[ref]}
-            onReplace={(v) => { setKeyRefused(null); void onKey(ref, v, d.provider).then(setKeyRefused); }} />
+          <SecretRow label={`${EMAIL_PROVIDERS[d.provider].label} key`} configured={emailKnown === true}
+            onReplace={(v) => {
+              emailRequest.current += 1;
+              setEmailCheck(null); setKeyRefused(null);
+              void onKey(ref, v, d.provider).then(setKeyRefused);
+            }} />
+          {replaces && savedEmailIdentity && emailKnown !== true ? (
+            <span className="send-line" data-testid="dest-email-key-check" aria-busy={emailCheck?.identity === emailIdentity && emailCheck.busy}>
+              {emailCheck?.identity === emailIdentity && emailCheck.busy ? <span role="status">Reading key</span>
+                : emailCheck?.identity === emailIdentity && emailCheck.code ? <>
+                  <StateChip state={emailCheck.code === "email_key_missing" ? "warning" : "failure"}
+                    label={emailCheck.code === "email_key_missing" ? "NO KEY" : "CANNOT READ KEY"} />
+                  {emailCheck.code === "email_key_missing" ? null : <span className="surface-token" data-chip>{refusedWord(emailCheck.code)}</span>}
+                </> : null}
+              <Button dense variant="ghost" loading={emailCheck?.identity === emailIdentity && emailCheck.busy}
+                onClick={() => void checkEmailKey()}>{emailCheck?.identity === emailIdentity && emailCheck.code ? "Retry" : "Check"}</Button>
+            </span>
+          ) : null}
           {keyRefused ? (
             <span className="send-line" data-testid="dest-key-refused" data-code={keyRefused}>
               <StateChip state="failure" label={SEND_WORDS.keyNotSaved} />
@@ -258,8 +332,8 @@ function DestForm({ conns, accountsLoading, accountsReadError, onAccountsRetry, 
             </span>
           ) : null}
         </div>
-        <GadgetRow wide label="To"><StringGadget label="To" value={d.to} onChange={(v) => set({ to: v })} placeholder="a@company.com, b@company.com" inputProps={{ "data-testid": "dest-to" } as never} /></GadgetRow>
-        <GadgetRow wide label="Cc"><StringGadget label="Cc" value={d.cc} onChange={(v) => set({ cc: v })} placeholder="c@company.com" /></GadgetRow>
+        <GadgetRow wide controlWidth="full" label="To"><PadGadget label="To" value={d.to} onChange={(v) => set({ to: v })} placeholder={"a@company.com\nb@company.com"} autoGrow /></GadgetRow>
+        <GadgetRow wide controlWidth="full" label="Cc"><PadGadget label="Cc" value={d.cc} onChange={(v) => set({ cc: v })} placeholder="c@company.com" autoGrow /></GadgetRow>
       </>) : null}
       {d.channel === "slack" ? (<>
         <div className="dest-secret" data-testid="dest-key-row">
@@ -278,7 +352,7 @@ function DestForm({ conns, accountsLoading, accountsReadError, onAccountsRetry, 
               onClick={() => {
                 setKeyChecking(true);
                 void wire.check(replaces)
-                  .then((r) => { if (r.check.state === "ready" || r.check.state === "slack_webhook_missing") onSlackKnown(d.slackRef, r.check.state === "ready"); else setKeyRefused(r.check.state); })
+                  .then((r) => { if (r.check.state === "ready" || r.check.state === "slack_webhook_missing") onKeyKnown(d.slackRef, r.check.state === "ready"); else setKeyRefused(r.check.state); })
                   .catch((e) => setKeyRefused(e instanceof Refusal ? e.code : "no_answer"))
                   .finally(() => setKeyChecking(false));
               }}>Check</Button>
@@ -290,20 +364,10 @@ function DestForm({ conns, accountsLoading, accountsReadError, onAccountsRetry, 
             </span>
           ) : null}
         </div>
-        <GadgetRow label="Channel name"><StringGadget label="Channel name" value={d.slackLabel} onChange={(v) => set({ slackLabel: v })} placeholder="#leads" inputProps={{ "data-testid": "dest-slack-label" } as never} /></GadgetRow>
+        <GadgetRow wide controlWidth="full" label="Channel name"><StringGadget label="Channel name" value={d.slackLabel} onChange={(v) => set({ slackLabel: v })} placeholder="#leads" inputProps={{ "data-testid": "dest-slack-label" } as never} /></GadgetRow>
       </>) : null}
-      <GadgetRow wide label="Name"><StringGadget label="Name" value={name} onChange={(v) => set({ name: v, nameTouched: true })} placeholder="Name" inputProps={{ "data-testid": "dest-name" } as never} /></GadgetRow>
-      <div className="send-verbs" data-testid="dest-form-verbs">
-        <Button dense variant="primary" disabled={!valid} loading={busy} onClick={() => void save()} data-testid="dest-save">Save</Button>
-        {onCancel ? <Button dense variant="ghost" onClick={onCancel} data-testid="dest-cancel">Cancel</Button> : null}
-        <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
-        {refused ? (
-          <span className="send-line" data-testid="dest-refused" data-code={refused}>
-            <StateChip state="failure" label="REFUSED" />
-            <span className="surface-token" data-chip>{refusedWord(refused)}</span>
-          </span>
-        ) : null}
-      </div>
+      <GadgetRow wide controlWidth="full" label="Name"><StringGadget label="Name" value={name} onChange={(v) => set({ name: v, nameTouched: true })} placeholder="Name" inputProps={{ "data-testid": "dest-name" } as never} /></GadgetRow>
+      </GadgetGroup>
     </div>
   );
 }
@@ -401,7 +465,7 @@ export function Destinations() {
     setKeys((k) => ({
       ...k,
       ...Object.fromEntries(r.filter((d) => d.channel === "email" && typeof d.account.key_present === "boolean")
-        .map((d) => [String(d.account.key_ref), !!d.account.key_present])),
+        .map((d) => [emailKeyIdentity(String(d.account.provider ?? DEFAULT_EMAIL_PROVIDER), String(d.account.key_ref)), !!d.account.key_present])),
     }));
   }).catch(() => setReadFailed(true)), []);
   useEffect(() => {
@@ -419,12 +483,12 @@ export function Destinations() {
     requestAnimationFrame(() => groupRef.current?.scrollIntoView({ block: "start" }));
   }, [arrive, rows, readFailed]);
   const onKey = (ref: string, v: string, provider: EmailProvider): Promise<string | null> => wire.saveKey(ref, v, provider)
-    .then(() => { setKeys((k) => ({ ...k, [ref]: true })); return null; })
+    .then(() => { setKeys((k) => ({ ...k, [emailKeyIdentity(provider, ref)]: true })); return null; })
     .catch((e) => (e instanceof Refusal ? e.code : "no_answer"));
   const onSlackKey = (url: string): Promise<{ keyRef: string } | { code: string }> => wire.saveSlackWebhook(url)
     .then((r) => { setKeys((k) => ({ ...k, [r.key_ref]: true })); return { keyRef: r.key_ref }; })
     .catch((e) => ({ code: e instanceof Refusal ? e.code : "no_answer" }));
-  const onSlackKnown = (ref: string, present: boolean) => setKeys((k) => ({ ...k, [ref]: present }));
+  const onKeyKnown = useCallback((ref: string, present: boolean) => setKeys((k) => ({ ...k, [ref]: present })), []);
   /** A Slack row's webhook, as far as this face knows it (a save or a Check): true, false or unknown. */
   const slackKey = (d: Destination): boolean | undefined =>
     d.channel === "slack" ? keys[String(d.account.key_ref ?? "")] : undefined;
@@ -446,7 +510,7 @@ export function Destinations() {
   const active = rows.filter((d) => d.state === "active");
   const parked = rows.filter((d) => d.state === "parked");
   const form = (
-    <DestForm conns={conns} accountsLoading={accountsLoading} accountsReadError={accountsReadError} onAccountsRetry={onAccountsRetry} initial={EMPTY} keys={keys} onKey={onKey} onSlackKey={onSlackKey} onSlackKnown={onSlackKnown}
+    <DestForm conns={conns} accountsLoading={accountsLoading} accountsReadError={accountsReadError} onAccountsRetry={onAccountsRetry} initial={EMPTY} keys={keys} onKey={onKey} onSlackKey={onSlackKey} onKeyKnown={onKeyKnown}
       onDone={() => {
         // PHILO-10-07: after Save the form closes; the saved row stays in view (at 393 the closed form
         // otherwise leaves the list above the window).
@@ -477,7 +541,7 @@ export function Destinations() {
                     trailing={<Button dense variant="secondary" onClick={() => { setEditing(null); setOpen(open === d.id ? null : d.id); }}>{open === d.id ? "Close" : "Details"}</Button>}>
                     {open === d.id ? (
                       editing === d.id ? (
-                        <DestForm conns={conns} accountsLoading={accountsLoading} accountsReadError={accountsReadError} onAccountsRetry={onAccountsRetry} initial={fromDestination(d)} replaces={d.id} keys={keys} onKey={onKey} onSlackKey={onSlackKey} onSlackKnown={onSlackKnown}
+                        <DestForm conns={conns} accountsLoading={accountsLoading} accountsReadError={accountsReadError} onAccountsRetry={onAccountsRetry} initial={fromDestination(d)} replaces={d.id} keys={keys} onKey={onKey} onSlackKey={onSlackKey} onKeyKnown={onKeyKnown}
                           onDone={() => { setEditing(null); setOpen(null); reload(); }} onCancel={() => setEditing(null)} />
                       ) : (
                         <div className="send-open" data-testid="dest-open">

@@ -19,6 +19,7 @@ import {
   CycleGadget,
 } from "../surface/gadgets";
 import { Button } from "../../components/signal/Signal";
+import { SurfaceFooter } from "../surface";
 
 /** Build a cron expression from a JS Date for one-shot mode. */
 function dateToCron(d: Date): string {
@@ -101,7 +102,7 @@ function ScheduleCreateForm({
     if (isOneShot) {
       const d = new Date(dateTime);
       if (Number.isNaN(d.getTime()) || d.getTime() <= Date.now()) {
-        setError("Pick a time in the future");
+        setError("Time must be future");
         setSubmitting(false);
         return;
       }
@@ -109,7 +110,7 @@ function ScheduleCreateForm({
     } else {
       cron = cronExpr.trim();
       if (!cron) {
-        setError("Enter a cron expression");
+        setError("Cron required");
         setSubmitting(false);
         return;
       }
@@ -143,7 +144,7 @@ function ScheduleCreateForm({
       forgetDuration();
       if (current.scheduleCreateWindow === submittedWindow) onClose();
     } else {
-      setError("Could not save. Your entries are kept. Check the time and try again.");
+      setError("Not saved · Kept");
     }
   }, [title, mode, dateTime, cronExpr, duration, onClose]);
 
@@ -161,9 +162,9 @@ function ScheduleCreateForm({
       onClose={onClose}
       className="desk-pullout"
     >
-      <div className="desk-surface-body" style={{ padding: "var(--space-3)" }}>
-        <GadgetGroup label="Recording starts on its own at the set time">
-          <GadgetRow label="Title">
+      <div className="desk-pullout-body desk-surface-body">
+        <GadgetGroup label="Recording" material="inset">
+          <GadgetRow label="Title" controlWidth="full">
             <StringGadget
               label="Title"
               value={title}
@@ -173,7 +174,7 @@ function ScheduleCreateForm({
               autoFocus
             />
           </GadgetRow>
-          <GadgetRow label="Mode">
+          <GadgetRow label="Mode" controlWidth="standard">
             <CycleGadget
               label="Mode"
               value={mode}
@@ -182,29 +183,28 @@ function ScheduleCreateForm({
             />
           </GadgetRow>
           {mode === "one-shot" ? (
-            <GadgetRow label="When">
-              <span className="gadget-string">
-                <input
-                  type="datetime-local"
-                  aria-label="When"
-                  value={dateTime}
-                  onChange={(e) => setDateTime(e.target.value)}
-                  style={{ width: "100%" }}
-                />
-              </span>
+            <GadgetRow label="When" controlWidth="full">
+              <StringGadget
+                type="datetime-local"
+                label="When"
+                value={dateTime}
+                onChange={setDateTime}
+                micDraftScope="schedule-time"
+                inputProps={{ style: { colorScheme: "light" } }}
+              />
             </GadgetRow>
           ) : (
-            <GadgetRow label="Cron">
+            <GadgetRow label="Cron" controlWidth="full">
               <StringGadget
                 label="Cron expression"
                 value={cronExpr}
                 onChange={setCronExpr}
                 placeholder="0 9 * * 1-5"
-                mic={false}
+                micDraftScope="schedule-cron"
               />
             </GadgetRow>
           )}
-          <GadgetRow label="Duration">
+          <GadgetRow label="Duration" controlWidth="standard">
             <CycleGadget
               label="Duration"
               value={duration}
@@ -214,17 +214,11 @@ function ScheduleCreateForm({
           </GadgetRow>
         </GadgetGroup>
 
-        {error ? (
-          <p className="gadget-inline-error" role="alert" style={{
-            color: "var(--kind-error)",
-            fontSize: "var(--font-size-xs)",
-            margin: "var(--space-2) 0 0",
-          }}>
-            {error}
-          </p>
-        ) : null}
-
-        <div style={{ marginTop: "var(--space-3)", display: "flex", gap: "var(--space-2)", justifyContent: "flex-end" }}>
+      </div>
+      <SurfaceFooter
+        receipt={error ? <span className="surface-footer-receipt-line" data-tone="danger" role="alert">{error}</span>
+          : submitting ? <span className="surface-footer-receipt-line" role="status">Saving</span> : undefined}
+        verbs={<>
           <Button variant="ghost" onClick={onClose} dense>
             Cancel
           </Button>
@@ -237,8 +231,8 @@ function ScheduleCreateForm({
           >
             Schedule
           </Button>
-        </div>
-      </div>
+        </>}
+      />
     </DeskWindowFrame>
   );
 }

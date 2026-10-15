@@ -1,7 +1,5 @@
 import { SurfaceFooter } from "../surface/SurfaceFooter";
 /** Knowledge pullout content (HS-117-15). */
-// @ts-ignore — shared ESM module (see ../sprites.d.ts)
-import { refAgent, spriteUrl } from "../sprites";
 import { Button } from "../../components/signal/Signal";
 import { useDesk } from "../store";
 import { openSurfaceOr } from "../shell";
@@ -11,10 +9,12 @@ import { DeskFilingStrip } from "../components/DeskFilingStrip";
 import { KIND_LABEL } from "../tools";
 import { kindWord } from "../windowName";
 import {
-  SurfaceRow,
-  SurfaceRows,
+  SurfaceLedger,
+  SurfaceLedgerRow,
+  SurfaceSection,
   SurfaceState,
 } from "../surface/Surface";
+import { StateChip } from "../surface";
 import { INLINE_EDITOR_CONTENT } from "./editors";
 import type { PulloutContentProps } from "./types";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
@@ -32,8 +32,7 @@ export function KbPullout({ object: o, registerClose }: PulloutContentProps) {
   const { copy, receipt: copyReceipt } = useCopyReceipt();
 
   const members = (ir.memberIds || [])
-    .map((m) => ({ ref: m, member: objectByRef(items, m) }))
-    .filter(({ member }) => member);
+    .map((m) => ({ ref: m, member: objectByRef(items, m) }));
 
   return (
     <>
@@ -41,30 +40,25 @@ export function KbPullout({ object: o, registerClose }: PulloutContentProps) {
         {editing && Content ? (
           <Content object={o} onClose={() => void session.done()} onWriter={session.onWriter} />
         ) : members.length ? (
-          <section>
-            <SurfaceRows>
+          <SurfaceSection label="Entries">
+            <SurfaceLedger count={null} cols="room" label="Knowledge entries">
               {members.map(({ ref, member }) => (
-                <SurfaceRow
+                <SurfaceLedgerRow
                   key={ref}
-                  glyph={
-                    <img
-                      src={spriteUrl(member!.kind, member!.id, "rest", refAgent(member!.ref))}
-                      width={22}
-                      height={22}
-                      alt=""
-                    />
-                  }
-                  title={member!.title}
-                  detail={KIND_LABEL[member!.kind] || kindWord(member!.kind)}
-                  onOpen={() => openPullout(ref)}
+                  wrap
+                  lineLabel={ref}
+                  primary={<span data-member-ref={ref} title={ref}>{member?.title || "Item unavailable"}</span>}
+                  meta={member ? KIND_LABEL[member.kind] || kindWord(member.kind) : undefined}
+                  cells={member ? undefined : <StateChip state="unreachable" label="Unavailable" />}
+                  trailing={member ? <Button dense variant="ghost" onClick={() => openPullout(ref)}>Open</Button> : undefined}
                 />
               ))}
-            </SurfaceRows>
-          </section>
+            </SurfaceLedger>
+          </SurfaceSection>
         ) : (
-          <section>
+          <SurfaceSection label="Entries">
             <SurfaceState empty emptyLabel="No entries" />
-          </section>
+          </SurfaceSection>
         )}
         {!editing && (
           <DeskFilingStrip
@@ -78,7 +72,7 @@ export function KbPullout({ object: o, registerClose }: PulloutContentProps) {
         <Button
           dense
           variant="ghost"
-          onClick={() => void copy(members.map(({ member }) => member!.title).join("\n"))}
+          onClick={() => void copy(members.map(({ ref, member }) => member?.title || ref).join("\n"))}
         >
           Copy
         </Button>

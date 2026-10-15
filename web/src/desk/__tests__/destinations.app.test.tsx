@@ -24,7 +24,7 @@ import listTwo from "./fixtures/destinations-wire/list-two.json";
 import saveRefusedJira from "./fixtures/destinations-wire/save-refused-jira.json";
 
 type Answer = { status: number; body: unknown } | "no answer";
-type Route = (init: RequestInit) => Answer;
+type Route = (init: RequestInit) => Answer | Promise<Answer>;
 const calls: { method: string; url: string; body?: unknown }[] = [];
 let routes: Record<string, Route> = {};
 
@@ -39,7 +39,7 @@ function stubFetch() {
       const [m, pattern] = k.split(" ");
       return m === method && new RegExp(`^${pattern}$`).test(url);
     });
-    const answer = key ? routes[key](init) : { status: 404, body: { error: `not routed ${method} ${url}` } };
+    const answer = key ? await routes[key](init) : { status: 404, body: { error: `not routed ${method} ${url}` } };
     if (answer === "no answer") throw new TypeError("Failed to fetch");
     return new Response(JSON.stringify(answer.body), {
       status: answer.status, headers: { "content-type": "application/json" },
@@ -96,6 +96,16 @@ describe("the Destinations group", () => {
     expect(screen.queryByTestId("dest-list")).toBeNull();
   });
 
+  it("keeps full destination rows wide under the Settings layout rules", async () => {
+    render(<Destinations />);
+    for (const channel of ["file", "github", "jira", "confluence", "email", "slack"]) {
+      const form = await pickChannel(channel);
+      const fullRows = form.querySelectorAll('.gadget-row[data-control-width="full"]');
+      expect(fullRows.length).toBeGreaterThan(0);
+      for (const row of fullRows) expect(row).toHaveAttribute("data-wide", "true");
+    }
+  });
+
   it("a synced folder is SYNCED FOLDER (cloud), with no same-device chip", async () => {
     render(<Destinations />);
     await screen.findByTestId("dest-form");
@@ -118,7 +128,7 @@ describe("the Destinations group", () => {
     const form = await pickChannel("email");
     fireEvent.change(within(form).getByLabelText("Provider"), { target: { value: "sendgrid" } });
     fireEvent.change(screen.getByTestId("dest-from"), { target: { value: "Karol@Acme.io" } });
-    fireEvent.change(screen.getByTestId("dest-to"), { target: { value: "lena@acme.io, tomas@acme.io" } });
+    fireEvent.change(screen.getByLabelText("To", { exact: true }), { target: { value: "lena@acme.io, tomas@acme.io" } });
     expect((screen.getByTestId("dest-name") as HTMLInputElement).value).toBe("Email lena@acme.io");
     // The key row: present or absent, never the key.
     const keyRow = screen.getByTestId("dest-key-row");
@@ -234,13 +244,21 @@ describe("the remote destination forms", () => {
 });
 
 describe("the email destination setup", () => {
+  async function editEmail() {
+    listing(listEmail);
+    render(<Destinations />);
+    const row = await waitFor(() => screen.getAllByTestId("dest-row").find((r) => r.textContent?.includes("Email lena@acme.io"))!);
+    fireEvent.click(within(row).getByRole("button", { name: "Details" }));
+    fireEvent.click(await screen.findByTestId("dest-edit"));
+    return screen.getByTestId("dest-form");
+  }
   // replaces: tests/e2e/test_philo10_04_send_face_glass.py::TestSendEmailGlass::test_the_email_destination_setup
   async function emailForm() {
     render(<Destinations />);
     const form = await pickChannel("email");
     fireEvent.change(within(form).getByLabelText("Provider"), { target: { value: "sendgrid" } });
     fireEvent.change(screen.getByTestId("dest-from"), { target: { value: "Karol@Acme.io" } });
-    fireEvent.change(screen.getByTestId("dest-to"), { target: { value: "lena@acme.io, tomas@acme.io" } });
+    fireEvent.change(screen.getByLabelText("To", { exact: true }), { target: { value: "lena@acme.io, tomas@acme.io" } });
   }
   function typeKey(value: string) {
     const keyRow = screen.getByTestId("dest-key-row");
@@ -277,6 +295,125 @@ describe("the email destination setup", () => {
     await waitFor(() => expect(screen.getAllByTestId("dest-row").some((r) => r.textContent?.includes("Email lena@acme.io"))).toBe(true));
     expect(calls.find((c) => c.method === "POST")!.body).toMatchObject({
       channel: "email", provider: "sendgrid", key_ref: "sendgrid-karol@acme.io", to: ["lena@acme.io", "tomas@acme.io"],
+    });
+  });
+
+  it("wraps recipient editors and saves comma and newline lists in their entered order", async () => {
+    routes["PUT /api/channels/email-keys/.+"] = () => ok(emailKeySaved);
+    routes["POST /api/channels/destinations"] = () => {
+      listing(listEmail);
+      return ok({ destination: listEmail.destinations[3] });
+    };
+    await emailForm();
+    const to = screen.getByRole("textbox", { name: "To" });
+    const cc = screen.getByRole("textbox", { name: "Cc" });
+    expect(to.tagName).toBe("TEXTAREA");
+    expect(cc.tagName).toBe("TEXTAREA");
+    expect(screen.getByRole("button", { name: /^Speak To(?: ·|$)/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Speak Cc(?: ·|$)/ })).toBeTruthy();
+    fireEvent.change(to, { target: { value: "\n lena@acme.io\ntomas@acme.io, noor@acme.io\n" } });
+    fireEvent.change(cc, { target: { value: " ops@acme.io, \n team@acme.io\r\n " } });
+    expect(screen.getByTestId("dest-name")).toHaveValue("Email lena@acme.io");
+    typeKey("SG.glassKEY");
+    await waitFor(() => expect(screen.getByTestId("dest-save")).toBeEnabled());
+    fireEvent.click(screen.getByTestId("dest-save"));
+    await waitFor(() => expect(screen.queryByTestId("dest-form")).toBeNull());
+    expect(calls.find((c) => c.method === "POST")!.body).toMatchObject({
+      channel: "email", name: "Email lena@acme.io", to: ["lena@acme.io", "tomas@acme.io", "noor@acme.io"],
+      cc: ["ops@acme.io", "team@acme.io"],
+    });
+  });
+
+  it("checks the saved email key locally and edits with its exact legacy ref without replacing the key", async () => {
+    const saved = listEmail.destinations[3];
+    routes["POST /api/channels/destinations/[^/]+/check"] = () => ok(checkEmail);
+    routes["POST /api/channels/destinations"] = () => ok({ destination: saved });
+    await editEmail();
+    expect(screen.getByRole("textbox", { name: "To" })).toHaveValue("lena@acme.io\ntomas@acme.io");
+    await waitFor(() => expect(within(screen.getByTestId("dest-key-row")).getByText("SET")).toBeTruthy());
+    expect(screen.getByTestId("dest-save")).toBeEnabled();
+    fireEvent.change(screen.getByLabelText("To", { exact: true }), { target: { value: "lena@acme.io\ntomas@acme.io, noor@acme.io" } });
+    fireEvent.click(screen.getByTestId("dest-save"));
+    await waitFor(() => expect(screen.queryByTestId("dest-form")).toBeNull());
+    expect(calls.find((c) => c.url === "/api/channels/destinations" && c.method === "POST")!.body).toMatchObject({
+      replaces: saved.id, key_ref: saved.account.key_ref, provider: "sendgrid",
+      to: ["lena@acme.io", "tomas@acme.io", "noor@acme.io"],
+    });
+    expect(calls.filter((c) => c.method === "PUT")).toEqual([]);
+  });
+
+  it("checks a shared legacy key ref separately for each email provider", async () => {
+    const saved = listEmail.destinations[3];
+    const resend = { ...saved, id: "email-resend-same-ref", name: "Resend same key ref",
+      account: { ...saved.account, provider: "resend" } };
+    listing({ destinations: [saved, resend] });
+    const sendgridCheck = `/api/channels/destinations/${saved.id}/check`;
+    const resendCheck = `/api/channels/destinations/${resend.id}/check`;
+    routes[`POST ${sendgridCheck}`] = () => ok(checkEmail);
+    routes[`POST ${resendCheck}`] = () => ok({ ...checkEmail, destination: resend,
+      check: { ...checkEmail.check, state: "email_key_missing" } });
+    render(<Destinations />);
+    const edit = async (name: string) => {
+      const row = await waitFor(() => screen.getAllByTestId("dest-row").find((r) => r.textContent?.includes(name))!);
+      fireEvent.click(within(row).getByRole("button", { name: "Details" }));
+      fireEvent.click(await screen.findByTestId("dest-edit"));
+    };
+    await edit(saved.name);
+    await waitFor(() => expect(screen.getByTestId("dest-save")).toBeEnabled());
+    fireEvent.click(screen.getByTestId("dest-cancel"));
+    await edit(resend.name);
+    await waitFor(() => expect(calls.some((c) => c.url === resendCheck)).toBe(true));
+    await waitFor(() => expect(screen.getByTestId("dest-email-key-check").textContent).toContain("NO KEY"));
+    expect(screen.getByTestId("dest-save")).toBeDisabled();
+    expect(within(screen.getByTestId("dest-key-row")).queryByText("SET")).toBeNull();
+    fireEvent.click(screen.getByTestId("dest-cancel"));
+    await edit(saved.name);
+    await waitFor(() => expect(screen.getByTestId("dest-save")).toBeEnabled());
+    expect(calls.filter((c) => c.url === sendgridCheck)).toHaveLength(1);
+    expect(calls.filter((c) => c.method === "PUT")).toEqual([]);
+  });
+
+  it.each([
+    ["email_key_missing", "NO KEY"],
+    ["email_key_store_locked", "KEY STORE LOCKED"],
+    ["email_key_store_not_native", "NO SAFE KEY STORE"],
+    ["no_answer", "NO ANSWER"],
+  ])("keeps an unreadable saved email key disabled with %s and retries its local read", async (code, label) => {
+    routes["POST /api/channels/destinations/[^/]+/check"] = () => code === "no_answer"
+      ? "no answer" : ok({ ...checkEmail, check: { ...checkEmail.check, state: code } });
+    await editEmail();
+    const failed = await screen.findByTestId("dest-email-key-check");
+    await waitFor(() => expect(failed.textContent).toContain(label));
+    expect(screen.getByTestId("dest-save")).toBeDisabled();
+    expect(within(screen.getByTestId("dest-key-row")).queryByText("SET")).toBeNull();
+    routes["POST /api/channels/destinations/[^/]+/check"] = () => ok(checkEmail);
+    fireEvent.click(within(failed).getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(screen.getByTestId("dest-save")).toBeEnabled());
+    expect(calls.filter((c) => c.method === "PUT")).toEqual([]);
+  });
+
+  it("ignores a pending saved-key check after the sender and provider change", async () => {
+    let finish!: (answer: Answer) => void;
+    routes["POST /api/channels/destinations/[^/]+/check"] = () => new Promise((resolve) => { finish = resolve; });
+    const form = await editEmail();
+    await waitFor(() => expect(calls.some((c) => c.url.endsWith("/check"))).toBe(true));
+    fireEvent.change(screen.getByTestId("dest-from"), { target: { value: "other@acme.io" } });
+    fireEvent.change(within(form).getByLabelText("Provider"), { target: { value: "resend" } });
+    await act(async () => { finish(ok(checkEmail)); });
+    expect(within(screen.getByTestId("dest-key-row")).queryByText("SET")).toBeNull();
+    expect(screen.getByTestId("dest-save")).toBeDisabled();
+    const keyRow = screen.getByTestId("dest-key-row");
+    routes["PUT /api/channels/email-keys/.+"] = () => ok(emailKeySaved);
+    routes["POST /api/channels/destinations"] = () => ok({ destination: listEmail.destinations[3] });
+    fireEvent.click(within(keyRow).getByRole("button", { name: "Replace" }));
+    const replacement = within(keyRow).getByLabelText("Replacement Resend key");
+    fireEvent.change(replacement, { target: { value: "re.glassKEY" } });
+    fireEvent.keyDown(replacement, { key: "Enter" });
+    await waitFor(() => expect(screen.getByTestId("dest-save")).toBeEnabled());
+    fireEvent.click(screen.getByTestId("dest-save"));
+    await waitFor(() => expect(screen.queryByTestId("dest-form")).toBeNull());
+    expect(calls.find((c) => c.url === "/api/channels/destinations" && c.method === "POST")!.body).toMatchObject({
+      replaces: listEmail.destinations[3].id, provider: "resend", from_email: "other@acme.io", key_ref: "resend-other@acme.io",
     });
   });
 

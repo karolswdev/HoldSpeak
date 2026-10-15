@@ -361,17 +361,10 @@
 /* PHILO-17: the source filter is the library's FilterTokens strip
    (filter-tokens.css draws it). */
 .room-history-search {
-  display: flex; align-items: center; gap: 4px; flex: 1; min-width: 120px;
+  display: flex; align-items: center; flex: 1; min-width: 120px;
 }
-.room-history-search input {
-  flex: 1;
-  font-size: var(--desk-surface-detail-size);
-  font-family: var(--font-mono);
-  background: var(--surface-2, #1c1f27);
-  border: 1px solid var(--border);
-  border-radius: 2px;
-  color: var(--text-primary);
-  padding: 4px 8px;
+.room-history-search .gadget-string {
+  width: 100%;
 }
 
 /* ── Conditions 3+4+9: 393 / narrow stacking ── */

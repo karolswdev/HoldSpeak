@@ -76,7 +76,7 @@ describe("the Destination form", () => {
     expect(screen.getByTestId("dest-key-row").textContent).toContain("SendGrid key");
     fireEvent.change(provider, { target: { value: "resend" } });
     fireEvent.change(screen.getByTestId("dest-from"), { target: { value: "karol@example.com" } });
-    fireEvent.change(screen.getByTestId("dest-to"), { target: { value: "priya@example.com" } });
+    fireEvent.change(screen.getByLabelText("To", { exact: true }), { target: { value: "priya@example.com" } });
 
     const keyRow = screen.getByTestId("dest-key-row");
     expect(keyRow.textContent).toContain("Resend key");

@@ -440,8 +440,20 @@ function FactoryControls() {
   );
 }
 
+interface SteerOptions {
+  submitOn: boolean;
+  grounding: GroundingSelection;
+  rails: RailsPick[];
+}
+const emptySteerOptions = (): SteerOptions => ({ submitOn: true, grounding: emptyGrounding(), rails: [] });
+
 /** The voice-first composer (HS-87-03), available under resolved authority. */
-function SteerComposer({ listenSignal = 0, available = true }: { listenSignal?: number; available?: boolean } = {}) {
+function SteerComposer({ listenSignal = 0, available = true, options, onOptionsChange }: {
+  listenSignal?: number;
+  available?: boolean;
+  options: SteerOptions;
+  onOptionsChange: (options: SteerOptions) => void;
+}) {
   const steerState = useSteering((s) => s.steerState);
   const openKey = useSteering((s) => s.openKey);
   const meetings = useDesk((s) => s.items.meeting);
@@ -450,20 +462,16 @@ function SteerComposer({ listenSignal = 0, available = true }: { listenSignal?: 
     setDraft: setText,
     recovered: textRecovered,
   } = useDurableDraft(`steer:${openKey || "unattached"}`);
-  const [submitOn, setSubmitOn] = useState(true);
-  const [grounding, setGrounding] =
-    useState<GroundingSelection>(emptyGrounding());
-  const [rails, setRails] = useState<RailsPick[]>([]);
+  const { submitOn, grounding, rails } = options;
 
   const send = async () => {
     if (!available) return;
     const delivered = await useSteering
       .getState()
       .steer(text, submitOn, buildGrounding(grounding, rails));
-    if (delivered) {
+    if (delivered && useSteering.getState().openKey === openKey) {
       setText(""); // a refused steer keeps its composition
-      setGrounding(emptyGrounding());
-      setRails([]);
+      onOptionsChange({ ...options, grounding: emptyGrounding(), rails: [] });
     }
   };
 
@@ -500,7 +508,7 @@ function SteerComposer({ listenSignal = 0, available = true }: { listenSignal?: 
           glyph="⏎"
           active={submitOn}
           title={submitOn ? "Enter after send" : "no Enter: text only"}
-          onClick={() => setSubmitOn((v) => !v)}
+          onClick={() => onOptionsChange({ ...options, submitOn: !submitOn })}
         />
         <TransportKey
           compact
@@ -521,13 +529,13 @@ function SteerComposer({ listenSignal = 0, available = true }: { listenSignal?: 
           startedAt: m.startedAt,
         }))}
         selection={grounding}
-        onChange={setGrounding}
+        onChange={(grounding) => onOptionsChange({ ...options, grounding })}
         limitTokens={STEER_LIMIT_TOKENS}
         meter={false}
       />
       <RailsPicker
         picks={rails}
-        onChange={setRails}
+        onChange={(rails) => onOptionsChange({ ...options, rails })}
         limitTokens={STEER_LIMIT_TOKENS}
         meter={false}
       />
@@ -664,10 +672,8 @@ function ClassifySection({ sessionKey }: { sessionKey: string }) {
 }
 
 /** The same ask well as a launched lane, through the existing steering route. */
-function SessionAnswerWell({ question, agent, available }: { question: string; agent: string; available: boolean }) {
+function SessionAnswerWell({ question, agent, available, listenSignal }: { question: string; agent: string; available: boolean; listenSignal: number }) {
   const openKey = useSteering((s) => s.openKey);
-  const answerOpen = useSteering((s) => s.answerOpen);
-  const answerSeq = useSteering((s) => s.answerSeq);
   const sending = useSteering((s) => s.steerState === "sending");
   const armed = useSteering((s) => s.armed);
   const direct = useSteering((s) => s.postureAuthorized);
@@ -683,7 +689,7 @@ function SessionAnswerWell({ question, agent, available }: { question: string; a
       onChange={setDraft}
       onAnswer={(text) => void answer(text)}
       draftScope={`steer:${openKey || "unattached"}`}
-      listenSignal={answerOpen ? answerSeq : 0}
+      listenSignal={listenSignal}
       busy={sending}
       disabled={!available}
       arm={available ? armed || direct ? <SteeringPolicyFacts /> : <ArmStrip /> : <span className="surface-token">Terminal unavailable</span>}
@@ -711,6 +717,8 @@ export function SessionPullout() {
   const row = useAgentFlights((s) => s.sessions.find((r) => r.key === openKey));
   const [terminal, setTerminal] = useState(false);
   const [directing, setDirecting] = useState(false);
+  const [steerOptions, setSteerOptions] = useState(emptySteerOptions);
+  const terminalAnswerSeq = useRef(0);
   const { closeSession } = useSteering.getState();
   // PHILO-14 C2: a session that belongs to a launch has the agent's lane
   // window as its face (lane/LaneWindow.tsx); this window is for a plain one
@@ -724,8 +732,14 @@ export function SessionPullout() {
   useEffect(() => {
     setTerminal(Boolean(openKey?.startsWith("pane:")));
     setDirecting(false);
+    setSteerOptions(emptySteerOptions());
+    terminalAnswerSeq.current = 0;
     if (openKey && !useAgentFlights.getState().loaded) void useAgentFlights.getState().load();
   }, [openKey]);
+
+  useEffect(() => {
+    if (answerOpen && answerSeq && answerSeq !== terminalAnswerSeq.current) setTerminal(false);
+  }, [answerOpen, answerSeq]);
 
   useEffect(() => {
     if (!openKey || laneLaunchId) return;
@@ -757,6 +771,9 @@ export function SessionPullout() {
   const agent = agentName(row?.agent || session?.agent || openKey.split(":", 1)[0]);
   const question = (session?.blocked || session?.awaitingResponse || row?.blocked) ? session?.question || row?.question || "" : "";
   const report = String(raw.last_assistant_text ?? "").trim();
+  // A Back press restores the composer without replaying the Speak request
+  // whose mic was unmounted on entry to the terminal. A later request is new.
+  const listenSignal = answerOpen && answerSeq !== terminalAnswerSeq.current ? answerSeq : 0;
   const tool = String(raw.last_tool_name ?? "").trim();
   const updated = String(raw.last_assistant_text_at || raw.updated_at || session?.updatedAt || "");
   const state = session?.stale ? "Stale session" : question ? row?.idle ? "Idle" : "Needs your answer" : humanizeWireValue(row?.state || "working");
@@ -799,10 +816,29 @@ export function SessionPullout() {
     >
 
       <div className="desk-pullout-body desk-session-body">
+        {terminal ? <div className="desk-session-terminal" data-testid="session-terminal">
+          <PaneWell
+            live={live}
+            lines={paneLines}
+            raw={paneRaw}
+            pane={paneGeom}
+            changedAt={paneChangedAt}
+            absence={
+              <>
+                <span>Terminal unavailable · {PANE_STATE_LABEL[paneStatus] || humanizeWireValue(paneStatus)}</span>
+                {paneDetail ? <span className="desk-session-pane-detail">{paneDetail}</span> : null}
+              </>
+            }
+          />
+          {!live ? <div className="desk-session-terminal-verbs">
+            <Button dense variant="ghost" onClick={() => void useSteering.getState().poll()}>Retry</Button>
+            <Button dense variant="ghost" onClick={() => setTerminal(false)}>Back to session</Button>
+          </div> : null}
+        </div> : <>
         <AppHead fact={state} data-testid="session-head">
           <StatusStrip items={[{ text: agent }, updated ? { text: wireClock(updated) } : null, raw.model ? { text: String(raw.model) } : null]} />
         </AppHead>
-        {question ? <SessionAnswerWell key={openKey} question={question} agent={agent} available={available} /> : null}
+        {question ? <SessionAnswerWell key={openKey} question={question} agent={agent} available={available} listenSignal={listenSignal} /> : null}
         {report && report !== question ? (
           <SurfaceSection label="Latest report"><AgentWords text={report} /></SurfaceSection>
         ) : tool ? (
@@ -811,28 +847,9 @@ export function SessionPullout() {
         {!question && (answerOpen || directing) ? (
           <div className="desk-session-answer" data-testid="session-answer-well">
             {available ? armed || postureAuthorized ? <SteeringPolicyFacts /> : <ArmStrip /> : <span className="surface-token">Terminal unavailable</span>}
-            <SteerComposer key={openKey} listenSignal={answerSeq} available={available} />
+            <SteerComposer key={openKey} listenSignal={listenSignal} available={available} options={steerOptions} onOptionsChange={setSteerOptions} />
           </div>
         ) : null}
-        {terminal ? <div className="desk-session-terminal" data-testid="session-terminal">
-        <PaneWell
-          live={live}
-          lines={paneLines}
-          raw={paneRaw}
-          pane={paneGeom}
-          changedAt={paneChangedAt}
-          absence={
-            <>
-              <span>Terminal unavailable · {PANE_STATE_LABEL[paneStatus] || humanizeWireValue(paneStatus)}</span>
-              {paneDetail ? <span className="desk-session-pane-detail">{paneDetail}</span> : null}
-            </>
-          }
-        />
-        {!live ? <div className="desk-session-terminal-verbs">
-          <Button dense variant="ghost" onClick={() => void useSteering.getState().poll()}>Retry</Button>
-          <Button dense variant="ghost" onClick={() => setTerminal(false)}>Back to session</Button>
-        </div> : null}
-        </div> : null}
         <FoldGadget title="Details" className="desk-session-details">
           <SurfaceFacts value={{ session: sessionId, project: row?.name || "", node: targetNode || "this Mac", pane: paneId || "", folder: String(raw.cwd || "") }} />
           <NodeCycle />
@@ -850,14 +867,18 @@ export function SessionPullout() {
             <ClassifySection sessionKey={openKey} />
           </div>
         </FoldGadget>
+        </>}
       </div>
 
       <SurfaceFooter
         className="desk-session-footer"
         receipt={steerState === "sent" || steerState === "refused" ? <span className={steerState === "refused" ? "desk-arm-refusal" : "desk-steer-sent"}>{steerState === "sent" ? "sent" : "Not sent"}{steerDetail ? ` · ${steerDetail}` : ""}</span> : <ReceiptLine sessionKey={openKey} />}
         verbs={<>
-          <Button dense variant="ghost" data-testid="session-open-terminal" aria-pressed={terminal} onClick={() => setTerminal(!terminal)}>{terminal ? "Back to session" : "Open terminal"}</Button>
-          {!question && available ? <Button dense variant="secondary" aria-pressed={directing} onClick={() => setDirecting(!directing)}>Direct</Button> : null}
+          <Button dense variant="ghost" data-testid="session-open-terminal" aria-pressed={terminal} onClick={() => {
+            if (!terminal) terminalAnswerSeq.current = answerSeq;
+            setTerminal(!terminal);
+          }}>{terminal ? "Back to session" : "Open terminal"}</Button>
+          {!question && available ? <Button dense variant="secondary" aria-pressed={directing} onClick={() => { setDirecting(terminal || !directing); setTerminal(false); }}>Direct</Button> : null}
         </>}
       />
     </DeskWindowFrame>

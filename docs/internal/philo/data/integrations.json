@@ -960,7 +960,7 @@
       "purpose": "Show active Claude/Codex sessions and bounded, hash-gated pane output.",
       "domain": "coder",
       "status": "experimental",
-      "status_reason": "Session routes and bounded pane observation are implemented. The October 14 session repair passed isolated real-hub Open checks and graph walks at 1440 and 393; live owner pane/control actions remain unverified.",
+      "status_reason": "Session routes and bounded pane observation are implemented. October 15 isolated real-hub walks at1440/393 cover long-report terminal handoff, real no-pane read/Retry and Back. Focused checks cover draft custody and new Speak requests; owner pane/control actions remain unverified.",
       "exposure": "user",
       "surfaces": [
         "Conductor",
@@ -1036,6 +1036,12 @@
           "symbol": "build_coders_router",
           "line": 71,
           "claim": "The Coder router serves status, sessions and board routes."
+        },
+        {
+          "path": "web/src/desk/components/SessionPullout.tsx",
+          "symbol": "export function SessionPullout() {",
+          "claim": "A plain session terminal owns the body; Back preserves the draft and new Speak reveals the composer without replaying the earlier request.",
+          "line": 700
         }
       ],
       "tests": [
@@ -1076,10 +1082,11 @@
       "docs": [
         "docs/CODER_INTEGRATION.md",
         "docs/AGENT_HOOK_INSTALL.md",
-        "docs/internal/SURFACE-REPAIR-2026-10-14.md"
+        "docs/internal/SURFACE-REPAIR-2026-10-14.md",
+        "docs/internal/SURFACE-REFINEMENT-2026-10-15/README.md"
       ],
       "limitations": [
-        "No real tmux pane, hook or owner Coder session was used.",
+        "No real tmux pane or owner Coder session was used. The October 15 surface walk ingests an authored report through real hooks in an isolated HOME with no pane; command delivery and microphone are unverified.",
         "Observation is bounded and may omit full transcript context.",
         "Latest report requires the existing opt-in message capture; otherwise the recorded tool/state is shown. No capture default was changed."
       ],
@@ -2326,7 +2333,7 @@
       "purpose": "Send a stored note, update, brief, decision, meeting summary, or artifact to a saved destination.",
       "domain": "channels",
       "status": "built_unreleased",
-      "status_reason": "Stored document sources run through the shared channel contract. Note Send uses the same stored-source and digest checks. The surface refinement is recorded separately; external delivery and owner acceptance are not claimed.",
+      "status_reason": "Stored document sources run through the shared channel contract. Note Send retains stored-source/digest checks. October 15 isolated real-hub recipient edits preserve the stored key ref and park the prior destination; local key Check/Retry is exercised. External delivery and owner acceptance are not claimed.",
       "exposure": "integration",
       "surfaces": [
         "HTTP channel operations",
@@ -2407,6 +2414,12 @@
           "symbol": "_NoteSource",
           "claim": "The Note source renders the current saved note by identity; a draft is not the send source.",
           "line": 572
+        },
+        {
+          "path": "web/src/pages/cores/connections/Destinations.tsx",
+          "symbol": "function DestForm({",
+          "claim": "Recipient edits parse commas/newlines, retain the saved email key ref and scope local presence knowledge to provider plus exact ref.",
+          "line": 119
         }
       ],
       "tests": [
@@ -2458,7 +2471,8 @@
       "docs": [
         "pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/design/document-sources.md",
         "pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/design/floor-send.md",
-        "docs/internal/SEND-REFINEMENT-2026-10-14.md"
+        "docs/internal/SEND-REFINEMENT-2026-10-14.md",
+        "docs/internal/SURFACE-REFINEMENT-2026-10-15/README.md"
       ],
       "limitations": [
         "The Floor artifact window and menu/drop integration belong to Phase 12 stories 03 and 04.",
