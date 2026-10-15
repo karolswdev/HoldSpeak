@@ -25,10 +25,25 @@ vi.mock("../../../lib/api", async (importOriginal) => {
 });
 
 import { RuntimeDocsCore, commandOf } from "../RuntimeDocsCore";
+import { apiFetch } from "../../../lib/api";
 
 afterEach(() => cleanup());
 
 describe("the Guide wing", () => {
+  it("a failed readiness read never claims everything is ready", async () => {
+    vi.mocked(apiFetch).mockRejectedValueOnce(new Error("Hub unavailable"));
+    render(<RuntimeDocsCore />);
+    await waitFor(() => expect(screen.getByTestId("guide-headline").textContent).toBe("Readiness not known"));
+    expect(screen.queryByText("Everything is ready")).toBeNull();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeTruthy();
+  });
+
+  it("unknown checks keep readiness unknown", async () => {
+    vi.mocked(apiFetch).mockResolvedValueOnce({ sections: [{ id: "database", label: "Database", status: "unknown", detail: "Not checked" }] });
+    render(<RuntimeDocsCore />);
+    await waitFor(() => expect(screen.getByTestId("guide-headline").textContent).toBe("Readiness not known"));
+    expect(screen.queryByText("Everything is ready")).toBeNull();
+  });
   it("leads with what needs him, one primary, the command on demand, the ready rows folded", async () => {
     const { container } = render(<RuntimeDocsCore />);
     await waitFor(() => expect(screen.getByTestId("guide-headline").textContent).toBe("2 things need you"));

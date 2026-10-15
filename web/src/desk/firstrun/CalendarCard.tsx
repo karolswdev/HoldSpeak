@@ -24,7 +24,13 @@ export function calendarReceipt(week: number, next: { title: string; starts_at: 
     .join(" · ");
 }
 
-export function CalendarCard({ step, lit }: { step: CalendarStep; lit: boolean }) {
+export function CalendarCard({ step, lit, reselectNative = false, onUsed, beforeUse }: {
+  step: CalendarStep;
+  lit: boolean;
+  reselectNative?: boolean;
+  onUsed?: () => Promise<void>;
+  beforeUse?: () => Promise<boolean>;
+}) {
   const [url, setUrl] = useState("");
   const host = hostOf(url);
   const typed = egressFor(host);
@@ -32,11 +38,16 @@ export function CalendarCard({ step, lit }: { step: CalendarStep; lit: boolean }
   const receipt = inUse ? calendarReceipt(step.week, step.next) : "";
   const found = stateCount("FOUND", rows.length);
   // PHILO-17: "OR" only when another choice is on the card above the link.
-  const asking = Boolean(macos?.can_request && !inUse);
+  const nativeAccessVisible = !inUse || reselectNative;
+  const asking = Boolean(macos?.can_request && nativeAccessVisible);
   const another = rows.length > 0 || asking;
   const add = async () => {
     if (!host || busy) return;
-    if (await step.addUrl(url.trim())) setUrl("");
+    if (beforeUse && !(await beforeUse())) return;
+    if (await step.addUrl(url.trim())) {
+      setUrl("");
+      await onUsed?.();
+    }
   };
   return (
     <Card
@@ -62,7 +73,7 @@ export function CalendarCard({ step, lit }: { step: CalendarStep; lit: boolean }
           </Button>
         </div>
       ) : null}
-      {macos?.can_request && !inUse ? (
+      {macos?.can_request && nativeAccessVisible ? (
         <div className="firstrun-fail" data-testid="firstrun-calendar-ask">
           <Button
             variant="primary"
@@ -75,7 +86,7 @@ export function CalendarCard({ step, lit }: { step: CalendarStep; lit: boolean }
           <EgressChip label="THIS DEVICE" scope="local" />
         </div>
       ) : null}
-      {step.notAllowed && !inUse ? (
+      {step.notAllowed && nativeAccessVisible ? (
         <div className="firstrun-fail" role="alert" data-testid="firstrun-calendar-denied">
           <StateChip state="failure" label="CALENDAR · NOT ALLOWED" />
           {macos?.state === "write_only" ? <span className="surface-token">WRITE ONLY</span> : null}
@@ -119,7 +130,14 @@ export function CalendarCard({ step, lit }: { step: CalendarStep; lit: boolean }
                       <span className="concierge-token">{row.account}</span>
                     ) : null}
                     <span className="concierge-cloud-actions">
-                      {row.in_use ? (
+                      {reselectNative && row.kind === "macos" && (row.in_use || row.off) ? (
+                        <Button dense variant="secondary" loading={busy === row.id} disabled={busy !== null}
+                          aria-label={`Refresh ${row.label} name`}
+                          onClick={() => void (async () => {
+                            if (beforeUse && !(await beforeUse())) return;
+                            if (await step.use(row)) await onUsed?.();
+                          })()}>Refresh name</Button>
+                      ) : row.in_use ? (
                         <StateChip state="success" label="IN USE" icon="●" />
                       ) : row.off ? (
                         /* Configured but turned off: "Use it" would add
@@ -132,7 +150,10 @@ export function CalendarCard({ step, lit }: { step: CalendarStep; lit: boolean }
                           loading={busy === row.id}
                           disabled={busy !== null}
                           aria-label={`Use ${row.label}`}
-                          onClick={() => void step.use(row)}
+                          onClick={() => void (async () => {
+                            if (beforeUse && !(await beforeUse())) return;
+                            if (await step.use(row)) await onUsed?.();
+                          })()}
                         >
                           Use it
                         </Button>

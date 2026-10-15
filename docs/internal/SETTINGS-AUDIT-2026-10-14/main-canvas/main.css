@@ -1,0 +1,12 @@
+.canvas { min-height:100vh; background:var(--wb-ground); color:var(--wb-text); padding:16px; }
+.canvas-label { font:12px var(--font-mono); margin-bottom:12px; }
+.canvas-window { position:relative; display:flex; flex-direction:column; width:min(980px,100%); height:auto; max-height:none; margin:auto; background:var(--desk-window-fill); border:1px solid var(--wb-ink); box-shadow:var(--wb-raised); color:var(--text); }
+.canvas-title { padding:7px 12px; background:var(--wb-steel); font:600 15px var(--font-mono); color:var(--wb-ink); }
+.canvas-wings { display:flex; gap:18px; padding:8px 12px; background:var(--wb-steel); font:12px var(--font-mono); color:var(--wb-ink); }
+.canvas-body { container:surface / inline-size; padding:16px; }
+.canvas-body .prefs-module { width:100%; max-width:680px; margin-inline:auto; gap:12px; }
+.canvas-body h2 { font:600 15px/1.3 var(--font-sans); margin:0; }
+.canvas-body .gadget-row { grid-template-columns:minmax(96px,160px) minmax(0,1fr); min-height:32px; }
+.canvas-body .surface-section { margin:0; }
+.canvas-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+@container surface (max-width:419px) { .canvas-body .gadget-row { grid-template-columns:minmax(0,1fr); gap:6px; padding-block:6px; } }

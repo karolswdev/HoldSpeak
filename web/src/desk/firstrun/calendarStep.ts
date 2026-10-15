@@ -297,6 +297,7 @@ export function useCalendarStep() {
         await read();
         await readDoor();
         follow(String(answer?.source?.id ?? ""));
+        return true;
       } catch (error) {
         if (error instanceof ApiError && error.status === 409) {
           setFailure({ kind: "not_allowed" });
@@ -304,6 +305,7 @@ export function useCalendarStep() {
         } else {
           setFailure({ kind: "refused", reason: readableError(error) });
         }
+        return false;
       } finally {
         setBusy(null);
       }
@@ -335,8 +337,7 @@ export function useCalendarStep() {
         setFailure({ kind: "cant_read", reason: cantReadReason(check.error_class, check.redirect_target), host: check.host || host });
         return false;
       }
-      await use(check.candidate);
-      return true;
+      return await use(check.candidate);
     },
     [use],
   );

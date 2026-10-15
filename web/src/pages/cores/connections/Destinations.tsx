@@ -23,7 +23,7 @@
  *   what is known without a post (WEBHOOK SET · HOST OK); it never posts.
  * - No counter of zero: the group head counts only when there is a row.
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type MouseEvent } from "react";
 import { Button } from "../../../components/signal/Signal";
 import {
   CheckGadget,
@@ -40,7 +40,8 @@ import {
   SurfaceLedgerRow,
 } from "../../../desk/surface";
 import type { ConnectionsResponse } from "./api";
-import { accountChip, useConnections } from "../../../desk/surface/send";
+import { ACCOUNTS_CHANGED, fetchConnections } from "./api";
+import { accountChip } from "../../../desk/surface/send";
 import {
   CHANNEL_WORD, DEFAULT_EMAIL_PROVIDER, DEST_FOCUS, EMAIL_PROVIDERS, SEND_WORDS, egressOf, emailProvider, refusedWord, stamp,
   takeDestinationsFocus, targetToken, wire, Refusal, type Channel, type Destination, type EmailProvider,
@@ -108,8 +109,9 @@ export const keyRef = (fromEmail: string, provider: EmailProvider = DEFAULT_EMAI
   `${provider}-${fromEmail.trim().toLowerCase().replace(/[^a-z0-9_.@-]/g, "-")}`.slice(0, 100);
 const addresses = (text: string) => text.split(",").map((a) => a.trim()).filter(Boolean);
 
-function DestForm({ conns, initial, replaces, keys, onKey, onSlackKey, onSlackKnown, onDone, onCancel }: {
+function DestForm({ conns, accountsLoading, accountsReadError, onAccountsRetry, initial, replaces, keys, onKey, onSlackKey, onSlackKnown, onDone, onCancel }: {
   conns: ConnectionsResponse | null; initial: Draft; replaces?: string; keys: Record<string, boolean>;
+  accountsLoading: boolean; accountsReadError: boolean; onAccountsRetry: () => void;
   onKey: (ref: string, v: string, provider: EmailProvider) => Promise<string | null>;
   /** The webhook save: the minted key_ref, or the refusal code. */
   onSlackKey: (url: string) => Promise<{ keyRef: string } | { code: string }>;
@@ -144,7 +146,37 @@ function DestForm({ conns, initial, replaces, keys, onKey, onSlackKey, onSlackKn
     : {};
   const eg = egressOf({ channel: d.channel, account, synced: d.synced });
   const acc = accountChip({ channel: d.channel, account }, conns);
+  const accountsUnavailable = accountsLoading || accountsReadError;
+  const dependsOnAccount = ["github", "jira", "confluence"].includes(d.channel);
+  const accountReadState = accountsLoading ? <span aria-busy="true">Reading accounts</span>
+    : <><StateChip state="failure" label="Could not read accounts" /><Button dense variant="secondary" onClick={onAccountsRetry}>Retry</Button></>;
+  const missingAccount = d.channel === "github" ? !gh?.account?.login
+    : d.channel === "jira" ? !jiraAcc : d.channel === "confluence" ? !confAcc : false;
+  const valid = Boolean(name.trim()) && !missingAccount && (!dependsOnAccount || !accountsUnavailable) && (
+    d.channel === "file" ? Boolean(d.folder.trim())
+    : d.channel === "github" ? Boolean(d.repo.trim()) && Number.isInteger(Number(d.number)) && Number(d.number) > 0
+    : d.channel === "jira" ? Boolean(d.key.trim())
+    : d.channel === "confluence" ? Boolean(d.space.trim())
+    : d.channel === "email" ? Boolean(d.fromEmail.trim()) && addresses(d.to).length > 0 && keys[ref] === true
+    : Boolean(d.slackLabel.trim()) && Boolean(d.slackRef) && slackKnown !== false
+  );
+  // Accounts and Destinations share this module. Open the existing control
+  // above the form so the user's destination draft stays mounted.
+  const setUpAccount = (event: MouseEvent<HTMLButtonElement>) => {
+    const module = event.currentTarget.closest(".prefs-module") ?? document;
+    const row = module.querySelector<HTMLElement>(`[data-testid="connections-${d.channel}"]`)
+      ?? module.querySelector<HTMLElement>(`[data-testid^="connections-${d.channel}-conn-"]`);
+    const add = module.querySelector<HTMLButtonElement>(`[data-testid="connections-add-open-${d.channel}"]`);
+    const show = module.querySelector<HTMLButtonElement>(`[data-testid="connections-${d.channel}-show"]`);
+    if (add && add.getAttribute("aria-expanded") !== "true") add.click();
+    if (show && show.getAttribute("aria-expanded") !== "true") show.click();
+    (row ?? add)?.scrollIntoView?.({ block: "center" });
+    const target = module.querySelector<HTMLInputElement>(`[data-testid="connections-add-${d.channel}"] input`)
+      ?? show ?? row?.querySelector<HTMLButtonElement>("button:not([disabled])") ?? add;
+    target?.focus({ preventScroll: true });
+  };
   const save = async () => {
+    if (!valid || busy) return;
     // Slack: no webhook typed, nothing to save (the hub would store a row that cannot post).
     if (d.channel === "slack" && slackKnown === false) { setRefused("slack_webhook_missing"); return; }
     setBusy(true); setRefused(null);
@@ -178,8 +210,9 @@ function DestForm({ conns, initial, replaces, keys, onKey, onSlackKey, onSlackKn
       {d.channel === "github" ? (<>
         <GadgetRow label="Account">
           <span className="send-line">
-            <span className="surface-token send-literal" data-chip>{gh?.account?.login ? `@${gh.account.login}` : "—"}</span>
+            {accountsUnavailable ? accountReadState : <><span className="surface-token send-literal" data-chip>{gh?.account?.login ? `@${gh.account.login}` : "—"}</span>
             {acc ? <StateChip state={acc.state} label={acc.label} /> : null}
+            {missingAccount ? <Button dense variant="secondary" onClick={setUpAccount}>Set up account</Button> : null}</>}
           </span>
         </GadgetRow>
         <GadgetRow label="Repository"><StringGadget label="Repository" value={d.repo} onChange={(v) => set({ repo: v })} placeholder="owner/repo" inputProps={{ "data-testid": "dest-repo" } as never} /></GadgetRow>
@@ -189,11 +222,11 @@ function DestForm({ conns, initial, replaces, keys, onKey, onSlackKey, onSlackKn
       {d.channel === "jira" ? (<>
         <GadgetRow label="Account">
           <span className="send-line">
-            {jiraConns.length ? (
+            {accountsUnavailable ? accountReadState : jiraConns.length ? (
               <CycleGadget label="Jira account" value={jiraAcc} onChange={(v) => set({ jiraAccount: v })}
                 options={jiraConns.map((c) => ({ value: `${c.account.site}|${c.account.email}`, label: `${c.account.site} · ${c.account.email}` }))} />
-            ) : <span className="surface-token" data-chip>NO JIRA ACCOUNT</span>}
-            {acc && jiraConns.length ? <StateChip state={acc.state} label={acc.label} /> : null}
+            ) : <><span className="surface-token" data-chip>No Jira account</span><Button dense variant="secondary" onClick={setUpAccount}>Set up account</Button></>}
+            {!accountsUnavailable && acc && jiraConns.length ? <StateChip state={acc.state} label={acc.label} /> : null}
           </span>
         </GadgetRow>
         <GadgetRow label="Work item"><StringGadget label="Work item" value={d.key} onChange={(v) => set({ key: v })} placeholder="PAY-118" inputProps={{ "data-testid": "dest-key" } as never} /></GadgetRow>
@@ -201,11 +234,11 @@ function DestForm({ conns, initial, replaces, keys, onKey, onSlackKey, onSlackKn
       {d.channel === "confluence" ? (<>
         <GadgetRow label="Account">
           <span className="send-line">
-            {confConns.length ? (
+            {accountsUnavailable ? accountReadState : confConns.length ? (
               <CycleGadget label="Confluence account" value={confAcc} onChange={(v) => set({ confAccount: v })}
                 options={confConns.map((c) => ({ value: `${c.account.site}|${c.account.email}`, label: `${c.account.site} · ${c.account.email}` }))} />
-            ) : <span className="surface-token" data-chip>NO CONFLUENCE ACCOUNT</span>}
-            {acc && confConns.length ? <StateChip state={acc.state} label={acc.label} /> : null}
+            ) : <><span className="surface-token" data-chip>No Confluence account</span><Button dense variant="secondary" onClick={setUpAccount}>Set up account</Button></>}
+            {!accountsUnavailable && acc && confConns.length ? <StateChip state={acc.state} label={acc.label} /> : null}
           </span>
         </GadgetRow>
         <GadgetRow label="Space id"><StringGadget label="Space id" value={d.space} onChange={(v) => set({ space: v })} placeholder="98304" inputProps={{ "data-testid": "dest-space", inputMode: "numeric" } as never} /></GadgetRow>
@@ -234,7 +267,7 @@ function DestForm({ conns, initial, replaces, keys, onKey, onSlackKey, onSlackKn
               setKeyRefused(null);
               void onSlackKey(v).then((r) => ("keyRef" in r ? set({ slackRef: r.keyRef }) : setKeyRefused(r.code)));
             }} />
-          {replaces && slackKnown === false ? (
+          {slackKnown === false ? (
             <span className="send-line" data-testid="dest-key-missing">
               <StateChip state="warning" label="NO WEBHOOK" />
             </span>
@@ -260,7 +293,7 @@ function DestForm({ conns, initial, replaces, keys, onKey, onSlackKey, onSlackKn
       </>) : null}
       <GadgetRow label="Name"><StringGadget label="Name" value={name} onChange={(v) => set({ name: v, nameTouched: true })} placeholder="Name" inputProps={{ "data-testid": "dest-name" } as never} /></GadgetRow>
       <div className="send-verbs" data-testid="dest-form-verbs">
-        <Button dense variant="primary" loading={busy} onClick={() => void save()} data-testid="dest-save">Save</Button>
+        <Button dense variant="primary" disabled={!valid} loading={busy} onClick={() => void save()} data-testid="dest-save">Save</Button>
         {onCancel ? <Button dense variant="ghost" onClick={onCancel} data-testid="dest-cancel">Cancel</Button> : null}
         <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
         {refused ? (
@@ -328,7 +361,23 @@ export function Destinations() {
   const [readFailed, setReadFailed] = useState(false);
   const [arrive, setArrive] = useState(false);
   const groupRef = useRef<HTMLDivElement>(null);
-  const conns = useConnections();
+  const [conns, setConns] = useState<ConnectionsResponse | null>(null);
+  const [accountsLoading, setAccountsLoading] = useState(true);
+  const [accountsReadError, setAccountsReadError] = useState(false);
+  const onAccountsRetry = () => window.dispatchEvent(new Event(ACCOUNTS_CHANGED));
+  useEffect(() => {
+    let live = true;
+    const read = () => {
+      setAccountsLoading(true);
+      void fetchConnections().then((answer) => { if (live) { setConns(answer); setAccountsReadError(false); } })
+        .catch(() => { if (live) { setConns(null); setAccountsReadError(true); } })
+        .finally(() => { if (live) setAccountsLoading(false); });
+    };
+    read();
+    window.addEventListener("focus", read);
+    window.addEventListener(ACCOUNTS_CHANGED, read);
+    return () => { live = false; window.removeEventListener("focus", read); window.removeEventListener(ACCOUNTS_CHANGED, read); };
+  }, []);
   const [open, setOpen] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
@@ -396,7 +445,7 @@ export function Destinations() {
   const active = rows.filter((d) => d.state === "active");
   const parked = rows.filter((d) => d.state === "parked");
   const form = (
-    <DestForm conns={conns} initial={EMPTY} keys={keys} onKey={onKey} onSlackKey={onSlackKey} onSlackKnown={onSlackKnown}
+    <DestForm conns={conns} accountsLoading={accountsLoading} accountsReadError={accountsReadError} onAccountsRetry={onAccountsRetry} initial={EMPTY} keys={keys} onKey={onKey} onSlackKey={onSlackKey} onSlackKnown={onSlackKnown}
       onDone={() => {
         // PHILO-10-07: after Save the form closes; the saved row stays in view (at 393 the closed form
         // otherwise leaves the list above the window).
@@ -414,7 +463,8 @@ export function Destinations() {
               {active.map((d) => {
                 const eg = egressOf(d);
                 const known = slackKey(d);
-                const acc = accountChip(known === undefined ? d : { ...d, account: { ...d.account, key_present: known } }, conns);
+                const acc = (accountsLoading || accountsReadError) && ["github", "jira", "confluence"].includes(d.channel) ? null
+                  : accountChip(known === undefined ? d : { ...d, account: { ...d.account, key_present: known } }, conns);
                 const c = checks[d.id];
                 return (
                   <SurfaceLedgerRow key={d.id} data-testid="dest-row" wrap open={open === d.id}
@@ -430,7 +480,7 @@ export function Destinations() {
                     </>}>
                     {open === d.id ? (
                       editing === d.id ? (
-                        <DestForm conns={conns} initial={fromDestination(d)} replaces={d.id} keys={keys} onKey={onKey} onSlackKey={onSlackKey} onSlackKnown={onSlackKnown}
+                        <DestForm conns={conns} accountsLoading={accountsLoading} accountsReadError={accountsReadError} onAccountsRetry={onAccountsRetry} initial={fromDestination(d)} replaces={d.id} keys={keys} onKey={onKey} onSlackKey={onSlackKey} onSlackKnown={onSlackKnown}
                           onDone={() => { setEditing(null); setOpen(null); reload(); }} onCancel={() => setEditing(null)} />
                       ) : (
                         <div className="send-open" data-testid="dest-open">

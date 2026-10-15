@@ -7756,6 +7756,136 @@
     },
     {
       "apis": [
+        "GET /api/settings",
+        "PUT /api/settings"
+      ],
+      "authority": "Owner Settings mutation with validation and optimistic revision checking.",
+      "configuration": [
+        "meeting",
+        "calendar",
+        "cadence",
+        "cadence_telegram",
+        "mesh"
+      ],
+      "dependencies": [
+        "Config schema",
+        "SettingsService",
+        "existing inference assignment authority"
+      ],
+      "docs": [
+        "docs/USER_GUIDE.md",
+        "docs/internal/SETTINGS-AUDIT-2026-10-14/backend-audit.md"
+      ],
+      "domain": "desk",
+      "egress": "The preference API saves local configuration; later configured jobs retain their own destination boundaries.",
+      "egress_possible": false,
+      "entry_points": [
+        "holdspeak/services/settings_service.py::SettingsService.update_settings"
+      ],
+      "evidence_level": "source_and_assertions_inspected",
+      "exposure": "user",
+      "failure_states": [
+        "settings_stale",
+        "inference_legacy_selector_retired",
+        "invalid preference"
+      ],
+      "id": "desk.preferences",
+      "inputs": [
+        "changed preference paths",
+        "settings revision",
+        "calendar source identity and names"
+      ],
+      "kernel_operations": [],
+      "limitations": [
+        "Already erased names and dropped sources cannot be reconstructed from damaged config alone. Explicit native reselection can repair a blank label from a detected calendar title.",
+        "Tests use isolated HOME and controlled native calendar discovery. Live OS reconfiguration and owner acceptance remain unverified."
+      ],
+      "model_requirements": [],
+      "name": "Edit preferences",
+      "network_requirements": [],
+      "outputs": [
+        "accepted redacted settings",
+        "named refusal or revision conflict"
+      ],
+      "owner_observed": false,
+      "persistence": [
+        "local config file",
+        "calendar.sources"
+      ],
+      "platforms": {
+        "aipi": "not_applicable",
+        "ipad": "unknown",
+        "linux_wayland": "unknown",
+        "linux_x11": "unknown",
+        "macos": "supported_with_setup"
+      },
+      "purpose": "Save local preferences while preserving calendar identity and the authoritative model assignments.",
+      "release_availability": "unverified",
+      "replacement": null,
+      "side_effect": "local_reversible",
+      "sources": [
+        {
+          "claim": "Canonical calendar sources survive echoed legacy subscription fields; GET and accepted writes share the migrated projection; existing cadence, Telegram and mesh preferences persist.",
+          "line": 290,
+          "path": "holdspeak/services/settings_service.py",
+          "symbol": "SettingsService.update_settings"
+        }
+      ],
+      "status": "experimental",
+      "status_reason": "Existing Settings surface audited; focused isolated HTTP tests execute calendar round trips, migrated response projection and preference persistence. Owner acceptance and live OS behavior remain unverified.",
+      "surfaces": [
+        "Settings"
+      ],
+      "tests": [
+        {
+          "assertion": "Full-document ordinary save preserves both named calendar sources and disabled state.",
+          "execution": {
+            "cases": 1,
+            "record": "docs/internal/SETTINGS-AUDIT-2026-10-14/backend-audit.md",
+            "run": "settings-audit-backend-2026-10-14",
+            "status": "passed"
+          },
+          "node": "test_full_document_preference_save_preserves_named_disabled_native_and_other_calendars",
+          "path": "tests/integration/test_calendar_settings.py"
+        },
+        {
+          "assertion": "Real assignment/marker producers prove successive ordinary writes and explicit retired-selector refusal.",
+          "execution": {
+            "cases": 2,
+            "record": "docs/internal/SETTINGS-AUDIT-2026-10-14/backend-audit.md",
+            "run": "settings-audit-backend-2026-10-14",
+            "status": "passed"
+          },
+          "node": "test_successive_ordinary_settings_saves_keep_retired_selectors_out",
+          "path": "tests/integration/test_desk_settings.py"
+        },
+        {
+          "assertion": "Rhythm, Telegram and device-name changes persist while existing credentials stay unchanged and redacted.",
+          "execution": {
+            "cases": 1,
+            "record": "docs/internal/SETTINGS-AUDIT-2026-10-14/backend-audit.md",
+            "run": "settings-audit-backend-2026-10-14",
+            "status": "passed"
+          },
+          "node": "test_rhythm_telegram_and_device_name_settings_persist_without_changing_secrets",
+          "path": "tests/integration/test_desk_settings.py"
+        },
+        {
+          "assertion": "Explicit native calendar reselection repairs only a blank name from controlled authoritative discovery; disabled state and other sources survive.",
+          "execution": {
+            "cases": 2,
+            "record": "docs/internal/SETTINGS-AUDIT-2026-10-14/backend-audit.md",
+            "run": "settings-audit-backend-2026-10-14",
+            "status": "passed"
+          },
+          "node": "test_native_calendar_reselection_repairs_only_a_blank_name_without_changing_sources",
+          "path": "tests/unit/test_onboarding_backends.py"
+        }
+      ],
+      "trust_boundary": "Owner-authorized changed preferences are validated before the local config write. Retired model selectors still refuse explicit mutations."
+    },
+    {
+      "apis": [
         "POST /api/threads",
         "GET /api/threads",
         "GET /api/threads/{thread_id}",

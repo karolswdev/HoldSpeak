@@ -12,7 +12,6 @@ import { Button } from "../../components/signal/Signal";
 import { CONTROL_MODES, controlModeLabel } from "../../lib/productLanguage";
 import {
   CycleGadget,
-  EgressChip,
   GadgetGroup,
 } from "../../desk/surface/gadgets";
 import {
@@ -389,9 +388,9 @@ export function autoDisplayFact(auto: string | undefined): string {
 }
 
 export const INTELLIGENCE_AUTO_OPTIONS = [
-  { value: "off", label: "OFF" },
-  { value: "room_linked", label: "AFTER ROOM MEETINGS" },
-  { value: "every", label: "AFTER EVERY MEETING" },
+  { value: "off", label: "Manual" },
+  { value: "room_linked", label: "After room meetings" },
+  { value: "every", label: "After every meeting" },
 ];
 
 /* ── the drawer face ── */
@@ -442,8 +441,8 @@ export function jobPills(hub: SettingsHubWire): Array<{ key: string; word: strin
   else if (hub.answers?.engineSet === true) pills.push({ key: "answers", word: "Answers", tone: "ok", title: hub.answers.engine ?? undefined });
   // The default (Everything else): a quiet fact while some work has an
   // engine of its own (PHILO-15 B33), amber when nothing has one.
-  if (hub.models.defaultSet) pills.push({ key: "default", word: "Everything else", tone: "ok" });
-  else pills.push({ key: "default", word: "Everything else", tone: workHasEngine(hub) ? "idle" : "warn", title: "No default" });
+  if (hub.models.defaultSet) pills.push({ key: "default", word: "Default engine", tone: "ok" });
+  else pills.push({ key: "default", word: "Default engine", tone: workHasEngine(hub) ? "idle" : "warn", title: "No default" });
   return pills;
 }
 
@@ -481,8 +480,6 @@ export function PrefsFace({
 
   const [atmosphereId] = useAtmospherePreference();
   const headline = hubHeadline(hub);
-  const [more, setMore] = useState(false);
-  const writtenAt = formatWrittenAt(hub.writtenAt);
 
   // Module rows — each opens the module face (the hub is the truth table).
   const openVerb = (moduleId: string) => (
@@ -491,7 +488,7 @@ export function PrefsFace({
 
   // PHILO-17 REFIT: the two things he does here lead the window, each on a
   // raised plate: pick which engine does which job, and connect an account.
-  // Everything else folds under More settings. ONE filled primary: Choose
+  // Ordinary preferences follow the lead actions. ONE filled primary: Choose
   // engines while a job has no engine, else Connect an account while none is
   // connected, else Choose engines.
   const connected = hub.connections.connected;
@@ -556,17 +553,7 @@ export function PrefsFace({
           </div>
         </section>
       </div>
-      <Button
-        variant="ghost"
-        dense
-        className="settings-more"
-        aria-expanded={more}
-        onClick={() => setMore((open) => !open)}
-        data-testid="settings-more"
-      >
-        <span className="settings-more-caret" aria-hidden="true">{more ? "▾" : "▸"}</span> More settings
-      </Button>
-      {more ? (<>
+      {/* PARKED (Settings audit 2026-10-14): More settings hid ordinary preferences. */}
       <SurfaceLedger count="" cols="hub">
         {/* Voice: LIVE green + target, or nothing */}
         <SurfaceLedgerRow
@@ -705,7 +692,6 @@ export function PrefsFace({
           onChange={onPosture}
         />
       </div>
-      </>) : null}
     </div>
   );
 }
@@ -731,6 +717,8 @@ export function PrefStatusBar({
   receipt,
   grantReceipt,
   hubWrittenAt,
+  idleReceipt,
+  onRetry,
 }: {
   /** Absent on the drawer face — the egress badge sits there instead. */
   onBack?: () => void;
@@ -741,44 +729,44 @@ export function PrefStatusBar({
   /** HS-170-04: writtenAt from the hub wire (epoch seconds), shown on
    *  the drawer face as WRITTEN HH:MM; module-level receipt overrides. */
   hubWrittenAt?: string | null;
+  idleReceipt?: ReactNode;
+  onRetry?: () => void;
 }) {
   let center: ReactNode;
   if (receipt.refusal)
     center = (
       <span className="prefs-receipt" data-tone="danger" role="alert">
         <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" style={{ flexShrink: 0 }}><path d="M8 2 1.5 13.5h13Z" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" /><line x1="8" y1="6.5" x2="8" y2="9.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" /><circle cx="8" cy="11.5" r="0.7" fill="currentColor" /></svg>{" "}
-        REFUSED · {receipt.refusal}
+        Not saved
       </span>
     );
   else if (receipt.saving)
     center = (
       <span className="prefs-receipt" role="status">
-        SAVING…
+        Saving…
       </span>
     );
   else if (receipt.writtenAt)
     center = (
       <span className="prefs-receipt" role="status">
-        WRITTEN {receipt.writtenAt}
+        Saved {receipt.writtenAt}
       </span>
     );
   else if (!onBack && hubWrittenAt)
     center = (
       <span className="prefs-receipt" role="status">
-        WRITTEN {hubWrittenAt}
+        Saved {hubWrittenAt}
       </span>
     );
-  else center = null; /* HS-139-07: no dangling "USING" when idle */
+  else center = idleReceipt ?? null;
   return (
-    <SurfaceFooter receipt={grantReceipt ?? undefined} verbs={<>
+    <SurfaceFooter receipt={receipt.refusal || receipt.saving ? center : grantReceipt ?? center} verbs={<>
+      {onRetry ? <Button variant="primary" dense disabled={receipt.saving} onClick={onRetry}>Retry</Button> : null}
       {onBack ? (
-        <Button variant="ghost" dense className="prefs-back" onClick={onBack}>
+        <Button variant="secondary" dense onClick={onBack}>
           <span aria-hidden="true">«</span> Settings
         </Button>
-      ) : (
-        <EgressChip />
-      )}
-      {center}
+      ) : null}
     </>} />
   );
 }

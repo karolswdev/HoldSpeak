@@ -1786,6 +1786,33 @@
       "tests_executed": 2
     },
     {
+      "assertions_inspected": 4,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "desk.preferences",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          2,
+          2
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          4,
+          4
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 4
+    },
+    {
       "assertions_inspected": 2,
       "docs": {
         "api": 0,
@@ -4191,28 +4218,28 @@
   ],
   "snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8",
   "totals": {
-    "assertions_inspected": 219,
+    "assertions_inspected": 223,
     "doc_paths": [
-      236,
-      236
+      238,
+      238
     ],
     "docs": {
       "api": 0,
       "operational": 65,
       "security": 19
     },
-    "records": 155,
-    "records_with_executed_assertions": 79,
+    "records": 156,
+    "records_with_executed_assertions": 80,
     "semantics_unresolved": 76,
     "source_paths": [
-      278,
-      278
+      279,
+      279
     ],
     "test_paths": [
-      219,
-      219
+      223,
+      223
     ],
-    "tests_executed": 181
+    "tests_executed": 185
   },
   "validation_errors": 0
 }

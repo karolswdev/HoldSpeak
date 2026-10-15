@@ -1,18 +1,19 @@
 /**
  * HS-154-01 — the TTS settings block.
  *
- * Browser voice always available. When the holdspeak[tts] extra is
- * installed, shows the enable toggle + the GPL-3.0 note (phonemizer /
+ * Browser voice availability comes from this browser. When the holdspeak[tts] extra is
+ * installed, shows the GPL-3.0 note (phonemizer /
  * espeak-ng) + the weights download with egress badge. When the extra
  * is absent, shows ONE line with the install command — no dead switch.
  */
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { apiFetch, readableError } from "../../lib/api";
 import {
   EgressChip,
   GadgetGroup,
   GadgetRow,
-} from "../../desk/surface/gadgets";
+  StateChip,
+} from "../../desk/surface";
 import { Button } from "../../components/signal/Signal";
 
 type TtsStatus = {
@@ -27,30 +28,27 @@ export function TtsSettingsBlock() {
   const [receipt, setReceipt] = useState("");
   const [error, setError] = useState("");
   const mounted = useRef(true);
+  const [readError, setReadError] = useState(false);
+  const browserAvailable = typeof window.speechSynthesis !== "undefined";
 
   useEffect(
-    () => () => {
-      mounted.current = false;
+    () => {
+      mounted.current = true;
+      return () => { mounted.current = false; };
     },
     [],
   );
 
-  useEffect(() => {
-    void (async () => {
-      try {
-        const data = await apiFetch<TtsStatus>("/api/tts/status");
-        if (mounted.current) {
-          setStatus(data);
-          setLoading(false);
-        }
-      } catch {
-        if (mounted.current) {
-          setStatus({ installed: false, model_ready: false });
-          setLoading(false);
-        }
-      }
-    })();
+  const reload = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await apiFetch<TtsStatus>("/api/tts/status");
+      if (mounted.current) { setStatus(data); setReadError(false); }
+    } catch {
+      if (mounted.current) setReadError(true);
+    } finally { if (mounted.current) setLoading(false); }
   }, []);
+  useEffect(() => { void reload(); }, [reload]);
 
   const handleDownload = async () => {
     setDownloading(true);
@@ -63,7 +61,7 @@ export function TtsSettingsBlock() {
       }>("/api/tts/download", { method: "POST" });
       if (mounted.current) {
         if (result.receipt?.downloaded) {
-          setReceipt("DOWNLOADED");
+          setReceipt("Downloaded");
           setStatus({ installed: true, model_ready: true });
         } else {
           setError("Download did not complete");
@@ -76,18 +74,19 @@ export function TtsSettingsBlock() {
     }
   };
 
-  if (loading) return null;
+  if (loading) return <GadgetGroup label="Speech"><span aria-busy="true">Checking</span></GadgetGroup>;
+  if (readError) return <GadgetGroup label="Speech"><GadgetRow label="Server voice"><StateChip state="failure" label="Could not read" /><Button dense variant="secondary" onClick={() => void reload()}>Retry</Button></GadgetRow></GadgetGroup>;
 
   // Extra NOT installed: one-line install instruction, no dead switch.
   if (!status?.installed) {
     return (
       <GadgetGroup label="Speech">
-        <GadgetRow wide label="BROWSER VOICE">
-          <span className="gadget-fact">ACTIVE</span>
+        <GadgetRow wide label="Browser voice">
+          <span className="gadget-fact">{browserAvailable ? "Available" : "Not available"}</span>
         </GadgetRow>
         <div className="prefs-egress-line">
           <span className="gadget-fact">
-            SERVER VOICE · pip install &apos;holdspeak[tts]&apos;
+            Server voice · pip install &apos;holdspeak[tts]&apos;
           </span>
         </div>
       </GadgetGroup>
@@ -97,12 +96,12 @@ export function TtsSettingsBlock() {
   // Extra installed.
   return (
     <GadgetGroup label="Speech">
-      <GadgetRow wide label="BROWSER VOICE">
-        <span className="gadget-fact">ACTIVE</span>
+      <GadgetRow wide label="Browser voice">
+        <span className="gadget-fact">{browserAvailable ? "Available" : "Not available"}</span>
       </GadgetRow>
-      <GadgetRow wide label="SERVER VOICE">
+      <GadgetRow wide label="Server voice">
         <span className="gadget-fact">
-          {status.model_ready ? "READY" : "WEIGHTS NEEDED"}
+          {status.model_ready ? "Ready" : "Model needed"}
         </span>
       </GadgetRow>
       {!status.model_ready ? (
@@ -113,7 +112,7 @@ export function TtsSettingsBlock() {
             scope="cloud"
           />
           <Button dense disabled={downloading} onClick={handleDownload}>
-            {downloading ? "DOWNLOADING..." : "DOWNLOAD WEIGHTS"}
+            {downloading ? "Downloading…" : "Download model"}
           </Button>
         </div>
       ) : null}

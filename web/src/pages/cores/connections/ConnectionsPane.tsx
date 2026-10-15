@@ -11,7 +11,6 @@ import {
   Receipt,
   SurfaceWell,
   SurfaceState,
-  TransportKey,
   StringGadget,
   type ChipState,
 } from "../../../desk/surface";
@@ -22,8 +21,11 @@ import type {
   ConnectionState,
   JiraSubConnection,
 } from "./api";
-import { addAtlassianAccount, fetchConnections, recheckProvider } from "./api";
+import { ACCOUNTS_CHANGED, addAtlassianAccount, fetchConnections, recheckProvider } from "./api";
 import "./connections.css";
+import { CalendarCard as CalendarSetupCard } from "../../../desk/firstrun/CalendarCard";
+import { useCalendarStep } from "../../../desk/firstrun/calendarStep";
+import "../../../desk/firstrun/firstrun.css";
 
 /* ── State mapping (D1 + D6) ── */
 
@@ -155,18 +157,21 @@ export function CommandWell({
 }: {
   hint: string;
 }) {
+  const [copy, setCopy] = useState<"Copy" | "Copied" | "Copy failed">("Copy");
   return (
     <SurfaceWell>
       <div className="connections-command-row">
         <code className="connections-command-code">{hint}</code>
-        <TransportKey
-          label="Copy"
-          glyph="C"
-          compact
+        <Button
+          dense
+          variant="secondary"
           onClick={() => {
-            try { void navigator.clipboard.writeText(hint); } catch { /* noop */ }
+            void (async () => {
+              try { await navigator.clipboard.writeText(hint); setCopy("Copied"); }
+              catch { setCopy("Copy failed"); }
+            })();
           }}
-        />
+        >{copy}</Button>
       </div>
     </SurfaceWell>
   );
@@ -184,7 +189,7 @@ export function SignInWell({
   tool: ConnectionTool;
   busy: boolean;
   onRecheck: () => void;
-  onAddAccount: (site: string, email: string) => void;
+  onAddAccount: (site: string, email: string) => void | Promise<void>;
 }) {
   const provider = tool.provider_id;
   const atlassian = provider === "jira" || provider === "confluence";
@@ -230,10 +235,10 @@ function GitHubCard({
   const showFold = foldOpen(state);
   const hint = tool.recovery_hint ?? "gh auth login";
   const [shown, setShown] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const copyHint = () => {
-    try { void navigator.clipboard.writeText(hint); } catch { /* noop */ }
-    setCopied(true);
+  const [copy, setCopy] = useState("Copy command");
+  const copyHint = async () => {
+    try { await navigator.clipboard.writeText(hint); setCopy("Copied"); }
+    catch { setCopy("Copy failed"); }
   };
 
   return (
@@ -263,8 +268,8 @@ function GitHubCard({
           <>
             {/* PHILO-17 REFIT: the sign-in is one compact row; the command
                 is copied by a verb and drawn only on demand. */}
-            <Button dense variant="ghost" onClick={copyHint} data-testid="connections-github-copy">
-              {copied ? "Copied" : "Copy command"}
+            <Button dense variant="ghost" onClick={() => void copyHint()} data-testid="connections-github-copy">
+              {copy}
             </Button>
             <Button dense variant="ghost" aria-expanded={shown} onClick={() => setShown((value) => !value)} data-testid="connections-github-show">
               {shown ? "Hide" : "Show"}
@@ -355,18 +360,23 @@ export function AddAccountFields({
   busy = false,
 }: {
   provider: "jira" | "confluence";
-  onAdd: (site: string, email: string) => void;
+  onAdd: (site: string, email: string) => void | Promise<void>;
   busy?: boolean;
 }) {
   const [site, setSite] = useState("");
   const [email, setEmail] = useState("");
+  const [failed, setFailed] = useState(false);
+  const [saving, setSaving] = useState(false);
   const s = site.trim();
   const e = email.trim();
-  const add = () => {
-    if (!s || !e) return;
-    onAdd(s, e);
-    setSite("");
-    setEmail("");
+  const add = async () => {
+    if (!s || !e || saving) return;
+    setSaving(true); setFailed(false);
+    try {
+      await onAdd(s, e);
+      setSite(""); setEmail("");
+    } catch { setFailed(true); }
+    finally { setSaving(false); }
   };
   return (
     <div className="connections-jira-ghost-fields" data-testid={`connections-add-${provider}`}>
@@ -380,9 +390,10 @@ export function AddAccountFields({
       </label>
       <CommandWell hint={`acli ${provider} auth login --site ${s || "<site>"} --email ${e || "<email>"} --token`} />
       <div className="connections-jira-add-row">
-        <Button dense variant="ghost" disabled={!s || !e} loading={busy} onClick={add}>
-          Add
+        <Button dense variant="secondary" disabled={!s || !e || busy} loading={saving} onClick={() => void add()}>
+          {failed ? "Retry" : "Add"}
         </Button>
+        {failed ? <StateChip state="failure" label="Account not added" /> : null}
       </div>
     </div>
   );
@@ -396,7 +407,7 @@ function AddAccountFold({
   busy,
 }: {
   provider: "jira" | "confluence";
-  onAdd: (site: string, email: string) => void;
+  onAdd: (site: string, email: string) => void | Promise<void>;
   busy: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -420,7 +431,7 @@ function JiraCards({
 }: {
   tool: ConnectionTool;
   onRecheck: (ref?: string) => void;
-  onAddAccount: (site: string, email: string) => void;
+  onAddAccount: (site: string, email: string) => void | Promise<void>;
   busyRef: string | null;
 }) {
   const connections = tool.connections ?? [];
@@ -454,6 +465,7 @@ function JiraCards({
           busy={busyRef === conn.connection_ref}
         />
       ))}
+      <AddAccountFold provider="jira" busy={busyRef === "jira"} onAdd={onAddAccount} />
     </>
   );
 }
@@ -517,7 +529,7 @@ function ConfluenceCards({
 }: {
   tool: ConnectionTool;
   onRecheck: (ref?: string) => void;
-  onAddAccount: (site: string, email: string) => void;
+  onAddAccount: (site: string, email: string) => void | Promise<void>;
   busyRef: string | null;
 }) {
   const connections = tool.connections ?? [];
@@ -547,6 +559,7 @@ function ConfluenceCards({
           busy={busyRef === conn.connection_ref}
         />
       ))}
+      <AddAccountFold provider="confluence" busy={busyRef === "confluence"} onAdd={onAddAccount} />
     </>
   );
 }
@@ -554,15 +567,17 @@ function ConfluenceCards({
 function CalendarCard({
   tool,
   onOpen,
+  onChoose,
 }: {
   tool: ConnectionTool | undefined;
   onOpen: () => void;
+  onChoose: () => void;
 }) {
   const sources = tool?.account?.sources;
   const isConnected = tool?.state === "connected";
   const state: ChipState = isConnected ? "success" : "idle";
   const label = isConnected ? "Connected" : "Not set up";
-  const summary = isConnected && sources != null ? `${sources} sources` : undefined;
+  const summary = isConnected && sources ? `${sources} sources` : undefined;
   const verb = isConnected ? "Sources" : "Set up";
 
   return (
@@ -576,12 +591,19 @@ function CalendarCard({
         <StateChip state={state} label={label} />
       </div>
       <div className="connections-tool-actions">
-        <Button dense variant="ghost" onClick={onOpen}>
-          {verb}
-        </Button>
+        {isConnected ? <Button dense variant="ghost" onClick={onOpen}>{verb}</Button> : null}
+        <Button dense variant="secondary" onClick={onChoose}>Choose calendar</Button>
       </div>
     </div>
   );
+}
+
+function CalendarChooser({ onCalendarChanged, onBeforeCalendarChange }: {
+  onCalendarChanged?: () => Promise<void>;
+  onBeforeCalendarChange?: () => Promise<boolean>;
+}) {
+  const step = useCalendarStep();
+  return <div className="connections-calendar-setup"><CalendarSetupCard step={step} lit={false} reselectNative onUsed={onCalendarChanged} beforeUse={onBeforeCalendarChange} /></div>;
 }
 
 function ModelsCard({
@@ -637,6 +659,8 @@ export function ConnectionsPane({
   onFooterUpdate,
   onOpenModule,
   focusProvider,
+  onCalendarChanged,
+  onBeforeCalendarChange,
 }: {
   /** Lifts the connections receipt to the parent footer. */
   onFooterUpdate: (foot: ConnectionsFoot) => void;
@@ -645,11 +669,16 @@ export function ConnectionsPane({
   /** PHILO-17 (needsyou): the provider to bring into view and focus
    *  (`github`, `jira`, `confluence`): Needs you's Reconnect lands here. */
   focusProvider?: string | null;
+  onCalendarChanged?: () => Promise<void>;
+  onBeforeCalendarChange?: () => Promise<boolean>;
 }) {
   const [data, setData] = useState<ConnectionsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | undefined>(undefined);
   const [recheckBusy, setRecheckBusy] = useState<string | null>(null);
+  const [checkFailed, setCheckFailed] = useState<string | null>(null);
+  const [calendarOpen, setCalendarOpen] = useState(focusProvider === "calendar");
+  useEffect(() => { if (focusProvider === "calendar") setCalendarOpen(true); }, [focusProvider]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -671,18 +700,19 @@ export function ConnectionsPane({
         egressHost: lastEgress,
         checkedAt: lastChecked ? formatTime(lastChecked) : undefined,
       });
-    } catch (err) {
-      setError(
-        err instanceof Error && err.message
-          ? `Connections did not load from this hub (${err.message}). Nothing changed. Retry.`
-          : "Connections did not load from this hub. Nothing changed. Retry.",
-      );
+    } catch {
+      setError("Accounts could not be read");
     } finally {
       setLoading(false);
     }
   }, [onFooterUpdate]);
 
   useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    const read = () => void load();
+    window.addEventListener(ACCOUNTS_CHANGED, read);
+    return () => window.removeEventListener(ACCOUNTS_CHANGED, read);
+  }, [load]);
 
   // PHILO-17 (needsyou): Reconnect opens on the provider's row, focused.
   const anchorRef = useRef<HTMLSpanElement>(null);
@@ -700,21 +730,25 @@ export function ConnectionsPane({
 
   const handleRecheck = useCallback(async (providerId: string, subRef?: string) => {
     setRecheckBusy(subRef ?? providerId);
+    setCheckFailed(null);
     try {
       const updated = await recheckProvider(providerId);
-      if (updated && data) {
-        setData({
-          tools: data.tools.map((t) =>
+      if (!updated) throw new Error("No check result");
+      if (data) {
+        setData((current) => current ? ({
+          tools: current.tools.map((t) =>
             t.provider_id === providerId ? updated : t
           ),
-        });
+        }) : current);
         const checkedAt = updated.last_checked_at ? formatTime(updated.last_checked_at) : undefined;
         onFooterUpdate({
           egressHost: updated.egress_host,
           checkedAt,
         });
       }
-    } finally {
+      window.dispatchEvent(new Event(ACCOUNTS_CHANGED));
+    } catch { setCheckFailed(providerId); }
+    finally {
       setRecheckBusy(null);
     }
   }, [data, onFooterUpdate]);
@@ -722,11 +756,12 @@ export function ConnectionsPane({
   // PHILO-17 U29: an added account is checked at once (never left NEVER CHECKED).
   const handleAddAccount = useCallback(async (provider: "jira" | "confluence", site: string, email: string) => {
     setRecheckBusy(provider);
+    setCheckFailed(null);
     try {
       await addAtlassianAccount(provider, site, email);
-      await recheckProvider(provider);
-    } catch {
-      // The add failed; the card shows the state unchanged.
+      window.dispatchEvent(new Event(ACCOUNTS_CHANGED));
+      try { await recheckProvider(provider); }
+      catch { setCheckFailed(provider); }
     } finally {
       setRecheckBusy(null);
       void load();
@@ -754,6 +789,8 @@ export function ConnectionsPane({
   return (
     <GadgetGroup label="Accounts">
       <span ref={anchorRef} hidden />
+      {error ? <SurfaceState error={error} onRetry={() => void load()} /> : null}
+      {checkFailed ? <div className="connections-check-failed" role="alert"><span>{checkFailed === "github" ? "GitHub" : checkFailed === "jira" ? "Jira" : "Confluence"}</span><StateChip state="failure" label="Check failed" /><Button dense variant="secondary" onClick={() => void handleRecheck(checkFailed)}>Retry</Button></div> : null}
       {github ? (
         <GitHubCard
           tool={github}
@@ -766,7 +803,7 @@ export function ConnectionsPane({
         <JiraCards
           tool={jira}
           onRecheck={(ref) => void handleRecheck("jira", ref)}
-          onAddAccount={(site, email) => void handleAddAccount("jira", site, email)}
+          onAddAccount={(site, email) => handleAddAccount("jira", site, email)}
           busyRef={recheckBusy}
         />
       ) : null}
@@ -774,14 +811,16 @@ export function ConnectionsPane({
         <ConfluenceCards
           tool={confluence}
           onRecheck={(ref) => void handleRecheck("confluence", ref)}
-          onAddAccount={(site, email) => void handleAddAccount("confluence", site, email)}
+          onAddAccount={(site, email) => handleAddAccount("confluence", site, email)}
           busyRef={recheckBusy}
         />
       ) : null}
       <CalendarCard
         tool={calendar}
         onOpen={() => onOpenModule("meetings")}
+        onChoose={() => setCalendarOpen((value) => !value)}
       />
+      {calendarOpen ? <CalendarChooser onCalendarChanged={async () => { await onCalendarChanged?.(); await load(); }} onBeforeCalendarChange={onBeforeCalendarChange} /> : null}
       <ModelsCard
         tool={models}
         onOpen={() => onOpenModule("models")}

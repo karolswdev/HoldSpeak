@@ -184,12 +184,29 @@
 
 /* ── Inside a section: the section's name at the window headline size ── */
 .desk-next .prefs-module > .gadget-pane-title {
-  font: 650 19px / 1.25 var(--font-display);
+  font: 600 15px / 1.3 var(--font-sans);
   letter-spacing: 0;
   text-transform: none;
 }
 
 /* The folded rows carry their pixel sprite before the name. */
+.settings-content { min-width:0; }
+.desk-next .prefs-module:not([data-settings-module="models"]) { width:100%; max-width:680px; margin-inline:auto; gap:12px; }
+.desk-next .prefs-module:not([data-settings-module="models"]) > .gadget-group { margin-bottom:0; }
+.desk-next .prefs-module:not([data-settings-module="models"]) .gadget-row { grid-template-columns:minmax(96px,160px) minmax(0,1fr); min-height:32px; }
+.prefs-inline-controls, .prefs-calendar-well-actions, .prefs-read-failure { display:flex; flex-wrap:wrap; align-items:center; gap:8px; min-width:0; }
+.prefs-read-failure { font:13px/1.4 var(--font-sans); overflow-wrap:anywhere; }
+.prefs-read-failure > span { flex:1 1 180px; min-width:0; }
+.prefs-calendar-well { display:flex; flex-direction:column; gap:10px; padding-block:10px; min-width:0; }
+.prefs-calendar-well .gadget-string-captioned { width:100%; }
+.prefs-source-location { font:12px/1.4 var(--font-mono); overflow-wrap:anywhere; }
+.prefs-calendar-add { list-style:none; padding:8px 6px; }
+.desk-next .prefs-module .prefs-calendar-section { margin:0; }
+.desk-next .prefs-module .prefs-calendar-section .surface-ledger-line { grid-template-columns:20px minmax(120px,1fr) minmax(0,1fr) max-content; }
+.desk-next .prefs-module .prefs-calendar-section .surface-ledger-primary { overflow-wrap:anywhere; }
+@container surface (max-width:419px) {
+ .desk-next .prefs-module:not([data-settings-module="models"]) .gadget-row { grid-template-columns:minmax(0,1fr); gap:6px; padding-block:6px; }
+}
 .desk-next .settings-row-name {
   display: inline-flex;
   align-items: center;
@@ -245,9 +262,8 @@
   color: var(--wb-text);
 }
 .desk-next .guide-row-meta {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
   font: 500 12px / 1.3 var(--font-sans);
   color: var(--wb-muted);
 }

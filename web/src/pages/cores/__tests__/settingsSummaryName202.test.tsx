@@ -39,7 +39,6 @@ function face(intelligence: boolean) {
     />,
   );
   // PHILO-17 REFIT: the Meetings and Voice rows fold under More settings.
-  fireEvent.click(screen.getByTestId("settings-more"));
   return view;
 }
 
@@ -81,7 +80,6 @@ describe("the Settings hub names a missing engine", () => {
         precedence={[]}
       />,
     );
-    fireEvent.click(screen.getByTestId("settings-more"));
     return view;
   }
 

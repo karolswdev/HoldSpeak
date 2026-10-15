@@ -8,7 +8,7 @@
 // (the face halves; the hub halves are tests/unit/test_phase200_runtime_identity.py)
 
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor, cleanup } from "@testing-library/react";
+import { render, screen, waitFor, cleanup, fireEvent, within } from "@testing-library/react";
 import { RuntimeIdentityModule } from "../SettingsCore";
 
 const mockApiFetch = vi.fn();
@@ -182,7 +182,12 @@ describe("RuntimeIdentityModule", () => {
     mockApiFetch.mockRejectedValueOnce(new Error("boom"));
     render(<RuntimeIdentityModule />);
 
-    await waitFor(() => { expect(screen.getByText("UNREADABLE")).toBeTruthy(); });
+    const failure = await screen.findByRole("alert");
+    expect(failure.textContent).toContain("Could not read device details");
     expect(screen.queryByTestId("runtime-backend")).toBeNull();
+    mockApiFetch.mockResolvedValueOnce(makeWire());
+    fireEvent.click(within(failure).getByRole("button", { name: "Retry" }));
+    await screen.findByTestId("runtime-backend");
+    expect(screen.queryByTestId("runtime-unreadable")).toBeNull();
   });
 });

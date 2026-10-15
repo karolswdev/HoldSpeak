@@ -3,6 +3,7 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor, act, within } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import { useDoorController } from "../useDoorController";
 
 /* ── Mock door API (includes discovery wires moved from setup/api by HS-170-02) ── */
 
@@ -848,7 +849,17 @@ describe("DoorCore", () => {
       });
       const well = await screen.findByTestId("signin-well-github");
       expect(well.textContent).toContain("gh auth login");
-      expect(screen.getByTestId("transport-copy")).toBeTruthy();
+      const previousClipboard = Object.getOwnPropertyDescriptor(navigator, "clipboard");
+      const writeText = vi.fn(async () => {});
+      Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
+      try {
+        fireEvent.click(within(well).getByRole("button", { name: "Copy" }));
+        await within(well).findByRole("button", { name: "Copied" });
+        expect(writeText).toHaveBeenCalledExactlyOnceWith("gh auth login");
+      } finally {
+        if (previousClipboard) Object.defineProperty(navigator, "clipboard", previousClipboard);
+        else Reflect.deleteProperty(navigator, "clipboard");
+      }
       expect(mockOpenSurfaceWindow).not.toHaveBeenCalled();
     });
 
@@ -878,6 +889,23 @@ describe("DoorCore", () => {
       });
       await waitFor(() => expect(mockRecheckProvider).toHaveBeenCalledWith("github"));
       await waitFor(() => expect(mockFetchConnections.mock.calls.length).toBeGreaterThan(reads));
+    });
+
+    it("Door recheck failure remains visible after the connection refresh", async () => {
+      mockFetchConnections.mockResolvedValue(coldTools());
+      mockRecheckProvider.mockRejectedValueOnce(new Error("Hub unavailable"));
+      let controller!: ReturnType<typeof useDoorController>;
+      function Probe() {
+        controller = useDoorController();
+        return <><button onClick={() => controller.recheck("github")}>Check GitHub</button><span role="alert">{controller.error}</span></>;
+      }
+      render(<Probe />);
+      await waitFor(() => expect(controller.loaded).toBe(true));
+      const reads = mockFetchConnections.mock.calls.length;
+      fireEvent.click(screen.getByRole("button", { name: "Check GitHub" }));
+      await waitFor(() => expect(screen.getByRole("alert").textContent).toContain("GitHub check failed"));
+      expect(mockFetchConnections.mock.calls.length).toBeGreaterThan(reads);
+      expect(controller.busy).toBeNull();
     });
 
     it("Add for a Jira account checks it at once (never left NEVER CHECKED)", async () => {

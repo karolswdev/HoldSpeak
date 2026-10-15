@@ -11,7 +11,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ApiError, apiFetch } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
-import { FilterTokens, GadgetGroup, GadgetRow, StateChip, StringGadget } from "../../desk/surface";
+import { FilterTokens, FoldGadget, GadgetGroup, GadgetRow, StateChip, StringGadget, SurfaceState } from "../../desk/surface";
 import { useOwnerName } from "../../desk/firstrun/ownerName";
 import { OwnerAliasField } from "../../desk/firstrun/OwnerAliasField";
 
@@ -71,6 +71,7 @@ export function usePeopleAccess() {
  * one-letter mishearing of the name ("Carol" for "Karol") still counts. */
 export function OwnerNameGroup() {
   const owner = useOwnerName();
+  if (owner.loading || owner.readError) return <GadgetGroup label="You"><SurfaceState loading={owner.loading} error={owner.readError} onRetry={() => void owner.reload()} /></GadgetGroup>;
   return (
     <GadgetGroup label="You">
       <GadgetRow label="Your name">
@@ -92,6 +93,7 @@ export function OwnerNameGroup() {
       {owner.error ? (
         <GadgetRow label="Receipt">
           <StateChip state="failure" label="NOT SAVED" />
+          <Button dense variant="secondary" onClick={() => void owner.flush()}>Retry</Button>
         </GadgetRow>
       ) : null}
     </GadgetGroup>
@@ -143,10 +145,10 @@ export function PeopleAccessModule() {
         </GadgetRow>
       ) : null}
       {access ? (<>
-      <GadgetRow label="Agents can read your People notes" wide>
+      <GadgetRow label="Agent access" wide>
         <span data-testid="people-access">
           <FilterTokens
-            label="People MCP access"
+            label="Agent access"
             value={held ? access.effective : access.mode}
             options={MODES}
             disabled={held || busy}
@@ -156,12 +158,10 @@ export function PeopleAccessModule() {
       </GadgetRow>
       <GadgetRow label="Agents you start">
         <span className="surface-token" data-chip data-testid="people-access-agents">
-          {access.agents === "off" ? "OFF" : "READ"}
-        </span>
-        <span className="surface-token" data-chip data-muted data-wrap data-testid="people-access-source">
-          {sourceToken(access)}
+          {access.agents === "off" ? "Off" : "Read"}
         </span>
       </GadgetRow>
+      {held ? <GadgetRow label="Access source"><span data-testid="people-access-source">Set by environment</span><FoldGadget title="Details"><code>{access.env_var || "HOLDSPEAK_MCP_PEOPLE_ACCESS"}</code></FoldGadget></GadgetRow> : null}
       </>) : null}
       {receipt ? (
         <GadgetRow label="Receipt">
@@ -171,14 +171,8 @@ export function PeopleAccessModule() {
             data-operation-id={receipt.operationId}
           >
             {receipt.ok
-              ? <StateChip state="success" label="SUCCEEDED" />
-              : <StateChip state="failure" label="REFUSED" />}{" "}
-            <span className="surface-token" data-chip>{`ACCESS · ${(MODES.find((m) => m.value === receipt.mode)?.label ?? receipt.mode).toUpperCase()}`}</span>{" "}
-            {!receipt.ok && receipt.code ? (
-              <span className="surface-token" data-chip>{receipt.code.toUpperCase()}</span>
-            ) : null}{" "}
-            <span className="surface-token" data-chip>BY OWNER</span>{" "}
-            <span className="surface-token" data-chip data-muted>{receipt.at}</span>
+              ? <StateChip state="success" label={`Saved · ${MODES.find((m) => m.value === receipt.mode)?.label ?? "Access"}`} />
+              : <StateChip state="failure" label={`Not saved · ${receipt.code === "people_access_env_override" ? "Set by environment" : "Access could not change"}`} />}
           </span>
         </GadgetRow>
       ) : null}

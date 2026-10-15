@@ -69,7 +69,6 @@ const hub = (patch: Partial<SettingsHubWire> = {}): SettingsHubWire => ({
 const face = (wire: SettingsHubWire) => {
   const view = render(<PrefsFace onOpen={vi.fn()} hub={wire} posture="neutral" onPosture={vi.fn()} precedence={[]} />);
   // PHILO-17 REFIT: the Meetings row folds under More settings.
-  fireEvent.click(screen.getByTestId("settings-more"));
   return view;
 };
 

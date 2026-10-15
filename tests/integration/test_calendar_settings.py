@@ -282,3 +282,62 @@ def test_sources_wire_via_mcp(
     assert sources[0]["label"] == "MCP source"
     assert sources[0]["id"]
     assert result["settings"]["_calendar_sources"][0]["kind"] == "https"
+
+
+def _named_calendar_sources() -> list[dict]:
+    return [
+        {"id": "native-work", "label": "Work", "url": "eventkit:CAL-WORK", "enabled": False},
+        {"id": "team-feed", "label": "Team", "url": "https://calendar.example.test/team.ics", "enabled": True},
+    ]
+
+
+def test_full_document_preference_save_preserves_named_disabled_native_and_other_calendars(
+    client: TestClient, settings_path: Path
+) -> None:
+    sources = _named_calendar_sources()
+    _put(client, {"calendar": {"sources": sources}})
+    draft = client.get("/api/settings").json()
+    assert draft["calendar"]["subscription"] == "eventkit:CAL-WORK"
+    draft["ui"]["desk_sounds"] = False
+
+    saved = _put(client, draft)
+
+    assert saved["calendar"]["sources"] == sources
+    assert Config.load(path=settings_path).to_dict()["calendar"]["sources"] == sources
+    assert saved["_calendar_sources"][0]["kind"] == "macos"
+    assert saved["_calendar_sources"][0]["enabled"] is False
+
+
+@pytest.mark.parametrize("sources", [[], _named_calendar_sources()[1:]])
+def test_canonical_calendar_sources_win_an_echoed_subscription_alias(
+    client: TestClient, settings_path: Path, sources: list[dict]
+) -> None:
+    _put(client, {"calendar": {"sources": _named_calendar_sources()}})
+    draft = client.get("/api/settings").json()
+    draft["calendar"]["sources"] = sources
+
+    saved = _put(client, draft)
+
+    assert saved["calendar"]["sources"] == sources
+    assert Config.load(path=settings_path).to_dict()["calendar"]["sources"] == sources
+
+
+def test_legacy_subscription_only_can_replace_and_clear_canonical_sources(
+    client: TestClient, settings_path: Path
+) -> None:
+    _put(client, {"calendar": {"sources": _named_calendar_sources()}})
+    saved = _put(client, {"calendar": {"subscription": "/tmp/replacement.ics"}})
+    assert [s["url"] for s in saved["calendar"]["sources"]] == ["/tmp/replacement.ics"]
+    cleared = _put(client, {"calendar": {"subscription": ""}})
+    assert cleared["calendar"]["sources"] == []
+    assert Config.load(path=settings_path).calendar.sources == []
+
+
+def test_unrelated_partial_preference_save_preserves_every_calendar_source_byte(
+    client: TestClient, settings_path: Path
+) -> None:
+    sources = _named_calendar_sources()
+    _put(client, {"calendar": {"sources": sources}})
+    saved = _put(client, {"presence": {"enabled": True}})
+    assert saved["calendar"]["sources"] == sources
+    assert Config.load(path=settings_path).to_dict()["calendar"]["sources"] == sources

@@ -24,6 +24,28 @@ afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.useRealTimers(); });
 
 const puts = () => calls.filter((c) => c.method === "PUT");
 
+describe("owner identity must be read before editing", () => {
+  it("a failed read cannot write blank aliases and Retry recovers the saved identity", async () => {
+    let failed = true;
+    vi.stubGlobal("fetch", vi.fn(async (_url: string, init?: RequestInit) => {
+      const method = init?.method ?? "GET";
+      calls.push({ method, body: init?.body ? JSON.parse(String(init.body)) : null });
+      return new Response(JSON.stringify(failed ? { error: "Unavailable" } : { owner: { name: "Karol", aliases: ["Carol"] } }),
+        { status: failed ? 503 : 200, headers: { "content-type": "application/json" } });
+    }));
+    render(<Probe />);
+    await act(async () => { await Promise.resolve(); });
+    expect(owner.readError).toBeTruthy();
+    act(() => { owner.setName("New"); owner.addAliases("Other"); });
+    await act(async () => { await owner.flush(); });
+    expect(puts()).toEqual([]);
+    failed = false;
+    await act(async () => { await owner.reload(); });
+    expect(owner.name).toBe("Karol");
+    expect(owner.aliases).toEqual(["Carol"]);
+  });
+});
+
 describe("useOwnerName flushes on page leave", () => {
   it("pagehide inside the delay sends the pending edit at once, with keepalive", async () => {
     render(<Probe />);

@@ -292,12 +292,22 @@ class OnboardingService:
         else:
             label = label or str(urlsplit(source).hostname or "")
         existing = self._sources()
-        for item in existing:
-            if str(item.url) == source:
-                return {"added": False, "source": _source_row(item)}
         sources = [
             {"id": s.id, "label": s.label, "url": s.url, "enabled": s.enabled} for s in existing
         ]
+        for index, item in enumerate(existing):
+            if str(item.url) == source:
+                # Explicit native reselection can repair a name erased by an
+                # older Settings write. The detected title is authoritative;
+                # keep custom names and every other saved source value.
+                if source.startswith("eventkit:") and not item.label:
+                    detected_label = str(match["title"] or "").strip()[:200]
+                    if detected_label:
+                        sources[index]["label"] = detected_label
+                        self._settings.update_settings(principal, {"calendar": {"sources": sources}})
+                        repaired = next(s for s in self._sources() if s.id == item.id)
+                        return {"added": False, "source": _source_row(repaired)}
+                return {"added": False, "source": _source_row(item)}
         sources.append({"label": label[:200], "url": source, "enabled": True})
         self._settings.update_settings(principal, {"calendar": {"sources": sources}})
         added = next((s for s in self._sources() if str(s.url) == source), None)

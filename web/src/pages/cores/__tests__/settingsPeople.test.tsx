@@ -31,7 +31,7 @@ beforeEach(() => {
 });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
-const strip = () => screen.getByRole("group", { name: "People MCP access" });
+const strip = () => screen.getByRole("group", { name: "Agent access" });
 
 describe("Settings › People", () => {
   it("shows Off / Read / Read and write (PHILO-17 U35 plain words) with the setting pressed, agents READ and SOURCE · SETTING", async () => {
@@ -39,10 +39,10 @@ describe("Settings › People", () => {
     await screen.findByTestId("people-access-agents");
     const tokens = within(strip()).getAllByRole("button");
     expect(tokens.map((t) => t.textContent)).toEqual(["Off", "Read", "Read and write"]);
-    expect(screen.getByText("Agents can read your People notes")).toBeTruthy();
+    expect(screen.getByText("Agent access")).toBeTruthy();
     expect(within(strip()).getByRole("button", { name: "Read and write" }).getAttribute("aria-pressed")).toBe("true");
-    expect(screen.getByTestId("people-access-agents").textContent).toBe("READ");
-    expect(screen.getByTestId("people-access-source").textContent).toBe("SOURCE · SETTING");
+    expect(screen.getByTestId("people-access-agents").textContent).toBe("Read");
+    expect(screen.queryByTestId("people-access-source")).toBeNull();
     expect(tokens.every((t) => !(t as HTMLButtonElement).disabled)).toBe(true);
   });
 
@@ -50,13 +50,13 @@ describe("Settings › People", () => {
     render(<PeopleAccessModule />);
     await screen.findByTestId("people-access-agents");
     fireEvent.click(within(strip()).getByRole("button", { name: "Off" }));
-    await waitFor(() => expect(screen.getByTestId("people-access-agents").textContent).toBe("OFF"));
+    await waitFor(() => expect(screen.getByTestId("people-access-agents").textContent).toBe("Off"));
     expect(puts).toEqual([{ mode: "off" }]);
     const receipt = screen.getByTestId("people-access-receipt");
     expect(receipt.getAttribute("data-outcome")).toBe("succeeded");
     expect(receipt.getAttribute("data-operation-id")).toBe("op_1");
-    expect(receipt.textContent).toContain("SUCCEEDED");
-    expect(receipt.textContent).toContain("ACCESS · OFF");
+    expect(receipt.textContent).toContain("Saved · Off");
+    expect(receipt.querySelectorAll(".gadget-state").length).toBeLessThanOrEqual(1);
   });
 
   it("is disabled while the variable overrides the setting, and names it", async () => {
@@ -67,8 +67,8 @@ describe("Settings › People", () => {
     const tokens = within(strip()).getAllByRole("button") as HTMLButtonElement[];
     expect(tokens.every((t) => t.disabled)).toBe(true);
     expect(within(strip()).getByRole("button", { name: "Off" }).getAttribute("aria-pressed")).toBe("true");
-    expect(screen.getByTestId("people-access-source").textContent).toBe("SOURCE · HOLDSPEAK_MCP_PEOPLE_ACCESS");
-    expect(screen.getByTestId("people-access-agents").textContent).toBe("OFF");
+    expect(screen.getByTestId("people-access-source").textContent).toBe("Set by environment");
+    expect(screen.getByTestId("people-access-agents").textContent).toBe("Off");
     fireEvent.click(tokens[1]);
     expect(puts).toEqual([]);
   });
@@ -80,8 +80,8 @@ describe("Settings › People", () => {
     fireEvent.click(within(strip()).getByRole("button", { name: "Read" }));
     const receipt = await screen.findByTestId("people-access-receipt");
     expect(receipt.getAttribute("data-outcome")).toBe("refused");
-    expect(receipt.textContent).toContain("REFUSED");
-    expect(receipt.textContent).toContain("PEOPLE_ACCESS_ENV_OVERRIDE");
+    expect(receipt.textContent).toContain("Not saved");
+    expect(receipt.textContent).toContain("Set by environment");
   });
 
   it("the hub row's cell is one plain fact (PHILO-17 U35: was MCP · WRITE · AGENTS · READ)", async () => {
@@ -104,7 +104,7 @@ describe("Settings › People", () => {
     putAnswer = () => ({ status: 409, body: { code: "people_access_env_override", operation_id: "op_review" } });
     fireEvent.click(within(strip()).getByRole("button", { name: "Off" }));
     await waitFor(() => expect(screen.queryByTestId("people-access-agents")).toBeNull());
-    expect(screen.getByTestId("people-access-receipt").textContent).toContain("PEOPLE_ACCESS_ENV_OVERRIDE");
+    expect(screen.getByTestId("people-access-receipt").textContent).toContain("Set by environment");
     const failed = screen.getByTestId("people-access-read-failed");
     expect(failed.textContent).toContain("READ FAILED");
     expect(failed.getAttribute("data-code")).toBe("unavailable");
@@ -116,7 +116,7 @@ describe("Settings › People", () => {
     const failed = await screen.findByTestId("people-access-read-failed");
     expect(failed.textContent).toContain("READ FAILED");
     expect(failed.textContent).toContain("UNAVAILABLE");
-    expect(screen.queryByRole("group", { name: "People MCP access" })).toBeNull();
+    expect(screen.queryByRole("group", { name: "Agent access" })).toBeNull();
     getAnswer = () => ({ status: 200, body: { mode: "write", effective: "write", source: "config", env_var: null, agents: "read" } });
     fireEvent.click(within(failed).getByRole("button", { name: "Retry" }));
     await screen.findByTestId("people-access-agents");

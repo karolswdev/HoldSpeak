@@ -136,7 +136,8 @@ export function RuntimeDocsCore({ hero, speechTestId = "guide-speech-setup" }: C
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
   const checks = sortChecks(asRows(resource.data.sections, []) as Check[]);
   const needs = checks.filter((c) => c.status === "fail" || c.status === "warn");
-  const fine = checks.filter((c) => !(c.status === "fail" || c.status === "warn"));
+  const fine = checks.filter((c) => c.status === "pass" || c.status === "info");
+  const unknown = checks.filter((c) => !["pass", "info", "fail", "warn"].includes(c.status ?? ""));
   const fixable = (c: Check) => c.id === "speech-model" || ENGINE_CHECKS.has(String(c.id ?? "")) || Boolean(commandOf(c.fix));
   const leadCheck = needs.find(fixable);
   const loaded = !resource.loading || checks.length > 0;
@@ -153,11 +154,13 @@ export function RuntimeDocsCore({ hero, speechTestId = "guide-speech-setup" }: C
     }
   };
 
-  const headline = !loaded
+  const headline = resource.error
+    ? "Readiness not known"
+    : !loaded
     ? "Checking"
     : needs.length
       ? needWords(needs.length)
-      : "Everything is ready";
+      : unknown.length || !checks.length ? "Readiness not known" : "Everything is ready";
   // ONE filled primary: the first row that needs him, else Test runtime.
   return (
     <>
@@ -181,6 +184,7 @@ export function RuntimeDocsCore({ hero, speechTestId = "guide-speech-setup" }: C
             ))}
           </ul>
         ) : null}
+        {unknown.length ? <ul className="guide-list" aria-label="Not known">{unknown.map((check, index) => <GuideRow key={String(check.id ?? index)} check={check} lead={false} speech={speech} speechTestId={speechTestId} onReady={() => void resource.reload()} />)}</ul> : null}
         {fine.length ? (
           <FoldGadget title="Ready" token={String(fine.length)}>
             <ul className="guide-list">

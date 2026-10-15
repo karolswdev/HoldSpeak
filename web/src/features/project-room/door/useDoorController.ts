@@ -534,8 +534,12 @@ export function useDoorController(options: DoorOptions = {}): DoorController {
   const recheck = useCallback(
     async (provider: string) => {
       setBusy(provider);
+      setError("");
       try {
         await recheckProvider(provider);
+      } catch (error) {
+        const name = provider === "github" ? "GitHub" : provider === "jira" ? "Jira" : "Confluence";
+        safe(() => setError(`${name} check failed · ${readableError(error)}`));
       } finally {
         await readConnections();
         safe(() => setBusy(null));

@@ -3,6 +3,7 @@ import {
   mergeSettingsChanges,
   projectPendingSettingsChanges,
   settingsScope,
+  snapshotEgressChip,
 } from "../SettingsCore";
 
 describe("Settings registered wing deep links", () => {
@@ -13,6 +14,15 @@ describe("Settings registered wing deep links", () => {
   it("keeps a wing's requested repair and refuses an unknown wing", () => {
     expect(settingsScope("models::writing_dictation")).toEqual({ module: "models", focus: "writing_dictation" });
     expect(settingsScope("not-a-wing").module).toBeNull();
+  });
+});
+
+describe("Settings snapshot import destination", () => {
+  it.each(["127.0.0.1", "http://127.0.0.1:8080/v1", "localhost", "[::1]"])("omits the chip for the known loopback host %s", (host) => {
+    expect(snapshotEgressChip({ scope: "cloud", host })).toBeNull();
+  });
+  it.each(["192.168.1.43", "api.example.com"])("keeps the external host %s", (host) => {
+    expect(snapshotEgressChip({ scope: "cloud", host })?.label).toBe(host);
   });
 });
 

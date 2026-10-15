@@ -124,8 +124,7 @@ const ledgerRow = (name: string) =>
 async function openHub() {
   const view = render(<SettingsCore />);
   await screen.findByText("No engine yet");
-  // PHILO-17 REFIT: the rows past Runs on and Accounts fold under More settings.
-  fireEvent.click(screen.getByTestId("settings-more"));
+  // Ordinary preferences are visible on first open.
   await waitFor(() => expect(ledgerRow("Rhythm")?.textContent).toContain("EVERY 15 MIN"));
   return view;
 }
@@ -166,7 +165,6 @@ describe("the Settings hub on a cold hub", () => {
     expect(container.querySelector(".prefs-module .gadget-pane-title")?.textContent).toBe("Voice");
     fireEvent.click(screen.getByRole("button", { name: "Settings" }));
     await screen.findByText("No engine yet");
-    fireEvent.click(screen.getByTestId("settings-more"));
     fireEvent.click(within(ledgerRow("System")!).getByRole("button", { name: "Open" }));
     expect(container.querySelector(".prefs-module .gadget-pane-title")?.textContent).toBe("System");
     await screen.findByTestId("system-display");
@@ -192,7 +190,7 @@ describe("every declared settings module has a door", () => {
     expect(container.querySelectorAll(".surface-footer-layout")).toHaveLength(1);
     fireEvent.click(screen.getByRole("button", { name: "Settings" }));
     await waitFor(() => expect(container.querySelector(".prefs-hub")).toBeTruthy());
-    expect(container.querySelector(".prefs-back")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Settings" })).toBeNull();
   });
 });
 
@@ -260,7 +258,6 @@ describe("Settings navigation uses one selection", () => {
     expectWing("Guide");
     expect(document.querySelectorAll(".surface-footer-layout")).toHaveLength(1);
     pressWing("Settings");
-    fireEvent.click(screen.getByTestId("settings-more"));
     fireEvent.click(within(ledgerRow("Meetings")!).getByRole("button", { name: "Open" }));
     expect(screen.getByRole("checkbox", { name: "Auto export" })).toBeChecked();
   });
@@ -304,10 +301,10 @@ describe("Settings navigation uses one selection", () => {
     fireEvent.click(await screen.findByRole("checkbox", { name: "Auto export" }));
     pressWing("Guide");
     await screen.findByTestId("guide");
-    const retry = await screen.findByRole("button", { name: "Try again" }, { timeout: 3000 });
+    const retry = within(await screen.findByTestId("settings-save-failure", {}, { timeout: 3000 })).getByRole("button", { name: "Retry" });
     expect(retry.closest('[role="alert"]')?.textContent).toContain("Settings connection lost");
     expectWing("Guide");
-    expect(screen.queryByTestId("guide")).toBeNull();
+    expect(screen.getByTestId("guide")).toBeInTheDocument();
     expect(hub.state.settings.meeting.auto_export).toBe(false);
     expect(document.querySelectorAll(".surface-footer-layout")).toHaveLength(1);
 
@@ -316,7 +313,7 @@ describe("Settings navigation uses one selection", () => {
     await waitFor(() => expect(hub.state.settings.meeting.auto_export).toBe(true));
     await screen.findByTestId("guide");
     expect(screen.queryByText(/REFUSED/)).toBeNull();
-    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
     expect(document.querySelectorAll(".surface-footer-layout")).toHaveLength(1);
   });
 });
@@ -346,15 +343,14 @@ describe("Settings › People: his name and the other names for him", () => {
 
 describe("Settings › Meetings", () => {
   const meetingsText = () => document.querySelector(".prefs-module")?.textContent ?? "";
-  const summaryRow = () =>
-    Array.from(document.querySelectorAll(".gadget-row")).find(
-      (row) => row.querySelector(".gadget-row-label")?.textContent === "Summary",
-    ) as HTMLElement;
+  const summaryRow = () => screen.getByTestId("settings-summary-controls").closest(".gadget-row") as HTMLElement;
 
   it("cold: After every meeting, the cycle, NO MODEL + Choose model and no egress chip; Mic device, Auto export; Summary, never Intelligence", async () => {
     // replaces: tests/e2e/test_hs172_settings_meetings_glass.py::TestSettingsMeetingsAutoRun::test_settings_meetings_nomodel
     const { container } = render(<SettingsCore scope="meetings" />);
-    await waitFor(() => expect(screen.getByTestId("meetings-auto-display").textContent).toContain("After every meeting"));
+    await screen.findByRole("combobox", { name: "Auto-run the summary" });
+    expect(screen.queryByTestId("meetings-auto-display")).toBeNull();
+    expect(screen.getByRole("option", { name: "Manual" })).toBeInTheDocument();
     await screen.findByTestId("settings-no-model");
     expect(container.querySelectorAll(".gadget-cycle select").length).toBeGreaterThanOrEqual(1);
     expect(summaryRow().querySelector(".surface-state-chip[data-state='warning']")).not.toBeNull();
@@ -380,17 +376,19 @@ describe("Settings › Meetings", () => {
     // replaces: tests/e2e/test_hs175_settings_meetings_glass.py::TestSettingsCalendarSection::test_calendar_section
     hub.state.settings.calendar = { ...hub.state.settings.calendar, sources: [{ id: "src-work", label: "WORK", url: "/Users/owner/work.ics", enabled: true }] };
     hub.state.calendar = { ...clone(calendarOneWire), matched_this_week: 1 };
+    hub.state.settings.meeting.auto_record = "room_linked";
     render(<SettingsCore scope="meetings" />);
     const auto = await screen.findByTestId("settings-auto-record");
     await waitFor(() => expect(within(auto).getByTestId("matched-this-week").textContent).toBe("1 MATCHED THIS WEEK"));
     expect(auto.textContent).toContain("5 MIN BEFORE");
     expect(auto.querySelector("select")).not.toBeNull();
     const text = meetingsText();
-    expect(text.indexOf("Auto export")).toBeLessThan(text.indexOf("CALENDAR"));
+    expect(text.indexOf("CALENDAR")).toBeLessThan(text.indexOf("Auto export"));
     const row = screen.getByTestId("calendar-source-src-work");
-    expect(within(row).getByText("ICS")).toBeInTheDocument();
+    expect(within(row).getByText("Calendar feed")).toBeInTheDocument();
     expect(within(row).queryByText("THIS DEVICE")).toBeNull();
-    for (const verb of ["Edit", "Disable", "Remove"]) expect(within(row).getByRole("button", { name: verb })).toBeInTheDocument();
+    fireEvent.click(within(row).getByRole("button", { name: "Edit" }));
+    for (const verb of ["Disable", "Remove"]) expect(within(row.closest(".surface-ledger-row") as HTMLElement).getByRole("button", { name: verb })).toBeInTheDocument();
     expect(screen.getByTestId("calendar-connect-row")).toBeInTheDocument();
     expect(document.querySelector(".prefs-calendar-section")?.textContent ?? "").not.toMatch(/\b0\s+(SOURCE|CALENDAR|EVENT|RECORDING|MATCHED)/i);
   });
@@ -400,7 +398,7 @@ describe("Settings › Meetings", () => {
     render(<SettingsCore scope="meetings" />);
     fireEvent.click(await screen.findByTestId("calendar-add-btn"));
     const well = screen.getByTestId("calendar-well");
-    expect(within(well).getByRole("textbox").getAttribute("placeholder")).toMatch(/ICS|file/);
+    expect(within(well).getByRole("textbox", { name: "Calendar URL or file path" }).getAttribute("placeholder")).toMatch(/ICS|file/);
     expect(well.querySelector(".desk-mic")).not.toBeNull();
     expect(within(well).getByRole("button", { name: "Cancel" })).toBeInTheDocument();
     expect(within(well).getByRole("button", { name: "Save" })).toBeInTheDocument();
@@ -414,6 +412,185 @@ describe("Settings › Meetings", () => {
     await waitFor(() => expect(hub.state.calls.some((c) => c.path === "/api/calendar/sources")).toBe(true));
     expect(auto.textContent).not.toContain("MATCHED THIS WEEK");
     expect(auto.textContent).not.toContain("MIN BEFORE");
+  });
+});
+
+describe("Settings repair: ordinary choices and recoverable writes", () => {
+  it("shows ordinary modules without an extra disclosure", async () => {
+    render(<SettingsCore />);
+    await screen.findByTestId("settings-hub-choose");
+    expect(ledgerRow("Meetings")).toBeTruthy();
+    expect(ledgerRow("Voice")).toBeTruthy();
+    expect(screen.queryByTestId("settings-more")).toBeNull();
+  });
+
+  it("renames a native calendar without exposing or changing its identifier, preserving every source", async () => {
+    const original = clone(hub.state.settings.calendar);
+    const native = { ...clone(original.sources[0] ?? {}), id: "native-work", label: "", url: "eventkit:6A0B9E7C-1884-4C46-9F90-9A7B1D24B191", enabled: true };
+    const feed = { ...native, id: "team-feed", label: "Team", url: "https://work.example/calendar.ics", enabled: false };
+    hub.state.settings.calendar = { ...original, sources: [native, feed] };
+    hub.state.calendar = { ...clone(calendarOneWire), sources: [{ ...clone(calendarOneWire.sources[0]), id: native.id, label: "", type: "MACOS" }] };
+    render(<SettingsCore scope="meetings" />);
+    const row = await screen.findByTestId("calendar-source-native-work");
+    expect(row.textContent).toContain("Mac calendar");
+    expect(row.textContent).not.toContain("6A0B9E7C");
+    expect(row.textContent).not.toContain("ICS");
+    fireEvent.click(within(row).getByRole("button", { name: "Edit" }));
+    const well = screen.getByTestId("calendar-well");
+    expect(within(well).queryByRole("textbox", { name: "Calendar URL or file path" })).toBeNull();
+    fireEvent.change(within(well).getByRole("textbox", { name: "Calendar name" }), { target: { value: "Work" } });
+    fireEvent.click(within(well).getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(hub.state.settings.calendar.sources[0].label).toBe("Work"));
+    const put = hub.state.calls.find((call) => call.method === "PUT" && call.path === "/api/settings")!;
+    expect(Object.keys(put.body!).sort()).toEqual(["_revision", "calendar"]);
+    expect(put.body!.calendar).toEqual({ sources: [{ ...native, label: "Work" }, feed] });
+    expect(hub.state.settings.calendar.sources[0].url).toBe(native.url);
+  });
+
+  it("keeps a refused edit in place and Retry sends only its changed path", async () => {
+    hub.state.settings.meeting.auto_export = false;
+    const base = hub.fetchStub;
+    let refuse = true;
+    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
+      if (refuse && init?.method === "PUT" && new URL(String(input), "http://hub.test").pathname === "/api/settings") throw new TypeError("Settings connection lost");
+      return base(input, init);
+    }));
+    render(<SettingsCore scope="meetings" />);
+    const toggle = await screen.findByRole("checkbox", { name: "Auto export" });
+    fireEvent.click(toggle);
+    const retry = within(await screen.findByTestId("settings-save-failure", {}, { timeout: 3000 })).getByRole("button", { name: "Retry" });
+    expect(toggle).toBeChecked();
+    expect(retry.closest('[role="alert"]')?.textContent).toContain("Settings connection lost");
+    const footer = document.querySelector(".surface-footer-layout")!;
+    expect(footer.querySelector(".surface-footer-receipt")?.textContent).toContain("Not saved");
+    expect(footer.querySelector(".surface-footer-verbs")?.textContent).not.toContain("Settings connection lost");
+    refuse = false;
+    fireEvent.click(retry);
+    await waitFor(() => expect(hub.state.settings.meeting.auto_export).toBe(true));
+    const put = hub.state.calls.find((call) => call.method === "PUT" && call.path === "/api/settings")!;
+    expect(put.body).toEqual({ _revision: settingsWire._revision, meeting: { auto_export: true } });
+    expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
+  });
+
+  it("an unrelated accepted edit keeps the earlier failure; a later edit of that field wins", async () => {
+    hub.state.settings.meeting.auto_export = false;
+    const base = hub.fetchStub;
+    let refuse = true;
+    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
+      if (refuse && init?.method === "PUT" && new URL(String(input), "http://hub.test").pathname === "/api/settings") throw new TypeError("Settings connection lost");
+      return base(input, init);
+    }));
+    render(<SettingsCore scope="meetings" />);
+    const toggle = await screen.findByRole("checkbox", { name: "Auto export" });
+    fireEvent.click(toggle);
+    await screen.findByTestId("settings-save-failure", {}, { timeout: 3000 });
+    refuse = false;
+    fireEvent.change(screen.getByRole("combobox", { name: "Auto-run the summary" }), { target: { value: "off" } });
+    await waitFor(() => expect(hub.state.settings.meeting.intelligence_auto).toBe("off"), { timeout: 3000 });
+    expect(toggle).toBeChecked();
+    expect(screen.getByTestId("settings-save-failure")).toBeInTheDocument();
+    fireEvent.click(toggle);
+    await waitFor(() => expect(screen.queryByTestId("settings-save-failure")).toBeNull(), { timeout: 3000 });
+    expect(toggle).not.toBeChecked();
+    expect(hub.state.settings.meeting.auto_export).toBe(false);
+  });
+
+  it("Retry keeps the newer same-field edit made inside the debounce window", async () => {
+    const base = hub.fetchStub;
+    let refuse = true;
+    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
+      if (refuse && init?.method === "PUT" && new URL(String(input), "http://hub.test").pathname === "/api/settings") throw new TypeError("Settings connection lost");
+      return base(input, init);
+    }));
+    render(<SettingsCore scope="meetings" />);
+    const timing = await screen.findByRole("combobox", { name: "Auto-run the summary" });
+    fireEvent.change(timing, { target: { value: "room_linked" } });
+    const failure = await screen.findByTestId("settings-save-failure", {}, { timeout: 3000 });
+    refuse = false;
+    fireEvent.change(timing, { target: { value: "off" } });
+    fireEvent.click(within(failure).getByRole("button", { name: "Retry" }));
+    expect(timing).toHaveValue("off");
+    await waitFor(() => expect(hub.state.settings.meeting.intelligence_auto).toBe("off"));
+    expect(hub.state.calls.filter((call) => call.method === "PUT" && call.path === "/api/settings").at(-1)?.body?.meeting).toEqual({ intelligence_auto: "off" });
+  });
+
+  it("a successful secret replacement keeps the earlier preference failure and its Retry", async () => {
+    hub.state.settings.meeting.auto_export = false;
+    const base = hub.fetchStub;
+    let refusePreference = true;
+    let secretSaved = false;
+    let modeSaved = false;
+    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
+      const path = new URL(String(input), "http://hub.test").pathname;
+      if (refusePreference && init?.method === "PUT" && path === "/api/settings") throw new TypeError("Preference connection lost");
+      if (init?.method === "PUT" && path === "/api/settings/secrets/web_token") { secretSaved = true; return new Response(JSON.stringify({ success: true }), { status: 200, headers: { "content-type": "application/json" } }); }
+      if (init?.method === "PUT" && path === "/api/authority/control-mode") { modeSaved = true; return new Response(JSON.stringify({ ...authorityWire, control_mode: "neutral" }), { status: 200, headers: { "content-type": "application/json" } }); }
+      return base(input, init);
+    }));
+    render(<SettingsWindow scope="meetings" />);
+    fireEvent.click(await screen.findByRole("checkbox", { name: "Auto export" }));
+    await screen.findByTestId("settings-save-failure", {}, { timeout: 3000 });
+    fireEvent.click(screen.getByRole("tab", { name: "Accounts" }));
+    const credentials = screen.getByText("Credentials").closest("details")!;
+    fireEvent.click(within(credentials).getByText("Credentials"));
+    const secret = Array.from(credentials.querySelectorAll(".gadget-secret")).find((row) => row.textContent?.includes("Web pairing token")) as HTMLElement;
+    fireEvent.click(within(secret).getByRole("button", { name: "Replace" }));
+    const replacement = within(secret).getByLabelText("Replacement Web pairing token");
+    fireEvent.change(replacement, { target: { value: "fixture-replacement" } });
+    fireEvent.keyDown(replacement, { key: "Enter" });
+    await waitFor(() => expect(secretSaved).toBe(true));
+    await waitFor(() => expect(within(secret).getByRole("button", { name: "Replace" })).not.toBeDisabled());
+    expect(screen.getByTestId("settings-save-failure").textContent).toContain("Preference connection lost");
+    expect(document.querySelector(".surface-footer-receipt")?.textContent).toContain("Not saved");
+    fireEvent.click(screen.getByRole("tab", { name: "Settings" }));
+    fireEvent.change(await screen.findByRole("combobox", { name: "Control posture" }), { target: { value: "neutral" } });
+    await waitFor(() => expect(modeSaved).toBe(true));
+    expect(screen.getByTestId("settings-save-failure").textContent).toContain("Preference connection lost");
+    expect(document.querySelector(".surface-footer-receipt")?.textContent).toContain("Not saved");
+    refusePreference = false;
+    fireEvent.click(within(screen.getByTestId("settings-save-failure")).getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(hub.state.settings.meeting.auto_export).toBe(true));
+  });
+
+  it("offers primary Retry in the footer while a failed preference remains pending", async () => {
+    const base = hub.fetchStub;
+    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
+      if (init?.method === "PUT" && new URL(String(input), "http://hub.test").pathname === "/api/settings") throw new TypeError("Settings connection lost");
+      return base(input, init);
+    }));
+    render(<SettingsCore scope="meetings" />);
+    fireEvent.click(await screen.findByRole("checkbox", { name: "Auto export" }));
+    await screen.findByTestId("settings-save-failure", {}, { timeout: 3000 });
+    const footer = document.querySelector(".surface-footer-layout") as HTMLElement;
+    expect(within(footer).getByRole("button", { name: "Retry" }).className).toContain("btn--primary");
+  });
+
+  it("Auto-record reflects the edited setting even while calendar statistics report the earlier mode", async () => {
+    hub.state.settings.meeting.auto_record = "off";
+    hub.state.calendar = { ...clone(calendarOneWire), auto_record: "room_linked" };
+    render(<SettingsCore scope="meetings" />);
+    const control = await screen.findByRole("combobox", { name: "Auto-record mode" });
+    expect(control).toHaveValue("off");
+    fireEvent.change(control, { target: { value: "all_calendar" } });
+    expect(control).toHaveValue("all_calendar");
+    await waitFor(() => expect(hub.state.settings.meeting.auto_record).toBe("all_calendar"), { timeout: 3000 });
+    expect(control).toHaveValue("all_calendar");
+  });
+
+  it("a failed runtime read offers a working Retry instead of a false identity", async () => {
+    const base = hub.fetchStub;
+    let refuse = true;
+    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
+      if (refuse && new URL(String(input), "http://hub.test").pathname === "/api/system/identity") throw new TypeError("Device details unavailable");
+      return base(input, init);
+    }));
+    render(<SettingsCore scope="system" />);
+    const failure = await screen.findByTestId("runtime-unreadable");
+    expect(screen.queryByTestId("runtime-backend")).toBeNull();
+    refuse = false;
+    fireEvent.click(within(failure).getByRole("button", { name: "Retry" }));
+    await screen.findByTestId("runtime-backend");
+    expect(screen.queryByTestId("runtime-unreadable")).toBeNull();
   });
 });
 
@@ -521,7 +698,7 @@ describe("Settings › Meetings when the owner turned summaries off", () => {
 });
 
 describe("Settings › Sounds without the speech extra", () => {
-  it("BROWSER VOICE is ACTIVE and the server voice is one install line, not a dead switch", async () => {
+  it("browser voice names observed support and the server voice is one install line", async () => {
     // replaces: tests/e2e/test_hs154_call_glass.py::test_tts_settings_glass
     // The answer is the hub's own: GET /api/tts/status without the extra
     // (holdspeak/web/routes/tts.py; tests/unit/test_tts_route.py::TestTtsNotInstalled).
@@ -531,10 +708,10 @@ describe("Settings › Sounds without the speech extra", () => {
         ? new Response(JSON.stringify({ installed: false, model_ready: false }), { status: 200, headers: { "content-type": "application/json" } })
         : base(input, init)));
     render(<SettingsCore scope="sounds" />);
-    const label = await screen.findByText("BROWSER VOICE");
+    const label = await screen.findByText("Browser voice");
     const group = label.closest(".gadget-group") as HTMLElement;
-    expect(group.textContent).toContain("ACTIVE");
-    expect(group.textContent).toContain("SERVER VOICE · pip install 'holdspeak[tts]'");
+    expect(group.textContent).toContain("Not available");
+    expect(group.textContent).toContain("Server voice · pip install 'holdspeak[tts]'");
     expect(within(group).queryByRole("checkbox")).toBeNull();
     expect(within(group).queryByRole("button")).toBeNull();
   });

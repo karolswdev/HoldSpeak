@@ -53,8 +53,8 @@ describe("Settings wallpaper picker", () => {
     expect(screen.getByRole("radio", { name: /Quiet Desk/ })).toHaveFocus();
     await user.keyboard("{Home}");
     expect(screen.getByRole("radio", { name: /Rainy City/ })).toHaveFocus();
-    expect(
-      screen.getByRole("checkbox", { name: "Environment sound" }),
-    ).not.toBeChecked();
+    expect(screen.queryByRole("checkbox", { name: "Environment sound" })).toBeNull();
+    expect(screen.queryByRole("checkbox", { name: "Environment animation" })).toBeNull();
+    expect(screen.queryByText("SAVED ON THIS BROWSER · APPLIES LIVE TO THE FLOOR")).toBeNull();
   });
 });

@@ -4,7 +4,7 @@
 // hub's OWN /api/connections answers, recorded by
 // tests/integration/test_desk_connections.py (which proves no fixture field
 // is invented: the scar law).
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ConnectionsPane } from "../../pages/cores/connections";
 import checkedWire from "./fixtures/connections-wire/connections-checked.json";
@@ -100,6 +100,9 @@ describe("Recheck asks the hub and the card shows its answer", () => {
       const path = new URL(String(input), "http://hub.test").pathname;
       if (path === "/api/connections/github/recheck" && init?.method === "POST") {
         reads.push(`POST ${path}`);
+        // Recheck stores this answer. The Accounts refresh GET must read it,
+        // rather than replay the cold state that existed before the press.
+        wire.tools = wire.tools.map((entry: Json) => entry.provider_id === "github" ? clone(answer) : entry);
         return new Response(JSON.stringify(answer), { status: 200, headers: { "content-type": "application/json" } });
       }
       return base(input, init);
@@ -108,10 +111,11 @@ describe("Recheck asks the hub and the card shows its answer", () => {
     render(<ConnectionsPane onFooterUpdate={onFooterUpdate} onOpenModule={vi.fn()} />);
     const card = await screen.findByTestId("connections-github");
     expect(chipWords(card)).toBe("Never checked");
-    within(card).getByRole("button", { name: /Recheck/ }).click();
+    fireEvent.click(within(card).getByRole("button", { name: /Recheck/ }));
     await screen.findByText(/Connected · Checked now/);
     expect(chipWords(screen.getByTestId("connections-github"))).toBe("Connected · Checked now");
     expect(reads).toContain("POST /api/connections/github/recheck");
+    expect(reads.filter((read) => read === "GET /api/connections")).toHaveLength(2);
     const foot = onFooterUpdate.mock.calls.at(-1)?.[0];
     expect(foot.egressHost).toBe("github.com");
     expect(foot.checkedAt).toBeTruthy();

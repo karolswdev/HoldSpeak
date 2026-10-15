@@ -8,6 +8,9 @@ import { checkedAgo, stateWords } from "../connections/ConnectionsPane";
 // The hub's own /api/connections on a fresh HOME (scripts/record_needs_you_fixture.py,
 // the "grouped" boot): the test diet's SCAR LAW, no typed state.
 import RECORDED from "../../../desk/__tests__/fixtures/needsYou.recorded.json";
+import CALENDAR_WIRE from "../../../test/wire/onboarding-calendar.wire.json";
+import CALENDAR_USE_WIRE from "../../../test/wire/onboarding-calendar.use.wire.json";
+import CALENDAR_CHECK_WIRE from "../../../test/wire/onboarding-calendar.check.wire.json";
 
 const RECORDED_CONNECTIONS = RECORDED.grouped.gets["/api/connections"] as unknown as ConnectionsResponse;
 function recordedTool(id: string): ConnectionTool {
@@ -26,7 +29,8 @@ vi.mock("../connections/api", async (importOriginal) => {
   };
 });
 
-vi.mock("../../../lib/api", () => ({
+vi.mock("../../../lib/api", async (importOriginal) => ({
+  ApiError: (await importOriginal<typeof import("../../../lib/api")>()).ApiError,
   apiFetch: vi.fn(),
   readableError: (e: unknown) => String(e),
 }));
@@ -372,9 +376,13 @@ describe("ConnectionsPane", () => {
     it("calls recheckProvider and updates the footer", async () => {
       const updated = connectedGithub();
       updated.last_checked_at = "2026-09-04T14:00:00Z";
-      mockRecheckProvider.mockResolvedValue(updated);
+      const response = fullResponse();
+      mockRecheckProvider.mockImplementation(async (provider) => {
+        response.tools = response.tools.map((tool) => tool.provider_id === provider ? updated : tool);
+        return updated;
+      });
       const onFooter = vi.fn();
-      renderPane(fullResponse(), { onFooter });
+      renderPane(response, { onFooter });
 
       const card = await screen.findByTestId("connections-github");
       fireEvent.click(within(card).getByText("Recheck"));
@@ -388,6 +396,7 @@ describe("ConnectionsPane", () => {
         expect(lastCall.egressHost).toBe("github.com");
         expect(lastCall.checkedAt).toBeTruthy();
       });
+      expect(mockFetchConnections.mock.calls.length).toBeGreaterThan(1);
     });
   });
 
@@ -605,5 +614,136 @@ describe("ConnectionsPane focusProvider", () => {
       expect(document.activeElement).not.toBeNull();
       expect(card.contains(document.activeElement)).toBe(true);
     });
+  });
+});
+
+describe("Accounts recovery", () => {
+  it.each([{ state: "not_determined", can_request: true, verb: "Allow calendar access" }, { state: "denied", can_request: false, verb: "Open System Settings" }])("Settings calendar $state access remains available with an existing feed", async ({ state, can_request, verb }) => {
+    vi.mocked(apiFetch).mockImplementation(async (path) => {
+      if (path === "/api/onboarding/calendar") return { ...CALENDAR_WIRE.wire, macos: { state, can_request }, candidates: [] };
+      if (path === "/api/settings") return { calendar: { sources: [{ id: "feed", url: CALENDAR_CHECK_WIRE.wire.url, enabled: true }] } };
+      if (path === "/api/door") return { calendar_configured: true };
+      return {};
+    });
+    mockFetchConnections.mockResolvedValue(fullResponse());
+    render(<ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} focusProvider="calendar" />);
+    fireEvent.click(await screen.findByRole("button", { name: verb }));
+    const destination = can_request ? "/api/onboarding/calendar/macos/access" : "/api/onboarding/calendar/macos/settings";
+    await waitFor(() => expect(vi.mocked(apiFetch).mock.calls.some(([path, init]) => path === destination && init?.method === "POST")).toBe(true));
+  });
+
+  it("Settings calendar URL Add waits for the save gate and reconciles the accepted use", async () => {
+    let allowed = false;
+    const before = vi.fn(async () => allowed);
+    const changed = vi.fn(async () => {});
+    vi.mocked(apiFetch).mockImplementation(async (path) => {
+      if (path === "/api/onboarding/calendar") return { ...CALENDAR_WIRE.wire, candidates: [] };
+      if (path === "/api/settings") return { calendar: { sources: [] } };
+      if (path === "/api/onboarding/calendar/check") return CALENDAR_CHECK_WIRE.wire;
+      if (path === "/api/onboarding/calendar/use") return CALENDAR_USE_WIRE.wire;
+      return {};
+    });
+    mockFetchConnections.mockResolvedValue(fullResponse());
+    render(<ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} focusProvider="calendar" onCalendarChanged={changed} onBeforeCalendarChange={before} />);
+    const field = await screen.findByRole("textbox", { name: "Calendar URL" });
+    fireEvent.change(field, { target: { value: CALENDAR_CHECK_WIRE.wire.url } });
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    await waitFor(() => expect(before).toHaveBeenCalledOnce());
+    expect(vi.mocked(apiFetch).mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
+    expect(field).toHaveValue(CALENDAR_CHECK_WIRE.wire.url);
+    allowed = true;
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    await waitFor(() => expect(changed).toHaveBeenCalledOnce());
+    expect(vi.mocked(apiFetch).mock.calls.filter(([, init]) => init?.method === "POST").map(([path]) => path)).toEqual(["/api/onboarding/calendar/check", "/api/onboarding/calendar/use"]);
+    expect(field).toHaveValue("");
+  });
+  it.each([true, false])("Settings refreshes a configured native calendar name with enabled=%s and reconciles only accepted writes", async (enabled) => {
+    const candidate = CALENDAR_WIRE.wire.candidates[0];
+    const changed = vi.fn(async () => {});
+    const before = vi.fn(async () => true);
+    let accepted = false;
+    vi.mocked(apiFetch).mockImplementation(async (path) => {
+      if (path === "/api/onboarding/calendar") {
+        if (accepted && !enabled) throw new Error("Refresh unavailable");
+        return CALENDAR_WIRE.wire;
+      }
+      if (path === "/api/settings") return { calendar: { sources: [{ id: "saved", url: candidate.id, enabled }] } };
+      if (path === "/api/door") return { calendar_configured: true };
+      if (path === "/api/onboarding/calendar/use") { accepted = true; return CALENDAR_USE_WIRE.wire; }
+      return {};
+    });
+    mockFetchConnections.mockResolvedValue(fullResponse());
+    render(<ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} focusProvider="calendar" onCalendarChanged={changed} onBeforeCalendarChange={before} />);
+    const refresh = await screen.findByRole("button", { name: `Refresh ${candidate.label} name` });
+    fireEvent.click(refresh);
+    await waitFor(() => expect(changed).toHaveBeenCalledOnce());
+    expect(before).toHaveBeenCalledOnce();
+    expect(apiFetch).toHaveBeenCalledWith("/api/onboarding/calendar/use", { method: "POST", json: { id: candidate.id, label: candidate.label } });
+  });
+
+  it("a refused pending Settings save prevents the calendar write", async () => {
+    const before = vi.fn(async () => false);
+    vi.mocked(apiFetch).mockImplementation(async (path) => {
+      if (path === "/api/onboarding/calendar") return CALENDAR_WIRE.wire;
+      if (path === "/api/settings") return { calendar: { sources: [] } };
+      return {};
+    });
+    mockFetchConnections.mockResolvedValue(fullResponse());
+    render(<ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} focusProvider="calendar" onBeforeCalendarChange={before} />);
+    fireEvent.click(await screen.findByRole("button", { name: `Use ${CALENDAR_WIRE.wire.candidates[0].label}` }));
+    await waitFor(() => expect(before).toHaveBeenCalledOnce());
+    expect(vi.mocked(apiFetch).mock.calls.some(([path]) => path === "/api/onboarding/calendar/use")).toBe(false);
+  });
+
+  it("a refused native calendar use keeps the chooser and does not reconcile", async () => {
+    const changed = vi.fn(async () => {});
+    vi.mocked(apiFetch).mockImplementation(async (path) => {
+      if (path === "/api/onboarding/calendar") return CALENDAR_WIRE.wire;
+      if (path === "/api/settings") return { calendar: { sources: [] } };
+      if (path === "/api/door") return {};
+      if (path === "/api/onboarding/calendar/use") throw new Error("Calendar refused");
+      return {};
+    });
+    mockFetchConnections.mockResolvedValue(fullResponse());
+    render(<ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} focusProvider="calendar" onCalendarChanged={changed} />);
+    fireEvent.click(await screen.findByRole("button", { name: `Use ${CALENDAR_WIRE.wire.candidates[0].label}` }));
+    expect(await screen.findByText(/Calendar refused/)).toBeInTheDocument();
+    expect(changed).not.toHaveBeenCalled();
+  });
+
+  it("the API rejects failed reads and checks instead of returning empty setup", async () => {
+    const real = await vi.importActual<typeof import("../connections/api")>("../connections/api");
+    vi.mocked(apiFetch).mockRejectedValue(new Error("Hub unavailable"));
+    await expect(real.fetchConnections()).rejects.toThrow("Hub unavailable");
+    await expect(real.recheckProvider("github")).rejects.toThrow("Hub unavailable");
+  });
+
+  it("keeps failed Add inputs and offers another account after an existing one", async () => {
+    renderPane({ tools: [connectedJira()] });
+    fireEvent.click(await screen.findByTestId("connections-add-open-jira"));
+    const form = screen.getByTestId("connections-add-jira");
+    fireEvent.change(within(form).getByRole("textbox", { name: "Site" }), { target: { value: "next.atlassian.net" } });
+    fireEvent.change(within(form).getByRole("textbox", { name: "Email" }), { target: { value: "next@example.com" } });
+    vi.mocked(apiFetch).mockRejectedValue(new Error("Account refused"));
+    fireEvent.click(within(form).getByRole("button", { name: "Add" }));
+    await within(form).findByText("Account not added");
+    expect(within(form).getByRole("textbox", { name: "Site" })).toHaveValue("next.atlassian.net");
+    expect(within(form).getByRole("textbox", { name: "Email" })).toHaveValue("next@example.com");
+  });
+
+  it("names a failed Recheck without presenting it as accepted", async () => {
+    renderPane({ tools: [connectedGithub()] });
+    const row = await screen.findByTestId("connections-github");
+    mockRecheckProvider.mockRejectedValue(new Error("Hub unavailable"));
+    fireEvent.click(within(row).getByRole("button", { name: "Recheck" }));
+    expect(await screen.findByText("Check failed")).toBeInTheDocument();
+  });
+
+  it("says Copy failed when the clipboard refuses", async () => {
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: vi.fn().mockRejectedValue(new Error("Refused")) } });
+    renderPane({ tools: [signInGithub()] });
+    fireEvent.click(await screen.findByTestId("connections-github-copy"));
+    expect(await screen.findByText("Copy failed")).toBeInTheDocument();
+    expect(screen.queryByText("Copied")).toBeNull();
   });
 });
