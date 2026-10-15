@@ -130,7 +130,9 @@ with HS-111-08; the gadget kit carries their duties:
   etch, `--accent` check; a real checkbox input; never color-only (the
   row label or checkline word states the position).
 - CycleGadget: the ONE pick — a real `<select>` under the ↻ face;
-  `--border` well, mono value.
+  `--border` well, mono value. Its shared Workbench popup has a square
+  beveled ground frame, paper choice rows, blue active row, current-choice
+  check and flat unavailable rows. Legacy Select uses the same popup.
 - SurfaceWings: the ONE tab strip (window head) — square `--radius-xs`
   gadgets, mono uppercase, active = SUNKEN (`--desk-window-well` +
   `--desk-window-etch`); ArrowLeft/Right/Home/End roving; the gear

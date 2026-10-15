@@ -4,9 +4,32 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-14 (Shared Settings primitives: #1205)
+**Last updated:** 2026-10-15 (App-wide Workbench pickers: #1206)
 
 ## Current phase
+
+**App-wide Workbench pickers — #1206 (2026-10-15).** The owner accepted
+the Settings sheets and rejected browser-native dropdown menus. One shared
+core now renders square Workbench popup rows, checked current choice,
+separate active highlight, unavailable ghost state and bounded scrolling.
+The visible native select retains labels, form values, defaults/reset,
+required/disabled/ref and native events. Pointer, keyboard, Escape no-save,
+Tab exit and outside actions preserve the existing writers. Semantic
+snapshot comparison keeps menus open across unrelated parent renders.
+Source census:47 CycleGadget callsites after the Thread enum adoption,
+plus the legacy Select consumer; all share the core. No per-face menus,
+new dependencies or ceiling increases. Final quick GREEN:3880web /708
+affected Python /107desk sweeps (2existing xfails) /17canon; build and
+final TypeScript pass. Root read13-state real production walks at1440/393,
+actual language/export saves and refusal/Retry, nine-point phone targets,
+and graph language-save cases including native touch393. Source review
+RATIFY after one lifecycle fix/recheck; no Muad'Dib check or owner visual
+acceptance claimed. Physical Safari/iOS and assistive technology remain
+unverified; source coverage is not a live walk of every consumer. Owner
+requested the next broad visual audit after this release. Existing compact
+Calendar chooser limitation remains open. Full main tape/postmerge review
+remain separate.
+[Implementation, census, exact proof and limits](../docs/internal/WORKBENCH-PICKERS-2026-10-14/README.md).
 
 **Shared Settings primitives — #1205 (2026-10-14).** The owner rejected
 Voice's flat form and requested a reusable foundation. Existing library

@@ -218,3 +218,24 @@ def test_ds6_exempts_only_the_workbench_ink_divider():
     assert ds6(".a { border-left: 2px solid var(--wb-ink); }")
     assert ds6(".a { border-left: 1px solid var(--wb-blue); }")
     assert ds6(".a { border-left: 1px solid #6688bb; }")
+
+
+@pytest.mark.parametrize(("filename", "source", "rule"), [
+    ("Button.tsx", "export const Button = () => <button>Save</button>;", "A1"),
+    ("WorkbenchSelect.tsx", "export const Select = () => <select />;", "B"),
+])
+def test_picker_library_implementation_paths_are_exact(filename, source, rule):
+    """Native library elements are valid only at their implementation path."""
+    scanner = _load_scanner()
+
+    def hits(path):
+        return [v for v in scanner.scan_file(path, source, source.splitlines()) if v.rule == rule]
+
+    assert hits(f"components/signal/{filename}") == []
+    for path in (
+        f"desk/components/{filename}",
+        f"features/picker/{filename}",
+        f"components/signal/Fake{filename}",
+        f"components/signal/{filename}.copy.tsx",
+    ):
+        assert hits(path), f"face or lookalike path escaped {rule}: {path}"

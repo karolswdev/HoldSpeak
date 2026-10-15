@@ -1,5 +1,5 @@
 import { openNewThread } from "../newThread";
-import { countLabel, wireDayClock } from "../surface";
+import { countLabel, CycleGadget, wireDayClock } from "../surface";
 /** HS-151-05 — Thread pullout content: head (in-place title, egress lamp,
  * status line, token meter), body (user/assistant rows with StreamingMaterial,
  * reasoning folded behind RAW, error row in-flow, CRASHED + Retry, sibling
@@ -187,17 +187,15 @@ function ElicitationForm({
               </label>
             )}
             {enumVals ? (
-              // UX-CANON: needs redesign (HS-170-04)
-              <select
-                className="thread-elicitation-select"
+              <CycleGadget
+                label={`${label}${isReq ? " *" : ""}`}
                 value={String(values[key] ?? "")}
-                onChange={(e) => handleChange(key, e.target.value)}
-              >
-                <option value="">--</option>
-                {enumVals.map((v: unknown) => (
-                  <option key={String(v)} value={String(v)}>{String(v)}</option>
-                ))}
-              </select>
+                options={[
+                  { value: "", label: "--" },
+                  ...enumVals.map((v: unknown) => ({ value: String(v), label: String(v) })),
+                ]}
+                onChange={(next) => handleChange(key, next)}
+              />
             ) : type === "boolean" ? (
               <label className="thread-elicitation-boolean">
                 {/* UX-CANON: needs redesign (HS-170-04) */}

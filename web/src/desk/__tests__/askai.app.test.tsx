@@ -172,6 +172,29 @@ describe("Ask AI: the decision box sends the owner's decision", () => {
     expect(rowState()).toBe("running");
   });
 
+  it("elicitation enums keep their empty choice and submit the selected string value", async () => {
+    const enumerated: ToolRow = {
+      ...asking,
+      elicitation: {
+        type: "object",
+        properties: { mode: { type: "string", title: "Mode", enum: ["file", "local+cloud", 0] } },
+        required: ["mode"],
+      },
+    };
+    withRow(enumerated, { call_id: "glass-elicit-1", decision: "approve", always: false, state: "admitted" });
+    const mode = screen.getByRole<HTMLSelectElement>("combobox", { name: "Mode *" });
+    expect(mode).toHaveValue("");
+    expect(Array.from(mode.options, (option) => [option.value, option.textContent])).toEqual([
+      ["", "--"], ["file", "file"], ["local+cloud", "local+cloud"], ["0", "0"],
+    ]);
+    expect(screen.getByText("Mode *")).toBeVisible();
+    fireEvent.change(mode, { target: { value: "0" } });
+    expect(decideBody()).toBeUndefined();
+    fireEvent.click(screen.getByTestId("elicitation-submit"));
+    await waitFor(() => expect(decideBody()).toEqual({ call_id: "glass-elicit-1", decision: "approve", answer: { mode: "0" } }));
+    expect(rowState()).toBe("running");
+  });
+
   it("an elicitation Decline sends deny and the row is denied", async () => {
     // replaces: tests/e2e/test_hs152_hands_glass.py::test_elicitation_form_submit_and_decline (Decline)
     withRow(asking, { call_id: "glass-elicit-1", decision: "deny", always: false, state: "denied" });
