@@ -4,6 +4,7 @@
 // from a live hub by tests/integration/test_desk_settings.py (which also
 // proves no fixture carries a field the hub does not send: the scar law).
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { useState, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SettingsCore } from "../../pages/cores/SettingsCore";
 import { PREF_MODULES } from "../../pages/cores/settingsPrefs";
@@ -20,6 +21,11 @@ import remoteRevokeWire from "./fixtures/settings-wire/remote-revoke.json";
 import settingsPutWire from "./fixtures/settings-wire/settings-put.json";
 import settingsWire from "./fixtures/settings-wire/settings.json";
 import identityWire from "./fixtures/settings-wire/system-identity.json";
+import setupStatusWire from "./fixtures/trust-wire/status-virgin.json";
+import enginesWire from "./fixtures/runs-on-truth/no-record/0-open_api_concierge_detect.json";
+import localAiWire from "./fixtures/runs-on-truth/no-record/0-open_api_setup_local-ai.json";
+import { WingSlotContext } from "../surface/wings";
+import { useDesk } from "../store";
 
 type Json = Record<string, any>;
 const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
@@ -71,6 +77,9 @@ function hubDouble() {
       }
       case "GET /api/system/identity": return answer(200, identityWire);
       case "GET /api/projects": return answer(200, projectsWire);
+      case "GET /api/setup/status": return answer(200, setupStatusWire);
+      case "GET /api/setup/local-ai": return answer(200, localAiWire.wire);
+      case "GET /api/concierge/detect": return answer(200, enginesWire.wire);
     }
     if (method === "DELETE" && path.startsWith("/api/settings/remote/credentials/")) {
       const id = decodeURIComponent(path.split("/").pop() ?? "");
@@ -87,11 +96,13 @@ function hubDouble() {
 
 let hub: ReturnType<typeof hubDouble>;
 beforeEach(() => {
+  useDesk.setState({ windowsById: {} });
   hub = hubDouble();
   vi.stubGlobal("fetch", hub.fetchStub);
 });
 afterEach(() => {
   cleanup();
+  useDesk.setState({ windowsById: {} });
   vi.unstubAllGlobals();
   vi.useRealTimers();
 });
@@ -182,6 +193,131 @@ describe("every declared settings module has a door", () => {
     fireEvent.click(screen.getByRole("button", { name: "Settings" }));
     await waitFor(() => expect(container.querySelector(".prefs-hub")).toBeTruthy());
     expect(container.querySelector(".prefs-back")).toBeNull();
+  });
+});
+
+/** The real frame publication seam: wing presses must reach this core. */
+function SettingsWindow({ scope }: { scope?: string }) {
+  const [wings, setWings] = useState<ReactNode>(null);
+  return (
+    <WingSlotContext.Provider value={setWings}>
+      <header>{wings}</header>
+      <SettingsCore scope={scope} />
+    </WingSlotContext.Provider>
+  );
+}
+
+describe("Settings navigation uses one selection", () => {
+  const pressWing = (name: string) => fireEvent.click(screen.getByRole("tab", { name }));
+  const expectWing = (name: string) => expect(screen.getByRole("tab", { name })).toHaveAttribute("aria-selected", "true");
+  const expectModule = (name: string) => expect(document.querySelector(".prefs-module .gadget-pane-title")?.textContent).toBe(name);
+
+  it("a scoped Engines entry can open Accounts, Settings, both hub doors, Guide and Back with matching wings", async () => {
+    const view = render(<SettingsWindow scope="models::writing_dictation" />);
+    await screen.findByTestId("runson-root");
+    expectWing("Engines");
+    expectModule("Engines");
+
+    pressWing("Accounts");
+    expectWing("Accounts");
+    expectModule("Accounts");
+    expect(screen.queryByTestId("runson-root")).toBeNull();
+    pressWing("Settings");
+    expectWing("Settings");
+    await screen.findByTestId("settings-hub-choose");
+    fireEvent.click(screen.getByTestId("settings-hub-accounts"));
+    expectModule("Accounts");
+    expectWing("Accounts");
+    pressWing("Settings");
+    fireEvent.click(screen.getByTestId("settings-hub-choose"));
+    expectModule("Engines");
+    expectWing("Engines");
+    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+    expectWing("Settings");
+    expect(screen.getByTestId("settings-hub-accounts")).toBeInTheDocument();
+    pressWing("Guide");
+    expectWing("Guide");
+    await screen.findByTestId("guide");
+    expect(document.querySelectorAll(".surface-footer-layout")).toHaveLength(1);
+
+    // A subsequent external scope is another entry, even on the same wing.
+    view.rerender(<SettingsWindow scope="meetings" />);
+    await screen.findByRole("checkbox", { name: "Auto export" });
+    expectModule("Meetings");
+    expectWing("Settings");
+    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+    expect(screen.getByTestId("settings-hub-choose")).toBeInTheDocument();
+    expect(screen.queryByTestId("guide")).toBeNull();
+  });
+
+  it("Guide keeps an edit made before the save delay and has one footer", async () => {
+    hub.state.settings.meeting.auto_export = false;
+    render(<SettingsWindow scope="meetings" />);
+    fireEvent.click(await screen.findByRole("checkbox", { name: "Auto export" }));
+    pressWing("Guide");
+    await screen.findByTestId("guide");
+    await waitFor(() => expect(hub.state.settings.meeting.auto_export).toBe(true), { timeout: 3000 });
+    expectWing("Guide");
+    expect(document.querySelectorAll(".surface-footer-layout")).toHaveLength(1);
+    pressWing("Settings");
+    fireEvent.click(screen.getByTestId("settings-more"));
+    fireEvent.click(within(ledgerRow("Meetings")!).getByRole("button", { name: "Open" }));
+    expect(screen.getByRole("checkbox", { name: "Auto export" })).toBeChecked();
+  });
+
+  it("opening the same external scope again leaves Guide and keeps the pending writer", async () => {
+    hub.state.settings.meeting.auto_export = false;
+    useDesk.getState().openSurfaceWindow("configure-settings", "models");
+    const view = render(<SettingsWindow scope="models" />);
+    await screen.findByTestId("runson-root");
+    pressWing("Guide");
+    await screen.findByTestId("guide");
+    act(() => useDesk.getState().openSurfaceWindow("configure-settings", "models"));
+    expectModule("Engines");
+    expectWing("Engines");
+
+    act(() => useDesk.getState().openSurfaceWindow("configure-settings", "meetings"));
+    view.rerender(<SettingsWindow scope="meetings" />);
+    fireEvent.click(await screen.findByRole("checkbox", { name: "Auto export" }));
+    pressWing("Guide");
+    await screen.findByTestId("guide");
+    act(() => useDesk.getState().openSurfaceWindow("configure-settings", "meetings"));
+    expectModule("Meetings");
+    expectWing("Settings");
+    expect(screen.getByRole("checkbox", { name: "Auto export" })).toBeChecked();
+    await waitFor(() => expect(hub.state.settings.meeting.auto_export).toBe(true), { timeout: 3000 });
+    expect(hub.state.calls.filter((call) => call.method === "GET" && call.path === "/api/settings")).toHaveLength(1);
+  });
+
+  it("a pending write failure is visible in Guide; Try again resends the edit and restores its single footer", async () => {
+    hub.state.settings.meeting.auto_export = false;
+    const base = hub.fetchStub;
+    let fail = true;
+    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
+      if (fail && init?.method === "PUT" && new URL(String(input), "http://hub.test").pathname === "/api/settings") {
+        // A real transport failure has no invented successful hub response.
+        throw new TypeError("Settings connection lost");
+      }
+      return base(input, init);
+    }));
+    render(<SettingsWindow scope="meetings" />);
+    fireEvent.click(await screen.findByRole("checkbox", { name: "Auto export" }));
+    pressWing("Guide");
+    await screen.findByTestId("guide");
+    const retry = await screen.findByRole("button", { name: "Try again" }, { timeout: 3000 });
+    expect(retry.closest('[role="alert"]')?.textContent).toContain("Settings connection lost");
+    expectWing("Guide");
+    expect(screen.queryByTestId("guide")).toBeNull();
+    expect(hub.state.settings.meeting.auto_export).toBe(false);
+    expect(document.querySelectorAll(".surface-footer-layout")).toHaveLength(1);
+
+    fail = false;
+    fireEvent.click(retry);
+    await waitFor(() => expect(hub.state.settings.meeting.auto_export).toBe(true));
+    await screen.findByTestId("guide");
+    expect(screen.queryByText(/REFUSED/)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+    expect(document.querySelectorAll(".surface-footer-layout")).toHaveLength(1);
   });
 });
 

@@ -48,6 +48,7 @@ import { useWindowTitle } from "../../desk/surface/title";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { egressFor } from "../../desk/surface/egress";
 import { openSurface } from "../../desk/shell";
+import { useDesk } from "../../desk/store";
 import { announceTaskReturn } from "../../desk/returnToTask";
 import { HotkeyCapture } from "./settingsBespoke";
 import { toggleSfx } from "../../lib/sfx";
@@ -59,7 +60,7 @@ import { TtsSettingsBlock } from "./settingsTts";
 import { WallpaperModule } from "./settingsWallpaper";
 import { OwnerNameGroup, PeopleAccessModule } from "./settingsPeople";
 import { RuntimeDocsCore } from "./RuntimeDocsCore";
-import { useCoreWings } from "./core-hooks";
+import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 import { ConnectionsPane, type ConnectionsFoot } from "./connections";
 import { Destinations } from "./connections/Destinations";
 import { RunsOnCore } from "../../features/runson/RunsOnCore";
@@ -1238,46 +1239,23 @@ export function RemoteAccessModule({
   );
 }
 
-export function SettingsCore({ hero, scope }: CoreProps) {
-  // HS-100-10 — the Runtime guide is the Guide wing (the standalone
-  // doc-window died; deep links land here via the registry alias).
-  const parsed = settingsScope(scope);
-  const wings = useCoreWings(SETTINGS_WINGS, parsed.module ?? "settings");
-  useEffect(() => {
-    wings.setView(parsed.module ?? "settings");
-  }, [parsed.module]);
-  if (wings.view === "guide") return <RuntimeDocsCore />;
-  return (
-    <SettingsFace
-      hero={hero}
-      scope={scope}
-      moduleOverride={wings.view === "settings" ? null : wings.view}
-      onModuleBack={() => wings.setView("settings")}
-    />
-  );
+export function SettingsCore(props: CoreProps) {
+  return <SettingsFace {...props} />;
 }
 
-function SettingsFace({
-  hero,
-  scope,
-  moduleOverride,
-  onModuleBack,
-}: CoreProps & {
-  moduleOverride?: string | null;
-  onModuleBack?: () => void;
-}) {
-  const parsed = settingsScope(scope);
+function SettingsFace({ hero, scope }: CoreProps) {
+  // A scope is a new entry intent. Once open, the hub, wings and Back all
+  // change this same selection, including its optional one-time focus.
+  const [navigation, setNavigation] = useState(() => settingsScope(scope));
+  const entry = useDesk((desk) => desk.windowsById["surface-settings"]);
+  useEffect(() => {
+    setNavigation(settingsScope(scope));
+  }, [scope, entry]);
+  const moduleId = navigation.module === "settings" ? null : navigation.module;
   const integrationSubject =
-    parsed.module === "integrations"
-      ? parsed.focus
+    moduleId === "integrations"
+      ? navigation.focus
       : null;
-  // HS-139-05: resolve aliases from the retired roster to its successor.
-  const resolvedScope = parsed.module;
-  const scopedModule = PREF_MODULES.some(
-    (module) => module.id === resolvedScope,
-  )
-    ? (resolvedScope ?? null)
-    : null;
   const resource = useResource<SettingsResponse>("/api/settings", {});
   const authority = useResource<AuthorityPolicyResponse>(
     "/api/authority/policy",
@@ -1300,9 +1278,6 @@ function SettingsFace({
   // and whether its RECEIPT well is open under Remote access.
   const [grantAct, setGrantAct] = useState<GrantAct | null>(null);
   const [grantReceiptOpen, setGrantReceiptOpen] = useState(false);
-  const [moduleId, setModuleId] = useState<string | null>(
-    integrationSubject ? "integrations" : scopedModule,
-  );
   const [highlight, setHighlight] = useState("");
   const [saving, setSaving] = useState(false);
   const [writtenAt, setWrittenAt] = useState("");
@@ -1362,6 +1337,7 @@ function SettingsFace({
   const debouncedChangesRef = useRef<Array<[string[], unknown]>>([]);
   const nextJobIdRef = useRef(0);
   const writerFencedRef = useRef(false);
+  const failedChangesRef = useRef<Array<[string[], unknown]>>([]);
   const repaintPending = () => {
     const visible = projectPendingSettingsChanges(
       authoritativeBaseRef.current,
@@ -1425,13 +1401,17 @@ function SettingsFace({
       // the owner left gets focus back (design D2(a) "Focus return").
       announceTaskReturn(from);
       setWrittenAt(new Date().toTimeString().slice(0, 8));
+      failedChangesRef.current = [];
       return true;
     } catch (error) {
       // The leave send moved the revision: this older save's refusal is
       // expected, and the newer values already went out.
       const supersededByLeave =
         leaveSentRef.current && error instanceof ApiError && error.status === 409;
-      if (!supersededByLeave) setRefusal(readableError(error));
+      if (!supersededByLeave) {
+        failedChangesRef.current = job.changes;
+        setRefusal(readableError(error));
+      }
       writerFencedRef.current = true;
       removePendingJob(job.id);
       try {
@@ -1571,25 +1551,22 @@ function SettingsFace({
     }
   };
 
-  // A scope names the focused module. Integration links retain their
-  // subject alias while the palette can address every module directly.
-  // HS-139-05: aliases from the retired 14-tile roster land here too.
-  useEffect(() => {
-    if (integrationSubject) setModuleId("integrations");
-    else if (scopedModule) setModuleId(scopedModule);
-    else if (moduleOverride !== undefined) setModuleId(moduleOverride);
-  }, [integrationSubject, scopedModule, moduleOverride]);
-
   // HS-139-05: deep-index and filter removed — all tiles stay visible at once.
   const openModule = (id: string) => {
-    setModuleId(id);
+    setNavigation({ module: id });
     setHighlight("");
   };
   const backToSettings = () => {
-    setModuleId(null);
+    setNavigation({ module: null });
     setHighlight("");
-    onModuleBack?.();
   };
+  const activeWing = SETTINGS_WINGS.some((wing) => wing.id === moduleId)
+    ? moduleId!
+    : "settings";
+  useWindowWings(
+    <SurfaceWings wings={SETTINGS_WINGS} active={activeWing} onChange={openModule} />,
+    [activeWing],
+  );
 
   /* ── gadget bindings (plain function helpers — never components
         defined in render, which would remount and drop focus) ── */
@@ -2388,7 +2365,7 @@ function SettingsFace({
          Opening models/assignments redirects to the Concierge surface. ── */
       case "models":
       case "assignments": {
-        return <RunsOnCore scope={parsed.focus} title="Settings" onBack={backToSettings} />;
+        return <RunsOnCore scope={navigation.focus} title="Settings" onBack={backToSettings} />;
       }
       /* ── Connections: tools + credentials + RAW ── */
       case "integrations": {
@@ -2490,7 +2467,11 @@ function SettingsFace({
         error={resource.error}
         onRetry={() => void resource.reload()}
       >
-        {module ? (
+        {moduleId === "guide" ? (
+          <SurfaceState error={refusal} onRetry={() => void commitMany(failedChangesRef.current)}>
+            <RuntimeDocsCore />
+          </SurfaceState>
+        ) : module ? (
           <div className="prefs-module">
             <h2 className="gadget-pane-title">{module.label}</h2>
             {renderModule(module.id)}
@@ -2511,7 +2492,7 @@ function SettingsFace({
         )}
       </SurfaceState>
       {/* HS-168-03: connections module shows its own receipt footer. */}
-      {moduleId === "integrations" ? (
+      {moduleId === "guide" && !refusal ? null : moduleId === "integrations" ? (
         <SurfaceFooter verbs={<>
           <EgressChip
             label={connectionsFoot?.egressHost ? connectionsFoot.egressHost.toUpperCase() : undefined}
@@ -2526,7 +2507,7 @@ function SettingsFace({
       ) : moduleId === "models" ? null : (
         <PrefStatusBar
           onBack={
-            module
+            module || moduleId === "guide"
               ? backToSettings
               : undefined
           }

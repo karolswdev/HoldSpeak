@@ -13,11 +13,11 @@ Validation errors at generation: **0**.
 
 | Measure | Present / total or count |
 | --- | ---: |
-| Source paths | 277 / 277 |
-| Test paths | 216 / 216 |
+| Source paths | 278 / 278 |
+| Test paths | 219 / 219 |
 | Documentation paths | 236 / 236 |
-| Assertions inspected | 216 |
-| Tests executed | 178 |
+| Assertions inspected | 219 |
+| Tests executed | 181 |
 | Records with an executed assertion | 79 |
 | Semantic records unresolved | 76 |
 
@@ -56,7 +56,7 @@ Validation errors at generation: **0**.
 | `model.registry` | capabilities | 2/2 | 1/1 | 1 | 1 | 1 | partially_evidenced |
 | `model.assignment` | capabilities | 5/5 | 2/2 | 2 | 2 | 1 | partially_evidenced |
 | `model.route_plan` | capabilities | 3/3 | 2/2 | 2 | 2 | 2 | partially_evidenced |
-| `model.execution` | capabilities | 3/3 | 3/3 | 3 | 3 | 2 | partially_evidenced |
+| `model.execution` | capabilities | 4/4 | 6/6 | 6 | 6 | 2 | partially_evidenced |
 | `model.destination_readiness` | capabilities | 2/2 | 3/3 | 3 | 3 | 1 | partially_evidenced |
 | `model.cancel_receipts` | capabilities | 3/3 | 2/2 | 2 | 2 | 2 | partially_evidenced |
 | `voice.correction_memory` | capabilities | 1/1 | 1/1 | 1 | 1 | 1 | partially_evidenced |

@@ -15,7 +15,6 @@ import { announceTaskReturn } from "../../desk/returnToTask";
 import {
   checkEndpoint,
   conciergeDownload,
-  conciergeProbe,
   conciergeSummarySelection,
   conciergeTaskProbe,
   defineEndpoint,
@@ -40,24 +39,22 @@ import {
 } from "./api";
 import {
   DEFAULT_JOB,
+  JOB_PROBE_CAPABILITIES,
   MEETINGS_JOB,
   SPEECH_JOB,
-  THOUGHTS_JOB,
   accepts as acceptsRule,
   buildEngines,
+  enginePlace,
   hostLabel,
   jobName,
   jobForScope,
-  limitTokens,
+  leadEngine,
   offMachine,
   ownEntries,
   rosterId,
   type BoardEngine,
 } from "./model";
 
-/** The probeable capability (route_probe.py PROBE_CAPABILITIES): Ask, in
- *  Thoughts & notes. Every other job's Try it asks its first engine. */
-export const PROBE_CAPABILITY = "ask.answer";
 const POLL_MS = 1000;
 
 export interface Egress {
@@ -70,6 +67,9 @@ export interface JobResult {
   tone: "ok" | "danger" | "busy" | "idle";
   /** Tokens, joined with ` · ` on the face. */
   tokens: string[];
+  sampleInput?: string;
+  sampleOutput?: string;
+  egress?: Egress;
 }
 
 export interface Receipt {
@@ -95,8 +95,8 @@ interface UndoStep {
   };
 }
 
-/** A pending off-machine Try (Article III): the consent is bound to the exact
- *  engine and host it was shown for (C3). */
+/** The owner's row press is bound to the displayed job and destination (XI.4).
+ *  The name is retained from the parked footer confirmation protocol. */
 export interface PendingTry {
   job: string;
   engineKey: string;
@@ -104,6 +104,7 @@ export interface PendingTry {
   engineHost: string;
   host: string;
   scope: "local" | "cloud";
+  engineRevision?: number;
 }
 
 export type AddState = "IDLE" | "CHECKING" | "READY" | "UNREACHABLE" | "KEY_REQUIRED" | "KEY_INVALID" | "NOT_ADDED";
@@ -127,7 +128,17 @@ export function consentHost(engine: BoardEngine): string {
 
 /** A consent holds only for the same job, engine id AND destination. */
 export function consentHolds(consent: PendingTry, job: string, engine: BoardEngine): boolean {
-  return consent.job === job && consent.engineKey === engine.key && consent.engineHost === consentHost(engine);
+  return consent.job === job && consent.engineKey === engine.key && consent.engineHost === consentHost(engine)
+    && (consent.engineRevision === undefined || consent.engineRevision === engine.profileRevision);
+}
+
+/** Refusals name the server's rule; a success reason is never an error label. */
+export function probeReason(code: string | undefined): string {
+  if (code === "route_probe_assignment_changed") return "Route changed";
+  if (code === "route_probe_off_machine_not_confirmed") return "Destination not confirmed";
+  if (!code || code === "inference_succeeded") return "No usable result";
+  const words = code.replace(/^(route_probe_|inference_)/, "").replace(/_/g, " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
 /** A stopped download's reason as a token (`model_download_network` →
@@ -207,7 +218,6 @@ export function useRunsOn(scope?: string) {
   const [results, setResults] = useState<Record<string, JobResult>>({});
   const [trying, setTrying] = useState<{ job: string; engine: string } | null>(null);
   const [listening, setListening] = useState(false);
-  const [pending, setPending] = useState<PendingTry | null>(null);
   const [downloads, setDownloads] = useState<Record<string, number>>({});
   /** A download that stopped: its reason token, kept until retried (V3). */
   const [failedDownloads, setFailedDownloads] = useState<Record<string, string>>({});
@@ -219,6 +229,7 @@ export function useRunsOn(scope?: string) {
   const detectionRef = useRef<Promise<Detection | null> | null>(null);
   const timers = useRef(new Map<string, ReturnType<typeof setInterval>>());
   const scopeApplied = useRef(false);
+  const activeTry = useRef<string | null>(null);
 
   useEffect(() => {
     mounted.current = true;
@@ -491,125 +502,94 @@ export function useRunsOn(scope?: string) {
     [engineByKey, rowOf],
   );
 
-  /** Ask for the owner's press before bytes leave this machine. */
-  const askConsent = useCallback((job: string, engine: BoardEngine, host?: string, scope?: Egress["scope"]) => {
-    setPending({
-      job,
-      engineKey: engine.key,
-      engineHost: consentHost(engine),
-      host: host ?? hostLabel(engine),
-      scope: scope ?? (engine.emblem === "API" ? "cloud" : "local"),
-    });
-  }, []);
+  /** Only destinations the row can show are authorized by its press. Summary
+   *  capability overrides may differ from the Meetings group's chain. */
+  const trialTargetsForJob = useCallback((job: string): BoardEngine[] => {
+    if (job === DEFAULT_JOB) return [];
+    const group = engineForJob(job);
+    const lead = leadEngine(job, group, detection, engines, detectionFailed);
+    if (!lead || typeof lead !== "object" || !lead.profileId) return [];
+    const entries = rowOf(job)?.assignment?.entries ?? [];
+    const targets = entries[0]?.profile_id === lead.profileId
+      ? entries.map((entry) => engineByKey(entry.profile_id))
+      : [lead];
+    if (targets.some((target) => !target || (offMachine(target) && hostLabel(target) === "NOT SET"))) return [];
+    return targets as BoardEngine[];
+  }, [detection, detectionFailed, engineByKey, engineForJob, engines, rowOf]);
+  const currentTrialTargets = useRef(trialTargetsForJob);
+  currentTrialTargets.current = trialTargetsForJob;
+
+  const trialBindingsForJob = useCallback((job: string): PendingTry[] => trialTargetsForJob(job).map((engine) => ({
+    job,
+    engineKey: engine.key,
+    engineHost: consentHost(engine),
+    engineRevision: engine.profileRevision,
+    host: hostLabel(engine),
+    scope: enginePlace(engine).place === "cloud" ? "cloud" : "local",
+  })), [trialTargetsForJob]);
 
   const runTry = useCallback(
-    async (job: string, consent: PendingTry | null) => {
-      const engine = engineForJob(job);
-      if (!engine) {
-        setPending(null);
+    async (job: string, shown: PendingTry[]) => {
+      if (activeTry.current) return;
+      const capability = JOB_PROBE_CAPABILITIES[job];
+      if (!capability) return;
+      const targets = currentTrialTargets.current(job);
+      const engine = targets[0];
+      if (!engine || !shown.length || targets.length !== shown.length || targets.some((target, index) => !consentHolds(shown[index], job, target))) {
+        setResults((prev) => ({ ...prev, [job]: { tone: "danger", tokens: ["Not tried", "Route changed"] } }));
         return;
       }
-      // C3: a consent authorizes exactly the engine and host it named. If the
-      // job's engine changed since, the old press is void: ask again.
-      // C3 (r2): the press is valid only for the engine id AND the host it
-      // displayed; a refreshed detection that moved the host voids it.
-      if (consent && !consentHolds(consent, job, engine)) {
-        if (offMachine(engine)) askConsent(job, engine);
-        else setPending(null);
-        return;
-      }
-      const confirmed = consent !== null;
-      if (offMachine(engine) && !confirmed) {
-        // Article III: the bytes leave only on the press that names the host.
-        askConsent(job, engine);
-        return;
-      }
-      setPending(null);
+      activeTry.current = job;
       setTrying({ job, engine: engine.key });
-      setResults((prev) => ({ ...prev, [job]: { tone: "busy", tokens: ["TRYING"] } }));
+      setResults((prev) => ({ ...prev, [job]: { tone: "busy", tokens: ["Trying"] } }));
       try {
-        let tokens: string[];
-        let tone: JobResult["tone"];
-        let host = hostLabel(engine);
-        if (job === THOUGHTS_JOB) {
-          const answer = await conciergeTaskProbe(PROBE_CAPABILITY, confirmed || undefined);
-          if (answer.state === "REFUSED") {
-            // The route's boundary says a leg leaves this machine: name the
-            // address the engine reaches, else say so plainly.
-            askConsent(
-              job,
-              engine,
-              engine.baseUrl ? endpointHostPort(engine.baseUrl).toUpperCase() : "OFF THIS MACHINE",
-              answer.paid ? "cloud" : "local",
-            );
-            setResults((prev) => {
-              const next = { ...prev };
-              delete next[job];
-              return next;
-            });
-            return;
-          }
-          if (answer.host) host = answer.host.toUpperCase();
-          // A real request through the route: the only READY a Try may say.
-          tone = answer.ok ? "ok" : "danger";
-          tokens = answer.ok
-            ? ["READY", answer.model || engine.name, ...msToken(answer.latencyMs)]
-            : ["BROKEN", (answer.reasonCode || "NO ANSWER").replace(/_/g, " ").toUpperCase()];
-        } else {
-          if (!engine.detectId) throw new Error("not detected");
-          const answer = await conciergeProbe(engine.detectId, engine.kind === "cloud");
-          // A.10 / V2: this probe reads the engine's model list (or, for a
-          // cloud engine with no probe to run, nothing at all). It says
-          // REACHED or NOT CHECKED, never READY; ms only when measured.
-          if (answer.state === "READY") {
-            tone = "ok";
-            tokens = ["REACHED", engine.name, ...msToken(answer.latencyMs)];
-          } else if (answer.state === "NOT_SET") {
-            tone = "idle";
-            tokens = ["NOT CHECKED", engine.name];
-          } else {
-            tone = "danger";
-            tokens = ["BROKEN", answer.state === "NOT_SUPPORTED" ? "NO ADAPTER" : "NO ANSWER"];
-          }
-        }
-        if (tone === "ok") tokens.push(...limitTokens(job, engine));
+        const answer = await conciergeTaskProbe(capability, targets.some(offMachine) || undefined, targets.map((target) => target.profileId!));
         if (!mounted.current) return;
-        setResults((prev) => ({ ...prev, [job]: { tone, tokens } }));
-        setEgress({ label: host, scope: engine.emblem === "API" ? "cloud" : "local" });
+        const completed = answer.state === "READY" && answer.ok;
+        const empty = completed && answer.emptyOutput;
+        const tokens = completed
+          ? ["Completed", ...(answer.testedTask ? [answer.testedTask] : []), answer.model || engine.name, ...msToken(answer.latencyMs), ...(empty ? ["No text returned"] : [])]
+          : [answer.state === "REFUSED" ? "Not tried" : "Not completed", probeReason(answer.reasonCode)];
+        const place = answer.host ? { ...engine, host: answer.host, baseUrl: undefined, emblem: answer.boundary === "local" ? "MAC" as const : answer.boundary === "cloud" ? "API" as const : "LAN" as const } : engine;
+        setResults((prev) => ({ ...prev, [job]: {
+          tone: completed ? (empty ? "idle" : "ok") : "danger",
+          tokens,
+          sampleInput: answer.sampleInput,
+          sampleOutput: completed ? answer.sampleOutput : undefined,
+          egress: offMachine(place) ? { label: hostLabel(place), scope: enginePlace(place).place === "cloud" ? "cloud" : "local" } : undefined,
+        } }));
       } catch {
-        if (mounted.current) setResults((prev) => ({ ...prev, [job]: { tone: "danger", tokens: ["BROKEN", "NO ANSWER"] } }));
+        if (mounted.current) setResults((prev) => ({ ...prev, [job]: { tone: "danger", tokens: ["Not completed", "No answer"] } }));
       } finally {
+        activeTry.current = null;
         if (mounted.current) setTrying(null);
       }
     },
-    [askConsent, engineForJob],
+    [],
   );
-
-  // C3: when the job behind a pending press changes engine, the press goes
-  // and a new one, naming the new host, takes its place.
-  useEffect(() => {
-    if (!pending) return;
-    const engine = engineForJob(pending.job);
-    if (engine && consentHolds(pending, pending.job, engine)) return;
-    if (engine && offMachine(engine)) askConsent(pending.job, engine);
-    else setPending(null);
-  }, [askConsent, engineForJob, pending]);
 
   /** Speech: you speak, it shows what it heard (the speak-to-fill route,
    *  `/api/dictation/transcribe`: on this device, nothing egresses). */
   const trySpeech = useCallback(async () => {
     if (!listening) {
+      if (activeTry.current) return;
+      activeTry.current = SPEECH_JOB;
+      setTrying({ job: SPEECH_JOB, engine: engineForJob(SPEECH_JOB)?.key ?? "" });
+      setResults((prev) => ({ ...prev, [SPEECH_JOB]: { tone: "busy", tokens: ["Starting"] } }));
       try {
         await startCapture();
+        if (!mounted.current) return;
         setListening(true);
-        setTrying({ job: SPEECH_JOB, engine: engineForJob(SPEECH_JOB)?.key ?? "" });
         setResults((prev) => ({ ...prev, [SPEECH_JOB]: { tone: "busy", tokens: ["LISTENING"] } }));
       } catch {
+        activeTry.current = null;
+        setTrying(null);
         setResults((prev) => ({ ...prev, [SPEECH_JOB]: { tone: "danger", tokens: ["BROKEN", "NO MICROPHONE"] } }));
       }
       return;
     }
     setListening(false);
+    setResults((prev) => ({ ...prev, [SPEECH_JOB]: { tone: "busy", tokens: ["Transcribing"] } }));
     const started = performance.now();
     try {
       const text = await stopAndTranscribe();
@@ -621,27 +601,23 @@ export function useRunsOn(scope?: string) {
           ? { tone: "ok", tokens: [`HEARD: "${text.trim()}"`, ...msToken(ms)] }
           : { tone: "danger", tokens: ["HEARD NOTHING"] },
       }));
-      setEgress({ label: "THIS DEVICE", scope: "local" });
     } catch {
       await cancelCapture();
       if (mounted.current) setResults((prev) => ({ ...prev, [SPEECH_JOB]: { tone: "danger", tokens: ["BROKEN", "NOT HEARD"] } }));
     } finally {
+      activeTry.current = null;
       if (mounted.current) setTrying(null);
     }
   }, [engineForJob, listening]);
 
   const tryJob = useCallback(
-    (job: string) => {
+    (job: string, shown: PendingTry[]) => {
       setSelected(job);
       if (job === SPEECH_JOB) void trySpeech();
-      else void runTry(job, null);
+      else void runTry(job, shown);
     },
     [runTry, trySpeech],
   );
-
-  const confirmTry = useCallback(() => {
-    if (pending) void runTry(pending.job, pending);
-  }, [pending, runTry]);
 
   /* ── Download: the bar fills on the engine itself ── */
 
@@ -867,10 +843,8 @@ export function useRunsOn(scope?: string) {
     results,
     trying,
     listening,
-    pending,
     tryJob,
-    confirmTry,
-    cancelTry: () => setPending(null),
+    trialBindingsForJob,
     engineForJob,
     downloads,
     failedDownloads,

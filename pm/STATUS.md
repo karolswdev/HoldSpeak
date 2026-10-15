@@ -4,9 +4,31 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-14 (Deep usability audit and repair: #1202)
+**Last updated:** 2026-10-14 (Settings navigation and direct trials: #1203)
 
 ## Current phase
+
+**Settings navigation and direct trials — #1203 (2026-10-14).** The owner
+found Accounts/Engines could not open, a second Try confirmation, contradictory
+Answers failure, missing waiting and unclear job names. One navigation state
+now owns Settings wings, hub doors, Back and repeated scope entries. Guide
+keeps the settings writer mounted; actual before/after captures cover pending
+save, refusal and Retry. Try starts on its row at both widths with the library
+animation, destination chips and actual sample input/output. Five fixed public
+samples use existing adopted routes; successful empty output remains successful.
+Custom tasks and Background work name routing groups; task details are folded.
+A live capture also found loopback falsely required off-machine confirmation;
+preview now uses the existing endpoint locality classifier. Final quick check
+GREEN: 3597 web /676 Python /107 desk sweeps (2 existing xfails) /15 canon;
+build and frozen frontend TypeScript passed. Actual UI→HTTP→kernel→terminal DB
+captures pass all five jobs at1440/393, including animated waiting, one request,
+phone target ownership and unchanged domain/assignment snapshots. The provider
+leaf is replayed; this does not prove physical model quality. Open: owner's
+microphone/LAN/cloud response, external sign-in and owner acceptance; one sample
+is not every task; ID guard does not bind a same-profile endpoint retarget.
+Root bounded review RATIFY; no Muad'Dib, independent whole-change or postmerge
+review claimed. Full main tape remains separate.
+[Repair and actual verification](../docs/internal/SETTINGS-TRIALS-2026-10-14/README.md).
 
 **Deep usability audit and repair — #1202 (2026-10-14).** The owner clarified
 that Send was an example and requested a deep pass across existing surfaces.

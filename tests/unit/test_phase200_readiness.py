@@ -21,6 +21,7 @@ tests/unit/test_one_path_cardinality.py.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -28,6 +29,7 @@ from typing import Any
 import pytest
 
 from holdspeak.db import Database
+from holdspeak.inference_capabilities import meeting_analysis_claims
 from holdspeak.kernel.provider_signals import ProviderPermanentNoGeneration
 from holdspeak.kernel.runtime import _configure
 from holdspeak.services import concierge_service as cs
@@ -551,3 +553,127 @@ def test_when_every_frozen_leg_fails_the_probe_names_the_route_and_refuses(
     assert set(seen) == every
     # No silent substitution: nothing outside the frozen plan was dispatched.
     assert set(seen) <= every
+
+
+def test_a_successful_empty_output_keeps_the_kernel_terminal_truth(tmp_path: Path) -> None:
+    db = _routed_db(tmp_path, "probe-empty.db", ("quick",))
+    broker = _configure(db)
+
+    class EmptyEngine(_Engine):
+        def run_prompt(self, **_kwargs: Any) -> str:
+            return ""
+
+    broker.inference_runner._engine_factory = lambda revision, **_kwargs: EmptyEngine(revision.id)
+    result = route_probe.task_probe(broker, OWNER, db=db)
+
+    assert result["outcome"] == "succeeded"
+    assert result["ok"] is True and result["state"] == "READY"
+    assert result["reasonCode"] == ""
+    assert result["emptyOutput"] is True and result["sampleOutput"] == ""
+    assert result["executionId"] and result["routePlanId"]
+
+
+@pytest.mark.parametrize(
+    ("capability_id", "group", "tested_task", "output"),
+    [
+        ("speech.rewrite", "writing_dictation", "Dictation clean-up", "We will meet at ten tomorrow."),
+        ("ask.answer", "thoughts_notes", "Answers", "4"),
+        ("meeting.deferred_analysis", "meetings", "Meeting summary", json.dumps({
+            "topics": ["Settings fix"], "summary": "The settings fix will ship on Tuesday.",
+            "action_items": [], "decisions": [],
+        })),
+        ("recipe.run", "agents_tools", "Recipe", "Check the settings fix."),
+        ("background.rails_summary", "background", "Background summary", "The settings fix passed review."),
+    ],
+)
+def test_each_job_sample_runs_its_own_capability_without_domain_writes(
+    tmp_path: Path, capability_id: str, group: str, tested_task: str, output: str,
+) -> None:
+    db = Database(tmp_path / "probe-job.db")
+    _profile(db, "quick", claims=("language", *meeting_analysis_claims()))
+    _assign(db, capability_id, ["quick"])
+    broker = _configure(db)
+    calls: list[dict[str, Any]] = []
+
+    class SampleEngine(_Engine):
+        def run_prompt(self, **kwargs: Any) -> str:
+            calls.append(kwargs)
+            return output
+
+    broker.inference_runner._engine_factory = lambda revision, **_kwargs: SampleEngine(revision.id)
+    domain_tables = ("meetings", "notes", "recipes", "workflows", "memory_facts", "memory_pages", "cadence_loops", "inference_assignment_heads", "inference_assignment_revisions")
+    with db._connection() as conn:
+        before = {table: [tuple(row) for row in conn.execute(f"SELECT * FROM {table}")] for table in domain_tables}
+
+    result = route_probe.task_probe(
+        broker, OWNER, db=db, capability_id=capability_id, expected_profile_ids=["quick"],
+    )
+
+    assert result["ok"] is True and result["outcome"] == "succeeded"
+    assert result["capabilityId"] == capability_id and result["group"] == group
+    assert result["testedTask"] == tested_task
+    assert result["sampleInput"]
+    assert result["sampleOutput"] and result["emptyOutput"] is False
+    assert len(calls) == 1 and calls[0]["max_tokens"] == 512
+    assert calls[0]["user_prompt"] == result["sampleInput"]
+    assert "tools" not in calls[0]
+    with db._connection() as conn:
+        after = {table: [tuple(row) for row in conn.execute(f"SELECT * FROM {table}")] for table in domain_tables}
+        execution = conn.execute("SELECT state,terminal_outcome FROM inference_route_executions WHERE id=?", (result["executionId"],)).fetchone()
+    assert after == before
+    assert tuple(execution) == ("terminal", "succeeded")
+
+
+def test_a_changed_assignment_refuses_before_admission(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    db = _routed_db(tmp_path, "probe-changed.db", ("quick", "deep"))
+    broker = _configure(db)
+    seen = _engine_factory(broker)
+
+    def never_admit(*_args: Any, **_kwargs: Any) -> None:
+        raise AssertionError("a changed route must not be admitted")
+
+    monkeypatch.setattr(broker.inference_adoption_service, "admit", never_admit)
+    result = route_probe.task_probe(broker, OWNER, db=db, expected_profile_ids=["quick"])
+    assert result["state"] == "REFUSED" and result["ok"] is False
+    assert result["reasonCode"] == "route_probe_assignment_changed"
+    assert seen == []
+
+
+def test_an_invalid_meeting_sample_never_elects_a_successful_winner(tmp_path: Path) -> None:
+    db = Database(tmp_path / "probe-invalid-summary.db")
+    _profile(db, "quick", claims=("language", *meeting_analysis_claims()))
+    _assign(db, "meeting.deferred_analysis", ["quick"])
+    broker = _configure(db)
+    _engine_factory(broker)
+
+    result = route_probe.task_probe(broker, OWNER, db=db, capability_id="meeting.deferred_analysis")
+
+    assert result["ok"] is False and result["outcome"] != "succeeded"
+    assert result["state"] == "UNREACHABLE"
+    assert result["reasonCode"] != "inference_succeeded"
+
+
+@pytest.mark.parametrize(("endpoint", "off_machine", "paid"), [
+    ("http://127.0.0.1:8080/v1", False, False),
+    ("http://localhost:8080/v1", False, False),
+    ("http://[::1]:8080/v1", False, False),
+    ("http://192.168.1.43:8080/v1", True, False),
+    ("https://api.example.com/v1", True, True),
+])
+def test_probe_preview_uses_the_existing_endpoint_locality_classifier(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    endpoint: str, off_machine: bool, paid: bool,
+) -> None:
+    db = _routed_db(tmp_path, "probe-endpoint-locality.db", ("quick",))
+    broker = _configure(db)
+    seen = _engine_factory(broker)
+    monkeypatch.setattr(broker.inference_adoption_service.plans, "resolve_route_plan",
+        lambda *_args, **_kwargs: {"entries": [{"ordinal": 1, "profile_id": "quick",
+            "deployment_revision_id": "recorded-endpoint", "boundary": "private_network"}]})
+    monkeypatch.setattr(route_probe, "_deployment_facts",
+        lambda *_args: {"endpoint": endpoint, "engine": "openai_compatible", "model": "quick", "node": ""})
+    preview = route_probe.preview_route(broker, db=db)
+    assert preview["offMachine"] is off_machine
+    assert preview["paid"] is paid
+    assert preview["legs"][0]["boundary"] == "private_network", "Keep frozen route facts intact"
+    assert seen == [], "Locality preview must not dispatch"

@@ -72,6 +72,21 @@
 }
 .runson-receipt[data-tone="danger"] { color: var(--wb-danger-ink); }
 
+/* A trial owns one row at both widths: destination, verb, then its result. */
+.runson-trial-action { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+.runson-job-content, .runson-trial-result, .runson-trial-sample { display: flex; flex-direction: column; align-items: stretch; gap: 8px; min-width: 0; }
+.runson-job-content { width: 100%; }
+.runson-trial-result { text-transform: none; letter-spacing: 0; }
+.runson-trial-result[data-tone="busy"] { color: var(--wb-muted); }
+.runson-trial-result .surface-well { margin: 0; color: var(--wb-text); user-select: text; -webkit-user-select: text; }
+.runson-trial-result .surface-well-body { display: flex; flex-direction: column; gap: 12px; }
+.runson-trial-sample { font: 13px / 1.4 var(--font-sans); white-space: pre-wrap; overflow-wrap: anywhere; }
+.runson-trial-caption { font: 600 12px / 1.4 var(--font-mono); color: var(--wb-muted); }
+.runson-job-details { font: 12px / 1.4 var(--font-mono); text-transform: none; letter-spacing: 0; }
+.runson-job-content .gadget-fold summary { font-size: 12px; }
+.runson-root .switchboard:not(.is-list) .switchboard-job-name { grid-column: 1 / -1; }
+.runson-root .switchboard:not(.is-list) .switchboard-job-verb { grid-column: 1 / -1; grid-row: auto; }
+
 @container (max-width: 719px) {
   .runson-root .btn { min-height: 44px; }
   .runson-engine-actions { align-items: stretch; }

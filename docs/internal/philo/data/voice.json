@@ -1666,6 +1666,12 @@
           "symbol": "InferenceRunner",
           "line": 80,
           "claim": "The kernel runs admitted invocation attempts, cancellation, streaming, and receipts."
+        },
+        {
+          "path": "holdspeak/services/route_probe.py",
+          "symbol": "task_probe",
+          "line": 220,
+          "claim": "Settings trials run fixed public samples through five existing adopted capabilities and preserve kernel terminal truth; a displayed profile-chain guard can refuse before admission."
         }
       ],
       "tests": [
@@ -1701,6 +1707,39 @@
             "run": "full-python-suite",
             "cases": 1
           }
+        },
+        {
+          "path": "tests/unit/test_phase200_readiness.py",
+          "node": "test_a_successful_empty_output_keeps_the_kernel_terminal_truth",
+          "assertion": "A successful kernel receipt remains READY with emptyOutput rather than inference_succeeded failure.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/internal/SETTINGS-TRIALS-2026-10-14/probe.md",
+            "run": "settings-trials-probe-2026-10-14",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_phase200_readiness.py",
+          "node": "test_each_job_sample_runs_its_own_capability_without_domain_writes",
+          "assertion": "Five fixed samples use their registered capability and real kernel receipt with a controlled provider leaf; no domain or assignment writes.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/internal/SETTINGS-TRIALS-2026-10-14/probe.md",
+            "run": "settings-trials-probe-2026-10-14",
+            "cases": 5
+          }
+        },
+        {
+          "path": "tests/unit/test_phase200_readiness.py",
+          "node": "test_a_changed_assignment_refuses_before_admission",
+          "assertion": "An unexpected planned profile refuses before admission or provider dispatch.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/internal/SETTINGS-TRIALS-2026-10-14/probe.md",
+            "run": "settings-trials-probe-2026-10-14",
+            "cases": 1
+          }
         }
       ],
       "docs": [
@@ -1708,7 +1747,7 @@
         "docs/EXECUTION_DESTINATIONS.md"
       ],
       "limitations": [
-        "No provider success, outage, deadline, or fallback was observed.",
+        "Settings sample tests execute real route/kernel receipt paths with a controlled provider leaf; no physical model quality or owner endpoint success is established.",
         "A valid route can still fail when a deployment is unavailable."
       ],
       "failure_states": [

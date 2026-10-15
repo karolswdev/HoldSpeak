@@ -434,7 +434,7 @@ describe("Runs on — a stranger connects an engine and the face keeps his choic
 
     // Undo, Undo: the Default, then Meetings and its summary row back to inheritance.
     fireEvent.click(screen.getByTestId("runson-undo"));
-    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^UNDONE .*Everything else/));
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^UNDONE .*Default engine/));
     fireEvent.click(screen.getByTestId("runson-undo"));
     await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^UNDONE .*Meeting summaries$/));
     const summaryTask = hub.roster().task_overrides.find((t) => t.id === SUMMARY)!;
@@ -575,7 +575,7 @@ describe("Runs on — a record-less engine is refused on the drop (recorded hub)
     const rec = new RecordedHub("no-record", "0-open");
     await openRecorded(rec);
     const plate = await screen.findByTestId("switchboard-engine-old-box");
-    for (const [job, label] of [["thoughts_notes", "ANSWERS AND THOUGHTS"], ["agents_tools", "AGENTS AND RECIPES"]]) {
+    for (const [job, label] of [["thoughts_notes", "ANSWERS AND NOTES"], ["agents_tools", "CUSTOM TASKS"]]) {
       fireEvent.click(screen.getByTestId(`switchboard-job-${job}`));
       fireEvent.keyDown(plate, { key: "Enter" });
       await waitFor(() =>

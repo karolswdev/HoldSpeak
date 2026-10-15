@@ -3031,7 +3031,7 @@
         "receipt persistence"
       ],
       "limitations": [
-        "No provider success, outage, deadline, or fallback was observed.",
+        "Settings sample tests execute real route/kernel receipt paths with a controlled provider leaf; no physical model quality or owner endpoint success is established.",
         "A valid route can still fail when a deployment is unavailable."
       ],
       "model_requirements": [
@@ -3081,6 +3081,12 @@
           "line": 80,
           "path": "holdspeak/kernel/inference_runner.py",
           "symbol": "InferenceRunner"
+        },
+        {
+          "claim": "Settings trials run fixed public samples through five existing adopted capabilities and preserve kernel terminal truth; a displayed profile-chain guard can refuse before admission.",
+          "line": 220,
+          "path": "holdspeak/services/route_probe.py",
+          "symbol": "task_probe"
         }
       ],
       "status": "internal",
@@ -3123,6 +3129,39 @@
           },
           "node": "test_local_capacity_pre_send_failure_falls_back_with_zero_physical_primary",
           "path": "tests/unit/test_phase143_inference_fallback_controller.py"
+        },
+        {
+          "assertion": "A successful kernel receipt remains READY with emptyOutput rather than inference_succeeded failure.",
+          "execution": {
+            "cases": 1,
+            "record": "docs/internal/SETTINGS-TRIALS-2026-10-14/probe.md",
+            "run": "settings-trials-probe-2026-10-14",
+            "status": "passed"
+          },
+          "node": "test_a_successful_empty_output_keeps_the_kernel_terminal_truth",
+          "path": "tests/unit/test_phase200_readiness.py"
+        },
+        {
+          "assertion": "Five fixed samples use their registered capability and real kernel receipt with a controlled provider leaf; no domain or assignment writes.",
+          "execution": {
+            "cases": 5,
+            "record": "docs/internal/SETTINGS-TRIALS-2026-10-14/probe.md",
+            "run": "settings-trials-probe-2026-10-14",
+            "status": "passed"
+          },
+          "node": "test_each_job_sample_runs_its_own_capability_without_domain_writes",
+          "path": "tests/unit/test_phase200_readiness.py"
+        },
+        {
+          "assertion": "An unexpected planned profile refuses before admission or provider dispatch.",
+          "execution": {
+            "cases": 1,
+            "record": "docs/internal/SETTINGS-TRIALS-2026-10-14/probe.md",
+            "run": "settings-trials-probe-2026-10-14",
+            "status": "passed"
+          },
+          "node": "test_a_changed_assignment_refuses_before_admission",
+          "path": "tests/unit/test_phase200_readiness.py"
         }
       ],
       "trust_boundary": "Execution crosses exactly the destination boundary frozen for the reserved child; fallback cannot invent or retarget a leg."

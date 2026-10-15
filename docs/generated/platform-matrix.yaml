@@ -1401,7 +1401,8 @@
       "source_ids": [
         "holdspeak/services/inference_fallback_controller.py",
         "holdspeak/services/inference_fallback_controller.py",
-        "holdspeak/kernel/inference_runner.py"
+        "holdspeak/kernel/inference_runner.py",
+        "holdspeak/services/route_probe.py"
       ],
       "status": "internal"
     },
@@ -1413,7 +1414,8 @@
       "source_ids": [
         "holdspeak/services/inference_fallback_controller.py",
         "holdspeak/services/inference_fallback_controller.py",
-        "holdspeak/kernel/inference_runner.py"
+        "holdspeak/kernel/inference_runner.py",
+        "holdspeak/services/route_probe.py"
       ],
       "status": "internal"
     },
@@ -1425,7 +1427,8 @@
       "source_ids": [
         "holdspeak/services/inference_fallback_controller.py",
         "holdspeak/services/inference_fallback_controller.py",
-        "holdspeak/kernel/inference_runner.py"
+        "holdspeak/kernel/inference_runner.py",
+        "holdspeak/services/route_probe.py"
       ],
       "status": "internal"
     },
@@ -1437,7 +1440,8 @@
       "source_ids": [
         "holdspeak/services/inference_fallback_controller.py",
         "holdspeak/services/inference_fallback_controller.py",
-        "holdspeak/kernel/inference_runner.py"
+        "holdspeak/kernel/inference_runner.py",
+        "holdspeak/services/route_probe.py"
       ],
       "status": "internal"
     },
@@ -1449,7 +1453,8 @@
       "source_ids": [
         "holdspeak/services/inference_fallback_controller.py",
         "holdspeak/services/inference_fallback_controller.py",
-        "holdspeak/kernel/inference_runner.py"
+        "holdspeak/kernel/inference_runner.py",
+        "holdspeak/services/route_probe.py"
       ],
       "status": "internal"
     },

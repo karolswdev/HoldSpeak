@@ -1,19 +1,18 @@
 # Models
 
-Choose the engines that HoldSpeak uses for each capability.
-The **Concierge** combines engine discovery and model assignments in one window.
+Open **Settings > Engines** to choose the engine for each AI job.
+Open **Settings > Accounts** to connect GitHub, Jira, Confluence or a calendar.
 
-## Configure an assignment set
+## Choose an engine
 
-1. Open **Settings > Models**.
-2. Review the engines under **FOUND**.
-3. Add an engine or download a supported preset if necessary.
-4. Review the proposed engine for each group under **THE SET**.
-5. Select **Use these** when the set is ready.
+1. Open **Settings > Engines**.
+2. Use **Find on LAN**, **Add an engine**, or **Download a local model**.
+3. Select a job and choose its engine.
+4. Use **Default engine** for jobs that do not need a separate assignment.
 
-Each engine row identifies its host and current state.
-A file on disk or a saved credential does not prove that the engine can run.
-The set can include different engines for different kinds of work.
+**Custom tasks** covers saved Agents, recipes and Workflow steps.
+**Background work** covers automatic drafts, summaries and memory work.
+These are routing groups. They can share the default engine.
 
 ## Add or check an engine
 
@@ -30,8 +29,8 @@ The **Check** control on those rows shows `1 TOKEN · $` before a paid probe.
 The Concierge requires that explicit action for a paid cloud check.
 Normal model work can also incur provider charges.
 
-The Concierge URL field does not collect a provider key.
-For a keyed provider, use the owner Model Library API with its separate write-only secret field.
+For a keyed provider, enter its key in the engine form
+or use the owner Model Library API with its write-only secret field.
 The [Model Library contract](MCP_SIDECAR.md#model-library) describes the underlying owner operations.
 The [API surface](API_SURFACE.md) lists their HTTP routes.
 
@@ -50,23 +49,24 @@ A cloud row showing **NOT SET** requires credential setup before a paid check ca
 | **UNREACHABLE** | The engine did not respond as required. |
 | **OFF** | You explicitly disabled a capability group. |
 
-**Use these** applies each group that is ready or explicitly off.
-It does not send a group that is **WAITING**.
+The picker changes the selected job. A missing or incompatible engine cannot run that job.
 A successful check establishes current availability. It does not guarantee future availability or model quality.
 
-## Test the assigned route
+## Try a job
 
-**Test**, below the proposed set, sends one short request through the route the
-assignment currently resolves to. It reports the model that answered, the
-measured time, and the host the request reached. `THIS DEVICE` means nothing
-left the machine.
+Select **Try it** beside a job. A text trial sends a fixed sample through
+that job's assigned route. The destination is shown beside the button before
+you press it. The button shows progress, then the row shows the tested task,
+serving model, time, sample and returned text. One press starts the trial.
 
-A route whose first destination is off this machine is not tested until you
-select **Test** a second time. A paid destination shows its cost indicator
-first. Nothing is sent before that second selection.
+**Speech to text** uses the microphone: speak, then select **Stop**.
+The browser can request microphone access. Text trials use a fixed sample.
+A successful inference with no text reads **Completed · No text returned**.
+A failure stays on the job and names its cause.
 
-A reachability **Check** proves that an address answered. **Test** proves that
-the assigned route completed a task and names what served it.
+A sample checks one task in the group. It does not test every Agent, Workflow
+or memory operation. **Default engine** supplies other jobs and has no
+separate trial. A provider can charge for a trial on its service.
 
 ## Repair states
 
@@ -113,7 +113,7 @@ It records models, deployment information, and readiness observations.
 An **assignment** selects the compatible model list for a capability or eligible saved item.
 These are separate service contracts beneath the Concierge.
 
-**Settings > Models** and the assignment entry points open the Concierge.
+**Settings > Engines** and the assignment entry points open the engine picker.
 Use the [MCP reference](MCP_SIDECAR.md) or [API surface](API_SURFACE.md) for programmatic access to those services.
 
 The assignment service supports complete ordered lists of one to four compatible models.

@@ -1,0 +1,10 @@
+body { margin: 0; }
+.canvas-desk { min-height: 100vh; background: var(--wb-desktop, #747f91); }
+.canvas-label { position: fixed; top: 4px; left: 8px; font: 12px var(--font-mono); color: var(--wb-ink); }
+.canvas-trial-action { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.canvas-trial-result { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; font: 13px var(--font-sans); text-transform: none; letter-spacing: 0; }
+.canvas-output { display: block; padding: 8px; background: var(--wb-field-hi); border: 1px solid var(--wb-ink); }
+.canvas-details { font: 12px var(--font-mono); text-transform: none; }
+.canvas-desk .runson-root .switchboard-job-result { display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
+.canvas-desk .runson-root .switchboard:not(.is-list) .switchboard-job-name { grid-column: 1 / -1; }
+.canvas-desk .runson-root .switchboard:not(.is-list) .switchboard-job-verb { grid-column: 1 / -1; grid-row: auto; }
