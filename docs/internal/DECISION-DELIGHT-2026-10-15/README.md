@@ -118,6 +118,20 @@ Root updated that test to assert the same exact record id, no destination read
 or preview before explicit Send, one well after Send, and Hide unmounting it.
 No product change, removed identity assertion, timeout increase or waiver.
 The exact Room file collected 16 cases and passed all 16 in 2.95s
-(`room-send-{collect,green}.log`). A final complete quick run follows.
+(`room-send-{collect,green}.log`). The final complete quick run is GREEN (see below).
 The Room host behavior is covered by these transport tests; no actual Room
 producer/browser navigation is claimed by the decision-reader walks.
+
+Final quick (`quick-confirm/`, `quick-confirm.log`) passed **3764 web /
+651 affected Python / 107 sweeps (2 existing xfails) / 17 canon**. Root read
+all tails and exit 0. Final TypeScript passed (`typecheck-confirm.log`).
+Release bundle `14ec45e9c3a23de3` follows the test-only Room amendment; the
+product source walked on build `614de169acd2c58d` is unchanged. Existing
+jsdom canvas warnings are not production page errors. Canvas files sit
+outside web/src and were rendered/read separately before build.
+
+Release: [PR #1211](https://github.com/karolswdev/HoldSpeak/pull/1211).
+Product commit `5d3c8402e`; Room test amendment `d1d4c81ef`. The status/link
+commit changes docs only. Normal local hub deployment is recorded separately
+after merge, with no fixture walk against the owner's desk. Owner acceptance,
+formal postmerge review, remote CI green and full main tape remain unclaimed.
