@@ -4,9 +4,28 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-15 (App-wide Workbench pickers: #1206)
+**Last updated:** 2026-10-15 (Continued visual refinement: #1207)
 
 ## Current phase
+
+**Continued visual refinement — #1207 (2026-10-15).** After the shared
+picker release, two bounded audits and actual production captures drove a
+repair pass across Tool Inspector, Thread questions, Agent editing,
+Workbench results/read recovery and compact Calendar selection. Existing
+library species supply named inset sheets, populated field labels, typed
+answers, local actions and one result reader. Exact GitHub repository and
+proposal identity stay visible; distinct outcomes/egress use the footer.
+Runs/Memory failures no longer claim empty, and retry rereads their own
+resource while retaining known content. Stored mint_attempted reaches the
+wire, proved through real runner/publication. Calendar chooser remains
+visible and keeps URL entry with an existing source. Final quick GREEN:
+3685web /896affected Python /107desk sweeps (2existing xfails) /17canon;
+release TypeScript/build pass. Root read13-state production walks1440/393,
+real Agent Done flush and Calendar recovery graph/native-touch393. Independent
+Sol source review RATIFY after one destination fix/recheck; root live caught
+and fixed Inspector structural positioning. No Muad'Dib check or owner
+acceptance inferred. Next source candidates and runtime limits are below.
+[Design, audit, focused proof, live evidence and limits](../docs/internal/VISUAL-REFINEMENT-2026-10-15/README.md).
 
 **App-wide Workbench pickers — #1206 (2026-10-15).** The owner accepted
 the Settings sheets and rejected browser-native dropdown menus. One shared
@@ -26,8 +45,7 @@ and graph language-save cases including native touch393. Source review
 RATIFY after one lifecycle fix/recheck; no Muad'Dib check or owner visual
 acceptance claimed. Physical Safari/iOS and assistive technology remain
 unverified; source coverage is not a live walk of every consumer. Owner
-requested the next broad visual audit after this release. Existing compact
-Calendar chooser limitation remains open. Full main tape/postmerge review
+requested the next broad visual audit after this release. The compact Calendar chooser limitation was closed by #1207. Full main tape/postmerge review
 remain separate.
 [Implementation, census, exact proof and limits](../docs/internal/WORKBENCH-PICKERS-2026-10-14/README.md).
 
@@ -47,8 +65,8 @@ phone hit ownership and calendar-save graph cases. Independent Sol source
 review RATIFY after one correction/recheck; no Muad'Dib check or owner
 visual acceptance claimed. Remote address and optional TTS missing-model
 reads are declared layout substitutions, not hardware/connection proof.
-Open existing P2: compact native Calendar chooser can have no controls
-with an in-use source and unavailable discovery. Desktop matrix retains
+The existing P2 compact Calendar chooser failure with an in-use source
+and unavailable discovery was closed by #1207. Desktop matrix retains
 17 states before this failure; phone visibility is not chooser completion.
 Add feed remains the explicit URL entry. Owner live judgment, real native
 devices, remote connection, speech/model quality and external dispatch
@@ -224,6 +242,16 @@ committing generated docs and line-number test maps; split the tests.
 
 ## Open work
 
+**From #1207:** continue live inspection of the ranked source candidates:
+Schedule recording, Room History degraded/no-match state, Knowledge unavailable
+membership, long recipient lists and session terminal action geometry. Exact
+opening paths are in the two audit reports. These are not live-confirmed
+repairs. Thread question controls have UI contract coverage; a production
+elicitation emitter remains unestablished. No live artifact-arrival, clipboard,
+failed-mint recovery, actual model quality or native hardware claim. Owner desk
+judgment, full main tape and Astra postmerge review remain due. The former
+Calendar chooser P2 is closed; no source-review findings remain open.
+
 **From #1198:** two intermediate full sweeps observed a Week 1440 layout
 movement (166 / 118 px). Six focused checks, three complete diagnostic sweeps,
 the unchanged #1197 baseline, and the final unmodified quick check passed;
@@ -288,6 +316,11 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 | Runs on (16c): a per-object wire on the board (thought/workbench/agent/recipe/project overrides; the parked AssignmentEditor sheet edited them; the contextual atom now only reads them and opens Runs on); FOUND model files and an unrecorded Whisper (add-to-library needs a detected_artifact_id detect does not carry); Try it through the route for jobs other than Thoughts & notes (route_probe accepts only ask.answer); the phone list cannot pin an inherited engine as a job's own; 25 atlas cases still drive the Concierge flow (Add = use for summaries; the window closes) | — | — |
 
 ## Last merged (newest first)
+
+- **#1207 — Continued visual refinement.** Shared Workbench composition across
+  Inspector/Thread/Agent/Workbench/Calendar; honest recovery, one result reader,
+  stored mint fact wire. Quick GREEN,1440/393 production walks, independent
+  source review RATIFY. [Record](../docs/internal/VISUAL-REFINEMENT-2026-10-15/README.md).
 
 - **#1199 — Model discovery and download repair (2026-10-13).** Bounded
   Find on LAN; corrected signed Qwen catalog and default artifact locators;

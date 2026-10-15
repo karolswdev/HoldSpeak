@@ -1,5 +1,7 @@
 # Continued visual refinement
 
+Release [#1207](https://github.com/karolswdev/HoldSpeak/pull/1207).
+
 The owner requested continued product inspection after the shared picker
 release #1206. Base `94551006a`; isolated worktree
 `wt-visual-refinement-20261015`. Workbench material stays the common grammar.
