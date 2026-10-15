@@ -4,7 +4,9 @@
 // (tests/e2e/test_desk_sweep.py, fit and clipped at 393) proves the layouts.
 import { describe, expect, it } from "vitest";
 
-const cssSources = import.meta.glob<string>("/src/**/*.css", {
+// Parked faces are retained history, as in the canon scanner. Their old
+// viewport rules do not grant an exception to an active window body.
+const cssSources = import.meta.glob<string>(["/src/**/*.css", "!/src/**/_parked/**/*.css"], {
   eager: true,
   import: "default",
   query: "?raw",
@@ -34,6 +36,7 @@ const viewportWidthMediaAllowlist = new Set([
 
 describe("HS-129-06 container-query law", () => {
   it("keeps viewport-width media limited to shell exceptions", () => {
+    expect(cssSources).toHaveProperty("/src/styles/global.css");
     for (const [path, css] of Object.entries(cssSources)) {
       if (/@media\s*\(\s*(?:max|min)-width/.test(css)) {
         expect(viewportWidthMediaAllowlist).toContain(path);

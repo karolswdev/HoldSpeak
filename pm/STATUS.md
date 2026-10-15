@@ -4,9 +4,28 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-15 (Continued surface refinement: #1208)
+**Last updated:** 2026-10-15 (Opened Workbench and Accounts: #1209)
 
 ## Current phase
+
+**Opened Workbench and Accounts — #1209 (2026-10-15).** The owner's
+opened-workbench/controls report drove a complete bounded pass: multiline
+instruction composer, grouped Agent/Engines/Starts when, folded roster,
+library mode/schedule cycles and paper item instruction/result material.
+Known missing-engine Runs offers repair; Home counts real item states.
+Shared Pad remeasures on width changes, fixing reproduced clipped text.
+Accounts' wrapping status and provider actions fit; Add stays within its
+provider row. Mounted Add forms keep refusal/Retry and drafts through
+Cancel/sign-in detours for populated and empty providers. Existing writes,
+source completion, priority, references and late-save fences remain.
+Final quick GREEN: 4935 web / 709 affected Python / 107 desk sweeps
+(2 existing xfails) / 17 canon; release TypeScript passes. Root inspected
+16-state final production walks at 1440/393, actual isolated CRUD/Retry and
+width resize; graph multiline Add passes at both widths. Independent Sol
+source review RATIFY after one bounded fix re-check; its initially missed
+Accounts lifecycle regression is recorded. No owner acceptance, native
+provider health, microphone hardware, full main tape or postmerge review
+inferred. [Direction, verification and limits](../docs/internal/ACCOUNT-WORKBENCH-2026-10-15/README.md).
 
 **Continued surface refinement — #1208 (2026-10-15).** The five
 remaining ranked targets now use the existing Workbench kit: Schedule,
@@ -258,6 +277,14 @@ committing generated docs and line-number test maps; split the tests.
 
 ## Open work
 
+**From #1209:** opened Workbench/controls and the reported Accounts row are
+refined and verified on isolated production faces at 1440/393. Continue
+bounded inspection of remaining existing surfaces. Owner live judgment,
+full main tape and Astra postmerge review remain separate. Native sign-in,
+provider health, microphone hardware, actual model execution and schedule
+firing were not established by these UI/CRUD checks. No confirmed source
+review finding remains open; no guard ceiling changed.
+
 **From #1208:** the five #1207 source candidates are repaired and
 observed on isolated production faces at1440/393. Continue bounded inspection
 of existing surfaces; plain no-pane terminal still repeats Back in its body
@@ -332,6 +359,12 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 
 ## Last merged (newest first)
 
+- **#1209 — Opened Workbench and Accounts.** Named multiline composer,
+  coherent configuration and library cycles, readable item material,
+  honest progress and engine repair; shared Pad width-resize clipping fixed.
+  Account status contained, Add within provider row, refusal/draft lifecycle
+  preserved. Quick 4935/709/107/17 green; 16-state walks at both widths;
+  real graph Add pointer/touch passes. Source review RATIFY after fixes.
 - **#1208 — Continued surface refinement.** Schedule, email recipients/key
   reuse, History recovery, Knowledge unavailable members and terminal handoff;
   shared Pad mic clearance. Quick GREEN,1440/393 production walks and one

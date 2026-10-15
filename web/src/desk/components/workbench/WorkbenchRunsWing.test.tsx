@@ -19,6 +19,16 @@ const RUN: WorkbenchRun = {
 };
 
 describe("WorkbenchRunsWing", () => {
+  it("offers the engine repair instead of a run that is known to be unavailable", async () => {
+    const onRun = vi.fn(), onChooseEngine = vi.fn();
+    render(<WorkbenchRunsWing runs={[]} configured running={false} engineMissing onChooseEngine={onChooseEngine}
+      openRunId={null} onToggleRun={vi.fn()} onRun={onRun} onBindAgent={vi.fn()} />);
+    expect(screen.queryByRole("button", { name: "Run now" })).toBeNull();
+    await userEvent.setup().click(screen.getByRole("button", { name: "Choose engine" }));
+    expect(onChooseEngine).toHaveBeenCalledOnce();
+    expect(onRun).not.toHaveBeenCalled();
+  });
+
   it("keeps the empty-state action honest", async () => {
     const onRun = vi.fn();
     render(

@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "atlas_version": "account-workbench-20261015",
+  "extends": "docs/internal/SURFACE-REFINEMENT-2026-10-15/atlas.json",
+  "source_commit": "3d46ffdc39f1f677d869275f86ad81d61388835c",
+  "states": [
+    {
+      "id": "state.desk_presentation.workbench_multiline_item",
+      "family": "desk_presentation",
+      "values": {
+        "application": "Workbench",
+        "item": "multiline accepted"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/components/WorkbenchWindow.tsx",
+          "symbol": "export function WorkbenchWindow({",
+          "claim": "The instruction control keeps the full item body and existing writer."
+        }
+      ],
+      "reachable_by": [
+        "case.workbench.add.multiline"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "case.workbench.add.multiline",
+      "job": "j3",
+      "edge_ids": [
+        "edge.route.demoted_routes_workbenches"
+      ],
+      "state_id": "state.desk_presentation.workbench_multiline_item",
+      "applicability": "applicable",
+      "preconditions": [
+        "Isolated HOME/DB; real Workbench/item producers; no agent/model run, capture, schedule or egress."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/setup/status",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "timeout_s": 10
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/workbenches",
+          "body": {
+            "name": "Graph architecture review"
+          },
+          "expect_status": 201,
+          "adapter": "http-route",
+          "capture_as": "wb_id",
+          "capture_path": "workbench.id"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/?open=workbench:{wb_id}"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-workbench-window [aria-label=\"New item instruction\"]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-pointer",
+          "selector": ".desk-workbench-window [aria-label=\"New item instruction\"]",
+          "value": "Review the migration plan.\nConfirm rollback ownership and the release gate."
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-by-viewport",
+        "role": "button",
+        "name": "Add"
+      },
+      "expected": {
+        "observe_at": "protocol: GET /api/workbenches/{wb_id}",
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_field",
+              "path": "workbench.item_count",
+              "value": 1
+            },
+            {
+              "kind": "protocol_field",
+              "path": "workbench.items.0.body",
+              "value": "Review the migration plan.\nConfirm rollback ownership and the release gate."
+            }
+          ]
+        },
+        "words": "Add keeps both lines in one real stored work item."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ],
+  "clocks": [
+    {
+      "id": "clock.browser_wall",
+      "source": "Browser Date",
+      "mechanism": "none: real wall time, no clock advance",
+      "status": "available",
+      "used_by": []
+    }
+  ],
+  "excluded": [],
+  "council_readings": []
+}

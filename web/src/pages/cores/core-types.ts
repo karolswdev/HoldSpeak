@@ -48,6 +48,8 @@ export interface WbSummary {
   schedule_enabled: boolean;
   item_count: number;
   pending_count: number;
+  /** Present on the current hub payload; older summaries may omit the list. */
+  items?: { status: string; parked?: boolean }[];
   last_run: {
     started_at: string;
     completed_at: string | null;

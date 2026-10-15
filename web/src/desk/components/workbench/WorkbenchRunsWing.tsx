@@ -19,6 +19,8 @@ export function WorkbenchRunsWing({
   onToggleRun,
   onRun,
   onBindAgent,
+  engineMissing = false,
+  onChooseEngine,
 }: {
   runs: WorkbenchRun[];
   configured: boolean;
@@ -30,6 +32,8 @@ export function WorkbenchRunsWing({
   onToggleRun: (runId: string) => void;
   onRun: () => void;
   onBindAgent: () => void;
+  engineMissing?: boolean;
+  onChooseEngine?: () => void;
 }) {
   return (
     <div className="wb-runs-wing">
@@ -40,10 +44,10 @@ export function WorkbenchRunsWing({
         {runs.length === 0 && !loading && !error ? (
           <SurfaceState
             empty
-            emptyLabel={configured ? "No runs yet" : "No agent bound"}
+            emptyLabel={!configured ? "No agent bound" : engineMissing ? "No engine" : "No runs yet"}
             emptyGlyph="○"
-            actionLabel={configured ? "Run now" : "Bind an agent"}
-            onAction={configured ? (running ? undefined : onRun) : onBindAgent}
+            actionLabel={!configured ? "Bind an agent" : engineMissing ? "Choose engine" : "Run now"}
+            onAction={!configured ? onBindAgent : engineMissing ? onChooseEngine : (running ? undefined : onRun)}
           />
         ) : null}
         {runs.map((run) => {
