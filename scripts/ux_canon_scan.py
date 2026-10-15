@@ -554,8 +554,8 @@ def scan_file(rel_path: str, content: str, lines: list[str]) -> list[Violation]:
 
         # Rule A1: Raw <button (not the library Button), over the whole file.
         # Case-sensitive: <button is raw HTML; <Button is the library component
-        # Exclude Signal.tsx (the library itself) and gadgets.tsx (surface kit)
-        is_button_library = any(k in rel_path for k in (
+        # Signal's Button moved to its own implementation to avoid an import cycle.
+        is_button_library = rel_path == "components/signal/Button.tsx" or any(k in rel_path for k in (
             "Signal.tsx", "gadgets.tsx",
         ))
         if not is_button_library:
@@ -736,7 +736,7 @@ def scan_file(rel_path: str, content: str, lines: list[str]) -> list[Violation]:
             # Rule B: Non-library controls (raw <input>/<select>/<textarea>)
             # `\b` after the tag name is satisfied by the end of the line, so
             # a multi-line tag is seen.  Exclude files that ARE the library wrappers.
-            is_library_file = any(k in rel_path for k in (
+            is_library_file = rel_path == "components/signal/WorkbenchSelect.tsx" or any(k in rel_path for k in (
                 "Signal.tsx", "gadgets.tsx", "MicButton", "StringGadget",
                 "EditInPlace", "CycleGadget", "CheckGadget", "PadGadget",
                 "LedgerFilter", "ChoiceCard", "surface/controls/",

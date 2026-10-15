@@ -1,0 +1,42 @@
+.workbench-picker {
+  position: fixed;
+  z-index: var(--desk-z-popover);
+  box-sizing: border-box;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 3px;
+  border: 1px solid var(--wb-ink);
+  border-radius: 0;
+  background: var(--wb-field);
+  box-shadow: var(--wb-raised), var(--wb-drop);
+  scrollbar-color: var(--wb-muted) var(--wb-field);
+  touch-action: pan-y;
+}
+.workbench-picker-row {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 32px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 0;
+  background: var(--wb-paper);
+  color: var(--wb-ink);
+  font: 400 13px / 1.35 var(--font-sans);
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.workbench-picker-row[data-active] {
+  background: var(--wb-sel);
+  color: var(--wb-paper);
+}
+.workbench-picker-row:disabled {
+  background: var(--wb-field);
+  color: var(--wb-muted);
+  cursor: not-allowed;
+}
+.workbench-picker-check { font: 600 12px var(--font-mono); }

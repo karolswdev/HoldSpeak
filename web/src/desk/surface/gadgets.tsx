@@ -16,6 +16,7 @@ import {
   type Ref,
 } from "react";
 import { Button } from "../../components/signal/Signal";
+import { WorkbenchSelect } from "../../components/signal/WorkbenchSelect";
 import { MicButton } from "../components/MicButton";
 import { ConfirmVerb } from "./Surface";
 import { useRovingRows } from "./roving";
@@ -147,7 +148,7 @@ export function CheckGadget({
   );
 }
 
-/* ── CycleGadget: a real <select> wearing the ↻ VALUE face ── */
+/* ── CycleGadget: native form ownership, shared Workbench choice popup ── */
 
 export type CycleOption = {
   value: string;
@@ -177,7 +178,7 @@ export function CycleGadget({
       <span className="gadget-cycle-glyph" aria-hidden="true">
         ↻
       </span>
-      <select
+      <WorkbenchSelect
         aria-label={label}
         value={value}
         disabled={disabled}
@@ -193,7 +194,7 @@ export function CycleGadget({
             {option.label ?? option.value}
           </option>
         ))}
-      </select>
+      </WorkbenchSelect>
     </span>
   );
 }

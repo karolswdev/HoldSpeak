@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "atlas_version": "workbench-pickers-20261014",
+  "extends": "docs/internal/philo/graph/atlas-settings-audit.json",
+  "source_commit": "91275406b0e670731bf4798bf55179f2c819c9ea",
+  "states": [
+    {
+      "id": "state.desk_presentation.workbench_language_picker",
+      "family": "desk_presentation",
+      "values": {
+        "application": "Settings",
+        "section": "Voice",
+        "picker": "Language open"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/surface/gadgets.tsx",
+          "symbol": "export function CycleGadget({",
+          "claim": "The shared choice species owns a Workbench popup and preserves form values."
+        }
+      ],
+      "reachable_by": [
+        "case.settings.pick.language"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "case.settings.pick.language",
+      "job": "j3",
+      "edge_ids": [
+        "edge.route.demoted_routes_settings"
+      ],
+      "state_id": "state.desk_presentation.workbench_language_picker",
+      "applicability": "applicable",
+      "preconditions": [
+        "Isolated HOME/DB; actual picker and settings producer; no microphone, OS settings, download or external model."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/setup/status",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "timeout_s": 10
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/settings",
+          "body": {
+            "model": {
+              "language": "auto"
+            }
+          },
+          "expect_status": 200,
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/settings"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "#surface-settings .prefs-hub"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "#surface-settings .surface-ledger-row:has(.surface-ledger-primary:text-is(\"Voice\")) button:text-is(\"Open\")"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "#surface-settings select[aria-label=\"Language\"]"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "combobox",
+          "name": "Language",
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[role=listbox]",
+          "adapter": "ui-pointer"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "selector": "[role=listbox] [role=option]:has-text(\"English (en)\")",
+        "adapter": "ui-by-viewport"
+      },
+      "expected": {
+        "observe_at": "protocol: GET /api/settings",
+        "predicate": {
+          "kind": "protocol_field",
+          "path": "model.language",
+          "value": "en"
+        },
+        "words": "The library-rendered option commits through the existing HTTP settings writer."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ],
+  "clocks": [
+    {
+      "id": "clock.browser_wall",
+      "source": "Browser Date",
+      "mechanism": "none: real wall time, no clock advance",
+      "status": "available",
+      "used_by": []
+    }
+  ],
+  "excluded": [],
+  "council_readings": []
+}

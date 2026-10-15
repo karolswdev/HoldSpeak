@@ -752,4 +752,11 @@ input[type="file"]::file-selector-button:hover {
   :root .desk-panepicker .desk-panepicker-item {
     min-height: var(--desk-button-hit-size);
   }
+  /* Native picker owners and chrome choice rows owe the device target. */
+  :root .workbench-picker-row,
+  :root select.workbench-select,
+  :root .gadget-cycle select.workbench-select {
+    min-height: var(--desk-button-hit-size);
+    min-width: var(--desk-button-hit-size);
+  }
 }

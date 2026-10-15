@@ -187,6 +187,32 @@ obey one rule: nothing clips, nothing scrolls sideways (HS-200-12).
   strip.
 - The desktop strip never folds.
 
+## CycleGadget / WorkbenchSelect (2026-10-14)
+
+CycleGadget keeps `label`, `value`, `options`, `onChange`, `disabled`.
+Its visible native select owns the label, focus and selected value. Missing
+values remain named; unavailable options remain listed and cannot commit.
+The shared `components/signal/WorkbenchSelect` core also serves legacy
+Signal Select, preserving native props, default values, form membership,
+required validation, refs and input/change events.
+
+The native popup is replaced by a library listbox portaled above window
+clipping. Its square beveled frame uses ground, choice rows use paper,
+the active row uses selection blue, the saved choice has a check, and
+unavailable rows are flat with muted ink. Every choice is a chrome Button.
+The portal copies the owner's computed custom properties. Long labels
+wrap; long lists scroll within the space above or below the control.
+At narrow device widths both owner and rows own 44px targets.
+
+Pointer, Enter, Space or arrow opens without changing the value. Focus
+stays on the select; arrows, Home, End and typeahead move the active row.
+Enter, Space or a row press commits one native input/change pair only if
+the value changed. Escape cancels and stops before the window's Escape;
+Tab exits normally; outside pointer closes and keeps its destination
+action. Blur, resize, ancestor scroll, disable, roster/value change and
+unmount close. Scrolling the popup itself keeps it open. Native multiple
+or sized list controls retain their native list behavior.
+
 ## StringGadget.micLabel (HS-200-13) / PadGadget.micLabel (HS-201-12)
 
 The text well's mic is the voice law (canon B: MicButton on every text
