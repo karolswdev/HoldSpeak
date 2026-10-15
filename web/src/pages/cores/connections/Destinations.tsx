@@ -41,6 +41,7 @@ import {
 } from "../../../desk/surface";
 import type { ConnectionsResponse } from "./api";
 import { ACCOUNTS_CHANGED, fetchConnections } from "./api";
+import "./connections.css";
 import { accountChip } from "../../../desk/surface/send";
 import {
   CHANNEL_WORD, DEFAULT_EMAIL_PROVIDER, DEST_FOCUS, EMAIL_PROVIDERS, SEND_WORDS, egressOf, emailProvider, refusedWord, stamp,
@@ -204,23 +205,23 @@ function DestForm({ conns, accountsLoading, accountsReadError, onAccountsRetry, 
         </GadgetRow>
       )}
       {d.channel === "file" ? (<>
-        <GadgetRow label="Folder"><StringGadget label="Folder" value={d.folder} onChange={(v) => set({ folder: v })} placeholder="/Users/you/Reports" inputProps={{ "data-testid": "dest-folder" } as never} /></GadgetRow>
+        <GadgetRow wide label="Folder"><StringGadget label="Folder" value={d.folder} onChange={(v) => set({ folder: v })} placeholder="/Users/you/Reports" inputProps={{ "data-testid": "dest-folder" } as never} /></GadgetRow>
         <GadgetRow label="Synced"><CheckGadget variant="token" label="SYNCED" checked={d.synced} onChange={(v) => set({ synced: v })} /></GadgetRow>
       </>) : null}
       {d.channel === "github" ? (<>
-        <GadgetRow label="Account">
+        <GadgetRow wide label="Account">
           <span className="send-line">
             {accountsUnavailable ? accountReadState : <><span className="surface-token send-literal" data-chip>{gh?.account?.login ? `@${gh.account.login}` : "—"}</span>
             {acc ? <StateChip state={acc.state} label={acc.label} /> : null}
             {missingAccount ? <Button dense variant="secondary" onClick={setUpAccount}>Set up account</Button> : null}</>}
           </span>
         </GadgetRow>
-        <GadgetRow label="Repository"><StringGadget label="Repository" value={d.repo} onChange={(v) => set({ repo: v })} placeholder="owner/repo" inputProps={{ "data-testid": "dest-repo" } as never} /></GadgetRow>
+        <GadgetRow wide label="Repository"><StringGadget label="Repository" value={d.repo} onChange={(v) => set({ repo: v })} placeholder="owner/repo" inputProps={{ "data-testid": "dest-repo" } as never} /></GadgetRow>
         <GadgetRow label="Kind"><CycleGadget label="Kind" value={d.kind} options={[{ value: "issue", label: "Issue" }, { value: "pr", label: "Pull request" }]} onChange={(v) => set({ kind: v as "issue" | "pr" })} /></GadgetRow>
         <GadgetRow label="Number"><StringGadget label="Number" value={d.number} onChange={(v) => set({ number: v })} placeholder="42" inputProps={{ "data-testid": "dest-number", inputMode: "numeric" } as never} /></GadgetRow>
       </>) : null}
       {d.channel === "jira" ? (<>
-        <GadgetRow label="Account">
+        <GadgetRow wide label="Account">
           <span className="send-line">
             {accountsUnavailable ? accountReadState : jiraConns.length ? (
               <CycleGadget label="Jira account" value={jiraAcc} onChange={(v) => set({ jiraAccount: v })}
@@ -232,7 +233,7 @@ function DestForm({ conns, accountsLoading, accountsReadError, onAccountsRetry, 
         <GadgetRow label="Work item"><StringGadget label="Work item" value={d.key} onChange={(v) => set({ key: v })} placeholder="PAY-118" inputProps={{ "data-testid": "dest-key" } as never} /></GadgetRow>
       </>) : null}
       {d.channel === "confluence" ? (<>
-        <GadgetRow label="Account">
+        <GadgetRow wide label="Account">
           <span className="send-line">
             {accountsUnavailable ? accountReadState : confConns.length ? (
               <CycleGadget label="Confluence account" value={confAcc} onChange={(v) => set({ confAccount: v })}
@@ -241,12 +242,12 @@ function DestForm({ conns, accountsLoading, accountsReadError, onAccountsRetry, 
             {!accountsUnavailable && acc && confConns.length ? <StateChip state={acc.state} label={acc.label} /> : null}
           </span>
         </GadgetRow>
-        <GadgetRow label="Space id"><StringGadget label="Space id" value={d.space} onChange={(v) => set({ space: v })} placeholder="98304" inputProps={{ "data-testid": "dest-space", inputMode: "numeric" } as never} /></GadgetRow>
+        <GadgetRow wide label="Space id"><StringGadget label="Space id" value={d.space} onChange={(v) => set({ space: v })} placeholder="98304" inputProps={{ "data-testid": "dest-space", inputMode: "numeric" } as never} /></GadgetRow>
       </>) : null}
       {d.channel === "email" ? (<>
         <GadgetRow label="Provider"><CycleGadget label="Provider" value={d.provider} options={PROVIDERS} onChange={(v) => { setKeyRefused(null); set({ provider: v as EmailProvider }); }} /></GadgetRow>
         <GadgetRow label="From"><StringGadget label="From" value={d.fromEmail} onChange={(v) => set({ fromEmail: v })} placeholder="you@company.com" inputProps={{ "data-testid": "dest-from" } as never} /></GadgetRow>
-        <GadgetRow label="From name"><StringGadget label="From name" value={d.fromName} onChange={(v) => set({ fromName: v })} placeholder="Your name" /></GadgetRow>
+        <GadgetRow wide label="From name"><StringGadget label="From name" value={d.fromName} onChange={(v) => set({ fromName: v })} placeholder="Your name" /></GadgetRow>
         <div className="dest-secret" data-testid="dest-key-row">
           <SecretRow label={`${EMAIL_PROVIDERS[d.provider].label} key`} configured={!!keys[ref]}
             onReplace={(v) => { setKeyRefused(null); void onKey(ref, v, d.provider).then(setKeyRefused); }} />
@@ -257,8 +258,8 @@ function DestForm({ conns, accountsLoading, accountsReadError, onAccountsRetry, 
             </span>
           ) : null}
         </div>
-        <GadgetRow label="To"><StringGadget label="To" value={d.to} onChange={(v) => set({ to: v })} placeholder="a@company.com, b@company.com" inputProps={{ "data-testid": "dest-to" } as never} /></GadgetRow>
-        <GadgetRow label="Cc"><StringGadget label="Cc" value={d.cc} onChange={(v) => set({ cc: v })} placeholder="c@company.com" /></GadgetRow>
+        <GadgetRow wide label="To"><StringGadget label="To" value={d.to} onChange={(v) => set({ to: v })} placeholder="a@company.com, b@company.com" inputProps={{ "data-testid": "dest-to" } as never} /></GadgetRow>
+        <GadgetRow wide label="Cc"><StringGadget label="Cc" value={d.cc} onChange={(v) => set({ cc: v })} placeholder="c@company.com" /></GadgetRow>
       </>) : null}
       {d.channel === "slack" ? (<>
         <div className="dest-secret" data-testid="dest-key-row">
@@ -291,7 +292,7 @@ function DestForm({ conns, accountsLoading, accountsReadError, onAccountsRetry, 
         </div>
         <GadgetRow label="Channel name"><StringGadget label="Channel name" value={d.slackLabel} onChange={(v) => set({ slackLabel: v })} placeholder="#leads" inputProps={{ "data-testid": "dest-slack-label" } as never} /></GadgetRow>
       </>) : null}
-      <GadgetRow label="Name"><StringGadget label="Name" value={name} onChange={(v) => set({ name: v, nameTouched: true })} placeholder="Name" inputProps={{ "data-testid": "dest-name" } as never} /></GadgetRow>
+      <GadgetRow wide label="Name"><StringGadget label="Name" value={name} onChange={(v) => set({ name: v, nameTouched: true })} placeholder="Name" inputProps={{ "data-testid": "dest-name" } as never} /></GadgetRow>
       <div className="send-verbs" data-testid="dest-form-verbs">
         <Button dense variant="primary" disabled={!valid} loading={busy} onClick={() => void save()} data-testid="dest-save">Save</Button>
         {onCancel ? <Button dense variant="ghost" onClick={onCancel} data-testid="dest-cancel">Cancel</Button> : null}
@@ -429,7 +430,7 @@ export function Destinations() {
     d.channel === "slack" ? keys[String(d.account.key_ref ?? "")] : undefined;
   if (readFailed) {
     return (
-      <div data-send="destinations" data-testid="destinations" ref={groupRef}>
+      <div className="connections-destinations" data-send="destinations" data-testid="destinations" ref={groupRef}>
         <GadgetGroup label="Destinations">
           <div className="send-verbs" data-testid="dest-unreadable">
             <StateChip state="failure" label={`${SEND_WORDS.cannotRead} DESTINATIONS`} />
@@ -455,10 +456,10 @@ export function Destinations() {
       onCancel={active.length ? () => setAdding(false) : undefined} />
   );
   return (
-    <div data-send="destinations" data-testid="destinations" ref={groupRef}>
+    <div className="connections-destinations" data-send="destinations" data-testid="destinations" ref={groupRef}>
       <GadgetGroup label={active.length ? `Destinations ${active.length}` : "Destinations"}>
         {active.length ? (
-          <SurfaceLedger count="" cols="room">
+          <SurfaceLedger count="" cols="account-destinations">
             <ul className="surface-ledger-rows" data-testid="dest-list">
               {active.map((d) => {
                 const eg = egressOf(d);
@@ -471,13 +472,9 @@ export function Destinations() {
                     lineLabel={`${d.name}, ${CHANNEL_WORD[d.channel] ?? d.channel}`}
                     onToggle={() => { setEditing(null); setOpen(open === d.id ? null : d.id); }}
                     lead={<span className="send-pick" aria-hidden="true">{open === d.id ? "▾" : "▸"}</span>}
-                    primary={<span className="surface-primary" data-destination={d.name}>{d.name}</span>}
-                    cells={<>
-                      <span className="surface-token" data-chip>{CHANNEL_WORD[d.channel] ?? d.channel}</span>
-                      <span className="surface-token send-literal send-wrap send-target" data-chip title={targetToken(d.channel, d.target)}>{targetToken(d.channel, d.target)}</span>
-                      {acc ? <StateChip state={acc.state} label={acc.label} /> : null}
-                      <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
-                    </>}>
+                    primary={<span className="connections-tool-identity"><strong className="connections-tool-label" data-destination={d.name}>{d.name}</strong><span className="connections-tool-summary send-target">{targetToken(d.channel, d.target)}</span></span>}
+                    cells={<span className="surface-ledger-cells connections-tool-chips"><span className="connections-tool-summary">{CHANNEL_WORD[d.channel] ?? d.channel}</span>{acc ? <StateChip state={acc.state} label={acc.label}/> : null}</span>}
+                    trailing={<Button dense variant="secondary" onClick={() => { setEditing(null); setOpen(open === d.id ? null : d.id); }}>{open === d.id ? "Close" : "Details"}</Button>}>
                     {open === d.id ? (
                       editing === d.id ? (
                         <DestForm conns={conns} accountsLoading={accountsLoading} accountsReadError={accountsReadError} onAccountsRetry={onAccountsRetry} initial={fromDestination(d)} replaces={d.id} keys={keys} onKey={onKey} onSlackKey={onSlackKey} onSlackKnown={onSlackKnown}
@@ -544,16 +541,16 @@ export function Destinations() {
         {parked.length ? (
           <div data-testid="dest-parked">
             <FoldGadget title="PARKED" token={String(parked.length)}>
-              <SurfaceLedger count="" cols="room">
+              <SurfaceLedger count="" cols="account-destinations">
                 <ul className="surface-ledger-rows">
                   {parked.map((d) => (
                     <SurfaceLedgerRow key={d.id} data-testid="dest-parked-row" wrap expands={false}
                       primary={<span className="surface-primary" data-destination={d.name}>{d.name}</span>}
-                      cells={<>
+                      cells={<span className="surface-ledger-cells connections-tool-chips">
                         <span className="surface-token" data-chip>{CHANNEL_WORD[d.channel] ?? d.channel}</span>
                         <span className="surface-token send-literal send-wrap send-target" data-chip title={targetToken(d.channel, d.target)}>{targetToken(d.channel, d.target)}</span>
                         <span className="surface-token" data-chip>{`PARKED ${stamp(d.parked_at)}`}</span>
-                      </>} />
+                      </span>} />
                   ))}
                 </ul>
               </SurfaceLedger>

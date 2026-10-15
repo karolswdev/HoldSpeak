@@ -19,7 +19,7 @@ Base eef72f987 (#1203), one combined Settings release.
 | System | runtime, remote credentials/grants, reset, device fields | 1440 and 393 |
 | Engines | #1203 hosting/trial regression, existing Switchboard retained | 1440 and 393 |
 | Accounts | GitHub/Jira/Confluence, add/check/copy, calendar chooser, credentials | 1440 and 393 |
-| Destinations | missing account, draft custody, validation, setup recovery | source and focused interaction checks; populated live checks pending |
+| Destinations | missing account, draft custody, validation, setup recovery | populated, refused, saved and parked long-target states at 1440 and 393 |
 | Guide | known/unknown/error readiness, fix actions, runtime check | 1440 and 393 |
 
 Source audit is not a claim that every advanced control ran on real hardware.
@@ -87,7 +87,7 @@ wait for its actual Retry. A missing destination folder correctly returned 400;
 the final walk explicitly checks retained input, creates the temporary folder,
 then saves it through the real route. Neither was a product success failure.
 
-## Owner visual rejection — revision in progress
+## Owner visual rejection — functional checkpoint
 
 The owner reviewed the screenshots and rejected their visual quality, then
 confirmed that the Workbench style must stay. Merge and deployment stopped.
@@ -105,10 +105,93 @@ each, including newest-edit Retry at32/31ms; Accounts walks pass5states each.
 The shipping Accounts followup checks full-host wrapping and uncompressed
 buttons. These are functional/geometry results, not visual acceptance.
 
-No PR, merge or local hub deployment has occurred for this audit yet.
+At that checkpoint, no PR, merge or local hub deployment had occurred.
 Owner acceptance, actual EventKit permission/read, real account
 sign-in, physical mic/hotkey/audio devices, speech/model quality, screenshot
 inference, external sends, remote devices and actual scheduled firing remain
 unverified. Existing calendar refresh status is inferred from old events rather
 than a persisted latest-read outcome; no new refresh framework was added.
 Already dropped source identities cannot be recovered from damaged config.
+
+
+## Workbench visual revision — finished build
+
+The owner kept the Workbench direction and requested a substantive improvement.
+[VISUAL-REVISION.md](VISUAL-REVISION.md) records the settled composition. The
+second native canvases use the real window frame, wings and library controls;
+root read them at both widths before the workers built this revision. The
+first canvases and rejected captures remain as history.
+
+Home now gives every module the same direct Open row, grouped by Work and Desk.
+Meetings pairs Summary/Recording with Calendar/Export in a wide window. Voice,
+Rhythm, Sounds and System use the same group spacing and value proportions.
+Labels use readable sans type; metadata uses compact mono type. Short phone
+controls stay beside their labels. Text fields and long editors use their
+available width. Empty symbol headings and repeated technical headline/plates
+are parked. The existing Engines Switchboard stays intact.
+
+Accounts names each provider and account. Sign-in commands open explicitly;
+Add and failed input stay in their local well. Same-email accounts retain their
+site identity. Destinations use the same row grammar, with details on demand.
+Calendar selection omits the first-run wrapper in Settings. People, speech,
+Guide and Wallpaper share the layout and type rules. All repaired preference,
+secret, calendar and destination operations remain.
+
+Independent final source review found three more defects: an account draft
+lost on a sign-in detour, hidden site identity, and mismatched parked cells.
+The bounded correction and final RATIFY are in [review-visual.md](review-visual.md).
+This is a Sol source review, not Muad'Dib's check. Root then diagnosed and
+corrected the actual phone directory status wrapping and checkbox decoration
+interception in Settings only. The input now owns all nine checked points of
+its 44px target; Save, Retry and Add calendar also own their phone targets.
+A parked destination has no details door, so its full path now wraps without
+the inherited two-line clamp. No global gadget or form framework was added.
+
+### Final verification
+
+The first combined visual check was RED: 3643 web checks passed and four
+layout assertions failed; affected Python1131 and canon15 passed. The sweep
+had99 passes, eight failures and two existing xfails. All eight failures shared
+one cause: resetting a quiet fact's border to0 also reset its computed color.
+The local transparent-border correction preserves the material contract.
+Three compatibility test files now follow explicit Details and the current
+home facts while retaining payload, routing, refusal and no-send assertions.
+Their focused correction runs passed52 main and8 Slack checks. No scanner,
+material rule, assertion fence or ceiling was waived.
+
+Final combined quick check **GREEN** against original baseeef72f987:
+**3647 web tests /1131 affected Python /107 desk sweeps /15 canon guards**;
+the sweep retains two existing xfails. Production build and frontend TypeScript
+passed. Logs: `.tmp/settings-audit/quick-visual-release/` and its console log.
+This includes all final test corrections and the transparent fact-border fix.
+
+Actual production walks: `visual-shipping-main-{1440,393}` each pass18states;
+`accounts-visual-shipping-{1440,393}` each pass6states. Source1b1b617d6 is dirty
+in these observations; each records the actual bundle and isolated DB path.
+They cover all module/wing arrivals, accepted calendar preservation and rename,
+failed preference custody, Retry, newest-edit Retry before debounce, native
+chooser reach, full provider hosts, refused account input, actual destination
+folder refusal followed by an accepted save, and actual Remove→park with a long
+path. The final parked targets have clampnone and no horizontal overflow;
+root viewed both shots. Browser page-error lists are empty.
+
+`graph-visual-final-{1440,393}` pass the production calendar save case with
+initial predicate feedback0.939/0.948s and settled terminal1.098/1.101s. Root
+read the observations and before/after shots, with isolated DB provenance.
+Capability doc check passed10outputs; graph join check passed with14existing
+subtype notes. No model inference gesture is claimed by these settings walks.
+Native direction canvases are outside the quick source selection; root rendered
+and viewed them separately in the real frame at both widths before build.
+
+Root read the actual production screenshots, observations and isolated DB
+provenance. Earlier failed rig outputs remain: an obsolete home headline and
+row selector, a build replaced while a browser arrived, a destination well
+located inside its sibling row, and a Fold queried as a Button. Corrected
+locators use the real current DOM. The phone checkbox failure was a product
+hit-interception defect and received a scoped CSS fix; it was not forced past.
+The retained user rejection is not converted into visual acceptance by tests.
+
+Owner live acceptance, EventKit access, real provider sign-in, physical audio,
+model quality, external sends and scheduled firing remain open as above.
+The owner's existing normal hub is deployed only after the final green check
+and PR merge, when voice and meeting capture are idle.

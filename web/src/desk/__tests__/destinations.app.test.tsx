@@ -69,6 +69,25 @@ async function pickChannel(value: string) {
 }
 
 describe("the Destinations group", () => {
+  it("keeps a parked long target and date together in the ledger facts slot", async () => {
+    const destination = structuredClone(listTwo.destinations[0]);
+    destination.state = "parked";
+    destination.parked_at = "2026-10-14T12:00:00Z";
+    destination.target.folder = "/Architecture/Research-and-platform-delivery/Quarterly-reports-and-owner-review";
+    destination.target.display = destination.target.folder;
+    listing({ destinations: [destination] });
+    render(<Destinations />);
+    const row = await screen.findByTestId("dest-parked-row");
+    fireEvent.click(screen.getByText("PARKED", { exact: true }));
+    const cells = row.querySelector(":scope > .surface-ledger-cells");
+    expect(cells).not.toBeNull();
+    expect(cells).toContainElement(within(row).getByText("FILE", { exact: true }));
+    expect(cells).toContainElement(row.querySelector(".send-target"));
+    expect(cells?.textContent).toContain("PARKED");
+    expect(row.querySelector(".send-target")?.textContent).toContain("Quarterly-reports-and-owner-review");
+    expect(within(row).queryByRole("button", { name: /Remove|Delete/ })).toBeNull();
+  });
+
   // replaces: tests/e2e/test_philo10_04_send_face_glass.py::TestSendFaceGlass::test_the_destinations_group
   it("with no destination the add form is the group, with no counter", async () => {
     render(<Destinations />);

@@ -2,7 +2,7 @@
  * 2026-10-05, canvas YDTpkaJqFs3hyrZ4g581Mx §1). The calendars macOS
  * already has, one "Use it" each (THIS DEVICE); or one calendar link
  * (its host named once typed). The macOS prompt shows only on his press. */
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import { EgressChip, Receipt, StateChip, StringGadget, SurfaceLedgerRow, countToken } from "../surface";
 import { egressFor } from "../surface/egress";
@@ -22,6 +22,11 @@ export function calendarReceipt(week: number, next: { title: string; starts_at: 
   ]
     .filter(Boolean)
     .join(" · ");
+}
+
+/** Settings uses the same chooser without the first-use card and explanation. */
+function CalendarFrame({ compact, children, ...card }: { compact: boolean; children: ReactNode; title: string; line: string; testId: string; lit: boolean; selected: boolean; state: ReactNode }) {
+  return compact ? <div className="connections-calendar-chooser" data-testid={card.testId}>{children}</div> : <Card {...card}>{children}</Card>;
 }
 
 export function CalendarCard({ step, lit, reselectNative = false, onUsed, beforeUse }: {
@@ -50,7 +55,8 @@ export function CalendarCard({ step, lit, reselectNative = false, onUsed, before
     }
   };
   return (
-    <Card
+    <CalendarFrame
+      compact={reselectNative}
       title="Calendar"
       line="Reads your meetings, so HoldSpeak can record the next one."
       testId="firstrun-calendar"
@@ -214,6 +220,6 @@ export function CalendarCard({ step, lit, reselectNative = false, onUsed, before
           <span className="firstrun-reason">{failure.reason}</span>
         </div>
       ) : null}
-    </Card>
+    </CalendarFrame>
   );
 }

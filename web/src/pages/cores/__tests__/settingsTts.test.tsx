@@ -15,6 +15,13 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe("Settings speech", () => {
+  it("keeps server installation detail behind an explicit fold", async () => {
+    render(<TtsSettingsBlock />);
+    expect(await screen.findByText("Not installed")).toBeTruthy();
+    expect(screen.getByText(/pip install/)).not.toBeVisible();
+    fireEvent.click(screen.getByText("Details"));
+    expect(screen.getByText(/pip install/)).toBeVisible();
+  });
   it("a failed status read offers Retry instead of an install instruction", async () => {
     unavailable = true;
     render(<TtsSettingsBlock />);
@@ -22,7 +29,10 @@ describe("Settings speech", () => {
     expect(screen.queryByText(/pip install/)).toBeNull();
     unavailable = false;
     fireEvent.click(retry);
-    expect(await screen.findByText(/pip install/)).toBeTruthy();
+    expect(await screen.findByText("Not installed")).toBeTruthy();
+    expect(screen.getByText(/pip install/)).not.toBeVisible();
+    fireEvent.click(screen.getByText("Details"));
+    expect(screen.getByText(/pip install/)).toBeVisible();
   });
   it("does not claim browser voice is available when the browser lacks synthesis", async () => {
     vi.stubGlobal("speechSynthesis", undefined);

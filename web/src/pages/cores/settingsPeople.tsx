@@ -74,8 +74,8 @@ export function OwnerNameGroup() {
   if (owner.loading || owner.readError) return <GadgetGroup label="You"><SurfaceState loading={owner.loading} error={owner.readError} onRetry={() => void owner.reload()} /></GadgetGroup>;
   return (
     <GadgetGroup label="You">
-      <GadgetRow label="Your name">
-        <span data-testid="settings-owner-name">
+      <GadgetRow wide label="Your name">
+        <span className="prefs-text-field" data-testid="settings-owner-name">
           <StringGadget
             label="Your name"
             value={owner.name}
@@ -85,8 +85,8 @@ export function OwnerNameGroup() {
           />
         </span>
       </GadgetRow>
-      <GadgetRow label="Also called">
-        <span data-testid="settings-owner-aliases">
+      <GadgetRow wide label="Also called">
+        <span className="prefs-text-field" data-testid="settings-owner-aliases">
           <OwnerAliasField owner={owner} />
         </span>
       </GadgetRow>
@@ -157,7 +157,7 @@ export function PeopleAccessModule() {
         </span>
       </GadgetRow>
       <GadgetRow label="Agents you start">
-        <span className="surface-token" data-chip data-testid="people-access-agents">
+        <span className="prefs-value" data-testid="people-access-agents">
           {access.agents === "off" ? "Off" : "Read"}
         </span>
       </GadgetRow>

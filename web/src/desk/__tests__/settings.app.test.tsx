@@ -130,18 +130,22 @@ async function openHub() {
 }
 
 describe("the Settings hub on a cold hub", () => {
-  it("No engine yet; Runs on, Rhythm and System rows; NO DEFAULT; EVERY 15 MIN; posture once; library verbs only", async () => {
+  it("groups direct module choices under Work and Desk with truthful facts and library verbs", async () => {
     // replaces: tests/e2e/test_hs170_settings_hub_glass.py::test_settings_hub_cold
     const { container } = await openHub();
-    expect(container.querySelectorAll(".surface-display")).toHaveLength(1);
+    expect(container.querySelectorAll(".surface-display, .settings-plate, .settings-leads")).toHaveLength(0);
+    const work = screen.getByRole("group", { name: "Work preferences" });
+    const desk = screen.getByRole("group", { name: "Desk preferences" });
+    expect(within(work).getAllByRole("button", { name: "Open" })).toHaveLength(5);
+    expect(within(desk).getAllByRole("button", { name: "Open" })).toHaveLength(4);
     const rows = Array.from(container.querySelectorAll(".surface-ledger-primary")).map((n) => n.textContent);
     expect(rows).toEqual(expect.arrayContaining(["Rhythm", "System"]));
     expect(rows).not.toContain("Models");
     expect(rows).not.toContain("Assignments");
-    // Runs on leads on its own plate, with the one primary (Choose engines).
+    // Engines uses the same row and Open verb as the ordinary modules.
     const engines = screen.getByTestId("settings-lead-engines");
-    expect(within(engines).getByRole("button", { name: "Choose engines" }).className).toContain("btn--primary");
-    expect(container.querySelectorAll(".prefs-hub .btn--primary")).toHaveLength(1);
+    expect(within(engines).getByRole("button", { name: "Open" }).className).toContain("btn--secondary");
+    expect(container.querySelectorAll(".prefs-hub .btn--primary")).toHaveLength(0);
     const rhythm = ledgerRow("Rhythm")!.textContent ?? "";
     expect(rhythm).not.toMatch(/\b0 LOOP/);
     expect(container.querySelectorAll(".prefs-posture-label")).toHaveLength(1);
@@ -150,12 +154,12 @@ describe("the Settings hub on a cold hub", () => {
     expect(hub.state.unknown).toEqual([]);
   });
 
-  it("a hub with a connection: the Connections row counts it, and the hub keeps one display", async () => {
+  it("a hub with a connection names the count on the Accounts row", async () => {
     // replaces: tests/e2e/test_hs170_settings_hub_glass.py::test_settings_hub_rows_update_after_seed
     hub.state.hub.connections.connected = 1;
     const { container } = await openHub();
     await waitFor(() => expect(screen.getByTestId("settings-lead-accounts").textContent).toContain("1 connected"));
-    expect(container.querySelectorAll(".surface-display")).toHaveLength(1);
+    expect(container.querySelectorAll(".surface-display")).toHaveLength(0);
   });
 
   it("Open on Voice opens the Voice module; « Settings comes back; Open on System opens System", async () => {
@@ -416,6 +420,27 @@ describe("Settings › Meetings", () => {
 });
 
 describe("Settings repair: ordinary choices and recoverable writes", () => {
+  it("composes Meetings into related columns while keeping all ordinary groups present", async () => {
+    const { container } = render(<SettingsCore scope="meetings" />);
+    await screen.findByRole("combobox", { name: "Auto-run the summary" });
+    const columns = container.querySelectorAll('.prefs-module[data-settings-module="meetings"] .prefs-groups > .prefs-column');
+    expect(columns).toHaveLength(2);
+    expect(columns[0].textContent).toContain("Summary");
+    expect(columns[0].textContent).toContain("Recording");
+    expect(columns[1].textContent).toContain("Calendar");
+    expect(columns[1].textContent).toContain("Export");
+    expect(screen.getByRole("checkbox", { name: "Auto export" })).toBeInTheDocument();
+  });
+
+  it("keeps the empty spoken-symbol dictionary to its Add action", async () => {
+    const { container } = render(<SettingsCore scope="voice" />);
+    await screen.findByRole("combobox", { name: "Language" });
+    expect(container.querySelector(".gadget-table-head")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Add symbol" }));
+    expect(screen.getByRole("textbox", { name: "Spoken phrase 1" })).toBeInTheDocument();
+    expect(container.querySelector(".gadget-table-head")).toBeInTheDocument();
+  });
+
   it("shows ordinary modules without an extra disclosure", async () => {
     render(<SettingsCore />);
     await screen.findByTestId("settings-hub-choose");
@@ -613,7 +638,8 @@ describe("Settings › System › Remote access", () => {
     const view = render(<SettingsCore scope="system" />);
     fireEvent.change(await screen.findByRole("combobox", { name: "Remote transport" }), { target: { value: "ON" } });
     await screen.findByRole("button", { name: "Issue credential" });
-    await waitFor(() => expect(screen.getByTestId("system-hub-chips").textContent).toContain("Other devices: on"));
+    await waitFor(() => expect(screen.getByRole("combobox", { name: "Remote transport" })).toHaveValue("ON"));
+    expect(screen.getByTestId("system-hub-chips").textContent).not.toContain("Other devices");
 
     fireEvent.click(screen.getByRole("button", { name: "Issue credential" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Credential name" }), { target: { value: "test-glass-runner" } });
@@ -698,7 +724,7 @@ describe("Settings › Meetings when the owner turned summaries off", () => {
 });
 
 describe("Settings › Sounds without the speech extra", () => {
-  it("browser voice names observed support and the server voice is one install line", async () => {
+  it("browser voice names observed support and server installation opens in Details", async () => {
     // replaces: tests/e2e/test_hs154_call_glass.py::test_tts_settings_glass
     // The answer is the hub's own: GET /api/tts/status without the extra
     // (holdspeak/web/routes/tts.py; tests/unit/test_tts_route.py::TestTtsNotInstalled).
@@ -711,9 +737,17 @@ describe("Settings › Sounds without the speech extra", () => {
     const label = await screen.findByText("Browser voice");
     const group = label.closest(".gadget-group") as HTMLElement;
     expect(group.textContent).toContain("Not available");
-    expect(group.textContent).toContain("Server voice · pip install 'holdspeak[tts]'");
+    expect(within(group).getByText("Not installed")).toBeInTheDocument();
     expect(within(group).queryByRole("checkbox")).toBeNull();
-    expect(within(group).queryByRole("button")).toBeNull();
+    const details = within(group).getByText("Details").closest("details")!;
+    expect(details).not.toHaveAttribute("open");
+    expect(within(details).getByRole("button", { name: "Copy", hidden: true })).not.toBeVisible();
+    expect(within(details).getByText("pip install 'holdspeak[tts]'")).not.toBeVisible();
+    fireEvent.click(within(group).getByText("Details"));
+    expect(details).toHaveAttribute("open");
+    expect(within(details).getByText("pip install 'holdspeak[tts]'")).toBeInTheDocument();
+    expect(within(details).getByRole("button", { name: "Copy" })).toBeVisible();
+    expect(within(group).queryByRole("checkbox")).toBeNull();
   });
 });
 

@@ -80,7 +80,7 @@ export function WallpaperModule({
                   <strong>{atmosphere.name}</strong>
                 </span>
                 <span className="prefs-wallpaper-state">
-                  {selected ? "IN USE" : "CHOOSE"}
+                  {selected ? "In use" : "Choose"}
                 </span>
               </Button>
               {showFavorites && (

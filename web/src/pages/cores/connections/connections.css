@@ -1,97 +1,44 @@
 /* HS-168-03 — ConnectionsPane layout. Never restyle barrel species. */
 
-/* ── Tool row: the ratified 640 layout ── */
-/* [emblem · label · summary] · [StateChip · ProvenanceChip] · [verb · EgressChip] */
-.connections-tool-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-1) var(--space-2);
-  padding: var(--space-2) var(--space-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-1);
-  background: var(--desk-window-well);
-  min-height: 44px;
+/* Accounts uses the library ledger; only this named composition owns its grid. */
+.connections-pane { min-width:0; }
+.connections-pane .surface-ledger { margin:0; }
+.connections-pane .surface-ledger[data-cols="accounts"] .surface-ledger-row > .surface-ledger-line {
+  display:grid; grid-template-columns:24px minmax(0,1fr) max-content;
+  align-items:center; gap:4px 10px; min-height:72px; padding:8px 10px;
 }
-
-.connections-tool-row + .connections-tool-row {
-  margin-top: var(--space-1);
-}
-
-/* Identity line: emblem + label ALWAYS on one line, never split. */
-.connections-tool-identity {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  flex-shrink: 1;
-  min-width: 0;
-  max-width: 100%;
-}
-
-.connections-tool-emblem {
-  font-family: var(--font-mono);
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text-muted);
-  width: 24px;
-  text-align: center;
-  flex-shrink: 0;
-}
-
-/* SVG calendar emblem sized to match the text emblems. */
-.connections-tool-emblem-svg {
-  width: 16px;
-  height: 16px;
-  color: var(--text-muted);
-  flex-shrink: 0;
-}
-
-.connections-tool-label {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
-
-.connections-tool-summary {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--text-muted);
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.connections-tool-chips {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  flex-wrap: wrap;
-}
-
-.connections-tool-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  margin-left: auto;
-  flex-shrink: 1;
-  flex-wrap: wrap;
-  min-width: 0;
-  max-width: 100%;
-}
-
-/* Accounts disclose the full destination at the action, at both widths. */
-.connections-tool-row .gadget-chip.gadget-chip-truncate {
-  display: inline-flex;
-  min-width: 0;
-  max-width: 100%;
-  overflow: visible;
-  text-overflow: clip;
-  white-space: normal;
-  overflow-wrap: anywhere;
+.connections-pane .surface-ledger[data-cols="accounts"] .surface-ledger-line > .surface-ledger-lead { grid-column:1; grid-row:1; align-self:start; min-width:0; width:auto; }
+.connections-pane .surface-ledger[data-cols="accounts"] .surface-ledger-line > .surface-ledger-primary { grid-column:2 / -1; grid-row:1; min-width:0; white-space:normal; }
+.connections-pane .surface-ledger[data-cols="accounts"] .surface-ledger-line > .surface-ledger-cells { grid-column:2; grid-row:2; min-width:0; margin:0; }
+.connections-pane .surface-ledger[data-cols="accounts"] .surface-ledger-line > .surface-ledger-trailing { grid-column:3; grid-row:2; min-width:0; margin:0; }
+.connections-tool-identity { display:flex; flex-direction:column; gap:2px; min-width:0; }
+.connections-tool-emblem { font:600 12px/1.4 var(--font-mono); color:var(--text-muted); }
+.connections-tool-emblem-svg { width:16px; height:16px; color:var(--text-muted); }
+.connections-tool-label { font:600 15px/1.3 var(--font-ui); color:var(--text); white-space:normal; overflow-wrap:anywhere; }
+.connections-tool-summary { font:400 12px/1.3 var(--font-mono); color:var(--text-muted); min-width:0; white-space:normal; overflow-wrap:anywhere; }
+.connections-tool-chips, .connections-tool-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; min-width:0; }
+.connections-check-action { display:flex; flex-wrap:wrap; justify-content:flex-end; align-items:center; gap:8px; min-width:0; max-width:280px; }
+.connections-pane .gadget-chip { min-width:0; max-width:100%; overflow:visible; text-overflow:clip; white-space:normal; overflow-wrap:anywhere; }
+.connections-well-head { margin-bottom:12px; font:600 13px/1.4 var(--font-ui); }
+.connections-pane .surface-ledger-open { padding:12px; }
+.connections-pane .surface-well { margin:0; }
+.connections-add-account { display:flex; flex-wrap:wrap; gap:12px; padding:8px 10px; border-bottom:1px solid var(--border); }
+.connections-add-account > .surface-well { flex:1 0 100%; min-width:0; }
+.connections-engines { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.connections-engines .connections-tool-label { font-size:13px; }
+.connections-calendar-setup { margin-top:12px; }
+.connections-calendar-setup .connections-calendar-chooser { display:flex; flex-direction:column; gap:12px; min-width:0; }
+.connections-calendar-setup .firstrun-field { margin:0; }
+.connections-calendar-setup .firstrun-caption { font:400 13px/1.4 var(--font-ui); text-transform:none; letter-spacing:0; }
+.connections-calendar-setup .concierge-group-name { font:500 15px/1.3 var(--font-ui); }
+@container surface (max-width:560px) {
+  .connections-pane .surface-ledger[data-cols="accounts"] .surface-ledger-row > .surface-ledger-line { grid-template-columns:24px minmax(0,1fr) max-content; gap:4px 8px; padding:6px 8px; }
+  .connections-pane .surface-ledger-trailing:has(> .connections-check-action) { display:contents; }
+  .connections-pane .surface-ledger-trailing > .connections-check-action { display:contents; }
+  .connections-pane .surface-ledger-trailing > .connections-check-action > .btn { grid-column:3; grid-row:2; }
+  .connections-pane .surface-ledger-trailing > .connections-check-action > .gadget-chip { grid-column:2 / -1; grid-row:3; justify-self:end; }
+  .connections-command-row { flex-wrap:wrap; }
+  .connections-tool-actions { justify-content:flex-end; }
 }
 
 /* ── Fold: sign-in command well ── */
@@ -146,11 +93,7 @@
 }
 
 .connections-field-label-text {
-  font-family: var(--font-mono);
-  font-size: var(--desk-surface-label-size); /* PHILO-10-04: the 12 px floor (was 10 px) */
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font:400 13px/1.4 var(--font-ui);
   color: var(--text-muted);
 }
 
@@ -179,30 +122,6 @@
   text-align: right;
 }
 
-/* ── 393 phone: stack card content, but never split identity ── */
-@container surface (max-width: 500px) {
-  .connections-tool-row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  /* Identity line stays horizontal even when the row stacks. */
-  .connections-tool-identity {
-    flex-direction: row;
-    flex-wrap: nowrap;
-  }
-
-  .connections-tool-actions {
-    margin-left: 0;
-    width: 100%;
-    justify-content: flex-start;
-  }
-
-  .connections-tool-chips {
-    width: 100%;
-  }
-}
-
 /* PHILO-17 U29: the sign-in well inside a source row (New Project, the Room). */
 .connections-signin-well {
   display: flex;
@@ -228,3 +147,16 @@
   overflow-wrap: anywhere;
   user-select: all;
 }
+
+/* Destinations uses the same named identity rhythm, with details on demand. */
+.connections-destinations .surface-ledger[data-cols="account-destinations"] .surface-ledger-row > .surface-ledger-line { display:grid; grid-template-columns:24px minmax(0,1fr) max-content; align-items:center; gap:4px 8px; padding:8px 10px; min-height:72px; }
+.connections-destinations .surface-ledger[data-cols="account-destinations"] .surface-ledger-line > .surface-ledger-lead { grid-column:1; grid-row:1 / span 2; min-width:0; }
+.connections-destinations .surface-ledger[data-cols="account-destinations"] .surface-ledger-line > .surface-ledger-primary { grid-column:2; grid-row:1; min-width:0; white-space:normal; }
+.connections-destinations .surface-ledger[data-cols="account-destinations"] .surface-ledger-line > .surface-ledger-cells { grid-column:2; grid-row:2; margin:0; }
+.connections-destinations .surface-ledger[data-cols="account-destinations"] .surface-ledger-line > .surface-ledger-trailing { grid-column:3; grid-row:1 / span 2; margin:0; }
+.connections-destinations .send-field dt { font:400 13px/1.4 var(--font-ui); text-transform:none; letter-spacing:0; }
+.connections-destinations .send-field dd { font:400 12px/1.4 var(--font-mono); }
+.connections-destinations .gadget-chip { min-width:0; max-width:100%; white-space:normal; overflow-wrap:anywhere; }
+.connections-destinations .dest-form { margin-top:12px; }
+/* Parked rows have no expanded detail door; keep their full target readable. */
+.connections-destinations [data-testid="dest-parked-row"] .send-target { display:block; -webkit-line-clamp:unset; line-clamp:unset; overflow:visible; white-space:normal; overflow-wrap:anywhere; }

@@ -12,9 +12,11 @@ import {
   EgressChip,
   GadgetGroup,
   GadgetRow,
+  FoldGadget,
   StateChip,
 } from "../../desk/surface";
 import { Button } from "../../components/signal/Signal";
+import { CommandWell } from "./connections/ConnectionsPane";
 
 type TtsStatus = {
   installed: boolean;
@@ -81,14 +83,11 @@ export function TtsSettingsBlock() {
   if (!status?.installed) {
     return (
       <GadgetGroup label="Speech">
-        <GadgetRow wide label="Browser voice">
-          <span className="gadget-fact">{browserAvailable ? "Available" : "Not available"}</span>
+        <GadgetRow label="Browser voice">
+          <span className="prefs-value">{browserAvailable ? "Available" : "Not available"}</span>
         </GadgetRow>
-        <div className="prefs-egress-line">
-          <span className="gadget-fact">
-            Server voice · pip install &apos;holdspeak[tts]&apos;
-          </span>
-        </div>
+        <GadgetRow label="Server voice"><span className="prefs-value">Not installed</span></GadgetRow>
+        <FoldGadget title="Details"><CommandWell hint="pip install 'holdspeak[tts]'"/></FoldGadget>
       </GadgetGroup>
     );
   }
@@ -96,11 +95,11 @@ export function TtsSettingsBlock() {
   // Extra installed.
   return (
     <GadgetGroup label="Speech">
-      <GadgetRow wide label="Browser voice">
-        <span className="gadget-fact">{browserAvailable ? "Available" : "Not available"}</span>
+      <GadgetRow label="Browser voice">
+        <span className="prefs-value">{browserAvailable ? "Available" : "Not available"}</span>
       </GadgetRow>
-      <GadgetRow wide label="Server voice">
-        <span className="gadget-fact">
+      <GadgetRow label="Server voice">
+        <span className="prefs-value">
           {status.model_ready ? "Ready" : "Model needed"}
         </span>
       </GadgetRow>
@@ -130,11 +129,11 @@ export function TtsSettingsBlock() {
           </span>
         </div>
       ) : null}
-      <div className="prefs-egress-line">
+      <FoldGadget title="Details">
         <span className="gadget-fact">
           GPL-3.0 · phonemizer + espeak-ng
         </span>
-      </div>
+      </FoldGadget>
     </GadgetGroup>
   );
 }

@@ -119,7 +119,7 @@
           "kind": "ui",
           "action": "click",
           "adapter": "ui-by-viewport",
-          "selector": "#surface-settings .surface-ledger-row:has(.settings-row-name:text-is(\"Meetings\")) button:text-is(\"Open\")"
+          "selector": "#surface-settings .surface-ledger-row:has(.surface-ledger-primary:text-is(\"Meetings\")) button:text-is(\"Open\")"
         },
         {
           "kind": "ui",

@@ -73,7 +73,6 @@ import {
   DeskModule,
   MIR_PROFILE_OPTIONS,
   MODULE_ALIASES,
-  OtherDevicesChip,
   PREF_MODULES,
   PrefsFace,
   PrefStatusBar,
@@ -695,21 +694,21 @@ function SystemModule({
   receiptOpen?: boolean;
   onGrantAct?: (act: GrantAct) => void;
 }) {
-  const [remoteOn, setRemoteOn] = useState(hubSystem.remote ?? false);
   return (
     <>
       <div className="prefs-hub-chips" data-testid="system-hub-chips">
         <span className="surface-token" data-chip data-testid="system-display">{hubSystem.host}</span>
-        <OtherDevicesChip on={remoteOn} />
       </div>
-      <div className="prefs-rule" aria-hidden="true" />
-      <RemoteAccessModule
-        onEnabledChange={setRemoteOn}
-        grantAct={grantAct}
-        receiptOpen={receiptOpen}
-        onGrantAct={onGrantAct}
-      />
-      {deskModule}
+      <div className="prefs-groups">
+      <div className="prefs-column">
+        <RemoteAccessModule
+          grantAct={grantAct}
+          receiptOpen={receiptOpen}
+          onGrantAct={onGrantAct}
+        />
+      </div>
+      <div className="prefs-column">{deskModule}</div>
+      </div>
       {/* PHILO-17 U35: one RAW fold holds the diagnostics (build hashes,
           schema), the mesh name, and the device rows. */}
       <RuntimeIdentityModule>
@@ -1781,92 +1780,99 @@ function SettingsFace({ hero, scope }: CoreProps) {
           []) as unknown[];
         return (
           <>
-            <HotkeyCapture
-              value={(data.hotkey ?? {}) as Record<string, unknown>}
-              onCommit={(next) =>
-                update(["hotkey"], {
-                  ...(data.hotkey as Record<string, unknown>),
-                  ...next,
-                })
-              }
-              onRefuse={setRefusal}
-            />
-            <GadgetGroup label="Transcription">
-              {cyc(["model", "language"], "Language", LANGUAGE_OPTIONS)}
-            </GadgetGroup>
-            <GadgetGroup label="Typing">
-              {check(
-                ["dictation", "preview_before_type"],
-                "Preview before type",
-              )}
-              {check(
-                ["dictation", "macros", "enabled"],
-                "Voice commands",
-                countToken(macroItems.length, "CONFIGURED") ?? undefined,
-              )}
-            </GadgetGroup>
-            <GadgetGroup label="Spoken symbols">
-              <GadgetRow wide label="Dictionary" highlight={hl(symbolsPath)}>
-                <GadgetTable
-                  head={["SPOKEN", "SYMBOL", "ATTACH"]}
-                  deleteLabel="FORGET?"
-                  onDelete={(index) =>
-                    update(
-                      symbolsPath,
-                      symbols.filter((_, row) => row !== index),
-                    )
-                  }
-                  onAdd={() =>
-                    update(symbolsPath, [
-                      ...symbols,
-                      { spoken: "", symbol: "", attach: "none" },
-                    ])
-                  }
-                  rows={symbols.map((entry, index) => [
-                    <StringGadget
-                      key="spoken"
-                      label={`Spoken phrase ${index + 1}`}
-                      value={entry.spoken ?? ""}
-                      placeholder="arrow"
-                      onChange={(next) => patchSymbol(index, { spoken: next })}
-                    />,
-                    <StringGadget
-                      key="symbol"
-                      label={`Symbol ${index + 1}`}
-                      value={entry.symbol ?? ""}
-                      placeholder="→"
-                      mic={false}
-                      onChange={(next) => patchSymbol(index, { symbol: next })}
-                    />,
-                    <CycleGadget
-                      key="attach"
-                      label={`Attachment ${index + 1}`}
-                      value={entry.attach ?? "none"}
-                      options={[
-                        { value: "none" },
-                        { value: "left" },
-                        { value: "right" },
-                        { value: "both" },
-                      ]}
-                      onChange={(next) => patchSymbol(index, { attach: next })}
-                    />,
-                  ])}
-                />
-              </GadgetRow>
-            </GadgetGroup>
-            <GadgetGroup label="Wake word">
-              {check(
-                ["wake_word", "enabled"],
-                "Enabled",
-                "models download once",
-              )}
-              {cyc(
-                ["wake_word", "action"],
-                "Action",
-                WAKE_ACTION_OPTIONS,
-                "type lands in the focused app",
-              )}
-            </GadgetGroup>
+            <div className="prefs-groups">
+            <div className="prefs-column">
+              <HotkeyCapture
+                value={(data.hotkey ?? {}) as Record<string, unknown>}
+                onCommit={(next) =>
+                  update(["hotkey"], {
+                    ...(data.hotkey as Record<string, unknown>),
+                    ...next,
+                  })
+                }
+                onRefuse={setRefusal}
+              />
+              <GadgetGroup label="Transcription">
+                {cyc(["model", "language"], "Language", LANGUAGE_OPTIONS)}
+              </GadgetGroup>
+              <GadgetGroup label="Typing">
+                {check(
+                  ["dictation", "preview_before_type"],
+                  "Preview before type",
+                )}
+                {check(
+                  ["dictation", "macros", "enabled"],
+                  "Voice commands",
+                  countToken(macroItems.length, "CONFIGURED") ?? undefined,
+                )}
+              </GadgetGroup>
+            </div>
+            <div className="prefs-column">
+              <GadgetGroup label="Spoken symbols">
+                {symbols.length ? <GadgetRow wide label="Dictionary" highlight={hl(symbolsPath)}>
+                  <GadgetTable
+                    head={["SPOKEN", "SYMBOL", "ATTACH"]}
+                    addLabel="Add symbol"
+                    deleteLabel="FORGET?"
+                    onDelete={(index) =>
+                      update(
+                        symbolsPath,
+                        symbols.filter((_, row) => row !== index),
+                      )
+                    }
+                    onAdd={() =>
+                      update(symbolsPath, [
+                        ...symbols,
+                        { spoken: "", symbol: "", attach: "none" },
+                      ])
+                    }
+                    rows={symbols.map((entry, index) => [
+                      <StringGadget
+                        key="spoken"
+                        label={`Spoken phrase ${index + 1}`}
+                        value={entry.spoken ?? ""}
+                        placeholder="arrow"
+                        onChange={(next) => patchSymbol(index, { spoken: next })}
+                      />,
+                      <StringGadget
+                        key="symbol"
+                        label={`Symbol ${index + 1}`}
+                        value={entry.symbol ?? ""}
+                        placeholder="→"
+                        mic={false}
+                        onChange={(next) => patchSymbol(index, { symbol: next })}
+                      />,
+                      <CycleGadget
+                        key="attach"
+                        label={`Attachment ${index + 1}`}
+                        value={entry.attach ?? "none"}
+                        options={[
+                          { value: "none" },
+                          { value: "left" },
+                          { value: "right" },
+                          { value: "both" },
+                        ]}
+                        onChange={(next) => patchSymbol(index, { attach: next })}
+                      />,
+                    ])}
+                  />
+                </GadgetRow> : <Button dense variant="secondary" onClick={() => update(symbolsPath, [{ spoken: "", symbol: "", attach: "none" }])}>Add symbol</Button>}
+              </GadgetGroup>
+              <GadgetGroup label="Wake word">
+                {check(
+                  ["wake_word", "enabled"],
+                  "Enabled",
+                  "models download once",
+                )}
+                {cyc(
+                  ["wake_word", "action"],
+                  "Action",
+                  WAKE_ACTION_OPTIONS,
+                  "type lands in the focused app",
+                )}
+              </GadgetGroup>
+            </div>
+            </div>
             {/* HS-139-04/05: all voice RAW wells merged. */}
             <FoldGadget title="Advanced">
               <GadgetGroup label="Transcription">
@@ -1927,28 +1933,30 @@ function SettingsFace({ hero, scope }: CoreProps) {
       /* ── Sounds & Presence: desk sounds + presence + mascot ── */
       case "sounds":
         return (
-          <>
-            <GadgetGroup label="Sounds">
-              <GadgetRow
-                label="DESK SOUNDS"
-                highlight={hl(["ui", "desk_sounds"])}
-              >
-                <CheckGadget
-                  label="DESK SOUNDS"
-                  checked={Boolean(val(["ui", "desk_sounds"]) ?? true)}
-                  onChange={(next) => {
-                    update(["ui", "desk_sounds"], next);
-                    toggleSfx(next);
-                  }}
-                />
-              </GadgetRow>
-            </GadgetGroup>
-            <GadgetGroup label="Presence">
-              {check(["presence", "enabled"], "Presence")}
-              {check(["presence", "mascot"], "Mascot")}
-            </GadgetGroup>
-            <TtsSettingsBlock />
-          </>
+          <div className="prefs-groups">
+            <div className="prefs-column">
+              <GadgetGroup label="Sounds">
+                <GadgetRow
+                  label="Desk sounds"
+                  highlight={hl(["ui", "desk_sounds"])}
+                >
+                  <CheckGadget
+                    label="DESK SOUNDS"
+                    checked={Boolean(val(["ui", "desk_sounds"]) ?? true)}
+                    onChange={(next) => {
+                      update(["ui", "desk_sounds"], next);
+                      toggleSfx(next);
+                    }}
+                  />
+                </GadgetRow>
+              </GadgetGroup>
+              <GadgetGroup label="Presence">
+                {check(["presence", "enabled"], "Presence")}
+                {check(["presence", "mascot"], "Mascot")}
+              </GadgetGroup>
+            </div>
+            <div className="prefs-column"><TtsSettingsBlock /></div>
+          </div>
         );
       case "wallpaper":
         return <WallpaperModule />;
@@ -2068,126 +2076,131 @@ function SettingsFace({ hero, scope }: CoreProps) {
         );
         return (
           <>
-            <GadgetGroup label="Summary">
-              <GadgetRow label="Make summary">
-                <CycleGadget label="Auto-run the summary" value={autoVal} options={INTELLIGENCE_AUTO_OPTIONS} onChange={(next) => update(["meeting", "intelligence_auto"], next)} />
-              </GadgetRow>
-              <GadgetRow label="Engine">
-                <span className="prefs-summary-controls" data-testid="settings-summary-controls">
-                  {summariesOff ? <StateChip state="idle" label="SUMMARIES OFF" data-testid="settings-summaries-off" />
-                    : hasModel ? <>
-                      <span className="gadget-fact">{String(meetingsHub?.engine || "Assigned engine")}</span>
-                      {intelHost && egressFor(intelHost).label ? <EgressChip label={egressFor(intelHost).label} scope={egressFor(intelHost).scope} /> : null}
-                    </> : <StateChip state="warning" label="NO MODEL" data-testid="settings-no-model" />}
-                  <Button variant="ghost" dense onClick={() => setNavigation({ module: "models", focus: "meetings" })} data-testid={!hasModel && !summariesOff ? "settings-choose-model" : undefined}>
-                    {hasModel || summariesOff ? "Change engine" : "Choose engine"}
-                  </Button>
-                </span>
-              </GadgetRow>
-            </GadgetGroup>
-            <GadgetGroup label="Recording">
-              <GadgetRow label="Microphone">
-                <span className="gadget-fact">
-                  {String(val(["meeting", "mic_device"]) || "System default")}
-                </span>
-              </GadgetRow>
-              <GadgetRow label="System audio">
-                <span className="gadget-fact">
-                  {String(val(["meeting", "system_audio_device"]) || "Auto")}
-                </span>
-              </GadgetRow>
-              <div data-testid="settings-auto-record"><GadgetRow label="Auto-record">{autoRecordControls}</GadgetRow></div>
-              <FoldGadget title="Audio devices">
-                <GadgetRow label="Mic device" fact="Custom name">
-                  <StringGadget
-                    label="Mic device"
-                    placeholder="System default"
-                    value={String(val(["meeting", "mic_device"]) ?? "")}
-                    onChange={(next) => update(["meeting", "mic_device"], next || null)}
-                  />
+            <div className="prefs-groups">
+            <div className="prefs-column">
+              <GadgetGroup label="Summary">
+                <GadgetRow label="Make summary">
+                  <CycleGadget label="Auto-run the summary" value={autoVal} options={INTELLIGENCE_AUTO_OPTIONS} onChange={(next) => update(["meeting", "intelligence_auto"], next)} />
                 </GadgetRow>
-                <GadgetRow label="System audio name" fact="Custom name">
-                  <StringGadget
-                    label="System audio device"
-                    placeholder="Auto"
-                    value={String(val(["meeting", "system_audio_device"]) ?? "")}
-                    onChange={(next) => update(["meeting", "system_audio_device"], next || null)}
-                  />
+                <GadgetRow label="Engine">
+                  <span className="prefs-summary-controls" data-testid="settings-summary-controls">
+                    {summariesOff ? <StateChip state="idle" label="SUMMARIES OFF" data-testid="settings-summaries-off" />
+                      : hasModel ? <>
+                        <span className="prefs-value">{String(meetingsHub?.engine || "Assigned engine")}</span>
+                        {intelHost && egressFor(intelHost).label ? <EgressChip label={egressFor(intelHost).label} scope={egressFor(intelHost).scope} /> : null}
+                      </> : <StateChip state="warning" label="NO MODEL" data-testid="settings-no-model" />}
+                    <Button variant="secondary" dense onClick={() => setNavigation({ module: "models", focus: "meetings" })} data-testid={!hasModel && !summariesOff ? "settings-choose-model" : undefined}>
+                      {hasModel || summariesOff ? "Change engine" : "Choose engine"}
+                    </Button>
+                  </span>
                 </GadgetRow>
-              </FoldGadget>
-            </GadgetGroup>
-            {/* HS-175-03: CALENDAR section replaces the 146 Calendar GadgetGroup.
-                Source rows, the Connect calendar well, Auto-record, Snapshot. */}
-            <SurfaceSection label="CALENDAR" className="prefs-calendar-section">
-              {calLoading && !calSources ? <span className="gadget-fact" role="status">Reading calendars…</span> : null}
-              {calReadError ? <div className="prefs-read-failure" role="alert"><span>Could not read calendars</span><Button dense variant="ghost" disabled={calLoading} onClick={() => void loadCalSources()}>Retry</Button></div> : null}
-              <ul className="surface-rows prefs-calendar-sources">
-                {sources.map((entry, index) => {
-                  const fact = calFacts.get(entry.id);
-                  const stat = calStats.get(entry.id);
-                  const host = fact?.egress && fact.host ? String(fact.host) : null;
-                  const identity = calendarSourceIdentity(entry, stat?.type);
-                  const label = identity.label;
-                  const type = identity.type;
-                  const minutes = fact?.refresh_seconds ? Math.round(fact.refresh_seconds / 60) : 15;
-                  const state = (!entry.enabled ? "idle" : stat?.status ?? "idle") as "success" | "failure" | "idle";
-                  const editing = calWellFor === entry.id;
-                  const removing = calRemoveFor === entry.id;
-                  return (
-                    <SurfaceLedgerRow
-                      key={entry.id}
-                      data-testid={`calendar-source-${entry.id}`}
-                      wrap
-                      lead={<StateChip state={state} icon={"●"} label="" />}
-                      primary={<span data-muted={!entry.enabled || undefined} style={!entry.enabled ? { color: "var(--text-muted)" } : undefined}>{label}</span>}
-                      cells={
-                        <span style={{ display: "inline-flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-                          {label !== type ? <span className="gadget-fact">{type}</span> : null}
-                          {/* HS-175 counsel C9 (H2-2): egress where egress happens --
-                              the host on an HTTPS source; a file source carries NO
-                              chip (absence is the signal, never a reassurance). */}
-                          {host
-                            ? <EgressChip label={host} scope="cloud" title={`Fetches ${label} from ${host} every ${minutes} minutes. No credentials or headers are sent.`} />
-                            : null}
-                          {/* C9(b): COUNT(DISTINCT uid) counts events -- named so. */}
-                          {(() => { const ct = stat ? countToken(stat.event_count, "EVENT") : null; return ct ? <span className="surface-token" data-chip data-testid="calendar-source-events">{ct}</span> : null; })()}
-                          {/* C8: the viewer's local clock from the ISO instant. */}
-                          {(() => { const clock = formatLocalClock(stat?.last_read_at) ?? stat?.last_read ?? null; return clock ? <span className="surface-token" data-chip data-testid="calendar-source-last-read">LAST READ {clock}</span> : null; })()}
-                        </span>
-                      }
-                      trailing={
-                        <>
-                          {/* C10 (H8-2): Edit is withheld on a SNAPSHOT row -- its
-                              path is generated by the upload and rewritten by it. */}
-                          {!entry.enabled ? <span className="gadget-fact">Disabled</span> : null}
-                          <Button variant="ghost" dense data-testid="calendar-source-edit" onClick={(e) => { e.stopPropagation(); openCalWell(entry.id, entry.url, entry.label); }}>Edit</Button>
-                        </>
-                      }
-                      open={editing || removing}
-                      onToggle={() => {
-                        if (editing) closeCalWell(); else openCalWell(entry.id, entry.url, entry.label);
-                      }}
-                    >
-                      {editing ? <>{calWell}<div className="prefs-calendar-well-actions"><Button variant="ghost" dense data-testid="calendar-source-toggle" onClick={() => patchSource(index, { enabled: !entry.enabled })}>{entry.enabled ? "Disable" : "Enable"}</Button><Button variant="ghost" dense data-testid="calendar-source-remove" onClick={() => { closeCalWell(); setCalRemoveFor(entry.id); }}>Remove</Button></div></> : null}
-                      {removing ? (
-                        <div className="prefs-calendar-well" data-testid="calendar-remove-confirm">
-                          <span className="surface-token" data-chip data-tone="danger">REMOVE {label.toUpperCase()}</span>
-                          <div className="prefs-calendar-well-actions">
-                            <Button variant="danger" dense onClick={() => { setCalRemoveFor(null); update(sourcesPath, sources.filter((_, i) => i !== index)); }}>Remove</Button>
-                            <Button variant="ghost" dense onClick={() => setCalRemoveFor(null)}>Cancel</Button>
+              </GadgetGroup>
+              <GadgetGroup label="Recording">
+                <GadgetRow label="Microphone">
+                  <span className="prefs-value">
+                    {String(val(["meeting", "mic_device"]) || "System default")}
+                  </span>
+                </GadgetRow>
+                <GadgetRow label="System audio">
+                  <span className="prefs-value">
+                    {String(val(["meeting", "system_audio_device"]) || "Auto")}
+                  </span>
+                </GadgetRow>
+                <div data-testid="settings-auto-record"><GadgetRow label="Auto-record">{autoRecordControls}</GadgetRow></div>
+                <FoldGadget title="Audio devices">
+                  <GadgetRow wide label="Mic device" fact="Custom name">
+                    <StringGadget
+                      label="Mic device"
+                      placeholder="System default"
+                      value={String(val(["meeting", "mic_device"]) ?? "")}
+                      onChange={(next) => update(["meeting", "mic_device"], next || null)}
+                    />
+                  </GadgetRow>
+                  <GadgetRow wide label="System audio name" fact="Custom name">
+                    <StringGadget
+                      label="System audio device"
+                      placeholder="Auto"
+                      value={String(val(["meeting", "system_audio_device"]) ?? "")}
+                      onChange={(next) => update(["meeting", "system_audio_device"], next || null)}
+                    />
+                  </GadgetRow>
+                </FoldGadget>
+              </GadgetGroup>
+            </div>
+            <div className="prefs-column">
+              {/* HS-175-03: CALENDAR section replaces the 146 Calendar GadgetGroup.
+                  Source rows, the Connect calendar well, Auto-record, Snapshot. */}
+              <SurfaceSection label="Calendar" className="prefs-calendar-section">
+                {calLoading && !calSources ? <span className="gadget-fact" role="status">Reading calendars…</span> : null}
+                {calReadError ? <div className="prefs-read-failure" role="alert"><span>Could not read calendars</span><Button dense variant="ghost" disabled={calLoading} onClick={() => void loadCalSources()}>Retry</Button></div> : null}
+                {sources.length ? <SurfaceLedger count={null} cols="settings-calendar" label="Calendar sources">
+                  {sources.map((entry, index) => {
+                    const fact = calFacts.get(entry.id);
+                    const stat = calStats.get(entry.id);
+                    const host = fact?.egress && fact.host ? String(fact.host) : null;
+                    const identity = calendarSourceIdentity(entry, stat?.type);
+                    const label = identity.label;
+                    const type = identity.type;
+                    const minutes = fact?.refresh_seconds ? Math.round(fact.refresh_seconds / 60) : 15;
+                    const state = (!entry.enabled ? "idle" : stat?.status ?? "idle") as "success" | "failure" | "idle";
+                    const editing = calWellFor === entry.id;
+                    const removing = calRemoveFor === entry.id;
+                    return (
+                      <SurfaceLedgerRow
+                        key={entry.id}
+                        data-testid={`calendar-source-${entry.id}`}
+                        wrap
+                        lead={<StateChip state={state} icon={"●"} label="" />}
+                        primary={<span data-muted={!entry.enabled || undefined} style={!entry.enabled ? { color: "var(--text-muted)" } : undefined}>{label}</span>}
+                        cells={
+                          <span style={{ display: "inline-flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                            {label !== type ? <span className="gadget-fact">{type}</span> : null}
+                            {!entry.enabled ? <span className="gadget-fact">Disabled</span> : null}
+                            {/* HS-175 counsel C9 (H2-2): egress where egress happens --
+                                the host on an HTTPS source; a file source carries NO
+                                chip (absence is the signal, never a reassurance). */}
+                            {host
+                              ? <EgressChip label={host} scope="cloud" title={`Fetches ${label} from ${host} every ${minutes} minutes. No credentials or headers are sent.`} />
+                              : null}
+                            {/* C9(b): COUNT(DISTINCT uid) counts events -- named so. */}
+                            {(() => { const ct = stat ? countToken(stat.event_count, "EVENT") : null; return ct ? <span className="surface-token" data-chip data-testid="calendar-source-events">{ct}</span> : null; })()}
+                            {/* C8: the viewer's local clock from the ISO instant. */}
+                            {(() => { const clock = formatLocalClock(stat?.last_read_at) ?? stat?.last_read ?? null; return clock ? <span className="surface-token" data-chip data-testid="calendar-source-last-read">LAST READ {clock}</span> : null; })()}
+                          </span>
+                        }
+                        trailing={
+                          <>
+                            {/* C10 (H8-2): Edit is withheld on a SNAPSHOT row -- its
+                                path is generated by the upload and rewritten by it. */}
+                            <Button variant="secondary" dense data-testid="calendar-source-edit" onClick={(e) => { e.stopPropagation(); openCalWell(entry.id, entry.url, entry.label); }}>Edit</Button>
+                          </>
+                        }
+                        open={editing || removing}
+                        onToggle={() => {
+                          if (editing) closeCalWell(); else openCalWell(entry.id, entry.url, entry.label);
+                        }}
+                      >
+                        {editing ? <>{calWell}<div className="prefs-calendar-well-actions"><Button variant="ghost" dense data-testid="calendar-source-toggle" onClick={() => patchSource(index, { enabled: !entry.enabled })}>{entry.enabled ? "Disable" : "Enable"}</Button><Button variant="ghost" dense data-testid="calendar-source-remove" onClick={() => { closeCalWell(); setCalRemoveFor(entry.id); }}>Remove</Button></div></> : null}
+                        {removing ? (
+                          <div className="prefs-calendar-well" data-testid="calendar-remove-confirm">
+                            <span className="surface-token" data-chip data-tone="danger">REMOVE {label.toUpperCase()}</span>
+                            <div className="prefs-calendar-well-actions">
+                              <Button variant="danger" dense onClick={() => { setCalRemoveFor(null); update(sourcesPath, sources.filter((_, i) => i !== index)); }}>Remove</Button>
+                              <Button variant="ghost" dense onClick={() => setCalRemoveFor(null)}>Cancel</Button>
                           </div>
                         </div>
                       ) : null}
                     </SurfaceLedgerRow>
                   );
                 })}
-                {/* Connect calendar row + the same in-world well (the "new" use) */}
-                <li className="prefs-calendar-add" data-testid="calendar-connect-row">
+              </SurfaceLedger> : null}
+                {/* Add feed reuses the existing source editor. */}
+                <div className="prefs-calendar-add" data-testid="calendar-connect-row">
                   <div className="prefs-calendar-well-actions">
-                    <Button dense onClick={() => setNavigation({ module: "integrations", focus: "calendar" })}>Add calendar</Button>
-                    <Button variant="ghost" dense onClick={() => openCalWell("new", "")} data-testid="calendar-add-btn">Add feed</Button>
+                    <Button dense variant={failedChangesRef.current.length ? "secondary" : "primary"} onClick={() => setNavigation({ module: "integrations", focus: "calendar" })}>Add calendar</Button>
+                    <Button variant="secondary" dense onClick={() => openCalWell("new", "")} data-testid="calendar-add-btn">Add feed</Button>
                     {(() => { const chip = snapshotEgressChip(calSources?.snapshot_egress); return chip ? <EgressChip label={chip.label} scope={chip.scope} title={chip.title} /> : null; })()}
-                    <Button variant="ghost" dense data-testid="calendar-snapshot-btn" onClick={() => {
+                    <Button variant="secondary" dense data-testid="calendar-snapshot-btn" onClick={() => {
                       const input = document.createElement("input");
                       input.type = "file"; input.accept = ".png,.jpg,.jpeg,.webp"; input.multiple = true;
                       input.onchange = async () => {
@@ -2200,10 +2213,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
                     }}>Import image</Button>
                   </div>
                   {calWellFor === "new" ? calWell : null}
-                </li>
+                </div>
                 {/* PARKED (Settings audit): a full Connect row repeated Add. */}
-
-              </ul>
             </SurfaceSection>
             <GadgetGroup label="Export">
               <GadgetRow label="Auto export">
@@ -2229,6 +2240,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
                 </GadgetRow>
               ) : null}
             </GadgetGroup>
+            </div>
+            </div>
             {/* HS-139-04: all operator knobs fold behind one RAW well.
                 PHILO-17 U35: Allow actuators is one of them (it sat on the
                 face), and the fold carries no hand-kept count. */}
@@ -2317,40 +2330,46 @@ function SettingsFace({ hero, scope }: CoreProps) {
       case "rhythm":
         return (
           <>
-            <GadgetGroup label="Cadence">
-              {check(["cadence", "enabled"], "Enabled")}
-              {cyc(
-                ["cadence", "pressure"],
-                "Pressure",
-                CADENCE_PRESSURE_OPTIONS,
-              )}
-              {num(["cadence", "quiet_hours_start"], "Quiet from", {
-                unit: "h",
-                min: 0,
-                max: 23,
-              })}
-              {num(["cadence", "quiet_hours_end"], "Quiet until", {
-                unit: "h",
-                min: 0,
-                max: 23,
-              })}
-              {num(["cadence", "max_nudges_per_day"], "Max nudges", {
-                unit: "/day",
-                min: 0,
-              })}
-            </GadgetGroup>
-            {/* PHILO-15 05: the morning Brief job, ON by default; its own setting. */}
-            <GadgetGroup label="Morning brief">
-              {check(["cadence", "brief_enabled"], "Enabled")}
-              {num(["cadence", "brief_hour"], "Make at", {
-                unit: "h",
-                min: 0,
-                max: 23,
-              })}
-            </GadgetGroup>
-            <GadgetGroup label="Telegram">
-              {check(["cadence_telegram", "enabled"], "Enabled")}
-            </GadgetGroup>
+            <div className="prefs-groups">
+            <div className="prefs-column">
+              <GadgetGroup label="Cadence">
+                {check(["cadence", "enabled"], "Enabled")}
+                {cyc(
+                  ["cadence", "pressure"],
+                  "Pressure",
+                  CADENCE_PRESSURE_OPTIONS,
+                )}
+                {num(["cadence", "quiet_hours_start"], "Quiet from", {
+                  unit: "h",
+                  min: 0,
+                  max: 23,
+                })}
+                {num(["cadence", "quiet_hours_end"], "Quiet until", {
+                  unit: "h",
+                  min: 0,
+                  max: 23,
+                })}
+                {num(["cadence", "max_nudges_per_day"], "Max nudges", {
+                  unit: "/day",
+                  min: 0,
+                })}
+              </GadgetGroup>
+            </div>
+            <div className="prefs-column">
+              {/* PHILO-15 05: the morning Brief job, ON by default; its own setting. */}
+              <GadgetGroup label="Morning brief">
+                {check(["cadence", "brief_enabled"], "Enabled")}
+                {num(["cadence", "brief_hour"], "Make at", {
+                  unit: "h",
+                  min: 0,
+                  max: 23,
+                })}
+              </GadgetGroup>
+              <GadgetGroup label="Telegram">
+                {check(["cadence_telegram", "enabled"], "Enabled")}
+              </GadgetGroup>
+            </div>
+            </div>
             {/* HS-139-04: operator knobs fold behind RAW. */}
             <FoldGadget title="Advanced">
               <GadgetGroup>
@@ -2397,30 +2416,34 @@ function SettingsFace({ hero, scope }: CoreProps) {
           />
         );
         return (
-          <>
-            {/* HS-168-03: the Connections face above credentials + mesh. */}
-            <ConnectionsPane
-              onFooterUpdate={handleConnectionsFooter}
-              onOpenModule={openModule}
-              focusProvider={integrationSubject}
-              onBeforeCalendarChange={beforeCalendarChange}
-              onCalendarChanged={calendarChanged}
-            />
-            {/* PHILO-10-04 (B1): the Destinations group, under Tools. */}
-            <Destinations />
-            {/* PHILO-17 REFIT: keys and tokens are technical; they fold. */}
-            <FoldGadget title="Credentials">
-              <GadgetGroup>
-                {keepSecrets.map(secretRow)}
-              </GadgetGroup>
-            </FoldGadget>
-            {/* HS-139-04: operator-wiring secrets fold behind RAW. */}
-            {rawSecrets.length ? (
-              <FoldGadget title="Advanced">
-                <GadgetGroup>{rawSecrets.map(secretRow)}</GadgetGroup>
+          <div className="prefs-groups">
+            <div className="prefs-column">
+              {/* HS-168-03: the Connections face above credentials + mesh. */}
+              <ConnectionsPane
+                onFooterUpdate={handleConnectionsFooter}
+                onOpenModule={openModule}
+                focusProvider={integrationSubject}
+                onBeforeCalendarChange={beforeCalendarChange}
+                onCalendarChanged={calendarChanged}
+              />
+            </div>
+            <div className="prefs-column">
+              {/* PHILO-10-04 (B1): the Destinations group, under Tools. */}
+              <Destinations />
+              {/* PHILO-17 REFIT: keys and tokens are technical; they fold. */}
+              <FoldGadget title="Credentials">
+                <GadgetGroup>
+                  {keepSecrets.map(secretRow)}
+                </GadgetGroup>
               </FoldGadget>
-            ) : null}
-          </>
+              {/* HS-139-04: operator-wiring secrets fold behind RAW. */}
+              {rawSecrets.length ? (
+                <FoldGadget title="Advanced">
+                  <GadgetGroup>{rawSecrets.map(secretRow)}</GadgetGroup>
+                </FoldGadget>
+              ) : null}
+            </div>
+          </div>
         );
       }
       /* ── System: display + remote access + desk reset + one RAW (diagnostics, mesh, devices) ── */
@@ -2448,8 +2471,10 @@ function SettingsFace({ hero, scope }: CoreProps) {
             {/* PHILO-15 B57: his name and the other names for him, after
                 first run (the reopened You card shows them without an edit;
                 Astra r1 on #1090: this is the place he looks). */}
-            <OwnerNameGroup />
-            <PeopleAccessModule />
+            <div className="prefs-groups">
+              <div className="prefs-column"><OwnerNameGroup /></div>
+              <div className="prefs-column"><PeopleAccessModule /></div>
+            </div>
           </>
         );
       default:
@@ -2464,7 +2489,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
   return (
     <>
       {hero ? hero(null) : null}
-      <div ref={contentRef} className="settings-content">
+      <div ref={contentRef} className="settings-content" data-settings-view={moduleId || "home"}>
       {refusal ? <SurfaceWell><div className="prefs-read-failure" role="alert" data-testid="settings-save-failure"><span>{refusal}</span>{failedChangesRef.current.length ? <Button dense variant="ghost" disabled={saving} onClick={() => void retryFailedChanges()}>Retry</Button> : null}</div></SurfaceWell> : null}
       <SurfaceState
         loading={resource.loading}

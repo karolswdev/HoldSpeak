@@ -167,7 +167,7 @@ export function RuntimeDocsCore({ hero, speechTestId = "guide-speech-setup" }: C
       {renderHeroSlot(hero, null)}
       {/* Busy while it says "Checking": the checks land after the head and
           the speech row grows after them (rows moved 74 px at 393 under load). */}
-      <div className="settings-home guide" data-testid="guide" aria-busy={loaded ? undefined : true}>
+      <div className="settings-home prefs-module guide guide-module" data-settings-module="guide" data-testid="guide" aria-busy={loaded ? undefined : true}>
         <div className="settings-head">
           <h2 className="settings-title" data-warning={needs.length ? "" : undefined} data-testid="guide-headline">{headline}</h2>
           <span className="guide-head-sp" />

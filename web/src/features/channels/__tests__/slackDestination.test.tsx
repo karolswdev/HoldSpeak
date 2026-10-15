@@ -141,16 +141,19 @@ describe("Slack in the Destination form", () => {
     expect(calls.some((c) => c.method === "POST")).toBe(false);
   });
 
-  it("D3: the row carries SLACK, the label and HOOKS.SLACK.COM; Check says WEBHOOK SET · HOST OK and posts nothing", async () => {
+  it("D3: the row names Slack; Details shows the Check host, and Check says WEBHOOK SET · HOST OK without sending", async () => {
     rows = [slackRow("chd_slack")];
     render(<Destinations />);
     const row = await screen.findByTestId("dest-row");
     expect(row.textContent).toContain("SLACK");
     expect(row.textContent).toContain("#leads");
-    expect(row.textContent).toContain("HOOKS.SLACK.COM");
-    fireEvent.click(within(row).getByText("Slack #leads"));
+    expect(within(row).getByText("Slack #leads")).toBeVisible();
+    expect(within(row).queryByText("HOOKS.SLACK.COM")).toBeNull();
+    fireEvent.click(within(row).getByRole("button", { name: "Details" }));
     const open = await screen.findByTestId("dest-open");
     expect(open.textContent).toContain("Channel name");
+    expect(within(screen.getByTestId("dest-verbs")).getByText("HOOKS.SLACK.COM")).toBeVisible();
+    expect(document.body.textContent).not.toContain("synthetic-secret");
     fireEvent.click(screen.getByTestId("dest-check"));
     const result = await screen.findByTestId("dest-check-result");
     expect(result.textContent).toContain("WEBHOOK SET · HOST OK");
