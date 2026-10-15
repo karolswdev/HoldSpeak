@@ -8,6 +8,7 @@ import { editorDraftKey, keptEditorPatch } from "./editorDraft";
 import { useDebouncedSave, useEditorSession } from "./useDebouncedSave";
 import { KbEditor } from "./KbEditor";
 import { WorkflowEditor } from "./WorkflowEditor";
+import { RecipeEditor } from "./RecipeEditor";
 
 vi.mock("../../../lib/api", async (original) => ({ ...(await original<typeof import("../../../lib/api")>()), apiFetch: vi.fn() }));
 
@@ -29,6 +30,11 @@ function NoteHost({ close }: { close: () => void }) {
 function KnowledgeHost({ close = vi.fn() }: { close?: () => void }) {
   const session = useEditorSession(close);
   return <><KbEditor object={kbObject} onClose={() => void session.done()} onWriter={session.onWriter} />{session.receipt}{session.verbs}</>;
+}
+const recipe = { kind: "recipe", id: "review-agent", name: "Review agent", role: "Architect", systemPrompt: "Review the design", userTemplate: "Assess {input}", avatar: "A", tools: ["desk.list"], kbId: kb.id } as const;
+function RecipeHost({ close }: { close: () => void }) {
+  const session = useEditorSession(close);
+  return <><RecipeEditor object={{ kind: "recipe", id: recipe.id, title: recipe.name, ref: recipe } as any} onClose={() => void session.done()} onWriter={session.onWriter} />{session.receipt}{session.verbs}</>;
 }
 
 beforeEach(() => {
@@ -175,5 +181,27 @@ describe("Knowledge and Workflow editors", () => {
     await act(async () => { await vi.advanceTimersByTimeAsync(450); });
     expect(useDesk.getState().updatePrimitive).toHaveBeenCalledWith("workflow", "branch-flow", { name: "Renamed branch review" });
     expect(object.ref.graphJson).toEqual(graph);
+  });
+});
+
+describe("Recipe editor control sheet", () => {
+  it("names populated values, folds advanced fields both ways and preserves its writer", async () => {
+    const close = vi.fn();
+    const update = vi.fn(async () => true);
+    useDesk.setState({ updatePrimitive: update, items: { ...useDesk.getState().items, recipe: [recipe] } as any });
+    render(<RecipeHost close={close} />);
+    for (const name of ["Name", "Role", "Instructions"]) expect(screen.getByText(name)).toBeVisible();
+    expect(screen.getByRole("textbox", { name: "Instructions" })).toHaveValue("Review the design");
+    const advanced = screen.getByText("Advanced").closest("details")!;
+    expect(advanced).not.toHaveAttribute("open");
+    fireEvent.click(advanced.querySelector("summary")!);
+    for (const name of ["Avatar", "User template", "Tools", "Knowledge"]) expect(screen.getByText(name)).toBeVisible();
+    fireEvent.change(screen.getByRole("textbox", { name: "Tools" }), { target: { value: " desk.list , desk.open , " } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Instructions" }), { target: { value: " Keep this spacing \n" } });
+    fireEvent.click(advanced.querySelector("summary")!);
+    expect(advanced).not.toHaveAttribute("open");
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Done" })); });
+    expect(update).toHaveBeenCalledWith("recipe", recipe.id, { tools: ["desk.list", "desk.open"], system_prompt: " Keep this spacing \n" });
+    expect(close).toHaveBeenCalledTimes(1);
   });
 });

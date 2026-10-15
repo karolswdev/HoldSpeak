@@ -53,6 +53,8 @@ import {
   restoredOutcome,
   restoreFailedOutcome,
   notParkedOutcome,
+  openSourceRef,
+  StateChip,
   type ParkOutcome,
   type ParkedRow,
 } from "../surface";
@@ -103,6 +105,7 @@ import {
   CheckGadget,
   EgressChip,
   FoldGadget,
+  GadgetGroup,
   LampGadget,
   LedMeter,
   PadGadget,
@@ -629,7 +632,6 @@ function WorkbenchItemCard({
   expanded,
   recipeId,
   workbenchId,
-  workbenchName,
   onToggle,
   onReload,
   onRemove,
@@ -643,7 +645,6 @@ function WorkbenchItemCard({
   expanded: boolean;
   recipeId: string | null;
   workbenchId: string;
-  workbenchName: string;
   onToggle: () => void;
   onReload: () => void;
   onRemove: (item: WorkbenchItem) => void;
@@ -725,9 +726,6 @@ function WorkbenchItemCard({
     if (result.ok) void useDesk.getState().refresh();
     setKeeping(false);
   };
-
-  // Issue 5: inline expansion for pending-review artifacts (no desk pullout)
-  const [artifactExpanded, setArtifactExpanded] = useState(false);
 
   const [minting, setMinting] = useState(false);
   const handleRetryMint = async () => {
@@ -816,17 +814,23 @@ function WorkbenchItemCard({
           {/* result + egress */}
           {hasResult ? (
             <div className="wb-card-result">
+              <GadgetGroup
+                label={item.status === "failed" ? "FAILED" : "RESULT"}
+                material="inset"
+                actions={<>
+                  <Button dense variant="secondary" onClick={() => onCopy(item.result!)}>
+                    Copy
+                  </Button>
+                  {artifactId ? (
+                    <Button dense variant="secondary" onClick={() => openSourceRef(`artifact:${artifactId}`)}>
+                      Open artifact
+                    </Button>
+                  ) : null}
+                </>}
+              >
               <div className="wb-card-result-head">
-                <span className="wb-card-result-label">
-                  {item.status === "failed" ? "FAILED" : "RESULT"}
-                </span>
-                <Button variant="chrome"
-                  type="button"
-                  className="desk-chip quiet"
-                  onClick={() => onCopy(item.result!)}
-                >
-                  Copy
-                </Button>
+                {hasMintedArtifact ? <StateChip state="warning" label="Review needed" /> : null}
+                {mintFailed ? <StateChip state="failure" label="Mint failed" /> : null}
                 {egressLamp ? (
                   <EgressChip
                     label={`⌂ ${egressLamp.label}`}
@@ -839,20 +843,7 @@ function WorkbenchItemCard({
                     }
                   />
                 ) : null}
-                {hasMintedArtifact ? (
-                  <span className="desk-chip" data-tone="info">pending-review</span>
-                ) : null}
-                {mintFailed ? (
-                  <span className="desk-chip" data-tone="fail">Mint failed</span>
-                ) : null}
               </div>
-              {hasMintedArtifact ? (
-                <div className="wb-card-artifact-link">
-                  <span className="wb-card-artifact-title">
-                    {workbenchName}: {item.title}
-                  </span>
-                </div>
-              ) : null}
               {failureReason ? (
                 <div className="wb-card-error-reason" role="alert">
                   <span>ERROR</span>
@@ -862,32 +853,7 @@ function WorkbenchItemCard({
               <div className="wb-card-result-body">
                 <Material>{item.result!}</Material>
               </div>
-              {/* Issue 5: inline artifact detail (not a desk pullout) */}
-              {hasMintedArtifact && artifactExpanded ? (
-                <div className="wb-card-artifact-detail">
-                  <div className="wb-card-artifact-detail-head">
-                    <span className="desk-chip" data-tone="info">pending-review</span>
-                    <span className="wb-card-artifact-detail-id">{artifactId}</span>
-                  </div>
-                  <div className="wb-card-artifact-detail-body">
-                    <Material>{item.result!}</Material>
-                  </div>
-                  {egressLamp ? (
-                    <div className="wb-card-artifact-detail-egress">
-                      <EgressChip
-                        label={`⌂ ${egressLamp.label}`}
-                        scope={
-                          egressLamp.tone === "ok"
-                            ? "local"
-                            : egressLamp.tone === "fail"
-                              ? "cloud"
-                              : "mixed"
-                        }
-                      />
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
+              </GadgetGroup>
             </div>
           ) : null}
 
@@ -901,17 +867,6 @@ function WorkbenchItemCard({
 
           {/* verbs */}
           <div className="wb-card-verbs">
-            {/* Minted artifact: inline expand (Issue 5: no desk pullout for pending-review) */}
-            {hasMintedArtifact ? (
-              <Button variant="chrome"
-                type="button"
-                className="desk-chip"
-                onClick={() => setArtifactExpanded(!artifactExpanded)}
-                aria-expanded={artifactExpanded}
-              >
-                {artifactExpanded ? "Collapse" : "Open"}
-              </Button>
-            ) : null}
             {/* Mint failed: show Retry mint verb */}
             {mintFailed ? (
               <Button variant="chrome"
@@ -1933,7 +1888,6 @@ export function WorkbenchWindow({
                   expanded={expanded === item.id}
                   recipeId={detail?.recipe_id || null}
                   workbenchId={workbenchId}
-                  workbenchName={name}
                   onToggle={() =>
                     setExpanded(expanded === item.id ? null : item.id)
                   }
@@ -2004,6 +1958,9 @@ export function WorkbenchWindow({
         {activeWing === "runs" && !showConfig ? (
           <WorkbenchRunsWing
             runs={runs}
+            loading={runsHook.loading}
+            error={runsHook.error ? `Runs not loaded · ${runsHook.error}` : null}
+            onRetry={loadRuns}
             configured={isConfigured}
             running={running}
             openRunId={openRunId}
@@ -2018,8 +1975,10 @@ export function WorkbenchWindow({
         {/* ── memory wing ──────────────────────────────────────────── */}
         {activeWing === "memory" && !showConfig ? (
           <div className="wb-memory-wing">
+            <GadgetGroup label={countLabel("MEMORIES", memoryEntries.length)} material="inset">
+            {memoryHook.error ? <SurfaceState error={`Memory not loaded · ${memoryHook.error}`} onRetry={memoryHook.loading ? undefined : loadMemory} /> : null}
+            {memoryHook.loading && !memoryEntries.length && !memoryHook.error ? <SurfaceState loading /> : null}
             <SurfaceLedger
-              count={countLabel("MEMORIES", memoryEntries.length)}
               controls={
                 memoryEntries.length > 0 ? (
                   <ConfirmVerb
@@ -2035,7 +1994,7 @@ export function WorkbenchWindow({
                 ) : null
               }
             >
-              {memoryEntries.length === 0 ? (
+              {memoryEntries.length === 0 && !memoryHook.loading && !memoryHook.error ? (
                 <SurfaceState empty emptyLabel="No memories yet" emptyGlyph="◇" />
               ) : null}
               {memoryEntries.map((entry, i) => {
@@ -2082,10 +2041,12 @@ export function WorkbenchWindow({
                 );
               })}
             </SurfaceLedger>
+            </GadgetGroup>
           </div>
         ) : null}
       </div>
 
+      <div className="desk-surface-foot">
       <SurfaceFooter
         // The repair door sits in the footer's verb slot, so no receipt
         // (a failed write, a Park outcome, a copy) can cover it.
@@ -2125,6 +2086,7 @@ export function WorkbenchWindow({
           )
         }
       />
+      </div>
     </DeskWindowFrame>
   );
 }

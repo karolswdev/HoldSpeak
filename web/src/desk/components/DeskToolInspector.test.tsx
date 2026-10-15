@@ -5,6 +5,7 @@ import type { Note } from "../../lib/primitives";
 import { EMPTY_ITEMS } from "../api";
 import { useDesk } from "../store";
 import { DeskToolInspector } from "./DeskToolInspector";
+import inspectorChrome from "./chrome-menus.css?raw";
 
 // PHILO-11-05: the free-text desk Slack send is parked (design section 6, D1); the
 // inspector's integration flow is fenced on the Custom webhook, which keeps it.
@@ -55,6 +56,101 @@ describe("HS-93-04 Desk tool inspector", () => {
   });
 
   afterEach(() => vi.unstubAllGlobals());
+
+  it("keeps the Inspector in the desk plane while the shared frame owns geometry and material", () => {
+    const host = inspectorChrome.match(/\.desk-next \.desk-tool-inspector\s*\{([^}]+)\}/)?.[1] ?? "";
+    expect(host).toMatch(/position:\s*fixed/);
+    expect(host).toMatch(/display:\s*flex/);
+    expect(host).toMatch(/flex-direction:\s*column/);
+    expect(host).toMatch(/overflow:\s*hidden/);
+    expect(host).not.toMatch(/(?:^|;)\s*(?:top|right|bottom|left|width|height|z-index|border|background|box-shadow)\s*:/);
+  });
+
+  it.each([
+    ["executed", undefined, "success", "Executed"],
+    ["failed", undefined, "failure", "Failed"],
+    ["rejected", undefined, "idle", "Rejected"],
+    ["proposed", "refused", "warning", "Refused"],
+  ] as const)("keeps %s %s receipts honest in the library footer", async (status, outcome, tone, label) => {
+    const fetcher = vi.fn(async (input: string) => {
+      const url = String(input);
+      if (url.endsWith("/api/authority/policy")) return json({ control_mode: "neutral", control_mode_label: "Normal" });
+      if (url.endsWith("/propose")) return json({ proposal: {
+        id: "outcome-1", target: "webhook", status, preview: "Send the selected release checklist",
+        policy_snapshot: { outcome }, error: status === "failed" ? "Endpoint unavailable" : undefined,
+        payload: { _source: { ref: "note:release", label: "Release checklist" } },
+      } });
+      if (url.endsWith("/api/desk/actuators/webhook/outcome-1/decision")) return json({ proposal: {
+        id: "outcome-1", target: "webhook", status: "executed", preview: "Send the selected release checklist",
+        payload: { _source: { ref: "note:release", label: "Release checklist" } },
+      } });
+      if (url.startsWith("/api/desk/projections?")) return json({ projections: [], counts: {}, subject_counts: {}, page: { total: 0, has_more: false } });
+      throw new Error(`Unexpected request: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetcher);
+    useDesk.setState({ toolInspector: { kind: "integration", id: "companion_webhook" } });
+    const { container } = render(<MemoryRouter><DeskToolInspector /></MemoryRouter>);
+    const post = screen.getByRole("button", { name: "Post Release checklist to Custom webhook" });
+    expect(post).toHaveClass("btn");
+    fireEvent.click(post);
+    const receipt = await screen.findByRole("status", { name: label });
+    expect(receipt).toHaveAttribute("data-state", tone);
+    expect(receipt.closest(".surface-footer-receipt")).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Return to Release checklist" })).toHaveClass("btn");
+    expect(container.querySelector(".desk-integration-receipt")).toBeNull();
+    const egress = container.querySelector(".surface-footer-egress .gadget-chip-egress");
+    expect(egress).toHaveTextContent("Launch workspace");
+    expect(egress).not.toHaveAttribute("data-scope", "local");
+    if (status === "failed") {
+      expect(screen.getByRole("button", { name: /Retry/ })).toHaveClass("btn");
+      expect(screen.getByRole("alert")).toHaveTextContent("Endpoint unavailable");
+      fireEvent.click(screen.getByRole("button", { name: /Retry/ }));
+      expect(await screen.findByRole("status", { name: "Executed" })).toHaveAttribute("data-state", "success");
+      const retryCall = fetcher.mock.calls.find(([url]) => String(url).endsWith("/webhook/outcome-1/decision"));
+      expect(retryCall).toBeTruthy();
+    }
+    if (outcome === "refused") expect(screen.queryByRole("button", { name: /Approve/ })).not.toBeInTheDocument();
+  });
+
+  it("names a known endpoint host at the action without exposing its path", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => json({ control_mode: "neutral" })));
+    useDesk.setState({
+      setup: { trust: { destinations: [{ ...webhook, destination: "https://hooks.example.invalid/private-path" }] } },
+      toolInspector: { kind: "integration", id: "companion_webhook" },
+    });
+    const { container } = render(<MemoryRouter><DeskToolInspector /></MemoryRouter>);
+    const egress = container.querySelector(".surface-footer-egress .gadget-chip-egress");
+    expect(egress).toHaveTextContent("hooks.example.invalid");
+    expect(egress).not.toHaveTextContent("private-path");
+    expect(egress).toHaveAttribute("data-scope", "cloud");
+  });
+
+  it("keeps the exact GitHub repository visible before creating an issue and its host in the footer", () => {
+    vi.stubGlobal("fetch", vi.fn(async () => json({ control_mode: "neutral" })));
+    useDesk.setState({
+      setup: { trust: { destinations: [{ ...webhook, id: "github", name: "GitHub", destination: "owner/architecture-reports" }] } },
+      toolInspector: { kind: "integration", id: "github" },
+    });
+    const { container } = render(<MemoryRouter><DeskToolInspector /></MemoryRouter>);
+    expect(container.querySelector(".desk-tool-status .surface-primary")).toHaveTextContent("owner/architecture-reports");
+    expect(screen.getByRole("button", { name: "Create GitHub issue from Release checklist" })).toBeVisible();
+    const egress = container.querySelector(".surface-footer-egress .gadget-chip-egress");
+    expect(egress).toHaveTextContent("github.com");
+    expect(egress).toHaveAttribute("data-scope", "cloud");
+  });
+
+  it("names an unconfigured integration once without repeating a placeholder destination", () => {
+    vi.stubGlobal("fetch", vi.fn(async () => json({ control_mode: "neutral" })));
+    useDesk.setState({
+      setup: { trust: { destinations: [{ ...webhook, enabled: false, destination: "Not configured" }] } },
+      toolInspector: { kind: "integration", id: "companion_webhook" },
+    });
+    const { container } = render(<MemoryRouter><DeskToolInspector /></MemoryRouter>);
+    expect(screen.getAllByText("Not configured")).toHaveLength(1);
+    expect(container.querySelector(".desk-tool-status .surface-primary")).toBeNull();
+    expect(container.querySelector(".surface-footer-egress .gadget-chip-egress")).toBeNull();
+    expect(screen.getByRole("button", { name: "Configure Custom webhook" })).toHaveClass("btn");
+  });
 
   it("binds an Integration proposal and Receipt to the exact selected source", async () => {
     const fetcher = vi.fn(async (input: string, init?: RequestInit) => {
@@ -140,7 +236,7 @@ describe("HS-93-04 Desk tool inspector", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("Launch workspace")).toBeInTheDocument();
+    expect(document.querySelector(".desk-tool-status")).toHaveTextContent("Launch workspace");
     expect(screen.getByText("Ship after checks pass.")).toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("button", {
@@ -165,7 +261,7 @@ describe("HS-93-04 Desk tool inspector", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "Approve and post to webhook" }),
     );
-    expect(await screen.findByText("Receipt · executed")).toBeInTheDocument();
+    expect(await screen.findByRole("status", { name: "Executed" })).toHaveAttribute("data-state", "success");
     fireEvent.click(
       screen.getByRole("button", { name: "Return to Release checklist" }),
     );
@@ -241,7 +337,7 @@ describe("HS-93-04 Desk tool inspector", () => {
         name: "Post Release checklist to Custom webhook",
       }),
     );
-    expect(await screen.findByText("Receipt · executed")).toBeInTheDocument();
+    expect(await screen.findByRole("status", { name: "Executed" })).toHaveAttribute("data-state", "success");
     // The wire's control_posture authority renders as its product label —
     // present both as the fact label and as the authority value.
     expect(screen.getAllByText("Control posture").length).toBeGreaterThan(1);

@@ -1431,7 +1431,7 @@
       "purpose": "Save local preferences while preserving calendar identity and the authoritative model assignments.",
       "domain": "desk",
       "status": "experimental",
-      "status_reason": "Existing Settings surface audited; focused isolated HTTP tests execute calendar round trips, migrated response projection and preference persistence. Owner acceptance and live OS behavior remain unverified.",
+      "status_reason": "Existing Settings surface audited; isolated HTTP tests cover identity and migrated preferences. Focused UI tests cover compact Calendar read states, retry and URL entry with an existing source. Native hardware and owner acceptance remain unverified.",
       "exposure": "user",
       "surfaces": [
         "Settings"
@@ -1488,22 +1488,29 @@
           "symbol": "SettingsService.update_settings",
           "line": 290,
           "claim": "Canonical calendar sources survive echoed legacy subscription fields; GET and accepted writes share the migrated projection; existing cadence, Telegram and mesh preferences persist."
+        },
+        {
+          "path": "web/src/desk/firstrun/CalendarCard.tsx",
+          "symbol": "function CalendarFrame({",
+          "line": 28,
+          "claim": "Compact Settings reselection uses a named inset, explicit loading/unavailable/empty read states, read recovery and Calendar URL entry with an existing source."
         }
       ],
       "docs": [
         "docs/USER_GUIDE.md",
-        "docs/internal/SETTINGS-AUDIT-2026-10-14/backend-audit.md"
+        "docs/internal/SETTINGS-AUDIT-2026-10-14/backend-audit.md",
+        "docs/internal/VISUAL-REFINEMENT-2026-10-15/README.md"
       ],
       "limitations": [
         "Already erased names and dropped sources cannot be reconstructed from damaged config alone. Explicit native reselection can repair a blank label from a detected calendar title.",
-        "Tests use isolated HOME and controlled native calendar discovery. Live OS reconfiguration and owner acceptance remain unverified."
+        "Tests and walks use isolated HOME and disabled or controlled native calendar discovery. Live OS reconfiguration and owner acceptance remain unverified."
       ],
       "failure_states": [
         "settings_stale",
         "inference_legacy_selector_retired",
         "invalid preference"
       ],
-      "evidence_level": "source_and_assertions_inspected",
+      "evidence_level": "tests_executed",
       "release_availability": "unverified",
       "owner_observed": false,
       "trust_boundary": "Owner-authorized changed preferences are validated before the local config write. Retired model selectors still refuse explicit mutations.",

@@ -700,13 +700,14 @@ describe("Accounts recovery", () => {
     await waitFor(() => expect(vi.mocked(apiFetch).mock.calls.some(([path, init]) => path === destination && init?.method === "POST")).toBe(true));
   });
 
-  it("Settings calendar URL Add waits for the save gate and reconciles the accepted use", async () => {
+  it("Settings calendar URL Add remains available with an existing feed, waits for the save gate and reconciles the accepted use", async () => {
     let allowed = false;
     const before = vi.fn(async () => allowed);
     const changed = vi.fn(async () => {});
     vi.mocked(apiFetch).mockImplementation(async (path) => {
       if (path === "/api/onboarding/calendar") return { ...CALENDAR_WIRE.wire, candidates: [] };
-      if (path === "/api/settings") return { calendar: { sources: [] } };
+      if (path === "/api/settings") return { calendar: { sources: [{ id: "feed", url: CALENDAR_CHECK_WIRE.wire.url, enabled: true }] } };
+      if (path === "/api/door") return { calendar_configured: true };
       if (path === "/api/onboarding/calendar/check") return CALENDAR_CHECK_WIRE.wire;
       if (path === "/api/onboarding/calendar/use") return CALENDAR_USE_WIRE.wire;
       return {};
@@ -724,6 +725,89 @@ describe("Accounts recovery", () => {
     await waitFor(() => expect(changed).toHaveBeenCalledOnce());
     expect(vi.mocked(apiFetch).mock.calls.filter(([, init]) => init?.method === "POST").map(([path]) => path)).toEqual(["/api/onboarding/calendar/check", "/api/onboarding/calendar/use"]);
     expect(field).toHaveValue("");
+  });
+
+  it("Settings calendar chooser names its inset and shows loading until the read returns", async () => {
+    let finishRead!: (answer: typeof CALENDAR_WIRE.wire) => void;
+    const detection = new Promise<typeof CALENDAR_WIRE.wire>((resolve) => { finishRead = resolve; });
+    vi.mocked(apiFetch).mockImplementation(async (path) => {
+      if (path === "/api/onboarding/calendar") return detection;
+      if (path === "/api/settings") return { calendar: { sources: [] } };
+      return {};
+    });
+    mockFetchConnections.mockResolvedValue(fullResponse());
+    render(<ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} focusProvider="calendar" />);
+    const chooser = await screen.findByRole("region", { name: "Choose calendar" });
+    expect(chooser).toHaveAttribute("data-material", "inset");
+    expect(within(chooser).getByRole("status", { name: "CHECKING CALENDARS" })).toBeVisible();
+    expect(within(chooser).queryByRole("status", { name: "NO CALENDARS FOUND" })).toBeNull();
+    expect(within(chooser).getByRole("textbox", { name: "Calendar URL" })).toBeVisible();
+    finishRead(CALENDAR_WIRE.wire);
+    await within(chooser).findByRole("button", { name: `Use ${CALENDAR_WIRE.wire.candidates[0].label}` });
+    expect(within(chooser).queryByRole("status", { name: "CHECKING CALENDARS" })).toBeNull();
+  });
+
+  it.each([
+    { state: "unavailable", label: "CALENDARS UNAVAILABLE" },
+    { state: "full_access", label: "NO CALENDARS FOUND" },
+  ])("Settings calendar chooser distinguishes $state from loading and reads again without a prompt", async ({ state, label }) => {
+    let reads = 0;
+    let finishRead!: (answer: typeof CALENDAR_WIRE.wire) => void;
+    vi.mocked(apiFetch).mockImplementation(async (path) => {
+      if (path === "/api/onboarding/calendar") {
+        reads += 1;
+        if (reads === 1) return { ...CALENDAR_WIRE.wire, macos: { state, can_request: false }, candidates: [] };
+        return new Promise<typeof CALENDAR_WIRE.wire>((resolve) => { finishRead = resolve; });
+      }
+      if (path === "/api/settings") return { calendar: { sources: [{ id: "feed", url: CALENDAR_CHECK_WIRE.wire.url, enabled: true }] } };
+      if (path === "/api/door") return { calendar_configured: true };
+      return {};
+    });
+    mockFetchConnections.mockResolvedValue(fullResponse());
+    render(<ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} focusProvider="calendar" />);
+    const chooser = await screen.findByTestId("firstrun-calendar");
+    await within(chooser).findByRole("status", { name: label });
+    expect(within(chooser).getByRole("status", { name: "IN USE" })).toBeVisible();
+    expect(within(chooser).queryByRole("button", { name: "Allow calendar access" })).toBeNull();
+    expect(within(chooser).queryByRole("button", { name: "Open System Settings" })).toBeNull();
+    const field = within(chooser).getByRole("textbox", { name: "Calendar URL" });
+    fireEvent.change(field, { target: { value: CALENDAR_CHECK_WIRE.wire.url } });
+    expect(within(chooser).getByText(CALENDAR_CHECK_WIRE.wire.host.toUpperCase())).toBeVisible();
+    const check = within(chooser).getByRole("button", { name: "Check again" });
+    fireEvent.click(check);
+    await waitFor(() => expect(reads).toBe(2));
+    expect(check).toBeDisabled();
+    expect(within(chooser).getByRole("button", { name: "Add" })).toBeDisabled();
+    fireEvent.click(check);
+    expect(reads).toBe(2);
+    finishRead(CALENDAR_WIRE.wire);
+    await within(chooser).findByRole("button", { name: `Use ${CALENDAR_WIRE.wire.candidates[0].label}` });
+    expect(within(chooser).queryByRole("status", { name: label })).toBeNull();
+    expect(field).toHaveValue(CALENDAR_CHECK_WIRE.wire.url);
+    expect(vi.mocked(apiFetch).mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
+  });
+
+  it("Settings calendar chooser retries a failed read without calling native permission or URL writes", async () => {
+    let reads = 0;
+    vi.mocked(apiFetch).mockImplementation(async (path) => {
+      if (path === "/api/onboarding/calendar") {
+        reads += 1;
+        if (reads === 1) throw new Error("Calendar read unavailable");
+        return CALENDAR_WIRE.wire;
+      }
+      if (path === "/api/settings") return { calendar: { sources: [] } };
+      return {};
+    });
+    mockFetchConnections.mockResolvedValue(fullResponse());
+    render(<ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} focusProvider="calendar" />);
+    const chooser = await screen.findByTestId("firstrun-calendar");
+    await within(chooser).findByRole("status", { name: "CAN'T CHECK" });
+    expect(within(chooser).getByText("Error: Calendar read unavailable")).toBeVisible();
+    fireEvent.click(within(chooser).getByRole("button", { name: "Retry" }));
+    await within(chooser).findByRole("button", { name: `Use ${CALENDAR_WIRE.wire.candidates[0].label}` });
+    expect(reads).toBe(2);
+    expect(within(chooser).queryByRole("status", { name: "CAN'T CHECK" })).toBeNull();
+    expect(vi.mocked(apiFetch).mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
   });
   it.each([true, false])("Settings refreshes a configured native calendar name with enabled=%s and reconciles only accepted writes", async (enabled) => {
     const candidate = CALENDAR_WIRE.wire.candidates[0];

@@ -1,5 +1,5 @@
 import { openNewThread } from "../newThread";
-import { countLabel, CycleGadget, wireDayClock } from "../surface";
+import { countLabel, CheckGadget, CycleGadget, GadgetGroup, GadgetRow, StringGadget, wireDayClock } from "../surface";
 /** HS-151-05 — Thread pullout content: head (in-place title, egress lamp,
  * status line, token meter), body (user/assistant rows with StreamingMaterial,
  * reasoning folded behind RAW, error row in-flow, CRASHED + Retry, sibling
@@ -174,18 +174,18 @@ function ElicitationForm({
   return (
     <div className="thread-elicitation-form" data-testid="elicitation-form">
       {prompt && <div className="thread-elicitation-prompt">{prompt}</div>}
+      <GadgetGroup label="Answer" material="inset" actions={<>
+        <Button variant="primary" dense onClick={() => onSubmit(values)} data-testid="elicitation-submit">Submit</Button>
+        <Button variant="ghost" dense onClick={onDecline} data-testid="elicitation-decline">Decline</Button>
+      </>}>
       {fields.map(([key, prop]) => {
         const type = String(prop.type ?? "string");
         const enumVals = Array.isArray(prop.enum) ? prop.enum : null;
         const label = String(prop.title ?? key);
         const isReq = required.includes(key);
         return (
-          <div key={key} className={`thread-elicitation-field${type === "boolean" ? " thread-elicitation-field--boolean" : ""}`}>
-            {type !== "boolean" && (
-              <label className="thread-elicitation-label">
-                {label}{isReq ? " *" : ""}
-              </label>
-            )}
+          <GadgetRow key={key} label={`${label}${isReq ? " *" : ""}`}
+            controlWidth={enumVals || type === "boolean" ? "standard" : type === "number" || type === "integer" ? "short" : "full"}>
             {enumVals ? (
               <CycleGadget
                 label={`${label}${isReq ? " *" : ""}`}
@@ -197,60 +197,23 @@ function ElicitationForm({
                 onChange={(next) => handleChange(key, next)}
               />
             ) : type === "boolean" ? (
-              <label className="thread-elicitation-boolean">
-                {/* UX-CANON: needs redesign (HS-170-04) */}
-                <input
-                  type="checkbox"
-                  checked={Boolean(values[key])}
-                  onChange={(e) => handleChange(key, e.target.checked)}
-                />
-                <span className="thread-elicitation-label">{label}{isReq ? " *" : ""}</span>
-              </label>
+              <CheckGadget variant="state" label={label} checked={Boolean(values[key])}
+                onChange={(next) => handleChange(key, next)} />
             ) : type === "number" || type === "integer" ? (
-              // UX-CANON: needs redesign (HS-170-04)
-              <input
+              <StringGadget
+                label={label}
                 type="number"
-                className="thread-elicitation-input"
                 value={String(values[key] ?? "")}
-                onChange={(e) => handleChange(key, Number(e.target.value))}
+                onChange={(next) => handleChange(key, Number(next))}
               />
             ) : (
-              // HS-176-04 — the voice law: a free-text answer carries the mic.
-              <span className="thread-elicitation-well">
-                <input
-                  type="text"
-                  className="thread-elicitation-input"
-                  aria-label={label}
-                  value={String(values[key] ?? "")}
-                  onChange={(e) => handleChange(key, e.target.value)}
-                />
-                <MicButton
-                  label={`Speak ${label}`}
-                  onText={(spoken) => handleChange(key, spoken)}
-                />
-              </span>
+              <StringGadget label={label} value={String(values[key] ?? "")}
+                onChange={(next) => handleChange(key, next)} />
             )}
-          </div>
+          </GadgetRow>
         );
       })}
-      <div className="thread-tool-decision-actions">
-        <Button
-          variant="primary"
-          dense
-          onClick={() => onSubmit(values)}
-          data-testid="elicitation-submit"
-        >
-          Submit
-        </Button>
-        <Button
-          variant="ghost"
-          dense
-          onClick={onDecline}
-          data-testid="elicitation-decline"
-        >
-          Decline
-        </Button>
-      </div>
+      </GadgetGroup>
     </div>
   );
 }

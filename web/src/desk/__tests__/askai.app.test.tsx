@@ -202,6 +202,37 @@ describe("Ask AI: the decision box sends the owner's decision", () => {
     await waitFor(() => expect(decideBody()).toEqual({ call_id: "glass-elicit-1", decision: "deny" }));
     expect(rowState()).toBe("denied");
   });
+
+  it("submits typed string, number, boolean and enum answers from one named library sheet", async () => {
+    withRow({ ...asking, elicitation: {
+      type: "object", prompt: "Choose release settings",
+      properties: {
+        title: { type: "string", title: "Release title" },
+        count: { type: "integer", title: "Review count" },
+        notify: { type: "boolean", title: "Notify team" },
+        mode: { type: "string", title: "Release mode", enum: ["draft", "ready"] },
+      },
+    } }, { call_id: "glass-elicit-1", decision: "approve", state: "admitted" });
+    const title = screen.getByRole("textbox", { name: "Release title" });
+    const count = screen.getByRole("spinbutton", { name: "Review count" });
+    const notify = screen.getByRole("checkbox", { name: "Notify team" });
+    expect(title.closest(".gadget-string")).not.toBeNull();
+    expect(count.closest(".gadget-string")).not.toBeNull();
+    expect(count).toHaveValue(null);
+    expect(notify.closest(".gadget-check")).toHaveAttribute("data-variant", "state");
+    const actions = screen.getByTestId("elicitation-submit").closest(".gadget-group-actions");
+    expect(actions).toContainElement(screen.getByTestId("elicitation-decline"));
+    expect(screen.getByTestId("elicitation-submit")).toBeVisible();
+    expect(screen.getByTestId("elicitation-decline")).toBeVisible();
+    fireEvent.change(title, { target: { value: "Release 7" } });
+    fireEvent.change(count, { target: { value: "3" } });
+    fireEvent.click(notify);
+    fireEvent.change(screen.getByRole("combobox", { name: "Release mode" }), { target: { value: "ready" } });
+    fireEvent.click(screen.getByTestId("elicitation-submit"));
+    await waitFor(() => expect(decideBody()).toEqual({
+      call_id: "glass-elicit-1", decision: "approve", answer: { title: "Release 7", count: 3, notify: true, mode: "ready" },
+    }));
+  });
 });
 
 // ── HS-154 the call: the hub's recorded thread reads ─────────────────────────
