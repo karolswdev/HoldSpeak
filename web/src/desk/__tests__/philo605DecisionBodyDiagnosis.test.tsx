@@ -247,12 +247,10 @@ describe("shared collection read truth", () => {
   });
 });
 
-/** PHILO-8-04 — the read view's "Decision" section, found by its heading
+/** The read view's "Decision" paper, found by its accessible name
  * (an empty field draws no heading, so a position is not stable). */
 function decisionSection(): Element | undefined {
-  return Array.from(document.querySelectorAll(".desk-decision-card > section")).find(
-    (section) => section.querySelector("h3")?.textContent === "Decision",
-  );
+  return screen.queryByRole("region", { name: "Decision" }) ?? undefined;
 }
 
 describe("PHILO-6-05 decision body fences", () => {

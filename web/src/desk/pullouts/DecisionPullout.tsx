@@ -1,6 +1,6 @@
 import { SurfaceFooter } from "../surface/SurfaceFooter";
 /** Decision pullout content (HS-117-15). */
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { apiRequest } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import { useDesk } from "../store";
@@ -11,16 +11,26 @@ import { Material } from "../surface/Material";
 import {
   SurfaceRow,
   SurfaceRows,
-  SurfaceSection,
+  SurfaceState,
 } from "../surface/Surface";
 import { humanTime } from "../surface/format";
-import { FoldGadget, PadGadget } from "../surface/gadgets";
+import { CycleGadget, FoldGadget, GadgetGroup, GadgetRow, PadGadget } from "../surface/gadgets";
+import { StateChip } from "../surface";
+import { writeFailureReason } from "../hooks/useWriteReceipt";
 import type { PulloutContentProps } from "./types";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { DeskDecisionSendWells } from "../documentSendsLazy";
+import "./attention-records.css";
 
 /** The title createPrimitive("decision") gives (store/dataSlice.ts). */
 export const DEFAULT_DECISION_TITLE = "New decision";
+
+const DECISION_STATES = [
+  { value: "proposed", label: "Proposed" },
+  { value: "accepted", label: "Accepted" },
+  { value: "superseded", label: "Replaced" },
+  { value: "deprecated", label: "Retired" },
+];
 
 export function DecisionPullout({ object: o }: PulloutContentProps) {
   const items = useDesk((s) => s.items);
@@ -48,6 +58,16 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
     useDesk.getState().newIds.includes(o.id),
   );
   const [decisionDraft, setDecisionDraft] = useState(draftFromRecord);
+  const [savedStatus, setSavedStatus] = useState<string | null>(null);
+  const [savingStatus, setSavingStatus] = useState(false);
+  const [statusFailure, setStatusFailure] = useState("");
+  const [retryStatus, setRetryStatus] = useState<string | null>(null);
+  const statusWrite = useRef({ pending: false, generation: 0 });
+  useEffect(() => {
+    setSavedStatus(null);
+  }, [o.id, ir.status]);
+  useEffect(() => () => { statusWrite.current.generation += 1; }, [o.id]);
+  const status = savedStatus ?? String(ir.status || "proposed");
 
   const startDecisionEdit = () => {
     setDecisionDraft(draftFromRecord());
@@ -68,25 +88,50 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
     void useDesk.getState().updatePrimitive("decision", o.id, patch);
     setEditingDecision(false);
   };
-  const cycleDecisionStatus = () => {
-    const cycle = ["proposed", "accepted", "superseded", "deprecated"];
-    const current = String(ir.status || "proposed");
-    const status = cycle[(cycle.indexOf(current) + 1) % cycle.length];
-    void apiRequest(`/api/decisions/${encodeURIComponent(o.id)}/status`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
-    }).then(() => useDesk.getState().refresh());
+  const writeStatus = async (next: string) => {
+    if (statusWrite.current.pending || next === status) return;
+    statusWrite.current.pending = true;
+    const generation = statusWrite.current.generation;
+    setSavingStatus(true);
+    setStatusFailure("");
+    try {
+      const response = await apiRequest(`/api/decisions/${encodeURIComponent(o.id)}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: next }),
+      });
+      if (!response.ok) throw response;
+      const body = await response.json();
+      if (generation !== statusWrite.current.generation) return;
+      setSavedStatus(String(body?.decision?.status ?? next));
+      setRetryStatus(null);
+      void useDesk.getState().refresh();
+    } catch (cause) {
+      if (generation !== statusWrite.current.generation) return;
+      setStatusFailure(`STATUS FAILED · ${writeFailureReason(cause)}`);
+      setRetryStatus(next);
+    } finally {
+      statusWrite.current.pending = false;
+      if (generation === statusWrite.current.generation) setSavingStatus(false);
+    }
   };
 
   return (
     <>
       <div className="desk-pullout-body desk-surface-body">
-        <section className="desk-decision-card">
+        <section className="desk-decision-card attention-decision">
+          <GadgetGroup label="State" material="inset">
+            <GadgetRow label="Status" controlWidth="standard">
+              <CycleGadget label="Decision status" value={status} options={DECISION_STATES}
+                disabled={savingStatus} onChange={(next) => void writeStatus(next)} />
+            </GadgetRow>
+            {savingStatus ? <StateChip state="idle" label="Saving status" /> : null}
+            {statusFailure ? <div className="attention-record-feedback">
+              <SurfaceState error={statusFailure} />
+              <Button dense variant="ghost" disabled={savingStatus} onClick={() => retryStatus && void writeStatus(retryStatus)}>Retry</Button>
+            </div> : null}
+          </GadgetGroup>
           <div className="desk-pullout-facts">
-            <Button variant="ghost" dense onClick={cycleDecisionStatus}>
-              {String(ir.status || "proposed")} ↻
-            </Button>
             {Array.isArray(ir.deciders) && ir.deciders.length ? (
               <span>{ir.deciders.join(" · ")}</span>
             ) : null}
@@ -99,32 +144,27 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
                 ["decision_markdown", "Decision"],
                 ["consequences_markdown", "Consequences"],
               ] as const).map(([field, label]) => (
-                <label key={field} className="surface-eyebrow">
-                  {label}
+                <GadgetGroup key={field} label={label} material="inset">
                   <PadGadget
                     label={label}
                     value={decisionDraft[field]}
                     rows={5}
-                    onChange={(value) => setDecisionDraft({ ...decisionDraft, [field]: value })}
+                    onChange={(value) => setDecisionDraft((current) => ({ ...current, [field]: value }))}
                   />
-                </label>
+                </GadgetGroup>
               ))}
             </div>
           ) : (
             <>
-              {/* PHILO-8-04 — a heading shows only with text under it
-                  (UX-CANON: no empty labels); Edit still offers all three. */}
-              {([
-                ["Decision context", ir.contextMarkdown],
-                ["Decision", ir.decisionMarkdown],
-                ["Consequences", ir.consequencesMarkdown],
-              ] as const).map(([label, text]) =>
-                String(text || "").trim() ? (
-                  <SurfaceSection key={label} label={label}>
-                    <Material>{String(text)}</Material>
-                  </SurfaceSection>
-                ) : null,
-              )}
+              {String(ir.decisionMarkdown || "").trim() ? (
+                <GadgetGroup label="Decision" material="inset"><Material>{String(ir.decisionMarkdown)}</Material></GadgetGroup>
+              ) : null}
+              {String(ir.contextMarkdown || "").trim() ? (
+                <FoldGadget title="Context" open><Material>{String(ir.contextMarkdown)}</Material></FoldGadget>
+              ) : null}
+              {String(ir.consequencesMarkdown || "").trim() ? (
+                <FoldGadget title="Consequences"><Material>{String(ir.consequencesMarkdown)}</Material></FoldGadget>
+              ) : null}
             </>
           )}
           {Array.isArray(ir.alternatives) && ir.alternatives.length ? (
@@ -136,12 +176,13 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
           ) : null}
           {(items.decision || []).filter((candidate) => candidate.supersededBy === o.id).map((candidate) => (
             <Button key={candidate.id} variant="ghost" dense onClick={() => openPullout(String(candidate.id))}>
-              Supersedes {String(candidate.title || candidate.id)}
+              Previous decision · {String(candidate.title || "Decision")}
             </Button>
           ))}
           {ir.supersededBy ? (
             <Button variant="ghost" dense onClick={() => openPullout(String(ir.supersededBy))}>
-              Superseded by {String(ir.supersededBy)}
+              Next decision{items.decision.find((candidate) => candidate.id === ir.supersededBy)?.title
+                ? ` · ${items.decision.find((candidate) => candidate.id === ir.supersededBy)!.title}` : ""}
             </Button>
           ) : null}
           {/* PHILO-11-05a (canvas B1-B3, T2): the decision's SEND well,

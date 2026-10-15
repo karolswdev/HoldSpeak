@@ -123,7 +123,7 @@ describe("HS-132-08 the board never announces a false all clear", () => {
 
     // The live commitment is on the board, and nothing reads clear.
     expect(await screen.findByText(liveCard.text)).toBeInTheDocument();
-    expect(screen.getByText("Now")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Due soon · 1" })).toBeInTheDocument();
     expect(screen.queryByText(/ALL CLEAR/i)).toBeNull();
     expect(screen.queryByText(/no follow-through yet/i)).toBeNull();
   });

@@ -12,6 +12,7 @@ import { StateChip, countToken } from "../../surface";
 import { BriefSendWells } from "../../documentSendsLazy";
 import { openPerson, refOpener } from "../../openObject";
 import { StandingPagesSection, useStandingPages } from "../../standingPages";
+import "../attention-records.css";
 
 interface BriefItem {
   id: string;
@@ -191,7 +192,7 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
   const [shelving, setShelving] = useState(false);
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
   const [addingAgenda, setAddingAgenda] = useState(false);
-  const { attempt, receipt } = useWriteReceipt();
+  const { attempt, receipt, clear } = useWriteReceipt();
   // Memory on the Desk (canvas section 2, option B): the desk's standing
   // pages live in the Brief, under its head.
   const standingPages = useStandingPages("desk");
@@ -270,6 +271,11 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
   const allItems = [...thisWeekItems, ...lookbackItems];
   const selected = allItems.find((item) => item.id === selectedId);
   const selectedPerson = brief?.person_sections?.find((p) => p.relationship_id === selectedPersonId);
+  const selectedWords = selectedPerson ? `PERSON · ${selectedPerson.display_name}`
+    : selected ? (() => {
+      const parsed = parseLookbackItem(selected);
+      return `SELECTED · ${parsed.kind ? `${parsed.kind} · ` : ""}${parsed.primary}`;
+    })() : undefined;
 
   /* ── THIS WEEK composed rows ──────────────────────────────────── */
 
@@ -324,9 +330,9 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
 
   /* ── Triage shelf ─────────────────────────────────────────────── */
 
-  const addToAgenda = async (personId: string) => {
+  const addToAgenda = async (personId: string, personName: string) => {
     setAddingAgenda(true);
-    await attempt("add to 1:1 agenda", async () => {
+    await attempt(`${personName} · add to 1:1 agenda`, async () => {
       const sessionsResp = await apiFetch<{ one_on_ones: Array<{ id: string; state: string }> }>(
         `/api/people/relationships/${encodeURIComponent(personId)}/one-on-ones`,
       );
@@ -345,18 +351,19 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
         { method: "POST", json: { body: "Follow up from brief", visibility: "shared_intent", state: "open", source: { kind: "brief" } } },
       );
       refreshIntelligenceAttention();
-    });
+    }, { subject: `person:${personId}` });
     setAddingAgenda(false);
   };
 
   const setShelfState = async (state: ShelfState) => {
     const itemId = selectedId;
-    if (!itemId) return;
+    if (!itemId || !selected) return;
     const next: ShelfState | null = shelf[itemId] === state ? null : state;
     setShelving(true);
     const result = await attempt(
-      next === null ? "clear triage" : next,
+      `${parseLookbackItem(selected).primary} · ${next === null ? "clear triage" : next}`,
       () => apiFetch(`/api/brief/items/${encodeURIComponent(itemId)}/shelf`, { method: "POST", json: { state: next } }),
+      { subject: `brief-item:${itemId}` },
     );
     setShelving(false);
     if (!result.ok) return;
@@ -491,7 +498,8 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
                 );
               }
               return (
-                <div key={item.id} className="intelligence-brief-sf-row" data-testid="brief-sf-row">
+                <div key={item.id} className="intelligence-brief-sf-row" data-testid="brief-sf-row"
+                  data-selected={selectedId === item.id || undefined}>
                   {parsed.kind ? (
                     <span className="intelligence-brief-sf-kind" data-testid="brief-sf-kind">{parsed.kind}</span>
                   ) : null}
@@ -499,11 +507,14 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
                     <span className="intelligence-brief-sf-primary"
                       role="button"
                       tabIndex={0}
+                      aria-current={selectedId === item.id || undefined}
                       onClick={() => {
                         const ftId = item.source_ref?.match(/^(?:follow-through|action_item):(.+)$/)?.[1];
                         if (ftId && onOpenFollowThrough) { onOpenFollowThrough(ftId); return; }
                         // PHILO-13-06 (B1): the row opens the object it names in
                         // its own window, and stays selected here for triage.
+                        clear?.();
+                        setSelectedPersonId(null);
                         setSelectedId(item.id);
                         refOpener(item.source_ref)?.();
                       }}
@@ -548,7 +559,13 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
                   key={person.relationship_id}
                   primary={person.display_name}
                   open={isOpen}
-                  onToggle={() => setSelectedPersonId(isOpen ? null : person.relationship_id)}
+                  selected={isOpen}
+                  wrap
+                  onToggle={() => {
+                    clear?.();
+                    setSelectedId(null);
+                    setSelectedPersonId(isOpen ? null : person.relationship_id);
+                  }}
                   lineLabel={`Person: ${person.display_name}`}
                   data-testid={`person-row-${person.relationship_id}`}
                 >
@@ -584,24 +601,17 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
       </div>
       <SurfaceFooter
         receipt={
-          receipt ??
-          (refreshFailed || undefined) ??
-          (selectedPerson
-            ? `PERSON · ${selectedPerson.display_name}`
-            : selected
-              ? (() => {
-                  // PHILO-17: the receipt names the row the verbs act on.
-                  const parsed = parseLookbackItem(selected);
-                  return `SELECTED · ${parsed.kind ? `${parsed.kind} · ` : ""}${parsed.primary}`;
-                })()
-              : undefined)
+          receipt ? <div className="attention-brief-receipt">
+            {selectedWords ? <span>{selectedWords}</span> : null}
+            {receipt}
+          </div> : (refreshFailed || undefined) ?? selectedWords
         }
         verbs={
           // PHILO-13-04 ledger, paid in B1 (A.11): a brief that did not load
           // has nothing to acknowledge, defer or speak; its Try again stands.
           error ? null : selectedPerson ? (
             <>
-              <Button dense disabled={addingAgenda} onClick={() => void addToAgenda(selectedPerson.relationship_id)} data-testid="verb-add-agenda">
+              <Button dense disabled={addingAgenda} onClick={() => void addToAgenda(selectedPerson.relationship_id, selectedPerson.display_name)} data-testid="verb-add-agenda">
                 Add to 1:1 agenda
               </Button>
               <Button dense variant="ghost" onClick={() => openPerson(selectedPerson.relationship_id)} data-testid="verb-open-person">

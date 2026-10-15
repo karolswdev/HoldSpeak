@@ -596,7 +596,8 @@
   }
 }
 
-/* HS-128-03 — Follow-Through is a lane ledger, not a task board of cards. */
+/* Follow-through: one heading per populated group, a readable task and
+   named verbs. This slice composes the settled library canvas. */
 .intelligence-view:has(.follow-through-view) {
   display: block;
   place-items: initial;
@@ -605,198 +606,108 @@
   background: transparent;
   box-shadow: none;
 }
-
 .follow-through-view {
   display: grid;
+  min-width: 0;
   gap: var(--space-4);
 }
-
-.follow-through-lane {
-  margin: 0;
+.follow-through-lane { margin: 0; min-width: 0; }
+.follow-through-lane .surface-ledger { margin: 0; }
+.follow-through-view .surface-ledger[data-cols="follow-through"] > .surface-ledger-row > .surface-ledger-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2);
+  padding: var(--space-3);
 }
-
-.follow-through-lane .surface-section-head {
-  align-items: center;
+.follow-through-view .surface-ledger-primary {
+  grid-column: 1;
+  min-width: 0;
+  white-space: normal;
+  overflow: visible;
 }
-
-.follow-through-count {
-  min-width: 1.5rem;
-  padding: 1px var(--space-1);
-  border: 1px solid var(--border-strong);
-  background: var(--desk-window-well);
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
-  font-weight: 700;
-  line-height: 1.25;
-  text-align: center;
+.follow-through-identity {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: var(--space-1);
+  overflow-wrap: anywhere;
 }
-
-.follow-through-lane.is-overdue {
-  padding-inline: var(--space-2);
-  border-inline-start: 2px solid var(--accent);
-  background: color-mix(in srgb, var(--accent-tint) 36%, transparent);
+.follow-through-identity strong { font: 600 15px / 1.4 var(--font-sans); }
+.follow-through-owner,
+.follow-through-staleness,
+.follow-through-facts {
+  color: var(--wb-muted);
+  font: 400 12px / 1.4 var(--font-mono);
+  overflow-wrap: anywhere;
 }
-
-.follow-through-lane.is-overdue .follow-through-count {
-  border-color: var(--accent);
-  color: var(--accent);
+.follow-through-facts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-self: start;
+  min-width: 0;
+  max-width: 100%;
+  gap: var(--space-1);
 }
-
-.surface-ledger[data-cols="follow-through"] .surface-ledger-line {
-  grid-template-columns: minmax(0, 1fr) auto auto 1.25rem;
+.follow-through-view .surface-state-chip {
+  width: fit-content;
+  max-width: 100%;
+  justify-self: start;
+}
+.follow-through-view .surface-ledger-trailing {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: var(--space-2);
 }
-
-.follow-through-owner {
-  display: grid;
-  width: 1.35rem;
-  height: 1.35rem;
-  place-items: center;
-  border: 1px solid var(--border-strong);
-  background: var(--desk-window-well);
-  color: var(--text);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
-  font-weight: 700;
-  line-height: 1;
-}
-
-/* HS-150-07: person chip for mapped owners (same grammar as the Door). */
-.follow-through-person-chip {
+.follow-through-expanded { min-width: 0; padding: var(--space-2) 0; }
+.follow-through-expanded .gadget-row-gadget {
   display: flex;
-  align-items: center;
-  gap: 4px;
-  width: auto;
-  height: auto;
-  padding: 1px 6px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface-2);
-  color: var(--text-muted);
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  white-space: nowrap;
-  place-items: unset;
+  flex-wrap: wrap;
+  min-width: 0;
+  gap: var(--space-2);
 }
-
-.follow-through-staleness {
-  color: var(--text-faint);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
-  white-space: nowrap;
+.follow-through-expanded .gadget-row-gadget > .gadget-string {
+  flex: 1;
+  min-width: 120px;
+  max-width: 100%;
 }
-
-.follow-through-due {
-  min-width: 3.75rem;
-  color: var(--text-faint);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
-  text-align: right;
-}
-
-.follow-through-due[data-overdue] {
-  color: var(--accent);
-  font-weight: 700;
-}
-
-.follow-through-source {
+.follow-through-expanded .gadget-group-actions { flex-wrap: wrap; gap: var(--space-2); }
+.follow-through-provenance {
   display: grid;
-  width: 1.25rem;
-  min-height: 1.25rem;
-  place-items: center;
-  color: var(--text-muted);
-  cursor: pointer;
-  font-family: var(--font-mono);
-  font-size: 0.875rem;
+  gap: var(--space-1);
+  margin: 0;
+  padding: var(--space-2);
+  color: var(--wb-muted);
+  font: 400 12px / 1.45 var(--font-mono);
+  overflow-wrap: anywhere;
 }
-
-.follow-through-source:hover {
-  color: var(--accent);
-}
-
+.follow-through-provenance cite { font-style: normal; font-weight: 600; }
 .follow-through-done-receipt {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  flex-wrap: wrap;
   gap: var(--space-2);
-  padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--border-strong);
-  background: var(--desk-window-well);
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
-}
-
-.follow-through-expanded {
-  display: grid;
-  gap: var(--space-2);
-  padding: var(--space-2) 0;
-}
-
-.follow-through-verbs {
-  display: flex;
-  gap: 2px;
-}
-
-.follow-through-verbs .signal-button {
-  min-width: 1.75rem;
-  padding-inline: var(--space-1);
-  font-family: var(--font-mono);
-}
-
-.follow-through-delegate {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.follow-through-delegate .gadget-string {
-  flex: 1;
-}
-
-.follow-through-provenance {
-  display: grid;
-  gap: 2px;
-  margin: 0;
   padding: var(--space-2);
-  border-inline-start: 2px solid var(--border-strong);
   background: var(--desk-window-well);
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
-  line-height: 1.45;
+  border: 1px solid var(--border-strong);
+  font: 400 12px / 1.4 var(--font-mono);
 }
-
-.follow-through-provenance cite {
-  color: var(--text-faint);
-  font-size: var(--font-size-xs);
-  font-style: normal;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.follow-through-provenance.is-unavailable,
-.follow-through-lane-empty {
-  padding: var(--space-2) 0;
-  color: var(--text-faint);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
-  text-transform: uppercase;
+.follow-through-done-receipt > span:not(.surface-state-chip) { flex: 1; overflow-wrap: anywhere; min-width: 0; }
+.follow-through-view .surface-action-notice-body { display: grid; gap: var(--space-1); min-width: 0; overflow-wrap: anywhere; }
+@container surface (max-width: 560px) {
+  .follow-through-view { gap: var(--space-3); }
+  .follow-through-view .surface-ledger[data-cols="follow-through"] > .surface-ledger-row > .surface-ledger-line {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .follow-through-view .surface-ledger-trailing { grid-column: 1; }
 }
 
 @container surface (max-width: 560px) {
   .intelligence-pullout { min-width: 0; gap: var(--space-2); }
   .intelligence-header { display: grid; gap: var(--space-1); }
   .intelligence-segments { width: 100%; }
-  .follow-through-view { gap: var(--space-2); }
-  .surface-ledger[data-cols="follow-through"] .surface-ledger-line {
-    grid-template-columns: minmax(0, 1fr) auto auto 44px;
-    gap: var(--space-1);
-  }
-  .follow-through-verbs { flex-wrap: wrap; }
-  .follow-through-delegate { align-items: stretch; flex-wrap: wrap; }
   .receipt-revisions li { grid-template-columns: 5rem minmax(0, 1fr); }
   .receipt-revisions li span:last-child { grid-column: 1 / -1; }
 }
@@ -809,35 +720,11 @@
   .intelligence-brief-group:not(:first-child) .gadget-fold-body { max-height: 0; overflow: hidden; }
   .intelligence-brief-group:focus-within .gadget-fold-body,
   .intelligence-brief-group[open] .gadget-fold-body { max-height: none; }
-  .surface-ledger[data-cols="follow-through"] .surface-ledger-line {
-    grid-template-columns: minmax(0, 1fr) auto auto 44px;
-  }
-  .follow-through-source {
-    display: grid;
-    width: 44px;
-    min-width: 44px;
-    min-height: 44px;
-  }
-  .follow-through-verbs { padding-top: var(--space-1); border-top: 1px solid var(--border); }
   .receipts-search-actions { align-items: flex-start; flex-direction: column; }
   .receipt-fields { grid-template-columns: 5rem minmax(0, 1fr); }
   .receipt-chain > div { grid-template-columns: 1fr; }
   .receipt-chain span:last-child, .receipt-chain button:last-child { text-align: left; }
   .receipt-revisions li { grid-template-columns: 1fr; gap: 2px; }
-}
-
-/* HS-129-06 — Name the window body that governs Follow-Through density. */
-@container surface (max-width: 380px) {
-  .surface-ledger[data-cols="follow-through"] .surface-ledger-line {
-    grid-template-columns: minmax(0, 1fr) auto auto 44px;
-  }
-
-  .follow-through-source {
-    display: grid;
-    width: 44px;
-    min-width: 44px;
-    min-height: 44px;
-  }
 }
 
 @media (max-width: 560px) {

@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "atlas_version": "follow-through-20261015",
+  "extends": "docs/internal/ACCOUNT-WORKBENCH-2026-10-15/atlas.json",
+  "source_commit": "420a0eb28df9b1cdae2ce3fde8e78790f221d7cd",
+  "states": [
+    {
+      "id": "state.desk_presentation.follow_through_new_task",
+      "family": "desk_presentation",
+      "values": {
+        "application": "Follow-through",
+        "task": "new open task without a cadence loop"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "holdspeak/services/follow_through_service.py",
+          "symbol": "def complete(",
+          "claim": "Snooze creates a missing canonical loop within the existing transaction."
+        }
+      ],
+      "reachable_by": [
+        "case.follow_through.snooze.new_task"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "case.follow_through.snooze.new_task",
+      "job": "j3",
+      "edge_ids": [
+        "edge.http.post.api_follow_through_complete"
+      ],
+      "state_id": "state.desk_presentation.follow_through_new_task",
+      "applicability": "applicable",
+      "preconditions": [
+        "Isolated HOME/DB; real Note and Door task producers; no collection, model execution, capture, People store or external send."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/setup/status",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "timeout_s": 10
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "body": {
+            "title": "Graph rollback review",
+            "body_markdown": "Confirm rollback ownership before rollout."
+          },
+          "expect_status": 201,
+          "adapter": "http-route",
+          "capture_as": "note_id",
+          "capture_path": "note.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/door/items",
+          "body": {
+            "task": "Confirm rollback ownership",
+            "owner": "Karol",
+            "due": "2000-01-01",
+            "source_type": "thought",
+            "source_ref": "note:{note_id}"
+          },
+          "expect_status": 201,
+          "adapter": "http-route",
+          "capture_as": "task_id",
+          "capture_path": "item.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/desk/windows/pullout%3Aintelligence%3Adesk/open",
+          "body": {},
+          "expect_status": 200,
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Follow-through",
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Details for Confirm rollback ownership",
+          "adapter": "ui-by-viewport"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "role": "button",
+        "name": "Tomorrow",
+        "adapter": "ui-by-viewport"
+      },
+      "expected": {
+        "observe_at": "protocol: GET /api/follow-through/board",
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_field",
+              "path": "now",
+              "value": []
+            },
+            {
+              "kind": "protocol_field",
+              "path": "waiting",
+              "value": []
+            },
+            {
+              "kind": "protocol_field",
+              "path": "unassigned",
+              "value": []
+            },
+            {
+              "kind": "protocol_field",
+              "path": "overdue",
+              "value": []
+            }
+          ]
+        },
+        "words": "Tomorrow removes the new confirmed task from every active board lane before collection."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ],
+  "clocks": [
+    {
+      "id": "clock.browser_wall",
+      "source": "Browser Date",
+      "mechanism": "none: real wall time, no clock advance",
+      "status": "available",
+      "used_by": []
+    }
+  ],
+  "excluded": [],
+  "council_readings": []
+}

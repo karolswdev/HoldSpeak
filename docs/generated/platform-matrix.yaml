@@ -3789,6 +3789,61 @@
       "status": "experimental"
     },
     {
+      "availability": "unknown",
+      "capability_id": "desk.follow_through",
+      "id": "desk.follow_through@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/services/follow_through_service.py",
+        "web/src/desk/pullouts/views/FollowThroughView.tsx"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "desk.follow_through",
+      "id": "desk.follow_through@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/services/follow_through_service.py",
+        "web/src/desk/pullouts/views/FollowThroughView.tsx"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "desk.follow_through",
+      "id": "desk.follow_through@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/services/follow_through_service.py",
+        "web/src/desk/pullouts/views/FollowThroughView.tsx"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "desk.follow_through",
+      "id": "desk.follow_through@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/services/follow_through_service.py",
+        "web/src/desk/pullouts/views/FollowThroughView.tsx"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "desk.follow_through",
+      "id": "desk.follow_through@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/services/follow_through_service.py",
+        "web/src/desk/pullouts/views/FollowThroughView.tsx"
+      ],
+      "status": "built_unreleased"
+    },
+    {
       "availability": "not_applicable",
       "capability_id": "agents.thread_persistent",
       "id": "agents.thread_persistent@aipi",

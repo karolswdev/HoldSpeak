@@ -23,7 +23,7 @@
  *   - the draft stays with its meeting: "a title typed under A never files
  *     under B; back on A it is A's again".
  */
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useDesk } from "../store";
 import { objectByRef } from "../world";
@@ -155,17 +155,17 @@ describe("the decision window shows a heading only with text under it", () => {
   const CASES: Array<[string, Wire, string[]]> = [
     ["title-only", { title: "Glass title only decision" }, []],
     ["context-only", { title: "Glass context only decision", context_markdown: "Our own runners are full every night." },
-      ["Decision context"]],
+      ["Context"]],
     ["context-and-decision", {
       title: "Move the nightly build to the shared runners",
       context_markdown: "Our own runners are full every night. The shared runner pool has spare capacity after 8 PM.",
       decision_markdown: "Move the nightly build to the shared runners.",
-    }, ["Decision context", "Decision"]],
+    }, ["Decision", "Context"]],
   ];
   const heads = () =>
     // The decision's own headings (its SEND well carries its own head).
-    Array.from(document.querySelectorAll(".desk-decision-card h3"))
-      .filter((h) => !h.closest("[data-send]")).map((h) => (h.textContent ?? "").trim());
+    Array.from(document.querySelectorAll(".desk-decision-card > .gadget-group > h4, .desk-decision-card > .gadget-fold > summary > .gadget-fold-title"))
+      .map((h) => (h.textContent ?? "").trim()).filter((label) => label !== "State");
 
   beforeEach(async () => {
     hub.decisions = CASES.map(([slug, fields]) => decisionWire({ id: `decision_${slug}`, ...fields }));
@@ -188,5 +188,71 @@ describe("the decision window shows a heading only with text under it", () => {
     for (const name of ["Context", "Decision", "Consequences"]) {
       expect(screen.getByRole("textbox", { name })).toBeTruthy();
     }
+  });
+});
+
+describe("the decision window chooses a named state", () => {
+  async function renderDecision() {
+    hub.decisions = [decisionWire({ id: "state-decision", title: "Use the shared runners", status: "accepted" })];
+    await act(async () => { await useDesk.getState().refresh(); });
+    function Face() {
+      const items = useDesk((state) => state.items);
+      const object = objectByRef(items, "decision:state-decision");
+      return object ? <DecisionPullout object={object} onClose={() => {}} /> : null;
+    }
+    render(<Face />);
+  }
+
+  it("inspecting status writes nothing; a chosen state renders only after success", async () => {
+    await renderDecision();
+    const select = screen.getByRole("combobox", { name: "Decision status" });
+    expect(select).toHaveValue("accepted");
+    fireEvent.pointerDown(select, { button: 0 });
+    const choices = screen.getByRole("listbox", { name: "Decision status" });
+    expect(within(choices).getByRole("option", { name: "Retired" })).toBeInTheDocument();
+    expect(hub.puts).toHaveLength(0);
+    let complete!: () => void;
+    vi.mocked(fetch).mockImplementation((input, init) => {
+      if (String(input).endsWith("/status")) {
+        hub.puts.push({ url: String(input), body: JSON.parse(String(init?.body)) });
+        return new Promise((resolve) => { complete = () => {
+          hub.decisions = [{ ...hub.decisions[0], status: "deprecated" }];
+          resolve(json({ decision: hub.decisions[0] }));
+        }; });
+      }
+      return hubFetch(input, init);
+    });
+    fireEvent.click(within(choices).getByRole("option", { name: "Retired" }));
+    expect(select).toHaveValue("accepted");
+    expect(select).toBeDisabled();
+    fireEvent.change(select, { target: { value: "proposed" } });
+    expect(hub.puts).toHaveLength(1);
+    await act(async () => complete());
+    await waitFor(() => expect(select).toHaveValue("deprecated"));
+    expect(select).not.toBeDisabled();
+  });
+
+  it("a refused status keeps the old state and Retry repeats the exact choice", async () => {
+    await renderDecision();
+    let refuse = true;
+    vi.mocked(fetch).mockImplementation((input, init) => {
+      if (String(input).endsWith("/status")) {
+        const body = JSON.parse(String(init?.body));
+        hub.puts.push({ url: String(input), body });
+        if (refuse) return Promise.resolve(json({ error: "state_refused" }, 403));
+        hub.decisions = [{ ...hub.decisions[0], status: body.status }];
+        return Promise.resolve(json({ decision: hub.decisions[0] }));
+      }
+      return hubFetch(input, init);
+    });
+    const select = screen.getByRole("combobox", { name: "Decision status" });
+    fireEvent.pointerDown(select, { button: 0 });
+    fireEvent.click(within(screen.getByRole("listbox", { name: "Decision status" })).getByRole("option", { name: "Replaced" }));
+    expect(await screen.findByText(/STATUS FAILED.*HTTP 403/)).toBeInTheDocument();
+    expect(select).toHaveValue("accepted");
+    refuse = false;
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(select).toHaveValue("superseded"));
+    expect(hub.puts.map((put) => put.body)).toEqual([{ status: "superseded" }, { status: "superseded" }]);
   });
 });

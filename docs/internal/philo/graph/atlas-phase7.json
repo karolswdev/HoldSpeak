@@ -1233,7 +1233,7 @@
       "expected": {
         "predicate": {
           "kind": "readable_text",
-          "value": "Supersedes Atlas old decision"
+          "value": "Previous decision · Atlas old decision"
         },
         "observe_at": "[role=region][aria-label='Superseding Atlas old decision'] .desk-decision-card",
         "reads": [
@@ -1246,7 +1246,7 @@
             "path": "/api/decisions/{successor_id}"
           }
         ],
-        "words": "both are readable on the Desk: the successor opens by its own row and its card names the old decision ('Supersedes Atlas old decision', DecisionPullout.tsx:136-140); the old decision reads superseded, superseded_by the successor (the reads). The supersede ACTION is not on the face."
+        "words": "both are readable on the Desk: the successor opens by its own row and its card names the old decision ('Previous decision · Atlas old decision', DecisionPullout.tsx:175-180); the old decision reads superseded, superseded_by the successor (the reads). The supersede ACTION is not on the face."
       },
       "completion_bound_s": 45,
       "viewports": [
@@ -3659,8 +3659,8 @@
         },
         {
           "path": "web/src/desk/pullouts/DecisionPullout.tsx",
-          "symbol": "const cycleDecisionStatus",
-          "claim": "the pullout's status control cycles proposed -> accepted -> superseded -> deprecated"
+          "symbol": "const writeStatus = async (next: string) => {",
+          "claim": "the pullout's status picker writes the explicit Proposed, Accepted, Replaced or Retired choice through the existing PUT"
         },
         {
           "path": "holdspeak/services/monday_brief_service.py",
@@ -3669,7 +3669,7 @@
         },
         {
           "path": "web/src/desk/pullouts/DecisionPullout.tsx",
-          "symbol": "Supersedes {",
+          "symbol": "Previous decision · {String(candidate.title || \"Decision\")}",
           "claim": "a successor's card names the decision it supersedes"
         },
         {

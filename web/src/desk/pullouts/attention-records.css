@@ -1,0 +1,116 @@
+/* Local composition of the library paper reader and named inset sheets. */
+.desk-next .attention-record,
+.desk-next .attention-decision {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-3);
+  font: 400 13px / 1.5 var(--font-sans);
+}
+
+.attention-record > *,
+.attention-decision > *,
+.attention-record .gadget-row-gadget,
+.attention-decision .gadget-row-gadget {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.attention-record .surface-material,
+.attention-decision .surface-material {
+  margin: 0;
+}
+
+.attention-record .gadget-row-gadget {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font: 400 13px / 1.5 var(--font-sans);
+}
+
+.attention-record .gadget-row-gadget > .surface-material {
+  width: 100%;
+}
+
+.attention-record-verbs,
+.attention-record-feedback {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.attention-record-verbs .btn {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.attention-record .gadget-fold[open] > .gadget-fold-body {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.attention-decision .desk-decision-editor {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.attention-record-revisions {
+  display: grid;
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.attention-record-revisions li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-1) var(--space-2);
+  overflow-wrap: anywhere;
+}
+
+.attention-record-revisions time {
+  font: 400 12px / 1.5 var(--font-mono);
+  color: var(--text-muted);
+}
+
+.attention-record-revisions li > span:last-child {
+  grid-column: 1 / -1;
+  white-space: pre-wrap;
+}
+
+.intelligence-brief-sf-row[data-selected] {
+  background: var(--desk-aerogel-fill);
+  box-shadow: var(--desk-window-etch);
+  outline: 1px solid var(--desk-aerogel-edge);
+  outline-offset: -1px;
+}
+
+/* A late write keeps its named subject; the latest selection stays visible. */
+.attention-brief-receipt {
+  display: grid;
+  min-width: 0;
+  max-width: 100%;
+  gap: var(--space-1);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.attention-brief-receipt .write-receipt-label {
+  flex: 1 1 12ch;
+  min-width: 0;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+}
+
+@container surface (max-width: 560px) {
+  .desk-next .attention-record {
+    padding: var(--space-2);
+    gap: var(--space-2);
+  }
+}
