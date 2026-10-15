@@ -7,6 +7,11 @@ existing Workbench kit. No new backend, authority, provider or form framework.
 The owner's later clarification identified the **opened workbench and
 controls**, which is the primary target of this pass.
 
+Release: [PR #1209](https://github.com/karolswdev/HoldSpeak/pull/1209),
+product commit `6c141ddbb`. The following status/link commit changes docs only;
+the verified product and bundle stay identical. Normal local-hub deployment
+is recorded separately in this directory's local handover after merge.
+
 ## Direction and repair
 
 [Settled direction](DESIGN.md), [library canvas](canvas/index.html) and
