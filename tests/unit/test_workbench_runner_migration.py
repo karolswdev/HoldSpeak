@@ -267,6 +267,26 @@ def test_item_memory_artifact_and_attempt_history_are_receipt_gated(runner_rig):
     assert all(stage["state"] == "PUBLISHED" for stage in stages)
 
 
+def test_item_wire_retains_mint_attempted_from_real_publication(runner_rig):
+    """The detail wire exposes the stored mint fact the recovery UI reads."""
+    from holdspeak.services.workbench_service import WorkbenchService
+
+    db, broker, workbench, items, _ = runner_rig
+    service = WorkbenchService(db)
+    before = service.get_workbench(OWNER, workbench.id)["items"][0]
+
+    _run(db, broker, workbench.id, memory_enabled=False)
+
+    stored = db.workbench_items.get(items[0].id)
+    after = service.get_workbench(OWNER, workbench.id)["items"][0]
+    assert stored.status == "done"
+    assert stored.mint_attempted is True
+    assert after["result_artifact_id"] == stored.result_artifact_id
+    assert db.plugins.get_artifact(stored.result_artifact_id) is not None
+    assert before["mint_attempted"] is False
+    assert after["mint_attempted"] is True
+
+
 def test_retry_mint_reads_the_exact_item_historical_route_not_a_later_run(runner_rig, monkeypatch):
     """A retry projection may not borrow a newer item's current route evidence."""
     from holdspeak.services.inference_assignment_service import InferenceAssignmentService

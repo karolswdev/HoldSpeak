@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "atlas_version": "visual-refinement-20261015",
+  "extends": "docs/internal/WORKBENCH-PICKERS-2026-10-14/atlas.json",
+  "source_commit": "94551006a52e7b3b05d2d17d1e68aabf54fe34c6",
+  "states": [
+    {
+      "id": "state.desk_presentation.calendar_reselection_unavailable",
+      "family": "desk_presentation",
+      "values": {
+        "application": "Settings",
+        "section": "Accounts",
+        "calendar": "existing source and unavailable discovery"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/firstrun/CalendarCard.tsx",
+          "symbol": "export function CalendarCard({",
+          "claim": "Compact reselection shows an honest read state and keeps the URL entry available."
+        }
+      ],
+      "reachable_by": [
+        "case.settings.calendar.reselection_unavailable"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "case.settings.calendar.reselection_unavailable",
+      "job": "j3",
+      "edge_ids": [
+        "edge.route.demoted_routes_settings"
+      ],
+      "state_id": "state.desk_presentation.calendar_reselection_unavailable",
+      "applicability": "applicable",
+      "preconditions": [
+        "Isolated HOME/DB and disabled native calendar integration. Existing source set through real settings API. No permission prompt, hardware or external dispatch."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/setup/status",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "timeout_s": 10
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/settings",
+          "body": {
+            "calendar": {
+              "sources": [
+                {
+                  "id": "native-audit",
+                  "label": "Architecture",
+                  "url": "eventkit:AUDIT-WORK",
+                  "enabled": true
+                }
+              ]
+            }
+          },
+          "expect_status": 200,
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/settings"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "#surface-settings .prefs-hub"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "#surface-settings .surface-ledger-row:has(.surface-ledger-primary:text-is(\"Meetings\")) button:text-is(\"Open\")"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Add calendar"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=firstrun-calendar] button:text-is(\"Check again\")"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-by-viewport",
+        "role": "button",
+        "name": "Check again"
+      },
+      "expected": {
+        "observe_at": "[data-testid=firstrun-calendar]",
+        "predicate": {
+          "kind": "text_contains",
+          "value": "CALENDARS UNAVAILABLE"
+        },
+        "words": "The actual discovery read settles visibly while the existing source and Calendar URL remain available."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ],
+  "clocks": [
+    {
+      "id": "clock.browser_wall",
+      "source": "Browser Date",
+      "mechanism": "none: real wall time, no clock advance",
+      "status": "available",
+      "used_by": []
+    }
+  ],
+  "excluded": [],
+  "council_readings": []
+}

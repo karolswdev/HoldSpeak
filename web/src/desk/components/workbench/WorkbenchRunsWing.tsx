@@ -1,6 +1,7 @@
 import type { WorkbenchRun } from "../../detail-types";
 import { boundaryEgressLamp } from "../../inferenceEgress";
 import { humanTime } from "../../surface/format";
+import { GadgetGroup } from "../../surface/gadgets";
 import {
   SurfaceLedger,
   SurfaceLedgerRow,
@@ -11,6 +12,9 @@ export function WorkbenchRunsWing({
   runs,
   configured,
   running,
+  loading = false,
+  error,
+  onRetry,
   openRunId,
   onToggleRun,
   onRun,
@@ -19,6 +23,9 @@ export function WorkbenchRunsWing({
   runs: WorkbenchRun[];
   configured: boolean;
   running: boolean;
+  loading?: boolean;
+  error?: string | null;
+  onRetry?: () => void;
   openRunId: string | null;
   onToggleRun: (runId: string) => void;
   onRun: () => void;
@@ -26,8 +33,11 @@ export function WorkbenchRunsWing({
 }) {
   return (
     <div className="wb-runs-wing">
-      <SurfaceLedger count={runs.length > 0 ? `${runs.length} RUNS` : "RUNS"}>
-        {runs.length === 0 ? (
+      <GadgetGroup label={runs.length > 0 ? `RUNS ${runs.length}` : "RUNS"} material="inset">
+      {error ? <SurfaceState error={error} onRetry={loading ? undefined : onRetry} /> : null}
+      {loading && !runs.length && !error ? <SurfaceState loading /> : null}
+      <SurfaceLedger>
+        {runs.length === 0 && !loading && !error ? (
           <SurfaceState
             empty
             emptyLabel={configured ? "No runs yet" : "No agent bound"}
@@ -81,6 +91,7 @@ export function WorkbenchRunsWing({
           );
         })}
       </SurfaceLedger>
+      </GadgetGroup>
     </div>
   );
 }

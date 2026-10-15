@@ -3,8 +3,7 @@ import { useMemo, useState } from "react";
 import { useDesk } from "../../store";
 import { MicButton } from "../../components/MicButton";
 import { AgentAvatar } from "../../components/AgentAvatar";
-import { CycleGadget, PadGadget, StringGadget } from "../../surface/gadgets";
-import { Button } from "../../../components/signal/Signal";
+import { CycleGadget, FoldGadget, GadgetGroup, GadgetRow, PadGadget, StringGadget } from "../../surface";
 import type { Persona } from "../../../lib/primitives";
 import { useDebouncedSave } from "./useDebouncedSave";
 import { keptEditorPatch, keptField } from "./editorDraft";
@@ -13,7 +12,6 @@ import type { InlineEditorContentProps } from "./types";
 export function RecipeEditor({ object: o, autoFocusName, onWriter }: InlineEditorContentProps) {
   const items = useDesk((s) => s.items);
   const save = useDebouncedSave("recipe", o.id, onWriter);
-  const [more, setMore] = useState(false);
 
   const live = useMemo(
     () => (items.recipe || []).find((x) => x.id === o.id) || o.ref as Persona,
@@ -44,76 +42,62 @@ export function RecipeEditor({ object: o, autoFocusName, onWriter }: InlineEdito
 
   return (
     <>
-      <div className="desk-inline-editor-row">
-        <AgentAvatar
-          avatar={f.avatar}
-          id={o.id}
-          size={32}
-          className="desk-inline-editor-avatar"
+      <GadgetGroup label="Agent" material="inset">
+        <GadgetRow label="Name" controlWidth="full">
+          <div className="desk-inline-editor-row">
+            <AgentAvatar avatar={f.avatar} id={o.id} size={32} className="desk-inline-editor-avatar" />
+            <StringGadget
+              label="Name"
+              value={f.name}
+              placeholder="Name"
+              autoFocus={autoFocusName}
+              onChange={(value) => set("name", "name", value)}
+            />
+          </div>
+        </GadgetRow>
+        <GadgetRow label="Role" controlWidth="full">
+          <StringGadget label="Role" value={f.role} placeholder="Role" onChange={(value) => set("role", "role", value)} />
+        </GadgetRow>
+      </GadgetGroup>
+      <GadgetGroup label="Instructions" material="inset">
+        <PadGadget
+          label="Instructions"
+          rows={6}
+          value={f.systemPrompt}
+          placeholder="Instructions"
+          onChange={(value) => set("systemPrompt", "system_prompt", value)}
         />
-        <StringGadget
-          label="Name"
-          value={f.name}
-          placeholder="Name"
-          autoFocus={autoFocusName}
-          onChange={(value) => set("name", "name", value)}
-        />
-      </div>
-      <StringGadget
-        label="Role"
-        value={f.role}
-        placeholder="Role"
-        onChange={(value) => set("role", "role", value)}
-      />
-      <PadGadget
-        label="Instructions"
-        rows={4}
-        value={f.systemPrompt}
-        placeholder="Instructions"
-        onChange={(value) => set("systemPrompt", "system_prompt", value)}
-      />
-      {more ? (
-        <>
-          <StringGadget
-            label="Avatar"
-            value={f.avatar}
-            placeholder="Avatar"
-            onChange={(value) => set("avatar", "avatar", value)}
-          />
-          <PadGadget
-            label="User template"
-            rows={3}
-            value={f.userTemplate}
-            placeholder="User template"
-            onChange={(value) => set("userTemplate", "user_template", value)}
-          />
-          <StringGadget
-            label="Tools"
-            value={f.tools}
-            placeholder="Tools"
-            onChange={(value) => set("tools", "tools", value, true)}
-          />
-          <CycleGadget
-            label="Knowledge"
-            value={f.kbId}
-            options={[
-              { value: "", label: "No Knowledge" },
-              ...(items.kb || []).map((k) => ({
-                value: String(k.id),
-                label: String(k.name || k.id),
-              })),
-            ]}
-            onChange={(value) => set("kbId", "kb_id", value)}
-          />
-        </>
-      ) : (
-        <Button
-          dense variant="ghost"
-          onClick={() => setMore(true)}
-        >
-          More
-        </Button>
-      )}
+      </GadgetGroup>
+      <FoldGadget title="Advanced">
+        <GadgetGroup material="inset">
+          <GadgetRow label="Avatar" controlWidth="full">
+            <StringGadget label="Avatar" value={f.avatar} placeholder="Avatar" onChange={(value) => set("avatar", "avatar", value)} />
+          </GadgetRow>
+          <GadgetRow label="User template" controlWidth="full">
+            <PadGadget
+              label="User template"
+              rows={3}
+              value={f.userTemplate}
+              placeholder="User template"
+              onChange={(value) => set("userTemplate", "user_template", value)}
+            />
+          </GadgetRow>
+          <GadgetRow label="Tools" controlWidth="full">
+            <StringGadget label="Tools" value={f.tools} placeholder="Tools" onChange={(value) => set("tools", "tools", value, true)} />
+          </GadgetRow>
+          <GadgetRow label="Knowledge" controlWidth="full">
+            <CycleGadget
+              label="Knowledge"
+              value={f.kbId}
+              options={[
+                { value: "", label: "No Knowledge" },
+                ...(items.kb || []).map((k) => ({ value: String(k.id), label: String(k.name || k.id) })),
+              ]}
+              onChange={(value) => set("kbId", "kb_id", value)}
+            />
+          </GadgetRow>
+        </GadgetGroup>
+      </FoldGadget>
       <div className="desk-inline-editor-foot">
         <MicButton
           draftScope={`inline:${o.kind}:${o.id}`}

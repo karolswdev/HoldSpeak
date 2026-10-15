@@ -1196,6 +1196,7 @@ class WorkbenchItemRecord:
             "result": self.result,
             "result_artifact_id": self.result_artifact_id,
             "result_egress": json.loads(self.result_egress_json) if self.result_egress_json else None,
+            "mint_attempted": self.mint_attempted,
             "tokens_consumed": self.tokens_consumed,
             "created_at": self.created_at,
             "last_modified": self.last_modified,

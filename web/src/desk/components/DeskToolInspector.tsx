@@ -16,8 +16,13 @@ import { useDesk } from "../store";
 import { openSurfaceOr } from "../shell";
 import { allObjects } from "../world";
 import { qualifiedRef } from "../api";
-import { SurfaceState } from "../surface/Surface";
-import { FoldGadget } from "../surface/gadgets";
+import {
+  EgressChip, FoldGadget, GadgetGroup, GadgetRow, Material,
+  StateChip, SurfaceFooter, SurfaceSection, SurfaceState, SurfaceWell,
+  type ChipState,
+} from "../surface";
+import { bareHost, egressFor } from "../surface/egress";
+import { Button } from "../../components/signal/Signal";
 import { DeskWindowFrame } from "./DeskWindow";
 import { WhyControl } from "./WhyControl";
 
@@ -67,10 +72,9 @@ const INTEGRATION_TARGET: Record<string, "slack" | "webhook" | "github"> = {
 function Fact({ label, value }: { label: string; value: unknown }) {
   if (value === undefined || value === null || value === "") return null;
   return (
-    <div>
-      <dt>{label}</dt>
-      <dd>{String(value)}</dd>
-    </div>
+    <GadgetRow label={label} controlWidth="full">
+      <span className="desk-tool-value">{String(value)}</span>
+    </GadgetRow>
   );
 }
 
@@ -238,32 +242,56 @@ export function DeskToolInspector() {
 
   const title =
     project?.name ?? integration?.name ?? target?.name ?? "Desk tool";
+  const refused = proposal?.policy_snapshot?.outcome === "refused";
+  const terminal = proposal && (refused || ["executed", "rejected", "failed"].includes(proposal.status));
+  const outcome: { state: ChipState; label: string } | null = busy
+    ? { state: "working", label: "Working…" }
+    : proposal
+      ? refused ? { state: "warning", label: "Refused" }
+        : proposal.status === "executed" ? { state: "success", label: "Executed" }
+          : proposal.status === "failed" ? { state: "failure", label: "Failed" }
+            : proposal.status === "rejected" ? { state: "idle", label: "Rejected" }
+              : { state: "warning", label: "Awaiting approval" }
+      : null;
+  const destination = integration?.destination || "";
+  // The trust projection may name an endpoint without exposing its host.
+  // Only a real route gets host classification; an opaque label stays remote.
+  const route = integration?.id === "github" ? egressFor("github.com")
+    : /^[a-z][a-z0-9+.-]*:\/\//i.test(destination) ? egressFor(bareHost(destination))
+      : { label: destination, scope: "remote" as const };
+  const sourceText = boundSource
+    ? allObjects(items).find((object) => qualifiedRef(object.kind, object.id) === boundSource.ref)?.ref
+    : null;
+  const sourceBody = sourceText && "bodyMarkdown" in sourceText ? String(sourceText.bodyMarkdown || "")
+    : integrationAction?.source.ref === boundSource?.ref ? integrationAction?.source.text || "" : "";
+  const configureIntegration = () => {
+    if (integration) openSurfaceOr("configure-integration", "/settings", `integration:${integration.id}`);
+  };
   return (
     <DeskWindowFrame
       id="inspector"
       glyph="⌕"
       label={title}
       className="desk-tool-inspector"
-      eyebrow={project ? "Project" : integration ? "Integration" : "Runs on"}
-      title={<h2 className="desk-panel-title">{title}</h2>}
+      title={title}
+      defaultW={620}
+      minW={320}
+      fitContent
       entrance={false}
       open={Boolean(inspector)}
       onClose={closeToolInspector}
     >
-      {/* HS-129-04 — inspector material scrolls below the fixed window head. */}
+      {/* The frame owns geometry; the body owns the reading scroll. */}
       <div className="desk-pullout-body desk-surface-body desk-tool-inspector-body">
       {project ? (
         <>
-          <p>
-            {project.description || "Project material"}
-          </p>
-          <dl className="desk-tool-facts">
+          {project.description ? <Material>{project.description}</Material> : null}
+          <GadgetGroup label="Project" material="inset">
             <Fact label="Meetings" value={project.meeting_count} />
             <Fact label="Updated" value={when(project.updated_at)} />
-          </dl>
+          </GadgetGroup>
           <WhyControl workType="project" workRef={project.id} />
-          <section>
-            <h3>Related Desk material</h3>
+          <SurfaceSection label="Related material">
             {loadingProject ? <SurfaceState loading /> : null}
             {!loadingProject && !resourceObjects.length ? (
               <SurfaceState empty emptyLabel="No material" />
@@ -272,13 +300,12 @@ export function DeskToolInspector() {
               {resourceObjects.map((resource) => (
                 <li key={resource.resource_ref}>
                   {resource.object ? (
-                    <button
-                      type="button"
-                      className="desk-chip quiet"
+                    <Button
+                      dense variant="ghost"
                       onClick={() => openPullout(resource.resource_ref)}
                     >
                       {resource.object.title}
-                    </button>
+                    </Button>
                   ) : (
                     <span>
                       <strong>{(() => { const ref = resource.resource_ref; return humanizeWireValue(String(ref)); })()}</strong>
@@ -290,31 +317,15 @@ export function DeskToolInspector() {
                 </li>
               ))}
             </ul>
-          </section>
-          <button
-            type="button"
-            className="desk-chip"
-            onClick={() =>
-              openSurfaceOr("dictate", "/dictation", `project:${project.id}`)
-            }
-          >
-            Open Project context
-          </button>
+          </SurfaceSection>
         </>
       ) : null}
 
       {target ? (
         <>
-          <p>
-            {target.readiness.available
-              ? "Ready for model-backed work."
-              : target.readiness.reason}
-          </p>
-          <dl className="desk-tool-facts">
-            <Fact
-              label="State"
-              value={target.readiness.available ? "Ready" : "Unavailable"}
-            />
+          <StateChip state={target.readiness.available ? "success" : "unreachable"} label={target.readiness.available ? "Ready" : "Unavailable"} />
+          {!target.readiness.available && target.readiness.reason ? <SurfaceState error={target.readiness.reason} /> : null}
+          <GadgetGroup label="Runs on" material="inset">
             <Fact label="Boundary" value={target.boundary} />
             <Fact label="Engine" value={target.engine} />
             <Fact label="Model" value={target.model || "Hub default"} />
@@ -323,98 +334,34 @@ export function DeskToolInspector() {
               label="Returns"
               value={target.data_scope.returned.join(", ")}
             />
-          </dl>
-          <div className="desk-tool-actions">
-            {target.model &&
-            models.some((model) => model.name === target.model) ? (
-              <button
-                type="button"
-                className="desk-chip"
-                disabled={!target.readiness.available}
-                onClick={() => void openNewThread({ title: target.model, profile_override: target.model })}
-              >
-                Continue in thread
-              </button>
-            ) : null}
-            <button
-              type="button"
-              className="desk-chip quiet"
-              onClick={() => openSurfaceOr("configure-runs-on", "/profiles")}
-            >
-              Configure Runs on
-            </button>
-          </div>
+          </GadgetGroup>
         </>
       ) : null}
 
       {integration ? (
         <>
-          <p>{integration.operation}</p>
-          <dl className="desk-tool-facts">
-            <Fact
-              label="State"
-              value={integration.enabled ? "Configured" : "Not configured"}
-            />
-            <Fact label="Destination" value={integration.destination} />
-            <Fact label="Boundary" value={integration.boundary} />
-            <Fact label="Data" value={integration.data_class} />
-            <Fact
-              label="Control posture"
-              value={
-                authority?.control_mode_label ||
-                (authority?.control_mode
-                  ? controlModeLabel(authority.control_mode)
-                  : undefined)
-              }
-            />
-            <Fact
-              label="Authority"
-              value={
-                authority?.control_mode
-                  ? controlModeDescription(authority.control_mode)
-                  : integration.authority_basis
-              }
-            />
-            <Fact label="Background" value={integration.background_ability} />
-          </dl>
-          {integrationAction ? (
-            <section className="desk-integration-effect">
-              <h3>Selected source</h3>
-              <strong>{integrationAction.source.title}</strong>
-              <FoldGadget title="RAW · SOURCE">
-                <pre>{integrationAction.source.text}</pre>
-              </FoldGadget>
-              {!proposal ? (
-                <button
-                  type="button"
-                  className="desk-chip"
-                  disabled={busy}
-                  onClick={() => void propose()}
-                >
-                  {busy
-                    ? "Preparing proposed action…"
-                    : integrationAction.label}
-                </button>
-              ) : null}
-            </section>
-          ) : (
-            <p className="desk-tool-empty">
-              {integration.enabled
-                ? "Select one Note or Artifact with text to use this Integration."
-                : "Configure this Integration before using it from selected material."}
-            </p>
-          )}
+          <div className="desk-tool-status">
+            <StateChip state={integration.enabled ? "success" : "idle"} label={integration.enabled ? "Configured" : "Not configured"} />
+            {integration.enabled && destination ? <strong className="surface-primary">{destination}</strong> : null}
+          </div>
+          {boundSource ? (
+            <GadgetGroup label="Source" material="inset">
+              <GadgetRow label="Selected material" controlWidth="full"><strong className="surface-primary">{boundSource.label}</strong></GadgetRow>
+              {sourceBody ? <FoldGadget title="Source text"><Material>{sourceBody}</Material></FoldGadget> : null}
+            </GadgetGroup>
+          ) : integration.enabled ? <SurfaceState empty emptyLabel="No selected text" /> : null}
           {proposal ? (
-            <section className="desk-integration-proposal" aria-live="polite">
-              <h3>
-                {proposal.policy_snapshot?.outcome === "refused"
-                  ? "Operation refused"
-                  : proposal.status === "proposed"
-                    ? "Proposed action"
-                    : "Operation Receipt"}
-              </h3>
-              <p>{proposal.preview}</p>
-              <dl className="desk-tool-facts">
+            <SurfaceWell head="Preview"><Material>{proposal.preview}</Material></SurfaceWell>
+          ) : null}
+          <FoldGadget title="Details">
+            <GadgetGroup material="inset">
+              <Fact label="Operation" value={integration.operation} />
+              <Fact label="Boundary" value={integration.boundary} />
+              <Fact label="Data" value={integration.data_class} />
+              <Fact label="Control posture" value={authority?.control_mode_label || (authority?.control_mode ? controlModeLabel(authority.control_mode) : undefined)} />
+              <Fact label="Authority" value={authority?.control_mode ? controlModeDescription(authority.control_mode) : integration.authority_basis} />
+              <Fact label="Background" value={integration.background_ability} />
+              {proposal ? <>
                 <Fact
                   label="Effect"
                   value={
@@ -453,87 +400,37 @@ export function DeskToolInspector() {
                       : undefined
                   }
                 />
-              </dl>
-              {proposal.status === "proposed" &&
-              proposal.policy_snapshot?.outcome !== "refused" ? (
-                <div className="desk-tool-actions">
-                  <button
-                    type="button"
-                    className="desk-chip"
-                    disabled={busy}
-                    onClick={() => void decide("approved")}
-                  >
-                    {proposal.commitment?.approve ||
-                      `Approve ${integration.operation}`}
-                  </button>
-                  <button
-                    type="button"
-                    className="desk-chip quiet"
-                    disabled={busy}
-                    onClick={() => void decide("rejected")}
-                  >
-                    Reject proposed action
-                  </button>
-                </div>
-              ) : null}
-              {proposal.status === "failed" ? (
-                <button
-                  type="button"
-                  className="desk-chip"
-                  disabled={busy}
-                  onClick={() => void decide("approved")}
-                >
-                  Retry {proposal.commitment?.approve || integration.operation}
-                </button>
-              ) : null}
-              {["executed", "rejected", "failed"].includes(proposal.status) ||
-              proposal.policy_snapshot?.outcome === "refused" ? (
-                <div className="desk-integration-receipt">
-                  <strong>
-                    Receipt ·{" "}
-                    {proposal.policy_snapshot?.outcome === "refused"
-                      ? "refused"
-                      : proposal.status}
-                  </strong>
-                  <p>
-                    Source retained ·{" "}
-                    {boundSource?.label || "selected material"}
-                  </p>
-                  {proposal.error ? <p>{proposal.error}</p> : null}
-                  {boundSource ? (
-                    <button
-                      type="button"
-                      className="desk-chip quiet"
-                      onClick={() => openPullout(boundSource.ref)}
-                    >
-                      Return to {boundSource.label}
-                    </button>
-                  ) : null}
-                </div>
-              ) : null}
-            </section>
-          ) : null}
-          <button
-            type="button"
-            className="desk-chip quiet"
-            onClick={() =>
-              openSurfaceOr(
-                "configure-integration",
-                "/settings",
-                `integration:${integration.id}`,
-              )
-            }
-          >
-            Configure {integration.name}
-          </button>
+              </> : null}
+            </GadgetGroup>
+          </FoldGadget>
+          {proposal?.error ? <SurfaceState error={proposal.error} /> : null}
         </>
       ) : null}
 
-      {error ? (
-        <p className="desk-run-warning" role="alert">
-          {error} Selected material is retained; retry the action.
-        </p>
-      ) : null}
+      {error ? <SurfaceState error={error} /> : null}
+      </div>
+      <div className="desk-surface-foot">
+        <SurfaceFooter
+          egress={integration?.enabled ? <EgressChip label={route.label} scope={route.scope} /> : undefined}
+          receipt={outcome ? <StateChip state={outcome.state} label={outcome.label} /> : undefined}
+          verbs={<>
+            {project ? <Button dense variant="primary" onClick={() => openSurfaceOr("dictate", "/dictation", `project:${project.id}`)}>Open Project context</Button> : null}
+            {target ? <>
+              {target.model && models.some((model) => model.name === target.model) ? <Button dense variant="primary" disabled={!target.readiness.available} onClick={() => void openNewThread({ title: target.model, profile_override: target.model })}>Continue in thread</Button> : null}
+              <Button dense variant="ghost" onClick={() => openSurfaceOr("configure-runs-on", "/profiles")}>Configure Runs on</Button>
+            </> : null}
+            {integration ? <>
+              {!proposal && integrationAction ? <Button dense variant="primary" loading={busy} onClick={() => void propose()}>{integrationAction.label}</Button> : null}
+              {proposal?.status === "proposed" && !refused ? <>
+                <Button dense variant="primary" loading={busy} onClick={() => void decide("approved")}>{proposal.commitment?.approve || `Approve ${integration.operation}`}</Button>
+                <Button dense variant="ghost" disabled={busy} onClick={() => void decide("rejected")}>Reject proposed action</Button>
+              </> : null}
+              {proposal?.status === "failed" ? <Button dense variant="primary" loading={busy} onClick={() => void decide("approved")}>Retry {proposal.commitment?.approve || integration.operation}</Button> : null}
+              {terminal && boundSource ? <Button dense variant="ghost" onClick={() => openPullout(boundSource.ref)}>Return to {boundSource.label}</Button> : null}
+              <Button dense variant={!integration.enabled ? "primary" : "ghost"} onClick={configureIntegration}>Configure {integration.name}</Button>
+            </> : null}
+          </>}
+        />
       </div>
     </DeskWindowFrame>
   );

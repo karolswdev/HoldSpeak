@@ -1796,12 +1796,12 @@
       "kind": "capabilities",
       "path_presence": {
         "docs": [
-          2,
-          2
+          3,
+          3
         ],
         "sources": [
-          1,
-          1
+          2,
+          2
         ],
         "tests": [
           4,
@@ -4220,8 +4220,8 @@
   "totals": {
     "assertions_inspected": 223,
     "doc_paths": [
-      238,
-      238
+      239,
+      239
     ],
     "docs": {
       "api": 0,
@@ -4232,8 +4232,8 @@
     "records_with_executed_assertions": 80,
     "semantics_unresolved": 76,
     "source_paths": [
-      279,
-      279
+      280,
+      280
     ],
     "test_paths": [
       223,

@@ -75,7 +75,7 @@ Missing shards: **none**.
 | `desk.note.task` | Make a task from a note | Add a confirmed open task from selected text in a saved note and keep a link to its source. | built_unreleased | user | tests_executed | no | local |
 | `people.prep.record` | Record from 1:1 preparation | Start a meeting from its linked calendar event while keeping the person and unsent agenda in place. | built_unreleased | user | tests_executed | no | possible |
 | `desk.engines.find_lan` | Find model servers on LAN | Find nearby OpenAI-compatible model servers and offer their models in the existing engine picker. | built_unreleased | user | tests_executed | no | possible |
-| `desk.preferences` | Edit preferences | Save local preferences while preserving calendar identity and the authoritative model assignments. | experimental | user | source_and_assertions_inspected | no | local |
+| `desk.preferences` | Edit preferences | Save local preferences while preserving calendar identity and the authoritative model assignments. | experimental | user | tests_executed | no | local |
 | `agents.thread_persistent` | Persistent Thread chat | Save a multi-turn assistant conversation with branches, drafts, refs and kept results. | experimental | user | source_and_assertions_inspected | no | possible |
 | `agents.thread_tool_loop` | Persistent Thread tool loop | Offer a bounded MCP tool palette inside a Thread turn and retain tool results and receipts. | experimental | user | source_and_assertions_inspected | no | possible |
 | `agents.interview` | Interview conversation | Use one owner-only Thread mode to record sourced facts and reviewable suggestions. | experimental | user | source_and_assertions_inspected | no | possible |

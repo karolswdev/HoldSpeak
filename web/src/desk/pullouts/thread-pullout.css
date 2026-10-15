@@ -56,23 +56,10 @@
   min-width: 0;
 }
 
-.desk-next .thread-title-well .desk-mic,
-.desk-next .thread-elicitation-well .desk-mic {
+.desk-next .thread-title-well .desk-mic {
   flex: none;
   width: 24px;
   height: 24px;
-}
-
-/* HS-176-04 — a free-text elicitation answer and its mic share one row. */
-.thread-elicitation-well {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.thread-elicitation-well .thread-elicitation-input {
-  flex: 1;
-  min-width: 0;
 }
 
 .desk-next .thread-inline-editor-mic .desk-mic {
@@ -725,60 +712,12 @@
   margin-top: 6px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-2);
 }
 
 .thread-elicitation-prompt {
-  font-size: var(--desk-surface-body-size, 13px);
-  color: var(--text-muted);
-}
-
-.thread-elicitation-field {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.thread-elicitation-label {
-  font-size: var(--desk-surface-label-size, 11px);
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
-
-.thread-elicitation-input,
-.thread-elicitation-select {
-  border: 1px solid var(--border, rgba(128, 128, 128, 0.2));
-  border-radius: 2px;
-  padding: 4px 6px;
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: var(--desk-surface-body-size, 13px);
-  background: var(--desk-window-well, rgba(128, 128, 128, 0.05));
-  box-shadow: var(--desk-window-etch, inset 0 1px 2px rgba(0,0,0,.12));
-  color: inherit;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-/* HS-152-05 nit: boolean checkbox aligned with its label, not centred */
-.thread-elicitation-field--boolean {
-  flex-direction: row;
-  align-items: center;
-  gap: 6px;
-}
-
-.thread-elicitation-boolean {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-}
-
-.thread-elicitation-boolean input[type="checkbox"] {
-  margin: 0;
-  flex-shrink: 0;
+  font: 600 var(--desk-type-primary-size) / 1.4 var(--font-sans);
+  color: var(--text);
 }
 
 /* ── Per-kind result renderers (HS-152-05) ──────────────────────────── */

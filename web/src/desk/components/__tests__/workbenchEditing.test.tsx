@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_ITEMS } from "../../api";
 import { useDesk } from "../../store";
 import { clearWriteFailure } from "../../hooks/useWriteReceipt";
+import { deskQueryClient, deskResourceKey } from "../../../lib/queryClient";
 import {
   BODY_SAVE_PAUSE_MS,
   WorkbenchWindow,
@@ -58,6 +59,29 @@ function detail(overrides: Record<string, unknown> = {}) {
   };
 }
 
+// Real isolated-hub GET /api/workbenches/workbench_6ad52d3c08af, captured
+// 2026-10-15 by the visual-refinement rig (base 94551006a). The pending
+// item was created through POST workbench + POST item; Runs/Memory were
+// {runs: []}/{entries: []}. Kept here so the test has no scratch dependency.
+const RECORDED_READ_DETAIL = {
+  id: "workbench_6ad52d3c08af", name: "Architecture review",
+  recipe_id: null, profile_id: null, resolver_profile_id: null,
+  schedule: null, schedule_enabled: false, schedule_revision: 1,
+  item_order: [], created_at: "2026-10-15T06:33:38Z",
+  last_modified: "2026-10-15T06:33:38Z", deleted: false,
+  items: [{
+    id: "wbi_cc3626366ca7", workbench_id: "workbench_6ad52d3c08af",
+    title: "Review the migration", body: "Confirm rollback ownership and the release gate.",
+    priority: 3, status: "pending", grounding: {}, context: {},
+    result: null, result_artifact_id: null, result_egress: null,
+    tokens_consumed: 0, created_at: "2026-10-15T06:33:38Z",
+    last_modified: "2026-10-15T06:33:38Z", claimed_at: null,
+    completed_at: null, parked: false,
+  }],
+  item_count: 1, pending_count: 1, last_run: null,
+  assignment_summary: { status: "no_assignment", source: null, chain: [], repair: "Choose default" },
+};
+
 /** The hub takes every write; GETs answer the same detail every time. */
 function mockHub(wb: Record<string, unknown>) {
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -71,7 +95,7 @@ function mockHub(wb: Record<string, unknown>) {
     if (/\/runs$/.test(url)) return json({ runs: [] });
     if (/\/memory$/.test(url)) return json({ entries: [] });
     if (/\/api\/skills/.test(url)) return json({ skills: [] });
-    if (/\/api\/workbenches\/wb1$/.test(url)) return json({ workbench: wb });
+    if (url.endsWith(`/api/workbenches/${wb.id}`)) return json({ workbench: wb });
     return json({});
   });
   vi.stubGlobal("fetch", fetchMock);
@@ -87,18 +111,18 @@ async function openWindow(wb: Record<string, unknown> = detail()) {
   return { fetchMock, ...(await mount()) };
 }
 
-async function mount() {
+async function mount(workbenchId = "wb1", itemTitle = "Draft the brief") {
   useDesk.setState({
     items: {
       ...EMPTY_ITEMS,
-      workbench: [{ kind: "workbench", id: "wb1", name: "Daily" } as never],
+      workbench: [{ kind: "workbench", id: workbenchId, name: "Daily" } as never],
     },
     inferenceTargets: [],
     profiles: [],
   });
-  const view = render(<WorkbenchWindow workbenchId="wb1" />);
+  const view = render(<WorkbenchWindow workbenchId={workbenchId} />);
   dom = view.baseElement as HTMLElement;
-  await screen.findByText("Draft the brief");
+  await screen.findByText(itemTitle);
   return view;
 }
 
@@ -177,6 +201,96 @@ describe("HS-132-07 item body draft", () => {
       { timeout: BODY_SAVE_PAUSE_MS + 1500 },
     );
     expect(pad).toHaveValue("keep me");
+  });
+});
+
+describe("Workbench independent reads", () => {
+  beforeEach(() => { localStorage.clear(); clearWriteFailure(); });
+  afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+
+  it.each([
+    { wing: "Runs", suffix: "runs", empty: "No agent bound" },
+    { wing: "Memory", suffix: "memory", empty: "No memories yet" },
+  ])("names a failed $wing read and retries only that read", async ({ wing, suffix, empty }) => {
+    const fetchMock = mockHub(RECORDED_READ_DETAIL);
+    const read = fetchMock.getMockImplementation()!;
+    let unavailable = true;
+    fetchMock.mockImplementation(async (input, init) => String(input).endsWith(`/${suffix}`) && (!init?.method || init.method === "GET")
+      ? new Response(JSON.stringify(unavailable ? { error: "Read unavailable" } : suffix === "runs" ? { runs: [] } : { entries: [] }), {
+        status: unavailable ? 503 : 200,
+        headers: { "content-type": "application/json" },
+      }) : read(input, init));
+    await mount(RECORDED_READ_DETAIL.id, RECORDED_READ_DETAIL.items[0].title);
+    fireEvent.change(screen.getByRole("combobox", { name: "New item instruction" }), { target: { value: "Keep the next instruction" } });
+    fireEvent.click(screen.getByRole("tab", { name: wing }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(new RegExp(wing, "i"));
+    expect(screen.queryByText(empty)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Run now" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Bind an agent" })).toBeNull();
+    const readsBeforeRetry = fetchMock.mock.calls.filter(([input]) => String(input).endsWith(`/${suffix}`)).length;
+    const detailPath = `/workbenches/${RECORDED_READ_DETAIL.id}`;
+    const detailReadsBeforeRetry = fetchMock.mock.calls.filter(([input]) => String(input).endsWith(detailPath)).length;
+    unavailable = false;
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+    await screen.findByText(empty);
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(fetchMock.mock.calls.filter(([input]) => String(input).endsWith(`/${suffix}`))).toHaveLength(readsBeforeRetry + 1);
+    expect(fetchMock.mock.calls.filter(([input]) => String(input).endsWith(detailPath))).toHaveLength(detailReadsBeforeRetry);
+    expect(fetchMock.mock.calls.filter(([input, init]) => String(input).endsWith("/run") && init?.method === "POST")).toHaveLength(0);
+    fireEvent.click(screen.getByRole("tab", { name: "Items" }));
+    expect(screen.getByText(RECORDED_READ_DETAIL.items[0].title)).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "New item instruction" })).toHaveValue("Keep the next instruction");
+  });
+
+  it("keeps known memory and its disclosure while a refresh fails, then retries the read", async () => {
+    const entry = {
+      run_id: "run-memory", kind: "observation", content: "Keep the rollback owner in the next brief.",
+      item_title: "Draft the brief", timestamp: "2026-10-15T06:33:38Z", provenance: { model: "local-model" },
+    };
+    const fetchMock = mockHub(detail());
+    const read = fetchMock.getMockImplementation()!;
+    let unavailable = false;
+    fetchMock.mockImplementation(async (input, init) => String(input).endsWith("/memory") && (!init?.method || init.method === "GET")
+      ? new Response(JSON.stringify(unavailable ? { error: "Read unavailable" } : { entries: [entry] }), {
+        status: unavailable ? 503 : 200, headers: { "content-type": "application/json" },
+      }) : read(input, init));
+    await mount();
+    fireEvent.click(screen.getByRole("tab", { name: "Memory" }));
+    await screen.findByText(entry.content);
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(entry.content) }));
+    expect(screen.getByRole("button", { name: "Promote to skill" })).toBeInTheDocument();
+
+    unavailable = true;
+    await act(async () => { await deskQueryClient.invalidateQueries({ queryKey: deskResourceKey("workbench-memory", "wb1") }); });
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/Memory/i);
+    expect(screen.getAllByText(entry.content)).toHaveLength(2);
+    expect(screen.getByRole("button", { name: "Promote to skill" })).toBeInTheDocument();
+    expect(screen.queryByText("No memories yet")).toBeNull();
+    unavailable = false;
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
+    expect(screen.getAllByText(entry.content)).toHaveLength(2);
+  });
+
+  it("opens the linked artifact without repeating its result in the item", async () => {
+    const output = "Rollback ownership is confirmed.";
+    await openWindow(detail({ items: [{ ...ITEM, status: "done", result: output, result_artifact_id: "artifact-result" }] }));
+    const open = vi.spyOn(useDesk.getState(), "openPullout").mockImplementation(() => undefined);
+    fireEvent.click(screen.getByText("Draft the brief"));
+    expect(screen.getAllByText(output)).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Open artifact" }));
+
+    await waitFor(() => expect(open).toHaveBeenCalledWith("artifact:artifact-result"));
+    expect(screen.getAllByText(output)).toHaveLength(1);
+    expect(screen.queryByText("artifact-result", { exact: true })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Collapse" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Copy" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Re-run" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Park" })).toBeInTheDocument();
   });
 });
 

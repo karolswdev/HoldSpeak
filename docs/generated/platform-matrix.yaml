@@ -3739,7 +3739,8 @@
       "id": "desk.preferences@aipi",
       "platform": "aipi",
       "source_ids": [
-        "holdspeak/services/settings_service.py"
+        "holdspeak/services/settings_service.py",
+        "web/src/desk/firstrun/CalendarCard.tsx"
       ],
       "status": "experimental"
     },
@@ -3749,7 +3750,8 @@
       "id": "desk.preferences@ipad",
       "platform": "ipad",
       "source_ids": [
-        "holdspeak/services/settings_service.py"
+        "holdspeak/services/settings_service.py",
+        "web/src/desk/firstrun/CalendarCard.tsx"
       ],
       "status": "experimental"
     },
@@ -3759,7 +3761,8 @@
       "id": "desk.preferences@linux_wayland",
       "platform": "linux_wayland",
       "source_ids": [
-        "holdspeak/services/settings_service.py"
+        "holdspeak/services/settings_service.py",
+        "web/src/desk/firstrun/CalendarCard.tsx"
       ],
       "status": "experimental"
     },
@@ -3769,7 +3772,8 @@
       "id": "desk.preferences@linux_x11",
       "platform": "linux_x11",
       "source_ids": [
-        "holdspeak/services/settings_service.py"
+        "holdspeak/services/settings_service.py",
+        "web/src/desk/firstrun/CalendarCard.tsx"
       ],
       "status": "experimental"
     },
@@ -3779,7 +3783,8 @@
       "id": "desk.preferences@macos",
       "platform": "macos",
       "source_ids": [
-        "holdspeak/services/settings_service.py"
+        "holdspeak/services/settings_service.py",
+        "web/src/desk/firstrun/CalendarCard.tsx"
       ],
       "status": "experimental"
     },

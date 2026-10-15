@@ -4,7 +4,7 @@
  * (its host named once typed). The macOS prompt shows only on his press. */
 import { useState, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
-import { EgressChip, Receipt, StateChip, StringGadget, SurfaceLedgerRow, countToken } from "../surface";
+import { EgressChip, GadgetGroup, Receipt, StateChip, StringGadget, SurfaceLedgerRow, countToken } from "../surface";
 import { egressFor } from "../surface/egress";
 import { Card } from "./Card";
 import { hostOf, meetingClock, stateCount, type CalendarCandidate, type CalendarStep } from "./calendarStep";
@@ -26,7 +26,16 @@ export function calendarReceipt(week: number, next: { title: string; starts_at: 
 
 /** Settings uses the same chooser without the first-use card and explanation. */
 function CalendarFrame({ compact, children, ...card }: { compact: boolean; children: ReactNode; title: string; line: string; testId: string; lit: boolean; selected: boolean; state: ReactNode }) {
-  return compact ? <div className="connections-calendar-chooser" data-testid={card.testId}>{children}</div> : <Card {...card}>{children}</Card>;
+  return compact ? (
+    <div data-testid={card.testId}>
+      <GadgetGroup label="Choose calendar" material="inset">
+        <div className="connections-calendar-chooser">
+          {card.state ? <div className="firstrun-fail">{card.state}</div> : null}
+          {children}
+        </div>
+      </GadgetGroup>
+    </div>
+  ) : <Card {...card}>{children}</Card>;
 }
 
 export function CalendarCard({ step, lit, reselectNative = false, onUsed, beforeUse }: {
@@ -46,6 +55,9 @@ export function CalendarCard({ step, lit, reselectNative = false, onUsed, before
   const nativeAccessVisible = !inUse || reselectNative;
   const asking = Boolean(macos?.can_request && nativeAccessVisible);
   const another = rows.length > 0 || asking;
+  const nativeLoading = reselectNative && !step.loaded;
+  const nativeEmpty = reselectNative && step.loaded && !step.unread && !rows.length && !asking && !step.notAllowed;
+  const nativeUnavailable = macos?.state === "unavailable";
   const add = async () => {
     if (!host || busy) return;
     if (beforeUse && !(await beforeUse())) return;
@@ -74,9 +86,26 @@ export function CalendarCard({ step, lit, reselectNative = false, onUsed, before
         <div className="firstrun-fail" role="alert">
           <StateChip state="unreachable" label="CAN'T CHECK" />
           <span className="firstrun-reason">{step.unread}</span>
-          <Button dense variant="secondary" onClick={() => void step.read()}>
-            Try again
+          <Button dense variant="secondary"
+            loading={reselectNative && busy === "check"}
+            disabled={reselectNative && busy !== null}
+            onClick={() => void (reselectNative ? step.checkAgain() : step.read())}>
+            {reselectNative ? "Retry" : "Try again"}
           </Button>
+        </div>
+      ) : null}
+      {nativeLoading || nativeEmpty ? (
+        <div className="firstrun-fail">
+          <StateChip
+            state={nativeEmpty && nativeUnavailable ? "unreachable" : "idle"}
+            label={nativeLoading ? "CHECKING CALENDARS" : nativeUnavailable ? "CALENDARS UNAVAILABLE" : "NO CALENDARS FOUND"}
+          />
+          {nativeEmpty ? (
+            <Button dense variant="secondary" loading={busy === "check"} disabled={busy !== null}
+              onClick={() => void step.checkAgain()}>
+              Check again
+            </Button>
+          ) : null}
         </div>
       ) : null}
       {macos?.can_request && nativeAccessVisible ? (
@@ -178,7 +207,7 @@ export function CalendarCard({ step, lit, reselectNative = false, onUsed, before
         </ul>
       ) : null}
       {receipt ? <Receipt status="ok" label={receipt} /> : null}
-      {!inUse ? (
+      {!inUse || reselectNative ? (
         <label className="firstrun-field firstrun-stretch">
           <span className="firstrun-caption">{another ? "OR A CALENDAR URL" : "CALENDAR URL"}</span>
           <span className="firstrun-urlrow">

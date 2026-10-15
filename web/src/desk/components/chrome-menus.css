@@ -590,66 +590,35 @@
   color: var(--text-muted);
   font-size: var(--font-size-sm);
 }
-/* HS-129-04 — Tool Inspector's frame never scrolls its title bar. */
+/* Inspector composes the shared frame, paper sheets and Steel footer. */
 .desk-next .desk-tool-inspector {
   position: fixed;
-  top: 64px;
-  right: 18px;
-  bottom: 18px;
-  z-index: var(--desk-z-window-base);
-  width: min(430px, calc(100vw - 36px));
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border));
-  border-radius: 2px;
-  background: var(--desk-window-fill);
-  color: var(--text);
-  box-shadow: var(--desk-window-shadow);
-  backdrop-filter: none;
 }
-.desk-next .desk-tool-inspector h2,
-.desk-next .desk-tool-inspector h3,
-.desk-next .desk-tool-inspector p {
-  margin: 0;
+.desk-next .desk-tool-inspector-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  min-width: 0;
 }
-.desk-next .desk-tool-inspector h2 {
-  margin-top: 3px;
-  font: 700 var(--font-size-lg) var(--font-display);
+.desk-next .desk-tool-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
 }
-.desk-next .desk-tool-inspector h3 {
-  margin-bottom: 8px;
-  font-size: var(--font-size-sm);
-}
-.desk-next .desk-tool-inspector > p,
-.desk-next .desk-tool-inspector > section,
-.desk-next .desk-tool-inspector > dl,
-.desk-next .desk-tool-inspector > a,
-.desk-next .desk-tool-inspector > .desk-tool-actions {
-  margin-top: 14px;
-}
-.desk-next .desk-tool-facts {
-  margin-bottom: 0;
-  border: 1px solid var(--surface-3);
-  border-radius: 2px;
-  overflow: hidden;
-}
-.desk-next .desk-tool-facts div {
-  display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
-  gap: 12px;
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--surface-3);
-}
-.desk-next .desk-tool-facts div:last-child {
-  border-bottom: 0;
-}
-.desk-next .desk-tool-facts dt {
-  color: var(--text-muted);
-}
-.desk-next .desk-tool-facts dd {
-  margin: 0;
+.desk-next .desk-tool-status .surface-primary,
+.desk-next .desk-tool-value {
   overflow-wrap: anywhere;
+  min-width: 0;
+}
+.desk-next .desk-tool-inspector-body p {
+  margin: 0;
+  font: 400 var(--desk-surface-body-size) / 1.5 var(--font-sans);
 }
 .desk-next .desk-tool-resource-list {
   display: grid;
@@ -658,54 +627,14 @@
   padding: 0;
   list-style: none;
 }
-.desk-next .desk-tool-resource-list button,
-.desk-next .desk-tool-resource-list span {
+.desk-next .desk-tool-resource-list li > span {
   display: flex;
-  width: 100%;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 10px;
-  border: 1px solid var(--surface-3);
-  border-radius: 2px;
-  background: var(--surface-1);
-  color: var(--text);
-  text-align: left;
-}
-.desk-next .desk-tool-resource-list button {
-  cursor: pointer;
+  flex-direction: column;
+  gap: var(--space-1);
+  overflow-wrap: anywhere;
 }
 .desk-next .desk-tool-resource-list small {
   color: var(--text-muted);
-}
-.desk-next .desk-tool-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.desk-next .desk-integration-effect,
-.desk-next .desk-integration-proposal,
-.desk-next .desk-integration-receipt {
-  display: grid;
-  gap: 9px;
-  padding: 12px;
-  border: 1px solid var(--surface-3);
-  border-radius: 2px;
-  background: var(--surface-1);
-}
-.desk-next .desk-integration-effect pre {
-  max-height: 180px;
-  margin: 0;
-  padding: var(--space-2);
-  overflow: auto;
-  border-radius: 2px;
-  background: var(--bg);
-  color: var(--text-muted);
-  font: var(--font-size-xs) var(--font-mono);
-  white-space: pre-wrap;
-}
-.desk-next .desk-integration-receipt {
-  background: color-mix(in srgb, var(--ok) 9%, var(--surface-1));
 }
 .desk-next .sr-only {
   position: absolute;
