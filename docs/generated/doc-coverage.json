@@ -2299,7 +2299,7 @@
       "tests_executed": 0
     },
     {
-      "assertions_inspected": 4,
+      "assertions_inspected": 5,
       "docs": {
         "api": 0,
         "operational": 0,
@@ -2309,21 +2309,21 @@
       "kind": "capabilities",
       "path_presence": {
         "docs": [
-          4,
-          4
+          5,
+          5
         ],
         "sources": [
-          4,
-          4
+          6,
+          6
         ],
         "tests": [
-          4,
-          4
+          5,
+          5
         ]
       },
       "semantic_status": "partially_evidenced",
       "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
-      "tests_executed": 4
+      "tests_executed": 5
     },
     {
       "assertions_inspected": 2,
@@ -4245,10 +4245,10 @@
   ],
   "snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8",
   "totals": {
-    "assertions_inspected": 226,
+    "assertions_inspected": 227,
     "doc_paths": [
-      244,
-      244
+      245,
+      245
     ],
     "docs": {
       "api": 0,
@@ -4259,14 +4259,14 @@
     "records_with_executed_assertions": 81,
     "semantics_unresolved": 76,
     "source_paths": [
-      284,
-      284
+      286,
+      286
     ],
     "test_paths": [
-      226,
-      226
+      227,
+      227
     ],
-    "tests_executed": 188
+    "tests_executed": 189
   },
   "validation_errors": 0
 }

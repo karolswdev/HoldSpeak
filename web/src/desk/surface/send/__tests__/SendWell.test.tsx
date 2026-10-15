@@ -77,6 +77,93 @@ const noManualRow = () => {
   expect(document.body.textContent).not.toContain("DELIVERY");
 };
 
+describe("decision document hosts unfold Send only on request", () => {
+  it.each([
+    ["desk decision", <DeskDecisionSendWells key="desk" id="decision_fold" title="Use the shared runners" />],
+    ["decision record", <DecisionRecordSendWells key="record" id="record_fold" text="Use the shared runners" />],
+  ])("the %s reads sends while folded and reads destinations and preview only after Send", async (_name, face) => {
+    routes["GET /api/channels/destinations"] = () => ({ destinations: [folder({ builtin: true })] });
+    render(face);
+    await waitFor(() => expect(apiFetch.mock.calls.some(([path]) => String(path).startsWith("/api/channels/sends?"))).toBe(true));
+    expect(screen.queryByTestId("send-well")).toBeNull();
+    expect(apiFetch.mock.calls.some(([path]) => path === "/api/channels/destinations")).toBe(false);
+    expect(previews).toEqual([]);
+    fireEvent.click(screen.getByRole("button", { name: /^Send$/ }));
+    expect(await screen.findByTestId("send-preview")).toBeTruthy();
+    expect(previews).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: /^Hide$/ }));
+    expect(screen.queryByTestId("send-well")).toBeNull();
+  });
+
+  it("a folded sends read failure has an exact read Retry without opening destinations", async () => {
+    let fail = true;
+    routes["GET /api/channels/sends"] = () => {
+      if (fail) throw new Error("no answer");
+      return { sends: [] };
+    };
+    render(<DeskDecisionSendWells id="decision_fold_read" title="Use the shared runners" />);
+    const failure = await screen.findByTestId("sends-unreadable");
+    expect(failure.textContent).toContain("SENDS");
+    fail = false;
+    fireEvent.click(within(failure).getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(screen.queryByTestId("sends-unreadable")).toBeNull());
+    expect(screen.queryByTestId("send-well")).toBeNull();
+    expect(apiFetch.mock.calls.some(([path]) => path === "/api/channels/destinations")).toBe(false);
+  });
+
+  it("prepared work is visible folded; opening retains its frozen payload across an ordinary preview version change", async () => {
+    const ref = "desk_decision:decision_fold_prepared";
+    const prepared = send({
+      id: "chs_fold_prepared", document_ref: ref, state: "prepared", prepare_operation_id: "op_fold",
+      dispatch_started_at: null, settled_at: null, proof: null, file_path: null,
+      preview: { text: "Frozen decision words" },
+    });
+    routes["GET /api/channels/sends"] = () => ({ sends: [prepared] });
+    let words = "Current decision words";
+    routes["POST /api/channels/preview"] = (init) => {
+      previews.push(String(init.json?.document_ref));
+      return { payload_digest: `dig:${words}`, preview: { text: words } };
+    };
+    const view = render(<DeskDecisionSendWells id="decision_fold_prepared" title="Use the shared runners" version="saved-v1" />);
+    expect(await screen.findByText("PREPARED ×1")).toBeTruthy();
+    expect(screen.queryByTestId("send-well")).toBeNull();
+    expect(previews).toEqual([]);
+    fireEvent.click(screen.getByRole("button", { name: /^Send$/ }));
+    expect(await screen.findByTestId("prepared-preview")).toHaveTextContent("Frozen decision words");
+    await pick("Team folder");
+    await waitFor(() => expect(within(screen.getByTestId("send-preview")).getByTestId("send-preview-body")).toHaveTextContent("Current decision words"));
+    words = "New saved decision words";
+    view.rerender(<DeskDecisionSendWells id="decision_fold_prepared" title="Use the shared runners" version="saved-v2" />);
+    await waitFor(() => expect(within(screen.getByTestId("send-preview")).getByTestId("send-preview-body")).toHaveTextContent("New saved decision words"));
+    expect(screen.getByTestId("prepared-preview")).toHaveTextContent("Frozen decision words");
+    expect(screen.getByTestId("prepared-discard")).toHaveTextContent("Discard");
+    expect(previews).toEqual([ref, ref]);
+  });
+
+  it("Hide cannot conceal an unresolved held send; Retry retains its command and destination", async () => {
+    const submitted: Array<Record<string, unknown>> = [];
+    routes["POST /api/channels/send"] = (init) => {
+      submitted.push(init.json!);
+      if (submitted.length === 1) throw new Error("answer lost");
+      return { send: send({ document_ref: "desk_decision:decision_fold_held" }) };
+    };
+    render(<DeskDecisionSendWells id="decision_fold_held" title="Use the shared runners" />);
+    fireEvent.click(screen.getByRole("button", { name: /^Send$/ }));
+    await pick("Team folder");
+    fireEvent.click(await screen.findByTestId("send-verb"));
+    await screen.findByTestId("send-retry");
+    const hide = screen.getByRole("button", { name: /^Hide$/ });
+    expect(hide).toBeDisabled();
+    fireEvent.click(hide);
+    expect(screen.getByTestId("send-retry")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("send-retry"));
+    await screen.findByTestId("send-sent");
+    expect(submitted).toHaveLength(2);
+    expect(submitted[1]).toEqual(submitted[0]);
+    expect(hide).not.toBeDisabled();
+  });
+});
+
 describe("the SEND well species on a brief (not an update)", () => {
   it("no destination: NO DESTINATION + Add destination; no history head, no counter of zero", async () => {
     routes["GET /api/channels/destinations"] = () => ({ destinations: [] });
@@ -524,6 +611,7 @@ describe("PHILO-11-05a: each document face sends its own document_ref", () => {
     ["decision-record", "decision_record:record-85f927aa", <DecisionRecordSendWells key="r" id="record-85f927aa" text="Freeze the old ledger on Nov 3" />],
   ])("the %s face: the preview and the press carry %s, and the receipt is its row", async (seat, ref, face) => {
     const { container } = render(face);
+    if (seat !== "brief") fireEvent.click(screen.getByRole("button", { name: /^Send$/ }));
     expect(await screen.findByTestId("send-well")).toBeTruthy();
     expect(container.querySelector(`[data-seat=${seat}] [data-testid=send-well]`)?.getAttribute("data-doc")).toBe(ref);
     await pick("Team folder");
@@ -552,6 +640,7 @@ describe("PHILO-11-05a: each document face sends its own document_ref", () => {
       return { send: row };
     };
     render(<DeskDecisionSendWells id="decision_7f3a" title="Freeze the old ledger" />);
+    fireEvent.click(screen.getByRole("button", { name: /^Send$/ }));
     await pick("Team folder");
     await waitFor(() => expect(screen.getByTestId("send-preview-body").textContent).toContain("Nov 5"));
     words = "Freeze the old ledger on Nov 6.";   // PUT /api/decisions/<id> in another place
@@ -586,6 +675,7 @@ describe("PHILO-11-05a: each document face sends its own document_ref", () => {
       return { send: row };
     };
     render(<DecisionRecordSendWells id="record-85f927aa" text="Finance runs one more reconciliation" />);
+    fireEvent.click(screen.getByRole("button", { name: /^Send$/ }));
     const row = await screen.findByTestId("prepared-row");
     expect(within(row).getByTestId("prepared-label").textContent).toBe("D-85F927");
     expect(within(row).getByTestId("prepared-by").textContent).toBe("BY REMOTE-PROJECT-AGENT");

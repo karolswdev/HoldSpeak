@@ -2333,14 +2333,16 @@
       "purpose": "Send a stored note, update, brief, decision, meeting summary, or artifact to a saved destination.",
       "domain": "channels",
       "status": "built_unreleased",
-      "status_reason": "Stored document sources run through the shared channel contract. Note Send retains stored-source/digest checks. October 15 isolated real-hub recipient edits preserve the stored key ref and park the prior destination; local key Check/Retry is exercised. External delivery and owner acceptance are not claimed.",
+      "status_reason": "Stored document sources run through the shared channel contract. Note Send retains stored-source/digest checks. October 15 isolated real-hub recipient edits preserve the stored key ref and park the prior destination; local key Check/Retry is exercised. External delivery and owner acceptance are not claimed. Decision and governing-record readers now fold Send until requested. Focused UI tests exercise folded reads, nonzero prepared discovery, held Retry and ordinary-preview refresh while prepared bytes remain frozen. These tests use HTTP substitutions; actual isolated runtime observations and limits are recorded separately.",
       "exposure": "integration",
       "surfaces": [
         "HTTP channel operations",
         "MCP channel tools",
         "Thread preparation",
         "Project update Send well",
-        "Note Send"
+        "Note Send",
+        "Decision reader Send fold",
+        "Governing decision record Send fold"
       ],
       "entry_points": [
         "holdspeak/services/channel_service.py::ChannelService",
@@ -2420,6 +2422,18 @@
           "symbol": "function DestForm({",
           "claim": "Recipient edits parse commas/newlines, retain the saved email key ref and scope local presence knowledge to provider plus exact ref.",
           "line": 119
+        },
+        {
+          "path": "web/src/desk/surface/send/SendWell.tsx",
+          "symbol": "export function SendWellsFold(",
+          "claim": "The folded host shares the existing sends read and exposes prepared, failed, running and held state before explicit opening.",
+          "line": 859
+        },
+        {
+          "path": "web/src/desk/documentSends.tsx",
+          "symbol": "export function DeskDecisionSendWells(",
+          "claim": "Decision and decision-record adapters use the shared fold; decision versions refresh ordinary preview only.",
+          "line": 78
         }
       ],
       "tests": [
@@ -2466,13 +2480,25 @@
             "run": "2026-10-14",
             "cases": 2
           }
+        },
+        {
+          "path": "web/src/desk/surface/send/__tests__/SendWell.test.tsx",
+          "node": "decision document hosts unfold Send only on request",
+          "assertion": "Both adapters defer destination and preview reads until Send; read Retry, prepared frozen bytes, version changes and held command identity remain reachable.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/internal/DECISION-DELIGHT-2026-10-15/BUILD-DECISION.md",
+            "run": "2026-10-15",
+            "cases": 5
+          }
         }
       ],
       "docs": [
         "pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/design/document-sources.md",
         "pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/design/floor-send.md",
         "docs/internal/SEND-REFINEMENT-2026-10-14.md",
-        "docs/internal/SURFACE-REFINEMENT-2026-10-15/README.md"
+        "docs/internal/SURFACE-REFINEMENT-2026-10-15/README.md",
+        "docs/internal/DECISION-DELIGHT-2026-10-15/README.md"
       ],
       "limitations": [
         "The Floor artifact window and menu/drop integration belong to Phase 12 stories 03 and 04.",

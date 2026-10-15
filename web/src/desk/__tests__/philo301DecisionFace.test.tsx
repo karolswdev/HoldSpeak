@@ -74,7 +74,7 @@ describe("PHILO-3-01 the decision face", () => {
   });
 
   it("a new decision opens in Edit; Done titles it from the first line", async () => {
-    const update = vi.fn();
+    const update = vi.fn().mockResolvedValue(true);
     useDesk.setState({ newIds: ["decision_new1"], updatePrimitive: update } as never);
     const o = {
       id: "decision_new1", kind: "decision", title: "New decision",
@@ -91,7 +91,7 @@ describe("PHILO-3-01 the decision face", () => {
   });
 
   it("an owner title is never replaced", () => {
-    const update = vi.fn();
+    const update = vi.fn().mockResolvedValue(true);
     useDesk.setState({ newIds: ["d2"], updatePrimitive: update } as never);
     const o = {
       id: "d2", kind: "decision", title: "Bus choice",

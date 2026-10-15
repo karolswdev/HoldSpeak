@@ -833,16 +833,56 @@ export function PreparedChip({ docRef }: { docRef: string }) {
  *  read of the document's sends. `head` sits first inside SEND. `history`
  *  is the slot only the update fills (its DELIVERY N and Mark delivered,
  *  R8); every other document gets SENDS N. */
-export function SendWells({ doc, head, onSettled, history }: {
+type SendWellsProps = {
   doc: DocRef; head?: ReactNode; onSettled?: () => void;
   history?: (sends: Send[]) => ReactNode;
-}) {
-  const sendsRead = useSends(doc.ref, onSettled);
+};
+
+function ReadSendWells({ doc, head, onSettled, history, sendsRead }: SendWellsProps & { sendsRead: Read<Send[]> }) {
   const sends = mergeKnown(doc.ref, sendsRead.data ?? []);
   return (
     <>
       <SendWell doc={doc} sendsRead={sendsRead} onSettled={onSettled} head={head} />
       {history ? history(sends) : <SendHistory sends={sends} />}
     </>
+  );
+}
+
+export function SendWells(props: SendWellsProps) {
+  const sendsRead = useSends(props.doc.ref, props.onSettled);
+  return <ReadSendWells {...props} sendsRead={sendsRead} />;
+}
+
+/** A compact document host. Sends stay readable while destinations and the
+ * ordinary preview mount only after Send. A held press keeps its exact Retry
+ * in view, including when another seat of this document made the press. */
+export function SendWellsFold(props: SendWellsProps) {
+  useStore();
+  const { doc } = props;
+  const sendsRead = useSends(doc.ref, props.onSettled);
+  const sends = mergeKnown(doc.ref, sendsRead.data ?? []);
+  const [openedRef, setOpenedRef] = useState<string | null>(null);
+  const prefix = `${doc.ref}|`;
+  const held = [...store.holds.keys(), ...store.busy].some((key) => key.startsWith(prefix));
+  const open = openedRef === doc.ref || held;
+  const prepared = sends.filter((s) => s.state === "prepared").length;
+  const running = sends.some((s) => s.state === "dispatching");
+  const ended = sends.some((s) => s.state !== "prepared" && s.state !== "dispatching");
+  const refusals = [...store.outcomes.entries()].filter(([key, outcome]) => key.startsWith(prefix) && outcome.kind === "refused");
+  return (
+    <div className="send-fold" data-send="fold" data-doc={doc.ref} data-testid="send-fold">
+      <div className="send-fold-head">
+        <span>{SEND_WORDS.send}</span>
+        {prepared > 0 ? <StateChip state="active" label={`${SEND_WORDS.prepared} ×${prepared}`} /> : null}
+        {running ? <StateChip state="active" label={SEND_WORDS.sending} /> : null}
+        {ended && !open ? <StateChip state="idle" label={HISTORY_HEAD} /> : null}
+        <Button dense variant="ghost" aria-expanded={open} disabled={held}
+          onClick={() => setOpenedRef(open ? null : doc.ref)}>{open ? "Hide" : SEND_WORDS.send}</Button>
+      </div>
+      {open ? <ReadSendWells {...props} sendsRead={sendsRead} /> : <>
+        {sendsRead.failed ? <Unreadable what="SENDS" testid="sends-unreadable" onRetry={sendsRead.reload} /> : null}
+        {refusals.map(([key, outcome]) => <OutcomeLine key={key} o={outcome} />)}
+      </>}
+    </div>
   );
 }

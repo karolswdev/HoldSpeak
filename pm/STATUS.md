@@ -4,9 +4,27 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-15 (Follow-through and attention surfaces: #1210)
+**Last updated:** 2026-10-15 (Decision readers and shared window seams: #1211)
 
 ## Current phase
+
+**Decision readers and shared window seams — #1211 (2026-10-15).** Continued
+the owner-directed Workbench refinement. Shared compact Send folds defer
+ordinary preview/destination reads, keep prepared/history/failure discovery
+and held Retry; prepared bytes remain frozen while ordinary decision previews
+refresh after accepted field changes. Text Save awaits its writer, retains
+refused/newer drafts, and keeps exact-value Retry. Front windows now cover
+shared resize seams in paint and pointer ownership; exposed drag/key behavior
+remains. Final quick GREEN: 3764 web / 651 affected Python / 107 sweeps
+(2 existing xfails) / 17 canon; TypeScript passed. Root read actual 15-state
+desktop / 13-state phone walks and real multiline Save graph cases with
+pointer/native touch. Independent source counsel closed one pending Retry
+mismatch. The wider run caught one older Room eager-preview test; its explicit
+Send coverage retains exact record identity and one-well checks, 16/16 green.
+No owner acceptance, provider dispatch, full main tape or formal postmerge
+review inferred. [Proof and limits](../docs/internal/DECISION-DELIGHT-2026-10-15/README.md).
+[Next refinements](../docs/internal/DECISION-DELIGHT-2026-10-15/NEXT-SURFACES.md):
+duplicate speech controls, repeated Send heading and record source-fact grouping.
 
 **Follow-through and attention surfaces — #1210 (2026-10-15).** The owner's
 confusing Follow-through report drove a substantive Workbench pass: readable
@@ -28,7 +46,7 @@ acceptance, provider/model execution, encrypted People store, full main tape or
 postmerge review inferred. [Proof and limits](../docs/internal/FOLLOW-THROUGH-2026-10-15/README.md).
 [Next targets](../docs/internal/FOLLOW-THROUGH-2026-10-15/NEXT-SURFACES.md): shared
 divider overpaint, automatic Send preview, editor save/refusal and preview
-freshness. These inherited findings remain open for the next pass.
+freshness. These four findings are addressed by #1211 above.
 
 **Opened Workbench and Accounts — #1209 (2026-10-15).** The owner's
 opened-workbench/controls report drove a complete bounded pass: multiline
@@ -299,6 +317,13 @@ committing generated docs and line-number test maps; split the tests.
 
 ## Open work
 
+**From #1211:** continue the bounded surface audit in the linked next-refinements
+record. No confirmed source finding remains from this pass. Owner live judgment,
+formal postmerge review and full main tape are separate. Existing remote CI
+token-gate/API-reference debt was reproduced on #1209/#1210; this pass does not
+claim it repaired. Held Send has focused transport-test coverage, not a live
+provider-dispatch claim.
+
 **From #1209:** opened Workbench/controls and the reported Accounts row are
 refined and verified on isolated production faces at 1440/393. Continue
 bounded inspection of remaining existing surfaces. Owner live judgment,
@@ -380,6 +405,15 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 | Runs on (16c): a per-object wire on the board (thought/workbench/agent/recipe/project overrides; the parked AssignmentEditor sheet edited them; the contextual atom now only reads them and opens Runs on); FOUND model files and an unrecorded Whisper (add-to-library needs a detected_artifact_id detect does not carry); Try it through the route for jobs other than Thoughts & notes (route_probe accepts only ask.answer); the phone list cannot pin an inherited engine as a job's own; 25 atlas cases still drive the Concierge flow (Add = use for summaries; the window closes) | — | — |
 
 ## Last merged (newest first)
+
+- **#1211 — Decision readers and shared window seams.** Compact reusable Send,
+  exact save recovery/newer-draft continuity, current ordinary previews and
+  front-window pointer ownership. Quick 3764/651/107/17 green; actual 1440/393
+  walks and real pointer/touch multiline Save cases. Source counsel RATIFY.
+- **#1210 — Follow-through and attention surfaces.** Readable task ledger,
+  inline Manage with retained drafts/exact Retry, canonical Snooze before
+  collection and duplicate suppression; Brief selection/decision readers.
+  Quick 365/1335/107/17 green; actual 1440/393 walks and real Snooze graph cases.
 
 - **#1209 — Opened Workbench and Accounts.** Named multiline composer,
   coherent configuration and library cycles, readable item material,
