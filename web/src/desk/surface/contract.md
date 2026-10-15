@@ -225,6 +225,17 @@ window's answer pad names its mic `Speak your answer`).
 
 ## PadGadget capture hooks (surface repair, 2026-10-14)
 
+`inputRef?: Ref<HTMLTextAreaElement>` exposes the same textarea used by
+auto-grow. `inputProps` accepts additional native textarea attributes, such
+as combobox roles, source-list ARIA links, selection and paste handlers.
+The species retains ownership of its label, value, change and key handlers,
+disabled state, rows, placeholder and autofocus. Hosts keep custom capture
+grammar singular with the existing `mic={false}` option.
+
+`autoGrow` remeasures on value changes and native ResizeObserver width
+changes. Height-only observer feedback does not trigger another resize;
+the observer disconnects when the effect is replaced or the pad unmounts.
+
 `micStartSignal?: number` and `micDraftScope?: string` mirror StringGadget.
 They pass to the pad's existing MicButton. A direct agent message uses this
 single mic for capture start, pending-answer sequencing and draft recovery.

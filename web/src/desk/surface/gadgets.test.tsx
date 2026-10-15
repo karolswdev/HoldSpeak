@@ -4,6 +4,7 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+import { createRef } from "react";
 import {
   CheckGadget,
   CycleGadget,
@@ -391,6 +392,77 @@ describe("gadget kit", () => {
     const pad = screen.getByRole("textbox", { name: "Notes" });
     fireEvent.change(pad, { target: { value: "spoken words" } });
     expect(onChange).toHaveBeenCalledWith("spoken words");
+  });
+
+  it("PadGadget forwards native combobox attributes and its textarea ref", () => {
+    const inputRef = createRef<HTMLTextAreaElement>();
+    const onPaste = vi.fn();
+    const { unmount } = render(<PadGadget label="Instruction" value="Review" onChange={vi.fn()} mic={false}
+      inputRef={inputRef} inputProps={{ role: "combobox", "aria-expanded": false, "aria-controls": "sources", onPaste }} />);
+    const pad = screen.getByRole("combobox", { name: "Instruction" });
+    expect(pad.tagName).toBe("TEXTAREA");
+    expect(inputRef.current).toBe(pad);
+    expect(pad).toHaveAttribute("aria-controls", "sources");
+    fireEvent.paste(pad);
+    expect(onPaste).toHaveBeenCalledOnce();
+    unmount();
+    expect(inputRef.current).toBeNull();
+  });
+
+  it("PadGadget keeps controlled ownership and auto-grow when an external ref is used", () => {
+    const onChange = vi.fn(), onKeyDown = vi.fn(), rejectedChange = vi.fn(), rejectedKey = vi.fn();
+    const inputRef = vi.fn();
+    const props = { role: "combobox", "aria-label": "Wrong", value: "Wrong", onChange: rejectedChange, onKeyDown: rejectedKey } as never;
+    const view = (value: string) => <PadGadget label="Instruction" value={value} onChange={onChange} onKeyDown={onKeyDown}
+      mic={false} autoGrow inputRef={inputRef} inputProps={props} />;
+    const { rerender } = render(view("Review"));
+    const pad = screen.getByRole("combobox", { name: "Instruction" });
+    expect(inputRef).toHaveBeenCalledWith(pad);
+    expect(pad).toHaveValue("Review");
+    Object.defineProperty(pad, "scrollHeight", { configurable: true, value: 80 });
+    rerender(view("Review\nConfirm ownership"));
+    expect(pad).toHaveStyle({ height: "82px" });
+    fireEvent.change(pad, { target: { value: "Revised" } });
+    fireEvent.keyDown(pad, { key: "Enter" });
+    expect(onChange).toHaveBeenCalledWith("Revised");
+    expect(onKeyDown).toHaveBeenCalledOnce();
+    expect(rejectedChange).not.toHaveBeenCalled();
+    expect(rejectedKey).not.toHaveBeenCalled();
+  });
+
+  it("PadGadget auto-grow remeasures width changes, ignores height feedback and disconnects", () => {
+    let notify!: ResizeObserverCallback;
+    const observe = vi.fn(), disconnect = vi.fn();
+    vi.stubGlobal("ResizeObserver", class {
+      constructor(callback: ResizeObserverCallback) { notify = callback; }
+      observe = observe;
+      disconnect = disconnect;
+    });
+    try {
+      const view = (value: string) => <PadGadget label="Resized instruction" value={value} onChange={vi.fn()} mic={false} autoGrow />;
+      const { rerender, unmount } = render(view("Review the complete migration instruction"));
+      const pad = screen.getByRole("textbox", { name: "Resized instruction" });
+      let contentHeight = 271;
+      Object.defineProperty(pad, "scrollHeight", { configurable: true, get: () => contentHeight });
+      const resize = (width: number) => act(() => notify([{ contentRect: { width } } as ResizeObserverEntry], {} as ResizeObserver));
+      expect(observe).toHaveBeenCalledWith(pad);
+      resize(566);
+      expect(pad).toHaveStyle({ height: "273px" });
+      contentHeight = 634;
+      resize(327);
+      expect(pad).toHaveStyle({ height: "636px" });
+      contentHeight = 900;
+      resize(327);
+      expect(pad).toHaveStyle({ height: "636px" });
+      contentHeight = 40;
+      rerender(view("A shorter instruction"));
+      expect(pad).toHaveStyle({ height: "42px" });
+      expect(disconnect).toHaveBeenCalledOnce();
+      unmount();
+      expect(disconnect).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it("FoldGadget keeps details semantics and carries the token slot", () => {

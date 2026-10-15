@@ -224,6 +224,32 @@ describe("Run with no engine", () => {
     expect(screen.getByRole("button", { name: "Run: No engine" })).toBeDisabled();
   });
 
+  it("offers the same engine repair from empty Runs without submitting a known refusal", async () => {
+    const calls = mockHub({ recipeId: "r1", recipes: AGENT, engineStatus: "no_assignment" });
+    render(<WorkbenchWindow workbenchId="wb1" />);
+    await screen.findByTestId("wb-no-engine");
+    fireEvent.click(screen.getByRole("tab", { name: "Runs" }));
+    expect(screen.queryByRole("button", { name: "Run now" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Choose engine" })).toBeInTheDocument();
+    expect(calls.mock.calls.filter(([input, init]) => String(input).endsWith("/run") && init?.method === "POST")).toHaveLength(0);
+  });
+
+  it("folds the bound agent roster while keeping its identity and engine controls visible", async () => {
+    mockHub({ recipeId: "r1", recipes: AGENT, engineStatus: "assigned" });
+    render(<WorkbenchWindow workbenchId="wb1" />);
+    fireEvent.click(await screen.findByRole("button", { name: "Configure" }));
+    const group = screen.getByRole("region", { name: "Agent" });
+    expect(group).toHaveAttribute("data-material", "inset");
+    const roster = group.querySelector("details")!;
+    expect(roster).not.toHaveAttribute("open");
+    expect(group.querySelector(".wb-config-current-agent strong")).toHaveTextContent("Agent");
+    await waitFor(() => expect(group.querySelector(".wb-config-current-agent strong")).toBeVisible());
+    expect(screen.getByRole("region", { name: "Engines" })).toHaveAttribute("data-material", "inset");
+    fireEvent.click(within(group).getByText("Choose agent", { exact: true }));
+    expect(roster).toHaveAttribute("open");
+    expect(screen.getByLabelText("Search agents")).toBeVisible();
+  });
+
   it("offers Run when the engine is assigned on THIS workbench only (subject scope)", async () => {
     mockHub({ recipeId: "r1", recipes: AGENT, engineStatus: "assigned", engineSource: "subject" });
     const fetchMock = vi.mocked(fetch);

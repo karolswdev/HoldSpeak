@@ -5,13 +5,15 @@
 // what the payload under the cursor will really do, RUN names what is
 // missing instead of standing bare, and the empty runs ledger offers the
 // step that ends it.
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_ITEMS } from "../../api";
 import { useDesk } from "../../store";
 import { clearWriteFailure } from "../../hooks/useWriteReceipt";
 import { deskQueryClient, deskResourceKey } from "../../../lib/queryClient";
+import * as MicCapture from "../MicButton";
+import { workbenchVoiceGrammar } from "../../voice/grammars/workbench";
 import {
   BODY_SAVE_PAUSE_MS,
   WorkbenchWindow,
@@ -300,6 +302,102 @@ describe("Workbench inlet draft custody", () => {
 
   const inletKey = "workbench/wb1/inlet";
   const instruction = "Review release ownership with the team and keep the complete source instruction after returning.";
+
+  it("seats a visible multiline instruction and primary Add in the named inset", async () => {
+    await openWindow();
+    const group = screen.getByRole("region", { name: "Add item" });
+    expect(group).toHaveAttribute("data-material", "inset");
+    expect(within(group).getByText("Instruction", { exact: true })).toBeVisible();
+    expect(within(group).getByRole("combobox", { name: "New item instruction" }).tagName).toBe("TEXTAREA");
+    const add = within(group).getByRole("button", { name: "Add" });
+    expect(add).toHaveClass("btn--primary");
+    expect(add.closest("footer")).toHaveClass("gadget-group-actions");
+    expect(within(group).getAllByRole("button", { name: /^Speak(?: ·|$)/ })).toHaveLength(1);
+    fireEvent.click(screen.getByText("Draft the brief"));
+    expect(within(screen.getByRole("region", { name: "Instruction" })).getByRole("textbox", { name: "Item body" })).toBeInTheDocument();
+  });
+
+  it("the single grammar mic fills the paired Pad and sends its complete instruction and source through Add", async () => {
+    // Observe the existing real MicButton and inject at its transcription
+    // callback boundary; capture hardware and provider egress are not exercised.
+    const capture = vi.spyOn(MicCapture, "MicButton");
+    const fetchMock = mockHub(RECORDED_READ_DETAIL);
+    const read = fetchMock.getMockImplementation()!;
+    fetchMock.mockImplementation(async (input, init) => String(input).endsWith("/voice/resolve")
+      ? new Response(JSON.stringify({ refs: [] }), { headers: { "content-type": "application/json" } })
+      : read(input, init));
+    await mount(RECORDED_READ_DETAIL.id, RECORDED_READ_DETAIL.items[0].title);
+    act(() => useDesk.setState({ items: { ...useDesk.getState().items, directory: [
+      { kind: "directory", id: "release", name: "Release sources", nameNormalized: "release sources", memberIds: [] } as never,
+    ] } }));
+    const group = screen.getByRole("region", { name: "Add item" });
+    expect(within(group).getAllByRole("button", { name: /^Speak(?: ·|$)/ })).toHaveLength(1);
+    const authority = capture.mock.calls.find(([props]) => props.draftScope === `workbench:${RECORDED_READ_DETAIL.id}`)?.[0];
+    expect(authority?.grammar).toBe(workbenchVoiceGrammar);
+    expect(authority?.onProposalConfirm).toBeTypeOf("function");
+    const pad = within(group).getByRole("combobox", { name: "New item instruction" });
+    fireEvent.change(pad, { target: { value: "Review.\nConfirm rollback owner." } });
+    // Read the latest controlled callback after the typed draft changed.
+    const latest = capture.mock.calls.filter(([props]) => props.draftScope === `workbench:${RECORDED_READ_DETAIL.id}`).at(-1)![0];
+    await act(async () => { latest.onText("Use Release sources."); });
+    const complete = "Review.\nConfirm rollback owner. Use Release sources.";
+    expect(pad).toHaveValue(complete);
+    expect(within(group).getByRole("button", { name: "Remove Release sources" })).toBeInTheDocument();
+    expect(fetchMock.mock.calls.some(([path, init]) => String(path).endsWith("/voice/resolve") && JSON.parse(String(init?.body)).transcript === "Use Release sources.")).toBe(true);
+    fireEvent.click(within(group).getByRole("button", { name: "Add" }));
+    await waitFor(() => expect(pad).toHaveValue(""));
+    const posts = fetchMock.mock.calls.filter(([path, init]) => String(path).endsWith("/items") && init?.method === "POST");
+    expect(posts).toHaveLength(1);
+    expect(JSON.parse(String(posts[0][1]?.body))).toEqual({
+      title: complete, body: complete, priority: 3, grounding: { refs: ["zone:release"] },
+    });
+  });
+
+  it("keeps Shift+Enter as a newline and Enter submits the complete instruction once", async () => {
+    const { fetchMock } = await openWindow();
+    const user = userEvent.setup();
+    const input = screen.getByRole("combobox", { name: "New item instruction" });
+    await user.type(input, "Review the plan");
+    await user.keyboard("{Shift>}{Enter}{/Shift}Confirm rollback ownership");
+    expect(input).toHaveValue("Review the plan\nConfirm rollback ownership");
+    const posts = () => fetchMock.mock.calls.filter(([path, init]) => String(path).endsWith("/items") && init?.method === "POST");
+    expect(posts()).toHaveLength(0);
+    await user.keyboard("{Enter}");
+    await waitFor(() => expect(posts()).toHaveLength(1));
+    expect(JSON.parse(String(posts()[0][1]?.body))).toEqual({
+      title: "Review the plan\nConfirm rollback ownership", body: "Review the plan\nConfirm rollback ownership", priority: 3,
+    });
+  });
+
+  it("selects a typed source before Add and keeps pasted @ as instruction text", async () => {
+    const previousScroll = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "scrollIntoView");
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", { configurable: true, value: vi.fn() });
+    try {
+    const { fetchMock } = await openWindow();
+    act(() => useDesk.setState({ items: { ...useDesk.getState().items, directory: [
+      { kind: "directory", id: "release", name: "Release sources", nameNormalized: "release sources", memberIds: [] } as never,
+    ] } }));
+    const user = userEvent.setup();
+    const input = screen.getByRole("combobox", { name: "New item instruction" });
+    await user.type(input, "Review @Rel");
+    expect(input).toHaveAttribute("aria-expanded", "true");
+    await user.keyboard("{Enter}");
+    expect(input).toHaveValue("Review");
+    expect(input).toHaveFocus();
+    expect(screen.getByRole("button", { name: "Remove Release sources" })).toBeInTheDocument();
+    expect(fetchMock.mock.calls.filter(([path, init]) => String(path).endsWith("/items") && init?.method === "POST")).toHaveLength(0);
+    fireEvent.paste(input);
+    fireEvent.change(input, { target: { value: "Review @Release sources" } });
+    expect(input).toHaveAttribute("aria-expanded", "false");
+    await user.keyboard("{Enter}");
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([path, init]) => String(path).endsWith("/items") && init?.method === "POST")).toHaveLength(1));
+    const post = fetchMock.mock.calls.find(([path, init]) => String(path).endsWith("/items") && init?.method === "POST")!;
+    expect(JSON.parse(String(post[1]?.body))).toMatchObject({ body: "Review @Release sources", grounding: { refs: ["zone:release"] } });
+    } finally {
+      if (previousScroll) Object.defineProperty(HTMLElement.prototype, "scrollIntoView", previousScroll);
+      else Reflect.deleteProperty(HTMLElement.prototype, "scrollIntoView");
+    }
+  });
 
   it("keeps the successful detail and composer when an aggregate read loses the workbench bucket", async () => {
     await openWindow();

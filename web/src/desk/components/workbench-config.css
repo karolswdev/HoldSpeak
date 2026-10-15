@@ -58,11 +58,15 @@
   flex: 1 0 auto;
   max-height: none;
   position: relative;
+  padding: 8px var(--desk-window-pad-x) 14px;
 }
+.desk-next .wb-config-panel > .gadget-group { margin-top: 16px; }
+.desk-next .wb-config-panel > .gadget-fold { margin-top: 12px; }
+.desk-next .wb-config-panel .contextual-assignment + .contextual-assignment { margin-top: 12px; }
 .desk-next .wb-config-collapse {
   display: flex;
   justify-content: flex-end;
-  padding: 6px var(--desk-window-pad-x);
+  padding: 6px 0;
   border-bottom: 1px solid var(--border-subtle);
   font-size: var(--font-size-xs);
 }
@@ -76,8 +80,10 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  font-family: var(--font-mono);
-  font-size: var(--desk-surface-body-size);
+  min-width: 0;
+  font-family: var(--font-sans);
+  font-size: var(--desk-type-primary-size, 15px);
+  overflow-wrap: anywhere;
 }
 .desk-next .wb-config-agent-info strong {
   font-weight: 600;
@@ -231,6 +237,7 @@
   font-size: var(--font-size-xs);
   color: var(--text-faint);
   border-top: 1px solid var(--border-subtle);
+  overflow-wrap: anywhere;
 }
 
 /* ── title editing ── */
@@ -253,27 +260,14 @@
 
 /* ── item card (HS-116-11) ── */
 .desk-next .wb-card {
-  --wb-card-edge: transparent;
-  border-bottom: 1px solid var(--border-subtle);
-  box-shadow: inset 3px 0 0 var(--wb-card-edge);
-  transition: box-shadow var(--duration-long) var(--ease-standard);
-}
-.desk-next .wb-card[data-status="claimed"] {
-  --wb-card-edge: var(--warn-signal, var(--warn));
-  animation: wb-pulse 1.6s ease-in-out infinite;
-}
-.desk-next .wb-card[data-status="done"] {
-  --wb-card-edge: var(--ok);
-}
-.desk-next .wb-card[data-status="failed"] {
-  --wb-card-edge: var(--danger-signal, var(--danger));
-}
-.desk-next .wb-card[data-status="dismissed"] {
-  opacity: 0.5;
-}
-@keyframes wb-pulse {
-  0%, 100% { --wb-card-edge: var(--warn-signal, var(--warn)); }
-  50% { --wb-card-edge: color-mix(in srgb, var(--warn-signal, var(--warn)) 30%, transparent); }
+  --text: var(--wb-text);
+  --text-muted: var(--wb-muted);
+  --text-faint: var(--wb-muted);
+  margin: 8px var(--desk-window-pad-x);
+  border: 1px solid var(--wb-rule);
+  background: var(--wb-well);
+  color: var(--wb-text);
+  box-shadow: var(--wb-sunken);
 }
 
 /* card head */
@@ -292,10 +286,14 @@
 .desk-next .wb-card-head:hover {
   background: var(--accent-tint);
 }
+.desk-next .wb-card-head[aria-expanded="true"] { background: color-mix(in srgb, var(--wb-sel) 8%, var(--wb-well)); }
+.desk-next .wb-card-head > .surface-state-chip { flex-shrink: 0; max-width: 45%; }
 .desk-next .wb-card-title {
   flex: 1;
-  font-family: var(--font-mono);
-  font-size: var(--desk-surface-body-size);
+  min-width: 0;
+  font-family: var(--font-sans);
+  font-size: var(--desk-type-primary-size, 15px);
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: normal;
@@ -316,8 +314,8 @@
 .desk-next .wb-card-preview {
   padding: 0 var(--desk-window-pad-x) 6px 22px;
   margin: 0;
-  font-family: var(--font-mono);
-  font-size: var(--desk-surface-detail-size);
+  font-family: var(--font-sans);
+  font-size: var(--desk-surface-body-size);
   color: var(--text-faint);
   line-height: 1.4;
   overflow: hidden;
@@ -328,13 +326,15 @@
 
 /* expanded detail */
 .desk-next .wb-card-detail {
-  padding: 0 var(--desk-window-pad-x) 10px 22px;
+  min-width: 0;
+  padding: 0 var(--desk-window-pad-x) 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
-.desk-next .wb-card-body-edit .gadget-pad {
-  font-size: var(--desk-surface-detail-size);
+.desk-next .wb-card-body-edit .gadget-pad textarea,
+.desk-next .wb-inlet .gadget-pad textarea {
+  font: 400 13px / 1.5 var(--font-sans);
 }
 
 /* grounding chips */
@@ -384,9 +384,10 @@
 /* ── inlet (HS-118-03/04, cleaned HS-135-13) ── */
 .desk-next .wb-inlet {
   position: relative;
-  border-bottom: 1px solid var(--border);
+  margin: 8px var(--desk-window-pad-x);
   flex-shrink: 0;
 }
+.desk-next .wb-inlet .gadget-group-actions { justify-content: flex-end; }
 .desk-next .wb-inlet .inlet-autocomplete {
   top: 100%;
   bottom: auto;
@@ -416,23 +417,16 @@
 }
 .desk-next .wb-inlet-row {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px var(--desk-window-pad-x);
+  align-items: flex-start;
+  width: 100%;
+  gap: 8px;
+  padding: 0;
 }
-.desk-next .wb-inlet-input {
+.desk-next .wb-inlet-row > .gadget-pad {
   flex: 1;
-  font-family: var(--font-mono);
-  font-size: var(--desk-surface-body-size);
-  background: transparent;
-  border: none;
-  color: var(--text);
-  outline: none;
   min-width: 0;
 }
-.desk-next .wb-inlet-input::placeholder {
-  color: var(--text-faint);
-}
+.desk-next .wb-inlet .gadget-pad textarea { padding-right: 6px; }
 .desk-next .wb-priority-cycle {
   font-family: var(--font-mono);
   font-size: var(--font-size-xs);
@@ -652,6 +646,7 @@
 }
 .desk-next .wb-home-card-stats {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   font-family: var(--font-mono);
   font-size: var(--desk-surface-detail-size);
@@ -682,8 +677,6 @@
 /* ── narrow workbench (container query) ── */
 /* HS-129-06 — Workbench uses the public window-body container name. */
 @container surface (max-width: 560px) {
-  .desk-next .wb-inlet-row { flex-wrap: wrap; }
-  .desk-next .wb-inlet-input { flex-basis: calc(100% - 54px); min-height: var(--desk-button-hit-size); }
   .wb-config-strip {
     flex-wrap: wrap;
   }

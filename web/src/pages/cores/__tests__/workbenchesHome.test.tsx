@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { WorkbenchesHomeCore } from "../WorkbenchesHomeCore";
 
@@ -20,6 +20,40 @@ const RUN = { id: "run-alpha", workbench_id: "alpha", started_at: "2026-10-14T13
 beforeEach(() => { vi.clearAllMocks(); });
 
 describe("Workbenches read truth", () => {
+  it("counts only actual done items and names running and terminal run states", async () => {
+    const bench = { ...ALPHA, item_count: 5, pending_count: 1, items: [
+      { status: "pending" }, { status: "claimed" }, { status: "done" }, { status: "failed" }, { status: "dismissed" },
+      { status: "done", parked: true },
+    ] };
+    const runs = ["running", "completed", "failed", "cancelled"].map((status) => ({ ...RUN, id: status, status }));
+    mocks.apiFetch.mockImplementation((path: string) => Promise.resolve(path === "/api/workbenches" ? { workbenches: [bench, BETA] } : { runs: path.includes("alpha") ? runs : [] }));
+    render(<WorkbenchesHomeCore />);
+    const alpha = await screen.findByRole("button", { name: /Alpha.*PENDING/ });
+    expect(within(alpha).getByText("1 DONE")).toBeInTheDocument();
+    expect(within(alpha).getByText("5 ITEMS")).toBeInTheDocument();
+    expect(within(alpha).getByText("1 FAILED")).toBeInTheDocument();
+    expect(within(alpha).getByText("1 IN PROGRESS")).toBeInTheDocument();
+    expect(within(alpha).queryByText("4 DONE")).toBeNull();
+    const beta = screen.getByRole("button", { name: /Beta.*PENDING/ });
+    expect(within(beta).getByText("2 ITEMS")).toBeInTheDocument();
+    expect(beta).not.toHaveTextContent("DONE");
+    expect(await screen.findByText("Running", { exact: true })).toHaveClass("surface-state-chip");
+    expect(screen.getByText("Completed", { exact: true })).toBeInTheDocument();
+    expect(screen.getByText("Failed", { exact: true })).toBeInTheDocument();
+    expect(screen.getByText("Cancelled", { exact: true })).toBeInTheDocument();
+    expect(screen.queryByText("FAIL", { exact: true })).toBeNull();
+  });
+
+  it("keeps all-failed work visible and marked for attention without inventing DONE", async () => {
+    const bench = { ...ALPHA, item_count: 3, pending_count: 0, items: [{ status: "failed" }, { status: "failed" }, { status: "failed" }] };
+    mocks.apiFetch.mockImplementation((path: string) => Promise.resolve(path === "/api/workbenches" ? { workbenches: [bench] } : { runs: [] }));
+    render(<WorkbenchesHomeCore />);
+    const alpha = await screen.findByRole("button", { name: /Alpha.*3 ITEMS/ });
+    expect(alpha).toHaveAttribute("data-needs", "true");
+    expect(within(alpha).getByText("3 FAILED")).toBeInTheDocument();
+    expect(alpha).not.toHaveTextContent("DONE");
+    expect(alpha).not.toHaveTextContent("PENDING");
+  });
   it("updates the still-open list after a Desk write and keeps the last rows on a failed reread", async () => {
     let workbenches: typeof ALPHA[] = [];
     let fail = false;

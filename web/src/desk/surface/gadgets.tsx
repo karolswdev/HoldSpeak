@@ -374,6 +374,8 @@ export function PadGadget({
   disabled,
   autoFocus,
   onKeyDown,
+  inputRef,
+  inputProps,
 }: {
   label: string;
   value: string;
@@ -395,19 +397,44 @@ export function PadGadget({
   disabled?: boolean;
   autoFocus?: boolean;
   onKeyDown?: (event: KeyboardEvent<HTMLTextAreaElement>) => void;
+  /** Hosts can focus or position the caret without taking control of the pad. */
+  inputRef?: Ref<HTMLTextAreaElement>;
+  /** Native textarea attributes for specialized patterns, including comboboxes. */
+  inputProps?: Omit<
+    ComponentPropsWithoutRef<"textarea">,
+    "aria-label" | "autoFocus" | "disabled" | "onChange" | "onKeyDown" | "placeholder" | "ref" | "rows" | "value"
+  >;
 }) {
-  const padRef = useRef<HTMLTextAreaElement>(null);
+  const padRef = useRef<HTMLTextAreaElement | null>(null);
   useEffect(() => {
     if (!autoGrow) return;
     const pad = padRef.current;
     if (!pad) return;
-    pad.style.height = "auto";
-    pad.style.height = `${pad.scrollHeight + 2}px`;
+    const grow = () => {
+      pad.style.height = "auto";
+      pad.style.height = `${pad.scrollHeight + 2}px`;
+    };
+    grow();
+    if (typeof ResizeObserver === "undefined") return;
+    let observedWidth: number | undefined;
+    const observer = new ResizeObserver(([entry]) => {
+      if (!entry || entry.contentRect.width === observedWidth) return;
+      observedWidth = entry.contentRect.width;
+      grow();
+    });
+    observer.observe(pad);
+    return () => observer.disconnect();
   }, [value, autoGrow]);
   return (
     <span className="gadget-pad" data-grow={autoGrow || undefined}>
       <textarea
-        ref={padRef}
+        {...inputProps}
+        ref={(element) => {
+          padRef.current = element;
+          if (typeof inputRef === "function") inputRef(element);
+          else if (inputRef && typeof inputRef === "object")
+            (inputRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = element;
+        }}
         aria-label={label}
         value={value}
         placeholder={placeholder}

@@ -166,12 +166,13 @@ MIC_SPECIES = ("StringGadget", "PadGadget", "EditInPlace")
 
 # The named allowlist: (path relative to web/src, needle, reason).
 #
-# The needle is matched against the element's NEIGHBOURHOOD — its own tag text
-# plus the two preceding lines — never a line number (line-anchored fences
-# move).  Every entry is one element of the HS-176-01 census
+# A label needle is matched against its own tag. Other needles use the
+# NEIGHBOURHOOD — its tag plus the two preceding lines — never a line number.
+# The original entries come from the HS-176-01 census
 # (pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/mic-census-176.md
 # §2c and §3): 19 raw non-text controls + 4 justified `mic={false}` opt-outs
-# = 23, plus the 24th added by ruling R13 (the Speak face's utterance well).
+# = 23, plus R13's Speak utterance well. The retired Thread boolean exception
+# is parked below; Workbench's existing grammar mic replaces the Pad mic.
 MIC_ALLOWLIST: tuple[tuple[str, str, str], ...] = (
     # -- 19 raw elements the census names (census §2c) ----------------------
     ("components/signal/Signal.tsx", 'hs-control ${props.className',
@@ -190,8 +191,8 @@ MIC_ALLOWLIST: tuple[tuple[str, str, str], ...] = (
      "PropGadget slider — not a text input"),
     ("desk/surface/patterns/ChoiceCardGroup.tsx", "surface-choice-card-radio",
      "ChoiceCard radio — not a text input"),
-    ("desk/pullouts/ThreadPullout.tsx", "thread-elicitation-boolean",
-     "Elicitation boolean checkbox — not a text input"),
+    # Parked: ("desk/pullouts/ThreadPullout.tsx", "thread-elicitation-boolean",
+    # "Elicitation boolean checkbox — not a text input"). It now uses CheckGadget.
     ("desk/pullouts/ThreadPullout.tsx", 'type="number"',
      "Elicitation numeric field — a number, not dictatable text"),
     ("desk/components/ScheduleCreateWindow.tsx", 'type="datetime-local"',
@@ -224,6 +225,8 @@ MIC_ALLOWLIST: tuple[tuple[str, str, str], ...] = (
     # -- the 24th, ruling R13 (HS-176-05) ----------------------------------
     ("pages/cores/dictation/SpeakFace.tsx", 'label="Utterance"',
      "The Talk transport is this face's mic authority (Article IV.3, R13)"),
+    ("desk/components/WorkbenchWindow.tsx", 'label="New item instruction"',
+     "The adjacent Workbench grammar MicButton writes this instruction and resolves its references; the Pad must not add a second capture authority"),
 )
 
 
@@ -384,7 +387,9 @@ def scan_mic(rel_path: str, content: str, lines: list[str]) -> list[Violation]:
         if kind == "raw" and covered(offset):
             continue
         hood = _mic_neighbourhood(lines, line_no, tag)
-        if any(rel_path == path and needle in hood for path, needle, _r in MIC_ALLOWLIST):
+        # A named field exception belongs to that tag, never a nearby field.
+        if any(rel_path == path and needle in (tag if needle.startswith("label=") else hood)
+               for path, needle, _r in MIC_ALLOWLIST):
             continue
         first = tag.strip().splitlines()[0].strip()
         violations.append(Violation(

@@ -25,6 +25,8 @@ class ResizeObserverStub {
 if (!("ResizeObserver" in globalThis)) {
   Object.defineProperty(globalThis, "ResizeObserver", {
     value: ResizeObserverStub,
+    configurable: true,
+    writable: true,
   });
 }
 

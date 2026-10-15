@@ -521,7 +521,7 @@ class TestMicAllowlist:
         assert not stale, "stale allowlist entries:\n  " + "\n  ".join(stale)
 
     def test_the_ledger_matches_the_census(self):
-        """23 census elements (19 raw + 4 opt-outs) + the R13 well = 24."""
+        """23 census - retired Thread checkbox + R13 + Workbench grammar = 24."""
         mod = _load_scanner()
         assert len(mod.MIC_ALLOWLIST) == 24
         assert len({(p, n) for p, n, _ in mod.MIC_ALLOWLIST}) == 24
@@ -589,3 +589,21 @@ def test_the_real_concierge_address_well_is_not_blind() -> None:
     assert scanner.scan_mic(rel, content, content.splitlines()) == []
     hole = content.replace('label="Server address"', 'label="Server address"\n              mic={false}', 1)
     assert len(scanner.scan_mic(rel, hole, hole.splitlines())) == 1
+
+
+def test_workbench_instruction_keeps_one_named_grammar_mic_authority() -> None:
+    scanner = _load_scanner()
+    content = '''export function WorkbenchWindow() {
+      return <div>
+        <MicButton onText={writeInstructionAndResolveReferences} />
+        <PadGadget label="New item instruction" mic={false} />
+        <PadGadget label="Unrelated instruction" mic={false} />
+      </div>;
+    }'''
+    rel = "desk/components/WorkbenchWindow.tsx"
+    found = scanner.scan_mic(rel, content, content.splitlines())
+    assert len(found) == 1
+    assert 'label="Unrelated instruction"' in content.splitlines()[found[0].line - 1]
+    # The named label does not excuse a different face's missing capture path.
+    elsewhere = scanner.scan_mic("features/x/Row.tsx", content, content.splitlines())
+    assert len(elsewhere) == 2

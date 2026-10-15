@@ -4,9 +4,11 @@
 // hub's OWN /api/connections answers, recorded by
 // tests/integration/test_desk_connections.py (which proves no fixture field
 // is invented: the scar law).
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ConnectionsPane } from "../../pages/cores/connections";
+import { AddAccountFields } from "../../pages/cores/connections/ConnectionsPane";
 import checkedWire from "./fixtures/connections-wire/connections-checked.json";
 import coldWire from "./fixtures/connections-wire/connections-cold.json";
 
@@ -153,7 +155,247 @@ describe("the cold Connections face", () => {
     expect(within(gh).getByRole("button", { name: /Recheck/ })).toBeTruthy();
     for (const id of ["connections-calendar", "connections-models", "connections-jira", "connections-confluence"])
       expect(screen.getByTestId(id), id).toBeTruthy();
+    expect(screen.getByTestId("connections-add-open-jira").closest(".surface-ledger-row"))
+      .toBe(screen.getByTestId("connections-jira").closest(".surface-ledger-row"));
     expect(chipWords(screen.getByTestId("connections-calendar"))).toBe("Not set up");
     expect(reads).toEqual(["GET /api/connections"]);
+  });
+});
+
+describe("account rows keep their status and actions together", () => {
+  it.each(["jira", "confluence"])("keeps the empty %s Add form and refusal across Cancel/reopen", async (provider) => {
+    wire = clone(coldWire);
+    const base = globalThis.fetch;
+    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
+      const path = new URL(String(input), "http://hub.test").pathname;
+      if (path === `/api/providers/${provider}/connections` && init?.method === "POST") {
+        reads.push(`POST ${path}`);
+        throw new Error("Add refused");
+      }
+      return base(input, init);
+    }));
+    render(<ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} />);
+    fireEvent.click(await screen.findByTestId(`connections-add-open-${provider}`));
+    const form = screen.getByTestId(`connections-add-${provider}`);
+    fireEvent.change(within(form).getByRole("textbox", { name: "Site" }), { target: { value: "draft.atlassian.net" } });
+    fireEvent.change(within(form).getByRole("textbox", { name: "Email" }), { target: { value: "draft@example.com" } });
+    fireEvent.click(within(form).getByRole("button", { name: "Add" }));
+    await within(form).findByText("Account not added");
+    fireEvent.click(within(form).getByRole("button", { name: "Cancel" }));
+    expect(screen.getByTestId(`connections-add-${provider}`)).toBe(form);
+    expect(form).not.toBeVisible();
+    expect(screen.queryByRole("textbox", { name: "Site" })).toBeNull();
+    fireEvent.click(screen.getByTestId(`connections-add-open-${provider}`));
+    expect(screen.getByTestId(`connections-add-${provider}`)).toBe(form);
+    expect(within(form).getByText("Account not added")).toBeVisible();
+    expect(within(form).getByRole("button", { name: "Retry" })).toBeVisible();
+    expect((within(form).getByRole("textbox", { name: "Site" }) as HTMLInputElement).value).toBe("draft.atlassian.net");
+    expect((within(form).getByRole("textbox", { name: "Email" }) as HTMLInputElement).value).toBe("draft@example.com");
+  });
+
+  it("uses wrapping state chips and puts Add in the last provider account row", async () => {
+    wire = clone(checkedWire);
+    render(<ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} />);
+    await screen.findByTestId("connections-github");
+    for (const chip of document.querySelectorAll(".connections-pane .surface-state-chip")) {
+      expect(chip.hasAttribute("data-wrap")).toBe(true);
+    }
+    const rows = tool("jira").connections;
+    const first = screen.getByTestId(`connections-jira-conn-${rows[0].connection_ref}`);
+    const last = screen.getByTestId(`connections-jira-conn-${rows.at(-1).connection_ref}`);
+    const add = screen.getByTestId("connections-add-open-jira");
+    expect(add.closest(".surface-ledger-row")).toBe(last.closest(".surface-ledger-row"));
+    expect(within(first).queryByRole("button", { name: "Add Jira account" })).toBeNull();
+    expect(within(last).getByRole("button", { name: "Recheck" })).toBeTruthy();
+    expect(document.querySelector(".connections-add-account")).toBeNull();
+  });
+
+  it("keeps Add drafts on Cancel and when switching to sign-in in the same row", async () => {
+    wire = clone(checkedWire);
+    const last = tool("jira").connections.at(-1);
+    last.state = "owner_action_required";
+    render(<ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} />);
+    const row = await screen.findByTestId(`connections-jira-conn-${last.connection_ref}`);
+    fireEvent.click(screen.getByTestId("connections-add-open-jira"));
+    let form = screen.getByTestId("connections-add-jira");
+    expect(form.closest(".surface-ledger-row")).toBe(row.closest(".surface-ledger-row"));
+    fireEvent.change(within(form).getByRole("textbox", { name: "Site" }), { target: { value: "draft.atlassian.net" } });
+    fireEvent.change(within(form).getByRole("textbox", { name: "Email" }), { target: { value: "draft@example.com" } });
+    fireEvent.click(within(form).getByRole("button", { name: "Cancel" }));
+    expect(screen.getByTestId("connections-add-jira")).toBe(form);
+    expect(form).not.toBeVisible();
+    expect(within(row.closest(".surface-ledger-row") as HTMLElement).queryByRole("textbox", { name: "Site" })).toBeNull();
+    fireEvent.click(screen.getByTestId("connections-add-open-jira"));
+    expect(screen.getByTestId("connections-add-jira")).toBe(form);
+    expect((within(form).getByRole("textbox", { name: "Site" }) as HTMLInputElement).value).toBe("draft.atlassian.net");
+    fireEvent.click(within(row).getByRole("button", { name: "Sign in" }));
+    expect(screen.getByTestId("connections-add-jira")).toBe(form);
+    expect(form).not.toBeVisible();
+    expect(within(row.closest(".surface-ledger-row") as HTMLElement).queryByRole("textbox", { name: "Site" })).toBeNull();
+    expect(within(row.closest(".surface-ledger-row") as HTMLElement).getByText(`acli jira auth login --site ${last.account.site} --email ${last.account.email} --token`)).toBeTruthy();
+    fireEvent.click(screen.getByTestId("connections-add-open-jira"));
+    expect(screen.getByTestId("connections-add-jira")).toBe(form);
+    expect(form).toBeVisible();
+    expect((within(form).getByRole("textbox", { name: "Email" }) as HTMLInputElement).value).toBe("draft@example.com");
+    expect(reads).toEqual(["GET /api/connections"]);
+  });
+});
+
+describe("account writers retain their existing routes and results", () => {
+  it("Recheck uses the provider route and marks only the selected account busy", async () => {
+    wire = clone(checkedWire);
+    const base = globalThis.fetch;
+    let finish!: (response: Response) => void;
+    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
+      const path = new URL(String(input), "http://hub.test").pathname;
+      if (path === "/api/connections/jira/recheck" && init?.method === "POST") {
+        reads.push(`POST ${path}`);
+        return new Promise<Response>((resolve) => { finish = resolve; });
+      }
+      return base(input, init);
+    }));
+    render(<ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} />);
+    const rows = tool("jira").connections;
+    const first = await screen.findByTestId(`connections-jira-conn-${rows[0].connection_ref}`);
+    const last = screen.getByTestId(`connections-jira-conn-${rows.at(-1).connection_ref}`);
+    const recheck = within(last).getByRole("button", { name: "Recheck" }) as HTMLButtonElement;
+    fireEvent.click(recheck);
+    expect(recheck.disabled).toBe(true);
+    expect((within(first).getByRole("button", { name: "Recheck" }) as HTMLButtonElement).disabled).toBe(false);
+    await act(async () => { finish(new Response(JSON.stringify(tool("jira")), { status: 200, headers: { "content-type": "application/json" } })); });
+    await waitFor(() => expect(recheck.disabled).toBe(false));
+    expect(reads.filter((read) => read.startsWith("POST"))).toEqual(["POST /api/connections/jira/recheck"]);
+  });
+
+  it("a refused Add keeps the draft for Retry; acceptance refreshes accounts and checks the provider", async () => {
+    wire = clone(checkedWire);
+    const recordedJira = clone(tool("jira"));
+    const added = recordedJira.connections.at(-1);
+    tool("jira").connections = [tool("jira").connections[0]];
+    tool("jira").connections[0].state = "owner_action_required";
+    const base = globalThis.fetch;
+    const submissions: Json[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
+      const path = new URL(String(input), "http://hub.test").pathname;
+      if (path === "/api/providers/jira/connections" && init?.method === "POST") {
+        reads.push(`POST ${path}`);
+        submissions.push(JSON.parse(String(init.body)));
+        if (submissions.length === 1) throw new Error("Add refused");
+        wire.tools = wire.tools.map((entry: Json) => entry.provider_id === "jira" ? clone(recordedJira) : entry);
+        // The Add client consumes no response fields. Its following GET and
+        // Recheck replay the recorded hub answer, including the added row.
+        return new Response(null, { status: 200 });
+      }
+      if (path === "/api/connections/jira/recheck" && init?.method === "POST") {
+        reads.push(`POST ${path}`);
+        return new Response(JSON.stringify(recordedJira), { status: 200, headers: { "content-type": "application/json" } });
+      }
+      return base(input, init);
+    }));
+    render(<ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} />);
+    fireEvent.click(await screen.findByTestId("connections-add-open-jira"));
+    let form = screen.getByTestId("connections-add-jira");
+    fireEvent.change(within(form).getByRole("textbox", { name: "Site" }), { target: { value: added.account.site } });
+    fireEvent.change(within(form).getByRole("textbox", { name: "Email" }), { target: { value: added.account.email } });
+    fireEvent.click(within(form).getByRole("button", { name: "Add" }));
+    await within(form).findByText("Account not added");
+    expect((within(form).getByRole("textbox", { name: "Site" }) as HTMLInputElement).value).toBe(added.account.site);
+    expect((within(form).getByRole("textbox", { name: "Email" }) as HTMLInputElement).value).toBe(added.account.email);
+    const existing = screen.getByTestId(`connections-jira-conn-${recordedJira.connections[0].connection_ref}`);
+    fireEvent.click(within(existing).getByRole("button", { name: "Sign in" }));
+    expect(form).not.toBeVisible();
+    expect(within(existing.closest(".surface-ledger-row") as HTMLElement).queryByRole("textbox", { name: "Site" })).toBeNull();
+    fireEvent.click(screen.getByTestId("connections-add-open-jira"));
+    expect(screen.getByTestId("connections-add-jira")).toBe(form);
+    expect(within(form).getByText("Account not added")).toBeVisible();
+    fireEvent.click(within(form).getByRole("button", { name: "Retry" }));
+    await screen.findByTestId(`connections-jira-conn-${added.connection_ref}`);
+    await waitFor(() => {
+      form = screen.getByTestId("connections-add-jira");
+      expect((within(form).getByRole("textbox", { name: "Site" }) as HTMLInputElement).value).toBe("");
+      expect((within(form).getByRole("textbox", { name: "Email" }) as HTMLInputElement).value).toBe("");
+    });
+    expect(submissions).toEqual([
+      { site: added.account.site, email: added.account.email },
+      { site: added.account.site, email: added.account.email },
+    ]);
+    expect(reads).toContain("POST /api/connections/jira/recheck");
+    expect(form.closest(".surface-ledger-row")).toBe(screen.getByTestId(`connections-jira-conn-${added.connection_ref}`).closest(".surface-ledger-row"));
+  });
+
+  it("a failed Recheck offers Retry and redraws the recovered hub state", async () => {
+    wire = clone(coldWire);
+    const answer = clone(recheckGithubWire) as Json;
+    answer.last_checked_at = new Date().toISOString();
+    const base = globalThis.fetch;
+    let attempts = 0;
+    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
+      const path = new URL(String(input), "http://hub.test").pathname;
+      if (path === "/api/connections/github/recheck" && init?.method === "POST") {
+        reads.push(`POST ${path}`);
+        if (++attempts === 1) throw new Error("Check refused");
+        wire.tools = wire.tools.map((entry: Json) => entry.provider_id === "github" ? clone(answer) : entry);
+        return new Response(JSON.stringify(answer), { status: 200, headers: { "content-type": "application/json" } });
+      }
+      return base(input, init);
+    }));
+    render(<ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} />);
+    const card = await screen.findByTestId("connections-github");
+    fireEvent.click(within(card).getByRole("button", { name: "Recheck" }));
+    const alert = await screen.findByRole("alert");
+    expect(within(alert).getByText("Check failed")).toBeTruthy();
+    fireEvent.click(within(alert).getByRole("button", { name: "Retry" }));
+    await screen.findByText("Connected · Checked now");
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(attempts).toBe(2);
+  });
+});
+
+describe("Add input custody", () => {
+  it("keeps local field defaults for callers without a controlled draft", async () => {
+    const onAdd = vi.fn().mockRejectedValueOnce(new Error("Add refused"));
+    render(<AddAccountFields provider="confluence" onAdd={onAdd} />);
+    const site = screen.getByRole("textbox", { name: "Site" }) as HTMLInputElement;
+    const email = screen.getByRole("textbox", { name: "Email" }) as HTMLInputElement;
+    fireEvent.change(site, { target: { value: "alpha.atlassian.net" } });
+    fireEvent.change(email, { target: { value: "owner@example.com" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    await screen.findByText("Account not added");
+    expect(site.value).toBe("alpha.atlassian.net");
+    expect(email.value).toBe("owner@example.com");
+    onAdd.mockResolvedValueOnce(undefined);
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(site.value).toBe(""));
+    expect(email.value).toBe("");
+    expect(onAdd).toHaveBeenCalledWith("alpha.atlassian.net", "owner@example.com");
+  });
+
+  it("clears accepted submitted values and preserves edits made while Add is pending", async () => {
+    let finish!: () => void;
+    const onAdd = vi.fn(() => new Promise<void>((resolve) => { finish = resolve; }));
+    function DraftFields() {
+      const [draft, setDraft] = useState({ site: "alpha.atlassian.net", email: "owner@example.com" });
+      return <AddAccountFields compact provider="jira" onAdd={onAdd} draft={draft} onDraftChange={setDraft} />;
+    }
+    render(<DraftFields />);
+    const site = screen.getByRole("textbox", { name: "Site" }) as HTMLInputElement;
+    const email = screen.getByRole("textbox", { name: "Email" }) as HTMLInputElement;
+    const add = screen.getByRole("button", { name: "Add" }) as HTMLButtonElement;
+    fireEvent.click(add);
+    expect(onAdd).toHaveBeenCalledWith("alpha.atlassian.net", "owner@example.com");
+    expect(add.disabled).toBe(true);
+    fireEvent.change(site, { target: { value: "newer.atlassian.net" } });
+    fireEvent.change(email, { target: { value: "newer@example.com" } });
+    await act(async () => { finish(); });
+    expect(site.value).toBe("newer.atlassian.net");
+    expect(email.value).toBe("newer@example.com");
+    onAdd.mockResolvedValueOnce(undefined);
+    fireEvent.click(add);
+    await waitFor(() => expect(site.value).toBe(""));
+    expect(email.value).toBe("");
+    expect(onAdd.mock.calls).toEqual([
+      ["alpha.atlassian.net", "owner@example.com"],
+      ["newer.atlassian.net", "newer@example.com"],
+    ]);
   });
 });

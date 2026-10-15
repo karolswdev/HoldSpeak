@@ -103,9 +103,11 @@ import { openSurfaceOr } from "../shell";
 import { onReturnToTask, rememberTaskFocus } from "../returnToTask";
 import {
   CheckGadget,
+  CycleGadget,
   EgressChip,
   FoldGadget,
   GadgetGroup,
+  GadgetRow,
   LampGadget,
   LedMeter,
   PadGadget,
@@ -116,7 +118,6 @@ import {
   EditInPlace,
   SurfaceRows,
   SurfaceRow,
-  SurfaceSection,
   SurfaceState,
 } from "../surface/Surface";
 import {
@@ -275,6 +276,8 @@ function ConfigPanel({
   onCollapse: () => void;
 }) {
   const [agentSearch, setAgentSearch] = useState("");
+  const [agentChooserOpen, setAgentChooserOpen] = useState(!detail.recipe_id);
+  useEffect(() => { setAgentChooserOpen(!detail.recipe_id); }, [detail.recipe_id]);
   const activeAutomationCount = automations.filter((automation) => automation.enabled).length;
   const [startMode, setStartMode] = useState<"manual" | "schedule" | "event" | "idle">(
     resourcefulPolicy?.enabled
@@ -357,7 +360,7 @@ function ConfigPanel({
       </Button>
 
       {/* ── agent ───────────────────────────────────────────────────── */}
-      <SurfaceSection label="AGENT">
+      <GadgetGroup label="Agent" material="inset">
         {recipe ? (
           <div className="wb-config-current-agent">
             <AgentAvatar
@@ -372,14 +375,15 @@ function ConfigPanel({
             </span>
           </div>
         ) : null}
-        <div className="wb-config-agent-search">
+        <FoldGadget title="Choose agent" open={agentChooserOpen} onToggle={setAgentChooserOpen}>
+        <GadgetRow label="Search agents" wide controlWidth="full">
           <StringGadget
             label="Search agents"
             value={agentSearch}
             onChange={setAgentSearch}
             placeholder="SEARCH AGENTS"
           />
-        </div>
+        </GadgetRow>
         <SurfaceRows>
           {filteredRecipes.map((r) => (
             <SurfaceRow
@@ -418,10 +422,11 @@ function ConfigPanel({
         ) : filteredRecipes.length === 0 ? (
           <SurfaceState empty emptyLabel="No agents match" />
         ) : null}
-      </SurfaceSection>
+        </FoldGadget>
+      </GadgetGroup>
 
       {/* ── assignments ───────────────────────────────────────────── */}
-      <SurfaceSection label="RUNS ON">
+      <GadgetGroup label="Engines" material="inset">
         <ContextualAssignment
           label="Item assignment"
           capabilityId="workbench.item"
@@ -433,9 +438,6 @@ function ConfigPanel({
             capability_id: "workbench.item",
           }}
         />
-      </SurfaceSection>
-
-      <SurfaceSection label="RESOLVES WITH">
         <ContextualAssignment
           label="Reference assignment"
           capabilityId="voice.reference_resolve"
@@ -446,65 +448,35 @@ function ConfigPanel({
             capability_id: "voice.reference_resolve",
           }}
         />
-      </SurfaceSection>
+      </GadgetGroup>
 
       {/* ── start condition ───────────────────────────────────────── */}
-      <SurfaceSection label="STARTS WHEN">
-        <div className="wb-start-mode" role="radiogroup" aria-label="Workbench start condition">
-          <Button variant="chrome"
-            type="button"
-            role="radio"
-            aria-checked={startMode === "manual"}
-            className="desk-chip"
-            onClick={() => selectStartMode("manual")}
-          >
-            Manual
-          </Button>
-          <Button variant="chrome"
-            type="button"
-            role="radio"
-            aria-checked={startMode === "schedule"}
-            className="desk-chip"
-            onClick={() => selectStartMode("schedule")}
-          >
-            Schedule
-          </Button>
-          <Button variant="chrome"
-            type="button"
-            role="radio"
-            aria-checked={startMode === "event"}
-            className="desk-chip"
-            onClick={() => selectStartMode("event")}
-          >
-            Event
-          </Button>
-          <Button variant="chrome"
-            type="button"
-            role="radio"
-            aria-checked={startMode === "idle"}
-            className="desk-chip"
-            onClick={() => selectStartMode("idle")}
-          >
-            Idle
-          </Button>
-        </div>
-        {startMode === "manual" ? (
-          <p className="wb-start-mode-copy">Starts only when you press Run.</p>
-        ) : null}
+      <GadgetGroup label="Starts when" material="inset">
+        <GadgetRow label="Mode" controlWidth="standard">
+          <CycleGadget label="Workbench start condition" value={startMode}
+            options={[
+              { value: "manual", label: "Manual" },
+              { value: "schedule", label: "Schedule" },
+              { value: "event", label: "Event" },
+              { value: "idle", label: "Idle" },
+            ]}
+            onChange={(mode) => selectStartMode(mode as typeof startMode)}
+          />
+        </GadgetRow>
         {startMode === "schedule" ? (
-          <div className="wb-schedule-row">
-            {SCHEDULE_PRESETS.filter((preset) => preset.cron !== null).map((preset) => (
-              <Button variant="chrome"
-                key={preset.label}
-                type="button"
-                className="desk-chip"
-                aria-pressed={preset.cron === detail.schedule}
-                onClick={() => onUpdateSchedule(preset.cron)}
-              >
-                {preset.label}
-              </Button>
-            ))}
+          <>
+            <GadgetRow label="Schedule" controlWidth="standard">
+              <CycleGadget label="Schedule" value={detail.schedule ?? ""}
+                options={[
+                  { value: "", label: "Choose schedule", disabled: true },
+                  ...SCHEDULE_PRESETS.filter((preset) => preset.cron !== null)
+                    .map((preset) => ({ value: preset.cron!, label: preset.label })),
+                ]}
+                onChange={(cron) => { if (cron) onUpdateSchedule(cron); }}
+              />
+            </GadgetRow>
             {/* HS-132-07 — a disabled control names why (AC 4). */}
+            <GadgetRow label="Enabled" controlWidth="standard">
             <span className="wb-schedule-toggle" title={detail.schedule ? undefined : "Pick a schedule first"}>
               <CheckGadget
                 label="Schedule enabled"
@@ -513,7 +485,8 @@ function ConfigPanel({
                 disabled={!detail.schedule}
               />
             </span>
-          </div>
+            </GadgetRow>
+          </>
         ) : null}
         {startMode === "event" ? <WorkbenchAutomations workbenchId={workbenchId} write={write} onChanged={onAutomationsChanged} /> : null}
         {startMode === "idle" ? (
@@ -524,19 +497,10 @@ function ConfigPanel({
             onChanged={onResourcefulChanged}
           />
         ) : null}
-      </SurfaceSection>
+      </GadgetGroup>
 
       {/* ── skills (read-only, inherited from the bound agent) ─────── */}
-      <SurfaceSection
-        label="SKILLS"
-        actions={
-          countToken(boundSkills.length, "INHERITED") ? (
-            <span className="wb-config-skill-count">
-              {countToken(boundSkills.length, "INHERITED")}
-            </span>
-          ) : null
-        }
-      >
+      <FoldGadget title="Skills" token={countToken(boundSkills.length, "INHERITED")}>
         {boundSkills.length > 0 ? (
           <SurfaceRows>
             {boundSkills.map((s) => (
@@ -578,12 +542,14 @@ function ConfigPanel({
             Edit in Agent
           </Button>
         ) : null}
-      </SurfaceSection>
+      </FoldGadget>
 
       {/* ── workspace path ──────────────────────────────────────────── */}
+      <FoldGadget title="Workspace">
       <div className="wb-workspace-path">
         ~/.holdspeak/workbenches/{detail.id}/
       </div>
+      </FoldGadget>
     </div>
   );
 }
@@ -769,9 +735,9 @@ function WorkbenchItemCard({
         {item.status === "claimed" ? (
           <LedMeter label="WORKING" value={0} scanning />
         ) : null}
-        <span className="desk-chip" data-tone={chip.tone}>
-          {chip.label}
-        </span>
+        <StateChip wrap label={chip.label}
+          state={item.status === "done" ? "success" : item.status === "failed" ? "failure" : item.status === "claimed" ? "working" : "idle"}
+        />
       </Button>
       <WhyControl workType="workbench_item" workRef={item.id} />
 
@@ -788,6 +754,7 @@ function WorkbenchItemCard({
         <div className="wb-card-detail">
           {/* body (editable) */}
           <div className="wb-card-body-edit">
+            <GadgetGroup label="Instruction" material="inset">
             <PadGadget
               label="Item body"
               value={bodyDraft ?? serverBody}
@@ -796,6 +763,7 @@ function WorkbenchItemCard({
               rows={2}
               autoGrow
             />
+            </GadgetGroup>
           </div>
 
           {/* grounding chips */}
@@ -1077,7 +1045,7 @@ export function WorkbenchWindow({
   const [acSelectedIndex, setAcSelectedIndex] = useState(0);
   const [acDismissed, setAcDismissed] = useState(false);
   const typedAtPosRef = useRef<number | null>(null);
-  const inletInputRef = useRef<HTMLInputElement>(null);
+  const inletInputRef = useRef<HTMLTextAreaElement>(null);
   const prevAcQueryRef = useRef("");
 
   // Fix #2: only open autocomplete for typed @ characters.
@@ -1695,7 +1663,22 @@ export function WorkbenchWindow({
         {activeWing === "items" && !showConfig ? (
           <>
             {/* ── inlet (HS-118-03/04) ─────────────────────────────── */}
-            <SurfaceSection label="Add item" className="wb-inlet">
+            <div className="wb-inlet">
+            <GadgetGroup label="Add item" material="inset" actions={<>
+              <Button dense
+                variant="ghost"
+                className="wb-priority-cycle"
+                data-priority={newPriority}
+                onClick={() => setNewPriority((p) => (p >= 3 ? 1 : p + 1))}
+                title={`Priority ${newPriority}. Click to cycle`}
+              >
+                P{newPriority}
+              </Button>
+              <Button dense variant="primary" disabled={!newTitle.trim()}
+                title={newTitle.trim() ? "Add this item" : "No instruction typed"}
+                onClick={() => void addItem()}
+              >Add</Button>
+            </>}>
               {/* grounding tray */}
               {groundingRefs.length > 0 ? (
                 <div className="wb-inlet-tray">
@@ -1740,6 +1723,7 @@ export function WorkbenchWindow({
                   onSelectedIndexChange={setAcSelectedIndex}
                 />
               ) : null}
+              <GadgetRow label="Instruction" wide controlWidth="full">
               <div className="wb-inlet-row">
                 <MicButton
                   draftScope={`workbench:${workbenchId}`}
@@ -1759,32 +1743,32 @@ export function WorkbenchWindow({
                   onProposalConfirm={(p) => setVoiceProposal(p)}
                   onState={handleMicState}
                 />
-                {/* UX-CANON: needs redesign (HS-170-04) — combobox inlet with autocomplete can't use StringGadget */}
-                <input
-                  ref={inletInputRef}
-                  type="text"
-                  className="wb-inlet-input"
+                <PadGadget
+                  inputRef={inletInputRef}
+                  label="New item instruction"
+                  rows={3}
+                  autoGrow
+                  mic={false}
                   placeholder="What needs doing?"
-                  role="combobox"
-                  aria-expanded={acOpen}
-                  aria-controls="wb-inlet-listbox"
-                  aria-activedescendant={acActiveId}
                   value={newTitle}
-                  onChange={(e) => {
-                    setNewTitle(e.target.value);
-                    setCursorPos(e.target.selectionStart ?? e.target.value.length);
+                  onChange={(text) => {
+                    setNewTitle(text);
+                    setCursorPos(inletInputRef.current?.selectionStart ?? text.length);
                     setAcDismissed(false);
                   }}
-                  onPaste={() => {
-                    typedAtPosRef.current = null;
-                  }}
-                  onSelect={(e) => {
-                    setCursorPos((e.target as HTMLInputElement).selectionStart ?? cursorPos);
+                  inputProps={{
+                    role: "combobox",
+                    "aria-expanded": acOpen,
+                    "aria-controls": "wb-inlet-listbox",
+                    "aria-activedescendant": acActiveId,
+                    onPaste: () => { typedAtPosRef.current = null; },
+                    onSelect: (event) => { setCursorPos(event.currentTarget.selectionStart ?? cursorPos); },
                   }}
                   onKeyDown={(e) => {
+                    if (e.key === "Enter" && e.shiftKey) return;
                     // Fix #2: detect typed @ (fires before insertion).
                     if (e.key === "@" && !e.ctrlKey && !e.metaKey && !e.altKey) {
-                      typedAtPosRef.current = (e.target as HTMLInputElement).selectionStart ?? 0;
+                      typedAtPosRef.current = e.currentTarget.selectionStart ?? 0;
                     }
                     if (acOpen) {
                       if (e.key === "ArrowDown") {
@@ -1826,39 +1810,23 @@ export function WorkbenchWindow({
                       }
                       if (e.key === "Backspace") {
                         // Check if backspacing past @ would close.
-                        const sel = (e.target as HTMLInputElement).selectionStart ?? 0;
+                        const sel = e.currentTarget.selectionStart ?? 0;
                         if (sel <= atPos + 1) {
                           setAcDismissed(true);
                           typedAtPosRef.current = null;
                         }
                       }
                     }
-                    if (!acOpen && e.key === "Enter") void addItem();
+                    if (!acOpen && e.key === "Enter") {
+                      e.preventDefault();
+                      void addItem();
+                    }
                   }}
-                  aria-label="New item instruction"
                 />
-                <Button
-                  variant="chrome"
-                  className="desk-chip wb-priority-cycle"
-                  data-priority={newPriority}
-                  onClick={() => setNewPriority((p) => (p >= 3 ? 1 : p + 1))}
-                  title={`Priority ${newPriority}. Click to cycle`}
-                >
-                  P{newPriority}
-                </Button>
-                <Button
-                  variant="chrome"
-                  className="desk-chip is-primary"
-                  disabled={!newTitle.trim()}
-                  title={
-                    newTitle.trim() ? "Add this item" : "No instruction typed"
-                  }
-                  onClick={() => void addItem()}
-                >
-                  Add
-                </Button>
               </div>
-            </SurfaceSection>
+              </GadgetRow>
+            </GadgetGroup>
+            </div>
 
             <div className="wb-items">
               {/* HS-130-09 — the template picker is a PRE-persistence chooser
@@ -1962,6 +1930,8 @@ export function WorkbenchWindow({
             error={runsHook.error ? `Runs not loaded · ${runsHook.error}` : null}
             onRetry={loadRuns}
             configured={isConfigured}
+            engineMissing={engine === "none"}
+            onChooseEngine={chooseEngine}
             running={running}
             openRunId={openRunId}
             onToggleRun={(runId) =>

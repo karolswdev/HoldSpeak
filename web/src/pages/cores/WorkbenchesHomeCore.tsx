@@ -13,6 +13,7 @@ import {
   SurfaceState,
 } from "../../desk/surface/Surface";
 import { countToken } from "../../desk/surface/count";
+import { StateChip } from "../../desk/surface";
 import { renderHeroSlot } from "./core-layout";
 import { humanTime } from "../../desk/surface/format";
 import type {
@@ -113,7 +114,11 @@ export function WorkbenchesHomeCore({ hero }: CoreProps) {
           {workbenches.map((wb) => {
             const recipe = recipes.find((r) => r.id === wb.recipe_id);
             const assignment = wb.assignment_summary;
-            const needsYou = wb.pending_count > 0 || (wb.last_run?.status === "failed");
+            const activeItems = wb.items?.filter((item) => !item.parked);
+            const doneCount = activeItems?.filter((item) => item.status === "done").length;
+            const failedCount = activeItems?.filter((item) => item.status === "failed").length;
+            const claimedCount = activeItems?.filter((item) => item.status === "claimed").length;
+            const needsYou = wb.pending_count > 0 || Boolean(failedCount) || (wb.last_run?.status === "failed");
             return (
               <Button
                 key={wb.id}
@@ -136,12 +141,15 @@ export function WorkbenchesHomeCore({ hero }: CoreProps) {
                   <span className="wb-home-card-name">{wb.name}</span>
                 </div>
                 <div className="wb-home-card-stats">
+                  {countToken(wb.item_count, "ITEM") ? <span>{countToken(wb.item_count, "ITEM")}</span> : null}
                   {countToken(wb.pending_count, "PENDING") ? (
                     <span>{countToken(wb.pending_count, "PENDING")}</span>
                   ) : null}
-                  {countToken(wb.item_count - wb.pending_count, "DONE") ? (
-                    <span>{countToken(wb.item_count - wb.pending_count, "DONE")}</span>
+                  {doneCount !== undefined && countToken(doneCount, "DONE") ? (
+                    <span>{countToken(doneCount, "DONE")}</span>
                   ) : null}
+                  {countToken(failedCount, "FAILED") ? <span>{countToken(failedCount, "FAILED")}</span> : null}
+                  {countToken(claimedCount, "IN PROGRESS", "IN PROGRESS") ? <span>{countToken(claimedCount, "IN PROGRESS", "IN PROGRESS")}</span> : null}
                   {wb.item_count === 0 ? <span>Empty</span> : null}
                 </div>
                 <div className="wb-home-card-meta">
@@ -180,12 +188,11 @@ export function WorkbenchesHomeCore({ hero }: CoreProps) {
                     </>
                   }
                   cells={
-                    <span
-                      className="desk-chip wb-badge-compact"
-                      data-tone={run.status === "completed" ? "ok" : "fail"}
-                    >
-                      {run.status === "completed" ? "OK" : "FAIL"}
-                    </span>
+                    <StateChip
+                      state={run.status === "completed" ? "success" : run.status === "running" ? "working" : run.status === "failed" ? "failure" : "idle"}
+                      label={run.status ? run.status.replaceAll("_", " ").replace(/^./, (letter) => letter.toUpperCase()) : "Unknown"}
+                      wrap
+                    />
                   }
                   expands={false}
                   onToggle={() =>

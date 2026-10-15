@@ -1,0 +1,8 @@
+body{margin:0}.canvas-desk{min-height:100vh;padding:24px;background:var(--desk-floor)}.canvas-body{padding:20px}
+/* Direction only: identity, full status, then coherent provider actions. */
+.canvas-body.connections-pane .surface-ledger[data-cols="accounts"] .surface-ledger-line > .surface-ledger-primary{grid-column:2/-1;grid-row:1}
+.canvas-body.connections-pane .surface-ledger[data-cols="accounts"] .surface-ledger-line > .surface-ledger-cells{grid-column:2/-1;grid-row:2}
+.canvas-body.connections-pane .surface-ledger[data-cols="accounts"] .surface-ledger-line > .surface-ledger-trailing{grid-column:2/-1;grid-row:3;display:flex;justify-content:flex-end}
+.canvas-body.connections-pane .surface-ledger-trailing > .connections-check-action{display:flex;max-width:100%}
+.canvas-body.connections-pane .surface-ledger-trailing > .connections-check-action > .gadget-chip{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+@media(max-width:420px){.canvas-desk{padding:0}.canvas-body{padding:14px}}

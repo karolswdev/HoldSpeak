@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_ITEMS } from "../../api";
@@ -30,8 +30,9 @@ function automation(enabled = false) {
   };
 }
 
-function mockHub(initialAutomations: Record<string, unknown>[] = []) {
+function mockHub(initialAutomations: Record<string, unknown>[] = [], detailOverrides: Record<string, unknown> = {}) {
   let automations = initialAutomations;
+  let detail = { ...DETAIL, ...detailOverrides };
   let resourceful = {
     workbench_id: "wb1", enabled: false, idle_after_minutes: 30,
     cooldown_hours: 6, nightly_target: 2, night_only: true,
@@ -65,19 +66,22 @@ function mockHub(initialAutomations: Record<string, unknown>[] = []) {
     if (/\/runs$/.test(url)) return json({ runs: [] });
     if (/\/memory$/.test(url)) return json({ entries: [] });
     if (/\/api\/skills/.test(url)) return json({ skills: [] });
-    if (/\/api\/workbenches\/wb1$/.test(url)) return json({ workbench: DETAIL });
+    if (/\/api\/workbenches\/wb1$/.test(url)) {
+      if (method === "PUT") detail = { ...detail, ...JSON.parse(String(init?.body || "{}")) };
+      return json({ workbench: detail });
+    }
     return json({});
   });
   vi.stubGlobal("fetch", calls);
   return calls;
 }
 
-async function open(automations: Record<string, unknown>[] = []) {
+async function open(automations: Record<string, unknown>[] = [], detailOverrides: Record<string, unknown> = {}) {
   useDesk.setState({
     items: { ...EMPTY_ITEMS, workbench: [{ kind: "workbench", id: "wb1", name: "Review desk" } as never] },
     inferenceTargets: [], profiles: [],
   });
-  const calls = mockHub(automations);
+  const calls = mockHub(automations, detailOverrides);
   render(<WorkbenchWindow workbenchId="wb1" />);
   await screen.findByText("Review the plan");
   await userEvent.setup().click(screen.getByRole("button", { name: "Configure" }));
@@ -88,18 +92,38 @@ describe("Workbench STARTS WHEN automations", () => {
   beforeEach(() => localStorage.clear());
   afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
+  it("keeps a custom cron visible and persists Schedule and Enabled through the original writer", async () => {
+    const calls = await open([], { schedule: "15 9 * * 2", schedule_enabled: true });
+    const schedule = screen.getByRole("combobox", { name: "Schedule" });
+    expect(schedule).toHaveValue("15 9 * * 2");
+    expect(screen.getByRole("option", { name: "15 9 * * 2" })).toBeInTheDocument();
+    fireEvent.change(schedule, { target: { value: "0 * * * *" } });
+    await waitFor(() => expect(calls.mock.calls.some(([url, init]) =>
+      String(url).endsWith("/api/workbenches/wb1") && init?.method === "PUT" &&
+      JSON.stringify(JSON.parse(String(init.body))) === JSON.stringify({ schedule: "0 * * * *", schedule_enabled: true }),
+    )).toBe(true));
+    await waitFor(() => expect(schedule).toHaveValue("0 * * * *"));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Schedule enabled" }));
+    await waitFor(() => expect(calls.mock.calls.some(([url, init]) =>
+      String(url).endsWith("/api/workbenches/wb1") && init?.method === "PUT" &&
+      JSON.parse(String(init.body)).schedule_enabled === false,
+    )).toBe(true));
+  });
+
   it("reveals one start mode at a time and requires a repository for Event", async () => {
     await open();
-    expect(screen.getByText("Starts only when you press Run.")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Starts when" })).toHaveAttribute("data-material", "inset");
+    expect(screen.getByRole("combobox", { name: "Workbench start condition" })).toHaveValue("manual");
+    expect(screen.queryByText("Starts only when you press Run.")).toBeNull();
     expect(screen.queryByLabelText("GitHub repository")).not.toBeInTheDocument();
 
-    await userEvent.setup().click(screen.getByRole("radio", { name: "Schedule" }));
-    expect(screen.getByRole("button", { name: "7 AM daily" })).toBeInTheDocument();
+    fireEvent.change(screen.getByRole("combobox", { name: "Workbench start condition" }), { target: { value: "schedule" } });
+    expect(screen.getByRole("combobox", { name: "Schedule" })).toBeInTheDocument();
     expect(screen.queryByLabelText("GitHub repository")).not.toBeInTheDocument();
 
-    await userEvent.setup().click(screen.getByRole("radio", { name: "Event" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Workbench start condition" }), { target: { value: "event" } });
     expect(screen.getByLabelText("GitHub repository")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "7 AM daily" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: "Schedule" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /GitHub · Review requested/i })).toBeDisabled();
     expect(screen.getByText("REPOSITORY REQUIRED")).toBeInTheDocument();
   });
@@ -107,7 +131,7 @@ describe("Workbench STARTS WHEN automations", () => {
   it("creates the GitHub review-requested preset with an explicit repository", async () => {
     const calls = await open();
     const user = userEvent.setup();
-    await user.click(screen.getByRole("radio", { name: "Event" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Workbench start condition" }), { target: { value: "event" } });
     await user.type(screen.getByLabelText("GitHub repository"), "karolswdev/HoldSpeak");
     await user.click(screen.getByRole("button", { name: /GitHub · Review requested/i }));
 
@@ -128,7 +152,7 @@ describe("Workbench STARTS WHEN automations", () => {
   it("tests without delivering work, then enables and pauses the trigger", async () => {
     const calls = await open([automation(false)]);
     const user = userEvent.setup();
-    await user.click(screen.getByRole("radio", { name: "Event" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Workbench start condition" }), { target: { value: "event" } });
     await screen.findByText("GitHub · Review requested");
     const automationButton = screen
       .getAllByRole("button", { name: /GitHub · Review requested/ })
@@ -157,10 +181,9 @@ describe("Workbench STARTS WHEN automations", () => {
 
   it("pauses an active event automation when Manual is selected", async () => {
     const calls = await open([automation(true)]);
-    const user = userEvent.setup();
-    expect(screen.getByRole("radio", { name: "Event" })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("combobox", { name: "Workbench start condition" })).toHaveValue("event");
 
-    await user.click(screen.getByRole("radio", { name: "Manual" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Workbench start condition" }), { target: { value: "manual" } });
 
     await waitFor(() => expect(calls.mock.calls.some(([url, init]) => {
       if (!String(url).endsWith("/automations/auto-1") || (init as RequestInit).method !== "PATCH") {
@@ -174,7 +197,7 @@ describe("Workbench STARTS WHEN automations", () => {
     const calls = await open();
     const user = userEvent.setup();
 
-    await user.click(screen.getByRole("radio", { name: "Idle" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Workbench start condition" }), { target: { value: "idle" } });
 
     expect(screen.getByText("6H COOLDOWN")).toBeInTheDocument();
     expect(screen.getByText("TARGET 2 / NIGHT")).toBeInTheDocument();
