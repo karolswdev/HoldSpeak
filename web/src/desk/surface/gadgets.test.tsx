@@ -8,6 +8,8 @@ import {
   CheckGadget,
   CycleGadget,
   FoldGadget,
+  GadgetDivider,
+  GadgetGroup,
   GadgetRow,
   GadgetTable,
   LampGadget,
@@ -18,8 +20,108 @@ import {
   StepperGadget,
   TransportKey,
 } from "./gadgets";
+import { Button } from "../../components/signal/Signal";
+import { SurfaceColumns } from "./Surface";
 
 describe("gadget kit", () => {
+  it("inset groups name their section and keep actions after block content", () => {
+    const { container } = render(
+      <GadgetGroup label="Spoken symbols" material="inset" actions={<Button>Add symbol</Button>}>
+        <GadgetRow label="Dictionary" controlWidth="full"><div>Symbol editor</div></GadgetRow>
+        <GadgetDivider/>
+      </GadgetGroup>,
+    );
+    const group = screen.getByRole("region", { name: "Spoken symbols" });
+    expect(group).toHaveAttribute("data-material", "inset");
+    const content = group.querySelector(".gadget-sheet")!;
+    const footer = screen.getByRole("button", { name: "Add symbol" }).closest("footer")!;
+    expect(footer.parentElement).toBe(group);
+    expect(content.contains(footer)).toBe(false);
+    expect(content.compareDocumentPosition(footer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(container.querySelector(".gadget-row-gadget")?.tagName).toBe("DIV");
+    expect(screen.getByRole("separator")).toBeInTheDocument();
+  });
+
+  it("state checks expose one named checkbox and a visible On or Off value", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    const { rerender } = render(<CheckGadget variant="state" label="Preview before type" checked={false} onChange={onChange}/>);
+    const box = screen.getByRole("checkbox", { name: "Preview before type" });
+    expect(screen.getAllByRole("checkbox")).toHaveLength(1);
+    expect(screen.getByText("Off")).toHaveAttribute("aria-hidden", "true");
+    await user.click(screen.getByText("Off").closest("label")!);
+    expect(onChange).toHaveBeenCalledWith(true);
+    rerender(<CheckGadget variant="state" label="Preview before type" checked onChange={onChange}/>);
+    expect(screen.getByText("On")).toBeInTheDocument();
+    expect(box).toBeChecked();
+    box.focus();
+    await user.keyboard(" ");
+    expect(onChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it("disabled state checks retain their value and reject pointer and keyboard changes", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<CheckGadget variant="state" label="Voice commands" checked disabled onChange={onChange}/>);
+    expect(screen.getByText("On")).toBeInTheDocument();
+    const box = screen.getByRole("checkbox", { name: "Voice commands" });
+    expect(box).toBeDisabled();
+    await user.click(screen.getByText("On").closest("label")!);
+    await user.keyboard(" ");
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("field tables derive repeated visible labels from the supplied heads", () => {
+    const onChange = vi.fn();
+    const { container, rerender } = render(<GadgetTable layout="fields" head={["Spoken", "Attach"]} rows={[[
+      <input key="spoken" aria-label="Spoken phrase 1" defaultValue="arrow"/>,
+      <CycleGadget key="attach" label="Attachment 1" value="none" options={[{ value:"none" },{ value:"right" }]} onChange={onChange}/>,
+    ]]}/>);
+    const labels = container.querySelectorAll(".gadget-table-field-label");
+    expect(Array.from(labels, (label) => label.textContent)).toEqual(["Spoken", "Attach"]);
+    labels.forEach((label) => expect(label).toHaveAttribute("aria-hidden", "true"));
+    fireEvent.change(screen.getByRole("combobox", { name:"Attachment 1" }), { target:{ value:"right" } });
+    expect(onChange).toHaveBeenCalledWith("right");
+    rerender(<GadgetTable head={["Spoken"]} rows={[["arrow"]]}/>);
+    expect(container.querySelector(".gadget-table-field-label")).toBeNull();
+  });
+
+  it("field tables keep editing keys native and preserve an armed row action across reorder", () => {
+    const onDelete = vi.fn();
+    const entries = [{ id:"arrow", word:"arrow" },{ id:"bracket", word:"bracket" }];
+    const table = (items: typeof entries) => <GadgetTable layout="fields" head={["Spoken"]}
+      rowKey={(index) => items[index].id} onDelete={onDelete} deleteLabel="Forget?"
+      rows={items.map((entry) => [<input key={entry.id} aria-label={entry.id} defaultValue={entry.word}/>])}/>;
+    const { rerender } = render(table(entries));
+    const arrow = screen.getByRole("textbox", { name:"arrow" });
+    const bracket = screen.getByRole("textbox", { name:"bracket" });
+    arrow.focus();
+    fireEvent.keyDown(arrow, { key:"ArrowDown" });
+    expect(arrow).toHaveFocus();
+    const firstAction = screen.getByRole("button", { name:"Delete row 1" });
+    firstAction.focus();
+    fireEvent.keyDown(firstAction, { key:"ArrowDown" });
+    const action = screen.getByRole("button", { name:"Delete row 2" });
+    expect(action).toHaveFocus();
+    fireEvent.keyDown(action, { key:"ArrowLeft" });
+    expect(bracket).toHaveFocus();
+    fireEvent.click(action);
+    expect(onDelete).not.toHaveBeenCalled();
+    rerender(table([entries[1], entries[0]]));
+    expect(screen.getByRole("button", { name:"Delete row 1" })).toBe(action);
+    expect(action).toHaveTextContent("Forget?");
+    fireEvent.click(action);
+    expect(onDelete).toHaveBeenCalledWith(0);
+  });
+
+  it("preference columns retain the two content slots and leave the default unmarked", () => {
+    const { container, rerender } = render(<SurfaceColumns variant="preferences" main={<span>Capture</span>} side={<span>Symbols</span>}/>);
+    expect(container.querySelector('.surface-columns[data-variant="preferences"] > .surface-columns-main')).toHaveTextContent("Capture");
+    expect(container.querySelector('.surface-columns[data-variant="preferences"] > .surface-columns-side')).toHaveTextContent("Symbols");
+    rerender(<SurfaceColumns main={<span>Capture</span>} side={<span>Symbols</span>}/>);
+    expect(container.querySelector(".surface-columns")).not.toHaveAttribute("data-variant");
+  });
+
   it("CheckGadget is a real checkbox", async () => {
     const onChange = vi.fn();
     const user = userEvent.setup();

@@ -76,13 +76,13 @@ export function TtsSettingsBlock() {
     }
   };
 
-  if (loading) return <GadgetGroup label="Speech"><span aria-busy="true">Checking</span></GadgetGroup>;
-  if (readError) return <GadgetGroup label="Speech"><GadgetRow label="Server voice"><StateChip state="failure" label="Could not read" /><Button dense variant="secondary" onClick={() => void reload()}>Retry</Button></GadgetRow></GadgetGroup>;
+  if (loading) return <GadgetGroup material="inset" label="Speech"><span aria-busy="true">Checking</span></GadgetGroup>;
+  if (readError) return <GadgetGroup material="inset" label="Speech"><GadgetRow label="Server voice"><StateChip state="failure" label="Could not read" /><Button dense variant="secondary" onClick={() => void reload()}>Retry</Button></GadgetRow></GadgetGroup>;
 
   // Extra NOT installed: one-line install instruction, no dead switch.
   if (!status?.installed) {
     return (
-      <GadgetGroup label="Speech">
+      <GadgetGroup material="inset" label="Speech">
         <GadgetRow label="Browser voice">
           <span className="prefs-value">{browserAvailable ? "Available" : "Not available"}</span>
         </GadgetRow>
@@ -94,17 +94,9 @@ export function TtsSettingsBlock() {
 
   // Extra installed.
   return (
-    <GadgetGroup label="Speech">
-      <GadgetRow label="Browser voice">
-        <span className="prefs-value">{browserAvailable ? "Available" : "Not available"}</span>
-      </GadgetRow>
-      <GadgetRow label="Server voice">
-        <span className="prefs-value">
-          {status.model_ready ? "Ready" : "Model needed"}
-        </span>
-      </GadgetRow>
+    <GadgetGroup material="inset" label="Speech" actions={!status.model_ready || receipt || error ? <>
       {!status.model_ready ? (
-        <div className="prefs-egress-line">
+        <>
           <EgressChip
             label="DOWNLOADS huggingface.co · ~90 MB"
             title="One-time model download from Hugging Face."
@@ -113,22 +105,27 @@ export function TtsSettingsBlock() {
           <Button dense disabled={downloading} onClick={handleDownload}>
             {downloading ? "Downloading…" : "Download model"}
           </Button>
-        </div>
+        </>
       ) : null}
       {receipt ? (
-        <div className="prefs-egress-line">
-          <span className="gadget-fact" role="status">
-            {receipt}
-          </span>
-        </div>
+        <span className="gadget-fact" role="status">
+          {receipt}
+        </span>
       ) : null}
       {error ? (
-        <div className="prefs-egress-line">
-          <span className="gadget-fact" data-tone="danger" role="alert">
-            {error}
-          </span>
-        </div>
+        <span className="gadget-fact" data-tone="danger" role="alert">
+          {error}
+        </span>
       ) : null}
+    </> : undefined}>
+      <GadgetRow label="Browser voice">
+        <span className="prefs-value">{browserAvailable ? "Available" : "Not available"}</span>
+      </GadgetRow>
+      <GadgetRow label="Server voice">
+        <span className="prefs-value">
+          {status.model_ready ? "Ready" : "Model needed"}
+        </span>
+      </GadgetRow>
       <FoldGadget title="Details">
         <span className="gadget-fact">
           GPL-3.0 · phonemizer + espeak-ng

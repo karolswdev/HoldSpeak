@@ -25,17 +25,31 @@ import "./gadgets.css";
 
 export function GadgetGroup({
   label,
+  material,
+  actions,
   children,
 }: {
   label?: string;
+  /** Opt-in native control sheet; other surfaces keep the engraved default. */
+  material?: "default" | "inset";
+  /** Bounded library Buttons after the content, never a stretched add row. */
+  actions?: ReactNode;
   children: ReactNode;
 }) {
+  const headingId = useId();
   return (
-    <section className="gadget-group">
-      {label ? <h4 className="gadget-group-label">{label}</h4> : null}
+    <section className="gadget-group" data-material={material === "inset" ? material : undefined}
+      aria-labelledby={label ? headingId : undefined}>
+      {label ? <h4 id={headingId} className="gadget-group-label">{label}</h4> : null}
       <div className="gadget-sheet">{children}</div>
+      {actions ? <footer className="gadget-group-actions">{actions}</footer> : null}
     </section>
   );
+}
+
+/** The etched rule between related controls in one native sheet. */
+export function GadgetDivider() {
+  return <hr className="gadget-divider"/>;
 }
 
 /** One row of the gadget sheet: label column, gadget column. A `fact`
@@ -46,30 +60,35 @@ export function GadgetRow({
   fact,
   wide,
   highlight,
+  controlWidth,
   children,
 }: {
   label: ReactNode;
   fact?: ReactNode;
   wide?: boolean;
   highlight?: boolean;
+  /** Opt-in aligned preference value column; full permits block editors. */
+  controlWidth?: "standard" | "short" | "full";
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (highlight) ref.current?.scrollIntoView({ block: "center" });
   }, [highlight]);
+  const GadgetSlot = controlWidth ? "div" : "span";
   return (
     <div
       ref={ref}
       className="gadget-row"
       data-wide={wide || undefined}
       data-highlight={highlight || undefined}
+      data-control-width={controlWidth}
     >
       <span className="gadget-row-label">
         {label}
         {fact ? <span className="gadget-fact">{fact}</span> : null}
       </span>
-      <span className="gadget-row-gadget">{children}</span>
+      <GadgetSlot className="gadget-row-gadget">{children}</GadgetSlot>
     </div>
   );
 }
@@ -89,7 +108,7 @@ export function CheckGadget({
   disabled?: boolean;
   /** "token" renders a bordered mono-uppercase token with ✓ glyph
    *  (HS-169-02 Door toggles). Default is the checkbox square. */
-  variant?: "default" | "token";
+  variant?: "default" | "token" | "state";
 }) {
   if (variant === "token") {
     return (
@@ -108,7 +127,7 @@ export function CheckGadget({
     );
   }
   return (
-    <label className="gadget-check">
+    <label className="gadget-check" data-variant={variant === "state" ? variant : undefined}>
       <input
         type="checkbox"
         aria-label={label}
@@ -121,6 +140,9 @@ export function CheckGadget({
           <path d="M3.5 8.5 6.5 11.5 12.5 4.5" />
         </svg>
       </span>
+      {variant === "state" ? <span className="gadget-check-state-word" aria-hidden="true">
+        {checked ? "On" : "Off"}
+      </span> : null}
     </label>
   );
 }
@@ -567,6 +589,7 @@ export function GadgetTable({
   onAdd,
   addLabel = "+ ADD",
   verbs,
+  layout,
 }: {
   head: string[];
   rows: ReactNode[][];
@@ -582,6 +605,8 @@ export function GadgetTable({
   /** HS-111-02 — the row-verbs slot: renders in the trailing cell in
    * place of the default armed × (an arming FORGET?, a Replace…). */
   verbs?(index: number): ReactNode;
+  /** Repeat the supplied column heads beside native fields in a narrow window. */
+  layout?: "table" | "fields";
 }) {
   const cols = { "--gadget-cols": head.length } as CSSProperties;
   // HS-111-08 — roving focus is kit law (audit §3.1): the table is ONE
@@ -598,6 +623,7 @@ export function GadgetTable({
       className="gadget-table"
       style={cols}
       data-verbs={verbs || onDelete ? "" : undefined}
+      data-layout={layout === "fields" ? layout : undefined}
     >
       <div className="gadget-table-head">
         {head.map((column) => (
@@ -609,6 +635,9 @@ export function GadgetTable({
         <div className="gadget-table-row" key={rowKey ? rowKey(index) : index}>
           {cells.map((cell, cellIndex) => (
             <span key={cellIndex} className="gadget-table-cell">
+              {layout === "fields" ? <span className="gadget-table-field-label" aria-hidden="true">
+                {head[cellIndex]}
+              </span> : null}
               {cell}
             </span>
           ))}

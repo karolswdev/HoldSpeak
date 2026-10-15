@@ -40,6 +40,13 @@ describe("Settings speech", () => {
     expect(await screen.findByText("Not available")).toBeTruthy();
     expect(screen.queryByText("ACTIVE")).toBeNull();
   });
+  it("keeps a ready server to its observed value without an empty action footer", async () => {
+    installed = true; ready = true;
+    const { container } = render(<TtsSettingsBlock />);
+    expect(await screen.findByText("Ready")).toBeTruthy();
+    expect(container.querySelector(".gadget-group-actions")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Download model" })).toBeNull();
+  });
   it("an installed server can download its model and report the accepted result", async () => {
     installed = true;
     render(<TtsSettingsBlock />);

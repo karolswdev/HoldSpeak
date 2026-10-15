@@ -304,12 +304,15 @@ export function SurfaceState({
 export function SurfaceColumns({
   main,
   side,
+  variant,
 }: {
   main: ReactNode;
   side: ReactNode;
+  /** Equal, bounded preference sheets; the default retains its 3:2 split. */
+  variant?: "default" | "preferences";
 }) {
   return (
-    <div className="surface-columns">
+    <div className="surface-columns" data-variant={variant === "preferences" ? variant : undefined}>
       <div className="surface-columns-main">{main}</div>
       <div className="surface-columns-side">{side}</div>
     </div>

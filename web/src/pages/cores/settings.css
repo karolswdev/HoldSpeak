@@ -191,9 +191,9 @@
 
 /* The folded rows carry their pixel sprite before the name. */
 .settings-content { min-width:0; }
-.desk-next .prefs-module:not([data-settings-module="models"]) { width:100%; max-width:1120px; margin-inline:0; gap:24px; }
-.desk-next .prefs-module:not([data-settings-module="models"]) > .gadget-group { margin-bottom:0; }
-.desk-next .prefs-module:not([data-settings-module="models"]) .gadget-row { grid-template-columns:minmax(96px,160px) minmax(0,1fr); min-height:32px; }
+.desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) { width:100%; max-width:1120px; margin-inline:0; gap:24px; }
+.desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) > .gadget-group { margin-bottom:0; }
+.desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) .gadget-row { grid-template-columns:minmax(96px,160px) minmax(0,1fr); min-height:32px; }
 .prefs-inline-controls, .prefs-calendar-well-actions, .prefs-read-failure { display:flex; flex-wrap:wrap; align-items:center; gap:8px; min-width:0; }
 .prefs-read-failure { font:13px/1.4 var(--font-sans); overflow-wrap:anywhere; }
 .prefs-read-failure > span { flex:1 1 180px; min-width:0; }
@@ -205,7 +205,7 @@
 .desk-next .prefs-module .prefs-calendar-section .surface-ledger-line { grid-template-columns:20px minmax(120px,1fr) minmax(0,1fr) max-content; }
 .desk-next .prefs-module .prefs-calendar-section .surface-ledger-primary { overflow-wrap:anywhere; }
 @container surface (max-width:419px) {
- .desk-next .prefs-module:not([data-settings-module="models"]) .gadget-row { grid-template-columns:minmax(0,1fr); gap:6px; padding-block:6px; }
+ .desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) .gadget-row { grid-template-columns:minmax(0,1fr); gap:6px; padding-block:6px; }
 }
 .desk-next .settings-row-name {
   display: inline-flex;
@@ -303,38 +303,38 @@
   overflow-wrap: anywhere;
 }
 
-/* Settings visual revision, 2026-10-14. The native window and gadgets keep
-   their materials. These rules author the preference body and its values. */
+/* Legacy form composition remains for Accounts and the unmigrated modules.
+   Inset sheets use the surface library geometry without these overrides. */
 .desk-next .settings-content:not([data-settings-view="models"]) { padding:12px; }
 .desk-next .settings-home { width:100%; max-width:1120px; padding:0; gap:24px; font:13px/1.4 var(--font-ui); }
 .desk-next .settings-directory-grid,
 .desk-next .prefs-groups { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:32px; align-items:start; min-width:0; }
 .desk-next .prefs-column { display:flex; flex-direction:column; gap:28px; min-width:0; }
-.desk-next .prefs-module:not([data-settings-module="models"]) { font:13px/1.4 var(--font-ui); }
-.desk-next .prefs-module:not([data-settings-module="models"]) .gadget-group { margin:0; }
-.desk-next .prefs-module:not([data-settings-module="models"]) > .gadget-pane-title { margin:0; }
-.desk-next .prefs-module:not([data-settings-module="models"]) .gadget-group-label,
-.desk-next .prefs-module:not([data-settings-module="models"]) .surface-section-head h3,
+.desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) { font:13px/1.4 var(--font-ui); }
+.desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) .gadget-group { margin:0; }
+.desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) > .gadget-pane-title { margin:0; }
+.desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) .gadget-group-label,
+.desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) .surface-section-head h3,
 .desk-next .settings-home .surface-section-head h3 { margin:0 0 8px; font:600 15px/1.4 var(--font-ui); text-transform:none; letter-spacing:0; color:var(--text); }
-.desk-next .prefs-module:not([data-settings-module="models"]) .surface-section,
+.desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) .surface-section,
 .desk-next .settings-home .surface-section { margin:0; min-width:0; }
-.desk-next .prefs-module:not([data-settings-module="models"]) .gadget-row { grid-template-columns:minmax(112px,160px) minmax(0,1fr); min-height:44px; padding:4px 0; gap:12px; }
-.desk-next .prefs-module:not([data-settings-module="models"]) .gadget-row[data-wide] { grid-template-columns:minmax(0,1fr); }
-.desk-next .prefs-module:not([data-settings-module="models"]) .gadget-row-label { font:400 13px/1.4 var(--font-ui); }
-.desk-next .prefs-module:not([data-settings-module="models"]) .gadget-row-gadget { flex-wrap:wrap; gap:8px; }
-.desk-next .prefs-module:not([data-settings-module="models"]) .gadget-fact { font:400 12px/1.4 var(--font-mono); }
+.desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) .gadget-row { grid-template-columns:minmax(112px,160px) minmax(0,1fr); min-height:44px; padding:4px 0; gap:12px; }
+.desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) .gadget-row[data-wide] { grid-template-columns:minmax(0,1fr); }
+.desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) .gadget-row-label { font:400 13px/1.4 var(--font-ui); }
+.desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) .gadget-row-gadget { flex-wrap:wrap; gap:8px; }
+.desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) .gadget-fact { font:400 12px/1.4 var(--font-mono); }
 .desk-next .prefs-value { font:400 13px/1.4 var(--font-ui); }
-.desk-next .prefs-module:not([data-settings-module="models"]) .gadget-string { min-width:0; }
-.desk-next .prefs-module:not([data-settings-module="models"]) .gadget-string:not(.gadget-stepper) { width:100%; }
-.desk-next .prefs-module:not([data-settings-module="models"]) .gadget-stepper { width:max-content; max-width:100%; }
-.desk-next .prefs-module:not([data-settings-module="models"]) .gadget-stepper input { width:7ch; flex:0 0 7ch; min-width:0; }
-.desk-next .prefs-module:not([data-settings-module="models"]) .gadget-fold { margin:10px 0 0; }
-.desk-next .prefs-module:not([data-settings-module="models"]) > .gadget-fold { margin:0; }
-.desk-next .prefs-module:not([data-settings-module="models"]) .prefs-summary-controls { flex-direction:row; align-items:center; gap:8px; width:auto; padding:0; }
+.desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) .gadget-string { min-width:0; }
+.desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) .gadget-string:not(.gadget-stepper) { width:100%; }
+.desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) .gadget-stepper { width:max-content; max-width:100%; }
+.desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) .gadget-stepper input { width:7ch; flex:0 0 7ch; min-width:0; }
+.desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) .gadget-fold { margin:10px 0 0; }
+.desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) > .gadget-fold { margin:0; }
+.desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) .prefs-summary-controls { flex-direction:row; align-items:center; gap:8px; width:auto; padding:0; }
 .desk-next .prefs-reset-controls { display:flex; align-items:center; flex-wrap:wrap; gap:8px; min-height:44px; }
 .desk-next .prefs-reset-details { display:flex; flex-direction:column; gap:8px; }
-.desk-next .prefs-module:not([data-settings-module="models"]) .prefs-hub-chips { padding:0; font:12px/1.4 var(--font-mono); }
-.desk-next .prefs-module:not([data-settings-module="models"]) .prefs-hub-chips .surface-token { padding:0; border:0; background:none; }
+.desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) .prefs-hub-chips { padding:0; font:12px/1.4 var(--font-mono); }
+.desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) .prefs-hub-chips .surface-token { padding:0; border:0; background:none; }
 
 /* One module-choice grammar: sprite, name and quiet fact, then Open. */
 .desk-next .settings-home .surface-ledger[data-cols="settings-directory"] .surface-ledger-line,
@@ -366,20 +366,20 @@
   .desk-next .prefs-groups { grid-template-columns:minmax(0,1fr); gap:24px; }
 }
 @container surface (max-width:419px) {
-  .desk-next .prefs-module:not([data-settings-module="models"]) { gap:20px; }
+  .desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) { gap:20px; }
   .desk-next .prefs-column { gap:20px; }
-  .desk-next .prefs-module:not([data-settings-module="models"]) .gadget-row { grid-template-columns:minmax(100px,1fr) auto; gap:8px; min-height:44px; padding-block:4px; }
-  .desk-next .prefs-module:not([data-settings-module="models"]) .gadget-row[data-wide],
-  .desk-next .prefs-module:not([data-settings-module="models"]) .gadget-row:has(.gadget-string:not(.gadget-stepper)),
-  .desk-next .prefs-module:not([data-settings-module="models"]) .gadget-row:has(.gadget-prop) { grid-template-columns:minmax(0,1fr); }
-  .desk-next .prefs-module:not([data-settings-module="models"]) .gadget-row-gadget { justify-content:flex-end; }
-  .desk-next .prefs-module:not([data-settings-module="models"]) .gadget-row[data-wide] .gadget-row-gadget,
-  .desk-next .prefs-module:not([data-settings-module="models"]) .gadget-row:has(.gadget-string:not(.gadget-stepper)) .gadget-row-gadget,
-  .desk-next .prefs-module:not([data-settings-module="models"]) .gadget-row:has(.gadget-prop) .gadget-row-gadget { justify-content:flex-start; }
-  .desk-next .prefs-module:not([data-settings-module="models"]) .gadget-cycle select { max-width:210px; }
-  .desk-next .prefs-module:not([data-settings-module="models"]) .btn,
+  .desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) .gadget-row { grid-template-columns:minmax(100px,1fr) auto; gap:8px; min-height:44px; padding-block:4px; }
+  .desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) .gadget-row[data-wide],
+  .desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) .gadget-row:has(.gadget-string:not(.gadget-stepper)),
+  .desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) .gadget-row:has(.gadget-prop) { grid-template-columns:minmax(0,1fr); }
+  .desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) .gadget-row-gadget { justify-content:flex-end; }
+  .desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) .gadget-row[data-wide] .gadget-row-gadget,
+  .desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) .gadget-row:has(.gadget-string:not(.gadget-stepper)) .gadget-row-gadget,
+  .desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) .gadget-row:has(.gadget-prop) .gadget-row-gadget { justify-content:flex-start; }
+  .desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) .gadget-cycle select { max-width:210px; }
+  .desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) .btn,
   .desk-next .settings-home .btn { margin-block:0; }
-  .desk-next .prefs-module:not([data-settings-module="models"]) .gadget-check { min-width:44px; min-height:44px; justify-content:center; }
+  .desk-next .prefs-module:not([data-settings-module="models"]):not([data-settings-material="inset"]) .gadget-check { min-width:44px; min-height:44px; justify-content:center; }
   .desk-next .settings-home .surface-ledger[data-cols="settings-directory"] .surface-ledger-line,
   .desk-next .prefs-calendar-section .surface-ledger[data-cols="settings-calendar"] .surface-ledger-line { grid-template-columns:28px minmax(0,1fr) max-content; min-height:64px; padding:8px; gap:3px 8px; }
   .desk-next .settings-home .prefs-posture { justify-content:space-between; }
@@ -397,4 +397,16 @@
 .desk-next .prefs-module[data-settings-module="wallpaper"] .prefs-wallpaper-state { font:400 12px/1.4 var(--font-mono); letter-spacing:0; }
 @container surface (max-width:560px) {
   .desk-next .prefs-module[data-settings-module="wallpaper"] .prefs-wallpaper-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+
+/* The module frame composes the shared preference sheets. Field, row, group,
+   action and column geometry belongs to the surface library. */
+.desk-next .settings-content[data-settings-material="inset"] { padding:6px 10px 10px; }
+.desk-next .prefs-module[data-settings-material="inset"] { width:100%; max-width:960px; min-width:0; margin-inline:0; gap:22px; font:13px/1.4 var(--font-sans); }
+.desk-next .prefs-module-head { display:flex; align-items:center; flex-wrap:wrap; gap:8px 12px; min-width:0; }
+.desk-next .prefs-module-head .prefs-tile-sprite { width:32px; height:32px; image-rendering:pixelated; }
+.desk-next .prefs-module-head .gadget-pane-title { margin:0; font:600 15px/1.4 var(--font-sans); text-transform:none; letter-spacing:0; }
+@container surface (max-width:559.9px) {
+  .desk-next .prefs-module[data-settings-material="inset"] { gap:18px; }
+  .desk-next .prefs-module-head { gap:8px; }
 }

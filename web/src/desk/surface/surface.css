@@ -315,6 +315,21 @@
   gap: var(--desk-surface-section-gap);
 }
 
+/* Opt-in equal native preference sheets; the default 3:2 stays above. */
+.surface-columns[data-variant="preferences"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 100%;
+  max-width: 960px;
+  gap: 24px;
+}
+.surface-columns[data-variant="preferences"] > :is(.surface-columns-main, .surface-columns-side) { gap: 22px; }
+@container surface (max-width: 920px) {
+  .surface-columns[data-variant="preferences"] { grid-template-columns: minmax(0, 1fr); max-width: 620px; gap: 22px; }
+}
+@container surface (max-width: 559.9px) {
+  .surface-columns[data-variant="preferences"] > :is(.surface-columns-main, .surface-columns-side) { gap: 18px; }
+}
+
 /* Rule 2 — master–detail answers to the WINDOW. */
 .surface-split {
   display: grid;
