@@ -8,7 +8,7 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
-**Owner desktop density feedback (2026-10-16).**
+**Owner desktop density feedback — #1223 (2026-10-16).**
 Artifact footer actions retain vertical clearance on first open and through
 resize. Desktop Dock is 60 px with 24 px art; Screen art 48 px with tighter rows.
 Window movement reaches the actual 28 px top bar (phone 44 px). Shared reading
@@ -17,8 +17,11 @@ renders checklist children and retains compact task text. Verified build
 Actual 1440/393 walks cover 400/600/320 px windows, drag/resize/reload, exact Copy,
 footer hit points, phone More and unchanged artifact content. Independent Sol
 counsel RATIFY. [Direction and verification](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/FOLLOWUP-DENSITY.md).
-The earlier B full tape is red; two attributed wire-fixture mismatches have a
-separate forward fix prepared. Broader inherited/unattributed failures remain.
+Merged as `6788a92f1`; normal idle-hub delivery is live on port 8765, PID 96844.
+Formal Astra postmerge review RATIFY. The earlier B full tape is red; its two
+attributed wire-fixture mismatches are corrected in #1224. Broader inherited
+and unattributed failures remain.
+[Postmerge delivery record](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/POSTMERGE-DENSITY.md).
 
 
 **Flagship daily work, creation and recovery — #1221 (2026-10-16).**
@@ -37,8 +40,15 @@ and [all-family coverage](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/C
 Merged as `14ae17b68`; normal idle-hub delivery is live on port8765, PID79705,
 with exact merged/source/build agreement. Formal Astra postmerge review RATIFY:
 [release record](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/POSTMERGE-CDE.md).
-Full main tape 38957119404 (C/D/E) is queued and38950387547 (B) is running at
-record time; neither is claimed green. Owner live judgment remains separate.
+Full main tape 38950387547 (B) completed red: 103 failures / 16,327 passes,
+with 96 failure names shared with the preceding tape. This forward fix aligns
+the two follow-through wire fixtures with their real nullable hold fields;
+the isolated producer fences and 32 web consumer checks pass. CDE tape
+38957119404 remains in progress; no full-tape green is claimed.
+Owner density feedback was delivered by #1223, build `ca987454c0b44162`,
+PID 96844 on port 8765; formal Astra postmerge review RATIFY.
+[Delivery and fixture follow-up](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/POSTMERGE-DENSITY.md).
+Owner live judgment remains separate.
 The bounded kickoff implementation/delivery is complete; every parent family
 has explicit current/carried/unknown coverage. `/todo` remains non-idempotent:
 explicitly sending again after an unknown result can create another task.
