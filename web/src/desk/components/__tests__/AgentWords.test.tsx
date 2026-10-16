@@ -108,6 +108,19 @@ describe("AgentWords: the subset", () => {
 });
 
 describe("AgentWords: compact", () => {
+  it("retains checked, unchecked and nested task words with inline marks", () => {
+    const source = "- [ ] **Review PRs**\n  - [x] Read [Guide](https://example.com/guide) and `review.md`\n- [x] **Send notes**";
+    const el = draw(source, true);
+    expect(el.textContent).toBe("[ ] Review PRs · [x] Read Guide https://example.com/guide and review.md · [x] Send notes");
+    expect(agentWordsPlain(source)).toBe(el.textContent);
+    expect([...el.querySelectorAll("strong")].map((node) => node.textContent?.trim()).join(" ")).toBe("Review PRs Send notes");
+    expect(el.querySelector("code")?.textContent).toBe("review.md");
+    expect(el.querySelector("a,button,input,ul,li")).toBeNull();
+    noLiteralMarks(el.textContent ?? "");
+    expect(askOf("- [ ] **May I review PRs?**")).toBe("[ ] **May I review PRs?**");
+    expect(agentWordsPlain("- [X] **Read notes**")).toBe("[X] Read notes");
+  });
+
   it("one line with no ask: blocks joined with ·, marks kept, no list markers", () => {
     const steps = "Steps done:\n\n1. **project.list** called\n2. `NOTES.md` written";
     const el = draw(steps, true);

@@ -474,9 +474,9 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
               });
             }}
           >
-            {/* HS-111-09 — integer-true: the 32px source renders at 32
-                CSS px (64 device px at DPR 2 = exact 2x); 24 was a 1.5x
-                smear. */}
+            {/* The owner's 2026-10-16 density direction draws desktop art
+                at 24 CSS px; the phone keeps 32 px. CSS owns that size;
+                the intrinsic 32 px source stays unchanged. */}
             {DOCK_SPRITES[application.windowId] ? (
               <img src={DOCK_SPRITES[application.windowId]} alt="" width={32} height={32} className="desk-dock-sprite" draggable={false} />
             ) : (
