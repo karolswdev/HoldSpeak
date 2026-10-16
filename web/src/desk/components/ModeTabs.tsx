@@ -1,13 +1,9 @@
-/** HS-153-01 -- Mode tabs beside the composer.
- *
- * Renders: Desk . Chase . Draft . Plan . <custom modes>
- * Coloured dot from avatar, active tab marked (aria-pressed).
- * One Tab entry, arrow-key focus and Enter selection. The strip wraps
- * within its surface at 393. */
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
+/** Thread mode uses the library's measured filter strip.
+ * Choosing the bound recipe again removes the mode binding. */
+import { useEffect, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import type { ThreadMode } from "../threads";
-import { Button } from "../../components/signal/Signal";
+import { FilterTokens } from "../surface/FilterTokens";
 
 export interface ModeTabItem {
   id: string;
@@ -74,86 +70,22 @@ export function resetModeCache(): void {
 
 export function ModeTabs({ activeMode, onSelect, disabled }: ModeTabsProps) {
   const [modes, setModes] = useState<ModeTabItem[]>([]);
-  const [focusedModeId, setFocusedModeId] = useState<string | null>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     void fetchModes().then(setModes);
   }, []);
 
-  useEffect(() => {
-    setFocusedModeId(activeMode?.id ?? null);
-  }, [activeMode?.id]);
-
-  const tabStopId = modes.find((mode) => mode.id === focusedModeId)?.id
-    ?? modes.find((mode) => mode.id === activeMode?.id)?.id
-    ?? modes[0]?.id;
-
-  const handleKey = useCallback(
-    (e: KeyboardEvent<HTMLDivElement>) => {
-      if (disabled) return;
-      const btns = scrollRef.current?.querySelectorAll<HTMLButtonElement>(
-        "[data-mode-tab]:not(:disabled)",
-      );
-      if (!btns || btns.length === 0) return;
-      const arr = Array.from(btns);
-      const idx = arr.findIndex((b) => b === document.activeElement);
-      if (e.key === "ArrowRight" || e.key === "ArrowDown") {
-        e.preventDefault();
-        const next = idx < arr.length - 1 ? idx + 1 : 0;
-        arr[next].focus();
-      } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
-        e.preventDefault();
-        const prev = idx > 0 ? idx - 1 : arr.length - 1;
-        arr[prev].focus();
-      } else if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        if (idx >= 0) arr[idx].click();
-      }
-    },
-    [disabled],
-  );
-
   if (modes.length === 0) return null;
 
   return (
-    <div
-      className="thread-mode-tabs"
-      role="tablist"
-      aria-label="Thread modes"
-      data-testid="mode-tabs"
-      onKeyDown={handleKey}
-      ref={scrollRef}
-    >
-      {modes.map((m) => {
-        const isActive = activeMode?.id === m.id;
-        return (
-          <Button
-            variant="chrome"
-            key={m.id}
-            type="button"
-            role="tab"
-            data-mode-tab
-            data-mode-id={m.id}
-            aria-selected={isActive}
-            aria-pressed={isActive}
-            className={`thread-mode-tab${isActive ? " thread-mode-tab--active" : ""}`}
-            tabIndex={!disabled && m.id === tabStopId ? 0 : -1}
-            disabled={disabled}
-            onFocus={() => setFocusedModeId(m.id)}
-            onClick={() => {
-              if (!disabled) onSelect(isActive ? "" : m.id);
-            }}
-            data-testid={`mode-tab-${m.name.toLowerCase()}`}
-          >
-            <span
-              className="thread-mode-dot"
-              style={{ backgroundColor: m.avatar }}
-            />
-            <span className="thread-mode-label">{m.name}</span>
-          </Button>
-        );
-      })}
+    <div className="thread-mode-tabs" data-testid="mode-tabs">
+      <FilterTokens
+        label="Thread mode"
+        emptyLabel="Choose mode"
+        options={modes.map((mode) => ({ value: mode.id, label: mode.name }))}
+        value={activeMode?.id ?? ""}
+        onChange={(next) => onSelect(next === activeMode?.id ? "" : next)}
+        disabled={disabled}
+      />
     </div>
   );
 }

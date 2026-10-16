@@ -2977,7 +2977,9 @@
         "web/src/desk/gl/Atmosphere.tsx",
         "web/src/desk/gl/atmosphereRegistry.ts",
         "web/src/desk/gl/jupiterOrbitScene.ts",
-        "web/src/desk/gl/jupiterOrbitModel.ts"
+        "web/src/desk/gl/jupiterOrbitModel.ts",
+        "web/src/desk/components/AskPanel.tsx",
+        "holdspeak/db/plugins.py"
       ],
       "status": "built_unreleased"
     },
@@ -2995,7 +2997,9 @@
         "web/src/desk/gl/Atmosphere.tsx",
         "web/src/desk/gl/atmosphereRegistry.ts",
         "web/src/desk/gl/jupiterOrbitScene.ts",
-        "web/src/desk/gl/jupiterOrbitModel.ts"
+        "web/src/desk/gl/jupiterOrbitModel.ts",
+        "web/src/desk/components/AskPanel.tsx",
+        "holdspeak/db/plugins.py"
       ],
       "status": "built_unreleased"
     },
@@ -3013,7 +3017,9 @@
         "web/src/desk/gl/Atmosphere.tsx",
         "web/src/desk/gl/atmosphereRegistry.ts",
         "web/src/desk/gl/jupiterOrbitScene.ts",
-        "web/src/desk/gl/jupiterOrbitModel.ts"
+        "web/src/desk/gl/jupiterOrbitModel.ts",
+        "web/src/desk/components/AskPanel.tsx",
+        "holdspeak/db/plugins.py"
       ],
       "status": "built_unreleased"
     },
@@ -3031,7 +3037,9 @@
         "web/src/desk/gl/Atmosphere.tsx",
         "web/src/desk/gl/atmosphereRegistry.ts",
         "web/src/desk/gl/jupiterOrbitScene.ts",
-        "web/src/desk/gl/jupiterOrbitModel.ts"
+        "web/src/desk/gl/jupiterOrbitModel.ts",
+        "web/src/desk/components/AskPanel.tsx",
+        "holdspeak/db/plugins.py"
       ],
       "status": "built_unreleased"
     },
@@ -3049,7 +3057,9 @@
         "web/src/desk/gl/Atmosphere.tsx",
         "web/src/desk/gl/atmosphereRegistry.ts",
         "web/src/desk/gl/jupiterOrbitScene.ts",
-        "web/src/desk/gl/jupiterOrbitModel.ts"
+        "web/src/desk/gl/jupiterOrbitModel.ts",
+        "web/src/desk/components/AskPanel.tsx",
+        "holdspeak/db/plugins.py"
       ],
       "status": "built_unreleased"
     },
@@ -3881,7 +3891,9 @@
       "source_ids": [
         "holdspeak/services/thread_service.py",
         "holdspeak/db/threads.py",
-        "holdspeak/web/routes/threads.py"
+        "holdspeak/web/routes/threads.py",
+        "web/src/desk/pullouts/ThreadPullout.tsx",
+        "web/src/desk/components/ThreadComposer.tsx"
       ],
       "status": "experimental"
     },
@@ -3893,7 +3905,9 @@
       "source_ids": [
         "holdspeak/services/thread_service.py",
         "holdspeak/db/threads.py",
-        "holdspeak/web/routes/threads.py"
+        "holdspeak/web/routes/threads.py",
+        "web/src/desk/pullouts/ThreadPullout.tsx",
+        "web/src/desk/components/ThreadComposer.tsx"
       ],
       "status": "experimental"
     },
@@ -3905,7 +3919,9 @@
       "source_ids": [
         "holdspeak/services/thread_service.py",
         "holdspeak/db/threads.py",
-        "holdspeak/web/routes/threads.py"
+        "holdspeak/web/routes/threads.py",
+        "web/src/desk/pullouts/ThreadPullout.tsx",
+        "web/src/desk/components/ThreadComposer.tsx"
       ],
       "status": "experimental"
     },
@@ -3917,7 +3933,9 @@
       "source_ids": [
         "holdspeak/services/thread_service.py",
         "holdspeak/db/threads.py",
-        "holdspeak/web/routes/threads.py"
+        "holdspeak/web/routes/threads.py",
+        "web/src/desk/pullouts/ThreadPullout.tsx",
+        "web/src/desk/components/ThreadComposer.tsx"
       ],
       "status": "experimental"
     },
@@ -3929,7 +3947,9 @@
       "source_ids": [
         "holdspeak/services/thread_service.py",
         "holdspeak/db/threads.py",
-        "holdspeak/web/routes/threads.py"
+        "holdspeak/web/routes/threads.py",
+        "web/src/desk/pullouts/ThreadPullout.tsx",
+        "web/src/desk/components/ThreadComposer.tsx"
       ],
       "status": "experimental"
     },

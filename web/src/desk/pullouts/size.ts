@@ -14,6 +14,7 @@ export const PULLOUT_SIZE: Partial<Record<string, { w: number; h: number }>> = {
   // material until the Thought window's 820 x 640 cap.
   note: { w: 520, h: 360 },
   intelligence: { w: 880, h: 700 },
+  thread: { w: 660, h: 700 },
   // PHILO-17: a meeting is a whole window (its record, its wings, its foot).
   meeting: { w: 720, h: 600 },
   // PHILO-17 (2b): a person is a whole window (the six lenses on one row).

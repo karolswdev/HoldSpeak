@@ -1,0 +1,76 @@
+/* Thread and Ask share a paper conversation and a bounded writing rail.
+   The host owns scrolling; the traffic well must not create another viewport. */
+.conversation-reading {
+  min-width: 0;
+  min-height: 0;
+}
+.conversation-reading .surface-traffic,
+.conversation-reading .surface-traffic > .surface-well {
+  flex: none;
+  min-width: 0;
+}
+.conversation-reading .surface-traffic > .surface-well > .surface-well-body {
+  overflow: visible;
+  gap: 0;
+  padding: 0;
+}
+.conversation-reading .surface-traffic-turn {
+  grid-template-columns: minmax(76px, auto) minmax(0, 1fr);
+  gap: 4px 12px;
+  padding: 14px 16px;
+}
+.conversation-reading .surface-traffic-prefix {
+  font: 600 12px / 1.5 var(--font-mono);
+  color: var(--text-muted);
+}
+.conversation-reading .surface-traffic-text {
+  font: 400 14px / 1.65 var(--font-sans);
+  color: var(--text);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.conversation-reading .surface-traffic-text p {
+  margin: 0 0 10px;
+}
+.conversation-reading .surface-traffic-text p:last-child {
+  margin-bottom: 0;
+}
+.conversation-reading .surface-material {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+.conversation-reading .surface-traffic-meta {
+  grid-column: 2;
+  gap: 8px;
+  padding-top: 6px;
+  font: 400 12px / 1.5 var(--font-mono);
+}
+.conversation-composer {
+  min-width: 0;
+  background: var(--wb-field);
+  border: 1px solid var(--wb-ink);
+  box-shadow: var(--desk-window-etch);
+  padding: 12px;
+}
+.conversation-composer .gadget-pad {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+.conversation-composer .gadget-pad textarea {
+  font: 400 14px / 1.55 var(--font-sans);
+  max-height: 150px;
+  overflow-y: auto;
+}
+@container surface (max-width: 520px) {
+  .conversation-reading .surface-traffic-turn {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    padding: 12px;
+  }
+  .conversation-reading .surface-traffic-meta { padding-top: 4px; }
+  .conversation-composer { padding: 10px; }
+  .conversation-composer .gadget-pad textarea { max-height: 120px; }
+}

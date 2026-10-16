@@ -97,6 +97,18 @@
           "symbol": "build_threads_router",
           "line": 68,
           "claim": "The HTTP router serves concrete Thread routes."
+        },
+        {
+          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "symbol": "ThreadPullout",
+          "claim": "The Workbench conversation uses shared paper traffic and editors, real close/load retry, failed-turn retry and passive branch position while preserving runtime reconciliation and message anchors.",
+          "line": 1094
+        },
+        {
+          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "symbol": "InlineEditor",
+          "claim": "Group focus keeps Send/Cancel reachable; shared Pad editors retain existing draft and speech append contracts.",
+          "line": 1021
         }
       ],
       "tests": [
@@ -121,6 +133,18 @@
             "run": "full-python-suite",
             "cases": 1
           }
+        },
+        {
+          "path": "web/src/desk/__tests__/ThreadPullout.test.tsx",
+          "node": "retries loading and closes an absent thread with the real callback",
+          "assertion": "The real Thread face exposes load retry and passes its existing close callback.",
+          "execution": "passed"
+        },
+        {
+          "path": "web/src/desk/__tests__/ThreadPullout.test.tsx",
+          "node": "retries the failed message through the existing regenerate writer",
+          "assertion": "A failed answer offers the canonical regenerate writer for that message.",
+          "execution": "passed"
         }
       ],
       "docs": [
@@ -2293,7 +2317,7 @@
           "path": "web/src/components/AmbientLayer.tsx",
           "symbol": "Qlippy",
           "line": 196,
-          "claim": "Settings gate the component; runtime events refresh durable projections or queue learning cards. Dictation journal projections never produce a Qlippy popup. Successful Dismiss closes older popup backlog in the tab while retaining untouched items in Attention; a refused writer remains visible for Retry."
+          "claim": "Settings gate the component; runtime events refresh durable projections or queue learning cards. Dictation journal projections never produce a Qlippy popup. Successful Dismiss closes older popup backlog in the tab while retaining untouched items in Attention; a refused writer remains visible for Retry. Existing notices share a bounded Workbench stack with explicit paper/ink tokens and complete payload wells; running analysis uses the library pulse with reduced-motion support."
         },
         {
           "path": "web/public/qlippy/README.md",
@@ -2318,6 +2342,12 @@
           "path": "web/src/components/ambientDismiss.test.tsx",
           "node": "keeps a failed write visible and retries its exact ID after a refresh",
           "assertion": "A refused visible-row dismissal stays on that row after refresh; Try again writes the same ID and leaves the other row untouched.",
+          "execution": "passed"
+        },
+        {
+          "path": "web/src/components/ambientMaterial.test.tsx",
+          "node": "omits zero queue counts, uses shared rows and opens the existing queue route",
+          "assertion": "The existing queue omits zero tokens and uses library actions/rows; location is mocked in this rendered test.",
           "execution": "passed"
         }
       ],

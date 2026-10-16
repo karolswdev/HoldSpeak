@@ -30,20 +30,6 @@
 
 .thread-rename { align-self: flex-start; }
 
-.thread-title-input {
-  all: unset;
-  font-family: var(--font-display, inherit);
-  font-weight: 600;
-  font-size: var(--desk-type-primary-size, 15px);
-  line-height: 1.3;
-  color: var(--text);
-  padding: 1px 4px;
-  border-radius: 2px;
-  background: var(--desk-window-well, rgba(128, 128, 128, 0.08));
-  box-shadow: var(--desk-window-etch, inset 0 1px 2px rgba(0,0,0,.12));
-  min-height: 20px;
-}
-
 /* HS-176-04 — the voice law: the title well holds the field and its mic. */
 .thread-title-well {
   display: flex;
@@ -51,28 +37,12 @@
   gap: 6px;
 }
 
-.thread-title-well .thread-title-input {
-  flex: 1;
-  min-width: 0;
-}
-
-.desk-next .thread-title-well .desk-mic {
-  flex: none;
-  width: 24px;
-  height: 24px;
-}
-
-.desk-next .thread-inline-editor-mic .desk-mic {
-  width: 24px;
-  height: 24px;
-}
-
 .thread-head-instruments {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
-  font-size: var(--desk-surface-label-size, 11px);
+  font-size: 12px;
   font-family: var(--font-mono, ui-monospace, monospace);
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -97,14 +67,14 @@
 }
 
 .thread-row {
-  padding: 10px 12px;
+  padding: 0;
   border-bottom: 1px solid var(--border-subtle, rgba(128, 128, 128, 0.08));
 }
 
 /* ── User row ────────────────────────────────────────────────────────── */
 
 .thread-row-label {
-  font-size: var(--desk-surface-label-size, 11px);
+  font-size: 12px;
   font-family: var(--font-mono, ui-monospace, monospace);
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -114,8 +84,7 @@
 }
 
 .thread-row-user .thread-row-body {
-  font-size: var(--desk-surface-body-size, 13px);
-  line-height: 1.55;
+  font: 400 13px / 1.65 var(--font-sans);
   white-space: pre-wrap;
   word-break: break-word;
   color: var(--text);
@@ -124,8 +93,7 @@
 /* ── Assistant row ───────────────────────────────────────────────────── */
 
 .thread-row-assistant .thread-row-body {
-  font-size: var(--desk-surface-body-size, 13px);
-  line-height: 1.6;
+  font: 400 14px / 1.65 var(--font-sans);
   color: var(--text);
 }
 
@@ -136,7 +104,7 @@
   gap: 6px;
   margin-bottom: 4px;
   font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: var(--desk-surface-label-size, 11px);
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -158,8 +126,7 @@
 .thread-streaming-text {
   white-space: pre-wrap;
   word-break: break-word;
-  font-size: var(--desk-surface-body-size, 13px);
-  line-height: 1.6;
+  font: 400 14px / 1.65 var(--font-sans);
 }
 
 .thread-cursor {
@@ -173,59 +140,6 @@
 
 @keyframes thread-blink {
   50% { opacity: 0; }
-}
-
-.thread-row-streaming {
-  box-shadow: inset 2px 0 0 var(--accent, #3b82f6);
-}
-
-/* ── Error / Crashed ─────────────────────────────────────────────────── */
-/* (4) CRASHED: Retry primary; error: severity label + message */
-
-.thread-row-error {
-  box-shadow: inset 2px 0 0 var(--danger-signal, #ef4444);
-}
-
-.thread-row-error-body {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 4px 0;
-}
-
-.thread-error-severity {
-  font-size: var(--desk-surface-label-size, 11px);
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--danger-signal, #ef4444);
-}
-
-.thread-error-message {
-  font-size: var(--desk-surface-detail-size, 12px);
-  color: var(--text-muted);
-  word-break: break-word;
-}
-
-.thread-row-crashed {
-  box-shadow: inset 2px 0 0 var(--warn-signal, #f59e0b);
-}
-
-.thread-row-crashed-body {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 0;
-}
-
-.thread-crash-label {
-  font-size: var(--desk-surface-label-size, 11px);
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--warn-signal, #f59e0b);
 }
 
 /* ── RAW fold ────────────────────────────────────────────────────────── */
@@ -264,31 +178,9 @@
 .thread-row-actions {
   display: flex;
   align-items: center;
-  gap: 0;
-  margin-top: 6px;
+  gap: 6px;
+  margin-top: 10px;
   flex-wrap: wrap;
-}
-
-.desk-next .thread-row-actions .desk-chip.quiet {
-  font-size: var(--font-size-xs);
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  height: 22px;
-  padding: 0 7px;
-  border-color: var(--border-subtle, rgba(128,128,128,.12));
-  box-shadow: none;
-  color: var(--text-faint);
-}
-
-.desk-next .thread-row-actions .desk-chip.quiet + .desk-chip.quiet {
-  margin-left: -1px;
-}
-
-.desk-next .thread-row-actions .desk-chip.quiet:hover {
-  color: var(--text);
-  border-color: var(--accent);
 }
 
 /* ── Sibling picker ──────────────────────────────────────────────────── */
@@ -299,20 +191,6 @@
   gap: 2px;
   font-size: var(--desk-surface-detail-size, 12px);
   font-family: var(--font-mono, ui-monospace, monospace);
-}
-
-.thread-sibling-nav {
-  all: unset;
-  cursor: pointer;
-  padding: 0 4px;
-  font-size: 14px;
-  line-height: 1;
-  color: var(--text-faint);
-}
-
-.thread-sibling-nav:disabled {
-  opacity: 0.3;
-  cursor: default;
 }
 
 .thread-sibling-count {
@@ -326,8 +204,8 @@
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 6px 8px;
+  gap: 10px;
+  padding: 12px;
   border-top: 1px solid var(--border, rgba(128, 128, 128, 0.15));
   background: var(--surface-2, rgba(128, 128, 128, 0.04));
   max-width: 100%;
@@ -339,7 +217,7 @@
 .thread-composer {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 10px;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -348,63 +226,11 @@
 
 /* (5) at 393: no resize handle, tight spacing, chips wrap */
 .thread-composer-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 4px;
+  display: grid;
+  gap: 10px;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-}
-
-.thread-composer-input {
-  flex: 1;
-  min-width: 0;
-  resize: none;
-  border: 1px solid var(--border, rgba(128, 128, 128, 0.2));
-  border-radius: 2px;
-  padding: 6px 8px;
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: var(--desk-surface-body-size, 13px);
-  background: var(--desk-window-well, rgba(128, 128, 128, 0.05));
-  box-shadow: var(--desk-window-etch, inset 0 1px 2px rgba(0,0,0,.12));
-  color: inherit;
-  min-height: 22px;
-  max-height: 120px;
-  overflow-y: auto;
-  box-sizing: border-box;
-}
-
-.thread-composer-input:focus {
-  outline: 1px solid var(--accent, #3b82f6);
-  outline-offset: -1px;
-}
-
-/* HS-200-41 (D-R2, corrected by F4) — the desk chip grammar has no disabled
-   face (chrome-menus.css `.desk-next .desk-chip`), so a refused Send read
-   exactly like a live one on an empty draft. The library's
-   `:where(.btn):disabled` cannot reach it: the chip rule outranks it. Pay it
-   on this surface only; global.css is not this story's to change.
-
-   D-R2 first reached for "the library's own disabled tokens", and the glass
-   said no: `--disabled-bg` is `--surface-1` against a `--surface-2` chip and
-   `--disabled-border` IS `--border`, so the fill differed by 1.09:1, the
-   border was byte-identical, and the entire signal was the label greying.
-   That is dimmed, not refused.
-
-   The treatment the same design already ratified for a refused primary is
-   used instead — D2(a): drawn `disabled` + `aria-disabled`, **flat, dashed
-   and muted** (C9). The DASH is the part that carries: a border-style change
-   reads as refusal at any contrast, on any ground, and to anyone who cannot
-   separate two greys. */
-.thread-composer-row .desk-chip:disabled,
-.thread-composer-row .desk-chip:disabled:hover,
-.thread-inline-editor-actions .desk-chip:disabled,
-.thread-inline-editor-actions .desk-chip:disabled:hover {
-  border: 1px dashed var(--disabled-border);
-  background: var(--disabled-bg);
-  box-shadow: none;
-  color: var(--disabled-fg);
-  cursor: not-allowed;
 }
 
 /* ── Ref chips ───────────────────────────────────────────────────────── */
@@ -444,33 +270,6 @@
   max-width: 180px;
 }
 
-.thread-ref-chip-remove {
-  all: unset;
-  cursor: pointer;
-  font-size: var(--font-size-xs);
-  font-family: var(--font-mono, ui-monospace, monospace);
-  color: var(--text-faint);
-  padding: 0 2px;
-  line-height: 1;
-}
-
-.thread-ref-chip-remove:hover {
-  color: var(--danger-signal, #ef4444);
-}
-
-/* HS-200-41 (D-R3) — the remove verb is the library Button now, and the
-   library's own hover/press grammar reaches it: `:where(.btn):hover` ties with
-   the rule above on specificity and wins on sheet load order, painting a
-   background this chip never had. Outrank it here; the resting face and the
-   focus ring the swap gained both stay. */
-.thread-ref-chip .thread-ref-chip-remove:hover {
-  background: none;
-  border-color: transparent;
-}
-.thread-ref-chip .thread-ref-chip-remove:active:not(:disabled) {
-  transform: none;
-}
-
 /* ── Autocomplete anchor (positions above the field) ─────────────────── */
 
 .thread-composer-ac-anchor {
@@ -506,38 +305,9 @@
   width: 100%;
 }
 
-.thread-inline-editor-input {
-  width: 100%;
-  resize: none;
-  border: 1px solid var(--accent, #3b82f6);
-  border-radius: 2px;
-  padding: 6px 8px;
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: var(--desk-surface-body-size, 13px);
-  background: var(--desk-window-well, rgba(128, 128, 128, 0.05));
-  box-shadow: var(--desk-window-etch, inset 0 1px 2px rgba(0,0,0,.12));
-  color: inherit;
-  min-height: 22px;
-  max-height: 120px;
-  box-sizing: border-box;
-}
-
 .thread-inline-editor-actions {
   display: flex;
   gap: 4px;
-}
-
-/* ── User row editable ───────────────────────────────────────────────── */
-
-.thread-row-body-editable {
-  cursor: pointer;
-  border-radius: 2px;
-  padding: 1px 2px;
-  margin: -1px -2px;
-}
-
-.thread-row-body-editable:hover {
-  background: var(--wash-1, rgba(128, 128, 128, 0.05));
 }
 
 /* ── Kind glyph in autocomplete ──────────────────────────────────────── */
@@ -603,7 +373,7 @@
   align-items: center;
   gap: 6px;
   font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: var(--desk-surface-label-size, 11px);
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -823,7 +593,7 @@
 
 /* Shared */
 .thread-result-label {
-  font-size: var(--desk-surface-label-size, 11px);
+  font-size: 12px;
   font-family: var(--font-mono, ui-monospace, monospace);
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -844,74 +614,13 @@
   font-style: italic;
 }
 
-/* ── HS-153-01: Mode tabs ─────────────────────────────────────────────── */
-
+/* The measured FilterTokens strip supplies the mode material. */
 .thread-mode-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px;
-  padding: 4px 8px;
+  min-width: 0;
+  padding: 0;
   flex-shrink: 0;
 }
-
-.thread-mode-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  border: 1px solid var(--border, rgba(128, 128, 128, 0.15));
-  border-radius: 2px;
-  background: transparent;
-  cursor: pointer;
-  white-space: nowrap;
-  font-size: var(--desk-surface-detail-size, 12px);
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-.thread-mode-tab:hover:not(:disabled) {
-  background: var(--surface-hover, rgba(128, 128, 128, 0.08));
-}
-.thread-mode-tab:focus-visible {
-  outline: 2px solid var(--focus-ring, #4f8ff7);
-  outline-offset: -1px;
-}
-.thread-mode-tab:disabled {
-  cursor: default;
-}
-.thread-mode-tab--active {
-  background: var(--surface-selected, rgba(128, 128, 128, 0.12));
-  border-color: var(--text-muted, #888);
-  color: var(--text, #e0e0e0);
-  font-weight: 600;
-}
-
-.thread-mode-dot {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.thread-mode-label {
-  line-height: 1;
-}
-
-@container surface (max-width: 520px) {
-  .thread-mode-tab { min-height: 44px; }
-  .thread-call-chip { min-height: 44px; }
-  .desk-next .thread-composer-row > .desk-mic {
-    flex: 0 0 44px;
-    min-width: 44px;
-    min-height: 44px;
-    width: 44px;
-    height: 44px;
-    box-sizing: border-box;
-  }
-}
+.thread-mode-tabs .surface-filter-tokens { width: 100%; }
 
 /* System row (in-flow slash command feedback, HS-153-02) */
 .thread-system-row {
@@ -929,33 +638,6 @@
 
 /* ── HS-154-04: Speaker glyph ─────────────────────────────────────── */
 
-.thread-speaker-glyph {
-  all: unset;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 2px;
-  font-size: 9px;
-  line-height: 1;
-  color: var(--text-faint, #888);
-  border: 1px solid var(--border-subtle, rgba(128, 128, 128, 0.12));
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
-  flex-shrink: 0;
-}
-
-.thread-speaker-glyph:hover {
-  color: var(--text-muted, #666);
-  border-color: var(--text-faint, #888);
-}
-
-.thread-speaker-glyph:focus-visible {
-  outline: 2px solid var(--focus-ring, #4488ff);
-  outline-offset: 1px;
-}
-
 .thread-speaker-glyph--active {
   color: var(--warning-signal, #f59e0b);
   border-color: var(--warning-signal, #f59e0b);
@@ -963,30 +645,6 @@
 }
 
 /* ── HS-154-03: Call chip ─────────────────────────────────────────── */
-
-.thread-call-chip {
-  all: unset;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 1px 6px;
-  border: 1px solid var(--border, rgba(128, 128, 128, 0.15));
-  border-radius: 2px;
-  font-size: var(--desk-surface-detail-size, 12px);
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-faint, #888);
-  white-space: nowrap;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
-}
-
-.thread-call-chip:hover { color: var(--text-muted, #666); border-color: var(--text-faint, #888); }
-.thread-call-chip:focus-visible { outline: 2px solid var(--focus-ring, #4488ff); outline-offset: 1px; }
-
-.thread-call-chip--off { opacity: 0.7; }
 
 .thread-call-chip--listening {
   color: var(--success-signal, #22c55e);
@@ -1078,7 +736,6 @@
 .thread-annotation-popover {
   background: var(--desk-window-fill);
   border: 1px solid var(--border-subtle, rgba(128, 128, 128, 0.12));
-  border-inline-start: 1px solid color-mix(in srgb, var(--accent, #4488ff) 30%, transparent);
   border-radius: 2px;
   padding: 8px;
   min-width: 240px;
@@ -1089,7 +746,7 @@
 
 .thread-annotation-quote-head {
   font-family: var(--font-mono);
-  font-size: var(--desk-surface-label-size, 11px);
+  font-size: 12px;
   color: var(--text-muted, #888);
   margin-bottom: 6px;
   overflow: hidden;
@@ -1102,22 +759,6 @@
   gap: 4px;
   align-items: center;
   margin-bottom: 6px;
-}
-
-.thread-annotation-comment-input {
-  flex: 1;
-  padding: 4px 6px;
-  font-family: var(--font-mono);
-  font-size: var(--desk-surface-body-size, 12px);
-  border: 1px solid var(--border, rgba(128, 128, 128, 0.2));
-  border-radius: 2px;
-  background: var(--desk-window-well);
-  color: var(--text);
-  outline: none;
-}
-
-.thread-annotation-comment-input:focus {
-  border-color: var(--accent, #4488ff);
 }
 
 .thread-annotation-actions {
@@ -1148,20 +789,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.thread-annotation-chip-remove {
-  background: none;
-  border: none;
-  padding: 0 2px;
-  cursor: pointer;
-  color: var(--text-muted, #888);
-  font-size: var(--font-size-xs);
-  line-height: 1;
-}
-
-.thread-annotation-chip-remove:hover {
-  color: var(--text, inherit);
 }
 
 /* ── HS-153-05: compaction cut marker + earlier fold ────────────── */
@@ -1202,20 +829,29 @@
   padding: 4px 12px;
 }
 
-.thread-earlier-toggle {
-  all: unset;
-  cursor: pointer;
-  color: var(--text-muted, #888);
-  font-family: var(--font-mono, monospace);
-  font-size: var(--desk-surface-sm-size, 11px);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.thread-earlier-toggle:hover {
-  color: var(--accent, #0af);
-}
-
 .thread-earlier-messages {
   opacity: 0.7;
 }
+
+/* The transcript remains the sole vertical scroll owner above the writer. */
+.thread-pullout-body { padding: 12px; gap: 12px; }
+.thread-head { padding: 0 0 10px; gap: 8px; }
+.thread-reading { flex: none; }
+.thread-row:last-child { border-bottom: 0; }
+.thread-row-label { margin: 0; font-size: 12px; letter-spacing: .03em; }
+.thread-row-head { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; margin: 0; }
+.thread-title-well .gadget-string { width: 100%; min-width: 0; }
+.thread-annotation-input-row .gadget-string { flex: 1; min-width: 0; }
+.thread-composer-input, .thread-inline-editor-input { min-height: 78px; resize: none; }
+.thread-composer-actions, .thread-inline-editor-actions { display: flex; justify-content: flex-end; gap: 6px; }
+.thread-row-actions .thread-inline-editor { flex: 1 0 100%; min-width: 0; }
+.thread-speaker-glyph, .thread-call-chip { white-space: nowrap; }
+.thread-row-failure .surface-state { justify-content: flex-start; padding: 8px 0; }
+.thread-error-details { margin-top: 8px; }
+@container surface (max-width: 520px) {
+  .thread-pullout-body { padding: 10px; gap: 10px; }
+  .thread-foot { padding: 10px; }
+  .thread-row-head { flex-direction: row; align-items: center; flex-wrap: wrap; }
+}
+
+.thread-composer-capture { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }

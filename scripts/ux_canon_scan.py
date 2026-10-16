@@ -229,6 +229,20 @@ MIC_ALLOWLIST: tuple[tuple[str, str, str], ...] = (
      "The adjacent Workbench grammar MicButton writes this instruction and resolves its references; the Pad must not add a second capture authority"),
 )
 
+# These named fields keep their host's functional append and mic recovery
+# controls. Unlike MIC_ALLOWLIST, a host authority is valid only while an
+# explicit MicButton is present in the same component as this exact field.
+MIC_HOST_AUTHORITIES: tuple[tuple[str, str, str], ...] = (
+    ("desk/components/AskPanel.tsx", 'label="Ask about your work"',
+     "Ask's host MicButton appends to the latest durable prompt"),
+    ("desk/components/ThreadComposer.tsx", 'label="Thread message"',
+     "The Thread composer MicButton appends to the latest draft"),
+    ("desk/components/ThreadComposer.tsx", 'label={placeholder ?? "Edit message"}',
+     "The inline editor MicButton appends inside its editor focus group"),
+    ("desk/pullouts/ThreadPullout.tsx", 'label="Comment"',
+     "The annotation MicButton appends to the current comment"),
+)
+
 
 def _mic_tag_text(content: str, start: int, limit: int = 4000) -> str:
     """The opening tag beginning at `start`, across however many lines.
@@ -382,9 +396,14 @@ def scan_mic(rel_path: str, content: str, lines: list[str]) -> list[Violation]:
         col = offset - (content.rfind("\n", 0, offset) + 1)
         if _mic_is_commented(lines, line_no, col):
             continue
-        # An opt-out is an explicit refusal: a MicButton elsewhere in the
-        # component never covers it.
+        # General opt-outs remain refusals, even beside a MicButton. Only a
+        # named host field can transfer capture authority within its component.
         if kind == "raw" and covered(offset):
+            continue
+        if kind == "optout" and covered(offset) and any(
+            rel_path == path and needle in tag
+            for path, needle, _reason in MIC_HOST_AUTHORITIES
+        ):
             continue
         hood = _mic_neighbourhood(lines, line_no, tag)
         # A named field exception belongs to that tag, never a nearby field.

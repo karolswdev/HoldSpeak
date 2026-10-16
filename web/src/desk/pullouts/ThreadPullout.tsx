@@ -1,5 +1,5 @@
 import { openNewThread } from "../newThread";
-import { countLabel, CheckGadget, CycleGadget, GadgetGroup, GadgetRow, StringGadget, wireDayClock } from "../surface";
+import { countLabel, FoldGadget, CheckGadget, CycleGadget, GadgetGroup, GadgetRow, StringGadget, wireDayClock } from "../surface";
 /** HS-151-05 — Thread pullout content: head (in-place title, egress lamp,
  * status line, token meter), body (user/assistant rows with StreamingMaterial,
  * reasoning folded behind RAW, error row in-flow, CRASHED + Retry, sibling
@@ -7,9 +7,13 @@ import { countLabel, CheckGadget, CycleGadget, GadgetGroup, GadgetRow, StringGad
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   SurfaceState,
+  SurfaceTraffic,
+  SurfaceTrafficTurn,
+  useScrollHint,
   SurfaceRows,
   SurfaceRow,
 } from "../surface/Surface";
+import "../surface/patterns/conversation.css";
 import { Material } from "../surface/Material";
 import { intelBadge } from "../chair/intelBadge";
 import { ContextualAssignment } from "../../pages/cores/ContextualAssignment";
@@ -99,45 +103,12 @@ function StreamingMaterial({ text, done }: { text: string; done: boolean }) {
   );
 }
 
-// ── Sibling picker ──────────────────────────────────────────────────
-// The server returns { message_id: [position(1-based), total] }.
-// When total > 1 the picker renders; navigation reloads the thread
-// with the chosen sibling path (the server picks the canonical path).
-function SiblingPicker({
-  position,
-  total,
-  onPrev,
-  onNext,
-}: {
-  position: number;
-  total: number;
-  onPrev: () => void;
-  onNext: () => void;
-}) {
+// The service exposes branch position/count, but no branch navigation path.
+function SiblingPicker({ position, total }: { position: number; total: number }) {
   if (total <= 1) return null;
   return (
-    <span className="thread-sibling-picker">
-      <button
-        type="button"
-        className="thread-sibling-nav"
-        disabled={position <= 1}
-        onClick={onPrev}
-        aria-label="Previous sibling"
-      >
-        &#x2039;
-      </button>
-      <span className="thread-sibling-count">
-        {position}/{total}
-      </span>
-      <button
-        type="button"
-        className="thread-sibling-nav"
-        disabled={position >= total}
-        onClick={onNext}
-        aria-label="Next sibling"
-      >
-        &#x203a;
-      </button>
+    <span className="thread-sibling-picker" aria-label={`Branch ${position} of ${total}`}>
+      <span className="thread-sibling-count">{position}/{total}</span>
     </span>
   );
 }
@@ -711,18 +682,17 @@ function AnnotationPopover({
         {quoteHead}
       </div>
       <div className="thread-annotation-input-row">
-        {/* UX-CANON: needs redesign (HS-170-04) */}
-        <input
-          ref={inputRef}
-          type="text"
-          className="thread-annotation-comment-input"
-          data-testid="annotation-comment-input"
+        <StringGadget
+          inputRef={inputRef}
+          label="Comment"
           placeholder="Comment"
           value={comment}
-          onChange={(e) => setComment(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && comment.trim()) {
-              e.preventDefault();
+          onChange={setComment}
+          mic={false}
+          inputProps={{ "data-testid": "annotation-comment-input" } as React.ComponentPropsWithoutRef<"input">}
+          onKeyDown={(event) => {
+            if (!event.nativeEvent.isComposing && event.key === "Enter" && comment.trim()) {
+              event.preventDefault();
               onSave(comment.trim());
             }
           }}
@@ -829,7 +799,6 @@ function ThreadMessageList({
   guardrailRowsForThread,
   getBufferText,
   threadId,
-  loadThread,
   handleRetry,
   handleKeep,
   handleBranch,
@@ -841,7 +810,6 @@ function ThreadMessageList({
   guardrailRowsForThread: Record<string, GuardrailRow>;
   getBufferText: (id: string) => string;
   threadId: string;
-  loadThread: (id: string) => Promise<void>;
   handleRetry: (messageId: string) => void;
   handleKeep: (messageId: string, as: "note" | "artifact") => void;
   handleBranch: (messageId: string, text: string) => void;
@@ -889,8 +857,6 @@ function ThreadMessageList({
         bufferText={getBufferText(msg.id)}
         siblingPosition={sibPosition}
         siblingTotal={sibTotal}
-        onSiblingPrev={() => void loadThread(threadId)}
-        onSiblingNext={() => void loadThread(threadId)}
         onRetry={handleRetry}
         onKeep={handleKeep}
         onBranch={handleBranch}
@@ -932,8 +898,6 @@ function MessageRow({
   bufferText,
   siblingPosition,
   siblingTotal,
-  onSiblingPrev,
-  onSiblingNext,
   onRetry,
   onKeep,
   onBranch,
@@ -946,8 +910,6 @@ function MessageRow({
   bufferText: string;
   siblingPosition: number;
   siblingTotal: number;
-  onSiblingPrev: () => void;
-  onSiblingNext: () => void;
   onRetry: (messageId: string) => void;
   onKeep: (messageId: string, as: "note" | "artifact") => void;
   /** Branch from this message: edit-and-resend (user row) or fork (assistant row). */
@@ -986,32 +948,28 @@ function MessageRow({
     const userText = msg.parts.map((p) => p.text).join("") || "";
     return (
       <div className="thread-row thread-row-user" data-message-id={msg.id}>
-        <div className="thread-row-label">YOU{msg.pending && <span> · Sending…</span>}</div>
-        {editing ? (
-          <InlineEditor
-            initialText={userText}
-            onConfirm={(text) => {
-              setEditing(false);
-              onBranch(msg.id, text);
-            }}
-            onCancel={() => setEditing(false)}
-            placeholder="Edit message"
-          />
-        ) : (
-          <div
-            className="thread-row-body thread-row-body-editable"
-            onClick={msg.pending ? undefined : () => setEditing(true)}
-            title={msg.pending ? undefined : "Click to edit and resend"}
-          >
-            {userText || "(empty)"}
-          </div>
-        )}
-        <SiblingPicker
-          position={siblingPosition}
-          total={siblingTotal}
-          onPrev={onSiblingPrev}
-          onNext={onSiblingNext}
-        />
+        <SurfaceTrafficTurn
+          prefix={<span className="thread-row-label">YOU</span>}
+          meta={msg.pending ? <span>Sending…</span> : undefined}
+          verbs={!editing && !msg.pending ? (
+            <Button variant="ghost" dense onClick={() => setEditing(true)}>Edit</Button>
+          ) : undefined}
+        >
+          {editing ? (
+            <InlineEditor
+              initialText={userText}
+              onConfirm={(text) => {
+                setEditing(false);
+                onBranch(msg.id, text);
+              }}
+              onCancel={() => setEditing(false)}
+              placeholder="Edit message"
+            />
+          ) : (
+            <div className="thread-row-body">{userText || "(empty)"}</div>
+          )}
+          <SiblingPicker position={siblingPosition} total={siblingTotal} />
+        </SurfaceTrafficTurn>
       </div>
     );
   }
@@ -1026,32 +984,24 @@ function MessageRow({
       }
       data-message-id={msg.id}
     >
-      <div className="thread-row-head">
-        <span className="thread-row-label">ASSISTANT</span>
-        <TurnLamp lamp={threadTurnRoute(msg)?.lamp ?? null} />
-      </div>
-
-      {crashed && (
-        <div className="thread-row-crashed-body">
-          <span className="thread-crash-label">CRASHED</span>
-          <Button
-            variant="primary"
-            dense
-            onClick={() => onRetry(msg.id)}
-          >
-            Retry
-          </Button>
-        </div>
-      )}
-
-      {hasError && (
-        <div className="thread-row-error-body">
-          <span className="thread-error-severity">ERROR</span>
-          <span className="thread-error-message">
-            {typeof msg.errorJson?.error === "string"
-              ? msg.errorJson.error
-              : "Turn failed"}
-          </span>
+      <SurfaceTrafficTurn
+        prefix={<span className="thread-row-head">
+          <span className="thread-row-label">ASSISTANT</span>
+          <TurnLamp lamp={threadTurnRoute(msg)?.lamp ?? null} />
+        </span>}
+        error={crashed || hasError}
+      >
+      {(crashed || hasError) && (
+        <div className="thread-row-failure">
+          <SurfaceState
+            error={crashed ? "Reply interrupted" : "Reply failed"}
+            onRetry={() => onRetry(msg.id)}
+          />
+          {msg.errorJson && (
+            <FoldGadget title="Details" className="thread-error-details">
+              <pre className="thread-raw-content">{JSON.stringify(msg.errorJson, null, 2)}</pre>
+            </FoldGadget>
+          )}
         </div>
       )}
 
@@ -1062,15 +1012,9 @@ function MessageRow({
       )}
 
       {reasoningText && isDone && (
-        <details className="thread-raw-fold">
-          <summary
-            className="thread-raw-toggle"
-            onClick={() => setShowRaw(!showRaw)}
-          >
-            RAW
-          </summary>
+        <FoldGadget title="Raw" className="thread-raw-fold" open={showRaw} onToggle={setShowRaw}>
           <pre className="thread-raw-content">{reasoningText}</pre>
-        </details>
+        </FoldGadget>
       )}
 
       {/* HS-153-03: guardrail row (before tool rows) */}
@@ -1102,8 +1046,6 @@ function MessageRow({
         <SiblingPicker
           position={siblingPosition}
           total={siblingTotal}
-          onPrev={onSiblingPrev}
-          onNext={onSiblingNext}
         />
         {isDone && !editing && (
           <>
@@ -1142,23 +1084,26 @@ function MessageRow({
           />
         )}
       </div>
+      </SurfaceTrafficTurn>
     </div>
   );
 }
 
 // ── ThreadPullout ───────────────────────────────────────────────────
 
-export function ThreadPullout({ object: o }: PulloutContentProps) {
+export function ThreadPullout({ object: o, onClose }: PulloutContentProps) {
   if (o.ref.kind !== "thread") return null;
-  return <ThreadPulloutInner threadId={o.id} title={o.title} />;
+  return <ThreadPulloutInner threadId={o.id} title={o.title} onClose={onClose} />;
 }
 
 function ThreadPulloutInner({
   threadId,
   title: initialTitle,
+  onClose,
 }: {
   threadId: string;
   title: string;
+  onClose: () => void;
 }) {
   const detail = useThreadStore((s) => s.threads[threadId]);
   const buffers = useThreadStore((s) => s.buffers);
@@ -1193,6 +1138,7 @@ function ThreadPulloutInner({
   const [restoreFocus, setRestoreFocus] = useState(false);
 
   const bodyRef = useRef<HTMLDivElement>(null);
+  useScrollHint(bodyRef, bodyRef, "y");
   const followTail = useRef(true);
 
   // Load thread on mount
@@ -1576,7 +1522,7 @@ function ThreadPulloutInner({
   if (loading && !detail) {
     return (
       <div className="desk-pullout-body desk-surface-body">
-        <SurfaceState empty emptyLabel="Loading thread" emptyGlyph="..." />
+        <SurfaceState loading />
       </div>
     );
   }
@@ -1584,20 +1530,15 @@ function ThreadPulloutInner({
   if (!detail) {
     return (
       <div className="desk-pullout-body desk-surface-body">
-        <SurfaceState
-          empty
-          emptyLabel="Thread not found"
-          emptyGlyph="?"
-          actionLabel="Close"
-          onAction={() => undefined}
-        />
+        <SurfaceState error="Thread not loaded" onRetry={() => void loadThread(threadId)} />
+        <Button variant="ghost" onClick={() => onClose()}>Close</Button>
       </div>
     );
   }
 
   return (
     <>
-      <div className="desk-pullout-body desk-surface-body thread-pullout-body" ref={bodyCallbackRef}
+      <div className="desk-pullout-body desk-surface-body thread-pullout-body surface-scroll-hint" data-axis="y" ref={bodyCallbackRef}
         onScroll={(event) => {
           const body = event.currentTarget;
           followTail.current = body.scrollHeight - body.scrollTop - body.clientHeight < 40;
@@ -1614,31 +1555,28 @@ function ThreadPulloutInner({
                 if (event.target !== titleRef.current) event.preventDefault();
               }}
             >
-              <input
-                ref={titleRef}
-                className="thread-title-input"
-                aria-label="Thread title"
+              <StringGadget
+                inputRef={titleRef}
+                label="Thread title"
                 value={titleDraft}
-                onChange={(e) => setTitleDraft(e.target.value)}
-                onBlur={commitTitle}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
+                onChange={setTitleDraft}
+                micLabel="Speak thread title"
+                inputProps={{ onBlur: () => void commitTitle() }}
+                onKeyDown={(event) => {
+                  if (event.nativeEvent.isComposing) return;
+                  if (event.key === "Enter") {
+                    event.preventDefault();
                     restoreRenameFocus.current = true;
                     void commitTitle();
                   }
-                  if (e.key === "Escape") {
-                    e.preventDefault();
+                  if (event.key === "Escape") {
+                    event.preventDefault();
                     restoreRenameFocus.current = true;
                     setTitleDraft(initialTitle);
                     setEditingTitle(false);
                   }
                 }}
                 autoFocus
-              />
-              <MicButton
-                label="Speak thread title"
-                onText={(spoken) => setTitleDraft(spoken)}
               />
             </span>
           ) : null}
@@ -1692,7 +1630,8 @@ function ThreadPulloutInner({
           )}
         </div>
 
-        {/* Body: turn rows */}
+        <div className="conversation-reading thread-reading">
+          <SurfaceTraffic>
         {detail.messages.length === 0 ? (
           <SurfaceState
             empty
@@ -1707,13 +1646,14 @@ function ThreadPulloutInner({
             guardrailRowsForThread={guardrailRowsForThread}
             getBufferText={getBufferText}
             threadId={threadId}
-            loadThread={loadThread}
             handleRetry={handleRetry}
             handleKeep={handleKeep}
             handleBranch={handleBranch}
             handleDecide={handleDecide}
           />
         )}
+          </SurfaceTraffic>
+        </div>
         {/* HS-153-04: annotation popover anchored to selection */}
         {annotationPopover && (
           <AnnotationPopover

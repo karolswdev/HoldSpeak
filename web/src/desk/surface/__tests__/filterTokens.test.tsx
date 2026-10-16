@@ -1,6 +1,7 @@
 // HS-176-03 — the promoted FilterTokens species (ruling R6).
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { StripMenuButton } from "../stripMenu";
 import { FilterTokens } from "../FilterTokens";
 
 const OPTIONS = [
@@ -102,5 +103,21 @@ describe("FilterTokens", () => {
     );
     // matchCount/total would be a second count on the face (A.7/A.8).
     expect(container.textContent).toBe("ALLDICTATIONBROWSERHOTKEY");
+  });
+});
+
+// No new choice is needed for an unbound Thread; only the folded caption changes.
+describe("folded filter caption", () => {
+  it("names an unmatched value without claiming the first choice is active", () => {
+    render(<StripMenuButton label="Thread mode" choices={OPTIONS.slice(1)} value="" emptyLabel="Choose mode" onChange={() => {}} variant="secondary" />);
+    expect(screen.getByRole("button", { name: "Thread mode: Choose mode" })).toHaveTextContent("Choose mode");
+  });
+  it("keeps the existing first-choice fallback for other callers", () => {
+    render(<StripMenuButton label="Source filter" choices={OPTIONS} value="missing" onChange={() => {}} variant="secondary" />);
+    expect(screen.getByRole("button", { name: "Source filter: ALL" })).toHaveTextContent("ALL");
+  });
+  it("uses the current choice before the empty caption", () => {
+    render(<StripMenuButton label="Thread mode" choices={OPTIONS} value="browser" emptyLabel="Choose mode" onChange={() => {}} variant="secondary" />);
+    expect(screen.getByRole("button", { name: "Thread mode: BROWSER" })).toHaveTextContent("BROWSER");
   });
 });

@@ -1,12 +1,18 @@
 // Phase 17: the live Ask face names its effective engine and sends engine
 // setup to the shared Runs on surface.
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AskPanel } from "../components/AskPanel";
 import { EMPTY_ITEMS } from "../api";
 import { useDesk } from "../store";
 import { latchAskSelection } from "../ask";
 import { durableDraftKey } from "../../lib/durableDraft";
+import { RailsPicker } from "../components/RailsPicker";
+import { useMissionControl } from "../missioncontrol";
+import type { RailsPick } from "../grounding";
+import { clearEngineCache } from "../hooks/useEngine";
 
 const shell = vi.hoisted(() => ({ openSurfaceOr: vi.fn() }));
 vi.mock("../shell", async (importOriginal) => ({
@@ -44,6 +50,8 @@ beforeEach(() => {
   Element.prototype.scrollIntoView = () => {};
   shell.openSurfaceOr.mockReset();
   localStorage.clear();
+  clearEngineCache();
+  useMissionControl.setState({ repos: [] });
   latchAskSelection(null);
   useDesk.setState({ items: EMPTY_ITEMS, selectedIds: [], askOpen: true, pullouts: [], panelRects: {}, panelSaved: [], panelOrder: [] });
   vi.stubGlobal("fetch", vi.fn((url: string) => Promise.resolve({
@@ -95,7 +103,7 @@ describe("AskPanel's Note passage handoff", () => {
     expect(remountedPrompt).toHaveValue("Recovered question");
     expect(screen.queryByTestId("ask-selected-passage")).toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: "ASK" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
     await waitFor(() => expect(requests.some((request) => request.url.endsWith("/api/ask"))).toBe(true));
     const askRequest = requests.find((request) => request.url.endsWith("/api/ask"));
     const payload = JSON.parse(String(askRequest?.init?.body));
@@ -117,7 +125,7 @@ describe("AskPanel's Note passage handoff", () => {
     const prompt = await screen.findByPlaceholderText("Ask about your work");
     fireEvent.change(prompt, { target: { value: "What should I do?" } });
     expect(screen.getByTestId("ask-selected-passage")).toHaveTextContent("Selected passage");
-    fireEvent.click(screen.getByRole("button", { name: "ASK" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
     await waitFor(() => expect(requests.some((request) => request.url.endsWith("/api/ask"))).toBe(true));
     const askRequest = requests.find((request) => request.url.endsWith("/api/ask"));
     const payload = JSON.parse(String(askRequest?.init?.body));
@@ -139,7 +147,7 @@ describe("AskPanel's Note passage handoff", () => {
     render(<AskPanel />);
     const prompt = await screen.findByPlaceholderText("Ask about your work");
     fireEvent.change(prompt, { target: { value: "First question" } });
-    fireEvent.click(screen.getByRole("button", { name: "ASK" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
     await waitFor(() => expect(requests.filter((request) => request.url.endsWith("/api/ask"))).toHaveLength(1));
     expect(JSON.parse(String(requests.find((request) => request.url.endsWith("/api/ask"))?.init?.body)).prompt)
       .toBe("First question\n\nSelected text:\n> First quote");
@@ -164,7 +172,7 @@ describe("AskPanel's Note passage handoff", () => {
     const prompt = await screen.findByPlaceholderText("Ask about your work");
     await waitFor(() => expect(screen.queryByTestId("ask-selected-passage")).toBeNull());
     fireEvent.change(prompt, { target: { value: "Use only the current note" } });
-    fireEvent.click(screen.getByRole("button", { name: "ASK" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
     await waitFor(() => expect(requests.some((request) => request.url.endsWith("/api/ask"))).toBe(true));
     const payload = JSON.parse(String(requests.find((request) => request.url.endsWith("/api/ask"))?.init?.body));
     expect(payload.prompt).toBe("Use only the current note");
@@ -184,11 +192,231 @@ describe("daily work: the question leads Ask", () => {
     expect(screen.queryByText("USES ASSIGNMENT")).toBeNull();
     expect(screen.queryByRole("radiogroup", { name: "Lens" })).toBeNull();
     expect(screen.queryByText(/^Budget /)).toBeNull();
-    const notes = screen.getByRole("button", { name: "Add notes" });
-    expect(notes).toHaveAttribute("aria-expanded", "false");
-    fireEvent.click(notes);
-    expect(notes).toHaveAttribute("aria-expanded", "true");
-    fireEvent.click(notes);
+    expect(screen.queryByText("Ground this ask")).toBeNull();
+    expect(screen.getAllByText("Add notes")).toHaveLength(1);
+    const notes = screen.getByText("Add notes").closest("details")!;
+    expect(notes.open).toBe(false);
+    fireEvent.click(notes.querySelector("summary")!);
+    await waitFor(() => expect(notes.open).toBe(true));
+    expect(notes.querySelector("details")).toBeNull();
+    fireEvent.click(notes.querySelector("summary")!);
     expect(prompt).toHaveValue("Keep this question");
+  });
+});
+
+describe("Ask's sent request", () => {
+  it("Retry and Keep use the complete sent snapshot while a newer draft and selection survive", async () => {
+    useDesk.setState({ items: { ...EMPTY_ITEMS, note: [note, otherNote] }, selectedIds: ["note:note-1"] });
+    useMissionControl.setState({ repos: [{ name: "HoldSpeak", status: "live", projects: [{ slug: "desk", currentPhase: null, stories: [] }] }] as any });
+    latchAskSelection({ noteRef: "note:note-1", text: "Original quote" });
+    const calls: Array<{ url: string; init?: RequestInit }> = [];
+    const retried = deferred<Response>();
+    let asks = 0;
+    vi.stubGlobal("fetch", vi.fn((url: string, init?: RequestInit) => {
+      calls.push({ url, init });
+      if (url.endsWith("/api/ask")) {
+        asks += 1;
+        return asks === 1 ? Promise.resolve(response({ reason: "did_not_answer" }, false)) : retried.promise;
+      }
+      if (url.endsWith("/api/grounding/resolve")) return Promise.resolve(response({ titles: ["Other note"], chars: 200 }));
+      if (url.endsWith("/api/missioncontrol/rails/size")) return Promise.resolve(response({ sizes: [{ kind: "roadmap", id: "desk", chars: 120 }] }));
+      if (url.endsWith("/api/ask/keep")) return Promise.resolve(response({ artifact_id: "kept-answer" }));
+      return Promise.resolve(response({}));
+    }));
+
+    render(<AskPanel />);
+    const prompt = screen.getByRole("textbox", { name: "Ask about your work" });
+    fireEvent.change(prompt, { target: { value: "Original question" } });
+    fireEvent.click(screen.getByText("Add notes").closest("summary")!);
+    const groundingPick = await screen.findByRole("checkbox", { name: "Other note" });
+    fireEvent.click(groundingPick);
+    await waitFor(() => expect(groundingPick).toBeChecked());
+    fireEvent.click(screen.getByText("Ground on the rails").closest("summary")!);
+    const railPick = await screen.findByRole("checkbox", { name: "desk: roadmap" });
+    fireEvent.click(railPick);
+    await waitFor(() => expect(railPick).toBeChecked());
+    expect(screen.queryByText(/Grounded on/)).toBeNull();
+    expect(screen.queryByText(/\/.*tok/)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    const retry = await screen.findByRole("button", { name: "Try again" });
+    const first = JSON.parse(String(calls.find((call) => call.url.endsWith("/api/ask"))?.init?.body));
+    expect(first).toMatchObject({
+      prompt: "Original question\n\nSelected text:\n> Original quote",
+      lens: "Summarize",
+      context: [{ id: "note-1", kind: "note", ref: "note:note-1", title: "Canonical note" }],
+      grounding: { refs: ["note:note-2"], rails: [{ repo: "HoldSpeak", project: "desk", kind: "roadmap", id: "desk" }] },
+    });
+
+    fireEvent.change(prompt, { target: { value: "Newer question" } });
+    fireEvent.click(groundingPick);
+    fireEvent.click(railPick);
+    act(() => {
+      useDesk.setState({ items: { ...EMPTY_ITEMS, note: [{ ...note, title: "Changed source" }, otherNote] }, selectedIds: ["note:note-2"] });
+      latchAskSelection({ noteRef: "note:note-2", text: "Newer quote" });
+    });
+    expect(screen.getByTestId("ask-selected-passage")).toHaveTextContent("Newer quote");
+    fireEvent.click(retry);
+    await waitFor(() => expect(asks).toBe(2));
+    const retriedCall = calls.filter((call) => call.url.endsWith("/api/ask"))[1];
+    expect(JSON.parse(String(retriedCall.init?.body))).toEqual(first);
+    expect(prompt).toHaveValue("Newer question");
+    expect(JSON.parse(localStorage.getItem(durableDraftKey("desk-ask"))!).text).toBe("Newer question");
+    await act(async () => { retried.resolve(response({ output: "Original answer" })); });
+    fireEvent.click(await screen.findByRole("button", { name: "Keep" }));
+    await waitFor(() => expect(calls.some((call) => call.url.endsWith("/api/ask/keep"))).toBe(true));
+    const keep = JSON.parse(String(calls.find((call) => call.url.endsWith("/api/ask/keep"))?.init?.body));
+    expect(keep).toEqual({
+      lens: first.lens,
+      prompt: first.prompt,
+      output: "Original answer",
+      context: [first.context[0], { id: "note-2", kind: "Note", ref: "note:note-2", title: "Other note" }],
+    });
+    expect(JSON.parse(localStorage.getItem(durableDraftKey("desk-ask"))!).text).toBe("Newer question");
+  });
+
+  it("a fresh Ask builds from the edited draft and current selected passage", async () => {
+    useDesk.setState({ items: { ...EMPTY_ITEMS, note: [note, otherNote] }, selectedIds: ["note:note-1"] });
+    const payloads: any[] = [];
+    vi.stubGlobal("fetch", vi.fn((url: string, init?: RequestInit) => {
+      if (url.endsWith("/api/ask")) {
+        payloads.push(JSON.parse(String(init?.body)));
+        return Promise.resolve(response({ reason: "did_not_answer" }, false));
+      }
+      return Promise.resolve(response({}));
+    }));
+    render(<AskPanel />);
+    const prompt = screen.getByRole("textbox", { name: "Ask about your work" });
+    fireEvent.change(prompt, { target: { value: "First question" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    await screen.findByRole("button", { name: "Try again" });
+    fireEvent.change(prompt, { target: { value: "Current question" } });
+    act(() => {
+      useDesk.setState({ selectedIds: ["note:note-2"] });
+      latchAskSelection({ noteRef: "note:note-2", text: "Current quote" });
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    await waitFor(() => expect(payloads).toHaveLength(2));
+    expect(payloads[1]).toMatchObject({ prompt: "Current question\n\nSelected text:\n> Current quote", context: [{ ref: "note:note-2" }] });
+  });
+});
+
+describe("Ask view abandonment", () => {
+  it.each(["Close", "Cancel", "Escape"])("%s abandons a pending view; a late answer cannot change the reopened Ask", async (action) => {
+    const pending = deferred<Response>();
+    const fresh = deferred<Response>();
+    const transmissions: RequestInit[] = [];
+    vi.stubGlobal("fetch", vi.fn((url: string, init?: RequestInit) => {
+      if (url.endsWith("/api/ask")) {
+        transmissions.push(init!);
+        return transmissions.length === 1 ? pending.promise : fresh.promise;
+      }
+      return Promise.resolve(response({}));
+    }));
+    function Host() {
+      const open = useDesk((state) => state.askOpen);
+      return open ? <AskPanel /> : null;
+    }
+    render(<Host />);
+    const prompt = screen.getByRole("textbox", { name: "Ask about your work" });
+    fireEvent.change(prompt, { target: { value: "Old request" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    await waitFor(() => expect(transmissions).toHaveLength(1));
+    fireEvent.change(prompt, { target: { value: "Newer durable draft" } });
+    if (action === "Escape") fireEvent.keyDown(prompt, { key: "Escape" });
+    else fireEvent.click(screen.getByRole("button", { name: action === "Close" ? "Close Ask AI" : "Cancel" }));
+    await waitFor(() => expect(screen.queryByRole("textbox", { name: "Ask about your work" })).toBeNull());
+    expect(transmissions[0].signal?.aborted).toBe(true);
+    act(() => useDesk.setState({ askOpen: true }));
+    expect(screen.getByRole("textbox", { name: "Ask about your work" })).toHaveValue("Newer durable draft");
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    await waitFor(() => expect(transmissions).toHaveLength(2));
+    await act(async () => { pending.resolve(response({ output: "Late old answer" })); });
+    expect(screen.queryByText("Late old answer")).toBeNull();
+    expect(screen.getByTestId("run-line")).toHaveAttribute("data-state", "running");
+    await act(async () => { fresh.resolve(response({ output: "Fresh answer" })); });
+    expect(await screen.findByText("Fresh answer")).toBeInTheDocument();
+    expect(screen.queryByText("Late old answer")).toBeNull();
+  });
+});
+
+describe("Ask's Workbench composition", () => {
+  it("Keep stays pending until accepted and a failed keep can be tried again", async () => {
+    const pendingKeep = deferred<Response>();
+    let keeps = 0;
+    vi.stubGlobal("fetch", vi.fn((url: string) => {
+      if (url.endsWith("/api/ask/keep")) {
+        keeps += 1;
+        return pendingKeep.promise;
+      }
+      return Promise.resolve(response(url.endsWith("/api/ask") ? { output: "Answer to keep" } : {}));
+    }));
+    render(<AskPanel />);
+    fireEvent.change(screen.getByRole("textbox", { name: "Ask about your work" }), { target: { value: "Question" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    const keep = await screen.findByRole("button", { name: "Keep" });
+    fireEvent.click(keep);
+    await waitFor(() => expect(keeps).toBe(1));
+    expect(keep).toHaveAttribute("aria-busy", "true");
+    expect(keep).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Kept" })).toBeNull();
+    await act(async () => { pendingKeep.resolve(response({}, false)); });
+    expect(await screen.findByText("Not kept")).toBeInTheDocument();
+    expect(keep).toBeEnabled();
+    expect(keep).not.toHaveAttribute("aria-busy");
+    fireEvent.click(keep);
+    await waitFor(() => expect(keeps).toBe(2));
+  });
+
+  it("uses the named Pad and gives Copy, Keep and Bin one home each", async () => {
+    vi.stubGlobal("fetch", vi.fn((url: string) => Promise.resolve(response(url.endsWith("/api/ask") ? { output: "Clear answer" } : {}))));
+    render(<AskPanel />);
+    const prompt = screen.getByRole("textbox", { name: "Ask about your work" });
+    expect(prompt.closest(".gadget-pad")).not.toBeNull();
+    fireEvent.change(prompt, { target: { value: "Clear question" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    await screen.findByText("Clear answer");
+    for (const name of ["Keep", "Bin", "Copy"]) expect(screen.getAllByRole("button", { name })).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "Keep" }).closest(".surface-footer")).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Bin" }).closest(".surface-footer")).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Copy" }).closest(".surface-traffic-turn")).not.toBeNull();
+    expect(screen.queryByText(/SESSION|Summarize/)).toBeNull();
+  });
+
+  it("shows a no-engine failure and its engine action once", async () => {
+    vi.stubGlobal("fetch", vi.fn((url: string) => Promise.resolve(response(url.endsWith("/api/ask") ? { reason: "no_engine" } : {}, !url.endsWith("/api/ask")))));
+    render(<AskPanel />);
+    await screen.findByRole("button", { name: "Choose engine" });
+    fireEvent.change(screen.getByRole("textbox", { name: "Ask about your work" }), { target: { value: "Question" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    await screen.findByRole("button", { name: "Choose an engine" });
+    expect(screen.getAllByText("No engine for answers")).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: "Choose engine" })).toBeNull();
+    expect(screen.getAllByRole("button", { name: /Choose.*engine/ })).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "Choose an engine" }));
+    expect(shell.openSurfaceOr).toHaveBeenCalledWith("configure-runs-on", "/settings", "models");
+  });
+
+  it("Rails has one keyboard checkbox per band and no enclosing button", async () => {
+    useMissionControl.setState({ repos: [{ name: "HoldSpeak", status: "live", projects: [{ slug: "desk", currentPhase: null, stories: [] }] }] as any });
+    const onChange = vi.fn();
+    vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(response({ sizes: [{ kind: "roadmap", id: "desk", chars: 120 }] }))));
+    function Picker() {
+      const [picks, setPicks] = useState<RailsPick[]>([]);
+      return <RailsPicker picks={picks} onChange={(next) => { onChange(next); setPicks(next); }} limitTokens={16384} />;
+    }
+    render(<Picker />);
+    fireEvent.click(screen.getByText("Ground on the rails").closest("summary")!);
+    const checkbox = await screen.findByRole("checkbox", { name: "desk: roadmap" });
+    const band = checkbox.closest(".desk-ground-line")!;
+    expect(band.tagName).toBe("DIV");
+    expect(checkbox.closest("button")).toBeNull();
+    expect(band.querySelectorAll("input, button, [tabindex]")).toHaveLength(1);
+    checkbox.focus();
+    await userEvent.keyboard("[Space]");
+    await waitFor(() => expect(checkbox).toBeChecked());
+    expect(onChange).toHaveBeenCalledTimes(1);
+    fireEvent.click(band.querySelector(".desk-ground-name")!);
+    expect(checkbox).not.toBeChecked();
+    expect(onChange).toHaveBeenCalledTimes(2);
   });
 });

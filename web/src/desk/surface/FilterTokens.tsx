@@ -49,6 +49,7 @@ export function FilterTokens({
   label,
   className,
   disabled,
+  emptyLabel,
 }: {
   options: FilterTokenOption[];
   /** The active option's `value`. */
@@ -60,6 +61,8 @@ export function FilterTokens({
   /** Conductor R7: the whole strip is the library Button's disabled state
    *  (the choice is held elsewhere); the pressed token still shows the value. */
   disabled?: boolean;
+  /** Folded caption when no option is selected; adds no menu choice. */
+  emptyLabel?: string;
 }) {
   const cx = ["surface-filter-tokens", className].filter(Boolean).join(" ");
   // PHILO-13-11 (C1, §3a): at the phone width a strip that does not fit
@@ -77,6 +80,7 @@ export function FilterTokens({
           label={label}
           choices={options}
           value={value}
+          emptyLabel={emptyLabel}
           onChange={onChange}
           variant="secondary"
           className="surface-filter-menu"

@@ -118,6 +118,18 @@
           "symbol": "export function jupiterEncounterForWindow(",
           "line": 71,
           "claim": "One deterministic draw per active ten-minute window selects rare authored visits, never a per-frame chance."
+        },
+        {
+          "path": "web/src/desk/components/AskPanel.tsx",
+          "symbol": "AskPanel",
+          "claim": "Ask opens on the shared Pad and paper conversation; exact request/Keep snapshots preserve newer drafts, while local close abandons stale response updates without claiming server cancellation.",
+          "line": 92
+        },
+        {
+          "path": "holdspeak/db/plugins.py",
+          "symbol": "VALID_ARTIFACT_SOURCE_TYPES",
+          "line": 28,
+          "claim": "The additive artifact-source vocabulary accepts the existing closed canonical resource kinds, so grounded Ask Keep persists typed Note, Knowledge and Zone lineage; unknown kinds remain rejected."
         }
       ],
       "tests": [
@@ -170,6 +182,24 @@
             "run": "2026-10-15",
             "cases": 3
           }
+        },
+        {
+          "path": "web/src/desk/__tests__/askPanelRunsOn.test.tsx",
+          "node": "Retry and Keep use the complete sent snapshot while a newer draft and selection survive",
+          "assertion": "Changed prompt, selected quote, grounding and rail edits do not alter the retried request or kept answer lineage.",
+          "execution": "passed"
+        },
+        {
+          "path": "web/src/desk/__tests__/askPanelRunsOn.test.tsx",
+          "node": "%s abandons a pending view; a late answer cannot change the reopened Ask",
+          "assertion": "Local close aborts/invalidates the pending view and preserves the newer durable draft on reopen.",
+          "execution": "passed"
+        },
+        {
+          "path": "tests/unit/test_ask_keep_sources.py",
+          "node": "test_keep_persists_note_and_knowledge_sources_with_exact_prompt_and_relationships",
+          "assertion": "Real Ask Keep preserves original quoted question, canonical sources and relationship snapshot across database reopen without model execution.",
+          "execution": "passed"
         }
       ],
       "docs": [

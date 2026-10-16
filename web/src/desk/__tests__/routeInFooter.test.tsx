@@ -217,11 +217,11 @@ describe("Ask: the lamp on the turn, the route once in the footer", () => {
     return view;
   }
 
-  it("the HUB> turn wears the LAN lamp; the footer names host, model, receipt", async () => {
+  it("the Answer turn wears the LAN lamp; the footer names host, model, receipt", async () => {
     const { container } = await askWith(LAN_ASK);
-    const hubTurn = [...container.querySelectorAll(".surface-traffic-turn, [class*='traffic-turn']")]
-      .find((n) => n.textContent?.includes("HUB>"))!;
-    expect(hubTurn.querySelector(".gadget-lamp")!.textContent).toBe("LAN");
+    const answerTurn = [...container.querySelectorAll(".surface-traffic-turn, [class*='traffic-turn']")]
+      .find((n) => n.querySelector(".surface-traffic-prefix")?.textContent === "Answer")!;
+    expect(answerTurn.querySelector(".gadget-lamp")!.textContent).toBe("LAN");
     const chip = container.querySelector(".surface-footer-egress .gadget-chip-egress")!;
     expect(chip.textContent).toBe("192.168.1.43 · LAN");
     expect(container.querySelector(".surface-footer-receipt")!.textContent).toBe("LAST TURN · qwen3.8-27b · RECEIPT ··a91f");

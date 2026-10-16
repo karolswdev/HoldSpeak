@@ -82,11 +82,12 @@ def test_ask_panel_never_regresses_to_a_pre_box_or_section_stack() -> None:
         "HS-102-03 regression: AskPanel.tsx must not render the answer "
         "as raw markdown in a <pre> — use Material instead."
     )
-    assert "desk-chat-well" in source, (
+    assert source.count('className="conversation-composer desk-ask-composer"') == 1, (
         "HS-102-03 regression: AskPanel.tsx must compose its question "
-        "as the one-well grammar (desk-chat-well), not a stack of "
+        "as the shared conversation composer, not a stack of "
         "separate sections."
     )
+    assert source.count("<PadGadget") == 1, "Ask has one library question pad"
 
 
 def test_history_core_artifacts_wing_is_the_library() -> None:

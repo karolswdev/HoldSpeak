@@ -402,12 +402,10 @@
   font-size: var(--desk-surface-label-size);
 }
 
-/* HS-101 sitting round 2 — the ambient card yields to an open right
-   sheet instead of burying its composer. */
-/* Object cards (.is-card) float anywhere since round 9 — only the
-   right-docked working sheets still displace the ambient card. */
+/* The old right: 452px displacement is parked: Qlippy now sits in the
+   viewport-bounded ambient stack, including over a compact sheet. */
 body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
-  right: 452px;
+  right: auto;
 }
 
 /* HS-141-05 — visible Thought context: one quiet in-body row and a compact

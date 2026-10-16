@@ -4,9 +4,25 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-15 (Attention dismissal: #1214)
+**Last updated:** 2026-10-15 (Thread, Ask and notifications: #1215)
 
 ## Current phase
+
+**Thread, Ask and notifications — #1215 (2026-10-15).** Shared Workbench paper
+traffic and bounded question pads; measured Thread modes, pointer editing and
+real load/reply recovery. Ask retries the exact submitted question/sources,
+keeps their lineage, preserves newer typed/speech work, and closes a pending
+local view without late updates. Existing notices share a bounded stack above
+the Dock, full payload wells, reachable phone actions and reduced-motion pulse;
+#1214 journal exclusion/dismissal remain. Actual Keep walk found and fixed the
+artifact store rejecting canonical note sources. Quick GREEN: 3855 web /761
+affected Python /107 sweeps (two existing xfails) /17 canon; TypeScript passes.
+Root read twelve-state conversation and seven-state notices walks at1440/393
+on build228dd99cb87915de, actual Keep artifact prompt/refs, and real Search→Ask
+cases at both widths. Inference/runtime frame replay boundaries are explicit;
+no real model/mic execution claim. Source counsel and later root seam checks are
+separately scoped. Broader whole-app audit is active, not closed by this pass.
+[Proof and limits](../docs/internal/THREAD-ASK-REFINEMENT-2026-10-15/README.md).
 
 **Attention dismissal — #1214 (2026-10-15).** Owner could not clear the
 Dictation needs review popup, then challenged its usefulness. Read-only live
