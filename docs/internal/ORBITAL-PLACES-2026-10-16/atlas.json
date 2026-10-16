@@ -1,0 +1,214 @@
+{
+  "schema_version": 1,
+  "atlas_version": "orbital-places-20261016",
+  "extends": "docs/internal/philo/graph/atlas.json",
+  "source_commit": "5c26bd0fa1be3c7a2b5568cca45560a2f297d816",
+  "states": [
+    {
+      "id": "state.desk_presentation.mars_ready",
+      "family": "desk_presentation",
+      "values": {
+        "application": "Change places",
+        "task": "Choose live mars orbit"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/pages/cores/settingsWallpaper.tsx",
+          "symbol": "onClick={() => select(atmosphere.id)}",
+          "claim": "Existing collection radio saves the chosen scene and updates the shared host."
+        }
+      ],
+      "reachable_by": [
+        "case.desk.wallpaper.mars.ready"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.saturn_ready",
+      "family": "desk_presentation",
+      "values": {
+        "application": "Change places",
+        "task": "Choose live saturn orbit"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/pages/cores/settingsWallpaper.tsx",
+          "symbol": "onClick={() => select(atmosphere.id)}",
+          "claim": "Existing collection radio saves the chosen scene and updates the shared host."
+        }
+      ],
+      "reachable_by": [
+        "case.desk.wallpaper.saturn.ready"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "case.desk.wallpaper.mars.ready",
+      "job": "j3",
+      "edge_ids": [
+        "edge.face.wallpaper_choose"
+      ],
+      "state_id": "state.desk_presentation.mars_ready",
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME/DB, engine none. Real Wallpaper radio and lazy scene. This readiness case does not prove natural rare-event waiting or hardware performance."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": ".desk-screen",
+          "state": "visible",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/desk/windows/surface-places/open",
+          "body": {},
+          "expect_status": 200,
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-atmosphere-choice=\"mars-orbit\"]",
+          "state": "visible",
+          "adapter": "ui-navigation"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "selector": "[data-atmosphere-choice=\"mars-orbit\"]",
+        "adapter": "ui-by-viewport"
+      },
+      "expected": {
+        "observe_at": ".desk-stage[data-atmosphere=\"mars-orbit\"] canvas",
+        "predicate": {
+          "kind": "attr_equals",
+          "attr": "data-ready",
+          "value": "true"
+        },
+        "words": "Actual collection choice loads mars and completes first render; motion/reduced-motion/persistence are separately observed."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.desk.wallpaper.saturn.ready",
+      "job": "j3",
+      "edge_ids": [
+        "edge.face.wallpaper_choose"
+      ],
+      "state_id": "state.desk_presentation.saturn_ready",
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME/DB, engine none. Real Wallpaper radio and lazy scene. This readiness case does not prove natural rare-event waiting or hardware performance."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": ".desk-screen",
+          "state": "visible",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/desk/windows/surface-places/open",
+          "body": {},
+          "expect_status": 200,
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-atmosphere-choice=\"saturn-orbit\"]",
+          "state": "visible",
+          "adapter": "ui-navigation"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "selector": "[data-atmosphere-choice=\"saturn-orbit\"]",
+        "adapter": "ui-by-viewport"
+      },
+      "expected": {
+        "observe_at": ".desk-stage[data-atmosphere=\"saturn-orbit\"] canvas",
+        "predicate": {
+          "kind": "attr_equals",
+          "attr": "data-ready",
+          "value": "true"
+        },
+        "words": "Actual collection choice loads saturn and completes first render; motion/reduced-motion/persistence are separately observed."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ],
+  "clocks": [
+    {
+      "id": "clock.orbital_wall",
+      "source": "Real browser and hub clocks",
+      "mechanism": "No clock overrides in choice/readiness walks.",
+      "status": "available",
+      "used_by": [
+        "case.desk.wallpaper.mars.ready",
+        "case.desk.wallpaper.saturn.ready"
+      ]
+    }
+  ],
+  "excluded": [],
+  "council_readings": []
+}

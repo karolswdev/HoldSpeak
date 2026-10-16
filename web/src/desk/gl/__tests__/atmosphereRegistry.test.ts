@@ -35,6 +35,22 @@ describe("atmosphere registry", () => {
           load: expect.any(Function),
         }),
         expect.objectContaining({
+          id: "mars-orbit",
+          name: "In Mars' orbit",
+          seed: 0x4d415253,
+          gradeClassName: "desk-atmosphere-grade--mars-orbit",
+          previewUrl: expect.stringContaining("desk/atmospheres/mars-orbit.webp"),
+          load: expect.any(Function),
+        }),
+        expect.objectContaining({
+          id: "saturn-orbit",
+          name: "In Saturn's orbit",
+          seed: 0x53415455,
+          gradeClassName: "desk-atmosphere-grade--saturn-orbit",
+          previewUrl: expect.stringContaining("desk/atmospheres/saturn-orbit.webp"),
+          load: expect.any(Function),
+        }),
+        expect.objectContaining({
           id: "quiet-desk",
           previewUrl: null,
           load: null,
@@ -51,10 +67,14 @@ describe("atmosphere registry", () => {
       "greenhouse",
       "laundromat",
       "jupiter-orbit",
+      "mars-orbit",
+      "saturn-orbit",
       "quiet-desk",
     ]);
     expect(isAtmosphereId("lantern-garden")).toBe(true);
     expect(isAtmosphereId("jupiter-orbit")).toBe(true);
+    expect(isAtmosphereId("mars-orbit")).toBe(true);
+    expect(isAtmosphereId("saturn-orbit")).toBe(true);
     expect(isAtmosphereId("quiet-desk")).toBe(true);
     expect(isAtmosphereId("unknown")).toBe(false);
     expect(resolveAtmosphere("unknown").id).toBe(DEFAULT_ATMOSPHERE_ID);
@@ -62,6 +82,8 @@ describe("atmosphere registry", () => {
 
   it("includes every authored world in one scenic collection", () => {
     expect(SCENIC_ATMOSPHERES).toContainEqual(resolveAtmosphere("jupiter-orbit"));
+    expect(SCENIC_ATMOSPHERES).toContainEqual(resolveAtmosphere("mars-orbit"));
+    expect(SCENIC_ATMOSPHERES).toContainEqual(resolveAtmosphere("saturn-orbit"));
     expect(SCENIC_ATMOSPHERES).not.toContainEqual(resolveAtmosphere("quiet-desk"));
     expect(SCENIC_ATMOSPHERES.map(({ id }) => id)).toEqual(
       ATMOSPHERES.filter(({ load }) => load).map(({ id }) => id),

@@ -2,7 +2,8 @@ import { act, render, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
-  cleanup, factory, jupiterFactory, jupiterModuleLoad, load,
+  cleanup, factory, jupiterFactory, jupiterModuleLoad,
+  marsFactory, marsModuleLoad, saturnFactory, saturnModuleLoad, load,
   mountAtmosphereScene, activityDispose, observeAtmosphereActivity, controls,
 } = vi.hoisted(() => {
   const cleanup = vi.fn();
@@ -12,6 +13,10 @@ const {
     factory,
     jupiterFactory: vi.fn(),
     jupiterModuleLoad: vi.fn(),
+    marsFactory: vi.fn(),
+    marsModuleLoad: vi.fn(),
+    saturnFactory: vi.fn(),
+    saturnModuleLoad: vi.fn(),
     load: vi.fn(async () => factory),
     mountAtmosphereScene: vi.fn(() => cleanup),
     activityDispose: vi.fn(),
@@ -26,7 +31,7 @@ vi.mock("../atmosphereRegistry", async (importOriginal) => {
     ...actual,
     DEFAULT_ATMOSPHERE_ID: "rainy-city",
     resolveAtmosphere: (id = "rainy-city") =>
-      id === "jupiter-orbit" || id === "quiet-desk"
+      ["jupiter-orbit", "mars-orbit", "saturn-orbit", "quiet-desk"].includes(id)
         ? actual.resolveAtmosphere(id)
         : {
             id,
@@ -43,6 +48,14 @@ vi.mock("../jupiterOrbitScene", () => {
   jupiterModuleLoad();
   return { createJupiterOrbitScene: jupiterFactory };
 });
+vi.mock("../marsOrbitScene", () => {
+  marsModuleLoad();
+  return { createMarsOrbitScene: marsFactory };
+});
+vi.mock("../saturnOrbitScene", () => {
+  saturnModuleLoad();
+  return { createSaturnOrbitScene: saturnFactory };
+});
 vi.mock("../atmosphereRuntime", () => ({ mountAtmosphereScene }));
 vi.mock("../atmosphereActivity", () => ({ observeAtmosphereActivity }));
 vi.mock("../atmosphereControls", () => ({ useAtmosphereControls: () => controls }));
@@ -56,6 +69,10 @@ beforeEach(() => {
   factory.mockReset();
   jupiterFactory.mockReset();
   jupiterModuleLoad.mockClear();
+  marsFactory.mockReset();
+  marsModuleLoad.mockClear();
+  saturnFactory.mockReset();
+  saturnModuleLoad.mockClear();
   load.mockReset().mockResolvedValue(factory);
   mountAtmosphereScene.mockReset().mockReturnValue(cleanup);
   activityDispose.mockReset();
@@ -113,25 +130,32 @@ describe("Desk atmosphere host", () => {
     expect(observeAtmosphereActivity).not.toHaveBeenCalled();
   });
 
-  it("loads Jupiter through its real registry entry only when selected", async () => {
+  it.each([
+    { planet: "Jupiter", id: "jupiter-orbit", seed: 0x4a555049, sceneFactory: jupiterFactory, moduleLoad: jupiterModuleLoad },
+    { planet: "Mars", id: "mars-orbit", seed: 0x4d415253, sceneFactory: marsFactory, moduleLoad: marsModuleLoad },
+    { planet: "Saturn", id: "saturn-orbit", seed: 0x53415455, sceneFactory: saturnFactory, moduleLoad: saturnModuleLoad },
+  ] as const)("loads $planet through its real registry entry only when selected", async ({ id, seed, sceneFactory, moduleLoad }) => {
     controls.motion = false;
     const view = render(<Atmosphere id="quiet-desk" />);
-    expect(jupiterModuleLoad).not.toHaveBeenCalled();
+    expect(moduleLoad).not.toHaveBeenCalled();
 
-    view.rerender(<Atmosphere id="jupiter-orbit" />);
+    view.rerender(<Atmosphere id={id} />);
     const canvas = view.container.querySelector("canvas");
     await waitFor(() =>
       expect(mountAtmosphereScene).toHaveBeenCalledWith(
         canvas,
-        jupiterFactory,
-        expect.objectContaining({ seed: 0x4a555049, motion: false }),
+        sceneFactory,
+        expect.objectContaining({ seed, motion: false }),
       ),
     );
-    expect(jupiterModuleLoad).toHaveBeenCalledOnce();
+    expect(moduleLoad).toHaveBeenCalledOnce();
     expect(load).not.toHaveBeenCalled();
     expect(view.container.querySelector(".desk-stage")).toHaveAttribute(
       "data-atmosphere",
-      "jupiter-orbit",
+      id,
+    );
+    expect(view.container.querySelector(".desk-atmosphere-grade")).toHaveClass(
+      `desk-atmosphere-grade--${id}`,
     );
     expect(canvas).toHaveAttribute("data-ready", "true");
 
