@@ -4,9 +4,22 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-15 (In Jupiter's orbit: #1213)
+**Last updated:** 2026-10-15 (Attention dismissal: #1214)
 
 ## Current phase
+
+**Attention dismissal — #1214 (2026-10-15).** Owner could not clear the
+Dictation needs review popup, then challenged its usefulness. Read-only live
+counts showed13 successful dismissals and19 identical warnings still queued.
+Journal projections no longer interrupt through Qlippy; journal/Attention
+records remain. Other-source Dismiss writes only the visible presentation,
+then quiets historical popup backlog in that tab. Pending/refused writes stay
+on the exact row with Retry; newer eligible attention can show. Quick GREEN:
+300 web /66 affected Python /107 sweeps (two existing xfails) /17 canon;
+TypeScript passes. Root read six-state actual isolated1440/393 interactions,
+no-popup/reload, real visible-row dismissal with two untouched rows retained,
+and a newer eligible source appearing. Source counsel RATIFY; four-row sampler
+and storage-denied reload limitations are recorded. [Proof](../docs/internal/ATTENTION-DISMISS-2026-10-15/README.md).
 
 **In Jupiter's orbit — #1213 (2026-10-15).** The owner asked for a large
 Jupiter, passing Galilean moons and rare Pioneer sightings, then reviewed the
@@ -350,6 +363,15 @@ committing generated docs and line-number test maps; split the tests.
 
 ## Open work
 
+**From #1214 and owner's next direction:** refine notifications, Thread and
+Ask as coherent Workbench faces. Source audit found Ask mutable retry/Keep
+lineage and pending-close seams, Thread inline-editor focus loss and dead
+sibling arrows; verify and repair in the next bounded face pass. The existing
+four-row ambient sampler is not exhaustive; older eligible rows remain in
+Attention. Denied sessionStorage cannot retain the popup cutoff across a full
+reload. No source-counsel blocking condition remains. Owner live judgment,
+formal postmerge review, remote CI and full main tape remain separate.
+
 **From #1213:** owner live judgment, formal postmerge review, remote CI and
 full main tape remain separate. Artistic scale, moon timing and bounded
 weather are not ephemerides or fluid simulation. Software WebGL checks do not
@@ -454,6 +476,10 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 
 ## Last merged (newest first)
 
+- **#1214 — Useful attention and dismissal.** Dictation journal entries stay
+  out of Qlippy. Visible-only Dismiss closes old popup backlog, with exact
+  failed Retry and tab cutoff. Quick300/66/107/17 green;14 focused and actual
+  six-state1440/393 observations. Delegated source counsel RATIFY.
 - **#1213 — In Jupiter's orbit.** Rich local NASA sky/cloud maps, layered
   stars and galactic dust, independently flowing weather, four passing moons
   with shadows and rare Pioneer/Voyager visitors. Quick 3821/651/107/17 green;

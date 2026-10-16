@@ -45,3 +45,5 @@ coder execution. Outputs `walk-final-1440/`, `walk-393/`. The first desktop
 rig stopped on a case-sensitive expected fixture label; correcting only that
 assertion and replaying fresh passed. Final metadata claims66 also pass;
 generated documentation is current.
+
+Release: [PR #1214](https://github.com/karolswdev/HoldSpeak/pull/1214).
