@@ -2,7 +2,9 @@
 
 Owner-directed whole-app follow-through. Own worktree
 wt-cohesive-desk-entry-20261016, branch feat/cohesive-desk-entry-20261016,
-base main2a18c8831 after merged#1218. Goal remains active during this pass.
+base main2a18c8831 after merged#1218.
+Delivery PR [#1219](https://github.com/karolswdev/HoldSpeak/pull/1219).
+The goal remains active until the normal merged build is delivered.
 [Settled direction and actual-baseline amendment](DESIGN.md).
 
 ## Previous release delivered

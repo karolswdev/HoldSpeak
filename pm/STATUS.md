@@ -4,9 +4,28 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-16 (Cohesive conditional controls: #1218)
+**Last updated:** 2026-10-16 (Cohesive Desk entry: #1219)
 
 ## Current phase
+
+**Cohesive Desk entry — #1219 (2026-10-16).** Phone launchers use the
+existing paper/ink menu material with clear Apps/Projects/Drawers/New sections;
+long names wrap and native activation preserves exact destinations. Presence
+uses the shared Workbench material, shows complete activity text and returns
+to Desk with query/auth intact. Get ready's existing composition and real
+Continue later handoff are preserved. Complete quick GREEN:287web/651affected
+Python/109sweeps(noexpectedfailures)/17canon; TypeScript, generated docs and
+graph join pass. Actual eight-state desktop and ten-state phone walks pass on
+build1db394185ca801fe; five phone native opens reach exact stored destinations
+once, all36desktop/63phone hit+pointer samples own and full long text fits.
+Official Presence→Desk graph passes both widths. The final paired proof closes
+the entry gaps from the completion audit; no further concrete UI blocker is
+established in this finite pass. Normal owner hub deployment follows exact
+merged tree equality; root records delivery privately. Owner live judgment,
+formal postmerge review and the main tape outcome remain separate. Inherited
+Presence can retain the last producer label after disconnect while the lamp
+turns off; runtime mapping is unchanged. This does not claim all provider or
+native hardware states. [Proof and limits](../docs/internal/COHESIVE-DESK-ENTRY-2026-10-16/README.md).
 
 **Cohesive conditional controls — #1218 (2026-10-16).** Library Thread
 replay/Rails/phase Story controls keep native activation and exact identities;
@@ -22,10 +41,9 @@ works. Complete quick GREEN:3963web/651affectedPython/109sweeps(noexpectedfailur
 control/policy/Calendar tasks include real policy and ICS/config persistence;
 exact graph Search→Delivery entry passes both widths. Build52f6ff3c43024642 has
 the frozen product; unchanged earlier proof is explicitly carried forward.
-Formal postmerge review and owner judgment are separate. Whole-app goal stays
-active: Phone Desk home and paired Get ready/Presence entry surfaces are next.
-Actual baseline already found a clipped Presence label and undersized phone
-return target; Get ready handoff works. [Proof and limits](../docs/internal/COHESIVE-EDGE-CONTROLS-2026-10-16/README.md).
+Formal postmerge review and owner judgment are separate. The next entry scope
+from this release is closed by #1219 above; its baseline found a clipped
+Presence label and undersized phone return target while Get ready worked. [Proof and limits](../docs/internal/COHESIVE-EDGE-CONTROLS-2026-10-16/README.md).
 
 **Desk navigation and calendar review — #1217 (2026-10-16).** Explicit
 Search Close restores focus and preserves keyboard intent; same-title meetings
