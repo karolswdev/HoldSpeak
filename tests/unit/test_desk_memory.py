@@ -365,13 +365,16 @@ def test_the_decision_chain_and_the_carry_survive_a_hub_restart(
     Needs you once; a second hub boots on the same HOME and database file."""
     from holdspeak.db import get_database, reset_database
     from holdspeak.services.brief_carry import pending_carries
-    from holdspeak.services.needs_you_aggregate import LastKnownStore
+    from holdspeak.services.needs_you_aggregate import LastKnownStore, shared_last_known
 
     home = tmp_path / "home"
     home.mkdir()
     monkeypatch.setenv("HOME", str(home))
     try:
         first = _boot(tmp_path, monkeypatch)
+        first_store = first.root.needs_you_last_known
+        assert first_store is shared_last_known(lambda: first.db)
+        assert first_store._db_factory() is first.db
         chain = _seed_continuity_chain(first)
         carried = _ok(first.client.post(f"/api/decision-records/{chain['new']['decision_record_id']}/carry", json={}))
         assert carried["replayed"] is False and carried["project_id"] == chain["project_id"]
@@ -382,6 +385,9 @@ def test_the_decision_chain_and_the_carry_survive_a_hub_restart(
 
         # ── the SECOND hub on the same HOME (the same database file) ──
         second = _boot(tmp_path, monkeypatch)
+        assert second.root.needs_you_last_known is shared_last_known(lambda: second.db)
+        assert second.root.needs_you_last_known is not first_store
+        assert second.root.needs_you_last_known._db_factory() is second.db
         wire = _recall_read(second, query="freeze window", filter="all")
         assert [c["id"] for c in wire["current"]] == [chain["new"]["decision_record_id"]]
         assert wire["current"][0]["carried"] is True, "the carry mark did not survive the restart"
@@ -401,6 +407,37 @@ def test_the_decision_chain_and_the_carry_survive_a_hub_restart(
     finally:
         reset_database()
         composition.install(composition.bare(label="pytest"))
+
+
+def test_a_prior_service_read_does_not_take_the_hubs_last_known_observations(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from holdspeak.services import needs_you_aggregate
+    from holdspeak.services.project_service import ProjectService
+
+    # A lawful bare service read can bind the fallback before a hub starts.
+    # The hub must persist its observations into its own database afterward.
+    fallback = needs_you_aggregate.LastKnownStore()
+    monkeypatch.setattr(needs_you_aggregate, "_LAST_KNOWN", fallback)
+    prior = Database(tmp_path / "prior.db")
+    prior.projects.create_project(project_id="prior-project", name="Prior service project")
+    ProjectService(prior).needs_you(Principal(PrincipalKind.OWNER, "pytest"))
+    assert needs_you_aggregate.shared_last_known(lambda: prior) is fallback
+    assert fallback._db_factory() is prior
+    assert fallback.source_ids() == ["project:prior-project"]
+    restarted = tmp_path / "restarted"
+    restarted.mkdir()
+    try:
+        test_the_decision_chain_and_the_carry_survive_a_hub_restart(restarted, monkeypatch)
+        with prior._connection() as conn:
+            rows = conn.execute("SELECT source_id FROM needs_you_last_known").fetchall()
+        assert [row["source_id"] for row in rows] == ["project:prior-project"], (
+            "the hub changed the prior service's observations"
+        )
+        assert needs_you_aggregate.shared_last_known(lambda: prior) is fallback
+        assert fallback._db_factory() is prior, "starting a hub changed the bare service binding"
+    finally:
+        prior.close()
 
 
 # ── from test_hs202_desk_memory_recent.py: HS-202-02 job 4 — Desk memory shows the desk's memory. ──

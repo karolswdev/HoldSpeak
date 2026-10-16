@@ -1620,8 +1620,6 @@ class TestB11BothConductors:
     (a stubbed capture entry) -- the hand-off the ruling names."""
 
     def test_event_born_row_is_armed_and_started_by_the_136_conductor(self, db_recordings: Database) -> None:
-        import time as _time
-
         from holdspeak.scheduled_recording_conductor import ScheduledRecordingConductor
 
         conductor = _make_conductor_recordings(db_recordings, lambda: _config("all_calendar", lead=5), ICS_ONE_WITH_URL)
@@ -1630,27 +1628,47 @@ class TestB11BothConductors:
         assert rec.state == "idle" and rec.born_from == "calendar_event"
 
         started: list[dict] = []
+        capture_started = threading.Event()
+
+        def start_meeting(**kw: Any) -> None:
+            started.append(kw)
+            capture_started.set()
+
         clock = {"t": rec.next_fire_at + 1}
         sc = ScheduledRecordingConductor(
             clock=lambda: clock["t"],
             db_factory=lambda: db_recordings,
-            start_meeting_fn=lambda **kw: started.append(kw),
+            start_meeting_fn=start_meeting,
             countdown_seconds=0,
         )
-        sc._tick()
-        deadline = _time.monotonic() + 5.0
-        while _time.monotonic() < deadline:
+        try:
+            sc._tick()
+            # Recording state is durable before the admission receipt and
+            # capture callback; only the callback proves capture was started.
+            assert capture_started.wait(timeout=5), "scheduled capture did not start"
             after = db_recordings.scheduled_recordings.get(rec.id)
-            if after is not None and after.state == "recording":
-                break
-            _time.sleep(0.05)
-
-        after = db_recordings.scheduled_recordings.get(rec.id)
-        assert after is not None and after.state == "recording"
-        assert after.last_outcome == "recording_started"
-        assert len(started) == 1
-        assert started[0]["calendar_event_id"] == rec.calendar_event_id
-        assert started[0]["title"] == "Standup"
+            assert after is not None and after.state == "recording"
+            assert after.last_outcome == "recording_started"
+            with db_recordings._connection() as conn:
+                receipt = conn.execute(
+                    "SELECT state, outcome FROM kernel_receipts WHERE receipt_id = ?",
+                    (after.last_receipt_id,),
+                ).fetchone()
+            assert receipt is not None
+            assert receipt["state"] == "succeeded" and receipt["outcome"] == "recording_started"
+            assert len(started) == 1
+            assert started[0]["calendar_event_id"] == rec.calendar_event_id
+            assert started[0]["title"] == "Standup"
+        finally:
+            # _fire installs its auto-stop timer after calling start_meeting.
+            # Wait for that work before stop() cancels all timers.
+            fire_finished = sc._fire_lock.acquire(timeout=5)
+            try:
+                sc.stop()
+            finally:
+                if fire_finished:
+                    sc._fire_lock.release()
+            assert fire_finished, "scheduled fire did not finish"
 
 
 # ── from test_philo15_calendar_open_settings.py: PHILO-15 04 (gap 12): a denied calendar has a way forward. ──

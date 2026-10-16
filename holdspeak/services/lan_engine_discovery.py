@@ -8,6 +8,7 @@ profile.
 """
 from __future__ import annotations
 
+import hashlib
 import ipaddress
 import json
 import re
@@ -15,8 +16,9 @@ import socket
 import subprocess
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from functools import partial
 from http.client import HTTPResponse
 from typing import Any, Callable, Iterable, Mapping, Sequence
 from urllib.error import HTTPError
@@ -24,6 +26,8 @@ from urllib.parse import urlparse
 from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
 
 from ..setup_runtime import discover_endpoint_models
+from ..principals import Principal, UNAUTHENTICATED
+from ..kernel.external_egress import run_external_egress
 from .inference_default_service import LOOPBACK_ENGINE_PORTS, is_chat_model
 
 # The same four common engine ports the local scanner knows.  The LAN scan
@@ -40,6 +44,31 @@ HTTP_PROBE_SECONDS = 0.5
 class LanInterface:
     address: ipaddress.IPv4Address
     network: ipaddress.IPv4Network
+
+
+@dataclass(frozen=True)
+class LanScanPlan:
+    interfaces: tuple[LanInterface, ...]
+    ports: tuple[tuple[int, str], ...]
+    targets: tuple[tuple[str, int], ...]
+    interface_source: str
+    bounded: bool
+    expires_at: float
+    tcp_seconds: float
+    http_seconds: float
+    workers: int
+    probe: Callable[[str], dict[str, Any]] | None = field(compare=False, repr=False)
+
+    def manifest(self) -> dict[str, Any]:
+        return {
+            "interfaces": tuple((str(row.address), str(row.network)) for row in self.interfaces),
+            "ports": self.ports,
+            "targets": self.targets,
+            "method": "GET", "path": "/v1/models",
+            "expiresAtMonotonic": self.expires_at,
+            "tcpSeconds": self.tcp_seconds, "httpSeconds": self.http_seconds,
+            "workers": self.workers,
+        }
 
 
 class _NoRedirect(HTTPRedirectHandler):
@@ -86,9 +115,17 @@ def _mask_prefix(mask: str) -> int | None:
 
 
 def _run(argv: Sequence[str]) -> str:
+    # These fixed interface reads cannot be expanded into a process effect.
+    command = tuple(argv)
+    if command not in {
+        ("ip", "-json", "-4", "addr", "show"),
+        ("ip", "-4", "-o", "addr", "show"),
+        ("ifconfig",),
+    }:
+        raise ValueError("LAN discovery only permits fixed interface reads")
     try:
         result = subprocess.run(
-            list(argv), capture_output=True, text=True, timeout=1.0, check=False,
+            list(command), capture_output=True, text=True, timeout=1.0, check=False,
         )
     except (OSError, subprocess.SubprocessError):
         return ""
@@ -145,19 +182,8 @@ def _interface_snapshot() -> tuple[tuple[LanInterface, ...], str]:
     if not found:
         found = _parse_ifconfig(_run(("ifconfig",)))
         source = "ifconfig"
-    if not found:
-        # A stdlib-only fallback has no portable netmask API.  Its bounded /24
-        # result is marked partial by the caller, never reported as complete.
-        source = "stdlib-fallback"
-        try:
-            names = socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET)
-        except OSError:
-            names = []
-        for item in names:
-            address = str(item[4][0]) if item and item[4] else ""
-            row = _valid_interface(address, 24)
-            if row is not None:
-                found.append(row)
+    # Hostname resolution is not an interface read: it can send DNS before
+    # admission. If the fixed local commands have no address, report unavailable.
     unique = {(str(row.address), str(row.network)): row for row in found}
     return tuple(unique[key] for key in sorted(unique)), source
 
@@ -196,33 +222,73 @@ def _hosts(interfaces: Sequence[LanInterface]) -> tuple[str, ...]:
     return tuple(str(address) for address in sorted(candidates))
 
 
-def _lan_http_get(url: str, *, headers: dict[str, str], timeout: float) -> tuple[int, bytes]:
+def _lan_http_get(
+    url: str, *, headers: dict[str, str], timeout: float,
+    expires_at: float | None = None,
+) -> tuple[int, bytes]:
     parsed = urlparse(url)
     host = parsed.hostname or ""
     try:
         address = ipaddress.ip_address(host)
     except ValueError as exc:
         raise ValueError("LAN discovery requires an IPv4 address") from exc
-    if not isinstance(address, ipaddress.IPv4Address) or not address.is_private:
+    if not isinstance(address, ipaddress.IPv4Address) or _valid_interface(host, 24) is None:
         raise ValueError("LAN discovery only permits private IPv4 addresses")
+    if parsed.scheme != "http" or parsed.path != "/v1/models" or parsed.query or parsed.fragment:
+        raise ValueError("LAN discovery only permits GET /v1/models")
+    if parsed.username or parsed.password or headers != {"Accept": "application/json"}:
+        raise ValueError("LAN discovery does not send credentials")
+    deadline = time.monotonic() + timeout
+    if expires_at is not None:
+        deadline = min(deadline, expires_at)
+    if time.monotonic() >= deadline:
+        raise TimeoutError("LAN models body deadline expired")
     request = Request(url, headers=headers, method="GET")
-    with _LAN_OPENER.open(request, timeout=max(0.01, timeout)) as response:  # noqa: S310
-        return int(getattr(response, "status", 200) or 200), response.read()
+    with _LAN_OPENER.open(request, timeout=timeout) as response:  # noqa: S310
+        # read() can wait forever while body bytes keep trickling. read1()
+        # yields ordinary body chunks so the frozen expiry is checked after
+        # each arrival, including a complete body that arrived too late.
+        # A blocked ordinary read can exceed expiry by one socket timeout
+        # (at most HTTP_PROBE_SECONDS). urllib's header/chunk-framing reads
+        # remain outside this body check; this is not a hard wall-clock bound.
+        body = bytearray()
+        while True:
+            if time.monotonic() >= deadline:
+                raise TimeoutError("LAN models body deadline expired")
+            chunk = response.read1(16 * 1024)
+            if time.monotonic() >= deadline:
+                raise TimeoutError("LAN models body deadline expired")
+            if not chunk:
+                return int(getattr(response, "status", 200) or 200), bytes(body)
+            body.extend(chunk)
 
 
-def _probe_endpoint(base_url: str, *, timeout: float) -> dict[str, Any]:
+def _probe_endpoint(
+    base_url: str, *, timeout: float, expires_at: float | None = None,
+    tcp_seconds: float = TCP_PREFLIGHT_SECONDS,
+) -> dict[str, Any]:
     """TCP preflight, then one keyless GET /v1/models."""
     parsed = urlparse(base_url)
     host = parsed.hostname or ""
     port = int(parsed.port or 80)
-    if not host or not ipaddress.ip_address(host).is_private:
+    if (
+        _valid_interface(host, 24) is None
+        or parsed.scheme != "http" or parsed.path != "/v1"
+        or parsed.username or parsed.password or parsed.query or parsed.fragment
+    ):
         return {"ok": False, "models": []}
-    with socket.create_connection((host, port), timeout=min(timeout, TCP_PREFLIGHT_SECONDS)):
+    remaining = timeout if expires_at is None else expires_at - time.monotonic()
+    if remaining <= 0:
+        return {"ok": False, "models": []}
+    with socket.create_connection((host, port), timeout=min(remaining, tcp_seconds)):
         pass
+    remaining = timeout if expires_at is None else expires_at - time.monotonic()
+    if remaining <= 0:
+        return {"ok": False, "models": []}
     return discover_endpoint_models(
         base_url,
-        timeout_seconds=min(timeout, HTTP_PROBE_SECONDS),
-        http_get=_lan_http_get,
+        timeout_seconds=min(remaining, timeout),
+        http_get=partial(_lan_http_get, expires_at=expires_at),
     )
 
 
@@ -247,8 +313,14 @@ def scan_lan_engines(
     probe: Callable[[str], dict[str, Any]] | None = None,
     deadline_seconds: float = SCAN_DEADLINE_SECONDS,
     max_workers: int = MAX_WORKERS,
+    principal: Principal = UNAUTHENTICATED,
+    broker: Any = None,
 ) -> dict[str, Any]:
-    """Return transient Found rows from at most two private /24 windows."""
+    """Freeze one finite scan, then admit all real transports before dispatch.
+
+    A test that injects interfaces and a pure probe without a principal or
+    broker can exercise the computation alone. Authenticated scans still admit.
+    """
     interface_source = "injected"
     if interfaces is None:
         selected, interface_source = _interface_snapshot()
@@ -256,20 +328,49 @@ def scan_lan_engines(
         raw_interfaces = interfaces() if callable(interfaces) else interfaces
         selected = tuple(raw_interfaces)
     normalized = tuple(
-        row if isinstance(row, LanInterface) else _valid_interface(str(row), 24)
+        _valid_interface(str(row.address), row.network.prefixlen)
+        if isinstance(row, LanInterface) and row.address in row.network
+        else _valid_interface(str(row), 24)
         for row in selected
     )
     usable = tuple(row for row in normalized if row is not None)
     hosts = _hosts(usable)
-    targets = [(host, int(port)) for host in hosts for port, _engine in ports]
+    frozen_ports = tuple((int(port), str(engine)) for port, engine in ports)
+    if any(not 1 <= port <= 65535 for port, _engine in frozen_ports):
+        raise ValueError("LAN discovery requires valid TCP ports")
+    targets = tuple((host, port) for host in hosts for port, _engine in frozen_ports)
     all_windows = {str(_window_for_interface(row)) for row in usable}
     bounded = (
         bool(usable)
-        and interface_source != "stdlib-fallback"
         and all(interface.network.prefixlen >= 24 for interface in usable)
         and len(all_windows) <= MAX_NETWORK_WINDOWS
     )
-    if not usable:
+    plan = LanScanPlan(
+        usable, frozen_ports, targets, interface_source, bounded,
+        time.monotonic() + max(0.0, min(float(deadline_seconds), SCAN_DEADLINE_SECONDS)),
+        TCP_PREFLIGHT_SECONDS, HTTP_PROBE_SECONDS,
+        max(1, min(int(max_workers), MAX_WORKERS)), probe,
+    )
+    pure_test = (
+        probe is not None and interfaces is not None
+        and principal is UNAUTHENTICATED and broker is None
+    )
+    if not usable or pure_test:
+        return _execute_scan(plan)
+    manifest = plan.manifest()
+    digest = hashlib.sha256(json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    destination = "lan-scan:" + digest
+    return run_external_egress(
+        connector_id="lan-engine-discovery", destination=destination,
+        data_classes=("engine-discovery",), payload_material=manifest,
+        allowed_destinations=(destination,), principal=principal, broker=broker,
+        sender=_execute_scan, args=(plan,),
+    )
+
+
+def _execute_scan(plan: LanScanPlan) -> dict[str, Any]:
+    """The admitted sender: only the frozen target list can reach transports."""
+    if not plan.interfaces:
         return {
             "engines": [],
             "partial": False,
@@ -278,19 +379,27 @@ def scan_lan_engines(
             "hostsChecked": 0,
             "portsChecked": 0,
         }
-    started = time.monotonic()
-    probe_fn = probe or (lambda base_url: _probe_endpoint(base_url, timeout=HTTP_PROBE_SECONDS))
+
+    def probe_fn(base_url: str) -> dict[str, Any]:
+        if time.monotonic() >= plan.expires_at:
+            return {"ok": False, "models": []}
+        if plan.probe is not None:
+            return plan.probe(base_url)
+        return _probe_endpoint(
+            base_url, timeout=plan.http_seconds,
+            expires_at=plan.expires_at, tcp_seconds=plan.tcp_seconds,
+        )
+
     results: list[dict[str, Any]] = []
     futures: dict[Any, tuple[str, int]] = {}
     completed_hosts: set[str] = set()
-    workers = max(1, min(int(max_workers), MAX_WORKERS))
     timed_out = False
-    with ThreadPoolExecutor(max_workers=workers, thread_name_prefix="holdspeak-lan-scan") as pool:
-        for host, port in targets:
-            if time.monotonic() - started >= deadline_seconds:
+    with ThreadPoolExecutor(max_workers=plan.workers, thread_name_prefix="holdspeak-lan-scan") as pool:
+        for host, port in plan.targets:
+            if time.monotonic() >= plan.expires_at:
                 break
             futures[pool.submit(probe_fn, f"http://{host}:{port}/v1")] = (host, port)
-        remaining = max(0.0, deadline_seconds - (time.monotonic() - started))
+        remaining = max(0.0, plan.expires_at - time.monotonic())
         try:
             completed = as_completed(futures, timeout=remaining)
             for future in completed:
@@ -298,7 +407,7 @@ def scan_lan_engines(
                 completed_hosts.add(host)
                 try:
                     answer = future.result()
-                except Exception:
+                except OSError:
                     continue
                 if not isinstance(answer, dict) or not answer.get("ok"):
                     continue
@@ -312,18 +421,18 @@ def scan_lan_engines(
                 future.cancel()
     unique = {(row["host"], row["baseUrl"], row["name"]): row for row in results}
     partial = (
-        not bounded
+        not plan.bounded
         or timed_out
-        or len(futures) < len(targets)
-        or time.monotonic() - started >= deadline_seconds
+        or len(futures) < len(plan.targets)
+        or time.monotonic() >= plan.expires_at
     )
     return {
         "engines": [unique[key] for key in sorted(unique)],
         "partial": partial,
         "unavailable": False,
-        "interfaceSource": interface_source,
+        "interfaceSource": plan.interface_source,
         "hostsChecked": len(completed_hosts),
-        "portsChecked": len(ports),
+        "portsChecked": len(plan.ports),
     }
 
 
