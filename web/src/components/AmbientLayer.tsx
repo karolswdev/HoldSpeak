@@ -1,7 +1,11 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { apiFetch, readableError, type JsonRecord } from "../lib/api";
 import { useRuntimeBus, useRuntimeFrame } from "../runtime/RuntimeBus";
-import { useProjections } from "../desk/projections";
+import { useProjections, type DeskProjection } from "../desk/projections";
+import {
+  readAttentionPopupCutoff,
+  recordAttentionPopupCutoff,
+} from "./ambientAttentionCutoff";
 import {
   publishAftercare,
   publishAftercareHost,
@@ -295,6 +299,12 @@ function Qlippy() {
     [],
   );
   const [busy, setBusy] = useState(false);
+  const [attentionCutoff, setAttentionCutoff] = useState(readAttentionPopupCutoff);
+  const [dismissal, setDismissal] = useState<{
+    projection: DeskProjection;
+    status: "pending" | "failed";
+  } | null>(null);
+  const dismissing = useRef(false);
   useEffect(() => {
     let current = true;
     void apiFetch<JsonRecord>("/api/settings")
@@ -342,14 +352,35 @@ function Qlippy() {
   useEffect(() => {
     if (enabled) void useProjections.getState().refreshAmbient();
   }, [enabled]);
-  const projection = projections.find(
+  const projection = dismissal?.projection ?? projections.find(
     (row) =>
-      row.attention_state === "needs_attention" ||
-      row.attention_state === "unseen",
+      !row.dismissed &&
+      row.source_kind !== "dictation_journal" &&
+      (!attentionCutoff || Date.parse(row.timestamp) > attentionCutoff) &&
+      (row.attention_state === "needs_attention" ||
+        row.attention_state === "unseen"),
   );
   const card = cards[0];
   if (!enabled || (!projection && !card)) return null;
   const dismiss = () => setCards((current) => current.slice(1));
+  const dismissProjection = async (row: DeskProjection) => {
+    if (dismissing.current) return;
+    dismissing.current = true;
+    setDismissal({ projection: row, status: "pending" });
+    let accepted = false;
+    try {
+      accepted = await useProjections.getState().present(row.id, "dismiss");
+    } catch {
+      // Keep the exact row available for Retry if the writer cannot finish.
+    }
+    dismissing.current = false;
+    if (!accepted) {
+      setDismissal({ projection: row, status: "failed" });
+      return;
+    }
+    setAttentionCutoff(recordAttentionPopupCutoff(Date.now()));
+    setDismissal(null);
+  };
   const decide = async (decision: "approved" | "rejected") => {
     if (!card?.meeting_id || !card.id) return dismiss();
     setBusy(true);
@@ -393,6 +424,13 @@ function Qlippy() {
                 "Review this moment when you are ready.",
             )}
         </p>
+        {dismissal ? (
+          <SurfaceState
+            loading={dismissal.status === "pending"}
+            error={dismissal.status === "failed" ? "Cannot dismiss" : undefined}
+            onRetry={() => void dismissProjection(dismissal.projection)}
+          />
+        ) : null}
         <div className="button-row">
           {/* HS-202-06 — a projection with no door draws no "Review source",
               and NEVER falls into the card branch below (Astra's counsel on
@@ -404,6 +442,7 @@ function Qlippy() {
               <Button
                 dense
                 variant="primary"
+                disabled={dismissal?.status === "pending"}
                 onClick={() => {
                   window.location.href = projection.detail_url;
                 }}
@@ -433,11 +472,10 @@ function Qlippy() {
           <Button
             dense
             variant="ghost"
+            loading={dismissal?.status === "pending"}
             onClick={() =>
               projection
-                ? void useProjections
-                    .getState()
-                    .present(projection.id, "dismiss")
+                ? void dismissProjection(projection)
                 : dismiss()
             }
           >

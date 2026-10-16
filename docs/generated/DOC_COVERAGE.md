@@ -14,12 +14,12 @@ Validation errors at generation: **0**.
 | Measure | Present / total or count |
 | --- | ---: |
 | Source paths | 292 / 292 |
-| Test paths | 231 / 231 |
+| Test paths | 233 / 233 |
 | Documentation paths | 247 / 247 |
-| Assertions inspected | 231 |
-| Tests executed | 193 |
-| Records with an executed assertion | 82 |
-| Semantic records unresolved | 75 |
+| Assertions inspected | 233 |
+| Tests executed | 195 |
+| Records with an executed assertion | 83 |
+| Semantic records unresolved | 74 |
 
 ## Documentation classes
 
@@ -117,7 +117,7 @@ Validation errors at generation: **0**.
 | `integration.actuators` | capabilities | 3/3 | 3/3 | 3 | 2 | 0 | partially_evidenced |
 | `companion.ipad_client` | capabilities | 3/3 | 2/2 | 2 | 0 | 0 | unresolved |
 | `companion.aipi_audio_control` | capabilities | 3/3 | 2/2 | 2 | 0 | 0 | unresolved |
-| `companion.qlippy_presence` | capabilities | 2/2 | 1/1 | 1 | 0 | 0 | unresolved |
+| `companion.qlippy_presence` | capabilities | 2/2 | 3/3 | 3 | 2 | 0 | partially_evidenced |
 | `channels.document_sources` | capabilities | 6/6 | 5/5 | 5 | 5 | 0 | partially_evidenced |
 | `channels.slack` | capabilities | 2/2 | 2/2 | 2 | 0 | 0 | unresolved |
 | `runtime.kernel` | components | 2/2 | 0/0 | 0 | 0 | 0 | unresolved |

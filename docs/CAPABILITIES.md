@@ -93,7 +93,7 @@ Missing shards: **none**.
 | `integration.actuators` | Approval-gated external actuators | Turn reviewed text or artifacts into owner-authorized GitHub or webhook effects with receipts. | experimental | user | source_and_assertions_inspected | no | possible |
 | `companion.ipad_client` | iPad hub client | Capture, review, import, approve and inspect HoldSpeak work from a typed native client. | built_unreleased | user | source_and_assertions_inspected | no | possible |
 | `companion.aipi_audio_control` | AIPI-Lite audio and control companion | Forward device audio and expose meeting/status/Coder controls through a separate bridge. | experimental | user | source_and_assertions_inspected | no | possible |
-| `companion.qlippy_presence` | Qlippy presence | Reflect selected attention states and egress posture through the optional mascot surface. | experimental | user | source_and_assertions_inspected | no | local |
+| `companion.qlippy_presence` | Qlippy presence | Show selected actionable attention through the optional mascot without replaying dismissed popup backlog. Dictation journal entries stay in history and Attention. | experimental | user | source_and_assertions_inspected | no | local |
 | `channels.document_sources` | Send a stored document | Send a stored note, update, brief, decision, meeting summary, or artifact to a saved destination. | built_unreleased | integration | tests_executed | no | possible |
 | `channels.slack` | Send a document to Slack | Post a stored document to a saved Slack destination. | built_unreleased | integration | source_and_assertions_inspected | no | possible |
 

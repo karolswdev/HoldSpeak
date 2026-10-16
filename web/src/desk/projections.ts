@@ -59,7 +59,7 @@ interface ProjectionState extends ProjectionEnvelope {
   present(
     id: string,
     action: "acknowledge" | "dismiss" | "restore",
-  ): Promise<void>;
+  ): Promise<boolean>;
 }
 
 const EMPTY_PAGE = { offset: 0, limit: 50, total: 0, has_more: false };
@@ -142,8 +142,10 @@ export const useProjections = create<ProjectionState>((set, get) => ({
       );
       set({ selectedId: action === "dismiss" ? null : get().selectedId });
       await Promise.all([get().refresh(true), get().refreshAmbient()]);
+      return true;
     } catch (error) {
       set({ error: readableError(error) });
+      return false;
     }
   },
 }));
