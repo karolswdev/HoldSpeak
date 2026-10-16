@@ -264,7 +264,7 @@ describe("Ask: the lamp on the turn, the route once in the footer", () => {
     expect(container.querySelector(".gadget-chip-egress")).toBeNull();
   });
 
-  it("prints the fallback receipt place and freezes the finished elapsed time", async () => {
+  it("prints the fallback receipt place and keeps one completed footer receipt as time advances", async () => {
     const clock = vi.spyOn(Date, "now").mockReturnValue(1_000);
     try {
       const fallback = {
@@ -274,11 +274,16 @@ describe("Ask: the lamp on the turn, the route once in the footer", () => {
       };
       const view = await askWith(fallback);
       expect(view.container.querySelector(".surface-footer-egress .gadget-chip-egress")?.textContent).toBe("fallback-box · LAN");
-      expect(view.container.querySelector("[data-testid=run-line]")?.textContent).toBe("Answered in 0 s");
+      const footerReceipt = "LAST TURN · fallback-model · FALLBACK · RECEIPT ··back";
+      expect(view.container.querySelector(".surface-footer-receipt")?.textContent).toBe(footerReceipt);
+      expect(screen.getAllByText(footerReceipt, { exact: true })).toHaveLength(1);
+      expect(view.container.querySelector("[data-testid=run-line]")).toBeNull();
 
       clock.mockReturnValue(9_000);
       view.rerender(<AskPanel />);
-      expect(view.container.querySelector("[data-testid=run-line]")?.textContent).toBe("Answered in 0 s");
+      expect(view.container.querySelector(".surface-footer-receipt")?.textContent).toBe(footerReceipt);
+      expect(screen.getAllByText(footerReceipt, { exact: true })).toHaveLength(1);
+      expect(view.container.querySelector("[data-testid=run-line]")).toBeNull();
     } finally {
       clock.mockRestore();
     }

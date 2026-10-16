@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { usePrReceipts, type PrRow } from "../prReceipts";
 import { PrReceiptsSection } from "./PrReceiptsSection";
 
@@ -18,6 +18,7 @@ const row: PrRow = {
 };
 
 describe("PR follow-through desk object", () => {
+  beforeEach(() => usePrReceipts.setState({ load: vi.fn(async () => {}) }));
   afterEach(() => usePrReceipts.setState({ sources: [], loaded: false, busy: false }));
 
   it("keeps unavailable verbs visible with their named reason", () => {
@@ -67,5 +68,65 @@ describe("PR follow-through desk object", () => {
     expect(screen.getByText(/Finding one/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Approve" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Deny" })).toBeInTheDocument();
+  });
+
+  it("shows Review ready for a completed draft and keeps identifiers inside the output fold", async () => {
+    const output = "Review finding one.\n\nReview finding two.";
+    const draftReview = vi.fn(async () => ({ output, operation_id: "delivery-pr-review:7a1b", artifact_id: "review-42" }));
+    usePrReceipts.setState({
+      sources: [{ source_id: "src_1", label: "HoldSpeak", status: "live", detail: "", observed_at: row.observed_at, prs: [row] }],
+      loaded: true, draftReview,
+    });
+    const { container } = render(<PrReceiptsSection />);
+    fireEvent.click(screen.getByRole("button", { name: "More for #393" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Draft review" }));
+    expect(await screen.findByText("Review ready")).toBeVisible();
+    expect(draftReview).toHaveBeenCalledWith(row);
+    const result = container.querySelector(".desk-pr-result td")!;
+    const fold = result.querySelector("details")!;
+    expect(fold).not.toHaveAttribute("open");
+    expect(fold.querySelector("pre")).toHaveTextContent("delivery-pr-review:7a1b");
+    expect(fold.querySelector("pre")).toHaveTextContent("review-42");
+    expect(fold.querySelector("pre")?.textContent).toContain(output);
+    const resting = result.cloneNode(true) as HTMLElement;
+    resting.querySelector("details")?.remove();
+    expect(resting.textContent).toBe("Review ready");
+    fireEvent.click(fold.querySelector("summary")!);
+    expect(fold).toHaveAttribute("open");
+    expect(fold.querySelector("pre")).toBeVisible();
+  });
+
+  it("retains the performed action so an accepted send is not reported as a ready review", async () => {
+    usePrReceipts.setState({
+      sources: [{ source_id: "src_1", label: "HoldSpeak", status: "live", detail: "", observed_at: row.observed_at, prs: [row] }],
+      loaded: true,
+      draftReview: vi.fn(async () => ({ output: "A completed review", artifact_id: "review-42" })),
+      sendAgent: vi.fn(async () => ({ state: "accepted", output: "Request queued", operation_id: "spawn-accepted" })),
+    });
+    render(<PrReceiptsSection />);
+    fireEvent.click(screen.getByRole("button", { name: "More for #393" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Draft review" }));
+    expect(await screen.findByText("Review ready")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "More for #393" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Send agent" }));
+    fireEvent.change(screen.getByLabelText("Instruction"), { target: { value: "Inspect the receipt" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send agent" }));
+    expect(await screen.findByText("Accepted")).toBeVisible();
+    expect(usePrReceipts.getState().sendAgent).toHaveBeenCalledWith(row, "Inspect the receipt");
+    expect(screen.queryByText("Review ready")).toBeNull();
+    expect(screen.queryByText("Agent started")).toBeNull();
+  });
+
+  it("does not call an accepted draft ready without review output", async () => {
+    usePrReceipts.setState({
+      sources: [{ source_id: "src_1", label: "HoldSpeak", status: "live", detail: "", observed_at: row.observed_at, prs: [row] }],
+      loaded: true, draftReview: vi.fn(async () => ({ operation_id: "draft-accepted", state: "accepted" })),
+    });
+    const { container } = render(<PrReceiptsSection />);
+    fireEvent.click(screen.getByRole("button", { name: "More for #393" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Draft review" }));
+    expect(await screen.findByText("Accepted")).toBeVisible();
+    expect(screen.queryByText("Review ready")).toBeNull();
+    expect(container.querySelector(".desk-pr-result details summary")).toHaveTextContent("RAW · RECEIPT");
   });
 });

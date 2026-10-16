@@ -1,6 +1,6 @@
 // Phase 17: the live Ask face names its effective engine and sends engine
 // setup to the shared Runs on surface.
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -66,6 +66,7 @@ afterEach(() => {
   latchAskSelection(null);
   cleanup();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 describe("AskPanel's engine line", () => {
@@ -74,6 +75,77 @@ describe("AskPanel's engine line", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Choose engine" }));
     expect(shell.openSurfaceOr).toHaveBeenCalledWith("configure-runs-on", "/settings", "models");
     expect(screen.queryByRole("button", { name: "Save assignment" })).toBeNull();
+  });
+});
+
+describe("AskPanel's grounding receipt", () => {
+  it.each([
+    { name: "no matches", matched: 0, overflow: 0, refs: [], label: "UNGROUNDED" },
+    { name: "all matches overflowed", matched: 3, overflow: 3, refs: ["note:release-checks"], label: "UNGROUNDED" },
+    { name: "overflow exceeds matches", matched: 2, overflow: 4, refs: ["note:release-checks"], label: "UNGROUNDED" },
+    { name: "positive matches use the receipt denominator", matched: 5, overflow: 2, refs: ["note:release-checks", "note:release-owner"], label: "GROUNDED ON 3 OF 5" },
+  ])("$name keeps citations, claims and answer actions", async ({ matched, overflow, refs, label }) => {
+    vi.stubGlobal("fetch", vi.fn((url: string) => Promise.resolve(response(url.endsWith("/api/ask") ? {
+      output: "Release answer",
+      grounding: { matched_count: matched, overflow_count: overflow, source_refs: refs },
+      grounding_claims: [{ text: "Release timing needs confirmation", label: "partial", flagged: true }],
+    } : {}))));
+    render(<AskPanel />);
+    fireEvent.change(screen.getByRole("textbox", { name: "Ask about your work" }), { target: { value: "Release checks?" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    const receipt = (await screen.findByText(label)).closest<HTMLElement>(".desk-ask-receipt")!;
+    expect(receipt).toHaveTextContent("Release timing needs confirmation");
+    expect(within(receipt).queryAllByRole("button")).toHaveLength(refs.length);
+    for (const ref of refs) expect(screen.getByRole("button", { name: `Note · ${ref.slice(5)}` })).toBeInTheDocument();
+    expect(screen.queryByText(/GROUNDED ON 0/)).toBeNull();
+    for (const name of ["Copy", "Keep", "Bin"]) expect(screen.getByRole("button", { name })).toBeInTheDocument();
+  });
+
+  it("an answer without a grounding receipt has no grounding label", async () => {
+    vi.stubGlobal("fetch", vi.fn((url: string) => Promise.resolve(response(url.endsWith("/api/ask") ? { output: "Context-free answer" } : {}))));
+    render(<AskPanel />);
+    fireEvent.change(screen.getByRole("textbox", { name: "Ask about your work" }), { target: { value: "Question" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    await screen.findByText("Context-free answer");
+    expect(screen.queryByText(/GROUNDED|UNGROUNDED/)).toBeNull();
+  });
+});
+
+describe("AskPanel's success receipt", () => {
+  it.each([
+    [0, "Answered"],
+    [499, "Answered"],
+    [2600, "Answered in 3 s"],
+  ])("%s ms has one footer success status and no zero-second phrase", async (elapsed, label) => {
+    let now = 1000;
+    vi.spyOn(Date, "now").mockImplementation(() => now);
+    const pending = deferred<Response>();
+    vi.stubGlobal("fetch", vi.fn((url: string) => url.endsWith("/api/ask") ? pending.promise : Promise.resolve(response({}))));
+    const { container } = render(<AskPanel />);
+    fireEvent.change(screen.getByRole("textbox", { name: "Ask about your work" }), { target: { value: "Question" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    expect(screen.getByTestId("run-line")).toHaveAttribute("data-state", "running");
+    now += elapsed;
+    await act(async () => pending.resolve(response({ output: "Receipt answer" })));
+    await screen.findByText("Receipt answer");
+    expect(screen.getAllByText(label, { exact: true })).toHaveLength(1);
+    expect(screen.getByText(label, { exact: true }).closest(".surface-footer")).not.toBeNull();
+    expect(container.querySelector('.surface-run-line[data-state="success"]')).toBeNull();
+    expect(screen.queryByText(/Answered in 0 s/)).toBeNull();
+  });
+
+  it("a routed answer keeps its route receipt in the footer", async () => {
+    vi.stubGlobal("fetch", vi.fn((url: string) => Promise.resolve(response(url.endsWith("/api/ask") ? {
+      output: "Routed answer",
+      route: { lamp: "lan", host: "studio.local", model: "Review model", receipt: "receipt-a91f" },
+    } : {}))));
+    const { container } = render(<AskPanel />);
+    fireEvent.change(screen.getByRole("textbox", { name: "Ask about your work" }), { target: { value: "Question" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    const receipt = await screen.findByText("LAST TURN · Review model · RECEIPT ··a91f");
+    expect(receipt.closest(".surface-footer")).not.toBeNull();
+    expect(container.querySelector('.surface-run-line[data-state="success"]')).toBeNull();
+    expect(screen.getByText("studio.local · LAN")).toBeInTheDocument();
   });
 });
 

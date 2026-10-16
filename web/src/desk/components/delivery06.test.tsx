@@ -1,10 +1,13 @@
 // HS-111-06 — species smoke locks (audit §4.4): the census fold, the
 // shared PaneWell seam, the dossier's named empty-command token, and
 // the lifecycle surface-token.
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it, vi } from "vitest";
 import type { McSession } from "../missioncontrol";
-import { useDeliveryDossier, type StoryDossier } from "../deliveryDossier";
+import { fromWirePhaseDossier, fromWireStoryDossier, useDeliveryDossier, type StoryDossier } from "../deliveryDossier";
+import phaseFixture from "../../../../apple/Tests/ContractsTests/Fixtures/delivery_phase_dossier.json";
+import storyFixture from "../../../../apple/Tests/ContractsTests/Fixtures/delivery_story_dossier.json";
 import { PaneWell } from "../surface/Surface";
 import { censusByAgent } from "./MissionControlConveyor";
 import { DeliveryDossierWindow } from "./DeliveryDossierWindow";
@@ -132,5 +135,53 @@ describe("LifecycleChip (pill → token)", () => {
     expect(token?.textContent).toBe("Accepted");
     expect(token?.getAttribute("data-tone")).toBe("ok");
     expect(container.querySelector(".signal-status")).toBeNull();
+  });
+});
+
+describe("Delivery phase Story control", () => {
+  it.each([
+    { passing: 0, failing: 0, expected: null },
+    { passing: 2, failing: 0, expected: "2 pass" },
+    { passing: 0, failing: 3, expected: "3 fail" },
+    { passing: 2, failing: 1, expected: "2 pass · 1 fail" },
+  ])("shows only positive phase facts for $passing pass and $failing fail", ({ passing, failing, expected }) => {
+    const saved = useDeliveryDossier.getState();
+    try {
+      const dossier = fromWirePhaseDossier(phaseFixture);
+      dossier.stories[0] = { ...dossier.stories[0], passing, failing };
+      useDeliveryDossier.setState({ dossier, loading: false, refusal: null });
+      const { container } = render(<DeliveryDossierWindow />);
+      expect(screen.getByRole("button", { name: "HS-94-05 · Evidence dossiers and safe assets" })).toBeTruthy();
+      const facts = container.querySelector(".desk-dlv-phase-stories small");
+      if (expected === null) expect(facts).toBeNull();
+      else expect(facts?.textContent).toBe(expected);
+      expect(screen.queryByRole("button", { name: /HS-94-10/ })).toBeNull();
+    } finally {
+      cleanup();
+      useDeliveryDossier.setState(saved, true);
+    }
+  });
+
+  it("opens only the ready Story by its exact project and id through the library Button", async () => {
+    const saved = useDeliveryDossier.getState();
+    const openStory = vi.fn(async () => useDeliveryDossier.setState({ dossier: fromWireStoryDossier(storyFixture) }));
+    const user = userEvent.setup();
+    try {
+      useDeliveryDossier.setState({ dossier: fromWirePhaseDossier(phaseFixture), loading: false, refusal: null, openStory });
+      render(<DeliveryDossierWindow />);
+      const ready = screen.getByRole("button", { name: "HS-94-05 · Evidence dossiers and safe assets" });
+      expect(ready).toHaveClass("btn", "btn--ghost", "btn--sm");
+      expect(screen.queryByRole("button", { name: /HS-94-10/ })).toBeNull();
+      expect(screen.getByText("HS-94-10 · not found")).toBeTruthy();
+      ready.focus();
+      await user.keyboard(" ");
+      expect(openStory).toHaveBeenCalledOnce();
+      expect(openStory).toHaveBeenCalledWith("holdspeak", "HS-94-05");
+      expect(screen.queryByRole("button", { name: "HS-94-05 · Evidence dossiers and safe assets" })).toBeNull();
+      expect(screen.getByText("RUNS 1 PASS 1 FAIL")).toBeTruthy();
+    } finally {
+      cleanup();
+      useDeliveryDossier.setState(saved, true);
+    }
   });
 });

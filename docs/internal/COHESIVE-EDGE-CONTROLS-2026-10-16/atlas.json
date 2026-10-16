@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "atlas_version": "cohesive-edge-controls-20261016",
+  "extends": "docs/internal/DESK-NAVIGATION-DELIGHT-2026-10-16/atlas.json",
+  "source_commit": "9038911d97a5f4b85717486fba617d4fd26e43f1",
+  "states": [
+    {
+      "id": "state.desk_presentation.delivery_open",
+      "family": "desk_presentation",
+      "values": {
+        "application": "Delivery",
+        "task": "Open work evidence"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/components/DeskToolShelf.tsx",
+          "symbol": "DeskToolShelf",
+          "claim": "Registered Delivery launcher is reachable through the real Search shelf."
+        }
+      ],
+      "reachable_by": [
+        "case.desk.search.delivery_open"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "case.desk.search.delivery_open",
+      "job": "j11",
+      "edge_ids": [
+        "edge.verb.system_search"
+      ],
+      "state_id": "state.desk_presentation.delivery_open",
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME/DB, engine none. Registered launcher opens actual Delivery. Populated dossier transport and exact phase Story are checked separately."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/desk/seed",
+          "body": {},
+          "expect_status": 200,
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "button[aria-controls=desk-tool-shelf]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "input[aria-controls=desk-palette-listbox]",
+          "value": "Delivery"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "selector": "[id=\"desk-palette-option-drawer:delivery-board\"]",
+        "adapter": "ui-by-viewport"
+      },
+      "expected": {
+        "observe_at": ".desk-dlv-board",
+        "predicate": {
+          "kind": "selector_presence",
+          "selector": ".desk-dlv-board",
+          "present": true
+        },
+        "words": "Search opens the actual Delivery board, with the truthful empty isolated hub. No repository/provider/inference work."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ],
+  "clocks": [],
+  "excluded": [],
+  "council_readings": []
+}

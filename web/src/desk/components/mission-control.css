@@ -51,7 +51,7 @@
   position: fixed;
   left: var(--space-3);
   right: var(--space-3);
-  bottom: var(--space-3);
+  bottom: calc(var(--desk-dock-h, var(--desk-snap-bottom)) + var(--space-3));
   z-index: var(--desk-z-chrome);
   padding: var(--space-2) var(--space-3);
   /* HS-111: opaque fill — no translucent surfaces */
@@ -66,7 +66,7 @@
 .desk-next .desk-mc-tab {
   position: fixed;
   left: 112px;
-  bottom: var(--space-3);
+  bottom: calc(var(--desk-dock-h, var(--desk-snap-bottom)) + var(--space-3));
   z-index: var(--desk-z-chrome);
   display: inline-flex;
   align-items: center;
@@ -75,7 +75,7 @@
   /* HS-111: opaque fill */
   background: var(--surface-1);
   border: 1px solid var(--surface-3);
-  border-radius: 2px;
+  border-radius: 0;
   color: var(--text-muted);
   font-size: 12px;
   cursor: pointer;
@@ -85,6 +85,12 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--space-1);
+}
+.desk-next .desk-mc-tab.btn {
+  color: var(--wb-ink);
+}
+.desk-next .desk-mc-tab.btn .surface-token {
+  color: inherit;
 }
 /* HS-111: section labels — system-label style */
 .desk-next .desk-mc-title {
@@ -136,21 +142,17 @@
   min-height: 36px;
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
+  gap: var(--space-1);
   padding: 1px 4px;
   border-radius: 0;
   border: 1px solid var(--surface-3);
   color: var(--text-muted);
 }
 .desk-next .desk-mc-story-pick {
-  min-height: 32px;
-  appearance: none;
-  padding: 0 4px;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
+  white-space: nowrap;
 }
 .desk-next .desk-mc-story.st-done {
   color: var(--ok);
@@ -185,20 +187,7 @@
    awaiting is STEADY inverted video — the operator call, not a
    blinker. */
 .desk-next .desk-mc-pin {
-  min-height: 32px;
-  appearance: none;
-  border: 0;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
   gap: 2px;
-  margin-left: 2px;
-  padding: 0 6px;
-  border-radius: 0;
-  background: var(--surface-2);
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -209,7 +198,10 @@
   color: var(--bg);
 }
 .desk-next .desk-mc-pin.stale {
-  opacity: 0.5;
+  border-style: dotted;
+}
+.desk-next .desk-mc-pin.btn.manual:not(.armed) {
+  color: var(--text-muted);
 }
 .desk-next .desk-mc-sessions {
   display: flex;
@@ -223,19 +215,14 @@
 /* The needs-you cell: the ONLY loud off-belt layer — steady inverted
    video (audit §3.1, attention ladder). */
 .desk-next .desk-mc-needs {
-  appearance: none;
-  border: 0;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 0;
   background: var(--warn);
   color: var(--bg);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  white-space: nowrap;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 /* The census fold: one FoldGadget per agent, roster in a well. */
 .desk-next .desk-mc-sessions .gadget-fold {
@@ -714,17 +701,8 @@
   white-space: nowrap;
 }
 .desk-next .desk-mc-evidence-open {
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  appearance: none;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-}
-.desk-next .desk-mc-evidence-open:hover {
-  color: var(--accent);
+  width: var(--size-btn);
+  padding-inline: var(--space-2);
 }
 .desk-next .desk-mc-evidence {
   margin-top: var(--space-1);

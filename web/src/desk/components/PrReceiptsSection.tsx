@@ -16,17 +16,26 @@ import { DeskComposer } from "./DeskComposer";
 import { WorkMenu, type WorkMenuEntry } from "./DeskMenu";
 import { FoldGadget } from "../surface/gadgets";
 import { SurfaceCode, SurfaceState, SurfaceWell } from "../surface/Surface";
+import { humanizeWireValue } from "../../lib/productLanguage";
 
 type Action = "send" | "comment" | "status" | null;
 type VerbName = "send_agent" | "draft_review" | "post_comment" | "post_status";
+type ResultAction = VerbName | "approve" | "deny";
 interface RowWork {
   action: Action;
   text: string;
   busy: string;
   result: PrActionResult | null;
+  resultAction: ResultAction | null;
   info: boolean;
 }
-const EMPTY: RowWork = { action: null, text: "", busy: "", result: null, info: false };
+const EMPTY: RowWork = { action: null, text: "", busy: "", result: null, resultAction: null, info: false };
+
+function resultLabel(result: PrActionResult, action: ResultAction | null): string {
+  if (result.error) return "REFUSED";
+  if (action === "draft_review" && result.output?.trim()) return "Review ready";
+  return humanizeWireValue(result.proposal?.status || result.state || "accepted");
+}
 
 export function PrReceiptsSection() {
   const store = usePrReceipts();
@@ -56,8 +65,8 @@ export function PrReceiptsSection() {
     setOpenDiff({ key: `${row.source_id}:${row.number}`, diff: await store.diff(row.source_id, row.number) });
   };
 
-  const run = async (key: string, label: string, act: () => Promise<PrActionResult>) => {
-    patch(key, { busy: label, result: null });
+  const run = async (key: string, action: ResultAction, label: string, act: () => Promise<PrActionResult>) => {
+    patch(key, { busy: label, result: null, resultAction: action });
     try {
       patch(key, { busy: "", result: await act(), action: null });
     } catch (error) {
@@ -96,6 +105,11 @@ export function PrReceiptsSection() {
                     const headRef = row.head_ref;
                     const rowObserved = row.observed_at;
                     const rowGate = row.agent_gate;
+                    const rawReceipt = [
+                      w.result?.operation_id ? `Operation · ${w.result.operation_id}` : null,
+                      w.result?.artifact_id ? `Artifact · ${w.result.artifact_id}` : null,
+                    ].filter(Boolean).join("\n");
+                    const rawResult = [w.result?.output, rawReceipt ? `Receipt\n${rawReceipt}` : null].filter(Boolean).join("\n\n");
                     return (
                       <Fragment key={key}>
                         <tr className={row.needs_you ? "is-needs-you" : undefined} data-desk-object="pr">
@@ -118,7 +132,7 @@ export function PrReceiptsSection() {
                                     const a = availability(row, name);
                                     const labels = { send_agent: "Send agent", draft_review: "Draft review", post_comment: "Post comment", post_status: "Post status" };
                                     const click = name === "draft_review"
-                                      ? () => void run(key, "Drafting", () => store.draftReview(row))
+                                      ? () => void run(key, "draft_review", "Drafting", () => store.draftReview(row))
                                       : () => patch(key, { action: name === "send_agent" ? "send" : name === "post_comment" ? "comment" : "status", text: name === "post_status" ? "Review in progress" : w.text, result: null });
                                     return { type: "item", id: name, label: labels[name], ghost: !a.available ? a.reason || "unavailable" : w.busy ? w.busy : null, onSelect: click };
                                   }),
@@ -148,6 +162,7 @@ export function PrReceiptsSection() {
                                 onAction={() =>
                                   void run(
                                     key,
+                                    w.action === "send" ? "send_agent" : w.action === "status" ? "post_status" : "post_comment",
                                     w.action === "send" ? "Sending" : "Proposing",
                                     () =>
                                       w.action === "send"
@@ -177,20 +192,20 @@ export function PrReceiptsSection() {
                               </SurfaceWell>
                             </FoldGadget>
                             <span className="desk-pr-compose-actions">
-                              <Button dense variant="ghost" onClick={() => void run(key, "Denying", () => store.decide(proposalId!, "reject"))}>Deny</Button>
-                              <Button dense variant="ghost" onClick={() => void run(key, "Posting", () => store.decide(proposalId!, "approve"))}>Approve</Button>
+                              <Button dense variant="ghost" onClick={() => void run(key, "deny", "Denying", () => store.decide(proposalId!, "reject"))}>Deny</Button>
+                              <Button dense variant="ghost" onClick={() => void run(key, "approve", "Posting", () => store.decide(proposalId!, "approve"))}>Approve</Button>
                             </span>
                           </td></tr>
                         ) : null}
                         {w.busy ? <tr className="desk-pr-result"><td colSpan={4}>{w.busy}</td></tr> : null}
                         {w.result && !proposal ? (
                           <tr className={`desk-pr-result ${w.result.error ? "is-error" : "is-ok"}`}><td colSpan={4}>
-                            <strong>{w.result.error ? "REFUSED" : w.result.proposal?.status?.toUpperCase() || "RECEIPT"}</strong>
-                            {w.result.reason || w.result.error || w.result.operation_id || w.result.artifact_id}
-                            {w.result.output ? (
-                              <FoldGadget title="RAW · OUTPUT">
-                                <SurfaceWell head="RAW · OUTPUT">
-                                  <SurfaceCode>{w.result.output}</SurfaceCode>
+                            <strong>{resultLabel(w.result, w.resultAction)}</strong>
+                            {w.result.reason || w.result.error}
+                            {rawResult ? (
+                              <FoldGadget title={w.result.output ? "RAW · OUTPUT" : "RAW · RECEIPT"}>
+                                <SurfaceWell head={w.result.output ? "RAW · OUTPUT" : "RAW · RECEIPT"}>
+                                  <SurfaceCode>{rawResult}</SurfaceCode>
                                 </SurfaceWell>
                               </FoldGadget>
                             ) : null}

@@ -571,4 +571,71 @@ describe("Defer two-step (defect 5)", () => {
     expect(inlineBar.querySelector("[data-testid='review-defer-date']")).toBeTruthy();
     expect(inlineBar.querySelector("[data-testid='review-defer-confirm']")).toBeTruthy();
   });
+
+  it("Cancel defer keeps Edit and submits the latest draft", async () => {
+    enterReviewPosture();
+    render(<WindowHarness scope="project:p1" />);
+    fireEvent.click(await screen.findByTestId("review-verb"));
+    fireEvent.click(await screen.findByRole("button", { name: /^Edit / }));
+    const text = screen.getByRole("textbox", { name: "Edit Text" });
+    fireEvent.change(text, { target: { value: "Draft before defer" } });
+    fireEvent.click(screen.getByRole("button", { name: /^Defer / }));
+    const date = screen.getByLabelText("Defer until date");
+    expect(date).toHaveAttribute("type", "date");
+    expect(date).toHaveFocus();
+    fireEvent.change(date, { target: { value: "2026-11-03" } });
+    fireEvent.change(text, { target: { value: "Latest retained draft" } });
+    fireEvent.click(screen.getByRole("button", { name: "Cancel defer" }));
+    expect(screen.queryByTestId("review-defer-armed")).toBeNull();
+    expect(text).toHaveValue("Latest retained draft");
+    expect(screen.getByRole("button", { name: "Cancel edit" })).toBeTruthy();
+    expect(apiFetch.mock.calls.filter(([url]) => String(url).endsWith("/decide"))).toHaveLength(0);
+    fireEvent.click(screen.getByRole("button", { name: /^Edit and accept / }));
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith(
+      "/api/projects/p1/reviews/prev_r1/proposals/pprop_1/decide",
+      expect.objectContaining({ method: "POST", json: expect.objectContaining({
+        verb: "edit_accept", patch: expect.objectContaining({ text: "Latest retained draft" }),
+      }) }),
+    ));
+  });
+
+  it("Escape cancels armed Defer before Edit and Review without making a decision", async () => {
+    enterReviewPosture();
+    render(<WindowHarness scope="project:p1" />);
+    fireEvent.click(await screen.findByTestId("review-verb"));
+    fireEvent.click(await screen.findByRole("button", { name: /^Edit / }));
+    const text = screen.getByRole("textbox", { name: "Edit Text" });
+    fireEvent.change(text, { target: { value: "Retained through Escape" } });
+    fireEvent.click(screen.getByRole("button", { name: /^Defer / }));
+    fireEvent.keyDown(screen.getByLabelText("Defer until date"), { key: "Escape" });
+    expect(screen.queryByTestId("review-defer-armed")).toBeNull();
+    expect(text).toHaveValue("Retained through Escape");
+    fireEvent.keyDown(text, { key: "Escape" });
+    expect(screen.queryByRole("textbox", { name: "Edit Text" })).toBeNull();
+    expect(screen.getByTestId("review-posture")).toBeTruthy();
+    fireEvent.keyDown(screen.getByTestId("review-posture"), { key: "Escape" });
+    expect(screen.queryByTestId("review-posture")).toBeNull();
+    expect(apiFetch.mock.calls.filter(([url]) => String(url).endsWith("/decide"))).toHaveLength(0);
+  });
+
+  it("Enter on the native defer date confirms the exact date once", async () => {
+    enterReviewPosture();
+    render(<WindowHarness scope="project:p1" />);
+    fireEvent.click(await screen.findByTestId("review-verb"));
+    fireEvent.click(await screen.findByRole("button", { name: /^Edit / }));
+    fireEvent.click(screen.getByRole("button", { name: /^Defer / }));
+    const date = screen.getByLabelText("Defer until date");
+    expect(date).toHaveAttribute("type", "date");
+    expect(date).toHaveFocus();
+    fireEvent.change(date, { target: { value: "2026-11-03" } });
+    fireEvent.keyDown(date, { key: "Enter" });
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith(
+      "/api/projects/p1/reviews/prev_r1/proposals/pprop_1/decide",
+      expect.objectContaining({ method: "POST", json: expect.objectContaining({
+        verb: "defer", deferred_until: "2026-11-03",
+      }) }),
+    ));
+    expect(apiFetch.mock.calls.filter(([url]) => String(url).endsWith("/decide"))).toHaveLength(1);
+    expect(screen.queryByTestId("review-defer-armed")).toBeNull();
+  });
 });

@@ -326,6 +326,7 @@ export function AskPanel() {
   };
 
   const receipt = result?.groundingReceipt || null;
+  const groundedMatches = groundedMatchCount(receipt);
   const flaggedClaims = (result?.groundingClaims || []).filter(
     (c) => c.flagged,
   );
@@ -347,7 +348,7 @@ export function AskPanel() {
   const statusLine = keepError || (printedRoute
     ? lastTurnLine(printedRoute)
     : phase === "printed"
-      ? `Answered${finishedElapsedSeconds !== undefined ? ` in ${finishedElapsedSeconds} s` : ""}`
+      ? `Answered${(finishedElapsedSeconds ?? 0) > 0 ? ` in ${finishedElapsedSeconds} s` : ""}`
       : [
             promptRecovered ? "DRAFT · RECOVERED" : "",
             overBudget ? "Too many notes" : "",
@@ -421,7 +422,6 @@ export function AskPanel() {
                 </>
               }
             >
-              <RunLine phase="success" pastVerb="Answered" elapsedSeconds={finishedElapsedSeconds} />
               <div
                 className="desk-ask-answer"
                 /* HS-101 B7 — the result drags OUT through the glass:
@@ -460,8 +460,9 @@ export function AskPanel() {
                     {receipt ? (
                       <>
                         <p className="desk-ask-grounded">
-                          GROUNDED ON {groundedMatchCount(receipt)} OF{" "}
-                          {receipt.matchedCount}
+                          {groundedMatches > 0
+                            ? `GROUNDED ON ${groundedMatches} OF ${receipt.matchedCount}`
+                            : "UNGROUNDED"}
                         </p>
                         <CitationChips refs={receipt.sourceRefs} />
                       </>

@@ -1,0 +1,29 @@
+.canvas-desk { min-height: 100vh; background: var(--desk-floor); }
+.canvas-body { min-height: 0; overflow: auto; padding: 12px; }
+
+/* Proposed product rules: only Review verbs and the native date input. */
+.review-verb-bar > .btn,
+.review-defer-group > .btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+.review-defer-group { min-width: 0; max-width: 100%; }
+.review-posture .review-defer-date {
+  flex: 0 1 168px;
+  width: 168px;
+  min-width: 0;
+  max-width: 100%;
+  min-height: var(--desk-button-hit-size);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--wb-rule);
+  border-radius: 0;
+  background: var(--wb-well);
+  color: var(--wb-text);
+  box-shadow: var(--wb-sunken);
+  color-scheme: light;
+}
+.review-posture .review-defer-date::-webkit-calendar-picker-indicator { opacity: 1; filter: none; }
+@container surface (max-width: 559.9px) {
+  .review-verb-bar { flex-wrap: wrap; }
+  .review-defer-group { flex: 1 0 100%; flex-wrap: wrap; }
+}

@@ -4,9 +4,28 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-16 (Desk navigation and calendar review: #1217)
+**Last updated:** 2026-10-16 (Cohesive conditional controls: #1218)
 
 ## Current phase
+
+**Cohesive conditional controls — #1218 (2026-10-16).** Library Thread
+replay/Rails/phase Story controls keep native activation and exact identities;
+phone Rails sits above the Dock. Ask has one completion receipt, honest zero
+grounding and named cached citations with complete long-title wrapping.
+Resourcefulness has visible routine choices, concise limits, stored progress
+and exact Save/Retry labels. Capability preserves multiline material and the
+shared Pad appends late speech to current edits. PR draft outcomes are readable
+without claiming accepted agents started. Armed Review Edit+Defer fits narrow
+surfaces; desktop footer Retry owns the bottom points while edge/corner resize
+works. Complete quick GREEN:3963web/651affectedPython/109sweeps(noexpectedfailures)/
+17canon; TypeScript and generated documentation checks pass. Actual paired
+control/policy/Calendar tasks include real policy and ICS/config persistence;
+exact graph Search→Delivery entry passes both widths. Build52f6ff3c43024642 has
+the frozen product; unchanged earlier proof is explicitly carried forward.
+Formal postmerge review and owner judgment are separate. Whole-app goal stays
+active: Phone Desk home and paired Get ready/Presence entry surfaces are next.
+Actual baseline already found a clipped Presence label and undersized phone
+return target; Get ready handoff works. [Proof and limits](../docs/internal/COHESIVE-EDGE-CONTROLS-2026-10-16/README.md).
 
 **Desk navigation and calendar review — #1217 (2026-10-16).** Explicit
 Search Close restores focus and preserves keyboard intent; same-title meetings

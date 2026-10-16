@@ -7,10 +7,10 @@ import { useDurableDraft } from "../../../lib/durableDraft";
 import { useDesk } from "../../store";
 import { openSurfaceOr } from "../../shell";
 import { qualifiedRef } from "../../api";
-import { MicButton } from "../../components/MicButton";
 import { ContextualAssignment } from "../../../pages/cores/ContextualAssignment";
 import { Material } from "../../surface/Material";
 import { SurfaceState } from "../../surface/Surface";
+import { PadGadget } from "../../surface/gadgets";
 import { humanizeWireValue } from "../../../lib/productLanguage";
 import {
   contextualCapabilityActions,
@@ -117,22 +117,16 @@ export function CapabilitySection({ object: o }: { object: WorldObject }) {
         <SurfaceState error={readiness.detail || "Unavailable"} />
       ) : null}
       <div className="desk-chat-well">
-        <div className="desk-chat-composer">
-          <MicButton
-            label={`Speak to fill ${runLabel.toLowerCase()} material`}
-            draftScope={`capability:${o.kind}:${o.id}`}
-            onText={(text) =>
-              setRunInput((current) =>
-                current ? `${current} ${text}` : text,
-              )
-            }
-          />
-          <input
+        <div className="desk-chat-composer desk-capability-composer">
+          <PadGadget
+            label={runLabel}
             value={runInput}
             placeholder="Material"
-            aria-label={runLabel}
-            title={String(capability.input_help ?? "")}
-            onChange={(e) => setRunInput(e.target.value)}
+            rows={7}
+            inputProps={{ title: String(capability.input_help ?? "") }}
+            onChange={setRunInput}
+            micLabel={`Speak to fill ${runLabel.toLowerCase()} material`}
+            micDraftScope={`capability:${o.kind}:${o.id}`}
           />
           <Button
             dense

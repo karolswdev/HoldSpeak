@@ -2259,6 +2259,17 @@ button.surface-edit-in-place:hover {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+  min-width: 0;
+  max-width: 100%;
+}
+.desk-next .surface-citations > .desk-chip {
+  max-width: 100%;
+  height: auto;
+  min-height: var(--size-chip);
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+  text-align: start;
 }
 .project-memory-supersede {
   display: inline-flex;

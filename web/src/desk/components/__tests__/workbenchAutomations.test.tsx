@@ -30,7 +30,7 @@ function automation(enabled = false) {
   };
 }
 
-function mockHub(initialAutomations: Record<string, unknown>[] = [], detailOverrides: Record<string, unknown> = {}) {
+function mockHub(initialAutomations: Record<string, unknown>[] = [], detailOverrides: Record<string, unknown> = {}, resourcefulOverrides: Record<string, unknown> = {}) {
   let automations = initialAutomations;
   let detail = { ...DETAIL, ...detailOverrides };
   let resourceful = {
@@ -38,6 +38,7 @@ function mockHub(initialAutomations: Record<string, unknown>[] = [], detailOverr
     cooldown_hours: 6, nightly_target: 2, night_only: true,
     night_start_hour: 22, night_end_hour: 7,
     routines: ["loose_ideas", "failed_work"], nightly_count: 0,
+    ...resourcefulOverrides,
   };
   const calls = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
@@ -76,12 +77,12 @@ function mockHub(initialAutomations: Record<string, unknown>[] = [], detailOverr
   return calls;
 }
 
-async function open(automations: Record<string, unknown>[] = [], detailOverrides: Record<string, unknown> = {}) {
+async function open(automations: Record<string, unknown>[] = [], detailOverrides: Record<string, unknown> = {}, resourcefulOverrides: Record<string, unknown> = {}) {
   useDesk.setState({
     items: { ...EMPTY_ITEMS, workbench: [{ kind: "workbench", id: "wb1", name: "Review desk" } as never] },
     inferenceTargets: [], profiles: [],
   });
-  const calls = mockHub(automations, detailOverrides);
+  const calls = mockHub(automations, detailOverrides, resourcefulOverrides);
   render(<WorkbenchWindow workbenchId="wb1" />);
   await screen.findByText("Review the plan");
   await userEvent.setup().click(screen.getByRole("button", { name: "Configure" }));
@@ -201,19 +202,102 @@ describe("Workbench STARTS WHEN automations", () => {
 
     expect(screen.getByText("6H COOLDOWN")).toBeInTheDocument();
     expect(screen.getByText("TARGET 2 / NIGHT")).toBeInTheDocument();
-    expect(screen.getByText(/ONLY THE SELECTED MAINTENANCE ITEM RUNS/)).toBeInTheDocument();
+    const selectedOnly = screen.getByText("SELECTED MAINTENANCE ONLY");
+    expect(selectedOnly.closest(".wb-resourceful-routines")).not.toBeNull();
+    expect(screen.getByText("PENDING WORK UNTOUCHED")).toBeInTheDocument();
+    expect(screen.getByText("SOURCE DATA · REVIEW-ONLY")).toBeInTheDocument();
+    expect(screen.getByText("RUNS AS OWNER").closest(".wb-automation-verbs")).not.toBeNull();
+    expect(screen.getByText("PAUSED")).toBeInTheDocument();
+    expect(screen.queryByText(/0\/\d+ THIS NIGHT/)).toBeNull();
     await user.click(screen.getByRole("button", { name: "Decrease Cooldown hours" }));
     await user.click(screen.getByRole("button", { name: "Decrease Cooldown hours" }));
     await user.click(screen.getByRole("button", { name: "Increase Nightly target" }));
     expect(screen.getByText("4H COOLDOWN")).toBeInTheDocument();
     expect(screen.getByText("TARGET 3 / NIGHT")).toBeInTheDocument();
+    await user.click(screen.getByRole("checkbox", { name: "Prepare recovery plans" }).closest("label")!);
     await user.click(screen.getByRole("button", { name: "Enable overnight resourcefulness" }));
+    expect(calls.mock.calls.some(([url, init]) => String(url).endsWith("/resourceful") && init?.method === "PUT")).toBe(false);
     await user.click(screen.getByRole("button", { name: "RUN AS OWNER?" }));
 
     await waitFor(() => expect(calls.mock.calls.some(([url, init]) => {
       if (!String(url).endsWith("/resourceful") || (init as RequestInit).method !== "PUT") return false;
       const body = JSON.parse(String((init as RequestInit).body));
-      return body.enabled === true && body.cooldown_hours === 4 && body.nightly_target === 3;
+      return JSON.stringify(body) === JSON.stringify({
+        enabled: true, idle_after_minutes: 30, cooldown_hours: 4, nightly_target: 3,
+        night_only: true, night_start_hour: 22, night_end_hour: 7, routines: ["loose_ideas"],
+      });
     })).toBe(true));
+  });
+
+  it.each([0, 1])("enabled policy with %s completed items keeps stored progress honest while editing", async (nightlyCount) => {
+    await open([], {}, { enabled: true, nightly_count: nightlyCount });
+    fireEvent.change(screen.getByRole("combobox", { name: "Workbench start condition" }), { target: { value: "idle" } });
+    expect(screen.getByText("READY WHEN IDLE")).toBeInTheDocument();
+    expect(screen.getByText("LOCAL DATA")).toBeInTheDocument();
+    expect(screen.getByText("ONE ITEM / RUN")).toBeInTheDocument();
+    if (nightlyCount) expect(screen.getByText("1/2 THIS NIGHT")).toBeInTheDocument();
+    else expect(screen.queryByText(/THIS NIGHT/)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Increase Nightly target" }));
+    expect(screen.getByText("TARGET 3 / NIGHT")).toBeInTheDocument();
+    if (nightlyCount) expect(screen.getByText("1/2 THIS NIGHT")).toBeInTheDocument();
+    expect(screen.queryByText(/0\/\d+ THIS NIGHT/)).toBeNull();
+  });
+
+  it("resourcefulness Retry owns the pending guard and replays the original policy write", async () => {
+    const calls = await open();
+    fireEvent.change(screen.getByRole("combobox", { name: "Workbench start condition" }), { target: { value: "idle" } });
+    fireEvent.click(screen.getByRole("button", { name: "Decrease Cooldown hours" }));
+    const writes: RequestInit[] = [];
+    let resolveWrite!: (response: Response) => void;
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input).endsWith("/resourceful") && init?.method === "PUT") {
+        writes.push(init);
+        return new Promise<Response>((resolve) => { resolveWrite = resolve; });
+      }
+      return calls(input, init);
+    }));
+    fireEvent.click(screen.getByRole("button", { name: "Enable overnight resourcefulness" }));
+    fireEvent.click(screen.getByRole("button", { name: "RUN AS OWNER?" }));
+    await waitFor(() => expect(writes).toHaveLength(1));
+    expect(screen.getByRole("button", { name: "Enable overnight resourcefulness" })).toBeDisabled();
+    resolveWrite(new Response("{}", { status: 503, headers: { "content-type": "application/json" } }));
+    const retry = await screen.findByRole("button", { name: "Retry" });
+    expect(screen.getByText("ENABLE RESOURCEFULNESS FAILED · HTTP 503")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Increase Nightly target" }));
+    fireEvent.click(retry);
+    await waitFor(() => expect(writes).toHaveLength(2));
+    expect(screen.getByRole("button", { name: "Enable overnight resourcefulness" })).toBeDisabled();
+    fireEvent.click(retry);
+    expect(writes).toHaveLength(2);
+    expect(writes[1].body).toEqual(writes[0].body);
+    expect(JSON.parse(String(writes[1].body))).toEqual({
+      enabled: true, idle_after_minutes: 30, cooldown_hours: 5, nightly_target: 2,
+      night_only: true, night_start_hour: 22, night_end_hour: 7, routines: ["loose_ideas", "failed_work"],
+    });
+    resolveWrite(new Response("{}", { status: 503, headers: { "content-type": "application/json" } }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Enable overnight resourcefulness" })).toBeEnabled());
+  });
+
+  it("Save policy names its failure and Retry replays that same save", async () => {
+    const calls = await open([], {}, { enabled: true });
+    fireEvent.change(screen.getByRole("combobox", { name: "Workbench start condition" }), { target: { value: "idle" } });
+    fireEvent.click(screen.getByRole("button", { name: "Increase Nightly target" }));
+    const writes: RequestInit[] = [];
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input).endsWith("/resourceful") && init?.method === "PUT") {
+        writes.push(init);
+        return Promise.resolve(new Response("{}", { status: 503, headers: { "content-type": "application/json" } }));
+      }
+      return calls(input, init);
+    }));
+    fireEvent.click(screen.getByRole("button", { name: "Save policy" }));
+    await screen.findByText("SAVE POLICY FAILED · HTTP 503");
+    expect(screen.queryByText("ENABLE RESOURCEFULNESS FAILED · HTTP 503")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Increase Nightly target" }));
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(writes).toHaveLength(2));
+    expect(writes[1].body).toEqual(writes[0].body);
+    expect(JSON.parse(String(writes[1].body))).toMatchObject({ enabled: true, nightly_target: 3 });
+    expect(await screen.findByText("SAVE POLICY FAILED · HTTP 503")).toBeInTheDocument();
   });
 });

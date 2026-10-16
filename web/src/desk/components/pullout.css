@@ -368,6 +368,14 @@
   color: var(--text);
   font-size: var(--desk-surface-body-size);
 }
+.desk-next .desk-chat-well .desk-capability-composer {
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+.desk-next .desk-capability-composer .gadget-pad {
+  flex: 1 1 240px;
+  min-width: 0;
+}
 .desk-next .desk-chat-well-foot .runs-on-picker {
   display: flex;
   flex-direction: column;

@@ -79,8 +79,9 @@ function SessionPin({
   const armedUntil = useSteering((s) => s.armedKeys[session.key]);
   const armed = Boolean(armedUntil && armedUntil > Date.now());
   return (
-    <button
-      type="button"
+    <Button
+      dense
+      variant="ghost"
       className={
         "desk-mc-pin" +
         (session.awaitingResponse ? " awaiting" : "") +
@@ -100,7 +101,7 @@ function SessionPin({
     >
       ⌁{session.agent}
       {session.awaitingResponse ? " NEEDS YOU" : ""}
-    </button>
+    </Button>
   );
 }
 
@@ -123,6 +124,10 @@ function PhaseBelt({
   const beltStories = current
     ? project.stories.filter((s) => s.phase === current.number)
     : [];
+  const pickedStory =
+    picked && picked.repo === repoName && picked.project === project.slug
+      ? picked.story
+      : null;
   return (
     <div className="desk-mc-project">
       <div className="desk-mc-phases">
@@ -154,19 +159,21 @@ function PhaseBelt({
               "desk-mc-story st-" +
               s.status.replace(/[^a-z-]/g, "") +
               (s.storyId === project.nextStoryId ? " next" : "") +
-              (picked && picked.story === s.storyId ? " picked" : "")
+              (pickedStory === s.storyId ? " picked" : "")
             }
           >
-            <button
-              type="button"
+            <Button
+              dense
+              variant="ghost"
               className="desk-mc-story-pick"
+              aria-pressed={pickedStory === s.storyId}
               title={
                 `${s.title} [${s.status}]` +
                 (s.evidenceExists ? " ·evidence" : "")
               }
               onClick={() =>
                 onPick(
-                  picked && picked.story === s.storyId
+                  pickedStory === s.storyId
                     ? null
                     : {
                         repo: repoName,
@@ -177,11 +184,13 @@ function PhaseBelt({
               }
             >
               {s.storyId}
-            </button>
+            </Button>
             {s.evidenceExists && (
-              <button
-                type="button"
+              <Button
+                dense
+                variant="ghost"
                 className="desk-mc-evidence-open"
+                aria-label={`Open evidence for ${s.storyId}`}
                 title="open the evidence in place"
                 onClick={(ev) => {
                   ev.stopPropagation();
@@ -191,7 +200,7 @@ function PhaseBelt({
                 }}
               >
                 <span aria-hidden="true">{GLYPH_CHECK}</span>
-              </button>
+              </Button>
             )}
             {(pins[s.storyId] || []).map((sess) => (
               <SessionPin key={sess.key} session={sess} />
@@ -469,16 +478,17 @@ function OffBeltPanel({ sessions }: { sessions: McSession[] }) {
   return (
     <div className="desk-mc-sessions">
       {needsYou.map((s) => (
-        <button
+        <Button
           key={s.key}
-          type="button"
+          dense
+          variant="ghost"
           className="desk-mc-needs"
           title={`${s.key}: ${agentWordsPlain(s.lastAssistantText, 200)}`}
           onClick={() => useSteering.getState().openSession(s.key)}
         >
           NEEDS YOU · {s.agent} ·{" "}
           {s.storyIds[0] || s.key.split(":", 2)[1]?.slice(0, 8) || s.key}
-        </button>
+        </Button>
       ))}
       {census.map((row) => (
         <FoldGadget

@@ -10,6 +10,15 @@ import { WorkbenchResourceful } from "../WorkbenchResourceful";
 import { CapabilitySection } from "../../pullouts/shared/CapabilitySection";
 import { openSurfaceOr } from "../../shell";
 import { useWriteReceipt } from "../../hooks/useWriteReceipt";
+import { readDurableDraft } from "../../../lib/durableDraft";
+
+const { micCallbacks } = vi.hoisted(() => ({ micCallbacks: new Map<string, (text: string) => void>() }));
+vi.mock("../MicButton", () => ({
+  MicButton: ({ onText, label = "Speak", draftScope = "" }: { onText: (text: string) => void; label?: string; draftScope?: string }) => {
+    micCallbacks.set(draftScope, onText);
+    return <button type="button" aria-label={label} data-testid="field-mic" data-draft-scope={draftScope}/>;
+  },
+}));
 
 const realOpenPullout = useDesk.getState().openPullout;
 
@@ -26,6 +35,8 @@ vi.mock("../../shell", async () => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  micCallbacks.clear();
+  localStorage.clear();
   vi.stubGlobal("fetch", vi.fn(async () => new Response("{}", { headers: { "content-type": "application/json" } })));
   useDesk.setState({ items: { ...EMPTY_ITEMS }, selectedIds: [], drafts: {}, places: {}, zoneViewPrefs: {}, openPullout: vi.fn() });
 });
@@ -163,5 +174,38 @@ describe("common controls keep their actions", () => {
     fireEvent.click(screen.getByRole("button", { name: "Assignments" }));
     expect(openSurfaceOr).toHaveBeenCalledWith("configure-runs-on", "/profiles", "workflow:flow-1");
     await waitFor(() => expect(screen.getByRole("button", { name: "Run" })).not.toBeDisabled());
+  });
+
+  it("keeps selected paragraphs and newer edits when a late voice result fills capability material", async () => {
+    const scope = "capability:workflow:flow-paragraphs";
+    const workflow = { kind: "workflow", id: "flow-paragraphs", name: "Review", capability: {
+      readiness: { state: "ready" }, input_schema: { required: ["input"] }, effect_classes: ["creates_artifact"], supported_placements: ["this_machine"],
+    } };
+    const runCapability = vi.fn(async () => ({ output: "Kept paragraph review", warning: "", state: "complete", artifactId: null, invocationId: null, actualPlacement: null }));
+    useDesk.setState({ items: { ...EMPTY_ITEMS,
+      note: [{ kind: "note", id: "architecture", title: "Architecture", bodyMarkdown: "First paragraph.\n\nSecond paragraph." }],
+      workflow: [workflow],
+    } as never, selectedIds: ["note:architecture"], runCapability: runCapability as never });
+    const object = { kind: "workflow", id: workflow.id, title: workflow.name, ref: workflow } as never;
+    const view = render(<CapabilitySection object={object}/>);
+    const material = screen.getByRole("textbox", { name: "Run Review on Architecture" });
+    expect(material.tagName).toBe("TEXTAREA");
+    expect(material).toHaveValue("## Architecture\nFirst paragraph.\n\nSecond paragraph.");
+    expect(screen.getAllByTestId("field-mic").filter((mic) => mic.getAttribute("data-draft-scope") === scope)).toHaveLength(1);
+    // Hold the callback from before the edit, as an in-flight capture does.
+    const lateVoice = micCallbacks.get(scope)!;
+    const edited = "## Architecture\nEdited first paragraph.\n\nSecond paragraph stays.";
+    fireEvent.change(material, { target: { value: edited } });
+    act(() => lateVoice("New spoken clause."));
+    const expected = `${edited} New spoken clause.`;
+    expect(material).toHaveValue(expected);
+    expect(readDurableDraft(scope)?.text).toBe(expected);
+    fireEvent.click(screen.getByRole("button", { name: "Run" }));
+    expect(await screen.findByText("Kept paragraph review")).toBeTruthy();
+    expect(runCapability).toHaveBeenCalledWith("workflow", workflow.id, expected);
+    view.unmount();
+    render(<CapabilitySection object={object}/>);
+    expect(screen.getByRole("textbox", { name: "Run Review on Architecture" })).toHaveValue(expected);
+    expect(screen.getByText("Recovered local run material.")).toBeTruthy();
   });
 });

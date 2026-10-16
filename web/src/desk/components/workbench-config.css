@@ -142,17 +142,33 @@
   display: grid;
   gap: 2px;
 }
-.desk-next .wb-resourceful-routine small,
+.desk-next .wb-resourceful-routine-fact,
 .desk-next .wb-resourceful-status {
   color: var(--text-muted);
   font-family: var(--font-mono);
   font-size: var(--desk-surface-detail-size);
 }
-.desk-next .wb-resourceful-routine small {
-  padding-left: 24px;
+.desk-next .wb-resourceful-routine-fact {
+  white-space: normal;
+}
+.desk-next .wb-resourceful-routine .gadget-check-token {
+  justify-self: start;
+}
+.desk-next .wb-resourceful-limits,
+.desk-next .wb-resourceful-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+.desk-next .wb-resourceful-limits {
+  padding-top: 4px;
 }
 .desk-next .wb-resourceful-status {
+  margin: 0;
   padding: 2px var(--desk-surface-row-pad-x);
+}
+.desk-next .wb-resourceful .wb-automation-verbs {
+  align-items: center;
 }
 
 /* ── start condition / event automations ──────────────────────────── */

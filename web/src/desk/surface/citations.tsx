@@ -6,8 +6,10 @@
 // this species; a third rendering is a defect.
 import { openRef } from "../openObject";
 import { openPrimitive, openSurfaceOr } from "../shell";
-import { meetingWindowRef } from "../objectWindows";
+import { meetingOfScope, meetingWindowRef } from "../objectWindows";
 import { Button } from "../../components/signal/Signal";
+import { resolveRef } from "../lineage";
+import { useDesk } from "../store";
 
 /** The honest "grounded on N" arithmetic: matches minus overflow —
  * the receipt never counts material the hub did not actually read. */
@@ -34,7 +36,7 @@ export function refOpensWindow(ref: string): boolean {
   return !NO_WINDOW_REF_KINDS.includes(ref.split(":", 1)[0]);
 }
 
-/** The token's label grammar: `Kind · id`. */
+/** The pure fallback metadata grammar: `Kind · id`. */
 export function sourceLabel(ref: string): string {
   const [rawKind, ...rest] = ref.split(":");
   // A desk decision reads as what it is: a decision.
@@ -74,7 +76,9 @@ export function openSourceRef(ref: string) {
   openPrimitive(ref);
 }
 
-/** A chip opens through the one open grammar (`openRef`): an action item in
+/** Cached sources read `Kind · name`; uncached sources keep `Kind · id`.
+ * The original receipt ref stays in the title and reaches the opener intact.
+ * A chip opens through the one open grammar (`openRef`): an action item in
  * Follow-through, a decision in its window; `openSourceRef` is only the
  * window dispatch under it. */
 export function CitationChips({
@@ -84,23 +88,38 @@ export function CitationChips({
   refs: string[];
   onOpen?: (ref: string) => void;
 }) {
+  const items = useDesk((state) => state.items);
   if (!refs.length) return null;
   return (
     <div className="surface-citations" aria-label="Citations">
-      {refs.map((ref) => !refOpensWindow(ref) ? (
-        <span key={ref} className="desk-chip quiet" data-testid="citation-plain">
-          {sourceLabel(ref)}
-        </span>
-      ) : (
-        <Button
-          variant="chrome"
-          key={ref}
-          className="desk-chip quiet"
-          onClick={() => onOpen(ref)}
-        >
-          {sourceLabel(ref)}
-        </Button>
-      ))}
+      {refs.map((ref) => {
+        // Read the parent identity without consuming its view/focus request.
+        // Opening still receives the exact receipt ref below.
+        const meetingId = meetingOfScope(ref);
+        const identity = meetingId ? `meeting:${meetingId}`
+          : ref.startsWith("thread:") ? ref.split("#", 1)[0]
+          : ref.startsWith("desk_decision:") ? `decision:${ref.slice("desk_decision:".length)}`
+          : ref;
+        const source = resolveRef(items, identity);
+        const label = source.resolved
+          ? sourceLabel(`${ref.split(":", 1)[0]}:${source.label}`)
+          : sourceLabel(ref);
+        return !refOpensWindow(ref) ? (
+          <span key={ref} className="desk-chip quiet" data-testid="citation-plain" title={ref}>
+            {label}
+          </span>
+        ) : (
+          <Button
+            variant="chrome"
+            key={ref}
+            className="desk-chip quiet"
+            title={ref}
+            onClick={() => onOpen(ref)}
+          >
+            {label}
+          </Button>
+        );
+      })}
     </div>
   );
 }

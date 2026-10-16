@@ -85,14 +85,11 @@
 }
 /* HS-111: section labels — system-label style */
 .desk-next .desk-dlv-story-open {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
-  background: none;
-  border: none;
-  color: var(--accent);
-  cursor: pointer;
-  padding: 3px 0;
+  min-width: 0;
+  max-width: 100%;
+  justify-content: flex-start;
+  white-space: normal;
+  overflow-wrap: anywhere;
   text-align: left;
 }
 .desk-next .desk-dlv-story-unavail small {
@@ -132,6 +129,13 @@
   display: flex;
   flex-direction: column;
   gap: 3px;
+}
+.desk-next .desk-dlv-phase-stories > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
 }
 .desk-next .desk-dlv-refusal {
   display: flex;
@@ -333,8 +337,8 @@
 .desk-next .desk-pr-result.is-error strong {
   color: var(--danger);
 }
-/* HS-129-06 — Delivery reflows with its window body, not the browser. */
-@container surface (max-width: 520px) {
+/* Use the existing stacked PR rows before the table's 760 px minimum clips. */
+@container surface (max-width: 760px) {
   .desk-next .desk-pr-object-table {
     min-width: 0;
     width: 100%;
