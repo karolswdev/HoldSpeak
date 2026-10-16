@@ -1408,7 +1408,7 @@
       "tests_executed": 2
     },
     {
-      "assertions_inspected": 5,
+      "assertions_inspected": 8,
       "docs": {
         "api": 0,
         "operational": 1,
@@ -1422,17 +1422,17 @@
           4
         ],
         "sources": [
-          9,
-          9
+          11,
+          11
         ],
         "tests": [
-          5,
-          5
+          8,
+          8
         ]
       },
       "semantic_status": "partially_evidenced",
       "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
-      "tests_executed": 4
+      "tests_executed": 7
     },
     {
       "assertions_inspected": 2,
@@ -1840,7 +1840,7 @@
       "tests_executed": 3
     },
     {
-      "assertions_inspected": 2,
+      "assertions_inspected": 4,
       "docs": {
         "api": 0,
         "operational": 0,
@@ -1854,17 +1854,17 @@
           1
         ],
         "sources": [
-          3,
-          3
+          5,
+          5
         ],
         "tests": [
-          2,
-          2
+          4,
+          4
         ]
       },
       "semantic_status": "partially_evidenced",
       "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
-      "tests_executed": 2
+      "tests_executed": 4
     },
     {
       "assertions_inspected": 3,
@@ -2272,7 +2272,7 @@
       "tests_executed": 0
     },
     {
-      "assertions_inspected": 3,
+      "assertions_inspected": 4,
       "docs": {
         "api": 0,
         "operational": 0,
@@ -2290,13 +2290,13 @@
           2
         ],
         "tests": [
-          3,
-          3
+          4,
+          4
         ]
       },
       "semantic_status": "partially_evidenced",
       "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
-      "tests_executed": 2
+      "tests_executed": 3
     },
     {
       "assertions_inspected": 5,
@@ -4245,7 +4245,7 @@
   ],
   "snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8",
   "totals": {
-    "assertions_inspected": 233,
+    "assertions_inspected": 239,
     "doc_paths": [
       247,
       247
@@ -4259,14 +4259,14 @@
     "records_with_executed_assertions": 83,
     "semantics_unresolved": 74,
     "source_paths": [
-      292,
-      292
+      296,
+      296
     ],
     "test_paths": [
-      233,
-      233
+      239,
+      239
     ],
-    "tests_executed": 195
+    "tests_executed": 201
   },
   "validation_errors": 0
 }

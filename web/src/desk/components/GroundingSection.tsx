@@ -28,6 +28,8 @@ const tok = (chars: number): number =>
   chars <= 0 ? 0 : Math.max(1, Math.floor(chars / 4));
 
 export function GroundingSection(props: {
+  /** A host can name the one disclosure for its current job. */
+  label?: string;
   meetings: Array<{ id: string; title: string; startedAt?: string }>;
   resources?: Array<{ ref: string; kind: string; id: string; title: string }>;
   selection: GroundingSelection;
@@ -37,14 +39,18 @@ export function GroundingSection(props: {
    * lip, the steer composer) passes false; standalone mounts keep the
    * section's own LedMeter. */
   meter?: boolean;
+  /** Hide the fold's budget when the host reports only excess usage. */
+  showBudget?: boolean;
 }) {
   const {
+    label,
     meetings,
     resources = [],
     selection,
     onChange,
     limitTokens,
     meter = true,
+    showBudget = true,
   } = props;
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
@@ -177,12 +183,12 @@ export function GroundingSection(props: {
           </span>
         }
         title={
-          groundingIsEmpty(selection)
+          label || (groundingIsEmpty(selection)
             ? "Ground this ask"
-            : `Grounded on ${groundingLabel(selection)}`
+            : `Grounded on ${groundingLabel(selection)}`)
         }
         token={
-          groundingIsEmpty(selection) ? undefined : (
+          !showBudget || groundingIsEmpty(selection) ? undefined : (
             <span className="surface-token" data-tone={tone}>
               {fmt(used)} / {fmt(limitTokens)} tok
             </span>

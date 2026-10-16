@@ -12,6 +12,7 @@ from typing import Optional, Any
 
 from ..logging_config import get_logger
 from .base import BaseRepository
+from .relationships import RESOURCE_KINDS
 from .models import (
     IntentWindowSummary,
     PluginRunSummary,
@@ -24,7 +25,8 @@ log = get_logger("db.plugins")
 
 # Stored lineage vocabulary. Keep this additive: artifact_sources is the shared
 # causal thread for meeting synthesis, primitive runs, sync imports, and promoted
-# decisions. HS-109-03 adds decision + meeting as first-class reference kinds.
+# decisions. Canonical Desk sources use the same closed kind vocabulary as
+# qualified references; legacy producer source types remain valid below.
 VALID_ARTIFACT_SOURCE_TYPES = frozenset(
     {
         "ask",
@@ -43,7 +45,7 @@ VALID_ARTIFACT_SOURCE_TYPES = frozenset(
         "workbench_item",
         "workflow",
     }
-)
+) | RESOURCE_KINDS
 
 
 class PluginArtifactRepository(BaseRepository):

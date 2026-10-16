@@ -74,6 +74,7 @@ export function StripMenuButton({
   variant,
   className,
   disabled,
+  emptyLabel,
 }: {
   /** The strip's accessible name ("Window faces", "Ranking"). */
   label: string;
@@ -87,12 +88,14 @@ export function StripMenuButton({
   className?: string;
   /** The library Button's disabled state (FilterTokens' `disabled`). */
   disabled?: boolean;
+  /** Honest caption for callers whose unbound value is not a choice. */
+  emptyLabel?: string;
 }) {
   const [at, setAt] = useState<{ x: number; y: number; keys: boolean } | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const current = choices.find((c) => c.value === value);
   const shown =
-    doorOpen && door ? door : (current?.label ?? choices[0]?.label ?? "");
+    doorOpen && door ? door : (current?.label ?? emptyLabel ?? choices[0]?.label ?? "");
   const entries: WorkMenuEntry[] = choices.map((c) => ({
     type: "item" as const,
     id: `strip-${c.value || "all"}`,

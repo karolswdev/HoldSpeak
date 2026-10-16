@@ -578,7 +578,7 @@ describe("ThreadComposer", () => {
     const send = screen.getByTestId("composer-send");
     expect(send).toBeDisabled();
     // D-R1 — Send keeps the chip face; the swap is canon, not appearance.
-    expect(send).toHaveClass("btn", "desk-chip");
+    expect(send).toHaveClass("btn", "btn--primary");
 
   });
 
@@ -719,6 +719,32 @@ describe("InlineEditor", () => {
     expect(onConfirm).not.toHaveBeenCalled();
   });
 
+  it("keeps internal focus transfers alive so pointer Send confirms", () => {
+    const onConfirm = vi.fn(), onCancel = vi.fn();
+    render(<InlineEditor initialText="original" onConfirm={onConfirm} onCancel={onCancel} />);
+    const input = screen.getByTestId("inline-editor-input");
+    const send = screen.getByRole("button", { name: "Send" });
+    fireEvent.change(input, { target: { value: "revised question" } });
+    fireEvent.blur(input, { relatedTarget: send });
+    expect(onCancel).not.toHaveBeenCalled();
+    fireEvent.click(send);
+    expect(onConfirm).toHaveBeenCalledExactlyOnceWith("revised question");
+  });
+
+  it("cancels when focus leaves the editor group", () => {
+    const onCancel = vi.fn();
+    render(<InlineEditor initialText="original" onConfirm={vi.fn()} onCancel={onCancel} />);
+    fireEvent.blur(screen.getByTestId("inline-editor-input"), { relatedTarget: document.body });
+    expect(onCancel).toHaveBeenCalledExactlyOnceWith();
+  });
+
+  it("does not submit a composing Enter", () => {
+    const onConfirm = vi.fn();
+    render(<InlineEditor initialText="original" onConfirm={onConfirm} onCancel={vi.fn()} />);
+    fireEvent.keyDown(screen.getByTestId("inline-editor-input"), { key: "Enter", isComposing: true });
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
+
   // HS-200-41 AC5 — Send and Cancel are the library Button, not raw markup.
   it("draws every verb as the library Button", () => {
     render(
@@ -729,9 +755,8 @@ describe("InlineEditor", () => {
       (el) => !el.classList.contains("btn") && !el.classList.contains("desk-mic"),
     );
     expect(raw.map((el) => el.outerHTML)).toEqual([]);
-    // D-R1 — the swap is canon only: both verbs keep the chip face they had.
-    expect(screen.getByText("Send")).toHaveClass("desk-chip");
-    expect(screen.getByText("Cancel")).toHaveClass("desk-chip", "quiet");
+    expect(screen.getByText("Send")).toHaveClass("btn--primary");
+    expect(screen.getByText("Cancel")).toHaveClass("btn--ghost");
   });
 });
 

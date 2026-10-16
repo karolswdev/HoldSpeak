@@ -14,13 +14,12 @@ import { SurfaceFooter } from "../surface/SurfaceFooter";
 // finally reaches this glass.
 import "./chrome-menus.css";
 import "./ask-panel.css";
-import { Disclosure } from "../surface/patterns/Disclosure";
-import { useEffect, useMemo, useRef, useState } from "react";
+import "../surface/patterns/conversation.css";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDesk } from "../store";
 import {
   ASK_LENSES,
   askContexts,
-  askLineageLine,
   latchAskSelection,
   keepAsk,
   selectionPrompt,
@@ -28,6 +27,7 @@ import {
   ASK_SELECTION_EVENT_NAME,
   runAsk,
   type AskSelectionHandoff,
+  type AskContext,
   type AskRunResult,
 } from "../ask";
 import {
@@ -55,11 +55,10 @@ import { useDurableDraft } from "../../lib/durableDraft";
 import { qualifiedRef } from "../api";
 import { DeskWindowFrame } from "./DeskWindow";
 import { Material } from "../surface/Material";
-import { SurfaceTraffic, SurfaceTrafficTurn } from "../surface/Surface";
-import { countToken } from "../surface/count";
+import { SurfaceState, SurfaceTraffic, SurfaceTrafficTurn } from "../surface/Surface";
 import {
   LedMeter,
-  TransportKey,
+  PadGadget,
 } from "../surface/gadgets";
 import {
   RouteEgressChip,
@@ -71,7 +70,6 @@ import {
 } from "../turnRoute";
 import { CitationChips, groundedMatchCount } from "../surface/citations";
 import { Button } from "../../components/signal/Signal";
-import { humanizeWireValue } from "../../lib/productLanguage";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { useEngine, refreshEngine } from "../hooks/useEngine";
 import { EngineLine, RunLine, reasonVerb, reasonWords } from "../surface";
@@ -80,6 +78,16 @@ import { openSurfaceOr } from "../shell";
 
 /** The budget figure the audit names: 0.3K / 16.4K. */
 const fmtK = (n: number): string => `${(n / 1000).toFixed(1)}K`;
+
+/** This copy belongs to the transmission, never to the editable draft. */
+interface AskRequestSnapshot {
+  prompt: string;
+  lens: string;
+  context: AskContext[];
+  grounding: ReturnType<typeof buildGrounding>;
+  selection: AskSelectionHandoff | null;
+  keepContext: AskContext[];
+}
 
 export function AskPanel() {
   const items = useDesk((s) => s.items);
@@ -99,20 +107,16 @@ export function AskPanel() {
   );
   // The transmission on the log: the YOU> turn as it was sent (the draft
   // keeps editing underneath without rewriting the transcript).
-  const [sent, setSent] = useState<{
-    prompt: string;
-    lens: string;
-    ctx: number;
-    selection: AskSelectionHandoff | null;
-  } | null>(null);
+  const [sent, setSent] = useState<AskRequestSnapshot | null>(null);
   const [result, setResult] = useState<AskRunResult | null>(null);
   const [failedRun, setFailedRun] = useState<AskRunResult | null>(null);
   const [runStartedAt, setRunStartedAt] = useState<number | undefined>();
   const [finishedElapsedSeconds, setFinishedElapsedSeconds] = useState<number | undefined>();
   // The run's receipt route (success or refusal): the lamp needs one.
   const [route, setRoute] = useState<TurnRoute | null>(null);
-  const [error, setError] = useState("");
+  const [keepError, setKeepError] = useState("");
   const [kept, setKept] = useState(false);
+  const [isKeeping, setIsKeeping] = useState(false);
   const [grounding, setGrounding] =
     useState<GroundingSelection>(emptyGrounding());
   const [rails, setRails] = useState<RailsPick[]>([]);
@@ -121,13 +125,39 @@ export function AskPanel() {
   );
   const { copy, receipt: copyReceipt } = useCopyReceipt();
   const endRef = useRef<HTMLDivElement | null>(null);
+  const mounted = useRef(true);
+  const abandoned = useRef(false);
+  const requestId = useRef(0);
+  const pendingRequest = useRef<{ id: number; controller: AbortController } | null>(null);
+  const keeping = useRef(false);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      requestId.current += 1;
+      pendingRequest.current?.controller.abort();
+      pendingRequest.current = null;
+    };
+  }, []);
+
+  // Abort abandons this view's wait. It makes no claim about the server run.
+  const bin = useCallback(() => {
+    abandoned.current = true;
+    requestId.current += 1;
+    pendingRequest.current?.controller.abort();
+    pendingRequest.current = null;
+    latchAskSelection(null);
+    clearSelection();
+    closeAsk();
+  }, [clearSelection, closeAsk]);
 
   // The transcript keeps its newest transmission in view (the
   // PersonaChat grammar): the refusal turn and the printed turn are
   // never hidden below the well's fold.
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end" });
-  }, [phase, error]);
+  }, [phase, failedRun]);
 
   const context = useMemo(
     () => askContexts(items, selectedIds),
@@ -157,11 +187,11 @@ export function AskPanel() {
     apiRequest("/api/projects")
       .then((response) => response.json())
       .then((body) =>
-        setProjects(
+        mounted.current && setProjects(
           (body.projects || []).filter((project: any) => !project.is_archived),
         ),
       )
-      .catch(() => setProjects([]));
+      .catch(() => { if (mounted.current) setProjects([]); });
   }, []);
   const groundableResources = useMemo(
     () => [
@@ -192,11 +222,6 @@ export function AskPanel() {
     ],
     [items, projects],
   );
-  // The context is pinned at print time so keep records what was actually read
-  // even if the selection changes underneath. Grounding rows join it at print
-  // time (the receipts rule): the kept ask names what grounded the answer.
-  const printedContext = useRef(context);
-
   // The editor receives the server's compatible chain. The Ask composer has no
   // browser-selected destination whose context window it can invent.
   const limitTokens = 16_384;
@@ -205,49 +230,41 @@ export function AskPanel() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && phase !== "routing") {
-        latchAskSelection(null);
-        closeAsk();
-      }
+      if (e.key === "Escape") bin();
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [phase]);
+  }, [bin]);
 
-  const ask = async () => {
-    if (!prompt.trim() || phase === "routing" || overBudget) return;
-    const requestSelection = selectedPassage && context.some((entry) => entry.ref === selectedPassage.noteRef)
-      ? selectedPassage
-      : null;
-    const requestPrompt = selectionPrompt(prompt, requestSelection);
+  const run = async (snapshot: AskRequestSnapshot) => {
+    if (pendingRequest.current || abandoned.current || !mounted.current) return;
+    const controller = new AbortController();
+    const id = ++requestId.current;
+    pendingRequest.current = { id, controller };
     setPhase("routing");
-    setError("");
+    setKeepError("");
+    setKept(false);
     setResult(null);
     setFailedRun(null);
     setRoute(null);
     const startedAt = Date.now();
     setRunStartedAt(startedAt);
     setFinishedElapsedSeconds(undefined);
-    setSent({ prompt: requestPrompt, lens, ctx: context.length, selection: requestSelection });
-    // Receipts: the grounding rows ride the pinned context so keep names them.
-    printedContext.current = [
-      ...context,
-      ...groundingReceiptRows(grounding)
-        .filter((g) => !context.some((c) => c.id === g.id))
-        .map((g) => ({ id: g.id, kind: g.kind, ref: g.ref, title: g.title })),
-    ];
+    setSent(snapshot);
     const r = await runAsk({
-      prompt: requestPrompt,
-      lens,
-      context,
-      grounding: buildGrounding(grounding, rails),
+      prompt: snapshot.prompt,
+      lens: snapshot.lens,
+      context: snapshot.context,
+      grounding: snapshot.grounding,
+      signal: controller.signal,
     });
+    if (!mounted.current || abandoned.current || controller.signal.aborted || pendingRequest.current?.id !== id) return;
+    pendingRequest.current = null;
     setRoute(routeFromWire(r.route));
     const elapsedSeconds = Math.max(0, Math.round((Date.now() - startedAt) / 1000));
     setFinishedElapsedSeconds(elapsedSeconds);
     if (!r.ok) {
-      setFailedRun(r);
-      setError(reasonWords(r.reason, engine.model));
+      setFailedRun({ ...r, reason: r.reason || "did_not_answer" });
       setPhase("compose");
       return;
     }
@@ -255,129 +272,124 @@ export function AskPanel() {
     setPhase("printed");
   };
 
-  const keep = async () => {
-    if (!result || kept) return;
-    setKept(true);
-    const artifactId = await keepAsk({
+  const ask = () => {
+    if (!prompt.trim() || pendingRequest.current || overBudget) return;
+    const selection = selectedPassage && context.some((entry) => entry.ref === selectedPassage.noteRef)
+      ? { ...selectedPassage }
+      : null;
+    const copiedContext = context.map((entry) => ({ ...entry }));
+    const keepContext = [
+      ...copiedContext,
+      ...groundingReceiptRows(grounding)
+        .filter((entry) => !copiedContext.some((source) => source.ref === entry.ref))
+        .map((entry) => ({ ...entry })),
+    ];
+    // Every nested value is built here. Later selections and picker changes
+    // cannot rewrite Retry or the lineage of this answer.
+    const snapshot: AskRequestSnapshot = {
+      prompt: selectionPrompt(prompt, selection),
       lens,
-      prompt: prompt.trim(),
+      context: copiedContext,
+      grounding: buildGrounding(grounding, rails),
+      selection,
+      keepContext,
+    };
+    return run(snapshot);
+  };
+
+  const keep = async () => {
+    if (!result || !sent || kept || keeping.current || abandoned.current) return;
+    keeping.current = true;
+    const id = requestId.current;
+    setKeepError("");
+    setIsKeeping(true);
+    const artifactId = await keepAsk({
+      lens: sent.lens,
+      prompt: sent.prompt,
       output: result.output,
-      context: printedContext.current,
+      context: sent.keepContext,
     });
+    keeping.current = false;
+    if (!mounted.current || abandoned.current || requestId.current !== id) return;
+    setIsKeeping(false);
     if (artifactId) {
+      setKept(true);
       // The kept card is a REAL artifact — it lands on the desk wearing the
       // NEW beat (the HS-73-06 grammar), like every other run-born output.
-      clearSelection();
-      latchAskSelection(null);
-      closeAsk();
+      bin();
       await refresh();
       markNew(artifactId);
     } else {
       setKept(false);
-      setError("NOT KEPT · PRESS KEEP AGAIN");
+      setKeepError("Not kept");
     }
-  };
-
-  const bin = () => {
-    latchAskSelection(null);
-    clearSelection();
-    closeAsk();
   };
 
   const receipt = result?.groundingReceipt || null;
   const flaggedClaims = (result?.groundingClaims || []).filter(
     (c) => c.flagged,
   );
-  const placement = result?.actualPlacement || null;
   // Owner pick 2026-10-05 (route in footer): the turn wears only its lamp;
   // the footer names the full route once. Both come from the hub's receipt
   // route, on an answer and on a refusal that sent bytes (Astra, #875).
-  const printedRoute = sent && (result || error) ? route : null;
+  const printedRoute = sent && (result || failedRun) ? route : null;
   const printedLamp = printedRoute?.lamp ?? null;
   const printedPlace = printedRoute
     ? routeEgress(printedRoute).label || "This device"
     : engine.place;
   // A refusal that sent bytes: the failure is on the HUB> turn; the
   // footer names where they went.
-  const refusedRoute = Boolean(error && printedRoute && !result);
-
-  const turnCount = (sent ? 1 : 0) + (result || failedRun ? 1 : 0);
   const hasTraffic = Boolean(sent || failedRun || result || phase === "routing");
 
   // The footer receipt bar's one status line (audit §3.5): fault > routing
   // > run receipt > the compose budget tokens.
-  const statusTone =
-    (error && !refusedRoute) || overBudget ? ("danger" as const) : undefined;
-  const statusLine = refusedRoute && printedRoute
+  const statusTone = keepError || overBudget ? ("danger" as const) : undefined;
+  const statusLine = keepError || (printedRoute
     ? lastTurnLine(printedRoute)
-    : error
-    ? error
-    : phase === "routing"
-      ? "ROUTING"
-      : phase === "printed" && printedRoute
-        ? lastTurnLine(printedRoute)
-        : phase === "printed" && result
-          ? String(placement?.model || result.model || "")
-          : [
+    : phase === "printed"
+      ? `Answered${finishedElapsedSeconds !== undefined ? ` in ${finishedElapsedSeconds} s` : ""}`
+      : [
             promptRecovered ? "DRAFT · RECOVERED" : "",
             overBudget ? "Too many notes" : "",
           ]
             .filter(Boolean)
-            .join(" · ");
+            .join(" · "));
 
   return (
     <DeskWindowFrame
       id="ask"
       glyph="✦"
       label="Ask AI"
-      className="desk-pullout desk-ask"
+      className={`desk-pullout desk-ask is-card${hasTraffic ? " has-traffic" : ""}`}
       icon={
         <span className="desk-ask-glyph" aria-hidden="true">
           ✦
         </span>
       }
-      title={
-        phase === "printed"
-          ? askLineageLine(printedContext.current, lens)
-          : "Ask AI"
-      }
+      title="Ask AI"
       open
-      defaultW={520}
-      defaultH={600}
-      onClose={() => {
-        if (phase !== "routing") bin();
-      }}
+      defaultW={640}
+      defaultH={360}
+      fitContent
+      onClose={bin}
     >
       <div className="desk-pullout-body desk-ask-body">
-        {hasTraffic ? <SurfaceTraffic
-          head={["SESSION", countToken(turnCount, "TURN")]
-            .filter(Boolean)
-            .join(" · ")}
-          showEmpty={false}
-        >
+        {hasTraffic ? <div className="conversation-reading desk-ask-reading"><SurfaceTraffic showEmpty={false}>
           {sent ? (
             <SurfaceTrafficTurn
-              prefix="YOU>"
-              meta={
-                <>
-                  <span className="surface-token">{sent.lens}</span>
-                  {sent.ctx > 0 ? (
-                    <span className="surface-token">Context {sent.ctx}</span>
-                  ) : null}
-                </>
-              }
+              prefix="You"
             >
               {sent.prompt}
             </SurfaceTrafficTurn>
           ) : null}
           {phase === "routing" ? (
-            <SurfaceTrafficTurn prefix="HUB>">
+            <SurfaceTrafficTurn prefix="Answer">
               <RunLine phase="running" verb="Asking" model={engine.model} place={engine.place} startedAt={runStartedAt} />
             </SurfaceTrafficTurn>
           ) : null}
           {sent && failedRun ? (
             <SurfaceTrafficTurn
-              prefix="HUB>"
+              prefix="Answer"
               error
               meta={<TurnLamp lamp={printedLamp} />}
             >
@@ -390,13 +402,13 @@ export function AskPanel() {
                 onAction={failedRun.reason === "no_engine"
                   ? () => openSurfaceOr("configure-runs-on", "/settings", "models")
                   : undefined}
-                onRetry={failedRun.reason !== "no_engine" && reasonVerb(failedRun.reason) ? () => void ask() : undefined}
+                onRetry={failedRun.reason !== "no_engine" && reasonVerb(failedRun.reason) && sent ? () => void run(sent) : undefined}
               />
             </SurfaceTrafficTurn>
           ) : null}
           {phase === "printed" && result ? (
             <SurfaceTrafficTurn
-              prefix="HUB>"
+              prefix="Answer"
               meta={<TurnLamp lamp={printedLamp} />}
               verbs={
                 <>
@@ -406,33 +418,16 @@ export function AskPanel() {
                   >
                     Copy
                   </Button>
-                  <Button
-                    dense
-                    variant="ghost"
-                    disabled={kept}
-                    onClick={() => void keep()}
-                  >
-                    {kept ? "Kept" : "Keep"}
-                  </Button>
-                  <Button dense variant="ghost" onClick={bin}>
-                    Bin
-                  </Button>
                 </>
               }
             >
-              <RunLine
-                phase="success"
-                pastVerb="Answered"
-                model={result.model || engine.model}
-                place={printedPlace}
-                elapsedSeconds={finishedElapsedSeconds}
-              />
+              <RunLine phase="success" pastVerb="Answered" elapsedSeconds={finishedElapsedSeconds} />
               <div
                 className="desk-ask-answer"
                 /* HS-101 B7 — the result drags OUT through the glass:
                    release it over the desk and it is kept (the same keep
                    verb; the desk files the minted artifact). */
-                draggable={!kept}
+                draggable={!kept && !isKeeping}
                 title={kept ? undefined : "Drag onto the desk to keep"}
                 onDragStart={(e) => {
                   e.dataTransfer.setData(
@@ -486,10 +481,10 @@ export function AskPanel() {
             </SurfaceTrafficTurn>
           ) : null}
           <div ref={endRef} />
-        </SurfaceTraffic> : null}
+        </SurfaceTraffic></div> : <div className="desk-ask-compose-space" aria-hidden="true" />}
 
         {phase !== "printed" && (
-          <>
+          <div className="conversation-composer desk-ask-composer">
             {selectedPassage ? (
               <div className="desk-ask-selected" data-testid="ask-selected-passage">
                 <p className="desk-ground-sect">Selected text</p>
@@ -504,18 +499,15 @@ export function AskPanel() {
                 </div>
               </div>
             ) : null}
-            <div className="desk-chat-well">
-              <div className="desk-chat-composer">
-                <MicButton
-                  draftScope="desk-ask"
-                  onText={(t) => setPrompt((v) => (v ? v + " " + t : t))}
-                />
-                <textarea
+            <div className="desk-ask-input">
+                <PadGadget
+                  label="Ask about your work"
+                  mic={false}
                   rows={3}
                   value={prompt}
                   placeholder="Ask about your work"
                   autoFocus
-                  onChange={(e) => setPrompt(e.target.value)}
+                  onChange={setPrompt}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
@@ -523,30 +515,12 @@ export function AskPanel() {
                     }
                   }}
                 />
-                <TransportKey
-                  compact
-                  label="ASK"
-                  glyph="▸"
-                  disabled={
-                    !prompt.trim() || phase === "routing" || overBudget
-                  }
-                  title={
-                    overBudget
-                      ? "Too many notes"
-                      : phase === "routing"
-                        ? "Routing"
-                        : undefined
-                  }
-                  onClick={() => void ask()}
+                <MicButton
+                  label="Speak Ask about your work"
+                  draftScope="desk-ask"
+                  onText={(text) => setPrompt((current) => current ? `${current} ${text}` : text)}
                 />
-              </div>
             </div>
-
-            <EngineLine
-              engine={engine}
-              onChoose={() => openSurfaceOr("configure-runs-on", "/settings", "models")}
-              onRetry={() => void refreshEngine("ask.answer")}
-            />
             {context.length > 0 ? (
               <div className="desk-ask-sources" data-testid="ask-context">
                 <span>With:</span>
@@ -555,8 +529,11 @@ export function AskPanel() {
                 ) : <span key={source.id}>{source.title}</span>)}
               </div>
             ) : null}
-            <Disclosure label="Add notes">
+            <div className="desk-ask-compose-actions">
+              <div className="desk-ask-context-tools">
               <GroundingSection
+                label="Add notes"
+                showBudget={false}
                 meetings={(items.meeting || []).map((m) => ({
                   id: m.id,
                   title: String(m.title || "Meeting with no title"),
@@ -569,23 +546,36 @@ export function AskPanel() {
                 meter={false}
               />
               <RailsPicker
+                showBudget={false}
                 picks={rails}
                 onChange={setRails}
                 limitTokens={limitTokens}
                 meter={false}
               />
-              {overBudget ? <div className="desk-ask-rack-lip">
+              </div>
+              <Button
+                variant="primary"
+                disabled={!prompt.trim() || phase === "routing" || overBudget}
+                title={overBudget ? "Too many notes" : phase === "routing" ? "Asking" : undefined}
+                onClick={() => void ask()}
+              >Ask</Button>
+            </div>
+            {overBudget ? <div className="desk-ask-rack-lip">
                 <LedMeter
                   label={`Budget ${fmtK(groundTokens)}/${fmtK(limitTokens)}`}
                   value={limitTokens > 0 ? groundTokens / limitTokens : 0}
                 />
               </div> : null}
-            </Disclosure>
-          </>
+            {phase !== "routing" && !failedRun ? <EngineLine
+              engine={engine}
+              onChoose={() => openSurfaceOr("configure-runs-on", "/settings", "models")}
+              onRetry={() => void refreshEngine("ask.answer")}
+            /> : null}
+          </div>
         )}
       </div>
 
-      <SurfaceFooter className={printedRoute ? "turn-route-footer" : undefined} egress={printedRoute ? <RouteEgressChip route={printedRoute} /> : null} receipt={copyReceipt || <span className="surface-footer-receipt-line" data-tone={statusTone} role="status">{statusLine}</span>} verbs={<><Button dense variant="ghost" disabled={phase === "routing"} onClick={bin}>{phase === "printed" ? "Bin" : "Cancel"}</Button>{phase === "printed" && result ? <Button dense disabled={kept} onClick={() => void keep()}>{kept ? "Kept" : "Keep"}</Button> : null}</>} />
+      <SurfaceFooter className={printedRoute ? "turn-route-footer" : undefined} egress={printedRoute ? <RouteEgressChip route={printedRoute} /> : null} receipt={keepError ? <SurfaceState error={keepError} /> : copyReceipt || <span className="surface-footer-receipt-line" data-tone={statusTone} role="status">{statusLine}</span>} verbs={<><Button dense variant="ghost" onClick={bin}>{phase === "printed" ? "Bin" : "Cancel"}</Button>{phase === "printed" && result ? <Button dense variant="primary" loading={isKeeping} disabled={kept} onClick={() => void keep()}>{kept ? "Kept" : "Keep"}</Button> : null}</>} />
     </DeskWindowFrame>
   );
 }

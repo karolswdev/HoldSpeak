@@ -71,7 +71,7 @@ function seedStore(messages: ThreadMessage[], siblings: Record<string, string[]>
   useThreadStore.setState({ threads: { "t-1": detail }, buffers: {}, loading: {} });
 }
 
-function renderPullout() {
+function renderPullout(onClose = () => {}) {
   return render(
     <RuntimeBusProvider>
       <ThreadPullout
@@ -89,11 +89,33 @@ function renderPullout() {
             updatedAt: new Date().toISOString(),
           } as any,
         }}
-        onClose={() => {}}
+        onClose={onClose}
       />
     </RuntimeBusProvider>,
   );
 }
+
+describe("ThreadPullout recovery", () => {
+  it("shows real loading state until the thread is loaded", () => {
+    useThreadStore.setState({ threads: {}, buffers: {}, loading: { "t-1": true } });
+    vi.spyOn(useThreadStore.getState(), "loadThread").mockResolvedValue(undefined);
+    const { container } = renderPullout();
+    expect(container.querySelector('[data-kind="loading"][aria-busy="true"]')).toBeTruthy();
+    expect(screen.queryByText("Thread not found")).toBeNull();
+  });
+  it("retries loading and closes an absent thread with the real callback", () => {
+    useThreadStore.setState({ threads: {}, buffers: {}, loading: {} });
+    const load = vi.spyOn(useThreadStore.getState(), "loadThread").mockResolvedValue(undefined);
+    const close = vi.fn();
+    renderPullout(close);
+    expect(screen.getByText("Thread not loaded")).toBeTruthy();
+    load.mockClear();
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(load).toHaveBeenCalledExactlyOnceWith("t-1");
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(close).toHaveBeenCalledExactlyOnceWith();
+  });
+});
 
 describe("ThreadPullout title", () => {
   beforeEach(() => {
@@ -116,7 +138,7 @@ describe("ThreadPullout title", () => {
     fireEvent.click(screen.getByRole("button", { name: "Rename thread" }));
     const input = screen.getByRole("textbox", { name: "Thread title" });
     expect((input as HTMLInputElement).value).toBe("Test Thread");
-    expect(document.activeElement).toBe(input);
+    await waitFor(() => expect(document.activeElement).toBe(input));
     expect(screen.getByRole("button", { name: /^Speak thread title/ })).toBeTruthy();
     fireEvent.change(input, { target: { value: "Discard this" } });
     fireEvent.keyDown(input, { key: "Escape" });
@@ -182,7 +204,30 @@ describe("ThreadPullout rows", () => {
       }),
     ]);
     renderPullout();
-    expect(screen.getByText("Provider unreachable")).toBeTruthy();
+    expect(screen.getByText("Reply failed")).toBeTruthy();
+    expect(screen.getByText("Details")).toBeTruthy();
+    expect(screen.getByText(/Provider unreachable/)).toBeTruthy();
+  });
+
+  it("retries the failed message through the existing regenerate writer", async () => {
+    seedStore([makeMsg({ errorJson: { error: "transport details" }, parts: [] })]);
+    const retry = vi.spyOn(threads, "regenerateThread").mockResolvedValue({} as any);
+    renderPullout();
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(retry).toHaveBeenCalledExactlyOnceWith("t-1", { message_id: "msg-1" }));
+  });
+
+  it("opens the user editor from an explicit library Edit action", async () => {
+    seedStore([makeMsg({ role: "user", parts: [{ id: "p1", messageId: "msg-1", ordinal: 0, kind: "text", text: "First question", sensitive: false }] })]);
+    const branch = vi.spyOn(threads, "branchThread").mockResolvedValue({} as any);
+    const { container } = renderPullout();
+    const edit = screen.getByRole("button", { name: "Edit" });
+    expect(edit.classList.contains("btn")).toBe(true);
+    expect(container.querySelector(".thread-row-user")?.getAttribute("data-message-id")).toBe("msg-1");
+    fireEvent.click(edit);
+    fireEvent.change(screen.getByTestId("inline-editor-input"), { target: { value: "Revised question" } });
+    fireEvent.click(screen.getAllByRole("button", { name: "Send" })[0]);
+    await waitFor(() => expect(branch).toHaveBeenCalledExactlyOnceWith("t-1", { message_id: "msg-1", text: "Revised question" }));
   });
 
   it("renders CRASHED + Retry when streaming older than threshold", () => {
@@ -196,8 +241,8 @@ describe("ThreadPullout rows", () => {
       }),
     ]);
     renderPullout();
-    expect(screen.getByText("CRASHED")).toBeTruthy();
-    expect(screen.getByText("Retry")).toBeTruthy();
+    expect(screen.getByText("Reply interrupted")).toBeTruthy();
+    expect(screen.getByText("Try again")).toBeTruthy();
   });
 
   it("renders sibling picker with n/m format", () => {
@@ -211,6 +256,8 @@ describe("ThreadPullout rows", () => {
     renderPullout();
     // Should show the sibling count for the message.
     expect(screen.getByText("1/3")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Previous sibling" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Next sibling" })).toBeNull();
   });
 
   it("renders the last turn's receipt short-id in the footer", () => {
@@ -270,8 +317,8 @@ describe("ThreadPullout rows", () => {
     renderPullout();
     // Both the user row and the crashed assistant row must render.
     expect(screen.getByText("YOU")).toBeTruthy();
-    expect(screen.getByText("CRASHED")).toBeTruthy();
-    expect(screen.getByText("Retry")).toBeTruthy();
+    expect(screen.getByText("Reply interrupted")).toBeTruthy();
+    expect(screen.getByText("Try again")).toBeTruthy();
   });
 
   it("error row shows named reason from errorJson", () => {
@@ -283,7 +330,8 @@ describe("ThreadPullout rows", () => {
       }),
     ]);
     renderPullout();
-    expect(screen.getByText("Provider unreachable: fake engine error")).toBeTruthy();
+    expect(screen.getByText("Reply failed")).toBeTruthy();
+    expect(screen.getByText(/Provider unreachable: fake engine error/).closest("details")?.open).toBe(false);
   });
 
   it("hydrates a persisted deny as primary and focused", () => {

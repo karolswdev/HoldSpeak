@@ -246,26 +246,112 @@
   background: var(--surface-1);
   box-shadow: var(--desk-window-etch);
 }
-.ambient-preview,
-.ambient-qlippy,
-.ambient-queue > div,
-.ambient-theater {
+.ambient-notices {
+  /* AmbientLayer sits outside the desk/window token map. Resolve every
+     semantic alias here so the shared wells, rows and states use ink. */
+  --text: var(--wb-text);
+  --text-muted: var(--wb-muted);
+  --text-faint: var(--wb-muted);
+  --surface-1: var(--wb-field);
+  --surface-2: var(--wb-well);
+  --surface-3: var(--wb-steel-2);
+  --surface-hover: color-mix(in srgb, var(--wb-ink) 5%, transparent);
+  --border: var(--wb-rule-soft);
+  --border-strong: var(--wb-rule);
+  --border-subtle: var(--wb-rule-soft);
+  --desk-window-well: var(--wb-well);
+  --desk-window-etch: var(--wb-sunken);
+  --desk-scrollbar-thumb: var(--wb-muted);
+  --accent: var(--wb-ember-ink);
+  --accent-text: var(--wb-ember-ink);
+  --ok: var(--wb-ok-ink);
+  --success: var(--wb-ok-ink);
+  --warn: var(--wb-warn-ink);
+  --warn-signal: var(--wb-warn-ink);
+  --danger: var(--wb-danger-ink);
+  --danger-signal: var(--wb-danger-ink);
+  --info: var(--wb-info-ink);
+  --wash-1: color-mix(in srgb, var(--wb-ink) 5%, transparent);
+  --ambient-bottom: calc(max(var(--desk-dock-h, var(--desk-snap-bottom)), 56px) + var(--space-3) + env(safe-area-inset-bottom, 0px));
   position: fixed;
-  z-index: var(--desk-z-dock);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-lg);
-  background: rgba(21, 23, 29, 0.96);
-  box-shadow: var(--elev-3);
-  backdrop-filter: none;
+  z-index: var(--desk-z-popover);
+  right: var(--space-3);
+  bottom: var(--ambient-bottom);
+  width: min(390px, calc(100vw - 24px));
+  max-height: min(65dvh, calc(100dvh - var(--desk-snap-top) - var(--ambient-bottom) - var(--space-3)));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--wb-muted) transparent;
+  container: ambient-notices / inline-size;
+  pointer-events: none;
+  color: var(--text);
 }
-.ambient-preview {
-  left: 50%;
-  bottom: 24px;
-  width: min(560px, calc(100vw - 32px));
+.ambient-notices > :is(.ambient-preview, .ambient-qlippy, .ambient-queue, .ambient-theater) {
+  flex: none;
+  min-width: 0;
+  width: 100%;
   display: grid;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  transform: translateX(-50%);
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--wb-ink);
+  border-radius: 0;
+  background: var(--wb-field);
+  box-shadow: var(--wb-raised);
+  pointer-events: auto;
+}
+.ambient-notice-head {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+.ambient-notice-head strong {
+  color: var(--text);
+  font: 600 15px / 1.35 var(--font-ui);
+  overflow-wrap: anywhere;
+}
+.ambient-source {
+  color: var(--text-muted);
+  font: 500 12px / 1.5 var(--font-mono);
+  overflow-wrap: anywhere;
+}
+.ambient-notices .gadget-lamp {
+  font-size: 12px;
+  white-space: normal;
+}
+.ambient-notices .surface-well-body {
+  max-height: none;
+  overflow: visible;
+  padding: var(--space-2);
+}
+.ambient-notices .ambient-content {
+  margin: 0;
+  color: var(--text);
+  font: 400 13px / 1.55 var(--font-ui);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.ambient-verbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.ambient-notices .surface-state {
+  min-width: 0;
+  padding: var(--space-2);
+  flex-wrap: wrap;
+  font: 400 13px / 1.5 var(--font-ui);
+}
+@container ambient-notices (max-width: 380px) {
+  .ambient-notices .btn {
+    min-block-size: var(--desk-button-hit-size);
+    min-inline-size: var(--desk-button-hit-size);
+    margin-block: 0;
+  }
 }
 .ambient-aftercare-fixed {
   bottom: 104px;
@@ -314,80 +400,39 @@
 .desk-listmode > [data-aftercare-floor-slot="top"] .ambient-aftercare-flow {
   margin-inline: auto;
 }
-.ambient-preview p,
-.ambient-qlippy p {
-  margin: 0;
-  color: var(--text-muted);
+.ambient-queue > .btn {
+  justify-self: start;
 }
-.ambient-queue {
-  position: fixed;
-  z-index: var(--desk-z-popover);
-  top: 76px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-.ambient-queue > div {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 50%;
-  width: 250px;
+.ambient-queue-detail {
+  min-width: 0;
   display: grid;
   gap: var(--space-2);
-  padding: var(--space-4);
-  transform: translateX(-50%);
-}
-.ambient-queue p {
-  margin: 0;
-  color: var(--text-muted);
-}
-.ambient-queue a {
-  color: var(--accent);
 }
 /* HS-132-03 — the queued jobs themselves, not just their count. */
-.ambient-queue-jobs {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: var(--space-1);
+.ambient-queue .surface-rows {
+  gap: 0;
+  background: var(--wb-well);
+  box-shadow: var(--wb-sunken);
 }
-.ambient-queue-jobs li {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-2);
+.ambient-queue .surface-row {
+  border-radius: 0;
 }
-.ambient-queue-jobs li span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.ambient-queue .surface-row-text strong {
+  font: 500 13px / 1.5 var(--font-ui);
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
-.ambient-queue-jobs li small {
+.ambient-queue .surface-row-meta {
   color: var(--text-muted);
-  text-transform: uppercase;
+  font: 400 12px / 1.5 var(--font-mono);
 }
-.ambient-qlippy {
-  right: 20px;
-  bottom: 20px;
-  width: min(390px, calc(100vw - 32px));
-  display: grid;
-  grid-template-columns: 44px minmax(0, 1fr);
-  gap: var(--space-3);
-  padding: var(--space-4);
+.ambient-theater .gadget-lamp-dot {
+  animation: surface-state-pulse calc(var(--duration-long) * 4) ease-in-out infinite;
 }
-.ambient-qlippy > div:last-child {
-  display: grid;
-  gap: var(--space-2);
-}
-.qlippy-face {
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  border-radius: 2px;
-  background: var(--accent-gradient);
-  color: white;
-  font-size: 1.35rem;
-  box-shadow: 0 5px 18px var(--accent-glow);
+@media (prefers-reduced-motion: reduce) {
+  .ambient-theater .gadget-lamp-dot {
+    animation: none;
+  }
 }
 .ambient-waveform {
   position: fixed;
@@ -410,25 +455,6 @@
   background: var(--accent);
   transition: height 60ms linear;
 }
-.ambient-theater {
-  right: 20px;
-  top: 80px;
-  display: grid;
-  grid-template-columns: 36px minmax(0, 1fr);
-  gap: 2px var(--space-3);
-  align-items: center;
-  padding: var(--space-3) var(--space-4);
-}
-.ambient-theater > span {
-  grid-row: 1 / span 2;
-  color: var(--accent);
-  font-size: 1.8rem;
-  animation: signal-spin 4s linear infinite;
-}
-.ambient-theater small {
-  color: var(--text-muted);
-}
-
 @media (max-width: 560px) {
   .desk-listmode > [data-aftercare-floor-slot="top"]:not(:empty) {
     width: calc(100vw - 24px);
@@ -456,24 +482,6 @@
   }
   .welcome-mark {
     position: static;
-  }
-  /* HS-200-42 (counsel F4) — the queue chip is `position: fixed` at
-     `top: 76px; left: 50%`, which at a phone width lands dead centre on the
-     Chair headline ("Nothing needs you"): the story-42 walk shot the
-     `1 QUEUED` chip printed over it. The owner's law is that nothing
-     overlaps UI. Scoped to the narrow width, so the desk width is untouched:
-     the chip moves to the right margin of the same band, which is empty
-     there, and its popover hangs from that edge instead of off-screen. */
-  .ambient-queue {
-    left: auto;
-    right: var(--space-3);
-    transform: none;
-  }
-  .ambient-queue > div {
-    left: auto;
-    right: 0;
-    width: min(250px, calc(100vw - 24px));
-    transform: none;
   }
 }
 

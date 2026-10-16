@@ -1,4 +1,4 @@
-/** HS-151-06 / HS-153-02 — Thread composer: textarea + MicButton + @-refs + / verbs.
+/** HS-151-06 / HS-153-02 — Thread composer: PadGadget + @-refs + / verbs.
  *
  * HS-153-02: two-stage slash completion (command → argument), R3 rule
  * (/ only at line start), mode/prompt/tools/todo/compact/guardrail verbs,
@@ -14,6 +14,7 @@ import {
   useState,
   type KeyboardEvent,
 } from "react";
+import { PadGadget } from "../surface/gadgets";
 import { MicButton } from "./MicButton";
 import {
   InletAutocomplete,
@@ -52,9 +53,6 @@ function RefChipRow({
         {KIND_GLYPH[chip.ref.kind] ?? chip.ref.kind}
       </span>
       <span className="thread-ref-chip-name">{chip.ref.name}</span>
-      {/* HS-200-41 AC5 — every verb is the library Button. `ghost` keeps the
-          chip's `all: unset` face (thread-pullout.css) exactly as ratified;
-          `secondary` would drag in the global .btn wash. */}
       <Button
         variant="ghost"
         dense
@@ -497,14 +495,6 @@ export function ThreadComposer({
     return () => cancelAnimationFrame(id);
   }, [restoreFocus]);
 
-  // ── auto-resize textarea ─────────────────────────────────────────
-  useEffect(() => {
-    const ta = textareaRef.current;
-    if (!ta) return;
-    ta.style.height = "auto";
-    ta.style.height = `${Math.min(ta.scrollHeight, 120)}px`;
-  }, [draft]);
-
   // ── update autocomplete on draft/cursor change ───────────────────
   const updateAutocomplete = useCallback(
     (text: string, cursor: number) => {
@@ -549,10 +539,9 @@ export function ThreadComposer({
   // ── handlers ─────────────────────────────────────────────────────
 
   const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      const text = e.target.value;
+    (text: string) => {
       setDraft(text);
-      updateAutocomplete(text, e.target.selectionStart ?? text.length);
+      updateAutocomplete(text, textareaRef.current?.selectionStart ?? text.length);
     },
     [updateAutocomplete],
   );
@@ -815,6 +804,7 @@ export function ThreadComposer({
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.nativeEvent.isComposing || e.keyCode === 229) return;
       // Slash command palette navigation
       if (slashOpen && slashCompletion && slashCompletion.items.length > 0) {
         if (e.key === "ArrowDown") {
@@ -907,16 +897,13 @@ export function ThreadComposer({
     ],
   );
 
-  const handleMicText = useCallback(
-    (text: string) => {
-      // Voice transcript lands in the field, never sends (Art. IV)
-      setDraft((prev) => (prev ? prev + " " + text : text));
-    },
-    [],
-  );
+  const handleMicText = useCallback((text: string) => {
+    // Append to the latest draft, including edits made during capture.
+    setDraft((current) => current ? `${current} ${text}` : text);
+  }, []);
 
   return (
-    <div className="thread-composer" data-testid="thread-composer">
+    <div className="thread-composer conversation-composer" data-testid="thread-composer">
       {/* System rows (in-flow feedback from slash commands) */}
       {systemRows.map((text, i) => (
         <SystemRow key={i} text={text} />
@@ -971,31 +958,30 @@ export function ThreadComposer({
         )}
       </div>
 
-      {/* Input row: textarea + mic + send/stop */}
-      {/* UX-CANON: needs redesign (HS-170-04) — raw textarea */}
       <div className="thread-composer-row">
-        <textarea
-          ref={textareaRef}
-          className="thread-composer-input"
-          placeholder="Type a message..."
+        <PadGadget
+          inputRef={textareaRef}
+          label="Thread message"
+          placeholder="Continue this conversation"
           value={draft}
           onChange={handleChange}
-          onSelect={handleSelect}
           onKeyDown={handleKeyDown}
-          rows={1}
+          rows={3}
+          autoGrow
+          mic={false}
           disabled={disabled || sending}
-          data-testid="composer-input"
-          aria-label="Thread message"
+          inputProps={{
+            className: "thread-composer-input",
+            onSelect: handleSelect,
+            "data-testid": "composer-input",
+          } as React.ComponentPropsWithoutRef<"textarea">}
         />
-        <MicButton
-          onText={handleMicText}
-          label="Speak"
-        />
+        <div className="thread-composer-actions">
+          <div className="thread-composer-capture"><MicButton onText={handleMicText} label="Speak" /></div>
         {streaming ? (
           <Button
-            variant="ghost"
+            variant="secondary"
             type="button"
-            className="desk-chip"
             onClick={() => onStop()}
             data-testid="composer-stop"
           >
@@ -1003,16 +989,16 @@ export function ThreadComposer({
           </Button>
         ) : (
           <Button
-            variant="ghost"
+            variant="primary"
             type="button"
-            className="desk-chip"
             onClick={() => void handleSend()}
-            disabled={!draft.trim() || sending}
+            disabled={disabled || !draft.trim() || sending}
             data-testid="composer-send"
           >
             Send
           </Button>
         )}
+        </div>
       </div>
     </div>
   );
@@ -1054,6 +1040,7 @@ export function InlineEditor({
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.nativeEvent.isComposing || e.keyCode === 229) return;
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         if (text.trim()) onConfirm(text.trim());
@@ -1067,39 +1054,38 @@ export function InlineEditor({
   );
 
   return (
-    <div className="thread-inline-editor" data-testid="inline-editor">
-      <textarea
-        ref={inputRef}
-        className="thread-inline-editor-input"
+    <div
+      className="thread-inline-editor conversation-composer"
+      data-testid="inline-editor"
+      onBlur={(event) => {
+        if (event.relatedTarget instanceof Node && event.currentTarget.contains(event.relatedTarget)) return;
+        onCancel();
+      }}
+    >
+      <PadGadget
+        inputRef={inputRef}
+        label={placeholder ?? "Edit message"}
         value={text}
-        onChange={(e) => setText(e.target.value)}
+        onChange={setText}
         onKeyDown={handleKeyDown}
-        onBlur={onCancel}
         placeholder={placeholder}
-        rows={1}
-        data-testid="inline-editor-input"
+        rows={3}
+        autoGrow
+        mic={false}
+        inputProps={{
+          className: "thread-inline-editor-input",
+          "data-testid": "inline-editor-input",
+        } as React.ComponentPropsWithoutRef<"textarea">}
       />
       <div className="thread-inline-editor-actions">
-        {/* HS-176-04 — the voice law (Article IV.1).  The mousedown guard
-            keeps focus in the textarea: its onBlur cancels the edit, so a
-            plain click would dismiss the editor before the mic toggled. */}
-        <span
-          className="thread-inline-editor-mic"
-          onMouseDown={(event) => event.preventDefault()}
-        >
-          <MicButton
-            label="Speak message"
-            onText={(spoken) =>
-              setText((current) =>
-                current && !/\s$/.test(current) ? `${current} ${spoken}` : current + spoken,
-              )
-            }
-          />
-        </span>
+        <div className="thread-composer-capture">
+          <MicButton label="Speak message" onText={(spoken) => setText((current) =>
+            current && !/\s$/.test(current) ? `${current} ${spoken}` : current + spoken,
+          )} />
+        </div>
         <Button
-          variant="ghost"
+          variant="primary"
           type="button"
-          className="desk-chip"
           onClick={() => text.trim() && onConfirm(text.trim())}
           disabled={!text.trim()}
         >
@@ -1108,7 +1094,6 @@ export function InlineEditor({
         <Button
           variant="ghost"
           type="button"
-          className="desk-chip quiet"
           onClick={onCancel}
         >
           Cancel

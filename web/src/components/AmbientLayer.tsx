@@ -16,7 +16,7 @@ import {
 import { humanizeWireValue } from "../lib/productLanguage";
 import { Button } from "./signal/Signal";
 import { LampGadget } from "../desk/surface/gadgets";
-import { SurfaceState } from "../desk/surface/Surface";
+import { SurfaceRow, SurfaceRows, SurfaceState, SurfaceWell } from "../desk/surface/Surface";
 import { useOnDeskChanged } from "../desk/useDeskChangedRefresh";
 import {
   handleWorkbenchRunStart,
@@ -68,15 +68,20 @@ function PreviewCard() {
   };
   return (
     <aside className="ambient-preview" aria-label="Dictation preview">
-      <span className="signal-eyebrow">Preview before type</span>
-      <p>{preview.text ?? "Your dictation is ready."}</p>
+      <header className="ambient-notice-head">
+        <span className="ambient-source">{preview.kind === "wake" ? "Wake" : "Dictation"}</span>
+        <strong>Preview</strong>
+      </header>
+      <SurfaceWell>
+        <p className="ambient-content">{preview.text ?? ""}</p>
+      </SurfaceWell>
       {error ? (
         <SurfaceState
           error={error}
           onRetry={failedChoice ? () => void act(failedChoice) : undefined}
         />
       ) : null}
-      <div className="button-row">
+      <div className="ambient-verbs">
         <Button
           dense
           variant="primary"
@@ -108,8 +113,14 @@ function QueueHud() {
   const running = Number(queue.running ?? 0);
   const retries = Number(queue.scheduled_retries ?? 0);
   if (!pending && !failed && !running && !retries) return null;
+  const counts = [
+    pending ? `${pending} pending` : "",
+    running ? `${running} running` : "",
+    failed ? `${failed} failed` : "",
+    retries ? `${retries} retrying` : "",
+  ].filter(Boolean);
   return (
-    <aside className="ambient-queue">
+    <aside className="ambient-queue" aria-label="Intelligence queue">
       <Button
         dense
         variant="ghost"
@@ -120,32 +131,39 @@ function QueueHud() {
           on
           tone={failed ? "fail" : running ? "ok" : "warn"}
           label={
-            running
-              ? `${running} running`
-              : failed
-                ? `${failed} failed`
-                : `${pending} queued`
+            open
+              ? counts.join(" · ")
+              : running
+                ? `${running} running`
+                : failed
+                  ? `${failed} failed`
+                  : pending
+                    ? `${pending} queued`
+                    : `${retries} retrying`
           }
         />
       </Button>
       {open ? (
-        <div>
-          <strong>Intelligence queue</strong>
-          <p>
-            {pending} pending · {running} running · {failed} failed
-            {retries ? ` · ${retries} retrying` : ""}
-          </p>
+        <div className="ambient-queue-detail">
+          <header className="ambient-notice-head">
+            <strong>Intelligence queue</strong>
+          </header>
           {jobs.length ? (
-            <ul className="ambient-queue-jobs">
+            <SurfaceRows>
               {jobs.slice(0, 6).map((job, index) => (
-                <li key={String(job.id ?? index)}>
-                  <span>{String(job.label ?? job.meeting_id ?? "Job")}</span>
-                  <small>{String(job.status ?? "")}</small>
-                </li>
+                <SurfaceRow
+                  key={String(job.id ?? index)}
+                  title={String(job.label ?? job.meeting_id ?? "Job")}
+                  meta={humanizeWireValue(String(job.status ?? ""))}
+                />
               ))}
-            </ul>
+            </SurfaceRows>
           ) : null}
-          <a href="/history">Open queue</a>
+          <div className="ambient-verbs">
+            <Button dense variant="primary" onClick={() => { window.location.href = "/history"; }}>
+              Open queue
+            </Button>
+          </div>
         </div>
       ) : null}
     </aside>
@@ -362,6 +380,12 @@ function Qlippy() {
   );
   const card = cards[0];
   if (!enabled || (!projection && !card)) return null;
+  const source = projection
+    ? `${humanizeWireValue(String(projection.projection_kind))} · ${humanizeWireValue(String(projection.subject_label))}`
+    : humanizeWireValue(card!.frameType);
+  const content = projection
+    ? projection.summary
+    : card?.preview ?? card?.detail ?? card?.body;
   const dismiss = () => setCards((current) => current.slice(1));
   const dismissProjection = async (row: DeskProjection) => {
     if (dismissing.current) return;
@@ -396,92 +420,81 @@ function Qlippy() {
   };
   return (
     <aside className="ambient-qlippy" aria-label="Qlippy">
-      <div className="qlippy-face" aria-hidden="true">
-        ◉
-      </div>
-      <div>
-        <span className="signal-eyebrow">
-          {projection
-            ? `${humanizeWireValue(String(projection.projection_kind))} · ${humanizeWireValue(String(projection.subject_label))}`
-            : card!.frameType.replace(/_/g, " ")}
+      <header className="ambient-notice-head">
+        <span className="ambient-source">
+          <LampGadget on tone={projection ? "warn" : "ok"} label={source} />
         </span>
         <strong>
           {projection?.title ??
             String(
               card?.title ??
                 card?.label ??
-                (card?.frameType === "learning_event"
-                  ? "HoldSpeak learned"
-                  : "Something is ready"),
+                (card?.frameType === "learning_event" ? "Learned" : "Ready"),
             )}
         </strong>
-        <p>
-          {projection?.summary ??
-            String(
-              card?.preview ??
-                card?.detail ??
-                card?.body ??
-                "Review this moment when you are ready.",
-            )}
-        </p>
-        {dismissal ? (
-          <SurfaceState
-            loading={dismissal.status === "pending"}
-            error={dismissal.status === "failed" ? "Cannot dismiss" : undefined}
-            onRetry={() => void dismissProjection(dismissal.projection)}
-          />
+      </header>
+      {content != null && String(content).trim() ? (
+        <SurfaceWell>
+          <p className="ambient-content">{String(content)}</p>
+        </SurfaceWell>
+      ) : null}
+      {dismissal ? (
+        <SurfaceState
+          loading={dismissal.status === "pending"}
+          error={dismissal.status === "failed" ? "Cannot dismiss" : undefined}
+          onRetry={() => void dismissProjection(dismissal.projection)}
+        />
+      ) : null}
+      <div className="ambient-verbs">
+        {/* HS-202-06 — a projection with no door draws no "Review source",
+            and NEVER falls into the card branch below (Astra's counsel on
+            #600: with Qlippy on and no queued card, `card!` is undefined
+            and the whole desk threw). Projection rendering and card
+            rendering are separate branches. */}
+        {projection ? (
+          projection.detail_url && projection.detail_url !== "/" ? (
+            <Button
+              dense
+              variant="primary"
+              disabled={dismissal?.status === "pending"}
+              onClick={() => {
+                window.location.href = projection.detail_url;
+              }}
+            >
+              Review source
+            </Button>
+          ) : null
+        ) : card!.frameType === "actuator_proposed" ? (
+          <>
+            <Button
+              dense
+              variant="primary"
+              loading={busy}
+              onClick={() => void decide("approved")}
+            >
+              Approve
+            </Button>
+            <Button
+              dense
+              variant="ghost"
+              onClick={() => void decide("rejected")}
+            >
+              Decline
+            </Button>
+          </>
         ) : null}
-        <div className="button-row">
-          {/* HS-202-06 — a projection with no door draws no "Review source",
-              and NEVER falls into the card branch below (Astra's counsel on
-              #600: with Qlippy on and no queued card, `card!` is undefined
-              and the whole desk threw). Projection rendering and card
-              rendering are separate branches. */}
-          {projection ? (
-            projection.detail_url && projection.detail_url !== "/" ? (
-              <Button
-                dense
-                variant="primary"
-                disabled={dismissal?.status === "pending"}
-                onClick={() => {
-                  window.location.href = projection.detail_url;
-                }}
-              >
-                Review source
-              </Button>
-            ) : null
-          ) : card!.frameType === "actuator_proposed" ? (
-            <>
-              <Button
-                dense
-                variant="primary"
-                loading={busy}
-                onClick={() => void decide("approved")}
-              >
-                Approve
-              </Button>
-              <Button
-                dense
-                variant="ghost"
-                onClick={() => void decide("rejected")}
-              >
-                Decline
-              </Button>
-            </>
-          ) : null}
-          <Button
-            dense
-            variant="ghost"
-            loading={dismissal?.status === "pending"}
-            onClick={() =>
-              projection
-                ? void dismissProjection(projection)
-                : dismiss()
-            }
-          >
-            Dismiss
-          </Button>
-        </div>
+        <Button
+          dense
+          variant="ghost"
+          loading={dismissal?.status === "pending"}
+          onClick={() =>
+            projection
+              ? void dismissProjection(projection)
+              : dismiss()
+          }
+        >
+          Dismiss
+        </Button>
       </div>
     </aside>
   );
@@ -517,11 +530,13 @@ function GenerationTheater() {
   if (!active) return null;
   return (
     <div className="ambient-theater" role="status">
-      <span aria-hidden="true">✦</span>
-      <strong>{String(status?.label ?? "Analyzing meeting")}</strong>
-      <small>
-        {String(status?.detail ?? "Transcript analysis is running.")}
-      </small>
+      <header className="ambient-notice-head">
+        <span className="ambient-source">
+          <LampGadget on tone="info" label={humanizeWireValue(String(status?.state ?? status?.status))} />
+        </span>
+        <strong>{String(status?.label ?? "Meeting analysis")}</strong>
+      </header>
+      {status?.detail ? <p className="ambient-content">{String(status.detail)}</p> : null}
     </div>
   );
 }
@@ -552,12 +567,14 @@ function SpriteStateWatcher() {
 export function AmbientLayer() {
   return (
     <>
-      <QueueHud />
-      <PreviewCard />
       <AftercareNote />
-      <Qlippy />
+      <div className="ambient-notices">
+        <PreviewCard />
+        <Qlippy />
+        <GenerationTheater />
+        <QueueHud />
+      </div>
       <Waveform />
-      <GenerationTheater />
       <SpriteStateWatcher />
     </>
   );

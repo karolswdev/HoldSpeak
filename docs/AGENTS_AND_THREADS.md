@@ -9,6 +9,19 @@ This page describes how Threads work, what limits apply, and which routes
 serve them. For the steps to start and use a Thread, see the
 [User Guide](USER_GUIDE.md#threads).
 
+## The conversation window
+
+Thread and Ask use the same paper conversation and text controls. A Thread
+keeps its conversation. Ask answers one question; Keep saves that answer with
+the question and sources that produced it. Try again uses the sent question,
+so later draft edits stay in the composer. Close leaves that draft available
+when you return. Closing an Ask view does not confirm that its server run
+stopped.
+
+A Thread reply that failed offers Try again. Its Details fold holds the
+diagnostic. Branch position is a read-only fact; it is not a navigation
+control. The mode selector shows Choose mode when no mode is bound.
+
 ## What a Thread keeps
 
 The hub stores each Thread with its messages, message parts, frozen source

@@ -1,8 +1,89 @@
-.desk-ask-sources {
-  display:flex;
-  align-items:center;
-  flex-wrap:wrap;
-  gap:4px 8px;
-  font:12px var(--font-mono);
+.desk-next .desk-ask {
+  height: 360px;
 }
-.desk-ask-sources .btn { max-width:100%; white-space:normal; overflow-wrap:anywhere; }
+.desk-next .desk-ask.has-traffic {
+  height: 600px;
+}
+.desk-next .desk-ask-body {
+  gap: 14px;
+}
+.desk-ask-compose-space {
+  flex: 1;
+  min-height: 12px;
+}
+.desk-ask-reading {
+  flex: 1 0 auto;
+}
+.desk-next .desk-ask-reading .surface-traffic,
+.desk-next .desk-ask-reading .surface-traffic > .surface-well {
+  min-height: 0;
+  flex: none;
+}
+.desk-ask-reading .surface-traffic-turn:first-child .surface-traffic-text {
+  white-space: pre-wrap;
+}
+.desk-ask .surface-run-line[data-state="running"]::before {
+  content: "◌";
+  display: inline-block;
+  margin-inline-end: var(--space-2);
+  opacity: 0.75;
+  animation: surface-state-pulse calc(var(--duration-long) * 4) ease-in-out infinite;
+}
+.desk-ask-composer {
+  display: grid;
+  flex: none;
+  gap: 10px;
+}
+.desk-ask-input {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.desk-ask-input .gadget-pad {
+  flex: 1;
+}
+.desk-ask-input > .desk-mic {
+  flex: none;
+}
+.desk-ask-sources {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  min-width: 0;
+  font: 12px var(--font-mono);
+}
+.desk-ask-sources .btn {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.desk-ask-compose-actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.desk-ask-context-tools {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+}
+.desk-next .desk-ask-context-tools .desk-ground {
+  margin: 0;
+}
+.desk-next .desk-ask-context-tools .gadget-fold > summary {
+  padding-block: 6px;
+}
+.desk-ask-compose-actions > .btn {
+  flex: none;
+}
+@container surface (max-width: 520px) {
+  .desk-next .desk-ask-body { gap: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-ask .surface-run-line[data-state="running"]::before {
+    animation: none;
+  }
+}

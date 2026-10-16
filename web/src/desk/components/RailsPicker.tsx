@@ -75,8 +75,9 @@ export function RailsPicker(props: {
   limitTokens: number;
   /** HS-111-05 — a host with a shared budget meter passes false. */
   meter?: boolean;
+  showBudget?: boolean;
 }) {
-  const { picks, onChange, limitTokens, meter = true } = props;
+  const { picks, onChange, limitTokens, meter = true, showBudget = true } = props;
   const rows = useRailsRows();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
@@ -117,7 +118,7 @@ export function RailsPicker(props: {
             : picks.length > 0 ? `Rails · ${picks.length}` : "Ground on the rails"
         }
         token={
-          picks.length > 0 ? (
+          showBudget && picks.length > 0 ? (
             <span className="surface-token" data-tone={tone}>
               {fmt(used)} / {fmt(limitTokens)} tok
             </span>
@@ -143,8 +144,7 @@ export function RailsPicker(props: {
                   key={key(r)}
                   className={"desk-ground-row" + (sel ? " is-picked" : "")}
                 >
-                  <button
-                    type="button"
+                  <div
                     className="desk-ground-line is-press"
                     onClick={(event) => {
                       if (
@@ -169,7 +169,7 @@ export function RailsPicker(props: {
                         {fmt(tok(priced.chars))} tok
                       </span>
                     )}
-                  </button>
+                  </div>
                 </li>
               );
             })}

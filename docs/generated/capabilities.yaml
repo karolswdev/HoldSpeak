@@ -6456,6 +6456,18 @@
           "line": 71,
           "path": "web/src/desk/gl/jupiterOrbitModel.ts",
           "symbol": "export function jupiterEncounterForWindow("
+        },
+        {
+          "claim": "Ask opens on the shared Pad and paper conversation; exact request/Keep snapshots preserve newer drafts, while local close abandons stale response updates without claiming server cancellation.",
+          "line": 92,
+          "path": "web/src/desk/components/AskPanel.tsx",
+          "symbol": "AskPanel"
+        },
+        {
+          "claim": "The additive artifact-source vocabulary accepts the existing closed canonical resource kinds, so grounded Ask Keep persists typed Note, Knowledge and Zone lineage; unknown kinds remain rejected.",
+          "line": 28,
+          "path": "holdspeak/db/plugins.py",
+          "symbol": "VALID_ARTIFACT_SOURCE_TYPES"
         }
       ],
       "status": "built_unreleased",
@@ -6517,6 +6529,24 @@
           },
           "node": "rare Jupiter encounters",
           "path": "web/src/desk/gl/__tests__/jupiterOrbitModel.test.ts"
+        },
+        {
+          "assertion": "Changed prompt, selected quote, grounding and rail edits do not alter the retried request or kept answer lineage.",
+          "execution": "passed",
+          "node": "Retry and Keep use the complete sent snapshot while a newer draft and selection survive",
+          "path": "web/src/desk/__tests__/askPanelRunsOn.test.tsx"
+        },
+        {
+          "assertion": "Local close aborts/invalidates the pending view and preserves the newer durable draft on reopen.",
+          "execution": "passed",
+          "node": "%s abandons a pending view; a late answer cannot change the reopened Ask",
+          "path": "web/src/desk/__tests__/askPanelRunsOn.test.tsx"
+        },
+        {
+          "assertion": "Real Ask Keep preserves original quoted question, canonical sources and relationship snapshot across database reopen without model execution.",
+          "execution": "passed",
+          "node": "test_keep_persists_note_and_knowledge_sources_with_exact_prompt_and_relationships",
+          "path": "tests/unit/test_ask_keep_sources.py"
         }
       ],
       "trust_boundary": "Browser route enters the Desk shell; no native host is required."
@@ -8217,6 +8247,18 @@
           "line": 68,
           "path": "holdspeak/web/routes/threads.py",
           "symbol": "build_threads_router"
+        },
+        {
+          "claim": "The Workbench conversation uses shared paper traffic and editors, real close/load retry, failed-turn retry and passive branch position while preserving runtime reconciliation and message anchors.",
+          "line": 1094,
+          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "symbol": "ThreadPullout"
+        },
+        {
+          "claim": "Group focus keeps Send/Cancel reachable; shared Pad editors retain existing draft and speech append contracts.",
+          "line": 1021,
+          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "symbol": "InlineEditor"
         }
       ],
       "status": "experimental",
@@ -8247,6 +8289,18 @@
           },
           "node": "test_import_threads",
           "path": "tests/integration/test_threads_api.py"
+        },
+        {
+          "assertion": "The real Thread face exposes load retry and passes its existing close callback.",
+          "execution": "passed",
+          "node": "retries loading and closes an absent thread with the real callback",
+          "path": "web/src/desk/__tests__/ThreadPullout.test.tsx"
+        },
+        {
+          "assertion": "A failed answer offers the canonical regenerate writer for that message.",
+          "execution": "passed",
+          "node": "retries the failed message through the existing regenerate writer",
+          "path": "web/src/desk/__tests__/ThreadPullout.test.tsx"
         }
       ],
       "trust_boundary": "Owner thread input is persisted and frozen before an admitted model child; kept output is a separate local write."
@@ -10409,7 +10463,7 @@
       "side_effect": "local_reversible",
       "sources": [
         {
-          "claim": "Settings gate the component; runtime events refresh durable projections or queue learning cards. Dictation journal projections never produce a Qlippy popup. Successful Dismiss closes older popup backlog in the tab while retaining untouched items in Attention; a refused writer remains visible for Retry.",
+          "claim": "Settings gate the component; runtime events refresh durable projections or queue learning cards. Dictation journal projections never produce a Qlippy popup. Successful Dismiss closes older popup backlog in the tab while retaining untouched items in Attention; a refused writer remains visible for Retry. Existing notices share a bounded Workbench stack with explicit paper/ink tokens and complete payload wells; running analysis uses the library pulse with reduced-motion support.",
           "line": 196,
           "path": "web/src/components/AmbientLayer.tsx",
           "symbol": "Qlippy"
@@ -10445,6 +10499,12 @@
           "execution": "passed",
           "node": "keeps a failed write visible and retries its exact ID after a refresh",
           "path": "web/src/components/ambientDismiss.test.tsx"
+        },
+        {
+          "assertion": "The existing queue omits zero tokens and uses library actions/rows; location is mocked in this rendered test.",
+          "execution": "passed",
+          "node": "omits zero queue counts, uses shared rows and opens the existing queue route",
+          "path": "web/src/components/ambientMaterial.test.tsx"
         }
       ],
       "trust_boundary": "Qlippy presents state and egress facts; dismissing a card never authorizes an effect."

@@ -527,6 +527,76 @@ class TestMicAllowlist:
         assert len({(p, n) for p, n, _ in mod.MIC_ALLOWLIST}) == 24
 
 
+_MIC_HOST_FIELDS = (
+    ("desk/components/AskPanel.tsx", "PadGadget", 'label="Ask about your work"'),
+    ("desk/components/ThreadComposer.tsx", "PadGadget", 'label="Thread message"'),
+    ("desk/components/ThreadComposer.tsx", "PadGadget", 'label={placeholder ?? "Edit message"}'),
+    ("desk/pullouts/ThreadPullout.tsx", "StringGadget", 'label="Comment"'),
+)
+
+
+class TestMicHostAuthorities:
+    """Four host fields must prove their explicit mic in their own component."""
+
+    @staticmethod
+    def _body(species: str, label: str, mic: str = "") -> str:
+        return (
+            "export function Face() {\n"
+            "  return <div>\n"
+            f"    <{species} {label} mic={{false}} value={{a}} onChange={{f}} />\n"
+            f"    {mic}\n"
+            "  </div>;\n"
+            "}\n"
+        )
+
+    @staticmethod
+    def _scan(path: str, body: str):
+        scanner = _load_scanner()
+        return scanner.scan_mic(path, body, body.splitlines())
+
+    @pytest.mark.parametrize(("path", "species", "label"), _MIC_HOST_FIELDS)
+    def test_named_field_with_same_component_mic_is_covered(self, path, species, label):
+        body = self._body(species, label, "<MicButton onText={f} />")
+        assert self._scan(path, body) == []
+
+    @pytest.mark.parametrize(("path", "species", "label"), _MIC_HOST_FIELDS)
+    def test_named_field_without_explicit_mic_is_flagged(self, path, species, label):
+        assert len(self._scan(path, self._body(species, label))) == 1
+
+    @pytest.mark.parametrize(("path", "species", "label"), _MIC_HOST_FIELDS)
+    def test_mic_in_another_component_does_not_cover_named_field(self, path, species, label):
+        other = "export function Other() { return <MicButton onText={f} />; }\n"
+        assert len(self._scan(path, other + self._body(species, label))) == 1
+
+    @pytest.mark.parametrize(("path", "species", "label"), _MIC_HOST_FIELDS)
+    def test_unrelated_field_in_named_file_still_requires_its_own_mic(self, path, species, label):
+        # Even a nearby approved label cannot exempt a different tag.
+        body = self._body(species, label, "<MicButton onText={f} />")
+        body = body.replace(
+            "    <MicButton",
+            f'    <{species} label="Other text" mic={{false}} value={{b}} onChange={{f}} />\n    <MicButton',
+        )
+        hits = self._scan(path, body)
+        assert len(hits) == 1
+        assert body.splitlines()[hits[0].line - 1].strip().startswith(f'<{species} label="Other text"')
+
+    @pytest.mark.parametrize(("path", "species", "label"), _MIC_HOST_FIELDS)
+    def test_named_label_in_another_path_is_flagged(self, path, species, label):
+        body = self._body(species, label, "<MicButton onText={f} />")
+        assert len(self._scan("desk/components/OtherWindow.tsx", body)) == 1
+
+    def test_authorities_are_exact_named_fields_present_in_tree(self):
+        scanner = _load_scanner()
+        assert {(path, label) for path, label, _ in scanner.MIC_HOST_AUTHORITIES} == {
+            (path, label) for path, _species, label in _MIC_HOST_FIELDS
+        }
+        assert len(scanner.MIC_HOST_AUTHORITIES) == 4
+        src = Path(__file__).resolve().parents[2] / "web" / "src"
+        for path, label, reason in scanner.MIC_HOST_AUTHORITIES:
+            assert label in (src / path).read_text()
+            assert len(reason) > 10
+
+
 # PHILO-15 02 (ruling 2026-10-07): a secret is never dictated aloud.
 # Astra r2: the comments sit in ATTRIBUTE position (depth 0), as on the real
 # Concierge address field, and each carries an apostrophe.

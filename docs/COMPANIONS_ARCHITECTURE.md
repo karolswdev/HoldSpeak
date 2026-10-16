@@ -68,6 +68,12 @@ route there names its consumers.
 durable projections. The sprite assets are listed in
 `web/public/qlippy/README.md`.
 
+Existing notices share a bounded Workbench stack above the dock. Actual
+preview and learning text stays readable in paper wells. Queue counts omit
+zero values. Dictation journal entries stay in history and Attention; they
+do not open a Qlippy popup. Dismiss closes the visible presentation and keeps
+older popup backlog quiet in the tab. Untouched Attention records remain.
+
 ## Limits
 
 The repository holds the Swift sources and their tests. It does not ship a
