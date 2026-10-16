@@ -246,9 +246,9 @@ describe("PHILO-14 A1 — the screen of objects", () => {
       return { x: parseFloat(el.style.left), y: parseFloat(el.style.top) };
     };
     expect(at(/^Payments ledger cutover/)).toEqual({ x: 20, y: 12 });
-    expect(at(/^Platform observability/)).toEqual({ x: 20, y: 124 });
-    expect(at(/^People/)).toEqual({ x: 20, y: 236 });
-    expect(at(/^Conductor/)).toEqual({ x: 20, y: 348 });
+    expect(at(/^Platform observability/)).toEqual({ x: 20, y: 108 });
+    expect(at(/^People/)).toEqual({ x: 20, y: 204 });
+    expect(at(/^Conductor/)).toEqual({ x: 20, y: 300 });
     expect(at(/^Needs you/)).toEqual({ x: 1300, y: 12 });
     expect(at(/^Archive/)).toEqual({ x: 1300, y: 660 });
     expect(at(/^Claude Code: rollback runbook/)).toEqual({ x: 1170, y: 12 });
@@ -499,8 +499,9 @@ describe("PHILO-14 A1 — the pure parts", () => {
     const objects = composeScreen(base);
     const at = layoutScreen(objects, 1440, 796);
     // the column stops above TALK at the foot (Astra's P3 on #939)
-    expect(at["project:p5"]).toEqual({ x: 20, y: 572 });
-    expect(at["project:p6"]).toEqual({ x: 140, y: 12 });
+    expect(at["project:p5"]).toEqual({ x: 20, y: 492 });
+    expect(at["project:p6"]).toEqual({ x: 20, y: 588 });
+    expect(at["project:p7"]).toEqual({ x: 140, y: 12 });
     expect(at["people:a"]).toEqual({ x: 330, y: 24 });
   });
 
@@ -512,9 +513,9 @@ describe("PHILO-14 A1 — the pure parts", () => {
     };
     const plain = layoutScreen(composeScreen(base), 1440, 796);
     const captioned = layoutScreen(composeScreen({ ...base, peopleCaption: "1:1 15:00" }), 1440, 796);
-    expect(plain["drawer:conductor"].y - plain["drawer:people"].y).toBe(112);
-    // 117 px icon + the 6 px notch above the next drawer: 136 clears both.
-    expect(captioned["drawer:conductor"].y - captioned["drawer:people"].y).toBe(136);
+    expect(plain["drawer:conductor"].y - plain["drawer:people"].y).toBe(96);
+    // Keep the extra 24 px caption allowance above the next count notch.
+    expect(captioned["drawer:conductor"].y - captioned["drawer:people"].y).toBe(120);
   });
 
   it("the Conductor wears the count notch alone while its agents only work", () => {

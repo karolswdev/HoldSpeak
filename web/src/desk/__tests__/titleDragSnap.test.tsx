@@ -178,7 +178,7 @@ describe("a title drag (PHILO-17 snapjump)", () => {
       fireEvent.pointerUp(head, at(654, 140));
     });
     expect(snapForPointer(654, 140, VW, VH)).toBeNull();
-    expect(rect()).toEqual({ x: 194, y: 122, w: 920, h: 720 });
+    expect(rect()).toEqual({ x: 194, y: 120, w: 920, h: 720 });
   });
 
   it("while the title drag holds the pointer, no native drag starts (a desk icon under the press point)", () => {
@@ -260,6 +260,6 @@ describe("a title drag (PHILO-17 snapjump)", () => {
     act(() => {
       fireEvent.pointerUp(head, { ...at(654, 140), pointerType: "touch" });
     });
-    expect(rect()).toEqual({ x: 194, y: 122, w: 920, h: 720 });
+    expect(rect()).toEqual({ x: 194, y: 120, w: 920, h: 720 });
   });
 });

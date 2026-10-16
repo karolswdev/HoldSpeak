@@ -12,8 +12,8 @@ export interface Placed {
 }
 
 const COL = 120; // an icon is 112 px wide; 8 px between
-const DRAWER_ROW = 112;
-const FIELD_ROW = 116;
+const DRAWER_ROW = 96;
+const FIELD_ROW = 100;
 const EDGE = 20;
 const TOP = 12;
 const FIELD_GAP = 70; // A-1: the field starts 70 px right of the drawer column
@@ -23,8 +23,8 @@ const BOTTOM = 136; // Parked: its top this far above the screen's foot
 const TALK_ZONE = 72; // the TALK control at the foot-left (Astra's P3 on #939)
 const NOT_READ_LINE = 30; // a NOT READ drawer's Retry line
 // PHILO-17 (phonepass): a caption (People's `1:1 15:00`) adds 24 px to the
-// icon (117 px with a one-line name), and the drawer below wears its count
-// notch 6 px above its top: the captioned row is 136 px, so nothing touches.
+// compact desktop icon; preserve that extra room above the next drawer's
+// count notch rather than reducing the caption's readable size.
 const CAPTION_LINE = 24;
 
 export function layoutScreen(objects: readonly ScreenObject[], width: number, height: number): Record<string, Placed> {

@@ -142,5 +142,5 @@ export function SurfaceFooter({
   const target = useContext(FootSlotContext);
   return target
     ? createPortal(contents, target)
-    : <footer className="surface-footer">{contents}</footer>;
+    : <footer className="desk-surface-foot surface-footer">{contents}</footer>;
 }

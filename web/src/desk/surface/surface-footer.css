@@ -13,7 +13,7 @@
   --warn: var(--wb-ink);
   --danger: var(--wb-ink);
   min-height: 36px;
-  padding: 0 8px;
+  padding: 4px 8px;
   /* PHILO-7-02: the window's resize grip (window-chrome.css:143, 16 px at
      right 4 / bottom 4) owns the footer's last 20 px; the last verb must not
      sit under it (elementFromPoint hit the grip at the verb's corner). */
@@ -47,7 +47,10 @@
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr) max-content;
   align-items: center;
-  height: 100%;
+  /* The host owns the inset; an intrinsic grid stays clear of the top rule
+     even when the window opens at a content-fitted height. */
+  height: auto;
+  min-height: 28px;
   gap: 6px;
   /* HS-168-05: explicit areas — an empty (hidden) egress slot must never
      shift the receipt into the narrow first column (the "OF 4" clip). */
@@ -211,9 +214,9 @@
   .desk-next .surface-footer-layout {
     grid-template-columns: minmax(0, 1fr) max-content;
     grid-template-areas: "egress egress" "receipt verbs";
-    min-height: 36px;
+    min-height: 28px;
     row-gap: 3px;
-    padding: 4px 0;
+    padding: 0;
   }
   .desk-next .surface-footer-egress { grid-area: egress; }
   .desk-next .surface-footer-verbs { grid-area: verbs; flex-wrap: wrap; }
@@ -502,8 +505,7 @@
 
 /* PHILO-3-01 — a footer that holds a write receipt gives it the full
    second row. In the middle column (a 400 px pullout at 1440, any pullout
-   at 393 -- a pullout's footer sits in no `surface` container, so the
-   narrow rule above never reaches it) the label clipped to "ACK…" and the
+   at 393) the label clipped to "ACK…" and the
    cause was lost. The named failure and its verbs get the whole row. */
 .desk-next .surface-footer:has(.write-receipt) {
   height: auto;
@@ -513,7 +515,7 @@
   grid-template-areas: "egress . verbs" "receipt receipt receipt";
   row-gap: 3px;
   height: auto;
-  padding-block: 4px;
+  padding-block: 0;
 }
 .desk-next .surface-footer-layout:has(.write-receipt) .surface-footer-receipt {
   justify-content: flex-start;

@@ -29,9 +29,9 @@ export function workBand() {
   const style = getComputedStyle(document.documentElement);
   const top = parseFloat(style.getPropertyValue("--desk-work-top"));
   const band = parseFloat(style.getPropertyValue("--desk-work-bottom"));
-  // The Dock publishes its measured height (`--desk-dock-h`, Dock.tsx). The
-  // shelf (76 px) is higher than the shell band (52 px); a window placed or
-  // clamped to the band alone had its foot and its verbs under the Dock.
+  // The Dock publishes its measured height (`--desk-dock-h`, Dock.tsx). If
+  // it is taller than the reserved band, use that height so the window's
+  // foot and its verbs remain above the Dock.
   const dock = parseFloat(style.getPropertyValue("--desk-dock-h"));
   const bottom = Number.isFinite(band) ? band : fallback.bottom;
   return {

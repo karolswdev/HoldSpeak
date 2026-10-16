@@ -38,6 +38,20 @@ describe("shared reading document", () => {
     expect(container.textContent).toContain("Mail mailto:a@example.com");
   });
 
+  it.each(["material", "agent"])("%s renders task inline content and keeps static markers", (host) => {
+    const source = "- [ ] **Provide the PRs to review** — You — no deadline stated\n- [x] Read [Guide](https://example.com/guide) and `review.md`";
+    const { container } = render(host === "material" ? <Material>{source}</Material> : <AgentWords text={source} />);
+    const items = container.querySelectorAll("ul > li");
+    expect(items).toHaveLength(2);
+    expect(items[0].textContent).toBe("[ ] Provide the PRs to review — You — no deadline stated");
+    expect(items[0].querySelector("strong")?.textContent).toBe("Provide the PRs to review");
+    expect(items[1].textContent).toBe("[x] Read Guide and review.md");
+    expect(items[1].querySelector("a")?.getAttribute("href")).toBe("https://example.com/guide");
+    expect(items[1].querySelector("code")?.textContent).toBe("review.md");
+    expect(container.textContent).not.toContain("**");
+    expect(container.querySelector("input")).toBeNull();
+  });
+
   it("compact summaries keep their ask and never create link controls", () => {
     const { container } = render(<AgentWords compact text={`${DOCUMENT}\n\nMay I open [Held task](action:held-17)?`} />);
     expect(container.querySelector("p,table,pre,button,a,h2")).toBeNull();

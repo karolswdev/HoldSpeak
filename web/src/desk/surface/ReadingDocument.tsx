@@ -81,6 +81,7 @@ function renderNode(node: SyntaxNode, context: Context): ReactNode {
   switch (node.name) {
     case "Document": return children.map((child) => renderNode(child, context));
     case "Paragraph": return <p key={key}>{contents(node, context)}</p>;
+    case "Task": return <span key={key}>{contents(node, context)}</span>;
     case "StrongEmphasis": return <strong key={key}>{contents(node, context)}</strong>;
     case "Emphasis": return <em key={key}>{contents(node, context)}</em>;
     case "Strikethrough": return <del key={key}>{contents(node, context)}</del>;

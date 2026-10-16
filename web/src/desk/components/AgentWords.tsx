@@ -52,11 +52,11 @@ export function parseAgentWords(source: string): Block[] {
     } else if (node.name === "BulletList" || node.name === "OrderedList") {
       const items: ListItem[] = [];
       for (const item of readingChildren(node).filter((child) => child.name === "ListItem")) {
-        const parts = readingChildren(item).filter((child) => child.name === "Paragraph");
+        const parts = readingChildren(item).filter((child) => child.name === "Paragraph" || child.name === "Task");
         const entry: ListItem = { text: parts.map((part) => text.slice(part.from, part.to)).join("\n") };
         const nested: string[] = [];
         const gather = (child: SyntaxNode) => {
-          if (child.name === "Paragraph") nested.push(text.slice(child.from, child.to));
+          if (child.name === "Paragraph" || child.name === "Task") nested.push(text.slice(child.from, child.to));
           else readingChildren(child).forEach(gather);
         };
         readingChildren(item).filter((child) => child.name === "BulletList" || child.name === "OrderedList").forEach(gather);
@@ -73,6 +73,8 @@ export function parseAgentWords(source: string): Block[] {
 
 /** Compact marks keep plain link destinations and no press targets. */
 export function parseInline(source: string): Inline[] {
+  // A flattened task marker stays text when its body is parsed outside a list.
+  if (/^\[[ xX]\](?=[ \t])/.test(source)) source = `\\${source}`;
   const content = parseReading(source).firstChild;
   if (!content) return [];
   const convert = (node: SyntaxNode): Inline[] => {
