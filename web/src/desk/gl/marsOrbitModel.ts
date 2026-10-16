@@ -1,8 +1,10 @@
-/** Authored cinematic scale and periods, not an ephemeris. */
+/** Physical relative body sizes; orbit distances and periods remain authored. */
 export const MARS_RADIUS = 4.95;
+/** NASA/JPL mean radius in km; moon radii use equivalent-volume means. */
+export const MARS_MEAN_RADIUS_KM = 3389.50;
 export const MARS_MOONS = [
-  { name: "Phobos", radius: 0.34, orbit: 6.8, period: 145, phase: 2.40 },
-  { name: "Deimos", radius: 0.21, orbit: 9.3, period: 330, phase: 5.10 },
+  { name: "Phobos", physicalRadiusKm: 11.08, radius: MARS_RADIUS * 11.08 / MARS_MEAN_RADIUS_KM, orbit: 6.8, period: 145, phase: 2.40 },
+  { name: "Deimos", physicalRadiusKm: 6.2, radius: MARS_RADIUS * 6.2 / MARS_MEAN_RADIUS_KM, orbit: 9.3, period: 330, phase: 5.10 },
 ] as const;
 
 export function marsMoonPosition(

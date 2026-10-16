@@ -1,5 +1,9 @@
 # Mars and Saturn orbital places
 
+**Size correction:** the owner rejected the enlarged moon bodies after #1229.
+[Physical sizes and current verification](SCALE-CORRECTION.md) supersede the
+original body-size direction and the historical images described below.
+
 Built for the owner's 2026-10-16 request. Formal review: UNCHECKED — awaiting Muad'Dib. Owner visual acceptance remains open.
 
 ## Use

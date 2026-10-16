@@ -1,13 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { MARS_MOONS, MARS_RADIUS, marsMoonPosition, marsRenderSize } from "../marsOrbitModel";
+import { MARS_MOONS, MARS_RADIUS, MARS_MEAN_RADIUS_KM, marsMoonPosition, marsRenderSize } from "../marsOrbitModel";
 
 describe("Mars cinematic orbits", () => {
-  it("starts Phobos visibly beyond the limb and gives the moons different speeds and sizes", () => {
+  it("starts Phobos beyond the limb and gives the moons different speeds and sizes", () => {
     const [x, y, z] = marsMoonPosition(0, 0);
     expect(Math.hypot(x, y)).toBeGreaterThan(MARS_RADIUS);
     expect(z).toBeGreaterThan(0);
     expect(MARS_MOONS[0].period).toBeLessThan(MARS_MOONS[1].period);
     expect(MARS_MOONS[0].radius).toBeGreaterThan(MARS_MOONS[1].radius);
+  });
+
+  it("maps NASA/JPL physical mean radii directly to Mars without visibility enlargement", () => {
+    expect(MARS_MEAN_RADIUS_KM).toBe(3389.50);
+    expect(MARS_MOONS.map(moon => moon.physicalRadiusKm)).toEqual([11.08, 6.2]);
+    MARS_MOONS.forEach(moon => {
+      expect(moon.radius / MARS_RADIUS).toBeCloseTo(moon.physicalRadiusKm / MARS_MEAN_RADIUS_KM, 12);
+    });
   });
 
   it("carries each moon through real front and back depth and returns after its period", () => {

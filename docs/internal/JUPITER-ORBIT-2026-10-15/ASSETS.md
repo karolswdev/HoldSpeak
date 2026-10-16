@@ -1,5 +1,9 @@
 # Jupiter scene assets and references
 
+**Size correction 2026-10-16:** natural moon bodies now use physical radius
+ratios. See [current correction](../ORBITAL-PLACES-2026-10-16/SCALE-CORRECTION.md);
+this supersedes the historical cinematic-size description below.
+
 ## Local image
 
 `web/src/desk/gl/textures/jupiter-cassini.jpg` is NASA Photojournal PIA07782,

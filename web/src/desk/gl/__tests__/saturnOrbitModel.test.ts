@@ -1,11 +1,18 @@
 import { describe, expect, it } from "vitest";
 import {
-  SATURN_MOONS, SATURN_RADIUS, SATURN_RING_INNER, SATURN_RING_OUTER,
+  SATURN_MOONS, SATURN_RADIUS, SATURN_EQUATORIAL_RADIUS_KM, SATURN_RING_INNER, SATURN_RING_OUTER,
   SATURN_CASSINI_INNER, SATURN_CASSINI_OUTER, saturnFraming,
   saturnMoonPosition, saturnRenderSize,
 } from "../saturnOrbitModel";
 
 describe("Saturn cinematic model", () => {
+  it("scales solid moon radii against Saturn's physical equatorial radius", () => {
+    expect(SATURN_EQUATORIAL_RADIUS_KM).toBe(60_268);
+    expect(SATURN_MOONS.map(moon => moon.physicalRadiusKm)).toEqual([2574.76, 252.10]);
+    expect(SATURN_MOONS[0].radius / SATURN_RADIUS).toBeCloseTo(2574.76 / 60_268, 14);
+    expect(SATURN_MOONS[1].radius / SATURN_RADIUS).toBeCloseTo(252.10 / 60_268, 14);
+  });
+
   it("keeps two distinct staggered passes with front and back depth", () => {
     expect(SATURN_MOONS.map(moon => moon.name)).toEqual(["Titan", "Enceladus"]);
     expect(SATURN_MOONS[0].radius).toBeGreaterThan(SATURN_MOONS[1].radius * 2);

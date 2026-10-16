@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  JUPITER_CLOUD_FLOW, JUPITER_ENCOUNTER_WINDOW_SECONDS, JUPITER_MOONS, JUPITER_RADIUS,
+  JUPITER_CLOUD_FLOW, JUPITER_ENCOUNTER_WINDOW_SECONDS, JUPITER_MOONS, JUPITER_RADIUS, JUPITER_MEAN_RADIUS_KM,
   jupiterEncounterAtTime, jupiterEncounterForWindow, jupiterMoonPosition,
   jupiterRenderSize, jupiterZonalDisplacement, makeJupiterRandom,
 } from "../jupiterOrbitModel";
@@ -8,6 +8,14 @@ import {
 const seed = 0x4a555049;
 
 describe("Jupiter orbital composition", () => {
+  it("uses NASA/JPL physical mean radii with no moon visibility enlargement", () => {
+    expect(JUPITER_MEAN_RADIUS_KM).toBe(69911);
+    const physicalRadii = [1821.49, 1560.80, 2631.20, 2410.30];
+    JUPITER_MOONS.forEach((moon, index) => {
+      expect(moon.physicalRadiusKm).toBe(physicalRadii[index]);
+      expect(moon.radius / JUPITER_RADIUS).toBeCloseTo(physicalRadii[index] / 69911, 12);
+    });
+  });
   it("starts with one foreground moon and three behind the planet", () => {
     const positions = JUPITER_MOONS.map((_, index) => jupiterMoonPosition(index, 0));
     expect(positions[0][2]).toBeGreaterThan(0);

@@ -1,5 +1,7 @@
-/** Cinematic scale and periods; these are not an ephemeris. */
+/** Physical body size ratios; orbit distances and periods remain authored. */
 export const JUPITER_RADIUS = 5.85;
+/** NASA/JPL volume-equivalent mean radius: https://ssd.jpl.nasa.gov/planets/phys_par.html */
+export const JUPITER_MEAN_RADIUS_KM = 69911;
 export const JUPITER_ENCOUNTER_WINDOW_SECONDS = 600;
 
 /** Bounded authored flow: neighbouring jets oppose, without hours of growing shear. */
@@ -20,11 +22,12 @@ export function jupiterZonalDisplacement(latitude: number, elapsed: number): num
     * Math.sin(Math.max(0, elapsed) * JUPITER_CLOUD_FLOW.jetRate);
 }
 
+/** Moon mean radii: https://ssd.jpl.nasa.gov/sats/phys_par/ */
 export const JUPITER_MOONS = [
-  { name: "Io", radius: 0.30, orbit: 7.7, period: 160, phase: 2.42 },
-  { name: "Europa", radius: 0.24, orbit: 9.1, period: 240, phase: 4.41 },
-  { name: "Ganymede", radius: 0.39, orbit: 10.6, period: 360, phase: 4.83 },
-  { name: "Callisto", radius: 0.34, orbit: 12.1, period: 480, phase: 4.57 },
+  { name: "Io", physicalRadiusKm: 1821.49, radius: JUPITER_RADIUS * 1821.49 / JUPITER_MEAN_RADIUS_KM, orbit: 7.7, period: 160, phase: 2.42 },
+  { name: "Europa", physicalRadiusKm: 1560.80, radius: JUPITER_RADIUS * 1560.80 / JUPITER_MEAN_RADIUS_KM, orbit: 9.1, period: 240, phase: 4.41 },
+  { name: "Ganymede", physicalRadiusKm: 2631.20, radius: JUPITER_RADIUS * 2631.20 / JUPITER_MEAN_RADIUS_KM, orbit: 10.6, period: 360, phase: 4.83 },
+  { name: "Callisto", physicalRadiusKm: 2410.30, radius: JUPITER_RADIUS * 2410.30 / JUPITER_MEAN_RADIUS_KM, orbit: 12.1, period: 480, phase: 4.57 },
 ] as const;
 
 export type JupiterEncounterKind = "pioneer" | "voyager" | "monolith";
