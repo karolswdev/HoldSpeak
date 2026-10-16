@@ -146,6 +146,13 @@ describe("RecallFace (HS-200-13)", () => {
     expect(within(current).getByRole("button", { name: "Open the Project: Q4 platform" })).toBeTruthy();
     expect(within(current).getByRole("group", { name: "Project" })).toBeTruthy();
     expect(within(current).getByRole("button", { name: "Carry into brief" }).className).toContain("btn--primary");
+    const title = within(current).getByTestId("recall-card-title");
+    const rationale = within(current).getByTestId("recall-rationale");
+    const source = within(current).getByTestId("recall-open-source");
+    const carry = within(current).getByTestId("recall-carry");
+    expect(title.compareDocumentPosition(rationale) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(rationale.compareDocumentPosition(source) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(source.compareDocumentPosition(carry) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
     const superseded = cards[1];
     expect(within(superseded).getByTestId("recall-superseded-by").textContent).toBe("SUPERSEDED BY DEC 09-07");

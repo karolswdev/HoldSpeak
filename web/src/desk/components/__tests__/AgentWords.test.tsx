@@ -54,10 +54,9 @@ describe("AgentWords: the subset", () => {
     expect(el.querySelector("p:last-child")?.textContent).toBe("Done.");
   });
 
-  it("a bulleted list nested one level; a heading is a bold line, no heading tag", () => {
+  it("a bulleted list retains hierarchy and semantic heading depth", () => {
     const el = draw("# Plan\n- one\n  - one a\n- two");
-    expect(el.querySelector("h1,h2,h3,h4,h5,h6")).toBeNull();
-    expect(el.querySelector("strong.aw-h")?.textContent).toBe("Plan");
+    expect(el.querySelector("h1")?.textContent?.trim()).toBe("Plan");
     const top = el.querySelector("ul")!;
     expect(top.querySelectorAll(":scope > li")).toHaveLength(2);
     expect(top.querySelector("li > ul > li")?.textContent).toBe("one a");
@@ -73,10 +72,11 @@ describe("AgentWords: the subset", () => {
     expect(el.querySelectorAll("p br")).toHaveLength(1);
   });
 
-  it("a link is its text and then its address, never an anchor", () => {
+  it("HTTP links preserve labels and need an explicit press", () => {
     const el = draw("See [the docs](https://example.com/docs) and <https://x.dev>.");
-    expect(el.querySelector("a")).toBeNull();
-    expect(el.textContent).toBe("See the docs https://example.com/docs and https://x.dev.");
+    expect(el.querySelector("a")?.getAttribute("href")).toBe("https://example.com/docs");
+    expect(el.querySelector("a")?.textContent).toBe("the docs");
+    expect(el.textContent).toBe("See the docs and https://x.dev.");
   });
 
   it("an image is its alt text in brackets", () => {
@@ -90,9 +90,8 @@ describe("AgentWords: the subset", () => {
     expect(el.textContent).toContain("<b>x</b>");
   });
 
-  it("long tokens break after / _ - .", () => {
+  it("long code tokens retain their exact text", () => {
     const el = draw("`hs/project_item-pitem_d25d3fc020be4d8cbc90269fc17da3f7`");
-    expect(el.querySelectorAll("code wbr").length).toBeGreaterThanOrEqual(4);
     expect(el.querySelector("code")?.textContent).toBe("hs/project_item-pitem_d25d3fc020be4d8cbc90269fc17da3f7");
   });
 

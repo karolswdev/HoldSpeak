@@ -67,17 +67,6 @@ export function sinceFridayLabel(periodStart: string | undefined): string {
 }
 
 /** Source emblem chip from source_ref (for SINCE FRIDAY items). */
-function sourceEmblem(sourceRef: string | null | undefined): string | null {
-  if (!sourceRef) return null;
-  const lower = sourceRef.toLowerCase();
-  if (lower.startsWith("meeting:") || lower.startsWith("meeting_watch:")) return "MTG";
-  if (lower.startsWith("calendar:") || lower.startsWith("calendar_event:")) return null;
-  if (lower.includes("github") || lower.includes("gh")) return "GH";
-  if (lower.includes("jira") || lower.includes("confluence")) return "J";
-  if (lower.startsWith("decision:") || lower.startsWith("actuator_proposal:")) return null;
-  if (lower.startsWith("pipeline:") || lower.startsWith("pipeline-event:")) return "SYS";
-  return null;
-}
 
 /** Replace YYYY-MM-DD in a string with MON DD (e.g. "SEP 04"). */
 function humanizeDate(text: string): string {
@@ -183,6 +172,10 @@ function composedThisWeek(item: BriefItem): boolean {
 
 export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; onOpenFollowThrough?: (id: string) => void }) {
   const [brief, setBrief] = useState<MondayBrief | null>(null);
+  // Activity resumes effects on return. Keep the populated body (and its
+  // open Send well) mounted while that resume read is in flight.
+  const hasBrief = useRef(false);
+  hasBrief.current = brief !== null;
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
@@ -223,7 +216,7 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
   // A Brief made in another window, or by an agent, shows here.
   useOnDeskChanged(() => { void load(true); });
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void load(hasBrief.current); }, [load]);
 
   // PHILO-17: the brief was frozen at its first generation. When the hub says
   // the desk is newer (a meeting, a decision, an engine), make it again.
@@ -378,6 +371,13 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
 
   /* ── Body ─────────────────────────────────────────────────────── */
 
+  const standingAnswers = (
+    <StandingPagesSection
+      pages={[...standingPages.filter((page) => page.slug === "what-i-owe"), ...standingPages.filter((page) => page.slug !== "what-i-owe")]}
+      presentation="questions"
+    />
+  );
+
   const body = loading ? (
     <SurfaceState loading />
   ) : error ? (
@@ -390,13 +390,13 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
         onAction={() => void generate()}
         actionLabel={generating ? "Generating..." : "Generate"}
       />
-      <StandingPagesSection pages={standingPages} />
+      {standingAnswers}
     </>
   ) : brief.is_empty ? (
     <>
       {/* PHILO-17 (owner): one quiet line, never an empty well. */}
       <p className="intelligence-brief-quiet" data-testid="brief-no-changes">No changes since the last brief</p>
-      <StandingPagesSection pages={standingPages} />
+      {standingAnswers}
     </>
   ) : (
     <>
@@ -423,7 +423,60 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
         ) : null;
       })()}
 
-      <StandingPagesSection pages={standingPages} />
+      {standingAnswers}
+
+      {/* ── SINCE FRIDAY: flat rows, no folds, no "00" ─────────── */}
+      {hasLookback ? (
+        <div className="intelligence-brief-section" data-testid="brief-since-friday">
+          <div className="intelligence-brief-section-caption">{sinceFridayLabel(brief.period_start)}</div>
+          <div className="intelligence-brief-flat" data-testid="brief-lookback-rows">
+            {lookbackItems.map((item) => {
+              const state = shelf[item.id];
+              const parsed = parseLookbackItem(item);
+              const blocker = blockerKey(item.source_ref);
+              if (blocker) {
+                return (
+                  <div key={item.id} className="intelligence-brief-sf-row intelligence-brief-blocker" data-testid="brief-blocker-row">
+                    {/* PHILO-17: one quiet row: the words, then a compact verb
+                        (the Meetings grammar). */}
+                    <span className="kit-pill" data-tone="warn">{parsed.primary}</span>
+                    <Button dense onClick={() => openBlocker(blocker)} data-testid={`brief-blocker-verb-${blocker}`}>
+                      {parsed.detail || "Choose engine"}
+                    </Button>
+                  </div>
+                );
+              }
+              return (
+                <div key={item.id} className="intelligence-brief-sf-row" data-testid="brief-sf-row"
+                  data-selected={selectedId === item.id || undefined}>
+                  <div className="intelligence-brief-sf-body">
+                    <Button variant="chrome" className="intelligence-brief-sf-primary"
+                      aria-current={selectedId === item.id || undefined}
+                      onClick={() => {
+                        const ftId = item.source_ref?.match(/^(?:follow-through|action_item):(.+)$/)?.[1];
+                        if (ftId && onOpenFollowThrough) { onOpenFollowThrough(ftId); return; }
+                        // PHILO-13-06 (B1): the row opens the object it names in
+                        // its own window, and stays selected here for triage.
+                        clear?.();
+                        setSelectedPersonId(null);
+                        setSelectedId(item.id);
+                        refOpener(item.source_ref)?.();
+                      }}
+                    >
+                      {parsed.primary}
+                    </Button>
+                  </div>
+                  <div className="intelligence-brief-sf-facts">
+                    {parsed.kind ? <span className="intelligence-brief-sf-kind" data-testid="brief-sf-kind">{parsed.kind}</span> : null}
+                    {parsed.detail ? <span className="intelligence-brief-sf-detail">{humanizeDate(parsed.detail)}</span> : null}
+                    {state ? <span className="intelligence-brief-shelf-state">{state}</span> : null}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
 
       {/* ── THIS WEEK (absent when empty per A.8) ──────────────── */}
       {hasThisWeek ? (
@@ -472,70 +525,6 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
               ) : null}
             </div>
           ))}
-        </div>
-      ) : null}
-
-      {/* ── SINCE FRIDAY: flat rows, no folds, no "00" ─────────── */}
-      {hasLookback ? (
-        <div className="intelligence-brief-section" data-testid="brief-since-friday">
-          <div className="intelligence-brief-section-caption">{sinceFridayLabel(brief.period_start)}</div>
-          <div className="intelligence-brief-flat" data-testid="brief-lookback-rows">
-            {lookbackItems.map((item) => {
-              const state = shelf[item.id];
-              const emblem = sourceEmblem(item.source_ref);
-              const parsed = parseLookbackItem(item);
-              const blocker = blockerKey(item.source_ref);
-              if (blocker) {
-                return (
-                  <div key={item.id} className="intelligence-brief-sf-row intelligence-brief-blocker" data-testid="brief-blocker-row">
-                    {/* PHILO-17: one quiet row: the words, then a compact verb
-                        (the Meetings grammar). */}
-                    <span className="kit-pill" data-tone="warn">{parsed.primary}</span>
-                    <Button dense onClick={() => openBlocker(blocker)} data-testid={`brief-blocker-verb-${blocker}`}>
-                      {parsed.detail || "Choose engine"}
-                    </Button>
-                  </div>
-                );
-              }
-              return (
-                <div key={item.id} className="intelligence-brief-sf-row" data-testid="brief-sf-row"
-                  data-selected={selectedId === item.id || undefined}>
-                  {parsed.kind ? (
-                    <span className="intelligence-brief-sf-kind" data-testid="brief-sf-kind">{parsed.kind}</span>
-                  ) : null}
-                  <div className="intelligence-brief-sf-body">
-                    <span className="intelligence-brief-sf-primary"
-                      role="button"
-                      tabIndex={0}
-                      aria-current={selectedId === item.id || undefined}
-                      onClick={() => {
-                        const ftId = item.source_ref?.match(/^(?:follow-through|action_item):(.+)$/)?.[1];
-                        if (ftId && onOpenFollowThrough) { onOpenFollowThrough(ftId); return; }
-                        // PHILO-13-06 (B1): the row opens the object it names in
-                        // its own window, and stays selected here for triage.
-                        clear?.();
-                        setSelectedPersonId(null);
-                        setSelectedId(item.id);
-                        refOpener(item.source_ref)?.();
-                      }}
-                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") e.currentTarget.click(); }}
-                    >
-                      {parsed.primary}
-                    </span>
-                    {parsed.detail ? (
-                      <span className="intelligence-brief-sf-detail">{humanizeDate(parsed.detail)}</span>
-                    ) : null}
-                  </div>
-                  {emblem ? (
-                    <span className="surface-token" data-chip data-testid="brief-source-emblem">{emblem}</span>
-                  ) : null}
-                  {state ? (
-                    <span className="intelligence-brief-shelf-state">{state}</span>
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
         </div>
       ) : null}
 

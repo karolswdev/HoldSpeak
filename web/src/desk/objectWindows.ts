@@ -11,6 +11,7 @@
  * import: the store calls in here. */
 import type { Primitive } from "../lib/primitives";
 import type { WorldObject } from "./world";
+import { heldArtifactSource } from "./api";
 
 export type MeetingView = "outcomes" | "review" | "artifacts";
 
@@ -123,6 +124,11 @@ export function takePersonLens(relationshipId: string): PersonLens | null {
  * it (the desk reads the newest meetings only; a person is not a desk
  * item). The window reads the rest itself. */
 export function objectWindowStandIn(ref: string): WorldObject | null {
+  if (ref.startsWith("artifact:")) {
+    const id = ref.slice("artifact:".length).split("#", 1)[0];
+    const artifact = heldArtifactSource(id);
+    return artifact ? { kind: "artifact", id, title: artifact.title, ref: artifact } : null;
+  }
   if (ref.startsWith("meeting:") && ref.length > "meeting:".length) {
     const id = ref.slice("meeting:".length);
     return {

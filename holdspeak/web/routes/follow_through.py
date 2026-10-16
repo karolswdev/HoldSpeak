@@ -99,9 +99,12 @@ def build_follow_through_router(ctx: WebContext) -> APIRouter:
         project_id: str | None = None,
         owner: str | None = None,
         state: str | None = None,
+        focus_id: str | None = None,
     ) -> dict[str, list[dict[str, Any]]]:
         try:
-            raw_board = service.board(principal(request), project_id=project_id, owner=owner, state=state)
+            raw_board = service.board(
+                principal(request), project_id=project_id, owner=owner, state=state, focus_id=focus_id,
+            )
             board_dict = _board_dict(raw_board)
             return _enrich_board(board_dict, raw_board)
         except ValueError as exc:

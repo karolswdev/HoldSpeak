@@ -503,6 +503,16 @@
       "consumers": []
     },
     {
+      "path": "/api/artifacts/{artifact_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.sync",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/ask",
       "methods": [
         "POST"

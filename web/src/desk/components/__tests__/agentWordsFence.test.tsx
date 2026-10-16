@@ -1,7 +1,7 @@
 // Phase 16 fence — every surface that prints an agent's words draws them
 // with AgentWords: no literal `**`, no literal backtick pair, no literal
-// `1. ` marker when the input is markdown; HTML stays text; a link is no
-// anchor; a compact line never ends inside a word.
+// `1. ` marker when the input is markdown; HTML stays text; links navigate
+// on a press; a compact line never ends inside a word.
 // Canvas: docs/internal/philo/phase-16/02-canvas/agent-words.html.
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -30,14 +30,18 @@ describe("the agent-words surfaces render markdown", () => {
     expect(q.querySelector("ol")).not.toBeNull();
   });
 
-  it("the ask well: HTML is text, a link is no anchor", () => {
+  it("the ask well: HTML is text and an external link retains its label", () => {
     const { container } = render(
       <AskWell agent="pi" question={HOSTILE} value="" onChange={() => {}} onAnswer={() => {}} />,
     );
     const q = container.querySelector(".ask-well-question") as HTMLElement;
-    expect(q.querySelector("img,a")).toBeNull();
+    expect(q.querySelector("img")).toBeNull();
     expect(q.textContent).toContain('<img src=x onerror="alert(1)">');
-    expect(q.textContent).toContain("https://evil.example/x");
+    const link = q.querySelector("a")!;
+    expect(link.textContent).toBe("here");
+    expect(link).toHaveAttribute("href", "https://evil.example/x");
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noreferrer noopener");
   });
 
   it("the rail: SAYS whole, ASKS one line", () => {
@@ -59,7 +63,13 @@ describe("the agent-words surfaces render markdown", () => {
     noLiteralMarks(rail.textContent ?? "");
     expect(rail.querySelector(".lane-rail-says ol")).not.toBeNull();
     expect(rail.querySelector(".lane-rail-words-line.is-compact")).not.toBeNull();
-    expect(rail.querySelector("a,img")).toBeNull();
+    expect(rail.querySelector("img")).toBeNull();
+    expect(rail.textContent).toContain('<img src=x onerror="alert(1)">');
+    const link = rail.querySelector("a")!;
+    expect(link.textContent).toBe("here");
+    expect(link).toHaveAttribute("href", "https://evil.example/x");
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noreferrer noopener");
   });
 
   it("the Needs row (ASKS): compact, two lines", () => {

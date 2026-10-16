@@ -11,6 +11,8 @@ import type { PulloutContentProps } from "./types";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { Button } from "../../components/signal/Signal";
 import { ArtifactSendWells } from "../documentSendsLazy";
+import { ActionNotice, StateChip, SurfaceWell } from "../surface";
+import "./artifact-reading.css";
 
 export function ArtifactPullout({ object: o }: PulloutContentProps) {
   const items = useDesk((s) => s.items);
@@ -21,16 +23,26 @@ export function ArtifactPullout({ object: o }: PulloutContentProps) {
   const { copy, receipt: copyReceipt } = useCopyReceipt();
   const body = String(ir.bodyMarkdown || "");
   const lin = lineage(items, ir.sources);
+  const read = ir.sourceRead;
+  const hasMaterial = read?.hasMaterial !== false;
+  const reviewState = ir.status === "pending-review" ? { state: "warning" as const, label: "Awaiting review" }
+    : ir.status === "rejected" ? { state: "failure" as const, label: "Rejected" } : null;
 
   return (
     <>
       <div className="desk-pullout-body desk-surface-body">
-        <section>
+        {read ? <ActionNotice role="alert" tone="danger" action={{ label: "Retry read", onClick: () => void useDesk.getState().refresh() }}>
+          <StateChip state={read.state === "unavailable" ? "unreachable" : "failure"} label={read.state === "unavailable" ? "Source unavailable" : "Read failed"} />
+          {hasMaterial ? <StateChip state="warning" label="Last read" /> : null}
+          {read.state === "failed" ? <span>{humanizeWireValue(read.message)}</span> : null}
+        </ActionNotice> : null}
+        {reviewState ? <StateChip {...reviewState} /> : null}
+        {hasMaterial ? <section>
           <h3>{humanizeWireValue(String(ir.artifactType || "artifact"))}</h3>
-          <Material>{body}</Material>
-        </section>
+          <div className="artifact-reading"><SurfaceWell><Material>{body}</Material></SurfaceWell></div>
+        </section> : null}
         {/* PHILO-13-15 (C5, canvas P5): the artifact's SEND well. */}
-        <ArtifactSendWells id={o.id} title={String(ir.title || o.title || "Artifact")} type={String(ir.artifactType || "artifact")} />
+        {hasMaterial ? <ArtifactSendWells id={o.id} title={String(ir.title || o.title || "Artifact")} type={String(ir.artifactType || "artifact")} /> : null}
         {lin.any && (
           <section>
             <h3>Lineage</h3>
@@ -46,17 +58,17 @@ export function ArtifactPullout({ object: o }: PulloutContentProps) {
             </div>
           </section>
         )}
-        <DeskFilingStrip
+        {hasMaterial ? <DeskFilingStrip
           objectRef={resourceRef}
           objectKind={o.kind}
           objectId={o.id}
-        />
+        /> : null}
       </div>
       <SurfaceFooter receipt={copyReceipt} verbs={<>
-        <Button dense variant="ghost" onClick={() => void copy(body)}>Copy</Button>
-        <Button dense variant="ghost" onClick={() => openSurfaceOr("dictate", "/dictation", resourceRef)}>
+        {hasMaterial ? <Button dense variant="ghost" onClick={() => void copy(body)}>Copy</Button> : null}
+        {hasMaterial ? <Button dense variant="ghost" onClick={() => openSurfaceOr("dictate", "/dictation", resourceRef)}>
           Dictate about this
-        </Button></>} />
+        </Button> : null}</>} />
     </>
   );
 }

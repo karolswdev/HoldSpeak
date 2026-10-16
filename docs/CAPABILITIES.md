@@ -63,7 +63,7 @@ Missing shards: **none**.
 | `meeting.plugin.decision_capture` | Decision capture | Capture typed decisions, open questions, and bounded transcript provenance. | experimental | user | source_and_assertions_inspected | no | possible |
 | `desk.open` | Open Desk | Open the Workbench surface and its current workspace. | built_unreleased | user | tests_executed | no | local |
 | `desk.arrange` | Arrange windows | Move, resize, snap, minimize, maximize and restore Desk windows. | built_unreleased | user | source_and_assertions_inspected | no | local |
-| `desk.inspect` | Inspect Desk object | Open a selected object in a named window surface with identity, state, provenance and verbs. | partial | user | source_and_assertions_inspected | no | possible |
+| `desk.inspect` | Inspect Desk object | Open a selected object or exact cited task/output with identity, stored state, provenance and available verbs. | partial | user | tests_executed | no | possible |
 | `desk.execute` | Run a Desk verb | Offer and run a named operation for the current Desk context. | partial | user | source_and_assertions_inspected | no | possible |
 | `desk.drop` | Drop Desk object or file | Apply a named internal or external drop effect only when the source and target contract allows it. | partial | user | source_and_assertions_inspected | no | possible |
 | `desk.persist` | Persist workspace | Restore and save the local Desk arrangement with a bounded versioned shape. | built_unreleased | user | source_and_assertions_inspected | no | local |
@@ -76,7 +76,7 @@ Missing shards: **none**.
 | `people.prep.record` | Record from 1:1 preparation | Start a meeting from its linked calendar event while keeping the person and unsent agenda in place. | built_unreleased | user | tests_executed | no | possible |
 | `desk.engines.find_lan` | Find model servers on LAN | Find nearby OpenAI-compatible model servers and offer their models in the existing engine picker. | built_unreleased | user | tests_executed | no | possible |
 | `desk.preferences` | Edit preferences | Save local preferences while preserving calendar identity and the authoritative model assignments. | experimental | user | tests_executed | no | local |
-| `desk.follow_through` | Act on follow-through | Read tasks by date and review state, assign owners and dates, complete or snooze work, and open its recorded source. | built_unreleased | user | tests_executed | no | local |
+| `desk.follow_through` | Act on follow-through | Read tasks by date and review state, inspect a cited held task, assign owners and dates, complete or snooze work, and open its recorded source. | built_unreleased | user | tests_executed | no | local |
 | `agents.thread_persistent` | Persistent Thread chat | Save a multi-turn assistant conversation with branches, drafts, refs and kept results. | experimental | user | source_and_assertions_inspected | no | possible |
 | `agents.thread_tool_loop` | Persistent Thread tool loop | Offer a bounded MCP tool palette inside a Thread turn and retain tool results and receipts. | experimental | user | source_and_assertions_inspected | no | possible |
 | `agents.interview` | Interview conversation | Use one owner-only Thread mode to record sourced facts and reviewable suggestions. | experimental | user | source_and_assertions_inspected | no | possible |
@@ -84,7 +84,7 @@ Missing shards: **none**.
 | `knowledge.grounding` | Grounded evidence hydration | Resolve explicit meetings, artifacts, projects, rails and optional memory matches into bounded evidence blocks. | experimental | user | source_and_assertions_inspected | no | possible |
 | `knowledge.memory_search` | Long-horizon memory search | Search retained notes, meetings, decisions, threads, projects and workbench items with principal-scoped filters. | experimental | user | source_and_assertions_inspected | no | local |
 | `workflows.linear_run` | Linear Workflow run | Run a validated linear workflow with frozen route evidence, child receipts and a retained artifact. | experimental | user | source_and_assertions_inspected | no | possible |
-| `coder.observation` | Coder session observation | Show active Claude/Codex sessions and bounded, hash-gated pane output. | experimental | user | tests_executed | no | local |
+| `coder.observation` | Coder session observation | Show active Claude/Codex sessions, structured captured reports and bounded, hash-gated pane output. | experimental | user | tests_executed | no | local |
 | `coder.reply_and_draft` | Coder reply and draft | Draft, keep, edit and explicitly deliver a reply to one verified Coder process target. | experimental | user | source_and_assertions_inspected | no | possible |
 | `coder.gate` | Coder Gate held tool call | Hold a matched risky Coder tool call for owner decision with bounded previews, idempotency and fail-closed recovery. | experimental | operator | source_and_assertions_inspected | no | possible |
 | `integration.activity_connectors` | Activity connector packs | Preview and run local-first activity connector packs with explicit permissions and scoped rows. | experimental | developer | source_and_assertions_inspected | no | possible |

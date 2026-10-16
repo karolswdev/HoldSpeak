@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 
 from ...principals import UNAUTHENTICATED
 from ...db import get_observer
-from ...services.errors import ConflictError, ServiceError, ValidationError
+from ...services.errors import ConflictError, NotFound, ServiceError, ValidationError
 from ...services.sync_service import (
     SYNC_KINDS,
     _MERGEABLE,
@@ -22,6 +22,8 @@ from ..context import WebContext
 
 def _error(exc: ServiceError) -> JSONResponse:
     payload = {"success": False, "error": exc.code, "detail": exc.detail, **exc.context}
+    if isinstance(exc, NotFound):
+        return JSONResponse(payload, status_code=404)
     if isinstance(exc, ConflictError):
         return JSONResponse(payload, status_code=409)
     return JSONResponse(payload, status_code=422 if isinstance(exc, ValidationError) else 400)
@@ -34,6 +36,13 @@ def build_sync_router(ctx: WebContext) -> APIRouter:
         from ... import db as hsdb
         from ...services.sync_service import SyncService
         service = SyncService(hsdb.get_database(), hub_model_name=lambda: _hub_model_name(None), observer=get_observer())
+
+    @router.get("/api/artifacts/{artifact_id}")
+    async def api_get_artifact(artifact_id: str, request: Request) -> Any:
+        try:
+            return JSONResponse(service.get_artifact(getattr(request.state, "principal", UNAUTHENTICATED), artifact_id))
+        except ServiceError as exc:
+            return _error(exc)
 
     @router.get("/api/sync/pull")
     async def api_sync_pull(request: Request, limit: int = 50) -> Any:

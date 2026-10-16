@@ -142,19 +142,22 @@ export function StandingPagesSection({
   pages,
   onOpenRef = openRef,
   now,
+  presentation = "grouped",
 }: {
   pages: StandingPageWire[];
   onOpenRef?: (ref: string) => void;
   now?: Date;
+  /** Brief leads with the named answers, without a second generic heading. */
+  presentation?: "grouped" | "questions";
 }) {
   if (!pages.length) return null;
   const by = modelToken(pages);
   return (
-    <div data-testid="standing-pages">
+    <div data-testid="standing-pages" data-presentation={presentation}>
       <SurfaceSection
-        label={pages.length > 0 ? `Standing pages · ${pages.length}` : "Standing pages"}
+        label={presentation === "grouped" ? `Standing pages · ${pages.length}` : undefined}
         className="standing-pages-section"
-        actions={by ? <span className="standing-pages-model" data-testid="standing-pages-model">{by}</span> : undefined}
+        actions={presentation === "grouped" && by ? <span className="standing-pages-model" data-testid="standing-pages-model">{by}</span> : undefined}
       >
         <div className="standing-pages-grid">
           {pages.map((page) => (
@@ -169,6 +172,7 @@ export function StandingPagesSection({
             />
           ))}
         </div>
+        {presentation === "questions" && by ? <span className="standing-pages-model" data-testid="standing-pages-model">{by}</span> : null}
       </SurfaceSection>
     </div>
   );

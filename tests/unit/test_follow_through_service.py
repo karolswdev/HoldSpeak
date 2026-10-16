@@ -428,6 +428,94 @@ def test_snoozed_action_loop_is_excluded_from_active_lanes(db: Database) -> None
     assert board.overdue == []
 
 
+def _hold_action(db: Database, item_id: str, *, snoozed: bool, deferred: bool) -> str:
+    until = (date.today() + timedelta(days=2)).isoformat()
+    with db._connection() as conn:
+        if snoozed:
+            conn.execute(
+                "INSERT INTO cadence_loops "
+                "(id, source_type, source_id, title, status, snoozed_until) "
+                "VALUES (?, 'meeting_action', ?, 'Follow up', 'snoozed', ?)",
+                (f"loop-{item_id}", item_id, until),
+            )
+        if deferred:
+            conn.execute(
+                "INSERT INTO follow_through_proposals "
+                "(id, meeting_id, kind, text, source_plugin, fingerprint, action_item_id, deferred_until) "
+                "VALUES (?, 'meeting-1', 'action', 'Follow up', 'meeting_summary', ?, ?, ?)",
+                (f"proposal-{item_id}", item_id, item_id, f"{until}T00:00:00+00:00"),
+            )
+    return until
+
+
+@pytest.mark.parametrize("snoozed,deferred", [(True, False), (False, True), (True, True)])
+def test_focused_action_includes_only_exact_held_task_without_mutation(
+    db: Database, snoozed: bool, deferred: bool,
+) -> None:
+    for item_id in ("focused", "other-held", "active"):
+        _insert_action(db, item_id)
+    until = _hold_action(db, "focused", snoozed=snoozed, deferred=deferred)
+    _hold_action(db, "other-held", snoozed=True, deferred=True)
+    service = FollowThroughService(db)
+    tables = ("action_items", "cadence_loops", "follow_through_proposals")
+    with db._connection() as conn:
+        before = {table: [tuple(row) for row in conn.execute(f"SELECT * FROM {table} ORDER BY id")] for table in tables}
+
+    assert _card_ids(_board_cards(service)) == ["active"]
+    board = service.board(OWNER, focus_id="focused")
+    assert {card.id for card in board.waiting} == {"focused", "active"}
+    card = next(card for card in board.waiting if card.id == "focused")
+    assert card.status == "open"
+    assert card.source == "action_item"
+    assert card.snoozed_until == (until if snoozed else None)
+    assert card.deferred_until == (f"{until}T00:00:00+00:00" if deferred else None)
+    assert _card_ids(_board_cards(service)) == ["active"]
+    with db._connection() as conn:
+        after = {table: [tuple(row) for row in conn.execute(f"SELECT * FROM {table} ORDER BY id")] for table in tables}
+    assert after == before
+
+
+def test_focused_action_preserves_filters_and_terminal_or_missing_omission(db: Database) -> None:
+    _insert_action(db, "focused")
+    _hold_action(db, "focused", snoozed=True, deferred=True)
+    service = FollowThroughService(db)
+
+    for filters in ({"owner": "Grace"}, {"project_id": "another-project"}, {"state": "now"}):
+        board = service.board(OWNER, focus_id="focused", **filters)
+        assert not (board.now + board.waiting + board.unassigned + board.overdue)
+    missing = service.board(OWNER, focus_id="missing")
+    assert not (missing.now + missing.waiting + missing.unassigned + missing.overdue)
+    with db._connection() as conn:
+        conn.execute("UPDATE action_items SET status = 'done' WHERE id = 'focused'")
+    done = service.board(OWNER, focus_id="focused")
+    assert not (done.now + done.waiting + done.unassigned + done.overdue)
+
+
+def test_http_board_focus_id_reads_one_held_action(db: Database, monkeypatch: pytest.MonkeyPatch) -> None:
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    from holdspeak.web.context import WebContext
+    from holdspeak.web.routes import follow_through
+
+    for item_id in ("focused", "other-held"):
+        _insert_action(db, item_id)
+        _hold_action(db, item_id, snoozed=True, deferred=False)
+    monkeypatch.setattr(follow_through, "_enrich_board", lambda wire, board: wire)
+    app = FastAPI()
+    app.include_router(follow_through.build_follow_through_router(WebContext(
+        get_state=lambda: {}, follow_through_service=FollowThroughService(db),
+    )))
+    with TestClient(app) as client:
+        ordinary = client.get("/api/follow-through/board")
+        focused = client.get("/api/follow-through/board", params={"focus_id": "focused"})
+        filtered = client.get("/api/follow-through/board", params={"focus_id": "focused", "owner": "Grace"})
+    assert ordinary.status_code == focused.status_code == filtered.status_code == 200
+    assert not any(ordinary.json().values())
+    assert not any(filtered.json().values())
+    assert [card["id"] for card in focused.json()["waiting"]] == ["focused"]
+    assert focused.json()["waiting"][0]["snoozed_until"]
+
+
 def test_new_note_task_snooze_creates_one_durable_canonical_loop(db: Database) -> None:
     item = _add_note_task(db)
     item_id = str(item["id"])

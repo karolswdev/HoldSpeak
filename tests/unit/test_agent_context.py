@@ -169,7 +169,7 @@ def test_extract_last_assistant_text_from_mixed_content_fixture() -> None:
 
     text = extract_last_assistant_text("claude", path)
 
-    assert text == "I will inspect the repo. Do you want me to update the README next?"
+    assert text == "I will inspect the repo.\nDo you want me to update the README next?"
 
 
 def test_extract_last_assistant_text_from_codex_fixture() -> None:
@@ -257,6 +257,61 @@ def test_ingest_capture_messages_is_explicit_and_bounded(tmp_path: Path) -> None
     assert with_capture.last_assistant_text_at == "2026-05-10T00:00:00Z"
     assert with_capture.awaiting_response is True
     assert with_capture.capture_messages is True
+
+
+def test_capture_preserves_markdown_through_question_and_report(tmp_path: Path) -> None:
+    """Both transcript formats and Codex Stop keep the document intact."""
+    document = (
+        "## Plan\n\n- First\n  - Nested\n\n"
+        "| Job | State |\n| --- | --- |\n| Read | Ready |\n\n"
+        "```python\n  print('ready')\n```\n\nMay I proceed?"
+    )
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / ".git").mkdir()
+    for agent in ("claude", "codex"):
+        transcript = tmp_path / f"{agent}.jsonl"
+        record = (
+            {"type": "assistant", "message": {"role": "assistant", "content": [{"type": "text", "text": document}]}}
+            if agent == "claude"
+            else {"type": "response_item", "payload": {"type": "message", "role": "assistant", "content": [{"type": "output_text", "text": document}]}}
+        )
+        transcript.write_text(json.dumps(record) + "\n", encoding="utf-8")
+        assert extract_last_assistant_text(agent, transcript) == document
+        assert extract_last_assistant_text(agent, transcript, max_chars=32) == document[-32:]
+        session = ingest_agent_hook_event(
+            agent=agent,
+            payload={"session_id": agent, "hook_event_name": "Stop", "cwd": str(repo), "transcript_path": str(transcript)},
+            state_path=tmp_path / f"{agent}-state.json",
+            capture_messages=True,
+        )
+        assert session.last_assistant_text == document
+        assert session.question == document
+    codex = ingest_agent_hook_event(
+        agent="codex",
+        payload={"session_id": "stop", "hook_event_name": "Stop", "cwd": str(repo), "last_assistant_message": document},
+        state_path=tmp_path / "stop-state.json",
+    )
+    assert codex.question == document
+
+
+def test_codex_stop_document_keeps_capture_bound_and_secret_filter(tmp_path: Path) -> None:
+    from holdspeak.agent_context.sessions import DEFAULT_ASSISTANT_CAPTURE_MAX_CHARS
+
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / ".git").mkdir()
+    tail = "\n\n## Plan\n\nMay I proceed?"
+    document = "x" * DEFAULT_ASSISTANT_CAPTURE_MAX_CHARS + tail
+    payload = {"session_id": "bounded", "hook_event_name": "Stop", "cwd": str(repo), "last_assistant_message": document}
+    session = ingest_agent_hook_event(agent="codex", payload=payload, state_path=tmp_path / "bounded.json")
+    assert session.question == document[-DEFAULT_ASSISTANT_CAPTURE_MAX_CHARS:]
+    secret = ingest_agent_hook_event(
+        agent="codex",
+        payload={**payload, "session_id": "secret", "last_assistant_message": "## Plan\n\nsk-proj-" + "a" * 48 + "\n\nMay I proceed?"},
+        state_path=tmp_path / "secret.json",
+    )
+    assert secret.question == "[redacted: possible secret]"
 
 
 def test_user_prompt_submit_clears_captured_assistant_text(tmp_path: Path) -> None:

@@ -531,3 +531,26 @@
     order: 3;
   }
 }
+
+/* Day: the upcoming job leads; long meeting and proposal names stay readable. */
+.desk-next .today-day {
+  font-size: var(--desk-type-display-size);
+}
+.desk-next .today-row-name,
+.desk-next .today-row-title {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+  font-size: var(--desk-type-primary-size);
+}
+.desk-next .today-plate > * {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.desk-next .today-next,
+.desk-next .today-row,
+.desk-next .today-next-sprite {
+  border-radius: 0;
+}

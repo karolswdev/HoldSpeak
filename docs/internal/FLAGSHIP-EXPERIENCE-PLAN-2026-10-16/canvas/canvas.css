@@ -1,0 +1,29 @@
+/* Direction-only composition on the imported product material and species. */
+.canvas-ground { --text:var(--wb-text); --text-muted:var(--wb-muted); --text-faint:var(--wb-muted); --border:var(--wb-rule); --surface-1:var(--wb-field); --surface-2:var(--wb-well); --desk-window-well:var(--wb-well); --warn:var(--wb-warn-ink); --desk-window-etch:var(--wb-sunken); min-height:100dvh; padding:var(--space-3); box-sizing:border-box; background:var(--desk-floor); color:var(--text); text-align:left; }
+.canvas-window { max-width:1060px; margin:auto; min-width:0; border:1px solid var(--wb-ink); background:var(--wb-field); box-shadow:var(--wb-raised); }
+.canvas-window-title { padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--wb-ink); background:var(--wb-stipple-fine),var(--wb-steel); font:600 15px/1.4 var(--font-sans); }
+.canvas-body { container-type:inline-size; container-name:surface; display:block; min-width:0; padding:var(--space-3); }
+.canvas-body > div { min-width:0; }
+.canvas-brief { display:grid; gap:var(--space-3); }
+.canvas-body .intelligence-brief-period, .canvas-body .today-day { font:650 26px/1.2 var(--font-display); }
+.canvas-body .intelligence-brief-generated { margin:0; line-height:1.4; }
+.canvas-body .standing-page { box-shadow:var(--wb-sunken); }
+.canvas-body .standing-page-sentence { display:block; margin:0 0 var(--space-1); }
+.canvas-body .surface-row-line { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:start; gap:var(--space-1) var(--space-2); padding:var(--space-2) 0; }
+.canvas-body .surface-row-main, .canvas-body .surface-row-open { grid-column:1 / -1; display:flex; flex-direction:column; align-items:stretch; width:100%; white-space:normal; gap:var(--space-1); }
+.canvas-body .surface-token { white-space:normal; overflow-wrap:anywhere; }
+.canvas-body .surface-row-text strong, .canvas-body .surface-row-text small { white-space:normal; overflow:visible; text-overflow:clip; overflow-wrap:anywhere; }
+.canvas-body .surface-row-text strong { font:600 15px/1.4 var(--font-sans); color:var(--wb-text); }
+.canvas-body .surface-row-text small { font:400 13px/1.5 var(--font-sans); }
+.canvas-body .surface-row-meta { grid-column:1; min-width:0; overflow-wrap:anywhere; white-space:normal; font:500 12px/1.5 var(--font-mono); }
+.canvas-facts { display:flex; align-items:center; flex-wrap:wrap; gap:var(--space-2); min-width:0; }
+.canvas-body .surface-section { min-width:0; }
+.canvas-body .today-side .surface-section { display:grid; gap:var(--space-2); }
+.canvas-body .today-side .surface-section > * { min-width:0; max-width:100%; overflow-wrap:anywhere; white-space:normal; }
+.canvas-body .today-side .surface-token { line-height:1.5; }
+.canvas-body .today-side .canvas-facts { gap:var(--space-2); }
+.canvas-body .recall-card-title { white-space:normal; overflow:visible; text-overflow:clip; overflow-wrap:anywhere; }
+.canvas-body .follow-through-provenance { display:grid; gap:var(--space-2); }
+.canvas-body .today-next { box-shadow:var(--wb-raised); }
+.canvas-body .today-row, .canvas-body .today-next-sprite { border-radius:0; }
+@container surface (max-width:560px) { .canvas-body .today-row-name, .canvas-body .today-row-title { white-space:normal; overflow:visible; text-overflow:clip; } .canvas-body .today-next-bar { flex-wrap:wrap; } }

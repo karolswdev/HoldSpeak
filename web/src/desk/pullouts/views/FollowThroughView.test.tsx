@@ -416,6 +416,30 @@ function deferred<T>() {
 describe("Follow-through writer and draft custody", () => {
   beforeEach(() => { apiFetch.mockReset(); openSourceRef.mockReset(); localStorage.clear(); });
 
+  it("reads and expands the exact held source despite the ordinary overdue filter without a lifecycle write", async () => {
+    const target = { ...WALK_BOARD.waiting[0], snoozed_until: "2026-10-17", deferred_until: "2026-10-18T00:00:00Z" };
+    apiFetch.mockResolvedValue({ ...structuredClone(WALK_BOARD), waiting: [target] });
+    render(<FollowThroughView focusCardId={target.id} overdueOnly />);
+    const details = await screen.findByRole("button", { name: `Details for ${target.text}` });
+    await waitFor(() => expect(details).toHaveAttribute("aria-expanded", "true"));
+    expect(screen.getByLabelText("Snoozed until 2026-10-17")).toBeInTheDocument();
+    expect(screen.getByLabelText("Deferred until 2026-10-18")).toBeInTheDocument();
+    expect(screen.queryByText(WALK_BOARD.now[0].text, { selector: "strong" })).toBeNull();
+    expect(apiFetch).toHaveBeenCalledWith(`/api/follow-through/board?focus_id=${target.id}`);
+    expect(apiFetch.mock.calls.every(([, init]) => !init?.method)).toBe(true);
+  });
+
+  it("missing focus and refused focus reads each retry the same canonical source", async () => {
+    apiFetch.mockResolvedValueOnce(EMPTY_BOARD).mockRejectedValueOnce(new Error("Read refused")).mockResolvedValueOnce(EMPTY_BOARD);
+    render(<FollowThroughView focusCardId="held/id" />);
+    expect(await screen.findByRole("alert")).toHaveTextContent("Task unavailable");
+    fireEvent.click(screen.getByRole("button", { name: "Retry read" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Read refused");
+    fireEvent.click(screen.getByRole("button", { name: "Retry read" }));
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Task unavailable"));
+    expect(apiFetch.mock.calls.map(([path]) => path)).toEqual(Array(3).fill("/api/follow-through/board?focus_id=held%2Fid"));
+  });
+
   it("Assign uses the existing writer once, keeps the board visible, and preserves a newer owner draft across a lane move", async () => {
     const card = structuredClone(WALK_BOARD.now[0]);
     let board: Record<keyof typeof EMPTY_BOARD, (typeof card)[]> = { ...EMPTY_BOARD, now: [card] };
@@ -437,6 +461,40 @@ describe("Follow-through writer and draft custody", () => {
     expect(screen.getByRole("textbox", { name: "Owner" })).toHaveValue("Newer draft");
     expect(screen.getByText("Avery")).toBeInTheDocument();
     expect(apiFetch).toHaveBeenCalledWith("/api/follow-through/complete", { method: "POST", json: { card_id: card.id, verb: "delegate", payload: { to: "Avery" } } });
+  });
+
+  it("a held task write follows the current focused source after another source opens while it is pending", async () => {
+    const first = { ...structuredClone(WALK_BOARD.waiting[0]), snoozed_until: "2026-10-17" };
+    const second = { ...structuredClone(WALK_BOARD.now[0]), deferred_until: "2026-10-18T00:00:00Z" };
+    const write = deferred<unknown>();
+    apiFetch.mockImplementation((path: string) => {
+      if (path === `/api/follow-through/board?focus_id=${first.id}`) return Promise.resolve({ ...EMPTY_BOARD, waiting: [first] });
+      if (path === `/api/follow-through/board?focus_id=${second.id}`) return Promise.resolve({ ...EMPTY_BOARD, now: [second] });
+      if (path === "/api/follow-through/complete") return write.promise;
+      throw new Error(`Unexpected request: ${path}`);
+    });
+    const view = render(<FollowThroughView focusCardId={first.id} />);
+    await waitFor(() => expect(screen.getByRole("button", { name: `Details for ${first.text}` })).toHaveAttribute("aria-expanded", "true"));
+    fireEvent.change(screen.getByRole("textbox", { name: "Owner" }), { target: { value: "Avery" } });
+    fireEvent.click(screen.getByRole("button", { name: "Assign" }));
+    view.rerender(<FollowThroughView focusCardId={second.id} />);
+    await waitFor(() => expect(screen.getByRole("button", { name: `Details for ${second.text}` })).toHaveAttribute("aria-expanded", "true"));
+    await act(async () => { first.owner = "Avery"; write.resolve({ card_id: first.id, verb: "delegate" }); });
+    expect(await screen.findByLabelText("Assigned to Avery")).toBeInTheDocument();
+    expect(screen.getByText(first.text, { selector: ".surface-action-notice span" })).toBeInTheDocument();
+    expect(screen.getByText(second.text, { selector: "strong" })).toBeInTheDocument();
+    expect(screen.queryByText(first.text, { selector: "strong" })).toBeNull();
+    expect(screen.getByRole("button", { name: `Details for ${second.text}` })).toHaveAttribute("aria-expanded", "true");
+    expect(screen.queryByLabelText("Task unavailable")).toBeNull();
+    const reads = apiFetch.mock.calls.filter(([path]) => path.startsWith("/api/follow-through/board"));
+    expect(reads.map(([path]) => path)).toEqual([
+      `/api/follow-through/board?focus_id=${first.id}`,
+      `/api/follow-through/board?focus_id=${second.id}`,
+      `/api/follow-through/board?focus_id=${second.id}`,
+    ]);
+    const writes = apiFetch.mock.calls.filter(([path]) => path === "/api/follow-through/complete");
+    expect(writes).toHaveLength(1);
+    expect(writes[0][1]).toEqual({ method: "POST", json: { card_id: first.id, verb: "delegate", payload: { to: "Avery" } } });
   });
 
   it("a refused date keeps the draft and Retry sends the rejected date without replacing newer input", async () => {

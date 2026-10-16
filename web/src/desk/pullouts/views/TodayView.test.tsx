@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PERSON_OPEN_EVENT } from "../../objectWindows";
+import { takeRoomProposalRequest } from "../../openObject";
 import { TodayView, countdown, currentStep, toFinish } from "./TodayView";
 
 const shell = vi.hoisted(() => ({ openSurfaceOr: vi.fn() }));
@@ -68,8 +69,8 @@ describe("PHILO-17 Today: the day as a timeline", () => {
         { id: "ev1", source: "calendar_event", title: "1:1 Priya", starts_at: inMinutes(50), ends_at: inMinutes(80), person_label: "Priya Nair", person_relationship_id: "r1" },
         { id: "ev2", source: "calendar_event", title: "Ledger cutover sync", starts_at: inMinutes(120), ends_at: inMinutes(150), project_id: "p1", project_name: "Payments" },
       ] }),
-      "/api/meetings?limit=40": () => json({ meetings: [] }),
-      "/api/desk/needs-you": () => json({ items: [{ proposalId: "pr1", title: "Freeze the ledger on Nov 12", meetingTitle: "Ledger cutover sync" }] }),
+      "/api/meetings?limit=40": () => json({ meetings: [{ id: "unfinished", title: "Old meeting", started_at: inMinutes(-60), transcriptWords: 40, intel_status: "disabled" }] }),
+      "/api/desk/needs-you": () => json({ items: [{ proposalId: "pr1", projectId: "p1", title: "Freeze the ledger on Nov 12", meetingTitle: "Ledger cutover sync" }] }),
       "/api/people/readiness": () => json({ readiness: "ready" }),
       "/api/people/relationships?counts=1": () => json({ relationships: [{ id: "r1", you_owe_count: 1, owes_you_count: 1 }] }),
       "/api/proposals/pr1/confirm": () => json({ ok: true }),
@@ -83,10 +84,14 @@ describe("PHILO-17 Today: the day as a timeline", () => {
     expect(within(next).getByRole("button", { name: "Record when it starts" }).className).toContain("btn--primary");
     expect(screen.getAllByTestId("today-later")).toHaveLength(1);
     expect(screen.getByTestId("today-now")).toBeTruthy();
+    expect(next.compareDocumentPosition(screen.getByTestId("today-finish")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     const owed = await screen.findByTestId("today-owed");
     await waitFor(() => expect(owed.textContent).toContain("1you owe"));
     expect(owed.textContent).toContain("1owed to you");
     const decide = screen.getByTestId("today-decide");
+    fireEvent.click(within(decide).getByRole("button", { name: "Open decision" }));
+    expect(takeRoomProposalRequest("p1")).toBe("pr1");
+    expect(calls.some(([url, init]) => url.includes("/proposals/") && init?.method === "POST")).toBe(false);
     fireEvent.click(within(decide).getByRole("button", { name: "Confirm" }));
     await waitFor(() => expect(calls.some(([url, init]) => url === "/api/proposals/pr1/confirm" && init?.method === "POST")).toBe(true));
     // One filled primary in the window.

@@ -36,6 +36,8 @@ type FollowThroughCard = {
   person_relationship_id?: string;
   delegated_at?: string | null;
   created_at?: string | null;
+  snoozed_until?: string | null;
+  deferred_until?: string | null;
 };
 type FollowThroughBoard = Record<Lane, FollowThroughCard[]>;
 type Draft = { owner: string; due: string; ownerDirty: boolean; dueDirty: boolean };
@@ -136,7 +138,8 @@ export function FollowThroughView({ overdueOnly = false, focusCardId, onClearFil
 }) {
   const [board, setBoard] = useState<FollowThroughBoard | null>(null);
   const [loading, setLoading] = useState(true);
-  const [readError, setReadError] = useState("");
+  const [readError, setReadError] = useState<{ message: string; focusId: string | null } | null>(null);
+  const [boardFocusId, setBoardFocusId] = useState<string | undefined>();
   const [writeError, setWriteError] = useState<{ request: WriteRequest; message: string } | null>(null);
   const writeNoticeRef = useRef<HTMLDivElement>(null);
   const [pending, setPending] = useState<WriteRequest | null>(null);
@@ -145,17 +148,22 @@ export function FollowThroughView({ overdueOnly = false, focusCardId, onClearFil
   const [openCardId, setOpenCardId] = useState<string | null>(null);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const focusPending = useRef(focusCardId);
+  const currentFocusId = useRef(focusCardId);
+  currentFocusId.current = focusCardId;
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const draftsRef = useRef(drafts);
   const [doneReceipt, setDoneReceipt] = useState<DoneReceipt | null>(readDoneReceipt);
   const reads = useRef(0);
-  const reload = useCallback(async () => {
+  const reload = useCallback(async (targetId: string | null = focusCardId ?? null) => {
     const order = ++reads.current;
+    setLoading(true);
     try {
-      const next = await apiFetch<FollowThroughBoard>("/api/follow-through/board");
+      const path = `/api/follow-through/board${targetId ? `?focus_id=${encodeURIComponent(targetId)}` : ""}`;
+      const next = await apiFetch<FollowThroughBoard>(path);
       if (order !== reads.current) return;
       setBoard(next);
-      setReadError("");
+      setBoardFocusId(targetId ?? undefined);
+      setReadError(null);
       // A refresh updates untouched fields, never the owner's draft. Keep
       // drafts above lane rows so moving a task to another lane loses nothing.
       const updated = { ...draftsRef.current };
@@ -170,11 +178,11 @@ export function FollowThroughView({ overdueOnly = false, focusCardId, onClearFil
       draftsRef.current = updated;
       setDrafts(updated);
     } catch (cause) {
-      if (order === reads.current) setReadError(readableError(cause));
+      if (order === reads.current) setReadError({ message: readableError(cause), focusId: targetId });
     } finally {
       if (order === reads.current) setLoading(false);
     }
-  }, []);
+  }, [focusCardId]);
   useOnDeskChanged(() => { void reload(); });
   useEffect(() => { void reload(); }, [reload]);
   useEffect(() => {
@@ -186,11 +194,11 @@ export function FollowThroughView({ overdueOnly = false, focusCardId, onClearFil
   }, [focusCardId]);
   useEffect(() => {
     const target = focusPending.current;
-    if (!target || !board || !LANES.some((lane) => board[lane.id].some((card) => card.id === target))) return;
+    if (!target || !board || boardFocusId !== focusCardId || !LANES.some((lane) => board[lane.id].some((card) => card.id === target))) return;
     setOpenCardId(target);
     setSelectedCardId(target);
     focusPending.current = undefined;
-  }, [board, focusCardId]);
+  }, [board, boardFocusId, focusCardId]);
   useEffect(() => {
     if (!doneReceipt) return;
     const timer = window.setTimeout(() => {
@@ -236,7 +244,9 @@ export function FollowThroughView({ overdueOnly = false, focusCardId, onClearFil
         }
       }
       if (!request.done) setOutcome({ text: request.result, label: request.label });
-      await reload();
+      // The write owns its original card/payload, but its follow-up read
+      // belongs to the subject the owner is inspecting when it lands.
+      await reload(currentFocusId.current ?? null);
       refreshIntelligenceAttention();
     } catch (cause) {
       setWriteError({ request, message: readableError(cause) });
@@ -271,9 +281,11 @@ export function FollowThroughView({ overdueOnly = false, focusCardId, onClearFil
       })}>Undo</Button>
     </div>
   ) : null;
-  const visibleLanes = (overdueOnly ? LANES.filter((lane) => lane.id === "overdue") : LANES)
-    .filter((lane) => (board?.[lane.id].length ?? 0) > 0);
+  const shownCards = (lane: Lane) => (board?.[lane] ?? []).filter((card) => !overdueOnly || lane === "overdue" || card.id === focusCardId);
+  const visibleLanes = LANES.filter((lane) => shownCards(lane.id).length > 0);
   const boardTotal = board ? LANES.reduce((count, lane) => count + board[lane.id].length, 0) : 0;
+  const focusMissing = !!focusCardId && !!board && boardFocusId === focusCardId && !loading && !readError
+    && !LANES.some((lane) => board[lane.id].some((card) => card.id === focusCardId));
 
   return (
     <div className="follow-through-view">
@@ -289,13 +301,14 @@ export function FollowThroughView({ overdueOnly = false, focusCardId, onClearFil
           </ActionNotice>
         </div>
       ) : null}
-      {readError ? <ActionNotice role="alert" tone="danger" action={{ label: "Retry read", onClick: () => void reload() }}><StateChip state="failure" label="Read failed" /><span>{readError}</span></ActionNotice> : null}
+      {readError ? <ActionNotice role="alert" tone="danger" action={{ label: "Retry read", onClick: () => void reload(readError.focusId) }}><StateChip state="failure" label="Read failed" /><span>{readError.message}</span></ActionNotice> : null}
+      {focusMissing ? <ActionNotice role="alert" tone="danger" action={{ label: "Retry read", onClick: () => void reload(focusCardId) }}><StateChip state="unreachable" label="Task unavailable" /></ActionNotice> : null}
       {loading && !board ? <SurfaceState loading /> : !board ? null : !boardTotal ? <SurfaceState empty emptyLabel="No follow-through yet" /> : !visibleLanes.length ? (
         <SurfaceState empty emptyLabel="No overdue follow-through. Other lanes hold work." onAction={onClearFilter} actionLabel="Show all lanes" />
       ) : visibleLanes.map((lane) => (
-        <SurfaceSection key={lane.id} label={lane.label} count={board[lane.id].length} className="follow-through-lane">
+        <SurfaceSection key={lane.id} label={lane.label} count={shownCards(lane.id).length} className="follow-through-lane">
           <SurfaceLedger cols="follow-through">
-            {board[lane.id].map((card) => {
+            {shownCards(lane.id).map((card) => {
               const source = sourceFor(card);
               const due = dueLabel(card.due);
               const draft = drafts[card.id] ?? draftFor(card);
@@ -313,6 +326,8 @@ export function FollowThroughView({ overdueOnly = false, focusCardId, onClearFil
                   </span>}
                   cells={<span className="follow-through-facts"><StateChip state={due.overdue ? "warning" : "idle"} label={due.label} wrap />
                     {card.due ? <time dateTime={card.due.slice(0, 10)}>{card.due.slice(0, 10)}</time> : null}
+                    {card.snoozed_until ? <StateChip state="idle" label={`Snoozed until ${card.snoozed_until.slice(0, 10)}`} wrap /> : null}
+                    {card.deferred_until ? <StateChip state="idle" label={`Deferred until ${card.deferred_until.slice(0, 10)}`} wrap /> : null}
                     {!source ? <span>Source unavailable</span> : null}
                   </span>}
                   trailing={<>

@@ -118,7 +118,7 @@ describe("Needs you: Name an owner and Review on a meeting's action items", () =
     // the test ended (an unhandled rejection under load).
     vi.mocked(apiFetch).mockImplementation(async (path: string) => {
       const value = String(path);
-      if (value === "/api/follow-through/board") return board as never;
+      if (value.split("?", 1)[0] === "/api/follow-through/board") return board as never;
       if (value.startsWith("/api/meetings")) return { meetings: [] } as never;
       if (value.startsWith("/api/desk/needs-you")) return { count: 0, projects: [], items: [], next: null, coverage: [], complete: true } as never;
       return null as never;
@@ -133,6 +133,7 @@ describe("Needs you: Name an owner and Review on a meeting's action items", () =
       act(() => openIntelligence({ view: "follow-through", followThroughId: "ai-owned" }));
       expect(openPullout).toHaveBeenCalledWith("intelligence:desk");
       const verbs = await screen.findByLabelText(`Verbs for ${OWNED}`);
+      expect(apiFetch).toHaveBeenCalledWith("/api/follow-through/board?focus_id=ai-owned");
       const task = screen.getByText(OWNED).closest(".surface-ledger-row") as HTMLElement;
       expect(within(task).getByRole("button", { name: "Mark done" })).toBeTruthy();
       expect(within(task).getByRole("button", { name: `Details for ${OWNED}` })).toHaveAttribute("aria-expanded", "true");

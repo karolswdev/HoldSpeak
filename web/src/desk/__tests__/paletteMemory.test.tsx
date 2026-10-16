@@ -127,6 +127,9 @@ describe("the palette finds a word inside a meeting", () => {
     useDesk.setState({ refresh, openPullout: vi.fn(() => { order.push("open"); }) });
     apiFetch.mockImplementation((path: string) => {
       if (path.startsWith("/api/memory/search?")) return Promise.resolve({ hits });
+      if (path === "/api/artifacts/a-old") return Promise.resolve({ artifact: {
+        id: "a-old", title: "Old notes", artifact_type: "notes", body_markdown: "the quokka key", status: "ready",
+      } });
       if (path === "/api/sync/pull?limit=50") return Promise.resolve({ artifacts: Array.from({ length: 30 }, (_, i) => ({
         meta: { id: i === 29 ? "a-old" : `a-${i}`, deleted: false },
         value: { id: i === 29 ? "a-old" : `a-${i}`, title: `A ${i}`, artifact_type: "notes" } })) });
@@ -140,6 +143,8 @@ describe("the palette finds a word inside a meeting", () => {
     // The object is in the store when its window opens: the 25th artifact, past the list's 24.
     expect(useDesk.getState().items.artifact.map((a) => a.id)).toContain("a-old");
     expect(useDesk.getState().items.artifact).toHaveLength(25);
+    expect(apiFetch).toHaveBeenCalledWith("/api/artifacts/a-old");
+    expect(apiFetch).not.toHaveBeenCalledWith("/api/sync/pull?limit=500");
   });
 
   it("the MEMORY band comes after the local matches, and an object a local row shows is not shown twice", async () => {

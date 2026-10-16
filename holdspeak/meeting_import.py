@@ -583,7 +583,7 @@ def _persist_import(
     """The shared persistence tail: segments in, a real meeting out.
 
     One tail, every import path (audio HS-55, transcripts HS-57): builds the
-    normal ``MeetingState``, saves it via the normal ``save_meeting``, then
+    normal ``MeetingState``, saves it through the repository transaction, then
     queues the summary by the same rule as Stop (PHILO-17,
     ``meeting_backlog_service.queue_after_save``): the "after every meeting"
     setting, a ready route, and the owner's consent.
@@ -614,10 +614,12 @@ def _persist_import(
     state.transcription_status = TRANSCRIPTION_COMPLETE
     state.transcription_status_detail = None
 
-    db.meetings.save_meeting(state)
     # PHILO-17 (Astra r2): the upsert keeps a placeholder row's start; the
-    # start this import resolved is the one that stands.
+    # start this import resolved is the one that stands. Publish it in the
+    # same commit as the finished transcript and end, so readers cannot see
+    # a completed import with the placeholder's start.
     with db._connection() as conn:
+        db.meetings._save_meeting(conn, state)
         conn.execute(
             "UPDATE meetings SET started_at = ? WHERE id = ?",
             (utc_iso(state.started_at), state.id),

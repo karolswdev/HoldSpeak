@@ -156,14 +156,14 @@ describe("Rhythm: the local clock", () => {
 });
 
 describe("The Brief detail the Rhythm row names", () => {
-  it("shows THIS WEEK before SINCE FRIDAY, one period, no headline, counted rows and NEXT inside MEETINGS", async () => {
+  it("shows changed work before THIS WEEK, one period, no headline, counted rows and NEXT inside MEETINGS", async () => {
     // replaces: tests/e2e/test_hs175_rhythm_brief_glass.py::TestRhythmWeeklyBrief::test_brief_this_week_section
     // (all but the ONE GUTTER check, which measures left edges: real layout)
     hub({ brief: brief(THIS_WEEK) });
     const { container } = render(<BriefView header={<div>Header</div>} />);
     const thisWeek = await screen.findByTestId("brief-this-week");
     const since = screen.getByTestId("brief-since-friday");
-    expect(thisWeek.compareDocumentPosition(since) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(since.compareDocumentPosition(thisWeek) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
     expect(container.querySelectorAll(".intelligence-brief-period")).toHaveLength(1);
     expect(container.querySelector(".intelligence-brief-headline")).toBeNull();

@@ -13,7 +13,7 @@ from ..db.refinement_thoughts import RefinementThoughtRepository, canonical_json
 from ..db.relationships import qualified_ref
 from ..principals import Principal
 from ..principals import PrincipalKind
-from .errors import ConflictError, ValidationError
+from .errors import ConflictError, NotFound, ValidationError
 
 log = get_logger("services.sync")
 
@@ -1242,6 +1242,13 @@ class SyncService:
         self._db = db
         self._hub_model_name = hub_model_name
         self._observer = observer or NullObserver()
+
+    def get_artifact(self, principal: Principal, artifact_id: str) -> dict[str, Any]:
+        """Inspect one cited output without changing its review or list state."""
+        artifact = self._db.plugins.get_artifact(artifact_id)
+        if artifact is None:
+            raise NotFound("artifact", artifact_id)
+        return {"artifact": _artifact_value(artifact)}
 
     def pull(self, principal: Principal, *, limit: int = 50) -> dict[str, Any]:
         db = self._db

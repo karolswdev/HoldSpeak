@@ -981,10 +981,10 @@
     {
       "id": "coder.observation",
       "name": "Coder session observation",
-      "purpose": "Show active Claude/Codex sessions and bounded, hash-gated pane output.",
+      "purpose": "Show active Claude/Codex sessions, structured captured reports and bounded, hash-gated pane output.",
       "domain": "coder",
       "status": "experimental",
-      "status_reason": "Session routes and bounded pane observation are implemented. October 15 isolated real-hub walks at1440/393 cover long-report terminal handoff, real no-pane read/Retry and Back. Focused checks cover draft custody and new Speak requests; owner pane/control actions remain unverified.",
+      "status_reason": "Session routes and bounded pane observation are implemented. October 15 isolated real-hub walks at1440/393 cover long-report terminal handoff, real no-pane read/Retry and Back. Focused checks cover draft custody and new Speak requests; owner pane/control actions remain unverified. October 16 focused capture and rendered checks preserve new multiline Claude/Codex reports and Codex Stop questions through semantic document rendering; compact summaries retain their existing ask/truncation behavior.",
       "exposure": "user",
       "surfaces": [
         "Conductor",
@@ -1012,7 +1012,9 @@
         "session status",
         "waiting state",
         "bounded lines",
-        "content hash"
+        "content hash",
+        "original captured Markdown line breaks and indentation",
+        "shared readable full report document"
       ],
       "persistence": [
         "coder session/steering audit rows"
@@ -1066,6 +1068,24 @@
           "symbol": "export function SessionPullout() {",
           "claim": "A plain session terminal owns the body; Back preserves the draft and new Speak reveals the composer without replaying the earlier request.",
           "line": 700
+        },
+        {
+          "path": "holdspeak/agent_context/sessions.py",
+          "symbol": "extract_last_assistant_text",
+          "line": 989,
+          "claim": "Transcript text pieces retain their original line breaks and indentation within the existing capture bound and secret filter."
+        },
+        {
+          "path": "holdspeak/agent_context/sessions.py",
+          "symbol": "ingest_agent_hook_event",
+          "line": 204,
+          "claim": "New Codex Stop questions retain the bounded original multiline payload instead of whitespace flattening."
+        },
+        {
+          "path": "web/src/desk/surface/ReadingDocument.tsx",
+          "symbol": "ReadingDocument",
+          "line": 124,
+          "claim": "Material and full AgentWords share semantic headings, nested lists, tables and original code; horizontal table/code wells retain keyboard scroll hints."
         }
       ],
       "tests": [
@@ -1101,18 +1121,78 @@
             "run": "root-session-final",
             "cases": 2
           }
+        },
+        {
+          "path": "tests/unit/test_agent_context.py",
+          "node": "test_capture_preserves_markdown_through_question_and_report",
+          "assertion": "Real temporary Claude/Codex transcript ingestion and Codex Stop payloads retain the exact multiline question/report and bounded tail.",
+          "execution": {
+            "status": "passed",
+            "record": ".tmp/flagship-reading/scoped-check-output.txt",
+            "run": "reading-capture-36",
+            "cases": 1
+          }
+        },
+        {
+          "path": "tests/unit/test_agent_context.py",
+          "node": "test_codex_stop_document_keeps_capture_bound_and_secret_filter",
+          "assertion": "New multiline Codex Stop capture retains the existing character bound and possible-secret redaction.",
+          "execution": {
+            "status": "passed",
+            "record": ".tmp/flagship-reading/scoped-check-output.txt",
+            "run": "reading-capture-36",
+            "cases": 1
+          }
+        },
+        {
+          "path": "web/src/desk/surface/__tests__/ReadingDocument.test.tsx",
+          "node": "%s uses semantic document blocks and original code",
+          "assertion": "Material and full AgentWords render semantic headings, nested lists, tables and exact code; canonical source refs use the opener, HTTP labels persist, and repository paths remain inert. Canonical opener is substituted in this component test.",
+          "execution": {
+            "status": "passed",
+            "record": ".tmp/flagship-reading/scoped-check-output.txt",
+            "run": "reading-web-28",
+            "cases": 2
+          }
+        },
+        {
+          "path": "web/src/desk/surface/__tests__/ReadingDocument.test.tsx",
+          "node": "shows HTML and unsupported destinations as text and never loads images",
+          "assertion": "HTML stays text, unsupported schemes stay inert and image elements are not created.",
+          "execution": {
+            "status": "passed",
+            "record": ".tmp/flagship-reading/scoped-check-output.txt",
+            "run": "reading-web-28",
+            "cases": 1
+          }
+        },
+        {
+          "path": "web/src/desk/surface/__tests__/ReadingDocument.test.tsx",
+          "node": "compact summaries keep their ask and never create link controls",
+          "assertion": "Compact agent text keeps its intentional last ask selection and creates no document/link controls.",
+          "execution": {
+            "status": "passed",
+            "record": ".tmp/flagship-reading/scoped-check-output.txt",
+            "run": "reading-web-28",
+            "cases": 1
+          }
         }
       ],
       "docs": [
         "docs/CODER_INTEGRATION.md",
         "docs/AGENT_HOOK_INSTALL.md",
         "docs/internal/SURFACE-REPAIR-2026-10-14.md",
-        "docs/internal/SURFACE-REFINEMENT-2026-10-15/README.md"
+        "docs/internal/SURFACE-REFINEMENT-2026-10-15/README.md",
+        "docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/IMPLEMENTATION.md",
+        "docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/briefs/reading.md"
       ],
       "limitations": [
         "No real tmux pane or owner Coder session was used. The October 15 surface walk ingests an authored report through real hooks in an isolated HOME with no pane; command delivery and microphone are unverified.",
         "Observation is bounded and may omit full transcript context.",
-        "Latest report requires the existing opt-in message capture; otherwise the recorded tool/state is shown. No capture default was changed."
+        "Latest report requires the existing opt-in message capture; otherwise the recorded tool/state is shown. No capture default was changed.",
+        "Old stored flattened text cannot be reliably repaired without the retained original. Capture opt-in, bounds and secret filtering remain unchanged.",
+        "The shared reader does not open local repository paths; unsupported targets retain their label and inert destination. HTTP(S) links require an explicit press; no arbitrary HTML or remote image fetch is introduced.",
+        "Focused capture/rendered tests establish source preservation and document grammar, not owner visual acceptance, live provider output or public release."
       ],
       "failure_states": [
         "tmux_absent",

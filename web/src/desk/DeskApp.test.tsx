@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import DeskApp from "./DeskApp";
 import { stageFirstValueNoteOpen } from "./firstValue";
 import { useSettleState } from "./settleState";
+import * as deskApi from "./api";
 
 const state = vi.hoisted(() => ({
   setupResolved: true,
@@ -150,6 +151,7 @@ describe("DeskApp arrival state", () => {
     state.pullouts = [];
     sessionStorage.clear();
     window.history.replaceState({}, "", "/");
+    deskApi.__resetHeldObjects();
   });
 
   it("makes first value the only Chair composition and suppresses Desk chrome", () => {
@@ -243,6 +245,23 @@ describe("DeskApp arrival state", () => {
     render(<DeskApp />);
 
     expect(screen.getByTestId("ask-panel")).toBeInTheDocument();
+  });
+
+  it("holds cold and restored artifact windows before the first bounded refresh", async () => {
+    state.arrivalRequired = false;
+    state.pullouts = [{ id: "artifact:restored-output", origin: null }];
+    window.history.replaceState({}, "", "/?open=artifact:cited-output");
+    const hold = vi.spyOn(deskApi, "holdObject");
+    state.refresh.mockImplementationOnce(async () => {
+      expect(hold).toHaveBeenCalledWith("artifact:cited-output");
+      expect(hold).toHaveBeenCalledWith("artifact:restored-output");
+      expect(state.openPullout).not.toHaveBeenCalled();
+    });
+    try {
+      render(<DeskApp />);
+      await waitFor(() => expect(state.openPullout).toHaveBeenCalledWith("artifact:cited-output"));
+      expect(new URLSearchParams(window.location.search).get("open")).toBeNull();
+    } finally { hold.mockRestore(); }
   });
 
   it("keeps work and the empty Desk's recorder mounted while settling, then resets on exit", () => {
