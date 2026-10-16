@@ -2,9 +2,10 @@
 
 **Execution resumed by the owner's invocation of [KICKOFF.md](KICKOFF.md),
 2026-10-16.** The plan was written during the earlier planning pause. Baseline:
-main `ebfce9feb` / released build `1db394185ca801fe` (#1219). The active first
-batch is recorded in [Implementation](IMPLEMENTATION.md) and
-[Delivery B](DELIVERY-B.md). Historical source-audit and candidate descriptions
+main `ebfce9feb` / released build `1db394185ca801fe` (#1219). The merged first batch is recorded in [Implementation](IMPLEMENTATION.md) and
+[Delivery B](DELIVERY-B.md). The connected follow-up is
+[Daily work and recovery](IMPLEMENTATION-CDE.md), with [actual verification](DELIVERY-CDE.md); [coverage](COVERAGE.md)
+reconciles every surface family with current and carried evidence. Historical source-audit and candidate descriptions
 below retain their original evidence limits; they do not pause the authorized
 execution. Formal postmerge review and owner visual judgment remain separate.
 The owner selected an Astra master orchestrator and Sol HIGH workers for this

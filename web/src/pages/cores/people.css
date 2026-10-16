@@ -542,6 +542,17 @@
 }
 .desk-next .person-page .people-add .gadget-string { flex: 1 1 auto; min-width: 0; }
 .desk-next .person-page .people-add > .btn { flex: none; }
+@container surface (max-width: 559.9px) {
+  .desk-next .person-page .people-add { align-items: stretch; flex-wrap: wrap; }
+  .desk-next .person-page .people-add .gadget-string { flex: 1 1 100%; }
+  .desk-next .person-page .people-add .gadget-string input,
+  .desk-next .person-page .people-add > .btn,
+  .desk-next .person-page .people-commitment-inspector .btn,
+  .desk-next .person-page .people-commitment-inspector input,
+  .desk-next .person-page .people-commitment-inspector select { min-height: 44px; }
+  .desk-next .person-page .people-add .desk-mic,
+  .desk-next .person-page .people-commitment-inspector .desk-mic { width: 44px; height: 44px; margin-right: 0; }
+}
 
 /* Owed both ways: two steel plates side by side (one column when narrow). */
 .desk-next .people-owe-grid {

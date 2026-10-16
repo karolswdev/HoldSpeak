@@ -42,7 +42,8 @@ import {
 import { GroundingSection } from "./GroundingSection";
 import { RailsPicker } from "./RailsPicker";
 import { MicButton } from "./MicButton";
-import { apiRequest } from "../../lib/api";
+import { apiFetch, readableError } from "../../lib/api";
+import { useOnDeskChanged } from "../useDeskChangedRefresh";
 
 /** PHILO-13-04 (A3): an Ask that did not answer says so in plain words; the
  * hub's own text (a model path, a refusal sentence) never reaches the face,
@@ -72,7 +73,7 @@ import { CitationChips, groundedMatchCount } from "../surface/citations";
 import { Button } from "../../components/signal/Signal";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { useEngine, refreshEngine } from "../hooks/useEngine";
-import { EngineLine, RunLine, reasonVerb, reasonWords } from "../surface";
+import { ActionNotice, StateChip, EngineLine, RunLine, reasonVerb, reasonWords } from "../surface";
 import { openRef } from "../openObject";
 import { openSurfaceOr } from "../shell";
 
@@ -123,6 +124,8 @@ export function AskPanel() {
   const [projects, setProjects] = useState<Array<{ id: string; name: string }>>(
     [],
   );
+  const [projectsRead, setProjectsRead] = useState<{ loading: boolean; known: boolean; error: string }>({ loading: true, known: false, error: "" });
+  const projectsReads = useRef(0);
   const { copy, receipt: copyReceipt } = useCopyReceipt();
   const endRef = useRef<HTMLDivElement | null>(null);
   const mounted = useRef(true);
@@ -183,16 +186,20 @@ export function AskPanel() {
       setSelectedPassage(null);
     }
   }, [context, items.note, selectedIds, selectedPassage]);
-  useEffect(() => {
-    apiRequest("/api/projects")
-      .then((response) => response.json())
-      .then((body) =>
-        mounted.current && setProjects(
-          (body.projects || []).filter((project: any) => !project.is_archived),
-        ),
-      )
-      .catch(() => { if (mounted.current) setProjects([]); });
+  const readProjects = useCallback(async () => {
+    const order = ++projectsReads.current;
+    setProjectsRead((current) => ({ ...current, loading: true }));
+    try {
+      const body = await apiFetch<{ projects?: Array<{ id: string; name: string; is_archived?: boolean }> }>("/api/projects");
+      if (!mounted.current || order !== projectsReads.current) return;
+      setProjects((body.projects ?? []).filter((project) => !project.is_archived));
+      setProjectsRead({ loading: false, known: true, error: "" });
+    } catch (error) {
+      if (mounted.current && order === projectsReads.current) setProjectsRead((current) => ({ ...current, loading: false, error: readableError(error) }));
+    }
   }, []);
+  useEffect(() => { void readProjects(); }, [readProjects]);
+  useOnDeskChanged(() => { void readProjects(); });
   const groundableResources = useMemo(
     () => [
       ...(items.note || []).map((item) => ({
@@ -530,6 +537,12 @@ export function AskPanel() {
                 ) : <span key={source.id}>{source.title}</span>)}
               </div>
             ) : null}
+            {projectsRead.error ? <ActionNotice role="alert" tone="warn" action={{ label: "Retry Projects", onClick: () => void readProjects() }}>
+              <StateChip state="unreachable" label="Projects unavailable" />
+              {projectsRead.known ? <>{" · "}<StateChip state="warning" label="Last read" /></> : null}
+              {" · "}<span>{projectsRead.error}</span>
+            </ActionNotice> : projectsRead.loading ? <StateChip state="working" label="Reading Projects" />
+              : !projects.length ? <StateChip state="idle" label="No projects" /> : null}
             <div className="desk-ask-compose-actions">
               <div className="desk-ask-context-tools">
               <GroundingSection

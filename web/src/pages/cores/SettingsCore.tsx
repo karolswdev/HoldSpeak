@@ -15,6 +15,7 @@ import type {
 } from "./core-types";
 import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
+import { humanizeWireValue } from "../../lib/productLanguage";
 import { documentBuildId } from "../../lib/buildId";
 import { useFlushOnLeave } from "../../lib/flushOnLeave";
 import { useResource } from "../pageSupport";
@@ -735,7 +736,13 @@ export function RemoteAccessModule({
 } = {}) {
   const [wire, setWire] = useState<RemoteWire | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  type ReadTarget = "remote" | "projects";
+  const [readErrors, setReadErrors] = useState<Partial<Record<ReadTarget, string>>>({});
+  const [writeError, setWriteError] = useState<{ action: string; subject: string; message: string } | null>(null);
+  const remoteReads = useRef(0);
+  const projectReads = useRef(0);
+  const writes = useRef(0);
+  const [projectsLoading, setProjectsLoading] = useState(false);
   const [issueOpen, setIssueOpen] = useState(false);
   const [issueName, setIssueName] = useState("");
   const [issuePalette, setIssuePalette] = useState("PROJECT");
@@ -751,23 +758,51 @@ export function RemoteAccessModule({
   const [openRows, setOpenRows] = useState<string[]>([]);
 
   const fetchRemote = useCallback(async () => {
+    const order = ++remoteReads.current;
     setLoading(true);
     try {
       const data = await apiFetch<RemoteWire>("/api/settings/remote");
+      if (order !== remoteReads.current) return;
       setWire(data);
-      setError("");
+      setReadErrors((current) => ({ ...current, remote: undefined }));
       onEnabledChange?.(data.enabled);
     } catch (err) {
-      setError(readableError(err));
+      if (order === remoteReads.current) setReadErrors((current) => ({ ...current, remote: readableError(err) }));
     } finally {
-      setLoading(false);
+      if (order === remoteReads.current) setLoading(false);
     }
   }, [onEnabledChange]);
+
+  const fetchProjects = useCallback(async () => {
+    const order = ++projectReads.current;
+    setProjectsLoading(true);
+    try {
+      const listed = await apiFetch<{ projects?: ProjectFact[] }>("/api/projects");
+      if (order !== projectReads.current) return;
+      setProjects((listed?.projects ?? []).filter((project) => !project.is_archived));
+      setReadErrors((current) => ({ ...current, projects: undefined }));
+    } catch (err) {
+      if (order === projectReads.current) setReadErrors((current) => ({ ...current, projects: readableError(err) }));
+    } finally {
+      if (order === projectReads.current) setProjectsLoading(false);
+    }
+  }, []);
+
+  // A new explicit writer owns its outcome. Reads never accept or retry it.
+  const beginWrite = () => {
+    const order = ++writes.current;
+    setWriteError(null);
+    return order;
+  };
+  const failWrite = (order: number, action: string, subject: string, err: unknown) => {
+    if (order === writes.current) setWriteError({ action, subject, message: readableError(err) });
+  };
 
   useEffect(() => { void fetchRemote(); }, [fetchRemote]);
 
   const toggleEnabled = async (next: string) => {
     const enabled = next === "ON";
+    const order = beginWrite();
     setToggleBusy(true);
     try {
       await apiFetch("/api/settings/remote", {
@@ -776,7 +811,7 @@ export function RemoteAccessModule({
       });
       await fetchRemote();
     } catch (err) {
-      setError(readableError(err));
+      failWrite(order, `Turn remote access ${enabled ? "on" : "off"}`, "", err);
     } finally {
       setToggleBusy(false);
     }
@@ -784,8 +819,9 @@ export function RemoteAccessModule({
 
   const issueCredential = async () => {
     if (!issueName.trim()) return;
+    const identity = issueName.trim();
+    const order = beginWrite();
     setIssuing(true);
-    setError("");
     try {
       const result = await apiFetch<{
         token: string;
@@ -796,7 +832,7 @@ export function RemoteAccessModule({
       }>("/api/settings/remote/credentials", {
         method: "POST",
         json: {
-          identity: issueName.trim(),
+          identity,
           palette: issuePalette,
           ttl_seconds: Number(issueTtl),
         },
@@ -808,7 +844,7 @@ export function RemoteAccessModule({
       setIssueTtl("43200");
       await fetchRemote();
     } catch (err) {
-      setError(readableError(err));
+      failWrite(order, "Issue credential", identity, err);
     } finally {
       setIssuing(false);
     }
@@ -816,8 +852,8 @@ export function RemoteAccessModule({
 
   /** PHILO-7-02: Allow / Stop filing -- delegation.grant / delegation.revoke. */
   const setGrant = async (identity: string, verb: GrantVerbKind) => {
+    const order = beginWrite();
     setGranting(identity);
-    setError("");
     try {
       const result = await apiFetch(`/api/settings/remote/delegations/${encodeURIComponent(identity)}`, {
         method: verb === "allow" ? "PUT" : "DELETE",
@@ -840,7 +876,7 @@ export function RemoteAccessModule({
         const act = grantActFrom(payload, "refused", verb, identity, code);
         if (act) onGrantAct?.(act);
       } else {
-        setError(readableError(err));
+        failWrite(order, GRANT_WORDS[verb], identity, err);
       }
     } finally {
       setGranting(null);
@@ -852,8 +888,8 @@ export function RemoteAccessModule({
   const setProjectGrant = async (identity: string, projectId: string, projectName: string, verb: GrantVerbKind) => {
     const key = `${identity}/${projectId}`;
     const extra = { kind: "project" as const, project: projectName };
+    const order = beginWrite();
     setGranting(key);
-    setError("");
     try {
       const result = await apiFetch(
         `/api/settings/remote/delegations/${encodeURIComponent(identity)}/projects/${encodeURIComponent(projectId)}`,
@@ -876,7 +912,7 @@ export function RemoteAccessModule({
         const act = grantActFrom(payload, "refused", verb, identity, code, extra);
         if (act) onGrantAct?.(act);
       } else {
-        setError(readableError(err));
+        failWrite(order, PROJECT_GRANT_WORDS[verb], `${identity} · ${projectName}`, err);
       }
     } finally {
       setGranting(null);
@@ -885,8 +921,8 @@ export function RemoteAccessModule({
   };
 
   const revokeCredential = async (id: string, identity: string) => {
+    const order = beginWrite();
     setRevoking(id);
-    setError("");
     try {
       const result = await apiFetch<Record<string, unknown>>(`/api/settings/remote/credentials/${id}`, {
         method: "DELETE",
@@ -908,7 +944,7 @@ export function RemoteAccessModule({
       }
       await fetchRemote();
     } catch (err) {
-      setError(readableError(err));
+      failWrite(order, "Revoke credential", identity, err);
     } finally {
       setRevoking(null);
     }
@@ -921,7 +957,7 @@ export function RemoteAccessModule({
   };
 
   if (loading && !wire) return <span className="gadget-fact" role="status">Reading remote access…</span>;
-  if (error && !wire) return <div className="prefs-read-failure" role="alert"><span>Could not read remote access</span><Button dense variant="ghost" onClick={() => void fetchRemote()}>Retry</Button></div>;
+  if (readErrors.remote && !wire) return <div className="prefs-read-failure" role="alert"><span>Could not read remote access</span><Button dense variant="ghost" onClick={() => void fetchRemote()}>Retry</Button></div>;
 
   const enabled = wire?.enabled ?? false;
   const allCredentials = wire?.credentials ?? [];
@@ -938,9 +974,7 @@ export function RemoteAccessModule({
     setOpenRows((rows) => (open ? [...rows.filter((r) => r !== identity), identity] : rows.filter((r) => r !== identity)));
     if (open) {
       // The projects the row can grant: every project that is not archived.
-      void apiFetch<{ projects?: ProjectFact[] }>("/api/projects")
-        .then((listed) => setProjects((listed?.projects ?? []).filter((p) => !p.is_archived)))
-        .catch((err) => setError(readableError(err)));
+      void fetchProjects();
     }
   };
   const activeCount = credentials.filter((c) => c.active).length;
@@ -1071,7 +1105,7 @@ export function RemoteAccessModule({
                       const key = `${cred.identity}/${p.id}`;
                       const live = grant?.state === "LIVE";
                       return (
-                        <GadgetRow key={p.id} label={p.name}>
+                        <GadgetRow key={p.id} label={p.name} wide controlWidth="full">
                           <span className="prefs-project-line" data-testid={`project-line-${p.id}`}>
                             {p.archived ? (
                               <span className="surface-token" data-chip data-testid="project-archived">
@@ -1225,8 +1259,23 @@ export function RemoteAccessModule({
         </>
       ) : null}
 
-      {error ? (
-        <div className="prefs-read-failure" role="alert" data-testid="remote-error"><span>{error}</span><Button dense variant="ghost" disabled={loading} onClick={() => void fetchRemote()}>Retry</Button></div>
+      {readErrors.remote ? (
+        <div className="prefs-read-failure" role="alert" data-testid="remote-read-error">
+          <span>Could not read remote access · {humanizeWireValue(readErrors.remote)}</span>
+          <Button dense variant="ghost" disabled={loading} onClick={() => void fetchRemote()}>Retry</Button>
+        </div>
+      ) : null}
+      {readErrors.projects ? (
+        <div className="prefs-read-failure" role="alert" data-testid="remote-projects-error">
+          <span>Could not read Projects · {humanizeWireValue(readErrors.projects)}</span>
+          <Button dense variant="ghost" disabled={projectsLoading} onClick={() => void fetchProjects()}>Retry</Button>
+        </div>
+      ) : null}
+      {writeError ? (
+        <div className="prefs-read-failure" role="alert" data-testid="remote-error">
+          <span>Change not confirmed · {writeError.action}{writeError.subject ? ` · ${writeError.subject}` : ""} · {humanizeWireValue(writeError.message)}</span>
+          <Button dense variant="ghost" disabled={loading} onClick={() => void fetchRemote()}>Reload current state</Button>
+        </div>
       ) : null}
     </GadgetGroup>
   );

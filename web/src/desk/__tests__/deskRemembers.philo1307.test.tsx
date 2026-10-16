@@ -218,6 +218,8 @@ describe("B2: unsent drafts return, per object, and clear on save", () => {
     const first = render(<PeopleCore />);
     fireEvent.click(await screen.findByText("Priya Nair"));
     fireEvent.click(await screen.findByRole("tab", { name: "Prep" }));
+    expect(screen.queryByLabelText("Add to the agenda")).toBeNull();
+    fireEvent.click(await screen.findByRole("button", { name: "Add to agenda" }));
     fireEvent.change(await screen.findByLabelText("Add to the agenda"), { target: { value: "Ask about the EU shard backup plan" } });
     first.unmount(); // close mid-typing
     expect(stored().drafts).toEqual({ "people/1on1/r1": "Ask about the EU shard backup plan" });
@@ -231,9 +233,13 @@ describe("B2: unsent drafts return, per object, and clear on save", () => {
     expect(await screen.findByLabelText("Add to the agenda")).toHaveValue("Ask about the EU shard backup plan");
     expect(posted).toEqual([]); // restore never sends
 
-    const agenda = screen.getByLabelText("Add to the agenda").closest(".people-agenda-add") as HTMLElement;
+    const agenda = screen.getByTestId("people-next-plate");
     fireEvent.click(within(agenda).getByRole("button", { name: "Add to agenda" }));
     await waitFor(() => expect(stored().drafts).toEqual({}));
+    expect(posted).toEqual(["/api/people/one-on-ones/s1/agenda"]);
+    expect(screen.queryByLabelText("Add to the agenda")).toBeNull();
+    fireEvent.click(within(screen.getByTestId("people-next-plate")).getByRole("button", { name: "Add to agenda" }));
+    expect(screen.getByLabelText("Add to the agenda")).toHaveValue("");
     expect(posted).toEqual(["/api/people/one-on-ones/s1/agenda"]);
     second.unmount();
   });
@@ -243,10 +249,15 @@ describe("B2: unsent drafts return, per object, and clear on save", () => {
     const { PeopleCore } = await import("../../pages/cores/PeopleCore");
     const view = render(<PeopleCore />);
     fireEvent.click(await screen.findByText("Priya Nair"));
+    fireEvent.click(await screen.findByRole("button", { name: "Add to agenda" }));
     fireEvent.change(await screen.findByLabelText("Add to the agenda"), { target: { value: "For Priya only" } });
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
     fireEvent.click(await screen.findByText("Sam Lee"));
+    await screen.findByRole("tablist", { name: "Sam Lee lenses" });
+    expect(screen.queryByLabelText("Add to the agenda")).toBeNull();
+    fireEvent.click(await screen.findByRole("button", { name: "Add to agenda" }));
     expect(await screen.findByLabelText("Add to the agenda")).toHaveValue("");
+    expect(stored().drafts).toEqual({ "people/1on1/r1": "For Priya only" });
     view.unmount();
   });
 

@@ -13,13 +13,13 @@ Validation errors at generation: **0**.
 
 | Measure | Present / total or count |
 | --- | ---: |
-| Source paths | 312 / 312 |
-| Test paths | 259 / 259 |
-| Documentation paths | 253 / 253 |
-| Assertions inspected | 259 |
-| Tests executed | 221 |
-| Records with an executed assertion | 84 |
-| Semantic records unresolved | 73 |
+| Source paths | 318 / 318 |
+| Test paths | 266 / 266 |
+| Documentation paths | 258 / 258 |
+| Assertions inspected | 266 |
+| Tests executed | 228 |
+| Records with an executed assertion | 85 |
+| Semantic records unresolved | 72 |
 
 ## Documentation classes
 
@@ -88,24 +88,24 @@ Validation errors at generation: **0**.
 | `desk.open` | capabilities | 14/14 | 11/11 | 11 | 10 | 1 | partially_evidenced |
 | `desk.arrange` | capabilities | 2/2 | 2/2 | 2 | 0 | 1 | unresolved |
 | `desk.inspect` | capabilities | 6/6 | 8/8 | 8 | 6 | 0 | partially_evidenced |
-| `desk.execute` | capabilities | 2/2 | 2/2 | 2 | 0 | 0 | unresolved |
+| `desk.execute` | capabilities | 3/3 | 3/3 | 3 | 1 | 0 | partially_evidenced |
 | `desk.drop` | capabilities | 2/2 | 2/2 | 2 | 0 | 0 | unresolved |
 | `desk.persist` | capabilities | 2/2 | 1/1 | 1 | 0 | 0 | unresolved |
 | `desk.runtime` | capabilities | 2/2 | 2/2 | 2 | 0 | 1 | unresolved |
 | `desk.native_host` | capabilities | 1/1 | 0/0 | 0 | 0 | 0 | unresolved |
 | `desk.dock.live` | capabilities | 1/1 | 1/1 | 1 | 1 | 0 | partially_evidenced |
 | `project.update.linked_week` | capabilities | 3/3 | 5/5 | 5 | 5 | 0 | partially_evidenced |
-| `people.prep.read` | capabilities | 1/1 | 1/1 | 1 | 1 | 0 | partially_evidenced |
+| `people.prep.read` | capabilities | 2/2 | 3/3 | 3 | 3 | 0 | partially_evidenced |
 | `desk.note.task` | capabilities | 2/2 | 1/1 | 1 | 1 | 0 | partially_evidenced |
 | `people.prep.record` | capabilities | 2/2 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `desk.engines.find_lan` | capabilities | 3/3 | 2/2 | 2 | 2 | 0 | partially_evidenced |
-| `desk.preferences` | capabilities | 4/4 | 6/6 | 6 | 6 | 0 | partially_evidenced |
+| `desk.preferences` | capabilities | 5/5 | 7/7 | 7 | 7 | 0 | partially_evidenced |
 | `desk.follow_through` | capabilities | 4/4 | 7/7 | 7 | 7 | 0 | partially_evidenced |
-| `agents.thread_persistent` | capabilities | 5/5 | 4/4 | 4 | 4 | 0 | partially_evidenced |
+| `agents.thread_persistent` | capabilities | 7/7 | 6/6 | 6 | 6 | 0 | partially_evidenced |
 | `agents.thread_tool_loop` | capabilities | 3/3 | 3/3 | 3 | 0 | 0 | unresolved |
 | `agents.interview` | capabilities | 3/3 | 3/3 | 3 | 3 | 0 | partially_evidenced |
 | `agents.mcp_http` | capabilities | 3/3 | 2/2 | 2 | 2 | 0 | partially_evidenced |
-| `knowledge.grounding` | capabilities | 3/3 | 4/4 | 4 | 4 | 0 | partially_evidenced |
+| `knowledge.grounding` | capabilities | 4/4 | 5/5 | 5 | 5 | 0 | partially_evidenced |
 | `knowledge.memory_search` | capabilities | 3/3 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `workflows.linear_run` | capabilities | 2/2 | 3/3 | 3 | 3 | 0 | partially_evidenced |
 | `coder.observation` | capabilities | 7/7 | 8/8 | 8 | 8 | 0 | partially_evidenced |

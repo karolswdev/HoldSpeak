@@ -27,12 +27,14 @@ import {
 } from "./InletAutocomplete";
 import type { ResolvedRef } from "../../lib/drawerResolver";
 import { useDesk } from "../store";
-import { apiFetch } from "../../lib/api";
+import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { KIND_GLYPH } from "../tools";
 import { SurfaceRows, SurfaceRow } from "../surface/Surface";
 import { Button } from "../../components/signal/Signal";
-import { useThreadComposerDraft } from "../threadComposerDrafts";
+import { beginThreadTodo, settleThreadTodo, useThreadComposerDraft } from "../threadComposerDrafts";
 import { noteName } from "../windowName";
+import { ActionNotice, StateChip } from "../surface";
+import { useOnDeskChanged } from "../useDeskChangedRefresh";
 
 // ── ref chip (the attachment) ───────────────────────────────────────
 
@@ -141,7 +143,7 @@ export function isSlashAtLineStart(text: string, cursor: number): boolean {
   const lastNewline = beforeCursor.lastIndexOf("\n");
   const lineStart = lastNewline + 1;
   // The slash must be at lineStart
-  return text[lineStart] === "/";
+  return cursor > lineStart && text[lineStart] === "/";
 }
 
 /** Pure function: given the full input text, cursor position, and context,
@@ -158,7 +160,7 @@ export function completeSlash(
   const lineStart = lastNewline + 1;
 
   // R3: / only at line start
-  if (text[lineStart] !== "/") return null;
+  if (cursor <= lineStart || text[lineStart] !== "/") return null;
 
   const lineContent = text.slice(lineStart, cursor);
   // lineContent is "/<something>"
@@ -229,13 +231,12 @@ export interface PromptNote {
 }
 
 let _promptCache: PromptNote[] | null = null;
-let _promptFetching = false;
+let _promptFetching: Promise<PromptNote[]> | null = null;
 
-export async function loadPromptNotes(): Promise<PromptNote[]> {
-  if (_promptCache) return _promptCache;
-  if (_promptFetching) return [];
-  _promptFetching = true;
-  try {
+export async function loadPromptNotes(refresh = false): Promise<PromptNote[]> {
+  if (!refresh && _promptCache) return _promptCache;
+  if (_promptFetching) return _promptFetching;
+  _promptFetching = (async () => {
     const data = await apiFetch<{ notes?: Array<Record<string, unknown>> }>(
       "/api/notes?tag=prompt",
     );
@@ -249,11 +250,8 @@ export async function loadPromptNotes(): Promise<PromptNote[]> {
         body: String(n.body_markdown ?? ""),
       }));
     return _promptCache;
-  } catch {
-    return [];
-  } finally {
-    _promptFetching = false;
-  }
+  })();
+  try { return await _promptFetching; } finally { _promptFetching = null; }
 }
 
 export function resetPromptCache(): void {
@@ -261,13 +259,12 @@ export function resetPromptCache(): void {
 }
 
 let _guardrailCache: Array<{ id: string; title: string }> | null = null;
-let _guardrailFetching = false;
+let _guardrailFetching: Promise<Array<{ id: string; title: string }>> | null = null;
 
-export async function loadGuardrailNotes(): Promise<Array<{ id: string; title: string }>> {
-  if (_guardrailCache) return _guardrailCache;
-  if (_guardrailFetching) return [];
-  _guardrailFetching = true;
-  try {
+export async function loadGuardrailNotes(refresh = false): Promise<Array<{ id: string; title: string }>> {
+  if (!refresh && _guardrailCache) return _guardrailCache;
+  if (_guardrailFetching) return _guardrailFetching;
+  _guardrailFetching = (async () => {
     const data = await apiFetch<{ notes?: Array<Record<string, unknown>> }>(
       "/api/notes?tag=guardrail",
     );
@@ -279,11 +276,8 @@ export async function loadGuardrailNotes(): Promise<Array<{ id: string; title: s
         title: noteName(n),
       }));
     return _guardrailCache;
-  } catch {
-    return [];
-  } finally {
-    _guardrailFetching = false;
-  }
+  })();
+  try { return await _guardrailFetching; } finally { _guardrailFetching = null; }
 }
 
 // ── people loader (lazy, cached) ────────────────────────────────────
@@ -294,13 +288,12 @@ interface PersonRow {
 }
 
 let _peopleCache: AutocompleteItem[] | null = null;
-let _peopleFetching = false;
+let _peopleFetching: Promise<AutocompleteItem[]> | null = null;
 
-async function loadPeople(): Promise<AutocompleteItem[]> {
-  if (_peopleCache) return _peopleCache;
-  if (_peopleFetching) return [];
-  _peopleFetching = true;
-  try {
+async function loadPeople(refresh = false): Promise<AutocompleteItem[]> {
+  if (!refresh && _peopleCache) return _peopleCache;
+  if (_peopleFetching) return _peopleFetching;
+  _peopleFetching = (async () => {
     const data = await apiFetch<{ relationships?: PersonRow[] }>(
       "/api/people/relationships",
     );
@@ -314,12 +307,20 @@ async function loadPeople(): Promise<AutocompleteItem[]> {
         nameNormalized: r.display_name.toLowerCase(),
       }));
     return _peopleCache;
-  } catch {
-    return [];
-  } finally {
-    _peopleFetching = false;
-  }
+  })();
+  try { return await _peopleFetching; } finally { _peopleFetching = null; }
 }
+
+/** Test seam; the production cache remains shared by the existing pickers. */
+export function resetThreadChoiceCaches(): void {
+  _promptCache = null;
+  _guardrailCache = null;
+  _peopleCache = null;
+}
+
+type ChoiceKind = "modes" | "prompts" | "guardrails" | "people";
+type ChoiceRead = { status: "loading" | "ready" | "failed"; error?: string; known?: boolean };
+const CHOICE_LABELS: Record<ChoiceKind, string> = { modes: "Modes", prompts: "Prompts", guardrails: "Guardrails", people: "People" };
 
 // ── system-style row (in-flow status messages) ──────────────────────
 
@@ -382,7 +383,11 @@ export function ThreadComposer({
   disabled,
 }: ThreadComposerProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const { draft, setDraft, chips, setChips, sending, setSending } = useThreadComposerDraft(threadId);
+  const { draft, setDraft, chips, setChips, sending, setSending, todo } = useThreadComposerDraft(threadId);
+  const [choiceReads, setChoiceReads] = useState<Partial<Record<ChoiceKind, ChoiceRead>>>({});
+  const choiceReadsRef = useRef(choiceReads);
+  const live = useRef(true);
+  useEffect(() => { live.current = true; return () => { live.current = false; }; }, []);
 
   // autocomplete state
   const [acOpen, setAcOpen] = useState(false);
@@ -435,54 +440,40 @@ export function ThreadComposer({
     return [...out, ...people];
   }, [items, people]);
 
-  // Load people lazily on first @ trigger
-  const loadPeopleOnce = useCallback(() => {
-    if (people.length > 0 || _peopleCache) {
-      if (_peopleCache && people.length === 0) setPeople(_peopleCache);
-      return;
+  const readChoices = useCallback(async (kind: ChoiceKind, refresh = false) => {
+    const prior = choiceReadsRef.current[kind];
+    if (prior?.status === "loading" || (!refresh && prior)) return;
+    const publish = (read: ChoiceRead) => {
+      if (!live.current) return;
+      choiceReadsRef.current = { ...choiceReadsRef.current, [kind]: read };
+      setChoiceReads(choiceReadsRef.current);
+    };
+    publish({ status: "loading", known: prior?.known });
+    try {
+      if (kind === "people") setPeople(await loadPeople(refresh));
+      else if (kind === "prompts") setPrompts(await loadPromptNotes(refresh));
+      else if (kind === "guardrails") setGuardrails(await loadGuardrailNotes(refresh));
+      else {
+        const data = await apiFetch<{ recipes?: Array<Record<string, unknown>> }>("/api/recipes?kind=mode");
+        const order = ["hs-seed-mode-desk", "hs-seed-mode-chase", "hs-seed-mode-draft", "hs-seed-mode-plan"];
+        const rank = (id: string) => order.includes(id) ? order.indexOf(id) : order.length;
+        const next = (data.recipes ?? []).filter((row) => row.name && !row.deleted)
+          .map((row) => ({ id: String(row.id ?? ""), name: String(row.name ?? "") }))
+          .sort((a, b) => rank(a.id) - rank(b.id) || a.name.localeCompare(b.name));
+        if (live.current) setModes(next);
+      }
+      publish({ status: "ready", known: true });
+    } catch (error) {
+      publish({ status: "failed", error: readableError(error), known: prior?.known });
     }
-    void loadPeople().then((p) => setPeople(p));
-  }, [people]);
-
-  // Load modes for /mode completion (reuse ModeTabs fetchModes cache)
-  const loadModesOnce = useCallback(() => {
-    if (modes.length > 0) return;
-    void apiFetch<{ recipes?: Array<Record<string, unknown>> }>(
-      "/api/recipes?kind=mode",
-    ).then((data) => {
-      const recipes = data.recipes ?? [];
-      const SEED_ORDER = [
-        "hs-seed-mode-desk",
-        "hs-seed-mode-chase",
-        "hs-seed-mode-draft",
-        "hs-seed-mode-plan",
-      ];
-      const rank = (id: string): number => {
-        const i = SEED_ORDER.indexOf(id);
-        return i === -1 ? SEED_ORDER.length : i;
-      };
-      const items = recipes
-        .filter((r) => r.name && !r.deleted)
-        .map((r) => ({
-          id: String(r.id ?? ""),
-          name: String(r.name ?? ""),
-        }));
-      items.sort((a, b) => rank(a.id) - rank(b.id) || a.name.localeCompare(b.name));
-      setModes(items);
-    }).catch(() => {});
-  }, [modes.length]);
-
-  // Load prompts for /prompt completion
-  const loadPromptsOnce = useCallback(() => {
-    if (prompts.length > 0) return;
-    void loadPromptNotes().then((p) => setPrompts(p));
-  }, [prompts.length]);
-
-  // Load guardrails for /guardrail completion
-  const loadGuardrailsOnce = useCallback(() => {
-    if (guardrails.length > 0) return;
-    void loadGuardrailNotes().then((g) => setGuardrails(g));
-  }, [guardrails.length]);
+  }, []);
+  const loadPeopleOnce = useCallback(() => { void readChoices("people"); }, [readChoices]);
+  const loadModesOnce = useCallback(() => { void readChoices("modes"); }, [readChoices]);
+  const loadPromptsOnce = useCallback(() => { void readChoices("prompts"); }, [readChoices]);
+  const loadGuardrailsOnce = useCallback(() => { void readChoices("guardrails"); }, [readChoices]);
+  useOnDeskChanged(() => {
+    for (const kind of Object.keys(choiceReadsRef.current) as ChoiceKind[]) void readChoices(kind, true);
+  });
 
   // ── focus return after turn_done (double-rAF precedent) ──────────
   useEffect(() => {
@@ -500,6 +491,11 @@ export function ThreadComposer({
     (text: string, cursor: number) => {
       // Two-stage slash completion (R3: / only at line start)
       const completion = completeSlash(text, cursor, { modes, prompts, guardrails });
+      if (completion?.stage === "argument") {
+        if (completion.command?.id === "mode") loadModesOnce();
+        if (completion.command?.id === "prompt") loadPromptsOnce();
+        if (completion.command?.id === "guardrail") loadGuardrailsOnce();
+      }
       if (completion && completion.items.length > 0) {
         setSlashOpen(true);
         setSlashCompletion(completion);
@@ -547,6 +543,12 @@ export function ThreadComposer({
   );
 
   const handleSelect = useCallback(() => {
+    const ta = textareaRef.current;
+    if (ta) updateAutocomplete(draft, ta.selectionStart);
+  }, [draft, updateAutocomplete]);
+
+  // A completed choice read updates the open picker without another keystroke.
+  useEffect(() => {
     const ta = textareaRef.current;
     if (ta) updateAutocomplete(draft, ta.selectionStart);
   }, [draft, updateAutocomplete]);
@@ -650,23 +652,26 @@ export function ThreadComposer({
           }
           break;
         case "todo":
-          setDraft("");
           if (!arg) {
             addSystemRow("Usage: /todo <text>");
-          } else {
+          } else if (beginThreadTodo(threadId, draft)) {
+            const command = draft;
             void (async () => {
               try {
                 const result = await apiFetch<{ status: string; error?: string }>(
-                  `/api/threads/${threadId}/todo`,
+                  `/api/threads/${encodeURIComponent(threadId)}/todo`,
                   { method: "POST", json: { text: arg } },
                 );
-                if (result.status === "ok") {
-                  addSystemRow(`Todo added: ${arg}`);
-                } else {
-                  addSystemRow(`Todo failed: ${result.error || "unknown"}`);
-                }
-              } catch (err) {
-                addSystemRow(`Todo failed: ${err instanceof Error ? err.message : "unknown error"}`);
+                if (result.status === "ok") settleThreadTodo(threadId, command, "accepted");
+                // These two replies return before the tool is dispatched.
+                else if (["denied", "timeout"].includes(result.status))
+                  settleThreadTodo(threadId, command, "refused", result.error || result.status);
+                else settleThreadTodo(threadId, command, "unknown", result.error);
+              } catch (error) {
+                // A transport/server failure does not establish whether this
+                // non-idempotent task writer ran. Never replay it implicitly.
+                const refused = error instanceof ApiError && error.status >= 400 && error.status < 500;
+                settleThreadTodo(threadId, command, refused ? "refused" : "unknown", readableError(error));
               }
             })();
           }
@@ -719,7 +724,7 @@ export function ThreadComposer({
           break;
       }
     },
-    [threadId, lastAssistantId, onKeep, onFork, onStop, onNewThread, onModeSelect, onToggleGuardrail, modes, prompts, guardrails, currentMode, addSystemRow],
+    [threadId, draft, lastAssistantId, onKeep, onFork, onStop, onNewThread, onModeSelect, onToggleGuardrail, modes, prompts, guardrails, currentMode, addSystemRow],
   );
 
   const pickSlashItem = useCallback(
@@ -770,7 +775,7 @@ export function ThreadComposer({
   );
 
   const handleSend = useCallback(async () => {
-    if (!draft.trim() || sending) return;
+    if (!draft.trim() || sending || todo?.status === "pending") return;
     const text = draft.trim();
     // HS-153-05: intercept freeform-arg slash commands (e.g. /todo, /compact)
     // that never enter the palette's argument stage because they have no completions.
@@ -800,7 +805,7 @@ export function ThreadComposer({
       setSending(false);
       textareaRef.current?.focus();
     }
-  }, [draft, sending, chips, onSend, executeSlashCommand]);
+  }, [draft, sending, todo, chips, onSend, executeSlashCommand]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -904,6 +909,22 @@ export function ThreadComposer({
 
   return (
     <div className="thread-composer conversation-composer" data-testid="thread-composer">
+      {todo ? <ActionNotice role={todo.status === "refused" || todo.status === "unknown" ? "alert" : "status"} tone={todo.status === "accepted" ? "ok" : "warn"}>
+        <StateChip state={todo.status === "pending" ? "working" : todo.status === "accepted" ? "success" : "warning"}
+          label={todo.status === "pending" ? "Adding task" : todo.status === "accepted" ? "Task added" : todo.status === "refused" ? "Task not added" : "Result unknown"} />
+        {" · "}<span>{todo.command}</span>
+        {todo.message ? <>{" · "}<span>{todo.message}</span></> : null}
+      </ActionNotice> : null}
+      {(Object.keys(choiceReads) as ChoiceKind[]).map((kind) => {
+        const read = choiceReads[kind]!;
+        const count = kind === "modes" ? modes.length : kind === "prompts" ? prompts.length : kind === "guardrails" ? guardrails.length : people.length;
+        return read.status === "failed" ? <ActionNotice key={kind} role="alert" tone="warn" action={{ label: `Retry ${CHOICE_LABELS[kind]}`, onClick: () => void readChoices(kind, true) }}>
+          <StateChip state="unreachable" label={`${CHOICE_LABELS[kind]} unavailable`} />
+          {read.known ? <>{" · "}<StateChip state="warning" label="Last read" /></> : null}
+          {" · "}<span>{read.error}</span>
+        </ActionNotice> : read.status === "loading" ? <StateChip key={kind} state="working" label={`Reading ${CHOICE_LABELS[kind]}`} />
+          : !count ? <StateChip key={kind} state="idle" label={`No ${CHOICE_LABELS[kind].toLowerCase()}`} /> : null;
+      })}
       {/* System rows (in-flow feedback from slash commands) */}
       {systemRows.map((text, i) => (
         <SystemRow key={i} text={text} />
@@ -992,7 +1013,7 @@ export function ThreadComposer({
             variant="primary"
             type="button"
             onClick={() => void handleSend()}
-            disabled={disabled || !draft.trim() || sending}
+            disabled={disabled || !draft.trim() || sending || todo?.status === "pending"}
             data-testid="composer-send"
           >
             Send

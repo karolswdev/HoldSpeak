@@ -1,0 +1,41 @@
+{
+  "review_id": "prev_45b3ea1fd0dd45d6ac722448baff6788",
+  "project_id": "proj-aa707497b64f",
+  "status": "open",
+  "from_sequence": 0,
+  "through_sequence": 3,
+  "source_manifest": {
+    "native:decisions": {
+      "observation_count": 0,
+      "state": "ok"
+    },
+    "native:followthrough": {
+      "observation_count": 1,
+      "state": "ok"
+    },
+    "native:meetings": {
+      "observation_count": 1,
+      "state": "ok"
+    },
+    "native:resources": {
+      "observation_count": 1,
+      "state": "ok"
+    }
+  },
+  "project_revision_opened": 2,
+  "materiality_version": "v1",
+  "opened_at": "2026-10-16T18:59:19+00:00",
+  "proposals": [
+    {
+      "id": "pprop_186a67c2c432d234647d1cf4f50a7a9d",
+      "proposal_kind": "risk_attention",
+      "target_ref": "action_item:philo13-b4-owned-action",
+      "title": "risk_attention: action_item:philo13-b4-owned-action",
+      "rationale": "Overdue follow-through requires risk attention",
+      "patch_json": "{\"_source_version\":\"2026-10-15\",\"card_id\":\"philo13-b4-owned-action\",\"due\":\"2026-10-15\",\"lane\":\"overdue\",\"owner\":\"Priya\",\"text\":\"Send the dry-run report\"}",
+      "materiality": "0.795",
+      "producer_kind": "assessment",
+      "lifecycle": "open"
+    }
+  ]
+}

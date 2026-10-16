@@ -5,10 +5,10 @@
     {
       "id": "agents.thread_persistent",
       "name": "Persistent Thread chat",
-      "purpose": "Save a multi-turn assistant conversation with branches, drafts, refs and kept results.",
+      "purpose": "Save conversations and kept results; retain task commands and newer drafts when results are delayed or unknown.",
       "domain": "agents",
       "status": "experimental",
-      "status_reason": "Thread CRUD, persistence and streaming orchestration are implemented and assertion-backed; provider and owner use were not observed.",
+      "status_reason": "Thread CRUD, persistence and streaming orchestration are implemented and assertion-backed; provider and owner use were not observed. October 16 focused composer tests additionally retain exact /todo command ownership through pending/refused/unknown/accepted states and remount; helper failures retain known choices with exact read Retry. No provider completion or replay idempotency is inferred.",
       "exposure": "user",
       "surfaces": [
         "Thread window",
@@ -108,7 +108,19 @@
           "path": "web/src/desk/components/ThreadComposer.tsx",
           "symbol": "InlineEditor",
           "claim": "Group focus keeps Send/Cancel reachable; shared Pad editors retain existing draft and speech append contracts.",
-          "line": 1021
+          "line": 1030
+        },
+        {
+          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "symbol": "export function ThreadComposer",
+          "line": 370,
+          "claim": "Only an actual pending task blocks duplicate dispatch; unknown preserves words and allows a new explicit Send."
+        },
+        {
+          "path": "web/src/desk/threadComposerDrafts.ts",
+          "symbol": "export function settleThreadTodo",
+          "line": 136,
+          "claim": "Acceptance clears only the unchanged raw command in its original Thread; reload retains interrupted commands as unknown."
         }
       ],
       "tests": [
@@ -145,14 +157,28 @@
           "node": "retries the failed message through the existing regenerate writer",
           "assertion": "A failed answer offers the canonical regenerate writer for that message.",
           "execution": "passed"
+        },
+        {
+          "path": "web/src/desk/__tests__/ThreadComposer.test.tsx",
+          "node": "allows an explicit new Send of retained words after unknown, blocking only the actual pending command",
+          "assertion": "A new deliberate Send is possible after unknown; pending blocks another dispatch.",
+          "execution": "passed"
+        },
+        {
+          "path": "web/src/desk/__tests__/ThreadComposer.test.tsx",
+          "node": "names an unknown task outcome without automatic replay and retains newer typing and speech",
+          "assertion": "Transport ambiguity retains original command and newer typed/spoken draft without replay.",
+          "execution": "passed"
         }
       ],
       "docs": [
-        "docs/AGENTS_AND_THREADS.md"
+        "docs/AGENTS_AND_THREADS.md",
+        "docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/IMPLEMENTATION-CDE.md"
       ],
       "limitations": [
         "No model call, live stream or owner walk was run.",
-        "Published releases may expose fewer features."
+        "Published releases may expose fewer features.",
+        "The /todo writer has no replay idempotency. A deliberate new Send after unknown can create another task; there is no automatic replay."
       ],
       "failure_states": [
         "thread_not_found",
@@ -569,7 +595,7 @@
       "purpose": "Resolve explicit meetings, artifacts, projects, rails and optional memory matches into bounded evidence blocks.",
       "domain": "knowledge",
       "status": "experimental",
-      "status_reason": "The shared resolver, caps, qualified refs, project scope and rails refusal behavior are implemented and assertion-backed.",
+      "status_reason": "The shared resolver, caps, qualified refs, project scope and rails refusal behavior are implemented and assertion-backed. October 16 focused Ask tests additionally distinguish unavailable Projects from a successful empty collection and retain known choices, question and selected Note passage during failed reread/Retry.",
       "exposure": "user",
       "surfaces": [
         "Ask",
@@ -643,6 +669,12 @@
           "symbol": "changeSelection",
           "line": 55,
           "claim": "Async source reads merge into current choices; existing checkbox controls own selection."
+        },
+        {
+          "path": "web/src/desk/components/AskPanel.tsx",
+          "symbol": "export function AskPanel",
+          "line": 93,
+          "claim": "Projects uses checked latest-read responses with local Retry while preserving known grounding choices and question."
         }
       ],
       "tests": [
@@ -689,11 +721,18 @@
             "run": "deep-usability-grounding-2026-10-14",
             "cases": 1
           }
+        },
+        {
+          "path": "web/src/desk/__tests__/askPanelExperience.test.tsx",
+          "node": "a failed Projects refresh retains known choices, the question, selected passage and Note context",
+          "assertion": "Failed Projects refresh and exact Retry preserve known choices and selected Note/passage/question.",
+          "execution": "passed"
         }
       ],
       "docs": [
         "docs/AGENTS_AND_THREADS.md",
-        "docs/KERNEL.md"
+        "docs/KERNEL.md",
+        "docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/IMPLEMENTATION-CDE.md"
       ],
       "limitations": [
         "Isolated Ask walks at 1440 and 393 resolved two real Notes through the production route; no owner-desk, remote source or model call was run.",

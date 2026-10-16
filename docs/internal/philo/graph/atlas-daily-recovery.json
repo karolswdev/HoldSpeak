@@ -1,0 +1,247 @@
+{
+  "schema_version": 1,
+  "source_commit": "1c20a595c88048241b44251201e852f9a75f53e3",
+  "cases": [
+    {
+      "id": "case.flagship.people.they_owe",
+      "job": "j7",
+      "edge_ids": [
+        "edge.face.people_prep"
+      ],
+      "state_id": "state.desk_presentation.they_owe_inspection",
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME. Declared real People/calendar/meeting fixture, then an actual owed commitment producer. No provider or microphone."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "cli",
+          "action": "seed_people_prep",
+          "capture_as": "people",
+          "adapter": "people-prep-producer"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/people/relationships/{relationship_id}/owed",
+          "adapter": "http-route",
+          "body": {
+            "body": "Send the API compatibility notes and service rollout checklist",
+            "visibility": "shared_intent"
+          },
+          "capture_as": "commitment",
+          "capture_path": "commitment.id"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-tools-launch",
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "input[placeholder=\"Search tools and Desk items\"]",
+          "value": "people",
+          "adapter": "ui-input"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-tool-shelf [id=\"desk-palette-option-desk.open-people\"]",
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "#surface-people button:has-text(\"Priya Sharma\")"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "tab",
+          "name": "Prep"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-navigation",
+          "selector": "[data-testid=people-they-owe] button.people-plate-title"
+        },
+        {
+          "kind": "ui",
+          "action": "scroll_into_view",
+          "adapter": "ui-navigation",
+          "selector": "[data-testid=people-they-owe]",
+          "block": "start"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": "[data-testid=people-they-owe] button.people-plate-title"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "text_contains",
+          "value": "Send the API compatibility notes and service rollout checklist"
+        },
+        "observe_at": "[data-testid=people-they-owe] .people-commitment-inspector",
+        "words": "The exact owed commitment opens in its own section; the supplemental journey verifies unchanged lifecycle and focus return."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.flagship.ask.projects_retry",
+      "job": "beyond",
+      "edge_ids": [
+        "edge.route.projects_read"
+      ],
+      "state_id": "state.desk_presentation.ask_projects_recovered",
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME. Projects collection is genuinely empty. A declared browser 503 affects the initial read; Retry reaches the real hub."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "boundary",
+          "substitute": "http_fault",
+          "label": "Declared Projects read unavailable",
+          "method": "GET",
+          "path": "/api/projects",
+          "status": 503,
+          "times": 20,
+          "body": {
+            "detail": "Projects read unavailable"
+          }
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-verbbar-item[data-menu-id=go] button"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "[role^=menuitem]:has(.desk-menu-label:text-is(\"Ask AI\")) >> nth=-1"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-navigation",
+          "selector": "#ask [role=alert]"
+        },
+        {
+          "kind": "boundary",
+          "substitute": "http_fault_lift",
+          "label": "Restore the real Projects read"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": "#ask button:text-is(\"Retry Projects\")"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "text_contains",
+          "value": "No projects"
+        },
+        "observe_at": "#ask",
+        "words": "Exact Projects Retry replaces unavailable with the successful empty collection; it does not send the question."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ],
+  "states": [
+    {
+      "id": "state.desk_presentation.they_owe_inspection",
+      "family": "desk_presentation",
+      "values": {
+        "journey": "case.flagship.people.they_owe"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/pages/cores/PeopleCore.tsx",
+          "symbol": "function PrepPane",
+          "claim": "The exact owed commitment opens in its own section; the supplemental journey verifies unchanged lifecycle and focus return."
+        }
+      ],
+      "reachable_by": [
+        "case.flagship.people.they_owe"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.ask_projects_recovered",
+      "family": "desk_presentation",
+      "values": {
+        "journey": "case.flagship.ask.projects_retry"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/components/AskPanel.tsx",
+          "symbol": "export function AskPanel",
+          "claim": "Exact Projects Retry replaces unavailable with the successful empty collection; it does not send the question."
+        }
+      ],
+      "reachable_by": [
+        "case.flagship.ask.projects_retry"
+      ]
+    }
+  ],
+  "clocks": [
+    {
+      "id": "clock.browser_date",
+      "source": "Browser Date and timers",
+      "mechanism": "No clock mutation required.",
+      "status": "available",
+      "used_by": []
+    }
+  ],
+  "excluded": [],
+  "council_readings": []
+}

@@ -6459,7 +6459,7 @@
         },
         {
           "claim": "Ask opens on the shared Pad and paper conversation; exact request/Keep snapshots preserve newer drafts, while local close abandons stale response updates without claiming server cancellation.",
-          "line": 92,
+          "line": 93,
           "path": "web/src/desk/components/AskPanel.tsx",
           "symbol": "AskPanel"
         },
@@ -6925,7 +6925,8 @@
       ],
       "docs": [
         "docs/DESK_OBJECT_MODEL.md",
-        "docs/internal/philo/SRS.md"
+        "docs/internal/philo/SRS.md",
+        "docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/IMPLEMENTATION-CDE.md"
       ],
       "domain": "desk",
       "egress": "Backend verbs may egress according to their API and egress receipt; local verbs do not.",
@@ -6995,10 +6996,16 @@
           "line": 167,
           "path": "web/src/desk/verbRegistry.ts",
           "symbol": "VERBS"
+        },
+        {
+          "claim": "Healthy pending Review leads the header and opens the existing canonical review; Draft update remains secondary.",
+          "line": 319,
+          "path": "web/src/features/project-room/ProjectRoomCore.tsx",
+          "symbol": "function RoomHead"
         }
       ],
       "status": "partial",
-      "status_reason": "Registry availability, ghost reasons and local runners are implemented; async receipts and several backend runners remain incomplete.",
+      "status_reason": "Registry availability, ghost reasons and local runners are implemented; async receipts and several backend runners remain incomplete. October 16 focused Project tests additionally verify waiting Review leads the header only with a healthy positive pending count; existing Draft update and canonical review posture remain.",
       "surfaces": [
         "window menu",
         "floor menu",
@@ -7016,6 +7023,12 @@
           "execution": "not_run",
           "node": "a ghosted verb refuses quietly (⌘W with no window open)",
           "path": "web/src/desk/__tests__/keymap.test.ts"
+        },
+        {
+          "assertion": "Header Review enters the exact recorded review/task and Close returns to the same Room.",
+          "execution": "passed",
+          "node": "the head Review opens the recorded real task in the existing posture and returns to the Room",
+          "path": "web/src/features/project-room/__tests__/ProjectRoomCore.test.tsx"
         }
       ],
       "trust_boundary": "A user gesture enters the registry; only a registered available runner can mutate state or call a backend."
@@ -7658,7 +7671,8 @@
       ],
       "docs": [
         "pm/roadmap/holdspeak-philo/phase-13-the-desk/story-09-b4-the-one-on-one-finds-its-person.md",
-        "docs/internal/philo/phase-17/IMPLEMENTATION-PRODUCTIVITY.md"
+        "docs/internal/philo/phase-17/IMPLEMENTATION-PRODUCTIVITY.md",
+        "docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/IMPLEMENTATION-CDE.md"
       ],
       "domain": "desk",
       "egress": "The brief read sends no data off device.",
@@ -7702,7 +7716,7 @@
         "linux_x11": "unknown",
         "macos": "unknown"
       },
-      "purpose": "Read a report’s next 1:1, agenda, projects and confirmed open actions, matched by an unambiguous People identity.",
+      "purpose": "Read a report’s next 1:1, agenda, projects, confirmed actions and both obligations by their exact identity.",
       "release_availability": "unverified",
       "replacement": null,
       "side_effect": "none",
@@ -7712,10 +7726,16 @@
           "line": 373,
           "path": "holdspeak/services/people_service.py",
           "symbol": "PeopleService.one_on_one_brief"
+        },
+        {
+          "claim": "Each obligation opens its own exact inspector; Add preserves newer keyed drafts across person/view return.",
+          "line": 779,
+          "path": "web/src/pages/cores/PeopleCore.tsx",
+          "symbol": "function PrepPane"
         }
       ],
       "status": "built_unreleased",
-      "status_reason": "The productive-desk branch wires People Prep and verifies accepted-action ownership and terminal-state exclusion with focused tests; owner use remains unobserved.",
+      "status_reason": "The productive-desk branch wires People Prep and verifies accepted-action ownership and terminal-state exclusion with focused tests; owner use remains unobserved. Focused October 16 component tests cover both exact commitment inspectors and intent-open Add wells, with accepted writes clearing only the submitted raw draft. Release and owner use remain separate.",
       "surfaces": [
         "People Prep"
       ],
@@ -7725,6 +7745,18 @@
           "execution": "passed",
           "node": "test_brief_suggests_alias_event_without_linking_and_returns_next_prep_data",
           "path": "tests/unit/test_philo13_b4_prep.py"
+        },
+        {
+          "assertion": "Both sections read the exact execution ID and restore title focus without a lifecycle write.",
+          "execution": "passed",
+          "node": "opens either exact commitment in its owning section and Close returns to that row",
+          "path": "web/src/pages/cores/__tests__/peopleCore.test.tsx"
+        },
+        {
+          "assertion": "Each Add retains newer words after accepted/refused completion and scopes return by person.",
+          "execution": "passed",
+          "node": "$label keeps newer text after accepted=$accepted and through person/tab/remount return",
+          "path": "web/src/pages/cores/__tests__/peopleCore.test.tsx"
         }
       ],
       "trust_boundary": "The owner reads the encrypted People relationship and stored calendar, project and meeting context. A suggested calendar link needs explicit confirmation."
@@ -7888,7 +7920,7 @@
         },
         {
           "claim": "The linked Next 1:1 offers the real recording action and keeps its agenda draft.",
-          "line": 747,
+          "line": 670,
           "path": "web/src/pages/cores/PeopleCore.tsx",
           "symbol": "PrepPane"
         }
@@ -8037,7 +8069,8 @@
       "docs": [
         "docs/USER_GUIDE.md",
         "docs/internal/SETTINGS-AUDIT-2026-10-14/backend-audit.md",
-        "docs/internal/VISUAL-REFINEMENT-2026-10-15/README.md"
+        "docs/internal/VISUAL-REFINEMENT-2026-10-15/README.md",
+        "docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/IMPLEMENTATION-CDE.md"
       ],
       "domain": "desk",
       "egress": "The preference API saves local configuration; later configured jobs retain their own destination boundaries.",
@@ -8082,7 +8115,7 @@
         "linux_x11": "unknown",
         "macos": "supported_with_setup"
       },
-      "purpose": "Save local preferences while preserving calendar identity and the authoritative model assignments.",
+      "purpose": "Edit preferences and recover failed reads while keeping unconfirmed changes and unsaved inputs visible.",
       "release_availability": "unverified",
       "replacement": null,
       "side_effect": "local_reversible",
@@ -8110,10 +8143,16 @@
           "line": 117,
           "path": "web/src/pages/cores/CalendarSnapshotReviewCore.tsx",
           "symbol": "CalendarSnapshotReviewCore"
+        },
+        {
+          "claim": "Remote and Projects Retry target their own GET; Reload reads current state without replaying or confirming the failed writer.",
+          "line": 723,
+          "path": "web/src/pages/cores/SettingsCore.tsx",
+          "symbol": "export function RemoteAccessModule"
         }
       ],
       "status": "experimental",
-      "status_reason": "Existing Settings surface audited; isolated HTTP tests cover identity and migrated preferences. Focused UI tests cover compact Calendar read states, retry and URL entry with an existing source. Native hardware and owner acceptance remain unverified.",
+      "status_reason": "Existing Settings surface audited; isolated HTTP tests cover identity and migrated preferences. Focused UI tests cover compact Calendar read states, retry and URL entry with an existing source. Native hardware and owner acceptance remain unverified. October 16 Remote component tests distinguish exact failed reads from named unconfirmed writes; GET-only Reload retains write failure, drafts, credentials and structured grant outcomes.",
       "surfaces": [
         "Settings"
       ],
@@ -8173,6 +8212,12 @@
           "execution": "passed",
           "node": "keeps the reviewed anchor and events after refusal and retries the identical payload",
           "path": "web/src/pages/cores/__tests__/CalendarSnapshotReviewCore.test.tsx"
+        },
+        {
+          "assertion": "A failed Issue and failed reread retain exact fields/row, and successful GET does not erase the write failure.",
+          "execution": "passed",
+          "node": "Reload keeps unsaved Issue name, access, expiry and the expanded credential through read failure and recovery",
+          "path": "web/src/pages/cores/__tests__/remoteAccess.test.tsx"
         }
       ],
       "trust_boundary": "Owner-authorized changed preferences are validated before the local config write. Retired model selectors still refuse explicit mutations."
@@ -8388,7 +8433,8 @@
         "inference broker"
       ],
       "docs": [
-        "docs/AGENTS_AND_THREADS.md"
+        "docs/AGENTS_AND_THREADS.md",
+        "docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/IMPLEMENTATION-CDE.md"
       ],
       "domain": "agents",
       "egress": "The frozen model route determines whether prompt material leaves the hub.",
@@ -8419,7 +8465,8 @@
       ],
       "limitations": [
         "No model call, live stream or owner walk was run.",
-        "Published releases may expose fewer features."
+        "Published releases may expose fewer features.",
+        "The /todo writer has no replay idempotency. A deliberate new Send after unknown can create another task; there is no automatic replay."
       ],
       "model_requirements": [
         "configured admitted model route for assistant turns"
@@ -8448,7 +8495,7 @@
         "linux_x11": "supported_with_setup",
         "macos": "supported_with_setup"
       },
-      "purpose": "Save a multi-turn assistant conversation with branches, drafts, refs and kept results.",
+      "purpose": "Save conversations and kept results; retain task commands and newer drafts when results are delayed or unknown.",
       "release_availability": "unverified",
       "replacement": null,
       "side_effect": "local_reversible",
@@ -8479,13 +8526,25 @@
         },
         {
           "claim": "Group focus keeps Send/Cancel reachable; shared Pad editors retain existing draft and speech append contracts.",
-          "line": 1021,
+          "line": 1030,
           "path": "web/src/desk/components/ThreadComposer.tsx",
           "symbol": "InlineEditor"
+        },
+        {
+          "claim": "Only an actual pending task blocks duplicate dispatch; unknown preserves words and allows a new explicit Send.",
+          "line": 370,
+          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "symbol": "export function ThreadComposer"
+        },
+        {
+          "claim": "Acceptance clears only the unchanged raw command in its original Thread; reload retains interrupted commands as unknown.",
+          "line": 136,
+          "path": "web/src/desk/threadComposerDrafts.ts",
+          "symbol": "export function settleThreadTodo"
         }
       ],
       "status": "experimental",
-      "status_reason": "Thread CRUD, persistence and streaming orchestration are implemented and assertion-backed; provider and owner use were not observed.",
+      "status_reason": "Thread CRUD, persistence and streaming orchestration are implemented and assertion-backed; provider and owner use were not observed. October 16 focused composer tests additionally retain exact /todo command ownership through pending/refused/unknown/accepted states and remount; helper failures retain known choices with exact read Retry. No provider completion or replay idempotency is inferred.",
       "surfaces": [
         "Thread window",
         "MCP client"
@@ -8524,6 +8583,18 @@
           "execution": "passed",
           "node": "retries the failed message through the existing regenerate writer",
           "path": "web/src/desk/__tests__/ThreadPullout.test.tsx"
+        },
+        {
+          "assertion": "A new deliberate Send is possible after unknown; pending blocks another dispatch.",
+          "execution": "passed",
+          "node": "allows an explicit new Send of retained words after unknown, blocking only the actual pending command",
+          "path": "web/src/desk/__tests__/ThreadComposer.test.tsx"
+        },
+        {
+          "assertion": "Transport ambiguity retains original command and newer typed/spoken draft without replay.",
+          "execution": "passed",
+          "node": "names an unknown task outcome without automatic replay and retains newer typing and speech",
+          "path": "web/src/desk/__tests__/ThreadComposer.test.tsx"
         }
       ],
       "trust_boundary": "Owner thread input is persisted and frozen before an admitted model child; kept output is a separate local write."
@@ -8942,7 +9013,8 @@
       ],
       "docs": [
         "docs/AGENTS_AND_THREADS.md",
-        "docs/KERNEL.md"
+        "docs/KERNEL.md",
+        "docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/IMPLEMENTATION-CDE.md"
       ],
       "domain": "knowledge",
       "egress": "Hydrated blocks may be passed to a selected model by their caller; hydration alone does not send them.",
@@ -9014,10 +9086,16 @@
           "line": 55,
           "path": "web/src/desk/components/GroundingSection.tsx",
           "symbol": "changeSelection"
+        },
+        {
+          "claim": "Projects uses checked latest-read responses with local Retry while preserving known grounding choices and question.",
+          "line": 93,
+          "path": "web/src/desk/components/AskPanel.tsx",
+          "symbol": "export function AskPanel"
         }
       ],
       "status": "experimental",
-      "status_reason": "The shared resolver, caps, qualified refs, project scope and rails refusal behavior are implemented and assertion-backed.",
+      "status_reason": "The shared resolver, caps, qualified refs, project scope and rails refusal behavior are implemented and assertion-backed. October 16 focused Ask tests additionally distinguish unavailable Projects from a successful empty collection and retain known choices, question and selected Note passage during failed reread/Retry.",
       "surfaces": [
         "Ask",
         "Thread refs",
@@ -9068,6 +9146,12 @@
           },
           "node": "offers one keyboard control per choice without nesting an input inside a button",
           "path": "web/src/desk/components/__tests__/groundingSelection.test.tsx"
+        },
+        {
+          "assertion": "Failed Projects refresh and exact Retry preserve known choices and selected Note/passage/question.",
+          "execution": "passed",
+          "node": "a failed Projects refresh retains known choices, the question, selected passage and Note context",
+          "path": "web/src/desk/__tests__/askPanelExperience.test.tsx"
         }
       ],
       "trust_boundary": "Only resolved, named and capped source material enters a model-bearing payload; an unknown ref is returned for refusal."
