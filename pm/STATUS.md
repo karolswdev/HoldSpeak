@@ -8,14 +8,22 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
-**Recovery copy — green delivery batch (2026-10-16).** Read failures keep shown
-material; uncertain saves remain unconfirmed. Commands reads an accepted Add back
-before editing that saved row, without duplicates or lost newer fields. Models
-reports its initial reads as pending; held-read proof identifies the former
-104.19 px shift. Quick GREEN: **4,076 web / 16 copy / 109 sweep / 17 canon**.
-Real Commands recovery passes at 1440/393 with durable one-row readbacks; three
-held-read Models cases pass. TypeScript and source/build agreement are checked
-before delivery. The broader queue remains active.
+**Runtime recovery — verified, merge pending (2026-10-16).** Each hub owns its
+last-known store, so an earlier bare service cannot bind its recall to another DB.
+LAN discovery admits a frozen target set before transport and rejects late model
+bodies; calendar checks observe completed capture and stop their timers. Focused
+proof: 254 memory/calendar checks and 59 scanner/effect/route checks pass; three
+new late-body regressions fail before the fix. Ordinary quick GREEN: **575 affected /
+109 sweep / 17 canon**. Desktop/phone shots inspected; source/build match
+`f6ef8ac2099dde8b`. Normal idle-hub delivery follows merge.
+
+**Recovery copy — #1227 delivered (2026-10-16).** Commands recovers an uncertain
+Add by GET and edits the saved row without duplicates or lost newer fields. Read
+failures keep shown material; Models reports pending initial reads. Quick GREEN:
+**4,076 web / 16 copy / 109 sweep / 17 canon**; TypeScript passes. Actual Commands
+recovery at 1440/393 and three held-read Models cases pass. Merged `e834f2c5b`;
+formal Astra postmerge review RATIFY. Build `f6ef8ac2099dde8b`, PID 63584, is live
+on port 8765; health, Desk, Conductor and Models return 200.
 
 **Regression contracts — #1226 delivered (2026-10-16).** Brief fixtures pin
 presentation timezone; bounded memory score roundoff preserves exact same-process

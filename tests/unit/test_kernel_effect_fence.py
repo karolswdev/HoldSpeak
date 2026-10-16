@@ -170,6 +170,11 @@ _CALL_RULES = (
         ("create",),
         full_suffixes=("chat.completions.create", "responses.create"),
     ),
+    CallRule(
+        FAMILY_EGRESS, ("open",),
+        path_globs=("holdspeak/services/lan_engine_discovery.py",),
+        scopes=("_lan_http_get",),
+    ),
 )
 
 # These are the census's inspected, deliberate scope exclusions.  Keeping them
@@ -452,6 +457,29 @@ _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
 # warrant-validating anonymous-IPC child. A new statement matches no key here
 # and therefore fails as unledgered debt.
 _MIGRATED_CALLS: dict[tuple[str, str, str, int], str] = {
+    (
+        "holdspeak/services/lan_engine_discovery.py", "_run", "run", 1,
+    ): (
+        "Article XI.5 local interface read: _run rejects argv outside the exact "
+        "ip -json -4 addr show / ip -4 -o addr show / ifconfig commands before "
+        "subprocess.run; test_interface_read_runner_refuses_other_commands proves rejection"
+    ),
+    (
+        "holdspeak/services/lan_engine_discovery.py", "_probe_endpoint", "create_connection", 1,
+    ): (
+        "external.egress sender _execute_scan only: scan_lan_engines freezes "
+        "LanScanPlan targets and expiry, admits lan-scan:<manifest digest>, "
+        "then dispatches TCP; test_refused_scan_never_dispatches_tcp_or_http "
+        "and test_admitted_scan_freezes_manifest_and_receipts_success prove the boundary"
+    ),
+    (
+        "holdspeak/services/lan_engine_discovery.py", "_lan_http_get", "open", 1,
+    ): (
+        "external.egress sender _execute_scan -> _probe_endpoint -> "
+        "discover_endpoint_models uses only this keyless no-proxy no-redirect "
+        "GET /v1/models getter; the same frozen scan admission covers HTTP, "
+        "proved by test_refused_scan_never_dispatches_tcp_or_http"
+    ),
     (
         "holdspeak/coder_steering.py",
         "deliver",
@@ -1175,6 +1203,48 @@ def test_phase108_migrated_effect_sites_are_exact_and_still_present() -> None:
     ]
     assert len(raw) == 9
     assert all(site.family == FAMILY_RAW_DESKTOP for site in raw)
+
+
+def test_lan_transports_are_only_referenced_by_the_frozen_scan_sender() -> None:
+    """The exact migrated transports cannot acquire an unadmitted caller."""
+    helpers = {"_execute_scan", "_probe_endpoint", "_lan_http_get"}
+    references: list[tuple[str, str, str]] = []
+
+    class References(ast.NodeVisitor):
+        def __init__(self, relative: str) -> None:
+            self.relative = relative
+            self.scopes: list[str] = []
+
+        def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+            self.scopes.append(node.name)
+            self.generic_visit(node)
+            self.scopes.pop()
+
+        visit_AsyncFunctionDef = visit_FunctionDef
+
+        def visit_Name(self, node: ast.Name) -> None:
+            if node.id in helpers:
+                references.append((self.relative, ".".join(self.scopes), node.id))
+
+        def visit_Attribute(self, node: ast.Attribute) -> None:
+            if node.attr in helpers:
+                references.append((self.relative, ".".join(self.scopes), node.attr))
+            self.generic_visit(node)
+
+        def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
+            for alias in node.names:
+                if alias.name in helpers:
+                    references.append((self.relative, "import", alias.name))
+
+    for path in _source_paths():
+        relative = path.relative_to(_REPO).as_posix()
+        References(relative).visit(_parsed(relative, path.read_text(encoding="utf-8")))
+    relative = "holdspeak/services/lan_engine_discovery.py"
+    assert Counter(references) == Counter({
+        (relative, "scan_lan_engines", "_execute_scan"): 2,
+        (relative, "_execute_scan.probe_fn", "_probe_endpoint"): 1,
+        (relative, "_probe_endpoint", "_lan_http_get"): 1,
+    })
 
 
 def test_terminal_transport_has_only_the_process_input_executor_as_caller() -> None:

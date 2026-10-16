@@ -206,7 +206,7 @@ class LastKnownStore:
     the sources a successful project read no longer lists (archived,
     unlinked); and a recall re-reads the durable row when it is newer than
     the in-memory copy, so several stores over one database agree.  The
-    process shares ONE store: ``shared_last_known`` (below) returns the
+    active runtime shares ONE store: ``shared_last_known`` (below) returns the
     composition root's, else the module default, bound to the database.
     """
 
@@ -367,11 +367,12 @@ def last_known_store() -> LastKnownStore:
 
 
 def shared_last_known(db_factory: Callable[[], Any] | None = None) -> LastKnownStore:
-    """ONE durable store per process (counsel P1-4).
+    """ONE durable store per runtime (counsel P1-4).
 
     The composition root (HS-200-45 ``RuntimeServices.needs_you_last_known``)
-    carries it when a hub installed one; otherwise the module default is
-    used.  Either way the store is bound to ``db_factory`` on first use, so
+    owns it when a hub installed one; otherwise the module default is
+    used. A hub must not inherit a default store bound by an earlier bare
+    service to another database. Either store binds on first use, so
     the arrival route, the heartbeat and the MCP sidecar replay the same
     memory and prune it together.
     """
@@ -382,7 +383,7 @@ def shared_last_known(db_factory: Callable[[], Any] | None = None) -> LastKnownS
         if root is not None:
             store = getattr(root, "needs_you_last_known", None)
             if store is None and not getattr(root, "bare_root", True):
-                store = _LAST_KNOWN
+                store = LastKnownStore()
                 root.needs_you_last_known = store
     except Exception:  # pragma: no cover - the root is optional here
         store = None

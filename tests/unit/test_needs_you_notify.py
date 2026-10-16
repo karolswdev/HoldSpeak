@@ -474,7 +474,7 @@ class TestMacOSNotifier:
 class TestCocoaChildNotify:
     """The Cocoa child process handles the ``notify`` command."""
 
-    def test_cocoa_notify_calls_osascript(self):
+    def test_cocoa_notify_calls_osascript(self, monkeypatch):
         import subprocess
 
         calls = []
@@ -485,6 +485,7 @@ class TestCocoaChildNotify:
             return MagicMock(returncode=0)
 
         with patch.object(subprocess, "run", mock_run):
+            monkeypatch.setenv("HOLDSPEAK_DESKTOP_NOTIFY", "1")
             from holdspeak.desktop_presence_cocoa import _cocoa_notify
             _cocoa_notify({"title": "HoldSpeak", "body": "Test"})
             assert len(calls) == 1
@@ -497,11 +498,12 @@ class TestCocoaChildNotify:
 class TestCocoaRendererNotifyCommand:
     """The parent-side renderer can send a notify command."""
 
-    def test_notify_command_sent_to_queue(self):
+    def test_notify_command_sent_to_queue(self, monkeypatch):
         from holdspeak.desktop_notify import _notify_cocoa_child
 
         mock_renderer = MagicMock()
         mock_renderer._commands = MagicMock()
+        monkeypatch.setenv("HOLDSPEAK_DESKTOP_NOTIFY", "1")
         result = _notify_cocoa_child(mock_renderer, "Test", "Body", click_url="http://localhost")
         assert result is True
         mock_renderer._commands.put.assert_called_once()
@@ -590,10 +592,11 @@ class TestMCPNotifyTest:
         names = [t["name"] for t in TOOLS]
         assert "heartbeat.notify_test" in names
 
-    def test_dispatch_fires_notification(self):
+    def test_dispatch_fires_notification(self, monkeypatch):
         from holdspeak.mcp.families import heartbeat as heartbeat_family
 
         with patch("holdspeak.desktop_notify.notify", return_value=True):
+            monkeypatch.setenv("HOLDSPEAK_DESKTOP_NOTIFY", "1")
             from holdspeak.principals import Principal, PrincipalKind
             result = heartbeat_family.dispatch(
                 "heartbeat.notify_test",
