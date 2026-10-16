@@ -2974,7 +2974,10 @@
         "web/src/desk/DeskApp.tsx",
         "web/src/desk/screen/compose.ts",
         "web/src/desk/pullouts/DirectoryPullout.tsx",
-        "web/src/desk/gl/Atmosphere.tsx"
+        "web/src/desk/gl/Atmosphere.tsx",
+        "web/src/desk/gl/atmosphereRegistry.ts",
+        "web/src/desk/gl/jupiterOrbitScene.ts",
+        "web/src/desk/gl/jupiterOrbitModel.ts"
       ],
       "status": "built_unreleased"
     },
@@ -2989,7 +2992,10 @@
         "web/src/desk/DeskApp.tsx",
         "web/src/desk/screen/compose.ts",
         "web/src/desk/pullouts/DirectoryPullout.tsx",
-        "web/src/desk/gl/Atmosphere.tsx"
+        "web/src/desk/gl/Atmosphere.tsx",
+        "web/src/desk/gl/atmosphereRegistry.ts",
+        "web/src/desk/gl/jupiterOrbitScene.ts",
+        "web/src/desk/gl/jupiterOrbitModel.ts"
       ],
       "status": "built_unreleased"
     },
@@ -3004,7 +3010,10 @@
         "web/src/desk/DeskApp.tsx",
         "web/src/desk/screen/compose.ts",
         "web/src/desk/pullouts/DirectoryPullout.tsx",
-        "web/src/desk/gl/Atmosphere.tsx"
+        "web/src/desk/gl/Atmosphere.tsx",
+        "web/src/desk/gl/atmosphereRegistry.ts",
+        "web/src/desk/gl/jupiterOrbitScene.ts",
+        "web/src/desk/gl/jupiterOrbitModel.ts"
       ],
       "status": "built_unreleased"
     },
@@ -3019,7 +3028,10 @@
         "web/src/desk/DeskApp.tsx",
         "web/src/desk/screen/compose.ts",
         "web/src/desk/pullouts/DirectoryPullout.tsx",
-        "web/src/desk/gl/Atmosphere.tsx"
+        "web/src/desk/gl/Atmosphere.tsx",
+        "web/src/desk/gl/atmosphereRegistry.ts",
+        "web/src/desk/gl/jupiterOrbitScene.ts",
+        "web/src/desk/gl/jupiterOrbitModel.ts"
       ],
       "status": "built_unreleased"
     },
@@ -3034,7 +3046,10 @@
         "web/src/desk/DeskApp.tsx",
         "web/src/desk/screen/compose.ts",
         "web/src/desk/pullouts/DirectoryPullout.tsx",
-        "web/src/desk/gl/Atmosphere.tsx"
+        "web/src/desk/gl/Atmosphere.tsx",
+        "web/src/desk/gl/atmosphereRegistry.ts",
+        "web/src/desk/gl/jupiterOrbitScene.ts",
+        "web/src/desk/gl/jupiterOrbitModel.ts"
       ],
       "status": "built_unreleased"
     },

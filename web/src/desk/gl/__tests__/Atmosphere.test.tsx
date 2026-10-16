@@ -1,12 +1,17 @@
 import { act, render, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { cleanup, factory, load, mountAtmosphereScene, activityDispose, observeAtmosphereActivity, controls } = vi.hoisted(() => {
+const {
+  cleanup, factory, jupiterFactory, jupiterModuleLoad, load,
+  mountAtmosphereScene, activityDispose, observeAtmosphereActivity, controls,
+} = vi.hoisted(() => {
   const cleanup = vi.fn();
   const factory = vi.fn();
   return {
     cleanup,
     factory,
+    jupiterFactory: vi.fn(),
+    jupiterModuleLoad: vi.fn(),
     load: vi.fn(async () => factory),
     mountAtmosphereScene: vi.fn(() => cleanup),
     activityDispose: vi.fn(),
@@ -15,29 +20,29 @@ const { cleanup, factory, load, mountAtmosphereScene, activityDispose, observeAt
   };
 });
 
-vi.mock("../atmosphereRegistry", () => ({
-  DEFAULT_ATMOSPHERE_ID: "rainy-city",
-  resolveAtmosphere: (id = "rainy-city") =>
-    id === "quiet-desk"
-      ? {
-          id: "quiet-desk",
-          name: "Quiet Desk",
-          description: "No scene.",
-          seed: 0,
-          gradeClassName: "desk-atmosphere-grade--quiet-desk",
-          previewUrl: null,
-          load: null,
-        }
-      : {
-          id,
-          name: "Rainy City",
-          description: "A test storm.",
-          seed: 72,
-          gradeClassName: "desk-atmosphere-grade--rainy-city",
-          previewUrl: "/rainy-city.png",
-          load,
-        },
-}));
+vi.mock("../atmosphereRegistry", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../atmosphereRegistry")>();
+  return {
+    ...actual,
+    DEFAULT_ATMOSPHERE_ID: "rainy-city",
+    resolveAtmosphere: (id = "rainy-city") =>
+      id === "jupiter-orbit" || id === "quiet-desk"
+        ? actual.resolveAtmosphere(id)
+        : {
+            id,
+            name: "Rainy City",
+            description: "A test storm.",
+            seed: 72,
+            gradeClassName: "desk-atmosphere-grade--rainy-city",
+            previewUrl: "/rainy-city.png",
+            load,
+          },
+  };
+});
+vi.mock("../jupiterOrbitScene", () => {
+  jupiterModuleLoad();
+  return { createJupiterOrbitScene: jupiterFactory };
+});
 vi.mock("../atmosphereRuntime", () => ({ mountAtmosphereScene }));
 vi.mock("../atmosphereActivity", () => ({ observeAtmosphereActivity }));
 vi.mock("../atmosphereControls", () => ({ useAtmosphereControls: () => controls }));
@@ -49,6 +54,8 @@ beforeEach(() => {
   controls.motion = true;
   cleanup.mockReset();
   factory.mockReset();
+  jupiterFactory.mockReset();
+  jupiterModuleLoad.mockClear();
   load.mockReset().mockResolvedValue(factory);
   mountAtmosphereScene.mockReset().mockReturnValue(cleanup);
   activityDispose.mockReset();
@@ -104,6 +111,33 @@ describe("Desk atmosphere host", () => {
     expect(load).not.toHaveBeenCalled();
     expect(mountAtmosphereScene).not.toHaveBeenCalled();
     expect(observeAtmosphereActivity).not.toHaveBeenCalled();
+  });
+
+  it("loads Jupiter through its real registry entry only when selected", async () => {
+    controls.motion = false;
+    const view = render(<Atmosphere id="quiet-desk" />);
+    expect(jupiterModuleLoad).not.toHaveBeenCalled();
+
+    view.rerender(<Atmosphere id="jupiter-orbit" />);
+    const canvas = view.container.querySelector("canvas");
+    await waitFor(() =>
+      expect(mountAtmosphereScene).toHaveBeenCalledWith(
+        canvas,
+        jupiterFactory,
+        expect.objectContaining({ seed: 0x4a555049, motion: false }),
+      ),
+    );
+    expect(jupiterModuleLoad).toHaveBeenCalledOnce();
+    expect(load).not.toHaveBeenCalled();
+    expect(view.container.querySelector(".desk-stage")).toHaveAttribute(
+      "data-atmosphere",
+      "jupiter-orbit",
+    );
+    expect(canvas).toHaveAttribute("data-ready", "true");
+
+    view.unmount();
+    expect(cleanup).toHaveBeenCalledOnce();
+    expect(activityDispose).toHaveBeenCalledOnce();
   });
 
   it("releases the active scene when a live selection disables it", async () => {

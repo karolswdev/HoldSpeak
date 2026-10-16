@@ -39,6 +39,32 @@ describe("Settings wallpaper picker", () => {
     expect(localStorage.getItem(ATMOSPHERE_STORAGE_KEY)).toBe("lantern-garden");
   });
 
+  it("selects Jupiter from the collection and restores it on reopening", async () => {
+    localStorage.setItem(ATMOSPHERE_STORAGE_KEY, "lantern-garden");
+    localStorage.setItem(ATMOSPHERE_MOTION_KEY, "false");
+    const user = userEvent.setup();
+    const view = render(<WallpaperModule />);
+    const jupiter = screen.getByRole("radio", { name: /In Jupiter's orbit/ });
+
+    expect(screen.getByRole("radio", { name: /Lantern Garden/ })).toBeChecked();
+    expect(jupiter).not.toBeChecked();
+    expect(jupiter.querySelector("img")).toHaveAttribute(
+      "src",
+      expect.stringContaining("desk/atmospheres/jupiter-orbit.webp"),
+    );
+
+    await user.click(jupiter);
+
+    expect(jupiter).toBeChecked();
+    expect(localStorage.getItem(ATMOSPHERE_STORAGE_KEY)).toBe("jupiter-orbit");
+    expect(localStorage.getItem(ATMOSPHERE_MOTION_KEY)).toBe("false");
+    expect(localStorage.getItem(ATMOSPHERE_SOUND_KEY)).toBeNull();
+    view.unmount();
+    render(<WallpaperModule />);
+    expect(screen.getByRole("radio", { name: /In Jupiter's orbit/ })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Wallpaper motion" })).not.toBeChecked();
+  });
+
   it("lets the keyboard select the whole collection from one tab stop", async () => {
     const user = userEvent.setup();
     render(<WallpaperModule />);
@@ -55,6 +81,10 @@ describe("Settings wallpaper picker", () => {
     expect(localStorage.getItem(ATMOSPHERE_STORAGE_KEY)).toBe("radio-station");
     await user.keyboard("{End}");
     expect(screen.getByRole("radio", { name: /Quiet Desk/ })).toHaveFocus();
+    await user.keyboard("{ArrowLeft}");
+    expect(screen.getByRole("radio", { name: /In Jupiter's orbit/ })).toHaveFocus();
+    expect(screen.getByRole("radio", { name: /In Jupiter's orbit/ })).toBeChecked();
+    expect(localStorage.getItem(ATMOSPHERE_STORAGE_KEY)).toBe("jupiter-orbit");
     await user.keyboard("{Home}");
     expect(screen.getByRole("radio", { name: /Rainy City/ })).toHaveFocus();
     expect(screen.queryByRole("checkbox", { name: "Environment sound" })).toBeNull();

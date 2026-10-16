@@ -39,6 +39,19 @@ const lanternGarden = {
     ),
 } satisfies AtmosphereDefinition;
 
+const jupiterOrbit = {
+  id: "jupiter-orbit",
+  name: "In Jupiter's orbit",
+  description: "Jupiter, passing moons, and quiet stars.",
+  seed: 0x4a555049,
+  gradeClassName: "desk-atmosphere-grade--jupiter-orbit",
+  previewUrl: `${PUBLIC_BASE}desk/atmospheres/jupiter-orbit.webp`,
+  load: () =>
+    import("./jupiterOrbitScene").then(
+      (module) => module.createJupiterOrbitScene,
+    ),
+} satisfies AtmosphereDefinition;
+
 const quietDesk = {
   id: "quiet-desk",
   name: "Quiet Desk",
@@ -126,6 +139,7 @@ export const ATMOSPHERES = [
   rainyCity,
   lanternGarden,
   ...interiorAtmospheres,
+  jupiterOrbit,
   quietDesk,
 ] as const satisfies readonly AtmosphereDefinition[];
 

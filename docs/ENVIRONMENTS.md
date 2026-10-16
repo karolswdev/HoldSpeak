@@ -15,7 +15,7 @@ Arrow keys and Home/End change the selected place.
 
 ## Available places
 
-Rainy City is the default. Eight scenes are animated. Quiet Desk is still.
+Quiet Desk is the default. Select another place for a live scene.
 
 | Place | Scene |
 | --- | --- |
@@ -27,10 +27,19 @@ Rainy City is the default. Eight scenes are animated. Quiet Desk is still.
 | Deep-Sea Station | An observation port with marine life and sonar |
 | Storm Greenhouse | Iron rafters, terracotta pots, rain, and cloud light |
 | Last Laundromat | Mint tiles, moving drums, and fluorescent light |
+| In Jupiter's orbit | Flowing cloud bands, passing moons, stars, and rare visitors |
 | Quiet Desk | A still background without room sound |
 
 The scenes are decorative. Capture indicators can respond to the existing recorder state.
 The scenes do not acquire a microphone or start product work.
+
+### In Jupiter's orbit
+
+Open **Settings > Wallpaper** and select **In Jupiter's orbit**.
+Jupiter's cloud bands move slowly. Its four large moons pass at different intervals.
+Spacecraft can pass at rare intervals while motion is on.
+The scene uses local [NASA cloud and star maps](internal/JUPITER-ORBIT-2026-10-15/ASSETS.md).
+The sizes and times are for the scene. They do not show current positions in space.
 
 ## Save favorites
 
@@ -43,7 +52,7 @@ They survive a reload but do not become shared hub settings.
 
 ## Control motion and sound
 
-You can pause animation in the picker.
+Use **Motion** in Wallpaper settings to pause or resume animation.
 The operating system's reduced-motion preference takes precedence over the animation setting.
 Hidden tabs pause the scenes.
 
