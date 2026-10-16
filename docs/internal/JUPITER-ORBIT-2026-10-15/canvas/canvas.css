@@ -1,0 +1,13 @@
+html,body,#root{margin:0;width:100%;height:100%;overflow:hidden}
+.orbit-direction{position:relative;width:100%;height:100%;background:#020409;color:var(--wb-paper);overflow:hidden}
+.cosmos{position:absolute;inset:0;background:radial-gradient(ellipse at 68% 58%,#15232e33,transparent 65%),#020409}
+.star{position:absolute;width:1px;height:1px;border-radius:50%;background:#c4d8e4;box-shadow:0 0 3px #a5c4df55}
+.planet{position:absolute;right:6%;top:14%;width:75vh;height:70vh;border-radius:50%;background-size:200% 100%;background-position:59% 50%;transform:rotate(-12deg);box-shadow:inset -14vh -3vh 12vh 2vh #000e,inset 1.2vh 1vh 2.5vh #fff2,0 0 2px 1px #d0d9e1a0,0 0 20px #7293a329}
+.moon{position:absolute;border-radius:50%;background:radial-gradient(circle at 27% 31%,#ede2b9,#938672 45%,#272520 74%,#030609 91%);box-shadow:inset -8px -2px 13px #000b,0 0 2px #c3d3e566}
+.io{width:7vh;height:7vh;left:33%;top:62%;background-color:#bea653}
+.europa{width:2vh;height:2vh;right:9%;top:38%;opacity:.75}
+.drawers{position:absolute;top:56px;left:28px}.drawers .desk-icon-grid{display:flex;gap:20px}
+.wallpaper-direction{position:absolute;bottom:60px;left:40px;width:350px;background:var(--wb-surface);color:var(--wb-ink);padding:20px;border:2px solid var(--wb-ink)}
+@media(max-width:600px){.planet{right:-46%;top:22%;width:65vh;height:61vh}.io{left:15%;top:72%;width:5vh;height:5vh}.drawers{left:10px;top:35px}.drawers .desk-icon-grid{gap:4px}.wallpaper-direction{left:10px;right:10px;width:auto;bottom:35px}}
+
+.cosmos{background-size:cover;background-position:28% 50%}

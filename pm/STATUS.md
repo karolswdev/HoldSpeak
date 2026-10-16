@@ -4,9 +4,25 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-15 (Desk drawers and live wallpapers: #1212)
+**Last updated:** 2026-10-15 (In Jupiter's orbit: #1213)
 
 ## Current phase
+
+**In Jupiter's orbit — #1213 (2026-10-15).** The owner asked for a large
+Jupiter, passing Galilean moons and rare Pioneer sightings, then reviewed the
+live scene and asked for a richer universe and flowing atmosphere. One lazy
+Wallpaper/Places choice now has local NASA cloud/star maps, galactic dust and
+layered stars, independent opposing cloud jets/eddies/storm circulation, four
+moon spheres with transit shadows, and rare geometric visitors. Shared Motion,
+reduced motion, visibility suspension and still fallback remain in use.
+Final quick GREEN: 3821 web / 651 affected Python / 107 sweeps (two existing
+xfails) / 17 canon; build and release TypeScript pass. Root read real amended
+1440/393 product walks, moving frame samples, drawer hit/open, frozen Motion
+and reduced-motion states, WebGL-disabled fallback and real Wallpaper graph
+choice cases. Six old catalog-count tests were reproduced and corrected with
+registry-derived membership/wrap/direct-link coverage, 21 focused passes; no
+product change for that correction. Delegated source counsel RATIFY is
+separate from formal postmerge review. [Proof and limits](../docs/internal/JUPITER-ORBIT-2026-10-15/README.md).
 
 **Desk drawers and live wallpapers — #1212 (2026-10-15).** The owner asked
 to restore actual drawers and interactive Three.js scenery on the current
@@ -334,6 +350,13 @@ committing generated docs and line-number test maps; split the tests.
 
 ## Open work
 
+**From #1213:** owner live judgment, formal postmerge review, remote CI and
+full main tape remain separate. Artistic scale, moon timing and bounded
+weather are not ephemerides or fluid simulation. Software WebGL checks do not
+establish hardware performance; forced-time visitor samples do not establish
+natural long-session waiting. No source-counsel condition remains. Keep the
+serving worktree and requested standalone preview while they are in use.
+
 **From #1212:** owner live judgment, full main tape and formal postmerge review
 remain separate. Inherited runtime debt: if a scene throws during first
 resize/render after runtime listeners attach, the runtime cannot return its
@@ -431,6 +454,11 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 
 ## Last merged (newest first)
 
+- **#1213 — In Jupiter's orbit.** Rich local NASA sky/cloud maps, layered
+  stars and galactic dust, independently flowing weather, four passing moons
+  with shadows and rare Pioneer/Voyager visitors. Quick 3821/651/107/17 green;
+  actual amended 1440/393 faces, Motion/fallback and choice graph cases.
+  Delegated source counsel RATIFY; formal postmerge review remains separate.
 - **#1212 — Desk drawers and live Three.js wallpapers.** Canonical root/child
   drawers, real contents/menu opening, cycle reachability and parent captions;
   selected live scenery, still fallback and shared Motion control. Quick

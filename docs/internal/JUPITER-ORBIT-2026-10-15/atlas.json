@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "atlas_version": "jupiter-orbit-20261015",
+  "extends": "docs/internal/DESK-DRAWERS-LIVE-2026-10-15/atlas.json",
+  "source_commit": "54f028bd69d025d2d984c4fc5a05d64a601c4639",
+  "states": [
+    {
+      "id": "state.desk_presentation.jupiter_ready",
+      "family": "desk_presentation",
+      "values": {
+        "application": "Wallpaper",
+        "task": "Choose the live Jupiter orbit scene"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/pages/cores/settingsWallpaper.tsx",
+          "symbol": "onClick={() => select(atmosphere.id)}",
+          "claim": "The existing library Wallpaper radio saves the chosen scene preference and updates the shared host."
+        }
+      ],
+      "reachable_by": [
+        "case.desk.wallpaper.jupiter.ready"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "case.desk.wallpaper.jupiter.ready",
+      "job": "j3",
+      "edge_ids": [
+        "edge.ui.web_src_pages_cores_settingswallpaper_tsx.l51.onclick"
+      ],
+      "state_id": "state.desk_presentation.jupiter_ready",
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME/DB, engine none. Real Wallpaper radio and lazy scene. This readiness case does not prove natural rare-event waiting or hardware performance."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/desk/seed",
+          "body": {},
+          "expect_status": 200,
+          "adapter": "http-route"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/desk/windows/surface-settings/open",
+          "body": {},
+          "expect_status": 200,
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".surface-ledger-row:has(.surface-ledger-primary:text-is(\"Wallpaper\")) button",
+          "adapter": "ui-by-viewport"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "selector": "[data-atmosphere-choice=\"jupiter-orbit\"]",
+        "adapter": "ui-by-viewport"
+      },
+      "expected": {
+        "observe_at": ".desk-stage[data-atmosphere=\"jupiter-orbit\"] canvas",
+        "predicate": {
+          "kind": "attr_equals",
+          "attr": "data-ready",
+          "value": "true"
+        },
+        "words": "The actual Wallpaper radio loads the selected Jupiter scene and its existing host completes a first render."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ],
+  "clocks": [],
+  "excluded": [],
+  "council_readings": []
+}

@@ -8,7 +8,7 @@
       "purpose": "Open the Workbench surface and its current workspace.",
       "domain": "desk",
       "status": "built_unreleased",
-      "status_reason": "Current Desk composes real root folders and child/member windows using canonical zone refs, and mounts the selected existing live atmosphere with loading/failure still fallback. Focused component tests have executed for folder identities/filing and scene lifecycle/Motion controls; runtime proof and limits are recorded separately. Owner observation and hardware performance are not established.",
+      "status_reason": "Current Desk composes canonical root/child folders and mounts the selected lazy atmosphere with still fallback. Jupiter adds local NASA cloud/sky maps, independently flowing cloud zones, four separate moon meshes and rare authored visitors. Focused component/model/lifecycle tests executed; actual rendering and production limits are recorded separately. Owner observation and hardware performance remain independent.",
       "exposure": "user",
       "surfaces": [
         "/desk",
@@ -30,20 +30,25 @@
       },
       "inputs": [
         "browser route",
-        "saved workspace"
+        "saved workspace",
+        "saved Wallpaper selection"
       ],
       "outputs": [
         "Desk shell",
         "Screen object and folder projections",
-        "Selected live atmosphere or its still fallback"
+        "Selected live atmosphere or its still fallback",
+        "Selected Jupiter orbit scenery with moon passes and rare visitors"
       ],
       "persistence": [
-        "hs.desk.workspace.v1"
+        "hs.desk.workspace.v1",
+        "hs.desk.atmosphere",
+        "hs.desk.atmosphere.motion"
       ],
       "apis": [],
       "configuration": [
         "route registry",
-        "workspace preferences"
+        "workspace preferences",
+        "Wallpaper choice and Motion browser preferences"
       ],
       "dependencies": [
         "React",
@@ -69,13 +74,13 @@
         {
           "path": "web/src/App.tsx",
           "symbol": "App",
-          "line": 46,
+          "line": 7,
           "claim": "/desk and unknown paths redirect to /."
         },
         {
           "path": "web/src/desk/DeskApp.tsx",
           "symbol": "DeskApp",
-          "line": 86,
+          "line": 78,
           "claim": "DeskApp composes the Workbench shell."
         },
         {
@@ -95,6 +100,24 @@
           "symbol": "export function Atmosphere(",
           "line": 21,
           "claim": "Scene readiness and load failure retain still fallback and dispose activity observers."
+        },
+        {
+          "path": "web/src/desk/gl/atmosphereRegistry.ts",
+          "symbol": "const jupiterOrbit =",
+          "line": 42,
+          "claim": "Jupiter is one lazy choice with a local still, preserving Quiet as the default."
+        },
+        {
+          "path": "web/src/desk/gl/jupiterOrbitScene.ts",
+          "symbol": "export function createJupiterOrbitScene(",
+          "line": 159,
+          "claim": "Local NASA sky/cloud textures and sphere/shader geometry supply cloud flow, moon occlusion and visitors through the shared lifecycle."
+        },
+        {
+          "path": "web/src/desk/gl/jupiterOrbitModel.ts",
+          "symbol": "export function jupiterEncounterForWindow(",
+          "line": 71,
+          "claim": "One deterministic draw per active ten-minute window selects rare authored visits, never a per-frame chance."
         }
       ],
       "tests": [
@@ -125,12 +148,35 @@
             "run": "2026-10-15",
             "cases": 5
           }
+        },
+        {
+          "path": "web/src/desk/gl/__tests__/jupiterOrbitScene.test.ts",
+          "node": "Jupiter atmosphere lifecycle",
+          "assertion": "Real geometry with renderer/image boundaries covers separate moons, rich seeded stars, frozen cloud time, both local map refinement/failure and disposal.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/internal/JUPITER-ORBIT-2026-10-15/BUILD-SCENE.md",
+            "run": "2026-10-15",
+            "cases": 5
+          }
+        },
+        {
+          "path": "web/src/desk/gl/__tests__/jupiterOrbitModel.test.ts",
+          "node": "rare Jupiter encounters",
+          "assertion": "Seeded windows retain rare distribution, initial quiet interval, deterministic session behavior and bounded travel; this does not prove naturally waited encounters.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/internal/JUPITER-ORBIT-2026-10-15/BUILD-SCENE.md",
+            "run": "2026-10-15",
+            "cases": 3
+          }
         }
       ],
       "docs": [
         "docs/DESK_ARCHITECTURE.md",
         "docs/DESK_OBJECT_MODEL.md",
-        "docs/internal/DESK-DRAWERS-LIVE-2026-10-15/README.md"
+        "docs/internal/DESK-DRAWERS-LIVE-2026-10-15/README.md",
+        "docs/internal/JUPITER-ORBIT-2026-10-15/README.md"
       ],
       "limitations": [
         "No owner observation recorded in this lane.",

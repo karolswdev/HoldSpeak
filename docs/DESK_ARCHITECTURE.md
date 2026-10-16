@@ -56,6 +56,12 @@ The previous spatial Floor and list view are parked.
 
 The selected existing `gl/Atmosphere` renders behind Screen controls. Its still image stays visible until the first successful render, and remains the fallback when WebGL is unavailable. Quiet Desk allocates no scene. Motion is a browser preference exposed in Wallpaper settings; the runtime honors reduced motion and suspends hidden documents. Sound remains a separate opt-in.
 
+The Jupiter choice lazily loads its own scene and local NASA cloud/sky maps.
+Its cloud shader adds bounded flow to the slowly turning planet. Four moon
+meshes and rare visitors use the host's active elapsed time. No wall-clock
+timer or new persistence is added; scene geometry and textures are disposed
+with the host. Scale, travel and weather are authored rather than ephemerides.
+
 Above the Screen, `DeskApp` mounts the shared drop layer, the dock, inspectors, delivery windows, object windows, and `SurfaceWindows`.
 
 ## State ownership

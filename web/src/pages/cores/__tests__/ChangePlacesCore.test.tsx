@@ -6,6 +6,7 @@ import {
   parseAtmosphereFavorites,
 } from "../../../desk/gl/atmosphereFavorites";
 import { ATMOSPHERE_STORAGE_KEY } from "../../../desk/gl/atmospherePreference";
+import { ATMOSPHERES } from "../../../desk/gl/atmosphereRegistry";
 import { useSettleState } from "../../../desk/settleState";
 
 beforeEach(() => {
@@ -14,9 +15,17 @@ beforeEach(() => {
 });
 
 describe("Change places", () => {
-  it("shows eight scenes plus Quiet Desk without changing the current work surface", () => {
+  it("shows the complete catalog without changing the current work surface", () => {
     render(<ChangePlacesCore />);
-    expect(screen.getAllByRole("radio")).toHaveLength(9);
+    expect(
+      screen.getAllByRole("radio").map((radio) =>
+        radio.getAttribute("data-atmosphere-choice"),
+      ),
+    ).toEqual(ATMOSPHERES.map(({ id }) => id));
+    expect(screen.getByRole("radio", { name: /In Jupiter's orbit/ })).toHaveAttribute(
+      "data-atmosphere-choice",
+      "jupiter-orbit",
+    );
     fireEvent.click(screen.getByRole("radio", { name: /Night Train/ }));
     expect(localStorage.getItem(ATMOSPHERE_STORAGE_KEY)).toBe("night-train");
     // PHILO-17: the Floor is parked; the window offers no "View on Floor".
@@ -71,12 +80,17 @@ describe("Change places", () => {
     expect(screen.getByRole("status")).toHaveTextContent("No favorite places");
     expect(screen.queryAllByRole("radio")).toHaveLength(0);
   });
-  it("names an empty favorites list and still offers All places", () => {
+  it("restores the complete catalog after an empty Favorites filter", () => {
     render(<ChangePlacesCore />);
     fireEvent.click(screen.getByRole("button", { name: "Favorites" }));
     expect(screen.getByRole("status")).toHaveTextContent("No favorite places");
     fireEvent.click(screen.getByRole("button", { name: "All places" }));
-    expect(screen.getAllByRole("radio")).toHaveLength(9);
+    expect(
+      screen.getAllByRole("radio").map((radio) =>
+        radio.getAttribute("data-atmosphere-choice"),
+      ),
+    ).toEqual(ATMOSPHERES.map(({ id }) => id));
+    expect(screen.getByRole("radio", { name: /In Jupiter's orbit/ })).toBeInTheDocument();
   });
   it("settles without implicitly turning on motion, sound or capture", () => {
     render(<ChangePlacesCore />);

@@ -28,6 +28,13 @@ describe("atmosphere registry", () => {
           load: expect.any(Function),
         }),
         expect.objectContaining({
+          id: "jupiter-orbit",
+          name: "In Jupiter's orbit",
+          seed: 0x4a555049,
+          previewUrl: expect.stringContaining("desk/atmospheres/jupiter-orbit.webp"),
+          load: expect.any(Function),
+        }),
+        expect.objectContaining({
           id: "quiet-desk",
           previewUrl: null,
           load: null,
@@ -43,16 +50,19 @@ describe("atmosphere registry", () => {
       "deep-sea",
       "greenhouse",
       "laundromat",
+      "jupiter-orbit",
       "quiet-desk",
     ]);
     expect(isAtmosphereId("lantern-garden")).toBe(true);
+    expect(isAtmosphereId("jupiter-orbit")).toBe(true);
     expect(isAtmosphereId("quiet-desk")).toBe(true);
     expect(isAtmosphereId("unknown")).toBe(false);
     expect(resolveAtmosphere("unknown").id).toBe(DEFAULT_ATMOSPHERE_ID);
   });
 
-  it("includes both original worlds and all interiors in one scenic collection", () => {
-    expect(SCENIC_ATMOSPHERES).toHaveLength(8);
+  it("includes every authored world in one scenic collection", () => {
+    expect(SCENIC_ATMOSPHERES).toContainEqual(resolveAtmosphere("jupiter-orbit"));
+    expect(SCENIC_ATMOSPHERES).not.toContainEqual(resolveAtmosphere("quiet-desk"));
     expect(SCENIC_ATMOSPHERES.map(({ id }) => id)).toEqual(
       ATMOSPHERES.filter(({ load }) => load).map(({ id }) => id),
     );
