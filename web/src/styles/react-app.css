@@ -224,27 +224,58 @@
    recovery is a one-row gadget slab, sync conflicts are twin receipt
    slips (desk/surface/surface.css). */
 .presence-body {
-  min-height: 100vh;
+  --text: var(--wb-text);
+  --text-muted: var(--wb-muted);
+  --text-faint: var(--wb-muted);
+  --surface-1: var(--wb-field);
+  --surface-2: var(--wb-well);
+  --surface-3: var(--wb-steel-2);
+  --border: var(--wb-rule-soft);
+  --border-strong: var(--wb-rule);
+  --border-subtle: var(--wb-rule-soft);
+  --ok: var(--wb-ok-ink);
+  --warn: var(--wb-warn-ink);
+  --danger: var(--wb-danger-ink);
+  --accent: var(--wb-ember-ink);
+  --accent-hover: var(--wb-ember-ink);
+  --desk-window-well: var(--wb-well);
+  --desk-window-etch: var(--wb-sunken);
+  --wash-2: var(--wb-steel);
+  --shade-1: var(--wb-ink);
+  box-sizing: border-box;
+  min-height: 100dvh;
   display: grid;
-  grid-template-rows: auto 1fr;
-  padding: var(--space-3);
-  background: transparent;
+  grid-template-rows: none;
+  place-items: center;
+  padding: var(--space-4);
+  background: var(--desk-floor);
+  color: var(--text);
 }
 .presence-back {
-  justify-self: start;
+  justify-self: auto;
 }
 .presence-card {
-  width: min(520px, calc(100vw - 24px));
-  align-self: center;
-  justify-self: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  box-sizing: border-box;
+  width: min(520px, 100%);
+  min-width: 0;
+  display: block;
   padding: var(--space-4);
-  border: 1px solid var(--border);
-  border-radius: 2px;
-  background: var(--surface-1);
-  box-shadow: var(--desk-window-etch);
+  border: 1px solid var(--wb-ink);
+  border-radius: 0;
+  background: var(--wb-field);
+  box-shadow: var(--wb-raised);
+}
+.presence-activity {
+  min-width: 0;
+  margin-top: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--wb-rule);
+  background: var(--wb-well);
+  box-shadow: var(--wb-sunken);
+}
+.presence-activity .gadget-lamp {
+  font-size: var(--desk-surface-body-size);
+  line-height: 1.5;
 }
 .ambient-notices {
   /* AmbientLayer sits outside the desk/window token map. Resolve every

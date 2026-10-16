@@ -59,45 +59,45 @@
   padding: 12px 12px calc(var(--desk-dock-h, 76px) + 16px);
   box-sizing: border-box;
   overflow: auto;
-}
-.desk-go-home-group-title {
-  margin: 0;
-  font: 700 var(--font-size-xs) / 1.4 var(--font-mono);
-  letter-spacing: 0.04em;
-  color: var(--wb-paper);
-}
-.desk-go-home-group-title {
-  margin: 8px 0 4px;
-  color: var(--text-muted);
+  max-width: 720px;
+  margin-inline: auto;
 }
 .desk-go-home-list {
-  display: grid;
-  gap: 2px;
+  min-width: 0;
+  gap: var(--space-3);
 }
-.desk-go-home-row {
-  display: flex;
+.desk-go-home-group {
+  min-width: 0;
+  gap: 0;
+}
+.desk-go-home-group .surface-section-head {
+  margin: var(--space-2) var(--space-2) var(--space-1);
+}
+/* The existing desk-menu-list owns paper, ink, bevel and focus material. */
+.desk-next .desk-menu-list .desk-go-home-row {
+  min-width: 0;
   width: 100%;
-  min-height: 44px;
-  align-items: center;
-  gap: 8px;
+  min-height: var(--desk-button-hit-size);
+  height: auto;
+  padding-block: var(--space-2);
   justify-content: flex-start;
   text-align: left;
 }
-.desk-go-home-glyph {
-  width: 20px;
-  flex: 0 0 20px;
-  text-align: center;
+.desk-next .desk-go-home .desk-menu-label {
+  white-space: normal;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
 }
 .desk-go-home-reason {
+  flex: 0 0 auto;
+  min-width: 0;
+  max-width: 42%;
   margin-left: auto;
-  color: var(--text-muted);
-  font-size: var(--font-size-xs);
-}
-.desk-go-home-sep {
-  display: block;
-  height: 1px;
-  margin: 8px 0;
-  background: var(--line-subtle);
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: right;
+  line-height: 1.35;
 }
 /* 393: one 4-column grid in DOM order (A-1-393). */
 .desk-screen[data-layout="grid"] > .desk-icon-grid {

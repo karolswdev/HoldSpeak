@@ -21,14 +21,23 @@
  * (tests/e2e/test_desk_sweep.py). The menu fold is a DOM fact and is rendered.
  */
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { DeskMenuBar } from "../components/DeskMenuBar";
 import { GoHome } from "../screen/GoHome";
+import { useDesk } from "../store";
+import { EMPTY_ITEMS } from "../api";
+import { VERBS } from "../verbRegistry";
+import * as shell from "../shell";
 
 describe("the phone menu bar has one door that carries every verb", () => {
   let compact = true;
+  let saved: Pick<ReturnType<typeof useDesk.getState>, "items" | "projects" | "selectedIds">;
 
   beforeEach(() => {
+    const state = useDesk.getState();
+    saved = { items: state.items, projects: state.projects, selectedIds: state.selectedIds };
+    useDesk.setState({ items: { ...EMPTY_ITEMS }, projects: [], selectedIds: [] });
     vi.stubGlobal("matchMedia", (query: string) => ({
       matches: compact && query.includes("720px"),
       media: query,
@@ -42,6 +51,8 @@ describe("the phone menu bar has one door that carries every verb", () => {
   });
   afterEach(() => {
     cleanup();
+    useDesk.setState(saved);
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
 
@@ -86,5 +97,58 @@ describe("the phone menu bar has one door that carries every verb", () => {
     expect(screen.getByRole("menuitem", { name: "Ask AI" })).toBeTruthy();
     expect(screen.getByRole("menuitem", { name: "Note" })).toBeTruthy();
     expect(screen.queryByText("Today")).toBeNull();
+    expect(screen.getAllByRole("heading").map((heading) => heading.textContent)).toEqual(["Apps", "New"]);
+    expect(screen.getByRole("menu", { name: "Go menu" })).toHaveClass("desk-menu-list");
+    expect(screen.getAllByRole("menuitem").map((row) => row.querySelector(".desk-menu-label")?.textContent)).toEqual([
+      "Needs you", "Brief", "The week", "Capture", "Meetings", "Ask AI", "People", "Conductor", "Note", "Meeting", "Project", "Person",
+    ]);
+  });
+
+  it.each(["{Enter}", " "])("native %j activates a home verb once with the current selection context", async (key) => {
+    compact = true;
+    const user = userEvent.setup();
+    const verb = VERBS.find((candidate) => candidate.id === "go.ask")!;
+    const run = vi.spyOn(verb, "run").mockImplementation(() => {});
+    useDesk.setState({ selectedIds: ["note:selected"] });
+    render(<GoHome />);
+    const row = screen.getByRole("menuitem", { name: "Ask AI" });
+    expect(row).toHaveClass("btn--chrome");
+    row.focus();
+    await user.keyboard(key);
+    expect(run).toHaveBeenCalledTimes(1);
+    expect(run).toHaveBeenLastCalledWith({ selectedRef: "note:selected" });
+    act(() => useDesk.setState({ selectedIds: ["note:first", "note:second"] }));
+    await user.keyboard(key);
+    expect(run).toHaveBeenCalledTimes(2);
+    expect(run).toHaveBeenLastCalledWith({ selectedRef: null });
+  });
+
+  it("keeps a ghosted home verb focusable with its reason and refuses pointer and native keys", async () => {
+    compact = true;
+    const user = userEvent.setup();
+    const verb = VERBS.find((candidate) => candidate.id === "go.ask")!;
+    vi.spyOn(verb, "ghost").mockReturnValue("Select an object");
+    const run = vi.spyOn(verb, "run").mockImplementation(() => {});
+    render(<GoHome />);
+    const row = screen.getByRole("menuitem", { name: "Ask AI Select an object" });
+    expect(row).toHaveAttribute("aria-disabled", "true");
+    expect(row).toHaveClass("btn--chrome", "is-ghost");
+    row.focus();
+    expect(row).toHaveFocus();
+    await user.keyboard("{Enter} ");
+    await user.click(row);
+    expect(run).not.toHaveBeenCalled();
+  });
+
+  it("shows Projects only when present and opens the exact project id", async () => {
+    compact = true;
+    const user = userEvent.setup();
+    const open = vi.spyOn(shell, "openProjectRoom").mockImplementation(() => {});
+    useDesk.setState({ projects: [{ id: "p-go-exact", name: "Architecture rollout", description: "", keywords: [], team_members: [], is_archived: false, meeting_count: 0, updated_at: "2026-10-16T00:00:00Z" }] });
+    render(<GoHome />);
+    expect(screen.getAllByRole("heading").map((heading) => heading.textContent)).toEqual(["Apps", "Projects", "New"]);
+    await user.click(screen.getByRole("menuitem", { name: "Architecture rollout" }));
+    expect(open).toHaveBeenCalledOnce();
+    expect(open).toHaveBeenCalledWith("p-go-exact");
   });
 });
