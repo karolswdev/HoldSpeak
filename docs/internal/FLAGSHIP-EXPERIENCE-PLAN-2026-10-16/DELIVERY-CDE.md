@@ -218,3 +218,7 @@ no further concrete product blocker was established in this pass. The selected
 changes use the existing library and preserve the previously healed journeys.
 Delivery is complete only after merge and normal local runtime verification.
 The owner's real use and visual judgment remain separate.
+
+Product PR: [#1221](https://github.com/karolswdev/HoldSpeak/pull/1221).
+Verified product commit: `d0071b5312443b6dded6282baf2d1976b76b6f3c`;
+subsequent release-record changes are documentation only.

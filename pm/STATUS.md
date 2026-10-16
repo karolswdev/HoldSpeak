@@ -8,7 +8,7 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
-**Flagship daily work, creation and recovery — release candidate (2026-10-16).**
+**Flagship daily work, creation and recovery — #1221 (2026-10-16).**
 People Prep inspects either exact commitment, preserves newer Add drafts and
 empty-edit focus, and gives phone fields a full row. Project promotes pending
 Review. Thread retains `/todo` commands through pending/refused/unknown results,
