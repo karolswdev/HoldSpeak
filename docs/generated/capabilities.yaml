@@ -6480,6 +6480,12 @@
           "line": 39,
           "path": "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
           "symbol": "ThoughtReadsWell"
+        },
+        {
+          "claim": "Explicit library Close abandons the local search and restores launcher focus. Saved meeting choices show local time and attendees while retaining exact kind and ID; the portalled shelf uses the shared surface gadget target rules.",
+          "line": 332,
+          "path": "web/src/desk/components/DeskToolShelf.tsx",
+          "symbol": "DeskToolShelf"
         }
       ],
       "status": "built_unreleased",
@@ -6571,6 +6577,12 @@
           "execution": "passed",
           "node": "keeps the new action ID across set denial after accepted cleanup left an older stored ID",
           "path": "web/src/desk/thought-workspace/ThoughtReadsWell.test.tsx"
+        },
+        {
+          "assertion": "Software wire fixtures keep both meeting rows and open each canonical identity; root separately walks the real isolated meeting reads and window scopes.",
+          "execution": "passed",
+          "node": "same-title, same-time meetings show distinct attendees and open their exact identities",
+          "path": "web/src/desk/__tests__/palette.app.test.tsx"
         }
       ],
       "trust_boundary": "Browser route enters the Desk shell; no native host is required."
@@ -7982,6 +7994,18 @@
           "line": 28,
           "path": "web/src/desk/firstrun/CalendarCard.tsx",
           "symbol": "function CalendarFrame({"
+        },
+        {
+          "claim": "Empty usage and revision counters are suppressed while nonzero revisions, draft state, save outcomes and History controls remain.",
+          "line": 20,
+          "path": "web/src/pages/cores/ConstitutionalContextCore.tsx",
+          "symbol": "ConstitutionalContextCore"
+        },
+        {
+          "claim": "Calendar review uses readable library fields and stable local row identities. Pending Confirm keeps the draft mounted; refusal retains it for exact retry and accepted receipts use the returned source/count.",
+          "line": 117,
+          "path": "web/src/pages/cores/CalendarSnapshotReviewCore.tsx",
+          "symbol": "CalendarSnapshotReviewCore"
         }
       ],
       "status": "experimental",
@@ -8033,6 +8057,18 @@
           },
           "node": "test_native_calendar_reselection_repairs_only_a_blank_name_without_changing_sources",
           "path": "tests/unit/test_onboarding_backends.py"
+        },
+        {
+          "assertion": "The software wire fixture preserves the nonzero saved revision and real save receipt while cleared usage counters remain absent.",
+          "execution": "passed",
+          "node": "keeps a real revision and saved outcome when the draft is cleared",
+          "path": "web/src/pages/cores/__tests__/constitutionalContextSave.test.tsx"
+        },
+        {
+          "assertion": "Software wire fixture verifies retained reviewed fields and byte-identical Retry; root separately checks the real isolated ICS/config writer after declared browser refusal.",
+          "execution": "passed",
+          "node": "keeps the reviewed anchor and events after refusal and retries the identical payload",
+          "path": "web/src/pages/cores/__tests__/CalendarSnapshotReviewCore.test.tsx"
         }
       ],
       "trust_boundary": "Owner-authorized changed preferences are validated before the local config write. Retired model selectors still refuse explicit mutations."

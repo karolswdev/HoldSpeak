@@ -1,0 +1,51 @@
+.calendar-snapshot-fields {
+  border: 0;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+}
+.calendar-snapshot-anchor {
+  max-width: 260px;
+}
+.calendar-snapshot-events .surface-ledger-line {
+  grid-template-columns: minmax(0, 1fr) max-content;
+}
+.calendar-snapshot-events .surface-ledger-open {
+  padding: 12px;
+}
+.calendar-snapshot-editor {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.calendar-snapshot-schedule {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.calendar-snapshot-day {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+}
+.calendar-snapshot-day > span {
+  color: var(--text-muted);
+  font: 700 12px var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.calendar-snapshot-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+@container surface (max-width: 420px) {
+  .calendar-snapshot-schedule {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .calendar-snapshot-day {
+    grid-column: 1 / -1;
+  }
+}

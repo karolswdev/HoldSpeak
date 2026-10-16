@@ -112,4 +112,28 @@ describe("the deck while its ranking reads are out", () => {
     fireEvent.keyDown(name, { key: "Enter" });
     expect(submit).toHaveBeenCalledWith("Cutover notes");
   });
+
+  it("a name prompt's Save submits its typed name during the hold", async () => {
+    const submit = vi.fn();
+    openDeck();
+    act(() => useNamePrompt.getState().ask({ label: "Name the note", submit }));
+    fireEvent.change(screen.getByTestId("palette-name"), { target: { value: "  Cutover notes  " } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(submit).toHaveBeenCalledExactlyOnceWith("Cutover notes");
+    expect(usePalette.getState().open).toBe(false);
+    expect(useNamePrompt.getState().prompt).toBeNull();
+  });
+
+  it("Close abandons a name prompt without Save and returns focus to Search", async () => {
+    const submit = vi.fn();
+    openDeck();
+    act(() => useNamePrompt.getState().ask({ label: "Name the note", submit }));
+    fireEvent.change(screen.getByTestId("palette-name"), { target: { value: "Cutover notes" } });
+    const launcher = screen.getByRole("button", { name: /^Search/ });
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(submit).not.toHaveBeenCalled();
+    expect(useNamePrompt.getState().prompt).toBeNull();
+    expect(usePalette.getState().open).toBe(false);
+    expect(document.activeElement).toBe(launcher);
+  });
 });

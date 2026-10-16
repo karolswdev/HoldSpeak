@@ -42,6 +42,7 @@ import { useOnDeskChanged } from "../useDeskChangedRefresh";
 import { Button } from "../../components/signal/Signal";
 import { PaletteHitLine, snippetParts, snippetText, type PaletteHit } from "./paletteHit";
 import { openProjectRoom } from "../shell";
+import { wireDayClock } from "../surface/format";
 
 // Re-exported so existing imports keep one source (the data moved to
 // desk/tools.ts so the registry never imports a component).
@@ -84,6 +85,8 @@ interface DeckRow {
   /** A MEMORY row (⌘K option B, ratified 2026-10-05): the second line
    * under the title — the snippet with the match marked, FoundBy, the day. */
   hit?: PaletteHit;
+  /** Local meeting context distinguishes separate choices with one title. */
+  meetingMeta?: string;
   /** A contextual Send row stays visible but does not steal the first press. */
   preselect?: boolean;
   run(): void;
@@ -314,6 +317,16 @@ function objectBody(ref: unknown): string | undefined {
     return names.size ? [...names].join(" ") : undefined;
   }
   return undefined;
+}
+
+function meetingMeta(ref: unknown): string | undefined {
+  const meeting = (ref ?? {}) as Record<string, unknown>;
+  if (meeting.kind !== "meeting") return undefined;
+  const attendees = (Array.isArray(meeting.attendees) ? meeting.attendees : [])
+    .filter((name): name is string => typeof name === "string" && !!name.trim())
+    .map((name) => name.trim());
+  return [wireDayClock(meeting.startedAt), attendees.join(", ")]
+    .filter(Boolean).join(" · ") || undefined;
 }
 
 export function DeskToolShelf() {
@@ -671,6 +684,8 @@ export function DeskToolShelf() {
           // PHILO-13-14 (C4): a word inside a thought (a note's body) or a
           // speaker of a meeting finds it.
           body: objectBody(item.ref),
+          meetingMeta: meetingMeta(item.ref),
+          wrap: item.kind === "meeting",
           run: () => openPullout(qualifiedRef(item.kind, item.id)),
         });
       }
@@ -955,22 +970,31 @@ export function DeskToolShelf() {
               aria-label="Tools and Desk search"
               onKeyDown={onDeckKeyDown}
             >
-              <label className="desk-tool-search">
-                <span className="sr-only">{prompt ? prompt.label : "Search tools and Desk items"}</span>
-                <StringGadget
-                  inputRef={searchRef}
-                  label={prompt ? prompt.label : "Search tools and Desk items"}
-                  value={query}
-                  placeholder={prompt ? prompt.label : "Search tools and Desk items"}
-                  onChange={setQuery}
-                  inputProps={prompt ? { "data-testid": "palette-name" } as Record<string, string> : {
-                    role: "combobox",
-                    "aria-expanded": open,
-                    "aria-controls": "desk-palette-listbox",
-                    "aria-activedescendant": activeId,
+              <div className="desk-tool-search-head">
+                <label className="desk-tool-search">
+                  <span className="sr-only">{prompt ? prompt.label : "Search tools and Desk items"}</span>
+                  <StringGadget
+                    inputRef={searchRef}
+                    label={prompt ? prompt.label : "Search tools and Desk items"}
+                    value={query}
+                    placeholder={prompt ? prompt.label : "Search tools and Desk items"}
+                    onChange={setQuery}
+                    inputProps={prompt ? { "data-testid": "palette-name" } as Record<string, string> : {
+                      role: "combobox",
+                      "aria-expanded": open,
+                      "aria-controls": "desk-palette-listbox",
+                      "aria-activedescendant": activeId,
+                    }}
+                  />
+                </label>
+                <Button dense variant="ghost" className="desk-tool-close"
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") event.stopPropagation();
                   }}
-                />
-              </label>
+                  onClick={() => { close(); launchRef.current?.focus(); }}>
+                  Close
+                </Button>
+              </div>
               {prompt ? (
                 <div className="desk-tool-name">
                   <Button dense variant="primary" data-testid="palette-name-save"
@@ -1006,6 +1030,7 @@ export function DeskToolShelf() {
                           }
                           aria-disabled={row.ghost ? true : undefined}
                           data-wrap={row.wrap || undefined}
+                          data-meeting={!!row.meetingMeta || undefined}
                           aria-current={isSel || undefined}
                           onClick={() => runRow(row)}
                           onPointerEnter={() => {
@@ -1020,11 +1045,12 @@ export function DeskToolShelf() {
                             {row.glyph}
                           </span>
                           <span className="desk-deck-label">
-                            {row.hit ? <span className="desk-deck-title">{row.label}</span> : row.label}
+                            {row.hit || row.meetingMeta ? <span className="desk-deck-title">{row.label}</span> : row.label}
                             {row.ghost ? (
                               <small className="quiet"> · {row.ghost}</small>
                             ) : null}
                             {row.hit ? <PaletteHitLine hit={row.hit} /> : null}
+                            {row.meetingMeta ? <span className="desk-deck-meeting-meta">{row.meetingMeta}</span> : null}
                           </span>
                           {row.badge ? (
                             <span className="desk-deck-badge">{row.badge}</span>

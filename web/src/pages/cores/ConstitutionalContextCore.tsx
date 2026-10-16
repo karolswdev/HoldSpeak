@@ -92,6 +92,7 @@ export function ConstitutionalContextCore() {
     setDirty(false);
   };
 
+  const revision = ctx?.revision ?? 0;
   const charCount = draft.length;
   const tokenEstimate = Math.ceil(charCount / 4);
   const pct = charCount / limit;
@@ -155,13 +156,15 @@ export function ConstitutionalContextCore() {
         }
       >
         <div className="constitutional-context-status" aria-live="polite">
-          <span className="constitutional-context-fact">rev {ctx?.revision || 0}</span>
-          <span className="constitutional-context-fact">~{tokenEstimate.toLocaleString()} tokens</span>
-          <LampGadget
-            label={`${charCount.toLocaleString()}/${limit.toLocaleString()} chars`}
-            on={overLimit || nearLimit}
-            tone={overLimit ? "fail" : "warn"}
-          />
+          {revision > 0 ? <span className="constitutional-context-fact">rev {revision}</span> : null}
+          {charCount > 0 ? <span className="constitutional-context-fact">~{tokenEstimate.toLocaleString()} tokens</span> : null}
+          {charCount > 0 ? (
+            <LampGadget
+              label={`${charCount.toLocaleString()}/${limit.toLocaleString()} chars`}
+              on={overLimit || nearLimit}
+              tone={overLimit ? "fail" : "warn"}
+            />
+          ) : null}
           {overLimit ? <LampGadget label="over limit" on tone="fail" /> : null}
           {dirty ? <LampGadget label="unsaved" on tone="warn" /> : null}
           {saved ? <LampGadget label="saved" on tone="ok" /> : null}

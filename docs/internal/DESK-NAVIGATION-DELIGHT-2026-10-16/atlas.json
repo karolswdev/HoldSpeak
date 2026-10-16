@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "atlas_version": "desk-navigation-delight-20261016",
+  "extends": "docs/internal/COHESIVE-WORKFLOWS-2026-10-15/atlas.json",
+  "source_commit": "11984f33e86f6f9540dba44cfad45cbb67d90d10",
+  "states": [
+    {
+      "id": "state.desk_presentation.search_closed",
+      "family": "desk_presentation",
+      "values": {
+        "application": "Search",
+        "task": "Return to Desk"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/components/DeskToolShelf.tsx",
+          "symbol": "DeskToolShelf",
+          "claim": "The explicit Close uses existing close state and restores launcher focus."
+        }
+      ],
+      "reachable_by": [
+        "case.desk.search.closed"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "case.desk.search.closed",
+      "job": "j11",
+      "edge_ids": [
+        "edge.verb.system_search"
+      ],
+      "state_id": "state.desk_presentation.search_closed",
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME/DB, engine none. Real Search open, explicit Close; no provider/audio execution."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/desk/seed",
+          "body": {},
+          "expect_status": 200,
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "button[aria-controls=desk-tool-shelf]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "input[aria-controls=desk-palette-listbox]",
+          "value": "New Project"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "role": "button",
+        "name": "Close",
+        "adapter": "ui-by-viewport"
+      },
+      "expected": {
+        "observe_at": "button[aria-controls=desk-tool-shelf]",
+        "predicate": {
+          "kind": "selector_presence",
+          "selector": "#desk-tool-shelf",
+          "present": false
+        },
+        "words": "Explicit library Close dismisses Search; root task walk separately verifies focus return, meeting identities and hit ownership."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ],
+  "clocks": [],
+  "excluded": [],
+  "council_readings": []
+}

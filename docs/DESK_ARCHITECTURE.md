@@ -151,3 +151,17 @@ One check owns the pending state, and old reads cannot replace newer results.
 Calendar Save completion applies only to its submitted editor identity and
 values, preserving a newer calendar draft. Speech test capture cleanup owns
 only its listening hold; Stop hands ownership off before transcription waits.
+
+Search has an explicit library Close that restores its launcher focus. Meeting
+choices show local day/time and attendee context while preserving exact kind/ID
+identity. The portalled shelf names the shared surface container so StringGadget
+keeps its real mic touch target. Empty Context usage/revision counters are absent;
+nonzero revisions, History and save outcomes remain. Needs phone action rows
+declare their already-painted44px height to the existing hit-spacing formula.
+
+Calendar screenshot review gives event title/location readable fields, keeps
+stable local row identities through editing/removal, and strips those IDs from
+the writer payload. Confirm keeps the review mounted while pending and guards
+duplicate writes. Refusal retains the reviewed anchor/events for exact Retry;
+editing creates a new Confirm draft. The receipt uses the returned source/count.
+Extraction review fixtures do not establish OCR/model execution.
