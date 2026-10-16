@@ -11,7 +11,7 @@ Tracking alone does not finish this work.
 - [Brief/source tape](https://github.com/karolswdev/HoldSpeak/actions/runs/38950387547): 103 failed cases.
 - [Daily-work tape](https://github.com/karolswdev/HoldSpeak/actions/runs/38957119404): 106 failed cases.
 - Union: **110 distinct cases**. Four appear only in earlier tapes; absence is not closure.
-- Current main: `2669d98f2` (#1224). Its [full run](https://github.com/karolswdev/HoldSpeak/actions/runs/38961799415) is in progress.
+- Recovery baseline: `2669d98f2` (#1224). Its [full run](https://github.com/karolswdev/HoldSpeak/actions/runs/38961799415) is in progress.
 - Two producer cases were already verified by #1224. Every other case below needs current evidence.
 
 Working tree: `/Users/karol/dev/tools/wt-regression-recovery-20261016`.
@@ -125,7 +125,7 @@ product contract; no skips, blanket retries, threshold increases or broad exempt
 | R088 | Runtime and producers | `tests/integration/test_face_wire_fences.py::test_parked_reads` | Focused check passes after fix; awaiting delivery |
 | R089 | Runtime and producers | `tests/memory_bench/test_memory_bench.py::test_an_engine_that_fails_or_has_no_vectors_changes_nothing` | Focused check passes after fix; awaiting delivery |
 | R090 | Runtime and producers | `tests/memory_bench/test_memory_bench.py::test_no_engine_answer_equals_the_search_before_the_index` | Focused check passes after fix; awaiting delivery |
-| R091 | Runtime and producers | `tests/unit/test_agent_hand.py::test_hand_launches_a_minted_decision_record_with_a_bounded_session_name` | Focused check passes after fix; awaiting delivery |
+| R091 | Runtime and producers | `tests/unit/test_agent_hand.py::test_hand_launches_a_minted_decision_record_with_a_bounded_session_name` | Delivered in #1225; new concurrency/error regressions and quick checks pass |
 | R092 | Guards and copy | `tests/unit/test_decisions.py::test_pre_fix_route_answers_500_on_create` | Full-history checkout fix prepared; local historical assertions pass; CI verification pending |
 | R093 | Guards and copy | `tests/unit/test_density_guard.py::test_runtime_modules_stay_single_concern` | Focused check passes after fix; awaiting delivery |
 | R094 | Runtime and producers | `tests/unit/test_desk_memory.py::test_the_decision_chain_and_the_carry_survive_a_hub_restart` | Passed local focused run; CI cause still open |
@@ -148,7 +148,9 @@ product contract; no skips, blanket retries, threshold increases or broad exempt
 
 ## Delivery log
 
-- Recovery started from #1224. No new recovery fix is claimed delivered yet.
+- [#1225](https://github.com/karolswdev/HoldSpeak/pull/1225) merged `f6871e8df`: journal allocation/error-release fix.
+  Postmerge review RATIFY. Idle-hub delivery build `6e3600ca4e4d1251`, PID 28926;
+  health, Desk, Conductor and Models return 200. Broader recovery stays active.
 - Local collection selected all 26 nonbrowser cases. Focused baseline: **10 failed,
   16 passed** (13.39 s). CI-specific causes remain open where local tests passed.
   Current-source browser bundle built; eight representative cases: **7 failed, 1 passed**
@@ -158,6 +160,8 @@ product contract; no skips, blanket retries, threshold increases or broad exempt
   (14.71 s). No skip/expected-failure policy was changed.
 - Brief producer fixtures: original UTC run reproduced both failures; timezone-pinned
   versions pass **52 checks** under UTC, preserving exact stored payload equality.
-- Journal-only delivery quick is GREEN: **44 affected / 109 sweep / 17 canon**.
-  Source/build `6e3600ca4e4d1251` agree. Separate Today1440/393 shot checks pass
-  and the shots were inspected. Other fixes await their own delivery checks.
+- Journal-only delivery is being checked separately; other recovery fixes remain in
+  the working tree until their own delivery checks pass.
+- Restart probe: catalogue module fixture followed by restart passes (2 checks);
+  durable row is present before/after reboot and both stores use the current DB.
+  The original CI-only restart failure remains open.

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 from typing import Any
 
@@ -15,6 +16,37 @@ FACTS = HERE / "facts.json"
 HARD_FACTS = HERE / "relation_hard_facts.json"
 HARD_VECTORS = HERE / "relation_hard_vectors.npz"
 DATE_FACTS = HERE / "date_facts.json"
+
+
+def assert_keyword_golden(actual: Any, expected: Any) -> None:
+    """Compare the historical golden across SQLite floating-point builds.
+
+    FTS scores differ by a few ULPs across builds; min-max normalization
+    amplifies those differences. Only these two scores get a bounded
+    comparison. Same-process before/after answers still use exact equality.
+    """
+    score_ulps = {"bm25": 8, "normalized_score": 32}
+
+    def compare(value: Any, recorded: Any, path: str, field: str = "") -> None:
+        assert type(value) is type(recorded), f"{path}: {type(value)} != {type(recorded)}"
+        if isinstance(value, dict):
+            assert value.keys() == recorded.keys(), f"{path}: fields differ"
+            for key in recorded:
+                compare(value[key], recorded[key], f"{path}.{key}", key)
+        elif isinstance(value, list):
+            assert len(value) == len(recorded), f"{path}: lengths differ"
+            for index, (item, original) in enumerate(zip(value, recorded)):
+                compare(item, original, f"{path}[{index}]")
+        elif isinstance(value, float) and field in score_ulps:
+            assert math.isfinite(value) and math.isfinite(recorded), f"{path}: nonfinite score"
+            tolerance = min(
+                1e-15, score_ulps[field] * max(math.ulp(value), math.ulp(recorded)),
+            )
+            assert abs(value - recorded) <= tolerance, f"{path}: {value} != {recorded}"
+        else:
+            assert value == recorded, f"{path}: {value!r} != {recorded!r}"
+
+    compare(actual, expected, "$")
 
 
 def load_questions() -> list[dict[str, Any]]:

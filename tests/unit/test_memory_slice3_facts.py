@@ -196,6 +196,8 @@ def routed(tmp_path: Path):
 
 def test_no_engine_the_jobs_wait_and_recall_is_unchanged(routed) -> None:
     golden = json.loads(bench.GOLDEN.read_text())
+    before = bench.keyword_snapshot(routed.db, routed.refs)
+    bench.assert_keyword_golden(before, golden)
     assert resolve_extractor(routed.broker, OWNER) is None
     report = memory_conductor.tick(routed.db, routed.broker)
     assert report["extract"] == {
@@ -206,7 +208,7 @@ def test_no_engine_the_jobs_wait_and_recall_is_unchanged(routed) -> None:
     pending = routed.db.memory_index.pending_extraction(EXTRACT_KINDS, extract_module.EXTRACTOR_VERSION)
     assert len(pending) == len(routed.refs)
     assert _counts(routed.db) == {table: 0 for table in FACT_TABLES}
-    assert bench.keyword_snapshot(routed.db, routed.refs) == golden
+    assert bench.keyword_snapshot(routed.db, routed.refs) == before
 
 
 def test_a_network_default_made_without_the_owners_press_is_never_used_for_extraction(routed) -> None:
@@ -264,13 +266,15 @@ def test_each_chunk_call_is_one_admitted_child_with_a_receipt(routed) -> None:
 
 def test_an_engine_failure_ends_the_pass_and_charges_no_source(routed) -> None:
     golden = json.loads(bench.GOLDEN.read_text())
+    before = bench.keyword_snapshot(routed.db, routed.refs)
+    bench.assert_keyword_golden(before, golden)
     _profile(routed.db, "facts-model", model="qwen-lan")
     _assign(routed.db, EXTRACT_CAPABILITY, ["facts-model"])
     routed.engine.fail = True
     report = memory_conductor.tick(routed.db, routed.broker)
     assert report["extract"]["error"] and report["extract"]["sources"] == 0
     assert _counts(routed.db) == {table: 0 for table in FACT_TABLES}  # no job row: no source charged
-    assert bench.keyword_snapshot(routed.db, routed.refs) == golden
+    assert bench.keyword_snapshot(routed.db, routed.refs) == before
     routed.engine.fail = False
     memory_conductor.tick(routed.db, routed.broker)
     assert routed.db.memory_index.stats()["facts"] > 0

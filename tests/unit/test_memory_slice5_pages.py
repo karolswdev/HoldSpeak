@@ -1097,6 +1097,8 @@ def routed(tmp_path: Path):
 
 def test_no_page_engine_nothing_is_called_written_or_changed(routed, monkeypatch) -> None:
     golden = json.loads(bench.GOLDEN.read_text())
+    before = bench.keyword_snapshot(routed.db, routed.refs)
+    bench.assert_keyword_golden(before, golden)
     _profile(routed.db, "obs-model", model="qwen-lan", boundary="private_network")
     _assign(routed.db, EXTRACT_CAPABILITY, ["obs-model"])
     _assign(routed.db, CONSOLIDATE_CAPABILITY, ["obs-model"])
@@ -1110,7 +1112,7 @@ def test_no_page_engine_nothing_is_called_written_or_changed(routed, monkeypatch
     assert "memory_page" not in names
     with routed.db._connection() as conn:
         assert conn.execute("SELECT count(*) FROM memory_pages").fetchone()[0] == 0
-    assert bench.keyword_snapshot(routed.db, routed.refs) == golden
+    assert bench.keyword_snapshot(routed.db, routed.refs) == before
 
 
 def test_a_network_default_made_without_the_owners_press_is_never_used_for_pages(routed) -> None:

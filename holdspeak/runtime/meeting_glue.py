@@ -18,6 +18,7 @@ from ..device_status import (
 from ..logging_config import get_logger
 from ..meeting_session import MeetingSession
 from ..web.runtime_support import _UnknownDeviceError
+from .meeting_context import consume_meeting_context
 
 log = get_logger("web_runtime")
 
@@ -191,44 +192,9 @@ class MeetingGlueMixin:
         named status instead. An OWNER principal is never synthesized here — the
         narrow ``meeting-capture`` service-principal issuer does not exist yet.
         """
-        # Scheduled starts set the pending fields through the conductor because
-        # their callback predates the direct HTTP context argument. Consume
-        # them before any admission work, including a refusal, so they cannot
-        # attach to a later meeting. A direct owner start must never apply a
-        # scheduler's pending context while the two starts race.
-        principal_kind = getattr(
-            getattr(principal, "kind", None),
-            "value",
-            getattr(principal, "kind", None),
+        title_override, tags_override, calendar_event_id_override = consume_meeting_context(
+            self, principal=principal, calendar_event_id=calendar_event_id,
         )
-        scheduled_start = principal_kind == "scheduler"
-        with self.state_lock:
-            pending_title = self.pending_title
-            pending_calendar_event_id = self.pending_calendar_event_id
-            pending_tags = (
-                list(self.pending_tags) if self.pending_tags is not None else None
-            )
-            self.pending_title = None
-            self.pending_calendar_event_id = None
-            self.pending_tags = None
-        # Title and tags may be an owner's explicit idle metadata edit. Keep
-        # that existing contract when no scheduled event is pending. Once a
-        # scheduler has parked a calendar context, an overlapping direct
-        # owner start must not inherit its title or tags; the parked fields
-        # are still consumed above so they cannot leak into a later meeting.
-        pending_calendar = str(pending_calendar_event_id or "").strip() or None
-        scheduler_context = pending_calendar is not None
-        title_override = (
-            pending_title if scheduled_start or not scheduler_context else None
-        )
-        tags_override = (
-            pending_tags if scheduled_start or not scheduler_context else None
-        )
-        calendar_event_id_override = str(
-            calendar_event_id
-            or (pending_calendar if scheduled_start else "")
-            or ""
-        ).strip() or None
 
         if self._active_meeting_session() is not None:
             raise RuntimeError("Meeting already active")

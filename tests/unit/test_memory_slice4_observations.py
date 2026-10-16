@@ -758,11 +758,13 @@ def routed(tmp_path: Path):
 
 def test_no_engine_nothing_is_called_and_recall_is_unchanged(routed) -> None:
     golden = json.loads(bench.GOLDEN.read_text())
+    before = bench.keyword_snapshot(routed.db, routed.refs)
+    bench.assert_keyword_golden(before, golden)
     assert resolve_consolidator(routed.broker, OWNER) is None
     report = memory_conductor.tick(routed.db, routed.broker)
     assert report["consolidate"]["engine"] == "" and report["consolidate"]["calls"] == 0
     assert routed.engine.prompts == []
-    assert bench.keyword_snapshot(routed.db, routed.refs) == golden
+    assert bench.keyword_snapshot(routed.db, routed.refs) == before
 
 
 def test_a_network_default_made_without_the_owners_press_is_never_used_for_consolidation(routed) -> None:

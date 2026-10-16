@@ -41,23 +41,26 @@ def test_no_engine_answer_equals_the_search_before_the_index(desk) -> None:
     but no engine is set."""
     db, refs = desk
     golden = json.loads(bench.GOLDEN.read_text())
-    assert bench.keyword_snapshot(db, refs) == golden
+    before = bench.keyword_snapshot(db, refs)
+    bench.assert_keyword_golden(before, golden)
     sweep(db)
-    assert bench.keyword_snapshot(db, refs) == golden
+    assert bench.keyword_snapshot(db, refs) == before
     embed_pending(db, FixtureEmbedder(bench.FIXTURE))
     assert db.memory_index.stats()["vectors"] > 0
     assert db.memory.embedder is None
-    assert bench.keyword_snapshot(db, refs) == golden
+    assert bench.keyword_snapshot(db, refs) == before
 
 
 def test_an_engine_that_fails_or_has_no_vectors_changes_nothing(desk) -> None:
     db, refs = desk
     golden = json.loads(bench.GOLDEN.read_text())
+    before = bench.keyword_snapshot(db, refs)
+    bench.assert_keyword_golden(before, golden)
     sweep(db)
     engine = FixtureEmbedder(bench.FIXTURE)
     # The engine is set but no vector exists yet (the model just arrived).
     db.memory.set_embedder(engine)
-    assert bench.keyword_snapshot(db, refs) == golden
+    assert bench.keyword_snapshot(db, refs) == before
     embed_pending(db, engine)
 
     class Broken:
@@ -72,7 +75,7 @@ def test_an_engine_that_fails_or_has_no_vectors_changes_nothing(desk) -> None:
     for answer in broken.values():
         # The failed call is named; the rest is the keyword answer.
         assert answer["ranking"].pop("engine")["outcome"] == "failed"
-    assert broken == golden
+    assert broken == before
 
 
 def test_recall_before_and_after(desk, capsys) -> None:

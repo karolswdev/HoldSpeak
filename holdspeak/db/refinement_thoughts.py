@@ -43,7 +43,15 @@ class RefinementThoughtRepository(BaseRepository):
 
     def list(self, *, state: str | None = None) -> list[dict[str, Any]]:
         with self._connection() as conn:
-            rows = conn.execute("SELECT * FROM refinement_thoughts" + (" WHERE state = ?" if state else "") + " ORDER BY updated_at DESC", (state,) if state else ()).fetchall()
+            if state:
+                rows = conn.execute(
+                    "SELECT * FROM refinement_thoughts WHERE state = ? ORDER BY updated_at DESC",
+                    (state,),
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    "SELECT * FROM refinement_thoughts ORDER BY updated_at DESC",
+                ).fetchall()
         return [self._row(row) for row in rows]
 
     def revisions(self, thought_id: str) -> list[dict[str, Any]]:

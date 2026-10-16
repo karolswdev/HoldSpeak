@@ -11,6 +11,7 @@
       "grounding": {},
       "id": "wbi-park",
       "last_modified": "2026-10-11T23:47:04Z",
+      "mint_attempted": false,
       "parked": false,
       "priority": 3,
       "result": null,

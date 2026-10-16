@@ -25,6 +25,7 @@ import datetime
 import json
 import os
 import re
+import time
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -48,12 +49,29 @@ from holdspeak.web.routes import monday_brief as brief_routes
 REPO = Path(__file__).resolve().parents[2]
 FIXTURE = REPO / "web/src/desk/chair/__tests__/fixtures/philo6/brief-truth.json"
 HUB_ZONE = ZoneInfo("Etc/GMT+11")  # UTC-11
+FIXTURE_ZONE = ZoneInfo("America/Denver")
 # A Friday morning in the hub's zone; the lookback starts Thursday 17:00.
 GENERATED = datetime.datetime(2026, 9, 25, 7, 19, tzinfo=HUB_ZONE)
 EVENTS_AT = datetime.datetime(2026, 9, 25, 6, 0, tzinfo=HUB_ZONE)
 MEETING_TITLE = "Architecture review"
 OWNER = Principal(PrincipalKind.OWNER, "test-owner")
 RAW = re.compile(r"[A-Z][A-Za-z]*(?:Service|Manager|Handler|Provider)\.[a-z_]+")
+
+
+@pytest.fixture
+def producer_timezone():
+    """Pin local display times to the fixture's machine, then restore TZ.
+
+    The injected generation stamp separately retains its supplied -11:00
+    offset. Pipeline times and the saved meeting use the machine's zone.
+    """
+    try:
+        with pytest.MonkeyPatch.context() as patch:
+            patch.setenv("TZ", FIXTURE_ZONE.key)
+            time.tzset()
+            yield
+    finally:
+        time.tzset()
 
 
 def _hub(db: Database, monkeypatch, tmp_path) -> TestClient:
@@ -81,8 +99,8 @@ def _seed(db: Database, client: TestClient, monkeypatch) -> str:
     monkeypatch.setattr(observer_module, "time", SimpleNamespace(time=lambda: now["t"]))
     meeting = MeetingState(
         id="m-arch",
-        started_at=datetime.datetime(2026, 9, 25, 5, 0),
-        ended_at=datetime.datetime(2026, 9, 25, 5, 30),
+        started_at=datetime.datetime(2026, 9, 25, 5, 0, tzinfo=FIXTURE_ZONE),
+        ended_at=datetime.datetime(2026, 9, 25, 5, 30, tzinfo=FIXTURE_ZONE),
         title=MEETING_TITLE,
         tags=[],
         segments=[
@@ -142,7 +160,7 @@ def _stable(payload: dict[str, Any]) -> dict[str, Any]:
     return json.loads(token.sub(lambda m: names[m.group(0)], text))
 
 
-def test_the_real_producer_brief(tmp_path, monkeypatch):
+def test_the_real_producer_brief(tmp_path, monkeypatch, producer_timezone):
     db = Database(tmp_path / "hub.db")
     client = _hub(db, monkeypatch, tmp_path)
     _seed(db, client, monkeypatch)

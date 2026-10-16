@@ -30,7 +30,6 @@ GLYPHS = {
     ("desk/components/dock.css", ".desk-next .desk-dock-x"),  # the close picture (VerbGlyph svg); aria-label "Close <name>"
     ("desk/components/speak-to-fill.css", ".desk-next .desk-inline-editor-foot .desk-mic"),  # image-only mic; aria-label
     ("desk/pullouts/thread-pullout.css", ".thread-result-glyph"),  # ▣ beside the result title
-    ("desk/pullouts/thread-pullout.css", ".thread-speaker-glyph"),  # ▶ / ■; aria-label "Speak message" / "Stop speaking"
     ("desk/surface/gadgets.css", ".gadget-cycle-glyph"),  # ↻ aria-hidden; the select's value is the word
     ("desk/surface/gadgets.css", ".gadget-string .desk-mic, .desk-next .gadget-string .desk-mic"),  # image-only mic
     ("desk/surface/gadgets.css", ".gadget-arrows button"),  # ▲ ▼; aria-label "Increase/Decrease <label>"
