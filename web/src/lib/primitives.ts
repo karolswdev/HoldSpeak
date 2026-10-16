@@ -166,6 +166,8 @@ export interface Artifact {
   status: string;
   confidence?: number | null;
   sources?: unknown[];
+  /** Local exact-source read state; never written to the artifact record. */
+  sourceRead?: { state: "unavailable" | "failed"; message: string; hasMaterial: boolean };
 }
 
 /** NEW primitive — a free-standing markdown note, authored on any surface. */

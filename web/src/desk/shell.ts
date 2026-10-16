@@ -141,18 +141,20 @@ export function openPrimitive(ref: string): void {
   if (window.location.pathname === "/") {
     // PHILO-17: a meeting or a person window reads its own object; it opens
     // at once, with no desk refresh first.
-    if (objectWindowStandIn(ref)) {
+    if (!ref.startsWith("artifact:") && objectWindowStandIn(ref)) {
       void import("./store").then((m) => m.useDesk.getState().openPullout(ref));
       return;
     }
     // The arrival path's exact behavior: refresh first so a just-created
     // primitive is in the items before the pull-out resolves it.
-    void import("./store").then((m) =>
-      m.useDesk
-        .getState()
-        .refresh()
-        .then(() => m.useDesk.getState().openPullout(ref)),
-    );
+    void import("./store").then(async (m) => {
+      if (ref.startsWith("artifact:")) {
+        const { holdObject } = await import("./api");
+        holdObject(ref);
+      }
+      await m.useDesk.getState().refresh();
+      m.useDesk.getState().openPullout(ref);
+    });
     return;
   }
   shellNavigate?.(`/?open=${encodeURIComponent(ref)}`);

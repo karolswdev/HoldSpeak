@@ -37,6 +37,7 @@ import { InfoWindow } from "./components/InfoWindow";
 import { ApplicationBoundary } from "./components/ApplicationBoundary";
 import { objectByRef } from "./world";
 import { objectWindowStandIn } from "./objectWindows";
+import { holdObject } from "./api";
 import { useProjections } from "./projections";
 import { takeFirstValueNoteOpen } from "./firstValue";
 import { useSettleState } from "./settleState";
@@ -109,8 +110,13 @@ function DeskFaces() {
   const refreshDesk = useCallback(async () => {
     setRefreshFailure(null);
     try {
-      await refresh();
       const open = new URLSearchParams(window.location.search).get("open");
+      // Cold arrival and restored windows hold their exact source before
+      // the bounded collection read, just as an in-place citation does.
+      for (const ref of [open, ...useDesk.getState().pullouts.map((pullout) => pullout.id)]) {
+        if (ref?.startsWith("artifact:")) holdObject(ref);
+      }
+      await refresh();
       if (open) { useDesk.getState().openPullout(open); const url = new URL(window.location.href); url.searchParams.delete("open"); window.history.replaceState(window.history.state, "", url); } // B2 (Astra P2 #747): a link opens once; a reload never replays it over the restored editor
     } catch (caught) {
       setRefreshFailure(
@@ -151,7 +157,9 @@ function DeskFaces() {
   const chairOpenCards = pullouts
     // PHILO-17: a meeting or a person window reads its own object; the desk
     // holds the newest meetings only, and a person is not a desk item.
-    .map((pullout) => ({ ...pullout, object: objectByRef(items, pullout.id) ?? objectWindowStandIn(pullout.id) }))
+    .map((pullout) => ({ ...pullout, object:
+      (pullout.id.startsWith("artifact:") ? objectWindowStandIn(pullout.id) : null)
+      ?? objectByRef(items, pullout.id) ?? objectWindowStandIn(pullout.id) }))
     .filter((pullout) => Boolean(pullout.object));
 
   // PHILO-17 ("A meeting opens in one window"): a meeting window saved under

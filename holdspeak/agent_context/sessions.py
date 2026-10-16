@@ -258,7 +258,9 @@ def ingest_agent_hook_event(
         stop_text = _optional_str(payload.get("last_assistant_message"))
     codex_last_message: str | None = None
     if normalized_agent in STOP_IS_WAIT_AGENTS and hook_event_name == "Stop":
-        text = " ".join(str(payload.get("last_assistant_message") or "").split())
+        # Keep the document's line boundaries and indentation. The question
+        # filter below still trims edges and redacts possible secrets.
+        text = str(payload.get("last_assistant_message") or "").strip()
         codex_last_message = text[-DEFAULT_ASSISTANT_CAPTURE_MAX_CHARS:] or None
     tmux_context = detect_tmux_context(payload, env=env)
     detected_claim = detect_story_claim(payload, env=env)
@@ -1014,7 +1016,6 @@ def extract_last_assistant_text(
             latest = text
     if latest is None:
         return None
-    latest = " ".join(latest.split())
     if len(latest) > max_chars:
         latest = latest[-max_chars:]
     return latest

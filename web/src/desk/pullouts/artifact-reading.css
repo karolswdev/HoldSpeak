@@ -1,0 +1,13 @@
+.artifact-reading {
+  --text: var(--wb-text);
+  --text-muted: var(--wb-muted);
+}
+
+.artifact-reading .surface-well {
+  background: var(--alive-paper, var(--wb-paper));
+  color: var(--wb-text);
+}
+
+.artifact-reading .surface-well-body {
+  max-height: none;
+}

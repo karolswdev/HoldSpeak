@@ -1074,3 +1074,24 @@ nowhere). It decides nothing: the app answers `accepts` and writes in
   at most four).
 - Material: the §11 tokens with the canvas values as fallbacks
   (`var(--wb-well, #eef0f3)`); reduced motion stops the pulse and the lamp.
+
+
+## Shared reading material
+
+`ReadingDocument` is the document species behind `Material` and full
+`AgentWords`. It uses the installed `markdownLanguage.parser` grammar; no
+host defines its own Markdown blocks. Headings keep their semantic depth,
+lists can nest, tables retain header cells, and fenced code retains source
+whitespace. Table and code overflow stays in a keyboard-focusable local
+`ScrollHint` well. Hosts provide the surrounding material and title.
+
+Known note doors use their existing library Buttons. A qualified object
+reference is a Button only when `refOpener` supplies a supported opener.
+HTTP(S) links retain their label and open only on a press. Unsupported
+schemes and repository paths show the label plus an inert destination;
+there is no verified repository-file opener. HTML is text, images are alt
+text, and rendering never fetches external material. Compact `AgentWords`
+keeps its last-ask selection, marks and truncation, with inert links.
+
+Capture preserves original line breaks and indentation within the existing
+bounds and question secret filter. Historic flattened text stays as stored.

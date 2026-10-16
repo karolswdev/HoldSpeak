@@ -36,7 +36,8 @@ describe("Material door links", () => {
   it("an unknown door is bold text, never a dead button", () => {
     render(<Material>{"[Nowhere](door:nowhere) and [Proto](door:constructor)"}</Material>);
     expect(screen.queryByRole("button")).toBeNull();
-    expect(screen.getByText("Nowhere").tagName).toBe("STRONG");
+    expect(screen.getByText("Nowhere").closest("strong")).not.toBeNull();
+    expect(screen.getByText("door:nowhere")).toBeTruthy();
     expect(hasNoteDoor("[Nowhere](door:nowhere) [Proto](door:constructor)")).toBe(false);
     expect(hasNoteDoor(START_HERE)).toBe(true);
   });

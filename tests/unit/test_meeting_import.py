@@ -128,6 +128,46 @@ def test_happy_path_windows_timestamps_and_persistence(tmp_path, db):
     assert state.intel_status == "disabled"
 
 
+def test_import_completion_publishes_resolved_start_and_transcript_together(tmp_path, db, monkeypatch):
+    """Every committed completed import has its resolved start, even with a placeholder."""
+    import sqlite3
+    from contextlib import contextmanager
+
+    import holdspeak.meeting_import as importer
+    from holdspeak.timestamps import parse_stamp
+
+    moment = datetime(2026, 10, 16, 12, 0)
+    meeting_id = "import-placeholder"
+    placeholder = MeetingState(id=meeting_id, started_at=moment, title="Planning", segments=[])
+    placeholder.intel_status = "importing"
+    db.meetings.save_meeting(placeholder)
+    transcript = tmp_path / "planning.vtt"
+    transcript.write_text("WEBVTT\n\n00:00:00.000 --> 01:00:00.000\nRelease plan\n", encoding="utf-8")
+    monkeypatch.setattr(importer, "_import_moment", lambda: moment)
+    connection = db._connection
+    published = []
+
+    @contextmanager
+    def observe_commits():
+        with connection() as conn:
+            yield conn
+        # A separate reader sees only committed state, exactly as the
+        # upload poll or a Brief rebuild can while the worker is running.
+        with sqlite3.connect(db.db_path) as reader:
+            row = reader.execute("SELECT started_at, ended_at FROM meetings WHERE id = ?", (meeting_id,)).fetchone()
+            segments = reader.execute("SELECT COUNT(*) FROM segments WHERE meeting_id = ?", (meeting_id,)).fetchone()[0]
+        if row[1] is not None and segments:
+            published.append((parse_stamp(row[0]), parse_stamp(row[1])))
+
+    monkeypatch.setattr(db.meetings, "_connection", observe_commits)
+    monkeypatch.setattr(db, "_connection", observe_commits)
+    result = import_transcript(transcript, db=db, config=_config(intel_enabled=False), meeting_id=meeting_id)
+
+    assert published, "the completed import was not committed"
+    assert all(end - start == timedelta(hours=1) for start, end in published), published
+    assert result.state.started_at == moment - timedelta(hours=1)
+
+
 def test_stereo_44k_is_downmixed_and_resampled_before_transcription(tmp_path, db):
     wav = _write_wav(tmp_path / "hifi.wav", seconds=4.0, rate=44100, channels=2)
     transcriber = FakeTranscriber(["hello"])

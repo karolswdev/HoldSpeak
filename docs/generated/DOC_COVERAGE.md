@@ -13,13 +13,13 @@ Validation errors at generation: **0**.
 
 | Measure | Present / total or count |
 | --- | ---: |
-| Source paths | 301 / 301 |
-| Test paths | 244 / 244 |
-| Documentation paths | 247 / 247 |
-| Assertions inspected | 244 |
-| Tests executed | 206 |
-| Records with an executed assertion | 83 |
-| Semantic records unresolved | 74 |
+| Source paths | 312 / 312 |
+| Test paths | 259 / 259 |
+| Documentation paths | 253 / 253 |
+| Assertions inspected | 259 |
+| Tests executed | 221 |
+| Records with an executed assertion | 84 |
+| Semantic records unresolved | 73 |
 
 ## Documentation classes
 
@@ -87,7 +87,7 @@ Validation errors at generation: **0**.
 | `meeting.plugin.decision_capture` | capabilities | 2/2 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `desk.open` | capabilities | 14/14 | 11/11 | 11 | 10 | 1 | partially_evidenced |
 | `desk.arrange` | capabilities | 2/2 | 2/2 | 2 | 0 | 1 | unresolved |
-| `desk.inspect` | capabilities | 2/2 | 2/2 | 2 | 0 | 0 | unresolved |
+| `desk.inspect` | capabilities | 6/6 | 8/8 | 8 | 6 | 0 | partially_evidenced |
 | `desk.execute` | capabilities | 2/2 | 2/2 | 2 | 0 | 0 | unresolved |
 | `desk.drop` | capabilities | 2/2 | 2/2 | 2 | 0 | 0 | unresolved |
 | `desk.persist` | capabilities | 2/2 | 1/1 | 1 | 0 | 0 | unresolved |
@@ -100,7 +100,7 @@ Validation errors at generation: **0**.
 | `people.prep.record` | capabilities | 2/2 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `desk.engines.find_lan` | capabilities | 3/3 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `desk.preferences` | capabilities | 4/4 | 6/6 | 6 | 6 | 0 | partially_evidenced |
-| `desk.follow_through` | capabilities | 2/2 | 3/3 | 3 | 3 | 0 | partially_evidenced |
+| `desk.follow_through` | capabilities | 4/4 | 7/7 | 7 | 7 | 0 | partially_evidenced |
 | `agents.thread_persistent` | capabilities | 5/5 | 4/4 | 4 | 4 | 0 | partially_evidenced |
 | `agents.thread_tool_loop` | capabilities | 3/3 | 3/3 | 3 | 0 | 0 | unresolved |
 | `agents.interview` | capabilities | 3/3 | 3/3 | 3 | 3 | 0 | partially_evidenced |
@@ -108,7 +108,7 @@ Validation errors at generation: **0**.
 | `knowledge.grounding` | capabilities | 3/3 | 4/4 | 4 | 4 | 0 | partially_evidenced |
 | `knowledge.memory_search` | capabilities | 3/3 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `workflows.linear_run` | capabilities | 2/2 | 3/3 | 3 | 3 | 0 | partially_evidenced |
-| `coder.observation` | capabilities | 4/4 | 3/3 | 3 | 3 | 0 | partially_evidenced |
+| `coder.observation` | capabilities | 7/7 | 8/8 | 8 | 8 | 0 | partially_evidenced |
 | `coder.reply_and_draft` | capabilities | 2/2 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `coder.gate` | capabilities | 3/3 | 4/4 | 4 | 4 | 0 | partially_evidenced |
 | `integration.activity_connectors` | capabilities | 4/4 | 3/3 | 3 | 3 | 0 | partially_evidenced |
@@ -137,7 +137,7 @@ Validation errors at generation: **0**.
 | `desk.world` | components | 1/1 | 0/0 | 0 | 0 | 0 | unresolved |
 | `desk.window` | components | 1/1 | 0/0 | 0 | 0 | 0 | unresolved |
 | `desk.verb_registry` | components | 1/1 | 0/0 | 0 | 0 | 0 | unresolved |
-| `surface.library` | components | 1/1 | 0/0 | 0 | 0 | 0 | unresolved |
+| `surface.library` | components | 3/3 | 0/0 | 0 | 0 | 0 | unresolved |
 | `desk.runtime` | components | 1/1 | 0/0 | 0 | 0 | 1 | unresolved |
 | `runtime.sqlite` | integrations | 1/1 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `runtime.provider_routes` | integrations | 1/1 | 2/2 | 2 | 2 | 2 | partially_evidenced |

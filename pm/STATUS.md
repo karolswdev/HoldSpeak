@@ -4,9 +4,29 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-16 (Cohesive Desk entry: #1219)
+**Last updated:** 2026-10-16 (Flagship Brief/source reading delivery)
 
 ## Current phase
+
+**Flagship Brief/source reading — first connected delivery (2026-10-16).**
+Brief prioritizes standing answers/changed work, Day the next meeting, and
+Memory title/meaning. Explicit citations inspect exact held tasks and pending
+or rejected outputs without changing snooze/review state or public-list rules.
+Source-local failure/Retry, retained Brief Send/scroll and task drafts are
+implemented. Full Material/AgentWords share Markdown headings/lists/tables/code;
+new captures retain original line structure. Old flattened text is not rebuilt.
+Independent Sol counsel findings were fixed, including delayed Assign A reading
+current B rather than replacing it. Actual isolated phone/desktop journeys
+prove assignment persistence with the hold, pending output state, Codex asks
+rendering, failed-read recovery and return. Verification/release identifiers
+are in [Delivery B](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/DELIVERY-B.md).
+Normal local delivery follows merged tree/build equality. Formal postmerge
+review, full main tape and owner aesthetic acceptance remain separate.
+Programme remains active: next C covers People preparation/detail/draft safety
+and Project pending Review; D/E retain Thread task input and repair specific
+choice/notice/settings recovery. Healed work is preserved; this first delivery
+does not declare the whole product aesthetically accepted.
+
 
 **Cohesive Desk entry — #1219 (2026-10-16).** Phone launchers use the
 existing paper/ink menu material with clear Apps/Projects/Drawers/New sections;

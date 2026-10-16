@@ -2,14 +2,9 @@
  *
  *  Canvas: docs/internal/philo/phase-16/02-canvas/agent-words.html.
  *
- *  The input is UNTRUSTED. The output is React nodes only: no HTML string
- *  is ever set on the DOM (a tag in the text is shown as text, React
- *  escapes it). The subset: paragraphs and line breaks,
- *  `**bold**`, `*italic*` / `_italic_`, `` `code` ``, fenced code blocks
- *  (a language token when given), numbered and bulleted lists (one level
- *  nested), `# headings` as a bold line, `[text](url)` as the text and then
- *  the URL as plain text (never an anchor: an agent's link is never a press
- *  target), `![alt](src)` as `[alt]`. Long tokens break after `/ _ - .`.
+ *  Full reading shares Material's installed Markdown grammar and React-only
+ *  renderer: semantic headings, nested lists, tables, code and explicit links.
+ *  HTML stays text; images never fetch. Compact rows have no press targets.
  *
  *  `compact`: for rows, lamps and titles. Inline marks kept, blocks joined
  *  into one line with ` · `; when a paragraph ends with `?` the line is the
@@ -20,6 +15,8 @@
  */
 import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import "./agent-words.css";
+import { ReadingDocument, parseReading, readingChildren, readingContent, readingSegments } from "../surface/ReadingDocument";
+import type { SyntaxNode } from "@lezer/common";
 
 /* ── the model ────────────────────────────────────────────────────── */
 
@@ -41,193 +38,60 @@ export type Block =
   | { kind: "list"; ordered: boolean; start: number; items: ListItem[] }
   | { kind: "code"; lang: string; text: string };
 
-const FENCE_RE = /^\s*(```+|~~~+)\s*([\w+#.-]*)\s*$/;
-const HEADING_RE = /^\s{0,3}#{1,6}\s+(.*?)\s*#*\s*$/;
-const ITEM_RE = /^(\s*)([-*+•]|(\d{1,4})[.)])\s+(.*)$/;
-const RULE_RE = /^\s{0,3}([-*_])(\s*\1){2,}\s*$/;
-
-/** The blocks of an agent's text. */
+/** Compact adapters use the same installed Markdown grammar as full reading. */
 export function parseAgentWords(source: string): Block[] {
+  const text = String(source ?? "").replace(/\r\n?/g, "\n");
   const out: Block[] = [];
-  const lines = String(source ?? "").replace(/\r\n?/g, "\n").split("\n");
-  let para: string[] = [];
-  const flush = () => {
-    if (para.length) out.push({ kind: "p", lines: para });
-    para = [];
-  };
-  for (let i = 0; i < lines.length; i++) {
-    const raw = lines[i];
-    const fence = raw.match(FENCE_RE);
-    if (fence) {
-      flush();
-      const close = fence[1];
-      const body: string[] = [];
-      i++;
-      while (i < lines.length && !lines[i].trim().startsWith(close)) body.push(lines[i++]);
-      out.push({ kind: "code", lang: fence[2] || "", text: body.join("\n") });
-      continue;
-    }
-    if (!raw.trim()) {
-      flush();
-      continue;
-    }
-    if (RULE_RE.test(raw)) {
-      flush();
-      continue;
-    }
-    const h = raw.match(HEADING_RE);
-    if (h) {
-      flush();
-      out.push({ kind: "h", text: h[1] });
-      continue;
-    }
-    const item = raw.match(ITEM_RE);
-    if (item) {
-      const nested = item[1].replace(/\t/g, "  ").length >= 2;
-      const ordered = item[3] !== undefined;
-      const prev = out.at(-1);
-      if (nested && !para.length && prev?.kind === "list" && prev.items.length) {
-        const parent = prev.items[prev.items.length - 1];
-        if (!parent.children) parent.children = { ordered, items: [] };
-        parent.children.items.push(item[4]);
-        continue;
+  const visit = (node: SyntaxNode) => {
+    if (node.name === "Paragraph") out.push({ kind: "p", lines: text.slice(node.from, node.to).split("\n") });
+    else if (/^(ATX|Setext)Heading[1-6]$/.test(node.name)) out.push({ kind: "h", text: readingContent(node, text) });
+    else if (node.name === "FencedCode" || node.name === "CodeBlock") {
+      const code = readingChildren(node).filter((child) => child.name === "CodeText");
+      const info = node.getChild("CodeInfo");
+      out.push({ kind: "code", lang: info ? text.slice(info.from, info.to) : "", text: code.length ? text.slice(code[0].from, code.at(-1)!.to) : "" });
+    } else if (node.name === "BulletList" || node.name === "OrderedList") {
+      const items: ListItem[] = [];
+      for (const item of readingChildren(node).filter((child) => child.name === "ListItem")) {
+        const parts = readingChildren(item).filter((child) => child.name === "Paragraph");
+        const entry: ListItem = { text: parts.map((part) => text.slice(part.from, part.to)).join("\n") };
+        const nested: string[] = [];
+        const gather = (child: SyntaxNode) => {
+          if (child.name === "Paragraph") nested.push(text.slice(child.from, child.to));
+          else readingChildren(child).forEach(gather);
+        };
+        readingChildren(item).filter((child) => child.name === "BulletList" || child.name === "OrderedList").forEach(gather);
+        if (nested.length) entry.children = { ordered: false, items: nested };
+        items.push(entry);
       }
-      flush();
-      if (prev?.kind === "list" && prev.ordered === ordered && out.at(-1) === prev) prev.items.push({ text: item[4] });
-      else out.push({ kind: "list", ordered, start: ordered ? Number(item[3]) || 1 : 1, items: [{ text: item[4] }] });
-      continue;
-    }
-    // A line under a list item, indented: it goes on with that item.
-    const prev = out.at(-1);
-    if (!para.length && prev?.kind === "list" && /^\s{2,}\S/.test(raw)) {
-      const last = prev.items[prev.items.length - 1];
-      if (last.children?.items.length) last.children.items[last.children.items.length - 1] += ` ${raw.trim()}`;
-      else last.text += ` ${raw.trim()}`;
-      continue;
-    }
-    para.push(raw.replace(/^\s{0,3}>\s?/, "").trim());
-  }
-  flush();
+      out.push({ kind: "list", ordered: node.name === "OrderedList", start: Number(text.slice(node.from, node.to).match(/^\d+/)?.[0] ?? 1), items });
+    } else if (node.name === "TableCell") out.push({ kind: "p", lines: [text.slice(node.from, node.to)] });
+    else if (node.name !== "HorizontalRule") readingChildren(node).forEach(visit);
+  };
+  visit(parseReading(text));
   return out;
 }
 
-/** The index of the closing `delim` from `from`, skipping code spans. */
-function findClose(s: string, from: number, delim: string): number {
-  let i = from;
-  while (i < s.length) {
-    if (s[i] === "\\") {
-      i += 2;
-      continue;
+/** Compact marks keep plain link destinations and no press targets. */
+export function parseInline(source: string): Inline[] {
+  const content = parseReading(source).firstChild;
+  if (!content) return [];
+  const convert = (node: SyntaxNode): Inline[] => {
+    if (node.name === "InlineCode") return [{ t: "code", v: readingContent(node, source) }];
+    if (node.name === "Escape") return [{ t: "text", v: source.slice(node.from + 1, node.to) }];
+    if (node.name === "Autolink") return [{ t: "url", v: source.slice(node.from + 1, node.to - 1) }];
+    if (node.name === "Image") return [{ t: "text", v: `[${readingContent(node, source) || "image"}]` }];
+    const parts = readingSegments(node, source).flatMap((part): Inline[] => typeof part === "string" ? [{ t: "text", v: part }] : convert(part));
+    if (node.name === "StrongEmphasis" || node.name === "Emphasis") return [{ t: node.name === "StrongEmphasis" ? "strong" : "em", c: parts }];
+    if (node.name === "Link") {
+      const url = node.getChild("URL");
+      const href = url ? source.slice(url.from, url.to) : "";
+      if (inlinePlain(parts) === href) return [{ t: "url", v: href }];
+      return href ? [...parts, { t: "text", v: " " }, { t: "url", v: href }] : parts;
     }
-    if (s[i] === "`") {
-      const run = s.slice(i).match(/^`+/)![0];
-      const end = s.indexOf(run, i + run.length);
-      if (end > 0) {
-        i = end + run.length;
-        continue;
-      }
-    }
-    if (s.startsWith(delim, i)) {
-      // `**` never closes a single `*`, and the reverse.
-      if (delim.length === 1 && s[i + 1] === delim) {
-        i += 2;
-        continue;
-      }
-      return i;
-    }
-    i++;
-  }
-  return -1;
-}
-
-const WORD_CHAR = /[A-Za-z0-9]/;
-
-/** The inline marks of one line. */
-export function parseInline(s: string): Inline[] {
-  const out: Inline[] = [];
-  let text = "";
-  const push = (node: Inline) => {
-    if (text) out.push({ t: "text", v: text });
-    text = "";
-    out.push(node);
+    if (!node.firstChild) return [{ t: "text", v: source.slice(node.from, node.to) }];
+    return parts;
   };
-  let i = 0;
-  while (i < s.length) {
-    const ch = s[i];
-    if (ch === "\\" && i + 1 < s.length && /[\\`*_[\]()#!<>~.-]/.test(s[i + 1])) {
-      text += s[i + 1];
-      i += 2;
-      continue;
-    }
-    if (ch === "`") {
-      const run = s.slice(i).match(/^`+/)![0];
-      const end = s.indexOf(run, i + run.length);
-      if (end > 0) {
-        push({ t: "code", v: s.slice(i + run.length, end).trim() || s.slice(i + run.length, end) });
-        i = end + run.length;
-        continue;
-      }
-      text += run;
-      i += run.length;
-      continue;
-    }
-    if (ch === "!" && s[i + 1] === "[") {
-      const m = s.slice(i).match(/^!\[([^\]]*)\]\(([^)\s]*)(?:\s+"[^"]*")?\)/);
-      if (m) {
-        text += `[${m[1] || "image"}]`;
-        i += m[0].length;
-        continue;
-      }
-    }
-    if (ch === "[") {
-      const m = s.slice(i).match(/^\[([^\]]+)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/);
-      if (m) {
-        const label = parseInline(m[1]);
-        if (m[1].trim() === m[2].trim()) push({ t: "url", v: m[2] });
-        else {
-          if (text) out.push({ t: "text", v: text });
-          text = "";
-          out.push(...label, { t: "text", v: " " }, { t: "url", v: m[2] });
-        }
-        i += m[0].length;
-        continue;
-      }
-    }
-    if (ch === "<") {
-      const m = s.slice(i).match(/^<((?:https?|mailto):[^>\s]+)>/);
-      if (m) {
-        push({ t: "url", v: m[1] });
-        i += m[0].length;
-        continue;
-      }
-    }
-    if ((ch === "*" || ch === "_") && s[i + 1] === ch) {
-      const delim = ch + ch;
-      const leftOk = ch === "*" || !WORD_CHAR.test(s[i - 1] ?? "");
-      const end = leftOk && s[i + 2] && s[i + 2] !== " " ? findClose(s, i + 2, delim) : -1;
-      if (end > i + 2 && (ch === "*" || !WORD_CHAR.test(s[end + 2] ?? ""))) {
-        push({ t: "strong", c: parseInline(s.slice(i + 2, end)) });
-        i = end + 2;
-        continue;
-      }
-      text += delim;
-      i += 2;
-      continue;
-    }
-    if (ch === "*" || ch === "_") {
-      const leftOk = ch === "*" || !WORD_CHAR.test(s[i - 1] ?? "");
-      const end = leftOk && s[i + 1] && s[i + 1] !== " " ? findClose(s, i + 1, ch) : -1;
-      if (end > i + 1 && s[end - 1] !== " " && (ch === "*" || !WORD_CHAR.test(s[end + 1] ?? ""))) {
-        push({ t: "em", c: parseInline(s.slice(i + 1, end)) });
-        i = end + 1;
-        continue;
-      }
-    }
-    text += ch;
-    i++;
-  }
-  if (text) out.push({ t: "text", v: text });
-  return out;
+  return convert(content);
 }
 
 /* ── plain text ───────────────────────────────────────────────────── */
@@ -308,112 +172,10 @@ export function agentWordsPlain(text: string, max = 400, ask = true): string {
   return cutAtWord(lines.join(" · "), max);
 }
 
-/* ── long tokens ──────────────────────────────────────────────────── */
-
-const LONG_TOKEN = 16;
-
-/** A text with a break chance after `/ _ - .` inside a long token. */
-function breakable(text: string, key: string): ReactNode {
-  if (text.length <= LONG_TOKEN) return text;
-  const parts = text.split(/(\s+)/);
-  if (!parts.some((p) => p.length > LONG_TOKEN)) return text;
-  const out: ReactNode[] = [];
-  let n = 0;
-  for (const part of parts) {
-    if (part.length <= LONG_TOKEN || /^\s+$/.test(part)) {
-      out.push(part);
-      continue;
-    }
-    const bits = part.split(/(?<=[/_\-.])(?=.)/);
-    bits.forEach((bit, i) => {
-      out.push(bit);
-      if (i < bits.length - 1) out.push(<wbr key={`${key}-w${n++}`} />);
-    });
-  }
-  return out;
-}
-
-/* ── the full render ──────────────────────────────────────────────── */
-
-function renderInline(nodes: Inline[], key: string): ReactNode[] {
-  return nodes.map((n, i) => {
-    const k = `${key}.${i}`;
-    switch (n.t) {
-      case "text":
-        return <span key={k}>{breakable(n.v, k)}</span>;
-      case "code":
-        return <code key={k}>{breakable(n.v, k)}</code>;
-      case "url":
-        return (
-          <span key={k} className="aw-url">
-            {breakable(n.v, k)}
-          </span>
-        );
-      case "strong":
-        return <strong key={k}>{renderInline(n.c, k)}</strong>;
-      case "em":
-        return <em key={k}>{renderInline(n.c, k)}</em>;
-    }
-  });
-}
-
-function renderLine(text: string, key: string): ReactNode[] {
-  return renderInline(parseInline(text), key);
-}
-
-function renderBlock(b: Block, i: number): ReactNode {
-  const k = `b${i}`;
-  if (b.kind === "h") {
-    return (
-      <strong key={k} className="aw-h">
-        {renderLine(b.text, k)}
-      </strong>
-    );
-  }
-  if (b.kind === "code") {
-    return (
-      <pre key={k} className="aw-pre">
-        {b.lang ? <span className="aw-lang">{b.lang.toUpperCase()}</span> : null}
-        <code>{b.text}</code>
-      </pre>
-    );
-  }
-  if (b.kind === "list") {
-    const items = b.items.map((item, j) => (
-      <li key={j}>
-        {renderLine(item.text, `${k}.${j}`)}
-        {item.children ? (
-          item.children.ordered ? (
-            <ol>{item.children.items.map((c, m) => <li key={m}>{renderLine(c, `${k}.${j}.${m}`)}</li>)}</ol>
-          ) : (
-            <ul>{item.children.items.map((c, m) => <li key={m}>{renderLine(c, `${k}.${j}.${m}`)}</li>)}</ul>
-          )
-        ) : null}
-      </li>
-    ));
-    return b.ordered ? (
-      <ol key={k} start={b.start !== 1 ? b.start : undefined}>
-        {items}
-      </ol>
-    ) : (
-      <ul key={k}>{items}</ul>
-    );
-  }
-  return (
-    <p key={k}>
-      {b.lines.map((line, j) => (
-        <span key={j}>
-          {j ? <br /> : null}
-          {renderLine(line, `${k}.${j}`)}
-        </span>
-      ))}
-    </p>
-  );
-}
-
 /* ── the compact render ───────────────────────────────────────────── */
 
 type Mark = "strong" | "em" | "code" | "url" | "sep";
+const LONG_TOKEN = 16;
 
 /** One word of the compact line: its pieces with their marks; the space
  *  after it is part of the word. */
@@ -638,10 +400,5 @@ export function AgentWords({ text, compact, lines = 1, ask = true, className, "d
   const source = String(text ?? "");
   if (!source.trim()) return null;
   if (compact) return <CompactWords key={source} text={source} lines={lines} ask={ask} className={className} testId={testId} />;
-  const blocks = parseAgentWords(source);
-  return (
-    <div className={`agent-words${className ? ` ${className}` : ""}`} data-testid={testId}>
-      {blocks.map(renderBlock)}
-    </div>
-  );
+  return <ReadingDocument className={`agent-words${className ? ` ${className}` : ""}`} data-testid={testId}>{source}</ReadingDocument>;
 }

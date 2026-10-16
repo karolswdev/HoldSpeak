@@ -109,9 +109,39 @@
   min-width: 0;
   font-weight: 600;
   line-height: 1.4;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+}
+.recall-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.recall-card-actions:empty { display: none; }
+.recall-results .surface-row-main,
+.recall-results .surface-row-open {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-1);
+  white-space: normal;
+}
+.recall-results .surface-row-text strong,
+.recall-results .surface-row-text small {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+}
+.recall-results .surface-row-text strong {
+  font-size: var(--desk-type-primary-size);
+}
+.recall-results .surface-row-meta {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .recall-card-chips {
   display: flex;

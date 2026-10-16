@@ -536,10 +536,13 @@
     {
       "depends_on": [
         "semantic tokens",
-        "Signal controls"
+        "Signal controls",
+        "installed CodeMirror Markdown parser"
       ],
       "docs": [
-        "docs/internal/philo/DESIGN_SPECIFICATION.md"
+        "docs/internal/philo/DESIGN_SPECIFICATION.md",
+        "docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/IMPLEMENTATION.md",
+        "web/src/desk/surface/contract.md"
       ],
       "id": "surface.library",
       "interfaces": [
@@ -549,7 +552,8 @@
       "name": "Surface library",
       "owns": [
         "surface component contract",
-        "semantic states"
+        "semantic states",
+        "shared full-document Markdown grammar for Material and AgentWords"
       ],
       "purpose": "Render portable object surfaces, patterns and gadgets.",
       "sources": [
@@ -558,6 +562,18 @@
           "line": 3,
           "path": "web/src/desk/surface/index.ts",
           "symbol": "surface barrel"
+        },
+        {
+          "claim": "One React document renderer preserves heading/list/table/code structure, uses canonical openers and explicit HTTP links, leaves unsupported destinations inert, and never interprets HTML or fetches images.",
+          "line": 124,
+          "path": "web/src/desk/surface/ReadingDocument.tsx",
+          "symbol": "ReadingDocument"
+        },
+        {
+          "claim": "Full agent documents use the shared reader; compact summaries retain intentional ask selection and truncation.",
+          "line": 399,
+          "path": "web/src/desk/components/AgentWords.tsx",
+          "symbol": "AgentWords"
         }
       ]
     },

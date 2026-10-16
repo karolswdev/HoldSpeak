@@ -88,7 +88,7 @@ describe("HS-128-10 Desk Intelligence walk", () => {
     apiFetch.mockReset();
     apiFetch.mockImplementation((path: string) => {
       if (path === "/api/brief/latest") return Promise.resolve(brief);
-      if (path === "/api/follow-through/board") return Promise.resolve(board);
+      if (path.split("?", 1)[0] === "/api/follow-through/board") return Promise.resolve(board);
       if (path.startsWith("/api/decision-records")) return Promise.resolve([receipt]);
       // PHILO-17: Decisions lists the desk's decisions (the ledger).
       if (path.startsWith("/api/decisions?")) return Promise.resolve({
@@ -180,6 +180,7 @@ describe("HS-128-10 Desk Intelligence walk", () => {
     await screen.findByText(brief.period_label!);
     fireEvent.click(screen.getByText("Desk Intelligence is ready."));
     expect(await screen.findByText(board.now[0].text)).toBeInTheDocument();
+    expect(apiFetch).toHaveBeenCalledWith("/api/follow-through/board?focus_id=card-1");
     expect(screen.queryByRole("button", { name: "BACK" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Follow-through" })).toHaveAttribute("aria-pressed", "true");
     fireEvent.click(screen.getByRole("button", { name: "Brief" }));

@@ -5,7 +5,7 @@
  *
  * HS-117-01: every entity that crosses the wire has a concrete TypeScript
  * interface. Mappers take `unknown`, return concrete types, use wireGuard. */
-import { ApiError, apiFetch } from "../lib/api";
+import { ApiError, apiFetch, readableError } from "../lib/api";
 import type {
   Artifact,
   Chain,
@@ -663,6 +663,14 @@ export function fromWireCreated(kind: CreatedKind, wire: unknown): Primitive | n
 const HELD_KINDS = ["meeting", "artifact", "note", "decision", "thread"] as const;
 type HeldKind = (typeof HELD_KINDS)[number];
 const heldRefs = new Set<string>();
+// Exact source reads belong to their windows, including failed reads. An
+// unavailable source shell never joins the Desk's artifact collection.
+const heldArtifacts = new Map<string, { order: number; value: Artifact }>();
+let heldReadOrder = 0;
+
+export function heldArtifactSource(id: string): Artifact | null {
+  return heldArtifacts.get(id)?.value ?? null;
+}
 
 /** Keep the object of `ref` (`kind:id`, a `#` part is ignored) in the store
  * from the next load on. True when the kind is one the desk reads by id. */
@@ -677,10 +685,12 @@ export function holdObject(ref: string): boolean {
 
 export function __resetHeldObjects(): void {
   heldRefs.clear();
+  heldArtifacts.clear();
+  heldReadOrder = 0;
 }
 
 /** One object by its id, from the same routes its window reads. */
-async function loadHeld(kind: HeldKind, id: string, pulledArtifacts: unknown[]): Promise<Primitive | null> {
+async function loadHeld(kind: HeldKind, id: string): Promise<Primitive | null> {
   const key = encodeURIComponent(id);
   if (kind === "meeting") {
     const d = await apiFetch<Record<string, unknown>>(`/api/meetings/${key}`);
@@ -702,15 +712,13 @@ async function loadHeld(kind: HeldKind, id: string, pulledArtifacts: unknown[]):
   if (kind === "thread") {
     return fromWireThread(await apiFetch<Record<string, unknown>>(`/api/threads/${key}`));
   }
-  // An artifact has no read by id: it comes with the pull. The first pull
-  // covers the 50 newest meetings; an older one takes one wider pull.
-  const find = (rows: unknown[]) => rows.find((a) => wireString(a, "id") === id);
-  let found = find(pulledArtifacts);
-  if (!found) {
-    const wide = await apiFetch<Record<string, unknown>>("/api/sync/pull?limit=500");
-    found = find(liveValues(wireArray(wide, "artifacts")));
-  }
-  return found ? fromWireArtifact(found) : null;
+  // A cited output can await review and correctly be absent from sync's
+  // public list. Inspect that exact source without widening the list.
+  const d = await apiFetch<Record<string, unknown>>(`/api/artifacts/${key}`);
+  const artifact = fromWireArtifact(wireRaw(d, "artifact"));
+  if (!artifact || artifact.id !== id)
+    throw new ApiError(502, "Artifact source unavailable", d);
+  return artifact;
 }
 
 /** Load every kind — the same allSettled sweep the original desk ran. */
@@ -721,6 +729,7 @@ const LOAD_ORDER: readonly string[] = [
 ];
 
 export async function loadAll(): Promise<LoadResult> {
+  const sourceOrder = ++heldReadOrder;
   let pulledArtifacts: unknown[] = [];
   const items: TypedItems = { ...EMPTY_ITEMS };
   const status: Status = {};
@@ -741,9 +750,11 @@ export async function loadAll(): Promise<LoadResult> {
     const at = LOAD_ORDER.indexOf(kind);
     return at < 0 ? LOAD_ORDER.length : at;
   };
-  const fail = (kind: PrimitiveKind | "profile" | "project", label: string, e: unknown) => {
-    status[kind] = "unreachable";
-    if (!(e instanceof ApiError) || e.status >= 500) transientFailures[kind] = true;
+  const fail = (kind: PrimitiveKind | "profile" | "project", label: string, e: unknown, collection = true) => {
+    if (collection) {
+      status[kind] = "unreachable";
+      if (!(e instanceof ApiError) || e.status >= 500) transientFailures[kind] = true;
+    }
     const rank = rankOf(kind);
     if (rank < failedRank) {
       failedRank = rank;
@@ -923,15 +934,35 @@ export async function loadAll(): Promise<LoadResult> {
   ]);
 
   // The held objects (see holdObject): each one its list did not bring is
-  // read by its id. A read that fails (the thing is gone) leaves it out.
+  // read by its id. A failed artifact read stays beside that source.
   await Promise.allSettled([...heldRefs].map(async (ref) => {
     const at = ref.indexOf(":");
     const kind = ref.slice(0, at) as HeldKind;
     const id = ref.slice(at + 1);
     const bucket = (items[kind] ?? []) as Array<{ id: string }>;
-    if (status[kind] !== "live" || bucket.some((item) => item.id === id)) return;
-    const one = await loadHeld(kind, id, pulledArtifacts);
-    if (one) (items[kind] as unknown as Primitive[]) = [...(bucket as unknown as Primitive[]), one];
+    if (kind !== "artifact" && (status[kind] !== "live" || bucket.some((item) => item.id === id))) return;
+    try {
+      const one = await loadHeld(kind, id);
+      if (one) {
+        if (kind === "artifact" && one.kind === "artifact") {
+          if (sourceOrder >= (heldArtifacts.get(id)?.order ?? 0)) heldArtifacts.set(id, { order: sourceOrder, value: one });
+          items.artifact = [...items.artifact.filter((item) => item.id !== id), one];
+        } else (items[kind] as unknown as Primitive[]) = [...(items[kind] as unknown as Primitive[]), one];
+      }
+    } catch (e) {
+      if (kind === "artifact") {
+        const prior = heldArtifacts.get(id)?.value ?? items.artifact.find((item) => item.id === id);
+        const hasMaterial = !!prior && prior.sourceRead?.hasMaterial !== false;
+        const value: Artifact = {
+          ...(prior ?? { kind: "artifact", id, artifactType: "", title: "Artifact source", bodyMarkdown: "", status: "" }),
+          sourceRead: { state: e instanceof ApiError && e.status === 404 ? "unavailable" : "failed", message: readableError(e), hasMaterial },
+        };
+        if (sourceOrder >= (heldArtifacts.get(id)?.order ?? 0)) heldArtifacts.set(id, { order: sourceOrder, value });
+        // The source window shows this failure and its retry. Do not leave a
+        // global receipt behind after that window closes, or mark the usable
+        // public collection as failed.
+      }
+    }
   }));
 
   // HS-134-02: derive profiles from inference targets (read routes retired).

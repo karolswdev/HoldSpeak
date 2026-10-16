@@ -103,6 +103,10 @@ class FollowThroughCard:
     delegated_at: str | None = None
     # HS-150-02: the row's created_at for staleness fallback (delegated_at ?? created_at).
     created_at: str | None = None
+    # An explicit source read keeps the canonical task's holds visible without
+    # changing its lifecycle or the ordinary board's suppression rules.
+    snoozed_until: str | None = None
+    deferred_until: str | None = None
 
 
 @dataclass(frozen=True)
@@ -153,6 +157,7 @@ class FollowThroughService:
         project_id: str | None = None,
         owner: str | None = None,
         state: str | None = None,
+        focus_id: str | None = None,
     ) -> FollowThroughBoard:
         """Return the follow-through board, optionally narrowed to one lane."""
         if state is not None and state not in _LANES:
@@ -170,7 +175,7 @@ class FollowThroughService:
                 if project_id or owner else loops
             )
             decisions = self._decision_rows(conn, project_id=project_id)
-            deferred = self._deferred_action_ids(conn)
+            deferred = self._deferred_actions(conn)
             # Source identity governs mirror suppression, including actions
             # excluded by this read's filters or already completed.
             canonical_actions = conn.execute(
@@ -197,11 +202,13 @@ class FollowThroughService:
             if status.lower() in _TERMINAL_STATES:
                 continue
             loop = action_loops.get(str(action["id"]))
-            if loop is not None and self._is_snoozed(loop["snoozed_until"], today):
+            focused = str(action["id"]) == focus_id
+            snoozed = loop is not None and self._is_snoozed(loop["snoozed_until"], today)
+            if snoozed and not focused:
                 continue
             # PHILO-15 08: Defer on its proposal holds the WHOLE obligation
             # back until the stamp passes, its To review card included.
-            if str(action["id"]) in deferred:
+            if str(action["id"]) in deferred and not focused:
                 continue
             card = FollowThroughCard(
                 id=str(action["id"]),
@@ -229,6 +236,8 @@ class FollowThroughService:
                 ),
                 delegated_at=action["delegated_at"],
                 created_at=action["created_at"] if action["created_at"] else None,
+                snoozed_until=str(loop["snoozed_until"]) if focused and snoozed else None,
+                deferred_until=deferred.get(str(action["id"])) if focused else None,
             )
             lanes[card.lane].append(card)
 
@@ -747,7 +756,7 @@ class FollowThroughService:
             return unavailable
 
     @staticmethod
-    def _deferred_action_ids(conn: Any) -> set[str]:
+    def _deferred_actions(conn: Any) -> dict[str, str]:
         """Action rows whose open proposal is deferred into the future."""
         from .proposal_bridge_service import is_deferred
 
@@ -758,9 +767,9 @@ class FollowThroughService:
                 "AND deferred_until IS NOT NULL"
             ).fetchall()
         except Exception:
-            return set()
+            return {}
         return {
-            str(row["action_item_id"]) for row in rows
+            str(row["action_item_id"]): str(row["deferred_until"]) for row in rows
             if is_deferred(_Deferral(row["deferred_until"]))
         }
 

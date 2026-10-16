@@ -14,10 +14,13 @@ import {
 } from "../components/DeskWindow";
 import {
   openSurface,
+  openPrimitive,
   openSurfaceWhenReady,
   registerSurface,
+  setShellNavigator,
   __resetSurfaces,
 } from "../shell";
+import * as deskApi from "../api";
 import { useDesk } from "../store";
 
 beforeEach(() => {
@@ -328,5 +331,51 @@ describe("the surface dispatcher", () => {
 
     expect(opened).toEqual(["meeting:door-proof"]);
     off();
+  });
+
+  it("holds a cited artifact before refresh, then opens its qualified ref", async () => {
+    const previous = useDesk.getState();
+    const held = vi.spyOn(deskApi, "holdObject");
+    const calls: string[] = [];
+    const refresh = vi.fn(async () => {
+      expect(held).toHaveBeenCalledWith("artifact:art-cited");
+      calls.push("refresh");
+    });
+    const openPullout = vi.fn(() => { calls.push("open"); });
+    useDesk.setState({ refresh, openPullout });
+    try {
+      openPrimitive("artifact:art-cited");
+      await vi.waitFor(() => expect(openPullout).toHaveBeenCalledWith("artifact:art-cited"));
+      expect(calls).toEqual(["refresh", "open"]);
+    } finally {
+      useDesk.setState({ refresh: previous.refresh, openPullout: previous.openPullout });
+      held.mockRestore();
+      deskApi.__resetHeldObjects();
+    }
+  });
+
+  it("keeps other primitives on refresh and flat routes on their arrival link", async () => {
+    const previous = useDesk.getState();
+    const held = vi.spyOn(deskApi, "holdObject");
+    const refresh = vi.fn(async () => {});
+    const openPullout = vi.fn();
+    const navigate = vi.fn();
+    useDesk.setState({ refresh, openPullout });
+    setShellNavigator(navigate);
+    try {
+      openPrimitive("note:n-cited");
+      await vi.waitFor(() => expect(openPullout).toHaveBeenCalledWith("note:n-cited"));
+      expect(held).not.toHaveBeenCalled();
+      expect(refresh).toHaveBeenCalledTimes(1);
+      window.history.replaceState(null, "", "/history");
+      openPrimitive("artifact:art-cited");
+      expect(navigate).toHaveBeenCalledWith("/?open=artifact%3Aart-cited");
+      expect(held).not.toHaveBeenCalled();
+      expect(refresh).toHaveBeenCalledTimes(1);
+    } finally {
+      window.history.replaceState(null, "", "/");
+      useDesk.setState({ refresh: previous.refresh, openPullout: previous.openPullout });
+      held.mockRestore();
+    }
   });
 });

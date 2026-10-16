@@ -4,6 +4,7 @@
 
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { Activity } from "react";
 import { BriefView } from "./BriefView";
 
 // ---------------------------------------------------------------------------
@@ -528,5 +529,57 @@ describe("BriefView PHILO-17: refresh, blocker verb, THIS WEEK rows, named triag
     expect(await screen.findByText("SELECTED · MEETING RECORDED · Standup")).toBeInTheDocument();
     expect(screen.getByText("Acknowledge")).toBeInTheDocument();
     expect(screen.queryByTestId("brief-refresh")).not.toBeInTheDocument();
+  });
+
+  it.each(["read", "failed read"])("keeps the real open Send well and selected subject during a retained Brief resume %s", async (outcome) => {
+    mockBrief();
+    const respond = apiFetch.getMockImplementation()!;
+    let reads = 0;
+    let finish!: (value: unknown) => void;
+    let fail!: (reason: Error) => void;
+    const resumed = new Promise((resolve, reject) => { finish = resolve; fail = reject; });
+    apiFetch.mockImplementation((path: string, ...args: unknown[]) => {
+      if (path === "/api/brief/latest" && ++reads > 1) return resumed;
+      return respond(path, ...args);
+    });
+    const face = (mode: "visible" | "hidden") => <Activity mode={mode}><BriefView header={null} /></Activity>;
+    const view = render(face("visible"));
+    fireEvent.click(await screen.findByRole("button", { name: "Standup" }));
+    fireEvent.click(screen.getByTestId("brief-send-toggle"));
+    // This is the actual lazy BriefSendWells/SendWell, not a mocked child.
+    const well = await screen.findByTestId("send-well");
+    const fold = screen.getByTestId("brief-send-fold");
+    view.rerender(face("hidden"));
+    view.rerender(face("visible"));
+    await waitFor(() => expect(reads).toBe(2));
+    expect(screen.getByTestId("brief-send-fold")).toBe(fold);
+    expect(screen.getByTestId("brief-send-toggle")).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByTestId("send-well")).toBe(well);
+    expect(screen.getByText("SELECTED · MEETING RECORDED · Standup")).toBeInTheDocument();
+    await act(async () => {
+      if (outcome === "read") finish(briefWithPeople);
+      else fail(new Error("Resume read unavailable"));
+      await resumed.catch(() => {});
+    });
+    expect(screen.getByTestId("send-well")).toBe(well);
+    expect(screen.getByTestId("brief-send-toggle")).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByText("SELECTED · MEETING RECORDED · Standup")).toBeInTheDocument();
+    expect(screen.queryByText(/BRIEF DID NOT LOAD/)).toBeNull();
+  });
+
+  it("leads with obligations, then changed work before week counts, and keeps source titles as library verbs", async () => {
+    const brief = briefWithThisWeek("2026-09-20T08:00:00");
+    const page = (slug: string, text: string) => ({ slug, question: slug, sentences: [{ text, refs: [] }], built_at: "2026-09-20T08:00:00", stale: false, new_sources: 0, model: "", boundary: "local" });
+    apiFetch.mockImplementation((path: string) => Promise.resolve(path.startsWith("/api/memory/pages")
+      ? { pages: [page("what-changed-this-week", "The platform plan changed."), page("what-i-owe", "Send the platform plan.")] }
+      : path === "/api/brief/latest" ? brief : {}));
+    renderBriefView();
+    const history = await screen.findByTestId("brief-since-friday");
+    const pages = screen.getAllByTestId("standing-page");
+    expect(pages.map((node) => node.getAttribute("aria-label"))).toEqual(["What I owe", "What changed this week"]);
+    expect(pages[0].compareDocumentPosition(history) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(history.compareDocumentPosition(screen.getByTestId("brief-this-week")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Standup" }).className).toContain("btn");
+    expect(screen.queryByTestId("brief-source-emblem")).toBeNull();
   });
 });

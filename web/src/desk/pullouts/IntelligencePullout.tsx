@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { Activity, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode, type UIEventHandler } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "../../components/signal/Signal";
 import { SurfaceFooter } from "../surface/SurfaceFooter";
+import { FootSlotContext } from "../surface/foot";
 import { INTELLIGENCE_NAVIGATE, type IntelligenceNavigation, type IntelligenceView } from "../intelligenceNavigation";
 import { BriefView } from "./views/BriefView";
 import { FollowThroughView } from "./views/FollowThroughView";
@@ -78,6 +80,22 @@ function FilterTokens({
   );
 }
 
+// Activity hides its own DOM, but React leaves portals in their target.
+// Keep each retained view's foot in a target whose visibility changes at
+// the shell boundary, so inactive actions cannot escape into the frame.
+function RetainedView({ active, children, onScroll }: { active: boolean; children: ReactNode; onScroll: UIEventHandler<HTMLDivElement> }) {
+  const frameFoot = useContext(FootSlotContext);
+  const [viewFoot, setViewFoot] = useState<HTMLDivElement | null>(null);
+  return <>
+    {frameFoot ? createPortal(<div ref={setViewFoot} style={{ display: active ? "contents" : "none" }} />, frameFoot) : null}
+    <Activity mode={active ? "visible" : "hidden"}>
+      <FootSlotContext.Provider value={frameFoot ? viewFoot : null}>
+        <div style={{ display: "contents" }} onScrollCapture={onScroll}>{children}</div>
+      </FootSlotContext.Provider>
+    </Activity>
+  </>;
+}
+
 /** Desk-wide intelligence shell. Its three views gain their material in HS-128-02–04. */
 export function IntelligencePullout({ object }: PulloutContentProps) {
   // HS-132-08 — one navigation state. `activeView` used to live beside it, so
@@ -85,6 +103,18 @@ export function IntelligencePullout({ object }: PulloutContentProps) {
   // hiding lanes nothing named.
   const [navigation, setNavigation] = useState<IntelligenceNavigation>(() => ({ view: initialView() }));
   const activeView = navigation.view;
+  const [visited, setVisited] = useState<Set<IntelligenceView>>(() => new Set([activeView]));
+  const scrollPositions = useRef(new Map<IntelligenceView, Map<HTMLElement, { top: number; left: number }>>());
+
+  useEffect(() => {
+    setVisited((current) => current.has(activeView) ? current : new Set([...current, activeView]));
+  }, [activeView]);
+  useLayoutEffect(() => {
+    for (const [node, position] of scrollPositions.current.get(activeView) ?? []) {
+      node.scrollTop = position.top;
+      node.scrollLeft = position.left;
+    }
+  }, [activeView]);
 
   useEffect(() => {
     window.localStorage.setItem(VIEW_STORAGE_KEY, activeView);
@@ -116,14 +146,10 @@ export function IntelligencePullout({ object }: PulloutContentProps) {
     </div>
   );
 
-  if (activeView === "today") return <TodayView header={header} />;
-
-  if (activeView === "brief") return <BriefView header={header} onOpenFollowThrough={(followThroughId) => {
+  const brief = <BriefView header={header} onOpenFollowThrough={(followThroughId) => {
     setNavigation({ view: "follow-through", followThroughId });
   }} />;
-
-  if (activeView === "follow-through") {
-    return (
+  const followThrough = (
       <>
         <div className="desk-pullout-body desk-surface-body intelligence-pullout">
           {header}
@@ -136,9 +162,8 @@ export function IntelligencePullout({ object }: PulloutContentProps) {
         <SurfaceFooter />
       </>
     );
-  }
 
-  return (
+  const decisions = (
     <>
       <div className="desk-pullout-body desk-surface-body intelligence-pullout">
         {header}
@@ -149,4 +174,15 @@ export function IntelligencePullout({ object }: PulloutContentProps) {
       <SurfaceFooter />
     </>
   );
+  const views = { today: <TodayView header={header} />, brief, "follow-through": followThrough, receipts: decisions };
+  // A source round trip keeps the actual view's state and scrolling DOM.
+  // Hidden views suspend effects; their frame feet are hidden separately.
+  return VIEWS.filter((view) => visited.has(view.id) || view.id === activeView).map((view) => (
+    <RetainedView key={view.id} active={view.id === activeView} onScroll={(event) => {
+        const node = event.target as HTMLElement;
+        const positions = scrollPositions.current.get(view.id) ?? new Map();
+        positions.set(node, { top: node.scrollTop, left: node.scrollLeft });
+        scrollPositions.current.set(view.id, positions);
+      }}>{views[view.id]}</RetainedView>
+  ));
 }

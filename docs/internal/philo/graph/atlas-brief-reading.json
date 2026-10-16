@@ -1,0 +1,220 @@
+{
+  "schema_version": 1,
+  "source_commit": "ebfce9feb38fcbb72f1fed50e0f71dbc51f290ae",
+  "cases": [
+    {
+      "id": "case.brief_reading.source.artifact_missing",
+      "job": "beyond",
+      "edge_ids": [
+        "edge.route.artifact_exact_read"
+      ],
+      "state_id": "state.desk_presentation.artifact_missing",
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME; the named artifact was never created."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "goto",
+        "url": "/?open=artifact:walk-absent-source",
+        "adapter": "ui-navigation"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "text_contains",
+          "value": "Source unavailable"
+        },
+        "observe_at": "[id=\"pullout:artifact:walk-absent-source\"] [role=\"alert\"]",
+        "words": "The exact missing artifact opens a local unavailable result and read retry; no invented output."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.brief_reading.source.held_action_source",
+      "job": "beyond",
+      "edge_ids": [
+        "edge.route.follow_through_board"
+      ],
+      "state_id": "state.desk_presentation.held_action_source",
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME. Real Thought, Door task and snooze writes prepare the cited task; no model or provider."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/thoughts",
+          "body": {
+            "request_id": "graph-brief-source",
+            "raw_text": "Summarize what happened this week.",
+            "initial_note": {
+              "title": "Weekly summary source"
+            }
+          },
+          "capture_as": "thought",
+          "capture_path": "thought.id",
+          "expect_status": 201,
+          "adapter": "http-route"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/door/items",
+          "body": {
+            "task": "Summarize what happened this week.",
+            "owner": "Me",
+            "source_type": "thought",
+            "source_ref": "thought:{thought}"
+          },
+          "capture_as": "task",
+          "capture_path": "item.id",
+          "expect_status": 201,
+          "adapter": "http-route"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/follow-through/complete",
+          "body": {
+            "card_id": "{task}",
+            "verb": "snooze",
+            "payload": {
+              "until": "2099-10-17"
+            }
+          },
+          "adapter": "http-route"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "body": {
+            "title": "Source reading",
+            "body_markdown": "Read [the held weekly summary](action_item:{task})."
+          },
+          "capture_as": "note",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/?open=note:{note}",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[id=\"pullout:note:{note}\"] .reading-ref",
+          "adapter": "ui-pointer"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "selector": "[id=\"pullout:note:{note}\"] button.reading-ref",
+        "adapter": "ui-pointer"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "text_contains",
+          "value": "Snoozed until"
+        },
+        "observe_at": "[id=\"pullout:intelligence:desk\"] .follow-through-facts",
+        "words": "The exact canonical held task opens expanded with its stored hold date; the normal board remains suppressed."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ],
+  "states": [
+    {
+      "id": "state.desk_presentation.artifact_missing",
+      "family": "desk_presentation",
+      "values": {
+        "source_state": "missing",
+        "entry": "explicit canonical ref"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/pullouts/ArtifactPullout.tsx",
+          "symbol": "export function ArtifactPullout",
+          "claim": "The exact source read has a visible lifecycle-aware result."
+        }
+      ],
+      "reachable_by": [
+        "case.brief_reading.source.artifact_missing"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.held_action_source",
+      "family": "desk_presentation",
+      "values": {
+        "source_state": "snoozed",
+        "entry": "explicit canonical ref"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/pullouts/views/FollowThroughView.tsx",
+          "symbol": "export function FollowThroughView",
+          "claim": "The exact source read has a visible lifecycle-aware result."
+        }
+      ],
+      "reachable_by": [
+        "case.brief_reading.source.held_action_source"
+      ]
+    }
+  ],
+  "clocks": [
+    {
+      "id": "clock.browser_date",
+      "source": "Browser Date and timers",
+      "mechanism": "No clock mutation is required by these cases.",
+      "status": "available",
+      "used_by": []
+    }
+  ],
+  "excluded": [],
+  "council_readings": []
+}

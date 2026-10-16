@@ -9,7 +9,7 @@
 // missing decision. Before the repair the Arrival and the Brief view showed
 // `Decision recorded` and `Summary requested` beside their failures, and
 // `Primitive: get decision did not complete`.
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ apiFetch: vi.fn() }));
@@ -81,7 +81,12 @@ describe("PHILO-6-02 round 2: a failed operation never reads as a success", () =
     expect(text).not.toMatch(SUCCESS);
     expect(text).not.toMatch(/Primitive|[A-Z][A-Za-z]*Service\./);
     expect(text).toContain("Decision did not load");
-    // The Brief view says a `<Kind>: <subject>` row as its kind head.
-    expect(text).toContain("SUMMARY DID NOT STARTArchitecture review");
+    // The subject and its failed receipt stay together even when the reading
+    // order puts the subject before its subordinate outcome facts.
+    const failed = screen.getByText("SUMMARY DID NOT START");
+    const row = failed.closest(".intelligence-brief-sf-row") as HTMLElement;
+    expect(within(row).getByRole("button", { name: "Architecture review" })).toBeInTheDocument();
+    expect(within(row).getByText(/The summary route is not available/)).toBeInTheDocument();
+    expect(row.textContent).not.toMatch(SUCCESS);
   });
 });

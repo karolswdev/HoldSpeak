@@ -6695,7 +6695,8 @@
     },
     {
       "apis": [
-        "surface registry"
+        "surface registry",
+        "GET /api/artifacts/{artifact_id}"
       ],
       "authority": "The selected object and registered surface determine the inspection scope.",
       "configuration": [
@@ -6709,7 +6710,8 @@
       ],
       "docs": [
         "docs/DESK_OBJECT_MODEL.md",
-        "docs/internal/philo/DESIGN_SPECIFICATION.md"
+        "docs/internal/philo/DESIGN_SPECIFICATION.md",
+        "docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/IMPLEMENTATION.md"
       ],
       "domain": "desk",
       "egress": "A surface may display runtime-backed data and an explicit egress chip; inspection alone does not send data.",
@@ -6717,25 +6719,32 @@
       "entry_points": [
         "web/src/desk/surface/index.ts::SurfaceIdentity",
         "web/src/desk/surface/index.ts::SurfaceVerbs",
-        "web/src/desk/surface/index.ts::SurfaceRow"
+        "web/src/desk/surface/index.ts::SurfaceRow",
+        "holdspeak/services/sync_service.py::SyncService.get_artifact",
+        "web/src/desk/api.ts::heldArtifactSource"
       ],
-      "evidence_level": "source_and_assertions_inspected",
+      "evidence_level": "tests_executed",
       "exposure": "user",
       "failure_states": [
         "unknown object",
         "unregistered surface",
-        "stale runtime data"
+        "stale runtime data",
+        "exact_source_unavailable",
+        "exact_source_read_failed"
       ],
       "id": "desk.inspect",
       "inputs": [
         "object id",
         "selection context",
-        "window route"
+        "window route",
+        "canonical task or artifact ref"
       ],
       "kernel_operations": [],
       "limitations": [
         "No whole-world parity assertion.",
-        "Some windows have no provenance receipt."
+        "Some windows have no provenance receipt.",
+        "Focused browser-component tests use HTTP substitutions and do not establish whole-world parity, real PR review, external delivery or owner acceptance.",
+        "Held artifact material is retained in process memory for its requested window; old flattened agent text cannot be reconstructed by source inspection."
       ],
       "model_requirements": [
         "stable object id",
@@ -6750,7 +6759,9 @@
       "outputs": [
         "surface content",
         "available verbs",
-        "state and provenance"
+        "state and provenance",
+        "stored review/hold state",
+        "source-local unavailable/failed read and retained last material"
       ],
       "owner_observed": false,
       "persistence": [
@@ -6764,7 +6775,7 @@
         "linux_x11": "supported_with_setup",
         "macos": "supported_with_setup"
       },
-      "purpose": "Open a selected object in a named window surface with identity, state, provenance and verbs.",
+      "purpose": "Open a selected object or exact cited task/output with identity, stored state, provenance and available verbs.",
       "release_availability": "unverified",
       "replacement": null,
       "side_effect": "none",
@@ -6780,14 +6791,41 @@
           "line": 3,
           "path": "web/src/desk/surface/index.ts",
           "symbol": "surface barrel"
+        },
+        {
+          "claim": "Read one stored artifact by ID through the existing wire mapper without changing review state or sync public visibility.",
+          "line": 1246,
+          "path": "holdspeak/services/sync_service.py",
+          "symbol": "SyncService.get_artifact"
+        },
+        {
+          "claim": "Per-ID held artifact cache keeps real last material and source-local errors; unavailable shells stay out of artifact item buckets.",
+          "line": 671,
+          "path": "web/src/desk/api.ts",
+          "symbol": "heldArtifactSource"
+        },
+        {
+          "claim": "Cold/restored artifact refs are held before refresh; object windows prefer exact cached read state over public list material.",
+          "line": 91,
+          "path": "web/src/desk/DeskApp.tsx",
+          "symbol": "DeskFaces"
+        },
+        {
+          "claim": "Visited views preserve state and scroll through source return; inactive view footer targets hide their portaled actions.",
+          "line": 86,
+          "path": "web/src/desk/pullouts/IntelligencePullout.tsx",
+          "symbol": "RetainedView"
         }
       ],
       "status": "partial",
-      "status_reason": "The surface contract and shared components exist, but object/projection parity and provenance coverage are incomplete.",
+      "status_reason": "Object/projection parity and provenance coverage remain incomplete. October 16 focused service/route and rendered tests cover exact cited held tasks and pending/rejected artifacts, read-only lifecycle, local failure/Retry, cold/restored references and retained Brief drafts/scroll. Release and owner acceptance remain separate.",
       "surfaces": [
         "surface registry",
         "list rows",
-        "object windows"
+        "object windows",
+        "Brief source citations",
+        "Follow-through",
+        "Artifact window"
       ],
       "tests": [
         {
@@ -6801,9 +6839,75 @@
           "execution": "not_run",
           "node": "declares properties only where a real update path backs them",
           "path": "web/src/desk/__tests__/infoContract.test.ts"
+        },
+        {
+          "assertion": "Pending/rejected stored artifact exact GET preserves its DB row and remains excluded from public sync; this is a repository-produced fixture, not agent completion evidence.",
+          "execution": {
+            "cases": 2,
+            "record": "Codex tool session20692, 2026-10-16: 15 passed",
+            "run": "sources-sync-15",
+            "status": "passed"
+          },
+          "node": "test_exact_artifact_read_keeps_review_state_and_public_list",
+          "path": "tests/unit/test_web_routes_sync.py"
+        },
+        {
+          "assertion": "The exact artifact route obeys the same enabled hub token boundary and refuses an unauthenticated request.",
+          "execution": {
+            "cases": 1,
+            "record": "Codex tool session20692, 2026-10-16: 15 passed",
+            "run": "sources-sync-15",
+            "status": "passed"
+          },
+          "node": "test_exact_artifact_read_uses_hub_authentication",
+          "path": "tests/unit/test_web_routes_sync.py"
+        },
+        {
+          "assertion": "Substituted HTTP responses prove independent held reads and retention of previously read real material after a later exact-ID refusal.",
+          "execution": {
+            "cases": 1,
+            "record": ".tmp/flagship/sources-web-final.log",
+            "run": "sources-web-final",
+            "status": "passed"
+          },
+          "node": "independent held reads continue after a failure, while a later refusal retains only real material",
+          "path": "web/src/desk/__tests__/heldObjects.test.ts"
+        },
+        {
+          "assertion": "An unavailable local source shell has Retry read and exposes no Send, Filing, Copy or Dictate action for blank material.",
+          "execution": {
+            "cases": 1,
+            "record": ".tmp/flagship/sources-web-final.log",
+            "run": "sources-web-final",
+            "status": "passed"
+          },
+          "node": "an unavailable source shell exposes read Retry without blank material actions",
+          "path": "web/src/desk/pullouts/ArtifactPullout.test.tsx"
+        },
+        {
+          "assertion": "Cold arrival and restored artifact refs are held before refresh and the arrival ref opens once.",
+          "execution": {
+            "cases": 1,
+            "record": ".tmp/flagship/sources-web-final.log",
+            "run": "sources-web-final",
+            "status": "passed"
+          },
+          "node": "holds cold and restored artifact windows before the first bounded refresh",
+          "path": "web/src/desk/DeskApp.test.tsx"
+        },
+        {
+          "assertion": "The retained Brief DOM keeps its draft/scroll after source return; hidden footer actions are inaccessible and exactly one frame footer is active.",
+          "execution": {
+            "cases": 1,
+            "record": ".tmp/flagship/sources-web-final.log",
+            "run": "sources-web-final",
+            "status": "passed"
+          },
+          "node": "keeps Brief draft and scroll through source inspection while hiding inactive footer actions",
+          "path": "web/src/desk/pullouts/IntelligencePullout.test.tsx"
         }
       ],
-      "trust_boundary": "A Desk object id selects a browser surface; backend data enters through the API/runtime seams."
+      "trust_boundary": "Exact source reads use the existing authenticated hub transport. A held open task may bypass only its ordinary snooze/defer list suppression; an artifact read by canonical ID does not approve or publish it. Missing source shells remain local to their window and are not persisted artifacts or collection entries."
     },
     {
       "apis": [
@@ -8091,7 +8195,8 @@
       "docs": [
         "docs/internal/FOLLOW-THROUGH-2026-10-15/README.md",
         "docs/internal/FOLLOW-THROUGH-2026-10-15/BUILD-FOLLOW.md",
-        "docs/internal/FOLLOW-THROUGH-2026-10-15/BUILD-BACKEND.md"
+        "docs/internal/FOLLOW-THROUGH-2026-10-15/BUILD-BACKEND.md",
+        "docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/IMPLEMENTATION.md"
       ],
       "domain": "desk",
       "egress": "These lifecycle writers update local rows; they do not send task content.",
@@ -8111,7 +8216,8 @@
         "confirmed action item or existing cadence loop",
         "owner",
         "due date",
-        "explicit lifecycle action"
+        "explicit lifecycle action",
+        "optional canonical focus_id for source inspection"
       ],
       "kernel_operations": [],
       "limitations": [
@@ -8125,7 +8231,8 @@
       "outputs": [
         "updated local task or loop",
         "source window",
-        "visible result or exact Retry"
+        "visible result or exact Retry",
+        "focused held action with snooze/defer stamps"
       ],
       "owner_observed": false,
       "persistence": [
@@ -8141,7 +8248,7 @@
         "linux_x11": "unknown",
         "macos": "unknown"
       },
-      "purpose": "Read tasks by date and review state, assign owners and dates, complete or snooze work, and open its recorded source.",
+      "purpose": "Read tasks by date and review state, inspect a cited held task, assign owners and dates, complete or snooze work, and open its recorded source.",
       "release_availability": "unverified",
       "replacement": null,
       "side_effect": "local_reversible",
@@ -8157,10 +8264,22 @@
           "line": 130,
           "path": "web/src/desk/pullouts/views/FollowThroughView.tsx",
           "symbol": "FollowThroughView"
+        },
+        {
+          "claim": "Only the canonical focused open action bypasses ordinary snooze/defer suppression; existing filters and terminal omission remain unchanged.",
+          "line": 153,
+          "path": "holdspeak/services/follow_through_service.py",
+          "symbol": "FollowThroughService.board"
+        },
+        {
+          "claim": "Focused task reads expand the exact row, show hold dates and local unavailable/read Retry while preserving row drafts and failed writer requests.",
+          "line": 133,
+          "path": "web/src/desk/pullouts/views/FollowThroughView.tsx",
+          "symbol": "FollowThroughView"
         }
       ],
       "status": "built_unreleased",
-      "status_reason": "Focused service and rendered tests cover canonical Snooze, duplicate suppression, exact Retry and draft custody; isolated production walks and release are recorded in the October 15 pass.",
+      "status_reason": "Focused service and rendered tests cover canonical Snooze, duplicate suppression, exact Retry and draft custody; isolated production walks and release are recorded in the October 15 pass. October 16 focused checks also prove canonical focus_id inspection of snoozed/deferred open actions without changing holds, visible missing/read Retry and unchanged failed-writer/draft custody.",
       "surfaces": [
         "Follow-through"
       ],
@@ -8197,6 +8316,50 @@
           },
           "node": "test_collected_decision_is_represented_by_its_action_not_a_second_loop",
           "path": "tests/unit/test_follow_through_service.py"
+        },
+        {
+          "assertion": "Snooze, defer and combined holds expose only the focused canonical open action and preserve before/after DB rows.",
+          "execution": {
+            "cases": 3,
+            "record": "Codex tool session85224, 2026-10-16: 44 follow-through tests passed; two unrelated sync expectation failures corrected in session20692",
+            "run": "sources-python-59",
+            "status": "passed"
+          },
+          "node": "test_focused_action_includes_only_exact_held_task_without_mutation",
+          "path": "tests/unit/test_follow_through_service.py"
+        },
+        {
+          "assertion": "Focused reads preserve existing filters and omit completed or missing actions.",
+          "execution": {
+            "cases": 1,
+            "record": "Codex tool session85224, 2026-10-16",
+            "run": "sources-python-59",
+            "status": "passed"
+          },
+          "node": "test_focused_action_preserves_filters_and_terminal_or_missing_omission",
+          "path": "tests/unit/test_follow_through_service.py"
+        },
+        {
+          "assertion": "A focused held row expands despite the ordinary overdue filter, shows both hold dates and performs no lifecycle writer.",
+          "execution": {
+            "cases": 1,
+            "record": ".tmp/flagship/sources-web-final.log",
+            "run": "sources-web-final",
+            "status": "passed"
+          },
+          "node": "reads and expands the exact held source despite the ordinary overdue filter without a lifecycle write",
+          "path": "web/src/desk/pullouts/views/FollowThroughView.test.tsx"
+        },
+        {
+          "assertion": "Missing and refused focused reads expose Retry read and repeat the same encoded canonical focus ID.",
+          "execution": {
+            "cases": 1,
+            "record": ".tmp/flagship/sources-web-final.log",
+            "run": "sources-web-final",
+            "status": "passed"
+          },
+          "node": "missing focus and refused focus reads each retry the same canonical source",
+          "path": "web/src/desk/pullouts/views/FollowThroughView.test.tsx"
         }
       ],
       "trust_boundary": "Owner-only local action writers retain canonical action/loop identity. People text is not saved in the browser Done receipt."
@@ -9198,7 +9361,9 @@
         "docs/CODER_INTEGRATION.md",
         "docs/AGENT_HOOK_INSTALL.md",
         "docs/internal/SURFACE-REPAIR-2026-10-14.md",
-        "docs/internal/SURFACE-REFINEMENT-2026-10-15/README.md"
+        "docs/internal/SURFACE-REFINEMENT-2026-10-15/README.md",
+        "docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/IMPLEMENTATION.md",
+        "docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/briefs/reading.md"
       ],
       "domain": "coder",
       "egress": "Pane observation is local to the Coder host; companion transport may carry the bounded projection to an authenticated client.",
@@ -9227,7 +9392,10 @@
       "limitations": [
         "No real tmux pane or owner Coder session was used. The October 15 surface walk ingests an authored report through real hooks in an isolated HOME with no pane; command delivery and microphone are unverified.",
         "Observation is bounded and may omit full transcript context.",
-        "Latest report requires the existing opt-in message capture; otherwise the recorded tool/state is shown. No capture default was changed."
+        "Latest report requires the existing opt-in message capture; otherwise the recorded tool/state is shown. No capture default was changed.",
+        "Old stored flattened text cannot be reliably repaired without the retained original. Capture opt-in, bounds and secret filtering remain unchanged.",
+        "The shared reader does not open local repository paths; unsupported targets retain their label and inert destination. HTTP(S) links require an explicit press; no arbitrary HTML or remote image fetch is introduced.",
+        "Focused capture/rendered tests establish source preservation and document grammar, not owner visual acceptance, live provider output or public release."
       ],
       "model_requirements": [],
       "name": "Coder session observation",
@@ -9238,7 +9406,9 @@
         "session status",
         "waiting state",
         "bounded lines",
-        "content hash"
+        "content hash",
+        "original captured Markdown line breaks and indentation",
+        "shared readable full report document"
       ],
       "owner_observed": false,
       "persistence": [
@@ -9251,7 +9421,7 @@
         "linux_x11": "supported_with_setup",
         "macos": "supported_with_setup"
       },
-      "purpose": "Show active Claude/Codex sessions and bounded, hash-gated pane output.",
+      "purpose": "Show active Claude/Codex sessions, structured captured reports and bounded, hash-gated pane output.",
       "release_availability": "unverified",
       "replacement": null,
       "side_effect": "none",
@@ -9279,10 +9449,28 @@
           "line": 700,
           "path": "web/src/desk/components/SessionPullout.tsx",
           "symbol": "export function SessionPullout() {"
+        },
+        {
+          "claim": "Transcript text pieces retain their original line breaks and indentation within the existing capture bound and secret filter.",
+          "line": 989,
+          "path": "holdspeak/agent_context/sessions.py",
+          "symbol": "extract_last_assistant_text"
+        },
+        {
+          "claim": "New Codex Stop questions retain the bounded original multiline payload instead of whitespace flattening.",
+          "line": 204,
+          "path": "holdspeak/agent_context/sessions.py",
+          "symbol": "ingest_agent_hook_event"
+        },
+        {
+          "claim": "Material and full AgentWords share semantic headings, nested lists, tables and original code; horizontal table/code wells retain keyboard scroll hints.",
+          "line": 124,
+          "path": "web/src/desk/surface/ReadingDocument.tsx",
+          "symbol": "ReadingDocument"
         }
       ],
       "status": "experimental",
-      "status_reason": "Session routes and bounded pane observation are implemented. October 15 isolated real-hub walks at1440/393 cover long-report terminal handoff, real no-pane read/Retry and Back. Focused checks cover draft custody and new Speak requests; owner pane/control actions remain unverified.",
+      "status_reason": "Session routes and bounded pane observation are implemented. October 15 isolated real-hub walks at1440/393 cover long-report terminal handoff, real no-pane read/Retry and Back. Focused checks cover draft custody and new Speak requests; owner pane/control actions remain unverified. October 16 focused capture and rendered checks preserve new multiline Claude/Codex reports and Codex Stop questions through semantic document rendering; compact summaries retain their existing ask/truncation behavior.",
       "surfaces": [
         "Conductor",
         "Agent session",
@@ -9321,6 +9509,61 @@
           },
           "node": "test_open_keeps_work_and_phone_frame_then_focuses_one_answer",
           "path": "tests/e2e/test_conductor_glass.py"
+        },
+        {
+          "assertion": "Real temporary Claude/Codex transcript ingestion and Codex Stop payloads retain the exact multiline question/report and bounded tail.",
+          "execution": {
+            "cases": 1,
+            "record": ".tmp/flagship-reading/scoped-check-output.txt",
+            "run": "reading-capture-36",
+            "status": "passed"
+          },
+          "node": "test_capture_preserves_markdown_through_question_and_report",
+          "path": "tests/unit/test_agent_context.py"
+        },
+        {
+          "assertion": "New multiline Codex Stop capture retains the existing character bound and possible-secret redaction.",
+          "execution": {
+            "cases": 1,
+            "record": ".tmp/flagship-reading/scoped-check-output.txt",
+            "run": "reading-capture-36",
+            "status": "passed"
+          },
+          "node": "test_codex_stop_document_keeps_capture_bound_and_secret_filter",
+          "path": "tests/unit/test_agent_context.py"
+        },
+        {
+          "assertion": "Material and full AgentWords render semantic headings, nested lists, tables and exact code; canonical source refs use the opener, HTTP labels persist, and repository paths remain inert. Canonical opener is substituted in this component test.",
+          "execution": {
+            "cases": 2,
+            "record": ".tmp/flagship-reading/scoped-check-output.txt",
+            "run": "reading-web-28",
+            "status": "passed"
+          },
+          "node": "%s uses semantic document blocks and original code",
+          "path": "web/src/desk/surface/__tests__/ReadingDocument.test.tsx"
+        },
+        {
+          "assertion": "HTML stays text, unsupported schemes stay inert and image elements are not created.",
+          "execution": {
+            "cases": 1,
+            "record": ".tmp/flagship-reading/scoped-check-output.txt",
+            "run": "reading-web-28",
+            "status": "passed"
+          },
+          "node": "shows HTML and unsupported destinations as text and never loads images",
+          "path": "web/src/desk/surface/__tests__/ReadingDocument.test.tsx"
+        },
+        {
+          "assertion": "Compact agent text keeps its intentional last ask selection and creates no document/link controls.",
+          "execution": {
+            "cases": 1,
+            "record": ".tmp/flagship-reading/scoped-check-output.txt",
+            "run": "reading-web-28",
+            "status": "passed"
+          },
+          "node": "compact summaries keep their ask and never create link controls",
+          "path": "web/src/desk/surface/__tests__/ReadingDocument.test.tsx"
         }
       ],
       "trust_boundary": "Observation reads a bounded terminal projection; it does not grant process input or effect authority."

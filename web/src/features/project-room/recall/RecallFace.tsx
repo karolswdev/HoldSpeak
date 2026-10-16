@@ -126,23 +126,17 @@ function DecisionCardView({
         <span className="surface-primary recall-card-title" data-testid="recall-card-title">
           {card.text}
         </span>
-        {card.state === "current" ? (
-          <Button
-            dense
-            variant={card.carried ? "secondary" : primary ? "primary" : "secondary"}
-            loading={carrying}
-            aria-label={card.carried ? `Carried into brief: ${card.text}` : "Carry into brief"}
-            aria-pressed={card.carried || undefined}
-            data-carried={card.carried || undefined}
-            data-testid="recall-carry"
-            onClick={() => {
-              if (!card.carried) void ctrl.carry(card.id, card.project?.id ?? null);
-            }}
-          >
-            {card.carried ? "CARRIED" : "Carry into brief"}
-          </Button>
-        ) : null}
       </div>
+      {card.rationale ? (
+        <div className="recall-rationale" data-testid="recall-rationale">
+          {card.rationale}
+        </div>
+      ) : null}
+      {card.state === "disputed" && card.dispute_reason ? (
+        <div className="recall-rationale" data-testid="recall-dispute-reason">
+          {card.dispute_reason}
+        </div>
+      ) : null}
       <div className="recall-card-chips">
         <Chip label={card.dec_token} testid="recall-dec-token" />
         {card.axes.map((axis) => (
@@ -161,16 +155,6 @@ function DecisionCardView({
           />
         ) : null}
       </div>
-      {card.rationale ? (
-        <div className="recall-rationale" data-testid="recall-rationale">
-          {card.rationale}
-        </div>
-      ) : null}
-      {card.state === "disputed" && card.dispute_reason ? (
-        <div className="recall-rationale" data-testid="recall-dispute-reason">
-          {card.dispute_reason}
-        </div>
-      ) : null}
       {card.source ? (
         <div className="recall-source">
           <span className="surface-token">SOURCE</span>
@@ -186,6 +170,24 @@ function DecisionCardView({
           </Button>
         </div>
       ) : null}
+      <div className="recall-card-actions">
+        {card.state === "current" ? (
+          <Button
+            dense
+            variant={card.carried ? "secondary" : primary ? "primary" : "secondary"}
+            loading={carrying}
+            aria-label={card.carried ? `Carried into brief: ${card.text}` : "Carry into brief"}
+            aria-pressed={card.carried || undefined}
+            data-carried={card.carried || undefined}
+            data-testid="recall-carry"
+            onClick={() => {
+              if (!card.carried) void ctrl.carry(card.id, card.project?.id ?? null);
+            }}
+          >
+            {card.carried ? "CARRIED" : "Carry into brief"}
+          </Button>
+        ) : null}
+      </div>
     </article>
   );
 }

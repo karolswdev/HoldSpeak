@@ -11,7 +11,7 @@ import { Button } from "../../../components/signal/Signal";
 import { apiFetch } from "../../../lib/api";
 import { openSurfaceOr } from "../../shell";
 import { openSourceRef } from "../../surface/citations";
-import { calendarOpener } from "../../openObject";
+import { calendarOpener, openProjectProposal } from "../../openObject";
 import { useDesk } from "../../store";
 import { useOnDeskChanged } from "../../useDeskChangedRefresh";
 import { SurfaceFooter } from "../../surface/SurfaceFooter";
@@ -41,7 +41,7 @@ export type DayEvent = {
 };
 type DoorRead = { upcoming?: DayEvent[]; calendar_configured?: boolean };
 type MeetingRow = Record<string, unknown>;
-type NeedsItem = { proposalId?: string; title?: string; proposalKind?: string; meetingTitle?: string; muted?: boolean; waiting?: boolean };
+type NeedsItem = { proposalId?: string; title?: string; proposalKind?: string; meetingTitle?: string; projectId?: string; meetingId?: string; muted?: boolean; waiting?: boolean };
 
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const SHORT_DAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
@@ -429,15 +429,15 @@ export function TodayView({ header }: { header: ReactNode }) {
         </div>
         <div className="today-grid">
           <ol className="today-spine" aria-label="Today">
-            {justMadeNode}
-            {meetingsFailedNode}
-            {pastToday}
-            {finishNodes}
             {nowNode}
             {nextNode}
             {laterNodes}
             {doorFailedNode}
             {emptyNode}
+            {justMadeNode}
+            {meetingsFailedNode}
+            {pastToday}
+            {finishNodes}
           </ol>
           <aside className="today-side" aria-label="Owed and to decide">
             {failed.people ? <ReadFailed what="People" onRetry={() => void load()} testId="today-people-failed" /> : null}
@@ -459,6 +459,11 @@ export function TodayView({ header }: { header: ReactNode }) {
                 {decide.meetingTitle ? <span className="today-row-meta">{decide.meetingTitle}</span> : null}
                 {actError?.key === "decide" ? <span className="kit-pill" data-tone="danger" role="status" data-testid="today-decide-failed">{actError.text}</span> : null}
                 <div className="today-plate-verbs">
+                  {decide.projectId ? (
+                    <Button dense variant="secondary" onClick={() => openProjectProposal(decide.projectId!, String(decide.proposalId))}>Open decision</Button>
+                  ) : decide.meetingId ? (
+                    <Button dense variant="secondary" onClick={() => openSourceRef(`meeting:${decide.meetingId}?view=review`)}>Open source</Button>
+                  ) : null}
                   <Button dense disabled={busy === "decide"} data-testid="today-confirm"
                     onClick={() => void act("decide", "Not confirmed. Try again", () => apiFetch(`/api/proposals/${encodeURIComponent(String(decide.proposalId))}/confirm`, { method: "POST" }))}>
                     Confirm

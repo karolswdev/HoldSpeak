@@ -82,6 +82,13 @@ describe("StandingPage", () => {
 });
 
 describe("StandingPagesSection", () => {
+  it("lets Brief lead with the named answers while retaining source facts and engine credit", () => {
+    render(<StandingPagesSection pages={[DECIDED, CHANGED]} presentation="questions" now={NOW} onOpenRef={() => {}} />);
+    expect(screen.queryByRole("heading", { level: 3 })).toBeNull();
+    expect(screen.getAllByRole("heading", { level: 4 }).map((node) => node.textContent)).toEqual(["What did we decide", "What changed this week"]);
+    expect(screen.getByTestId("standing-pages-model")).toHaveTextContent("Written by qwen3.8-27b · LAN");
+    expect(screen.getByTestId("standing-page-stale")).toHaveTextContent("STALE · 3 NEW SOURCES");
+  });
   it("draws the scope's pages under Standing pages · N with the engine token", () => {
     render(<StandingPagesSection pages={[DECIDED, CHANGED]} now={NOW} onOpenRef={() => {}} />);
     expect(screen.getByRole("heading", { level: 3 }).textContent).toBe("Standing pages · 2");

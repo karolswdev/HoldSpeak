@@ -10,6 +10,7 @@ import json
 import types
 from datetime import datetime, timezone
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -118,6 +119,64 @@ def test_pull_serializes_meetings_and_artifacts(monkeypatch, tmp_path):
     assert a["meta"]["kind"] == "artifact" and a["meta"]["id"] == "a1"
     assert a["value"]["artifact_type"] == "decisions"
     assert a["value"]["meeting_id"] == "m1"
+
+
+@pytest.mark.parametrize("status", ["pending-review", "rejected"])
+def test_exact_artifact_read_keeps_review_state_and_public_list(monkeypatch, tmp_path, status):
+    db = _real_db(tmp_path, monkeypatch)
+    sources = [{"source_type": "workbench", "source_ref": "wb-source"}]
+    db.plugins.record_artifact(
+        artifact_id="art-held", meeting_id="", artifact_type="run_output",
+        title="Cited output", body_markdown="ARTIFACT10-15", status=status,
+        plugin_id="workbench", plugin_version="1", sources=sources,
+    )
+    before = db.plugins.get_artifact("art-held")
+    client = _client()
+
+    response = client.get("/api/artifacts/art-held")
+
+    assert response.status_code == 200
+    assert response.json()["artifact"] == {
+        "id": "art-held", "meeting_id": "", "artifact_type": "run_output",
+        "title": "Cited output", "body_markdown": "ARTIFACT10-15",
+        "structured_json": {}, "confidence": 0.0, "status": status,
+        "plugin_id": "workbench", "plugin_version": "1", "sources": sources,
+        "origin": "run",
+    }
+    assert db.plugins.get_artifact("art-held") == before
+    assert db.plugins.list_run_artifacts() == []
+    assert client.get("/api/sync/pull").json()["artifacts"] == []
+
+
+def test_exact_artifact_read_missing_is_404(monkeypatch, tmp_path):
+    monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: _fake_db(tmp_path))
+
+    response = _client().get("/api/artifacts/art-missing")
+
+    assert response.status_code == 404
+    assert response.json() == {
+        "success": False, "error": "not_found", "detail": "Unknown artifact: art-missing",
+        "kind": "artifact", "id": "art-missing",
+    }
+
+
+def test_exact_artifact_read_uses_hub_authentication(monkeypatch, tmp_path):
+    from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+
+    db = _real_db(tmp_path, monkeypatch)
+    db.plugins.record_artifact(
+        artifact_id="art-private", meeting_id="", artifact_type="run_output",
+        title="Private output", body_markdown="Read only", status="pending-review",
+    )
+    server = MeetingWebServer(WebRuntimeCallbacks(
+        on_bookmark=lambda *a, **k: None, on_stop=lambda *a, **k: None,
+        get_state=lambda: {"activity": {"state": "idle"}},
+    ), host="127.0.0.1")
+    client = TestClient(server.app)
+    assert client.get("/api/artifacts/art-private").status_code == 200
+    client.headers.clear()
+
+    assert client.get("/api/artifacts/art-private").status_code == 401
 
 
 def test_push_live_merges_meeting_and_keeps_audit_inbox(monkeypatch, tmp_path):
