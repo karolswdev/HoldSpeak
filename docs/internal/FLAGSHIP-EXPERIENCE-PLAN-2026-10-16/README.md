@@ -7,7 +7,9 @@ main `ebfce9feb` / released build `1db394185ca801fe` (#1219). The merged first b
 [Daily work and recovery](IMPLEMENTATION-CDE.md), with [actual verification](DELIVERY-CDE.md); [coverage](COVERAGE.md)
 reconciles every surface family with current and carried evidence. Historical source-audit and candidate descriptions
 below retain their original evidence limits; they do not pause the authorized
-execution. Formal postmerge review and owner visual judgment remain separate.
+execution. The bounded technical programme is delivered through #1220 and #1221;
+[postmerge review and live runtime](POSTMERGE-CDE.md) record the final identity.
+Full main tape and owner visual judgment remain separate.
 The owner selected an Astra master orchestrator and Sol HIGH workers for this
 programme; see [Delegation and delivery](EXECUTION.md).
 
