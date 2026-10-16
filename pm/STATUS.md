@@ -8,6 +8,22 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+**Journal recovery — verified for delivery (2026-10-16).** Independent journal
+stores now reserve the sequence and prior hash under SQLite’s write lock.
+Failed appends release their local lock and roll back. Three regression cases
+fail against the original code and pass with the fix. Ordinary quick GREEN:
+44 affected checks, 109 desktop/phone sweep cases, 17 canon checks. Source and
+build agree (`6e3600ca4e4d1251`); Today shots at 1440/393 inspected. Broader
+recovery stays active in the queue below; no full-suite green is claimed.
+
+**Broader regression recovery — active (2026-10-16).** The owner expanded the
+work to resolve the full-tape failures. All 110 distinct failing cases across the
+last three completed tapes are now tracked with fix ownership and next proof in
+the [recovery queue](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/REGRESSION-RECOVERY.md).
+The latest completed tape has 106 failures; #1224 already verified two producer
+fixes. Runtime, browser journeys, and guard/copy recovery are underway. Inherited
+status does not close a case. The current-main full run is still in progress.
+
 **Owner desktop density feedback — #1223 (2026-10-16).**
 Artifact footer actions retain vertical clearance on first open and through
 resize. Desktop Dock is 60 px with 24 px art; Screen art 48 px with tighter rows.
