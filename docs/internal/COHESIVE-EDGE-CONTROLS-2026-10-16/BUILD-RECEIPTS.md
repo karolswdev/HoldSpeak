@@ -81,7 +81,7 @@ the root's work.
 
 Root read the actual receipt tour and approved the revised library canvas
 before this follow-up. Named Ask samples and the Save-policy failure sample
-are in `.tmp/edges/canvas-receipts-named-shots-v3/` at1440 and393.
+are in `.tmp/edges/canvas-receipts-named-shots-v3/` at 1440 and 393.
 
 - Ask's successful run status now has one home in its existing footer.
   Rounded zero seconds omit the elapsed phrase; positive elapsed seconds
@@ -105,9 +105,9 @@ Additional product paths:
 `web/src/desk/surface/citations.tsx` and
 `web/src/desk/surface/surface.css` (citation scopes only).
 
-Collected50 named tests across AskRunsOn24, citations16 and Workbench
-automations10 in `.tmp/edges/receipts-seams-collect.log`. The pre-change
-run had17 failed,33 passed (`receipts-seams-before.log`). The final scoped
+Collected 50 named tests across AskRunsOn (24), citations (16) and Workbench
+automations (10) in `.tmp/edges/receipts-seams-collect.log`. The pre-change
+run had 17 failed, 33 passed (`receipts-seams-before.log`). The final scoped
 run (`receipts-seams-after.log`) was:
 
 ```text
@@ -128,12 +128,12 @@ is covered by the runtime tour below. Owned diffs passed `git diff --check`.
 Root subsequently delegated this scoped runtime tour to the worker. Product
 source stayed frozen; the root retained the complete quick check and release.
 Both runs used `.tmp/edges/receipt_tour.py` through the same isolated-HOME
-machine-lock helper. The worker read both observations and all16 state PNGs.
+machine-lock helper. The worker read both observations and all 16 state PNGs.
 
 | Width | Served build | Output under `.tmp/edges/` | Result |
 | --- | --- | --- | --- |
-| 1440x900 | `7210f8622d069ea6`, built14:18:30.746Z | `receipt-frozen-1440/` | captured8 states |
-| 393x852 | `52f6ff3c43024642`, built14:25:36.535Z | `receipt-frozen-393-current/` | captured8 states |
+| 1440x900 | `7210f8622d069ea6`, built 14:18:30.746Z | `receipt-frozen-1440/` | captured 8 states |
+| 393x852 | `52f6ff3c43024642`, built 14:25:36.535Z | `receipt-frozen-393-current/` | captured 8 states |
 
 The root rebuilt after the related test adjustment, changing build metadata
 without changing frozen product source. A preliminary phone attempt in
@@ -152,16 +152,16 @@ Real Workbench policy behavior at both widths:
 - Configure → Idle used the actual CycleGadget popup and pointer controls.
   Both routine names were visible on their library choices.
 - The first Enable press armed `RUN AS OWNER?`, sent no policy PUT and left
-  GET disabled. The confirming press wrote31 idle minutes,5 cooldown hours,
-  target3, overnight21:00–08:00 and only `loose_ideas`; the real returned
+  GET disabled. The confirming press wrote 31 idle minutes, 5 cooldown hours,
+  target 3, overnight 21:00–08:00 and only `loose_ideas`; the real returned
   policy and GET matched every setting and routine.
 - A browser-held Save PUT was refused with declared HTTP503. Save became
   busy/disabled, and the actual receipt said `SAVE POLICY FAILED · HTTP 503`
-  with Retry. Retry replayed the original target4 payload after a newer
-  target5 draft was entered. A duplicate pending Retry sent no new PUT.
+  with Retry. Retry replayed the original target 4 payload after a newer
+  target 5 draft was entered. A duplicate pending Retry sent no new PUT.
   The held Retry was forwarded to the real writer; response and GET stored
-  the original target4 and unchanged remaining settings/routines.
-- Pause wrote disabled with target4 and the same remaining policy. Real
+  the original target 4 and unchanged remaining settings/routines.
+- Pause wrote disabled with target 4 and the same remaining policy. Real
   response and GET confirmed it. The ordinary item remained pending with
   its original body, and resourceful history stayed empty. This proves
   policy persistence/recovery, not maintenance execution.
@@ -169,7 +169,7 @@ Real Workbench policy behavior at both widths:
 Declared Ask transport replay at both widths:
 
 - Meta+i opened the actual Ask panel. One response had zero matches; the
-  other had matched5/overflow2 and two real Note refs. No inference ran.
+  other had 5 matches, 2 overflow matches and two real Note refs. No inference ran.
 - The face showed `UNGROUNDED` and `GROUNDED ON 3 OF 5`, kept the flagged
   claim, and kept Keep visible/enabled. Both completed answers had exactly
   the `ANSWERED` footer status, no inline success RunLine and no zero-second
@@ -177,12 +177,12 @@ Declared Ask transport replay at both widths:
 - Cached citations showed `Note · Release checks` and the full long
   architecture title. Their original refs stayed in the titles. Text
   ranges fit within both citation boxes, with scrollWidth equal to
-  clientWidth. At393 the long citation was245x54.640625px; its text range
-  was205.921875x50.09375px, wholly within that box.
+  clientWidth. At 393 the long citation was 245x54.640625 px; its text range
+  was 205.921875x50.09375 px, wholly within that box.
 
-Each successful width recorded14 control probes and126 center/edge/corner
+Each successful width recorded 14 control probes and 126 center/edge/corner
 ownership points, all owned by the intended control after real pointer
-moves. Every probed393 target was at least44x44, including the mode/Idle
+moves. Every probed 393 target was at least 44x44, including the mode/Idle
 choice, routine tokens, Enable, Save, Pause, Retry, Ask, Keep and citations.
 Assertions apply to those controls in those states, not every app surface.
 
@@ -191,3 +191,25 @@ State names at each width: `resourceful-paused`, `resourceful-enable-armed`,
 `resourceful-save-refused`, `resourceful-paused-real`, `ask-zero`,
 `ask-positive`. Command tails are `receipts-frozen-1440.log` and
 `receipts-frozen-393-current.log` under `.tmp/edges/`.
+
+## Related route test adjustment
+
+The complete quick check found one existing test that still required Ask's
+removed inline `Answered in 0 s` success line. The root assigned that
+bounded test correction to this worker. Product source was unchanged.
+
+`web/src/desk/__tests__/routeInFooter.test.tsx` keeps its fallback LAN host
+assertion and now checks exactly one completed route receipt in the footer,
+unchanged as the clock advances from 1 to 9 seconds, with no inline RunLine.
+The separate Ask success cases above retain the positive elapsed-time fence
+for answers without a route receipt.
+
+The file's 17 named cases were collected in
+`.tmp/edges/receipts-route-collect.log`. Its focused run, under the same
+isolated HOME and lock, passed (`receipts-route-run.log`):
+
+```text
+Test Files  1 passed (1)
+     Tests  17 passed (17)
+  Duration  1.70s
+```

@@ -167,3 +167,8 @@ Note names and the full long title fit, one footer success/no zero seconds.
 Phone citation scrollWidth equals clientWidth. A first phone attempt stopped
 before any UI/action because its hardcoded old build expectation no longer
 matched; that metadata-only stop is preserved, not a product failure.
+
+
+Release PR: [#1218](https://github.com/karolswdev/HoldSpeak/pull/1218).
+Final source/deployment identities are recorded by the merge and local hub
+checks; normal deployment follows the exact merged tree.
