@@ -89,8 +89,32 @@ describe("Desk attention and receipt projection store", () => {
       .mockResolvedValueOnce(response([]));
     vi.stubGlobal("fetch", fetcher);
     await useProjections.getState().refresh(true);
-    await useProjections.getState().present("p1", "dismiss");
+    expect(await useProjections.getState().present("p1", "dismiss")).toBe(true);
     expect(fetcher.mock.calls[1][1].method).toBe("PUT");
     expect(useProjections.getState().projections).toEqual([]);
+  });
+
+  it("returns false for a refused writer and preserves the selected row without refreshing", async () => {
+    const fetcher = vi.fn(async () => ({
+      ok: false, status: 409, json: async () => ({ error: "Writer refused" }),
+    }));
+    vi.stubGlobal("fetch", fetcher);
+    useProjections.setState({ selectedId: "p1" });
+    expect(await useProjections.getState().present("p1", "dismiss")).toBe(false);
+    expect(useProjections.getState().selectedId).toBe("p1");
+    expect(useProjections.getState().error).toBe("Writer refused");
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns writer success even when a later refresh cannot read", async () => {
+    const fetcher = vi.fn()
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ success: true }) })
+      .mockRejectedValue(new Error("Read unavailable"));
+    vi.stubGlobal("fetch", fetcher);
+    useProjections.setState({ selectedId: "p1", error: "Old shared error" });
+    expect(await useProjections.getState().present("p1", "dismiss")).toBe(true);
+    expect(useProjections.getState().selectedId).toBeNull();
+    expect(useProjections.getState().error).toBe("Read unavailable");
+    expect(fetcher).toHaveBeenCalledTimes(3);
   });
 });

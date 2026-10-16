@@ -2236,7 +2236,7 @@
     {
       "id": "companion.qlippy_presence",
       "name": "Qlippy presence",
-      "purpose": "Reflect selected attention states and egress posture through the optional mascot surface.",
+      "purpose": "Show selected actionable attention through the optional mascot without replaying dismissed popup backlog. Dictation journal entries stay in history and Attention.",
       "domain": "companions",
       "status": "experimental",
       "status_reason": "Bundled sprites and presence integration are source-present; optional enablement and owner observation were not established.",
@@ -2266,7 +2266,8 @@
         "projection review or learning card"
       ],
       "persistence": [
-        "none; event/projection state only"
+        "Existing durable projection presentation state",
+        "Per-tab popup dismissal cutoff in sessionStorage, with in-memory fallback"
       ],
       "apis": [
         "RuntimeBus presence events"
@@ -2285,14 +2286,14 @@
       "egress_possible": false,
       "egress": "Assets are bundled without a third-party CDN dependency. A remote browser fetches the hub over its configured connection; local bundling does not mean no network transport.",
       "side_effect": "local_reversible",
-      "authority": "Projection review navigates to the source. A conditional decision handler delegates approval/rejection to the backend; its actuator-card branch is not fed by the current non-learning event path. Dismiss changes only local cards.",
+      "authority": "Projection review navigates to the source. Dismiss uses the existing presentation writer for the visible row and quiets older popup backlog in that tab; it does not change source data or dismiss other Attention items. A conditional decision handler delegates approval/rejection to the backend; its actuator-card branch is not fed by the current non-learning event path.",
       "kernel_operations": [],
       "sources": [
         {
           "path": "web/src/components/AmbientLayer.tsx",
           "symbol": "Qlippy",
           "line": 196,
-          "claim": "Settings gate the component; runtime events refresh durable projections or queue learning cards. The projection action navigates to its source."
+          "claim": "Settings gate the component; runtime events refresh durable projections or queue learning cards. Dictation journal projections never produce a Qlippy popup. Successful Dismiss closes older popup backlog in the tab while retaining untouched items in Attention; a refused writer remains visible for Retry."
         },
         {
           "path": "web/public/qlippy/README.md",
@@ -2306,6 +2307,18 @@
           "path": "tests/integration/test_web_companion_webhook.py",
           "node": "test_the_wire_events_ride_for_qlippy",
           "assertion": "Actuator proposed/result events include preview-only data suitable for Qlippy without payload secrets."
+        },
+        {
+          "path": "web/src/components/ambientDismiss.test.tsx",
+          "node": "keeps dictation journal warnings in Attention without a popup or write",
+          "assertion": "Rendered journal warnings remain in the shared store and produce neither popup nor presentation write.",
+          "execution": "passed"
+        },
+        {
+          "path": "web/src/components/ambientDismiss.test.tsx",
+          "node": "keeps a failed write visible and retries its exact ID after a refresh",
+          "assertion": "A refused visible-row dismissal stays on that row after refresh; Try again writes the same ID and leaves the other row untouched.",
+          "execution": "passed"
         }
       ],
       "docs": [

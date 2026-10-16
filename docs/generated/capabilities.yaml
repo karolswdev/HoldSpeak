@@ -10346,7 +10346,7 @@
       "apis": [
         "RuntimeBus presence events"
       ],
-      "authority": "Projection review navigates to the source. A conditional decision handler delegates approval/rejection to the backend; its actuator-card branch is not fed by the current non-learning event path. Dismiss changes only local cards.",
+      "authority": "Projection review navigates to the source. Dismiss uses the existing presentation writer for the visible row and quiets older popup backlog in that tab; it does not change source data or dismiss other Attention items. A conditional decision handler delegates approval/rejection to the backend; its actuator-card branch is not fed by the current non-learning event path.",
       "configuration": [
         "presence mascot mode",
         "optional enablement"
@@ -10393,7 +10393,8 @@
       ],
       "owner_observed": false,
       "persistence": [
-        "none; event/projection state only"
+        "Existing durable projection presentation state",
+        "Per-tab popup dismissal cutoff in sessionStorage, with in-memory fallback"
       ],
       "platforms": {
         "aipi": "not_applicable",
@@ -10402,13 +10403,13 @@
         "linux_x11": "supported_with_setup",
         "macos": "supported_with_setup"
       },
-      "purpose": "Reflect selected attention states and egress posture through the optional mascot surface.",
+      "purpose": "Show selected actionable attention through the optional mascot without replaying dismissed popup backlog. Dictation journal entries stay in history and Attention.",
       "release_availability": "unverified",
       "replacement": null,
       "side_effect": "local_reversible",
       "sources": [
         {
-          "claim": "Settings gate the component; runtime events refresh durable projections or queue learning cards. The projection action navigates to its source.",
+          "claim": "Settings gate the component; runtime events refresh durable projections or queue learning cards. Dictation journal projections never produce a Qlippy popup. Successful Dismiss closes older popup backlog in the tab while retaining untouched items in Attention; a refused writer remains visible for Retry.",
           "line": 196,
           "path": "web/src/components/AmbientLayer.tsx",
           "symbol": "Qlippy"
@@ -10432,6 +10433,18 @@
           "assertion": "Actuator proposed/result events include preview-only data suitable for Qlippy without payload secrets.",
           "node": "test_the_wire_events_ride_for_qlippy",
           "path": "tests/integration/test_web_companion_webhook.py"
+        },
+        {
+          "assertion": "Rendered journal warnings remain in the shared store and produce neither popup nor presentation write.",
+          "execution": "passed",
+          "node": "keeps dictation journal warnings in Attention without a popup or write",
+          "path": "web/src/components/ambientDismiss.test.tsx"
+        },
+        {
+          "assertion": "A refused visible-row dismissal stays on that row after refresh; Try again writes the same ID and leaves the other row untouched.",
+          "execution": "passed",
+          "node": "keeps a failed write visible and retries its exact ID after a refresh",
+          "path": "web/src/components/ambientDismiss.test.tsx"
         }
       ],
       "trust_boundary": "Qlippy presents state and egress facts; dismissing a card never authorizes an effect."
