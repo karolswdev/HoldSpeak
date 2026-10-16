@@ -29,6 +29,7 @@ COPY_CLASSIFICATIONS = frozenset(
 )
 
 _QUOTED = re.compile(r'(?P<quote>["`])(?P<text>(?:\\.|(?!\1).)*?)(?P=quote)')
+_JSX_TAG = re.compile(r"</?(?:[A-Za-z][\w.:-]*\b|(?=>))")
 _JSX_TEXT = re.compile(r">\s*([^<{][^<]*?)\s*<")
 _INLINE_CODE = re.compile(r"`([^`]+)`")
 _MARKDOWN_LINK = re.compile(r"!?\[([^\]]*)\]\([^)]*\)")
@@ -260,7 +261,53 @@ def _candidate(
     )
 
 
+def _jsx_text(source: str) -> Iterator[tuple[int, str]]:
+    """Read text after a JSX tag, never after an arrow in its attributes.
+
+    Attribute expressions can contain nested braces, strings and comparisons.
+    Only a closing angle outside those expressions ends the tag.
+    """
+    for match in _JSX_TAG.finditer(source):
+        index = match.end()
+        braces = 0
+        quote = ""
+        while index < len(source):
+            char = source[index]
+            if quote:
+                if char == "\\":
+                    index += 2
+                    continue
+                if char == quote:
+                    quote = ""
+            elif char in "\"'`":
+                quote = char
+            elif char == "{":
+                braces += 1
+            elif char == "}":
+                braces = max(0, braces - 1)
+            elif char == ">" and not braces:
+                break
+            index += 1
+        if index >= len(source):
+            continue
+        # Examine nested JSX tags independently: a component prop can itself
+        # hold rendered JSX. Masking the whole outer tag would hide that copy.
+        end = source.find("<", index + 1)
+        if end < 0:
+            continue
+        text = source[index + 1:end]
+        if "\n" not in text and text.strip() and not text.lstrip().startswith("{"):
+            yield source.count("\n", 0, index) + 1, text.strip()
+
+
 def _extract_source(client: str, relative: str, source: str) -> Iterator[CopyCandidate]:
+    jsx_by_line: dict[int, list[str]] = {}
+    if relative.endswith(".tsx"):
+        for line_number, text in _jsx_text(source):
+            jsx_by_line.setdefault(line_number, []).append(text)
+    else:
+        for line_number, line in enumerate(source.splitlines(), 1):
+            jsx_by_line[line_number] = [match.group(1) for match in _JSX_TEXT.finditer(line)]
     in_fence = False
     in_block_comment = False
     pending_error_context = 0
@@ -315,8 +362,8 @@ def _extract_source(client: str, relative: str, source: str) -> Iterator[CopyCan
 
         for match in _VISIBLE_PROP.finditer(raw_line):
             yield from emit(match.group("text"), "label")
-        for match in _JSX_TEXT.finditer(raw_line):
-            yield from emit(match.group(1), "action" if "button" in raw_line.lower() else "label")
+        for text in jsx_by_line.get(line_number, ()):
+            yield from emit(text, "action" if "button" in raw_line.lower() else "label")
 
         swift_visible = bool(_SWIFT_VISIBLE.search(raw_line))
         quoted = list(_QUOTED.finditer(raw_line))

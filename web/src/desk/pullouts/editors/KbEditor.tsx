@@ -106,7 +106,7 @@ export function KbEditor({ object: o, autoFocusName, onWriter }: InlineEditorCon
         {members.map(({ ref, object }) => <SurfaceLedgerRow key={ref}
           primary={object?.title || "Item unavailable"} meta={object ? KIND_LABEL[object.kind] || kindWord(object.kind) : "Unavailable"}
           trailing={<>
-            {object ? <Button dense variant="ghost" disabled={mutation.state === "saving"} onClick={async () => { if (await writer.flush()) useDesk.getState().openPullout(ref); }}>Open</Button> : null}
+            {object ? <Button dense variant="ghost" disabled={mutation.state === "saving"} onClick={async () => { if (await writer.flush()) useDesk.getState().openPullout(ref); }}>Open {kindWord(object.kind).toLowerCase()}</Button> : null}
             <Button dense variant="ghost" disabled={mutation.state === "saving"} onClick={() => void member(ref, true)}>Remove</Button>
           </>} />)}
       </SurfaceLedger> : <SurfaceState empty emptyLabel="No items" />}

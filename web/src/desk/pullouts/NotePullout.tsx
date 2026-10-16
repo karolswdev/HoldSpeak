@@ -363,7 +363,7 @@ export function NotePullout({
         if (current?.id === thought.id) {
           setStatus({ ownership: "thought", thought: current });
           setMessage("Review changed · Latest note loaded");
-        } else setMessage("Review changed · Could not read latest note · Retry");
+        } else setMessage("Latest note read failed · Shown note kept · Retry");
       } else {
         if (payload?.error === "refinement_review_action_payload_mismatch") clearThoughtRequest(key);
         setMessage(`${action === "answer" ? "Answer" : action === "accept" ? "Refinement" : "Dismissal"} not confirmed · ${readableError(cause)} · Retry`);

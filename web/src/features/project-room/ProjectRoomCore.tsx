@@ -1093,7 +1093,7 @@ function NeedsYouSection({
                       if (item.url) window.open(item.url, "_blank", "noopener");
                     }}>Decide</Button>
                   ) : item.url ? (
-                    <Button dense variant="ghost" onClick={() => window.open(item.url!, "_blank", "noopener")}>Open</Button>
+                    <Button dense variant="ghost" onClick={() => window.open(item.url!, "_blank", "noopener")}>Open source</Button>
                   ) : item.actionItemId ? (
                     /* A meeting's open action: Open lands on its card in
                        Follow-through, where the owner and the date are set
@@ -1949,7 +1949,7 @@ function DecisionsCommitmentsSection({ room }: { room: RoomSnapshot }) {
                 wrap
                 trailing={
                   dec.url ? (
-                    <Button dense variant="ghost" onClick={() => window.open(dec.url!, "_blank", "noopener")}>Open</Button>
+                    <Button dense variant="ghost" onClick={() => window.open(dec.url!, "_blank", "noopener")}>Open source</Button>
                   ) : undefined
                 }
               />
@@ -1967,7 +1967,7 @@ function DecisionsCommitmentsSection({ room }: { room: RoomSnapshot }) {
               }
               wrap
               trailing={
-                <Button dense variant="ghost" onClick={() => openPrimitive(`commitment:${c.id}`)}>Open</Button>
+                <Button dense variant="ghost" onClick={() => openPrimitive(`commitment:${c.id}`)}>Open commitment</Button>
               }
             />
           ))}

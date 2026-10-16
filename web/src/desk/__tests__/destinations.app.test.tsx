@@ -187,7 +187,7 @@ describe("the remote destination forms", () => {
     render(<Destinations />);
     let form = await pickChannel("jira");
     fireEvent.change(screen.getByTestId("dest-key"), { target: { value: "PAY-118" } });
-    expect(await within(form).findByText("Could not read accounts")).toBeTruthy();
+    expect(await within(form).findByText("Account read failed · Draft kept · Retry")).toBeTruthy();
     expect(within(form).queryByRole("button", { name: "Set up account" })).toBeNull();
     expect(within(form).queryByText("No Jira account")).toBeNull();
     expect(screen.getByTestId("dest-save")).toBeDisabled();

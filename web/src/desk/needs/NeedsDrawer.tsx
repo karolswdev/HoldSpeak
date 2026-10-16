@@ -134,7 +134,7 @@ function NeedVerbsView({ face, primary, onWell, well }: {
       return (
         <>
           <Button dense variant="ghost" aria-label={named("Open")} data-testid="needs-row-verb" data-verb="open"
-            onClick={() => openCoderSession(v.sessionKey)}>Open</Button>
+            onClick={() => openCoderSession(v.sessionKey)}>Open session</Button>
           <Button dense variant={lead} aria-label={named("Answer")} data-testid="needs-row-verb" data-verb="answer"
             onClick={() => openAgentAnswer(v.sessionKey)}>Answer</Button>
         </>
@@ -163,7 +163,7 @@ function NeedVerbsView({ face, primary, onWell, well }: {
             onClick={deny}>Deny</Button>
           {v.sessionKey ? (
             <Button dense variant={lead} aria-label={named("Open the agent's lane on Raw")} data-testid="needs-row-verb" data-verb="open"
-              onClick={() => openCoderSession(v.sessionKey, { raw: true })}>Open</Button>
+              onClick={() => openCoderSession(v.sessionKey, { raw: true })}>Open raw lane</Button>
           ) : null}
         </>
       );
@@ -179,7 +179,7 @@ function NeedVerbsView({ face, primary, onWell, well }: {
     case "session":
       return (
         <Button dense variant={lead} aria-label={named("Open the agent")} data-testid="needs-row-verb" data-verb="open"
-          onClick={() => openCoderSession(v.sessionKey)}>Open</Button>
+          onClick={() => openCoderSession(v.sessionKey)}>Open session</Button>
       );
     case "review":
       return (
@@ -256,7 +256,7 @@ function NeedVerbsView({ face, primary, onWell, well }: {
         <>
           <EgressChip label={urlHost(v.url) || "NOT SET"} scope="cloud" />
           <Button dense variant={lead} aria-label={named("Open")} data-testid="needs-row-verb" data-verb="open"
-            onClick={() => window.open(v.url, "_blank", "noopener")}>Open</Button>
+            onClick={() => window.open(v.url, "_blank", "noopener")}>Open link</Button>
         </>
       );
     case "summarize":
@@ -308,7 +308,7 @@ function NeedVerbsView({ face, primary, onWell, well }: {
             data-testid="needs-row-verb" data-verb={v.refused ? "retry" : "cancel"}
             onClick={() => void cancelArming(v.scheduleId)}>{v.refused ? "Retry" : "Cancel"}</Button>
           <Button dense variant="ghost" aria-label={named("Open")} data-testid="needs-row-verb" data-verb="open"
-            onClick={() => openSurfaceOr("review-meetings", "/history")}>Open</Button>
+            onClick={() => openSurfaceOr("review-meetings", "/history")}>Open meetings</Button>
         </>
       );
     case "calendar":
@@ -321,7 +321,7 @@ function NeedVerbsView({ face, primary, onWell, well }: {
       if (!open) return null;
       return (
         <Button dense variant={lead} aria-label={named("Open")} data-testid="needs-row-verb" data-verb="open"
-          onClick={() => open()}>Open</Button>
+          onClick={() => open()}>Open item</Button>
       );
     }
     default:

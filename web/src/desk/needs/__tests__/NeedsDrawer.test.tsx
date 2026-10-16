@@ -198,7 +198,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
       kind: "agent",
       fact: "The runbook needs a rollback owner. Jordan or Avery?",
       lamps: ["ASKS · 6 MIN"],
-      verbs: ["Open", "Answer"],
+      verbs: ["Open session", "Answer"],
     });
     // Phase 16: the kind plate is the agent (CC = Claude Code).
     expect(agent.plate).toBe("CC");
@@ -235,7 +235,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     const worked = face(row("Write the rollback runbook"));
     expect(worked.lamps).toEqual(["WORKING"]);
     expect(worked.fact).toBe("Claude Code · Payments ledger");
-    expect(worked.verbs).toEqual(["Open"]);
+    expect(worked.verbs).toEqual(["Open session"]);
     expect(row("Write the rollback runbook").textContent).not.toMatch(/UNASSIGNED|Name an owner/);
   });
 
@@ -283,7 +283,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     await mount();
     fireEvent.click(within(row("Claude Code: rollback runbook")).getByText("Answer"));
     expect(openCoderSession).toHaveBeenCalledWith("claude:s-run", { answer: true });
-    fireEvent.click(within(row("Claude Code: rollback runbook")).getByText("Open"));
+    fireEvent.click(within(row("Claude Code: rollback runbook")).getByText("Open session"));
     expect(openCoderSession).toHaveBeenLastCalledWith("claude:s-run");
   });
 
@@ -321,7 +321,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
       kind: "action",
       fact: "The runbook needs a rollback owner. Jordan or Avery?",
       lamps: ["ASKS · 6 MIN"],
-      verbs: ["Open", "Answer"],
+      verbs: ["Open session", "Answer"],
     });
     expect(document.querySelector(".needs-row[data-object-id='coder:claude:s-run']")).toBeNull();
     expect([...document.querySelectorAll(".needs-row-name")].filter((n) => n.textContent?.includes("rollback runbook"))).toHaveLength(1);
@@ -346,7 +346,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     expect(rows[0].getAttribute("data-kind")).toBe("meeting");
     const first = rows[0].querySelector(".gadget-lamp")?.textContent ?? "";
     expect(first).toMatch(/^ARMS · 0:0[78]$/);
-    expect(face(rows[0]).verbs).toEqual(["Cancel", "Open"]);
+    expect(face(rows[0]).verbs).toEqual(["Cancel", "Open meetings"]);
     await waitFor(() => expect(rows[0].querySelector(".gadget-lamp")?.textContent).not.toBe(first), { timeout: 2500 });
     fireEvent.click(rows[0].querySelector("[data-verb='cancel']")!);
     expect(cancel).toHaveBeenCalledWith("sch-1");
@@ -418,9 +418,9 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     const held = face(row("Codex: reconciliation"));
     expect(held.fact).toBe("psql -h staging-ledger -c 'select… +78 CHARS");
     expect(held.lamps).toEqual(["CUT · APPROVE IN RAW"]);
-    expect(held.verbs).toEqual(["Deny", "Open"]);
+    expect(held.verbs).toEqual(["Deny", "Open raw lane"]);
     expect(screen.queryByRole("button", { name: /^Approve/ })).toBeNull();
-    fireEvent.click(within(row("Codex: reconciliation")).getByText("Open"));
+    fireEvent.click(within(row("Codex: reconciliation")).getByText("Open raw lane"));
     // PHILO-15 20 (B63): Open opens the lane on Raw, where the cut call is approved.
     expect(openCoderSession).toHaveBeenCalledWith("codex:s-recon", { raw: true });
   });
@@ -445,7 +445,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     expect(held.fact).toBe(`OUTSIDE THE WORKTREE · /tmp/hs15_long.md\n${head}… +1666 CHARS`);
     expect(item.querySelector(".needs-row-fact")?.classList.contains("is-code")).toBe(true);
     expect(held.lamps).toEqual(["CUT · APPROVE IN RAW"]);
-    expect(held.verbs).toEqual(["Deny", "Open"]);
+    expect(held.verbs).toEqual(["Deny", "Open raw lane"]);
   });
 
   it("P1-2: a refused Cancel is named on the row with Retry; a cancel leaves a receipt after the row goes", async () => {

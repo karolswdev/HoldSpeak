@@ -193,7 +193,7 @@ export function PrReceiptsSection() {
                             </FoldGadget>
                             <span className="desk-pr-compose-actions">
                               <Button dense variant="ghost" onClick={() => void run(key, "deny", "Denying", () => store.decide(proposalId!, "reject"))}>Deny</Button>
-                              <Button dense variant="ghost" onClick={() => void run(key, "approve", "Posting", () => store.decide(proposalId!, "approve"))}>Approve</Button>
+                              <Button dense variant="ghost" onClick={() => void run(key, "approve", "Posting", () => store.decide(proposalId!, "approve"))}>Post to GitHub</Button>
                             </span>
                           </td></tr>
                         ) : null}

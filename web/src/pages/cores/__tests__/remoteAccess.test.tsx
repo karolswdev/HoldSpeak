@@ -240,7 +240,7 @@ describe("Remote access recovery ownership", () => {
   it("a failed first remote GET retries only that exact read", async () => {
     mockApiFetch.mockRejectedValueOnce(new TypeError("Hub unavailable")).mockResolvedValueOnce(knownRemote());
     render(<RemoteAccessModule />);
-    expect(await screen.findByRole("alert")).toHaveTextContent("Could not read remote access");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Remote access read failed · Grants unchanged · Retry");
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     expect(await screen.findByText("keeper")).toBeInTheDocument();
     expect(screen.queryByRole("alert")).toBeNull();

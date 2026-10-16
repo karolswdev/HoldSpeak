@@ -434,7 +434,7 @@ function MeetingDecisionDetail({
         {word ? <StateChip state="idle" label={word} wrap /> : null}
       </div>
       <GadgetGroup label="Decision" material="inset"><Material>{decision.text}</Material></GadgetGroup>
-      <GadgetGroup label="Context" material="inset">
+      <GadgetGroup label="Decision context" material="inset">
         {decision.rationale ? <GadgetRow label="Rationale" controlWidth="full"><Material>{decision.rationale}</Material></GadgetRow> : null}
         {decision.decided_at ? <GadgetRow label="Decided">{humanDate(decision.decided_at)}</GadgetRow> : null}
         {decision.meeting_title || meetingId ? <GadgetRow label="Meeting" controlWidth="full">
@@ -495,7 +495,7 @@ function ReceiptDetail({
       </div>
       <GadgetGroup label="Decision" material="inset"><Material>{decisionText}</Material></GadgetGroup>
       {receipt.rationale || receipt.alternatives || receipt.owner || receipt.review_date || origin ? (
-        <GadgetGroup label="Context" material="inset">
+        <GadgetGroup label="Decision context" material="inset">
           {receipt.rationale ? <GadgetRow label="Rationale" controlWidth="full"><Material>{receipt.rationale}</Material></GadgetRow> : null}
           {receipt.alternatives ? <GadgetRow label="Alternatives" controlWidth="full"><Material>{receipt.alternatives}</Material></GadgetRow> : null}
           {receipt.owner ? <GadgetRow label="Owner" controlWidth="full">{receipt.owner}</GadgetRow> : null}

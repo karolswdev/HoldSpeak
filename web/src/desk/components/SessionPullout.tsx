@@ -521,7 +521,7 @@ function SteerComposer({ listenSignal = 0, available = true, options, onOptionsC
       {textRecovered ? (
         <span className="quiet">Recovered local steer draft.</span>
       ) : null}
-      <FoldGadget title="Context">
+      <FoldGadget title="Steering sources">
       <GroundingSection
         meetings={(meetings || []).map((m) => ({
           id: m.id,

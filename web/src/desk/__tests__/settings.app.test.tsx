@@ -143,15 +143,19 @@ describe("the Settings hub on a cold hub", () => {
     expect(container.querySelectorAll(".surface-display, .settings-plate, .settings-leads")).toHaveLength(0);
     const work = screen.getByRole("group", { name: "Work preferences" });
     const desk = screen.getByRole("group", { name: "Desk preferences" });
-    expect(within(work).getAllByRole("button", { name: "Open" })).toHaveLength(5);
-    expect(within(desk).getAllByRole("button", { name: "Open" })).toHaveLength(4);
+    expect(within(work).getAllByRole("button", { name: /^Open / }).map((button) => button.textContent)).toEqual([
+      "Open Voice", "Open Meetings", "Open Rhythm", "Open Engines", "Open Accounts",
+    ]);
+    expect(within(desk).getAllByRole("button", { name: /^Open / }).map((button) => button.textContent)).toEqual([
+      "Open Sounds & Presence", "Open Wallpaper", "Open People", "Open System",
+    ]);
     const rows = Array.from(container.querySelectorAll(".surface-ledger-primary")).map((n) => n.textContent);
     expect(rows).toEqual(expect.arrayContaining(["Rhythm", "System"]));
     expect(rows).not.toContain("Models");
     expect(rows).not.toContain("Assignments");
     // Engines uses the same row and Open verb as the ordinary modules.
     const engines = screen.getByTestId("settings-lead-engines");
-    expect(within(engines).getByRole("button", { name: "Open" }).className).toContain("btn--secondary");
+    expect(within(engines).getByRole("button", { name: "Open Engines" }).className).toContain("btn--secondary");
     expect(container.querySelectorAll(".prefs-hub .btn--primary")).toHaveLength(0);
     const rhythm = ledgerRow("Rhythm")!.textContent ?? "";
     expect(rhythm).not.toMatch(/\b0 LOOP/);
@@ -172,11 +176,11 @@ describe("the Settings hub on a cold hub", () => {
   it("Open on Voice opens the Voice module; « Settings comes back; Open on System opens System", async () => {
     // replaces: tests/e2e/test_hs170_settings_hub_glass.py::test_settings_hub_open_verb_opens_surface
     const { container } = await openHub();
-    fireEvent.click(within(ledgerRow("Voice")!).getByRole("button", { name: "Open" }));
+    fireEvent.click(within(ledgerRow("Voice")!).getByRole("button", { name: "Open Voice" }));
     expect(container.querySelector(".prefs-module .gadget-pane-title")?.textContent).toBe("Voice");
     fireEvent.click(screen.getByRole("button", { name: "Settings" }));
     await screen.findByText("No engine yet");
-    fireEvent.click(within(ledgerRow("System")!).getByRole("button", { name: "Open" }));
+    fireEvent.click(within(ledgerRow("System")!).getByRole("button", { name: "Open System" }));
     expect(container.querySelector(".prefs-module .gadget-pane-title")?.textContent).toBe("System");
     await screen.findByTestId("system-display");
   });
@@ -269,7 +273,7 @@ describe("Settings navigation uses one selection", () => {
     expectWing("Guide");
     expect(document.querySelectorAll(".surface-footer-layout")).toHaveLength(1);
     pressWing("Settings");
-    fireEvent.click(within(ledgerRow("Meetings")!).getByRole("button", { name: "Open" }));
+    fireEvent.click(within(ledgerRow("Meetings")!).getByRole("button", { name: "Open Meetings" }));
     expect(screen.getByRole("checkbox", { name: "Auto export" })).toBeChecked();
   });
 
@@ -505,7 +509,7 @@ describe("Settings repair: ordinary choices and recoverable writes", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "Symbol 1" }), { target: { value: "" } });
     fireEvent.change(screen.getByRole("textbox", { name: "Spoken phrase 1" }), { target: { value: "new arrow" } });
     fireEvent.click(screen.getByRole("button", { name: "Settings" }));
-    fireEvent.click(within(ledgerRow("Voice")!).getByRole("button", { name: "Open" }));
+    fireEvent.click(within(ledgerRow("Voice")!).getByRole("button", { name: "Open Voice" }));
     expect(screen.getByRole("textbox", { name: "Spoken phrase 1" })).toHaveValue("new arrow");
     expect(screen.getByRole("textbox", { name: "Symbol 1" })).toHaveValue("");
     refuseSymbols = false;

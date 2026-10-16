@@ -371,7 +371,7 @@ export function useHeldCall(member: ConductorMember): { call: LaneGated | null; 
         setError(null);
       }
     } catch (cause) {
-      if (read === generation.current) setError(`Call read failed · ${readableError(cause)}`);
+      if (read === generation.current) setError(`Call read failed · Calls unchanged · Retry · ${readableError(cause)}`);
     }
   }, [launchId]);
   useEffect(() => {
@@ -413,7 +413,7 @@ function AskPlate({
       await useGate.getState().refresh();
       await reread();
       const error = useGate.getState().error;
-      setFailure(error ? { label: `Gate read failed · ${error}`, retry: () => void recoverRead() } : null);
+      setFailure(error ? { label: `Gate read failed · Decisions unchanged · Retry · ${error}`, retry: () => void recoverRead() } : null);
     } finally {
       pending.current = false;
       setBusy(false);
@@ -429,7 +429,7 @@ function AskPlate({
       await useGate.getState().decide(id, decision);
       setDecidedId(id);
       const error = useGate.getState().error;
-      if (error) setFailure({ label: `Gate read failed · ${error}`, retry: () => void recoverRead() });
+      if (error) setFailure({ label: `Decision saved · Gate read failed · Retry · ${error}`, retry: () => void recoverRead() });
     } catch (error) {
       setFailure({
         label: `${decision === "approved" ? "Approve" : "Deny"} failed · ${readableError(error)}`,

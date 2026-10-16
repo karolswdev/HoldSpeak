@@ -239,7 +239,7 @@ describe("Meetings calendar source rows", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
     expect(screen.queryByTestId("calendar-well")).toBeNull();
-    expect(screen.getByText("Could not read calendars")).toBeVisible();
+    expect(screen.getByText("Calendar read failed · Sources unchanged · Retry")).toBeVisible();
     expect(screen.queryByTestId("settings-save-failure")).toBeNull();
     expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled();
   });

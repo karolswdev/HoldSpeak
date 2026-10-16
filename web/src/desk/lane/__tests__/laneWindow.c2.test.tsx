@@ -308,7 +308,7 @@ describe("the agent's window", () => {
       return base(url, init);
     });
     fireEvent.click(screen.getByTestId("lane-approve"));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Decision read failed · Gate read unavailable");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Decision saved · Decision read failed · Retry · Gate read unavailable");
     expect(screen.queryByTestId("lane-approve")).toBeNull();
     unavailable = false;
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));

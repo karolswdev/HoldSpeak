@@ -54,7 +54,7 @@ export function WorkbenchTemplatePicker({
       if (error) throw new Error(error);
       onCreated?.(id);
     } catch (error) {
-      setReadError(`${name} created · Desk read failed · ${readableError(error)}`);
+      setReadError(`${name} created · Workbench saved · Desk read failed · Retry · ${readableError(error)}`);
     } finally {
       setBusy(false);
     }

@@ -440,8 +440,13 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
   const hw = hardwareToken(detection);
 
   /* ── the foot ── */
+  // Keep the useful roster-first paint, but do not call the face settled
+  // while its initial reads can still add the strip, engines or speech row.
+  const reading = (!roster && !ctrl.error)
+    || (!detection && !ctrl.detectionFailed)
+    || speech.ai.read.kind === "loading";
   return (
-    <div className="runson-root" ref={rootRef} data-testid="runson-root">
+    <div className="runson-root" ref={rootRef} data-testid="runson-root" aria-busy={reading || undefined}>
       <div className="runson-apphead">
         <h1 className="surface-display runson-fact" data-testid="runson-fact">
           {roster ? fact : "Runs on"}

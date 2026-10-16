@@ -39,18 +39,24 @@ const preview = (macro: Macro) =>
     type_text: "types",
   })[macro.action.kind] ?? "uses") + ` ${macro.action.payload}`;
 
+type CommandDraft = { session: object; index: number; macro: Macro };
+
+// Settings trims the keyword, but preserves the action payload verbatim.
+const sameMacro = (left: Macro, right: Macro) =>
+  left.keyword.trim() === right.keyword.trim() &&
+  left.action.kind === right.action.kind &&
+  left.action.payload === right.action.payload;
+
 export function CommandsCore({ hero }: CoreProps) {
   const resource = useResource<SettingsResponse>("/api/settings", {});
   const macros = resource.data.dictation?.macros ?? {};
   const items = (Array.isArray(macros.items) ? macros.items : []) as Macro[];
   const enabled = Boolean(macros.enabled);
-  const [editing, setEditing] = useState<{
-    index: number;
-    macro: Macro;
-  } | null>(null);
+  const [editing, setEditing] = useState<CommandDraft | null>(null);
   const [message, setMessage] = useState<{
     error?: boolean;
     text: string;
+    saveRecovery?: { draft?: CommandDraft };
   } | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -59,7 +65,7 @@ export function CommandsCore({ hero }: CoreProps) {
      (one writer), so a checkbox toggle can no longer round-trip (and
      clobber) the whole macro array. The `_revision` it read rides along so a
      concurrent Settings write is reconciled, not silently overwritten. */
-  const persist = async (next: Macro[]) => {
+  const persist = async (next: Macro[], draft?: CommandDraft) => {
     setBusy(true);
     setMessage(null);
     try {
@@ -73,11 +79,37 @@ export function CommandsCore({ hero }: CoreProps) {
       resource.setData(value.settings ?? resource.data);
       return true;
     } catch (error) {
-      setMessage({ error: true, text: `Command not saved · ${readableError(error)}` });
+      setMessage({
+        error: true,
+        text: `Command save not confirmed · Shown commands kept · Reload · ${readableError(error)}`,
+        saveRecovery: { draft },
+      });
       return false;
     } finally {
       setBusy(false);
     }
+  };
+  const recoverSave = async () => {
+    const notice = message;
+    if (!notice?.saveRecovery) return;
+    const settings = await resource.reload();
+    if (!settings) return;
+    const draft = notice.saveRecovery.draft;
+    if (draft) {
+      const saved = settings.dictation?.macros?.items ?? [];
+      const matches = saved.flatMap((macro, index) =>
+        sameMacro(macro, draft.macro) ? [index] : [],
+      );
+      // An uncertain Add must become an edit of its accepted row. Never
+      // replace newer fields or take over an editor opened since the save.
+      if (matches.length !== 1) return;
+      setEditing((current) =>
+        current?.session === draft.session
+          ? { ...current, index: matches[0] }
+          : current,
+      );
+    }
+    setMessage((current) => current === notice ? null : current);
   };
   const test = async (macro: Macro) => {
     setBusy(true);
@@ -102,10 +134,18 @@ export function CommandsCore({ hero }: CoreProps) {
   };
   const save = async () => {
     if (!editing) return;
+    const draft = editing;
     const next = [...items];
-    if (editing.index < 0) next.push(editing.macro);
-    else next[editing.index] = editing.macro;
-    if (await persist(next)) setEditing(null);
+    if (draft.index < 0) next.push(draft.macro);
+    else next[draft.index] = draft.macro;
+    if (await persist(next, draft)) {
+      setEditing((current) => {
+        if (current?.session !== draft.session) return current;
+        return current.macro === draft.macro
+          ? null
+          : { ...current, index: draft.index < 0 ? next.length - 1 : draft.index };
+      });
+    }
   };
 
   const verbs = (
@@ -113,7 +153,7 @@ export function CommandsCore({ hero }: CoreProps) {
       <Button
         dense
         disabled={busy}
-        onClick={() => setEditing({ index: -1, macro: blank() })}
+        onClick={() => setEditing({ session: {}, index: -1, macro: blank() })}
       >
         Add command
       </Button>
@@ -141,7 +181,10 @@ export function CommandsCore({ hero }: CoreProps) {
       {renderHeroSlot(hero, verbs, countToken(items.length, "COMMAND"))}
       {message ? (
         message.error ? (
-          <SurfaceState error={message.text} />
+          <SurfaceState
+            error={message.text}
+            onRetry={message.saveRecovery ? () => void recoverSave() : undefined}
+          />
         ) : (
           <p className="surface-receipt-line" data-tone="ok" role="status">
             {message.text}
@@ -161,7 +204,7 @@ export function CommandsCore({ hero }: CoreProps) {
                 emptyLabel="No voice commands"
                 emptyGlyph="○"
                 actionLabel="Add command"
-                onAction={() => setEditing({ index: -1, macro: blank() })}
+                onAction={() => setEditing({ session: {}, index: -1, macro: blank() })}
               />
             </>
           ) : (
@@ -188,7 +231,7 @@ export function CommandsCore({ hero }: CoreProps) {
                         variant="ghost"
                         disabled={busy}
                         onClick={() =>
-                          setEditing({ index, macro: structuredClone(macro) })
+                          setEditing({ session: {}, index, macro: structuredClone(macro) })
                         }
                       >
                         Edit

@@ -243,6 +243,60 @@ def test_a_dom_selector_is_code_and_real_failure_copy_beside_it_is_still_read(
     }
 
 
+def test_jsx_callback_wire_names_are_not_rendered_copy(tmp_path: Path) -> None:
+    face = tmp_path / "face.tsx"
+    face.write_text(
+        '<Button onClick={() => openSurfaceOr("configure-runs-on", "/profiles")}>'
+        'Configure Runs on</Button>\n'
+    )
+    contract = replace(
+        PRODUCT_LANGUAGE.copy_contract,
+        primary_surfaces={"web": ("face.tsx",)},
+    )
+    items = inventory(tmp_path, contract)
+    assert [item.text for item in items] == ["Configure Runs on"]
+    assert not violations(items, contract)
+
+
+def test_jsx_expression_code_does_not_hide_adjacent_prohibited_copy(tmp_path: Path) -> None:
+    face = tmp_path / "face.tsx"
+    face.write_text(
+        '<Button disabled={count > 0} onClick={() => send({ path: "/profiles", '
+        'nested: { value: "> Agent Desk <" } })}>Open engines</Button>'
+        '<span>Agent Desk</span>\n'
+        '<span>{profiles.length}</span><span>Recipes</span>\n'
+    )
+    contract = replace(
+        PRODUCT_LANGUAGE.copy_contract,
+        primary_surfaces={"web": ("face.tsx",)},
+    )
+    items = inventory(tmp_path, contract)
+    assert {item.text for item in items} == {"Open engines", "Agent Desk", "Recipes"}
+    assert {item.text for item in violations(items, contract)} == {"Agent Desk", "Recipes"}
+
+
+def test_multiline_jsx_attributes_keep_visible_text_and_failure_facts(tmp_path: Path) -> None:
+    face = tmp_path / "face.tsx"
+    face.write_text(
+        '<section><Button\n'
+        '  onClick={() => send({ path: "/profiles", nested: { value: ">" } })}\n'
+        '>Open engines</Button>Agent Desk<span>Recipes</span>\n'
+        '<span>Send failed · {error} · Draft kept · Retry</span></section>\n'
+        '<Pane content={<span>Profiles</span>} />\n'
+    )
+    contract = replace(
+        PRODUCT_LANGUAGE.copy_contract,
+        primary_surfaces={"web": ("face.tsx",)},
+    )
+    items = inventory(tmp_path, contract)
+    assert {(item.line, item.text) for item in items} == {
+        (3, "Open engines"), (3, "Agent Desk"), (3, "Recipes"),
+        (4, "Send failed · {value} · Draft kept · Retry"),
+        (5, "Profiles"),
+    }
+    assert {item.text for item in violations(items, contract)} == {"Agent Desk", "Recipes", "Profiles"}
+
+
 def test_copy_that_holds_a_bracket_is_still_copy(tmp_path: Path) -> None:
     """Astra on #783: only a selector-ONLY literal is code. A failure
     statement with ``[status=503]`` inside it is still read and still owes
