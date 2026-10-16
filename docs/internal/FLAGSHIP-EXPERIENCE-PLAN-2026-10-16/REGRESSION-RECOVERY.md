@@ -11,8 +11,9 @@ Tracking alone does not finish this work.
 - [Brief/source tape](https://github.com/karolswdev/HoldSpeak/actions/runs/38950387547): 103 failed cases.
 - [Daily-work tape](https://github.com/karolswdev/HoldSpeak/actions/runs/38957119404): 106 failed cases.
 - [Density tape](https://github.com/karolswdev/HoldSpeak/actions/runs/38961799415): **101 failed, 16,356 passed, 69 skipped, 1 expected failure**.
-- Union: **112 distinct cases** across four completed tapes. Absence is not closure.
-- Recovery baseline: `2669d98f2` (#1224). The #1226 [full run](https://github.com/karolswdev/HoldSpeak/actions/runs/38973245716) is in progress.
+- [Contracts recovery tape](https://github.com/karolswdev/HoldSpeak/actions/runs/38973245716): **82 failed, 16,400 passed, 68 skipped, 1 expected failure** at #1226 (`5c26bd0fa`), before copy/runtime/browser repairs. All 82 failure names already belong to this queue.
+- Union: **112 distinct cases** across five completed tapes. Absence is not closure.
+- Recovery baseline: `2669d98f2` (#1224). The #1228 [full run](https://github.com/karolswdev/HoldSpeak/actions/runs/38979062393) is in progress; it predates the browser repairs.
 - Two producer cases were already verified by #1224. Every other case below needs current evidence.
 
 Working tree: `/Users/karol/dev/tools/wt-regression-recovery-20261016`.
@@ -279,3 +280,33 @@ product contract; no skips, blanket retries, threshold increases or broad exempt
   Activity now opens this unscoped face without a scope; exact meeting scopes
   remain. **17 Activity checks, type check, and both actual return cases pass**
   (9.50 s). The added strict one-Back, exact-row and nine-hit-point proof stays.
+
+- The #1226 full tape finished: **82 failed / 16,400 passed / 68 skipped /
+  1 existing expected failure**. All 82 case names are already tracked; this
+  run predates #1227, #1228 and the browser batch. It adds no new case and does
+  not establish the status of the repaired current head.
+- Visual review found an additional Room evidence-claim ink defect: an undefined
+  `--text-primary` token falls back to near-white on pale paper. A bounded repair
+  to existing scoped `--text` and rendered contrast proof are in preparation.
+  This local finding is separate from the 112 historical CI case identities.
+
+- Integrated ordinary quick: **4,169 web / 180 affected / 109 sweep / 17 canon
+  pass; 3 affected cases fail**. Two desktop Object-hover cases still fail to
+  expose Delete; one receipt test selects two same-title records from its shared
+  fixture. All three remain asserted and under repair.
+- Room claim proof fails on the original bundle at **1.028:1 contrast** at both
+  widths while existing wrap/line-end assertions pass. The scoped-ink fix is
+  applied; rebuilt green proof and actual shots remain.
+
+- Room claim ink is now verified at both widths: **2 pass** after both fail on
+  the original colors. The same rendered claim measures **17.12:1** contrast
+  with scoped ink; root inspected actual 1440/393 shots and preserved the editor
+  wrapping/line-end assertions. Delivery remains coupled to the browser batch.
+
+- The three additional Desk failures are resolved. Actual pointer observations
+  prove hover opens the submenu; the desktop Delete keyboard hint changes its
+  accessible name, so tests identify the exact visible verb inside that submenu.
+  The shared receipt hub now uses a distinct title per width and retains the
+  created source ID. **All six desktop/phone cases pass together on one worker**
+  (78.77 s), with deletion, Undo, selected-row return and nine-hit checks intact.
+  The ordinary integrated quick is being rerun.

@@ -153,7 +153,7 @@
 
 .update-inline-claim-text {
   font: 400 13px/1.6 var(--font-sans, Inter, system-ui, sans-serif);
-  color: var(--text-primary, #f2f3f5);
+  color: var(--text);
 }
 
 /* ── HS-200-06: the three claim axes live in the library now

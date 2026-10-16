@@ -18,6 +18,7 @@ two actions with owner and due date) is opened at 393 touch and 1440 mouse:
   W2 nothing in the editor scrolls sideways;
   W3 every line's last words (the owner and the due date) are inside the
      editor's visible box.
+  W4 the draft's claim text reads at least 4.5:1 against its rendered paper.
 
 Shots go to assets/story-18-shots/ (``.tmp/evidence-shots/`` unless
 HOLDSPEAK_EVIDENCE_WRITE=1).
@@ -98,14 +99,17 @@ def _seed_draft(project_id: str) -> None:
     from holdspeak.db import get_database
 
     body = "## This week\n\n" + "\n\n".join(LINES) + "\n"
+    claims = [{"span_id": "wrap-summary", "text": LINES[0], "refs": [],
+               "section": "this_week", "verified": False, "kind": "observation",
+               "support": "unknown", "acceptance": "unreviewed"}]
     now = datetime.now().isoformat()
     with get_database()._connection() as conn:
         conn.execute(
             """INSERT INTO project_updates
                (id, project_id, project_revision, review_id, lifecycle, draft_revision,
                 body_md, claims_json, source_manifest_json, generator, created_at, updated_at)
-               VALUES (?, ?, 0, NULL, 'draft', 1, ?, '[]', '{}', 'deterministic', ?, ?)""",
-            ("pupd_p1318_wrap", project_id, body, now, now),
+               VALUES (?, ?, 0, NULL, 'draft', 1, ?, ?, '{}', 'deterministic', ?, ?)""",
+            ("pupd_p1318_wrap", project_id, body, json.dumps(claims), now, now),
         )
 
 
@@ -129,6 +133,38 @@ _ENDS_JS = """(ends) => {
     if (e.scrollWidth > e.clientWidth + 1 && ['auto', 'scroll'].includes(getComputedStyle(e).overflowX))
       out.sideways.push((e.className || e.tagName).toString().slice(0, 40) + ' ' + e.scrollWidth + '>' + e.clientWidth);
   return out;
+}"""
+
+
+_CLAIM_CONTRAST_JS = r"""(el) => {
+  const parse = (value) => {
+    const match = value.match(/rgba?\(([^)]+)\)/);
+    if (!match) throw new Error('Unsupported rendered colour: ' + value);
+    const parts = match[1].split(/[ ,/]+/).filter(Boolean).map(Number);
+    return [...parts.slice(0, 3), parts.length > 3 ? parts[3] : 1];
+  };
+  const over = (top, under) => top.slice(0, 3).map((v, i) => v * top[3] + under[i] * (1 - top[3])).concat(1);
+  const layers = [];
+  for (let node = el; node; node = node.parentElement) {
+    const colour = parse(getComputedStyle(node).backgroundColor);
+    if (colour[3] > 0) layers.push(colour);
+    if (colour[3] === 1) break;
+  }
+  if (!layers.length || layers[layers.length - 1][3] !== 1)
+    throw new Error('Claim has no opaque rendered background');
+  let background = layers.pop();
+  for (let i = layers.length - 1; i >= 0; i--) background = over(layers[i], background);
+  const foreground = over(parse(getComputedStyle(el).color), background);
+  const luminance = (colour) => colour.slice(0, 3).map((v) => {
+    const c = v / 255;
+    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  }).reduce((sum, c, i) => sum + c * [0.2126, 0.7152, 0.0722][i], 0);
+  const light = luminance(foreground), ground = luminance(background);
+  const rect = el.getBoundingClientRect();
+  return {text: el.textContent, foreground, background,
+    ratio: (Math.max(light, ground) + 0.05) / (Math.min(light, ground) + 0.05),
+    on_glass: rect.width > 0 && rect.height > 0 && rect.left >= 0 && rect.top >= 0
+      && rect.right <= innerWidth && rect.bottom <= innerHeight};
 }"""
 
 
@@ -176,8 +212,14 @@ def test_the_update_draft_wraps(tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
             faults = _rendered_text_faults(page, '[data-testid="update-body-editor"]', on_glass=True)
             ends = page.evaluate(_ENDS_JS, ENDS)
             page.screenshot(path=str(SHOTS / f"update-editor-wrap-{width}.png"))
+            claim = page.locator('[data-testid="update-inline-claim"][data-span-id="wrap-summary"] .update-inline-claim-text')
+            claim.wait_for()
+            claim.scroll_into_view_if_needed()
+            _settle(page)
+            contrast = claim.evaluate(_CLAIM_CONTRAST_JS)
+            page.screenshot(path=str(SHOTS / f"update-claim-ink-{width}.png"))
             (SHOTS / f"update-editor-wrap-{width}.json").write_text(
-                json.dumps({"faults": faults, "ends": ends}, indent=1) + "\n")
+                json.dumps({"faults": faults, "ends": ends, "claim_contrast": contrast}, indent=1) + "\n")
             browser.close()
     finally:
         server.stop()
@@ -186,6 +228,8 @@ def test_the_update_draft_wraps(tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
     assert not faults["clipped"] and not faults["overlaps"], f"W1 at {width}: {faults}"
     assert not ends["sideways"], f"W2 at {width}: the editor scrolls sideways: {ends['sideways']}"
     assert not ends["missing"], f"W3 at {width}: line ends off the editor ({ends['box']}): {ends['missing']}"
+    assert contrast["text"] == LINES[0] and contrast["on_glass"], f"W4 at {width}: no visible seeded claim: {contrast}"
+    assert contrast["ratio"] >= 4.5, f"W4 at {width}: claim ink is below 4.5:1 on its paper: {contrast}"
 
 
 # ══ lane e2e-high-1 ════════════════════════════════════════

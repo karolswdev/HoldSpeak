@@ -322,7 +322,14 @@ class TestOneDesk:
                 else:
                     obj.hover()
                     page.wait_for_timeout(700)
-                delete = menu.get_by_role("menuitem", name="Delete", exact=True)
+                    assert obj.get_attribute("aria-expanded") == "true"
+                object_menu = page.get_by_role("menu", name="Object submenu", exact=True)
+                object_menu.wait_for(timeout=T)
+                # Desktop adds a visible Delete key hint to the accessible
+                # name. The exact action label identifies the one row.
+                delete = object_menu.get_by_role("menuitem").filter(
+                    has=page.locator(".desk-menu-label", has_text=re.compile(r"^Delete$")))
+                assert delete.count() == 1, object_menu.inner_text()
                 assert delete.get_attribute("aria-disabled") != "true", delete.inner_text()
                 self._tap(page, delete, phone, 900)
                 page.locator(f"[id='{win}']").wait_for(state="detached", timeout=T)
@@ -377,7 +384,13 @@ class TestOneDesk:
                 else:
                     obj.hover()
                     page.wait_for_timeout(700)
-                self._tap(page, menu.get_by_role("menuitem", name="Delete", exact=True), phone, 900)
+                    assert obj.get_attribute("aria-expanded") == "true"
+                object_menu = page.get_by_role("menu", name="Object submenu", exact=True)
+                object_menu.wait_for(timeout=T)
+                delete = object_menu.get_by_role("menuitem").filter(
+                    has=page.locator(".desk-menu-label", has_text=re.compile(r"^Delete$")))
+                assert delete.count() == 1, object_menu.inner_text()
+                self._tap(page, delete, phone, 900)
                 page.locator(f"[id='{win}']").wait_for(state="detached", timeout=T)
                 # The Chair window is still open; the receipt and its Undo are on the glass.
                 assert page.locator(".desk-window-shell.chair-window[aria-label='Needs you']").first.is_visible()
@@ -650,8 +663,12 @@ def test_receipt_verbs_own_their_areas(receipt_hub, width: int) -> None:
         page.locator("[aria-controls=desk-tool-shelf]").wait_for(timeout=15000)
 
         # 3. a footer receipt (the Brief view's SurfaceFooter)
-        status, _ = receipt_hub.api("POST", "/api/decisions", {"title": "Receipt hit material", "status": "proposed"})
+        # The module shares a hub across widths. Each sitting owns a named
+        # record, and its source id must survive selection and return.
+        receipt_title = f"Receipt hit material at {width}"
+        status, made = receipt_hub.api("POST", "/api/decisions", {"title": receipt_title, "status": "proposed"})
         assert status == 201
+        decision_id = made["decision"]["id"]
         # the brief is made through the hub's own route (the Chair's Generate
         # is J10's case; at 393 the open Thread sheet covers the Chair here)
         status, _ = receipt_hub.api("POST", "/api/brief/generate", {})
@@ -660,22 +677,24 @@ def test_receipt_verbs_own_their_areas(receipt_hub, width: int) -> None:
         # PHILO-17 summaries (#1064): a setup row ("No engine for summaries")
         # can lead the list; select the decision's own row.
         page.locator("[data-testid=brief-sf-row] .intelligence-brief-sf-primary",
-                     has_text="Receipt hit material").first.click()
+                     has_text=receipt_title).click()
         # The row opens the decision in its own window (PHILO-13-06 B1); at
         # 393 that window is the front sheet. Bring the Brief back to the
         # front from its Dock tile: its footer is the receipt under test.
-        page.locator(".desk-window-shell[aria-label='Receipt hit material']").first.wait_for(timeout=15000)
-        page.locator(".desk-dock [aria-label^='Today']").first.click()
-        today = page.locator(".desk-window-shell.is-front[aria-label='Today']")
+        source = page.locator(f"[id='pullout:decision:{decision_id}']")
+        source.wait_for(timeout=15000)
+        assert source.get_attribute("aria-label") == receipt_title
+        page.locator(".desk-dock [data-app='intelligence:desk']").click()
+        today = page.locator("[id='pullout:intelligence:desk'].is-front")
         today.wait_for(timeout=15000)
         assert today.get_by_role("group", name="Intelligence view", exact=True).filter(visible=True).get_by_role(
             "button", name="Brief", exact=True).get_attribute("aria-pressed") == "true", (
                 "Returning to Today must keep the selected Brief view and its triage row"
             )
         assert today.get_by_test_id("brief-sf-row").filter(
-            has_text="Receipt hit material").get_attribute("data-selected") == "true"
+            has_text=receipt_title).get_attribute("data-selected") == "true"
         _fault(page, "POST", "/api/brief/items/")
-        page.get_by_role("button", name="Acknowledge").first.click()
+        today.get_by_role("button", name="Acknowledge", exact=True).click()
         _probe(page, ".surface-footer-receipt", "brief-footer", width, failures)
         browser.close()
     assert not failures, "\n".join(failures)
