@@ -52,6 +52,28 @@ const jupiterOrbit = {
     ),
 } satisfies AtmosphereDefinition;
 
+const marsOrbit = {
+  id: "mars-orbit",
+  name: "In Mars' orbit",
+  description: "Mars, Phobos, Deimos, and distant stars.",
+  seed: 0x4d415253,
+  gradeClassName: "desk-atmosphere-grade--mars-orbit",
+  previewUrl: `${PUBLIC_BASE}desk/atmospheres/mars-orbit.webp`,
+  load: () =>
+    import("./marsOrbitScene").then((module) => module.createMarsOrbitScene),
+} satisfies AtmosphereDefinition;
+
+const saturnOrbit = {
+  id: "saturn-orbit",
+  name: "In Saturn's orbit",
+  description: "Saturn, layered rings, and passing moons.",
+  seed: 0x53415455,
+  gradeClassName: "desk-atmosphere-grade--saturn-orbit",
+  previewUrl: `${PUBLIC_BASE}desk/atmospheres/saturn-orbit.webp`,
+  load: () =>
+    import("./saturnOrbitScene").then((module) => module.createSaturnOrbitScene),
+} satisfies AtmosphereDefinition;
+
 const quietDesk = {
   id: "quiet-desk",
   name: "Quiet Desk",
@@ -140,6 +162,8 @@ export const ATMOSPHERES = [
   lanternGarden,
   ...interiorAtmospheres,
   jupiterOrbit,
+  marsOrbit,
+  saturnOrbit,
   quietDesk,
 ] as const satisfies readonly AtmosphereDefinition[];
 

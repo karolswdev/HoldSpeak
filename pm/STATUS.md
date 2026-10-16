@@ -16,6 +16,17 @@ case identities and current proof. All 11 final browser cases now pass across
 the focused runs, including one-Back Activity return; 639 graph checks and
 TypeScript pass. Ordinary quick and delivery remain.
 
+**Orbital places — #1229 (2026-10-16).** Change places adds live Mars with
+Phobos/Deimos and Saturn with layered rings, Titan/Enceladus. Local terrain/sky,
+actual rendered picker/fallback stills, existing motion/visibility controls.
+Final build `37302e41750eb272`; quick GREEN: 4,105 web / 705 affected / 109
+sweep / 17 canon; TypeScript passes. Actual isolated 1440/393 journeys prove
+selection/reload, moving frames, drawer input, pause/reduced motion and Quiet
+cleanup. Four real graph readiness cases pass; unavailable-WebGL fallback is
+observed for Mars desktop and Saturn phone. Independent scene counsel finds
+no blocker. Formal postmerge review and owner visual judgment remain open.
+[Design, credits and verification](../docs/internal/ORBITAL-PLACES-2026-10-16/README.md).
+
 **Runtime recovery — #1228 delivered (2026-10-16).** Each hub owns its
 last-known store, so an earlier bare service cannot bind its recall to another DB.
 LAN discovery admits a frozen target set before transport and rejects late model
