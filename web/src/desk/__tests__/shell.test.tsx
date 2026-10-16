@@ -139,8 +139,8 @@ describe("snapForPointer (edge tiling)", () => {
   it("left/right flanks take halves below the chrome band", () => {
     const left = snapForPointer(10, 450, VW, VH)!;
     expect(left.x).toBe(10);
-    expect(left.y).toBe(54);
-    expect(left.h).toBe(VH - 54 - 52);
+    expect(left.y).toBe(28);
+    expect(left.h).toBe(VH - 28 - 60);
     const right = snapForPointer(VW - 5, 450, VW, VH)!;
     expect(right.x + right.w).toBe(VW - 10);
     expect(right.w).toBe(left.w);
@@ -149,7 +149,7 @@ describe("snapForPointer (edge tiling)", () => {
   it("corners take quarters", () => {
     const tl = snapForPointer(40, 80, VW, VH)!;
     const br = snapForPointer(VW - 40, VH - 40, VW, VH)!;
-    expect(tl.y).toBe(54);
+    expect(tl.y).toBe(28);
     expect(br.y).toBeGreaterThan(tl.y + tl.h - 1);
     expect(tl.w).toBe(br.w);
   });
@@ -162,8 +162,8 @@ describe("snapForPointer (edge tiling)", () => {
 describe("placeWindow (HS-97-02, the open-placement engine)", () => {
   const VW = 1440;
   const VH = 900;
-  const TOP = 54;
-  const BOTTOM = 52;
+  const TOP = 28;
+  const BOTTOM = 60;
 
   const headsClash = (
     a: { x: number; y: number; w: number },
@@ -258,8 +258,8 @@ describe("exposeLayout (HS-97-06, the pick grid)", () => {
     for (const c of cells) {
       expect(c.x).toBeGreaterThanOrEqual(10);
       expect(c.x + c.w).toBeLessThanOrEqual(1430);
-      expect(c.y).toBeGreaterThanOrEqual(54);
-      expect(c.y + c.h).toBeLessThanOrEqual(900 - 52);
+      expect(c.y).toBeGreaterThanOrEqual(28);
+      expect(c.y + c.h).toBeLessThanOrEqual(900 - 60);
     }
     for (let i = 0; i < cells.length; i++)
       for (let j = i + 1; j < cells.length; j++) {
@@ -285,7 +285,7 @@ describe("exposeLayout (HS-97-06, the pick grid)", () => {
 describe("clampIntoBand (HS-97-02, clamp-on-open)", () => {
   it("a rect persisted on a larger viewport lands whole", () => {
     const r = clampIntoBand({ x: 1300, y: 800, w: 640, h: 480 }, 1440, 900);
-    expect(r).toEqual({ x: 790, y: 368, w: 640, h: 480 });
+    expect(r).toEqual({ x: 790, y: 360, w: 640, h: 480 });
   });
 
   it("an in-band rect is untouched", () => {
@@ -295,7 +295,7 @@ describe("clampIntoBand (HS-97-02, clamp-on-open)", () => {
 });
 
 describe("the working band clears the measured Dock", () => {
-  it("places and clamps a window above the Dock's published height, not only the 52 px band", () => {
+  it("places and clamps a window above the Dock's published height, not only the 60 px band", () => {
     // Dock.tsx publishes `--desk-dock-h` (the 76 px shelf). A window placed at
     // the band's foot had its footer verbs under the Dock.
     document.documentElement.style.setProperty("--desk-dock-h", "76px");

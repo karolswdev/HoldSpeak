@@ -34,6 +34,20 @@
   height: 64px;
   image-rendering: pixelated;
 }
+/* Desktop Screen pictures use the owner's denser desk scale. Drawer wells
+   and the phone keep their own artwork and target sizes. */
+.desk-screen[data-layout="free"] .desk-icon {
+  min-height: 80px;
+}
+.desk-screen[data-layout="free"] .desk-icon-art,
+.desk-screen[data-layout="free"] .desk-icon-art > img:first-child {
+  width: 48px;
+  height: 48px;
+}
+.desk-screen[data-layout="free"] .desk-icon-badge {
+  width: 24px;
+  height: 24px;
+}
 .desk-icon:active .desk-icon-art {
   transform: translateY(1px);
 }

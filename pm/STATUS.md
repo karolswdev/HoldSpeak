@@ -4,9 +4,22 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-16 (Flagship daily work, creation and recovery)
+**Last updated:** 2026-10-16 (Owner desktop density feedback)
 
 ## Current phase
+
+**Owner desktop density feedback (2026-10-16).**
+Artifact footer actions retain vertical clearance on first open and through
+resize. Desktop Dock is 60 px with 24 px art; Screen art 48 px with tighter rows.
+Window movement reaches the actual 28 px top bar (phone 44 px). Shared reading
+renders checklist children and retains compact task text. Verified build
+`ca987454c0b44162`; quick GREEN: 4,168 web / 109 sweep / 17 canon, typecheck/tokens pass.
+Actual 1440/393 walks cover 400/600/320 px windows, drag/resize/reload, exact Copy,
+footer hit points, phone More and unchanged artifact content. Independent Sol
+counsel RATIFY. [Direction and verification](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/FOLLOWUP-DENSITY.md).
+The earlier B full tape is red; two attributed wire-fixture mismatches have a
+separate forward fix prepared. Broader inherited/unattributed failures remain.
+
 
 **Flagship daily work, creation and recovery — #1221 (2026-10-16).**
 People Prep inspects either exact commitment, preserves newer Add drafts and
@@ -24,7 +37,7 @@ and [all-family coverage](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/C
 Merged as `14ae17b68`; normal idle-hub delivery is live on port8765, PID79705,
 with exact merged/source/build agreement. Formal Astra postmerge review RATIFY:
 [release record](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/POSTMERGE-CDE.md).
-Full main tape38957119404 (C/D/E) is queued and38950387547 (B) is running at
+Full main tape 38957119404 (C/D/E) is queued and38950387547 (B) is running at
 record time; neither is claimed green. Owner live judgment remains separate.
 The bounded kickoff implementation/delivery is complete; every parent family
 has explicit current/carried/unknown coverage. `/todo` remains non-idempotent:
@@ -107,7 +120,7 @@ grounding and Resourcefulness are being refined. Additional source findings
 confirm Capability multiline material loses paragraph breaks on edit and PR
 draft success prints an opaque operation ID. Actual desktop Retry bottom-row
 pointer samples hit the inherited bottom resize edge; centre-click works,
-phone44px samples allpass. This common frame seam is assigned next, preserving
+phone 44 px samples allpass. This common frame seam is assigned next, preserving
 resize and restoring full action ownership. Armed Review Edit+Defer phone fit
 is still to observe. No target waiver or provider/audio acceptance claim.
 
@@ -122,7 +135,7 @@ lineage and opens the actual Note; New Project/common actions use the kit.
 Actual desktop review caught a narrow attached-context footer, separately
 corrected to readable context/action rows. Complete final quick GREEN:
 4039web/672affectedPython/107sweeps(twoexistingxfails)/17canon; TypeScript passes.
-Root read fourteen-state actual isolated task walks at1440/393 on build
+Root read fourteen-state actual isolated task walks at 1440/393 on build
 c5c94f74427b5104, real attach/detach refs/calendar saves, canonical source open,
 and actual Search→NewProject graph entry both widths on preceding6655519build
 with unchanged NewProject source. An intermediate phone picker timeout passed
@@ -141,7 +154,7 @@ the Dock, full payload wells, reachable phone actions and reduced-motion pulse;
 #1214 journal exclusion/dismissal remain. Actual Keep walk found and fixed the
 artifact store rejecting canonical note sources. Quick GREEN: 3855 web /761
 affected Python /107 sweeps (two existing xfails) /17 canon; TypeScript passes.
-Root read twelve-state conversation and seven-state notices walks at1440/393
+Root read twelve-state conversation and seven-state notices walks at 1440/393
 on build228dd99cb87915de, actual Keep artifact prompt/refs, and real Search→Ask
 cases at both widths. Inference/runtime frame replay boundaries are explicit;
 no real model/mic execution claim. Source counsel and later root seam checks are
@@ -260,7 +273,7 @@ session terminal handoff. Failed reads differ from empty results; real retry
 restores work. Recipient edits keep saved keys and provider-specific presence;
 full-width multiline fields clear their mic. Terminal replaces the long
 report, restores unsent work on Back and handles new Speak requests directly.
-Root inspected18-state production walks at1440/393, actual isolated Schedule
+Root inspected18-state production walks at 1440/393, actual isolated Schedule
 and destination saves, local key Check/Retry, History recovery and Knowledge
 member opening; graph Knowledge cases pass at both widths. Final quick GREEN:
 3712web /651affected Python /107desk sweeps (2existing xfails) /17canon; build and release TypeScript pass. Independent Sol source review
@@ -300,7 +313,7 @@ Source census:47 CycleGadget callsites after the Thread enum adoption,
 plus the legacy Select consumer; all share the core. No per-face menus,
 new dependencies or ceiling increases. Final quick GREEN:3880web /708
 affected Python /107desk sweeps (2existing xfails) /17canon; build and
-final TypeScript pass. Root read13-state real production walks at1440/393,
+final TypeScript pass. Root read13-state real production walks at 1440/393,
 actual language/export saves and refusal/Retry, nine-point phone targets,
 and graph language-save cases including native touch393. Source review
 RATIFY after one lifecycle fix/recheck; no Muad'Dib check or owner visual
@@ -321,7 +334,7 @@ incomplete entries now remain local drafts, while valid values use the
 existing writer. Normalization, unrelated saves, refusal/Retry and armed
 Forget pass. Final quick GREEN: 3650 web /651 affected Python /107 desk
 sweeps (2 existing xfails) /15 canon; build and TypeScript pass. Root read
-canvas and production faces at1440/393, symbol loops, full/bounded fields,
+canvas and production faces at 1440/393, symbol loops, full/bounded fields,
 phone hit ownership and calendar-save graph cases. Independent Sol source
 review RATIFY after one correction/recheck; no Muad'Dib check or owner
 visual acceptance claimed. Remote address and optional TTS missing-model
@@ -348,7 +361,7 @@ retain newest failed edits and Retry. Rhythm, Telegram and device preferences
 persist; read failures remain unknown rather than empty/ready.
 Final quick GREEN:3647web /1131affected Python /107desk sweeps (2existing xfails)
 /15canon; production build and frontend TypeScript pass. Root inspected actual
-18-state main and6-state Accounts/destination walks at1440/393, production
+18-state main and6-state Accounts/destination walks at 1440/393, production
 calendar graph saves, long paths and phone hit ownership in isolated HOME/DB.
 Sol workers built; independent Sol source reviews RATIFY after bounded fixes.
 No Muad'Dib check or postmerge review is claimed. Open: owner live acceptance,
@@ -371,7 +384,7 @@ A live capture also found loopback falsely required off-machine confirmation;
 preview now uses the existing endpoint locality classifier. Final quick check
 GREEN: 3597 web /676 Python /107 desk sweeps (2 existing xfails) /15 canon;
 build and frozen frontend TypeScript passed. Actual UI→HTTP→kernel→terminal DB
-captures pass all five jobs at1440/393, including animated waiting, one request,
+captures pass all five jobs at 1440/393, including animated waiting, one request,
 phone target ownership and unchanged domain/assignment snapshots. The provider
 leaf is replayed; this does not prove physical model quality. Open: owner's
 microphone/LAN/cloud response, external sign-in and owner acceptance; one sample
@@ -543,7 +556,7 @@ firing were not established by these UI/CRUD checks. No confirmed source
 review finding remains open; no guard ceiling changed.
 
 **From #1208:** the five #1207 source candidates are repaired and
-observed on isolated production faces at1440/393. Continue bounded inspection
+observed on isolated production faces at 1440/393. Continue bounded inspection
 of existing surfaces; plain no-pane terminal still repeats Back in its body
 and footer, a visual follow-up. OS clipboard, owner tmux/control, microphone,
 external email dispatch, native calendar, model quality and scheduled firing

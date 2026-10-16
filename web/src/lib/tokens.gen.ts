@@ -16,8 +16,8 @@ export const DESK_WINDOW = {
   margin: 10,
   grab: 72,
   cascade: 26,
-  snapTop: 54,
-  snapBottom: 52,
+  snapTop: 28,
+  snapBottom: 60,
 } as const;
 
 export const GLOW_POOL: Record<string, string> = {
