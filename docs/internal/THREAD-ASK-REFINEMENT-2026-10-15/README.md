@@ -88,7 +88,7 @@ They do not prove real wake capture, inference or job execution. Queue Open land
 is not claimed by the notification walkthrough. No full nightly suite, remote CI,
 formal postmerge review, hardware performance or owner acceptance is inferred.
 
-## Final release verification
+## Final release verification — #1215
 
 Final complete quick is GREEN, actual exit 0: 3855 web tests in 409 files,
 761 affected Python tests, 107 Desk sweeps with two existing xfails, and 17 canon
@@ -129,3 +129,7 @@ HTTP/build agreement and warm runtime belong in this retained tree's untracked
 `LOCAL-HUB.md`; no authenticated token is recorded there. The Jupiter preview
 on port 4488 remains available. Broader whole-app audit findings are the next
 scope; this release does not claim every interface is finished.
+
+[PR #1215](https://github.com/karolswdev/HoldSpeak/pull/1215) carries the complete
+48-file product, focused regressions, design and proof record. Final release
+metadata adds this record and pm/STATUS only; tested product source is unchanged.
