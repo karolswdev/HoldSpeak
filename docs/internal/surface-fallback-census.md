@@ -13,7 +13,9 @@ surface lacks a reviewed classification.
 
 Story 143-07 adds `holdspeak/services/ask_service.py` as the controller-winner
 application-projection owner; `_routed_projection` decorates an already elected
-physical result and never selects or advances a route.
+physical result and never selects or advances a route. `_route_reason` projects
+closed runner dispositions into reason tokens; it selects no route, dispatches
+no operation and makes no retry decision.
 
 Story 162-03 adds `holdspeak/services/project_update_service.py` as a
 classified backend surface: `_resolve_for_capability` is the private

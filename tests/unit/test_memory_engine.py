@@ -84,6 +84,8 @@ def test_no_assignment_means_no_engine_and_todays_recall(desk) -> None:
     import json
 
     golden = json.loads(bench.GOLDEN.read_text())
+    before = bench.keyword_snapshot(desk.db, desk.refs)
+    bench.assert_keyword_golden(before, golden)
     assert resolve_embedder(desk.broker, OWNER) is None
     report = memory_conductor.tick(desk.db, desk.broker)
     assert report["engine"] == "" and report["embedded"] == 0 and report["error"] == ""
@@ -92,7 +94,7 @@ def test_no_assignment_means_no_engine_and_todays_recall(desk) -> None:
     assert stats["chunks"] > 0 and stats["vectors"] == 0
     assert desk.db.memory.embedder is None
     assert desk.model.batches == []
-    assert bench.keyword_snapshot(desk.db, desk.refs) == golden
+    assert bench.keyword_snapshot(desk.db, desk.refs) == before
 
 
 def test_a_wider_assignment_is_never_used_for_embedding(desk) -> None:
@@ -161,6 +163,8 @@ def test_an_engine_failure_ends_the_tick_and_recall_stays_whole(desk) -> None:
     import json
 
     golden = json.loads(bench.GOLDEN.read_text())
+    before = bench.keyword_snapshot(desk.db, desk.refs)
+    bench.assert_keyword_golden(before, golden)
     _assign_embed(desk.db)
     desk.model.fail = True
     report = memory_conductor.tick(desk.db, desk.broker)
@@ -169,7 +173,7 @@ def test_an_engine_failure_ends_the_tick_and_recall_stays_whole(desk) -> None:
     # The engine is set and broken: every search still answers, keyword only.
     assert desk.db.memory.embedder is not None
     # No vector exists, so the engine is not called for a question at all.
-    assert bench.keyword_snapshot(desk.db, desk.refs) == golden
+    assert bench.keyword_snapshot(desk.db, desk.refs) == before
     # The failed call has a receipt too; it is not a success.
     receipt = desk.broker.store.receipt(desk.db.memory.embedder.last_operation_id)
     assert receipt["outcome"] != "succeeded"

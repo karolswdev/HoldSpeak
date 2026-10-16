@@ -19,14 +19,16 @@ scratch shot folder. All four were read; no page errors.
 
 | Direction | 1440 | 393 |
 | --- | --- | --- |
-| Multiline material, one mic | [shot](../../../.tmp/edges/canvas-material-receipts/shots/material-1440.png) | [shot](../../../.tmp/edges/canvas-material-receipts/shots/material-393.png) |
-| Plain draft outcome; technical receipt in output fold | [shot](../../../.tmp/edges/canvas-material-receipts/shots/pr-result-1440.png) | [shot](../../../.tmp/edges/canvas-material-receipts/shots/pr-result-393.png) |
-| Inherited footer seam | [shot](../../../.tmp/edges/canvas-material-receipts/shots/frame-before-1440.png) | [shot](../../../.tmp/edges/canvas-material-receipts/shots/frame-before-393.png) |
-| Reserved bottom band | [shot](../../../.tmp/edges/canvas-material-receipts/shots/frame-after-1440.png) | [shot](../../../.tmp/edges/canvas-material-receipts/shots/frame-after-393.png) |
+| Multiline material, one mic | `material-1440.png` | `material-393.png` |
+| Plain draft outcome; technical receipt in output fold | `pr-result-1440.png` | `pr-result-393.png` |
+| Inherited footer seam | `frame-before-1440.png` | `frame-before-393.png` |
+| Reserved bottom band | `frame-after-1440.png` | `frame-after-393.png` |
 
-The PNGs live under `.tmp/edges/` for exclusion from commits. These are
-direction captures, not actual application observations. The canvas now
-expresses the approved desktop-only frame scope.
+These filenames identify local scratch captures under
+`.tmp/edges/canvas-material-receipts/shots/`. The PNGs were excluded from
+commits and are unavailable in a clean checkout. They are direction captures,
+not retained application observations. The canvas expresses the approved
+desktop-only frame scope.
 
 Capability now uses PadGadget's default integrated mic with its original
 label/scope. Root diagnosed the exact shared seam and extended ownership to

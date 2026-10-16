@@ -8,13 +8,23 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
-**Journal recovery — verified for delivery (2026-10-16).** Independent journal
-stores now reserve the sequence and prior hash under SQLite’s write lock.
-Failed appends release their local lock and roll back. Three regression cases
-fail against the original code and pass with the fix. Ordinary quick GREEN:
-44 affected checks, 109 desktop/phone sweep cases, 17 canon checks. Source and
-build agree (`6e3600ca4e4d1251`); Today shots at 1440/393 inspected. Broader
-recovery stays active in the queue below; no full-suite green is claimed.
+**Regression contracts — verified for delivery (2026-10-16).** Brief fixtures
+declare their display timezone; memory goldens allow only bounded platform score
+roundoff while preserving exact same-process retrieval. Two stale wire fixtures
+match their producers; nightly checkout retains historical regression commits.
+Meeting context is extracted without changing its consumption order; SQL shapes
+are static; obsolete glyph and scratch-link records are corrected. Quick GREEN:
+579 affected / 109 sweep / 17 canon (one existing expected failure). Build
+`08b3ac3cbb13ef50` matches source; 1440/393 shots inspected. Guard ceilings and
+existing skip/expected-failure policies are unchanged.
+
+**Journal recovery — #1225 delivered (2026-10-16).** Concurrent stores reserve
+sequence and prior hash under SQLite’s write lock; failures release the local
+lock and roll back. Merged `f6871e8df`; formal Astra postmerge review RATIFY.
+Quick GREEN: 44 affected / 109 sweep / 17 canon. Build `6e3600ca4e4d1251` is
+live on port 8765, PID 28926; health, Desk, Conductor and Models return 200.
+Three regression checks fail on the original implementation and pass fixed.
+The wider recovery queue remains active.
 
 **Broader regression recovery — active (2026-10-16).** The owner expanded the
 work to resolve the full-tape failures. All 110 distinct failing cases across the

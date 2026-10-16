@@ -113,7 +113,6 @@
         "n_gpu_layers": -1,
         "n_threads": null,
         "openai_compatible_timeout_seconds": 8.0,
-        "profile_id": null,
         "warm_on_start": false
       },
       "spoken_symbols": []
@@ -195,9 +194,7 @@
       "profile_id": null,
       "tail": 20
     },
-    "thoughts": {
-      "inference_target_id": null
-    },
+    "thoughts": {},
     "ui": {
       "desk_sounds": true
     },

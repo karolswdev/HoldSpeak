@@ -39,7 +39,9 @@ from holdspeak.services.meeting_route_projection import project_route
 from holdspeak.services.primitive_service import PrimitiveService
 from holdspeak.services.sqlite_observer import SQLiteObserver
 
-from tests.unit.test_philo6_02_brief_truth import EVENTS_AT, OWNER, RAW, _hub, _stable
+from tests.unit.test_philo6_02_brief_truth import (
+    EVENTS_AT, FIXTURE_ZONE, OWNER, RAW, _hub, _stable, producer_timezone,
+)
 
 REPO = Path(__file__).resolve().parents[2]
 FIXTURE = REPO / "web/src/desk/chair/__tests__/fixtures/philo6/brief-failed-ops.json"
@@ -81,8 +83,8 @@ def _seed_failures(db: Database, client, monkeypatch) -> None:
     now["t"] += 60
     meeting = MeetingState(
         id="m-arch",
-        started_at=datetime.datetime(2026, 9, 25, 5, 0),
-        ended_at=datetime.datetime(2026, 9, 25, 5, 30),
+        started_at=datetime.datetime(2026, 9, 25, 5, 0, tzinfo=FIXTURE_ZONE),
+        ended_at=datetime.datetime(2026, 9, 25, 5, 30, tzinfo=FIXTURE_ZONE),
         title=MEETING_TITLE,
         tags=[],
         segments=[
@@ -111,7 +113,7 @@ def _seed_failures(db: Database, client, monkeypatch) -> None:
         PrimitiveService(db, observer=observer).get_decision(OWNER, MISSING)
 
 
-def test_failed_operations_make_no_success_line(tmp_path, monkeypatch):
+def test_failed_operations_make_no_success_line(tmp_path, monkeypatch, producer_timezone):
     db = Database(tmp_path / "hub.db")
     client = _hub(db, monkeypatch, tmp_path)
     _seed_failures(db, client, monkeypatch)

@@ -19,10 +19,14 @@ This is a composition problem. Reuse the existing frame, question well,
 activity rows, composer, library controls and receipts to make the work lead.
 A new agent framework or another session application is unnecessary.
 
-- [Current session, 1440](../../../.tmp/evidence-shots/surface-audit-conductor/session-plain-no-pane-1440.png)
-- [Current session, 393](../../../.tmp/evidence-shots/surface-audit-conductor/session-plain-no-pane-393.png)
-- [The working session identified in Conductor, 393](../../../.tmp/evidence-shots/surface-audit-conductor/conductor-populated-393.png)
-- [Existing launched question/answer face, 393](../../../.tmp/evidence-shots/surface-audit-conductor/lane-claude-asking-393.png)
+The following local scratch captures were recorded under
+`.tmp/evidence-shots/surface-audit-conductor/`. They were not retained in git
+and are unavailable in a clean checkout.
+
+- Current session, 1440: `session-plain-no-pane-1440.png`
+- Current session, 393: `session-plain-no-pane-393.png`
+- The working session identified in Conductor, 393: `conductor-populated-393.png`
+- Existing launched question/answer face, 393: `lane-claude-asking-393.png`
 
 The absent pane is a deliberate fixture state. We do not claim real terminal
 access is broken. The defect is the face's poor handling of that state and the
