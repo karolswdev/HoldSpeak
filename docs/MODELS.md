@@ -10,7 +10,7 @@ Open **Settings > Accounts** to connect GitHub, Jira, Confluence or a calendar.
 3. Select a job and choose its engine.
 4. Use **Default engine** for jobs that do not need a separate assignment.
 
-**Custom tasks** covers saved Agents, recipes and Workflow steps.
+**Custom tasks** covers saved Agents and Workflow steps.
 **Background work** covers automatic drafts, summaries and memory work.
 These are routing groups. They can share the default engine.
 

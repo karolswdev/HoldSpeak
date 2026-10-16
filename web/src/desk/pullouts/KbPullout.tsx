@@ -50,7 +50,7 @@ export function KbPullout({ object: o, registerClose }: PulloutContentProps) {
                   primary={<span data-member-ref={ref} title={ref}>{member?.title || "Item unavailable"}</span>}
                   meta={member ? KIND_LABEL[member.kind] || kindWord(member.kind) : undefined}
                   cells={member ? undefined : <StateChip state="unreachable" label="Unavailable" />}
-                  trailing={member ? <Button dense variant="ghost" onClick={() => openPullout(ref)}>Open</Button> : undefined}
+                  trailing={member ? <Button dense variant="ghost" onClick={() => openPullout(ref)}>Open {kindWord(member.kind).toLowerCase()}</Button> : undefined}
                 />
               ))}
             </SurfaceLedger>

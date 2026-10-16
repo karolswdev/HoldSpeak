@@ -245,7 +245,7 @@ export function CadenceCore({ hero }: CoreProps) {
       setWrittenAt(Date.now() / 1000);
       await heartbeat.reload();
     } catch (error) {
-      setSaveError(`Settings not saved · ${readableError(error)}`);
+      setSaveError(`Settings save not confirmed · Shown settings kept · Reload · ${readableError(error)}`);
     } finally {
       setSaving(false);
     }
@@ -339,7 +339,7 @@ export function CadenceCore({ hero }: CoreProps) {
       {renderHeroSlot(hero, null, null)}
       <div className="cadence-body" data-settling={shown ? undefined : "true"} aria-busy={shown ? undefined : true}>
       {shown ? null : <div className="cadence-settling-line"><SurfaceState loading /></div>}
-      {saveError ? <SurfaceState error={saveError} /> : null}
+      {saveError ? <SurfaceState error={saveError} onRetry={async () => { if (await heartbeat.reload()) setSaveError(""); }} /> : null}
       {heartbeat.error ? <SurfaceState error={`Rhythm settings not loaded · ${heartbeat.error}`} onRetry={() => void heartbeat.reload()} /> : null}
 
       {/* Display headline: accent when the sweep runs, muted when not */}
@@ -687,7 +687,7 @@ export function CadenceCore({ hero }: CoreProps) {
         egress={<EgressChip />}
         receipt={saving || saveError || writtenAt ? (
           <span className="surface-token" data-chip data-muted={!saveError || undefined} data-tone={saveError ? "fail" : undefined} role="status">
-            {saving ? "Saving" : saveError ? "Not saved" : `Saved ${fmtEpoch(writtenAt)}`}
+            {saving ? "Saving" : saveError ? "Unconfirmed" : `Saved ${fmtEpoch(writtenAt)}`}
           </span>
         ) : null}
       />

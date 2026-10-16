@@ -195,7 +195,7 @@ function DestForm({ conns, accountsLoading, accountsReadError, onAccountsRetry, 
   const accountsUnavailable = accountsLoading || accountsReadError;
   const dependsOnAccount = ["github", "jira", "confluence"].includes(d.channel);
   const accountReadState = accountsLoading ? <span aria-busy="true">Reading accounts</span>
-    : <><StateChip state="failure" label="Could not read accounts" /><Button dense variant="secondary" onClick={onAccountsRetry}>Retry</Button></>;
+    : <><StateChip state="failure" label="Account read failed · Draft kept · Retry" wrap /><Button dense variant="secondary" onClick={onAccountsRetry}>Retry</Button></>;
   const missingAccount = d.channel === "github" ? !gh?.account?.login
     : d.channel === "jira" ? !jiraAcc : d.channel === "confluence" ? !confAcc : false;
   const valid = Boolean(name.trim()) && !missingAccount && (!dependsOnAccount || !accountsUnavailable) && (

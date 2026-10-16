@@ -10,6 +10,7 @@ import { act, fireEvent, render, renderHook, screen, waitFor, within } from "@te
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../../lib/api";
 import type { Detection, Roster, RosterRow } from "../api";
+import type { LocalAiRead } from "../../../desk/firstrun/localAi";
 
 const m = vi.hoisted(() => ({
   readRoster: vi.fn(),
@@ -62,9 +63,13 @@ vi.mock("../../../lib/speakToFill", async (importOriginal) => ({
 vi.mock("../../concierge/MeaningSearchRow", () => ({ MeaningSearchRow: () => null }));
 // PHILO-17 speech: the speech truth is the hub's (its own vitest file fences
 // the row); here only "is speech set up" moves.
-const speechState = vi.hoisted(() => ({ notSetUp: false }));
+const speechState = vi.hoisted(() => ({ notSetUp: false, readKind: "ok" as LocalAiRead["kind"] }));
 vi.mock("../../../desk/firstrun/SpeechSetup", () => ({
-  useSpeechSetup: () => ({ notSetUp: speechState.notSetUp, ready: !speechState.notSetUp }),
+  useSpeechSetup: () => ({
+    notSetUp: speechState.readKind === "ok" && speechState.notSetUp,
+    ready: speechState.readKind === "ok" && !speechState.notSetUp,
+    ai: { read: { kind: speechState.readKind } },
+  }),
   SpeechSetup: ({ testId }: { testId: string }) => <span data-testid={testId}>Speech is not set up</span>,
 }));
 vi.mock("../../../desk/shell", () => ({ openSurfaceOr: m.openSurfaceOr }));
@@ -169,6 +174,8 @@ function detection(): Detection {
 }
 
 beforeEach(() => {
+  speechState.readKind = "ok";
+  speechState.notSetUp = false;
   for (const fn of Object.values(m)) fn.mockReset();
   m.readRoster.mockResolvedValue(roster());
   m.readDetection.mockResolvedValue(detection());
@@ -192,6 +199,50 @@ async function board(scope?: string) {
 }
 
 describe("Runs on — paint and words", () => {
+  it.each(["roster", "detection"] as const)("marks initial reads pending with %s first and preserves useful controls", async (first) => {
+    let finishRoster!: (value: Roster) => void;
+    let finishDetection!: (value: Detection) => void;
+    m.readRoster.mockReturnValue(new Promise<Roster>((resolve) => { finishRoster = resolve; }));
+    m.readDetection.mockReturnValue(new Promise<Detection>((resolve) => { finishDetection = resolve; }));
+    speechState.readKind = "loading";
+    const view = render(<RunsOnCore/>);
+    const face = screen.getByTestId("runson-root");
+    expect(face).toHaveAttribute("aria-busy", "true");
+    expect(screen.getByRole("button", { name: "Find on LAN" })).toBeEnabled();
+    await act(async () => { if (first === "roster") finishRoster(roster()); else finishDetection(detection()); });
+    expect(face).toHaveAttribute("aria-busy", "true");
+    if (first === "roster") expect(screen.getAllByTestId(/^switchboard-job-/)).toHaveLength(7);
+    await act(async () => { if (first === "roster") finishDetection(detection()); else finishRoster(roster()); });
+    expect(face).toHaveAttribute("aria-busy", "true");
+    speechState.readKind = "ok";
+    speechState.notSetUp = true;
+    view.rerender(<RunsOnCore/>);
+    expect(screen.getByTestId("runson-speech-setup")).toBeInTheDocument();
+    expect(face).not.toHaveAttribute("aria-busy");
+    speechState.notSetUp = false;
+  });
+
+  it.each(["roster", "detection"] as const)("clears initial pending state when the %s read fails", async (failed) => {
+    if (failed === "roster") m.readRoster.mockRejectedValue(new Error("Roster offline"));
+    else m.readDetection.mockRejectedValue(new Error("Detection offline"));
+    render(<RunsOnCore/>);
+    await waitFor(() => expect(screen.getByTestId("runson-root")).not.toHaveAttribute("aria-busy"));
+    expect(m.readRoster).toHaveBeenCalled();
+    expect(m.readDetection).toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Find on LAN" })).toBeEnabled();
+  });
+
+  it("clears initial pending state when the speech read becomes unread", async () => {
+    speechState.readKind = "loading";
+    const view = render(<RunsOnCore/>);
+    await screen.findByTestId("switchboard-engine-openrouter");
+    expect(screen.getByTestId("runson-root")).toHaveAttribute("aria-busy", "true");
+    speechState.readKind = "unread";
+    view.rerender(<RunsOnCore/>);
+    expect(screen.getByTestId("runson-root")).not.toHaveAttribute("aria-busy");
+    expect(screen.queryByTestId("runson-speech-setup")).toBeNull();
+  });
+
   it("paints the roster's jobs before the detection lands, then the engines fill in", async () => {
     let finish: (value: Detection) => void = () => {};
     m.readDetection.mockReturnValue(new Promise<Detection>((resolve) => (finish = resolve)));

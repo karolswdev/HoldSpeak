@@ -188,7 +188,7 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
                 <GadgetGroup label="Decision" material="inset"><Material>{String(ir.decisionMarkdown)}</Material></GadgetGroup>
               ) : null}
               {String(ir.contextMarkdown || "").trim() ? (
-                <FoldGadget title="Context" open><Material>{String(ir.contextMarkdown)}</Material></FoldGadget>
+                <FoldGadget title="Decision context" open><Material>{String(ir.contextMarkdown)}</Material></FoldGadget>
               ) : null}
               {String(ir.consequencesMarkdown || "").trim() ? (
                 <FoldGadget title="Consequences"><Material>{String(ir.consequencesMarkdown)}</Material></FoldGadget>

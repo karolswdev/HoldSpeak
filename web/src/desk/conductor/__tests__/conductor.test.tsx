@@ -593,7 +593,7 @@ describe("PHILO-17 the Conductor reads like Today", () => {
     });
     render(<ConductorWindow />);
     fireEvent.click(await screen.findByRole("button", { name: "Approve" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Gate read failed · Gate read unavailable");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Decision saved · Gate read failed · Retry · Gate read unavailable");
     await waitFor(() => expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled());
     expect(screen.queryByRole("button", { name: "Approve" })).toBeNull();
     unavailable = false;
@@ -614,7 +614,7 @@ describe("PHILO-17 the Conductor reads like Today", () => {
       return base(url, init);
     });
     render(<ConductorWindow />);
-    expect(await screen.findByRole("alert")).toHaveTextContent("Call read failed · Call unavailable");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Call read failed · Calls unchanged · Retry · Call unavailable");
     unavailable = false;
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByRole("button", { name: "Approve" })).toBeEnabled();

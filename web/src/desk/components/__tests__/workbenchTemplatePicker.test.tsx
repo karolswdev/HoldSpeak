@@ -156,7 +156,7 @@ describe("WorkbenchTemplatePicker — one record per exit", () => {
     render(<WorkbenchTemplatePicker onCreated={onCreated} />);
     const card = (await screen.findByText(name)).closest("button")!;
     fireEvent.click(card);
-    expect(await screen.findByRole("alert")).toHaveTextContent(`${name} created · Desk read failed · Read unavailable`);
+    expect(await screen.findByRole("alert")).toHaveTextContent(`${name} created · Workbench saved · Desk read failed · Retry · Read unavailable`);
     const id = name === "Blank" ? "wb-blank" : "wb-from-template";
     expect(openWorkbenchWindow).toHaveBeenCalledWith(id);
     expect(card).toHaveAttribute("aria-pressed", "true");
@@ -176,7 +176,7 @@ describe("WorkbenchTemplatePicker — one record per exit", () => {
     refresh.mockImplementationOnce(async () => { useDesk.setState({ error: "Workbenches unavailable" }); });
     render(<WorkbenchTemplatePicker />);
     fireEvent.click(await screen.findByText("Blank"));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Blank created · Desk read failed · Workbenches unavailable");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Blank created · Workbench saved · Desk read failed · Retry · Workbenches unavailable");
     expect(createCalls()).toHaveLength(1);
     expect(openWorkbenchWindow).toHaveBeenCalledWith("wb-blank");
   });

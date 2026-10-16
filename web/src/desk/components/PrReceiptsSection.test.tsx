@@ -66,7 +66,7 @@ describe("PR follow-through desk object", () => {
     fireEvent.click(screen.getByRole("button", { name: "Propose" }));
     expect(await screen.findByText("PROPOSED")).toBeInTheDocument();
     expect(screen.getByText(/Finding one/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Approve" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Post to GitHub" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Deny" })).toBeInTheDocument();
   });
 

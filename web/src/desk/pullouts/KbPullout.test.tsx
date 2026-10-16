@@ -48,9 +48,9 @@ describe("Knowledge reader membership", () => {
     expect(available).toHaveTextContent(note.title);
     expect(missing).toHaveTextContent("Item unavailable");
     expect(missing).toHaveTextContent("Unavailable");
-    expect(within(missing).queryByRole("button", { name: "Open" })).toBeNull();
+    expect(within(missing).queryByRole("button", { name: /Open/ })).toBeNull();
     expect(screen.queryByText("No entries")).toBeNull();
-    fireEvent.click(within(available).getByRole("button", { name: "Open" }));
+    fireEvent.click(within(available).getByRole("button", { name: "Open note" }));
     expect(openPullout).toHaveBeenCalledWith(mixed.memberIds[0]);
     expect(screen.getByTestId("filing-strip")).toBeInTheDocument();
     expect(apiFetch).not.toHaveBeenCalled();

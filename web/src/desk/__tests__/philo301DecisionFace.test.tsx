@@ -131,7 +131,7 @@ describe("PHILO-8-04 the decision window shows no empty heading", () => {
         onClose={() => {}}
       />,
     );
-    expect(heads()).toEqual(["Context"]);
+    expect(heads()).toEqual(["Decision context"]);
     expect(screen.getByText("Runners are full.")).toBeInTheDocument();
   });
 
@@ -142,7 +142,7 @@ describe("PHILO-8-04 the decision window shows no empty heading", () => {
         onClose={() => {}}
       />,
     );
-    expect(heads()).toEqual(["Decision", "Context", "Consequences"]);
+    expect(heads()).toEqual(["Decision", "Decision context", "Consequences"]);
     for (const body of ["C", "D", "Q"]) expect(screen.getByText(body)).toBeInTheDocument();
   });
 });

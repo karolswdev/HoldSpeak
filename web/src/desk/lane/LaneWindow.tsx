@@ -331,7 +331,7 @@ function DecideVerbs({ call }: { call: LaneGated }) {
       await useGate.getState().refresh();
       await useLane.getState().load();
       const error = useGate.getState().error ?? useLane.getState().error;
-      setFailure(error ? { label: `Decision read failed · ${error}`, retry: () => void recoverRead() } : null);
+      setFailure(error ? { label: `Decision read failed · Decisions unchanged · Retry · ${error}`, retry: () => void recoverRead() } : null);
     } finally {
       pending.current = false;
       setBusy(false);
@@ -347,7 +347,7 @@ function DecideVerbs({ call }: { call: LaneGated }) {
       setDecidedId(call.id);
       await useLane.getState().load();
       const error = useGate.getState().error ?? useLane.getState().error;
-      if (error) setFailure({ label: `Decision read failed · ${error}`, retry: () => void recoverRead() });
+      if (error) setFailure({ label: `Decision saved · Decision read failed · Retry · ${error}`, retry: () => void recoverRead() });
     } catch (error) {
       setFailure({
         label: `${decision === "approved" ? "Approve" : "Deny"} failed · ${readableError(error)}`,
