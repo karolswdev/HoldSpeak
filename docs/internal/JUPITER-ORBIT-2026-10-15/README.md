@@ -133,5 +133,26 @@ follows the completed source counsel and is not attributed to its verdict.
 The standalone user-facing preview was also observed independently at
 `live-preview-check/`: actual shared runtime, no entropy/time substitutions,
 nonblank changing framebuffer samples and no page errors. The preview server
-on4488 is retained because the owner asked to see and use it while the release
+on 4488 is retained because the owner asked to see and use it while the release
 check runs. This does not mutate the owner hub or store.
+
+## Release — #1213
+
+[PR #1213](https://github.com/karolswdev/HoldSpeak/pull/1213) carries the
+original scene and the owner's richer-universe/flowing-weather amendment.
+The final complete quick check is GREEN: 3821 web tests in 406 files,
+651 affected Python assertions, 107 Desk sweeps (two existing xfails), and
+17 canon guards. Root read the actual log and exit 0. Release TypeScript also
+exited0. Logs: `.tmp/jupiter-orbit/quick-release.log` and
+`.tmp/jupiter-orbit/typecheck-release.log`. The final build is
+`05aaf13be67d3ff5`. Actual amended product walks used `4e9308a2ae4cc5ff`;
+the later rebuild followed test-only catalog alignment, with no product-source
+change. This distinction does not claim a new live walk against the final tag.
+
+The normal owner hub redeploy follows merge. Its exact source, merge/tree,
+served build, PID and warm runtime observations belong in the untracked
+`LOCAL-HUB.md` in this retained serving worktree. No authenticated token is
+recorded there. The standalone preview on 4488 is retained for the owner.
+Delegated source counsel is separate from formal postmerge review, full main
+tape, remote CI, owner acceptance, hardware performance and natural rare-event
+waiting; none of those is inferred from these checks.
