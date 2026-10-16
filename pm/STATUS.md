@@ -8,14 +8,23 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
-**Runtime recovery — verified, merge pending (2026-10-16).** Each hub owns its
+**Browser recovery — final verification (2026-10-16).** Activity now owns a
+Finished receipt list with exact source doors and retained failed reads. Phone
+swipe/Depth, Capture/Today restoration, Go toggle, canonical record reopening and
+Chair band/seat geometry are repaired. The 112-case recovery queue retains exact
+case identities and current proof. All 11 final browser cases now pass across
+the focused runs, including one-Back Activity return; 639 graph checks and
+TypeScript pass. Ordinary quick and delivery remain.
+
+**Runtime recovery — #1228 delivered (2026-10-16).** Each hub owns its
 last-known store, so an earlier bare service cannot bind its recall to another DB.
 LAN discovery admits a frozen target set before transport and rejects late model
 bodies; calendar checks observe completed capture and stop their timers. Focused
 proof: 254 memory/calendar checks and 59 scanner/effect/route checks pass; three
 new late-body regressions fail before the fix. Ordinary quick GREEN: **575 affected /
 109 sweep / 17 canon**. Desktop/phone shots inspected; source/build match
-`f6ef8ac2099dde8b`. Normal idle-hub delivery follows merge.
+`f6ef8ac2099dde8b`. Merged `58a0d4552`; formal Astra postmerge review RATIFY.
+Idle-hub delivery is live on port 8765, PID 76313; all four HTTP checks return 200.
 
 **Recovery copy — #1227 delivered (2026-10-16).** Commands recovers an uncertain
 Add by GET and edits the saved row without duplicates or lost newer fields. Read

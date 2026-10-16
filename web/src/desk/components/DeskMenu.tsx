@@ -457,6 +457,7 @@ export function WorkMenu({
   anchor = "below",
   entries,
   onClose,
+  opener,
   returnFocus,
   autoFocus,
   menuContext,
@@ -468,6 +469,8 @@ export function WorkMenu({
   anchor?: "above" | "below";
   entries: WorkMenuEntry[];
   onClose(): void;
+  /** The title Button owns its own toggle; its press is inside this menu. */
+  opener?: HTMLElement | null;
   returnFocus?: () => void;
   autoFocus?: boolean;
   /** HS-148-01: panel-level context declaration (mechanism — default "verb"). */
@@ -523,11 +526,11 @@ export function WorkMenu({
   useEffect(() => {
     const down = (e: PointerEvent) => {
       const t = e.target as Node;
-      if (!panelRef.current?.contains(t)) onClose();
+      if (!panelRef.current?.contains(t) && !opener?.contains(t)) onClose();
     };
     document.addEventListener("pointerdown", down, true);
     return () => document.removeEventListener("pointerdown", down, true);
-  }, [onClose]);
+  }, [onClose, opener]);
 
   // HS-148-01 D3 repair: defer focus past the browser's native click-to-focus.
   // On a real pointer-down open, the browser's click sequence

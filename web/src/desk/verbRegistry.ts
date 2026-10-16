@@ -432,7 +432,7 @@ export const VERBS: Verb[] = [
     run: (ctx) => {
       const o = selected(ctx);
       if (!o) return;
-      useDesk.getState().openPullout(o.kind === "directory" ? qualifiedRef(o.kind, o.id) : o.id, ctx.origin);
+      useDesk.getState().openPullout(qualifiedRef(o.kind, o.id), ctx.origin);
     },
   },
   {

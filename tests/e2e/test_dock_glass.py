@@ -1,4 +1,8 @@
-"""The Dock app, AS RENDERED: what only a real browser proves of the Dock.
+"""The Dock app, AS RENDERED: current daily doors, seats and touch ownership.
+
+The historical paging test names stay as recovery-queue identities. Their
+current proofs cover all four essential phone doors, exact tap destinations,
+Capture's return seat and five project seat journeys. No pager is assumed.
 
 Owner, 2026-10-12 (push 2 of the test diet): a browser test only for drag,
 focus, keys, touch, hover or an exact geometry relation. Through the real hub
@@ -54,6 +58,48 @@ SHOTS = evidence_dir("pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-
 SIZES = {1440: 900, 393: 852}
 T = 20_000
 DOCK = ".desk-dock"
+PHONE_DOORS = {
+    "today": ("intelligence:desk", '[id="pullout:intelligence:desk"]', '[data-testid="today-day"]'),
+    "capture": ("chair:capture", '[aria-label="Capture"].desk-window-shell', '[data-testid="arrival-capture-bar"]'),
+    "meetings": ("surface-meetings", '#surface-meetings', '[data-testid="meetings-headline"]'),
+    "people": ("surface-people", '#surface-people', '.desk-surface-body'),
+}
+
+
+def _whole_dock_target(target: Any) -> dict[str, Any]:
+    probe = target.evaluate("""el => {
+      const r=el.getBoundingClientRect(), d=el.closest('.desk-dock').getBoundingClientRect();
+      const points=[.1,.5,.9].flatMap(x=>[.1,.5,.9].map(y=>{
+        const hit=document.elementFromPoint(r.left+r.width*x,r.top+r.height*y);
+        return !!hit && (hit===el || el.contains(hit));
+      }));
+      return {name:el.getAttribute('aria-label'),width:r.width,height:r.height,
+        whole:r.left>=Math.max(0,d.left)-.5 && r.right<=Math.min(innerWidth,d.right)+.5 && r.top>=0 && r.bottom<=innerHeight,
+        points};
+    }""")
+    assert probe["whole"] and probe["width"] >= 44 and probe["height"] >= 44, probe
+    assert all(probe["points"]), probe
+    return probe
+
+
+def _tap_dock(page: Any, target: Any) -> None:
+    _whole_dock_target(target)
+    box = target.bounding_box()
+    page.touchscreen.tap(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+
+
+def _swipe_shelf(page: Any, *, right: bool = False) -> None:
+    box = page.locator(DOCK).bounding_box()
+    assert box
+    cdp = page.context.new_cdp_session(page)
+    try:
+        cdp.send("Input.synthesizeScrollGesture", {
+            "x": box["x"] + box["width"] / 2, "y": box["y"] + box["height"] / 2,
+            "xDistance": 340 if right else -340, "yDistance": 0,
+            "gestureSourceType": "touch", "speed": 800})
+    finally:
+        cdp.detach()
+    page.wait_for_timeout(700)
 
 OWNS_ITS_CENTRE = """(el) => { const r = el.getBoundingClientRect();
     const x = r.left + r.width / 2, y = r.top + r.height / 2;
@@ -122,22 +168,23 @@ class TestDockGlass:
         with sync_playwright() as pw:
             browser, page, errors = self._page(pw, width)
             try:
-                seats = page.evaluate("""() => {
-                    const d = document.querySelector('.desk-dock');
-                    const more = d.querySelector('.desk-dock-more').getBoundingClientRect();
-                    return [...d.querySelectorAll('.desk-dock-launch')]
-                      .map((b) => ({ app: b.dataset.app || b.getAttribute('aria-label'), r: b.getBoundingClientRect() }))
-                      .filter((x) => x.r.right <= more.left + 0.5 && x.r.left >= 0)
-                      .sort((a, b) => a.r.left - b.r.left).map((x) => x.app);
-                }""")
-                # PHILO-17 (doors): People is a desk drawer now; Missed fits the first page.
-                assert seats == ["intelligence:desk", "surface-meetings", "surface-dictation", "Missed"], seats
-                before = page.evaluate("() => document.querySelector('.desk-dock').scrollLeft")
-                self._press(page, page.get_by_role("button", name="More AppIcons"), width)
-                page.wait_for_timeout(700)
-                after = page.evaluate("() => document.querySelector('.desk-dock').scrollLeft")
-                assert after > before, (before, after)
-                page.screenshot(path=str(SHOTS / f"dock-02-more-{width}.png"))
+                doors = page.locator(".desk-dock-app[data-app]")
+                assert set(doors.evaluate_all("bs => bs.map(b=>b.dataset.app)")) == {door[0] for door in PHONE_DOORS.values()}
+                for target in doors.all():
+                    _whole_dock_target(target)
+                capture = page.locator('.desk-dock [data-app="chair:capture"]')
+                _tap_dock(page, capture)
+                page.locator('[aria-label="Capture"].desk-window-shell [data-testid=arrival-capture-bar]').wait_for()
+                _tap_dock(page, page.locator('.desk-dock [data-app="intelligence:desk"]'))
+                page.locator('[id="pullout:intelligence:desk"] [data-testid=today-day]').wait_for()
+                _whole_dock_target(capture)
+                capture_window = page.locator('[aria-label="Capture"].desk-window-shell')
+                assert capture_window.count() == 1, "Capture must remain open while Today is front"
+                _tap_dock(page, capture)
+                capture_window.wait_for(state="visible")
+                page.wait_for_function("el => el.classList.contains('is-front')", arg=capture_window.element_handle())
+                capture_window.locator('[data-testid=arrival-capture-bar]').wait_for()
+                page.screenshot(path=str(SHOTS / f"dock-02-capture-return-{width}.png"))
                 assert not [e for e in errors if "ResizeObserver" not in e], errors
             finally:
                 browser.close()
@@ -208,8 +255,8 @@ class TestDockTap393:
         finally:
             server.stop()
 
-    @pytest.mark.parametrize("paging", ["more", "swipe", "into-view"])
-    def test_a_tap_on_a_paged_dock_presses_that_icon_393(self, paging: str) -> None:
+    @pytest.mark.parametrize("app", list(PHONE_DOORS))
+    def test_a_tap_on_a_paged_dock_presses_that_icon_393(self, app: str) -> None:
         from playwright.sync_api import sync_playwright
 
         with sync_playwright() as pw:
@@ -225,34 +272,22 @@ class TestDockTap393:
                 _normal_chair(page)
                 _settle(page)
                 page.locator(".desk-dock .desk-dock-launch").first.wait_for(state="attached")
-                label = page.evaluate(PAST_JS)
-                assert label, "the fence needs an icon past the first page of the shelf"
-                floor = page.locator("[data-fence-target='1']")
-                box = floor.bounding_box()
-                if paging == "more":
-                    page.get_by_test_id("desk-dock-more").tap()
-                elif paging == "swipe":
-                    cdp = ctx.new_cdp_session(page)
-                    cdp.send("Input.synthesizeScrollGesture", {
-                        "x": 300, "y": 824, "xDistance": -341, "yDistance": 0,
-                        "gestureSourceType": "touch", "speed": 800})
-                    cdp.detach()
-                else:
-                    floor.scroll_into_view_if_needed()
-                page.wait_for_timeout(1200)
+                app_id, window_selector, content = PHONE_DOORS[app]
+                door = page.locator(f'.desk-dock [data-app="{app_id}"]')
+                label = door.get_attribute("aria-label")
                 page.evaluate(PRESSES_JS)
-                box = floor.bounding_box()
-                assert box and 0 <= box["x"] and box["x"] + box["width"] <= 393 - 48, (
-                    label, "is not on the paged shelf", paging, box)
-                page.touchscreen.tap(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
-                page.wait_for_timeout(600)
+                _tap_dock(page, door)
+                window = page.locator(window_selector)
+                window.wait_for(state="visible")
+                window.locator(content).wait_for()
+                assert "is-front" in (window.get_attribute("class") or ""), app
                 presses = page.evaluate("() => window.__presses")
                 settled = page.evaluate(
                     "() => document.querySelector('.desk-next').getAttribute('data-settled')")
-                assert presses == [label], (paging, presses)
-                assert settled != "true", (paging, "the tap hid the menus")
+                assert presses == [label], (app, presses)
+                assert settled != "true", (app, "the tap hid the menus")
                 assert page.locator(".desk-tools-launch").first.is_visible(), (
-                    paging, "Search is hidden after the tap")
+                    app, "Search is hidden after the tap")
             finally:
                 browser.close()
 
@@ -287,23 +322,36 @@ class TestDockPagesOnWholeIcons(FinishRig):
         with sync_playwright() as pw:
             browser, page, errors = self._page(pw, 393)
             try:
-                pages = [page.evaluate(SHELF_PAGE)]
+                probes = [_whole_dock_target(target) for target in page.locator('.desk-dock-app[data-app]').all()]
                 page.screenshot(path=str(FINISH_SHOTS / "dock-home-393.png"))
-                more = page.get_by_role("button", name="More AppIcons")
-                for n in range(1, 8):
-                    self._press(page, more, 393)
-                    page.wait_for_timeout(900)
-                    state = page.evaluate(SHELF_PAGE)
-                    page.screenshot(path=str(FINISH_SHOTS / f"dock-page{n}-393.png"))
-                    if state["scrollLeft"] == 0:
-                        break
-                    pages.append(state)
-                assert pages[-1]["atEnd"], pages  # the walk reached the end of the shelf
-                assert len(pages) >= 3, pages  # five projects: the shelf has pages
-                for state in pages:
-                    assert not state["right"], f"a strip of the next AppIcon beside More: {state}"
-                    # Every page, the last one included (Astra, #869: it showed 1 px of Delivery).
-                    assert not state["left"], f"a strip of the item before this page: {state}"
+                # Five actual project journeys exercise window seats on the
+                # current shelf; projects are reached from Go, not Dock pages.
+                projects = _api(page,"GET","/api/projects",token="finish-polish-glass")["projects"]
+                assert len(projects) >= 5
+                for n, project in enumerate(projects):
+                    page.locator(".desk-verbbar-item[data-menu-id='go'] button").tap()
+                    menu = page.locator(".desk-verbbar-menu")
+                    menu.get_by_role("menuitem",name=project["name"],exact=True).tap()
+                    room = page.locator('#surface-project-memory')
+                    room.wait_for(state="visible")
+                    assert room.get_attribute("aria-label") == project["name"]
+                    page.locator(".desk-verbbar-item[data-menu-id='go'] button").tap()
+                    page.locator(".desk-verbbar-menu [role^=menuitem]").filter(
+                        has=page.locator(".desk-menu-label",has_text="Needs you")).tap()
+                    page.locator('.desk-window-shell[aria-label="Needs you"]').wait_for(state="visible")
+                    seat = page.locator('.desk-dock [data-seat="surface-project-memory"]')
+                    seat.wait_for(state="attached")
+                    for _ in range(6):
+                        if seat.evaluate("el => { const r=el.getBoundingClientRect(); return r.left>=0 && r.right<=innerWidth; }"):
+                            break
+                        _swipe_shelf(page)
+                    probes.append(_whole_dock_target(seat))
+                    _tap_dock(page,seat)
+                    room.wait_for(state="visible")
+                    assert room.get_attribute("aria-label") == project["name"]
+                    seat.wait_for(state="detached")
+                    page.screenshot(path=str(FINISH_SHOTS / f"dock-seat{n}-393.png"))
+                assert len(probes) >= 9, probes
                 assert not errors, errors
             finally:
                 browser.close()

@@ -729,6 +729,22 @@ def _workbench_api(page: Any, method: str, path: str, body: dict[str, Any] | Non
     return result["payload"]
 
 
+def _window_inside_worktop(page: Any, workspace: Any) -> dict[str, float]:
+    """Measure the live chrome and Dock, rather than an obsolete top inset."""
+    _settle(page)
+    box = workspace.bounding_box()
+    bounds = page.evaluate("""() => {
+      const bar = document.querySelector('.desk-menubar').getBoundingClientRect();
+      const dock = document.querySelector('.desk-dock').getBoundingClientRect();
+      return {top:bar.bottom, bottom:dock.top, width:innerWidth};
+    }""")
+    assert box and box["width"] > 0 and box["height"] > 0, box
+    assert bounds["top"] - 1 <= box["y"], (box, bounds)
+    assert box["y"] + box["height"] <= bounds["bottom"] + 1, (box, bounds)
+    assert 0 <= box["x"] and box["x"] + box["width"] <= bounds["width"] + 1, (box, bounds)
+    return box
+
+
 @pytest.mark.e2e
 @pytest.mark.requires_meeting
 @pytest.mark.parametrize("width", [1440, 393])
@@ -843,9 +859,7 @@ def test_thought_workbench_real_glass(tmp_path: Path, monkeypatch: pytest.Monkey
             assert workspace.get_by_role("region", name="Interview", exact=True).count() == 0
             assert workspace.get_by_role("button", name="Info", exact=True).count() == 0
 
-            window_box = workspace.bounding_box()
-            assert window_box and window_box["y"] >= 48
-            assert window_box["y"] + window_box["height"] <= 900
+            window_box = _window_inside_worktop(page, workspace)
             note_box = page.get_by_role("region", name="Note", exact=True).bounding_box()
             band_box = band.bounding_box()
             foot_box = workspace.locator(".surface-footer").bounding_box()
@@ -940,9 +954,7 @@ def test_thought_workbench_real_glass(tmp_path: Path, monkeypatch: pytest.Monkey
             well = page.get_by_role("region", name="Add notes", exact=True)
             well.wait_for(timeout=10000)
             assert well.evaluate("el => el.closest('.thought-workspace-window') !== null")
-            window_box = workspace.bounding_box()
-            assert window_box and window_box["y"] >= 48
-            assert window_box["y"] + window_box["height"] <= 900
+            window_box = _window_inside_worktop(page, workspace)
             well_box = well.bounding_box()
             assert well_box and well_box["y"] + well_box["height"] <= window_box["y"] + window_box["height"] + 1
             page.screenshot(path=f"/tmp/holdspeak-thought-context-well-{width}.png", full_page=False)

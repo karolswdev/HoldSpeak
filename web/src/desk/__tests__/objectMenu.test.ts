@@ -52,7 +52,7 @@ describe("objectMenuEntries (registry-derived, parallel list #4 dead)", () => {
     expect(useDesk.getState().selectedIds).toEqual(["note:n1"]);
     expect(useDesk.getState().openAsk).toHaveBeenCalledOnce();
     byId["object.open"].onSelect();
-    expect(useDesk.getState().openPullout).toHaveBeenCalledWith("n1", undefined);
+    expect(useDesk.getState().openPullout).toHaveBeenCalledWith("note:n1", undefined);
     byId["object.info"].onSelect();
     expect(useDesk.getState().openInfoWindow).toHaveBeenCalledWith("note:n1");
   });

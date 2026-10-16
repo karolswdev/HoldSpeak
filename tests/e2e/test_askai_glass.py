@@ -9,8 +9,8 @@ because each check needs a real browser:
   anchored inside the window (selection, geometry);
 * the Thread composer (HS-200-41 lane F, was in
   tests/e2e/test_hs200_task_resume_glass.py): an empty draft's Send READS
-  refused (computed cursor and contrast), and the ref chip's x paints no
-  hover background but keeps its focus ring (hover, focus).
+  refused (readable text, flat material and cursor), and the ref chip's x
+  keeps the library ghost material, focus ring and removal action.
 
 Was tests/e2e/test_hs153_practice_glass.py. Its other legs moved:
 the mode tabs to web/src/desk/__tests__/ModeTabs.test.tsx and
@@ -864,6 +864,7 @@ _composer_SWATCH_JS = """(sel) => {
       border: cs.borderTopColor,
       cursor: cs.cursor,
       opacity: cs.opacity,
+      shadow: cs.boxShadow,
       disabled: el.disabled === true,
       labelContrast: contrast(cs.color, over),
       fillVsBackdrop: contrast(over, backdrop),
@@ -931,11 +932,8 @@ def test_a_refused_send_reads_as_refused(
                 f"difference is the DOM `disabled` attribute: {refused} vs {live}"
             )
 
-            # WHERE the refusal actually reads, measured.  LANE-F FINDING:
-            # `--disabled-bg` is `--surface-1`, and against the composer's
-            # well the FILL barely moves (~1.1:1) — the whole visible signal
-            # is the dimmed LABEL (14.8:1 -> 4.4:1) plus the not-allowed
-            # cursor.  Recorded for the orchestrator's eye, not fixed here.
+            # The held verb is flat and readable. Contrast need not be
+            # lower than the live blue plate to distinguish its state.
             print(
                 f"[hs200-41] FINDING refused-vs-live @{width}: "
                 f"fill {refused['effectiveBackground']} vs {live['effectiveBackground']} "
@@ -944,14 +942,10 @@ def test_a_refused_send_reads_as_refused(
                 f"{live['labelContrast']}:1; border identical="
                 f"{refused['border'] == live['border']}"
             )
-            assert refused["labelContrast"] < live["labelContrast"], (
-                f"the refused label is not dimmer than the live one: {refused} {live}"
-            )
-            # The refused verb must still be READABLE, not erased (A.8's
-            # sibling: a refusal is a statement, not a disappearance).
-            assert refused["labelContrast"] >= 3.0, (
-                f"the refused Send is below 3:1 and cannot be read: {refused}"
-            )
+            assert refused["shadow"] == "none" and live["shadow"] != "none", (refused, live)
+            assert refused["opacity"] == live["opacity"] == "1", (refused, live)
+            assert refused["labelContrast"] >= 4.5, refused
+            assert live["labelContrast"] >= 4.5, live
 
             _assert_clean(page, errors)
             browser.close()
@@ -963,11 +957,7 @@ def test_a_refused_send_reads_as_refused(
 def test_the_ref_chip_x_paints_no_hover_background(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
 ) -> None:
-    """The library's hover grammar was neutralised on the chip's `x`.
-
-    Hovered: no background, no border, no lift.  Focused: the ring the
-    swap to the library `Button` gained must still be there.
-    """
+    """The chip's x uses the ordinary ghost Button material and interaction."""
     _ensure_build()
     server, url = _boot(tmp_path, monkeypatch, token=COMPOSER_TOKEN)
     errors: list[str] = []
@@ -997,33 +987,39 @@ def test_the_ref_chip_x_paints_no_hover_background(
             page.wait_for_selector('[data-testid="composer-chips"]', timeout=10000)
             _settle(page)
 
-            remove = page.locator(".thread-ref-chip-remove").first
+            remove = page.locator(".thread-ref-chip-remove")
             remove.wait_for(timeout=5000)
             name = remove.get_attribute("aria-label") or ""
             assert name.startswith("Remove "), f"the x needs a name: {name!r}"
 
+            page.mouse.move(2, 2)
+            page.wait_for_timeout(200)
             resting = _composer_swatch(page, ".thread-ref-chip-remove")
+            material = remove.evaluate("""el => {
+              const probe = document.createElement('i'); el.parentElement.appendChild(probe);
+              const read = (property, value) => { probe.style[property] = value; return getComputedStyle(probe)[property]; };
+              const values = {steel:read('backgroundColor','var(--wb-steel)'),
+                hover:read('backgroundColor','var(--wb-steel-2)'), ink:read('borderTopColor','var(--wb-ink)'),
+                raised:read('boxShadow','var(--wb-raised)')};
+              probe.remove(); return values;
+            }""")
+            assert {"btn", "btn--ghost", "btn--sm"} <= set((remove.get_attribute("class") or "").split())
+            assert resting["background"] == material["steel"] and resting["border"] == material["ink"], (resting, material)
+            assert resting["shadow"] == material["raised"], (resting, material)
             remove.hover()
             page.wait_for_timeout(200)
             hovered = _composer_swatch(page, ".thread-ref-chip-remove")
             print(f"[hs200-41] chip x @{width} resting={json.dumps(resting)}")
             print(f"[hs200-41] chip x @{width} hovered={json.dumps(hovered)}")
-            assert hovered["background"] in ("rgba(0, 0, 0, 0)", "transparent"), (
-                f"the chip's x paints a hover background: {hovered}"
-            )
-            assert hovered["border"] in ("rgba(0, 0, 0, 0)", "transparent"), (
-                f"the chip's x paints a hover border: {hovered}"
-            )
-            assert hovered["color"] != resting["color"], (
-                "hover must still SAY something — the colour shift is the "
-                f"whole remaining affordance: {resting} vs {hovered}"
-            )
+            assert hovered["background"] == material["hover"] != resting["background"], (resting, hovered, material)
+            assert hovered["border"] == material["ink"] and hovered["shadow"] == material["raised"], (hovered, material)
+            assert hovered["labelContrast"] >= 4.5, hovered
             _composer_shot_element(
                 page, page.locator('[data-testid="composer-chips"]'),
                 f"composer-refchip-hover-{width}", pad=28,
             )
 
-            # The focus ring survived the neutralisation.  It must be reached
+            # The focus ring must be reached
             # by a REAL Tab — a scripted `.focus()` leaves Chromium in mouse
             # modality, where `:focus-visible` does not apply and an absent
             # ring would prove nothing.
@@ -1045,6 +1041,7 @@ def test_the_ref_chip_x_paints_no_hover_background(
                 }"""
             )
             print(f"[hs200-41] chip x focus ring @{width}: {json.dumps(ring)}")
+            assert ring["onTheX"] and ring["name"] == name, ring
             if ring["onTheX"]:
                 _composer_shot_element(
                     page, page.locator('[data-testid="composer-chips"]'),
@@ -1054,10 +1051,15 @@ def test_the_ref_chip_x_paints_no_hover_background(
                 assert ring["outlineStyle"] != "none" and ring["outlineWidth"] != "0px", (
                     f"the focus ring did NOT survive the library swap: {ring}"
                 )
-                hovered_focus = _composer_swatch(page, ".thread-ref-chip-remove")
-                assert hovered_focus["background"] in (
-                    "rgba(0, 0, 0, 0)", "transparent",
-                ), hovered_focus
+            owned = remove.evaluate("""el => {
+              const r=el.getBoundingClientRect(); const x=r.left+r.width/2, y=r.top+r.height/2;
+              const hit=document.elementFromPoint(x,y);
+              return r.width>0 && r.height>0 && x>=0 && y>=0 && x<innerWidth && y<innerHeight && !!hit && el.contains(hit);
+            }""")
+            assert owned, "the chip removal control does not own its touch/click centre"
+            remove.click()
+            remove.wait_for(state="detached")
+            assert field.is_visible(), "removing one reference must keep the composer open"
 
             _assert_clean(page, errors)
             browser.close()

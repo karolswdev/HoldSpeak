@@ -1,8 +1,10 @@
 import { useDesk } from "../../store";
+import { COMPACT_VIEWPORT_QUERY } from "../../useCompactViewport";
+import { phoneRing, showRingWindow } from "./phoneRing";
 import { flashSwitcher } from "./Switcher";
 import { back, tileFront, userArranged } from "../../compositor/useCompositor";
 import { getPresentation, modeNow } from "../../compositor/live";
-import { chairPhoneToBack, chairWindowSpec } from "../../chair/chairWindows";
+import { chairWindowSpec } from "../../chair/chairWindows";
 import {
   cycleWindows as cycleWindowsRaw,
   cycleWindowsReverse as cycleWindowsReverseRaw,
@@ -96,7 +98,20 @@ export const maximizeFrontWindow = zoomFrontWindow;
  * a time, so a Chair window sent back gives the work area to the next one. */
 export function sendWindowToBack(id: string): void {
   useDesk.getState().sendPanelToBack(id);
-  chairPhoneToBack(id);
+  if (chairWindowSpec(id) && typeof window !== "undefined"
+    && window.matchMedia?.(COMPACT_VIEWPORT_QUERY).matches) {
+    // Only one Chair pane mounts on the phone. Depth must also reach an
+    // open program pane (Today now owns Brief), restoring it from its seat.
+    const ring = phoneRing();
+    const at = ring.findIndex((entry) => entry.id === id);
+    if (at >= 0 && ring.length > 1) showRingWindow(ring[(at + 1) % ring.length].id);
+    else if (at < 0) {
+      // A restored legacy Chair Brief is outside the canonical ring.
+      // Return it to Today when open, otherwise the first available pane.
+      const next = ring.find((entry) => entry.id === "pullout:intelligence:desk") ?? ring[0];
+      if (next) showRingWindow(next.id);
+    }
+  }
 }
 
 /** ⌃B — depth on the front window. */

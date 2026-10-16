@@ -9,7 +9,7 @@
   padding: var(--space-4);
   max-width: 960px;
   margin: var(--desk-work-top) auto var(--desk-work-bottom);
-  min-height: calc(100dvh - var(--desk-snap-top) - var(--desk-snap-bottom));
+  min-height: calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom));
 }
 
 /* PHILO-13-11 (C1, slice two) — the Chair was a Workbench SCREEN of four
@@ -162,24 +162,28 @@
     top: var(--chair-top);
     width: calc(50% - 22px);
     min-height: calc(var(--chair-band) - var(--chair-capture-h) - 12px);
+    height: calc(var(--chair-band) - var(--chair-capture-h) - 12px);
   }
   .desk-next .chair-desk[data-layout="screen"] .chair-window--capture {
     left: 14px;
     top: calc(var(--chair-top) + var(--chair-band) - var(--chair-capture-h));
     width: calc(50% - 22px);
     min-height: var(--chair-capture-h);
+    height: var(--chair-capture-h);
   }
   .desk-next .chair-desk[data-layout="screen"] .chair-window--brief {
     left: calc(50% + 8px);
     top: var(--chair-top);
     width: calc(50% - 22px);
     min-height: calc(var(--chair-band) * 0.64 - 8px);
+    height: calc(var(--chair-band) * 0.64 - 8px);
   }
   .desk-next .chair-desk[data-layout="screen"] .chair-window--week {
     left: calc(50% + 8px);
     top: calc(var(--chair-top) + var(--chair-band) * 0.64 + 8px);
     width: calc(50% - 22px);
     min-height: calc(var(--chair-band) * 0.36 - 8px);
+    height: calc(var(--chair-band) * 0.36 - 8px);
   }
 }
 /* R1: a closed Chair window leaves its place with ONE compact reopen

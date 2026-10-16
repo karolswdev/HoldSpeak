@@ -46,8 +46,8 @@ product contract; no skips, blanket retries, threshold increases or broad exempt
 | R008 | Browser journeys | `tests/e2e/test_chair_glass.py::TestTheCardInCapture1440::test_closed_capture_opens_and_holds_the_whole_card` | Current-source 25-case follow-up: passed; delivery pending |
 | R009 | Browser journeys | `tests/e2e/test_chair_glass.py::TestTheCardInCapture1440::test_moved_capture_keeps_its_rect_and_the_card_scrolls_whole` | Current-source 166-case browser run: passed; delivery pending |
 | R010 | Browser journeys | `tests/e2e/test_chair_glass.py::TestTheCardInCapture1440::test_resized_capture_keeps_its_rect_and_the_card_scrolls_whole` | Current-source 166-case browser run: passed; delivery pending |
-| R011 | Browser journeys | `tests/e2e/test_chair_glass.py::TestTheChairAsWindows::test_the_chair_as_windows[1440]` | Current-source 10-case final follow-up: passed; delivery pending |
-| R012 | Browser journeys | `tests/e2e/test_chair_glass.py::TestTheChairAsWindows::test_the_chair_as_windows[393]` | Current-source 10-case final follow-up: failed; causal repair continues |
+| R011 | Browser journeys | `tests/e2e/test_chair_glass.py::TestTheChairAsWindows::test_the_chair_as_windows[1440]` | Final built browser proof: passed; delivery pending |
+| R012 | Browser journeys | `tests/e2e/test_chair_glass.py::TestTheChairAsWindows::test_the_chair_as_windows[393]` | Final built browser proof: passed; delivery pending |
 | R013 | Browser journeys | `tests/e2e/test_creation_glass.py::TestEveryNewVerbOpensItsWindow::test_a_new_verb_opens_its_window_at_once[1440-chair]` | Current-source 166-case browser run: passed; delivery pending |
 | R014 | Browser journeys | `tests/e2e/test_creation_glass.py::TestEveryNewVerbOpensItsWindow::test_a_new_verb_opens_its_window_at_once[393-chair]` | Current-source 166-case browser run: passed; delivery pending |
 | R015 | Browser journeys | `tests/e2e/test_creation_glass.py::TestEveryNewVerbOpensItsWindow::test_two_quick_presses_make_one_record[393]` | Current-source 166-case browser run: passed; delivery pending |
@@ -111,12 +111,12 @@ product contract; no skips, blanket retries, threshold increases or broad exempt
 | R073 | Browser journeys | `tests/e2e/test_today_glass.py::TestTheTodayWindowSize::test_today_opens_at_its_size_and_keeps_the_size_he_sets` | Current-source 166-case browser run: passed; delivery pending |
 | R074 | Browser journeys | `tests/e2e/test_windows_glass.py::TestCloseMeansGone::test_a_meeting_resolved_as_deleted_closes_its_card[1440]` | Current-source 166-case browser run: passed; delivery pending |
 | R075 | Browser journeys | `tests/e2e/test_windows_glass.py::TestCloseMeansGone::test_a_meeting_resolved_as_deleted_closes_its_card[393]` | Current-source 166-case browser run: passed; delivery pending |
-| R076 | Browser journeys | `tests/e2e/test_windows_glass.py::TestCloseMeansGone::test_every_opener_closes_to_the_desk[393]` | Current-source 10-case final follow-up: passed; delivery pending |
+| R076 | Browser journeys | `tests/e2e/test_windows_glass.py::TestCloseMeansGone::test_every_opener_closes_to_the_desk[393]` | Final built browser proof: passed; delivery pending |
 | R077 | Browser journeys | `tests/e2e/test_windows_glass.py::TestCloseMeansGone::test_the_closed_intelligence_window_does_not_swallow_retry[393]` | Current-source 166-case browser run: passed; delivery pending |
 | R078 | Browser journeys | `tests/e2e/test_windows_glass.py::TestHubWindows::test_one_desk_two_views` | Current-source 166-case browser run: passed; delivery pending |
-| R079 | Browser journeys | `tests/e2e/test_windows_glass.py::TestTheDeskRemembers::test_windows_places_and_drafts_return_after_a_reload[1440]` | Current-source 10-case final follow-up: failed; causal repair continues |
-| R080 | Browser journeys | `tests/e2e/test_windows_glass.py::TestTheDeskRemembers::test_windows_places_and_drafts_return_after_a_reload[393]` | Current-source 10-case final follow-up: passed; delivery pending |
-| R081 | Browser journeys | `tests/e2e/test_windows_glass.py::TestThePhoneDesk::test_the_phone_desk_393` | Current-source 10-case final follow-up: passed; delivery pending |
+| R079 | Browser journeys | `tests/e2e/test_windows_glass.py::TestTheDeskRemembers::test_windows_places_and_drafts_return_after_a_reload[1440]` | Final built browser proof: passed; delivery pending |
+| R080 | Browser journeys | `tests/e2e/test_windows_glass.py::TestTheDeskRemembers::test_windows_places_and_drafts_return_after_a_reload[393]` | Final built browser proof: passed; delivery pending |
+| R081 | Browser journeys | `tests/e2e/test_windows_glass.py::TestThePhoneDesk::test_the_phone_desk_393` | Final built browser proof: passed; delivery pending |
 | R082 | Browser journeys | `tests/e2e/test_windows_glass.py::TestWindowNamesOnGlass::test_the_project_room_is_named_by_its_project_and_393_shows_the_name[393]` | Current-source 166-case browser run: passed; delivery pending |
 | R083 | Browser journeys | `tests/e2e/test_windows_glass.py::TestWindowsOpenWell::test_windows_open_clear_and_come_back` | Current-source 166-case browser run: passed; delivery pending |
 | R084 | Browser journeys | `tests/e2e/test_windows_glass.py::test_escape_closes_the_strip_menu_not_the_window` | Current-source 166-case browser run: passed; delivery pending |
@@ -129,10 +129,10 @@ product contract; no skips, blanket retries, threshold increases or broad exempt
 | R091 | Runtime and producers | `tests/unit/test_agent_hand.py::test_hand_launches_a_minted_decision_record_with_a_bounded_session_name` | Delivered in #1225; new concurrency/error regressions and quick checks pass |
 | R092 | Guards and copy | `tests/unit/test_decisions.py::test_pre_fix_route_answers_500_on_create` | Full-history checkout delivered in #1226; local assertions pass; new CI verification pending |
 | R093 | Guards and copy | `tests/unit/test_density_guard.py::test_runtime_modules_stay_single_concern` | Delivered in #1226; affected checks and ordinary quick checks pass |
-| R094 | Runtime and producers | `tests/unit/test_desk_memory.py::test_the_decision_chain_and_the_carry_survive_a_hub_restart` | Runtime fix verified: 575 affected / 109 sweep / 17 canon; merge pending |
+| R094 | Runtime and producers | `tests/unit/test_desk_memory.py::test_the_decision_chain_and_the_carry_survive_a_hub_restart` | Delivered in #1228; 575 affected / 109 sweep / 17 canon GREEN |
 | R095 | Guards and copy | `tests/unit/test_doc_drift_guard.py::test_no_live_doc_has_a_dangling_relative_link` | Delivered in #1226; affected checks and ordinary quick checks pass |
 | R096 | Guards and copy | `tests/unit/test_graph_reference.py::test_council_revision_holds_the_resolutions_the_join_read` | Full-history checkout delivered in #1226; local assertions pass; new CI verification pending |
-| R097 | Guards and copy | `tests/unit/test_kernel_effect_fence.py::test_effect_ledger_is_complete_and_current` | Runtime fix verified: 575 affected / 109 sweep / 17 canon; merge pending |
+| R097 | Guards and copy | `tests/unit/test_kernel_effect_fence.py::test_effect_ledger_is_complete_and_current` | Delivered in #1228; 575 affected / 109 sweep / 17 canon GREEN |
 | R098 | Runtime and producers | `tests/unit/test_memory_engine.py::test_an_engine_failure_ends_the_tick_and_recall_stays_whole` | Delivered in #1226; affected checks and ordinary quick checks pass |
 | R099 | Runtime and producers | `tests/unit/test_memory_engine.py::test_no_assignment_means_no_engine_and_todays_recall` | Delivered in #1226; affected checks and ordinary quick checks pass |
 | R100 | Runtime and producers | `tests/unit/test_memory_slice3_facts.py::test_an_engine_failure_ends_the_pass_and_charges_no_source` | Delivered in #1226; affected checks and ordinary quick checks pass |
@@ -148,7 +148,7 @@ product contract; no skips, blanket retries, threshold increases or broad exempt
 | R110 | Guards and copy | `tests/unit/test_static_sql_matches_schema.py::test_unchecked_statements_are_named_counted_and_do_not_grow` | Delivered in #1226; affected checks and ordinary quick checks pass |
 
 | R111 | Browser journeys | `tests/e2e/test_thought_glass.py::test_thought_workbench_real_glass[393]` | Current-source 166-case browser run: passed; delivery pending |
-| R112 | Runtime and producers | `tests/unit/test_calendar_ingest.py::TestB11BothConductors::test_event_born_row_is_armed_and_started_by_the_136_conductor` | Runtime fix verified: 575 affected / 109 sweep / 17 canon; merge pending |
+| R112 | Runtime and producers | `tests/unit/test_calendar_ingest.py::TestB11BothConductors::test_event_born_row_is_armed_and_started_by_the_136_conductor` | Delivered in #1228; 575 affected / 109 sweep / 17 canon GREEN |
 
 ## Delivery log
 
@@ -258,3 +258,24 @@ product contract; no skips, blanket retries, threshold increases or broad exempt
   17 canon**. Enabled-notification doubles pass with the runner still disabled.
   Desktop/phone shots inspected; source digest equals build `f6ef8ac2099dde8b`.
   Independent runtime source review found no blocking defect; merge next.
+
+- [#1228](https://github.com/karolswdev/HoldSpeak/pull/1228) merged `58a0d4552`.
+  Formal Astra postmerge review RATIFY; build `f6ef8ac2099dde8b`, PID 76313,
+  is live on port 8765. Health, Desk, Conductor and Models return 200.
+  Runtime recovery is delivered; browser recovery remains active.
+- Go event ownership and both directions of bare/qualified record reopening
+  pass **34 focused checks**. Existing window keys, saved geometry, drafts,
+  collision separation and minimized restoration are preserved.
+
+- Final type check passes; all **639 graph atlas checks pass** after naming the
+  actual controls in the case selectors. Final browser proof: **10 passed, 1 failed**
+  (68.47 s). All remaining prior window cases pass, including remembered drafts
+  and phone front ownership. The new Activity return case passes at 1440 but
+  finds Back leaves Rhythm open at 393; this added finding remains under repair.
+  Actual Activity desktop/phone and returned desktop shots were inspected.
+
+- Phone return cause confirmed by the DB-backed window read: Back cleared an
+  unnecessary `service:HeartbeatService` scope rather than closing Rhythm.
+  Activity now opens this unscoped face without a scope; exact meeting scopes
+  remain. **17 Activity checks, type check, and both actual return cases pass**
+  (9.50 s). The added strict one-Back, exact-row and nine-hit-point proof stays.

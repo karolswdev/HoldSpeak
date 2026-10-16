@@ -86,6 +86,14 @@ LINES = [
 ENDS = ["end to end.", "cutover sync).", "Due: 2026-10-06.", "Due: 2026-10-07."]
 
 
+def _open_update_history(page: Any, project_id: str) -> None:
+    """The palette's project command opens saved updates without drafting."""
+    page.locator("[aria-controls=desk-tool-shelf]:visible").click()
+    page.locator("[aria-controls=desk-palette-listbox]").fill("Draft update for")
+    page.locator(f"[id='desk-palette-option-week.draft-update.{project_id}']").click()
+    page.get_by_test_id("update-list").wait_for(timeout=20_000)
+
+
 def _seed_draft(project_id: str) -> None:
     from holdspeak.db import get_database
 
@@ -156,9 +164,10 @@ def test_the_update_draft_wraps(tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
                 else:
                     loc.click()
 
-            press(page.locator('[data-testid="updates-verb"]').first)
-            page.locator('[data-testid="update-list-item"]').first.wait_for()
-            press(page.locator('[data-testid="update-list-item"]').first)
+            _open_update_history(page, pid)
+            seeded = page.get_by_test_id("update-list-item").filter(
+                has=page.locator("[data-update-id='pupd_p1318_wrap']"))
+            press(seeded)
             editor = page.locator('[data-testid="update-body-editor"] .cm-editor')
             editor.wait_for()
             editor.scroll_into_view_if_needed()
@@ -1851,9 +1860,8 @@ class TestRoomFaceGlass:
         return out
 
     @staticmethod
-    def _updates(page: Any) -> None:
-        page.locator("[data-testid=updates-verb]").click()
-        page.locator("[data-testid=update-list]").wait_for(timeout=T)
+    def _updates(page: Any, project_id: str) -> None:
+        _open_update_history(page, project_id)
         page.wait_for_timeout(400)
 
     @staticmethod
@@ -2022,12 +2030,21 @@ class TestRoomFaceGlass:
                 pid = self._project(page)
                 uid = self._published(page, pid)
                 self._room(page, pid)
-                self._updates(page)
+                self._updates(page, pid)
                 self._open_update(page, uid)
                 page.evaluate(FETCH_SEAM)
-                page.locator("[data-testid=update-verb-copy]").click()
+                if width == 393:
+                    # Published updates keep Regenerate as their first footer
+                    # verb; Copy is the exact action in its compact More menu.
+                    page.locator(".surface-footer-layout:has([data-testid=update-footer-receipt])").get_by_role(
+                        "button", name="More actions", exact=True).click()
+                    page.get_by_role("menu", name="More actions").get_by_role(
+                        "menuitem", name="Copy", exact=True).click()
+                else:
+                    page.get_by_test_id("update-verb-copy").click()
                 page.wait_for_timeout(300)
                 clip = page.evaluate("navigator.clipboard.readText().catch(e => 'ERR ' + e)")
+                assert clip == "## Progress\n\nThe ledger cutover is on track.\n", clip
                 after_copy = self._facts(page)
                 _rf_shot(page, "deliver-1-after-copy", width)
                 assert after_copy["deliver_verb"] == "Mark delivered", after_copy
@@ -2075,8 +2092,12 @@ class TestRoomFaceGlass:
                 calls = page.evaluate("window.__calls")
                 hub2 = self._deliveries(page, pid, uid)
                 both = self._facts(page)
+                copy_door = (
+                    ".surface-footer-layout:has([data-testid=update-footer-receipt]) button[aria-label='More actions']"
+                    if width == 393 else "[data-testid=update-verb-copy]"
+                )
                 pointer = self._pointer(page, width, ["[data-testid=deliver-verb]", "[data-section=delivery] .desk-mic",
-                                                      "[data-testid=update-verb-back]", "[data-testid=update-verb-copy]"])
+                                                      "[data-testid=update-verb-back]", copy_door])
                 _rf_record("deliver-two-rows", width, {"clipboard_head": str(clip)[:60], "calls": calls, "hub": hub2,
                                                     "after_copy": after_copy, "returned": returned, "pending": pending,
                                                     "once": once, "both": both, "pointer": pointer})
@@ -2099,7 +2120,7 @@ class TestRoomFaceGlass:
                 _rf_shot(page, "deliver-6-list-chip", width)
                 assert listed["delivered_chips"] == ["✓ DELIVERY ×2"], listed["delivered_chips"]
                 # A draft offers no Mark delivered.
-                page.locator("[data-testid=update-verb-draft-deterministic]").click()
+                page.get_by_test_id("update-verb-draft").click()
                 page.locator("[data-testid=update-editor][data-lifecycle=draft]").wait_for(timeout=T)
                 page.wait_for_timeout(500)
                 draft = self._facts(page)
@@ -2124,7 +2145,7 @@ class TestRoomFaceGlass:
                 a = self._published(page, pid)
                 b = self._published(page, pid)
                 self._room(page, pid)
-                self._updates(page)
+                self._updates(page, pid)
                 page.evaluate(FETCH_SEAM)
                 self._open_update(page, a)
                 # A named refusal: the hub's code, its plain word; nothing kept.
@@ -2306,7 +2327,7 @@ class TestRoomFaceGlass:
                 row.wait_for(timeout=T)
                 row.scroll_into_view_if_needed()
                 page.wait_for_timeout(300)
-                face = row.evaluate("""r => ({text: r.innerText.replace(/\s+/g, ' ').trim(),
+                face = row.evaluate(r"""r => ({text: r.innerText.replace(/\s+/g, ' ').trim(),
                     lead: r.querySelector('.surface-state-chip')?.getAttribute('data-state'),
                     code: r.querySelector('[data-outcome]')?.dataset.code})""")
                 _rf_record("receipt-refused", width, {"hub": hub, "face": face})
@@ -2458,7 +2479,7 @@ class TestRoomFaceGlass:
                 self._published(page, pid)
                 _api(page, "POST", f"/api/projects/{pid}/updates/draft", {"generator": "deterministic"}, token=RF_TOKEN)
                 self._room(page, pid)
-                self._updates(page)
+                self._updates(page, pid)
                 facts = self._facts(page)
                 words = page.evaluate("""() => [...document.querySelectorAll('[data-testid=update-list-item] .update-list-row')]
                     .map(r => ({lifecycle: r.dataset.lifecycle, tokens: [...r.querySelectorAll('.surface-token')].map(t => t.innerText.trim())}))""")
