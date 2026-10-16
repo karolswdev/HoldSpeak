@@ -174,6 +174,8 @@ describe("People: Add on They owe you shows the saved item", () => {
     render(<PeopleCore scope={`people:${id}`} />);
     const owed = await screen.findByTestId("people-they-owe", {}, { timeout: 5000 });
     expect(within(owed).queryByText(owedBody)).toBeNull();
+    expect(within(owed).queryByLabelText("They owe you")).toBeNull();
+    fireEvent.click(within(owed).getByRole("button", { name: "Add" }));
     fireEvent.change(within(owed).getByLabelText("They owe you"), { target: { value: owedBody } });
     fireEvent.click(within(owed).getByRole("button", { name: "Add" }));
     // 5 s, not the 1 s default: the full suite runs in parallel (#1100).
@@ -182,6 +184,7 @@ describe("People: Add on They owe you shows the saved item", () => {
     expect(posted).toHaveLength(1);
     expect(JSON.parse(String(posted[0][1]?.body)).body).toBe(owedBody);
     expect(screen.getByTestId("people-they-owe").querySelector("h3")!.textContent).toBe("THEY OWE YOU1");
+    expect(within(screen.getByTestId("people-they-owe")).queryByLabelText("They owe you")).toBeNull();
     // It is what they owe, never a request asked of him.
     expect(fetchSpy.mock.calls.some(([url]) => String(url).endsWith("/requests"))).toBe(false);
   });

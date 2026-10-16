@@ -3,14 +3,14 @@
 // re-render, Revoke removal.
 
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, waitFor, act, cleanup } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act, cleanup, within } from "@testing-library/react";
 import { RemoteAccessModule } from "../SettingsCore";
 
 // Mock apiFetch
 const mockApiFetch = vi.fn();
-vi.mock("../../../lib/api", () => ({
+vi.mock("../../../lib/api", async (importOriginal) => ({
+  ...await importOriginal<typeof import("../../../lib/api")>(),
   apiFetch: (...args: unknown[]) => mockApiFetch(...args),
-  readableError: (err: unknown) => String(err),
 }));
 
 // Mock clipboard
@@ -26,6 +26,7 @@ const EPOCH_LAST_USED = Math.floor(Date.now() / 1000) - 3600; // 1 hour ago
 import REMOTE_OFF from "./wire/remote-settings.off.wire.json";
 import REMOTE_ISSUED from "./wire/remote-settings.issued.wire.json";
 import REMOTE_ONE from "./wire/remote-settings.one-credential.wire.json";
+import PROJECTS from "../../../desk/__tests__/fixtures/settings-wire/grant-projects.json";
 
 function makeRemoteWire(overrides: Record<string, unknown> = {}) {
   return { ...structuredClone(REMOTE_OFF.wire), ...overrides };
@@ -218,5 +219,188 @@ describe("RemoteAccessModule", () => {
     });
 
     expect(screen.getByTestId("remote-address").textContent).toBe("100.64.0.2:8765");
+  });
+});
+
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason: unknown) => void;
+  const promise = new Promise<T>((yes, no) => { resolve = yes; reject = no; });
+  return { promise, resolve, reject };
+}
+
+describe("Remote access recovery ownership", () => {
+  beforeEach(() => mockApiFetch.mockReset());
+  afterEach(cleanup);
+
+  const knownRemote = () => makeRemoteWire({ enabled: true, bind_host: "100.64.0.2", port: 8765,
+    credentials: [makeCred("keeper", { identity: "keeper" })], total_count: 1, active_count: 1 });
+
+  it("a failed first remote GET retries only that exact read", async () => {
+    mockApiFetch.mockRejectedValueOnce(new TypeError("Hub unavailable")).mockResolvedValueOnce(knownRemote());
+    render(<RemoteAccessModule />);
+    expect(await screen.findByRole("alert")).toHaveTextContent("Could not read remote access");
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(await screen.findByText("keeper")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(mockApiFetch.mock.calls).toEqual([["/api/settings/remote"], ["/api/settings/remote"]]);
+  });
+
+  it("a failed remote reread keeps the known ledger through Retry and ignores an older failed read", async () => {
+    const older = deferred<unknown>();
+    const retry = deferred<unknown>();
+    mockApiFetch.mockResolvedValueOnce(knownRemote()).mockRejectedValueOnce(new Error("Offline"))
+      .mockReturnValueOnce(retry.promise).mockReturnValueOnce(older.promise).mockResolvedValueOnce(knownRemote());
+    const view = render(<RemoteAccessModule />);
+    const row = await screen.findByTestId("credential-row-keeper");
+    view.rerender(<RemoteAccessModule onEnabledChange={() => {}} />);
+    const notice = await screen.findByTestId("remote-read-error");
+    expect(screen.getByTestId("credential-row-keeper")).toBe(row);
+    fireEvent.click(within(notice).getByRole("button", { name: "Retry" }));
+    expect(screen.getByTestId("credential-row-keeper")).toBe(row);
+    await act(async () => retry.resolve(knownRemote()));
+    expect(screen.queryByRole("alert")).toBeNull();
+    view.rerender(<RemoteAccessModule onEnabledChange={() => {}} />);
+    view.rerender(<RemoteAccessModule onEnabledChange={() => {}} />);
+    await waitFor(() => expect(mockApiFetch).toHaveBeenCalledTimes(5));
+    await act(async () => older.reject(new Error("Late offline")));
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.getByTestId("credential-row-keeper")).toBe(row);
+  });
+
+  it.each(["toggle", "issue", "revoke"])("a failed %s names its write and Reload never repeats the writer", async (kind) => {
+    mockApiFetch.mockImplementation((path: string, init?: { method?: string }) => {
+      if (!init?.method) return Promise.resolve(knownRemote());
+      return Promise.reject(new TypeError("Connection lost"));
+    });
+    const view = render(<RemoteAccessModule />);
+    await screen.findByText("keeper");
+    let action: string;
+    if (kind === "toggle") {
+      action = "Turn remote access off";
+      fireEvent.change(screen.getByRole("combobox", { name: "Remote transport" }), { target: { value: "OFF" } });
+    } else if (kind === "issue") {
+      action = "Issue credential · new-runner";
+      fireEvent.click(screen.getByTestId("issue-credential-btn"));
+      fireEvent.change(screen.getByRole("textbox", { name: "Credential name" }), { target: { value: "new-runner" } });
+      fireEvent.click(screen.getByTestId("issue-submit"));
+    } else {
+      action = "Revoke credential · keeper";
+      fireEvent.click(screen.getByTestId("credential-revoke"));
+    }
+    const notice = await screen.findByTestId("remote-error");
+    expect(notice).toHaveTextContent(`Change not confirmed · ${action}`);
+    expect(within(notice).queryByRole("button", { name: "Retry" })).toBeNull();
+    fireEvent.click(within(notice).getByRole("button", { name: "Reload current state" }));
+    await waitFor(() => expect(mockApiFetch.mock.calls.filter(([, init]) => !init?.method)).toHaveLength(2));
+    view.rerender(<RemoteAccessModule onEnabledChange={() => {}} />);
+    await waitFor(() => expect(mockApiFetch.mock.calls.filter(([, init]) => !init?.method)).toHaveLength(3));
+    expect(screen.getByTestId("remote-error")).toHaveTextContent(action);
+    expect(mockApiFetch.mock.calls.filter(([, init]) => init?.method)).toHaveLength(1);
+    expect(screen.getByRole("combobox", { name: "Remote transport" })).toHaveValue("ON");
+  });
+
+  it("Reload keeps unsaved Issue name, access, expiry and the expanded credential through read failure and recovery", async () => {
+    let remoteReads = 0;
+    mockApiFetch.mockImplementation((path: string, init?: { method?: string }) => {
+      if (path === "/api/projects") return Promise.resolve(PROJECTS);
+      if (init?.method === "POST") return Promise.reject(new TypeError("Issue response unavailable"));
+      if (++remoteReads === 2) return Promise.reject(new TypeError("Read unavailable"));
+      return Promise.resolve(knownRemote());
+    });
+    render(<RemoteAccessModule />);
+    const row = await screen.findByTestId("credential-row-keeper");
+    fireEvent.click(screen.getByRole("button", { name: "Projects: keeper" }));
+    await screen.findByTestId(`project-line-${PROJECTS.projects[0].id}`);
+    fireEvent.click(screen.getByTestId("issue-credential-btn"));
+    fireEvent.change(screen.getByRole("textbox", { name: "Credential name" }), { target: { value: "new-runner" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "Access" }), { target: { value: "DESK" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "Expires after" }), { target: { value: "604800" } });
+    fireEvent.click(screen.getByTestId("issue-submit"));
+    fireEvent.click(within(await screen.findByTestId("remote-error")).getByRole("button", { name: "Reload current state" }));
+    const readFailure = await screen.findByTestId("remote-read-error");
+    expect(screen.getByTestId("remote-error")).toHaveTextContent("Issue credential · new-runner");
+    fireEvent.click(within(readFailure).getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(screen.queryByTestId("remote-read-error")).toBeNull());
+    expect(screen.getByTestId("remote-error")).toHaveTextContent("Issue credential · new-runner");
+    expect(screen.getByRole("textbox", { name: "Credential name" })).toHaveValue("new-runner");
+    expect(screen.getByRole("combobox", { name: "Access" })).toHaveValue("DESK");
+    expect(screen.getByRole("combobox", { name: "Expires after" })).toHaveValue("604800");
+    expect(screen.getByRole("button", { name: "Projects: keeper" })).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByTestId("credential-row-keeper")).toBe(row);
+    expect(mockApiFetch.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(1);
+  });
+
+  it.each(["desk", "project"])("the automatic %s grant reread retains the original transport failure and subject", async (kind) => {
+    const wire = { ...knownRemote(), credentials: [makeCred("keeper", { identity: "keeper", palette: kind === "desk" ? "DESK" : "PROJECT" })] };
+    mockApiFetch.mockImplementation((path: string, init?: { method?: string }) => {
+      if (path === "/api/projects") return Promise.resolve(PROJECTS);
+      if (init?.method) return Promise.reject(new TypeError("Grant response unavailable"));
+      return Promise.resolve(wire);
+    });
+    render(<RemoteAccessModule />);
+    await screen.findByText("keeper");
+    if (kind === "project") {
+      fireEvent.click(screen.getByRole("button", { name: "Projects: keeper" }));
+      await screen.findByTestId(`project-line-${PROJECTS.projects[0].id}`);
+      fireEvent.click(within(screen.getByTestId(`project-line-${PROJECTS.projects[0].id}`)).getByRole("button", { name: "Allow run and publish" }));
+    } else fireEvent.click(screen.getByRole("button", { name: "Allow filing" }));
+    await waitFor(() => expect(mockApiFetch.mock.calls.filter(([path]) => path === "/api/settings/remote")).toHaveLength(2));
+    const notice = screen.getByTestId("remote-error");
+    expect(notice).toHaveTextContent(kind === "desk" ? "Allow filing · keeper" : `Allow run and publish · keeper · ${PROJECTS.projects[0].name}`);
+    fireEvent.click(within(notice).getByRole("button", { name: "Reload current state" }));
+    await waitFor(() => expect(mockApiFetch.mock.calls.filter(([path]) => path === "/api/settings/remote")).toHaveLength(3));
+    expect(screen.getByTestId("remote-error")).toHaveTextContent("Grant response unavailable");
+    expect(mockApiFetch.mock.calls.filter(([, init]) => init?.method)).toHaveLength(1);
+  });
+
+  it("an older writer failure cannot replace a later explicit issue outcome or its one-time token", async () => {
+    const revoke = deferred<unknown>();
+    let issued = false;
+    mockApiFetch.mockImplementation((_path: string, init?: { method?: string }) => {
+      if (init?.method === "DELETE") return revoke.promise;
+      if (init?.method === "POST") {
+        issued = true;
+        return Promise.resolve({ ...REMOTE_ISSUED.wire, identity: "new-runner" });
+      }
+      return Promise.resolve({ ...knownRemote(), credentials: [makeCred("keeper", { identity: "keeper" }),
+        ...(issued ? [makeCred(REMOTE_ISSUED.wire.id, { identity: "new-runner" })] : [])] });
+    });
+    const view = render(<RemoteAccessModule />);
+    await screen.findByText("keeper");
+    fireEvent.click(screen.getByTestId("credential-revoke"));
+    fireEvent.click(screen.getByTestId("issue-credential-btn"));
+    fireEvent.change(screen.getByRole("textbox", { name: "Credential name" }), { target: { value: "new-runner" } });
+    fireEvent.click(screen.getByTestId("issue-submit"));
+    expect(await screen.findByTestId("token-value")).toHaveTextContent(REMOTE_ISSUED.wire.token);
+    await act(async () => revoke.reject(new Error("Older revoke response unavailable")));
+    view.rerender(<RemoteAccessModule onEnabledChange={() => {}} />);
+    await waitFor(() => expect(mockApiFetch.mock.calls.filter(([, init]) => !init?.method)).toHaveLength(3));
+    expect(screen.queryByTestId("remote-error")).toBeNull();
+    expect(screen.getByTestId("token-value")).toHaveTextContent(REMOTE_ISSUED.wire.token);
+    expect(mockApiFetch.mock.calls.filter(([, init]) => init?.method === "DELETE")).toHaveLength(1);
+    expect(mockApiFetch.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(1);
+  });
+
+  it("failed project choices Retry rereads Projects, preserves known choices and never replays a grant", async () => {
+    let projectReads = 0;
+    mockApiFetch.mockImplementation((path: string) => {
+      if (path === "/api/projects") return ++projectReads === 2 ? Promise.reject(new Error("Projects unavailable")) : Promise.resolve(PROJECTS);
+      return Promise.resolve(knownRemote());
+    });
+    render(<RemoteAccessModule />);
+    await screen.findByText("keeper");
+    const open = () => fireEvent.click(screen.getByRole("button", { name: "Projects: keeper" }));
+    open();
+    await screen.findByTestId(`project-line-${PROJECTS.projects[0].id}`);
+    open(); open();
+    const failure = await screen.findByTestId("remote-projects-error");
+    expect(screen.getByTestId(`project-line-${PROJECTS.projects[0].id}`)).toBeInTheDocument();
+    fireEvent.click(within(failure).getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(screen.queryByTestId("remote-projects-error")).toBeNull());
+    expect(projectReads).toBe(3);
+    expect(mockApiFetch.mock.calls.filter(([path]) => path === "/api/settings/remote")).toHaveLength(1);
+    expect(mockApiFetch.mock.calls.every(([, init]) => !init?.method)).toBe(true);
   });
 });

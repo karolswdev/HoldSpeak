@@ -155,3 +155,19 @@ runtime identifiers follow after delivery; no provider result is inferred.
 PR: [#1220](https://github.com/karolswdev/HoldSpeak/pull/1220). The source branch
 is `fix/brief-reference-open-20261016`. Normal idle-hub delivery follows its
 merge and exact tree/build comparison; the runtime receipt is recorded separately.
+
+## Delivered
+
+PR#1220 merged at2026-10-16 18:49:46 UTC as
+`1c20a595c88048241b44251201e852f9a75f53e3`. The verified branch and merged main
+have identical tree`d8d069ea1efae3095d3efa00193332092848902f`. Normal local
+replacement observed the previous hub idle, then served build
+`c15a5e7c1ef79062` from the first implementation worktree, PID52533. Health,
+Desk, Conductor and Models returned200; served stamp and HTML matched the
+verified bundle. Receipt: first worktree `.tmp/flagship/deployment.json`.
+That worktree is now the serving tree and is frozen. Follow-up implementation
+uses `wt-flagship-daily-recovery-20261016`, based on the merged commit.
+
+The full postmerge suite was dispatched on that exact main head:
+[run38950387547](https://github.com/karolswdev/HoldSpeak/actions/runs/38950387547).
+It was in progress when this record was written; no result is claimed here.

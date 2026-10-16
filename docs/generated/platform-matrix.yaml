@@ -3215,7 +3215,8 @@
       "platform": "aipi",
       "source_ids": [
         "web/src/desk/verbRegistry.ts",
-        "web/src/desk/verbRegistry.ts"
+        "web/src/desk/verbRegistry.ts",
+        "web/src/features/project-room/ProjectRoomCore.tsx"
       ],
       "status": "partial"
     },
@@ -3226,7 +3227,8 @@
       "platform": "ipad",
       "source_ids": [
         "web/src/desk/verbRegistry.ts",
-        "web/src/desk/verbRegistry.ts"
+        "web/src/desk/verbRegistry.ts",
+        "web/src/features/project-room/ProjectRoomCore.tsx"
       ],
       "status": "partial"
     },
@@ -3237,7 +3239,8 @@
       "platform": "linux_wayland",
       "source_ids": [
         "web/src/desk/verbRegistry.ts",
-        "web/src/desk/verbRegistry.ts"
+        "web/src/desk/verbRegistry.ts",
+        "web/src/features/project-room/ProjectRoomCore.tsx"
       ],
       "status": "partial"
     },
@@ -3248,7 +3251,8 @@
       "platform": "linux_x11",
       "source_ids": [
         "web/src/desk/verbRegistry.ts",
-        "web/src/desk/verbRegistry.ts"
+        "web/src/desk/verbRegistry.ts",
+        "web/src/features/project-room/ProjectRoomCore.tsx"
       ],
       "status": "partial"
     },
@@ -3259,7 +3263,8 @@
       "platform": "macos",
       "source_ids": [
         "web/src/desk/verbRegistry.ts",
-        "web/src/desk/verbRegistry.ts"
+        "web/src/desk/verbRegistry.ts",
+        "web/src/features/project-room/ProjectRoomCore.tsx"
       ],
       "status": "partial"
     },
@@ -3594,7 +3599,8 @@
       "id": "people.prep.read@aipi",
       "platform": "aipi",
       "source_ids": [
-        "holdspeak/services/people_service.py"
+        "holdspeak/services/people_service.py",
+        "web/src/pages/cores/PeopleCore.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -3604,7 +3610,8 @@
       "id": "people.prep.read@ipad",
       "platform": "ipad",
       "source_ids": [
-        "holdspeak/services/people_service.py"
+        "holdspeak/services/people_service.py",
+        "web/src/pages/cores/PeopleCore.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -3614,7 +3621,8 @@
       "id": "people.prep.read@linux_wayland",
       "platform": "linux_wayland",
       "source_ids": [
-        "holdspeak/services/people_service.py"
+        "holdspeak/services/people_service.py",
+        "web/src/pages/cores/PeopleCore.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -3624,7 +3632,8 @@
       "id": "people.prep.read@linux_x11",
       "platform": "linux_x11",
       "source_ids": [
-        "holdspeak/services/people_service.py"
+        "holdspeak/services/people_service.py",
+        "web/src/pages/cores/PeopleCore.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -3634,7 +3643,8 @@
       "id": "people.prep.read@macos",
       "platform": "macos",
       "source_ids": [
-        "holdspeak/services/people_service.py"
+        "holdspeak/services/people_service.py",
+        "web/src/pages/cores/PeopleCore.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -3817,7 +3827,8 @@
         "holdspeak/services/settings_service.py",
         "web/src/desk/firstrun/CalendarCard.tsx",
         "web/src/pages/cores/ConstitutionalContextCore.tsx",
-        "web/src/pages/cores/CalendarSnapshotReviewCore.tsx"
+        "web/src/pages/cores/CalendarSnapshotReviewCore.tsx",
+        "web/src/pages/cores/SettingsCore.tsx"
       ],
       "status": "experimental"
     },
@@ -3830,7 +3841,8 @@
         "holdspeak/services/settings_service.py",
         "web/src/desk/firstrun/CalendarCard.tsx",
         "web/src/pages/cores/ConstitutionalContextCore.tsx",
-        "web/src/pages/cores/CalendarSnapshotReviewCore.tsx"
+        "web/src/pages/cores/CalendarSnapshotReviewCore.tsx",
+        "web/src/pages/cores/SettingsCore.tsx"
       ],
       "status": "experimental"
     },
@@ -3843,7 +3855,8 @@
         "holdspeak/services/settings_service.py",
         "web/src/desk/firstrun/CalendarCard.tsx",
         "web/src/pages/cores/ConstitutionalContextCore.tsx",
-        "web/src/pages/cores/CalendarSnapshotReviewCore.tsx"
+        "web/src/pages/cores/CalendarSnapshotReviewCore.tsx",
+        "web/src/pages/cores/SettingsCore.tsx"
       ],
       "status": "experimental"
     },
@@ -3856,7 +3869,8 @@
         "holdspeak/services/settings_service.py",
         "web/src/desk/firstrun/CalendarCard.tsx",
         "web/src/pages/cores/ConstitutionalContextCore.tsx",
-        "web/src/pages/cores/CalendarSnapshotReviewCore.tsx"
+        "web/src/pages/cores/CalendarSnapshotReviewCore.tsx",
+        "web/src/pages/cores/SettingsCore.tsx"
       ],
       "status": "experimental"
     },
@@ -3869,7 +3883,8 @@
         "holdspeak/services/settings_service.py",
         "web/src/desk/firstrun/CalendarCard.tsx",
         "web/src/pages/cores/ConstitutionalContextCore.tsx",
-        "web/src/pages/cores/CalendarSnapshotReviewCore.tsx"
+        "web/src/pages/cores/CalendarSnapshotReviewCore.tsx",
+        "web/src/pages/cores/SettingsCore.tsx"
       ],
       "status": "experimental"
     },
@@ -3948,7 +3963,9 @@
         "holdspeak/db/threads.py",
         "holdspeak/web/routes/threads.py",
         "web/src/desk/pullouts/ThreadPullout.tsx",
-        "web/src/desk/components/ThreadComposer.tsx"
+        "web/src/desk/components/ThreadComposer.tsx",
+        "web/src/desk/components/ThreadComposer.tsx",
+        "web/src/desk/threadComposerDrafts.ts"
       ],
       "status": "experimental"
     },
@@ -3962,7 +3979,9 @@
         "holdspeak/db/threads.py",
         "holdspeak/web/routes/threads.py",
         "web/src/desk/pullouts/ThreadPullout.tsx",
-        "web/src/desk/components/ThreadComposer.tsx"
+        "web/src/desk/components/ThreadComposer.tsx",
+        "web/src/desk/components/ThreadComposer.tsx",
+        "web/src/desk/threadComposerDrafts.ts"
       ],
       "status": "experimental"
     },
@@ -3976,7 +3995,9 @@
         "holdspeak/db/threads.py",
         "holdspeak/web/routes/threads.py",
         "web/src/desk/pullouts/ThreadPullout.tsx",
-        "web/src/desk/components/ThreadComposer.tsx"
+        "web/src/desk/components/ThreadComposer.tsx",
+        "web/src/desk/components/ThreadComposer.tsx",
+        "web/src/desk/threadComposerDrafts.ts"
       ],
       "status": "experimental"
     },
@@ -3990,7 +4011,9 @@
         "holdspeak/db/threads.py",
         "holdspeak/web/routes/threads.py",
         "web/src/desk/pullouts/ThreadPullout.tsx",
-        "web/src/desk/components/ThreadComposer.tsx"
+        "web/src/desk/components/ThreadComposer.tsx",
+        "web/src/desk/components/ThreadComposer.tsx",
+        "web/src/desk/threadComposerDrafts.ts"
       ],
       "status": "experimental"
     },
@@ -4004,7 +4027,9 @@
         "holdspeak/db/threads.py",
         "holdspeak/web/routes/threads.py",
         "web/src/desk/pullouts/ThreadPullout.tsx",
-        "web/src/desk/components/ThreadComposer.tsx"
+        "web/src/desk/components/ThreadComposer.tsx",
+        "web/src/desk/components/ThreadComposer.tsx",
+        "web/src/desk/threadComposerDrafts.ts"
       ],
       "status": "experimental"
     },
@@ -4196,7 +4221,8 @@
       "source_ids": [
         "holdspeak/grounding.py",
         "holdspeak/grounding_rails.py",
-        "web/src/desk/components/GroundingSection.tsx"
+        "web/src/desk/components/GroundingSection.tsx",
+        "web/src/desk/components/AskPanel.tsx"
       ],
       "status": "experimental"
     },
@@ -4208,7 +4234,8 @@
       "source_ids": [
         "holdspeak/grounding.py",
         "holdspeak/grounding_rails.py",
-        "web/src/desk/components/GroundingSection.tsx"
+        "web/src/desk/components/GroundingSection.tsx",
+        "web/src/desk/components/AskPanel.tsx"
       ],
       "status": "experimental"
     },
@@ -4220,7 +4247,8 @@
       "source_ids": [
         "holdspeak/grounding.py",
         "holdspeak/grounding_rails.py",
-        "web/src/desk/components/GroundingSection.tsx"
+        "web/src/desk/components/GroundingSection.tsx",
+        "web/src/desk/components/AskPanel.tsx"
       ],
       "status": "experimental"
     },
@@ -4232,7 +4260,8 @@
       "source_ids": [
         "holdspeak/grounding.py",
         "holdspeak/grounding_rails.py",
-        "web/src/desk/components/GroundingSection.tsx"
+        "web/src/desk/components/GroundingSection.tsx",
+        "web/src/desk/components/AskPanel.tsx"
       ],
       "status": "experimental"
     },
@@ -4244,7 +4273,8 @@
       "source_ids": [
         "holdspeak/grounding.py",
         "holdspeak/grounding_rails.py",
-        "web/src/desk/components/GroundingSection.tsx"
+        "web/src/desk/components/GroundingSection.tsx",
+        "web/src/desk/components/AskPanel.tsx"
       ],
       "status": "experimental"
     },

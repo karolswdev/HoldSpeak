@@ -123,7 +123,7 @@
           "path": "web/src/desk/components/AskPanel.tsx",
           "symbol": "AskPanel",
           "claim": "Ask opens on the shared Pad and paper conversation; exact request/Keep snapshots preserve newer drafts, while local close abandons stale response updates without claiming server cancellation.",
-          "line": 92
+          "line": 93
         },
         {
           "path": "holdspeak/db/plugins.py",
@@ -586,7 +586,7 @@
       "purpose": "Offer and run a named operation for the current Desk context.",
       "domain": "desk",
       "status": "partial",
-      "status_reason": "Registry availability, ghost reasons and local runners are implemented; async receipts and several backend runners remain incomplete.",
+      "status_reason": "Registry availability, ghost reasons and local runners are implemented; async receipts and several backend runners remain incomplete. October 16 focused Project tests additionally verify waiting Review leads the header only with a healthy positive pending count; existing Draft update and canonical review posture remain.",
       "exposure": "user",
       "surfaces": [
         "window menu",
@@ -657,6 +657,12 @@
           "symbol": "VERBS",
           "line": 167,
           "claim": "The registry enumerates Desk verbs."
+        },
+        {
+          "path": "web/src/features/project-room/ProjectRoomCore.tsx",
+          "symbol": "function RoomHead",
+          "line": 319,
+          "claim": "Healthy pending Review leads the header and opens the existing canonical review; Draft update remains secondary."
         }
       ],
       "tests": [
@@ -670,11 +676,18 @@
           "node": "a ghosted verb refuses quietly (\u2318W with no window open)",
           "assertion": "The keymap does not run a ghosted verb.",
           "execution": "not_run"
+        },
+        {
+          "path": "web/src/features/project-room/__tests__/ProjectRoomCore.test.tsx",
+          "node": "the head Review opens the recorded real task in the existing posture and returns to the Room",
+          "assertion": "Header Review enters the exact recorded review/task and Close returns to the same Room.",
+          "execution": "passed"
         }
       ],
       "docs": [
         "docs/DESK_OBJECT_MODEL.md",
-        "docs/internal/philo/SRS.md"
+        "docs/internal/philo/SRS.md",
+        "docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/IMPLEMENTATION-CDE.md"
       ],
       "limitations": [
         "Thread registry runners are metadata-only; ThreadComposer and its pullout callbacks own execution.",
@@ -1320,10 +1333,10 @@
     {
       "id": "people.prep.read",
       "name": "Read 1:1 preparation",
-      "purpose": "Read a report\u2019s next 1:1, agenda, projects and confirmed open actions, matched by an unambiguous People identity.",
+      "purpose": "Read a report\u2019s next 1:1, agenda, projects, confirmed actions and both obligations by their exact identity.",
       "domain": "desk",
       "status": "built_unreleased",
-      "status_reason": "The productive-desk branch wires People Prep and verifies accepted-action ownership and terminal-state exclusion with focused tests; owner use remains unobserved.",
+      "status_reason": "The productive-desk branch wires People Prep and verifies accepted-action ownership and terminal-state exclusion with focused tests; owner use remains unobserved. Focused October 16 component tests cover both exact commitment inspectors and intent-open Add wells, with accepted writes clearing only the submitted raw draft. Release and owner use remain separate.",
       "exposure": "user",
       "surfaces": [
         "People Prep"
@@ -1373,6 +1386,12 @@
           "symbol": "PeopleService.one_on_one_brief",
           "line": 373,
           "claim": "The brief combines saved agenda, calendar links, projects and accepted open actions through the ambiguity-safe People owner resolver."
+        },
+        {
+          "path": "web/src/pages/cores/PeopleCore.tsx",
+          "symbol": "function PrepPane",
+          "line": 779,
+          "claim": "Each obligation opens its own exact inspector; Add preserves newer keyed drafts across person/view return."
         }
       ],
       "tests": [
@@ -1381,11 +1400,24 @@
           "node": "test_brief_suggests_alias_event_without_linking_and_returns_next_prep_data",
           "assertion": "Real ICS, meeting and People producers yield a suggestion, confirmed event and the report-owned open actions; completed and parked work stays out.",
           "execution": "passed"
+        },
+        {
+          "path": "web/src/pages/cores/__tests__/peopleCore.test.tsx",
+          "node": "opens either exact commitment in its owning section and Close returns to that row",
+          "assertion": "Both sections read the exact execution ID and restore title focus without a lifecycle write.",
+          "execution": "passed"
+        },
+        {
+          "path": "web/src/pages/cores/__tests__/peopleCore.test.tsx",
+          "node": "$label keeps newer text after accepted=$accepted and through person/tab/remount return",
+          "assertion": "Each Add retains newer words after accepted/refused completion and scopes return by person.",
+          "execution": "passed"
         }
       ],
       "docs": [
         "pm/roadmap/holdspeak-philo/phase-13-the-desk/story-09-b4-the-one-on-one-finds-its-person.md",
-        "docs/internal/philo/phase-17/IMPLEMENTATION-PRODUCTIVITY.md"
+        "docs/internal/philo/phase-17/IMPLEMENTATION-PRODUCTIVITY.md",
+        "docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/IMPLEMENTATION-CDE.md"
       ],
       "limitations": [
         "Verification uses isolated fixtures, not the owner\u2019s reports or calendar.",
@@ -1551,7 +1583,7 @@
         {
           "path": "web/src/pages/cores/PeopleCore.tsx",
           "symbol": "PrepPane",
-          "line": 747,
+          "line": 670,
           "claim": "The linked Next 1:1 offers the real recording action and keeps its agenda draft."
         }
       ],
@@ -1690,10 +1722,10 @@
     {
       "id": "desk.preferences",
       "name": "Edit preferences",
-      "purpose": "Save local preferences while preserving calendar identity and the authoritative model assignments.",
+      "purpose": "Edit preferences and recover failed reads while keeping unconfirmed changes and unsaved inputs visible.",
       "domain": "desk",
       "status": "experimental",
-      "status_reason": "Existing Settings surface audited; isolated HTTP tests cover identity and migrated preferences. Focused UI tests cover compact Calendar read states, retry and URL entry with an existing source. Native hardware and owner acceptance remain unverified.",
+      "status_reason": "Existing Settings surface audited; isolated HTTP tests cover identity and migrated preferences. Focused UI tests cover compact Calendar read states, retry and URL entry with an existing source. Native hardware and owner acceptance remain unverified. October 16 Remote component tests distinguish exact failed reads from named unconfirmed writes; GET-only Reload retains write failure, drafts, credentials and structured grant outcomes.",
       "exposure": "user",
       "surfaces": [
         "Settings"
@@ -1768,12 +1800,19 @@
           "symbol": "CalendarSnapshotReviewCore",
           "line": 117,
           "claim": "Calendar review uses readable library fields and stable local row identities. Pending Confirm keeps the draft mounted; refusal retains it for exact retry and accepted receipts use the returned source/count."
+        },
+        {
+          "path": "web/src/pages/cores/SettingsCore.tsx",
+          "symbol": "export function RemoteAccessModule",
+          "line": 723,
+          "claim": "Remote and Projects Retry target their own GET; Reload reads current state without replaying or confirming the failed writer."
         }
       ],
       "docs": [
         "docs/USER_GUIDE.md",
         "docs/internal/SETTINGS-AUDIT-2026-10-14/backend-audit.md",
-        "docs/internal/VISUAL-REFINEMENT-2026-10-15/README.md"
+        "docs/internal/VISUAL-REFINEMENT-2026-10-15/README.md",
+        "docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/IMPLEMENTATION-CDE.md"
       ],
       "limitations": [
         "Already erased names and dropped sources cannot be reconstructed from damaged config alone. Explicit native reselection can repair a blank label from a detected calendar title.",
@@ -1843,6 +1882,12 @@
           "path": "web/src/pages/cores/__tests__/CalendarSnapshotReviewCore.test.tsx",
           "node": "keeps the reviewed anchor and events after refusal and retries the identical payload",
           "assertion": "Software wire fixture verifies retained reviewed fields and byte-identical Retry; root separately checks the real isolated ICS/config writer after declared browser refusal.",
+          "execution": "passed"
+        },
+        {
+          "path": "web/src/pages/cores/__tests__/remoteAccess.test.tsx",
+          "node": "Reload keeps unsaved Issue name, access, expiry and the expanded credential through read failure and recovery",
+          "assertion": "A failed Issue and failed reread retain exact fields/row, and successful GET does not erase the write failure.",
           "execution": "passed"
         }
       ],

@@ -348,12 +348,16 @@ function RoomHead({
   room,
   ctrl,
   updateCtrl,
+  reviewCtrl,
+  pendingCount,
   quiet = false,
   lateItems = null,
 }: {
   room: RoomSnapshot;
   ctrl: ReturnType<typeof useProjectRoomController>;
   updateCtrl: ReturnType<typeof useUpdateController>;
+  reviewCtrl: ReturnType<typeof useReviewController>;
+  pendingCount: number;
   /** PHILO-17: another well holds the face's one primary (Add source's Add). */
   quiet?: boolean;
   /** PHILO-17 refit: the late milestones (null while the items read is out). */
@@ -426,10 +430,14 @@ function RoomHead({
             <span data-testid="room-sources-word" data-tone={sourceWord.stale ? "warn" : undefined}>{sourceWord.word}</span>
           ) : null}
         </span>
-        <span className="room-head-trailing">
+        <span className="room-head-trailing surface-verbs-actions">
+          {pendingCount > 0 ? <Button dense variant={quiet ? "secondary" : "primary"}
+            loading={reviewCtrl.loading} onClick={() => void reviewCtrl.enterReview()} data-testid="room-head-review">
+            Review {pendingCount}
+          </Button> : null}
           <Button
             dense
-            variant={quiet ? "secondary" : "primary"}
+            variant={quiet || pendingCount > 0 ? "secondary" : "primary"}
             loading={updateCtrl.loading || updateCtrl.draftBusy}
             disabled={updateEngine.state === "unread"}
             onClick={() => void updateCtrl.draft(updateEngine.state === "set" ? "model" : "deterministic")}
@@ -2974,8 +2982,15 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
           {ctrl.view === "room" ? (
             <>
               <div className="room-section-rise" style={{ animationDelay: "0ms" }}>
-                <RoomHead room={ctrl.room} ctrl={ctrl} updateCtrl={updateCtrl} quiet={addingSources}
-                  lateItems={lateOf(itemsRead.items)} />
+                <RoomHead
+                  room={ctrl.room}
+                  ctrl={ctrl}
+                  updateCtrl={updateCtrl}
+                  reviewCtrl={reviewCtrl}
+                  pendingCount={pendingCount}
+                  quiet={addingSources}
+                  lateItems={lateOf(itemsRead.items)}
+                />
               </div>
               {/* PHILO-17 refit: the two things he reads here first (what is
                   open, the plan with what is late) in the main column; the

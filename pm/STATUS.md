@@ -4,9 +4,29 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-16 (Flagship Brief/source reading delivery)
+**Last updated:** 2026-10-16 (Flagship daily work, creation and recovery)
 
 ## Current phase
+
+**Flagship daily work, creation and recovery — release candidate (2026-10-16).**
+People Prep inspects either exact commitment, preserves newer Add drafts and
+empty-edit focus, and gives phone fields a full row. Project promotes pending
+Review. Thread retains `/todo` commands through pending/refused/unknown results,
+return and reload; caret-zero Enter cannot invoke an unrelated slash command.
+Ask/helper reads have exact Retry. Remote separates failed reads from named
+unconfirmed writes and keeps draft/row state on GET-only Reload.
+Final quick GREEN: 4104 web / 109 sweeps / 17 canon; TypeScript, atlas and
+generated-doc checks pass. Actual desktop/phone/narrow daily, task/Keep and
+Remote recovery journeys pass, with real producer readbacks and declared
+failure/recorded-material boundaries. Build `a7145045f5dbab3c` matches source.
+[Delivery and evidence](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/DELIVERY-CDE.md)
+and [all-family coverage](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/COVERAGE.md).
+Merge, normal idle-hub delivery and formal postmerge review follow; full main
+suite and owner live judgment are separate. `/todo` remains non-idempotent:
+explicitly sending again after an unknown result can create another task.
+The inherited graph census debt and native/provider/external-operation limits
+remain named. No whole-product aesthetic acceptance is claimed.
+
 
 **Flagship Brief/source reading — #1220 (2026-10-16).**
 Brief prioritizes standing answers/changed work, Day the next meeting, and

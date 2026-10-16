@@ -2,6 +2,10 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PeopleCore, RelationshipPane } from "../PeopleCore";
 import { useDesk } from "../../../desk/store";
+import RECORDED_RELATIONSHIP from "../../../desk/__tests__/fixtures/people-wire/relationship-before.json";
+import RECORDED_PREP from "../../../desk/__tests__/fixtures/people-wire/brief.json";
+import RECORDED_OWED from "../../../desk/__tests__/fixtures/people-wire/owed-created.json";
+import RECORDED_SESSIONS from "../../../desk/__tests__/fixtures/people-agenda-wire/one-on-ones.json";
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -19,6 +23,137 @@ function stub(handlers: Record<string, (input: string, opts?: { method?: string;
 }
 
 afterEach(() => vi.unstubAllGlobals());
+
+describe("Prep owns each obligation and pending Add draft", () => {
+  beforeEach(() => useDesk.setState({ drafts: {}, places: {} }));
+  afterEach(() => useDesk.setState({ drafts: {}, places: {} }));
+  const person = RECORDED_RELATIONSHIP.relationship;
+  const leader = person.commitments[0];
+  const report = RECORDED_OWED.commitment;
+  const session = RECORDED_SESSIONS.one_on_ones[0];
+  const scenarios = [
+    { label: "Add to the agenda", section: "people-next-plate", button: "Add to agenda", path: `/api/people/one-on-ones/${session.id}/agenda` },
+    { label: "You owe", section: "people-you-owe", button: "Add", path: `/api/people/requests/${person.requests[0].id}/accept` },
+    { label: "They owe you", section: "people-they-owe", button: "Add", path: `/api/people/relationships/${person.id}/owed` },
+  ];
+  function mount(id = person.id, refresh = vi.fn(), failure = vi.fn()) {
+    const relationship = { ...person, id, sessions: [session], owed_to_you: [report] };
+    // The recorded transport contains nullable fields (for example
+    // project_refs). Preserve that genuine wire instead of inventing values
+    // to satisfy the narrower component annotation.
+    return render(<RelationshipPane relationship={relationship as unknown as Parameters<typeof RelationshipPane>[0]["relationship"]} initialLens="prep" onRefresh={refresh} onProtectedFailure={failure} onArchived={vi.fn()} />);
+  }
+  function readers(write: (path: string, opts?: { method?: string; body?: string }) => Response | Promise<Response> = () => json({ commitment: report }, 201)) {
+    vi.stubGlobal("fetch", vi.fn(async (input: string, opts?: { method?: string; body?: string }) => {
+      const path = String(input);
+      if (opts?.method === "POST") {
+        if (path.endsWith("/requests")) return json({ request: person.requests[0] }, 201);
+        return write(path, opts);
+      }
+      if (path.endsWith("/brief")) return json(RECORDED_PREP);
+      if (path === "/api/door") return json({ upcoming: [] });
+      if (path === "/api/workbenches") return json({ workbenches: [] });
+      if (path.endsWith("/execution")) return json({ items: [] });
+      if (path === "/api/projects") return json({ projects: [] });
+      throw new Error(`Unexpected request: ${path}`);
+    }));
+  }
+
+  it("opens either exact commitment in its owning section and Close returns to that row", async () => {
+    readers();
+    mount();
+    await screen.findByTestId("people-prep-lens");
+    for (const [sectionId, item] of [["people-you-owe", leader], ["people-they-owe", report]] as const) {
+      const section = screen.getByTestId(sectionId);
+      const title = within(section).getByRole("button", { name: item.body });
+      title.focus();
+      fireEvent.click(title);
+      expect(within(section).getByRole("button", { name: "Send to Workbench" })).toBeTruthy();
+      expect(section.querySelector(".people-commitment-body")).toHaveTextContent(item.body);
+      await waitFor(() => expect(vi.mocked(fetch).mock.calls.some(([url]) => String(url) === `/api/people/commitments/${item.id}/execution`)).toBe(true));
+      expect(document.querySelectorAll(".people-commitment-inspector")).toHaveLength(1);
+      fireEvent.click(within(section).getByRole("button", { name: "Close" }));
+      expect(section.querySelector(".people-commitment-inspector")).toBeNull();
+      expect(within(section).getByRole("button", { name: item.body })).toBeTruthy();
+      expect(title).toHaveFocus();
+    }
+  });
+
+  it.each(scenarios)("$label starts closed and clears only its accepted submitted draft", async ({ label, section, button }) => {
+    const refresh = vi.fn();
+    readers();
+    mount(person.id, refresh);
+    const area = await screen.findByTestId(section);
+    expect(screen.queryByLabelText(label)).toBeNull();
+    fireEvent.click(within(area).getByRole("button", { name: button }));
+    fireEvent.change(screen.getByLabelText(label), { target: { value: "  Send the platform plan  " } });
+    fireEvent.click(within(area).getByRole("button", { name: button }));
+    await waitFor(() => expect(refresh).toHaveBeenCalledOnce());
+    expect(screen.queryByLabelText(label)).toBeNull();
+    fireEvent.click(within(area).getByRole("button", { name: button }));
+    expect(screen.getByLabelText(label)).toHaveValue("");
+  });
+
+  it.each(scenarios)("$label stays open and focused when its text is cleared for editing", async ({ label, section, button }) => {
+    readers();
+    mount();
+    const area = await screen.findByTestId(section);
+    fireEvent.click(within(area).getByRole("button", { name: button }));
+    const input = screen.getByLabelText(label) as HTMLInputElement;
+    input.focus();
+    fireEvent.change(input, { target: { value: "Replace these words" } });
+    input.setSelectionRange(0, input.value.length);
+    fireEvent.change(input, { target: { value: "" } });
+    expect(screen.getByLabelText(label)).toBe(input);
+    expect(input).toHaveFocus();
+    expect(input).toHaveValue("");
+    expect(within(area).getByRole("button", { name: button })).toBeDisabled();
+    fireEvent.change(input, { target: { value: "Replacement words" } });
+    expect(input).toHaveFocus();
+    expect(input).toHaveValue("Replacement words");
+    expect(vi.mocked(fetch).mock.calls.some(([, options]) => options?.method === "POST")).toBe(false);
+    fireEvent.click(within(area).getByRole("button", { name: "Hide" }));
+    expect(screen.queryByLabelText(label)).toBeNull();
+  });
+
+  it.each(scenarios.flatMap((scenario) => [true, false].map((accepted) => ({ ...scenario, accepted }))))("$label keeps newer text after accepted=$accepted and through person/tab/remount return", async ({ label, section, button, path, accepted }) => {
+    let finish!: (response: Response) => void;
+    const submitted: Array<{ path: string; body: unknown }> = [];
+    readers((url, opts) => {
+      submitted.push({ path: url, body: opts?.body ? JSON.parse(opts.body) : null });
+      return new Promise<Response>((resolve) => { finish = resolve; });
+    });
+    const refresh = vi.fn();
+    const failure = vi.fn();
+    let view = mount(person.id, refresh, failure);
+    const area = await screen.findByTestId(section);
+    fireEvent.click(within(area).getByRole("button", { name: button }));
+    const input = screen.getByLabelText(label);
+    fireEvent.change(input, { target: { value: "Original task for this report" } });
+    fireEvent.click(within(area).getByRole("button", { name: button }));
+    await waitFor(() => expect(submitted).toHaveLength(1));
+    expect(submitted[0].path).toBe(path);
+    expect(within(area).getByRole("button", { name: button })).toBeDisabled();
+    expect(input).not.toBeDisabled();
+    fireEvent.change(input, { target: { value: "Newer task for the next Add" } });
+    await act(async () => finish(accepted ? json({ commitment: report }, 201) : json({ error: "Writer refused" }, 409)));
+    await waitFor(() => expect(accepted ? refresh : failure).toHaveBeenCalledOnce());
+    expect(screen.getByLabelText(label)).toHaveValue("Newer task for the next Add");
+    fireEvent.click(screen.getByRole("tab", { name: "History" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Prep" }));
+    expect(await screen.findByLabelText(label)).toHaveValue("Newer task for the next Add");
+    view.unmount();
+    view = mount("another-report");
+    const other = await screen.findByTestId(section);
+    expect(screen.queryByLabelText(label)).toBeNull();
+    fireEvent.click(within(other).getByRole("button", { name: button }));
+    expect(screen.getByLabelText(label)).toHaveValue("");
+    view.unmount();
+    mount();
+    expect(await screen.findByLabelText(label)).toHaveValue("Newer task for the next Add");
+    expect(submitted).toHaveLength(1);
+  });
+});
 
 describe("Context keeps the report's working note", () => {
   beforeEach(() => useDesk.setState({ drafts: {}, places: {} }));
@@ -598,6 +733,7 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
     expect(within(owed).queryByText("Old item")).toBeNull();
     expect(screen.getByText("Asked of you")).toBeTruthy();
     expect(screen.queryByText(/Open requests/i)).toBeNull();
+    fireEvent.click(within(owed).getByRole("button", { name: "Add" }));
     fireEvent.change(within(owed).getByLabelText("They owe you"), { target: { value: "Send me the API migration estimate" } });
     fireEvent.click(within(owed).getByRole("button", { name: "Add" }));
     await waitFor(() => expect(posts(fetchSpy, "/api/people/relationships/r1/owed")).toHaveLength(1));

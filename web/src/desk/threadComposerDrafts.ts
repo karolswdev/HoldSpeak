@@ -2,10 +2,17 @@ import { useCallback, type SetStateAction } from "react";
 import { create } from "zustand";
 import type { ResolvedRef } from "../lib/drawerResolver";
 
+export interface TodoCommand {
+  command: string;
+  status: "pending" | "accepted" | "refused" | "unknown";
+  message?: string;
+}
+
 interface ComposerDraft {
   text: string;
   chips: Array<{ ref: ResolvedRef }>;
   sending: boolean;
+  todo?: TodoCommand;
 }
 
 type DraftMap = Record<string, ComposerDraft>;
@@ -33,12 +40,13 @@ function session(): Storage | null {
   }
 }
 
-/** Persisted shape: text + chips only, and never an in-flight send. */
+/** Retain command custody, but a reload cannot retain an in-flight wait. */
 function durable(drafts: DraftMap): DraftMap {
   const out: DraftMap = {};
   for (const [threadId, draft] of Object.entries(drafts)) {
-    if (!draft.text && !draft.chips.length) continue;
-    out[threadId] = { text: draft.text, chips: draft.chips, sending: false };
+    if (!draft.text && !draft.chips.length && !draft.todo) continue;
+    out[threadId] = { text: draft.text, chips: draft.chips, sending: false,
+      ...(draft.todo ? { todo: draft.todo.status === "pending" ? { ...draft.todo, status: "unknown" as const, message: "Request interrupted" } : draft.todo } : {}) };
   }
   return out;
 }
@@ -59,13 +67,15 @@ function loadDrafts(): DraftMap {
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
     const out: DraftMap = {};
     for (const [threadId, value] of Object.entries(parsed as Record<string, unknown>)) {
-      const stored = value as { text?: unknown; chips?: unknown } | null;
+      const stored = value as { text?: unknown; chips?: unknown; todo?: Partial<TodoCommand> } | null;
       const text = typeof stored?.text === "string" ? stored.text : "";
       const chips = Array.isArray(stored?.chips) ? stored.chips.filter(isChip) : [];
-      if (!text && !chips.length) continue;
+      const todo = typeof stored?.todo?.command === "string" && ["accepted", "refused", "unknown"].includes(stored.todo.status ?? "")
+        ? stored.todo as TodoCommand : undefined;
+      if (!text && !chips.length && !todo) continue;
       // `sending` is never rehydrated: the reload killed the request, and a
       // stored `true` would leave the composer disabled forever.
-      out[threadId] = { text, chips, sending: false };
+      out[threadId] = { text, chips, sending: false, ...(todo ? { todo } : {}) };
     }
     return out;
   } catch {
@@ -107,9 +117,30 @@ function updateField<K extends keyof ComposerDraft>(threadId: string, key: K, ne
       : next;
     const draft = { ...current, [key]: value };
     const drafts = { ...s.drafts };
-    if (!draft.text && !draft.chips.length && !draft.sending) delete drafts[threadId];
+    if (!draft.text && !draft.chips.length && !draft.sending && !draft.todo) delete drafts[threadId];
     else drafts[threadId] = draft;
     return { drafts };
+  });
+}
+
+/** One local dispatch owns the submitted command through window return. */
+export function beginThreadTodo(threadId: string, command: string): boolean {
+  const current = useThreadComposerDrafts.getState().drafts[threadId] ?? EMPTY_DRAFT;
+  if (current.todo?.status === "pending" || current.sending) return false;
+  useThreadComposerDrafts.setState((state) => ({ drafts: { ...state.drafts,
+    [threadId]: { ...current, todo: { command, status: "pending" } },
+  } }));
+  return true;
+}
+
+export function settleThreadTodo(threadId: string, command: string, status: Exclude<TodoCommand["status"], "pending">, message?: string): void {
+  useThreadComposerDrafts.setState((state) => {
+    const current = state.drafts[threadId];
+    if (!current || current.todo?.command !== command || current.todo.status !== "pending") return state;
+    return { drafts: { ...state.drafts, [threadId]: { ...current,
+      text: status === "accepted" && current.text === command ? "" : current.text,
+      todo: { command, status, ...(message ? { message } : {}) },
+    } } };
   });
 }
 
@@ -118,5 +149,5 @@ export function useThreadComposerDraft(threadId: string) {
   const setDraft = useCallback((value: SetStateAction<string>) => updateField(threadId, "text", value), [threadId]);
   const setChips = useCallback((value: SetStateAction<ComposerDraft["chips"]>) => updateField(threadId, "chips", value), [threadId]);
   const setSending = useCallback((value: SetStateAction<boolean>) => updateField(threadId, "sending", value), [threadId]);
-  return { draft: state.text, chips: state.chips, sending: state.sending, setDraft, setChips, setSending };
+  return { draft: state.text, chips: state.chips, sending: state.sending, todo: state.todo, setDraft, setChips, setSending };
 }

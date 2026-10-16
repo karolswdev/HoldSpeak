@@ -1,0 +1,53 @@
+{
+  "_": "Captured from the real isolated Thread todo route and local door.add_item tool. No provider. Source: .tmp/flagship/thread-producer.json; retained response and provenance, not an invented success.",
+  "producer": "real isolated Thread todo route, local door.add_item tool, no provider",
+  "thread": {
+    "id": "th_09e513f689db",
+    "title": "Platform migration tasks",
+    "recipe_id": "",
+    "profile_override": "",
+    "directory_id": "",
+    "call_mode": 0,
+    "parent_thread_id": null,
+    "status_line": "",
+    "token_in": 0,
+    "token_out": 0,
+    "created_at": 1792177089.8089888,
+    "updated_at": 1792177089.8089888,
+    "last_turn_at": null,
+    "mode": null
+  },
+  "result": {
+    "status": "ok",
+    "result": {
+      "id": "ai_61e2c1eae3f6458ba8acdc2453251b4c",
+      "task": "Send the platform migration plan",
+      "owner": null,
+      "due": null,
+      "status": "open",
+      "source_type": "thread",
+      "source_ref": "thread:th_09e513f689db"
+    },
+    "receipt_id": "tr-4e3c7cbf4621"
+  },
+  "provenance": {
+    "revision": "1c20a595c88048241b44251201e852f9a75f53e3",
+    "revision_source": "git",
+    "dirty": true,
+    "frontend_build": null,
+    "hub": null,
+    "db_path": null,
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-16T18:58:09.989252+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance"
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.4",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800"
+  }
+}

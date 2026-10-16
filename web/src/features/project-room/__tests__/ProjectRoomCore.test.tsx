@@ -9,7 +9,7 @@
 //   - counters (Meetings 0 · Resources 0 · …) → removed (D1 cut)
 //   - identity dedup → the name is said once (title bar); no orientation band
 
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { useState, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_ITEMS } from "../../../desk/api";
@@ -18,6 +18,10 @@ import { WingSlotContext } from "../../../desk/surface/wings";
 import { useDesk } from "../../../desk/store";
 import { ProjectRoomCore } from "../ProjectRoomCore";
 import { ApiError } from "../../../lib/api";
+import RECORDED_ROOM from "./room-wires/hs175.json";
+// Root's isolated daily_tour.py POST /reviews capture, 2026-10-16,
+// daily-setup-4/observation.json: real People prep and overdue task collection.
+import RECORDED_REVIEW from "./room-wires/daily-review.json";
 
 vi.mock("../../../desk/ask", async () => {
   const actual =
@@ -205,6 +209,67 @@ describe("Room proposal correction retains a refused write", () => {
 // The old test pinned SurfaceIdentity with lifecycle/posture/REV chips.
 // The 169 Room head shows a headline, health chip, and Draft update.
 describe("ProjectRoomCore — room head (was: orientation band, WEB-NOW-001)", () => {
+  const recorded = RECORDED_ROOM.before["/api/projects/proj-1f92412a834a/room"];
+  function headReads(review: unknown) {
+    apiFetch.mockImplementation((url: string) => {
+      if (url === "/api/projects/p1/room") return Promise.resolve(roomResponse({ review, sources: recorded.sources }));
+      return Promise.resolve(response(url));
+    });
+  }
+
+  it("gives actual pending Review the head lead and keeps Draft update secondary", async () => {
+    headReads({ ...recorded.review, pending_count: 2 });
+    render(<WindowHarness scope="project:p1" />);
+    expect(await screen.findByTestId("room-head-review")).toHaveTextContent("Review 2");
+    expect(screen.getByTestId("room-head-review").className).toContain("btn--primary");
+    expect(screen.getByTestId("updates-verb").className).toContain("btn--secondary");
+    expect(document.querySelectorAll(".btn--primary")).toHaveLength(1);
+  });
+
+  it("the head Review opens the recorded real task in the existing posture and returns to the Room", async () => {
+    apiFetch.mockImplementation((url: string) => {
+      if (url === "/api/projects/p1/room") return Promise.resolve(roomResponse({ review: { ...recorded.review, pending_count: RECORDED_REVIEW.proposals.length }, sources: recorded.sources }));
+      if (url === "/api/projects/p1/reviews") return Promise.resolve({ ...RECORDED_REVIEW, project_id: "p1" });
+      return Promise.resolve(response(url));
+    });
+    render(<WindowHarness scope="project:p1" />);
+    fireEvent.click(await screen.findByTestId("room-head-review"));
+    expect(await screen.findByTestId("review-posture")).toHaveAttribute("data-review-id", RECORDED_REVIEW.review_id);
+    expect(screen.getByTestId("review-posture")).toHaveAttribute("data-review-status", "open");
+    expect(screen.getByTestId("review-detail-subject")).toHaveTextContent(JSON.parse(RECORDED_REVIEW.proposals[0].patch_json).text);
+    expect(screen.getAllByTestId("review-queue-item")).toHaveLength(RECORDED_REVIEW.proposals.length);
+    expect(screen.queryByTestId("room-head")).toBeNull();
+    fireEvent.click(within(screen.getByTestId("review-posture").querySelector(".surface-verbs") as HTMLElement).getByRole("button", { name: "Close" }));
+    expect(await screen.findByTestId("room-head-review")).toHaveTextContent("Review 1");
+  });
+
+  it.each([
+    { ...recorded.review, pending_count: 0 },
+    { state: "absent", reason: "not_yet_built" },
+    { state: "degraded", error_code: "review_read_failed", pending_count: 2 },
+  ])("keeps Draft update as lead without verified positive Review: %j", async (review) => {
+    headReads(review);
+    render(<WindowHarness scope="project:p1" />);
+    const draft = await screen.findByTestId("updates-verb");
+    expect(screen.queryByTestId("room-head-review")).toBeNull();
+    expect(draft.className).toContain("btn--primary");
+  });
+
+  it("keeps both head actions quiet while the existing Add source well owns the primary", async () => {
+    headReads({ ...recorded.review, pending_count: 2 });
+    render(<WindowHarness scope="project:p1" />);
+    await screen.findByTestId("room-head-review");
+    fireEvent.click(screen.getByTestId("room-fold-sources").querySelector("summary")!);
+    fireEvent.click(await screen.findByTestId("room-add-source"));
+    await screen.findByTestId("room-add-sources");
+    await waitFor(() => expect(screen.getByTestId("room-head-review").className).toContain("btn--secondary"));
+    expect(screen.getByTestId("updates-verb").className).toContain("btn--secondary");
+    expect(screen.getByTestId("room-add-sources-add").className).toContain("btn--primary");
+    expect(document.querySelectorAll(".btn--primary")).toHaveLength(1);
+    fireEvent.click(screen.getByTestId("room-add-sources-cancel"));
+    await waitFor(() => expect(screen.getByTestId("room-head-review").className).toContain("btn--primary"));
+  });
+
   it("renders the headline (was: Project name in orientation band)", async () => {
     render(<WindowHarness scope="project:p1" />);
     // HS-169-03: the headline replaces the SurfaceIdentity name

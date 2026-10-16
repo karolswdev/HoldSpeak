@@ -4,12 +4,16 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { act, render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { clearThreadComposerDraft, useThreadComposerDrafts } from "../threadComposerDrafts";
-import { apiFetch } from "../../lib/api";
+import { ApiError, apiFetch } from "../../lib/api";
+import recordedTodo from "./fixtures/thread-todo.recorded.json";
+import recordedPeople from "./fixtures/people-wire/relationships.json";
+import recordedModes from "./wire/recipes.seed.wire.json";
 import {
   ThreadComposer,
   loadPromptNotes,
   loadGuardrailNotes,
   resetPromptCache,
+  resetThreadChoiceCaches,
   InlineEditor,
   filterSlashCommands,
   completeSlash,
@@ -26,14 +30,15 @@ import {
 } from "../components/InletAutocomplete";
 // ── mock dependencies ──────────────────────────────────────────────
 
-vi.mock("../../lib/api", () => ({
+vi.mock("../../lib/api", async (original) => ({
+  ...await original<typeof import("../../lib/api")>(),
   apiFetch: vi.fn().mockResolvedValue({ relationships: [] }),
 }));
+const choiceRefresh = vi.hoisted(() => ({ current: null as (() => void) | null }));
+vi.mock("../useDeskChangedRefresh", () => ({ useOnDeskChanged: (callback: () => void) => { choiceRefresh.current = callback; } }));
 
-vi.mock("../store", () => ({
-  useDesk: Object.assign(
-    (sel: (s: Record<string, unknown>) => unknown) =>
-      sel({
+vi.mock("../store", () => {
+  const state = {
         items: {
           meeting: [{ id: "m1", title: "Standup" }],
           note: [
@@ -61,10 +66,12 @@ vi.mock("../store", () => ({
           repository: [],
           intelligence: [],
         },
-      }),
+      };
+  return { useDesk: Object.assign(
+    (sel: (s: Record<string, unknown>) => unknown) => sel(state),
     { getState: () => ({ items: {} }) },
-  ),
-}));
+  ) };
+});
 
 vi.mock("../tools", () => ({
   KIND_GLYPH: {
@@ -125,6 +132,7 @@ vi.mock("../surface/Surface", () => ({
 // ── helpers ────────────────────────────────────────────────────────
 
 beforeEach(() => {
+  resetThreadChoiceCaches();
   useThreadComposerDrafts.setState({ drafts: {} });
   // HS-200-41 AC4 — the draft store is sessionStorage-backed; without this a
   // draft written by one test would rehydrate into the next.
@@ -222,6 +230,11 @@ describe("completeSlash (pure)", () => {
   it("returns null for mid-line /", () => {
     const result = completeSlash("hello /mode", 11, CTX);
     expect(result).toBeNull();
+  });
+
+  it.each([["/todo Keep these words", 0], ["first line\n/todo Keep these words", 11]])("does not complete a slash ahead of the caret: %s", (text, cursor) => {
+    expect(completeSlash(text, cursor, CTX)).toBeNull();
+    expect(isSlashAtLineStart(text, cursor)).toBe(false);
   });
 
   it("returns completions for / at start of second line", () => {
@@ -394,6 +407,230 @@ describe("directoryToItem", () => {
 describe("ThreadComposer", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it.each([false, true])("the recorded accepted task settles only its original Thread and clears only unchanged submitted words: newer=%s", async (newer) => {
+    let finish!: (reply: typeof recordedTodo.result) => void;
+    vi.mocked(apiFetch).mockImplementation((path) => String(path).endsWith("/todo")
+      ? new Promise<never>((resolve) => { finish = (reply) => resolve(reply as never); }) : Promise.resolve({ recipes: [], notes: [], relationships: [] }) as never);
+    const threadId = recordedTodo.thread.id;
+    const command = `/todo ${recordedTodo.result.result.task}`;
+    const first = renderComposer({ threadId });
+    fireEvent.change(screen.getByTestId("composer-input"), { target: { value: command } });
+    fireEvent.click(screen.getByTestId("composer-send"));
+    if (newer) {
+      fireEvent.change(screen.getByTestId("composer-input"), { target: { value: "My newer words" } });
+      fireEvent.click(screen.getByTestId("mic-button"));
+    }
+    first.unmount();
+    const other = renderComposer({ threadId: "t-2" });
+    fireEvent.change(screen.getByTestId("composer-input"), { target: { value: "Other Thread draft" } });
+    await act(async () => finish(recordedTodo.result));
+    expect(screen.queryByLabelText("Task added")).toBeNull();
+    expect(screen.getByTestId("composer-input")).toHaveValue("Other Thread draft");
+    other.unmount();
+    renderComposer({ threadId });
+    expect(screen.getByLabelText("Task added")).toBeInTheDocument();
+    expect(screen.getByText(command)).toBeInTheDocument();
+    expect(screen.getByTestId("composer-input")).toHaveValue(newer ? "My newer words hello from mic" : "");
+    expect(vi.mocked(apiFetch).mock.calls.filter(([path]) => String(path).endsWith("/todo"))).toEqual([
+      [`/api/threads/${threadId}/todo`, { method: "POST", json: { text: recordedTodo.result.result.task } }],
+    ]);
+  });
+
+  it("a reload retains the exact interrupted command as unknown and leaves explicit Send available", async () => {
+    vi.mocked(apiFetch).mockImplementation((path) => String(path).endsWith("/todo")
+      ? new Promise<never>(() => {}) : Promise.resolve({ recipes: [], notes: [], relationships: [] }) as never);
+    const first = renderComposer();
+    const command = "/todo Send the platform plan";
+    fireEvent.change(screen.getByTestId("composer-input"), { target: { value: command } });
+    fireEvent.click(screen.getByTestId("composer-send"));
+    expect(JSON.parse(sessionStorage.getItem(DRAFT_KEY)!)["t-1"].todo.status).toBe("unknown");
+    first.unmount();
+    vi.resetModules();
+    const reloaded = await import("../threadComposerDrafts");
+    const restored = reloaded.useThreadComposerDrafts.getState().drafts;
+    expect(restored["t-1"].todo).toEqual({ command, status: "unknown", message: "Request interrupted" });
+    useThreadComposerDrafts.setState({ drafts: restored });
+    renderComposer();
+    expect(screen.getByLabelText("Result unknown")).toBeInTheDocument();
+    expect(screen.getByTestId("composer-input")).toHaveValue(command);
+    expect(screen.getByTestId("composer-send")).not.toBeDisabled();
+    expect(vi.mocked(apiFetch).mock.calls.filter(([path]) => String(path).endsWith("/todo"))).toHaveLength(1);
+  });
+
+  it("keeps an exact pending task command through Thread return and a refusal without dispatching twice", async () => {
+    let reject!: (cause: unknown) => void;
+    vi.mocked(apiFetch).mockImplementation((path) => String(path).endsWith("/todo")
+      ? new Promise<never>((_resolve, refuse) => { reject = refuse; }) : Promise.resolve({ recipes: [], notes: [], relationships: [] }) as never);
+    const first = renderComposer();
+    fireEvent.change(screen.getByTestId("composer-input"), { target: { value: "/todo Send the platform plan" } });
+    fireEvent.click(screen.getByTestId("composer-send"));
+    fireEvent.click(screen.getByTestId("composer-send"));
+    expect(screen.getByTestId("composer-input")).toHaveValue("/todo Send the platform plan");
+    expect(screen.getByTestId("composer-input")).not.toBeDisabled();
+    expect(screen.getByTestId("composer-send")).toBeDisabled();
+    first.unmount();
+    const other = renderComposer({ threadId: "t-2" });
+    expect(screen.queryByLabelText("Adding task")).toBeNull();
+    expect(screen.getByTestId("composer-input")).toHaveValue("");
+    await act(async () => reject(new ApiError(409, "Task refused", { error: "Task refused" })));
+    expect(screen.queryByLabelText("Task not added")).toBeNull();
+    other.unmount();
+    renderComposer();
+    expect(screen.getByLabelText("Task not added")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("/todo Send the platform plan");
+    expect(screen.getByTestId("composer-input")).toHaveValue("/todo Send the platform plan");
+    expect(vi.mocked(apiFetch).mock.calls.filter(([path]) => String(path).endsWith("/todo"))).toEqual([
+      ["/api/threads/t-1/todo", { method: "POST", json: { text: "Send the platform plan" } }],
+    ]);
+  });
+
+  it("names an unknown task outcome without automatic replay and retains newer typing and speech", async () => {
+    let reject!: (cause: unknown) => void;
+    vi.mocked(apiFetch).mockImplementation((path) => String(path).endsWith("/todo")
+      ? new Promise<never>((_resolve, refuse) => { reject = refuse; }) : Promise.resolve({ recipes: [], notes: [], relationships: [] }) as never);
+    renderComposer();
+    fireEvent.change(screen.getByTestId("composer-input"), { target: { value: "/todo Send the platform plan" } });
+    fireEvent.click(screen.getByTestId("composer-send"));
+    fireEvent.change(screen.getByTestId("composer-input"), { target: { value: "Newer owner words" } });
+    fireEvent.click(screen.getByTestId("mic-button"));
+    await act(async () => reject(new TypeError("Connection lost")));
+    expect(screen.getByLabelText("Result unknown")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("/todo Send the platform plan");
+    expect(screen.getByRole("alert")).toHaveTextContent("Result unknown · /todo Send the platform plan · Connection lost");
+    expect(screen.getByTestId("composer-input")).toHaveValue("Newer owner words hello from mic");
+    expect(screen.getByTestId("composer-send")).not.toBeDisabled();
+    expect(screen.queryByRole("button", { name: /retry/i })).toBeNull();
+    expect(vi.mocked(apiFetch).mock.calls.filter(([path]) => String(path).endsWith("/todo"))).toHaveLength(1);
+  });
+
+  it.each([["denied", "Task not added"], ["failed", "Result unknown"]])("Enter after a retained %s task remount sends that exact task, never Keep; only pending blocks", async (status, label) => {
+    let taskCalls = 0;
+    let reject!: (cause: unknown) => void;
+    vi.mocked(apiFetch).mockImplementation((path) => {
+      if (!String(path).endsWith("/todo")) return Promise.resolve({ recipes: [], notes: [], relationships: [] }) as never;
+      taskCalls += 1;
+      return taskCalls === 1 ? Promise.resolve({ status }) as never : new Promise<never>((_resolve, refuse) => { reject = refuse; });
+    });
+    const command = "/todo Send the platform plan";
+    const first = renderComposer();
+    fireEvent.change(screen.getByTestId("composer-input"), { target: { value: command } });
+    fireEvent.click(screen.getByTestId("composer-send"));
+    expect(await screen.findByLabelText(label)).toBeInTheDocument();
+    first.unmount();
+    const returned = renderComposer();
+    const input = screen.getByTestId("composer-input") as HTMLTextAreaElement;
+    expect(input).toHaveValue(command);
+    expect(input.selectionStart).toBe(0);
+    expect(screen.queryByTestId("slash-palette")).toBeNull();
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(returned.props.onKeep).not.toHaveBeenCalled();
+    expect(taskCalls).toBe(2);
+    expect(screen.getByLabelText("Adding task")).toBeInTheDocument();
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(taskCalls).toBe(2);
+    expect(vi.mocked(apiFetch).mock.calls.filter(([path]) => String(path).endsWith("/todo"))).toEqual([
+      ["/api/threads/t-1/todo", { method: "POST", json: { text: "Send the platform plan" } }],
+      ["/api/threads/t-1/todo", { method: "POST", json: { text: "Send the platform plan" } }],
+    ]);
+    await act(async () => reject(new TypeError("Connection lost")));
+  });
+
+  it.each([
+    ["denied", "Task not added"],
+    ["timeout", "Task not added"],
+    ["failed", "Result unknown"],
+    ["error", "Result unknown"],
+  ])("preserves the exact command for body status %s and reports %s", async (status, label) => {
+    // Inject failure replies at the writer boundary; accepted replies above
+    // replay the real local producer, including its actual result identity.
+    vi.mocked(apiFetch).mockImplementation(async (path) => String(path).endsWith("/todo")
+      ? { status } as never : { recipes: [], notes: [], relationships: [] } as never);
+    renderComposer();
+    const command = "/todo Send the platform plan";
+    fireEvent.change(screen.getByTestId("composer-input"), { target: { value: command } });
+    fireEvent.click(screen.getByTestId("composer-send"));
+    expect(await screen.findByLabelText(label)).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(command);
+    expect(screen.getByTestId("composer-input")).toHaveValue(command);
+    expect(screen.getByTestId("composer-send")).not.toBeDisabled();
+    expect(vi.mocked(apiFetch).mock.calls.filter(([path]) => String(path).endsWith("/todo"))).toHaveLength(1);
+  });
+
+  it("allows an explicit new Send of retained words after unknown, blocking only the actual pending command", async () => {
+    const refusals: Array<(cause: unknown) => void> = [];
+    vi.mocked(apiFetch).mockImplementation((path) => String(path).endsWith("/todo")
+      ? new Promise<never>((_resolve, reject) => { refusals.push(reject); }) : Promise.resolve({ recipes: [], notes: [], relationships: [] }) as never);
+    renderComposer();
+    const command = "/todo Send the platform plan";
+    fireEvent.change(screen.getByTestId("composer-input"), { target: { value: command } });
+    fireEvent.click(screen.getByTestId("composer-send"));
+    await act(async () => refusals[0](new TypeError("Connection lost")));
+    expect(screen.getByLabelText("Result unknown")).toBeInTheDocument();
+    expect(screen.getByTestId("composer-input")).toHaveValue(command);
+    expect(screen.getByTestId("composer-send")).not.toBeDisabled();
+    expect(refusals).toHaveLength(1);
+    fireEvent.click(screen.getByTestId("composer-send"));
+    expect(refusals).toHaveLength(2);
+    expect(screen.getByTestId("composer-send")).toBeDisabled();
+    await act(async () => refusals[1](new TypeError("Connection lost again")));
+    expect(screen.getByTestId("composer-input")).toHaveValue(command);
+  });
+
+  it.each([
+    ["/mode ", "Modes", "/api/recipes?kind=mode"],
+    ["/prompt ", "Prompts", "/api/notes?tag=prompt"],
+    ["/guardrail ", "Guardrails", "/api/notes?tag=guardrail"],
+    ["@", "People", "/api/people/relationships"],
+  ])("a failed %s choice read offers its exact local Retry and a valid empty result is distinct", async (text, label, failedPath) => {
+    let failed = true;
+    vi.mocked(apiFetch).mockImplementation(async (path) => {
+      if (path === failedPath && failed) throw new TypeError("Choices offline");
+      return { recipes: [], notes: [], relationships: [] } as never;
+    });
+    renderComposer();
+    const input = screen.getByTestId("composer-input");
+    fireEvent.change(input, { target: { value: text } });
+    expect(await screen.findByLabelText(`${label} unavailable`)).toBeInTheDocument();
+    expect(input).toHaveValue(text);
+    expect(screen.queryByLabelText(`No ${label.toLowerCase()}`)).toBeNull();
+    const prior = vi.mocked(apiFetch).mock.calls.length;
+    failed = false;
+    fireEvent.click(screen.getByRole("button", { name: `Retry ${label}` }));
+    expect(await screen.findByLabelText(`No ${label.toLowerCase()}`)).toBeInTheDocument();
+    expect(vi.mocked(apiFetch).mock.calls.slice(prior).map(([path]) => path)).toEqual([failedPath]);
+    expect(input).toHaveValue(text);
+  });
+
+  it.each([
+    ["@Avery", "People", "/api/people/relationships", recordedPeople, "Avery Chen"],
+    ["/mode ", "Modes", "/api/recipes?kind=mode", recordedModes.wire, "Desk"],
+  ])("a failed %s choice refresh keeps the known choices and words; Retry only reads %s", async (text, label, source, wire, title) => {
+    let failed = false;
+    vi.mocked(apiFetch).mockImplementation(async (path) => {
+      if (path === source) {
+        if (failed) throw new TypeError("Choices offline");
+        return wire as never;
+      }
+      return { recipes: [], notes: [] } as never;
+    });
+    renderComposer();
+    const input = screen.getByTestId("composer-input");
+    fireEvent.change(input, { target: { value: text } });
+    expect(await screen.findByTestId(`surface-row-${title}`)).toBeInTheDocument();
+    failed = true;
+    act(() => choiceRefresh.current!());
+    expect(await screen.findByLabelText(`${label} unavailable`)).toBeInTheDocument();
+    expect(screen.getByLabelText("Last read")).toBeInTheDocument();
+    expect(screen.getByTestId(`surface-row-${title}`)).toBeInTheDocument();
+    expect(input).toHaveValue(text);
+    const prior = vi.mocked(apiFetch).mock.calls.length;
+    failed = false;
+    fireEvent.click(screen.getByRole("button", { name: `Retry ${label}` }));
+    await waitFor(() => expect(screen.queryByLabelText(`${label} unavailable`)).toBeNull());
+    expect(vi.mocked(apiFetch).mock.calls.slice(prior).map(([path]) => path)).toEqual([source]);
+    expect(screen.getByTestId(`surface-row-${title}`)).toBeInTheDocument();
   });
 
   it("PHILO-17: the @ picker names an untitled note by its first words, else New note", () => {

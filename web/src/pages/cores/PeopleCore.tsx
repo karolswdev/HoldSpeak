@@ -1,7 +1,7 @@
 // HS-135-04: People is a single protected Desk application.  Its roster is
 // a relationship projection, never a field of person tiles or a scorecard.
 import { wireDate } from "../../desk/surface/format";
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import type { CoreProps } from "./core-types";
 import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch } from "../../lib/api";
@@ -755,6 +755,27 @@ function ConcernDetail({ concern, brief }: { concern: Exclude<NowConcern, null>;
  *  what to raise, add to the agenda), then two plates: what he owes and
  *  what is owed to him, each with its add row. Every fact is the person's
  *  record or the hub's 1:1 brief (`/brief`, read-only). */
+function PrepAddWell({ label, draft, onChange, onAdd, busy, actionLabel = "Add", testId }: {
+  label: string; draft: string; onChange(value: string): void; onAdd(onSaved: () => void): void;
+  busy: boolean; actionLabel?: string; testId?: string;
+}) {
+  const [open, setOpen] = useState(() => Boolean(draft));
+  const inputId = useId();
+  useEffect(() => {
+    if (draft) setOpen(true);
+  }, [draft]);
+  const add = () => onAdd(() => setOpen(false));
+  return open ? <SurfaceWell><div className="people-add">
+    <StringGadget label={label} value={draft} onChange={onChange} inputProps={{ id: inputId }}
+      onKeyDown={(event) => { if (event.key === "Enter" && !busy) add(); }} />
+    <Button dense variant="secondary" disabled={!draft.trim() || busy} loading={busy} onClick={add} data-testid={testId}>{actionLabel}</Button>
+    <Button dense variant="ghost" disabled={busy} onClick={() => setOpen(false)} aria-expanded={true}>Hide</Button>
+  </div></SurfaceWell> : <Button dense variant="ghost" onClick={() => {
+    setOpen(true);
+    requestAnimationFrame(() => document.getElementById(inputId)?.focus());
+  }} aria-expanded={false} data-testid={testId}>{actionLabel}</Button>;
+}
+
 function PrepPane({ relationship, onRefresh, onProtectedFailure, onPickCalendar }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void; onPickCalendar(): void }) {
   const [brief, setBrief] = useState<OneOnOneBrief | null>(null);
   const [failure, setFailure] = useState("");
@@ -763,7 +784,8 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onPickCalendar 
   const [busy, setBusy] = useState<string | null>(null);
   const recordingState = useDesk((state) => state.recording);
   const { failure: recordingFailure, receipt: recordingReceipt } = useDeskWriteReceipt();
-  const [selectedCommitment, setSelectedCommitment] = useState<Commitment | null>(null);
+  const [selectedCommitment, setSelectedCommitment] = useState<{ commitment: Commitment; section: "you" | "they" } | null>(null);
+  const commitmentOrigin = useRef<HTMLElement | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [preparedAt] = useState(() => new Date().toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false }));
   // The person's record is re-read after each write; the brief follows it.
@@ -790,28 +812,40 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onPickCalendar 
   if (!brief && !failure) return <SurfaceState loading />;
 
   const base = `/api/people/relationships/${encodeURIComponent(relationship.id)}`;
+  const inspectCommitment = (commitment: Commitment, section: "you" | "they") => {
+    commitmentOrigin.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setSelectedCommitment({ commitment, section });
+  };
+  const closeCommitment = () => {
+    setSelectedCommitment(null);
+    commitmentOrigin.current?.focus();
+  };
   const run = async (key: string, work: () => Promise<unknown>, after?: () => void) => {
     setBusy(key);
     try { await work(); after?.(); onRefresh(); } catch (cause) { onProtectedFailure(cause); } finally { setBusy(null); }
   };
-  const addAgenda = () => {
-    const body = agendaDraft.trim(); if (!body) return;
+  const addAgenda = (onSaved?: () => void) => {
+    const submitted = agendaDraft;
+    const body = submitted.trim(); if (!body || busy === "agenda") return;
     void run("agenda", async () => {
       const session = relationship.sessions?.[0] ?? (await apiFetch<{ one_on_one: Session }>(`${base}/one-on-ones`, { method: "POST", json: { visibility: "shared_intent" } })).one_on_one;
       await apiFetch(`/api/people/one-on-ones/${encodeURIComponent(session.id)}/agenda`, { method: "POST", json: { body, visibility: "shared_intent", state: "open", source: { kind: "manual" } } });
-    }, forgetAgenda);
+    }, () => { if ((keptDraft(`people/1on1/${relationship.id}`) ?? "") === submitted) { forgetAgenda(); onSaved?.(); } });
   };
   // What he owes: the hub's own path (a request he accepts becomes his commitment).
-  const addOwe = () => {
-    const body = oweDraft.trim(); if (!body) return;
+  const addOwe = (onSaved?: () => void) => {
+    const submitted = oweDraft;
+    const body = submitted.trim(); if (!body || busy === "owe") return;
     void run("owe", async () => {
       const made = await apiFetch<{ request: { id: string } }>(`${base}/requests`, { method: "POST", json: { body, visibility: "shared_intent", source: { kind: "manual" } } });
       await apiFetch(`/api/people/requests/${encodeURIComponent(made.request.id)}/accept`, { method: "POST", json: {} });
-    }, forgetOwe);
+    }, () => { if ((keptDraft(`people/request/${relationship.id}`) ?? "") === submitted) { forgetOwe(); onSaved?.(); } });
   };
-  const addOwed = () => {
-    const body = owedDraft.trim(); if (!body) return;
-    void run("owed", () => apiFetch(`${base}/owed`, { method: "POST", json: { body, visibility: "shared_intent" } }), forgetOwed);
+  const addOwed = (onSaved?: () => void) => {
+    const submitted = owedDraft;
+    const body = submitted.trim(); if (!body || busy === "owed") return;
+    void run("owed", () => apiFetch(`${base}/owed`, { method: "POST", json: { body, visibility: "shared_intent" } }),
+      () => { if ((keptDraft(`people/owed/${relationship.id}`) ?? "") === submitted) { forgetOwed(); onSaved?.(); } });
   };
   const done = (id: string) => void run(`done:${id}`, () => apiFetch(`/api/people/commitments/${encodeURIComponent(id)}/transition`, { method: "POST", json: { verb: "done" } }));
   const completeAction = (id: string) => void run(`action-done:${id}`, () => apiFetch("/api/follow-through/complete", { method: "POST", json: { card_id: id, verb: "done", payload: {} } }));
@@ -822,7 +856,6 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onPickCalendar 
   const nextEvent = prep?.nextOneOnOne ?? null;
   const nextAt = relationship.next_one_on_one ?? nextEvent?.starts_at ?? null;
   const suggestions = !nextAt && prep ? prep.calendarLinkSuggestions : [];
-  const lead: "link" | "agenda" = suggestions.length ? "link" : "agenda";
   const nextTitle = nextEvent?.title || (relationship.calendar_links ?? [])[0]?.label || "1:1";
   const until = nextAt ? untilWords(nextAt, now) : "";
 
@@ -919,10 +952,7 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onPickCalendar 
           </ol>
         </div> : null}
 
-        <div className="people-add people-agenda-add">
-          <StringGadget label="Add to the agenda" value={agendaDraft} onChange={setAgendaDraft} placeholder="What to raise" inputProps={{ id: `people-agenda-${relationship.id}` }} onKeyDown={(event) => { if (event.key === "Enter") addAgenda(); }} />
-          <Button dense variant={nextEvent?.id ? "secondary" : lead === "agenda" ? "primary" : "secondary"} disabled={busy === "agenda"} loading={busy === "agenda"} onClick={() => { if (agendaDraft.trim()) addAgenda(); else document.getElementById(`people-agenda-${relationship.id}`)?.focus(); }} data-testid="people-add-agenda">Add to agenda</Button>
-        </div>
+        <PrepAddWell key={relationship.id} label="Add to the agenda" draft={agendaDraft} onChange={setAgendaDraft} onAdd={addAgenda} busy={busy === "agenda"} actionLabel="Add to agenda" testId="people-add-agenda" />
       </div>
     </section>
 
@@ -934,21 +964,19 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onPickCalendar 
             meta={<span className="people-pill" data-tone="info">Asked of you</span>}
             verb={<Button dense variant="ghost" loading={busy === `accept:${item.id}`} onClick={() => accept(item.id)}>Accept</Button>} />)}
           {youOweRows.map((item) => <PlateRow key={item.id} title={item.body}
-            onTitle={() => setSelectedCommitment(item)}
+            onTitle={() => inspectCommitment(item, "you")}
             meta={item.due || item.execution_links?.length ? <>{item.due ? <DuePill due={item.due} /> : null}{item.execution_links?.length ? <span className="people-pill" data-tone="info">On a Workbench</span> : null}</> : undefined}
             verb={<Button dense variant="ghost" loading={busy === `done:${item.id}`} onClick={() => done(item.id)}>Done</Button>} />)}
         </ul> : null}
-        {selectedCommitment ? <CommitmentInspector commitment={selectedCommitment} onClose={() => setSelectedCommitment(null)} onRefresh={() => { onRefresh(); setSelectedCommitment(null); }} onProtectedFailure={onProtectedFailure} /> : null}
-        <div className="people-add">
-          <StringGadget label="You owe" value={oweDraft} onChange={setOweDraft} placeholder="What you owe" onKeyDown={(event) => { if (event.key === "Enter") addOwe(); }} />
-          <Button dense variant="ghost" disabled={!oweDraft.trim() || busy === "owe"} loading={busy === "owe"} onClick={addOwe}>Add</Button>
-        </div>
+        {selectedCommitment?.section === "you" ? <CommitmentInspector key={selectedCommitment.commitment.id} commitment={selectedCommitment.commitment} onClose={closeCommitment} onRefresh={() => { onRefresh(); setSelectedCommitment(null); }} onProtectedFailure={onProtectedFailure} /> : null}
+        <PrepAddWell key={relationship.id} label="You owe" draft={oweDraft} onChange={setOweDraft} onAdd={addOwe} busy={busy === "owe"} />
       </section>
 
       <section className="people-plate" data-testid="people-they-owe">
         <h3 className="people-cap">THEY OWE YOU{owedRows.length + actions.length ? <b>{owedRows.length + actions.length}</b> : null}</h3>
         {owedRows.length || actions.length ? <ul className="people-plate-rows" data-testid="prep-owed">
           {owedRows.map((item) => <PlateRow key={item.id} title={item.body}
+            onTitle={() => inspectCommitment(item, "they")}
             meta={item.due ? <DuePill due={item.due} /> : undefined}
             verb={<Button dense variant="ghost" loading={busy === `done:${item.id}`} onClick={() => done(item.id)}>Done</Button>} />)}
           {actions.map((action) => {
@@ -962,10 +990,8 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onPickCalendar 
               verb={<Button dense variant="ghost" loading={busy === `action-done:${action.id}`} onClick={() => completeAction(action.id)}>Done</Button>} />;
           })}
         </ul> : null}
-        <div className="people-add">
-          <StringGadget label="They owe you" value={owedDraft} onChange={setOwedDraft} placeholder="What they owe you" onKeyDown={(event) => { if (event.key === "Enter") addOwed(); }} />
-          <Button dense variant="ghost" disabled={!owedDraft.trim() || busy === "owed"} loading={busy === "owed"} onClick={addOwed}>Add</Button>
-        </div>
+        {selectedCommitment?.section === "they" ? <CommitmentInspector key={selectedCommitment.commitment.id} commitment={selectedCommitment.commitment} onClose={closeCommitment} onRefresh={() => { onRefresh(); setSelectedCommitment(null); }} onProtectedFailure={onProtectedFailure} /> : null}
+        <PrepAddWell key={relationship.id} label="They owe you" draft={owedDraft} onChange={setOwedDraft} onAdd={addOwed} busy={busy === "owed"} />
       </section>
     </div>
 
