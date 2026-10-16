@@ -4,9 +4,26 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-15 (Decision readers and shared window seams: #1211)
+**Last updated:** 2026-10-15 (Desk drawers and live wallpapers: #1212)
 
 ## Current phase
+
+**Desk drawers and live wallpapers — #1212 (2026-10-15).** The owner asked
+to restore actual drawers and interactive Three.js scenery on the current
+Screen. Root folders now use canonical drawer icons and phone Go rows; real
+children and members open in the existing contents window. Menu Open works,
+legacy bare refs suppress only their resolved object, and filing cycles retain
+a reachable root. Nested drawers show their real parent. The Screen mounts
+the selected lazy Atmosphere behind its controls, keeps still fallback until
+ready or on WebGL failure, and exposes the existing saved Motion setting.
+Quiet allocates no scene. Final quick GREEN: 3798 web / 651 affected Python /
+107 sweeps (two existing xfails) / 17 canon; build and TypeScript pass. Root
+read actual desktop/phone folder and filing cases, changing pixels for all
+eight scenes, Motion/reduced-motion checks and WebGL-disabled fallback.
+Bounded delegated source counsel closed three findings in one fix round;
+the final parent-caption correction is separately verified. No owner live
+acceptance, hardware performance, full main tape or formal postmerge review
+inferred. [Proof and limits](../docs/internal/DESK-DRAWERS-LIVE-2026-10-15/README.md).
 
 **Decision readers and shared window seams — #1211 (2026-10-15).** Continued
 the owner-directed Workbench refinement. Shared compact Send folds defer
@@ -317,6 +334,14 @@ committing generated docs and line-number test maps; split the tests.
 
 ## Open work
 
+**From #1212:** owner live judgment, full main tape and formal postmerge review
+remain separate. Inherited runtime debt: if a scene throws during first
+resize/render after runtime listeners attach, the runtime cannot return its
+partial cleanup. The host releases its own observer and keeps still fallback;
+this pass does not claim disposal of that partially constructed renderer.
+Continue the bounded surface refinement record below. No source-counsel
+condition remains; no backend, filing writer or guard ceiling changed.
+
 **From #1211:** continue the bounded surface audit in the linked next-refinements
 record. No confirmed source finding remains from this pass. Owner live judgment,
 formal postmerge review and full main tape are separate. Existing remote CI
@@ -406,6 +431,11 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 
 ## Last merged (newest first)
 
+- **#1212 — Desk drawers and live Three.js wallpapers.** Canonical root/child
+  drawers, real contents/menu opening, cycle reachability and parent captions;
+  selected live scenery, still fallback and shared Motion control. Quick
+  3798/651/107/17 green; actual 1440/393 flows and real filing graph cases.
+  Delegated source counsel RATIFY; formal postmerge review remains separate.
 - **#1211 — Decision readers and shared window seams.** Compact reusable Send,
   exact save recovery/newer-draft continuity, current ordinary previews and
   front-window pointer ownership. Quick 3764/651/107/17 green; actual 1440/393

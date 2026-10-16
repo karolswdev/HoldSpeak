@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { objectMenuEntries, windowObjectEntry } from "../objectMenu";
 import { seatMounted, seatUnmounted } from "../deleteSeat";
 import { OBJECT_DELETE_REQUEST } from "../verbRegistry";
-import { EMPTY_ITEMS } from "../api";
+import { EMPTY_ITEMS, fromWireDirectory, qualifiedRef } from "../api";
 import type { Note, Project } from "../../lib/primitives";
 import { useDesk } from "../store";
 import type { WorkMenuEntry } from "../components/DeskMenu";
@@ -25,6 +25,20 @@ beforeEach(() => {
 });
 
 describe("objectMenuEntries (registry-derived, parallel list #4 dead)", () => {
+  it("offers a drawer's Open and dispatches its canonical ref while File stays withheld", () => {
+    const directory = fromWireDirectory({ id: "dir_b5c056b59f3e", name: "Platform", parent_id: null,
+      member_ids: ["note:note_0b9ebdadf0fa"], created_at: "2026-10-16T01:39:56Z" })!;
+    const ref = qualifiedRef("directory", directory.id);
+    useDesk.setState({ items: { ...EMPTY_ITEMS, directory: [directory] }, selectedIds: [ref] });
+    const entries = objectMenuEntries({ ref });
+    const open = entries.find((entry) => entry.id === "object.open") as Extract<WorkMenuEntry, { type: "item" }>;
+    expect(open).toBeDefined();
+    expect(open.ghost).toBeNull();
+    expect(entries.some((entry) => entry.id === "object.file")).toBe(false);
+    open.onSelect();
+    expect(useDesk.getState().openPullout).toHaveBeenCalledWith(ref, undefined);
+  });
+
   it("offers the Note's live object verbs without kind ghosts", () => {
     const entries = objectMenuEntries({ ref: "note:n1" });
     const byId = Object.fromEntries(

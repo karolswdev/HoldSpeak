@@ -138,6 +138,8 @@ describe("atmosphere runtime", () => {
     };
     const factory = vi.fn(() => scene);
     const canvas = document.createElement("canvas");
+    const addWindowListener = vi.spyOn(window, "addEventListener");
+    const removeWindowListener = vi.spyOn(window, "removeEventListener");
     const cleanup = mountAtmosphereScene(canvas, factory, { seed: 91 });
 
     expect(factory).toHaveBeenCalledWith({
@@ -151,6 +153,7 @@ describe("atmosphere runtime", () => {
     expect(scene.update).toHaveBeenCalledWith(
       expect.objectContaining({ delta: 0, elapsed: 0 }),
     );
+    expect(addWindowListener).toHaveBeenCalledWith("pointermove", expect.any(Function), { passive: true });
 
     window.dispatchEvent(
       new MouseEvent("pointermove", { clientX: 900, clientY: 200 }),
@@ -163,11 +166,44 @@ describe("atmosphere runtime", () => {
       }),
     );
 
+    Object.defineProperty(document, "hidden", { configurable: true, value: true });
+    const renders = vi.mocked(scene.render).mock.calls.length;
+    document.dispatchEvent(new Event("visibilitychange"));
+    expect(cancelFrame).toHaveBeenCalledWith(17);
+    frame?.(9_000);
+    expect(scene.render).toHaveBeenCalledTimes(renders);
+    vi.spyOn(performance, "now").mockReturnValue(9_000);
+    Object.defineProperty(document, "hidden", { configurable: true, value: false });
+    document.dispatchEvent(new Event("visibilitychange"));
+    frame?.(9_016);
+    expect(scene.update).toHaveBeenLastCalledWith(expect.objectContaining({ delta: 0.016, elapsed: 0.032 }));
+
     motionListener?.({ matches: true } as MediaQueryListEvent);
     expect(scene.setReducedMotion).toHaveBeenCalledWith(true);
     expect(cancelFrame).toHaveBeenCalled();
 
     cleanup();
     expect(scene.dispose).toHaveBeenCalledOnce();
+    expect(removeWindowListener).toHaveBeenCalledWith("pointermove", expect.any(Function));
+  });
+
+  it("honors system reduced motion even when the saved motion choice is on", () => {
+    const requestFrame = vi.fn();
+    vi.stubGlobal("requestAnimationFrame", requestFrame);
+    vi.stubGlobal("cancelAnimationFrame", vi.fn());
+    Object.defineProperty(document, "hidden", { configurable: true, value: false });
+    vi.spyOn(window, "matchMedia").mockReturnValue({
+      matches: true,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    } as unknown as MediaQueryList);
+    const scene: AtmosphereScene = { resize: vi.fn(), update: vi.fn(), render: vi.fn(), dispose: vi.fn() };
+    const factory = vi.fn(() => scene);
+    const cleanup = mountAtmosphereScene(document.createElement("canvas"), factory, { seed: 91, motion: true });
+
+    expect(factory).toHaveBeenCalledWith(expect.objectContaining({ reducedMotion: true }));
+    expect(requestFrame).not.toHaveBeenCalled();
+    expect(scene.render).toHaveBeenCalled();
+    cleanup();
   });
 });

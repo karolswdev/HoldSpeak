@@ -110,13 +110,17 @@ export function DeskFilingStrip({
     const members = zone.memberIds || [];
     return members.includes(objectId) || members.includes(objectRef);
   });
+  const parentId = objectKind === "directory"
+    ? zones.find((zone) => zone.id === objectId)?.parentId : null;
+  const parentZone = parentId ? zones.find((zone) => zone.id === parentId) : undefined;
   const knowledgeHomes = knowledgeChoices.filter(
     (knowledge) => objectRef !== qualifiedRef("kb", knowledge.id),
   );
   const knowledgeCount = (relationships.knowledge || []).length;
   const projectCount = (relationships.projects || []).length;
   const filedSummary = [
-    homeZone ? String(homeZone.name || homeZone.id) : "Desk root",
+    parentZone ? String(parentZone.name || parentZone.id)
+      : homeZone ? String(homeZone.name || homeZone.id) : "Desk root",
     knowledgeCount ? `${knowledgeCount} Knowledge` : "",
     projectCount ? `${projectCount} Project${projectCount === 1 ? "" : "s"}` : "",
   ]

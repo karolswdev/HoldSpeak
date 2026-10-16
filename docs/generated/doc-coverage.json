@@ -1408,7 +1408,7 @@
       "tests_executed": 2
     },
     {
-      "assertions_inspected": 1,
+      "assertions_inspected": 3,
       "docs": {
         "api": 0,
         "operational": 1,
@@ -1418,21 +1418,21 @@
       "kind": "capabilities",
       "path_presence": {
         "docs": [
-          2,
-          2
-        ],
-        "sources": [
           3,
           3
         ],
+        "sources": [
+          6,
+          6
+        ],
         "tests": [
-          1,
-          1
+          3,
+          3
         ]
       },
-      "semantic_status": "unresolved",
-      "semantic_status_reason": "A matching assertion and executed test are required; path presence alone is not sufficient.",
-      "tests_executed": 0
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
     },
     {
       "assertions_inspected": 2,
@@ -4245,10 +4245,10 @@
   ],
   "snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8",
   "totals": {
-    "assertions_inspected": 227,
+    "assertions_inspected": 229,
     "doc_paths": [
-      245,
-      245
+      246,
+      246
     ],
     "docs": {
       "api": 0,
@@ -4256,17 +4256,17 @@
       "security": 19
     },
     "records": 157,
-    "records_with_executed_assertions": 81,
-    "semantics_unresolved": 76,
+    "records_with_executed_assertions": 82,
+    "semantics_unresolved": 75,
     "source_paths": [
-      286,
-      286
+      289,
+      289
     ],
     "test_paths": [
-      227,
-      227
+      229,
+      229
     ],
-    "tests_executed": 189
+    "tests_executed": 191
   },
   "validation_errors": 0
 }

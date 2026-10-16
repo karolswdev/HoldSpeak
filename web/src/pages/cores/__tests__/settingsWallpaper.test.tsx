@@ -1,10 +1,14 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import { ATMOSPHERE_STORAGE_KEY } from "../../../desk/gl/atmospherePreference";
+import { ATMOSPHERE_MOTION_KEY, ATMOSPHERE_SOUND_KEY } from "../../../desk/gl/atmosphereControls";
 import { WallpaperModule } from "../settingsWallpaper";
 
-beforeEach(() => localStorage.clear());
+beforeEach(() => {
+  localStorage.clear();
+  window.dispatchEvent(new Event("storage"));
+});
 
 describe("Settings wallpaper picker", () => {
   it("shows catalog previews and persists the live selection", async () => {
@@ -56,5 +60,35 @@ describe("Settings wallpaper picker", () => {
     expect(screen.queryByRole("checkbox", { name: "Environment sound" })).toBeNull();
     expect(screen.queryByRole("checkbox", { name: "Environment animation" })).toBeNull();
     expect(screen.queryByText("SAVED ON THIS BROWSER · APPLIES LIVE TO THE FLOOR")).toBeNull();
+  });
+
+  it("pauses and resumes wallpaper motion with the stored control and keeps sound opt-in", async () => {
+    const user = userEvent.setup();
+    const view = render(<WallpaperModule />);
+    const motion = screen.getByRole("checkbox", { name: "Wallpaper motion" });
+    expect(motion).toBeChecked();
+
+    await user.click(motion);
+    expect(motion).not.toBeChecked();
+    expect(localStorage.getItem(ATMOSPHERE_MOTION_KEY)).toBe("false");
+    expect(localStorage.getItem(ATMOSPHERE_SOUND_KEY)).toBeNull();
+    view.unmount();
+    render(<WallpaperModule />);
+    const restored = screen.getByRole("checkbox", { name: "Wallpaper motion" });
+    expect(restored).not.toBeChecked();
+    restored.focus();
+    await user.keyboard(" ");
+    expect(restored).toBeChecked();
+    expect(localStorage.getItem(ATMOSPHERE_MOTION_KEY)).toBe("true");
+    expect(localStorage.getItem(ATMOSPHERE_SOUND_KEY)).toBeNull();
+  });
+
+  it("reads a motion preference changed by another settings surface", () => {
+    render(<WallpaperModule />);
+    act(() => {
+      localStorage.setItem(ATMOSPHERE_MOTION_KEY, "false");
+      window.dispatchEvent(new Event("storage"));
+    });
+    expect(screen.getByRole("checkbox", { name: "Wallpaper motion" })).not.toBeChecked();
   });
 });

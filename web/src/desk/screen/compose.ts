@@ -10,7 +10,7 @@ import { qualifiedRef } from "../api";
 import { isInFlight, liveAgentSessions, type AgentFlight, type CoderSessionRow } from "../agentFlights";
 import { needYouWords, objectSprite, type ObjectTone } from "../surface";
 import { spriteUrl } from "../sprites";
-import { allObjects } from "../world";
+import { allObjects, objectByRef } from "../world";
 import type { ScreenTarget } from "./open";
 
 export type ScreenRole = "drawer" | "needs" | "parked" | "loose" | "agent";
@@ -114,7 +114,58 @@ export function normalizeRef(ref: string): string {
   if (kind === "desk_decision" || kind === "decision_record") return `decision:${id}`;
   if (kind === "person") return `people:${id}`;
   if (kind === "action_item") return `action:${id}`;
+  if (kind === "directory") return `zone:${id}`;
   return `${kind}:${id}`;
+}
+
+/** Bare member ids name the same single object the directory reader resolves.
+ * An unresolved bare id cannot decide any other object's filing. */
+function directoryMemberRefs(items: Items, members: readonly string[]): ReadonlySet<string> {
+  const refs = new Set<string>();
+  for (const stored of members) {
+    const ref = normalizeRef(stored);
+    const member = objectByRef(items, ref);
+    if (member) refs.add(qualifiedRef(member.kind, member.id));
+    else if (ref.includes(":")) refs.add(ref);
+  }
+  return refs;
+}
+
+/** Follow real parents first, then stored membership. Each cyclic group keeps
+ * one Desk entry so filing an ancestor cannot hide the entire drawer tree. */
+export function rootDirectories(items: Items): Items["directory"] {
+  const directories = items.directory ?? [];
+  const byId = new Map(directories.map((directory) => [directory.id, directory]));
+  const members = new Map(directories.map((directory) => [directory.id, directoryMemberRefs(items, directory.memberIds)]));
+  const parents = new Map<string, string | undefined>();
+  const roots = new Set<string>();
+  for (const directory of directories) {
+    const ref = qualifiedRef("directory", directory.id);
+    const parent = directory.parentId && byId.has(directory.parentId)
+      ? directory.parentId
+      : directories.find((candidate) => members.get(candidate.id)?.has(ref))?.id;
+    parents.set(directory.id, parent);
+    if (!parent) roots.add(directory.id);
+  }
+  const finished = new Set<string>();
+  for (const directory of directories) {
+    const path: string[] = [];
+    const onPath = new Set<string>();
+    let id: string | undefined = directory.id;
+    while (id !== undefined && !finished.has(id)) {
+      if (onPath.has(id)) {
+        const cycle = path.slice(path.indexOf(id));
+        const originalRoots = cycle.filter((candidate) => !byId.get(candidate)?.parentId);
+        roots.add((originalRoots.length ? originalRoots : cycle).sort()[0]);
+        break;
+      }
+      onPath.add(id);
+      path.push(id);
+      id = parents.get(id);
+    }
+    for (const visited of path) finished.add(visited);
+  }
+  return directories.filter((directory) => roots.has(directory.id));
 }
 
 function sprites(kind: string, id: string, agent?: string) {
@@ -164,7 +215,19 @@ function agentWordFor(row: CoderSessionRow): string {
 export function composeScreen(input: ScreenInputs): ScreenObject[] {
   const out: ScreenObject[] = [];
 
-  // ── drawers: the Projects, People, the Conductor ──
+  // ── drawers: the real folders, Projects, People, the Conductor ──
+  for (const directory of rootDirectories(input.items)) {
+    const ref = qualifiedRef("directory", directory.id);
+    out.push({
+      key: ref,
+      role: "drawer",
+      kind: "directory",
+      kindWord: "DRAWER",
+      name: directory.name || "Drawer",
+      ...sprites("directory", directory.id),
+      target: { type: "ref", ref },
+    });
+  }
   for (const project of input.items.project ?? []) {
     const n = input.projectCounts[project.id] ?? 0;
     const failed = Boolean(input.notRead?.[project.id]);
@@ -240,12 +303,16 @@ export function composeScreen(input: ScreenInputs): ScreenObject[] {
   // Unknown stays unknown (Astra's P1 on #939): an object whose filing a
   // failed read would decide is not drawn loose.
   if (input.membersLoaded && !input.unknownAll) {
+    const filed = new Set([...input.filed].map(normalizeRef));
+    for (const directory of input.items.directory ?? []) {
+      for (const ref of directoryMemberRefs(input.items, directory.memberIds)) filed.add(ref);
+    }
     for (const o of allObjects(input.items)) {
       if (!LOOSE_KINDS.has(o.kind)) continue;
       if (!hasUserOwnedContent(o)) continue;
       if (o.kind === "meeting" && input.unknownMeetings) continue;
       const ref = qualifiedRef(o.kind, o.id);
-      if (input.filed.has(normalizeRef(ref))) continue;
+      if (filed.has(normalizeRef(ref))) continue;
       const needs = input.needsRefs.has(ref);
       out.push({
         key: ref,
@@ -260,7 +327,7 @@ export function composeScreen(input: ScreenInputs): ScreenObject[] {
     for (const person of input.persons) {
       if (!person.name.trim()) continue;
       const ref = `people:${person.id}`;
-      if (input.filed.has(ref)) continue;
+      if (filed.has(ref)) continue;
       out.push({
         key: ref,
         role: "loose",
@@ -291,5 +358,5 @@ export function composeScreen(input: ScreenInputs): ScreenObject[] {
 
 /** True when the desk holds nothing but the drawers that always exist. */
 export function screenIsBare(objects: readonly ScreenObject[]): boolean {
-  return !objects.some((o) => o.role === "loose" || o.role === "agent" || o.key.startsWith("project:"));
+  return !objects.some((o) => o.role === "loose" || o.role === "agent" || o.kind === "directory" || o.key.startsWith("project:"));
 }

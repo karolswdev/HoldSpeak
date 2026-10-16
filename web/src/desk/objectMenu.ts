@@ -15,6 +15,7 @@ import { deleteSeatShown } from "./deleteSeat";
 function offeredForKind(v: Verb, kind: WorldObject["kind"]): boolean {
   switch (v.id) {
     case "object.open":
+      return true;
     case "object.file":
       return kind !== "directory";
     case "object.ask-project":

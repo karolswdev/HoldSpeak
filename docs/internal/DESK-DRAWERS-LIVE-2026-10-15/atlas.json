@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "atlas_version": "desk-drawers-live-20261015",
+  "extends": "docs/internal/DECISION-DELIGHT-2026-10-15/atlas.json",
+  "source_commit": "bea522bebf7674950bdccbf9c2e2999738229fd8",
+  "states": [
+    {
+      "id": "state.desk_presentation.drawer_member_visible",
+      "family": "desk_presentation",
+      "values": {
+        "application": "Drawer",
+        "task": "Read a Note filed through the real membership writer"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/pullouts/DirectoryPullout.tsx",
+          "symbol": "export function DirectoryPullout(",
+          "claim": "The drawer reads real child directories and canonical members from the shared Desk store."
+        }
+      ],
+      "reachable_by": [
+        "case.desk.drawer.file.visible"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "case.desk.drawer.file.visible",
+      "job": "j3",
+      "edge_ids": [
+        "edge.http.put.api_directories_directory_id_members_primitive_id"
+      ],
+      "state_id": "state.desk_presentation.drawer_member_visible",
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME/DB. Real directory/note/membership production routes. No owner state, model, microphone, provider or clipboard."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/setup/status",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "timeout_s": 10
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/directories",
+          "body": {
+            "name": "Platform"
+          },
+          "expect_status": 201,
+          "adapter": "http-route",
+          "capture_as": "folder_id",
+          "capture_path": "directory.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "body": {
+            "title": "Rollback plan",
+            "body_markdown": "Keep the previous deployment ready."
+          },
+          "expect_status": 201,
+          "adapter": "http-route",
+          "capture_as": "note_id",
+          "capture_path": "note.id"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-keyboard",
+          "selector": "[data-object-id=\"zone:{folder_id}\"]",
+          "key": "Enter"
+        }
+      ],
+      "trigger": {
+        "kind": "api",
+        "method": "PUT",
+        "path": "/api/directories/{folder_id}/members/note:{note_id}",
+        "body": {},
+        "expect_status": 200,
+        "adapter": "http-route"
+      },
+      "expected": {
+        "observe_at": "[id=\"pullout:zone:{folder_id}\"] .surface-rows",
+        "predicate": {
+          "kind": "readable_text",
+          "value": "Rollback plan"
+        },
+        "words": "A real filing writer makes the stored Note readable inside its open real drawer."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ],
+  "clocks": [],
+  "excluded": [],
+  "council_readings": []
+}

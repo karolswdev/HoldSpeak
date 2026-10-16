@@ -12,7 +12,7 @@
  *  selectedIds, PHILO-17): the menu bar Object menu, F2 and the right-click
  *  menu act on it. PHILO-17 (owner 2026-10-10, "everything must become one
  *  desk"): the Screen is the one desk; the Floor is parked. */
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useAgentFlights } from "../agentFlights";
 import { projectOpenHere, useNeedsYou } from "../needsYou";
 import { Button } from "../../components/signal/Signal";
@@ -31,6 +31,7 @@ import { openTarget } from "./open";
 import { SCREEN_HOST, HandConfirmSlot, handOriginOfRef, handSourceProps, handTargetProps, useDropHand } from "../hand";
 import { useAtmospherePreference } from "../gl/atmospherePreference";
 import { resolveAtmosphere } from "../gl/atmosphereRegistry";
+import { Atmosphere } from "../gl/Atmosphere";
 import { GoHome } from "./GoHome";
 import "./screen.css";
 
@@ -129,11 +130,15 @@ export function Screen() {
   // PHILO-14 C3: drop to hand. A loose work item drags (not at 393: the
   // hand there is the verb); the Conductor drawer and the agents take it.
   const drag = useDropHand((s) => s.drag);
-  // PHILO-17 (Muad'Dib's ruling): the Screen draws the chosen place as its
-  // backdrop: the place's still picture on the A1 floor, never a GL scene.
-  // Quiet Desk has no still: the floor alone.
+  // Owner 2026-10-15: restore the selected live place behind the current
+  // Screen. Its still covers loading or failed WebGL; Quiet Desk stays plain.
   const [placeId] = useAtmospherePreference();
-  const still = resolveAtmosphere(placeId).previewUrl;
+  const place = resolveAtmosphere(placeId);
+  const [readyPlace, setReadyPlace] = useState<string | null>(null);
+  const onAtmosphereReady = useCallback((ready: boolean) => {
+    setReadyPlace(ready ? placeId : null);
+  }, [placeId]);
+  const still = readyPlace === placeId ? null : place.previewUrl;
 
   return (
     <div
@@ -145,6 +150,7 @@ export function Screen() {
       data-place-still={still ? "" : undefined}
       style={still ? ({ "--desk-place-still": `url("${still}")` } as React.CSSProperties) : undefined}
     >
+      {place.load ? <Atmosphere id={placeId} onReadyChange={onAtmosphereReady} /> : null}
       {compact ? <GoHome /> : <IconGrid
         label="Desk"
         marquee={marquee}

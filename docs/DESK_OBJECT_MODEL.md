@@ -18,7 +18,7 @@ A verb that the table does not list is not available for that kind.
 | `note` | Note | content | yes | ask, edit, rename, duplicate, delete | pullout |
 | `decision` | Decision | content | yes | duplicate, delete, send | pullout |
 | `thread` | Thread | content | yes | delete | pullout |
-| `directory` | Zone | organization | yes | rename, delete | Zone window |
+| `directory` | Zone (drawer) | organization | yes | rename, delete | Directory contents window |
 | `kb` | Knowledge | organization | yes | ask, edit, rename, duplicate, delete | pullout |
 | `project` | Project | organization | no | send | Project Room (the `open-project-memory` surface) |
 | `repository` | Repository | organization | yes | none | repository window |
@@ -32,12 +32,13 @@ A verb that the table does not list is not available for that kind.
 | `people` | People | local | no | none | People window |
 | `game`, `layout`, `story` | Game, Layout, Story | local | no | none | none |
 
-A Zone is a drawer, not a card.
-At the root of the Floor, filed objects leave the Floor and a coder session stays.
-Inside a Zone, the Floor shows only its members.
-`world.ts` leaves the Zone, game, layout, intelligence, and People kinds out of the ordinary Floor.
-It also leaves out roadmaps.
-The list view shows the same objects as the spatial view.
+Directories appear as drawer icons on the current Desk. Root folders open their
+stored contents; children appear inside their parent. Filed work stays inside
+its drawer. The same root folders are available under Drawers in phone Go.
+Directory references use `zone:<id>`; existing member aliases and bare IDs
+resolve through the shared object lookup. Missing stored members show an
+unavailable row. Missing parents and filing cycles retain a reachable root.
+The previous spatial Floor and its list projection remain parked.
 
 An ID resolves as a bare ID or as a qualified `kind:id` reference.
 

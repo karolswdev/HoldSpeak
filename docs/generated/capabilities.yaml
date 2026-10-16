@@ -6340,12 +6340,14 @@
       ],
       "dependencies": [
         "React",
-        "Pixi world",
-        "Zustand desk store"
+        "Zustand desk store",
+        "Directory primitives",
+        "Existing lazy Three.js atmosphere registry"
       ],
       "docs": [
         "docs/DESK_ARCHITECTURE.md",
-        "docs/DESK_OBJECT_MODEL.md"
+        "docs/DESK_OBJECT_MODEL.md",
+        "docs/internal/DESK-DRAWERS-LIVE-2026-10-15/README.md"
       ],
       "domain": "desk",
       "egress": "Opening the Desk does not itself send data off device.",
@@ -6354,7 +6356,7 @@
         "web/src/routes.tsx::routes",
         "web/src/desk/DeskApp.tsx::DeskApp"
       ],
-      "evidence_level": "source_and_assertions_inspected",
+      "evidence_level": "tests_executed",
       "exposure": "user",
       "failure_states": [
         "unknown route",
@@ -6376,7 +6378,8 @@
       "network_requirements": [],
       "outputs": [
         "Desk shell",
-        "world and list projections"
+        "Screen object and folder projections",
+        "Selected live atmosphere or its still fallback"
       ],
       "owner_observed": false,
       "persistence": [
@@ -6411,13 +6414,34 @@
           "line": 86,
           "path": "web/src/desk/DeskApp.tsx",
           "symbol": "DeskApp"
+        },
+        {
+          "claim": "Root folders and missing-parent folders appear on Desk; directory members remain filed.",
+          "line": 136,
+          "path": "web/src/desk/screen/compose.ts",
+          "symbol": "export function rootDirectories("
+        },
+        {
+          "claim": "Child folders and canonical members remain readable, including unavailable member state.",
+          "line": 22,
+          "path": "web/src/desk/pullouts/DirectoryPullout.tsx",
+          "symbol": "export function DirectoryPullout("
+        },
+        {
+          "claim": "Scene readiness and load failure retain still fallback and dispose activity observers.",
+          "line": 21,
+          "path": "web/src/desk/gl/Atmosphere.tsx",
+          "symbol": "export function Atmosphere("
         }
       ],
       "status": "built_unreleased",
-      "status_reason": "The root route and DeskApp are present in source; /desk is an alias redirect and this documentation lane did not establish owner observation.",
+      "status_reason": "Current Desk composes real root folders and child/member windows using canonical zone refs, and mounts the selected existing live atmosphere with loading/failure still fallback. Focused component tests have executed for folder identities/filing and scene lifecycle/Motion controls; runtime proof and limits are recorded separately. Owner observation and hardware performance are not established.",
       "surfaces": [
         "/desk",
-        "DeskApp"
+        "DeskApp",
+        "Desk root drawers",
+        "Directory contents window",
+        "Wallpaper Motion preference"
       ],
       "tests": [
         {
@@ -6425,6 +6449,28 @@
           "execution": "not_run",
           "node": "routes a registered surface and reports unregistered ones",
           "path": "web/src/desk/__tests__/shell.test.tsx"
+        },
+        {
+          "assertion": "Actual producer wire fixtures exercise canonical children/members, aliases, deduplication, unavailable and empty state.",
+          "execution": {
+            "cases": 4,
+            "record": "docs/internal/DESK-DRAWERS-LIVE-2026-10-15/BUILD-FOLDERS.md",
+            "run": "2026-10-15",
+            "status": "passed"
+          },
+          "node": "Directory contents",
+          "path": "web/src/desk/pullouts/DirectoryPullout.test.tsx"
+        },
+        {
+          "assertion": "Real Settings radios mount the chosen scene host, defer still removal until readiness, preserve failure fallback and apply Motion.",
+          "execution": {
+            "cases": 5,
+            "record": "docs/internal/DESK-DRAWERS-LIVE-2026-10-15/BUILD-BACKGROUND.md",
+            "run": "2026-10-15",
+            "status": "passed"
+          },
+          "node": "the current Screen's live atmosphere",
+          "path": "web/src/desk/screen/__tests__/screenAtmosphere.test.tsx"
         }
       ],
       "trust_boundary": "Browser route enters the Desk shell; no native host is required."

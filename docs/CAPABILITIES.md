@@ -61,7 +61,7 @@ Missing shards: **none**.
 | `meeting.plugin.runbook_delta` | Runbook delta | Draft typed runbook changes from a meeting transcript. | experimental | user | source_and_assertions_inspected | no | possible |
 | `meeting.plugin.decision_announcement_drafter` | Decision announcement drafter | Draft typed announcements for recorded meeting decisions. | experimental | user | source_and_assertions_inspected | no | possible |
 | `meeting.plugin.decision_capture` | Decision capture | Capture typed decisions, open questions, and bounded transcript provenance. | experimental | user | source_and_assertions_inspected | no | possible |
-| `desk.open` | Open Desk | Open the Workbench surface and its current workspace. | built_unreleased | user | source_and_assertions_inspected | no | local |
+| `desk.open` | Open Desk | Open the Workbench surface and its current workspace. | built_unreleased | user | tests_executed | no | local |
 | `desk.arrange` | Arrange windows | Move, resize, snap, minimize, maximize and restore Desk windows. | built_unreleased | user | source_and_assertions_inspected | no | local |
 | `desk.inspect` | Inspect Desk object | Open a selected object in a named window surface with identity, state, provenance and verbs. | partial | user | source_and_assertions_inspected | no | possible |
 | `desk.execute` | Run a Desk verb | Offer and run a named operation for the current Desk context. | partial | user | source_and_assertions_inspected | no | possible |

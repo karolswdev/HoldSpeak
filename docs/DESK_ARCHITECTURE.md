@@ -20,9 +20,9 @@ flowchart TD
   App --> Routes["PRODUCT_ROUTES / DEMOTED_ROUTES"]
   Routes --> Desk[DeskApp]
   Desk --> Store[Zustand useDesk]
-  Store --> World["WorldStage (Pixi/WebGL)"]
-  Store --> List[DeskListView]
   Store --> Chair[ChairHome]
+  Chair --> Screen["Screen: icons, drawers and phone Go"]
+  Screen --> Atmosphere["Selected lazy Three.js atmosphere"]
   Store --> Windows["SurfaceWindows and DeskWindowFrame"]
   Windows --> Surface["desk/surface components"]
   Store --> HTTP["desk/api and lib/api"]
@@ -48,9 +48,15 @@ Add a demoted route only when the tool needs its own address.
 
 ## What the Desk renders
 
-`DeskApp` renders the Chair or the Floor.
-The Floor is the `WorldStage` scene or the `DeskListView` list.
-Above them, `DeskApp` mounts the shared drop layer, the dock, inspectors, delivery windows, object windows, and `SurfaceWindows`.
+`DeskApp` renders one Desk through `ChairHome` and `screen/Screen`.
+The Screen draws root Directory folders, Project doors, loose work and live agents.
+Phone Go includes the same root drawers. Child folders and members open in the existing Directory pullout.
+Directory identities remain `zone:<id>` in selection, menus and windows.
+The previous spatial Floor and list view are parked.
+
+The selected existing `gl/Atmosphere` renders behind Screen controls. Its still image stays visible until the first successful render, and remains the fallback when WebGL is unavailable. Quiet Desk allocates no scene. Motion is a browser preference exposed in Wallpaper settings; the runtime honors reduced motion and suspends hidden documents. Sound remains a separate opt-in.
+
+Above the Screen, `DeskApp` mounts the shared drop layer, the dock, inspectors, delivery windows, object windows, and `SurfaceWindows`.
 
 ## State ownership
 
@@ -63,7 +69,8 @@ Above them, `DeskApp` mounts the shared drop layer, the dock, inspectors, delive
 | Chair window state, unsent drafts, window places | `useDesk` | `hs.desk.workspace.v1` |
 | Selection, hover, drag, editor, Ask, cards | `useDesk` | Memory |
 | Connection state and latest frame | `RuntimeBusProvider` | Memory |
-| Animation progress | React, Motion, Pixi | Never authoritative |
+| Scene choice and motion | Atmosphere preference/controls | Browser storage |
+| Animation progress | React and the existing atmosphere runtime | Never authoritative |
 
 `workspaceStorage.ts` owns the workspace document.
 It validates the version, window IDs, rects, and Zone preferences.

@@ -13,13 +13,13 @@ Validation errors at generation: **0**.
 
 | Measure | Present / total or count |
 | --- | ---: |
-| Source paths | 286 / 286 |
-| Test paths | 227 / 227 |
-| Documentation paths | 245 / 245 |
-| Assertions inspected | 227 |
-| Tests executed | 189 |
-| Records with an executed assertion | 81 |
-| Semantic records unresolved | 76 |
+| Source paths | 289 / 289 |
+| Test paths | 229 / 229 |
+| Documentation paths | 246 / 246 |
+| Assertions inspected | 229 |
+| Tests executed | 191 |
+| Records with an executed assertion | 82 |
+| Semantic records unresolved | 75 |
 
 ## Documentation classes
 
@@ -85,7 +85,7 @@ Validation errors at generation: **0**.
 | `meeting.plugin.runbook_delta` | capabilities | 2/2 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `meeting.plugin.decision_announcement_drafter` | capabilities | 2/2 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `meeting.plugin.decision_capture` | capabilities | 2/2 | 2/2 | 2 | 2 | 0 | partially_evidenced |
-| `desk.open` | capabilities | 3/3 | 1/1 | 1 | 0 | 1 | unresolved |
+| `desk.open` | capabilities | 6/6 | 3/3 | 3 | 2 | 1 | partially_evidenced |
 | `desk.arrange` | capabilities | 2/2 | 2/2 | 2 | 0 | 1 | unresolved |
 | `desk.inspect` | capabilities | 2/2 | 2/2 | 2 | 0 | 0 | unresolved |
 | `desk.execute` | capabilities | 2/2 | 2/2 | 2 | 0 | 0 | unresolved |

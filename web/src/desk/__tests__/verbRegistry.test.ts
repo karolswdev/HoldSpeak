@@ -4,16 +4,36 @@
  * closed, the create set includes Workflow (the drifted parallel list
  * died), the floor verbs exist, and the keymap's bound set is exactly
  * the verbs that declare a key. */
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { VERBS, menuVerbs, verbLabel, verbsFor, verbById } from "../verbRegistry";
 import { DESK_TOOLS } from "../tools";
 import { GO_APPLICATIONS, GO_TOOL_APPLICATIONS, applicationVerbId } from "../applications";
 import { registerSurface } from "../shell";
 import { THREAD_SLASH_COMMANDS } from "../components/ThreadComposer";
+import { EMPTY_ITEMS, fromWireDirectory, qualifiedRef } from "../api";
+import { useDesk } from "../store";
 
 const CTX = { selectedRef: null };
 
 describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
+  it("opens a selected drawer by canonical ref and preserves its pointer origin", () => {
+    const directory = fromWireDirectory({ id: "dir_b5c056b59f3e", name: "Platform", parent_id: null,
+      member_ids: ["note:note_0b9ebdadf0fa"], created_at: "2026-10-16T01:39:56Z" })!;
+    const ref = qualifiedRef("directory", directory.id);
+    const previous = useDesk.getState();
+    const openPullout = vi.fn();
+    useDesk.setState({ items: { ...EMPTY_ITEMS, directory: [directory] }, selectedIds: [ref], openPullout });
+    try {
+      const open = verbById("object.open")!;
+      const ctx = { selectedRef: ref, origin: { x: 120, y: 90 } };
+      expect(open.ghost(ctx)).toBeNull();
+      open.run(ctx);
+      expect(openPullout).toHaveBeenCalledWith(ref, ctx.origin);
+    } finally {
+      useDesk.setState({ items: previous.items, selectedIds: previous.selectedIds, openPullout: previous.openPullout });
+    }
+  });
+
   it("every verb has a unique id, a label, and a closed scope", () => {
     const ids = VERBS.map((v) => v.id);
     expect(new Set(ids).size).toBe(ids.length);
