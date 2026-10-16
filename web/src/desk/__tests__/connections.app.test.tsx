@@ -246,10 +246,12 @@ describe("account writers retain their existing routes and results", () => {
     wire = clone(checkedWire);
     const base = globalThis.fetch;
     let finish!: (response: Response) => void;
+    const submissions: Json[] = [];
     vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
       const path = new URL(String(input), "http://hub.test").pathname;
       if (path === "/api/connections/jira/recheck" && init?.method === "POST") {
         reads.push(`POST ${path}`);
+        submissions.push(JSON.parse(String(init.body)));
         return new Promise<Response>((resolve) => { finish = resolve; });
       }
       return base(input, init);
@@ -261,7 +263,13 @@ describe("account writers retain their existing routes and results", () => {
     const recheck = within(last).getByRole("button", { name: "Recheck" }) as HTMLButtonElement;
     fireEvent.click(recheck);
     expect(recheck.disabled).toBe(true);
-    expect((within(first).getByRole("button", { name: "Recheck" }) as HTMLButtonElement).disabled).toBe(false);
+    expect(recheck).toHaveAttribute("aria-busy", "true");
+    const peer = within(first).getByRole("button", { name: "Recheck" });
+    expect(peer).toBeDisabled();
+    expect(peer).not.toHaveAttribute("aria-busy", "true");
+    fireEvent.click(peer);
+    expect(reads.filter((read) => read.startsWith("POST"))).toEqual(["POST /api/connections/jira/recheck"]);
+    expect(submissions).toEqual([{ ref: rows.at(-1).connection_ref }]);
     await act(async () => { finish(new Response(JSON.stringify(tool("jira")), { status: 200, headers: { "content-type": "application/json" } })); });
     await waitFor(() => expect(recheck.disabled).toBe(false));
     expect(reads.filter((read) => read.startsWith("POST"))).toEqual(["POST /api/connections/jira/recheck"]);

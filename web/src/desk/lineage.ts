@@ -2,39 +2,28 @@
  * original desk's `resolveRef` / `lineage`, tolerating the same
  * wire drift: `{source_type, source_ref}` (canonical), bare strings, and
  * `{type, ref}` / `{source}` variants. */
-import type { PrimitiveKind } from "../lib/primitives";
-import type { Items } from "./api";
-
-const RESOLVE_ORDER: PrimitiveKind[] = [
-  "meeting",
-  "artifact",
-  "note",
-  "directory",
-  "kb",
-  "project",
-  "recipe",
-  "chain",
-  "workflow",
-];
+import { qualifiedRef, type Items } from "./api";
+import { objectByRef } from "./world";
 
 export interface ResolvedRef {
   kind: string;
   label: string;
   resolved: boolean;
+  /** The chosen object's canonical identity, independent of legacy wire IDs. */
+  actionRef?: string;
 }
 
 export function resolveRef(items: Items, ref: string): ResolvedRef {
   if (!ref) return { kind: "", label: "", resolved: false };
-  for (const kind of RESOLVE_ORDER) {
-    const hit = (items[kind] || []).find((x) => x.id === ref);
-    if (hit) {
-      return {
-        kind,
-        label: String(("title" in hit ? hit.title : "") || ("name" in hit ? hit.name : "") || hit.id),
-        resolved: true,
-      };
-    }
-  }
+  const colon = ref.indexOf(":");
+  const identity = colon < 0 ? ref : qualifiedRef(ref.slice(0, colon), ref.slice(colon + 1));
+  // A qualified identity never falls back to a bare ID from another kind.
+  // The shared resolver still owns legacy bare-ID order and object names.
+  const candidates = colon < 0 ? items : Object.fromEntries(Object.entries(items).map(([kind, rows]) => [
+    kind, rows.filter((row: { id: string }) => qualifiedRef(kind, row.id) === identity),
+  ])) as Items;
+  const hit = objectByRef(candidates, identity);
+  if (hit) return { kind: hit.kind, label: hit.title, resolved: true, actionRef: qualifiedRef(hit.kind, hit.id) };
   // Not loaded on this surface (synced elsewhere) — show the id honestly.
   return { kind: "", label: ref, resolved: false };
 }

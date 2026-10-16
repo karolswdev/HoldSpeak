@@ -1,6 +1,7 @@
 /** Shared capability run section — used by recipe, chain, workflow pullouts
  * (HS-117-15). Manages all run-related state internally. */
 import { useEffect, useState } from "react";
+import { Button } from "../../../components/signal/Signal";
 import { apiRequest } from "../../../lib/api";
 import { useDurableDraft } from "../../../lib/durableDraft";
 import { useDesk } from "../../store";
@@ -133,11 +134,10 @@ export function CapabilitySection({ object: o }: { object: WorldObject }) {
             title={String(capability.input_help ?? "")}
             onChange={(e) => setRunInput(e.target.value)}
           />
-          <button
-            type="button"
-            className={
-              o.kind === "recipe" ? "desk-chip" : "desk-chip is-primary"
-            }
+          <Button
+            dense
+            variant={o.kind === "recipe" ? "ghost" : "primary"}
+            loading={runBusy}
             onClick={() => void run()}
             disabled={
               runBusy ||
@@ -152,7 +152,7 @@ export function CapabilitySection({ object: o }: { object: WorldObject }) {
                 : o.kind === "recipe"
                   ? "Ask"
                   : "Run"}
-          </button>
+          </Button>
         </div>
         {o.kind === "recipe" ? (
           <div className="desk-chat-well-foot">
@@ -184,15 +184,15 @@ export function CapabilitySection({ object: o }: { object: WorldObject }) {
                 .join(" · ")}`
             : ""}
         </span>
-        <button
-          type="button"
-          className="desk-chip quiet"
+        <Button
+          dense
+          variant="ghost"
           onClick={() =>
             openSurfaceOr("configure-runs-on", "/profiles", resourceRef)
           }
         >
           Assignments
-        </button>
+        </Button>
       </div>
       {runWarning && <span className="desk-run-warning"><span aria-hidden="true">{String.fromCodePoint(0x26A0)}</span> {runWarning}</span>}
       {runOut && (
@@ -201,13 +201,12 @@ export function CapabilitySection({ object: o }: { object: WorldObject }) {
         </div>
       )}
       {runArtifactId && (
-        <button
-          type="button"
-          className="desk-chip"
+        <Button
+          dense
           onClick={() => openPullout(runArtifactId)}
         >
           Open kept Artifact
-        </button>
+        </Button>
       )}
       {runInvocationId && (
         <p className="quiet desk-run-receipt">

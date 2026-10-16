@@ -204,6 +204,81 @@ describe("HS-132-07 item body draft", () => {
     );
     expect(pad).toHaveValue("keep me");
   });
+
+  it.each(["Keep this instruction", ""])("flushes a closing instruction and recovers the refused snapshot %j", async (body) => {
+    const wb = detail({ items: [{ ...ITEM, body: "Saved instruction" }] });
+    const fetchMock = mockHub(wb);
+    const read = fetchMock.getMockImplementation()!;
+    fetchMock.mockImplementation(async (input, init) => init?.method === "PUT"
+      ? new Response(JSON.stringify({ error: "Unavailable" }), { status: 503, headers: { "content-type": "application/json" } })
+      : read(input, init));
+    const view = await mount();
+    fireEvent.click(screen.getByText("Draft the brief"));
+    fireEvent.change(screen.getByLabelText("Item body"), { target: { value: body } });
+    expect(itemPuts(fetchMock)).toHaveLength(0);
+    view.unmount();
+    await waitFor(() => expect(itemPuts(fetchMock)).toHaveLength(1));
+    expect(JSON.parse(String(itemPuts(fetchMock)[0][1]?.body))).toEqual({ body });
+    expect(useDesk.getState().drafts["workbench/wb1/item/i-1/body"]).toBe(body);
+    await mount();
+    fireEvent.click(screen.getByText("Draft the brief"));
+    expect(screen.getByLabelText("Item body")).toHaveValue(body);
+    expect(itemPuts(fetchMock)).toHaveLength(1);
+  });
+
+  it("keeps the next instruction while an older body save lands", async () => {
+    const { fetchMock, unmount } = await openWindow();
+    const read = fetchMock.getMockImplementation()!;
+    let release!: (response: Response) => void;
+    fetchMock.mockImplementation((input, init) => init?.method === "PUT"
+      ? new Promise<Response>((resolve) => { release = resolve; }) : read(input, init));
+    fireEvent.click(screen.getByText("Draft the brief"));
+    fireEvent.change(screen.getByLabelText("Item body"), { target: { value: "First instruction" } });
+    await waitFor(() => expect(release).toBeTypeOf("function"), { timeout: BODY_SAVE_PAUSE_MS + 1500 });
+    fireEvent.change(screen.getByLabelText("Item body"), { target: { value: "Newer instruction" } });
+    await act(async () => { release(new Response("{}", { headers: { "content-type": "application/json" } })); });
+    expect(screen.getByLabelText("Item body")).toHaveValue("Newer instruction");
+    expect(useDesk.getState().drafts["workbench/wb1/item/i-1/body"]).toBe("Newer instruction");
+    fetchMock.mockImplementation(read);
+    unmount();
+    await waitFor(() => expect(itemPuts(fetchMock)).toHaveLength(2));
+  });
+
+  it.each(["Closing instruction B", ""])("orders a closing body %j behind the pending older save across reopen", async (body) => {
+    const wb = detail({ items: [{ ...ITEM, body: body ? "Original instruction" : "" }] });
+    const fetchMock = mockHub(wb);
+    const read = fetchMock.getMockImplementation()!;
+    const writes: Array<{ body: string; resolve(): void }> = [];
+    fetchMock.mockImplementation((input, init) => init?.method === "PUT"
+      ? new Promise<Response>((resolve) => {
+        const sent = JSON.parse(String(init.body)).body as string;
+        writes.push({ body: sent, resolve: () => {
+          wb.items = [{ ...ITEM, body: sent }];
+          resolve(new Response("{}", { headers: { "content-type": "application/json" } }));
+        } });
+      }) : read(input, init));
+    const view = await mount();
+    fireEvent.click(screen.getByText("Draft the brief"));
+    fireEvent.change(screen.getByLabelText("Item body"), { target: { value: "Pending instruction A" } });
+    await waitFor(() => expect(writes).toHaveLength(1), { timeout: BODY_SAVE_PAUSE_MS + 1500 });
+    fireEvent.change(screen.getByLabelText("Item body"), { target: { value: body } });
+    view.unmount();
+    await mount();
+    fireEvent.click(screen.getByText("Draft the brief"));
+    expect(screen.getByLabelText("Item body")).toHaveValue(body);
+    // B cannot complete before A: it has not been sent yet.
+    expect(writes).toHaveLength(1);
+    expect(useDesk.getState().drafts["workbench/wb1/item/i-1/body"]).toBe(body);
+    await act(async () => { writes[0].resolve(); });
+    await waitFor(() => expect(writes).toHaveLength(2));
+    expect(writes[1].body).toBe(body);
+    expect(screen.getByLabelText("Item body")).toHaveValue(body);
+    await act(async () => { writes[1].resolve(); });
+    await waitFor(() => expect(useDesk.getState().drafts["workbench/wb1/item/i-1/body"]).toBeUndefined());
+    expect(wb.items[0].body).toBe(body);
+    expect(screen.getByLabelText("Item body")).toHaveValue(body);
+    expect(itemPuts(fetchMock)).toHaveLength(2);
+  });
 });
 
 describe("Workbench independent reads", () => {
@@ -457,6 +532,33 @@ describe("Workbench inlet draft custody", () => {
     await act(async () => { release(new Response("{}", { status: 200, headers: { "content-type": "application/json" } })); });
     expect(screen.getByRole("combobox", { name: "New item instruction" })).toHaveValue("Keep this next instruction");
     expect(useDesk.getState().drafts[inletKey]).toContain("Keep this next instruction");
+  });
+
+  it("allows one Add or exact Retry in flight while retaining the next inlet", async () => {
+    const { fetchMock } = await openWindow();
+    const read = fetchMock.getMockImplementation()!;
+    let release!: (response: Response) => void;
+    fetchMock.mockImplementation((input, init) => String(input).endsWith("/items") && init?.method === "POST"
+      ? new Promise<Response>((resolve) => { release = resolve; }) : read(input, init));
+    const field = screen.getByRole("combobox", { name: "New item instruction" });
+    const add = screen.getByRole("button", { name: "Add" });
+    const posts = () => fetchMock.mock.calls.filter(([input, init]) => String(input).endsWith("/items") && init?.method === "POST");
+    fireEvent.change(field, { target: { value: instruction } });
+    fireEvent.click(add);
+    fireEvent.click(add);
+    expect(add).toBeDisabled();
+    expect(posts()).toHaveLength(1);
+    fireEvent.change(field, { target: { value: "Keep the next item" } });
+    await act(async () => { release(new Response("{}", { status: 503, headers: { "content-type": "application/json" } })); });
+    const retry = screen.getByRole("button", { name: "Retry" });
+    fireEvent.click(retry);
+    fireEvent.click(retry);
+    fireEvent.click(add);
+    expect(posts()).toHaveLength(2);
+    expect(posts()[1][1]?.body).toBe(posts()[0][1]?.body);
+    await act(async () => { release(new Response("{}", { headers: { "content-type": "application/json" } })); });
+    expect(field).toHaveValue("Keep the next item");
+    expect(useDesk.getState().drafts[inletKey]).toContain("Keep the next item");
   });
 });
 

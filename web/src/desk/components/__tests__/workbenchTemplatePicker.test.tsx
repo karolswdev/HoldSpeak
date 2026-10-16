@@ -107,6 +107,23 @@ describe("WorkbenchTemplatePicker — one record per exit", () => {
     expect(openWorkbenchWindow).toHaveBeenCalledWith("wb-blank");
   });
 
+  it("distinguishes a pending template read from a loaded empty list and permits Blank", async () => {
+    const api = apiFetch as unknown as ReturnType<typeof vi.fn>;
+    let release!: (value: unknown) => void;
+    const base = api.getMockImplementation() as (url: string, opts?: { method?: string }) => Promise<unknown>;
+    api.mockImplementation((url, opts) => url === "/api/workbench-templates"
+      ? new Promise((resolve) => { release = resolve; }) : base(url, opts));
+    render(<WorkbenchTemplatePicker />);
+    expect(screen.getByRole("status")).toHaveAttribute("aria-busy", "true");
+    expect(screen.queryByText("No templates · Start Blank")).toBeNull();
+    release({ templates: [] });
+    expect(await screen.findByText("No templates · Start Blank")).toBeVisible();
+    expect(screen.queryByText("Loading")).toBeNull();
+    fireEvent.click(screen.getByText("Blank"));
+    await waitFor(() => expect(openWorkbenchWindow).toHaveBeenCalledWith("wb-blank"));
+    expect(createCalls()).toHaveLength(1);
+  });
+
   it.each(["Daily Brief", "Blank"])("keeps %s selected on POST failure and retries that choice", async (name) => {
     const api = apiFetch as unknown as ReturnType<typeof vi.fn>;
     let failed = false;

@@ -1,5 +1,5 @@
 // HS-168-03 — ConnectionsPane vitest: states, verbs, deep links, labels.
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ConnectionsPane, type ConnectionsFoot } from "../connections";
 import type { ConnectionsResponse, ConnectionTool } from "../connections/api";
@@ -35,7 +35,7 @@ vi.mock("../../../lib/api", async (importOriginal) => ({
   readableError: (e: unknown) => String(e),
 }));
 
-import { fetchConnections, recheckProvider } from "../connections/api";
+import { ACCOUNTS_CHANGED, fetchConnections, recheckProvider } from "../connections/api";
 import { apiFetch } from "../../../lib/api";
 
 const mockFetchConnections = vi.mocked(fetchConnections);
@@ -373,6 +373,34 @@ describe("ConnectionsPane", () => {
   /* ── Recheck ── */
 
   describe("Recheck", () => {
+    it("sends the selected account through the existing ref wire key", async () => {
+      vi.mocked(apiFetch).mockResolvedValue(connectedJira());
+      const actual = await vi.importActual<typeof import("../connections/api")>("../connections/api");
+      await actual.recheckProvider("jira", "beta-admin");
+      expect(apiFetch).toHaveBeenCalledWith("/api/connections/jira/recheck", {
+        method: "POST", json: { ref: "beta-admin" },
+      });
+    });
+
+    it("retries the selected account and lets one action own pending", async () => {
+      let reject!: (cause: Error) => void;
+      mockRecheckProvider.mockReturnValueOnce(new Promise((_resolve, no) => { reject = no; }));
+      renderPane({ tools: [connectedGithub(), twoJiraConnections()] });
+      const alpha = await screen.findByTestId("connections-jira-conn-alpha-user");
+      const beta = screen.getByTestId("connections-jira-conn-beta-admin").closest("li")!;
+      fireEvent.click(within(beta).getByRole("button", { name: "Sign in" }));
+      fireEvent.click(within(beta).getByRole("button", { name: "Recheck" }));
+      expect(mockRecheckProvider).toHaveBeenCalledWith("jira", "beta-admin");
+      expect(within(alpha).getByRole("button", { name: "Recheck" })).toBeDisabled();
+      fireEvent.click(within(alpha).getByRole("button", { name: "Recheck" }));
+      expect(mockRecheckProvider).toHaveBeenCalledTimes(1);
+      await act(async () => reject(new Error("offline")));
+      mockRecheckProvider.mockResolvedValueOnce(twoJiraConnections());
+      fireEvent.click(within(screen.getByRole("alert")).getByRole("button", { name: "Retry" }));
+      await waitFor(() => expect(mockRecheckProvider).toHaveBeenCalledTimes(2));
+      expect(mockRecheckProvider).toHaveBeenLastCalledWith("jira", "beta-admin");
+    });
+
     it("calls recheckProvider and updates the footer", async () => {
       const updated = connectedGithub();
       updated.last_checked_at = "2026-09-04T14:00:00Z";
@@ -403,6 +431,27 @@ describe("ConnectionsPane", () => {
   /* ── Footer receipt ── */
 
   describe("Footer", () => {
+    it.each(["response", "failure"])("ignores a stale account read %s after the latest rows and footer arrive", async (outcome) => {
+      let finish!: (response: ConnectionsResponse) => void;
+      let fail!: (cause: Error) => void;
+      mockFetchConnections.mockReturnValueOnce(new Promise((yes, no) => { finish = yes; fail = no; }));
+      const latest = fullResponse();
+      latest.tools[0] = { ...connectedGithub(), account: { login: "latest-owner" }, last_checked_at: "2026-09-04T18:00:00Z" };
+      mockFetchConnections.mockResolvedValueOnce(latest);
+      const onFooter = vi.fn();
+      render(<ConnectionsPane onFooterUpdate={onFooter} onOpenModule={vi.fn()}/>);
+      act(() => window.dispatchEvent(new Event(ACCOUNTS_CHANGED)));
+      expect(await screen.findByText("latest-owner")).toBeInTheDocument();
+      await act(async () => {
+        if (outcome === "response") finish(fullResponse());
+        else fail(new Error("old read failed"));
+      });
+      expect(screen.getByText("latest-owner")).toBeInTheDocument();
+      expect(screen.queryByRole("alert")).toBeNull();
+      expect(onFooter).toHaveBeenCalledTimes(1);
+      expect(onFooter).toHaveBeenLastCalledWith(expect.objectContaining({ egressHost: "github.com" }));
+    });
+
     it("reports egressHost and checkedAt on load", async () => {
       const onFooter = vi.fn();
       // Give GitHub a later timestamp so it is the last checked host.

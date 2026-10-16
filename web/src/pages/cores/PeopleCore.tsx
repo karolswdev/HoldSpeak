@@ -52,6 +52,7 @@ type Readiness = {
 };
 type CalendarLink = { uid: string; source_id: string; label: string; linked_at?: string };
 type UpcomingEvent = { id: string; uid: string; title: string; starts_at: string; ends_at: string; source_id: string; source_label?: string };
+type CalendarRead = { loading: boolean; error: string; retry(): void };
 type Relationship = {
   id: string;
   display_name: string;
@@ -622,11 +623,16 @@ export function RelationshipPane({ relationship, initialLens, lensRequest = null
   useEffect(() => { if (lensRequest) setLens(paneLens(lensRequest.lens) ?? "prep"); }, [lensRequest, setLens]);
   // The calendar picker (Context) reads the Door's upcoming events.
   const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([]);
+  const [calendarLoading, setCalendarLoading] = useState(lens === "context");
+  const [calendarError, setCalendarError] = useState("");
+  const [calendarAttempt, setCalendarAttempt] = useState(0);
   const [contextLinksOpen, setContextLinksOpen] = useState(false);
   const wantsCalendar = lens === "context";
   useEffect(() => {
     if (!wantsCalendar) return;
     let live = true;
+    setCalendarLoading(true);
+    setCalendarError("");
     void apiFetch<{ upcoming?: UpcomingEvent[] }>("/api/door")
       .then((door) => {
         if (!live) return;
@@ -634,9 +640,11 @@ export function RelationshipPane({ relationship, initialLens, lensRequest = null
           (item: Record<string, unknown>) => item.source === "calendar_event" && item.uid,
         ) as UpcomingEvent[]);
       })
-      .catch(() => { if (live) setUpcomingEvents([]); });
+      .catch((cause) => { if (live) setCalendarError(plainFailure("CALENDAR DID NOT LOAD", cause)); })
+      .finally(() => { if (live) setCalendarLoading(false); });
     return () => { live = false; };
-  }, [relationship.id, wantsCalendar]);
+  }, [relationship.id, wantsCalendar, calendarAttempt]);
+  const calendarRead: CalendarRead = { loading: calendarLoading, error: calendarError, retry: () => setCalendarAttempt((attempt) => attempt + 1) };
   const youOwe = openCount(relationship.commitments);
   const owesYou = openCount(relationship.owed_to_you);
   return <div className="people-detail person-page">
@@ -660,7 +668,7 @@ export function RelationshipPane({ relationship, initialLens, lensRequest = null
       {PANE_TABS.map(([id, label]) => <Button key={id} dense variant="ghost" role="tab" aria-selected={lens === id} onClick={() => setLens(id)}>{label}</Button>)}
     </div>
     {lens === "prep" ? <PrepPane relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} onPickCalendar={() => { setContextLinksOpen(true); setLens("context"); }} /> : null}
-    {lens === "context" ? <ContextLens key={relationship.id} relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} upcomingEvents={upcomingEvents} initialLinksOpen={contextLinksOpen} /> : null}
+    {lens === "context" ? <ContextLens key={relationship.id} relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} upcomingEvents={upcomingEvents} calendarRead={calendarRead} initialLinksOpen={contextLinksOpen} /> : null}
     {lens === "history" ? <HistoryLens relationship={relationship} /> : null}
     {lens === "info" ? <InfoLens relationship={relationship} onArchived={onArchived} onProtectedFailure={onProtectedFailure} /> : null}
   </div>;
@@ -1142,7 +1150,7 @@ function LinkSuggestions({ relationship, prep, onLinked, onProtectedFailure, tes
 }
 
 /** HS-149-03: the picker + linked series + unlink two-beat. In-world, no modal. */
-function CalendarLinkSection({ relationship, onRefresh, onProtectedFailure, upcomingEvents }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void; upcomingEvents: UpcomingEvent[] }) {
+function CalendarLinkSection({ relationship, onRefresh, onProtectedFailure, upcomingEvents, calendarRead }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void; upcomingEvents: UpcomingEvent[]; calendarRead: CalendarRead }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const links = relationship.calendar_links ?? [];
@@ -1195,7 +1203,7 @@ function CalendarLinkSection({ relationship, onRefresh, onProtectedFailure, upco
     />)}</SurfaceRows> : null}
     {pickerOpen ? (
       <div className="people-picker" data-testid="people-event-picker">
-        {sorted.all.length ? <SurfaceRows>{sorted.all.map((ev) => {
+        {calendarRead.loading ? <SurfaceState loading /> : calendarRead.error ? <SurfaceState error={calendarRead.error} onRetry={calendarRead.retry} /> : sorted.all.length ? <SurfaceRows>{sorted.all.map((ev) => {
           const isSuggested = sorted.suggested.includes(ev);
           return <SurfaceRow
             key={`${ev.uid}:${ev.source_id}:${ev.id}`}
@@ -1257,7 +1265,7 @@ function OwnerAliasSection({ relationship, onRefresh, onProtectedFailure }: { re
   </SurfaceSection></div>;
 }
 
-function ContextLens({ relationship, onRefresh, onProtectedFailure, upcomingEvents = [], initialLinksOpen = false }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void; upcomingEvents?: UpcomingEvent[]; initialLinksOpen?: boolean }) {
+function ContextLens({ relationship, onRefresh, onProtectedFailure, upcomingEvents = [], calendarRead, initialLinksOpen = false }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void; upcomingEvents?: UpcomingEvent[]; calendarRead: CalendarRead; initialLinksOpen?: boolean }) {
   const draftKey = `people/context/${relationship.id}`;
   const [topic, setTopic, forgetTopic] = useDeskDraft(`${draftKey}/topic`);
   const [body, setBody, forgetBody] = useDeskDraft(`${draftKey}/body`);
@@ -1294,7 +1302,7 @@ function ContextLens({ relationship, onRefresh, onProtectedFailure, upcomingEven
     <SurfaceSection label="Projects">{linkedProjects.length ? <SurfaceRows>{linkedProjects.map((project) => <SurfaceRow key={project.id} title={project.name} detail={project.description} onOpen={() => openProjectRoom(project.id)} />)}</SurfaceRows> : <SurfaceState empty emptyLabel="No linked projects" />}</SurfaceSection>
     <Disclosure label="Links" defaultOpen={initialLinksOpen}>
       <SurfaceSection label="Projects"><div className="people-project-link"><CycleGadget label="Project" value={projectId} onChange={setProjectId} options={projects.map((project) => ({ value: project.id, label: project.name }))} /><Button dense disabled={!projectId || relationship.project_refs?.includes(projectId)} onClick={() => void linkProject()}>Link</Button></div>{linkedProjects.length ? <SurfaceRows>{linkedProjects.map((project) => <SurfaceRow key={project.id} title={project.name} verbs={<Button dense variant="ghost" onClick={() => void unlinkProject(project.id)}>Unlink</Button>} />)}</SurfaceRows> : null}</SurfaceSection>
-      <CalendarLinkSection relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} upcomingEvents={upcomingEvents} />
+      <CalendarLinkSection relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} upcomingEvents={upcomingEvents} calendarRead={calendarRead} />
       <OwnerAliasSection relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} />
     </Disclosure>
   </>;
@@ -1322,7 +1330,7 @@ function CommitmentInspector({ commitment, onClose, onRefresh, onProtectedFailur
   const send = async () => { if (!workbenchId) return; setBusy(true); try { await apiFetch(`/api/people/commitments/${encodeURIComponent(commitment.id)}/workbench`, { method: "POST", json: { workbench_id: workbenchId } }); await load(); } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); } };
   const satisfy = async () => { setBusy(true); try { await apiFetch(`/api/people/commitments/${encodeURIComponent(commitment.id)}/satisfy`, { method: "POST", json: { rationale: rationale.trim() } }); onRefresh(); } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); } };
   const linked = items[0];
-  return <div className="people-commitment-inspector"><div className="people-inspector-head"><strong>Commitment</strong><Button dense variant="ghost" onClick={onClose}>Close</Button></div><div className="people-commitment-body">{commitment.body}</div>{linked ? <SurfaceRows><SurfaceRow title={linked.result ? "Output ready" : "Workbench item"} detail={linked.result || `Status: ${linked.status}`} meta={linked.status} onOpen={() => openSurfaceOr("open-workbenches", "/workbenches", `workbench:${linked.workbench_id}`)} /></SurfaceRows> : <div className="people-delegate"><CycleGadget label="Workbench" value={workbenchId} onChange={setWorkbenchId} options={workbenches.map((workbench) => ({ value: workbench.id, label: workbench.name }))} /><Button dense disabled={!workbenchId || busy} onClick={() => void send()}>Send to Workbench</Button><span className="egress-badge is-cloud" title="Workbench model">Workbench model</span></div>}<div className="people-satisfy"><StringGadget label="Satisfaction note" value={rationale} onChange={setRationale} placeholder="What fulfilled the commitment?" /><Button dense variant="primary" disabled={busy} onClick={() => void satisfy()}>Mark satisfied</Button></div></div>;
+  return <div className="people-commitment-inspector"><div className="people-inspector-head"><strong>Commitment</strong><Button dense variant="ghost" onClick={onClose}>Close</Button></div><div className="people-commitment-body">{commitment.body}</div>{linked ? <SurfaceRows><SurfaceRow title={linked.result ? "Output ready" : "Workbench item"} detail={linked.result || `Status: ${linked.status}`} meta={linked.status} onOpen={() => openSurfaceOr("open-workbenches", "/workbenches", `workbench:${linked.workbench_id}`)} /></SurfaceRows> : <div className="people-delegate"><CycleGadget label="Workbench" value={workbenchId} onChange={setWorkbenchId} options={workbenches.map((workbench) => ({ value: workbench.id, label: workbench.name }))} /><Button dense disabled={!workbenchId || busy} onClick={() => void send()}>Send to Workbench</Button></div>}<div className="people-satisfy"><StringGadget label="Satisfaction note" value={rationale} onChange={setRationale} placeholder="What fulfilled the commitment?" /><Button dense variant="primary" disabled={busy} onClick={() => void satisfy()}>Mark satisfied</Button></div></div>;
 }
 
 function HistoryLens({ relationship }: { relationship: RelationshipDetail }) {

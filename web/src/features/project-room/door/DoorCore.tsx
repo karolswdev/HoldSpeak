@@ -2,7 +2,7 @@
 // Composed from the surface library. Every verb is the library Button.
 
 import { useRoomRead } from "../roomReads";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, type ComponentPropsWithoutRef } from "react";
 import {
   SurfaceLedgerRow,
   SurfaceFooter,
@@ -10,7 +10,6 @@ import {
   EgressChip,
   CheckGadget,
   StringGadget,
-  MicButton,
 } from "../../../desk/surface";
 import { Button } from "../../../components/signal/Signal";
 import { TitleSlotContext } from "../../../desk/surface/title";
@@ -470,21 +469,15 @@ export function DoorCore({ scope }: CoreProps) {
     <div className="door-root" data-testid="door-root">
       {/* 1. The outcome well */}
       <div className="door-outcome-well" data-testid="door-outcome">
-        <div className="door-outcome-input-wrap">
-          <input
-            type="text"
-            className="door-outcome-input"
+          <StringGadget
+            label="Project name"
+            caption
             placeholder="What are you delivering?"
             value={ctrl.outcome}
-            onChange={(e) => ctrl.setOutcome(e.target.value)}
-            maxLength={600}
-            data-testid="door-outcome-input"
+            onChange={ctrl.setOutcome}
+            micLabel="Speak outcome"
+            inputProps={{ maxLength: 600, "data-testid": "door-outcome-input" } as ComponentPropsWithoutRef<"input">}
           />
-          <MicButton
-            label="Speak outcome"
-            onText={(text) => ctrl.setOutcome(text)}
-          />
-        </div>
         <span className="door-outcome-caption">
           THIS BECOMES THE PROJECT&apos;S NAME
         </span>

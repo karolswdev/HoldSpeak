@@ -213,8 +213,8 @@ export function SignInWell({
 
 /* ── Tool cards ── */
 
-function GitHubCard({ tool, onRecheck, busy, lead = false }: {
-  tool: ConnectionTool; onRecheck: () => void; busy: boolean; lead?: boolean;
+function GitHubCard({ tool, onRecheck, busy, blocked, lead = false }: {
+  tool: ConnectionTool; onRecheck: () => void; busy: boolean; blocked: boolean; lead?: boolean;
 }) {
   const state = tool.state;
   const details = needsDetails(state);
@@ -225,7 +225,7 @@ function GitHubCard({ tool, onRecheck, busy, lead = false }: {
     try { await navigator.clipboard.writeText(hint); setCopy("Copied"); }
     catch { setCopy("Copy failed"); }
   };
-  const check = <span className="connections-check-action"><EgressChip label="GITHUB.COM" scope="cloud"/><Button dense variant={lead ? "primary" : "secondary"} onClick={onRecheck} loading={busy}>{state === "degraded" ? "Retry" : "Recheck"}</Button></span>;
+  const check = <span className="connections-check-action"><EgressChip label="GITHUB.COM" scope="cloud"/><Button dense variant={lead ? "primary" : "secondary"} onClick={onRecheck} loading={busy} disabled={blocked && !busy}>{state === "degraded" ? "Retry" : "Recheck"}</Button></span>;
   return <SurfaceLedgerRow data-testid="connections-github" wrap expands={false} open={details && shown}
     lead={<span className="connections-tool-emblem">GH</span>}
     primary={<span className="connections-tool-identity"><strong className="connections-tool-label">GitHub</strong>{tool.account?.login ? <span className="connections-tool-summary">{tool.account.login}</span> : null}</span>}
@@ -244,15 +244,15 @@ function AccountEmail({ email }: { email: string }) {
   return <span className="connections-tool-summary">{at < 0 ? email : <>{email.slice(0, at + 1)}<wbr/>{email.slice(at + 1)}</>}</span>;
 }
 
-function AtlassianConnectionRow({ provider, conn, onRecheck, busy, open, onToggle, addAction, addWell, addOpen = false }: {
-  provider: "jira" | "confluence"; conn: JiraSubConnection; onRecheck: () => void; busy: boolean; open: boolean; onToggle: () => void;
+function AtlassianConnectionRow({ provider, conn, onRecheck, busy, blocked, open, onToggle, addAction, addWell, addOpen = false }: {
+  provider: "jira" | "confluence"; conn: JiraSubConnection; onRecheck: () => void; busy: boolean; blocked: boolean; open: boolean; onToggle: () => void;
   addAction?: ReactNode; addWell?: ReactNode; addOpen?: boolean;
 }) {
   const state = conn.state;
   const details = needsDetails(state);
   const name = provider === "jira" ? "Jira" : "Confluence";
   const hint = conn.recovery_hint ?? `acli ${provider} auth login --site ${conn.account.site} --email ${conn.account.email} --token`;
-  const check = <span className="connections-check-action"><HostChip site={conn.account.site}/><Button dense variant="secondary" onClick={onRecheck} loading={busy}>{state === "degraded" ? "Retry" : "Recheck"}</Button></span>;
+  const check = <span className="connections-check-action"><HostChip site={conn.account.site}/><Button dense variant="secondary" onClick={onRecheck} loading={busy} disabled={blocked && !busy}>{state === "degraded" ? "Retry" : "Recheck"}</Button></span>;
   const shown = (details && open) || addOpen;
   // The Add form keeps its pending/refusal state through sign-in detours.
   return <SurfaceLedgerRow data-testid={`connections-${provider}-conn-${conn.connection_ref}`} wrap expands={false} open={shown || Boolean(addWell)}
@@ -345,7 +345,7 @@ function AtlassianCards({ tool, onRecheck, onAddAccount, busyRef }: {
   const [well, setWell] = useState<string | null>(null);
   const [draft, setDraft] = useState<AccountDraft>({ site: "", email: "" });
   const addButton = <Button dense variant="ghost" aria-expanded={well === "add"} onClick={() => setWell(value => value === "add" ? null : "add")} data-testid={`connections-add-open-${provider}`}>{well === "add" ? "Cancel" : connections.length ? `Add ${name} account` : "Add account"}</Button>;
-  const form = <SurfaceWell><div className="connections-well-head"><strong>Add {name} account</strong></div><AddAccountFields compact provider={provider} onAdd={onAddAccount} busy={busyRef === provider} onCancel={() => setWell(null)} draft={draft} onDraftChange={setDraft}/></SurfaceWell>;
+  const form = <SurfaceWell><div className="connections-well-head"><strong>Add {name} account</strong></div><AddAccountFields compact provider={provider} onAdd={onAddAccount} busy={busyRef !== null} onCancel={() => setWell(null)} draft={draft} onDraftChange={setDraft}/></SurfaceWell>;
   if (!connections.length) return <SurfaceLedgerRow data-testid={`connections-${provider}`} wrap expands={false} open
     lead={<span className="connections-tool-emblem">{name[0]}</span>}
     primary={<span className="connections-tool-identity"><strong className="connections-tool-label">{name}</strong></span>}
@@ -356,7 +356,7 @@ function AtlassianCards({ tool, onRecheck, onAddAccount, busyRef }: {
       const last = index === connections.length - 1;
       return <AtlassianConnectionRow
         key={conn.connection_ref} provider={provider} conn={conn}
-        onRecheck={() => onRecheck(conn.connection_ref)} busy={busyRef === conn.connection_ref}
+        onRecheck={() => onRecheck(conn.connection_ref)} busy={busyRef === conn.connection_ref} blocked={busyRef !== null}
         open={well === conn.connection_ref}
         onToggle={() => setWell(value => value === conn.connection_ref ? null : conn.connection_ref)}
         addAction={last ? addButton : undefined} addWell={last ? form : undefined}
@@ -450,15 +450,19 @@ export function ConnectionsPane({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | undefined>(undefined);
   const [recheckBusy, setRecheckBusy] = useState<string | null>(null);
-  const [checkFailed, setCheckFailed] = useState<string | null>(null);
+  const [checkFailed, setCheckFailed] = useState<{ providerId: string; subRef?: string } | null>(null);
+  const loadGeneration = useRef(0);
+  const actionPending = useRef(false);
   const [calendarOpen, setCalendarOpen] = useState(focusProvider === "calendar");
   useEffect(() => { if (focusProvider === "calendar") setCalendarOpen(true); }, [focusProvider]);
 
   const load = useCallback(async () => {
+    const generation = ++loadGeneration.current;
     setLoading(true);
     setError(undefined);
     try {
       const resp = await fetchConnections();
+      if (generation !== loadGeneration.current) return;
       setData(resp);
       // Compute the foot from the response
       const lastChecked = resp.tools
@@ -475,13 +479,14 @@ export function ConnectionsPane({
         checkedAt: lastChecked ? formatTime(lastChecked) : undefined,
       });
     } catch {
-      setError("Accounts could not be read");
+      if (generation === loadGeneration.current) setError("Accounts could not be read");
     } finally {
-      setLoading(false);
+      if (generation === loadGeneration.current) setLoading(false);
     }
   }, [onFooterUpdate]);
 
   useEffect(() => { void load(); }, [load]);
+  useEffect(() => () => { ++loadGeneration.current; }, []);
   useEffect(() => {
     const read = () => void load();
     window.addEventListener(ACCOUNTS_CHANGED, read);
@@ -503,40 +508,42 @@ export function ConnectionsPane({
   }, [focusProvider, loaded]);
 
   const handleRecheck = useCallback(async (providerId: string, subRef?: string) => {
+    if (actionPending.current) return;
+    actionPending.current = true;
     setRecheckBusy(subRef ?? providerId);
     setCheckFailed(null);
     try {
-      const updated = await recheckProvider(providerId);
+      const updated = subRef ? await recheckProvider(providerId, subRef) : await recheckProvider(providerId);
       if (!updated) throw new Error("No check result");
-      if (data) {
-        setData((current) => current ? ({
-          tools: current.tools.map((t) =>
-            t.provider_id === providerId ? updated : t
-          ),
-        }) : current);
-        const checkedAt = updated.last_checked_at ? formatTime(updated.last_checked_at) : undefined;
-        onFooterUpdate({
-          egressHost: updated.egress_host,
-          checkedAt,
-        });
-      }
+      ++loadGeneration.current;
+      setLoading(false);
+      setError(undefined);
+      setData((current) => current ? ({
+        tools: current.tools.map((t) => t.provider_id === providerId ? updated : t),
+      }) : current);
+      const checkedAt = updated.last_checked_at ? formatTime(updated.last_checked_at) : undefined;
+      onFooterUpdate({ egressHost: updated.egress_host, checkedAt });
       window.dispatchEvent(new Event(ACCOUNTS_CHANGED));
-    } catch { setCheckFailed(providerId); }
+    } catch { setCheckFailed({ providerId, subRef }); }
     finally {
+      actionPending.current = false;
       setRecheckBusy(null);
     }
-  }, [data, onFooterUpdate]);
+  }, [onFooterUpdate]);
 
   // PHILO-17 U29: an added account is checked at once (never left NEVER CHECKED).
   const handleAddAccount = useCallback(async (provider: "jira" | "confluence", site: string, email: string) => {
+    if (actionPending.current) throw new Error("Another account action is pending");
+    actionPending.current = true;
     setRecheckBusy(provider);
     setCheckFailed(null);
     try {
       await addAtlassianAccount(provider, site, email);
       window.dispatchEvent(new Event(ACCOUNTS_CHANGED));
       try { await recheckProvider(provider); }
-      catch { setCheckFailed(provider); }
+      catch { setCheckFailed({ providerId: provider }); }
     } finally {
+      actionPending.current = false;
       setRecheckBusy(null);
       void load();
     }
@@ -561,13 +568,14 @@ export function ConnectionsPane({
     <div className="connections-pane prefs-column">
       <span ref={anchorRef} hidden />
       {error ? <SurfaceState error={error} onRetry={() => void load()} /> : null}
-      {checkFailed ? <div className="connections-check-failed" role="alert"><span>{checkFailed === "github" ? "GitHub" : checkFailed === "jira" ? "Jira" : "Confluence"}</span><StateChip wrap state="failure" label="Check failed" /><Button dense variant="secondary" onClick={() => void handleRecheck(checkFailed)}>Retry</Button></div> : null}
+      {checkFailed ? <div className="connections-check-failed" role="alert"><span>{checkFailed.providerId === "github" ? "GitHub" : checkFailed.providerId === "jira" ? "Jira" : "Confluence"}</span><StateChip wrap state="failure" label="Check failed" /><Button dense variant="secondary" disabled={recheckBusy !== null} onClick={() => void handleRecheck(checkFailed.providerId, checkFailed.subRef)}>Retry</Button></div> : null}
       <SurfaceSection label="Services"><SurfaceLedger cols="accounts"><ul className="surface-ledger-rows connections-services">
       {github ? (
         <GitHubCard
           tool={github}
           onRecheck={() => void handleRecheck("github")}
           busy={recheckBusy === "github"}
+          blocked={recheckBusy !== null}
           lead={github.state !== "connected" && github.state !== "signed_in"}
         />
       ) : null}

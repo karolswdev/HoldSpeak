@@ -177,8 +177,8 @@ describe("PeopleCore encrypted local plane", () => {
     render(<PeopleCore scope="people:r1" />);
     fireEvent.click(await screen.findByRole("button", { name: /Discuss the next architecture step/ }));
     expect(await screen.findByRole("button", { name: "Send to Workbench" })).toBeTruthy();
-    expect(screen.getByText("Workbench model")).toBeTruthy();
-    expect(screen.getByTitle("Workbench model")).toHaveClass("egress-badge", "is-cloud");
+    expect(screen.queryByTitle("Workbench model")).toBeNull();
+    expect(screen.queryByText("Workbench model")).toBeNull();
     expect(screen.getByRole("button", { name: "Mark satisfied" })).toBeTruthy();
     fireEvent.click(screen.getByRole("tab", { name: "History" }));
     expect(screen.getByText("Accepted")).toBeTruthy();
@@ -691,5 +691,34 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
     expect(fetchSpy.mock.calls.some(([url]) => /\/api\/people\/relationships\/r\d$/.test(String(url)))).toBe(false);
     // The soonest 1:1 this week is the roster's focus plate, with Open prep.
     expect(within(screen.getByTestId("people-roster-next")).getByRole("button", { name: "Open prep" })).toBeTruthy();
+  });
+});
+
+
+describe("Calendar reads keep their actual state", () => {
+  it("shows loading, keeps the note through failure, retries, then shows a true empty", async () => {
+    let settle: (response: Response) => void = () => {};
+    let reads = 0;
+    stub({
+      "/api/projects": () => json({ projects: [] }),
+      "/api/door": () => ++reads === 1
+        ? new Promise<Response>((resolve) => { settle = resolve; })
+        : json({ upcoming: [] }),
+    });
+    render(<RelationshipPane relationship={{ id: "calendar-state", display_name: "Priya" }} initialLens="context" onRefresh={vi.fn()} onProtectedFailure={vi.fn()} onArchived={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
+    fireEvent.change(screen.getByLabelText("Note"), { target: { value: "Keep the rollout draft" } });
+    fireEvent.click(screen.getByRole("button", { name: "Links" }));
+    fireEvent.click(screen.getByTestId("people-link-event"));
+    const picker = screen.getByTestId("people-event-picker");
+    expect(picker.querySelector('[data-kind="loading"]')).toBeTruthy();
+    expect(screen.queryByText("No upcoming events")).toBeNull();
+    await act(async () => { settle(json({ error: "unavailable" }, 503)); });
+    expect(within(picker).getByRole("alert")).toHaveTextContent("CALENDAR DID NOT LOAD");
+    expect(screen.getByLabelText("Note")).toHaveValue("Keep the rollout draft");
+    fireEvent.click(within(picker).getByRole("button", { name: "Try again" }));
+    expect(await within(picker).findByText("No upcoming events")).toBeTruthy();
+    expect(reads).toBe(2);
+    expect(screen.getByLabelText("Note")).toHaveValue("Keep the rollout draft");
   });
 });

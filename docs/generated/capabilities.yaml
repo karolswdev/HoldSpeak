@@ -6468,6 +6468,18 @@
           "line": 28,
           "path": "holdspeak/db/plugins.py",
           "symbol": "VALID_ARTIFACT_SOURCE_TYPES"
+        },
+        {
+          "claim": "Get Info resolves canonical qualified identities through the shared Desk object resolver, narrows qualified kinds, retains legacy IDs and opens the resolved canonical action reference.",
+          "line": 16,
+          "path": "web/src/desk/lineage.ts",
+          "symbol": "resolveRef"
+        },
+        {
+          "claim": "The active Thought Add a note well keeps local request IDs through storage refusal, applies accepted receipts despite cleanup refusal, and distinguishes loading, failure and empty listing states.",
+          "line": 39,
+          "path": "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
+          "symbol": "ThoughtReadsWell"
         }
       ],
       "status": "built_unreleased",
@@ -6547,6 +6559,18 @@
           "execution": "passed",
           "node": "test_keep_persists_note_and_knowledge_sources_with_exact_prompt_and_relationships",
           "path": "tests/unit/test_ask_keep_sources.py"
+        },
+        {
+          "assertion": "Actual Info Button calls the real Desk opener with the canonical note identity, despite a same-ID meeting.",
+          "execution": "passed",
+          "node": "opens the existing canonical Note from Info without choosing a same-ID meeting",
+          "path": "web/src/desk/components/__tests__/commonControls.test.tsx"
+        },
+        {
+          "assertion": "The active Reads well uses its new in-memory retry identity rather than the stale accepted stored ID.",
+          "execution": "passed",
+          "node": "keeps the new action ID across set denial after accepted cleanup left an older stored ID",
+          "path": "web/src/desk/thought-workspace/ThoughtReadsWell.test.tsx"
         }
       ],
       "trust_boundary": "Browser route enters the Desk shell; no native host is required."

@@ -1336,13 +1336,16 @@ function SourcesSection({
   onAdding,
 }: {
   room: RoomSnapshot;
-  onReload: () => void;
+  onReload: () => Promise<void>;
   stewardCtrl: ReturnType<typeof useStewardController>;
   ctrl: ReturnType<typeof useProjectRoomController>;
   /** One filled primary per face: while Add source is open, Add is it. */
   onAdding?: (adding: boolean) => void;
 }) {
   const [busyWatch, setBusyWatch] = useState<string>("");
+  const watchPending = useRef(false);
+  type WatchAction = "Pause" | "Resume" | "Remove";
+  const [watchFailures, setWatchFailures] = useState<Record<string, { action: WatchAction; ids: string[]; reason: string }>>({});
   // Astra r2 on #1068: an older project that watches a repository nobody
   // registered registers it here (the call New Project makes on create).
   const repository = useProjectRepository(room.projectId);
@@ -1375,25 +1378,29 @@ function SourcesSection({
   const { items, count } = room.sources;
 
   // HS-169-04: act on every watchId in the merged row.
-  const handlePause = async (watchIds: string[]) => {
-    setBusyWatch(watchIds[0]);
-    try { await Promise.all(watchIds.map(api.pauseWatch)); onReload(); }
-    catch { /* non-fatal */ }
-    finally { setBusyWatch(""); }
-  };
-
-  const handleResume = async (watchIds: string[]) => {
-    setBusyWatch(watchIds[0]);
-    try { await Promise.all(watchIds.map(api.resumeWatch)); onReload(); }
-    catch { /* non-fatal */ }
-    finally { setBusyWatch(""); }
-  };
-
-  const handleRetire = async (watchIds: string[]) => {
-    setBusyWatch(watchIds[0]);
-    try { await Promise.all(watchIds.map(api.retireWatch)); onReload(); }
-    catch { /* non-fatal */ }
-    finally { setBusyWatch(""); }
+  const changeWatches = async (action: WatchAction, watchIds: string[], rowId = watchIds[0]) => {
+    if (watchPending.current || !watchIds.length) return;
+    watchPending.current = true;
+    setBusyWatch(rowId);
+    const mutate = action === "Pause" ? api.pauseWatch : action === "Resume" ? api.resumeWatch : api.retireWatch;
+    try {
+      const outcomes = await Promise.allSettled(watchIds.map((id) => mutate(id)));
+      const rejected = outcomes.flatMap((outcome, index) => outcome.status === "rejected" ? [{ id: watchIds[index], cause: outcome.reason }] : []);
+      // Read only after all siblings settle. Retry never replays an accepted watch.
+      setWatchFailures((current) => {
+        const next = { ...current };
+        if (rejected.length) next[rowId] = {
+          action, ids: rejected.map((failure) => failure.id),
+          reason: plainFailure(`${action.toUpperCase()} FAILED · ${items.find((source) => source.watchIds.includes(rowId))?.scope ?? rowId}`, rejected[0].cause),
+        };
+        else delete next[rowId];
+        return next;
+      });
+      await onReload();
+    } finally {
+      watchPending.current = false;
+      setBusyWatch("");
+    }
   };
 
   const sorted = [...items].sort((a, b) => {
@@ -1433,6 +1440,7 @@ function SourcesSection({
         </>
       }
     >
+      {Object.entries(watchFailures).map(([rowId, failure]) => <SurfaceState key={rowId} error={failure.reason} onRetry={busyWatch ? undefined : () => void changeWatches(failure.action, failure.ids, rowId)} />)}
       {registerFailure ? (
         <span className="surface-token" data-chip data-tone="fail" role="status" data-testid="room-register-failure">{registerFailure}</span>
       ) : null}
@@ -1498,7 +1506,8 @@ function SourcesSection({
                         label="Remove"
                         confirmLabel="Remove?"
                         busy={busyWatch === src.watchIds[0]}
-                        onConfirm={() => void handleRetire(src.watchIds)}
+                        disabled={Boolean(busyWatch) || Object.values(watchFailures).some((failure) => failure.ids.some((id) => src.watchIds.includes(id)))}
+                        onConfirm={() => void changeWatches("Remove", src.watchIds)}
                       />
                     </>
                   }
@@ -1561,9 +1570,9 @@ function SourcesSection({
                     dense
                     variant="ghost"
                     loading={busyWatch === src.watchIds[0]}
+                    disabled={Boolean(busyWatch) || Object.values(watchFailures).some((failure) => failure.ids.some((id) => src.watchIds.includes(id)))}
                     onClick={() => {
-                      if (src.state === "paused") void handleResume(src.watchIds);
-                      else void handlePause(src.watchIds);
+                      void changeWatches(src.state === "paused" ? "Resume" : "Pause", src.watchIds);
                     }}
                     data-testid={isMeeting ? "source-meeting-verb" : undefined}
                   >
@@ -3011,7 +3020,7 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
               <div className="room-folds" data-testid="room-folds">
                 <RoomSlot id="sources" place={place("sources")} own={{ extras: extrasRead }} delay="80ms">
                   <RoomFold title="Sources" token={sourceCount || undefined} open={addingSources || undefined} testId="room-fold-sources">
-                    <SourcesSection room={ctrl.room} onReload={() => void ctrl.load()} stewardCtrl={stewardCtrl} ctrl={ctrl} onAdding={setAddingSources} />
+                    <SourcesSection room={ctrl.room} onReload={() => ctrl.load()} stewardCtrl={stewardCtrl} ctrl={ctrl} onAdding={setAddingSources} />
                   </RoomFold>
                 </RoomSlot>
                 <RoomSlot id="pages" place={place("pages")} own={{ pages: pagesLoaded }}

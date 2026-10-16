@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "atlas_version": "cohesive-workflows-20261015",
+  "extends": "docs/internal/THREAD-ASK-REFINEMENT-2026-10-15/atlas.json",
+  "source_commit": "7f3345745fb44f9238215ea980559f0cafa7a454",
+  "states": [
+    {
+      "id": "state.desk_presentation.project_name_ready",
+      "family": "desk_presentation",
+      "values": {
+        "application": "New Project",
+        "task": "Name the project"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/features/project-room/door/DoorCore.tsx",
+          "symbol": "export function DoorCore({ scope }: CoreProps)",
+          "claim": "New Project uses the shared StringGadget with the Project name label and existing mic."
+        }
+      ],
+      "reachable_by": [
+        "case.desk.project.name.ready"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "case.desk.project.name.ready",
+      "job": "j11",
+      "edge_ids": [
+        "edge.app.project_setup"
+      ],
+      "state_id": "state.desk_presentation.project_name_ready",
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME/DB, engine none. Actual Search to New Project entry point. Proves labeled library field, not provider connection or project creation."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/desk/seed",
+          "body": {},
+          "expect_status": 200,
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "button[aria-controls=desk-tool-shelf]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "input[aria-controls=desk-palette-listbox]",
+          "value": "New Project"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": "button[id=\"desk-palette-option-desk.new-project\"]"
+      },
+      "expected": {
+        "observe_at": "[data-testid=door-root]",
+        "predicate": {
+          "kind": "selector_presence",
+          "selector": "[data-testid=door-root] .gadget-string input[aria-label=\"Project name\"]",
+          "present": true
+        },
+        "words": "Actual New Project presents the labeled library Project name field."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ],
+  "clocks": [],
+  "excluded": [],
+  "council_readings": []
+}

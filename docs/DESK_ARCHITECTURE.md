@@ -124,3 +124,30 @@ It reconnects after `min(12000, 500 * 2^(attempt-1))` milliseconds, with the att
 - Per-object receipts in Info need hub support.
 - There is no locale catalog.
 - The tokens give a dark theme only.
+
+## Current workflow recovery
+
+Workbench item instructions keep a durable local draft, including an empty
+instruction. Closing flushes the pending pause. Per-item writes run in order
+across close and reopen; a refused save keeps the draft. Add and its exact Retry
+share one pending guard. Coder replies clear only the draft that was sent.
+
+A gate decision distinguishes the named already-decided race from refusal.
+Conductor and the opened lane show failed decisions. Once accepted, a failed
+read offers read recovery and does not repeat the decision. Project source
+changes settle every watch in a merged row, then reread; Retry sends only the
+failed watches. People calendar and meeting owner reads distinguish pending,
+failed and empty states and offer real read recovery.
+
+Get Info resolves canonical qualified source identities and legacy IDs through
+the existing object resolver. It opens the resolved kind; an unavailable source
+has a disabled library action. The active owned Thought uses the workspace
+Add a note well. Its local retry identity survives unavailable browser storage;
+accepted receipts still apply if storage cleanup fails. The older Note picker
+is a separate compatibility path, not the normal owned-Thought window.
+
+An account Recheck sends that account's ref to the existing provider route.
+One check owns the pending state, and old reads cannot replace newer results.
+Calendar Save completion applies only to its submitted editor identity and
+values, preserving a newer calendar draft. Speech test capture cleanup owns
+only its listening hold; Stop hands ownership off before transcription waits.

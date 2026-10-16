@@ -482,6 +482,7 @@ export function WorkMenu({
   const [subAt, setSubAt] = useState<{ x: number; y: number } | null>(null);
   const panelRef = useRef<HTMLElement | null>(null);
   const subRef = useRef<HTMLElement | null>(null);
+  const subOpener = useRef<HTMLElement | null>(null);
 
   // PHILO-9-04 (the ratified list canvas): the species keeps its measured
   // panel inside the viewport (8 px margin). The clamp above guesses the
@@ -584,6 +585,7 @@ export function WorkMenu({
   };
 
   const onSubAnchor = (_id: string, el: HTMLElement) => {
+    subOpener.current = el;
     const r = el.getBoundingClientRect();
     setSubAt({ x: r.right + 1, y: r.top - 3 });
   };
@@ -609,7 +611,8 @@ export function WorkMenu({
         if (openSub && e.key === "ArrowLeft") {
           e.preventDefault();
           e.stopPropagation();
-          setOpenSub(null);
+          if (narrow && deeper.length) setDeeper((path) => path.slice(0, -1));
+          else setOpenSub(null);
           return;
         }
         if (e.key === "Escape" && openSub) {
@@ -683,9 +686,7 @@ export function WorkMenu({
               e.preventDefault();
               e.stopPropagation();
               setOpenSub(null);
-              panelRef.current
-                ?.querySelector<HTMLElement>("[aria-haspopup='menu']")
-                ?.focus();
+              subOpener.current?.focus();
               return;
             }
             menuKeyDown(e, onClose, returnFocus);

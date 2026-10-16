@@ -15,6 +15,8 @@ import { ConductorInfoWindow } from "../ConductorInfoWindow";
 import { canRun, closeReceipt, conductorHead, conductorMembers, headWords, readyMember } from "../members";
 import { __resetConductor, useConductor } from "../store";
 import { laneSessionKey as laneSessionKeyOf } from "../../lane/laneStore";
+import { ApiError } from "../../../lib/api";
+import { useGate } from "../../gate";
 
 
 
@@ -132,6 +134,7 @@ beforeEach(() => {
   });
   __resetConductor();
   useAgentFlights.setState({ sessions: [], flights: [], loaded: false });
+  useGate.setState({ held: [], loaded: false, error: null });
   useDesk.setState({ items: { ...EMPTY_ITEMS }, zoneViewPrefs: {}, panelRects: {}, panelOrder: [], panelMin: [] });
 });
 
@@ -531,6 +534,91 @@ describe("PHILO-17 the Conductor reads like Today", () => {
     expect(apiFetch).toHaveBeenCalledWith("/api/gate/proposals/toolu_psql/decide", expect.objectContaining({
       method: "POST", json: expect.objectContaining({ decision: "approved" }),
     }));
+  });
+
+  it("names a refused approval, blocks repeated presses and retries the same call", async () => {
+    const base = apiFetch.getMockImplementation()!;
+    let release!: () => void;
+    let accepted = false;
+    let attempts = 0;
+    apiFetch.mockImplementation(async (url: string, init?: { method?: string }) => {
+      if (url.endsWith("/decide")) {
+        attempts++;
+        if (attempts === 1) {
+          await new Promise<void>((resolve) => { release = resolve; });
+          throw new ApiError(403, "Approval refused", { error: "Approval refused" });
+        }
+        accepted = true;
+        return { state: "approved" };
+      }
+      if (url.startsWith("/api/agent/launches/l-runbook/lane")) return { gated: accepted ? [] : [{ id: "call-refused", tool: "Bash", args_shown: "git status", args_cut: false, state: "held" }] };
+      if (url.startsWith("/api/gate/proposals?")) return { proposals: [] };
+      return base(url, init);
+    });
+    render(<ConductorWindow />);
+    const approve = await screen.findByRole("button", { name: "Approve" });
+    fireEvent.click(approve);
+    fireEvent.click(approve);
+    expect(approve).toBeDisabled();
+    expect(attempts).toBe(1);
+    await act(async () => { release(); });
+    expect(await screen.findByRole("alert")).toHaveTextContent("Approve failed · Approval refused");
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
+    const posts = apiFetch.mock.calls.filter(([url]) => String(url).endsWith("/decide"));
+    expect(posts).toHaveLength(2);
+    expect(posts[1]).toEqual(posts[0]);
+    expect(screen.queryByRole("button", { name: "Approve" })).toBeNull();
+  });
+
+  it.each([false, true])("retries reads only after a settled approval with unavailable truth, race=%s", async (race) => {
+    const base = apiFetch.getMockImplementation()!;
+    let settled = false;
+    let unavailable = true;
+    apiFetch.mockImplementation(async (url: string, init?: { method?: string }) => {
+      if (url.endsWith("/decide")) {
+        settled = true;
+        if (race) throw new ApiError(409, "already_decided", { error: "already_decided", state: "denied" });
+        return { state: "approved" };
+      }
+      if (url.startsWith("/api/agent/launches/l-runbook/lane")) {
+        if (settled && unavailable) throw new Error("Lane read unavailable");
+        return { gated: settled ? [] : [{ id: "call-read", tool: "Bash", args_shown: "git status", args_cut: false, state: "held" }] };
+      }
+      if (url.startsWith("/api/gate/proposals?")) {
+        if (unavailable) throw new Error("Gate read unavailable");
+        return { proposals: [] };
+      }
+      return base(url, init);
+    });
+    render(<ConductorWindow />);
+    fireEvent.click(await screen.findByRole("button", { name: "Approve" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Gate read failed · Gate read unavailable");
+    await waitFor(() => expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled());
+    expect(screen.queryByRole("button", { name: "Approve" })).toBeNull();
+    unavailable = false;
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
+    expect(apiFetch.mock.calls.filter(([url]) => String(url).endsWith("/decide"))).toHaveLength(1);
+    expect(screen.queryByTestId("conductor-held-call")).toBeNull();
+  });
+
+  it("names a failed held-call read and retries that read", async () => {
+    const base = apiFetch.getMockImplementation()!;
+    let unavailable = true;
+    apiFetch.mockImplementation(async (url: string, init?: { method?: string }) => {
+      if (url.startsWith("/api/agent/launches/l-runbook/lane")) {
+        if (unavailable) throw new Error("Call unavailable");
+        return { gated: [{ id: "call-recovered", tool: "Bash", args_shown: "git status", args_cut: false, state: "held" }] };
+      }
+      return base(url, init);
+    });
+    render(<ConductorWindow />);
+    expect(await screen.findByRole("alert")).toHaveTextContent("Call read failed · Call unavailable");
+    unavailable = false;
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(await screen.findByRole("button", { name: "Approve" })).toBeEnabled();
+    expect(apiFetch.mock.calls.filter(([url]) => String(url).endsWith("/decide"))).toHaveLength(0);
   });
 
   it("a cut call is never approved on the plate: it opens the lane", async () => {

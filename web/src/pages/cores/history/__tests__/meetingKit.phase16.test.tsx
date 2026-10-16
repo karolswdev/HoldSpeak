@@ -2,7 +2,7 @@
 // record heads with its title (the AppHead, once) and the strip
 // (`TUE 14:00 · 42 MIN` · SUMMARISED · `4 PEOPLE`), then `Decisions · n` and
 // `Commitments · n`, each a Section over a Ledger of kind-plated rows.
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { MeetingHeader, meetingOutcomeFact, meetingStripItems, peopleCount } from "../MeetingHeader";
 import { MeetingOutcomes, meetingOutcomes } from "../MeetingDetail";
@@ -592,5 +592,38 @@ describe("the meeting's recorded decisions (PHILO-17)", () => {
     const order = [...container.querySelectorAll("[data-testid=meeting-decisions], [data-testid=meeting-commitments]")]
       .map((el) => el.getAttribute("data-testid"));
     expect(order).toEqual(["meeting-decisions", "meeting-commitments"]);
+  });
+});
+
+
+describe("Meeting People read recovery", () => {
+  it("shows a pending lookup and retries failure without clearing the task or date draft", async () => {
+    let failRead: (cause: unknown) => void = () => {};
+    let reads = 0;
+    apiFetch.mockImplementation((url: string) => {
+      if (url === "/api/people/relationships") return ++reads === 1
+        ? new Promise((_resolve, reject) => { failRead = reject; })
+        : Promise.resolve({ relationships: [{ id: "priya", display_name: "Priya" }] });
+      return Promise.resolve({});
+    });
+    const data = {
+      ftProposals: [{ id: "people-gap", meeting_id: "m-people", kind: "action", text: "Write the runbook", state: "proposed", created_at: "", owner: null, due: null }],
+      openActions: [], settledActions: [], segments: [], busy: false,
+      confirmProposal: vi.fn(), dismissProposal: vi.fn(), deferProposal: vi.fn(), confirmAll: vi.fn(),
+    };
+    render(<MeetingOutcomes data={data as never} meeting={{ id: "m-people" }} />);
+    expect(screen.getByTestId("meeting-people-read")).toHaveAttribute("aria-busy", "true");
+    fireEvent.click(screen.getByTestId("proposal-more-btn"));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Edit" }));
+    fireEvent.change(screen.getByLabelText("Task"), { target: { value: "Ship the runbook draft" } });
+    fireEvent.change(screen.getByLabelText("When?"), { target: { value: "2026-11-12" } });
+    await act(async () => { failRead(new TypeError("offline")); });
+    expect(screen.getByRole("alert")).toHaveTextContent("PEOPLE DID NOT LOAD");
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(await screen.findByRole("option", { name: "Priya" })).toBeTruthy();
+    expect(screen.getByLabelText("Task")).toHaveValue("Ship the runbook draft");
+    expect(screen.getByLabelText("When?")).toHaveValue("2026-11-12");
+    expect(data.confirmProposal).not.toHaveBeenCalled();
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 });

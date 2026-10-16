@@ -39,12 +39,20 @@ import { useWindowId } from "../components/window/windowIdContext";
 import { thoughtWriteLine } from "./thoughtReceipt";
 import "./thought-workspace.css";
 
+const workspaceRequestIds = new Map<string, string | null>();
 function stableId(key: string): string {
-  const prior = sessionStorage.getItem(key);
-  if (prior) return prior;
-  const next = crypto.randomUUID();
-  sessionStorage.setItem(key, next);
-  return next;
+  let id = workspaceRequestIds.get(key);
+  if (!workspaceRequestIds.has(key)) {
+    try { id = sessionStorage.getItem(key) || id; } catch { /* Memory owns this retry. */ }
+  }
+  if (!id) id = crypto.randomUUID();
+  workspaceRequestIds.set(key, id);
+  try { sessionStorage.setItem(key, id); } catch { /* Memory owns this retry. */ }
+  return id;
+}
+function clearStableId(key: string) {
+  workspaceRequestIds.set(key, null);
+  try { sessionStorage.removeItem(key); workspaceRequestIds.delete(key); } catch { /* Apply the accepted result. */ }
 }
 
 export function utf8OffsetToIndex(value: string, byteOffset: number): number | null {
@@ -309,7 +317,7 @@ function WorkspaceReady({
     const key = `hs.thought.review.${reviewId}.answer`;
     const succeeded = await afterFlush(async (latest) => {
       const result = await actOnReview({ thought: latest, reviewId, action: "answer", request_id: stableId(key), answer, workspace_cursor: writer.getWorkspaceCursor() ?? projection.workspace_cursor });
-      sessionStorage.removeItem(key);
+      clearStableId(key);
       return result;
     }, true);
     if (succeeded) setAnswer("");
@@ -352,7 +360,7 @@ function WorkspaceReady({
   const ask = () => afterFlush(async (latest) => {
     const key = `hs.thought.refine.${latest.id}`;
     const result = await refineThought(latest, stableId(key), writer.getWorkspaceCursor() ?? projection.workspace_cursor);
-    sessionStorage.removeItem(key);
+    clearStableId(key);
     return result;
   });
 
@@ -367,7 +375,7 @@ function WorkspaceReady({
       request_id: stableId(key),
       workspace_cursor: fresh?.workspace_cursor ?? writer.getWorkspaceCursor() ?? projection.workspace_cursor,
     });
-    sessionStorage.removeItem(key);
+    clearStableId(key);
     return result;
   });
 
@@ -405,7 +413,7 @@ function WorkspaceReady({
     const result = action === "detach"
       ? await detachThoughtContext(latest, attachment.ref, stableId(key), writer.getWorkspaceCursor() ?? projection.workspace_cursor)
       : await refreshThoughtContext(latest, attachment.ref, stableId(key), writer.getWorkspaceCursor() ?? projection.workspace_cursor);
-    sessionStorage.removeItem(key);
+    clearStableId(key);
     return result;
   });
 

@@ -3,6 +3,7 @@ import {
   abortHold,
   beginHold,
   endHold,
+  holdOwnsFloor,
   micCaptureReason,
   micCaptureSupported,
   subscribeCaptureLevel,
@@ -180,24 +181,22 @@ export async function retryPendingTranscription(
 
 export async function stopAndTranscribe(scope?: string): Promise<string> {
   const captured = endHold();
-  if (!captured?.chunks.length) {
-    // HS-118-08: release the audio floor even if nothing was captured.
-    try {
-      await apiFetch("/api/dictation/floor/release", { method: "POST" });
-    } catch {
-      // Best-effort release.
-    }
-    return "";
-  }
-  const audio = toWav16kMono(captured.chunks, captured.rate);
-  if (scope) await savePendingVoice(scope, audio);
-  const text = await transcribeWav(audio);
-  if (scope) await clearPendingVoice(scope);
-  // HS-118-08: release the audio floor after transcription completes.
   try {
-    await apiFetch("/api/dictation/floor/release", { method: "POST" });
-  } catch {
-    // Best-effort release.
+    if (!captured?.chunks.length) return "";
+    const audio = toWav16kMono(captured.chunks, captured.rate);
+    if (scope) await savePendingVoice(scope, audio);
+    const text = await transcribeWav(audio);
+    if (scope) await clearPendingVoice(scope);
+    return text;
+  } finally {
+    // Stop ended this hold before transcription. A later hold can now own
+    // the mic, so cleanup must leave its floor claim and capture alone.
+    if (!holdOwnsFloor()) {
+      try {
+        await apiFetch("/api/dictation/floor/release", { method: "POST" });
+      } catch {
+        // Best-effort release; preserve the transcription's actual outcome.
+      }
+    }
   }
-  return text;
 }

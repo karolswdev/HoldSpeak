@@ -4,6 +4,7 @@
 // Properties are the declared tooltypes (real update paths only); absent
 // data renders as absence. No kind hand-builds its Info.
 import { useState } from "react";
+import { Button } from "../../components/signal/Signal";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
 import { refAgent, spriteUrl } from "../sprites";
 import { spriteStateCssClass } from "../../lib/spriteStates";
@@ -51,8 +52,9 @@ function IdentityName({ o }: { o: WorldObject }) {
     );
   if (!editing)
     return (
-      <button
-        type="button"
+      <Button
+        dense
+        variant="ghost"
         className="info-name"
         title="Rename"
         onClick={() => {
@@ -61,7 +63,7 @@ function IdentityName({ o }: { o: WorldObject }) {
         }}
       >
         {o.title}
-      </button>
+      </Button>
     );
   // HS-111-10 mic sweep: the rename well is the kit's StringGadget.
   // Commit on focus LEAVING the well (relatedTarget check) so pressing
@@ -200,14 +202,15 @@ export function InfoWindow({
                 <span className="desk-chip quiet">via {lin.via.label}</span>
               ) : null}
               {lin.from.map((f) => (
-                <button
+                <Button
                   key={f.ref}
-                  type="button"
-                  className="desk-chip quiet"
-                  onClick={() => f.resolved && openPullout(f.ref)}
+                  dense
+                  variant="ghost"
+                  disabled={!f.resolved}
+                  onClick={() => openPullout(f.actionRef ?? f.ref)}
                 >
                   {f.label}
-                </button>
+                </Button>
               ))}
             </div>
           </section>
@@ -241,16 +244,16 @@ export function InfoWindow({
                   {s.handoff ? (
                     <>
                       {" "}
-                      <button
-                        type="button"
-                        className="desk-chip quiet"
+                      <Button
+                        dense
+                        variant="ghost"
                         onClick={() => {
                           s.handoff!.action(o);
                           closeInfoWindow(refId);
                         }}
                       >
                         {s.handoff.verb}
-                      </button>
+                      </Button>
                     </>
                   ) : null}
                 </span>,

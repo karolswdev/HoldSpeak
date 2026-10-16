@@ -1312,6 +1312,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
   const [calWellName, setCalWellName] = useState("");
   const [calWellError, setCalWellError] = useState("");
   const [calWellSaving, setCalWellSaving] = useState(false);
+  const calWellGeneration = useRef(0);
+  const calSavePending = useRef(false);
   // The in-world Remove confirm step (never a modal): the armed source id.
   const [calRemoveFor, setCalRemoveFor] = useState<string | null>(null);
   const [calLoading, setCalLoading] = useState(false);
@@ -2037,6 +2039,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
           {autoRecordValue === "room_linked" && calSources?.matched_this_week ? <span className="gadget-fact" data-testid="matched-this-week">{countToken(calSources.matched_this_week, "MATCHED THIS WEEK")}</span> : null}
         </span>;
         const openCalWell = (target: string, prefill: string, name = "") => {
+          ++calWellGeneration.current;
           setCalRemoveFor(null);
           setCalWellFor(target);
           setCalWellValue(prefill);
@@ -2044,6 +2047,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
           setCalWellError("");
         };
         const closeCalWell = () => {
+          ++calWellGeneration.current;
           setCalWellFor(null);
           setCalWellValue("");
           setCalWellName("");
@@ -2051,7 +2055,9 @@ function SettingsFace({ hero, scope }: CoreProps) {
         };
         const saveCalWell = async () => {
           const url = calWellValue.trim();
-          if ((!url && !editingIdentity?.native) || calWellFor === null) return;
+          if ((!url && !editingIdentity?.native) || calWellFor === null || calSavePending.current) return;
+          const generation = calWellGeneration.current;
+          calSavePending.current = true;
           setCalWellSaving(true);
           setCalWellError("");
           const nextSources =
@@ -2059,7 +2065,9 @@ function SettingsFace({ hero, scope }: CoreProps) {
               ? [...sources, { id: crypto.randomUUID(), label: calWellName.trim(), url, enabled: true }]
               : sources.map((s) => (s.id === calWellFor ? { ...s, label: calWellName.trim(), ...(editingIdentity?.native || editingIdentity?.snapshot ? {} : { url }) } : s));
           const ok = await commitMany([[sourcesPath, nextSources]]);
+          calSavePending.current = false;
           setCalWellSaving(false);
+          if (generation !== calWellGeneration.current) return;
           if (ok) {
             closeCalWell();
           } else {
@@ -2068,13 +2076,13 @@ function SettingsFace({ hero, scope }: CoreProps) {
         };
         const calWell = (
           <div className="prefs-calendar-well" data-testid="calendar-well">
-            <StringGadget label="Calendar name" caption value={calWellName} placeholder={editingIdentity?.type ?? "Calendar name"} onChange={setCalWellName} />
+            <StringGadget label="Calendar name" caption value={calWellName} placeholder={editingIdentity?.type ?? "Calendar name"} onChange={(value) => { ++calWellGeneration.current; setCalWellName(value); setCalWellError(""); }} />
             {!editingIdentity?.native && !editingIdentity?.snapshot ? (
             <StringGadget
               label="Calendar URL or file path"
               value={calWellValue}
               placeholder="Paste an ICS URL or a file path"
-              onChange={setCalWellValue}
+              onChange={(value) => { ++calWellGeneration.current; setCalWellValue(value); setCalWellError(""); }}
               caption
               mic
             />
@@ -2082,7 +2090,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
             {calWellError ? <span className="gadget-fact" role="alert">{calWellError}</span> : null}
             <div className="prefs-calendar-well-actions">
               <Button variant="ghost" dense onClick={closeCalWell}>Cancel</Button>
-              <Button dense disabled={calWellSaving || (!calWellValue.trim() && !editingIdentity?.native)} onClick={() => void saveCalWell()}>Save</Button>
+              <Button dense loading={calWellSaving} disabled={!calWellValue.trim() && !editingIdentity?.native} onClick={() => void saveCalWell()}>Save</Button>
             </div>
           </div>
         );

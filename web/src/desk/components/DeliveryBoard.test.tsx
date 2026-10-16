@@ -6,6 +6,7 @@ import { DeliveryBoard } from "./DeliveryBoard";
 import { activateLauncher } from "./DeskWindow";
 import { useDelivery } from "../delivery";
 import { useDeliveryFactory } from "../deliveryFactory";
+import { useDeliveryDossier } from "../deliveryDossier";
 import { useDesk } from "../store";
 
 const initialSettings = {
@@ -52,6 +53,7 @@ describe("CompanionRepoConfig (HS-139-03)", () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   it("refuses a stale companion-repo PUT and reloads the server's value", async () => {
@@ -102,4 +104,33 @@ describe("CompanionRepoConfig (HS-139-03)", () => {
       meeting: { companion_github_repo: "owner/rejected" },
     });
   });
+
+  it("uses library recovery and dossier actions with the same source authority", async () => {
+    const refresh = vi.spyOn(useDelivery.getState(), "refresh").mockResolvedValue();
+    const openPhase = vi.spyOn(useDeliveryDossier.getState(), "openPhase").mockResolvedValue();
+    const openStory = vi.spyOn(useDeliveryDossier.getState(), "openStory").mockResolvedValue();
+    vi.stubGlobal("fetch", vi.fn(async () => json(initialSettings)));
+    useDelivery.setState({ sources: [{
+      sourceId: "source-1", nodeId: null, label: "Local delivery", status: "stale", detail: "", observedAt: "", capabilities: null, worktrees: [],
+      projects: [{ sourceId: "source-1", slug: "platform", prefix: "PLAT", currentPhase: { number: 7, title: "Release", status: "open", storiesDone: 1, storiesTotal: 2 }, nextStoryId: "PLAT-7-01", phases: [], warnings: 0,
+        stories: [{ sourceId: "source-1", project: "platform", storyId: "PLAT-7-01", title: "Ship release", status: "open", phase: 7, evidenceExists: false }],
+      }],
+    }] });
+    render(<DeliveryBoard />);
+    await act(async () => { expect(activateLauncher("delivery-board")).toBe(true); });
+    refresh.mockClear();
+    const recover = screen.getByRole("button", { name: "Refresh source" });
+    expect(recover).toHaveClass("btn");
+    fireEvent.click(recover);
+    expect(refresh).toHaveBeenCalledOnce();
+    const phase = screen.getByRole("button", { name: "Phase 7 dossier" });
+    expect(phase).toHaveClass("btn");
+    fireEvent.click(phase);
+    expect(openPhase).toHaveBeenCalledWith("platform", 7, "source-1");
+    const story = screen.getByRole("button", { name: "PLAT-7-01" });
+    expect(story).toHaveClass("btn");
+    fireEvent.click(story);
+    expect(openStory).toHaveBeenCalledWith("platform", "PLAT-7-01", "source-1");
+  });
+
 });

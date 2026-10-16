@@ -16,12 +16,28 @@ import { ThoughtNoteEditor, type ThoughtNoteEditorHandle } from "./editors/Thoug
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import type { PulloutContentProps } from "./types";
 import { actOnReview, adoptThought, completeThought, detachThoughtContext, listThoughtContext, originalThought, reconcileThought, refineThought, refreshThoughtContext, resumeThought, reviewThought, sourceLabel, stopRefinement, thoughtForNote, type NoteThoughtStatus, type Thought, type ThoughtAttachment, type ThoughtCompletionReceipt, type ThoughtContextReceipt, type ThoughtDefaultApplicationReceipt, type ThoughtDefaultContext, type ThoughtDefaultContextReceipt, type ThoughtNote, type ThoughtReview, type ThoughtUsedContextReceipt } from "../thoughts";
-import { apiFetch, ApiError } from "../../lib/api";
+import { apiFetch, ApiError, readableError } from "../../lib/api";
 import { ThoughtContextPicker } from "./ThoughtContextPicker";
 import { useEditorSession } from "./editors/useDebouncedSave";
 
 const REFINING_STATES = ["reserved", "in_flight", "awaiting_projection"];
 function isRefining(state?: string): boolean { return !!state && REFINING_STATES.includes(state); }
+
+const thoughtRequestIds = new Map<string, string | null>();
+function thoughtRequestId(key: string): string {
+  let id = thoughtRequestIds.get(key);
+  if (!thoughtRequestIds.has(key)) {
+    try { id = sessionStorage.getItem(key) || id; } catch { /* Memory owns this retry. */ }
+  }
+  if (!id) id = crypto.randomUUID();
+  thoughtRequestIds.set(key, id);
+  try { sessionStorage.setItem(key, id); } catch { /* Memory owns this retry. */ }
+  return id;
+}
+function clearThoughtRequest(key: string) {
+  thoughtRequestIds.set(key, null);
+  try { sessionStorage.removeItem(key); thoughtRequestIds.delete(key); } catch { /* The accepted result still applies. */ }
+}
 
 function readableVersion(value: string): string {
   if (!value || /^version\b/i.test(value)) return value;
@@ -85,6 +101,7 @@ export function NotePullout({
   const contextRow = useRef<HTMLDivElement | null>(null);
   const thoughtEditor = useRef<ThoughtNoteEditorHandle | null>(null);
   const latestThought = useRef<Thought | null>(null);
+  const refinementPending = useRef(false);
   const loadOwnership = async () => {
     setOwnershipLookup("pending"); setStatus(null); setOriginal(null); setMessage(""); setContextPicker(false); setContextReceipt(null); setPolicyReceipt(null); setDefaultApplicationReceipt(null);
     try { setStatus(await thoughtForNote(o.id)); setOwnershipLookup("ready"); }
@@ -116,13 +133,13 @@ export function NotePullout({
   useEffect(() => {
     if (!thought) return;
     const key = `hs.thought.default-context-receipt.${thought.id}`;
-    const stored = sessionStorage.getItem(key);
-    if (!stored) return;
-    sessionStorage.removeItem(key);
     try {
+      const stored = sessionStorage.getItem(key);
+      if (!stored) return;
       const receipt = JSON.parse(stored) as ThoughtDefaultApplicationReceipt;
       setDefaultApplicationReceipt(receipt);
       if (receipt.status === "applied") setDefaultRefs(new Set(receipt.attachments.map((item) => item.ref)));
+      try { sessionStorage.removeItem(key); } catch { /* Keep the visible receipt. */ }
     }
     catch { /* A broken transient receipt is not authority and is safe to omit. */ }
   }, [thought?.id]);
@@ -199,13 +216,12 @@ export function NotePullout({
       catch { setContextBusy(false); return; }
     }
     const key = `hs.thought.context.${action}.${base.id}.${attachment.ref}`;
-    const requestId = sessionStorage.getItem(key) || crypto.randomUUID();
-    sessionStorage.setItem(key, requestId);
     try {
+      const requestId = thoughtRequestId(key);
       const result = action === "detach"
         ? await detachThoughtContext(base, attachment.ref, requestId)
         : await refreshThoughtContext(base, attachment.ref, requestId);
-      sessionStorage.removeItem(key);
+      clearThoughtRequest(key);
       applyContextResult(result);
       setContextPicker(false);
     } catch (cause) {
@@ -217,9 +233,8 @@ export function NotePullout({
     if (adopting) return;
     setAdopting(true); setMessage("");
     const key = `hs.thought.adopt.${o.id}`;
-    const request_id = sessionStorage.getItem(key) || crypto.randomUUID();
-    sessionStorage.setItem(key, request_id);
     try {
+      const request_id = thoughtRequestId(key);
       const fresh = await thoughtForNote(o.id);
       if (fresh.ownership === "thought") {
         setStatus(fresh); useDesk.getState().openEditor(o.id); return;
@@ -227,8 +242,8 @@ export function NotePullout({
       const adopted = await adoptThought({ request_id, note_id: o.id,
         expected_source_content_sha256: fresh.source_precondition.content_sha256,
         expected_source_last_modified: fresh.source_precondition.last_modified });
-      sessionStorage.removeItem(key); setStatus({ ownership: "thought", thought: adopted.thought });
-      sessionStorage.setItem(`hs.thought.default-context-receipt.${adopted.thought.id}`, JSON.stringify(adopted.default_context_receipt));
+      clearThoughtRequest(key); setStatus({ ownership: "thought", thought: adopted.thought });
+      try { sessionStorage.setItem(`hs.thought.default-context-receipt.${adopted.thought.id}`, JSON.stringify(adopted.default_context_receipt)); } catch { /* The receipt remains in this pullout. */ }
       setDefaultApplicationReceipt(adopted.default_context_receipt);
       await useDesk.getState().refresh(); useDesk.getState().openEditor(o.id);
     } catch (cause) {
@@ -249,7 +264,7 @@ export function NotePullout({
       // naming this a failure so a retry never manufactures a second thought.
       try {
         const recovered = await thoughtForNote(o.id);
-        if (recovered.ownership === "thought") { setStatus(recovered); sessionStorage.removeItem(key); useDesk.getState().openEditor(o.id); return; }
+        if (recovered.ownership === "thought") { setStatus(recovered); clearThoughtRequest(key); useDesk.getState().openEditor(o.id); return; }
         setStatus(recovered); setOwnershipLookup("ready");
       } catch {
         // The commit might have landed, or the owner may be offline. Retain
@@ -270,20 +285,19 @@ export function NotePullout({
     // YOLO by default: this is the owner's immediate command, never a confirm.
     setFinishing(true); setMessage("");
     const key = `hs.thought.complete.${thought.id}`;
-    const request_id = sessionStorage.getItem(key) || crypto.randomUUID();
-    sessionStorage.setItem(key, request_id);
     try {
+      const request_id = thoughtRequestId(key);
       const latest = editing && thoughtEditor.current ? await thoughtEditor.current.flush() : thought;
       const completed = await completeThought({ thought: latest, request_id });
-      sessionStorage.removeItem(key);
+      clearThoughtRequest(key);
       setStatus({ ownership: "thought", thought: completed.thought });
       setCompletionReceipt(completed.receipt);
       closeEditor();
       void useDesk.getState().refresh().catch(() => undefined);
     } catch (cause) {
       const payload = cause instanceof ApiError && cause.payload && typeof cause.payload === "object"
-        ? cause.payload as { error?: string; context?: { current?: Thought } } : null;
-      const current = payload?.context?.current;
+        ? cause.payload as { error?: string; current?: Thought; context?: { current?: Thought } } : null;
+      const current = payload?.current ?? payload?.context?.current;
       if (current?.id === thought.id) setStatus({ ownership: "thought", thought: current });
       if (payload?.error === "thought_already_completed" || payload?.error === "thought_completed") {
         closeEditor(); setMessage("This thought is already done.");
@@ -296,7 +310,7 @@ export function NotePullout({
         // completion request was made, so do not invent ambiguity about it.
       } else {
         if (payload?.error === "completion_request_payload_mismatch" || payload?.error === "completion_request_superseded") {
-          sessionStorage.removeItem(key);
+          clearThoughtRequest(key);
           setMessage("That earlier completion request is no longer current. Review this thought, then press Finish Thought again.");
           return;
         }
@@ -305,46 +319,73 @@ export function NotePullout({
     } finally { setFinishing(false); }
   };
   const refine = async () => {
-    if (!thought || refining) return;
+    if (!thought || refinementPending.current) return;
+    refinementPending.current = true;
     setRefining(true); setMessage("");
     const key = `hs.thought.refine.${thought.id}`;
-    const requestId = sessionStorage.getItem(key) || crypto.randomUUID();
-    sessionStorage.setItem(key, requestId);
-    try { const next = await refineThought(thought, requestId); sessionStorage.removeItem(key); setStatus({ ownership: "thought", thought: next.thought }); }
+    try { const next = await refineThought(thought, thoughtRequestId(key)); clearThoughtRequest(key); setStatus({ ownership: "thought", thought: next.thought }); }
     catch { setMessage("Could not start refining. Your working note is unchanged."); }
-    finally { setRefining(false); }
+    finally { refinementPending.current = false; setRefining(false); }
   };
   const stop = async () => {
     const invocationId = thought?.continuity?.invocation_id;
-    if (!thought || !invocationId || refining) return;
+    if (!thought || !invocationId || refinementPending.current) return;
+    refinementPending.current = true;
     setRefining(true);
     try { setStatus({ ownership: "thought", thought: await stopRefinement(thought, invocationId) }); setMessage("Stopped. Your working note is unchanged."); }
     catch { setMessage("Could not stop this request yet. Your working note is unchanged. Try again, or finish instead."); }
-    finally { setRefining(false); }
+    finally { refinementPending.current = false; setRefining(false); }
   };
   const act = async (action: "answer" | "accept" | "reject") => {
-    if (!thought || !review || refining || (action === "answer" && !answer.trim())) return;
+    if (!thought || !review || refinementPending.current || (action === "answer" && !answer.trim())) return;
+    refinementPending.current = true;
     setRefining(true); setMessage("");
     const key = `hs.thought.review.${review.id}.${action}`;
-    const requestId = sessionStorage.getItem(key) || crypto.randomUUID();
-    sessionStorage.setItem(key, requestId);
-    try { const result = await actOnReview({ thought, reviewId: review.id, action, request_id: requestId, answer }); sessionStorage.removeItem(key); setStatus({ ownership: "thought", thought: result.thought }); setReview(null); setAnswer(""); setMessage(action === "answer" ? "Answer added to your working note." : action === "accept" ? "Refinement accepted into your working note." : "Refinement dismissed."); }
-    catch { setMessage("That review changed elsewhere. Your latest working note is shown."); }
-    finally { setRefining(false); }
+    try {
+      const result = await actOnReview({ thought, reviewId: review.id, action, request_id: thoughtRequestId(key), answer });
+      clearThoughtRequest(key); setStatus({ ownership: "thought", thought: result.thought }); setReview(null);
+      setAnswer((current) => current === answer ? "" : current);
+      setMessage(action === "answer" ? "Answer added to your working note." : action === "accept" ? "Refinement accepted into your working note." : "Refinement dismissed.");
+    } catch (cause) {
+      const payload = cause instanceof ApiError && cause.payload && typeof cause.payload === "object"
+        ? cause.payload as { error?: string; current?: Thought; context?: { current?: Thought } } : null;
+      const conflict = cause instanceof ApiError && cause.status === 409
+        && ["thought_revision_conflict", "refinement_review_superseded", "refinement_review_action_superseded"].includes(payload?.error ?? "");
+      if (conflict) {
+        clearThoughtRequest(key);
+        let current = payload?.current ?? payload?.context?.current;
+        if (current?.id !== thought.id) {
+          try {
+            const latest = await thoughtForNote(o.id);
+            if (latest.ownership === "thought" && latest.thought.id === thought.id) current = latest.thought;
+          } catch { /* Only claim a current version after a successful read. */ }
+        }
+        if (current?.id === thought.id) {
+          setStatus({ ownership: "thought", thought: current });
+          setMessage("Review changed · Latest note loaded");
+        } else setMessage("Review changed · Could not read latest note · Retry");
+      } else {
+        if (payload?.error === "refinement_review_action_payload_mismatch") clearThoughtRequest(key);
+        setMessage(`${action === "answer" ? "Answer" : action === "accept" ? "Refinement" : "Dismissal"} not confirmed · ${readableError(cause)} · Retry`);
+      }
+    } finally { refinementPending.current = false; setRefining(false); }
   };
   const resume = async () => {
     if (!thought || finishing || thought.state !== "completed") return;
     setFinishing(true); setMessage("");
     try {
       const resumed = await resumeThought(thought);
-      sessionStorage.removeItem(`hs.thought.complete.${thought.id}`);
+      clearThoughtRequest(`hs.thought.complete.${thought.id}`);
       setStatus({ ownership: "thought", thought: resumed }); setCompletionReceipt(null); openEditor(o.id);
       void useDesk.getState().refresh().catch(() => undefined);
     }
     catch (cause) {
-      const payload = cause instanceof ApiError && cause.payload && typeof cause.payload === "object" ? cause.payload as { context?: { current?: Thought } } : null;
-      if (payload?.context?.current?.id === thought.id) setStatus({ ownership: "thought", thought: payload.context.current });
-      setMessage("This thought changed elsewhere. Your latest version is shown. Review it, then resume refining.");
+      const payload = cause instanceof ApiError && cause.payload && typeof cause.payload === "object" ? cause.payload as { current?: Thought; context?: { current?: Thought } } : null;
+      const current = payload?.current ?? payload?.context?.current;
+      if (cause instanceof ApiError && cause.status === 409 && current?.id === thought.id) {
+        setStatus({ ownership: "thought", thought: current });
+        setMessage("Thought changed · Latest note loaded · Retry Resume refining");
+      } else setMessage(`Resume not confirmed · ${readableError(cause)} · Retry Resume refining`);
     } finally { setFinishing(false); }
   };
   useEffect(() => {

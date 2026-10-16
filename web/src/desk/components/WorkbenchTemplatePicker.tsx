@@ -22,6 +22,7 @@ export function WorkbenchTemplatePicker({
   onCreated?: (workbenchId: string) => void;
 }) {
   const [templates, setTemplates] = useState<Template[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
@@ -33,9 +34,11 @@ export function WorkbenchTemplatePicker({
 
   const loadTemplates = useCallback(() => {
     setError(false);
+    setLoading(true);
     return apiFetch<any>("/api/workbench-templates")
       .then((d) => setTemplates(d.templates || []))
-      .catch(() => setError(true));
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -99,9 +102,11 @@ export function WorkbenchTemplatePicker({
             error="Templates failed to load. Current work is unchanged. Retry."
             onRetry={() => void loadTemplates()}
           />
-        ) : templates.length === 0 ? (
+        ) : loading ? (
           <SurfaceState loading />
         ) : (
+          <>
+          {!templates.length ? <SurfaceState empty emptyLabel="No templates · Start Blank" /> : null}
           <div ref={gridRef} className="wb-picker-grid">
             {templates.map((t) => (
               <Button
@@ -134,6 +139,7 @@ export function WorkbenchTemplatePicker({
               <span className="wb-picker-card-desc">Start from scratch</span>
             </Button>
           </div>
+          </>
         )}
       </SurfaceSection>
     </div>

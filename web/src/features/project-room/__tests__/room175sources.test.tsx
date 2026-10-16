@@ -3,7 +3,7 @@
  * says PAUSED beside its Resume verb (MTG / GH / J alike); CHECKED prints
  * the viewer's local clock from the hub's offset-carrying instant.
  */
-import { render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { useState, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_ITEMS } from "../../../desk/api";
@@ -107,5 +107,69 @@ describe("HS-175 C8: CHECKED in the viewer's clock", () => {
     const d = new Date(CHECKED_AT);
     const pad = (n: number) => String(n).padStart(2, "0");
     expect(within(mtg).getByTestId("source-meeting-checked").textContent).toContain(`CHECKED ${pad(d.getHours())}:${pad(d.getMinutes())}`);
+  });
+});
+
+
+describe("merged Watch outcomes", () => {
+  it.each([
+    { state: "live", label: "Pause", path: "pause" },
+    { state: "paused", label: "Resume", path: "resume" },
+    { state: "cant_check", label: "Remove", path: "retire" },
+  ])("$label settles all siblings, rereads, and retries only the failed ID", async ({ state, label, path }) => {
+    let finishSibling: (value: unknown) => void = () => {};
+    let reads = 0;
+    let failedAttempts = 0;
+    const accepted = new Set<string>();
+    apiFetch.mockImplementation((url: string) => {
+      if (url === `/api/watches/w-failed/${path}`) {
+        if (++failedAttempts === 1) return Promise.reject(new TypeError("offline"));
+        accepted.add("w-failed");
+        return Promise.resolve({});
+      }
+      if (url === `/api/watches/w-sibling/${path}`) return new Promise((resolve) => {
+        finishSibling = (value) => { accepted.add("w-sibling"); resolve(value); };
+      });
+      if (url === "/api/projects/p1/room") {
+        reads += 1;
+        const body = roomResponse();
+        body.sources.items = [{ ...body.sources.items[0], watchId: "w-failed", watchIds: ["w-failed", "w-sibling"], state, scope: "acme/merged" }];
+        return Promise.resolve(body);
+      }
+      return Promise.resolve(response(url));
+    });
+    render(<WindowHarness scope="project:p1" />);
+    const verb = await screen.findByRole("button", { name: label });
+    const before = reads;
+    fireEvent.click(verb);
+    if (label === "Remove") fireEvent.click(screen.getByRole("button", { name: "Remove?" }));
+    await waitFor(() => expect(failedAttempts).toBe(1));
+    expect(reads).toBe(before);
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+    await act(async () => { finishSibling({}); });
+    await waitFor(() => expect(reads).toBe(before + 1));
+    expect(screen.getByRole("alert")).toHaveTextContent(`${label.toUpperCase()} FAILED`);
+    expect(accepted.has("w-sibling")).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(reads).toBe(before + 2));
+    expect(failedAttempts).toBe(2);
+    expect(apiFetch.mock.calls.filter(([url]) => url === `/api/watches/w-sibling/${path}`)).toHaveLength(1);
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("accepted writes with a failed reread offer read recovery, without replaying writes", async () => {
+    let mutated = false;
+    apiFetch.mockImplementation((url: string) => {
+      if (url === "/api/watches/w-gh/resume") { mutated = true; return Promise.resolve({}); }
+      if (url === "/api/projects/p1/room" && mutated) return Promise.reject(new TypeError("offline"));
+      return Promise.resolve(response(url));
+    });
+    render(<WindowHarness scope="project:p1" />);
+    const verbs = await screen.findAllByRole("button", { name: "Resume" });
+    fireEvent.click(verbs[0]);
+    expect(await screen.findByRole("alert")).toHaveTextContent("ROOM DID NOT LOAD");
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(apiFetch.mock.calls.filter(([url]) => url === "/api/projects/p1/room").length).toBe(3));
+    expect(apiFetch.mock.calls.filter(([url]) => url === "/api/watches/w-gh/resume")).toHaveLength(1);
   });
 });

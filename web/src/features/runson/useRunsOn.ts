@@ -230,6 +230,12 @@ export function useRunsOn(scope?: string) {
   const timers = useRef(new Map<string, ReturnType<typeof setInterval>>());
   const scopeApplied = useRef(false);
   const activeTry = useRef<string | null>(null);
+  const ownsCapture = useRef(false);
+  const releaseCapture = useCallback(async () => {
+    if (!ownsCapture.current) return;
+    ownsCapture.current = false;
+    await cancelCapture();
+  }, []);
 
   useEffect(() => {
     mounted.current = true;
@@ -238,8 +244,9 @@ export function useRunsOn(scope?: string) {
       mounted.current = false;
       for (const timer of live.values()) clearInterval(timer);
       live.clear();
+      void releaseCapture().catch(() => undefined);
     };
-  }, []);
+  }, [releaseCapture]);
 
   const loadRoster = useCallback(async () => {
     try {
@@ -571,6 +578,7 @@ export function useRunsOn(scope?: string) {
   /** Speech: you speak, it shows what it heard (the speak-to-fill route,
    *  `/api/dictation/transcribe`: on this device, nothing egresses). */
   const trySpeech = useCallback(async () => {
+    if (!mounted.current) return;
     if (!listening) {
       if (activeTry.current) return;
       activeTry.current = SPEECH_JOB;
@@ -578,11 +586,13 @@ export function useRunsOn(scope?: string) {
       setResults((prev) => ({ ...prev, [SPEECH_JOB]: { tone: "busy", tokens: ["Starting"] } }));
       try {
         await startCapture();
-        if (!mounted.current) return;
+        ownsCapture.current = true;
+        if (!mounted.current) { await releaseCapture(); return; }
         setListening(true);
         setResults((prev) => ({ ...prev, [SPEECH_JOB]: { tone: "busy", tokens: ["LISTENING"] } }));
       } catch {
         activeTry.current = null;
+        if (!mounted.current) return;
         setTrying(null);
         setResults((prev) => ({ ...prev, [SPEECH_JOB]: { tone: "danger", tokens: ["BROKEN", "NO MICROPHONE"] } }));
       }
@@ -590,6 +600,9 @@ export function useRunsOn(scope?: string) {
     }
     setListening(false);
     setResults((prev) => ({ ...prev, [SPEECH_JOB]: { tone: "busy", tokens: ["Transcribing"] } }));
+    // stopAndTranscribe synchronously ends this hold before its HTTP await.
+    // Another field can own the mic while that response is still pending.
+    ownsCapture.current = false;
     const started = performance.now();
     try {
       const text = await stopAndTranscribe();
@@ -602,13 +615,12 @@ export function useRunsOn(scope?: string) {
           : { tone: "danger", tokens: ["HEARD NOTHING"] },
       }));
     } catch {
-      await cancelCapture();
       if (mounted.current) setResults((prev) => ({ ...prev, [SPEECH_JOB]: { tone: "danger", tokens: ["BROKEN", "NOT HEARD"] } }));
     } finally {
       activeTry.current = null;
       if (mounted.current) setTrying(null);
     }
-  }, [engineForJob, listening]);
+  }, [engineForJob, listening, releaseCapture]);
 
   const tryJob = useCallback(
     (job: string, shown: PendingTry[]) => {
