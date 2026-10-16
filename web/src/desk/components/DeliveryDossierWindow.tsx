@@ -237,8 +237,9 @@ export function DeliveryDossierWindow() {
               {dossier.stories.map((s) => (
                 <li key={s.storyId}>
                   {s.state === "ready" ? (
-                    <button
-                      type="button"
+                    <Button
+                      dense
+                      variant="ghost"
                       className="desk-dlv-story-open"
                       onClick={() =>
                         void useDeliveryDossier
@@ -247,15 +248,17 @@ export function DeliveryDossierWindow() {
                       }
                     >
                       {s.storyId} {s.title ? `· ${s.title}` : ""}
-                    </button>
+                    </Button>
                   ) : (
                     <span className="desk-dlv-story-unavail">
                       {s.storyId} · {s.state.replace(/_/g, " ")}
                     </span>
                   )}
-                  {s.state === "ready" ? (
+                  {s.state === "ready" && (s.passing > 0 || s.failing > 0) ? (
                     <small>
-                      {s.passing} pass · {s.failing} fail
+                      {s.passing > 0 ? `${s.passing} pass` : null}
+                      {s.passing > 0 && s.failing > 0 ? " · " : null}
+                      {s.failing > 0 ? `${s.failing} fail` : null}
                     </small>
                   ) : null}
                 </li>

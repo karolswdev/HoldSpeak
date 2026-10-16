@@ -406,6 +406,10 @@ export function PadGadget({
   >;
 }) {
   const padRef = useRef<HTMLTextAreaElement | null>(null);
+  // A capture can finish after this controlled pad was edited or its owner
+  // changed. Held microphone callbacks must use the latest value and writer.
+  const voiceTargetRef = useRef({ value, onChange });
+  voiceTargetRef.current = { value, onChange };
   useEffect(() => {
     if (!autoGrow) return;
     const pad = padRef.current;
@@ -449,11 +453,12 @@ export function PadGadget({
           label={micLabel ?? `Speak ${label}`}
           startSignal={micStartSignal}
           draftScope={micDraftScope}
-          onText={(text) =>
-            onChange(
-              value && !/\s$/.test(value) ? `${value} ${text}` : value + text,
-            )
-          }
+          onText={(text) => {
+            const current = voiceTargetRef.current;
+            current.onChange(
+              current.value && !/\s$/.test(current.value) ? `${current.value} ${text}` : current.value + text,
+            );
+          }}
         />
       ) : null}
     </span>

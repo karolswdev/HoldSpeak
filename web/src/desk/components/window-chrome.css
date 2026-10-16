@@ -687,6 +687,11 @@
   /* HS-129-06 — surface is the one public window-body container name. */
   container-name: surface;
 }
+/* Keep footer actions above the 6 px bottom resize edge. The frame keeps
+   its edge and corner grip; the footer's inline grip reserve stays in force. */
+.desk-next .desk-window-shell:not(.is-sheet) > .desk-surface-foot {
+  padding-block-end: 6px;
+}
 .desk-next .desk-core-verbs {
   display: flex;
   justify-content: flex-end;

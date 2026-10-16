@@ -7,6 +7,7 @@
 // - Keyboard reachable (Enter/Space toggles)
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, act } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 // ---- mock autoSpeak ----
 
@@ -51,6 +52,8 @@ describe("SpeakerGlyph", () => {
     const glyph = screen.getByTestId("speaker-glyph");
     expect(glyph.textContent).toContain("▶"); // ▶
     expect(glyph.getAttribute("data-speaking")).toBe("false");
+    expect(glyph).toHaveClass("btn", "btn--ghost", "btn--sm");
+    expect(glyph).toHaveAttribute("type", "button");
   });
 
   it("does not render when text is empty", () => {
@@ -112,19 +115,36 @@ describe("SpeakerGlyph", () => {
     expect(mockReplayMessage).not.toHaveBeenCalled();
   });
 
-  it("is keyboard reachable with Enter", () => {
+  it("native Enter replays exactly once", async () => {
+    const user = userEvent.setup();
     render(<SpeakerGlyph messageId="msg-1" text="Test" />);
     const glyph = screen.getByTestId("speaker-glyph");
-    expect(glyph.getAttribute("tabindex")).toBe("0");
-    fireEvent.keyDown(glyph, { key: "Enter" });
+    await user.tab();
+    expect(glyph).toHaveFocus();
+    await user.keyboard("{Enter}");
+    expect(mockReplayMessage).toHaveBeenCalledTimes(1);
     expect(mockReplayMessage).toHaveBeenCalledWith("msg-1", "Test");
   });
 
-  it("is keyboard reachable with Space", () => {
+  it("native Space replays exactly once", async () => {
+    const user = userEvent.setup();
     render(<SpeakerGlyph messageId="msg-1" text="Test" />);
     const glyph = screen.getByTestId("speaker-glyph");
-    fireEvent.keyDown(glyph, { key: " " });
+    glyph.focus();
+    await user.keyboard(" ");
+    expect(mockReplayMessage).toHaveBeenCalledTimes(1);
     expect(mockReplayMessage).toHaveBeenCalledWith("msg-1", "Test");
+  });
+
+  it("native Enter stops only the speaking message exactly once", async () => {
+    const user = userEvent.setup();
+    mockActiveSpeakerId = "msg-1";
+    render(<SpeakerGlyph messageId="msg-1" text="Test" />);
+    act(() => ttsStateCallback?.("speaking"));
+    screen.getByRole("button", { name: "Stop speaking" }).focus();
+    await user.keyboard("{Enter}");
+    expect(mockStopReplay).toHaveBeenCalledTimes(1);
+    expect(mockReplayMessage).not.toHaveBeenCalled();
   });
 
   it("has correct aria-label for play state", () => {

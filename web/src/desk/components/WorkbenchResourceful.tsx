@@ -11,12 +11,12 @@ const ROUTINES = [
   {
     id: "loose_ideas" as const,
     label: "Develop loose ideas",
-    detail: "Take the oldest revised Note filed in the Loose Ideas directory.",
+    detail: "LOOSE IDEAS DIRECTORY · OLDEST REVISED NOTE",
   },
   {
     id: "failed_work" as const,
     label: "Prepare recovery plans",
-    detail: "Diagnose incomplete work and draft a recovery plan.",
+    detail: "INCOMPLETE WORK · DRAFT PLAN",
   },
 ];
 
@@ -68,7 +68,7 @@ export function WorkbenchResourceful({
   const nightlyTarget = settings.nightly_target;
   const lastFiredAt = policy.last_fired_at;
 
-  const commit = (enabled: boolean) => write(enabled ? "ENABLE RESOURCEFULNESS" : "PAUSE RESOURCEFULNESS", async () => {
+  const commit = (enabled: boolean, verb = enabled ? "ENABLE RESOURCEFULNESS" : "PAUSE RESOURCEFULNESS") => write(verb, async () => {
     // Receipt Retry replays this callback, so it owns the same busy guard.
     if (pendingRef.current) return;
     pendingRef.current = true;
@@ -84,10 +84,9 @@ export function WorkbenchResourceful({
 
   return (
     <div className="wb-resourceful">
-      <p className="wb-automation-safety">
-        WHEN IDLE · ONE BOUNDED IMPROVEMENT FROM LOCAL DATA
-      </p>
       <div className="wb-resourceful-contract" role="status">
+        <span className="surface-token">LOCAL DATA</span>
+        <span className="surface-token">ONE ITEM / RUN</span>
         <span className="desk-chip">{idleMin} MIN IDLE</span>
         <span className="desk-chip">{cdHours}H COOLDOWN</span>
         <span className="desk-chip">TARGET {nightlyTarget} / NIGHT</span>
@@ -176,27 +175,30 @@ export function WorkbenchResourceful({
         {ROUTINES.map((routine) => (
           <div className="wb-resourceful-routine" key={routine.id}>
             <CheckGadget
+              variant="token"
               label={routine.label}
               checked={routines.includes(routine.id)}
               onChange={(checked) => setRoutines((current) => checked
                 ? [...current, routine.id]
                 : current.filter((value) => value !== routine.id))}
             />
-            <small>{routine.detail}</small>
+            <span className="surface-token wb-resourceful-routine-fact">{routine.detail}</span>
           </div>
         ))}
+        <div className="wb-resourceful-limits" aria-label="Execution limits">
+          <span className="surface-token">SELECTED MAINTENANCE ONLY</span>
+          <span className="surface-token">PENDING WORK UNTOUCHED</span>
+          <span className="surface-token">SOURCE DATA · REVIEW-ONLY</span>
+        </div>
       </div>
-      <p className="wb-automation-safety">
-        RUNS AS OWNER · ONLY THE SELECTED MAINTENANCE ITEM RUNS · ORDINARY
-        PENDING WORK IS NEVER SWEPT · SOURCE DATA IS REVIEW-ONLY
-      </p>
       <div className="wb-automation-verbs">
+        <span className="surface-token">RUNS AS OWNER</span>
         {policy.enabled ? (
           <>
             <Button
               dense
               loading={pending}
-              onClick={() => void commit(true)}
+              onClick={() => void commit(true, "SAVE POLICY")}
               disabled={!routines.length || pending}
             >
               Save policy
@@ -220,11 +222,13 @@ export function WorkbenchResourceful({
           />
         )}
       </div>
-      <p className="wb-resourceful-status" role="status">
-        {policy.enabled
-          ? `READY WHEN IDLE · ${policy.nightly_count}/${policy.nightly_target} THIS NIGHT`
-          : "PAUSED · NO RESOURCEFUL WORK WILL START"}
-      </p>
+      <div className="wb-resourceful-status" role="status">
+        <span className="surface-token">{policy.enabled ? "READY WHEN IDLE" : "PAUSED"}</span>
+        {policy.enabled && policy.nightly_count > 0 ? (
+          <span className="surface-token">{policy.nightly_count}/{policy.nightly_target} THIS NIGHT</span>
+        ) : null}
+        {!policy.enabled ? <span className="surface-token">NO RESOURCEFUL WORK STARTS</span> : null}
+      </div>
       {lastFiredAt ? (
         <span className="wb-automation-last surface-token">LAST RUN {humanTime(lastFiredAt)}</span>
       ) : null}

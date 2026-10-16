@@ -1,0 +1,29 @@
+.canvas-desk { min-height: 100vh; background: var(--desk-floor); }
+.canvas-body { display: flex; flex-direction: column; gap: 18px; padding: 16px; }
+.canvas-reply { display: flex; flex-direction: column; gap: 8px; }
+.canvas-reply-text { font: 400 var(--desk-surface-body-size)/1.5 var(--font-sans); }
+.desk-next .desk-mc,
+.desk-next .desk-mc-tab { bottom: calc(var(--desk-dock-h, var(--desk-snap-bottom)) + var(--space-3)); }
+
+/* Proposed scoped adjustments: the library owns the plate and touch target. */
+.desk-next .desk-window-shell .thread-row-actions .thread-speaker-glyph--active.btn--ghost:not(:disabled) { color: var(--wb-warn-ink); border-color: var(--wb-warn-ink); background: var(--pill-warn); }
+.desk-next .desk-mc-story { flex-wrap: wrap; min-width: 0; max-width: 100%; gap: 4px; }
+.desk-next .desk-mc-story-pick { min-height: var(--size-btn); appearance: auto; padding: var(--space-1) var(--space-2); border: 1px solid var(--wb-ink); background: var(--wb-steel); color: var(--wb-ink); font: 500 12px/1 var(--font-mono); }
+.desk-next .desk-mc-evidence-open { width: var(--size-btn); height: auto; padding: var(--space-1) var(--space-2); border: 1px solid var(--wb-ink); background: var(--wb-steel); color: var(--wb-ink); }
+.desk-next .desk-mc-evidence-open:hover { color: var(--wb-ink); }
+.desk-next .desk-mc-pin { min-height: var(--size-btn); appearance: auto; border: 1px solid var(--wb-ink); margin-left: 0; padding: var(--space-1) var(--space-2); background: var(--wb-steel); color: var(--wb-ink); }
+.desk-next .desk-mc-pin.awaiting { background: var(--warn); color: var(--bg); }
+.desk-next .desk-mc-pin.stale { opacity: 1; border-style: dotted; }
+.desk-next .desk-mc-pin.btn.manual:not(.armed) { color: var(--text-muted); }
+.desk-next .desk-mc-needs { border: 1px solid var(--wb-ink); padding: var(--space-1) var(--space-2); max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+.desk-next .desk-dlv-story-open { display: inline-flex; min-width: 0; max-width: 100%; align-items: center; justify-content: flex-start; padding: var(--space-1) var(--space-2); border: 1px solid var(--wb-ink); background: var(--wb-steel); color: var(--wb-ink); white-space: normal; overflow-wrap: anywhere; text-align: left; }
+.desk-next .desk-dlv-phase-stories > li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+
+/* Device target sizing, matching the existing global phone target rule. */
+@media (max-width: 420px) {
+  :root .desk-next .desk-mc :is(.desk-mc-story-pick, .desk-mc-evidence-open, .desk-mc-pin, .desk-mc-needs) {
+    min-block-size: var(--desk-button-hit-size);
+    min-inline-size: var(--desk-button-hit-size);
+    margin-block: var(--space-1);
+  }
+}

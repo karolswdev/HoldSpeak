@@ -24,6 +24,14 @@ import {
 import { Button } from "../../components/signal/Signal";
 import { SurfaceColumns } from "./Surface";
 
+const { micCallbacks } = vi.hoisted(() => ({ micCallbacks: new Map<string, (text: string) => void>() }));
+vi.mock("../components/MicButton", () => ({
+  MicButton: ({ onText, label = "Speak", draftScope = "" }: { onText: (text: string) => void; label?: string; draftScope?: string }) => {
+    micCallbacks.set(draftScope, onText);
+    return <button type="button" aria-label={label} data-draft-scope={draftScope}/>;
+  },
+}));
+
 describe("gadget kit", () => {
   it("inset groups name their section and keep actions after block content", () => {
     const { container } = render(
@@ -392,6 +400,23 @@ describe("gadget kit", () => {
     const pad = screen.getByRole("textbox", { name: "Notes" });
     fireEvent.change(pad, { target: { value: "spoken words" } });
     expect(onChange).toHaveBeenCalledWith("spoken words");
+  });
+
+  it("PadGadget keeps one mic and appends a late capture through the latest value and writer", () => {
+    const firstChange = vi.fn();
+    const latestChange = vi.fn();
+    const { rerender } = render(<PadGadget label="Material" value="First draft." onChange={firstChange}
+      micLabel="Speak material" micDraftScope="pad:late-material"/>);
+    const lateCapture = micCallbacks.get("pad:late-material")!;
+    expect(screen.getAllByRole("button", { name: "Speak material" })).toHaveLength(1);
+    const newer = "Edited first paragraph.\n\nSecond paragraph stays.";
+    rerender(<PadGadget label="Material" value={newer} onChange={latestChange}
+      micLabel="Speak material" micDraftScope="pad:late-material"/>);
+    act(() => lateCapture("New spoken clause."));
+    expect(firstChange).not.toHaveBeenCalled();
+    expect(latestChange).toHaveBeenCalledExactlyOnceWith(`${newer} New spoken clause.`);
+    expect(screen.getByRole("textbox", { name: "Material" })).toHaveValue(newer);
+    expect(screen.getAllByRole("button", { name: "Speak material" })).toHaveLength(1);
   });
 
   it("PadGadget forwards native combobox attributes and its textarea ref", () => {

@@ -165,3 +165,16 @@ the writer payload. Confirm keeps the review mounted while pending and guards
 duplicate writes. Refusal retains the reviewed anchor/events for exact Retry;
 editing creates a new Confirm draft. The receipt uses the returned source/count.
 Extraction review fixtures do not establish OCR/model execution.
+
+### Conditional work controls (2026-10-16)
+
+Thread replay and Rails/dossier actions compose the library Button; Rails
+selection compares repo/project/Story. Desk furniture positions above the
+measured Dock. Ask retains actual grounding arithmetic and shows an explicit
+ungrounded state without zero meters. Resourcefulness uses visible library
+routine choices with the same consent, policy payload and pending Retry owner.
+Capability material composes the multiline Pad; late mic callbacks use its
+current value/writer. PR results retain action identity and disclose technical
+receipts; their existing reflow follows the760px table floor. Desktop footer
+content reserves the bottom resize edge while keeping resize handlers; Review
+wraps armed date/action groups with natural labels. No new service/public API.

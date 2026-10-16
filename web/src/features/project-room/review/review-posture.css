@@ -98,21 +98,45 @@
   padding: var(--space-1, 4px) 0;
 }
 
+.review-verb-bar > .btn,
+.review-defer-group > .btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
 .review-defer-group {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1, 4px);
+  min-width: 0;
+  max-width: 100%;
 }
 
-.review-defer-date {
+.review-posture .review-defer-date {
+  flex: 0 1 168px;
   font-family: var(--font-mono);
   font-size: 12px;
-  padding: 2px var(--space-1, 4px);
-  border: 1px solid var(--border, #2a2e3e);
-  border-radius: 2px;
-  background: var(--bg-input, transparent);
-  color: var(--text-primary, inherit);
-  width: 120px;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--wb-rule);
+  border-radius: 0;
+  background: var(--wb-well);
+  color: var(--wb-text);
+  box-shadow: var(--wb-sunken);
+  width: 168px;
+  min-width: 0;
+  max-width: 100%;
+  min-height: var(--desk-button-hit-size);
+  color-scheme: light;
+}
+
+.review-posture .review-defer-date::-webkit-calendar-picker-indicator {
+  opacity: 1;
+  filter: none;
+}
+
+@container surface (max-width: 559.9px) {
+  .review-verb-bar { flex-wrap: wrap; }
+  .review-defer-group { flex: 1 0 100%; flex-wrap: wrap; }
 }
 
 /* ── Edit fields (D5: each field carries MicButton) ── */

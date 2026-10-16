@@ -1,0 +1,25 @@
+body { margin: 0; }
+.material-direction-floor { min-height: 100vh; background: var(--desk-floor); padding: 24px; }
+.material-direction-body { min-height: 0; overflow: auto; }
+.material-direction-composer { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; }
+.material-direction-composer .gadget-pad { flex: 1 1 240px; min-width: 0; }
+.material-direction-result { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.material-direction-result .gadget-fold { flex: 1 1 100%; }
+/* Direction only: reserve an actual bottom band for the inherited resize edge. */
+.material-direction-frame-before .desk-window-shell:not(.is-sheet) > .desk-surface-foot { padding-block-end: 0; }
+.material-direction-frame-after .desk-window-shell:not(.is-sheet) > .desk-surface-foot { padding-block-end: 6px; }
+/* Existing PR composition, previewed through its table's 760 px minimum. */
+@container surface (max-width: 760px) {
+  .material-direction-pr-result .desk-pr-object-table { min-width: 0; width: 100%; }
+  .material-direction-pr-result .desk-pr-object-table thead { display: none; }
+  .material-direction-pr-result .desk-pr-object-table tbody { display: block; }
+  .material-direction-pr-result .desk-pr-object-table tr[data-desk-object="pr"] { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; padding: 10px; border-bottom: 1px solid var(--border); }
+  .material-direction-pr-result .desk-pr-object-table tr[data-desk-object="pr"] > * { display: block; width: auto; padding: 0; border: 0; }
+  .material-direction-pr-result .desk-pr-object-table tr[data-desk-object="pr"] > th { grid-column: 1 / -1; font-size: 12px; }
+  .material-direction-pr-result .desk-pr-object-table tr[data-desk-object="pr"] > td:nth-child(3) { justify-self: end; }
+  .material-direction-pr-result .desk-pr-object-table tr[data-desk-object="pr"] > td:last-child { grid-column: 1 / -1; margin-top: 4px; }
+  .material-direction-pr-result :is(.desk-pr-detail,.desk-pr-action,.desk-pr-proposal,.desk-pr-result,.desk-pr-diffrow) { display: block; }
+  .material-direction-pr-result :is(.desk-pr-detail,.desk-pr-action,.desk-pr-proposal,.desk-pr-result,.desk-pr-diffrow) > td { display: block; width: auto; }
+  .material-direction-pr-result .desk-pr-detail dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .material-direction-pr-result .desk-pr-proposal pre { font-size: var(--font-size-xs); }
+}

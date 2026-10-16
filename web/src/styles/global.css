@@ -210,6 +210,14 @@ small {
     height: var(--desk-button-hit-size);
     transform: translateY(-50%);
   }
+
+  /* Rails is desk furniture outside a surface container. Reserve the
+     device target in each action row; its halo fits inside the plate. */
+  :root .desk-next .desk-mc :is(.desk-mc-story-pick, .desk-mc-evidence-open, .desk-mc-pin, .desk-mc-needs) {
+    min-block-size: var(--desk-button-hit-size);
+    min-inline-size: var(--desk-button-hit-size);
+    margin-block: var(--space-1);
+  }
 }
 
 /* HS-202-05 (counsel round, finding 1): the filled Button's plate is
