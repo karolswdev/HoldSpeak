@@ -21,8 +21,13 @@ Remote recovery journeys pass, with real producer readbacks and declared
 failure/recorded-material boundaries. Build `a7145045f5dbab3c` matches source.
 [Delivery and evidence](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/DELIVERY-CDE.md)
 and [all-family coverage](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/COVERAGE.md).
-Merge, normal idle-hub delivery and formal postmerge review follow; full main
-suite and owner live judgment are separate. `/todo` remains non-idempotent:
+Merged as `14ae17b68`; normal idle-hub delivery is live on port8765, PID79705,
+with exact merged/source/build agreement. Formal Astra postmerge review RATIFY:
+[release record](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/POSTMERGE-CDE.md).
+Full main tape38957119404 (C/D/E) is queued and38950387547 (B) is running at
+record time; neither is claimed green. Owner live judgment remains separate.
+The bounded kickoff implementation/delivery is complete; every parent family
+has explicit current/carried/unknown coverage. `/todo` remains non-idempotent:
 explicitly sending again after an unknown result can create another task.
 The inherited graph census debt and native/provider/external-operation limits
 remain named. No whole-product aesthetic acceptance is claimed.
@@ -43,9 +48,7 @@ are in [Delivery B](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/DELIVER
 Normal local delivery follows merged tree/build equality. Formal postmerge
 review, full main tape and owner aesthetic acceptance remain separate.
 Release quick GREEN:4185 web/1599 affected Python/109 sweeps/17 canon;
-build`c15a5e7c1ef79062`. Programme remains active: next C covers People preparation/detail/draft safety
-and Project pending Review; D/E retain Thread task input and repair specific
-choice/notice/settings recovery. Healed work is preserved; this first delivery
+build`c15a5e7c1ef79062`. The connected C/D/E continuation is delivered in #1221 above. Healed work is preserved; this first delivery
 does not declare the whole product aesthetically accepted.
 
 

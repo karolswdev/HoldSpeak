@@ -222,3 +222,14 @@ The owner's real use and visual judgment remain separate.
 Product PR: [#1221](https://github.com/karolswdev/HoldSpeak/pull/1221).
 Verified product commit: `d0071b5312443b6dded6282baf2d1976b76b6f3c`;
 subsequent release-record changes are documentation only.
+
+## Merged and live
+
+PR #1221 merged as `14ae17b684024db1cdb33d9446c90c0789b51ceb` at
+2026-10-16 19:43:49 UTC. Verified branch and merged tree agree exactly:
+`332d80cade236eca8c1d1d61831308d83c6c0787`. Normal idle-hub delivery now serves
+build `a7145045f5dbab3c` from this worktree, PID 79705 on port 8765; health,
+Desk, Conductor and Models return 200 and served stamp/HTML match.
+[Astra postmerge review and delivery](POSTMERGE-CDE.md) is RATIFY and records
+full main-tape runs and explicit remaining limits. Owner link:
+http://127.0.0.1:8765/. The serving product and bundle remain frozen.

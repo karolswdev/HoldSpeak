@@ -119,4 +119,8 @@ names every current run directory and stamp, the final quick GREEN
 bounded judgment, separately from formal Astra postmerge review. B remains the
 verified merged/live #1220 delivery. No active family is unaccounted for; the
 remaining unknown inner operations above are not silently promoted to passes.
-Normal local delivery and main-tape results are recorded after they occur.
+C/D/E merged as #1221 and the verified build is live locally.
+[Formal postmerge review](POSTMERGE-CDE.md) records source/build/runtime equality
+and the still-pending full main tape. The bounded technical programme is
+delivered; owner visual acceptance and named external/native operations remain
+separate.
