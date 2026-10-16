@@ -1,8 +1,11 @@
 import { Button } from "../../components/signal/Signal";
 import { ATMOSPHERES } from "../../desk/gl/atmosphereRegistry";
 import { useAtmospherePreference } from "../../desk/gl/atmospherePreference";
+import { useAtmosphereControls } from "../../desk/gl/atmosphereControls";
 import {
+  CheckGadget,
   GadgetGroup,
+  GadgetRow,
 } from "../../desk/surface";
 import { useAtmosphereFavorites } from "../../desk/gl/atmosphereFavorites";
 
@@ -11,6 +14,7 @@ export function WallpaperModule({
   favoritesOnly = false,
 }: { showFavorites?: boolean; favoritesOnly?: boolean } = {}) {
   const [selectedId, select] = useAtmospherePreference();
+  const { motion, setMotion } = useAtmosphereControls();
   const { favorites, toggle } = useAtmosphereFavorites();
   const choices = favoritesOnly
     ? ATMOSPHERES.filter((entry) => favorites.includes(entry.id))
@@ -120,6 +124,9 @@ export function WallpaperModule({
           );
         })}
       </div>
+      <GadgetRow label="Motion">
+        <CheckGadget label="Wallpaper motion" checked={motion} onChange={setMotion} variant="state" />
+      </GadgetRow>
     </GadgetGroup>
   );
 }

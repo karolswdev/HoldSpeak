@@ -5,17 +5,19 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../../lib/api";
-import { EMPTY_ITEMS } from "../../api";
+import { EMPTY_ITEMS, fromWireDirectory, fromWireNote, qualifiedRef, type Items } from "../../api";
 import { useAgentFlights, fromWireSessionRow } from "../../agentFlights";
 import { useChairWindows } from "../../chair/chairWindows";
 import { useDrawers } from "../../drawer/store";
 import { useDesk } from "../../store";
-import { composeScreen, layoutScreen, shortItemName, normalizeRef, type ScreenInputs } from "..";
+import { composeScreen, layoutScreen, screenIsBare, shortItemName, normalizeRef, type ScreenInputs } from "..";
 import { Screen } from "../Screen";
+import { rootDirectories } from "../compose";
 import { resetScreenMembers } from "../members";
 import { DeskIcon } from "../../surface";
 import { verbById } from "../../verbRegistry";
 import { dispatchKey, keyContext } from "../../keymap";
+import { DeskMenuBar } from "../../components/DeskMenuBar";
 
 const shell = vi.hoisted(() => ({
   openProjectRoom: vi.fn(),
@@ -31,6 +33,13 @@ vi.mock("../../shell", async (original) => ({
   openPrimitive: shell.openPrimitive,
 }));
 const openMeeting = vi.hoisted(() => vi.fn());
+const atmosphere = vi.hoisted(() => ({ ready: null as null | ((ready: boolean) => void) }));
+vi.mock("../../gl/Atmosphere", () => ({
+  Atmosphere: ({ id, onReadyChange }: { id: string; onReadyChange: (ready: boolean) => void }) => {
+    atmosphere.ready = onReadyChange;
+    return <div data-testid="live-atmosphere" data-atmosphere={id} />;
+  },
+}));
 vi.mock("../../openObject", async (original) => {
   const real = await original<typeof import("../../openObject")>();
   return {
@@ -62,7 +71,7 @@ const ITEMS = {
   ],
   repository: [{ kind: "repository", id: "repo-ledger", name: "payments-ledger" }],
   thread: [{ kind: "thread", id: "t-1", title: "Idea: shard the reconciliation", tokenIn: 0, tokenOut: 0, createdAt: "" }],
-} as never;
+} as unknown as Items;
 
 const RESOURCES: Record<string, string[]> = {
   "p-ledger": ["desk_decision:d-freeze", "people:p-jordan", "repository:repo-other"],
@@ -128,6 +137,15 @@ function setCompact(on: boolean) {
 }
 const realMatchMedia = window.matchMedia;
 
+// Recorded GET /api/directories after root's isolated POST root/child and
+// PUT member. Source: .tmp/desk-drawers-live/produced-directory-wire.json.
+const folder = fromWireDirectory({ id: "dir_b5c056b59f3e", name: "Platform", name_normalized: "platform",
+  parent_id: null, member_ids: ["note:note_0b9ebdadf0fa"], created_at: "2026-10-16T01:39:56Z" })!;
+const childFolder = fromWireDirectory({ id: "dir_3e8aa70e9523", name: "Architecture", name_normalized: "architecture",
+  parent_id: folder.id, member_ids: [], created_at: "2026-10-16T01:39:56Z" })!;
+const filedNote = fromWireNote({ id: "note_0b9ebdadf0fa", title: "Rollback plan", body_markdown: "Keep the previous deployment ready.", tags: [],
+  created_at: "2026-10-16T01:39:56Z", updated_at: "2026-10-16T01:39:56Z", last_modified: "2026-10-16T01:39:56Z", deleted: false })!;
+
 const icon = (name: RegExp) => screen.getByRole("button", { name });
 const keys = () => [...document.querySelectorAll<HTMLElement>(".desk-screen [data-object-id]")].map((el) => el.dataset.objectId);
 
@@ -140,6 +158,7 @@ beforeEach(() => {
   shell.openProjectRoom.mockReset();
   shell.openSurfaceOr.mockReset();
   shell.openCoderSession.mockReset();
+  atmosphere.ready = null;
   openMeeting.mockReset();
   useChairWindows.setState({ closed: { "chair:needs": true, "chair:brief": true, "chair:week": true, "chair:capture": true }, phone: "" });
   useDesk.setState({ items: ITEMS, updatedAt: 1, selectedIds: [], editingId: null });
@@ -151,6 +170,38 @@ afterEach(() => {
 });
 
 describe("PHILO-14 A1 — the screen of objects", () => {
+  it("renders real root drawers, recovers missing parents and opens the qualified directory", async () => {
+    const orphan = { ...childFolder, id: "missing-parent-child", name: "Unfiled drawer", parentId: "missing-parent" };
+    useDesk.setState({ items: { ...ITEMS, directory: [childFolder, folder, orphan], note: [...ITEMS.note, filedNote] } });
+    const open = vi.spyOn(useDesk.getState(), "openPullout").mockImplementation(() => undefined);
+    try {
+      render(<><Screen /><DeskMenuBar /></>);
+      await waitFor(() => expect(keys()).toContain("note:n-2"));
+      expect(keys()).toContain(qualifiedRef("directory", folder.id));
+      expect(keys()).toContain(qualifiedRef("directory", orphan.id));
+      expect(keys()).not.toContain(qualifiedRef("directory", childFolder.id));
+      expect(keys()).not.toContain(qualifiedRef("note", filedNote.id));
+      expect(icon(/^Platform, DRAWER$/)).toBeTruthy();
+      fireEvent.click(icon(/^Platform, DRAWER$/));
+      expect(useDesk.getState().selectedIds).toEqual([qualifiedRef("directory", folder.id)]);
+      fireEvent.click(screen.getByRole("button", { name: /^Object$/ }));
+      const objectMenu = screen.getByRole("menu", { name: "Object menu" });
+      fireEvent.click(within(objectMenu).getByRole("menuitem", { name: /^Open/ }));
+      expect(open).toHaveBeenCalledWith(qualifiedRef("directory", folder.id), undefined);
+      open.mockClear();
+      fireEvent.contextMenu(icon(/^Platform, DRAWER$/), { clientX: 100, clientY: 100 });
+      const contextMenu = screen.getByRole("menu", { name: "Platform menu" });
+      fireEvent.click(within(contextMenu).getByRole("menuitem", { name: /^Open/ }));
+      expect(open).toHaveBeenCalledWith(qualifiedRef("directory", folder.id), undefined);
+      open.mockClear();
+      fireEvent.keyDown(icon(/^Platform, DRAWER$/), { key: "Enter" });
+      expect(open).toHaveBeenCalledWith(qualifiedRef("directory", folder.id));
+      expect(screen.queryByTestId("desk-screen-empty")).toBeNull();
+    } finally {
+      open.mockRestore();
+    }
+  });
+
   it("composes the drawers, the loose objects and the agents from the desk", async () => {
     render(<Screen />);
     await waitFor(() => expect(keys()).toContain("meeting:m-vendor"));
@@ -328,18 +379,22 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     expect(keys().some((k) => k?.startsWith("people:"))).toBe(false);
   });
 
-  it("PHILO-17: the chosen place is the backdrop (its still); Quiet Desk is the floor alone", async () => {
+  it("keeps the chosen still until the live backdrop is ready; Quiet Desk has no atmosphere", async () => {
     localStorage.setItem("hs.desk.atmosphere", "night-train");
     const view = render(<Screen />);
     const desk = screen.getByTestId("desk-screen");
     expect(desk.getAttribute("data-place")).toBe("night-train");
     expect(desk.hasAttribute("data-place-still")).toBe(true);
     expect(desk.style.getPropertyValue("--desk-place-still")).toContain("night-train.webp");
-    expect(desk.querySelector("canvas")).toBeNull();
+    expect(screen.getByTestId("live-atmosphere").getAttribute("data-atmosphere")).toBe("night-train");
+    act(() => atmosphere.ready?.(true));
+    expect(desk.hasAttribute("data-place-still")).toBe(false);
+    expect(desk.style.getPropertyValue("--desk-place-still")).toBe("");
     view.unmount();
     localStorage.setItem("hs.desk.atmosphere", "quiet-desk");
     render(<Screen />);
     expect(screen.getByTestId("desk-screen").hasAttribute("data-place-still")).toBe(false);
+    expect(screen.queryByTestId("live-atmosphere")).toBeNull();
     localStorage.removeItem("hs.desk.atmosphere");
   });
 
@@ -364,12 +419,75 @@ describe("PHILO-14 A1 — the screen of objects", () => {
 });
 
 describe("PHILO-14 A1 — the pure parts", () => {
+  it("resolves bare members to one canonical kind without hiding colliding drawers or decisions", () => {
+    const directory = [
+      { ...folder, memberIds: ["shared", "unknown-person"] },
+      { ...childFolder, id: "shared", parentId: null, memberIds: [] },
+    ];
+    const items: Items = { ...EMPTY_ITEMS, directory, note: [{ ...filedNote, id: "shared" }],
+      decision: [{ ...ITEMS.decision[0], id: "shared", title: "Different kind" }] };
+    expect(rootDirectories(items).map((row) => row.id)).toEqual([folder.id, "shared"]);
+    const objects = composeScreen({ items, projectCounts: {}, needsCount: 0, needsRefs: new Set(), heldCalls: 0, sessions: [], flights: [],
+      filed: new Set(), persons: [{ id: "unknown-person", name: "Unresolved person" }], membersLoaded: true });
+    expect(objects.map((row) => row.key)).toEqual(expect.arrayContaining(["zone:shared", "decision:shared", "people:unknown-person"]));
+    expect(objects.map((row) => row.key)).not.toContain("note:shared");
+  });
+
+  it("keeps the original root reachable when filing it into its own child creates a parent cycle", () => {
+    const childHoldingRoot = { ...childFolder, memberIds: [qualifiedRef("directory", folder.id)] };
+    for (const directory of [[folder, childHoldingRoot], [childHoldingRoot, folder]]) {
+      expect(rootDirectories({ ...EMPTY_ITEMS, directory }).map((row) => row.id)).toEqual([folder.id]);
+    }
+  });
+
+  it("keeps one deterministic root for a membership-only cycle regardless of input order", () => {
+    const parent = { ...folder, memberIds: [qualifiedRef("directory", childFolder.id)] };
+    const child = { ...childFolder, parentId: null, memberIds: [`directory:${folder.id}`] };
+    for (const directory of [[parent, child], [child, parent]]) {
+      expect(rootDirectories({ ...EMPTY_ITEMS, directory }).map((row) => row.id)).toEqual([childFolder.id]);
+    }
+  });
+
+  it("keeps a self-filed or self-parented drawer as a reachable root", () => {
+    for (const parentId of [null, folder.id]) {
+      const self = { ...folder, parentId, memberIds: [qualifiedRef("directory", folder.id)] };
+      expect(rootDirectories({ ...EMPTY_ITEMS, directory: [self] }).map((row) => row.id)).toEqual([folder.id]);
+    }
+  });
+
+  it("reaches folders filed by canonical or directory alias member refs through their parent", () => {
+    const otherChild = { ...childFolder, id: "legacy-child", parentId: null };
+    const base: ScreenInputs = {
+      items: { ...EMPTY_ITEMS, directory: [{ ...folder, memberIds: [qualifiedRef("directory", childFolder.id), `directory:${otherChild.id}`] },
+        { ...childFolder, parentId: null }, otherChild] },
+      projectCounts: {}, needsCount: 0, needsRefs: new Set(), heldCalls: 0, sessions: [], flights: [],
+      filed: new Set(), persons: [], membersLoaded: true,
+    };
+    expect(composeScreen(base).filter((o) => o.kind === "directory").map((o) => o.key)).toEqual([qualifiedRef("directory", folder.id)]);
+  });
+
+  it("keeps canonical and legacy directory members filed without hiding a different qualified kind", () => {
+    const base: ScreenInputs = {
+      items: { ...ITEMS, directory: [{ ...folder, memberIds: ["note:n-2", "desk_decision:d-otel", "m-vendor", "person:p-avery"] }],
+        meeting: [{ kind: "meeting", id: "n-2", title: "Same id, different kind" }, { kind: "meeting", id: "m-vendor", title: "Vendor call" }] } as never,
+      projectCounts: {}, needsCount: 0, needsRefs: new Set(), heldCalls: 0, sessions: [], flights: [],
+      filed: new Set(), persons: [{ id: "p-avery", name: "Avery Chen" }], membersLoaded: true,
+    };
+    const objects = composeScreen(base);
+    expect(objects.map((o) => o.key)).toContain("meeting:n-2");
+    for (const ref of ["note:n-2", "decision:d-otel", "meeting:m-vendor", "people:p-avery"])
+      expect(objects.map((o) => o.key)).not.toContain(ref);
+    expect(objects.find((o) => o.key === qualifiedRef("directory", folder.id))?.target).toEqual({ type: "ref", ref: qualifiedRef("directory", folder.id) });
+    expect(screenIsBare(composeScreen({ ...base, items: { ...EMPTY_ITEMS, directory: [folder] } }))).toBe(false);
+  });
+
   it("names the item short and normalizes a Project's ref names", () => {
     expect(shortItemName("Write the rollback runbook")).toBe("rollback runbook");
     expect(shortItemName("Add the ledger freeze flag")).toBe("ledger freeze flag");
     expect(shortItemName("Ship it")).toBe("Ship it");
     expect(normalizeRef("desk_decision:d1")).toBe("decision:d1");
     expect(normalizeRef("person:x")).toBe("people:x");
+    expect(normalizeRef("directory:x")).toBe(qualifiedRef("directory", "x"));
   });
 
   it("wraps the drawers into a second column and moves the field right", () => {

@@ -1,7 +1,7 @@
 // PHILO-14 A1 — ChairHome renders the screen of objects after arrival; the
 // first-run path (arrivalRequired) is untouched; a fresh desk opens with the
 // four Chair windows closed (they open on demand).
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../../lib/api";
 
@@ -25,6 +25,31 @@ beforeEach(() => {
 });
 
 describe("PHILO-14 A1 — the Chair is the screen", () => {
+  it("keeps phone Go and adds the same real root drawers as a named Drawers section", async () => {
+    const { EMPTY_ITEMS, fromWireDirectory, qualifiedRef } = await import("../../api");
+    const { useDesk } = await import("../../store");
+    const { GoHome } = await import("../GoHome");
+    // Recorded real GET /api/directories, produced in root's isolated hub.
+    const folder = fromWireDirectory({ id: "dir_b5c056b59f3e", name: "Platform", parent_id: null,
+      member_ids: ["note:note_0b9ebdadf0fa"], created_at: "2026-10-16T01:39:56Z" })!;
+    const child = fromWireDirectory({ id: "dir_3e8aa70e9523", name: "Architecture", parent_id: folder.id,
+      member_ids: [], created_at: "2026-10-16T01:39:56Z" })!;
+    const orphan = { ...child, id: "orphan", name: "Unfiled drawer", parentId: "missing-parent" };
+    const openPullout = vi.fn();
+    useDesk.setState({ items: { ...EMPTY_ITEMS, directory: [child, folder, orphan] }, projects: [], selectedIds: [], openPullout });
+    render(<GoHome />);
+    expect(screen.getByRole("menu", { name: "Go menu" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Drawers" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: /Meetings/ })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: /Architecture/ })).toBeNull();
+    const row = screen.getByRole("menuitem", { name: /Platform/ });
+    expect(row).toHaveAttribute("data-object-id", qualifiedRef("directory", folder.id));
+    fireEvent.click(row);
+    expect(openPullout).toHaveBeenCalledWith(qualifiedRef("directory", folder.id));
+    fireEvent.click(screen.getByRole("menuitem", { name: /Unfiled drawer/ }));
+    expect(openPullout).toHaveBeenCalledWith(qualifiedRef("directory", orphan.id));
+  });
+
   it("renders the screen and no Chair window on a fresh desk", async () => {
     const { ChairHome } = await import("../../chair/ChairHome");
     render(<ChairHome />);

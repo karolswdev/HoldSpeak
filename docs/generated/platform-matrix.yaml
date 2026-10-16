@@ -2971,7 +2971,10 @@
       "source_ids": [
         "web/src/routes.tsx",
         "web/src/App.tsx",
-        "web/src/desk/DeskApp.tsx"
+        "web/src/desk/DeskApp.tsx",
+        "web/src/desk/screen/compose.ts",
+        "web/src/desk/pullouts/DirectoryPullout.tsx",
+        "web/src/desk/gl/Atmosphere.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -2983,7 +2986,10 @@
       "source_ids": [
         "web/src/routes.tsx",
         "web/src/App.tsx",
-        "web/src/desk/DeskApp.tsx"
+        "web/src/desk/DeskApp.tsx",
+        "web/src/desk/screen/compose.ts",
+        "web/src/desk/pullouts/DirectoryPullout.tsx",
+        "web/src/desk/gl/Atmosphere.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -2995,7 +3001,10 @@
       "source_ids": [
         "web/src/routes.tsx",
         "web/src/App.tsx",
-        "web/src/desk/DeskApp.tsx"
+        "web/src/desk/DeskApp.tsx",
+        "web/src/desk/screen/compose.ts",
+        "web/src/desk/pullouts/DirectoryPullout.tsx",
+        "web/src/desk/gl/Atmosphere.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -3007,7 +3016,10 @@
       "source_ids": [
         "web/src/routes.tsx",
         "web/src/App.tsx",
-        "web/src/desk/DeskApp.tsx"
+        "web/src/desk/DeskApp.tsx",
+        "web/src/desk/screen/compose.ts",
+        "web/src/desk/pullouts/DirectoryPullout.tsx",
+        "web/src/desk/gl/Atmosphere.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -3019,7 +3031,10 @@
       "source_ids": [
         "web/src/routes.tsx",
         "web/src/App.tsx",
-        "web/src/desk/DeskApp.tsx"
+        "web/src/desk/DeskApp.tsx",
+        "web/src/desk/screen/compose.ts",
+        "web/src/desk/pullouts/DirectoryPullout.tsx",
+        "web/src/desk/gl/Atmosphere.tsx"
       ],
       "status": "built_unreleased"
     },

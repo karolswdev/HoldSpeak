@@ -17,8 +17,8 @@
   font-family: var(--font-sans);
   color: var(--wb-paper);
 }
-/* PHILO-17: the chosen place (Change places) is the backdrop: its still
-   picture under the floor's light, on the Workbench backdrop colour. */
+/* The selected still covers loading and WebGL failure. The live scene owns
+   the backdrop only after its first render succeeds. */
 .desk-screen[data-place-still] {
   /* The A1 floor's one light (tokens.css --desk-floor): bright top-left,
      falling to the foot, over the picture. */
@@ -27,6 +27,23 @@
     linear-gradient(180deg, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.28) 100%),
     var(--desk-place-still) center / cover no-repeat,
     var(--wb-backdrop);
+}
+/* Keep the one scene inside the Screen's work area and fixed behind its
+   scrolling objects. Inherited insets include the standing receipt's offset.
+   This overrides the parked Floor host's full-viewport placement. */
+.desk-next .desk-screen > .desk-stage {
+  position: fixed;
+  inset: inherit;
+  z-index: -1;
+  pointer-events: none;
+  background: transparent;
+  opacity: 0;
+}
+.desk-next .desk-screen > .desk-stage[data-atmosphere-state="ready"] {
+  opacity: 1;
+}
+.desk-next .desk-screen > .desk-stage .desk-atmosphere-canvas {
+  object-fit: cover;
 }
 /* 1440: the icons stand where layout.ts puts them (A-1). */
 .desk-screen[data-layout="free"] > .desk-icon-grid {

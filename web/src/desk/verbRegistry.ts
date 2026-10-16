@@ -15,6 +15,7 @@ import { openIntelligence } from "./intelligenceNavigation";
 import { openSurfaceOr } from "./shell";
 import { openPerson, openProjectRename, openProjectUpdates } from "./openObject";
 import { apiFetch } from "../lib/api";
+import { qualifiedRef } from "./api";
 import { objectByRef } from "./world";
 import { DESK_TOOLS, KIND_GLYPH } from "./tools";
 import { applicationForAction } from "./applications";
@@ -431,9 +432,7 @@ export const VERBS: Verb[] = [
     run: (ctx) => {
       const o = selected(ctx);
       if (!o) return;
-      // PHILO-17: no face draws a zone; a zone opens no window.
-      if (o.kind === "directory") return;
-      useDesk.getState().openPullout(o.id, ctx.origin);
+      useDesk.getState().openPullout(o.kind === "directory" ? qualifiedRef(o.kind, o.id) : o.id, ctx.origin);
     },
   },
   {
