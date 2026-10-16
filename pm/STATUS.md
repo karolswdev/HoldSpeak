@@ -4,9 +4,30 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-15 (Thread, Ask and notifications: #1215)
+**Last updated:** 2026-10-16 (Cohesive workflows: #1216)
 
 ## Current phase
+
+**Cohesive workflows — #1216 (2026-10-16).** The whole-app audit fixes
+Workbench Close/refusal/reopen and ordered drafts, exact Add/Coder Retry,
+honest Conductor/Lane decisions and accepted-read recovery, policy Retry
+ownership, selected account Recheck and latest reads, calendar A/B edits,
+speech test ownership/floor release, People/meeting read recovery and Project
+source partial outcomes. Active Thought context uses library material and
+storage-safe local retry identities; Get Info resolves canonical kind/ID
+lineage and opens the actual Note; New Project/common actions use the kit.
+Actual desktop review caught a narrow attached-context footer, separately
+corrected to readable context/action rows. Complete final quick GREEN:
+4039web/672affectedPython/107sweeps(twoexistingxfails)/17canon; TypeScript passes.
+Root read fourteen-state actual isolated task walks at1440/393 on build
+c5c94f74427b5104, real attach/detach refs/calendar saves, canonical source open,
+and actual Search→NewProject graph entry both widths on preceding6655519build
+with unchanged NewProject source. An intermediate phone picker timeout passed
+exact reproduction and unchanged complete rerun; no waiver. Formal postmerge
+review remains separate from bounded source counsel. The whole-app goal stays
+active: Search Close/meeting identity/mic target, empty Context meters and
+Needs spacing are the next bounded pass; Week zoom and populated calendar
+snapshot remain to assess. [Proof and limits](../docs/internal/COHESIVE-WORKFLOWS-2026-10-15/README.md).
 
 **Thread, Ask and notifications — #1215 (2026-10-15).** Shared Workbench paper
 traffic and bounded question pads; measured Thread modes, pointer editing and

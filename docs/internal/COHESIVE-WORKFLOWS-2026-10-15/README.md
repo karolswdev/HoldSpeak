@@ -185,3 +185,5 @@ Next bounded pass: explicit Search Close and distinct meeting context, portal
 mic hit ownership, empty Context meters and Needs button spacing; Week zoom
 and populated calendar snapshot remain to assess. The whole-app goal remains
 active until required refinements and their functional checks are delivered.
+
+Release: [PR #1216](https://github.com/karolswdev/HoldSpeak/pull/1216).
