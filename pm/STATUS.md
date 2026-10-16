@@ -24,8 +24,15 @@ and [all-family coverage](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/C
 Merged as `14ae17b68`; normal idle-hub delivery is live on port8765, PID79705,
 with exact merged/source/build agreement. Formal Astra postmerge review RATIFY:
 [release record](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/POSTMERGE-CDE.md).
-Full main tape38957119404 (C/D/E) is queued and38950387547 (B) is running at
-record time; neither is claimed green. Owner live judgment remains separate.
+Full main tape 38950387547 (B) completed red: 103 failures / 16,327 passes,
+with 96 failure names shared with the preceding tape. This forward fix aligns
+the two follow-through wire fixtures with their real nullable hold fields;
+the isolated producer fences and 32 web consumer checks pass. CDE tape
+38957119404 remains in progress; no full-tape green is claimed.
+Owner density feedback was delivered by #1223, build `ca987454c0b44162`,
+PID 96844 on port 8765; formal Astra postmerge review RATIFY.
+[Delivery and fixture follow-up](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/POSTMERGE-DENSITY.md).
+Owner live judgment remains separate.
 The bounded kickoff implementation/delivery is complete; every parent family
 has explicit current/carried/unknown coverage. `/todo` remains non-idempotent:
 explicitly sending again after an unknown result can create another task.
