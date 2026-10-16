@@ -33,6 +33,50 @@ const SETTINGS = {
   },
 };
 
+function appliedAddWithLostResponse() {
+  const server = {
+    settings: {
+      ...SETTINGS,
+      dictation: { macros: { enabled: true, items: [] as typeof SETTINGS.dictation.macros.items } },
+    },
+  };
+  let puts = 0;
+  mocks.apiFetch.mockImplementation((path: string, init?: Init) => {
+    if (path === "/api/settings" && init?.method === "PUT") {
+      puts += 1;
+      server.settings = {
+        ...server.settings,
+        _revision: `rev-${puts + 1}`,
+        dictation: {
+          macros: {
+            enabled: true,
+            items: init.json.dictation.macros.items.map((macro: typeof SETTINGS.dictation.macros.items[number]) => ({
+              ...macro,
+              keyword: macro.keyword.trim(),
+            })),
+          },
+        },
+      };
+      if (puts === 1) return Promise.reject(new Error("Response lost"));
+      return Promise.resolve({ settings: server.settings });
+    }
+    if (path === "/api/settings") return Promise.resolve(server.settings);
+    return Promise.resolve({});
+  });
+  return server;
+}
+
+async function addWithLostResponse() {
+  render(<CommandsCore />);
+  await screen.findByText("No voice commands");
+  fireEvent.click(screen.getAllByRole("button", { name: "Add command" })[0]);
+  fireEvent.change(screen.getByRole("textbox", { name: "Spoken keyword" }), { target: { value: "  type ledger  " } });
+  fireEvent.change(screen.getByLabelText("Command behavior"), { target: { value: "type_text" } });
+  fireEvent.change(screen.getByRole("textbox", { name: "Payload" }), { target: { value: "Ledger is ready." } });
+  fireEvent.click(screen.getByRole("button", { name: "Save command" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("Command save not confirmed");
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.apiFetch.mockImplementation((path: string, init?: Init) => {
@@ -97,7 +141,7 @@ describe("CommandsCore is one honest items-writer (HS-130-07)", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "Payload" }), { target: { value: "Ledger is ready." } });
     fireEvent.click(screen.getByRole("button", { name: "Save command" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Command not saved · Settings unavailable");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Command save not confirmed · Shown commands kept · Reload · Settings unavailable");
     expect(screen.getByRole("textbox", { name: "Spoken keyword" })).toHaveValue("type ledger");
     expect(screen.getByLabelText("Command behavior")).toHaveValue("type_text");
     expect(screen.getByRole("textbox", { name: "Payload" })).toHaveValue("Ledger is ready.");
@@ -107,5 +151,117 @@ describe("CommandsCore is one honest items-writer (HS-130-07)", () => {
     expect(writes).toHaveLength(2);
     expect(writes[1].json).toEqual(writes[0].json);
     expect(screen.getByText("“type ledger”")).toBeVisible();
+  });
+
+  it("reloads an applied Add after a lost response and saves exactly one command", async () => {
+    appliedAddWithLostResponse();
+    await addWithLostResponse();
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+    await screen.findByText("“type ledger”");
+    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
+    expect(screen.getByRole("textbox", { name: "Spoken keyword" })).toHaveValue("  type ledger  ");
+    expect(callsTo("/api/settings").filter((c) => c.method === "PUT")).toHaveLength(1);
+    expect(callsTo("/api/settings").filter((c) => !c.method)).toHaveLength(2);
+    expect(callsTo("/api/commands/test")).toHaveLength(0);
+
+    fireEvent.click(screen.getByRole("button", { name: "Save command" }));
+    await waitFor(() => expect(screen.queryByRole("textbox", { name: "Payload" })).toBeNull());
+    const writes = callsTo("/api/settings").filter((c) => c.method === "PUT");
+    expect(writes).toHaveLength(2);
+    expect(writes[1].json.dictation.macros.items).toHaveLength(1);
+    expect(writes[1].json._revision).toBe("rev-2");
+    expect(screen.getAllByText("“type ledger”")).toHaveLength(1);
+  });
+
+  it("preserves newer local fields while reconciling the saved Add row", async () => {
+    appliedAddWithLostResponse();
+    await addWithLostResponse();
+    fireEvent.change(screen.getByRole("textbox", { name: "Spoken keyword" }), { target: { value: "new keyword" } });
+    fireEvent.change(screen.getByLabelText("Command behavior"), { target: { value: "open_url" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Payload" }), { target: { value: "https://new.example" } });
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+    await screen.findByText("“type ledger”");
+    expect(screen.getByRole("textbox", { name: "Spoken keyword" })).toHaveValue("new keyword");
+    expect(screen.getByLabelText("Command behavior")).toHaveValue("open_url");
+    expect(screen.getByRole("textbox", { name: "Payload" })).toHaveValue("https://new.example");
+    fireEvent.click(screen.getByRole("button", { name: "Save command" }));
+    await waitFor(() => expect(screen.queryByRole("textbox", { name: "Payload" })).toBeNull());
+    const writes = callsTo("/api/settings").filter((c) => c.method === "PUT");
+    expect(writes[1].json.dictation.macros.items).toEqual([
+      { keyword: "new keyword", action: { kind: "open_url", payload: "https://new.example" } },
+    ]);
+  });
+
+  it("does not take over a different draft opened after the failed save", async () => {
+    appliedAddWithLostResponse();
+    await addWithLostResponse();
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    fireEvent.click(screen.getAllByRole("button", { name: "Add command" })[0]);
+    fireEvent.change(screen.getByRole("textbox", { name: "Spoken keyword" }), { target: { value: "second command" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Payload" }), { target: { value: "https://second.example" } });
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+    await screen.findByText("“type ledger”");
+    expect(screen.getByRole("textbox", { name: "Spoken keyword" })).toHaveValue("second command");
+    expect(screen.getByRole("textbox", { name: "Payload" })).toHaveValue("https://second.example");
+    fireEvent.click(screen.getByRole("button", { name: "Save command" }));
+    await waitFor(() => expect(screen.queryByRole("textbox", { name: "Payload" })).toBeNull());
+    const writes = callsTo("/api/settings").filter((c) => c.method === "PUT");
+    expect(writes[1].json.dictation.macros.items).toEqual([
+      { keyword: "type ledger", action: { kind: "type_text", payload: "Ledger is ready." } },
+      { keyword: "second command", action: { kind: "open_url", payload: "https://second.example" } },
+    ]);
+  });
+
+  it.each(["absent", "changed", "ambiguous"])("keeps the draft and uncertainty when the saved row is %s", async (state) => {
+    const server = appliedAddWithLostResponse();
+    await addWithLostResponse();
+    const saved = server.settings.dictation.macros.items[0];
+    server.settings = {
+      ...server.settings,
+      dictation: {
+        macros: {
+          enabled: true,
+          items: state === "absent" ? [] : state === "ambiguous" ? [saved, saved] : [
+            { ...saved, action: { ...saved.action, payload: "Changed elsewhere." } },
+          ],
+        },
+      },
+    };
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+    await screen.findByRole("textbox", { name: "Payload" });
+    expect(screen.getByRole("alert")).toHaveTextContent("Command save not confirmed");
+    expect(screen.getByRole("textbox", { name: "Spoken keyword" })).toHaveValue("  type ledger  ");
+    expect(screen.getByRole("textbox", { name: "Payload" })).toHaveValue("Ledger is ready.");
+    expect(callsTo("/api/settings").filter((c) => c.method === "PUT")).toHaveLength(1);
+    expect(callsTo("/api/settings").filter((c) => !c.method)).toHaveLength(2);
+  });
+
+  it.each(["rejected request", "failed result"])("keeps explicit Test after a %s without an unrelated settings retry", async (failure) => {
+    mocks.apiFetch.mockImplementation((path: string) => {
+      if (path === "/api/commands/test") {
+        return failure === "rejected request"
+          ? Promise.reject(new Error("Test unavailable"))
+          : Promise.resolve({ ok: false, error: "Test unavailable" });
+      }
+      return Promise.resolve(SETTINGS);
+    });
+    render(<CommandsCore />);
+    await screen.findByText("“docs”");
+    fireEvent.click(screen.getByRole("button", { name: "Test" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Test unavailable");
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+    expect(callsTo("/api/settings")).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "Test" }));
+    await waitFor(() => expect(callsTo("/api/commands/test")).toHaveLength(2));
+    expect(callsTo("/api/commands/test")).toEqual([
+      { method: "POST", json: SETTINGS.dictation.macros.items[0].action },
+      { method: "POST", json: SETTINGS.dictation.macros.items[0].action },
+    ]);
+    expect(callsTo("/api/settings")).toHaveLength(1);
   });
 });

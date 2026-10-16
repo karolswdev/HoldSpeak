@@ -479,7 +479,7 @@ export function ConnectionsPane({
         checkedAt: lastChecked ? formatTime(lastChecked) : undefined,
       });
     } catch {
-      if (generation === loadGeneration.current) setError("Accounts could not be read");
+      if (generation === loadGeneration.current) setError("Account read failed · Accounts unchanged · Retry");
     } finally {
       if (generation === loadGeneration.current) setLoading(false);
     }

@@ -18,6 +18,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from ...principals import UNAUTHENTICATED, PrincipalKind
+from ...kernel.external_egress import EgressOperationRefused
 from ...services.errors import ConflictError, ServiceError
 from ..context import WebContext
 from ..runtime_support import error_500
@@ -146,8 +147,12 @@ def build_concierge_router(ctx: WebContext) -> APIRouter:
             _owner(request)
             from ...services.lan_engine_discovery import checked_at, scan_lan_engines
 
-            result = await asyncio.to_thread(scan_lan_engines)
+            result = await asyncio.to_thread(scan_lan_engines, principal=request.state.principal)
             return JSONResponse({**result, "checkedAt": checked_at()})
+        except EgressOperationRefused as exc:
+            return _safe_error(ServiceError(
+                "concierge_lan_refused", exc.reason, context={"status": 403},
+            ))
         except ServiceError as exc:
             return _safe_error(exc)
         except Exception as exc:

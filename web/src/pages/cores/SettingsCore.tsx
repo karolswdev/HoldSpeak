@@ -585,7 +585,7 @@ export function RuntimeIdentityModule({ children }: { children?: ReactNode } = {
     return (
       <>
         <div className="prefs-read-failure" data-testid="runtime-unreadable" role="alert">
-          <span>Could not read device details</span>
+          <span>Device read failed · Settings unchanged · Retry</span>
           <Button variant="ghost" dense onClick={() => { setError(""); setNonce((n) => n + 1); }}>Retry</Button>
         </div>
         {children ? <FoldGadget title="Advanced">{children}</FoldGadget> : null}
@@ -957,7 +957,7 @@ export function RemoteAccessModule({
   };
 
   if (loading && !wire) return <span className="gadget-fact" role="status">Reading remote access…</span>;
-  if (readErrors.remote && !wire) return <div className="prefs-read-failure" role="alert"><span>Could not read remote access</span><Button dense variant="ghost" onClick={() => void fetchRemote()}>Retry</Button></div>;
+  if (readErrors.remote && !wire) return <div className="prefs-read-failure" role="alert"><span>Remote access read failed · Grants unchanged · Retry</span><Button dense variant="ghost" onClick={() => void fetchRemote()}>Retry</Button></div>;
 
   const enabled = wire?.enabled ?? false;
   const allCredentials = wire?.credentials ?? [];
@@ -1261,13 +1261,13 @@ export function RemoteAccessModule({
 
       {readErrors.remote ? (
         <div className="prefs-read-failure" role="alert" data-testid="remote-read-error">
-          <span>Could not read remote access · {humanizeWireValue(readErrors.remote)}</span>
+          <span>Remote access read failed · Grants unchanged · Retry · {humanizeWireValue(readErrors.remote)}</span>
           <Button dense variant="ghost" disabled={loading} onClick={() => void fetchRemote()}>Retry</Button>
         </div>
       ) : null}
       {readErrors.projects ? (
         <div className="prefs-read-failure" role="alert" data-testid="remote-projects-error">
-          <span>Could not read Projects · {humanizeWireValue(readErrors.projects)}</span>
+          <span>Project read failed · Projects unchanged · Retry · {humanizeWireValue(readErrors.projects)}</span>
           <Button dense variant="ghost" disabled={projectsLoading} onClick={() => void fetchProjects()}>Retry</Button>
         </div>
       ) : null}
@@ -2216,7 +2216,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
                   </div>
                 }>
                 {calLoading && !calSources ? <span className="gadget-fact" role="status">Reading calendars…</span> : null}
-                {calReadError ? <div className="prefs-read-failure" role="alert"><span>Could not read calendars</span><Button dense variant="ghost" disabled={calLoading} onClick={() => void loadCalSources()}>Retry</Button></div> : null}
+                {calReadError ? <div className="prefs-read-failure" role="alert"><span>Calendar read failed · Sources unchanged · Retry</span><Button dense variant="ghost" disabled={calLoading} onClick={() => void loadCalSources()}>Retry</Button></div> : null}
                 {sources.length ? <SurfaceLedger count={null} cols="settings-calendar" label="Calendar sources">
                   {sources.map((entry, index) => {
                     const fact = calFacts.get(entry.id);
@@ -2584,7 +2584,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
             }
           />
           </SurfaceState>
-          {authority.error ? <div className="prefs-read-failure" role="alert"><span>Could not read control mode</span><Button dense variant="ghost" onClick={() => void authority.reload()}>Retry</Button></div> : null}
+          {authority.error ? <div className="prefs-read-failure" role="alert"><span>Control mode read failed · Mode unchanged · Retry</span><Button dense variant="ghost" onClick={() => void authority.reload()}>Retry</Button></div> : null}
         </>)}
       </SurfaceState>
       </div>

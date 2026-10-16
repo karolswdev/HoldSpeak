@@ -737,7 +737,7 @@ function ConcernDetail({ concern, brief }: { concern: Exclude<NowConcern, null>;
       {ws.prs_waiting.map((pr) => <SurfaceLedgerRow key={`pr-${pr.pr_number}`} wrap expands={false}
         primary={<span className="surface-primary">{`#${pr.pr_number} · ${pr.title}`}</span>}
         cells={<span className="people-now-caption"><span className={pr.days_waiting >= 3 ? "people-now-caption-warning" : ""}>{pr.days_waiting} {pr.days_waiting === 1 ? "DAY" : "DAYS"}</span>{pr.repo ? <> · <span>{pr.repo.toUpperCase()}</span></> : null}</span>}
-        trailing={pr.url ? <Button dense variant="ghost" onClick={() => window.open(pr.url, "_blank", "noopener")}>Open</Button> : undefined} />)}
+        trailing={pr.url ? <Button dense variant="ghost" onClick={() => window.open(pr.url, "_blank", "noopener")}>Open PR</Button> : undefined} />)}
     </SurfaceLedger>
   </div>;
   if (concern === "assignments" && ws?.open_assignments?.length) return <div data-testid="now-assignments-detail" className="people-concern">
@@ -745,7 +745,7 @@ function ConcernDetail({ concern, brief }: { concern: Exclude<NowConcern, null>;
       {ws.open_assignments.map((a) => <SurfaceLedgerRow key={a.key} wrap expands={false}
         primary={<span className="surface-primary">{`${a.key} · ${a.summary}`}</span>}
         cells={<span className="people-now-caption"><span>{a.status.toUpperCase()}</span>{a.overdue ? <> · <span className="people-now-caption-warning">OVERDUE</span></> : null}</span>}
-        trailing={a.url ? <Button dense variant="ghost" onClick={() => window.open(a.url, "_blank", "noopener")}>Open</Button> : undefined} />)}
+        trailing={a.url ? <Button dense variant="ghost" onClick={() => window.open(a.url, "_blank", "noopener")}>Open issue</Button> : undefined} />)}
     </SurfaceLedger>
   </div>;
   return null;

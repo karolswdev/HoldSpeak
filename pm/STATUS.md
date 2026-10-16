@@ -4,35 +4,52 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-16 (Owner desktop density feedback)
+**Last updated:** 2026-10-16 (Broader regression recovery)
 
 ## Current phase
 
-**Regression contracts — verified for delivery (2026-10-16).** Brief fixtures
-declare their display timezone; memory goldens allow only bounded platform score
-roundoff while preserving exact same-process retrieval. Two stale wire fixtures
-match their producers; nightly checkout retains historical regression commits.
-Meeting context is extracted without changing its consumption order; SQL shapes
-are static; obsolete glyph and scratch-link records are corrected. Quick GREEN:
-579 affected / 109 sweep / 17 canon (one existing expected failure). Build
-`08b3ac3cbb13ef50` matches source; 1440/393 shots inspected. Guard ceilings and
-existing skip/expected-failure policies are unchanged.
+**Runtime recovery — verified, merge pending (2026-10-16).** Each hub owns its
+last-known store, so an earlier bare service cannot bind its recall to another DB.
+LAN discovery admits a frozen target set before transport and rejects late model
+bodies; calendar checks observe completed capture and stop their timers. Focused
+proof: 254 memory/calendar checks and 59 scanner/effect/route checks pass; three
+new late-body regressions fail before the fix. Ordinary quick GREEN: **575 affected /
+109 sweep / 17 canon**. Desktop/phone shots inspected; source/build match
+`f6ef8ac2099dde8b`. Normal idle-hub delivery follows merge.
+
+**Recovery copy — #1227 delivered (2026-10-16).** Commands recovers an uncertain
+Add by GET and edits the saved row without duplicates or lost newer fields. Read
+failures keep shown material; Models reports pending initial reads. Quick GREEN:
+**4,076 web / 16 copy / 109 sweep / 17 canon**; TypeScript passes. Actual Commands
+recovery at 1440/393 and three held-read Models cases pass. Merged `e834f2c5b`;
+formal Astra postmerge review RATIFY. Build `f6ef8ac2099dde8b`, PID 63584, is live
+on port 8765; health, Desk, Conductor and Models return 200.
+
+**Regression contracts — #1226 delivered (2026-10-16).** Brief fixtures pin
+presentation timezone; bounded memory score roundoff preserves exact same-process
+retrieval. Wire fixtures match producers; CI retains historical regression commits.
+Meeting context extraction preserves consumption order; SQL shapes and stale guard
+records are corrected. Quick GREEN: 579 affected / 109 sweep / 17 canon (one existing
+expected failure), plus 11 wire-consumer checks. Merged `5c26bd0fa`; formal Astra
+postmerge review RATIFY. Build `08b3ac3cbb13ef50`, PID 33619, is live on port 8765;
+health, Desk, Conductor and Models return 200. Desktop/phone shots inspected.
 
 **Journal recovery — #1225 delivered (2026-10-16).** Concurrent stores reserve
 sequence and prior hash under SQLite’s write lock; failures release the local
 lock and roll back. Merged `f6871e8df`; formal Astra postmerge review RATIFY.
 Quick GREEN: 44 affected / 109 sweep / 17 canon. Build `6e3600ca4e4d1251` is
-live on port 8765, PID 28926; health, Desk, Conductor and Models return 200.
+the prior delivery on port 8765, PID 28926 (superseded by #1226); health, Desk, Conductor and Models return 200.
 Three regression checks fail on the original implementation and pass fixed.
 The wider recovery queue remains active.
 
 **Broader regression recovery — active (2026-10-16).** The owner expanded the
-work to resolve the full-tape failures. All 110 distinct failing cases across the
-last three completed tapes are now tracked with fix ownership and next proof in
+work to resolve the full-tape failures. All 112 distinct failing cases across the
+last four completed tapes are now tracked with fix ownership and next proof in
 the [recovery queue](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/REGRESSION-RECOVERY.md).
-The latest completed tape has 106 failures; #1224 already verified two producer
-fixes. Runtime, browser journeys, and guard/copy recovery are underway. Inherited
-status does not close a case. The current-main full run is still in progress.
+The latest completed tape has 101 failures / 16,356 passes; two newly exposed
+cases cover phone worktop geometry and async calendar completion. Runtime, browser
+journeys, and guard/copy recovery remain active. Inherited status does not close a
+case. The #1226 full run is in progress.
 
 **Owner desktop density feedback — #1223 (2026-10-16).**
 Artifact footer actions retain vertical clearance on first open and through

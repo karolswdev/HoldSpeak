@@ -150,7 +150,7 @@ describe("NotePullout adoption recovery", () => {
     const answer = await screen.findByRole("textbox", { name: "Answer" });
     fireEvent.change(answer, { target: { value: "Mina" } });
     fireEvent.click(screen.getByRole("button", { name: "Answer" }));
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Could not read latest note"));
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Latest note read failed · Shown note kept · Retry"));
     expect(answer).toHaveValue("Mina");
     expect(screen.getByRole("button", { name: "Answer" })).toBeEnabled();
   });

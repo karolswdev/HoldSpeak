@@ -288,12 +288,12 @@ describe("the decision window shows a heading only with text under it", () => {
   const CASES: Array<[string, Wire, string[]]> = [
     ["title-only", { title: "Glass title only decision" }, []],
     ["context-only", { title: "Glass context only decision", context_markdown: "Our own runners are full every night." },
-      ["Context"]],
+      ["Decision context"]],
     ["context-and-decision", {
       title: "Move the nightly build to the shared runners",
       context_markdown: "Our own runners are full every night. The shared runner pool has spare capacity after 8 PM.",
       decision_markdown: "Move the nightly build to the shared runners.",
-    }, ["Decision", "Context"]],
+    }, ["Decision", "Decision context"]],
   ];
   const heads = () =>
     // The decision's own headings (its SEND well carries its own head).

@@ -111,7 +111,7 @@ describe("People: the Prep card (HS-172-05)", () => {
     await screen.findByTestId("people-prep-lens");
     fireEvent.click(screen.getByTestId("prep-prs-open"));
     const detail = await screen.findByTestId("now-prs-detail");
-    expect(within(detail).getAllByRole("button", { name: "Open" })).toHaveLength(2);
+    expect(within(detail).getAllByRole("button", { name: "Open PR" })).toHaveLength(2);
     expect(screen.getByRole("tab", { name: "Prep" }).getAttribute("aria-selected")).toBe("true");
   });
 });

@@ -543,7 +543,7 @@ export function PrefsFace({
               dense
               onClick={() => onOpen(entry.id)}
               data-testid={entry.id === "models" ? "settings-hub-choose" : entry.id === "integrations" ? "settings-hub-accounts" : undefined}
-            >Open</Button>
+            >Open {entry.label}</Button>
           }
         />
       ))}

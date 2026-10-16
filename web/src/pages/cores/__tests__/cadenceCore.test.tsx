@@ -196,7 +196,7 @@ describe("Rhythm action receipts", () => {
     expect(screen.queryByLabelText("Notification content")).toBeNull();
   });
 
-  it("shows Saving while PUT is pending, Not saved on failure, then Saved after a successful retry", async () => {
+  it("shows Saving while PUT is pending, Unconfirmed on failure, then Saved after a successful retry", async () => {
     let finish: (response: Response) => void = () => undefined;
     let current = { ...settings };
     let puts = 0;
@@ -218,8 +218,8 @@ describe("Rhythm action receipts", () => {
     expect(screen.getByRole("button", { name: "Run now" })).toBeDisabled();
     expect(screen.queryByText(/Saved \d|WRITTEN/)).toBeNull();
     await act(async () => finish(json({ detail: "Write refused" }, 409)));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Settings not saved · Write refused");
-    expect(screen.getByText("Not saved")).toBeVisible();
+    expect(await screen.findByRole("alert")).toHaveTextContent("Settings save not confirmed · Shown settings kept · Reload · Write refused");
+    expect(screen.getByText("Unconfirmed")).toBeVisible();
     expect(interval).toHaveValue("15");
     expect(interval).toBeEnabled();
     fireEvent.change(interval, { target: { value: "30" } });
@@ -242,6 +242,31 @@ describe("Rhythm action receipts", () => {
     expect(await screen.findByText(/^Saved \d{2}:\d{2}$/)).toBeVisible();
     expect(await screen.findByRole("alert")).toHaveTextContent("Rhythm settings not loaded · Read unavailable");
     expect(screen.queryByText("Not saved")).toBeNull();
+  });
+
+  it("checks an ambiguous write by reading settings without sending the change twice", async () => {
+    let current = { ...settings };
+    let puts = 0;
+    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
+      const url = String(input);
+      if (init?.method === "PUT") {
+        puts += 1;
+        current = { ...current, ...JSON.parse(String(init.body)) };
+        throw new TypeError("Response lost");
+      }
+      return url === "/api/settings/heartbeat" ? json(current) : reads(url);
+    }));
+    const { container } = render(<CadenceCore />);
+    await waitFor(() => expect(container.querySelector(".cadence-body[data-settling]")).toBeNull());
+    fireEvent.change(screen.getByLabelText("Sweep interval"), { target: { value: "30" } });
+    expect(await screen.findByText("Unconfirmed")).toBeVisible();
+    expect(screen.getByRole("alert")).toHaveTextContent("Shown settings kept · Reload · Response lost");
+    expect(screen.getByLabelText("Sweep interval")).toHaveValue("15");
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(screen.getByLabelText("Sweep interval")).toHaveValue("30"));
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.queryByText("Unconfirmed")).toBeNull();
+    expect(puts).toBe(1);
   });
 
   it.each([

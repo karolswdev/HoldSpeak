@@ -183,7 +183,7 @@ describe("RuntimeIdentityModule", () => {
     render(<RuntimeIdentityModule />);
 
     const failure = await screen.findByRole("alert");
-    expect(failure.textContent).toContain("Could not read device details");
+    expect(failure.textContent).toContain("Device read failed · Settings unchanged · Retry");
     expect(screen.queryByTestId("runtime-backend")).toBeNull();
     mockApiFetch.mockResolvedValueOnce(makeWire());
     fireEvent.click(within(failure).getByRole("button", { name: "Retry" }));
