@@ -10,7 +10,7 @@ import {
 } from "react";
 import { spriteUrl } from "../sprites";
 import { useDesk } from "../store";
-import { keptDraft, useDeskDraft } from "../deskMemory";
+import { forgetDraft, keepDraft, keptDraft, useDeskDraft } from "../deskMemory";
 import type {
   WorkbenchDetail,
   WorkbenchItem,
@@ -592,6 +592,9 @@ export function dropIntentLabel(intent: DropIntent): string {
 /** HS-132-07 — the pause that ends a typing burst, matching the desk's
  * other inline editors (`useDebouncedSave`). */
 export const BODY_SAVE_PAUSE_MS = 450;
+// A closing/reopened card joins the same item's outstanding body write.
+// Later instructions reach the hub after earlier ones, including Retry.
+const bodyWrites = new Map<string, Promise<void>>();
 
 function WorkbenchItemCard({
   item,
@@ -648,33 +651,53 @@ function WorkbenchItemCard({
   const rerunItem = () => void updateItem({ status: "pending", result: null, result_egress: null, tokens_consumed: 0, completed_at: null }, "RE-RUN ITEM");
   const dismissItem = () => void updateItem({ status: "dismissed" }, "DISMISS ITEM");
 
-  // HS-132-07 — the body is a LOCAL draft. The old well bound the server
-  // value straight to the textarea and fired a PUT + full refetch on every
-  // keystroke, so a refetch landing mid-word overwrote what was typed. The
-  // draft owns the characters; the hub sees one PUT per pause (the same
-  // 450ms the desk's other editors use), and a refused save still names
-  // itself through the window's write-receipt channel.
+  // The workspace keeps every edit, including an emptied instruction.
+  // A close flushes the pause timer; a refusal still leaves the draft here
+  // for the next open. Retry clears only the snapshot the hub accepted.
   const serverBody = item.body || "";
-  const [bodyDraft, setBodyDraft] = useState<string | null>(null);
+  const bodyKey = `workbench/${workbenchId}/item/${item.id}/body`;
+  const bodyDraft = useDesk((s) => s.drafts[bodyKey] ?? null);
   const bodyTimer = useRef<number | null>(null);
+  const pendingBody = useRef<string | null>(null);
+  const saveBody = useRef<(body: string) => void>(() => undefined);
+  saveBody.current = (body) => {
+    void write("SAVE ITEM", () => {
+      const saved = (bodyWrites.get(bodyKey) ?? Promise.resolve())
+        .catch(() => undefined)
+        .then(async () => {
+          await updateWorkbenchItem(workbenchId, item.id, { body });
+        });
+      bodyWrites.set(bodyKey, saved);
+      return saved.finally(() => {
+        if (bodyWrites.get(bodyKey) === saved) bodyWrites.delete(bodyKey);
+      }).then(onReload);
+    });
+  };
   useEffect(
     () => () => {
-      if (bodyTimer.current) window.clearTimeout(bodyTimer.current);
+      if (bodyTimer.current !== null) {
+        window.clearTimeout(bodyTimer.current);
+        bodyTimer.current = null;
+        const body = pendingBody.current;
+        pendingBody.current = null;
+        if (body !== null) saveBody.current(body);
+      }
     },
     [],
   );
-  // Once the hub holds exactly what was typed, the draft dissolves and the
-  // server value drives the well again.
+  // Keep the accepted text visible until the read actually contains it.
   useEffect(() => {
-    if (bodyDraft !== null && bodyDraft === serverBody && bodyTimer.current === null)
-      setBodyDraft(null);
-  }, [bodyDraft, serverBody]);
+    if (bodyDraft !== null && bodyDraft === serverBody && bodyTimer.current === null && !bodyWrites.has(bodyKey))
+      forgetDraft(bodyKey);
+  }, [bodyDraft, bodyKey, serverBody]);
   const editBody = (next: string) => {
-    setBodyDraft(next);
-    if (bodyTimer.current) window.clearTimeout(bodyTimer.current);
+    keepDraft(bodyKey, next);
+    pendingBody.current = next;
+    if (bodyTimer.current !== null) window.clearTimeout(bodyTimer.current);
     bodyTimer.current = window.setTimeout(() => {
       bodyTimer.current = null;
-      void updateItem({ body: next });
+      pendingBody.current = null;
+      saveBody.current(next);
     }, BODY_SAVE_PAUSE_MS);
   };
 
@@ -994,6 +1017,8 @@ export function WorkbenchWindow({
 
   const [expanded, setExpanded] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const addPending = useRef(false);
   const [configOpen, setConfigOpen] = useState(false);
   const inletKey = `workbench/${workbenchId}/inlet`;
   const [keptInlet, keepInlet, forgetInlet] = useDeskDraft(inletKey);
@@ -1294,6 +1319,7 @@ export function WorkbenchWindow({
   };
 
   const addItem = async () => {
+    if (addPending.current) return;
     generationRef.current++;
     setResolverError(null);
     setResolving(false);
@@ -1322,14 +1348,23 @@ export function WorkbenchWindow({
     // refused add can be re-issued by RETRY (which replays this whole body).
     const submittedDraft = keptInlet;
     await write("ADD ITEM", async () => {
-      await addWorkbenchItem(workbenchId, payload);
-      // An accepted snapshot clears only itself. Text entered while the
-      // request was in flight belongs to the next item (including Retry).
-      if (keptDraft(inletKey) === submittedDraft) forgetInlet();
-      setResolverError(null);
-      setCursorPos(0);
-      typedAtPosRef.current = null;
-      load();
+      // The receipt replays this closure, so Add and Retry share one guard.
+      if (addPending.current) return;
+      addPending.current = true;
+      setAdding(true);
+      try {
+        await addWorkbenchItem(workbenchId, payload);
+        if (keptDraft(inletKey) === submittedDraft) {
+          forgetInlet();
+          setCursorPos(0);
+          typedAtPosRef.current = null;
+        }
+        setResolverError(null);
+        load();
+      } finally {
+        addPending.current = false;
+        setAdding(false);
+      }
     });
   };
 
@@ -1674,7 +1709,7 @@ export function WorkbenchWindow({
               >
                 P{newPriority}
               </Button>
-              <Button dense variant="primary" disabled={!newTitle.trim()}
+              <Button dense variant="primary" loading={adding} disabled={!newTitle.trim()}
                 title={newTitle.trim() ? "Add this item" : "No instruction typed"}
                 onClick={() => void addItem()}
               >Add</Button>

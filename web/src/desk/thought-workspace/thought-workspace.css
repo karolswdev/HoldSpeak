@@ -571,6 +571,14 @@
   .desk-next .thought-note-foot .surface-footer-receipt > .surface-footer-receipt-line {
     text-align: start;
   }
+
+  /* The full desktop action group can fill a narrow window. Context owns
+     a row before those wrapping verbs; the compact Finish/More layout
+     has no group wrapper and keeps its existing allocation. */
+  .desk-next .surface-footer-layout.thought-note-foot:has(> .surface-footer-verbs > .surface-footer-verbs-group) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "egress" "verbs" "receipt";
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

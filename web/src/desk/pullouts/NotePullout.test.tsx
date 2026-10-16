@@ -10,7 +10,6 @@ const { copySpy, flushThoughtEditor } = vi.hoisted(() => ({ copySpy: vi.fn(), fl
 vi.mock("../surface/SurfaceFooter", () => ({ SurfaceFooter: ({ receipt, verbs }: { receipt?: unknown; verbs: unknown }) => <footer>{receipt as any}{verbs as any}</footer> }));
 vi.mock("../components/DeskFilingStrip", () => ({ DeskFilingStrip: () => null }));
 vi.mock("../surface/Material", () => ({ Material: ({ children }: { children: unknown }) => <>{children}</>, hasNoteDoor: (text: string) => /\]\(door:/.test(text) }));
-vi.mock("../surface/Surface", () => ({ SurfaceState: () => null }));
 vi.mock("./editors", () => ({ INLINE_EDITOR_CONTENT: {} }));
 vi.mock("./editors/ThoughtNoteEditor", async () => {
   const React = await import("react");
@@ -55,9 +54,107 @@ beforeEach(() => {
   vi.mocked(apiFetch).mockResolvedValue({ models: [] } as never);
   vi.mocked(listThoughtContext).mockResolvedValue(compactContext as any);
 });
-afterEach(() => { cleanup(); vi.clearAllMocks(); sessionStorage.clear(); });
+afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.clearAllMocks(); sessionStorage.clear(); });
 
 describe("NotePullout adoption recovery", () => {
+  it.each(["getItem", "setItem"] as const)("keeps the legacy context picker usable when storage %s refuses", async (method) => {
+    vi.mocked(thoughtForNote).mockResolvedValue({ ownership: "thought", thought: ownedThought });
+    vi.mocked(attachThoughtContext).mockRejectedValueOnce(new Error("offline")).mockResolvedValueOnce({
+      thought: { ...ownedThought, aggregate_revision: 2, attachment_revision: 2, attachments: [everyday] },
+      receipt: { id: `ctx-${method}`, action: "attach", ref: everyday.ref, title: everyday.title, leaf_count: 5, leaves: everyday.leaves },
+    });
+    useDesk.setState({ editingId: null, refresh: vi.fn(), openEditor: vi.fn(), closeEditor: vi.fn() });
+    render(<NotePullout object={object} onClose={vi.fn()}/>);
+    fireEvent.click(await screen.findByRole("button", { name: "Attach" }));
+    const picker = await screen.findByRole("region", { name: "Attach context" });
+    const choice = await within(picker).findByRole("button", { name: "Everyday context, 5 notes" });
+    vi.spyOn(Storage.prototype, method).mockImplementation(() => { throw new Error("Storage denied"); });
+    fireEvent.click(choice);
+    expect(await within(picker).findByRole("alert")).toHaveTextContent("offline");
+    expect(choice).toBeEnabled();
+    const id = vi.mocked(attachThoughtContext).mock.calls[0][2];
+    fireEvent.click(within(picker).getByRole("button", { name: "Try again" }));
+    expect(await screen.findByText("Attached Everyday context")).toBeVisible();
+    expect(vi.mocked(attachThoughtContext).mock.calls[1][2]).toBe(id);
+  });
+
+  it("shows the accepted legacy context receipt when storage cleanup refuses", async () => {
+    vi.mocked(thoughtForNote).mockResolvedValue({ ownership: "thought", thought: ownedThought });
+    vi.mocked(attachThoughtContext).mockResolvedValue({
+      thought: { ...ownedThought, aggregate_revision: 2, attachment_revision: 2, attachments: [everyday] },
+      receipt: { id: "ctx-remove-denied", action: "attach", ref: everyday.ref, title: everyday.title, leaf_count: 5, leaves: everyday.leaves },
+    });
+    useDesk.setState({ editingId: null, refresh: vi.fn(), openEditor: vi.fn(), closeEditor: vi.fn() });
+    render(<NotePullout object={object} onClose={vi.fn()}/>);
+    fireEvent.click(await screen.findByRole("button", { name: "Attach" }));
+    const picker = await screen.findByRole("region", { name: "Attach context" });
+    const choice = await within(picker).findByRole("button", { name: "Everyday context, 5 notes" });
+    vi.spyOn(Storage.prototype, "removeItem").mockImplementation(() => { throw new Error("Storage denied"); });
+    fireEvent.click(choice);
+    expect(await screen.findByText("Attached Everyday context")).toBeVisible();
+    expect(screen.queryByRole("region", { name: "Attach context" })).toBeNull();
+  });
+
+  it.each(["getItem", "setItem"] as const)("keeps the answer and retry identity when storage %s and the review write fail", async (method) => {
+    vi.mocked(thoughtForNote).mockResolvedValue({ ownership: "thought", thought: { ...ownedThought, continuity: { state: "review_ready", review_result_id: `review-storage-${method}` } } });
+    vi.mocked(reviewThought).mockResolvedValue({ id: `review-storage-${method}`, kind: "question", question: "Who owns launch?" });
+    vi.mocked(actOnReview).mockRejectedValueOnce(new Error("offline")).mockResolvedValueOnce({ thought: { ...ownedThought, aggregate_revision: 2 } });
+    useDesk.setState({ editingId: null, refresh: vi.fn(), openEditor: vi.fn(), closeEditor: vi.fn() });
+    render(<NotePullout object={object} onClose={vi.fn()}/>);
+    const answer = await screen.findByRole("textbox", { name: "Answer" });
+    fireEvent.change(answer, { target: { value: "Mina owns launch." } });
+    vi.spyOn(Storage.prototype, method).mockImplementation(() => { throw new Error("Storage denied"); });
+    fireEvent.click(screen.getByRole("button", { name: "Answer" }));
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Answer not confirmed · offline · Retry"));
+    expect(answer).toHaveValue("Mina owns launch.");
+    expect(screen.getByRole("status")).not.toHaveTextContent("changed elsewhere");
+    const id = vi.mocked(actOnReview).mock.calls[0][0].request_id;
+    fireEvent.click(screen.getByRole("button", { name: "Answer" }));
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Answer added"));
+    expect(vi.mocked(actOnReview).mock.calls[1][0].request_id).toBe(id);
+  });
+
+  it("applies an accepted review when storage cleanup refuses", async () => {
+    vi.mocked(thoughtForNote).mockResolvedValue({ ownership: "thought", thought: { ...ownedThought, continuity: { state: "review_ready", review_result_id: "review-cleanup" } } });
+    vi.mocked(reviewThought).mockResolvedValue({ id: "review-cleanup", kind: "question", question: "Who owns launch?" });
+    vi.mocked(actOnReview).mockResolvedValue({ thought: { ...ownedThought, working_note: { ...ordinary.note, body_markdown: "Accepted answer body" } } });
+    useDesk.setState({ editingId: null, refresh: vi.fn(), openEditor: vi.fn(), closeEditor: vi.fn() });
+    render(<NotePullout object={object} onClose={vi.fn()}/>);
+    fireEvent.change(await screen.findByRole("textbox", { name: "Answer" }), { target: { value: "Mina" } });
+    vi.spyOn(Storage.prototype, "removeItem").mockImplementation(() => { throw new Error("Storage denied"); });
+    fireEvent.click(screen.getByRole("button", { name: "Answer" }));
+    expect(await screen.findByText("Accepted answer body")).toBeVisible();
+    expect(screen.getByRole("status")).toHaveTextContent("Answer added");
+  });
+
+  it("shows the authoritative current note only for a named review conflict", async () => {
+    const ready = { ...ownedThought, continuity: { state: "review_ready", review_result_id: "review-conflict" } };
+    const current = { ...ownedThought, aggregate_revision: 2, working_note: { ...ordinary.note, body_markdown: "Current note body" } };
+    vi.mocked(thoughtForNote).mockResolvedValue({ ownership: "thought", thought: ready });
+    vi.mocked(reviewThought).mockResolvedValue({ id: "review-conflict", kind: "question", question: "Who owns launch?" });
+    vi.mocked(actOnReview).mockRejectedValue(new ApiError(409, "working thought changed elsewhere", { error: "thought_revision_conflict", current }));
+    useDesk.setState({ editingId: null, refresh: vi.fn(), openEditor: vi.fn(), closeEditor: vi.fn() });
+    render(<NotePullout object={object} onClose={vi.fn()}/>);
+    fireEvent.change(await screen.findByRole("textbox", { name: "Answer" }), { target: { value: "Mina" } });
+    fireEvent.click(screen.getByRole("button", { name: "Answer" }));
+    expect(await screen.findByText("Current note body")).toBeVisible();
+    expect(screen.getByRole("status")).toHaveTextContent("Review changed · Latest note loaded");
+  });
+
+  it("does not claim a latest note when a superseded review cannot be reread", async () => {
+    vi.mocked(thoughtForNote).mockResolvedValueOnce({ ownership: "thought", thought: { ...ownedThought, continuity: { state: "review_ready", review_result_id: "review-unread" } } }).mockRejectedValue(new Error("offline"));
+    vi.mocked(reviewThought).mockResolvedValue({ id: "review-unread", kind: "question", question: "Who owns launch?" });
+    vi.mocked(actOnReview).mockRejectedValue(new ApiError(409, "review is no longer current", { error: "refinement_review_superseded" }));
+    useDesk.setState({ editingId: null, refresh: vi.fn(), openEditor: vi.fn(), closeEditor: vi.fn() });
+    render(<NotePullout object={object} onClose={vi.fn()}/>);
+    const answer = await screen.findByRole("textbox", { name: "Answer" });
+    fireEvent.change(answer, { target: { value: "Mina" } });
+    fireEvent.click(screen.getByRole("button", { name: "Answer" }));
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Could not read latest note"));
+    expect(answer).toHaveValue("Mina");
+    expect(screen.getByRole("button", { name: "Answer" })).toBeEnabled();
+  });
+
   it("keeps one refinement request id across an ambiguous retry and clears it after admission", async () => {
     vi.mocked(apiFetch).mockResolvedValue({ models: [{ id: "this_machine", ready: true }] } as never);
     vi.mocked(thoughtForNote).mockResolvedValue({ ownership: "thought", thought: ownedThought });
@@ -329,7 +426,7 @@ describe("NotePullout adoption recovery", () => {
     const picker = await screen.findByRole("region", { name: "Attach context" });
     expect(within(picker).getByRole("heading", { name: "On this Thought" })).toBeInTheDocument();
     expect(within(picker).getByRole("heading", { name: "For new Thoughts" })).toBeInTheDocument();
-    expect(within(picker).getByText("Attach context to use it by default.")).toBeVisible();
+    expect(within(picker).getByRole("searchbox", { name: "Search notes" })).toBeVisible();
     expect(within(picker).queryByRole("button", { name: "Use these by default" })).not.toBeInTheDocument();
     expect(within(picker).queryByRole("button", { name: "Stop using by default" })).not.toBeInTheDocument();
   });

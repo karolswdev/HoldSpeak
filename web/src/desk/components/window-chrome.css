@@ -986,7 +986,7 @@
 }
 .desk-info-window .info-kv {
   display: grid;
-  grid-template-columns: 96px 1fr;
+  grid-template-columns: 96px minmax(0, 1fr);
   gap: var(--space-1) var(--space-3);
   align-items: baseline;
 }
@@ -1003,20 +1003,28 @@
   font-size: var(--font-size-xs);
 }
 .desk-info-window .info-name {
-  background: none;
-  border: 0;
-  border-bottom: 1px dashed var(--border-subtle);
-  color: var(--text);
-  font-size: var(--font-size-sm);
-  cursor: text;
-  padding: 0;
   text-align: left;
-  width: max-content;
+  justify-content: flex-start;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.desk-info-window .info-kv > *,
+.desk-info-window .info-prop > *,
+.desk-info-window .desk-pullout-lineage > * {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.desk-info-window .desk-pullout-lineage > * {
+  white-space: normal;
 }
 /* HS-111-10 mic sweep: the rename well is StringGadget; the wrapper
    only bounds its width inside the identity row. */
 .desk-info-window .info-name-edit {
   display: block;
+  min-width: 0;
+  width: 100%;
   max-width: 260px;
 }
 .desk-info-window .info-props {
@@ -1025,7 +1033,7 @@
 }
 .desk-info-window .info-prop {
   display: grid;
-  grid-template-columns: 130px 1fr;
+  grid-template-columns: 130px minmax(0, 1fr);
   gap: var(--space-3);
   align-items: center;
 }
@@ -1036,6 +1044,12 @@
 }
 .desk-info-window .info-kind {
   font-size: var(--font-size-xs);
+}
+@container surface (max-width: 420px) {
+  .desk-info-window .info-prop {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+  }
 }
 
 

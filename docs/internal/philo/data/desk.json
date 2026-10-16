@@ -130,6 +130,18 @@
           "symbol": "VALID_ARTIFACT_SOURCE_TYPES",
           "line": 28,
           "claim": "The additive artifact-source vocabulary accepts the existing closed canonical resource kinds, so grounded Ask Keep persists typed Note, Knowledge and Zone lineage; unknown kinds remain rejected."
+        },
+        {
+          "path": "web/src/desk/lineage.ts",
+          "symbol": "resolveRef",
+          "line": 16,
+          "claim": "Get Info resolves canonical qualified identities through the shared Desk object resolver, narrows qualified kinds, retains legacy IDs and opens the resolved canonical action reference."
+        },
+        {
+          "path": "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
+          "symbol": "ThoughtReadsWell",
+          "line": 39,
+          "claim": "The active Thought Add a note well keeps local request IDs through storage refusal, applies accepted receipts despite cleanup refusal, and distinguishes loading, failure and empty listing states."
         }
       ],
       "tests": [
@@ -199,6 +211,18 @@
           "path": "tests/unit/test_ask_keep_sources.py",
           "node": "test_keep_persists_note_and_knowledge_sources_with_exact_prompt_and_relationships",
           "assertion": "Real Ask Keep preserves original quoted question, canonical sources and relationship snapshot across database reopen without model execution.",
+          "execution": "passed"
+        },
+        {
+          "path": "web/src/desk/components/__tests__/commonControls.test.tsx",
+          "node": "opens the existing canonical Note from Info without choosing a same-ID meeting",
+          "assertion": "Actual Info Button calls the real Desk opener with the canonical note identity, despite a same-ID meeting.",
+          "execution": "passed"
+        },
+        {
+          "path": "web/src/desk/thought-workspace/ThoughtReadsWell.test.tsx",
+          "node": "keeps the new action ID across set denial after accepted cleanup left an older stored ID",
+          "assertion": "The active Reads well uses its new in-memory retry identity rather than the stale accepted stored ID.",
           "execution": "passed"
         }
       ],

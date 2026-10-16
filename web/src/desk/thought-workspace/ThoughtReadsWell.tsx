@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { readableError } from "../../lib/api";
-import { CheckGadget, countToken, StringGadget } from "../surface";
+import { CheckGadget, countToken, StringGadget, SurfaceState } from "../surface";
 import {
   attachThoughtContext,
   detachThoughtContext,
@@ -16,6 +16,21 @@ import {
 export type ReadsResult = { thought: Thought; receipt: ThoughtContextReceipt; workbench?: ThoughtWorkspaceProjection };
 
 const CANDIDATE_CAP = 6;
+const readsRequestIds = new Map<string, string | null>();
+function readsRequestId(key: string): string {
+  let id = readsRequestIds.get(key);
+  if (!readsRequestIds.has(key)) {
+    try { id = sessionStorage.getItem(key) || id; } catch { /* Memory owns this retry. */ }
+  }
+  if (!id) id = crypto.randomUUID();
+  readsRequestIds.set(key, id);
+  try { sessionStorage.setItem(key, id); } catch { /* Memory owns this retry. */ }
+  return id;
+}
+function clearReadsRequest(key: string) {
+  readsRequestIds.set(key, null);
+  try { sessionStorage.removeItem(key); readsRequestIds.delete(key); } catch { /* Keep the accepted receipt. */ }
+}
 
 /* HS-201-12 — band 4's `Add a note`: what the AI may read for THIS note, as an
    in-window well under the foot.  Library species only, no portal overlay,
@@ -39,7 +54,11 @@ export function ThoughtReadsWell({
   const [query, setQuery] = useState("");
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [readAttempt, setReadAttempt] = useState(0);
   const wellRef = useRef<HTMLDivElement | null>(null);
+  const pendingAction = useRef(false);
+  const retryAction = useRef<(() => void) | null>(null);
 
   // The well takes focus when it opens, so Escape always lands in it and
   // the caller can send focus back to Add a note when it closes.
@@ -62,6 +81,7 @@ export function ThoughtReadsWell({
      the picker uses), debounced, and the mic rides the field (voice law). */
   useEffect(() => {
     let live = true;
+    setLoading(true);
     const run = async () => {
       try {
         const search = query.trim();
@@ -81,29 +101,31 @@ export function ThoughtReadsWell({
           .filter((row, index, all) => !held.has(row.ref) && all.findIndex((item) => item.ref === row.ref) === index)
           .slice(0, CANDIDATE_CAP));
       } catch (cause) {
-        if (live) setError(readableError(cause));
-      }
+        if (live) { setError(readableError(cause)); retryAction.current = () => setReadAttempt((attempt) => attempt + 1); }
+      } finally { if (live) setLoading(false); }
     };
     const timer = window.setTimeout(() => { void run(); }, query ? 160 : 0);
     return () => { live = false; window.clearTimeout(timer); };
-  }, [thought.id, thought.attachment_revision, query]);
+  }, [thought.id, thought.attachment_revision, query, readAttempt]);
 
   const change = async (ref: string, next: boolean) => {
-    if (pending || disabled) return;
+    if (pendingAction.current || disabled) return;
+    pendingAction.current = true;
     setPending(ref);
     setError("");
     const key = `hs.thought.reads.${next ? "attach" : "detach"}.${thought.id}.${ref}`;
-    const requestId = sessionStorage.getItem(key) || crypto.randomUUID();
-    sessionStorage.setItem(key, requestId);
     try {
+      const requestId = readsRequestId(key);
       const result = next
         ? await attachThoughtContext(thought, ref, requestId, cursor)
         : await detachThoughtContext(thought, ref, requestId, cursor);
-      sessionStorage.removeItem(key);
+      clearReadsRequest(key);
       onApplied(result);
     } catch (cause) {
       setError(readableError(cause));
+      retryAction.current = () => { void change(ref, next); };
     } finally {
+      pendingAction.current = false;
       setPending(null);
     }
   };
@@ -131,8 +153,9 @@ export function ThoughtReadsWell({
     <span className="thought-reads-rows">
       {attachments.map((item) => row(item.ref, item.title, item.leaf_count, true))}
       {candidates.map((item) => row(item.ref, item.title, item.leaf_count, false))}
-      {!attachments.length && !candidates.length && !error ? <span className="surface-token">{query.trim() ? "No match" : "Nothing to read yet"}</span> : null}
+      {loading && !attachments.length && !candidates.length ? <SurfaceState loading/> : null}
+      {!loading && !attachments.length && !candidates.length && !error ? <span className="surface-token">{query.trim() ? "No match" : "Nothing to read yet"}</span> : null}
     </span>
-    {error ? <span className="thought-reads-error" role="alert">{error}</span> : null}
+    {error ? <SurfaceState error={error} onRetry={() => retryAction.current?.()}/> : null}
   </div>;
 }

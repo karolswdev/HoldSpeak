@@ -26,6 +26,8 @@ import { fromWireFlight, useAgentFlights } from "../../agentFlights";
 import { useSteering } from "../../steering";
 import { wireClock } from "../../surface/format";
 import { BRIEF_HEAD, OWNER_TEXT, noLiteralMarks } from "../../components/__tests__/fixtures.agentWords";
+import { ApiError } from "../../../lib/api";
+import { useGate } from "../../gate";
 
 const QUESTION = "The runbook needs a rollback owner. Jordan or Avery?";
 const KEY = "claude:c1a0de00-runbook";
@@ -138,6 +140,7 @@ beforeEach(() => {
   api.request.mockReset();
   localStorage.clear();
   __resetLane();
+  useGate.setState({ held: [], loaded: false, error: null });
   __resetDraftEgress();
   useAgentFlights.setState({ flights: [], sessions: [], loaded: true });
 });
@@ -257,6 +260,63 @@ describe("the timeline words", () => {
 });
 
 describe("the agent's window", () => {
+  it("shows a refused gate decision and retries the same proposal without an unhandled rejection", async () => {
+    const lane = fixture();
+    await openLane(lane);
+    const base = api.fetch.getMockImplementation()!;
+    let attempts = 0;
+    let accepted = false;
+    api.fetch.mockImplementation(async (url: string, init?: { method?: string }) => {
+      if (url.endsWith("/decide")) {
+        attempts++;
+        if (attempts === 1) throw new ApiError(403, "Approval refused", { error: "Approval refused" });
+        accepted = true;
+        return { state: "approved" };
+      }
+      if (url.startsWith("/api/agent/launches/")) return accepted ? { ...lane, gated: [] } : lane;
+      return base(url, init);
+    });
+    fireEvent.click(screen.getByTestId("lane-approve"));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Approve failed · Approval refused");
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(screen.queryByTestId("lane-approve")).toBeNull());
+    const decisions = api.fetch.mock.calls.filter(([url]) => String(url).endsWith("/decide"));
+    expect(decisions).toHaveLength(2);
+    expect(decisions[1]).toEqual(decisions[0]);
+  });
+
+  it.each([false, true])("retries authoritative reads after the gate settles, race=%s", async (race) => {
+    const lane = fixture();
+    await openLane(lane);
+    const base = api.fetch.getMockImplementation()!;
+    let settled = false;
+    let unavailable = true;
+    api.fetch.mockImplementation(async (url: string, init?: { method?: string }) => {
+      if (url.endsWith("/decide")) {
+        settled = true;
+        if (race) throw new ApiError(409, "already_decided", { error: "already_decided", state: "denied" });
+        return { state: "approved" };
+      }
+      if (url.startsWith("/api/gate/proposals?")) {
+        if (unavailable) throw new Error("Gate read unavailable");
+        return { proposals: [] };
+      }
+      if (url.startsWith("/api/agent/launches/")) {
+        if (settled && unavailable) throw new Error("Lane read unavailable");
+        return settled ? { ...lane, gated: [] } : lane;
+      }
+      return base(url, init);
+    });
+    fireEvent.click(screen.getByTestId("lane-approve"));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Decision read failed · Gate read unavailable");
+    expect(screen.queryByTestId("lane-approve")).toBeNull();
+    unavailable = false;
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
+    expect(api.fetch.mock.calls.filter(([url]) => String(url).endsWith("/decide"))).toHaveLength(1);
+    expect(screen.queryByTestId("lane-held-call")).toBeNull();
+  });
+
   it("renders the title, the track, the ask well, the rail, the PR card, the files and the footer", async () => {
     useAgentFlights.setState({ flights: [fromWireFlight({ origin_ref: "action:a1", title: "Write the rollback runbook", agent: "claude", state: "waiting", session_key: KEY, launch_id: "launch_f2_runbook" })] });
     await openLane(fixture());
@@ -449,25 +509,25 @@ describe("the agent's window", () => {
     expect(mic.getAttribute("data-auto")).toBe("true");
   });
 
-  it("TO APPROVE: the held call with Deny / Approve; both decide through the gate route", async () => {
+  it.each([
+    { decision: "approved", verb: "lane-approve" },
+    { decision: "denied", verb: "lane-deny" },
+  ])("TO APPROVE: $decision decides the held call once through the gate route", async ({ decision, verb }) => {
     await openLane(fixture({ wait: { question: "Claude needs your permission to use Bash", kind: "TO APPROVE", started: null } }));
     const well = screen.getByTestId("lane-approve-well");
     expect(within(well).queryByRole("textbox")).toBeNull();
     expect(well.textContent).toContain("psql -h staging-ledger");
-    fireEvent.click(within(well).getByTestId("lane-approve"));
+    fireEvent.click(within(well).getByTestId(verb));
     await waitFor(() =>
       expect(api.fetch).toHaveBeenCalledWith("/api/gate/proposals/toolu_psql/decide", expect.objectContaining({
-        method: "POST", json: expect.objectContaining({ decision: "approved" }),
+        method: "POST", json: expect.objectContaining({ decision }),
       })),
     );
     // PHILO-17 THE REFIT: Deny and Approve live on the held plate, not the rail.
     expect(within(screen.getByTestId("lane-rail")).queryByTestId("lane-deny")).toBeNull();
-    fireEvent.click(within(well).getByTestId("lane-deny"));
-    await waitFor(() =>
-      expect(api.fetch).toHaveBeenCalledWith("/api/gate/proposals/toolu_psql/decide", expect.objectContaining({
-        json: expect.objectContaining({ decision: "denied" }),
-      })),
-    );
+    await waitFor(() => expect(within(well).queryByTestId("lane-approve")).toBeNull());
+    expect(within(well).queryByTestId("lane-deny")).toBeNull();
+    expect(api.fetch.mock.calls.filter(([url]) => String(url).endsWith("/decide"))).toHaveLength(1);
   });
 
   it("PHILO-14 A5: a held call the hub cannot show whole: the head + `… +90 CHARS`, Deny and Raw, never Approve", async () => {

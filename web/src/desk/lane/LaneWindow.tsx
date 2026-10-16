@@ -16,7 +16,7 @@
  * kill route (two presses), Open PR opens the PR on GitHub. */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
-import { ApiError, apiFetch } from "../../lib/api";
+import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { useDurableDraft } from "../../lib/durableDraft";
 import { useAgentFlights } from "../agentFlights";
 import { AgentWords, cutAtWord } from "../components/AgentWords";
@@ -29,6 +29,7 @@ import { useSteering } from "../steering";
 import { useDesk } from "../store";
 import {
   AskWell,
+  ActionNotice,
   EgressChip,
   FilesChanged,
   FoldGadget,
@@ -319,17 +320,49 @@ function railEntries(lane: LaneWire, events: readonly LaneEvent[], briefOpen: bo
 function DecideVerbs({ call }: { call: LaneGated }) {
   // The held plate's verbs: Approve is the lane's one first move.
   const [busy, setBusy] = useState(false);
-  const decide = async (decision: "approved" | "denied") => {
+  const pending = useRef(false);
+  const [decidedId, setDecidedId] = useState<string | null>(null);
+  const [failure, setFailure] = useState<{ label: string; retry(): void } | null>(null);
+  const recoverRead = async () => {
+    if (pending.current) return;
+    pending.current = true;
     setBusy(true);
     try {
-      await useGate.getState().decide(call.id, decision);
+      await useGate.getState().refresh();
+      await useLane.getState().load();
+      const error = useGate.getState().error ?? useLane.getState().error;
+      setFailure(error ? { label: `Decision read failed · ${error}`, retry: () => void recoverRead() } : null);
     } finally {
+      pending.current = false;
       setBusy(false);
-      void useLane.getState().load();
+    }
+  };
+  const decide = async (decision: "approved" | "denied") => {
+    if (pending.current || decidedId === call.id) return;
+    pending.current = true;
+    setBusy(true);
+    setFailure(null);
+    try {
+      await useGate.getState().decide(call.id, decision);
+      setDecidedId(call.id);
+      await useLane.getState().load();
+      const error = useGate.getState().error ?? useLane.getState().error;
+      if (error) setFailure({ label: `Decision read failed · ${error}`, retry: () => void recoverRead() });
+    } catch (error) {
+      setFailure({
+        label: `${decision === "approved" ? "Approve" : "Deny"} failed · ${readableError(error)}`,
+        retry: () => void decide(decision),
+      });
+      await useLane.getState().load();
+    } finally {
+      pending.current = false;
+      setBusy(false);
     }
   };
   return (
     <>
+      {failure ? <ActionNotice tone="danger" role="alert" action={busy ? undefined : { label: "Retry", onClick: failure.retry }}>{failure.label}</ActionNotice> : null}
+      {decidedId === call.id ? null : <>
       <Button dense variant="ghost" disabled={busy} onClick={() => void decide("denied")} data-testid="lane-deny">
         Deny
       </Button>
@@ -344,6 +377,7 @@ function DecideVerbs({ call }: { call: LaneGated }) {
           Approve
         </Button>
       )}
+      </>}
     </>
   );
 }

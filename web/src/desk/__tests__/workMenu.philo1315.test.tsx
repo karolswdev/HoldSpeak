@@ -101,3 +101,30 @@ describe("1440: a submenu opens next to its parent panel (obligation b)", () => 
     expect(Math.abs(subLeft() + 220 - 1100)).toBeLessThanOrEqual(3);
   });
 });
+
+
+describe("submenu keyboard return", () => {
+  it("Left climbs one narrow level, as Back does", () => {
+    setWidth(393);
+    render(<WorkMenu label="Go menu" x={0} y={40} entries={go()} onClose={() => {}} />);
+    fireEvent.click(screen.getByText("Object"));
+    fireEvent.click(screen.getByText("Send to"));
+    fireEvent.keyDown(screen.getByRole("menu"), { key: "ArrowLeft" });
+    expect(screen.getByRole("menu")).toHaveAttribute("aria-label", "Object submenu");
+    expect(screen.getByText("Open")).toBeTruthy();
+    fireEvent.keyDown(screen.getByRole("menu"), { key: "ArrowLeft" });
+    expect(screen.getByRole("menu")).toHaveAttribute("aria-label", "Go menu");
+  });
+
+  it("Left from the second wide submenu returns to its own opener", () => {
+    setWidth(1440);
+    render(<WorkMenu label="Choices" x={0} y={40} entries={[
+      { type: "sub", id: "first", label: "First", entries: [{ type: "item", id: "a", label: "First item", onSelect: vi.fn() }] },
+      { type: "sub", id: "second", label: "Second", entries: [{ type: "item", id: "b", label: "Second item", onSelect: vi.fn() }] },
+    ]} onClose={() => {}} />);
+    const opener = screen.getByRole("menuitem", { name: /Second/ });
+    fireEvent.click(opener);
+    fireEvent.keyDown(screen.getByRole("menu", { name: "Second submenu" }), { key: "ArrowLeft" });
+    expect(opener).toHaveFocus();
+  });
+});

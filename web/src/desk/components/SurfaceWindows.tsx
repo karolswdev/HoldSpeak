@@ -30,6 +30,7 @@ import { TitleSlotContext } from "../surface/title";
 import { windowName } from "../windowName";
 import { WingSlotContext } from "../surface/wings";
 import type { CoreProps } from "../../pages/cores/core-types";
+import { SurfaceState } from "../surface/Surface";
 import { ApplicationBoundary } from "./ApplicationBoundary";
 import { useSurfaceScrollPlace } from "../hooks/useSurfaceScrollPlace";
 
@@ -249,7 +250,7 @@ export function SurfaceWindowHost({
                 {/* PHILO-17: the face's code is still loading: busy, so the
                     window never reads as settled empty (the desk sweep's held
                     read: Memory settled here, then its face moved 30 px). */}
-                <Suspense fallback={<p className="quiet" aria-busy="true">…</p>}>
+                <Suspense fallback={<SurfaceState loading />}>
                   <row.Core
                     scope={scope}
                     scopeLabel={

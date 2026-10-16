@@ -127,12 +127,7 @@ export function ZoneWindow({
     >
       <div className="desk-pullout-body desk-surface-body">
         {members.length === 0 ? (
-          <SurfaceState
-            empty
-            emptyLabel="Empty"
-            actionLabel="Drop items here"
-            onAction={() => undefined}
-          />
+          <SurfaceState empty emptyLabel="No items" />
         ) : pref.view === "icons" ? (
           <div className="zone-grid" role="list">
             {members.map((member) => (

@@ -2979,7 +2979,9 @@
         "web/src/desk/gl/jupiterOrbitScene.ts",
         "web/src/desk/gl/jupiterOrbitModel.ts",
         "web/src/desk/components/AskPanel.tsx",
-        "holdspeak/db/plugins.py"
+        "holdspeak/db/plugins.py",
+        "web/src/desk/lineage.ts",
+        "web/src/desk/thought-workspace/ThoughtReadsWell.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -2999,7 +3001,9 @@
         "web/src/desk/gl/jupiterOrbitScene.ts",
         "web/src/desk/gl/jupiterOrbitModel.ts",
         "web/src/desk/components/AskPanel.tsx",
-        "holdspeak/db/plugins.py"
+        "holdspeak/db/plugins.py",
+        "web/src/desk/lineage.ts",
+        "web/src/desk/thought-workspace/ThoughtReadsWell.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -3019,7 +3023,9 @@
         "web/src/desk/gl/jupiterOrbitScene.ts",
         "web/src/desk/gl/jupiterOrbitModel.ts",
         "web/src/desk/components/AskPanel.tsx",
-        "holdspeak/db/plugins.py"
+        "holdspeak/db/plugins.py",
+        "web/src/desk/lineage.ts",
+        "web/src/desk/thought-workspace/ThoughtReadsWell.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -3039,7 +3045,9 @@
         "web/src/desk/gl/jupiterOrbitScene.ts",
         "web/src/desk/gl/jupiterOrbitModel.ts",
         "web/src/desk/components/AskPanel.tsx",
-        "holdspeak/db/plugins.py"
+        "holdspeak/db/plugins.py",
+        "web/src/desk/lineage.ts",
+        "web/src/desk/thought-workspace/ThoughtReadsWell.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -3059,7 +3067,9 @@
         "web/src/desk/gl/jupiterOrbitScene.ts",
         "web/src/desk/gl/jupiterOrbitModel.ts",
         "web/src/desk/components/AskPanel.tsx",
-        "holdspeak/db/plugins.py"
+        "holdspeak/db/plugins.py",
+        "web/src/desk/lineage.ts",
+        "web/src/desk/thought-workspace/ThoughtReadsWell.tsx"
       ],
       "status": "built_unreleased"
     },

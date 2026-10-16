@@ -87,13 +87,13 @@ function FreshnessChip({ source }: { source: DeliverySource }) {
         {recovery.state}
       </span>
       <span className="quiet surface-token">{recovery.state.toUpperCase()}</span>
-      <button
-        type="button"
-        className="desk-chip quiet"
+      <Button
+        dense
+        variant="ghost"
         onClick={() => void useDelivery.getState().refresh()}
       >
         {recovery.label}
-      </button>
+      </Button>
     </span>
   );
 }
@@ -442,9 +442,9 @@ export function DeliveryBoard() {
               <div className="desk-dlv-project-head">
                 <span className="desk-mc-slug">{p.slug}</span>
                 {p.currentPhase ? (
-                  <button
-                    type="button"
-                    className="desk-chip quiet"
+                  <Button
+                    dense
+                    variant="ghost"
                     title="open the phase dossier"
                     onClick={() =>
                       void useDeliveryDossier
@@ -453,7 +453,7 @@ export function DeliveryBoard() {
                     }
                   >
                     Phase {p.currentPhase.number} dossier
-                  </button>
+                  </Button>
                 ) : null}
                 {p.warnings > 0 ? (
                   <span className="desk-mc-warn"><span aria-hidden="true">{GLYPH_WARN}</span> {p.warnings}</span>
@@ -470,9 +470,9 @@ export function DeliveryBoard() {
                       key={s.storyId}
                       className={"desk-mc-story st-" + s.status.replace(/[^a-z-]/g, "")}
                     >
-                      <button
-                        type="button"
-                        className="desk-mc-story-pick"
+                      <Button
+                        dense
+                        variant="ghost"
                         title={`${s.title} [${s.status}]`}
                         onClick={() =>
                           void useDeliveryDossier
@@ -481,7 +481,7 @@ export function DeliveryBoard() {
                         }
                       >
                         {s.storyId}
-                      </button>
+                      </Button>
                       {s.evidenceExists ? (
                         <span className="desk-dlv-evidence" title="has evidence">
                           <span aria-hidden="true">{GLYPH_CHECK}</span>

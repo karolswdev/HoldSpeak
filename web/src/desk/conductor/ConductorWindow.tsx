@@ -10,10 +10,11 @@
  *  This window is where agents live: the Agents application and the
  *  Arrival's AGENTS section fold into it (PROPOSAL §3, Movement C).
  */
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import {
   AppHead,
+  ActionNotice,
   EgressChip,
   StatusStrip,
   SurfaceFooter,
@@ -22,7 +23,7 @@ import {
 } from "../surface";
 import { FoldGadget } from "../surface/gadgets";
 import { AgentWords } from "../components/AgentWords";
-import { apiFetch } from "../../lib/api";
+import { apiFetch, readableError } from "../../lib/api";
 import { useGate } from "../gate";
 import { gatedHead, type LaneGated } from "../lane/laneWire";
 import { DeskWindowFrame } from "../components/DeskWindow";
@@ -353,27 +354,33 @@ function CoderRow({
 /** The call a launched coder holds at the gate (PHILO-17: approve in one
  *  press). Read from the launch's lane (its gated calls are not paged); a
  *  call the hub cannot show whole is never approved here (PHILO-14 A5). */
-export function useHeldCall(member: ConductorMember): { call: LaneGated | null; reread(): void } {
+export function useHeldCall(member: ConductorMember): { call: LaneGated | null; error: string | null; reread(): Promise<void> } {
   const [call, setCall] = useState<LaneGated | null>(null);
-  const [tick, setTick] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const generation = useRef(0);
   const launchId = member.launchId;
-  useEffect(() => {
+  const reread = useCallback(async () => {
+    const read = ++generation.current;
     if (!launchId) return;
-    let live = true;
-    apiFetch<{ gated?: LaneGated[] | unknown } | null>(`/api/agent/launches/${encodeURIComponent(launchId)}/lane?after=0&limit=1`)
-      .then((lane) => {
-        const gated = Array.isArray(lane?.gated) ? (lane!.gated as LaneGated[]) : [];
-        const held = [...gated].reverse().find((g) => (g.state === "held" || g.state === "pending") && g.was_held !== false);
-        if (live) setCall(held ?? null);
-      })
-      .catch(() => {
-        if (live) setCall(null);
-      });
+    try {
+      const lane = await apiFetch<{ gated?: LaneGated[] | unknown } | null>(`/api/agent/launches/${encodeURIComponent(launchId)}/lane?after=0&limit=1`);
+      const gated = Array.isArray(lane?.gated) ? (lane!.gated as LaneGated[]) : [];
+      const held = [...gated].reverse().find((g) => (g.state === "held" || g.state === "pending") && g.was_held !== false);
+      if (read === generation.current) {
+        setCall(held ?? null);
+        setError(null);
+      }
+    } catch (cause) {
+      if (read === generation.current) setError(`Call read failed · ${readableError(cause)}`);
+    }
+  }, [launchId]);
+  useEffect(() => {
+    void reread();
     return () => {
-      live = false;
+      generation.current++;
     };
-  }, [launchId, member.live, member.when, tick]);
-  return { call, reread: () => setTick((n) => n + 1) };
+  }, [reread, member.live, member.when]);
+  return { call, error, reread };
 }
 
 /** A coder that asks: a raised plate with the title bar, the question, and
@@ -392,17 +399,46 @@ function AskPlate({
   selected: boolean;
   onSelect(): void;
 }) {
-  const { call, reread } = useHeldCall(member);
+  const { call, error: callError, reread } = useHeldCall(member);
   const [busy, setBusy] = useState(false);
+  const pending = useRef(false);
+  const [decidedId, setDecidedId] = useState<string | null>(null);
+  const [failure, setFailure] = useState<{ label: string; retry(): void } | null>(null);
   const held = member.live === "held" || Boolean(call);
-  const decide = async (decision: "approved" | "denied") => {
-    if (!call) return;
+  const recoverRead = async () => {
+    if (pending.current) return;
+    pending.current = true;
     setBusy(true);
     try {
-      await useGate.getState().decide(call.id, decision);
+      await useGate.getState().refresh();
+      await reread();
+      const error = useGate.getState().error;
+      setFailure(error ? { label: `Gate read failed · ${error}`, retry: () => void recoverRead() } : null);
     } finally {
+      pending.current = false;
       setBusy(false);
-      reread();
+      void useConductor.getState().readFlights();
+    }
+  };
+  const decide = async (decision: "approved" | "denied", id = call?.id) => {
+    if (!id || pending.current || decidedId === id) return;
+    pending.current = true;
+    setBusy(true);
+    setFailure(null);
+    try {
+      await useGate.getState().decide(id, decision);
+      setDecidedId(id);
+      const error = useGate.getState().error;
+      if (error) setFailure({ label: `Gate read failed · ${error}`, retry: () => void recoverRead() });
+    } catch (error) {
+      setFailure({
+        label: `${decision === "approved" ? "Approve" : "Deny"} failed · ${readableError(error)}`,
+        retry: () => void decide(decision, id),
+      });
+    } finally {
+      await reread();
+      pending.current = false;
+      setBusy(false);
       void useConductor.getState().readFlights();
     }
   };
@@ -438,8 +474,10 @@ function AskPlate({
           ) : null}
         </div>
       </div>
+      {failure ? <ActionNotice tone="danger" role="alert" action={busy ? undefined : { label: "Retry", onClick: failure.retry }}>{failure.label}</ActionNotice> : null}
+      {!failure && callError ? <SurfaceState error={callError} onRetry={busy ? undefined : () => void reread()} /> : null}
       <div className="cw-ask-verbs">
-        {call && !call.args_cut ? (
+        {call && !call.args_cut && call.id !== decidedId ? (
           <>
             <Button dense variant="ghost" disabled={busy} onClick={() => void decide("denied")} data-testid="conductor-deny">
               Deny
@@ -448,7 +486,7 @@ function AskPlate({
               Approve
             </Button>
           </>
-        ) : (
+        ) : call?.id === decidedId ? null : (
           <Button dense variant={lead ? "primary" : "secondary"} onClick={() => answerMember(member)} data-testid="conductor-answer">
             {held ? "See the call" : "Answer"}
           </Button>

@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Button } from "../../components/signal/Signal";
 import type { ResourcefulPolicy } from "../detail-types";
 import { updateResourcefulPolicy } from "../api";
 import type { WriteAttempt } from "../hooks/useWriteReceipt";
@@ -30,6 +31,8 @@ export function WorkbenchResourceful({
   write: WriteAttempt;
   onChanged: () => void;
 }) {
+  const [pending, setPending] = useState(false);
+  const pendingRef = useRef(false);
   const [routines, setRoutines] = useState<ResourcefulPolicy["routines"]>(
     policy?.routines ?? [],
   );
@@ -65,17 +68,19 @@ export function WorkbenchResourceful({
   const nightlyTarget = settings.nightly_target;
   const lastFiredAt = policy.last_fired_at;
 
-  const commit = (enabled: boolean) => write(
-    enabled ? "ENABLE RESOURCEFULNESS" : "PAUSE RESOURCEFULNESS",
-    async () => {
-      await updateResourcefulPolicy(workbenchId, {
-        enabled,
-        ...settings,
-        routines,
-      });
+  const commit = (enabled: boolean) => write(enabled ? "ENABLE RESOURCEFULNESS" : "PAUSE RESOURCEFULNESS", async () => {
+    // Receipt Retry replays this callback, so it owns the same busy guard.
+    if (pendingRef.current) return;
+    pendingRef.current = true;
+    setPending(true);
+    try {
+      await updateResourcefulPolicy(workbenchId, { enabled, ...settings, routines });
       onChanged();
-    },
-  );
+    } finally {
+      pendingRef.current = false;
+      setPending(false);
+    }
+  });
 
   return (
     <div className="wb-resourceful">
@@ -188,28 +193,29 @@ export function WorkbenchResourceful({
       <div className="wb-automation-verbs">
         {policy.enabled ? (
           <>
-            <button
-              type="button"
-              className="desk-chip"
+            <Button
+              dense
+              loading={pending}
               onClick={() => void commit(true)}
-              disabled={!routines.length}
+              disabled={!routines.length || pending}
             >
               Save policy
-            </button>
-            <button
-              type="button"
-              className="desk-chip"
+            </Button>
+            <Button
+              dense
+              loading={pending}
               data-tone="warn"
               onClick={() => void commit(false)}
             >
               Pause
-            </button>
+            </Button>
           </>
         ) : (
           <ConfirmVerb
             label={settings.night_only ? "Enable overnight resourcefulness" : "Enable resourcefulness"}
             confirmLabel="RUN AS OWNER?"
-            disabled={!routines.length}
+            busy={pending}
+            disabled={!routines.length || pending}
             onConfirm={() => void commit(true)}
           />
         )}

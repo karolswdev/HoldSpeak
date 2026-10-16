@@ -184,6 +184,66 @@ describe("Meetings calendar source rows", () => {
     expect(screen.getByTestId("settings-save-failure")).toHaveTextContent("must be a file path or HTTPS URL");
   });
 
+  it.each(["same source", "another source"])("keeps a newer %s draft when the earlier Save succeeds", async (target) => {
+    let finish!: (value: unknown) => void;
+    apiFetch.mockImplementation((url: string, init?: { method?: string }) => {
+      if (url === "/api/settings" && init?.method === "PUT") return new Promise((resolve) => { finish = resolve; });
+      return Promise.resolve({ sources: [] });
+    });
+    render(<SettingsCore scope="meetings"/>);
+    fireEvent.click(within(screen.getByTestId("calendar-source-src-work")).getByRole("button", { name: "Edit" }));
+    fireEvent.change(screen.getByRole("textbox", WELL_INPUT), { target: { value: "https://first.example/a.ics" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await act(async () => { await Promise.resolve(); });
+    expect(screen.getByRole("button", { name: "Save" })).toHaveAttribute("aria-busy", "true");
+    if (target === "another source") fireEvent.click(within(screen.getByTestId("calendar-source-src-personal")).getByRole("button", { name: "Edit" }));
+    fireEvent.change(screen.getByRole("textbox", WELL_INPUT), { target: { value: "https://newer.example/b.ics" } });
+    await act(async () => finish({ settings: { ...settings, _revision: "calendar-r2" } }));
+    expect(screen.getByRole("textbox", WELL_INPUT)).toHaveValue("https://newer.example/b.ics");
+    expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
+    expect(apiFetch.mock.calls.filter(([url, init]) => url === "/api/settings" && init?.method === "PUT")).toHaveLength(1);
+  });
+
+  it("does not apply an earlier Save refusal to the newer calendar draft", async () => {
+    let refuse!: (cause: Error) => void;
+    apiFetch.mockImplementation((url: string, init?: { method?: string }) => {
+      if (url === "/api/settings" && init?.method === "PUT") return new Promise((_yes, no) => { refuse = no; });
+      return Promise.resolve({ ...settings, sources: [] });
+    });
+    render(<SettingsCore scope="meetings"/>);
+    fireEvent.click(screen.getByTestId("calendar-add-btn"));
+    fireEvent.change(screen.getByRole("textbox", WELL_INPUT), { target: { value: "https://first.example/a.ics" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await act(async () => { await Promise.resolve(); });
+    fireEvent.change(screen.getByRole("textbox", WELL_INPUT), { target: { value: "https://newer.example/b.ics" } });
+    await act(async () => refuse(new Error("Source refused")));
+    const well = screen.getByTestId("calendar-well");
+    expect(within(well).getByRole("textbox", WELL_INPUT)).toHaveValue("https://newer.example/b.ics");
+    expect(within(well).queryByRole("alert")).toBeNull();
+    expect(screen.getByTestId("settings-save-failure")).toHaveTextContent("Source refused");
+  });
+
+  it("keeps an accepted Save distinct from a failed calendar reread", async () => {
+    let accepted = false;
+    apiFetch.mockImplementation((url: string, init?: { method?: string }) => {
+      if (url === "/api/settings" && init?.method === "PUT") {
+        accepted = true;
+        return Promise.resolve({ settings: { ...settings, _revision: "calendar-r2" } });
+      }
+      if (url === "/api/calendar/sources" && accepted) return Promise.reject(new Error("Read unavailable"));
+      return Promise.resolve({ sources: [] });
+    });
+    render(<SettingsCore scope="meetings"/>);
+    fireEvent.click(screen.getByTestId("calendar-add-btn"));
+    fireEvent.change(screen.getByRole("textbox", WELL_INPUT), { target: { value: "https://accepted.example/feed.ics" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    expect(screen.queryByTestId("calendar-well")).toBeNull();
+    expect(screen.getByText("Could not read calendars")).toBeVisible();
+    expect(screen.queryByTestId("settings-save-failure")).toBeNull();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled();
+  });
+
   it("removes a source after the in-world confirm step (never a modal)", async () => {
     render(<SettingsCore scope="meetings" />);
     const work = screen.getByTestId("calendar-source-src-work");

@@ -1,6 +1,6 @@
 import { SurfaceFooter } from "../surface/SurfaceFooter";
 /** Coder pullout content (HS-117-15). */
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useDesk } from "../store";
 import { openSurfaceOr } from "../shell";
 import { qualifiedRef } from "../api";
@@ -31,6 +31,8 @@ export function CoderPullout({ object: o, onClose }: PulloutContentProps) {
   const [answered, setAnswered] = useState<
     "selected" | "sent" | "failed" | null
   >(null);
+  const [sending, setSending] = useState(false);
+  const sendPending = useRef(false);
 
   const coderSessionId = String(ir.sessionId || o.id);
   const {
@@ -46,6 +48,25 @@ export function CoderPullout({ object: o, onClose }: PulloutContentProps) {
 
   const coderWaiting =
     String(ir.state || "") === "waiting" || Boolean(ir.question);
+
+  const sendReply = async (text: string, draftSnapshot?: string) => {
+    if (sendPending.current || !text.trim()) return;
+    sendPending.current = true;
+    setSending(true);
+    setAnswered(null);
+    try {
+      const ok = await speakToCoder(String(ir.agent || "claude"), coderSessionId, text);
+      setAnswered(ok ? "sent" : "failed");
+      if (ok && draftSnapshot !== undefined) {
+        setCoderDraft((current) => current === draftSnapshot ? "" : current);
+      }
+    } catch {
+      setAnswered("failed");
+    } finally {
+      sendPending.current = false;
+      setSending(false);
+    }
+  };
 
   return (
     <>
@@ -75,14 +96,8 @@ export function CoderPullout({ object: o, onClose }: PulloutContentProps) {
                       </SurfaceWell>
                     </FoldGadget>
                     <Button dense variant="ghost"
-                      onClick={() => {
-                        setAnswered(null);
-                        void speakToCoder(
-                          String(ir.agent || "claude"),
-                          String(ir.sessionId || o.id),
-                          contextualCoderAction.source.text,
-                        ).then((ok) => setAnswered(ok ? "sent" : "failed"));
-                      }}
+                      disabled={sending}
+                      onClick={() => void sendReply(contextualCoderAction.source.text)}
                     >
                       {answered === "sent"
                         ? `Sent ${contextualCoderAction.source.title}`
@@ -112,19 +127,9 @@ export function CoderPullout({ object: o, onClose }: PulloutContentProps) {
                       onChange={(event) => setCoderDraft(event.target.value)}
                     />
                     <Button dense variant="primary"
+                      loading={sending}
                       disabled={!coderDraft.trim()}
-                      onClick={() => {
-                        setAnswered(null);
-                        const retained = coderDraft.trim();
-                        void speakToCoder(
-                          String(ir.agent || "claude"),
-                          coderSessionId,
-                          retained,
-                        ).then((ok) => {
-                          setAnswered(ok ? "sent" : "failed");
-                          if (ok) setCoderDraft("");
-                        });
-                      }}
+                      onClick={() => void sendReply(coderDraft.trim(), coderDraft)}
                     >
                       {answered === "failed" ? "Retry reply" : "Send reply"}
                     </Button>

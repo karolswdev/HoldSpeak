@@ -142,11 +142,44 @@ afterEach(() => {
     vi.useRealTimers();
   }
   vi.clearAllMocks();
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
   Object.defineProperty(window, "matchMedia", { configurable: true, writable: true, value: originalMatchMedia });
 });
 
 describe("ThoughtWorkspaceWindow — the four bands", () => {
+  it.each(["getItem", "setItem"] as const)("keeps the active answer retry identity when storage %s refuses", async (method) => {
+    const answered = { ...thought, aggregate_revision: 4, working_revision: 3, working_note: { ...thought.working_note, body_markdown: "Mina owns launch." } };
+    const accepted = projection({ thought: answered, workspace_cursor: { ...cursor, aggregate_revision: 4, continuity_revision: 5 } });
+    vi.mocked(thoughtWorkbench).mockResolvedValue(questionProjection("Who owns launch?", `active-storage-${method}`));
+    vi.mocked(actOnReview).mockRejectedValueOnce(new ApiError(503, "Connection lost", {})).mockResolvedValueOnce({ thought: answered, workbench: accepted });
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()}/>);
+    const answer = await screen.findByRole("textbox", { name: "Your answer" });
+    fireEvent.change(answer, { target: { value: "Mina owns launch." } });
+    vi.spyOn(Storage.prototype, method).mockImplementation(() => { throw new Error("Storage denied"); });
+    fireEvent.click(screen.getByRole("button", { name: "Add to note" }));
+    await waitFor(() => expect(actOnReview).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Add to note" })).toBeEnabled());
+    expect(answer).toHaveValue("Mina owns launch.");
+    const id = vi.mocked(actOnReview).mock.calls[0][0].request_id;
+    fireEvent.click(screen.getByRole("button", { name: "Add to note" }));
+    await waitFor(() => expect(screen.getByRole("textbox", { name: "Note body" })).toHaveValue("Mina owns launch."));
+    expect(vi.mocked(actOnReview).mock.calls[1][0].request_id).toBe(id);
+  });
+
+  it("installs the accepted active answer when request cleanup refuses", async () => {
+    const answered = { ...thought, aggregate_revision: 4, working_revision: 3, working_note: { ...thought.working_note, body_markdown: "Accepted active answer" } };
+    vi.mocked(thoughtWorkbench).mockResolvedValue(questionProjection("Who owns launch?", "active-storage-remove"));
+    vi.mocked(actOnReview).mockResolvedValue({ thought: answered, workbench: projection({ thought: answered, workspace_cursor: { ...cursor, aggregate_revision: 4, continuity_revision: 5 } }) });
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()}/>);
+    fireEvent.change(await screen.findByRole("textbox", { name: "Your answer" }), { target: { value: "Mina" } });
+    vi.spyOn(Storage.prototype, "removeItem").mockImplementation(() => { throw new Error("Storage denied"); });
+    fireEvent.click(screen.getByRole("button", { name: "Add to note" }));
+    await waitFor(() => expect(screen.getByRole("textbox", { name: "Note body" })).toHaveValue("Accepted active answer"));
+    expect(screen.queryByText(/Storage denied/)).toBeNull();
+    expect(screen.queryByRole("textbox", { name: "Your answer" })).toBeNull();
+  });
+
   it("keeps an idle note plain, says the context once, and holds one filled primary", async () => {
     vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
     render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);

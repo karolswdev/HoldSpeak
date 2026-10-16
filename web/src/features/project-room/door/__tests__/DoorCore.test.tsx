@@ -127,26 +127,23 @@ vi.mock("../../../../desk/surface", () => ({
       {label}
     </span>
   ),
-  StringGadget: ({
-    label,
-    value,
-    onChange,
-    placeholder,
-    autoFocus,
-  }: {
-    label?: string;
-    value?: string;
-    onChange?: (v: string) => void;
-    placeholder?: string;
-    autoFocus?: boolean;
+  StringGadget: ({ label, value, onChange, placeholder, autoFocus, inputProps, micLabel }: {
+    label?: string; value?: string; onChange?: (v: string) => void;
+    placeholder?: string; autoFocus?: boolean;
+    inputProps?: React.ComponentPropsWithoutRef<"input">; micLabel?: string;
   }) => (
-    <input
-      data-testid={`string-gadget-${label?.toLowerCase().replace(/\s+/g, "-")}`}
-      value={value ?? ""}
-      onChange={(e) => onChange?.(e.target.value)}
-      placeholder={placeholder}
-      autoFocus={autoFocus}
-    />
+    <span>
+      <input
+        {...inputProps}
+        aria-label={label}
+        data-testid={(inputProps as Record<string, unknown> | undefined)?.["data-testid"] as string | undefined ?? `string-gadget-${label?.toLowerCase().replace(/\s+/g, "-")}`}
+        value={value ?? ""}
+        onChange={(e) => onChange?.(e.target.value)}
+        placeholder={placeholder}
+        autoFocus={autoFocus}
+      />
+      <button data-testid="mic-btn" aria-label={micLabel ?? `Speak ${label}`} onClick={() => onChange?.("voice input")}>Mic</button>
+    </span>
   ),
   SurfaceWell: ({ children }: { children?: React.ReactNode }) => <div data-testid="surface-well">{children}</div>,
   TransportKey: ({ label, onClick }: { label?: string; onClick?: () => void }) => (
@@ -292,6 +289,8 @@ describe("DoorCore", () => {
       });
       const input = screen.getByTestId("door-outcome-input") as HTMLInputElement;
       expect(input.placeholder).toBe("What are you delivering?");
+      expect(screen.getByLabelText("Project name")).toBe(input);
+      expect(screen.getAllByRole("button", { name: "Speak outcome" })).toHaveLength(1);
       expect(input.value).toBe("");
     });
 

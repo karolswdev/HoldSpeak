@@ -4,7 +4,7 @@
 // and exactly two verbs. Deny carries an optional one line reason
 // that rides back to the agent verbatim.
 import { create } from "zustand";
-import { apiFetch } from "../lib/api";
+import { ApiError, apiFetch } from "../lib/api";
 
 export interface GateProposal {
   id: string;
@@ -56,16 +56,21 @@ export const useGate = create<GateStore>((set, get) => ({
   },
 
   decide: async (id, decision, reason) => {
+    let failure: unknown;
     try {
       await apiFetch(`/api/gate/proposals/${encodeURIComponent(id)}/decide`, {
         method: "POST",
         json: { decision, reason: reason?.trim() || undefined, actor: "owner" },
       });
-    } catch {
-      // A 409 means the race was lost (already decided or expired);
-      // the refresh below shows the standing truth either way.
+    } catch (error) {
+      const race = error instanceof ApiError && error.status === 409 &&
+        (error.payload as { error?: unknown } | null)?.error === "already_decided";
+      if (!race) failure = error;
     }
+    // Reads keep their own error. Once accepted (or already decided), a
+    // failed read must never offer the decision POST as its Retry.
     await get().refresh();
+    if (failure) throw failure;
   },
 }));
 

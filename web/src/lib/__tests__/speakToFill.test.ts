@@ -15,6 +15,7 @@ vi.mock("../api", () => ({
 vi.mock("../micSession", () => ({
   beginHold: vi.fn().mockResolvedValue(undefined),
   endHold: vi.fn().mockReturnValue(null),
+  holdOwnsFloor: vi.fn().mockReturnValue(false),
   abortHold: vi.fn(),
   micCaptureReason: vi.fn().mockReturnValue(null),
   micCaptureSupported: vi.fn().mockReturnValue(true),

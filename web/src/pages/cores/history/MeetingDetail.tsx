@@ -3,6 +3,8 @@
 import { NO_TRANSCRIPT_SPEECH, speechWasMissing } from "../../../desk/firstrun/speechTruth";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
+import { plainFailure } from "../../../desk/surface/plainFailure";
+import { ActionNotice } from "../../../desk/surface/patterns/ActionNotice";
 import { AppHead, SurfaceLedger, SurfaceLedgerRow, SurfaceSection, SurfaceState } from "../../../desk/surface";
 import { MeetingConflictRecovery } from "../../../meetings/MeetingConflictRecovery";
 import { MeetingIntelRecovery } from "../../../meetings/MeetingIntelRecovery";
@@ -249,6 +251,9 @@ export function MeetingOutcomes({ data, meeting }: { data: MeetingData; meeting:
   type Draft = { text: string; owner: string; due: string };
   type MoreMenu = { x: number; y: number; autoFocus: boolean };
   const [people, setPeople] = useState<Person[]>([]);
+  const [peopleLoading, setPeopleLoading] = useState(true);
+  const [peopleError, setPeopleError] = useState("");
+  const [peopleAttempt, setPeopleAttempt] = useState(0);
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [more, setMore] = useState<Record<string, MoreMenu>>({});
   const [editing, setEditing] = useState<Record<string, boolean>>({});
@@ -257,11 +262,14 @@ export function MeetingOutcomes({ data, meeting }: { data: MeetingData; meeting:
   const moreRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   useEffect(() => {
     let live = true;
+    setPeopleLoading(true);
+    setPeopleError("");
     void apiFetch<{ relationships?: Person[] }>("/api/people/relationships")
       .then((body) => { if (live) setPeople(body.relationships ?? []); })
-      .catch(() => undefined);
+      .catch((cause) => { if (live) setPeopleError(plainFailure("PEOPLE DID NOT LOAD", cause)); })
+      .finally(() => { if (live) setPeopleLoading(false); });
     return () => { live = false; };
-  }, []);
+  }, [peopleAttempt]);
   // People is a read-time projection of the Door. Resolve a destination by
   // the durable action item id only; the owner label on a meeting row is not
   // enough to guess a relationship (aliases can be ambiguous or unavailable).
@@ -467,6 +475,9 @@ export function MeetingOutcomes({ data, meeting }: { data: MeetingData; meeting:
     ) : null;
     return <>{lifecycle}{actionLifecycle}{destinationVerbs(row, !pending)}{menu}</>;
   };
+  const peopleReadRow = commitments.find((row) => row.proposalId
+    && (row.gap || editing[row.proposalId])
+    && (editing[row.proposalId] || !draftFor(row, row.proposalId).owner))?.proposalId;
   const gapFor = (row: OutcomeRow) => {
     if (!row.proposalId) return undefined;
     const id = row.proposalId;
@@ -481,6 +492,12 @@ export function MeetingOutcomes({ data, meeting }: { data: MeetingData; meeting:
       <div className="meeting-outcome-gap" data-testid="outcome-gap">
         {editing[id] ? <StringGadget label="Task" value={draft.text} onChange={(value) => setDraft(row, "text", value)} disabled={data.busy} /> : null}
         {showOwner ? <CycleGadget label="Who?" value={draft.owner} options={ownerOptions} onChange={(value) => setDraft(row, "owner", value)} disabled={data.busy} /> : null}
+        {showOwner && id === peopleReadRow && (peopleLoading || peopleError) ? <div data-testid="meeting-people-read" aria-busy={peopleLoading || undefined}>
+          <ActionNotice tone={peopleError ? "warn" : "info"} role={peopleError ? "alert" : "status"}
+            action={peopleError ? { label: "Retry", onClick: () => setPeopleAttempt((attempt) => attempt + 1) } : undefined}>
+            {peopleLoading ? "PEOPLE LOADING" : peopleError}
+          </ActionNotice>
+        </div> : null}
         {showDue ? <StringGadget label="When?" type="date" value={draft.due} onChange={(value) => setDraft(row, "due", value)} disabled={data.busy} /> : null}
       </div>
     );

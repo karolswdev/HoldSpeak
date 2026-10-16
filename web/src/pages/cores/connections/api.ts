@@ -171,8 +171,11 @@ export async function addAtlassianAccount(providerId: "jira" | "confluence", sit
   await apiFetch(`/api/providers/${providerId}/connections`, { method: "POST", json: { site, email } });
 }
 
-export async function recheckProvider(providerId: string): Promise<ConnectionTool | null> {
-  const raw = await apiFetch(`/api/connections/${providerId}/recheck`, { method: "POST" });
+export async function recheckProvider(providerId: string, connectionRef?: string): Promise<ConnectionTool | null> {
+  const raw = await apiFetch(`/api/connections/${providerId}/recheck`, {
+    method: "POST",
+    ...(connectionRef ? { json: { ref: connectionRef } } : {}),
+  });
   const tool = decodeTool(raw);
   if (!tool) throw new Error("Check returned no account");
   return tool;

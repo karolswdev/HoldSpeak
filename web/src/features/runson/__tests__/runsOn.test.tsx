@@ -70,6 +70,7 @@ vi.mock("../../../desk/firstrun/SpeechSetup", () => ({
 vi.mock("../../../desk/shell", () => ({ openSurfaceOr: m.openSurfaceOr }));
 
 import { RunsOnCore } from "../RunsOnCore";
+import { useRunsOn } from "../useRunsOn";
 
 const Q27 = { profile_id: "q27", profile_revision: 1, label: "qwen3.8 27B", boundary: "private_network", readiness: "ready" };
 const Q4B = { profile_id: "q4b", profile_revision: 2, label: "Qwen 3.5 4B", boundary: "local", readiness: "ready" };
@@ -732,6 +733,74 @@ describe("Runs on — Try it", () => {
 });
 
 describe("Runs on — speech not set up (PHILO-17)", () => {
+  it.each(["success", "failure"])("closing a transcribing host leaves a newer capture alone after late %s", async (outcome) => {
+    let finish!: (text: string) => void;
+    let fail!: (cause: Error) => void;
+    m.startCapture.mockResolvedValue(undefined);
+    m.stopAndTranscribe.mockReturnValue(new Promise<string>((resolve, reject) => { finish = resolve; fail = reject; }));
+    const old = renderHook(() => useRunsOn());
+    act(() => old.result.current.tryJob("speech_recognition", []));
+    await waitFor(() => expect(old.result.current.listening).toBe(true));
+    act(() => old.result.current.tryJob("speech_recognition", []));
+    expect(m.stopAndTranscribe).toHaveBeenCalledTimes(1);
+    expect(old.result.current.listening).toBe(false);
+
+    // The first hold has ended at Stop; this successful host now owns the
+    // shared mic while the previous transcription response is pending.
+    const current = renderHook(() => useRunsOn());
+    act(() => current.result.current.tryJob("speech_recognition", []));
+    await waitFor(() => expect(current.result.current.listening).toBe(true));
+    old.unmount();
+    expect(m.cancelCapture).not.toHaveBeenCalled();
+    await act(async () => {
+      if (outcome === "success") finish("Earlier transcription");
+      else fail(new Error("Earlier transcription failed"));
+    });
+    expect(m.cancelCapture).not.toHaveBeenCalled();
+    expect(current.result.current.listening).toBe(true);
+    current.unmount();
+    expect(m.cancelCapture).toHaveBeenCalledTimes(1);
+  });
+
+  it("releases this host's live capture when it closes without transcribing", async () => {
+    m.startCapture.mockResolvedValue(undefined);
+    const host = renderHook(() => useRunsOn());
+    act(() => host.result.current.tryJob("speech_recognition", []));
+    await waitFor(() => expect(host.result.current.listening).toBe(true));
+    host.unmount();
+    expect(m.cancelCapture).toHaveBeenCalledTimes(1);
+    expect(m.stopAndTranscribe).not.toHaveBeenCalled();
+  });
+
+  it("releases a capture that finishes starting after this host closes", async () => {
+    let started!: () => void;
+    m.startCapture.mockReturnValue(new Promise<void>((resolve) => { started = resolve; }));
+    const host = renderHook(() => useRunsOn());
+    act(() => host.result.current.tryJob("speech_recognition", []));
+    host.unmount();
+    expect(m.cancelCapture).not.toHaveBeenCalled();
+    await act(async () => started());
+    expect(m.cancelCapture).toHaveBeenCalledTimes(1);
+    expect(m.stopAndTranscribe).not.toHaveBeenCalled();
+  });
+
+  it("closing idle or refused hosts leaves another host's capture alone", async () => {
+    m.startCapture.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error("floor held"));
+    const owner = renderHook(() => useRunsOn());
+    act(() => owner.result.current.tryJob("speech_recognition", []));
+    await waitFor(() => expect(owner.result.current.listening).toBe(true));
+    const idle = renderHook(() => useRunsOn());
+    idle.unmount();
+    const refused = renderHook(() => useRunsOn());
+    act(() => refused.result.current.tryJob("speech_recognition", []));
+    await waitFor(() => expect(refused.result.current.trying).toBeNull());
+    refused.unmount();
+    expect(m.cancelCapture).not.toHaveBeenCalled();
+    expect(m.stopAndTranscribe).not.toHaveBeenCalled();
+    owner.unmount();
+    expect(m.cancelCapture).toHaveBeenCalledTimes(1);
+  });
+
   afterEach(() => {
     speechState.notSetUp = false;
   });
