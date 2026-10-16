@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "atlas_version": "cohesive-desk-entry-20261016",
+  "extends": "docs/internal/COHESIVE-EDGE-CONTROLS-2026-10-16/atlas.json",
+  "source_commit": "2a18c88319d84935768fe2aa356a04b18bde4e5a",
+  "states": [
+    {
+      "id": "state.desk_presentation.presence_return",
+      "family": "desk_presentation",
+      "values": {
+        "route": "/presence",
+        "task": "Return to Desk"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/pages/PresencePage.tsx",
+          "symbol": "PresencePage",
+          "claim": "Standalone runtime status returns to the real Desk through its library action."
+        }
+      ],
+      "reachable_by": [
+        "case.desk.presence.return_desk"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "case.desk.presence.return_desk",
+      "job": "j11",
+      "edge_ids": [
+        "edge.route.product_routes_presence"
+      ],
+      "state_id": "state.desk_presentation.presence_return",
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME/DB, engine none; first use dismissed through the real UI. No capture, provider or runtime activity execution."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": ".desk-screen",
+          "state": "visible",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/presence?entry=return"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "selector": ".presence-back",
+        "adapter": "ui-by-viewport"
+      },
+      "expected": {
+        "observe_at": ".desk-screen",
+        "predicate": {
+          "kind": "selector_presence",
+          "selector": ".desk-screen",
+          "present": true
+        },
+        "words": "The standalone status action returns to actual Desk at both widths. Query/auth, long label and strict pointer ownership are checked in the paired entry task tour."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ],
+  "clocks": [
+    {
+      "id": "clock.entry_wall",
+      "source": "Real browser and hub clocks",
+      "mechanism": "No clock override or advance; bounded navigation only.",
+      "status": "available",
+      "used_by": [
+        "case.desk.presence.return_desk"
+      ]
+    }
+  ],
+  "excluded": [],
+  "council_readings": []
+}

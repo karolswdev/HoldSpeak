@@ -1,0 +1,30 @@
+.canvas-desk { min-height: 100vh; background: var(--desk-floor); }
+/* The desktop specimen is forced for material review; product GoHome stays
+   mounted only at the existing compact breakpoint. */
+.canvas-desk .desk-go-home { max-width: 720px; margin-inline: auto; }
+
+/* Arrangement only. The existing desk-menu-list supplies all row material. */
+.desk-go-home-list { min-width: 0; gap: var(--space-3); }
+.desk-go-home-group { min-width: 0; gap: 0; }
+.desk-go-home-group .surface-section-head { margin: var(--space-2) var(--space-2) var(--space-1); }
+.desk-next .desk-menu-list .desk-go-home-row {
+  min-width: 0;
+  min-height: var(--desk-button-hit-size);
+  height: auto;
+  padding-block: var(--space-2);
+}
+.desk-next .desk-go-home .desk-menu-label {
+  white-space: normal;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+.desk-go-home-reason {
+  flex: 0 0 auto;
+  min-width: 0;
+  max-width: 42%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: right;
+  line-height: 1.35;
+}

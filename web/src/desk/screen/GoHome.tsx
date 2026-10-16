@@ -5,7 +5,8 @@ import { KIND_GLYPH } from "../tools";
 import { openProjectRoom } from "../shell";
 import { phoneGo } from "../components/DeskMenuBar";
 import { VERBS, verbLabel, type VerbContext } from "../verbRegistry";
-import type { WorkMenuEntry } from "../components/DeskMenu";
+import { WorkMenuSep, type WorkMenuEntry } from "../components/DeskMenu";
+import { SurfaceSection } from "../surface/Surface";
 import { qualifiedRef } from "../api";
 import { rootDirectories } from "./compose";
 import { openScreenRef } from "./open";
@@ -17,7 +18,7 @@ export function GoHome() {
   const items = useDesk((state) => state.items);
   const selectedIds = useDesk((state) => state.selectedIds);
   const ctx: VerbContext = { selectedRef: selectedIds.length === 1 ? selectedIds[0] : null };
-  const entries = useMemo(() => {
+  const sections = useMemo(() => {
     const row = (verbId: string, label?: string): WorkMenuEntry | null => {
       const verb = VERBS.find((candidate) => candidate.id === verbId);
       if (!verb) return null;
@@ -44,26 +45,29 @@ export function GoHome() {
         }),
       });
     }
-    return go;
+    return [
+      {
+        id: "go-apps", label: "Apps",
+        entries: go.filter((entry) => (entry.type === "item" && !entry.id.startsWith("go-project-")) || entry.id === "go-places-sep"),
+      },
+      {
+        id: "go-projects", label: "Projects",
+        entries: go.filter((entry) => entry.type === "item" && entry.id.startsWith("go-project-")),
+      },
+      ...go.filter((entry): entry is Extract<WorkMenuEntry, { type: "sub" }> => entry.type === "sub"),
+    ].filter((section) => section.entries.length > 0);
   }, [projects, items, ctx.selectedRef]);
 
   return (
     <section className="desk-go-home" aria-label="Go">
-      <div className="desk-go-home-list" role="menu" aria-label="Go menu">
-        {entries.map((entry, index) => {
-          if (entry.type === "sep") {
-            return <span key={entry.id ?? `go-sep-${index}`} role="separator" className="desk-go-home-sep" />;
-          }
-          if (entry.type === "sub") {
-            return (
-              <div key={entry.id} className="desk-go-home-group">
-                <h2 className="desk-go-home-group-title">{entry.label}</h2>
-                {entry.entries.filter((child): child is Extract<WorkMenuEntry, { type: "item" }> => child.type === "item").map((child) => <GoRow key={child.id} entry={child} />)}
-              </div>
-            );
-          }
-          return <GoRow key={entry.id} entry={entry} />;
-        })}
+      <div className="desk-go-home-list desk-menu-list" role="menu" aria-label="Go menu" data-menu-context="launcher">
+        {sections.map((section) => (
+          <SurfaceSection key={section.id} label={section.label} className="desk-go-home-group">
+            {section.entries.map((entry, index) => entry.type === "sep"
+              ? <WorkMenuSep key={entry.id ?? index} />
+              : entry.type === "item" ? <GoRow key={entry.id} entry={entry} /> : null)}
+          </SurfaceSection>
+        ))}
       </div>
     </section>
   );
@@ -74,14 +78,14 @@ function GoRow({ entry }: { entry: Extract<WorkMenuEntry, { type: "item" }> }) {
     <Button
       variant="chrome"
       role="menuitem"
-      className="desk-go-home-row"
+      className={`desk-go-home-row${entry.ghost ? " is-ghost" : ""}`}
       data-object-id={entry.id.startsWith("zone:") ? entry.id : undefined}
       aria-disabled={entry.ghost ? true : undefined}
       onClick={() => { if (!entry.ghost) entry.onSelect(); }}
     >
-      <span className="desk-go-home-glyph" aria-hidden="true">{entry.glyph ?? KIND_GLYPH.project}</span>
-      <span>{entry.label}</span>
-      {entry.ghost ? <span className="desk-go-home-reason">{entry.ghost}</span> : null}
+      <span className="desk-menu-glyph" aria-hidden="true">{entry.glyph ?? KIND_GLYPH.project}</span>
+      <span className="desk-menu-label">{entry.label}</span>
+      {entry.ghost ? <span className="desk-go-home-reason quiet">{entry.ghost}</span> : null}
     </Button>
   );
 }

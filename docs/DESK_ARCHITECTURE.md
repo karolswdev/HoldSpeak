@@ -178,3 +178,14 @@ current value/writer. PR results retain action identity and disclose technical
 receipts; their existing reflow follows the760px table floor. Desktop footer
 content reserves the bottom resize edge while keeping resize handlers; Review
 wraps armed date/action groups with natural labels. No new service/public API.
+
+
+### Desk entry composition (2026-10-16)
+
+Compact GoHome groups the existing phoneGo actions, Projects and qualified
+root Drawers on the shared Workbench menu material. SurfaceSection supplies
+captions; chrome Buttons retain native activation, context and ghost refusal.
+Rows own their phone target and wrap names/reasons. Desktop Screen is unchanged.
+Standalone Presence uses the same floor/steel/paper tokens and existing block
+LampGadget; its library Desk action preserves query context. Runtime bus/state
+expressions and the Get ready handoff writers stay unchanged. No new API.

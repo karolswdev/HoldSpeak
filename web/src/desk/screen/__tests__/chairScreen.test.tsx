@@ -1,7 +1,7 @@
 // PHILO-14 A1 — ChairHome renders the screen of objects after arrival; the
 // first-run path (arrivalRequired) is untouched; a fresh desk opens with the
 // four Chair windows closed (they open on demand).
-import { fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../../lib/api";
 
@@ -48,6 +48,40 @@ describe("PHILO-14 A1 — the Chair is the screen", () => {
     expect(openPullout).toHaveBeenCalledWith(qualifiedRef("directory", folder.id));
     fireEvent.click(screen.getByRole("menuitem", { name: /Unfiled drawer/ }));
     expect(openPullout).toHaveBeenCalledWith(qualifiedRef("directory", orphan.id));
+  });
+
+  it("routes the same-name Meetings app and drawer to their exact existing destinations", async () => {
+    const { EMPTY_ITEMS, fromWireDirectory, qualifiedRef } = await import("../../api");
+    const { useDesk } = await import("../../store");
+    const { VERBS } = await import("../../verbRegistry");
+    const { GoHome } = await import("../GoHome");
+    const saved = useDesk.getState();
+    const app = VERBS.find((verb) => verb.id === "go.review-meetings")!;
+    const run = vi.spyOn(app, "run").mockImplementation(() => {});
+    const openPullout = vi.fn();
+    // View-store name collision; actual directory writer proof belongs to root.
+    const directory = fromWireDirectory({ id: "dir_b5c056b59f3e", name: "Meetings", parent_id: null, member_ids: [], created_at: "2026-10-16T01:39:56Z" })!;
+    try {
+      useDesk.setState({ items: { ...EMPTY_ITEMS, directory: [directory] }, projects: [], selectedIds: [], openPullout });
+      render(<GoHome />);
+      expect(screen.getAllByRole("heading").map((heading) => heading.textContent)).toEqual(["Apps", "Drawers", "New"]);
+      const appRow = within(screen.getByRole("heading", { name: "Apps" }).closest("section")!).getByRole("menuitem", { name: "Meetings" });
+      const drawerRow = within(screen.getByRole("heading", { name: "Drawers" }).closest("section")!).getByRole("menuitem", { name: "Meetings" });
+      expect(appRow).not.toHaveAttribute("data-object-id");
+      expect(drawerRow).toHaveAttribute("data-object-id", qualifiedRef("directory", directory.id));
+      fireEvent.click(appRow);
+      expect(run).toHaveBeenCalledOnce();
+      expect(run).toHaveBeenCalledWith({ selectedRef: null });
+      expect(openPullout).not.toHaveBeenCalled();
+      fireEvent.click(drawerRow);
+      expect(openPullout).toHaveBeenCalledOnce();
+      expect(openPullout).toHaveBeenCalledWith(qualifiedRef("directory", directory.id));
+      expect(run).toHaveBeenCalledOnce();
+    } finally {
+      cleanup();
+      run.mockRestore();
+      useDesk.setState(saved, true);
+    }
   });
 
   it("renders the screen and no Chair window on a fresh desk", async () => {
