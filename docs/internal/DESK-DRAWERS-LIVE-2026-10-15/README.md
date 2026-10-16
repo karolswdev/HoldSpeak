@@ -157,3 +157,22 @@ The observations are under `.tmp/desk-drawers-live/graph-file-1440/` and
 edits. The phone case used `index-DO16wCgO.js` after the caption correction;
 desktop used the earlier reviewed bundle before that summary-only correction.
 The supplemental final drawer walks cover the caption at both widths.
+
+## Release
+
+[PR #1212](https://github.com/karolswdev/HoldSpeak/pull/1212). The complete
+quick check against `bea522beb` passed: 3,798 web tests in 403 files, 651
+affected Python tests, 107 Desk sweeps (two existing xfails), and 17 canon
+guards. Build and release TypeScript pass. Root read each actual tail; logs
+are `.tmp/desk-drawers-live/quick-final.log` and `quick-final/`. Existing jsdom
+text-measurement diagnostics, the sweep rig's invalid-escape warning and the
+bundle-size advisory remain visible. No failing test was waived. The library
+canvas is outside quick-check coverage and was separately rendered/read at
+both widths before implementation. The quick build retains the same content
+build ID `fb29710037373e39` and `index-DO16wCgO.js` as the final drawer walks.
+
+Normal owner hub redeployment follows the merge; its PID/build and warm runtime
+are recorded in the serving worktree's untracked `LOCAL-HUB.md`. Formal
+postmerge review, full main tape, hardware performance and owner live judgment
+remain separate from the local verification above. The source review's
+inherited partial runtime-mount cleanup limitation remains open.
