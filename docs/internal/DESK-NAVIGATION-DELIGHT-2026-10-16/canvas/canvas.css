@@ -1,0 +1,11 @@
+body { margin: 0; }
+.direction-floor { min-height: 100vh; background: var(--desk-floor); padding: 24px; }
+.desk-next .desk-tool-shelf { container: surface / inline-size; }
+.desk-next .desk-tool-search-head { display: flex; align-items: center; gap: 12px; }
+.desk-next .desk-tool-search-head .desk-tool-search { flex: 1; min-width: 0; margin-top: 0; }
+.desk-next .desk-tool-close { flex: none; }
+.desk-next .desk-deck-row[data-meeting] { align-items: flex-start; padding-block: 8px; }
+.desk-next .desk-deck-row[data-meeting] .desk-deck-glyph,
+.desk-next .desk-deck-row[data-meeting] .desk-deck-kind { padding-top: 2px; }
+.desk-next .desk-deck-meeting-meta { display: block; margin-top: 3px; color: var(--text-muted); font: 400 12px/1.5 var(--font-mono); white-space: normal; overflow-wrap: anywhere; }
+.desk-next .desk-deck-row:is(.is-selected, :hover, :focus-visible) .desk-deck-meeting-meta { color: var(--wb-paper); }

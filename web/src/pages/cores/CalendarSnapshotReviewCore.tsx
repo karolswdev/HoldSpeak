@@ -1,21 +1,23 @@
 // HS-146-07 — Calendar snapshot review surface: extracted events from
 // a screenshot are shown as an editable list; the owner confirms the
 // anchor date and the events before they become a .ics source.
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { apiFetch, readableError } from "../../lib/api";
-import {
-  CycleGadget,
-  GadgetTable,
-  StringGadget,
-} from "../../desk/surface/gadgets";
+import { CycleGadget, StringGadget } from "../../desk/surface/gadgets";
 import { countLabel, StateChip } from "../../desk/surface";
 import { humanizeWireValue } from "../../lib/productLanguage";
 import { useWindowTitle } from "../../desk/surface/title";
 import { windowName } from "../../desk/windowName";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
-import { SurfaceSection } from "../../desk/surface/Surface";
+import {
+  ConfirmVerb,
+  SurfaceLedger,
+  SurfaceLedgerRow,
+  SurfaceSection,
+} from "../../desk/surface/Surface";
 import { Button } from "../../components/signal/Signal";
 import type { CoreProps } from "./core-types";
+import "./calendar-snapshot-review.css";
 
 interface SnapshotEvent {
   title: string;
@@ -25,11 +27,21 @@ interface SnapshotEvent {
   location: string | null;
 }
 
+interface ReviewEvent extends SnapshotEvent {
+  rowId: string;
+}
+
 type Phase =
-  | { step: "review"; events: SnapshotEvent[]; anchor: string; confidence: string }
+  | {
+      step: "review";
+      events: ReviewEvent[];
+      anchor: string;
+      confidence: string;
+      saving: boolean;
+      saveError?: string;
+    }
   | { step: "error"; verb: "READ" | "SAVE"; message: string }
-  | { step: "confirming" }
-  | { step: "done"; count: number; sourceLabel: string };
+  | { step: "done"; count?: number; sourceLabel?: string };
 
 /** UX-CANON A10 (honest states, plain reasons): a refusal reads
  * `CAN'T READ · <plain reason>`, never the hub's code
@@ -47,7 +59,15 @@ export function refusalReason(message: string): string {
   return /^[a-z0-9]+(_[a-z0-9]+)+$/.test(m) ? humanizeWireValue(m) : m;
 }
 
-const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+const WEEKDAYS = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+];
 
 function parseScope(scope: string | undefined): {
   events: SnapshotEvent[];
@@ -55,11 +75,17 @@ function parseScope(scope: string | undefined): {
   confidence: string;
   error: string | null;
 } {
-  if (!scope) return { events: [], anchor: "", confidence: "absent", error: "no_import" };
+  if (!scope)
+    return { events: [], anchor: "", confidence: "absent", error: "no_import" };
   try {
     const data = JSON.parse(scope);
     if (data.error) {
-      return { events: [], anchor: "", confidence: "absent", error: data.error };
+      return {
+        events: [],
+        anchor: "",
+        confidence: "absent",
+        error: data.error,
+      };
     }
     return {
       events: (data.events || []).map((e: Record<string, unknown>) => ({
@@ -99,17 +125,38 @@ export function CalendarSnapshotReviewCore({ scope }: CoreProps) {
     }
     return {
       step: "review",
-      events: initial.events,
+      // Identity belongs to the imported row, once, through edits/removals.
+      events: initial.events.map((event, index) => ({
+        ...event,
+        rowId: `snapshot-event-${index}`,
+      })),
       anchor: initial.anchor ?? "",
       confidence: initial.confidence,
+      saving: false,
     };
   });
+  const confirming = useRef(false);
   const calendarName = phase.step === "done" ? phase.sourceLabel : null;
-  useWindowTitle(calendarName ? windowName({ kind: "calendar", name: calendarName }) : null, [calendarName]);
+  useWindowTitle(
+    calendarName ? windowName({ kind: "calendar", name: calendarName }) : null,
+    [calendarName],
+  );
 
   const handleConfirm = useCallback(async () => {
-    if (phase.step !== "review") return;
-    setPhase({ step: "confirming" });
+    if (
+      phase.step !== "review" ||
+      confirming.current ||
+      !isAnchorValid(phase.anchor) ||
+      !phase.events.length
+    )
+      return;
+    // The ref closes the gap before React paints the disabled Confirm.
+    confirming.current = true;
+    const body = JSON.stringify({
+      anchor_date: phase.anchor.trim(),
+      events: phase.events.map(({ rowId: _rowId, ...event }) => event),
+    });
+    setPhase({ ...phase, saving: true, saveError: undefined });
     try {
       const result = await apiFetch<{
         success: boolean;
@@ -119,22 +166,25 @@ export function CalendarSnapshotReviewCore({ scope }: CoreProps) {
       }>("/api/calendar/snapshot/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          anchor_date: phase.anchor.trim(),
-          events: phase.events,
-        }),
+        body,
       });
       if (result.success) {
         setPhase({
           step: "done",
-          count: result.events_count ?? phase.events.length,
-          sourceLabel: result.source_label ?? "O365 SNAPSHOT",
+          count: result.events_count,
+          sourceLabel: result.source_label,
         });
       } else {
-        setPhase({ step: "error", verb: "SAVE", message: result.error ?? "Events not saved" });
+        setPhase({
+          ...phase,
+          saving: false,
+          saveError: result.error ?? "Events not saved",
+        });
       }
     } catch (err) {
-      setPhase({ step: "error", verb: "SAVE", message: readableError(err) });
+      setPhase({ ...phase, saving: false, saveError: readableError(err) });
+    } finally {
+      confirming.current = false;
     }
   }, [phase]);
 
@@ -142,9 +192,14 @@ export function CalendarSnapshotReviewCore({ scope }: CoreProps) {
     return (
       <div className="surface-padded">
         <SurfaceSection label="Calendar snapshot">
-          <p className="surface-state-quiet" data-testid="calendar-snapshot-refusal">
+          <p
+            className="surface-state-quiet"
+            data-testid="calendar-snapshot-refusal"
+          >
             <StateChip state="failure" label={`CAN'T ${phase.verb}`} />{" "}
-            <span className="surface-token" data-chip="">{refusalReason(phase.message)}</span>
+            <span className="surface-token" data-chip="">
+              {refusalReason(phase.message)}
+            </span>
           </p>
         </SurfaceSection>
         <SurfaceFooter />
@@ -152,23 +207,27 @@ export function CalendarSnapshotReviewCore({ scope }: CoreProps) {
     );
   }
 
-  if (phase.step === "confirming") {
-    return (
-      <div className="surface-padded">
-        <SurfaceSection label="Calendar snapshot">
-          <p className="surface-state-quiet">Writing events...</p>
-        </SurfaceSection>
-      </div>
-    );
-  }
-
   if (phase.step === "done") {
     return (
       <div className="surface-padded">
-        <SurfaceSection label="Calendar snapshot">
-          <p className="surface-state-quiet">
-            {phase.count} event{phase.count !== 1 ? "s" : ""} imported as {phase.sourceLabel}
-          </p>
+        <SurfaceSection label="Import">
+          <div
+            className="calendar-snapshot-status"
+            role="status"
+            data-testid="calendar-snapshot-receipt"
+          >
+            <StateChip state="success" label="SAVED" />
+            {phase.count != null && phase.count > 0 ? (
+              <span className="surface-token" data-chip="">
+                {countLabel("EVENTS", phase.count)}
+              </span>
+            ) : null}
+            {phase.sourceLabel ? (
+              <span className="surface-token" data-chip="">
+                {phase.sourceLabel}
+              </span>
+            ) : null}
+          </div>
         </SurfaceSection>
         <SurfaceFooter />
       </div>
@@ -178,104 +237,165 @@ export function CalendarSnapshotReviewCore({ scope }: CoreProps) {
   // Review step
   const anchorValid = isAnchorValid(phase.anchor);
 
-  const updateEvent = (index: number, patch: Partial<SnapshotEvent>) => {
+  const updateEvent = (rowId: string, patch: Partial<SnapshotEvent>) => {
     setPhase((prev) => {
-      if (prev.step !== "review") return prev;
-      const next = prev.events.map((e, i) =>
-        i === index ? { ...e, ...patch } : e,
+      if (prev.step !== "review" || confirming.current) return prev;
+      const next = prev.events.map((event) =>
+        event.rowId === rowId ? { ...event, ...patch } : event,
       );
-      return { ...prev, events: next };
+      return { ...prev, events: next, saveError: undefined };
     });
   };
 
-  const deleteEvent = (index: number) => {
+  const deleteEvent = (rowId: string) => {
     setPhase((prev) => {
-      if (prev.step !== "review") return prev;
-      return { ...prev, events: prev.events.filter((_, i) => i !== index) };
+      if (prev.step !== "review" || confirming.current) return prev;
+      return {
+        ...prev,
+        events: prev.events.filter((event) => event.rowId !== rowId),
+        saveError: undefined,
+      };
     });
   };
 
   return (
-    <div className="surface-padded">
-      <SurfaceSection label="Week anchor">
-        <div style={{ maxWidth: 260 }}>
-          <StringGadget
-            label="Week of"
-            value={phase.anchor}
-            placeholder="YYYY-MM-DD"
-            onChange={(next) =>
-              setPhase((prev) =>
-                prev.step === "review" ? { ...prev, anchor: next } : prev,
-              )
-            }
-          />
-        </div>
-        {!anchorValid && phase.anchor ? (
-          <small className="surface-state-quiet">Enter a date as YYYY-MM-DD</small>
-        ) : null}
-      </SurfaceSection>
-
-      <SurfaceSection label={countLabel("EVENTS", phase.events.length)}>
-        <GadgetTable
-          head={["TITLE", "DAY", "START", "END", "LOCATION"]}
-          deleteLabel="REMOVE?"
-          onDelete={deleteEvent}
-          rowKey={(i) => `${i}-${phase.events[i]?.title}`}
-          rows={phase.events.map((event, index) => [
+    <div className="surface-padded calendar-snapshot-review">
+      <fieldset className="calendar-snapshot-fields" disabled={phase.saving}>
+        <SurfaceSection label="Week anchor">
+          <div className="calendar-snapshot-anchor">
             <StringGadget
-              key="title"
-              label={`Event ${index + 1} title`}
-              value={event.title}
-              onChange={(next) => updateEvent(index, { title: next })}
-            />,
-            <CycleGadget
-              key="weekday"
-              label={`Event ${index + 1} weekday`}
-              value={event.weekday}
-              options={WEEKDAYS.map((d) => ({
-                value: d,
-                label: d.charAt(0).toUpperCase() + d.slice(1, 3),
-              }))}
-              onChange={(next) => updateEvent(index, { weekday: next })}
-            />,
-            <StringGadget
-              key="start"
-              label={`Event ${index + 1} start`}
-              value={event.start_time}
-              placeholder="HH:MM"
-              mic={false}
-              onChange={(next) => updateEvent(index, { start_time: next })}
-            />,
-            <StringGadget
-              key="end"
-              label={`Event ${index + 1} end`}
-              value={event.end_time}
-              placeholder="HH:MM"
-              mic={false}
-              onChange={(next) => updateEvent(index, { end_time: next })}
-            />,
-            <StringGadget
-              key="location"
-              label={`Event ${index + 1} location`}
-              value={event.location ?? ""}
-              placeholder=""
+              label="Week of"
+              caption
+              value={phase.anchor}
+              placeholder="YYYY-MM-DD"
               onChange={(next) =>
-                updateEvent(index, { location: next || null })
+                setPhase((prev) =>
+                  prev.step === "review" && !confirming.current
+                    ? { ...prev, anchor: next, saveError: undefined }
+                    : prev,
+                )
               }
-            />,
-          ])}
-        />
-      </SurfaceSection>
+            />
+          </div>
+          {!anchorValid && phase.anchor ? (
+            <small className="surface-state-quiet">YYYY-MM-DD</small>
+          ) : null}
+        </SurfaceSection>
+
+        <SurfaceSection label={countLabel("EVENTS", phase.events.length)}>
+          <div className="calendar-snapshot-events">
+            <SurfaceLedger label="Events">
+              <ul className="surface-ledger-rows">
+                {phase.events.map((event, index) => (
+                  <SurfaceLedgerRow
+                    key={event.rowId}
+                    primary={`Event ${index + 1}`}
+                    open
+                    expands={false}
+                    trailing={
+                      <ConfirmVerb
+                        label="Remove"
+                        confirmLabel="Remove?"
+                        ariaLabel={`Remove event ${index + 1}`}
+                        disabled={phase.saving}
+                        onConfirm={() => deleteEvent(event.rowId)}
+                      />
+                    }
+                  >
+                    <div className="calendar-snapshot-editor">
+                      <StringGadget
+                        label={`Event ${index + 1} title`}
+                        caption
+                        value={event.title}
+                        onChange={(next) =>
+                          updateEvent(event.rowId, { title: next })
+                        }
+                      />
+                      <div className="calendar-snapshot-schedule">
+                        <div className="calendar-snapshot-day">
+                          <span aria-hidden="true">Day</span>
+                          <CycleGadget
+                            label={`Event ${index + 1} weekday`}
+                            value={event.weekday}
+                            options={WEEKDAYS.map((d) => ({
+                              value: d,
+                              label: d.charAt(0).toUpperCase() + d.slice(1),
+                            }))}
+                            onChange={(next) =>
+                              updateEvent(event.rowId, { weekday: next })
+                            }
+                          />
+                        </div>
+                        <StringGadget
+                          key="start"
+                          label={`Event ${index + 1} start`}
+                          caption
+                          value={event.start_time}
+                          placeholder="HH:MM"
+                          mic={false}
+                          onChange={(next) =>
+                            updateEvent(event.rowId, { start_time: next })
+                          }
+                        />
+                        <StringGadget
+                          key="end"
+                          label={`Event ${index + 1} end`}
+                          caption
+                          value={event.end_time}
+                          placeholder="HH:MM"
+                          mic={false}
+                          onChange={(next) =>
+                            updateEvent(event.rowId, { end_time: next })
+                          }
+                        />
+                      </div>
+                      <StringGadget
+                        label={`Event ${index + 1} location`}
+                        caption
+                        value={event.location ?? ""}
+                        placeholder=""
+                        onChange={(next) =>
+                          updateEvent(event.rowId, { location: next || null })
+                        }
+                      />
+                    </div>
+                  </SurfaceLedgerRow>
+                ))}
+              </ul>
+            </SurfaceLedger>
+          </div>
+        </SurfaceSection>
+      </fieldset>
 
       <SurfaceFooter
+        receipt={
+          phase.saving ? (
+            <StateChip state="idle" label="Saving" />
+          ) : phase.saveError ? (
+            <span
+              className="surface-footer-receipt-line"
+              data-wrap=""
+              data-tone="danger"
+              role="alert"
+              data-testid="calendar-snapshot-save-refusal"
+            >
+              <StateChip state="failure" label="CAN'T SAVE" />{" "}
+              <span className="surface-token" data-chip="" data-wrap="">
+                {refusalReason(phase.saveError)}
+              </span>
+            </span>
+          ) : undefined
+        }
         verbs={
           <>
             <Button
               dense
+              variant="primary"
+              loading={phase.saving}
               disabled={!anchorValid || phase.events.length === 0}
               onClick={handleConfirm}
             >
-              CONFIRM
+              {phase.saveError ? "Retry" : "CONFIRM"}
             </Button>
           </>
         }

@@ -2981,7 +2981,8 @@
         "web/src/desk/components/AskPanel.tsx",
         "holdspeak/db/plugins.py",
         "web/src/desk/lineage.ts",
-        "web/src/desk/thought-workspace/ThoughtReadsWell.tsx"
+        "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
+        "web/src/desk/components/DeskToolShelf.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -3003,7 +3004,8 @@
         "web/src/desk/components/AskPanel.tsx",
         "holdspeak/db/plugins.py",
         "web/src/desk/lineage.ts",
-        "web/src/desk/thought-workspace/ThoughtReadsWell.tsx"
+        "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
+        "web/src/desk/components/DeskToolShelf.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -3025,7 +3027,8 @@
         "web/src/desk/components/AskPanel.tsx",
         "holdspeak/db/plugins.py",
         "web/src/desk/lineage.ts",
-        "web/src/desk/thought-workspace/ThoughtReadsWell.tsx"
+        "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
+        "web/src/desk/components/DeskToolShelf.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -3047,7 +3050,8 @@
         "web/src/desk/components/AskPanel.tsx",
         "holdspeak/db/plugins.py",
         "web/src/desk/lineage.ts",
-        "web/src/desk/thought-workspace/ThoughtReadsWell.tsx"
+        "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
+        "web/src/desk/components/DeskToolShelf.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -3069,7 +3073,8 @@
         "web/src/desk/components/AskPanel.tsx",
         "holdspeak/db/plugins.py",
         "web/src/desk/lineage.ts",
-        "web/src/desk/thought-workspace/ThoughtReadsWell.tsx"
+        "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
+        "web/src/desk/components/DeskToolShelf.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -3790,7 +3795,9 @@
       "platform": "aipi",
       "source_ids": [
         "holdspeak/services/settings_service.py",
-        "web/src/desk/firstrun/CalendarCard.tsx"
+        "web/src/desk/firstrun/CalendarCard.tsx",
+        "web/src/pages/cores/ConstitutionalContextCore.tsx",
+        "web/src/pages/cores/CalendarSnapshotReviewCore.tsx"
       ],
       "status": "experimental"
     },
@@ -3801,7 +3808,9 @@
       "platform": "ipad",
       "source_ids": [
         "holdspeak/services/settings_service.py",
-        "web/src/desk/firstrun/CalendarCard.tsx"
+        "web/src/desk/firstrun/CalendarCard.tsx",
+        "web/src/pages/cores/ConstitutionalContextCore.tsx",
+        "web/src/pages/cores/CalendarSnapshotReviewCore.tsx"
       ],
       "status": "experimental"
     },
@@ -3812,7 +3821,9 @@
       "platform": "linux_wayland",
       "source_ids": [
         "holdspeak/services/settings_service.py",
-        "web/src/desk/firstrun/CalendarCard.tsx"
+        "web/src/desk/firstrun/CalendarCard.tsx",
+        "web/src/pages/cores/ConstitutionalContextCore.tsx",
+        "web/src/pages/cores/CalendarSnapshotReviewCore.tsx"
       ],
       "status": "experimental"
     },
@@ -3823,7 +3834,9 @@
       "platform": "linux_x11",
       "source_ids": [
         "holdspeak/services/settings_service.py",
-        "web/src/desk/firstrun/CalendarCard.tsx"
+        "web/src/desk/firstrun/CalendarCard.tsx",
+        "web/src/pages/cores/ConstitutionalContextCore.tsx",
+        "web/src/pages/cores/CalendarSnapshotReviewCore.tsx"
       ],
       "status": "experimental"
     },
@@ -3834,7 +3847,9 @@
       "platform": "macos",
       "source_ids": [
         "holdspeak/services/settings_service.py",
-        "web/src/desk/firstrun/CalendarCard.tsx"
+        "web/src/desk/firstrun/CalendarCard.tsx",
+        "web/src/pages/cores/ConstitutionalContextCore.tsx",
+        "web/src/pages/cores/CalendarSnapshotReviewCore.tsx"
       ],
       "status": "experimental"
     },

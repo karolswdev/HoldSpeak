@@ -293,20 +293,8 @@ ROOM_ITEM_UNDER_ASK = (r"^overlap '[^']+' x '[^']+' @\[(?:[^\]<]*<)*item-row(?:<
                        r" x \[(?:[^\]<]*<)*room-ask[\w-]*(?:<[^\]]*)?\](?: \[\[.*)?$")
 
 KNOWN_REDS: dict[tuple[str, int], list[Red]] = {
-    # PHILO-17 (the target fence, 2026-10-12): the menu bar is shorter than
-    # 44 px at 393, so its two menu titles lose their lower points to the bar.
-    ("desk", 393): [
-        Red("target", r"^'HoldSpeak' @\[\] loses \d/9 points .*\[miss:ancestor\]->desk-menubar",
-            "the menu bar's HoldSpeak menu title owns under 44 px at 393 (the bar is shorter)"),
-        Red("target", r"^'Go' @\[\] loses \d/9 points .*\[miss:ancestor\]->desk-menubar",
-            "the menu bar's Go menu title owns under 44 px at 393 (the bar is shorter)"),
-    ],
-    # The palette's in-well mic sits inside the search field: the field owns
-    # the mic's 44 px area at 393.
-    ("palette", 393): [
-        Red("target", r"^'Speak Search tools and Desk[^']*' @\[[^\]]*\] loses \d/9 points .*->INPUT\)$",
-            "the palette's in-well mic owns under 44 px at 393 (the search field takes its area)"),
-    ],
+    # 2026-10-16: the palette's named surface container healed its in-well
+    # mic target at 393. That case now holds every target fence without an excuse.
     ("desk", 1440): [
         Red("overlap", r"^People, DRAWER, 1:1 [\d:]+ x Conductor, DRAWER, ", "the People drawer icon overlaps the "
             "Conductor icon by 5 px when its `1:1 HH:MM` caption is wide (depends on the clock)", maybe=True),

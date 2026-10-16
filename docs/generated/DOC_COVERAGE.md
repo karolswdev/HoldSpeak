@@ -13,11 +13,11 @@ Validation errors at generation: **0**.
 
 | Measure | Present / total or count |
 | --- | ---: |
-| Source paths | 298 / 298 |
-| Test paths | 241 / 241 |
+| Source paths | 301 / 301 |
+| Test paths | 244 / 244 |
 | Documentation paths | 247 / 247 |
-| Assertions inspected | 241 |
-| Tests executed | 203 |
+| Assertions inspected | 244 |
+| Tests executed | 206 |
 | Records with an executed assertion | 83 |
 | Semantic records unresolved | 74 |
 
@@ -85,7 +85,7 @@ Validation errors at generation: **0**.
 | `meeting.plugin.runbook_delta` | capabilities | 2/2 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `meeting.plugin.decision_announcement_drafter` | capabilities | 2/2 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `meeting.plugin.decision_capture` | capabilities | 2/2 | 2/2 | 2 | 2 | 0 | partially_evidenced |
-| `desk.open` | capabilities | 13/13 | 10/10 | 10 | 9 | 1 | partially_evidenced |
+| `desk.open` | capabilities | 14/14 | 11/11 | 11 | 10 | 1 | partially_evidenced |
 | `desk.arrange` | capabilities | 2/2 | 2/2 | 2 | 0 | 1 | unresolved |
 | `desk.inspect` | capabilities | 2/2 | 2/2 | 2 | 0 | 0 | unresolved |
 | `desk.execute` | capabilities | 2/2 | 2/2 | 2 | 0 | 0 | unresolved |
@@ -99,7 +99,7 @@ Validation errors at generation: **0**.
 | `desk.note.task` | capabilities | 2/2 | 1/1 | 1 | 1 | 0 | partially_evidenced |
 | `people.prep.record` | capabilities | 2/2 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `desk.engines.find_lan` | capabilities | 3/3 | 2/2 | 2 | 2 | 0 | partially_evidenced |
-| `desk.preferences` | capabilities | 2/2 | 4/4 | 4 | 4 | 0 | partially_evidenced |
+| `desk.preferences` | capabilities | 4/4 | 6/6 | 6 | 6 | 0 | partially_evidenced |
 | `desk.follow_through` | capabilities | 2/2 | 3/3 | 3 | 3 | 0 | partially_evidenced |
 | `agents.thread_persistent` | capabilities | 5/5 | 4/4 | 4 | 4 | 0 | partially_evidenced |
 | `agents.thread_tool_loop` | capabilities | 3/3 | 3/3 | 3 | 0 | 0 | unresolved |

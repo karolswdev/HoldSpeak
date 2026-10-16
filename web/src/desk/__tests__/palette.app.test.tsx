@@ -8,6 +8,7 @@
  * each wire shape below is the hub's own answer, copied from a run of the
  * real routes on an isolated hub (2026-10-11). */
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -33,11 +34,12 @@ import { EMPTY_ITEMS, __resetHeldObjects, fromWireMeeting, loadAll } from "../ap
 import { ApiError } from "../../lib/api";
 import type { Meeting, Note } from "../../lib/primitives";
 import { useDesk } from "../store";
-import { usePalette } from "../chromeState";
+import { useNamePrompt, usePalette } from "../chromeState";
 import { DeskToolShelf, MEMORY_DEBOUNCE_MS } from "../components/DeskToolShelf";
 import { objectByRef } from "../world";
 import { Pullout } from "../components/Pullout";
 import enterHub from "./fixtures/palette-enter/recorded.json";
+import { wireDayClock } from "../surface/format";
 
 /* The hub's list row for a meeting whose speakers are Dana Okafor and Me
  * (GET /api/meetings?limit=24, `db.meetings.save_meeting`, intel off). */
@@ -83,6 +85,7 @@ beforeEach(() => {
   __resetHeldObjects();
   localStorage.clear();
   usePalette.setState({ open: false });
+  useNamePrompt.setState({ prompt: null });
   routes = {};
   apiFetch.mockReset();
   openProjectRoom.mockReset();
@@ -128,6 +131,34 @@ async function type(input: HTMLElement, q: string, wait = 0) {
 const rows = () => screen.queryAllByRole("option");
 const top = () => rows().find((o) => o.className.includes("is-selected"));
 
+describe("the palette's Close", () => {
+  it("closes a typed search, returns focus to Search, and reopens with an empty query", async () => {
+    const input = await deck();
+    await type(input, "Vendor");
+    const launcher = screen.getByRole("button", { name: /^Search/ });
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(usePalette.getState().open).toBe(false);
+    expect(screen.queryByRole("region", { name: "Tools and Desk search" })).toBeNull();
+    expect(document.activeElement).toBe(launcher);
+    expect(useDesk.getState().openPullout).not.toHaveBeenCalled();
+    fireEvent.click(launcher);
+    expect((screen.getByRole("combobox", { name: "Search tools and Desk items" }) as HTMLInputElement).value).toBe("");
+  });
+
+  it("Enter on Close activates Close, runs no selected result, and restores launcher focus", async () => {
+    useDesk.setState({ items: { ...EMPTY_ITEMS, meeting: [fromWireMeeting(VENDOR_ROW) as Meeting] } });
+    const input = await deck();
+    await type(input, "Vendor");
+    expect(top()?.id).toBe("desk-palette-option-meeting:m-vendor");
+    const launcher = screen.getByRole("button", { name: /^Search/ });
+    screen.getByRole("button", { name: "Close" }).focus();
+    await userEvent.keyboard("{Enter}");
+    expect(usePalette.getState().open).toBe(false);
+    expect(useDesk.getState().openPullout).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(launcher);
+  });
+});
+
 describe("the palette finds the right row and opens it", () => {
   it("a word inside one of three thoughts lists that thought only", async () => {
     // replaces: tests/e2e/test_philo13_14_palette_glass.py::TestPaletteKnowsHisWeek::test_the_palette_knows_his_week_and_does_verbs (leg 3)
@@ -161,6 +192,50 @@ describe("the palette finds the right row and opens it", () => {
     expect(first?.textContent).toContain("MEETING");
     fireEvent.keyDown(input, { key: "Enter" });
     expect(useDesk.getState().openPullout).toHaveBeenCalledWith("meeting:m-vendor");
+  });
+
+  it("same-title, same-time meetings show distinct attendees and open their exact identities", async () => {
+    // Controlled identity/attendee variants of the recorded list row above.
+    const other = { ...VENDOR_ROW, id: "m-vendor-other", attendees: ["Priya Shah", "Omar Haddad"] };
+    useDesk.setState({ items: { ...EMPTY_ITEMS,
+      meeting: [fromWireMeeting(VENDOR_ROW) as Meeting, fromWireMeeting(other) as Meeting],
+      note: [{ kind: "note", id: VENDOR_ROW.id, title: VENDOR_ROW.title, bodyMarkdown: "", tags: [], createdAt: "" } as Note],
+    } });
+    let input = await deck();
+    await type(input, "Vendor");
+    const meetingRows = rows().filter((row) => row.id.startsWith("desk-palette-option-meeting:"));
+    expect(meetingRows.map((row) => row.id)).toEqual([
+      "desk-palette-option-meeting:m-vendor", "desk-palette-option-meeting:m-vendor-other",
+    ]);
+    expect(meetingRows.map((row) => row.querySelector(".desk-deck-title")?.textContent))
+      .toEqual([VENDOR_ROW.title, VENDOR_ROW.title]);
+    expect(meetingRows.map((row) => row.querySelector(".desk-deck-meeting-meta")?.textContent))
+      .toEqual([
+        `${wireDayClock(VENDOR_ROW.started_at)} · Dana Okafor, Me`,
+        `${wireDayClock(VENDOR_ROW.started_at)} · Priya Shah, Omar Haddad`,
+      ]);
+    const note = document.getElementById("desk-palette-option-note:m-vendor");
+    expect(note).toBeTruthy();
+    expect(note?.querySelector(".desk-deck-meeting-meta")).toBeNull();
+    fireEvent.click(meetingRows[0]);
+    expect(useDesk.getState().openPullout).toHaveBeenLastCalledWith("meeting:m-vendor");
+    fireEvent.click(screen.getByRole("button", { name: /Search/ }));
+    input = screen.getByRole("combobox", { name: "Search tools and Desk items" });
+    await type(input, "Vendor");
+    fireEvent.click(document.getElementById("desk-palette-option-meeting:m-vendor-other")!);
+    expect(useDesk.getState().openPullout).toHaveBeenLastCalledWith("meeting:m-vendor-other");
+  });
+
+  it("a meeting with no valid time or attendee names adds no empty metadata line", async () => {
+    useDesk.setState({ items: { ...EMPTY_ITEMS, meeting: [
+      fromWireMeeting({ ...VENDOR_ROW, started_at: "invalid", attendees: ["", " "] }) as Meeting,
+    ] } });
+    const input = await deck();
+    await type(input, "Vendor");
+    const meeting = document.getElementById("desk-palette-option-meeting:m-vendor");
+    expect(meeting).toBeTruthy();
+    expect(meeting?.querySelector(".desk-deck-meeting-meta")).toBeNull();
+    expect(meeting?.textContent).not.toContain("invalid");
   });
 
   it("a meeting older than the desk's list opens from its MEMORY row, read by id first", async () => {

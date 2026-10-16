@@ -1061,6 +1061,8 @@
     flex-wrap: nowrap;
     gap: 0;
     padding-left: 0;
+    border-bottom: 0;
+    box-shadow: inset 0 -1px 0 var(--wb-ink), inset 0 -2px 0 var(--wb-steel);
     overflow: hidden;
   }
   .desk-next .desk-menubar .desk-chrome {

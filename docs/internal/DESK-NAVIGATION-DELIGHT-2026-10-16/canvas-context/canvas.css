@@ -1,0 +1,17 @@
+body { margin: 0; }
+.direction-floor { min-height: 100vh; background: var(--desk-floor); padding: 24px; }
+.direction-body { flex: 1; min-height: 0; padding: 16px; overflow: auto; }
+.direction-body .needs-drawer { min-height: 100%; }
+
+/* Proposed change: the existing 44 px plate tells the shared halo formula
+   its real height. Names, facts, lamps and row grammar stay in the library. */
+@container surface (max-width: 520px) {
+  .needs-drawer .needs-row-verbs .btn {
+    --btn-painted-h: var(--desk-button-hit-size);
+  }
+}
+
+@media (max-width: 600px) {
+  .direction-floor { padding: 0; }
+  .direction-body { padding: 12px; }
+}

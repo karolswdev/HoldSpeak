@@ -1408,7 +1408,7 @@
       "tests_executed": 2
     },
     {
-      "assertions_inspected": 10,
+      "assertions_inspected": 11,
       "docs": {
         "api": 0,
         "operational": 1,
@@ -1422,17 +1422,17 @@
           4
         ],
         "sources": [
-          13,
-          13
+          14,
+          14
         ],
         "tests": [
-          10,
-          10
+          11,
+          11
         ]
       },
       "semantic_status": "partially_evidenced",
       "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
-      "tests_executed": 9
+      "tests_executed": 10
     },
     {
       "assertions_inspected": 2,
@@ -1786,7 +1786,7 @@
       "tests_executed": 2
     },
     {
-      "assertions_inspected": 4,
+      "assertions_inspected": 6,
       "docs": {
         "api": 0,
         "operational": 0,
@@ -1800,17 +1800,17 @@
           3
         ],
         "sources": [
-          2,
-          2
-        ],
-        "tests": [
           4,
           4
+        ],
+        "tests": [
+          6,
+          6
         ]
       },
       "semantic_status": "partially_evidenced",
       "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
-      "tests_executed": 4
+      "tests_executed": 6
     },
     {
       "assertions_inspected": 3,
@@ -4245,7 +4245,7 @@
   ],
   "snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8",
   "totals": {
-    "assertions_inspected": 241,
+    "assertions_inspected": 244,
     "doc_paths": [
       247,
       247
@@ -4259,14 +4259,14 @@
     "records_with_executed_assertions": 83,
     "semantics_unresolved": 74,
     "source_paths": [
-      298,
-      298
+      301,
+      301
     ],
     "test_paths": [
-      241,
-      241
+      244,
+      244
     ],
-    "tests_executed": 203
+    "tests_executed": 206
   },
   "validation_errors": 0
 }

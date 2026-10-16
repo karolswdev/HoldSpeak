@@ -66,6 +66,7 @@
   }
   /* 393: every verb is a 44 px touch target. */
   .needs-drawer .needs-row-verbs .btn {
+    --btn-painted-h: var(--desk-button-hit-size);
     min-height: 44px;
   }
 }
