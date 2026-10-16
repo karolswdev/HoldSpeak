@@ -113,3 +113,25 @@ Affected architecture/atlas/document claims collected/passed651. Generated
 capability docs check passes; graph join check passes with14 existing subtype
 notes. Current Places guide documents the choice, real Motion path and authored
 scale/timing, and corrects its inherited incorrect Rainy City default.
+
+## Wider catalog regression alignment
+
+The first complete quick check correctly returned RED: six older Places/design
+preview assertions fixed the collection at eight scenes, last Laundromat and
+08 counters. Actual rendered output included the new Jupiter choice. Its
+other results were3809 web passes,651 affected Python passes,107 Desk sweeps
+(two existing xfails),17 canon passes. No result was waived. Root read the
+actual failure log and extended the integration worker's scope to exactly
+ChangePlacesCore.test.tsx and AtmospherePreview.test.tsx, with no product edit.
+The exact old scope reproduced6failed/9passed; revised collection/run passed21
+in two files. Expectations now compare the real catalog's rendered membership,
+order/wrap and positions, explicitly include Jupiter, and test every scenic
+direct link, retaining current-workspace, favorites and fallback assertions.
+Root read both test diffs, collection and real tail. This test-only alignment
+follows the completed source counsel and is not attributed to its verdict.
+
+The standalone user-facing preview was also observed independently at
+`live-preview-check/`: actual shared runtime, no entropy/time substitutions,
+nonblank changing framebuffer samples and no page errors. The preview server
+on4488 is retained because the owner asked to see and use it while the release
+check runs. This does not mutate the owner hub or store.
