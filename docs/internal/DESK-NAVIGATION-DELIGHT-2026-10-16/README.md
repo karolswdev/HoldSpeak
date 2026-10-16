@@ -133,3 +133,5 @@ Browser-held/read-failure substitutions are declared in observations. No owner
 DB/HOME, mic, Keychain, clipboard, provideraccount or owner tmux is used in checks.
 Normal idle owner hub deployment follows merge. Natural OCR/provider/audio,
 hardware performance, fullnightly/remoteCI and owner acceptance remain distinct.
+
+Release PR: https://github.com/karolswdev/HoldSpeak/pull/1217.

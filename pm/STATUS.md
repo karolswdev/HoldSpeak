@@ -4,9 +4,31 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-16 (Cohesive workflows: #1216)
+**Last updated:** 2026-10-16 (Desk navigation and calendar review: #1217)
 
 ## Current phase
+
+**Desk navigation and calendar review — #1217 (2026-10-16).** Explicit
+Search Close restores focus and preserves keyboard intent; same-title meetings
+show date/time and attendees, retaining exact identities. Search mic and phone
+chrome targets are proved healed, with only their obsolete exceptions removed.
+Empty Context suppresses zero meters and stays null-safe; Needs fits three
+complete phone rows. Calendar review uses readable library fields/ledgers,
+stable typing focus, mounted pending/refused drafts, exact Retry and returned
+source receipts. Failure stays beside Retry after scrolling. Complete quick
+GREEN:3912web/697affectedPython/109sweeps(noexpectedfailures)/17canon; TypeScript
+passes. Actual16phone/18desktop state walks on c52c05eebc4eb5fa include real
+Context save, exact meeting GET/window scopes and corrected calendar ICS/config
+writes. Search Close graph cases pass both widths. Formal postmerge review is
+separate. [Proof and limits](../docs/internal/DESK-NAVIGATION-DELIGHT-2026-10-16/README.md).
+Whole-app goal remains active: Thread replay/Rails action controls, Ask zero
+grounding and Resourcefulness are being refined. Additional source findings
+confirm Capability multiline material loses paragraph breaks on edit and PR
+draft success prints an opaque operation ID. Actual desktop Retry bottom-row
+pointer samples hit the inherited bottom resize edge; centre-click works,
+phone44px samples allpass. This common frame seam is assigned next, preserving
+resize and restoring full action ownership. Armed Review Edit+Defer phone fit
+is still to observe. No target waiver or provider/audio acceptance claim.
 
 **Cohesive workflows — #1216 (2026-10-16).** The whole-app audit fixes
 Workbench Close/refusal/reopen and ordered drafts, exact Add/Coder Retry,
