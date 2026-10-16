@@ -151,3 +151,7 @@ read the result and deterministic before/after regression. Build remains
 its build stamp (`.tmp/flagship/source-build-equality.json`). This closes the
 independent counsel's sole remaining release-check condition. Merge and local
 runtime identifiers follow after delivery; no provider result is inferred.
+
+PR: [#1220](https://github.com/karolswdev/HoldSpeak/pull/1220). The source branch
+is `fix/brief-reference-open-20261016`. Normal idle-hub delivery follows its
+merge and exact tree/build comparison; the runtime receipt is recorded separately.

@@ -8,7 +8,7 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
-**Flagship Brief/source reading — first connected delivery (2026-10-16).**
+**Flagship Brief/source reading — #1220 (2026-10-16).**
 Brief prioritizes standing answers/changed work, Day the next meeting, and
 Memory title/meaning. Explicit citations inspect exact held tasks and pending
 or rejected outputs without changing snooze/review state or public-list rules.
@@ -22,7 +22,8 @@ rendering, failed-read recovery and return. Verification/release identifiers
 are in [Delivery B](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/DELIVERY-B.md).
 Normal local delivery follows merged tree/build equality. Formal postmerge
 review, full main tape and owner aesthetic acceptance remain separate.
-Programme remains active: next C covers People preparation/detail/draft safety
+Release quick GREEN:4185 web/1599 affected Python/109 sweeps/17 canon;
+build`c15a5e7c1ef79062`. Programme remains active: next C covers People preparation/detail/draft safety
 and Project pending Review; D/E retain Thread task input and repair specific
 choice/notice/settings recovery. Healed work is preserved; this first delivery
 does not declare the whole product aesthetically accepted.
