@@ -34,8 +34,10 @@ def append_record(
     metadata = {"refs": refs, "head": head}
     if forbidden_content(metadata):
         raise KernelRefused("journal_content_forbidden")
-    append_lock.acquire()
-    with connection() as conn:
+    with append_lock, connection() as conn:
+        # Stores have separate Python locks. Allocate the sequence and its
+        # previous hash under the database's write lock across all stores.
+        conn.execute("BEGIN IMMEDIATE")
         if not correlation_id or not causation_id:
             operation = conn.execute(
                 "SELECT correlation_id,parent_operation_id FROM kernel_operations WHERE operation_id=?",
@@ -81,5 +83,4 @@ def append_record(
         )
         record["cursor"] = int(cursor.lastrowid)
         record["record_sha256"] = hash_value
-    append_lock.release()
     return record
