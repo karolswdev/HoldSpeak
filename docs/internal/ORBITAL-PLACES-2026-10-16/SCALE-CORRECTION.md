@@ -77,3 +77,38 @@ Test Files  2 passed (2)
 Actual volume assertions compare independently summed rendered triangle
 volumes to physical sphere volumes with relative tolerance 1e-6. No build,
 browser, stage or commit.
+
+## Release verification — #1230
+
+PR [#1230](https://github.com/karolswdev/HoldSpeak/pull/1230), base `58effbd4e`,
+worktree `wt-orbital-scale-20261016`, branch `fix/orbital-scale-20261016`.
+Frozen build `99ecedf6825c8597`; independently recomputed source digest matches.
+TypeScript exits 0. Final quick GREEN: 4,119 tests in 420 web files, 705 affected
+Python checks, 109 Desk sweep cases, 17 canon checks. No full-tape green claim.
+Logs: `.tmp/orbital-places/quick-scale.log`, `quick-scale/`, `typecheck-scale.log`.
+Jupiter focused tests: 14 passed in two files; `scale-jupiter-{collect,run}.log`.
+
+Actual product factories rendered at 1440×1000 and 393×852, authored elapsed
+0/60/180: all six observations pass with no page or GL console errors.
+Root inspected the six initial images. Outputs:
+`.tmp/orbital-places/scale-{mars,saturn,jupiter}-{1440,393}/`.
+All three actual framebuffer exports replace the picker/fallback WebP files;
+these are corrected scene exports, not sketches. The original build's
+large-moon previews are superseded.
+
+Real picker and first-frame readiness pass on isolated production hubs at
+1440 and 393 through `scripts/graph_walk.py`, with native pointer/touch,
+engine none, fresh HOME/DB and real clocks. Root read initial feedback,
+settled outcomes, isolation/provenance, and before/after shots.
+Observations: `.tmp/orbital-places/graph-scale-mars-{1440,393}/<run-id>/`.
+Product revision is `8c86323af558b34e65e6da7651d3138c83a1cc8f`, dirty=true
+(untracked dependency symlink; later records only). The local atlas retains
+Saturn and declares Jupiter readiness, but those selector cases were not
+rerun for this constant correction. Their actual GL scenes and model ratios
+were verified at both widths. Motion/fallback behavior carries the prior
+#1229 host proof; no runtime/control logic changed.
+
+Normal owner-hub delivery follows merge and an idle runtime check, separately
+from isolated verification. Earlier port61862 scene links redirect to the new
+corrected live preview on57047. Preview/live serving trees are retained.
+Formal postmerge review and owner aesthetic judgment remain open.
