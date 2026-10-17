@@ -290,7 +290,19 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
 
     await waitFor(() => expect(useDesk.getState().askOpen).toBe(true));
     expect(useDesk.getState().selectedIds).toEqual(["note:note-1"]);
-    expect(takeAskSelection()).toEqual({ noteRef: "note:note-1", text: "Ask about this exact passage" });
+    expect(takeAskSelection()).toEqual({ noteRef: "note:note-1", text: "Ask about this exact passage", source: { id: "note-1", kind: "note", ref: "note:note-1", title: saved.working_note.title || "Note" } });
+  });
+
+  it("hands Ask the saved Note source when no passage is selected", async () => {
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Ask about this note" }));
+    await waitFor(() => expect(useDesk.getState().askOpen).toBe(true));
+    expect(takeAskSelection()).toEqual({
+      noteRef: `note:${thought.working_note.id}`,
+      text: "",
+      source: { id: thought.working_note.id, kind: "note", ref: `note:${thought.working_note.id}`, title: thought.working_note.title || "Note" },
+    });
   });
 
   it("never renders a heading over an empty question", async () => {

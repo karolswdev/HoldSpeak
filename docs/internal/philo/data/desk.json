@@ -5,10 +5,10 @@
     {
       "id": "desk.open",
       "name": "Open Desk",
-      "purpose": "Open the Workbench surface and its current workspace.",
+      "purpose": "Open the Workbench workspace to read sources, write decisions, ask questions and continue threads.",
       "domain": "desk",
       "status": "built_unreleased",
-      "status_reason": "Current Desk composes canonical root/child folders and mounts the selected lazy atmosphere with still fallback. Jupiter adds local NASA cloud/sky maps, independently flowing cloud zones, four separate moon meshes and rare authored visitors. Focused component/model/lifecycle tests executed; actual rendering and production limits are recorded separately. Owner observation and hardware performance remain independent.",
+      "status_reason": "Current Desk composes canonical root/child folders and mounts the selected lazy atmosphere with still fallback. Jupiter adds local NASA cloud/sky maps, independently flowing cloud zones, four separate moon meshes and rare authored visitors. Focused component/model/lifecycle tests executed; actual rendering and production limits are recorded separately. Owner observation and hardware performance remain independent. Daily Decision, Ask and Thread faces now prioritize writing and paper reading; source identities and draft-safe controls have focused interaction coverage. Owner visual acceptance remains pending.",
       "exposure": "user",
       "surfaces": [
         "/desk",
@@ -122,8 +122,8 @@
         {
           "path": "web/src/desk/components/AskPanel.tsx",
           "symbol": "AskPanel",
-          "claim": "Ask opens on the shared Pad and paper conversation; exact request/Keep snapshots preserve newer drafts, while local close abandons stale response updates without claiming server cancellation.",
-          "line": 93
+          "claim": "Ask shares paper reading with Thread. Edit question retains the prior answer and sent Sources, while Question sources and explicit saved Note handoffs remain independent of desktop icon selection; Keep uses the original snapshot.",
+          "line": 94
         },
         {
           "path": "holdspeak/db/plugins.py",
@@ -148,6 +148,24 @@
           "symbol": "DeskToolShelf",
           "claim": "Explicit library Close abandons the local search and restores launcher focus. Saved meeting choices show local time and attendees while retaining exact kind and ID; the portalled shelf uses the shared surface gadget target rules.",
           "line": 332
+        },
+        {
+          "path": "web/src/desk/pullouts/DecisionPullout.tsx",
+          "symbol": "export function DecisionPullout",
+          "line": 35,
+          "claim": "Decision opens in a focused paper editor before supporting Context/Consequences folds, with compact status and reachable Done/Cancel."
+        },
+        {
+          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "symbol": "export function ThreadPullout",
+          "line": 1111,
+          "claim": "Thread has bounded source/details controls and a separate composer; completed answers keep one routine action and expose the remaining actions through More."
+        },
+        {
+          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "symbol": "export function ThreadComposer",
+          "line": 370,
+          "claim": "Sources and Commands open explicit pickers without clearing draft text; picker completion returns focus and Enter during streaming edits the draft rather than stopping the reply."
         }
       ],
       "tests": [
@@ -236,13 +254,38 @@
           "node": "same-title, same-time meetings show distinct attendees and open their exact identities",
           "assertion": "Software wire fixtures keep both meeting rows and open each canonical identity; root separately walks the real isolated meeting reads and window scopes.",
           "execution": "passed"
+        },
+        {
+          "path": "web/src/desk/__tests__/askPanelRunsOn.test.tsx",
+          "node": "keeps the answer's sent sources distinct when the next question selects different material",
+          "assertion": "Editing the next question labels its new sources separately; Keep preserves the prior answer and exact original note.",
+          "execution": "passed"
+        },
+        {
+          "path": "web/src/desk/__tests__/decision.app.test.tsx",
+          "node": "writing starts in Decision; support folds keep their drafts when closed",
+          "assertion": "Initial focus is in Decision; closing/reopening supporting folds retains their draft text.",
+          "execution": "passed"
+        },
+        {
+          "path": "web/src/desk/__tests__/ThreadPullout.test.tsx",
+          "node": "names seeded material from the live desk, prefers frozen titles and keeps an honest unavailable ref",
+          "assertion": "Real seed reference shape resolves a readable title, frozen names win and unavailable material retains identity.",
+          "execution": "passed"
+        },
+        {
+          "path": "web/src/desk/__tests__/askPanelRunsOn.test.tsx",
+          "node": "retains an explicit saved Note handoff when the floor drops its selection (quote: %s)",
+          "assertion": "An explicit saved source and optional passage survive collection refresh and floor selection loss; answer sources retain the submitted identity.",
+          "execution": "passed"
         }
       ],
       "docs": [
         "docs/DESK_ARCHITECTURE.md",
         "docs/DESK_OBJECT_MODEL.md",
         "docs/internal/DESK-DRAWERS-LIVE-2026-10-15/README.md",
-        "docs/internal/JUPITER-ORBIT-2026-10-15/README.md"
+        "docs/internal/JUPITER-ORBIT-2026-10-15/README.md",
+        "docs/internal/DAILY-EXPERIENCE-2026-10-17/DESIGN.md"
       ],
       "limitations": [
         "No owner observation recorded in this lane.",

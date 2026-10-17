@@ -1,6 +1,6 @@
 import { SurfaceFooter } from "../surface/SurfaceFooter";
 /** Decision pullout content (HS-117-15). */
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import { apiRequest } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import { useDesk } from "../store";
@@ -14,7 +14,7 @@ import {
   SurfaceState,
 } from "../surface/Surface";
 import { humanTime } from "../surface/format";
-import { CycleGadget, FoldGadget, GadgetGroup, GadgetRow, PadGadget } from "../surface/gadgets";
+import { CycleGadget, FoldGadget, PadGadget } from "../surface/gadgets";
 import { ActionNotice, StateChip } from "../surface";
 import { currentWriteFailure, subscribeWriteFailure, writeFailureReason } from "../hooks/useWriteReceipt";
 import type { PulloutContentProps } from "./types";
@@ -34,6 +34,7 @@ const DECISION_STATES = [
 
 export function DecisionPullout({ object: o }: PulloutContentProps) {
   const items = useDesk((s) => s.items);
+  const decisionHeading = useId();
   const { openPullout } = useDesk.getState();
   if (o.ref.kind !== "decision") return null;
   const ir = o.ref;
@@ -141,57 +142,58 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
     <>
       <div className="desk-pullout-body desk-surface-body">
         <section className="desk-decision-card attention-decision">
-          <GadgetGroup label="State" material="inset">
-            <GadgetRow label="Status" controlWidth="standard">
-              <CycleGadget label="Decision status" value={status} options={DECISION_STATES}
-                disabled={savingStatus || savingDecision} onChange={(next) => void writeStatus(next)} />
-            </GadgetRow>
-            {savingStatus ? <StateChip state="working" label="Saving status" /> : null}
-            {statusFailure ? <div className="attention-record-feedback">
-              <SurfaceState error={statusFailure} />
-              <Button dense variant="ghost" disabled={savingStatus || savingDecision} onClick={() => retryStatus && void writeStatus(retryStatus)}>Retry</Button>
-            </div> : null}
-          </GadgetGroup>
-          <div className="desk-pullout-facts">
-            {Array.isArray(ir.deciders) && ir.deciders.length ? (
-              <span>{ir.deciders.join(" · ")}</span>
-            ) : null}
-            {ir.decidedAt ? <span>{humanTime(String(ir.decidedAt))}</span> : null}
+          <div className="attention-decision-strip">
+            <span>Decision status</span>
+            <CycleGadget label="Decision status" value={status} options={DECISION_STATES}
+              disabled={savingStatus || savingDecision} onChange={(next) => void writeStatus(next)} />
+            {Array.isArray(ir.deciders) && ir.deciders.length ? <span className="attention-decision-fact">{ir.deciders.join(" · ")}</span> : null}
+            {ir.decidedAt ? <span className="attention-decision-fact">{humanTime(String(ir.decidedAt))}</span> : null}
           </div>
+          {savingStatus ? <StateChip state="working" label="Saving status" /> : null}
+          {statusFailure ? <div className="attention-record-feedback">
+            <SurfaceState error={statusFailure} />
+            <Button dense variant="ghost" disabled={savingStatus || savingDecision} onClick={() => retryStatus && void writeStatus(retryStatus)}>Retry</Button>
+          </div> : null}
           {editingDecision ? (
             <div className="desk-decision-editor">
               {savingDecision ? <StateChip state="working" label="Saving decision" /> : null}
               {writeFailure?.subject === resourceRef && writeFailure.verb === "SAVE" ? (
                 <ActionNotice tone="danger" role="alert"><StateChip state="failure" label="Save failed" /><span>{o.title}</span></ActionNotice>
               ) : null}
+              <section className="attention-decision-paper" aria-labelledby={decisionHeading}>
+                <h2 id={decisionHeading}>Decision</h2>
+                <PadGadget label="Decision" value={decisionDraft.decision_markdown} rows={8} autoGrow autoFocus
+                  onChange={(value) => {
+                    draftVersion.current += 1;
+                    setDecisionDraft((current) => ({ ...current, decision_markdown: value }));
+                  }} />
+              </section>
               {([
                 ["context_markdown", "Context"],
-                ["decision_markdown", "Decision"],
                 ["consequences_markdown", "Consequences"],
               ] as const).map(([field, label]) => (
-                <GadgetGroup key={field} label={label} material="inset">
-                  <PadGadget
-                    label={label}
-                    value={decisionDraft[field]}
-                    rows={5}
+                <FoldGadget key={field} title={label} open={Boolean(decisionDraft[field].trim())} className="attention-decision-support">
+                  <PadGadget label={label} value={decisionDraft[field]} rows={3} autoGrow
                     onChange={(value) => {
                       draftVersion.current += 1;
                       setDecisionDraft((current) => ({ ...current, [field]: value }));
-                    }}
-                  />
-                </GadgetGroup>
+                    }} />
+                </FoldGadget>
               ))}
             </div>
           ) : (
             <>
               {String(ir.decisionMarkdown || "").trim() ? (
-                <GadgetGroup label="Decision" material="inset"><Material>{String(ir.decisionMarkdown)}</Material></GadgetGroup>
+                <section className="attention-decision-paper" aria-labelledby={decisionHeading}>
+                  <h2 id={decisionHeading}>Decision</h2>
+                  <Material>{String(ir.decisionMarkdown)}</Material>
+                </section>
               ) : null}
               {String(ir.contextMarkdown || "").trim() ? (
-                <FoldGadget title="Decision context" open><Material>{String(ir.contextMarkdown)}</Material></FoldGadget>
+                <FoldGadget title="Context" open className="attention-decision-support"><Material>{String(ir.contextMarkdown)}</Material></FoldGadget>
               ) : null}
               {String(ir.consequencesMarkdown || "").trim() ? (
-                <FoldGadget title="Consequences"><Material>{String(ir.consequencesMarkdown)}</Material></FoldGadget>
+                <FoldGadget title="Consequences" open className="attention-decision-support"><Material>{String(ir.consequencesMarkdown)}</Material></FoldGadget>
               ) : null}
             </>
           )}
@@ -213,6 +215,12 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
                 ? ` · ${items.decision.find((candidate) => candidate.id === ir.supersededBy)!.title}` : ""}
             </Button>
           ) : null}
+          {editingDecision ? <FoldGadget title="More" className="attention-decision-support">
+            <div className="attention-record-verbs">
+              <Button variant="ghost" dense onClick={() => void copy(decisionContent)}>Copy</Button>
+              <Button variant="ghost" dense onClick={() => openSurfaceOr("dictate", "/dictation", resourceRef)}>Dictate about this</Button>
+            </div>
+          </FoldGadget> : null}
           {!editingDecision ? <DeskDecisionSendWells id={o.id} title={o.title} version={documentVersion} /> : null}
         </section>
         <DeskFilingStrip
@@ -221,7 +229,8 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
           objectId={o.id}
         />
       </div>
-      <SurfaceFooter receipt={copyReceipt} verbs={<>
+      <SurfaceFooter receipt={copyReceipt || (editingDecision ? "Editing" : null)} verbs={<>
+        {!editingDecision ? <>
         <Button
           variant="ghost"
           dense
@@ -238,6 +247,7 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
         >
           Dictate about this
         </Button>
+        </> : null}
         {editingDecision ? (
           <>
             <Button variant="ghost" dense disabled={savingDecision || savingStatus} onClick={() => setEditingDecision(false)}>Cancel</Button>

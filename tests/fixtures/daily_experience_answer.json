@@ -1,0 +1,7 @@
+{
+  "raw_text": "## Two checks remain\n\nThe release can proceed when the migration owner confirms the rollback and the platform team completes the load test.\n\n| Check | Owner | Next step |\n| --- | --- | --- |\n| Rollback | Jordan | Restore the previous schema |\n| Load test | Platform | Run the release workload |\n\nThe release checklist already covers monitoring and the support handover.",
+  "model": "daily-recorded-engine",
+  "capabilities": [
+    "ask.answer"
+  ]
+}

@@ -550,10 +550,16 @@ function WorkspaceReady({
     try {
       const selected = selectedPassage;
       const latest = await writer.flush({ fence: true });
-      latchAskSelection(selected && selected.text.trim() && selected.body === latest.working_note.body_markdown
-        ? { noteRef: `note:${draftNoteId}`, text: selected.text }
-        : null);
-      useDesk.getState().setSelected([`note:${draftNoteId}`]);
+      const note = latest.working_note;
+      const noteRef = `note:${note.id}`;
+      // The floor can trim its icon selection while this Note is still open.
+      // Ask owns the saved source and valid quote, independently of that set.
+      latchAskSelection({
+        noteRef,
+        text: selected && selected.text.trim() && selected.body === note.body_markdown ? selected.text : "",
+        source: { id: note.id, kind: "note", ref: noteRef, title: note.title || "Note" },
+      });
+      useDesk.getState().setSelected([noteRef]);
       useDesk.getState().openAsk();
       say("Ask opened");
     } catch (cause) { sayFault(cause); }

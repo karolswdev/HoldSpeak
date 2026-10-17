@@ -33,7 +33,7 @@ import { SurfaceRows, SurfaceRow } from "../surface/Surface";
 import { Button } from "../../components/signal/Signal";
 import { beginThreadTodo, settleThreadTodo, useThreadComposerDraft } from "../threadComposerDrafts";
 import { noteName } from "../windowName";
-import { ActionNotice, StateChip } from "../surface";
+import { ActionNotice, StateChip, StringGadget } from "../surface";
 import { useOnDeskChanged } from "../useDeskChangedRefresh";
 
 // ── ref chip (the attachment) ───────────────────────────────────────
@@ -389,6 +389,27 @@ export function ThreadComposer({
   const live = useRef(true);
   useEffect(() => { live.current = true; return () => { live.current = false; }; }, []);
 
+  // Explicit pickers keep their query separate from the unsent message.
+  const [picker, setPicker] = useState<"sources" | "commands" | null>(null);
+  const [sourceQuery, setSourceQuery] = useState("");
+  const [command, setCommand] = useState<SlashCommand | null>(null);
+  const [commandArgument, setCommandArgument] = useState("");
+
+  const pickerRef = useRef<HTMLDivElement>(null);
+  const closePicker = useCallback(() => {
+    setPicker(null);
+    requestAnimationFrame(() => textareaRef.current?.focus());
+  }, []);
+  useEffect(() => {
+    if (!picker) return;
+    const frame = requestAnimationFrame(() => {
+      pickerRef.current?.querySelector<HTMLElement>(
+        picker === "sources" || command ? "input" : ".surface-row-open",
+      )?.focus();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [picker, command]);
+
   // autocomplete state
   const [acOpen, setAcOpen] = useState(false);
   const [acQuery, setAcQuery] = useState("");
@@ -489,6 +510,7 @@ export function ThreadComposer({
   // ── update autocomplete on draft/cursor change ───────────────────
   const updateAutocomplete = useCallback(
     (text: string, cursor: number) => {
+      if (picker) { setAcOpen(false); setSlashOpen(false); return; }
       // Two-stage slash completion (R3: / only at line start)
       const completion = completeSlash(text, cursor, { modes, prompts, guardrails });
       if (completion?.stage === "argument") {
@@ -529,7 +551,7 @@ export function ThreadComposer({
         setAcOpen(false);
       }
     },
-    [primitiveItems, acQuery, loadPeopleOnce, modes, prompts, guardrails, loadModesOnce, loadPromptsOnce, loadGuardrailsOnce],
+    [picker, primitiveItems, acQuery, loadPeopleOnce, modes, prompts, guardrails, loadModesOnce, loadPromptsOnce, loadGuardrailsOnce],
   );
 
   // ── handlers ─────────────────────────────────────────────────────
@@ -591,33 +613,34 @@ export function ThreadComposer({
   );
 
   const addSystemRow = useCallback((text: string) => {
-    setSystemRows((prev) => [...prev, text]);
+    setSystemRows((prev) => [...prev.slice(-1), text]);
   }, []);
 
   const executeSlashCommand = useCallback(
-    (cmdId: string, arg?: string) => {
+    (cmdId: string, arg?: string, preserveDraft = false) => {
+      const clearCommand = () => { if (!preserveDraft) setDraft(""); };
       setSlashOpen(false);
       setSlashCompletion(null);
 
       switch (cmdId) {
         case "keep":
-          setDraft("");
+          clearCommand();
           if (lastAssistantId) onKeep(lastAssistantId, "note");
           break;
         case "fork":
-          setDraft("");
+          clearCommand();
           if (lastAssistantId) onFork(lastAssistantId);
           break;
         case "stop":
-          setDraft("");
+          clearCommand();
           onStop();
           break;
         case "new":
-          setDraft("");
+          clearCommand();
           onNewThread();
           break;
         case "mode":
-          setDraft("");
+          clearCommand();
           if (arg && onModeSelect) {
             // Find the mode by name
             const mode = modes.find((m) => m.name.toLowerCase() === arg.toLowerCase());
@@ -631,20 +654,21 @@ export function ThreadComposer({
             const prompt = prompts.find((p) => p.title.toLowerCase() === arg.toLowerCase());
             if (prompt) {
               // Insert the prompt body at the caret (replace the slash command line)
-              setDraft(prompt.body);
+              const nextDraft = preserveDraft && draft ? `${draft}\n${prompt.body}` : prompt.body;
+              setDraft(nextDraft);
               // Focus and move cursor to end
               requestAnimationFrame(() => {
                 const ta = textareaRef.current;
                 if (ta) {
                   ta.focus();
-                  ta.setSelectionRange(prompt.body.length, prompt.body.length);
+                  ta.setSelectionRange(nextDraft.length, nextDraft.length);
                 }
               });
             }
           }
           break;
         case "tools":
-          setDraft("");
+          clearCommand();
           if (currentMode) {
             addSystemRow(`Current palette: ${currentMode.name} mode tools`);
           } else {
@@ -654,8 +678,8 @@ export function ThreadComposer({
         case "todo":
           if (!arg) {
             addSystemRow("Usage: /todo <text>");
-          } else if (beginThreadTodo(threadId, draft)) {
-            const command = draft;
+          } else if (beginThreadTodo(threadId, preserveDraft ? `/todo ${arg}` : draft)) {
+            const command = preserveDraft ? `/todo ${arg}` : draft;
             void (async () => {
               try {
                 const result = await apiFetch<{ status: string; error?: string }>(
@@ -677,7 +701,7 @@ export function ThreadComposer({
           }
           break;
         case "compact":
-          setDraft("");
+          clearCommand();
           void (async () => {
             try {
               addSystemRow("Compacting thread...");
@@ -694,7 +718,7 @@ export function ThreadComposer({
           })();
           break;
         case "guardrail":
-          setDraft("");
+          clearCommand();
           if (!currentMode) {
             addSystemRow("Bind a mode first (use /mode)");
           } else if (arg && onToggleGuardrail) {
@@ -876,14 +900,10 @@ export function ThreadComposer({
         return;
       }
 
-      // Enter → send (Shift+Enter → newline)
-      if (e.key === "Enter" && !e.shiftKey) {
+      // Draft editing continues while a reply runs. Stop is explicit.
+      if (e.key === "Enter" && !e.shiftKey && !streaming) {
         e.preventDefault();
-        if (streaming) {
-          onStop();
-        } else {
-          void handleSend();
-        }
+        void handleSend();
         return;
       }
     },
@@ -908,7 +928,66 @@ export function ThreadComposer({
   }, []);
 
   return (
-    <div className="thread-composer conversation-composer" data-testid="thread-composer">
+    <div className="thread-composer conversation-composer" data-testid="thread-composer"
+      onKeyDownCapture={(event) => {
+        if (event.key === "Escape" && picker) {
+          event.preventDefault();
+          event.stopPropagation();
+          closePicker();
+        }
+      }}>
+      {picker && <div ref={pickerRef} className="thread-composer-picker" data-testid="composer-picker">
+        <div className="thread-picker-head">
+          <span>{picker === "sources" ? "Sources" : command?.label || "Commands"}</span>
+          <Button variant="ghost" dense aria-label="Close picker" onClick={() => { closePicker(); }}>Close</Button>
+        </div>
+        {picker === "sources" ? <>
+          <StringGadget label="Find source" value={sourceQuery} onChange={(value) => { setSourceQuery(value); setAcIndex(0); }} autoFocus
+            onKeyDown={(event) => {
+              const matches = filterItems(sourceQuery, primitiveItems);
+              if (event.nativeEvent.isComposing) return;
+              if (event.key === "ArrowDown") { event.preventDefault(); setAcIndex((index) => Math.min(index + 1, matches.length - 1)); }
+              if (event.key === "ArrowUp") { event.preventDefault(); setAcIndex((index) => Math.max(index - 1, 0)); }
+              if (event.key === "Enter" && matches[acIndex]) {
+                event.preventDefault(); addChip(itemToRef(matches[acIndex])); closePicker();
+              }
+            }} />
+          <InletAutocomplete allMatches={filterItems(sourceQuery, primitiveItems)} selectedIndex={acIndex}
+            onSelectedIndexChange={setAcIndex} emptyLabel="No matches"
+            onSelectItem={(item) => { addChip(itemToRef(item)); closePicker(); }} />
+        </> : !command ? <SurfaceRows>
+          {THREAD_SLASH_COMMANDS.filter((item) => item.id === "stop" ? streaming
+            : ["keep", "fork"].includes(item.id) ? Boolean(lastAssistantId) : true).map((item) => <SurfaceRow key={item.id} id={`thread-command-${item.id}`}
+            title={item.label} detail={`/${item.id}`} onOpen={() => {
+              if (item.hasArg) {
+                setCommand(item); setCommandArgument("");
+                if (item.id === "mode") loadModesOnce();
+                if (item.id === "prompt") loadPromptsOnce();
+                if (item.id === "guardrail") loadGuardrailsOnce();
+              } else { closePicker(); executeSlashCommand(item.id, undefined, true); }
+            }} />)}
+        </SurfaceRows> : <>
+          <StringGadget label={command.label} value={commandArgument} onChange={setCommandArgument} autoFocus
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.nativeEvent.isComposing && commandArgument.trim()) {
+                event.preventDefault(); closePicker(); executeSlashCommand(command.id, commandArgument.trim(), true);
+              }
+            }} />
+          <SurfaceRows>{(command.id === "mode" ? modes.map((item) => ({ id: item.id, label: item.name }))
+            : command.id === "prompt" ? prompts.map((item) => ({ id: item.id, label: item.title }))
+              : command.id === "guardrail" ? guardrails.map((item) => ({ id: item.id, label: item.title })) : [])
+            .filter((item) => item.label.toLowerCase().includes(commandArgument.toLowerCase()))
+            .map((item) => <SurfaceRow key={item.id} id={`thread-command-argument-${item.id}`} title={item.label}
+              onOpen={() => { closePicker(); executeSlashCommand(command.id, item.label, true); }} />)}</SurfaceRows>
+          <div className="thread-picker-actions">
+            <Button variant="ghost" dense onClick={() => setCommand(null)}>Back</Button>
+            <Button variant="primary" dense disabled={!commandArgument.trim()} onClick={() => {
+              closePicker(); executeSlashCommand(command.id, commandArgument.trim(), true);
+            }}>Run</Button>
+          </div>
+        </>}
+      </div>}
+
       {todo ? <ActionNotice role={todo.status === "refused" || todo.status === "unknown" ? "alert" : "status"} tone={todo.status === "accepted" ? "ok" : "warn"}>
         <StateChip state={todo.status === "pending" ? "working" : todo.status === "accepted" ? "success" : "warning"}
           label={todo.status === "pending" ? "Adding task" : todo.status === "accepted" ? "Task added" : todo.status === "refused" ? "Task not added" : "Result unknown"} />
@@ -987,7 +1066,7 @@ export function ThreadComposer({
           value={draft}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
-          rows={3}
+          rows={2}
           autoGrow
           mic={false}
           disabled={disabled || sending}
@@ -998,6 +1077,16 @@ export function ThreadComposer({
           } as React.ComponentPropsWithoutRef<"textarea">}
         />
         <div className="thread-composer-actions">
+          <div className="thread-composer-tools">
+            <Button variant="ghost" dense aria-expanded={picker === "sources"} onClick={() => {
+              if (picker === "sources") closePicker(); else setPicker("sources"); setSourceQuery(""); setAcIndex(0);
+              setAcOpen(false); setSlashOpen(false); loadPeopleOnce();
+            }}>Sources</Button>
+            <Button variant="ghost" dense aria-expanded={picker === "commands"} onClick={() => {
+              if (picker === "commands") closePicker(); else setPicker("commands"); setCommand(null);
+              setAcOpen(false); setSlashOpen(false);
+            }}>Commands</Button>
+          </div>
           <div className="thread-composer-capture"><MicButton onText={handleMicText} label="Speak" /></div>
         {streaming ? (
           <Button

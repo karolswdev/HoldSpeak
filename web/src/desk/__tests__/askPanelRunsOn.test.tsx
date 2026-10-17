@@ -150,6 +150,39 @@ describe("AskPanel's success receipt", () => {
 });
 
 describe("AskPanel's Note passage handoff", () => {
+  it.each(["Exact saved passage", ""])("retains an explicit saved Note handoff when the floor drops its selection (quote: %s)", async (text) => {
+    const source = { id: "note-1", kind: "note", ref: "note:note-1", title: "Saved window note" };
+    useDesk.setState({ items: { ...EMPTY_ITEMS, note: [otherNote] }, selectedIds: [source.ref] });
+    latchAskSelection({ noteRef: source.ref, text, source });
+    const requests: any[] = [];
+    vi.stubGlobal("fetch", vi.fn((url: string, init?: RequestInit) => {
+      if (url.endsWith("/api/ask")) requests.push(JSON.parse(String(init?.body)));
+      return Promise.resolve(response(url.endsWith("/api/ask") ? { output: "Saved source answer" } : {}));
+    }));
+    render(<AskPanel />);
+    act(() => useDesk.setState({ selectedIds: [], items: { ...EMPTY_ITEMS, note: [{ ...otherNote, title: "Refreshed floor note" }] } }));
+    expect(screen.getByTestId("ask-context")).toHaveTextContent("Saved window note");
+    if (text) expect(screen.getByTestId("ask-selected-passage")).toHaveTextContent(text);
+    else expect(screen.queryByTestId("ask-selected-passage")).toBeNull();
+    fireEvent.change(screen.getByRole("textbox", { name: "Ask about your work" }), { target: { value: "Question from the note" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    await screen.findByText("Saved source answer");
+    expect(requests[0]).toMatchObject({
+      prompt: text ? `Question from the note\n\nSelected text:\n> ${text}` : "Question from the note",
+      context: [source],
+    });
+    expect(screen.getByTestId("ask-answer-sources")).toHaveTextContent("Saved window note");
+    fireEvent.click(screen.getByRole("button", { name: "Edit question" }));
+    expect(screen.getByTestId("ask-context")).toHaveTextContent("Saved window note");
+    if (text) {
+      fireEvent.click(screen.getByText("Selected text").closest("summary")!);
+      await screen.findByRole("button", { name: "Remove" });
+      fireEvent.click(screen.getByRole("button", { name: "Remove" }));
+      expect(screen.queryByTestId("ask-selected-passage")).toBeNull();
+      expect(screen.getByTestId("ask-context")).toHaveTextContent("Saved window note");
+    }
+  });
+
   it("recovers the question, shows the selected text, and Remove keeps it out of the request", async () => {
     localStorage.setItem(durableDraftKey("desk-ask"), JSON.stringify({ version: 1, text: "Recovered question", updatedAt: "2026-10-13T00:00:00Z" }));
     useDesk.setState({ items: { ...EMPTY_ITEMS, note: [note] }, selectedIds: ["note:note-1"], askOpen: true });
@@ -260,7 +293,7 @@ describe("daily work: the question leads Ask", () => {
     render(<AskPanel />);
     const prompt = await screen.findByPlaceholderText("Ask about your work");
     fireEvent.change(prompt, { target: { value: "Keep this question" } });
-    expect(screen.getByTestId("ask-context")).toHaveTextContent("With:Canonical note");
+    expect(screen.getByTestId("ask-context")).toHaveTextContent("Question sources:Canonical note");
     expect(screen.queryByText("USES ASSIGNMENT")).toBeNull();
     expect(screen.queryByRole("radiogroup", { name: "Lens" })).toBeNull();
     expect(screen.queryByText(/^Budget /)).toBeNull();
@@ -412,6 +445,116 @@ describe("Ask view abandonment", () => {
 });
 
 describe("Ask's Workbench composition", () => {
+  it.each([true, false])("opens a newer Note handoff and keeps it open across an earlier success (already answered: %s)", async (alreadyAnswered) => {
+    useDesk.setState({ items: { ...EMPTY_ITEMS, note: [note, otherNote] }, selectedIds: ["note:note-1"] });
+    const answer = deferred<Response>();
+    vi.stubGlobal("fetch", vi.fn((url: string) => url.endsWith("/api/ask") ? answer.promise : Promise.resolve(response({}))));
+    render(<AskPanel />);
+    fireEvent.change(screen.getByRole("textbox", { name: "Ask about your work" }), { target: { value: "First request" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    if (alreadyAnswered) await act(async () => { answer.resolve(response({ output: "First answer" })); });
+    act(() => {
+      useDesk.setState({ selectedIds: ["note:note-2"] });
+      latchAskSelection({ noteRef: "note:note-2", text: "New note passage", source: { id: "note-2", kind: "note", ref: "note:note-2", title: "New saved note" } });
+    });
+    expect(screen.getByRole("textbox", { name: "Ask about your work" })).toBeInTheDocument();
+    if (!alreadyAnswered) await act(async () => { answer.resolve(response({ output: "First answer" })); });
+    expect(await screen.findByText("First answer")).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Ask about your work" })).toBeInTheDocument();
+    expect(screen.getByTestId("ask-selected-passage")).toHaveTextContent("New note passage");
+    expect(screen.getByTestId("ask-context")).toHaveTextContent("New saved note");
+    expect(screen.getByTestId("ask-answer-sources")).toHaveTextContent("Canonical note");
+    expect(screen.getByRole("button", { name: "Keep" })).toBeEnabled();
+  });
+
+  it("keeps the answer's sent sources distinct when the next question selects different material", async () => {
+    useDesk.setState({ items: { ...EMPTY_ITEMS, note: [note, otherNote] }, selectedIds: ["note:note-1"] });
+    const keeps: any[] = [];
+    vi.stubGlobal("fetch", vi.fn((url: string, init?: RequestInit) => {
+      if (url.endsWith("/api/ask/keep")) {
+        keeps.push(JSON.parse(String(init?.body)));
+        return Promise.resolve(response({}, false));
+      }
+      return Promise.resolve(response(url.endsWith("/api/ask") ? { output: "Answer from the first note" } : {}));
+    }));
+    render(<AskPanel />);
+    fireEvent.change(screen.getByRole("textbox", { name: "Ask about your work" }), { target: { value: "First note question" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    await screen.findByText("Answer from the first note");
+    const answerSources = screen.getByTestId("ask-answer-sources");
+    expect(within(answerSources).getByRole("button", { name: "Canonical note" })).toBeInTheDocument();
+    expect(screen.queryByTestId("ask-context")).toBeNull();
+    expect(screen.getAllByRole("button", { name: "Canonical note" })).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit question" }));
+    act(() => useDesk.setState({ selectedIds: ["note:note-2"] }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Ask about your work" }), { target: { value: "Other note question" } });
+    const questionSources = screen.getByTestId("ask-context");
+    expect(questionSources).toHaveTextContent("Question sources:");
+    expect(within(questionSources).getByRole("button", { name: "Other note" })).toBeInTheDocument();
+    expect(within(questionSources).queryByRole("button", { name: "Canonical note" })).toBeNull();
+    expect(within(answerSources).getByRole("button", { name: "Canonical note" })).toBeInTheDocument();
+    expect(within(answerSources).queryByRole("button", { name: "Other note" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Keep" }));
+    await screen.findByText("Not kept");
+    expect(keeps[0]).toMatchObject({ prompt: "First note question", output: "Answer from the first note", context: [{ ref: "note:note-1", title: "Canonical note" }] });
+  });
+
+  it("Edit question retains the answer and Keep snapshot until a new Ask is sent", async () => {
+    const requests: any[] = [];
+    const nextAnswer = deferred<Response>();
+    const kept: any[] = [];
+    vi.stubGlobal("fetch", vi.fn((url: string, init?: RequestInit) => {
+      if (url.endsWith("/api/ask")) {
+        requests.push(JSON.parse(String(init?.body)));
+        return requests.length === 1 ? Promise.resolve(response({ output: "First answer" })) : nextAnswer.promise;
+      }
+      if (url.endsWith("/api/ask/keep")) {
+        kept.push(JSON.parse(String(init?.body)));
+        return Promise.resolve(response({}, false));
+      }
+      return Promise.resolve(response({}));
+    }));
+    render(<AskPanel />);
+    fireEvent.change(screen.getByRole("textbox", { name: "Ask about your work" }), { target: { value: "First question" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    await screen.findByText("First answer");
+    expect(screen.queryByRole("textbox", { name: "Ask about your work" })).toBeNull();
+    const reading = screen.getByRole("region", { name: "Ask answer" });
+    reading.scrollTop = 120;
+    fireEvent.click(screen.getByRole("button", { name: "Edit question" }));
+    const prompt = screen.getByRole("textbox", { name: "Ask about your work" });
+    expect(prompt).toHaveValue("First question");
+    expect(prompt).toHaveFocus();
+    fireEvent.change(prompt, { target: { value: "Independent next question" } });
+    expect(screen.getByText("First answer")).toBeInTheDocument();
+    expect(reading.scrollTop).toBe(120);
+    fireEvent.click(screen.getByRole("button", { name: "Keep" }));
+    await screen.findByText("Not kept");
+    expect(kept[0]).toMatchObject({ prompt: "First question", output: "First answer" });
+    expect(prompt).toHaveValue("Independent next question");
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    await waitFor(() => expect(requests).toHaveLength(2));
+    expect(requests[1]).toMatchObject({ prompt: "Independent next question", context: [] });
+    expect(JSON.stringify(requests[1])).not.toContain("First answer");
+    expect(screen.queryByText("First answer")).toBeNull();
+    await act(async () => { nextAnswer.resolve(response({ output: "Next answer" })); });
+    expect(await screen.findByText("Next answer")).toBeInTheDocument();
+  });
+
+  it("keeps a picked source named after its picker folds", async () => {
+    useDesk.setState({ items: { ...EMPTY_ITEMS, note: [note] } });
+    vi.stubGlobal("fetch", vi.fn((url: string) => Promise.resolve(response(url.endsWith("/api/grounding/resolve") ? { titles: ["Canonical note"], chars: 200 } : {}))));
+    render(<AskPanel />);
+    fireEvent.click(screen.getByText("Add notes").closest("summary")!);
+    fireEvent.click(await screen.findByRole("checkbox", { name: "Canonical note" }));
+    const sources = await screen.findByTestId("ask-context");
+    expect(within(sources).getByRole("button", { name: "Canonical note" })).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Add notes").closest("summary")!);
+    await waitFor(() => expect(screen.queryByRole("checkbox", { name: "Canonical note" })).toBeNull());
+    expect(within(sources).getByRole("button", { name: "Canonical note" })).toBeInTheDocument();
+  });
+
   it("Keep stays pending until accepted and a failed keep can be tried again", async () => {
     const pendingKeep = deferred<Response>();
     let keeps = 0;

@@ -111,6 +111,21 @@ describe("PHILO-13-08 New Decision writes nothing before it is named", () => {
     expect(usePalette.getState().open).toBe(false);
   });
 
+  it("the named decision well creates only after a title and explicit Create", async () => {
+    render(<DeskToolShelf />);
+    await act(async () => { newDecision().run({ selectedRef: null }); });
+    expect(screen.getByRole("region", { name: "New decision" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "New decision" })).toBeInTheDocument();
+    const create = screen.getByRole("button", { name: "Create" });
+    expect(create).toBeDisabled();
+    fireEvent.change(screen.getByRole("textbox", { name: "Decision title" }), { target: { value: "Use one ledger" } });
+    expect(create).not.toBeDisabled();
+    expect(hub.posts).toEqual([]);
+    await act(async () => { fireEvent.click(create); });
+    await waitFor(() => expect(hub.posts).toHaveLength(1));
+    expect(hub.posts[0].title).toBe("Use one ledger");
+  });
+
   it("Enter with no title writes nothing", async () => {
     render(<DeskToolShelf />);
     await act(async () => { newDecision().run({ selectedRef: null }); });

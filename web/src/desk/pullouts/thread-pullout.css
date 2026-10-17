@@ -855,3 +855,60 @@
 }
 
 .thread-composer-capture { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+
+/* Daily writing: steel supports one paper transcript and one bounded writer. */
+.thread-pullout-body { padding: 0; gap: 0; }
+.thread-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  flex-shrink: 1;
+  min-height: 56px;
+  max-height: min(35%, 240px);
+  box-sizing: border-box;
+  overflow: hidden;
+  padding: 8px 12px;
+  gap: 6px 12px;
+  background: var(--wb-steel);
+}
+.thread-head > .thread-call-chip { align-self: start; }
+.thread-head-controls { min-height: 0; min-width: 0; overflow-y: auto; overflow-x: hidden; }
+.thread-context-strip { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px 12px; min-width: 0; }
+.thread-details, .thread-mode-fold { min-width: 0; flex: 0 1 auto; }
+.thread-context-strip .gadget-fold { margin: 0; }
+.thread-context-strip .gadget-fold > summary { min-height: 28px; }
+.thread-context-strip .gadget-fold[open] { flex-basis: 100%; }
+.thread-details .thread-head-instruments { margin: 6px 0; }
+.thread-details .thread-title-well { margin-top: 6px; }
+.thread-reading { flex: 1 0 auto; background: var(--alive-paper); }
+.thread-reading .surface-traffic, .thread-reading .surface-well { border: 0; box-shadow: none; }
+.thread-row-user .thread-row-body, .thread-row-assistant .thread-row-body,
+.thread-streaming-text { font: 400 14px / 1.65 var(--font-sans); }
+.thread-row-head { flex-direction: row; align-items: center; }
+.thread-row-actions { margin-top: 12px; gap: 8px; }
+.thread-row-more { flex: 1 0 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.thread-foot { padding: 10px 12px; gap: 6px; background: var(--wb-steel); border-top: 1px solid var(--wb-ink); }
+.thread-composer.conversation-composer { padding: 0; border: 0; box-shadow: none; background: transparent; gap: 6px; }
+.thread-composer-row { gap: 6px; }
+.thread-composer .thread-composer-input { min-height: 52px; max-height: 120px; }
+.thread-composer-actions { align-items: center; gap: 8px; }
+.thread-composer-tools { display: flex; align-items: center; gap: 8px; }
+.thread-composer-capture { flex: 1; justify-content: flex-end; }
+.thread-composer-picker { position: absolute; z-index: var(--desk-z-popover, 100); bottom: calc(100% + 8px); left: 0; right: 0; max-height: min(300px, 45vh); overflow-y: auto; padding: 8px; border: 1px solid var(--wb-ink); box-shadow: var(--desk-window-etch); background: var(--wb-paper); }
+.thread-picker-head, .thread-picker-actions { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; font: 600 12px / 1.5 var(--font-mono); }
+.thread-picker-actions { margin: 6px 0 0; }
+.thread-composer-picker .gadget-string { display: flex; width: 100%; margin-bottom: 6px; }
+.thread-composer-picker .inlet-autocomplete { position: static; max-height: none; border: 0; box-shadow: none; }
+.thread-sources .surface-row-text strong { white-space: normal; overflow-wrap: anywhere; }
+@container surface (max-width: 520px) {
+  .thread-head { padding: 6px 10px; }
+  .thread-foot { padding: 8px 10px; }
+  .thread-context-strip .gadget-fold > summary { min-height: 44px; }
+  .thread-composer-actions, .thread-composer-tools { gap: 6px; }
+  .thread-composer .thread-composer-input { min-height: 50px; max-height: 100px; }
+  .thread-composer-picker .surface-row { min-height: 44px; }
+}
+
+/* The writing well has the same warm paper as the transcript and Ask. */
+.desk-next .thread-foot .thread-composer .gadget-pad,
+.desk-next .thread-foot .thread-composer .gadget-pad textarea { background: var(--alive-paper); }

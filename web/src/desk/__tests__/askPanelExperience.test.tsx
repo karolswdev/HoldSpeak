@@ -78,7 +78,8 @@ it.each(["transport", "HTTP"])("a %s failed Projects read is distinct from the r
   const prior = reads.length;
   failed = false;
   fireEvent.click(screen.getByRole("button", { name: "Retry Projects" }));
-  expect(await screen.findByLabelText("No projects")).toBeInTheDocument();
+  await waitFor(() => expect(screen.queryByLabelText("Projects unavailable")).toBeNull());
+  expect(screen.queryByLabelText("No projects")).toBeNull();
   expect(reads.slice(prior)).toEqual(["/api/projects"]);
   expect(prompt).toHaveValue("Which migration needs me?");
 });

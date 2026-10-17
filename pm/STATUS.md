@@ -4,9 +4,25 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-17 (#1241 delivered; tonight three repairs full-main GREEN)
+**Last updated:** 2026-10-17 (daily Decision, Ask and Thread experience)
 
 ## Current phase
+
+**Daily usability: Decision, Ask and Thread.** The owner's three named faces
+now share content-led Workbench paper, compact controls and useful phone
+layouts. New decision starts in the decision editor. Ask retains an answer
+while editing, separates sent and question sources, and carries a saved Note
+and selected passage independently of desktop icon selection. Thread exposes
+Sources and Commands without losing drafts, bounds its expanded header and
+keeps Stop explicit while writing. Integration fixed the loaded phone composer,
+command focus, source titles and a late reply hiding a newer Note handoff.
+
+Actual isolated desktop/phone walks cover creation, reading, editing and
+expanded source controls; phone pointer ownership is checked. Ask provider text
+is replayed at the declared boundary, not a live model-quality claim. Ordinary
+quick and normal local delivery are recorded in the release record; full-main
+follows merge in the separate proof tree. Owner visual acceptance remains open.
+[Design and release](../docs/internal/DAILY-EXPERIENCE-2026-10-17/RELEASE.md).
 
 **Tonight: three daily repairs complete — #1240/#1241 delivered, full-main GREEN.**
 Send retains the exact command and preview through reload; Retry cannot turn

@@ -1221,3 +1221,33 @@
 /* PHILO-13-08 (B3): the deck asks a create's name (New Decision); Save
    sits under the well. */
 .desk-tool-name { display: flex; padding: 6px 2px 2px; }
+
+
+/* Decision creation retains the no-write title step in a named paper well. */
+.desk-next .desk-decision-prompt {
+  padding: var(--space-4);
+  background: var(--wb-field-hi);
+}
+
+.desk-next .desk-decision-prompt .desk-decision-prompt-title {
+  margin: 0 0 var(--space-3);
+  font: 600 15px / 1.4 var(--font-sans);
+}
+
+.desk-next .desk-decision-prompt .desk-decision-prompt-label {
+  display: block;
+  margin-bottom: var(--space-2);
+  font: 400 12px / 1.5 var(--font-mono);
+}
+
+.desk-next .desk-decision-prompt .gadget-string,
+.desk-next .desk-decision-prompt .gadget-string input {
+  background: var(--alive-paper);
+  color: var(--wb-ink);
+  font-family: var(--font-sans);
+}
+
+.desk-next .desk-decision-prompt .desk-tool-name {
+  justify-content: flex-end;
+  padding-top: var(--space-3);
+}

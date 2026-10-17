@@ -56,9 +56,10 @@ import { useDurableDraft } from "../../lib/durableDraft";
 import { qualifiedRef } from "../api";
 import { DeskWindowFrame } from "./DeskWindow";
 import { Material } from "../surface/Material";
-import { SurfaceState, SurfaceTraffic, SurfaceTrafficTurn } from "../surface/Surface";
+import { ScrollHint, SurfaceState, SurfaceTraffic, SurfaceTrafficTurn } from "../surface/Surface";
 import {
   LedMeter,
+  FoldGadget,
   PadGadget,
 } from "../surface/gadgets";
 import {
@@ -88,6 +89,7 @@ interface AskRequestSnapshot {
   grounding: ReturnType<typeof buildGrounding>;
   selection: AskSelectionHandoff | null;
   keepContext: AskContext[];
+  railSources: RailsPick[];
 }
 
 export function AskPanel() {
@@ -127,7 +129,12 @@ export function AskPanel() {
   const [projectsRead, setProjectsRead] = useState<{ loading: boolean; known: boolean; error: string }>({ loading: true, known: false, error: "" });
   const projectsReads = useRef(0);
   const { copy, receipt: copyReceipt } = useCopyReceipt();
-  const endRef = useRef<HTMLDivElement | null>(null);
+  const [editingQuestion, setEditingQuestion] = useState(true);
+  const [passageOpen, setPassageOpen] = useState(true);
+  const questionGeneration = useRef(0);
+  const readingRef = useRef<HTMLDivElement | null>(null);
+  const questionContextRef = useRef<HTMLDivElement | null>(null);
+  const answerRef = useRef<HTMLDivElement | null>(null);
   const mounted = useRef(true);
   const abandoned = useRef(false);
   const requestId = useRef(0);
@@ -155,30 +162,43 @@ export function AskPanel() {
     closeAsk();
   }, [clearSelection, closeAsk]);
 
-  // The transcript keeps its newest transmission in view (the
-  // PersonaChat grammar): the refusal turn and the printed turn are
-  // never hidden below the well's fold.
+  // A new answer starts at its heading. Editing, receipts and source reads
+  // must not move the owner's reading position.
   useEffect(() => {
-    endRef.current?.scrollIntoView({ block: "end" });
-  }, [phase, failedRun]);
+    const reading = readingRef.current;
+    const answer = answerRef.current?.closest(".surface-traffic-turn");
+    if (result && reading && answer) {
+      reading.scrollTop += answer.getBoundingClientRect().top - reading.getBoundingClientRect().top;
+    }
+  }, [result]);
 
-  const context = useMemo(
-    () => askContexts(items, selectedIds),
-    [items, selectedIds],
-  );
   const [selectedPassage, setSelectedPassage] = useState<AskSelectionHandoff | null>(() => takeAskSelection());
+  const context = useMemo(() => {
+    const selected = askContexts(items, selectedIds);
+    const source = selectedPassage?.source;
+    if (!source || source.ref !== selectedPassage.noteRef) return selected;
+    // An explicit Note handoff names the saved source, even before a desk
+    // collection read or after the floor drops a non-icon selection.
+    return [...selected.filter((entry) => entry.ref !== source.ref), { ...source }];
+  }, [items, selectedIds, selectedPassage]);
   useEffect(() => {
     const onSelection = (event: Event) => {
       const next = (event as CustomEvent<AskSelectionHandoff | null>).detail;
       // The mounted composer owns this handoff now. Clear the module latch so
       // a later mount cannot replay a quote already shown in this composer.
       takeAskSelection();
-      setSelectedPassage(next && next.text.trim() ? next : null);
+      setSelectedPassage(next && (next.text.trim() || next.source) ? next : null);
+      if (next) {
+        questionGeneration.current += 1;
+        setEditingQuestion(true);
+        setPassageOpen(true);
+      }
     };
     window.addEventListener(ASK_SELECTION_EVENT_NAME, onSelection);
     return () => window.removeEventListener(ASK_SELECTION_EVENT_NAME, onSelection);
   }, []);
   useEffect(() => {
+    if (selectedPassage?.source) return;
     const noteItems = items.note || [];
     const noteKnown = noteItems.length > 0;
     const noteStillExists = noteItems.some((item) => qualifiedRef("note", item.id) === selectedPassage?.noteRef);
@@ -247,6 +267,7 @@ export function AskPanel() {
     if (pendingRequest.current || abandoned.current || !mounted.current) return;
     const controller = new AbortController();
     const id = ++requestId.current;
+    const generation = questionGeneration.current;
     pendingRequest.current = { id, controller };
     setPhase("routing");
     setKeepError("");
@@ -258,6 +279,7 @@ export function AskPanel() {
     setRunStartedAt(startedAt);
     setFinishedElapsedSeconds(undefined);
     setSent(snapshot);
+    setPassageOpen(false);
     const r = await runAsk({
       prompt: snapshot.prompt,
       lens: snapshot.lens,
@@ -276,12 +298,13 @@ export function AskPanel() {
       return;
     }
     setResult(r);
+    if (generation === questionGeneration.current) setEditingQuestion(false);
     setPhase("printed");
   };
 
   const ask = () => {
-    if (!prompt.trim() || pendingRequest.current || overBudget) return;
-    const selection = selectedPassage && context.some((entry) => entry.ref === selectedPassage.noteRef)
+    if (!prompt.trim() || pendingRequest.current || keeping.current || overBudget) return;
+    const selection = selectedPassage?.text.trim() && context.some((entry) => entry.ref === selectedPassage.noteRef)
       ? { ...selectedPassage }
       : null;
     const copiedContext = context.map((entry) => ({ ...entry }));
@@ -300,6 +323,7 @@ export function AskPanel() {
       grounding: buildGrounding(grounding, rails),
       selection,
       keepContext,
+      railSources: rails.map((source) => ({ ...source })),
     };
     return run(snapshot);
   };
@@ -348,6 +372,10 @@ export function AskPanel() {
   // A refusal that sent bytes: the failure is on the HUB> turn; the
   // footer names where they went.
   const hasTraffic = Boolean(sent || failedRun || result || phase === "routing");
+  const sourceContext = [
+    ...context,
+    ...groundingReceiptRows(grounding).filter((source) => !context.some((entry) => entry.ref === source.ref)),
+  ];
 
   // The footer receipt bar's one status line (audit §3.5): fault > routing
   // > run receipt > the compose budget tokens.
@@ -376,13 +404,12 @@ export function AskPanel() {
       }
       title="Ask AI"
       open
-      defaultW={640}
-      defaultH={360}
-      fitContent
+      defaultW={740}
+      defaultH={620}
       onClose={bin}
     >
       <div className="desk-pullout-body desk-ask-body">
-        {hasTraffic ? <div className="conversation-reading desk-ask-reading"><SurfaceTraffic showEmpty={false}>
+        {hasTraffic ? <ScrollHint axis="y" scrollRef={readingRef} className="desk-ask-reading-wrap"><div ref={readingRef} className="conversation-reading desk-ask-reading" role="region" aria-label="Ask answer" tabIndex={0}><SurfaceTraffic showEmpty={false}>
           {sent ? (
             <SurfaceTrafficTurn
               prefix="You"
@@ -414,7 +441,7 @@ export function AskPanel() {
               />
             </SurfaceTrafficTurn>
           ) : null}
-          {phase === "printed" && result ? (
+          {result ? (
             <SurfaceTrafficTurn
               prefix="Answer"
               meta={<TurnLamp lamp={printedLamp} />}
@@ -431,6 +458,7 @@ export function AskPanel() {
             >
               <div
                 className="desk-ask-answer"
+                ref={answerRef}
                 /* HS-101 B7 — the result drags OUT through the glass:
                    release it over the desk and it is kept (the same keep
                    verb; the desk files the minted artifact). */
@@ -458,6 +486,15 @@ export function AskPanel() {
                   }
                 }}
               >
+                {sent && (sent.keepContext.length || sent.railSources.length) ? (
+                  <div className="desk-ask-sources desk-ask-answer-sources" data-testid="ask-answer-sources">
+                    <span>Sources:</span>
+                    {sent.keepContext.map((source) => source.ref ? (
+                      <Button key={source.ref} dense variant="ghost" onClick={() => openRef(source.ref!)}>{source.title}</Button>
+                    ) : <span key={source.id}>{source.title}</span>)}
+                    {sent.railSources.map((source) => <span className="surface-token" key={`${source.repo}:${source.kind}:${source.id}`}>{source.title}</span>)}
+                  </div>
+                ) : null}
                 <Material>{result.output}</Material>
                 {/* HS-111-05 — the honesty law reaches this surface: the
                     server's cited retrieval receipt, never inferred, and
@@ -488,36 +525,51 @@ export function AskPanel() {
               </div>
             </SurfaceTrafficTurn>
           ) : null}
-          <div ref={endRef} />
-        </SurfaceTraffic></div> : <div className="desk-ask-compose-space" aria-hidden="true" />}
+        </SurfaceTraffic></div></ScrollHint> : null}
 
-        {phase !== "printed" && (
+        {editingQuestion && (
           <div className="conversation-composer desk-ask-composer">
-            {selectedPassage ? (
-              <div className="desk-ask-selected" data-testid="ask-selected-passage">
-                <p className="desk-ground-sect">Selected text</p>
+            {sourceContext.length || rails.length || selectedPassage?.text.trim() ? <ScrollHint axis="y" scrollRef={questionContextRef} className="desk-ask-context-wrap"><div ref={questionContextRef} className="desk-ask-question-context">
+            {sourceContext.length || rails.length ? (
+              <div className="desk-ask-sources" data-testid="ask-context">
+                <span>Question sources:</span>
+                {sourceContext.map((source) => source.ref ? (
+                  <Button key={source.ref} dense variant="ghost" onClick={() => openRef(source.ref!)}>{source.title}</Button>
+                ) : <span key={source.id}>{source.title}</span>)}
+                {rails.map((source) => <span className="surface-token" key={`${source.repo}:${source.kind}:${source.id}`}>{source.title}</span>)}
+              </div>
+            ) : null}
+            {selectedPassage?.text.trim() ? (
+              <div className="desk-ask-passage" data-testid="ask-selected-passage">
+                <FoldGadget title="Selected text" open={passageOpen} onToggle={setPassageOpen}>
                 <blockquote>{selectedPassage.text}</blockquote>
                 <div className="desk-ask-selection-verbs">
                   <Button dense variant="ghost" onClick={() => openRef(selectedPassage.noteRef)}>
                     Back to note
                   </Button>
-                  <Button dense variant="ghost" onClick={() => { latchAskSelection(null); setSelectedPassage(null); }}>
+                  <Button dense variant="ghost" onClick={() => {
+                    const source = selectedPassage.source;
+                    latchAskSelection(null);
+                    setSelectedPassage(source ? { noteRef: selectedPassage.noteRef, text: "", source } : null);
+                  }}>
                     Remove
                   </Button>
                 </div>
+                </FoldGadget>
               </div>
             ) : null}
+            </div></ScrollHint> : null}
             <div className="desk-ask-input">
                 <PadGadget
                   label="Ask about your work"
                   mic={false}
-                  rows={3}
+                  rows={hasTraffic ? 2 : 6}
                   value={prompt}
                   placeholder="Ask about your work"
                   autoFocus
                   onChange={setPrompt}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
+                    if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
                       e.preventDefault();
                       void ask();
                     }
@@ -529,20 +581,6 @@ export function AskPanel() {
                   onText={(text) => setPrompt((current) => current ? `${current} ${text}` : text)}
                 />
             </div>
-            {context.length > 0 ? (
-              <div className="desk-ask-sources" data-testid="ask-context">
-                <span>With:</span>
-                {context.map((source) => source.ref ? (
-                  <Button key={source.id} dense variant="ghost" onClick={() => openRef(source.ref!)}>{source.title}</Button>
-                ) : <span key={source.id}>{source.title}</span>)}
-              </div>
-            ) : null}
-            {projectsRead.error ? <ActionNotice role="alert" tone="warn" action={{ label: "Retry Projects", onClick: () => void readProjects() }}>
-              <StateChip state="unreachable" label="Projects unavailable" />
-              {projectsRead.known ? <>{" · "}<StateChip state="warning" label="Last read" /></> : null}
-              {" · "}<span>{projectsRead.error}</span>
-            </ActionNotice> : projectsRead.loading ? <StateChip state="working" label="Reading Projects" />
-              : !projects.length ? <StateChip state="idle" label="No projects" /> : null}
             <div className="desk-ask-compose-actions">
               <div className="desk-ask-context-tools">
               <GroundingSection
@@ -566,13 +604,25 @@ export function AskPanel() {
                 limitTokens={limitTokens}
                 meter={false}
               />
+              {projectsRead.error ? <ActionNotice role="alert" tone="warn" action={{ label: "Retry Projects", onClick: () => void readProjects() }}>
+                <StateChip state="unreachable" label="Projects unavailable" />
+                {projectsRead.known ? <>{" · "}<StateChip state="warning" label="Last read" /></> : null}
+                {" · "}<span>{projectsRead.error}</span>
+              </ActionNotice> : null}
               </div>
+              <div className="desk-ask-send">
+              {phase !== "routing" && !failedRun ? <EngineLine
+                engine={engine}
+                onChoose={() => openSurfaceOr("configure-runs-on", "/settings", "models")}
+                onRetry={() => void refreshEngine("ask.answer")}
+              /> : null}
               <Button
                 variant="primary"
-                disabled={!prompt.trim() || phase === "routing" || overBudget}
+                disabled={!prompt.trim() || phase === "routing" || isKeeping || overBudget}
                 title={overBudget ? "Too many notes" : phase === "routing" ? "Asking" : undefined}
                 onClick={() => void ask()}
               >Ask</Button>
+              </div>
             </div>
             {overBudget ? <div className="desk-ask-rack-lip">
                 <LedMeter
@@ -580,16 +630,12 @@ export function AskPanel() {
                   value={limitTokens > 0 ? groundTokens / limitTokens : 0}
                 />
               </div> : null}
-            {phase !== "routing" && !failedRun ? <EngineLine
-              engine={engine}
-              onChoose={() => openSurfaceOr("configure-runs-on", "/settings", "models")}
-              onRetry={() => void refreshEngine("ask.answer")}
-            /> : null}
           </div>
         )}
+        {!editingQuestion && result ? <div className="desk-ask-edit-question"><Button dense variant="ghost" onClick={() => setEditingQuestion(true)}>Edit question</Button></div> : null}
       </div>
 
-      <SurfaceFooter className={printedRoute ? "turn-route-footer" : undefined} egress={printedRoute ? <RouteEgressChip route={printedRoute} /> : null} receipt={keepError ? <SurfaceState error={keepError} /> : copyReceipt || <span className="surface-footer-receipt-line" data-tone={statusTone} role="status">{statusLine}</span>} verbs={<><Button dense variant="ghost" onClick={bin}>{phase === "printed" ? "Bin" : "Cancel"}</Button>{phase === "printed" && result ? <Button dense variant="primary" loading={isKeeping} disabled={kept} onClick={() => void keep()}>{kept ? "Kept" : "Keep"}</Button> : null}</>} />
+      <SurfaceFooter className={printedRoute ? "turn-route-footer" : undefined} egress={printedRoute ? <RouteEgressChip route={printedRoute} /> : null} receipt={keepError ? <SurfaceState error={keepError} /> : copyReceipt || <span className="surface-footer-receipt-line" data-tone={statusTone} role="status">{statusLine}</span>} verbs={<><Button dense variant="ghost" onClick={bin}>{result ? "Bin" : "Cancel"}</Button>{result ? <Button dense variant="primary" loading={isKeeping} disabled={kept} onClick={() => void keep()}>{kept ? "Kept" : "Keep"}</Button> : null}</>} />
     </DeskWindowFrame>
   );
 }
