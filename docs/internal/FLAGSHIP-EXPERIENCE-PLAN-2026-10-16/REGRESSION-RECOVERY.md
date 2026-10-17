@@ -327,3 +327,9 @@ product contract; no skips, blanket retries, threshold increases or broad exempt
   return cases pass** (4 checks, 17.79 s); 17 Activity checks and TypeScript pass.
   Root inspected both actual corrected shots. Final ordinary quick runs against
   the last green commit `83522911b`, covering this bounded final delta.
+
+- Final delta ordinary quick is **GREEN: 4,117 related web / 109 sweep /
+  17 canon**, against last green `83522911b`. This follows the broad green
+  **4,169 web / 183 affected / 109 sweep / 17 canon** run. Current source/build
+  match `372447f4cba801bb`; actual corrected 1440/393 shots inspected. Merge and
+  authorized idle-hub delivery are next.
