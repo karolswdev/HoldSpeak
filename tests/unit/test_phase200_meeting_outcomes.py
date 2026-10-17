@@ -182,6 +182,193 @@ def _count(db: Database, table: str, where: str = "", params: tuple = ()) -> int
         return int(conn.execute(f"SELECT COUNT(*) FROM {table} {where}", params).fetchone()[0])
 
 
+@pytest.mark.parametrize("kept", [0, 1])
+def test_failed_outcome_publication_restarts_from_saved_results_without_inference(tmp_path, monkeypatch, kept):
+    """A local write failure must not turn successful model work into READY."""
+    from holdspeak.intel_queue import process_next_intel_job
+    from holdspeak.kernel.runtime import _configure
+    from holdspeak.services.meeting_intel_service import MeetingIntelService
+
+    db, engine = _rig(tmp_path, monkeypatch)
+    state = _meeting(db, f"m-publication-{kept}")
+    create = db.proposals.create_proposal
+    writes = 0
+
+    def fail_after_saved_rows(**fields):
+        nonlocal writes
+        if writes == kept:
+            raise RuntimeError("local proposal storage unavailable")
+        writes += 1
+        return create(**fields)
+
+    monkeypatch.setattr(db.proposals, "create_proposal", fail_after_saved_rows)
+    assert process_next_intel_job() is True
+    job = _latest_job(db, state.id)
+    assert (job.status, job.lifecycle_posture) == ("claimed", "publication_pending")
+    assert db.meetings.get_meeting(state.id).intel_status == "partial"
+    assert len(_proposals(db, state.id)) == kept
+    assert engine.plugin_calls == [DEC, ACT]
+    computation_calls = (len(engine.analyzed), list(engine.plugin_calls))
+    artifacts = [(a.id, a.structured_json) for a in db.plugins.list_artifacts(state.id)]
+    assert artifacts
+    assert process_next_intel_job() is False  # pending local backoff, no spin
+
+    # A real fresh database and broker, with the exact committed job/results.
+    fresh = Database(db.db_path)
+    monkeypatch.setattr("holdspeak.db.get_database", lambda *a, **k: fresh)
+    monkeypatch.setattr("holdspeak.intel_queue.get_database", lambda *a, **k: fresh)
+    _configure(fresh)
+    service = MeetingIntelService(fresh)
+    recovery = service.get_recovery(OWNER, state.id)
+    assert recovery["local_publication"] is True
+    assert recovery["actions"] == {"retry": True, "skip": True}
+    service.retry_recovery(OWNER, state.id)  # no route hash: local work only
+    assert process_next_intel_job() is True
+    repaired = _latest_job(fresh, state.id)
+    assert repaired.job_id == job.job_id and repaired.status == "succeeded"
+    assert repaired.attempts == job.attempts
+    assert fresh.meetings.get_meeting(state.id).intel_status == "ready"
+    assert len(_proposals(fresh, state.id)) == 5
+    assert (len(engine.analyzed), engine.plugin_calls) == computation_calls
+    assert [(a.id, a.structured_json) for a in fresh.plugins.list_artifacts(state.id)] == artifacts
+    assert _count(fresh, "intel_jobs", "WHERE origin_job_id=?", (job.job_id,)) == 0
+    assert process_next_intel_job() is False
+
+
+def test_skipping_failed_local_publication_is_final_and_does_not_block_a_sibling(tmp_path, monkeypatch):
+    from holdspeak.intel_queue import process_next_intel_job
+    from holdspeak.services.meeting_intel_service import MeetingIntelService
+
+    db, engine = _rig(tmp_path, monkeypatch)
+    state = _meeting(db, "m-publication-skip")
+    sibling = _meeting(db, "m-publication-sibling")
+    create = db.proposals.create_proposal
+
+    def fail_one_meeting(**fields):
+        if fields["meeting_id"] == state.id:
+            raise RuntimeError("local proposal storage unavailable")
+        return create(**fields)
+
+    monkeypatch.setattr(db.proposals, "create_proposal", fail_one_meeting)
+    assert process_next_intel_job() is True
+    pending = _latest_job(db, state.id)
+    assert pending.lifecycle_posture == "publication_pending"
+    assert process_next_intel_job() is True
+    assert db.meetings.get_meeting(sibling.id).intel_status == "ready"
+    service = MeetingIntelService(db)
+    service.skip_recovery(OWNER, state.id)
+    monkeypatch.setattr(db.proposals, "create_proposal", create)
+    assert process_next_intel_job() is True  # close the skipped parent's receipt only
+    assert process_next_intel_job() is False
+    assert db.meetings.get_meeting(state.id).intel_status == "skipped"
+    assert _latest_job(db, state.id).status == "skipped"
+    assert _proposals(db, state.id) == []
+    assert engine.plugin_calls == [DEC, ACT, DEC, ACT]
+
+
+@pytest.mark.parametrize("boundary", ["before_pending", "before_bridge", "before_ready", "before_unseen"])
+def test_outcome_publication_crash_recovers_exact_rows_after_stale_parent_reconciliation(tmp_path, monkeypatch, boundary):
+    from holdspeak.intel_queue import process_next_intel_job
+    from holdspeak.kernel.runtime import _configure
+
+    db, engine = _rig(tmp_path, monkeypatch)
+    state = _meeting(db, f"m-publication-crash-{boundary}")
+
+    def process_loss(*args, **kwargs):
+        raise KeyboardInterrupt("publication process lost")
+
+    with monkeypatch.context() as crash:
+        if boundary == "before_pending":
+            crash.setattr(db.intel, "begin_bound_publication", process_loss)
+        elif boundary == "before_bridge":
+            crash.setattr("holdspeak.intel_queue._bridge_proposals", process_loss)
+        elif boundary == "before_ready":
+            crash.setattr(db.intel, "complete_bound_intel_job", process_loss)
+        else:
+            crash.setattr(db.meetings, "mark_ready_unseen", process_loss)
+        with pytest.raises(KeyboardInterrupt):
+            process_next_intel_job()
+    job = _latest_job(db, state.id)
+    saved_ids = {p["id"] for p in _proposals(db, state.id)}
+    calls = (len(engine.analyzed), list(engine.plugin_calls))
+    if boundary != "before_pending":
+        with db._connection() as conn:
+            conn.execute("UPDATE kernel_parent_runs SET lease_heartbeat_at=? WHERE operation_id=?",
+                         (time.time() - 1000, job.parent_operation_id))
+    fresh = Database(db.db_path)
+    monkeypatch.setattr("holdspeak.db.get_database", lambda *a, **k: fresh)
+    monkeypatch.setattr("holdspeak.intel_queue.get_database", lambda *a, **k: fresh)
+    broker = _configure(fresh)
+    assert broker.parent_run_controller.reconcile_abandoned() == 0
+    assert process_next_intel_job() is True
+    assert _latest_job(fresh, state.id).job_id == job.job_id
+    assert fresh.meetings.get_meeting(state.id).intel_status == "ready"
+    repaired_ids = {p["id"] for p in _proposals(fresh, state.id)}
+    assert len(repaired_ids) == 5 and saved_ids <= repaired_ids
+    assert (len(engine.analyzed), engine.plugin_calls) == calls
+    assert _count(fresh, "intel_jobs", "WHERE origin_job_id=?", (job.job_id,)) == 0
+
+
+@pytest.mark.parametrize("fence", ["cancel", "expire", "transcript", "takeover"])
+def test_each_outcome_insert_and_ready_obey_publication_owner_fences(tmp_path, monkeypatch, fence):
+    from holdspeak.intel_queue import process_next_intel_job
+    from holdspeak.kernel.runtime import _service
+    from holdspeak.meeting_session.deferred_bound import queue_service_principal
+
+    db, engine = _rig(tmp_path, monkeypatch)
+    state = _meeting(db, f"m-publication-fence-{fence}")
+    create = db.proposals.create_proposal
+    writes = 0
+
+    def fence_after_first_insert(**fields):
+        nonlocal writes
+        result = create(**fields)
+        writes += 1
+        if writes == 1:
+            job = _latest_job(db, state.id)
+            if fence == "cancel":
+                _service().parent_run_controller.cancel_by_operation_id(queue_service_principal(), job.parent_operation_id)
+            else:
+                with db._connection() as conn:
+                    if fence == "expire":
+                        conn.execute("UPDATE kernel_parent_runs SET deadline_at=0 WHERE operation_id=?", (job.parent_operation_id,))
+                    elif fence == "transcript":
+                        conn.execute("UPDATE segments SET text=text||' changed' WHERE meeting_id=?", (state.id,))
+                    else:
+                        conn.execute("UPDATE intel_jobs SET executor_lease_expires_at=0 WHERE job_id=?", (job.job_id,))
+                if fence == "takeover":
+                    assert Database(db.db_path).intel.take_over_stale_bound_executor(job.job_id) is not None
+        return result
+
+    monkeypatch.setattr(db.proposals, "create_proposal", fence_after_first_insert)
+    process_next_intel_job()
+    assert len(_proposals(db, state.id)) == 1
+    assert db.meetings.get_meeting(state.id).intel_status != "ready"
+    assert _latest_job(db, state.id).status == ("claimed" if fence == "takeover" else "skipped")
+    assert engine.plugin_calls == [DEC, ACT]
+    assert _count(db, "intel_jobs", "WHERE origin_job_id=?", (_latest_job(db, state.id).job_id,)) == 0
+
+
+def test_ready_rechecks_parent_after_every_proposal_was_saved(tmp_path, monkeypatch):
+    from holdspeak.intel_queue import process_next_intel_job
+
+    db, engine = _rig(tmp_path, monkeypatch)
+    state = _meeting(db, "m-publication-ready-fence")
+    complete = db.intel.complete_bound_intel_job
+
+    def expire_before_ready(job, **kwargs):
+        with db._connection() as conn:
+            conn.execute("UPDATE kernel_parent_runs SET deadline_at=0 WHERE operation_id=?", (job.parent_operation_id,))
+        return complete(job, **kwargs)
+
+    monkeypatch.setattr(db.intel, "complete_bound_intel_job", expire_before_ready)
+    assert process_next_intel_job() is True
+    assert len(_proposals(db, state.id)) == 5
+    assert db.meetings.get_meeting(state.id).intel_status == "skipped"
+    assert _latest_job(db, state.id).status == "skipped"
+    assert engine.plugin_calls == [DEC, ACT]
+
+
 # ── AC1: the real chain ───────────────────────────────────────────────
 
 
@@ -859,3 +1046,38 @@ def test_an_unpersisted_parent_shell_is_an_orphan_only_after_a_lease(tmp_path, m
     clock[0] += 2
     assert controller.reconcile_abandoned() == 1
     assert broker.store.operation(shell.operation_id)["state"] == "indeterminate"
+
+
+@pytest.mark.parametrize("historical_unlinked", [False, True])
+def test_confirmed_new_action_retains_its_done_identity_after_fresh_read(tmp_path, monkeypatch, historical_unlinked):
+    from holdspeak.services.follow_through_service import FollowThroughService
+    from holdspeak.services.proposal_bridge_service import ProposalBridgeService
+
+    db, _engine = _rig(tmp_path, monkeypatch)
+    state = _meeting(db, "m-confirm-new-action")
+    _drain()
+    service = ProposalBridgeService(db)
+    proposal = _by_text(_proposals(db, state.id), "payments team")
+    assert proposal["action_item_id"] is None  # no matching summary-native action
+    result = service.confirm_proposal(OWNER, proposal["id"], owner="Karol", due="2026-10-20")
+    action_id = result["action_item_id"]
+    assert action_id and result["proposal"]["action_item_id"] == action_id
+    assert db.proposals.get_proposal(proposal["id"]).action_item_id == action_id
+    if historical_unlinked:
+        # Exact old persisted shape: the commitment has the link; the proposal
+        # has none. Read fallback must preserve history without migrating it.
+        with db._connection() as conn:
+            conn.execute("UPDATE follow_through_proposals SET action_item_id=NULL WHERE id=?", (proposal["id"],))
+    FollowThroughService(db).complete(OWNER, action_id, "done")
+    fresh = Database(db.db_path)
+    fresh_service = ProposalBridgeService(fresh)
+    kept = next(row for row in fresh_service.meeting_review(state.id)["proposals"] if row["id"] == proposal["id"])
+    assert kept["state"] == "confirmed"
+    assert kept["action_item_id"] == action_id
+    assert kept["action_status"] == kept["action_item_status"] == "done"
+    replay = fresh_service.confirm_proposal(OWNER, proposal["id"])
+    assert replay["replayed"] is True and replay["action_item_id"] == action_id
+    assert replay["proposal"]["action_item_id"] == action_id
+    assert _count(fresh, "action_items", "WHERE id=?", (action_id,)) == 1
+    if historical_unlinked:
+        assert fresh.proposals.get_proposal(proposal["id"]).action_item_id is None

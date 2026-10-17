@@ -1,0 +1,669 @@
+{
+  "schema_version": 1,
+  "source_commit": "76a44ad7042dd37cb2a116d59c8435065e6ddf04",
+  "cases": [
+    {
+      "job": "beyond",
+      "edge_ids": [
+        "edge.http.post.api_workbenches_workbench_id_run"
+      ],
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME; actual API producers create the recipe, Workbench and required missing Note reference. The declared recorded engine is available route inventory only; zero physical provider calls are expected."
+      ],
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ],
+      "id": "case.tonight.workbench.missing_source",
+      "state_id": "state.desk_presentation.tonight_workbench_failed",
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "boundary",
+          "substitute": "engine_reply",
+          "label": "Available Workbench route inventory; zero expected provider calls",
+          "reply": "tests/fixtures/tonight_workbench_route.json",
+          "adapter": "hub-engine-boundary",
+          "why": "Only declares an available route. No provider invocation or generated output completion is expected."
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "body": {
+            "disposition": "completed"
+          }
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "body": {
+            "base_url": "{replay_provider_url}"
+          }
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "body": {
+            "draft": {
+              "request_id": "tonight-workbench-engine",
+              "profile_id": "tonight-workbench-engine",
+              "expected_profile_revision": 0,
+              "label": "Recorded unused Workbench engine",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "{replay_provider_url}",
+              "requires_key": false
+            },
+            "secret": null
+          }
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/recipes",
+          "adapter": "http-route",
+          "expect_status": 201,
+          "capture_as": "recipe_id",
+          "capture_path": "recipe.id",
+          "body": {
+            "name": "Architecture evidence agent",
+            "system_prompt": "Use the attached sources."
+          }
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/workbenches",
+          "adapter": "http-route",
+          "expect_status": 201,
+          "capture_as": "workbench_id",
+          "capture_path": "workbench.id",
+          "body": {
+            "name": "Architecture review",
+            "recipe_id": "{recipe_id}"
+          }
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/assignments/set",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "body": {
+            "command_id": "tonight-workbench-route",
+            "expected_revision": 0,
+            "scope": {
+              "kind": "subject",
+              "subject_kind": "workbench",
+              "subject_id": "{workbench_id}",
+              "capability_id": "workbench.item"
+            },
+            "entries": [
+              {
+                "profile_id": "{profile_id}",
+                "profile_revision": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/workbenches/{workbench_id}/items",
+          "adapter": "http-route",
+          "expect_status": 201,
+          "capture_as": "item_id",
+          "capture_path": "item.id",
+          "body": {
+            "title": "Review architecture evidence",
+            "body": "Check migration read compatibility.",
+            "grounding": {
+              "refs": [
+                "note:restored-source"
+              ]
+            },
+            "context": {
+              "project_id": "architecture-review"
+            }
+          }
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/workbenches/{workbench_id}/run",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "capture_as": "run_id",
+          "capture_path": "run.run_id",
+          "body": {
+            "memory_enabled": false
+          }
+        },
+        {
+          "kind": "check",
+          "adapter": "http-read",
+          "observe_at": "protocol: GET /api/workbenches/{workbench_id}",
+          "predicate": {
+            "kind": "all_of",
+            "predicates": [
+              {
+                "kind": "protocol_field",
+                "path": "workbench.items.0.status",
+                "value": "failed"
+              },
+              {
+                "kind": "protocol_field",
+                "path": "workbench.items.0.result_artifact_id",
+                "value": null
+              },
+              {
+                "kind": "protocol_field",
+                "path": "workbench.items.0.grounding.refs",
+                "value": [
+                  "note:restored-source"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "button.desk-tools-launch"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-input",
+          "selector": "input[placeholder=\"Search tools and Desk items\"]",
+          "value": "Workbenches"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-tool-shelf [role=\"option\"]:has-text(\"Workbenches\")"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "button.wb-home-card:has-text(\"Architecture review\")"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-navigation",
+          "selector": ".wb-card[data-status=\"failed\"] .wb-card-head"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": ".wb-card[data-status=\"failed\"] button.wb-card-head",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "scroll_into_view",
+            "adapter": "ui-navigation",
+            "selector": ".wb-card-result-body",
+            "block": "center"
+          }
+        ]
+      },
+      "expected": {
+        "observe_at": ".wb-card[data-status=\"failed\"] .wb-card-result-body",
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "readable_text",
+              "value": "Source unavailable \u00b7 note:restored-source"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "workbench.items",
+                    "match": {
+                      "id": "{item_id}",
+                      "status": "failed",
+                      "result_artifact_id": null
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/workbenches/{workbench_id}"
+          }
+        ],
+        "words": "The actual missing-source attempt shows its exact failure and preserves its source reference without an output artifact. No inference success is claimed."
+      }
+    },
+    {
+      "job": "beyond",
+      "edge_ids": [
+        "edge.http.put.api_workbenches_workbench_id_items_item_id"
+      ],
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME; actual API producers create the recipe, Workbench and required missing Note reference. The declared recorded engine is available route inventory only; zero physical provider calls are expected."
+      ],
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ],
+      "id": "case.tonight.workbench.same_item_rerun",
+      "state_id": "state.desk_presentation.tonight_workbench_pending",
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "boundary",
+          "substitute": "engine_reply",
+          "label": "Available Workbench route inventory; zero expected provider calls",
+          "reply": "tests/fixtures/tonight_workbench_route.json",
+          "adapter": "hub-engine-boundary",
+          "why": "Only declares an available route. No provider invocation or generated output completion is expected."
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "body": {
+            "disposition": "completed"
+          }
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "body": {
+            "base_url": "{replay_provider_url}"
+          }
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "body": {
+            "draft": {
+              "request_id": "tonight-workbench-engine",
+              "profile_id": "tonight-workbench-engine",
+              "expected_profile_revision": 0,
+              "label": "Recorded unused Workbench engine",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "{replay_provider_url}",
+              "requires_key": false
+            },
+            "secret": null
+          }
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/recipes",
+          "adapter": "http-route",
+          "expect_status": 201,
+          "capture_as": "recipe_id",
+          "capture_path": "recipe.id",
+          "body": {
+            "name": "Architecture evidence agent",
+            "system_prompt": "Use the attached sources."
+          }
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/workbenches",
+          "adapter": "http-route",
+          "expect_status": 201,
+          "capture_as": "workbench_id",
+          "capture_path": "workbench.id",
+          "body": {
+            "name": "Architecture review",
+            "recipe_id": "{recipe_id}"
+          }
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/assignments/set",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "body": {
+            "command_id": "tonight-workbench-route",
+            "expected_revision": 0,
+            "scope": {
+              "kind": "subject",
+              "subject_kind": "workbench",
+              "subject_id": "{workbench_id}",
+              "capability_id": "workbench.item"
+            },
+            "entries": [
+              {
+                "profile_id": "{profile_id}",
+                "profile_revision": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/workbenches/{workbench_id}/items",
+          "adapter": "http-route",
+          "expect_status": 201,
+          "capture_as": "item_id",
+          "capture_path": "item.id",
+          "body": {
+            "title": "Review architecture evidence",
+            "body": "Check migration read compatibility.",
+            "grounding": {
+              "refs": [
+                "note:restored-source"
+              ]
+            },
+            "context": {
+              "project_id": "architecture-review"
+            }
+          }
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/workbenches/{workbench_id}/run",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "capture_as": "run_id",
+          "capture_path": "run.run_id",
+          "body": {
+            "memory_enabled": false
+          }
+        },
+        {
+          "kind": "check",
+          "adapter": "http-read",
+          "observe_at": "protocol: GET /api/workbenches/{workbench_id}",
+          "predicate": {
+            "kind": "all_of",
+            "predicates": [
+              {
+                "kind": "protocol_field",
+                "path": "workbench.items.0.status",
+                "value": "failed"
+              },
+              {
+                "kind": "protocol_field",
+                "path": "workbench.items.0.result_artifact_id",
+                "value": null
+              },
+              {
+                "kind": "protocol_field",
+                "path": "workbench.items.0.grounding.refs",
+                "value": [
+                  "note:restored-source"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "button.desk-tools-launch"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-input",
+          "selector": "input[placeholder=\"Search tools and Desk items\"]",
+          "value": "Workbenches"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-tool-shelf [role=\"option\"]:has-text(\"Workbenches\")"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "button.wb-home-card:has-text(\"Architecture review\")"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-navigation",
+          "selector": ".wb-card[data-status=\"failed\"] .wb-card-head"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".wb-card[data-status=\"failed\"] button.wb-card-head"
+        },
+        {
+          "kind": "ui",
+          "action": "scroll_into_view",
+          "adapter": "ui-navigation",
+          "selector": ".wb-card-result-body",
+          "block": "center",
+          "capture_shot": true
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "expect_status": 201,
+          "body": {
+            "id": "restored-source",
+            "title": "Architecture evidence",
+            "body_markdown": "Exact restored architecture evidence: keep migration reads compatible."
+          }
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-by-viewport",
+        "role": "button",
+        "name": "Re-run",
+        "trigger_route": {
+          "method": "PUT",
+          "path": "/api/workbenches/{workbench_id}/items/{item_id}"
+        }
+      },
+      "expected": {
+        "observe_at": ".wb-card[data-status=\"pending\"]",
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "text_contains",
+              "value": "NEEDS REVIEW"
+            },
+            {
+              "kind": "input_value",
+              "selector": ".wb-card textarea[aria-label=\"Item body\"]",
+              "equals": "Check migration read compatibility."
+            },
+            {
+              "kind": "protocol_status",
+              "status": 200,
+              "method": "PUT",
+              "path": "/api/workbenches/{workbench_id}/items/{item_id}",
+              "body_fields": {
+                "item.id": "{item_id}",
+                "item.status": "pending",
+                "item.grounding.refs": [
+                  "note:restored-source"
+                ],
+                "item.context.project_id": "architecture-review",
+                "item.result_artifact_id": null
+              }
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "workbench.items",
+                    "match": {
+                      "id": "{item_id}",
+                      "status": "pending",
+                      "result_artifact_id": null
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/workbenches/{workbench_id}"
+          }
+        ],
+        "words": "Re-run resets the same item to pending after real source restoration and retains instruction, grounding and context. This does not run the provider or claim a completed output."
+      }
+    }
+  ],
+  "states": [
+    {
+      "id": "state.desk_presentation.tonight_workbench_failed",
+      "family": "desk_presentation",
+      "values": {
+        "journey": "case.tonight.workbench.missing_source"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "holdspeak/workbench_conductor.py",
+          "symbol": "def _hydrate_item_grounding(",
+          "claim": "Explicit attachments must resolve without silent dropping."
+        },
+        {
+          "path": "holdspeak/services/workbench_runner.py",
+          "symbol": "# A missing attachment fails this item before any provider",
+          "claim": "The affected item fails locally under the parent epoch."
+        },
+        {
+          "path": "web/src/desk/components/WorkbenchWindow.tsx",
+          "symbol": "const rerunItem = () => void updateItem({ status: \"pending\", result: null, result_egress: null, tokens_consumed: 0, completed_at: null }, \"RE-RUN ITEM\");",
+          "claim": "The existing Re-run resets the same item."
+        }
+      ],
+      "reachable_by": [
+        "case.tonight.workbench.missing_source"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.tonight_workbench_pending",
+      "family": "desk_presentation",
+      "values": {
+        "journey": "case.tonight.workbench.same_item_rerun"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "holdspeak/workbench_conductor.py",
+          "symbol": "def _hydrate_item_grounding(",
+          "claim": "Explicit attachments must resolve without silent dropping."
+        },
+        {
+          "path": "holdspeak/services/workbench_runner.py",
+          "symbol": "# A missing attachment fails this item before any provider",
+          "claim": "The affected item fails locally under the parent epoch."
+        },
+        {
+          "path": "web/src/desk/components/WorkbenchWindow.tsx",
+          "symbol": "const rerunItem = () => void updateItem({ status: \"pending\", result: null, result_egress: null, tokens_consumed: 0, completed_at: null }, \"RE-RUN ITEM\");",
+          "claim": "The existing Re-run resets the same item."
+        }
+      ],
+      "reachable_by": [
+        "case.tonight.workbench.same_item_rerun"
+      ]
+    }
+  ],
+  "clocks": [
+    {
+      "id": "clock.browser_date",
+      "source": "Browser Date and timers",
+      "mechanism": "No clock mutation required.",
+      "status": "available",
+      "used_by": []
+    }
+  ],
+  "excluded": [],
+  "council_readings": []
+}

@@ -828,10 +828,10 @@
     {
       "id": "meeting.intelligence",
       "name": "Meeting intelligence chain",
-      "purpose": "Summarize a saved meeting and retain its summary, route receipt, and analysis artifacts.",
+      "purpose": "Summarize a saved meeting, retain analysis, and finish local outcome publication from saved results after a write failure.",
       "domain": "meeting",
       "status": "experimental",
-      "status_reason": "PHILO-3-02 observed one Run, automatic Arrival summary and actual-host receipt, retry/failure cause, and exact restart retention with the real LAN Qwen3.6-35B engine. Planted-fact recovery is partial; no owner sitting is claimed.",
+      "status_reason": "PHILO-3-02 observed one Run, automatic Arrival summary and actual-host receipt, retry/failure cause, and exact restart retention with the real LAN Qwen3.6-35B engine. Planted-fact recovery is partial; no owner sitting is claimed. October17 focused execution proves a committed pending local publication resumes the same job and saved artifacts without another provider call, with per-write parent/transcript/executor checks.",
       "exposure": "user",
       "surfaces": [
         "meeting artifacts",
@@ -923,6 +923,24 @@
           "symbol": "project_intel_job",
           "line": 42,
           "claim": "Meeting detail and recovery share durable queue state, last error and retry facts; scheduled retry is established by its failed predecessor, not by time alone."
+        },
+        {
+          "path": "holdspeak/intel_queue.py",
+          "symbol": "_finish_bound_publication",
+          "line": 471,
+          "claim": "Required proposal publication completes before READY; local write failure preserves the same saved-results job."
+        },
+        {
+          "path": "holdspeak/db/intel.py",
+          "symbol": "IntelRepository.require_bound_publication_in_transaction",
+          "line": 1089,
+          "claim": "Each proposal write and final READY check the exact current executor, parent and transcript in their transaction."
+        },
+        {
+          "path": "web/src/meetings/MeetingIntelRecovery.tsx",
+          "symbol": "export function MeetingIntelRecovery",
+          "line": 101,
+          "claim": "The existing recovery slab distinguishes local outcome Retry from a new routed inference run."
         }
       ],
       "tests": [
@@ -1013,18 +1031,53 @@
             "run": "Astra final producer fixture verification",
             "cases": 1
           }
+        },
+        {
+          "path": "tests/unit/test_phase200_meeting_outcomes.py",
+          "node": "test_failed_outcome_publication_restarts_from_saved_results_without_inference",
+          "assertion": "A failure before/after one proposal resumes with a fresh DB/broker, same job/artifacts, exactly five proposals and unchanged provider calls.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/internal/TONIGHT-THREE-2026-10-17/RELEASE.md",
+            "run": "2026-10-17",
+            "cases": 2
+          }
+        },
+        {
+          "path": "tests/unit/test_phase200_meeting_outcomes.py",
+          "node": "test_each_outcome_insert_and_ready_obey_publication_owner_fences",
+          "assertion": "Cancellation, expiry, transcript change and executor takeover after one proposal prevent further writes and false READY.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/internal/TONIGHT-THREE-2026-10-17/RELEASE.md",
+            "run": "2026-10-17",
+            "cases": 4
+          }
+        },
+        {
+          "path": "tests/unit/test_phase200_meeting_outcomes.py",
+          "node": "test_confirmed_new_action_retains_its_done_identity_after_fresh_read",
+          "assertion": "Confirm saves the exact action link; both new and historical unlinked confirmations retain Done through a fresh DB/review read.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/internal/TONIGHT-THREE-2026-10-17/RELEASE.md",
+            "run": "2026-10-17",
+            "cases": 2
+          }
         }
       ],
       "docs": [
         "docs/MEETING_INTELLIGENCE.md",
         "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/summary-lane-record.md",
-        "docs/internal/philo/phase-3/summary/usefulness.md"
+        "docs/internal/philo/phase-3/summary/usefulness.md",
+        "docs/internal/TONIGHT-THREE-2026-10-17/RELEASE.md"
       ],
       "limitations": [
         "Schema success does not prove semantic correctness.",
         "PHILO-3-02 queue fences execute the real admission and drain with a substituted provider. Real LAN completion, Arrival and restart proof are recorded separately in the lane evidence; the owner has not observed the result.",
         "The retained synthetic meeting loses or corrupts planted facts: SQLite and Maya Chen are misheard; the named failure-fence action is omitted or replaced. At 393, an existing aftercare card can overlap the last summary line; scrolling is recorded separately.",
-        "PHILO-6-03 records a later no-overlap pass on the Arrival at 1440/393 in Chromium. The dated Phase 5 overlap evidence above remains historical; no Safari device result is claimed."
+        "PHILO-6-03 records a later no-overlap pass on the Arrival at 1440/393 in Chromium. The dated Phase 5 overlap evidence above remains historical; no Safari device result is claimed.",
+        "October17 local publication recovery uses substituted provider output and real isolated durable rows. Stale-parent recovery is proved after publication-pending or succeeded is committed; physical provider/native capture and all pre-marker abandoned-computation states are not covered."
       ],
       "failure_states": [
         "blocked",

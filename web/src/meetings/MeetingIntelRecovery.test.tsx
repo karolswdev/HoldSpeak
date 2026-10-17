@@ -2,7 +2,7 @@
 // state token, KEPT fact, NOT DONE token, RETRY/SKIP verbs on the row.
 // HS-201-06 — the words are plain ones now (Constitution tenet 4,
 // ASD-STE100); the wire contract under test is unchanged.
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../lib/api";
 import { MeetingIntelRecovery } from "./MeetingIntelRecovery";
@@ -128,5 +128,68 @@ describe("HS-93-06 Meeting intelligence recovery", () => {
     // The panel should NOT render for running state.
     expect(container.querySelector(".meeting-intel-recovery")).toBeNull();
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  it("reveals local outcome Retry on record revision without a route or another model run", async () => {
+    const pending = {
+      ...failedRecovery, local_publication: true, planned_route: { status: "off", legs: [] },
+      remaining: { label: "Decisions and action items", detail: "Summary saved. Decisions and action items are not complete." },
+    };
+    mockedApiFetch.mockResolvedValueOnce({ ...failedRecovery, state: "queued" });
+    const { rerender } = render(<MeetingIntelRecovery meetingId="meeting-1" revision={0} />);
+    await waitFor(() => expect(mockedApiFetch).toHaveBeenCalledTimes(1));
+    mockedApiFetch.mockResolvedValueOnce(pending);
+    rerender(<MeetingIntelRecovery meetingId="meeting-1" revision={1} />);
+    const retry = await screen.findByRole("button", { name: "Retry" });
+    expect(screen.getByText("NOT DONE: DECISIONS AND ACTION ITEMS")).toBeInTheDocument();
+    expect(screen.queryByTestId("recovery-route")).not.toBeInTheDocument();
+    mockedApiFetch.mockResolvedValueOnce({ success: true, recovery: { ...pending, visible: false, state: "ready" } });
+    fireEvent.click(retry);
+    await waitFor(() => expect(mockedApiFetch).toHaveBeenLastCalledWith(
+      "/api/meetings/meeting-1/intel-recovery/retry", { method: "POST" },
+    ));
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument());
+  });
+
+  it("drops an older recovery read after a newer record revision", async () => {
+    let resolveOld!: (value: unknown) => void;
+    mockedApiFetch.mockReturnValueOnce(new Promise((resolve) => { resolveOld = resolve; }));
+    const { rerender } = render(<MeetingIntelRecovery meetingId="meeting-1" revision={0} />);
+    mockedApiFetch.mockResolvedValueOnce({ ...failedRecovery, visible: false, state: "ready" });
+    rerender(<MeetingIntelRecovery meetingId="meeting-1" revision={1} />);
+    await waitFor(() => expect(mockedApiFetch).toHaveBeenCalledTimes(2));
+    resolveOld(failedRecovery);
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument());
+  });
+
+  it("keeps the action result when a revision read started during its POST finishes late", async () => {
+    const pending = { ...failedRecovery, local_publication: true };
+    let finishPost!: (value: unknown) => void;
+    let finishRead!: (value: unknown) => void;
+    mockedApiFetch.mockResolvedValueOnce(pending)
+      .mockReturnValueOnce(new Promise((resolve) => { finishPost = resolve; }))
+      .mockReturnValueOnce(new Promise((resolve) => { finishRead = resolve; }));
+    const { rerender } = render(<MeetingIntelRecovery meetingId="meeting-1" revision={0} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Retry" }));
+    rerender(<MeetingIntelRecovery meetingId="meeting-1" revision={1} />);
+    await waitFor(() => expect(mockedApiFetch).toHaveBeenCalledTimes(3));
+    await act(async () => { finishPost({ success: true, recovery: { ...pending, visible: false, state: "ready" } }); });
+    await act(async () => { finishRead(pending); });
+    expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
+  });
+
+  it("does not apply a previous meeting's action to the newly opened meeting", async () => {
+    let finishPost!: (value: unknown) => void;
+    const onChanged = vi.fn();
+    mockedApiFetch.mockResolvedValueOnce({ ...failedRecovery, local_publication: true })
+      .mockReturnValueOnce(new Promise((resolve) => { finishPost = resolve; }))
+      .mockResolvedValueOnce({ ...failedRecovery, meeting_id: "meeting-2", visible: false, state: "ready" });
+    const { rerender } = render(<MeetingIntelRecovery meetingId="meeting-1" onChanged={onChanged} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Retry" }));
+    rerender(<MeetingIntelRecovery meetingId="meeting-2" onChanged={onChanged} />);
+    await waitFor(() => expect(mockedApiFetch).toHaveBeenCalledTimes(3));
+    await act(async () => { finishPost({ success: true, recovery: failedRecovery }); });
+    expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
+    expect(onChanged).not.toHaveBeenCalled();
   });
 });

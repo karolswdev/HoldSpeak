@@ -5,7 +5,7 @@ from holdspeak.timestamps import local_wall
 from typing import Any, Callable
 from ..config import Config
 from ..db.core import Database
-from ..db.intel import MANUAL_INTEL_RETRY_REASON, ROUTED_INTEL_RETRY_REASON
+from ..db.intel import MANUAL_INTEL_RETRY_REASON, ROUTED_INTEL_RETRY_REASON, PUBLICATION_PENDING_POSTURE
 from ..intel_queue import build_runtime_queue_frame, drain_intel_queue
 from ..meeting_aftercare import build_aftercare_ready_event
 from ..principals import Principal
@@ -51,15 +51,18 @@ def project_intel_job(db: Database, job: Any | None) -> dict[str, Any] | None:
     if job is None:
         return None
     raw_status = str(getattr(job, "status", "") or "").strip().lower()
+    local_publication = getattr(job, "lifecycle_posture", None) == PUBLICATION_PENDING_POSTURE
     scheduled_retry = _is_scheduled_retry(db, job)
     status = (
-        "retrying"
+        "partial"
+        if local_publication
+        else "retrying"
         if scheduled_retry
         else "running"
         if raw_status == "claimed"
         else raw_status
     )
-    has_failure = raw_status == "failed" or scheduled_retry
+    has_failure = raw_status == "failed" or scheduled_retry or local_publication
     requested_at = job.requested_at.isoformat() if job.requested_at else None
     updated_at = job.updated_at.isoformat() if job.updated_at else None
     return {
@@ -180,6 +183,15 @@ class MeetingIntelService:
         meeting = self._db.meetings.get_meeting(meeting_id)
         if meeting is None:
             raise NotFound("meeting", meeting_id)
+        local = self._db.intel.request_local_publication_retry(meeting_id)
+        if local is not None:
+            if local == "running":
+                raise self._conflict(meeting_id, "Meeting outcomes are already being saved.", code="running")
+            from ..intel_queue_conductor import wake_intel_queue_conductor
+
+            wake_intel_queue_conductor()
+            self._broadcast_queue()
+            return {"success": True, **({"recovery": self.get_recovery(None, meeting_id)} if recovery else {})}
         state = self._guard_gesture_state(meeting_id, expected_selection_hash)
         if state == "empty":
             outcome = self._db.intel.request_intel_retry(meeting_id, reason=MANUAL_INTEL_RETRY_REASON)
@@ -279,10 +291,15 @@ class MeetingIntelService:
         if meeting is None: raise NotFound("meeting", meeting_id)
         job = self._db.intel.get_intel_job(meeting_id)
         latest_job = self._db.intel.get_latest_intel_job(meeting_id)
+        local_publication = job is not None and job.lifecycle_posture == PUBLICATION_PENDING_POSTURE
+        import time
+        local_busy = local_publication and float(job.executor_lease_expires_at or 0) > time.time()
         artifacts = self._db.plugins.list_artifacts(meeting_id, limit=2000)
         meeting_state = str(meeting.intel_status or "disabled").strip().lower(); job_state = str(job.status).strip().lower() if job else None
         if job_state == "claimed":
             job_state = "running"
+        if local_publication:
+            job_state = "partial"
         reserved_handoff = (
             self._db.intel.has_unsettled_stop_reservation(meeting_id)
             or self._db.intel.has_compatibility_cutover_reservation(meeting_id)
@@ -305,7 +322,7 @@ class MeetingIntelService:
         planned_route = project_route(self._db, invocation_id=f"meeting:{meeting_id}")
         # PHILO-15 01 ruling: under OFF nothing offers Retry; OFF is a choice.
         off = route_is_off(planned_route)
-        return {"meeting_id":meeting_id,"visible":visible,"state":state,"headline":headline,"completed":completed,"planned_route":planned_route,"run_receipt":self._db.intel.get_run_receipt(meeting_id),"last_refusal":self._db.intel.get_last_refusal(meeting_id),"remaining":{"label":"Routed meeting intelligence" if meeting.intel is not None and meeting_state in {"partial","skipped"} else "Remaining meeting intelligence" if meeting.intel is not None else "Summary, topics, action items, and routed artifacts","detail":str(detail)},"job":job_projection,"actions":{"retry":not off and not reserved_handoff and visible and state != "running" and not (meeting_state == "ready" and job is None) and not retry_requested,"skip":not reserved_handoff and visible and state != "running" and not (meeting_state == "ready" and job is None) and meeting_state != "skipped"}}
+        return {"meeting_id":meeting_id,"visible":visible,"state":state,"headline":headline,"completed":completed,"planned_route":planned_route,"run_receipt":self._db.intel.get_run_receipt(meeting_id),"last_refusal":self._db.intel.get_last_refusal(meeting_id),"local_publication":local_publication,"remaining":{"label":"Decisions and action items" if local_publication else "Routed meeting intelligence" if meeting.intel is not None and meeting_state in {"partial","skipped"} else "Remaining meeting intelligence" if meeting.intel is not None else "Summary, topics, action items, and routed artifacts","detail":str(detail)},"job":job_projection,"actions":{"retry":(local_publication or not off) and not local_busy and not reserved_handoff and visible and state != "running" and not (meeting_state == "ready" and job is None) and not retry_requested,"skip":not local_busy and not reserved_handoff and visible and state != "running" and not (meeting_state == "ready" and job is None) and meeting_state != "skipped"}}
     def retry_recovery(self, principal: Principal, meeting_id: str, payload: dict[str, Any] | None = None) -> dict[str, Any]: return self._retry(meeting_id, recovery=True, expected_selection_hash=(payload or {}).get("expected_selection_hash"))
     def skip_recovery(self, principal: Principal, meeting_id: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
         outcome = self._db.intel.skip_remaining_intel(meeting_id)

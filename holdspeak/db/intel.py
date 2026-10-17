@@ -217,6 +217,8 @@ COMPATIBILITY_CUTOVER_REASON = "pre_c_unbound_execution_compatibility_cutover"
 # and CLI processes. The bearer is renewed by the runner; a crashed runner leaves
 # a finite stale window that stored-ID recovery may take over with a new epoch.
 BOUND_EXECUTOR_LEASE_SECONDS = 15.0
+PUBLICATION_PENDING_POSTURE = "publication_pending"
+PUBLICATION_PENDING_REASON = "Summary saved. Decisions and action items are not complete."
 
 # Readers must select a lineage leaf before deciding whether it is unresolved.
 # Filtering terminal successors first resurrects a failed ancestor after retry
@@ -1009,8 +1011,9 @@ class IntelRepository(BaseRepository):
                    AND parent_operation_id IS NOT NULL AND bundle_id IS NOT NULL
                    AND bundle_sha256 IS NOT NULL AND claim_id IS NOT NULL
                    AND (executor_lease_expires_at IS NULL OR executor_lease_expires_at<=?)
+                   AND (lifecycle_posture != 'publication_pending' OR julianday(requested_at)<=julianday(?))
                    ORDER BY julianday(requested_at) ASC LIMIT 1""",
-                (now,),
+                (now, utc_now_iso()),
             ).fetchone()
         return self._job_from_row(row) if row is not None else None
 
@@ -1076,9 +1079,166 @@ class IntelRepository(BaseRepository):
                    WHERE j.status IN ('failed','superseded','succeeded','skipped')
                      AND j.parent_operation_id IS NOT NULL
                      AND p.state IN ('OPEN','CANCELLING') AND r.operation_id IS NULL
+                     AND (j.status!='succeeded' OR j.executor_lease_expires_at IS NULL
+                          OR j.executor_lease_expires_at<=?)
                    ORDER BY j.updated_at ASC LIMIT 1"""
+                , (time.time(),)
             ).fetchone()
         return self._job_from_row(row) if row is not None else None
+
+    def require_bound_publication_in_transaction(
+        self, conn: Any, job: IntelJob, parent_epoch: int, *, now: float | None = None,
+        pending: bool = True,
+    ) -> None:
+        """Fence this Meeting's local proposal write on its exact saved owner."""
+        from ..kernel.model import KernelRefused
+
+        row = self._bound_executor_row_in_transaction(
+            conn, job_id=str(job.job_id), executor_lease_token=str(job.executor_lease_token),
+            executor_lease_epoch=int(job.executor_lease_epoch),
+        )
+        if row is None:
+            raise KernelRefused("bound_executor_lease_lost")
+        if pending and row["lifecycle_posture"] != PUBLICATION_PENDING_POSTURE:
+            raise KernelRefused("meeting_publication_not_pending")
+        current = conn.execute(
+            _CURRENT_LINEAGE_CTE + "SELECT job_id FROM current_jobs WHERE meeting_id=? AND current_rank=1",
+            (job.meeting_id,),
+        ).fetchone()
+        if current is None or current["job_id"] != job.job_id:
+            raise KernelRefused("meeting_publication_superseded")
+        meeting = conn.execute("SELECT intel_status,parked FROM meetings WHERE id=?", (job.meeting_id,)).fetchone()
+        if meeting is None or meeting["parked"] or meeting["intel_status"] == "skipped":
+            raise KernelRefused("meeting_publication_skipped")
+        if _durable_transcript_hash(conn, job.meeting_id) != job.transcript_hash:
+            raise KernelRefused("meeting_publication_transcript_changed")
+        parent = conn.execute(
+            """SELECT p.state,p.execution_epoch,p.deadline_at,o.warrant_revoked
+               FROM kernel_parent_runs p JOIN kernel_operations o ON o.operation_id=p.operation_id
+               WHERE p.operation_id=?""", (job.parent_operation_id,),
+        ).fetchone()
+        at = time.time() if now is None else now
+        if (parent is None or parent["state"] != "OPEN" or parent["warrant_revoked"]
+                or int(parent["execution_epoch"]) != parent_epoch or float(parent["deadline_at"]) <= at):
+            raise KernelRefused("meeting_publication_parent_not_live")
+
+    def begin_bound_publication(self, job: IntelJob, parent_epoch: int, *, now: float) -> None:
+        with self._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            self.require_bound_publication_in_transaction(conn, job, parent_epoch, now=now, pending=False)
+            conn.execute(
+                "UPDATE intel_jobs SET lifecycle_posture=?,last_error=NULL,updated_at=? WHERE job_id=?",
+                (PUBLICATION_PENDING_POSTURE, utc_now_iso(), job.job_id),
+            )
+            conn.execute(
+                """UPDATE meetings SET intel_status='partial',intel_status_detail=?,intel_completed_at=NULL,
+                   sync_modified_at=?,updated_at=datetime('now') WHERE id=?""",
+                (PUBLICATION_PENDING_REASON, utc_now_iso(), job.meeting_id),
+            )
+
+    def defer_bound_publication(self, job: IntelJob, *, delay_seconds: int) -> bool:
+        from datetime import timedelta
+
+        with self._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            row = self._bound_executor_row_in_transaction(
+                conn, job_id=str(job.job_id), executor_lease_token=str(job.executor_lease_token),
+                executor_lease_epoch=int(job.executor_lease_epoch),
+            )
+            if row is None or row["lifecycle_posture"] != PUBLICATION_PENDING_POSTURE:
+                return False
+            due = utc_iso(utc_now() + timedelta(seconds=max(1, delay_seconds)))
+            conn.execute(
+                "UPDATE intel_jobs SET requested_at=?,last_error=?,updated_at=? WHERE job_id=?",
+                (due, PUBLICATION_PENDING_REASON, utc_now_iso(), job.job_id),
+            )
+            conn.execute(
+                """INSERT INTO intel_job_attempts (meeting_id,job_id,event_kind,attempt,outcome,error,retry_at,created_at)
+                   VALUES (?,?,'publication',?,'pending',?,?,?)""",
+                (job.meeting_id, job.job_id, job.attempts, PUBLICATION_PENDING_REASON, due, utc_now_iso()),
+            )
+            return True
+
+    def request_local_publication_retry(self, meeting_id: str) -> str | None:
+        """Make this exact saved-results repair due; never enqueue computation."""
+        with self._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            row = conn.execute(
+                _CURRENT_LINEAGE_CTE + "SELECT * FROM current_jobs WHERE meeting_id=? AND current_rank=1",
+                (meeting_id,),
+            ).fetchone()
+            if row is None or row["lifecycle_posture"] != PUBLICATION_PENDING_POSTURE:
+                return None
+            if row["status"] not in {"claimed", "running"}:
+                return None
+            if float(row["executor_lease_expires_at"] or 0) > time.time():
+                return "running"
+            conn.execute("UPDATE intel_jobs SET requested_at=?,updated_at=? WHERE job_id=?",
+                         (utc_now_iso(), utc_now_iso(), row["job_id"]))
+            return PUBLICATION_PENDING_POSTURE
+
+    def stop_bound_publication(self, job: IntelJob, reason: str) -> bool:
+        """A cancelled, changed or expired local publication has no successor."""
+        with self._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            row = self._bound_executor_row_in_transaction(
+                conn, job_id=str(job.job_id), executor_lease_token=str(job.executor_lease_token),
+                executor_lease_epoch=int(job.executor_lease_epoch),
+            )
+            if row is None:
+                return False
+            conn.execute("UPDATE intel_jobs SET status='skipped',lifecycle_posture='terminal',last_error=?,updated_at=? WHERE job_id=?",
+                         (reason, utc_now_iso(), job.job_id))
+            current = conn.execute(
+                _CURRENT_LINEAGE_CTE + "SELECT job_id FROM current_jobs WHERE meeting_id=? AND current_rank=1",
+                (job.meeting_id,),
+            ).fetchone()
+            if current is not None and current["job_id"] == job.job_id:
+                conn.execute("""UPDATE meetings SET intel_status='skipped',intel_status_detail=?,intel_completed_at=NULL,
+                             sync_modified_at=?,updated_at=datetime('now') WHERE id=?""",
+                             (reason, utc_now_iso(), job.meeting_id))
+            return True
+
+    def adopt_terminal_publication(self, job: IntelJob) -> IntelJob | None:
+        """Repair only the old succeeded/current/open-parent completion gap."""
+        with self._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            row = conn.execute(
+                "SELECT * FROM intel_jobs WHERE job_id=? AND status='succeeded'",
+                (job.job_id,),
+            ).fetchone()
+            if row is None or float(row["executor_lease_expires_at"] or 0) > time.time():
+                return None
+            current = conn.execute(
+                _CURRENT_LINEAGE_CTE + "SELECT job_id FROM current_jobs WHERE meeting_id=? AND current_rank=1",
+                (job.meeting_id,),
+            ).fetchone()
+            if current is None or current["job_id"] != job.job_id:
+                conn.execute("UPDATE intel_jobs SET status='superseded',lifecycle_posture='terminal',updated_at=? WHERE job_id=?",
+                             (utc_now_iso(), job.job_id))
+                return self._job_from_row(conn.execute("SELECT * FROM intel_jobs WHERE job_id=?", (job.job_id,)).fetchone())
+            parent = conn.execute("SELECT state,deadline_at FROM kernel_parent_runs WHERE operation_id=?",
+                                  (job.parent_operation_id,)).fetchone()
+            meeting = conn.execute("SELECT intel_status FROM meetings WHERE id=?", (job.meeting_id,)).fetchone()
+            if (parent is None or parent["state"] != "OPEN" or float(parent["deadline_at"]) <= time.time()
+                    or meeting is None or meeting["intel_status"] == "skipped"
+                    or _durable_transcript_hash(conn, job.meeting_id) != job.transcript_hash):
+                conn.execute("UPDATE intel_jobs SET status='skipped',lifecycle_posture='terminal',updated_at=? WHERE job_id=?",
+                             (utc_now_iso(), job.job_id))
+                if meeting is not None and meeting["intel_status"] != "skipped":
+                    conn.execute("UPDATE meetings SET intel_status='skipped',intel_completed_at=NULL,intel_status_detail=? WHERE id=?",
+                                 ("Saved analysis kept. Outcome publication stopped.", job.meeting_id))
+                return self._job_from_row(conn.execute("SELECT * FROM intel_jobs WHERE job_id=?", (job.job_id,)).fetchone())
+            conn.execute(
+                """UPDATE intel_jobs SET status='claimed',lifecycle_posture=?,executor_lease_token=?,
+                   executor_lease_epoch=executor_lease_epoch+1,executor_lease_expires_at=?,updated_at=? WHERE job_id=?""",
+                (PUBLICATION_PENDING_POSTURE, "intel_executor_" + uuid.uuid4().hex,
+                 time.time() + BOUND_EXECUTOR_LEASE_SECONDS, utc_now_iso(), job.job_id),
+            )
+            conn.execute("UPDATE meetings SET intel_status='partial',intel_completed_at=NULL,intel_status_detail=? WHERE id=?",
+                         (PUBLICATION_PENDING_REASON, job.meeting_id))
+            adopted = conn.execute("SELECT * FROM intel_jobs WHERE job_id=?", (job.job_id,)).fetchone()
+            return self._job_from_row(adopted)
 
     @staticmethod
     def _is_compatibility_cutover_in_transaction(conn: Any, job: Any | None) -> bool:
@@ -1774,7 +1934,7 @@ class IntelRepository(BaseRepository):
                 conn.rollback()
                 raise
 
-    def complete_bound_intel_job(self, job: IntelJob) -> bool:
+    def complete_bound_intel_job(self, job: IntelJob, *, publication_guard: Callable[[Any], None] | None = None) -> bool:
         """Terminalize only the exact current C1 bearer and append completion truth."""
         if not job.job_id or not job.executor_lease_token or not job.executor_lease_epoch:
             return False
@@ -1788,6 +1948,8 @@ class IntelRepository(BaseRepository):
             if row is None:
                 conn.rollback()
                 return False
+            if publication_guard is not None:
+                publication_guard(conn)
             if _durable_transcript_hash(conn, str(row["meeting_id"])) != str(row["transcript_hash"]):
                 self.supersede_bound_intel_job_in_transaction(
                     conn, job_id=str(job.job_id), executor_lease_token=str(job.executor_lease_token),
@@ -3040,8 +3202,10 @@ class IntelRepository(BaseRepository):
                 or self._is_compatibility_cutover_in_transaction(conn, job)
             ):
                 return "reserved"
+            publication_pending = job is not None and job["lifecycle_posture"] == PUBLICATION_PENDING_POSTURE
             if job is not None and job["status"] in {"running", "claimed"}:
-                return "running"
+                if not publication_pending or float(job["executor_lease_expires_at"] or 0) > time.time():
+                    return "running"
             if (job is None or job["status"] in {"succeeded", "skipped"}) and meeting["intel_status"] == "ready":
                 return "ready"
             if (job is None or job["status"] == "skipped") and meeting["intel_status"] == "skipped":
@@ -3087,6 +3251,9 @@ class IntelRepository(BaseRepository):
                     AND COALESCE(lifecycle_posture,'') != ?""",
                 (now, meeting_id, COMPATIBILITY_CUTOVER_POSTURE),
             )
+            if publication_pending:
+                conn.execute("UPDATE intel_jobs SET status='skipped',lifecycle_posture='terminal',updated_at=? WHERE job_id=?",
+                             (now, job["job_id"]))
             conn.execute(
                 """
                 UPDATE meetings

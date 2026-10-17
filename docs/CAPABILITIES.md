@@ -27,7 +27,7 @@ Missing shards: **none**.
 | `voice.delivery` | Dictation delivery | Commit processed text to preview, focused input, or an admitted agent destination under one operation policy. | experimental | user | source_and_assertions_inspected | no | possible |
 | `meeting.capture` | Meeting capture | Persist a meeting before capture, transcribe live audio, checkpoint segments, and hand off a final record. | experimental | user | source_and_assertions_inspected | no | local |
 | `meeting.import` | Meeting import | Turn audio or a transcript file into a normal persisted meeting that can be searched, exported, and analyzed. | experimental | user | tests_executed | no | possible |
-| `meeting.intelligence` | Meeting intelligence chain | Summarize a saved meeting and retain its summary, route receipt, and analysis artifacts. | experimental | user | tests_executed | no | possible |
+| `meeting.intelligence` | Meeting intelligence chain | Summarize a saved meeting, retain analysis, and finish local outcome publication from saved results after a write failure. | experimental | user | tests_executed | no | possible |
 | `meeting.aftercare` | Meeting aftercare | Compare current and previous meeting artifacts and return read-only decisions, actions, closures, and provenance. Show a card when a meeting summary is ready. | experimental | user | source_and_assertions_inspected | no | local |
 | `model.registry` | Inference capability registry | Define canonical model operations, modalities, output kinds, revisions, retry policies, and fallback dispositions. | internal | developer | source_and_assertions_inspected | no | local |
 | `model.assignment` | Inference assignment | Store sparse owner assignments for capability groups without executing providers or selecting fallback at run time. | internal | user | source_and_assertions_inspected | no | local |
@@ -81,7 +81,7 @@ Missing shards: **none**.
 | `agents.thread_tool_loop` | Persistent Thread tool loop | Offer a bounded MCP tool palette inside a Thread turn and retain tool results and receipts. | experimental | user | source_and_assertions_inspected | no | possible |
 | `agents.interview` | Interview conversation | Use one owner-only Thread mode to record sourced facts and reviewable suggestions. | experimental | user | source_and_assertions_inspected | no | possible |
 | `agents.mcp_http` | MCP HTTP and sidecar tools | Expose the shared service/tool catalogue to MCP clients with authenticated dispatch. | experimental | integration | source_and_assertions_inspected | no | possible |
-| `knowledge.grounding` | Grounded evidence hydration | Resolve explicit meetings, artifacts, projects, rails and optional memory matches into bounded evidence blocks. | experimental | user | source_and_assertions_inspected | no | possible |
+| `knowledge.grounding` | Grounded evidence hydration | Resolve explicit sources into evidence blocks; stop a Workbench item when an attached source cannot be read. | experimental | user | tests_executed | no | possible |
 | `knowledge.memory_search` | Long-horizon memory search | Search retained notes, meetings, decisions, threads, projects and workbench items with principal-scoped filters. | experimental | user | source_and_assertions_inspected | no | local |
 | `workflows.linear_run` | Linear Workflow run | Run a validated linear workflow with frozen route evidence, child receipts and a retained artifact. | experimental | user | source_and_assertions_inspected | no | possible |
 | `coder.observation` | Coder session observation | Show active Claude/Codex sessions, structured captured reports and bounded, hash-gated pane output. | experimental | user | tests_executed | no | local |
@@ -94,7 +94,7 @@ Missing shards: **none**.
 | `companion.ipad_client` | iPad hub client | Capture, review, import, approve and inspect HoldSpeak work from a typed native client. | built_unreleased | user | source_and_assertions_inspected | no | possible |
 | `companion.aipi_audio_control` | AIPI-Lite audio and control companion | Forward device audio and expose meeting/status/Coder controls through a separate bridge. | experimental | user | source_and_assertions_inspected | no | possible |
 | `companion.qlippy_presence` | Qlippy presence | Show selected actionable attention through the optional mascot without replaying dismissed popup backlog. Dictation journal entries stay in history and Attention. | experimental | user | source_and_assertions_inspected | no | local |
-| `channels.document_sources` | Send a stored document | Send a stored note, update, brief, decision, meeting summary, or artifact to a saved destination. | built_unreleased | integration | tests_executed | no | possible |
+| `channels.document_sources` | Send a stored document | Send a stored document to a saved destination and retain an uncertain command across a tab reload. | built_unreleased | integration | tests_executed | no | possible |
 | `channels.slack` | Send a document to Slack | Post a stored document to a saved Slack destination. | built_unreleased | integration | source_and_assertions_inspected | no | possible |
 
 ## Reading the catalogue

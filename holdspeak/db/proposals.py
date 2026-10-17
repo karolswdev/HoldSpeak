@@ -10,7 +10,7 @@ import json
 import uuid
 from dataclasses import dataclass
 from holdspeak.timestamps import utc_now_iso
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 from .base import BaseRepository
 
@@ -109,6 +109,7 @@ class ProposalRepository(BaseRepository):
         support_record: Optional[dict[str, Any]] = None,
         rationale: Optional[str] = None,
         action_item_id: Optional[str] = None,
+        publication_guard: Callable[[Any], None] | None = None,
     ) -> Optional[Proposal]:
         """Insert a proposal; returns None when its identity already exists.
 
@@ -121,6 +122,9 @@ class ProposalRepository(BaseRepository):
         proposal_id = f"prop-{uuid.uuid4().hex[:16]}"
         now = utc_now_iso()
         with self._connection() as conn:
+            if publication_guard is not None:
+                conn.execute("BEGIN IMMEDIATE")
+                publication_guard(conn)
             if retry_key:
                 existing = conn.execute(
                     "SELECT id FROM follow_through_proposals "

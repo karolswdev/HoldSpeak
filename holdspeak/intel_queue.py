@@ -338,7 +338,7 @@ class _BoundExecutorLease:
         self._db.intel.release_bound_executor_lease(self._job)
 
 
-def _bridge_proposals(db: Any, meeting_id: str, job: Any = None) -> None:
+def _bridge_proposals(db: Any, meeting_id: str, job: Any = None, *, required: bool = False, publication_guard=None) -> None:
     """HS-172-03 (a): bridge extractor artifacts to follow-through proposals.
 
     HS-200-12: also called after a PARTIAL plugin chain, before its retry is
@@ -349,15 +349,17 @@ def _bridge_proposals(db: Any, meeting_id: str, job: Any = None) -> None:
     """
     try:
         from .services.proposal_bridge_service import ProposalBridgeService
-        bridge = ProposalBridgeService(db)
+        bridge = ProposalBridgeService(db, publication_guard=publication_guard)
         created = bridge.bridge_meeting_artifacts(meeting_id, job=job)
         if created:
             log.info("HS-172-03: bridged %d proposals for meeting %s", len(created), meeting_id)
     except Exception as exc:
+        if required:
+            raise
         log.warning("HS-172-03: proposal bridge failed for meeting %s: %s", meeting_id, exc)
 
 
-def _on_intel_complete(db: Any, meeting_id: str, job: Any = None) -> None:
+def _on_intel_complete(db: Any, meeting_id: str, job: Any = None, *, bridge: bool = True) -> None:
     """HS-172-03: post-completion hooks, each in its own failure boundary.
 
     (a) Bridge extractor artifacts to follow-through proposals.
@@ -365,7 +367,8 @@ def _on_intel_complete(db: Any, meeting_id: str, job: Any = None) -> None:
     (c) Invalidate the needs-you aggregate cache.
     """
     # (a) Proposal bridge.
-    _bridge_proposals(db, meeting_id, job)
+    if bridge:
+        _bridge_proposals(db, meeting_id, job)
 
     # (b) Source suggestions for each linked Room.
     try:
@@ -465,6 +468,40 @@ def _meeting_memory(db, meeting):
         return None
 
 
+def _finish_bound_publication(db, job, bound, lease, broker, *, on_meeting_ready, retry_seconds):
+    """Finish only saved local work; return progress, parent outcome, keep-open."""
+    from .kernel.model import KernelRefused
+
+    epoch = bound._parent.context.epoch
+    clock = broker.parent_run_controller._clock
+    guard = lambda conn: db.intel.require_bound_publication_in_transaction(conn, job, epoch, now=clock())
+    try:
+        _bridge_proposals(db, job.meeting_id, job, required=True, publication_guard=guard)
+        if not db.intel.complete_bound_intel_job(job, publication_guard=guard):
+            lease.mark_lost()
+            return False, "failed", True
+    except KernelRefused as exc:
+        if exc.reason == "bound_executor_lease_lost":
+            lease.mark_lost()
+            return False, "failed", True
+        stopped = db.intel.stop_bound_publication(job, "Saved analysis kept. Outcome publication stopped.")
+        return stopped, "cancelled", False
+    except Exception as exc:
+        log.warning("Saved Meeting outcomes could not be published for %s: %s", job.meeting_id, type(exc).__name__)
+        changed = db.intel.defer_bound_publication(job, delay_seconds=retry_seconds)
+        if not changed:
+            lease.mark_lost()
+        return changed, "failed", True
+    _on_intel_complete(db, job.meeting_id, job, bridge=False)
+    db.meetings.mark_ready_unseen(job.meeting_id)
+    if on_meeting_ready is not None:
+        try:
+            on_meeting_ready(job.meeting_id)
+        except Exception as exc:
+            log.debug("on_meeting_ready observer failed: %s", type(exc).__name__)
+    return True, "succeeded", False
+
+
 def _process_bound_intel_job(
     db, job, broker, *, on_meeting_ready, retry_base_seconds: int,
     retry_max_seconds: int, retry_max_attempts: int,
@@ -478,7 +515,23 @@ def _process_bound_intel_job(
         return False
     outcome = "failed"
     bound = None
+    publication_pending = False
     try:
+        if getattr(job, "lifecycle_posture", None) == "publication_pending":
+            publication_pending = True
+            # No route admission or provider work on this path. All computation
+            # was durably materialized before this posture was committed.
+            try:
+                bound = BoundDeferredIntelJob.reconstruct(db, job, broker=broker)
+            except Exception:
+                changed = db.intel.stop_bound_publication(job, "Saved analysis kept. Outcome publication stopped.")
+                publication_pending = False
+                return changed
+            changed, outcome, publication_pending = _finish_bound_publication(
+                db, job, bound, lease, broker, on_meeting_ready=on_meeting_ready,
+                retry_seconds=retry_base_seconds,
+            )
+            return changed
         meeting = db.meetings.get_meeting(job.meeting_id)
         if meeting is None or not meeting.segments:
             changed = db.intel.settle_bound_execution(
@@ -678,24 +731,22 @@ def _process_bound_intel_job(
                 return changed
         if not lease.held():
             return False
-        if not db.intel.complete_bound_intel_job(job):
-            lease.mark_lost()
-            return False
-        outcome = "succeeded"
-        # HS-172-03: bridge artifacts to proposals + suggest sources.
-        # PHILO-15 08 (B13): BEFORE the ready frame, so the aftercare card
-        # counts the proposals it offers to open.
-        _on_intel_complete(db, job.meeting_id, job)
-        # Durable-before-observable: the Dock's aftercare frame must have a
-        # durable unseen row before the websocket callback can publish it.
-        db.meetings.mark_ready_unseen(job.meeting_id)
-        if on_meeting_ready is not None:
-            try:
-                on_meeting_ready(job.meeting_id)
-            except Exception as exc:
-                log.debug("on_meeting_ready observer failed: %s", type(exc).__name__)
-        return True
+        publication_pending = True
+        db.intel.begin_bound_publication(job, bound._parent.context.epoch,
+                                         now=broker.parent_run_controller._clock())
+        changed, outcome, publication_pending = _finish_bound_publication(
+            db, job, bound, lease, broker, on_meeting_ready=on_meeting_ready,
+            retry_seconds=retry_base_seconds,
+        )
+        return changed
     except KernelRefused as exc:
+        if publication_pending:
+            if exc.reason == "bound_executor_lease_lost":
+                lease.mark_lost()
+                return False
+            publication_pending = False
+            outcome = "cancelled"
+            return db.intel.stop_bound_publication(job, "Saved analysis kept. Outcome publication stopped.")
         # The provider's typed refusal is terminal, not a fallback/retry signal.
         log.warning("Bound deferred kernel refusal for meeting %s: %s", job.meeting_id, exc.reason)
         if lease.lost:
@@ -710,6 +761,13 @@ def _process_bound_intel_job(
             lease.mark_lost()
         return changed
     except Exception as exc:
+        if publication_pending:
+            # A failure after READY (for example its unseen marker) leaves the
+            # succeeded/open-parent record for the same local completion repair.
+            current = db.intel.get_latest_intel_job(job.meeting_id)
+            if current is not None and current.job_id == job.job_id and current.status == "succeeded":
+                return True
+            return db.intel.defer_bound_publication(job, delay_seconds=retry_base_seconds)
         # FaultInjected carries the named deterministic point; retain it in the
         # durable retry evidence instead of reducing it to its exception class.
         from .faults import FaultInjected
@@ -756,7 +814,7 @@ def _process_bound_intel_job(
         # A fenced-out executor may not terminalize the shared parent after a
         # newer bearer adopted it. A normal terminal job still closes its parent
         # even though completion has already made lease renewal inapplicable.
-        if bound is not None and not lease.lost:
+        if bound is not None and not lease.lost and not publication_pending:
             executor_lease = {
                 "job_id": str(job.job_id), "token": str(job.executor_lease_token),
                 "epoch": int(job.executor_lease_epoch),
@@ -804,7 +862,38 @@ def process_next_intel_job(
     # bind until this durable receipt exists.
     pending_close = db.intel.get_bound_terminal_pending_close_intel_job()
     if pending_close is not None:
+        if pending_close.status == "succeeded":
+            adopted = db.intel.adopt_terminal_publication(pending_close)
+            if adopted is None:
+                return False  # another live local completion owns this parent
+            if adopted.status == "claimed":
+                from .kernel.runtime import _service
+
+                changed = _process_bound_intel_job(
+                    db, adopted, _service(), on_meeting_ready=on_meeting_ready,
+                    retry_base_seconds=retry_base_seconds, retry_max_seconds=retry_max_seconds,
+                    retry_max_attempts=retry_max_attempts,
+                )
+                if changed:
+                    _notify_queue_meeting_changed(adopted.meeting_id)
+                return changed
+            # The old parent was cancelled/expired or its transcript changed.
+            # Its saved work remains, but no new proposal may be published.
+            pending_close = adopted
         from .meeting_session.deferred_bound import BoundDeferredIntelJob
+
+        # A cancelling parent cannot be reconstructed as an OPEN execution;
+        # settle its existing cancellation authority, without any publication.
+        with db._connection() as conn:
+            parent = conn.execute("SELECT state FROM kernel_parent_runs WHERE operation_id=?",
+                                  (pending_close.parent_operation_id,)).fetchone()
+        if parent is not None and parent["state"] == "CANCELLING":
+            from .kernel.runtime import _service
+            from .meeting_session.deferred_bound import queue_service_principal
+
+            _service().parent_run_controller.cancel_by_operation_id(queue_service_principal(), pending_close.parent_operation_id)
+            db.intel.promote_successors_after_parent_terminal(pending_close.parent_operation_id)
+            return True
 
         bound = BoundDeferredIntelJob.reconstruct(db, pending_close)
         outcome = (

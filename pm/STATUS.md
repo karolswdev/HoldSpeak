@@ -4,9 +4,22 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-17 (#1238 delivered; full-main GREEN)
+**Last updated:** 2026-10-17 (tonight three repairs; quick GREEN)
 
 ## Current phase
+
+**Tonight: Send, Meeting outcomes, Workbench sources (2026-10-17).**
+Send retains the same unresolved command/preview across reload; Retry cannot
+turn that press into a second delivery. Meeting local outcome publication
+resumes saved results without inference, and Confirm/Done retains its exact
+action link through reload, including old unlinked confirmations. Workbench
+refuses unreadable explicit sources before dispatch and preserves grounding
+and context on Re-run. All three have reproduced failures and passing isolated
+1440/393 observations. Final ordinary quick GREEN:4,132 related UI /1,841
+Python /109 sweep /17 canon; TypeScript,75 doc guards and27 atlas checks pass.
+Source/build `426015d9eee42d70`. Merge, postmerge review, normal idle delivery
+and full-main result follow this candidate; full success is not claimed yet.
+[Release and exact limits](../docs/internal/TONIGHT-THREE-2026-10-17/RELEASE.md).
 
 **Full-main recovery — GREEN, #1238 delivered (2026-10-17).** Merged product
 head `00025d6f6` completes the isolated local full suite: **16,580 passed,
@@ -709,6 +722,15 @@ Now: the fast-lane change (owner ruling 2026-10-03): remove the commit gate; sto
 committing generated docs and line-number test maps; split the tests.
 
 ## Open work
+
+**Tonight follow-through:** the first integrated sweep saw one Components-window
+HTTP503; the focused reproduction and final109-case sweep pass. Its endpoint
+and cause remain unknown; future failures now retain the URL. Track rather
+than excuse or invent a fix. The alternate localhost/127.0.0.1 origin entry
+mismatch remains separate; use the actual address printed by `holdspeak web`.
+Send recovery is tab-scoped; stale Meeting repair is bounded to saved pending
+publication/succeeded states. Real external delivery/provider/native execution
+and owner acceptance are not established by the isolated proofs.
 
 **From #1214 and owner's next direction:** refine notifications, Thread and
 Ask as coherent Workbench faces. Source audit found Ask mutable retry/Keep

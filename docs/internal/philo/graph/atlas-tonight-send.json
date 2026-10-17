@@ -1,0 +1,275 @@
+{
+  "schema_version": 1,
+  "atlas_version": "tonight-send-20261017",
+  "extends": "docs/internal/philo/graph/atlas-send-refinement.json",
+  "source_commit": "76a44ad7042dd37cb2a116d59c8435065e6ddf04",
+  "states": [
+    {
+      "id": "state.desk_presentation.tonight_send_reload",
+      "family": "desk_presentation",
+      "values": {
+        "note": "saved",
+        "send": "one sent row after reload and Retry"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/surface/send/pendingCommand.ts",
+          "symbol": "export function keepPendingCommand",
+          "claim": "The unresolved command is saved before dispatch and restored after reload."
+        }
+      ],
+      "reachable_by": [
+        "case.tonight.send.reload_retry"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "case.tonight.send.reload_retry",
+      "job": "j11",
+      "edge_ids": [
+        "edge.face.channel_send"
+      ],
+      "state_id": "state.desk_presentation.tonight_send_reload",
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME and hub. One declared browser 503 prevents the first dispatch; saved Note, preview, later Retry, folder write and receipt use production entrypoints. The separate regression test holds the actual server before its durable send row."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "Wait for the real first-run dismissal before reload."
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/thoughts",
+          "body": {
+            "request_id": "refinement-send-note",
+            "raw_text": "Migration plan\n\nUse the rollback runbook before the Friday cutover.",
+            "initial_note": {
+              "title": "Migration plan",
+              "body_markdown": "Migration plan\n\nUse the rollback runbook before the Friday cutover."
+            }
+          },
+          "capture_as": "note_id",
+          "capture_path": "thought.working_note.id",
+          "adapter": "http-route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "button[aria-controls=desk-tool-shelf]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "input[aria-controls=desk-palette-listbox]",
+          "value": "Migration plan",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "button.desk-deck-row:has-text(\"Migration plan\")",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": ".thought-note-foot",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".thought-note-foot button[aria-label=\"More actions\"]",
+          "adapter": "ui-by-viewport",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".thought-note-foot button:has-text(\"Send\"), button[role=menuitem]:has-text(\"Send\")",
+          "adapter": "ui-by-viewport",
+          "then": [
+            {
+              "kind": "ui",
+              "action": "wait_for",
+              "selector": "[data-testid=thought-send] [data-testid=send-preview]",
+              "adapter": "ui-observation",
+              "timeout_s": 20
+            }
+          ]
+        },
+        {
+          "kind": "boundary",
+          "substitute": "http_fault",
+          "label": "Declared browser loss before dispatch",
+          "method": "POST",
+          "path": "/api/channels/send",
+          "status": 503,
+          "times": 1,
+          "body": {
+            "detail": "Declared unavailable response"
+          }
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[data-testid=send-verb]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=send-retry]",
+          "adapter": "ui-observation"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/?open=note:{note_id}",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": ".thought-note-foot",
+          "adapter": "ui-observation"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".thought-note-foot button[aria-label=\"More actions\"]",
+          "adapter": "ui-by-viewport",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".thought-note-foot button:has-text(\"Send\"), button[role=menuitem]:has-text(\"Send\")",
+          "adapter": "ui-by-viewport",
+          "then": [
+            {
+              "kind": "ui",
+              "action": "wait_for",
+              "selector": "[data-testid=thought-send] [data-testid=send-preview]",
+              "adapter": "ui-observation",
+              "timeout_s": 20
+            }
+          ]
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "selector": "[data-testid=send-retry]",
+        "adapter": "ui-pointer",
+        "trigger_route": {
+          "method": "POST",
+          "path": "/api/channels/send"
+        },
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "selector": "[data-testid=send-sent]",
+            "adapter": "ui-observation",
+            "timeout_s": 20
+          }
+        ]
+      },
+      "expected": {
+        "observe_at": "[data-testid=thought-send]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/channels/sends?document_ref=note:{note_id}"
+          }
+        ],
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "selector_presence",
+              "selector": "[data-testid=send-sent]",
+              "present": true
+            },
+            {
+              "kind": "text_contains",
+              "value": "Use the rollback runbook before the Friday cutover."
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "sends",
+                    "match": {
+                      "state": "sent",
+                      "document_ref": "note:{note_id}"
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "words": "The restored explicit Retry reaches the real folder channel and yields one sent row while retaining the original saved preview. The separate race regression proves identical command and exact file bytes."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ],
+  "clocks": [
+    {
+      "id": "clock.browser_wall",
+      "source": "Browser Date",
+      "mechanism": "none: these cases use browser wall time without moving a clock",
+      "status": "available",
+      "used_by": []
+    }
+  ],
+  "excluded": [],
+  "council_readings": []
+}
