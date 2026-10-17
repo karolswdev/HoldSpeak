@@ -4,31 +4,34 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-17 (#1243 daily surfaces delivered; follow-up in progress)
+**Last updated:** 2026-10-17 (#1243/#1244 daily surfaces delivered; atlas source anchor corrected)
 
 ## Current phase
 
-**Daily usability: Decision, Ask and Thread — #1243 delivered.** The owner's three named faces
-now share content-led Workbench paper, compact controls and useful phone
-layouts. New decision starts in the decision editor. Ask retains an answer
-while editing, separates sent and question sources, and carries a saved Note
-and selected passage independently of desktop icon selection. Thread exposes
-Sources and Commands without losing drafts, bounds its expanded header and
-keeps Stop explicit while writing. Integration fixed the loaded phone composer,
-command focus, source titles and a late reply hiding a newer Note handoff.
+**Daily usability: Decision, Ask and Thread — #1243/#1244 delivered.** The
+owner's three named faces now share content-led Workbench paper, compact
+controls and useful phone layouts. New decision starts in the decision editor.
+Ask retains an answer while editing, separates sent and question sources, and
+carries a saved Note/passage independently of desktop icon selection. Thread
+exposes Sources and Commands without losing drafts, bounds expanded details,
+names command actions and keeps Stop explicit while writing.
 
 Actual isolated desktop/phone walks cover creation, reading, editing and
-expanded source controls; phone pointer ownership is checked. Ask provider text
-is replayed at the declared boundary, not a live model-quality claim. Ordinary
-quick is GREEN and the idle local hub serves build `e95ae448a3f033e6` from
-`wt-daily-experience-20261017`. Formal review RATIFY preceded full-main:
-**5 failed / 16,693 passed / 26 skipped / 1 expected failure**, plus3 mandatory
-live-bus passes. Two product labels and two stale receipt navigation tests are
-fixed forward with passing scoped checks; the memory-index lock remains
-unreproduced and unresolved after bounded diagnosis. The initial red evidence is
-retained. Owner visual acceptance remains
-open.
-[Design and release](../docs/internal/DAILY-EXPERIENCE-2026-10-17/RELEASE.md).
+expanded source controls, including real pointer ownership and picker focus.
+Ask uses a declared recorded provider reply. Ordinary quick GREEN:304 related
+web,12 affected browser,109 sweep and17 canon. Astra formal review RATIFY.
+Merged product `ac55cd318` full run: **16,697 passed,1 failed,26 skipped,
+1 expected failure**, plus3 mandatory live-bus passes. Its sole stale atlas
+source anchor is corrected; all26 anchor checks pass. The original recall-lock
+case passed, but its earlier unexplained failure remains open below.
+[Final merged verification](https://github.com/karolswdev/HoldSpeak/pull/1244#issuecomment-6239495252) retains the exact subsequent head
+and result; the previous run is not called green.
+
+The idle local hub serves build `22aa76d6327046a1` from
+`wt-daily-delivery-20261017`, PID38565, port8765; source/build agree and four
+HTTP checks pass. The actual printed Desk address was opened. Owner visual
+acceptance and live provider/native behavior remain open.
+[Design, release, evidence and limits](../docs/internal/DAILY-EXPERIENCE-2026-10-17/RELEASE.md).
 
 **Tonight: three daily repairs complete — #1240/#1241 delivered, full-main GREEN.**
 Send retains the exact command and preview through reload; Retry cannot turn
@@ -753,7 +756,10 @@ committing generated docs and line-number test maps; split the tests.
 
 ## Open work
 
-**Daily surfaces #1243:** owner visual acceptance remains open. One full-run
+**Daily surfaces #1243:** owner visual acceptance remains open. The saved
+Decision Send row still repeats its label beside the button; this is visible
+polish debt in the new1440/393 Background shots, separate from the verified
+writing/save path. One full-run
 `test_a_withdrawn_recall_never_reaches_a_later_turn[project-edit]` failed with
 `database is locked` at `memory_index.py:177`. It passes alone; the whole scoped
 file passes52 with3 recording-only skips. Bounded transaction tracing did not

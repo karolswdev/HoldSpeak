@@ -2408,16 +2408,20 @@
           "predicates": [
             {
               "kind": "readable_text",
-              "value": "DECISION CONTEXT"
+              "value": "Background"
+            },
+            {
+              "kind": "readable_text",
+              "value": "Our own runners are full every night."
             },
             {
               "kind": "text_absent",
-              "value": "CONSEQUENCES"
+              "value": "Consequences"
             }
           ]
         },
         "observe_at": ".desk-decision-card",
-        "words": "the owner opens a decision that has only its context; the window reads the 'DECISION CONTEXT' heading (the heading style sets capitals) with its text, readable, and draws no 'CONSEQUENCES' heading (nothing is under it). An absence has no readable form, so that half is text_absent."
+        "words": "The owner opens a saved decision with background text and no consequences. The Background fold is open, its saved body is readable, and the window draws no empty Consequences heading. The absence is checked with text_absent."
       },
       "completion_bound_s": 20,
       "viewports": [
@@ -2988,8 +2992,8 @@
       "sources": [
         {
           "path": "web/src/desk/pullouts/DecisionPullout.tsx",
-          "symbol": "[\"context_markdown\", \"Context\"],",
-          "claim": "the read view's context heading, drawn only with text under it"
+          "symbol": "<FoldGadget title=\"Background\" open className=\"attention-decision-support\">",
+          "claim": "The saved read view opens the Background fold and renders its body only when contextMarkdown contains text."
         }
       ],
       "reachable_by": [
