@@ -43,6 +43,7 @@ class MeetingCaptureJournal:
         self._durable: dict[str, int] = {}
         self._error: Optional[str] = None
         self._status = "recording"
+        self._sealed = False
         self._write_manifest()
 
     @property
@@ -54,7 +55,7 @@ class MeetingCaptureJournal:
         if audio.size == 0:
             return
         with self._lock:
-            if self._error is not None:
+            if self._sealed or self._error is not None:
                 return
             try:
                 handle = self._files.get(source)
@@ -79,18 +80,44 @@ class MeetingCaptureJournal:
                 self._error = f"{type(exc).__name__}: {exc}"
                 raise
 
-    def finalize(self) -> None:
+    def seal(self) -> None:
+        """Close accepted audio durably, keeping an unfinished Meeting discoverable."""
         with self._lock:
-            if self._error is not None:
+            if self._sealed:
+                if self._error is not None:
+                    raise OSError(self._error)
+                return
+            self._sealed = True
+            failure: Optional[Exception] = None
+            try:
+                if self._error is not None:
+                    raise OSError(self._error)
+                self._checkpoint_locked()
+            except Exception as exc:
+                failure = exc
+            for handle in self._files.values():
+                try:
+                    handle.close()
+                except Exception as exc:
+                    failure = failure or exc
+            self._files.clear()
+            if failure is not None:
+                self._error = f"{type(failure).__name__}: {failure}"
                 self._status = "recoverable"
                 self._write_manifest()
-                raise OSError(self._error)
-            self._checkpoint_locked()
+                raise failure
+
+    def finalize(self) -> None:
+        """Complete the capture marker after the Meeting's final durable commit."""
+        self.seal()
+        with self._lock:
+            previous = self._status
             self._status = "finalized"
-            self._write_manifest()
-            for handle in self._files.values():
-                handle.close()
-            self._files.clear()
+            try:
+                self._write_manifest()
+            except Exception:
+                self._status = previous
+                raise
 
     def mark_recoverable(self, error: str) -> None:
         with self._lock:

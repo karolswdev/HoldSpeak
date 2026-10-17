@@ -19,7 +19,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.unit.test_agent_hand import _seed
+from tests.unit.test_agent_hand import OWNER, _seed
 from tests.unit.test_conductor_k4_follow_through import _status, _sweep
 from tests.unit.test_philo15_17_merge_reaches_update import REAL_PR1, _real_pr, _rehearsal_launch
 
@@ -96,3 +96,69 @@ def test_a_merge_lands_on_the_room_receipt_within_one_poll(tmp_path: Path, monke
         server.stop()
         rig.tmux.ended = True
         reset_database()
+
+
+def test_pr_receipt_stays_whole_at_each_ledger_write_boundary(tmp_path: Path, monkeypatch) -> None:
+    """Read through the Room's real join after truncate and a partial write.
+
+    The real launch and PR poll produce every ledger row. Only filesystem
+    scheduling is controlled: each write yields to a fresh reader at the two
+    points that an in-place write exposes to another thread/process.
+    """
+    from holdspeak.db import Database
+    from holdspeak.delivery.factory_launch import LaunchLedger
+    from holdspeak.services.agent_flights import agent_flights
+
+    db = Database(tmp_path / "holdspeak.db")
+    _seed(db)
+    rig = _rehearsal_launch(tmp_path, db, monkeypatch)
+    path = tmp_path / "launches.json"
+    snapshots = []
+    write_text = Path.write_text
+
+    def interleaved_write(target, data, *args, **kwargs):
+        if target.parent != path.parent or not (
+            target.name == path.name or target.name.startswith(f".{path.name}.")
+        ):
+            return write_text(target, data, *args, **kwargs)
+        previous = path.read_text(encoding="utf-8")
+
+        def read_boundary(boundary):
+            # A new ledger is the request path's reader, not the writer's cache.
+            snapshots.append({
+                "boundary": boundary, "visible": path.read_text(encoding="utf-8"),
+                "previous": previous, "next": data,
+                "flights": agent_flights(db, [], ledger=LaunchLedger(path)),
+            })
+
+        with target.open("w", encoding=kwargs.get("encoding", "utf-8")) as stream:
+            read_boundary("opened")
+            midpoint = len(data) // 2
+            written = stream.write(data[:midpoint])
+            stream.flush()
+            read_boundary("partial")
+            return written + stream.write(data[midpoint:])
+
+    try:
+        rig.gh.prs = [_real_pr(rig.branch, rig.head, "OPEN")]
+        _sweep(rig)
+        [before] = agent_flights(db, [], ledger=LaunchLedger(path))
+        assert before["state"] == "pr_open"
+        monkeypatch.setattr(Path, "write_text", interleaved_write)
+        rig.gh.prs = [_real_pr(rig.branch, rig.head, "MERGED")]
+        rig.observer.poll_open_prs(OWNER)
+        [after] = agent_flights(db, [], ledger=LaunchLedger(path))
+        assert after["state"] == "merged" and after["close"] == "closed"
+        assert _status(db, "ai_1") == "done"
+        assert snapshots, "the actual PR poll must cross the write boundary"
+        for snapshot in snapshots:
+            assert snapshot["visible"] in (snapshot["previous"], snapshot["next"]), snapshot
+            [flight] = snapshot["flights"]
+            assert flight["launch_id"] == before["launch_id"] == after["launch_id"]
+            assert flight["origin_ref"] == before["origin_ref"]
+            assert flight["pr"]["number"] == REAL_PR1["number"]
+            assert flight["pr"]["url"] == REAL_PR1["url"]
+            assert flight["pr"]["title"] == REAL_PR1["title"]
+            assert flight["state"] in {"pr_open", "merged"}
+    finally:
+        rig.tmux.ended = True

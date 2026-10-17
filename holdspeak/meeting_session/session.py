@@ -692,7 +692,7 @@ class MeetingSession(
         journal_error: Optional[Exception] = None
         if self._capture_journal is not None:
             try:
-                self._capture_journal.finalize()
+                self._capture_journal.seal()
             except Exception as exc:
                 journal_error = exc
 
@@ -790,7 +790,10 @@ class MeetingSession(
                 final_state.capture_failure = f"Audio finalization failed: {journal_error}"
             log.error(final_state.capture_failure)
             if self._capture_journal is not None:
-                self._capture_journal.mark_recoverable(final_state.capture_failure)
+                try:
+                    self._capture_journal.mark_recoverable(final_state.capture_failure)
+                except Exception as marker_error:
+                    log.error("Could not publish capture recovery marker: %s", marker_error)
         try:
             from ..db import get_database
 
@@ -800,6 +803,28 @@ class MeetingSession(
                 final_state.capture_status = "recoverable"
                 final_state.capture_failure = f"Final Meeting checkpoint failed: {exc}"
             log.error(final_state.capture_failure)
+            if self._capture_journal is not None:
+                try:
+                    self._capture_journal.mark_recoverable(final_state.capture_failure)
+                except Exception as marker_error:
+                    log.error("Could not publish capture recovery marker: %s", marker_error)
+        else:
+            if journal_error is None and self._capture_journal is not None:
+                try:
+                    self._capture_journal.finalize()
+                except Exception as exc:
+                    with self._lock:
+                        final_state.capture_status = "recoverable"
+                        final_state.capture_failure = f"Capture completion marker failed: {exc}"
+                    log.error(final_state.capture_failure)
+                    try:
+                        self._capture_journal.mark_recoverable(final_state.capture_failure)
+                    except Exception as marker_error:
+                        log.error("Could not publish capture recovery marker: %s", marker_error)
+                    try:
+                        get_database().meetings.save_meeting(final_state)
+                    except Exception as checkpoint_error:
+                        log.error("Could not checkpoint capture marker failure: %s", checkpoint_error)
 
         # HS-131-08: the live parent was already cancelled and closed by the
         # handoff above. This close is the no-parent / never-admitted case only;

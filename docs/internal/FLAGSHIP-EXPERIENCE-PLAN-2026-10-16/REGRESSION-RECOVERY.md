@@ -31,7 +31,15 @@ test totals:
 - [Contracts recovery tape](https://github.com/karolswdev/HoldSpeak/actions/runs/38973245716): **82 failed, 16,400 passed, 68 skipped, 1 expected failure** at #1226 (`5c26bd0fa`), before copy/runtime/browser repairs. All 82 failure names already belong to this queue.
 - [Final recovery run](https://github.com/karolswdev/HoldSpeak/actions/runs/38985702250): **1 failed, 16,514 passed, 68 skipped, 1 expected failure** at #1232 (`fc02d9b8f`). The remaining failure is R071 below.
 - [Runtime recovery run](https://github.com/karolswdev/HoldSpeak/actions/runs/38979062393): **78 failed, 16,434 passed, 68 skipped, 1 expected failure** at #1228 (`58a0d4552`), before the browser repairs. One additional identity is R113.
-- Union: **113 distinct cases** across the recorded runs. Absence is not closure.
+- Local full main `add3c231c` (#1237): **3 failed, 16,571 passed, 27 skipped,
+  1 expected failure**, plus 3 mandatory live-bus passes. Archived trace in
+  `wt-main-proof-20261016/.tmp/recovery/main-full-add3c231c.log`. Reopens R093
+  and adds R114/R115. [Active follow-up](../MEETING-STOP-NATIVE-2026-10-16/MODULE-FOLLOWUP.md).
+- Midnight release check adds R116: the prior-day Brief correctly becomes stale,
+  contrary to a test's wall-clock-dependent fresh premise.
+- Union: **116 distinct cases** across the recorded CI, local full and release
+  runs (113 historical CI identities plus three newly observed local identities).
+  Absence is not closure.
 - Recovery baseline: `2669d98f2` (#1224). The #1228 [full run](https://github.com/karolswdev/HoldSpeak/actions/runs/38979062393) finished before the browser repairs were included; the #1232 result above supersedes it.
 - Focused/quick proof and explicit retired-contract replacements remain below. The full-main run reopened R071; its local pass did not establish the loaded CI transition. [Current repair](THOUGHT-SEND.md).
 
@@ -149,7 +157,7 @@ product contract; no skips, blanket retries, threshold increases or broad exempt
 | R090 | Runtime and producers | `tests/memory_bench/test_memory_bench.py::test_no_engine_answer_equals_the_search_before_the_index` | Delivered in #1226; affected checks and ordinary quick checks pass |
 | R091 | Runtime and producers | `tests/unit/test_agent_hand.py::test_hand_launches_a_minted_decision_record_with_a_bounded_session_name` | Delivered in #1225; new concurrency/error regressions and quick checks pass |
 | R092 | Guards and copy | `tests/unit/test_decisions.py::test_pre_fix_route_answers_500_on_create` | Full-history checkout delivered in #1226; local assertions pass; new CI verification pending |
-| R093 | Guards and copy | `tests/unit/test_density_guard.py::test_runtime_modules_stay_single_concern` | Delivered in #1226; affected checks and ordinary quick checks pass |
+| R093 | Guards and copy | `tests/unit/test_density_guard.py::test_runtime_modules_stay_single_concern` | Reopened by #1237: runtime module607 exceeds unchanged600 budget. Stop completion moved into its own153-line helper, caller467; AST-equivalent body and27 focused checks pass. Full-main follow-through pending. |
 | R094 | Runtime and producers | `tests/unit/test_desk_memory.py::test_the_decision_chain_and_the_carry_survive_a_hub_restart` | Delivered in #1228; 575 affected / 109 sweep / 17 canon GREEN |
 | R095 | Guards and copy | `tests/unit/test_doc_drift_guard.py::test_no_live_doc_has_a_dangling_relative_link` | Delivered in #1226; affected checks and ordinary quick checks pass |
 | R096 | Guards and copy | `tests/unit/test_graph_reference.py::test_council_revision_holds_the_resolutions_the_join_read` | Full-history checkout delivered in #1226; local assertions pass; new CI verification pending |
@@ -170,6 +178,9 @@ product contract; no skips, blanket retries, threshold increases or broad exempt
 | R111 | Browser journeys | `tests/e2e/test_thought_glass.py::test_thought_workbench_real_glass[393]` | Current-source 166-case browser run: passed; delivered in #1231 |
 | R112 | Runtime and producers | `tests/unit/test_calendar_ingest.py::TestB11BothConductors::test_event_born_row_is_armed_and_started_by_the_136_conductor` | Delivered in #1228; 575 affected / 109 sweep / 17 canon GREEN |
 | R113 | Browser journeys | `tests/e2e/test_thought_glass.py::test_thought_note_long_context_and_open_well_never_clip[1440]` | Observed in #1228 full run; no failure in the subsequent #1232 full run. Current 17-case Thought-file run passes, including this retained long-context path. |
+| R114 | Runtime and producers | `tests/integration/test_meeting_kill_recovery.py::test_kill_between_checkpoint_and_finalize_recovers_same_identity` | Sealing now retains recovery discovery until the final DB checkpoint. Original SIGKILL/control pair plus durability/Stop/admission coverage:97 passed; exact128,000 PCM bytes and same-ID repeated recovery retained. Full-main follow-through pending. |
+| R115 | Runtime and producers | `tests/integration/test_delivery_pr_poll_real_hub.py::test_a_merge_lands_on_the_room_receipt_within_one_poll` | Deterministic read during ledger truncation reproduced the missing flight. Atomic publication passes the original real-hub case and new boundary regression (2); exact identity and poll timing retained. Full-main follow-through pending. |
+| R116 | Runtime and producers | `tests/unit/test_monday_brief_service.py::test_a_brief_is_stale_after_a_new_meeting_decision_or_engine` | Controlled midnight counterfactual fails before repair. One evolving clock now covers the brief, events and real assignment producer, with persisted timestamp ordering asserted;126 service checks pass. Product daily-staleness and separate prior-day test unchanged. Full-main follow-through pending. |
 
 ## Delivery log
 

@@ -55,3 +55,18 @@ revision identity remains separate from this frontend digest.
 Two additional saved-meeting cases pass at 1440/393; root inspected
 `.tmp/evidence-shots/desk-sweep/meeting-{1440,393}.png`. They verify retained
 layout and controls, not physical recording or the simulated failure paths.
+
+## Delivery and full-run follow-through
+
+Merged #1237 at `add3c231c`; the verified idle hub was delivered normally from
+`wt-meeting-stop-review-fixes-20261017`, PID25584, port8765. Health, Desk,
+Conductor and Models return200. Frontend `2759d0c6c13d4b6b` matches source;
+the backend revision is the merged head above. Formal Astra bounded review
+[RATIFY](https://github.com/karolswdev/HoldSpeak/pull/1237#issuecomment-6230298016)
+also closes the original #1233 review's two executed findings.
+
+The subsequent full run completed with3 failed/16,571 passed, plus3 mandatory
+live-bus passes. It reopened the runtime size guard and found the audio-journal
+completion/discovery ordering and transient PR receipt read. These are fixed
+forward in [the full-main follow-up](MODULE-FOLLOWUP.md); the earlier focused
+review is not presented as a full-suite pass.

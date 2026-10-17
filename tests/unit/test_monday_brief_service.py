@@ -401,17 +401,21 @@ def _stale_service(tmp_path, clock):
     return db, MondayBriefService(db, clock=lambda: clock["now"])
 
 
-def test_a_brief_is_stale_after_a_new_meeting_decision_or_engine(tmp_path, quiet_needs_you):
+def test_a_brief_is_stale_after_a_new_meeting_decision_or_engine(tmp_path, monkeypatch, quiet_needs_you):
+    from holdspeak.services import inference_assignment_service
     from tests.unit.test_hs172_loop_wire import assign_meeting_engine
 
-    real_now = datetime.datetime.now().replace(microsecond=0)
-    clock = {"now": real_now}
+    # Start at midnight and advance one clock for the brief and every event.
+    # The real assignment producer must stamp this clock too, not wall time.
+    base = datetime.datetime(2026, 10, 17, 0, 0, tzinfo=ZoneInfo("America/Denver"))
+    clock = {"now": base}
+    monkeypatch.setattr(inference_assignment_service, "_now", lambda: clock["now"].astimezone(datetime.UTC).isoformat())
     db, service = _stale_service(tmp_path, clock)
-    base = real_now - datetime.timedelta(minutes=30)  # same day unless run at 00:00-00:30
-    brief = service.generate(None, now=base)
+    brief = service.generate(None, now=clock["now"])
     assert service.is_stale(brief) is False
 
-    meeting_at = (base + datetime.timedelta(minutes=5)).isoformat()
+    clock["now"] = base + datetime.timedelta(minutes=5)
+    meeting_at = clock["now"].isoformat()
     with db._connection() as conn:
         conn.execute(
             "INSERT INTO meetings (id, started_at, ended_at, title, duration_seconds, intel_status, capture_status,"
@@ -420,9 +424,11 @@ def test_a_brief_is_stale_after_a_new_meeting_decision_or_engine(tmp_path, quiet
         )
     assert service.is_stale(brief) is True
 
-    brief = service.generate(None, now=base + datetime.timedelta(minutes=10))
+    clock["now"] = base + datetime.timedelta(minutes=10)
+    brief = service.generate(None, now=clock["now"])
     assert service.is_stale(brief) is False
-    decided_at = (base + datetime.timedelta(minutes=15)).isoformat()
+    clock["now"] = base + datetime.timedelta(minutes=15)
+    decided_at = clock["now"].isoformat()
     with db._connection() as conn:
         conn.execute(
             "INSERT INTO decision_records (id, decision_text, rationale, source_type, source_id, created_at, updated_at) "
@@ -430,9 +436,15 @@ def test_a_brief_is_stale_after_a_new_meeting_decision_or_engine(tmp_path, quiet
         )
     assert service.is_stale(brief) is True
 
-    brief = service.generate(None, now=base + datetime.timedelta(minutes=20))
+    clock["now"] = base + datetime.timedelta(minutes=20)
+    brief = service.generate(None, now=clock["now"])
     assert service.is_stale(brief) is False
-    assign_meeting_engine(db)  # an engine assigned now, after the brief was made
+    clock["now"] = base + datetime.timedelta(minutes=25)
+    assign_meeting_engine(db)
+    with db._connection() as conn:
+        assigned_at = conn.execute("SELECT updated_at FROM inference_assignment_heads").fetchone()[0]
+    assert parse_stamp(assigned_at) == clock["now"]
+    assert parse_stamp(assigned_at) > parse_stamp(brief.generated_at)
     assert service.is_stale(brief) is True
 
 

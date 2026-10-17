@@ -149,6 +149,10 @@ def test_kill_between_checkpoint_and_finalize_recovers_same_identity(tmp_path):
     assert [r["meeting_id"] for r in recoverable] == [meeting_id]
     assert recoverable[0]["status"] == "recording"
     assert recoverable[0]["durable_bytes"].get("mic", 0) > 0
+    audio_path = captures_root / meeting_id / "mic.f32le.partial"
+    expected_audio = b"\0" * 128000  # the child's complete 32000 f32 samples
+    assert recoverable[0]["durable_bytes"] == {"mic": len(expected_audio)}
+    assert audio_path.read_bytes() == expected_audio
 
     # Restart: a fresh handle recovers the SAME identity to a closed state.
     restarted = Database(tmp_path / "hs.db")
@@ -158,6 +162,7 @@ def test_kill_between_checkpoint_and_finalize_recovers_same_identity(tmp_path):
     assert recovered.capture_status == "recovered"
     assert recovered.ended_at == crashed.capture_checkpoint_at
     assert [s.text for s in recovered.segments] == [EXPECTED_PREFIX]
+    assert audio_path.read_bytes() == expected_audio
 
     # No duplicate object was minted by the crash or the recovery; a repeated
     # recovery converges on the same closed state.
@@ -166,6 +171,7 @@ def test_kill_between_checkpoint_and_finalize_recovers_same_identity(tmp_path):
     assert again.id == meeting_id
     assert again.capture_status == "recovered"
     assert [m.id for m in restarted.meetings.list_meetings()] == [meeting_id]
+    assert audio_path.read_bytes() == expected_audio
 
 
 @pytest.mark.integration
