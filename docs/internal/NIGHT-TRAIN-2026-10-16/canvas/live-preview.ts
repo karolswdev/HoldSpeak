@@ -1,0 +1,1 @@
+import {mountAtmosphereScene} from '@w/desk/gl/atmosphereRuntime';import {createNightTrainScene} from '@w/desk/gl/interiors/nightTrainScene';const release=mountAtmosphereScene(document.querySelector<HTMLCanvasElement>('#scene')!,createNightTrainScene,{seed:213});addEventListener('pagehide',release,{once:true});
