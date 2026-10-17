@@ -59,4 +59,12 @@ Mountains are authored relief; lake reflections approximate the skyline.
 
 ## Production and delivery
 
-Pending final quick check, real picker walks, PR merge and idle-hub delivery.
+Final quick check GREEN against origin/main: production build,4,146 related web
+tests across420 files,109 actual Desk sweep checks at both widths and17canon
+guards. Logs: `.tmp/night-train-fidelity/quick/` and `quick-check.log`.
+Production build `3ebdb08ab76ecc2b` matches an independent digest of the exact
+source inputs. The emitted picker asset matches its frozen SHA256. The three
+canvas TS files outside web/src are excluded by quick; their actual moving
+browser harnesses were exercised separately above.
+
+Real picker walks, PR merge and idle-hub delivery are pending.
