@@ -5,6 +5,17 @@ programme through the broader failures. An inherited failure stays open until it
 is reproduced, fixed and verified, or current evidence proves it already healed.
 Tracking alone does not finish this work.
 
+**Current result — 2026-10-17:** #1238 is merged and live at product head
+`00025d6f6`. The isolated local full suite completes with **16,580 passed,
+zero failures,26 skipped,1 expected failure**, plus3 mandatory live-bus passes.
+Exact JUnit reconciliation closes all116 tracked cases:113 exact identities
+pass; R029–R031 use their four explicitly recorded passing Dock replacements.
+No tracked case is skipped or unexpectedly absent. The table retains repair
+history; this completed result supersedes its earlier pending full-run states.
+[Delivery, exact logs and remaining limits](../MEETING-STOP-NATIVE-2026-10-16/MODULE-FOLLOWUP.md#completed-full-main-verification)
+include12 warnings and the optional/native/harness boundaries. Remote nightly
+remains separate and pending; owner visual acceptance is not inferred.
+
 ## Additional observed product failures
 
 The 113-case historical CI union below does not include newly diagnosed local
@@ -41,7 +52,7 @@ test totals:
   runs (113 historical CI identities plus three newly observed local identities).
   Absence is not closure.
 - Recovery baseline: `2669d98f2` (#1224). The #1228 [full run](https://github.com/karolswdev/HoldSpeak/actions/runs/38979062393) finished before the browser repairs were included; the #1232 result above supersedes it.
-- Focused/quick proof and explicit retired-contract replacements remain below. The full-main run reopened R071; its local pass did not establish the loaded CI transition. [Current repair](THOUGHT-SEND.md).
+- Focused/quick proof and explicit retired-contract replacements remain below. The earlier full-main run reopened R071; its repaired loading transition now passes in the completed local full run. [Repair](THOUGHT-SEND.md).
 
 Delivery source: `/Users/karol/dev/tools/wt-regression-browser-delivery-20261016`.
 Earlier candidate work remains preserved in `/Users/karol/dev/tools/wt-regression-recovery-20261016`.
@@ -135,7 +146,7 @@ product contract; no skips, blanket retries, threshold increases or broad exempt
 | R068 | Browser journeys | `tests/e2e/test_speak_glass.py::test_the_learned_row_wraps_without_overlap_at_393` | Current-source 166-case browser run: passed; delivered in #1231 |
 | R069 | Browser journeys | `tests/e2e/test_thought_glass.py::TestTheThoughtOpensAtOnce::test_one_press_one_window_every_key[1440]` | Current-source 166-case browser run: passed; delivered in #1231 |
 | R070 | Browser journeys | `tests/e2e/test_thought_glass.py::TestTheThoughtSends::test_write_a_thought_then_send_it_to_a_folder[1440]` | Current-source 166-case browser run: passed; delivered in #1231 |
-| R071 | Browser journeys | `tests/e2e/test_thought_glass.py::TestTheThoughtSends::test_write_a_thought_then_send_it_to_a_folder[393]` | Reopened by full-main #1232. A held authoritative read reproduces the premature footer assertion (1 failed); the repaired desktop/phone check proves exact buffered text and focus before actions (2 passed), with original saved-revision/file/return checks retained. [Thought send](THOUGHT-SEND.md). |
+| R071 | Browser journeys | `tests/e2e/test_thought_glass.py::TestTheThoughtSends::test_write_a_thought_then_send_it_to_a_folder[393]` | Reopened by full-main #1232. A held authoritative read reproduces the premature footer assertion (1 failed); the repaired desktop/phone check proves exact buffered text and focus before actions (2 passed), with original saved-revision/file/return checks retained. [Thought send](THOUGHT-SEND.md). Exact case passed in full main `00025d6f6`. |
 | R072 | Browser journeys | `tests/e2e/test_thought_glass.py::test_thought_workbench_real_glass[1440]` | Current-source 166-case browser run: passed; delivered in #1231 |
 | R073 | Browser journeys | `tests/e2e/test_today_glass.py::TestTheTodayWindowSize::test_today_opens_at_its_size_and_keeps_the_size_he_sets` | Current-source 166-case browser run: passed; delivered in #1231 |
 | R074 | Browser journeys | `tests/e2e/test_windows_glass.py::TestCloseMeansGone::test_a_meeting_resolved_as_deleted_closes_its_card[1440]` | Current-source 166-case browser run: passed; delivered in #1231 |
@@ -157,7 +168,7 @@ product contract; no skips, blanket retries, threshold increases or broad exempt
 | R090 | Runtime and producers | `tests/memory_bench/test_memory_bench.py::test_no_engine_answer_equals_the_search_before_the_index` | Delivered in #1226; affected checks and ordinary quick checks pass |
 | R091 | Runtime and producers | `tests/unit/test_agent_hand.py::test_hand_launches_a_minted_decision_record_with_a_bounded_session_name` | Delivered in #1225; new concurrency/error regressions and quick checks pass |
 | R092 | Guards and copy | `tests/unit/test_decisions.py::test_pre_fix_route_answers_500_on_create` | Full-history checkout delivered in #1226; local assertions pass; new CI verification pending |
-| R093 | Guards and copy | `tests/unit/test_density_guard.py::test_runtime_modules_stay_single_concern` | Reopened by #1237: runtime module607 exceeds unchanged600 budget. Stop completion moved into its own153-line helper, caller467; AST-equivalent body and27 focused checks pass. Full-main follow-through pending. |
+| R093 | Guards and copy | `tests/unit/test_density_guard.py::test_runtime_modules_stay_single_concern` | Reopened by #1237: runtime module607 exceeds unchanged600 budget. Stop completion moved into its own153-line helper, caller467; AST-equivalent body and27 focused checks pass. Exact case passed in full main `00025d6f6`; delivered in #1238. |
 | R094 | Runtime and producers | `tests/unit/test_desk_memory.py::test_the_decision_chain_and_the_carry_survive_a_hub_restart` | Delivered in #1228; 575 affected / 109 sweep / 17 canon GREEN |
 | R095 | Guards and copy | `tests/unit/test_doc_drift_guard.py::test_no_live_doc_has_a_dangling_relative_link` | Delivered in #1226; affected checks and ordinary quick checks pass |
 | R096 | Guards and copy | `tests/unit/test_graph_reference.py::test_council_revision_holds_the_resolutions_the_join_read` | Full-history checkout delivered in #1226; local assertions pass; new CI verification pending |
@@ -178,9 +189,9 @@ product contract; no skips, blanket retries, threshold increases or broad exempt
 | R111 | Browser journeys | `tests/e2e/test_thought_glass.py::test_thought_workbench_real_glass[393]` | Current-source 166-case browser run: passed; delivered in #1231 |
 | R112 | Runtime and producers | `tests/unit/test_calendar_ingest.py::TestB11BothConductors::test_event_born_row_is_armed_and_started_by_the_136_conductor` | Delivered in #1228; 575 affected / 109 sweep / 17 canon GREEN |
 | R113 | Browser journeys | `tests/e2e/test_thought_glass.py::test_thought_note_long_context_and_open_well_never_clip[1440]` | Observed in #1228 full run; no failure in the subsequent #1232 full run. Current 17-case Thought-file run passes, including this retained long-context path. |
-| R114 | Runtime and producers | `tests/integration/test_meeting_kill_recovery.py::test_kill_between_checkpoint_and_finalize_recovers_same_identity` | Sealing now retains recovery discovery until the final DB checkpoint. Original SIGKILL/control pair plus durability/Stop/admission coverage:97 passed; exact128,000 PCM bytes and same-ID repeated recovery retained. Full-main follow-through pending. |
-| R115 | Runtime and producers | `tests/integration/test_delivery_pr_poll_real_hub.py::test_a_merge_lands_on_the_room_receipt_within_one_poll` | Deterministic read during ledger truncation reproduced the missing flight. Atomic publication passes the original real-hub case and new boundary regression (2); exact identity and poll timing retained. Full-main follow-through pending. |
-| R116 | Runtime and producers | `tests/unit/test_monday_brief_service.py::test_a_brief_is_stale_after_a_new_meeting_decision_or_engine` | Controlled midnight counterfactual fails before repair. One evolving clock now covers the brief, events and real assignment producer, with persisted timestamp ordering asserted;126 service checks pass. Product daily-staleness and separate prior-day test unchanged. Full-main follow-through pending. |
+| R114 | Runtime and producers | `tests/integration/test_meeting_kill_recovery.py::test_kill_between_checkpoint_and_finalize_recovers_same_identity` | Sealing now retains recovery discovery until the final DB checkpoint. Original SIGKILL/control pair plus durability/Stop/admission coverage:97 passed; exact128,000 PCM bytes and same-ID repeated recovery retained. Exact case passed in full main `00025d6f6`; delivered in #1238. |
+| R115 | Runtime and producers | `tests/integration/test_delivery_pr_poll_real_hub.py::test_a_merge_lands_on_the_room_receipt_within_one_poll` | Deterministic read during ledger truncation reproduced the missing flight. Atomic publication passes the original real-hub case and new boundary regression (2); exact identity and poll timing retained. Exact case passed in full main `00025d6f6`; delivered in #1238. |
+| R116 | Runtime and producers | `tests/unit/test_monday_brief_service.py::test_a_brief_is_stale_after_a_new_meeting_decision_or_engine` | Controlled midnight counterfactual fails before repair. One evolving clock now covers the brief, events and real assignment producer, with persisted timestamp ordering asserted;126 service checks pass. Product daily-staleness and separate prior-day test unchanged. Exact case passed in full main `00025d6f6`; delivered in #1238. |
 
 ## Delivery log
 
