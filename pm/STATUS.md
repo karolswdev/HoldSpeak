@@ -8,6 +8,17 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+**Browser recovery — verified; delivery next (2026-10-16).** Activity owns
+Finished receipts with exact source doors and one-Back return. Phone swipe/Depth,
+Capture/Today, Go toggle, record-window identity and Chair geometry are repaired.
+The broad ordinary quick is GREEN: **4,169 web / 183 affected / 109 sweep /
+17 canon**; 639 graph checks and TypeScript pass. Room contrast is 17.12:1
+at both widths (1.03:1 before). Final visual review found a squeezed phone
+Activity title; the existing wrapping row fixes it, with four actual layout/return
+cases and 17 Activity checks passing. The final delta quick is GREEN: **4,117
+related web / 109 sweep / 17 canon**. Source/build match `372447f4cba801bb`;
+actual 1440/393 shots inspected. Merge and idle-hub delivery remain.
+
 **Orbital places — #1229 (2026-10-16).** Change places adds live Mars with
 Phobos/Deimos and Saturn with layered rings, Titan/Enceladus. Local terrain/sky,
 actual rendered picker/fallback stills, existing motion/visibility controls.
@@ -19,21 +30,22 @@ observed for Mars desktop and Saturn phone. Independent scene counsel finds
 no blocker. Formal postmerge review and owner visual judgment remain open.
 [Design, credits and verification](../docs/internal/ORBITAL-PLACES-2026-10-16/README.md).
 
-**Runtime recovery — verified, merge pending (2026-10-16).** Each hub owns its
+**Runtime recovery — #1228 delivered (2026-10-16).** Each hub owns its
 last-known store, so an earlier bare service cannot bind its recall to another DB.
 LAN discovery admits a frozen target set before transport and rejects late model
 bodies; calendar checks observe completed capture and stop their timers. Focused
 proof: 254 memory/calendar checks and 59 scanner/effect/route checks pass; three
 new late-body regressions fail before the fix. Ordinary quick GREEN: **575 affected /
 109 sweep / 17 canon**. Desktop/phone shots inspected; source/build match
-`f6ef8ac2099dde8b`. Normal idle-hub delivery follows merge.
+`f6ef8ac2099dde8b`. Merged `58a0d4552`; formal Astra postmerge review RATIFY.
+Idle-hub delivery was delivered on port 8765, PID 76313; all four HTTP checks return 200.
 
 **Recovery copy — #1227 delivered (2026-10-16).** Commands recovers an uncertain
 Add by GET and edits the saved row without duplicates or lost newer fields. Read
 failures keep shown material; Models reports pending initial reads. Quick GREEN:
 **4,076 web / 16 copy / 109 sweep / 17 canon**; TypeScript passes. Actual Commands
 recovery at 1440/393 and three held-read Models cases pass. Merged `e834f2c5b`;
-formal Astra postmerge review RATIFY. Build `f6ef8ac2099dde8b`, PID 63584, is live
+formal Astra postmerge review RATIFY. Build `f6ef8ac2099dde8b`, PID 63584, was delivered
 on port 8765; health, Desk, Conductor and Models return 200.
 
 **Regression contracts — #1226 delivered (2026-10-16).** Brief fixtures pin
@@ -42,7 +54,7 @@ retrieval. Wire fixtures match producers; CI retains historical regression commi
 Meeting context extraction preserves consumption order; SQL shapes and stale guard
 records are corrected. Quick GREEN: 579 affected / 109 sweep / 17 canon (one existing
 expected failure), plus 11 wire-consumer checks. Merged `5c26bd0fa`; formal Astra
-postmerge review RATIFY. Build `08b3ac3cbb13ef50`, PID 33619, is live on port 8765;
+postmerge review RATIFY. Build `08b3ac3cbb13ef50`, PID 33619, was delivered on port 8765;
 health, Desk, Conductor and Models return 200. Desktop/phone shots inspected.
 
 **Journal recovery — #1225 delivered (2026-10-16).** Concurrent stores reserve
@@ -55,12 +67,13 @@ The wider recovery queue remains active.
 
 **Broader regression recovery — active (2026-10-16).** The owner expanded the
 work to resolve the full-tape failures. All 112 distinct failing cases across the
-last four completed tapes are now tracked with fix ownership and next proof in
+five completed tapes are now tracked with fix ownership and next proof in
 the [recovery queue](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/REGRESSION-RECOVERY.md).
-The latest completed tape has 101 failures / 16,356 passes; two newly exposed
-cases cover phone worktop geometry and async calendar completion. Runtime, browser
-journeys, and guard/copy recovery remain active. Inherited status does not close a
-case. The #1226 full run is in progress.
+The latest completed tape (#1226, before later repairs) has 82 failures / 16,400
+passes; every failure is already in the queue. Copy and runtime repairs are
+delivered; browser recovery is in final verification. A further visual Room ink
+defect is being fixed. The #1228 full run remains in progress. Inherited status
+does not close a case.
 
 **Owner desktop density feedback — #1223 (2026-10-16).**
 Artifact footer actions retain vertical clearance on first open and through
@@ -71,7 +84,7 @@ renders checklist children and retains compact task text. Verified build
 Actual 1440/393 walks cover 400/600/320 px windows, drag/resize/reload, exact Copy,
 footer hit points, phone More and unchanged artifact content. Independent Sol
 counsel RATIFY. [Direction and verification](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/FOLLOWUP-DENSITY.md).
-Merged as `6788a92f1`; normal idle-hub delivery is live on port 8765, PID 96844.
+Merged as `6788a92f1`; normal idle-hub delivery was delivered on port 8765, PID 96844.
 Formal Astra postmerge review RATIFY. The earlier B full tape is red; its two
 attributed wire-fixture mismatches are corrected in #1224. Broader inherited
 and unattributed failures remain.
@@ -91,7 +104,7 @@ Remote recovery journeys pass, with real producer readbacks and declared
 failure/recorded-material boundaries. Build `a7145045f5dbab3c` matches source.
 [Delivery and evidence](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/DELIVERY-CDE.md)
 and [all-family coverage](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/COVERAGE.md).
-Merged as `14ae17b68`; normal idle-hub delivery is live on port8765, PID79705,
+Merged as `14ae17b68`; normal idle-hub delivery was delivered on port8765, PID79705,
 with exact merged/source/build agreement. Formal Astra postmerge review RATIFY:
 [release record](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/POSTMERGE-CDE.md).
 Full main tape 38950387547 (B) completed red: 103 failures / 16,327 passes,

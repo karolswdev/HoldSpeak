@@ -100,9 +100,10 @@ FRAME_JS = r"""(width) => {""" + FOLDED_WORD_JS + r"""
     const btns = [...h.querySelectorAll('button')].filter(visible);
     const name = h.parentElement.getAttribute('aria-label');
     // PHILO-13-12 (C2): depth is built, so the set ends iconify, zoom, depth
-    // (1440) and close ... depth (393; design §3).
+    // (1440) and Back ... depth (393).
     const first = btns[0], last = btns.slice(width > 720 ? -3 : -1);
-    if (!first || first.getAttribute('aria-label') !== `Close ${name}`) out.layout.push({name, first: first && label(first)});
+    const exit = width > 720 ? `Close ${name}` : `Back from ${name}`;
+    if (!first || first.getAttribute('aria-label') !== exit) out.layout.push({name, first: first && label(first)});
     const want = width > 720 ? [`Iconify ${name}`, `Zoom ${name}`, `To back ${name}`] : [`To back ${name}`];
     if (last.map((b) => b.getAttribute('aria-label')).join('|') !== want.join('|')) out.layout.push({name, last: last.map(label)});
   }

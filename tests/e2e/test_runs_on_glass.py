@@ -35,7 +35,8 @@ import pytest
 from tests._evidence import evidence_dir
 
 from .glass_infra import _api, _assert_clean, _boot, _normal_chair, _settle
-from .fit_rig import BOX_JS, T, WIDTHS, FitRig
+from .fit_rig import BOX_JS, T, WIDTHS, FitRig, TOKEN as FIT_TOKEN
+from .type_floor_rig import HIT_PROBE_JS, OWNERSHIP_JS
 
 SHOTS = evidence_dir("docs/internal/philo/phase-16/c-shots")
 TOKEN = "glass-test"
@@ -71,12 +72,18 @@ class _FakeOpenAI(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:  # noqa: N802
         length = int(self.headers.get("Content-Length") or 0)
-        self.rfile.read(length)
+        request = json.loads(self.rfile.read(length))
         if "chat/completions" in self.path:
+            self.server.model_requests.append(request)
+            # The current Try it runs the task's semantic adapter. Meeting
+            # summaries require valid typed JSON; Answers keep a plain line.
+            typed = (request.get("response_format") or {}).get("type") == "json_object"
+            content = json.dumps({"topics": ["Settings fix"], "summary": "Ship the settings fix on Tuesday.",
+                                  "action_items": [], "decisions": []}) if typed else "ready"
             self._json({
                 "id": "fake", "object": "chat.completion", "model": self.MODEL,
                 "choices": [{"index": 0, "finish_reason": "stop",
-                             "message": {"role": "assistant", "content": "ready"}}],
+                             "message": {"role": "assistant", "content": content}}],
                 "usage": {"prompt_tokens": 8, "completion_tokens": 1, "total_tokens": 9},
             })
             return
@@ -90,6 +97,7 @@ class _FakeOpenAI(BaseHTTPRequestHandler):
 def _serve(model: str = _FakeOpenAI.MODEL) -> ThreadingHTTPServer:
     handler = type("_Fake", (_FakeOpenAI,), {"MODEL": model})
     server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+    server.model_requests = []
     threading.Thread(target=server.serve_forever, daemon=True).start()
     return server
 
@@ -106,6 +114,8 @@ def _doubles(
     import holdspeak.inference_setup_catalog as catalog
     import holdspeak.services.concierge_service as cs
     import holdspeak.setup_runtime as setup_runtime
+    import holdspeak.intel as intel
+    from holdspeak.loopback_http import is_loopback_url, loopback_httpx_client
     from holdspeak.services.inference_acquisition_service import InferenceAcquisitionApplicationService
 
     ticks = {"n": 0, "hold": 1, "moved": 0}
@@ -118,6 +128,21 @@ def _doubles(
         return real_discover(url, *args, **kwargs)
 
     monkeypatch.setattr(setup_runtime, "discover_endpoint_models", discover)
+
+    real_openai = intel.OpenAI
+
+    def fixture_openai(**kwargs: Any) -> Any:
+        base = str(kwargs.get("base_url") or "")
+        if base.rstrip("/") in {LAN_BASE, LAN_BASE.replace(".43:", ".44:")}:
+            kwargs["base_url"] = f"http://127.0.0.1:{lan_port}/v1"
+            kwargs["http_client"] = loopback_httpx_client(kwargs.get("timeout"))
+        else:
+            assert is_loopback_url(base), "Only fixture endpoints can create a model client"
+        # Freeze/admission still names the LAN deployment. Only the physical
+        # SDK transport reaches this process's local fake, with no proxy.
+        return real_openai(**kwargs)
+
+    monkeypatch.setattr(intel, "OpenAI", fixture_openai)
 
     real_detect = cs.detect
 
@@ -205,6 +230,15 @@ def _speech_engine() -> None:
     )
 
 
+def _assignment_board(page: Any) -> Any:
+    """The jobs and saved engines, distinct from Found and Downloads."""
+    return page.get_by_test_id("runson-assignments").get_by_test_id("switchboard")
+
+
+def _found_board(page: Any) -> Any:
+    return page.get_by_test_id("runson-found-engines").get_by_test_id("switchboard")
+
+
 def _open_runs_on(page: Any) -> None:
     page.evaluate(
         """([key]) => sessionStorage.setItem("hs.desk.staged-surface-open", JSON.stringify({key}))""",
@@ -213,19 +247,19 @@ def _open_runs_on(page: Any) -> None:
     page.reload(wait_until="load")
     _normal_chair(page)
     page.get_by_test_id("runson-root").wait_for(timeout=15_000)
-    page.get_by_test_id("switchboard").wait_for(timeout=15_000)
+    _assignment_board(page).wait_for(timeout=15_000)
 
 
 def _ensure_wide_runs_on(page: Any) -> None:
     """Use the window's Zoom verb before asserting the three column board."""
-    board = page.get_by_test_id("switchboard")
+    board = _assignment_board(page)
     if board.get_attribute("data-layout") == "board":
         return
     zoom = _window(page).locator("button[aria-label^='Zoom ']")
     zoom.wait_for(timeout=15_000)
     zoom.click()
     page.wait_for_function(
-        "() => document.querySelector('[data-testid=switchboard]')?.getAttribute('data-layout') === 'board'",
+        "() => document.querySelector('[data-testid=runson-assignments] [data-testid=switchboard]')?.getAttribute('data-layout') === 'board'",
         timeout=15_000,
     )
 
@@ -274,6 +308,52 @@ def _seed(page: Any, local_port: int) -> tuple[tuple[str, int], tuple[str, int]]
 def _no_raw_buttons(page: Any) -> None:
     raw = page.get_by_test_id("runson-root").locator("button:not(.btn):not(.gadget-chip-egress)")
     assert raw.count() == 0, f"raw <button>: {raw.count()}"
+
+
+def _whole_hit(control: Any) -> None:
+    observed = control.evaluate("(el) => {" + OWNERSHIP_JS + HIT_PROBE_JS + "return hs202Probe(el, 44, 'Runs on'); }")
+    assert not observed["occluded"] and not observed["covered"] and not observed["bad"], observed
+    assert observed["w"] >= 44 and observed["h"] >= 44, observed
+
+
+def _probe_task_once(page: Any, job: str, capability: str, profile_id: str, fake: Any, *, off_machine: bool) -> None:
+    """One current Try gesture: the bound public sample and its real receipt."""
+    before = _assignment_snapshot(_api(page, "GET", "/api/inference/assignments", token=TOKEN))
+    physical_before = len(fake.model_requests)
+    pressed: list[Any] = []
+
+    def record(request: Any) -> None:
+        if request.url.endswith("/api/concierge/probe") and request.method == "POST":
+            pressed.append(request)
+
+    page.on("request", record)
+    try:
+        with page.expect_response(lambda response: response.url.endswith("/api/concierge/probe")
+                                  and response.request.method == "POST") as tried:
+            page.get_by_test_id(f"runson-try-{job}").click()
+    finally:
+        page.remove_listener("request", record)
+    assert tried.value.ok, tried.value.text()
+    expected: dict[str, Any] = {"task": True, "capabilityId": capability, "expectedProfileIds": [profile_id]}
+    if off_machine:
+        expected["confirmOffMachine"] = True
+    assert len(pressed) == 1 and pressed[0].post_data_json == expected, [request.post_data_json for request in pressed]
+    answer = tried.value.json()
+    assert answer["ok"] is True and answer["state"] == "READY" and answer["outcome"] == "succeeded", answer
+    assert answer["operationId"] and answer["executionId"] and answer["routePlanId"], answer
+    assert answer["legs"] and all(leg["profileId"] == profile_id for leg in answer["legs"]), answer
+    assert answer["sampleInput"] and answer["sampleOutput"] and not answer["emptyOutput"], answer
+    assert answer["latencyMs"] > 0, answer
+    assert len(fake.model_requests) == physical_before + 1
+    physical = fake.model_requests[-1]
+    assert physical["model"] == answer["model"] and physical["messages"][-1]["content"] == answer["sampleInput"], physical
+    state = page.get_by_test_id(f"runson-trial-state-{job}")
+    state.filter(has_text="Completed").wait_for()
+    assert state.inner_text().startswith("Completed · ") and f"{answer['latencyMs']} MS" in state.inner_text()
+    assert page.get_by_test_id(f"runson-trial-input-{job}").text_content() == answer["sampleInput"]
+    assert page.get_by_test_id(f"runson-trial-output-{job}").text_content() == answer["sampleOutput"]
+    assert _assignment_snapshot(_api(page, "GET", "/api/inference/assignments", token=TOKEN)) == before
+    assert page.get_by_test_id("runson-try-confirm").count() == 0
 
 
 def _assignment_snapshot(payload: dict[str, Any]) -> str:
@@ -328,7 +408,7 @@ def _install_lan_scanner_double(monkeypatch: Any) -> tuple[str, list[str], list[
         discover_urls.append(url)
         return real_discover(url, timeout_seconds=1.0)
 
-    def scan() -> dict[str, Any]:
+    def scan(*, principal: Any) -> dict[str, Any]:
         return real_scan(
             interfaces=[
                 lan_engine_discovery.LanInterface(
@@ -339,6 +419,7 @@ def _install_lan_scanner_double(monkeypatch: Any) -> tuple[str, list[str], list[
             ports=[(8080, "openai-compatible")],
             probe=probe,
             max_workers=8,
+            principal=principal,
         )
 
     monkeypatch.setattr(lan_engine_discovery, "scan_lan_engines", scan)
@@ -364,7 +445,7 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
             if width == 1440:
                 _ensure_wide_runs_on(page)
             # The engines fill in once detection lands.
-            page.get_by_test_id("switchboard-found-cap").wait_for(timeout=15_000)
+            _found_board(page).get_by_test_id("switchboard-found-cap").wait_for(timeout=15_000)
             assert page.locator('[role="dialog"]').count() == 0
             _no_raw_buttons(page)
             fact = page.get_by_test_id("runson-fact").inner_text()
@@ -383,16 +464,17 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
                 where = page.locator("[data-testid='switchboard-job-meetings'] .switchboard-job-pill").inner_text()
                 assert "Qwen3.8 27B" in where and " · ON " in where.upper() and "192.168.77.43" in where, where
                 default_name = page.locator("[data-testid='switchboard-job-default'] .switchboard-job-name").text_content() or ""
-                assert default_name.startswith("Everything else → ") and " · on " in default_name, default_name
+                assert default_name == "Default engine → Qwen3.8 27B · on 192.168.77.43", default_name
             else:
                 # The phone list: the outcome name, its engine and place under it.
                 assert lead == "Meeting summaries", lead
                 # PHILO-17 refit: the engine and place are the job's pill.
                 where = page.locator("[data-testid='switchboard-job-meetings'] .switchboard-job-pill").inner_text()
                 assert " · ON " in where.upper(), where
-            jobs_text = page.get_by_test_id("switchboard").inner_text().upper()
+            jobs_text = _assignment_board(page).inner_text().upper()
+            job_labels = {line.strip() for line in jobs_text.splitlines()}
             for gone in ("TASKS", "FOLLOWS DEFAULT", "EVERY JOB WITHOUT ITS OWN WIRE", "DICTATION INTENT"):
-                assert gone not in jobs_text, gone
+                assert gone not in job_labels, gone
             # PHILO-17 meetings r2: every window's headline is 19 px.
             assert float(page.get_by_test_id("runson-fact").evaluate("e => parseFloat(getComputedStyle(e).fontSize)")) >= 19
             words = page.locator("[data-testid^='switchboard-job-']").evaluate_all(
@@ -403,7 +485,7 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
                 assert page.get_by_role("button", name=retired, exact=True).count() == 0
 
             if width == 1440:
-                board = page.get_by_test_id("switchboard")
+                board = _assignment_board(page)
                 assert board.get_attribute("data-layout") == "board"
                 wires = page.get_by_test_id("switchboard-wire")
                 assert wires.count() >= 3
@@ -412,12 +494,24 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
 
                 # Drag the LAN engine onto Meetings: one write, a receipt, Undo.
                 lan_plate = page.locator("[data-testid^='switchboard-engine-']").filter(has_text="qwen3.8 27B").first
+                before_patch = _api(page, "GET", "/api/inference/assignments", token=TOKEN)
+                before_meetings = next(row for row in before_patch["rows"] if row["id"] == "meetings")
+                group_writes: list[Any] = []
+
+                def record_patch(request: Any) -> None:
+                    if request.method == "POST" and request.url.endswith("/api/inference/assignments/set"):
+                        group_writes.append(request)
+
+                page.on("request", record_patch)
                 with page.expect_response(lambda r: r.url.endswith("/api/inference/assignments/set")) as written:
                     lan_plate.drag_to(page.get_by_test_id("switchboard-job-meetings"))
+                page.remove_listener("request", record_patch)
                 assert written.value.ok, written.value.text()
+                assert len(group_writes) == 1
                 body = written.value.request.post_data_json
                 assert body["scope"] == {"kind": "group", "group_id": "meetings"}
-                assert isinstance(body["expected_revision"], int)
+                assert body["expected_revision"] == before_meetings["expected_revision"]
+                assert body["entries"][0]["profile_id"] == "glass-lan-27b"
                 receipt = page.get_by_test_id("runson-receipt")
                 receipt.wait_for()
                 page.wait_for_function(
@@ -431,32 +525,15 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
                 assert summaries["has_override"] is True, summaries
                 _shot(page, "c2-patched", width)
 
-                # Try it on Meetings: off-machine, so the press names the host first.
-                page.get_by_test_id("runson-try-meetings").click()
-                confirm = page.get_by_test_id("runson-try-confirm")
-                confirm.wait_for()
-                assert "192.168.77.43" in confirm.inner_text()
-                confirm.click()
-                page.get_by_test_id("switchboard-result-meetings").wait_for()
-                page.wait_for_function(
-                    "() => /^REACHED · qwen3\\.8 27B · \\d+ MS$/i.test(document.querySelector('[data-testid=switchboard-result-meetings]')?.textContent || '')"
-                )
-                # Thoughts & notes runs a real request through its route (the Ask probe).
-                page.get_by_test_id("runson-try-thoughts_notes").click()
-                # An endpoint profile's route names a network boundary even on
-                # loopback, so the probe waits for the press (Article III).
-                page.get_by_test_id("runson-try-confirm").click()
-                thoughts = page.get_by_test_id("switchboard-result-thoughts_notes")
-                thoughts.wait_for()
-                page.wait_for_function(
-                    "() => !/TRYING/.test(document.querySelector('[data-testid=switchboard-result-thoughts_notes]')?.textContent || 'TRYING')",
-                    timeout=15_000,
-                )
-                assert thoughts.inner_text().upper().startswith("READY · "), thoughts.inner_text()
+                # The current row names the off-machine host beside the one
+                # Try gesture; admission freezes the displayed profile ids.
+                assert "192.168.77.43" in page.get_by_test_id("runson-trial-egress-meetings").inner_text()
+                _probe_task_once(page, "meetings", "meeting.deferred_analysis", "glass-lan-27b", fakes[0], off_machine=True)
+                _probe_task_once(page, "thoughts_notes", "ask.answer", "glass-mac-4b", fakes[2], off_machine=False)
                 _shot(page, "c3-try-it", width)
 
                 # FOUND → Use it: the engine joins the column with no wire.
-                found = page.locator(".switchboard-engine.is-found").first
+                found = _found_board(page).locator(".switchboard-engine.is-found")
                 found.wait_for()
                 _shot(page, "c4-found", width)
                 with page.expect_response(lambda r: r.url.endswith("/define-endpoint")) as used:
@@ -465,11 +542,15 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
                 page.wait_for_function(
                     "() => /^ADDED /.test(document.querySelector('[data-testid=runson-receipt]')?.textContent || '')"
                 )
-                page.locator(".switchboard-engine.is-found").first.wait_for(state="detached", timeout=15_000)
+                found.wait_for(state="detached", timeout=15_000)
                 _shot(page, "c5-after-use-it", width)
 
                 # Download: the chip names the internet host; the bar fills on the plate.
+                downloads = page.locator(".runson-downloads")
+                if downloads.get_attribute("open") is None:
+                    downloads.locator("summary").click()
                 plate = page.locator("[data-testid='switchboard-engine-preset:preset_glass_vision']")
+                plate.wait_for(state="visible")
                 assert "HUGGINGFACE.CO" in plate.inner_text()
                 assert "THIS DEVICE" not in plate.inner_text()
                 plate.get_by_role("button", name="Download").click()
@@ -485,7 +566,7 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
                     timeout=10_000,
                 )
             else:
-                board = page.get_by_test_id("switchboard")
+                board = _assignment_board(page)
                 assert board.get_attribute("data-layout") == "list"
                 assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
                 small = page.evaluate("""() => [...document.querySelectorAll('[data-testid=runson-root] .btn, [data-testid=switchboard] .switchboard-tap')]
@@ -508,14 +589,9 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
                 assert body["scope"] == {"kind": "group", "group_id": "meetings"}
                 assert body["entries"][0]["profile_id"] == "glass-mac-4b"
                 _shot(page, "c2-list-patched", width)
-                # At phone width SurfaceFooter keeps Undo under its real More
-                # menu. Prove the menu action performs the durable inverse.
-                more = page.locator(".runson-foot").get_by_role("button", name="More actions", exact=True)
-                more.wait_for()
-                more.click()
-                undo_menu = page.get_by_role("menu", name="More actions")
-                undo_menu.get_by_role("menuitem", name="Undo", exact=True).wait_for()
-                undo_menu.get_by_role("menuitem", name="Undo", exact=True).click()
+                # With no primary verb, SurfaceFooter keeps the first action.
+                # Runs on's Undo is that action at both widths.
+                page.locator(".runson-foot").get_by_test_id("runson-undo").click()
                 page.wait_for_function(
                     "() => /^UNDONE /.test(document.querySelector('[data-testid=runson-receipt]')?.textContent || '')"
                 )
@@ -525,9 +601,13 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
                 summaries = next(task for task in after["task_overrides"] if task["id"] == "meeting.deferred_analysis")
                 assert summaries["has_override"] is False, summaries
                 assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
-            # Meaning search (ratified: a row under the board) scrolls into
-            # the body, clear of the window's foot.
+            # Optional local models and Meaning search live in this real
+            # disclosure. A closed details descendant has no reachable row.
+            downloads = page.locator(".runson-downloads")
+            if downloads.get_attribute("open") is None:
+                downloads.locator("summary").click()
             meaning = page.locator(".runson-meaning > *").first
+            meaning.wait_for(state="visible")
             meaning.scroll_into_view_if_needed()
             _settle(page)
             clear = page.evaluate("""() => {
@@ -539,6 +619,8 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
               return r.height > 0 && r.bottom <= f.top + 1 ? true : `row ${r.top}-${r.bottom} foot ${f.top}`;
             }""")
             assert clear is True, clear
+            if width == 393:
+                _whole_hit(meaning.get_by_test_id("meaning-search-verb"))
             _shot(page, "c7-meaning-search" if width == 1440 else "c3-meaning-search", width)
             _assert_clean(page, errors)
             browser.close()
@@ -569,24 +651,49 @@ def test_astra_review_real_producer(tmp_path: Path, monkeypatch: Any, case: str)
             lan, local = _seed(page, fakes[2].server_address[1])
             _open_runs_on(page)
             _ensure_wide_runs_on(page)
-            page.get_by_test_id("switchboard-found-cap").wait_for(timeout=15_000)
+            _found_board(page).get_by_test_id("switchboard-found-cap").wait_for(timeout=15_000)
             receipt = "() => document.querySelector('[data-testid=runson-receipt]')?.textContent || ''"
 
             if case == "stale_confirmation":
-                # Press Try on Meetings (it follows the LAN default), then
-                # patch Meetings to the loopback engine; the old press must go.
-                page.get_by_test_id("runson-try-meetings").click()
-                confirm = page.get_by_test_id("runson-try-confirm")
-                confirm.wait_for()
-                assert "192.168.77.43" in confirm.inner_text()
-                probes: list[str] = []
-                page.on("request", lambda r: probes.append(r.post_data or "") if r.url.endswith("/api/concierge/probe") else None)
-                with page.expect_response(lambda r: r.url.endswith("/api/inference/assignments/set")):
+                # Try now admits the displayed route in one press. Hold its
+                # transport while a real UI patch changes that route: the old
+                # off-machine permission must not admit the new selection.
+                shown = page.get_by_test_id("switchboard-job-meetings")
+                assert "192.168.77.43" in shown.get_by_test_id("runson-trial-egress-meetings").inner_text()
+                pending: list[Any] = []
+                page.route("**/api/concierge/probe", lambda route: pending.append(route))
+                with page.expect_request(lambda r: r.url.endswith("/api/concierge/probe")) as pressed:
+                    shown.get_by_test_id("runson-try-meetings").click()
+                body = pressed.value.post_data_json
+                assert body == {"task": True, "capabilityId": "meeting.deferred_analysis",
+                                "confirmOffMachine": True, "expectedProfileIds": ["glass-lan-27b"]}, body
+                assert len(pending) == 1, pending
+                dispatches: list[str] = []
+                real_model_post = _FakeOpenAI.do_POST
+
+                def record_model_post(handler: Any) -> None:
+                    dispatches.append(handler.path)
+                    real_model_post(handler)
+
+                monkeypatch.setattr(_FakeOpenAI, "do_POST", record_model_post)
+                with page.expect_response(lambda r: r.url.endswith("/api/inference/assignments/set")) as changed:
                     page.get_by_test_id("switchboard-engine-glass-mac-4b").drag_to(page.get_by_test_id("switchboard-job-meetings"))
-                # The new engine is on this machine: no press is needed, and
-                # no press for the old host survives.
-                page.wait_for_function("() => !document.querySelector('[data-testid=runson-try-confirm]')")
-                assert probes == [], probes
+                assert changed.value.ok, changed.value.text()
+                # Meetings patches its group and its summary capability.
+                # The receipt follows both writes, so admission sees the
+                # completed change rather than an intermediate group write.
+                page.wait_for_function(f"() => /^PATCHED /.test(({receipt})())")
+                with page.expect_response(lambda r: r.url.endswith("/api/concierge/probe")) as refused:
+                    pending[0].continue_()
+                answer = refused.value.json()
+                assert refused.value.ok, answer
+                assert answer["state"] == "REFUSED" and answer["reasonCode"] == "route_probe_assignment_changed", answer
+                assert answer["legs"] and all(leg["profileId"] == "glass-mac-4b" for leg in answer["legs"]), answer
+                assert not answer.get("model") and dispatches == [], (answer, dispatches)
+                page.get_by_test_id("runson-trial-state-meetings").filter(
+                    has_text="Not tried · Route changed").wait_for()
+                assert page.get_by_test_id("runson-try-confirm").count() == 0
+                assert len(pending) == 1, pending
                 return
 
             job = "thoughts_notes" if case == "lost_update" else "meetings"
@@ -679,15 +786,13 @@ class TestTheRunsOnFooter(FitRig):
                 wait_board(page)
                 patch(page, "default", "lane12-second-engine")
                 receipt = page.get_by_test_id("runson-receipt")
-                if width == 393:
-                    # SurfaceFooter keeps the primary Try verb visible and
-                    # puts Undo in its real More menu on the phone.
-                    undo = page.locator(".runson-foot").get_by_role("button", name="More actions", exact=True)
-                    undo.wait_for(timeout=T)
-                else:
-                    undo = page.get_by_test_id("runson-undo")
-                    undo.wait_for(timeout=T)
-                page.wait_for_timeout(600)
+                # Undo is Runs on's first footer action and remains visible
+                # in SurfaceFooter's compact layout.
+                undo = page.locator(".runson-foot").get_by_test_id("runson-undo")
+                undo.wait_for(timeout=T)
+                page.wait_for_function(
+                    "() => /^PATCHED /.test(document.querySelector('[data-testid=runson-receipt]')?.textContent || '') && !document.querySelector('[data-testid=runson-undo]')?.disabled"
+                )
                 _settle(page)
                 rb, cb = receipt.evaluate(BOX_JS), undo.evaluate(BOX_JS)
                 text = receipt.inner_text()
@@ -705,12 +810,18 @@ class TestTheRunsOnFooter(FitRig):
                 self._shot(page, "B27-runson-footer", width, footer)
                 self._shot(page, "B27-runson", width)
                 if width == 393:
+                    before_undo = _api(page, "GET", "/api/inference/assignments", token=FIT_TOKEN)
+                    default = next(row for row in before_undo["rows"] if row["id"] == "global")
+                    assert default["assignment"]["entries"][0]["profile_id"] == "lane12-second-engine", default
+                    _whole_hit(undo)
                     undo.click()
-                    menu = page.get_by_role("menu", name="More actions")
-                    menu.get_by_role("menuitem", name="Undo", exact=True).click()
                     page.wait_for_function(
                         "() => /^UNDONE /.test(document.querySelector('[data-testid=runson-receipt]')?.textContent || '')"
                     )
+                    after_undo = _api(page, "GET", "/api/inference/assignments", token=FIT_TOKEN)
+                    restored = next(row for row in after_undo["rows"] if row["id"] == "global")
+                    assert [entry["profile_id"] for entry in restored["assignment"]["entries"]] == [
+                        "hs201-meeting-engine", "lane12-second-engine"], restored
                 self._write("runson", width)
                 assert not errors, errors
             finally:
@@ -752,7 +863,7 @@ def test_runs_on_find_on_lan_found_then_use_it_real_scanner(
 
             # Detection found no new LAN row. The row below must come from the
             # explicit scanner request and its real model response.
-            assert page.get_by_test_id(f"switchboard-engine-{expected_key}").count() == 0
+            assert page.get_by_test_id("runson-found-engines").get_by_test_id(f"switchboard-engine-{expected_key}").count() == 0
             with page.expect_response(
                 lambda response: response.url.endswith("/api/concierge/discover-lan"),
                 timeout=30_000,
@@ -761,7 +872,7 @@ def test_runs_on_find_on_lan_found_then_use_it_real_scanner(
             discovery_response = discovery.value
             assert discovery_response.ok, discovery_response.text()
 
-            found = page.get_by_test_id(f"switchboard-engine-{expected_key}")
+            found = _found_board(page).get_by_test_id(f"switchboard-engine-{expected_key}")
             found.wait_for(timeout=30_000)
             found_text = found.inner_text()
             assert expected_model in found_text, found_text

@@ -183,6 +183,7 @@ export function DeskMenuBar() {
   // vs hover-switch. Only intentional opens autoFocus the first item.
   const [intentional, setIntentional] = useState(false);
   const barRef = useRef<HTMLElement | null>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
   const [at, setAt] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const selectedIds = useDesk((s) => s.selectedIds);
   // PHILO-15 11: the phone Go lists the projects.
@@ -214,6 +215,7 @@ export function DeskMenuBar() {
   }, [open]);
 
   const openMenu = (id: MenuId, el: HTMLElement, isIntentional: boolean) => {
+    openerRef.current = el;
     const r = el.getBoundingClientRect();
     setAt({ x: r.left, y: r.bottom });
     setIntentional(isIntentional);
@@ -315,11 +317,8 @@ export function DeskMenuBar() {
             className={`desk-verbbar-title${open === m.id ? " on" : ""}`}
             aria-haspopup="menu"
             aria-expanded={open === m.id}
-            // Pointer-down (not click): the WorkMenu's own outside-press
-            // close runs first on the document capture phase; the
-            // render-time `open` here still names the state BEFORE that
-            // close, so the same title toggles closed and a sibling
-            // title hands over in one press.
+            // The menu treats its opener as inside. This title owns the
+            // pointer toggle; a sibling title opens its own menu.
             onPointerDown={(e) => {
               if (e.button !== 0) return;
               if (open === m.id) setOpen(null);
@@ -347,6 +346,7 @@ export function DeskMenuBar() {
               y={at.y}
               entries={entries(m.id)}
               onClose={() => setOpen(null)}
+              opener={openerRef.current}
               autoFocus={intentional}
               menuContext={m.id === "go" ? "launcher" : "verb"}
             />

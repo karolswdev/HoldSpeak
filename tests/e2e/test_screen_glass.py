@@ -2,7 +2,7 @@
 it. What jsdom cannot read: the Delete key on a selected icon, the receipt's
 box in the viewport (9 of 9 ``elementFromPoint`` samples on it, no pixel
 shared with the ask bar or the Dock), the 6 s linger of "Removal committed",
-and the same after the Screen scrolls at 393.
+and the same with the phone's current Go desk and a scrolled drawer at 393.
 
 The delete's logic (Undo keeps the object, a second delete commits the
 first, the seat) is vitest: ``web/src/desk/__tests__/deleteReceipt.test.tsx``.
@@ -19,6 +19,7 @@ phase cleared after 1.2 s.
 """
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -134,6 +135,49 @@ def _icon_menu_delete(page: Any, decision_id: str) -> None:
     item.click()
 
 
+def _phone_open_decision(page: Any, decision_id: str, title: str) -> Any:
+    """Open the exact record through Search, as the phone's Go desk does."""
+    field = page.locator('[aria-controls=desk-palette-listbox]')
+    if not field.is_visible():
+        page.locator('[aria-controls=desk-tool-shelf]:visible').tap()
+    field.fill(title)
+    page.locator(f'[id="desk-palette-option-decision:{decision_id}"]').tap()
+    window = page.locator(f'[id="pullout:decision:{decision_id}"]')
+    window.wait_for()
+    return window
+
+
+def _phone_window_delete(page: Any, window: Any) -> None:
+    """Long-press the real window head, then Object > Delete."""
+    box = window.locator(':scope > .desk-pullout-head').bounding_box()
+    assert box
+    x, y = box['x'] + box['width'] * .65, box['y'] + box['height'] / 2
+    cdp = page.context.new_cdp_session(page)
+    try:
+        cdp.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': [{'x': x, 'y': y}]})
+        page.wait_for_timeout(800)
+        cdp.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []})
+    finally:
+        cdp.detach()
+    menu = page.locator('.desk-head-menu[role=menu]')
+    menu.wait_for()
+    menu.get_by_role('menuitem').filter(
+        has=page.locator('.desk-menu-label', has_text=re.compile(r'^Object$'))).tap()
+    delete = page.get_by_role('menu', name='Object submenu', exact=True).get_by_role('menuitem').filter(
+        has=page.locator('.desk-menu-label', has_text=re.compile(r'^Delete$')))
+    assert delete.get_attribute('aria-disabled') != 'true'
+    delete.tap()
+    window.wait_for(state='detached')
+
+
+def _undo_phone_delete(page: Any, decision_id: str) -> None:
+    _readable_settled(page, 'Removed', 5_000)
+    page.locator('.undo-receipt-btn').tap()
+    _readable_settled(page, 'Restored', 5_000)
+    page.wait_for_timeout(10_000)  # past the pending removal's 8 s deadline
+    assert _status(page, decision_id) == 200
+
+
 
 class TestScreenDeleteGlass:
     @pytest.fixture(autouse=True)
@@ -150,11 +194,12 @@ class TestScreenDeleteGlass:
     def _open(self, pw: Any, width: int, titles: list[str]) -> tuple[Any, Any, list[str], list[str]]:
         browser = pw.chromium.launch(headless=True)
         page = browser.new_page(viewport={"width": width, "height": 852 if width <= 720 else 900},
-                                reduced_motion=STILL_FLOOR)
+                                reduced_motion=STILL_FLOOR, has_touch=width <= 720)
         errors: list[str] = []
         page.on("pageerror", lambda err: errors.append(str(err)))
         page.on("request", lambda req: self.deletes.append(req.url) if req.method == "DELETE" else None)
         page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+        _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
         ids = [_decision(page, title) for title in titles]
         page.reload(wait_until="load")
         _normal_chair(page)
@@ -172,22 +217,30 @@ class TestScreenDeleteGlass:
         with sync_playwright() as pw:
             browser = pw.chromium.launch(headless=True)
             try:
-                page = browser.new_page(viewport={"width": width, "height": 900})
+                page = browser.new_page(viewport={"width": width, "height": 900},
+                                        has_touch=width <= 720, reduced_motion=STILL_FLOOR)
                 errors: list[str] = []
                 page.on("pageerror", lambda err: errors.append(str(err)))
                 page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+                _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
                 created = _api(page, "POST", "/api/decisions",
                                {"title": "Glass withdrawn decision", "status": "accepted"}, token=TOKEN)
                 decision_id = created["decision"]["id"]
                 page.reload(wait_until="load")
                 _normal_chair(page)
 
-                # The one desk: select the decision's icon on the Screen.
-                icon = page.locator(f".desk-screen [data-object-id='decision:{decision_id}']")
-                icon.wait_for(timeout=15_000)
-                icon.scroll_into_view_if_needed()
-                icon.click()
-                assert icon.get_attribute("aria-pressed") == "true"
+                if width <= 720:
+                    window = _phone_open_decision(page, decision_id, "Glass withdrawn decision")
+                    _phone_window_delete(page, window)
+                    _undo_phone_delete(page, decision_id)
+                    window = _phone_open_decision(page, decision_id, "Glass withdrawn decision")
+                else:
+                    # Desktop retains the real selected-icon Delete key proof.
+                    icon = _icon(page, decision_id)
+                    icon.wait_for(timeout=15_000)
+                    icon.scroll_into_view_if_needed()
+                    icon.click()
+                    assert icon.get_attribute("aria-pressed") == "true"
                 # An in-page clock: when 'Removal committed' first shows and when it goes.
                 page.evaluate("""() => {
                   window.__committedFirst = null; window.__committedGone = null;
@@ -198,7 +251,10 @@ class TestScreenDeleteGlass:
                     if (!text && window.__committedFirst !== null) { window.__committedGone = now; clearInterval(iv); }
                   }, 50);
                 }""")
-                page.keyboard.press("Delete")
+                if width <= 720:
+                    _phone_window_delete(page, window)
+                else:
+                    page.keyboard.press("Delete")
 
                 pending = _readable_receipt(page, "Removed", 5_000)
                 page.screenshot(path=str(SHOTS / f"1-pending-{width}.png"))
@@ -227,26 +283,45 @@ class TestScreenDeleteGlass:
         with sync_playwright() as pw:
             browser, page, ids, errors = self._open(pw, 393, titles)
             try:
-                # The end of the desk: the last icon, the Screen scrolled to its foot.
-                _icon(page, ids[-1]).wait_for(timeout=15_000)
-                page.evaluate("() => { const s = document.querySelector('.desk-screen'); s.scrollTop = s.scrollHeight; }")
+                # At 393 Go is the desk. Open an actual drawer whose contents
+                # exceed its viewport, then delete the record at its foot.
+                created = _api(page, "POST", "/api/directories", {"name": "Receipt decisions"}, token=TOKEN)
+                directory_id = (created.get("directory") or created)["id"]
+                for decision_id in ids:
+                    _api(page, "PUT", f"/api/directories/{directory_id}/members/decision:{decision_id}", {}, token=TOKEN)
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                door = page.locator(f'.desk-go-home [data-object-id="zone:{directory_id}"]')
+                door.scroll_into_view_if_needed()
+                door.tap()
+                drawer = page.locator(f'[id="pullout:zone:{directory_id}"]')
+                drawer.wait_for()
+                body = drawer.locator('.desk-pullout-body')
+                body.evaluate("s => { s.scrollTop = s.scrollHeight; }")
                 page.wait_for_timeout(200)
-                scroll = page.evaluate(
-                    "() => { const s = document.querySelector('.desk-screen');"
-                    " return {top: s.scrollTop, h: s.scrollHeight, vh: s.clientHeight}; }"
-                )
-                assert scroll["h"] > scroll["vh"] and scroll["top"] > 0, f"the desk does not scroll: {scroll}"
-                _icon_menu_delete(page, ids[-1])
+                scroll = body.evaluate("s => ({top:s.scrollTop, h:s.scrollHeight, vh:s.clientHeight})")
+                assert scroll["h"] > scroll["vh"] and scroll["top"] > 0, f"the drawer does not scroll: {scroll}"
+                last = drawer.locator('.surface-row-open').filter(has=page.locator(f'[data-member-ref="decision:{ids[-1]}"]'))
+                last.tap()
+                window = page.locator(f'[id="pullout:decision:{ids[-1]}"]')
+                window.wait_for()
+                _phone_window_delete(page, window)
                 _readable_settled(page, "Removed", 5_000)
                 page.screenshot(path=str(SHOTS / "desk-long-end-393.png"))
                 _readable_settled(page, "Removal committed", 15_000)
                 assert _status(page, ids[-1]) == 404
-                # The top of the same desk.
-                page.evaluate("() => { document.querySelector('.desk-screen').scrollTop = 0; }")
+                # The top of the same drawer, and an Undo that survives the
+                # original removal deadline while that scrolled host stays open.
+                body.evaluate("s => { s.scrollTop = 0; }")
                 page.wait_for_timeout(200)
-                _icon_menu_delete(page, ids[0])
+                first = drawer.locator('.surface-row-open').filter(has=page.locator(f'[data-member-ref="decision:{ids[0]}"]'))
+                first.tap()
+                window = page.locator(f'[id="pullout:decision:{ids[0]}"]')
+                window.wait_for()
+                _phone_window_delete(page, window)
                 _readable_settled(page, "Removed", 5_000)
                 page.screenshot(path=str(SHOTS / "desk-long-top-393.png"))
+                _undo_phone_delete(page, ids[0])
                 self._clean(errors)
             finally:
                 browser.close()

@@ -2,14 +2,14 @@
 // the window switcher: a library menu Button, `<front window> ▾`. Its menu
 // lists the phone's ring (phoneRing.ts), a check on the window in front:
 // any open window in two taps. The title text truncates; the ▾ is its own
-// fixed mark (painted by CSS) and never does. It also mounts the ring's touch swipe.
+// fixed mark (painted by CSS) and never does. The mounted DeskChrome owns the touch swipe.
 import { useEffect, useRef, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { WorkMenu, type WorkMenuEntry } from "../DeskMenu";
 import { useDesk } from "../../store";
 import { useChairWindows } from "../../chair/chairWindows";
 import { useAllOpenWindows } from "./windowRegistry";
-import { phoneCurrent, phoneRing, showRingWindow, usePhoneSwipe } from "./phoneRing";
+import { phoneCurrent, phoneRing, showRingWindow } from "./phoneRing";
 
 export function ScreenSwitcher({ name }: { name: string }) {
   // Re-render on every fact the ring reads.
@@ -19,7 +19,6 @@ export function ScreenSwitcher({ name }: { name: string }) {
   useChairWindows((s) => s.captureInRing);
   useDesk((s) => s.panelOrder);
   useDesk((s) => s.panelMin);
-  usePhoneSwipe(true);
   const [at, setAt] = useState<{ x: number; y: number } | null>(null);
   // A press on the title while the menu is open CLOSES it. The menu's own
   // outside press (document, capture) closes it first and may re-render

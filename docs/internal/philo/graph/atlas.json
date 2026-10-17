@@ -7602,18 +7602,18 @@
         "edge.face.shade_receipt_open"
       ],
       "state_id": "state.projections.door.present",
-      "applicability": "unreachable",
+      "applicability": "applicable",
       "preconditions": [
-        "case.j9.shade_open.door_present reached -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+        "This run mints its own sweep receipt through the real heartbeat producer and opens Activity from Search.",
         {
           "kind": "check",
           "predicate": {
             "kind": "attr_equals",
-            "attr": "aria-label",
-            "value": "Missed"
+            "attr": "data-testid",
+            "value": "activity-finished"
           },
-          "observe_at": ".desk-shade",
-          "why": "OPEN_SHADE really opened Desk memory"
+          "observe_at": "[data-testid=activity-finished]",
+          "why": "Search Activity opened the current Finished receipt surface."
         },
         {
           "kind": "check",
@@ -7649,16 +7649,44 @@
           "adapter": "http-route"
         },
         {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/desk/projections?kind=receipt&attention_state=resolved&offset=0&limit=50",
+          "body": null,
+          "adapter": "http-route",
+          "expect_status": 200,
+          "capture_as": "sweep_projection_id",
+          "capture_path": "projections",
+          "capture_match": {
+            "subject_ref": "service:HeartbeatService",
+            "detail_url": "/cadence"
+          },
+          "why": "Bind the exact receipt minted by this run, rather than opening another Finished row."
+        },
+        {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-dock [data-launcher='attention']"
+          "selector": "button[aria-controls=desk-tool-shelf]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "input[aria-controls=desk-palette-listbox]",
+          "value": "Activity",
+          "adapter": "ui-keyboard"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-deck-row[id='desk-palette-option-go.inspect-activity']",
+          "adapter": "ui-pointer"
         },
         {
           "kind": "ui",
           "action": "wait_for",
-          "adapter": "ui-pointer",
-          "selector": ".desk-shade"
+          "selector": "[id='activity-receipt-{sweep_projection_id}']",
+          "adapter": "ui-pointer"
         }
       ],
       "expected": {
@@ -7667,14 +7695,172 @@
           "value": "Rhythm"
         },
         "observe_at": "#surface-cadence",
-        "words": "the Rhythm/cadence face opens (the configure-cadence surface) and the shade closes; the click is not a no-op - this is the owner's sitting defect 1 [the audit's stated observation location: face: the opened surface]"
+        "words": "The produced sweep receipt opens Rhythm from Activity; Activity stays open for the return."
       },
       "completion_bound_s": 30,
       "viewports": [
         1440,
         393
       ],
-      "reason": "The former Missed/System shade is parked. Needs you is the active attention list; old observations remain historical evidence."
+      "reason": "Finished sweep receipts are read in Activity, reached through Search; the legacy case id remains for evidence continuity.",
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "selector": "[id='activity-receipt-{sweep_projection_id}'] button",
+        "adapter": "ui-pointer",
+        "timeout_s": 15,
+        "why": "The exact sweep receipt\u2019s library Open receipt Button opens its registered Rhythm face from Activity."
+      }
+    },
+    {
+      "id": "case.j9.activity_receipt_return.same_receipt",
+      "job": "j9",
+      "edge_ids": [
+        "edge.face.shade_receipt_open"
+      ],
+      "state_id": "state.projections.door.present",
+      "applicability": "applicable",
+      "preconditions": [
+        "This isolated run mints one real heartbeat sweep receipt, captures its exact projection id, and opens Rhythm from that receipt in Activity."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/settings/heartbeat/run-now",
+          "body": {},
+          "adapter": "http-route",
+          "expect_status": 200
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/desk/projections?kind=receipt&attention_state=resolved&offset=0&limit=50",
+          "body": null,
+          "adapter": "http-route",
+          "expect_status": 200,
+          "capture_as": "sweep_projection_id",
+          "capture_path": "projections",
+          "capture_match": {
+            "subject_ref": "service:HeartbeatService",
+            "detail_url": "/cadence"
+          },
+          "why": "Bind the exact receipt minted by this run, rather than opening another Finished row."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "button[aria-controls=desk-tool-shelf]",
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "input[aria-controls=desk-palette-listbox]",
+          "value": "Activity",
+          "adapter": "ui-keyboard"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-deck-row[id='desk-palette-option-go.inspect-activity']",
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[id='activity-receipt-{sweep_projection_id}']",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[id='activity-receipt-{sweep_projection_id}'] button",
+          "adapter": "ui-by-viewport",
+          "timeout_s": 15,
+          "why": "The exact sweep receipt\u2019s library Open receipt Button opens its registered Rhythm face from Activity."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "#surface-cadence.is-front button[aria-label=\"Close Rhythm\"]",
+          "at_width": 1440,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "#surface-cadence.is-front button[aria-label=\"Back from Rhythm\"]",
+          "at_width": 393,
+          "adapter": "ui-pointer"
+        }
+      ],
+      "expected": {
+        "observe_at": "#surface-activity.is-front [id='activity-receipt-{sweep_projection_id}'] button",
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "hit_target",
+              "min_width": 1,
+              "min_height": 28
+            },
+            {
+              "kind": "selector_presence",
+              "selector": "#surface-cadence",
+              "present": false
+            },
+            {
+              "kind": "protocol_rows_same",
+              "read_index": 0,
+              "collection": "projections",
+              "match": {
+                "id": "{sweep_projection_id}"
+              },
+              "identity": "id"
+            }
+          ]
+        },
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/desk/projections?kind=receipt&attention_state=resolved&offset=0&limit=50"
+          },
+          {
+            "method": "GET",
+            "path": "/api/desk/windows"
+          }
+        ],
+        "words": "The same receipt Button owns nine plate hit points in frontmost Activity; Rhythm is gone and the projection/source identity is unchanged. The library plate is 28px; phone halo ownership is not inferred from its bounding box."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ],
+      "reason": "Closing Rhythm returns to the same Finished receipt in Activity without changing its durable source.",
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "selector": "#surface-cadence .desk-gadget-close",
+        "adapter": "ui-by-viewport",
+        "timeout_s": 15,
+        "why": "Native Close at 1440 or Back at 393 closes the unscoped Rhythm host."
+      }
     },
     {
       "id": "case.j9.shade_open.door_absent",

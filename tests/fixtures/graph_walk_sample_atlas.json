@@ -4,7 +4,7 @@
   "cases": [
     {
       "id": "J9-sweep-receipt-open",
-      "job": "J9 Open what the desk remembered: a sweep receipt's Open opens the Rhythm face",
+      "job": "J9 Open what the desk remembered: the exact sweep receipt in Activity opens Rhythm",
       "edge_ids": [
         "edge:shade.receipt.open"
       ],
@@ -48,36 +48,53 @@
           "adapter": "ui-pointer"
         },
         {
-          "kind": "ui",
-          "action": "click",
-          "selector": ".desk-dock [data-launcher='attention']",
-          "timeout_s": 20,
-          "adapter": "ui-pointer",
-          "why": "Desk memory: the Dock launcher opens the shade (PHILO-17: the bell opens Needs you)"
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/desk/projections?kind=receipt&attention_state=resolved&offset=0&limit=50",
+          "body": null,
+          "adapter": "http-route",
+          "expect_status": 200,
+          "capture_as": "sweep_projection_id",
+          "capture_path": "projections",
+          "capture_match": {
+            "subject_ref": "service:HeartbeatService",
+            "detail_url": "/cadence"
+          },
+          "why": "Bind the exact receipt minted by this run, rather than opening another Finished row."
         },
         {
           "kind": "ui",
-          "action": "wait_for",
-          "selector": ".desk-shade",
-          "timeout_s": 15,
+          "action": "click",
+          "selector": "button[aria-controls=desk-tool-shelf]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "input[aria-controls=desk-palette-listbox]",
+          "value": "Activity",
+          "adapter": "ui-keyboard"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-deck-row[id='desk-palette-option-go.inspect-activity']",
           "adapter": "ui-pointer"
         },
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "section[aria-label=\"Finished\"] .desk-shade-item",
-          "timeout_s": 15,
-          "adapter": "ui-pointer",
-          "why": "the sweep row lands in Finished (attention_state resolved, holdspeak/db/projections.py:706)"
+          "selector": "[id='activity-receipt-{sweep_projection_id}']",
+          "adapter": "ui-pointer"
         }
       ],
       "trigger": {
         "kind": "ui",
         "action": "click",
-        "selector": "section[aria-label=\"Finished\"] .desk-shade-item:has-text(\"SWEEP\") .desk-shade-do button",
-        "timeout_s": 15,
+        "selector": "[id='activity-receipt-{sweep_projection_id}'] button",
         "adapter": "ui-pointer",
-        "why": "the receipt's own Open (web/src/desk/components/SystemShade.tsx:387) -- the real entry point, not a substitute"
+        "timeout_s": 15,
+        "why": "The exact sweep receipt\u2019s library Open receipt Button opens its registered Rhythm face from Activity."
       },
       "expected": {
         "observe_at": "#surface-cadence",
@@ -90,7 +107,8 @@
             "method": "GET",
             "path": "/api/desk/projections"
           }
-        ]
+        ],
+        "words": "The produced sweep receipt opens Rhythm from Activity; Activity stays open for the return."
       },
       "completion_bound_s": 20,
       "viewports": [

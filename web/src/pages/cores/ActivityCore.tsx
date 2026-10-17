@@ -37,6 +37,7 @@ import {
 import { humanTime, presentValue } from "../../desk/surface/format";
 import { useAction, useCoreWings } from "./core-hooks";
 import { CoreResourceGuard, renderHeroSlot } from "./core-layout";
+import { ActivityFinishedReceipts } from "./ActivityFinishedReceipts";
 
 const WINGS = [
   { id: "records", label: "Records" },
@@ -251,6 +252,7 @@ export function ActivityCore({ hero }: CoreProps) {
           {list(wings.view as Kind)}
         </SurfaceSection>
       )}
+      {!wings.doorOpen && wings.view === "records" ? <ActivityFinishedReceipts query={query}/> : null}
       <SurfaceFooter />
     </>
   );

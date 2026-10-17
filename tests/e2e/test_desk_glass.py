@@ -88,22 +88,35 @@ class TestObjectVerbsOnTheChair:
         _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
         page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
         _normal_chair(page)
-        page.locator(ICON).wait_for(timeout=T)
+        if width < 720:
+            # The phone has a Go index instead of loose Screen icons. Open
+            # this exact note, then use its window's Object menu.
+            _search(page, NOTE, f"[id='desk-palette-option-note:{NOTE_ID}']")
+            page.get_by_role("region", name=NOTE, exact=True).wait_for(timeout=T)
+        else:
+            page.locator(ICON).wait_for(timeout=T)
         return browser, page, errors
 
     def _note_title(self) -> str:
         return str(self.db.notes.get(NOTE_ID).title)
 
-    def _rename_in_editor(self, page: Any, title: str) -> None:
-        editor = page.locator(".desk-editor-window")
+    def _rename_in_editor(self, page: Any, title: str, *, inline: bool = False) -> None:
+        # An already open note owns its editor in that same window. A loose
+        # Screen object's F2 command still opens the standalone editor.
+        editor = page.locator(f"[id='pullout:note:{NOTE_ID}']" if inline else ".desk-editor-window")
         editor.wait_for(timeout=T)
         field = editor.get_by_role("textbox", name="Title", exact=True)
+        field.wait_for(timeout=T)
         with page.expect_response(lambda r: f"/api/notes/{NOTE_ID}" in r.url and r.request.method == "PUT"
                                   and (r.request.post_data_json or {}).get("title") == title) as kept:
             field.fill(title)
         assert kept.value.ok, kept.value.text()
-        editor.get_by_role("button", name="Save", exact=True).click()
-        editor.wait_for(state="detached", timeout=T)
+        editor.get_by_role("button", name="Done", exact=True).click()
+        if inline:
+            field.wait_for(state="detached", timeout=T)
+            assert editor.is_visible() and editor.get_attribute("aria-label") == title
+        else:
+            editor.wait_for(state="detached", timeout=T)
 
     def _object_rename_disabled(self, page: Any, shot: str | None = None) -> bool:
         """Open the menu bar Object menu; True when Rename is ghosted."""
@@ -151,7 +164,7 @@ class TestObjectVerbsOnTheChair:
                 editor = page.locator(".desk-editor-window")
                 editor.wait_for(timeout=T)
                 assert editor.get_by_role("textbox", name="Title", exact=True).input_value() == "Avery 1:1 questions"
-                editor.get_by_role("button", name="Save", exact=True).click()
+                editor.get_by_role("button", name="Done", exact=True).click()
                 editor.wait_for(state="detached", timeout=T)
                 # A right-click opens the Floor's object menu.
                 icon.click(button="right")
@@ -187,17 +200,16 @@ class TestObjectVerbsOnTheChair:
         with sync_playwright() as pw:
             browser, page, errors = self._page(pw, 393)
             try:
-                icon = page.locator(ICON)
-                icon.scroll_into_view_if_needed()
-                icon.click(button="right")
-                assert icon.get_attribute("aria-pressed") == "true"
-                ctx_menu = page.locator(".desk-world-menu")
+                note = page.get_by_role("region", name=NOTE, exact=True)
+                note.locator(":scope > .desk-pullout-head").click(button="right")
+                ctx_menu = page.locator(".desk-head-menu")
                 ctx_menu.wait_for(timeout=T)
+                ctx_menu.get_by_role("menuitem", name="Object", exact=True).click()
                 rename = ctx_menu.get_by_role("menuitem", name=re.compile(r"^Rename"))
                 assert rename.get_attribute("aria-disabled") != "true"
                 page.screenshot(path=str(SHOTS / "objverbs-393-right-click.png"))
                 rename.click()
-                self._rename_in_editor(page, "Avery questions")
+                self._rename_in_editor(page, "Avery questions", inline=True)
                 assert self._note_title() == "Avery questions"
                 assert not errors, errors
             finally:
@@ -245,6 +257,12 @@ class TestOneDesk:
         t = head.locator(".desk-pullout-title").first
         b = t.bounding_box() if t.count() and t.is_visible() else head.first.bounding_box()
         x, y = b["x"] + min(b["width"] - 4, max(8, b["width"] / 2)), b["y"] + b["height"] / 2
+        hit = page.evaluate("""([x, y]) => {
+          const target = document.elementFromPoint(x, y);
+          return {window: target?.closest('.desk-window-shell')?.id,
+                  target: target?.outerHTML.slice(0, 200)};
+        }""", [x, y])
+        assert hit["window"] == win, (win, b, hit)
         if phone:
             cdp = page.context.new_cdp_session(page)
             cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": x, "y": y, "id": 1}]})
@@ -255,7 +273,7 @@ class TestOneDesk:
         else:
             page.mouse.click(x, y, button="right")
             page.wait_for_timeout(500)
-        page.locator("[role=menu]").first.wait_for(timeout=10_000)
+        page.locator(".desk-head-menu").wait_for(timeout=10_000)
 
     def _desk(self, pw: Any, width: int) -> tuple[Any, Any, list[str]]:
         phone = width <= 720
@@ -296,14 +314,22 @@ class TestOneDesk:
                 page.locator(f"[id='{win}']").wait_for(timeout=T)
                 page.wait_for_timeout(900)
                 self._window_menu(page, win, phone)
-                obj = page.locator("[role=menu] [role=menuitem][aria-haspopup=menu]:has-text('Object')").first
+                menu = page.locator(".desk-head-menu")
+                obj = menu.get_by_role("menuitem", name="Object", exact=True)
                 obj.wait_for(timeout=T)
                 if phone:
                     self._tap(page, obj, phone)
                 else:
                     obj.hover()
                     page.wait_for_timeout(700)
-                delete = page.locator("[role=menu] [role^=menuitem]:has-text('Delete')").last
+                    assert obj.get_attribute("aria-expanded") == "true"
+                object_menu = page.get_by_role("menu", name="Object submenu", exact=True)
+                object_menu.wait_for(timeout=T)
+                # Desktop adds a visible Delete key hint to the accessible
+                # name. The exact action label identifies the one row.
+                delete = object_menu.get_by_role("menuitem").filter(
+                    has=page.locator(".desk-menu-label", has_text=re.compile(r"^Delete$")))
+                assert delete.count() == 1, object_menu.inner_text()
                 assert delete.get_attribute("aria-disabled") != "true", delete.inner_text()
                 self._tap(page, delete, phone, 900)
                 page.locator(f"[id='{win}']").wait_for(state="detached", timeout=T)
@@ -350,14 +376,21 @@ class TestOneDesk:
                 page.locator(f"[id='{win}']").wait_for(timeout=T)
                 page.wait_for_timeout(900)
                 self._window_menu(page, win, phone)
-                obj = page.locator("[role=menu] [role=menuitem][aria-haspopup=menu]:has-text('Object')").first
+                menu = page.locator(".desk-head-menu")
+                obj = menu.get_by_role("menuitem", name="Object", exact=True)
                 obj.wait_for(timeout=T)
                 if phone:
                     self._tap(page, obj, phone)
                 else:
                     obj.hover()
                     page.wait_for_timeout(700)
-                self._tap(page, page.locator("[role=menu] [role^=menuitem]:has-text('Delete')").last, phone, 900)
+                    assert obj.get_attribute("aria-expanded") == "true"
+                object_menu = page.get_by_role("menu", name="Object submenu", exact=True)
+                object_menu.wait_for(timeout=T)
+                delete = object_menu.get_by_role("menuitem").filter(
+                    has=page.locator(".desk-menu-label", has_text=re.compile(r"^Delete$")))
+                assert delete.count() == 1, object_menu.inner_text()
+                self._tap(page, delete, phone, 900)
                 page.locator(f"[id='{win}']").wait_for(state="detached", timeout=T)
                 # The Chair window is still open; the receipt and its Undo are on the glass.
                 assert page.locator(".desk-window-shell.chair-window[aria-label='Needs you']").first.is_visible()
@@ -591,10 +624,7 @@ def test_receipt_verbs_own_their_areas(receipt_hub, width: int) -> None:
 
         clear_hub_windows(page, receipt_hub.token)
         page.reload()
-        try:
-            page.get_by_role("button", name="Continue later").click(timeout=4000)
-        except Exception:
-            pass
+        _normal_chair(page)
         page.locator("[aria-controls=desk-tool-shelf]").wait_for(timeout=15000)
 
         # 1. the chrome receipt (the desk backstop)
@@ -623,7 +653,7 @@ def test_receipt_verbs_own_their_areas(receipt_hub, width: int) -> None:
 
         # 2. a Thread receipt (in flow in the pullout)
         _search(page, "New Thread", "[id='desk-palette-option-desk.new-thread']")
-        page.locator(".thread-title").first.click()
+        page.get_by_role("button", name="Rename thread", exact=True).click()
         _fault(page, "PATCH", "/api/threads/")
         page.locator("input[aria-label='Thread title']").fill("Renamed")
         page.keyboard.press("Enter")
@@ -633,8 +663,12 @@ def test_receipt_verbs_own_their_areas(receipt_hub, width: int) -> None:
         page.locator("[aria-controls=desk-tool-shelf]").wait_for(timeout=15000)
 
         # 3. a footer receipt (the Brief view's SurfaceFooter)
-        status, _ = receipt_hub.api("POST", "/api/decisions", {"title": "Receipt hit material", "status": "proposed"})
+        # The module shares a hub across widths. Each sitting owns a named
+        # record, and its source id must survive selection and return.
+        receipt_title = f"Receipt hit material at {width}"
+        status, made = receipt_hub.api("POST", "/api/decisions", {"title": receipt_title, "status": "proposed"})
         assert status == 201
+        decision_id = made["decision"]["id"]
         # the brief is made through the hub's own route (the Chair's Generate
         # is J10's case; at 393 the open Thread sheet covers the Chair here)
         status, _ = receipt_hub.api("POST", "/api/brief/generate", {})
@@ -643,15 +677,24 @@ def test_receipt_verbs_own_their_areas(receipt_hub, width: int) -> None:
         # PHILO-17 summaries (#1064): a setup row ("No engine for summaries")
         # can lead the list; select the decision's own row.
         page.locator("[data-testid=brief-sf-row] .intelligence-brief-sf-primary",
-                     has_text="Receipt hit material").first.click()
+                     has_text=receipt_title).click()
         # The row opens the decision in its own window (PHILO-13-06 B1); at
         # 393 that window is the front sheet. Bring the Brief back to the
         # front from its Dock tile: its footer is the receipt under test.
-        page.locator(".desk-window-shell[aria-label='Receipt hit material']").first.wait_for(timeout=15000)
-        page.locator(".desk-dock [aria-label^='Today']").first.click()
-        page.locator(".desk-window-shell.is-front[aria-label='Today']").wait_for(timeout=15000)
+        source = page.locator(f"[id='pullout:decision:{decision_id}']")
+        source.wait_for(timeout=15000)
+        assert source.get_attribute("aria-label") == receipt_title
+        page.locator(".desk-dock [data-app='intelligence:desk']").click()
+        today = page.locator("[id='pullout:intelligence:desk'].is-front")
+        today.wait_for(timeout=15000)
+        assert today.get_by_role("group", name="Intelligence view", exact=True).filter(visible=True).get_by_role(
+            "button", name="Brief", exact=True).get_attribute("aria-pressed") == "true", (
+                "Returning to Today must keep the selected Brief view and its triage row"
+            )
+        assert today.get_by_test_id("brief-sf-row").filter(
+            has_text=receipt_title).get_attribute("data-selected") == "true"
         _fault(page, "POST", "/api/brief/items/")
-        page.get_by_role("button", name="Acknowledge").first.click()
+        today.get_by_role("button", name="Acknowledge", exact=True).click()
         _probe(page, ".surface-footer-receipt", "brief-footer", width, failures)
         browser.close()
     assert not failures, "\n".join(failures)
@@ -743,8 +786,10 @@ class TestDeskDebtsGlass:
         self._seed(page)
         page.reload(wait_until="load")
         _normal_chair(page)
-        # PHILO-17: the one desk. The note's icon is on the Screen.
-        page.locator(f"{S_ICON}").first.wait_for(timeout=T)
+        # The probe note is filed in Payments, so it is not a loose Screen
+        # icon. Search opens the exact filed note at both widths.
+        _search(page, NOTES[0], f"[id='desk-palette-option-note:{self.note_id}']")
+        page.get_by_role("region", name=NOTES[0], exact=True).wait_for(timeout=T)
         page.wait_for_timeout(1200)
         return browser, page, errors
 
@@ -757,6 +802,7 @@ class TestDeskDebtsGlass:
         notes = [_api(page, "POST", "/api/notes", {"title": t, "body": t}, token=S_TOKEN) for t in NOTES]
         zid = (zones[0].get("directory") or zones[0])["id"]
         nid = (notes[0].get("note") or notes[0])["id"]
+        self.note_id = nid
         _api(page, "PUT", f"/api/directories/{zid}/members/note:{nid}", {}, token=S_TOKEN)
         _api(page, "PUT", "/api/authority/control-mode", {"control_mode": "neutral"}, token=S_TOKEN)
         _api(page, "POST", "/api/desk/actuators/github/propose",
@@ -766,14 +812,19 @@ class TestDeskDebtsGlass:
         assert counts.get(f"note:{nid}", {}).get("needs_attention") == 1, counts
 
     def _open_note_editor(self, page: Any) -> Any:
-        # PHILO-17: the note's desk icon and its object menu (the Screen).
-        icon = page.locator(S_ICON).first
-        icon.scroll_into_view_if_needed()
-        icon.click(button="right")
-        page.get_by_role("menuitem", name="Edit", exact=True).click()
+        self._note_object_menu(page).get_by_role("menuitem", name="Edit", exact=True).click()
         editor = page.locator(".cm-content").first
         editor.wait_for(timeout=T)
         return editor
+
+    @staticmethod
+    def _note_object_menu(page: Any) -> Any:
+        note = page.get_by_role("region", name=NOTES[0], exact=True)
+        note.locator(":scope > .desk-pullout-head").click(button="right")
+        menu = page.locator(".desk-head-menu")
+        menu.wait_for(timeout=T)
+        menu.get_by_role("menuitem", name="Object", exact=True).click()
+        return menu
 
     @pytest.mark.e2e
     @pytest.mark.parametrize("width", WIDTHS)
@@ -824,10 +875,8 @@ class TestDeskDebtsGlass:
         with sync_playwright() as pw:
             browser, page, errors = self._open(pw, width)
             try:
-                icon = page.locator(S_ICON).first
-                icon.scroll_into_view_if_needed()
-                icon.click(button="right")
-                page.get_by_role("menuitem", name="Continue in thread", exact=True).click()
+                self._note_object_menu(page).get_by_role(
+                    "menuitem", name="Continue in thread", exact=True).click()
                 area = page.locator("textarea").first
                 area.wait_for(timeout=T)
                 area.fill("Ask Priya about the cutover date")

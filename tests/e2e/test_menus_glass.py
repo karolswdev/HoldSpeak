@@ -115,22 +115,34 @@ def _press(page: Any, target: Any) -> None:
 
 
 def _press_dock(page: Any, selector: str) -> None:
-    """Press a Dock control as the phone does: page the shelf with More
-    (a real tap) until the control is on the visible page, then tap it."""
-    target = page.locator(selector).first
+    """Swipe the current phone shelf until its named tile can be tapped."""
+    target = page.locator(selector)
+    target.wait_for(state="attached")
     for _ in range(6):
         if target.evaluate(ON_SHELF_JS):
             _press(page, target)
             return
-        _press(page, page.locator(".desk-dock .desk-dock-more"))
+        box = page.locator(".desk-dock").bounding_box()
+        assert box, "the Dock has no touch surface"
+        y = box["y"] + box["height"] / 2
+        start, end = box["x"] + box["width"] - 20, box["x"] + 20
+        cdp = page.context.new_cdp_session(page)
+        try:
+            cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": start, "y": y}]})
+            for step in range(1, 9):
+                cdp.send("Input.dispatchTouchEvent", {"type": "touchMove", "touchPoints": [{"x": start + (end - start) * step / 8, "y": y}]})
+                page.wait_for_timeout(16)
+            cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+        finally:
+            cdp.detach()
         page.wait_for_timeout(450)
     raise AssertionError(f"{selector} never came onto the Dock's visible page")
 
 
 def _row(page: Any, label: str) -> Any:
     """The menu row whose label is `label` (its name also carries a keycap)."""
-    return page.locator("[role^=menuitem]").filter(
-        has=page.locator(".desk-menu-label", has_text=re.compile(f"^{re.escape(label)}$"))).last
+    return page.locator(".desk-verbbar-menu [role^=menuitem]").filter(
+        has=page.locator(".desk-menu-label", has_text=re.compile(f"^{re.escape(label)}$")))
 
 
 class _MenusRig:
@@ -177,7 +189,7 @@ class _MenusRig:
     def _go_row(self, page: Any, *path: str) -> Callable[[], None]:
         def run() -> None:
             _press(page, page.locator(".desk-verbbar-item[data-menu-id='go'] button"))
-            page.locator(".desk-menu-list").first.wait_for()
+            page.locator(".desk-verbbar-menu").wait_for()
             for label in path:
                 _press(page, _row(page, label))
         return run
@@ -553,7 +565,7 @@ class TestSharedControlsAreSpecies:
             title = page.locator(".desk-verbbar-title", has_text=name)
             title.wait_for(timeout=10_000)
             title.click()
-            menu = page.get_by_role("menu", name=f"{name} menu", exact=True)
+            menu = page.locator(f'.desk-verbbar-menu[aria-label="{name} menu"]')
             menu.wait_for(timeout=10_000)
             _library_species(
                 page,
@@ -577,9 +589,7 @@ class TestSharedControlsAreSpecies:
                 f"ArrowUp did not walk back: {back} != {first}"
             )
             page.keyboard.press("Escape")
-            page.get_by_role("menu", name=f"{name} menu", exact=True).wait_for(
-                state="detached"
-            )
+            menu.wait_for(state="detached")
             # Escape closes the whole panel. Where focus LANDS afterwards is
             # NOT ASSESSED here: `DeskMenuBar.tsx:134-144` renders `WorkMenu`
             # without `returnFocus` (`DeskMenu.tsx:455` accepts it), at the
@@ -625,18 +635,19 @@ class TestSharedControlsAreSpecies:
                 ring = _tab_into(page, ".desk-wings")
                 assert ring["outlineWidth"] > 0, f"the strip menu has no focus ring: {ring}"
                 page.keyboard.press("Enter")
-                page.locator(".desk-menu-list").first.wait_for(timeout=5_000)
-                checked = page.locator(".desk-menu-list [aria-checked=true]").all_inner_texts()
+                wing_menu = page.get_by_role("menu", name="Window faces", exact=True)
+                wing_menu.wait_for(timeout=5_000)
+                checked = wing_menu.locator("[aria-checked=true]").all_inner_texts()
                 assert len(checked) == 1, f"the strip menu must check ONE current face: {checked}"
                 # the CHOICES own the target, not only the trigger (Astra counsel
                 # on #730): every row of the open menu, checkable rows included
-                choices = page.locator(".desk-menu-list [role^=menuitem]")
+                choices = wing_menu.locator("[role^=menuitem]")
                 assert choices.count() >= 5, f"the strip menu drew {choices.count()} choices"
-                assert page.locator(".desk-menu-list [role=menuitemcheckbox]").count() >= 4
-                _strip_targets(page, ".desk-menu-list [role^=menuitem]", subject="the strip menu's choices")
+                assert wing_menu.get_by_role("menuitemcheckbox").count() >= 4
+                _strip_targets(page, '[role=menu][aria-label="Window faces"] [role^=menuitem]', subject="the strip menu's choices")
                 # a keyboard open puts focus on a row (DeskMenu autoFocus)
                 page.wait_for_function(
-                    "() => Boolean(document.activeElement?.closest('.desk-menu-list'))",
+                    "() => Boolean(document.activeElement?.closest('[role=menu][aria-label=\"Window faces\"]'))",
                     timeout=5_000,
                 )
                 page.keyboard.press("ArrowDown")

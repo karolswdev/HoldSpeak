@@ -156,7 +156,8 @@ class TestEveryNewVerbOpensItsWindow:
         return win
 
     def _close(self, page: Any, win: Any, width: int) -> None:
-        self._press(page, win.locator("[aria-label^='Close']").first, width)
+        prefix = "Back from " if width < 720 else "Close "
+        self._press(page, win.locator(f".desk-gadget-close[aria-label^='{prefix}']"), width)
         win.wait_for(state="detached")
 
     @pytest.mark.parametrize("face", ["chair"])
@@ -214,6 +215,11 @@ class TestEveryNewVerbOpensItsWindow:
                     before, sent = page.evaluate(WINDOW_IDS), len(posts)
                     page.locator("[aria-controls=desk-tool-shelf]").first.click()
                     page.locator("[aria-controls=desk-palette-listbox]").fill("New Agent")
+                    # Object matches own the default press. The Agent made
+                    # above also matches this query, so select the command
+                    # through the palette's actual pointer selection first.
+                    command = page.locator("[id='desk-palette-option-desk.new-agent']")
+                    command.hover()
                     page.locator("[id='desk-palette-option-desk.new-agent'][aria-selected=true]").wait_for()
                     page.keyboard.press("Enter")
                     win = self._new_window(page, before, "New Agent from the palette")

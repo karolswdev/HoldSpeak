@@ -35,7 +35,7 @@ from .concierge_rig import _quiet_concierge
 from .meeting_rig import _FixtureImportTranscriber, _chip_label, _wait_record_host
 from tests._evidence import evidence_dir
 from .chair_windows import go_group, open_chair_window
-from .runs_on import close_runs_on, engine_key_for, patch, wait_board
+from .runs_on import engine_key_for
 from . import runs_on
 
 TOKEN = "hs202-first-use"
@@ -94,12 +94,13 @@ def _desk(page, base, *, capture=False):
 
 
 def _needs(page):
-    """PHILO-14 A5 (#935): Needs you is a drawer on the screen."""
-    if not page.locator(".needs-drawer").count():
-        icon = page.locator(".desk-screen [data-object-id='drawer:needs']")
-        icon.wait_for()
-        icon.focus()
-        page.keyboard.press("Enter")
+    """The attention bell opens its own list at both widths."""
+    drawer = page.locator(".needs-drawer")
+    if not drawer.count() or not drawer.is_visible():
+        bell = page.get_by_test_id("desk-bell")
+        bell.wait_for()
+        assert _hit(bell), "Needs you bell is unreachable"
+        bell.click()
     return _loaded(page.locator(".needs-drawer [data-testid='arrival-display']"))
 
 
@@ -173,6 +174,7 @@ def _refind_note(page, note_id):
 def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
     _ensure_build()
     _quiet_concierge(monkeypatch)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.setenv("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(tmp_path / "people-keys.json"))
     import holdspeak.web_server as web_server
     from holdspeak.db import get_database
@@ -220,6 +222,29 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
     stub = ThreadingHTTPServer(("127.0.0.1", 0), _StubHandler)
     thread = threading.Thread(target=stub.serve_forever, daemon=True)
     thread.start()
+    # Same-device routes intentionally have no passive egress badge. Use a
+    # LAN-named fixture to preserve this walk's visible destination proof,
+    # while its sole discovery socket still reaches the loopback stub.
+    import holdspeak.setup_runtime as setup_runtime
+
+    fixture_host = "192.168.77.43"
+    fixture_endpoint = f"http://{fixture_host}:8080/v1"
+    stub_endpoint = f"http://127.0.0.1:{stub.server_address[1]}/v1"
+    discover_endpoint_models = setup_runtime.discover_endpoint_models
+    endpoint_tool_support = setup_runtime.endpoint_tool_support
+
+    def discover_fixture_endpoint(base_url, *args, **kwargs):
+        assert str(base_url) == fixture_endpoint, base_url
+        return discover_endpoint_models(stub_endpoint, *args, **kwargs)
+
+    def check_fixture_tools(base_url, *args, **kwargs):
+        assert str(base_url) == fixture_endpoint, base_url
+        # Check reads /props and may POST a one-token tool probe after /models.
+        # Keep all physical fixture traffic on loopback, with the real parser.
+        return endpoint_tool_support(stub_endpoint, *args, **kwargs)
+
+    monkeypatch.setattr(setup_runtime, "discover_endpoint_models", discover_fixture_endpoint)
+    monkeypatch.setattr(setup_runtime, "endpoint_tool_support", check_fixture_tools)
     failures = set()
     shots = SHOTS if os.environ.get("HS202_EXPORT_SHOTS") == "1" else tmp_path / "shots"
     shots.mkdir(parents=True, exist_ok=True)
@@ -298,13 +323,14 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                 expect(words_card.get_by_text(WORDS)).to_be_visible()
                 assert len(received) == 1 and frames
                 words_card.get_by_role("button", name="Keep as note", exact=True).click()
-                expect(words_card.get_by_role("status", name="HEARD", exact=True)).to_be_visible()
+                expect(words_card.locator(".firstrun-cardstate").get_by_role("status", name="HEARD", exact=True)).to_be_visible()
+                expect(words_card.get_by_test_id("heard-quote").get_by_role("status", name="HEARD", exact=True)).to_be_visible()
             finally:
                 whisper_models.speech_readiness = real_readiness
             shot("fixture-speech-kept")
             print("PASS: fixture speech became visible text and a kept note; PCM samples", received[0])
 
-            # Job 5: one real UI setup gesture, with a deterministic localhost endpoint.
+            # Job 5: one real UI setup gesture, with the LAN-named local fixture.
             _desk(page, base)
             _needs(page)
             # The A5 row verb's accessible name carries its row; read its word.
@@ -312,33 +338,76 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             _loaded(choose)
             assert _hit(choose)
             choose.click()
-            # PHILO-16 (C): the door opens Runs on, already on Meetings.
-            wait_board(page)
-            assert "is-selected" in (page.get_by_test_id("switchboard-job-meetings").get_attribute("class") or "") \
-                or page.get_by_test_id("switchboard").get_attribute("data-layout") == "list"
-            _loaded(page.get_by_test_id("concierge-add-engine"))
+            # Engines now lives in Settings. With no saved engine its empty
+            # assignment board is hidden; the useful next action is Add engine.
+            models = page.locator("#surface-settings [data-settings-view='models']")
+            models.wait_for()
+            _loaded(models.get_by_test_id("concierge-add-engine"))
             page.get_by_test_id("concierge-add-engine").click()
             address = page.locator("[data-testid='concierge-add-engine-row'] input").first
-            endpoint = "http://127.0.0.1:" + str(stub.server_address[1]) + "/v1"
+            endpoint = fixture_endpoint
             address.fill(endpoint)
             _loaded(page.get_by_test_id("concierge-add-egress"))
-            assert "127.0.0.1" in page.get_by_test_id("concierge-add-egress").inner_text()
-            page.get_by_test_id("concierge-add-check").click()
+            assert fixture_host in page.get_by_test_id("concierge-add-egress").inner_text()
+            setup_checks, endpoint_writes = [], []
+
+            def record_setup_request(request):
+                if request.method != "POST":
+                    return
+                if request.url.endswith("/api/setup/discover-models"):
+                    setup_checks.append(request)
+                elif request.url.endswith("/define-endpoint"):
+                    endpoint_writes.append(request)
+
+            page.on("request", record_setup_request)
+            with page.expect_response(lambda response: response.url.endswith("/api/setup/discover-models")
+                                      and response.request.method == "POST") as checked:
+                page.get_by_test_id("concierge-add-check").click()
+            assert checked.value.ok, checked.value.text()
+            assert checked.value.json()["ok"] is True
+            assert checked.value.json()["models"] == [_StubHandler.MODEL]
+            assert len(setup_checks) == 1
+            assert setup_checks[0].post_data_json == {"base_url": endpoint, "check_tools": True}
+            expect(address).to_have_value(endpoint)
             expect(page.get_by_test_id("concierge-add-model")).to_have_text(_StubHandler.MODEL)
             with page.expect_response(lambda response: response.url.endswith("/define-endpoint")
                                       and response.request.method == "POST") as defined:
                 page.get_by_test_id("concierge-add-submit").click()
             assert defined.value.ok, defined.value.text()
+            assert len(endpoint_writes) == 1
             assert defined.value.request.post_data_json["draft"]["endpoint"] == endpoint
+            assert defined.value.request.post_data_json["draft"]["model"] == _StubHandler.MODEL
+            page.remove_listener("request", record_setup_request)
             provider = defined.value.json()["provider"]
             assert provider["profile_id"] and provider["profile_revision"] > 0
+            board = models.get_by_test_id("runson-assignments").get_by_test_id("switchboard")
+            board.wait_for()
             # The engine joins the column; one patch onto Meetings sets the
             # summaries. The window stays: the receipt is in its foot.
-            patch(page, "meetings", engine_key_for(endpoint))
+            engine_key = engine_key_for(endpoint)
+            with page.expect_response(lambda response: response.url.endswith("/api/inference/assignments/set")) as assigned:
+                if board.get_attribute("data-layout") == "list":
+                    board.get_by_test_id("switchboard-job-meetings").click()
+                    board.get_by_test_id(f"switchboard-tap-{engine_key}").click()
+                else:
+                    board.get_by_test_id(f"switchboard-engine-{engine_key}").drag_to(
+                        board.get_by_test_id("switchboard-job-meetings"))
+            assert assigned.value.ok, assigned.value.text()
+            assignment = assigned.value.request.post_data_json
+            assert assignment["scope"] == {"kind": "group", "group_id": "meetings"}, assignment
+            assert assignment["entries"][0]["profile_id"] == provider["profile_id"], assignment
+            runs_on.wait_receipt(page, r"^PATCHED ")
             assert runs_on.receipt(page).upper().startswith("PATCHED "), runs_on.receipt(page)
             assert page.locator("[data-testid='runson-undo']").count() == 1
             choose.wait_for(state="detached")
-            close_runs_on(page)
+            settings = page.locator("#surface-settings")
+            back = settings.get_by_role("button", name="Back from Settings" if width < 720 else "Close Settings", exact=True)
+            back.click()
+            if width < 720:
+                # Back leaves the scoped Models view before leaving Settings.
+                settings.locator(".settings-home").wait_for()
+                back.click()
+            settings.wait_for(state="detached")
             _needs(page)
             print("PASS: engine setup completed visibly without a reload")
             shot("engine-set")
@@ -346,26 +415,24 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             # Persistent doors: real hit ownership, normal clicks, loaded destination.
             dock = page.locator(".desk-dock")
             doors = {}
-            for key, name in (("speak", "Speak"), ("meetings", "Meetings"), ("missed", "Missed")):
+            essential = (
+                [("today", "Today", '[id="pullout:intelligence:desk"] [data-testid=today-day]'),
+                 ("capture", "Capture", '[aria-label="Capture"] [data-testid=arrival-capture-bar]'),
+                 ("meetings", "Meetings", ".meetings-head-verbs"),
+                 ("people", "People", "#surface-people .desk-surface-body")]
+                if width <= 720 else
+                [("speak", "Speak", ".speak-face"),
+                 ("meetings", "Meetings", ".meetings-head-verbs"),
+                 ("today", "Today", '[id="pullout:intelligence:desk"] [data-testid=today-day]')]
+            )
+            for key, name, destination in essential:
                 door = dock.get_by_role("button", name=name, exact=True)
-                # PHILO-13-13 C3-W (the ratified C1 393 Dock): the shelf ends on a
-                # whole icon and More AppIcons pages it; a door past the page is
-                # one More press away, never a sideways page scroll.
-                more = dock.get_by_test_id("desk-dock-more")
-                for _ in range(3):
-                    if _hit(door) or width > 720 or not more.is_visible():
-                        break
-                    more.click()
-                    page.wait_for_timeout(400)
                 doors[key] = check("dock-" + key, _hit(door),
                                    name + " dock door fits and owns its hit target")
-                # page back to the first page (More wraps at the end) for the next door
-                first = dock.get_by_role("button", name="Speak", exact=True)
-                for _ in range(3):
-                    if width > 720 or _hit(first) or not more.is_visible():
-                        break
-                    more.click()
-                    page.wait_for_timeout(400)
+                if doors[key]:
+                    door.click()
+                    _loaded(page.locator(destination))
+                    _desk(page, base)
             meetings_ok = doors["meetings"]
             if meetings_ok:
                 _meetings(page)
@@ -423,8 +490,8 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                 # (Thought / Meeting / Project / Person). Desk ▸ Object ▸
                 # Window ▸ are not on the phone; each window has its own menu.
                 folded_item(
-                    "menu-New", "Thought",
-                    "Thought is visible and reachable at Go ▸ New",
+                    "menu-New", "Note",
+                    "Note is visible and reachable at Go ▸ New",
                 )
                 page.keyboard.press("Escape")
             else:
@@ -480,11 +547,11 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                 print("RECOVERY: use New Note keyboard command after the recorded menu failure.")
                 page.keyboard.press("Meta+n")
             editor = page.locator(".desk-editor-window")
-            _loaded(editor.get_by_role("button", name="Save", exact=True))
-            # This new note has no earlier autosave. The editor's own Kept
+            _loaded(editor.get_by_role("button", name="Done", exact=True))
+            # This new note has no earlier autosave. The editor's own Saved
             # receipt must appear for this edit, not elsewhere on the desk.
-            receipt = editor.get_by_role("status").filter(has_text=re.compile(r"^Kept · "))
-            assert receipt.count() == 0, "New note already has a Kept receipt before typing"
+            receipt = editor.get_by_role("status").filter(has_text=re.compile(r"^Saved "))
+            assert receipt.count() == 0, "New note already has a Saved receipt before typing"
             editor_id = editor.get_attribute("id")
             assert editor_id and editor_id.startswith("editor:note:")
             with page.expect_response(lambda response: "/api/notes/" in response.url
@@ -497,15 +564,15 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             created = [n for n in notes if n["id"] not in before_notes and n["title"] == NOTE_TITLE]
             assert len(created) == 1 and created[0]["body_markdown"] == NOTE_BODY, {"before": before_notes, "notes": notes}
             note_id = created[0]["id"]
-            # The ruled editor autosaves; Save only closes it. Require the
+            # The editor autosaves; Done flushes and closes it. Require the
             # fresh keep on glass before the close removes its status node.
             observe("save-confirmation", """id => [...(document.getElementById(id)
               ?.querySelectorAll('[role=status]') || [])]
-              .some(e => visible(e) && /^Kept · /.test(e.textContent))""",
-                    "The edit has a new visible Kept receipt in its editor before Save",
+              .some(e => visible(e) && /^Saved /.test(e.textContent))""",
+                    "The edit has a new visible Saved receipt in its editor before Done",
                     arg=editor_id)
             shot("editor-kept-before-save")
-            editor.get_by_role("button", name="Save", exact=True).click()
+            editor.get_by_role("button", name="Done", exact=True).click()
             editor.wait_for(state="detached")
             saved = _api(page, "GET", "/api/notes/" + note_id, token=TOKEN)["note"]
             assert saved["title"] == NOTE_TITLE and saved["body_markdown"] == NOTE_BODY
@@ -536,7 +603,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             assert planned["status"] == "ready" and detail.get("run_receipt") is None
             assert db.intel.get_latest_intel_job(meeting_id) is None and not engine.analyzed
             host = planned["legs"][0]["host"]
-            assert len(planned["legs"]) == 1 and host == "127.0.0.1", planned
+            assert len(planned["legs"]) == 1 and host == fixture_host, planned
             assert planned["legs"][0]["profile_id"] == provider["profile_id"]
             assert planned["legs"][0]["profile_revision"] == provider["profile_revision"]
             print("PLANNED", host, planned["selection_hash"])
@@ -550,7 +617,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                 _meetings(page, recovery=not meetings_ok)
                 page.get_by_test_id("meeting-row-" + meeting_id).locator(".meetings-stream-row-body").click()
             route = _loaded(page.get_by_test_id("detail-route"))
-            assert _chip_label(host) in route.inner_text()
+            expect(route.locator(".gadget-chip-egress")).to_have_text(f"{host} · LAN")
             run = page.get_by_test_id("detail-run-intelligence-btn")
             assert _hit(run), "Run summary must be reachable on the loaded record"
             route_box, verb_box = route.bounding_box(), run.bounding_box()

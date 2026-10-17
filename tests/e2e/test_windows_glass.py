@@ -8,12 +8,12 @@ press):
 
 * The phone desk (PHILO-13-17, C7; the owner ratified the canvas 2026-10-03):
   the frame (menu bar + Dock) <= 142 px; the front window's content >= 700
-  px; the switcher's ▾ is painted whole at 3:1; the menu bar and the Dock own
+  px; the Go door is painted whole at 4.5:1; the menu bar and the Dock own
   no point of a content control's 44 px band; every body and footer control
   of the front window owns 44 x 44. The swipe lands 5 of 5 where the ring
   says (it wraps) and one swipe goes back; the long press still opens the
-  window menu; the switcher reaches any window in 2 taps, and a second tap
-  closes it (Astra r1 #751).
+  window menu; Go reaches a daily window in 2 taps, and a second tap
+  closes Go (Astra r1 #751).
 * Escape on an open strip menu closes the menu, not the window (PHILO-13-18):
   Speak's wings fold into one strip menu at 393; a tap opens it and leaves
   focus on the Button; the first Escape closes the menu and Speak stays in
@@ -67,7 +67,7 @@ from typing import Any, Callable
 
 import pytest
 
-from .chair_windows import open_chair_window
+from .chair_windows import chair_window, open_chair_window
 from .glass_infra import (
     _api,
     _boot,
@@ -182,7 +182,7 @@ MARK_CONTRAST = r"""(sel) => {
   let g = {r: 255, g: 255, b: 255, a: 1}; for (let i = chain.length - 1; i >= 0; i--) g = blend(chain[i], g);
   const fg = blend(rgb(getComputedStyle(mark, '::before').color) || rgb(getComputedStyle(mark).color), g);
   const x = lum(fg), y = lum(g);
-  const btn = mark.closest('.desk-screen-switcher');
+  const btn = mark.closest('button');
   return {ratio: Math.round(((Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05)) * 100) / 100,
           fg: [fg.r, fg.g, fg.b].map(Math.round), bg: [g.r, g.g, g.b].map(Math.round),
           open: btn ? btn.getAttribute('aria-expanded') === 'true' : null};
@@ -273,7 +273,7 @@ class TestThePhoneDesk:
         return page.evaluate(FRAME)
 
     def _board(self, page: Any, width: int, name: str, facts: dict[str, Any], fails: list[str],
-               *, chevron: bool = True) -> dict[str, Any]:
+               *, navigator: bool = True) -> dict[str, Any]:
         """One board: the shot and every glass fence of this story."""
         _settle(page)
         f = self._front(page)
@@ -296,10 +296,10 @@ class TestThePhoneDesk:
                 fails.append(f"{name}: chrome owns content hit points {f['chrome_owns_content']}")
             if f["body_under_44"]:
                 fails.append(f"{name}: body/footer controls under 44 x 44 {f['body_under_44']}")
-            if chevron:
-                f["chevron"] = self._chevron(page)
-                if not (f["chevron"]["whole"] and f["chevron"]["painted"] and f["chevron"]["contrast"]["ratio"] >= 3):
-                    fails.append(f"{name}: the switcher ▾ is not painted whole {f['chevron']}")
+            if navigator:
+                f["go"] = self._navigator(page)
+                if not (f["go"]["whole"] and f["go"]["painted"] and f["go"]["contrast"]["ratio"] >= 4.5):
+                    fails.append(f"{name}: Go is not painted whole {f['go']}")
         if faults["clipped"] or faults["overlaps"]:
             fails.append(f"{name}: on_glass clipped/overlaps {f['on_glass']}")
         if f["fixed_card"]:
@@ -311,9 +311,9 @@ class TestThePhoneDesk:
         return f
 
     @staticmethod
-    def _chevron(page: Any) -> dict[str, Any]:
-        """The ▾ is PAINTED: whole, on top at its centre, and its box's pixels change when it alone is hidden."""
-        sel = "[data-testid=desk-screen-switcher-mark]"
+    def _navigator(page: Any) -> dict[str, Any]:
+        """Go is painted whole, owns its centre, and has visible contrast."""
+        sel = ".desk-verbbar-item[data-menu-id=go] button"
         w = page.evaluate(WHOLE, sel)
         b = page.locator(sel).first.bounding_box()
         clip = {"x": b["x"], "y": b["y"], "width": max(1, b["width"]), "height": max(1, b["height"])}
@@ -321,12 +321,10 @@ class TestThePhoneDesk:
         page.evaluate(f"() => {{ document.querySelector('{sel}').style.visibility = 'hidden'; }}")
         hidden = page.screenshot(clip=clip)
         page.evaluate(f"() => {{ document.querySelector('{sel}').style.visibility = ''; }}")
-        cut = page.evaluate("""() => { const n = document.querySelector('.desk-screen-switcher .desk-screen-name');
+        cut = page.evaluate("""() => { const n = document.querySelector('.desk-screen-title .desk-screen-name');
             return n ? n.scrollWidth > n.clientWidth + 1 : null; }""")
-        # Astra r1 #751, condition 3: pixels that change at 1:1 are not "painted"
-        # for a reader. The mark's computed colour against the button's own
-        # (opaque, composited) background reads >= 3:1 (a non-text mark), in
-        # the closed and in the open state.
+        # Keep the visibility/contrast fence on the current navigator,
+        # with its menu closed and open.
         contrast = page.evaluate(MARK_CONTRAST, sel)
         return {"whole": bool(w.get("whole")), "painted": shown != hidden, "contrast": contrast,
                 "box": [round(b["x"]), round(b["y"]), round(b["width"]), round(b["height"])], "title_truncated": cut}
@@ -363,30 +361,40 @@ class TestThePhoneDesk:
                 if f["front"] != ["Needs you"] or f["title"] != "Needs you":
                     fails.append(f"C7-1: Needs you is not the one front window {f['front']} {f['title']}")
 
-                # two desk windows: Meetings, then the meeting (the ring is now 5)
+                # Phone Brief is Today's Brief view. Meetings then holds the
+                # selected record in its one host; no duplicate record pane.
+                self._tap(page, page.locator(".desk-verbbar-item[data-menu-id='go'] button"), width)
+                self._tap(page, page.locator(".desk-verbbar-menu").get_by_role("menuitem", name="Brief", exact=True), width)
+                today = chair_window(page, "Brief")
+                today.wait_for()
+                assert today.get_by_role("group", name="Intelligence view").filter(visible=True).get_by_role(
+                    "button", name="Brief", exact=True).get_attribute("aria-pressed") == "true"
                 self._open_meeting(page, width)
                 self._board(page, width, "C7-3a-meeting-window", facts, fails)
-                ring = ["Needs you", "Brief", "The week", "Meetings", MEETING]
+                ring = ["Needs you", "The week", "Today", MEETING]
 
-                # S2 the swipe: 5 of 5 forward (it wraps), then one back
+                # Five real forward gestures still prove the wrap, followed
+                # by a reverse gesture to the selected meeting's same host.
                 landed: list[str | None] = []
                 for _ in range(5):
                     self._swipe(page, +1)
                     fr = self._front(page)["front"]
                     landed.append(fr[0] if len(fr) == 1 else None)
                 facts["swipe_forward"] = landed
-                if landed != ring:
-                    fails.append(f"S2: 5 swipes landed {landed}, the ring says {ring}")
+                if landed != ring + ring[:1]:
+                    fails.append(f"S2: 5 swipes landed {landed}, the ring says {ring + ring[:1]}")
                 self._swipe(page, -1)
                 back = self._front(page)["front"]
                 facts["swipe_back"] = back
-                if back != ["Meetings"]:
-                    fails.append(f"S2: a swipe back landed {back}, not Meetings")
+                if back != [MEETING]:
+                    fails.append(f"S2: a swipe back landed {back}, not {MEETING}")
                 self._board(page, width, "C7-3b-swipe-to-meetings", facts, fails)
-                # past the first desk window, the Chair's window returns
+                self._swipe(page, -1)
+                if self._front(page)["front"] != ["Today"]:
+                    fails.append(f"S2: past Meetings the swipe landed {self._front(page)['front']}")
                 self._swipe(page, -1)
                 if self._front(page)["front"] != ["The week"]:
-                    fails.append(f"S2: past Meetings the swipe landed {self._front(page)['front']}")
+                    fails.append(f"S2: past Today the swipe landed {self._front(page)['front']}")
                 self._board(page, width, "C7-3c-swipe-to-the-chair", facts, fails)
 
                 # the long press still opens the window menu (the swipe never eats it)
@@ -399,23 +407,28 @@ class TestThePhoneDesk:
                 page.keyboard.press("Escape")
                 page.wait_for_timeout(300)
 
-                # S3 the switcher: 2 taps to Needs you
-                switcher = ".desk-screen-switcher-menu"
-                self._tap(page, page.get_by_test_id("desk-screen-switcher"), width, 600)
-                rows = page.locator(f"{switcher} [role=menuitemcheckbox]").all_inner_texts()
-                facts["switcher_rows"] = rows
-                if [r.replace("✓", "").strip() for r in rows] != ring:
-                    fails.append(f"S3: the switcher lists {rows}")
-                self._board(page, width, "C7-4a-switcher-open", facts, fails)
-                # C2: the second native tap on the open switcher closes it; a third opens it again
-                self._tap(page, page.get_by_test_id("desk-screen-switcher"), width, 600)
-                if page.locator(switcher).count():
-                    fails.append("C2 a second tap on the switcher did not close it")
-                self._tap(page, page.get_by_test_id("desk-screen-switcher"), width, 600)
-                if not page.locator(switcher).count():
-                    fails.append("C2 a third tap did not open the switcher")
-                self._tap(page, page.locator(f"{switcher} [role=menuitemcheckbox]", has_text="Needs you"), width, 700)
-                f = self._board(page, width, "C7-4b-switcher-picked", facts, fails)
+                # Go is the current two-tap phone navigator. Its second
+                # native tap dismisses it; a third opens it again.
+                go = page.locator(".desk-verbbar-item[data-menu-id='go'] button")
+                # The phone home also has a persistent Go menu. Toggle the
+                # transient menu that belongs to this title Button.
+                menu = page.locator('.desk-verbbar-menu[role="menu"][aria-label="Go menu"]')
+                self._tap(page, go, width, 600)
+                menu.wait_for()
+                assert go.get_attribute("aria-expanded") == "true"
+                rows = menu.locator(".desk-menu-label").all_inner_texts()
+                facts["go_rows"] = rows
+                if rows[:4] != ["Needs you", "Brief", "The week", "Capture"]:
+                    fails.append(f"S3: Go lists {rows}")
+                self._board(page, width, "C7-4a-go-open", facts, fails)
+                self._tap(page, go, width, 600)
+                if menu.count() or go.get_attribute("aria-expanded") != "false":
+                    fails.append("C2 a second tap on Go did not close it")
+                self._tap(page, go, width, 600)
+                if not menu.is_visible() or go.get_attribute("aria-expanded") != "true":
+                    fails.append("C2 a third tap did not open Go")
+                self._tap(page, menu.get_by_role("menuitemcheckbox", name="Needs you", exact=True), width, 700)
+                f = self._board(page, width, "C7-4b-go-picked", facts, fails)
                 if f["front"] != ["Needs you"]:
                     fails.append(f"S3: two taps landed {f['front']}")
 
@@ -456,10 +469,13 @@ def test_escape_closes_the_strip_menu_not_the_window(tmp_path: Path, monkeypatch
             assert strip.count() == 1, "at 393 the Speak wings fold into one strip menu"
             box = strip.bounding_box()
             page.touchscreen.tap(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
-            page.locator(".desk-menu-list").first.wait_for()
+            strip_menu = page.get_by_role("menu", name="Window faces", exact=True)
+            strip_menu.wait_for()
+            assert strip.get_attribute("aria-expanded") == "true"
             page.keyboard.press("Escape")
-            page.wait_for_timeout(400)
-            menu_open = page.locator(".desk-menu-list").count()
+            strip_menu.wait_for(state="detached")
+            menu_open = strip_menu.count()
+            assert strip.get_attribute("aria-expanded") == "false"
             still_open = window.count() and window.is_visible()
             front = page.evaluate(
                 "() => { const f = [...document.querySelectorAll('.desk-window-shell.is-front')].pop();"
@@ -1179,11 +1195,16 @@ class TestHubWindows:
                 c.locator(".desk-verbbar-item[data-menu-id='go'] button").click()
                 c.locator(".desk-verbbar-menu").wait_for()
                 checked = {}
-                for name in H_THREE:
+                for name in ("The week", "Needs you"):
                     row = c.locator(f".desk-menu-list [role='menuitemcheckbox']:has-text('{name}')").first
                     checked[name] = row.get_attribute("aria-checked") if row.count() else None
-                if any(checked.get(n) != "true" for n in H_THREE):
+                if any(value != "true" for value in checked.values()):
                     fails["B5 393 Go lists the open Chair windows"] = checked
+                # Phone Brief is a command into Today's Brief view, rather
+                # than the desktop Chair window's open/closed checkbox.
+                brief_door = c.locator(".desk-verbbar-menu").get_by_role("menuitem", name="Brief", exact=True)
+                if not brief_door.count() or not brief_door.is_enabled():
+                    fails["B5 393 Go offers Brief in Today"] = brief_door.count()
                 c.screenshot(path=str(H_SHOTS / "393-C-go-chair.png"))
                 c.keyboard.press("Escape")
 
@@ -1384,8 +1405,9 @@ class TestWindowsOpenWell:
                     for name in ("Meetings", "People"):
                         if icons and wins[name][0] < icons:
                             fails[f"W1 {name} clear of the icon column"] = {"rect": wins[name], "icons_right": icons}
-                    if meetings[2] < 900:
-                        fails["W1 Meetings opens wide enough (U24)"] = meetings
+                    # applications.ts declares the canonical first-open room.
+                    if meetings[2:] != [720, 600]:
+                        fails["W1 Meetings opens at its declared 720 x 600 size"] = meetings
                 a.screenshot(path=str(W_SHOTS / "1440-two-apps.png"))
 
                 # ── W2: drag a tabbed app by the empty part of its bar ─────
@@ -1500,12 +1522,13 @@ N_NAME_FACTS = """() => {
   if (c.measureText(text).width > box + 0.5) { shown = 0;
     for (let n = text.length - 1; n > 0; n--) if (c.measureText(text.slice(0, n) + '…').width <= box + 0.5) { shown = n; break; } }
   const clock = document.querySelector('.desk-clock');
-  const mark = document.querySelector('.desk-screen-switcher-mark');
+  const go = document.querySelector(".desk-verbbar-item[data-menu-id=go] button");
   const bar = document.querySelector('.desk-menubar').getBoundingClientRect();
-  const r = e.getBoundingClientRect(); const m = mark ? mark.getBoundingClientRect() : null;
+  const r = e.getBoundingClientRect(); const g = go ? go.getBoundingClientRect() : null;
+  const hit = g ? document.elementFromPoint(g.x + g.width / 2, g.y + g.height / 2) : null;
   return { text, box, shown, one_line: r.height < parseFloat(cs.fontSize) * 1.8, ellipsis: cs.textOverflow,
     clock: !!clock && clock.getBoundingClientRect().width > 0,
-    mark_whole: m ? (m.width >= 5 && m.right <= bar.right + 0.5) : null,
+    go_whole: g ? (g.width >= 44 && g.height >= 44 && g.left >= bar.left && g.right <= bar.right + 0.5 && !!hit && go.contains(hit)) : false,
     bar_overflow: document.documentElement.scrollWidth > innerWidth,
     front: [...document.querySelectorAll('.desk-window-shell.is-front')].map((w) => w.getAttribute('aria-label')) };
 }"""
@@ -1582,7 +1605,7 @@ class TestWindowNamesOnGlass:
                     assert not facts["clock"], facts
                     assert facts["shown"] >= 10, facts
                     assert facts["box"] >= 100, facts
-                    assert facts["mark_whole"], facts   # the ▾ never truncates
+                    assert facts["go_whole"], facts  # the current navigator owns its touch target
                 else:
                     assert facts["clock"], facts
                     assert facts["shown"] == len(N_PROJECT), facts
@@ -1598,6 +1621,12 @@ CLOSE_TOKEN = "philo13-05-close"
 CLOSE_SHOTS = evidence_dir("pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-05-shots")
 
 CLOSE_SIZES = {1440: 900, 393: 852}
+
+def _close_control(page: Any, width: int, label: str, *, host: Any = None) -> Any:
+    """The shared frame calls its compact gadget Back; unscoped Back closes."""
+    return (host if host is not None else page).get_by_role(
+        "button", name=f"Back from {label}" if width < 720 else f"Close {label}", exact=True)
+
 
 def _on_the_desk(hit: dict[str, Any] | None) -> bool:
     """The old centre lands on the Desk. PHILO-13-11 (slice two): the Chair
@@ -1686,7 +1715,7 @@ class TestCloseMeansGone:
         cx, cy = x + w / 2, y + h / 2
         assert page.evaluate(HIT_JS, [cx, cy])["window"] == win["id"], "the open window is not on top"
         page.screenshot(path=str(CLOSE_SHOTS / f"{name}-before-{width}.png"))
-        self._press(page, page.locator(f"[id='{win['id']}'] [aria-label='Close {label}']"), width)
+        self._press(page, _close_control(page, width, label, host=page.locator(f"[id='{win['id']}']")), width)
         page.wait_for_timeout(900)
         _settle(page)
         hit = page.evaluate(HIT_JS, [cx, cy])
@@ -1713,12 +1742,12 @@ class TestCloseMeansGone:
                 option = page.locator("[id^='desk-palette-option-decision:']").first
                 option.wait_for()
                 self._press(page, option, width)
-                page.locator(f".desk-gadget-close[aria-label='Close {CLOSE_DECISION}']").wait_for()
+                _close_control(page, width, CLOSE_DECISION).wait_for()
                 self._close_and_prove(page, width, CLOSE_DECISION, "palette-decision")
 
                 # 2. the Dock: `intelligence:desk`.
                 self._press(page, page.locator(".desk-dock-launch[aria-label^='Today']"), width)
-                page.locator(".desk-gadget-close[aria-label='Close Today']").wait_for()
+                _close_control(page, width, "Today").wait_for()
                 self._close_and_prove(page, width, "Today", "dock-intelligence")
 
                 # 3. Write a thought: `note:<id>` (newThought.ts) → the Thought window.
@@ -1727,44 +1756,77 @@ class TestCloseMeansGone:
                     open_chair_window(page, "Capture")
                 self._press(page, page.get_by_test_id("arrival-develop-thought"), width)
                 # A thought with no words is named `New thought` (windowName.ts).
-                page.locator(".desk-gadget-close[aria-label='Close New thought']").wait_for()
+                _close_control(page, width, "New thought").wait_for()
                 self._close_and_prove(page, width, "New thought", "write-a-thought")
 
-                # 4. the one desk (PHILO-17): a Screen icon, Enter -> `note:<id>` (qualified).
-                icon = page.locator(f"[data-testid=desk-screen] .desk-icon[aria-label^='{NOTE}']").first
-                icon.wait_for(state="attached")
-                # 393: one window fills the work area; close the Chair windows
-                # shown over the desk until its icons are on the glass.
-                for _ in range(6):
-                    if icon.is_visible():
-                        break
-                    shown = page.locator(".desk-window-shell.chair-window:visible .desk-gadget-close").first
-                    if not shown.count():
-                        break
-                    self._press(page, shown, width)
-                    page.wait_for_timeout(500)
-                icon.wait_for()
-                icon.focus()
-                page.keyboard.press("Enter")
-                page.locator(f".desk-gadget-close[aria-label='Close {NOTE}']").wait_for()
-                self._close_and_prove(page, width, NOTE, "screen-icon-note")
-                # 5. a bare id: the icon's menu -> Open (object.open -> openPullout(o.id)).
-                icon = page.locator(f"[data-testid=desk-screen] .desk-icon[aria-label^='{CLOSE_DECISION}']").first
-                icon.focus()
-                page.keyboard.press("Shift+F10")
-                item = page.get_by_role("menuitem", name="Open", exact=True)
-                item.wait_for()
-                self._press(page, item, width)
-                page.locator(f".desk-gadget-close[aria-label='Close {CLOSE_DECISION}']").wait_for()
-                self._close_and_prove(page, width, CLOSE_DECISION, "icon-menu-bare-decision")
+                if width < 720:
+                    # The phone home is Go. Find opens exact existing
+                    # records; the grid and its keyboard icon menu are
+                    # desktop doors. Keep the Note and bare-id Object Open
+                    # journeys through their current touch doors.
+                    self._press(page, page.locator("[aria-controls=desk-tool-shelf]").first, width)
+                    page.locator("[aria-controls=desk-palette-listbox]").fill(NOTE)
+                    note_option = page.locator("[id^='desk-palette-option-note:']").first
+                    note_option.wait_for()
+                    page.wait_for_timeout(900)
+                    _settle(page)
+                    self._press(page, note_option, width)
+                    _close_control(page, width, NOTE).wait_for()
+                    self._close_and_prove(page, width, NOTE, "find-note")
+
+                    self._press(page, page.locator("[aria-controls=desk-tool-shelf]").first, width)
+                    page.locator("[aria-controls=desk-palette-listbox]").fill("freeze")
+                    option.wait_for()
+                    page.wait_for_timeout(900)
+                    _settle(page)
+                    self._press(page, option, width)
+                    decision = page.locator(f".desk-window-shell[aria-label='{CLOSE_DECISION}']")
+                    head = decision.locator(".desk-pullout-title").bounding_box()
+                    assert head
+                    TestThePhoneDesk._long_press(page, head["x"] + head["width"] / 2, head["y"] + head["height"] / 2)
+                    window_menu = page.get_by_role("menu", name=f"{CLOSE_DECISION} window menu", exact=True)
+                    self._press(page, window_menu.get_by_role("menuitem", name="Object", exact=True), width)
+                    object_menu = page.get_by_role("menu", name="Object submenu", exact=True)
+                    self._press(page, object_menu.get_by_role("menuitem", name="Open", exact=True), width)
+                    _close_control(page, width, CLOSE_DECISION).wait_for()
+                    assert decision.count() == 1, "Object Open duplicated the existing decision"
+                    self._close_and_prove(page, width, CLOSE_DECISION, "window-menu-bare-decision")
+                else:
+                    # 4. the one desk (PHILO-17): a Screen icon, Enter -> `note:<id>` (qualified).
+                    icon = page.locator(f"[data-testid=desk-screen] .desk-icon[aria-label^='{NOTE}']").first
+                    icon.wait_for(state="attached")
+                    # 393: one window fills the work area; close the Chair windows
+                    # shown over the desk until its icons are on the glass.
+                    for _ in range(6):
+                        if icon.is_visible():
+                            break
+                        shown = page.locator(".desk-window-shell.chair-window:visible .desk-gadget-close").first
+                        if not shown.count():
+                            break
+                        self._press(page, shown, width)
+                        page.wait_for_timeout(500)
+                    icon.wait_for()
+                    icon.focus()
+                    page.keyboard.press("Enter")
+                    _close_control(page, width, NOTE).wait_for()
+                    self._close_and_prove(page, width, NOTE, "screen-icon-note")
+                    # 5. a bare id: the icon's menu -> Open (object.open -> openPullout(o.id)).
+                    icon = page.locator(f"[data-testid=desk-screen] .desk-icon[aria-label^='{CLOSE_DECISION}']").first
+                    icon.focus()
+                    page.keyboard.press("Shift+F10")
+                    item = page.get_by_role("menuitem", name="Open", exact=True)
+                    item.wait_for()
+                    self._press(page, item, width)
+                    _close_control(page, width, CLOSE_DECISION).wait_for()
+                    self._close_and_prove(page, width, CLOSE_DECISION, "icon-menu-bare-decision")
                 assert not errors, errors
             finally:
                 browser.close()
 
     @pytest.mark.parametrize("width", list(CLOSE_SIZES))
     def test_the_closed_intelligence_window_does_not_swallow_retry(self, width: int) -> None:
-        """J1's recovery leg: the brief read fails, Intelligence opens and closes,
-        and the Chair's Retry (under the old window at 393) works with no reload."""
+        """J1's recovery leg: close leaves no stale pane swallowing the next
+        action, and the visible Brief retry reads successfully with no reload."""
         from playwright.sync_api import sync_playwright
 
         with sync_playwright() as pw:
@@ -1774,21 +1836,38 @@ class TestCloseMeansGone:
                     status=500, body='{"detail":"injected"}', content_type="application/json"))
                 page.reload(wait_until="load")
                 _normal_chair(page)
-                # PHILO-13-11 (slice two, R2): at 393 the Brief is its own window.
-                if width <= 720:
+                if width < 720:
                     open_chair_window(page, "Brief")
-                retry = page.get_by_test_id("arrival-brief-retry")
-                retry.wait_for()
-                self._press(page, page.locator(".desk-dock-launch[aria-label^='Today']"), width)
-                page.locator(".desk-gadget-close[aria-label='Close Today']").wait_for()
-                page.unroute("**/api/brief/latest*")
-                proof = self._close_and_prove(page, width, "Today", "j1-retry")
-                self._press(page, retry, width)
-                page.get_by_test_id("arrival-brief-retry").wait_for(state="detached", timeout=10_000)
+                    brief = chair_window(page, "Brief").locator(".intelligence-brief").filter(visible=True)
+                    retry = brief.get_by_role("button", name="Try again", exact=True)
+                    retry.wait_for()
+                    proof = self._close_and_prove(page, width, "Today", "j1-retry")
+                    # Closing leaves no stale pane over the next owner's
+                    # action. Go reopens Brief; its visible Retry performs
+                    # the successful read in that exact canonical host.
+                    go = page.locator(".desk-verbbar-item[data-menu-id='go'] button")
+                    self._press(page, go, width)
+                    self._press(page, page.get_by_role("menu", name="Go menu").get_by_role("menuitem", name="Brief", exact=True), width)
+                    retry.wait_for()
+                    page.unroute("**/api/brief/latest*")
+                    with page.expect_response(lambda response: "/api/brief/latest" in response.url and response.status == 200):
+                        self._press(page, retry, width)
+                    retry.wait_for(state="detached", timeout=10_000)
+                    brief.locator("[data-testid=brief-generated-label], [data-testid=brief-no-changes]").first.wait_for()
+                    result = brief.inner_text()[:200]
+                else:
+                    retry = page.get_by_test_id("arrival-brief-retry")
+                    retry.wait_for()
+                    self._press(page, page.locator(".desk-dock-launch[aria-label^='Today']"), width)
+                    _close_control(page, width, "Today").wait_for()
+                    page.unroute("**/api/brief/latest*")
+                    proof = self._close_and_prove(page, width, "Today", "j1-retry")
+                    self._press(page, retry, width)
+                    retry.wait_for(state="detached", timeout=10_000)
+                    result = page.get_by_test_id("arrival-brief").first.inner_text()[:200]
                 _settle(page)
                 page.screenshot(path=str(CLOSE_SHOTS / f"j1-retry-reached-{width}.png"))
-                (CLOSE_SHOTS / f"j1-retry-{width}.txt").write_text(
-                    f"{proof}\nafter Retry: {page.get_by_test_id('arrival-brief').first.inner_text()[:200]!r}\n")
+                (CLOSE_SHOTS / f"j1-retry-{width}.txt").write_text(f"{proof}\nafter Retry: {result!r}\n")
                 assert not [e for e in errors if "injected" not in e], errors
             finally:
                 browser.close()
@@ -1797,10 +1876,9 @@ class TestCloseMeansGone:
     def test_a_meeting_resolved_as_deleted_closes_its_card(self, width: int) -> None:
         """Round three (Astra counsel r2): the meeting card's own close caller,
         through the REAL producer. A tombstone conflict is recorded through the
-        meeting repository (as tests/integration/test_meeting_conflict_recovery.py
-        does); the card opens as `meeting:<id>`; the real MeetingConflictRecovery
-        resolves with Use incoming; the real route answers deleted:true; the card
-        leaves the DOM and its old centre hits the Desk."""
+        meeting repository; the selected record opens in canonical Meetings;
+        Use incoming deletes the DB row and returns to the list. The shared
+        host then closes and its old centre hits the Desk."""
         from playwright.sync_api import sync_playwright
         from datetime import datetime, timedelta
 
@@ -1828,9 +1906,9 @@ class TestCloseMeansGone:
                 option = page.locator("[id='desk-palette-option-meeting:p13-tombstone']")
                 option.wait_for()
                 self._press(page, option, width)
-                # PHILO-17: the meeting is its own window (the whole record).
-                card = page.locator(f".desk-object-window[aria-label='{title}']")
+                card = page.locator("#surface-meetings")
                 card.wait_for()
+                page.wait_for_function("title => document.querySelector('#surface-meetings')?.getAttribute('aria-label') === title", arg=title)
                 incoming = card.get_by_role("button", name="Use incoming")
                 incoming.wait_for()
                 page.wait_for_timeout(600)
@@ -1847,15 +1925,21 @@ class TestCloseMeansGone:
                 page.wait_for_timeout(1500)
                 _settle(page)
                 hit = page.evaluate(HIT_JS, [cx, cy])
-                left = [o for o in self._open(page) if o["id"] == win_id]
+                card.get_by_test_id("meetings-headline").wait_for()
+                page.wait_for_function("() => document.querySelector('#surface-meetings')?.getAttribute('aria-label') === 'Meetings'")
+                left = [o for o in self._open(page) if o["id"] == win_id and o["label"] == title]
                 page.screenshot(path=str(CLOSE_SHOTS / f"meeting-tombstone-after-{width}.png"))
                 proof = {"window": win_id, "centre": [round(cx), round(cy)], "resolve": answers,
                          "hit": hit, "left_in_dom": left}
                 (CLOSE_SHOTS / f"meeting-tombstone-{width}.txt").write_text(f"{proof}\n")
                 assert answers and answers[0]["status"] == 200, answers
                 assert db.meetings.get_meeting(local.id) is None
-                assert not left, f"the closed card stays in the DOM: {left}"
-                assert _on_the_desk(hit), f"the old centre hits {hit}"
+                assert not left, f"the deleted meeting's detail stays on glass: {left}"
+                assert incoming.count() == 0, "the deleted record's recovery controls stayed mounted"
+                assert hit and hit["window"] == "surface-meetings", hit
+                # Deletion returns to the list in the same host. Its own
+                # unscoped Back/Close then proves the Desk is reachable.
+                self._close_and_prove(page, width, "Meetings", "meeting-tombstone-host")
                 assert not errors, errors
             finally:
                 browser.close()
@@ -1882,6 +1966,7 @@ class TestTheDeskRemembers(_Rig):
                 people = page.locator(PERSON).first
                 people.get_by_role("tab", name="Prep").wait_for()
                 self._press(page, people.get_by_role("tab", name="Prep"), width)
+                self._press(page, people.get_by_test_id("people-add-agenda"), width)
                 pad = people.get_by_role("textbox", name="Add to the agenda")
                 pad.wait_for()
                 self._press(page, pad, width)
@@ -1890,7 +1975,7 @@ class TestTheDeskRemembers(_Rig):
 
                 # 4. Intelligence: opened, then closed (close means gone)
                 self._press(page, page.locator(".desk-dock-launch[aria-label^='Today']"), width)
-                close = page.locator(".desk-gadget-close[aria-label='Close Today']")
+                close = _close_control(page, width, "Today")
                 close.wait_for()
                 page.wait_for_timeout(500)
                 self._press(page, close, width)
@@ -1911,12 +1996,15 @@ class TestTheDeskRemembers(_Rig):
                 page.wait_for_timeout(900)
                 _settle(page)
                 self._press(page, room.get_by_test_id("updates-verb"), width)
-                self._press(page, room.get_by_test_id("update-verb-draft-deterministic"), width)
+                # The Room's Draft update now creates the draft directly,
+                # rather than entering a list with a second generator verb.
+                room.locator('[data-testid="update-posture"][data-phase="editor"]').wait_for()
                 editor = room.locator("[contenteditable=true]").first
                 editor.wait_for()
                 self._press(page, editor, width)
                 page.keyboard.press("Control+End")
                 page.keyboard.type(" " + ROOM_WORDS)
+                assert ROOM_WORDS in editor.inner_text()
                 page.wait_for_timeout(400)
                 if width >= 720:
                     head = room.locator(".desk-window-head, .desk-window-title").first
@@ -1931,6 +2019,10 @@ class TestTheDeskRemembers(_Rig):
 
                 # 5. at 1440 the decision is iconified (393 has no Iconify gadget)
                 if width >= 720:
+                    # The moved Room can cover the decision's header. Raise
+                    # that same record through Find before its real Iconify
+                    # press; the Room's unsent words and measured seat stay.
+                    self._palette(page, "freeze", "decision:d-freeze", width)
                     deck = page.locator(f".desk-pullout[aria-label='{DECISION}']")
                     self._press(page, deck.locator(f"[aria-label='Iconify {DECISION}']"), width)
                     page.wait_for_timeout(900)
@@ -1950,12 +2042,10 @@ class TestTheDeskRemembers(_Rig):
                     arg=ROOM_WORDS, timeout=15_000)
                 people = page.locator(PERSON).first
                 if width < 720:
-                    # 393 shows one window at a time: he brings Priya's window
-                    # forward from the screen switcher (PHILO-17: her own window).
+                    # An exact palette record pick raises the restored person
+                    # without changing the retained Prep lens or unsent draft.
                     people.wait_for(state="attached", timeout=20_000)
-                    self._press(page, page.get_by_test_id("desk-screen-switcher"), width)
-                    self._press(page, page.locator(".desk-screen-switcher-menu [role=menuitemcheckbox]",
-                                                   has_text="Priya Nair").first, width)
+                    self._palette(page, "Priya", f"people:{self.ids['priya']}", width)
                 people.get_by_role("textbox", name="Add to the agenda").wait_for(timeout=20_000)
                 page.wait_for_timeout(1200)
                 _settle(page)

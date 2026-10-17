@@ -1,6 +1,6 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createRecordingSlice } from "../../store/recordingSlice";
 import type { DeskState } from "../../store/types";
 
@@ -26,8 +26,8 @@ const mocks = vi.hoisted(() => {
     for (const listener of runtimeListeners.get(type) ?? []) listener({ type, data });
   };
   const desk = {
-    panelMin: [],
-    panelOrder: [],
+    panelMin: [] as string[],
+    panelOrder: [] as string[],
     windowsById: {},
     recording: "idle",
     recordingStartedAt: null as number | null,
@@ -45,11 +45,18 @@ const mocks = vi.hoisted(() => {
   const shortcut = { open: false, setOpen: vi.fn() };
   const settle = { settled: false };
   const runtime = { state: "connected", subscribe };
+  const focusPanel = vi.fn((id: string) => {
+    desk.panelOrder = [...desk.panelOrder.filter((entry) => entry !== id), id];
+  });
+  const restorePanel = vi.fn((id: string) => {
+    desk.panelMin = desk.panelMin.filter((entry) => entry !== id);
+    focusPanel(id);
+  });
   const useDesk = (selector: (state: typeof desk) => unknown) => selector(desk);
   useDesk.getState = () => ({
     ...desk,
-    restorePanel: vi.fn(),
-    focusPanel: vi.fn(),
+    restorePanel,
+    focusPanel,
     closeSurfaceWindow: vi.fn(),
     resetLayout: vi.fn(),
   });
@@ -83,6 +90,9 @@ const mocks = vi.hoisted(() => {
     emitRuntime,
     durable,
     people,
+    compact: false,
+    windows: [] as Array<{ id: string; label: string; glyph: string; close: () => void; dock: boolean }>,
+    openIntelligence: vi.fn(),
   };
 });
 
@@ -104,7 +114,7 @@ vi.mock("../../../components/signal/Signal", () => ({
     <button {...props}>{children}</button>
   ),
 }));
-vi.mock("../../intelligenceNavigation", () => ({ openIntelligence: vi.fn() }));
+vi.mock("../../intelligenceNavigation", () => ({ openIntelligence: mocks.openIntelligence }));
 vi.mock("../../systemSprites", () => ({ DOCK_SPRITES: {}, SYSTEM: { floorGrid: "floor.svg" } }));
 vi.mock("../../store", () => ({ useDesk: mocks.useDesk }));
 vi.mock("../../settleState", () => ({
@@ -120,19 +130,14 @@ vi.mock("../../keymap", () => ({ useKeymap: vi.fn() }));
 vi.mock("../DeskMenu", () => ({ WorkMenu: () => null }));
 vi.mock("../../windowMenuAdapter", () => ({ dockChipMenuEntries: () => [] }));
 vi.mock("./windowRegistry", () => ({
-  useOpenWindows: () => [],
+  useOpenWindows: () => mocks.windows,
+  useShownName: (_id: string, label: string) => label,
+  registrySnapshot: [],
   chipEls: { set: vi.fn(), delete: vi.fn() },
 }));
-vi.mock("../../chair/chairWindows", () => ({
-  openChairWindow: vi.fn(),
-  useChairWindows: () => ({
-    closed: {
-      "chair:needs": false,
-      "chair:week": false,
-      "chair:capture": false,
-    },
-  }),
-}));
+vi.mock("../../useCompactViewport", () => ({ useCompactViewport: () => mocks.compact }));
+// Keep the real Chair lifecycle below; the Dock does not mount its body.
+vi.mock("../../needs/NeedsDrawer", () => ({ NeedsDrawer: () => null }));
 const dockLaunchers = vi.hoisted(() => ({ list: [] as Array<{ id: string; label: string; glyph: string; open: boolean; activate: () => void }> }));
 vi.mock("./launcherRegistry", () => ({ useLaunchers: () => dockLaunchers.list }));
 vi.mock("./Expose", () => ({ toggleExpose: vi.fn() }));
@@ -150,6 +155,80 @@ vi.mock("./RoomActions", () => ({ RoomActions: () => null }));
 
 import { Dock } from "./Dock";
 import { __resetSurfaces, registerSurface } from "../../shell";
+import { useChairWindows } from "../../chair/chairWindows";
+import { chipEls } from "./windowRegistry";
+
+afterEach(() => {
+  mocks.compact = false;
+  mocks.desk.panelMin = [];
+  mocks.desk.panelOrder = [];
+  mocks.windows = [];
+  mocks.openIntelligence.mockReset();
+  vi.unstubAllGlobals();
+});
+
+describe("phone Today Dock door", () => {
+  it.each([false, true])("keeps Brief selected when an existing Today is behind or minimized=%s", (minimized) => {
+    mocks.compact = true;
+    const winId = "pullout:intelligence:desk";
+    mocks.windows = [{ id: winId, label: "Today", glyph: "I", close: vi.fn(), dock: true }];
+    mocks.desk.panelOrder = [winId, "surface-meetings"];
+    mocks.desk.panelMin = minimized ? [winId] : [];
+    let selectedView = "brief";
+    mocks.openIntelligence.mockImplementation(({ view }: { view: string }) => { selectedView = view; });
+    const view = render(<Dock />);
+    const today = screen.getByRole("button", { name: minimized ? "Today, iconified" : "Today" });
+    expect(today).toHaveAttribute("data-app", "intelligence:desk");
+    expect(chipEls.set).toHaveBeenCalledWith(winId, today);
+    expect(today).toHaveClass(minimized ? "is-seated" : "is-run");
+
+    fireEvent.click(today);
+    view.rerender(<Dock />);
+
+    expect(mocks.desk.panelOrder.at(-1)).toBe(winId);
+    expect(mocks.desk.panelMin).not.toContain(winId);
+    expect(screen.getByRole("button", { name: "Today" })).toHaveClass("is-run");
+    expect(selectedView).toBe("brief");
+    expect(mocks.openIntelligence).not.toHaveBeenCalled();
+  });
+
+  it("launches the day view when Today is closed", () => {
+    mocks.compact = true;
+    render(<Dock />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Today" }));
+
+    expect(mocks.openIntelligence).toHaveBeenCalledTimes(1);
+    expect(mocks.openIntelligence).toHaveBeenCalledWith({ view: "today" });
+  });
+});
+
+describe("phone Capture Dock door", () => {
+  it.each([false, true])("returns an already open Capture to the phone when minimized=%s", (minimized) => {
+    mocks.compact = true;
+    vi.stubGlobal("matchMedia", () => ({ matches: true }));
+    mocks.desk.panelOrder = ["chair:capture", "chair:needs"];
+    mocks.desk.panelMin = minimized ? ["chair:capture"] : [];
+    useChairWindows.setState({
+      closed: { "chair:capture": false, "chair:needs": false },
+      phone: "chair:needs", captureInRing: true,
+    });
+    function PhoneDock() {
+      const phone = useChairWindows((state) => state.phone);
+      return <><Dock /><output data-testid="phone-pane">{phone}</output></>;
+    }
+    render(<PhoneDock />);
+    expect(screen.getByTestId("phone-pane")).toHaveTextContent("chair:needs");
+
+    fireEvent.click(screen.getByRole("button", { name: minimized ? "Capture, iconified" : "Capture" }));
+
+    expect(screen.getByTestId("phone-pane")).toHaveTextContent("chair:capture");
+    expect(useChairWindows.getState().closed["chair:capture"]).toBe(false);
+    expect(useChairWindows.getState().closed["chair:needs"]).toBe(false);
+    expect(mocks.desk.panelMin).not.toContain("chair:capture");
+    expect(mocks.desk.panelOrder.at(-1)).toBe("chair:capture");
+  });
+});
 
 function makeRecordingProducer() {
   const state: Record<string, unknown> = {

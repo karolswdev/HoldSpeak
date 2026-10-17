@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { __resetSurfaces, registerSurface } from "../shell";
 import { useDesk } from "../store";
 import { DeskMenuBar } from "./DeskMenuBar";
+import { WorkMenu } from "./DeskMenu";
 import { DeskChrome } from "./DeskChrome";
 import { dismissAftercare, publishAftercare } from "../intelligenceAttention";
 
@@ -17,6 +18,14 @@ afterEach(() => {
   dismissAftercare();
   __resetSurfaces();
 });
+
+// jsdom has no PointerEvent constructor. Retain the native mouse-button
+// fields and the pointer kind while dispatching the real pointer event path.
+function pointer(target: Element, type: "pointerdown" | "pointerup", pointerType: string) {
+  const event = new MouseEvent(type, { bubbles: true, cancelable: true, button: 0 });
+  Object.defineProperty(event, "pointerType", { value: pointerType });
+  fireEvent(target, event);
+}
 
 it("routes a ready meeting through the one attention bell", async () => {
   publishAftercare({
@@ -35,6 +44,37 @@ it("routes a ready meeting through the one attention bell", async () => {
 });
 
 describe("DeskMenuBar", () => {
+  it("leaves an opener pointer press to its owner and closes on an outside press", () => {
+    const opener = document.createElement("button");
+    document.body.append(opener);
+    const close = vi.fn();
+    try {
+      render(<WorkMenu label="Owned menu" x={0} y={40} entries={[]} onClose={close} opener={opener} />);
+      pointer(opener, "pointerdown", "touch");
+      expect(close).not.toHaveBeenCalled();
+      pointer(document.body, "pointerdown", "touch");
+      expect(close).toHaveBeenCalledTimes(1);
+    } finally {
+      opener.remove();
+    }
+  });
+
+  it("hands a pointer press from Go to a sibling title and preserves Escape dismissal", () => {
+    render(<DeskMenuBar />);
+    const go = screen.getByRole("button", { name: /^Go$/ });
+    const desk = screen.getByRole("button", { name: /^Desk$/ });
+    pointer(go, "pointerdown", "mouse");
+    expect(screen.getByRole("menu", { name: "Go menu" })).toBeVisible();
+    pointer(desk, "pointerdown", "mouse");
+    expect(screen.queryByRole("menu", { name: "Go menu" })).toBeNull();
+    expect(go).toHaveAttribute("aria-expanded", "false");
+    expect(desk).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("menu", { name: "Desk menu" })).toBeVisible();
+    fireEvent.keyDown(document.body, { key: "Escape" });
+    expect(screen.queryByRole("menu", { name: "Desk menu" })).toBeNull();
+    expect(desk).toHaveAttribute("aria-expanded", "false");
+  });
+
   it("marks the registry-derived Go title and launches Meetings through its real menu", () => {
     const opened: Array<string | undefined> = [];
     const off = registerSurface("review-meetings", (scope) => opened.push(scope));
@@ -128,6 +168,28 @@ describe("DeskMenuBar at 393", () => {
 
   const labels = (menu: HTMLElement) =>
     Array.from(menu.querySelectorAll("[role^=menuitem] .desk-menu-label"), (e) => e.textContent?.trim());
+
+  it.each(["touch", "mouse"])("toggles Go on repeated %s pointer presses with the outside listener mounted", (pointerType) => {
+    render(<DeskMenuBar />);
+    const go = screen.getByRole("button", { name: /^Go$/ });
+    const press = () => {
+      pointer(go, "pointerdown", pointerType);
+      pointer(go, "pointerup", pointerType);
+      fireEvent.click(go, { detail: 1 });
+    };
+    press();
+    expect(screen.getByRole("menu", { name: "Go menu" })).toBeVisible();
+    expect(go).toHaveAttribute("aria-expanded", "true");
+    press();
+    expect(screen.queryByRole("menu", { name: "Go menu" })).toBeNull();
+    expect(go).toHaveAttribute("aria-expanded", "false");
+    press();
+    expect(screen.getByRole("menu", { name: "Go menu" })).toBeVisible();
+    expect(go).toHaveAttribute("aria-expanded", "true");
+    pointer(document.body, "pointerdown", pointerType);
+    expect(screen.queryByRole("menu", { name: "Go menu" })).toBeNull();
+    expect(go).toHaveAttribute("aria-expanded", "false");
+  });
 
   // PHILO-17 (doors): Settings left Go (it is in the HoldSpeak menu).
   it("Go is ten rows: Chair windows, places, the projects, New; no ⌘ keycap", () => {
