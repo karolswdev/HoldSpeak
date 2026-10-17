@@ -24,6 +24,7 @@ from holdspeak.runtime.meeting_glue import MeetingGlueMixin
 from holdspeak.services.meeting_service import MeetingService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes.meetings.live import build_live_router
+from holdspeak.voice_typing import VoiceTypingSession
 
 
 def _recorder(monkeypatch, on_audio_chunk=None):
@@ -279,6 +280,160 @@ def test_runtime_keeps_device_error_separate_from_successful_save(monkeypatch, c
         assert runtime._set_runtime_activity.call_args.kwargs["last_error"] == cleanup_error
     else:
         runtime.voice_session.release.assert_called_once_with("meeting")
+
+
+def _runtime_for_stop(session, monkeypatch):
+    monkeypatch.setattr("holdspeak.services.meeting_backlog_service.queue_after_save", lambda *_: {})
+
+    class Runtime(MeetingGlueMixin):
+        pass
+
+    runtime = Runtime()
+    runtime.state_lock = threading.Lock()
+    runtime.meeting_lock = threading.Lock()
+    runtime.runtime_status = {}
+    runtime.recording_ticker = Mock()
+    runtime.device_stats_cycle = {}
+    runtime.voice_session = VoiceTypingSession()
+    assert runtime.voice_session.acquire("meeting")
+    runtime._set_runtime_activity = Mock()
+    runtime._flush_deferred_plugin_runs_to_db = lambda: {}
+    runtime._persist_pending_mir_history = lambda _: {}
+    runtime._synthesize_and_persist_artifacts = lambda _: {}
+    runtime._associate_meeting_with_projects = lambda _: {}
+    runtime.meeting_session = session
+    return runtime
+
+
+@pytest.mark.parametrize("failed_source", ["mic", "system"])
+def test_cleanup_worker_start_failure_preserves_audio_save_and_unavailable_floor(
+    tmp_path, monkeypatch, failed_source,
+):
+    db = Database(tmp_path / "meetings.db")
+    monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
+    meeting_id = "cleanup-start-failure"
+    journal = MeetingCaptureJournal(meeting_id, directory=tmp_path / "captures")
+    recorder = _recorder(monkeypatch, lambda chunk: journal.append(chunk.source, chunk.audio))
+    pcm = np.arange(16, dtype=np.float32)
+    for source in ("mic", "system"):
+        assert recorder._commit_audio_chunk(pcm, 0, source)
+    streams = {source: SimpleNamespace(stop=Mock(), close=Mock()) for source in ("mic", "system")}
+    recorder._mic_stream, recorder._system_stream = streams["mic"], streams["system"]
+    started = []
+    native_start = threading.Thread.start
+
+    def start(thread):
+        started.append(thread.name)
+        if thread.name == f"meeting-{failed_source}-cleanup":
+            raise RuntimeError("cannot start cleanup worker")
+        return native_start(thread)
+
+    monkeypatch.setattr(threading.Thread, "start", start)
+    session = MeetingSession()
+    session._state = MeetingState(id=meeting_id, started_at=datetime.now(), capture_status="recording")
+    session._recorder = recorder
+    session._capture_journal = journal
+    session._transcribe_chunks = Mock()
+    save = session.save
+    session.save = Mock(side_effect=lambda: save(directory=tmp_path / "meetings"))
+    runtime = _runtime_for_stop(session, monkeypatch)
+
+    result = runtime._stop_active_meeting(allow_runtime_fallback=False)
+
+    assert result["device_cleanup_error"] is not None
+    assert f"{failed_source} audio device did not close" in result["device_cleanup_error"]
+    assert started == ["meeting-mic-cleanup", "meeting-system-cleanup"]
+    other = "system" if failed_source == "mic" else "mic"
+    streams[other].stop.assert_called_once_with()
+    streams[other].close.assert_called_once_with()
+    # Never run uncertain native cleanup on the calling Stop thread.
+    streams[failed_source].stop.assert_not_called()
+    streams[failed_source].close.assert_not_called()
+    mic, system = session._transcribe_chunks.call_args.args
+    np.testing.assert_array_equal(mic[0].audio, pcm)
+    np.testing.assert_array_equal(system[0].audio, pcm)
+    assert not recorder._commit_audio_chunk(pcm, 1, "mic")
+    assert result["meeting"]["id"] == meeting_id and result["meeting"]["capture_status"] == "finalized"
+    assert result["save_error"] is None
+    assert result["save"]["database_saved"] and result["save"]["json_saved"]
+    session.save.assert_called_once_with()
+    assert [row.id for row in db.meetings.list_meetings()] == [meeting_id]
+    manifest = json.loads(journal.manifest_path.read_text())
+    assert manifest["status"] == "finalized"
+    assert manifest["durable_bytes"] == {"mic": pcm.nbytes, "system": pcm.nbytes}
+    assert runtime.voice_session.active_owner == "meeting"
+    assert not runtime.voice_session.acquire("hotkey")
+    assert runtime.runtime_status["last_error"] == result["device_cleanup_error"]
+    assert runtime._set_runtime_activity.call_args.kwargs["label"] == "Saved"
+
+
+def test_delayed_duplicate_stop_cannot_replace_the_winners_saved_activity(tmp_path, monkeypatch):
+    db = Database(tmp_path / "meetings.db")
+    monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
+    entered, finish_winner = threading.Event(), threading.Event()
+    duplicate_reached, finish_duplicate = threading.Event(), threading.Event()
+    meeting_id = "single-runtime-stop"
+
+    def stop_recorder():
+        entered.set()
+        assert finish_winner.wait(3)
+        return [], []
+
+    session = MeetingSession()
+    session._state = MeetingState(id=meeting_id, started_at=datetime.now())
+    session._recorder = SimpleNamespace(stop=stop_recorder, get_pending_device_chunks=lambda: {})
+    save = session.save
+    session.save = Mock(side_effect=lambda: save(directory=tmp_path / "meetings"))
+    runtime = _runtime_for_stop(session, monkeypatch)
+
+    def stop_ticker():
+        if threading.current_thread().name == "duplicate-stop":
+            duplicate_reached.set()
+            assert finish_duplicate.wait(3)
+
+    runtime.recording_ticker.stop.side_effect = stop_ticker
+    results, failures = {}, {}
+
+    def stop(name):
+        try:
+            results[name] = runtime._stop_active_meeting(allow_runtime_fallback=False)
+        except Exception as exc:
+            failures[name] = exc
+        finally:
+            if name == "duplicate":
+                duplicate_reached.set()
+
+    winner = threading.Thread(target=stop, args=("winner",), name="winner-stop", daemon=True)
+    duplicate = threading.Thread(target=stop, args=("duplicate",), name="duplicate-stop", daemon=True)
+    winner.start()
+    try:
+        assert entered.wait(1)
+        duplicate.start()
+        # Either the old preamble is now held or the new guard refused it.
+        assert duplicate_reached.wait(1)
+        finish_winner.set()
+        winner.join(3)
+        assert not winner.is_alive() and "winner" in results, failures
+        assert runtime._set_runtime_activity.call_args.kwargs["label"] == "Saved"
+    finally:
+        finish_winner.set()
+        finish_duplicate.set()
+        winner.join(3)
+        if duplicate.ident is not None:
+            duplicate.join(3)
+    assert not duplicate.is_alive()
+    assert [call.args[0] for call in runtime._set_runtime_activity.call_args_list] == ["saving", "complete"]
+    assert runtime.recording_ticker.stop.call_count == 1
+    assert isinstance(failures.get("duplicate"), RuntimeError)
+    assert str(failures["duplicate"]) == "Meeting is already stopping"
+    assert "duplicate" not in results
+    assert results["winner"]["meeting"]["id"] == meeting_id
+    assert results["winner"]["save_error"] is None
+    assert results["winner"]["save"]["database_saved"] and results["winner"]["save"]["json_saved"]
+    session.save.assert_called_once_with()
+    assert [row.id for row in db.meetings.list_meetings()] == [meeting_id]
+    assert runtime.meeting_session is None and runtime.runtime_status["last_error"] == ""
+    assert runtime.voice_session.active_owner is None
 
 
 @pytest.mark.parametrize("path", ["/api/meeting/stop", "/api/stop"])

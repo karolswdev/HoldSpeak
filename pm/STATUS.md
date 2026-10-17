@@ -4,11 +4,21 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-16 (Thought and Send continuation)
+**Last updated:** 2026-10-17 (Meeting Stop follow-up)
 
 ## Current phase
 
-**Thought and Send continuation (2026-10-16).** A lost Send answer followed by
+**Meeting Stop follow-up (2026-10-17).** Postmerge review reproduced two
+additional paths: cleanup-worker launch failure hid an unclosed device, and
+a delayed duplicate Stop overwrote Saved with Saving. The bounded corrections
+preserve audio/save/floor custody and admit one runtime Stop before visible
+effects. Three regressions fail before repair; all 18 owned checks now pass
+with real isolated DB/journal rows and controlled native streams. Ordinary
+quick GREEN: 120 affected / 109 sweep / 17 canon; 28 doc guards pass.
+Full-main follow-through remains next; actual driver recovery is
+unverified. [Follow-up](../docs/internal/MEETING-STOP-NATIVE-2026-10-16/POSTMERGE-FOLLOWUP.md).
+
+**Thought and Send — #1236 delivered (2026-10-16).** A lost Send answer followed by
 Back and a newer note edit showed new text above Retry for the old command.
 The shared Send well now retains the original preview with its pending command;
 Retry recovers the same send, and a distinct Send again uses the newer words.
@@ -20,7 +30,9 @@ also passes with one exact project row. The historical queue now includes
 113 distinct cases, including a previously unrecorded long-context case from
 the earlier runtime tape. Ordinary quick GREEN: 4,119 related web / 17 Thought
 browser / 109 Desk sweep / 17 canon. Source/build `2759d0c6c13d4b6b` agree.
-Full-main follow-through is the active next check.
+Merged main `20f6113b5`, formal Astra review RATIFY; the idle local hub serves
+that exact build from `wt-thought-send-recovery-20261016`, PID20767, port8765.
+Four HTTP checks return200. Full-main follow-through is the active next check.
 [Continuation and proof](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/THOUGHT-SEND.md).
 
 **Night Train fidelity — #1235 (2026-10-16).** Corrects the rejected #1234
