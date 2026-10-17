@@ -1,6 +1,7 @@
 # Tonight's three repairs — release record
 
-In progress on `fix/tonight-three-20261017`, based on `76a44ad70`.
+Merged in [PR #1240](https://github.com/karolswdev/HoldSpeak/pull/1240) as
+`f65325452`, based on `76a44ad70`.
 The owner asked Astra to select and solve the three highest-cost daily issues.
 Scope and settled behavior are in [PLAN.md](PLAN.md).
 
@@ -124,8 +125,36 @@ accepts the existing HTTP inventory namespace with explicit methods and strict
 route tokens; the two referenced IDs exist in `static-astra.json`.
 Source/build identity is `426015d9eee42d70` (built2026-10-17T07:06:50.658Z).
 
-PR merge, formal postmerge review, idle-hub delivery and full-main execution
-follow this verified candidate. Runtime walks are
+Merged main is `f65325452`. [Astra postmerge review](https://github.com/karolswdev/HoldSpeak/pull/1240#issuecomment-6231103541)
+returns RATIFY with the limits below. Idle local delivery is complete from
+`wt-tonight-three-20261017`, PID8943, port8765, build`426015d9eee42d70`.
+Health, Desk, Conductor and Models return200; the served bundle equals source.
+The authenticated address printed by the deployed `holdspeak web` was opened
+without exposing its credential. Delivery facts are in
+`.tmp/feedback/deployment.json` in that serving worktree.
+
+The independent proof tree is on the same merged head with its own matching
+bundle. Mandatory live bus passes3 in24.59s; the first full-main run completed with1 failure,16,670 passes,26 skips,
+1 expected failure and12 warnings in662.90s. The sole failure is
+`test_static_sql_matches_schema::test_unchecked_statements_are_named_counted_and_do_not_grow`:
+the new parent-close query used an imported CTE constant that the static checker
+cannot resolve, growing unchecked statements from138 to139. The fix moves that
+same query into the existing intel DB module so it is checked, retaining the
+same connection, transaction and predicates; the ceiling remains138.
+The original complete log, JUnit and state remain under
+`wt-main-proof-20261016/.tmp/recovery/*-f65325452-first.*`.
+The12 warnings concern parked-file escape syntax and isolated test background
+threads accessing already-removed tables. Skips remain optional model/native,
+owner-state and mesh-harness cases; the expected failure is the Kestrel case
+without vectors. No owner database failure is inferred from test teardown. Runtime walks are
 isolated from the owner's HOME, database, microphone and external credentials.
 Use the authenticated address printed by `holdspeak web`; a bare alternate
 loopback origin is not a working Desk-entry claim.
+
+SQL follow-up candidate:83 focused checks pass in8.24s; actual static sweep
+prepares2710 statements, with138 unchecked under the unchanged138 ceiling.
+Ordinary quick GREEN:107 affected /109 sweep /17 canon;75 documentation guards
+and generated-doc checks pass. Query tokens and transcript-comparison AST match
+the original; no connection/transaction is added. Logs live in
+`wt-tonight-release-record-20261017/.tmp/tonight/sql-*`. The first sweep503 did
+not recur in this109-case sweep either. Full-main repeats after this merge.

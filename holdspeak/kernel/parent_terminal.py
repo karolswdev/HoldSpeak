@@ -99,23 +99,11 @@ def close_parent(
             # This parent has finished its provider children and owns only
             # deterministic publication of saved Meeting outcomes. Recheck in
             # the SAME close transaction: a pre-read can race entry to pending.
-            from ..db.intel import _CURRENT_LINEAGE_CTE, _durable_transcript_hash
+            from ..db.intel import has_recoverable_bound_publication
 
-            pending = conn.execute(
-                _CURRENT_LINEAGE_CTE + """SELECT j.* FROM current_jobs j
-                   JOIN meetings m ON m.id=j.meeting_id
-                   WHERE j.current_rank=1 AND j.parent_operation_id=?
-                     AND j.bundle_id IS NOT NULL AND j.bundle_sha256 IS NOT NULL AND j.claim_id IS NOT NULL
-                     AND ((j.status IN ('claimed','running') AND j.lifecycle_posture='publication_pending')
-                          OR (j.status='succeeded' AND m.intel_status='ready'))
-                     AND m.parked=0 AND m.intel_status!='skipped'
-                     AND EXISTS (SELECT 1 FROM artifacts a WHERE a.meeting_id=j.meeting_id
-                         AND a.plugin_id='meeting_summary' AND json_extract(a.structured_json,'$.job_id')=j.job_id)
-                   LIMIT 1""", (context.operation_id,),
-            ).fetchone()
-            if (pending is not None and not row["warrant_revoked"]
-                    and float(row["deadline_at"]) > controller._clock()
-                    and _durable_transcript_hash(conn, pending["meeting_id"]) == pending["transcript_hash"]):
+            if (has_recoverable_bound_publication(conn, context.operation_id)
+                    and not row["warrant_revoked"]
+                    and float(row["deadline_at"]) > controller._clock()):
                 return None, False
         if executor_lease is not None:
             job_id = str(executor_lease.get("job_id") or "")

@@ -4,11 +4,11 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-17 (tonight three repairs; quick GREEN)
+**Last updated:** 2026-10-17 (#1240 delivered; full-main SQL guard follow-up)
 
 ## Current phase
 
-**Tonight: Send, Meeting outcomes, Workbench sources (2026-10-17).**
+**Tonight: Send, Meeting outcomes, Workbench sources — #1240 delivered (2026-10-17).**
 Send retains the same unresolved command/preview across reload; Retry cannot
 turn that press into a second delivery. Meeting local outcome publication
 resumes saved results without inference, and Confirm/Done retains its exact
@@ -17,8 +17,17 @@ refuses unreadable explicit sources before dispatch and preserves grounding
 and context on Re-run. All three have reproduced failures and passing isolated
 1440/393 observations. Final ordinary quick GREEN:4,132 related UI /1,841
 Python /109 sweep /17 canon; TypeScript,75 doc guards and27 atlas checks pass.
-Source/build `426015d9eee42d70`. Merge, postmerge review, normal idle delivery
-and full-main result follow this candidate; full success is not claimed yet.
+Merged main `f65325452`, source/build `426015d9eee42d70`.
+[Astra postmerge review](https://github.com/karolswdev/HoldSpeak/pull/1240#issuecomment-6231103541)
+RATIFY. Idle local delivery from `wt-tonight-three-20261017`, PID8943,
+port8765; health/Desk/Conductor/Models200. The printed authenticated Desk
+address was opened. Mandatory live bus passes3 in24.59s. Full-main completed:1 failed /16,670
+passed /26 skipped /1 expected failure. The static SQL guard found one new
+unchecked query (139 vs138); the same-transaction query is moving to its DB
+module so the guard can validate it without raising the ceiling. Follow-up83 focused
+and ordinary quick107 affected /109 sweep /17 canon pass; static sweep
+prepares2710 statements with138 unchecked, unchanged ceiling138. The12
+existing warning types and exact limits remain in the release record.
 [Release and exact limits](../docs/internal/TONIGHT-THREE-2026-10-17/RELEASE.md).
 
 **Full-main recovery — GREEN, #1238 delivered (2026-10-17).** Merged product
