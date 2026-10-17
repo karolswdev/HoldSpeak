@@ -1,13 +1,19 @@
-/* Thread and Ask share a paper conversation and a bounded writing rail.
-   The host owns scrolling; the traffic well must not create another viewport. */
+/* Ask and Thread share document paper. The host owns the reading viewport;
+   traffic itself never introduces a second scrolling well. */
 .conversation-reading {
   min-width: 0;
   min-height: 0;
+  background: var(--alive-paper);
+  border: 1px solid var(--border);
+  box-shadow: var(--desk-window-etch);
 }
 .conversation-reading .surface-traffic,
 .conversation-reading .surface-traffic > .surface-well {
   flex: none;
   min-width: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 .conversation-reading .surface-traffic > .surface-well > .surface-well-body {
   overflow: visible;
@@ -15,15 +21,22 @@
   padding: 0;
 }
 .conversation-reading .surface-traffic-turn {
-  grid-template-columns: minmax(76px, auto) minmax(0, 1fr);
-  gap: 4px 12px;
-  padding: 14px 16px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  margin: 0 18px;
+  padding: 18px 0;
+}
+.conversation-reading .surface-traffic-turn + .surface-traffic-turn {
+  border-top: 1px solid var(--border-subtle);
 }
 .conversation-reading .surface-traffic-prefix {
+  grid-column: 1;
+  max-width: 100%;
   font: 600 12px / 1.5 var(--font-mono);
   color: var(--text-muted);
 }
 .conversation-reading .surface-traffic-text {
+  grid-column: 1;
   font: 400 14px / 1.65 var(--font-sans);
   color: var(--text);
   white-space: normal;
@@ -32,18 +45,16 @@
 .conversation-reading .surface-traffic-text p {
   margin: 0 0 10px;
 }
-.conversation-reading .surface-traffic-text p:last-child {
-  margin-bottom: 0;
-}
+.conversation-reading .surface-traffic-text p:last-child { margin-bottom: 0; }
 .conversation-reading .surface-material {
   font-family: inherit;
   font-size: inherit;
   line-height: inherit;
 }
 .conversation-reading .surface-traffic-meta {
-  grid-column: 2;
+  grid-column: 1;
   gap: 8px;
-  padding-top: 6px;
+  padding-top: 4px;
   font: 400 12px / 1.5 var(--font-mono);
 }
 .conversation-composer {
@@ -65,10 +76,9 @@
 }
 @container surface (max-width: 520px) {
   .conversation-reading .surface-traffic-turn {
-    display: flex;
-    flex-direction: column;
+    margin: 0 12px;
+    padding: 14px 0;
     gap: 7px;
-    padding: 12px;
   }
   .conversation-reading .surface-traffic-meta { padding-top: 4px; }
   .conversation-composer { padding: 10px; }

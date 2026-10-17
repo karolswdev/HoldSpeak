@@ -57,6 +57,91 @@
   gap: var(--space-3);
 }
 
+/* The explicit host scope beats window-chrome.css section resets.
+   Decision material leads; status and supporting records stay on steel. */
+.desk-next .attention-decision {
+  gap: var(--space-4);
+}
+
+.desk-next .attention-decision-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  min-width: 0;
+  font: 400 12px / 1.5 var(--font-mono);
+}
+
+.attention-decision-strip > .gadget-cycle {
+  margin-left: auto;
+}
+
+.attention-decision-strip .attention-decision-fact {
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.desk-next .desk-pullout-body .attention-decision .attention-decision-paper {
+  min-width: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--wb-rule);
+  background: var(--alive-paper);
+  color: var(--wb-ink);
+  box-shadow: var(--desk-window-etch);
+}
+
+.attention-decision-paper > h2 {
+  margin: 0 0 var(--space-3);
+  font: 600 15px / 1.4 var(--font-sans);
+}
+
+.desk-next .attention-decision .gadget-pad textarea,
+.desk-next .attention-decision .surface-material {
+  color: var(--wb-ink);
+  font: 400 14px / 1.6 var(--font-sans);
+}
+
+.desk-next .attention-decision .attention-decision-paper .gadget-pad,
+.desk-next .attention-decision .attention-decision-paper .gadget-pad textarea {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.desk-next .attention-decision .attention-decision-paper .gadget-pad textarea {
+  min-height: 14rem;
+  padding-top: 0;
+  padding-left: 0;
+}
+
+.attention-decision-paper:focus-within {
+  border-color: var(--accent);
+}
+
+.desk-next .attention-decision-support > summary {
+  width: 100%;
+  min-height: 36px;
+}
+
+.desk-next .attention-decision-support .gadget-pad {
+  background: var(--alive-paper);
+}
+
+.desk-next .attention-decision-support .surface-material {
+  padding: var(--space-3);
+  background: var(--alive-paper);
+}
+
+@container surface (max-width: 560px) {
+  .desk-next .desk-pullout-body .attention-decision .attention-decision-paper {
+    padding: var(--space-3);
+  }
+
+  .desk-next .attention-decision-support > summary {
+    min-height: 44px;
+  }
+}
+
 .attention-record-revisions {
   display: grid;
   gap: var(--space-2);

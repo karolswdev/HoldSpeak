@@ -1,4 +1,5 @@
 import { openNewThread } from "../newThread";
+import { refOpener } from "../openObject";
 import { countLabel, FoldGadget, CheckGadget, CycleGadget, GadgetGroup, GadgetRow, StringGadget, wireDayClock } from "../surface";
 /** HS-151-05 — Thread pullout content: head (in-place title, egress lamp,
  * status line, token meter), body (user/assistant rows with StreamingMaterial,
@@ -51,6 +52,7 @@ import {
   addAnnotation,
   deleteAnnotation,
   type ThreadMessage,
+  type ThreadRef,
   type ThreadDeltaPayload,
   type ThreadTurnStartedPayload,
   type ThreadTurnDonePayload,
@@ -80,13 +82,50 @@ import {
   wasAutoSpoken,
 } from "../autoSpeak";
 import type { PulloutContentProps } from "./types";
-import { noteName } from "../windowName";
+import { noteName, primitiveName } from "../windowName";
 import "./thread-pullout.css";
 
 // HS-152-04: stable empty refs for zustand selectors (avoid infinite re-render).
 const EMPTY_TOOL_ROWS: Record<string, ToolRow> = {};
 const EMPTY_GUARDRAIL_ROWS: Record<string, GuardrailRow> = {};
 const EMPTY_DRAFT_ANNOTATIONS: DraftAnnotation[] = [];
+
+
+/** The hub returns frozen snapshots as JSON strings on older threads.
+ * Keep the sent identity even when its source is no longer on the desk. */
+function ThreadSources({ refs }: { refs: ThreadRef[] }) {
+  const items = useDesk((state) => state.items);
+  const sources = new Map<string, { ref: ThreadRef; title: string; frozen: boolean }>();
+  for (const ref of refs) {
+    // Import idempotency markers are not material sent to a model.
+    if (ref.refKind === "import_hash" || !ref.refId) continue;
+    let frozen = ref.frozenJson;
+    if (typeof frozen === "string") {
+      try { frozen = JSON.parse(frozen); } catch { frozen = null; }
+    }
+    const identity = ref.refId.includes(":") ? ref.refId : `${ref.refKind}:${ref.refId}`;
+    const separator = identity.indexOf(":");
+    const kind = identity.slice(0, separator);
+    const id = identity.slice(separator + 1);
+    const storeKind = ({ person: "people", knowledge: "kb", zone: "directory" } as Record<string, string>)[kind] || kind;
+    const item = items[storeKind as keyof typeof items]?.find((candidate) => String(candidate.id) === id);
+    const frozenTitle = typeof frozen?.title === "string" ? frozen.title.trim() : "";
+    const prior = sources.get(identity);
+    if (!prior || (!prior.frozen && frozenTitle)) sources.set(identity, {
+      ref,
+      title: frozenTitle || (item ? primitiveName(storeKind, item, id) : "Source unavailable"),
+      frozen: Boolean(frozenTitle),
+    });
+  }
+  if (!sources.size) return null;
+  return <FoldGadget title={countLabel("Sources ·", sources.size)} className="thread-sources">
+    <SurfaceRows>{Array.from(sources, ([identity, source]) => {
+      const open = refOpener(identity);
+      return <SurfaceRow key={source.ref.id} id={`thread-source-${source.ref.id}`} title={source.title}
+        detail={identity} onOpen={open ?? undefined} />;
+    })}</SurfaceRows>
+  </FoldGadget>;
+}
 
 // ── StreamingMaterial ────────────────────────────────────────────────
 // Append-safe wrapper: renders the live text cheaply while streaming,
@@ -936,6 +975,7 @@ function MessageRow({
 
   const [showRaw, setShowRaw] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const routineTools = toolRows?.filter((row) =>
     row.state === "pending" || row.state === "running" || row.state === "receipted",
   ) ?? [];
@@ -1039,39 +1079,16 @@ function MessageRow({
       )}
 
       <div className="thread-row-actions">
-        {/* HS-154-04: speaker glyph — replay any finished assistant text */}
-        {isDone && displayText && (
-          <SpeakerGlyph messageId={msg.id} text={displayText} />
-        )}
-        <SiblingPicker
-          position={siblingPosition}
-          total={siblingTotal}
-        />
-        {isDone && !editing && (
-          <>
-            <Button
-              variant="ghost"
-              dense
-              onClick={() => onKeep(msg.id, "note")}
-            >
-              Keep as note
-            </Button>
-            <Button
-              variant="ghost"
-              dense
-              onClick={() => onKeep(msg.id, "artifact")}
-            >
-              Keep as artifact
-            </Button>
-            <Button
-              variant="ghost"
-              dense
-              onClick={() => setEditing(true)}
-            >
-              Fork here
-            </Button>
-          </>
-        )}
+        <SiblingPicker position={siblingPosition} total={siblingTotal} />
+        {isDone && !editing && <>
+          <Button variant="ghost" dense onClick={() => onKeep(msg.id, "note")}>Keep as note</Button>
+          <Button variant="ghost" dense aria-expanded={moreOpen} onClick={() => setMoreOpen(!moreOpen)}>More</Button>
+        </>}
+        {isDone && moreOpen && !editing && <div className="thread-row-more">
+          {displayText && <SpeakerGlyph messageId={msg.id} text={displayText} />}
+          <Button variant="ghost" dense onClick={() => onKeep(msg.id, "artifact")}>Keep as artifact</Button>
+          <Button variant="ghost" dense onClick={() => setEditing(true)}>Fork here</Button>
+        </div>}
         {editing && (
           <InlineEditor
             initialText=""
@@ -1137,6 +1154,8 @@ function ThreadPulloutInner({
   // HS-151-06: track turn_done for focus restore
   const [restoreFocus, setRestoreFocus] = useState(false);
 
+  const headerControlsRef = useRef<HTMLDivElement>(null);
+  useScrollHint(headerControlsRef, headerControlsRef, "y");
   const bodyRef = useRef<HTMLDivElement>(null);
   useScrollHint(bodyRef, bodyRef, "y");
   const followTail = useRef(true);
@@ -1538,13 +1557,13 @@ function ThreadPulloutInner({
 
   return (
     <>
-      <div className="desk-pullout-body desk-surface-body thread-pullout-body surface-scroll-hint" data-axis="y" ref={bodyCallbackRef}
-        onScroll={(event) => {
-          const body = event.currentTarget;
-          followTail.current = body.scrollHeight - body.scrollTop - body.clientHeight < 40;
-        }}>
         {/* The window names the thread. Rename keeps its in-place editor. */}
         <div className="thread-head">
+          <CallChip threadId={threadId} callMode={detail.thread?.call_mode ?? 0}
+            isStreaming={isStreaming} onReload={() => void loadThread(threadId)} />
+          <div className="thread-head-controls surface-scroll-hint" data-axis="y" ref={headerControlsRef}>
+          <div className="thread-context-strip">
+            <FoldGadget title="Thread details" className="thread-details">
           {editingTitle ? (
             // HS-176-04 — the voice law: the title is spoken or typed.
             // The mousedown guard keeps focus in the field: its onBlur
@@ -1596,12 +1615,6 @@ function ThreadPulloutInner({
                 Rename
               </Button>
             )}
-            <CallChip
-              threadId={threadId}
-              callMode={detail.thread?.call_mode ?? 0}
-              isStreaming={isStreaming}
-              onReload={() => void loadThread(threadId)}
-            />
             {(liveStatusLine || detail.thread?.status_line) && (
               <span className="thread-status-line">{liveStatusLine || detail.thread?.status_line}</span>
             )}
@@ -1628,8 +1641,21 @@ function ThreadPulloutInner({
               }}
             />
           )}
+            </FoldGadget>
+            <FoldGadget title={`Mode · ${detail.thread?.mode?.name || "None"}`} className="thread-mode-fold">
+              <ModeTabs activeMode={detail.thread?.mode ?? null}
+                onSelect={(recipeId) => void setMode(threadId, recipeId)} disabled={isStreaming} />
+            </FoldGadget>
+          </div>
+          <ThreadSources refs={detail.refs} />
+          </div>
         </div>
 
+      <div className="desk-pullout-body desk-surface-body thread-pullout-body surface-scroll-hint" data-axis="y" ref={bodyCallbackRef}
+        onScroll={(event) => {
+          const body = event.currentTarget;
+          followTail.current = body.scrollHeight - body.scrollTop - body.clientHeight < 40;
+        }}>
         <div className="conversation-reading thread-reading">
           <SurfaceTraffic>
         {detail.messages.length === 0 ? (
@@ -1679,11 +1705,6 @@ function ThreadPulloutInner({
           reload={() => loadThread(threadId)}
           onTry={(text) => handleSend(text, [])}
         />}
-        <ModeTabs
-          activeMode={detail.thread?.mode ?? null}
-          onSelect={(recipeId) => void setMode(threadId, recipeId)}
-          disabled={isStreaming}
-        />
         {receipt}
         {/* HS-153-04: annotation chips above the composer */}
         <AnnotationChips

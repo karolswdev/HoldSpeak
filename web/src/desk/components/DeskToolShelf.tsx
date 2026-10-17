@@ -333,6 +333,7 @@ export function DeskToolShelf() {
   const open = usePalette((s) => s.open);
   // PHILO-13-08 (B3): a create that asks its name first (New Decision).
   const prompt = useNamePrompt((s) => s.prompt);
+  const decisionPrompt = prompt?.label === "Decision title";
   const [query, setQuery] = useState("");
   // -1 means the palette has not received an arrow press yet. The first
   // runnable object then wins, while contextual Send rows remain reachable
@@ -965,14 +966,15 @@ export function DeskToolShelf() {
             <aside
               ref={rootRef}
               id="desk-tool-shelf"
-              className="desk-tool-shelf"
+              className={decisionPrompt ? "desk-tool-shelf desk-decision-prompt" : "desk-tool-shelf"}
               role="region"
-              aria-label="Tools and Desk search"
+              aria-label={decisionPrompt ? "New decision" : "Tools and Desk search"}
               onKeyDown={onDeckKeyDown}
             >
+              {decisionPrompt ? <h2 className="desk-decision-prompt-title">New decision</h2> : null}
               <div className="desk-tool-search-head">
                 <label className="desk-tool-search">
-                  <span className="sr-only">{prompt ? prompt.label : "Search tools and Desk items"}</span>
+                  <span className={decisionPrompt ? "desk-decision-prompt-label" : "sr-only"}>{prompt ? prompt.label : "Search tools and Desk items"}</span>
                   <StringGadget
                     inputRef={searchRef}
                     label={prompt ? prompt.label : "Search tools and Desk items"}
@@ -999,7 +1001,7 @@ export function DeskToolShelf() {
                 <div className="desk-tool-name">
                   <Button dense variant="primary" data-testid="palette-name-save"
                     disabled={!query.trim()} onClick={submitName}>
-                    Save
+                    {decisionPrompt ? "Create" : "Save"}
                   </Button>
                 </div>
               ) : !ranked ? null : rows.length ? (

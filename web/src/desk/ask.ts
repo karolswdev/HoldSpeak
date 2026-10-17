@@ -18,6 +18,8 @@ export interface AskContext {
 export interface AskSelectionHandoff {
   noteRef: string;
   text: string;
+  /** The Note window has just saved this source. Floor selection is separate. */
+  source?: AskContext;
 }
 
 const ASK_SELECTION_EVENT = "holdspeak:ask-selection";
@@ -25,7 +27,9 @@ let pendingAskSelection: AskSelectionHandoff | null = null;
 
 /** A transient Note → Ask handoff. The Note remains the canonical context. */
 export function latchAskSelection(selection: AskSelectionHandoff | null): void {
-  pendingAskSelection = selection && selection.text.trim() ? { ...selection } : null;
+  pendingAskSelection = selection && (selection.text.trim() || selection.source)
+    ? { ...selection, ...(selection.source ? { source: { ...selection.source } } : {}) }
+    : null;
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent<AskSelectionHandoff | null>(ASK_SELECTION_EVENT, { detail: pendingAskSelection }));
   }
@@ -38,7 +42,7 @@ export function takeAskSelection(): AskSelectionHandoff | null {
 }
 
 export function selectionPrompt(question: string, selection: AskSelectionHandoff | null): string {
-  if (!selection) return question.trim();
+  if (!selection?.text.trim()) return question.trim();
   const quote = selection.text.split("\n").map((line) => `> ${line}`).join("\n");
   return [question.trim(), `Selected text:\n${quote}`].filter(Boolean).join("\n\n");
 }

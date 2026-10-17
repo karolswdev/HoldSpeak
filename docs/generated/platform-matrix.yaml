@@ -2997,7 +2997,10 @@
         "holdspeak/db/plugins.py",
         "web/src/desk/lineage.ts",
         "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
-        "web/src/desk/components/DeskToolShelf.tsx"
+        "web/src/desk/components/DeskToolShelf.tsx",
+        "web/src/desk/pullouts/DecisionPullout.tsx",
+        "web/src/desk/pullouts/ThreadPullout.tsx",
+        "web/src/desk/components/ThreadComposer.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -3020,7 +3023,10 @@
         "holdspeak/db/plugins.py",
         "web/src/desk/lineage.ts",
         "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
-        "web/src/desk/components/DeskToolShelf.tsx"
+        "web/src/desk/components/DeskToolShelf.tsx",
+        "web/src/desk/pullouts/DecisionPullout.tsx",
+        "web/src/desk/pullouts/ThreadPullout.tsx",
+        "web/src/desk/components/ThreadComposer.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -3043,7 +3049,10 @@
         "holdspeak/db/plugins.py",
         "web/src/desk/lineage.ts",
         "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
-        "web/src/desk/components/DeskToolShelf.tsx"
+        "web/src/desk/components/DeskToolShelf.tsx",
+        "web/src/desk/pullouts/DecisionPullout.tsx",
+        "web/src/desk/pullouts/ThreadPullout.tsx",
+        "web/src/desk/components/ThreadComposer.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -3066,7 +3075,10 @@
         "holdspeak/db/plugins.py",
         "web/src/desk/lineage.ts",
         "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
-        "web/src/desk/components/DeskToolShelf.tsx"
+        "web/src/desk/components/DeskToolShelf.tsx",
+        "web/src/desk/pullouts/DecisionPullout.tsx",
+        "web/src/desk/pullouts/ThreadPullout.tsx",
+        "web/src/desk/components/ThreadComposer.tsx"
       ],
       "status": "built_unreleased"
     },
@@ -3089,7 +3101,10 @@
         "holdspeak/db/plugins.py",
         "web/src/desk/lineage.ts",
         "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
-        "web/src/desk/components/DeskToolShelf.tsx"
+        "web/src/desk/components/DeskToolShelf.tsx",
+        "web/src/desk/pullouts/DecisionPullout.tsx",
+        "web/src/desk/pullouts/ThreadPullout.tsx",
+        "web/src/desk/components/ThreadComposer.tsx"
       ],
       "status": "built_unreleased"
     },

@@ -900,14 +900,68 @@ describe("ThreadComposer", () => {
     expect(send).not.toBeDisabled();
   });
 
-  it("Enter with streaming calls onStop, not onSend", () => {
+  it("Enter while streaming edits the draft without stopping or submitting", () => {
     const { props } = renderComposer({ streaming: true });
     const input = screen.getByTestId("composer-input") as HTMLTextAreaElement;
     fireEvent.change(input, { target: { value: "hello" } });
-    fireEvent.keyDown(input, { key: "Enter", shiftKey: false });
-    expect(props.onStop).toHaveBeenCalled();
+    expect(fireEvent.keyDown(input, { key: "Enter", shiftKey: false })).toBe(true);
+    expect(props.onStop).not.toHaveBeenCalled();
     expect(props.onSend).not.toHaveBeenCalled();
   });
+
+  it("opens and searches Sources without changing the draft, then attaches the chosen source", () => {
+    renderComposer();
+    const input = screen.getByTestId("composer-input") as HTMLTextAreaElement;
+    fireEvent.change(input, { target: { value: "Keep these exact words" } });
+    fireEvent.click(screen.getByRole("button", { name: "Sources" }));
+    expect(input.value).toBe("Keep these exact words");
+    fireEvent.change(screen.getByRole("textbox", { name: "Find source" }), { target: { value: "Design" } });
+    fireEvent.keyDown(screen.getByRole("textbox", { name: "Find source" }), { key: "Enter" });
+    expect(input.value).toBe("Keep these exact words");
+    expect(screen.getByTestId("composer-chips").textContent).toContain("Design notes");
+    expect(screen.queryByTestId("composer-picker")).toBeNull();
+  });
+
+  it("Escape closes a source picker during streaming without changing words or stopping", () => {
+    const { props } = renderComposer({ streaming: true });
+    const input = screen.getByTestId("composer-input") as HTMLTextAreaElement;
+    fireEvent.change(input, { target: { value: "Next question" } });
+    fireEvent.click(screen.getByRole("button", { name: "Sources" }));
+    fireEvent.keyDown(screen.getByRole("textbox", { name: "Find source" }), { key: "Escape" });
+    expect(screen.queryByTestId("composer-picker")).toBeNull();
+    expect(input.value).toBe("Next question");
+    expect(props.onStop).not.toHaveBeenCalled();
+  });
+
+  it("Commands keeps the unsent draft when a thread command runs", () => {
+    const { props } = renderComposer();
+    const input = screen.getByTestId("composer-input") as HTMLTextAreaElement;
+    fireEvent.change(input, { target: { value: "My unfinished thought" } });
+    fireEvent.click(screen.getByRole("button", { name: "Commands" }));
+    expect(input.value).toBe("My unfinished thought");
+    fireEvent.click(screen.getByText("Keep as note"));
+    expect(props.onKeep).toHaveBeenCalled();
+    expect(input.value).toBe("My unfinished thought");
+    expect(screen.queryByTestId("composer-picker")).toBeNull();
+  });
+
+  it("chooses a mode from Commands without inserting command syntax into the draft", async () => {
+    vi.mocked(apiFetch).mockResolvedValue({ recipes: [{ id: "mode-review", name: "Review" }] } as never);
+    const onModeSelect = vi.fn();
+    renderComposer({ onModeSelect });
+    const input = screen.getByTestId("composer-input") as HTMLTextAreaElement;
+    fireEvent.change(input, { target: { value: "Keep this question" } });
+    fireEvent.click(screen.getByRole("button", { name: "Commands" }));
+    fireEvent.click(screen.getByText("Switch mode"));
+    const argumentInput = screen.getByRole("textbox", { name: "Switch mode" });
+    await waitFor(() => expect(document.activeElement).toBe(argumentInput));
+    fireEvent.click(await screen.findByText("Review"));
+    await waitFor(() => expect(document.activeElement).toBe(input));
+    expect(onModeSelect).toHaveBeenCalledExactlyOnceWith("mode-review");
+    expect(input.value).toBe("Keep this question");
+    expect(screen.queryByTestId("composer-picker")).toBeNull();
+  });
+
 });
 
 // ── InlineEditor tests ──────────────────────────────────────────────

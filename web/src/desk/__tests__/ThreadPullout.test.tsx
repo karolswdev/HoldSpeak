@@ -1,11 +1,12 @@
 /** HS-151-05 — ThreadPullout rendering tests: rows render streaming, done,
  * error, crashed+Retry, sibling picker. */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import * as threads from "../threads";
 import { useThreadStore, type ThreadMessage, type ThreadDetail } from "../threads";
 import { ThreadPullout } from "../pullouts/ThreadPullout";
 import { RuntimeBusProvider } from "../../runtime/RuntimeBus";
+import { useDesk } from "../store";
 
 // Mock the WebSocket so RuntimeBusProvider does not connect.
 beforeEach(() => {
@@ -128,6 +129,8 @@ describe("ThreadPullout title", () => {
     detail.thread.mode = { id: "hs-seed-mode-desk", name: "Desk", avatar: "#666" };
     const { container } = renderPullout();
     expect(screen.queryByText("Test Thread")).toBeNull();
+    expect(screen.getByText("Thread details").closest("details")?.hasAttribute("open")).toBe(false);
+    fireEvent.click(screen.getByText("Thread details"));
     expect(screen.getByRole("button", { name: "Rename thread" }).classList.contains("btn")).toBe(true);
     expect(container.querySelector(".thread-mode-badge")).toBeNull();
   });
@@ -135,6 +138,7 @@ describe("ThreadPullout title", () => {
   it("opens the current title and mic; Escape restores Rename focus without a write", async () => {
     const patch = vi.spyOn(threads, "patchThread");
     renderPullout();
+    fireEvent.click(screen.getByText("Thread details"));
     fireEvent.click(screen.getByRole("button", { name: "Rename thread" }));
     const input = screen.getByRole("textbox", { name: "Thread title" });
     expect((input as HTMLInputElement).value).toBe("Test Thread");
@@ -149,6 +153,7 @@ describe("ThreadPullout title", () => {
   it("Enter commits the title and restores Rename focus", async () => {
     const patch = vi.spyOn(threads, "patchThread").mockResolvedValue(useThreadStore.getState().threads["t-1"].thread);
     renderPullout();
+    fireEvent.click(screen.getByText("Thread details"));
     fireEvent.click(screen.getByRole("button", { name: "Rename thread" }));
     const input = screen.getByRole("textbox", { name: "Thread title" });
     fireEvent.change(input, { target: { value: "Architecture review" } });
@@ -181,6 +186,85 @@ describe("ThreadPullout rows", () => {
     } });
     renderPullout();
     expect(screen.getByText("Hello from the live answer")).toBeTruthy();
+  });
+
+  it("keeps the main answer action visible and exposes other actions through More", () => {
+    seedStore([makeMsg()]);
+    renderPullout();
+    expect(screen.getByRole("button", { name: "Keep as note" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Keep as artifact" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Fork here" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "More" }));
+    expect(screen.getByRole("button", { name: "Keep as artifact" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Fork here" })).toBeTruthy();
+  });
+
+  it("moves focus into real command rows and returns to the writer after a choice or Escape", async () => {
+    seedStore([makeMsg()]);
+    renderPullout();
+    const input = screen.getByTestId("composer-input") as HTMLTextAreaElement;
+    fireEvent.change(input, { target: { value: "My next question" } });
+    const commands = screen.getByRole("button", { name: "Commands" });
+    commands.focus();
+    fireEvent.click(commands);
+    const firstCommand = within(screen.getByTestId("composer-picker")).getByRole("button", { name: /Keep as note/ });
+    await waitFor(() => expect(document.activeElement).toBe(firstCommand));
+    fireEvent.click(within(screen.getByTestId("composer-picker")).getByRole("button", { name: /Show tools/ }));
+    await waitFor(() => expect(document.activeElement).toBe(input));
+    expect(input.value).toBe("My next question");
+    fireEvent.click(commands);
+    const cancelTarget = within(screen.getByTestId("composer-picker")).getByRole("button", { name: /Keep as note/ });
+    await waitFor(() => expect(document.activeElement).toBe(cancelTarget));
+    fireEvent.keyDown(cancelTarget, { key: "Escape" });
+    await waitFor(() => expect(document.activeElement).toBe(input));
+    expect(screen.queryByTestId("composer-picker")).toBeNull();
+    expect(input.value).toBe("My next question");
+  });
+
+  it("retains sent source names and qualified identities from real frozen refs", () => {
+    seedStore([makeMsg()]);
+    useThreadStore.getState().threads["t-1"].refs = [{ id: "r-1", threadId: "t-1", messageId: "",
+      refKind: "note", refId: "note:n-1", frozenJson: JSON.stringify({ title: "Release plan" }) as any, createdAt: "" }];
+    renderPullout();
+    fireEvent.click(screen.getByText("Sources · 1"));
+    expect(screen.getByText("Release plan")).toBeTruthy();
+    expect(screen.getByText("note:n-1")).toBeTruthy();
+    expect(screen.queryByText("note:note:n-1")).toBeNull();
+  });
+
+  it("omits importer bookkeeping from the source count", () => {
+    seedStore([makeMsg()]);
+    useThreadStore.getState().threads["t-1"].refs = [{ id: "r-import", threadId: "t-1", messageId: "",
+      refKind: "import_hash", refId: "import-fingerprint", frozenJson: null, createdAt: "" }];
+    const { container } = renderPullout();
+    expect(container.querySelector(".thread-sources")).toBeNull();
+    expect(screen.queryByText("import-fingerprint")).toBeNull();
+  });
+
+  it("names seeded material from the live desk, prefers frozen titles and keeps an honest unavailable ref", () => {
+    seedStore([makeMsg()]);
+    const priorItems = useDesk.getState().items;
+    useDesk.setState({ items: { ...priorItems, note: [{ id: "n-seed", title: "Current release plan" }] as never } });
+    useThreadStore.getState().threads["t-1"].refs = [
+      { id: "seed", threadId: "t-1", messageId: "", refKind: "seed", refId: "note:n-seed", frozenJson: null, createdAt: "" },
+      { id: "live", threadId: "t-1", messageId: "", refKind: "seed", refId: "note:n-live", frozenJson: null, createdAt: "" },
+      { id: "snapshot", threadId: "t-1", messageId: "", refKind: "note", refId: "note:n-seed", frozenJson: { title: "Sent release plan" }, createdAt: "" },
+    ];
+    const view = renderPullout();
+    fireEvent.click(screen.getByText("Sources · 2"));
+    expect(screen.getByText("Sent release plan")).toBeTruthy();
+    expect(screen.queryByText("Current release plan")).toBeNull();
+    expect(screen.getByText("Source unavailable")).toBeTruthy();
+    expect(screen.getByText("note:n-live")).toBeTruthy();
+    view.unmount();
+    useThreadStore.getState().threads["t-1"].refs = [
+      { id: "seed", threadId: "t-1", messageId: "", refKind: "seed", refId: "note:n-seed", frozenJson: null, createdAt: "" },
+    ];
+    renderPullout();
+    fireEvent.click(screen.getByText("Sources · 1"));
+    expect(screen.getByText("Current release plan")).toBeTruthy();
+    expect(screen.getByText("note:n-seed")).toBeTruthy();
+    useDesk.setState({ items: priorItems });
   });
 
   it("renders a user row with YOU label", () => {

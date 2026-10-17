@@ -67,6 +67,8 @@ describe("PHILO-3-01 no data loss on an immediate reopen", () => {
     expect(useDesk.getState().newIds).toContain("decision_keep");
 
     const first = render(<Face />);
+    fireEvent.click(screen.getByText("Context", { selector: ".gadget-fold-title" }));
+    fireEvent.click(screen.getByText("Consequences", { selector: ".gadget-fold-title" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Context" }), { target: { value: "Source: review" } });
     fireEvent.change(screen.getByRole("textbox", { name: "Decision" }), { target: { value: "Adopt the bus" } });
     fireEvent.change(screen.getByRole("textbox", { name: "Consequences" }), { target: { value: "One path" } });

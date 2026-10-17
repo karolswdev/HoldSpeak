@@ -112,7 +112,7 @@ describe("PHILO-8-04 the decision window shows no empty heading", () => {
     }) as unknown as WorldObject;
   const heads = () =>
     // PHILO-11-05a: the decision's own headings (its SEND well carries its own head).
-    Array.from(document.querySelectorAll(".desk-decision-card > .gadget-group > h4, .desk-decision-card > .gadget-fold > summary > .gadget-fold-title"))
+    Array.from(document.querySelectorAll(".desk-decision-card > .attention-decision-paper > h2, .desk-decision-card > .gadget-fold > summary > .gadget-fold-title"))
       .map((h) => h.textContent).filter((label) => label !== "State");
 
   it("a title-only decision shows no heading; Edit offers all three fields", () => {
@@ -120,7 +120,7 @@ describe("PHILO-8-04 the decision window shows no empty heading", () => {
     expect(heads()).toEqual([]);
     fireEvent.click(screen.getByRole("button", { name: "Edit" }));
     for (const name of ["Context", "Decision", "Consequences"]) {
-      expect(screen.getByRole("textbox", { name })).toBeTruthy();
+      expect(screen.getByLabelText(name, { selector: "textarea" })).toBeTruthy();
     }
   });
 
@@ -131,7 +131,7 @@ describe("PHILO-8-04 the decision window shows no empty heading", () => {
         onClose={() => {}}
       />,
     );
-    expect(heads()).toEqual(["Decision context"]);
+    expect(heads()).toEqual(["Context"]);
     expect(screen.getByText("Runners are full.")).toBeInTheDocument();
   });
 
@@ -142,7 +142,7 @@ describe("PHILO-8-04 the decision window shows no empty heading", () => {
         onClose={() => {}}
       />,
     );
-    expect(heads()).toEqual(["Decision", "Decision context", "Consequences"]);
+    expect(heads()).toEqual(["Decision", "Context", "Consequences"]);
     for (const body of ["C", "D", "Q"]) expect(screen.getByText(body)).toBeInTheDocument();
   });
 });

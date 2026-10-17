@@ -288,16 +288,16 @@ describe("the decision window shows a heading only with text under it", () => {
   const CASES: Array<[string, Wire, string[]]> = [
     ["title-only", { title: "Glass title only decision" }, []],
     ["context-only", { title: "Glass context only decision", context_markdown: "Our own runners are full every night." },
-      ["Decision context"]],
+      ["Context"]],
     ["context-and-decision", {
       title: "Move the nightly build to the shared runners",
       context_markdown: "Our own runners are full every night. The shared runner pool has spare capacity after 8 PM.",
       decision_markdown: "Move the nightly build to the shared runners.",
-    }, ["Decision", "Decision context"]],
+    }, ["Decision", "Context"]],
   ];
   const heads = () =>
     // The decision's own headings (its SEND well carries its own head).
-    Array.from(document.querySelectorAll(".desk-decision-card > .gadget-group > h4, .desk-decision-card > .gadget-fold > summary > .gadget-fold-title"))
+    Array.from(document.querySelectorAll(".desk-decision-card > .attention-decision-paper > h2, .desk-decision-card > .gadget-fold > summary > .gadget-fold-title"))
       .map((h) => (h.textContent ?? "").trim()).filter((label) => label !== "State");
 
   beforeEach(async () => {
@@ -314,12 +314,42 @@ describe("the decision window shows a heading only with text under it", () => {
     });
   }
 
+  it("writing starts in Decision; support folds keep their drafts when closed", () => {
+    const object = objectByRef(useDesk.getState().items, "decision:decision_title-only");
+    render(<DecisionPullout object={object!} onClose={() => {}} />);
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    expect(screen.getByRole("textbox", { name: "Decision" })).toHaveFocus();
+    const context = screen.getByText("Context", { selector: ".gadget-fold-title" });
+    const consequences = screen.getByText("Consequences", { selector: ".gadget-fold-title" });
+    expect(context.closest("details")).not.toHaveAttribute("open");
+    expect(consequences.closest("details")).not.toHaveAttribute("open");
+    expect(screen.getByLabelText("Context")).toHaveValue("");
+    fireEvent.click(context);
+    fireEvent.change(screen.getByRole("textbox", { name: "Context" }), { target: { value: "A reason to retain" } });
+    fireEvent.click(context);
+    expect(context.closest("details")).not.toHaveAttribute("open");
+    expect(screen.getByLabelText("Context")).toHaveValue("A reason to retain");
+    fireEvent.click(context);
+    expect(screen.getByRole("textbox", { name: "Context" })).toHaveValue("A reason to retain");
+    expect(hub.puts).toHaveLength(0);
+  });
+
+  it("populated support opens beside the primary decision when editing", () => {
+    const object = objectByRef(useDesk.getState().items, "decision:decision_context-and-decision");
+    render(<DecisionPullout object={object!} onClose={() => {}} />);
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    expect(screen.getByRole("textbox", { name: "Decision" })).toHaveFocus();
+    expect(screen.getByText("Context", { selector: ".gadget-fold-title" }).closest("details")).toHaveAttribute("open");
+    expect(screen.getByRole("textbox", { name: "Context" })).toHaveValue("Our own runners are full every night. The shared runner pool has spare capacity after 8 PM.");
+    expect(screen.getByText("Consequences", { selector: ".gadget-fold-title" }).closest("details")).not.toHaveAttribute("open");
+  });
+
   it("Edit on a title-only decision still offers all three fields", () => {
     const object = objectByRef(useDesk.getState().items, "decision:decision_title-only");
     render(<DecisionPullout object={object!} onClose={() => {}} />);
     fireEvent.click(screen.getByRole("button", { name: "Edit" }));
     for (const name of ["Context", "Decision", "Consequences"]) {
-      expect(screen.getByRole("textbox", { name })).toBeTruthy();
+      expect(screen.getByLabelText(name, { selector: "textarea" })).toBeTruthy();
     }
   });
 });
