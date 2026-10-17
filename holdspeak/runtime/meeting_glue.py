@@ -377,13 +377,29 @@ class MeetingGlueMixin:
         return state.to_dict()
 
     def _stop_active_meeting(self, *, allow_runtime_fallback: bool) -> dict[str, object]:
-        session = self._active_meeting_session()
+        # Claim the runtime's visible Stop effects before touching the ticker
+        # or publishing Saving. The session's own guard still fences finalize.
+        with self.meeting_lock:
+            if getattr(self, "_meeting_stop_in_progress", False):
+                raise RuntimeError("Meeting is already stopping")
+            session = self.meeting_session
+            if session is not None and session.is_active:
+                self._meeting_stop_in_progress = True
+            else:
+                session = None
         if session is None:
             if allow_runtime_fallback:
                 self.runtime_stop_event.set()
                 return {"status": "stopping_runtime"}
             raise RuntimeError("No active meeting")
 
+        try:
+            return self._finish_meeting_stop(session)
+        finally:
+            with self.meeting_lock:
+                self._meeting_stop_in_progress = False
+
+    def _finish_meeting_stop(self, session: MeetingSession) -> dict[str, object]:
         # HS-14-07: notify any attached devices that we are about to
         # stop and persist. Captured *before* ``session.stop`` flips
         # the state and clears the device list.

@@ -5,6 +5,23 @@ programme through the broader failures. An inherited failure stays open until it
 is reproduced, fixed and verified, or current evidence proves it already healed.
 Tracking alone does not finish this work.
 
+## Additional observed product failures
+
+The 113-case historical CI union below does not include newly diagnosed local
+product failures. These stay tracked separately rather than disappearing into
+test totals:
+
+- Send Back/edit/reopen displayed newer words above Retry for an older command.
+  Reproduced at 1440/393; fixed, merged and delivered in #1236. Exact replay and
+  later distinct-send file proof: [Thought and Send](THOUGHT-SEND.md).
+- Failure to launch either native cleanup worker hid the unclosed device and
+  released the audio floor. Both controlled variants failed before repair;
+  current focused proof preserves audio and same-ID save with an unavailable
+  floor. [Meeting Stop follow-up](../MEETING-STOP-NATIVE-2026-10-16/POSTMERGE-FOLLOWUP.md).
+- A delayed duplicate Meeting Stop changed Saved back to Saving. Controlled
+  ordering failed before repair; current proof preserves the winning Saved
+  result and one DB row. The same follow-up owns delivery and full-main proof.
+
 ## Scope and evidence
 
 - [Prior tape](https://github.com/karolswdev/HoldSpeak/actions/runs/38897233198): 100 failed cases.

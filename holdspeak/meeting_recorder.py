@@ -615,6 +615,7 @@ class MeetingRecorder:
             self._mic_stream = None
             self._system_stream = None
         pending: list[tuple[str, threading.Event, dict[str, str]]] = []
+        errors = []
         for stream, name in streams:
             if stream is None:
                 continue
@@ -635,11 +636,15 @@ class MeetingRecorder:
                 finally:
                     done.set()
 
-            threading.Thread(target=cleanup, name=f"meeting-{name}-cleanup", daemon=True).start()
+            try:
+                threading.Thread(target=cleanup, name=f"meeting-{name}-cleanup", daemon=True).start()
+            except Exception as exc:
+                errors.append(f"{name} audio device did not close")
+                log.warning("Could not start %s audio cleanup: %s", name, exc)
+                continue
             pending.append((name, done, result))
 
         deadline = time.monotonic() + _NATIVE_STOP_TIMEOUT_SECONDS
-        errors = []
         for name, done, result in pending:
             if not done.wait(max(0.0, deadline - time.monotonic())):
                 errors.append(f"{name} audio device did not close")

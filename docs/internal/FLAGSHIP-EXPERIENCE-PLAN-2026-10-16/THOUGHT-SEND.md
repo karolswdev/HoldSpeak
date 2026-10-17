@@ -126,3 +126,23 @@ occurred. External-source creation and native/provider effects are not claimed.
   Source/build agree at `2759d0c6c13d4b6b`.
   This proves in-memory held-command return and local folder delivery; reload
   persistence and external delivery are not claimed. Full main follows merge.
+
+## Merged and delivered — #1236
+
+Merged main `20f6113b5`; formal Astra review RATIFY is recorded on
+[the PR](https://github.com/karolswdev/HoldSpeak/pull/1236#issuecomment-6230245839).
+The verified idle hub was delivered normally: PID20767, port8765, worktree
+`wt-thought-send-recovery-20261016`, build `2759d0c6c13d4b6b`. Served build and
+merged source agree. Health, Desk, Conductor and Models return200. Runtime is
+idle with no meeting active. Night Train fidelity and preceding layout repairs
+remain included. Remote full run39006834509 is pending; no full-green claim.
+
+VERDICT: RATIFY
+FINDINGS:
+1. No blocker found in merged #1236. The held command retains its original preview and body at `web/src/desk/surface/send/SendWell.tsx:406`; Retry renders that preview at line 600. Settlement or refusal clears both together at lines 414/418. This restores truthful Send content (Tenets 3 and 7).
+2. The real local-folder continuation at 1440/393 verifies the identical retry command/digest, one original file with unchanged bytes, and a distinct later send of the newer note. Proof: `.tmp/recovery/send-return/fixed/facts-{1440,393}.json`, corresponding four shots and saved files in the delivery worktree. Root inspected the mismatch and repaired phone preview and desktop later-send result.
+3. The Thought regression now explicitly holds the real initial read before typing and proves exact buffered text/focus before actions (`tests/e2e/test_thought_glass.py:1464`). Original save, clipboard, revision, file, refusal and return assertions remain. Ordinary quick: 4,119 web, 17 Thought, 109 sweep, 17 canon; TypeScript and 28 doc guards pass.
+CONDITIONS: None for this bounded change. Full main verification continues separately.
+MISSED: The broader recovery originally omitted one historical long-context failure identity; R113 is now tracked and passes the current Thought-file run. No unresolved product finding in this diff.
+TUESDAY: The owner can return from an uncertain send, edit the note, retry the original words truthfully, then send the newer revision separately.
+UNKNOWN: External delivery, native effects and persistence of an uncertain command across browser reload were not exercised. A passing local release check is not yet a full-main result.
