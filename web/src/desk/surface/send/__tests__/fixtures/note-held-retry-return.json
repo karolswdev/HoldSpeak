@@ -1,0 +1,236 @@
+{
+  "recorded_from": "Isolated real Note producer and local folder dispatch; lost first browser answer, Back, saved revision 2\u21923, Retry, distinct Send again. .tmp/recovery/send-return/test_fixed_probe.py (1440).",
+  "destinations": {
+    "destinations": [
+      {
+        "id": "holdspeak-folder",
+        "name": "HoldSpeak folder",
+        "channel": "file",
+        "account": {},
+        "target": {
+          "builtin": "documents",
+          "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-4813/popen-gw0/test_lost_response_then_new_re0/home/Documents/HoldSpeak/Sent",
+          "display": "~/Documents/HoldSpeak/Sent"
+        },
+        "builtin": true,
+        "target_digest": "fd9961900ca6267811a8b99949df5afca789de5ccd014383651ea3ea9b9d43af",
+        "synced": false,
+        "state": "active",
+        "badge": "local",
+        "created_at": "2026-10-17T05:25:46+00:00",
+        "parked_at": null,
+        "connection": null
+      }
+    ]
+  },
+  "old_preview": {
+    "document_ref": "note:note_fb7fc774be95",
+    "title": "Frozen send bytes one.",
+    "destination_id": "holdspeak-folder",
+    "channel": "file",
+    "badge": "local",
+    "payload_digest": "674d3a6f6ffbd3388c4d8866a79724fae01cb0f80ae089e1b6e500cddf90b6e6",
+    "size": 25,
+    "preview": {
+      "text": "# Frozen send bytes one.\n"
+    }
+  },
+  "new_preview": {
+    "document_ref": "note:note_fb7fc774be95",
+    "title": "New saved words two.",
+    "destination_id": "holdspeak-folder",
+    "channel": "file",
+    "badge": "local",
+    "payload_digest": "bd477271982b857e5b1402122b6d543cd63035d7a2271bdefb798f965846e187",
+    "size": 23,
+    "preview": {
+      "text": "# New saved words two.\n"
+    }
+  },
+  "old_send": {
+    "send": {
+      "id": "chs_0ece29d804497655e8c29434",
+      "document_ref": "note:note_fb7fc774be95",
+      "destination_id": "holdspeak-folder",
+      "destination_name": "HoldSpeak folder",
+      "channel": "file",
+      "badge": "local",
+      "account": {},
+      "target": {
+        "builtin": "documents",
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-4813/popen-gw0/test_lost_response_then_new_re0/home/Documents/HoldSpeak/Sent",
+        "display": "~/Documents/HoldSpeak/Sent"
+      },
+      "target_digest": "fd9961900ca6267811a8b99949df5afca789de5ccd014383651ea3ea9b9d43af",
+      "payload_digest": "674d3a6f6ffbd3388c4d8866a79724fae01cb0f80ae089e1b6e500cddf90b6e6",
+      "document_json": {
+        "label": "NOTE",
+        "slug": "frozen-send-bytes-one",
+        "title": "Frozen send bytes one."
+      },
+      "size": 25,
+      "preview": {
+        "text": "# Frozen send bytes one.\n"
+      },
+      "prepared_by": {
+        "kind": "owner",
+        "identity": "owner-session"
+      },
+      "prepare_operation_id": null,
+      "send_operation_id": "op_408d75368fa44928b3a6148e485f5ddd",
+      "state": "sent",
+      "reason": null,
+      "proof": {
+        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-4813/popen-gw0/test_lost_response_then_new_re0/home/Documents/HoldSpeak/Sent/2026-10-17-frozen-send-bytes-one-note-0ece29d8.md",
+        "sha256": "674d3a6f6ffbd3388c4d8866a79724fae01cb0f80ae089e1b6e500cddf90b6e6",
+        "size": 25
+      },
+      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-4813/popen-gw0/test_lost_response_then_new_re0/home/Documents/HoldSpeak/Sent/2026-10-17-frozen-send-bytes-one-note-0ece29d8.md",
+      "created_at": "2026-10-17T05:25:51.714967+00:00",
+      "dispatch_started_at": "2026-10-17T05:25:51.714967+00:00",
+      "settled_at": "2026-10-17T05:25:51+00:00",
+      "dispatch_seq": 1,
+      "egress": null
+    },
+    "outcome": "sent",
+    "operation_id": "op_408d75368fa44928b3a6148e485f5ddd",
+    "receipt": {
+      "receipt_id": "rcpt_44af16b8aee048e8bd435bd561733d13",
+      "operation_id": "op_408d75368fa44928b3a6148e485f5ddd",
+      "state": "succeeded",
+      "outcome": "succeeded",
+      "result_ref": "channel_send:chs_0ece29d804497655e8c29434",
+      "created_at": 1792214751.71577,
+      "actor_kind": "owner",
+      "actor_identity": "owner-session",
+      "delegator_kind": "",
+      "delegator_identity": "",
+      "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+      "target_ref": "document:note:note_fb7fc774be95"
+    }
+  },
+  "replay": {
+    "send": {
+      "id": "chs_0ece29d804497655e8c29434",
+      "document_ref": "note:note_fb7fc774be95",
+      "destination_id": "holdspeak-folder",
+      "destination_name": "HoldSpeak folder",
+      "channel": "file",
+      "badge": "local",
+      "account": {},
+      "target": {
+        "builtin": "documents",
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-4813/popen-gw0/test_lost_response_then_new_re0/home/Documents/HoldSpeak/Sent",
+        "display": "~/Documents/HoldSpeak/Sent"
+      },
+      "target_digest": "fd9961900ca6267811a8b99949df5afca789de5ccd014383651ea3ea9b9d43af",
+      "payload_digest": "674d3a6f6ffbd3388c4d8866a79724fae01cb0f80ae089e1b6e500cddf90b6e6",
+      "document_json": {
+        "label": "NOTE",
+        "slug": "frozen-send-bytes-one",
+        "title": "Frozen send bytes one."
+      },
+      "size": 25,
+      "preview": {
+        "text": "# Frozen send bytes one.\n"
+      },
+      "prepared_by": {
+        "kind": "owner",
+        "identity": "owner-session"
+      },
+      "prepare_operation_id": null,
+      "send_operation_id": "op_408d75368fa44928b3a6148e485f5ddd",
+      "state": "sent",
+      "reason": null,
+      "proof": {
+        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-4813/popen-gw0/test_lost_response_then_new_re0/home/Documents/HoldSpeak/Sent/2026-10-17-frozen-send-bytes-one-note-0ece29d8.md",
+        "sha256": "674d3a6f6ffbd3388c4d8866a79724fae01cb0f80ae089e1b6e500cddf90b6e6",
+        "size": 25
+      },
+      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-4813/popen-gw0/test_lost_response_then_new_re0/home/Documents/HoldSpeak/Sent/2026-10-17-frozen-send-bytes-one-note-0ece29d8.md",
+      "created_at": "2026-10-17T05:25:51.714967+00:00",
+      "dispatch_started_at": "2026-10-17T05:25:51.714967+00:00",
+      "settled_at": "2026-10-17T05:25:51+00:00",
+      "dispatch_seq": 1,
+      "egress": null
+    },
+    "outcome": "sent",
+    "operation_id": "op_408d75368fa44928b3a6148e485f5ddd",
+    "receipt": {
+      "receipt_id": "rcpt_44af16b8aee048e8bd435bd561733d13",
+      "operation_id": "op_408d75368fa44928b3a6148e485f5ddd",
+      "state": "succeeded",
+      "outcome": "succeeded",
+      "result_ref": "channel_send:chs_0ece29d804497655e8c29434",
+      "created_at": 1792214751.71577,
+      "actor_kind": "owner",
+      "actor_identity": "owner-session",
+      "delegator_kind": "",
+      "delegator_identity": "",
+      "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+      "target_ref": "document:note:note_fb7fc774be95"
+    }
+  },
+  "new_send": {
+    "send": {
+      "id": "chs_32deea9db8a0e32b09fd57c8",
+      "document_ref": "note:note_fb7fc774be95",
+      "destination_id": "holdspeak-folder",
+      "destination_name": "HoldSpeak folder",
+      "channel": "file",
+      "badge": "local",
+      "account": {},
+      "target": {
+        "builtin": "documents",
+        "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-4813/popen-gw0/test_lost_response_then_new_re0/home/Documents/HoldSpeak/Sent",
+        "display": "~/Documents/HoldSpeak/Sent"
+      },
+      "target_digest": "fd9961900ca6267811a8b99949df5afca789de5ccd014383651ea3ea9b9d43af",
+      "payload_digest": "bd477271982b857e5b1402122b6d543cd63035d7a2271bdefb798f965846e187",
+      "document_json": {
+        "label": "NOTE",
+        "slug": "new-saved-words-two",
+        "title": "New saved words two."
+      },
+      "size": 23,
+      "preview": {
+        "text": "# New saved words two.\n"
+      },
+      "prepared_by": {
+        "kind": "owner",
+        "identity": "owner-session"
+      },
+      "prepare_operation_id": null,
+      "send_operation_id": "op_0f128c3e556d464d92aa294103cf68b6",
+      "state": "sent",
+      "reason": null,
+      "proof": {
+        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-4813/popen-gw0/test_lost_response_then_new_re0/home/Documents/HoldSpeak/Sent/2026-10-17-new-saved-words-two-note-32deea9d.md",
+        "sha256": "bd477271982b857e5b1402122b6d543cd63035d7a2271bdefb798f965846e187",
+        "size": 23
+      },
+      "file_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-4813/popen-gw0/test_lost_response_then_new_re0/home/Documents/HoldSpeak/Sent/2026-10-17-new-saved-words-two-note-32deea9d.md",
+      "created_at": "2026-10-17T05:25:52.208806+00:00",
+      "dispatch_started_at": "2026-10-17T05:25:52.208806+00:00",
+      "settled_at": "2026-10-17T05:25:52+00:00",
+      "dispatch_seq": 2,
+      "egress": null
+    },
+    "outcome": "sent",
+    "operation_id": "op_0f128c3e556d464d92aa294103cf68b6",
+    "receipt": {
+      "receipt_id": "rcpt_af26eb6e19b6411fa47b47b4488fe03a",
+      "operation_id": "op_0f128c3e556d464d92aa294103cf68b6",
+      "state": "succeeded",
+      "outcome": "succeeded",
+      "result_ref": "channel_send:chs_32deea9db8a0e32b09fd57c8",
+      "created_at": 1792214752.20925,
+      "actor_kind": "owner",
+      "actor_identity": "owner-session",
+      "delegator_kind": "",
+      "delegator_identity": "",
+      "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+      "target_ref": "document:note:note_fb7fc774be95"
+    }
+  }
+}

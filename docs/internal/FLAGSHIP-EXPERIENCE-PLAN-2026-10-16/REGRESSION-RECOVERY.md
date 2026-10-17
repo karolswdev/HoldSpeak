@@ -12,9 +12,11 @@ Tracking alone does not finish this work.
 - [Daily-work tape](https://github.com/karolswdev/HoldSpeak/actions/runs/38957119404): 106 failed cases.
 - [Density tape](https://github.com/karolswdev/HoldSpeak/actions/runs/38961799415): **101 failed, 16,356 passed, 69 skipped, 1 expected failure**.
 - [Contracts recovery tape](https://github.com/karolswdev/HoldSpeak/actions/runs/38973245716): **82 failed, 16,400 passed, 68 skipped, 1 expected failure** at #1226 (`5c26bd0fa`), before copy/runtime/browser repairs. All 82 failure names already belong to this queue.
-- Union: **112 distinct cases** across five completed tapes. Absence is not closure.
-- Recovery baseline: `2669d98f2` (#1224). The #1228 [full run](https://github.com/karolswdev/HoldSpeak/actions/runs/38979062393) is in progress; it predates the browser repairs.
-- Every recorded case now has current focused/quick proof or an explicit retired-contract replacement below. Full-main confirmation remains separate and pending.
+- [Final recovery run](https://github.com/karolswdev/HoldSpeak/actions/runs/38985702250): **1 failed, 16,514 passed, 68 skipped, 1 expected failure** at #1232 (`fc02d9b8f`). The remaining failure is R071 below.
+- [Runtime recovery run](https://github.com/karolswdev/HoldSpeak/actions/runs/38979062393): **78 failed, 16,434 passed, 68 skipped, 1 expected failure** at #1228 (`58a0d4552`), before the browser repairs. One additional identity is R113.
+- Union: **113 distinct cases** across the recorded runs. Absence is not closure.
+- Recovery baseline: `2669d98f2` (#1224). The #1228 [full run](https://github.com/karolswdev/HoldSpeak/actions/runs/38979062393) finished before the browser repairs were included; the #1232 result above supersedes it.
+- Focused/quick proof and explicit retired-contract replacements remain below. The full-main run reopened R071; its local pass did not establish the loaded CI transition. [Current repair](THOUGHT-SEND.md).
 
 Delivery source: `/Users/karol/dev/tools/wt-regression-browser-delivery-20261016`.
 Earlier candidate work remains preserved in `/Users/karol/dev/tools/wt-regression-recovery-20261016`.
@@ -108,7 +110,7 @@ product contract; no skips, blanket retries, threshold increases or broad exempt
 | R068 | Browser journeys | `tests/e2e/test_speak_glass.py::test_the_learned_row_wraps_without_overlap_at_393` | Current-source 166-case browser run: passed; delivered in #1231 |
 | R069 | Browser journeys | `tests/e2e/test_thought_glass.py::TestTheThoughtOpensAtOnce::test_one_press_one_window_every_key[1440]` | Current-source 166-case browser run: passed; delivered in #1231 |
 | R070 | Browser journeys | `tests/e2e/test_thought_glass.py::TestTheThoughtSends::test_write_a_thought_then_send_it_to_a_folder[1440]` | Current-source 166-case browser run: passed; delivered in #1231 |
-| R071 | Browser journeys | `tests/e2e/test_thought_glass.py::TestTheThoughtSends::test_write_a_thought_then_send_it_to_a_folder[393]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R071 | Browser journeys | `tests/e2e/test_thought_glass.py::TestTheThoughtSends::test_write_a_thought_then_send_it_to_a_folder[393]` | Reopened by full-main #1232. A held authoritative read reproduces the premature footer assertion (1 failed); the repaired desktop/phone check proves exact buffered text and focus before actions (2 passed), with original saved-revision/file/return checks retained. [Thought send](THOUGHT-SEND.md). |
 | R072 | Browser journeys | `tests/e2e/test_thought_glass.py::test_thought_workbench_real_glass[1440]` | Current-source 166-case browser run: passed; delivered in #1231 |
 | R073 | Browser journeys | `tests/e2e/test_today_glass.py::TestTheTodayWindowSize::test_today_opens_at_its_size_and_keeps_the_size_he_sets` | Current-source 166-case browser run: passed; delivered in #1231 |
 | R074 | Browser journeys | `tests/e2e/test_windows_glass.py::TestCloseMeansGone::test_a_meeting_resolved_as_deleted_closes_its_card[1440]` | Current-source 166-case browser run: passed; delivered in #1231 |
@@ -150,6 +152,7 @@ product contract; no skips, blanket retries, threshold increases or broad exempt
 | R110 | Guards and copy | `tests/unit/test_static_sql_matches_schema.py::test_unchecked_statements_are_named_counted_and_do_not_grow` | Delivered in #1226; affected checks and ordinary quick checks pass |
 | R111 | Browser journeys | `tests/e2e/test_thought_glass.py::test_thought_workbench_real_glass[393]` | Current-source 166-case browser run: passed; delivered in #1231 |
 | R112 | Runtime and producers | `tests/unit/test_calendar_ingest.py::TestB11BothConductors::test_event_born_row_is_armed_and_started_by_the_136_conductor` | Delivered in #1228; 575 affected / 109 sweep / 17 canon GREEN |
+| R113 | Browser journeys | `tests/e2e/test_thought_glass.py::test_thought_note_long_context_and_open_well_never_clip[1440]` | Observed in #1228 full run; no failure in the subsequent #1232 full run. Current 17-case Thought-file run passes, including this retained long-context path. |
 
 ## Delivery log
 

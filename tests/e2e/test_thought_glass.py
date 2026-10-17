@@ -33,6 +33,7 @@ web/src/desk/thought-workspace/ThoughtWorkspaceWindow.test.tsx
 """
 from __future__ import annotations
 
+import json
 import os
 import re
 import shutil
@@ -1458,19 +1459,58 @@ class TestTheThoughtSends:
                 page.wait_for_timeout(1200)
                 _settle(page)
 
-                self._menu_thought(page, width)
+                # The frame opens before its authoritative workbench read.
+                # Hold that read to exercise the real early-typing gap.
+                opening_reads: list[Any] = []
+                def hold_opening_read(route: Any) -> None:
+                    opening_reads.append(route)
+                    page.evaluate("window.__thoughtOpeningReadHeld = true")
+
+                page.route("**/api/thoughts/*/workbench", hold_opening_read)
+                with page.expect_request("**/api/thoughts/*/workbench") as opening_request:
+                    self._menu_thought(page, width)
+                assert opening_request.value.method == "GET"
                 win = page.locator(THOUGHT)
                 win.wait_for()
-                page.keyboard.type(SEND_WORDS)  # no wait: Send saves the note first
+                win.locator(".thought-workspace-opening[aria-busy=true]").wait_for()
+                page.wait_for_function("window.__thoughtOpeningReadHeld === true", timeout=T)
+                assert opening_reads, "the initial workbench read was not held"
+                page.keyboard.type(SEND_WORDS)  # the opening key buffer owns these words
 
                 foot = win.locator(".thought-note-foot")
                 door = foot.get_by_role("button", name="More actions" if width < 720 else "Send", exact=True)
+                opening = win.evaluate("""win => ({
+                    loading: Boolean(win.querySelector('.thought-workspace-opening[aria-busy=true]')),
+                    editor: Boolean(win.querySelector('.thought-note-body .cm-content')),
+                    footer: Boolean(win.querySelector('.thought-note-foot')),
+                    focused: document.activeElement?.getAttribute('aria-label')
+                })""")
+                (SEND_SHOTS / f"thought-send-opening-{width}.json").write_text(json.dumps(opening, indent=2) + "\n")
+                page.screenshot(path=str(SEND_SHOTS / f"thought-send-opening-{width}.png"))
+                assert opening["loading"] and not opening["editor"] and not opening["footer"], opening
+                for route in opening_reads:
+                    route.continue_()
+                page.unroute("**/api/thoughts/*/workbench")
+                # A frame is not an editable document. Let the authoritative
+                # read mount Note and hand the buffered keys to its own field.
+                note = win.locator(".thought-note-body .cm-content").first
+                note.wait_for(timeout=T)
+                page.wait_for_function("""([el, words]) => el.isConnected
+                    && el.getAttribute('contenteditable') === 'true'
+                    && el.innerText === words && document.activeElement === el""",
+                    arg=[note.element_handle(), SEND_WORDS], timeout=T)
+                door.wait_for(timeout=T)
                 assert door.is_visible()
+                opening["ready"] = note.evaluate("""el => ({body: el.innerText,
+                    editable: el.getAttribute('contenteditable'), focused: document.activeElement === el})""")
+                (SEND_SHOTS / f"thought-send-opening-{width}.json").write_text(json.dumps(opening, indent=2) + "\n")
+                _settle(page)
+                page.screenshot(path=str(SEND_SHOTS / f"thought-send-ready-{width}.png"))
 
                 # Copy copies the working text.
                 self._note_action(page, win, width, "Copy").click()
                 foot.get_by_text("COPIED").wait_for(timeout=T)
-                assert SEND_WORDS in page.evaluate("navigator.clipboard.readText()")
+                assert page.evaluate("navigator.clipboard.readText()") == SEND_WORDS
 
                 # Keyboard Send saves first, then owns the body. No dispatch yet.
                 send = self._note_action(page, win, width, "Send")
