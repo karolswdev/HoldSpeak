@@ -1,7 +1,9 @@
 # Tonight's three repairs — release record
 
 Merged in [PR #1240](https://github.com/karolswdev/HoldSpeak/pull/1240) as
-`f65325452`, based on `76a44ad70`.
+`f65325452`, based on `76a44ad70`; SQL verification follow-up
+[PR #1241](https://github.com/karolswdev/HoldSpeak/pull/1241) is merged as
+`8277534ea`. This final product head is delivered and full-main GREEN.
 The owner asked Astra to select and solve the three highest-cost daily issues.
 Scope and settled behavior are in [PLAN.md](PLAN.md).
 
@@ -158,3 +160,40 @@ and generated-doc checks pass. Query tokens and transcript-comparison AST match
 the original; no connection/transaction is added. Logs live in
 `wt-tonight-release-record-20261017/.tmp/tonight/sql-*`. The first sweep503 did
 not recur in this109-case sweep either. Full-main repeats after this merge.
+
+## Final completion
+
+Merged product head`8277534ea` passes the complete isolated local suite:
+**16,671 passed, zero failures,26 skipped,1 expected failure,12 warnings**
+in670.76seconds. Mandatory live bus separately passes3 in24.00seconds.
+Root parsed the JUnit result, verified no failure/error entries, and confirmed
+the previously failing static SQL guard passes. Original red and final green
+runs remain distinct. The skip/warning limits above still apply; these totals
+do not claim external provider/native execution or owner visual acceptance.
+
+Final evidence in `wt-main-proof-20261016`:
+`.tmp/recovery/main-full-8277534ea.log`,
+`.tmp/recovery/main-full-results-8277534ea.xml`,
+`.tmp/recovery/main-full-state-8277534ea.json`, and
+`.tmp/recovery/main-live-bus-8277534ea.log` with its JUnit companion.
+Machine lock, isolated HOME,8 workers, native effects/real CLI off; metal excluded.
+
+The SQL follow-up's [Astra postmerge review](https://github.com/karolswdev/HoldSpeak/pull/1241#issuecomment-6231273159)
+returns RATIFY. Its idle normal delivery serves from
+`wt-tonight-release-record-20261017`, PID30260, port8765. Four routes return200;
+source and served frontend both equal`426015d9eee42d70`. The proof tree names
+the same product head and has its own matching bundle. This final records-only
+update changes no product, test or script; it does not replace the tested head
+with an untested product claim.
+
+The three requested repairs are complete. Open follow-up remains the original
+unclassified Components503, alternate-origin entry behavior, and the explicit
+provider/native/owner-acceptance limits. Subsequent complete sweeps did not
+reproduce the503; no cause or repair is invented.
+
+Final records-only verification:75 documentation guards and generation/coverage
+checks pass; ordinary quick109 desktop/phone sweep and17 canon checks pass.
+Its first build attempt found the proof worktree's dependency directory empty
+(`vite` absent). That directory was parked and linked to the retained matching
+dependency installation; the successful rerun changes no product or test.
+The missing-dependency cause is not established by this record.
