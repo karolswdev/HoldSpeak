@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 from pathlib import Path
+import threading
 
 from holdspeak.db import Database
+from holdspeak.db.connection import make_connection_factory
 from holdspeak.grounding import GROUNDING_MAX_REFS, hydrate_refs_detailed
+from holdspeak.memory.retain import sweep
 
 
 def _decision(
@@ -233,3 +237,78 @@ def test_automatic_memory_overflow_does_not_subtract_an_unmatched_exclusion(
     assert len(hydrated.blocks) == GROUNDING_MAX_REFS
     assert hydrated.matched_count == GROUNDING_MAX_REFS + 1
     assert hydrated.overflow_count == 1
+
+
+def test_first_source_indexing_survives_a_writer_during_cold_fts_preparation(
+    tmp_path: Path, monkeypatch,
+) -> None:
+    """A real Note write commits between first-use FTS preparation and DELETE."""
+    db = Database(tmp_path / "cold_fts.db")
+    db.notes.upsert(note_id="n-code", title="Codename", body_markdown="Atlas codename is ZEPHYRINDEX.")
+    writer_holds = threading.Event()
+    release_writer = threading.Event()
+    writer_done = threading.Event()
+    errors: list[BaseException] = []
+    notes_connection = db.notes._connection
+
+    @contextmanager
+    def held_note_write():
+        with notes_connection() as conn:
+            yield conn
+            writer_holds.set()
+            if not release_writer.wait(10):
+                raise AssertionError("the index did not release the Note writer")
+
+    monkeypatch.setattr(db.notes, "_connection", held_note_write)
+
+    def write_note() -> None:
+        try:
+            db.notes.upsert(note_id="n-peer", title="Concurrent note", body_markdown="Saved during indexing.")
+        except BaseException as exc:
+            errors.append(exc)
+        finally:
+            writer_done.set()
+
+    # A new thread/handle has not opened this FTS table through schema creation.
+    cold_connection = make_connection_factory(db.db_path)
+
+    @contextmanager
+    def index_connection():
+        with cold_connection() as conn:
+            def release_at_fts_delete(statement: str) -> None:
+                if statement.startswith("DELETE FROM memory_chunks_fts"):
+                    release_writer.set()
+                    if not writer_done.wait(5):
+                        # SQLite swallows exceptions from trace callbacks.
+                        errors.append(AssertionError("the Note writer did not commit"))
+
+            conn.set_trace_callback(release_at_fts_delete)
+            try:
+                yield conn
+            finally:
+                conn.set_trace_callback(None)
+
+    monkeypatch.setattr(db.memory_index, "_connection", index_connection)
+    writer = threading.Thread(target=write_note, name="cold-fts-note-writer")
+    writer.start()
+    try:
+        assert writer_holds.wait(5), "the Note writer did not acquire its transaction"
+        assert not errors
+        result = sweep(db, kinds=["note"])
+    finally:
+        release_writer.set()
+        writer.join(timeout=5)
+
+    assert not writer.is_alive()
+    assert not errors
+    assert result["written"] == 1
+    assert db.notes.get("n-peer").body_markdown == "Saved during indexing."
+    assert db.memory_index.ledger()["note:n-code"]["state"] == "live"
+    with db._connection() as conn:
+        rows = conn.execute(
+            "SELECT c.source_ref,c.text FROM memory_chunks_fts f "
+            "JOIN memory_chunks c ON c.rowid=f.rowid AND c.id=f.chunk_id "
+            "WHERE memory_chunks_fts MATCH ?", ("ZEPHYRINDEX",),
+        ).fetchall()
+    assert [row["source_ref"] for row in rows] == ["note:n-code"]
+    assert "Atlas codename is ZEPHYRINDEX." in rows[0]["text"]

@@ -4,7 +4,7 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-17 (#1243/#1244 daily surfaces delivered; atlas source anchor corrected)
+**Last updated:** 2026-10-17 (daily surfaces delivered; recurrent recall contention reproduced and corrected)
 
 ## Current phase
 
@@ -22,8 +22,11 @@ Ask uses a declared recorded provider reply. Ordinary quick GREEN:304 related
 web,12 affected browser,109 sweep and17 canon. Astra formal review RATIFY.
 Merged product `ac55cd318` full run: **16,697 passed,1 failed,26 skipped,
 1 expected failure**, plus3 mandatory live-bus passes. Its sole stale atlas
-source anchor is corrected; all26 anchor checks pass. The original recall-lock
-case passed, but its earlier unexplained failure remains open below.
+source anchor is corrected; all26 anchor checks pass. The next full run
+reproduced recall contention before any chat turn (code5, SQLITE_BUSY). A
+deterministic fresh-connection regression now proves the cause: empty vector
+deletion starts a deferred transaction before first-use FTS preparation. The
+minimal no-op guard is fixed forward; exact verification is linked below.
 [Final merged verification](https://github.com/karolswdev/HoldSpeak/pull/1244#issuecomment-6239495252) retains the exact subsequent head
 and result; the previous run is not called green.
 
@@ -759,15 +762,21 @@ committing generated docs and line-number test maps; split the tests.
 **Daily surfaces #1243:** owner visual acceptance remains open. The saved
 Decision Send row still repeats its label beside the button; this is visible
 polish debt in the new1440/393 Background shots, separate from the verified
-writing/save path. One full-run
-`test_a_withdrawn_recall_never_reaches_a_later_turn[project-edit]` failed with
-`database is locked` at `memory_index.py:177`. It passes alone; the whole scoped
-file passes52 with3 recording-only skips. Bounded transaction tracing did not
-establish a cause; no speculative retry or transaction change was made. Keep
-this finding open even if the next full run passes. A recurrence needs SQLite's
-extended error code and transaction/thread trace. Exact original evidence and
-diagnosis are in the daily release record. Earlier #1214 Ask/Thread findings
-must be judged against the new face-specific proofs, not assumed all closed.
+writing/save path. The recurrent memory-index lock has a reproduced cause and
+minimal correction, recorded in the daily release record. The exact startup
+writer in the full run remains unidentified; the regression independently uses
+a real competing Note write. Postmerge verification and current local delivery
+are kept in the linked final verification record. Earlier #1214 Ask/Thread
+findings must be judged against the new face-specific proofs, not assumed all
+closed.
+
+**People availability observed during daily verification:** the recall-fix
+quick reported503 from `/api/people/relationships` on Places1440 and
+`/api/people/relationships/{id}/brief` on Settings. The exact Settings repeat
+also failed once; its next diagnostic run passed. Cause remains unknown.
+Per-worker isolated keyfiles exclude shared native-key access. Failure-chain
+diagnostics now accompany the next check; no People behavior is changed or
+error hidden. See the daily release record for the preserved failing logs.
 
 **Tonight follow-through:** the first integrated sweep saw one Components-window
 HTTP503; the focused reproduction and final109-case sweep pass. Its endpoint
