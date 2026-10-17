@@ -1,8 +1,14 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as THREE from "three";
 import { randomSource, type Room } from "../interiors/sceneKit";
 import { createTrainLandscape } from "../interiors/nightTrainLandscape";
 import { TRAIN_TREE_LAYERS } from "../interiors/nightTrainJourney";
+import { createTrainStation } from "../interiors/nightTrainStation";
+const stationState=vi.hoisted(()=>({helpers:[] as {update:ReturnType<typeof vi.fn>;dispose:ReturnType<typeof vi.fn>}[]}));
+vi.mock("../interiors/nightTrainStation",()=>({createTrainStation:vi.fn(()=>{
+  const helper={update:vi.fn(),dispose:vi.fn()};stationState.helpers.push(helper);return helper;
+})}));
+beforeEach(()=>{vi.clearAllMocks();stationState.helpers=[];});
 
 function fakeRoom(seed = 73) {
   const protectedObjects = new Set<THREE.Object3D>();
@@ -29,8 +35,21 @@ describe("Night Train landscape ownership", () => {
       expect(protectedObjects.has(ridge)).toBe(true);
       expect(ridge.position.z).toBeLessThan(-3);
       const shape = (ridge.children[0] as THREE.Mesh).geometry;
-      expect(shape.getAttribute("position").count).toBeGreaterThan(30_000);
+      const positions=shape.getAttribute("position");
+      expect(positions.count).toBeGreaterThan(30_000);
+      const columns=769,rows=41;
+      for(let column=0;column<columns;column++){
+        expect(positions.getY(column)).toBe(-5);
+        expect(positions.getY((rows-1)*columns+column)).toBe(-5);
+      }
+      for(let row=0;row<rows;row++){
+        expect(positions.getY(row*columns)).toBe(-5);
+        expect(positions.getY(row*columns+columns-1)).toBe(-5);
+      }
       const normal = shape.getAttribute("normal");
+      for(const row of [6,20,34])for(const column of [220,384,548]){
+        expect(normal.getY(row*columns+column)).toBeGreaterThan(0);
+      }
       const slopes = new Set(Array.from({length: normal.count},(_,i) => normal.getY(i).toFixed(2)));
       expect(slopes.size).toBeGreaterThan(index >= 2 ? 10 : 20);
     }
@@ -47,12 +66,11 @@ describe("Night Train landscape ownership", () => {
       expect(matrix.elements.every(Number.isFinite)).toBe(true);
       expect(protectedObjects.has(trees.parent!)).toBe(true);
     }
-    const platform = world.getObjectByName("Train station platform") as THREE.Mesh<THREE.BoxGeometry>;
-    expect(platform.position.y - platform.geometry.parameters.height / 2).toBeGreaterThan(water.position.y);
-    const posts = world.getObjectByName("Train station posts") as THREE.InstancedMesh<THREE.CylinderGeometry>;
-    const post = new THREE.Matrix4(); posts.getMatrixAt(0,post);
-    expect(post.elements[13] - posts.geometry.parameters.height / 2)
-      .toBeCloseTo(platform.position.y + platform.geometry.parameters.height / 2);
+    expect(createTrainStation).toHaveBeenCalledWith(room,world);
+    expect(stationState.helpers[0].update).toHaveBeenCalledWith(0);
+    const reflection=(water.material as THREE.ShaderMaterial).uniforms.uSkyline.value as THREE.DataTexture;
+    expect(reflection.image.width).toBe(769); expect(reflection.image.height).toBe(1);
+    expect(new Set(reflection.image.data as Uint8Array).size).toBeGreaterThan(40);
     landscape.dispose();
   });
 
@@ -87,15 +105,19 @@ describe("Night Train landscape ownership", () => {
     const geometryDisposes = vi.spyOn(THREE.BufferGeometry.prototype, "dispose");
     const materialDisposes = vi.spyOn(THREE.Material.prototype, "dispose");
     const instanceDisposes = vi.spyOn(THREE.InstancedMesh.prototype, "dispose");
+    const textureDisposes=vi.spyOn(THREE.Texture.prototype,"dispose");
     const landscape = createTrainLandscape(room);
     const world = room.root.getObjectByName("Night train landscape")!;
     const water = world.getObjectByName("Train lake") as THREE.Mesh<THREE.BufferGeometry, THREE.ShaderMaterial>;
     landscape.dispose(); landscape.dispose(); landscape.update(100);
     expect(room.root.children).toEqual([retained]);
     expect(water.material.uniforms.uTime.value).toBe(0);
-    expect(geometryDisposes).toHaveBeenCalledTimes(10);
-    expect(materialDisposes).toHaveBeenCalledTimes(11);
-    expect(instanceDisposes).toHaveBeenCalledTimes(5);
+    expect(geometryDisposes).toHaveBeenCalledTimes(7);
+    expect(materialDisposes).toHaveBeenCalledTimes(9);
+    expect(instanceDisposes).toHaveBeenCalledTimes(3);
+    expect(textureDisposes).toHaveBeenCalledTimes(1);
+    expect(stationState.helpers[0].dispose).toHaveBeenCalledTimes(1);
+    expect(stationState.helpers[0].update).toHaveBeenCalledTimes(1);
     expect(new Set(geometryDisposes.mock.contexts).size).toBe(geometryDisposes.mock.contexts.length);
     expect(new Set(materialDisposes.mock.contexts).size).toBe(materialDisposes.mock.contexts.length);
     expect(geometryDisposes.mock.contexts).not.toContain(retainedGeometry);

@@ -40,6 +40,7 @@ export class Room {
   private target: THREE.Vector3;
   private renderer: THREE.WebGLRenderer;
   private composer: EffectComposer;
+  private readonly highQuality: boolean;
   private reduced = false;
   private disposed = false;
   private environment: THREE.WebGLRenderTarget;
@@ -56,9 +57,11 @@ export class Room {
       fov?: number;
       exposure?: number;
       ambient?: number;
+      renderQuality?: "high";
     },
   ) {
     this.random = randomSource(context.seed);
+    this.highQuality = options.renderQuality === "high";
     this.reduced = context.reducedMotion;
     this.scene.background = new THREE.Color(options.background);
     this.scene.fog = new THREE.FogExp2(
@@ -92,7 +95,12 @@ export class Room {
     this.scene.environmentIntensity = 0.22;
     environment.dispose();
     pmrem.dispose();
-    this.composer = new EffectComposer(this.renderer);
+    // Composer owns both this target and its clone, including final disposal.
+    const renderTarget = this.highQuality ? new THREE.WebGLRenderTarget(1, 1, {
+      type: THREE.HalfFloatType,
+      samples: Math.min(4, this.renderer.capabilities.maxSamples),
+    }) : undefined;
+    this.composer = new EffectComposer(this.renderer, renderTarget);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
     this.composer.addPass(
       new UnrealBloomPass(new THREE.Vector2(1, 1), 0.26, 0.65, 0.86),
@@ -595,12 +603,9 @@ export class Room {
     batch(this.root);
     return {
       resize: ({ width, height, devicePixelRatio }) => {
-        const ratio = Math.min(
-          devicePixelRatio,
-          1.5,
-          1600 / width,
-          1000 / height,
-        );
+        const ratio = this.highQuality
+          ? Math.min(devicePixelRatio, 2, 2560 / width, 1600 / height)
+          : Math.min(devicePixelRatio, 1.5, 1600 / width, 1000 / height);
         this.renderer.setPixelRatio(ratio);
         this.renderer.setSize(width, height, false);
         this.composer.setPixelRatio(ratio);
