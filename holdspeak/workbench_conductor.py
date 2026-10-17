@@ -16,6 +16,7 @@ from typing import Any, Optional
 
 from .constitutional_context import constitutional_receipt
 from .logging_config import get_logger
+from .services.errors import ServiceError
 from .services.support import _new_id, inject_skills
 
 log = get_logger("workbench_conductor")
@@ -163,41 +164,31 @@ def _hydrate_item_grounding(
     """
     try:
         grounding = json.loads(grounding_json) if grounding_json else {}
-    except (json.JSONDecodeError, TypeError):
-        return ""
+    except (json.JSONDecodeError, TypeError) as exc:
+        raise ServiceError("grounding_invalid", "Source list not valid") from exc
+    if grounding is None:
+        grounding = {}
     if not isinstance(grounding, dict):
-        return ""
+        raise ServiceError("grounding_invalid", "Source list not valid")
 
-    meeting_ids = [str(x) for x in grounding.get("meeting_ids", []) if x]
-    artifact_ids = [str(x) for x in grounding.get("artifact_ids", []) if x]
-    refs = [str(x) for x in grounding.get("refs", []) if x]
+    sources = [grounding.get(key, []) for key in ("meeting_ids", "artifact_ids", "refs")]
+    if any(not isinstance(values, list) or any(not isinstance(ref, str) or not ref.strip() for ref in values)
+           for values in sources):
+        raise ServiceError("grounding_invalid", "Source list not valid")
+    meeting_ids, artifact_ids, refs = sources
+    explicit = bool(meeting_ids or artifact_ids or refs)
 
     if not meeting_ids and not artifact_ids and not refs and not query.strip():
         return ""
 
-    # HS-118-02: cap enforcement. Total refs capped at GROUNDING_MAX_REFS (16).
-    # Drop order: refs last-added-first, then artifact_ids last-added-first,
-    # preserving meeting_ids in their original order.
+    # An explicit attachment is required evidence, never optional enrichment.
+    # Keep the existing cap, but refuse rather than silently changing the job.
     from .grounding import GROUNDING_MAX_REFS
 
     total = len(meeting_ids) + len(artifact_ids) + len(refs)
     if total > GROUNDING_MAX_REFS:
-        dropped: list[str] = []
-        excess = total - GROUNDING_MAX_REFS
-
-        # Drop from refs (last-added-first = pop from end)
-        while excess > 0 and refs:
-            dropped.append(refs.pop())
-            excess -= 1
-
-        # Drop from artifact_ids (last-added-first = pop from end)
-        while excess > 0 and artifact_ids:
-            dropped.append(artifact_ids.pop())
-            excess -= 1
-
-        log.warning(
-            f"Grounding cap exceeded: {total} refs > {GROUNDING_MAX_REFS}, "
-            f"dropped {len(dropped)} ref(s): {dropped}"
+        raise ServiceError(
+            "grounding_over_limit", f"Source limit exceeded · {total}/{GROUNDING_MAX_REFS}",
         )
 
     try:
@@ -212,13 +203,18 @@ def _hydrate_item_grounding(
             query=query,
             include_memory=memory_enabled("workbench.item"),
         )
-        if unknown:
-            log.warning(f"Grounding hydration: {len(unknown)} unknown ref(s) skipped: {unknown}")
-        if blocks:
-            return "[GROUNDING]\n" + "\n\n".join(blocks)
     except Exception as exc:
+        if explicit:
+            raise ServiceError("grounding_source_unavailable", "Source unavailable · " + ", ".join(
+                [*(f"meeting:{ref}" for ref in meeting_ids), *(f"artifact:{ref}" for ref in artifact_ids), *refs]
+            )) from exc
         log.warning(f"Grounding hydration failed: {exc}")
-    return ""
+        return ""
+    if unknown and explicit:
+        raise ServiceError("grounding_source_unavailable", "Source unavailable · " + ", ".join(unknown))
+    if unknown:
+        log.warning(f"Grounding recall: {len(unknown)} unavailable optional ref(s): {unknown}")
+    return "[GROUNDING]\n" + "\n\n".join(blocks) if blocks else ""
 
 
 def _assemble_recipe_context(db: Any, recipe: Any) -> str:

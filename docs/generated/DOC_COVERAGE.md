@@ -13,11 +13,11 @@ Validation errors at generation: **0**.
 
 | Measure | Present / total or count |
 | --- | ---: |
-| Source paths | 318 / 318 |
-| Test paths | 266 / 266 |
-| Documentation paths | 258 / 258 |
-| Assertions inspected | 266 |
-| Tests executed | 228 |
+| Source paths | 324 / 324 |
+| Test paths | 272 / 272 |
+| Documentation paths | 261 / 261 |
+| Assertions inspected | 272 |
+| Tests executed | 234 |
 | Records with an executed assertion | 85 |
 | Semantic records unresolved | 72 |
 
@@ -51,7 +51,7 @@ Validation errors at generation: **0**.
 | `voice.delivery` | capabilities | 2/2 | 3/3 | 3 | 3 | 1 | partially_evidenced |
 | `meeting.capture` | capabilities | 3/3 | 2/2 | 2 | 2 | 1 | partially_evidenced |
 | `meeting.import` | capabilities | 2/2 | 3/3 | 3 | 3 | 1 | partially_evidenced |
-| `meeting.intelligence` | capabilities | 5/5 | 8/8 | 8 | 8 | 0 | partially_evidenced |
+| `meeting.intelligence` | capabilities | 8/8 | 11/11 | 11 | 11 | 0 | partially_evidenced |
 | `meeting.aftercare` | capabilities | 9/9 | 8/8 | 8 | 3 | 0 | partially_evidenced |
 | `model.registry` | capabilities | 2/2 | 1/1 | 1 | 1 | 1 | partially_evidenced |
 | `model.assignment` | capabilities | 5/5 | 2/2 | 2 | 2 | 1 | partially_evidenced |
@@ -105,7 +105,7 @@ Validation errors at generation: **0**.
 | `agents.thread_tool_loop` | capabilities | 3/3 | 3/3 | 3 | 0 | 0 | unresolved |
 | `agents.interview` | capabilities | 3/3 | 3/3 | 3 | 3 | 0 | partially_evidenced |
 | `agents.mcp_http` | capabilities | 3/3 | 2/2 | 2 | 2 | 0 | partially_evidenced |
-| `knowledge.grounding` | capabilities | 4/4 | 5/5 | 5 | 5 | 0 | partially_evidenced |
+| `knowledge.grounding` | capabilities | 6/6 | 7/7 | 7 | 7 | 0 | partially_evidenced |
 | `knowledge.memory_search` | capabilities | 3/3 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `workflows.linear_run` | capabilities | 2/2 | 3/3 | 3 | 3 | 0 | partially_evidenced |
 | `coder.observation` | capabilities | 7/7 | 8/8 | 8 | 8 | 0 | partially_evidenced |
@@ -118,7 +118,7 @@ Validation errors at generation: **0**.
 | `companion.ipad_client` | capabilities | 3/3 | 2/2 | 2 | 0 | 0 | unresolved |
 | `companion.aipi_audio_control` | capabilities | 3/3 | 2/2 | 2 | 0 | 0 | unresolved |
 | `companion.qlippy_presence` | capabilities | 2/2 | 4/4 | 4 | 3 | 0 | partially_evidenced |
-| `channels.document_sources` | capabilities | 6/6 | 5/5 | 5 | 5 | 0 | partially_evidenced |
+| `channels.document_sources` | capabilities | 7/7 | 6/6 | 6 | 6 | 0 | partially_evidenced |
 | `channels.slack` | capabilities | 2/2 | 2/2 | 2 | 0 | 0 | unresolved |
 | `runtime.kernel` | components | 2/2 | 0/0 | 0 | 0 | 0 | unresolved |
 | `runtime.inference` | components | 1/1 | 0/0 | 0 | 0 | 1 | unresolved |

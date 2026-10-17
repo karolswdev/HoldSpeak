@@ -22,6 +22,7 @@ import { PreparedChip, SendWells, resetSendStore, type DocRef } from "..";
 import { BriefSendWells, DecisionRecordSendWells, DeskDecisionSendWells, NoteSendWells } from "../../../documentSends";
 import { useDesk } from "../../../store";
 import noteReturn from "./fixtures/note-held-retry-return.json";
+import preparedReturn from "./fixtures/icloud-prepared-send.json";
 
 const REF = "monday_brief:b1";
 const BRIEF: DocRef = { ref: REF, title: "Brief Sep 29", label: "BRIEF SEP 29" };
@@ -64,7 +65,7 @@ beforeEach(() => {
     try { return Promise.resolve(r(init, path)); } catch (e) { return Promise.reject(e); }
   });
 });
-afterEach(() => vi.useRealTimers());
+afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); });
 
 const pick = async (name: string) => {
   const row = (await screen.findAllByTestId("destination-row")).find((r) => r.textContent?.includes(name))!;
@@ -137,6 +138,139 @@ it.each(["ready", "pending"] as const)("keeps a lost Note command's preview acro
   expect(stored.map((row) => row.preview.text)).toEqual([originalText, newText]);
   expect(stored.map((row) => row.id)).toEqual([noteReturn.old_send.send.id, noteReturn.new_send.send.id]);
   await waitFor(() => expect(screen.getByTestId("send-sent")).toHaveTextContent(noteReturn.new_send.send.proof.path.split("/").at(-1)!));
+});
+
+it.each(["empty", "unreadable", "settled"] as const)("restores an uncertain Note command after reload with %s sends; in-progress is still the same Retry", async (readState) => {
+  const ref = noteReturn.old_preview.document_ref;
+  const id = ref.slice("note:".length);
+  let currentPreview = noteReturn.old_preview;
+  const submitted: Array<Record<string, unknown>> = [];
+  routes["GET /api/channels/destinations"] = () => noteReturn.destinations;
+  routes["GET /api/channels/sends"] = () => ({ sends: [] });
+  routes["POST /api/channels/preview"] = () => currentPreview;
+  routes["POST /api/channels/send"] = (init) => {
+    // Custody is synchronous, before the wire client starts the request.
+    expect(JSON.parse(sessionStorage.getItem("hs.send.pending.v1")!)[0].command.key).toBe(init.json!.command_id);
+    submitted.push(init.json!);
+    if (submitted.length === 1) throw new Error("network answer lost");
+    if (submitted.length === 2) throw new ApiError(409, "in progress", { code: "operation_in_progress" });
+    return noteReturn.replay;
+  };
+  let mounted = render(<NoteSendWells id={id} title={currentPreview.title} version={2} />);
+  await screen.findByTestId("send-preview-body");
+  fireEvent.click(screen.getByTestId("send-verb"));
+  await screen.findByTestId("send-retry");
+  mounted.unmount();
+  currentPreview = noteReturn.new_preview;
+  routes["GET /api/channels/sends"] = () => {
+    if (readState === "unreadable") throw new Error("sends cannot be read");
+    return { sends: readState === "settled" ? [noteReturn.old_send.send] : [] };
+  };
+  // A real page reload creates new module state while preserving tab storage.
+  resetSendStore(true);
+  mounted = render(<NoteSendWells id={id} title={currentPreview.title} version={3} />);
+  const retry = await screen.findByTestId("send-retry");
+  expect(submitted).toHaveLength(1); // hydration never dispatches
+  expect(retry).toBeEnabled();
+  expect(screen.getByTestId("send-preview-body")).toHaveTextContent(noteReturn.old_preview.title);
+  expect(screen.getByTestId("send-preview-body")).not.toHaveTextContent(noteReturn.new_preview.title);
+  if (readState === "unreadable") await screen.findByTestId("sends-unreadable");
+  fireEvent.click(retry);
+  await waitFor(() => expect(submitted).toHaveLength(2));
+  await screen.findByTestId("send-lost");
+  expect(sessionStorage.getItem("hs.send.pending.v1")).not.toBeNull();
+  mounted.unmount();
+  resetSendStore(true);
+  render(<NoteSendWells id={id} title={currentPreview.title} version={3} />);
+  fireEvent.click(await screen.findByTestId("send-retry"));
+  await screen.findByTestId("send-sent");
+  expect(submitted).toEqual([submitted[0], submitted[0], submitted[0]]);
+  expect(sessionStorage.getItem("hs.send.pending.v1")).toBeNull();
+});
+
+it.each(["pending", "failed"] as const)("a fresh Send waits for its %s history read before it can dispatch", async (readState) => {
+  routes["GET /api/channels/destinations"] = () => noteReturn.destinations;
+  routes["POST /api/channels/preview"] = () => noteReturn.old_preview;
+  let resolveHistory!: (answer: { sends: Send[] }) => void;
+  routes["GET /api/channels/sends"] = () => {
+    if (readState === "failed") throw new Error("history unreadable");
+    return new Promise((resolve) => { resolveHistory = resolve; });
+  };
+  const sendRequest = vi.fn(() => noteReturn.old_send);
+  routes["POST /api/channels/send"] = sendRequest;
+  render(<NoteSendWells id={noteReturn.old_preview.document_ref.slice(5)} title={noteReturn.old_preview.title} version={2} />);
+  await screen.findByTestId("send-preview-body");
+  const sendButton = screen.getByTestId("send-verb");
+  expect(sendButton).toBeDisabled();
+  fireEvent.click(sendButton);
+  expect(sendRequest).not.toHaveBeenCalled();
+  if (readState === "failed") {
+    routes["GET /api/channels/sends"] = () => ({ sends: [] });
+    fireEvent.click(await screen.findByTestId("sends-unreadable-retry"));
+  } else {
+    await act(async () => { resolveHistory({ sends: [] }); });
+    routes["GET /api/channels/sends"] = () => ({ sends: [] });
+  }
+  await waitFor(() => expect(sendButton).toBeEnabled());
+  fireEvent.click(sendButton);
+  await screen.findByTestId("send-sent");
+  expect(sendRequest).toHaveBeenCalledTimes(1);
+});
+
+it("a tab-storage failure refuses before any dispatch", async () => {
+  routes["GET /api/channels/destinations"] = () => noteReturn.destinations;
+  routes["POST /api/channels/preview"] = () => noteReturn.old_preview;
+  const sendRequest = vi.fn(() => noteReturn.old_send);
+  routes["POST /api/channels/send"] = sendRequest;
+  const realSetItem = Storage.prototype.setItem;
+  vi.spyOn(Storage.prototype, "setItem").mockImplementation(function(this: Storage, key, value) {
+    if (key === "hs.send.pending.v1") throw new DOMException("storage closed", "QuotaExceededError");
+    realSetItem.call(this, key, value);
+  });
+  render(<NoteSendWells id={noteReturn.old_preview.document_ref.slice(5)} title={noteReturn.old_preview.title} version={2} />);
+  await screen.findByTestId("send-preview-body");
+  fireEvent.click(screen.getByTestId("send-verb"));
+  expect(await screen.findByTestId("send-refused")).toHaveTextContent("TAB STORAGE UNAVAILABLE");
+  expect(screen.getByTestId("send-refused")).toHaveTextContent("NOTHING SENT");
+  expect(sendRequest).not.toHaveBeenCalled();
+  vi.restoreAllMocks();
+  fireEvent.click(screen.getByTestId("send-verb"));
+  await screen.findByTestId("send-sent");
+  expect(sendRequest).toHaveBeenCalledTimes(1);
+});
+
+it("a terminal preview refusal clears tab custody", async () => {
+  routes["GET /api/channels/destinations"] = () => noteReturn.destinations;
+  routes["POST /api/channels/preview"] = () => noteReturn.old_preview;
+  routes["POST /api/channels/send"] = () => { throw new ApiError(400, "preview changed", { code: "preview_changed" }); };
+  render(<NoteSendWells id={noteReturn.old_preview.document_ref.slice(5)} title={noteReturn.old_preview.title} version={2} />);
+  await screen.findByTestId("send-preview-body");
+  fireEvent.click(screen.getByTestId("send-verb"));
+  await screen.findByTestId("send-refused");
+  expect(sessionStorage.getItem("hs.send.pending.v1")).toBeNull();
+  resetSendStore(true);
+  expect(sessionStorage.getItem("hs.send.pending.v1")).toBeNull();
+});
+
+it("an exact prepared row's terminal read resolves its restored pending press", async () => {
+  const doc = { ref: preparedReturn.ref, title: "Review update", label: "Update" };
+  let settled = false;
+  const sendRequest = vi.fn(() => { throw new Error("prepared answer lost"); });
+  routes["GET /api/channels/destinations"] = () => preparedReturn.destinations;
+  routes["GET /api/channels/sends"] = () => settled ? { sends: [preparedReturn.after.send] } : preparedReturn.before;
+  routes["POST /api/channels/send"] = sendRequest;
+  const mounted = render(<SendWells doc={doc} />);
+  fireEvent.click(await screen.findByTestId("prepared-send"));
+  await screen.findByTestId("prepared-retry");
+  expect(sessionStorage.getItem("hs.send.pending.v1")).not.toBeNull();
+  mounted.unmount();
+  settled = true;
+  resetSendStore(true);
+  render(<SendWells doc={doc} />);
+  await screen.findByTestId("prepared-result");
+  await waitFor(() => expect(sessionStorage.getItem("hs.send.pending.v1")).toBeNull());
+  expect(screen.queryByTestId("prepared-retry")).toBeNull();
+  expect(sendRequest).toHaveBeenCalledTimes(1);
 });
 
 describe("decision document hosts unfold Send only on request", () => {

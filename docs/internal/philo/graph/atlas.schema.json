@@ -1602,9 +1602,10 @@
               ]
             },
             "edge_ids": {
+              "description": "Atlas edge names and canonical HTTP inventory IDs: edge.http.<method>.<route>, with a known lowercase HTTP method and a lowercase/underscore route token.",
               "items": {
                 "type": "string",
-                "pattern": "^edge\\.(face|route|timer|tool|cli)\\.[a-z0-9_]+$"
+                "pattern": "^edge\\.(?:(face|route|timer|tool|cli)\\.[a-z0-9_]+|http\\.(get|post|put|patch|delete|head|options|trace|connect)\\.[a-z0-9_]+)$"
               }
             },
             "state_id": {

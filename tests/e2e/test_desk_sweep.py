@@ -973,7 +973,15 @@ def _page(browser: Any, width: int, base: str) -> tuple[Any, Any, list[str], lis
     errors: list[str] = []
     requests: list[str] = []
     page.on("pageerror", lambda e: errors.append(f"pageerror: {str(e)[:300]}"))
-    page.on("console", lambda m: errors.append(f"console: {m.text[:300]}") if m.type == "error" else None)
+    def console_error(message: Any) -> None:
+        if message.type != "error":
+            return
+        # Keep the old observation prefix for the exact known-red matching,
+        # while retaining the failed resource URL for an actionable diagnosis.
+        url = (message.location or {}).get("url", "")
+        errors.append(f"console: {message.text[:300]}" + (f" [{url}]" if url else ""))
+
+    page.on("console", console_error)
     page.on("request", lambda r: requests.append(r.url))
     return ctx, page, errors, requests
 

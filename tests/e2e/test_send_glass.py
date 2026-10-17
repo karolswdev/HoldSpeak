@@ -74,6 +74,7 @@ from __future__ import annotations
 import json
 import re
 import uuid
+import threading
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -91,6 +92,118 @@ TOKEN = "send-glass"
 SHOTS = evidence_dir("pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-15-shots")
 SIZES = {1440: 900, 393: 852}
 T = 20_000
+
+
+@pytest.mark.parametrize("width", list(SIZES))
+def test_uncertain_send_reload_keeps_the_exact_command(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
+    """A real folder send held BEFORE its durable row: reload must retain Retry.
+
+    The only seam delays validation; the real renderer, admission, dispatch,
+    receipts and filesystem run unchanged. A baseline run still presses the
+    available Send after reload, so its two files establish the actual cost.
+    """
+    from playwright.sync_api import sync_playwright
+    from holdspeak.db import get_database
+    from holdspeak.services.channel_contract import FileChannel
+
+    _ensure_build()
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    db = get_database()
+    entered, release = threading.Event(), threading.Event()
+    real_check = FileChannel.check_before_dispatch
+    checked = 0
+
+    def held_check(channel: Any, target: Any, **kwargs: Any) -> str:
+        nonlocal checked
+        checked += 1
+        if checked == 1:
+            entered.set()
+            assert release.wait(25), "the browser did not release its held validation"
+        return real_check(channel, target, **kwargs)
+
+    monkeypatch.setattr(FileChannel, "check_before_dispatch", held_check)
+    shots = evidence_dir("docs/internal/TONIGHT-THREE-2026-10-17/send-reload")
+    shots.mkdir(parents=True, exist_ok=True)
+    submitted: list[dict[str, Any]] = []
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=True)
+        page = browser.new_page(viewport={"width": width, "height": SIZES[width]})
+        page.set_default_timeout(T)
+        page.on("request", lambda r: submitted.append(r.post_data_json)
+                if r.method == "POST" and r.url.endswith("/api/channels/send") else None)
+        try:
+            page.goto(f"{base}/?token={TOKEN}", wait_until="load")
+            _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+            made = _api(page, "POST", "/api/thoughts", {
+                "request_id": str(uuid.uuid4()), "raw_text": "The exact saved report stays here.", "source": {"kind": "typed"},
+                "initial_note": {"title": "One report after reload", "body_markdown": "The exact saved report stays here.", "tags": []},
+            }, token=TOKEN)
+            ref = f"note:{made['thought']['working_note']['id']}"
+            page.goto(f"{base}/?open={ref}", wait_until="load")
+            _normal_chair(page)
+
+            def open_send() -> Any:
+                win = page.locator(".thought-workspace-window").first
+                win.locator(".thought-note-body .cm-content").wait_for()
+                if width < 720:
+                    win.get_by_role("button", name="More actions", exact=True).click()
+                    page.get_by_role("menu", name="More actions", exact=True).get_by_role("menuitem", name="Send", exact=True).click()
+                else:
+                    win.locator(".thought-note-foot").get_by_role("button", name="Send", exact=True).click()
+                well = win.locator("[data-testid=send-well]")
+                well.locator("[data-testid=send-preview-body]").wait_for()
+                return well
+
+            well = open_send()
+            original = well.locator("[data-testid=send-preview-body]").inner_text()
+            well.locator("[data-testid=send-verb]").click()
+            assert entered.wait(5), "the first request never reached pre-boundary validation"
+            assert db.channel_sends.list_for_document(ref) == []
+            page.reload(wait_until="load")
+            # The current note keeps a later draft/save. Retry still belongs to
+            # the first frozen press and must not send these newer words.
+            draft = "The updated draft is kept after reload."
+            editor = page.locator(".thought-note-body .cm-content").first
+            editor.wait_for()
+            editor.click()
+            page.keyboard.press("ControlOrMeta+A")
+            page.keyboard.type(draft)
+            well = open_send()
+            restored = well.locator("[data-testid=send-preview-body]").inner_text()
+            retry = well.locator("[data-testid=send-retry]")
+            retained = retry.count() == 1
+            page.screenshot(path=str(shots / f"reload-{width}.png"))
+            # Press the actual control in both versions; do not manufacture a
+            # second command or claim a duplicate from source alone.
+            (retry if retained else well.locator("[data-testid=send-verb]")).click()
+            release.set()
+            page.wait_for_function("""() => document.querySelector('[data-testid=send-sent]') !== null""")
+            page.wait_for_timeout(600)
+            rows = db.channel_sends.list_for_document(ref)
+            with db._connection() as conn:
+                operations = [dict(row) for row in conn.execute(
+                    "SELECT operation_id,state FROM kernel_operations WHERE name='channel.send'")]
+            files = [Path(row["file_path"]) for row in rows]
+            facts = {"retained": retained, "submitted": submitted, "original": original, "restored": restored, "draft": draft,
+                     "sends": [{"id": row["id"], "state": row["state"]} for row in rows], "operations": operations,
+                     "files": [{"path": str(path), "text": path.read_text()} for path in files]}
+            (shots / f"facts-{width}.json").write_text(json.dumps(facts, indent=2) + "\n")
+            page.screenshot(path=str(shots / f"settled-{width}.png"))
+            assert retained, facts
+            assert submitted[0] == submitted[1], facts
+            assert restored == original, facts
+            assert len(rows) == len(operations) == len(files) == 1, facts
+            assert rows[0]["state"] == "sent" and operations[0]["state"] == "succeeded", facts
+            assert files[0].read_bytes() == bytes(rows[0]["payload"]), facts
+            # Back restores the same saved document, rather than an empty editor.
+            page.locator(".thought-send-foot").get_by_role("button", name="Back", exact=True).click()
+            assert draft == page.locator(".thought-note-body .cm-content").inner_text()
+            (shots / f"return-{width}.png").write_bytes(page.screenshot())
+        finally:
+            release.set()
+            browser.close()
+            server.stop()
+
 MEET = "surface-meetings"  # the saved record is inside Meetings, with Back
 BARE = "pullout:meeting:m-bare"
 FREEZE = "pullout:decision:d-freeze"

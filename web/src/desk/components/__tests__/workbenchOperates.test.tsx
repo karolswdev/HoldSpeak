@@ -311,3 +311,64 @@ describe("Run with no engine", () => {
     expect(screen.getByRole("button", { name: "Run: No engine" })).toBeDisabled();
   });
 });
+
+// Recorded from the real WorkbenchRunner/WorkbenchService on an isolated DB by
+// test_grounding_source_restoration_reruns_same_item_with_exact_source. The
+// failed attempt made zero provider calls; Re-run's producer retained the same
+// item, instruction, explicit source and context. No model result is replayed.
+const groundingRetryRecording = {"failed":{"id":"wb-5af249dd93","name":"Runner","recipe_id":"recipe-5af249dd93","profile_id":"profile-5af249dd93","resolver_profile_id":null,"schedule":null,"schedule_enabled":false,"schedule_revision":1,"item_order":[],"created_at":"2026-10-17T06:42:41Z","last_modified":"2026-10-17T06:42:41Z","deleted":false,"items":[{"id":"item-1","workbench_id":"wb-5af249dd93","title":"Item 1","body":"input 1","priority":3,"status":"failed","grounding":{"refs":["note:restored-source"]},"context":{"origin":"owner-instruction","project_id":"architecture-review"},"result":"Source unavailable · note:restored-source","result_artifact_id":null,"result_egress":null,"mint_attempted":false,"tokens_consumed":0,"created_at":"2026-10-17T06:42:41Z","last_modified":"2026-10-17T06:42:42.043721+00:00","claimed_at":"2026-10-17T06:42:42.043401+00:00","completed_at":"2026-10-17T06:42:42.043721+00:00","parked":false}],"item_count":1,"pending_count":0,"last_run":{"id":"wbrun_edfd91d1084f","workbench_id":"wb-5af249dd93","started_at":"2026-10-17T06:42:42.043097+00:00","completed_at":"2026-10-17T06:42:42.057525+00:00","items_attempted":1,"items_completed":0,"items_failed":1,"mint_failures":0,"total_tokens":0,"egress_boundary":"","model":"","constitutional_context_revision":0,"constitutional_context_hash":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","skills_injected":[],"status":"completed"},"assignment_summary":{"status":"assigned","source":"subject","chain":["Profile"],"repair":null}},"reset":{"id":"item-1","workbench_id":"wb-5af249dd93","title":"Item 1","body":"input 1","priority":3,"status":"pending","grounding":{"refs":["note:restored-source"]},"context":{"origin":"owner-instruction","project_id":"architecture-review"},"result":null,"result_artifact_id":null,"result_egress":null,"mint_attempted":false,"tokens_consumed":0,"created_at":"2026-10-17T06:42:41Z","last_modified":"2026-10-17T06:42:42Z","claimed_at":"2026-10-17T06:42:42.043401+00:00","completed_at":null,"parked":false},"pending":{"id":"wb-5af249dd93","name":"Runner","recipe_id":"recipe-5af249dd93","profile_id":"profile-5af249dd93","resolver_profile_id":null,"schedule":null,"schedule_enabled":false,"schedule_revision":1,"item_order":[],"created_at":"2026-10-17T06:42:41Z","last_modified":"2026-10-17T06:42:41Z","deleted":false,"items":[{"id":"item-1","workbench_id":"wb-5af249dd93","title":"Item 1","body":"input 1","priority":3,"status":"pending","grounding":{"refs":["note:restored-source"]},"context":{"origin":"owner-instruction","project_id":"architecture-review"},"result":null,"result_artifact_id":null,"result_egress":null,"mint_attempted":false,"tokens_consumed":0,"created_at":"2026-10-17T06:42:41Z","last_modified":"2026-10-17T06:42:42Z","claimed_at":"2026-10-17T06:42:42.043401+00:00","completed_at":null,"parked":false}],"item_count":1,"pending_count":1,"last_run":{"id":"wbrun_edfd91d1084f","workbench_id":"wb-5af249dd93","started_at":"2026-10-17T06:42:42.043097+00:00","completed_at":"2026-10-17T06:42:42.057525+00:00","items_attempted":1,"items_completed":0,"items_failed":1,"mint_failures":0,"total_tokens":0,"egress_boundary":"","model":"","constitutional_context_revision":0,"constitutional_context_hash":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","skills_injected":[],"status":"completed"},"assignment_summary":{"status":"assigned","source":"subject","chain":["Profile"],"repair":null}}};
+
+describe("Workbench required source recovery", () => {
+  beforeEach(() => { localStorage.clear(); mocks.listeners.clear(); });
+  afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+
+  it("renders the actual missing source and Re-run returns the same grounded instruction to pending", async () => {
+    let snapshot: typeof groundingRetryRecording.failed | typeof groundingRetryRecording.pending =
+      structuredClone(groundingRetryRecording.failed);
+    const bench = snapshot.id;
+    const original = snapshot.items[0];
+    const calls = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const path = new URL(String(input), "http://test").pathname;
+      const json = (body: unknown) => new Response(JSON.stringify(body), {
+        headers: { "content-type": "application/json" },
+      });
+      if (path === `/api/workbenches/${bench}/items/${original.id}` && init?.method === "PUT") {
+        expect(JSON.parse(String(init.body))).toEqual({
+          status: "pending", result: null, result_egress: null, tokens_consumed: 0, completed_at: null,
+        });
+        snapshot = structuredClone(groundingRetryRecording.pending);
+        return json({ item: groundingRetryRecording.reset });
+      }
+      if (path === `/api/workbenches/${bench}`) return json({ workbench: snapshot });
+      if (path.endsWith("/runs")) return json({ runs: [] });
+      if (path.endsWith("/memory")) return json({ entries: [] });
+      if (path.startsWith("/api/skills")) return json({ skills: [] });
+      return json({});
+    });
+    vi.stubGlobal("fetch", calls);
+    useDesk.setState({
+      items: { ...EMPTY_ITEMS,
+        workbench: [{ kind: "workbench", id: bench, name: snapshot.name } as never],
+        recipe: [{ kind: "recipe", id: snapshot.recipe_id, name: "Runner" } as never],
+      },
+      inferenceTargets: [], profiles: [],
+    });
+    const { container } = render(<WorkbenchWindow workbenchId={bench} />);
+    fireEvent.click((await screen.findByText(original.title)).closest("button")!);
+    await screen.findByRole("button", { name: "Re-run" });
+    expect(container.querySelector(".wb-card-result-body")).toHaveTextContent(original.result);
+    expect(screen.getByRole("textbox", { name: "Item body" })).toHaveValue(original.body);
+    expect(screen.queryByRole("button", { name: "Open artifact" })).toBeNull();
+    expect(screen.queryByText("Review needed")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Re-run" }));
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Re-run" })).toBeNull());
+    expect(screen.getByRole("textbox", { name: "Item body" })).toHaveValue(original.body);
+    expect(screen.getByText("NEEDS REVIEW")).toBeInTheDocument();
+    expect(snapshot.items[0].id).toBe(original.id);
+    expect(snapshot.items[0].grounding).toEqual(original.grounding);
+    expect(snapshot.items[0].context).toEqual(original.context);
+    expect(calls.mock.calls.filter(([, init]) => init?.method === "PUT")).toHaveLength(1);
+    expect(calls.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(0);
+  });
+});

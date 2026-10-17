@@ -108,6 +108,161 @@ def _row(broker, op):
         return dict(conn.execute("SELECT * FROM kernel_parent_runs WHERE operation_id=?", (op,)).fetchone())
 
 
+@pytest.mark.parametrize("grounding", [
+    {"refs": ["note:missing-source"]},
+    {"meeting_ids": ["missing-meeting"]},
+    {"artifact_ids": ["missing-artifact"]},
+    {"refs": [f"note:source-{i}" for i in range(17)]},
+])
+def test_incomplete_grounding_fails_only_its_item_without_provider_or_artifact(tmp_path, monkeypatch, grounding):
+    db, broker, workbench, items, state = _setup_runner(tmp_path, monkeypatch, item_count=2)
+    blocked = items[0]
+    db.workbench_items.upsert(
+        item_id=blocked.id, workbench_id=workbench.id, title=blocked.title,
+        body=blocked.body, grounding=grounding,
+    )
+
+    result = _run(db, broker, workbench.id, memory_enabled=False)
+
+    stored = db.workbench_items.get(blocked.id)
+    assert stored.status == "failed"
+    assert "Source" in stored.result
+    assert (stored.id, stored.title, stored.body, json.loads(stored.grounding_json)) == (
+        blocked.id, blocked.title, blocked.body, grounding,
+    )
+    assert stored.result_artifact_id is None
+    assert len(state["calls"]) == 1
+    assert items[1].body in state["calls"][0]["user_prompt"]
+    assert db.workbench_items.get(items[1].id).status == "done"
+    with db._connection() as conn:
+        assert conn.execute("SELECT count(*) FROM artifacts WHERE source_item_id=?", (blocked.id,)).fetchone()[0] == 0
+    run = _run_row(db, result["run_id"])
+    assert (run["items_attempted"], run["items_failed"], run["items_completed"]) == (2, 1, 1)
+
+
+def test_grounding_source_restoration_reruns_same_item_with_exact_source(runner_rig):
+    from holdspeak.services.workbench_service import WorkbenchService
+
+    db, broker, workbench, items, state = runner_rig
+    original = items[0]
+    grounding = {"refs": ["note:restored-source"]}
+    context = {"project_id": "architecture-review", "origin": "owner-instruction"}
+    db.workbench_items.upsert(item_id=original.id, workbench_id=workbench.id,
+                             title=original.title, body=original.body, grounding=grounding, context=context)
+    failed_run = _run(db, broker, workbench.id, memory_enabled=False)
+    assert state["calls"] == []
+    assert db.workbench_items.get(original.id).status == "failed"
+    service = WorkbenchService(db)
+    failed_wire = service.get_workbench(OWNER, workbench.id)
+
+    source = "Exact restored architecture evidence: keep migration reads compatible."
+    db.notes.upsert(note_id="restored-source", title="Architecture evidence", body_markdown=source)
+    reset_wire = service.update_item(OWNER, workbench.id, original.id, status="pending", result=None,
+                                    result_egress=None, tokens_consumed=0, completed_at=None)
+    pending_wire = service.get_workbench(OWNER, workbench.id)
+    assert reset_wire["grounding"] == grounding
+    assert reset_wire["context"] == context
+    completed_run = _run(db, broker, workbench.id, memory_enabled=False)
+    stored = db.workbench_items.get(original.id)
+    assert stored.status == "done"
+    assert (stored.id, stored.title, stored.body, json.loads(stored.grounding_json)) == (
+        original.id, original.title, original.body, grounding,
+    )
+    assert len(state["calls"]) == 1
+    assert json.loads(stored.context_json) == context
+    assert source in state["calls"][0]["user_prompt"]
+    assert original.body in state["calls"][0]["user_prompt"]
+    assert db.plugins.get_artifact(stored.result_artifact_id).body_markdown == stored.result
+    # Optional producer recording for the rendered failure/Re-run proof.
+    import os
+    if path := os.environ.get("HOLDSPEAK_WORKBENCH_WIRE_WRITE"):
+        Path(path).write_text(json.dumps({"failed": failed_wire, "reset": reset_wire,
+                                         "pending": pending_wire, "done": service.get_workbench(OWNER, workbench.id),
+                                         "failed_run": failed_run, "completed_run": completed_run}, indent=2))
+
+
+@pytest.mark.parametrize("kind", ["meeting", "artifact", "note"])
+def test_unreadable_explicit_source_never_calls_provider(runner_rig, monkeypatch, kind):
+    db, broker, workbench, items, state = runner_rig
+    grounding = {"meeting_ids": ["unreadable"]} if kind == "meeting" else (
+        {"artifact_ids": ["unreadable"]} if kind == "artifact" else {"refs": ["note:unreadable"]})
+    db.workbench_items.upsert(item_id=items[0].id, workbench_id=workbench.id,
+                             title=items[0].title, body=items[0].body, grounding=grounding)
+    repo, method = {"meeting": (db.meetings, "get_meeting"), "artifact": (db.plugins, "get_artifact"),
+                    "note": (db.notes, "get")}[kind]
+    def unreadable(*args, **kwargs):
+        raise OSError("test source cannot be read")
+    monkeypatch.setattr(repo, method, unreadable)
+    _run(db, broker, workbench.id, memory_enabled=False)
+    assert state["calls"] == []
+    stored = db.workbench_items.get(items[0].id)
+    assert stored.status == "failed"
+    assert "Source" in stored.result
+    assert json.loads(stored.grounding_json) == grounding
+
+
+@pytest.mark.parametrize("grounding", ["invalid mapping", {"refs": "note:source"}])
+def test_producer_persisted_malformed_grounding_is_not_an_empty_attachment_set(runner_rig, grounding):
+    from holdspeak.services.workbench_service import WorkbenchService
+    db, broker, workbench, _, state = runner_rig
+    item = WorkbenchService(db).add_item(OWNER, workbench.id, title="Inspect exact sources", grounding=grounding)
+    from holdspeak.services.workbench_runner import WorkbenchRunner
+    asyncio.run(WorkbenchRunner(db, broker).run(OWNER, workbench.id, memory_enabled=False, item_ids=[item["id"]]))
+    assert state["calls"] == []
+    assert db.workbench_items.get(item["id"]).status == "failed"
+
+
+def test_cancel_during_failed_source_read_does_not_publish_item_failure(runner_rig, monkeypatch):
+    db, broker, workbench, items, state = runner_rig
+    db.workbench_items.upsert(item_id=items[0].id, workbench_id=workbench.id,
+                             title=items[0].title, body=items[0].body, grounding={"refs": ["note:missing"]})
+    def cancel_during_read(*args, **kwargs):
+        with db._connection() as conn:
+            parent = conn.execute("SELECT parent_operation_id FROM workbench_runs WHERE status='running'").fetchone()[0]
+        assert broker.parent_run_controller.cancel_by_operation_id(OWNER, parent) == "cancelled"
+        return None
+    monkeypatch.setattr(db.notes, "get", cancel_during_read)
+    result = _run(db, broker, workbench.id, memory_enabled=False)
+    assert result["terminal_disposition"] == "cancelled"
+    assert state["calls"] == []
+    stored = db.workbench_items.get(items[0].id)
+    assert stored.status == "pending"
+    assert stored.result is None
+
+
+def test_failed_grounded_rerun_retains_historical_artifact_without_current_success_pointer(runner_rig):
+    from holdspeak.services.workbench_service import WorkbenchService
+    db, broker, workbench, items, state = runner_rig
+    _run(db, broker, workbench.id, memory_enabled=False)
+    item = db.workbench_items.get(items[0].id)
+    historical_id, historical_result = item.result_artifact_id, item.result
+    WorkbenchService(db).update_item(
+        OWNER, workbench.id, item.id, status="pending", result=None, result_egress=None,
+        grounding={"refs": ["note:missing-rerun-evidence"]},
+    )
+    _run(db, broker, workbench.id, memory_enabled=False)
+    failed = db.workbench_items.get(item.id)
+    assert failed.status == "failed"
+    assert failed.result_artifact_id is None
+    assert failed.mint_attempted is False
+    assert failed.result_egress_json is None
+    assert len(state["calls"]) == 1
+    assert db.plugins.get_artifact(historical_id).body_markdown == historical_result
+
+
+def test_explicit_grounding_and_context_replacement_or_clear_stays_deliberate(runner_rig):
+    from holdspeak.services.workbench_service import WorkbenchService
+    db, _, workbench, items, _ = runner_rig
+    service = WorkbenchService(db)
+    changed = service.update_item(OWNER, workbench.id, items[0].id,
+                                  grounding={"refs": ["note:replacement"]}, context={"project_id": "replacement"})
+    assert changed["grounding"] == {"refs": ["note:replacement"]}
+    assert changed["context"] == {"project_id": "replacement"}
+    cleared = service.update_item(OWNER, workbench.id, items[0].id, grounding=None, context={})
+    assert cleared["grounding"] == {}
+    assert cleared["context"] == {}
+
+
 def test_manual_attempt_creates_one_authenticated_workbench_parent(runner_rig):
     db, broker, workbench, _, _ = runner_rig
     result = _run(db, broker, workbench.id, memory_enabled=False)

@@ -284,11 +284,37 @@ class WorkbenchRunner:
                     return self._adopt_terminal(run_id, parent)
                 attempted += 1
                 emit_item_claimed(workbench_id=workbench_id,run_id=run_id,item_id=item.id,title=item.title,index=ordinal,total=len(items))
-                parts=[x for x in (context,memory,_hydrate_item_grounding(
-                    self.db,
-                    item.grounding_json,
-                    query=f"{item.title}\n{item.body}",
-                ),f"[TASK]\n{item.title}",item.body) if x]
+                try:
+                    grounding = _hydrate_item_grounding(
+                        self.db, item.grounding_json, query=f"{item.title}\n{item.body}",
+                    )
+                except ServiceError as exc:
+                    # A missing attachment fails this item before any provider
+                    # call. Cancellation/expiry still own the parent election.
+                    if self.broker.parent_run_controller.expire_if_due(parent.context, principal):
+                        self._release_unpublished_claim(item.id)
+                        return self._adopt_terminal(run_id, parent)
+                    now = utc_now_iso()
+                    with self.db._connection() as conn:
+                        conn.execute("BEGIN IMMEDIATE")
+                        advanced = conn.execute(
+                            """UPDATE workbench_items SET status='failed', result=?,
+                               result_egress_json=NULL, result_artifact_id=NULL, mint_attempted=0,
+                               tokens_consumed=0, completed_at=?, last_modified=?
+                               WHERE id=? AND status='claimed' AND parked=0 AND EXISTS (
+                                 SELECT 1 FROM kernel_parent_runs
+                                 WHERE operation_id=? AND state='OPEN' AND execution_epoch=?
+                               )""",
+                            (exc.detail, now, now, item.id, parent.operation_id, parent.context.epoch),
+                        ).rowcount
+                    if advanced != 1:
+                        self._release_unpublished_claim(item.id)
+                        return self._adopt_terminal(run_id, parent)
+                    failed += 1
+                    emit_item_failed(workbench_id=workbench_id, run_id=run_id, item_id=item.id,
+                                     title=item.title, index=ordinal, total=len(items), error=exc.detail)
+                    continue
+                parts=[x for x in (context,memory,grounding,f"[TASK]\n{item.title}",item.body) if x]
                 prompt="\n\n".join(parts)
                 item_operation="workbench_item_"+uuid.uuid4().hex
                 payload={"workbench_id":workbench_id,"workbench_revision":str(wb.last_modified),"item_id":item.id,"item_revision":str(item.last_modified),"recipe_id":recipe.id,"recipe_revision":str(recipe.last_modified),"system_prompt":system,"user_prompt":prompt,"rendered_input_sha256":_sha(prompt),"skills":skills,"context_hash":_sha(context),"attempt_ordinal":ordinal}

@@ -39,8 +39,9 @@ import hashlib
 import json
 import re
 import uuid
+from dataclasses import replace
 from holdspeak.timestamps import utc_now_iso
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 from ..db.core import Database
 from ..db.proposals import Proposal
@@ -271,8 +272,9 @@ def is_deferred(p: Any, now: Any = None) -> bool:
 class ProposalBridgeService:
     """Bridge intel artifacts into follow-through proposals."""
 
-    def __init__(self, db: Database) -> None:
+    def __init__(self, db: Database, *, publication_guard: Callable[[Any], None] | None = None) -> None:
         self._db = db
+        self._publication_guard = publication_guard
 
     def _notify_changed(self, proposal: Proposal, operation: str) -> None:
         """Refresh desk projections after a proposal transaction commits."""
@@ -433,6 +435,7 @@ class ProposalBridgeService:
             support_record=evidence.record,
             rationale=str(rationale).strip() if isinstance(rationale, str) and rationale.strip() else None,
             action_item_id=action_item_id,
+            **({"publication_guard": self._publication_guard} if self._publication_guard is not None else {}),
         )
 
     def _bridge_summary_artifact(
@@ -496,6 +499,9 @@ class ProposalBridgeService:
                     # The moment the item was said: Follow-through quotes it
                     # instead of "source moment unavailable".
                     with self._db._connection() as conn:
+                        if self._publication_guard is not None:
+                            conn.execute("BEGIN IMMEDIATE")
+                            self._publication_guard(conn)
                         conn.execute(
                             "UPDATE action_items SET source_timestamp = ? "
                             "WHERE id = ? AND source_timestamp IS NULL",
@@ -974,6 +980,15 @@ class ProposalBridgeService:
                         now, delegated_at, proposal.meeting_id,
                     ),
                 )
+
+            if is_action:
+                # The confirmed proposal and its commitment name the same
+                # obligation, including an action first created on Confirm.
+                conn.execute(
+                    "UPDATE follow_through_proposals SET action_item_id=? WHERE id=?",
+                    (action_id, proposal_id),
+                )
+                flipped = replace(flipped, action_item_id=action_id)
 
             # 5. decision_commitments linking the record to the action (an
             #    action only: the Room reaches its commitments this way).
@@ -1480,8 +1495,20 @@ class ProposalBridgeService:
                          "state": "skipped", "count": None, "reason": reason})
         return rows
 
-    @staticmethod
-    def _serialize(p: Proposal) -> dict[str, Any]:
+    def _serialize(self, p: Proposal) -> dict[str, Any]:
+        action_item_id = p.action_item_id
+        if not action_item_id and p.kind == "action" and p.state == "confirmed" and p.commitment_id:
+            # Earlier Confirm transactions retained the link on the commitment
+            # only. Resolve that existing authority without changing old rows.
+            with self._db._connection() as conn:
+                linked = conn.execute(
+                    """SELECT c.action_item_id FROM decision_commitments c
+                       JOIN action_items a ON a.id=c.action_item_id
+                       JOIN decision_records r ON r.source_id=c.decision_id
+                       WHERE c.id=? AND r.id=? AND a.meeting_id=?""",
+                    (p.commitment_id, p.decision_record_id, p.meeting_id),
+                ).fetchone()
+            action_item_id = str(linked["action_item_id"]) if linked is not None else None
         unknowns: list[dict[str, str]] = []
         if p.kind == "action":
             if not p.owner:
@@ -1529,7 +1556,7 @@ class ProposalBridgeService:
             "unknowns": unknowns,
             "edited_at": p.edited_at,
             "text_edited": bool(p.edited_at) and p.text != (p.original_text or p.text),
-            "action_item_id": p.action_item_id,
+            "action_item_id": action_item_id,
             "deferred_until": p.deferred_until,
         }
 

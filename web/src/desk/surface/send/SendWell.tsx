@@ -8,8 +8,8 @@
  * ConfirmVerb.
  *
  * THE PRESS RULE: one press = one {document, destination or prepared row,
- * command_id, preview digest}, held PER DOCUMENT AND TARGET in a module store
- * that survives Back and opening another document. Two seats of one document
+ * command_id, preview digest}, held PER DOCUMENT AND TARGET with tab custody
+ * that survives Back, opening another document and a reload. Two seats of one document
  * (the Chair's brief and Intelligence -> BRIEF) share that store, so they
  * show one pick and one press. A lost answer keeps all four; Retry sends the
  * same key, and the hub's replay answers the settled row, never a second
@@ -46,6 +46,7 @@ import {
 } from "../../../features/channels/channels";
 import "../../../features/channels/channels.css";
 import "./send-well.css"; import { keepPlace, keptPlace } from "../../deskMemory"; // PHILO-13-07 (B2)
+import { clearPendingCommand, keepPendingCommand, pendingCommands, resetPendingCommands, type HeldCommand } from "./pendingCommand";
 
 /** The one document a well sends: `ref` is `<kind>:<id>` (the wire's
  *  `document_ref`), `title` its name, `label` the short token a prepared row
@@ -59,9 +60,9 @@ export type DocRef = { ref: string; title: string; label: string; version?: stri
 type Outcome =
   | { kind: "none" }
   | { kind: "refused"; code: string; at: number }
-  | { kind: "lost" }
+  | { kind: "lost"; storageFailed?: boolean }
   | { kind: "settled"; send: Send };
-type Held = { key: string; body: { send_id?: string; document_ref?: string; destination_id?: string; preview_digest?: string }; preview?: Preview };
+type Held = HeldCommand;
 const store = {
   picked: new Map<string, string | null>(),          // ref -> destination id
   preparedOpen: new Map<string, string | null>(),    // ref -> the one open prepared row (absent = the first)
@@ -74,6 +75,18 @@ const store = {
   tick: 0,
   subs: new Set<() => void>(),
 };
+function restorePendingCommands() {
+  try {
+    for (const { ref, target, command } of pendingCommands()) {
+      const k = `${ref}|${target}`;
+      store.holds.set(k, command);
+      store.outcomes.set(k, { kind: "lost" });
+      if (command.body.send_id) store.preparedOpen.set(ref, target);
+      else store.picked.set(ref, target);
+    }
+  } catch { /* A later press must establish custody and will name this failure. */ }
+}
+restorePendingCommands();
 const bump = () => { store.tick++; store.subs.forEach((f) => f()); };
 const useStore = () =>
   useSyncExternalStore((f) => { store.subs.add(f); return () => { store.subs.delete(f); }; }, () => store.tick);
@@ -90,10 +103,13 @@ export function pickDestination(ref: string, destinationId: string | null) {
 /** The destination picked for `ref`, or null. */
 export const pickedDestination = (ref: string): string | null => store.picked.get(ref) ?? null;
 
-/** Test seam: forget every held press (a fresh page has none). */
-export function resetSendStore() {
+/** Test seam: ordinary isolation clears custody; reload simulation restores it. */
+export function resetSendStore(restorePending = false) {
   store.picked.clear(); store.preparedOpen.clear(); store.holds.clear(); store.outcomes.clear(); store.busy.clear();
-  store.known.clear(); bump();
+  store.known.clear();
+  if (restorePending) restorePendingCommands();
+  else resetPendingCommands();
+  bump();
 }
 
 /* ── the reads (each names its failure) ──────────────────────────────── */
@@ -258,6 +274,7 @@ function OutcomeLine({ o }: { o: Outcome }) {
     return (
       <span className="send-line" data-testid="send-lost">
         <StateChip state="warning" label={SEND_WORDS.lost} />
+        {o.storageFailed ? <span className="surface-token" data-chip>{SEND_WORDS.storageUnavailable}</span> : null}
       </span>
     );
   }
@@ -403,7 +420,22 @@ async function press(ref: string, target: string, fresh: () => Held["body"], rel
   const k = `${ref}|${target}`;
   if (store.busy.has(k)) return;                 // a double-click is one press
   let held = store.holds.get(k);
-  if (!held) { held = { key: commandId(), body: fresh(), preview }; store.holds.set(k, held); }
+  const uncertain = Boolean(held);
+  if (!held) held = { key: commandId(), body: fresh(), preview };
+  try { keepPendingCommand(ref, target, held); }
+  catch {
+    store.outcomes.set(k, uncertain ? { kind: "lost", storageFailed: true }
+      : { kind: "refused", code: "send_storage_unavailable", at: Date.now() });
+    bump();
+    return;
+  }
+  store.holds.set(k, held);
+  const heldKey = held.key;
+  const forget = () => {
+    // If storage closes after dispatch, its retained record is safe to replay.
+    try { clearPendingCommand(ref, target, heldKey); } catch { /* keep the safe replay */ }
+    store.holds.delete(k);
+  };
   store.busy.add(k); store.outcomes.set(k, { kind: "none" }); bump();
   try {
     const pending = wire.send({ ...held.body, command_id: held.key });
@@ -411,11 +443,11 @@ async function press(ref: string, target: string, fresh: () => Held["body"], rel
     // shows as SENDING while it runs.
     const peek = setTimeout(reload, 250);
     const send = await pending.finally(() => clearTimeout(peek));
-    store.holds.delete(k);
+    forget();
     store.known.set(send.id, send);
     store.outcomes.set(k, { kind: "settled", send });
   } catch (e) {
-    if (e instanceof Refusal) { store.holds.delete(k); store.outcomes.set(k, { kind: "refused", code: e.code, at: Date.now() }); }
+    if (e instanceof Refusal && e.code !== "operation_in_progress") { forget(); store.outcomes.set(k, { kind: "refused", code: e.code, at: Date.now() }); }
     else store.outcomes.set(k, { kind: "lost" });  // keep the document, the key and the body for Retry
   } finally {
     store.busy.delete(k); bump(); reload(); onSettled?.();
@@ -539,6 +571,22 @@ export function SendWell({ doc, sendsRead, onSettled, head }: {
   useLayoutEffect(() => { reportRead?.(wellRead); }, [reportRead, wellRead]);
 
   const sends = mergeKnown(ref, sendsRead.data ?? []);
+  useEffect(() => {
+    // Prepared rows already name their exact command target. A terminal read
+    // resolves that row even if its browser answer was lost; it must not leave
+    // a hidden pending Retry holding the fold open forever.
+    let changed = false;
+    for (const [k, command] of store.holds) {
+      const ended = sendsRead.data?.find((s) => s.document_ref === ref
+        && s.id === command.body.send_id && ENDED.has(s.state));
+      if (!ended) continue;
+      try { clearPendingCommand(ref, ended.id, command.key); } catch { /* a later reload replays safely */ }
+      store.holds.delete(k);
+      store.outcomes.set(k, { kind: "settled", send: ended });
+      changed = true;
+    }
+    if (changed) bump();
+  }, [ref, sendsRead.data]);
   const reload = sendsRead.reload;
   // Every send that went through a prepare, in the order prepared: the open
   // ones and the ones that ended (their result stays here).
@@ -600,11 +648,15 @@ export function SendWell({ doc, sendsRead, onSettled, head }: {
                 const activePreview = held?.preview ?? (pv && !("failed" in pv)
                   ? previewOf(d.channel, d.target, d.account, pv.preview) : null);
                 const running = last?.state === "dispatching";
+                // A new command needs an authoritative history read. An exact
+                // held replay remains safe even when that read gets no answer.
+                const waitingForHistory = !held && (sendsRead.data === null || sendsRead.failed);
+                const waitingForSend = running && !held;
                 const far = farSide(d.channel, d.target, d.account);
                 const verbs = (
                   <div className="send-verbs" data-testid="send-verbs">
-                    <Button dense variant="primary" loading={busy || running}
-                      disabled={!activePreview || running}
+                    <Button dense variant="primary" loading={busy || waitingForSend}
+                      disabled={!activePreview || waitingForSend || waitingForHistory}
                       data-testid={lost ? "send-retry" : "send-verb"}
                       onClick={() => void press(ref, d.id, () => ({
                         document_ref: ref, destination_id: d.id,

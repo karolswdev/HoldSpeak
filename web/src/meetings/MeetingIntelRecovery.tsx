@@ -3,7 +3,7 @@
 // RETRY/SKIP verbs on the row. The warn reads as the token's color
 // only; the transcript well stays the spine.
 // HS-201-06 — every word on the row is a plain one (tenet 4).
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../components/signal/Signal";
 import { SurfaceState } from "../desk/surface/Surface";
 import { GadgetGroup, GadgetRow } from "../desk/surface/gadgets";
@@ -45,6 +45,8 @@ export type MeetingIntelRecoveryState = {
   /** HS-201-03's settled contract, served by the recovery read model. */
   planned_route?: unknown;
   run_receipt?: unknown;
+  /** Saved analysis needs only local outcome publication; no route leaves. */
+  local_publication?: boolean;
 };
 
 type RecoveryResponse = {
@@ -99,8 +101,10 @@ function twoSentences(first: string, second: string): string {
 export function MeetingIntelRecovery({
   meetingId,
   onChanged,
+  revision = 0,
 }: {
   meetingId: string;
+  revision?: number;
   onChanged?(recovery: MeetingIntelRecoveryState): void | Promise<void>;
 }) {
   const [recovery, setRecovery] = useState<MeetingIntelRecoveryState | null>(
@@ -112,18 +116,28 @@ export function MeetingIntelRecovery({
   // HS-201-04: a refused run is a REFUSAL with its plain reason, not an
   // error surface. It never replaces the receipt of an earlier real run.
   const [refusal, setRefusal] = useState<SummaryRefusal | null>(null);
+  const readSequence = useRef(0);
+  const currentMeeting = useRef(meetingId);
+  currentMeeting.current = meetingId;
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
+  useEffect(() => { setBusy(""); }, [meetingId]);
 
   const load = useCallback(async () => {
     if (!meetingId) return;
+    const sequence = ++readSequence.current;
     setLoading(true);
     setError("");
     try {
-      setRecovery(
-        await apiFetch<MeetingIntelRecoveryState>(
+      const fresh = await apiFetch<MeetingIntelRecoveryState>(
           `/api/meetings/${encodeURIComponent(meetingId)}/intel-recovery`,
-        ),
-      );
+        );
+      if (sequence === readSequence.current) setRecovery(fresh);
     } catch (reason) {
+      if (sequence !== readSequence.current) return;
       setError(
         twoSentences(
           readableError(reason),
@@ -131,13 +145,14 @@ export function MeetingIntelRecovery({
         ),
       );
     } finally {
-      setLoading(false);
+      if (sequence === readSequence.current) setLoading(false);
     }
   }, [meetingId]);
 
   useEffect(() => {
     void load();
-  }, [load]);
+    return () => { readSequence.current += 1; };
+  }, [load, revision]);
 
   // HS-201-04 (Article III, the point of decision): the route the next run
   // WILL use, and the destinations the last run DID contact. Both come from
@@ -152,31 +167,47 @@ export function MeetingIntelRecovery({
     readRunReceipt(recovery),
     readRunReceipt(recovery?.job),
   );
-  const canRun = routeReady(route);
+  const localPublication = Boolean(recovery?.local_publication);
+  const canRun = localPublication || routeReady(route);
 
   const choose = async (action: "retry" | "skip") => {
+    const forMeeting = meetingId;
+    const mine = () => mounted.current && currentMeeting.current === forMeeting;
+    const accept = async (fresh: MeetingIntelRecoveryState) => {
+      if (!mine()) return;
+      readSequence.current += 1;
+      setRecovery(fresh);
+      await onChanged?.(fresh);
+    };
     setBusy(action);
     setError("");
     setRefusal(null);
+    readSequence.current += 1;
     const path = `/api/meetings/${encodeURIComponent(meetingId)}/intel-recovery/${action}`;
     try {
       // HS-201-04: Retry starts a summary run, so it carries the disclosed
       // selection hash (lane A's interlock). Skip starts no run.
       if (action === "retry") {
+        if (localPublication) {
+          const result = await apiFetch<RecoveryResponse>(path, { method: "POST" });
+          await accept(result.recovery);
+          return;
+        }
         const outcome = await postSummaryRun<RecoveryResponse>(path, route);
+        if (!mine()) return;
         if (!outcome.ok) {
+          readSequence.current += 1;
           setRefusal(outcome.refusal);
           await load();
           return;
         }
-        setRecovery(outcome.result.recovery);
-        await onChanged?.(outcome.result.recovery);
+        await accept(outcome.result.recovery);
         return;
       }
       const result = await apiFetch<RecoveryResponse>(path, { method: "POST" });
-      setRecovery(result.recovery);
-      await onChanged?.(result.recovery);
+      await accept(result.recovery);
     } catch (reason) {
+      if (!mine()) return;
       setError(
         twoSentences(
           readableError(reason),
@@ -184,7 +215,7 @@ export function MeetingIntelRecovery({
         ),
       );
     } finally {
-      setBusy("");
+      if (mine()) setBusy("");
     }
   };
 
@@ -207,7 +238,7 @@ export function MeetingIntelRecovery({
           the wire's word for it, and a summary is what the user asked
           for (Constitution tenet 4, audit row 4). */}
       {recovery?.visible ? (
-        <GadgetGroup label="Summary">
+        <GadgetGroup label={localPublication ? "Outcomes" : "Summary"}>
           {/* HS-201-04 (audit defects 6 and 7): the facts span the row and
               the verbs sit at its trailing edge, so nothing is pushed under
               the window footer and no fact is clipped into a column of
@@ -230,7 +261,7 @@ export function MeetingIntelRecovery({
                 {/* Article III: the destinations of the LAST run, then the
                     route the NEXT run will use. */}
                 <RunAttempts receipt={receipt} testId="recovery-attempts" />
-                {recovery.actions.retry ? (
+                {recovery.actions.retry && !localPublication ? (
                   <RouteDisclosure route={route} testId="recovery-route" />
                 ) : null}
                 <RefusalToken

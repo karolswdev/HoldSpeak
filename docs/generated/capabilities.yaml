@@ -2244,7 +2244,8 @@
       "docs": [
         "docs/MEETING_INTELLIGENCE.md",
         "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/summary-lane-record.md",
-        "docs/internal/philo/phase-3/summary/usefulness.md"
+        "docs/internal/philo/phase-3/summary/usefulness.md",
+        "docs/internal/TONIGHT-THREE-2026-10-17/RELEASE.md"
       ],
       "domain": "meeting",
       "egress": "Model dispatch may egress according to the frozen destination; external actuators are separate opt-in registrations.",
@@ -2280,7 +2281,8 @@
         "Schema success does not prove semantic correctness.",
         "PHILO-3-02 queue fences execute the real admission and drain with a substituted provider. Real LAN completion, Arrival and restart proof are recorded separately in the lane evidence; the owner has not observed the result.",
         "The retained synthetic meeting loses or corrupts planted facts: SQLite and Maya Chen are misheard; the named failure-fence action is omitted or replaced. At 393, an existing aftercare card can overlap the last summary line; scrolling is recorded separately.",
-        "PHILO-6-03 records a later no-overlap pass on the Arrival at 1440/393 in Chromium. The dated Phase 5 overlap evidence above remains historical; no Safari device result is claimed."
+        "PHILO-6-03 records a later no-overlap pass on the Arrival at 1440/393 in Chromium. The dated Phase 5 overlap evidence above remains historical; no Safari device result is claimed.",
+        "October17 local publication recovery uses substituted provider output and real isolated durable rows. Stale-parent recovery is proved after publication-pending or succeeded is committed; physical provider/native capture and all pre-marker abandoned-computation states are not covered."
       ],
       "model_requirements": [
         "LLM capability for every registered built-in plugin"
@@ -2308,7 +2310,7 @@
         "linux_x11": "supported_with_setup",
         "macos": "supported_with_setup"
       },
-      "purpose": "Summarize a saved meeting and retain its summary, route receipt, and analysis artifacts.",
+      "purpose": "Summarize a saved meeting, retain analysis, and finish local outcome publication from saved results after a write failure.",
       "release_availability": "unverified",
       "replacement": null,
       "side_effect": "local_reversible",
@@ -2342,10 +2344,28 @@
           "line": 42,
           "path": "holdspeak/services/meeting_intel_service.py",
           "symbol": "project_intel_job"
+        },
+        {
+          "claim": "Required proposal publication completes before READY; local write failure preserves the same saved-results job.",
+          "line": 471,
+          "path": "holdspeak/intel_queue.py",
+          "symbol": "_finish_bound_publication"
+        },
+        {
+          "claim": "Each proposal write and final READY check the exact current executor, parent and transcript in their transaction.",
+          "line": 1089,
+          "path": "holdspeak/db/intel.py",
+          "symbol": "IntelRepository.require_bound_publication_in_transaction"
+        },
+        {
+          "claim": "The existing recovery slab distinguishes local outcome Retry from a new routed inference run.",
+          "line": 101,
+          "path": "web/src/meetings/MeetingIntelRecovery.tsx",
+          "symbol": "export function MeetingIntelRecovery"
         }
       ],
       "status": "experimental",
-      "status_reason": "PHILO-3-02 observed one Run, automatic Arrival summary and actual-host receipt, retry/failure cause, and exact restart retention with the real LAN Qwen3.6-35B engine. Planted-fact recovery is partial; no owner sitting is claimed.",
+      "status_reason": "PHILO-3-02 observed one Run, automatic Arrival summary and actual-host receipt, retry/failure cause, and exact restart retention with the real LAN Qwen3.6-35B engine. Planted-fact recovery is partial; no owner sitting is claimed. October17 focused execution proves a committed pending local publication resumes the same job and saved artifacts without another provider call, with per-write parent/transcript/executor checks.",
       "surfaces": [
         "meeting artifacts",
         "meeting analysis",
@@ -2439,6 +2459,39 @@
           },
           "node": "test_summary_wire_fixture_matches_real_producer_states",
           "path": "tests/unit/test_philo3_summary_detail.py"
+        },
+        {
+          "assertion": "A failure before/after one proposal resumes with a fresh DB/broker, same job/artifacts, exactly five proposals and unchanged provider calls.",
+          "execution": {
+            "cases": 2,
+            "record": "docs/internal/TONIGHT-THREE-2026-10-17/RELEASE.md",
+            "run": "2026-10-17",
+            "status": "passed"
+          },
+          "node": "test_failed_outcome_publication_restarts_from_saved_results_without_inference",
+          "path": "tests/unit/test_phase200_meeting_outcomes.py"
+        },
+        {
+          "assertion": "Cancellation, expiry, transcript change and executor takeover after one proposal prevent further writes and false READY.",
+          "execution": {
+            "cases": 4,
+            "record": "docs/internal/TONIGHT-THREE-2026-10-17/RELEASE.md",
+            "run": "2026-10-17",
+            "status": "passed"
+          },
+          "node": "test_each_outcome_insert_and_ready_obey_publication_owner_fences",
+          "path": "tests/unit/test_phase200_meeting_outcomes.py"
+        },
+        {
+          "assertion": "Confirm saves the exact action link; both new and historical unlinked confirmations retain Done through a fresh DB/review read.",
+          "execution": {
+            "cases": 2,
+            "record": "docs/internal/TONIGHT-THREE-2026-10-17/RELEASE.md",
+            "run": "2026-10-17",
+            "status": "passed"
+          },
+          "node": "test_confirmed_new_action_retains_its_done_identity_after_fresh_read",
+          "path": "tests/unit/test_phase200_meeting_outcomes.py"
         }
       ],
       "trust_boundary": "A saved transcript enters host-issued model dispatch; generated artifacts retain plugin and transcript-window lineage."
@@ -9014,7 +9067,8 @@
       "docs": [
         "docs/AGENTS_AND_THREADS.md",
         "docs/KERNEL.md",
-        "docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/IMPLEMENTATION-CDE.md"
+        "docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/IMPLEMENTATION-CDE.md",
+        "docs/internal/TONIGHT-THREE-2026-10-17/RELEASE.md"
       ],
       "domain": "knowledge",
       "egress": "Hydrated blocks may be passed to a selected model by their caller; hydration alone does not send them.",
@@ -9023,7 +9077,7 @@
         "holdspeak/grounding.py::hydrate_grounding_blocks_detailed",
         "holdspeak/grounding_rails.py::hydrate_rails_refs"
       ],
-      "evidence_level": "source_and_assertions_inspected",
+      "evidence_level": "tests_executed",
       "exposure": "user",
       "failure_states": [
         "unknown_ref",
@@ -9064,7 +9118,7 @@
         "linux_x11": "supported_with_setup",
         "macos": "supported_with_setup"
       },
-      "purpose": "Resolve explicit meetings, artifacts, projects, rails and optional memory matches into bounded evidence blocks.",
+      "purpose": "Resolve explicit sources into evidence blocks; stop a Workbench item when an attached source cannot be read.",
       "release_availability": "unverified",
       "replacement": null,
       "side_effect": "none",
@@ -9092,10 +9146,22 @@
           "line": 93,
           "path": "web/src/desk/components/AskPanel.tsx",
           "symbol": "export function AskPanel"
+        },
+        {
+          "claim": "Explicit attachments cannot silently disappear from a Workbench prompt.",
+          "line": 155,
+          "path": "holdspeak/workbench_conductor.py",
+          "symbol": "_hydrate_item_grounding"
+        },
+        {
+          "claim": "Omitted grounding and context survive Re-run; explicit replacements still apply.",
+          "line": 234,
+          "path": "holdspeak/services/workbench_service.py",
+          "symbol": "WorkbenchService.update_item"
         }
       ],
       "status": "experimental",
-      "status_reason": "The shared resolver, caps, qualified refs, project scope and rails refusal behavior are implemented and assertion-backed. October 16 focused Ask tests additionally distinguish unavailable Projects from a successful empty collection and retain known choices, question and selected Note passage during failed reread/Retry.",
+      "status_reason": "The shared resolver, caps, qualified refs, project scope and rails refusal behavior are implemented and assertion-backed. October 16 focused Ask tests additionally distinguish unavailable Projects from a successful empty collection and retain known choices, question and selected Note passage during failed reread/Retry. October17 focused Workbench execution proves explicit missing/unreadable/over-limit sources stop only their item before provider dispatch; same-ID Re-run retains source references and context.",
       "surfaces": [
         "Ask",
         "Thread refs",
@@ -9152,6 +9218,28 @@
           "execution": "passed",
           "node": "a failed Projects refresh retains known choices, the question, selected passage and Note context",
           "path": "web/src/desk/__tests__/askPanelExperience.test.tsx"
+        },
+        {
+          "assertion": "Missing Note, Meeting, artifact and over-limit attachments fail only their item; a valid sibling completes, with no blocked-item call or artifact.",
+          "execution": {
+            "cases": 4,
+            "record": "docs/internal/TONIGHT-THREE-2026-10-17/RELEASE.md",
+            "run": "2026-10-17",
+            "status": "passed"
+          },
+          "node": "test_incomplete_grounding_fails_only_its_item_without_provider_or_artifact",
+          "path": "tests/unit/test_workbench_runner_migration.py"
+        },
+        {
+          "assertion": "A restored Note reaches the provider with its exact text on the same item; Re-run keeps original refs/context and completed artifact.",
+          "execution": {
+            "cases": 1,
+            "record": "docs/internal/TONIGHT-THREE-2026-10-17/RELEASE.md",
+            "run": "2026-10-17",
+            "status": "passed"
+          },
+          "node": "test_grounding_source_restoration_reruns_same_item_with_exact_source",
+          "path": "tests/unit/test_workbench_runner_migration.py"
         }
       ],
       "trust_boundary": "Only resolved, named and capped source material enters a model-bearing payload; an unknown ref is returned for refusal."
@@ -10918,7 +11006,8 @@
         "pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/design/floor-send.md",
         "docs/internal/SEND-REFINEMENT-2026-10-14.md",
         "docs/internal/SURFACE-REFINEMENT-2026-10-15/README.md",
-        "docs/internal/DECISION-DELIGHT-2026-10-15/README.md"
+        "docs/internal/DECISION-DELIGHT-2026-10-15/README.md",
+        "docs/internal/TONIGHT-THREE-2026-10-17/RELEASE.md"
       ],
       "domain": "channels",
       "egress": "The owner sends the rendered document to the saved destination. The brief includes People sections; meeting forms omit the transcript.",
@@ -10955,7 +11044,8 @@
       "limitations": [
         "The Floor artifact window and menu/drop integration belong to Phase 12 stories 03 and 04.",
         "External delivery of each new kind and owner observation are not claimed.",
-        "Meeting digest and follow-up now use the channel renderer. Slack is limited to 39,000 text characters; no split or truncation."
+        "Meeting digest and follow-up now use the channel renderer. Slack is limited to 39,000 text characters; no split or truncation.",
+        "Unresolved browser custody is per tab: tab closure, cleared storage and cross-origin entry are not covered. No external recipient was contacted in the October17 reload proof."
       ],
       "model_requirements": [],
       "name": "Send a stored document",
@@ -10970,7 +11060,8 @@
       "owner_observed": false,
       "persistence": [
         "channel_sends: frozen payload and title, slug, label in document_json",
-        "project_update_deliveries for project updates only"
+        "project_update_deliveries for project updates only",
+        "Tab session storage retains an unresolved Send command, original request body and preview until settlement or terminal refusal."
       ],
       "platforms": {
         "aipi": "not_applicable",
@@ -10979,7 +11070,7 @@
         "linux_x11": "unknown",
         "macos": "supported_with_setup"
       },
-      "purpose": "Send a stored note, update, brief, decision, meeting summary, or artifact to a saved destination.",
+      "purpose": "Send a stored document to a saved destination and retain an uncertain command across a tab reload.",
       "release_availability": "unreleased",
       "replacement": null,
       "side_effect": "external_irreversible",
@@ -11019,10 +11110,16 @@
           "line": 78,
           "path": "web/src/desk/documentSends.tsx",
           "symbol": "export function DeskDecisionSendWells("
+        },
+        {
+          "claim": "Persist unresolved exact command custody synchronously before dispatch; reload does not send automatically.",
+          "line": 26,
+          "path": "web/src/desk/surface/send/pendingCommand.ts",
+          "symbol": "export function keepPendingCommand"
         }
       ],
       "status": "built_unreleased",
-      "status_reason": "Stored document sources run through the shared channel contract. Note Send retains stored-source/digest checks. October 15 isolated real-hub recipient edits preserve the stored key ref and park the prior destination; local key Check/Retry is exercised. External delivery and owner acceptance are not claimed. Decision and governing-record readers now fold Send until requested. Focused UI tests exercise folded reads, nonzero prepared discovery, held Retry and ordinary-preview refresh while prepared bytes remain frozen. These tests use HTTP substitutions; actual isolated runtime observations and limits are recorded separately.",
+      "status_reason": "Stored document sources run through the shared channel contract. Note Send retains stored-source/digest checks. October 15 isolated real-hub recipient edits preserve the stored key ref and park the prior destination; local key Check/Retry is exercised. External delivery and owner acceptance are not claimed. Decision and governing-record readers now fold Send until requested. Focused UI tests exercise folded reads, nonzero prepared discovery, held Retry and ordinary-preview refresh while prepared bytes remain frozen. These tests use HTTP substitutions; actual isolated runtime observations and limits are recorded separately. October17 isolated folder sends prove reload before the durable send row retains the exact command and preview; explicit Retry produces one delivery and preserves a newer saved draft.",
       "surfaces": [
         "HTTP channel operations",
         "MCP channel tools",
@@ -11087,6 +11184,17 @@
           },
           "node": "decision document hosts unfold Send only on request",
           "path": "web/src/desk/surface/send/__tests__/SendWell.test.tsx"
+        },
+        {
+          "assertion": "Real folder send held before the durable row survives reload at1440/393: identical command/body/preview, one operation/row/exact file; Back keeps newer saved note text.",
+          "execution": {
+            "cases": 2,
+            "record": "docs/internal/TONIGHT-THREE-2026-10-17/RELEASE.md",
+            "run": "2026-10-17",
+            "status": "passed"
+          },
+          "node": "test_uncertain_send_reload_keeps_the_exact_command",
+          "path": "tests/e2e/test_send_glass.py"
         }
       ],
       "trust_boundary": "The service reads the stored source by id. A prepared send freezes its bytes and names; inline Send checks the preview digest before dispatch."

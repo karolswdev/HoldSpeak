@@ -1058,7 +1058,10 @@
         "holdspeak/meeting_plugins.py",
         "holdspeak/plugins/host.py",
         "holdspeak/intel_queue.py",
-        "holdspeak/services/meeting_intel_service.py"
+        "holdspeak/services/meeting_intel_service.py",
+        "holdspeak/intel_queue.py",
+        "holdspeak/db/intel.py",
+        "web/src/meetings/MeetingIntelRecovery.tsx"
       ],
       "status": "experimental"
     },
@@ -1072,7 +1075,10 @@
         "holdspeak/meeting_plugins.py",
         "holdspeak/plugins/host.py",
         "holdspeak/intel_queue.py",
-        "holdspeak/services/meeting_intel_service.py"
+        "holdspeak/services/meeting_intel_service.py",
+        "holdspeak/intel_queue.py",
+        "holdspeak/db/intel.py",
+        "web/src/meetings/MeetingIntelRecovery.tsx"
       ],
       "status": "experimental"
     },
@@ -1086,7 +1092,10 @@
         "holdspeak/meeting_plugins.py",
         "holdspeak/plugins/host.py",
         "holdspeak/intel_queue.py",
-        "holdspeak/services/meeting_intel_service.py"
+        "holdspeak/services/meeting_intel_service.py",
+        "holdspeak/intel_queue.py",
+        "holdspeak/db/intel.py",
+        "web/src/meetings/MeetingIntelRecovery.tsx"
       ],
       "status": "experimental"
     },
@@ -1100,7 +1109,10 @@
         "holdspeak/meeting_plugins.py",
         "holdspeak/plugins/host.py",
         "holdspeak/intel_queue.py",
-        "holdspeak/services/meeting_intel_service.py"
+        "holdspeak/services/meeting_intel_service.py",
+        "holdspeak/intel_queue.py",
+        "holdspeak/db/intel.py",
+        "web/src/meetings/MeetingIntelRecovery.tsx"
       ],
       "status": "experimental"
     },
@@ -1114,7 +1126,10 @@
         "holdspeak/meeting_plugins.py",
         "holdspeak/plugins/host.py",
         "holdspeak/intel_queue.py",
-        "holdspeak/services/meeting_intel_service.py"
+        "holdspeak/services/meeting_intel_service.py",
+        "holdspeak/intel_queue.py",
+        "holdspeak/db/intel.py",
+        "web/src/meetings/MeetingIntelRecovery.tsx"
       ],
       "status": "experimental"
     },
@@ -4222,7 +4237,9 @@
         "holdspeak/grounding.py",
         "holdspeak/grounding_rails.py",
         "web/src/desk/components/GroundingSection.tsx",
-        "web/src/desk/components/AskPanel.tsx"
+        "web/src/desk/components/AskPanel.tsx",
+        "holdspeak/workbench_conductor.py",
+        "holdspeak/services/workbench_service.py"
       ],
       "status": "experimental"
     },
@@ -4235,7 +4252,9 @@
         "holdspeak/grounding.py",
         "holdspeak/grounding_rails.py",
         "web/src/desk/components/GroundingSection.tsx",
-        "web/src/desk/components/AskPanel.tsx"
+        "web/src/desk/components/AskPanel.tsx",
+        "holdspeak/workbench_conductor.py",
+        "holdspeak/services/workbench_service.py"
       ],
       "status": "experimental"
     },
@@ -4248,7 +4267,9 @@
         "holdspeak/grounding.py",
         "holdspeak/grounding_rails.py",
         "web/src/desk/components/GroundingSection.tsx",
-        "web/src/desk/components/AskPanel.tsx"
+        "web/src/desk/components/AskPanel.tsx",
+        "holdspeak/workbench_conductor.py",
+        "holdspeak/services/workbench_service.py"
       ],
       "status": "experimental"
     },
@@ -4261,7 +4282,9 @@
         "holdspeak/grounding.py",
         "holdspeak/grounding_rails.py",
         "web/src/desk/components/GroundingSection.tsx",
-        "web/src/desk/components/AskPanel.tsx"
+        "web/src/desk/components/AskPanel.tsx",
+        "holdspeak/workbench_conductor.py",
+        "holdspeak/services/workbench_service.py"
       ],
       "status": "experimental"
     },
@@ -4274,7 +4297,9 @@
         "holdspeak/grounding.py",
         "holdspeak/grounding_rails.py",
         "web/src/desk/components/GroundingSection.tsx",
-        "web/src/desk/components/AskPanel.tsx"
+        "web/src/desk/components/AskPanel.tsx",
+        "holdspeak/workbench_conductor.py",
+        "holdspeak/services/workbench_service.py"
       ],
       "status": "experimental"
     },
@@ -5014,7 +5039,8 @@
         "holdspeak/services/document_sources.py",
         "web/src/pages/cores/connections/Destinations.tsx",
         "web/src/desk/surface/send/SendWell.tsx",
-        "web/src/desk/documentSends.tsx"
+        "web/src/desk/documentSends.tsx",
+        "web/src/desk/surface/send/pendingCommand.ts"
       ],
       "status": "built_unreleased"
     },
@@ -5029,7 +5055,8 @@
         "holdspeak/services/document_sources.py",
         "web/src/pages/cores/connections/Destinations.tsx",
         "web/src/desk/surface/send/SendWell.tsx",
-        "web/src/desk/documentSends.tsx"
+        "web/src/desk/documentSends.tsx",
+        "web/src/desk/surface/send/pendingCommand.ts"
       ],
       "status": "built_unreleased"
     },
@@ -5044,7 +5071,8 @@
         "holdspeak/services/document_sources.py",
         "web/src/pages/cores/connections/Destinations.tsx",
         "web/src/desk/surface/send/SendWell.tsx",
-        "web/src/desk/documentSends.tsx"
+        "web/src/desk/documentSends.tsx",
+        "web/src/desk/surface/send/pendingCommand.ts"
       ],
       "status": "built_unreleased"
     },
@@ -5059,7 +5087,8 @@
         "holdspeak/services/document_sources.py",
         "web/src/pages/cores/connections/Destinations.tsx",
         "web/src/desk/surface/send/SendWell.tsx",
-        "web/src/desk/documentSends.tsx"
+        "web/src/desk/documentSends.tsx",
+        "web/src/desk/surface/send/pendingCommand.ts"
       ],
       "status": "built_unreleased"
     },
@@ -5074,7 +5103,8 @@
         "holdspeak/services/document_sources.py",
         "web/src/pages/cores/connections/Destinations.tsx",
         "web/src/desk/surface/send/SendWell.tsx",
-        "web/src/desk/documentSends.tsx"
+        "web/src/desk/documentSends.tsx",
+        "web/src/desk/surface/send/pendingCommand.ts"
       ],
       "status": "built_unreleased"
     },

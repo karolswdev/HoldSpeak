@@ -729,6 +729,7 @@ export function MeetingDetail({
       />
       <MeetingIntelRecovery
         meetingId={id}
+        revision={revision}
         onChanged={async () => {
           setDetail(await apiFetch(`/api/meetings/${encodeURIComponent(id)}`));
           onDeleted();

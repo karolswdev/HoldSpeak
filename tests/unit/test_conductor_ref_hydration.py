@@ -3,18 +3,20 @@
 The conductor's _hydrate_item_grounding() now forwards meeting_ids,
 artifact_ids, AND refs through the shared hydration pipeline. Tests pin:
 zone ref hydration, mixed grounding (all three types), cap enforcement
-with correct drop ordering, and invalid ref handling.
+without silent truncation, and named invalid-source failures.
 """
 
 from __future__ import annotations
 
 import json
 import logging
+import pytest
 from types import SimpleNamespace
 from typing import Any
 
 from holdspeak.workbench_conductor import _hydrate_item_grounding
 from holdspeak.grounding import GROUNDING_MAX_REFS
+from holdspeak.services.errors import ServiceError
 
 
 # --- Fake objects -----------------------------------------------------------
@@ -88,6 +90,45 @@ class _FakeDB:
 
 
 # --- Zone ref hydration -----------------------------------------------------
+
+
+@pytest.mark.parametrize("grounding", [
+    {"meeting_ids": ["missing-meeting"]},
+    {"artifact_ids": ["missing-artifact"]},
+    {"refs": ["note:missing-note"]},
+    {"meeting_ids": ["valid"], "refs": ["note:missing-note"]},
+])
+def test_explicit_source_missing_refuses_entire_item_grounding(grounding):
+    db = _FakeDB(meetings={"valid": _FakeMeeting("Valid", "2026-08-01", summary="Partial evidence")})
+    with pytest.raises(ServiceError) as raised:
+        _hydrate_item_grounding(db, json.dumps(grounding))
+    assert raised.value.code == "grounding_source_unavailable"
+
+
+def test_explicit_source_read_error_refuses_without_partial_grounding(monkeypatch):
+    db = _FakeDB(notes={"valid": _FakeNote("Valid", "Partial evidence")})
+    def unreadable(*args, **kwargs):
+        raise OSError("test source cannot be read")
+    monkeypatch.setattr(db.notes, "get", unreadable)
+    with pytest.raises(ServiceError) as raised:
+        _hydrate_item_grounding(db, json.dumps({"refs": ["note:valid"]}))
+    assert raised.value.code == "grounding_source_unavailable"
+
+
+def test_over_limit_explicit_sources_refuse_without_silent_truncation():
+    with pytest.raises(ServiceError) as raised:
+        _hydrate_item_grounding(_FakeDB(), json.dumps({"meeting_ids": [f"m{i}" for i in range(GROUNDING_MAX_REFS + 1)]}))
+    assert raised.value.code == "grounding_over_limit"
+
+
+@pytest.mark.parametrize("answer", ["unknown", "error"])
+def test_empty_attachment_lists_do_not_require_optional_recall(monkeypatch, answer):
+    def recall(*args, **kwargs):
+        if answer == "error":
+            raise OSError("optional recall unavailable")
+        return [], [], [], ["note:old-memory"]
+    monkeypatch.setattr("holdspeak.grounding.hydrate_grounding_blocks", recall)
+    assert _hydrate_item_grounding(_FakeDB(), '{"refs":[],"meeting_ids":[],"artifact_ids":[]}', query="Review work") == ""
 
 
 def test_zone_ref_hydrates_member_content() -> None:
@@ -170,94 +211,18 @@ def test_prompt_ordering_meetings_then_artifacts_then_refs() -> None:
 # --- Cap enforcement ---------------------------------------------------------
 
 
-def test_cap_enforcement_drops_refs_first(caplog) -> None:
-    """When total > 16, refs are dropped last-added-first, then artifacts."""
-    # 10 meetings + 5 artifacts + 5 refs = 20 total, need to drop 4
-    meetings = {}
-    for i in range(10):
-        mid = f"m{i}"
-        meetings[mid] = _FakeMeeting(f"M{i}", "2026-08-01", summary=f"Summary {i}")
-
-    artifacts = {}
-    for i in range(5):
-        aid = f"a{i}"
-        artifacts[aid] = _FakeArtifact(f"Art{i}", f"Body {i}")
-
-    notes = {}
-    for i in range(5):
-        nid = f"n{i}"
-        notes[nid] = _FakeNote(f"Note{i}", f"Note body {i}")
-        # Each note ref is its own direct note ref, not a zone
-    db = _FakeDB(meetings=meetings, artifacts=artifacts, notes=notes)
-
-    grounding = json.dumps({
-        "meeting_ids": [f"m{i}" for i in range(10)],
-        "artifact_ids": [f"a{i}" for i in range(5)],
-        "refs": [f"note:n{i}" for i in range(5)],
-    })
-
-    with caplog.at_level(logging.WARNING, logger="holdspeak.workbench_conductor"):
-        result = _hydrate_item_grounding(db, grounding)
-
-    # Cap warning logged
-    assert any("cap exceeded" in r.message.lower() for r in caplog.records), (
-        f"Expected cap warning, got: {[r.message for r in caplog.records]}"
-    )
-
-    # All 10 meetings preserved
-    for i in range(10):
-        assert f"Summary {i}" in result
-
-    # Only first artifact survives (5 refs dropped = not enough, still need 4-5=wait...
-    # 20 - 16 = 4 excess. Drop 4 from refs (last-added-first): n4, n3, n2, n1.
-    # Remaining: 10 meetings + 5 artifacts + 1 ref (note:n0) = 16. All fit.
-    assert "Note body 0" in result  # n0 kept
-    assert "Note body 4" not in result  # n4 dropped
-
-
-def test_cap_drops_artifacts_after_refs_exhausted(caplog) -> None:
-    """When refs alone can't absorb the excess, artifact_ids are dropped too."""
-    # 14 meetings + 3 artifacts + 2 refs = 19 total, need to drop 3
-    meetings = {}
-    for i in range(14):
-        mid = f"m{i}"
-        meetings[mid] = _FakeMeeting(f"M{i}", "2026-08-01", summary=f"MS{i}")
-
-    artifacts = {}
-    for i in range(3):
-        artifacts[f"a{i}"] = _FakeArtifact(f"Art{i}", f"AB{i}")
-
-    notes = {}
-    for i in range(2):
-        notes[f"n{i}"] = _FakeNote(f"Note{i}", f"NB{i}")
-
-    db = _FakeDB(meetings=meetings, artifacts=artifacts, notes=notes)
-
-    grounding = json.dumps({
-        "meeting_ids": [f"m{i}" for i in range(14)],
-        "artifact_ids": [f"a{i}" for i in range(3)],
-        "refs": [f"note:n{i}" for i in range(2)],
-    })
-
-    with caplog.at_level(logging.WARNING, logger="holdspeak.workbench_conductor"):
-        result = _hydrate_item_grounding(db, grounding)
-
-    # 19 - 16 = 3 excess. Drop 2 refs (n1, n0), then 1 artifact (a2).
-    # Remaining: 14 meetings + 2 artifacts (a0, a1) + 0 refs = 16
-    assert any("cap exceeded" in r.message.lower() for r in caplog.records)
-
-    # All 14 meetings preserved
-    for i in range(14):
-        assert f"MS{i}" in result
-
-    # a0 and a1 kept, a2 dropped
-    assert "AB0" in result
-    assert "AB1" in result
-    assert "AB2" not in result
-
-    # Both refs dropped
-    assert "NB0" not in result
-    assert "NB1" not in result
+@pytest.mark.parametrize("counts", [(10, 5, 5), (14, 3, 2)])
+def test_cap_enforcement_refuses_mixed_sources_instead_of_dropping(counts) -> None:
+    meetings, artifacts, refs = counts
+    grounding = {
+        "meeting_ids": [f"m{i}" for i in range(meetings)],
+        "artifact_ids": [f"a{i}" for i in range(artifacts)],
+        "refs": [f"note:n{i}" for i in range(refs)],
+    }
+    with pytest.raises(ServiceError) as raised:
+        _hydrate_item_grounding(_FakeDB(), json.dumps(grounding))
+    assert raised.value.code == "grounding_over_limit"
+    assert f"{sum(counts)}/{GROUNDING_MAX_REFS}" in raised.value.detail
 
 
 def test_under_cap_no_warning(caplog) -> None:
@@ -279,45 +244,14 @@ def test_under_cap_no_warning(caplog) -> None:
 # --- Invalid ref handling ----------------------------------------------------
 
 
-def test_invalid_qualified_ref_skipped_with_warning(caplog) -> None:
-    """A malformed or nonexistent qualified ref is skipped gracefully."""
-    db = _FakeDB(
-        meetings={"m1": _FakeMeeting("Good", "2026-08-01", summary="Good content")},
-    )
-    grounding = json.dumps({
-        "meeting_ids": ["m1"],
-        "refs": ["badformat", "note:nonexistent"],
-    })
-
-    with caplog.at_level(logging.WARNING, logger="holdspeak.workbench_conductor"):
-        result = _hydrate_item_grounding(db, grounding)
-
-    # The valid meeting still hydrates
-    assert "Good content" in result
-    # Unknown refs logged
-    assert any("unknown ref" in r.message.lower() for r in caplog.records)
-
-
-def test_all_refs_invalid_returns_empty() -> None:
-    """When every ref is invalid/nonexistent, hydration returns empty."""
-    db = _FakeDB()
-    grounding = json.dumps({"refs": ["note:ghost"]})
-    result = _hydrate_item_grounding(db, grounding)
-    # No blocks produced, so empty string
-    assert result == ""
-
-
-def test_nonexistent_zone_ref_skipped() -> None:
-    """A zone ref pointing to a nonexistent zone is skipped gracefully."""
-    db = _FakeDB(
-        meetings={"m1": _FakeMeeting("OK", "2026-08-01", summary="Valid")},
-    )
-    grounding = json.dumps({
-        "meeting_ids": ["m1"],
-        "refs": ["zone:nonexistent"],
-    })
-    result = _hydrate_item_grounding(db, grounding)
-    assert "Valid" in result  # meeting still hydrates
+@pytest.mark.parametrize("refs", [["badformat", "note:nonexistent"], ["note:ghost"], ["zone:nonexistent"]])
+def test_invalid_qualified_ref_refuses_with_its_identity(refs) -> None:
+    db = _FakeDB(meetings={"m1": _FakeMeeting("Good", "2026-08-01", summary="Good content")})
+    grounding = json.dumps({"meeting_ids": ["m1"], "refs": refs})
+    with pytest.raises(ServiceError) as raised:
+        _hydrate_item_grounding(db, grounding)
+    assert raised.value.code == "grounding_source_unavailable"
+    assert all(ref in raised.value.detail for ref in refs)
 
 
 # --- Edge cases --------------------------------------------------------------

@@ -592,10 +592,10 @@
     {
       "id": "knowledge.grounding",
       "name": "Grounded evidence hydration",
-      "purpose": "Resolve explicit meetings, artifacts, projects, rails and optional memory matches into bounded evidence blocks.",
+      "purpose": "Resolve explicit sources into evidence blocks; stop a Workbench item when an attached source cannot be read.",
       "domain": "knowledge",
       "status": "experimental",
-      "status_reason": "The shared resolver, caps, qualified refs, project scope and rails refusal behavior are implemented and assertion-backed. October 16 focused Ask tests additionally distinguish unavailable Projects from a successful empty collection and retain known choices, question and selected Note passage during failed reread/Retry.",
+      "status_reason": "The shared resolver, caps, qualified refs, project scope and rails refusal behavior are implemented and assertion-backed. October 16 focused Ask tests additionally distinguish unavailable Projects from a successful empty collection and retain known choices, question and selected Note passage during failed reread/Retry. October17 focused Workbench execution proves explicit missing/unreadable/over-limit sources stop only their item before provider dispatch; same-ID Re-run retains source references and context.",
       "exposure": "user",
       "surfaces": [
         "Ask",
@@ -675,6 +675,18 @@
           "symbol": "export function AskPanel",
           "line": 93,
           "claim": "Projects uses checked latest-read responses with local Retry while preserving known grounding choices and question."
+        },
+        {
+          "path": "holdspeak/workbench_conductor.py",
+          "symbol": "_hydrate_item_grounding",
+          "line": 155,
+          "claim": "Explicit attachments cannot silently disappear from a Workbench prompt."
+        },
+        {
+          "path": "holdspeak/services/workbench_service.py",
+          "symbol": "WorkbenchService.update_item",
+          "line": 234,
+          "claim": "Omitted grounding and context survive Re-run; explicit replacements still apply."
         }
       ],
       "tests": [
@@ -727,12 +739,35 @@
           "node": "a failed Projects refresh retains known choices, the question, selected passage and Note context",
           "assertion": "Failed Projects refresh and exact Retry preserve known choices and selected Note/passage/question.",
           "execution": "passed"
+        },
+        {
+          "path": "tests/unit/test_workbench_runner_migration.py",
+          "node": "test_incomplete_grounding_fails_only_its_item_without_provider_or_artifact",
+          "assertion": "Missing Note, Meeting, artifact and over-limit attachments fail only their item; a valid sibling completes, with no blocked-item call or artifact.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/internal/TONIGHT-THREE-2026-10-17/RELEASE.md",
+            "run": "2026-10-17",
+            "cases": 4
+          }
+        },
+        {
+          "path": "tests/unit/test_workbench_runner_migration.py",
+          "node": "test_grounding_source_restoration_reruns_same_item_with_exact_source",
+          "assertion": "A restored Note reaches the provider with its exact text on the same item; Re-run keeps original refs/context and completed artifact.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/internal/TONIGHT-THREE-2026-10-17/RELEASE.md",
+            "run": "2026-10-17",
+            "cases": 1
+          }
         }
       ],
       "docs": [
         "docs/AGENTS_AND_THREADS.md",
         "docs/KERNEL.md",
-        "docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/IMPLEMENTATION-CDE.md"
+        "docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/IMPLEMENTATION-CDE.md",
+        "docs/internal/TONIGHT-THREE-2026-10-17/RELEASE.md"
       ],
       "limitations": [
         "Isolated Ask walks at 1440 and 393 resolved two real Notes through the production route; no owner-desk, remote source or model call was run.",
@@ -745,7 +780,7 @@
         "context_cap_overflow"
       ],
       "replacement": null,
-      "evidence_level": "source_and_assertions_inspected",
+      "evidence_level": "tests_executed",
       "release_availability": "unverified",
       "owner_observed": false
     },
@@ -2492,10 +2527,10 @@
     {
       "id": "channels.document_sources",
       "name": "Send a stored document",
-      "purpose": "Send a stored note, update, brief, decision, meeting summary, or artifact to a saved destination.",
+      "purpose": "Send a stored document to a saved destination and retain an uncertain command across a tab reload.",
       "domain": "channels",
       "status": "built_unreleased",
-      "status_reason": "Stored document sources run through the shared channel contract. Note Send retains stored-source/digest checks. October 15 isolated real-hub recipient edits preserve the stored key ref and park the prior destination; local key Check/Retry is exercised. External delivery and owner acceptance are not claimed. Decision and governing-record readers now fold Send until requested. Focused UI tests exercise folded reads, nonzero prepared discovery, held Retry and ordinary-preview refresh while prepared bytes remain frozen. These tests use HTTP substitutions; actual isolated runtime observations and limits are recorded separately.",
+      "status_reason": "Stored document sources run through the shared channel contract. Note Send retains stored-source/digest checks. October 15 isolated real-hub recipient edits preserve the stored key ref and park the prior destination; local key Check/Retry is exercised. External delivery and owner acceptance are not claimed. Decision and governing-record readers now fold Send until requested. Focused UI tests exercise folded reads, nonzero prepared discovery, held Retry and ordinary-preview refresh while prepared bytes remain frozen. These tests use HTTP substitutions; actual isolated runtime observations and limits are recorded separately. October17 isolated folder sends prove reload before the durable send row retains the exact command and preview; explicit Retry produces one delivery and preserves a newer saved draft.",
       "exposure": "integration",
       "surfaces": [
         "HTTP channel operations",
@@ -2529,7 +2564,8 @@
       ],
       "persistence": [
         "channel_sends: frozen payload and title, slug, label in document_json",
-        "project_update_deliveries for project updates only"
+        "project_update_deliveries for project updates only",
+        "Tab session storage retains an unresolved Send command, original request body and preview until settlement or terminal refusal."
       ],
       "apis": [
         "POST /api/channels/preview",
@@ -2596,6 +2632,12 @@
           "symbol": "export function DeskDecisionSendWells(",
           "claim": "Decision and decision-record adapters use the shared fold; decision versions refresh ordinary preview only.",
           "line": 78
+        },
+        {
+          "path": "web/src/desk/surface/send/pendingCommand.ts",
+          "symbol": "export function keepPendingCommand",
+          "line": 26,
+          "claim": "Persist unresolved exact command custody synchronously before dispatch; reload does not send automatically."
         }
       ],
       "tests": [
@@ -2653,6 +2695,17 @@
             "run": "2026-10-15",
             "cases": 5
           }
+        },
+        {
+          "path": "tests/e2e/test_send_glass.py",
+          "node": "test_uncertain_send_reload_keeps_the_exact_command",
+          "assertion": "Real folder send held before the durable row survives reload at1440/393: identical command/body/preview, one operation/row/exact file; Back keeps newer saved note text.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/internal/TONIGHT-THREE-2026-10-17/RELEASE.md",
+            "run": "2026-10-17",
+            "cases": 2
+          }
         }
       ],
       "docs": [
@@ -2660,12 +2713,14 @@
         "pm/roadmap/holdspeak-philo/phase-12-send-from-the-floor/design/floor-send.md",
         "docs/internal/SEND-REFINEMENT-2026-10-14.md",
         "docs/internal/SURFACE-REFINEMENT-2026-10-15/README.md",
-        "docs/internal/DECISION-DELIGHT-2026-10-15/README.md"
+        "docs/internal/DECISION-DELIGHT-2026-10-15/README.md",
+        "docs/internal/TONIGHT-THREE-2026-10-17/RELEASE.md"
       ],
       "limitations": [
         "The Floor artifact window and menu/drop integration belong to Phase 12 stories 03 and 04.",
         "External delivery of each new kind and owner observation are not claimed.",
-        "Meeting digest and follow-up now use the channel renderer. Slack is limited to 39,000 text characters; no split or truncation."
+        "Meeting digest and follow-up now use the channel renderer. Slack is limited to 39,000 text characters; no split or truncation.",
+        "Unresolved browser custody is per tab: tab closure, cleared storage and cross-origin entry are not covered. No external recipient was contacted in the October17 reload proof."
       ],
       "failure_states": [
         "document_kind_unknown",
@@ -2799,7 +2854,7 @@
       "evidence_level": "source_and_assertions_inspected",
       "release_availability": "unreleased",
       "owner_observed": false,
-      "implementation_revision": "PHILO-11-02 on base3552be416; built artifact awaits Muad\u2019Dib counsel."
+      "implementation_revision": "PHILO-11-02 on base3552be416; built artifact awaits Muad’Dib counsel."
     }
   ],
   "components": [],

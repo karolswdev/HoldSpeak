@@ -97,6 +97,7 @@ export const SEND_WORDS = {
   discarded: "DISCARDED",
   check: "Check",
   lost: "NO ANSWER · RESULT UNKNOWN",
+  storageUnavailable: "TAB STORAGE UNAVAILABLE",
   cannotRead: "CANNOT READ",
   noPreview: "NO PREVIEW",
   keyNotSaved: "KEY NOT SAVED",
@@ -153,6 +154,7 @@ export const sentWord = (channel: string, proof?: Record<string, unknown> | null
 
 /** Refusals (before the boundary: nothing ran). */
 const REFUSED: Record<string, string> = {
+  send_storage_unavailable: "TAB STORAGE UNAVAILABLE",
   github_identity_changed: "GITHUB ACCOUNT CHANGED",
   github_identity_unverified: "GITHUB ACCOUNT NOT VERIFIED",
   github_not_logged_in: "GITHUB NOT SIGNED IN",
