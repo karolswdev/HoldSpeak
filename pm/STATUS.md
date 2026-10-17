@@ -12,7 +12,7 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 visibility enlargement. All eight natural moons in Mars/Jupiter/Saturn use
 NASA/JPL physical radius ratios. Actual irregular Mars mesh volume is normalized;
 shadow/haze inputs shrink with body radii. All three picker/fallback stills are
-regenerated. Build `99ecedf6825c8597`; quick GREEN: 4,119 web / 705 affected /
+regenerated. Combined build `0ce82ada178bf199`; quick GREEN: 4,154 web / 705 affected /
 109 sweep / 17 canon; TypeScript and 32 focused checks pass. Six actual GL
 compositions cover desktop/phone; two real Mars picker readiness walks pass.
 Orbit spacing/time remain authored. Independent source counsel found no blocker;

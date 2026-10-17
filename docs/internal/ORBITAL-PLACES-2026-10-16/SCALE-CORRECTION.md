@@ -112,3 +112,17 @@ Normal owner-hub delivery follows merge and an idle runtime check, separately
 from isolated verification. Earlier port61862 scene links redirect to the new
 corrected live preview on57047. Preview/live serving trees are retained.
 Formal postmerge review and owner aesthetic judgment remain open.
+
+## Combined current-main check
+
+Main advanced through #1231/#1232 before this correction merged. Incorporated
+`fc02d9b8f`; resolved only the Status insertion conflict, retaining both release
+records. No orbital product source conflicts. Combined build `0ce82ada178bf199`;
+quick GREEN: 4,154 tests in422 web files, 705 affected Python, 109 sweep and17
+canon. Logs `.tmp/orbital-places/quick-combined-own.log` and `quick-combined-own/`.
+An initial combined build could not find Vite after another session removed a
+shared dependency tree. Parked that symlink and installed this worktree's own
+lockfile dependencies; the complete combined check then passed. The train
+worktree also owns its dependencies. Earlier orbital render/model and picker
+proof remains scoped to the recorded revisions; original image/radius sources
+are unchanged by the main integration.
