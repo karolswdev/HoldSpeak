@@ -4,9 +4,24 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-16 (Night Train rebuild)
+**Last updated:** 2026-10-16 (Night Train fidelity correction)
 
 ## Current phase
+
+**Night Train fidelity — #1235 (2026-10-16).** Corrects the rejected #1234
+scene: supported curved book pages, steady camera, actual multisampled
+postprocessing and bounded retina resolution; connected mountain relief with
+upward normals/closed edges; masonry station, pitched roof, braced canopy,
+recessed windows and framed lanterns with warm pools/shadows. Updated real GL
+picker still. Quick GREEN:4,146 related web /109Desk sweep /17canon;24focused
+checks and TypeScript pass. Real1440/393 picker selection/Close/reload walks
+pass on actual MetalM2Max, with renderer identity in provenance. Build
+`3ebdb08ab76ecc2b`; live delivery follows merge. Root inspected raw edge/station
+crops and continuous moving frames; interior crops remain pixel-stable.
+Owner aesthetic judgment and formal Muad’Dib postmerge review remain open.
+Tooling debt: unforced graph persistent Chromium uses SwiftShader; its10s
+interaction timeouts remain recorded, software responsiveness is not claimed.
+[Review and limits](../docs/internal/NIGHT-TRAIN-FIDELITY-2026-10-16/VERIFICATION.md).
 
 **Night Train — #1234 (2026-10-16).** Close seated compartment, walnut and
 emerald fabric, warm reading lamp, ceramic cup and open book, actual subtle
