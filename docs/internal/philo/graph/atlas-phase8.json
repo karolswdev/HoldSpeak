@@ -2992,7 +2992,7 @@
       "sources": [
         {
           "path": "web/src/desk/pullouts/DecisionPullout.tsx",
-          "symbol": "<FoldGadget title=\"Background\" open className=\"attention-decision-support\">",
+          "symbol": "[\"context_markdown\", \"contextMarkdown\", \"Background\"],",
           "claim": "The saved read view opens the Background fold and renders its body only when contextMarkdown contains text."
         }
       ],

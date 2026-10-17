@@ -535,7 +535,7 @@
         "action": "click_role",
         "adapter": "ui-by-viewport",
         "role": "button",
-        "name": "Done",
+        "name": "Save",
         "exact": true
       },
       "expected": {

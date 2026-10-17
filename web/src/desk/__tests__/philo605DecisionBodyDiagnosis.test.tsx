@@ -1,6 +1,6 @@
 /**
  * PHILO-6-05 diagnosis probe. It drives the real dataSlice updatePrimitive
- * through a subscribed host and records the store/render result after Done.
+ * through a subscribed host and records the store/render result after Save.
  * One held-WorldObject case remains as an explicit synthetic negative
  * control; it is not a production-host diagnosis.
  */
@@ -326,7 +326,7 @@ describe("PHILO-6-05 decision body fences", () => {
     });
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Done" }));
+      fireEvent.click(screen.getByRole("button", { name: "Save" }));
     });
 
     const stored = useDesk.getState().items.decision[0];
@@ -334,7 +334,7 @@ describe("PHILO-6-05 decision body fences", () => {
     expect(stored.decisionMarkdown).toBe("Keep the local ledger");
     // The held prop intentionally carries the old record. This synthetic
     // control stays green and must not be cited as the production cause.
-    // PHILO-8-04: the read view is showing (Done left the editor) and it
+    // PHILO-8-04: the read view is showing (Save left the editor) and it
     // draws the OLD record: its decision is empty, so its heading hides.
     expect(document.querySelector(".desk-decision-editor")).toBeNull();
     expect(document.querySelector(".desk-decision-card")?.textContent).not.toContain(
@@ -351,7 +351,7 @@ describe("PHILO-6-05 decision body fences", () => {
     });
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Done" }));
+      fireEvent.click(screen.getByRole("button", { name: "Save" }));
     });
 
     // This is the production-host control: if it fails, inspect refresh or
@@ -363,7 +363,7 @@ describe("PHILO-6-05 decision body fences", () => {
     render(<ProductionHost />);
     requests.deferDecisionRead = true;
     const refresh = useDesk.getState().refresh();
-    // Let loadAll start the deferred /api/decisions read before Done.
+    // Let loadAll start the deferred /api/decisions read before Save.
     await waitFor(() => {
       if (!requests.resolveDecisionRead) throw new Error(JSON.stringify(requests.calls));
     });
@@ -372,7 +372,7 @@ describe("PHILO-6-05 decision body fences", () => {
       target: { value: "Keep the local ledger" },
     });
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Done" }));
+      fireEvent.click(screen.getByRole("button", { name: "Save" }));
     });
     expect(decisionSection()?.textContent).toContain("Keep the local ledger");
     expect(useDesk.getState().items.decision[0].decisionMarkdown).toBe("Keep the local ledger");

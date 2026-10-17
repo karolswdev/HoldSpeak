@@ -1,6 +1,6 @@
 import { openNewThread } from "../newThread";
 import { refOpener } from "../openObject";
-import { countLabel, FoldGadget, CheckGadget, CycleGadget, GadgetGroup, GadgetRow, StringGadget, wireDayClock } from "../surface";
+import { ActionNotice, StateChip, countLabel, FoldGadget, CheckGadget, CycleGadget, GadgetGroup, GadgetRow, StringGadget, wireDayClock } from "../surface";
 /** HS-151-05 — Thread pullout content: head (in-place title, egress lamp,
  * status line, token meter), body (user/assistant rows with StreamingMaterial,
  * reasoning folded behind RAW, error row in-flow, CRASHED + Retry, sibling
@@ -1135,6 +1135,8 @@ function ThreadPulloutInner({
   const guardrailRowsForThread = useThreadStore((s) => s.guardrailRows[threadId] ?? EMPTY_GUARDRAIL_ROWS);
 
   const { attempt, receipt } = useWriteReceipt();
+  const [kept, setKept] = useState<{ threadId: string; id: string; as: "note" | "artifact" } | null>(null);
+  const keepRequest = useRef(0);
   const { subscribe, state: busState } = useRuntimeBus();
 
   // Title editing
@@ -1300,9 +1302,14 @@ function ThreadPulloutInner({
 
   const handleKeep = useCallback(
     async (messageId: string, as: "note" | "artifact") => {
-      await attempt(`keep as ${as}`, () =>
-        keepMessage(threadId, { message_id: messageId, as }),
-      );
+      const request = ++keepRequest.current;
+      await attempt(`keep as ${as}`, async () => {
+        const saved = await keepMessage(threadId, { message_id: messageId, as });
+        // The receipt retries this callback, so a later acknowledged save
+        // gets the same continuation as the original press.
+        if (saved.id && request === keepRequest.current) setKept({ threadId, id: saved.id, as });
+        return saved;
+      });
     },
     [threadId, attempt],
   );
@@ -1706,6 +1713,12 @@ function ThreadPulloutInner({
           onTry={(text) => handleSend(text, [])}
         />}
         {receipt}
+        {kept?.threadId === threadId && <ActionNotice role="status" tone="ok">
+          <StateChip state="success" label={kept.as === "note" ? "Note saved" : "Artifact saved"} />
+          <Button variant="ghost" dense onClick={refOpener(`${kept.as}:${kept.id}`) ?? undefined}>
+            {kept.as === "note" ? "Open note" : "Open artifact"}
+          </Button>
+        </ActionNotice>}
         {/* HS-153-04: annotation chips above the composer */}
         <AnnotationChips
           annotations={draftAnnotations}

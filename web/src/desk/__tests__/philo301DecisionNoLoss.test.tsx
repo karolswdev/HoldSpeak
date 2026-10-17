@@ -1,5 +1,5 @@
 /** PHILO-3-01 round 2 (Astra condition 1) — save, close, reopen inside the
- * new-object marker, press Done: the text the owner saved is kept.
+ * new-object marker, press Save: the text the owner saved is kept.
  * Drives the REAL store slice (createPrimitive, updatePrimitive, the
  * optimistic items patch); only the hub transport is a double. */
 import { act, fireEvent, render, screen } from "@testing-library/react";
@@ -59,7 +59,7 @@ beforeEach(() => {
 });
 
 describe("PHILO-3-01 no data loss on an immediate reopen", () => {
-  it("save -> close -> reopen inside the marker -> Done keeps the text", async () => {
+  it("save -> close -> reopen inside the marker -> Save keeps the text", async () => {
     await act(async () => {
       // PHILO-13-08 (B3): a decision is created only once it is named.
       await useDesk.getState().createPrimitive("decision", { title: "Adopt the one bus" });
@@ -72,13 +72,13 @@ describe("PHILO-3-01 no data loss on an immediate reopen", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "Background" }), { target: { value: "Source: review" } });
     fireEvent.change(screen.getByRole("textbox", { name: "Decision" }), { target: { value: "Adopt the bus" } });
     fireEvent.change(screen.getByRole("textbox", { name: "Consequences" }), { target: { value: "One path" } });
-    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Done" })); });
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Save" })); });
     first.unmount(); // close
 
     // reopen at once: the marker still stands
     expect(useDesk.getState().newIds).toContain("decision_keep");
     render(<Face />);
-    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Done" })); });
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Save" })); });
 
     const last = hub.puts[hub.puts.length - 1];
     expect(last.context_markdown).toBe("Source: review");

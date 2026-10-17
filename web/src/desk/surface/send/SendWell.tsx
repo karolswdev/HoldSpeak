@@ -929,7 +929,6 @@ export function SendWellsFold(props: SendWellsProps) {
   return (
     <div className="send-fold" data-send="fold" data-doc={doc.ref} data-testid="send-fold">
       <div className="send-fold-head">
-        <span>{SEND_WORDS.send}</span>
         {prepared > 0 ? <StateChip state="active" label={`${SEND_WORDS.prepared} ×${prepared}`} /> : null}
         {running ? <StateChip state="active" label={SEND_WORDS.sending} /> : null}
         {ended && !open ? <StateChip state="idle" label={HISTORY_HEAD} /> : null}

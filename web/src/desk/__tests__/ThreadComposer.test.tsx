@@ -101,34 +101,6 @@ vi.mock("../components/MicButton", () => ({
   ),
 }));
 
-vi.mock("../surface/Surface", () => ({
-  SurfaceRows: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  SurfaceRow: ({
-    title,
-    onOpen,
-    selected,
-  }: {
-    title: string;
-    onOpen: () => void;
-    selected: boolean;
-    detail?: string;
-    glyph?: React.ReactNode;
-    id?: string;
-    role?: string;
-    ariaSelected?: boolean;
-  }) => (
-    <div
-      data-testid={`surface-row-${title}`}
-      data-selected={selected || undefined}
-      onClick={onOpen}
-    >
-      {title}
-    </div>
-  ),
-}));
-
 // ── helpers ────────────────────────────────────────────────────────
 
 beforeEach(() => {
@@ -618,28 +590,28 @@ describe("ThreadComposer", () => {
     renderComposer();
     const input = screen.getByTestId("composer-input");
     fireEvent.change(input, { target: { value: text } });
-    expect(await screen.findByTestId(`surface-row-${title}`)).toBeInTheDocument();
+    expect(await screen.findByText(title)).toBeInTheDocument();
     failed = true;
     act(() => choiceRefresh.current!());
     expect(await screen.findByLabelText(`${label} unavailable`)).toBeInTheDocument();
     expect(screen.getByLabelText("Last read")).toBeInTheDocument();
-    expect(screen.getByTestId(`surface-row-${title}`)).toBeInTheDocument();
+    expect(screen.getByText(title)).toBeInTheDocument();
     expect(input).toHaveValue(text);
     const prior = vi.mocked(apiFetch).mock.calls.length;
     failed = false;
     fireEvent.click(screen.getByRole("button", { name: `Retry ${label}` }));
     await waitFor(() => expect(screen.queryByLabelText(`${label} unavailable`)).toBeNull());
     expect(vi.mocked(apiFetch).mock.calls.slice(prior).map(([path]) => path)).toEqual([source]);
-    expect(screen.getByTestId(`surface-row-${title}`)).toBeInTheDocument();
+    expect(screen.getByText(title)).toBeInTheDocument();
   });
 
   it("PHILO-17: the @ picker names an untitled note by its first words, else New note", () => {
     renderComposer();
     const input = screen.getByTestId("composer-input");
     fireEvent.change(input, { target: { value: "@Ask" } });
-    expect(screen.getByTestId("surface-row-Ask Avery about the cutover")).toBeInTheDocument();
+    expect(screen.getByText("Ask Avery about the cutover")).toBeInTheDocument();
     fireEvent.change(input, { target: { value: "@New" } });
-    expect(screen.getByTestId("surface-row-New note")).toBeInTheDocument();
+    expect(screen.getByText("New note")).toBeInTheDocument();
   });
 
   it("PHILO-17: the prompt and guardrail pickers keep an untitled note, by its words", async () => {
@@ -666,7 +638,7 @@ describe("ThreadComposer", () => {
     const first = renderComposer();
     const input = screen.getByTestId("composer-input");
     fireEvent.change(input, { target: { value: "@De" } });
-    fireEvent.click(screen.getByTestId("surface-row-Design notes"));
+    fireEvent.click(screen.getByText("Design notes"));
     fireEvent.change(input, { target: { value: "My draft before changing rooms" } });
     first.unmount();
     const other = renderComposer({ threadId: "t-2" });
@@ -701,7 +673,7 @@ describe("ThreadComposer", () => {
     renderComposer();
     const input = screen.getByTestId("composer-input");
     fireEvent.change(input, { target: { value: "@De" } });
-    fireEvent.click(screen.getByTestId("surface-row-Design notes"));
+    fireEvent.click(screen.getByText("Design notes"));
     fireEvent.change(input, { target: { value: "Half-written question" } });
 
     const stored = JSON.parse(window.sessionStorage.getItem(DRAFT_KEY) as string);
@@ -797,7 +769,7 @@ describe("ThreadComposer", () => {
     renderComposer({ streaming });
     const input = screen.getByTestId("composer-input");
     fireEvent.change(input, { target: { value: "@De" } });
-    fireEvent.click(screen.getByTestId("surface-row-Design notes"));
+    fireEvent.click(screen.getByText("Design notes"));
     fireEvent.change(input, { target: { value: "A question with an attachment" } });
     expect(screen.getByTestId(streaming ? "composer-stop" : "composer-send")).toHaveClass("btn");
 
@@ -915,8 +887,8 @@ describe("ThreadComposer", () => {
     fireEvent.change(input, { target: { value: "Keep these exact words" } });
     fireEvent.click(screen.getByRole("button", { name: "Sources" }));
     expect(input.value).toBe("Keep these exact words");
-    fireEvent.change(screen.getByRole("textbox", { name: "Find source" }), { target: { value: "Design" } });
-    fireEvent.keyDown(screen.getByRole("textbox", { name: "Find source" }), { key: "Enter" });
+    fireEvent.change(screen.getByRole("combobox", { name: "Find source" }), { target: { value: "Design" } });
+    fireEvent.keyDown(screen.getByRole("combobox", { name: "Find source" }), { key: "Enter" });
     expect(input.value).toBe("Keep these exact words");
     expect(screen.getByTestId("composer-chips").textContent).toContain("Design notes");
     expect(screen.queryByTestId("composer-picker")).toBeNull();
@@ -927,7 +899,7 @@ describe("ThreadComposer", () => {
     const input = screen.getByTestId("composer-input") as HTMLTextAreaElement;
     fireEvent.change(input, { target: { value: "Next question" } });
     fireEvent.click(screen.getByRole("button", { name: "Sources" }));
-    fireEvent.keyDown(screen.getByRole("textbox", { name: "Find source" }), { key: "Escape" });
+    fireEvent.keyDown(screen.getByRole("combobox", { name: "Find source" }), { key: "Escape" });
     expect(screen.queryByTestId("composer-picker")).toBeNull();
     expect(input.value).toBe("Next question");
     expect(props.onStop).not.toHaveBeenCalled();
@@ -945,6 +917,69 @@ describe("ThreadComposer", () => {
     expect(screen.queryByTestId("composer-picker")).toBeNull();
   });
 
+  it("filters command labels and syntax, navigates actual results and keeps the writer intact", async () => {
+    const { props } = renderComposer();
+    const input = screen.getByTestId("composer-input");
+    fireEvent.change(input, { target: { value: "My next question" } });
+    fireEvent.click(screen.getByRole("button", { name: "Commands" }));
+    const find = screen.getByRole("combobox", { name: "Find command" });
+    await waitFor(() => expect(document.activeElement).toBe(find));
+    vi.mocked(HTMLElement.prototype.scrollIntoView).mockClear();
+    fireEvent.keyDown(find, { key: "ArrowDown" });
+    const fork = screen.getByRole("option", { name: /Fork from here/ });
+    expect(fork).toHaveAttribute("aria-selected", "true");
+    expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledWith({ block: "nearest" });
+    expect(vi.mocked(HTMLElement.prototype.scrollIntoView).mock.contexts).toContain(fork);
+    fireEvent.change(find, { target: { value: "new" } });
+    expect(screen.getAllByRole("option")).toHaveLength(1);
+    expect(find).toHaveAttribute("aria-activedescendant", "thread-command-new");
+    fireEvent.keyDown(find, { key: "Enter", keyCode: 229 });
+    fireEvent.keyDown(find, { key: "Enter", isComposing: true });
+    expect(props.onNewThread).not.toHaveBeenCalled();
+    fireEvent.keyDown(find, { key: "Enter" });
+    expect(props.onNewThread).toHaveBeenCalledOnce();
+    await waitFor(() => expect(document.activeElement).toBe(input));
+    expect(input).toHaveValue("My next question");
+  });
+
+  it("keeps an empty command result open and accepts a later filtered choice", () => {
+    const { props } = renderComposer({ streaming: true });
+    fireEvent.click(screen.getByRole("button", { name: "Commands" }));
+    const find = screen.getByRole("combobox", { name: "Find command" });
+    fireEvent.change(find, { target: { value: "missing" } });
+    fireEvent.keyDown(find, { key: "ArrowDown" });
+    fireEvent.keyDown(find, { key: "Enter" });
+    expect(screen.getByText("No matches")).toBeInTheDocument();
+    expect(find).not.toHaveAttribute("aria-activedescendant");
+    expect(props.onSend).not.toHaveBeenCalled();
+    fireEvent.keyDown(find, { key: "Escape", keyCode: 229 });
+    expect(screen.getByTestId("composer-picker")).toBeInTheDocument();
+    fireEvent.change(find, { target: { value: "stop" } });
+    fireEvent.keyDown(find, { key: "Enter" });
+    expect(props.onStop).toHaveBeenCalledOnce();
+    expect(screen.queryByTestId("composer-picker")).toBeNull();
+  });
+
+  it("navigates loaded mode arguments and refuses unmatched names without changing the draft", async () => {
+    vi.mocked(apiFetch).mockResolvedValue(recordedModes.wire as never);
+    const onModeSelect = vi.fn();
+    renderComposer({ onModeSelect });
+    fireEvent.change(screen.getByTestId("composer-input"), { target: { value: "Keep my thought" } });
+    fireEvent.click(screen.getByRole("button", { name: "Commands" }));
+    fireEvent.click(screen.getByRole("button", { name: /Switch mode/ }));
+    const argument = screen.getByRole("combobox", { name: "Switch mode" });
+    await screen.findByRole("option", { name: "Desk" });
+    fireEvent.change(argument, { target: { value: "No such mode" } });
+    fireEvent.keyDown(argument, { key: "Enter" });
+    expect(onModeSelect).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Switch mode" })).toBeDisabled();
+    fireEvent.change(argument, { target: { value: "" } });
+    fireEvent.keyDown(argument, { key: "ArrowDown" });
+    fireEvent.keyDown(argument, { key: "Enter" });
+    expect(onModeSelect).toHaveBeenCalledExactlyOnceWith("hs-seed-mode-chase");
+    expect(screen.getByTestId("composer-input")).toHaveValue("Keep my thought");
+  });
+
   it("chooses a mode from Commands without inserting command syntax into the draft", async () => {
     vi.mocked(apiFetch).mockResolvedValue({ recipes: [{ id: "mode-review", name: "Review" }] } as never);
     const onModeSelect = vi.fn();
@@ -953,7 +988,7 @@ describe("ThreadComposer", () => {
     fireEvent.change(input, { target: { value: "Keep this question" } });
     fireEvent.click(screen.getByRole("button", { name: "Commands" }));
     fireEvent.click(screen.getByText("Switch mode"));
-    const argumentInput = screen.getByRole("textbox", { name: "Switch mode" });
+    const argumentInput = screen.getByRole("combobox", { name: "Switch mode" });
     await waitFor(() => expect(document.activeElement).toBe(argumentInput));
     await screen.findByText("Review");
     fireEvent.change(argumentInput, { target: { value: "Review" } });
@@ -1068,8 +1103,8 @@ describe("slash command palette via composer", () => {
     const input = screen.getByTestId("composer-input") as HTMLTextAreaElement;
     fireEvent.change(input, { target: { value: "/ke" } });
     // Should show the keep command
-    expect(screen.getByTestId("surface-row-/keep")).toBeInTheDocument();
-    expect(screen.queryByTestId("surface-row-/fork")).not.toBeInTheDocument();
+    expect(screen.getByText("/keep")).toBeInTheDocument();
+    expect(screen.queryByText("/fork")).not.toBeInTheDocument();
   });
 
   it("/stop runs onStop", () => {

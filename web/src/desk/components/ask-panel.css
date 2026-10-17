@@ -8,6 +8,8 @@
   padding: 14px 16px;
 }
 .desk-ask-reading-wrap {
+  --scroll-hint-background: var(--alive-paper);
+  --scroll-hint-depth: 12px;
   flex: 1;
   min-height: 0;
 }
@@ -23,8 +25,24 @@
   min-height: 0;
   flex: none;
 }
-.desk-ask-reading .surface-traffic-turn:first-child .surface-traffic-text {
+.desk-ask-reading-fold {
+  margin-inline: 18px;
+}
+.desk-ask-sent-question { margin-top: 12px; }
+.desk-ask-reading-fold:last-child { margin-bottom: 14px; }
+.desk-ask-reading-fold > summary {
+  font: 600 12px / 1.5 var(--font-sans);
+  text-transform: none;
+  letter-spacing: normal;
+}
+.desk-ask-question-text {
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: 400 13px / 1.6 var(--font-sans);
+}
+.desk-ask-run-details {
+  overflow-wrap: anywhere;
+  font: 400 12px / 1.5 var(--font-mono);
 }
 .desk-ask .surface-run-line[data-state="running"]::before {
   content: "◌";
@@ -85,8 +103,7 @@
   flex: none;
   gap: 4px 8px;
   min-width: 0;
-  max-height: 92px;
-  overflow-y: auto;
+  overflow: visible;
   font: 12px var(--font-mono);
 }
 .desk-ask-sources .btn {
@@ -95,25 +112,25 @@
   overflow-wrap: anywhere;
 }
 .desk-ask-answer-sources {
-  margin-bottom: 12px;
-  max-height: none;
-  overflow: visible;
+  margin-block: 4px 8px;
 }
 .desk-ask-context-wrap {
   display: flex;
   flex-direction: column;
   flex: 0 1 auto;
-  min-height: 0;
-  max-height: 240px;
+  min-height: 44px;
+  max-height: 200px;
 }
 .desk-ask-question-context {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-height: 0;
   gap: 8px;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
+.desk-ask-question-context > * { flex: none; }
 .desk-next .desk-window.desk-ask.has-traffic .desk-ask-context-wrap {
   max-height: 120px;
 }
@@ -148,18 +165,14 @@
   display: flex;
   flex: none;
   align-items: flex-end;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
   min-width: 0;
-  max-height: 172px;
 }
 .desk-ask-context-tools {
   display: grid;
   min-width: 0;
   flex: 1;
-  max-height: 172px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
 }
 .desk-next .desk-ask-context-tools .desk-ground {
   margin: 0;
@@ -178,9 +191,10 @@
   flex-wrap: wrap;
   gap: 8px;
   min-width: 0;
-  max-width: 48%;
+  width: 100%;
 }
 .desk-ask-send .surface-engine-line {
+  flex: 1;
   min-width: 0;
   overflow-wrap: anywhere;
 }
@@ -189,16 +203,10 @@
 }
 @container surface (max-width: 520px) {
   .desk-next .desk-ask-body { gap: 10px; padding: 12px; }
-  .desk-next .desk-window.desk-ask .desk-ask-compose-actions {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 10px;
-    max-height: 178px;
-  }
-  .desk-ask-context-tools { grid-column: 1; grid-row: 2; max-height: 112px; }
-  .desk-ask-send { display: contents; }
-  .desk-ask-send .surface-engine-line { grid-column: 1 / -1; grid-row: 1; }
-  .desk-ask-send > .btn { grid-column: 2; grid-row: 2; align-self: end; }
+  .desk-ask-reading-fold { margin-inline: 12px; }
+  .desk-ask-reading-fold > summary { min-height: 44px; }
+  .desk-ask-context-wrap { max-height: 160px; }
+  .desk-ask-send > .btn { flex: none; }
   .desk-next .desk-ask-context-tools .gadget-fold > summary { min-height: 44px; }
   .desk-next .desk-ask.has-traffic .desk-ask-composer { max-height: 64%; }
   .desk-next .desk-ask-input .gadget-pad textarea { padding: 10px; }

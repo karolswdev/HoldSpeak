@@ -284,6 +284,7 @@ describe("decision document hosts unfold Send only on request", () => {
     expect(screen.queryByTestId("send-well")).toBeNull();
     expect(apiFetch.mock.calls.some(([path]) => path === "/api/channels/destinations")).toBe(false);
     expect(previews).toEqual([]);
+    expect(within(screen.getByTestId("send-fold")).getAllByText("Send")).toHaveLength(1);
     fireEvent.click(screen.getByRole("button", { name: /^Send$/ }));
     expect(await screen.findByTestId("send-preview")).toBeTruthy();
     expect(previews).toHaveLength(1);

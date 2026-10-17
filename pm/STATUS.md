@@ -4,9 +4,25 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-17 (daily surfaces delivered; recurrent recall contention reproduced and corrected)
+**Last updated:** 2026-10-17 (continued Decision, Ask and Thread usability; exact delivery/tape linked below)
 
 ## Current phase
+
+**Daily work: readable documents and useful save/return paths.** Decision now
+keeps unfinished writing across close/reload and clears only acknowledged
+fields. Ask gives the answer more room, opens its exact saved artifact and
+preserves the question/context on return. Thread commands are searchable with
+bounded choices and working keyboard selection; Keep/Retry exposes the exact
+saved note without losing the reply draft. Shared Workbench materials remain.
+
+279 focused checks pass. Ordinary quick GREEN:4,167 related web,109 sweep and17 canon. Actual isolated1440/393 walks cover creation,
+draft recovery, answer editing, exact save/open/return and keyboard/focus;
+Ask's provider reply is declared replay. Independent review caught and closed
+background Escape and missing Retry continuation. The release check, merged
+head, formal review and idle delivery are retained in the
+[release record](../docs/internal/DAILY-DELIGHT-2026-10-17/RELEASE.md).
+Owner aesthetic acceptance is open. Prior Room phone review and People503
+findings remain explicitly tracked; this UI pass does not claim to fix them.
 
 **Daily usability: Decision, Ask and Thread — #1243/#1244 delivered.** The
 owner's three named faces now share content-led Workbench paper, compact
@@ -31,7 +47,7 @@ minimal no-op guard is fixed forward; exact verification is linked below.
 and result; the previous run is not called green.
 
 The idle local hub serves build `22aa76d6327046a1` from
-`wt-daily-delivery-20261017`, PID38565, port8765; source/build agree and four
+`wt-daily-recall-delivery-20261017`, PID82970, port8765 (before the next delivery); source/build agree and four
 HTTP checks pass. The actual printed Desk address was opened. Owner visual
 acceptance and live provider/native behavior remain open.
 [Design, release, evidence and limits](../docs/internal/DAILY-EXPERIENCE-2026-10-17/RELEASE.md).

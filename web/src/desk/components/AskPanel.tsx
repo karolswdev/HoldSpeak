@@ -95,7 +95,7 @@ interface AskRequestSnapshot {
 export function AskPanel() {
   const items = useDesk((s) => s.items);
   const selectedIds = useDesk((s) => s.selectedIds);
-  const { closeAsk, clearSelection, refresh, markNew } = useDesk.getState();
+  const { closeAsk, clearSelection, markNew } = useDesk.getState();
 
   // The desk lens strip is parked; its default still names the run.
   const lens = ASK_LENSES[0].name;
@@ -118,7 +118,8 @@ export function AskPanel() {
   // The run's receipt route (success or refusal): the lamp needs one.
   const [route, setRoute] = useState<TurnRoute | null>(null);
   const [keepError, setKeepError] = useState("");
-  const [kept, setKept] = useState(false);
+  const [savedAnswerRef, setSavedAnswerRef] = useState<string | null>(null);
+  const kept = Boolean(savedAnswerRef);
   const [isKeeping, setIsKeeping] = useState(false);
   const [grounding, setGrounding] =
     useState<GroundingSelection>(emptyGrounding());
@@ -162,14 +163,11 @@ export function AskPanel() {
     closeAsk();
   }, [clearSelection, closeAsk]);
 
-  // A new answer starts at its heading. Editing, receipts and source reads
-  // must not move the owner's reading position.
+  // A collapsed Question leaves the answer at the top of the new reading.
+  // Editing, receipts and source reads must not move the reading position.
   useEffect(() => {
     const reading = readingRef.current;
-    const answer = answerRef.current?.closest(".surface-traffic-turn");
-    if (result && reading && answer) {
-      reading.scrollTop += answer.getBoundingClientRect().top - reading.getBoundingClientRect().top;
-    }
+    if (result && reading) reading.scrollTop = 0;
   }, [result]);
 
   const [selectedPassage, setSelectedPassage] = useState<AskSelectionHandoff | null>(() => takeAskSelection());
@@ -255,13 +253,10 @@ export function AskPanel() {
   const groundTokens = groundingTokens(grounding) + railsTokens(rails);
   const overBudget = groundTokens > limitTokens;
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") bin();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [bin]);
+  const editPrompt = (next: Parameters<typeof setPrompt>[0]) => {
+    questionGeneration.current += 1;
+    setPrompt(next);
+  };
 
   const run = async (snapshot: AskRequestSnapshot) => {
     if (pendingRequest.current || abandoned.current || !mounted.current) return;
@@ -271,7 +266,7 @@ export function AskPanel() {
     pendingRequest.current = { id, controller };
     setPhase("routing");
     setKeepError("");
-    setKept(false);
+    setSavedAnswerRef(null);
     setResult(null);
     setFailedRun(null);
     setRoute(null);
@@ -344,14 +339,14 @@ export function AskPanel() {
     if (!mounted.current || abandoned.current || requestId.current !== id) return;
     setIsKeeping(false);
     if (artifactId) {
-      setKept(true);
-      // The kept card is a REAL artifact — it lands on the desk wearing the
-      // NEW beat (the HS-73-06 grammar), like every other run-born output.
-      bin();
-      await refresh();
+      const ref = `artifact:${artifactId}`;
+      setSavedAnswerRef(ref);
       markNew(artifactId);
+      // The canonical opener hydrates the exact saved artifact. Keep this
+      // mounted writer behind it, including any newer question or sources.
+      openRef(ref);
     } else {
-      setKept(false);
+      setSavedAnswerRef(null);
       setKeepError("Not kept");
     }
   };
@@ -361,9 +356,9 @@ export function AskPanel() {
   const flaggedClaims = (result?.groundingClaims || []).filter(
     (c) => c.flagged,
   );
-  // Owner pick 2026-10-05 (route in footer): the turn wears only its lamp;
-  // the footer names the full route once. Both come from the hub's receipt
-  // route, on an answer and on a refusal that sent bytes (Astra, #875).
+  // The answer lamp and footer egress come from the hub's receipt route,
+  // including a refusal that sent bytes. The 2026-10-17 composition keeps
+  // the unchanged detailed receipt in Run details below the answer.
   const printedRoute = sent && (result || failedRun) ? route : null;
   const printedLamp = printedRoute?.lamp ?? null;
   const printedPlace = printedRoute
@@ -378,11 +373,9 @@ export function AskPanel() {
   ];
 
   // The footer receipt bar's one status line (audit §3.5): fault > routing
-  // > run receipt > the compose budget tokens.
+  // > plain completion > the compose budget tokens.
   const statusTone = keepError || overBudget ? ("danger" as const) : undefined;
-  const statusLine = keepError || (printedRoute
-    ? lastTurnLine(printedRoute)
-    : phase === "printed"
+  const statusLine = keepError || (phase === "printed"
       ? `Answered${(finishedElapsedSeconds ?? 0) > 0 ? ` in ${finishedElapsedSeconds} s` : ""}`
       : [
             promptRecovered ? "DRAFT · RECOVERED" : "",
@@ -408,14 +401,16 @@ export function AskPanel() {
       defaultH={620}
       onClose={bin}
     >
-      <div className="desk-pullout-body desk-ask-body">
+      <div className="desk-pullout-body desk-ask-body" onKeyDown={(event) => {
+        // The frame owns Escape from this window. An IME uses Escape to
+        // finish composition, so that event must not close the writer.
+        if (event.key === "Escape" && event.nativeEvent.isComposing) event.stopPropagation();
+      }}>
         {hasTraffic ? <ScrollHint axis="y" scrollRef={readingRef} className="desk-ask-reading-wrap"><div ref={readingRef} className="conversation-reading desk-ask-reading" role="region" aria-label="Ask answer" tabIndex={0}><SurfaceTraffic showEmpty={false}>
           {sent ? (
-            <SurfaceTrafficTurn
-              prefix="You"
-            >
-              {sent.prompt}
-            </SurfaceTrafficTurn>
+            <FoldGadget key={requestId.current} title="Question" className="desk-ask-reading-fold desk-ask-sent-question">
+              <div className="desk-ask-question-text">{sent.prompt}</div>
+            </FoldGadget>
           ) : null}
           {phase === "routing" ? (
             <SurfaceTrafficTurn prefix="Answer">
@@ -486,15 +481,6 @@ export function AskPanel() {
                   }
                 }}
               >
-                {sent && (sent.keepContext.length || sent.railSources.length) ? (
-                  <div className="desk-ask-sources desk-ask-answer-sources" data-testid="ask-answer-sources">
-                    <span>Sources:</span>
-                    {sent.keepContext.map((source) => source.ref ? (
-                      <Button key={source.ref} dense variant="ghost" onClick={() => openRef(source.ref!)}>{source.title}</Button>
-                    ) : <span key={source.id}>{source.title}</span>)}
-                    {sent.railSources.map((source) => <span className="surface-token" key={`${source.repo}:${source.kind}:${source.id}`}>{source.title}</span>)}
-                  </div>
-                ) : null}
                 <Material>{result.output}</Material>
                 {/* HS-111-05 — the honesty law reaches this surface: the
                     server's cited retrieval receipt, never inferred, and
@@ -525,11 +511,48 @@ export function AskPanel() {
               </div>
             </SurfaceTrafficTurn>
           ) : null}
+          {result && sent && (sent.keepContext.length || sent.railSources.length) ? (
+            <FoldGadget title="Sources" className="desk-ask-reading-fold">
+              <div className="desk-ask-sources desk-ask-answer-sources" data-testid="ask-answer-sources">
+                {sent.keepContext.map((source) => source.ref ? (
+                  <Button key={source.ref} dense variant="ghost" onClick={() => openRef(source.ref!)}>{source.title}</Button>
+                ) : <span key={source.id}>{source.title}</span>)}
+                {sent.railSources.map((source) => <span className="surface-token" key={`${source.repo}:${source.kind}:${source.id}`}>{source.title}</span>)}
+              </div>
+            </FoldGadget>
+          ) : null}
+          {printedRoute ? (
+            <FoldGadget title="Run details" className="desk-ask-reading-fold">
+              <div className="desk-ask-run-details">{lastTurnLine(printedRoute)}</div>
+            </FoldGadget>
+          ) : null}
         </SurfaceTraffic></div></ScrollHint> : null}
 
         {editingQuestion && (
           <div className="conversation-composer desk-ask-composer">
-            {sourceContext.length || rails.length || selectedPassage?.text.trim() ? <ScrollHint axis="y" scrollRef={questionContextRef} className="desk-ask-context-wrap"><div ref={questionContextRef} className="desk-ask-question-context">
+            <div className="desk-ask-input">
+                <PadGadget
+                  label="Ask about your work"
+                  mic={false}
+                  rows={hasTraffic ? 2 : 6}
+                  value={prompt}
+                  placeholder="Ask about your work"
+                  autoFocus
+                  onChange={editPrompt}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+                      e.preventDefault();
+                      void ask();
+                    }
+                  }}
+                />
+                <MicButton
+                  label="Speak Ask about your work"
+                  draftScope="desk-ask"
+                  onText={(text) => editPrompt((current) => current ? `${current} ${text}` : text)}
+                />
+            </div>
+            <ScrollHint axis="y" scrollRef={questionContextRef} className="desk-ask-context-wrap"><div ref={questionContextRef} className="desk-ask-question-context">
             {sourceContext.length || rails.length ? (
               <div className="desk-ask-sources" data-testid="ask-context">
                 <span>Question sources:</span>
@@ -558,30 +581,6 @@ export function AskPanel() {
                 </FoldGadget>
               </div>
             ) : null}
-            </div></ScrollHint> : null}
-            <div className="desk-ask-input">
-                <PadGadget
-                  label="Ask about your work"
-                  mic={false}
-                  rows={hasTraffic ? 2 : 6}
-                  value={prompt}
-                  placeholder="Ask about your work"
-                  autoFocus
-                  onChange={setPrompt}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
-                      e.preventDefault();
-                      void ask();
-                    }
-                  }}
-                />
-                <MicButton
-                  label="Speak Ask about your work"
-                  draftScope="desk-ask"
-                  onText={(text) => setPrompt((current) => current ? `${current} ${text}` : text)}
-                />
-            </div>
-            <div className="desk-ask-compose-actions">
               <div className="desk-ask-context-tools">
               <GroundingSection
                 label="Add notes"
@@ -610,6 +609,8 @@ export function AskPanel() {
                 {" · "}<span>{projectsRead.error}</span>
               </ActionNotice> : null}
               </div>
+            </div></ScrollHint>
+            <div className="desk-ask-compose-actions">
               <div className="desk-ask-send">
               {phase !== "routing" && !failedRun ? <EngineLine
                 engine={engine}
@@ -635,7 +636,7 @@ export function AskPanel() {
         {!editingQuestion && result ? <div className="desk-ask-edit-question"><Button dense variant="ghost" onClick={() => setEditingQuestion(true)}>Edit question</Button></div> : null}
       </div>
 
-      <SurfaceFooter className={printedRoute ? "turn-route-footer" : undefined} egress={printedRoute ? <RouteEgressChip route={printedRoute} /> : null} receipt={keepError ? <SurfaceState error={keepError} /> : copyReceipt || <span className="surface-footer-receipt-line" data-tone={statusTone} role="status">{statusLine}</span>} verbs={<><Button dense variant="ghost" onClick={bin}>{result ? "Bin" : "Cancel"}</Button>{result ? <Button dense variant="primary" loading={isKeeping} disabled={kept} onClick={() => void keep()}>{kept ? "Kept" : "Keep"}</Button> : null}</>} />
+      <SurfaceFooter className={printedRoute ? "turn-route-footer" : undefined} egress={printedRoute ? <RouteEgressChip route={printedRoute} /> : null} receipt={keepError ? <SurfaceState error={keepError} /> : copyReceipt || <span className="surface-footer-receipt-line" data-tone={statusTone} role="status">{[statusLine, printedRoute?.fallback ? "Fallback" : ""].filter(Boolean).join(" · ")}</span>} verbs={<><Button dense variant="ghost" onClick={bin}>{result ? "Bin" : "Cancel"}</Button>{result ? <Button dense variant="primary" loading={isKeeping} onClick={() => savedAnswerRef ? openRef(savedAnswerRef) : void keep()}>{savedAnswerRef ? "Open saved answer" : "Keep"}</Button> : null}</>} />
     </DeskWindowFrame>
   );
 }

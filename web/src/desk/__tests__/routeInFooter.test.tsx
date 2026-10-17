@@ -1,9 +1,8 @@
-/** Owner pick 2026-10-05 (canvas section 4, option C "Route in footer"):
- * each turn wears only its LAMP, the turn's receipt boundary; the footer's
- * egress slot names the FULL route of the LAST turn (host chip, model,
- * receipt) and the model is named once. Ask (LAN) and a chat with LAN,
- * LOCAL, CLOUD turns and one turn with no model call. */
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+/** The turn's lamp and footer egress always come from its actual receipt.
+ * Thread keeps the complete last-turn receipt in its footer. Ask's settled
+ * 2026-10-17 composition keeps ordinary status there and the unchanged
+ * canonical receipt in an inspectable Run details fold below the answer. */
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useThreadStore, type ThreadMessage, type ThreadDetail } from "../threads";
 import { ThreadPullout } from "../pullouts/ThreadPullout";
@@ -183,7 +182,7 @@ describe("chat: a lamp per turn, the route of the last turn in the footer", () =
   });
 });
 
-describe("Ask: the lamp on the turn, the route once in the footer", () => {
+describe("Ask: visible receipt egress, ordinary status and inspectable Run details", () => {
   const LAN_ASK = {
     output: "The cutover is on 17 October.",
     invocation_id: "inv-1",
@@ -203,12 +202,16 @@ describe("Ask: the lamp on the turn, the route once in the footer", () => {
     useDesk.setState({ items: EMPTY_ITEMS, selectedIds: [], askOpen: true, pullouts: [], panelRects: {}, panelSaved: [], panelOrder: [] });
   });
 
-  async function askWith(payload: Record<string, unknown>, status = 200) {
-    vi.stubGlobal("fetch", vi.fn((url: string) => Promise.resolve({
-      ok: !(String(url).includes("/api/ask") && status >= 400),
-      status: String(url).includes("/api/ask") ? status : 200,
-      json: () => Promise.resolve(String(url).includes("/api/ask") ? payload : {}),
-    })));
+  async function askWith(payload: Record<string, unknown>, status = 200, onAsk?: () => void) {
+    vi.stubGlobal("fetch", vi.fn((url: string) => {
+      const isAsk = String(url).includes("/api/ask");
+      if (isAsk) onAsk?.();
+      return Promise.resolve({
+        ok: !(isAsk && status >= 400),
+        status: isAsk ? status : 200,
+        json: () => Promise.resolve(isAsk ? payload : {}),
+      });
+    }));
     const view = render(<AskPanel />);
     fireEvent.change(view.container.querySelector("textarea")!, { target: { value: "What did we decide about the cutover date?" } });
     fireEvent.keyDown(view.container.querySelector("textarea")!, { key: "Enter" });
@@ -217,14 +220,25 @@ describe("Ask: the lamp on the turn, the route once in the footer", () => {
     return view;
   }
 
-  it("the Answer turn wears the LAN lamp; the footer names host, model, receipt", async () => {
+  it("the Answer turn and footer disclose the actual LAN route, with its model and receipt in Run details", async () => {
     const { container } = await askWith(LAN_ASK);
-    const answerTurn = [...container.querySelectorAll(".surface-traffic-turn, [class*='traffic-turn']")]
-      .find((n) => n.querySelector(".surface-traffic-prefix")?.textContent === "Answer")!;
-    expect(answerTurn.querySelector(".gadget-lamp")!.textContent).toBe("LAN");
+    const answerTurn = [...container.querySelectorAll(".surface-traffic-turn")]
+      .find((node) => node.querySelector(".surface-traffic-prefix")?.textContent === "Answer")!;
+    const lamp = answerTurn.querySelector(".gadget-lamp")!;
+    expect(lamp).toHaveTextContent("LAN");
+    await waitFor(() => expect(container.querySelector(".surface-traffic .gadget-lamp")).toBeVisible());
     const chip = container.querySelector(".surface-footer-egress .gadget-chip-egress")!;
     expect(chip.textContent).toBe("192.168.1.43 · LAN");
-    expect(container.querySelector(".surface-footer-receipt")!.textContent).toBe("LAST TURN · qwen3.8-27b · RECEIPT ··a91f");
+    expect(chip).toHaveAttribute("data-scope", "local");
+    await waitFor(() => expect(container.querySelector(".surface-footer-egress .gadget-chip-egress")).toBeVisible());
+    expect(container.querySelector(".surface-footer-receipt")!.textContent).toMatch(/^Answered(?: in [1-9]\d* s)?$/);
+    const details = within(container).getByText("Run details").closest("details")!;
+    const receiptLine = "LAST TURN · qwen3.8-27b · RECEIPT ··a91f";
+    expect(details.open).toBe(false);
+    expect(within(details).getByText(receiptLine, { exact: true })).toBeInTheDocument();
+    expect(within(container).getAllByText(receiptLine, { exact: true })).toHaveLength(1);
+    fireEvent.click(within(container).getByText("Run details"));
+    await waitFor(() => expect(within(container).getByText(receiptLine, { exact: true })).toBeVisible());
   });
 
   it("names the model once (the CONTROL named it twice)", async () => {
@@ -246,16 +260,32 @@ describe("Ask: the lamp on the turn, the route once in the footer", () => {
     expect(container.querySelector(".gadget-chip-egress")).toBeNull();
   });
 
-  it("a refused Ask that sent to the cloud keeps its lamp and route (the real 409 body)", async () => {
+  it("a refused Ask keeps its visible cloud egress and error, with the exact failed route inspectable", async () => {
     const refusal = {
       error: "No assigned model completed this request",
       receipt: { execution_id: "exec-00007c02", outcome: "failed", attempts: [{ boundary: "cloud", send_phase: "provider_no_generation" }] },
       route: { lamp: "cloud", host: "api.openai.com", model: "gpt-5-mini", receipt: "exec-00007c02", fallback: false },
     };
     const { container } = await askWith(refusal, 409);
-    expect(container.querySelector(".surface-traffic .gadget-lamp")!.textContent).toBe("CLOUD");
-    expect(container.querySelector(".surface-footer-egress .gadget-chip-egress")!.textContent).toBe("api.openai.com");
-    expect(container.querySelector(".surface-footer-receipt")!.textContent).toBe("LAST TURN · gpt-5-mini · RECEIPT ··7c02");
+    const lamp = container.querySelector(".surface-traffic .gadget-lamp")!;
+    expect(lamp.textContent).toBe("CLOUD");
+    await waitFor(() => expect(container.querySelector(".surface-traffic .gadget-lamp")).toBeVisible());
+    const chip = container.querySelector(".surface-footer-egress .gadget-chip-egress")!;
+    expect(chip.textContent).toBe("api.openai.com");
+    expect(chip).toHaveAttribute("data-scope", "cloud");
+    await waitFor(() => expect(container.querySelector(".surface-footer-egress .gadget-chip-egress")).toBeVisible());
+    const error = container.querySelector("[data-testid=run-line][data-state=failure]")!;
+    expect(error).toHaveTextContent("did not answer");
+    expect(error).toBeVisible();
+    expect(within(error as HTMLElement).getByRole("button", { name: "Try again" })).toBeVisible();
+    expect(container.querySelector(".surface-footer-receipt")).not.toHaveTextContent("Answered");
+    expect(within(container).queryByText("The cutover is on 17 October.")).toBeNull();
+    const details = within(container).getByText("Run details").closest("details")!;
+    const receiptLine = "LAST TURN · gpt-5-mini · RECEIPT ··7c02";
+    expect(details.open).toBe(false);
+    expect(within(details).getByText(receiptLine, { exact: true })).toBeInTheDocument();
+    fireEvent.click(within(container).getByText("Run details"));
+    await waitFor(() => expect(within(container).getByText(receiptLine, { exact: true })).toBeVisible());
   });
 
   it("a refusal with no sent attempt has no lamp", async () => {
@@ -264,7 +294,7 @@ describe("Ask: the lamp on the turn, the route once in the footer", () => {
     expect(container.querySelector(".gadget-chip-egress")).toBeNull();
   });
 
-  it("prints the fallback receipt place and keeps one completed footer receipt as time advances", async () => {
+  it("discloses fallback egress and keeps its completed status and canonical receipt fixed as time advances", async () => {
     const clock = vi.spyOn(Date, "now").mockReturnValue(1_000);
     try {
       const fallback = {
@@ -272,17 +302,29 @@ describe("Ask: the lamp on the turn, the route once in the footer", () => {
         model: "assigned-model",
         route: { lamp: "private_network", host: "fallback-box", model: "fallback-model", receipt: "exec-fallback", fallback: true },
       };
-      const view = await askWith(fallback);
-      expect(view.container.querySelector(".surface-footer-egress .gadget-chip-egress")?.textContent).toBe("fallback-box · LAN");
-      const footerReceipt = "LAST TURN · fallback-model · FALLBACK · RECEIPT ··back";
-      expect(view.container.querySelector(".surface-footer-receipt")?.textContent).toBe(footerReceipt);
-      expect(screen.getAllByText(footerReceipt, { exact: true })).toHaveLength(1);
+      const view = await askWith(fallback, 200, () => clock.mockReturnValue(4_100));
+      const chip = view.container.querySelector(".surface-footer-egress .gadget-chip-egress")!;
+      expect(chip.textContent).toBe("fallback-box · LAN");
+      await waitFor(() => expect(view.container.querySelector(".surface-footer-egress .gadget-chip-egress")).toBeVisible());
+      const completedStatus = "Answered in 3 s · Fallback";
+      expect(view.container.querySelector(".surface-footer-receipt")?.textContent).toBe(completedStatus);
+      expect(within(view.container).getByText(completedStatus, { exact: true })).toBeVisible();
+      const routeReceipt = "LAST TURN · fallback-model · FALLBACK · RECEIPT ··back";
+      const details = within(view.container).getByText("Run details").closest("details")!;
+      expect(details.open).toBe(false);
+      expect(within(details).getByText(routeReceipt, { exact: true })).toBeInTheDocument();
+      fireEvent.click(within(view.container).getByText("Run details"));
+      await waitFor(() => expect(within(view.container).getByText(routeReceipt, { exact: true })).toBeVisible());
+      expect(within(view.container).getAllByText(routeReceipt, { exact: true })).toHaveLength(1);
       expect(view.container.querySelector("[data-testid=run-line]")).toBeNull();
+      expect(view.container.textContent).not.toContain("assigned-model");
 
       clock.mockReturnValue(9_000);
       view.rerender(<AskPanel />);
-      expect(view.container.querySelector(".surface-footer-receipt")?.textContent).toBe(footerReceipt);
-      expect(screen.getAllByText(footerReceipt, { exact: true })).toHaveLength(1);
+      expect(view.container.querySelector(".surface-footer-receipt")?.textContent).toBe(completedStatus);
+      expect(within(view.container).getByText(completedStatus, { exact: true })).toBeVisible();
+      expect(within(view.container).getAllByText(routeReceipt, { exact: true })).toHaveLength(1);
+      expect(within(view.container).getByText(routeReceipt, { exact: true })).toBeVisible();
       expect(view.container.querySelector("[data-testid=run-line]")).toBeNull();
     } finally {
       clock.mockRestore();

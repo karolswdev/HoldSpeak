@@ -25,12 +25,13 @@
  */
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useDesk } from "../store";
+import { loadDeskWorkspace, useDesk } from "../store";
 import { objectByRef } from "../world";
 import { DecisionPullout } from "../pullouts/DecisionPullout";
 import { MeetingDecideWell } from "../../meetings/MeetingDecideWell";
 import { DeskReceiptRow } from "../components/DeskReceiptRow";
 import { dismissWriteFailure } from "../hooks/useWriteReceipt";
+import { keptEditorPatch } from "../pullouts/editors/editorDraft";
 
 type Wire = Record<string, unknown>;
 
@@ -118,8 +119,9 @@ describe("the decision editor keeps its draft until the save is accepted", () =>
       const object = objectByRef(items, ref);
       return <>{object ? <DecisionPullout object={object} onClose={() => {}} /> : null}<DeskReceiptRow /></>;
     }
-    render(<Face />);
+    const view = render(<Face />);
     fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    return { ...view, reopen: () => render(<Face />) };
   }
 
   function fillDraft(suffix: string) {
@@ -134,7 +136,7 @@ describe("the decision editor keeps its draft until the save is accepted", () =>
     }
   }
 
-  it("Done waits for one write and disables conflicting status, Retry and cancel presses", async () => {
+  it("Save waits for one write and disables conflicting status, Retry and cancel presses", async () => {
     await renderEditor();
     fillDraft("to keep");
     let complete!: () => void;
@@ -158,7 +160,7 @@ describe("the decision editor keeps its draft until the save is accepted", () =>
     await screen.findByText(/STATUS FAILED.*HTTP 403/);
     const statusRetry = screen.getByRole("button", { name: "Retry" });
     expect(statusRetry).not.toBeDisabled();
-    const done = screen.getByRole("button", { name: "Done" });
+    const done = screen.getByRole("button", { name: "Save" });
     act(() => { fireEvent.click(done); fireEvent.click(done); });
     expect(hub.puts).toHaveLength(1);
     expectDraft("to keep");
@@ -184,10 +186,10 @@ describe("the decision editor keeps its draft until the save is accepted", () =>
       }
       return hubFetch(input, init);
     });
-    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await screen.findByText(/SAVE FAILED.*HTTP 403/);
     expectDraft("refused");
-    await waitFor(() => expect(screen.getByRole("button", { name: "Done" })).not.toBeDisabled());
+    await waitFor(() => expect(screen.getByRole("button", { name: "Save" })).not.toBeDisabled());
     expect(screen.getByText("Save failed")).toBeInTheDocument();
     fillDraft("typed later");
     refuse = false;
@@ -196,7 +198,7 @@ describe("the decision editor keeps its draft until the save is accepted", () =>
     expect(hub.puts[1].body).toEqual(hub.puts[0].body);
     expectDraft("typed later");
     await waitFor(() => expect(screen.queryByText("Save failed")).toBeNull());
-    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Done" })); });
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Save" })); });
     expect(hub.puts.at(-1)?.body.decision_markdown).toBe("Decision typed later");
     expect(screen.queryByRole("textbox", { name: "Decision" })).toBeNull();
   });
@@ -216,13 +218,82 @@ describe("the decision editor keeps its draft until the save is accepted", () =>
       }
       return hubFetch(input, init);
     });
-    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
     expectDraft("submitted");
     fillDraft("typed later");
     await act(async () => complete());
     expectDraft("typed later");
-    expect(screen.getByRole("button", { name: "Done" })).not.toBeDisabled();
+    expect(screen.getByRole("button", { name: "Save" })).not.toBeDisabled();
     expect(useDesk.getState().items.decision.find((d) => d.id === "body-decision")?.decisionMarkdown).toBe("Decision submitted");
+  });
+
+  it("close and reload restore this object's draft, including emptied fields, without a write", async () => {
+    const face = await renderEditor();
+    fillDraft("after reopening");
+    fireEvent.change(screen.getByRole("textbox", { name: "Consequences" }), { target: { value: "" } });
+    face.unmount();
+    // Rehydrate the same workspace document a fresh page loads.
+    useDesk.setState({ drafts: loadDeskWorkspace().drafts ?? {}, newIds: [] });
+    face.reopen();
+    expect(screen.getByRole("textbox", { name: "Decision" })).toHaveValue("Decision after reopening");
+    expect(screen.getByRole("textbox", { name: "Background" })).toHaveValue("Background after reopening");
+    expect(screen.getByLabelText("Consequences")).toHaveValue("");
+    expect(screen.getByText("Draft kept")).toBeInTheDocument();
+    expect(hub.puts).toEqual([]);
+  });
+
+  it("Cancel discards only this object's retained fields; reopening reads the saved document", async () => {
+    const face = await renderEditor();
+    fillDraft("cancelled");
+    useDesk.getState().setDraft("editor/decision/another-decision", JSON.stringify({ decision_markdown: "Other work" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(keptEditorPatch("decision", "body-decision")).toEqual({});
+    expect(keptEditorPatch("decision", "another-decision").decision_markdown).toBe("Other work");
+    face.unmount();
+    face.reopen();
+    expect(screen.queryByRole("textbox", { name: "Decision" })).toBeNull();
+    expect(screen.getByText("Current decision")).toBeInTheDocument();
+    expect(hub.puts).toEqual([]);
+  });
+
+  it("an acknowledged current Save clears its retained fields and returns to the saved document", async () => {
+    const face = await renderEditor();
+    fillDraft("saved");
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Save" })); });
+    expect(keptEditorPatch("decision", "body-decision")).toEqual({});
+    expect(screen.getByText("Saved")).toBeInTheDocument();
+    face.unmount();
+    face.reopen();
+    expect(screen.queryByRole("textbox", { name: "Decision" })).toBeNull();
+    expect(screen.getByText("Decision saved")).toBeInTheDocument();
+  });
+
+  it("a late Save from a closed window cannot erase newer words in the reopened editor", async () => {
+    const face = await renderEditor();
+    fillDraft("submitted");
+    let complete!: () => void;
+    vi.mocked(fetch).mockImplementation((input, init) => {
+      if (String(input) === path && init?.method === "PUT") {
+        const body = JSON.parse(String(init.body));
+        hub.puts.push({ url: path, body });
+        return new Promise((resolve) => { complete = () => {
+          hub.decisions = [{ ...hub.decisions[0], ...body }];
+          resolve(json({ decision: hub.decisions[0] }));
+        }; });
+      }
+      return hubFetch(input, init);
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    face.unmount();
+    const reopened = face.reopen();
+    fireEvent.change(screen.getByRole("textbox", { name: "Decision" }), { target: { value: "Newer reopened words" } });
+    await act(async () => complete());
+    expect(screen.getByRole("textbox", { name: "Decision" })).toHaveValue("Newer reopened words");
+    expect(keptEditorPatch("decision", "body-decision")).toEqual({ decision_markdown: "Newer reopened words" });
+    reopened.unmount();
+    face.reopen();
+    expect(screen.getByRole("textbox", { name: "Decision" })).toHaveValue("Newer reopened words");
+    expect(hub.puts).toHaveLength(1);
   });
 });
 
@@ -297,7 +368,7 @@ describe("the decision window shows a heading only with text under it", () => {
   ];
   const heads = () =>
     // The decision's own headings (its SEND well carries its own head).
-    Array.from(document.querySelectorAll(".desk-decision-card > .attention-decision-paper > h2, .desk-decision-card > .gadget-fold > summary > .gadget-fold-title"))
+    Array.from(document.querySelectorAll(".attention-decision-paper > .attention-decision-main > h2, .attention-decision-paper > .gadget-fold > summary > .gadget-fold-title"))
       .map((h) => (h.textContent ?? "").trim()).filter((label) => label !== "State");
 
   beforeEach(async () => {

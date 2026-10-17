@@ -3,6 +3,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import * as threads from "../threads";
+import * as openObject from "../openObject";
 import { useThreadStore, type ThreadMessage, type ThreadDetail } from "../threads";
 import { ThreadPullout } from "../pullouts/ThreadPullout";
 import { RuntimeBusProvider } from "../../runtime/RuntimeBus";
@@ -199,7 +200,7 @@ describe("ThreadPullout rows", () => {
     expect(screen.getByRole("button", { name: "Fork here" })).toBeTruthy();
   });
 
-  it("moves focus into real command rows and returns to the writer after a choice or Escape", async () => {
+  it("moves focus into command search and returns to the writer after a choice or Escape", async () => {
     seedStore([makeMsg()]);
     renderPullout();
     const input = screen.getByTestId("composer-input") as HTMLTextAreaElement;
@@ -207,18 +208,73 @@ describe("ThreadPullout rows", () => {
     const commands = screen.getByRole("button", { name: "Commands" });
     commands.focus();
     fireEvent.click(commands);
-    const firstCommand = within(screen.getByTestId("composer-picker")).getByRole("button", { name: /Keep as note/ });
+    const firstCommand = screen.getByRole("combobox", { name: "Find command" });
     await waitFor(() => expect(document.activeElement).toBe(firstCommand));
     fireEvent.click(within(screen.getByTestId("composer-picker")).getByRole("button", { name: /Show tools/ }));
     await waitFor(() => expect(document.activeElement).toBe(input));
     expect(input.value).toBe("My next question");
     fireEvent.click(commands);
-    const cancelTarget = within(screen.getByTestId("composer-picker")).getByRole("button", { name: /Keep as note/ });
+    const cancelTarget = screen.getByRole("combobox", { name: "Find command" });
     await waitFor(() => expect(document.activeElement).toBe(cancelTarget));
     fireEvent.keyDown(cancelTarget, { key: "Escape" });
     await waitFor(() => expect(document.activeElement).toBe(input));
     expect(screen.queryByTestId("composer-picker")).toBeNull();
     expect(input.value).toBe("My next question");
+  });
+
+  it.each(["note", "artifact"] as const)("opens only the confirmed saved %s when the owner presses Open", async (as) => {
+    seedStore([makeMsg()]);
+    let finish!: (value: { id: string }) => void;
+    vi.spyOn(threads, "keepMessage").mockImplementation(() => new Promise((resolve) => { finish = resolve; }));
+    const open = vi.fn();
+    const opener = vi.spyOn(openObject, "refOpener").mockReturnValue(open);
+    renderPullout();
+    const writer = screen.getByTestId("composer-input");
+    fireEvent.change(writer, { target: { value: "My next question" } });
+    if (as === "artifact") fireEvent.click(screen.getByRole("button", { name: "More" }));
+    fireEvent.click(screen.getByRole("button", { name: `Keep as ${as}` }));
+    expect(threads.keepMessage).toHaveBeenCalledWith("t-1", { message_id: "msg-1", as });
+    expect(screen.queryByRole("button", { name: `Open ${as}` })).toBeNull();
+    expect(open).not.toHaveBeenCalled();
+    fireEvent.change(writer, { target: { value: "Newer typing while saving" } });
+    finish({ id: "confirmed-saved-id" });
+    const saved = await screen.findByRole("button", { name: `Open ${as}` });
+    expect(opener).toHaveBeenCalledWith(`${as}:confirmed-saved-id`);
+    expect(screen.getByLabelText(as === "note" ? "Note saved" : "Artifact saved")).toBeInTheDocument();
+    expect(open).not.toHaveBeenCalled();
+    expect(writer).toHaveValue("Newer typing while saving");
+    fireEvent.click(saved);
+    expect(open).toHaveBeenCalledOnce();
+    expect(screen.getByTestId("composer-input")).toBe(writer);
+  });
+
+  it("offers the exact saved note after a refused Keep succeeds through Retry", async () => {
+    seedStore([makeMsg()]);
+    vi.spyOn(threads, "keepMessage").mockRejectedValueOnce(new TypeError("Failed to fetch"))
+      .mockResolvedValueOnce({ id: "confirmed-retry-note" });
+    const open = vi.fn();
+    const opener = vi.spyOn(openObject, "refOpener").mockReturnValue(open);
+    renderPullout();
+    fireEvent.click(screen.getByRole("button", { name: "Keep as note" }));
+    await screen.findByText("KEEP AS NOTE FAILED · HUB UNREACHABLE");
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    const saved = await screen.findByRole("button", { name: "Open note" });
+    expect(opener).toHaveBeenCalledWith("note:confirmed-retry-note");
+    expect(screen.queryByText("KEEP AS NOTE FAILED · HUB UNREACHABLE")).toBeNull();
+    expect(open).not.toHaveBeenCalled();
+    fireEvent.click(saved);
+    expect(open).toHaveBeenCalledOnce();
+    expect(threads.keepMessage).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps the failed save visible and offers no saved-object continuation", async () => {
+    seedStore([makeMsg()]);
+    vi.spyOn(threads, "keepMessage").mockRejectedValue(new TypeError("Failed to fetch"));
+    renderPullout();
+    fireEvent.click(screen.getByRole("button", { name: "Keep as note" }));
+    expect(await screen.findByText("KEEP AS NOTE FAILED · HUB UNREACHABLE")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Open note" })).toBeNull();
+    expect(screen.queryByLabelText("Note saved")).toBeNull();
   });
 
   it("retains sent source names and qualified identities from real frozen refs", () => {

@@ -29,7 +29,7 @@ import type { ResolvedRef } from "../../lib/drawerResolver";
 import { useDesk } from "../store";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { KIND_GLYPH } from "../tools";
-import { SurfaceRows, SurfaceRow } from "../surface/Surface";
+import { ScrollHint, SurfaceRows, SurfaceRow } from "../surface/Surface";
 import { Button } from "../../components/signal/Signal";
 import { beginThreadTodo, settleThreadTodo, useThreadComposerDraft } from "../threadComposerDrafts";
 import { noteName } from "../windowName";
@@ -392,10 +392,13 @@ export function ThreadComposer({
   // Explicit pickers keep their query separate from the unsent message.
   const [picker, setPicker] = useState<"sources" | "commands" | null>(null);
   const [sourceQuery, setSourceQuery] = useState("");
+  const [commandQuery, setCommandQuery] = useState("");
+  const [pickerIndex, setPickerIndex] = useState(0);
   const [command, setCommand] = useState<SlashCommand | null>(null);
   const [commandArgument, setCommandArgument] = useState("");
 
   const pickerRef = useRef<HTMLDivElement>(null);
+  const pickerResultsRef = useRef<HTMLDivElement>(null);
   const closePicker = useCallback(() => {
     setPicker(null);
     requestAnimationFrame(() => textareaRef.current?.focus());
@@ -404,7 +407,7 @@ export function ThreadComposer({
     if (!picker) return;
     const frame = requestAnimationFrame(() => {
       pickerRef.current?.querySelector<HTMLElement>(
-        picker === "sources" || command ? "input" : ".surface-row-open",
+        "input",
       )?.focus();
     });
     return () => cancelAnimationFrame(frame);
@@ -922,6 +925,68 @@ export function ThreadComposer({
     ],
   );
 
+  const sourceMatches = filterItems(sourceQuery, primitiveItems);
+  const sourceCapped = primitiveItems.filter((item) => item.nameNormalized.startsWith(sourceQuery.toLowerCase())).length > sourceMatches.length;
+  const commandMatches = filterSlashCommands(commandQuery).filter((item) => item.id === "stop" ? streaming
+    : ["keep", "fork"].includes(item.id) ? Boolean(lastAssistantId) : true);
+  const argumentQuery = command?.id === "guardrail" ? commandArgument.replace(/^(?:on|off)\s+/i, "") : commandArgument;
+  const argumentChoices = command?.id === "mode" ? modes.map((item) => ({ id: item.id, label: item.name }))
+    : command?.id === "prompt" ? prompts.map((item) => ({ id: item.id, label: item.title }))
+      : command?.id === "guardrail" ? guardrails.map((item) => ({ id: item.id, label: item.title })) : [];
+  const argumentMatches = argumentChoices.filter((item) => item.label.toLowerCase().includes(argumentQuery.toLowerCase()));
+  const validArgument = Boolean(commandArgument.trim()) && (command?.id === "todo"
+    || argumentChoices.some((item) => item.label.toLowerCase() === argumentQuery.trim().toLowerCase()));
+  const pickerCount = picker === "sources" ? sourceMatches.length : command ? argumentMatches.length : commandMatches.length;
+  const selectedPickerIndex = Math.min(picker === "sources" ? acIndex : pickerIndex, Math.max(0, pickerCount - 1));
+
+  useEffect(() => {
+    if (!picker) return;
+    if (picker === "sources") setAcIndex(selectedPickerIndex);
+    else setPickerIndex(selectedPickerIndex);
+    pickerResultsRef.current?.querySelector<HTMLElement>("[data-selected]")?.scrollIntoView?.({ block: "nearest" });
+  }, [picker, command, pickerIndex, acIndex, commandQuery, commandArgument, sourceQuery, pickerCount, selectedPickerIndex]);
+
+  const chooseCommand = (item: SlashCommand) => {
+    if (item.hasArg) {
+      setCommand(item); setCommandArgument(""); setPickerIndex(0);
+      if (item.id === "mode") loadModesOnce();
+      if (item.id === "prompt") loadPromptsOnce();
+      if (item.id === "guardrail") loadGuardrailsOnce();
+    } else { closePicker(); executeSlashCommand(item.id, undefined, true); }
+  };
+  const chooseArgument = (label: string) => {
+    if (!command) return;
+    const prefix = command.id === "guardrail" ? commandArgument.match(/^(on|off)\s+/i)?.[1] : undefined;
+    closePicker(); executeSlashCommand(command.id, prefix ? `${prefix} ${label}` : label, true);
+  };
+  const pickerListId = picker === "sources" ? "wb-inlet-listbox" : `thread-${threadId}-picker-results`;
+  const activePickerId = !pickerCount ? undefined : picker === "sources"
+    ? `wb-inlet-option-${sourceMatches[selectedPickerIndex].kind}-${sourceMatches[selectedPickerIndex].id}`
+    : command ? `thread-command-argument-${argumentMatches[selectedPickerIndex].id}` : `thread-command-${commandMatches[selectedPickerIndex].id}`;
+  const pickerInputProps = command?.id === "todo" && picker === "commands" ? {} : { role: "combobox", "aria-expanded": true, "aria-autocomplete": "list" as const,
+    "aria-controls": pickerListId, "aria-activedescendant": activePickerId };
+  const handlePickerKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.nativeEvent.isComposing || event.keyCode === 229) return;
+    if (["ArrowDown", "ArrowUp"].includes(event.key)) {
+      event.preventDefault();
+      const next = Math.max(0, Math.min(selectedPickerIndex + (event.key === "ArrowDown" ? 1 : -1), pickerCount - 1));
+      if (picker === "sources") setAcIndex(next); else setPickerIndex(next);
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      if (picker === "sources") {
+        if (sourceMatches[selectedPickerIndex]) { addChip(itemToRef(sourceMatches[selectedPickerIndex])); closePicker(); }
+        return;
+      }
+      if (picker === "commands" && !command && commandMatches[selectedPickerIndex]) {
+        chooseCommand(commandMatches[selectedPickerIndex]);
+      } else if (command && argumentMatches[selectedPickerIndex]) {
+        chooseArgument(argumentMatches[selectedPickerIndex].label);
+      } else if (command && validArgument) {
+        closePicker(); executeSlashCommand(command.id, commandArgument.trim(), true);
+      }
+    }
+  };
+
   const handleMicText = useCallback((text: string) => {
     // Append to the latest draft, including edits made during capture.
     setDraft((current) => current ? `${current} ${text}` : text);
@@ -930,7 +995,7 @@ export function ThreadComposer({
   return (
     <div className="thread-composer conversation-composer" data-testid="thread-composer"
       onKeyDownCapture={(event) => {
-        if (event.key === "Escape" && picker) {
+        if (event.key === "Escape" && picker && !event.nativeEvent.isComposing && event.keyCode !== 229) {
           event.preventDefault();
           event.stopPropagation();
           closePicker();
@@ -942,46 +1007,51 @@ export function ThreadComposer({
           <Button variant="ghost" dense aria-label="Close picker" onClick={() => { closePicker(); }}>Close</Button>
         </div>
         {picker === "sources" ? <>
-          <StringGadget label="Find source" value={sourceQuery} onChange={(value) => { setSourceQuery(value); setAcIndex(0); }} autoFocus
-            onKeyDown={(event) => {
-              const matches = filterItems(sourceQuery, primitiveItems);
-              if (event.nativeEvent.isComposing) return;
-              if (event.key === "ArrowDown") { event.preventDefault(); setAcIndex((index) => Math.min(index + 1, matches.length - 1)); }
-              if (event.key === "ArrowUp") { event.preventDefault(); setAcIndex((index) => Math.max(index - 1, 0)); }
-              if (event.key === "Enter" && matches[acIndex]) {
-                event.preventDefault(); addChip(itemToRef(matches[acIndex])); closePicker();
-              }
-            }} />
-          <InletAutocomplete allMatches={filterItems(sourceQuery, primitiveItems)} selectedIndex={acIndex}
-            onSelectedIndexChange={setAcIndex} emptyLabel="No matches"
-            onSelectItem={(item) => { addChip(itemToRef(item)); closePicker(); }} />
-        </> : !command ? <SurfaceRows>
-          {THREAD_SLASH_COMMANDS.filter((item) => item.id === "stop" ? streaming
-            : ["keep", "fork"].includes(item.id) ? Boolean(lastAssistantId) : true).map((item) => <SurfaceRow key={item.id} id={`thread-command-${item.id}`}
-            title={item.label} detail={`/${item.id}`} onOpen={() => {
-              if (item.hasArg) {
-                setCommand(item); setCommandArgument("");
-                if (item.id === "mode") loadModesOnce();
-                if (item.id === "prompt") loadPromptsOnce();
-                if (item.id === "guardrail") loadGuardrailsOnce();
-              } else { closePicker(); executeSlashCommand(item.id, undefined, true); }
-            }} />)}
-        </SurfaceRows> : <>
-          <StringGadget label={command.label} value={commandArgument} onChange={setCommandArgument} autoFocus
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.nativeEvent.isComposing && commandArgument.trim()) {
-                event.preventDefault(); closePicker(); executeSlashCommand(command.id, commandArgument.trim(), true);
-              }
-            }} />
-          <SurfaceRows>{(command.id === "mode" ? modes.map((item) => ({ id: item.id, label: item.name }))
-            : command.id === "prompt" ? prompts.map((item) => ({ id: item.id, label: item.title }))
-              : command.id === "guardrail" ? guardrails.map((item) => ({ id: item.id, label: item.title })) : [])
-            .filter((item) => item.label.toLowerCase().includes(commandArgument.toLowerCase()))
-            .map((item) => <SurfaceRow key={item.id} id={`thread-command-argument-${item.id}`} title={item.label}
-              onOpen={() => { closePicker(); executeSlashCommand(command.id, item.label, true); }} />)}</SurfaceRows>
+          <StringGadget label="Find source" placeholder="Find source" value={sourceQuery} onChange={(value) => { setSourceQuery(value); setAcIndex(0); }} autoFocus
+            inputProps={pickerInputProps} onKeyDown={handlePickerKeyDown} />
+          <ScrollHint axis="y" scrollRef={pickerResultsRef} className="thread-picker-hint">
+            <div ref={pickerResultsRef} className="thread-picker-results">
+              <InletAutocomplete allMatches={sourceMatches} selectedIndex={selectedPickerIndex}
+                onSelectedIndexChange={setAcIndex} emptyLabel="No matches"
+                onSelectItem={(item) => { addChip(itemToRef(item)); closePicker(); }} />
+            </div>
+          </ScrollHint>
+          {sourceCapped && <span className="thread-picker-feedback">Type to filter</span>}
+        </> : !command ? <>
+          <StringGadget label="Find command" placeholder="Find command" value={commandQuery} onChange={(value) => { setCommandQuery(value); setPickerIndex(0); }} autoFocus
+            inputProps={pickerInputProps} onKeyDown={handlePickerKeyDown} />
+          <ScrollHint axis="y" scrollRef={pickerResultsRef} className="thread-picker-hint">
+            <div ref={pickerResultsRef} className="thread-picker-results" id={pickerListId} role="listbox" aria-label="Commands">
+              <SurfaceRows>
+                {commandMatches.map((item, index) => (
+                  <SurfaceRow
+                    key={item.id} id={`thread-command-${item.id}`}
+                    role="option" ariaSelected={index === selectedPickerIndex} selected={index === selectedPickerIndex}
+                    title={item.label} meta={`/${item.id}`} onOpen={() => chooseCommand(item)} />
+                ))}
+              </SurfaceRows>
+              {!commandMatches.length && <span className="thread-picker-feedback" role="status">No matches</span>}
+            </div>
+          </ScrollHint>
+        </> : <>
+          <StringGadget label={command.label} value={commandArgument} onChange={(value) => { setCommandArgument(value); setPickerIndex(0); }} autoFocus
+            inputProps={pickerInputProps} onKeyDown={handlePickerKeyDown} />
+          {command.id !== "todo" && <ScrollHint axis="y" scrollRef={pickerResultsRef} className="thread-picker-hint">
+            <div ref={pickerResultsRef} className="thread-picker-results" id={pickerListId} role="listbox" aria-label={command.label}>
+              <SurfaceRows>
+                {argumentMatches.map((item, index) => (
+                  <SurfaceRow
+                    key={item.id} id={`thread-command-argument-${item.id}`}
+                    role="option" ariaSelected={index === selectedPickerIndex} selected={index === selectedPickerIndex}
+                    title={item.label} onOpen={() => chooseArgument(item.label)} />
+                ))}
+              </SurfaceRows>
+              {argumentChoices.length > 0 && !argumentMatches.length && <span className="thread-picker-feedback" role="status">No matches</span>}
+            </div>
+          </ScrollHint>}
           <div className="thread-picker-actions">
-            <Button variant="ghost" dense onClick={() => setCommand(null)}>Back</Button>
-            <Button variant="primary" dense disabled={!commandArgument.trim()} onClick={() => {
+            <Button variant="ghost" dense onClick={() => { setCommand(null); setPickerIndex(0); }}>Back</Button>
+            <Button variant="primary" dense disabled={!validArgument} onClick={() => {
               closePicker(); executeSlashCommand(command.id, commandArgument.trim(), true);
             }}>{command.label}</Button>
           </div>
@@ -1083,7 +1153,7 @@ export function ThreadComposer({
               setAcOpen(false); setSlashOpen(false); loadPeopleOnce();
             }}>Sources</Button>
             <Button variant="ghost" dense aria-expanded={picker === "commands"} onClick={() => {
-              if (picker === "commands") closePicker(); else setPicker("commands"); setCommand(null);
+              if (picker === "commands") closePicker(); else setPicker("commands"); setCommand(null); setCommandQuery(""); setPickerIndex(0);
               setAcOpen(false); setSlashOpen(false);
             }}>Commands</Button>
           </div>
