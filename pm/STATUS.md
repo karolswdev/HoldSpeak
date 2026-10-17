@@ -4,11 +4,21 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-17 (full-main recovery follow-through)
+**Last updated:** 2026-10-17 (#1238 delivered; full-main GREEN)
 
 ## Current phase
 
-**Full-main recovery follow-through (2026-10-17).** Main `add3c231c` ran to
+**Full-main recovery — GREEN, #1238 delivered (2026-10-17).** Merged product
+head `00025d6f6` completes the isolated local full suite: **16,580 passed,
+zero failures,26 skipped,1 expected failure**,516.12seconds; mandatory live bus
+separately passes3 in24.05seconds. JUnit reconciliation accounts for all116
+tracked identities:113 exact passes and3 retired Dock cases whose four recorded
+replacements pass; no unresolved case. Actual Mermaid rendering also passes.
+The12 warnings and native/provider/harness skips remain explicit in the linked
+record; remote nightly is pending. This is local full verification, not a
+claim of physical audio/provider execution or owner visual acceptance.
+
+The preceding main `add3c231c` ran to
 completion: 3 failed / 16,571 passed / 27 skipped / 1 expected failure, plus
 3 mandatory live-bus passes. R093 reopened on the runtime module budget;
 R114/R115 now track crash recovery discovery and a transiently missing PR
@@ -19,8 +29,11 @@ checkpoint recovery pass97 checks with the real SIGKILL proof and exact audio
 retained. The release check exposed a midnight-dependent Brief test (R116);
 its controlled event/assignment clock now passes all126 service checks without
 changing production staleness. Combined ordinary quick GREEN:727 affected /
-109 desktop-phone sweep /17 canon;28 doc guards pass. Merge/delivery and
-full-main follow-through are next. The queue has116 distinct recorded cases.
+109 desktop-phone sweep /17 canon;28 doc guards pass. Merged `00025d6f6`;
+[formal Astra review](https://github.com/karolswdev/HoldSpeak/pull/1238#issuecomment-6230527009)
+RATIFY. Idle hub delivered from `wt-meeting-stop-module-20261017`, PID61678,
+port8765; health/Desk/Conductor/Models200. Frontend `2759d0c6c13d4b6b` equals
+source. Verification and delivery name the same product head.
 [Follow-through](../docs/internal/MEETING-STOP-NATIVE-2026-10-16/MODULE-FOLLOWUP.md).
 
 **Meeting Stop — #1237 delivered (2026-10-17).** Postmerge review reproduced two

@@ -118,5 +118,56 @@ staleness rule changed. The separate prior-day test remains.
 Combined ordinary quick GREEN:727 affected checks in32.11seconds,109 desktop/
 phone sweep checks in62.97seconds,17 canon guards in1.90seconds;28 documentation
 guards pass in2.60seconds. The frontend remains `2759d0c6c13d4b6b`; this release
-changes backend recovery and tests. Full-main follow-through remains open until
-the merged product source completes its full run.
+changes backend recovery and tests. The completed full-main result follows.
+
+## Delivery
+
+[#1238](https://github.com/karolswdev/HoldSpeak/pull/1238) merged as
+`00025d6f62692267fb9cd8b2d0b432374f5c5bba`.
+[Formal Astra postmerge review](https://github.com/karolswdev/HoldSpeak/pull/1238#issuecomment-6230527009)
+RATIFY. Source tree `c6114dbde8b1545eb028dd5d0c00c520c9c68966` equals the merged
+tree; frontend `2759d0c6c13d4b6b` equals source. The idle local hub now runs from
+`wt-meeting-stop-module-20261017`, PID61678, port8765. Health, Desk, Conductor and
+Models return200. Jupiter4488 remains untouched. Delivery metadata is preserved
+in that worktree's `.tmp/feedback/deployment.json`.
+
+The isolated verification tree ran the new full suite against this exact
+merged head with JUnit per-case output. Mandatory live bus passed3 in24.05seconds.
+[Remote nightly](https://github.com/karolswdev/HoldSpeak/actions/runs/39008841865)
+also targets this head; its pending result is separate from local verification.
+
+## Completed full-main verification
+
+Local full at `00025d6f6`: **16,580 passed,0 failed,26 skipped,1 expected failure,
+12 warnings**,516.12seconds. No product/test changes were made in the running
+verification tree. The test invocation excludes physical Metal and separately
+runs the mandatory live bus. HOME, DB, credentials and native effects remain
+isolated. The actual Mermaid rendering guard passes in97.438seconds using the
+cached Chromium executable; the previous environment lookup skip is closed.
+
+Exact JUnit reconciliation of the116-case queue finds113 exact historical
+identities passed. R029/R030/R031 are the recorded retired Dock pager parameters;
+all four current Today/Capture/Meetings/People replacements pass. No tracked
+case is skipped, failed, unexpectedly absent or unresolved. This includes the
+reopened Thought readiness case, runtime size guard, SIGKILL recovery, real-hub
+PR polling and midnight Brief case. Absence alone was not treated as closure.
+
+Preserved in `wt-main-proof-20261016/.tmp/recovery/`:
+`main-full-00025d6f6.log`, `main-full-00025d6f6-results.xml`,
+`main-full-00025d6f6-state.json`, `main-live-bus-00025d6f6.log` and its results XML;
+`regression-reconciliation.json` and `.md` retain each case and replacement.
+The previous red `add3c231c` logs remain alongside them.
+
+The26 skips cover unavailable optional models/dependencies, live LAN/owner
+state, replay recording, conditional risk data and the existing mesh-pairing
+harness gap. They are not passes. The12 warnings comprise3 syntax warnings in
+parked test sources and9 background-thread warnings:6 scheduled auto-stop
+callbacks and3 streaming-turn callbacks reached temporary databases without
+their tables. These remain test-lifecycle debt, not evidence of owner data loss.
+The existing expected failure is the Kestrel relationship-recall case without
+vectors; that known extraction gap remains. Actual native audio-driver
+recovery, external provider effects and owner visual judgment remain unverified.
+
+The documentation-only result update passes the ordinary quick:109 desktop/
+phone sweep and17 canon checks;28 documentation guards pass. Product and test
+source are unchanged from the fully verified, delivered head above.
