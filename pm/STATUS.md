@@ -4,11 +4,24 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-16 (Meeting stop recovery)
+**Last updated:** 2026-10-16 (Night Train rebuild)
 
 ## Current phase
 
-**Meeting stop — native cleanup bounded (2026-10-16).** The owner's Stop
+**Night Train rebuilt (2026-10-16).** Close seated compartment, walnut and
+emerald fabric, warm reading lamp, ceramic cup and open book, actual subtle
+glass reflection and fine rain. Outside: shaded mountain relief, lake glints,
+clustered firs and passing station lights on a platform. Tree flow follows its
+ground. Desktop/phone compositions and reduced motion/resize are checked in
+actual GL; final real picker walks pass at both widths. Quick GREEN:4,133
+related /109sweep /17canon; final test-only delta GREEN:4related /109sweep /
+17canon;11focused checks and final TypeScript pass. Build `e3f7871900a082c1`.
+The actual rendered first frame supplies the picker/fallback still. Local M2Max
+frame measurements are recorded; actual phone hardware and owner aesthetic
+judgment remain open. Formal postmerge review remains open.
+[Review and limits](../docs/internal/NIGHT-TRAIN-2026-10-16/VERIFICATION.md).
+
+**Meeting stop — #1233 delivered (2026-10-16).** The owner's Stop
 hung in CoreAudio and blocked the web event loop. Stop now runs off the loop;
 PCM admission closes atomically, audio finalizes before slow downstream work,
 and both native streams clean up independently under one bounded deadline.
@@ -17,7 +30,9 @@ unavailable until restart. Same-ID saving, concurrent Stop, callback cutoff and
 responsive API checks pass: 51 focused tests; quick GREEN 125 affected / 109
 sweep / 17 canon. Independent source counsel found no blocker. The owner's
 interrupted meeting and its complete audio were recovered; Desk is responsive.
-Actual driver recovery is not claimed. Formal postmerge review remains open.
+Delivered from merged main `c76fbb892` on the verified idle hub; base model
+loaded with no error and global hotkey available. Actual driver recovery is
+not claimed. Formal postmerge review remains open.
 [Build and limits](../docs/internal/MEETING-STOP-NATIVE-2026-10-16/BUILD.md) ·
 [Recovery](../docs/internal/MEETING-STOP-NATIVE-2026-10-16/RECOVERY.md).
 

@@ -35,8 +35,8 @@ book/table; cool window fill retains material shape. Bloom stays restrained.
 Avoid the current crushed exterior, glowing horizontal stitching and huge room.
 
 Outside: distant layered ridges, lake/water glints, wooded slopes, sparse near
-vegetation and occasional passing station lights. All have distinct depth and
-motion speed. Use stable seeded geometry and continuous travel; initialize at
+vegetation and occasional passing station lights. Apparent motion differs with depth; rooted objects travel
+with their ground. Use stable seeded geometry and continuous travel; initialize at
 elapsed0. Tiny carriage/camera vibration only. Keep geographic claims absent.
 The scene does not signal app activity; the journey is the background's subject.
 

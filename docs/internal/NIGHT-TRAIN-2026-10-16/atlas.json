@@ -61,6 +61,18 @@
         {
           "kind": "api",
           "method": "POST",
+          "path": "/api/directories",
+          "body": {
+            "name": "Journey notes"
+          },
+          "expect_status": 201,
+          "adapter": "http-route",
+          "capture_as": "journey_directory",
+          "capture_path": "directory.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
           "path": "/api/desk/windows/surface-places/open",
           "body": {},
           "expect_status": 200,
@@ -84,7 +96,35 @@
         "kind": "ui",
         "action": "click",
         "selector": "[data-atmosphere-choice=\"night-train\"]",
-        "adapter": "ui-by-viewport"
+        "adapter": "ui-by-viewport",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "click",
+            "selector": "[aria-label=\"Close Change places\"], [aria-label=\"Back from Change places\"]",
+            "adapter": "ui-by-viewport"
+          },
+          {
+            "kind": "ui",
+            "action": "goto",
+            "url": "/",
+            "adapter": "ui-navigation"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "selector": ".desk-stage[data-atmosphere=\"night-train\"] canvas[data-ready=\"true\"]",
+            "state": "visible",
+            "adapter": "ui-navigation"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "selector": "[data-object-id=\"zone:{journey_directory}\"]",
+            "state": "visible",
+            "adapter": "ui-navigation"
+          }
+        ]
       },
       "expected": {
         "observe_at": ".desk-stage[data-atmosphere=\"night-train\"] canvas",
@@ -93,7 +133,7 @@
           "attr": "data-ready",
           "value": "true"
         },
-        "words": "Actual collection choice loads Night Train and completes first render; motion/reduced-motion/persistence are separately observed."
+        "words": "Actual collection choice persists across reload and renders Night Train on the Desk; the created drawer remains visible over it. Motion/cleanup are separately checked on the actual scene."
       },
       "completion_bound_s": 30,
       "viewports": [

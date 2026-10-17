@@ -55,7 +55,7 @@ vi.mock("../interiors/nightTrainLandscape", () => ({
 beforeEach(() => {
   const context = { fillStyle: "", fillRect() {}, strokeStyle: "", lineWidth: 0, strokeRect() {},
     beginPath() {}, moveTo() {}, lineTo() {}, stroke() {} };
-  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(context as unknown as CanvasRenderingContext2D);
+  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(context as never);
 });
 afterEach(() => { vi.restoreAllMocks(); });
 const construct = (reducedMotion = false) => createNightTrainScene({

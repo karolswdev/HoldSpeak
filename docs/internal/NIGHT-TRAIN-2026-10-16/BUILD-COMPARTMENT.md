@@ -94,3 +94,14 @@ state, scenery/rain/parallax/vibration pause, camera framing after resize and ba
 updates, and exactly-once reflection/Room disposal with no later scene work.
 Renderer/composer are mocked; root owns shader compilation, material and visual
 judgement, actual paired captures, previews and live Desk observations.
+
+## Test mock type correction
+
+Root's final TypeScript check found that the overloaded HTML canvas `getContext`
+spy selected its GPU context signature. The test-only fake return value now uses
+the existing mock boundary's `as never` cast. Product code is unchanged.
+
+- `.tmp/night-train/compartment-typefix-run.log`: exact focused file, 1 file /
+  4 tests passed, 631 ms, exit 0.
+- `.tmp/night-train/compartment-typefix-tsc.log`: `tsc --noEmit`, exit 0, no
+  diagnostics. Both ran through the supplied shared lock/isolated HOME helper.
