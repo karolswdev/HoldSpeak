@@ -326,6 +326,7 @@ describe("Ask AI: the call, over the hub's recorded thread", () => {
     });
     replayCall(CALL.after_turn);
     renderRecorded();
+    fireEvent.click(await screen.findByRole("button", { name: "More" }));
     const glyph = await screen.findByTestId("speaker-glyph");
     expect(glyph.getAttribute("data-speaking")).toBe("false");
     fireEvent.click(glyph);
