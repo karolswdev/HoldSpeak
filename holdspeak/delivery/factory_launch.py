@@ -299,6 +299,19 @@ def _valid_profile(entry: Any) -> Optional[dict[str, Any]]:
     }
 
 
+def _write_document(path: Path, document: Mapping[str, Any]) -> None:
+    """Publish a whole document; concurrent readers keep the previous one."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
+    try:
+        temporary.write_text(
+            json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        os.replace(temporary, path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
 class AgentProfileStore:
     """Node-configured Agent Profiles at
     ``~/.holdspeak/agent_profiles.json`` (``agent_profiles_schema: 1``).
@@ -349,10 +362,7 @@ class AgentProfileStore:
             "agent_profiles_schema": AGENT_PROFILES_SCHEMA,
             "profiles": [self._profiles[k] for k in sorted(self._profiles)],
         }
-        self._path.parent.mkdir(parents=True, exist_ok=True)
-        self._path.write_text(
-            json.dumps(doc, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-        )
+        _write_document(self._path, doc)
 
     def get(self, profile_id: str) -> Optional[dict[str, Any]]:
         return self._profiles.get(str(profile_id or ""))
@@ -626,10 +636,7 @@ class LaunchLedger:
             "launches_schema": LAUNCHES_SCHEMA,
             "launches": self._records[-LAUNCH_LEDGER_MAX_ROWS:],
         }
-        self._path.parent.mkdir(parents=True, exist_ok=True)
-        self._path.write_text(
-            json.dumps(doc, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-        )
+        _write_document(self._path, doc)
 
     def record(self, launch: dict[str, Any]) -> None:
         # The kernel codec and the launch executor may hold separate ledger

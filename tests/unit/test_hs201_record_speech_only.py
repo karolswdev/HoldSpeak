@@ -38,6 +38,9 @@ class _FixtureJournal:
     def append(self, *_args: Any, **_kwargs: Any) -> None:
         return None
 
+    def seal(self) -> None:
+        return None
+
     def finalize(self) -> None:
         return None
 

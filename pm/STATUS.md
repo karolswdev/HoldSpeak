@@ -4,19 +4,38 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-17 (Meeting Stop follow-up)
+**Last updated:** 2026-10-17 (full-main recovery follow-through)
 
 ## Current phase
 
-**Meeting Stop follow-up (2026-10-17).** Postmerge review reproduced two
+**Full-main recovery follow-through (2026-10-17).** Main `add3c231c` ran to
+completion: 3 failed / 16,571 passed / 27 skipped / 1 expected failure, plus
+3 mandatory live-bus passes. R093 reopened on the runtime module budget;
+R114/R115 now track crash recovery discovery and a transiently missing PR
+receipt. The caller/helper split is AST-equivalent and passes27 scoped checks;
+the receipt's atomic publication passes its original real-hub case plus a
+deterministic before/after boundary regression. Meeting audio sealing and final
+checkpoint recovery pass97 checks with the real SIGKILL proof and exact audio
+retained. The release check exposed a midnight-dependent Brief test (R116);
+its controlled event/assignment clock now passes all126 service checks without
+changing production staleness. Combined ordinary quick GREEN:727 affected /
+109 desktop-phone sweep /17 canon;28 doc guards pass. Merge/delivery and
+full-main follow-through are next. The queue has116 distinct recorded cases.
+[Follow-through](../docs/internal/MEETING-STOP-NATIVE-2026-10-16/MODULE-FOLLOWUP.md).
+
+**Meeting Stop — #1237 delivered (2026-10-17).** Postmerge review reproduced two
 additional paths: cleanup-worker launch failure hid an unclosed device, and
 a delayed duplicate Stop overwrote Saved with Saving. The bounded corrections
 preserve audio/save/floor custody and admit one runtime Stop before visible
 effects. Three regressions fail before repair; all 18 owned checks now pass
 with real isolated DB/journal rows and controlled native streams. Ordinary
 quick GREEN: 120 affected / 109 sweep / 17 canon; 28 doc guards pass.
-Full-main follow-through remains next; actual driver recovery is
-unverified. [Follow-up](../docs/internal/MEETING-STOP-NATIVE-2026-10-16/POSTMERGE-FOLLOWUP.md).
+Merged `add3c231c`; formal Astra review RATIFY with the subsequent full-run
+findings above fixed forward. Idle local hub delivered from
+`wt-meeting-stop-review-fixes-20261017`, PID25584, port8765; four HTTP checks
+return200. Frontend `2759d0c6c13d4b6b` matches source; backend head is named
+separately. Actual driver recovery is unverified.
+[Follow-up](../docs/internal/MEETING-STOP-NATIVE-2026-10-16/POSTMERGE-FOLLOWUP.md).
 
 **Thought and Send — #1236 delivered (2026-10-16).** A lost Send answer followed by
 Back and a newer note edit showed new text above Retry for the old command.

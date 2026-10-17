@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timedelta
+from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -98,6 +100,125 @@ def test_audio_journal_manifest_only_claims_fsynced_bytes(tmp_path):
     manifest = json.loads(journal.manifest_path.read_text())
     assert manifest["status"] == "finalized"
     assert MeetingCaptureJournal.recoverable(root) == []
+
+
+def test_audio_seal_keeps_complete_bytes_recoverable_and_rejects_late_append(tmp_path):
+    root = tmp_path / "captures"
+    journal = MeetingCaptureJournal("sealed", directory=root)
+    audio = np.arange(16, dtype=np.float32)
+    journal.append("mic", audio)
+    journal.seal()
+    journal.seal()  # sealing an already stopped capture is idempotent
+
+    [manifest] = MeetingCaptureJournal.recoverable(root)
+    assert manifest["meeting_id"] == "sealed" and manifest["status"] == "recording"
+    assert manifest["durable_bytes"] == {"mic": audio.nbytes}
+    path = journal.directory / "mic.f32le.partial"
+    assert path.read_bytes() == audio.astype("<f4").tobytes()
+    journal.append("mic", audio)
+    journal.append("system", audio)
+    assert path.read_bytes() == audio.astype("<f4").tobytes()
+    assert not (journal.directory / "system.f32le.partial").exists()
+
+    journal.finalize()
+    assert json.loads(journal.manifest_path.read_text())["status"] == "finalized"
+    assert MeetingCaptureJournal.recoverable(root) == []
+
+
+def _checkpointed_session(tmp_path, monkeypatch):
+    db = Database(tmp_path / "meetings.db")
+    monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
+    checkpoint = datetime.now() - timedelta(seconds=2)
+    state = MeetingState(
+        id="stopped-capture", started_at=checkpoint - timedelta(seconds=10),
+        capture_status="recording", capture_checkpoint_at=checkpoint,
+        segments=[TranscriptSegment("checkpointed words", "Me", 0, 8)],
+    )
+    db.meetings.save_meeting(state)
+    journal = MeetingCaptureJournal(state.id, directory=tmp_path / "captures")
+    audio = np.arange(32, dtype=np.float32)
+    journal.append("mic", audio)
+    session = MeetingSession(intel_enabled=False)
+    session._state = state
+    session._capture_journal = journal
+    return db, session, journal, audio, checkpoint
+
+
+def test_stop_seals_before_slow_join_and_completes_marker_after_db_commit(tmp_path, monkeypatch):
+    db, session, journal, audio, _checkpoint = _checkpointed_session(tmp_path, monkeypatch)
+    events = []
+
+    def join(timeout):
+        [manifest] = MeetingCaptureJournal.recoverable(tmp_path / "captures")
+        assert manifest["status"] == "recording"
+        assert manifest["durable_bytes"] == {"mic": audio.nbytes}
+        journal.append("mic", audio)
+        assert (journal.directory / "mic.f32le.partial").read_bytes() == audio.astype("<f4").tobytes()
+        events.append("joined")
+
+    session._transcribe_thread = SimpleNamespace(join=join)
+    save = db.meetings.save_meeting
+
+    def commit(state):
+        assert json.loads(journal.manifest_path.read_text())["status"] == "recording"
+        events.append("committed")
+        save(state)
+
+    monkeypatch.setattr(db.meetings, "save_meeting", commit)
+    stopped = session.stop()
+    assert events == ["joined", "committed"]
+    assert stopped.capture_status == "finalized"
+    assert db.meetings.get_meeting(stopped.id).capture_status == "finalized"
+    assert json.loads(journal.manifest_path.read_text())["status"] == "finalized"
+
+
+def test_failed_final_db_checkpoint_keeps_sealed_capture_discoverable(tmp_path, monkeypatch):
+    db, session, journal, audio, checkpoint = _checkpointed_session(tmp_path, monkeypatch)
+    save = db.meetings.save_meeting
+
+    def refuse(_state):
+        raise OSError("final checkpoint refused")
+
+    monkeypatch.setattr(db.meetings, "save_meeting", refuse)
+    stopped = session.stop()
+    assert stopped.capture_status == "recoverable"
+    assert "final checkpoint refused" in stopped.capture_failure
+    [manifest] = MeetingCaptureJournal.recoverable(tmp_path / "captures")
+    assert manifest["meeting_id"] == stopped.id and manifest["status"] == "recoverable"
+    assert manifest["durable_bytes"] == {"mic": audio.nbytes}
+    path = journal.directory / "mic.f32le.partial"
+    assert path.read_bytes() == audio.astype("<f4").tobytes()
+    assert db.meetings.get_meeting(stopped.id).capture_status == "recording"
+
+    monkeypatch.setattr(db.meetings, "save_meeting", save)
+    recovered = db.meetings.recover_capture(stopped.id)
+    assert recovered.id == stopped.id and recovered.capture_status == "recovered"
+    assert recovered.ended_at == checkpoint
+    assert [segment.text for segment in recovered.segments] == ["checkpointed words"]
+    assert path.read_bytes() == audio.astype("<f4").tobytes()
+
+
+def test_failed_completion_marker_keeps_prior_atomic_manifest_discoverable(tmp_path, monkeypatch):
+    db, session, journal, audio, _checkpoint = _checkpointed_session(tmp_path, monkeypatch)
+    replace = Path.replace
+    prior = []
+
+    def fail_final_marker(path, target):
+        if path == journal.manifest_path.with_suffix(".json.tmp") and json.loads(path.read_text())["status"] == "finalized":
+            prior.append(json.loads(journal.manifest_path.read_text()))
+            raise OSError("completion marker refused")
+        return replace(path, target)
+
+    monkeypatch.setattr(Path, "replace", fail_final_marker)
+    stopped = session.stop()
+    assert len(prior) == 1 and prior[0]["status"] == "recording"
+    assert prior[0]["durable_bytes"] == {"mic": audio.nbytes}
+    assert stopped.capture_status == "recoverable"
+    assert "completion marker refused" in stopped.capture_failure
+    [manifest] = MeetingCaptureJournal.recoverable(tmp_path / "captures")
+    assert manifest["meeting_id"] == stopped.id and manifest["status"] == "recoverable"
+    assert db.meetings.get_meeting(stopped.id).capture_status == "recoverable"
+    assert (journal.directory / "mic.f32le.partial").read_bytes() == audio.astype("<f4").tobytes()
 
 
 def test_equal_clock_conflict_keeps_losing_value_once(tmp_path):
