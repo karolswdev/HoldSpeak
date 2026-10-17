@@ -124,3 +124,19 @@ C/D/E merged as #1221 and the verified build is live locally.
 and the still-pending full main tape. The bounded technical programme is
 delivered; owner visual acceptance and named external/native operations remain
 separate.
+
+## October17 owner usability follow-through
+
+The owner reopened New decision, Ask and Thread on visual quality and practical
+use. [#1243 delivery](../DAILY-EXPERIENCE-2026-10-17/RELEASE.md) supplies actual
+desktop/phone observations for decision creation/save, populated Ask
+reading/editing with canonical selected-note custody, expanded quote/source
+controls and Thread command/source navigation. It fixes failures that earlier
+presence/sweep predicates did not establish: hidden Ask, overlapping controls,
+lost explicit source context and picker focus.
+
+This supersedes the visual composition of those three faces, while carrying
+the named earlier Keep/Send/retry proofs within their original limits. It does
+not promote every inner state, live provider/native operation or the other
+surface families to newly observed or owner accepted. The inventory above
+remains active.

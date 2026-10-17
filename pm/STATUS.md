@@ -4,11 +4,11 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-17 (daily Decision, Ask and Thread experience)
+**Last updated:** 2026-10-17 (#1243 daily surfaces delivered; follow-up in progress)
 
 ## Current phase
 
-**Daily usability: Decision, Ask and Thread.** The owner's three named faces
+**Daily usability: Decision, Ask and Thread — #1243 delivered.** The owner's three named faces
 now share content-led Workbench paper, compact controls and useful phone
 layouts. New decision starts in the decision editor. Ask retains an answer
 while editing, separates sent and question sources, and carries a saved Note
@@ -20,8 +20,14 @@ command focus, source titles and a late reply hiding a newer Note handoff.
 Actual isolated desktop/phone walks cover creation, reading, editing and
 expanded source controls; phone pointer ownership is checked. Ask provider text
 is replayed at the declared boundary, not a live model-quality claim. Ordinary
-quick and normal local delivery are recorded in the release record; full-main
-follows merge in the separate proof tree. Owner visual acceptance remains open.
+quick is GREEN and the idle local hub serves build `e95ae448a3f033e6` from
+`wt-daily-experience-20261017`. Formal review RATIFY preceded full-main:
+**5 failed / 16,693 passed / 26 skipped / 1 expected failure**, plus3 mandatory
+live-bus passes. Two product labels and two stale receipt navigation tests are
+fixed forward with passing scoped checks; the memory-index lock remains
+unreproduced and unresolved after bounded diagnosis. The initial red evidence is
+retained. Owner visual acceptance remains
+open.
 [Design and release](../docs/internal/DAILY-EXPERIENCE-2026-10-17/RELEASE.md).
 
 **Tonight: three daily repairs complete — #1240/#1241 delivered, full-main GREEN.**
@@ -746,6 +752,16 @@ Now: the fast-lane change (owner ruling 2026-10-03): remove the commit gate; sto
 committing generated docs and line-number test maps; split the tests.
 
 ## Open work
+
+**Daily surfaces #1243:** owner visual acceptance remains open. One full-run
+`test_a_withdrawn_recall_never_reaches_a_later_turn[project-edit]` failed with
+`database is locked` at `memory_index.py:177`. It passes alone; the whole scoped
+file passes52 with3 recording-only skips. Bounded transaction tracing did not
+establish a cause; no speculative retry or transaction change was made. Keep
+this finding open even if the next full run passes. A recurrence needs SQLite's
+extended error code and transaction/thread trace. Exact original evidence and
+diagnosis are in the daily release record. Earlier #1214 Ask/Thread findings
+must be judged against the new face-specific proofs, not assumed all closed.
 
 **Tonight follow-through:** the first integrated sweep saw one Components-window
 HTTP503; the focused reproduction and final109-case sweep pass. Its endpoint

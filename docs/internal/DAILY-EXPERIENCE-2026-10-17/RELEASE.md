@@ -4,7 +4,7 @@ The owner's priority is how daily work looks, feels and operates. This batch reb
 
 ## Result
 
-- **New decision:** a wider, warm-paper writing surface leads the window. Context and Consequences are folds that retain drafts. The creation prompt names the decision and uses Create. Done remains in the footer on a phone.
+- **New decision:** a wider, warm-paper writing surface leads the window. Background and Consequences are folds that retain drafts. The creation prompt names the decision and uses Create. Done remains in the footer on a phone.
 - **Ask:** a stable reading window, a paper question editor and explicit question/answer sources replace the compressed form. Edit question retains the previous answer and Keep action until a new Ask. A new answer opens at its beginning. The request does not claim conversational memory it does not carry.
 - **Thread:** readable paper turns, a compact header and a bounded writer. Sources and Commands expose the existing pickers; command focus returns to the writer. Enter during streaming edits the draft, while Stop remains explicit. Expanded source lists scroll within the header and show meaningful names.
 
@@ -40,4 +40,29 @@ The populated Ask desktop walk passes at `.tmp/daily/ask-final-1440/20261017T183
 
 Source digest and built bundle agree: `e95ae448a3f033e6`. The broad ordinary quick passed 4,188 related tests and found one stale test that expected Listen before opening More. The corrected test retains all speech/stop assertions and its 11-test file passes. The final ordinary quick against product commit `3bdd33132` is GREEN: 11 related tests, 109 desktop/phone sweep cases and 17 canon checks. The earlier broad sweep and canon checks also passed. No product behavior changed between these quicks; the remaining delta is one test interaction.
 
-Independent integrated advisory review: RATIFY, recorded in `INTEGRATED-REVIEW.md`. Merge, normal local delivery and formal postmerge review follow. Full-main runs after merge in the separate proof worktree.
+Independent integrated advisory review: RATIFY, recorded in `INTEGRATED-REVIEW.md`. PR #1243 merged and was delivered locally; the formal review and subsequent full-run findings are recorded below.
+
+## Delivered, reviewed and fixed forward
+
+[PR #1243](https://github.com/karolswdev/HoldSpeak/pull/1243) merged at `018a1358f`. Normal idle delivery started PID14353 from `/Users/karol/dev/tools/wt-daily-experience-20261017`, port8765, build `e95ae448a3f033e6`. Source and served build agreed; Desk, health, Conductor and Models returned200. The actual root Desk address printed by `holdspeak web` was opened; credentials remain private. No tests or builds run in that serving tree after delivery.
+
+The final same-build desktop Ask walk also passes at `.tmp/daily/ask-scrollhint-1440/20261017T184456Z-case.daily.ask.passage-astra-1440/`: reader287px, composer225px, Ask/Keep own all nine real pointer points.
+
+[Formal Astra postmerge review](https://github.com/karolswdev/HoldSpeak/pull/1243#issuecomment-6238883336) ratified the delivered surfaces, with full-main pending. The subsequent full run at `018a1358f` completed with **5 failed, 16,693 passed, 26 skipped and 1 expected failure** in681.06seconds; mandatory live bus passed3 in24.44seconds. Evidence: `/Users/karol/dev/tools/wt-main-proof-20261016/.tmp/daily-main/{main-full.log,main-full-results.xml,main-full-state.json}`. These original failures are retained:
+
+- Product copy: the generic command action **Run** did not name its consequence. It now uses the existing command label, such as **Switch mode** or **Toggle guardrail**.
+- Product language: Decision's unqualified **Context** label becomes **Background**, including copied text. The stored field and draft custody remain unchanged.
+- Receipt browser checks at1440/393: Rename moved into **Thread details**. The tests now open that fold and retain every receipt/pointer assertion; both pass.
+- Recall withdrawal after a project edit: one `database is locked` exception occurred in the memory-index write. Diagnosis and its final disposition are recorded below; no speculative retry is added.
+
+Focused follow-up checks pass: Decision46, Thread composer93, receipt browser2 and copy/language21. The proof tree's initially empty shared dependency directory was restored from the existing verified installation. The serving source and bundle were unchanged; the proof build then matched `e95ae448a3f033e6` before the full run.
+
+### Recall lock disposition
+
+The lock remains **unresolved**, not dismissed as a flake. The original failing parameter passes alone (1), and the complete scoped file passes52 with3 fixture-recording skips after55 collected. Logs: `.tmp/daily-main/recall-{collect,original,file-before}.log`. The sweep materializes source readers before index writes; post-terminal ThreadService work is a read and cleanup, and broker receipt persistence precedes terminal publication. Bounded competing-write probes did not reproduce the exception. The original report has no SQLite extended error code, so a snapshot/upgrade race remains a hypothesis. No transaction patch, retry or sleep is justified by this evidence. A recurrence should retain `sqlite_errorname`, transaction state and SQL/thread traces. A later passing full run does not establish a cause or erase this finding.
+
+The ordinary follow-up quick check is GREEN:304 related web checks,12 affected
+browser checks,109 desktop/phone sweep cases and17 canon checks. It builds the
+follow-up source and retains logs at `.tmp/daily-main/quick-followup.log` and
+`.tmp/daily-main/quick-logs/`. The full suite will run on the merged follow-up in
+the separate proof tree, with failure-only SQLite metadata capture.

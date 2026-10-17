@@ -13,6 +13,16 @@ Full main tape and owner visual judgment remain separate.
 The owner selected an Astra master orchestrator and Sol HIGH workers for this
 programme; see [Delegation and delivery](EXECUTION.md).
 
+## Latest owner usability correction — October17
+
+The owner rejected the visual and operating quality of New decision, Ask and
+Thread despite earlier technical passes. [Daily experience #1243](../DAILY-EXPERIENCE-2026-10-17/RELEASE.md) rebuilds those three faces and closes the
+loaded phone layout, explicit Note handoff, source naming and picker-focus
+failures found during real interaction. It is merged and locally delivered.
+The earlier bounded technical closure remains historical; it does not close
+whole-product visual acceptance. Keep the rest of the surface/journey inventory
+active and prioritize visible daily work in subsequent batches.
+
 ## 1. The experience we are building
 
 HoldSpeak should feel like a crafted personal workbench: calm to read, obvious

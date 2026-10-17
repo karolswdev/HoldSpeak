@@ -983,7 +983,7 @@ export function ThreadComposer({
             <Button variant="ghost" dense onClick={() => setCommand(null)}>Back</Button>
             <Button variant="primary" dense disabled={!commandArgument.trim()} onClick={() => {
               closePicker(); executeSlashCommand(command.id, commandArgument.trim(), true);
-            }}>Run</Button>
+            }}>{command.label}</Button>
           </div>
         </>}
       </div>}

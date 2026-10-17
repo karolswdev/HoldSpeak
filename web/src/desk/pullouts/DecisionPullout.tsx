@@ -41,7 +41,7 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
   const resourceRef = qualifiedRef(o.kind, o.id);
   const { copy, receipt: copyReceipt } = useCopyReceipt();
   const decisionContent = [
-    `# Context\n\n${String(ir.contextMarkdown || "")}`,
+    `# Background\n\n${String(ir.contextMarkdown || "")}`,
     `# Decision\n\n${String(ir.decisionMarkdown || "")}`,
     `# Consequences\n\n${String(ir.consequencesMarkdown || "")}`,
   ].join("\n\n");
@@ -169,7 +169,7 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
                   }} />
               </section>
               {([
-                ["context_markdown", "Context"],
+                ["context_markdown", "Background"],
                 ["consequences_markdown", "Consequences"],
               ] as const).map(([field, label]) => (
                 <FoldGadget key={field} title={label} open={Boolean(decisionDraft[field].trim())} className="attention-decision-support">
@@ -190,7 +190,7 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
                 </section>
               ) : null}
               {String(ir.contextMarkdown || "").trim() ? (
-                <FoldGadget title="Context" open className="attention-decision-support"><Material>{String(ir.contextMarkdown)}</Material></FoldGadget>
+                <FoldGadget title="Background" open className="attention-decision-support"><Material>{String(ir.contextMarkdown)}</Material></FoldGadget>
               ) : null}
               {String(ir.consequencesMarkdown || "").trim() ? (
                 <FoldGadget title="Consequences" open className="attention-decision-support"><Material>{String(ir.consequencesMarkdown)}</Material></FoldGadget>
