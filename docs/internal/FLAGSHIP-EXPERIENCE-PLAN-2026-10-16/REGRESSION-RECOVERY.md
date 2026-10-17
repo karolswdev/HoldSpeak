@@ -14,9 +14,10 @@ Tracking alone does not finish this work.
 - [Contracts recovery tape](https://github.com/karolswdev/HoldSpeak/actions/runs/38973245716): **82 failed, 16,400 passed, 68 skipped, 1 expected failure** at #1226 (`5c26bd0fa`), before copy/runtime/browser repairs. All 82 failure names already belong to this queue.
 - Union: **112 distinct cases** across five completed tapes. Absence is not closure.
 - Recovery baseline: `2669d98f2` (#1224). The #1228 [full run](https://github.com/karolswdev/HoldSpeak/actions/runs/38979062393) is in progress; it predates the browser repairs.
-- Two producer cases were already verified by #1224. Every other case below needs current evidence.
+- Every recorded case now has current focused/quick proof or an explicit retired-contract replacement below. Full-main confirmation remains separate and pending.
 
-Working tree: `/Users/karol/dev/tools/wt-regression-recovery-20261016`.
+Delivery source: `/Users/karol/dev/tools/wt-regression-browser-delivery-20261016`.
+Earlier candidate work remains preserved in `/Users/karol/dev/tools/wt-regression-recovery-20261016`.
 Astra owns the queue, integration and verification. Sol HIGH workers own the three
 disjoint investigation/implementation groups. Root serializes isolated test and
 browser jobs. The current serving bundle stays frozen during verification.
@@ -37,90 +38,90 @@ product contract; no skips, blanket retries, threshold increases or broad exempt
 
 | ID | Group | Case | State / next verification |
 | --- | --- | --- | --- |
-| R001 | Browser journeys | `tests/e2e/test_agents_glass.py::test_a_compact_line_at_393_keeps_its_ellipsis_in_the_box[long-id]` | Current-source 166-case browser run: passed; delivery pending |
-| R002 | Browser journeys | `tests/e2e/test_agents_glass.py::test_a_compact_line_at_393_keeps_its_ellipsis_in_the_box[unbreakable-4000]` | Current-source 166-case browser run: passed; delivery pending |
-| R003 | Browser journeys | `tests/e2e/test_askai_glass.py::test_a_refused_send_reads_as_refused[1440]` | Current-source 166-case browser run: passed; delivery pending |
-| R004 | Browser journeys | `tests/e2e/test_askai_glass.py::test_a_refused_send_reads_as_refused[393]` | Current-source 166-case browser run: passed; delivery pending |
-| R005 | Browser journeys | `tests/e2e/test_askai_glass.py::test_the_ref_chip_x_paints_no_hover_background[1440]` | Current-source 166-case browser run: passed; delivery pending |
-| R006 | Browser journeys | `tests/e2e/test_askai_glass.py::test_the_ref_chip_x_paints_no_hover_background[393]` | Current-source 166-case browser run: passed; delivery pending |
-| R007 | Browser journeys | `tests/e2e/test_chair_glass.py::TestTheCardInCapture1440::test_card_in_meetings_does_not_move_capture` | Current-source 166-case browser run: passed; delivery pending |
-| R008 | Browser journeys | `tests/e2e/test_chair_glass.py::TestTheCardInCapture1440::test_closed_capture_opens_and_holds_the_whole_card` | Current-source 25-case follow-up: passed; delivery pending |
-| R009 | Browser journeys | `tests/e2e/test_chair_glass.py::TestTheCardInCapture1440::test_moved_capture_keeps_its_rect_and_the_card_scrolls_whole` | Current-source 166-case browser run: passed; delivery pending |
-| R010 | Browser journeys | `tests/e2e/test_chair_glass.py::TestTheCardInCapture1440::test_resized_capture_keeps_its_rect_and_the_card_scrolls_whole` | Current-source 166-case browser run: passed; delivery pending |
-| R011 | Browser journeys | `tests/e2e/test_chair_glass.py::TestTheChairAsWindows::test_the_chair_as_windows[1440]` | Final built browser proof: passed; delivery pending |
-| R012 | Browser journeys | `tests/e2e/test_chair_glass.py::TestTheChairAsWindows::test_the_chair_as_windows[393]` | Final built browser proof: passed; delivery pending |
-| R013 | Browser journeys | `tests/e2e/test_creation_glass.py::TestEveryNewVerbOpensItsWindow::test_a_new_verb_opens_its_window_at_once[1440-chair]` | Current-source 166-case browser run: passed; delivery pending |
-| R014 | Browser journeys | `tests/e2e/test_creation_glass.py::TestEveryNewVerbOpensItsWindow::test_a_new_verb_opens_its_window_at_once[393-chair]` | Current-source 166-case browser run: passed; delivery pending |
-| R015 | Browser journeys | `tests/e2e/test_creation_glass.py::TestEveryNewVerbOpensItsWindow::test_two_quick_presses_make_one_record[393]` | Current-source 166-case browser run: passed; delivery pending |
-| R016 | Browser journeys | `tests/e2e/test_desk_glass.py::TestDeskDebtsGlass::test_the_editor_selection_is_readable[1440]` | Current-source 166-case browser run: passed; delivery pending |
-| R017 | Browser journeys | `tests/e2e/test_desk_glass.py::TestDeskDebtsGlass::test_the_editor_selection_is_readable[393]` | Current-source 166-case browser run: passed; delivery pending |
-| R018 | Browser journeys | `tests/e2e/test_desk_glass.py::TestDeskDebtsGlass::test_the_thread_composer_selection_is_readable[1440]` | Current-source 166-case browser run: passed; delivery pending |
-| R019 | Browser journeys | `tests/e2e/test_desk_glass.py::TestDeskDebtsGlass::test_the_thread_composer_selection_is_readable[393]` | Current-source 166-case browser run: passed; delivery pending |
-| R020 | Browser journeys | `tests/e2e/test_desk_glass.py::TestObjectVerbsOnTheChair::test_1440_object_menu_f2_and_right_click` | Current-source 166-case browser run: passed; delivery pending |
-| R021 | Browser journeys | `tests/e2e/test_desk_glass.py::TestObjectVerbsOnTheChair::test_393_right_click_opens_the_object_menu` | Current-source 25-case follow-up: passed; delivery pending |
-| R022 | Browser journeys | `tests/e2e/test_desk_glass.py::TestOneDesk::test_window_delete_keeps_undo_in_view_with_a_chair_window_open[393]` | Current-source 25-case follow-up: passed; delivery pending |
-| R023 | Browser journeys | `tests/e2e/test_desk_glass.py::test_receipt_verbs_own_their_areas[1440]` | Current-source 10-case final follow-up: passed; delivery pending |
-| R024 | Browser journeys | `tests/e2e/test_desk_glass.py::test_receipt_verbs_own_their_areas[393]` | Current-source 10-case final follow-up: passed; delivery pending |
-| R025 | Browser journeys | `tests/e2e/test_desk_sweep.py::test_every_window_holds_the_fences[surface-cadence-1440]` | Current-source 166-case browser run: passed; delivery pending |
+| R001 | Browser journeys | `tests/e2e/test_agents_glass.py::test_a_compact_line_at_393_keeps_its_ellipsis_in_the_box[long-id]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R002 | Browser journeys | `tests/e2e/test_agents_glass.py::test_a_compact_line_at_393_keeps_its_ellipsis_in_the_box[unbreakable-4000]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R003 | Browser journeys | `tests/e2e/test_askai_glass.py::test_a_refused_send_reads_as_refused[1440]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R004 | Browser journeys | `tests/e2e/test_askai_glass.py::test_a_refused_send_reads_as_refused[393]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R005 | Browser journeys | `tests/e2e/test_askai_glass.py::test_the_ref_chip_x_paints_no_hover_background[1440]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R006 | Browser journeys | `tests/e2e/test_askai_glass.py::test_the_ref_chip_x_paints_no_hover_background[393]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R007 | Browser journeys | `tests/e2e/test_chair_glass.py::TestTheCardInCapture1440::test_card_in_meetings_does_not_move_capture` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R008 | Browser journeys | `tests/e2e/test_chair_glass.py::TestTheCardInCapture1440::test_closed_capture_opens_and_holds_the_whole_card` | Current-source 25-case follow-up: passed; delivered in #1231 |
+| R009 | Browser journeys | `tests/e2e/test_chair_glass.py::TestTheCardInCapture1440::test_moved_capture_keeps_its_rect_and_the_card_scrolls_whole` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R010 | Browser journeys | `tests/e2e/test_chair_glass.py::TestTheCardInCapture1440::test_resized_capture_keeps_its_rect_and_the_card_scrolls_whole` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R011 | Browser journeys | `tests/e2e/test_chair_glass.py::TestTheChairAsWindows::test_the_chair_as_windows[1440]` | Final built browser proof: passed; delivered in #1231 |
+| R012 | Browser journeys | `tests/e2e/test_chair_glass.py::TestTheChairAsWindows::test_the_chair_as_windows[393]` | Final built browser proof: passed; delivered in #1231 |
+| R013 | Browser journeys | `tests/e2e/test_creation_glass.py::TestEveryNewVerbOpensItsWindow::test_a_new_verb_opens_its_window_at_once[1440-chair]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R014 | Browser journeys | `tests/e2e/test_creation_glass.py::TestEveryNewVerbOpensItsWindow::test_a_new_verb_opens_its_window_at_once[393-chair]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R015 | Browser journeys | `tests/e2e/test_creation_glass.py::TestEveryNewVerbOpensItsWindow::test_two_quick_presses_make_one_record[393]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R016 | Browser journeys | `tests/e2e/test_desk_glass.py::TestDeskDebtsGlass::test_the_editor_selection_is_readable[1440]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R017 | Browser journeys | `tests/e2e/test_desk_glass.py::TestDeskDebtsGlass::test_the_editor_selection_is_readable[393]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R018 | Browser journeys | `tests/e2e/test_desk_glass.py::TestDeskDebtsGlass::test_the_thread_composer_selection_is_readable[1440]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R019 | Browser journeys | `tests/e2e/test_desk_glass.py::TestDeskDebtsGlass::test_the_thread_composer_selection_is_readable[393]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R020 | Browser journeys | `tests/e2e/test_desk_glass.py::TestObjectVerbsOnTheChair::test_1440_object_menu_f2_and_right_click` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R021 | Browser journeys | `tests/e2e/test_desk_glass.py::TestObjectVerbsOnTheChair::test_393_right_click_opens_the_object_menu` | Current-source 25-case follow-up: passed; delivered in #1231 |
+| R022 | Browser journeys | `tests/e2e/test_desk_glass.py::TestOneDesk::test_window_delete_keeps_undo_in_view_with_a_chair_window_open[393]` | Current-source 25-case follow-up: passed; delivered in #1231 |
+| R023 | Browser journeys | `tests/e2e/test_desk_glass.py::test_receipt_verbs_own_their_areas[1440]` | Current-source 10-case final follow-up: passed; delivered in #1231 |
+| R024 | Browser journeys | `tests/e2e/test_desk_glass.py::test_receipt_verbs_own_their_areas[393]` | Current-source 10-case final follow-up: passed; delivered in #1231 |
+| R025 | Browser journeys | `tests/e2e/test_desk_sweep.py::test_every_window_holds_the_fences[surface-cadence-1440]` | Current-source 166-case browser run: passed; delivered in #1231 |
 | R026 | Browser journeys | `tests/e2e/test_desk_sweep.py::test_every_window_holds_the_fences[surface-settings@models-393]` | Delivered in #1227; ordinary quick GREEN and desktop/phone recovery/read-state proof pass |
-| R027 | Browser journeys | `tests/e2e/test_dock_glass.py::TestDockGlass::test_the_phone_shelf_seats_and_pages_by_touch` | Current-source 166-case browser run: passed; delivery pending |
-| R028 | Browser journeys | `tests/e2e/test_dock_glass.py::TestDockPagesOnWholeIcons::test_the_phone_dock_pages_on_whole_icons` | Current-source 166-case browser run: passed; delivery pending |
-| R029 | Browser journeys | `tests/e2e/test_dock_glass.py::TestDockTap393::test_a_tap_on_a_paged_dock_presses_that_icon_393[into-view]` | Retired pager contract replaced by current four phone-door parameters (Today/Capture/Meetings/People), all pass; whole-touch ownership and window-seat return pass; delivery pending |
-| R030 | Browser journeys | `tests/e2e/test_dock_glass.py::TestDockTap393::test_a_tap_on_a_paged_dock_presses_that_icon_393[more]` | Retired pager contract replaced by current four phone-door parameters (Today/Capture/Meetings/People), all pass; whole-touch ownership and window-seat return pass; delivery pending |
-| R031 | Browser journeys | `tests/e2e/test_dock_glass.py::TestDockTap393::test_a_tap_on_a_paged_dock_presses_that_icon_393[swipe]` | Retired pager contract replaced by current four phone-door parameters (Today/Capture/Meetings/People), all pass; whole-touch ownership and window-seat return pass; delivery pending |
-| R032 | Browser journeys | `tests/e2e/test_first_use_smoke.py::test_first_use_fence[1440-900]` | Current-source 25-case follow-up: passed; delivery pending |
-| R033 | Browser journeys | `tests/e2e/test_first_use_smoke.py::test_first_use_fence[393-852]` | Current-source 25-case follow-up: passed; delivery pending |
-| R034 | Browser journeys | `tests/e2e/test_frame_glass.py::TestTheFrame::test_the_frame[393]` | Current-source 166-case browser run: passed; delivery pending |
-| R035 | Browser journeys | `tests/e2e/test_frame_glass.py::TestTheGadgets::test_gadgets_393` | Current-source 25-case follow-up: passed; delivery pending |
-| R036 | Browser journeys | `tests/e2e/test_frame_glass.py::TestTitleBarB::test_title_bar_b[393]` | Current-source 166-case browser run: passed; delivery pending |
-| R037 | Browser journeys | `tests/e2e/test_graph_walk_smoke.py::test_the_rig_drives_j9_through_the_real_hub[1440]` | Current-source 25-case follow-up: passed; delivery pending |
-| R038 | Browser journeys | `tests/e2e/test_graph_walk_smoke.py::test_the_rig_drives_j9_through_the_real_hub[393]` | Current-source 25-case follow-up: passed; delivery pending |
-| R039 | Browser journeys | `tests/e2e/test_graph_walk_smoke.py::test_the_rig_drives_the_real_atlas[case.j9.shade_receipt_open.rhythm_face]` | Current-source 166-case browser run: passed; delivery pending |
-| R040 | Browser journeys | `tests/e2e/test_kit_glass.py::test_every_verb_is_one_plate_height[393]` | Current-source 166-case browser run: passed; delivery pending |
-| R041 | Browser journeys | `tests/e2e/test_meetings_glass.py::TestOneMeetingOneWindow::test_one_meeting_opens_in_one_window_from_every_door[1440]` | Current-source 166-case browser run: passed; delivery pending |
-| R042 | Browser journeys | `tests/e2e/test_menus_glass.py::TestDoors::test_a_room_falls_to_its_dock_tile_and_comes_back[393]` | Current-source 166-case browser run: passed; delivery pending |
-| R043 | Browser journeys | `tests/e2e/test_menus_glass.py::TestDoors::test_ask_ai_comes_back_after_capture_393` | Current-source 166-case browser run: passed; delivery pending |
-| R044 | Browser journeys | `tests/e2e/test_menus_glass.py::TestSharedControlsAreSpecies::test_menus_dock_and_wings[393-852]` | Current-source 166-case browser run: passed; delivery pending |
-| R045 | Browser journeys | `tests/e2e/test_room_glass.py::TestRoomFaceGlass::test_a_refusal_and_a_lost_answer_are_named_and_retry_stays_with_its_update[1440]` | Current-source 166-case browser run: passed; delivery pending |
-| R046 | Browser journeys | `tests/e2e/test_room_glass.py::TestRoomFaceGlass::test_a_refusal_and_a_lost_answer_are_named_and_retry_stays_with_its_update[393]` | Current-source 166-case browser run: passed; delivery pending |
-| R047 | Browser journeys | `tests/e2e/test_room_glass.py::TestRoomFaceGlass::test_copy_then_mark_delivered_twice_reads_back_two_rows[1440]` | Current-source 166-case browser run: passed; delivery pending |
-| R048 | Browser journeys | `tests/e2e/test_room_glass.py::TestRoomFaceGlass::test_copy_then_mark_delivered_twice_reads_back_two_rows[393]` | Current-source 166-case browser run: passed; delivery pending |
-| R049 | Browser journeys | `tests/e2e/test_room_glass.py::TestRoomFaceGlass::test_the_update_list_words_fit_each_lifecycle[1440]` | Current-source 166-case browser run: passed; delivery pending |
-| R050 | Browser journeys | `tests/e2e/test_room_glass.py::TestRoomFaceGlass::test_the_update_list_words_fit_each_lifecycle[393]` | Current-source 166-case browser run: passed; delivery pending |
-| R051 | Browser journeys | `tests/e2e/test_room_glass.py::test_the_update_draft_wraps[1440]` | Current-source 166-case browser run: passed; delivery pending |
-| R052 | Browser journeys | `tests/e2e/test_room_glass.py::test_the_update_draft_wraps[393]` | Current-source 166-case browser run: passed; delivery pending |
-| R053 | Browser journeys | `tests/e2e/test_runs_on_glass.py::TestTheRunsOnFooter::test_the_runs_on_receipt_never_runs_into_undo[393]` | Current-source 25-case follow-up: passed; delivery pending |
-| R054 | Browser journeys | `tests/e2e/test_runs_on_glass.py::test_astra_review_real_producer[lost_update]` | Current-source 25-case follow-up: passed; delivery pending |
-| R055 | Browser journeys | `tests/e2e/test_runs_on_glass.py::test_astra_review_real_producer[meeting_undo]` | Current-source 25-case follow-up: passed; delivery pending |
-| R056 | Browser journeys | `tests/e2e/test_runs_on_glass.py::test_astra_review_real_producer[stale_confirmation]` | Current-source 25-case follow-up: passed; delivery pending |
-| R057 | Browser journeys | `tests/e2e/test_runs_on_glass.py::test_runs_on_find_on_lan_found_then_use_it_real_scanner[desktop]` | Current-source 25-case follow-up: passed; delivery pending |
-| R058 | Browser journeys | `tests/e2e/test_runs_on_glass.py::test_runs_on_find_on_lan_found_then_use_it_real_scanner[phone]` | Current-source 25-case follow-up: passed; delivery pending |
-| R059 | Browser journeys | `tests/e2e/test_runs_on_glass.py::test_runs_on_switchboard[desktop]` | Current-source 25-case follow-up: passed; delivery pending |
-| R060 | Browser journeys | `tests/e2e/test_runs_on_glass.py::test_runs_on_switchboard[phone]` | Current-source 25-case follow-up: passed; delivery pending |
-| R061 | Browser journeys | `tests/e2e/test_screen_glass.py::TestScreenDeleteGlass::test_the_delete_receipt_is_readable_in_the_viewport[393]` | Current-source 166-case browser run: passed; delivery pending |
-| R062 | Browser journeys | `tests/e2e/test_screen_glass.py::TestScreenDeleteGlass::test_the_receipt_is_readable_on_a_long_desk_at_393` | Current-source 166-case browser run: passed; delivery pending |
-| R063 | Browser journeys | `tests/e2e/test_send_glass.py::TestSendGlass::test_room_pick_when_the_update_read_fails[1440]` | Current-source 166-case browser run: passed; delivery pending |
-| R064 | Browser journeys | `tests/e2e/test_settings_glass.py::test_a_held_filter_strip_is_flat[1440]` | Current-source 10-case final follow-up: passed; delivery pending |
-| R065 | Browser journeys | `tests/e2e/test_settings_glass.py::test_a_held_filter_strip_is_flat[393]` | Current-source 10-case final follow-up: passed; delivery pending |
-| R066 | Browser journeys | `tests/e2e/test_settings_glass.py::test_summary_controls_own_the_row_height[1440]` | Current-source 166-case browser run: passed; delivery pending |
-| R067 | Browser journeys | `tests/e2e/test_settings_glass.py::test_summary_controls_own_the_row_height[393]` | Current-source 166-case browser run: passed; delivery pending |
-| R068 | Browser journeys | `tests/e2e/test_speak_glass.py::test_the_learned_row_wraps_without_overlap_at_393` | Current-source 166-case browser run: passed; delivery pending |
-| R069 | Browser journeys | `tests/e2e/test_thought_glass.py::TestTheThoughtOpensAtOnce::test_one_press_one_window_every_key[1440]` | Current-source 166-case browser run: passed; delivery pending |
-| R070 | Browser journeys | `tests/e2e/test_thought_glass.py::TestTheThoughtSends::test_write_a_thought_then_send_it_to_a_folder[1440]` | Current-source 166-case browser run: passed; delivery pending |
-| R071 | Browser journeys | `tests/e2e/test_thought_glass.py::TestTheThoughtSends::test_write_a_thought_then_send_it_to_a_folder[393]` | Current-source 166-case browser run: passed; delivery pending |
-| R072 | Browser journeys | `tests/e2e/test_thought_glass.py::test_thought_workbench_real_glass[1440]` | Current-source 166-case browser run: passed; delivery pending |
-| R073 | Browser journeys | `tests/e2e/test_today_glass.py::TestTheTodayWindowSize::test_today_opens_at_its_size_and_keeps_the_size_he_sets` | Current-source 166-case browser run: passed; delivery pending |
-| R074 | Browser journeys | `tests/e2e/test_windows_glass.py::TestCloseMeansGone::test_a_meeting_resolved_as_deleted_closes_its_card[1440]` | Current-source 166-case browser run: passed; delivery pending |
-| R075 | Browser journeys | `tests/e2e/test_windows_glass.py::TestCloseMeansGone::test_a_meeting_resolved_as_deleted_closes_its_card[393]` | Current-source 166-case browser run: passed; delivery pending |
-| R076 | Browser journeys | `tests/e2e/test_windows_glass.py::TestCloseMeansGone::test_every_opener_closes_to_the_desk[393]` | Final built browser proof: passed; delivery pending |
-| R077 | Browser journeys | `tests/e2e/test_windows_glass.py::TestCloseMeansGone::test_the_closed_intelligence_window_does_not_swallow_retry[393]` | Current-source 166-case browser run: passed; delivery pending |
-| R078 | Browser journeys | `tests/e2e/test_windows_glass.py::TestHubWindows::test_one_desk_two_views` | Current-source 166-case browser run: passed; delivery pending |
-| R079 | Browser journeys | `tests/e2e/test_windows_glass.py::TestTheDeskRemembers::test_windows_places_and_drafts_return_after_a_reload[1440]` | Final built browser proof: passed; delivery pending |
-| R080 | Browser journeys | `tests/e2e/test_windows_glass.py::TestTheDeskRemembers::test_windows_places_and_drafts_return_after_a_reload[393]` | Final built browser proof: passed; delivery pending |
-| R081 | Browser journeys | `tests/e2e/test_windows_glass.py::TestThePhoneDesk::test_the_phone_desk_393` | Final built browser proof: passed; delivery pending |
-| R082 | Browser journeys | `tests/e2e/test_windows_glass.py::TestWindowNamesOnGlass::test_the_project_room_is_named_by_its_project_and_393_shows_the_name[393]` | Current-source 166-case browser run: passed; delivery pending |
-| R083 | Browser journeys | `tests/e2e/test_windows_glass.py::TestWindowsOpenWell::test_windows_open_clear_and_come_back` | Current-source 166-case browser run: passed; delivery pending |
-| R084 | Browser journeys | `tests/e2e/test_windows_glass.py::test_escape_closes_the_strip_menu_not_the_window` | Current-source 166-case browser run: passed; delivery pending |
+| R027 | Browser journeys | `tests/e2e/test_dock_glass.py::TestDockGlass::test_the_phone_shelf_seats_and_pages_by_touch` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R028 | Browser journeys | `tests/e2e/test_dock_glass.py::TestDockPagesOnWholeIcons::test_the_phone_dock_pages_on_whole_icons` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R029 | Browser journeys | `tests/e2e/test_dock_glass.py::TestDockTap393::test_a_tap_on_a_paged_dock_presses_that_icon_393[into-view]` | Retired pager contract replaced by current four phone-door parameters (Today/Capture/Meetings/People), all pass; whole-touch ownership and window-seat return pass; delivered in #1231 |
+| R030 | Browser journeys | `tests/e2e/test_dock_glass.py::TestDockTap393::test_a_tap_on_a_paged_dock_presses_that_icon_393[more]` | Retired pager contract replaced by current four phone-door parameters (Today/Capture/Meetings/People), all pass; whole-touch ownership and window-seat return pass; delivered in #1231 |
+| R031 | Browser journeys | `tests/e2e/test_dock_glass.py::TestDockTap393::test_a_tap_on_a_paged_dock_presses_that_icon_393[swipe]` | Retired pager contract replaced by current four phone-door parameters (Today/Capture/Meetings/People), all pass; whole-touch ownership and window-seat return pass; delivered in #1231 |
+| R032 | Browser journeys | `tests/e2e/test_first_use_smoke.py::test_first_use_fence[1440-900]` | Current-source 25-case follow-up: passed; delivered in #1231 |
+| R033 | Browser journeys | `tests/e2e/test_first_use_smoke.py::test_first_use_fence[393-852]` | Current-source 25-case follow-up: passed; delivered in #1231 |
+| R034 | Browser journeys | `tests/e2e/test_frame_glass.py::TestTheFrame::test_the_frame[393]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R035 | Browser journeys | `tests/e2e/test_frame_glass.py::TestTheGadgets::test_gadgets_393` | Current-source 25-case follow-up: passed; delivered in #1231 |
+| R036 | Browser journeys | `tests/e2e/test_frame_glass.py::TestTitleBarB::test_title_bar_b[393]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R037 | Browser journeys | `tests/e2e/test_graph_walk_smoke.py::test_the_rig_drives_j9_through_the_real_hub[1440]` | Current-source 25-case follow-up: passed; delivered in #1231 |
+| R038 | Browser journeys | `tests/e2e/test_graph_walk_smoke.py::test_the_rig_drives_j9_through_the_real_hub[393]` | Current-source 25-case follow-up: passed; delivered in #1231 |
+| R039 | Browser journeys | `tests/e2e/test_graph_walk_smoke.py::test_the_rig_drives_the_real_atlas[case.j9.shade_receipt_open.rhythm_face]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R040 | Browser journeys | `tests/e2e/test_kit_glass.py::test_every_verb_is_one_plate_height[393]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R041 | Browser journeys | `tests/e2e/test_meetings_glass.py::TestOneMeetingOneWindow::test_one_meeting_opens_in_one_window_from_every_door[1440]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R042 | Browser journeys | `tests/e2e/test_menus_glass.py::TestDoors::test_a_room_falls_to_its_dock_tile_and_comes_back[393]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R043 | Browser journeys | `tests/e2e/test_menus_glass.py::TestDoors::test_ask_ai_comes_back_after_capture_393` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R044 | Browser journeys | `tests/e2e/test_menus_glass.py::TestSharedControlsAreSpecies::test_menus_dock_and_wings[393-852]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R045 | Browser journeys | `tests/e2e/test_room_glass.py::TestRoomFaceGlass::test_a_refusal_and_a_lost_answer_are_named_and_retry_stays_with_its_update[1440]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R046 | Browser journeys | `tests/e2e/test_room_glass.py::TestRoomFaceGlass::test_a_refusal_and_a_lost_answer_are_named_and_retry_stays_with_its_update[393]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R047 | Browser journeys | `tests/e2e/test_room_glass.py::TestRoomFaceGlass::test_copy_then_mark_delivered_twice_reads_back_two_rows[1440]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R048 | Browser journeys | `tests/e2e/test_room_glass.py::TestRoomFaceGlass::test_copy_then_mark_delivered_twice_reads_back_two_rows[393]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R049 | Browser journeys | `tests/e2e/test_room_glass.py::TestRoomFaceGlass::test_the_update_list_words_fit_each_lifecycle[1440]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R050 | Browser journeys | `tests/e2e/test_room_glass.py::TestRoomFaceGlass::test_the_update_list_words_fit_each_lifecycle[393]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R051 | Browser journeys | `tests/e2e/test_room_glass.py::test_the_update_draft_wraps[1440]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R052 | Browser journeys | `tests/e2e/test_room_glass.py::test_the_update_draft_wraps[393]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R053 | Browser journeys | `tests/e2e/test_runs_on_glass.py::TestTheRunsOnFooter::test_the_runs_on_receipt_never_runs_into_undo[393]` | Current-source 25-case follow-up: passed; delivered in #1231 |
+| R054 | Browser journeys | `tests/e2e/test_runs_on_glass.py::test_astra_review_real_producer[lost_update]` | Current-source 25-case follow-up: passed; delivered in #1231 |
+| R055 | Browser journeys | `tests/e2e/test_runs_on_glass.py::test_astra_review_real_producer[meeting_undo]` | Current-source 25-case follow-up: passed; delivered in #1231 |
+| R056 | Browser journeys | `tests/e2e/test_runs_on_glass.py::test_astra_review_real_producer[stale_confirmation]` | Current-source 25-case follow-up: passed; delivered in #1231 |
+| R057 | Browser journeys | `tests/e2e/test_runs_on_glass.py::test_runs_on_find_on_lan_found_then_use_it_real_scanner[desktop]` | Current-source 25-case follow-up: passed; delivered in #1231 |
+| R058 | Browser journeys | `tests/e2e/test_runs_on_glass.py::test_runs_on_find_on_lan_found_then_use_it_real_scanner[phone]` | Current-source 25-case follow-up: passed; delivered in #1231 |
+| R059 | Browser journeys | `tests/e2e/test_runs_on_glass.py::test_runs_on_switchboard[desktop]` | Current-source 25-case follow-up: passed; delivered in #1231 |
+| R060 | Browser journeys | `tests/e2e/test_runs_on_glass.py::test_runs_on_switchboard[phone]` | Current-source 25-case follow-up: passed; delivered in #1231 |
+| R061 | Browser journeys | `tests/e2e/test_screen_glass.py::TestScreenDeleteGlass::test_the_delete_receipt_is_readable_in_the_viewport[393]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R062 | Browser journeys | `tests/e2e/test_screen_glass.py::TestScreenDeleteGlass::test_the_receipt_is_readable_on_a_long_desk_at_393` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R063 | Browser journeys | `tests/e2e/test_send_glass.py::TestSendGlass::test_room_pick_when_the_update_read_fails[1440]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R064 | Browser journeys | `tests/e2e/test_settings_glass.py::test_a_held_filter_strip_is_flat[1440]` | Current-source 10-case final follow-up: passed; delivered in #1231 |
+| R065 | Browser journeys | `tests/e2e/test_settings_glass.py::test_a_held_filter_strip_is_flat[393]` | Current-source 10-case final follow-up: passed; delivered in #1231 |
+| R066 | Browser journeys | `tests/e2e/test_settings_glass.py::test_summary_controls_own_the_row_height[1440]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R067 | Browser journeys | `tests/e2e/test_settings_glass.py::test_summary_controls_own_the_row_height[393]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R068 | Browser journeys | `tests/e2e/test_speak_glass.py::test_the_learned_row_wraps_without_overlap_at_393` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R069 | Browser journeys | `tests/e2e/test_thought_glass.py::TestTheThoughtOpensAtOnce::test_one_press_one_window_every_key[1440]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R070 | Browser journeys | `tests/e2e/test_thought_glass.py::TestTheThoughtSends::test_write_a_thought_then_send_it_to_a_folder[1440]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R071 | Browser journeys | `tests/e2e/test_thought_glass.py::TestTheThoughtSends::test_write_a_thought_then_send_it_to_a_folder[393]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R072 | Browser journeys | `tests/e2e/test_thought_glass.py::test_thought_workbench_real_glass[1440]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R073 | Browser journeys | `tests/e2e/test_today_glass.py::TestTheTodayWindowSize::test_today_opens_at_its_size_and_keeps_the_size_he_sets` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R074 | Browser journeys | `tests/e2e/test_windows_glass.py::TestCloseMeansGone::test_a_meeting_resolved_as_deleted_closes_its_card[1440]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R075 | Browser journeys | `tests/e2e/test_windows_glass.py::TestCloseMeansGone::test_a_meeting_resolved_as_deleted_closes_its_card[393]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R076 | Browser journeys | `tests/e2e/test_windows_glass.py::TestCloseMeansGone::test_every_opener_closes_to_the_desk[393]` | Final built browser proof: passed; delivered in #1231 |
+| R077 | Browser journeys | `tests/e2e/test_windows_glass.py::TestCloseMeansGone::test_the_closed_intelligence_window_does_not_swallow_retry[393]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R078 | Browser journeys | `tests/e2e/test_windows_glass.py::TestHubWindows::test_one_desk_two_views` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R079 | Browser journeys | `tests/e2e/test_windows_glass.py::TestTheDeskRemembers::test_windows_places_and_drafts_return_after_a_reload[1440]` | Final built browser proof: passed; delivered in #1231 |
+| R080 | Browser journeys | `tests/e2e/test_windows_glass.py::TestTheDeskRemembers::test_windows_places_and_drafts_return_after_a_reload[393]` | Final built browser proof: passed; delivered in #1231 |
+| R081 | Browser journeys | `tests/e2e/test_windows_glass.py::TestThePhoneDesk::test_the_phone_desk_393` | Final built browser proof: passed; delivered in #1231 |
+| R082 | Browser journeys | `tests/e2e/test_windows_glass.py::TestWindowNamesOnGlass::test_the_project_room_is_named_by_its_project_and_393_shows_the_name[393]` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R083 | Browser journeys | `tests/e2e/test_windows_glass.py::TestWindowsOpenWell::test_windows_open_clear_and_come_back` | Current-source 166-case browser run: passed; delivered in #1231 |
+| R084 | Browser journeys | `tests/e2e/test_windows_glass.py::test_escape_closes_the_strip_menu_not_the_window` | Current-source 166-case browser run: passed; delivered in #1231 |
 | R085 | Runtime and producers | `tests/integration/test_desk_chair.py::test_the_rows_the_chair_opens_carry_their_objects` | Verified in #1224; producer and consumer checks passed |
 | R086 | Runtime and producers | `tests/integration/test_desk_firstrun.py::test_a_lan_box_as_default_keeps_the_speech_download` | Delivered in #1226; affected checks and ordinary quick checks pass |
 | R087 | Runtime and producers | `tests/integration/test_face_wire_fences.py::test_honest_faces_and_arrival_reads` | Verified in #1224; producer and consumer checks passed |
@@ -147,8 +148,7 @@ product contract; no skips, blanket retries, threshold increases or broad exempt
 | R108 | Guards and copy | `tests/unit/test_product_copy.py::test_primary_copy_has_no_prohibited_operational_drift` | Delivered in #1227; ordinary quick GREEN and desktop/phone recovery/read-state proof pass |
 | R109 | Guards and copy | `tests/unit/test_product_language.py::test_primary_ui_has_no_new_unqualified_ambiguous_terms` | Delivered in #1227; ordinary quick GREEN and desktop/phone recovery/read-state proof pass |
 | R110 | Guards and copy | `tests/unit/test_static_sql_matches_schema.py::test_unchecked_statements_are_named_counted_and_do_not_grow` | Delivered in #1226; affected checks and ordinary quick checks pass |
-
-| R111 | Browser journeys | `tests/e2e/test_thought_glass.py::test_thought_workbench_real_glass[393]` | Current-source 166-case browser run: passed; delivery pending |
+| R111 | Browser journeys | `tests/e2e/test_thought_glass.py::test_thought_workbench_real_glass[393]` | Current-source 166-case browser run: passed; delivered in #1231 |
 | R112 | Runtime and producers | `tests/unit/test_calendar_ingest.py::TestB11BothConductors::test_event_born_row_is_armed_and_started_by_the_136_conductor` | Delivered in #1228; 575 affected / 109 sweep / 17 canon GREEN |
 
 ## Delivery log
@@ -333,3 +333,16 @@ product contract; no skips, blanket retries, threshold increases or broad exempt
   **4,169 web / 183 affected / 109 sweep / 17 canon** run. Current source/build
   match `372447f4cba801bb`; actual corrected 1440/393 shots inspected. Merge and
   authorized idle-hub delivery are next.
+
+- [#1231](https://github.com/karolswdev/HoldSpeak/pull/1231) merged
+  `9079a4be2f3faf88de453e6544802ebec1f5426c`. Formal Astra postmerge review
+  [RATIFY](https://github.com/karolswdev/HoldSpeak/pull/1231#issuecomment-6227157015).
+  Browser recovery, Room ink and readable Activity titles are delivered.
+  Idle-hub delivery: PID 16443, build `372447f4cba801bb`, port 8765; health,
+  Desk, Conductor and Models return 200. Verified tree
+  `4b1bb15dd5c3e9919a47a108508455a981791d0e` equals the merged source.
+  The #1229 orbital places are preserved.
+- Full-main follow-up [38985257857](https://github.com/karolswdev/HoldSpeak/actions/runs/38985257857)
+  targets the #1231 merge and is queued. The #1228 tape is still in progress.
+  No full-main green or owner visual acceptance is claimed.
+  [Delivery record](POSTMERGE-RECOVERY.md).

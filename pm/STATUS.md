@@ -8,16 +8,19 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
-**Browser recovery — verified; delivery next (2026-10-16).** Activity owns
-Finished receipts with exact source doors and one-Back return. Phone swipe/Depth,
-Capture/Today, Go toggle, record-window identity and Chair geometry are repaired.
-The broad ordinary quick is GREEN: **4,169 web / 183 affected / 109 sweep /
-17 canon**; 639 graph checks and TypeScript pass. Room contrast is 17.12:1
-at both widths (1.03:1 before). Final visual review found a squeezed phone
-Activity title; the existing wrapping row fixes it, with four actual layout/return
-cases and 17 Activity checks passing. The final delta quick is GREEN: **4,117
-related web / 109 sweep / 17 canon**. Source/build match `372447f4cba801bb`;
-actual 1440/393 shots inspected. Merge and idle-hub delivery remain.
+**Browser recovery — #1231 delivered (2026-10-16).** Activity owns Finished
+receipts with exact source doors, readable phone titles and one-Back return.
+Phone swipe/Depth, Capture/Today, Go toggle, record-window identity and Chair
+geometry are repaired. Room claim contrast is 17.12:1 at both widths (1.03:1
+before). Broad quick GREEN: **4,169 web / 183 affected / 109 sweep / 17 canon**.
+Final Activity delta quick GREEN: **4,117 related web / 109 sweep / 17 canon**;
+TypeScript, 639 graph checks, actual layout/return and counterfactual readability
+proof pass. Merged `9079a4be2`; formal Astra postmerge review RATIFY. Idle-hub
+delivery serves build `372447f4cba801bb`, PID 16443, port 8765, with source/build
+agreement and four successful HTTP checks. All 112 historical cases have current
+proof/replacement records. Full-main #1231 is queued; #1228 remains in progress.
+[Queue and limits](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/REGRESSION-RECOVERY.md) ·
+[Delivery record](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/POSTMERGE-RECOVERY.md).
 
 **Orbital places — #1229 (2026-10-16).** Change places adds live Mars with
 Phobos/Deimos and Saturn with layered rings, Titan/Enceladus. Local terrain/sky,
@@ -65,15 +68,14 @@ the prior delivery on port 8765, PID 28926 (superseded by #1226); health, Desk, 
 Three regression checks fail on the original implementation and pass fixed.
 The wider recovery queue remains active.
 
-**Broader regression recovery — active (2026-10-16).** The owner expanded the
+**Broader regression recovery — delivered; full-main follow-up pending (2026-10-16).** The owner expanded the
 work to resolve the full-tape failures. All 112 distinct failing cases across the
 five completed tapes are now tracked with fix ownership and next proof in
 the [recovery queue](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/REGRESSION-RECOVERY.md).
 The latest completed tape (#1226, before later repairs) has 82 failures / 16,400
-passes; every failure is already in the queue. Copy and runtime repairs are
-delivered; browser recovery is in final verification. A further visual Room ink
-defect is being fixed. The #1228 full run remains in progress. Inherited status
-does not close a case.
+passes; every failure is already in the queue. Copy, runtime and browser repairs are
+delivered, including the additional Room ink and Activity title findings. #1231
+full-main is queued and #1228 is in progress. Inherited status does not close a case.
 
 **Owner desktop density feedback — #1223 (2026-10-16).**
 Artifact footer actions retain vertical clearance on first open and through
