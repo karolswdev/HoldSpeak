@@ -208,6 +208,9 @@ class MemoryIndexRepository(BaseRepository):
 
     @staticmethod
     def _delete_vectors(conn: sqlite3.Connection, chunk_ids: Sequence[str]) -> None:
+        if not chunk_ids:
+            # Empty executemany starts a transaction before first-use FTS reads.
+            return
         conn.executemany(
             "DELETE FROM memory_embeddings WHERE item_kind=? AND item_id=?",
             [(CHUNK_ITEM_KIND, chunk_id) for chunk_id in chunk_ids],

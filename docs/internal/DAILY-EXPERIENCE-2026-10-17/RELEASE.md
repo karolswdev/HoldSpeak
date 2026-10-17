@@ -57,7 +57,7 @@ The final same-build desktop Ask walk also passes at `.tmp/daily/ask-scrollhint-
 
 Focused follow-up checks pass: Decision46, Thread composer93, receipt browser2 and copy/language21. The proof tree's initially empty shared dependency directory was restored from the existing verified installation. The serving source and bundle were unchanged; the proof build then matched `e95ae448a3f033e6` before the full run.
 
-### Recall lock disposition
+### Initial recall lock disposition (superseded by the reproduced cause below)
 
 The lock remains **unresolved**, not dismissed as a flake. The original failing parameter passes alone (1), and the complete scoped file passes52 with3 fixture-recording skips after55 collected. Logs: `.tmp/daily-main/recall-{collect,original,file-before}.log`. The sweep materializes source readers before index writes; post-terminal ThreadService work is a read and cleanup, and broker receipt persistence precedes terminal publication. Bounded competing-write probes did not reproduce the exception. The original report has no SQLite extended error code, so a snapshot/upgrade race remains a hypothesis. No transaction patch, retry or sleep is justified by this evidence. A recurrence should retain `sqlite_errorname`, transaction state and SQL/thread traces. A later passing full run does not establish a cause or erase this finding.
 
@@ -115,3 +115,66 @@ and `.tmp/daily-main/decision-phase8-393/20261017T192715Z-case.p8.decision_heads
 Ordinary documentation quick passes109 desktop/phone sweep cases and17 canon
 checks; the final case-only metadata adjustment has its separate scoped checks
 and actual walks. The unchanged product bundle remains `22aa76d6327046a1`.
+
+
+## Recall contention reproduced and fixed forward
+
+The third full run at `d32acd2ac` retained one failure: initial indexing in
+`test_a_memory_search_result_is_never_replayed_on_a_later_turn[delete-cloud]`.
+It failed before a chat turn, with SQLite code5 (`SQLITE_BUSY`) on the FTS
+DELETE. Exact tail: `1 failed, 16697 passed, 26 skipped, 1 xfailed, 12 warnings
+in 665.39s`; mandatory live bus passed3 in23.73seconds. Original evidence
+remains in `.tmp/daily-final/`; no prior run is relabelled green.
+
+The cause is now reproduced. Python SQLite opens a deferred transaction even
+for `executemany` with an empty input. On a fresh connection, first-use FTS
+preparation reads its configuration inside that transaction, then fails to
+upgrade the read transaction when a competing writer exists. The held-writer
+probe reproduces code5 in0.00689seconds; a warm connection waits5.36seconds.
+The event-controlled regression commits a real concurrent Note write at the
+FTS DELETE boundary and reproduces the stale snapshot without timing sleeps.
+Logs: `.tmp/daily-main/recall-first-use-contention.log`,
+`recall-empty-vector-guard.log` and `memory-contention-baseline.log`.
+
+The correction makes deletion of an empty vector list a true no-op, leaving
+FTS preparation outside the unnecessary transaction. Nonempty deletion and
+atomic source/chunk/keyword writes retain their existing behavior. The new
+regression fails on unchanged product at the same FTS DELETE and checks the
+actual saved Note, source ledger, chunks and FTS match after repair. Both scoped
+files pass59 with3 recording-only skips after62 collected; the baseline
+regression fails in0.54seconds and the fixed run completes in36.16seconds.
+Evidence: `.tmp/daily-main/memory-contention-{collect,baseline,fixed}.log`. The exact
+startup writer in the full run is still unidentified; the shared concurrency
+defect and minimal correction are independently reproduced. No retry or sleep
+is added to product code.
+
+The [final merged verification record](https://github.com/karolswdev/HoldSpeak/pull/1244#issuecomment-6239495252)
+will retain the correction's exact merged head, delivery, formal review and
+postmerge result. The frontend is unchanged, so the existing desktop/phone
+observations and source/bundle digest `22aa76d6327046a1` still apply.
+
+
+### Separate People availability finding
+
+The recall correction's first ordinary quick passed147 affected checks and17
+canon checks, but its sweep reported2 failures/107 passes: People relationship
+reads returned503 while opening Settings and Places. The exact endpoints are
+`/api/people/relationships/{id}/brief` and `/api/people/relationships`. An exact
+two-case repeat passed Places and failed Settings again; a subsequent Settings
+run with failure-only People diagnostics passed. This is not closed by a
+passing repeat. The cause remains unknown; isolated fixtures use a private
+keyfile/sidecar per worker, not the owner's native key or People store.
+
+Preserved evidence: `.tmp/daily-recall/quick-first-logs/`,
+`.tmp/daily-main/recall-sweep-two.log` and `recall-people-diagnostic.log`.
+The follow-up ordinary quick retains failure-only error-chain diagnostics to
+distinguish encrypted-store readiness from plaintext aggregation failure.
+No error suppression, retry, or People product change is included.
+
+
+The final ordinary quick is GREEN:147 affected checks,109 desktop/phone sweep
+cases and17 canon checks. Logs: `.tmp/daily-main/quick-recall-final.log` and
+`.tmp/daily-main/quick-logs/`. This permits the bounded recall correction to
+merge; it does not erase the separately recorded intermittent People503s.
+Merged-head full verification and idle delivery are recorded in the stable
+final verification link above.
