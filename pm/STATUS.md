@@ -8,7 +8,7 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
-**Daily work: readable documents and useful save/return paths.** Decision now
+**Daily work: readable documents and useful save/return paths — #1247.** Decision now
 keeps unfinished writing across close/reload and clears only acknowledged
 fields. Ask gives the answer more room, opens its exact saved artifact and
 preserves the question/context on return. Thread commands are searchable with
@@ -21,6 +21,7 @@ Ask's provider reply is declared replay. Independent review caught and closed
 background Escape and missing Retry continuation. The release check, merged
 head, formal review and idle delivery are retained in the
 [release record](../docs/internal/DAILY-DELIGHT-2026-10-17/RELEASE.md).
+[Exact merged verification and local delivery](https://github.com/karolswdev/HoldSpeak/pull/1247#issuecomment-6243418855) are updated after merge.
 Owner aesthetic acceptance is open. Prior Room phone review and People503
 findings remain explicitly tracked; this UI pass does not claim to fix them.
 

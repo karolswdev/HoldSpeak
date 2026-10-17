@@ -22,7 +22,7 @@ Independent source review found and closed two defects before delivery: backgrou
 
 The previous merged full run at`ebd2387b1` had16,698 passes and one Room review phone failure (`summary.phase_results` absent before the UI press). Its exact paired rerun passed; the cause remains unknown. The earlier People503 in quick/sweep is also unresolved despite a later green quick. Both remain tracked in the [prior exact verification](https://github.com/karolswdev/HoldSpeak/pull/1244#issuecomment-6239495252). This UI change does not claim to fix either.
 
-Formal postmerge review, exact merged full-suite result and idle local delivery are recorded in the PR and linked from Status. Physical phone hardware, real provider output and native voice capture are outside these isolated UI proofs.
+Formal postmerge review, exact merged full-suite result and idle local delivery are recorded in [#1247 verification](https://github.com/karolswdev/HoldSpeak/pull/1247#issuecomment-6243418855) and linked from Status. Physical phone hardware, real provider output and native voice capture are outside these isolated UI proofs.
 
 ## Completed runtime proof
 
