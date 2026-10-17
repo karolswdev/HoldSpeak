@@ -61,7 +61,7 @@ type Outcome =
   | { kind: "refused"; code: string; at: number }
   | { kind: "lost" }
   | { kind: "settled"; send: Send };
-type Held = { key: string; body: { send_id?: string; document_ref?: string; destination_id?: string; preview_digest?: string } };
+type Held = { key: string; body: { send_id?: string; document_ref?: string; destination_id?: string; preview_digest?: string }; preview?: Preview };
 const store = {
   picked: new Map<string, string | null>(),          // ref -> destination id
   preparedOpen: new Map<string, string | null>(),    // ref -> the one open prepared row (absent = the first)
@@ -399,11 +399,11 @@ export function ProofCell({ channel, proof, target, account }: {
 
 /* ── the press ─────────────────────────────────────────────────────── */
 
-async function press(ref: string, target: string, fresh: () => Held["body"], reload: () => void, onSettled?: () => void) {
+async function press(ref: string, target: string, fresh: () => Held["body"], reload: () => void, onSettled?: () => void, preview?: Preview) {
   const k = `${ref}|${target}`;
   if (store.busy.has(k)) return;                 // a double-click is one press
   let held = store.holds.get(k);
-  if (!held) { held = { key: commandId(), body: fresh() }; store.holds.set(k, held); }
+  if (!held) { held = { key: commandId(), body: fresh(), preview }; store.holds.set(k, held); }
   store.busy.add(k); store.outcomes.set(k, { kind: "none" }); bump();
   try {
     const pending = wire.send({ ...held.body, command_id: held.key });
@@ -533,7 +533,8 @@ export function SendWell({ doc, sendsRead, onSettled, head }: {
   // The well's first reads: its destinations, its sends, and the preview of
   // the destination it picked on its own (Astra r1 on #1108: the preview drew
   // above the meeting's Decide and Transcript after the body was shown).
-  const previewRead = !picked || (preview !== null && preview.ref === ref && preview.id === picked);
+  const heldPreview = picked ? store.holds.get(`${ref}|${picked}`)?.preview : undefined;
+  const previewRead = !picked || Boolean(heldPreview) || (preview !== null && preview.ref === ref && preview.id === picked);
   const wellRead = (dests.data !== null || dests.failed) && (sendsRead.data !== null || sendsRead.failed) && previewRead;
   useLayoutEffect(() => { reportRead?.(wellRead); }, [reportRead, wellRead]);
 
@@ -594,17 +595,21 @@ export function SendWell({ doc, sendsRead, onSettled, head }: {
                 const busy = store.busy.has(k);
                 const lost = o.kind === "lost";
                 const pv = preview && preview.ref === ref && preview.id === d.id ? preview : null;
+                // Retry replays the held command's bytes, even after Back
+                // and a newer save. Show that command's original preview.
+                const activePreview = held?.preview ?? (pv && !("failed" in pv)
+                  ? previewOf(d.channel, d.target, d.account, pv.preview) : null);
                 const running = last?.state === "dispatching";
                 const far = farSide(d.channel, d.target, d.account);
                 const verbs = (
                   <div className="send-verbs" data-testid="send-verbs">
                     <Button dense variant="primary" loading={busy || running}
-                      disabled={!pv || "failed" in pv || running}
+                      disabled={!activePreview || running}
                       data-testid={lost ? "send-retry" : "send-verb"}
                       onClick={() => void press(ref, d.id, () => ({
                         document_ref: ref, destination_id: d.id,
                         preview_digest: (pv as { digest: string }).digest,
-                      }), reload, onSettled)}>
+                      }), reload, onSettled, activePreview ?? undefined)}>
                       {lost ? SEND_WORDS.retry : last ? SEND_WORDS.sendAgain : SEND_WORDS.send}
                     </Button>
                     <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
@@ -645,11 +650,11 @@ export function SendWell({ doc, sendsRead, onSettled, head }: {
                   >
                     {open ? (
                       <div className="send-open" data-testid="send-open" data-destination={d.name}>
-                        {!pv && !pendingReads ? <div data-testid="send-preview-loading"><SurfaceState loading /></div> : null}
-                        {pv && !("failed" in pv)
-                          ? <PreviewWell preview={previewOf(d.channel, d.target, d.account, pv.preview)} testid="send-preview" verbs={verbs} />
+                        {!activePreview && !pv && !pendingReads ? <div data-testid="send-preview-loading"><SurfaceState loading /></div> : null}
+                        {activePreview
+                          ? <PreviewWell preview={activePreview} testid="send-preview" verbs={verbs} />
                           : null}
-                        {pv && "failed" in pv ? <PreviewFailed pv={pv} eg={eg} onRetry={() => setPreviewTry((n) => n + 1)} /> : null}
+                        {!activePreview && pv && "failed" in pv ? <PreviewFailed pv={pv} eg={eg} onRetry={() => setPreviewTry((n) => n + 1)} /> : null}
                       </div>
                     ) : null}
                   </SurfaceLedgerRow>

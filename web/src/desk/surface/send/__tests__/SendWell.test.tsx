@@ -19,8 +19,9 @@ vi.mock("../../../../pages/cores/connections/api", async () => {
 
 import { ApiError } from "../../../../lib/api";
 import { PreparedChip, SendWells, resetSendStore, type DocRef } from "..";
-import { BriefSendWells, DecisionRecordSendWells, DeskDecisionSendWells } from "../../../documentSends";
+import { BriefSendWells, DecisionRecordSendWells, DeskDecisionSendWells, NoteSendWells } from "../../../documentSends";
 import { useDesk } from "../../../store";
+import noteReturn from "./fixtures/note-held-retry-return.json";
 
 const REF = "monday_brief:b1";
 const BRIEF: DocRef = { ref: REF, title: "Brief Sep 29", label: "BRIEF SEP 29" };
@@ -76,6 +77,67 @@ const noManualRow = () => {
   expect(document.body.textContent).not.toContain("Mark delivered");
   expect(document.body.textContent).not.toContain("DELIVERY");
 };
+
+it.each(["ready", "pending"] as const)("keeps a lost Note command's preview across Back and a newer save with fresh preview %s", async (freshState) => {
+  // These envelopes come from the same real Note save/Send/folder/Back loop.
+  const ref = noteReturn.old_preview.document_ref;
+  const id = ref.slice("note:".length);
+  const originalText = noteReturn.old_preview.preview.text;
+  const newText = noteReturn.new_preview.preview.text;
+  let stored: Send[] = [];
+  const submitted: Array<Record<string, unknown>> = [];
+  let resolveReplay!: (answer: typeof noteReturn.replay) => void;
+  let resolveFresh!: (answer: typeof noteReturn.new_preview) => void;
+  routes["GET /api/channels/destinations"] = () => noteReturn.destinations;
+  routes["GET /api/channels/sends"] = () => ({ sends: stored });
+  routes["POST /api/channels/preview"] = (init) => {
+    previews.push(String(init.json?.document_ref));
+    if (previews.length === 1) return noteReturn.old_preview;
+    if (freshState === "pending") return new Promise((resolve) => { resolveFresh = resolve; });
+    return noteReturn.new_preview;
+  };
+  routes["POST /api/channels/send"] = (init) => {
+    submitted.push(init.json!);
+    if (submitted.length === 1) {
+      stored = [noteReturn.old_send.send as Send];
+      throw new Error("response lost after dispatch");
+    }
+    if (submitted.length === 2) return new Promise((resolve) => { resolveReplay = resolve; });
+    stored = [...stored, noteReturn.new_send.send as Send];
+    return noteReturn.new_send;
+  };
+  const original = render(<NoteSendWells id={id} title={noteReturn.old_preview.title} version={2} />);
+  expect(await screen.findByTestId("send-preview-body")).toHaveTextContent(noteReturn.old_preview.title);
+  fireEvent.click(screen.getByTestId("send-verb"));
+  await screen.findByTestId("send-retry");
+  original.unmount();
+
+  render(<NoteSendWells id={id} title={noteReturn.new_preview.title} version={3} />);
+  await waitFor(() => expect(previews).toEqual([ref, ref]));
+  expect(await screen.findByTestId("send-preview-body")).toHaveTextContent(noteReturn.old_preview.title);
+  expect(screen.getByTestId("send-preview-body")).not.toHaveTextContent(noteReturn.new_preview.title);
+  const retry = await screen.findByTestId("send-retry");
+  expect(retry).toBeEnabled();
+  fireEvent.click(retry);
+  expect(screen.getByTestId("send-preview-body")).toHaveTextContent(noteReturn.old_preview.title);
+  await act(async () => { resolveReplay(noteReturn.replay); });
+
+  expect(submitted[0]).toMatchObject({ document_ref: ref, destination_id: noteReturn.old_preview.destination_id, preview_digest: noteReturn.old_preview.payload_digest });
+  expect(submitted[1]).toEqual(submitted[0]);
+  expect(stored).toHaveLength(1);
+  expect(stored[0].id).toBe(noteReturn.replay.send.id);
+  if (freshState === "pending") await act(async () => { resolveFresh(noteReturn.new_preview); });
+  await screen.findByTestId("send-sent");
+  await waitFor(() => expect(screen.getByTestId("send-preview-body")).toHaveTextContent(noteReturn.new_preview.title));
+  expect(screen.getByTestId("send-verb")).toHaveTextContent("Send again");
+  fireEvent.click(screen.getByTestId("send-verb"));
+  await waitFor(() => expect(submitted).toHaveLength(3));
+  expect(submitted[2].preview_digest).toBe(noteReturn.new_preview.payload_digest);
+  expect(submitted[2].command_id).not.toBe(submitted[0].command_id);
+  expect(stored.map((row) => row.preview.text)).toEqual([originalText, newText]);
+  expect(stored.map((row) => row.id)).toEqual([noteReturn.old_send.send.id, noteReturn.new_send.send.id]);
+  await waitFor(() => expect(screen.getByTestId("send-sent")).toHaveTextContent(noteReturn.new_send.send.proof.path.split("/").at(-1)!));
+});
 
 describe("decision document hosts unfold Send only on request", () => {
   it.each([

@@ -4,9 +4,24 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-16 (Night Train fidelity correction)
+**Last updated:** 2026-10-16 (Thought and Send continuation)
 
 ## Current phase
+
+**Thought and Send continuation (2026-10-16).** A lost Send answer followed by
+Back and a newer note edit showed new text above Retry for the old command.
+The shared Send well now retains the original preview with its pending command;
+Retry recovers the same send, and a distinct Send again uses the newer words.
+Real local file/row/return checks pass at 1440/393. The final recovery tape
+finished with **1 failed / 16,514 passed**: the Thought test asserted a footer
+while the frame still loaded. Its deterministic held-read check now proves
+exact buffered text, focus and send custody. New Project create/reopen/reload
+also passes with one exact project row. The historical queue now includes
+113 distinct cases, including a previously unrecorded long-context case from
+the earlier runtime tape. Ordinary quick GREEN: 4,119 related web / 17 Thought
+browser / 109 Desk sweep / 17 canon. Source/build `2759d0c6c13d4b6b` agree.
+Full-main follow-through is the active next check.
+[Continuation and proof](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/THOUGHT-SEND.md).
 
 **Night Train fidelity — #1235 (2026-10-16).** Corrects the rejected #1234
 scene: supported curved book pages, steady camera, actual multisampled
@@ -72,8 +87,9 @@ Final Activity delta quick GREEN: **4,117 related web / 109 sweep / 17 canon**;
 TypeScript, 639 graph checks, actual layout/return and counterfactual readability
 proof pass. Merged `9079a4be2`; formal Astra postmerge review RATIFY. Idle-hub
 delivery serves build `372447f4cba801bb`, PID 16443, port 8765, with source/build
-agreement and four successful HTTP checks. All 112 historical cases have current
-proof/replacement records. Full-main #1231 is queued; #1228 remains in progress.
+agreement and four successful HTTP checks. The later #1232 full run reached 16,514 passes and reopened R071 only;
+the active continuation above repairs that readiness check and records the
+additional R113 identity from the older #1228 tape.
 [Queue and limits](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/REGRESSION-RECOVERY.md) ·
 [Delivery record](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/POSTMERGE-RECOVERY.md).
 
