@@ -955,7 +955,9 @@ describe("ThreadComposer", () => {
     fireEvent.click(screen.getByText("Switch mode"));
     const argumentInput = screen.getByRole("textbox", { name: "Switch mode" });
     await waitFor(() => expect(document.activeElement).toBe(argumentInput));
-    fireEvent.click(await screen.findByText("Review"));
+    await screen.findByText("Review");
+    fireEvent.change(argumentInput, { target: { value: "Review" } });
+    fireEvent.click(screen.getByRole("button", { name: "Switch mode" }));
     await waitFor(() => expect(document.activeElement).toBe(input));
     expect(onModeSelect).toHaveBeenCalledExactlyOnceWith("mode-review");
     expect(input.value).toBe("Keep this question");

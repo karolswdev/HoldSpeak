@@ -119,7 +119,7 @@ describe("PHILO-8-04 the decision window shows no empty heading", () => {
     render(<DecisionPullout object={decision({})} onClose={() => {}} />);
     expect(heads()).toEqual([]);
     fireEvent.click(screen.getByRole("button", { name: "Edit" }));
-    for (const name of ["Context", "Decision", "Consequences"]) {
+    for (const name of ["Background", "Decision", "Consequences"]) {
       expect(screen.getByLabelText(name, { selector: "textarea" })).toBeTruthy();
     }
   });
@@ -131,7 +131,7 @@ describe("PHILO-8-04 the decision window shows no empty heading", () => {
         onClose={() => {}}
       />,
     );
-    expect(heads()).toEqual(["Context"]);
+    expect(heads()).toEqual(["Background"]);
     expect(screen.getByText("Runners are full.")).toBeInTheDocument();
   });
 
@@ -142,7 +142,7 @@ describe("PHILO-8-04 the decision window shows no empty heading", () => {
         onClose={() => {}}
       />,
     );
-    expect(heads()).toEqual(["Decision", "Context", "Consequences"]);
+    expect(heads()).toEqual(["Decision", "Background", "Consequences"]);
     for (const body of ["C", "D", "Q"]) expect(screen.getByText(body)).toBeInTheDocument();
   });
 });
