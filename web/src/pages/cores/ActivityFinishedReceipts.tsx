@@ -113,9 +113,12 @@ export function ActivityFinishedReceipts({ query }: { query: string }) {
       const door = receiptDoor(row);
       const egress = receiptEgress(row);
       return <SurfaceRow key={row.id} id={`activity-receipt-${row.id}`} title={title}
-        detail={[wireDayClock(row.timestamp), row.subject_label].filter(Boolean).join(" · ")}
-        meta={<><span className="gadget-chip">{deSnake(row.outcome)}</span><EgressChip label={egress.label} scope={egress.scope}/></>}>
-        {door && !unavailable.has(row.id) ? <Button dense aria-label={`Open receipt: ${title}`} onClick={() => openReceipt(row)}>Open receipt</Button> : <span className="surface-token">Receipt view unavailable</span>}
+        detail={[wireDayClock(row.timestamp), row.subject_label].filter(Boolean).join(" · ")}>
+        <div className="surface-actions">
+          <span className="gadget-chip">{deSnake(row.outcome)}</span>
+          <EgressChip label={egress.label} scope={egress.scope}/>
+          {door && !unavailable.has(row.id) ? <Button dense aria-label={`Open receipt: ${title}`} onClick={() => openReceipt(row)}>Open receipt</Button> : <span className="surface-token">Receipt view unavailable</span>}
+        </div>
       </SurfaceRow>;
     })}</SurfaceRows>
     {loadedQuery === needle && page.has_more ? <Button dense variant="ghost" disabled={busy} onClick={() => void read(page.offset + page.limit)}>Load more</Button> : null}

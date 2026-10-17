@@ -310,3 +310,20 @@ product contract; no skips, blanket retries, threshold increases or broad exempt
   created source ID. **All six desktop/phone cases pass together on one worker**
   (78.77 s), with deletion, Undo, selected-row return and nine-hit checks intact.
   The ordinary integrated quick is being rerun.
+
+- Ordinary quick is **GREEN: 4,169 web / 183 affected / 109 sweep / 17 canon**
+  on build `28f31330014af5fd`. A prior attempt had a root-created missing pytest
+  retention directory and ran no Python checks; after correcting the directory,
+  the unmodified ordinary script completed successfully.
+- Final screenshot review adds a local Activity reading defect: the phone's
+  `SWEEP 2 ROOMS` title is squeezed to four characters beside outcome/egress
+  chips. The exact source journey works, but visual readability is insufficient.
+  Move the badges to the existing wrapping child row and retain a full-width
+  title/detail; focused old/new browser proof and final verification remain.
+
+- Activity title proof reproduces **56 px available / 109 px needed** on the
+  original phone row (desktop passes). After moving badges/action into the
+  existing wrapping child row, **both layout cases and both real producer
+  return cases pass** (4 checks, 17.79 s); 17 Activity checks and TypeScript pass.
+  Root inspected both actual corrected shots. Final ordinary quick runs against
+  the last green commit `83522911b`, covering this bounded final delta.

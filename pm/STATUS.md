@@ -8,16 +8,14 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
-**Browser recovery — final verification (2026-10-16).** Activity now owns a
-Finished receipt list with exact source doors and retained failed reads. Phone
-swipe/Depth, Capture/Today restoration, Go toggle, canonical record reopening and
-Chair band/seat geometry are repaired. The 112-case recovery queue retains exact
-case identities and current proof. The focused source/return cases, 639 graph
-checks and TypeScript pass. Ordinary quick passes 4,169 web, 180 affected, 109
-sweep and 17 canon checks. Its three Desk failures now pass in a shared-hub
-six-case follow-up; the final ordinary quick is running. Additional Room
-claim ink is fixed and observed at both widths (17.12:1 contrast; 1.03:1 before).
-Final quick and delivery remain.
+**Browser recovery — verified; final delta check (2026-10-16).** Activity owns
+Finished receipts with exact source doors and one-Back return. Phone swipe/Depth,
+Capture/Today, Go toggle, record-window identity and Chair geometry are repaired.
+The broad ordinary quick is GREEN: **4,169 web / 183 affected / 109 sweep /
+17 canon**; 639 graph checks and TypeScript pass. Room contrast is 17.12:1
+at both widths (1.03:1 before). Final visual review found a squeezed phone
+Activity title; the existing wrapping row fixes it, with four actual layout/return
+cases and 17 Activity checks passing. The last delta quick and delivery remain.
 
 **Orbital places — #1229 (2026-10-16).** Change places adds live Mars with
 Phobos/Deimos and Saturn with layered rings, Titan/Enceladus. Local terrain/sky,
