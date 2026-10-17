@@ -406,10 +406,11 @@ class MeetingGlueMixin:
         )
 
         final_state = session.stop()
-        # HS-32-03: the meeting's recorder is now closed — release the shared
-        # audio floor immediately (before the slower save/intel work, none of
-        # which touches the mic) so hotkey/device voice typing can resume.
-        self.voice_session.release(_MEETING_AUDIO_OWNER)
+        device_cleanup_error = getattr(session, "device_cleanup_error", None)
+        # Release the floor only after confirmed native cleanup. A timed-out
+        # driver can still own the device even though PCM admission is sealed.
+        if not device_cleanup_error:
+            self.voice_session.release(_MEETING_AUDIO_OWNER)
         final_state_payload = final_state.to_dict()
         meeting_id = str(final_state_payload.get("id") or "")
         with self.state_lock:
@@ -487,7 +488,7 @@ class MeetingGlueMixin:
                 self.meeting_session = None
 
         with self.state_lock:
-            self.runtime_status["last_error"] = save_error or ""
+            self.runtime_status["last_error"] = save_error or device_cleanup_error or ""
         if save_error:
             self._set_runtime_activity(
                 "error",
@@ -495,6 +496,15 @@ class MeetingGlueMixin:
                 detail="Meeting save failed.",
                 last_event="meeting_save_failed",
                 last_error=save_error,
+            )
+        elif device_cleanup_error:
+            self._set_runtime_activity(
+                "error",
+                source="meeting",
+                label="Saved",
+                detail="Meeting saved. Audio device did not close.",
+                last_event="meeting_saved_audio_cleanup_failed",
+                last_error=device_cleanup_error,
             )
         else:
             self._set_runtime_activity(
@@ -511,6 +521,7 @@ class MeetingGlueMixin:
             "meeting": final_state_payload,
             "save": save_payload,
             "save_error": save_error,
+            "device_cleanup_error": device_cleanup_error,
         }
 
     def _on_bookmark(self, label: str) -> dict[str, object]:
