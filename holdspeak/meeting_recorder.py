@@ -38,6 +38,9 @@ from .logging_config import get_logger
 
 log = get_logger("meeting")
 
+# Native CoreAudio teardown can wait forever. Saving accepted audio must not.
+_NATIVE_STOP_TIMEOUT_SECONDS = 1.0
+
 
 class MeetingRecorderError(HoldSpeakError):
     """Raised when meeting recording fails."""
@@ -176,6 +179,7 @@ class MeetingRecorder:
         # State
         self._lock = threading.Lock()
         self._recording = False
+        self.device_cleanup_error: Optional[str] = None
         self._start_time: Optional[float] = None
         self._buffer = DualStreamBuffer()
         # Phase 14: registered AIPI-Lite-class device streams.
@@ -306,6 +310,10 @@ class MeetingRecorder:
         with self._lock:
             if self._recording:
                 raise MeetingRecorderError("Already recording")
+            if self.device_cleanup_error:
+                raise MeetingRecorderError(
+                    "Audio device did not close. Restart HoldSpeak to record."
+                )
             self._recording = True
             self._start_time = time.time()
             self._buffer.clear()
@@ -369,14 +377,15 @@ class MeetingRecorder:
             if not self._recording:
                 raise MeetingRecorderError("Not recording")
             self._recording = False
+            # Commit and snapshot use this same lock, so an admitted callback
+            # finishes its buffer/journal write before capture is sealed.
+            mic_chunks, system_chunks = self._buffer.get_all_chunks()
 
         log.info("Stopping meeting recording")
 
         # Stop streams
         self._stop_streams()
 
-        # Get all chunks
-        mic_chunks, system_chunks = self._buffer.get_all_chunks()
         log.info(f"Recording stopped: {len(mic_chunks)} mic chunks, {len(system_chunks)} system chunks")
 
         return mic_chunks, system_chunks
@@ -477,6 +486,20 @@ class MeetingRecorder:
                 self._device_last_drain[device_id] = now
         return result
 
+    def _commit_audio_chunk(self, chunk: np.ndarray, timestamp: float, source: str) -> bool:
+        """Accept PCM and its journal write atomically with the Stop cutoff."""
+        duration = len(chunk) / self.sample_rate
+        with self._lock:
+            if not self._recording:
+                return False
+            if source == "mic":
+                self._buffer.add_mic_chunk(chunk, timestamp, duration)
+            else:
+                self._buffer.add_system_chunk(chunk, timestamp, duration)
+            if self.on_audio_chunk is not None:
+                self.on_audio_chunk(AudioChunk(chunk, timestamp, source, duration))
+        return True
+
     def _start_mic_stream(self) -> None:
         """Start the microphone input stream."""
 
@@ -500,10 +523,8 @@ class MeetingRecorder:
             if capture_rate != self.sample_rate:
                 chunk = _linear_resample_mono(chunk, capture_rate, self.sample_rate)
 
-            duration = len(chunk) / self.sample_rate
-            self._buffer.add_mic_chunk(chunk, timestamp, duration)
-            if self.on_audio_chunk is not None:
-                self.on_audio_chunk(AudioChunk(chunk, timestamp, "mic", duration))
+            if not self._commit_audio_chunk(chunk, timestamp, "mic"):
+                return
 
             # Level callback
             if self.on_mic_level is not None:
@@ -544,10 +565,8 @@ class MeetingRecorder:
             if capture_rate != self.sample_rate:
                 chunk = _linear_resample_mono(chunk, capture_rate, self.sample_rate)
 
-            duration = len(chunk) / self.sample_rate
-            self._buffer.add_system_chunk(chunk, timestamp, duration)
-            if self.on_audio_chunk is not None:
-                self.on_audio_chunk(AudioChunk(chunk, timestamp, "system", duration))
+            if not self._commit_audio_chunk(chunk, timestamp, "system"):
+                return
 
             # Level callback
             if self.on_system_level is not None:
@@ -590,21 +609,45 @@ class MeetingRecorder:
             return stream, fallback_rate
 
     def _stop_streams(self) -> None:
-        """Stop and close all audio streams."""
-        for stream, name in [(self._mic_stream, "mic"), (self._system_stream, "system")]:
+        """Bound native cleanup without making audio saving wait for a driver."""
+        with self._lock:
+            streams = [(self._mic_stream, "mic"), (self._system_stream, "system")]
+            self._mic_stream = None
+            self._system_stream = None
+        pending: list[tuple[str, threading.Event, dict[str, str]]] = []
+        for stream, name in streams:
             if stream is None:
                 continue
-            try:
-                stream.stop()
-            except Exception as e:
-                log.debug(f"Error stopping {name} stream: {e}")
-            try:
-                stream.close()
-            except Exception as e:
-                log.debug(f"Error closing {name} stream: {e}")
+            done = threading.Event()
+            result: dict[str, str] = {}
 
-        self._mic_stream = None
-        self._system_stream = None
+            def cleanup(stream=stream, name=name, done=done, result=result):
+                try:
+                    try:
+                        stream.stop()
+                    except Exception as exc:
+                        log.debug("Error stopping %s stream: %s", name, exc)
+                    try:
+                        stream.close()
+                    except Exception as exc:
+                        result["error"] = f"{name} audio device did not close"
+                        log.warning("Error closing %s stream: %s", name, exc)
+                finally:
+                    done.set()
+
+            threading.Thread(target=cleanup, name=f"meeting-{name}-cleanup", daemon=True).start()
+            pending.append((name, done, result))
+
+        deadline = time.monotonic() + _NATIVE_STOP_TIMEOUT_SECONDS
+        errors = []
+        for name, done, result in pending:
+            if not done.wait(max(0.0, deadline - time.monotonic())):
+                errors.append(f"{name} audio device did not close")
+            elif result.get("error"):
+                errors.append(result["error"])
+        if errors:
+            self.device_cleanup_error = "; ".join(errors) + ". Restart HoldSpeak to use the microphone."
+            log.warning(self.device_cleanup_error)
         self._stop_system_ffmpeg()
 
     def _stop_system_ffmpeg(self) -> None:
@@ -689,9 +732,8 @@ class MeetingRecorder:
                     chunk = np.frombuffer(chunk_bytes, dtype=np.float32).copy()
                     duration = len(chunk) / self.sample_rate
                     timestamp = max(0.0, (time.time() - start_time) - duration)
-                    self._buffer.add_system_chunk(chunk, timestamp, duration)
-                    if self.on_audio_chunk is not None:
-                        self.on_audio_chunk(AudioChunk(chunk, timestamp, "system", duration))
+                    if not self._commit_audio_chunk(chunk, timestamp, "system"):
+                        return
 
                     if self.on_system_level is not None:
                         level = self._level_from_audio(chunk)

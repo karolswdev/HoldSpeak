@@ -4,9 +4,22 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-16 (Broader regression recovery)
+**Last updated:** 2026-10-16 (Meeting stop recovery)
 
 ## Current phase
+
+**Meeting stop — native cleanup bounded (2026-10-16).** The owner's Stop
+hung in CoreAudio and blocked the web event loop. Stop now runs off the loop;
+PCM admission closes atomically, audio finalizes before slow downstream work,
+and both native streams clean up independently under one bounded deadline.
+A device cleanup failure preserves the save result and keeps the audio floor
+unavailable until restart. Same-ID saving, concurrent Stop, callback cutoff and
+responsive API checks pass: 51 focused tests; quick GREEN 125 affected / 109
+sweep / 17 canon. Independent source counsel found no blocker. The owner's
+interrupted meeting and its complete audio were recovered; Desk is responsive.
+Actual driver recovery is not claimed. Formal postmerge review remains open.
+[Build and limits](../docs/internal/MEETING-STOP-NATIVE-2026-10-16/BUILD.md) ·
+[Recovery](../docs/internal/MEETING-STOP-NATIVE-2026-10-16/RECOVERY.md).
 
 **Physical moon sizes — #1230 (2026-10-16).** Owner feedback supersedes
 visibility enlargement. All eight natural moons in Mars/Jupiter/Saturn use
@@ -16,7 +29,8 @@ regenerated. Combined build `0ce82ada178bf199`; quick GREEN: 4,154 web / 705 aff
 109 sweep / 17 canon; TypeScript and 32 focused checks pass. Six actual GL
 compositions cover desktop/phone; two real Mars picker readiness walks pass.
 Orbit spacing/time remain authored. Independent source counsel found no blocker;
-formal postmerge review and owner judgment remain open.
+Delivered on the recovered idle hub, build `0ce82ada178bf199`; formal postmerge
+review and owner judgment remain open.
 [Correction and proof](../docs/internal/ORBITAL-PLACES-2026-10-16/SCALE-CORRECTION.md).
 
 **Browser recovery — #1231 delivered (2026-10-16).** Activity owns Finished

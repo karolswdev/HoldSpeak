@@ -1,6 +1,7 @@
 """Live-meeting lifecycle routes backed by :class:`MeetingService`."""
 from __future__ import annotations
 
+import asyncio
 from typing import Any, Optional
 
 from fastapi import APIRouter, Request
@@ -25,6 +26,7 @@ log = get_logger("web.routes.meetings")
 # (`runtime/meeting_glue.py::_stop_active_meeting`). Matched on the message
 # rather than the type so this transport adapter need not import the runtime.
 _NO_ACTIVE_MEETING = "No active meeting"
+_STOP_IN_PROGRESS = "Meeting is already stopping"
 
 
 def _service(ctx: WebContext) -> MeetingService:
@@ -75,17 +77,21 @@ def build_live_router(ctx: WebContext) -> APIRouter:
             log.error("on_bookmark failed: %s", exc)
             return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
 
-    def _stop(request: Request) -> Any:
+    async def _stop(request: Request) -> Any:
         try:
-            stopped = _service(ctx).stop_capture(_principal(request))
+            service = _service(ctx)
+            stopped = await asyncio.to_thread(service.stop_capture, _principal(request))
             ctx.broadcast("stopped", stopped)
-            return JSONResponse({"success": True})
+            result: dict[str, Any] = {"success": True}
+            if isinstance(stopped, dict) and stopped.get("device_cleanup_error"):
+                result["warning"] = stopped["device_cleanup_error"]
+            return JSONResponse(result)
         except Exception as exc:
             # HS-132-02: HS-132-01 made the meeting verb refuse by name when no
             # meeting is live, but the refusal rode a 500 — a server fault for
             # what is a client asking to stop nothing. It is a conflict with the
             # current state, so it answers 409 and keeps the named reason.
-            status = 409 if _NO_ACTIVE_MEETING in str(exc) else 500
+            status = 409 if any(reason in str(exc) for reason in (_NO_ACTIVE_MEETING, _STOP_IN_PROGRESS)) else 500
             log.error("on_stop failed: %s", exc)
             return JSONResponse({"success": False, "error": str(exc)}, status_code=status)
 
@@ -118,11 +124,11 @@ def build_live_router(ctx: WebContext) -> APIRouter:
 
     @router.post("/api/meeting/stop")
     async def api_meeting_stop(request: Request, _: Optional[_StopRequest] = None) -> Any:
-        return _stop(request)
+        return await _stop(request)
 
     @router.post("/api/stop")
     async def api_stop(request: Request, _: Optional[_StopRequest] = None) -> Any:
-        return _stop(request)
+        return await _stop(request)
 
     @router.patch("/api/meeting")
     async def api_update_meeting(request: Request, payload: _UpdateMeetingRequest) -> Any:

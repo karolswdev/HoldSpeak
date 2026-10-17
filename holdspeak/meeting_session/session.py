@@ -223,6 +223,7 @@ class MeetingSession(
         self._state: Optional[MeetingState] = None
         self._recorder: Optional[MeetingRecorder] = None
         self._capture_journal: Optional[Any] = None
+        self.device_cleanup_error: Optional[str] = None
         self._lock = threading.Lock()
         self._transcribe_thread: Optional[threading.Thread] = None
         self._stop_event = threading.Event()
@@ -442,6 +443,7 @@ class MeetingSession(
         with self._lock:
             if self._state is not None and self._state.is_active:
                 raise RuntimeError("Meeting already active")
+            self.device_cleanup_error = None
 
             # Create new state
             self._state = MeetingState(
@@ -665,6 +667,8 @@ class MeetingSession(
         with self._lock:
             if self._state is None or not self._state.is_active:
                 raise RuntimeError("No active meeting")
+            if self._stop_event.is_set():
+                raise RuntimeError("Meeting is already stopping")
 
             # Signal stop
             self._stop_event.set()
@@ -674,6 +678,24 @@ class MeetingSession(
             # Detach the recorder under lock so no other thread can attempt to use it.
             self._recorder = None
 
+        # Seal capture promptly; native teardown has its own bounded wait. Do
+        # not keep accepting audio during the transcription/intelligence joins.
+        mic_chunks, system_chunks, device_chunks = [], [], {}
+        if recorder is not None:
+            try:
+                mic_chunks, system_chunks = recorder.stop()
+                self.device_cleanup_error = getattr(recorder, "device_cleanup_error", None)
+                device_chunks = recorder.get_pending_device_chunks()
+            except Exception as exc:
+                log.error("Error stopping recorder: %s", exc)
+        # Accepted PCM is durable before any slower transcript or intel work.
+        journal_error: Optional[Exception] = None
+        if self._capture_journal is not None:
+            try:
+                self._capture_journal.finalize()
+            except Exception as exc:
+                journal_error = exc
+
         # Wait for transcription thread
         if transcribe_thread is not None:
             transcribe_thread.join(timeout=5.0)
@@ -682,12 +704,10 @@ class MeetingSession(
         if intel_thread is not None:
             intel_thread.join(timeout=10.0)
 
-        # Stop recorder and do final transcription outside the session lock. The
-        # final transcription path appends segments under self._lock.
-        if recorder is not None:
+        # Final transcription stays outside the session lock, after live work
+        # has joined. The cutoff may have advanced while those threads drained.
+        if mic_chunks or system_chunks or device_chunks:
             try:
-                mic_chunks, system_chunks = recorder.stop()
-                device_chunks = recorder.get_pending_device_chunks()
                 # recorder.stop() returns ALL chunks from t=0. Filter to only
                 # audio not yet processed by the transcription loop, using the
                 # watermark it maintains. Without this, every stop re-transcribes
@@ -764,13 +784,6 @@ class MeetingSession(
 
         # Stop is itself a durable checkpoint; the later compatibility JSON and
         # aftercare work may fail without losing or duplicating the Meeting.
-        journal_error: Optional[Exception] = None
-        if self._capture_journal is not None:
-            try:
-                self._capture_journal.finalize()
-            except Exception as exc:
-                journal_error = exc
-
         if journal_error is not None:
             with self._lock:
                 final_state.capture_status = "recoverable"
