@@ -67,4 +67,29 @@ source inputs. The emitted picker asset matches its frozen SHA256. The three
 canvas TS files outside web/src are excluded by quick; their actual moving
 browser harnesses were exercised separately above.
 
-Real picker walks, PR merge and idle-hub delivery are pending.
+Real picker selection→Close/Back→reload→ready walks PASS at1440 and393 on
+clean revision `f72a34fae`, using fresh isolated HOME/DB and engine none. Root
+read both observations and before/after shots. Terminal predicates are settled,
+no console errors. Phone shot includes the existing Apps/Drawers panel; direct
+393GL captures above judge scene composition without that panel.
+
+Walk records: `.tmp/night-train-fidelity/graph-metal-1440/` and
+`graph-metal-393/`. The private `graph_metal.py` invokes the official graph rig
+with unchanged cases/steps, adding `--use-angle=metal` to its persistent browser
+launch. Actual M2Max renderer identity is captured in provenance before the
+rig saves each observation. No product/provider responses are substituted.
+
+Earlier unforced graph walks failed with10s click/readiness timeouts; these
+records remain in `graph-1440/`, `graph-1440-recheck/`, `graph-diagnosis/`, and
+`graph-1440-ready/`. A bounded startup comparison confirmed unforced Chromium
+uses Vulkan SwiftShader, while explicit Metal uses M2Max. Factory construction
+was195/180ms (software/Metal), Room batching7ms, resize635/4ms, first render
+submission299/133ms. No multi-second factory stall was measured. These are
+CPU/submission timings, not GPU timer queries. The same original walk passes
+on Metal without increasing its step timeout or changing product code.
+Source: `startup-measure/observation.json`. Tooling debt: graph_walk.py’s
+persistent browser lacks the native GPU selection used by conftest/direct GL
+checks. Software-renderer responsiveness is not established by the passing
+hardware walks; keep this limit visible.
+
+PR merge and idle-hub delivery are pending.
