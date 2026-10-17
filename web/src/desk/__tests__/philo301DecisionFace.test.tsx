@@ -73,7 +73,7 @@ describe("PHILO-3-01 the decision face", () => {
     expect(currentWriteFailure()).toBeNull();
   });
 
-  it("a new decision opens in Edit; Done titles it from the first line", async () => {
+  it("a new decision opens in Edit; Save titles it from the first line", async () => {
     const update = vi.fn().mockResolvedValue(true);
     useDesk.setState({ newIds: ["decision_new1"], updatePrimitive: update } as never);
     const o = {
@@ -83,7 +83,7 @@ describe("PHILO-3-01 the decision face", () => {
     render(<DecisionPullout object={o} onClose={() => {}} />);
     const well = screen.getByRole("textbox", { name: "Decision" });
     fireEvent.change(well, { target: { value: "# Adopt the one bus\nfor every frame" } });
-    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
     expect(update).toHaveBeenCalledWith(
       "decision", "decision_new1",
       expect.objectContaining({ title: "Adopt the one bus", decision_markdown: "# Adopt the one bus\nfor every frame" }),
@@ -99,7 +99,7 @@ describe("PHILO-3-01 the decision face", () => {
     } as unknown as WorldObject;
     render(<DecisionPullout object={o} onClose={() => {}} />);
     fireEvent.change(screen.getByRole("textbox", { name: "Decision" }), { target: { value: "Adopt it" } });
-    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
     expect(update.mock.calls[0][2]).not.toHaveProperty("title");
   });
 });
@@ -112,7 +112,7 @@ describe("PHILO-8-04 the decision window shows no empty heading", () => {
     }) as unknown as WorldObject;
   const heads = () =>
     // PHILO-11-05a: the decision's own headings (its SEND well carries its own head).
-    Array.from(document.querySelectorAll(".desk-decision-card > .attention-decision-paper > h2, .desk-decision-card > .gadget-fold > summary > .gadget-fold-title"))
+    Array.from(document.querySelectorAll(".attention-decision-paper > .attention-decision-main > h2, .attention-decision-paper > .gadget-fold > summary > .gadget-fold-title"))
       .map((h) => h.textContent).filter((label) => label !== "State");
 
   it("a title-only decision shows no heading; Edit offers all three fields", () => {

@@ -894,11 +894,24 @@
 .thread-composer-actions { align-items: center; gap: 8px; }
 .thread-composer-tools { display: flex; align-items: center; gap: 8px; }
 .thread-composer-capture { flex: 1; justify-content: flex-end; }
-.thread-composer-picker { position: absolute; z-index: var(--desk-z-popover, 100); bottom: calc(100% + 8px); left: 0; right: 0; max-height: min(300px, 45vh); overflow-y: auto; padding: 8px; border: 1px solid var(--wb-ink); box-shadow: var(--desk-window-etch); background: var(--wb-paper); }
+.thread-composer-picker { position: absolute; z-index: var(--desk-z-popover, 100); bottom: calc(100% + 8px); left: 0; right: 0; display: flex; flex-direction: column; min-height: 0; max-height: min(320px, 45vh); box-sizing: border-box; padding: 8px; border: 1px solid var(--wb-ink); box-shadow: var(--desk-window-etch); background: var(--wb-paper); }
 .thread-picker-head, .thread-picker-actions { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; font: 600 12px / 1.5 var(--font-mono); }
 .thread-picker-actions { margin: 6px 0 0; }
 .thread-composer-picker .gadget-string { display: flex; width: 100%; margin-bottom: 6px; }
-.thread-composer-picker .inlet-autocomplete { position: static; max-height: none; border: 0; box-shadow: none; }
+.desk-next .thread-composer-picker .inlet-autocomplete { position: static; max-height: none; overflow: visible; margin: 0; border: 0; box-shadow: none; background: transparent; }
+.thread-picker-head, .thread-picker-actions, .thread-composer-picker > .gadget-string { flex-shrink: 0; }
+.thread-picker-hint { display: flex; flex-direction: column; overflow: hidden; min-height: 0; --scroll-hint-background: var(--wb-paper); --scroll-hint-depth: 12px; }
+.thread-picker-results { min-height: 0; flex-shrink: 1; max-height: 144px; overflow-y: auto; overflow-x: hidden; }
+.thread-picker-results .surface-rows { gap: 0; }
+.thread-picker-results .surface-row { min-height: 44px; }
+.thread-picker-results .surface-row-line { min-height: 0; padding: 0; }
+.thread-picker-results .surface-row-open { min-height: 44px; padding: 6px 8px; box-sizing: border-box; }
+.thread-picker-results .surface-row-text { min-width: 0; }
+.thread-picker-results .surface-row-text strong { font-size: var(--desk-surface-body-size); }
+.thread-picker-results .surface-row-meta { font: 400 var(--desk-surface-detail-size) / 1.4 var(--font-mono); color: var(--text-muted); }
+.thread-picker-results .surface-row[data-selected] { background: var(--accent-tint); }
+.thread-picker-feedback { display: block; padding: 6px; font: 400 var(--desk-surface-detail-size) / 1.4 var(--font-mono); color: var(--text-muted); }
+.thread-pullout-body.surface-scroll-hint { --scroll-hint-background: var(--alive-paper); --scroll-hint-depth: 12px; }
 .thread-sources .surface-row-text strong { white-space: normal; overflow-wrap: anywhere; }
 @container surface (max-width: 520px) {
   .thread-head { padding: 6px 10px; }
@@ -906,7 +919,8 @@
   .thread-context-strip .gadget-fold > summary { min-height: 44px; }
   .thread-composer-actions, .thread-composer-tools { gap: 6px; }
   .thread-composer .thread-composer-input { min-height: 50px; max-height: 100px; }
-  .thread-composer-picker .surface-row { min-height: 44px; }
+  .thread-picker-results { max-height: 132px; }
+  .thread-composer-picker .surface-row, .thread-composer-picker .surface-row-open { min-height: 44px; }
 }
 
 /* The writing well has the same warm paper as the transcript and Ask. */

@@ -73,6 +73,10 @@
 }
 
 .attention-decision-strip > .gadget-cycle {
+  flex-shrink: 0;
+}
+
+.attention-decision-strip > .btn {
   margin-left: auto;
 }
 
@@ -82,6 +86,8 @@
 }
 
 .desk-next .desk-pullout-body .attention-decision .attention-decision-paper {
+  display: grid;
+  gap: var(--space-3);
   min-width: 0;
   padding: var(--space-4);
   border: 1px solid var(--wb-rule);
@@ -90,7 +96,14 @@
   box-shadow: var(--desk-window-etch);
 }
 
-.attention-decision-paper > h2 {
+.desk-next .desk-pullout-body .attention-decision .attention-decision-main {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.attention-decision-main > h2 {
   margin: 0 0 var(--space-3);
   font: 600 15px / 1.4 var(--font-sans);
 }
@@ -99,19 +112,6 @@
 .desk-next .attention-decision .surface-material {
   color: var(--wb-ink);
   font: 400 14px / 1.6 var(--font-sans);
-}
-
-.desk-next .attention-decision .attention-decision-paper .gadget-pad,
-.desk-next .attention-decision .attention-decision-paper .gadget-pad textarea {
-  background: transparent;
-  border: 0;
-  box-shadow: none;
-}
-
-.desk-next .attention-decision .attention-decision-paper .gadget-pad textarea {
-  min-height: 14rem;
-  padding-top: 0;
-  padding-left: 0;
 }
 
 .attention-decision-paper:focus-within {
@@ -123,13 +123,8 @@
   min-height: 36px;
 }
 
-.desk-next .attention-decision-support .gadget-pad {
-  background: var(--alive-paper);
-}
-
-.desk-next .attention-decision-support .surface-material {
-  padding: var(--space-3);
-  background: var(--alive-paper);
+.desk-next .attention-decision-paper .attention-decision-support .surface-material {
+  padding: 0;
 }
 
 @container surface (max-width: 560px) {

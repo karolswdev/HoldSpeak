@@ -3962,7 +3962,7 @@ button.surface-edit-in-place:hover {
   position: sticky;
   left: 0;
   right: 0;
-  height: 28px;
+  height: var(--scroll-hint-depth, 28px);
   display: none;
   pointer-events: none;
   z-index: var(--desk-z-local);
@@ -3970,13 +3970,13 @@ button.surface-edit-in-place:hover {
 }
 .surface-scroll-hint[data-axis="y"]::before {
   top: 0;
-  background: linear-gradient(to bottom, var(--surface-1), transparent);
-  margin-bottom: -28px;
+  background: linear-gradient(to bottom, var(--scroll-hint-background, var(--surface-1)), transparent);
+  margin-bottom: calc(-1 * var(--scroll-hint-depth, 28px));
 }
 .surface-scroll-hint[data-axis="y"]::after {
   bottom: 0;
-  background: linear-gradient(to top, var(--surface-1), transparent);
-  margin-top: -28px;
+  background: linear-gradient(to top, var(--scroll-hint-background, var(--surface-1)), transparent);
+  margin-top: calc(-1 * var(--scroll-hint-depth, 28px));
 }
 .surface-scroll-hint[data-axis="y"][data-scroll-hint="bottom"]::after,
 .surface-scroll-hint[data-axis="y"][data-scroll-hint="both"]::before,

@@ -14,10 +14,11 @@ import { useMissionControl } from "../missioncontrol";
 import type { RailsPick } from "../grounding";
 import { clearEngineCache } from "../hooks/useEngine";
 
-const shell = vi.hoisted(() => ({ openSurfaceOr: vi.fn() }));
+const shell = vi.hoisted(() => ({ openSurfaceOr: vi.fn(), openPrimitive: vi.fn() }));
 vi.mock("../shell", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../shell")>()),
   openSurfaceOr: shell.openSurfaceOr,
+  openPrimitive: shell.openPrimitive,
 }));
 
 const scope = { kind: "capability", capability_id: "ask.answer" };
@@ -49,6 +50,7 @@ function deferred<T>() {
 beforeEach(() => {
   Element.prototype.scrollIntoView = () => {};
   shell.openSurfaceOr.mockReset();
+  shell.openPrimitive.mockReset();
   localStorage.clear();
   clearEngineCache();
   useMissionControl.setState({ repos: [] });
@@ -134,7 +136,7 @@ describe("AskPanel's success receipt", () => {
     expect(screen.queryByText(/Answered in 0 s/)).toBeNull();
   });
 
-  it("a routed answer keeps its route receipt in the footer", async () => {
+  it("a routed answer keeps visible egress and an inspectable receipt below the answer", async () => {
     vi.stubGlobal("fetch", vi.fn((url: string) => Promise.resolve(response(url.endsWith("/api/ask") ? {
       output: "Routed answer",
       route: { lamp: "lan", host: "studio.local", model: "Review model", receipt: "receipt-a91f" },
@@ -143,7 +145,13 @@ describe("AskPanel's success receipt", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "Ask about your work" }), { target: { value: "Question" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
     const receipt = await screen.findByText("LAST TURN · Review model · RECEIPT ··a91f");
-    expect(receipt.closest(".surface-footer")).not.toBeNull();
+    const details = receipt.closest("details")!;
+    expect(details).toHaveTextContent("Run details");
+    expect(details.open).toBe(false);
+    expect(screen.getByText("Answered", { exact: true }).closest(".surface-footer")).not.toBeNull();
+    fireEvent.click(within(details).getByText("Run details"));
+    await waitFor(() => expect(details.open).toBe(true));
+    await waitFor(() => expect(screen.getByText("LAST TURN · Review model · RECEIPT ··a91f")).toBeVisible());
     expect(container.querySelector('.surface-run-line[data-state="success"]')).toBeNull();
     expect(screen.getByText("studio.local · LAN")).toBeInTheDocument();
   });
@@ -260,7 +268,7 @@ describe("AskPanel's Note passage handoff", () => {
     latchAskSelection({ noteRef: "note:note-1", text: "Second quote" });
     pending.resolve(response({ error: "offline", reason: "did_not_answer" }, false));
     await waitFor(() => expect(screen.getByTestId("ask-selected-passage")).toHaveTextContent("Second quote"));
-    const sentTurn = [...document.querySelectorAll(".surface-traffic-text")].find((node) => node.textContent?.includes("First question"));
+    const sentTurn = [...document.querySelectorAll(".desk-ask-question-text")].find((node) => node.textContent?.includes("First question"));
     expect(sentTurn).toHaveTextContent("First question Selected text: > First quote");
   });
 
@@ -482,6 +490,8 @@ describe("Ask's Workbench composition", () => {
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
     await screen.findByText("Answer from the first note");
     const answerSources = screen.getByTestId("ask-answer-sources");
+    fireEvent.click(screen.getByText("Sources").closest("summary")!);
+    await waitFor(() => expect(answerSources.closest("details")).toHaveAttribute("open"));
     expect(within(answerSources).getByRole("button", { name: "Canonical note" })).toBeInTheDocument();
     expect(screen.queryByTestId("ask-context")).toBeNull();
     expect(screen.getAllByRole("button", { name: "Canonical note" })).toHaveLength(1);
@@ -634,4 +644,136 @@ describe("Ask's Workbench composition", () => {
     expect(checkbox).not.toBeChecked();
     expect(onChange).toHaveBeenCalledTimes(2);
   });
+});
+
+
+describe("Ask answer and saved continuation", () => {
+  it("leads with the answer while the exact sent question, sources and fallback receipt remain inspectable", async () => {
+    useDesk.setState({ items: { ...EMPTY_ITEMS, note: [note] }, selectedIds: ["note:note-1"] });
+    latchAskSelection({ noteRef: "note:note-1", text: "Exact source quote" });
+    vi.stubGlobal("fetch", vi.fn((url: string) => Promise.resolve(response(url.endsWith("/api/ask") ? {
+      output: "Read this answer first",
+      route: { lamp: "cloud", host: "review.example", model: "Review model", receipt: "receipt-a91f", fallback: true },
+    } : {}))));
+    render(<AskPanel />);
+    fireEvent.change(screen.getByRole("textbox", { name: "Ask about your work" }), { target: { value: "Original question" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    const answer = await screen.findByText("Read this answer first");
+    const reading = screen.getByRole("region", { name: "Ask answer" });
+    const question = within(reading).getByText("Question").closest("details")!;
+    const sources = within(reading).getByText("Sources").closest("details")!;
+    const details = within(reading).getByText("Run details").closest("details")!;
+    expect(question.open).toBe(false);
+    expect(question.querySelector(".desk-ask-question-text")?.textContent).toBe("Original question\n\nSelected text:\n> Exact source quote");
+    expect(sources.open).toBe(false);
+    expect(details.open).toBe(false);
+    expect(answer.compareDocumentPosition(sources) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Copy" }).closest(".surface-traffic-turn")).toContainElement(answer);
+    expect(screen.getByText("review.example").closest(".surface-footer")).not.toBeNull();
+    expect(screen.getByText("CLOUD")).toBeInTheDocument();
+    expect(screen.getByText(/^Answered.*Fallback$/).closest(".surface-footer")).not.toBeNull();
+    expect(details).toHaveTextContent("LAST TURN · Review model · FALLBACK · RECEIPT ··a91f");
+    fireEvent.click(within(question).getByText("Question"));
+    await waitFor(() => expect(question.open).toBe(true));
+    expect(question.querySelector(".desk-ask-question-text")).toBeVisible();
+    fireEvent.click(within(sources).getByText("Sources"));
+    await waitFor(() => expect(sources.open).toBe(true));
+    fireEvent.click(within(sources).getByRole("button", { name: "Canonical note" }));
+    expect(shell.openPrimitive).toHaveBeenCalledWith("note:note-1");
+  });
+
+  it("ordinary typing during a pending Ask keeps the newer writer visible after its earlier answer arrives", async () => {
+    const pending = deferred<Response>();
+    vi.stubGlobal("fetch", vi.fn((url: string) => url.endsWith("/api/ask") ? pending.promise : Promise.resolve(response({}))));
+    render(<AskPanel />);
+    const prompt = screen.getByRole("textbox", { name: "Ask about your work" });
+    fireEvent.change(prompt, { target: { value: "Sent question" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    fireEvent.change(prompt, { target: { value: "Newer typed question" } });
+    await act(async () => pending.resolve(response({ output: "Earlier answer" })));
+    expect(await screen.findByText("Earlier answer")).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Ask about your work" })).toHaveValue("Newer typed question");
+    expect(document.querySelector(".desk-ask-question-text")?.textContent).toBe("Sent question");
+    expect(JSON.parse(localStorage.getItem(durableDraftKey("desk-ask"))!).text).toBe("Newer typed question");
+  });
+
+  it("opens only the confirmed saved artifact, retains newer writing and sources, and reopens without saving again", async () => {
+    useDesk.setState({ items: { ...EMPTY_ITEMS, note: [note, otherNote] }, selectedIds: ["note:note-1"] });
+    latchAskSelection({ noteRef: "note:note-1", text: "Sent quote" });
+    const pendingKeep = deferred<Response>();
+    const keeps: any[] = [];
+    vi.stubGlobal("fetch", vi.fn((url: string, init?: RequestInit) => {
+      if (url.endsWith("/api/ask/keep")) {
+        keeps.push(JSON.parse(String(init?.body)));
+        return keeps.length === 1 ? pendingKeep.promise : Promise.resolve(response({ artifact_id: "exact-kept-answer" }));
+      }
+      return Promise.resolve(response(url.endsWith("/api/ask") ? { output: "Answer from sent material" } : {}));
+    }));
+    render(<AskPanel />);
+    fireEvent.change(screen.getByRole("textbox", { name: "Ask about your work" }), { target: { value: "Sent question" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    await screen.findByText("Answer from sent material");
+    fireEvent.click(screen.getByRole("button", { name: "Edit question" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Ask about your work" }), { target: { value: "Newer draft" } });
+    act(() => {
+      useDesk.setState({ selectedIds: ["note:note-2"] });
+      latchAskSelection({ noteRef: "note:note-2", text: "Newer quote", source: { id: "note-2", kind: "note", ref: "note:note-2", title: "Other note" } });
+    });
+    const keep = screen.getByRole("button", { name: "Keep" });
+    fireEvent.click(keep);
+    expect(keep).toHaveAttribute("aria-busy", "true");
+    expect(shell.openPrimitive).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "Open saved answer" })).toBeNull();
+    await act(async () => pendingKeep.resolve(response({}, false)));
+    expect(await screen.findByText("Not kept")).toBeInTheDocument();
+    expect(shell.openPrimitive).not.toHaveBeenCalled();
+    expect(screen.getByRole("textbox", { name: "Ask about your work" })).toHaveValue("Newer draft");
+    expect(screen.getByTestId("ask-selected-passage")).toHaveTextContent("Newer quote");
+    fireEvent.click(screen.getByRole("button", { name: "Keep" }));
+    const open = await screen.findByRole("button", { name: "Open saved answer" });
+    expect(shell.openPrimitive).toHaveBeenCalledExactlyOnceWith("artifact:exact-kept-answer");
+    expect(useDesk.getState().askOpen).toBe(true);
+    expect(useDesk.getState().selectedIds).toEqual(["note:note-2"]);
+    expect(screen.getByRole("textbox", { name: "Ask about your work" })).toHaveValue("Newer draft");
+    expect(screen.getByTestId("ask-context")).toHaveTextContent("Other note");
+    expect(screen.getByTestId("ask-selected-passage")).toHaveTextContent("Newer quote");
+    expect(JSON.parse(localStorage.getItem(durableDraftKey("desk-ask"))!).text).toBe("Newer draft");
+    expect(keeps).toEqual([expect.objectContaining({ prompt: "Sent question\n\nSelected text:\n> Sent quote", output: "Answer from sent material", context: [expect.objectContaining({ ref: "note:note-1", title: "Canonical note" })] }), expect.anything()]);
+    expect(keeps[1]).toEqual(keeps[0]);
+    // A foreground picker can live outside both window DOM trees. Its
+    // Escape must not reach back into the mounted Ask behind the artifact.
+    const foreground = document.createElement("div");
+    foreground.setAttribute("aria-label", "Saved answer picker");
+    document.body.append(foreground);
+    fireEvent.keyDown(foreground, { key: "Escape" });
+    foreground.remove();
+    expect(useDesk.getState().askOpen).toBe(true);
+    expect(useDesk.getState().selectedIds).toEqual(["note:note-2"]);
+    expect(screen.getByRole("textbox", { name: "Ask about your work" })).toHaveValue("Newer draft");
+    expect(screen.getByTestId("ask-context")).toHaveTextContent("Other note");
+    expect(screen.getByTestId("ask-selected-passage")).toHaveTextContent("Newer quote");
+    expect(open).toBeEnabled();
+    fireEvent.click(open);
+    expect(shell.openPrimitive).toHaveBeenCalledTimes(2);
+    expect(shell.openPrimitive).toHaveBeenLastCalledWith("artifact:exact-kept-answer");
+    expect(keeps).toHaveLength(2);
+    expect(screen.queryByRole("button", { name: "Keep" })).toBeNull();
+  });
+});
+
+
+it("leaves prevented and composing Escape with the active writer, then closes on its ordinary Escape", async () => {
+  render(<AskPanel />);
+  const prompt = screen.getByRole("textbox", { name: "Ask about your work" });
+  fireEvent.change(prompt, { target: { value: "Retained writer" } });
+  prompt.addEventListener("keydown", (event) => event.preventDefault(), { once: true });
+  fireEvent.keyDown(prompt, { key: "Escape" });
+  expect(useDesk.getState().askOpen).toBe(true);
+  expect(prompt).toHaveValue("Retained writer");
+  fireEvent.keyDown(prompt, { key: "Escape", isComposing: true });
+  expect(useDesk.getState().askOpen).toBe(true);
+  expect(prompt).toHaveValue("Retained writer");
+  fireEvent.keyDown(prompt, { key: "Escape" });
+  await waitFor(() => expect(useDesk.getState().askOpen).toBe(false));
+  expect(JSON.parse(localStorage.getItem(durableDraftKey("desk-ask"))!).text).toBe("Retained writer");
 });

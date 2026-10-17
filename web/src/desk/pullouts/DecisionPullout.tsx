@@ -20,6 +20,7 @@ import { currentWriteFailure, subscribeWriteFailure, writeFailureReason } from "
 import type { PulloutContentProps } from "./types";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { DeskDecisionSendWells } from "../documentSendsLazy";
+import { keptEditorPatch, keptField, updateKeptEditorFields } from "./editors/editorDraft";
 import "./attention-records.css";
 
 /** The title createPrimitive("decision") gives (store/dataSlice.ts). */
@@ -31,6 +32,8 @@ const DECISION_STATES = [
   { value: "superseded", label: "Replaced" },
   { value: "deprecated", label: "Retired" },
 ];
+const DECISION_FIELDS = ["context_markdown", "decision_markdown", "consequences_markdown"] as const;
+type DecisionField = typeof DECISION_FIELDS[number];
 
 export function DecisionPullout({ object: o }: PulloutContentProps) {
   const items = useDesk((s) => s.items);
@@ -54,11 +57,21 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
     decision_markdown: String(ir.decisionMarkdown || ""),
     consequences_markdown: String(ir.consequencesMarkdown || ""),
   });
-  // PHILO-3-01 — a decision just created opens in Edit.
+  const draftFromMemory = () => {
+    const kept = keptEditorPatch("decision", o.id);
+    const record = draftFromRecord();
+    return {
+      context_markdown: keptField(kept, "context_markdown", record.context_markdown),
+      decision_markdown: keptField(kept, "decision_markdown", record.decision_markdown),
+      consequences_markdown: keptField(kept, "consequences_markdown", record.consequences_markdown),
+    };
+  };
+  // Reopening restores unsaved words without submitting them to the hub.
   const [editingDecision, setEditingDecision] = useState(() =>
-    useDesk.getState().newIds.includes(o.id),
+    useDesk.getState().newIds.includes(o.id) || DECISION_FIELDS.some((field) => field in keptEditorPatch("decision", o.id)),
   );
-  const [decisionDraft, setDecisionDraft] = useState(draftFromRecord);
+  const [decisionDraft, setDecisionDraft] = useState(draftFromMemory);
+  const [savedDecision, setSavedDecision] = useState(false);
   const [savingDecision, setSavingDecision] = useState(false);
   const decisionWrite = useRef({ pending: false, generation: 0 });
   const draftVersion = useRef(0);
@@ -73,6 +86,11 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
   }, [o.id, ir.status]);
   useEffect(() => () => { statusWrite.current.generation += 1; }, [o.id]);
   useEffect(() => () => { decisionWrite.current.generation += 1; }, [o.id]);
+  useEffect(() => {
+    if (editingDecision && !DECISION_FIELDS.some((field) => field in keptEditorPatch("decision", o.id))) {
+      updateKeptEditorFields("decision", o.id, decisionDraft);
+    }
+  }, [o.id, editingDecision]);
   const status = savedStatus ?? String(ir.status || "proposed");
   const documentVersion = JSON.stringify([
     o.title, status, ir.deciders, ir.contextMarkdown, ir.decisionMarkdown,
@@ -81,8 +99,20 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
 
   const startDecisionEdit = () => {
     draftVersion.current += 1;
-    setDecisionDraft(draftFromRecord());
+    const draft = draftFromMemory();
+    setDecisionDraft(draft);
+    updateKeptEditorFields("decision", o.id, draft);
+    setSavedDecision(false);
     setEditingDecision(true);
+  };
+  const changeDecisionField = (field: DecisionField, value: string) => {
+    draftVersion.current += 1;
+    setDecisionDraft((current) => ({ ...current, [field]: value }));
+    updateKeptEditorFields("decision", o.id, { [field]: value });
+  };
+  const cancelDecisionEdit = () => {
+    updateKeptEditorFields("decision", o.id, {}, [...DECISION_FIELDS]);
+    setEditingDecision(false);
   };
   const commitDecisionEdit = async () => {
     if (decisionWrite.current.pending || statusWrite.current.pending) return;
@@ -103,8 +133,17 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
         : decisionDraft;
     try {
       const accepted = await useDesk.getState().updatePrimitive("decision", o.id, patch);
+      // An acknowledgement can outlive this window. Only retire values this
+      // exact request saved; a reopened editor may already have newer words.
+      if (accepted) {
+        const kept = keptEditorPatch("decision", o.id);
+        updateKeptEditorFields("decision", o.id, {}, DECISION_FIELDS.filter((field) => kept[field] === patch[field]));
+      }
       if (generation !== decisionWrite.current.generation) return;
-      if (accepted && submittedVersion === draftVersion.current) setEditingDecision(false);
+      if (accepted && submittedVersion === draftVersion.current && !DECISION_FIELDS.some((field) => field in keptEditorPatch("decision", o.id))) {
+        setEditingDecision(false);
+        setSavedDecision(true);
+      }
     } finally {
       decisionWrite.current.pending = false;
       if (generation === decisionWrite.current.generation) setSavingDecision(false);
@@ -143,60 +182,47 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
       <div className="desk-pullout-body desk-surface-body">
         <section className="desk-decision-card attention-decision">
           <div className="attention-decision-strip">
-            <span>Decision status</span>
             <CycleGadget label="Decision status" value={status} options={DECISION_STATES}
               disabled={savingStatus || savingDecision} onChange={(next) => void writeStatus(next)} />
             {Array.isArray(ir.deciders) && ir.deciders.length ? <span className="attention-decision-fact">{ir.deciders.join(" · ")}</span> : null}
             {ir.decidedAt ? <span className="attention-decision-fact">{humanTime(String(ir.decidedAt))}</span> : null}
+            {editingDecision ? <Button variant="ghost" dense disabled={savingDecision || savingStatus} onClick={cancelDecisionEdit}>Cancel</Button> : null}
           </div>
           {savingStatus ? <StateChip state="working" label="Saving status" /> : null}
           {statusFailure ? <div className="attention-record-feedback">
             <SurfaceState error={statusFailure} />
             <Button dense variant="ghost" disabled={savingStatus || savingDecision} onClick={() => retryStatus && void writeStatus(retryStatus)}>Retry</Button>
           </div> : null}
-          {editingDecision ? (
-            <div className="desk-decision-editor">
-              {savingDecision ? <StateChip state="working" label="Saving decision" /> : null}
-              {writeFailure?.subject === resourceRef && writeFailure.verb === "SAVE" ? (
-                <ActionNotice tone="danger" role="alert"><StateChip state="failure" label="Save failed" /><span>{o.title}</span></ActionNotice>
-              ) : null}
-              <section className="attention-decision-paper" aria-labelledby={decisionHeading}>
-                <h2 id={decisionHeading}>Decision</h2>
-                <PadGadget label="Decision" value={decisionDraft.decision_markdown} rows={8} autoGrow autoFocus
-                  onChange={(value) => {
-                    draftVersion.current += 1;
-                    setDecisionDraft((current) => ({ ...current, decision_markdown: value }));
-                  }} />
-              </section>
-              {([
-                ["context_markdown", "Background"],
-                ["consequences_markdown", "Consequences"],
-              ] as const).map(([field, label]) => (
-                <FoldGadget key={field} title={label} open={Boolean(decisionDraft[field].trim())} className="attention-decision-support">
-                  <PadGadget label={label} value={decisionDraft[field]} rows={3} autoGrow
-                    onChange={(value) => {
-                      draftVersion.current += 1;
-                      setDecisionDraft((current) => ({ ...current, [field]: value }));
-                    }} />
-                </FoldGadget>
-              ))}
-            </div>
-          ) : (
-            <>
-              {String(ir.decisionMarkdown || "").trim() ? (
-                <section className="attention-decision-paper" aria-labelledby={decisionHeading}>
+          {editingDecision && savingDecision ? <StateChip state="working" label="Saving decision" /> : null}
+          {editingDecision && writeFailure?.subject === resourceRef && writeFailure.verb === "SAVE" ? (
+            <ActionNotice tone="danger" role="alert"><StateChip state="failure" label="Save failed" /><span>{o.title}</span></ActionNotice>
+          ) : null}
+          {editingDecision || [ir.decisionMarkdown, ir.contextMarkdown, ir.consequencesMarkdown].some((value) => String(value || "").trim()) ? (
+            <div className={`attention-decision-paper${editingDecision ? " desk-decision-editor" : ""}`}>
+              {editingDecision || String(ir.decisionMarkdown || "").trim() ? (
+                <section className="attention-decision-main" aria-labelledby={decisionHeading}>
                   <h2 id={decisionHeading}>Decision</h2>
-                  <Material>{String(ir.decisionMarkdown)}</Material>
+                  {editingDecision ? (
+                    <PadGadget label="Decision" value={decisionDraft.decision_markdown} rows={6} autoGrow autoFocus
+                      onChange={(value) => changeDecisionField("decision_markdown", value)} />
+                  ) : <Material>{String(ir.decisionMarkdown)}</Material>}
                 </section>
               ) : null}
-              {String(ir.contextMarkdown || "").trim() ? (
-                <FoldGadget title="Background" open className="attention-decision-support"><Material>{String(ir.contextMarkdown)}</Material></FoldGadget>
-              ) : null}
-              {String(ir.consequencesMarkdown || "").trim() ? (
-                <FoldGadget title="Consequences" open className="attention-decision-support"><Material>{String(ir.consequencesMarkdown)}</Material></FoldGadget>
-              ) : null}
-            </>
-          )}
+              {([
+                ["context_markdown", "contextMarkdown", "Background"],
+                ["consequences_markdown", "consequencesMarkdown", "Consequences"],
+              ] as const).map(([field, recordField, label]) => (
+                editingDecision || String(ir[recordField] || "").trim() ? (
+                  <FoldGadget key={field} title={label} open={editingDecision ? Boolean(decisionDraft[field].trim()) : true} className="attention-decision-support">
+                    {editingDecision ? (
+                      <PadGadget label={label} value={decisionDraft[field]} rows={3} autoGrow
+                        onChange={(value) => changeDecisionField(field, value)} />
+                    ) : <Material>{String(ir[recordField])}</Material>}
+                  </FoldGadget>
+                ) : null
+              ))}
+            </div>
+          ) : null}
           {Array.isArray(ir.alternatives) && ir.alternatives.length ? (
             <FoldGadget title="Alternatives considered">
               <SurfaceRows>{ir.alternatives.map((alternative: any, index: number) => (
@@ -229,7 +255,7 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
           objectId={o.id}
         />
       </div>
-      <SurfaceFooter receipt={copyReceipt || (editingDecision ? "Editing" : null)} verbs={<>
+      <SurfaceFooter receipt={copyReceipt || (editingDecision ? "Draft kept" : savedDecision ? "Saved" : DECISION_STATES.find((entry) => entry.value === status)?.label)} verbs={<>
         {!editingDecision ? <>
         <Button
           variant="ghost"
@@ -250,8 +276,7 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
         </> : null}
         {editingDecision ? (
           <>
-            <Button variant="ghost" dense disabled={savingDecision || savingStatus} onClick={() => setEditingDecision(false)}>Cancel</Button>
-            <Button variant="primary" dense disabled={savingDecision || savingStatus} onClick={() => void commitDecisionEdit()}>Done</Button>
+            <Button variant="primary" dense disabled={savingDecision || savingStatus} onClick={() => void commitDecisionEdit()}>Save</Button>
           </>
         ) : (
           <Button variant="primary" dense onClick={startDecisionEdit}>Edit</Button>

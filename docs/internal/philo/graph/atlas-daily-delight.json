@@ -1,0 +1,1786 @@
+{
+  "schema_version": 1,
+  "source_commit": "ebd2387b1aaa7a1d854d02b95cec01a2443a4faa",
+  "cases": [
+    {
+      "id": "case.delight.thread.read",
+      "job": "beyond",
+      "edge_ids": [
+        "edge.http.post.api_threads_import"
+      ],
+      "state_id": "state.desk_presentation.delight_thread_read",
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME. Real product API/UI. Thread content, where present, comes through the real import API; no inference claim."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "body": {
+            "disposition": "completed"
+          },
+          "adapter": "http-route",
+          "expect_status": 200
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/desk/seed",
+          "body": {},
+          "adapter": "http-route",
+          "expect_status": 200
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/threads/import",
+          "body": {
+            "threads": [
+              {
+                "title": "Release readiness",
+                "created_at": "2026-10-17T12:00:00Z",
+                "messages": [
+                  {
+                    "role": "user",
+                    "text": "What must we resolve before the release?"
+                  },
+                  {
+                    "role": "assistant",
+                    "text": "## Two checks remain\n\nThe release can proceed when the migration owner confirms the rollback and the platform team completes the load test.\n\n| Check | Owner | Next step |\n| --- | --- | --- |\n| Rollback | Jordan | Restore the previous schema |\n| Load test | Platform | Run the release workload |\n\nThe release checklist already covers monitoring and the support handover."
+                  }
+                ]
+              }
+            ]
+          },
+          "adapter": "http-route",
+          "expect_status": 200,
+          "capture_as": "thread_id",
+          "capture_path": "imported.79353c8aec1a1574a7a8ab005de161a602246093773684e0304c43cfb2c3abf5"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "goto",
+        "adapter": "ui-navigation",
+        "url": "/?open=thread:{thread_id}"
+      },
+      "expected": {
+        "observe_at": ".thread-pullout-body",
+        "predicate": {
+          "kind": "text_contains",
+          "value": "Two checks remain"
+        },
+        "words": "Imported conversation renders as paper with a reachable composer."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.delight.ask.answer",
+      "job": "beyond",
+      "edge_ids": [
+        "edge.http.post.api_ask"
+      ],
+      "state_id": "state.desk_presentation.delight_ask_answer",
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME. Real product API/UI. Provider text is a declared boundary replay, not live model quality."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "body": {
+            "disposition": "completed"
+          },
+          "adapter": "http-route",
+          "expect_status": 200
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/desk/seed",
+          "body": {},
+          "adapter": "http-route",
+          "expect_status": 200
+        },
+        {
+          "kind": "boundary",
+          "substitute": "engine_reply",
+          "label": "Declared local provider text for daily Ask interaction",
+          "reply": "tests/fixtures/daily_experience_answer.json",
+          "adapter": "hub-engine-boundary",
+          "why": "Tests result reading/editing and Keep; not live inference quality."
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "body": {
+            "base_url": "{replay_provider_url}"
+          }
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "body": {
+            "draft": {
+              "request_id": "daily-engine",
+              "profile_id": "daily-engine",
+              "expected_profile_revision": 0,
+              "label": "Recorded daily engine",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "{replay_provider_url}",
+              "requires_key": false
+            },
+            "secret": null
+          }
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/assignments/set",
+          "body": {
+            "command_id": "daily-ask-route",
+            "expected_revision": 0,
+            "scope": {
+              "kind": "capability",
+              "capability_id": "ask.answer"
+            },
+            "entries": [
+              {
+                "profile_id": "{profile_id}",
+                "profile_revision": 1
+              }
+            ]
+          },
+          "adapter": "http-route",
+          "expect_status": 200
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "button[aria-controls=desk-tool-shelf]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "input[aria-controls=desk-palette-listbox]",
+          "value": "Ask AI"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "button[id=\"desk-palette-option-go.ask\"]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "textarea[aria-label=\"Ask about your work\"]",
+          "value": "What must we resolve before the release?"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-by-viewport",
+        "role": "button",
+        "name": "Ask",
+        "exact": true
+      },
+      "expected": {
+        "observe_at": ".desk-ask",
+        "predicate": {
+          "kind": "text_contains",
+          "value": "Two checks remain"
+        },
+        "words": "Real Ask request returns declared provider text; result is readable from its beginning."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.delight.ask.edit",
+      "job": "beyond",
+      "edge_ids": [
+        "edge.http.post.api_ask"
+      ],
+      "state_id": "state.desk_presentation.delight_ask_edit",
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME. Real product API/UI. Provider text is a declared boundary replay, not live model quality."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "body": {
+            "disposition": "completed"
+          },
+          "adapter": "http-route",
+          "expect_status": 200
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/desk/seed",
+          "body": {},
+          "adapter": "http-route",
+          "expect_status": 200
+        },
+        {
+          "kind": "boundary",
+          "substitute": "engine_reply",
+          "label": "Declared local provider text for daily Ask interaction",
+          "reply": "tests/fixtures/daily_experience_answer.json",
+          "adapter": "hub-engine-boundary",
+          "why": "Tests result reading/editing and Keep; not live inference quality."
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "body": {
+            "base_url": "{replay_provider_url}"
+          }
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "body": {
+            "draft": {
+              "request_id": "daily-engine",
+              "profile_id": "daily-engine",
+              "expected_profile_revision": 0,
+              "label": "Recorded daily engine",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "{replay_provider_url}",
+              "requires_key": false
+            },
+            "secret": null
+          }
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/assignments/set",
+          "body": {
+            "command_id": "daily-ask-route",
+            "expected_revision": 0,
+            "scope": {
+              "kind": "capability",
+              "capability_id": "ask.answer"
+            },
+            "entries": [
+              {
+                "profile_id": "{profile_id}",
+                "profile_revision": 1
+              }
+            ]
+          },
+          "adapter": "http-route",
+          "expect_status": 200
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "button[aria-controls=desk-tool-shelf]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "input[aria-controls=desk-palette-listbox]",
+          "value": "Ask AI"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "button[id=\"desk-palette-option-go.ask\"]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "textarea[aria-label=\"Ask about your work\"]",
+          "value": "What must we resolve before the release?"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Ask",
+          "exact": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-keyboard",
+          "selector": ".desk-ask-answer"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-by-viewport",
+        "role": "button",
+        "name": "Edit question",
+        "exact": true
+      },
+      "expected": {
+        "observe_at": ".desk-ask",
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "selector_presence",
+              "selector": "textarea[aria-label=\"Ask about your work\"]",
+              "present": true
+            },
+            {
+              "kind": "text_contains",
+              "value": "Two checks remain"
+            }
+          ]
+        },
+        "words": "Edit question restores composer without discarding current answer."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.delight.decision.save",
+      "job": "beyond",
+      "edge_ids": [
+        "edge.http.post.api_decisions"
+      ],
+      "state_id": "state.desk_presentation.delight_decision_save",
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME. Real product API/UI. Thread content, where present, comes through the real import API; no inference claim."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "body": {
+            "disposition": "completed"
+          },
+          "adapter": "http-route",
+          "expect_status": 200
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/desk/seed",
+          "body": {},
+          "adapter": "http-route",
+          "expect_status": 200
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "button[aria-controls=desk-tool-shelf]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "input[aria-controls=desk-palette-listbox]",
+          "value": "New Decision"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "button[id=\"desk-palette-option-desk.new-decision\"]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[data-testid=palette-name]",
+          "value": "Use one release ledger"
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-keyboard",
+          "selector": "[data-testid=palette-name]",
+          "key": "Enter"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "textarea[aria-label=Decision]",
+          "value": "Use one release ledger for the platform team. Each change must name its owner, rollback step, and release check."
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-by-viewport",
+        "role": "button",
+        "name": "Save",
+        "exact": true
+      },
+      "expected": {
+        "observe_at": ".attention-decision",
+        "predicate": {
+          "kind": "text_contains",
+          "value": "Use one release ledger for the platform team."
+        },
+        "words": "Decision-first editor saves actual record and shows its document."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.delight.thread.commands",
+      "job": "beyond",
+      "edge_ids": [
+        "edge.http.post.api_threads_import"
+      ],
+      "state_id": "state.desk_presentation.delight_thread_commands",
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME. Real product API/UI. Thread content, where present, comes through the real import API; no inference claim."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "body": {
+            "disposition": "completed"
+          },
+          "adapter": "http-route",
+          "expect_status": 200
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/desk/seed",
+          "body": {},
+          "adapter": "http-route",
+          "expect_status": 200
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/threads/import",
+          "body": {
+            "threads": [
+              {
+                "title": "Release readiness",
+                "created_at": "2026-10-17T12:00:00Z",
+                "messages": [
+                  {
+                    "role": "user",
+                    "text": "What must we resolve before the release?"
+                  },
+                  {
+                    "role": "assistant",
+                    "text": "## Two checks remain\n\nThe release can proceed when the migration owner confirms the rollback and the platform team completes the load test.\n\n| Check | Owner | Next step |\n| --- | --- | --- |\n| Rollback | Jordan | Restore the previous schema |\n| Load test | Platform | Run the release workload |\n\nThe release checklist already covers monitoring and the support handover."
+                  }
+                ]
+              }
+            ]
+          },
+          "adapter": "http-route",
+          "expect_status": 200,
+          "capture_as": "thread_id",
+          "capture_path": "imported.79353c8aec1a1574a7a8ab005de161a602246093773684e0304c43cfb2c3abf5"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/?open=thread:{thread_id}"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "textarea[aria-label=\"Thread message\"]",
+          "value": "Keep this draft while I choose a command."
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-by-viewport",
+        "role": "button",
+        "name": "Commands"
+      },
+      "expected": {
+        "observe_at": ".thread-composer",
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "selector_presence",
+              "selector": "[data-testid=composer-picker]",
+              "present": true
+            },
+            {
+              "kind": "input_value",
+              "selector": "textarea[aria-label=\"Thread message\"]",
+              "equals": "Keep this draft while I choose a command."
+            }
+          ]
+        },
+        "words": "Commands opens from a visible control while preserving draft."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.delight.thread.sources",
+      "job": "beyond",
+      "edge_ids": [
+        "edge.http.post.api_threads_import"
+      ],
+      "state_id": "state.desk_presentation.delight_thread_sources",
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME. Real product API/UI. Thread content, where present, comes through the real import API; no inference claim."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "body": {
+            "disposition": "completed"
+          },
+          "adapter": "http-route",
+          "expect_status": 200
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/desk/seed",
+          "body": {},
+          "adapter": "http-route",
+          "expect_status": 200
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "body": {
+            "title": "Release evidence 01 \u2014 platform migration and rollback",
+            "body_markdown": "Evidence for the release.",
+            "tags": []
+          },
+          "adapter": "http-route",
+          "expect_status": 201,
+          "capture_as": "note0",
+          "capture_path": "note.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "body": {
+            "title": "Release evidence 02 \u2014 platform migration and rollback",
+            "body_markdown": "Evidence for the release.",
+            "tags": []
+          },
+          "adapter": "http-route",
+          "expect_status": 201,
+          "capture_as": "note1",
+          "capture_path": "note.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "body": {
+            "title": "Release evidence 03 \u2014 platform migration and rollback",
+            "body_markdown": "Evidence for the release.",
+            "tags": []
+          },
+          "adapter": "http-route",
+          "expect_status": 201,
+          "capture_as": "note2",
+          "capture_path": "note.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "body": {
+            "title": "Release evidence 04 \u2014 platform migration and rollback",
+            "body_markdown": "Evidence for the release.",
+            "tags": []
+          },
+          "adapter": "http-route",
+          "expect_status": 201,
+          "capture_as": "note3",
+          "capture_path": "note.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "body": {
+            "title": "Release evidence 05 \u2014 platform migration and rollback",
+            "body_markdown": "Evidence for the release.",
+            "tags": []
+          },
+          "adapter": "http-route",
+          "expect_status": 201,
+          "capture_as": "note4",
+          "capture_path": "note.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "body": {
+            "title": "Release evidence 06 \u2014 platform migration and rollback",
+            "body_markdown": "Evidence for the release.",
+            "tags": []
+          },
+          "adapter": "http-route",
+          "expect_status": 201,
+          "capture_as": "note5",
+          "capture_path": "note.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "body": {
+            "title": "Release evidence 07 \u2014 platform migration and rollback",
+            "body_markdown": "Evidence for the release.",
+            "tags": []
+          },
+          "adapter": "http-route",
+          "expect_status": 201,
+          "capture_as": "note6",
+          "capture_path": "note.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "body": {
+            "title": "Release evidence 08 \u2014 platform migration and rollback",
+            "body_markdown": "Evidence for the release.",
+            "tags": []
+          },
+          "adapter": "http-route",
+          "expect_status": 201,
+          "capture_as": "note7",
+          "capture_path": "note.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "body": {
+            "title": "Release evidence 09 \u2014 platform migration and rollback",
+            "body_markdown": "Evidence for the release.",
+            "tags": []
+          },
+          "adapter": "http-route",
+          "expect_status": 201,
+          "capture_as": "note8",
+          "capture_path": "note.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "body": {
+            "title": "Release evidence 10 \u2014 platform migration and rollback",
+            "body_markdown": "Evidence for the release.",
+            "tags": []
+          },
+          "adapter": "http-route",
+          "expect_status": 201,
+          "capture_as": "note9",
+          "capture_path": "note.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "body": {
+            "title": "Release evidence 11 \u2014 platform migration and rollback",
+            "body_markdown": "Evidence for the release.",
+            "tags": []
+          },
+          "adapter": "http-route",
+          "expect_status": 201,
+          "capture_as": "note10",
+          "capture_path": "note.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "body": {
+            "title": "Release evidence 12 \u2014 platform migration and rollback",
+            "body_markdown": "Evidence for the release.",
+            "tags": []
+          },
+          "adapter": "http-route",
+          "expect_status": 201,
+          "capture_as": "note11",
+          "capture_path": "note.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/threads",
+          "body": {
+            "title": "Release sources",
+            "seed_refs": [
+              "note:{note0}",
+              "note:{note1}",
+              "note:{note2}",
+              "note:{note3}",
+              "note:{note4}",
+              "note:{note5}",
+              "note:{note6}",
+              "note:{note7}",
+              "note:{note8}",
+              "note:{note9}",
+              "note:{note10}",
+              "note:{note11}"
+            ]
+          },
+          "adapter": "http-route",
+          "expect_status": 201,
+          "capture_as": "thread_id"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/?open=thread:{thread_id}"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": ".desk-window .thread-head .thread-sources > summary"
+      },
+      "expected": {
+        "observe_at": ".thread-composer",
+        "predicate": {
+          "kind": "selector_presence",
+          "selector": "textarea[aria-label=\"Thread message\"]",
+          "present": true
+        },
+        "words": "Twelve real sent source references can expand without pushing composer offscreen."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.delight.ask.passage",
+      "job": "beyond",
+      "edge_ids": [
+        "edge.http.post.api_ask"
+      ],
+      "state_id": "state.desk_presentation.delight_ask_passage",
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME. Real product API/UI. Provider text is a declared boundary replay, not live model quality."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "body": {
+            "disposition": "completed"
+          },
+          "adapter": "http-route",
+          "expect_status": 200
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/desk/seed",
+          "body": {},
+          "adapter": "http-route",
+          "expect_status": 200
+        },
+        {
+          "kind": "boundary",
+          "substitute": "engine_reply",
+          "label": "Declared local provider text for daily Ask interaction",
+          "reply": "tests/fixtures/daily_experience_answer.json",
+          "adapter": "hub-engine-boundary",
+          "why": "Tests result reading/editing and Keep; not live inference quality."
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "body": {
+            "base_url": "{replay_provider_url}"
+          }
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "body": {
+            "draft": {
+              "request_id": "daily-engine",
+              "profile_id": "daily-engine",
+              "expected_profile_revision": 0,
+              "label": "Recorded daily engine",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "{replay_provider_url}",
+              "requires_key": false
+            },
+            "secret": null
+          }
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/assignments/set",
+          "body": {
+            "command_id": "daily-ask-route",
+            "expected_revision": 0,
+            "scope": {
+              "kind": "capability",
+              "capability_id": "ask.answer"
+            },
+            "entries": [
+              {
+                "profile_id": "{profile_id}",
+                "profile_revision": 1
+              }
+            ]
+          },
+          "adapter": "http-route",
+          "expect_status": 200
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "body": {
+            "title": "Release checklist",
+            "body_markdown": "Confirm the rollback owner and run the load test before releasing the migration. Keep the release checklist current and attach the final report.",
+            "tags": []
+          },
+          "adapter": "http-route",
+          "expect_status": 201,
+          "capture_as": "note_id",
+          "capture_path": "note.id"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/?open=note:{note_id}"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Develop this thought",
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".thought-note-window .cm-content"
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-keyboard",
+          "selector": ".thought-note-window .cm-content",
+          "key": "Meta+a"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "More actions",
+          "optional": true,
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "button[aria-label=\"Ask about this note\"], [role=\"menuitem\"]:has-text(\"Ask about this note\")",
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "textarea[aria-label=\"Ask about your work\"]",
+          "value": "What must we resolve before the release?"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Ask"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-keyboard",
+          "selector": ".desk-ask-answer"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-by-viewport",
+        "role": "button",
+        "name": "Edit question"
+      },
+      "expected": {
+        "observe_at": ".desk-ask",
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "selector_presence",
+              "selector": "[data-testid=ask-selected-passage]",
+              "present": true
+            },
+            {
+              "kind": "text_contains",
+              "value": "Release checklist"
+            }
+          ]
+        },
+        "words": "The exact note remains named and selected text remains available in its fold while editing beside the previous answer."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.delight.decision.retain",
+      "job": "beyond",
+      "edge_ids": [
+        "edge.http.post.api_decisions"
+      ],
+      "state_id": "state.desk_presentation.delight_decision_retain",
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME. Real product API/UI. Thread content, where present, comes through the real import API; no inference claim."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "body": {
+            "disposition": "completed"
+          },
+          "adapter": "http-route",
+          "expect_status": 200
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/desk/seed",
+          "body": {},
+          "adapter": "http-route",
+          "expect_status": 200
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "adapter": "http-route",
+          "body": {
+            "title": "Retain the release decision",
+            "status": "proposed",
+            "decision_markdown": "Existing saved decision.",
+            "context_markdown": "The team needs one release record."
+          },
+          "expect_status": 201,
+          "capture_as": "decision_id",
+          "capture_path": "decision.id"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/?open=decision:{decision_id}"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Edit",
+          "exact": true
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "textarea[aria-label=Decision]",
+          "value": "Keep these unfinished release changes after closing."
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": ".desk-window.is-front .desk-gadget-close",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "goto",
+            "adapter": "ui-navigation",
+            "url": "/?open=decision:{decision_id}"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-keyboard",
+            "selector": "textarea[aria-label=Decision]"
+          },
+          {
+            "kind": "ui",
+            "action": "reload",
+            "adapter": "ui-navigation"
+          }
+        ]
+      },
+      "expected": {
+        "observe_at": ".attention-decision",
+        "predicate": {
+          "kind": "input_value",
+          "selector": "textarea[aria-label=Decision]",
+          "equals": "Keep these unfinished release changes after closing."
+        },
+        "words": "Closing, reopening and reloading restores the exact draft without saving it to the decision."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.delight.ask.keep",
+      "job": "beyond",
+      "edge_ids": [
+        "edge.http.post.api_ask"
+      ],
+      "state_id": "state.desk_presentation.delight_ask_keep",
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME. Real product API/UI. Provider text is a declared boundary replay, not live model quality."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "body": {
+            "disposition": "completed"
+          },
+          "adapter": "http-route",
+          "expect_status": 200
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/desk/seed",
+          "body": {},
+          "adapter": "http-route",
+          "expect_status": 200
+        },
+        {
+          "kind": "boundary",
+          "substitute": "engine_reply",
+          "label": "Declared local provider text for daily Ask interaction",
+          "reply": "tests/fixtures/daily_experience_answer.json",
+          "adapter": "hub-engine-boundary",
+          "why": "Tests result reading/editing and Keep; not live inference quality."
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "body": {
+            "base_url": "{replay_provider_url}"
+          }
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "body": {
+            "draft": {
+              "request_id": "daily-engine",
+              "profile_id": "daily-engine",
+              "expected_profile_revision": 0,
+              "label": "Recorded daily engine",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "{replay_provider_url}",
+              "requires_key": false
+            },
+            "secret": null
+          }
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/assignments/set",
+          "body": {
+            "command_id": "daily-ask-route",
+            "expected_revision": 0,
+            "scope": {
+              "kind": "capability",
+              "capability_id": "ask.answer"
+            },
+            "entries": [
+              {
+                "profile_id": "{profile_id}",
+                "profile_revision": 1
+              }
+            ]
+          },
+          "adapter": "http-route",
+          "expect_status": 200
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "body": {
+            "title": "Release checklist",
+            "body_markdown": "Confirm the rollback owner and run the load test before releasing the migration. Keep the release checklist current and attach the final report.",
+            "tags": []
+          },
+          "adapter": "http-route",
+          "expect_status": 201,
+          "capture_as": "note_id",
+          "capture_path": "note.id"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/?open=note:{note_id}"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Develop this thought",
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".thought-note-window .cm-content"
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-keyboard",
+          "selector": ".thought-note-window .cm-content",
+          "key": "Meta+a"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "More actions",
+          "optional": true,
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "button[aria-label=\"Ask about this note\"], [role=\"menuitem\"]:has-text(\"Ask about this note\")",
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "textarea[aria-label=\"Ask about your work\"]",
+          "value": "What must we resolve before the release?"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Ask"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-keyboard",
+          "selector": ".desk-ask-answer"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-by-viewport",
+        "role": "button",
+        "name": "Keep",
+        "exact": true
+      },
+      "expected": {
+        "observe_at": ".desk-window.is-front",
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "selector_presence",
+              "selector": ".desk-window.is-front .artifact-reading",
+              "present": true
+            },
+            {
+              "kind": "text_contains",
+              "value": "Two checks remain"
+            }
+          ]
+        },
+        "words": "Keep opens the confirmed saved answer and leaves Ask available for return with its context."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.delight.thread.keep",
+      "job": "beyond",
+      "edge_ids": [
+        "edge.http.post.api_threads_import"
+      ],
+      "state_id": "state.desk_presentation.delight_thread_keep",
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME. Real product API/UI. Thread content, where present, comes through the real import API; no inference claim."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "body": {
+            "disposition": "completed"
+          },
+          "adapter": "http-route",
+          "expect_status": 200
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/desk/seed",
+          "body": {},
+          "adapter": "http-route",
+          "expect_status": 200
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/threads/import",
+          "body": {
+            "threads": [
+              {
+                "title": "Release readiness",
+                "created_at": "2026-10-17T12:00:00Z",
+                "messages": [
+                  {
+                    "role": "user",
+                    "text": "What must we resolve before the release?"
+                  },
+                  {
+                    "role": "assistant",
+                    "text": "## Two checks remain\n\nThe release can proceed when the migration owner confirms the rollback and the platform team completes the load test.\n\n| Check | Owner | Next step |\n| --- | --- | --- |\n| Rollback | Jordan | Restore the previous schema |\n| Load test | Platform | Run the release workload |\n\nThe release checklist already covers monitoring and the support handover."
+                  }
+                ]
+              }
+            ]
+          },
+          "adapter": "http-route",
+          "expect_status": 200,
+          "capture_as": "thread_id",
+          "capture_path": "imported.79353c8aec1a1574a7a8ab005de161a602246093773684e0304c43cfb2c3abf5"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/?open=thread:{thread_id}"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "textarea[aria-label=\"Thread message\"]",
+          "value": "Keep this unfinished thread reply."
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-by-viewport",
+        "role": "button",
+        "name": "Keep as note",
+        "exact": true
+      },
+      "expected": {
+        "observe_at": ".thread-foot",
+        "predicate": {
+          "kind": "text_contains",
+          "value": "Note saved"
+        },
+        "words": "Keep as note confirms the saved note in place and exposes its exact opener while retaining the thread draft."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ],
+  "states": [
+    {
+      "id": "state.desk_presentation.delight_thread_read",
+      "family": "desk_presentation",
+      "values": {
+        "application": "case.delight.thread.read"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "symbol": "export function ThreadPullout",
+          "claim": "Imported conversation renders as paper with a reachable composer."
+        }
+      ],
+      "reachable_by": [
+        "case.delight.thread.read"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.delight_ask_answer",
+      "family": "desk_presentation",
+      "values": {
+        "application": "case.delight.ask.answer"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/components/AskPanel.tsx",
+          "symbol": "export function AskPanel()",
+          "claim": "Real Ask request returns declared provider text; result is readable from its beginning."
+        }
+      ],
+      "reachable_by": [
+        "case.delight.ask.answer"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.delight_ask_edit",
+      "family": "desk_presentation",
+      "values": {
+        "application": "case.delight.ask.edit"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/components/AskPanel.tsx",
+          "symbol": "export function AskPanel()",
+          "claim": "Edit question restores composer without discarding current answer."
+        }
+      ],
+      "reachable_by": [
+        "case.delight.ask.edit"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.delight_decision_save",
+      "family": "desk_presentation",
+      "values": {
+        "application": "case.delight.decision.save"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/pullouts/DecisionPullout.tsx",
+          "symbol": "export function DecisionPullout",
+          "claim": "Decision-first editor saves actual record and shows its document."
+        }
+      ],
+      "reachable_by": [
+        "case.delight.decision.save"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.delight_thread_commands",
+      "family": "desk_presentation",
+      "values": {
+        "application": "case.delight.thread.read"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "symbol": "export function ThreadPullout",
+          "claim": "Commands opens from a visible control while preserving draft."
+        }
+      ],
+      "reachable_by": [
+        "case.delight.thread.commands"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.delight_thread_sources",
+      "family": "desk_presentation",
+      "values": {
+        "application": "case.delight.thread.read"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "symbol": "export function ThreadPullout",
+          "claim": "Twelve real sent source references can expand without pushing composer offscreen."
+        }
+      ],
+      "reachable_by": [
+        "case.delight.thread.sources"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.delight_ask_passage",
+      "family": "desk_presentation",
+      "values": {
+        "application": "case.delight.ask.edit"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/components/AskPanel.tsx",
+          "symbol": "export function AskPanel()",
+          "claim": "Selected passage and exact note remain visible while editing the question beside its previous answer."
+        }
+      ],
+      "reachable_by": [
+        "case.delight.ask.passage"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.delight_decision_retain",
+      "family": "desk_presentation",
+      "values": {
+        "application": "case.delight.decision.retain"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/pullouts/DecisionPullout.tsx",
+          "symbol": "export function DecisionPullout",
+          "claim": "Closing, reopening and reloading restores the exact draft without saving it to the decision."
+        }
+      ],
+      "reachable_by": [
+        "case.delight.decision.retain"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.delight_ask_keep",
+      "family": "desk_presentation",
+      "values": {
+        "application": "case.delight.ask.keep"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/components/AskPanel.tsx",
+          "symbol": "export function AskPanel()",
+          "claim": "Keep opens the confirmed saved answer and leaves Ask available for return with its context."
+        }
+      ],
+      "reachable_by": [
+        "case.delight.ask.keep"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.delight_thread_keep",
+      "family": "desk_presentation",
+      "values": {
+        "application": "case.delight.thread.keep"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "symbol": "export function ThreadPullout",
+          "claim": "Keep as note confirms the saved note in place and exposes its exact opener while retaining the thread draft."
+        }
+      ],
+      "reachable_by": [
+        "case.delight.thread.keep"
+      ]
+    }
+  ],
+  "excluded": [],
+  "council_readings": [],
+  "clocks": [
+    {
+      "id": "clock.browser_date",
+      "source": "Browser Date and timers",
+      "mechanism": "No clock mutation required.",
+      "status": "available",
+      "used_by": []
+    }
+  ]
+}

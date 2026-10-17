@@ -108,6 +108,7 @@ Gradient edge fades for scrolling wells. ONE species with an `axis` prop. Promot
 - `axis: "x" | "y"` -- fade direction
 - `scrollRef: RefObject<HTMLElement | null>` -- the scrollable element (when null, falls back to wrapRef.parentElement)
 - `className?: string` -- additional class on the wrapper
+- Vertical wells may set `--scroll-hint-background` and `--scroll-hint-depth` to match their material. Defaults remain `var(--surface-1)` and `28px`; paper readers use `var(--alive-paper)` and `12px`.
 - Pure function: `computeScrollHint(scrollOffset, scrollExtent, clientExtent)` returns `ScrollHintState` ("none" | "start" | "end" | "both")
 - Hook: `useScrollHint(wrapRef, scrollRef, axis)` -- attaches scroll/resize listeners, sets `data-scroll-hint` on the wrapper
 - Fence: `computeScrollHint`/`computeVerticalScrollHint` must not be defined outside `desk/surface/`, `desk/chair/lanes/DoorBoardLane.tsx` (thin re-export), and `features/project-room/steward/model.ts` (thin re-export)
