@@ -21,3 +21,27 @@ UNKNOWN: Owner aesthetic acceptance, live model quality and physical microphone/
 ## Full-run follow-up
 
 The original review above preceded full-main completion. The run then found five failures: two product copy findings, two stale Thread-details navigation tests and one memory-index database lock. See RELEASE.md for exact identities, preserved evidence and fix-forward disposition. Owner aesthetic acceptance remains open.
+
+
+## Formal follow-up review — #1244
+
+VERDICT: RATIFY
+
+FINDINGS:
+1. Tenet4: Decision's supporting field now says Background consistently in editing, reading and copied text; stored `context_markdown` is unchanged. Evidence: `web/src/desk/pullouts/DecisionPullout.tsx:44`, `:172`, `:193`;46 focused Decision and21 product-copy/language checks pass.
+2. Tenets3 and4: Thread's argument action names its consequence using the existing command label. Evidence: `web/src/desk/components/ThreadComposer.tsx:986`;93 composer checks pass. Root inspected actual Toggle guardrail shots at1440 and393 in `.tmp/daily-main/thread-argument-{1440,393}/`. Both own all nine real-pointer target points, retain the draft on Close and return focus to the writer. The phone target is44px tall; the full label fits.
+3. Tenets3 and7: the receipt test now navigates the real Thread details fold before Rename, without dropping any refusal/receipt/pointer assertion. Evidence: `tests/e2e/test_desk_glass.py:656`; both focused widths and all12 affected browser checks pass. Ordinary quick is GREEN:304 related web,12 affected browser,109 sweep and17 canon checks.
+4. Merged product `ac55cd318` is delivered from `wt-daily-delivery-20261017`, PID38565, port8765. Verified source and served build both equal `22aa76d6327046a1`; four HTTP checks return200. The actual root Desk address printed by `holdspeak web` was opened. Verification remains in a separate worktree.
+
+CONDITIONS: None for these bounded copy/navigation corrections. The full-main run is in progress; any new finding is fixed forward.
+
+MISSED: #1243's scoped checks missed two language-contract failures and two stale receipt-navigation cases. All four are corrected here. Its fifth full-run failure, a memory-index database lock, remains explicitly open in STATUS and the release record: one original parameter and52 scoped cases pass, but no cause was established. No speculative transaction patch or blanket retry was added.
+
+TUESDAY: Yes: Decision names supporting background clearly, and Thread commands state what the press does without losing the draft or writer focus.
+
+UNKNOWN: The original database-lock cause; owner aesthetic acceptance; live provider quality and physical native input/output. The full-main result is pending and cannot close the unknown lock cause merely by passing.
+
+
+## Subsequent full result and source-anchor correction
+
+Merged `ac55cd318`: `1 failed, 16697 passed, 26 skipped, 1 xfailed, 12 warnings in 674.18s (0:11:14)`; mandatory live bus `3 passed in 23.82s`. The sole stale atlas source anchor is now corrected, with all26 source-anchor checks passing. The original recall-lock case passed, but its earlier cause remains unknown and open. The [final merged verification record](https://github.com/karolswdev/HoldSpeak/pull/1244#issuecomment-6239495252) holds the exact final head and outcome; the earlier one-failure run is not relabelled green.

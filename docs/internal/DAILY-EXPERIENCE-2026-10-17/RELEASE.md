@@ -66,3 +66,52 @@ browser checks,109 desktop/phone sweep cases and17 canon checks. It builds the
 follow-up source and retains logs at `.tmp/daily-main/quick-followup.log` and
 `.tmp/daily-main/quick-logs/`. The full suite will run on the merged follow-up in
 the separate proof tree, with failure-only SQLite metadata capture.
+
+## Follow-up delivered; source anchor corrected
+
+[PR #1244](https://github.com/karolswdev/HoldSpeak/pull/1244) merged at `ac55cd318`.
+Actual Toggle guardrail controls pass at1440 and393: all nine real-pointer target
+points owned, full label fits, exact draft retained on Close and writer focus
+restored. Root inspected both images. Evidence in the proof tree:
+`.tmp/daily-main/thread-argument-1440/20261017T190826Z-case.daily.thread.argument_label-astra-1440/`
+and `.tmp/daily-main/thread-argument-393/20261017T190939Z-case.daily.thread.argument_label-astra-393/`.
+Both use the same compiled frontend; the first records the precommit worktree
+and the second `92a47b65a` during the root's record changes.
+
+Normal idle delivery now serves from `wt-daily-delivery-20261017`, PID38565,
+port8765. Source and served build equal `22aa76d6327046a1`. The verified bundle
+was copied byte-for-byte from the separate proof tree. Desk, health, Conductor
+and Models return200. The actual root Desk address printed by `holdspeak web`
+was opened privately. Jupiter preview4488 and the stable dependency chain
+remain intact. No tests or builds run in the new delivery tree after it starts
+serving. [Formal Astra review](https://github.com/karolswdev/HoldSpeak/pull/1244#issuecomment-6239292955): RATIFY.
+
+The follow-up full run completed with **16,697 passed,1 failed,26 skipped and1
+expected failure**. Exact tail: `1 failed, 16697 passed, 26 skipped, 1 xfailed, 12 warnings in 674.18s (0:11:14)`. Mandatory live bus: `3 passed in 23.82s`. The sole
+failure is `test_every_source_reference_lands_on_its_symbol[atlas-phase8.json]`:
+the phase8 atlas still cites the old Context label. Its one source anchor now
+cites Background; all26 source-anchor checks pass after26 collected. No
+product source changes in this correction. Logs and JUnit remain in
+`.tmp/daily-main-fixed/`; the original five-failure run remains in
+`.tmp/daily-main/`. Failure-only SQLite metadata reporting did not alter
+product transactions or retry tests.
+
+The final documentation/anchor merge receives its postmerge run. Its exact
+head and result are kept in the [final verification record](https://github.com/karolswdev/HoldSpeak/pull/1244#issuecomment-6239495252)
+and the proof tree's `.tmp/daily-final/main-full-state.json`, JUnit and logs.
+This avoids treating the previous one-failure run as green.
+
+The original recall-lock case passed in the follow-up full run; its earlier
+cause remains unknown and open. Owner aesthetic acceptance and live provider/
+native behavior remain separate. The three requested faces are built, merged
+and available on the local Desk; the broader visual inventory remains active.
+
+The final metadata correction also updates the legacy saved-Decision case to
+the actual Background fold. It checks both the heading and saved body, with
+case-correct absence of empty Consequences. Three scoped schema/source checks
+pass after three collected. Real graph walks pass at1440 and393; root inspected
+both after shots in `.tmp/daily-main/decision-phase8-1440/20261017T192654Z-case.p8.decision_heads.hidden-astra-1440/`
+and `.tmp/daily-main/decision-phase8-393/20261017T192715Z-case.p8.decision_heads.hidden-astra-393/`.
+Ordinary documentation quick passes109 desktop/phone sweep cases and17 canon
+checks; the final case-only metadata adjustment has its separate scoped checks
+and actual walks. The unchanged product bundle remains `22aa76d6327046a1`.
