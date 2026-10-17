@@ -8,7 +8,7 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
-**Night Train rebuilt (2026-10-16).** Close seated compartment, walnut and
+**Night Train — #1234 (2026-10-16).** Close seated compartment, walnut and
 emerald fabric, warm reading lamp, ceramic cup and open book, actual subtle
 glass reflection and fine rain. Outside: shaded mountain relief, lake glints,
 clustered firs and passing station lights on a platform. Tree flow follows its

@@ -51,8 +51,8 @@ The local atlas validates against the production schema. Two final actual picker
 walks ran one case per `scripts/graph_walk.py` invocation, engine none, with
 fresh isolated HOME/DB and native state disabled. Both passed within30s:
 
--1440: `.tmp/night-train/graph-final-1440/20261017T024500Z-case.desk.wallpaper.train.ready-astra-1440/`.
--393: `.tmp/night-train/graph-final-393/20261017T024543Z-case.desk.wallpaper.train.ready-astra-393/`.
+- 1440: `.tmp/night-train/graph-final-1440/20261017T024500Z-case.desk.wallpaper.train.ready-astra-1440/`.
+- 393: `.tmp/night-train/graph-final-393/20261017T024543Z-case.desk.wallpaper.train.ready-astra-393/`.
 
 Root read initial feedback separately from settled terminal results, checked
 isolated DB provenance, and inspected before/after shots. The real radio choice
