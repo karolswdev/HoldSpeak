@@ -138,7 +138,7 @@ export function createTrainCompartment(room: Room) {
   const pool = room.spot(0xffd7a4, 0.85, [0.10, 1.018, -0.68], [0.12, 0.75, -0.47], 0.94, true);
   pool.shadow.camera.near = 0.02;
   pool.shadow.camera.far = 3;
-  pool.shadow.mapSize.set(512, 512);
+  pool.shadow.mapSize.set(1024, 1024);
   pool.shadow.bias = -0.0001;
   room.point(0x98c1df, 0.40, [-0.12, 1.75, -1.10], 3.6);
   room.point(0xe7ba7c, 0.12, [-0.8, 1.95, 0.70], 2.3);
@@ -159,23 +159,66 @@ export function createTrainCompartment(room: Room) {
   const tea = room.material(0x29180e, 0.13);
   room.cylinder(0.031, 0.031, 0.001, [0, 0.067, 0], tea, cup);
 
-  const book = room.moving(room.group([-0.08, 0.786, -0.44]));
+  // The cover rests on the 0.7775 m table top; all paper is part of a block.
+  const book = room.moving(room.group([-0.08, 0.7805, -0.44]));
   book.name = "Night Train open book";
   book.rotation.y = -0.18;
   const cover = room.material(0x354d41, 0.65);
-  const page = room.material(0xd8cbae, 0.88);
-  const ink = room.material(0x897e67, 0.9);
+  const edgeTexture = room.texture((ctx, size) => {
+    ctx.fillStyle = "#cbbd9e";
+    ctx.fillRect(0, 0, size, size);
+    ctx.fillStyle = "rgba(112,96,72,0.24)";
+    for (let y = 0; y < size; y += 8) ctx.fillRect(0, y, size, 0.7);
+  }, 128);
+  edgeTexture.wrapT = THREE.RepeatWrapping;
+  const edges = room.material(0xffffff, 0.9);
+  edges.map = edgeTexture;
+  const printTexture = room.texture((ctx, size) => {
+    ctx.fillStyle = "#d8cbae";
+    ctx.fillRect(0, 0, size, size);
+    ctx.fillStyle = "rgba(91,79,59,0.54)";
+    for (let row = 0; row < 18; row++) {
+      let x = 53;
+      for (let word = 0; word < 7; word++) {
+        const width = 20 + ((row * 17 + word * 29) % 31);
+        if (x + width > size - 48) break;
+        ctx.fillRect(x, 53 + row * 23, width, 2.2);
+        x += width + 9;
+      }
+    }
+  }, 512);
+  const paper = room.material(0xffffff, 0.9);
+  paper.map = printTexture;
+  const pageHeight = (t: number) => 0.010 + Math.sin(t * Math.PI) * 0.008 + t * 0.003;
+  room.box([0.002, 0.006, 0.17], [0, 0, 0], cover, book);
   for (const side of [-1, 1]) {
     room.box([0.112, 0.006, 0.17], [side * 0.057, 0, 0], cover, book);
-    const pages = room.box([0.105, 0.009, 0.16], [side * 0.054, 0.008, 0], page, book);
-    pages.rotation.z = side * -0.065;
-    // Fine printed rows stay below the physical page, never become UI text.
-    for (let row = 0; row < 11; row++) room.box(
-      [0.074 - (row % 4 === 0 ? 0.009 : 0), 0.0003, 0.00055],
-      [side * 0.056, 0.016 + side * -0.065 * side * 0.054, -0.060 + row * 0.011], ink, book,
-    );
+    // A continuous, gently curved solid block reaches from cover to paper.
+    const profile = new THREE.Shape();
+    profile.moveTo(side * 0.003, 0.003);
+    profile.lineTo(side * 0.109, 0.003);
+    profile.lineTo(side * 0.109, pageHeight(1));
+    for (let step = 24; step >= 0; step--) {
+      const t = step / 24;
+      profile.lineTo(side * (0.003 + t * 0.106), pageHeight(t));
+    }
+    profile.closePath();
+    const block = new THREE.ExtrudeGeometry(profile, { depth: 0.16, bevelEnabled: false, steps: 1 });
+    const positions = block.getAttribute("position"), uv = block.getAttribute("uv");
+    for (let i = 0; i < positions.count; i++) uv.setXY(i, positions.getX(i) * 4, positions.getY(i) * 50);
+    room.mesh(block, edges, [0, 0, -0.08], book);
+
+    // Printed top follows exactly the block below it, including the low gutter.
+    const top = new THREE.PlaneGeometry(0.106, 0.16, 24, 4);
+    top.rotateX(-Math.PI / 2);
+    const vertices = top.getAttribute("position");
+    for (let i = 0; i < vertices.count; i++) {
+      const t = vertices.getX(i) / 0.106 + 0.5;
+      const across = side > 0 ? t : 1 - t;
+      vertices.setXYZ(i, side > 0 ? 0.003 + t * 0.106 : -0.109 + t * 0.106,
+        pageHeight(across) + 0.00005, vertices.getZ(i));
+    }
+    top.computeVertexNormals();
+    room.mesh(top, paper, [0, 0, 0], book);
   }
-  const lifted = room.box([0.103, 0.0007, 0.155], [0.039, 0.048, 0], page, book);
-  lifted.rotation.z = 0.78;
-  room.box([0.004, 0.001, 0.13], [0.004, 0.015, 0.008], room.material(0x98654b), book);
 }

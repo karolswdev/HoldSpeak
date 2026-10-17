@@ -9,6 +9,7 @@ export function createNightTrainScene(context: AtmosphereSceneContext): Atmosphe
   const room = new Room(context, {
     camera: [-0.50, 1.15, 0.65], target: [0.03, 1.30, -1.30],
     background: 0x253b4d, fog: 0.007, ambient: 0.68, exposure: 1.15, fov: 49,
+    renderQuality: "high",
   });
   // Keep the oblique view of the wide distant sky inside the frustum.
   room.camera.far = 400;
@@ -19,7 +20,7 @@ export function createNightTrainScene(context: AtmosphereSceneContext): Atmosphe
   const landscape = createTrainLandscape(room);
   const base = room.finish();
   let reduced = context.reducedMotion, disposed = false;
-  let aspect = 1.6, elapsed = 0, pointerX = 0, pointerY = 0;
+  let aspect = 1.6;
   const target = new THREE.Vector3();
   const initialFrame: AtmosphereFrame = { elapsed: 0, delta: 0, pointer: { x: 0, y: 0 } };
   // The world and glass start from the same still, including with Motion off.
@@ -31,12 +32,9 @@ export function createNightTrainScene(context: AtmosphereSceneContext): Atmosphe
     const portrait = aspect < 0.8;
     const x = portrait ? -0.40 : -0.50;
     const z = portrait ? 0.98 : 0.65;
-    const vibrationX = Math.sin(elapsed * 11.3) * 0.00055 + Math.sin(elapsed * 23.7) * 0.00018;
-    const vibrationY = Math.sin(elapsed * 13.1) * 0.00045;
-    room.camera.position.set(x + pointerX * 0.014 + vibrationX, 1.15 - pointerY * 0.009 + vibrationY, z);
+    room.camera.position.set(x, 1.15, z);
     target.set(portrait ? 0.10 : 0.03, portrait ? 1.25 : 1.30, -1.30);
     room.camera.lookAt(target);
-    room.camera.rotateZ(Math.sin(elapsed * 9.7) * 0.00028);
     room.camera.updateMatrixWorld();
   }
   applyCamera();
@@ -49,12 +47,9 @@ export function createNightTrainScene(context: AtmosphereSceneContext): Atmosphe
     },
     update(frame: AtmosphereFrame) {
       if (disposed || reduced) return;
-      elapsed = Math.max(0, frame.elapsed);
+      const elapsed = Math.max(0, frame.elapsed);
       const delta = Math.min(Math.max(frame.delta, 0), 0.05);
-      const ease = 1 - Math.exp(-delta * 1.6);
-      pointerX += (frame.pointer.x - pointerX) * ease;
-      pointerY += (frame.pointer.y - pointerY) * ease;
-      base.update({ ...frame, elapsed, delta });
+      base.update({ ...frame, elapsed, delta, pointer: initialFrame.pointer });
       landscape.update(elapsed);
       glass.update(elapsed);
       // Room restores its private target on every update; our framing comes last.

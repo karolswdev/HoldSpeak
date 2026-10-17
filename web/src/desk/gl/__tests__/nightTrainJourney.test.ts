@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { TRAIN_TERRAIN_SPAN, TRAIN_TERRAIN_SPEEDS, TRAIN_TREE_LAYERS, trainRidgeHeight, trainTerrainHeight, trainStationPosition, trainTravelPosition } from "../interiors/nightTrainJourney";
+import { TRAIN_MASSIFS, TRAIN_TERRAIN_SPAN, TRAIN_TERRAIN_EXTENTS, TRAIN_TERRAIN_SPEEDS, TRAIN_TREE_LAYERS, trainRidgeHeight, trainTerrainHeight, trainStationPosition, trainTravelPosition } from "../interiors/nightTrainJourney";
 
 describe("Night Train continuous journey", () => {
   it("bounds population, separates depths and locks each wood layer to its terrain", () => {
@@ -21,6 +21,23 @@ describe("Night Train continuous journey", () => {
       expect(Math.abs(before)).toBeGreaterThan(100); expect(Math.abs(after)).toBeGreaterThan(100);
     }
     expect(trainTravelPosition(4, -1, 1, 600)).toBe(4);
+  });
+
+  it("authors distinct asymmetric summits separated by a deep glacial saddle", () => {
+    expect(new Set(TRAIN_MASSIFS[0].map(peak => peak.height)).size).toBeGreaterThan(4);
+    expect(TRAIN_MASSIFS[0].every(peak => Number(peak.left) !== Number(peak.right))).toBe(true);
+    const summit=trainTerrainHeight(18,1,0,0.67);
+    const valley=trainTerrainHeight(46,8,0,0.67);
+    expect(summit).toBeGreaterThan(19);
+    expect(summit-valley).toBeGreaterThan(12);
+    expect(Math.abs(trainTerrainHeight(4,1,0,0.67)-trainTerrainHeight(32,1,0,0.67))).toBeGreaterThan(1);
+  });
+
+  it("returns mountain boundaries below lake level so front edges cannot float",()=>{
+    for(let layer=0;layer<2;layer++)for(const x of [-120,-35,18,70,160]){
+      expect(trainTerrainHeight(x,TRAIN_TERRAIN_EXTENTS[layer],layer,0.67)).toBeLessThan(0.30);
+      expect(trainTerrainHeight(x,-TRAIN_TERRAIN_EXTENTS[layer],layer,0.67)).toBeLessThan(0.30);
+    }
   });
 
   it("gives terrain full depth with gullies, peaks and continuous heightfield boundaries", () => {
