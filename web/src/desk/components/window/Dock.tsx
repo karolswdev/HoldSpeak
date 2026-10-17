@@ -500,22 +500,24 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
         <>
           {/* The phone has four doors: Today, Capture, Meetings and People. */}
           {[
-            { id: "intelligence:desk", label: "Today", glyph: "◈", click: () => openIntelligence({ view: "today" }), running: Boolean(windowsById["intelligence:desk"]), minimized: panelMin.includes("intelligence:desk") },
+            { id: "intelligence:desk", label: "Today", glyph: "◈", click: () => openIntelligence({ view: "today" }), running: windows.some((w) => w.id === "pullout:intelligence:desk"), minimized: panelMin.includes("pullout:intelligence:desk") },
             { id: "chair:capture", label: "Capture", glyph: "●", click: () => openChairWindow("chair:capture"), running: !chair.closed["chair:capture"], minimized: panelMin.includes("chair:capture") },
             { id: "surface-meetings", label: "Meetings", glyph: "▣", click: () => void import("../../shell").then((m) => m.openSurfaceOr("review-meetings", "/history", undefined, { origin: "dock" })), running: Boolean(windowsById["surface-meetings"]), minimized: panelMin.includes("surface-meetings") },
             { id: "surface-people", label: "People", glyph: "♧", click: () => void import("../../shell").then((m) => m.openSurfaceOr("open-people", "/", undefined, { origin: "dock" })), running: Boolean(windowsById["surface-people"]), minimized: panelMin.includes("surface-people") },
-          ].map((tile) => (
+          ].map((tile) => {
+            const winId = tile.id === "intelligence:desk" ? "pullout:intelligence:desk" : tile.id;
+            return (
             <Button
               key={tile.id}
-              ref={seatRef(tile.id)}
+              ref={seatRef(winId)}
               variant="chrome"
               data-app={tile.id}
               className={`desk-dock-launch desk-dock-app${tile.running && !tile.minimized ? " is-run" : ""}${tile.minimized ? " is-seated" : ""}`}
               aria-label={`${tile.label}${tile.minimized ? ", iconified" : ""}`}
               onClick={() => {
-                if (tile.running && tile.minimized) useDesk.getState().restorePanel(tile.id);
-                else if (tile.running) useDesk.getState().focusPanel(tile.id);
-                else if (tile.id === "chair:capture") tile.click();
+                if (tile.id === "chair:capture") tile.click();
+                else if (tile.running && tile.minimized) useDesk.getState().restorePanel(winId);
+                else if (tile.running) useDesk.getState().focusPanel(winId);
                 else tile.click();
               }}
             >
@@ -523,7 +525,8 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
               <span className="desk-dock-label">{tile.label}</span>
               {tile.minimized ? seatLamp : null}
             </Button>
-          ))}
+            );
+          })}
         </>
       ) : null}
       {/* PHILO-16 (A1) §5: a seated window always has a seat. One whose

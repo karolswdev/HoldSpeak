@@ -115,7 +115,9 @@ def test_every_verb_is_one_plate_height(tmp_path: Path, monkeypatch: pytest.Monk
             _settle(page)
             verbs = window.evaluate(MEASURE)
             words = {v["word"] for v in verbs}
-            assert {"Icons", "List", "Room", "History", "Watch sources", "Get Info", "Open"} <= words, verbs
+            expected = {"Icons", "List", "Room", "History", "Watch sources", "Get Info"}
+            expected.add("More" if width == 393 else "Open")
+            assert expected <= words, verbs
             if width == 1440:
                 heights = {v["h"] for v in verbs}
                 assert heights == {28.0}, verbs
@@ -123,6 +125,18 @@ def test_every_verb_is_one_plate_height(tmp_path: Path, monkeypatch: pytest.Monk
                 small = [v for v in verbs if max(v["h"], v["halo"]) < 44]
                 assert not small, small
                 assert page.evaluate("document.scrollingElement.scrollWidth <= window.innerWidth")
+                # The extra footer action lives in More at phone width. Its
+                # disabled state still exposes the actual Open command.
+                window.get_by_role("button", name="More actions", exact=True).click()
+                menu = page.get_by_role("menu", name="More actions", exact=True)
+                open_action = menu.get_by_role("menuitem", name="Open · Busy", exact=True)
+                open_action.wait_for()
+                assert open_action.get_attribute("aria-disabled") == "true"
+                open_box = open_action.bounding_box()
+                assert open_box and open_box["height"] >= 44, open_box
+                page.keyboard.press("Escape")
+                menu.wait_for(state="detached")
+                assert window.is_visible()
             page.screenshot(path=str(SHOTS / f"kit-verb-{width}.png"))
             _assert_clean(page, errors)
             browser.close()

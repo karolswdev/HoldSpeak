@@ -161,13 +161,14 @@ class TestTheFrame:
                         failures["meetings"]["F3 the wings fold into the strip menu"] = {"strip_menus": strip.count()}
                     else:
                         self._press(page, strip, width)
-                        page.locator(".desk-menu-list").first.wait_for()
+                        wing_menu = page.get_by_role("menu", name="Window faces", exact=True)
+                        wing_menu.wait_for()
                         m = self._measure(page, width, "strip-menu-open", facts)
                         failures["strip-menu-open"] = self._fails(m, width, True)
-                        checked = page.locator(".desk-menu-list [aria-checked='true']").all_inner_texts()
+                        checked = wing_menu.locator("[aria-checked='true']").all_inner_texts()
                         facts["strip-menu-checked"] = checked
                         mark = page.evaluate("""() => { const g = document.querySelector(
-                            '.desk-menu-list [aria-checked="true"] .desk-menu-glyph svg, .desk-menu-list [aria-checked="true"] .desk-menu-glyph');
+                            '[role=menu][aria-label="Window faces"] [aria-checked="true"] .desk-menu-glyph svg, [role=menu][aria-label="Window faces"] [aria-checked="true"] .desk-menu-glyph');
                           if (!g) return 0; const r = g.getBoundingClientRect(); return r.width * r.height; }""")
                         facts["strip-menu-check-mark-area"] = mark
                         if len(checked) != 1 or not mark:
@@ -364,7 +365,7 @@ class TestTitleBarB:
                     page.screenshot(path=str(TITLEBAR_SHOTS / "build-TB-2-closeup-1440.png"),
                                     clip={"x": 8, "y": 34, "width": hb["x"] + hb["width"], "height": hb["y"] + hb["height"] + 10 - 34})
                     people.locator(":scope > .desk-pullout-head .desk-pullout-title").click(button="right")
-                    page.locator("[role=menu]").first.wait_for()
+                    page.locator(".desk-head-menu[role=menu]").wait_for()
                     m = measure("window-menu")
                     if not m["menus"]:
                         failures["window-menu"]["T5 the window menu opens from the title bar"] = True
@@ -399,7 +400,7 @@ class TestTitleBarB:
                     cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": x, "y": y}]})
                     page.wait_for_timeout(800)
                     cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
-                    page.locator("[role=menu]").first.wait_for()
+                    page.locator(".desk-head-menu[role=menu]").wait_for()
                     m = measure("window-menu")
                     if not m["menus"]:
                         failures["window-menu"]["T5 the window menu opens from the title bar"] = True
@@ -820,14 +821,27 @@ class TestTheGadgets:
                 # G1 on the Chair: one window at a time; depth gives the work
                 # area to the next Chair window. PHILO-14 A1 (#939): the
                 # Chair's windows start closed; he opens the Brief, then Needs
-                # you, from Go.
-                open_chair_window(page, "Brief")
+                # you, from Go. Brief now belongs to the Today window.
+                brief = open_chair_window(page, "Brief")
+                brief_name = brief.get_attribute("aria-label")
                 open_chair_window(page, "Needs you")
                 self._tap(page, page.get_by_role("button", name="To back Needs you"))
                 st = self._stack(page)
                 facts["chair-after-depth"] = st
                 shown = [w["name"] for w in st["wins"]]
-                if shown != ["Brief"] or _one_blue(st, "Brief"):
+                # Canonical Today keeps the Chair pane mounted behind it.
+                # Prove the one blue front and its whole hit area instead of
+                # requiring every obscured window to leave the DOM.
+                hits = brief.evaluate("""el => { const r = el.getBoundingClientRect();
+                  return [[r.left + 2, r.top + 2], [r.right - 2, r.top + 2],
+                    [r.left + 2, r.bottom - 2], [r.right - 2, r.bottom - 2],
+                    [r.left + r.width / 2, r.top + r.height / 2]].map(([x, y]) =>
+                      document.elementFromPoint(x, y)?.closest('.desk-window-shell')?.getAttribute('aria-label') ?? null);
+                }""")
+                st["hit_windows"] = hits
+                if (brief_name not in shown or _one_blue(st, brief_name)
+                        or _z(st, "Needs you") >= _z(st, brief_name)
+                        or hits != [brief_name] * 5):
                     fails["G1 393 Chair: depth"] = st
 
                 # Two desk windows, People in front.
@@ -843,8 +857,8 @@ class TestTheGadgets:
                 head = people.locator(":scope > .desk-pullout-head")
                 labels = [b.get_attribute("aria-label") for b in head.locator("button").all() if b.is_visible()]
                 facts["people-head"] = labels
-                if not labels or labels[0] != "Close People" or labels[-1] != "To back People":
-                    fails["G1 393 head: close ... depth"] = labels
+                if not labels or labels[0] != "Back from People" or labels[-1] != "To back People":
+                    fails["G1 393 head: Back ... depth"] = labels
                 # Depth closes the row on the right edge (design §3, board C1-2c).
                 edge = page.evaluate("""() => { const s = [...document.querySelectorAll('.desk-window-shell')].find((e) => e.getAttribute('aria-label') === 'People');
                   const h = s.querySelector(':scope > .desk-pullout-head').getBoundingClientRect();

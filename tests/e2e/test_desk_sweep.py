@@ -1096,6 +1096,28 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             sweep.failures["drawn"] = [str(exc)[:400]]
         else:
             sweep.fences()
+            if case_id == "surface-activity":
+                # The existing remote sweep seed has a short title. Its
+                # status and route must not squeeze that title into ellipsis.
+                receipt = page.locator('[id="activity-receipt-pipeline:ev-sweep-0"]')
+                receipt.wait_for(timeout=T)
+                title = receipt.locator(".surface-row-text > strong")
+                detail = receipt.locator(".surface-row-text > small")
+                assert title.inner_text() == "SWEEP 2 ROOMS"
+                assert detail.inner_text().endswith("Heartbeat")
+                for text in (title, detail):
+                    extent = text.evaluate("""el => ({text: el.textContent,
+                        width: el.clientWidth, content: el.scrollWidth})""")
+                    assert extent["width"] > 0 and extent["content"] <= extent["width"] + 1, (
+                        f"Activity receipt text is truncated at {width}: {extent}")
+                for badge in (receipt.get_by_text("completed", exact=True),
+                              receipt.get_by_text("REMOTE · studio.local", exact=True)):
+                    assert badge.is_visible(), f"Activity receipt badge missing at {width}"
+                    box = badge.bounding_box()
+                    assert box and box["x"] >= 0 and box["y"] >= 0 and (
+                        box["x"] + box["width"] <= width
+                        and box["y"] + box["height"] <= SIZES[width]), (
+                        f"Activity receipt badge is off glass at {width}: {box}")
             if palette:
                 sweep.palette()
             elif wid:

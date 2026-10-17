@@ -3,23 +3,22 @@
 Owner, 2026-10-12 (push 2 of the test diet): a browser test only for drag,
 focus, keys, touch, hover or an exact geometry relation.
 
-PHILO-14 A1c -- the MEETING READY card in Capture's slot at 1440 (exact
-rects; Capture moved and sized by the mouse).
+PHILO-14 A1c's legacy test ids remain for recovery evidence. DESIGN-windows
+§4.5 (2026-10-13) parked the ready card: the bell now opens the exact stored
+meeting inside Meetings, with Back returning to its list. These four cases
+carry the original geometry proofs through that current owner journey:
 
-Muad'Dib's ruling 2026-10-07: a card that lands opens a closed Capture and
-sits in Capture's slot; nothing floats over another window. Astra r1 (#954)
-asked for rendered geometry, not presence:
+  default   measure Capture's seat, close it, send the real ready signal;
+            Capture stays closed, the bell owns its hit target, the exact
+            summary opens, and Capture returns at its measured seat.
+  moved     move Capture by its title bar; its rect and scroll survive the
+            ready signal, reading the stored result, and the return.
+  resized   size Capture by its grip; the same geometry and scroll proof.
+  meetings  Meetings already open; the ready bell opens this exact result
+            there without changing Capture's rect.
 
-  default   Capture's seat is measured (open from the menu, close), then the
-            card opens the closed Capture; it grows up from the seat's foot;
-            the eyebrow, the title and Dismiss are whole in its body; it does
-            not cover Needs you; Dismiss -> the exact seat rect.
-  moved     Capture moved by its title bar (arranged) -> its rect does not
-            change through card -> Dismiss; the eyebrow is whole at
-            scrollTop 0; the title and Dismiss are whole once scrolled to.
-  resized   Capture sized by its grip (arranged) -> the same.
-  meetings  Capture open, Meetings in front -> the card lands in Meetings;
-            Capture's rect does not change through card -> Dismiss.
+No inference POST may occur while opening the completed result. The summary
+and Back must be whole and own their centres after scrolling into view.
 
 The frame is the hub's own (``build_aftercare_ready_event`` over a seeded
 meeting with open items, sent with ``MeetingWebServer.broadcast``).
@@ -65,6 +64,7 @@ from tests._evidence import evidence_dir
 
 from .chair_rig import _seed
 from .frame_rig import FRAME_JS
+from .chair_windows import chair_window, open_chair_window
 
 from .finish_rig import SHOTS as FINISH_SHOTS, FinishRig
 
@@ -174,38 +174,54 @@ class TestTheCardInCapture1440:
         event = build_aftercare_ready_event(get_database(), CARD_MEETING)
         assert event, "the seeded meeting has no aftercare (the event is quiet)"
         self.server.broadcast("aftercare_ready", event)
-        page.locator(".ambient-aftercare").wait_for()
-        page.wait_for_timeout(700)
+        page.get_by_test_id("desk-bell").filter(
+            has=page.locator(".desk-bell-ready")).wait_for()
+        assert page.get_by_test_id("desk-bell").get_attribute("aria-label") == "Meeting ready: Vendor call"
+        assert page.locator(".ambient-aftercare, .ambient-aftercare-fixed").count() == 0
         _settle(page)
 
     @staticmethod
     def _dismiss(page: Any) -> None:
-        button = page.locator(".ambient-aftercare").get_by_role("button", name="Dismiss")
-        button.scroll_into_view_if_needed()
-        button.click()
-        page.locator(".ambient-aftercare").wait_for(state="detached")
-        page.wait_for_timeout(500)
+        # DESIGN-windows §4.2: a ready meeting opens inside Meetings; Back
+        # returns to its list before closing the window returns to the desk.
+        meetings = page.locator('[id="surface-meetings"]')
+        meetings.get_by_test_id("meeting-record-back").click()
+        meetings.get_by_test_id(f"meeting-row-{CARD_MEETING}").wait_for()
+        meetings.get_by_role("button", name="Close Meetings", exact=True).click()
+        meetings.wait_for(state="detached")
 
     @staticmethod
     def _readable(page: Any, fails: list[str], name: str) -> dict[str, Any]:
-        """The receipt is reachable by scrolling Capture's body: at scrollTop 0
-        the eyebrow is whole; scrolled to them, the title and Dismiss are whole."""
-        body = page.locator(f"{CAPTURE} .chair-window-body")
-        body.evaluate("(el) => { el.scrollTop = 0; }")
-        page.wait_for_timeout(150)
-        card = page.locator(f"{CAPTURE} [data-aftercare-slot] .ambient-aftercare")
-        # At scrollTop 0 the card's first line is whole: nothing is stranded
-        # above the scroll origin. Each later part is whole once scrolled to.
-        out = {"eyebrow": card.locator(".signal-eyebrow").evaluate(WHOLE)}
-        for part, loc in (("title", card.locator("strong")),
-                          ("dismiss", card.get_by_role("button", name="Dismiss"))):
-            loc.evaluate("(el) => el.scrollIntoView({ block: 'nearest' })")
-            page.wait_for_timeout(150)
-            out[part] = loc.evaluate(WHOLE)
-        out["scroll"] = body.evaluate("(el) => ({ top: el.scrollTop, height: el.scrollHeight, client: el.clientHeight })")
-        for part in ("eyebrow", "title", "dismiss"):
+        """The ready control and the exact stored result own their centres.
+
+        DESIGN-attention parks the card; the ready bell is its real door.
+        No inference request may run while opening this completed meeting.
+        """
+        bell = page.get_by_test_id("desk-bell")
+        out = {"ready": bell.evaluate(WHOLE)}
+        inference: list[str] = []
+        page.on("request", lambda req: inference.append(req.url) if req.method == "POST"
+                and req.url.endswith("/intelligence/run") else None)
+        bell.click()
+        meetings = page.locator('[id="surface-meetings"]')
+        summary = meetings.get_by_test_id("meeting-summary-text")
+        summary.wait_for()
+        assert summary.inner_text() == "Contract draft by Friday."
+        summary.scroll_into_view_if_needed()
+        out["summary"] = summary.evaluate(WHOLE)
+        back = meetings.get_by_test_id("meeting-record-back")
+        back.scroll_into_view_if_needed()
+        out["back"] = back.evaluate(WHOLE)
+        rows = _api(page, "GET", "/api/desk/windows", token=TOKEN)["windows"]
+        selected = [row for row in rows if row["id"] == "surface-meetings"]
+        assert len(selected) == 1 and selected[0]["object_ref"] == f"meeting:{CARD_MEETING}", selected
+        saved = _api(page, "GET", f"/api/meetings/{CARD_MEETING}", token=TOKEN)
+        assert saved["id"] == CARD_MEETING, saved
+        assert inference == [], inference
+        out["meeting"] = selected[0]["object_ref"]
+        for part in ("ready", "summary", "back"):
             if not (out[part]["full"] and out[part]["hit"]):
-                fails.append(f"{name}: the card's {part} is not whole {out[part]}")
+                fails.append(f"{name}: the ready journey's {part} is not whole {out[part]}")
         return out
 
     def _arranged(self, how: str) -> None:
@@ -234,24 +250,24 @@ class TestTheCardInCapture1440:
                     page.mouse.up()
                 page.wait_for_timeout(500)
                 before = page.evaluate(GEOMETRY)
+                scroll = page.locator(f"{CAPTURE} .chair-window-body").evaluate("el => el.scrollTop")
                 facts["before"] = before
                 self._send_card(page)
                 with_card = page.evaluate(GEOMETRY)
                 facts["with_card"] = with_card
                 page.screenshot(path=str(SHOTS / f"A1c-r2-{how}-1440-card.png"))
-                if with_card["host"] != "Capture":
-                    fails.append(f"{how}: the card is in {with_card['host']}, not Capture")
-                if with_card["fixed"]:
-                    fails.append(f"{how}: a fixed card floats")
                 if not _same(before["capture"], with_card["capture"]):
-                    fails.append(f"{how}: Capture moved with the card {before['capture']} -> {with_card['capture']}")
+                    fails.append(f"{how}: Capture moved with the ready signal {before['capture']} -> {with_card['capture']}")
+                assert page.locator(f"{CAPTURE} .chair-window-body").evaluate("el => el.scrollTop") == scroll
                 facts["readable"] = self._readable(page, fails, how)
                 page.screenshot(path=str(SHOTS / f"A1c-r2-{how}-1440-scrolled.png"))
                 self._dismiss(page)
+                self._open_chair(page, "Capture")
                 after = page.evaluate(GEOMETRY)
                 facts["after"] = after
                 if not _same(before["capture"], after["capture"]):
-                    fails.append(f"{how}: Dismiss did not keep Capture {before['capture']} -> {after['capture']}")
+                    fails.append(f"{how}: return did not keep Capture {before['capture']} -> {after['capture']}")
+                assert page.locator(f"{CAPTURE} .chair-window-body").evaluate("el => el.scrollTop") == scroll
                 real = [e for e in errors if "ResizeObserver" not in e]
                 if real:
                     fails.append(f"page errors {real}")
@@ -277,34 +293,29 @@ class TestTheCardInCapture1440:
                 seat = page.evaluate(GEOMETRY)["capture"]
                 facts["seat"] = seat
                 page.get_by_role("button", name="Close Capture", exact=True).click()
-                page.wait_for_timeout(400)
+                page.locator(CAPTURE).wait_for(state="detached")
+                # Closing the front frame animates the revealed Needs-you
+                # plane. Measure its settled rect before sending the signal.
+                _settle(page)
                 if page.locator(f".desk-window-shell{CAPTURE}").count():
                     fails.append("Capture is open before the card")
+                needs_before = page.evaluate(GEOMETRY)["needs"]
                 self._send_card(page)
                 g = page.evaluate(GEOMETRY)
                 facts["with_card"] = g
                 page.screenshot(path=str(SHOTS / "A1c-r2-default-1440-card.png"))
-                if g["host"] != "Capture":
-                    fails.append(f"default: the card is in {g['host']}, not Capture")
-                if g["fixed"]:
-                    fails.append("default: a fixed card floats")
-                cap, needs = g["capture"], g["needs"]
-                if cap and needs and cap["y"] < needs["y"] + needs["h"] - 1 and cap["x"] < needs["x"] + needs["w"]:
-                    fails.append(f"default: Capture {cap} covers Needs you {needs}")
+                # A completed meeting no longer opens or grows Capture. The
+                # ready bell is visible without moving the work underneath.
+                assert g["capture"] is None, g
+                assert _same(needs_before, g["needs"]), (needs_before, g)
                 facts["readable"] = self._readable(page, fails, "default")
-                scroll = facts["readable"]["scroll"]
-                if scroll["height"] > scroll["client"] + 1:
-                    fails.append(f"default: the grown Capture still scrolls {scroll}")
                 self._dismiss(page)
+                self._open_chair(page, "Capture")
                 after = page.evaluate(GEOMETRY)
                 facts["after"] = after
-                # Astra r2: Dismiss returns Capture to the EXACT seat rect.
+                # Opening Capture after reading returns to its exact seat.
                 if not _same(seat, after["capture"]):
                     fails.append(f"default: Capture did not return to its seat {seat} -> {after['capture']}")
-                if cap and seat and abs(cap["y"] + cap["h"] - seat["y"] - seat["h"]) > 1:
-                    fails.append(f"default: the grown Capture's foot left the seat's {seat} -> {cap}")
-                if cap and seat and cap["h"] <= seat["h"]:
-                    fails.append(f"default: Capture did not grow for the card {seat} -> {cap}")
                 real = [e for e in errors if "ResizeObserver" not in e]
                 if real:
                     fails.append(f"page errors {real}")
@@ -333,7 +344,6 @@ class TestTheCardInCapture1440:
                 page.locator(".desk-verbbar-menu").get_by_role("menuitem", name=re.compile(r"^Meetings")).click()
                 meetings = page.locator(".desk-window-shell[aria-label='Meetings']")
                 meetings.wait_for()
-                meetings.locator("[data-aftercare-window-slot]").first.wait_for(state="attached")
                 page.wait_for_timeout(600)
                 before = page.evaluate(GEOMETRY)
                 facts["before"] = before
@@ -341,11 +351,11 @@ class TestTheCardInCapture1440:
                 with_card = page.evaluate(GEOMETRY)
                 facts["with_card"] = with_card
                 page.screenshot(path=str(SHOTS / "A1c-r2-meetings-1440-card.png"))
-                if with_card["host"] != "Meetings":
-                    fails.append(f"meetings: the card is in {with_card['host']}, not Meetings")
                 if not _same(before["capture"], with_card["capture"]):
                     fails.append(f"meetings: Capture moved {before['capture']} -> {with_card['capture']}")
+                facts["readable"] = self._readable(page, fails, "meetings")
                 self._dismiss(page)
+                self._open_chair(page, "Capture")
                 after = page.evaluate(GEOMETRY)
                 facts["after"] = after
                 if not _same(before["capture"], after["capture"]):
@@ -653,7 +663,10 @@ CHAIR_JS = r"""(width) => {
   const visible = (e) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e);
     return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none' && Number(cs.opacity) > 0.05; };
   const label = (e) => (e.getAttribute('aria-label') || e.textContent || e.className || '').trim().slice(0, 50);
-  const wins = [...document.querySelectorAll('.desk-window-shell.chair-window:not([data-departing])')].filter(visible);
+  const selector = width <= 720
+    ? '.desk-window-shell.chair-window:not([data-departing]), [id="pullout:intelligence:desk"]:not([data-departing])'
+    : '.desk-window-shell.chair-window:not([data-departing])';
+  const wins = [...document.querySelectorAll(selector)].filter(visible);
   const chair = document.querySelector('.chair');
   const se = document.scrollingElement;
   const out = {width, windows: wins.map((w) => w.getAttribute('aria-label')),
@@ -661,7 +674,23 @@ CHAIR_JS = r"""(width) => {
     page_scrolls: Boolean((chair && chair.scrollHeight > chair.clientHeight + 1) || (se && se.scrollHeight > se.clientHeight + 1)),
     bodies: {}, tiles_overlap: [], clipped: [], ellipsis: [], sideways: [], overlap: [], small_targets: [],
     low_contrast: [], small_text: []};
-  for (const w of wins) { const b = w.querySelector('.chair-window-body'); if (!b) continue;
+  if (width <= 720) {
+    // A canonical program pane retains the Chair behind it. DOM presence
+    // is not a second usable pane: sample the full work area, including
+    // its corners and edges, and keep the actual compositor identities.
+    out.phone_panes = wins.map((w) => {
+      const r = w.getBoundingClientRect();
+      const hits = [r.top + 2, r.top + r.height / 2, r.bottom - 2].flatMap((y) =>
+        [r.left + 2, r.left + r.width / 2, r.right - 2].map((x) =>
+          document.elementFromPoint(x, y)?.closest('.desk-window-shell')?.id ?? null));
+      return {id: w.id, name: w.getAttribute('aria-label'), plane: w.dataset.plane,
+        front: w.classList.contains('is-front'), z: getComputedStyle(w).zIndex,
+        rect: [r.left, r.top, r.width, r.height], hits};
+    });
+    out.usable_windows = out.phone_panes.filter((w) => w.hits.includes(w.id)).map((w) => w.name);
+  }
+  const bodyOf = (w) => [...w.querySelectorAll('.chair-window-body, .intelligence-pullout')].find(visible);
+  for (const w of wins) { const b = bodyOf(w); if (!b) continue;
     const cs = getComputedStyle(b);
     out.bodies[w.getAttribute('aria-label')] = {overflowY: cs.overflowY, scrolls: b.scrollHeight > b.clientHeight + 1,
       h: Math.round(b.getBoundingClientRect().height)}; }
@@ -672,7 +701,7 @@ CHAIR_JS = r"""(width) => {
     if (ox > 1 && oy > 1) out.tiles_overlap.push([wins[i].getAttribute('aria-label'), wins[j].getAttribute('aria-label')]);
   }
   for (const w of wins) {
-    const body = w.querySelector('.chair-window-body'); if (!body) continue;
+    const body = bodyOf(w); if (!body) continue;
     const br = body.getBoundingClientRect();
     // nothing clips: a text box past its clipping ancestor (single-line ellipsis recorded)
     const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT);
@@ -812,6 +841,10 @@ class TestTheChairAsWindows:
         if width > 720 and chair["tiles_overlap"]:
             fails["C1 the four tile"] = chair["tiles_overlap"]
         if width <= 720:
+            front = [pane for pane in chair["phone_panes"] if pane["front"]]
+            if (len(front) != 1 or chair["usable_windows"] != frame["front"]
+                    or any(owner != front[0]["id"] for owner in front[0]["hits"])):
+                fails["C4 one usable front pane owns its full work area"] = chair["phone_panes"]
             if frame["content"] is None or frame["content"] < 700 or frame["small_targets"] or chair["small_targets"]:
                 fails["C4 393 content and targets"] = {"content": frame["content"], "frame": frame["small_targets"],
                                                       "body": chair["small_targets"]}
@@ -857,7 +890,7 @@ class TestTheChairAsWindows:
         with sync_playwright() as pw:
             browser, page, errors = self._page(pw, width)
             try:
-                shell = lambda name: page.locator(f".desk-window-shell[aria-label='{name}']")  # noqa: E731
+                shell = lambda name: chair_window(page, name)  # noqa: E731
                 if width > 720:
                     # C1-4a: the four windows
                     frame, chair = self._measure(page, width, "chair-windows", facts)
@@ -957,48 +990,50 @@ class TestTheChairAsWindows:
                     # PHILO-16: the Window menu's verbs (Stage carries a check)
                     # sit above; the Chair's windows are their own list, the
                     # Window ▸ Chair submenu. Read that list only.
-                    rows = page.evaluate("""() => {
-                        // The innermost list holding the Chair rows (a submenu
-                        // nests inside the Window list).
-                        const list = [...document.querySelectorAll('.desk-menu-list')]
-                          .filter((l) => [...l.querySelectorAll('[role="menuitemcheckbox"]')]
-                            .some((e) => e.textContent.includes('Needs you'))).pop();
-                        return [...(list ? list.querySelectorAll('[role="menuitemcheckbox"]') : [])]
-                          .map((e) => [e.textContent.trim(), e.getAttribute('aria-checked')]); }""")
+                    rows = page.locator(".desk-verbbar-menu .desk-menu-label").all_inner_texts()
+                    rows = [name for name in rows if name in CHAIR]
                     facts["go-chair"] = rows
-                    # PHILO-15 11 (B21, owner ruling 2026-10-07): Capture is a Go row at 393 too.
-                    if [t.replace("✓", "").strip() for t, _ in rows] != ["Needs you", "Brief", "The week", "Capture"]:
+                    # Brief is a command into Today rather than a checked
+                    # Chair-window row; the four owner-facing doors stay.
+                    if rows != CHAIR:
                         failures["phone-desk"]["C4 Go has the four Chair rows"] = rows
-                    self._press(page, page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')"), width)
-                    shell("Brief").wait_for()
+                    page.keyboard.press("Escape")
+                    brief = open_chair_window(page, "Brief")
+                    brief_name = brief.get_attribute("aria-label")
                     frame, chair = self._measure(page, width, "chair-windows", facts)
                     failures["chair-windows"] = self._fails(frame, chair, width)
-                    if chair["windows"] != ["Brief"]:
-                        failures["chair-windows"]["C4 one window at a time"] = chair["windows"]
+                    if chair["usable_windows"] != [brief_name]:
+                        failures["chair-windows"]["C4 one window at a time"] = chair["phone_panes"]
                     page.screenshot(path=str(H1_SHOTS / f"build-C1-4a-chair-windows-{tag}.png"))
                     named["Brief"] = page.get_by_test_id("desk-screen-title").inner_text().strip()
-                    self._press(page, page.locator(".desk-verbbar-item[data-menu-id='go'] button"), width)
-                    page.locator(".desk-verbbar-menu").wait_for()
-                    self._press(page, page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('The week')"), width)
-                    shell("The week").wait_for()
+                    open_chair_window(page, "The week")
                     page.wait_for_timeout(250)
                     named["The week"] = page.get_by_test_id("desk-screen-title").inner_text().strip()
-                    self._press(page, page.locator(".desk-verbbar-item[data-menu-id='go'] button"), width)
-                    page.locator(".desk-verbbar-menu").wait_for()
-                    self._press(page, page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')"), width)
-                    shell("Brief").wait_for()
+                    open_chair_window(page, "Brief")
 
                     # C1-4c (393): close gives the work area to the next Chair window
-                    self._press(page, shell("Brief").get_by_role("button", name="Close Brief"), width)
+                    # A restored pullout flies back from its Dock chip. Measure
+                    # the settled control before sending the original touch.
+                    _settle(page)
+                    back = shell("Brief").get_by_role("button", name=f"Back from {brief_name}", exact=True)
+                    facts["brief-back-target"] = back.evaluate(WHOLE)
+                    assert facts["brief-back-target"]["full"] and facts["brief-back-target"]["hit"], facts["brief-back-target"]
+                    back.evaluate("""el => el.addEventListener('click', event => {
+                        window.__chairBackTap = {trusted: event.isTrusted,
+                            label: event.currentTarget.getAttribute('aria-label')};
+                    }, {once: true})""")
+                    self._press(page, back, width)
+                    facts["brief-back-event"] = page.evaluate("window.__chairBackTap")
+                    assert facts["brief-back-event"] == {"trusted": True, "label": f"Back from {brief_name}"}
                     shell("Brief").wait_for(state="detached")
                     frame, chair = self._measure(page, width, "chair-window-closed", facts)
                     failures["chair-window-closed"] = self._fails(frame, chair, width)
-                    if len(chair["windows"]) != 1 or "Brief" in chair["windows"]:
+                    if len(chair["windows"]) != 1 or brief_name in chair["windows"]:
                         failures["chair-window-closed"]["C4 the next Chair window takes the work area"] = chair["windows"]
                     page.screenshot(path=str(H1_SHOTS / f"build-C1-4c-chair-window-closed-{tag}.png"))
 
                     # Capture on demand from the Speak AppIcon
-                    self._press(page, page.locator(".desk-dock [aria-label^='Speak']").first, width)
+                    self._press(page, page.locator(".desk-dock").get_by_role("button", name="Capture", exact=True), width)
                     shell("Capture").wait_for()
                     frame, chair = self._measure(page, width, "capture-from-speak", facts)
                     failures["capture-from-speak"] = self._fails(frame, chair, width)
@@ -1007,7 +1042,7 @@ class TestTheChairAsWindows:
                     page.wait_for_timeout(250)
                     named["Capture"] = page.get_by_test_id("desk-screen-title").inner_text().strip()
                     facts["screen-title-per-window"] = named
-                    if any(named[n] != n for n in CHAIR):
+                    if any(named[n] != (brief_name if n == "Brief" else n) for n in CHAIR):
                         failures["capture-from-speak"]["C2 the screen title names the shown Chair window"] = named
                     if chair["windows"] != ["Capture"] or verbs["capture"] != 3:
                         failures["capture-from-speak"]["C4 Speak opens Capture"] = {

@@ -5,7 +5,7 @@ rig can tell a dead verb from a working one on a static page. This proves the
 same engine reaches a real product path: J9 — the owner's sitting defect 1 —
 a heartbeat sweep receipt minted through the REAL producer
 (`POST /api/settings/heartbeat/run-now` -> `HeartbeatService.run_sweep`,
-holdspeak/web/routes/system/settings.py:321), opened from Desk memory, must
+holdspeak/web/routes/system/settings.py:321), opened from Search Activity, must
 open the Rhythm face.
 
 No microphone, no owner data: the hub runs in a fresh mkdtemp HOME and the rig
@@ -23,6 +23,7 @@ import pytest
 from scripts.graph_walk import VERDICTS, case_engine_replay, run_case
 
 CASE = "J9-sweep-receipt-open"
+RETURN_CASE = "case.j9.activity_receipt_return.same_receipt"
 REPO = Path(__file__).resolve().parents[2]
 ATLAS = REPO / "tests/fixtures/graph_walk_sample_atlas.json"
 
@@ -46,13 +47,12 @@ pytestmark = [pytest.mark.e2e, pytest.mark.timeout(300, method="thread")]
 #
 # So `[title='Desk memory']` is a CORRECT selector that does not exist until
 # the gate is crossed, and "Continue later" is gone once it has been pressed.
-# PHILO-17 (needsyou): the bell opens Needs you now; the atlas opens the shade
-# from the Dock's Desk memory launcher (`.desk-dock [data-launcher='attention']`).
+# DESIGN-attention parks the shade. Finished receipts belong to Search Activity;
+# the legacy J9 case ids remain stable for the recovery queue and old evidence.
 REAL_ATLAS = REPO / "docs/internal/philo/graph/atlas.json"
 ATLAS_FENCE = {
     "case.j9.shade_receipt_open.rhythm_face": (
-        "pass", "", "the sweep receipt's own Open reaches the Rhythm face (the "
-        "atlas crosses the first-value gate before the bell since round three)",
+        "pass", "", "the exact produced sweep receipt's Open in Activity reaches Rhythm",
     ),
     "case.j1.first_words_continue_later.idle": (
         "pass", "", "Continue later is the trigger, pressed by nothing in setup; "
@@ -128,6 +128,8 @@ def test_the_rig_drives_the_real_atlas(case_id, tmp_path):
         assert answer["status"] == 202, answer
         assert answer["path"] == "/api/meetings/import"
         assert record["variables"]["meeting_id"] == answer["body"]["meeting_id"]
+    if case_id == "case.j9.shade_receipt_open.rhythm_face":
+        _assert_receipt_door(record)
     if case_id == "case.j10.route_generate_again.same_day_same_id":
         # the id captured BEFORE the second POST is in that POST's own body
         first = record["variables"]["first_brief_id"]
@@ -165,6 +167,7 @@ def test_the_rig_drives_j9_through_the_real_hub(viewport, tmp_path):
     titles_after = [w["title"] for w in record["after"]["windows"]]
     assert "Rhythm" not in titles_before
     assert "Rhythm" in titles_after
+    _assert_receipt_door(record)
 
     # the trigger was the receipt's own Open, driven at its real entry point
     assert record["trigger"]["adapter"] == "ui-pointer"
@@ -176,9 +179,80 @@ def test_the_rig_drives_j9_through_the_real_hub(viewport, tmp_path):
     _assert_observation_shape(record, viewport, tmp_path)
 
 
-def _assert_observation_shape(record, viewport, out):
+def _assert_receipt_door(record):
+    receipt_id = record["variables"]["sweep_projection_id"]
+    assert receipt_id.startswith("pipeline:"), receipt_id
+    assert record["trigger"]["selector"] == f"[id='activity-receipt-{receipt_id}'] button"
+    # Activity remains open behind the result, so the owner can close Rhythm
+    # and return to the exact receipt list he used.
+    before = [window["title"] for window in record["before"]["windows"]]
+    after = [window["title"] for window in record["after"]["windows"]]
+    assert "Activity" in before and "Activity" in after, (before, after)
+    assert "Rhythm" not in before and "Rhythm" in after, (before, after)
+
+
+@pytest.mark.parametrize("viewport", [1440, 393])
+def test_the_rig_returns_from_rhythm_to_the_same_activity_receipt(viewport, tmp_path):
+    record = run_case(
+        REAL_ATLAS, RETURN_CASE, brain="muaddib", viewport=viewport,
+        out=tmp_path, engine="none",
+    )
+    assert record["verdict"] == "pass", json.dumps(record["notes"], indent=2)
+    assert record["terminal_outcome"]["predicate_satisfied"] is True
+    assert record["terminal_outcome"]["within_bound"] is True
+    _assert_observation_shape(record, viewport, tmp_path, case_id=RETURN_CASE)
+    assert record["trigger"]["done"] is True
+    assert record["trigger"]["selector"] == "#surface-cadence .desk-gadget-close"
+    assert record["trigger"]["adapter"] == ("ui-touch" if viewport == 393 else "ui-pointer")
+
+    receipt_id = record["variables"]["sweep_projection_id"]
+    producer = next(step for step in record["setup"] if step["kind"] == "api")
+    assert (producer["method"], producer["path"], producer["status"]) == (
+        "POST", "/api/settings/heartbeat/run-now", 200,
+    )
+    opened = [step for step in record["setup"] if step.get("selector") ==
+              f"[id='activity-receipt-{receipt_id}'] button" and step.get("action") == "click"]
+    assert len(opened) == 1 and opened[0]["done"] is True
+    assert opened[0]["adapter"] == record["trigger"]["adapter"]
+    assert "Rhythm" in [window["title"] for window in record["before"]["windows"]]
+    after = record["after"]
+    assert "Rhythm" not in [window["title"] for window in after["windows"]]
+    assert after["observe_at"] == (
+        f"#surface-activity.is-front [id='activity-receipt-{receipt_id}'] button"
+    )
+    assert after["visible"] and after["hit_test"]["in_viewport"]
+    assert len(after["hit_test"]["samples"]) == 9 and after["hit_test"]["all_owned"]
+    if viewport == 393:
+        assert after["hit_test"]["rect"]["w"] >= 44
+    assert after["attrs"]["aria-label"].startswith("Open receipt: SWEEP")
+
+    sources = []
+    activity = []
+    for half in (record["before"], after):
+        reads = half["api_reads"]
+        assert [read["status"] for read in reads] == [200, 200]
+        rows = [row for row in reads[0]["payload"]["projections"] if row["id"] == receipt_id]
+        assert len(rows) == 1
+        sources.append(rows[0])
+        windows = reads[1]["payload"]["windows"]
+        activity.append([window for window in windows if window["id"] == "surface-activity"])
+    assert sources[0] == sources[1], "return changed the exact receipt or its source"
+    assert len(activity[0]) == len(activity[1]) == 1
+    assert activity[0][0]["object_ref"] == activity[1][0]["object_ref"]
+    source = sources[1]
+    assert source["source_kind"] == "pipeline_event"
+    assert receipt_id == f"pipeline:{source['source_id']}"
+    assert source["subject_ref"] == "service:HeartbeatService" and source["detail_url"] == "/cadence"
+    # Both snapshots read this projection through the hub's real database
+    # before run_case removes its isolated HOME. Its exact source event id
+    # and all receipt fields must survive the native return gesture.
+    assert source["reason_code"] == f"pipeline_{source['outcome']}"
+    assert source["source_api"] == "/api/desk/projections"
+
+
+def _assert_observation_shape(record, viewport, out, *, case_id=CASE):
     assert record["verdict"] in VERDICTS
-    assert record["case_id"] == CASE
+    assert record["case_id"] == case_id
     assert record["pass"] == "live"
     assert record["brain"] == "muaddib"
     assert record["viewport"] == viewport
@@ -227,4 +301,4 @@ def _assert_observation_shape(record, viewport, out):
     on_disk = json.loads((run_dir / "observation.json").read_text())
     assert on_disk["verdict"] == record["verdict"]
     assert on_disk["run_id"] == record["run_id"]
-    assert str(viewport) in record["run_id"] and CASE in record["run_id"]
+    assert str(viewport) in record["run_id"] and case_id in record["run_id"]

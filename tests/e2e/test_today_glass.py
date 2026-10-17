@@ -50,14 +50,18 @@ class TestTheTodayWindowSize(FitRig):
                 win.wait_for(timeout=T)
                 # PHILO-17 (concept C): the window opens on Day; its first
                 # items here are the Brief's, one tab away.
-                win.locator(".intelligence-segment", has_text="Brief").first.click()
+                win.get_by_role("group", name="Intelligence view", exact=True).filter(visible=True).get_by_role("button", name="Brief", exact=True).click()
                 first = win.locator(ITEM).first
                 first.wait_for(timeout=T)
                 page.wait_for_timeout(900)
                 _settle(page)
                 box = win.evaluate(BOX_JS)
                 item = first.evaluate(BOX_JS)
-                tops = win.locator(".intelligence-segment").evaluate_all(
+                active_header = win.get_by_role("group", name="Intelligence view", exact=True).filter(visible=True)
+                assert active_header.count() == 1, "one active view owns Intelligence navigation"
+                segments = active_header.locator(".intelligence-segment")
+                assert segments.count() == 4, "all four Intelligence views remain reachable"
+                tops = segments.evaluate_all(
                     "(es) => es.map((e) => Math.round(e.getBoundingClientRect().top))")
                 self.facts["B24"] = {"window": box, "first_item": item, "segment_tops": tops}
                 assert box["w"] >= 600, box

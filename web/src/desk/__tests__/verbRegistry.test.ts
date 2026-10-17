@@ -12,10 +12,46 @@ import { registerSurface } from "../shell";
 import { THREAD_SLASH_COMMANDS } from "../components/ThreadComposer";
 import { EMPTY_ITEMS, fromWireDirectory, qualifiedRef } from "../api";
 import { useDesk } from "../store";
+import { windowObjectEntry } from "../objectMenu";
+import type { Decision } from "../../lib/primitives";
+import type { WorkMenuEntry } from "../components/DeskMenu";
 
 const CTX = { selectedRef: null };
 
 describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
+  it("Object Open restores an existing qualified decision as one canonical pullout", () => {
+    const decision: Decision = {
+      kind: "decision", id: "d-freeze", title: "Freeze the old ledger on Nov 5", status: "proposed",
+      deciders: [], contextMarkdown: "", decisionMarkdown: "Freeze writes on Nov 5.",
+      alternatives: [], consequencesMarkdown: "", tags: [], createdAt: "2026-10-16T12:00:00Z",
+    };
+    const ref = qualifiedRef(decision.kind, decision.id);
+    const panelId = `pullout:${ref}`;
+    const previous = useDesk.getState();
+    useDesk.setState({
+      items: { ...EMPTY_ITEMS, decision: [decision] },
+      pullouts: [], panelMin: [], panelOrder: [], panelDepth: {},
+    });
+    try {
+      useDesk.getState().openPullout(ref);
+      useDesk.getState().minimizePanel(panelId);
+      useDesk.getState().focusPanel("chair:needs");
+      expect(useDesk.getState().panelMin).toContain(panelId);
+      const menu = windowObjectEntry(panelId, vi.fn()) as Extract<WorkMenuEntry, { type: "sub" }>;
+      const open = menu.entries.find((entry) => entry.id === "object.open") as Extract<WorkMenuEntry, { type: "item" }>;
+      expect(open.ghost).toBeNull();
+
+      open.onSelect();
+
+      expect(useDesk.getState().pullouts.map((pullout) => pullout.id)).toEqual([ref]);
+      expect(useDesk.getState().panelMin).not.toContain(panelId);
+      expect(useDesk.getState().panelOrder.at(-1)).toBe(panelId);
+      expect(useDesk.getState().items.decision).toEqual([decision]);
+    } finally {
+      useDesk.setState(previous, true);
+    }
+  });
+
   it("opens a selected drawer by canonical ref and preserves its pointer origin", () => {
     const directory = fromWireDirectory({ id: "dir_b5c056b59f3e", name: "Platform", parent_id: null,
       member_ids: ["note:note_0b9ebdadf0fa"], created_at: "2026-10-16T01:39:56Z" })!;

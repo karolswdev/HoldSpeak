@@ -161,11 +161,10 @@ def _no_marks(text: str) -> None:
 
 
 def _open_needs(page: Any) -> Any:
-    if not page.locator("[data-testid='needs-drawer']").count():
-        icon = page.locator(".desk-screen [data-object-id='drawer:needs']")
-        icon.focus()
-        page.keyboard.press("Enter")
     drawer = page.locator("[data-testid='needs-drawer']")
+    if not drawer.count() or not drawer.is_visible():
+        page.locator(".desk-go-home [role=menuitem]").filter(
+            has=page.locator(".desk-menu-label", has_text=re.compile(r"^Needs you$"))).click()
     drawer.wait_for(timeout=10000)
     return drawer
 
@@ -175,12 +174,11 @@ def _open_lane(page: Any) -> Any:
     if dock.count() and dock.first.is_visible():
         dock.first.click()
     else:
-        from urllib.parse import urlsplit
-
-        origin = "{0.scheme}://{0.netloc}".format(urlsplit(page.url))
-        page.goto(f"{origin}/conductor", wait_until="load")
-        _normal_chair(page)
-        _settle(page)
+        page.locator(".desk-verbbar-item[data-menu-id='go'] button").click()
+        menu = page.locator(".desk-verbbar-menu")
+        menu.wait_for()
+        menu.locator("[role^=menuitem]").filter(
+            has=page.locator(".desk-menu-label", has_text=re.compile(r"^Conductor$"))).click()
     conductor = page.locator(".conductor-window")
     conductor.wait_for(timeout=15000)
     agent = conductor.locator("[data-object-id='launch:launch_p16_words']")
@@ -251,9 +249,8 @@ LONG_ID = "May I merge `" + "d25d3fc020be4d8cbc90269fc17da3f7" * 6 + "`?"
 @pytest.mark.timeout(240)
 @pytest.mark.parametrize("question", [UNBREAKABLE, LONG_ID], ids=["unbreakable-4000", "long-id"])
 def test_a_compact_line_at_393_keeps_its_ellipsis_in_the_box(tmp_path: Path, monkeypatch, question: str) -> None:
-    """Rendered at 393 in a real browser: the Needs row (two lines) and the
-    rail ASKS line (one line). Not even one unit fits: the token itself is
-    cut at the width, the ellipsis seen; the content never taller than the box."""
+    """At 393 the compact Needs row keeps its ellipsis inside the box;
+    the current question is shown once, whole, in the Lane's Ask well."""
     _ensure_build()
     _isolate(tmp_path, monkeypatch)
     server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
@@ -281,17 +278,24 @@ def test_a_compact_line_at_393_keeps_its_ellipsis_in_the_box(tmp_path: Path, mon
             tag = "unbreakable" if question == UNBREAKABLE else "long-id"
             row.screenshot(path=str(SHOTS / f"compact-{tag}-needs-row-393.png"))
             page.keyboard.press("Escape")
-            _open_lane(page)
-            line = page.locator("[data-testid='lane-rail'] .lane-rail-words-line").first
-            line.scroll_into_view_if_needed()
+            window = _open_lane(page)
+            question_well = window.locator("[data-testid='lane-ask'] .ask-well-question")
+            question_well.wait_for()
             page.wait_for_timeout(300)
-            one = line.evaluate(_COMPACT_BOX)
-            _ellipsis_seen(one)
-            line.locator("xpath=ancestor::li[1]").screenshot(path=str(SHOTS / f"compact-{tag}-rail-asks-393.png"))
+            assert question_well.text_content().strip() == question.replace("`", "")
+            fit = question_well.evaluate("""el => {
+              const r=el.getBoundingClientRect(), w=el.closest('.desk-window-shell').getBoundingClientRect();
+              return {width:el.clientWidth, content:el.scrollWidth, height:el.clientHeight,
+                contentHeight:el.scrollHeight, left:r.left, right:r.right, windowLeft:w.left, windowRight:w.right};
+            }""")
+            assert fit["width"] > 0 and fit["content"] <= fit["width"] + 1, fit
+            assert fit["contentHeight"] <= fit["height"] + 1, fit
+            assert fit["windowLeft"] - 1 <= fit["left"] < fit["right"] <= fit["windowRight"] + 1, fit
+            rail_words = window.locator("[data-testid='lane-rail'] .lane-rail-says").all_text_contents()
+            assert question.replace("`", "") not in [text.strip() for text in rail_words], rail_words
+            window.screenshot(path=str(SHOTS / f"compact-{tag}-lane-asks-393.png"))
             assert page.evaluate("document.scrollingElement.scrollWidth <= window.innerWidth")
             _assert_clean(page, errors)
             browser.close()
     finally:
         server.stop()
-
-

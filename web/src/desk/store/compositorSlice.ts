@@ -295,7 +295,13 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
     const desc = PRIMITIVES[resolved.kind];
     switch (desc.surface.type) {
       case "pullout": {
-        openCard(id);
+        // Bare and qualified doors can name the same open record. Keep its
+        // existing window key so its geometry and retained drafts stay put.
+        const existing = get().pullouts.find((pullout) => {
+          const target = resolveKindFromId(pullout.id, get);
+          return target?.kind === resolved.kind && target.resolvedId === resolved.resolvedId;
+        });
+        openCard(existing?.id ?? id);
         break;
       }
       case "window": {

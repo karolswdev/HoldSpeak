@@ -81,9 +81,29 @@ def _remote(page: Any) -> Any:
     return page.locator(".gadget-group", has=page.locator(".gadget-group-label", has_text="Remote access")).last
 
 
+def _settings_directory(page: Any, base: str, token: str) -> Any:
+    """Request the directory explicitly, even if Settings remembered a wing."""
+    page.goto(f"{base}/?token={token}", wait_until="load")
+    _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=token)
+    page.evaluate("""() => sessionStorage.setItem('hs.desk.staged-surface-open',
+        JSON.stringify({key: 'configure-settings', scope: 'settings'}))""")
+    page.reload(wait_until="load")
+    _normal_chair(page)
+    directory = page.locator("#surface-settings .settings-home")
+    directory.wait_for(timeout=10_000)
+    return directory
+
+
+def _open_directory_module(page: Any, directory: Any, label: str, module: str) -> None:
+    row = directory.locator(".surface-ledger-row").filter(
+        has=page.locator(".surface-ledger-primary", has_text=re.compile(rf"^{re.escape(label)}$")))
+    row.get_by_role("button", name=f"Open {label}", exact=True).click()
+    page.locator(f"#surface-settings [data-settings-module='{module}']").wait_for()
+
+
 @pytest.mark.parametrize("width", [1440, 393])
 def test_summary_controls_own_the_row_height(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
-    """The Summary controls must finish above Capture + export at both widths."""
+    """The Summary controls must finish above Recording at both widths."""
     from playwright.sync_api import sync_playwright
 
     _ensure_build()
@@ -95,19 +115,16 @@ def test_summary_controls_own_the_row_height(tmp_path: Path, monkeypatch: pytest
             page = browser.new_page(viewport={"width": width, "height": 900 if width == 1440 else 852}, reduced_motion="reduce")
             errors: list[str] = []
             page.on("pageerror", lambda error: errors.append(str(error)))
-            _navigate_to_settings_hub(page, base)
-            more = page.get_by_test_id("settings-more")
-            if more.get_attribute("aria-expanded") == "false":
-                more.click()
-            row = page.locator(".surface-ledger-row", has=page.locator(".surface-ledger-primary", has_text="Meetings"))
-            row.get_by_role("button", name="Open", exact=True).click()
+            directory = _settings_directory(page, base, TOKEN)
+            _open_directory_module(page, directory, "Meetings", "meetings")
             controls = page.get_by_test_id("settings-summary-controls")
             controls.wait_for()
             _settle(page)
             controls.scroll_into_view_if_needed()
             geometry = controls.evaluate("""el => {
               const row = el.closest('.gadget-row').getBoundingClientRect();
-              const next = [...document.querySelectorAll('.gadget-group-label')].find(e => e.textContent === 'Capture + export').getBoundingClientRect();
+              const next = [...el.closest('[data-settings-module=meetings]').querySelectorAll('.gadget-group-label')]
+                .find(e => e.textContent === 'Recording').getBoundingClientRect();
               const children = [...el.children].map(e=>e.getBoundingClientRect()).filter(r=>r.width&&r.height);
               return {row:row.toJSON(),next:next.toJSON(),children:children.map(r=>r.toJSON())};
             }""")
@@ -259,12 +276,9 @@ def test_a_held_filter_strip_is_flat(tmp_path: Path, monkeypatch: pytest.MonkeyP
             _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=M_TOKEN)
             wire = _api(page, "GET", "/api/settings/people-access", token=M_TOKEN)
             assert wire["source"] == "env" and wire["effective"] == "read", wire
-            page.goto(f"{url}/settings", wait_until="load")
-            _normal_chair(page)
-            page.locator("[data-testid='settings-more']").click()  # PHILO-17 REFIT: People folds under More settings
-            row = page.locator(".surface-ledger-row", has=page.locator(".surface-ledger-primary", has_text="People"))
-            row.get_by_role("button", name="Open", exact=True).click()
-            strip = page.get_by_role("group", name="People MCP access", exact=True)
+            directory = _settings_directory(page, url, M_TOKEN)
+            _open_directory_module(page, directory, "People", "people")
+            strip = page.get_by_role("group", name="Agent access", exact=True)
             strip.wait_for(timeout=T)
             _settle(page)
             strip.scroll_into_view_if_needed()
@@ -285,6 +299,7 @@ def test_a_held_filter_strip_is_flat(tmp_path: Path, monkeypatch: pytest.MonkeyP
             assert len(tokens) == 3 and all(t["disabled"] for t in tokens), tokens
             assert all(t["shadow"] == "none" for t in tokens), tokens
             assert all(t["bg"] == t["ground"] for t in tokens), tokens
+            assert [t["text"] for t in tokens] == ["OFF", "READ", "READ AND WRITE"], tokens
             assert [t["text"] for t in tokens if t["active"]] == ["READ"], tokens
             _assert_clean(page, errors)
             browser.close()

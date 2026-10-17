@@ -1,9 +1,8 @@
 // PHILO-13-17 (C7, Q1/Q2; the owner's "Ratify, build it", 2026-10-03) —
 // the phone's ring of open windows. At 393 one window fills the work area;
 // a horizontal touch swipe on it moves to the next open window (finger to
-// the left) or back (to the right), and the screen title's switcher lists
-// the same ring. The ring: the open Chair windows in the Chair's order
-// (Needs you, Brief, The week, then Capture once it opened at 393), then
+// the left) or back (to the right). Go is the current visible navigator. The ring: the open Chair windows in the Chair's order
+// (Needs you, The week, then Capture once it opened at 393), then
 // the open desk windows in the order they opened. It wraps.
 // A Chair window takes the work area the way Go ▸ Chair does
 // (openChairWindow: the desk window in front iconifies, never closes).
@@ -32,7 +31,8 @@ export function phoneRing(): RingWindow[] {
   const cw = useChairWindows.getState();
   const chair = CHAIR_WINDOWS.filter(
     (w) =>
-      !cw.closed[w.id] &&
+      // Phone Brief is a view in Today, not the retired Chair Brief pane.
+      w.id !== "chair:brief" && !cw.closed[w.id] &&
       (w.phone || (w.id === "chair:capture" && (cw.captureInRing || cw.phone === w.id))),
   ).map((w) => ({ id: w.id, label: w.title, chair: true }));
   // The order the windows opened: their opening sequence, never the
@@ -88,7 +88,7 @@ export function swipeDirection(dx: number, dy: number): 1 | -1 | 0 {
  * and the shelf keep their own drag); only a window's body swipes. */
 const NOT_A_SWIPE = "input, textarea, select, [contenteditable='true'], [role=menu], .desk-dock, .cm-editor";
 
-/** Install the 393 swipe once (the screen title's switcher mounts it). */
+/** Install the 393 swipe once in the mounted Desk chrome. */
 export function usePhoneSwipe(enabled: boolean): void {
   useEffect(() => {
     if (!enabled) return;

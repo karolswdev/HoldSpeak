@@ -26,6 +26,7 @@ import { openSourceRef } from "../surface/citations";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import { useDeskWriteReceipt } from "../hooks/useWriteReceipt";
 import { useCompactViewport } from "../useCompactViewport";
+import { usePhoneSwipe } from "./window/phoneRing";
 import { SYSTEM } from "../systemSprites";
 import { MARK_APPLICATION_COMMANDS } from "../applications";
 import { Button } from "../../components/signal/Signal";
@@ -172,6 +173,7 @@ export function DeskChrome({
   // is its own full-width row in the desk flow (DeskReceiptRow), not a seat
   // in the bar.
   const compact = useCompactViewport();
+  usePhoneSwipe(compact);
   const frontWindow = useFrontWindowId();
 
   const anyLive = Object.values(status).some((v) => v === "live");

@@ -226,12 +226,15 @@ def _wing_names(page: Any) -> list[str]:
     strip = _folded(page)
     if not strip.count():
         return [t.strip().upper() for t in page.locator(".desk-wings-tabs [role=tab]").all_inner_texts()]
-    strip.first.click()
-    page.locator(".desk-menu-list").first.wait_for()
-    names = [t.strip().upper() for t in page.locator(".desk-menu-list [role=menuitemcheckbox]").all_inner_texts()]
+    strip.click()
+    menu = page.get_by_role("menu", name="Window faces", exact=True)
+    menu.wait_for()
+    names = [t.strip().upper() for t in menu.get_by_role("menuitemcheckbox").all_inner_texts()]
     # Escape closes the menu, not the window (test_philo13_18_strip_escape_glass).
     page.keyboard.press("Escape")
-    page.locator(".desk-menu-list").first.wait_for(state="detached")
+    menu.wait_for(state="detached")
+    assert strip.get_attribute("aria-expanded") == "false"
+    assert page.locator(".desk-window-shell[aria-label='Speak']").is_visible()
     return names
 
 def _wing_is_on(page: Any, name: str) -> bool:
