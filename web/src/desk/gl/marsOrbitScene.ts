@@ -96,7 +96,7 @@ const moonFragment = /* glsl */ `
   }
 `;
 
-/** A deformed sphere keeps real silhouette, relief and depth for each small moon. */
+/** Irregular relief normalized to the physical equivalent-volume body radius. */
 function moonGeometry(radius: number, kind: number): THREE.SphereGeometry {
   const geometry = new THREE.SphereGeometry(radius, 56, 40);
   const positions = geometry.getAttribute("position");
@@ -118,6 +118,28 @@ function moonGeometry(radius: number, kind: number): THREE.SphereGeometry {
     positions.setXYZ(i, direction.x * radius * relief * (kind === 0 ? 1.25 : 1.13),
       direction.y * radius * relief * (kind === 0 ? 0.83 : 0.94), direction.z * radius * relief * 0.94);
   }
+  // SphereGeometry duplicates the longitude seam and poles. Weld their positions
+  // exactly before measuring the closed surface, including float32 roundoff.
+  const columns = geometry.parameters.widthSegments + 1;
+  for (let row = 0; row <= geometry.parameters.heightSegments; row++) {
+    const first = row * columns;
+    const isPole = row === 0 || row === geometry.parameters.heightSegments;
+    for (let column = isPole ? 1 : columns - 1; column < columns; column++) {
+      positions.setXYZ(first + column, positions.getX(first), positions.getY(first), positions.getZ(first));
+    }
+  }
+  const indices = geometry.index!;
+  const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
+  let signedVolume = 0;
+  for (let i = 0; i < indices.count; i += 3) {
+    a.fromBufferAttribute(positions, indices.getX(i));
+    b.fromBufferAttribute(positions, indices.getX(i + 1));
+    c.fromBufferAttribute(positions, indices.getX(i + 2));
+    signedVolume += a.dot(b.cross(c)) / 6;
+  }
+  const targetVolume = 4 * Math.PI * radius ** 3 / 3;
+  const scale = Math.cbrt(targetVolume / Math.abs(signedVolume));
+  geometry.scale(scale, scale, scale);
   geometry.computeVertexNormals();
   return geometry;
 }

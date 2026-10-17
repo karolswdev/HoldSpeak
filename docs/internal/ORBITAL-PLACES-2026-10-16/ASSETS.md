@@ -16,4 +16,4 @@ Both scenes reuse the local NASA deep star map already credited in `../JUPITER-O
 
 `web/public/desk/atmospheres/{mars,saturn}-orbit.webp` are 1440×1000 framebuffer exports from the actual scene factories after local textures loaded, at authored elapsed zero. They are the picker and WebGL failure stills. These are not direction sketches.
 
-Moon sizes, orbit distances and periods are authored for composition. This is not an astronomical ephemeris.
+Moon body sizes now use physical relative radii; see [size correction](SCALE-CORRECTION.md). Orbit distances and periods remain authored. This is not an astronomical ephemeris.

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as THREE from "three";
 import { createMarsOrbitScene } from "../marsOrbitScene";
+import { MARS_MOONS, MARS_RADIUS, MARS_MEAN_RADIUS_KM } from "../marsOrbitModel";
 
 const rendererState = vi.hoisted(() => ({ latest: null as null | {
   render: ReturnType<typeof vi.fn>; dispose: ReturnType<typeof vi.fn>;
@@ -44,6 +45,44 @@ describe("Mars atmosphere lifecycle", () => {
       }
       expect(maximum / minimum).toBeGreaterThan(1.15);
     }
+    atmosphere.dispose();
+  });
+
+  it("preserves physical equivalent volumes in closed irregular meshes without size compensation", () => {
+    const atmosphere = construct(); atmosphere.render();
+    const [scene, camera] = rendererState.latest!.render.mock.calls[0] as [THREE.Scene, THREE.Camera];
+    expect(camera).toBeInstanceOf(THREE.OrthographicCamera);
+    const mars = scene.getObjectByName("Mars") as THREE.Mesh<THREE.SphereGeometry, THREE.ShaderMaterial>;
+    const shadowRadii = mars.material.uniforms.uRadii.value as number[];
+    MARS_MOONS.forEach((moon, index) => {
+      const mesh = scene.getObjectByName(moon.name) as THREE.Mesh<THREE.SphereGeometry>;
+      const positions = mesh.geometry.getAttribute("position"), indices = mesh.geometry.index!;
+      let signedVolume = 0;
+      // Independent determinant expansion over the rendered triangles.
+      for (let i = 0; i < indices.count; i += 3) {
+        const a = indices.getX(i), b = indices.getX(i + 1), c = indices.getX(i + 2);
+        signedVolume += (positions.getX(a) * (positions.getY(b) * positions.getZ(c) - positions.getZ(b) * positions.getY(c))
+          - positions.getY(a) * (positions.getX(b) * positions.getZ(c) - positions.getZ(b) * positions.getX(c))
+          + positions.getZ(a) * (positions.getX(b) * positions.getY(c) - positions.getY(b) * positions.getX(c))) / 6;
+      }
+      const physicalMappedRadius = MARS_RADIUS * moon.physicalRadiusKm / MARS_MEAN_RADIUS_KM;
+      const targetVolume = 4 * Math.PI * physicalMappedRadius ** 3 / 3;
+      expect(Math.abs(signedVolume) / targetVolume).toBeCloseTo(1, 6);
+      expect(mesh.scale.toArray()).toEqual([1, 1, 1]);
+      expect(mesh.parent!.scale.toArray()).toEqual([1, 1, 1]);
+      expect(shadowRadii[index]).toBe(physicalMappedRadius);
+      const columns = mesh.geometry.parameters.widthSegments + 1;
+      for (let row = 0; row <= mesh.geometry.parameters.heightSegments; row++) {
+        const first = row * columns;
+        const isPole = row === 0 || row === mesh.geometry.parameters.heightSegments;
+        for (let column = isPole ? 1 : columns - 1; column < columns; column++) {
+          for (const read of ["getX", "getY", "getZ"] as const) {
+            expect(positions[read](first + column)).toBe(positions[read](first));
+          }
+        }
+      }
+    });
+    expect(scene.children.some(child => child instanceof THREE.Sprite)).toBe(false);
     atmosphere.dispose();
   });
 

@@ -8,6 +8,17 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+**Physical moon sizes — #1230 (2026-10-16).** Owner feedback supersedes
+visibility enlargement. All eight natural moons in Mars/Jupiter/Saturn use
+NASA/JPL physical radius ratios. Actual irregular Mars mesh volume is normalized;
+shadow/haze inputs shrink with body radii. All three picker/fallback stills are
+regenerated. Combined build `0ce82ada178bf199`; quick GREEN: 4,154 web / 705 affected /
+109 sweep / 17 canon; TypeScript and 32 focused checks pass. Six actual GL
+compositions cover desktop/phone; two real Mars picker readiness walks pass.
+Orbit spacing/time remain authored. Independent source counsel found no blocker;
+formal postmerge review and owner judgment remain open.
+[Correction and proof](../docs/internal/ORBITAL-PLACES-2026-10-16/SCALE-CORRECTION.md).
+
 **Browser recovery — #1231 delivered (2026-10-16).** Activity owns Finished
 receipts with exact source doors, readable phone titles and one-Back return.
 Phone swipe/Depth, Capture/Today, Go toggle, record-window identity and Chair

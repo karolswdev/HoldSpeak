@@ -1,5 +1,8 @@
 # In Mars' orbit; In Saturn's orbit
 
+**Owner amendment 2026-10-16:** [physical moon body sizes](SCALE-CORRECTION.md)
+supersede the cinematic-size clauses below.
+
 DRAFT — UNCHECKED. Owner requested2026-10-16. Tuesday: quiet, beautiful
 space behind productive work; the owner can notice passing moons without
 losing legibility or control. Existing Atmosphere host and choice persistence.

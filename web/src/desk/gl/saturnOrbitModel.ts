@@ -1,15 +1,21 @@
-/** Authored cinematic sizes and periods, not an ephemeris. */
+/** Physical body radius ratios; authored orbit distances and periods, not an ephemeris. */
 export const SATURN_RADIUS = 3.4;
+/** Saturn's equatorial radius: https://ssd.jpl.nasa.gov/planets/phys_par.html */
+export const SATURN_EQUATORIAL_RADIUS_KM = 60_268;
 export const SATURN_OBLATENESS = 0.902;
 export const SATURN_RING_INNER = 4.1;
 export const SATURN_RING_OUTER = 7.7;
 export const SATURN_CASSINI_INNER = 6.48;
 export const SATURN_CASSINI_OUTER = 6.76;
 
-export const SATURN_MOONS = [
-  { name: "Titan", radius: 0.29, orbit: 8.8, period: 390, phase: 2.35, inclination: 0.12 },
-  { name: "Enceladus", radius: 0.115, orbit: 5.35, period: 175, phase: 5.2, inclination: -0.08 },
-] as const;
+/** Solid-body equivalent mean radii: https://ssd.jpl.nasa.gov/sats/phys_par/ */
+export const SATURN_MOONS = ([
+  { name: "Titan", physicalRadiusKm: 2574.76, orbit: 8.8, period: 390, phase: 2.35, inclination: 0.12 },
+  { name: "Enceladus", physicalRadiusKm: 252.10, orbit: 5.35, period: 175, phase: 5.2, inclination: -0.08 },
+] as const).map(moon => ({
+  ...moon,
+  radius: SATURN_RADIUS * moon.physicalRadiusKm / SATURN_EQUATORIAL_RADIUS_KM,
+}));
 
 export function saturnMoonPosition(
   index: number,
