@@ -322,6 +322,23 @@ def _durable_transcript_hash(conn: Any, meeting_id: str) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
+def has_recoverable_bound_publication(conn: Any, parent_operation_id: str) -> bool:
+    """Read pending saved outcomes on the caller's existing close transaction."""
+    pending = conn.execute(
+        _CURRENT_LINEAGE_CTE + """SELECT j.* FROM current_jobs j
+           JOIN meetings m ON m.id=j.meeting_id
+           WHERE j.current_rank=1 AND j.parent_operation_id=?
+             AND j.bundle_id IS NOT NULL AND j.bundle_sha256 IS NOT NULL AND j.claim_id IS NOT NULL
+             AND ((j.status IN ('claimed','running') AND j.lifecycle_posture='publication_pending')
+                  OR (j.status='succeeded' AND m.intel_status='ready'))
+             AND m.parked=0 AND m.intel_status!='skipped'
+             AND EXISTS (SELECT 1 FROM artifacts a WHERE a.meeting_id=j.meeting_id
+                 AND a.plugin_id='meeting_summary' AND json_extract(a.structured_json,'$.job_id')=j.job_id)
+           LIMIT 1""", (parent_operation_id,),
+    ).fetchone()
+    return pending is not None and _durable_transcript_hash(conn, pending["meeting_id"]) == pending["transcript_hash"]
+
+
 def _plan_installed_plugin_members(
     conn: Any, meeting_id: str,
 ) -> tuple[tuple[dict[str, Any], ...], dict[str, Any]]:
