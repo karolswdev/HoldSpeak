@@ -72,6 +72,8 @@ export interface NeedsYouRoomItem extends RankableItem {
   direction?: "mine" | "theirs" | "decide" | "setup";
   /** Betterment D0: the Person the row is about (`""` when none). */
   person_id?: string;
+  /** Betterment D2: that Person's display name (absent when none). */
+  person_name?: string;
   /** Betterment D1: the hub's one count rule counts this row
    *  (`needs_you_membership.counts_in_number`). */
   counted?: boolean;

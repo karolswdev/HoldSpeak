@@ -10783,7 +10783,7 @@
     },
     "/api/desk/needs-you": {
       "get": {
-        "description": "HS-171-03: cached needs-you aggregate.\n\nReads from the in-memory cache; ``?fresh=1`` forces a rebuild.\nResponse includes ``computedAt``, ``stale``, ``sweepId``.",
+        "description": "HS-171-03: cached needs-you aggregate.\n\nReads from the in-memory cache; ``?fresh=1`` forces a rebuild.\nResponse includes ``computedAt``, ``stale``, ``sweepId``.\n\nBetterment D2: ``direction``, ``person``, ``project`` and ``week=1``\nnarrow the rows (``desk.needs_you``'s arguments); the count stays the\none number.",
         "operationId": "api_desk_needs_you_api_desk_needs_you_get",
         "parameters": [
           {
@@ -10800,6 +10800,70 @@
                 }
               ],
               "title": "Fresh"
+            }
+          },
+          {
+            "in": "query",
+            "name": "direction",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Direction"
+            }
+          },
+          {
+            "in": "query",
+            "name": "person",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Person"
+            }
+          },
+          {
+            "in": "query",
+            "name": "project",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Project"
+            }
+          },
+          {
+            "in": "query",
+            "name": "week",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Week"
             }
           }
         ],

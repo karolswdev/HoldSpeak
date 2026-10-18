@@ -117,3 +117,49 @@
     margin-block:0;
   }
 }
+
+/* Betterment D2: the chips over the one list. Each chip is a FilterBar
+   cell; its count sits after its word. At the phone width the chips stay
+   in one row and the row scrolls (the design's phone rule). */
+.needs-chips { flex: none; }
+.needs-chip-row {
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.needs-chip.btn + .needs-chip.btn { margin-left: 0; }
+.needs-chip-count {
+  margin-left: 6px;
+  font-variant-numeric: tabular-nums;
+}
+@container surface (max-width: 520px) {
+  .needs-chips { min-width: 0; }
+  .needs-chip-row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .needs-chip.btn {
+    flex: none;
+    min-height: 44px;
+  }
+}
+/* Nudge: the drafted message, then its Send well. Decide: the three acts. */
+.needs-nudge-text {
+  width: 100%;
+  margin: 0;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.needs-drawer-nudge > :not(.needs-nudge-text) { width: 100%; }
+.needs-drawer-none {
+  margin: 0;
+  padding: 8px 10px;
+  color: var(--wb-muted);
+  font-size: 13px;
+}
+@container surface (max-width: 520px) {
+  .needs-drawer-decide .btn { min-height: 44px; }
+}
