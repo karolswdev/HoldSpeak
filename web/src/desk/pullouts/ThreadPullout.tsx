@@ -83,6 +83,7 @@ import {
 } from "../autoSpeak";
 import type { PulloutContentProps } from "./types";
 import { noteName, primitiveName } from "../windowName";
+import { reasonWords } from "../surface/runWords";
 import "./thread-pullout.css";
 
 // HS-152-04: stable empty refs for zustand selectors (avoid infinite re-render).
@@ -91,11 +92,30 @@ const EMPTY_GUARDRAIL_ROWS: Record<string, GuardrailRow> = {};
 const EMPTY_DRAFT_ANNOTATIONS: DraftAnnotation[] = [];
 
 
+/** A seed ref written before Betterment Q0 stored the desk's object as
+ *  Python text (`{'ref_kind': 'note', 'ref_id': 'n-risks'}`); read the
+ *  identity out of it, never show it. */
+function seedIdentity(ref: ThreadRef): string | null {
+  if (ref.refKind !== "seed") return null;
+  const kind = /'ref_kind':\s*'([^']+)'/.exec(ref.refId)?.[1];
+  const id = /'ref_id':\s*'([^']+)'/.exec(ref.refId)?.[1];
+  return kind && id ? `${kind}:${id}` : null;
+}
+
+/** A failed reply in words (Betterment Q0): the hub's reason token through
+ *  `runWords.ts`; an older row without one shows its stored sentence. */
+export function replyFailureWords(errorJson: Record<string, unknown> | null, model: string | null): string {
+  const reason = typeof errorJson?.reason === "string" ? errorJson.reason : "";
+  if (reason) return reasonWords(reason, model || "Engine");
+  const said = typeof errorJson?.error === "string" ? errorJson.error.trim() : "";
+  return said || reasonWords("did_not_answer", model || "Engine");
+}
+
 /** The hub returns frozen snapshots as JSON strings on older threads.
  * Keep the sent identity even when its source is no longer on the desk. */
 function ThreadSources({ refs }: { refs: ThreadRef[] }) {
   const items = useDesk((state) => state.items);
-  const sources = new Map<string, { ref: ThreadRef; title: string; frozen: boolean }>();
+  const sources = new Map<string, { ref: ThreadRef; title: string; detail: string; frozen: boolean }>();
   for (const ref of refs) {
     // Import idempotency markers are not material sent to a model.
     if (ref.refKind === "import_hash" || !ref.refId) continue;
@@ -103,17 +123,22 @@ function ThreadSources({ refs }: { refs: ThreadRef[] }) {
     if (typeof frozen === "string") {
       try { frozen = JSON.parse(frozen); } catch { frozen = null; }
     }
-    const identity = ref.refId.includes(":") ? ref.refId : `${ref.refKind}:${ref.refId}`;
+    const identity = seedIdentity(ref) ?? (ref.refId.includes(":") ? ref.refId : `${ref.refKind}:${ref.refId}`);
     const separator = identity.indexOf(":");
     const kind = identity.slice(0, separator);
     const id = identity.slice(separator + 1);
     const storeKind = ({ person: "people", knowledge: "kb", zone: "directory" } as Record<string, string>)[kind] || kind;
     const item = items[storeKind as keyof typeof items]?.find((candidate) => String(candidate.id) === id);
     const frozenTitle = typeof frozen?.title === "string" ? frozen.title.trim() : "";
+    // A source that cannot be read (no snapshot, and the desk holds it no
+    // more): its kind, and that it was deleted. Never a dict.
+    const gone = !item && !frozenTitle;
+    const kindWord = kind ? kind.charAt(0).toUpperCase() + kind.slice(1) : "Source";
     const prior = sources.get(identity);
     if (!prior || (!prior.frozen && frozenTitle)) sources.set(identity, {
       ref,
-      title: frozenTitle || (item ? primitiveName(storeKind, item, id) : "Source unavailable"),
+      title: item ? (frozenTitle || primitiveName(storeKind, item, id)) : (frozenTitle || kindWord),
+      detail: gone ? "was deleted" : identity,
       frozen: Boolean(frozenTitle),
     });
   }
@@ -122,7 +147,7 @@ function ThreadSources({ refs }: { refs: ThreadRef[] }) {
     <SurfaceRows>{Array.from(sources, ([identity, source]) => {
       const open = refOpener(identity);
       return <SurfaceRow key={source.ref.id} id={`thread-source-${source.ref.id}`} title={source.title}
-        detail={identity} onOpen={open ?? undefined} />;
+        detail={source.detail} onOpen={open ?? undefined} />;
     })}</SurfaceRows>
   </FoldGadget>;
 }
@@ -1034,11 +1059,12 @@ function MessageRow({
       {(crashed || hasError) && (
         <div className="thread-row-failure">
           <SurfaceState
-            error={crashed ? "Reply interrupted" : "Reply failed"}
+            error={crashed ? "Reply interrupted" : replyFailureWords(msg.errorJson, msg.modelId)}
             onRetry={() => onRetry(msg.id)}
+            retryLabel={crashed ? "Try again" : "Ask again"}
           />
           {msg.errorJson && (
-            <FoldGadget title="Details" className="thread-error-details">
+            <FoldGadget title="Raw" className="thread-error-details">
               <pre className="thread-raw-content">{JSON.stringify(msg.errorJson, null, 2)}</pre>
             </FoldGadget>
           )}

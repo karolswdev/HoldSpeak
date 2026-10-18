@@ -1,0 +1,135 @@
+{
+  "_": "The hub's own answer, captured by hand on 2026-10-17 (Betterment Q0) from an isolated rig hub (scripts/graph_walk.py serve, scratch HOME) with the real LAN engine at 192.168.1.43:8080: GET /api/threads/{id} for a thread opened with seed_refs [{ref_kind: note, ref_id: n-risks}], after one turn on the LAN engine qwen3.8-27b. Not fenced: CI has no LAN engine.",
+  "captured_at": "2026-10-18T03:35:00Z",
+  "wire": {
+    "id": "th_fd5fe721e206",
+    "title": "",
+    "recipe_id": "",
+    "profile_override": "",
+    "directory_id": "",
+    "call_mode": 0,
+    "parent_thread_id": null,
+    "status_line": "",
+    "token_in": 1363,
+    "token_out": 86,
+    "created_at": 1792294510.109736,
+    "updated_at": 1792294512.4118981,
+    "last_turn_at": 1792294510.139127,
+    "mode": null,
+    "messages": [
+      {
+        "id": "tm_49fa157226cf",
+        "role": "user",
+        "parent_id": null,
+        "streaming": false,
+        "receipt_id": "",
+        "egress_scope": "",
+        "egress_host": "",
+        "egress_receipt_id": "",
+        "egress_fallback": false,
+        "model_id": "",
+        "error_json": null,
+        "stats_json": null,
+        "parts": [
+          {
+            "id": "tp_3b398a4abfa3",
+            "kind": "text",
+            "text": "Which risk in this note has no owner?",
+            "ordinal": 0,
+            "sensitive": false,
+            "draft": false
+          }
+        ],
+        "created_at": 1792294510.127838,
+        "updated_at": 1792294510.128175,
+        "completed_at": null,
+        "aborted_at": null
+      },
+      {
+        "id": "tm_b1b606a7ff40",
+        "role": "assistant",
+        "parent_id": "tm_49fa157226cf",
+        "streaming": false,
+        "receipt_id": "ire_2a394dbf9dc06f67e347075a24444833",
+        "egress_scope": "private_network",
+        "egress_host": "192.168.1.43",
+        "egress_receipt_id": "ire_2a394dbf9dc06f67e347075a24444833",
+        "egress_fallback": false,
+        "model_id": "qwen3.8-27b",
+        "error_json": null,
+        "stats_json": {
+          "completion_tokens": 86,
+          "prompt_tokens": 1363,
+          "total_tokens": 1449
+        },
+        "parts": [
+          {
+            "id": "tp_89f42e5c8b9b",
+            "kind": "text",
+            "text": "The **reconciliation job** — it's listed as \"no owner yet.\"",
+            "ordinal": 0,
+            "sensitive": false,
+            "draft": false
+          }
+        ],
+        "created_at": 1792294510.139127,
+        "updated_at": 1792294512.411763,
+        "completed_at": 1792294512.411763,
+        "aborted_at": null
+      }
+    ],
+    "siblings": {},
+    "refs": [
+      {
+        "id": "tr_b6032492e066",
+        "ref_kind": "note",
+        "ref_id": "n-risks",
+        "frozen_json": "{\"kind\":\"note\",\"subtitle\":\"\",\"text\":\"- Reconciliation job: no owner yet.\\n- Cutover rollback plan: Mira owns it.\\n- Freeze date Nov 5: Theo owns comms.\",\"title\":\"Ledger migration risks\",\"via\":\"\"}",
+        "created_at": 1792294510.109959
+      },
+      {
+        "id": "tr_653adb177875",
+        "ref_kind": "note",
+        "ref_id": "n-risks",
+        "frozen_json": "{\"kind\":\"note\",\"subtitle\":\"\",\"text\":\"- Reconciliation job: no owner yet.\\n- Cutover rollback plan: Mira owns it.\\n- Freeze date Nov 5: Theo owns comms.\",\"title\":\"Ledger migration risks\",\"via\":\"memory\"}",
+        "created_at": 1792294510.128337
+      },
+      {
+        "id": "tr_273770a68177",
+        "ref_kind": "thread",
+        "ref_id": "th_dd64fbafe547",
+        "frozen_json": "{\"kind\":\"thread\",\"subtitle\":\"conversation\",\"text\":\"user: Which risk in this note has no owner?\\n\\nassistant: The **reconciliation job** \\u2014 it's listed as \\\"no owner yet.\\\"\",\"title\":\"th_dd64fbafe547\",\"via\":\"memory\"}",
+        "created_at": 1792294510.128337
+      },
+      {
+        "id": "tr_e6f0f6a58d0c",
+        "ref_kind": "thread",
+        "ref_id": "th_aca91ee2ff79",
+        "frozen_json": "{\"kind\":\"thread\",\"subtitle\":\"conversation\",\"text\":\"user: What do I owe Mira this week?\\n\\nassistant: Short answer: I don't have a concrete list.\\n\\n- **Follow-through board:** empty across all buckets (now / waiting / unassigned / overdue). No tracked task is assigned to you for Mira.\\n- **Memory page:** failed to load, so I can't check for notes or commitments outside the board.\\n- **Only Mira reference on file:** she *owns* the cutover rollback plan (ledger migration). That's her deliverable, not something you owe her.\\n\\n**What I'd suggest:**\\n1. Check your own notes/calendar for any verbal or Slack commitments to Mira this week \\u2014 I can't see those.\\n2. If there's a task that *should* be on the board, tell me and I'll add it.\\n3. If the rollback plan needs your input (e.g., a review or sign-off), that's the most likely \\\"owe\\\" given the Nov 5 freeze.\\n\\nWant me to draft a quick check-in message to Mira to confirm?\\n\\ntool: {\\\"hits\\\": [{\\\"kind\\\": \\\"note\\\", \\\"source_ref\\\": \\\"note:n-risks\\\", \\\"title\\\": \\\"Ledger migration risks\\\", \\\"snippet\\\": \\\"- Reconciliation job: no owner yet.\\\\n- Cutover rollback plan: <mark>Mira</mark> owns it.\\\\n- Freeze date Nov 5: Theo owns comms.\\\", \\\"occurred_at\\\": \\\"2026-10-18T03:33:04Z\\\", \\\"project_id\\\": null, \\\"bm25\\\": -8.8e-07, \\\"normalized_score\\\": 1.0, \\\"kind_rank\\\": 1, \\\"rank\\\": 1, \\\"retrieval_origin\\\": \\\"lexical\\\", \\\"related_to\\\": null, \\\"relationship\\\": null, \\\"graph_score\\\": 0.0}, {\\\"kind\\\": \\\"thread\\\", \\\"source_ref\\\": \\\"thread:th_682da858d27a#tm_4a1b40e92c54\\\", \\\"title\\\": \\\"\\\", \\\"snippet\\\": \\\"What do I owe <mark>Mira</mark> this week?\\\", \\\"occurred_at\\\": \\\"2026-10-18 03:24:34\\\", \\\"project_id\\\": null, \\\"bm25\\\": -1.[redacted], \\\"normalized_score\\\": 1.0, \\\"kind_rank\\\": 3, \\\"rank\\\": 2, \\\"retrieval_origin\\\": \\\"lexical\\\", \\\"related_to\\\": null, \\\"relationship\\\": null, \\\"graph_score\\\": 0.0}, {\\\"kind\\\": \\\"thread\\\", \\\"source_ref\\\": \\\"thread:th_aca91ee2ff79#tm_368121d9f8b3\\\", \\\"title\\\": \\\"\\\", \\\"snippet\\\": \\\"What do I owe <mark>Mira</mark> this week?\\\", \\\"occurred_at\\\": \\\"2026-10-18 03:34:08\\\", \\\"project_id\\\": null, \\\"bm25\\\": -1.[redacted], \\\"normalized_score\\\": 1.0, \\\"kind_rank\\\": 1, \\\"rank\\\": 3, \\\"retrieval_origin\\\": \\\"lexical\\\", \\\"related_to\\\": null, \\\"relationship\\\": null, \\\"graph_score\\\": 0.0}, {\\\"kind\\\": \\\"thread\\\", \\\"source_ref\\\": \\\"thread:th_ddb1d80ef179#tm_538b8f33763e\\\", \\\"title\\\": \\\"\\\", \\\"snippet\\\": \\\"What do I owe <mark>Mira</mark> this week?\\\", \\\"occurred_at\\\": \\\"2026-10-18 03:33:08\\\", \\\"project_id\\\": null, \\\"bm25\\\": -1.[redacted], \\\"normalized_score\\\": 1.0, \\\"kind_rank\\\": 2, \\\"rank\\\": 4, \\\"retrieval_origin\\\": \\\"lexical\\\", \\\"related_to\\\": null, \\\"relationship\\\": null, \\\"graph_score\\\": 0.0}], \\\"page\\\": {\\\"offset\\\": 0, \\\"limit\\\": 20, \\\"count\\\": 4, \\\"total\\\": 4}, \\\"ranking\\\": {\\\"method\\\": \\\"per_kind_bm25_interleave\\\", \\\"normalization\\\": \\\"min_max_within_kind\\\", \\\"interleave\\\": \\\"lexical_seed_then_typed_one_hop_neighbours\\\", \\\"parent_context\\\": \\\"matching transcript segments and message parts return their parent meeting or thread\\\", \\\"relationship_expansion\\\": {\\\"method\\\": \\\"authoritative_typed_one_hop\\\", \\\"lexical_count\\\": 4, \\\"expanded_count\\\": 0, \\\"max_seeds\\\": 32, \\\"max_results\\\": 64, \\\"max_neighbours_per_seed\\\": 2}, \\\"fusion\\\": {\\\"method\\\": \\\"reciprocal_rank_fusion\\\", \\\"k\\\": 60, \\\"retrievers\\\": [\\\"keyword\\\", \\\"time\\\"], \\\"keyword_count\\\": 4, \\\"relation_count\\\": 0, \\\"time_count\\\": 4, \\\"time\\\": {\\\"phrase\\\": \\\"this week\\\", \\\"time_from\\\": \\\"2026-10-12T00:00:00-06:00\\\", \\\"time_to\\\": \\\"2026-10-19T00:00:00-06:00\\\", \\\"in_range\\\": 4}}}}\",\"title\":\"th_aca91ee2ff79\",\"via\":\"memory\"}",
+        "created_at": 1792294510.128337
+      },
+      {
+        "id": "tr_f4c046cca5ea",
+        "ref_kind": "thread",
+        "ref_id": "th_ac8a18d3c92b",
+        "frozen_json": "{\"kind\":\"thread\",\"subtitle\":\"conversation\",\"text\":\"user: What do I owe Mira this week?\",\"title\":\"th_ac8a18d3c92b\",\"via\":\"memory\"}",
+        "created_at": 1792294510.128337
+      },
+      {
+        "id": "tr_50a071c2f769",
+        "ref_kind": "thread",
+        "ref_id": "th_ddb1d80ef179",
+        "frozen_json": "{\"kind\":\"thread\",\"subtitle\":\"conversation\",\"text\":\"user: What do I owe Mira this week?\",\"title\":\"th_ddb1d80ef179\",\"via\":\"memory\"}",
+        "created_at": 1792294510.128337
+      },
+      {
+        "id": "tr_e006dc801e3e",
+        "ref_kind": "thread",
+        "ref_id": "th_682da858d27a",
+        "frozen_json": "{\"kind\":\"thread\",\"subtitle\":\"conversation\",\"text\":\"user: What do I owe Mira this week?\",\"title\":\"th_682da858d27a\",\"via\":\"memory\"}",
+        "created_at": 1792294510.128337
+      }
+    ],
+    "draft_annotations": []
+  }
+}
