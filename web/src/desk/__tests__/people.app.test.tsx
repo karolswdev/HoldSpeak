@@ -112,7 +112,7 @@ describe("People: the Prep card (HS-172-05)", () => {
     fireEvent.click(screen.getByTestId("prep-prs-open"));
     const detail = await screen.findByTestId("now-prs-detail");
     expect(within(detail).getAllByRole("button", { name: "Open PR" })).toHaveLength(2);
-    expect(screen.getByRole("tab", { name: "Prep" }).getAttribute("aria-selected")).toBe("true");
+    expect(screen.getByTestId("people-prep-lens")).toBeTruthy();
   });
 });
 
@@ -121,9 +121,11 @@ describe("People: a person's own window (PHILO-17 2b)", () => {
     stubHub();
     render(<PersonWindowBody relationshipId="r1" />);
     const win = await screen.findByTestId("person-window");
-    await within(win).findByRole("tablist");
+    await within(win).findByTestId("people-folds");
     expect(win.textContent).toContain("Ania");
-    expect(within(win).getAllByRole("tab").map((t) => t.textContent)).toEqual(["Prep", "Context", "History", "Info"]);
+    // Betterment D7: the prep, then Context, History and Info as folds under it.
+    expect(within(win).getByTestId("people-prep-lens")).toBeTruthy();
+    expect([...win.querySelectorAll('[data-testid="people-folds"] .surface-disclosure-label')].map((n) => n.textContent)).toEqual(["Context", "History", "Info"]);
     const head = win.querySelector(".people-detail-head");
     expect(head).toBeTruthy();
     expect(head!.textContent).not.toMatch(/\bBack\b/);
@@ -174,17 +176,17 @@ describe("People: Add on They owe you shows the saved item", () => {
     render(<PeopleCore scope={`people:${id}`} />);
     const owed = await screen.findByTestId("people-they-owe", {}, { timeout: 5000 });
     expect(within(owed).queryByText(owedBody)).toBeNull();
-    expect(within(owed).queryByLabelText("They owe you")).toBeNull();
+    expect(within(owed).queryByLabelText("Priya owes me")).toBeNull();
     fireEvent.click(within(owed).getByRole("button", { name: "Add" }));
-    fireEvent.change(within(owed).getByLabelText("They owe you"), { target: { value: owedBody } });
+    fireEvent.change(within(owed).getByLabelText("Priya owes me"), { target: { value: owedBody } });
     fireEvent.click(within(owed).getByRole("button", { name: "Add" }));
     // 5 s, not the 1 s default: the full suite runs in parallel (#1100).
     await waitFor(() => expect(within(screen.getByTestId("people-they-owe")).getByText(owedBody)).toBeTruthy(), { timeout: 5000 });
     const posted = fetchSpy.mock.calls.filter(([url, o]) => String(url) === `/api/people/relationships/${id}/owed` && o?.method === "POST");
     expect(posted).toHaveLength(1);
     expect(JSON.parse(String(posted[0][1]?.body)).body).toBe(owedBody);
-    expect(screen.getByTestId("people-they-owe").querySelector("h3")!.textContent).toBe("THEY OWE YOU1");
-    expect(within(screen.getByTestId("people-they-owe")).queryByLabelText("They owe you")).toBeNull();
+    expect(screen.getByTestId("people-they-owe").querySelector("h3")!.textContent).toBe("Priya owes me1");
+    expect(within(screen.getByTestId("people-they-owe")).queryByLabelText("Priya owes me")).toBeNull();
     // It is what they owe, never a request asked of him.
     expect(fetchSpy.mock.calls.some(([url]) => String(url).endsWith("/requests"))).toBe(false);
   });

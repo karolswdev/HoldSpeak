@@ -24,7 +24,8 @@ function json(body: unknown, status = 200) {
 
 afterEach(() => vi.unstubAllGlobals());
 
-const selectedLens = () => screen.getAllByRole("tab").find((t) => t.getAttribute("aria-selected") === "true")?.textContent;
+// Betterment D7: the lens is the open fold under the prep (none open: Prep).
+const selectedLens = () => [...document.querySelectorAll('[data-testid="people-folds"] button[aria-expanded="true"] .surface-disclosure-label')].map((n) => n.textContent)[0] ?? "Prep";
 
 // The full desk suite runs in parallel; a slow render under that load must not
 // read as a failure, so the waits take 5 s, not the 1 s default (#1100).
@@ -43,7 +44,7 @@ describe("PHILO-13-06: a repeat Prep open re-applies Prep", () => {
     render(<PersonWindowBody relationshipId="r1" />);
     await waitFor(() => expect(selectedLens()).toBe("Prep"), { timeout: 5000 });
 
-    fireEvent.click(screen.getByRole("tab", { name: "History" }));
+    fireEvent.click(await screen.findByRole("button", { name: "History" }, { timeout: 5000 }));
     expect(selectedLens()).toBe("History");
 
     // The 1:1 row again: the same scope, an explicit Prep open.

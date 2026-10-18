@@ -119,7 +119,7 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
     await screen.findByTestId("people-prep-lens");
     expect(within(await screen.findByTestId("prep-agenda")).getByText("Review the dry-run report")).toBeTruthy();
     const owed = await screen.findByTestId("prep-owed");
-    expect(screen.getByTestId("people-they-owe").querySelector("h3")!.textContent).toBe("THEY OWE YOU1");
+    expect(screen.getByTestId("people-they-owe").querySelector("h3")!.textContent).toBe("Priya owes me1");
     fireEvent.click(within(owed).getByRole("button", { name: /Send the dry-run report/ }));
     expect(opened).toEqual(["meeting:m-1"]);
     const projects = screen.getByTestId("prep-projects");
@@ -136,10 +136,10 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
     } });
     render(<PeopleCore scope="people:r1:prep" />);
     const youOwe = await screen.findByTestId("prep-you-owe");
-    expect(screen.getByTestId("people-you-owe").querySelector("h3")!.textContent).toBe("YOU OWE1");
+    expect(screen.getByTestId("people-you-owe").querySelector("h3")!.textContent).toBe("I owe Priya1");
     expect(within(youOwe).getByText("Review her design doc")).toBeTruthy();
     const owed = screen.getByTestId("prep-owed");
-    expect(screen.getByTestId("people-they-owe").querySelector("h3")!.textContent).toBe("THEY OWE YOU2");
+    expect(screen.getByTestId("people-they-owe").querySelector("h3")!.textContent).toBe("Priya owes me2");
     expect(within(owed).getByText("Send the API migration estimate")).toBeTruthy();
     expect(within(owed).getByRole("button", { name: /Send the dry-run report/ })).toBeTruthy();
   });

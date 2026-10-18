@@ -35,6 +35,8 @@ import { countToken } from "../../desk/surface";
 import { AppTile, Avatar } from "../../desk/surface/kit";
 import { renderHeroSlot } from "./core-layout";
 import { useOwnerName } from "../../desk/firstrun/ownerName";
+import { nudgeText } from "../../desk/needs/NeedsDrawer";
+import { NoteSendWells } from "../../desk/documentSendsLazy";
 import { PeopleReadFailed } from "../../desk/people/PeopleReadFailed";
 import { useWindowTitle } from "../../desk/surface/title";
 import "./people.css";
@@ -87,6 +89,14 @@ type WatchPR = { title: string; repo: string; pr_number: number; days_waiting: n
 type WatchAssignment = { summary: string; key: string; status: string; url: string; overdue: boolean; room_id: string; room_name: string };
 type WatchSummary = { prs_waiting: WatchPR[]; oldest_waiting_days: number; open_assignments: WatchAssignment[] };
 type BriefLastMeeting = { meeting_id: string; title: string | null; item_count: number; open_count: number };
+/** Betterment D7: the last 1:1 with the person (else the last meeting she was in). */
+type BriefLastTime = {
+  meeting_id: string; title: string | null; started_at: string; one_on_one: boolean;
+  points: Array<{ id: string; task: string; owner: string | null; due: string | null; status: string | null }>;
+  decisions: Array<{ id: string; decision_text: string; lifecycle: string }>;
+};
+/** Betterment D0/D7: his own meeting actions for this person ("I owe"). */
+type BriefMyAction = { id: string; task: string; owner: string | null; due: string | null; due_said?: string | null; status?: string | null; meeting_id: string; meeting_title: string | null };
 type OneOnOneBrief = {
   relationship_id: string;
   display_name: string | null;
@@ -99,6 +109,8 @@ type OneOnOneBrief = {
   unlinked_meeting_count: number;
   watch_summary?: WatchSummary;
   last_meeting?: BriefLastMeeting | null;
+  last_time?: BriefLastTime | null;
+  i_owe_meeting_actions?: BriefMyAction[];
   /** The brief's memory: plaintext desk excerpts on this person's projects. */
   memory?: { excerpts?: Array<{ ref: string; kind: string; title: string; text: string; project_id?: string }> } | null;
 };
@@ -726,7 +738,8 @@ export function RelationshipPane({ relationship, initialLens, lensRequest = null
   const [calendarLoading, setCalendarLoading] = useState(lens === "context");
   const [calendarError, setCalendarError] = useState("");
   const [calendarAttempt, setCalendarAttempt] = useState(0);
-  const [contextLinksOpen, setContextLinksOpen] = useState(false);
+  const [contextLinksOpen] = useState(false);
+  const [prepRead, setPrepRead] = useState(false);
   const wantsCalendar = lens === "context";
   useEffect(() => {
     if (!wantsCalendar) return;
@@ -764,13 +777,19 @@ export function RelationshipPane({ relationship, initialLens, lensRequest = null
         {owesYou ? <span data-tone="ok"><b>{owesYou}</b> owed to you</span> : null}
       </span> : null}
     </header>
-    <div className="people-lenses" role="tablist" aria-label={`${relationship.display_name} lenses`}>
-      {PANE_TABS.map(([id, label]) => <Button key={id} dense variant="ghost" role="tab" aria-selected={lens === id} onClick={() => setLens(id)}>{label}</Button>)}
-    </div>
-    {lens === "prep" ? <PrepPane relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} onPickCalendar={() => { setContextLinksOpen(true); setLens("context"); }} /> : null}
-    {lens === "context" ? <ContextLens key={relationship.id} relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} upcomingEvents={upcomingEvents} calendarRead={calendarRead} initialLinksOpen={contextLinksOpen} /> : null}
-    {lens === "history" ? <HistoryLens relationship={relationship} /> : null}
-    {lens === "info" ? <InfoLens relationship={relationship} onArchived={onArchived} onProtectedFailure={onProtectedFailure} /> : null}
+    {/* Betterment D7: the prep is the page; Context, History and Info are
+        folds under it (one open at a time; a door that asks for one opens it). */}
+    <PrepPane relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} onRead={() => setPrepRead(true)} />
+    {/* The folds wait for the prep's first read: drawn under a loading prep,
+        they moved down when it landed (the desk sweep's still fence). */}
+    {prepRead || lens !== "prep" ? <div className="people-folds" data-testid="people-folds">
+      {PANE_TABS.filter(([id]) => id !== "prep").map(([id, label]) => <Disclosure key={id} label={label}
+        open={lens === id} onOpenChange={(open) => setLens(open ? id : "prep")}>
+        {lens === id && id === "context" ? <ContextLens key={relationship.id} relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} upcomingEvents={upcomingEvents} calendarRead={calendarRead} initialLinksOpen={contextLinksOpen} /> : null}
+        {lens === id && id === "history" ? <HistoryLens relationship={relationship} /> : null}
+        {lens === id && id === "info" ? <InfoLens relationship={relationship} onArchived={onArchived} onProtectedFailure={onProtectedFailure} /> : null}
+      </Disclosure>)}
+    </div> : null}
   </div>;
 }
 
@@ -876,7 +895,37 @@ function PrepAddWell({ label, draft, onChange, onAdd, busy, actionLabel = "Add",
   }} aria-expanded={false} data-testid={testId}>{actionLabel}</Button>;
 }
 
-function PrepPane({ relationship, onRefresh, onProtectedFailure, onPickCalendar }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void; onPickCalendar(): void }) {
+/** Betterment D7: Nudge on a row she owes. It drafts the short message
+ *  Needs you drafts (`nudgeText`), keeps it as a note and opens its Send
+ *  well here; he presses Send (the egress rule). */
+function PrepNudge({ task, person, due }: { task: string; person: string; due: string | null }) {
+  const [note, setNote] = useState<{ id: string; title: string } | null>(null);
+  const [failed, setFailed] = useState(false);
+  const started = useRef(false);
+  const text = nudgeText(task, person, due);
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    const title = `Nudge: ${task}`;
+    void (async () => {
+      try {
+        const made = await apiFetch<{ note?: { id?: string } }>("/api/notes", {
+          method: "POST", json: { title, body_markdown: text, tags: ["nudge"] },
+        });
+        const id = String(made.note?.id ?? "");
+        if (!id) { setFailed(true); return; }
+        setNote({ id, title });
+      } catch { setFailed(true); }
+    })();
+  }, [task, text]);
+  return <div className="people-nudge" role="region" aria-label={`Nudge: ${task}`} data-testid="prep-nudge">
+    <p className="people-nudge-text" data-testid="prep-nudge-text">{text}</p>
+    {failed ? <SurfaceState error="The message was not prepared. Nothing was sent. Press Nudge to try again." />
+      : note ? <NoteSendWells id={note.id} title={note.title} /> : <SurfaceState loading />}
+  </div>;
+}
+
+function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void; onRead?(): void }) {
   const [brief, setBrief] = useState<OneOnOneBrief | null>(null);
   const [failure, setFailure] = useState("");
   const [attempt, setAttempt] = useState(0);
@@ -908,7 +957,11 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onPickCalendar 
   const [agendaDraft, setAgendaDraft, forgetAgenda] = useDeskDraft(`people/1on1/${relationship.id}`);
   const [oweDraft, setOweDraft, forgetOwe] = useDeskDraft(`people/request/${relationship.id}`);
   const [owedDraft, setOwedDraft, forgetOwed] = useDeskDraft(`people/owed/${relationship.id}`);
+  // Betterment D7: Nudge on her row prepares a message; he presses Send.
+  const [nudging, setNudging] = useState<{ id: string; task: string; due: string | null } | null>(null);
+  const toggleNudge = (row: { id: string; task: string; due: string | null }) => setNudging((current) => (current?.id === row.id ? null : row));
 
+  useEffect(() => { if (brief || failure) onRead?.(); }, [brief, failure, onRead]);
   if (!brief && !failure) return <SurfaceState loading />;
 
   const base = `/api/people/relationships/${encodeURIComponent(relationship.id)}`;
@@ -993,16 +1046,29 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onPickCalendar 
   const asked = (relationship.requests ?? []).filter((item) => item.state === "requested");
   const owedRows = (relationship.owed_to_you ?? []).filter((item) => (item.state ?? "open") === "open");
   const actions = prep?.openMeetingActions ?? [];
+  const myActions = (brief?.i_owe_meeting_actions ?? []).filter((a) => !["done", "dismissed", "completed"].includes(String(a.status ?? "")));
+  const firstName = (displayName || "").trim().split(/\s+/)[0] || "They";
   // LAST TIME: the newest meeting of the linked 1:1 series (the brief's
   // linked_meetings, newest first), its decisions and open actions.
+  // Betterment D7: the hub's Last time (the last 1:1 with her, else the
+  // last meeting she was in) leads; the linked series is the fallback.
+  const lastTime = brief?.last_time ?? null;
   const last = brief?.linked_meetings?.[0] ?? null;
-  const lastId = last?.meeting_id ?? lm?.meeting_id ?? null;
-  const lastTitle = last?.title || lm?.title || "Meeting";
-  const lastLines: Array<{ key: string; kind: "decision" | "action"; text: string; meta?: string | null }> = last ? [
+  const lastId = lastTime?.meeting_id ?? last?.meeting_id ?? lm?.meeting_id ?? null;
+  const lastTitle = lastTime ? (lastTime.one_on_one ? "1:1" : lastTime.title || "Meeting") : last?.title || lm?.title || "Meeting";
+  const lastLines: Array<{ key: string; kind: "decision" | "action"; text: string; meta?: string | null }> = lastTime ? [
+    ...lastTime.decisions.map((d) => ({ key: `d-${d.id}`, kind: "decision" as const, text: d.decision_text })),
+    ...lastTime.points.map((a) => ({ key: `a-${a.id}`, kind: "action" as const, text: a.task, meta: [a.owner, a.status === "done" ? "Done" : null].filter(Boolean).join(" · ") || null })),
+  ] : last ? [
     ...last.decisions.map((d) => ({ key: `d-${d.id}`, kind: "decision" as const, text: d.decision_text })),
     ...last.open_action_items.map((a) => ({ key: `a-${a.id}`, kind: "action" as const, text: a.task, meta: [a.owner, a.due ? `BY ${shortDay(a.due)}` : null].filter(Boolean).join(" · ") || null })),
   ] : [];
-  const showLast = Boolean(lastId && (lastLines.length || (lm && lm.item_count > 0)));
+  const showLast = Boolean(lastId && (lastTime || lastLines.length || (lm && lm.item_count > 0)));
+  const lastStarted = lastTime?.started_at ?? last?.started_at ?? null;
+  const lastFacts = lastTime ? [
+    lastTime.points.length ? (lastTime.points.length === 1 ? "1 point" : `${lastTime.points.length} points`) : null,
+    lastTime.decisions.length ? (lastTime.decisions.length === 1 ? "1 decision" : `${lastTime.decisions.length} decisions`) : null,
+  ].filter(Boolean).join(" · ") : "";
   // ON THE DESK: what the plaintext desk holds on this person's projects
   // (the brief's memory excerpts; its search words are the person's names).
   const excerpts = (brief?.memory?.excerpts ?? []).filter((e) => (e.title || e.text).trim());
@@ -1035,50 +1101,40 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onPickCalendar 
             data-testid="prep-record-meeting"
           >Record meeting</Button> : null}
         </div> : suggestions.length && prep ? <LinkSuggestions relationship={relationship} prep={prep} onLinked={onRefresh} onProtectedFailure={onProtectedFailure} testId="prep-link-suggestion" />
-          : brief ? <div className="people-next-none"><span>No 1:1 planned</span><Button dense variant="ghost" onClick={onPickCalendar}>Pick from calendar</Button></div> : null}
+          : brief ? <div className="people-next-none"><span>No 1:1 planned</span></div> : null}
         {prep?.projects.length ? <span className="people-plate-meta" data-testid="prep-projects">
           {prep.projects.map((project) => <Button key={project.id} variant="chrome" className="people-pill people-pill-link" data-tone="info" onClick={refOpener(`project:${project.id}`) ?? undefined}>{project.name}</Button>)}
         </span> : null}
 
-        {agenda.length ? <div className="people-raise">
+        {brief ? <div className="people-raise" data-testid="prep-to-raise">
           <span className="people-cap">TO RAISE<b>{agenda.length || null}</b></span>
-          <ol className="people-raise-list">
+          {agenda.length ? <ol className="people-raise-list">
             {agenda.map((item, index) => <li key={item.id} className="people-raise-row" data-testid="prep-agenda">
               <span className="people-raise-n" aria-hidden="true">{index + 1}</span>
               <span className="people-raise-words">{item.body}</span>
               {item.rolled_from_id ? <span className="people-pill">Rolled</span> : null}
               <Button dense variant="ghost" className="people-raise-remove" aria-label={`Remove ${item.body}`} loading={busy === `remove:${item.id}`} onClick={() => removeAgenda(item.id)}>Remove</Button>
             </li>)}
-          </ol>
+          </ol> : null}
         </div> : null}
 
         <PrepAddWell key={relationship.id} label="Add to the agenda" draft={agendaDraft} onChange={setAgendaDraft} onAdd={addAgenda} busy={busy === "agenda"} actionLabel="Add to agenda" testId="people-add-agenda" />
       </div>
     </section>
 
+    {/* Betterment D7: two columns named with the person's name, both fed
+        by the one list: what she owes me (with Nudge) and what I owe her. */}
     <div className="people-owe-grid">
-      <section className="people-plate" data-testid="people-you-owe">
-        <h3 className="people-cap">YOU OWE{youOweRows.length ? <b>{youOweRows.length}</b> : null}</h3>
-        {youOweRows.length || asked.length ? <ul className="people-plate-rows" data-testid="prep-you-owe">
-          {asked.map((item) => <PlateRow key={item.id} testId="people-asked" title={item.body}
-            meta={<span className="people-pill" data-tone="info">Asked of you</span>}
-            verb={<Button dense variant="ghost" loading={busy === `accept:${item.id}`} onClick={() => accept(item.id)}>Accept</Button>} />)}
-          {youOweRows.map((item) => <PlateRow key={item.id} title={item.body}
-            onTitle={() => inspectCommitment(item, "you")}
-            meta={item.due || item.execution_links?.length ? <>{item.due ? <DuePill due={item.due} /> : null}{item.execution_links?.length ? <span className="people-pill" data-tone="info">On an automation</span> : null}</> : undefined}
-            verb={<Button dense variant="ghost" loading={busy === `done:${item.id}`} onClick={() => done(item.id)}>Done</Button>} />)}
-        </ul> : null}
-        {selectedCommitment?.section === "you" ? <CommitmentInspector key={selectedCommitment.commitment.id} commitment={selectedCommitment.commitment} onClose={closeCommitment} onRefresh={() => { onRefresh(); setSelectedCommitment(null); }} onProtectedFailure={onProtectedFailure} /> : null}
-        <PrepAddWell key={relationship.id} label="You owe" draft={oweDraft} onChange={setOweDraft} onAdd={addOwe} busy={busy === "owe"} />
-      </section>
-
       <section className="people-plate" data-testid="people-they-owe">
-        <h3 className="people-cap">THEY OWE YOU{owedRows.length + actions.length ? <b>{owedRows.length + actions.length}</b> : null}</h3>
+        <h3 className="people-cap">{`${firstName} owes me`}{owedRows.length + actions.length ? <b>{owedRows.length + actions.length}</b> : null}</h3>
         {owedRows.length || actions.length ? <ul className="people-plate-rows" data-testid="prep-owed">
           {owedRows.map((item) => <PlateRow key={item.id} title={item.body}
             onTitle={() => inspectCommitment(item, "they")}
             meta={item.due ? <DuePill due={item.due} /> : undefined}
-            verb={<Button dense variant="ghost" loading={busy === `done:${item.id}`} onClick={() => done(item.id)}>Done</Button>} />)}
+            verb={<span className="people-plate-verbs">
+              <Button dense variant="ghost" aria-expanded={nudging?.id === item.id} onClick={() => toggleNudge({ id: item.id, task: item.body, due: item.due ?? null })}>Nudge</Button>
+              <Button dense variant="ghost" loading={busy === `done:${item.id}`} onClick={() => done(item.id)}>Done</Button>
+            </span>} />)}
           {actions.map((action) => {
             const sourceRef = action.source_ref || (action.meeting_id ? `meeting:${action.meeting_id}` : null);
             const sourceName = action.meeting_title
@@ -1087,11 +1143,34 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onPickCalendar 
             return <PlateRow key={action.id} title={action.task}
               onTitle={refOpener(sourceRef) ?? undefined}
               meta={<>{sourceName ? <span>{sourceName}</span> : null}{action.due ? <DuePill due={action.due} /> : null}</>}
-              verb={<Button dense variant="ghost" loading={busy === `action-done:${action.id}`} onClick={() => completeAction(action.id)}>Done</Button>} />;
+              verb={<span className="people-plate-verbs">
+                <Button dense variant="ghost" aria-expanded={nudging?.id === action.id} onClick={() => toggleNudge({ id: action.id, task: action.task, due: action.due })}>Nudge</Button>
+                <Button dense variant="ghost" loading={busy === `action-done:${action.id}`} onClick={() => completeAction(action.id)}>Done</Button>
+              </span>} />;
           })}
         </ul> : null}
+        {nudging ? <PrepNudge key={nudging.id} task={nudging.task} person={displayName} due={nudging.due} /> : null}
         {selectedCommitment?.section === "they" ? <CommitmentInspector key={selectedCommitment.commitment.id} commitment={selectedCommitment.commitment} onClose={closeCommitment} onRefresh={() => { onRefresh(); setSelectedCommitment(null); }} onProtectedFailure={onProtectedFailure} /> : null}
-        <PrepAddWell key={relationship.id} label="They owe you" draft={owedDraft} onChange={setOwedDraft} onAdd={addOwed} busy={busy === "owed"} />
+        <PrepAddWell key={relationship.id} label={`${firstName} owes me`} draft={owedDraft} onChange={setOwedDraft} onAdd={addOwed} busy={busy === "owed"} />
+      </section>
+
+      <section className="people-plate" data-testid="people-you-owe">
+        <h3 className="people-cap">{`I owe ${firstName}`}{youOweRows.length + myActions.length ? <b>{youOweRows.length + myActions.length}</b> : null}</h3>
+        {youOweRows.length || asked.length || myActions.length ? <ul className="people-plate-rows" data-testid="prep-you-owe">
+          {asked.map((item) => <PlateRow key={item.id} testId="people-asked" title={item.body}
+            meta={<span className="people-pill" data-tone="info">Asked of you</span>}
+            verb={<Button dense variant="ghost" loading={busy === `accept:${item.id}`} onClick={() => accept(item.id)}>Accept</Button>} />)}
+          {youOweRows.map((item) => <PlateRow key={item.id} title={item.body}
+            onTitle={() => inspectCommitment(item, "you")}
+            meta={item.due || item.execution_links?.length ? <>{item.due ? <DuePill due={item.due} /> : null}{item.execution_links?.length ? <span className="people-pill" data-tone="info">On an automation</span> : null}</> : undefined}
+            verb={<Button dense variant="ghost" loading={busy === `done:${item.id}`} onClick={() => done(item.id)}>Done</Button>} />)}
+          {myActions.map((action) => <PlateRow key={action.id} testId="prep-i-owe-action" title={action.task}
+            onTitle={refOpener(action.meeting_id ? `meeting:${action.meeting_id}` : null) ?? undefined}
+            meta={<>{action.meeting_title ? <span>{`from ${action.meeting_title}`}</span> : null}{action.due ? <DuePill due={action.due} /> : null}</>}
+            verb={<Button dense variant="ghost" loading={busy === `action-done:${action.id}`} onClick={() => completeAction(action.id)}>Done</Button>} />)}
+        </ul> : null}
+        {selectedCommitment?.section === "you" ? <CommitmentInspector key={selectedCommitment.commitment.id} commitment={selectedCommitment.commitment} onClose={closeCommitment} onRefresh={() => { onRefresh(); setSelectedCommitment(null); }} onProtectedFailure={onProtectedFailure} /> : null}
+        <PrepAddWell key={relationship.id} label={`I owe ${firstName}`} draft={oweDraft} onChange={setOweDraft} onAdd={addOwe} busy={busy === "owe"} />
       </section>
     </div>
 
@@ -1100,10 +1179,9 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onPickCalendar 
         <h3 className="people-cap">LAST TIME</h3>
         <div className="people-last-head" data-testid="prep-meeting-row">
           <span className="people-plate-text">
-            <span className="people-plate-title">{lastTitle}</span>
+            <span className="people-plate-title" data-testid="prep-last-title">{lastStarted ? `${lastTitle} on ${dayLabel(lastStarted)}` : lastTitle}</span>
             <span className="people-plate-meta">
-              {last?.started_at ? <span className="people-mono">{dayLabel(last.started_at)}</span> : null}
-              {lm && lm.item_count > 0 ? <span className="people-prep-token" data-testid="prep-meeting-items">{lm.item_count} {lm.item_count === 1 ? "ITEM" : "ITEMS"}</span> : null}
+              {lastTime ? (lastFacts ? <span data-testid="prep-last-facts">{lastFacts}</span> : null) : lm && lm.item_count > 0 ? <span className="people-prep-token" data-testid="prep-meeting-items">{lm.item_count} {lm.item_count === 1 ? "ITEM" : "ITEMS"}</span> : null}
               {lm && lm.open_count > 0 ? <span className="people-prep-token" data-testid="prep-meeting-open-count">{lm.open_count} OPEN</span> : null}
             </span>
           </span>

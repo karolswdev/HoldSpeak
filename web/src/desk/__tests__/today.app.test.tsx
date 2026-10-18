@@ -182,3 +182,74 @@ describe("Today when People could not be read (Betterment D6)", () => {
     expect(screen.queryByTestId("today-people-read-failed")).toBeNull();
   });
 });
+
+// ── Betterment daily D7: the 1:1 prep, one press from Today ──
+import PREP_WEEK from "./fixtures/daily-week/one-on-one-prep.json";
+import { cleanup } from "@testing-library/react";
+import { PersonWindowBody } from "../../pages/cores/PeopleCore";
+
+describe("Today's Prep opens the 1:1 prep (Betterment D7), on one recorded boot", () => {
+  /** tests/integration/test_desk_people.py::test_one_on_one_prep_wire: Today's
+   *  reads and Mira's prep reads, her 1:1 in 90 minutes. */
+  const gets = PREP_WEEK.gets as Gets;
+
+  it("NEXT card Prep opens Mira's prep: her promise with Nudge, I owe Mira, To raise, Last time, the next 1:1 time", async () => {
+    vi.setSystemTime(new Date(String(PREP_WEEK.recordedAt)));
+    const { posts } = replay(gets);
+    api.fetch.mockImplementation(async (url: string, init?: { method?: string; json?: unknown }) => {
+      if (init?.method && init.method !== "GET") {
+        posts.push({ url: String(url), json: init.json });
+        return String(url) === "/api/notes" ? { note: { id: "note-nudge" } } : {};
+      }
+      return recordedGet(gets, String(url));
+    });
+    const opened: Array<{ relationshipId: string; lens: string }> = [];
+    const onPerson = (e: Event) => opened.push((e as CustomEvent).detail);
+    window.addEventListener(PERSON_OPEN_EVENT, onPerson);
+    try {
+      render(<TodayView />);
+      fireEvent.click(await screen.findByTestId("today-open-prep"));
+    } finally {
+      window.removeEventListener(PERSON_OPEN_EVENT, onPerson);
+    }
+    expect(opened).toEqual([expect.objectContaining({ relationshipId: "rel-mira", lens: "prep" })]);
+    cleanup();
+
+    render(<PersonWindowBody relationshipId={opened[0].relationshipId} />);
+    const owes = await screen.findByTestId("people-they-owe", {}, { timeout: 5000 });
+    expect(owes.querySelector("h3")!.textContent).toBe("Mira owes me1");
+    expect(owes.textContent).toContain("Draft the rollback runbook");
+    expect(screen.getByTestId("people-you-owe").querySelector("h3")!.textContent).toBe("I owe Mira");
+    expect(screen.getByTestId("prep-to-raise")).toBeTruthy();
+    // The next 1:1 time, from her linked series.
+    expect(screen.getByTestId("people-next-1on1").textContent).toMatch(/in 1 h 30 min|in 90 min|in 1 h 29 min/);
+    expect(screen.queryByRole("button", { name: "Pick from calendar" })).toBeNull();
+    // Last time: the last meeting she was in, its points and its decision.
+    const last = screen.getByTestId("prep-last");
+    expect(within(last).getByTestId("prep-last-title").textContent).toMatch(/^Payments platform sync on /);
+    expect(within(last).getByTestId("prep-last-facts").textContent).toBe("4 points · 1 decision");
+    expect(last.textContent).toContain("Freeze ledger writes during the cutover");
+    // Nudge drafts a message to her; he presses Send in the well.
+    fireEvent.click(within(owes).getByRole("button", { name: "Nudge" }));
+    expect((await screen.findByTestId("prep-nudge-text")).textContent).toMatch(/^Mira, is "Draft the rollback runbook" on track for /);
+    await waitFor(() => expect(posts.some((p) => p.url === "/api/notes")).toBe(true));
+    expect(await screen.findByTestId("note-send-wells")).toBeTruthy();
+    expect(posts.filter((p) => p.url.startsWith("/api/channels"))).toEqual([]);
+  });
+});
+
+describe("I owe Theo (Betterment D7), on the same recorded boot", () => {
+  it("what I said I would do in our 1:1 is under I owe Theo, with Done", async () => {
+    vi.setSystemTime(new Date(String(PREP_WEEK.recordedAt)));
+    const gets = PREP_WEEK.gets as Gets;
+    replay(gets);
+    render(<PersonWindowBody relationshipId="rel-theo" />);
+    const mine = await screen.findByTestId("people-you-owe", {}, { timeout: 5000 });
+    expect(mine.querySelector("h3")!.textContent).toBe("I owe Theo1");
+    const row = within(mine).getByTestId("prep-i-owe-action");
+    expect(row.textContent).toContain("Review design doc on settlement retries");
+    expect(row.textContent).toContain("from 1:1 with Theo");
+    expect(within(row).getByRole("button", { name: "Done" })).toBeTruthy();
+    expect(within(screen.getByTestId("prep-last")).getByTestId("prep-last-title").textContent).toMatch(/^1:1 on /);
+  });
+});
