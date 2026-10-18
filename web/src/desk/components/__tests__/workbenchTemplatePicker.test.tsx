@@ -4,7 +4,7 @@
  * Blank creates one record. Neither exit may create more than one, and each
  * opens exactly that record's window.
  */
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
 import { apiFetch } from "../../../lib/api";
@@ -186,6 +186,9 @@ describe("WorkbenchTemplatePicker — one record per exit", () => {
     const card = (await screen.findByText("Daily Brief")).closest("button")!;
     const blank = screen.getByText("Blank").closest("button")!;
     await waitFor(() => expect(card).toHaveAttribute("tabindex", "0"));
+    // useRovingRows stamps the tabindex one render before its key listener
+    // binds (the root is mirrored into state); flush that render first.
+    await act(async () => {});
     expect(card).toHaveClass("btn--chrome");
     expect(blank).toHaveAttribute("tabindex", "-1");
     card.focus();
