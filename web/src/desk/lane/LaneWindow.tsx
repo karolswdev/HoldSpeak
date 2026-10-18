@@ -67,6 +67,7 @@ import {
   type LaneGated,
   type LaneWait,
   type LaneWire,
+  branchFace,
 } from "./laneWire";
 import { TERMINAL_GONE_WORDS, laneSessionKey, launchForSession, useLane, useLaneLaunchId } from "./laneStore";
 import "./lane.css";
@@ -83,7 +84,6 @@ export const LANE_FRONT_POLL_MS = 5_000;
 export const LANE_WINDOW_ID = "lane";
 /** The capability whose model drafts an answer (`agent_responder.CAPABILITY`). */
 const DRAFT_CAPABILITY = "background.cadence_draft";
-const REBRIEF_PREFIX = "Re-brief: ";
 
 /** The lane window host: mounted once on the Desk. It opens on a launch by
  * id, or on the launch of the open coder session; a coder object of a launch
@@ -158,7 +158,7 @@ function LaneFrame({ launchId }: { launchId: string }) {
       id={LANE_WINDOW_ID}
       title={title}
       label={title}
-      kindWord="Coder lane"
+      kindWord="Agent"
       glyph="▮"
       className="desk-pullout is-lane"
       minW={360}
@@ -180,12 +180,12 @@ function LaneFrame({ launchId }: { launchId: string }) {
           dense
           variant="ghost"
           aria-pressed={raw}
-          aria-label={raw ? "Back to session" : "Open terminal"}
+          aria-label={raw ? "Story" : "Terminal"}
           data-testid="lane-raw"
           disabled={!sessionKey}
           onClick={() => useLane.getState().setRaw(!raw)}
         >
-          {raw ? "Back to session" : "Open terminal"}
+          {raw ? "Story" : "Terminal"}
         </Button>
       }
       open
@@ -232,7 +232,7 @@ function LaneBody({
   const pr = lane.follow_through?.pr;
   const worktree = lane.worktree;
   const checks = checksSummary(pr?.checks);
-  const branch = lane.launch.branch ?? (isNotRead(worktree) ? null : worktree.branch) ?? undefined;
+  const branch = branchFace(lane.launch.branch ?? (isNotRead(worktree) ? null : worktree.branch)) || undefined;
   const prCard = pr && pr.number != null ? (
     <PRCard
       data-testid="lane-pr"
@@ -377,10 +377,10 @@ function DecideVerbs({ call }: { call: LaneGated }) {
         Deny
       </Button>
       {/* PHILO-14 A5: a call the hub cannot show whole is never approved
-          here; Raw shows the live pane with the whole command. */}
+          here; Terminal shows the live pane with the whole command. */}
       {call.args_cut ? (
         <Button dense variant="secondary" onClick={() => useLane.getState().setRaw(true)} data-testid="lane-raw-cut">
-          Raw
+          Terminal
         </Button>
       ) : (
         <Button dense variant="primary" disabled={busy} onClick={() => void decide("approved")} data-testid="lane-approve">
@@ -596,10 +596,10 @@ export function approveShowing(lane: LaneWire): boolean {
 
 /** PHILO-17 THE REFIT: what the coder does now, as the lane's one headline. */
 export function laneDoing(lane: LaneWire, agent: string): { word: string; tone: "ok" | "warn" | "info" | "idle" } {
-  const name = agent || "The coder";
-  if (lane.launch.stopped) return { word: `${name} stopped`, tone: "idle" };
+  const name = agent || "The agent";
+  if (lane.launch.stopped) return { word: "Stopped by you", tone: "idle" };
   const wait = isNotRead(lane.wait) ? null : lane.wait;
-  if (heldNow(lane) || wait?.kind === "TO APPROVE") return { word: `${name} wants approval`, tone: "warn" };
+  if (heldNow(lane) || wait?.kind === "TO APPROVE") return { word: `${name} wants to run`, tone: "warn" };
   if (wait?.question && wait.kind === "TO ANSWER") return { word: `${name} asks you`, tone: "warn" };
   if (wait?.question && wait.kind === "DECIDING") return { word: "HoldSpeak drafts the answer", tone: "info" };
   const turn = wait ? turnEndWord(wait) : null;
@@ -638,9 +638,9 @@ function HeldPlate({ lane, agent }: { lane: LaneWire; agent: string }) {
   if (!held && !asks) return null;
   const age = waitAge(asks?.started ?? held?.created_at).toUpperCase();
   return (
-    <section className="lw-plate" aria-label={`${agent} wants approval`} data-testid="lane-approve-well">
+    <section className="lw-plate" aria-label={`${agent} wants to run`} data-testid="lane-approve-well">
       <header className="lw-plate-bar">
-        <span className="lw-plate-label">WANTS APPROVAL</span>
+        <span className="lw-plate-label">Wants to run</span>
         {age ? <span className="lw-plate-age">{age}</span> : null}
       </header>
       <div className="lw-plate-body">
@@ -657,7 +657,7 @@ function HeldPlate({ lane, agent }: { lane: LaneWire; agent: string }) {
           <DecideVerbs call={held} />
         ) : (
           <Button dense variant="primary" onClick={() => useLane.getState().setRaw(true)}>
-            Raw
+            Terminal
           </Button>
         )}
       </div>
@@ -665,26 +665,27 @@ function HeldPlate({ lane, agent }: { lane: LaneWire; agent: string }) {
   );
 }
 
-/** Re-brief: the owner's new instruction to the lane's own agent,
- * prefilled `Re-brief: `. The hub types it now when the agent is idle or
- * asks; mid-turn it is QUEUED · AFTER THIS TURN (PHILO-15 B46). */
+/** Tell it (was Re-brief; Betterment AG1): the owner's new instruction to
+ * the lane's own agent, in his own words. The hub types it now when the
+ * agent is idle or asks; mid-turn it is QUEUED · AFTER THIS TURN
+ * (PHILO-15 B46). */
 function RebriefWell() {
   const sending = useLane((s) => s.sending);
-  const [text, setText] = useState(REBRIEF_PREFIX);
-  const ready = text.trim().length > REBRIEF_PREFIX.trim().length;
+  const [text, setText] = useState("");
+  const ready = text.trim().length > 0;
   const send = async () => {
     if (!ready) return;
     if (await useLane.getState().sendRebrief(text.trim())) useLane.getState().setRebrief(false);
   };
   return (
-    <section className="lw-ask" aria-label="Re-brief" data-testid="lane-rebrief-well">
-      <p className="lw-caption">Re-brief</p>
+    <section className="lw-ask" aria-label="Tell it" data-testid="lane-rebrief-well">
+      <p className="lw-caption">Tell it</p>
       <div className="lw-ask-row">
         <StringGadget
-          label="Re-brief"
+          label="Tell it"
           value={text}
-          onChange={(next) => setText(next.startsWith(REBRIEF_PREFIX.trim()) ? next : `${REBRIEF_PREFIX}${next}`)}
-          micLabel="Speak the re-brief"
+          onChange={setText}
+          micLabel="Speak what to tell it"
           autoFocus
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.nativeEvent.isComposing) {
@@ -829,7 +830,7 @@ function RawPane() {
       {/* PHILO-17 THE REFIT: the pane's controls fold until asked for. */}
       {paneStatus !== "live" ? <div className="lw-verbs">
         <Button dense variant="ghost" onClick={() => void useSteering.getState().poll()}>Retry</Button>
-        <Button dense variant="ghost" onClick={() => useLane.getState().setRaw(false)}>Back to session</Button>
+        <Button dense variant="ghost" onClick={() => useLane.getState().setRaw(false)}>Story</Button>
       </div> : null}
       {paneStatus === "live" && paneId ? <FoldGadget title="Keys" className="lw-keys">
         <ArmStrip />
@@ -861,7 +862,7 @@ function LaneFooter({ lane }: { lane: LaneWire }) {
               data-testid="lane-rebrief"
               onClick={() => useLane.getState().setRebrief(!rebrief)}
             >
-              Re-brief
+              Tell it
             </Button>
           ) : null}
           {prUrl ? (
@@ -907,7 +908,7 @@ function StopVerb() {
         Back
       </Button>
       <Button dense variant="danger" data-testid="lane-stop-confirm" disabled={busy} onClick={() => void stop()}>
-        Stop · sure? (ends the coder's session)
+        Stop · sure? (ends the agent's session)
       </Button>
     </>
   );

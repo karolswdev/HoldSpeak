@@ -44,7 +44,6 @@ describe("glyph population (HS-148-02)", () => {
       "desk.new-thought": "note",
       "desk.new-decision": "decision",
       "desk.new-knowledge": "kb",
-      "desk.new-agent": "recipe",
       "desk.new-workflow": "workflow",
       "desk.new-workbench": "workbench",
       "desk.new-thread": "thread",

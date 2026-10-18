@@ -355,7 +355,7 @@ describe("delivery objects reach the List view", () => {
     expect(stories).toContain("HS-94-08");
     expect(stories).not.toContain("HS-93-01");
     // The active (working) attempt rides in as a Coder session row; the idle one does not.
-    const sessions = rows.filter((r) => r.kind === "Coder session").map((r) => r.label);
+    const sessions = rows.filter((r) => r.kind === "Agent").map((r) => r.label);
     expect(sessions).toEqual(["HS-94-08"]);
     // A story row carries its source freshness, resolved from the read model.
     expect(rows.find((r) => r.label === "HS-94-08" && r.kind === "Story")!.freshness).toBe("live");

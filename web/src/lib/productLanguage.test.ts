@@ -73,7 +73,8 @@ describe("product language contract", () => {
 
   it("adapts legacy wires without exposing their label", () => {
     expect(canonicalProductTerm("recipe")).toBe("persona");
-    expect(productLabel("recipe")).toBe("Agent"  /* HS-100-10 */);
+    expect(productLabel("recipe")).toBe("Mode" /* Betterment AG1, DECISIONS #3 */);
+    expect(productLabel("coder")).toBe("Agent" /* Betterment AG1 */);
     expect(productLabel("directory", true)).toBe("Zones");
     expect(productLabel("profile")).toBe("Runs on");
   });

@@ -127,7 +127,7 @@ const RENAME_LOCKS: Record<string, string> = {
   repository: "Named by its git remote",
   roadmap: "Named by its roadmap file",
   story: "Named by its story file",
-  coder: "Named by the live coder session",
+  coder: "Named by the live agent",
   game: "Named by the game",
   layout: "Named by the desk layout",
   intelligence: "Named by the desk",

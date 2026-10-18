@@ -213,7 +213,7 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     expect(ledger.querySelector(".desk-icon-lamp")?.getAttribute("data-tone")).toBe("ask");
     expect(icon(/^Platform observability, PROJECT, 1 open here/)).toBeTruthy();
     expect(icon(/^People, DRAWER$/).querySelector(".desk-icon-lamp")).toBeNull();
-    const conductor = icon(/^Conductor, DRAWER/);
+    const conductor = icon(/^Agents, DRAWER/);
     expect(conductor.querySelector(".desk-icon-badge")).toBeTruthy();
     expect(conductor.querySelector(".desk-icon-lamp")?.getAttribute("data-tone")).toBe("ask");
     // Needs you: one attention lamp; the desk keeps the count in the drawer
@@ -249,7 +249,7 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     expect(at(/^Payments ledger cutover/)).toEqual({ x: 20, y: 12 });
     expect(at(/^Platform observability/)).toEqual({ x: 20, y: 108 });
     expect(at(/^People/)).toEqual({ x: 20, y: 204 });
-    expect(at(/^Conductor/)).toEqual({ x: 20, y: 300 });
+    expect(at(/^Agents/)).toEqual({ x: 20, y: 300 });
     expect(at(/^Needs you/)).toEqual({ x: 1300, y: 12 });
     expect(at(/^Archive/)).toEqual({ x: 1300, y: 660 });
     expect(at(/^Claude Code: rollback runbook/)).toEqual({ x: 1170, y: 12 });
@@ -298,7 +298,7 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     expect(useDrawers.getState().drawers).toEqual([]);
     fireEvent.doubleClick(icon(/^Needs you/));
     expect(useChairWindows.getState().closed["chair:needs"]).toBe(false);
-    fireEvent.keyDown(icon(/^Conductor/), { key: "Enter" });
+    fireEvent.keyDown(icon(/^Agents/), { key: "Enter" });
     expect(shell.openSurfaceOr).toHaveBeenCalledWith("open-conductor", "/conductor");
     fireEvent.keyDown(icon(/^People, DRAWER/), { key: "Enter" });
     expect(shell.openSurfaceOr).toHaveBeenCalledWith("open-people", "/");

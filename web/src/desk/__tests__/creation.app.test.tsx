@@ -146,7 +146,7 @@ beforeEach(() => {
 const EDITOR_VERBS = [
   ["desk.new-note", "/api/notes", "note"],
   ["desk.new-knowledge", "/api/kbs", "kb"],
-  ["desk.new-agent", "/api/recipes", "recipe"],
+  // Betterment AG1 (DECISIONS #3): New Agent left the Desk menu (parked).
 ] as const;
 
 describe("a New verb opens its window at once, while the desk read is slow", () => {
@@ -192,21 +192,21 @@ describe("a New verb opens its window at once, while the desk read is slow", () 
     expect(useDesk.getState().items.thread.map((t) => t.id)).toContain(id);
   });
 
-  it("the palette is the same door: New Agent, Enter, one POST and its window", async () => {
+  it("the palette is the same door: New Knowledge, Enter, one POST and its window", async () => {
     // replaces: tests/e2e/test_new_verbs_open_glass.py::TestEveryNewVerbOpensItsWindow::test_a_new_verb_opens_its_window_at_once (the palette leg)
     render(<MemoryRouter><DeskToolShelf /><Desk /></MemoryRouter>);
     fireEvent.click(screen.getByRole("button", { name: /Search/ }));
     await settle();
     const input = screen.getByRole("combobox", { name: "Search tools and Desk items" });
-    fireEvent.change(input, { target: { value: "New Agent" } });
+    fireEvent.change(input, { target: { value: "New Knowledge" } });
     await settle();
     const first = screen.getAllByRole("option").find((o) => o.className.includes("is-selected"));
-    expect(first?.id).toBe("desk-palette-option-desk.new-agent");
+    expect(first?.id).toBe("desk-palette-option-desk.new-knowledge");
     await act(async () => { fireEvent.keyDown(input, { key: "Enter" }); });
     await settle();
-    expect(hub.posts).toEqual(["/api/recipes"]);
+    expect(hub.posts).toEqual(["/api/kbs"]);
     const made = useDesk.getState().editingId!;
-    expect(document.getElementById(`editor:recipe:${made}`)).not.toBeNull();
+    expect(document.getElementById(`editor:kb:${made}`)).not.toBeNull();
     await letReadsLand();
   });
 });
@@ -214,7 +214,7 @@ describe("a New verb opens its window at once, while the desk read is slow", () 
 describe("two quick presses make one record", () => {
   it.each([
     ["desk.new-note", "/api/notes", "notes"],
-    ["desk.new-agent", "/api/recipes", "recipes"],
+    ["desk.new-knowledge", "/api/kbs", "kbs"],
     ["desk.new-thread", "/api/threads", "threads"],
   ] as const)("%s twice: one POST, one record, one window", async (id, path, bucket) => {
     // replaces: tests/e2e/test_new_verbs_open_glass.py::TestEveryNewVerbOpensItsWindow::test_two_quick_presses_make_one_record

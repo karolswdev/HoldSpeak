@@ -598,7 +598,7 @@ export const PRIMITIVES = {
     label: productLabel("coder_session"),
     plural: productLabel("coder_session", true),
     syncClass: "presence",
-    blurb: "A live Claude or Codex session. Answer the coder by voice.",
+    blurb: "A live Claude Code, Codex or pi session. Answer the agent by voice.",
     icon: "M16 18l6-6-6-6M8 6l-6 6 6 6",
     authorable: false,
     capabilities: [],

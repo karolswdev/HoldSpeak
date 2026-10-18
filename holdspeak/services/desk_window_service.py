@@ -44,6 +44,7 @@ STATIC_WINDOWS: dict[str, str] = {
     "surface-dictation": "dictate",
     "surface-meetings": "review-meetings",
     "conductor": "open-conductor",
+    # Retired (RETIRED_WINDOWS): kept so a saved row still closes.
     "surface-companion": "inspect-personas-and-coders",
     "surface-settings": "configure-settings",
     "surface-live": "record-live",
@@ -118,6 +119,7 @@ RETIRED_APPS: dict[str, str] = {
 #: canonical Settings window that now hosts Engines.
 RETIRED_WINDOWS: dict[str, str] = {
     "surface-concierge": "Runs on is the Engines section of Settings (PHILO-17)",
+    "surface-companion": "the old Agents application is unmapped; Agents is the Conductor window (Betterment AG1)",
 }
 
 _WINDOW_ID = re.compile(r"^[A-Za-z0-9:_-]{1,200}$")

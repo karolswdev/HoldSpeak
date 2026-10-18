@@ -75,7 +75,7 @@ describe("the Conductor on the C4 seed", () => {
     expect(document.querySelectorAll("[data-object-id='agent:claude']")).toHaveLength(1);
     expect(document.querySelectorAll("[data-object-id='agent:codex']")).toHaveLength(1);
     const lamps: Record<string, string> = {
-      "launch:launch_c4_runbook": "ASKS YOU",
+      "launch:launch_c4_runbook": "Asks you",
       "launch:launch_c4_recon": "Working",
       "launch:launch_c4_flag": "PR #412 open",
     };
@@ -107,7 +107,7 @@ describe("the Conductor on the C4 seed", () => {
     expect(screen.getByTestId("conductor-stop")).toBeTruthy();
     fireEvent.click(screen.getByTestId("conductor-stop"));
     expect(screen.getByTestId("conductor-stop-confirm")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Stop · sure? (ends the coder's session)" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Stop · sure? (ends the agent's session)" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Get Info" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
     expect(screen.getByRole("button", { name: "Get Info" })).toBeTruthy();

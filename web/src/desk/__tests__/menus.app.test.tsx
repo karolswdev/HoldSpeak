@@ -241,7 +241,7 @@ describe.each([[1440, false], [393, true]] as const)("S1: Go at %i is the manife
     useDesk.setState({ items: { ...EMPTY_ITEMS }, projects: [] } as never);
   });
 
-  const DAILY_WORK = ["Today", "Needs you", "Brief", "The week", "Capture", "Meetings", "People", "Projects", "Conductor", "Ask AI", "Speak",
+  const DAILY_WORK = ["Today", "Needs you", "Brief", "The week", "Capture", "Meetings", "People", "Projects", "Agents", "Ask AI", "Speak",
     "Automations", "Memory", "Voice commands"];
 
   it("Go shows Daily then Work; Builder ▸ only when Builder tools is on, with eight rows", () => {

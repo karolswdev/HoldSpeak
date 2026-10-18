@@ -140,44 +140,26 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
         })),
     },
   },
-  // PHILO-14 C4: the Conductor drawer is where agents live. The Dock's
-  // Agents entry became Conductor (the D1 `dock-agents` glyph is drawn as
-  // the Conductor); it opens the Conductor window (conductor/), not a
-  // hosted surface.
+  // PHILO-14 C4: the Conductor drawer is where agents live. Betterment AG1
+  // (DECISIONS #3): its face name is Agents; the action, window id, route
+  // and ⌃3 keep the code name.
   {
     action: "open-conductor",
     windowId: "conductor",
-    label: "Conductor",
-    toolLabel: "Conductor",
-    description: "Your coding agents: who works, who asks, what they opened.",
+    label: "Agents",
+    toolLabel: "Agents",
+    description: "Your coding agents: who works, who asks you, what they finished.",
     glyph: "◉",
     href: "/conductor",
     group: "tool",
-    // PHILO-17 (doors): the Conductor's door is its desk drawer, Dock and Go.
+    // PHILO-17 (doors): the Agents door is its desk drawer, Dock and Go.
     dock: { order: 4, launch: "surface" },
     go: { group: "daily", order: 5 },
     shortcut: "⌃3",
   },
-  // PARKED (PHILO-14 C4): the old Agents application. It folded into the
-  // Conductor drawer; its route `/companion` stays alive, but it is in no
-  // Dock, Go list, shortcut or mark menu. Nothing links to it.
-  {
-    action: "inspect-personas-and-coders",
-    windowId: "surface-companion",
-    label: "Agents",
-    toolLabel: "Agents and coder sessions",
-    description: "Use saved behavior and inspect live sessions.",
-    glyph: "◉",
-    href: "/companion",
-    surface: {
-      eyebrow: "Companion",
-      minW: 560,
-      load: () =>
-        import("../pages/cores/CompanionCore").then((module) => ({
-          default: module.CompanionCore,
-        })),
-    },
-  },
+  // Betterment AG1: the old Agents application (`/companion`, CompanionCore)
+  // is unmapped: no manifest row, its address opens Agents. Its row is
+  // parked in desk/_parked/agents/companionApplication.ts.
   {
     action: "configure-settings",
     windowId: "surface-settings",
