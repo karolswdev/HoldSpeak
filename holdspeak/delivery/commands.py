@@ -83,6 +83,7 @@ _DECISION_BY_OUTCOME = {
     ("allowed", "scoped_grant"): "allowed_by_active_grant",
     ("allowed", "control_posture"): "allowed_by_control_posture",
     ("allowed", "direct_gesture"): "allowed_by_direct_gesture",
+    ("allowed", "owner_answer"): "allowed_by_owner_answer",
     ("grant_required", "none"): "grant_required",
 }
 _SNAPSHOT_BY_DECISION = {
@@ -100,6 +101,12 @@ _SNAPSHOT_BY_DECISION = {
         "outcome": "allowed",
         "authority_basis": "direct_gesture",
         "reason_code": "dictation_commit_allowed",
+    },
+    # Betterment AG2: the owner's press answers the agent's current wait.
+    "allowed_by_owner_answer": {
+        "outcome": "allowed",
+        "authority_basis": "owner_answer",
+        "reason_code": "owner_answer_press",
     },
     "grant_required": {
         "outcome": "grant_required",
@@ -631,6 +638,9 @@ class NodeCommandProcessor:
                 current_target=pane_id,
                 agent=str(payload.get("agent") or ""),
                 expected_pane_id=str(payload.get("expected_pane_id") or pane_id or ""),
+                expected_wait_id=(
+                    str(payload.get("expected_wait_id") or "") if "expected_wait_id" in payload else None
+                ),
                 operation=operation,
                 policy_snapshot=policy_snapshot,
                 **kwargs,
@@ -1085,6 +1095,9 @@ class HubCommandService:
                 arguments["expected_wait_id"] = str(payload.get("expected_wait_id") or "")
         else:
             arguments["keys"] = payload.get("keys")
+            # Betterment AG2: Allow / Deny name the wait they answer.
+            if "expected_wait_id" in payload:
+                arguments["expected_wait_id"] = str(payload.get("expected_wait_id") or "")
         raw = {
             "request_schema": 1,
             "request_id": command_id,

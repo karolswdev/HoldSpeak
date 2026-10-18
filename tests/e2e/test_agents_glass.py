@@ -183,9 +183,9 @@ def _open_lane(page: Any) -> Any:
     conductor.wait_for(timeout=15000)
     agent = conductor.locator("[data-object-id='launch:launch_p16_words']")
     agent.wait_for(timeout=20000)
-    # PHILO-17 refit (conductor): an asking coder is a plate whose one verb
-    # (Answer) opens its lane; a working coder's row carries Open.
-    agent.locator("[data-testid='conductor-answer'], [data-testid='conductor-open']").first.click()
+    # Betterment AG2: an asking agent's row answers in place; its Open (as a
+    # working agent's row) opens its window.
+    agent.locator("[data-testid='conductor-open']").first.click()
     window = page.locator(".is-lane")
     window.wait_for(timeout=15000)
     page.locator("[data-testid='lane-rail']").wait_for(timeout=15000)

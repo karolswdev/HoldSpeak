@@ -10,11 +10,10 @@
  *  This window is where agents live: the Agents application and the
  *  Arrival's AGENTS section fold into it (PROPOSAL §3, Movement C).
  */
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import {
   AppHead,
-  ActionNotice,
   EgressChip,
   StatusStrip,
   SurfaceFooter,
@@ -22,10 +21,6 @@ import {
   objectSprite,
 } from "../surface";
 import { FoldGadget } from "../surface/gadgets";
-import { AgentWords } from "../components/AgentWords";
-import { apiFetch, readableError } from "../../lib/api";
-import { useGate } from "../gate";
-import { gatedHead, type LaneGated } from "../lane/laneWire";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { useAgentFlights } from "../agentFlights";
 import { AGENT_HOST, AGENT_INSTALL, AGENT_NAME, needsHooks, type AgentId, type AgentRow } from "../firstrun/agentsStep";
@@ -34,6 +29,8 @@ import { useDesk } from "../store";
 import { useOnCoderFrame, useOnDeskChanged } from "../useDeskChangedRefresh";
 import { canRun, conductorHead, conductorMembers, headWords, type ConductorMember } from "./members";
 import { answerMember, answers, openMember, stopMember, stops } from "./open";
+import { AgentRow as AgentRowFace } from "../agents/AgentRow";
+import { openAgentLane } from "../shell";
 import { CONDUCTOR_WINDOW_ID, useConductor } from "./store";
 import "../drawer/drawer.css";
 import "./conductor.css";
@@ -331,150 +328,10 @@ function CoderRow({
   );
 }
 
-/** The call a launched coder holds at the gate (PHILO-17: approve in one
- *  press). Read from the launch's lane (its gated calls are not paged); a
- *  call the hub cannot show whole is never approved here (PHILO-14 A5). */
-export function useHeldCall(member: ConductorMember): { call: LaneGated | null; error: string | null; reread(): Promise<void> } {
-  const [call, setCall] = useState<LaneGated | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const generation = useRef(0);
-  const launchId = member.launchId;
-  const reread = useCallback(async () => {
-    const read = ++generation.current;
-    if (!launchId) return;
-    try {
-      const lane = await apiFetch<{ gated?: LaneGated[] | unknown } | null>(`/api/agent/launches/${encodeURIComponent(launchId)}/lane?after=0&limit=1`);
-      const gated = Array.isArray(lane?.gated) ? (lane!.gated as LaneGated[]) : [];
-      const held = [...gated].reverse().find((g) => (g.state === "held" || g.state === "pending") && g.was_held !== false);
-      if (read === generation.current) {
-        setCall(held ?? null);
-        setError(null);
-      }
-    } catch (cause) {
-      if (read === generation.current) setError(`Call read failed · Calls unchanged · Retry · ${readableError(cause)}`);
-    }
-  }, [launchId]);
-  useEffect(() => {
-    void reread();
-    return () => {
-      generation.current++;
-    };
-  }, [reread, member.live, member.when]);
-  return { call, error, reread };
-}
-
-/** A coder that asks: a raised plate with the title bar, the question, and
- *  ONE first verb. A held call that the hub shows whole is decided here
- *  (Approve, Deny); anything else opens the ask well (Answer). */
-function AskPlate({
-  member,
-  question,
-  lead,
-  selected,
-  onSelect,
-}: {
-  member: ConductorMember;
-  question: string;
-  lead: boolean;
-  selected: boolean;
-  onSelect(): void;
-}) {
-  const { call, error: callError, reread } = useHeldCall(member);
-  const [busy, setBusy] = useState(false);
-  const pending = useRef(false);
-  const [decidedId, setDecidedId] = useState<string | null>(null);
-  const [failure, setFailure] = useState<{ label: string; retry(): void } | null>(null);
-  const held = member.live === "held" || Boolean(call);
-  const recoverRead = async () => {
-    if (pending.current) return;
-    pending.current = true;
-    setBusy(true);
-    try {
-      await useGate.getState().refresh();
-      await reread();
-      const error = useGate.getState().error;
-      setFailure(error ? { label: `Gate read failed · Decisions unchanged · Retry · ${error}`, retry: () => void recoverRead() } : null);
-    } finally {
-      pending.current = false;
-      setBusy(false);
-      void useConductor.getState().readFlights();
-    }
-  };
-  const decide = async (decision: "approved" | "denied", id = call?.id) => {
-    if (!id || pending.current || decidedId === id) return;
-    pending.current = true;
-    setBusy(true);
-    setFailure(null);
-    try {
-      await useGate.getState().decide(id, decision);
-      setDecidedId(id);
-      const error = useGate.getState().error;
-      if (error) setFailure({ label: `Decision saved · Gate read failed · Retry · ${error}`, retry: () => void recoverRead() });
-    } catch (error) {
-      setFailure({
-        label: `${decision === "approved" ? "Approve" : "Deny"} failed · ${readableError(error)}`,
-        retry: () => void decide(decision, id),
-      });
-    } finally {
-      await reread();
-      pending.current = false;
-      setBusy(false);
-      void useConductor.getState().readFlights();
-    }
-  };
-  return (
-    <article
-      className="cw-ask"
-      data-object-id={member.id}
-      data-selected={selected ? "" : undefined}
-      data-testid="conductor-ask-row"
-      aria-label={`${titleOfAgent(member)} asks`}
-    >
-      <header className="cw-ask-bar">
-        <span className="cw-ask-label">{held ? "Wants to run" : "Asks you"}</span>
-        <span className="cw-ask-age">{askedWord(member.when)}</span>
-      </header>
-      <div className="cw-ask-body">
-        <Sprite member={member} size="plate" />
-        <div className="cw-ask-text">
-          <Button variant="chrome" className="cw-row-title" aria-pressed={selected} onClick={onSelect}>
-            {rowTitle(member)}
-          </Button>
-          <span className="cw-row-meta">
-            <span>{titleOfAgent(member)}</span>
-            {member.facts.where ? <span className="kit-pill" data-tone="info">{String(member.facts.where)}</span> : null}
-          </span>
-          {call ? (
-            <code className="cw-ask-call" data-testid="conductor-held-call">
-              {call.hold_reason ? <span className="cw-ask-why">{call.hold_reason}</span> : null}
-              {gatedHead(call)}
-            </code>
-          ) : question ? (
-            <AgentWords compact lines={3} className="cw-ask-q" text={question} />
-          ) : null}
-        </div>
-      </div>
-      {failure ? <ActionNotice tone="danger" role="alert" action={busy ? undefined : { label: "Retry", onClick: failure.retry }}>{failure.label}</ActionNotice> : null}
-      {!failure && callError ? <SurfaceState error={callError} onRetry={busy ? undefined : () => void reread()} /> : null}
-      <div className="cw-ask-verbs">
-        {call && !call.args_cut && call.id !== decidedId ? (
-          <>
-            <Button dense variant="ghost" disabled={busy} onClick={() => void decide("denied")} data-testid="conductor-deny">
-              Deny
-            </Button>
-            <Button dense variant={lead ? "primary" : "secondary"} loading={busy} onClick={() => void decide("approved")} data-testid="conductor-approve">
-              Approve
-            </Button>
-          </>
-        ) : call?.id === decidedId ? null : (
-          <Button dense variant={lead ? "primary" : "secondary"} onClick={() => answerMember(member)} data-testid="conductor-answer">
-            {held ? "See the call" : "Answer"}
-          </Button>
-        )}
-      </div>
-    </article>
-  );
-}
+/* Betterment AG2: the asking plate (AskPlate) became AgentRow
+ * (desk/agents/AgentRow.tsx): answer and allow in one press, the command
+ * shown first. `useHeldCall` moved with it. */
+export { useHeldCall } from "../agents/AgentRow";
 
 function titleOfAgent(member: ConductorMember): string {
   return AGENT_NAME[member.agent as AgentId] ?? member.agent;
@@ -560,6 +417,11 @@ export function ConductorWindow() {
   const ended = members.filter((m) => m.role === "stale");
   const fixable = ready.filter((m) => m.detect && m.detect.installed && needsHooks(m.detect));
   const question = (m: ConductorMember) => sessions.find((row) => row.key === m.sessionKey)?.question ?? "";
+  const waitIdOf = (m: ConductorMember) => {
+    const raw = sessions.find((row) => row.key === m.sessionKey)?.raw ?? {};
+    const session = ((raw as Record<string, unknown>).session ?? raw) as Record<string, unknown>;
+    return session.wait_id ? String(session.wait_id) : null;
+  };
   // ONE filled primary per window: the first ask's Answer, else the first
   // agent that lacks hooks.
   const leadAsk = asks[0]?.id ?? null;
@@ -625,13 +487,20 @@ export function ConductorWindow() {
             <section className="cw-section" data-testid="conductor-asks" aria-label="Needs you">
               <h3 className="cw-cap">NEEDS YOU</h3>
               {asks.map((m) => (
-                <AskPlate
+                <AgentRowFace
                   key={m.id}
                   member={m}
                   question={question(m)}
+                  waitId={waitIdOf(m)}
                   lead={m.id === leadAsk}
                   selected={m.id === selectedId}
                   onSelect={() => select(m.id)}
+                  onTerminal={() => {
+                    if (m.launchId) openAgentLane(m.launchId, { sessionKey: m.sessionKey, raw: true });
+                    else openMember(m);
+                  }}
+                  onOpenAnswer={() => answerMember(m)}
+                  onOpen={() => openMember(m)}
                 />
               ))}
             </section>
