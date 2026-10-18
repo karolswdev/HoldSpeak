@@ -12,7 +12,8 @@
 #      tests/e2e included; tests that import a changed holdspeak module or
 #      scripts/*.py; QUICK_TESTS);
 #   4. the desk sweep (every app at 1440 and 393), which must PROVE it ran
-#      (60 or more passed, never skipped), then the canon guard and the ratchet.
+#      (60 or more passed, never skipped), then the canon guard and the ratchet,
+#      then the repo guards (whole-repo censuses and ratchets).
 # The whole suite does NOT run here: it runs on main after the merge
 # (the orchestrator's main watcher), and a red there is fixed forward at once.
 #
@@ -127,6 +128,14 @@ fi
 echo "== canon guards"
 lock uv run pytest -q tests/unit/test_interior_canon_guard.py tests/unit/test_ux_canon_ratchet.py tests/unit/test_lan_address_guard.py tests/unit/test_automation_name_guard.py tests/unit/test_agents_name_guard.py >"$H/canon.log" 2>&1 || { echo "   the canon guards failed: RED"; fail=1; }
 grep -E '^(FAILED|ERROR)|passed|failed' "$H/canon.log" | tail -4 | sed 's/^/   /'
+
+# The repo guards (2026-10-18): fast whole-repo censuses and ratchets that a
+# "related tests" run never picks, so their reds used to reach main unseen
+# (static SQL, density, copy, API surface, frame registry, model-call census,
+# time census, kernel line budget, residual census, atlas anchors).
+echo "== repo guards"
+lock uv run pytest -q -n 8 tests/unit/test_static_sql_matches_schema.py tests/unit/test_density_guard.py tests/unit/test_product_copy.py tests/unit/test_api_surface.py tests/unit/test_realtime_frame_registry.py tests/unit/test_one_path_census.py tests/unit/test_aware_time_census.py tests/unit/test_kernel_effect_fence.py tests/unit/test_decisions.py tests/unit/test_philo7_contract.py tests/unit/test_doc_drift_guard.py tests/unit/test_graph_atlas.py tests/unit/test_phase143_surface_fallback_census.py tests/unit/test_ux_canon_scan.py >"$H/repo.log" 2>&1 || { echo "   the repo guards failed: RED"; fail=1; }
+grep -E '^(FAILED|ERROR)|passed|failed' "$H/repo.log" | tail -8 | sed 's/^/   /'
 
 if [ "$fail" = 0 ]; then echo "QUICK CHECK GREEN: merge; the main watcher runs the whole suite."; else echo "QUICK CHECK RED: fix before merging."; fi
 exit "$fail"
