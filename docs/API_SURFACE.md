@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 765 (plus static mounts). iOS-consumed: 89. Web-consumed: 595.
+Routes: 768 (plus static mounts). iOS-consumed: 89. Web-consumed: 597.
 
 ## device_audio_ws
 
@@ -110,6 +110,7 @@ Routes: 765 (plus static mounts). iOS-consumed: 89. Web-consumed: 595.
 | GET | `/api/agent/launches/{launch_id}/lane` | web |
 | POST | `/api/agent/launches/{launch_id}/rebrief` | web |
 | POST | `/api/agent/launches/{launch_id}/rebrief/{press_id}/take-back` | web |
+| POST | `/api/agent/launches/{launch_id}/seen` | web |
 | GET | `/api/projects/{project_id}/repository` | web |
 | POST | `/api/projects/{project_id}/repository` | web |
 
@@ -622,6 +623,7 @@ Routes: 765 (plus static mounts). iOS-consumed: 89. Web-consumed: 595.
 |---|---|---|
 | GET | `/api/inference/model-library` | web |
 | POST | `/api/inference/model-library/add-to-library` | web |
+| POST | `/api/inference/model-library/connect-cli-engine` | server only |
 | POST | `/api/inference/model-library/connect-hosted-model` | web |
 | POST | `/api/inference/model-library/connect-paired-device` | server only |
 | POST | `/api/inference/model-library/define-endpoint` | web |
@@ -719,7 +721,7 @@ Routes: 765 (plus static mounts). iOS-consumed: 89. Web-consumed: 595.
 |---|---|---|
 | POST | `/api/ask` | ios, web |
 | POST | `/api/ask/keep` | web |
-| POST | `/api/ask/{invocation_id}/cancel` | server only |
+| POST | `/api/ask/{invocation_id}/cancel` | web |
 | POST | `/api/grounding/resolve` | web |
 | GET | `/api/models` | web |
 
@@ -884,6 +886,7 @@ Routes: 765 (plus static mounts). iOS-consumed: 89. Web-consumed: 595.
 | DELETE | `/api/workbenches/{workbench_id}/memory` | web |
 | GET | `/api/workbenches/{workbench_id}/memory` | web |
 | POST | `/api/workbenches/{workbench_id}/memory/{index}/promote` | web |
+| POST | `/api/workbenches/{workbench_id}/results/{artifact_id}/open` | server only |
 | POST | `/api/workbenches/{workbench_id}/run` | web |
 | GET | `/api/workbenches/{workbench_id}/runs` | web |
 | POST | `/api/workbenches/{workbench_id}/runs/{parent_operation_id}/cancel` | server only |
