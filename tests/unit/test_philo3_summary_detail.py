@@ -357,6 +357,10 @@ def _normalise_wire(value: Any, key: str = "") -> Any:
             "completed_at",
             "sync_modified_at",
             "capture_checkpoint_at",
+            # Betterment D3: a promise kept on arrival carries its keep's clocks.
+            "reviewed_at",
+            "delegated_at",
+            "arrived_at",
         }:
             return "<producer-volatile>"
         # The retry detail carries the due time inside a human-readable cause.

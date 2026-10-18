@@ -163,3 +163,12 @@
 @container surface (max-width: 520px) {
   .needs-drawer-decide .btn { min-height: 44px; }
 }
+
+/* Betterment D3: promises kept on arrival, NEW under their meeting. */
+.needs-drawer .needs-arrival.surface-section { animation: none; }
+.needs-dropped {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}

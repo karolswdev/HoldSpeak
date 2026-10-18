@@ -10892,6 +10892,47 @@
         "summary": "Api Desk Needs You"
       }
     },
+    "/api/desk/needs-you/seen": {
+      "post": {
+        "description": "Betterment D3: he has seen these meetings' promises kept on\narrival; they leave the NEW group (they stay in the list).",
+        "operationId": "api_desk_needs_you_seen_api_desk_needs_you_seen_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "default": {},
+                "title": "Body",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Desk Needs You Seen Api Desk Needs You Seen Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Desk Needs You Seen"
+      }
+    },
     "/api/desk/parked": {
       "get": {
         "operationId": "api_desk_parked_api_desk_parked_get",
@@ -23842,6 +23883,49 @@
           }
         },
         "summary": "Api Edit Proposal",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/api/proposals/{proposal_id}/restore": {
+      "post": {
+        "description": "Betterment D3: Undo of Drop on a proposal (dismissed -> proposed).",
+        "operationId": "api_restore_proposal_api_proposals__proposal_id__restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "title": "Proposal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Restore Proposal Api Proposals  Proposal Id  Restore Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Restore Proposal",
         "tags": [
           "proposals"
         ]

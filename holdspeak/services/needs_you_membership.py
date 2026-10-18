@@ -1179,6 +1179,91 @@ def attach_person_ids(
         log.warning("needs-you: the People read for row people failed: %s", exc)
 
 
+#: Betterment D3: at most this many of a meeting's speakers are offered as
+#: "Whose?" choices.
+WHOSE_CHOICES = 8
+
+
+def attach_arrivals(items: list[dict[str, Any]], db: Any) -> None:
+    """Betterment D3: the promises a finished summary kept on arrival.
+
+    A row whose action item was kept on arrival and not seen yet carries
+    ``arrival`` (``meetingId``, ``meetingTitle``, ``startedAt``): the face
+    draws it NEW under its meeting at the top until he has seen it. The
+    meeting's proposals (decisions to Decide, promises with no owner) join
+    that group. A promise with no owner carries ``whose``: the meeting's
+    speakers, each one press. A read that fails leaves the rows as they are.
+    """
+    action_ids = {_row_action_id(item) for item in items} - {""}
+    proposal_ids = {str(item.get("proposalId")) for item in items if item.get("proposalId")}
+    if not action_ids and not proposal_ids:
+        return
+    try:
+        with db._connection() as conn:
+            arrived: dict[str, dict[str, Any]] = {}
+            if action_ids:
+                marks = ",".join("?" * len(action_ids))
+                for row in conn.execute(
+                    f"""SELECT ai.id, ai.meeting_id, m.title, m.started_at
+                          FROM action_items ai JOIN meetings m ON m.id = ai.meeting_id
+                         WHERE ai.id IN ({marks}) AND ai.arrived_at IS NOT NULL
+                           AND ai.arrival_seen_at IS NULL""",
+                    tuple(action_ids),
+                ).fetchall():
+                    arrived[str(row[0])] = {
+                        "meetingId": str(row[1]), "meetingTitle": str(row[2] or ""),
+                        "startedAt": str(row[3] or ""),
+                    }
+            proposals: dict[str, tuple[str, str, str]] = {}
+            if proposal_ids:
+                marks = ",".join("?" * len(proposal_ids))
+                for row in conn.execute(
+                    f"""SELECT id, meeting_id, kind, COALESCE(owner_supplied, owner_hint, '')
+                          FROM follow_through_proposals WHERE id IN ({marks})""",
+                    tuple(proposal_ids),
+                ).fetchall():
+                    proposals[str(row[0])] = (str(row[1] or ""), str(row[2] or ""), str(row[3] or "").strip())
+            unowned = {mid for mid, kind, owner in proposals.values() if kind == "action" and not owner}
+            speakers: dict[str, list[str]] = {}
+            for meeting_id in unowned:
+                rows = conn.execute(
+                    """SELECT speaker FROM segments WHERE meeting_id = ?
+                        GROUP BY speaker ORDER BY MIN(start_time)""",
+                    (meeting_id,),
+                ).fetchall()
+                names = [str(r[0]).strip() for r in rows if str(r[0] or "").strip()]
+                speakers[meeting_id] = [n for n in names if n.casefold() not in {"unknown", "speaker"}][:WHOSE_CHOICES]
+    except Exception as exc:
+        log.warning("needs-you: the arrival read failed: %s", exc)
+        return
+    groups = {group["meetingId"]: group for group in arrived.values()}
+    for item in items:
+        group = arrived.get(_row_action_id(item))
+        proposal = proposals.get(str(item.get("proposalId") or ""))
+        if group is None and proposal is not None:
+            group = groups.get(proposal[0])
+        if group is not None:
+            item["arrival"] = dict(group)
+        if proposal is not None and proposal[1] == "action" and not proposal[2]:
+            item["whose"] = list(speakers.get(proposal[0], []))
+
+
+def mark_arrivals_seen(db: Any, meeting_ids: Iterable[str]) -> int:
+    """Betterment D3: he has seen these meetings' kept promises; they leave
+    the NEW group (they stay in the list). Returns the rows marked."""
+    ids = sorted({str(mid) for mid in meeting_ids if str(mid or "").strip()})
+    if not ids:
+        return 0
+    marks = ",".join("?" * len(ids))
+    with db._connection() as conn:
+        changed = conn.execute(
+            f"""UPDATE action_items SET arrival_seen_at = ?
+                 WHERE meeting_id IN ({marks}) AND arrived_at IS NOT NULL AND arrival_seen_at IS NULL""",
+            (utc_now_iso(), *ids),
+        ).rowcount
+    return int(changed or 0)
+
+
 def _read_door(db: Any, principal: Any) -> dict[str, Any]:
     def bare() -> Any:
         from holdspeak.config import Config
@@ -1529,6 +1614,8 @@ def compose(
         result["unmutedItems"] + result["mutedItems"], db, principal,
         lambda owner: _is_me({"owner": owner}, names, personal, (), known_people),
     )
+    # Betterment D3: the promises kept on arrival, NEW under their meeting.
+    attach_arrivals(result["unmutedItems"], db)
     answer = dict(aggregate)
     # One coder coverage record: a recomposed cached answer carries the last
     # one, so it is replaced, never added twice.
@@ -1795,8 +1882,10 @@ __all__ = [
     "withhold_people_content",
     "DOOR_COLUMNS",
     "compose",
+    "attach_arrivals",
     "compute_needs_you",
     "filter_answer",
+    "mark_arrivals_seen",
     "row_passes",
     "decision_items",
     "meeting_decision_asks_elsewhere",

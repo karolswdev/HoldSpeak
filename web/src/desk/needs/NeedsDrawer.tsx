@@ -76,7 +76,24 @@ export function faceOpener(face: NeedFace): Opener | null {
   return refOpener(face.openRef);
 }
 
-type Well = "owner" | "date" | "detail" | "project" | "nudge" | "decide";
+type Well = "owner" | "date" | "detail" | "project" | "nudge" | "decide" | "whose";
+
+/** Betterment D3: Drop says what went and offers Undo for 8 s. */
+type Dropped = { name: string; undo(): Promise<unknown>; id: number };
+const UNDO_MS = 8000;
+export const useDropped = create<{ dropped: Dropped | null; set(d: Dropped | null): void }>(
+  (setState) => ({ dropped: null, set: (dropped) => setState({ dropped }) }),
+);
+let dropSeq = 0;
+
+/** Drop, then the Undo receipt in the foot (8 s). */
+export function offerUndo(name: string, undo: () => Promise<unknown>): void {
+  const id = ++dropSeq;
+  useDropped.getState().set({ name, undo, id });
+  window.setTimeout(() => {
+    if (useDropped.getState().dropped?.id === id) useDropped.getState().set(null);
+  }, UNDO_MS);
+}
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -224,6 +241,11 @@ function NeedVerbsView({ face, primary, onWell, well }: {
     case "work": {
       const opener = faceOpener(face);
       const key = `action-item:${v.cardId}`;
+      // Betterment D3: Drop removes it; Undo (8 s) opens it again.
+      const drop = () => act("Drop", async () => {
+        await followThrough(v.cardId, "dismiss");
+        offerUndo(face.name, () => followThrough(v.cardId, "reopen"));
+      }, key);
       const entries: WorkMenuEntry[] = [
         ...(opener ? [{ type: "item" as const, id: "open", label: "Open", onSelect: opener }] : []),
         ...(v.direction === "theirs"
@@ -235,8 +257,8 @@ function NeedVerbsView({ face, primary, onWell, well }: {
           : []),
         { type: "item", id: "later", label: "Later", ghost: busy ? "Busy" : undefined,
           onSelect: () => void act("Later", () => followThrough(v.cardId, "snooze", { until: tomorrowDay() }), key) },
-        { type: "item", id: "drop", label: "Drop", ghost: busy ? "Busy" : undefined,
-          onSelect: () => void act("Drop", () => followThrough(v.cardId, "dismiss"), key) },
+        ...(face.arrival ? [] : [{ type: "item" as const, id: "drop", label: "Drop", ghost: busy ? "Busy" : undefined,
+          onSelect: () => void drop() }]),
       ];
       return <>
         {v.direction === "theirs" ? (
@@ -247,6 +269,10 @@ function NeedVerbsView({ face, primary, onWell, well }: {
           <Button dense variant={lead} disabled={busy} aria-label={named("Done")} data-testid="needs-row-verb" data-verb="done"
             onClick={() => void act("Done", () => followThrough(v.cardId, "done"), key)}>Done</Button>
         )}
+        {face.arrival ? (
+          <Button dense variant="ghost" disabled={busy} aria-label={named("Drop")} data-testid="needs-row-verb" data-verb="drop"
+            onClick={() => void drop()}>Drop</Button>
+        ) : null}
         <Button ref={moreRef} dense variant="ghost" aria-label={named("More")} aria-haspopup="menu" aria-expanded={more}
           data-testid="needs-row-verb" data-verb="more" onClick={() => setMore((value) => !value)}>More</Button>
         {more && moreRef.current ? <WorkMenu label={named("More")} x={moreRef.current.getBoundingClientRect().left}
@@ -254,6 +280,12 @@ function NeedVerbsView({ face, primary, onWell, well }: {
           returnFocus={() => moreRef.current?.focus()} /> : null}
       </>;
     }
+    case "whose":
+      return (
+        <Button dense variant={lead} aria-label={named("Whose?")} aria-expanded={well === "whose"}
+          data-testid="needs-row-verb" data-verb="whose"
+          onClick={() => onWell(well === "whose" ? null : "whose")}>Whose?</Button>
+      );
     case "decide":
       return (
         <Button dense variant={lead} aria-label={named("Decide")} aria-expanded={well === "decide"}
@@ -461,8 +493,8 @@ function DecideWell({ face, onDone }: { face: NeedFace; onDone(): void }) {
   const v = face.verbs;
   if (v.kind !== "decide") return null;
   const opener = faceOpener(face);
-  const run = async (label: string, path: string, json?: unknown) => {
-    if (busy) return;
+  const run = async (label: string, path: string, json?: unknown): Promise<void> => {
+    if (busy) return Promise.reject(new Error("busy"));
     setBusy(true);
     const key = `proposal:${v.proposalId}`;
     try {
@@ -472,6 +504,7 @@ function DecideWell({ face, onDone }: { face: NeedFace; onDone(): void }) {
       void refreshNeedsYou(true);
     } catch (error) {
       reportWriteFailure(label, error, () => void run(label, path, json), key);
+      throw error;
     } finally {
       setBusy(false);
     }
@@ -481,12 +514,45 @@ function DecideWell({ face, onDone }: { face: NeedFace; onDone(): void }) {
       data-testid="needs-decide"
       onKeyDown={(event) => { if (event.key === "Escape") { event.stopPropagation(); onDone(); } }}>
       <Button dense variant="primary" disabled={busy} aria-label={`Accept: ${face.name}`} data-testid="needs-decide-accept"
-        autoFocus onClick={() => void run("Accept", "confirm")}>Accept</Button>
+        autoFocus onClick={() => void run("Accept", "confirm").catch(() => undefined)}>Accept</Button>
       <Button dense variant="secondary" disabled={busy} aria-label={`Not now: ${face.name}`}
-        onClick={() => void run("Not now", "defer", {})}>Not now</Button>
+        onClick={() => void run("Not now", "defer", {}).catch(() => undefined)}>Not now</Button>
       <Button dense variant="ghost" disabled={busy} aria-label={`Drop: ${face.name}`}
-        onClick={() => void run("Drop", "dismiss")}>Drop</Button>
+        onClick={() => void run("Drop", "dismiss").then(() => offerUndo(face.name, () => apiFetch(
+          `/api/proposals/${encodeURIComponent(v.proposalId)}/restore`, { method: "POST" }))).catch(() => undefined)}>Drop</Button>
       {opener ? <Button dense variant="ghost" aria-label={`Open: ${face.name}`} onClick={() => opener()}>Open</Button> : null}
+    </li>
+  );
+}
+
+/** Betterment D3: Whose? The meeting's speakers, one press each: the press
+ *  keeps the promise with that owner (Confirm with the owner). */
+function WhoseWell({ face, onDone }: { face: NeedFace; onDone(): void }) {
+  const [busy, setBusy] = useState(false);
+  const v = face.verbs;
+  if (v.kind !== "whose") return null;
+  const keep = async (owner: string) => {
+    if (busy) return;
+    setBusy(true);
+    const key = `proposal:${v.proposalId}`;
+    try {
+      await apiFetch(`/api/proposals/${encodeURIComponent(v.proposalId)}/confirm`, { method: "POST", json: { owner } });
+      clearWriteFailure(key);
+      onDone();
+      void refreshNeedsYou(true);
+    } catch (error) {
+      reportWriteFailure("Whose?", error, () => void keep(owner), key);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <li className="needs-drawer-well" role="region" aria-label={`Whose: ${face.name}`} data-testid="needs-whose"
+      onKeyDown={(event) => { if (event.key === "Escape") { event.stopPropagation(); onDone(); } }}>
+      {v.speakers.map((speaker, i) => (
+        <Button key={speaker} dense variant={i === 0 ? "secondary" : "ghost"} disabled={busy} autoFocus={i === 0}
+          aria-label={`${speaker}: ${face.name}`} onClick={() => void keep(speaker)}>{speaker}</Button>
+      ))}
     </li>
   );
 }
@@ -587,6 +653,7 @@ function NeedRow({ face, primary, projects }: { face: NeedFace; primary: boolean
         : well === "detail" ? <DetailWell face={face} />
           : well === "nudge" ? <NudgeWell face={face} />
             : well === "decide" ? <DecideWell face={face} onDone={() => setWell(null)} />
+              : well === "whose" ? <WhoseWell face={face} onDone={() => setWell(null)} />
               : well === "owner" || well === "date" ? <CommitWell face={face} which={well} onDone={() => setWell(null)} /> : null}
     </>
   );
@@ -614,7 +681,9 @@ function useRowMarks(
       // A row the hub counts (one member): the head, the Dock and the notch
       // say the number of these rows.
       li.setAttribute("data-counted", members.has(face.memberRef ?? face.id) ? "true" : "false");
-      if (face.verbs.kind === "confirm" || face.verbs.kind === "decide") li.setAttribute("data-proposal", "true");
+      if (face.verbs.kind === "confirm" || face.verbs.kind === "decide" || face.verbs.kind === "whose") li.setAttribute("data-proposal", "true");
+      if (face.arrival) li.setAttribute("data-new", "true");
+      else li.removeAttribute("data-new");
       if (face.direction) li.setAttribute("data-direction", face.direction);
       if (faceOpener(face)) li.setAttribute("data-opens", "true");
       else li.removeAttribute("data-opens");
@@ -878,9 +947,34 @@ export function NeedsDrawer() {
     (f) => (f.personKey ? [f.personKey, f.personName ?? f.personKey] : null));
   const projects = picksOf(narrowed.filter((f) => !chips.person || f.personKey === chips.person),
     (f) => (f.projectId ? [f.projectId, f.project?.name ?? f.projectId] : null));
-  // One filled primary on a face with work: the first row shown; a SETUP,
-  // repair or offer verb is never filled (HS-201-01 ruling 2).
-  const primaryId = showMuted ? null : shown.find((f) => !f.source && f.verbs.kind !== "setup")?.id ?? null;
+  // Betterment D3: promises kept on arrival, NEW under their meeting at the
+  // top. The hub is told they were seen once they are drawn; this window
+  // keeps them grouped until it closes, so no row moves under his eye.
+  const arrivals = useRef(new Map<string, NonNullable<NeedFace["arrival"]>>());
+  for (const face of faces) if (face.arrival) arrivals.current.set(face.id, face.arrival);
+  const arrivalOf = (face: NeedFace) => (showMuted ? undefined : face.arrival ?? arrivals.current.get(face.id));
+  const groups: Array<{ arrival: NonNullable<NeedFace["arrival"]>; faces: NeedFace[] }> = [];
+  for (const face of shown) {
+    const arrival = arrivalOf(face);
+    if (!arrival) continue;
+    const group = groups.find((g) => g.arrival.meetingId === arrival.meetingId);
+    if (group) group.faces.push({ ...face, arrival });
+    else groups.push({ arrival, faces: [{ ...face, arrival }] });
+  }
+  const rest = shown.filter((face) => !arrivalOf(face));
+  // One filled primary on a face with work: the first row drawn (a group's
+  // row leads); a SETUP, repair or offer verb is never filled (HS-201-01).
+  const firstId = showMuted ? null
+    : [...groups.flatMap((g) => g.faces), ...rest].find((f) => !f.source && f.verbs.kind !== "setup")?.id ?? null;
+  const groupKey = groups.map((g) => g.arrival.meetingId).sort().join("|");
+  const told = useRef(new Set<string>());
+  useEffect(() => {
+    const fresh = groupKey.split("|").filter((id) => id && !told.current.has(id));
+    if (!fresh.length) return;
+    for (const id of fresh) told.current.add(id);
+    void apiFetch("/api/desk/needs-you/seen", { method: "POST", json: { meeting_ids: fresh } }).catch(() => undefined);
+  }, [groupKey]);
+  const dropped = useDropped((st) => st.dropped);
   const all = [...faces, ...muted];
   const memberRefs = new Set(faces.filter((f) => !f.uncounted).map((f) => f.memberRef ?? f.id));
   const sourceReceipt = useSourceReceipt((st) => st.receipt);
@@ -950,11 +1044,25 @@ export function NeedsDrawer() {
               </NeedsList>
             </SurfaceSection>
           ) : shown.length > 0 ? (
-            <NeedsList label="Needs you">
-              {shown.map((face) => (
-                <NeedRow key={face.id} face={face} primary={face.id === primaryId} projects={multipleProjects} />
+            <>
+              {groups.map((group) => (
+                <SurfaceSection key={group.arrival.meetingId} className="needs-arrival" data-testid="needs-arrival"
+                  label={`New from ${group.arrival.meetingTitle || "a meeting"}${dayWord(group.arrival.startedAt) ? ` · ${dayWord(group.arrival.startedAt)}` : ""}`}>
+                  <NeedsList label={`New from ${group.arrival.meetingTitle || "a meeting"}`}>
+                    {group.faces.map((face) => (
+                      <NeedRow key={face.id} face={face} primary={face.id === firstId} projects={multipleProjects} />
+                    ))}
+                  </NeedsList>
+                </SurfaceSection>
               ))}
-            </NeedsList>
+              {rest.length > 0 ? (
+                <NeedsList label="Needs you">
+                  {rest.map((face) => (
+                    <NeedRow key={face.id} face={face} primary={face.id === firstId} projects={multipleProjects} />
+                  ))}
+                </NeedsList>
+              ) : null}
+            </>
           ) : chipsOn(chips) ? (
             <p className="needs-drawer-none" data-testid="needs-none">Nothing matches these filters.</p>
           ) : null}
@@ -962,7 +1070,17 @@ export function NeedsDrawer() {
       </div>
       <SurfaceFooter
         receipt={
-          outcome.receipt ? (
+          dropped ? (
+            <span className="surface-footer-receipt-line needs-dropped" role="status" data-testid="needs-dropped">
+              {`Dropped · ${dropped.name}`}
+              <Button dense variant="secondary" aria-label={`Undo: ${dropped.name}`} data-testid="needs-undo"
+                onClick={() => {
+                  useDropped.getState().set(null);
+                  void dropped.undo().then(() => refreshNeedsYou(true)).catch((error) =>
+                    reportWriteFailure("Undo", error, () => void dropped.undo()));
+                }}>Undo</Button>
+            </span>
+          ) : outcome.receipt ? (
             <span className="surface-footer-receipt-line" role="status" data-testid="needs-receipt">
               {outcome.receipt}
             </span>

@@ -15,7 +15,7 @@ import { ApiError, apiFetch } from "../../../lib/api";
 import { useAgentFlights, type AgentFlight } from "../../agentFlights";
 import { openCoderSession, openSurfaceOr } from "../../shell";
 import { useDesk } from "../../store";
-import { NeedsDrawer, useSourceReceipt } from "../NeedsDrawer";
+import { NeedsDrawer, useDropped, useSourceReceipt } from "../NeedsDrawer";
 import { useArmingOutcome } from "../arming";
 import { useState as useHarnessState, type ReactNode } from "react";
 import { ProjectRoomCore } from "../../../features/project-room/ProjectRoomCore";
@@ -134,6 +134,9 @@ const REAL_CANCEL = useDesk.getState().cancelArmedSchedule;
 let DOOR: Record<string, unknown> = { upcoming: [], calendar_configured: true };
 
 beforeEach(() => {
+  // Betterment D3: a Drop's Undo receipt lives 8 s in its store; one test's
+  // Drop never reaches the next test's foot.
+  useDropped.getState().set(null);
   gateCalls = [];
   DOOR = { upcoming: [], calendar_configured: true };
   useDesk.setState({ scheduledArming: null, cancelArmedSchedule: REAL_CANCEL } as never);

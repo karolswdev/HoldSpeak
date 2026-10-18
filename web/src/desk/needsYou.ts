@@ -74,10 +74,21 @@ export interface NeedsYouRoomItem extends RankableItem {
   person_id?: string;
   /** Betterment D2: that Person's display name (absent when none). */
   person_name?: string;
+  /** Betterment D3: kept on arrival and not seen yet: the meeting it came from. */
+  arrival?: NeedsArrival;
+  /** Betterment D3: a promise with no owner: the meeting's speakers (Whose?). */
+  whose?: string[];
   /** Betterment D1: the hub's one count rule counts this row
    *  (`needs_you_membership.counts_in_number`). */
   counted?: boolean;
   [key: string]: unknown;
+}
+
+/** Betterment D3: the meeting a promise kept on arrival came from. */
+export interface NeedsArrival {
+  meetingId: string;
+  meetingTitle: string;
+  startedAt: string;
 }
 
 /** A decision that waits for the owner's review, as the hub's rule reads it

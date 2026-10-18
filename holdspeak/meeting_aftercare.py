@@ -289,9 +289,7 @@ def compute_project_since_last_meeting(
             "since_last_meeting": None,
         }
     segments = current.segments or []
-    open_items = db.meetings.list_action_items(
-        include_completed=False, meeting_id=current.id
-    )
+    open_items = _open_items(db, current.id)
     decisions = _decisions_for_meeting(db, current.id, segments)
     return {
         "project_id": project_id,
@@ -304,6 +302,17 @@ def compute_project_since_last_meeting(
             current_segments=segments,
         ),
     }
+
+
+def _open_items(db: "Database", meeting_id: str) -> list[Any]:
+    """The meeting's open action items: still to review (``pending``) or
+    kept and not done (``open``: a Confirm, or Betterment D3's kept on
+    arrival). ``list_action_items(include_completed=False)`` reads only
+    ``pending``, so a kept promise would leave the aftercare."""
+    return [
+        item for item in db.meetings.list_action_items(include_completed=True, meeting_id=meeting_id)
+        if str(getattr(item, "status", "") or "").lower() in {"pending", "open"}
+    ]
 
 
 def compute_meeting_aftercare(
@@ -320,9 +329,7 @@ def compute_meeting_aftercare(
         return None
 
     segments = meeting.segments or []
-    open_items = db.meetings.list_action_items(
-        include_completed=False, meeting_id=meeting_id
-    )
+    open_items = _open_items(db, meeting_id)
     decisions = _decisions_for_meeting(db, meeting_id, segments)
 
     previous = _previous_meeting(db, meeting)

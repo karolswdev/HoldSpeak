@@ -5,21 +5,16 @@
       {
         "host": "same_device",
         "leg_ordinal": 1,
-        "operation_id": "op_832d94d562ab430a9420109c4986f157",
+        "operation_id": "op_8b44b898d9a7442391d6c23fe4294278",
         "outcome": "succeeded"
       }
     ],
-    "job_id": "ij_6376ab448b884ffad3ba801f4e470cb8bb809b161b681cc9c1831e66f126cb16",
+    "job_id": "ij_2aeac344902461bafe621ae33031a008946b51c61271152b82433d94c485d804",
     "looked_at": [
       {
         "at": "2026-10-15",
         "ref": "meeting:c2-thu",
         "title": "Thursday sync"
-      },
-      {
-        "at": "2026-10-15",
-        "ref": "artifact:summary-items-c2-thu",
-        "title": "Thursday sync: decisions and actions"
       },
       {
         "at": "2026-10-14",
@@ -29,7 +24,7 @@
     ],
     "meeting_id": "c2-fri",
     "outcome": "succeeded",
-    "receipt_id": "rr_93e806547e7e511fa88402317ed0f4ac",
-    "selection_hash": "sha256:94e59c2d2ea1c2a1823dc18b83e31daf99208559eb04ce7c8f921f5ec7a1efa1"
+    "receipt_id": "rr_fef080b4ff4ca0edee32e5d575e0e1f8",
+    "selection_hash": "sha256:cbe30994425c7808d78e4ef0f096e2e13471cb8e08c025f58cbd4cea4cb9576c"
   }
 }

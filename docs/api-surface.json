@@ -2256,6 +2256,16 @@
       ]
     },
     {
+      "path": "/api/desk/needs-you/seen",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.projects",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/desk/parked",
       "methods": [
         "GET"
@@ -5382,6 +5392,16 @@
     },
     {
       "path": "/api/proposals/{proposal_id}/edit",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.proposals",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/proposals/{proposal_id}/restore",
       "methods": [
         "POST"
       ],

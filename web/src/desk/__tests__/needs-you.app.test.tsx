@@ -217,3 +217,82 @@ describe("Needs you on the daily week: the chips and one verb per row (Bettermen
     await waitFor(() => expect(posts.some((p) => /\/api\/proposals\/prop-[^/]+\/dismiss$/.test(p.url))).toBe(true));
   });
 });
+
+// ── Betterment daily D3: promises from a meeting are kept on arrival ─────────
+import dailyArrival from "./fixtures/daily-week/needs-you-arrival.json";
+import { useDropped } from "../needs/NeedsDrawer";
+
+describe("Needs you after the week's summaries: kept on arrival, Drop and Undo (Betterment D3)", () => {
+  let posts: Array<{ url: string; json: unknown }>;
+  beforeEach(() => {
+    vi.setSystemTime(new Date(String(dailyArrival.needsYou.computedAt)));
+    posts = [];
+    useDropped.getState().set(null);
+    const gets: Gets = {
+      "/api/desk/needs-you?fresh=1": dailyArrival.needsYou,
+      "/api/door": hubWire("door.empty").wire,
+    };
+    api.fetch.mockImplementation(async (url: string, init?: { method?: string; json?: unknown }) => {
+      if (init?.method === "POST") {
+        posts.push({ url: String(url), json: init.json });
+        return {};
+      }
+      return recordedGet(gets, String(url));
+    });
+  });
+
+  const groups = () => [...document.querySelectorAll<HTMLElement>("[data-testid='needs-arrival']")];
+  const groupNames = (g: HTMLElement) => [...g.querySelectorAll(".needs-row-name")].map((n) => n.textContent ?? "").sort();
+
+  it("each meeting's promises are NEW under it, kept with no press; its decisions wait for Decide", async () => {
+    render(<NeedsDrawer />);
+    await waitFor(() => expect(groups()).toHaveLength(3));
+    expect(groups().map((g) => g.querySelector("h3")?.textContent?.split(" · ")[0]).sort()).toEqual([
+      "New from 1:1 with Theo", "New from Architecture review", "New from Payments platform sync",
+    ]);
+    // Every row of the week is in a group: nothing is left ungrouped.
+    expect(document.querySelectorAll("li.needs-row").length).toBe(
+      groups().reduce((n, g) => n + g.querySelectorAll("li.needs-row").length, 0));
+    const sync = groups().find((g) => g.querySelector("h3")?.textContent?.startsWith("New from Payments platform sync"))!;
+    expect(groupNames(sync)).toEqual([
+      "Confirm the vendor freeze dates", "Draft the rollback runbook", "Email Dana about the cutover window",
+      "Freeze ledger writes during the cutover", "Profile the reconciliation job",
+    ]);
+    // No Confirm anywhere: the promises are kept; each has Drop beside its verb.
+    expect(document.querySelectorAll("[data-verb='confirm']")).toHaveLength(0);
+    const dana = [...sync.querySelectorAll<HTMLElement>("li.needs-row")].find((li) => li.textContent?.includes("Email Dana"))!;
+    expect([...dana.querySelectorAll<HTMLElement>("[data-testid='needs-row-verb']")].map((b) => b.dataset.verb))
+      .toEqual(["done", "drop", "more"]);
+    const freeze = [...sync.querySelectorAll<HTMLElement>("li.needs-row")].find((li) => li.textContent?.includes("Freeze ledger"))!;
+    expect(freeze.querySelector("[data-verb='decide']")).toBeTruthy();
+    // Drawn once: the hub is told these meetings were seen.
+    await waitFor(() => expect(posts.find((p) => p.url === "/api/desk/needs-you/seen")).toBeTruthy());
+    const seen = posts.find((p) => p.url === "/api/desk/needs-you/seen")!.json as { meeting_ids: string[] };
+    expect(seen.meeting_ids.sort()).toEqual(["m-daily-architecture-review", "m-daily-platform-sync", "m-daily-theo-1on1"]);
+  });
+
+  it("Drop on a kept promise posts dismiss; Undo posts reopen", async () => {
+    render(<NeedsDrawer />);
+    await waitFor(() => expect(groups()).toHaveLength(3));
+    const row = [...document.querySelectorAll<HTMLElement>("li.needs-row")].find((li) => li.textContent?.includes("Write up alert rule changes"))!;
+    fireEvent.click(row.querySelector<HTMLElement>("[data-verb='drop']")!);
+    await waitFor(() => expect(screen.getByTestId("needs-dropped").textContent).toContain("Dropped · Write up alert rule changes"));
+    const card = (dailyArrival.needsYou.items as Array<{ title: string; actionItemId?: string }>)
+      .find((i) => i.title === "Write up alert rule changes")!.actionItemId;
+    expect(posts).toContainEqual({ url: "/api/follow-through/complete", json: { card_id: card, verb: "dismiss", payload: {} } });
+    fireEvent.click(screen.getByRole("button", { name: "Undo: Write up alert rule changes" }));
+    await waitFor(() => expect(posts).toContainEqual({ url: "/api/follow-through/complete", json: { card_id: card, verb: "reopen", payload: {} } }));
+  });
+
+  it("Drop on \"Do it\" dismisses the decision; Undo restores it", async () => {
+    render(<NeedsDrawer />);
+    await waitFor(() => expect(groups()).toHaveLength(3));
+    const row = [...document.querySelectorAll<HTMLElement>("li.needs-row")].find((li) => li.querySelector(".needs-row-name")?.textContent === "Do it")!;
+    fireEvent.click(row.querySelector<HTMLElement>("[data-verb='decide']")!);
+    fireEvent.click(await screen.findByRole("button", { name: "Drop: Do it" }));
+    await waitFor(() => expect(screen.getByTestId("needs-dropped").textContent).toContain("Dropped · Do it"));
+    expect(posts.some((p) => /\/api\/proposals\/prop-[^/]+\/dismiss$/.test(p.url))).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Undo: Do it" }));
+    await waitFor(() => expect(posts.some((p) => /\/api\/proposals\/prop-[^/]+\/restore$/.test(p.url))).toBe(true));
+  });
+});

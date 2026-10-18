@@ -52,11 +52,13 @@ def seed_people(client: Any) -> dict[str, str]:
     return ids
 
 
-def seed_meetings(db: Any, *, monday: date = MONDAY, file_into: Any = None) -> None:
+def seed_meetings(db: Any, *, monday: date = MONDAY, file_into: Any = None, arrival: bool = False) -> None:
     """The three meetings, their summaries and their proposals (nothing kept).
 
     ``file_into(meeting_id)`` files each meeting before its summary is
-    bridged (the recon's Project held all three).
+    bridged (the recon's Project held all three). ``arrival``: the summary
+    ends through the hub's own post-summary hook (``intel_queue
+    ._on_intel_complete``), which keeps the promises on arrival (D3).
     """
     from holdspeak.intel.models import ActionItem
     from holdspeak.kernel.summary_items_projection import write_summary_items
@@ -90,7 +92,12 @@ def seed_meetings(db: Any, *, monday: date = MONDAY, file_into: Any = None) -> N
             )
         if file_into is not None:
             file_into(meeting["id"])
-        ProposalBridgeService(db).bridge_meeting_artifacts(meeting["id"])
+        if arrival:
+            from holdspeak.intel_queue import _on_intel_complete
+
+            _on_intel_complete(db, meeting["id"])
+        else:
+            ProposalBridgeService(db).bridge_meeting_artifacts(meeting["id"])
 
 
 def seed_engine(client: Any) -> None:
@@ -124,12 +131,15 @@ def keep_nine(client: Any) -> list[str]:
     return kept
 
 
-def seed(hub: Any, *, monday: date = MONDAY, keep: bool = True, engine: bool = False) -> dict[str, str]:
+def seed(hub: Any, *, monday: date = MONDAY, keep: bool = True, engine: bool = False,
+         arrival: bool = False) -> dict[str, str]:
     """The whole week on ``hub`` (a ``tests/unit/test_desk_needs_you.py`` Hub).
 
     Returns the People ids by first name, and the Project's id (``project``).
 
     ``engine``: the recon's LAN engine is the Default (no "No engine" row).
+    ``arrival``: the summaries end through the hub's hook (D3: the promises
+    are kept on arrival; ``keep`` is then ignored).
     """
     if engine:
         seed_engine(hub.client)
@@ -137,8 +147,8 @@ def seed(hub: Any, *, monday: date = MONDAY, keep: bool = True, engine: bool = F
     project = _ok(hub.client.post("/api/projects", json={
         "name": WEEK["project"], "command_id": "daily-week-project"}))["project"]["id"]
     people["project"] = project
-    seed_meetings(hub.db, monday=monday, file_into=lambda meeting_id: _ok(
+    seed_meetings(hub.db, monday=monday, arrival=arrival, file_into=lambda meeting_id: _ok(
         hub.client.post(f"/api/projects/{project}/meetings/{meeting_id}")))
-    if keep:
+    if keep and not arrival:
         keep_nine(hub.client)
     return people

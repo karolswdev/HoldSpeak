@@ -539,13 +539,15 @@ describe("what the summary read (betterment/capture C2)", () => {
   /* The run receipt the hub served for Friday's summary
    * (fixtures/meetings-hub/looked-at.json, recorded by
    * tests/integration/test_desk_meetings.py), on the HS-172 record. */
-  it("a folded Looked at · 3 under the transcript; each source a link with its date", async () => {
+  // Betterment D3: Thursday's promises are kept on arrival now, and the
+  // recorded receipt reads Thursday and Wednesday (re-recorded).
+  it("a folded Looked at · 2 under the transcript; each source a link with its date", async () => {
     at(hs172 as Fixture);
     const detailPath = "/api/meetings/m-ran?include_parked=true";
     const detail = (hs172 as Fixture)[detailPath] as Record<string, unknown>;
     hub(hs172 as Fixture, { [detailPath]: { ...detail, run_receipt: lookedAt.run_receipt } });
     render(<Shell><MeetingRecord meetingId="m-ran" onClose={() => undefined} /></Shell>);
-    const fold = await screen.findByRole("button", { name: /Looked at · 3/ });
+    const fold = await screen.findByRole("button", { name: /Looked at · 2/ });
     const transcript = screen.getByRole("button", { name: /^Transcript/ });
     expect(transcript.compareDocumentPosition(fold) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.queryByTestId("meeting-looked-at")).toBeNull();
@@ -554,8 +556,8 @@ describe("what the summary read (betterment/capture C2)", () => {
     const rows = [...list.querySelectorAll("li")].map((li) => li.textContent ?? "");
     expect(rows[0]).toContain("Thursday sync");
     expect(rows[0]).toContain("Thu 15 Oct");
-    expect(rows[2]).toContain("Wednesday planning");
-    expect(rows[2]).toContain("Wed 14 Oct");
+    expect(rows[1]).toContain("Wednesday planning");
+    expect(rows[1]).toContain("Wed 14 Oct");
     expect(list.textContent).not.toContain("Friday");
     fireEvent.click(within(list).getByRole("button", { name: "Thursday sync" }));
     expect(openSurfaceOr).toHaveBeenCalledWith("review-meetings", "/history", "meeting:c2-thu");
