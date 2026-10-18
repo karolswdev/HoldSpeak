@@ -8,6 +8,7 @@
 
 import { act, fireEvent, render, renderHook, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { useBuilderTools } from "../../../desk/builderTools";
 import { ApiError } from "../../../lib/api";
 import type { Detection, Roster, RosterRow } from "../api";
 import type { LocalAiRead } from "../../../desk/firstrun/localAi";
@@ -1056,4 +1057,13 @@ describe("Runs on — FOUND, downloads, the add row", () => {
     // Betterment E3: the picker stays, the used model says ADDED.
     await waitFor(() => expect(within(screen.getByTestId("concierge-add-pick")).getByText("ADDED")).toBeTruthy());
   });
+});
+
+// Betterment E5 (DECISIONS #8): the drag switchboard these tests drive is
+// parked behind Builder tools; What runs where is engines.app.test.tsx.
+beforeEach(() => {
+  useBuilderTools.getState().setOn(true);
+});
+afterEach(() => {
+  useBuilderTools.getState().setOn(false);
 });

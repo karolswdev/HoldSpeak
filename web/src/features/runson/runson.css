@@ -232,3 +232,48 @@
   user-select: all;
 }
 .runson-picker-preset { font-weight: 600; }
+
+/* Betterment E5: What runs where. One row for each job: the job's name, its
+   engine (a press unfolds the picker in place, no modal), where the prompt
+   goes, and Try it; the answer sits under the row. */
+.runson-what { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.runson-what-cap {
+  margin: 0;
+  font: 600 var(--font-size-xs, 12px) var(--font-mono, "JetBrains Mono", monospace);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--wb-muted);
+}
+.runson-what-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.runson-what-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 200px) minmax(0, 1fr);
+  align-items: center;
+  gap: 4px 10px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--wb-rule, rgba(0,0,0,.12));
+  min-width: 0;
+}
+.runson-what-job { font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+.runson-what-engine { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.runson-what-pick { max-width: 100%; min-width: 0; }
+.runson-what-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.runson-what-options,
+.runson-what-result { grid-column: 1 / -1; }
+.runson-what-options {
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--wb-well);
+  border: 1px solid var(--wb-ink);
+}
+.runson-what-options li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+@container (max-width: 520px) {
+  .runson-what-row { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Betterment E5: Your engines has no wires, so its plates show no plug. */
+.runson-engine-list .switchboard-plug { display: none; }

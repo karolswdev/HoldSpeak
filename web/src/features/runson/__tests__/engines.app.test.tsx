@@ -38,6 +38,8 @@ function hub(start: Gets, posts: Record<string, Step> = {}) {
   let gets = start;
   const sent: Array<Record<string, unknown>> = [];
   vi.mocked(apiFetch).mockImplementation(async (path: string, init?: { method?: string; json?: unknown }) => {
+    // E5's row editors were not recorded for this desk: the rows read NOT READ.
+    if (path === "/api/inference/assignments/editor") throw new Error("not recorded");
     if (init?.method === "POST") {
       const draft = ((init.json ?? {}) as { draft?: Record<string, unknown> }).draft ?? {};
       sent.push(draft);
@@ -87,7 +89,7 @@ describe("Engines — Found on this Mac (Betterment E2)", () => {
     expect(sent[0]).not.toHaveProperty("spend_limit_usd");
 
     await waitFor(() => expect(screen.queryByTestId("runson-found-engines")).toBeNull());
-    const engine = await within(screen.getByTestId("runson-assignments")).findByTestId(PLATE);
+    const engine = await within(screen.getByTestId("runson-engines")).findByTestId(PLATE);
     expect(within(engine).getByText("Claude Code")).toBeTruthy();
     expect(within(engine).getByTestId("switchboard-lamp-agent-claude").getAttribute("data-lamp")).toBe("ok");
     expect(within(engine).getByText("ANTHROPIC")).toBeTruthy();
@@ -180,6 +182,7 @@ function threeHub(check: unknown = three("check").answer) {
   let gets = three("open").gets!;
   const defined: Array<Record<string, unknown>> = [];
   vi.mocked(apiFetch).mockImplementation(async (path: string, init?: { method?: string; json?: unknown }) => {
+    if (path === "/api/inference/assignments/editor") throw new Error("not recorded");
     if (init?.method === "POST" && path === "/api/setup/discover-models") return structuredClone(check) as never;
     if (init?.method === "POST") {
       const draft = ((init.json ?? {}) as { draft?: Record<string, unknown> }).draft ?? {};
@@ -244,13 +247,10 @@ describe("Engines — the model picker (Betterment E3)", () => {
     ]);
     expect(within(row("beta-13b")).getByRole("button", { name: "Use" })).toBeTruthy();
     expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^ADDED \d\d:\d\d · gamma-3b · 127\.0\.0\.1:8099$/);
-    // Both are on the board: plates at 1440; at 393 the list shows them as
-    // the taps of the job he opens.
-    const board = screen.getByTestId("runson-assignments");
-    const kind = px === 393 ? "tap" : "engine";
-    if (px === 393) fireEvent.click(within(board).getByTestId("switchboard-job-default"));
-    expect(await within(board).findByTestId(`switchboard-${kind}-engine-127-0-0-1-8099-alpha-7b`)).toBeTruthy();
-    expect(within(board).getByTestId(`switchboard-${kind}-engine-127-0-0-1-8099-gamma-3b`)).toBeTruthy();
+    // Both are in Your engines (Betterment E5: one list at both widths).
+    const board = screen.getByTestId("runson-engines");
+    expect(await within(board).findByTestId("switchboard-engine-engine-127-0-0-1-8099-alpha-7b")).toBeTruthy();
+    expect(within(board).getByTestId("switchboard-engine-engine-127-0-0-1-8099-gamma-3b")).toBeTruthy();
   });
 
   it("a long list has a search field that narrows it", async () => {
@@ -402,5 +402,134 @@ describe("Engines — Add an engine, by kind (Betterment E4)", () => {
     fireEvent.click(screen.getByTestId("runson-add-close"));
     expect(screen.queryByTestId("runson-add-kinds")).toBeNull();
     expect(screen.getByTestId("concierge-add-engine")).toBeTruthy();
+  });
+});
+
+/* ── Betterment E5: What runs where ── */
+
+import { WHAT_ROWS } from "../whatRows";
+
+type WhatStep = { name: string; gets?: Gets; editors?: Record<string, unknown>; post?: string; body?: Record<string, unknown>; answer?: unknown };
+const WHAT = (recorded as unknown as { whatRunsWhere: { steps: WhatStep[] } }).whatRunsWhere.steps;
+const whatStep = (name: string) => WHAT.find((s) => s.name === name)!;
+const rowOfScope = (scope: unknown) => WHAT_ROWS.find((r) => JSON.stringify(r.scope) === JSON.stringify(scope))!;
+
+/** The hub of `whatRunsWhere`: reads and editor answers of the current step;
+ *  a set moves to the step recorded for that row. */
+function whatHub() {
+  let at = whatStep("open");
+  const sent: Array<{ path: string; json: Record<string, unknown> }> = [];
+  vi.mocked(apiFetch).mockImplementation(async (path: string, init?: { method?: string; json?: unknown }) => {
+    const json = (init?.json ?? {}) as Record<string, unknown>;
+    if (path === "/api/inference/assignments/editor") return structuredClone(at.editors![rowOfScope(json.scope).id]) as never;
+    if (init?.method === "POST") {
+      sent.push({ path, json });
+      if (path === "/api/concierge/probe") return structuredClone(whatStep("tryAnswers").answer) as never;
+      const next = whatStep(rowOfScope(json.scope).id);
+      if (!next || path !== next.post) throw new Error(`unrecorded POST ${path}`);
+      at = next;
+      return structuredClone(next.answer) as never;
+    }
+    return recordedGet(at.gets!, String(path).split("?")[0]) as never;
+  });
+  return sent;
+}
+
+const whatRow = (id: string) => screen.getByTestId(`runson-what-${id}`);
+
+describe("Engines — What runs where (Betterment E5)", () => {
+  it.each([1440, 393])("at %i Meeting summaries and Answers each take 2 presses; an inheriting row reads Everything else", async (px) => {
+    width(px);
+    const sent = whatHub();
+    render(<RunsOnCore />);
+    await screen.findByTestId("runson-what");
+    // The drag switchboard is parked behind Builder tools.
+    expect(screen.queryByTestId("runson-assignments")).toBeNull();
+    await waitFor(() => expect(within(whatRow("summaries")).getByTestId("runson-what-pick-summaries").textContent).toContain("Everything else"));
+    expect(within(whatRow("automations")).getByTestId("runson-what-pick-automations").textContent).toContain("Everything else");
+
+    // Meeting summaries → the stub server: two presses.
+    fireEvent.click(within(whatRow("summaries")).getByTestId("runson-what-pick-summaries"));
+    await act(async () => {
+      fireEvent.click(within(whatRow("summaries")).getByTestId("runson-what-option-summaries-engine-stub"));
+    });
+    expect(sent[0]).toEqual({ path: "/api/inference/assignments/set", json: expect.objectContaining({
+      scope: { kind: "capability", capability_id: "meeting.deferred_analysis" },
+      expected_revision: 0,
+      entries: [{ profile_id: "engine-stub", profile_revision: 1 }],
+    }) });
+    await waitFor(() => expect(within(whatRow("summaries")).getByTestId("runson-what-pick-summaries").textContent).not.toContain("Everything else"));
+    expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^SET \d\d:\d\d · Meeting summaries → stub fallback$/);
+
+    // Answers → Claude Code: two presses.
+    fireEvent.click(within(whatRow("answers")).getByTestId("runson-what-pick-answers"));
+    await act(async () => {
+      fireEvent.click(within(whatRow("answers")).getByTestId("runson-what-option-answers-agent-claude"));
+    });
+    expect(sent[1].json).toMatchObject({ scope: { kind: "capability", capability_id: "ask.answer" }, entries: [{ profile_id: "agent-claude", profile_revision: 1 }] });
+    await waitFor(() => expect(within(whatRow("answers")).getByTestId("runson-what-pick-answers").textContent).toContain("Claude Code"));
+    expect(within(whatRow("answers")).getByText("ANTHROPIC")).toBeTruthy();
+    expect(screen.getByTestId("runson-undo")).toBeTruthy();
+  });
+
+  it("Speech to text lists no agent and no chat server; Everything else lists no speech engine", async () => {
+    width(1440);
+    whatHub();
+    render(<RunsOnCore />);
+    await screen.findByTestId("runson-what");
+    fireEvent.click(await screen.findByTestId("runson-what-more"));
+    await waitFor(() => expect(within(whatRow("speech")).getByTestId("runson-what-pick-speech").hasAttribute("disabled")).toBe(false));
+    fireEvent.click(within(whatRow("speech")).getByTestId("runson-what-pick-speech"));
+    const options = within(whatRow("speech")).getByTestId("runson-what-options-speech");
+    expect(within(options).queryByTestId("runson-what-option-speech-agent-claude")).toBeNull();
+    expect(within(options).queryByTestId("runson-what-option-speech-engine-stub")).toBeNull();
+    fireEvent.click(within(whatRow("default")).getByTestId("runson-what-pick-default"));
+    const defaults = within(whatRow("default")).getByTestId("runson-what-options-default");
+    expect(within(defaults).getAllByRole("button").map((b) => b.getAttribute("data-testid"))).toEqual([
+      "runson-what-option-default-agent-claude", "runson-what-option-default-engine-stub",
+    ]);
+  });
+
+  it("Try it under Answers shows the answer in words under the row", async () => {
+    width(1440);
+    const sent = whatHub();
+    render(<RunsOnCore />);
+    await screen.findByTestId("runson-what");
+    fireEvent.click(await within(whatRow("answers")).findByTestId("runson-what-pick-answers"));
+    await act(async () => {
+      fireEvent.click(within(whatRow("answers")).getByTestId("runson-what-option-answers-agent-claude"));
+    });
+    await waitFor(() => expect(within(whatRow("answers")).getByTestId("runson-what-pick-answers").textContent).toContain("Claude Code"));
+    await act(async () => {
+      fireEvent.click(within(whatRow("answers")).getByTestId("runson-what-try-answers"));
+    });
+    const probe = sent.find((s) => s.path === "/api/concierge/probe")!;
+    expect(probe.json).toMatchObject({ task: true, capabilityId: "ask.answer", confirmOffMachine: true, expectedProfileIds: ["agent-claude"] });
+    await waitFor(() => expect(screen.getByTestId("runson-what-state-answers").textContent).toMatch(/^Completed · /));
+    expect(screen.getByTestId("runson-what-output-answers").textContent).toBeTruthy();
+  });
+
+  it("Undo in the foot writes the row back", async () => {
+    width(1440);
+    const sent = whatHub();
+    render(<RunsOnCore />);
+    await screen.findByTestId("runson-what");
+    fireEvent.click(await within(whatRow("summaries")).findByTestId("runson-what-pick-summaries"));
+    await act(async () => {
+      fireEvent.click(within(whatRow("summaries")).getByTestId("runson-what-option-summaries-engine-stub"));
+    });
+    // The recorded hub has no Undo answer: the clear it sends is the proof.
+    vi.mocked(apiFetch).mockImplementationOnce(async (path: string, init?: { json?: unknown }) => {
+      sent.push({ path, json: (init?.json ?? {}) as Record<string, unknown> });
+      return { revision: 2 } as never;
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("runson-undo"));
+    });
+    expect(sent[sent.length - 1]).toEqual({ path: "/api/inference/assignments/clear", json: expect.objectContaining({
+      scope: { kind: "capability", capability_id: "meeting.deferred_analysis" },
+      capability_id: "meeting.deferred_analysis",
+      expected_revision: 1,
+    }) });
   });
 });

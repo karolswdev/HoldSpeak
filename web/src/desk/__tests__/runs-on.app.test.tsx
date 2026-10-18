@@ -17,6 +17,7 @@
 
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { useBuilderTools } from "../builderTools";
 
 vi.mock("../shell", () => ({ openSurfaceOr: vi.fn() }));
 
@@ -639,4 +640,13 @@ describe("Runs on — Anthropic is a service, never a NOT SUPPORTED YET dead end
       spy.mockRestore();
     }
   });
+});
+
+// Betterment E5 (DECISIONS #8): the drag switchboard these tests drive is
+// parked behind Builder tools; What runs where is engines.app.test.tsx.
+beforeEach(() => {
+  useBuilderTools.getState().setOn(true);
+});
+afterEach(() => {
+  useBuilderTools.getState().setOn(false);
 });

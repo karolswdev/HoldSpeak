@@ -209,6 +209,63 @@ def test_token_budget_plus_one_refuses_without_attempt(tmp_path: Path) -> None:
             INFERENCE_FALLBACK_AUTHORITY, command_id="reserve-over", execution_id=execution["id"]
         )
     assert exhausted.value.code == "inference_route_token_budget_exhausted"
+
+
+def _big_context_plan(db: Database, *, total_tokens: int, context: int = 49_152) -> tuple[str, object]:
+    """One leg on an engine whose real context (49,152) is above the job's
+    32,768 policy budget (Betterment E5, FOLLOWUPS E3)."""
+    _profile(db, "route-big", context_ceiling=context)
+    with db._connection() as conn:
+        conn.execute("UPDATE model_profile_readiness_observations SET state='ready'")
+    InferenceAssignmentService(db).set_assignment(OWNER, {
+        "command_id": "assign-big-route", "expected_revision": 0,
+        "scope": {"kind": "capability", "capability_id": "ask.answer"},
+        "entries": [{"profile_id": "route-big", "profile_revision": 1}],
+    })
+    ids = {
+        "admitted_request_id": "request:big", "admitted_request_sha256": _digest({"request": "big"}),
+        "context_plan_sha256": _digest({"context": "big"}), "serialized_request_sha256": _digest({"serialized": "big"}),
+    }
+    service = _evidence_service(
+        db, reference="big-evidence",
+        entries=[{"route_leg_ordinal": 1, "eligibility": "executable", "reason_code": None, **ids}],
+        budgets=[{"route_leg_ordinal": 1, **ids, "input_tokens": total_tokens, "reserved_output_tokens": 0,
+                  "total_tokens": total_tokens, "reserved_cost_units": 0, "reserved_tool_calls": 0}],
+    )
+    frozen = service.freeze_one_shot(
+        ROUTE_PLANNING_AUTHORITY, command_id="freeze-big", route_request={"capability_id": "ask.answer"},
+        operation_id="big-operation", planning_reference="big-evidence",
+    )
+    return str(frozen["operation_request_plan"]["id"]), service
+
+
+def test_the_token_budget_follows_the_engines_real_context(tmp_path: Path) -> None:
+    """A 40,000-token request on a 49,152 engine is not refused by the
+    32,768 policy budget; the engine's own context is the limit."""
+    db = Database(tmp_path / "reserve-big-context.db")
+    operation_plan_id, route_service = _big_context_plan(db, total_tokens=40_000)
+    controller = InferenceFallbackController(db, route_plan_service=route_service)
+    execution = controller.start_execution(
+        INFERENCE_FALLBACK_AUTHORITY, command_id="start-big", operation_plan_id=operation_plan_id
+    )
+    reserved = controller.reserve_next_attempt(
+        INFERENCE_FALLBACK_AUTHORITY, command_id="reserve-big", execution_id=execution["id"]
+    )
+    assert reserved["reservation"]["route_leg_ordinal"] == 1
+
+
+def test_past_the_engines_real_context_the_budget_still_refuses(tmp_path: Path) -> None:
+    db = Database(tmp_path / "reserve-past-context.db")
+    operation_plan_id, route_service = _big_context_plan(db, total_tokens=49_153)
+    controller = InferenceFallbackController(db, route_plan_service=route_service)
+    execution = controller.start_execution(
+        INFERENCE_FALLBACK_AUTHORITY, command_id="start-past", operation_plan_id=operation_plan_id
+    )
+    with pytest.raises(ConflictError) as exhausted:
+        controller.reserve_next_attempt(
+            INFERENCE_FALLBACK_AUTHORITY, command_id="reserve-past", execution_id=execution["id"]
+        )
+    assert exhausted.value.code == "inference_route_token_budget_exhausted"
     with db._connection() as conn:
         assert conn.execute("SELECT COUNT(*) FROM inference_route_attempts").fetchone()[0] == 0
 

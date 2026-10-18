@@ -236,7 +236,8 @@ def test_codex_answers_from_its_json_events(fake_bin: Path, egress: list) -> Non
 def test_a_cli_past_its_timeout_is_killed(fake_bin: Path, egress: list, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setitem(PRESETS, "claude", dataclasses.replace(PRESETS["claude"], timeout_seconds=3.0))
     set_mode(fake_bin, "claude", "sleep")
-    with pytest.raises(ProviderKnownNoGenerationTransient):
+    # Betterment E5: a timeout is not retried (permanent: the chain falls back).
+    with pytest.raises(ProviderPermanentNoGeneration):
         CliEngine.from_endpoint("cli:claude").run_prompt(user_prompt="Hi")
     assert process_gone(calls(fake_bin, "claude")[0]["pid"])
 
