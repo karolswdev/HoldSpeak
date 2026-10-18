@@ -2,9 +2,11 @@
 from __future__ import annotations
 
 import json
+import re
 import uuid
 from dataclasses import dataclass, replace
 from datetime import date, timedelta
+from holdspeak.due_dates import meeting_anchor, stored_due
 from holdspeak.timestamps import parse_stamp, utc_now_iso
 from typing import Any, Protocol
 
@@ -133,6 +135,7 @@ class PeopleCommitmentProjection(Protocol):
 
 _TERMINAL_STATES = {"done", "dismissed", "closed", "killed"}
 _LANES = ("now", "waiting", "unassigned", "overdue")
+_ISO_DAY = re.compile(r"^\d{4}-\d{2}-\d{2}")
 
 
 @observe_service
@@ -210,11 +213,17 @@ class FollowThroughService:
             # back until the stamp passes, its To review card included.
             if str(action["id"]) in deferred and not focused:
                 continue
+            # Betterment D0: a row stored before the said due was resolved
+            # ("Wednesday") is read against its meeting's day here, so the
+            # lane uses a date.
+            due = action["due"]
+            if due and not _ISO_DAY.match(str(due)):
+                due = stored_due(due, meeting_anchor(action["meeting_started_at"]))[0]
             card = FollowThroughCard(
                 id=str(action["id"]),
                 text=str(action["task"]),
                 owner=action["owner"],
-                due=self._date_text(action["due"]),
+                due=self._date_text(due),
                 status=status,
                 meeting_id=action["meeting_id"],
                 decision_id=action["decision_id"],
@@ -222,7 +231,7 @@ class FollowThroughService:
                 source="action_item",
                 lane=self._lane(
                     action["owner"],
-                    action["due"],
+                    due,
                     status,
                     today,
                     review_state=action["review_state"],
@@ -776,7 +785,7 @@ class FollowThroughService:
     @staticmethod
     def _action_rows(conn: Any, *, project_id: str | None, owner: str | None) -> list[Any]:
         query = (
-            "SELECT a.*, dc.decision_id FROM action_items a "
+            "SELECT a.*, dc.decision_id, m.started_at AS meeting_started_at FROM action_items a "
             "LEFT JOIN decision_commitments dc ON dc.action_item_id = a.id "
             "LEFT JOIN meetings m ON m.id = a.meeting_id"
         )

@@ -748,7 +748,8 @@ def test_an_unreadable_roster_is_the_unknown_blocker_and_the_answer_is_incomplet
 
     monkeypatch.setattr(membership, "_read_assignments", roster_unreadable)
     answer = _needs(hub)
-    assert answer["blockers"] == [{"key": "unknown", "label": "Could not read setup", "verb": "Try again"}]
+    assert answer["blockers"] == [
+        {"key": "unknown", "label": "Could not read setup", "verb": "Try again", "direction": "setup"}]
     assert {"ref": "blocker:unknown", "kind": "blocker"} in answer["members"]
     assert "assignments" in answer["sourceErrors"]
     assert answer["complete"] is False
@@ -774,3 +775,57 @@ def test_a_rooms_meeting_actions_are_its_open_rows_with_owner_unknown(hub: Hub) 
             "action_item", "OWNER · UNKNOWN", "open", None), row
     assert rows["Write the rollback runbook"]["action_item_id"] == "m-standup-a1"
     assert rows["Pilot OTel in billing"]["action_item_id"] == "m-arch-a1"
+
+
+# ── Betterment daily D0: every row knows its direction, its person and its date ──
+
+
+def test_every_row_knows_its_direction_its_person_and_its_date(hub: Hub) -> None:
+    """On the recon's week after the nine keeps: mine, theirs and decide come
+    apart, each row names its Person, and every said due is a date."""
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from tests.fixtures.daily_week import seed
+
+    people = seed(hub)
+    names = {rid: name for name, rid in people.items()}
+    answer = _needs(hub)
+    rows = {
+        row["title"]: (row["direction"], names.get(row["person_id"], row["person_id"]), row.get("dueAt"))
+        for row in answer["items"]
+    }
+    assert rows == {
+        "Draft the rollback runbook": ("theirs", "Mira", "2026-10-20"),
+        "Profile the reconciliation job": ("theirs", "Theo", "2026-10-23"),
+        "Write up alert rule changes": ("theirs", "Theo", "2026-10-22"),
+        "Confirm the vendor freeze dates": ("theirs", "Jun", "2026-10-16"),
+        "Load-test the dedupe key path": ("theirs", "Jun", "2026-10-23"),
+        "Email Dana about the cutover window": ("mine", "", "2026-10-19"),
+        "Review design doc on settlement retries": ("mine", "Theo", "2026-10-19"),
+        "Do it": ("decide", "", None),
+        "Talk about the staff path in our next one-on-one": ("decide", "", None),
+    }
+    assert {b["direction"] for b in answer["blockers"]} <= {"setup"}
+    # The said words stay beside the date.
+    with hub.db._connection() as conn:
+        said = dict(conn.execute("SELECT task, due_said FROM action_items").fetchall())
+    assert said["Profile the reconciliation job"] == "Friday next week"
+    assert said["Confirm the vendor freeze dates"] == "this week"
+
+
+def test_a_row_stored_with_words_still_gets_a_lane_from_its_meeting_day(hub: Hub) -> None:
+    """A row written before D0 (its due still "Monday") is read against its
+    meeting's day, so it is due soon instead of waiting forever."""
+    start = datetime.now().replace(hour=9, minute=0, second=0, microsecond=0) - timedelta(days=1)
+    weekday = (start + timedelta(days=1)).strftime("%A")  # today's name, said yesterday
+    with hub.db._connection() as conn:
+        conn.execute(
+            "INSERT INTO meetings (id, started_at, title, intel_status, capture_status, provenance) "
+            "VALUES ('m-legacy', ?, 'Legacy', 'complete', 'finalized', 'desktop')", (start.isoformat(),))
+        conn.execute(
+            "INSERT INTO action_items (id, meeting_id, task, owner, due, status, review_state, created_at) "
+            "VALUES ('ai-legacy', 'm-legacy', 'Send the legacy note', 'Me', ?, 'open', 'accepted', ?)",
+            (weekday, start.isoformat()))
+        conn.commit()
+    row = next(r for r in _needs(hub)["items"] if r["title"] == "Send the legacy note")
+    assert row["dueAt"] == (start + timedelta(days=1)).date().isoformat(), row
+    assert row["why"] == "DUE TODAY" and row["direction"] == "mine", row

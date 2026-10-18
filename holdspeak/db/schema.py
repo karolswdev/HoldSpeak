@@ -121,7 +121,10 @@ CREATE TABLE IF NOT EXISTS action_items (
     completed_at TEXT,
     delegated_at TEXT,
     source_type TEXT NOT NULL DEFAULT 'meeting',
-    source_ref TEXT NOT NULL DEFAULT ''
+    source_ref TEXT NOT NULL DEFAULT '',
+    -- Betterment D0: the due as the meeting said it ("Friday next week");
+    -- `due` holds the ISO day it names, read against the meeting's date.
+    due_said TEXT
 );
 
 -- Topics extracted from meetings
