@@ -1,0 +1,6 @@
+exec(open("steps/lib.py").read())
+close_all(page, wait)
+page.locator(".desk-mark").first.click(); wait(0.5)
+page.get_by_role("menuitem", name="Settings").first.click(); wait(2.5)
+b = page.get_by_role("button", name="Open Wallpaper"); b.first.scroll_into_view_if_needed(); b.first.click(); wait(2.5)
+shot("55-settings-wallpaper"); text('[role="region"][aria-label^="Settings"]', 2000); print(boxes(page))

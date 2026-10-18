@@ -1,0 +1,11 @@
+import time
+page.get_by_role("button", name="Search").first.click()
+wait(1); page.keyboard.type("Cutover risks"); wait(2); page.keyboard.press("Enter"); wait(4)
+page.get_by_text("More", exact=True).last.click(); wait(1.5)
+shot("12-thought-more-menu")
+text("[role=menu]", 600)
+page.get_by_text("Send", exact=True).last.click()
+t=time.time(); page.locator("[data-testid=prepared-row]").first.wait_for(timeout=15000); print("prepared", round(time.time()-t,1)); wait(1)
+shot("12-note-send-prepared")
+page.locator("[data-testid=prepared-send]").first.scroll_into_view_if_needed(); wait(0.5)
+shot("12-note-prepared-open")

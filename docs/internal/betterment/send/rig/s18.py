@@ -1,0 +1,17 @@
+import time
+page.mouse.dblclick(505, 80); wait(3)
+page.get_by_text("Object", exact=True).first.click(); wait(1.5)
+shot("18-meeting-object-menu")
+text("body", 200)
+items = page.locator("[role=menuitem]")
+print([items.nth(i).inner_text()[:40] for i in range(items.count())])
+st = page.locator("[role=menuitem]").filter(has_text="Send to")
+print("send to", st.count())
+if st.count():
+    st.first.hover(); wait(1.5); shot("18-meeting-object-send-to")
+    items = page.locator("[role=menuitem]"); print([items.nth(i).inner_text()[:40] for i in range(items.count())])
+t=time.time()
+page.locator("[role=menuitem]").filter(has_text="PAY-12 ticket").first.click(); wait(3)
+print("pick", round(time.time()-t,1))
+shot("18-send-to-picked")
+text("[data-testid=meeting-send-well]", 1200)

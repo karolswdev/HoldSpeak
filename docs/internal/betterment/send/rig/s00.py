@@ -1,0 +1,6 @@
+shot("00-desk-first-open")
+text("body", 1500)
+b = page.get_by_role("button", name="Continue later")
+if b.count(): b.first.click(); wait(2)
+shot("00-desk-after-continue")
+text("body", 1500)

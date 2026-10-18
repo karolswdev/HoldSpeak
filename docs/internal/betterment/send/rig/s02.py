@@ -1,0 +1,10 @@
+import time
+page.mouse.dblclick(505, 80); wait(3)
+shot("01-meeting-open")
+t=time.time()
+page.get_by_role("button", name="Send", exact=True).last.click(); wait(3)
+print("send press", round(time.time()-t,1))
+shot("02-meeting-send-open")
+text("[data-testid=meeting-send-well]", 4000)
+page.locator("[data-testid=meeting-send-well]").first.scroll_into_view_if_needed(); wait(1)
+shot("02-meeting-send-well")

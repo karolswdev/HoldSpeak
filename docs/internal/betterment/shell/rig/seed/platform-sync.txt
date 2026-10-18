@@ -1,0 +1,9 @@
+Karol: Morning. Platform sync. Ledger migration first.
+Mira: The cutover design doc is done. I need feedback from Karol by Friday.
+Karol: I will review it by Friday.
+Theo: The rollback runbook is not written yet. I will write it by Tuesday.
+Jun: Load tests on the new ledger pass at 2x peak. I will share the report on Monday.
+Karol: Decision: we freeze the old ledger on November 5. No new writes after that date.
+Mira: Agreed. I will tell the payments team.
+Karol: Theo, please also check the on-call rota for the cutover week.
+Theo: Yes, I will update the rota by Thursday.

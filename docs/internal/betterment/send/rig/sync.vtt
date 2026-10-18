@@ -1,0 +1,19 @@
+WEBVTT
+
+00:00:01.000 --> 00:00:09.000
+<v Karol>Okay, payments platform sync. Main topic is the ledger cutover. Mira, where are we on the rollback plan?
+
+00:00:09.500 --> 00:00:20.000
+<v Mira>The dual-write is on in staging. I still need to write the rollback runbook. I can have it by Tuesday.
+
+00:00:20.500 --> 00:00:31.000
+<v Theo>The reconciliation job is slow. It takes forty minutes on the full ledger. I will profile it before Thursday.
+
+00:00:31.500 --> 00:00:42.000
+<v Jun>Alerts are noisy. Half the pages last week were the retry storm. I will write up the alert rule changes this week.
+
+00:00:42.500 --> 00:00:55.000
+<v Karol>Good. Decision: we freeze schema changes on the ledger tables until the cutover is done. Everyone agree? Okay, frozen.
+
+00:00:55.500 --> 00:01:05.000
+<v Karol>I owe the VP a status on Friday. I will send the team update after this. Cutover target stays the twenty-eighth.

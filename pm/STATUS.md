@@ -4,23 +4,19 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-17 (betterment designs: Automations and Engines; #1248 key-scope fix)
+**Last updated:** 2026-10-17 (betterment: all clusters designed; DECISIONS.md; #1253)
 
 ## Current phase
 
-**Betterment: design documents that become recipes (owner, 2026-10-17).** The
-orchestrator now writes job-first designs for existing features before any
-build. Format: `docs/internal/betterment/README.md`. First two, drafts for
-the owner:
+**Betterment: every cluster designed (owner, 2026-10-17).** The master plan
+`docs/internal/betterment/PLAN.md` covers all 45 features in 10 clusters
+under one product model. Eleven job-first designs, each with a live walk,
+code map and recipe, are on main. Every owner decision is on one page:
+`docs/internal/betterment/DECISIONS.md` (38, each with a default). Truth-fix
+slices that need no decision start at once.
 
-- **Automations** (today "Workbench"): `docs/internal/betterment/workbench/`
-  (DESIGN, RECIPE A0-A10, RECON with 88 shots, MODEL). One automation = When /
-  Do / About / With / Put it in; each run makes one result.
-- **Engines**: `docs/internal/betterment/engines/` (DESIGN, RECIPE E0-E7,
-  MODEL). Adds agent CLIs (Claude Code, Codex, pi, Gemini) as engines, named
-  service tiles with a model picker, and a "What runs where" list.
-
-Open owner decisions: three in each DESIGN §5, each with a default.
+**#1253 merged:** Draft update no longer freezes the hub (model call off the
+event loop) and a failure says why in the Room, with Try again.
 
 **#1248 merged:** `/api/setup/discover-models` sends the environment
 `OPENAI_API_KEY` only to `https://api.openai.com` (found by the Engines map).

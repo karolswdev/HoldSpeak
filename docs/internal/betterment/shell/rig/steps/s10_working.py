@@ -1,0 +1,6 @@
+b = page.get_by_role("button", name="Continue later")
+if b.count(): b.first.click(); wait(2)
+shot("10-working-desk-seeded")
+labels = page.locator(".desk-icon-name, [class*='icon'] [class*='label'], [class*='IconLabel']").all_inner_texts()
+print("LABELS", labels[:50])
+text("main, body", 2000)

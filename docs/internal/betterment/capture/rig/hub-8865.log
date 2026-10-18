@@ -1,0 +1,395 @@
+REPO_ROOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.KYvtjosVq9/repos/platform
+DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.KYvtjosVq9/.local/share/holdspeak/holdspeak.db
+CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.KYvtjosVq9/.config/holdspeak/config.json
+SCHEDULER heartbeat conductor thread started (HeartbeatMixin._heartbeat_loop, TICK_SECONDS=60)
+WIRING {"has": ["MeetingWebServer routes", "isolated tmux socket directory", "the database owner lock (port published)", "a deterministic transcription double at the transcribe seam", "the intelligence queue drainer", "the heartbeat conductor loop"], "lacks": ["AudioRecorder (the microphone is forbidden to this rig)", "HotkeyListener (no native keystrokes)", "voice_session / device registry", "transcriber warm-up", "the deferred plugin-queue thread", "the Cadence Engine tick", "a CLI process edge (no recording runner requested; gh and acli are never run)", "the brief producer clock seam (not requested; the wall clock)"]}
+HUB_READY http://127.0.0.1:8865
+intent-router classify failed: holdspeak.dictation-intent-classify:cancelled
+intent-router classify failed: holdspeak.dictation-intent-classify:cancelled
+intent-router classify failed: holdspeak.dictation-intent-classify:failed
+intent-router classify failed: holdspeak.dictation-intent-classify:failed
+Exception in ASGI application
+  + Exception Group Traceback (most recent call last):
+  |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/_utils.py", line 79, in collapse_excgroups
+  |     yield
+  |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 192, in __call__
+  |     async with anyio.create_task_group() as task_group:
+  |                ^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 783, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/uvicorn/protocols/http/httptools_impl.py", line 416, in run_asgi
+    |     result = await app(  # type: ignore[func-returns-value]
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+    |     return await self.app(scope, receive, send)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/fastapi/applications.py", line 1135, in __call__
+    |     await super().__call__(scope, receive, send)
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/applications.py", line 107, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    |     raise exc
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 191, in __call__
+    |     with recv_stream, send_stream, collapse_excgroups():
+    |                                    ^^^^^^^^^^^^^^^^^^^^
+    |   File "/opt/homebrew/Cellar/python@3.12/3.12.12/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 158, in __exit__
+    |     self.gen.throw(value)
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/_utils.py", line 85, in collapse_excgroups
+    |     raise exc
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 193, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/holdspeak/web/announce.py", line 157, in _announce_writes
+    |     response = await call_next(request)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 168, in call_next
+    |     raise app_exc from app_exc.__cause__ or app_exc.__context__
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 144, in coro
+    |     await self.app(scope, receive_or_disconnect, send_no_error)
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 191, in __call__
+    |     with recv_stream, send_stream, collapse_excgroups():
+    |                                    ^^^^^^^^^^^^^^^^^^^^
+    |   File "/opt/homebrew/Cellar/python@3.12/3.12.12/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 158, in __exit__
+    |     self.gen.throw(value)
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/_utils.py", line 85, in collapse_excgroups
+    |     raise exc
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 193, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/holdspeak/web_server.py", line 941, in _web_auth_gate
+    |     return await call_next(request)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 168, in call_next
+    |     raise app_exc from app_exc.__cause__ or app_exc.__context__
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 144, in coro
+    |     await self.app(scope, receive_or_disconnect, send_no_error)
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    |     raise exc
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    |     await self.app(scope, receive, send)
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+    |     await route.handle(scope, receive, send)
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+    |     await self.app(scope, receive, send)
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 115, in app
+    |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    |     raise exc
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 101, in app
+    |     response = await f(request)
+    |                ^^^^^^^^^^^^^^^^
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 355, in app
+    |     raw_response = await run_endpoint_function(
+    |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 243, in run_endpoint_function
+    |     return await dependant.call(**values)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/holdspeak/web/routes/calendar_snapshot.py", line 183, in confirm_snapshot
+    |     resolved = resolve_events_to_timestamps(events, anchor_monday)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/holdspeak/services/calendar_snapshot_service.py", line 260, in resolve_events_to_timestamps
+    |     day_offset = WEEKDAY_MAP[event.weekday]
+    |                  ~~~~~~~~~~~^^^^^^^^^^^^^^^
+    | KeyError: 'Saturday'
+    +------------------------------------
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/uvicorn/protocols/http/httptools_impl.py", line 416, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/fastapi/applications.py", line 1135, in __call__
+    await super().__call__(scope, receive, send)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 191, in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.12/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/_utils.py", line 85, in collapse_excgroups
+    raise exc
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/holdspeak/web/announce.py", line 157, in _announce_writes
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 191, in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.12/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/_utils.py", line 85, in collapse_excgroups
+    raise exc
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/holdspeak/web_server.py", line 941, in _web_auth_gate
+    return await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 115, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 101, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 355, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 243, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/holdspeak/web/routes/calendar_snapshot.py", line 183, in confirm_snapshot
+    resolved = resolve_events_to_timestamps(events, anchor_monday)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/holdspeak/services/calendar_snapshot_service.py", line 260, in resolve_events_to_timestamps
+    day_offset = WEEKDAY_MAP[event.weekday]
+                 ~~~~~~~~~~~^^^^^^^^^^^^^^^
+KeyError: 'Saturday'
+Exception in ASGI application
+  + Exception Group Traceback (most recent call last):
+  |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/_utils.py", line 79, in collapse_excgroups
+  |     yield
+  |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 192, in __call__
+  |     async with anyio.create_task_group() as task_group:
+  |                ^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 783, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/uvicorn/protocols/http/httptools_impl.py", line 416, in run_asgi
+    |     result = await app(  # type: ignore[func-returns-value]
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+    |     return await self.app(scope, receive, send)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/fastapi/applications.py", line 1135, in __call__
+    |     await super().__call__(scope, receive, send)
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/applications.py", line 107, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    |     raise exc
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 191, in __call__
+    |     with recv_stream, send_stream, collapse_excgroups():
+    |                                    ^^^^^^^^^^^^^^^^^^^^
+    |   File "/opt/homebrew/Cellar/python@3.12/3.12.12/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 158, in __exit__
+    |     self.gen.throw(value)
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/_utils.py", line 85, in collapse_excgroups
+    |     raise exc
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 193, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/holdspeak/web/announce.py", line 157, in _announce_writes
+    |     response = await call_next(request)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 168, in call_next
+    |     raise app_exc from app_exc.__cause__ or app_exc.__context__
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 144, in coro
+    |     await self.app(scope, receive_or_disconnect, send_no_error)
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 191, in __call__
+    |     with recv_stream, send_stream, collapse_excgroups():
+    |                                    ^^^^^^^^^^^^^^^^^^^^
+    |   File "/opt/homebrew/Cellar/python@3.12/3.12.12/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 158, in __exit__
+    |     self.gen.throw(value)
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/_utils.py", line 85, in collapse_excgroups
+    |     raise exc
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 193, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/holdspeak/web_server.py", line 941, in _web_auth_gate
+    |     return await call_next(request)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 168, in call_next
+    |     raise app_exc from app_exc.__cause__ or app_exc.__context__
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 144, in coro
+    |     await self.app(scope, receive_or_disconnect, send_no_error)
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    |     raise exc
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    |     await self.app(scope, receive, send)
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+    |     await route.handle(scope, receive, send)
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+    |     await self.app(scope, receive, send)
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 115, in app
+    |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    |     raise exc
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 101, in app
+    |     response = await f(request)
+    |                ^^^^^^^^^^^^^^^^
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 355, in app
+    |     raw_response = await run_endpoint_function(
+    |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 243, in run_endpoint_function
+    |     return await dependant.call(**values)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/holdspeak/web/routes/calendar_snapshot.py", line 183, in confirm_snapshot
+    |     resolved = resolve_events_to_timestamps(events, anchor_monday)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/holdspeak/services/calendar_snapshot_service.py", line 260, in resolve_events_to_timestamps
+    |     day_offset = WEEKDAY_MAP[event.weekday]
+    |                  ~~~~~~~~~~~^^^^^^^^^^^^^^^
+    | KeyError: 'Monday'
+    +------------------------------------
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/uvicorn/protocols/http/httptools_impl.py", line 416, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/fastapi/applications.py", line 1135, in __call__
+    await super().__call__(scope, receive, send)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 191, in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.12/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/_utils.py", line 85, in collapse_excgroups
+    raise exc
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/holdspeak/web/announce.py", line 157, in _announce_writes
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 191, in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.12/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/_utils.py", line 85, in collapse_excgroups
+    raise exc
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/holdspeak/web_server.py", line 941, in _web_auth_gate
+    return await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 115, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 101, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 355, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 243, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/holdspeak/web/routes/calendar_snapshot.py", line 183, in confirm_snapshot
+    resolved = resolve_events_to_timestamps(events, anchor_monday)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/holdspeak/services/calendar_snapshot_service.py", line 260, in resolve_events_to_timestamps
+    day_offset = WEEKDAY_MAP[event.weekday]
+                 ~~~~~~~~~~~^^^^^^^^^^^^^^^
+KeyError: 'Monday'
+Exception in thread sr-countdown-sr_57a41788c0da:
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.12/3.12.12/Frameworks/Python.framework/Versions/3.12/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/opt/homebrew/Cellar/python@3.12/3.12.12/Frameworks/Python.framework/Versions/3.12/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/holdspeak/scheduled_recording_conductor.py", line 559, in _countdown_then_fire
+    self._countdown_then_fire_body(db, schedule_id, fire_at, cancel_event)
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/holdspeak/scheduled_recording_conductor.py", line 610, in _countdown_then_fire_body
+    floor_owner = self._voice_floor_fn()
+                  ^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/karol/dev/tools/wt-daily-delight-delivery-20261017/holdspeak/web_server.py", line 1751, in <lambda>
+    voice_floor_fn=lambda: self.voice_session.active_owner
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'active_owner'

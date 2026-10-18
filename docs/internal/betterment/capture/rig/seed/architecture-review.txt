@@ -1,0 +1,12 @@
+Me: Architecture review. One topic: idempotent retries for payment requests. Jun wrote the options page.
+Jun: Option A: the client sends a dedupe key with every payment request, and the gateway rejects a second request with the same key for twenty-four hours. Option B: a dedupe table on our server, keyed on merchant, amount and a time window.
+Mira: Option B guesses. Two real payments of the same amount within the window would be blocked. I don't like guessing with money.
+Theo: Option A needs every client to change. We have four clients. The mobile client releases every two weeks.
+Jun: The gateway already supports an idempotency key header. We only need the clients to send it.
+Me: Then the decision is: we adopt idempotent retries with a client dedupe key, option A. We do not build the server dedupe table.
+Mira: Agreed.
+Theo: Agreed. I'll update the reconciliation job to read the key.
+Me: Jun, please write the ADR for this by Wednesday.
+Jun: Will do.
+Mira: Rollout. I suggest web client first, then the mobile client in the release after next.
+Me: Okay. Mira owns the rollout plan. And we should tell the support team that duplicate charges will stop after the mobile release. I'll write the stakeholder update.

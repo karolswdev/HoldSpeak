@@ -1,0 +1,6 @@
+Karol: Architecture review for the event bus.
+Jun: Proposal: move the audit events to the new bus.
+Theo: The risk is ordering. We need a sequence id on each event.
+Karol: Decision: we add a sequence id before we move the audit events.
+Jun: I will write the ADR by next Friday.
+Karol: I will ask the security team to review the ADR.
