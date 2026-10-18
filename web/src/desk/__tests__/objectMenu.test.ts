@@ -122,3 +122,62 @@ describe("PHILO-17: a window carries its object's verbs (off-desk kinds)", () =>
     expect(windowObjectEntry("pullout:persona:missing", vi.fn())).toBeNull();
   });
 });
+
+// ── Betterment shell S0: the menu bar's Object menu IS the right-click menu ──
+import { createElement } from "react";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { DeskMenuBar } from "../components/DeskMenuBar";
+import { withholdGhosts } from "../components/DeskMenu";
+import { objectByRef } from "../world";
+import type { Meeting } from "../../lib/primitives";
+
+vi.mock("../../runtime/RuntimeBus", () => ({
+  useRuntimeBus: () => ({ state: "offline", lastFrame: null, subscribe: () => () => undefined }),
+  useOptionalRuntimeBus: () => ({ state: "offline", lastFrame: null, subscribe: () => () => undefined }),
+}));
+
+describe("S0: menu bar and right-click show the same rows", () => {
+  const rightClick = (ref: string) =>
+    withholdGhosts(objectMenuEntries({ ref }))
+      .filter((e) => e.type === "item")
+      .map((e) => (e as Extract<WorkMenuEntry, { type: "item" }>).label);
+  const menuBar = (title: string) => {
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(`^${title}$`) }), { detail: 0 });
+    const menu = screen.getByRole("menu", { name: `${title} menu` });
+    return Array.from(menu.querySelectorAll("[role^=menuitem] .desk-menu-label"), (e) => e.textContent?.trim());
+  };
+  beforeEach(() => {
+    useDesk.setState({
+      items: {
+        ...EMPTY_ITEMS,
+        note: [{ kind: "note", id: "n1", title: "Release checklist" } as Note],
+        meeting: [{ kind: "meeting", id: "m1", title: "Platform sync" } as Meeting],
+        project: [{ kind: "project", id: "p1", name: "Ledger migration" } as Project],
+      },
+      panelOrder: [],
+      panelMin: [],
+    } as never);
+  });
+
+  it.each([
+    ["note:n1", "Note"],
+    ["meeting:m1", "Meeting"],
+    ["project:p1", "Project"],
+  ])("%s: the %s menu equals its right-click menu", (ref, title) => {
+    useDesk.setState({ selectedIds: [ref] });
+    render(createElement(DeskMenuBar));
+    const rows = rightClick(ref);
+    expect(rows.length).toBeGreaterThan(0);
+    expect(menuBar(title)).toEqual(rows);
+  });
+
+  it("a person the desk does not hold as an object: neither face offers a menu", () => {
+    // The floor's right-click opens no menu for a ref objectByRef cannot
+    // resolve (screen/Screen.tsx openMenu); the menu bar draws no title.
+    useDesk.setState({ selectedIds: ["people:mira"] });
+    expect(objectByRef(useDesk.getState().items, "people:mira")).toBeNull();
+    render(createElement(DeskMenuBar));
+    expect(screen.queryByRole("button", { name: /^Person$/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Object$/ })).toBeNull();
+  });
+});

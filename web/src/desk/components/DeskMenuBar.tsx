@@ -1,7 +1,9 @@
 // HS-105-05 — the menu bar: the browsable face of the ONE verb registry.
 // Menus derive from verbRegistry (never hardcode a verb here — the guard
-// census enforces it); a verb that cannot run now is GHOSTED with its
-// reason, never hidden: the system admits what it can do.
+// census enforces it). Betterment shell S0 (UX-CANON A.11, "withhold, never
+// ghost"): a verb that cannot run now is not drawn. The Object menu is the
+// right-click menu of the thing in front (objectMenuEntries), titled by its
+// kind, and is not drawn when nothing is in front.
 // HS-111-07 — dropdowns render through the WorkMenu portal: inside the
 // chrome cluster they inherited the z-30 stacking context and windows
 // (z-42) covered open menus. The OS's own voice draws OVER the programs
@@ -22,8 +24,10 @@ import {
   type VerbContext,
 } from "../verbRegistry";
 import { openProjectRoom } from "../shell";
-import { KIND_GLYPH } from "../tools";
-import { WorkMenu, type WorkMenuEntry } from "./DeskMenu";
+import { KIND_GLYPH, KIND_LABEL } from "../tools";
+import { objectMenuEntries, windowObjectRef } from "../objectMenu";
+import { objectByRef } from "../world";
+import { WorkMenu, withholdGhosts, type WorkMenuEntry } from "./DeskMenu";
 import { useCompactViewport } from "../useCompactViewport";
 import { CHAIR_WINDOW_IDS } from "../chair/chairWindows";
 import {
@@ -34,8 +38,10 @@ import {
 import { Button } from "../../components/signal/Signal";
 import { frontSendTo, primeSendTo, useSendToTick } from "../windowSend";
 import {
+  closeFrontWindow,
   focusOrRestoreApp,
   frontWindowId,
+  openWindowCount,
   registrySnapshot,
   useAllOpenWindows,
 } from "./window/windowRegistry";
@@ -46,6 +52,37 @@ const MENUS: { id: MenuId; label: string }[] = [
   { id: "go", label: "Go" },
   { id: "window", label: "Window" },
 ];
+
+/** Betterment shell S0: the Object menu's title is the kind of the thing in
+ * front, in words. */
+const OBJECT_TITLE: Record<string, string> = {
+  note: "Note",
+  meeting: "Meeting",
+  people: "Person",
+  project: "Project",
+  decision: "Decision",
+  directory: "Drawer",
+};
+export function objectMenuTitle(kind: string): string {
+  return OBJECT_TITLE[kind] ?? KIND_LABEL[kind] ?? kind.charAt(0).toUpperCase() + kind.slice(1);
+}
+
+/** Betterment shell S0: the Object menu's target. The front window's object
+ * when the desk knows it, else the one selected icon, else none. `fromWindow`
+ * says the target is a window's, so its Delete closes that window first (the
+ * same rule as the window's own `Object ▸`). */
+export function menuBarObjectTarget(
+  frontId: string | null,
+  selectedIds: readonly string[],
+): { ref: string; kind: string; fromWindow: boolean } | null {
+  const items = useDesk.getState().items;
+  const fromWindow = windowObjectRef(frontId);
+  const ref = fromWindow ?? (selectedIds.length === 1 ? selectedIds[0] : null);
+  if (!ref) return null;
+  const object = objectByRef(items, ref);
+  if (!object) return null;
+  return { ref, kind: object.kind, fromWindow: Boolean(fromWindow) };
+}
 
 /** PHILO-15 11 (B21, owner ruling 2026-10-07) — Go at 393. Rehearsal 1A
  * counted 22 rows with ⌘ keycaps on a phone and nine New kinds. Go is now
@@ -186,6 +223,8 @@ export function DeskMenuBar() {
   const openerRef = useRef<HTMLElement | null>(null);
   const [at, setAt] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const selectedIds = useDesk((s) => s.selectedIds);
+  // S0: the Object menu's target resolves against the desk's objects.
+  useDesk((s) => s.items);
   // PHILO-15 11: the phone Go lists the projects.
   const projects = useDesk((s) => s.items.project);
   // The Window menu lists the open windows: re-render on a registry change
@@ -202,6 +241,28 @@ export function DeskMenuBar() {
   const ctx: VerbContext = {
     selectedRef: selectedIds.length === 1 ? selectedIds[0] : null,
   };
+  const objectTarget = menuBarObjectTarget(frontWindowId(), selectedIds);
+  // S0: the right-click rows of the thing in front; a Delete on a window's
+  // object closes that window first (the window's own Object ▸ rule).
+  const objectRows = objectTarget
+    ? withholdGhosts(objectMenuEntries({ ref: objectTarget.ref }).map((e) =>
+        objectTarget.fromWindow && e.type === "item" && e.id === "object.delete"
+          ? { ...e, onSelect: () => { closeFrontWindow(); e.onSelect(); } }
+          : e,
+      ))
+    : [];
+  const titles = MENUS.flatMap((m) =>
+    m.id !== "object"
+      ? [m]
+      : objectTarget && objectRows.length
+        ? [{ ...m, label: objectMenuTitle(objectTarget.kind) }]
+        : [],
+  );
+  // The Object menu closes when its target goes.
+  const objectShown = titles.some((m) => m.id === "object");
+  useEffect(() => {
+    if (open === "object" && !objectShown) setOpen(null);
+  }, [open, objectShown]);
   // The desktop dismissal rule (caught live by the 105-05 walk): an open
   // menu closes on ANY outside pointer-down and on Escape from anywhere.
   // (The WorkMenu panel guards its own inside; the bar guards its titles.)
@@ -232,8 +293,16 @@ export function DeskMenuBar() {
       if (sendTo) {
         if (out.length) out.push({ type: "sep", id: "sep-send-to-lead" });
         out.push(sendTo);
-        lastGroup = "send-to";   // the first verb opens its own group
       }
+      // S0: the same rows as the right-click menu of the thing in front.
+      if (sendTo && objectRows.length) out.push({ type: "sep", id: "sep-send-to" });
+      out.push(...objectRows);
+      return;
+    }
+    // S0: with no window open, the Window menu holds one line.
+    if (id === "window" && openWindowCount() === 0) {
+      out.push({ type: "note", id: "window-none", label: "No windows open" });
+      return;
     }
     // PHILO-13-11 (C1, slice two): a verb with a `submenu` rides in ONE
     // submenu of that name (Window ▸ Chair), at the place of its first verb.
@@ -310,7 +379,7 @@ export function DeskMenuBar() {
 
   return (
     <nav ref={barRef} className="desk-verbbar" aria-label="Desk menus">
-      {(compact ? MENUS.filter((m) => m.id === "go") : MENUS).map((m) => (
+      {(compact ? titles.filter((m) => m.id === "go") : titles).map((m) => (
         <span key={m.id} className="desk-verbbar-item" data-menu-id={m.id}>
           <Button
             variant="chrome"

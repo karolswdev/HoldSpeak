@@ -295,12 +295,12 @@ describe("Go at 393 is the owner's short list (PHILO-15 11, B21; supersedes C7 Q
     expect(within(menu).getByRole("menuitem", { name: /Note/ })).toBeInTheDocument();
   });
 
-  it("keeps all four menus flat at 1440 (the control)", () => {
+  it("keeps the menus flat at 1440 (the control; Object only with a thing in front, shell S0)", () => {
     compact = false;
     Object.defineProperty(window, "innerWidth", { configurable: true, value: 1440 });
     const { container } = render(<DeskMenuBar />);
     expect(Array.from(container.querySelectorAll("[data-menu-id]"), (e) => e.getAttribute("data-menu-id")))
-      .toEqual(["desk", "object", "go", "window"]);
+      .toEqual(["desk", "go", "window"]);
     fireEvent.click(screen.getByRole("button", { name: "Go" }), { detail: 0 });
     const menu = screen.getByRole("menu", { name: "Go menu" });
     expect(within(menu).queryByRole("menuitem", { name: /^Desk$/ })).toBeNull();

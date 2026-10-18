@@ -131,3 +131,53 @@ describe("dispatchKey runs registry verbs", () => {
     expect(dispatchKey(kd({ key: "9", metaKey: true }))).toBeNull();
   });
 });
+
+// ── Betterment shell S0: a key flashes the title of the menu its verb is in ──
+import { FLASH_MS, flashMenuTitle } from "../keymap";
+
+describe("S0: the menu title flashes when a key runs its verb", () => {
+  const bar = () => {
+    document.body.innerHTML =
+      '<nav class="desk-verbbar"><span class="desk-verbbar-item" data-menu-id="desk"><button class="desk-verbbar-title">Desk</button></span></nav>';
+    return document.querySelector(".desk-verbbar-title") as HTMLElement;
+  };
+  const motion = (reduce: boolean) =>
+    vi.stubGlobal("matchMedia", (query: string) => ({
+      matches: reduce && query.includes("reduce"), media: query,
+      addEventListener: () => {}, removeEventListener: () => {}, addListener: () => {}, removeListener: () => {},
+      onchange: null, dispatchEvent: () => false,
+    }));
+
+  it("⌃N runs New Note and flashes Desk once, for 120 ms", () => {
+    vi.useFakeTimers();
+    motion(false);
+    try {
+      const title = bar();
+      const verb = dispatchKey(new KeyboardEvent("keydown", { key: "n", ctrlKey: true, cancelable: true }));
+      expect(verb?.id).toBe("desk.new-note");
+      expect(title.classList.contains("is-flash")).toBe(true);
+      expect(FLASH_MS).toBe(120);
+      vi.advanceTimersByTime(FLASH_MS);
+      expect(title.classList.contains("is-flash")).toBe(false);
+    } finally {
+      vi.useRealTimers();
+      vi.unstubAllGlobals();
+      document.body.innerHTML = "";
+    }
+  });
+
+  it("no flash under reduced motion, and none for a verb with no menu", () => {
+    motion(true);
+    try {
+      const title = bar();
+      expect(flashMenuTitle("desk")).toBeNull();
+      expect(title.classList.contains("is-flash")).toBe(false);
+      motion(false);
+      expect(flashMenuTitle(undefined)).toBeNull();
+      expect(flashMenuTitle("desk")).toBe(title);
+    } finally {
+      vi.unstubAllGlobals();
+      document.body.innerHTML = "";
+    }
+  });
+});

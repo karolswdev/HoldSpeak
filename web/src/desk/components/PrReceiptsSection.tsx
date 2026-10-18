@@ -118,8 +118,9 @@ export function PrReceiptsSection() {
                           <td><span className={`desk-pr-attmeans is-${row.attribution}`} title={row.basis}>{attributionLabel(row)}</span></td>
                           <td>
                             {/* PHILO-17 THE REFIT: one verb per row (Open PR); the
-                                rest live in the row's ⋯ menu (the library menu),
-                                an unavailable verb ghosted with its reason. */}
+                                rest live in the row's ⋯ menu (the library menu);
+                                an unavailable verb is withheld (UX-CANON A.11,
+                                betterment shell S0). */}
                             <span className="desk-shade-do desk-pr-verbs">
                               <Button dense variant="ghost" onClick={() => window.open(row.url, "_blank", "noopener,noreferrer")}>Open PR</Button>
                               <RowMenu

@@ -21,16 +21,15 @@ describe("PR follow-through desk object", () => {
   beforeEach(() => usePrReceipts.setState({ load: vi.fn(async () => {}) }));
   afterEach(() => usePrReceipts.setState({ sources: [], loaded: false, busy: false }));
 
-  it("keeps unavailable verbs visible with their named reason", () => {
+  // Betterment shell S0 (UX-CANON A.11): an unavailable verb is withheld.
+  it("withholds unavailable verbs and keeps the live ones", () => {
     usePrReceipts.setState({ sources: [{ source_id: "src_1", label: "HoldSpeak", status: "live", detail: "", observed_at: row.observed_at, prs: [row] }], loaded: true });
     render(<PrReceiptsSection />);
     // PHILO-17 THE REFIT: one verb per row (Open PR); the rest in the ⋯ menu.
     expect(screen.getByRole("button", { name: "Open PR" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Send agent" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "More for #393" }));
-    const status = screen.getByRole("menuitem", { name: /^Post status/ });
-    expect(status).toHaveAttribute("aria-disabled", "true");
-    expect(status.textContent).toContain("gh credentials unavailable");
+    expect(screen.queryByRole("menuitem", { name: /^Post status/ })).toBeNull();
     expect(screen.getByRole("menuitem", { name: "Send agent" })).not.toHaveAttribute("aria-disabled");
   });
 
@@ -50,7 +49,7 @@ describe("PR follow-through desk object", () => {
     fireEvent.click(screen.getByRole("menuitem", { name: "Info" }));
     expect(screen.getByText("Agent").nextSibling).toHaveTextContent("UNGATED");
     fireEvent.click(screen.getByRole("button", { name: "More for #393" }));
-    expect(screen.getByRole("menuitem", { name: /^Send agent/ })).toHaveAttribute("aria-disabled", "true");
+    expect(screen.queryByRole("menuitem", { name: /^Send agent/ })).toBeNull();
   });
 
   it("shows the complete proposed comment before approval and offers deny", async () => {
