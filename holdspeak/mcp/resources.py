@@ -67,7 +67,6 @@ _VERBS = [
     ("desk.new-note", "New Note", "floor", "⌘N"),
     ("desk.new-decision", "New Decision", "floor", "⌘⇧N"),
     ("desk.new-knowledge", "New Knowledge", "floor", None),
-    ("desk.new-workflow", "New Workflow", "floor", None),
     ("desk.new-workbench", "New Automation", "floor", None),
     ("desk.overview", "Overview", "floor", "⌃↑"),
     ("desk.reset-layout", "Reset layout", "floor", None),

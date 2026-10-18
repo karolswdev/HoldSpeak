@@ -223,17 +223,9 @@ export const VERBS: Verb[] = [
   },
   // Betterment AG1 (DECISIONS #3): New Agent left the Desk menu; parked in
   // desk/_parked/agents/newAgentVerb.ts.
-  {
-    id: "desk.new-workflow",
-    label: "New Workflow",
-    menu: "desk",
-    scope: "floor",
-    group: "new",
-    glyph: KIND_GLYPH.workflow,
-    keywords: ["create", "steps"],
-    ghost: never,
-    run: () => void useDesk.getState().createPrimitive("workflow"),
-  },
+  // Betterment A8 (DECISIONS #2, one way to automate): New Workflow left the
+  // New menu; parked in desk/_parked/automations/newWorkflowVerb.ts. Saved
+  // workflows and their MCP tools stay.
   {
     id: "desk.new-workbench",
     label: "New Automation",
