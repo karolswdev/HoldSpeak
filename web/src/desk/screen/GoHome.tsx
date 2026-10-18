@@ -10,14 +10,19 @@ import { SurfaceSection } from "../surface/Surface";
 import { qualifiedRef } from "../api";
 import { rootDirectories } from "./compose";
 import { openScreenRef } from "./open";
+import { useBuilderTools } from "../builderTools";
+import { useLaunchers } from "../components/window/launcherRegistry";
 
-/** The phone Go face uses the same rows and actions as the menu-bar Go.
- * Four frequent doors belong to the Dock; this is the complete Go index. */
+/** The phone Go face uses the same rows and actions as the menu-bar Go
+ * (betterment shell S1: the manifest's Go groups); this is the complete Go
+ * index. */
 export function GoHome() {
   const projects = useDesk((state) => state.projects);
   const items = useDesk((state) => state.items);
   const selectedIds = useDesk((state) => state.selectedIds);
   const ctx: VerbContext = { selectedRef: selectedIds.length === 1 ? selectedIds[0] : null };
+  const launchers = useLaunchers();
+  const builder = useBuilderTools((state) => state.on);
   const sections = useMemo(() => {
     const row = (verbId: string, label?: string): WorkMenuEntry | null => {
       const verb = VERBS.find((candidate) => candidate.id === verbId);
@@ -31,47 +36,65 @@ export function GoHome() {
         onSelect: () => verb.run(ctx),
       };
     };
-    const go = phoneGo(row, projects ?? [], openProjectRoom);
-    const drawers = rootDirectories(items);
-    if (drawers.length) {
-      const at = go.findIndex((entry) => entry.id === "go-new-sep");
-      go.splice(at < 0 ? go.length : at, 0, {
-        type: "sep", id: "go-drawers-sep",
-      }, {
-        type: "sub", id: "go-drawers", label: "Drawers",
-        entries: drawers.map((directory) => {
-          const ref = qualifiedRef("directory", directory.id);
-          return { type: "item" as const, id: ref, label: directory.name || "Drawer", glyph: KIND_GLYPH.zone, onSelect: () => openScreenRef(ref) };
-        }),
-      });
+    // Betterment shell S1: the same rows as Go, in the same order. A
+    // separator starts a section; a submenu after a separator is its own
+    // section (Builder, New); a submenu inside a section draws its rows in
+    // place, under its name (Projects, Drawers).
+    const go = phoneGo({
+      row,
+      projects: projects ?? [],
+      openProject: openProjectRoom,
+      drawers: rootDirectories(items).map((d) => ({ ref: qualifiedRef("directory", d.id), name: d.name })),
+      openDrawer: openScreenRef,
+      launchers,
+      builder,
+    });
+    const out: { id: string; label: string; entries: WorkMenuEntry[]; sub?: boolean }[] = [];
+    let current = { id: "go-apps", label: "Apps", entries: [] as WorkMenuEntry[] };
+    out.push(current);
+    for (let i = 0; i < go.length; i++) {
+      const entry = go[i];
+      if (entry.type === "sep") {
+        const next = go[i + 1];
+        if (next?.type === "sub") {
+          out.push({ id: next.id, label: next.label, entries: next.entries, sub: true });
+          i += 1;
+          current = { id: `${next.id}-after`, label: "", entries: [] };
+          out.push(current);
+          continue;
+        }
+        current = { id: entry.id ?? `go-sep-${i}`, label: SECTION_LABEL[entry.id ?? ""] ?? "", entries: [] };
+        out.push(current);
+        continue;
+      }
+      current.entries.push(entry);
     }
-    return [
-      {
-        id: "go-apps", label: "Apps",
-        entries: go.filter((entry) => (entry.type === "item" && !entry.id.startsWith("go-project-")) || entry.id === "go-places-sep"),
-      },
-      {
-        id: "go-projects", label: "Projects",
-        entries: go.filter((entry) => entry.type === "item" && entry.id.startsWith("go-project-")),
-      },
-      ...go.filter((entry): entry is Extract<WorkMenuEntry, { type: "sub" }> => entry.type === "sub"),
-    ].filter((section) => section.entries.length > 0);
-  }, [projects, items, ctx.selectedRef]);
+    return out.filter((section) => section.entries.length > 0);
+  }, [projects, items, ctx.selectedRef, launchers, builder]);
 
   return (
     <section className="desk-go-home" aria-label="Go">
       <div className="desk-go-home-list desk-menu-list" role="menu" aria-label="Go menu" data-menu-context="launcher">
         {sections.map((section) => (
-          <SurfaceSection key={section.id} label={section.label} className="desk-go-home-group">
-            {section.entries.map((entry, index) => entry.type === "sep"
-              ? <WorkMenuSep key={entry.id ?? index} />
-              : entry.type === "item" ? <GoRow key={entry.id} entry={entry} /> : null)}
+          <SurfaceSection key={section.id} label={section.label} className={`desk-go-home-group${section.sub ? " is-sub" : ""}`}>
+            {section.entries.map((entry, index) => entry.type === "sub"
+              ? (
+                <SurfaceSection key={entry.id} label={entry.label} className="desk-go-home-group desk-go-home-sub">
+                  {entry.entries.map((inner) => inner.type === "item" ? <GoRow key={inner.id} entry={inner} /> : null)}
+                </SurfaceSection>
+              )
+              : entry.type === "sep"
+                ? <WorkMenuSep key={entry.id ?? index} />
+                : entry.type === "item" ? <GoRow key={entry.id} entry={entry} /> : null)}
           </SurfaceSection>
         ))}
       </div>
     </section>
   );
 }
+
+/** The section names of the phone home, by the separator that opens them. */
+const SECTION_LABEL: Record<string, string> = { "go-work-sep": "Work" };
 
 function GoRow({ entry }: { entry: Extract<WorkMenuEntry, { type: "item" }> }) {
   return (

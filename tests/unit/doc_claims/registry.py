@@ -107,7 +107,9 @@ def web_verb_registry_ids() -> set[str]:
     for block in body.split("\n  },"):
         action = re.search(r'^\s{4}action:\s*"([a-z0-9-]+)"', block, re.M)
         group = re.search(r'^\s{4}group:\s*"(app|tool)"', block, re.M)
-        if action and group:
+        # Betterment shell S1: Today and People open through their desk
+        # verbs (applications.ts applicationVerbId); they mint no go.* verb.
+        if action and group and action.group(1) not in {"open-intelligence", "open-people"}:
             ids.add(f"go.{action.group(1)}")
     return ids
 

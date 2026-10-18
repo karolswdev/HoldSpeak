@@ -82,11 +82,12 @@ describe.each([[1440, false], [393, true]] as const)("the HoldSpeak menu at %i",
       const menu = screen.queryByRole("menu", { name: "HoldSpeak" }) ?? openMark();
       fireEvent.click(within(menu).getByRole("menuitem", { name: new RegExp(`^${row}`) }));
     }
+    // Betterment shell S1: Engines and Accounts open their Settings wings
+    // (the Settings wing verbs), never the parked surfaces.
     expect(opened).toEqual([
       ["configure-settings", undefined],
-      ["configure-runs-on", undefined],
-      // Connections opens Settings on the destinations scope; Settings opens it plain.
-      ["configure-integrations", "integration:destinations"],
+      ["configure-settings", "models"],
+      ["configure-settings", "integrations"],
       ["configure-setup", undefined],
     ]);
     offs.forEach((off) => off());
@@ -204,5 +205,100 @@ describe("S0: the menu bar withholds what cannot run", () => {
   it("names each kind in words", () => {
     expect(["note", "meeting", "people", "project", "decision", "directory"].map(objectMenuTitle))
       .toEqual(["Note", "Meeting", "Person", "Project", "Decision", "Drawer"]);
+  });
+});
+
+// ── Betterment shell S1: Go lists every app; Builder tools switch ──
+import { GO_GROUPS, goRows } from "../applications";
+import { useBuilderTools } from "../builderTools";
+import { GoHome } from "../screen/GoHome";
+import { announceLauncher, retractLauncher } from "../components/window/launcherRegistry";
+
+describe.each([[1440, false], [393, true]] as const)("S1: Go at %i is the manifest's Go groups", (_width, isPhone) => {
+  const goMenu = () => {
+    fireEvent.click(screen.getByRole("button", { name: /^Go$/ }), { detail: 0 });
+    return screen.getByRole("menu", { name: "Go menu" });
+  };
+  /** The top-level rows of the open Go menu (a submenu by its own name). */
+  const top = (menu: HTMLElement) =>
+    Array.from(menu.querySelectorAll(":scope > [role^=menuitem] .desk-menu-label"), (e) => e.textContent?.trim());
+  beforeEach(() => {
+    useBuilderTools.getState().setOn(false);
+    useDesk.setState({
+      items: { ...EMPTY_ITEMS, project: [{ kind: "project", id: "p1", name: "Ledger migration" } as Project] },
+      projects: [{ id: "p1", name: "Ledger migration" }],
+      selectedIds: [],
+    } as never);
+    announceLauncher({ id: "delivery-board", label: "Delivery", glyph: "▤", open: false, activate: () => {} });
+    announceLauncher({ id: "panes", label: "Terminals", glyph: "⧉", open: false, activate: () => {} });
+  });
+  afterEach(() => {
+    useBuilderTools.getState().setOn(false);
+    retractLauncher("delivery-board");
+    retractLauncher("panes");
+    useDesk.setState({ items: { ...EMPTY_ITEMS }, projects: [] } as never);
+  });
+
+  const DAILY_WORK = ["Today", "Needs you", "Meetings", "People", "Projects", "Conductor", "Ask AI", "Speak",
+    "Workbenches", "Memory", "Voice commands"];
+
+  it("Go shows Daily then Work; Builder ▸ only when Builder tools is on, with eight rows", () => {
+    phone(isPhone);
+    render(<DeskMenuBar />);
+    const expected = isPhone ? [...DAILY_WORK, "New"] : DAILY_WORK;
+    expect(top(goMenu())).toEqual(expected);
+    fireEvent.keyDown(document.body, { key: "Escape" });
+
+    act(() => useBuilderTools.getState().setOn(true));
+    const menu = goMenu();
+    const withBuilder = isPhone ? [...DAILY_WORK, "Builder", "New"] : [...DAILY_WORK, "Builder"];
+    expect(top(menu)).toEqual(withBuilder);
+    fireEvent.click(within(menu).getByRole("menuitem", { name: /^Builder\W*$/ }));
+    const builder = screen.getAllByRole("menu").at(-1)!;
+    expect(labels(builder).filter((l) => l !== "Builder")).toEqual([
+      "Activity", "Processes", "Context", "Components", "Calendar snapshot", "Delivery board", "Terminals",
+      "Refresh from hub",
+    ]);
+  });
+
+  it("every Go row comes from goRows (no hand list)", () => {
+    phone(isPhone);
+    const fromManifest = GO_GROUPS.flatMap(goRows).length;
+    expect(fromManifest).toBe(8 + 4 + 8);
+  });
+});
+
+describe("S1: at 393 the phone home and Go show the same rows in the same order", () => {
+  beforeEach(() => {
+    useDesk.setState({
+      items: { ...EMPTY_ITEMS, project: [{ kind: "project", id: "p1", name: "Ledger migration" } as Project] },
+      projects: [{ id: "p1", name: "Ledger migration" }],
+    } as never);
+  });
+  afterEach(() => useDesk.setState({ items: { ...EMPTY_ITEMS }, projects: [] } as never));
+
+  it("home rows equal Go rows (a submenu's name stands for its rows)", () => {
+    phone(true);
+    const { unmount } = render(<GoHome />);
+    const home = screen.getByRole("menu", { name: "Go menu" });
+    // A top-level row is a home row; a submenu is its name: a nested group
+    // (Projects, Drawers) or a section of its own (Builder, New).
+    const homeTop: string[] = [];
+    for (const section of home.querySelectorAll(":scope > .desk-go-home-group")) {
+      if (section.classList.contains("is-sub")) {
+        homeTop.push(section.querySelector(":scope > header h3")?.textContent?.trim() ?? "");
+        continue;
+      }
+      for (const el of section.querySelectorAll("[role=menuitem] .desk-menu-label, .desk-go-home-sub > header h3")) {
+        if (el.tagName !== "H3" && el.closest(".desk-go-home-sub")) continue;
+        homeTop.push(el.textContent?.trim() ?? "");
+      }
+    }
+    unmount();
+    render(<DeskMenuBar />);
+    fireEvent.click(screen.getByRole("button", { name: /^Go$/ }), { detail: 0 });
+    const go = screen.getByRole("menu", { name: "Go menu" });
+    const goTop = Array.from(go.querySelectorAll(":scope > [role^=menuitem] .desk-menu-label"), (e) => e.textContent?.trim());
+    expect(homeTop).toEqual(goTop);
   });
 });

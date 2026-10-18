@@ -269,26 +269,25 @@ describe("Q2 the switcher in the screen title", () => {
   });
 });
 
-describe("Go at 393 is the owner's short list (PHILO-15 11, B21; supersedes C7 Q3)", () => {
-  it("the pure phone Go: the Chair's four windows, the Dock's places, the projects, then New ▸", () => {
+// Betterment shell S1: Go at 393 is the manifest's Go groups, as at 1440,
+// then New ▸ (supersedes PHILO-15 11 B21's hand list).
+describe("Go at 393 is the manifest's Go groups (betterment shell S1)", () => {
+  it("the pure phone Go: Daily, Work, then New ▸; Builder ▸ only when on", () => {
     const row = (id: string, label?: string): WorkMenuEntry => ({ type: "item", id, label: label ?? id, onSelect: () => {} });
-    const out = phoneGo(row, [{ id: "p-1", name: "Ledger cutover" }], () => {});
-    expect(out.map((e) => (e.type === "sep" ? "—" : e.label))).toEqual([
-      "chair.window.needs", "Brief", "chair.window.week", "chair.window.capture", "—",
-      // PHILO-17 (doors): Settings is in the HoldSpeak menu, not Go.
-      "Meetings", "Ask AI", "People", "Conductor", "—",
-      "Ledger cutover", "—", "New"]);
+    const words = (out: WorkMenuEntry[]) => out.map((e) => (e.type === "sep" ? "—" : e.type === "note" ? e.label : e.label));
+    const out = phoneGo({ row, projects: [{ id: "p-1", name: "Ledger cutover" }], openProject: () => {} });
+    expect(words(out)).toEqual([
+      "Today", "Needs you", "Meetings", "People", "Projects", "Conductor", "Ask AI", "Speak", "—",
+      "Workbenches", "Memory", "Voice commands", "—", "New"]);
     const nu = out[out.length - 1] as Extract<WorkMenuEntry, { type: "sub" }>;
-    expect(nu.entries.map((e) => (e.type === "sep" ? "—" : e.label))).toEqual(["Note", "Meeting", "Project", "Person"]);
+    expect(nu.entries.map((e) => (e.type === "item" ? e.label : "—"))).toEqual(["Note", "Meeting", "Project", "Person"]);
+    expect(words(phoneGo({ row, projects: [], openProject: () => {}, builder: true }))).toContain("Builder");
   });
 
   it("renders on the real menu bar: no Desk ▸ Object ▸ Window ▸, and New opens as a menu", () => {
     render(<DeskMenuBar />);
     fireEvent.click(screen.getByRole("button", { name: "Go" }), { detail: 0 });
     const menu = screen.getByRole("menu", { name: "Go menu" });
-    const rows = within(menu).getAllByRole("menuitemcheckbox").slice(0, 4);
-    expect(rows.map((h) => h.querySelector(".desk-menu-label")?.textContent?.trim())).toEqual(
-      ["Needs you", "The week", "Capture"]);
     const heads = within(menu).getAllByRole("menuitem").filter((h) => h.getAttribute("aria-haspopup") === "menu");
     expect(heads.map((h) => h.querySelector(".desk-menu-label")?.textContent?.trim())).toEqual(["New"]);
     fireEvent.click(heads[0]);

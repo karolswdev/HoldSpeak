@@ -114,9 +114,10 @@ describe("DeskMenuBar Go at 1440 (PHILO-17 doors)", () => {
     render(<DeskMenuBar />);
     fireEvent.click(screen.getByRole("button", { name: /^Go$/ }), { detail: 0 });
     const menu = screen.getByRole("menu", { name: "Go menu" });
+    // Betterment shell S1: Daily, then Work (Builder ▸ only behind its switch).
     expect(top(menu)).toEqual([
-      "Speak", "Meetings", "Today", "Ask AI", "People", "Conductor",
-      "Projects",
+      "Today", "Needs you", "Meetings", "People", "Projects", "Conductor", "Ask AI", "Speak",
+      "Workbenches", "Memory", "Voice commands",
     ]);
     expect(menu.textContent).not.toMatch(/Settings|Runs on|Connections|Setup|Desk memory|List view/);
     // The ⌃ keys stay on their rows (PHILO-17 U27).
@@ -193,7 +194,8 @@ describe("DeskMenuBar at 393", () => {
   });
 
   // PHILO-17 (doors): Settings left Go (it is in the HoldSpeak menu).
-  it("Go is ten rows: Chair windows, places, the projects, New; no ⌘ keycap", () => {
+  // Betterment shell S1: the manifest's Go groups, then New ▸; no ⌘ keycap.
+  it("Go is the Daily and Work rows, Projects ▸, then New; no ⌘ keycap", () => {
     useDesk.setState((s) => ({
       items: {
         ...s.items,
@@ -204,9 +206,8 @@ describe("DeskMenuBar at 393", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Go$/ }), { detail: 0 });
     const menu = screen.getByRole("menu", { name: "Go menu" });
     expect(labels(menu)).toEqual([
-      "Needs you", "Brief", "The week", "Capture",
-      "Meetings", "Ask AI", "People", "Conductor",
-      "Ledger cutover",
+      "Today", "Needs you", "Meetings", "People", "Projects", "Conductor", "Ask AI", "Speak",
+      "Workbenches", "Memory", "Voice commands",
       "New",
     ]);
     expect(menu.querySelectorAll(".desk-menu-keycaps, kbd")).toHaveLength(0);
@@ -233,6 +234,7 @@ describe("DeskMenuBar at 393", () => {
     }));
     render(<DeskMenuBar />);
     fireEvent.click(screen.getByRole("button", { name: /^Go$/ }), { detail: 0 });
+    fireEvent.click(screen.getByRole("menuitem", { name: /^Projects\W*$/ }));
     fireEvent.click(screen.getByRole("menuitem", { name: /Ledger cutover/ }));
     expect(opened).toEqual(["project:p-1"]);
     off();

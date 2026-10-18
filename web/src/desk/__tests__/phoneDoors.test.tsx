@@ -77,9 +77,8 @@ describe("the phone menu bar has one door that carries every verb", () => {
     expect(ids).toEqual(["desk", "go", "window"]);
   });
 
-  // PHILO-15 11 (B21, owner ruling 2026-10-07; supersedes C7 Q3): Go at 393
-  // is Needs you / Brief / The week / Capture, the Dock's places, the
-  // projects, then New ▸ Note / Meeting / Project / Person. No ⌘ hint.
+  // Betterment shell S1 (supersedes PHILO-15 11 B21): Go at 393 is the
+  // manifest's Go groups, then New ▸ Note / Meeting / Project / Person. No ⌘ hint.
   it("carries a new note (owner job 3's door) at Go ▸ New ▸ Note at phone width", () => {
     compact = true;
     render(<DeskMenuBar />);
@@ -97,11 +96,12 @@ describe("the phone menu bar has one door that carries every verb", () => {
     expect(screen.getByRole("menuitem", { name: "Meetings" })).toBeTruthy();
     expect(screen.getByRole("menuitem", { name: "Ask AI" })).toBeTruthy();
     expect(screen.getByRole("menuitem", { name: "Note" })).toBeTruthy();
-    expect(screen.queryByText("Today")).toBeNull();
-    expect(screen.getAllByRole("heading").map((heading) => heading.textContent)).toEqual(["Apps", "New"]);
+    // Betterment shell S1: the manifest's Go groups, as at 1440, then New.
+    expect(screen.getAllByRole("heading").map((heading) => heading.textContent)).toEqual(["Apps", "Work", "New"]);
     expect(screen.getByRole("menu", { name: "Go menu" })).toHaveClass("desk-menu-list");
     expect(screen.getAllByRole("menuitem").map((row) => row.querySelector(".desk-menu-label")?.textContent)).toEqual([
-      "Needs you", "Brief", "The week", "Capture", "Meetings", "Ask AI", "People", "Conductor", "Note", "Meeting", "Project", "Person",
+      "Today", "Needs you", "Meetings", "People", "Conductor", "Ask AI", "Speak",
+      "Workbenches", "Memory", "Voice commands", "Note", "Meeting", "Project", "Person",
     ]);
   });
 
@@ -140,7 +140,7 @@ describe("the phone menu bar has one door that carries every verb", () => {
     const open = vi.spyOn(shell, "openProjectRoom").mockImplementation(() => {});
     useDesk.setState({ projects: [{ id: "p-go-exact", name: "Architecture rollout", description: "", keywords: [], team_members: [], is_archived: false, meeting_count: 0, updated_at: "2026-10-16T00:00:00Z" }] });
     render(<GoHome />);
-    expect(screen.getAllByRole("heading").map((heading) => heading.textContent)).toEqual(["Apps", "Projects", "New"]);
+    expect(screen.getAllByRole("heading").map((heading) => heading.textContent)).toEqual(["Apps", "Projects", "Work", "New"]);
     await user.click(screen.getByRole("menuitem", { name: "Architecture rollout" }));
     expect(open).toHaveBeenCalledOnce();
     expect(open).toHaveBeenCalledWith("p-go-exact");

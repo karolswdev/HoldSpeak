@@ -3,9 +3,9 @@ import {
   DESK_APPLICATION_ALIASES,
   DESK_APPLICATIONS,
   DOCK_APPLICATIONS,
-  GO_APPLICATIONS,
-  GO_TOOL_APPLICATIONS,
+  GO_GROUPS,
   MARK_APPLICATION_COMMANDS,
+  goRows,
   SURFACE_APPLICATIONS,
 } from "../applications";
 import { DESK_TOOLS } from "../tools";
@@ -82,25 +82,45 @@ describe("DeskOS application manifest", () => {
 
   it("derives mark-menu application commands", () => {
     // PHILO-17 (doors): the HoldSpeak menu holds the setup applications.
+    // Betterment shell S1: Engines and Accounts open their Settings wings.
     expect(MARK_APPLICATION_COMMANDS).toEqual([
       "go.configure-settings",
-      "go.configure-runs-on",
-      "go.configure-integrations",
+      "settings.models",
+      "settings.integrations",
       "go.configure-setup",
     ]);
   });
 
-  it("PHILO-17 (doors): Go is the application index, then Tools", () => {
-    expect(GO_APPLICATIONS.map((application) => application.label)).toEqual([
-      "Speak", "Meetings", "Today", "Ask AI", "People", "Conductor",
+  it("betterment shell S1: Go lists every application, Daily, Work, Builder", () => {
+    const names = (group: (typeof GO_GROUPS)[number]) =>
+      goRows(group).map((r) => (r.kind === "app" || r.kind === "launcher" ? r.label : r.kind === "verb" ? r.label ?? r.verbId : r.kind));
+    expect(names("daily")).toEqual([
+      "Today", "Needs you", "Meetings", "People", "projects", "Conductor", "Ask AI", "Speak",
     ]);
-    expect(GO_TOOL_APPLICATIONS).toEqual([]);
-    // A setup application has one door: the HoldSpeak menu.
-    for (const action of ["configure-settings", "configure-runs-on", "configure-integrations", "configure-setup"]) {
+    expect(names("work")).toEqual(["Workbenches", "Memory", "Voice commands", "drawers"]);
+    expect(names("builder")).toEqual([
+      "Activity", "Processes", "Context", "Components", "Calendar snapshot", "Delivery board", "Terminals", "desk.refresh",
+    ]);
+    // A setup application has one door: the HoldSpeak menu. Rhythm's home is Settings ▸ Rhythm.
+    for (const action of ["configure-settings", "configure-runs-on", "configure-integrations", "configure-setup", "configure-cadence"]) {
       const application = DESK_APPLICATIONS.find((a) => a.action === action);
       expect(application?.go, action).toBeUndefined();
       expect(application?.dock, action).toBeUndefined();
     }
+    // Every live, windowed application with a door to open is in Go, or is a
+    // setup row of the HoldSpeak menu, or is opened by its own verb.
+    const inGo = new Set(GO_GROUPS.flatMap(goRows).flatMap((r) => (r.kind === "app" ? [r.app.action] : [])));
+    const elsewhere = new Set(["configure-settings", "configure-setup", "configure-cadence", "change-places",
+      "record-live", "project-setup", "inspect-personas-and-coders"]);
+    for (const application of DESK_APPLICATIONS) {
+      if (application.parked) continue;
+      expect(inGo.has(application.action) || elsewhere.has(application.action), application.action).toBe(true);
+    }
+  });
+
+  it("betterment shell S1: Today, People and Components have a group, so Search lists them", () => {
+    for (const action of ["open-intelligence", "open-people", "design-components"])
+      expect(DESK_TOOLS.some((tool) => tool.action === action), action).toBe(true);
   });
 
   // The global Desk surface and scoped Project Room share one retrieval face.

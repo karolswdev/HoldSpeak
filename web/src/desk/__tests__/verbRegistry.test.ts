@@ -7,7 +7,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { VERBS, menuVerbs, verbLabel, verbsFor, verbById } from "../verbRegistry";
 import { DESK_TOOLS } from "../tools";
-import { GO_APPLICATIONS, GO_TOOL_APPLICATIONS, applicationVerbId } from "../applications";
+import { GO_GROUPS, applicationForAction, applicationVerbId, goRows } from "../applications";
 import { registerSurface } from "../shell";
 import { THREAD_SLASH_COMMANDS } from "../components/ThreadComposer";
 import { EMPTY_ITEMS, fromWireDirectory, qualifiedRef } from "../api";
@@ -139,10 +139,11 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
 
   it("PHILO-17 (doors): the Go verbs are the manifest's Go rows", () => {
     const go = new Set(menuVerbs("go").map((v) => v.id));
-    const placed = [...GO_APPLICATIONS, ...GO_TOOL_APPLICATIONS].map(applicationVerbId);
+    const placed = GO_GROUPS.flatMap(goRows).flatMap((r) => (r.kind === "app" ? [applicationVerbId(r.app)] : []));
     expect([...go].sort()).toEqual([...placed].sort());
-    // The rest of DESK_TOOLS keep their verb (⌘K, keys, the HoldSpeak menu).
-    for (const tool of DESK_TOOLS) expect(verbById(`go.${tool.action}`), tool.action).toBeTruthy();
+    // Every DESK_TOOLS row has the verb that opens it (⌘K, keys, the HoldSpeak menu).
+    for (const tool of DESK_TOOLS)
+      expect(verbById(applicationVerbId(applicationForAction(tool.action)!)), tool.action).toBeTruthy();
   });
 
   it("the bound key set is the HS-101 grammar, declared in the registry", () => {

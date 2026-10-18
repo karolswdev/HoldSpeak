@@ -179,9 +179,11 @@ describe("PHILO-13-14 the palette knows his week", () => {
   it("`People` puts the People app first, above the `People & vocabulary` note", async () => {
     const input = await deck();
     await type(input, "People");
-    expect(top()).toContain("Open People");
+    // Betterment shell S1: the People App row, by the app's own name.
+    const app = (o: string) => o.includes("People") && o.includes("PROGRAM") && !o.includes("vocabulary");
+    expect(app(top() ?? "")).toBe(true);
     const rows = options();
-    expect(rows.findIndex((o) => o.includes("Open People"))).toBeLessThan(rows.findIndex((o) => o.includes("People & vocabulary")));
+    expect(rows.findIndex(app)).toBeLessThan(rows.findIndex((o) => o.includes("People & vocabulary")));
     fireEvent.keyDown(input, { key: "Enter" });
     expect(opened.surfaces).toContainEqual(["open-people", undefined]);
   });
