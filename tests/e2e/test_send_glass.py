@@ -791,7 +791,9 @@ class _Rig:
         # PHILO-14 A1 (#939): the Chair is the screen; its windows start closed.
         # The seat under test (Brief, The week) opens by the owner's gesture:
         # Window ▸ Chair ▸ <name> at 1440, Go ▸ <name> at 393.
-        if chair:
+        if chair == "The week":
+            self._raise_week(page, page.viewport_size["width"], fresh=True)
+        elif chair:
             open_chair_window(page, chair)
             page.wait_for_timeout(600)
         _settle(page)
@@ -935,13 +937,22 @@ class TestChairMeetingWells(_Rig):
     # ── C6b: the Chair's MEETINGS rows (both branches) ──
 
     @staticmethod
-    def _raise_week(page: Any, width: int) -> None:
-        """The existing Week window can be behind the open Meetings record."""
-        menu = "window" if width > 720 else "go"
-        page.locator(f".desk-verbbar-item[data-menu-id='{menu}'] button").click()
+    def _raise_week(page: Any, width: int, *, fresh: bool = False) -> None:
+        """The existing Week window can be behind the open Meetings record.
+
+        Betterment shell S0 (#1257): Window > Desk shows only while a window
+        is open, so a fresh desk opens Needs you from Go first. S1 (#1259):
+        The week left the phone Go (its window retires in daily D5), so at
+        393 the hub opens it, the agent door the desk sweep uses."""
         if width > 720:
+            if fresh:
+                page.locator(".desk-verbbar-item[data-menu-id='go'] button").click()
+                page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')").click()
+            page.locator(".desk-verbbar-item[data-menu-id='window'] button").click()
             page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Desk')").click()
-        page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('The week')").click()
+            page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('The week')").click()
+        else:
+            _api(page, "POST", "/api/desk/windows/chair:week/open", {}, token=H1_TOKEN)
         page.locator(".chair-window--week").wait_for(timeout=H1_T)
         _settle(page)
 

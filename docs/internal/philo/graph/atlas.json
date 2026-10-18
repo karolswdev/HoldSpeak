@@ -604,18 +604,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -623,7 +615,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -705,18 +697,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -724,7 +708,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -806,18 +790,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -825,7 +801,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -919,18 +895,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -938,7 +906,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -1064,18 +1032,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -1083,7 +1043,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -1252,18 +1212,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -1271,7 +1223,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -1510,18 +1462,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -1529,7 +1473,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -1722,6 +1666,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -1859,18 +1819,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -1878,7 +1830,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -2122,6 +2074,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -2308,18 +2276,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -2327,7 +2287,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -2566,6 +2526,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -2619,6 +2595,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -2666,18 +2658,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -2685,7 +2669,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -2709,6 +2693,22 @@
           "adapter": "ui-pointer",
           "selector": ".desk-window-shell.chair-window[aria-label='Needs you']",
           "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
         },
         {
           "kind": "ui",
@@ -2812,18 +2812,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -2831,7 +2823,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -3016,6 +3008,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -3063,18 +3071,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -3082,7 +3082,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -3106,6 +3106,22 @@
           "adapter": "ui-pointer",
           "selector": ".desk-window-shell.chair-window[aria-label='Needs you']",
           "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
         },
         {
           "kind": "ui",
@@ -3245,18 +3261,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -3264,7 +3272,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -3503,6 +3511,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -3552,6 +3576,22 @@
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-meetings]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
         },
         {
           "kind": "ui",
@@ -3667,6 +3707,22 @@
           "label": "Synthetic architect meeting at a browser audio boundary. This rig has no microphone recorder; block without substituting microphone ownership.",
           "substitute": "browser_audio_device",
           "reply_path": "tests/fixtures/philo3_architect_meeting.wav"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
         },
         {
           "kind": "ui",
@@ -3882,6 +3938,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -4022,18 +4094,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -4041,7 +4105,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -4243,6 +4307,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -4300,6 +4380,22 @@
         "action": "goto",
         "url": "/",
         "then": [
+          {
+            "kind": "ui",
+            "action": "click",
+            "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+            "at_width": 1440,
+            "adapter": "ui-pointer",
+            "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+            "at_width": 1440,
+            "adapter": "ui-pointer",
+            "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+          },
           {
             "kind": "ui",
             "action": "click",
@@ -4467,6 +4563,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -4524,6 +4636,22 @@
         "action": "goto",
         "url": "/",
         "then": [
+          {
+            "kind": "ui",
+            "action": "click",
+            "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+            "at_width": 1440,
+            "adapter": "ui-pointer",
+            "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+            "at_width": 1440,
+            "adapter": "ui-pointer",
+            "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+          },
           {
             "kind": "ui",
             "action": "click",
@@ -4643,18 +4771,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -4662,7 +4782,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -4864,6 +4984,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -4998,18 +5134,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -5017,7 +5145,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -5217,6 +5345,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -5351,18 +5495,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -5370,7 +5506,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -5563,6 +5699,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -5719,18 +5871,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -5738,7 +5882,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -5939,6 +6083,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -6105,18 +6265,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -6124,7 +6276,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -6312,6 +6464,22 @@
           "action": "goto",
           "adapter": "ui-navigation",
           "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
         },
         {
           "kind": "ui",
@@ -6509,6 +6677,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -6641,18 +6825,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -6660,7 +6836,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -6853,6 +7029,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -7018,18 +7210,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -7037,7 +7221,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -7239,6 +7423,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -7359,6 +7559,22 @@
         "action": "reload",
         "adapter": "ui-navigation",
         "then": [
+          {
+            "kind": "ui",
+            "action": "click",
+            "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+            "at_width": 1440,
+            "adapter": "ui-pointer",
+            "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+            "at_width": 1440,
+            "adapter": "ui-pointer",
+            "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+          },
           {
             "kind": "ui",
             "action": "click",
@@ -7667,6 +7883,51 @@
           "kind": "ui",
           "action": "click",
           "selector": "button[aria-controls=desk-tool-shelf]",
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S1 (#1259): Search lists Activity (a Builder row) only with Settings > System > Builder tools on. Turn it on the way the owner does."
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "input[aria-controls=desk-palette-listbox]",
+          "value": "Settings",
+          "adapter": "ui-keyboard",
+          "why": "Betterment shell S1 (#1259): Search lists Activity (a Builder row) only with Settings > System > Builder tools on. Turn it on the way the owner does."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-deck-row[id='desk-palette-option-go.configure-settings']",
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S1 (#1259): Search lists Activity (a Builder row) only with Settings > System > Builder tools on. Turn it on the way the owner does."
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Open System",
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S1 (#1259): Search lists Activity (a Builder row) only with Settings > System > Builder tools on. Turn it on the way the owner does."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "label.gadget-check:has(input[aria-label='Builder tools'])",
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S1 (#1259): Search lists Activity (a Builder row) only with Settings > System > Builder tools on. Turn it on the way the owner does."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "input[aria-label='Builder tools']:checked",
+          "state": "attached",
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S1 (#1259): Search lists Activity (a Builder row) only with Settings > System > Builder tools on. Turn it on the way the owner does."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "button[aria-controls=desk-tool-shelf]",
           "adapter": "ui-pointer"
         },
         {
@@ -7760,6 +8021,51 @@
             "detail_url": "/cadence"
           },
           "why": "Bind the exact receipt minted by this run, rather than opening another Finished row."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "button[aria-controls=desk-tool-shelf]",
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S1 (#1259): Search lists Activity (a Builder row) only with Settings > System > Builder tools on. Turn it on the way the owner does."
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "input[aria-controls=desk-palette-listbox]",
+          "value": "Settings",
+          "adapter": "ui-keyboard",
+          "why": "Betterment shell S1 (#1259): Search lists Activity (a Builder row) only with Settings > System > Builder tools on. Turn it on the way the owner does."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-deck-row[id='desk-palette-option-go.configure-settings']",
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S1 (#1259): Search lists Activity (a Builder row) only with Settings > System > Builder tools on. Turn it on the way the owner does."
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Open System",
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S1 (#1259): Search lists Activity (a Builder row) only with Settings > System > Builder tools on. Turn it on the way the owner does."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "label.gadget-check:has(input[aria-label='Builder tools'])",
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S1 (#1259): Search lists Activity (a Builder row) only with Settings > System > Builder tools on. Turn it on the way the owner does."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "input[aria-label='Builder tools']:checked",
+          "state": "attached",
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S1 (#1259): Search lists Activity (a Builder row) only with Settings > System > Builder tools on. Turn it on the way the owner does."
         },
         {
           "kind": "ui",
@@ -7959,18 +8265,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -7978,7 +8276,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -8185,6 +8483,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -8371,18 +8685,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -8390,7 +8696,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -8585,6 +8891,22 @@
           "role": "button",
           "name": "Continue later",
           "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
         },
         {
           "kind": "ui",
@@ -8782,18 +9104,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -8801,7 +9115,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -8996,6 +9310,22 @@
           "role": "button",
           "name": "Continue later",
           "optional": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
         },
         {
           "kind": "ui",
@@ -9203,18 +9533,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -9222,7 +9544,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -9413,6 +9735,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -9572,6 +9910,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -9691,6 +10045,22 @@
           },
           "adapter": "http-route",
           "why": "the brief's real material, minted through the production create route (holdspeak/web/routes/primitives/decisions.py:43, 201 {decision}); the decisions collector turns every proposed desk decision into the item 'Review decision: <title>' (holdspeak/services/monday_brief_service.py:750-758). No engine is needed."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
         },
         {
           "kind": "ui",
@@ -9864,6 +10234,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -10026,6 +10412,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -10099,6 +10501,22 @@
         "action": "reload",
         "adapter": "ui-navigation",
         "then": [
+          {
+            "kind": "ui",
+            "action": "click",
+            "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+            "at_width": 1440,
+            "adapter": "ui-pointer",
+            "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+            "at_width": 1440,
+            "adapter": "ui-pointer",
+            "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+          },
           {
             "kind": "ui",
             "action": "click",
@@ -10265,6 +10683,22 @@
           "expect_status": 200,
           "adapter": "http-route",
           "why": "the summary engine is chosen: no meeting-path blocker is in the window"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
         },
         {
           "kind": "ui",
@@ -10506,6 +10940,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -10741,6 +11191,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -10838,6 +11304,22 @@
         "adapter": "ui-navigation",
         "why": "ANOTHER reload after the second generate: the owner's J10 retention (story table J10)",
         "then": [
+          {
+            "kind": "ui",
+            "action": "click",
+            "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+            "at_width": 1440,
+            "adapter": "ui-pointer",
+            "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+            "at_width": 1440,
+            "adapter": "ui-pointer",
+            "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+          },
           {
             "kind": "ui",
             "action": "click",
@@ -11024,6 +11506,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -11181,6 +11679,22 @@
           "observe_at": "protocol: GET /api/setup/status",
           "timeout_s": 10,
           "why": "the 'Continue later' dismissal is on the hub before the brief is generated"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
         },
         {
           "kind": "ui",
@@ -11369,6 +11883,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -11489,6 +12019,22 @@
           },
           "adapter": "http-route",
           "why": "the brief's real material, minted through the production create route (holdspeak/web/routes/primitives/decisions.py:43, 201 {decision}); the decisions collector turns every proposed desk decision into the item 'Review decision: <title>' (holdspeak/services/monday_brief_service.py:750-758). No engine is needed."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
         },
         {
           "kind": "ui",
@@ -11650,6 +12196,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -11796,6 +12358,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -11912,6 +12490,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -11994,6 +12588,22 @@
           "name": "Continue later",
           "optional": true,
           "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
         },
         {
           "kind": "ui",
@@ -12120,6 +12730,22 @@
           "substitutes": "POST /api/notes",
           "label": "playwright route interception failing that one write; every other read stays real",
           "substitute": "route_failure"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
         },
         {
           "kind": "ui",
@@ -12420,6 +13046,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -12557,6 +13199,22 @@
           },
           "adapter": "http-route",
           "why": "the brief's real material, minted through the production create route (holdspeak/web/routes/primitives/decisions.py:43, 201 {decision}); the decisions collector turns every proposed desk decision into the item 'Review decision: <title>' (holdspeak/services/monday_brief_service.py:750-758). No engine is needed."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
         },
         {
           "kind": "ui",
@@ -12927,6 +13585,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -13039,18 +13713,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -13058,7 +13724,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -13256,6 +13922,22 @@
           "name": "Continue later",
           "optional": true,
           "timeout_s": 1
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
         },
         {
           "kind": "ui",
@@ -13421,18 +14103,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -13440,7 +14114,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -13633,6 +14307,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -13760,18 +14450,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -13779,7 +14461,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -13981,6 +14663,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -14131,18 +14829,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -14150,7 +14840,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -14347,6 +15037,22 @@
           "name": "Continue later",
           "optional": true,
           "timeout_s": 1
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
         },
         {
           "kind": "ui",
@@ -15073,18 +15779,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -15092,7 +15790,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -15315,6 +16013,22 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "adapter": "ui-pointer",
           "selector": ".desk-verbbar-item[data-menu-id='window'] button",
           "at_width": 1440,
@@ -15365,6 +16079,22 @@
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-brief-row]",
           "why": "the production brief generation populated the actual Arrival BRIEF row before the summary trigger"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
         },
         {
           "kind": "ui",
@@ -15542,18 +16272,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -15561,7 +16283,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -15767,6 +16489,22 @@
           "name": "Continue later",
           "optional": true,
           "timeout_s": 1
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
         },
         {
           "kind": "ui",
@@ -15934,18 +16672,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -15953,7 +16683,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -16159,6 +16889,22 @@
           "name": "Continue later",
           "optional": true,
           "timeout_s": 1
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
         },
         {
           "kind": "ui",
@@ -16350,18 +17096,10 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
           "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -16369,7 +17107,7 @@
           "adapter": "ui-pointer",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
           "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Needs you the way the owner does (Window > Chair > Needs you at 1440, Go > Needs you at 393)."
+          "why": "Betterment shell S0 (#1257): on a desk with no window open, Window holds one line (No windows open); S1 (#1259): Needs you is a Go row. Open Needs you with Go > Needs you."
         },
         {
           "kind": "ui",
@@ -16575,6 +17313,22 @@
           "name": "Continue later",
           "optional": true,
           "timeout_s": 1
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
         },
         {
           "kind": "ui",

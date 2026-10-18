@@ -66,6 +66,51 @@
           "kind": "ui",
           "action": "click",
           "selector": "button[aria-controls=desk-tool-shelf]",
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S1 (#1259): Search lists Activity (a Builder row) only with Settings > System > Builder tools on. Turn it on the way the owner does."
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "input[aria-controls=desk-palette-listbox]",
+          "value": "Settings",
+          "adapter": "ui-keyboard",
+          "why": "Betterment shell S1 (#1259): Search lists Activity (a Builder row) only with Settings > System > Builder tools on. Turn it on the way the owner does."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-deck-row[id='desk-palette-option-go.configure-settings']",
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S1 (#1259): Search lists Activity (a Builder row) only with Settings > System > Builder tools on. Turn it on the way the owner does."
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Open System",
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S1 (#1259): Search lists Activity (a Builder row) only with Settings > System > Builder tools on. Turn it on the way the owner does."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "label.gadget-check:has(input[aria-label='Builder tools'])",
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S1 (#1259): Search lists Activity (a Builder row) only with Settings > System > Builder tools on. Turn it on the way the owner does."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "input[aria-label='Builder tools']:checked",
+          "state": "attached",
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S1 (#1259): Search lists Activity (a Builder row) only with Settings > System > Builder tools on. Turn it on the way the owner does."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "button[aria-controls=desk-tool-shelf]",
           "adapter": "ui-pointer"
         },
         {

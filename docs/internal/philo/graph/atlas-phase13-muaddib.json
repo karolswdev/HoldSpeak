@@ -4209,7 +4209,7 @@
         },
         {
           "path": "web/src/features/project-room/update/useUpdateController.ts",
-          "symbol": "setEditBody(kept ?? update.bodyMd);",
+          "symbol": "setEditBody(kept ?? plain);",
           "claim": "the editor takes the kept body, empty included"
         }
       ],
