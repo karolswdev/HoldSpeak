@@ -4,9 +4,25 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-17 (betterment: all clusters designed; DECISIONS.md; #1253)
+**Last updated:** 2026-10-18 (betterment build delivered to the desk at `ee6f42227`)
 
 ## Current phase
+
+**Betterment build — delivered to his desk 2026-10-18 (main `ee6f42227`).**
+All 38 decisions adopted ("defaults"). Merged since the designs: P0 #1253,
+A0 #1256, C1 #1255, C2 #1258, S0/S1 #1257/#1259, Q0 #1260, ST0 #1261,
+AG0 #1262, Send S1 #1268, Q1/Q2 #1267/#1269, A1 #1270 (Automations name),
+E1 #1273 + M1 #1278 + E2 #1279 (Claude Code / Codex as engines with the
+desk's tools, spend limits), C3/C4 #1271/#1275, D0/D1 #1264/#1277, A2 #1280,
+P2/P1 #1276/#1283; M0 live CLI check #1266. Fix-forward of the reds these
+caused: #1263 #1272 #1274 #1281 #1282 #1284 #1285 #1286 #1287 #1288 #1289.
+No main watcher was running; the orchestrator ran the full suites itself:
+FAST 16,449 passed / 0 failed; web 5,515 passed / 0 branch-new; browser
+suite green after #1287–#1289. Desk hub restarted from
+`wt-desk-betterment-20261018` (Python 3.12, all extras), port 8765;
+/health, /, /conductor, /models answer 200; runtime reports backend
+`ee6f42227`. Not walked live by eye yet. Open items:
+`docs/internal/betterment/FOLLOWUPS.md`.
 
 **Betterment: every cluster designed (owner, 2026-10-17).** The master plan
 `docs/internal/betterment/PLAN.md` covers all 45 features in 10 clusters
