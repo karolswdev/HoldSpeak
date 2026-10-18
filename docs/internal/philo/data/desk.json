@@ -156,7 +156,7 @@
           "claim": "Decision opens in a focused paper editor before supporting Context/Consequences folds, with compact status and reachable Done/Cancel."
         },
         {
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "symbol": "export function ThreadPullout",
           "line": 1111,
           "claim": "Thread has bounded source/details controls and a separate composer; completed answers keep one routine action and expose the remaining actions through More."
@@ -220,13 +220,13 @@
           }
         },
         {
-          "path": "web/src/desk/__tests__/askPanelRunsOn.test.tsx",
+          "path": "web/src/desk/_parked/ask/askPanelRunsOn.test.tsx",
           "node": "Retry and Keep use the complete sent snapshot while a newer draft and selection survive",
           "assertion": "Changed prompt, selected quote, grounding and rail edits do not alter the retried request or kept answer lineage.",
           "execution": "passed"
         },
         {
-          "path": "web/src/desk/__tests__/askPanelRunsOn.test.tsx",
+          "path": "web/src/desk/_parked/ask/askPanelRunsOn.test.tsx",
           "node": "%s abandons a pending view; a late answer cannot change the reopened Ask",
           "assertion": "Local close aborts/invalidates the pending view and preserves the newer durable draft on reopen.",
           "execution": "passed"
@@ -256,7 +256,7 @@
           "execution": "passed"
         },
         {
-          "path": "web/src/desk/__tests__/askPanelRunsOn.test.tsx",
+          "path": "web/src/desk/_parked/ask/askPanelRunsOn.test.tsx",
           "node": "keeps the answer's sent sources distinct when the next question selects different material",
           "assertion": "Editing the next question labels its new sources separately; Keep preserves the prior answer and exact original note.",
           "execution": "passed"
@@ -268,13 +268,13 @@
           "execution": "passed"
         },
         {
-          "path": "web/src/desk/__tests__/ThreadPullout.test.tsx",
+          "path": "web/src/desk/pullouts/_parked/__tests__/ThreadPullout.test.tsx",
           "node": "names seeded material from the live desk, prefers frozen titles and keeps an honest unavailable ref",
           "assertion": "Real seed reference shape resolves a readable title, frozen names win and unavailable material retains identity.",
           "execution": "passed"
         },
         {
-          "path": "web/src/desk/__tests__/askPanelRunsOn.test.tsx",
+          "path": "web/src/desk/_parked/ask/askPanelRunsOn.test.tsx",
           "node": "retains an explicit saved Note handoff when the floor drops its selection (quote: %s)",
           "assertion": "An explicit saved source and optional passage survive collection refresh and floor selection loss; answer sources retain the submitted identity.",
           "execution": "passed"

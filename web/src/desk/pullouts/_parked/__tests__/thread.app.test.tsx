@@ -8,12 +8,12 @@
  * tests/unit/test_desk_thread.py. */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { useThreadStore } from "../threads";
-import { ThreadPullout } from "../pullouts/ThreadPullout";
-import { RuntimeBusProvider } from "../../runtime/RuntimeBus";
-import { useDesk } from "../store";
-import failedTurn from "../../test/wire/thread.failed-turn.wire.json";
-import seeded from "../../test/wire/thread.seeded.wire.json";
+import { useThreadStore } from "../../../threads";
+import { ThreadPullout } from "../ThreadPullout";
+import { RuntimeBusProvider } from "../../../../runtime/RuntimeBus";
+import { useDesk } from "../../../store";
+import failedTurn from "../../../../test/wire/thread.failed-turn.wire.json";
+import seeded from "../../../../test/wire/thread.seeded.wire.json";
 
 type Call = { url: string; method: string; body: unknown };
 let calls: Call[] = [];

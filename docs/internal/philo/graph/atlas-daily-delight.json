@@ -1600,7 +1600,7 @@
       "phase1_refs": [],
       "sources": [
         {
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "symbol": "export function ThreadPullout",
           "claim": "Imported conversation renders as paper with a reachable composer."
         }
@@ -1672,7 +1672,7 @@
       "phase1_refs": [],
       "sources": [
         {
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "symbol": "export function ThreadPullout",
           "claim": "Commands opens from a visible control while preserving draft."
         }
@@ -1690,7 +1690,7 @@
       "phase1_refs": [],
       "sources": [
         {
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "symbol": "export function ThreadPullout",
           "claim": "Twelve real sent source references can expand without pushing composer offscreen."
         }
@@ -1762,7 +1762,7 @@
       "phase1_refs": [],
       "sources": [
         {
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "symbol": "export function ThreadPullout",
           "claim": "Keep as note confirms the saved note in place and exposes its exact opener while retaining the thread draft."
         }

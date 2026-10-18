@@ -660,17 +660,8 @@ def test_receipt_verbs_own_their_areas(receipt_hub, width: int) -> None:
         page.reload()
         page.locator("[aria-controls=desk-tool-shelf]").wait_for(timeout=15000)
 
-        # 2. a Thread receipt (in flow in the pullout)
-        _search(page, "New Thread", "[id='desk-palette-option-desk.new-thread']")
-        page.get_by_text("Thread details", exact=True).click()
-        page.get_by_role("button", name="Rename thread", exact=True).click()
-        _fault(page, "PATCH", "/api/threads/")
-        page.locator("input[aria-label='Thread title']").fill("Renamed")
-        page.keyboard.press("Enter")
-        _probe(page, ".desk-pullout", "thread", width, failures)
-        page.unroute("**/*")
-        page.reload()
-        page.locator("[aria-controls=desk-tool-shelf]").wait_for(timeout=15000)
+        # 2. (Betterment Q4: the Thread window and its Rename are parked;
+        # threads open in Ask, which has no rename.)
 
         # 3. (parked by Betterment daily D4) the Brief wing's footer receipt:
         # Today is one page and the wing (Acknowledge, its footer) is parked;

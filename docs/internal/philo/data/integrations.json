@@ -99,7 +99,7 @@
           "claim": "The HTTP router serves concrete Thread routes."
         },
         {
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "symbol": "ThreadPullout",
           "claim": "The Workbench conversation uses shared paper traffic and editors, real close/load retry, failed-turn retry and passive branch position while preserving runtime reconciliation and message anchors.",
           "line": 1094
@@ -147,13 +147,13 @@
           }
         },
         {
-          "path": "web/src/desk/__tests__/ThreadPullout.test.tsx",
+          "path": "web/src/desk/pullouts/_parked/__tests__/ThreadPullout.test.tsx",
           "node": "retries loading and closes an absent thread with the real callback",
           "assertion": "The real Thread face exposes load retry and passes its existing close callback.",
           "execution": "passed"
         },
         {
-          "path": "web/src/desk/__tests__/ThreadPullout.test.tsx",
+          "path": "web/src/desk/pullouts/_parked/__tests__/ThreadPullout.test.tsx",
           "node": "retries the failed message through the existing regenerate writer",
           "assertion": "A failed answer offers the canonical regenerate writer for that message.",
           "execution": "passed"

@@ -3,17 +3,17 @@
  * selection inside textarea does not open popover, MicButton present. */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
-import { useThreadStore, type ThreadMessage, type ThreadDetail, type DraftAnnotation } from "../threads";
-import { ThreadPullout } from "../pullouts/ThreadPullout";
-import { RuntimeBusProvider } from "../../runtime/RuntimeBus";
+import { useThreadStore, type ThreadMessage, type ThreadDetail, type DraftAnnotation } from "../../../threads";
+import { ThreadPullout } from "../ThreadPullout";
+import { RuntimeBusProvider } from "../../../../runtime/RuntimeBus";
 
 // Mock api
-vi.mock("../../lib/api", () => ({
+vi.mock("../../../../lib/api", () => ({
   apiFetch: vi.fn().mockResolvedValue({ relationships: [] }),
 }));
 
 // Mock MicButton
-vi.mock("../components/MicButton", () => ({
+vi.mock("../../../components/MicButton", () => ({
   MicButton: ({ onText }: { onText: (t: string) => void }) => (
     <button data-testid="mic-button" onClick={() => onText("voice text")}>
       Mic
@@ -22,12 +22,12 @@ vi.mock("../components/MicButton", () => ({
 }));
 
 // Mock ModeTabs
-vi.mock("../components/ModeTabs", () => ({
+vi.mock("../../../components/ModeTabs", () => ({
   ModeTabs: () => <div data-testid="mode-tabs">Modes</div>,
 }));
 
 // Mock store
-vi.mock("../store", () => ({
+vi.mock("../../../store", () => ({
   useDesk: Object.assign(
     (sel: (s: Record<string, unknown>) => unknown) =>
       sel({

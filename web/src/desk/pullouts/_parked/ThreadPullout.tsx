@@ -1,6 +1,6 @@
-import { openNewThread } from "../newThread";
-import { refOpener } from "../openObject";
-import { ActionNotice, StateChip, countLabel, FoldGadget, CheckGadget, CycleGadget, GadgetGroup, GadgetRow, StringGadget, wireDayClock } from "../surface";
+import { openNewThread } from "../../newThread";
+import { refOpener } from "../../openObject";
+import { ActionNotice, StateChip, countLabel, FoldGadget, CheckGadget, CycleGadget, GadgetGroup, GadgetRow, StringGadget, wireDayClock } from "../../surface";
 /** HS-151-05 — Thread pullout content: head (in-place title, egress lamp,
  * status line, token meter), body (user/assistant rows with StreamingMaterial,
  * reasoning folded behind RAW, error row in-flow, CRASHED + Retry, sibling
@@ -13,13 +13,13 @@ import {
   useScrollHint,
   SurfaceRows,
   SurfaceRow,
-} from "../surface/Surface";
-import "../surface/patterns/conversation.css";
-import { Material } from "../surface/Material";
-import { intelBadge } from "../chair/intelBadge";
-import { ContextualAssignment } from "../../pages/cores/ContextualAssignment";
-import { SurfaceFooter } from "../surface/SurfaceFooter";
-import { RouteEgressChip, TurnLamp, lastTurnLine, routeLamp, type TurnRoute } from "../turnRoute";
+} from "../../surface/Surface";
+import "../../surface/patterns/conversation.css";
+import { Material } from "../../surface/Material";
+import { intelBadge } from "../../chair/intelBadge";
+import { ContextualAssignment } from "../../../pages/cores/ContextualAssignment";
+import { SurfaceFooter } from "../../surface/SurfaceFooter";
+import { RouteEgressChip, TurnLamp, lastTurnLine, routeLamp, type TurnRoute } from "../../turnRoute";
 
 /** Owner pick 2026-10-05 (route in footer): a turn's lamp is its receipt
  * route. The server writes egress_scope, egress_host and egress_receipt_id
@@ -38,8 +38,8 @@ function threadTurnRoute(msg: ThreadMessage): TurnRoute | null {
     fallback: Boolean(msg.egressFallback),
   };
 }
-import { useWriteReceipt } from "../hooks/useWriteReceipt";
-import { useRuntimeBus } from "../../runtime/RuntimeBus";
+import { useWriteReceipt } from "../../hooks/useWriteReceipt";
+import { useRuntimeBus } from "../../../runtime/RuntimeBus";
 import {
   useThreadStore,
   isCrashed,
@@ -65,26 +65,26 @@ import {
   type ToolRowState,
   type GuardrailRow,
   type ThreadCallStatePayload,
-} from "../threads";
-import { useDesk } from "../store";
-import { ThreadComposer, InlineEditor } from "../components/ThreadComposer";
-import { MicButton } from "../components/MicButton";
-import { Button } from "../../components/signal/Signal";
-import { ModeTabs } from "../components/ModeTabs";
-import { InterviewPanel } from "../components/InterviewPanel";
-import { CallChip } from "../components/CallChip";
-import { SpeakerGlyph } from "../components/SpeakerGlyph";
+} from "../../threads";
+import { useDesk } from "../../store";
+import { ThreadComposer, InlineEditor } from "../../components/ThreadComposer";
+import { MicButton } from "../../components/MicButton";
+import { Button } from "../../../components/signal/Signal";
+import { ModeTabs } from "../../components/ModeTabs";
+import { InterviewPanel } from "../../components/InterviewPanel";
+import { CallChip } from "../../components/CallChip";
+import { SpeakerGlyph } from "../../components/SpeakerGlyph";
 import {
   feedDelta as autoSpeakFeedDelta,
   flushTurn as autoSpeakFlushTurn,
   setCallActive as autoSpeakSetCallActive,
   bargeIn as autoSpeakBargeIn,
   wasAutoSpoken,
-} from "../autoSpeak";
-import type { PulloutContentProps } from "./types";
-import { noteName, primitiveName } from "../windowName";
-import { reasonWords } from "../surface/runWords";
-import "./thread-pullout.css";
+} from "../../autoSpeak";
+import type { PulloutContentProps } from "../types";
+import { noteName, primitiveName } from "../../windowName";
+import { reasonWords } from "../../surface/runWords";
+import "../thread-pullout.css";
 
 // HS-152-04: stable empty refs for zustand selectors (avoid infinite re-render).
 const EMPTY_TOOL_ROWS: Record<string, ToolRow> = {};

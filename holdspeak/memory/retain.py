@@ -213,8 +213,13 @@ def _threads(
         units = [(message_id, "\n".join(texts)) for message_id, texts in by_message.items()]
         if not units:
             continue
+        # Betterment Q4: a thread with no title is named by its first words,
+        # never by its id.
+        title = str(thread["title"] or "").strip() or (
+            " ".join(units[0][1].split())[:80] or "A conversation"
+        )
         yield MemorySource(
-            ref, "thread", str(thread["title"] or ""), thread["occurred_at"], units, pack=False
+            ref, "thread", title, thread["occurred_at"], units, pack=False
         )
 
 

@@ -193,8 +193,8 @@ MIC_ALLOWLIST: tuple[tuple[str, str, str], ...] = (
      "ChoiceCard radio — not a text input"),
     # Parked: ("desk/pullouts/ThreadPullout.tsx", "thread-elicitation-boolean",
     # "Elicitation boolean checkbox — not a text input"). It now uses CheckGadget.
-    ("desk/pullouts/ThreadPullout.tsx", 'type="number"',
-     "Elicitation numeric field — a number, not dictatable text"),
+    # Parked by Betterment Q4 with the Thread window: ("desk/pullouts/ThreadPullout.tsx",
+    # 'type="number"', "Elicitation numeric field — a number, not dictatable text").
     ("desk/components/ScheduleCreateWindow.tsx", 'type="datetime-local"',
      "Date/time picker — a calendar value, not dictatable text"),
     ("features/project-room/review/ReviewPosture.tsx", "review-defer-date",
@@ -239,8 +239,8 @@ MIC_HOST_AUTHORITIES: tuple[tuple[str, str, str], ...] = (
      "The Thread composer MicButton appends to the latest draft"),
     ("desk/components/ThreadComposer.tsx", 'label={placeholder ?? "Edit message"}',
      "The inline editor MicButton appends inside its editor focus group"),
-    ("desk/pullouts/ThreadPullout.tsx", 'label="Comment"',
-     "The annotation MicButton appends to the current comment"),
+    # Parked by Betterment Q4 with the Thread window: ("desk/pullouts/ThreadPullout.tsx",
+    # 'label="Comment"', "The annotation MicButton appends to the current comment").
 )
 
 

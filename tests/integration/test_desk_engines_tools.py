@@ -24,6 +24,7 @@ from tests.fixtures.fake_agent_cli import (
     install_fake_agent_clis,
     mcp_runs,
     path_with,
+    set_claude_answer,
     set_tool_plan,
 )
 
@@ -182,3 +183,117 @@ def test_a_run_whose_agent_reads_its_own_automation_does_not_hang(hub: str, fake
     assert got["status"] == 200 and "Cutover bench" in _tool_text(got["reply"]), got
     assert listed["status"] == 200 and _tool_text(listed["reply"]), listed
     assert got["seconds"] < 10 and listed["seconds"] < 10, runs[0]["calls"]
+
+
+def _seed_meetings(titles: list[str]) -> list[str]:
+    from holdspeak.db import get_database
+    from holdspeak.meeting_session import MeetingState, TranscriptSegment
+
+    ids = []
+    for n, title in enumerate(titles):
+        start = datetime.now() - timedelta(hours=n + 1)
+        meeting_id = f"m-looked-{n}"
+        get_database().meetings.save_meeting(MeetingState(
+            id=meeting_id, started_at=start, ended_at=start + timedelta(minutes=20), title=title,
+            segments=[TranscriptSegment(text="We cut over on Friday.", speaker="Me", start_time=1.0, end_time=3.0)]))
+        ids.append(meeting_id)
+    return ids
+
+
+def test_a_result_says_what_its_agent_looked_at_and_wrote_and_what_it_cost(
+    hub: str, fake_bin: Path, tmp_path: Path,
+) -> None:
+    """Done when (M2): a fake agent that reads 3 meetings and writes 1 note
+    gives a result whose Looked at names the 3 meetings and whose Wrote names
+    the 1 note (with Undo: the run made it), each by its title and its ref;
+    a send it prepared is listed under Prepared with its send id (he presses
+    Send); a refused call and a list name nothing; the result carries the
+    run's reported cost (E2's cli_engine_runs row, linked by its item)."""
+    from tests.fixtures.fake_agent_cli import CLAUDE_COST_USD
+
+    titles = ["Ledger cutover sync", "Hiring loop debrief", "Platform weekly"]
+    meetings = _seed_meetings(titles)
+    brief = _ok(hub, "POST", "/api/notes", {"title": "Cutover brief", "body_markdown": "Friday."})["note"]["id"]
+    folder = tmp_path / "outbox"
+    folder.mkdir()
+    destination = _ok(hub, "POST", "/api/channels/destinations",
+                      {"name": "Outbox folder", "channel": "file", "folder": str(folder)})["destination"]["id"]
+    bench = _ok(hub, "POST", "/api/workbenches", {"name": "Friday update"})["workbench"]["id"]
+    _ok(hub, "PUT", f"/api/workbenches/{bench}", {"instruction": "Write my Friday update from my meetings."})
+    _assign(hub, "workbench.item", _connect(hub, "claude"))
+    set_tool_plan(fake_bin, "claude", [
+        {"name": "meeting.list", "arguments": {}},
+        *({"name": "meeting.get", "arguments": {"meeting_id": m}} for m in meetings),
+        {"name": "desk.create", "arguments": {"kind": "notes", "data": {
+            "title": "Friday update draft", "body_markdown": "Cutover on Friday."}}},
+        {"name": "channel.prepare", "arguments": {"document_ref": f"note:{brief}", "destination_id": destination}},
+        {"name": "channel.send", "arguments": {"send_id": "send-x"}},
+    ], once=True)
+    set_claude_answer(fake_bin, "## Friday update\n\n- The ledger cutover moves to Friday.\n- Two hiring loops are booked.")
+
+    _ok(hub, "POST", f"/api/workbenches/{bench}/run", {})
+
+    (run,) = mcp_runs(fake_bin, "claude")
+    created = run["calls"][4]
+    assert created["status"] == 200 and _tool_text(created["reply"]), created
+    results = _ok(hub, "GET", f"/api/workbenches/{bench}")["workbench"]["results"]
+    assert results and results[0]["status"] == "done", results
+    used = results[0]["used"]
+    assert used is not None, results[0]
+    assert [(row["ref"], row["label"]) for row in used["looked_at"]] == [
+        (f"meeting:{m}", t) for m, t in zip(meetings, titles)], used
+    [wrote] = used["wrote"]
+    assert wrote["ref"].startswith("note:") and wrote["label"] == "Friday update draft" and wrote["undo"] is True, wrote
+    note_id = wrote["ref"].removeprefix("note:")
+    assert _ok(hub, "GET", f"/api/notes/{note_id}")  # the link names a real note
+    [prepared] = used["prepared"]
+    assert prepared["ref"] == f"note:{brief}" and prepared["label"] == "Cutover brief", prepared
+    assert prepared["destination"] == "Outbox folder" and prepared["send_id"], prepared
+    assert list(folder.iterdir()) == []  # prepared only: nothing left the desk
+    # One CLI run per engine call (the item; the memory note after it too):
+    # the result's cost is their sum.
+    engine_calls = len(calls(fake_bin, "claude"))
+    assert engine_calls >= 1
+    assert results[0]["cost_usd"] == pytest.approx(CLAUDE_COST_USD * engine_calls), (results[0], engine_calls)
+    _record_used_step(hub, bench, tmp_path, f"note:{brief}")
+
+
+AUTOMATION_HUB = Path(__file__).resolve().parents[2] / "web" / "src" / "desk" / "__tests__" / "fixtures" / "automation-hub"
+
+
+def _shape(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {k: _shape(v) for k, v in sorted(value.items())}
+    if isinstance(value, list):
+        return [_shape(v) for v in value]
+    return "null" if value is None else type(value).__name__
+
+
+def _record_used_step(base: str, bench: str, tmp_path: Path, prepared_ref: str) -> None:
+    """The automation window's reads after this run (the automation, its
+    lessons, and the sends of the document the agent prepared), for its
+    vitest (web/src/desk/__tests__/automation.app.test.tsx).
+    HOLDSPEAK_WIRE_WRITE=1 rewrites automation-hub/used.json; else this
+    fences its shape."""
+    import os
+    import re
+
+    answers = {
+        f"/api/workbenches/{bench}": _ok(base, "GET", f"/api/workbenches/{bench}"),
+        f"/api/workbenches/{bench}/memory": _ok(base, "GET", f"/api/workbenches/{bench}/memory"),
+        f"/api/channels/sends?document_ref={prepared_ref}": _ok(
+            base, "GET", f"/api/channels/sends?document_ref={prepared_ref}"),
+    }
+    text = re.sub(re.escape(str(tmp_path)), "/tmp/rig", json.dumps(answers))
+    scrubbed = json.loads(re.sub(re.escape(base), "http://127.0.0.1:0", text))
+    path = AUTOMATION_HUB / "used.json"
+    if os.environ.get("HOLDSPEAK_WIRE_WRITE") == "1":
+        path.write_text(json.dumps({
+            "_source": "The hub's own answers, captured by tests/integration/test_desk_engines_tools.py "
+                       "(a real hub, isolated database, the fake claude CLI reading 3 meetings, writing 1 note "
+                       "and preparing 1 send over MCP). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit it.",
+            "workbench_id": bench, "gets": scrubbed}, indent=1, ensure_ascii=False) + "\n")
+    assert path.exists(), f"no stored answers {path}; run with HOLDSPEAK_WIRE_WRITE=1"
+    stored = json.loads(path.read_text())["gets"]
+    assert _shape(list(stored.values())) == _shape(list(scrubbed.values())), \
+        f"{path.name}: the stored answers are not the hub's shape"

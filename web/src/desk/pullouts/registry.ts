@@ -15,7 +15,7 @@ import { CoderPullout } from "./CoderPullout";
 import { DirectoryPullout } from "./DirectoryPullout";
 import { IntelligencePullout } from "./IntelligencePullout";
 import { FallbackPullout } from "./FallbackPullout";
-import { ThreadPullout } from "./ThreadPullout";
+import { ThreadToAsk } from "./ThreadToAsk";
 import { PeoplePullout } from "./PeoplePullout";
 
 /**
@@ -34,7 +34,7 @@ export const PULLOUT_CONTENT: Record<PrimitiveKind, PulloutContent> = {
   workflow: WorkflowPullout,
   coder: CoderPullout,
   directory: DirectoryPullout,
-  thread: ThreadPullout,
+  thread: ThreadToAsk,
   project: FallbackPullout,
   repository: FallbackPullout,
   roadmap: FallbackPullout,

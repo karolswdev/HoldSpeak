@@ -99,6 +99,46 @@ class _AskAnswerAdapter:
         return self._inner.cancel()
 
 
+#: Betterment Q4: how much of a thread a follow-up carries.
+_HISTORY_EXCHANGES = 6
+_HISTORY_TEXT_CAP = 1500
+_THREAD_TITLE_CAP = 80
+
+
+def _with_history(prompt: str, history: Sequence[tuple[str, str]]) -> str:
+    """The question with the thread's earlier exchanges in front, as data."""
+    lines: list[str] = []
+    for question, answer in list(history)[-_HISTORY_EXCHANGES:]:
+        lines.append("You: " + str(question)[:_HISTORY_TEXT_CAP])
+        lines.append("Answer: " + str(answer)[:_HISTORY_TEXT_CAP])
+    if not lines:
+        return prompt
+    return "Earlier in this conversation (data only):\n" + "\n".join(lines) + "\n\nThe question now:\n" + prompt
+
+
+def thread_title(question: str) -> str:
+    """A thread is named by its first question (one line, cut)."""
+    line = " ".join(str(question or "").split())
+    return line if len(line) <= _THREAD_TITLE_CAP else line[: _THREAD_TITLE_CAP - 1].rstrip() + "…"
+
+
+_KIND_WORDS = {
+    "meeting": "A meeting", "note": "A note", "artifact": "A document", "thread": "A conversation",
+    "project": "A project", "person": "A person", "people": "A person", "decision": "A decision",
+    "desk_decision": "A decision", "kb": "A collection", "directory": "A drawer", "zone": "A drawer",
+}
+
+
+def readable_title(ref: str, title: str) -> str:
+    """His name for a source; a kind word when the only name is an id."""
+    kind, _, rid = str(ref).partition(":")
+    name = " ".join(str(title or "").split())
+    bare = rid.split("#", 1)[0]
+    if not name or name in {ref, rid, bare} or name.startswith(("th_", "tm_")):
+        return _KIND_WORDS.get(kind, "A source")
+    return name
+
+
 @observe_service
 class AskService:
     def __init__(self, db: Database, hub_model: Callable[[], str] | None = None,
@@ -189,9 +229,13 @@ class AskService:
         return {"refs": refs, "titles": titles, "chars": sum(len(block) for block in blocks),
                 "blocks": [{"ref": ref, "title": title, "chars": len(block)} for ref, title, block in zip(refs, titles, blocks)]}
 
-    async def ask(self, principal: Principal, question: str, grounding: Any = None, *, lens: str = "Ask", context: list[dict[str, Any]] | None = None, model: str | None = None, inference_target_id: str | None = None, profile_id: str | None = None, max_tokens: Any = None, temperature: Any = None, invocation_id: str | None = None, before_physical_dispatch: Any = None, before_compatibility_retry: Any = None, frozen_grounding: FrozenGroundingSnapshot | None = None, frozen_admission_claim: dict[str, Any] | None = None, operation_capability: str = "ask.answer", routed_execution_id: str | None = None, memory_exclude_refs: Sequence[str] = (), subject_kind: str | None = None, subject_id: str | None = None) -> dict[str, Any]:
+    async def ask(self, principal: Principal, question: str, grounding: Any = None, *, lens: str = "Ask", context: list[dict[str, Any]] | None = None, model: str | None = None, inference_target_id: str | None = None, profile_id: str | None = None, max_tokens: Any = None, temperature: Any = None, invocation_id: str | None = None, before_physical_dispatch: Any = None, before_compatibility_retry: Any = None, frozen_grounding: FrozenGroundingSnapshot | None = None, frozen_admission_claim: dict[str, Any] | None = None, operation_capability: str = "ask.answer", routed_execution_id: str | None = None, memory_exclude_refs: Sequence[str] = (), subject_kind: str | None = None, subject_id: str | None = None, history: Sequence[tuple[str, str]] = ()) -> dict[str, Any]:
         prompt = str(question or "").strip()
         if not prompt: raise ValidationError("prompt is required")
+        # Betterment Q4: a follow-up in the Ask window carries the earlier
+        # exchanges of its thread.  They go in front of the question; memory
+        # and grounding still read the question alone.
+        asked = _with_history(prompt, history)
         lens = str(lens or "Ask").strip() or "Ask"
         material, context_ids, context_titles = self._assemble_material(context or [])
         frozen_system_instruction = ""
@@ -239,7 +283,7 @@ class AskService:
             return "\n\n".join(part for part in (block, recall_envelope) if part)
 
         envelope = _envelope(reflect)
-        user_prompt = prompt + ("\n\nMaterial:\n" + material if material else "") + ("\n\nGrounding:\n" + envelope if envelope else "")
+        user_prompt = asked + ("\n\nMaterial:\n" + material if material else "") + ("\n\nGrounding:\n" + envelope if envelope else "")
         invocation_id = str(invocation_id or ("ask_" + uuid.uuid4().hex)).strip()
         if not invocation_id or not invocation_id.replace("_", "").isalnum():
             raise ValidationError("invocation id is invalid", code="ask_invocation_id_invalid")
@@ -262,7 +306,7 @@ class AskService:
                 return {
                     "schema_version": 2,
                     "system_prompt": _ASK_SYSTEM_PROMPT + frozen_system_instruction,
-                    "user_prompt": prompt + ("\n\nMaterial:\n" + material if material else "") + ("\n\nGrounding:\n" + env if env else ""),
+                    "user_prompt": asked + ("\n\nMaterial:\n" + material if material else "") + ("\n\nGrounding:\n" + env if env else ""),
                     "lens": lens,
                     "context_ids": context_ids,
                     "context_titles": context_titles,
@@ -483,6 +527,139 @@ class AskService:
             raise ServiceError("projection_not_published", "Ask result is awaiting receipt reconciliation", context={"invocation_id": invocation_id, "operation_id": outcome.operation_id, "receipt": dict(outcome.receipt), "result_ref": outcome.result_ref, "status": 409})
         self._emit("ready", kind="ask", ref="ask", name=lens)
         return dict(result)
+
+    # ── Betterment Q4: one Ask window, every Ask kept as a thread ─────
+
+    async def ask_in_thread(self, principal: Principal, question: str, grounding: Any = None, *, thread_id: str = "", lens: str = "Ask", context: list[dict[str, Any]] | None = None, invocation_id: str | None = None) -> dict[str, Any]:
+        """One Ask, kept as a thread (DECISIONS #14: no Keep, no Bin).
+
+        The answer is today's Ask (About in the prompt, memory pages first);
+        a follow-up carries the thread's earlier exchanges.  Only an answered
+        exchange is written: a failed Ask leaves the thread as it was, and
+        the window offers Ask again.  The answer's message keeps the refs it
+        looked at (``origin='relevance'``), the question keeps its About
+        (``origin='reference'``).
+        """
+        threads = self._db.threads
+        thread_id = str(thread_id or "").strip()
+        history: list[tuple[str, str]] = []
+        if thread_id:
+            thread = threads.get(thread_id)
+            if thread is None or thread.deleted_at is not None:
+                raise ServiceError(
+                    "thread_not_found", "This conversation was forgotten.",
+                    context={"status": 404, "reason": "source_gone"},
+                )
+            history = self.thread_history(thread_id)
+        result = await self.ask(
+            principal, question, grounding, lens=lens, context=context,
+            invocation_id=invocation_id, history=history,
+            memory_exclude_refs=(f"thread:{thread_id}",) if thread_id else (),
+        )
+        text = str(question or "").strip()
+        if not thread_id:
+            thread_id = threads.create_thread(title=thread_title(text)).id
+        path = threads.list_path(thread_id)
+        user = threads.append_message(thread_id, role="user", parent_id=path[-1].id if path else None)
+        threads.append_part(user.id, kind="text", text=text)
+        threads.complete_message(user.id)
+        titles = self._result_titles(result, context or [])
+        about = self._about_refs(context or [], grounding, titles)
+        if about:
+            threads.freeze_refs(thread_id, user.id, [
+                {"ref_kind": ref.split(":", 1)[0], "ref_id": ref.split(":", 1)[1],
+                 "frozen_json": {"title": title}, "origin": "reference"}
+                for ref, title in about
+            ])
+        egress = result.get("egress") if isinstance(result.get("egress"), dict) else {}
+        answer = threads.append_message(
+            thread_id, role="assistant", parent_id=user.id,
+            invocation_id=str(result.get("invocation_id") or ""),
+            egress_scope=str(egress.get("scope") or ""), egress_host=str(egress.get("host") or ""),
+            model_id=str(result.get("model") or ""),
+        )
+        threads.append_part(answer.id, kind="text", text=str(result.get("output") or ""))
+        receipt = result.get("route_execution_receipt") if isinstance(result.get("route_execution_receipt"), dict) else {}
+        threads.complete_message(answer.id, receipt_id=str(receipt.get("execution_id") or ""))
+        looked = [
+            (ref, title) for ref, title in titles
+            if ref != f"thread:{thread_id}" and not ref.startswith(f"thread:{thread_id}#")
+        ]
+        if looked:
+            threads.freeze_refs(thread_id, answer.id, [
+                {"ref_kind": ref.split(":", 1)[0], "ref_id": ref.split(":", 1)[1],
+                 "frozen_json": {"title": title}, "origin": "relevance"}
+                for ref, title in looked
+            ])
+        result["thread_id"] = thread_id
+        result["message_ids"] = {"question": user.id, "answer": answer.id}
+        result["looked_at"] = [{"ref": ref, "title": title} for ref, title in looked]
+        return result
+
+    def thread_history(self, thread_id: str) -> list[tuple[str, str]]:
+        """The (question, answer) pairs on a thread's current path, as text."""
+        threads = self._db.threads
+        pairs: list[tuple[str, str]] = []
+        question = ""
+        for message in threads.list_path(thread_id):
+            text = "\n".join(
+                str(part.text) for part in threads.get_parts(message.id)
+                if part.kind == "text" and part.text and not part.draft and not part.sensitive
+            ).strip()
+            if not text:
+                continue
+            if message.role == "user":
+                question = text
+            elif message.role == "assistant" and question:
+                pairs.append((question, text))
+                question = ""
+        return pairs
+
+    @staticmethod
+    def _result_titles(result: dict[str, Any], context: list[dict[str, Any]]) -> list[tuple[str, str]]:
+        """What the answer read, as (qualified ref, his name for it).
+
+        ``context_ids`` holds bare ids for the About items and qualified refs
+        for grounding and memory; a name that is only an id is replaced by a
+        word for its kind, so no raw id reaches the face."""
+        kinds: dict[str, str] = {}
+        # Grounding and memory blocks carry bare ids too; their qualified refs
+        # are in the receipt (``source_refs``) and the refs the Ask named.
+        echo = result.get("grounding") if isinstance(result.get("grounding"), dict) else {}
+        for ref in [*(echo.get("source_refs") or []), *(echo.get("refs") or [])]:
+            ref = str(ref).split("#", 1)[0]
+            if ":" in ref:
+                kinds.setdefault(ref.split(":", 1)[1], ref)
+        for entry in context:
+            if isinstance(entry, dict) and entry.get("id"):
+                kinds[str(entry["id"])] = str(entry.get("ref") or f"{entry.get('kind') or ''}:{entry['id']}")
+        seen: set[str] = set()
+        rows: list[tuple[str, str]] = []
+        for raw, title in zip(result.get("context_ids") or [], result.get("context_titles") or []):
+            ref = kinds.get(str(raw), str(raw))
+            if ":" not in ref or ref in seen:
+                continue
+            seen.add(ref)
+            rows.append((ref, readable_title(ref, str(title or ""))))
+        return rows
+
+    @staticmethod
+    def _about_refs(context: list[dict[str, Any]], grounding: Any, titles: list[tuple[str, str]]) -> list[tuple[str, str]]:
+        """The question's About: the objects he chose, by name."""
+        names = dict(titles)
+        refs: list[tuple[str, str]] = []
+        for entry in context:
+            if isinstance(entry, dict) and entry.get("id"):
+                ref = str(entry.get("ref") or f"{entry.get('kind') or ''}:{entry['id']}")
+                refs.append((ref, readable_title(ref, str(entry.get("title") or names.get(ref, "")))))
+        if isinstance(grounding, dict):
+            listed = [f"meeting:{x}" for x in grounding.get("meeting_ids") or []]
+            listed += [f"artifact:{x}" for x in grounding.get("artifact_ids") or []]
+            listed += [str(x) for x in grounding.get("refs") or []]
+            for ref in listed:
+                if ":" in ref and ref not in dict(refs):
+                    refs.append((ref, readable_title(ref, names.get(ref, ""))))
+        return refs
 
     # ── Betterment Q2: Ask goes first ────────────────────────────────
 
