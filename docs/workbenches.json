@@ -76,5 +76,13 @@
     "time_limit": "per item, from the engine: 60 s for an HTTP engine, the preset's timeout for a CLI engine",
     "inbox": "one Note filed in the Inbox zone (hs-seed-inbox, when it exists) with a link back to the automation",
     "needs_you": "one Door item owned by the owner (me) and due today, source_ref artifact:<id>"
+  },
+  "mcp_surface": {
+    "workbench.create / automation.create": "name, optional fields, and the sentence words: do (instruction), about (sources), put_in (output_target), when, with (engine profile id), spend_limit (dollars per run; null = the engine's own)",
+    "workbench.update / automation.update": "the given sentence words and fields only",
+    "when": "{schedule: {every: day|weekday|week|hour, day: friday or 0-6, time: HH:MM}} | {event: <event id>, repository: owner/repo} | {manual: true}; a schedule with no engine is kept off and the answer carries notice",
+    "workbench.results / automation.results": "the newest results (limit 1-20): text, used (looked_at, wrote, prepared), cost_usd, error",
+    "workbench.cancel / automation.cancel": "cancel the running run (the newest, or run_id); only the caller's own run",
+    "authority": "when = authority; with and spend_limit = config; a Thread or an agent run stops for the owner's press on both (mcp/tool_authority.py)"
   }
 }

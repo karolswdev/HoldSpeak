@@ -1198,7 +1198,11 @@ class MeetingRepository(BaseRepository):
             params: list[Any] = []
 
             if not include_completed:
-                query += " AND a.status = 'pending'"
+                # Betterment D3 follow-up: live work is ``pending`` (to review)
+                # or ``open`` (kept: Confirm, keep on arrival, a decision's
+                # commitment); reading ``pending`` alone dropped every kept
+                # promise from the open-loop collector.
+                query += " AND a.status IN ('pending', 'open')"
             if meeting_id:
                 query += " AND a.meeting_id = ?"
                 params.append(meeting_id)

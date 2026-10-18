@@ -20,6 +20,22 @@ def _new_id(prefix: str) -> str:
     return f"{prefix}_{uuid.uuid4().hex[:12]}"
 
 
+def _spend_limit(limit: Any) -> float | None:
+    """A Spend limit per run: None (the engine's own) or dollars in (0, 1000]."""
+    if limit is None:
+        return None
+    if isinstance(limit, bool) or not isinstance(limit, (int, float)) or not 0 < float(limit) <= 1000:
+        raise ValidationError("The spend limit is a dollar amount above 0 and at most 1000")
+    return round(float(limit), 2)
+
+
+#: Betterment M3: the sentence words an agent uses (DESIGN section 4), and
+#: the stored field each content word writes. ``when``, ``with`` and
+#: ``spend_limit`` go through set_when and set_engine (the owner's).
+SENTENCE_WORDS = frozenset({"do", "about", "when", "with", "put_in", "spend_limit"})
+_SENTENCE_CONTENT = {"do": "instruction", "about": "sources", "put_in": "output_target"}
+
+
 class _VoiceResolutionAdapter:
     """Keep raw resolver text inside the frozen typed route contract."""
 
@@ -279,12 +295,7 @@ class WorkbenchService:
         if unknown:
             raise ValidationError(f"Unknown fields: {', '.join(sorted(unknown))}")
         if "spend_limit_usd" in fields:
-            limit = fields["spend_limit_usd"]
-            if limit is not None:
-                if isinstance(limit, bool) or not isinstance(limit, (int, float)) or not 0 < float(limit) <= 1000:
-                    raise ValidationError("The spend limit is a dollar amount above 0 and at most 1000")
-                limit = round(float(limit), 2)
-            self._db.workbenches.set_spend_limit(workbench_id, limit)
+            self._db.workbenches.set_spend_limit(workbench_id, _spend_limit(fields["spend_limit_usd"]))
         profile_id = str(fields.get("profile_id") or "").strip()
         if profile_id:
             from holdspeak.kernel.runtime import _configure
@@ -331,6 +342,107 @@ class WorkbenchService:
             service.enable_from_owner_in_transaction(principal, wb, conn)
         service.complete_fenced(fenced)
         return True
+
+    # ── Betterment M3: the sentence, for an agent (MCP) ──────────────────
+
+    def create_automation(
+        self, principal: Principal, *, name: str, sentence: dict[str, Any], **fields: Any
+    ) -> dict[str, Any]:
+        """Make one automation from its sentence in one call: Do, About and
+        Put it in are written with it; With, Spend limit and When follow
+        (each is the owner's: ``set_engine``, ``set_when``). The sentence is
+        checked before anything is written."""
+        starts = self._check_sentence(sentence)
+        content = self._sentence_content(sentence, fields)
+        made = self.create_workbench(principal, name=name, **fields, **content)
+        return self._apply_starts(principal, str(made["id"]), sentence, starts)
+
+    def update_automation(
+        self, principal: Principal, workbench_id: str, *, sentence: dict[str, Any], **fields: Any
+    ) -> dict[str, Any]:
+        """Change the words of an automation's sentence that are given."""
+        starts = self._check_sentence(sentence)
+        content = self._sentence_content(sentence, fields)
+        if fields or content:
+            self.update_workbench(principal, workbench_id, **fields, **content)
+        else:
+            _launch_own(principal, f"workbench:{workbench_id}")
+            self._require_workbench(workbench_id)
+        return self._apply_starts(principal, workbench_id, sentence, starts)
+
+    @staticmethod
+    def _check_sentence(sentence: dict[str, Any]) -> dict[str, Any] | None:
+        unknown = set(sentence) - SENTENCE_WORDS
+        if unknown:
+            raise ValidationError(f"Unknown sentence words: {', '.join(sorted(unknown))}")
+        if "with" in sentence and not str(sentence["with"] or "").strip():
+            raise ValidationError("with is an engine's profile id, from model_library.get")
+        if "spend_limit" in sentence:
+            _spend_limit(sentence["spend_limit"])
+        if "when" not in sentence:
+            return None
+        from .automation_when import choice_from_mcp
+
+        return choice_from_mcp(sentence["when"])
+
+    @staticmethod
+    def _sentence_content(sentence: dict[str, Any], fields: dict[str, Any]) -> dict[str, Any]:
+        content = {stored: sentence[word] for word, stored in _SENTENCE_CONTENT.items() if word in sentence}
+        both = set(content) & set(fields)
+        if both:
+            raise ValidationError(f"Give each once, as a sentence word or a field: {', '.join(sorted(both))}")
+        return content
+
+    def _apply_starts(
+        self, principal: Principal, workbench_id: str, sentence: dict[str, Any], when: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        engine: dict[str, Any] = {}
+        if "with" in sentence:
+            engine["profile_id"] = str(sentence["with"]).strip()
+        if "spend_limit" in sentence:
+            engine["spend_limit_usd"] = sentence["spend_limit"]
+        if engine:
+            self.set_engine(principal, workbench_id, **engine)
+        notice = ""
+        if when is not None:
+            try:
+                self.set_when(principal, workbench_id, when)
+            except ValidationError as exc:
+                # The schedule is kept, off, until an engine is chosen: the
+                # automation exists, so say so instead of failing the call.
+                if exc.code != "automation_schedule_needs_engine":
+                    raise
+                notice = exc.detail
+        payload = self.get_workbench(principal, workbench_id)
+        if notice:
+            payload["notice"] = notice
+        return payload
+
+    def results(self, principal: Principal, workbench_id: str, *, limit: int = 1) -> dict[str, Any]:
+        """The newest results, newest first: the rendered text, what its agent
+        looked at, wrote and prepared, the cost and the failure reason (the
+        automation window's own read, ``automation_runs.results_of``)."""
+        self._require_workbench(workbench_id)
+        from .automation_runs import results_of
+
+        bounded = max(1, min(int(limit), 20))
+        return {"workbench_id": workbench_id, "results": results_of(self._db, workbench_id, limit=bounded)}
+
+    def cancel_latest_run(self, principal: Principal, workbench_id: str, run_id: str = "") -> dict[str, Any]:
+        """Cancel this automation's run that is still running (the newest, or
+        ``run_id``). The kernel cancels only a run its caller started."""
+        self._require_workbench(workbench_id)
+        query = "SELECT id, parent_operation_id FROM workbench_runs WHERE workbench_id=? AND status='running'"
+        params: list[Any] = [workbench_id]
+        if run_id:
+            query += " AND id=?"
+            params.append(run_id)
+        with self._db._connection() as conn:
+            row = conn.execute(query + " ORDER BY started_at DESC LIMIT 1", params).fetchone()
+        if row is None or not row["parent_operation_id"]:
+            raise ConflictError("Nothing is running for this automation")
+        disposition = self.cancel_run(principal, str(row["parent_operation_id"]))
+        return {"run_id": str(row["id"]), "disposition": disposition}
 
     # ── Items ────────────────────────────────────────────────────────────
 

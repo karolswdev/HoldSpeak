@@ -1,7 +1,7 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-259 tools across 45 families. Any MCP client (Claude Code, Cursor, a
+269 tools across 46 families. Any MCP client (Claude Code, Cursor, a
 custom script) can read and drive the desk without the web UI.
 
 This page is the MCP transport reference. Each tool description in the
@@ -132,8 +132,21 @@ lists every tool name.
 | `people` | The encrypted People ledger. |
 | `cadence`, `heartbeat`, `scheduled_recording`, `door` | The Cadence engine, the Heartbeat sweep, scheduled recordings and the Door. |
 | `model_library`, `inference`, `inference_assignment`, `concierge`, `settings` | Models, assignments and settings. |
-| `sequence`, `workflow`, `workbench`, `recipe`, `practice_recipe`, `reaction`, `watch`, `zone`, `kb` | Runs, Workbenches, recipes and Automations. |
+| `sequence`, `workflow`, `workbench`, `automation`, `recipe`, `practice_recipe`, `reaction`, `watch`, `zone`, `kb` | Runs, Workbenches, recipes and Automations. `automation.*` are the `workbench.*` tools by the user's word. |
 | `memory`, `dictation`, `event`, `pipeline`, `kernel`, `plugin_job`, `coder` | Search, journals, events, receipts, queued jobs and Coder sessions. |
+
+### Automations
+
+`automation.create` (or `workbench.create`) makes one automation from its
+sentence in one call: `do` (what each run does), `about` (what it reads),
+`put_in` (inbox, needs_you or destination:<id>), `when` (a schedule, an
+event or manual), `with` (the engine's profile id) and `spend_limit`
+(dollars per run). `automation.update` changes the words you give.
+`automation.results` returns the newest results: the text, what the agent
+looked at, wrote and prepared, the cost and the failure reason.
+`automation.cancel` cancels the run that is running. `when` is authority;
+`with` and `spend_limit` are config. A Thread or an agent run stops for
+your press on them; your own session does not.
 
 ### Desk
 
@@ -350,7 +363,7 @@ database, FTS index or Cadence.
 
 <!-- BEGIN MCP TOOL ROSTER (machine-generated -- do not edit) -->
 
-**Registry totals:** 259 tools across 45 families.
+**Registry totals:** 269 tools across 46 families.
 
 #### agent (1)
 
@@ -362,6 +375,17 @@ database, FTS index or Cadence.
 - `ask.keep`
 - `ask.resolve_grounding`
 - `ask.run`
+
+#### automation (8)
+
+- `automation.cancel`
+- `automation.create`
+- `automation.delete`
+- `automation.get`
+- `automation.list`
+- `automation.results`
+- `automation.run`
+- `automation.update`
 
 #### cadence (11)
 
@@ -722,15 +746,17 @@ database, FTS index or Cadence.
 - `watch.refresh`
 - `watch.set_enabled`
 
-#### workbench (10)
+#### workbench (12)
 
 - `workbench.add_item`
+- `workbench.cancel`
 - `workbench.create`
 - `workbench.delete`
 - `workbench.delete_item`
 - `workbench.get`
 - `workbench.list`
 - `workbench.list_runs`
+- `workbench.results`
 - `workbench.run`
 - `workbench.update`
 - `workbench.update_item`
@@ -850,7 +876,7 @@ use it.
 
 `tools_for_palette(palette)` returns only the tools in the palette. A
 client that lists tools through this filter sees 65 tools
-instead of 259.
+instead of 269.
 
 `dispatch_for_palette(name, arguments, principal, palette)` runs a tool
 only if `name` is in the palette. A name outside the palette gets a typed

@@ -748,11 +748,11 @@
     }
   ],
   "measurements": {
-    "residual_identities": 241,
-    "residual_mcp": 186,
+    "residual_identities": 252,
+    "residual_mcp": 197,
     "residual_http": 55,
     "http_constructions": 56,
-    "public_tools": 258
+    "public_tools": 269
   },
   "entries": [
     {
@@ -778,6 +778,54 @@
       "entry_point": "ask.run",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/ask.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "automation.cancel",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "automation.create",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "automation.delete",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "automation.get",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "automation.list",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "automation.results",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "automation.run",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "automation.update",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
     },
     {
       "transport": "mcp",
@@ -1813,6 +1861,12 @@
     },
     {
       "transport": "mcp",
+      "entry_point": "workbench.cancel",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
       "entry_point": "workbench.create",
       "discriminator": "",
       "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
@@ -1844,6 +1898,12 @@
     {
       "transport": "mcp",
       "entry_point": "workbench.list_runs",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "workbench.results",
       "discriminator": "",
       "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
     },

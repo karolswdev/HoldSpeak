@@ -49,8 +49,11 @@ if TYPE_CHECKING:
 # words are short, and the People tools' operator note leaves the chat
 # rendering (``thread_tools.tool_schemas_for``).  A tool here is gate-only,
 # MCP only.  Betterment D6: ``people.suggestions`` is an agent's MCP read;
-# the seeded palettes do not grow for it.
-_MCP_ONLY: frozenset[str] = frozenset({"people.suggestions"})
+# the seeded palettes do not grow for it. Betterment M3: an automation's
+# results and the ``automation.*`` aliases are an agent's MCP tools; a
+# thread reads results through workbench.get, and the Desk palette (27,679
+# of 27,680 bytes) does not grow.
+_MCP_ONLY: frozenset[str] = frozenset({"people.suggestions", "workbench.results"})
 
 
 def _thread_side(name: str) -> bool:
@@ -58,7 +61,7 @@ def _thread_side(name: str) -> bool:
     # MCP-only families: an agent composes the desk over MCP; the seeded
     # thread palettes do not widen (no palette grows versus main).
     return name not in _MCP_ONLY and not name.startswith(
-        ("project.", "provider.", "interview.", "practice_recipe.", "channel.", "desk_window.")
+        ("project.", "provider.", "interview.", "practice_recipe.", "channel.", "desk_window.", "automation.")
     )
 
 
