@@ -4,9 +4,28 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-18 (betterment batch four delivered at `eff269a6b`)
+**Last updated:** 2026-10-18 (betterment batch five delivered at `87e1f742c`)
 
 ## Current phase
+
+**Betterment batch five — delivered 2026-10-18 (main `87e1f742c`).** Automations,
+Engines and the desk's tools are complete as designed. A6 #1322 (Put it in;
+new results on Today and the Dock; Run-now race; "automation" in refusals),
+A8 #1325 (New Workflow parked), A9 #1318 (old automations show their tasks;
+Make this one automation), A10 #1324 (an agent reads a folder, read only;
+a made-one prompt goes once), E6 #1320 (one name, Engines; Try it on more
+rows), E7 #1323 (pi and Gemini CLI engines), M3 #1319 (automations on MCP;
+memory call without tools; cadence reads confirmed promises), M4 #1321
+(engines on MCP). Reds fixed forward: #1327 (all stale expectations; no
+regression; Codex agent launches still mount the Conductor palette).
+Owner report fixed: #1328 — macOS "A keychain cannot be found" popups came
+from test hubs with a scratch HOME asking the Keychain (made frequent by D6);
+the key stores now refuse before asking when HOME has no keychain.
+Verified on `c8401c507`: browser 346 passed; FAST 7 / web 1 red, fixed in
+#1327 (quick check + web baseline green). Desk hub restarted from
+`wt-desk-betterment-2026-10-18b`; 4 checks 200; backend `87e1f742c`.
+Slices: 52 of 117 (`docs/internal/betterment/TRACKER.md`). Next: the
+owner's walk — one real automation on a real engine.
 
 **Betterment batch four — delivered 2026-10-18 (main `eff269a6b`).** A5 #1309
 (one About picker, by name, shared with Ask; drop a note or meeting; event
