@@ -196,41 +196,16 @@
 .desk-next .desk-menu-list button.is-subopen .desk-menu-submark {
   color: var(--wb-ink);
 }
-/* HS-148-01: stipple ghosting — the Amiga stipple ERASED to background.
-   A checkerboard overlay in the panel's own ground color (var(--surface-3))
-   punches holes in the text + keycaps. Slight text mute under the stipple
-   so the composite reads. The stipple covers the item box only. */
-/* PHILO-13-11: Workbench ghosting on paper — a light paper stipple over
-   the ink words, still readable */
-.desk-next .desk-menu-list .is-ghost {
-  position: relative;
-  color: var(--wb-ink);
-  cursor: default;
-}
-.desk-next .desk-menu-list .is-ghost::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: repeating-conic-gradient(
-    var(--wb-paper) 0% 25%, transparent 0% 100%
-  ) 0 0 / 2px 2px;
-  opacity: 0.6;
-}
-.desk-next .desk-menu-list .is-ghost:hover,
-.desk-next .desk-menu-list .is-ghost:focus-visible {
-  background: none;
-  color: var(--wb-ink);
-}
-/* HS-148-01: ghost-reason collapse footer — one quiet hint for a uniform
-   panel instead of N per-row echoes. */
-.desk-next .desk-menu-ghost-hint {
+/* Betterment shell S0 (UX-CANON A.11, "withhold, never ghost"): a verb that
+   cannot run is not drawn, so the stipple and the ghost-reason footer are
+   gone. A menu with nothing to run holds one plain line (Window: "No
+   windows open"). */
+.desk-next .desk-menu-note {
   display: block;
-  padding: 3px 10px 4px;
+  padding: 6px 10px;
   color: var(--wb-ink);
-  font: 12px var(--font-mono);
-  letter-spacing: 0.02em;
-  border-top: 1px solid var(--wb-steel);
+  font-size: var(--font-size-sm);
+  cursor: default;
 }
 /* HS-148-02: root-attribute glyph gating.
    "none" hides all glyphs everywhere; "launcher" hides only in verb panels;
@@ -780,7 +755,8 @@
 .desk-next .desk-menubar button:hover,
 .desk-next .desk-menubar button:focus-visible,
 .desk-next .desk-menubar button[aria-expanded="true"],
-.desk-next .desk-menubar .desk-verbbar-title.on {
+.desk-next .desk-menubar .desk-verbbar-title.on,
+.desk-next .desk-menubar .desk-verbbar-title.is-flash {
   background: var(--wb-ink);
   color: var(--wb-paper);
 }
@@ -985,10 +961,6 @@
 .desk-verbbar-menu {
   min-width: 176px;
   z-index: var(--desk-z-popover);
-}
-.desk-verbbar-menu .is-ghost {
-  color: var(--text-faint);
-  cursor: default;
 }
 @media (max-width: 720px) {
   /* The compact bar keeps its navigator as one deliberately framed control,

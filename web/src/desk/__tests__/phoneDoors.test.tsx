@@ -66,14 +66,15 @@ describe("the phone menu bar has one door that carries every verb", () => {
     expect(ids).toEqual(["go"]);
   });
 
-  it("keeps all four menus at desk width", () => {
+  // Betterment shell S0: the Object menu is drawn only with a thing in front.
+  it("keeps Desk, Go and Window at desk width (Object only with a thing in front)", () => {
     compact = false;
     const { container } = render(<DeskMenuBar />);
     const ids = Array.from(
       container.querySelectorAll("[data-menu-id]"),
       (el) => el.getAttribute("data-menu-id"),
     );
-    expect(ids).toEqual(["desk", "object", "go", "window"]);
+    expect(ids).toEqual(["desk", "go", "window"]);
   });
 
   // PHILO-15 11 (B21, owner ruling 2026-10-07; supersedes C7 Q3): Go at 393
@@ -123,21 +124,14 @@ describe("the phone menu bar has one door that carries every verb", () => {
     expect(run).toHaveBeenLastCalledWith({ selectedRef: null });
   });
 
-  it("keeps a ghosted home verb focusable with its reason and refuses pointer and native keys", async () => {
+  // Betterment shell S0 (UX-CANON A.11): a home verb that cannot run is withheld.
+  it("withholds a home verb that cannot run", () => {
     compact = true;
-    const user = userEvent.setup();
     const verb = VERBS.find((candidate) => candidate.id === "go.ask")!;
     vi.spyOn(verb, "ghost").mockReturnValue("Select an object");
-    const run = vi.spyOn(verb, "run").mockImplementation(() => {});
     render(<GoHome />);
-    const row = screen.getByRole("menuitem", { name: "Ask AI Select an object" });
-    expect(row).toHaveAttribute("aria-disabled", "true");
-    expect(row).toHaveClass("btn--chrome", "is-ghost");
-    row.focus();
-    expect(row).toHaveFocus();
-    await user.keyboard("{Enter} ");
-    await user.click(row);
-    expect(run).not.toHaveBeenCalled();
+    expect(screen.queryByRole("menuitem", { name: /Ask AI/ })).toBeNull();
+    expect(document.querySelector(".is-ghost,[aria-disabled='true']")).toBeNull();
   });
 
   it("shows Projects only when present and opens the exact project id", async () => {

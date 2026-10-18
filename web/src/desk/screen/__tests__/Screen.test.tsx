@@ -184,8 +184,9 @@ describe("PHILO-14 A1 — the screen of objects", () => {
       expect(icon(/^Platform, DRAWER$/)).toBeTruthy();
       fireEvent.click(icon(/^Platform, DRAWER$/));
       expect(useDesk.getState().selectedIds).toEqual([qualifiedRef("directory", folder.id)]);
-      fireEvent.click(screen.getByRole("button", { name: /^Object$/ }));
-      const objectMenu = screen.getByRole("menu", { name: "Object menu" });
+      // Betterment shell S0: the Object menu is titled by the kind in front.
+      fireEvent.click(screen.getByRole("button", { name: /^Drawer$/ }));
+      const objectMenu = screen.getByRole("menu", { name: "Drawer menu" });
       fireEvent.click(within(objectMenu).getByRole("menuitem", { name: /^Open/ }));
       expect(open).toHaveBeenCalledWith(qualifiedRef("directory", folder.id), undefined);
       open.mockClear();

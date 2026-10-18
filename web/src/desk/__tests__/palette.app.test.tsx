@@ -415,3 +415,35 @@ describe("Enter on the first row opens the note it names", () => {
     expect(writes()).toEqual([]);
   });
 });
+
+// ── Betterment shell S0: Search shows only rows that run (UX-CANON A.11) ──
+import { announceLauncher, retractLauncher } from "../components/window/launcherRegistry";
+
+describe("S0: Search lists no dead row", () => {
+  it("\"agents\" lists no verb that waits for a selection", async () => {
+    const input = await deck();
+    await type(input, "agents");
+    const opts = rows();
+    expect(opts.length).toBeGreaterThan(0);
+    for (const o of opts) {
+      expect(o.textContent).not.toContain("Select an object");
+      expect(o.getAttribute("aria-disabled")).not.toBe("true");
+    }
+    expect(opts.map((o) => o.id)).not.toContain("desk-palette-option-object.hand-to-agent");
+  });
+
+  it("a launcher that opens no window (Terminals) is not a row; Delivery is", async () => {
+    announceLauncher({ id: "panes", label: "Terminals", glyph: "⧉", open: false, activate: () => {} });
+    announceLauncher({ id: "delivery-board", label: "Delivery", glyph: "▤", open: false, activate: () => {} });
+    try {
+      const input = await deck();
+      await type(input, "terminals");
+      expect(rows().map((o) => o.id)).not.toContain("desk-palette-option-drawer:panes");
+      await type(input, "delivery");
+      expect(rows().map((o) => o.id)).toContain("desk-palette-option-drawer:delivery-board");
+    } finally {
+      retractLauncher("panes");
+      retractLauncher("delivery-board");
+    }
+  });
+});

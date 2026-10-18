@@ -21,13 +21,13 @@ export function GoHome() {
   const sections = useMemo(() => {
     const row = (verbId: string, label?: string): WorkMenuEntry | null => {
       const verb = VERBS.find((candidate) => candidate.id === verbId);
-      if (!verb) return null;
+      // Betterment shell S0 (UX-CANON A.11): a verb that cannot run is withheld.
+      if (!verb || verb.ghost(ctx)) return null;
       return {
         type: "item",
         id: verb.id,
         label: label ?? verbLabel(verb, ctx),
         glyph: verb.glyph,
-        ghost: verb.ghost(ctx),
         onSelect: () => verb.run(ctx),
       };
     };
@@ -78,14 +78,12 @@ function GoRow({ entry }: { entry: Extract<WorkMenuEntry, { type: "item" }> }) {
     <Button
       variant="chrome"
       role="menuitem"
-      className={`desk-go-home-row${entry.ghost ? " is-ghost" : ""}`}
+      className="desk-go-home-row"
       data-object-id={entry.id.startsWith("zone:") ? entry.id : undefined}
-      aria-disabled={entry.ghost ? true : undefined}
-      onClick={() => { if (!entry.ghost) entry.onSelect(); }}
+      onClick={() => entry.onSelect()}
     >
       <span className="desk-menu-glyph" aria-hidden="true">{entry.glyph ?? KIND_GLYPH.project}</span>
       <span className="desk-menu-label">{entry.label}</span>
-      {entry.ghost ? <span className="desk-go-home-reason quiet">{entry.ghost}</span> : null}
     </Button>
   );
 }

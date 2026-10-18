@@ -58,7 +58,7 @@ describe("Chair app: the fresh arrival", () => {
     expect(screen.getByTestId("desk-screen")).toBeTruthy();
   });
 
-  it("1440: Window ▸ Chair reaches Needs you, Brief, The week and Capture; Needs you names the No engine SETUP row", async () => {
+  it("1440: with a window open, Window ▸ Chair reaches Needs you, Brief, The week and Capture; Needs you names the No engine SETUP row", async () => {
     vi.resetModules();
     const { ChairHome } = await import("../chair/ChairHome");
     const { DeskMenuBar } = await import("../components/DeskMenuBar");
@@ -83,6 +83,17 @@ describe("Chair app: the fresh arrival", () => {
       await waitFor(() => expect(region(name), name).toBeTruthy());
     };
 
+    // Betterment shell S0: with no window open, the Window menu is one line.
+    fireEvent.click(screen.getByRole("button", { name: "Window" }), { detail: 0 });
+    const empty = screen.getByRole("menu", { name: "Window menu" });
+    expect(empty.textContent).toBe("No windows open");
+    expect(within(empty).queryAllByRole(/menuitem/)).toHaveLength(0);
+    fireEvent.keyDown(document.body, { key: "Escape" });
+    // Needs you opens from its registry verb (the bell's and Go's door) ...
+    const { verbById } = await import("../verbRegistry");
+    act(() => verbById("chair.window.needs")!.run({ selectedRef: null }));
+    await waitFor(() => expect(region("Needs you"), "Needs you").toBeTruthy());
+    // ... and with a window open, Window ▸ Desk reaches all four.
     await pick("Needs you");
     expect(isChairWindowOpen("chair:needs")).toBe(true);
     const setup = await waitFor(() => {

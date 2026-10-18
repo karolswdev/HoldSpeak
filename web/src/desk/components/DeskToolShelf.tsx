@@ -212,6 +212,9 @@ export function rankRow(
 const OBJECT_SECTIONS = new Set(["OBJECTS", "MEETINGS", "PROJECTS", "PEOPLE", "SETTINGS"]);
 const FIRST_PRESS_OBJECT_SECTIONS = new Set(["OBJECTS", "MEETINGS", "PROJECTS", "PEOPLE"]);
 
+/** Betterment shell S0: dock launchers whose press opens no window. */
+export const LAUNCHERS_WITHOUT_WINDOW: ReadonlySet<string> = new Set(["panes"]);
+
 function isObjectRow(row: { section?: string }): boolean {
   return OBJECT_SECTIONS.has(String(row.section ?? ""));
 }
@@ -625,9 +628,11 @@ export function DeskToolShelf() {
       if (v.palette === false || v.scope === "go" || !offeredHere(v)) continue;
       const label = verbLabel(v, ctx);
       const ghost = v.ghost(ctx);
+      // Betterment shell S0 (UX-CANON A.11): a verb that cannot run now is
+      // not a row ("Hand to coder · Select an object" was a dead row).
+      if (ghost) continue;
       // A cold deck begins with the Desk's creation verbs; other verbs
-      // appear after use. A query still reaches every verb (ghosted ones
-      // say why).
+      // appear after use. A query still reaches every runnable verb.
       if (!normalized && v.group !== "new" && !recents.includes(v.id)) continue;
       push({
         id: v.id,
@@ -660,6 +665,10 @@ export function DeskToolShelf() {
     }
     for (const l of launchers) {
       if (l.id === "attention") continue;
+      // S0: a launcher that opens no window is not a Search row (Terminals
+      // toggles a pane list; the walk pressed it and saw nothing). Shell S1
+      // moves it to Go ▸ Builder.
+      if (LAUNCHERS_WITHOUT_WINDOW.has(l.id)) continue;
       push({
         id: `drawer:${l.id}`,
         section: "PROGRAMS",

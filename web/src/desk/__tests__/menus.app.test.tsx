@@ -134,3 +134,75 @@ describe.each([[1440, false], [393, true]] as const)("the chrome over an open hu
     useDesk.setState({ setup: null } as never);
   });
 });
+
+// ── Betterment shell S0: menus show only what works (UX-CANON A.11) ──
+// The real DeskMenuBar over the real registry and the real objectMenu. The
+// desk objects are the store's own shapes (as objectMenu.test.ts seeds them).
+import { DeskMenuBar, objectMenuTitle } from "../components/DeskMenuBar";
+import { EMPTY_ITEMS } from "../api";
+import type { Meeting, Note, Project } from "../../lib/primitives";
+
+describe("S0: the menu bar withholds what cannot run", () => {
+  const titles = () =>
+    Array.from(document.querySelectorAll(".desk-verbbar [data-menu-id] .desk-verbbar-title"), (e) => e.textContent?.trim());
+  const openTitle = (name: string) => {
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(`^${name}$`) }), { detail: 0 });
+    return screen.getByRole("menu", { name: `${name} menu` });
+  };
+  const noDeadRow = (menu: HTMLElement) => {
+    expect(menu.querySelectorAll("[aria-disabled='true']"), "a dead row is drawn").toHaveLength(0);
+    expect(menu.querySelector(".is-ghost, .desk-menu-ghost-hint")).toBeNull();
+  };
+  beforeEach(() => {
+    useDesk.setState({
+      items: {
+        ...EMPTY_ITEMS,
+        note: [{ kind: "note", id: "n1", title: "On-call handbook idea" } as Note],
+        meeting: [{ kind: "meeting", id: "m1", title: "Platform sync" } as Meeting],
+        project: [{ kind: "project", id: "p1", name: "Ledger migration" } as Project],
+      },
+      selectedIds: [],
+      panelOrder: [],
+      panelMin: [],
+    } as never);
+  });
+  afterEach(() => {
+    useDesk.setState({ items: { ...EMPTY_ITEMS }, selectedIds: [] } as never);
+  });
+
+  it("with nothing selected the bar reads Desk Go Window; no menu draws a dead row", () => {
+    render(<DeskMenuBar />);
+    expect(titles()).toEqual(["Desk", "Go", "Window"]);
+    for (const name of ["Desk", "Go"]) {
+      noDeadRow(openTitle(name));
+      fireEvent.keyDown(document.body, { key: "Escape" });
+    }
+  });
+
+  it("the Window menu with no window open is one line, No windows open", () => {
+    render(<DeskMenuBar />);
+    const menu = openTitle("Window");
+    expect(menu.textContent).toBe("No windows open");
+    expect(within(menu).queryAllByRole(/menuitem/)).toHaveLength(0);
+  });
+
+  it.each([
+    ["note:n1", "Note"],
+    ["meeting:m1", "Meeting"],
+    ["project:p1", "Project"],
+  ])("select %s: the third title is %s, and its rows all run", (ref, title) => {
+    useDesk.setState({ selectedIds: [ref] });
+    render(<DeskMenuBar />);
+    expect(titles()).toEqual(["Desk", title, "Go", "Window"]);
+    const menu = openTitle(title);
+    noDeadRow(menu);
+    expect(labels(menu).length).toBeGreaterThan(0);
+    // A note never offers a project's verbs.
+    if (title === "Note") expect(menu.textContent).not.toMatch(/Draft update|Ask this project|Archive/);
+  });
+
+  it("names each kind in words", () => {
+    expect(["note", "meeting", "people", "project", "decision", "directory"].map(objectMenuTitle))
+      .toEqual(["Note", "Meeting", "Person", "Project", "Decision", "Drawer"]);
+  });
+});
