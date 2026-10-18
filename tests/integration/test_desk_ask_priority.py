@@ -23,7 +23,7 @@ from typing import Any
 
 import pytest
 
-from holdspeak.engine_lanes import LANES, background_label, engine_key
+from holdspeak.engine_lanes import LANES, background_label, engine_key, lane
 from holdspeak.kernel.inference_runner import ServiceContract
 
 from tests.unit.test_desk_ask_ai import OWNER, _assign, _seed_routes, hub  # noqa: F401  (fixture)
@@ -101,7 +101,7 @@ def test_background_work_waits_while_an_ask_holds_the_engine(hub) -> None:
         # The meeting worker's next call, on the same engine (the runner gate).
         while not LANES.holds(engine_key(hub.db, revision)):
             time.sleep(0.01)
-        with runner._lane(_background_request(revision)):
+        with lane(runner._database, _background_request(revision)):
             background_started.append(time.monotonic())
 
     result: dict[str, Any] = {}
@@ -128,7 +128,7 @@ def test_background_work_on_another_engine_does_not_wait(hub) -> None:
     while not started:
         time.sleep(0.01)
     t0 = time.monotonic()
-    with runner._lane(_background_request("dep2_another_server")):
+    with lane(runner._database, _background_request("dep2_another_server")):
         waited = time.monotonic() - t0
     release.set()
     asker.join(10)
