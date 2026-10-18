@@ -839,7 +839,8 @@ def test_runs_on_find_on_lan_found_then_use_it_real_scanner(
     expected_url, probe_urls, discover_urls = _install_lan_scanner_double(monkeypatch)
     expected_model = "qwen3.8-27b"
     expected_key = "lan:192.168.77.44:8080:qwen3.8-27b"
-    expected_profile_id = "engine-192-168-77-44-8080"
+    # Betterment E3 (#1294): one engine for each model; the id is host + model.
+    expected_profile_id = "engine-192-168-77-44-8080-qwen3-8-27b"
     errors: list[str] = []
     try:
         from playwright.sync_api import sync_playwright
