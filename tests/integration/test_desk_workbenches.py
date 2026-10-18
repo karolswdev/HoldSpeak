@@ -1022,3 +1022,86 @@ def _mount(app: FastAPI, db: Database, *builders: Any) -> FastAPI:
     for build in builders:
         app.include_router(build(ctx))
     return app
+
+
+# ── A7 "Home, New automation, and starters" (betterment/workbench/RECIPE.md) ──
+# The hub half: New automation offers the four starters (the old templates
+# are hidden, still in code); a press makes one automation with the
+# starter's sentence and no agent (nothing is copied); a blank it cannot
+# guess is named until he fills it. The DESIGN §6 walk on the hub: Friday
+# team update → With Claude Code → Run now → a readable result. The face
+# replays these answers (automation.app.test.tsx, "A7").
+
+
+def test_a_starter_makes_one_automation_and_the_friday_walk_reads_a_result(tmp_path: Path, monkeypatch) -> None:
+    import holdspeak.workbench_memory as memory
+    from holdspeak.config import Config
+    from holdspeak.intel.cli_engine import CLI_ENGINES_ENV
+    from holdspeak.services.inference_acquisition_service import InferenceAcquisitionApplicationService
+    from holdspeak.services.inference_setup_service import InferenceSetupApplicationService
+    from holdspeak.services.model_library_service import ModelLibraryApplicationService
+    from holdspeak.workbench_templates import get_template
+
+    monkeypatch.setattr(memory, "WORKBENCH_DIR", tmp_path / "workbenches")
+    db, client, prompts, _ = _instruction_rig(tmp_path, monkeypatch)
+    with db._connection() as conn:
+        now = datetime.now().astimezone().isoformat()
+        conn.execute("INSERT INTO meetings (id, title, started_at, created_at) VALUES (?,?,?,?)",
+                     ("m-sync", "Platform sync meeting", now, now))
+
+    start = _record_gets("starters", client, ["/api/workbench-templates", "/api/workbenches"], "", tmp_path)
+    starters = start["/api/workbench-templates"]["templates"]
+    assert [s["id"] for s in starters] == [
+        "friday-team-update", "meeting-follow-ups", "one-on-one-prep", "summarize-a-drawer"]
+    friday = starters[0]
+    assert (friday["schedule"], friday["sources"], friday["output_target"], friday["blanks"]) == (
+        "0 15 * * 5", ["meetings:this_week", "notes:this_week"], "inbox", {})
+    assert start["/api/workbenches"]["workbenches"] == []
+    # Retired as starters; still in code.
+    assert get_template("todo-agent") is not None and not {"todo-agent", "triage-agent", "morning-brief"} & {
+        s["id"] for s in starters}
+
+    recipes_before = len(db.recipes.list())
+    made = client.post("/api/workbench-templates/friday-team-update/instantiate", json={})
+    assert made.status_code == 201, made.text
+    wb = made.json()["workbench"]["id"]
+    assert len(db.recipes.list()) == recipes_before  # nothing is copied
+    new = _record_window("friday-new", client, wb, tmp_path)[f"/api/workbenches/{wb}"]["workbench"]
+    assert (new["name"], new["recipe_id"], new["instruction_from"]) == ("Friday team update", None, "automation")
+    assert (new["schedule"], new["schedule_enabled"], new["when_kind"]) == ("0 15 * * 5", False, "schedule")
+    assert [s["label"] for s in new["sources_shown"]] == ["This week's meetings", "This week's notes"]
+    assert new["blanks"] == {}
+
+    # A blank stays named until he fills it; a second press makes a second one.
+    prep = client.post("/api/workbench-templates/one-on-one-prep/instantiate", json={}).json()["workbench"]
+    assert prep["blanks"] == {"about": "which people?"} and prep["output_target"] == "inbox"
+    filled = client.put(f"/api/workbenches/{prep['id']}", json={"sources": ["note:note-sync"]}).json()["workbench"]
+    assert filled["blanks"] == {}
+    follow = client.post("/api/workbench-templates/meeting-follow-ups/instantiate", json={}).json()["workbench"]
+    assert (follow["output_target"], follow["schedule"], follow["blanks"]) == ("needs_you", None, {"about": "which meeting?"})
+    assert len(db.recipes.list()) == recipes_before
+    # The old template path still answers for an old caller.
+    old = client.post("/api/workbench-templates/todo-agent/instantiate", json={})
+    assert old.status_code == 201 and old.json()["workbench"]["recipe_id"]
+    for gone in (prep["id"], follow["id"], old.json()["workbench"]["id"]):
+        db.workbenches.delete(gone)
+
+    # With: the Engines app's own Add for a found agent CLI, then this one uses it.
+    setup = InferenceSetupApplicationService(db, config_provider=Config, home_provider=lambda: tmp_path / "home")
+    acquisition = InferenceAcquisitionApplicationService(
+        db, setup_service=setup, model_root=tmp_path / "custody", home_provider=lambda: tmp_path / "home")
+    monkeypatch.setenv(CLI_ENGINES_ENV, "on")  # the engine stays the recorded stub; no CLI runs
+    ModelLibraryApplicationService(db, setup_service=setup, acquisition_service=acquisition).connect_cli_engine(
+        OWNER, {"request_id": "record-add", "profile_id": "agent-claude", "expected_profile_revision": 0,
+                "preset": "claude"})
+    assert client.put(f"/api/workbenches/{wb}/engine", json={"profile_id": "agent-claude"}).status_code == 200
+    claude = _record_window("friday-claude", client, wb, tmp_path)[f"/api/workbenches/{wb}"]["workbench"]
+    assert claude["assignment_summary"]["chain"] == ["Claude Code"]
+
+    assert client.post(f"/api/workbenches/{wb}/run", json={}).status_code == 200
+    assert "Platform sync meeting" in prompts[-1] and "The cutover moves to Thursday." in prompts[-1]
+    ran = _record_window("friday-ran", client, wb, tmp_path)[f"/api/workbenches/{wb}"]["workbench"]
+    [result] = ran["results"]
+    assert result["status"] == "done" and result["text"].startswith("## Weekly update") and result["new"] is True
+    rows = _record_gets("home-rows", client, ["/api/workbenches"], wb, tmp_path)["/api/workbenches"]["workbenches"]
+    assert [r["name"] for r in rows] == ["Friday team update"]

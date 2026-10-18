@@ -92,7 +92,6 @@ export function WorkbenchesHomeCore({ hero }: CoreProps) {
                 meta={automationRowWords(automation)}
                 cells={fresh ? <StateChip state="active" label={`${fresh} NEW`} /> : undefined}
                 expands={false}
-                lineLabel={`Open ${automation.name || "Automation"}`}
                 onToggle={() => useDesk.getState().openWorkbenchWindow(automation.id)}
                 data-testid="automation-home-row"
               />
