@@ -132,6 +132,8 @@ class CliChannel:
 
     name = ""
     manifest: WriteConnectorManifest
+    #: Seconds the create may take (see ``EmailChannel.answer_limit``).
+    answer_limit = CREATE_TIMEOUT
     suffix = ".txt"
     #: Pinned known non-delivery: (a phrase of the raw native error, its FIXED code).
     PINNED: tuple[tuple[str, str], ...] = ()

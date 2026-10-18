@@ -25,10 +25,7 @@ import {
   EMPTY_DOCK_LIVE,
   deskChanges,
   formatDockTime,
-  latestSendSettle,
   reduceDockFrame,
-  type DockSendOutcome,
-  type DockSendRead,
   type DockLiveState,
 } from "./dockState";
 import { burstTimer } from "../../burstTimer";
@@ -45,19 +42,16 @@ const DOCK_LIVE_FRAMES = [
   "stopped",
 ] as const;
 
+/* Betterment send S1: the Dock no longer reads every send on each refresh
+ * (nothing drew it; its SENT badge was cut). The send frame reducer and
+ * `latestSendSettle` stay parked in dockState.ts. */
 interface DockReadState {
-  sendOutcome: DockSendOutcome | null;
-  sendSettledAt: string | null;
   readyMeetingIds: string[];
-  sendReadAt: number | null;
   readyReadAt: number | null;
 }
 
 const EMPTY_DOCK_READ: DockReadState = {
-  sendOutcome: null,
-  sendSettledAt: null,
   readyMeetingIds: [],
-  sendReadAt: null,
   readyReadAt: null,
 };
 
@@ -154,10 +148,7 @@ function useDockLiveReads(): {
   const refresh = useCallback(async () => {
     if (runtimeState !== "connected") return;
     const requestedReadyGeneration = readyReadGeneration.current;
-    const [sends, ready] = await Promise.allSettled([
-      apiFetch<unknown>("/api/channels/sends"),
-      readUnreadReadyMeetings(),
-    ]);
+    const [ready] = await Promise.allSettled([readUnreadReadyMeetings()]);
     // A live invalidation always refreshes A2 through its shared read. This
     // explicit refresh is the event path; the Dock does not start the hook's
     // minute poll.
@@ -165,14 +156,6 @@ function useDockLiveReads(): {
     const readAt = Date.now();
     setReads((previous) => ({
       ...previous,
-      ...(sends.status === "fulfilled" ? (() => {
-        const settle = latestSendSettle(wireRows<DockSendRead>(sends.value, "sends"));
-        return {
-          sendOutcome: settle?.outcome ?? null,
-          sendSettledAt: settle?.at ?? null,
-          sendReadAt: readAt,
-        };
-      })() : {}),
       ...(ready.status === "fulfilled" &&
         requestedReadyGeneration === readyReadGeneration.current ? {
         readyMeetingIds: ready.value,
@@ -224,16 +207,13 @@ function useDockLiveReads(): {
     const state = runtimeState;
     const reconnected = state === "connected" && lastState.current !== "connected";
     lastState.current = state;
-    const hasSnapshot = reads.sendReadAt !== null || reads.readyReadAt !== null;
+    const hasSnapshot = reads.readyReadAt !== null;
     if (state === "connected" && (reconnected || !hasSnapshot)) {
       void refresh();
     }
-  }, [reads.readyReadAt, reads.sendReadAt, refresh, runtimeState]);
+  }, [reads.readyReadAt, refresh, runtimeState]);
 
-  const lastSuccessfulAt = Math.max(
-    reads.sendReadAt ?? 0,
-    reads.readyReadAt ?? 0,
-  ) || null;
+  const lastSuccessfulAt = reads.readyReadAt ?? null;
 
   return {
     live,

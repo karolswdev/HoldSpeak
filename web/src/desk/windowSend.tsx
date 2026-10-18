@@ -29,6 +29,7 @@ import { useWindowId } from "./components/window/windowIdContext";
 import type { WorkMenuEntry } from "./components/DeskMenu";
 import { resolve, type Fact, type MeetingForm } from "./floorSendBinding";
 import { apiFetch } from "../lib/api";
+import { keptPlace } from "./deskMemory";
 import {
   CHANNEL_WORD, DEST_CHANGED, requestDestinationsFocus, wire, type Destination,
 } from "../features/channels/channels";
@@ -150,6 +151,16 @@ export function readFact(kind: "meeting" | "project", id: string): Promise<void>
     .finally(() => { S.factsLoading.delete(k); bump(); });
 }
 
+/** The form a meeting's well shows when it opens: the one he last picked
+ *  for this meeting (MeetingSendWell keeps it at `meeting/form/<id>`), else
+ *  Summary. Betterment send S1: `Send to ▸` picks on THAT form, so the well
+ *  opens on the picked destination, not on another form's last-used row. */
+const KEPT_FORM: Record<string, MeetingForm> = { meeting_digest: "digest", meeting_followup: "followup" };
+function meetingFormOf(id: string, announced: AnnouncedDoc | undefined): MeetingForm {
+  if (announced?.kind === "meeting" && announced.id === id) return announced.form;
+  return KEPT_FORM[keptPlace(`meeting/form/${id}`) ?? ""] ?? "summary";
+}
+
 /** The document of the window `winId`, or null when it cannot send. */
 export function windowDoc(winId: string | null): WindowDoc | null {
   if (!winId) return null;
@@ -159,7 +170,7 @@ export function windowDoc(winId: string | null): WindowDoc | null {
   const m = /^pullout:(decision|artifact|meeting):(.+)$/.exec(winId);
   if (m) {
     if (m[1] === "meeting") {
-      const form = announced?.kind === "meeting" ? announced.form : "summary";
+      const form = meetingFormOf(m[2], announced);
       return { kind: "meeting", id: m[2], form, summary: factOfKey<boolean>(factKey("meeting", m[2])) };
     }
     return { kind: m[1] as "decision" | "artifact", id: m[2] };
@@ -172,7 +183,7 @@ export function windowDoc(winId: string | null): WindowDoc | null {
     const scoped = /^meeting:(.+)$/.exec(scope);
     const id = scoped?.[1] ?? (announced?.kind === "meeting" ? announced.id : null);
     if (!id) return null;
-    const form = announced?.kind === "meeting" && announced.id === id ? announced.form : "summary";
+    const form = meetingFormOf(id, announced);
     return { kind: "meeting", id, form, summary: factOfKey<boolean>(factKey("meeting", id)) };
   }
   if (winId === ROOM_WINDOW) {

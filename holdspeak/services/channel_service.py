@@ -48,6 +48,31 @@ from .errors import NotFound, ValidationError
 
 log = get_logger("services.channel")
 
+#: Seconds past a channel's own time limit before a send still ``dispatching``
+#: reads as no answer (betterment send S1: nothing says SENDING forever).
+NO_ANSWER_GRACE = 30.0
+#: A failed send that says the account is not signed in (a good send is a good check).
+SIGN_IN_FAILURES = frozenset({"github_not_authenticated", "atlassian_not_logged_in",
+                              "atlassian_unauthorized", "atlassian_identity_unverified"})
+
+
+def _now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _when(text: Any) -> Optional[datetime]:
+    try:
+        value = datetime.fromisoformat(str(text))
+    except (TypeError, ValueError):
+        return None
+    return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+
+
+def _newer(a: Any, b: Any) -> bool:
+    """``a`` is a later time than ``b`` (an unreadable time is never the newer one)."""
+    first, second = _when(a), _when(b)
+    return first is not None and (second is None or first > second)
+
 
 def _derived_id(prefix: str, operation_id: str) -> str:
     """An id derived from the admitted operation: a replay of the key finds the same row."""
@@ -97,12 +122,30 @@ class ChannelService:
         else:
             return None
         row = self._db.automations.get_provider_connection(connection_id)
-        if row is None or not row.get("last_checked_at"):
+        checked = (row or {}).get("last_checked_at")
+        # A send is a check too: the newest of (the last check, the last send) speaks.
+        last = self._last_send_on(channel, account)
+        if last is not None and (not checked or _newer(last["settled_at"], checked)):
+            state = "connected" if last["state"] == "sent" else "owner_action_required"
+            return {"id": connection_id, "state": state, "last_checked_at": last["settled_at"]}
+        if row is None or not checked:
             return {"id": connection_id, "state": "never_checked", "last_checked_at": None}
         state = str(row.get("state") or "")
         display = {"connected": "connected", "disconnected": "owner_action_required",
                    "owner_action_required": "owner_action_required", "unavailable": "unavailable"}.get(state, "degraded")
-        return {"id": connection_id, "state": display, "last_checked_at": row.get("last_checked_at")}
+        return {"id": connection_id, "state": display, "last_checked_at": checked}
+
+    def _last_send_on(self, channel: str, account: Mapping[str, Any]) -> Optional[dict[str, Any]]:
+        """The newest send on this account that says something about its sign-in: sent, or failed on sign-in."""
+        for row in self._db.channel_sends.settled_on(channel):
+            if row["state"] == "failed" and row["reason"] not in SIGN_IN_FAILURES:
+                continue
+            if channel != "github":
+                sent_as = json.loads(row["account_json"] or "{}")
+                if (sent_as.get("site"), sent_as.get("email")) != (account.get("site"), account.get("email")):
+                    continue
+            return row
+        return None
 
     def _send_view(self, row: Mapping[str, Any]) -> dict[str, Any]:
         destination = self._db.channel_destinations.get(row["destination_id"]) or {}
@@ -111,6 +154,17 @@ class ChannelService:
         # characters governed by its 39,000-character refusal.
         size = (contract.payload_size("slack", payload)[0]
                 if str(row["channel"]) == "slack" else len(payload))
+        state, reason = row["state"], row["reason"]
+        proof = json.loads(row["proof_json"]) if row["proof_json"] else None
+        if state == "dispatching" and self._past_answer_limit(row):
+            # No answer in time. The read asks the channel's recover (it never
+            # dispatches); only proof reads as sent. The row is not written: a late
+            # answer still settles it, and the next read shows that.
+            found = self._recover(row)
+            if found.state == "sent":
+                state, reason, proof = "sent", None, found.record()
+            else:
+                state, reason = "unknown", "no_answer_in_time"
         return {
             "id": row["id"], "document_ref": row["document_ref"], "destination_id": row["destination_id"],
             "destination_name": destination.get("name"), "channel": row["channel"],
@@ -122,12 +176,19 @@ class ChannelService:
             "size": size, "preview": contract.preview_for(row["channel"], payload, row["account_json"]),
             "prepared_by": {"kind": row["prepared_by_kind"], "identity": row["prepared_by_identity"]},
             "prepare_operation_id": row["prepare_operation_id"], "send_operation_id": row["send_operation_id"],
-            "state": row["state"], "reason": row["reason"],
-            "proof": json.loads(row["proof_json"]) if row["proof_json"] else None,
+            "state": state, "reason": reason, "proof": proof,
             "file_path": row["file_path"], "created_at": row["created_at"],
             "dispatch_started_at": row["dispatch_started_at"], "settled_at": row["settled_at"],
             "dispatch_seq": row["dispatch_seq"], "egress": row.get("egress"),
         }
+
+    @staticmethod
+    def _past_answer_limit(row: Mapping[str, Any]) -> bool:
+        started = _when(row.get("dispatch_started_at"))
+        if started is None:
+            return False
+        limit = float(getattr(contract.channel(str(row["channel"])), "answer_limit", 60.0)) + NO_ANSWER_GRACE
+        return (_now() - started).total_seconds() > limit
 
     @staticmethod
     def _synced(destination: Mapping[str, Any], send: Optional[Mapping[str, Any]] = None) -> bool:

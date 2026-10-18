@@ -124,7 +124,8 @@ function DestForm({ conns, accountsLoading, accountsReadError, onAccountsRetry, 
   onSlackKey: (url: string) => Promise<{ keyRef: string } | { code: string }>;
   /** What a Check found about a key's cache identity: present or absent. */
   onKeyKnown: (ref: string, present: boolean) => void;
-  onDone: () => void; onCancel?: () => void;
+  /** `saved`: the destination the hub saved (its account as the hub found it). */
+  onDone: (saved?: Destination) => void; onCancel?: () => void;
 }) {
   const [keyRefused, setKeyRefused] = useState<string | null>(null);
   const [keyChecking, setKeyChecking] = useState(false);
@@ -193,11 +194,12 @@ function DestForm({ conns, accountsLoading, accountsReadError, onAccountsRetry, 
   const eg = egressOf({ channel: d.channel, account, synced: d.synced });
   const acc = accountChip({ channel: d.channel, account }, conns);
   const accountsUnavailable = accountsLoading || accountsReadError;
-  const dependsOnAccount = ["github", "jira", "confluence"].includes(d.channel);
+  // Betterment send S1: a GitHub save asks gh itself (`gh api user`, the check
+  // every send uses), so it never waits on the Accounts row's `gh auth status`.
+  const dependsOnAccount = ["jira", "confluence"].includes(d.channel);
   const accountReadState = accountsLoading ? <span aria-busy="true">Reading accounts</span>
     : <><StateChip state="failure" label="Account read failed · Draft kept · Retry" wrap /><Button dense variant="secondary" onClick={onAccountsRetry}>Retry</Button></>;
-  const missingAccount = d.channel === "github" ? !gh?.account?.login
-    : d.channel === "jira" ? !jiraAcc : d.channel === "confluence" ? !confAcc : false;
+  const missingAccount = d.channel === "jira" ? !jiraAcc : d.channel === "confluence" ? !confAcc : false;
   const valid = Boolean(name.trim()) && !missingAccount && (!dependsOnAccount || !accountsUnavailable) && (
     d.channel === "file" ? Boolean(d.folder.trim())
     : d.channel === "github" ? Boolean(d.repo.trim()) && Number.isInteger(Number(d.number)) && Number(d.number) > 0
@@ -236,8 +238,7 @@ function DestForm({ conns, accountsLoading, accountsReadError, onAccountsRetry, 
       : { ...base, provider: d.provider, from_email: d.fromEmail.trim(), from_name: d.fromName.trim(),
           key_ref: ref, to: addresses(d.to), cc: addresses(d.cc) };
     try {
-      await wire.save(body);
-      onDone();
+      onDone(await wire.save(body));
     } catch (e) {
       setRefused(e instanceof Refusal ? e.code : "no_answer");
     } finally { setBusy(false); }
@@ -268,10 +269,8 @@ function DestForm({ conns, accountsLoading, accountsReadError, onAccountsRetry, 
       </>) : null}
       {d.channel === "github" ? (<>
         <GadgetRow wide controlWidth="full" label="Account">
-          <span className="send-line">
-            {accountsUnavailable ? accountReadState : <><span className="surface-token send-literal" data-chip>{gh?.account?.login ? `@${gh.account.login}` : "—"}</span>
-            {acc ? <StateChip state={acc.state} label={acc.label} /> : null}
-            {missingAccount ? <Button dense variant="secondary" onClick={setUpAccount}>Set up account</Button> : null}</>}
+          <span className="send-line" data-testid="dest-github-account">
+            <span className="surface-token send-literal" data-chip>{gh?.account?.login ? `@${gh.account.login}` : "READ FROM gh AT SAVE"}</span>
           </span>
         </GadgetRow>
         <GadgetRow wide controlWidth="full" label="Repository"><StringGadget label="Repository" value={d.repo} onChange={(v) => set({ repo: v })} placeholder="owner/repo" inputProps={{ "data-testid": "dest-repo" } as never} /></GadgetRow>
@@ -511,10 +510,12 @@ export function Destinations() {
   const parked = rows.filter((d) => d.state === "parked");
   const form = (
     <DestForm conns={conns} accountsLoading={accountsLoading} accountsReadError={accountsReadError} onAccountsRetry={onAccountsRetry} initial={EMPTY} keys={keys} onKey={onKey} onSlackKey={onSlackKey} onKeyKnown={onKeyKnown}
-      onDone={() => {
+      onDone={(saved) => {
         // PHILO-10-07: after Save the form closes; the saved row stays in view (at 393 the closed form
         // otherwise leaves the list above the window).
         setAdding(false); reload();
+        // Betterment send S1: a saved GitHub row opens, so its Account line shows the login gh named.
+        if (saved?.channel === "github") setOpen(saved.id);
         requestAnimationFrame(() => groupRef.current?.scrollIntoView({ block: "start" }));
       }}
       onCancel={active.length ? () => setAdding(false) : undefined} />

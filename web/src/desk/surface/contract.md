@@ -572,6 +572,13 @@ Rules the species holds (they are not the host's business):
   COMMENTED, BLOG POSTED, ACCEPTED BY <PROVIDER>; REFUSED + its word +
   NOTHING SENT; FAILED + its word + NOTHING SENT; RESULT UNKNOWN; PREPARED;
   SENDING. Each from `features/channels/channels.ts`, never re-spelled.
+- **Betterment send S1.** After FAILED or RESULT UNKNOWN the verb is
+  **Try again** (after SENT, **Send again**). A send the hub reads as
+  `no_answer_in_time` (still running past its channel's limit + 30 s) shows
+  "No answer from <channel>. Check <target> before you try again." with
+  **Check** and **Try again**, never SENDING. `accountChip` shows a chip only
+  for a sign-in failure, read from the hub's `connection` (where a good send
+  counts as a good check).
 - **A preview refused by name** (consumer behaviour; story 02 proves the producer and the route) shows `REFUSED`, its word, the size and the
   limit when the answer carries them as TOP-LEVEL integers `size` and
   `limit` beside `code` / `error_code` (`41,099 / 39,000 CHARACTERS` for

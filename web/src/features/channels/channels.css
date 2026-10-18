@@ -72,3 +72,11 @@ html body [data-send] .surface-token.send-literal { text-transform: none; }
   line-clamp: 2;
   overflow: hidden;
 }
+/* Betterment send S1: "No answer from Jira. Check PAY-12 before you try
+ * again." on its own line, above Try again and Check. */
+[data-send] .send-no-answer {
+  flex-basis: 100%;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--text);
+}

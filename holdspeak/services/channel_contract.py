@@ -29,7 +29,7 @@ import shutil
 import tempfile
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, Iterator, Mapping, Optional, Protocol
 
 from ..home_paths import home_display
@@ -806,6 +806,8 @@ class FileChannel:
     """
 
     name = "file"
+    #: Seconds a local write may take (see ``EmailChannel.answer_limit``).
+    answer_limit = 30.0
     #: The pinned known non-delivery list: the create refused before any byte.
     FAILED_ON_CREATE = {errno.EACCES: "permission_denied", errno.ENOSPC: "no_space", errno.EEXIST: "name_taken"}
 
@@ -854,7 +856,7 @@ class FileChannel:
 
     def choose_path(self, folder: str, document: Document, send_id: str) -> str:
         """``<date>-<slug>-<label>-<8 hex of send id>.md``; suffix when taken."""
-        day = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        day = _local_now().strftime("%Y-%m-%d")  # his day, not UTC's (betterment send S1)
         stem = f"{day}-{_slug(document.slug)}-{_slug(document.label)}-{send_id.split('_')[-1][:8]}"
         for index in range(1, 100):
             name = stem + ("" if index == 1 else f"-{index}") + ".md"
@@ -922,6 +924,11 @@ class FileChannel:
         if not path or not os.path.lexists(path):
             return Outcome("failed", "not_written")
         return self.read_back(path, str(row["payload_digest"]))
+
+
+def _local_now() -> datetime:
+    """Now on this machine's clock and time zone: a file name carries the owner's date."""
+    return datetime.now().astimezone()
 
 
 def _target_of(row: Mapping[str, Any]) -> dict[str, Any]:
