@@ -73,6 +73,7 @@ import {
 import { CitationChips, groundedMatchCount } from "../surface/citations";
 import { Button } from "../../components/signal/Signal";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
+import { reportWriteFailure } from "../hooks/useWriteReceipt";
 import { useEngine, refreshEngine } from "../hooks/useEngine";
 import { ActionNotice, StateChip, EngineLine, RunLine, reasonVerb, reasonWords } from "../surface";
 import { openRef } from "../openObject";
@@ -397,8 +398,10 @@ export function AskPanel() {
           entries: [{ profile_id: alternative.profile_id, profile_revision: alternative.profile_revision }],
         },
       });
-    } catch {
-      // The run below still goes; the hub answers with the reason if it cannot.
+    } catch (cause) {
+      // The run below still goes, on the assigned engine; the receipt says the
+      // other engine was not set for this one.
+      reportWriteFailure("Use another engine", cause);
     }
     await run(sent, next);
   };

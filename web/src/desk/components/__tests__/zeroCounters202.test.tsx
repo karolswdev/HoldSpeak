@@ -26,13 +26,14 @@ import { usePalette } from "../../chromeState";
 import { useProjections } from "../../projections";
 import { AskPanel } from "../AskPanel";
 
-vi.mock("../../../runtime/RuntimeBus", () => ({
-  useRuntimeBus: () => ({
+vi.mock("../../../runtime/RuntimeBus", () => {
+  const bus = {
     state: "connected",
     lastFrame: null,
     subscribe: () => () => undefined,
-  }),
-}));
+  };
+  return { useRuntimeBus: () => bus, useOptionalRuntimeBus: () => bus };
+});
 
 /** One zone with no members, and one note outside it. */
 const items: Items = {
