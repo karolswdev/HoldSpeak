@@ -127,12 +127,15 @@ export function AboutEditor({
   busy,
   onChange,
   folders = false,
+  foldersOnly = false,
 }: {
   sources: AutomationSource[];
   busy: boolean;
   onChange: (refs: string[]) => void;
   /** A10: With is an agent engine, so a folder can be a source. */
   folders?: boolean;
+  /** A10: an event start: About is the thing that happened, plus folders. */
+  foldersOnly?: boolean;
 }) {
   const items = useDesk((state) => state.items);
   const people = usePeopleNames();
@@ -143,8 +146,9 @@ export function AboutEditor({
   };
   return (
     <div className="automation-about-editor" data-testid="automation-about-editor">
-      <AboutChips sources={sources} busy={busy} onRemove={(ref) => onChange(refs.filter((r) => r !== ref))} />
-      <AboutPicker candidates={candidates} picked={refs} onPick={add} busy={busy} />
+      <AboutChips sources={foldersOnly ? sources.filter((source) => source.kind === "folder") : sources}
+        busy={busy} onRemove={(ref) => onChange(refs.filter((r) => r !== ref))} />
+      {foldersOnly ? null : <AboutPicker candidates={candidates} picked={refs} onPick={add} busy={busy} />}
       {folders ? (
         <FolderPicker picked={refs} busy={busy}
           onPick={(ref) => { if (!refs.includes(ref)) onChange([...refs, ref]); }} />

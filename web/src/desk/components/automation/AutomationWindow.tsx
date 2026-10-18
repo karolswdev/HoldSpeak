@@ -566,7 +566,21 @@ export function AutomationWindow({
               >
                 {doText || "What should it do?"}
               </SentenceLine>
-              {happened ? (
+              {happened && vendor ? (
+                // A10: an event start reads the thing that happened; with an
+                // agent engine, a folder can still be added for it to read.
+                <SentenceLine
+                  name="about"
+                  label="About"
+                  open={editing === "about"}
+                  onPress={() => toggle("about")}
+                  editor={<AboutEditor sources={sources} busy={aboutSaving} folders foldersOnly
+                    onChange={(refs) => void saveSources(refs)} />}
+                >
+                  {happened}
+                  <AboutChips sources={sources.filter((source) => source.kind === "folder")} />
+                </SentenceLine>
+              ) : happened ? (
                 <SentenceLine name="about" label="About">{happened}</SentenceLine>
               ) : (
                 <SentenceLine

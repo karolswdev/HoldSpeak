@@ -423,12 +423,15 @@ def test_an_agent_works_in_the_chosen_folder_read_only_for_a_press_and_a_review_
     newest = _ok(hub, "GET", f"/api/workbenches/{bench}")["workbench"]["results"][0]
     assert newest["title"] == "Move the ledger cutover behind a flag" and newest["status"] == "done", newest
     assert "risky_migration.sql" in newest["text"]
+    event_step = _record_folder_step(hub, bench, tmp_path, registered, "folder-event")
+    assert event_step[f"/api/workbenches/{bench}"]["workbench"]["event_starts"], "the event start is listed"
 
     # Read only: the folder is as it was.
     assert sorted(p.name for p in folder.iterdir()) == before
 
 
-def _record_folder_step(base: str, bench: str, tmp_path: Path, registered: dict) -> None:
+def _record_folder_step(base: str, bench: str, tmp_path: Path, registered: dict,
+                        name: str = "folder-ran") -> dict[str, Any]:
     """The automation window's reads after the folder run, for its vitest
     (automation-hub/folder-ran.json; HOLDSPEAK_WIRE_WRITE=1 rewrites it, else
     this fences its shape)."""
@@ -443,7 +446,7 @@ def _record_folder_step(base: str, bench: str, tmp_path: Path, registered: dict)
     }
     text = re.sub(re.escape(str(tmp_path)), "/tmp/rig", json.dumps(answers))
     scrubbed = json.loads(re.sub(re.escape(base), "http://127.0.0.1:0", text))
-    path = AUTOMATION_HUB / "folder-ran.json"
+    path = AUTOMATION_HUB / f"{name}.json"
     if os.environ.get("HOLDSPEAK_WIRE_WRITE") == "1":
         path.write_text(json.dumps({
             "_source": "The hub's own answers, captured by tests/integration/test_desk_engines_tools.py "
@@ -454,3 +457,4 @@ def _record_folder_step(base: str, bench: str, tmp_path: Path, registered: dict)
     stored = json.loads(path.read_text())["gets"]
     assert _shape(list(stored.values())) == _shape(list(scrubbed.values())), \
         f"{path.name}: the stored answers are not the hub's shape"
+    return scrubbed

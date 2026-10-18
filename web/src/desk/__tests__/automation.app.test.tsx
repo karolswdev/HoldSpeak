@@ -42,6 +42,7 @@ import oldMadeOne from "./fixtures/automation-hub/old-made-one.json";
 import putNew from "./fixtures/automation-hub/put-new.json";
 import putFolder from "./fixtures/automation-hub/put-folder.json";
 import folderRan from "./fixtures/automation-hub/folder-ran.json";
+import folderEvent from "./fixtures/automation-hub/folder-event.json";
 import { WorkbenchesHomeCore } from "../../pages/cores/WorkbenchesHomeCore";
 import { NewWorkbenchChooser } from "../components/NewWorkbenchChooser";
 import { EMPTY_ITEMS, fromWireDirectory, fromWireNote } from "../api";
@@ -909,5 +910,16 @@ describe("an agent works in a folder (A10)", () => {
     expect(refs).toContain(`repository:${recorded.repository.id}`);
     await waitFor(() => expect(within(folders).getByRole("textbox", { name: "Folder" })).toHaveValue(""));
     expect(hub.calls.filter((c) => c.method === "PUT")).toHaveLength(1);
+  });
+
+  it("a review-request start reads the thing that happened, keeps its folder, and offers only folders", async () => {
+    hub.step = folderEvent as Step;
+    render(<AutomationWindow workbenchId={(folderEvent as Step).workbench_id} />);
+    await screen.findByTestId("automation-sentence");
+    expect(line("about")).toHaveTextContent("Folder ledger");
+    expect(within(newest()).getByTestId("automation-reading")).toHaveTextContent("risky_migration.sql");
+    fireEvent.click(within(line("about")).getByRole("button"));
+    expect(await screen.findByTestId("automation-folders")).toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "Find by name" })).toBeNull();
   });
 });
