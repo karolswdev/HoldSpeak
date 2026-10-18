@@ -225,8 +225,9 @@ describe("PHILO-13-11 slice two — the Chair as windows", () => {
     // closing Capture gives the work area back to the next Chair window
     fireEvent.click(within(region("Capture")!).getByRole("button", { name: "Back from Capture" }));
     await waitFor(() => expect(region("Needs you")).toBeTruthy());
-    // Window ▸ Chair at 393 has no Capture row (Speak opens it)
-    expect(verbById("chair.window.capture")!.wide).toBe(true);
+    // Go lists Capture at 393 too (the phone has no Window menu; Go is the
+    // door to every Chair window on an empty desk).
+    expect(verbById("chair.window.capture")!.wide).toBeFalsy();
     // with every Chair window closed, the screen of objects (PHILO-14 A1;
     // board A-1-393), not a reopen list
     fireEvent.click(within(region("Needs you")!).getByRole("button", { name: "Back from Needs you" }));

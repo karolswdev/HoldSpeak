@@ -1,8 +1,7 @@
 """Reach the current Desk windows through the owner's menu and Dock doors.
 
-The desktop Window menu keeps the Chair windows. Phone Brief opens the
-Brief view in Today; Capture has its own Dock door. Other phone Chair
-windows open through the transient Go menu.
+Go lists every Chair window at both widths (Window ▸ Desk keeps them once a
+window is open). Phone Brief opens the Brief view in Today.
 """
 from __future__ import annotations
 
@@ -26,21 +25,15 @@ def open_chair_window(page: Any, name: str) -> Any:
             "button", name="Brief", exact=True)
         if brief.get_attribute("aria-pressed") == "true":
             return win
-    if name == "Capture" and page.viewport_size["width"] <= 720:
-        page.locator(".desk-dock").get_by_role("button", name="Capture", exact=True).click()
-    else:
-        menu = "window" if page.viewport_size["width"] > 720 else "go"
-        page.locator(f".desk-verbbar-item[data-menu-id='{menu}'] button").click()
-        panel = page.locator(".desk-verbbar-menu")
-        panel.wait_for()
-        if menu == "window":
-            # PHILO-14 A1 (#939): at 393 the Chair's windows are Go's first rows.
-            sub = panel.get_by_role("menuitem").filter(
-                has=page.locator(".desk-menu-label", has_text=re.compile(r"^Desk$")))
-            sub.scroll_into_view_if_needed()
-            sub.click()
-        panel.locator("[role^='menuitem']").filter(
-            has=page.locator(".desk-menu-label", has_text=re.compile(rf"^{re.escape(name)}$"))).click()
+    # Go is the Chair windows' door at both widths: S0 (#1257) left an empty
+    # desk's Window menu with one line, so Go lists every Chair window (one
+    # list, applications.ts GO_EXTRA_ROWS). On the phone, Go ▸ Brief is
+    # Today's Brief view.
+    page.locator(".desk-verbbar-item[data-menu-id='go'] button").click()
+    panel = page.locator(".desk-verbbar-menu")
+    panel.wait_for()
+    panel.locator("[role^='menuitem']").filter(
+        has=page.locator(".desk-menu-label", has_text=re.compile(rf"^{re.escape(name)}$"))).click()
     win.wait_for()
     if name == "Brief" and page.viewport_size["width"] <= 720:
         win.get_by_role("group", name="Intelligence view", exact=True).filter(visible=True).get_by_role(

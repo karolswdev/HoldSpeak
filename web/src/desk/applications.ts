@@ -543,13 +543,20 @@ export const MARK_APPLICATION_COMMANDS = DESK_APPLICATIONS.filter(
  * grammar as the manifest's `go`: the Chair's Needs you window, the desk's
  * projects and drawers (submenus), the builder launchers and Refresh. */
 export type GoExtra =
-  | { kind: "verb"; verbId: string; label?: string }
+  | { kind: "verb"; verbId: string; label?: string; phoneVerbId?: string }
   | { kind: "projects" }
   | { kind: "drawers" }
   | { kind: "launcher"; launcherId: string; label: string; glyph: string };
 
 export const GO_EXTRA_ROWS: readonly (GoExtra & { go: { group: GoGroup; order: number } })[] = [
   { kind: "verb", verbId: "chair.window.needs", label: "Needs you", go: { group: "daily", order: 1 } },
+  // The Chair's other windows: S0 left the Window menu with one line on an
+  // empty desk, so Go is their door (PLAN: no app is reachable only by a
+  // detour). Brief and The week stay until daily D5 retires them into
+  // Today. On the phone, Brief is Today's Brief view (`phoneVerbId`).
+  { kind: "verb", verbId: "chair.window.brief", label: "Brief", phoneVerbId: "desk.intelligence-brief", go: { group: "daily", order: 1.2 } },
+  { kind: "verb", verbId: "chair.window.week", label: "The week", go: { group: "daily", order: 1.4 } },
+  { kind: "verb", verbId: "chair.window.capture", label: "Capture", go: { group: "daily", order: 1.6 } },
   { kind: "projects", go: { group: "daily", order: 4 } },
   { kind: "drawers", go: { group: "work", order: 3 } },
   { kind: "launcher", launcherId: "delivery-board", label: "Delivery board", glyph: "▤", go: { group: "builder", order: 5 } },

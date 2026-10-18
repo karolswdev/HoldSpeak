@@ -161,10 +161,9 @@ class TestTheCardInCapture1440:
 
     @staticmethod
     def _open_chair(page: Any, name: str) -> None:
-        page.locator(".desk-verbbar-item[data-menu-id='window'] button").click()
-        page.locator(".desk-verbbar-menu [role='menuitem']").filter(has_text="Desk").click()
-        page.locator(".desk-menu-list [role='menuitemcheckbox']").filter(has_text=name).click()
-        page.locator(f".desk-window-shell.chair-window[aria-label='{name}']").wait_for()
+        # Betterment shell S0 (#1257): the Window menu holds "No windows
+        # open" on an empty desk; Go lists the Chair's windows (the shared door).
+        open_chair_window(page, name)
         page.wait_for_timeout(400)
 
     def _send_card(self, page: Any) -> None:
@@ -483,8 +482,10 @@ def _brief_menu_pick(page: Any, width: int, name: str) -> None:
     if width < 720:
         _brief_press(page, page.locator(".desk-verbbar-item[data-menu-id='go'] button"), width)
     else:
-        _brief_press(page, page.locator(".desk-verbbar-item[data-menu-id='window'] button"), width)
-        page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Desk')").hover()
+        # Betterment shell S0 (#1257): an empty desk's Window menu holds one
+        # line; Go is the Chair windows' door (the shared helper).
+        open_chair_window(page, name)
+        return
     _brief_press(page, page.locator(f".desk-menu-list [role='menuitemcheckbox']:has-text('{name}')"), width)
 
 
@@ -611,10 +612,9 @@ class TestChairWindowPlaces(FinishRig):
                 shell = page.locator(".desk-window-shell.chair-window[aria-label='Brief']")
 
                 def open_brief() -> None:
-                    page.locator(".desk-verbbar-item[data-menu-id='window'] button").click()
-                    page.locator(".desk-verbbar-menu").wait_for()
-                    page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Desk')").hover()
-                    page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')").click()
+                    # Betterment shell S0 (#1257): an empty desk's Window
+                    # menu holds one line; Go is the Brief's door.
+                    open_chair_window(page, "Brief")
                     shell.wait_for()
                     page.wait_for_timeout(600)
                     _settle(page)

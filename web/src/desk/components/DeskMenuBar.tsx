@@ -127,6 +127,8 @@ export interface GoInputs {
   openDrawer?: (ref: string) => void;
   launchers?: readonly { id: string; activate: () => void }[];
   builder?: boolean;
+  /** The phone: a row with a `phoneVerbId` runs that verb there. */
+  phone?: boolean;
 }
 
 /** Betterment shell S1 — Go is every application, from one list: Daily
@@ -136,13 +138,13 @@ export interface GoInputs {
  * truth (applications.ts `goRows`). A submenu with no rows is not drawn.
  * Pure over its inputs. */
 export function goEntries(inputs: GoInputs): WorkMenuEntry[] {
-  const { row, projects, openProject, drawers = [], openDrawer, launchers = [], builder = false } = inputs;
+  const { row, projects, openProject, drawers = [], openDrawer, launchers = [], builder = false, phone = false } = inputs;
   const draw = (r: GoRow): WorkMenuEntry | null => {
     switch (r.kind) {
       case "app":
         return row(applicationVerbId(r.app), r.label);
       case "verb":
-        return row(r.verbId, r.label);
+        return row(phone && r.phoneVerbId ? r.phoneVerbId : r.verbId, r.label);
       case "projects":
         return projects.length
           ? {
@@ -191,7 +193,7 @@ export function phoneGo(inputs: GoInputs): WorkMenuEntry[] {
   const newRows = PHONE_NEW.map(([id, label]) => inputs.row(id, label))
     .filter((e): e is WorkMenuEntry => e !== null);
   return [
-    ...goEntries(inputs),
+    ...goEntries({ ...inputs, phone: true }),
     { type: "sep", id: "go-new-sep" },
     { type: "sub", id: "go-new", label: "New", entries: newRows },
   ];

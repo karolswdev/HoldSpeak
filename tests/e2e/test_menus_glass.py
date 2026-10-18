@@ -229,7 +229,9 @@ class TestDoors(_MenusRig):
             browser, page, errors = self._page(pw, width)
             try:
                 phone = width < 720
-                (self._go_row(page, room) if phone else self._go_row(page, "Projects", room))()
+                # Betterment shell S1 (#1259): Go draws the manifest's groups
+                # at both widths, so the phone's projects sit in Projects ▸ too.
+                self._go_row(page, "Projects", room)()
                 page.locator(f".desk-window-shell[aria-label='{room}']").wait_for(timeout=T)
                 if phone:
                     # The phone's own way: a Chair window takes the work area and

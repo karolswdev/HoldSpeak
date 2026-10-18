@@ -888,7 +888,8 @@ export const VERBS: Verb[] = [
     scope: "window",
     group: "chair",
     submenu: "Desk",
-    wide: !w.phone,
+    // Go lists every Chair window at both widths (Capture too: the phone's
+    // Dock tile runs the same openChairWindow).
     palette: false,
     keywords: ["chair", "window"],
     checked: () => isChairWindowOpen(w.id),

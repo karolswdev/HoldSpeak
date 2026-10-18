@@ -95,7 +95,7 @@ describe("DeskOS application manifest", () => {
     const names = (group: (typeof GO_GROUPS)[number]) =>
       goRows(group).map((r) => (r.kind === "app" || r.kind === "launcher" ? r.label : r.kind === "verb" ? r.label ?? r.verbId : r.kind));
     expect(names("daily")).toEqual([
-      "Today", "Needs you", "Meetings", "People", "projects", "Conductor", "Ask AI", "Speak",
+      "Today", "Needs you", "Brief", "The week", "Capture", "Meetings", "People", "projects", "Conductor", "Ask AI", "Speak",
     ]);
     expect(names("work")).toEqual(["Automations", "Memory", "Voice commands", "drawers"]);
     expect(names("builder")).toEqual([
