@@ -1,0 +1,100 @@
+{
+ "_source": "The hub's own answers, captured by tests/unit/test_desk_brief.py::test_today_on_an_empty_desk_reads_nothing_waiting_and_no_calendar (MeetingWebServer + TestClient, isolated HOME, the browser rigs' seeds). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
+ "recordedAt": "2026-10-18T06:59:04.635139-06:00",
+ "gets": {
+  "/api/desk/needs-you?fresh=1": {
+   "count": 0,
+   "projects": [],
+   "items": [],
+   "next": null,
+   "computedAt": "2026-10-18T06:59:04.493702-06:00",
+   "stale": false,
+   "sweepId": null,
+   "coverage": [
+    {
+     "source_id": "coders",
+     "kind": "coder",
+     "state": "available",
+     "observed_at": "2026-10-18T12:59:04.550955+00:00",
+     "label": "Agents",
+     "project_id": "",
+     "reason": null,
+     "repair": null
+    }
+   ],
+   "complete": true,
+   "roomCounts": {},
+   "mutedCount": 0,
+   "roomItems": [],
+   "roomComplete": true,
+   "arming": [],
+   "waitingCount": 0,
+   "ownerNames": [
+    "manager",
+    "me",
+    "you"
+   ],
+   "members": [],
+   "blockers": [],
+   "failedMeetings": [],
+   "projectCounts": {},
+   "sourceErrors": {},
+   "peopleStoreState": "unconfigured"
+  },
+  "/api/door": {
+   "board": {
+    "now": [],
+    "waiting": [],
+    "unassigned": [],
+    "overdue": [],
+    "active": []
+   },
+   "upcoming": [],
+   "counts": {
+    "overdue": 0,
+    "now": 0,
+    "waiting": 0,
+    "active": 0,
+    "upcoming_today": 0
+   },
+   "calendar_configured": false,
+   "week": {
+    "days": [],
+    "total": 0,
+    "has_calendar": false,
+    "starts_at": "2026-10-12T06:00:00+00:00",
+    "ends_at": "2026-10-19T06:00:00+00:00"
+   },
+   "people_store_state": "unconfigured"
+  },
+  "/api/brief/latest?ensure=1": {
+   "id": "brief-44a169a3ff4a48ce8d2e6c149331c133",
+   "period_start": "2026-10-16T00:00:00-06:00",
+   "period_end": "2026-10-18T06:59:04.559556-06:00",
+   "headline": "No changes",
+   "sections": {
+    "this_week": [],
+    "changed": [],
+    "broke": [],
+    "waiting": [],
+    "decisions": []
+   },
+   "generated_at": "2026-10-18T06:59:04.559556-06:00",
+   "is_empty": true,
+   "shelf": {},
+   "ledger": {
+    "operations": 0,
+    "since": null
+   },
+   "period_label": "OCT 16-18",
+   "generated_label": "GENERATED OCT 18 06:59",
+   "title": "Brief · Sunday 18 Oct 2026",
+   "stale": false,
+   "person_sections_state": "unavailable"
+  },
+  "/api/meetings?limit=40": {
+   "meetings": [],
+   "total": 0
+  }
+ }
+}

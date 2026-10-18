@@ -52,7 +52,7 @@ import { EMPTY_ITEMS } from "../api";
 import { __resetSurfaces } from "../shell";
 import { useDesk } from "../store";
 import { ProjectMemoryCore } from "../../pages/cores/ProjectMemoryCore";
-import { BriefView } from "../pullouts/views/BriefView";
+import { SinceYesterday } from "../pullouts/views/BriefView";
 
 // ── the hub's answers ───────────────────────────────────────────────────
 
@@ -235,9 +235,12 @@ describe("Memory on the Desk: standing pages where the work lives", () => {
     expect(section.textContent).not.toMatch(/Rewrite/i);
   });
 
-  it("Intelligence -> BRIEF: the desk's own pages, no project sentence", async () => {
+  it("Today -> Since yesterday: the desk's own pages, no project sentence", async () => {
     // replaces: tests/e2e/test_memory_faces_glass.py::test_memory_on_the_desk (face half: desk)
-    render(<BriefView header={null} />);
+    // Betterment D4: the Brief wing is Today's Since-yesterday fold; the
+    // desk's standing pages are under what changed, in the open fold.
+    render(<SinceYesterday brief={{ id: "brief-memory", headline: "No changes", sections: {}, is_empty: true }}
+      failed={false} now={new Date()} defaultOpen onRetry={() => {}} />);
     const section = await screen.findByTestId("standing-pages");
     const titles = within(section).getAllByTestId("standing-page").map((p) => p.getAttribute("aria-label"));
     expect(titles).toEqual(["What I owe", "What changed this week"]);

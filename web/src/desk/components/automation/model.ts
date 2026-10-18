@@ -20,18 +20,62 @@ export interface AutomationResult {
   model: string;
   boundary: string;
   note_id: string | null;
-  /** Reported by an engine that bills (Engines E2). The hub does not put it
-   *  on a result yet; the card shows it when it is there. */
+  /** The cost an agent CLI engine reported for this result's runs (Engines
+   *  E2, linked by item in MCP M2); null when none was reported. */
   cost_usd?: number | null;
-  /** The hub's Looked at / Wrote / Prepared record (MCP M2). Not on the
-   *  wire yet; the card has its slot and draws nothing without it. */
+  /** What the run's agent looked at, wrote and prepared (MCP M2); null when
+   *  it touched nothing. */
   used?: AutomationUse | null;
 }
 
+/** One object a run's agent touched: its qualified ref, title and kind. */
+export interface UsedRow {
+  ref: string;
+  label: string;
+  kind?: string;
+}
+
 export interface AutomationUse {
-  looked_at?: Array<{ ref: string; label: string }>;
-  wrote?: Array<{ ref: string; label: string }>;
-  prepared?: Array<{ ref: string; label: string }>;
+  looked_at?: UsedRow[];
+  /** `undo`: the run made it, so the desk's delete (with its Undo) takes it back. */
+  wrote?: Array<UsedRow & { undo?: boolean }>;
+  /** A send the agent prepared; he presses Send. */
+  prepared?: Array<UsedRow & { send_id?: string; destination?: string }>;
+}
+
+const KIND_NOUNS: Record<string, [string, string]> = {
+  meeting: ["meeting", "meetings"],
+  note: ["note", "notes"],
+  decision: ["decision", "decisions"],
+  knowledge: ["knowledge base", "knowledge bases"],
+  zone: ["zone", "zones"],
+  sequence: ["sequence", "sequences"],
+  workflow: ["workflow", "workflows"],
+  project: ["project", "projects"],
+  people: ["person", "people"],
+  person: ["person", "people"],
+  workbench: ["automation", "automations"],
+  artifact: ["result", "results"],
+};
+
+/** `1 send`, `2 sends`. */
+export function sendWords(n: number): string {
+  return n === 1 ? "1 send" : `${n} sends`;
+}
+
+/** `3 meetings, 1 note`: the rows counted by kind, in first-seen order. */
+export function usedWords(rows: UsedRow[]): string {
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    const kind = row.kind || row.ref.split(":", 1)[0] || "";
+    counts.set(kind, (counts.get(kind) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([kind, n]) => {
+      const [one, many] = KIND_NOUNS[kind] ?? ["item", "items"];
+      return `${n} ${n === 1 ? one : many}`;
+    })
+    .join(", ");
 }
 
 export interface AutomationSource {

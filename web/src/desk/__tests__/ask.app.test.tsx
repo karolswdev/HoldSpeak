@@ -15,6 +15,9 @@ import { latchAskSelection } from "../ask";
 import { clearEngineCache } from "../hooks/useEngine";
 import BUSY from "../../test/wire/ask.busy.wire.json";
 import RETRY from "../../test/wire/ask.retry.wire.json";
+import THREAD from "../../test/wire/ask.thread.wire.json";
+import NOTE_WIRE from "../../test/wire/notes-create.wire.json";
+import { verbById } from "../verbRegistry";
 
 const bus = vi.hoisted(() => ({ handlers: new Map<string, Set<(frame: unknown) => void>>() }));
 vi.mock("../../runtime/RuntimeBus", () => {
@@ -127,5 +130,171 @@ describe("Betterment Q2: an Ask on a busy engine says so, and offers another eng
     await askMira();
     act(() => deliver("ask_progress", RETRY.retry));
     expect((await screen.findByTestId("run-line")).textContent).toContain(`Trying again, 1 of ${RETRY.retry.of}`);
+  });
+});
+
+/* ── Betterment Q4: one Ask window over a kept thread ─────────────────────
+ *
+ * The hub half is tests/unit/test_desk_ask.py. It records an Ask about a
+ * note, its follow-up, the thread read and the Recent list
+ * (web/src/test/wire/ask.thread.wire.json; HOLDSPEAK_WIRE_WRITE=1 rewrites
+ * it). Here fetch answers with those recorded answers. */
+
+const TID = THREAD.first.thread_id;
+const NOTE_REF = "note:n-mira";
+
+function hubWithThread() {
+  let asks = 0;
+  vi.stubGlobal("fetch", vi.fn((input: string, init: RequestInit = {}) => {
+    const url = String(input);
+    const method = String(init.method ?? "GET");
+    calls.push({ url, method, body: init.body ? JSON.parse(String(init.body)) : undefined });
+    if (method === "POST" && url.endsWith("/api/ask")) {
+      asks += 1;
+      return Promise.resolve(reply(asks === 1 ? THREAD.first : THREAD.second));
+    }
+    if (method === "GET" && url.endsWith("/api/threads")) return Promise.resolve(reply(THREAD.recent));
+    if (method === "GET" && url.endsWith(`/api/threads/${TID}`)) return Promise.resolve(reply(THREAD.thread));
+    if (method === "POST" && url.endsWith("/api/notes")) return Promise.resolve(reply(NOTE_WIRE.wire, 201));
+    return Promise.resolve(reply({}));
+  }));
+}
+
+function askBox() {
+  return screen.getByRole("textbox", { name: "Ask about your work" });
+}
+
+async function askText(text: string, answer: string) {
+  fireEvent.change(askBox(), { target: { value: text } });
+  fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+  expect(await screen.findByText(answer)).toBeInTheDocument();
+}
+
+describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
+  beforeEach(() => {
+    hubWithThread();
+    useDesk.setState({
+      items: { ...EMPTY_ITEMS, note: [{ kind: "note", id: "n-mira", title: "1:1 with Mira", bodyMarkdown: "", tags: [], createdAt: "" }] },
+      selectedIds: [NOTE_REF], askThread: null,
+    });
+  });
+
+  it("ask, read, follow up, read the second answer: one window, one thread", async () => {
+    render(<AskPanel />);
+    expect(screen.getByTestId("ask-context")).toHaveTextContent("About1:1 with Mira");
+    await askText("What do I owe Mira this week?", THREAD.first.output);
+
+    const first = calls.filter((c) => c.url.endsWith("/api/ask"))[0];
+    expect(first.body?.thread).toBe(true);
+    // Looked at names the note, folded, as a link.
+    const looked = screen.getByText("Looked at · 1:1 with Mira");
+    expect(looked.closest("details")?.open).toBe(false);
+    // The box is a follow-up box now, and starts empty.
+    expect(screen.getByPlaceholderText("Ask a follow-up")).toHaveValue("");
+
+    await askText("When should I tell her?", THREAD.second.output);
+    const second = calls.filter((c) => c.url.endsWith("/api/ask"))[1];
+    expect(second.body?.thread_id).toBe(TID);
+    expect(second.body?.thread).toBeUndefined();
+    const turns = screen.getAllByTestId("ask-turn");
+    expect(turns).toHaveLength(2);
+    expect(turns[0]).toHaveTextContent("What do I owe Mira this week?");
+    expect(turns[1]).toHaveTextContent("When should I tell her?");
+  });
+
+  it("Recent lists the kept asks; a row reopens the thread in the same window", async () => {
+    useDesk.setState({ selectedIds: [] });
+    render(<AskPanel />);
+    fireEvent.click(screen.getByRole("button", { name: "Recent" }));
+    const row = await screen.findByRole("button", { name: /What do I owe Mira this week\?/ });
+    fireEvent.click(row);
+
+    await waitFor(() => expect(screen.getAllByTestId("ask-turn")).toHaveLength(2));
+    expect(screen.getByText(THREAD.first.output)).toBeInTheDocument();
+    expect(screen.getByText(THREAD.second.output)).toBeInTheDocument();
+    // The thread's About comes back with it.
+    expect(screen.getByTestId("ask-context")).toHaveTextContent("1:1 with Mira");
+    expect(screen.queryByTestId("ask-recent")).toBeNull();
+    // A follow-up continues that thread and carries its About.
+    await askText("Anything else?", THREAD.first.output);
+    const sent = calls.filter((c) => c.url.endsWith("/api/ask")).at(-1)!;
+    expect(sent.body?.thread_id).toBe(TID);
+    expect((sent.body?.grounding as { refs?: string[] }).refs).toContain(NOTE_REF);
+  });
+
+  it("a thread opened anywhere opens in Ask; the Thread window is parked", async () => {
+    useDesk.setState({ askOpen: false });
+    useDesk.getState().openPullout(`thread:${TID}`);
+    expect(useDesk.getState().askOpen).toBe(true);
+    expect(useDesk.getState().askThread?.threadId).toBe(TID);
+    expect(useDesk.getState().pullouts.some((p) => p.id.startsWith("thread:"))).toBe(false);
+    render(<AskPanel />);
+    await waitFor(() => expect(screen.getAllByTestId("ask-turn")).toHaveLength(2));
+
+    // Desk ▸ New Thread opens a new Ask, not a thread window.
+    verbById("desk.new-thread")!.run({} as never);
+    await waitFor(() => expect(screen.queryAllByTestId("ask-turn")).toHaveLength(0));
+    expect(calls.some((c) => c.method === "POST" && c.url.endsWith("/api/threads"))).toBe(false);
+  });
+
+  it("Save as note makes a note titled by the question, with the answer and what it looked at", async () => {
+    render(<AskPanel />);
+    await askText("What do I owe Mira this week?", THREAD.first.output);
+    fireEvent.click(screen.getByRole("button", { name: "Save as note" }));
+    expect(await screen.findByText("Saved to your desk")).toBeInTheDocument();
+    const note = calls.find((c) => c.method === "POST" && c.url.endsWith("/api/notes"))!;
+    expect(note.body?.title).toBe("What do I owe Mira this week?");
+    expect(String(note.body?.body_markdown)).toContain(THREAD.first.output);
+    expect(String(note.body?.body_markdown)).toContain("Looked at: 1:1 with Mira");
+    expect(screen.getByRole("button", { name: "Open note" })).toBeInTheDocument();
+    // Keep and Bin are gone.
+    expect(screen.queryByRole("button", { name: "Keep" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Bin" })).toBeNull();
+  });
+
+  it("More ▸ Forget hides the ask with Undo; Undo brings it back and deletes nothing", async () => {
+    render(<AskPanel />);
+    await askText("What do I owe Mira this week?", THREAD.first.output);
+    fireEvent.click(screen.getByText("More"));
+    fireEvent.click(screen.getByRole("button", { name: "Forget" }));
+    expect(screen.getByText("Forgotten: What do I owe Mira this week?")).toBeInTheDocument();
+    expect(screen.queryAllByTestId("ask-turn")).toHaveLength(0);
+
+    fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+    await waitFor(() => expect(screen.getAllByTestId("ask-turn")).toHaveLength(2));
+    expect(calls.some((c) => c.method === "DELETE")).toBe(false);
+  });
+
+  it("a Forget still deletes the thread when the window closes before Undo", async () => {
+    const view = render(<AskPanel />);
+    await askText("What do I owe Mira this week?", THREAD.first.output);
+    fireEvent.click(screen.getByText("More"));
+    fireEvent.click(screen.getByRole("button", { name: "Forget" }));
+    view.unmount();
+    expect(calls.some((c) => c.method === "DELETE" && c.url.endsWith(`/api/threads/${TID}`))).toBe(true);
+  });
+
+  it("the window shows no raw id, no host string and no grounding receipt", async () => {
+    const { container } = render(<AskPanel />);
+    await askText("What do I owe Mira this week?", THREAD.first.output);
+    await askText("When should I tell her?", THREAD.second.output);
+    const text = container.textContent ?? "";
+    expect(text).not.toMatch(/\bth_[0-9a-f]+/);
+    expect(text).not.toContain("192.168.1.43");
+    expect(text).not.toContain("GROUNDED");
+    expect(text).not.toContain("RECEIPT");
+  });
+});
+
+describe("Betterment Q4: Stop while a question runs", () => {
+  it("Stop replaces Ask, tells the hub, and leaves the question marked stopped with Ask again", async () => {
+    await askMira();
+    expect(screen.queryByRole("button", { name: "Ask" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Stop" }));
+    expect(calls.some((c) => c.method === "POST" && c.url === `/api/ask/${BUSY.busy.invocation_id}/cancel`)).toBe(true);
+    const line = await screen.findByTestId("run-line");
+    expect(line.dataset.state).toBe("failure");
+    expect(line).toHaveTextContent("Stopped");
+    expect(screen.getByRole("button", { name: "Ask again" })).toBeInTheDocument();
   });
 });

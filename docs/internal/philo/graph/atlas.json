@@ -18072,7 +18072,7 @@
           "claim": "the Chair starts with briefLoading true"
         },
         {
-          "path": "web/src/desk/pullouts/views/BriefView.tsx",
+          "path": "web/src/desk/pullouts/_parked/BriefWing.tsx",
           "symbol": "<SurfaceState loading />",
           "claim": "the Brief pull-out draws the loading state first"
         }
@@ -18090,7 +18090,7 @@
       "phase1_refs": [],
       "sources": [
         {
-          "path": "web/src/desk/pullouts/views/BriefView.tsx",
+          "path": "web/src/desk/pullouts/_parked/BriefWing.tsx",
           "symbol": "actionLabel={generating ? \"Generating...\" : \"Generate\"}",
           "claim": "the pull-out's verb reads Generating... while the POST is in flight"
         },
@@ -18113,7 +18113,7 @@
       "phase1_refs": [],
       "sources": [
         {
-          "path": "web/src/desk/pullouts/views/BriefView.tsx",
+          "path": "web/src/desk/pullouts/_parked/BriefWing.tsx",
           "symbol": "<SurfaceState error={error} onRetry={() => void load()} />",
           "claim": "a failed read draws the error state with a Retry"
         }
@@ -18154,7 +18154,7 @@
           "claim": "is_empty is true when no section holds an item"
         },
         {
-          "path": "web/src/desk/pullouts/views/BriefView.tsx",
+          "path": "web/src/desk/pullouts/_parked/BriefWing.tsx",
           "symbol": ") : brief.is_empty ? (",
           "claim": "the pull-out draws No changes for an empty brief"
         },
@@ -18313,7 +18313,7 @@
           "claim": "an unavailable people store is stated, not hidden"
         },
         {
-          "path": "web/src/desk/pullouts/views/BriefView.tsx",
+          "path": "web/src/desk/pullouts/_parked/BriefWing.tsx",
           "symbol": "person-sections-unavailable",
           "claim": "the face draws that unavailability"
         }
@@ -20135,12 +20135,12 @@
       ],
       "sources": [
         {
-          "path": "web/src/desk/pullouts/views/BriefView.tsx",
+          "path": "web/src/desk/pullouts/_parked/BriefWing.tsx",
           "symbol": "const [selectedId, setSelectedId] = useState<string | null>(null);",
           "claim": "the Brief pull-out holds one selected item"
         },
         {
-          "path": "web/src/desk/pullouts/views/BriefView.tsx",
+          "path": "web/src/desk/pullouts/_parked/BriefWing.tsx",
           "symbol": "<Button dense disabled={addingAgenda} onClick={() => void addToAgenda(selectedPerson.relationship_id, selectedPerson.display_name)} data-testid=\"verb-add-agenda\">",
           "claim": "the selection decides which verbs the foot carries"
         }

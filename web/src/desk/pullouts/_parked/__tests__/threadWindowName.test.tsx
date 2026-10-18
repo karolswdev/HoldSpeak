@@ -8,19 +8,19 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const apiFetch = vi.fn();
-vi.mock("../../lib/api", async () => {
-  const actual = await vi.importActual<typeof import("../../lib/api")>("../../lib/api");
+vi.mock("../../../../lib/api", async () => {
+  const actual = await vi.importActual<typeof import("../../../../lib/api")>("../../lib/api");
   return { ...actual, apiFetch: (...args: unknown[]) => apiFetch(...args) };
 });
 
-import { EMPTY_ITEMS, fromWireThread } from "../api";
-import { allObjects } from "../world";
-import { Pullout } from "../components/Pullout";
-import { Dock } from "../components/DeskWindow";
-import { registrySnapshot } from "../components/window/windowRegistry";
-import { useThreadStore } from "../threads";
-import { useDesk } from "../store";
-import { RuntimeBusProvider } from "../../runtime/RuntimeBus";
+import { EMPTY_ITEMS, fromWireThread } from "../../../api";
+import { allObjects } from "../../../world";
+import { Pullout } from "../../../components/Pullout";
+import { Dock } from "../../../components/DeskWindow";
+import { registrySnapshot } from "../../../components/window/windowRegistry";
+import { useThreadStore } from "../../../threads";
+import { useDesk } from "../../../store";
+import { RuntimeBusProvider } from "../../../../runtime/RuntimeBus";
 
 const ID = "th_902f6b8ce0be";
 const NOW = "2026-10-04T09:40:00Z";

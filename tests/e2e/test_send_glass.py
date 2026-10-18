@@ -925,9 +925,9 @@ class _Rig:
     def _open_intelligence(page: Any, tab: str | None = None) -> None:
         page.locator("button.desk-dock-app").first.click()
         page.locator(".desk-window .intelligence-pullout").first.wait_for(timeout=H1_T)
-        # PHILO-17: the window opens on Day; the Brief is a tab, and its Send
-        # well starts folded (one row; Send opens it).
-        page.locator(".intelligence-segment", has_text=tab or "Brief").first.click()
+        # Betterment D4: Today is one page; the brief is its Since-yesterday
+        # fold, and its Send well starts folded (one row; Send opens it).
+        page.get_by_test_id("today-since-toggle").first.click()
         if not tab:
             page.get_by_test_id("brief-send-toggle").first.click()
         page.wait_for_timeout(900)

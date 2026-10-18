@@ -254,10 +254,9 @@ export const VERBS: Verb[] = [
     glyph: KIND_GLYPH.thread,
     keywords: ["create", "chat", "conversation"],
     ghost: never,
-    run: async () => {
-      const { openNewThread } = await import("./newThread");
-      await openNewThread();
-    },
+    // Betterment Q4: a new thread is a new Ask; the thread is kept when the
+    // first question is answered.
+    run: () => useDesk.getState().openAskThread(null),
   },
   // HS-159-05: Project creation joins the shared creation grammar (WEB-CR-001)
   {
@@ -356,14 +355,15 @@ export const VERBS: Verb[] = [
   },
   {
     id: "desk.open-intelligence",
-    label: "Open Intelligence",
-    // PHILO-17 (doors): one index. Go lists Intelligence; the Desk menu does not.
+    label: "Open Today",
+    // PHILO-17 (doors): one index. Go lists Today; the Desk menu does not.
+    // Betterment D4: Today is one page ("Intelligence" leaves every label).
     menu: "go",
     scope: "floor",
     group: "view",
     glyph: "◆",
-    keywords: ["brief", "follow-through", "receipts"],
-    app: "Intelligence",
+    keywords: ["today", "brief", "since yesterday", "this week", "needs you"],
+    app: "Today",
     ghost: never,
     run: () => openIntelligence({ view: "today" }),
   },
@@ -381,17 +381,18 @@ export const VERBS: Verb[] = [
   },
   {
     id: "desk.intelligence-brief",
-    label: "Show today's brief",
+    label: "Show since yesterday",
     scope: "floor",
-    keywords: ["intelligence", "daily", "brief"],
+    keywords: ["today", "daily", "brief", "since yesterday"],
     ghost: never,
     run: () => openIntelligence({ view: "brief" }),
   },
   {
     id: "desk.intelligence-overdue",
-    label: "Show overdue follow-through",
+    label: "Show what is overdue",
     scope: "floor",
-    keywords: ["intelligence", "follow-through", "overdue"],
+    // Betterment D4: Follow-through is parked; its rows are in Needs you.
+    keywords: ["needs you", "follow-through", "overdue"],
     ghost: never,
     run: () => openIntelligence({ view: "follow-through", overdueOnly: true }),
   },
@@ -527,11 +528,14 @@ export const VERBS: Verb[] = [
       const threadable = new Set(["meeting", "note", "artifact", "decision", "recipe", "people"]);
       return threadable.has(o.kind) ? null : "Not threadable";
     },
-    run: async (ctx) => {
+    // Betterment Q4: Ask with the object in About (Q5 renames this verb
+    // Ask about this).
+    run: (ctx) => {
       const o = selected(ctx);
       if (!o) return;
-      const { openNewThread } = await import("./newThread");
-      await openNewThread({ seed_refs: [{ ref_kind: o.kind, ref_id: o.id }] });
+      const desk = useDesk.getState();
+      desk.setSelected([`${o.kind}:${o.id}`]);
+      desk.openAskThread(null);
     },
   },
   {

@@ -5223,6 +5223,18 @@
     "/api/brief/latest": {
       "get": {
         "operationId": "latest_api_brief_latest_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "ensure",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Ensure",
+              "type": "boolean"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -5242,6 +5254,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "summary": "Latest",

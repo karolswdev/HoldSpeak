@@ -264,6 +264,9 @@
 
 .automation-used { display: flex; flex-direction: column; gap: 4px; }
 .automation-used-list { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
+.automation-used-row { display: inline-flex; align-items: center; gap: 4px; min-width: 0; }
+.automation-used-sends { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.automation-used-send { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
 
 /* ── what it has learned ──────────────────────────────────────────────── */
 

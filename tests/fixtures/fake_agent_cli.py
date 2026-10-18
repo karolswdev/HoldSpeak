@@ -12,12 +12,13 @@ timeout kill), ``fail`` (exit 1) or ``error`` (Claude's ``is_error`` result).
 
 Betterment M1: the fakes speak MCP to the hub the way the real CLIs are told
 to. ``set_tool_plan(bin_dir, name, [{"name": ..., "arguments": ...}])`` makes
-the next run call those tools over the HoldSpeak server its argv names
+each next run (``once=True``: only the next one) call those tools over the HoldSpeak server its argv names
 (Claude Code: the ``--mcp-config`` file, ``${VAR}`` expanded from the
 environment; Codex: ``-c mcp_servers.holdspeak.url`` and its
 ``bearer_token_env_var``). Each call's HTTP status and JSON-RPC answer go to
 ``<bin>/<name>-mcp.jsonl`` with the token and config the run used, and the
-answer is the JSON list of the tool results. With ``--json`` the fake Codex
+answer is the JSON list of the tool results (for Claude, unless
+``set_claude_answer`` gave one). With ``--json`` the fake Codex
 prints ``codex exec --json`` events (``item.completed`` agent_message,
 ``turn.completed`` usage).
 """
@@ -98,6 +99,8 @@ answer = None
 plan_file = here / (name + "-plan.json")
 if plan_file.exists():
     plan = json.loads(plan_file.read_text())
+    if plan.get("once"):
+        plan_file.unlink()
     target = server()
     results = []
     record = {{"server": None if target is None else {{"url": target["url"], "config": target["config"]}},
@@ -117,6 +120,8 @@ if plan_file.exists():
     with (here / (name + "-mcp.jsonl")).open("a") as log:
         log.write(json.dumps(record) + "\\n")
     answer = json.dumps(results)
+    if (here / "claude-answer").exists() and name == "claude":
+        answer = None  # set_claude_answer wins over the tool results
 if name == "claude":
     if mode == "error":
         # Claude Code reports what a run cost even when it stops at its limit.
@@ -161,9 +166,12 @@ def set_mode(bin_dir: Path, name: str, mode: str) -> None:
     (bin_dir / f"{name}-mode").write_text(mode)
 
 
-def set_tool_plan(bin_dir: Path, name: str, tool_calls: list[dict], *, timeout: float = 30.0) -> None:
-    """The next runs of *name* call these tools over the server their argv names."""
-    (bin_dir / f"{name}-plan.json").write_text(json.dumps({"calls": tool_calls, "timeout": timeout}))
+def set_tool_plan(
+    bin_dir: Path, name: str, tool_calls: list[dict], *, timeout: float = 30.0, once: bool = False,
+) -> None:
+    """The next runs of *name* call these tools over the server their argv names
+    (``once``: only the next run; an automation's memory call after it calls none)."""
+    (bin_dir / f"{name}-plan.json").write_text(json.dumps({"calls": tool_calls, "timeout": timeout, "once": once}))
 
 
 def mcp_runs(bin_dir: Path, name: str) -> list[dict]:

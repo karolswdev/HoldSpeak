@@ -1,5 +1,9 @@
 import { useDesk } from "./store";
 
+/** Betterment daily D4: Today is one page. `brief` is Today with Since
+ *  yesterday open; `receipts` is the Decisions page in the same window;
+ *  `follow-through` (parked) opens the Needs-you window, where its rows and
+ *  verbs live. */
 export type IntelligenceView = "today" | "brief" | "follow-through" | "receipts";
 
 export type IntelligenceNavigation = {
@@ -24,6 +28,21 @@ export const INTELLIGENCE_NAVIGATE = "holdspeak:intelligence-navigate";
 let requests = 0;
 
 export function openIntelligence(navigation: IntelligenceNavigation): void {
+  if (navigation.view === "follow-through") {
+    // Loaded on use: chairWindows reaches the window registry, which must
+    // not load while this module (imported by openObject) is loading.
+    // The request is still announced (its listeners name the card); the
+    // Today window ignores it.
+    void import("./chair/chairWindows").then((m) => m.openChairWindow("chair:needs"));
+    window.setTimeout(() => {
+      window.dispatchEvent(new CustomEvent<IntelligenceNavigation>(INTELLIGENCE_NAVIGATE, { detail: navigation }));
+    }, 0);
+    return;
+  }
+  if (navigation.view === "brief") {
+    requests += 1;
+    navigation = { ...navigation, nonce: requests };
+  }
   if (navigation.decisionId) {
     requests += 1;
     navigation = { ...navigation, nonce: requests };

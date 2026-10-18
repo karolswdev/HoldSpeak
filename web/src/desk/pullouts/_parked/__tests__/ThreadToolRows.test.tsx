@@ -11,9 +11,9 @@ import {
   type ThreadToolResultPayload,
   type ThreadStatusLinePayload,
   type ToolRow,
-} from "../threads";
-import { ThreadPullout } from "../pullouts/ThreadPullout";
-import { RuntimeBusProvider } from "../../runtime/RuntimeBus";
+} from "../../../threads";
+import { ThreadPullout } from "../ThreadPullout";
+import { RuntimeBusProvider } from "../../../../runtime/RuntimeBus";
 
 // Mock the WebSocket so RuntimeBusProvider does not connect.
 beforeEach(() => {

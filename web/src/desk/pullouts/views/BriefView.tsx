@@ -1,16 +1,14 @@
+/** The brief's helpers, and Today's Since-yesterday fold (Betterment daily
+ *  D4). The Brief wing it replaced (Generate, Refresh, Acknowledge, Defer,
+ *  the PEOPLE overlay) is parked in `../_parked/BriefWing.tsx`; the shelf
+ *  data stays. */
 import { wireDate } from "../../surface/format";
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
-import { apiFetch } from "../../../lib/api"; import { plainFailure } from "../../surface/plainFailure"; // PHILO-13-04: plain words, never the hub's `detail`
-import { useWriteReceipt } from "../../hooks/useWriteReceipt";
-import { refreshIntelligenceAttention } from "../../intelligenceAttention";
-import { useOnDeskChanged } from "../../useDeskChangedRefresh";
 import { openSurfaceOr } from "../../shell";
-import { SurfaceLedgerRow, SurfaceState } from "../../surface/Surface";
-import { SurfaceFooter } from "../../surface/SurfaceFooter";
-import { StateChip, countToken } from "../../surface";
 import { BriefSendWells } from "../../documentSendsLazy";
-import { openPerson, refOpener } from "../../openObject";
+import { refOpener } from "../../openObject";
+import { openIntelligence } from "../../intelligenceNavigation";
 import { StandingPagesSection, useStandingPages } from "../../standingPages";
 import "../attention-records.css";
 
@@ -25,26 +23,11 @@ interface BriefItem {
 
 type BriefSection = "this_week" | "changed" | "broke" | "waiting" | "decisions";
 
-type ShelfState = "acknowledged" | "deferred";
-
-interface PersonSection {
-  relationship_id: string;
-  display_name: string;
-  they_owe_count: number;
-  stalest_age_days: number | null;
-  you_owe_count: number;
-  agenda_backlog: number;
-  next_one_on_one: { event_id: string; title: string; starts_at: string } | null;
-}
-
-type MondayBrief = {
+export type MondayBrief = {
   id: string;
   headline: string;
   sections: Partial<Record<BriefSection, BriefItem[]>>;
   is_empty: boolean;
-  shelf?: Record<string, ShelfState>;
-  person_sections?: PersonSection[];
-  person_sections_state?: string;
   period_label?: string | null;
   generated_label?: string | null;
   period_start?: string;
@@ -54,7 +37,8 @@ type MondayBrief = {
   stale?: boolean;
 };
 
-const LOOKBACK_SECTIONS: readonly BriefSection[] = ["changed", "broke", "waiting", "decisions"];
+/** What changed (the waiting rows are Needs you's, above it in Today). */
+const LOOKBACK_SECTIONS: readonly BriefSection[] = ["changed", "broke", "decisions"];
 
 const _MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 
@@ -158,484 +142,145 @@ export function blockerKey(sourceRef: string | null | undefined): string | null 
   return match ? match[1] : null;
 }
 
-/** The THIS WEEK refs the composed rows (MEETINGS, NEXT, ARMED, DUE) draw. */
-function composedThisWeek(item: BriefItem): boolean {
-  return (
-    item.source_ref === "calendar:week" ||
-    item.source_ref === "calendar:armed" ||
-    item.source_ref === "meeting_watch:commitments_due" ||
-    item.text.startsWith("Next:")
-  );
+/** One kind of change, for the folded count line. */
+export type SinceKind = "meeting" | "decision" | "promise" | "failed" | "other";
+
+export function sinceKind(item: Pick<BriefItem, "section" | "text">): SinceKind {
+  if (item.section === "broke") return "failed";
+  if (/^Meeting recorded:/.test(item.text)) return "meeting";
+  if (/^Commitment due\b/.test(item.text)) return "promise";
+  if (/^(Decision (confirmed|made)|Review decision):/.test(item.text)) return "decision";
+  return "other";
 }
 
-/* ================================================================== */
+/** `2 meetings · 1 decision · 5 promises · 1 failed · 2 more`; a kind with
+ *  none is left out (no counters of zero). Empty when nothing changed. */
+export function sinceCounts(items: ReadonlyArray<Pick<BriefItem, "section" | "text">>): string {
+  const n: Record<SinceKind, number> = { meeting: 0, decision: 0, promise: 0, failed: 0, other: 0 };
+  for (const item of items) n[sinceKind(item)] += 1;
+  const word = (count: number, one: string, many: string) => (count ? `${count} ${count === 1 ? one : many}` : null);
+  return [
+    word(n.meeting, "meeting", "meetings"),
+    word(n.decision, "decision", "decisions"),
+    word(n.promise, "promise", "promises"),
+    word(n.failed, "failed", "failed"),
+    word(n.other, "more", "more"),
+  ].filter(Boolean).join(" · ");
+}
 
-export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; onOpenFollowThrough?: (id: string) => void }) {
-  const [brief, setBrief] = useState<MondayBrief | null>(null);
-  // Activity resumes effects on return. Keep the populated body (and its
-  // open Send well) mounted while that resume read is in flight.
-  const hasBrief = useRef(false);
-  hasBrief.current = brief !== null;
-  const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState(false);
-  const [error, setError] = useState("");
-  const [refreshFailed, setRefreshFailed] = useState("");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [shelf, setShelf] = useState<Record<string, ShelfState>>({});
-  const [shelving, setShelving] = useState(false);
-  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
-  const [addingAgenda, setAddingAgenda] = useState(false);
-  const { attempt, receipt, clear } = useWriteReceipt();
-  // Memory on the Desk (canvas section 2, option B): the desk's standing
-  // pages live in the Brief, under its head.
-  const standingPages = useStandingPages("desk");
+const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-  const reads = useRef({ started: 0, landed: 0 });
-  // PHILO-17: a stale brief is made again once per open view (never a loop).
-  const autoRefreshed = useRef(false);
-  const load = useCallback(async (quiet = false) => {
-    if (!quiet) {
-      setLoading(true);
-      setError("");
-    }
-    const order = ++reads.current.started;
-    try {
-      const latest = await apiFetch<MondayBrief | null>("/api/brief/latest");
-      // A read that started earlier and answers later never replaces a newer one.
-      if (order < reads.current.landed) return;
-      reads.current.landed = order;
-      setBrief(latest);
-      setShelf(latest?.shelf ?? {});
-    } catch (requestError) {
-      // A quiet re-read (the bus) that fails keeps the last Brief.
-      if (!quiet) setError(plainFailure("BRIEF DID NOT LOAD", requestError));
-    } finally {
-      if (!quiet) setLoading(false);
-    }
-  }, []);
-  // A Brief made in another window, or by an agent, shows here.
-  useOnDeskChanged(() => { void load(true); });
+/** `Since yesterday`, or `Since Friday` when the brief looks back further
+ *  (Monday). */
+export function sinceLabel(periodStart: string | null | undefined, now: Date = new Date()): string {
+  const start = parseLocal(periodStart);
+  if (!start) return "Since yesterday";
+  const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+  const same = start.getFullYear() === yesterday.getFullYear() && start.getMonth() === yesterday.getMonth()
+    && start.getDate() === yesterday.getDate();
+  return same ? "Since yesterday" : `Since ${WEEKDAYS[start.getDay()]}`;
+}
 
-  useEffect(() => { void load(hasBrief.current); }, [load]);
+/** The lookback rows of a brief: what changed, what broke, the decisions. */
+export function lookbackItems(brief: Pick<MondayBrief, "sections"> | null | undefined): BriefItem[] {
+  return LOOKBACK_SECTIONS.flatMap((id) => brief?.sections[id] ?? []);
+}
 
-  // PHILO-17: the brief was frozen at its first generation. When the hub says
-  // the desk is newer (a meeting, a decision, an engine), make it again.
-  useEffect(() => {
-    if (!brief?.stale || autoRefreshed.current || generating) return;
-    autoRefreshed.current = true;
-    void generate();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [brief?.stale]);
-
-  const generate = async () => {
-    setGenerating(true);
-    setError("");
-    setRefreshFailed("");
-    try {
-      const generated = await apiFetch<MondayBrief | null>("/api/brief/generate", { method: "POST" });
-      // PHILO-17 (Astra r2): a rebuild that answers nothing keeps the brief
-      // on the glass; it never blanks a good one.
-      if (generated) {
-        setSelectedId(null);
-        setBrief(generated);
-        setShelf(generated.shelf ?? {});
-      } else if (!brief) {
-        setError("BRIEF NOT MADE");
-      } else {
-        setRefreshFailed("BRIEF NOT MADE AGAIN");
-      }
-    } catch (requestError) {
-      // With a brief on the glass the failure is a footer fact, not a blank face.
-      if (brief) setRefreshFailed(plainFailure("BRIEF NOT MADE AGAIN", requestError));
-      else setError(plainFailure("BRIEF NOT MADE", requestError));
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  /* ── Derived data ─────────────────────────────────────────────── */
-
-  const thisWeekItems = brief?.sections["this_week"] ?? [];
-  // PHILO-17: a THIS WEEK item no composed row draws (e.g. "1 new decision
-  // from meetings") is its own row; the heading never stands over nothing.
-  const thisWeekOther = thisWeekItems.filter((item) => !composedThisWeek(item));
-  const lookbackItems = LOOKBACK_SECTIONS.flatMap((id) => brief?.sections[id] ?? []);
-  const hasLookback = lookbackItems.length > 0;
-  const allItems = [...thisWeekItems, ...lookbackItems];
-  const selected = allItems.find((item) => item.id === selectedId);
-  const selectedPerson = brief?.person_sections?.find((p) => p.relationship_id === selectedPersonId);
-  const selectedWords = selectedPerson ? `PERSON · ${selectedPerson.display_name}`
-    : selected ? (() => {
-      const parsed = parseLookbackItem(selected);
-      return `SELECTED · ${parsed.kind ? `${parsed.kind} · ` : ""}${parsed.primary}`;
-    })() : undefined;
-
-  /* ── THIS WEEK composed rows ──────────────────────────────────── */
-
-  const twMeetings = thisWeekItems.find((i) => i.source_ref === "calendar:week");
-  const twNext = thisWeekItems.find((i) => i.text.startsWith("Next:"));
-  const twArmed = thisWeekItems.find((i) => i.source_ref === "calendar:armed");
-  const twDue = thisWeekItems.find((i) => i.source_ref === "meeting_watch:commitments_due");
-
-  const meetingCount = (() => {
-    if (!twMeetings) return 0;
-    const m = twMeetings.text.match(/^(\d+)\s+meeting/);
-    return m ? parseInt(m[1], 10) : 0;
-  })();
-
-  const nextToken = (() => {
-    if (!twNext) return null;
-    const m = twNext.text.match(/^Next:\s+(.+?)\s+at\s+(\d{2}:\d{2})$/);
-    if (m) return `NEXT ${m[1].toUpperCase()} ${m[2]}`;
-    return `NEXT ${twNext.text.replace(/^Next:\s+/i, "").toUpperCase()}`;
-  })();
-
-  const armedCount = (() => {
-    if (!twArmed) return 0;
-    const m = twArmed.text.match(/^(\d+)\s+armed/);
-    return m ? parseInt(m[1], 10) : 0;
-  })();
-
-  const dueCount = (() => {
-    if (!twDue) return 0;
-    const m = twDue.text.match(/^(\d+)\s+commitment/);
-    return m ? parseInt(m[1], 10) : 0;
-  })();
-
-  // Detail format from backend: "commitment text | YYYY-MM-DD"
-  const dueDetailParts = (twDue?.detail ?? "").split(" | ");
-  const dueCommitmentText = dueDetailParts[0] || null;
-  const dueDayToken = dueDetailParts[1] ? dayToken(dueDetailParts[1]) : null;
-
-  /* ── meetingsLabel / armedLabel / dueLabel via countToken (A.8) ── */
-
-  const meetingsLabel = countToken(meetingCount, "MEETING", "MEETINGS");
-  const armedLabel = countToken(armedCount, "ARMED");
-  const dueLabel = countToken(dueCount, "DUE");
-  const hasThisWeek = Boolean(meetingsLabel || armedLabel || dueLabel || thisWeekOther.length > 0);
-
-  /* ── a setup blocker row opens Runs on (PHILO-17) ─────────────── */
-
-  const openBlocker = (key: string) => {
-    if (key === "unknown") void generate();
-    else openSurfaceOr("open-concierge", "/models", key);
-  };
-
-  /* ── Triage shelf ─────────────────────────────────────────────── */
-
-  const addToAgenda = async (personId: string, personName: string) => {
-    setAddingAgenda(true);
-    await attempt(`${personName} · add to 1:1 agenda`, async () => {
-      const sessionsResp = await apiFetch<{ one_on_ones: Array<{ id: string; state: string }> }>(
-        `/api/people/relationships/${encodeURIComponent(personId)}/one-on-ones`,
-      );
-      let sessionId: string | undefined;
-      const openSession = sessionsResp.one_on_ones?.find((s) => s.state !== "closed");
-      if (openSession) { sessionId = openSession.id; }
-      else {
-        const created = await apiFetch<{ one_on_one: { id: string } }>(
-          `/api/people/relationships/${encodeURIComponent(personId)}/one-on-ones`,
-          { method: "POST", json: { visibility: "shared_intent" } },
-        );
-        sessionId = created.one_on_one.id;
-      }
-      await apiFetch(
-        `/api/people/one-on-ones/${encodeURIComponent(sessionId)}/agenda`,
-        { method: "POST", json: { body: "Follow up from brief", visibility: "shared_intent", state: "open", source: { kind: "brief" } } },
-      );
-      refreshIntelligenceAttention();
-    }, { subject: `person:${personId}` });
-    setAddingAgenda(false);
-  };
-
-  const setShelfState = async (state: ShelfState) => {
-    const itemId = selectedId;
-    if (!itemId || !selected) return;
-    const next: ShelfState | null = shelf[itemId] === state ? null : state;
-    setShelving(true);
-    const result = await attempt(
-      `${parseLookbackItem(selected).primary} · ${next === null ? "clear triage" : next}`,
-      () => apiFetch(`/api/brief/items/${encodeURIComponent(itemId)}/shelf`, { method: "POST", json: { state: next } }),
-      { subject: `brief-item:${itemId}` },
-    );
-    setShelving(false);
-    if (!result.ok) return;
-    setShelf((current) => {
-      const updated = { ...current };
-      if (next === null) delete updated[itemId];
-      else updated[itemId] = next;
-      return updated;
-    });
-    refreshIntelligenceAttention();
-  };
-
-  /* ── Body ─────────────────────────────────────────────────────── */
-
-  const standingAnswers = (
+/** Memory on the Desk (canvas section 2, option B): the desk's standing
+ *  pages, under what changed. Read only when the fold is open. */
+function DeskPages() {
+  const pages = useStandingPages("desk");
+  return (
     <StandingPagesSection
-      pages={[...standingPages.filter((page) => page.slug === "what-i-owe"), ...standingPages.filter((page) => page.slug !== "what-i-owe")]}
+      pages={[...pages.filter((page) => page.slug === "what-i-owe"), ...pages.filter((page) => page.slug !== "what-i-owe")]}
       presentation="questions"
     />
   );
+}
 
-  const body = loading ? (
-    <SurfaceState loading />
-  ) : error ? (
-    <SurfaceState error={error} onRetry={() => void load()} />
-  ) : !brief ? (
-    <>
-      <SurfaceState
-        empty
-        emptyLabel="No brief generated."
-        onAction={() => void generate()}
-        actionLabel={generating ? "Generating..." : "Generate"}
-      />
-      {standingAnswers}
-    </>
-  ) : brief.is_empty ? (
-    <>
-      {/* PHILO-17 (owner): one quiet line, never an empty well. */}
-      <p className="intelligence-brief-quiet" data-testid="brief-no-changes">No changes since the last brief</p>
-      {standingAnswers}
-    </>
-  ) : (
-    <>
-      {/* ── HEAD: period (display, ONCE) + generated (caption) ──
-          HS-175 counsel C8: both formatted HERE from generated_at in the
-          viewer's local time; the hub's labels are the fallback. */}
-      {(() => {
-        // PHILO-15-09 (B04, ruling 3): the brief's ONE range is the hub's,
-        // computed from its window; the week-based local label is a
-        // fallback for a payload that carries none.
-        const period = brief.period_label ?? periodLabelLocal(brief.generated_at);
-        return period ? (
-          <div className="intelligence-brief-period" data-testid="brief-period-label" role="heading" aria-level={2}>
-            {period}
-          </div>
-        ) : null;
-      })()}
-      {(() => {
-        const generated = generatedLabelLocal(brief.generated_at) ?? brief.generated_label;
-        return generated ? (
-          <div className="intelligence-brief-generated" data-testid="brief-generated-label">
-            {briefIsPartial(brief.sections) ? `${generated} · PARTIAL` : generated}
-          </div>
-        ) : null;
-      })()}
-
-      {standingAnswers}
-
-      {/* ── SINCE FRIDAY: flat rows, no folds, no "00" ─────────── */}
-      {hasLookback ? (
-        <div className="intelligence-brief-section" data-testid="brief-since-friday">
-          <div className="intelligence-brief-section-caption">{sinceFridayLabel(brief.period_start)}</div>
-          <div className="intelligence-brief-flat" data-testid="brief-lookback-rows">
-            {lookbackItems.map((item) => {
-              const state = shelf[item.id];
-              const parsed = parseLookbackItem(item);
-              const blocker = blockerKey(item.source_ref);
-              if (blocker) {
-                return (
-                  <div key={item.id} className="intelligence-brief-sf-row intelligence-brief-blocker" data-testid="brief-blocker-row">
-                    {/* PHILO-17: one quiet row: the words, then a compact verb
-                        (the Meetings grammar). */}
-                    <span className="kit-pill" data-tone="warn">{parsed.primary}</span>
-                    <Button dense onClick={() => openBlocker(blocker)} data-testid={`brief-blocker-verb-${blocker}`}>
-                      {parsed.detail || "Choose engine"}
-                    </Button>
-                  </div>
-                );
-              }
-              return (
-                <div key={item.id} className="intelligence-brief-sf-row" data-testid="brief-sf-row"
-                  data-selected={selectedId === item.id || undefined}>
-                  <div className="intelligence-brief-sf-body">
-                    <Button variant="chrome" className="intelligence-brief-sf-primary"
-                      aria-current={selectedId === item.id || undefined}
-                      onClick={() => {
-                        const ftId = item.source_ref?.match(/^(?:follow-through|action_item):(.+)$/)?.[1];
-                        if (ftId && onOpenFollowThrough) { onOpenFollowThrough(ftId); return; }
-                        // PHILO-13-06 (B1): the row opens the object it names in
-                        // its own window, and stays selected here for triage.
-                        clear?.();
-                        setSelectedPersonId(null);
-                        setSelectedId(item.id);
-                        refOpener(item.source_ref)?.();
-                      }}
-                    >
-                      {parsed.primary}
-                    </Button>
-                  </div>
-                  <div className="intelligence-brief-sf-facts">
-                    {parsed.kind ? <span className="intelligence-brief-sf-kind" data-testid="brief-sf-kind">{parsed.kind}</span> : null}
-                    {parsed.detail ? <span className="intelligence-brief-sf-detail">{humanizeDate(parsed.detail)}</span> : null}
-                    {state ? <span className="intelligence-brief-shelf-state">{state}</span> : null}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ) : null}
-
-      {/* ── THIS WEEK (absent when empty per A.8) ──────────────── */}
-      {hasThisWeek ? (
-        <div className="intelligence-brief-section" data-testid="brief-this-week">
-          <div className="intelligence-brief-section-caption">THIS WEEK</div>
-
-          {/* MEETINGS row with NEXT token (countToken = null at zero) */}
-          {meetingsLabel ? (
-            <div className="intelligence-brief-tw-row" data-testid="brief-tw-meetings">
-              <span className="intelligence-brief-tw-primary">{meetingsLabel}</span>
-              {nextToken ? (
-                <span className="intelligence-brief-tw-token" data-testid="brief-tw-next">{nextToken}</span>
-              ) : null}
-            </div>
-          ) : null}
-
-          {/* ARMED row (countToken = null at zero) */}
-          {armedLabel ? (
-            <div className="intelligence-brief-tw-row" data-testid="brief-tw-armed">
-              <span className="intelligence-brief-tw-primary">{armedLabel}</span>
-            </div>
-          ) : null}
-
-          {/* DUE row with commitment text + day token */}
-          {dueLabel ? (
-            <div className="intelligence-brief-tw-row intelligence-brief-tw-due" data-testid="brief-tw-due">
-              <div className="intelligence-brief-tw-due-head">
-                <span className="intelligence-brief-tw-primary">{dueLabel}</span>
-              </div>
-              {dueCommitmentText ? (
-                <div className="intelligence-brief-tw-due-detail">
-                  <span className="intelligence-brief-tw-detail-text">{dueCommitmentText}</span>
-                  {dueDayToken ? (
-                    <span className="intelligence-brief-tw-token" data-testid="brief-tw-due-day">{dueDayToken}</span>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-
-          {thisWeekOther.map((item) => (
-            <div key={item.id} className="intelligence-brief-tw-row" data-testid="brief-tw-other">
-              <span className="intelligence-brief-tw-primary">{item.text}</span>
-              {item.detail ? (
-                <span className="intelligence-brief-tw-token">{humanizeDate(item.detail)}</span>
-              ) : null}
-            </div>
-          ))}
-        </div>
-      ) : null}
-
-      {/* ── People overlay ──────────────────────────────────────── */}
-      {brief.person_sections && brief.person_sections.length > 0 ? (
-        <div className="intelligence-brief-person-sections" data-testid="person-sections">
-          <div className="intelligence-brief-section-caption">PEOPLE</div>
-          <div className="intelligence-brief-flat">
-            {brief.person_sections.map((person) => {
-              const signals: string[] = [];
-              if (person.they_owe_count > 0) {
-                const age = person.stalest_age_days != null ? ` (${person.stalest_age_days}d)` : "";
-                signals.push(`They owe ${person.they_owe_count}${age}`);
-              }
-              if (person.you_owe_count > 0) signals.push(`You owe ${person.you_owe_count}`);
-              if (person.agenda_backlog > 0) signals.push(`${person.agenda_backlog} agenda`);
-              if (person.next_one_on_one) signals.push(`Next: ${person.next_one_on_one.title || "1:1"}`);
-              const isOpen = selectedPersonId === person.relationship_id;
-              return (
-                <SurfaceLedgerRow
-                  key={person.relationship_id}
-                  primary={person.display_name}
-                  open={isOpen}
-                  selected={isOpen}
-                  wrap
-                  onToggle={() => {
-                    clear?.();
-                    setSelectedId(null);
-                    setSelectedPersonId(isOpen ? null : person.relationship_id);
-                  }}
-                  lineLabel={`Person: ${person.display_name}`}
-                  data-testid={`person-row-${person.relationship_id}`}
-                >
-                  <div className="intelligence-brief-item-detail intelligence-brief-person-detail" data-testid={`person-signals-${person.relationship_id}`}>
-                    {signals.map((s, i) => <p key={i}>{s}</p>)}
-                  </div>
-                </SurfaceLedgerRow>
-              );
-            })}
-          </div>
-        </div>
-      ) : brief.person_sections_state === "unavailable" ? (
-        // PHILO-17: the words for why, and the one verb that fixes it.
-        <div className="intelligence-brief-person-unavailable intelligence-brief-blocker" data-testid="person-sections-unavailable">
-          <span className="intelligence-brief-quiet">People is not open, so the brief has no people</span>
-          <Button dense onClick={() => openSurfaceOr("open-people", "/", undefined)} data-testid="person-sections-open">Open People</Button>
-        </div>
-      ) : null}
-
-      {/* PHILO-11-05a (canvas A2, A3, A6): the brief's SEND well, after
-          PEOPLE. One pick and one press with the Chair's seat. */}
-      <BriefSendFold brief={brief} />
-    </>
-  );
-
-  return (
-    <>
-      <div className="desk-pullout-body desk-surface-body intelligence-pullout">
-        {header}
-        <section className="intelligence-view intelligence-brief" aria-live="polite">
-          {body}
-        </section>
+/** Betterment daily D4: Since yesterday (Since Friday on Monday), in Today.
+ *  Folded, one line of counts; unfolded, what changed, each row opening what
+ *  it names. The brief is made when Today opens (the hub's `ensure` read);
+ *  there is no Generate or Refresh. */
+export function SinceYesterday({ brief, failed, now, defaultOpen = false, openRequest = 0, onRetry }: {
+  brief: MondayBrief | null;
+  /** A new number opens the fold (the "Show since yesterday" verb). */
+  openRequest?: number;
+  /** The read failed: one line and Retry. */
+  failed: boolean;
+  now: Date;
+  defaultOpen?: boolean;
+  onRetry(): void;
+}) {
+  const [open, setOpen] = useState(defaultOpen || openRequest > 0);
+  useEffect(() => { if (openRequest > 0) setOpen(true); }, [openRequest]);
+  const items = lookbackItems(brief);
+  const label = sinceLabel(brief?.period_start, now);
+  const counts = sinceCounts(items);
+  if (failed && !brief) {
+    return (
+      <div className="today-fold" data-testid="today-since-failed" role="status">
+        <span className="today-fold-label">{label}</span>
+        <span className="kit-pill" data-tone="danger">The brief could not be read. Nothing changed. Press Retry.</span>
+        <Button dense variant="ghost" onClick={onRetry}>Retry</Button>
       </div>
-      <SurfaceFooter
-        receipt={
-          receipt ? <div className="attention-brief-receipt">
-            {selectedWords ? <span>{selectedWords}</span> : null}
-            {receipt}
-          </div> : (refreshFailed || undefined) ?? selectedWords
-        }
-        verbs={
-          // PHILO-13-04 ledger, paid in B1 (A.11): a brief that did not load
-          // has nothing to acknowledge, defer or speak; its Try again stands.
-          error ? null : selectedPerson ? (
-            <>
-              <Button dense disabled={addingAgenda} onClick={() => void addToAgenda(selectedPerson.relationship_id, selectedPerson.display_name)} data-testid="verb-add-agenda">
-                Add to 1:1 agenda
-              </Button>
-              <Button dense variant="ghost" onClick={() => openPerson(selectedPerson.relationship_id)} data-testid="verb-open-person">
-                Open person
-              </Button>
-            </>
-          ) : selected ? (
-            // PHILO-17: the triage verbs show only with a selected row, and
-            // the receipt names that row (they acted on nothing visible).
-            <>
-              <Button dense disabled={shelving} aria-pressed={shelf[selected.id] === "acknowledged"} onClick={() => void setShelfState("acknowledged")}>
-                Acknowledge
-              </Button>
-              <Button dense variant="ghost" disabled={shelving} aria-pressed={shelf[selected.id] === "deferred"} onClick={() => void setShelfState("deferred")}>
-                Defer
-              </Button>
-              <Button dense variant="ghost" onClick={() => openSurfaceOr("dictate", "/dictation", selected.source_ref ?? undefined)}>
-                Speak
-              </Button>
-            </>
-          ) : brief ? (
-            <Button dense variant="ghost" disabled={generating} onClick={() => void generate()} data-testid="brief-refresh">
-              {generating ? "Refreshing..." : "Refresh"}
-            </Button>
-          ) : null
-        }
-      />
-    </>
+    );
+  }
+  if (!brief) return null;
+  return (
+    <section className="today-fold" data-testid="today-since" aria-label={label}>
+      <Button variant="chrome" className="today-fold-head" aria-expanded={open} data-testid="today-since-toggle"
+        onClick={() => setOpen((value) => !value)}>
+        <span className="today-fold-mark" aria-hidden="true">{open ? "▾" : "▸"}</span>
+        <span className="today-fold-label">{label}</span>
+        <span className="today-fold-counts" data-testid="today-since-counts">{counts || "No changes"}</span>
+      </Button>
+      {open ? (
+        <div className="today-fold-body" data-testid="today-since-rows">
+          {items.map((item) => {
+            const parsed = parseLookbackItem(item);
+            const blocker = blockerKey(item.source_ref);
+            if (blocker) {
+              return (
+                <div key={item.id} className="today-fold-row" data-testid="brief-blocker-row">
+                  <span className="kit-pill" data-tone="warn">{parsed.primary}</span>
+                  <Button dense onClick={() => openSurfaceOr("open-concierge", "/models", blocker)}
+                    data-testid={`brief-blocker-verb-${blocker}`}>
+                    {parsed.detail || "Choose engine"}
+                  </Button>
+                </div>
+              );
+            }
+            const opener = refOpener(item.source_ref);
+            return (
+              <div key={item.id} className="today-fold-row" data-testid="brief-sf-row" data-kind={sinceKind(item)}>
+                {opener ? (
+                  <Button variant="chrome" className="today-fold-primary" onClick={() => opener()}>{parsed.primary}</Button>
+                ) : <span className="today-fold-primary">{parsed.primary}</span>}
+                <span className="today-fold-facts">
+                  {parsed.kind ? <span className="today-fold-kind" data-testid="brief-sf-kind">{parsed.kind}</span> : null}
+                  {parsed.detail ? <span>{humanizeDate(parsed.detail)}</span> : null}
+                </span>
+              </div>
+            );
+          })}
+          <div className="today-fold-verbs">
+            {/* The Decisions wing's one door, from here (Betterment D4). */}
+            <Button dense variant="ghost" data-testid="today-since-decisions"
+              onClick={() => openIntelligence({ view: "receipts" })}>Decisions</Button>
+          </div>
+          <DeskPages />
+          <BriefSendFold brief={brief as Parameters<typeof BriefSendWells>[0]["brief"]} />
+        </div>
+      ) : null}
+    </section>
   );
 }
 
 /** PHILO-17 (owner: the Send well was fully open under the brief): in the
  *  Brief the well starts folded, one row; Send opens it (the destination,
  *  the preview and the send itself), Hide folds it again. */
-function BriefSendFold({ brief }: { brief: Parameters<typeof BriefSendWells>[0]["brief"] }) {
+export function BriefSendFold({ brief }: { brief: Parameters<typeof BriefSendWells>[0]["brief"] }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="intelligence-brief-send" data-testid="brief-send-fold">

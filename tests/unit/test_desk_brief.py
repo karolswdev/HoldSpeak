@@ -249,3 +249,150 @@ def test_summaries_off_reads_off_and_asks_nothing(hub: Hub) -> None:
     # The wire the Meetings headline reads: the planned route says OFF.
     route = imported.get("planned_route") or imported.get("current_planned_route")
     assert route and route["status"] == "unavailable" and route["reason_code"] == "summaries off", imported
+
+
+# ── Betterment daily D4: Today makes Since yesterday without a press ───────
+
+
+def _ensured(hub: Hub) -> dict:
+    latest = hub.client.get("/api/brief/latest?ensure=1")
+    assert latest.status_code == 200, latest.text
+    return latest.json()
+
+
+def test_today_makes_the_brief_on_first_open_and_once(hub: Hub) -> None:
+    """No brief for the period: the read with ``ensure`` makes it (the owner's
+    Generate, off the event loop). A second read finds it and makes nothing.
+    A plain read still makes nothing (MCP, the Chair)."""
+    assert hub.client.get("/api/brief/latest").json() is None
+    _the_rehearsal_day()
+    first = _ensured(hub)
+    assert first and first["id"], first
+    texts = [i["text"] for items in first["sections"].values() for i in items]
+    assert "Meeting recorded: Architect sync" in texts, texts
+    assert first["stale"] is False
+    again = _ensured(hub)
+    assert (again["id"], again["generated_at"]) == (first["id"], first["generated_at"]), "made once"
+
+
+def test_today_makes_the_brief_again_for_a_new_day_or_a_newer_desk(hub: Hub) -> None:
+    """A brief of an earlier day (or one older than a meeting) is made again
+    on the next open; the stored brief of the day keeps its id."""
+    made = hub.client.post("/api/brief/generate").json()
+    yesterday = (datetime.now() - timedelta(days=1)).astimezone().isoformat()
+    with hub.db._connection() as conn:
+        conn.execute("UPDATE monday_briefs SET generated_at = ? WHERE id = ?", (yesterday, made["id"]))
+        conn.commit()
+    assert hub.client.get("/api/brief/latest").json()["stale"] is True
+    fresh = _ensured(hub)
+    assert fresh["generated_at"] > yesterday and fresh["stale"] is False, fresh
+    # A meeting newer than the brief (stored stamps have whole seconds: the
+    # brief is moved a minute back so the meeting is newer, not equal).
+    earlier = (datetime.now() - timedelta(minutes=1)).astimezone().isoformat()
+    with hub.db._connection() as conn:
+        conn.execute("UPDATE monday_briefs SET generated_at = ? WHERE id = ?", (earlier, fresh["id"]))
+        conn.commit()
+    _the_rehearsal_day()
+    newer = _ensured(hub)
+    assert newer["generated_at"] > earlier and newer["id"] == fresh["id"], "the newer desk made it again"
+    assert "Meeting recorded: Architect sync" in [i["text"] for items in newer["sections"].values() for i in items]
+
+
+def _calendar_today(hub: Hub, mira: str) -> None:
+    """The recon's day on the calendar: the 1:1 with Mira in 90 minutes (her
+    series linked to her), the platform sync after it, the 1:1 with Jun
+    tomorrow. Applied by the real ingest conductor."""
+    import tempfile
+    from datetime import timezone
+
+    from holdspeak.calendar_ingest_conductor import CalendarIngestConductor
+
+    now = datetime.now(timezone.utc).replace(second=0, microsecond=0)
+    events = (
+        ("daily-mira-1on1", "1:1 with Mira", now + timedelta(minutes=90), 30),
+        ("daily-platform-sync", "Payments platform sync", now + timedelta(hours=3), 30),
+        ("daily-jun-1on1", "1:1 with Jun", now + timedelta(days=1), 30),
+    )
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//HoldSpeak//daily D4//EN"]
+    for uid, title, start, minutes in events:
+        lines += ["BEGIN:VEVENT", f"UID:{uid}", f"DTSTART:{start.strftime('%Y%m%dT%H%M%SZ')}",
+                  f"DTEND:{(start + timedelta(minutes=minutes)).strftime('%Y%m%dT%H%M%SZ')}",
+                  f"SUMMARY:{title}", "END:VEVENT"]
+    ics = Path(tempfile.mkdtemp(prefix="daily-d4-ics-")) / "week.ics"
+    ics.write_text("\r\n".join([*lines, "END:VCALENDAR", ""]), encoding="utf-8")
+    put = hub.client.put("/api/settings", json={"calendar": {"sources": [
+        {"id": "daily-work", "label": "Work", "url": str(ics), "enabled": True}]}})
+    assert put.status_code == 200, put.text
+    assert CalendarIngestConductor().refresh() is True
+    linked = hub.client.post(f"/api/people/relationships/{mira}/calendar-links",
+                             json={"uid": "daily-mira-1on1", "source_id": "daily-work", "label": "1:1 with Mira"})
+    assert linked.status_code == 200, linked.text
+
+
+def test_today_on_the_daily_week_reads_the_one_number_the_day_and_since_yesterday(hub: Hub) -> None:
+    """The recon's week (D1: after the nine keeps, the LAN engine set) and its
+    day on the calendar. Today's reads: the one number (4), the next 1:1 with
+    Mira (her Prep), and the brief made on the first open. The face's half
+    (web/src/desk/__tests__/today.app.test.tsx) renders these answers."""
+    from datetime import date
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from tests.fixtures.daily_week import seed
+    from tests.unit.test_desk_speak import _record
+
+    seeded = seed(hub, monday=date.today(), engine=True)
+    _calendar_today(hub, seeded["Mira"])
+    needs = hub.client.get("/api/desk/needs-you?fresh=1").json()
+    assert needs["count"] == 4, needs["count"]
+    door = hub.client.get("/api/door").json()
+    mira = next(e for e in door["upcoming"] if e.get("title") == "1:1 with Mira")
+    assert mira["person_relationship_id"] == seeded["Mira"], mira
+    assert door["week"]["has_calendar"] is True and door["week"]["total"] >= 2, door["week"]
+    brief = _ensured(hub)
+    assert brief and brief["id"], brief
+    meetings = hub.client.get("/api/meetings?limit=40").json()
+    wire = json.loads(json.dumps({
+        "recordedAt": datetime.now().astimezone().isoformat(),
+        "gets": {
+            "/api/desk/needs-you?fresh=1": needs,
+            "/api/door": door,
+            "/api/brief/latest?ensure=1": brief,
+            "/api/meetings?limit=40": meetings,
+        },
+    }).replace(seeded["project"], "proj-daily-week"))
+    _record("today", wire, Path(hub.db.db_path).parent,
+            "tests/unit/test_desk_brief.py::test_today_on_the_daily_week_reads_the_one_number_the_day_and_since_yesterday",
+            folder=Path(__file__).resolve().parents[2] / "web" / "src" / "desk" / "__tests__"
+            / "fixtures" / "daily-week")
+
+
+def test_today_on_an_empty_desk_reads_nothing_waiting_and_no_calendar(hub: Hub) -> None:
+    """A fresh desk with its engine set (else the hub's "No engine for
+    summaries" row waits: the design wants that row only once a meeting
+    waits, a hub rule D4 does not change): no calendar, no meeting, nothing
+    waits. The first open still makes the (empty) brief. The face's half
+    (today.app.test.tsx, "an empty desk is one line") renders these answers."""
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from tests.fixtures.daily_week import seed_engine
+    from tests.unit.test_desk_speak import _record
+
+    seed_engine(hub.client)
+    needs = hub.client.get("/api/desk/needs-you?fresh=1").json()
+    assert needs["count"] == 0 and needs["members"] == [], needs
+    door = hub.client.get("/api/door").json()
+    assert door["calendar_configured"] is False and door["upcoming"] == [], door
+    brief = _ensured(hub)
+    assert brief and brief["id"], brief
+    meetings = hub.client.get("/api/meetings?limit=40").json()
+    assert meetings["meetings"] == []
+    _record("today-empty", {
+        "recordedAt": datetime.now().astimezone().isoformat(),
+        "gets": {
+            "/api/desk/needs-you?fresh=1": needs,
+            "/api/door": door,
+            "/api/brief/latest?ensure=1": brief,
+            "/api/meetings?limit=40": meetings,
+        },
+    }, Path(hub.db.db_path).parent,
+        "tests/unit/test_desk_brief.py::test_today_on_an_empty_desk_reads_nothing_waiting_and_no_calendar",
+        folder=Path(__file__).resolve().parents[2] / "web" / "src" / "desk" / "__tests__" / "fixtures" / "daily-week")

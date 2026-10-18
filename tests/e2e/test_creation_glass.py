@@ -61,10 +61,12 @@ SLOW_READ = """(() => {
 WINDOW_IDS = "() => [...document.querySelectorAll('.desk-window')].map((w) => w.id)"
 
 # (menu label, the POST path that makes it, True when its window is an editor with a name field)
+# Betterment Q4 ("One Ask window"): Desk ▸ New Thread opens the Ask window and
+# makes no record; the thread is kept when its first question is answered
+# (web/src/desk/__tests__/ask.app.test.tsx, "a thread opened anywhere opens in Ask").
 VERBS = [
     ("New Note", "/api/notes", True),
     ("New Knowledge", "/api/kbs", True),
-    ("New Thread", "/api/threads", False),
 ]
 
 
@@ -244,8 +246,7 @@ class TestEveryNewVerbOpensItsWindow:
             browser, page, errors, posts = self._page(pw, width)
             try:
                 proof: list[str] = []
-                legs = [("New Note", "/api/notes", "notes"), ("New Knowledge", "/api/kbs", "kbs"),
-                        ("New Thread", "/api/threads", "threads")]
+                legs = [("New Note", "/api/notes", "notes"), ("New Knowledge", "/api/kbs", "kbs")]
                 for label, path, key in legs:
                     before, sent, kept = page.evaluate(WINDOW_IDS), len(posts), count(page, path, key)
                     if width >= 720 and label == "New Note":
