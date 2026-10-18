@@ -50,6 +50,9 @@ _BOUNDARY_ALIASES = {
     "cloud": "cloud",
     "external_service": "cloud",
 }
+#: Betterment Q4: a capability with no assignment of its own uses this one's.
+_FOLLOWS = {"chat.turn": "ask.answer"}
+
 _CANONICAL_GROUPS = (
     ("thoughts_notes", "Thoughts & notes"),
     ("writing_dictation", "Writing & dictation"),
@@ -2270,9 +2273,13 @@ class InferenceAssignmentService:
                     "subject",
                 )
             )
+        keys.append((f"capability:{capability.id}", "capability"))
+        # Betterment Q4: one engine row, Answers. A capability with no head
+        # of its own follows the one it answers for (desk chat follows Ask).
+        if capability.id in _FOLLOWS:
+            keys.append((f"capability:{_FOLLOWS[capability.id]}", "capability"))
         keys.extend(
             (
-                (f"capability:{capability.id}", "capability"),
                 (f"group:{capability.group_id}", "group"),
                 ("global", "global"),
             )

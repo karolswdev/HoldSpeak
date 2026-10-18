@@ -500,8 +500,10 @@ def test_state_after_the_local_default(tmp_path: Path, engines) -> None:
     assert state["default"]["receipt_id"]
     rows = _by_id(state)
     assert rows["ask.answer"]["state"] == "assigned"
-    assert rows["chat.turn"]["state"] == "inherited_from_default"
-    assert (rows["chat.turn"]["inherited_from"], rows["chat.turn"]["lamp"]) == ("global", "local")
+    # Betterment Q4: one engine row, Answers. Desk chat has no assignment of
+    # its own, so it follows the Ask answer's, not the default.
+    assert rows["chat.turn"]["state"] == "assigned"
+    assert rows["chat.turn"]["inherited_from"] == "capability"
     for capability in LOCAL_INHERITING_CAPABILITIES:
         assert rows[capability]["state"] == "inherited_from_default", capability
     assert rows["memory.embed"]["state"] == "needs_setup"

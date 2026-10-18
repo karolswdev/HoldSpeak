@@ -170,6 +170,16 @@ export interface AskRunResult {
     matchedCount: number;
     overflowCount: number;
   } | null;
+  /** Betterment Q4: the thread this Ask was kept in (empty on a plain ask). */
+  threadId: string;
+  /** Betterment Q4: what the answer read, by his names for it. */
+  lookedAt: LookedAt[];
+}
+
+/** Betterment Q4: one record an answer read, as a link. */
+export interface LookedAt {
+  ref: string;
+  title: string;
 }
 
 /** One decomposed claim from the answer, scored against the cited material. */
@@ -201,6 +211,9 @@ export async function runAsk(opts: {
   /** HS-200-41: run under an identity a saved ask already pinned, so the
    * answer can be found again after a restart. Absent, the hub mints one. */
   invocationId?: string;
+  /** Betterment Q4: keep this Ask as a thread. A thread id continues that
+   * thread (a follow-up); `true` starts a new one. */
+  thread?: string | true;
 }): Promise<AskRunResult> {
   const fail = (output: string, refusalCode = "", route: unknown = null, reason = ""): AskRunResult => {
     const result: AskRunResult = {
@@ -218,6 +231,8 @@ export async function runAsk(opts: {
       contextTitles: [],
       groundingClaims: [],
       groundingReceipt: null,
+      threadId: "",
+      lookedAt: [],
     };
     if (reason) result.reason = reason;
     return result;
@@ -239,6 +254,7 @@ export async function runAsk(opts: {
         ...(opts.grounding ? { grounding: opts.grounding } : {}),
         ...(opts.model ? { model: opts.model } : {}),
         ...(opts.invocationId ? { invocation_id: opts.invocationId } : {}),
+        ...(opts.thread === true ? { thread: true } : opts.thread ? { thread_id: opts.thread } : {}),
       }),
     });
     const data = await res.json().catch(() => ({}));
@@ -333,7 +349,110 @@ export function parseAskResult(data: Record<string, any>): AskRunResult {
             overflowCount: Number(data.grounding.overflow_count) || 0,
           }
         : null,
+    threadId: String(data.thread_id || ""),
+    lookedAt: Array.isArray(data.looked_at)
+      ? data.looked_at
+          .filter((row: Record<string, unknown>) => row && typeof row.ref === "string" && row.ref.includes(":"))
+          .map((row: Record<string, unknown>) => ({ ref: String(row.ref), title: sourceName(String(row.ref), String(row.title || "")) }))
+      : [],
 };
+}
+
+/* ── Betterment Q4: one Ask window over a thread ───────────────────── */
+
+const KIND_WORDS: Record<string, string> = {
+  meeting: "A meeting", note: "A note", artifact: "A document", thread: "A conversation",
+  project: "A project", person: "A person", people: "A person", decision: "A decision",
+  desk_decision: "A decision", kb: "A collection", directory: "A drawer", zone: "A drawer",
+};
+
+/** His name for a source; a word for its kind when the only name is an id
+ * (no raw ids on the face). */
+export function sourceName(ref: string, title: string): string {
+  const [kind, rest = ""] = ref.split(/:(.*)/s);
+  const id = rest.split("#")[0];
+  const name = title.replace(/\s+/g, " ").trim();
+  if (!name || name === ref || name === rest || name === id || /^(th|tm|tr|tp)_[0-9a-f]+$/i.test(name)) {
+    return KIND_WORDS[kind] || "A source";
+  }
+  return name;
+}
+
+/** One question and its answer in the Ask window. */
+export interface AskTurn {
+  /** The answer's message id (or a local key before the hub names it). */
+  key: string;
+  question: string;
+  answer: string;
+  lookedAt: LookedAt[];
+}
+
+function frozenTitle(raw: unknown): string {
+  if (raw && typeof raw === "object") return String((raw as Record<string, unknown>).title || "");
+  if (typeof raw === "string" && raw.trim().startsWith("{")) {
+    try { return String((JSON.parse(raw) as Record<string, unknown>).title || ""); } catch { return ""; }
+  }
+  return "";
+}
+
+/** A kept thread as the Ask window draws it: question and answer pairs, the
+ * answer's Looked at, and the About its questions named. Only text parts are
+ * drawn; a question with no answer yet is left out. */
+export function askTurnsFromThread(detail: {
+  messages: Array<{ id: string; role: string; parts: Array<{ kind: string; text: string }> }>;
+  refs: Array<{ messageId: string; refKind: string; refId: string; frozenJson: unknown; origin?: string }>;
+}): { turns: AskTurn[]; about: LookedAt[] } {
+  const textOf = (message: { parts: Array<{ kind: string; text: string }> }) =>
+    message.parts.filter((part) => part.kind === "text" && part.text).map((part) => part.text).join("\n").trim();
+  const refsFor = (messageId: string, origin: string) => {
+    const seen = new Set<string>();
+    const out: LookedAt[] = [];
+    for (const row of detail.refs) {
+      if (row.messageId !== messageId || (row.origin && row.origin !== origin)) continue;
+      const ref = `${row.refKind}:${row.refId}`;
+      if (!row.refKind || !row.refId || seen.has(ref)) continue;
+      seen.add(ref);
+      out.push({ ref, title: sourceName(ref, frozenTitle(row.frozenJson)) });
+    }
+    return out;
+  };
+  const turns: AskTurn[] = [];
+  const about: LookedAt[] = [];
+  let question: { id: string; text: string } | null = null;
+  for (const message of detail.messages) {
+    const text = textOf(message);
+    if (message.role === "user") {
+      question = text ? { id: message.id, text } : null;
+      for (const row of refsFor(message.id, "reference")) {
+        if (!about.some((known) => known.ref === row.ref)) about.push(row);
+      }
+    } else if (message.role === "assistant" && question && text) {
+      turns.push({ key: message.id, question: question.text, answer: text, lookedAt: refsFor(message.id, "relevance") });
+      question = null;
+    }
+  }
+  return { turns, about };
+}
+
+/** Save as note: a note titled by the question, with the answer and the
+ * names of what it looked at. Returns the note's ref, or null. */
+export async function saveAnswerAsNote(turn: AskTurn): Promise<string | null> {
+  const looked = turn.lookedAt.length
+    ? `\n\nLooked at: ${turn.lookedAt.map((row) => row.title).join(", ")}`
+    : "";
+  try {
+    const res = await apiRequest("/api/notes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: turn.question.slice(0, 120), body_markdown: `${turn.answer}${looked}`, tags: ["ask"] }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json().catch(() => ({}));
+    const id = String(data?.note?.id || "");
+    return id ? `note:${id}` : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Keep the printed card: the hub mints the same artifact the iPad's Keep

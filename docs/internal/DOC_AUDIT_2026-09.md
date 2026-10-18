@@ -60,7 +60,7 @@ The index links current user guides and the existing Interview specification pac
 | Installation and Web build | [Package contract](../../pyproject.toml), [build hook](../../hatch_build.py), [Web scripts](../../web/package.json) |
 | Current menus and creation | [Verb registry](../../web/src/desk/verbRegistry.ts), [menu bar](../../web/src/desk/components/DeskMenuBar.tsx) |
 | Interview sections and limits | [Descriptors](../../holdspeak/services/interview_contracts.py), [service](../../holdspeak/services/interview_service.py), [MCP family](../../holdspeak/mcp/families/interview.py) |
-| Try draft and saved context | [Interview panel](../../web/src/desk/components/InterviewPanel.tsx), [Thread window](../../web/src/desk/pullouts/ThreadPullout.tsx) |
+| Try draft and saved context | [Interview panel](../../web/src/desk/components/InterviewPanel.tsx), [Thread window](../../web/src/desk/pullouts/_parked/ThreadPullout.tsx) |
 | Thread policies and modes | [Tool gate](../../holdspeak/services/thread_tools.py), [mode seeds](../../holdspeak/services/thread_modes.py) |
 | Models and current entry points | [Concierge](../../web/src/features/concierge/ConciergeCore.tsx), [controller](../../web/src/features/concierge/useConciergeController.ts), [Settings](../../web/src/pages/cores/SettingsCore.tsx) |
 | Current Project creation and Room controls | [Project creation](../../web/src/features/project-room/door/DoorCore.tsx), [source controller](../../web/src/features/project-room/door/useDoorController.ts), [Room](../../web/src/features/project-room/ProjectRoomCore.tsx) |

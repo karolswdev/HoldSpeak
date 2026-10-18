@@ -265,6 +265,12 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
       console.warn(`openPullout: unknown id "${id}"`);
       return;
     }
+    // Betterment Q4: Ask and Thread are one window. A thread opens in Ask
+    // (the Thread window is parked).
+    if (resolved.kind === "thread") {
+      get().openAskThread(resolved.resolvedId);
+      return;
+    }
     // PHILO-14 C2: a coder session of a launch opens the agent's lane.
     if (resolved.kind === "coder") {
       const coder = (get().items.coder ?? []).find((c) => c.id === resolved.resolvedId);

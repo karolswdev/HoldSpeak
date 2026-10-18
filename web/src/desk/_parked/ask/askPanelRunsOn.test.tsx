@@ -4,19 +4,19 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { AskPanel } from "../components/AskPanel";
-import { EMPTY_ITEMS } from "../api";
-import { useDesk } from "../store";
-import { latchAskSelection } from "../ask";
-import { durableDraftKey } from "../../lib/durableDraft";
-import { RailsPicker } from "../components/RailsPicker";
-import { useMissionControl } from "../missioncontrol";
-import type { RailsPick } from "../grounding";
-import { clearEngineCache } from "../hooks/useEngine";
+import { AskPanel } from "../../components/AskPanel";
+import { EMPTY_ITEMS } from "../../api";
+import { useDesk } from "../../store";
+import { latchAskSelection } from "../../ask";
+import { durableDraftKey } from "../../../lib/durableDraft";
+import { RailsPicker } from "../../components/RailsPicker";
+import { useMissionControl } from "../../missioncontrol";
+import type { RailsPick } from "../../grounding";
+import { clearEngineCache } from "../../hooks/useEngine";
 
 const shell = vi.hoisted(() => ({ openSurfaceOr: vi.fn(), openPrimitive: vi.fn() }));
-vi.mock("../shell", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../shell")>()),
+vi.mock("../../shell", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../shell")>()),
   openSurfaceOr: shell.openSurfaceOr,
   openPrimitive: shell.openPrimitive,
 }));

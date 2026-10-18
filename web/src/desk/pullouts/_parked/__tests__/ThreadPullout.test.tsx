@@ -2,12 +2,12 @@
  * error, crashed+Retry, sibling picker. */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import * as threads from "../threads";
-import * as openObject from "../openObject";
-import { useThreadStore, type ThreadMessage, type ThreadDetail } from "../threads";
-import { ThreadPullout } from "../pullouts/ThreadPullout";
-import { RuntimeBusProvider } from "../../runtime/RuntimeBus";
-import { useDesk } from "../store";
+import * as threads from "../../../threads";
+import * as openObject from "../../../openObject";
+import { useThreadStore, type ThreadMessage, type ThreadDetail } from "../../../threads";
+import { ThreadPullout } from "../ThreadPullout";
+import { RuntimeBusProvider } from "../../../../runtime/RuntimeBus";
+import { useDesk } from "../../../store";
 
 // Mock the WebSocket so RuntimeBusProvider does not connect.
 beforeEach(() => {

@@ -75,8 +75,10 @@ export interface ScreenInputs {
 
 const NOT_READ = { tone: "fail" as const, label: "NOT READ" };
 
-/** The kinds that lie loose on the screen (the brief's list). */
-const LOOSE_KINDS = new Set(["meeting", "note", "decision", "artifact", "repository", "thread"]);
+/** The kinds that lie loose on the screen (the brief's list). Betterment
+ * Q4: a thread is a kept Ask; it lives in Ask ▸ Recent, not on the desk
+ * (Save as note puts an answer on the desk). */
+const LOOSE_KINDS = new Set(["meeting", "note", "decision", "artifact", "repository"]);
 
 function hasUserOwnedContent(object: { kind: string; ref: unknown }): boolean {
   const value = (object.ref ?? {}) as Record<string, unknown>;

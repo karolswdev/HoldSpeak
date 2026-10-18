@@ -70,7 +70,14 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
             # can be CLAIMED out of ask_results instead of paid for twice.
             # AskService has always taken one (ask_service.py); only the
             # transport never offered it.
-            result=await service().ask(principal(request),str(body.get("prompt") or ""),body.get("grounding"),lens=str(body.get("lens") or "Ask"),context=body.get("context") if isinstance(body.get("context"),list) else [],model=body.get("model"),inference_target_id=body.get("inference_target_id"),profile_id=body.get("profile_id"),max_tokens=body.get("max_tokens"),temperature=body.get("temperature"),invocation_id=(str(body.get("invocation_id")).strip() or None) if body.get("invocation_id") else None)
+            invocation_id=(str(body.get("invocation_id")).strip() or None) if body.get("invocation_id") else None
+            context=body.get("context") if isinstance(body.get("context"),list) else []
+            if body.get("thread") is True or body.get("thread_id"):
+                # Betterment Q4: the Ask window keeps every Ask as a thread;
+                # a thread_id continues that thread.
+                result=await service().ask_in_thread(principal(request),str(body.get("prompt") or ""),body.get("grounding"),thread_id=str(body.get("thread_id") or ""),lens=str(body.get("lens") or "Ask"),context=context,invocation_id=invocation_id)
+                return JSONResponse(result)
+            result=await service().ask(principal(request),str(body.get("prompt") or ""),body.get("grounding"),lens=str(body.get("lens") or "Ask"),context=context,model=body.get("model"),inference_target_id=body.get("inference_target_id"),profile_id=body.get("profile_id"),max_tokens=body.get("max_tokens"),temperature=body.get("temperature"),invocation_id=invocation_id)
             return JSONResponse(result)
         except ServiceError as exc: return _error(exc)
         except Exception as exc: return error_500(exc,log,"Failed to run ask")

@@ -103,6 +103,8 @@ describe("the run/keep wire", () => {
       // (an ungrounded ask, or an older response shape).
       groundingClaims: [],
       groundingReceipt: null,
+      threadId: "",
+      lookedAt: [],
     });
   });
 

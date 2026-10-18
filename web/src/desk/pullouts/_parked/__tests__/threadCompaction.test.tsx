@@ -1,9 +1,9 @@
 /** HS-153-05 — Compaction cut marker, fold, compact_failed row, and Door card thread chip. */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { useThreadStore, type ThreadMessage, type ThreadDetail } from "../threads";
-import { ThreadPullout } from "../pullouts/ThreadPullout";
-import { RuntimeBusProvider } from "../../runtime/RuntimeBus";
+import { useThreadStore, type ThreadMessage, type ThreadDetail } from "../../../threads";
+import { ThreadPullout } from "../ThreadPullout";
+import { RuntimeBusProvider } from "../../../../runtime/RuntimeBus";
 
 // Mock WebSocket so RuntimeBusProvider does not connect.
 beforeEach(() => {

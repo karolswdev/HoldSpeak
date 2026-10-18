@@ -449,3 +449,13 @@ and measures other files import moved into rig modules (`chair_rig.py`,
 - `test_hs141_chair_geometry.py`: `tests/e2e/test_philo16_compositor_glass.py`
   (windows inside the work band), the desk sweep (drawn, fit, overlap), and
   `chair.app.test.tsx` (the thought row).
+
+# Parked by Betterment Q4: the Thread window (2026-10-18)
+
+Ask and Thread are one window (DECISIONS #14); the Thread window is parked
+(`web/src/desk/pullouts/_parked/ThreadPullout.tsx`), so these fences of its
+face have no subject. The Ask window's facts are in
+`web/src/desk/__tests__/ask.app.test.tsx` and `tests/unit/test_desk_ask.py`.
+
+- `test_askai_glass.py`: the Thread window's slash completion, guardrail row,
+  annotation popover, refused send and ref chip.
