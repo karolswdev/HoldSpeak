@@ -4,7 +4,7 @@ This reference supplements [API surface](API_SURFACE.md). The existing real-app
 generator owns the route roster; this census adds static handler evidence.
 It does not invent request/response schemas for raw `Request` handlers.
 
-Census baseline snapshot: `675401a857b85336d4acaa8c65383dfc9636e4c8`. Handler evidence and test candidates are read from the current working tree at generation. **758 method/route entries**.
+Census baseline snapshot: `675401a857b85336d4acaa8c65383dfc9636e4c8`. Handler evidence and test candidates are read from the current working tree at generation. **782 method/route entries**.
 
 **Verification boundary:** inspect the full endpoint ledger, `docs/generated/api-reference.json` (not in git; run `scripts/gen_docs.sh` to write it),
 and the [declared OpenAPI schemas](generated/openapi.json) for transport models.
@@ -39,7 +39,7 @@ the shared RuntimeBus. Companion client tags come from the existing generator.
 | `web.routes.activity.nudges` | 4 |
 | `web.routes.activity.plugin_jobs` | 5 |
 | `web.routes.activity.rules` | 6 |
-| `web.routes.agent_hand` | 9 |
+| `web.routes.agent_hand` | 11 |
 | `web.routes.authority` | 7 |
 | `web.routes.automations` | 22 |
 | `web.routes.cadence` | 13 |
@@ -47,7 +47,7 @@ the shared RuntimeBus. Companion client tags come from the existing generator.
 | `web.routes.calendar_snapshot` | 2 |
 | `web.routes.calendar_sources` | 1 |
 | `web.routes.channels` | 11 |
-| `web.routes.concierge` | 6 |
+| `web.routes.concierge` | 7 |
 | `web.routes.connections` | 2 |
 | `web.routes.constitutional` | 3 |
 | `web.routes.core` | 2 |
@@ -71,7 +71,7 @@ the shared RuntimeBus. Companion client tags come from the existing generator.
 | `web.routes.dictation.kb` | 4 |
 | `web.routes.dictation.pipeline` | 14 |
 | `web.routes.dictation.project_docs` | 5 |
-| `web.routes.door` | 1 |
+| `web.routes.door` | 2 |
 | `web.routes.follow_through` | 3 |
 | `web.routes.front_door` | 4 |
 | `web.routes.inference_assignments` | 7 |
@@ -87,12 +87,12 @@ the shared RuntimeBus. Companion client tags come from the existing generator.
 | `web.routes.memory` | 6 |
 | `web.routes.mesh` | 5 |
 | `web.routes.missioncontrol` | 10 |
-| `web.routes.model_library` | 7 |
+| `web.routes.model_library` | 8 |
 | `web.routes.monday_brief` | 5 |
 | `web.routes.onboarding` | 11 |
-| `web.routes.pages` | 20 |
-| `web.routes.people` | 27 |
-| `web.routes.primitives.ask` | 5 |
+| `web.routes.pages` | 21 |
+| `web.routes.people` | 31 |
+| `web.routes.primitives.ask` | 6 |
 | `web.routes.primitives.chains` | 7 |
 | `web.routes.primitives.decisions` | 7 |
 | `web.routes.primitives.directories` | 8 |
@@ -103,26 +103,27 @@ the shared RuntimeBus. Companion client tags come from the existing generator.
 | `web.routes.primitives.profiles` | 11 |
 | `web.routes.primitives.recipes` | 9 |
 | `web.routes.primitives.thoughts` | 20 |
-| `web.routes.primitives.workbenches` | 25 |
+| `web.routes.primitives.workbenches` | 29 |
 | `web.routes.primitives.workflows` | 7 |
 | `web.routes.project_briefs` | 8 |
 | `web.routes.project_door` | 2 |
 | `web.routes.project_reviews` | 5 |
 | `web.routes.project_setup` | 12 |
-| `web.routes.project_updates` | 8 |
+| `web.routes.project_updates` | 13 |
 | `web.routes.projections` | 2 |
-| `web.routes.projects` | 35 |
-| `web.routes.proposals` | 8 |
-| `web.routes.providers` | 16 |
+| `web.routes.projects` | 36 |
+| `web.routes.proposals` | 9 |
+| `web.routes.providers` | 17 |
 | `web.routes.repositories` | 10 |
 | `web.routes.roadmaps` | 4 |
 | `web.routes.scheduled_recordings` | 6 |
 | `web.routes.setup` | 17 |
 | `web.routes.steward` | 10 |
-| `web.routes.sync` | 2 |
+| `web.routes.sync` | 3 |
 | `web.routes.system.agent_capabilities` | 1 |
 | `web.routes.system.coder_factory_routes` | 2 |
-| `web.routes.system.coder_steering_routes` | 16 |
+| `web.routes.system.coder_relay_routes` | 5 |
+| `web.routes.system.coder_steering_routes` | 11 |
 | `web.routes.system.coders` | 6 |
 | `web.routes.system.gate_routes` | 13 |
 | `web.routes.system.health` | 3 |
