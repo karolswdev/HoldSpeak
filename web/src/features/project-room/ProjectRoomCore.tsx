@@ -39,7 +39,7 @@ import {
 import { useDrawerMembers } from "../../desk/drawer/useDrawerData";
 import { memberOpens, openMember } from "../../desk/drawer/open";
 import { useDrawers } from "../../desk/drawer/store";
-import { ParkReceipt, restoreFailedOutcome, restoredOutcome } from "../../desk/surface";
+import { ParkReceipt, RunLine, restoreFailedOutcome, restoredOutcome } from "../../desk/surface";
 import { restoreMeeting } from "../../desk/api";
 import { HandConfirmSlot, drawerHost, handOriginOfRef, handSourceProps } from "../../desk/hand";
 import { useCompactViewport } from "../../desk/useCompactViewport";
@@ -388,6 +388,7 @@ function RoomHead({
   }, [room.project.name, room.project.outcomeText]);
 
   const lateCount = lateItems?.length ?? 0;
+  const draftRun = updateCtrl.draftRun;
   const healthTone = healthWord ? (healthWord.tone === "fail" ? "danger" : healthWord.tone === "info" ? "info" : "ok") : null;
   const targetWord = target?.targetAt
     ? target.passed
@@ -447,6 +448,32 @@ function RoomHead({
           </Button>
         </span>
       </div>
+      {/* P0 (betterment/projects): the draft's run where he pressed it.
+          The Update posture draws its own line once it is open. */}
+      {updateCtrl.posture === "off" && (draftRun.phase === "running" || draftRun.phase === "failure") ? (
+        <div className="room-head-run" data-testid="room-head-draft-run">
+          <RunLine
+            phase={draftRun.phase}
+            verb="Working"
+            pastVerb="Drafted"
+            model={draftRun.generator === "model" ? updateEngine.model : ""}
+            place={draftRun.generator === "model" ? updateEngine.place : ""}
+            startedAt={draftRun.startedAt}
+            elapsedSeconds={draftRun.elapsedSeconds}
+            reason={draftRun.reason}
+            detail={draftRun.detail}
+            onRetry={draftRun.generator ? () => void updateCtrl.draft(draftRun.generator!) : undefined}
+            onAction={draftRun.reason === "no_engine"
+              ? () => openSurfaceOr("configure-runs-on", "/settings", "models") : undefined}
+          />
+          {draftRun.phase === "failure" && draftRun.generator === "model" ? (
+            <Button dense variant="ghost" onClick={() => void updateCtrl.draft("deterministic")}
+              data-testid="room-head-draft-records">
+              Use a draft from your records
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
       {showOutcome ? (
         <p className="room-head-outcome" data-testid="room-head-outcome">
           {room.project.outcomeText || room.project.name}

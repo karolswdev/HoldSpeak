@@ -20,8 +20,17 @@ export type DraftRun = {
   startedAt?: number;
   elapsedSeconds?: number;
   reason?: string;
+  /** The hub's plain words for why the draft was not made (P0). */
+  detail?: string;
   generator?: "deterministic" | "model";
 };
+
+function draftCommandId(): string {
+  const entropy = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+    ? crypto.randomUUID().replace(/-/g, "").slice(0, 12)
+    : Math.random().toString(36).slice(2, 14);
+  return `draft-${Date.now()}-${entropy}`;
+}
 
 /* PHILO-13-07 (B2) — the Room's update place (`list` or `editor:<update>`)
    per project, and the unsaved body per update (never per project, so the
@@ -217,7 +226,7 @@ export function useUpdateController(
     setDraftBusy(true);
     setError("");
     try {
-      const update = await updateApi.draftUpdate(projectId, generator);
+      const update = await updateApi.draftUpdate(projectId, generator, draftCommandId());
       setCurrent(update);
       setEditBody(update.bodyMd);
       setDirty(false);
@@ -240,6 +249,7 @@ export function useUpdateController(
         startedAt,
         elapsedSeconds: Math.max(0, Math.round((Date.now() - startedAt) / 1000)),
         reason: String(payload?.reason || "did_not_answer"),
+        detail: typeof payload?.detail === "string" ? payload.detail : undefined,
         generator,
       });
       fail("DRAFT NOT MADE", reason, () => void draft(generator));

@@ -24,6 +24,8 @@ import { ApiError } from "../../../lib/api";
 // The final diet lane's recorded wires (scripts/record_room_wires.py: the real
 // hub through TestClient on each browser test's own seed; nothing typed).
 import U173 from "./room-wires/update173.json";
+import D409 from "./room-wires/draft409.json";
+import { clearEngineCache } from "../../../desk/hooks/useEngine";
 import C200 from "./room-wires/claims200.json";
 import N10 from "./room-wires/nudge10.json";
 import H175 from "./room-wires/hs175.json";
@@ -1368,5 +1370,55 @@ describe("History reader states", () => {
     expect(rawButtons(history)).toEqual([]);
     expect(calls.filter((c) => c.key === room(pid))).toHaveLength(1);
     expect(calls.filter((c) => c.key.startsWith(`POST /api/projects/${pid}/`) && !c.key.endsWith("/room/read"))).toEqual([]);
+  });
+});
+
+describe("P0: a refused Draft update says why in the Room head, with Try again and the records draft", () => {
+  // The hub's own answers (scripts/record_room_wires.py draft409): a real
+  // engine route to a stub that answered prose; the 409 not_usable, then the
+  // records draft.
+  it("the 409 not_usable draws one line with the reason; Try again asks the engine again; the records verb opens the draft", async () => {
+    const { pid, gets, model, records, after } = D409 as unknown as {
+      pid: string; gets: Gets; after: Gets;
+      model: { path: string; answer: unknown }; records: { answer: unknown };
+    };
+    replay(gets, {
+      [`POST ${model.path}`]: (init) => {
+        if (init.json?.generator === "model") return model.answer;
+        Object.assign(hubGets, after);
+        return records.answer;
+      },
+    });
+    // The engine roster as the hub recorded it (the stub route assigned).
+    const inner = apiFetch.getMockImplementation()!;
+    apiFetch.mockImplementation((url: string, init: Init = {}) =>
+      url.split("?")[0] === "/api/inference/assignments"
+        ? hubAnswer(gets["/api/inference/assignments"])
+        : inner(url, init));
+    clearEngineCache(); // the roster is one desk fact; read this hub's
+    render(<WindowHarness scope={`project:${pid}`} />);
+    await waitFor(() => expect(screen.getByTestId("updates-verb")).not.toBeDisabled());
+    fireEvent.click(screen.getByTestId("updates-verb"));
+
+    const run = await screen.findByTestId("room-head-draft-run");
+    await waitFor(() => expect(within(run).getByTestId("run-line").getAttribute("data-state")).toBe("failure"));
+    expect(within(run).getByTestId("run-line").textContent).toContain("The answer was not usable (it did not return JSON)");
+    expect(rawButtons(run)).toEqual([]);
+    const drafts = () => calls.filter((c) => c.key === `POST ${model.path}`);
+    expect(drafts()).toHaveLength(1);
+    expect(drafts()[0].json?.generator).toBe("model");
+    expect(typeof drafts()[0].json?.command_id).toBe("string");
+
+    fireEvent.click(within(run).getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(drafts()).toHaveLength(2));
+    expect(drafts()[1].json?.generator).toBe("model");
+    expect(drafts()[1].json?.command_id).not.toBe(drafts()[0].json?.command_id);
+    await waitFor(() => expect(screen.getByTestId("room-head-draft-run").textContent).toContain("it did not return JSON"));
+
+    fireEvent.click(within(screen.getByTestId("room-head-draft-run")).getByRole("button", { name: "Use a draft from your records" }));
+    await screen.findByTestId("update-editor");
+    expect(drafts()[2].json?.generator).toBe("deterministic");
+    expect(screen.queryByTestId("room-head-draft-run")).toBeNull();
+    expect(misses).toEqual([]);
   });
 });

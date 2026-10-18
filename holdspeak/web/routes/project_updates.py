@@ -12,6 +12,7 @@ Owner-scoped; typed errors -> correct statuses.
 """
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 from typing import Any
@@ -99,10 +100,14 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
         try:
             generator = str(payload.get("generator") or "deterministic").strip()
             cmd_id = payload.get("command_id")
-            result = ops().invoke(principal(request), "project.draft_update", {
-                "project_id": project_id, "generator": generator, "command_id": cmd_id,
-                "strict_model_failure": True,
-            })
+            # P0 (betterment/projects): a model draft takes a minute or more.
+            # It runs off the event loop, so every other window keeps working.
+            result = await asyncio.to_thread(
+                ops().invoke, principal(request), "project.draft_update", {
+                    "project_id": project_id, "generator": generator, "command_id": cmd_id,
+                    "strict_model_failure": True,
+                },
+            )
             return JSONResponse({"success": True, "update": _enrich_update(result)})
         except OperationRefused as exc:
             return JSONResponse({"success": False, "code": "validation", "message": exc.detail}, status_code=400)
@@ -123,6 +128,7 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
                     "code": exc.code,
                     "message": exc.detail,
                     "reason": exc.context.get("reason"),
+                    "detail": exc.context.get("detail"),
                 },
                 status_code=int(exc.context.get("status") or 409),
             )
@@ -167,6 +173,7 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
                     "code": exc.code,
                     "message": exc.detail,
                     "reason": exc.context.get("reason"),
+                    "detail": exc.context.get("detail"),
                 },
                 status_code=int(exc.context.get("status") or 409),
             )
@@ -182,7 +189,9 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
         try:
             generator = str(payload.get("generator") or "deterministic").strip()
             cmd_id = payload.get("command_id")
-            result = ctx.project_update_service.regenerate_update(
+            # P0: a model regenerate runs off the event loop, as the draft does.
+            result = await asyncio.to_thread(
+                ctx.project_update_service.regenerate_update,
                 principal(request), update_id,
                 generator=generator, command_id=cmd_id,
             )
@@ -210,6 +219,7 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
                     "code": exc.code,
                     "message": exc.detail,
                     "reason": exc.context.get("reason"),
+                    "detail": exc.context.get("detail"),
                 },
                 status_code=int(exc.context.get("status") or 409),
             )

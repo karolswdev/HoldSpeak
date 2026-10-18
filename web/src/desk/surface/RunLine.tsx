@@ -13,6 +13,7 @@ export function RunLine({
   startedAt,
   elapsedSeconds,
   reason,
+  detail,
   onRetry,
   onAction,
 }: {
@@ -24,6 +25,8 @@ export function RunLine({
   startedAt?: number;
   elapsedSeconds?: number;
   reason?: string;
+  /** Plain words from the hub on why it failed, after the reason. */
+  detail?: string;
   onRetry?: () => void;
   onAction?: () => void;
 }) {
@@ -44,7 +47,7 @@ export function RunLine({
   const action = reasonVerb(reason);
   return (
     <div className="surface-run-line" data-testid="run-line" data-state="failure">
-      <span>{reasonWords(reason, model, seconds)}</span>
+      <span>{reasonWords(reason, model, seconds)}{detail ? ` (${detail})` : ""}</span>
       {action && (onAction || onRetry) ? <Button dense variant="ghost" onClick={onAction || onRetry}>{action}</Button> : null}
     </div>
   );
