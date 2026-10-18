@@ -90,7 +90,7 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
     }
   });
 
-  it("the create set derives Workflow too (the drifted list is dead)", () => {
+  it("the create set is derived from the registry (the drifted list is dead)", () => {
     const creates = verbsFor("floor")
       .filter((v) => v.group === "new")
       .map((v) => v.id);
@@ -99,7 +99,7 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
       "desk.new-thought", // PHILO-13-16 (C6)
       "desk.new-decision",
       "desk.new-knowledge",
-      "desk.new-workflow",
+      // Betterment A8: one way to automate; New Workflow is parked.
       "desk.new-workbench",
       "desk.new-thread",
       "desk.new-project",

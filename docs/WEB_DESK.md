@@ -37,7 +37,7 @@ With no saved choice, a compact screen with more than 16 objects opens the list 
 ## Create and open work
 
 Use the **Desk** menu to create a record.
-It offers **New Note**, **Write a thought**, **New Decision**, **New Knowledge**, **New Agent**, **New Workflow**, **New Automation**, **New Zone**, **New Thread**, and **New Project**.
+It offers **New Note**, **Write a thought**, **New Decision**, **New Knowledge**, **New Agent**, **New Automation**, **New Zone**, **New Thread**, and **New Project**.
 **New Project** opens the Project setup window. See [Project Rooms](PROJECT_ROOMS.md).
 
 Select an object, then use the **Object** menu.

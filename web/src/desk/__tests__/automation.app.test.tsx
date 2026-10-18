@@ -826,3 +826,34 @@ describe("A6: Put it in", () => {
     expect(screen.queryByTestId("automation-refusal")).toBeNull();
   });
 });
+
+/* ── A8: one way to automate; the parked faces stay behind RAW ─────────── */
+import { AutomationHost } from "../components/automation/AutomationHost";
+import { useBuilderTools } from "../builderTools";
+import { VERBS } from "../verbRegistry";
+
+// The parked queue view itself has its own tests (WorkbenchWindow's); here
+// only that RAW reaches it.
+vi.mock("../components/WorkbenchWindow", () => ({
+  WorkbenchWindow: ({ workbenchId }: { workbenchId: string }) => <div data-testid="parked-queue-window" data-id={workbenchId} />,
+}));
+
+describe("A8: park what the sentence replaces", () => {
+  afterEach(() => { act(() => { useBuilderTools.getState().setOn(false); }); });
+
+  it("the New menu has one Automation verb, and no New Workflow", () => {
+    const creates = VERBS.filter((v) => v.menu === "desk" && v.group === "new").map((v) => (typeof v.label === "string" ? v.label : v.label({ selectedRef: null })));
+    expect(creates.filter((label) => /automation|workflow|agent/i.test(label))).toEqual(["New Automation"]);
+  });
+
+  it("a sentence automation shows no RAW; with Builder tools on, RAW opens the parked queue view", async () => {
+    hub.step = empty as Step;
+    render(<AutomationHost workbenchId={WB} />);
+    await screen.findByTestId("automation-sentence");
+    expect(screen.queryByTestId("automation-raw")).toBeNull();
+    act(() => { useBuilderTools.getState().setOn(true); });
+    fireEvent.click(await screen.findByTestId("automation-raw"));
+    expect(await screen.findByTestId("parked-queue-window")).toHaveAttribute("data-id", WB);
+    expect(screen.queryByTestId("automation-sentence")).toBeNull();
+  });
+});

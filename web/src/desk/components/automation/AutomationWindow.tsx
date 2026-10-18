@@ -15,8 +15,9 @@
  * destination that he sends). Run now waits for an engine choice that is
  * still being saved, so it runs on the engine he just chose.
  *
- * The parked queue view (WorkbenchWindow) stays reachable for an old queue
- * automation through RAW in the title strip. */
+ * The parked queue view (WorkbenchWindow, with its event and idle starts)
+ * stays reachable through RAW in the title strip: for an old queue
+ * automation, and for every automation while Builder tools is on (A8). */
 import "./automation.css";
 import { useCallback, useEffect, useRef, useState, type DragEvent } from "react";
 import { useDesk } from "../../store";
@@ -57,6 +58,7 @@ import { WithEditor } from "./WithEditor";
 import { AboutChips, AboutEditor } from "./AboutEditor";
 import { PutEditor, PutValue } from "./PutEditor";
 import { useDropHand } from "../../hand";
+import { useBuilderTools } from "../../builderTools";
 import { ResultBody, ResultCard, ResultHead } from "./ResultCard";
 import {
   canMakeOne,
@@ -476,6 +478,10 @@ export function AutomationWindow({
     }
   };
 
+  // Betterment A8: the parked faces (the queue, event and idle starts) stay
+  // behind RAW: for an old queue automation, and for any one while Builder
+  // tools is on.
+  const builder = useBuilderTools((state) => state.on);
   const name = detail?.name || "Automation";
   const doText = detail?.instruction_shown ?? "";
   const sources = detail?.sources_shown ?? [];
@@ -497,7 +503,7 @@ export function AutomationWindow({
                 onChange={(next) => void setOn(next)} />
             </span>
           ) : null}
-          {detail && onRaw && isOldQueue(detail) ? (
+          {detail && onRaw && (isOldQueue(detail) || builder) ? (
             <Button dense variant="ghost" onClick={onRaw} data-testid="automation-raw">RAW</Button>
           ) : null}
           <Button
