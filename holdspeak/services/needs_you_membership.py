@@ -543,6 +543,20 @@ def _person_identity(row: dict[str, Any]) -> str:
     return str(row.get("person_relationship_id") or card.get("person_relationship_id") or "")
 
 
+def _names_another(row: dict[str, Any], personal_names: Iterable[str]) -> bool:
+    """The row names a Person explicitly, and that Person is not the owner.
+
+    Betterment D0: a unique first name now links to its Person, so the
+    owner's own "Karol" links to a Person "Karol Nowak" when he keeps
+    himself in People. A linked Person whose name is his own is him.
+    """
+    if not _person_identity(row):
+        return False
+    card = row.get("_doorCard") if isinstance(row.get("_doorCard"), dict) else {}
+    label = " ".join(str(row.get("person_label") or card.get("person_label") or "").split()).casefold()
+    return not label or label not in {" ".join(str(n or "").split()).casefold() for n in personal_names}
+
+
 def _is_me(
     row: dict[str, Any],
     self_names: Iterable[str],
@@ -562,7 +576,7 @@ def _is_me(
     owner = row.get("owner")
     if _is_self(owner, self_names):
         return True
-    if _person_identity(row) or str(row.get("id") or "") in set(identified):
+    if _names_another(row, personal_names) or str(row.get("id") or "") in set(identified):
         return False
     if _is_self(owner, personal_names):
         return True
@@ -663,6 +677,29 @@ def waits_on_other(
     REVIEW`` names no owner and is the owner's own work.
     """
     return _waiting_on(row) and not _is_me(row, self_names, personal_names, identified, known_people)
+
+
+def configured_owner_names() -> tuple[list[str], list[str]]:
+    """``(names, personal)``: the reserved names with his speaker label, and
+    the name and aliases he gave on first run (``config.owner``)."""
+    speaker: list[Any] = []
+    personal: list[str] = []
+    try:
+        from holdspeak.config import Config
+
+        config = Config.load()
+        speaker = [config.meeting.mic_label]
+        personal = [name.strip().casefold() for name in config.owner.names()]
+    except Exception as exc:
+        log.warning("needs-you: the owner names read failed: %s", exc)
+    return owner_names(speaker), personal
+
+
+def self_check(known_people: Iterable[str] | None = None) -> Callable[[Any], bool]:
+    """A test of one owner string: is it the owner himself (``_is_me``)?"""
+    names, personal = configured_owner_names()
+    persons = None if known_people is None else {str(n).strip().casefold() for n in known_people}
+    return lambda owner: _is_me({"owner": owner}, names, personal, (), persons)
 
 
 def owner_names(extra: Iterable[Any] = ()) -> list[str]:
@@ -828,6 +865,31 @@ def fold_asks(items: list[dict[str, Any]], flights: Iterable[dict[str, Any]]) ->
             item["foldedInto"] = target
 
 
+#: Betterment D0: the four directions of a row. ``mine``: the owner's own
+#: work. ``theirs``: a person owes it to him. ``decide``: a decision, an
+#: approval, or an agent's question waits for his answer. ``setup``: an
+#: engine or a connection is missing (the blockers, a failed summary).
+DIRECTIONS: tuple[str, ...] = ("mine", "theirs", "decide", "setup")
+
+_DECIDE_SOURCES = frozenset({DECISION_SOURCE, CODER_SOURCE, GATE_SOURCE})
+
+
+def row_direction(row: dict[str, Any], is_me: Callable[[dict[str, Any]], bool]) -> str:
+    """Whose move a ranked attention row is (``DIRECTIONS``)."""
+    if (
+        row.get("source") in _DECIDE_SOURCES
+        or row.get("kind") in _DECIDE_SOURCES
+        or row.get("proposalKind") == "decision"
+    ):
+        return "decide"
+    if row.get("waiting"):
+        return "theirs"
+    owner = str(row.get("owner") or "").strip()
+    if owner and row.get("why") != YOURS and not is_me(row):
+        return "theirs"
+    return "mine"
+
+
 def compute_needs_you(
     *,
     door: dict[str, Any] | None = None,
@@ -874,7 +936,7 @@ def compute_needs_you(
     names = list(self_names)
     personal = [str(n) for n in personal_names]
     # Rows that name a person explicitly: the owner's own name never claims them.
-    identified = {str(row.get("id") or "") for row in combined if _person_identity(row)}
+    identified = {str(row.get("id") or "") for row in combined if _names_another(row, personal)}
     persons = None if known_people is None else {str(n).strip().casefold() for n in known_people}
 
     def other(row: dict[str, Any]) -> bool:
@@ -928,6 +990,9 @@ def compute_needs_you(
         if item.get("source") not in (CODER_SOURCE, GATE_SOURCE) and _item_ref(item) in asked:
             item["askOverrides"] = True
             item["waiting"] = False
+    # Betterment D0: each row says whose move it is.
+    for item in ranked:
+        item["direction"] = row_direction(item, lambda row: _is_me(row, names, personal, identified, persons))
     muted_projects = {str(pid) for pid in muted_project_ids}
     unmuted_items: list[dict[str, Any]] = []
     muted_items: list[dict[str, Any]] = []
@@ -949,10 +1014,15 @@ def compute_needs_you(
     # row) and are not members of their own.
     counted_items = [item for item in counted_items if not item.get("foldedInto")]
 
-    blockers = meeting_path_blockers(
-        None if assignment_read == "failed" else assignments, assignment_read,
-    )
-    failed_meetings = [meeting for meeting in meetings if meeting_needs_you(meeting)]
+    blockers = [
+        {**blocker, "direction": "setup"}
+        for blocker in meeting_path_blockers(
+            None if assignment_read == "failed" else assignments, assignment_read,
+        )
+    ]
+    failed_meetings = [
+        {**meeting, "direction": "setup"} for meeting in meetings if meeting_needs_you(meeting)
+    ]
     members = (
         [{"ref": _item_ref(item), "kind": "attention"} for item in counted_items]
         + [{"ref": f"blocker:{blocker['key']}", "kind": "blocker"} for blocker in blockers]
@@ -998,6 +1068,56 @@ def _read_people_names(principal: Any) -> set[str] | None:
     except Exception as exc:
         log.warning("needs-you: the People names read failed: %s", exc)
         return None
+
+
+def _row_action_id(row: dict[str, Any]) -> str:
+    """The action item a row stands for, or ``""``."""
+    if row.get("_isDoor") and row.get("source") == "action_item":
+        return str(row.get("ref") or "")
+    return str(row.get("actionItemId") or row.get("proposalActionItemId") or "")
+
+
+def attach_person_ids(
+    items: list[dict[str, Any]], db: Any, principal: Any, is_self: Callable[[Any], bool],
+) -> None:
+    """Betterment D0: ``person_id`` on every row: the Person it is about.
+
+    *theirs*: the owner, when it names exactly one Person. *mine*: the Person
+    it is for (``PeopleService.my_action_people``). A People commitment: its
+    relationship. Else ``""``. A store that cannot be read leaves ``""``.
+    """
+    for item in items:
+        item["person_id"] = _person_identity(item)
+        card = item.get("_doorCard") if isinstance(item.get("_doorCard"), dict) else {}
+        target = str(card.get("target_ref") or "")
+        if not item["person_id"] and target.startswith("people:") and is_people_row(item):
+            item["person_id"] = target.removeprefix("people:")
+    try:
+        from holdspeak.people.key_free import people_reads_allowed
+
+        people = _hub_service("people_service", lambda: None)
+        if people is None or not people_reads_allowed():
+            return
+        if people.readiness_state() != "ready":
+            return
+        mine = people.my_action_people(db, is_self) if any(
+            item.get("direction") == "mine" and _row_action_id(item) for item in items
+        ) else {}
+        owners: dict[str, str] = {}
+        for item in items:
+            if item["person_id"]:
+                continue
+            if item.get("direction") == "mine":
+                item["person_id"] = mine.get(_row_action_id(item), "")
+            elif item.get("direction") == "theirs":
+                owner = str(item.get("owner") or "").strip()
+                if owner and owner not in owners:
+                    found = people.resolve_owner_candidates(owner)
+                    rel = found.get("relationship") if found.get("link") == "linked" else None
+                    owners[owner] = str((rel or {}).get("id") or "")
+                item["person_id"] = owners.get(owner, "")
+    except Exception as exc:
+        log.warning("needs-you: the People read for row people failed: %s", exc)
 
 
 def _read_door(db: Any, principal: Any) -> dict[str, Any]:
@@ -1316,19 +1436,7 @@ def compose(
         log.warning("needs-you: the gate read failed: %s", exc)
         errors["gate"] = _reason(exc)
 
-    # The names that mean the owner: the reserved ones, his speaker label,
-    # and the name and aliases he gave on first run (``config.owner``).
-    speaker: list[Any] = []
-    personal: list[str] = []
-    try:
-        from holdspeak.config import Config
-
-        config = Config.load()
-        speaker = [config.meeting.mic_label]
-        personal = [name.strip().casefold() for name in config.owner.names()]
-    except Exception as exc:
-        log.warning("needs-you: the owner names read failed: %s", exc)
-    names = owner_names(speaker)
+    names, personal = configured_owner_names()
     # PHILO-15 B57 (Astra r1 P1): the People on the desk, so a one-edit
     # mishearing never takes a real colleague's work.
     known_people = _read_people_names(principal)
@@ -1357,6 +1465,10 @@ def compose(
         personal_names=personal,
         known_people=known_people,
         now=now,
+    )
+    attach_person_ids(
+        result["unmutedItems"] + result["mutedItems"], db, principal,
+        lambda owner: _is_me({"owner": owner}, names, personal, (), known_people),
     )
     answer = dict(aggregate)
     # One coder coverage record: a recomposed cached answer carries the last

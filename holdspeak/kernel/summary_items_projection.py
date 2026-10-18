@@ -10,6 +10,8 @@ import json
 import time
 from typing import Any
 
+from ..due_dates import anchor_for_meeting, stored_due
+
 
 def summary_action_id(projection: dict[str, Any], ordinal: int, item: dict[str, Any]) -> str:
     """The persistence id of one summary action item.
@@ -21,6 +23,30 @@ def summary_action_id(projection: dict[str, Any], ordinal: int, item: dict[str, 
     return str(item.get("id") or "").strip() or "action_" + hashlib.sha256(
         f"{projection['job_id']}:{ordinal}".encode()
     ).hexdigest()[:24]
+
+
+def write_summary_actions(
+    conn: Any, projection: dict[str, Any], meeting_id: str, action_items: list[Any],
+) -> None:
+    """Write the summary's action items as ``action_items`` rows (pending review).
+
+    The closed semantic result omits persistence IDs (``summary_action_id``).
+    Betterment D0: a said due ("by Wednesday") is stored as the day it names,
+    read against the meeting's own day; the words stay as ``due_said``.
+    """
+    anchor = anchor_for_meeting(conn, meeting_id)
+    for ordinal, item in enumerate(action_items, 1):
+        if not isinstance(item, dict):
+            continue
+        due, due_said = stored_due(item.get("due"), anchor)
+        conn.execute(
+            """INSERT INTO action_items (id,meeting_id,task,owner,due,due_said,status,review_state,created_at)
+               VALUES (?,?,?,?,?,?,'pending','pending',?)
+               ON CONFLICT(id) DO UPDATE SET task=excluded.task,owner=excluded.owner,due=excluded.due,
+               due_said=excluded.due_said""",
+            (summary_action_id(projection, ordinal, item), meeting_id, str(item.get("task") or ""),
+             item.get("owner"), due, due_said, time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())),
+        )
 
 
 #: PHILO-15 08 (B02): the summary's own extractor id. Its decisions and
