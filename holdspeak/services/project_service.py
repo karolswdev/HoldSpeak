@@ -2748,15 +2748,33 @@ class ProjectService:
         if not repo.claim_dispatch(task.id, str(host_id or ""), int(lease_epoch or 0)):
             raise ConflictError(
                 "this ask is already being resumed", code="ask_task_resume_in_flight",
-                context={"task_id": task.id},
+                context={"task_id": task.id, "reason": "still_running"},
             )
+        # Betterment Q1: one identity is one kernel operation.  A run that
+        # ended without an answer cannot run again under its identity (the
+        # kernel replays its failure, or refuses the new material with
+        # ``UNIQUE constraint failed: inference_adoption_material_snapshots.
+        # operation_id``), so the retry gets its own.  A run still going is
+        # never doubled.
+        run_state = repo.invocation_run_state(task.invocation_id)
+        if run_state == "running":
+            repo.release_dispatch(task.id)
+            raise ConflictError(
+                "this ask is still running", code="ask_task_still_running",
+                context={"task_id": task.id, "reason": "still_running"},
+            )
+        if run_state == "ended":
+            task = repo.rotate_invocation(task.id, "ask_" + uuid.uuid4().hex) or task
         try:
             answer = await dispatcher(self._ask_task_dto(task, host_id=host_id))
         except ServiceError as exc:
-            # The target's own words, stored verbatim (ruling B5).
+            # The target's own words, stored verbatim (ruling B5).  The code
+            # is the face reason token when the refusal names one, so the
+            # row says why in words (Betterment Q1).
+            reason = exc.context.get("reason") if isinstance(exc.context, dict) else None
             repo.settle(
                 task.id, state="failed", stopped_reason=str(exc.detail),
-                stopped_code=str(exc.code),
+                stopped_code=str(reason) if isinstance(reason, str) and reason else str(exc.code),
             )
             raise
         except Exception:

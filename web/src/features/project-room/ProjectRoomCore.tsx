@@ -39,7 +39,7 @@ import {
 import { useDrawerMembers } from "../../desk/drawer/useDrawerData";
 import { memberOpens, openMember } from "../../desk/drawer/open";
 import { useDrawers } from "../../desk/drawer/store";
-import { ParkReceipt, RunLine, restoreFailedOutcome, restoredOutcome } from "../../desk/surface";
+import { ParkReceipt, RunLine, restoreFailedOutcome, restoredOutcome, isRunFailureReason, reasonWords } from "../../desk/surface";
 import { restoreMeeting } from "../../desk/api";
 import { HandConfirmSlot, drawerHost, handOriginOfRef, handSourceProps } from "../../desk/hand";
 import { useCompactViewport } from "../../desk/useCompactViewport";
@@ -2097,7 +2097,10 @@ export function useRoomAsk(projectId: string, projectName: string) {
   const [prompt, setPrompt] = useState("");
   const [result, setResult] = useState<AskRunResult | null>(null);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  // Betterment Q1: a failure is a reason TOKEN the face says in words
+  // (`runWords.ts`), never the hub's sentence. `words` holds only the
+  // browser's own line for a request that never reached the hub.
+  const [error, setError] = useState<RoomAskFailure | null>(null);
   // The ask no longer dies with the tab. The words are written to
   // `project_ask_tasks` BEFORE the run goes out (ruling B3), so a restart, a
   // crash or a trip to Settings finds them again.
@@ -2105,10 +2108,11 @@ export function useRoomAsk(projectId: string, projectName: string) {
   const [working, setWorking] = useState<{ id: string; verb: "resume" | "discard" } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const loadUnfinished = useCallback(async () => {
-    if (!projectId) return;
+  const loadUnfinished = useCallback(async (): Promise<AskTask[]> => {
+    if (!projectId) return [];
     const page = await listUnfinishedAsks({ projectId, limit: 5 });
     setUnfinished(page.items);
+    return page.items;
   }, [projectId]);
 
   // PHILO-17 (phonepass): the first read resolved (the Room waits for it).
@@ -2125,7 +2129,8 @@ export function useRoomAsk(projectId: string, projectName: string) {
     const purpose = prompt.trim();
     if (!purpose || busy) return;
     setBusy(true);
-    setError("");
+    setError(null);
+    const startedAt = Date.now();
     const grounding = {
       meeting_ids: [],
       artifact_ids: [],
@@ -2156,16 +2161,25 @@ export function useRoomAsk(projectId: string, projectName: string) {
       // sentence (ruling B5). The server resolves the token against its live
       // placement and quotes the engine itself; nothing written here reaches
       // the row. The ask stays unfinished and fully resumable either way.
+      // Betterment Q1: with no target code, the reason TOKEN is the code —
+      // a bounded token, never a sentence (B5) — so the row can say why.
       let recorded = false;
-      if (task && answer.refusalCode) {
-        recorded = (await stopAskTask(task.id, answer.refusalCode)).ok;
+      const code = answer.refusalCode || answer.reason || "";
+      if (task && code) {
+        recorded = (await stopAskTask(task.id, code)).ok;
       }
       // F6: the failure is said ONCE. When it landed on a row, the row says
-      // it — in the engine's own words, beside the verb that acts on it. The
-      // inline line survives only for a failure that reached no row at all
-      // (no saved row, or a transport failure the hub never coded), where it
-      // is the only thing that can speak.
-      if (!recorded) setError(answer.output);
+      // it — in words, beside Ask again. The inline line survives only for a
+      // failure that reached no row at all (no saved row, or a transport
+      // failure the hub never coded), where it is the only thing that can
+      // speak.
+      if (!recorded) {
+        setError({
+          reason: answer.reason || "",
+          seconds: Math.max(1, Math.round((Date.now() - startedAt) / 1000)),
+          words: answer.reason ? "" : answer.output,
+        });
+      }
       void loadUnfinished();
       return;
     }
@@ -2180,10 +2194,20 @@ export function useRoomAsk(projectId: string, projectName: string) {
 
   const resume = async (task: AskTask) => {
     setWorking({ id: task.id, verb: "resume" });
-    setError("");
+    setError(null);
     const outcome = await resumeAskTask(task.id);
     setWorking(null);
-    if (!outcome.ok) { setError(outcome.error); return; }
+    if (!outcome.ok) {
+      // Never the hub's sentence (RECON step 9 printed a raw database
+      // error here). Said once: when the row now carries the reason, the
+      // row says it.
+      const rows = await loadUnfinished();
+      const row = rows.find((candidate) => candidate.id === task.id);
+      if (!(outcome.reason && row?.state === "failed" && row.stoppedCode === outcome.reason)) {
+        setError({ reason: outcome.reason, words: "", task });
+      }
+      return;
+    }
     setPrompt(task.purpose);
     if (outcome.answer) setResult(outcome.answer);
     await loadUnfinished();
@@ -2204,6 +2228,28 @@ export function useRoomAsk(projectId: string, projectName: string) {
 }
 
 export type RoomAsk = ReturnType<typeof useRoomAsk>;
+
+/** A Room ask that did not answer, as the face holds it (Betterment Q1). */
+export interface RoomAskFailure {
+  /** The hub's reason token; empty when the hub never answered. */
+  reason: string;
+  seconds?: number;
+  /** The browser's own line for a request that never reached the hub. */
+  words: string;
+  /** The saved ask Ask again resumes; absent, Ask again asks anew. */
+  task?: AskTask;
+}
+
+/** Why a saved ask stopped, in words. The reason token when the row holds
+ *  one; the destination's own readiness words for a target code (B5); never
+ *  a raw code or the hub's sentence. */
+export function roomStopWords(task: Pick<AskTask, "stoppedCode" | "stoppedReason">): string {
+  const code = task.stoppedCode || "";
+  if (isRunFailureReason(code)) return reasonWords(code);
+  if (code === "ask_task_host_lost") return "Stopped when the hub restarted";
+  if (code.startsWith("inference_target_") && task.stoppedReason) return task.stoppedReason;
+  return code || task.stoppedReason ? reasonWords("") : "";
+}
 
 /** UNFINISHED — the saved work, in the Room BODY as its own section.
  *
@@ -2228,9 +2274,9 @@ function RoomUnfinishedSection({ ask }: { ask: RoomAsk }) {
             savedAt={task.savedAt}
             settledAt={task.settledAt}
             recipe={task.recipeKey}
-            stoppedReason={task.stoppedReason}
-            stoppedCode={task.stoppedCode}
+            stoppedReason={roomStopWords(task) || undefined}
             custody={task.custody}
+            {...(task.state === "failed" ? { verbLabel: "Ask again" } : {})}
             primary={false}
             busy={working?.id === task.id && working.verb === "resume"}
             onVerb={() => void ask.resume(task)}
@@ -2320,7 +2366,23 @@ export function RoomAskWell({
           <CitationChips refs={receipt?.sourceRefs || []} onOpen={onOpenRef} />
         </div>
       ) : null}
-      {error ? <p className="room-ask-error">{error}</p> : null}
+      {error ? (
+        <div className="room-ask-error" data-testid="room-ask-error">
+          <RunLine
+            phase="failure"
+            reason={error.reason}
+            elapsedSeconds={error.seconds}
+            detail={error.words || undefined}
+            onRetry={() => void (error.task ? ask.resume(error.task) : ask.ask())}
+            {...(error.reason === "no_engine" ? {
+              onAction: () => {
+                rememberTaskFocus(inputRef.current);
+                openSurfaceOr("configure-runs-on", "/settings", "models");
+              },
+            } : {})}
+          />
+        </div>
+      ) : null}
       <div className="room-ask-well" data-testid="room-ask-input-well">
         {/* Phase 16 (the interior kit, §11 "AskWell"): the library string
             well (sunken paper, the mic on its right edge) replaces the raw

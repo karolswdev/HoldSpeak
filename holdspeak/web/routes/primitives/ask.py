@@ -20,6 +20,10 @@ log=get_logger("web.routes.primitives")
 
 def _error(exc: ServiceError) -> JSONResponse:
     payload=dict(exc.context); payload.setdefault("error",exc.detail)
+    # Betterment Q1: every refusal names its reason token, so the face says
+    # why in words (runWords.ts) and never "did not answer" for a question
+    # that never reached the engine.
+    payload.setdefault("reason",AskService.refusal_reason(exc))
     if exc.code == "grounding_not_found": return JSONResponse(payload,status_code=400)
     return JSONResponse(payload,status_code=int(payload.pop("status", 400 if exc.code == "validation_error" else 409)))
 

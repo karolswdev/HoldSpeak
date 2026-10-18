@@ -424,7 +424,7 @@ class AskService:
             age = None if last is None else (local_wall() - last).total_seconds()
             if age is None or age > DEFAULT_LIVENESS_WINDOW_SECONDS:
                 seen = "no worker has ever polled" if age is None else f"last seen {int(age)}s ago"
-                raise ValidationError(f"mesh node '{node}' is offline ({seen})")
+                raise ValidationError(f"mesh node '{node}' is offline ({seen})", code="mesh_node_offline", context={"reason": "not_reachable"})
         # Resolve and persist the immutable deployment before payload construction
         # and ServiceContract hashing. Mutable target state cannot retarget this turn.
         revision = capture_deployment_revision(self._db, target)
@@ -512,6 +512,19 @@ class AskService:
             "cancelled": "stopped",
         }
         if isinstance(receipt, dict):
+            # Betterment Q1 (FOLLOWUPS, from Q0): an assigned engine whose
+            # last check could not reach it is "not reachable", never "no
+            # engine for answers".  The route skipped it before sending.
+            considered = receipt.get("considerations")
+            if (
+                isinstance(considered, list)
+                and not any(isinstance(leg, dict) and leg.get("physical_attempts") for leg in considered)
+                and any(
+                    isinstance(leg, dict) and leg.get("reason_code") == "binding_not_ready"
+                    for leg in considered
+                )
+            ):
+                return "not_reachable"
             attempts = receipt.get("attempts")
             if isinstance(attempts, list):
                 for attempt in reversed(attempts):
@@ -530,6 +543,27 @@ class AskService:
                 if value in reasons:
                     return reasons[value]
         return "did_not_answer"
+
+    @classmethod
+    def refusal_reason(cls, exc: ServiceError) -> str:
+        """The face reason token for any refusal of an ask (Betterment Q1).
+
+        Every refusal carries one, so the face never says "did not answer"
+        when nothing reached the engine.
+        """
+        reason = exc.context.get("reason") if isinstance(exc.context, dict) else None
+        if isinstance(reason, str) and reason:
+            return reason
+        code = str(exc.code or "")
+        if code == "grounding_not_found":
+            return "source_gone"
+        if code == "model_not_advertised":
+            return "no_engine"
+        if code == "mesh_node_offline":
+            return "not_reachable"
+        if isinstance(exc, ValidationError):
+            return "not_sent"
+        return cls._with_route_reason(exc).context["reason"]
 
     @classmethod
     def _with_route_reason(cls, exc: ServiceError) -> ServiceError:

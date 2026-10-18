@@ -184,6 +184,9 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         except NotFound as exc:
             return not_found(exc)
         except ServiceError as exc:
+            # Betterment Q1: a refused Resume names its reason token too.
+            from ...services.ask_service import AskService
+            exc.context.setdefault("reason", AskService.refusal_reason(exc))
             return service_error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to resume ask")

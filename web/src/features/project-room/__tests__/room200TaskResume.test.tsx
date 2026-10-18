@@ -222,7 +222,8 @@ describe("HS-200-41: the ask is durable before it is dispatched", () => {
     ).toBeInTheDocument();
     expect(
       within(row).getByRole("button", {
-        name: "Check: what is left before the cut-over",
+        // Betterment Q1: a failed ask's verb is Ask again.
+        name: "Ask again: what is left before the cut-over",
       }),
     ).toBeEnabled();
 
@@ -245,7 +246,8 @@ describe("HS-200-41: the ask is durable before it is dispatched", () => {
     await userEvent.click(well);
     await userEvent.paste("what is left before the cut-over");
     await userEvent.keyboard("{Enter}");
-    expect(await screen.findByText("Could not reach the server.")).toBeInTheDocument();
+    // Betterment Q1: the browser's own line rides the run line's words.
+    expect(await screen.findByText(/Could not reach the server\./)).toBeInTheDocument();
   });
 
   it("a refusal with no code records nothing — the client invents no token", async () => {
@@ -258,7 +260,8 @@ describe("HS-200-41: the ask is durable before it is dispatched", () => {
     await userEvent.paste("what is left before the cut-over");
     await userEvent.keyboard("{Enter}");
 
-    expect(await screen.findByText("Could not reach the server.")).toBeInTheDocument();
+    // Betterment Q1: the browser's own line rides the run line's words.
+    expect(await screen.findByText(/Could not reach the server\./)).toBeInTheDocument();
     expect(asks.stopAskTask).not.toHaveBeenCalled();
   });
 
