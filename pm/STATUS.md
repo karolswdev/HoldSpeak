@@ -4,9 +4,22 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-18 (betterment build delivered to the desk at `ee6f42227`)
+**Last updated:** 2026-10-18 (betterment batch two delivered at `8f46d9867`)
 
 ## Current phase
+
+**Betterment batch two — delivered 2026-10-18 (main `8f46d9867`).** A3 #1293
+(the Automations window: When/Do/About/With/Put it in, results below),
+E3 #1294 (model picker, one engine per model, real context size), AG1/AG2
+#1292/#1295 (Agents name; one-press Answer/Allow with the command shown),
+D2/D3 #1291/#1296 (Needs you filters and one verb per row; promises kept on
+arrival with Drop/Undo; a re-summary never revives a dropped promise).
+Reds fixed forward: #1298 #1299. Process: quick_check gained a ~50 s
+"repo guards" step (#1297) so census/ratchet reds stop reaching main.
+Verified on main before delivery: FAST 16,491 passed (the one red fixed in
+#1299), web 5,543 / 0 branch-new, browser 348 passed. Desk hub restarted
+from `wt-desk-betterment-20261018b`; /health, /, /conductor, /models 200;
+backend `8f46d9867`. Not walked by eye yet.
 
 **Betterment build — delivered to his desk 2026-10-18 (main `ee6f42227`).**
 All 38 decisions adopted ("defaults"). Merged since the designs: P0 #1253,
