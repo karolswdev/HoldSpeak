@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_runs_on_hub.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-18T15:56:29.291809Z",
+  "captured_at": "2026-10-18T23:37:03.243907Z",
   "wire": {
     "agents": [
       {
@@ -9,7 +9,8 @@
         "installed": false,
         "name": "Claude Code",
         "preset": "claude",
-        "vendor": "ANTHROPIC"
+        "vendor": "ANTHROPIC",
+        "vendorScope": "cloud"
       },
       {
         "added": false,
@@ -17,10 +18,29 @@
         "installed": false,
         "name": "Codex",
         "preset": "codex",
-        "vendor": "OPENAI"
+        "vendor": "OPENAI",
+        "vendorScope": "cloud"
+      },
+      {
+        "added": false,
+        "install": "npm install -g @earendil-works/pi-coding-agent",
+        "installed": false,
+        "name": "pi",
+        "preset": "pi",
+        "vendor": "PI CONFIG",
+        "vendorScope": "cloud"
+      },
+      {
+        "added": false,
+        "install": "npm install -g @google/gemini-cli",
+        "installed": false,
+        "name": "Gemini CLI",
+        "preset": "gemini",
+        "vendor": "GOOGLE",
+        "vendorScope": "cloud"
       }
     ],
-    "checkedAt": "2026-10-18T15:56:29.288844+00:00",
+    "checkedAt": "2026-10-18T23:37:03.241233+00:00",
     "engines": [
       {
         "baseUrl": "http://127.0.0.1:8099/v1",
@@ -95,8 +115,8 @@
       },
       "observation": {
         "available_memory_bytes": null,
-        "sha256": "sha256:eebcc4948a640c0b341e726a349d1515da2097f4ac831782181ab1f3b339841a",
-        "storage_available_bytes": 238649217024
+        "sha256": "sha256:55faee8a6776e1d3ee1dc089c0a765477f8e06ae0beabc2be817c9c54e3a1ed0",
+        "storage_available_bytes": 216947458048
       }
     },
     "lastApply": null,

@@ -318,7 +318,15 @@ def test_the_codex_launch_mounts_the_conductor_palette_with_its_mutators() -> No
             "desk_window.arrange", "desk_window.seat"} <= palette
     # Betterment D6: + people.suggestions (agents read People; owner ruling 2026-10-06).
     assert "people.suggestions" in palette
-    assert len(palette) == 138 + 6 + 1
+    # Betterment M3 (#1319): + the run's results and cancel, and the
+    # ``automation.*`` names of the Workbench work tools (``automation.run``
+    # stays out, as ``workbench.run`` does). Each is a work tool, and the
+    # launch rules hold them to the launch's own automations.
+    m3 = {"workbench.results", "workbench.cancel", "automation.list", "automation.get",
+          "automation.create", "automation.update", "automation.delete",
+          "automation.results", "automation.cancel"}
+    assert m3 <= palette
+    assert len(palette) == 138 + 6 + 1 + len(m3)
 
 
 # ── 6. Astra r2 on #996: the wait episode, the FIFO, expiry, provenance ──
