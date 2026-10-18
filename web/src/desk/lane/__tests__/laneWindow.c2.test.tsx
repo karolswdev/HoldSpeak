@@ -468,7 +468,7 @@ describe("the agent's window", () => {
   it("Stop: Normal unarmed never arms by itself; YOLO arms per press, then kills", async () => {
     await openLane(fixture({ control: { mode: "neutral", armed: false, direct: false } }));
     fireEvent.click(screen.getByTestId("lane-stop"));
-    expect(screen.getByTestId("lane-stop-confirm").textContent).toBe("Stop · sure? (ends the coder's session)");
+    expect(screen.getByTestId("lane-stop-confirm").textContent).toBe("Stop · sure? (ends the agent's session)");
     fireEvent.click(screen.getByTestId("lane-stop-confirm"));
     await waitFor(() => expect(screen.getByTestId("lane-receipt").textContent).toContain("ARM FIRST"));
     expect(posts("/arm")).toEqual([]);
@@ -590,11 +590,11 @@ describe("the agent's window", () => {
     expect(screen.getByTestId("lane-rail")).toBeTruthy();
   });
 
-  it("Re-brief opens the steer well prefilled; its receipt stays after the well closes", async () => {
+  it("Tell it (was Re-brief) opens the steer well empty; its receipt stays after the well closes", async () => {
     await openLane(fixture({ wait: null }));
     fireEvent.click(screen.getByTestId("lane-rebrief"));
-    const field = within(screen.getByTestId("lane-rebrief-well")).getByRole("textbox", { name: "Re-brief" }) as HTMLInputElement;
-    expect(field.value).toBe("Re-brief: ");
+    const field = within(screen.getByTestId("lane-rebrief-well")).getByRole("textbox", { name: "Tell it" }) as HTMLInputElement;
+    expect(field.value).toBe("");
     fireEvent.change(field, { target: { value: "Re-brief: name Jordan as the owner." } });
     fireEvent.keyDown(field, { key: "Enter" });
     // PHILO-15 B46: the Re-brief route of the launch (typed now, or queued mid-turn).
@@ -693,7 +693,7 @@ describe("PHILO-15 lane 14: the stations tell the truth", () => {
     answer({ [REBRIEF]: [202, { status: "queued", at: "2026-10-07T16:40:00Z" }] });
     serve(fixture({ wait: null, launch: { ...fixture().launch, queued_rebrief: { text: "Re-brief: use the security address.", at: "2026-10-07T16:40:00Z" } } }));
     fireEvent.click(screen.getByTestId("lane-rebrief"));
-    const field = within(screen.getByTestId("lane-rebrief-well")).getByRole("textbox", { name: "Re-brief" }) as HTMLInputElement;
+    const field = within(screen.getByTestId("lane-rebrief-well")).getByRole("textbox", { name: "Tell it" }) as HTMLInputElement;
     fireEvent.change(field, { target: { value: "Re-brief: use the security address." } });
     fireEvent.keyDown(field, { key: "Enter" });
     await waitFor(() => expect(screen.getByTestId("lane-queued").textContent).toBe("QUEUED · AFTER THIS TURN · Re-brief: use the security address."));

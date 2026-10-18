@@ -43,7 +43,7 @@ describe("DeskOS application manifest", () => {
       "Speak",
       "Meetings",
       "People",
-      "Conductor",
+      "Agents",
     ]);
     expect(
       DESK_APPLICATIONS.filter((application) => application.shortcut).map(
@@ -67,16 +67,14 @@ describe("DeskOS application manifest", () => {
     expect(settings?.surface).toMatchObject({ defaultW: 640, defaultH: 600 });
   });
 
-  it("PHILO-14 C4: the old Agents application is parked: route alive, in no Dock, Go list, shortcut or mark", () => {
-    const parked = DESK_APPLICATIONS.find((application) => application.action === "inspect-personas-and-coders");
-    expect(parked?.surface).toBeDefined();
-    expect(parked?.dock).toBeUndefined();
-    expect(parked?.shortcut).toBeUndefined();
-    expect(parked?.mark).toBeFalsy();
-    expect(parked?.group).toBeUndefined();
-    expect(DOCK_APPLICATIONS.some((application) => application.windowId === "surface-companion")).toBe(false);
+  it("Betterment AG1: the old Agents application is unmapped; the Conductor's face name is Agents", () => {
+    // The old Agents application (`/companion`) has no manifest row now; its
+    // row is parked in desk/_parked/agents/companionApplication.ts.
+    expect(DESK_APPLICATIONS.some((application) => application.action === "inspect-personas-and-coders")).toBe(false);
+    expect(DESK_APPLICATIONS.some((application) => application.windowId === "surface-companion")).toBe(false);
     const conductor = DESK_APPLICATIONS.find((application) => application.action === "open-conductor");
-    expect(conductor).toMatchObject({ windowId: "conductor", label: "Conductor", href: "/conductor", shortcut: "⌃3" });
+    // The code name stays (action, window id, route, ⌃3); the face says Agents.
+    expect(conductor).toMatchObject({ windowId: "conductor", label: "Agents", toolLabel: "Agents", href: "/conductor", shortcut: "⌃3" });
     expect(conductor?.dock).toMatchObject({ order: 4, launch: "surface" });
   });
 
@@ -95,7 +93,7 @@ describe("DeskOS application manifest", () => {
     const names = (group: (typeof GO_GROUPS)[number]) =>
       goRows(group).map((r) => (r.kind === "app" || r.kind === "launcher" ? r.label : r.kind === "verb" ? r.label ?? r.verbId : r.kind));
     expect(names("daily")).toEqual([
-      "Today", "Needs you", "Brief", "The week", "Capture", "Meetings", "People", "projects", "Conductor", "Ask AI", "Speak",
+      "Today", "Needs you", "Brief", "The week", "Capture", "Meetings", "People", "projects", "Agents", "Ask AI", "Speak",
     ]);
     expect(names("work")).toEqual(["Automations", "Memory", "Voice commands", "drawers"]);
     expect(names("builder")).toEqual([
@@ -111,7 +109,7 @@ describe("DeskOS application manifest", () => {
     // setup row of the HoldSpeak menu, or is opened by its own verb.
     const inGo = new Set(GO_GROUPS.flatMap(goRows).flatMap((r) => (r.kind === "app" ? [r.app.action] : [])));
     const elsewhere = new Set(["configure-settings", "configure-setup", "configure-cadence", "change-places",
-      "record-live", "project-setup", "inspect-personas-and-coders"]);
+      "record-live", "project-setup"]);
     for (const application of DESK_APPLICATIONS) {
       if (application.parked) continue;
       expect(inGo.has(application.action) || elsewhere.has(application.action), application.action).toBe(true);

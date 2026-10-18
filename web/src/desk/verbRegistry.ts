@@ -221,17 +221,8 @@ export const VERBS: Verb[] = [
     ghost: never,
     run: () => void useDesk.getState().createPrimitive("kb"),
   },
-  {
-    id: "desk.new-agent",
-    label: "New Agent",
-    menu: "desk",
-    scope: "floor",
-    group: "new",
-    glyph: KIND_GLYPH.recipe,
-    keywords: ["create", "recipe"],
-    ghost: never,
-    run: () => void useDesk.getState().createPrimitive("recipe"),
-  },
+  // Betterment AG1 (DECISIONS #3): New Agent left the Desk menu; parked in
+  // desk/_parked/agents/newAgentVerb.ts.
   {
     id: "desk.new-workflow",
     label: "New Workflow",
@@ -502,11 +493,11 @@ export const VERBS: Verb[] = [
     },
   },
   {
-    // Hand to coder (Conductor K2, the canvas ratified 2026-10-06): one
+    // Hand to agent (Conductor K2, the canvas ratified 2026-10-06): one
     // registry verb reaches the Object menu, the object context menu and ⌘K.
     // It opens the launch sheet on every hand-off (the owner's ruling).
     id: "object.hand-to-agent",
-    label: "Hand to coder",
+    label: "Hand to agent",
     menu: "object",
     scope: "object",
     glyph: "⇥",

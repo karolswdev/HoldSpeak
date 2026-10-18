@@ -107,8 +107,8 @@ describe("the launch sheet", () => {
     expect(within(sheet).getByText("3 OPEN")).toBeTruthy();
     const where = within(sheet).getByTestId("hand-where").textContent ?? "";
     expect(where).toContain("~/dev/payments-ledger");
-    expect(where).toContain("NEW WORKTREE");
-    expect(where).toContain("hs/action-ai_1");
+    expect(where).toContain("NEW BRANCH"); // Betterment AG1: never the item id
+    expect(where).not.toContain("ai_1");
     expect(where).toContain("CONTROL · YOLO");
     const footer = document.querySelector(".desk-hand-footer")!;
     expect(footer.querySelector(".gadget-chip-egress")!.textContent).toContain("API.ANTHROPIC.COM");
@@ -218,7 +218,7 @@ describe("Hand to coder: where the verb reaches", () => {
       <HandRowVerb item={{ title: "PAY-418 Reconciliation job slow", source: "jira", kind: "issue", watchId: "watch-r4-jira", entityId: "PAY-418" }} />,
     );
     expect(container.querySelectorAll("[data-testid=hand-row-verb]").length).toBe(1);
-    fireEvent.click(screen.getByRole("button", { name: "Hand to coder: PAY-418 Reconciliation job slow" }));
+    fireEvent.click(screen.getByRole("button", { name: "Hand to agent: PAY-418 Reconciliation job slow" }));
     expect(useAgentHand.getState().origin).toMatchObject({ kind: "issue", id: "watch-r4-jira.PAY-418" });
   });
 
@@ -228,7 +228,7 @@ describe("Hand to coder: where the verb reaches", () => {
       <HandRowVerb item={{ title: "#418", source: "github" }} />
     </>);
     expect(container.querySelectorAll("[data-testid=hand-row-verb]").length).toBe(1);
-    fireEvent.click(screen.getByRole("button", { name: "Hand to coder: Write the rollback runbook" }));
+    fireEvent.click(screen.getByRole("button", { name: "Hand to agent: Write the rollback runbook" }));
     expect(useAgentHand.getState().origin).toMatchObject({ kind: "action", id: "ai_1" });
   });
 

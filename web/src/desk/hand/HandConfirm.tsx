@@ -36,6 +36,7 @@ import {
 } from "../components/HandSheet";
 import { AGENT_NAME, type AgentId } from "../firstrun/agentsStep";
 import { useDropHand, type HandPending } from "./store";
+import { branchFace } from "../lane/laneWire";
 import "./hand.css";
 
 const DELIVERY_POLL_MS = 2000;
@@ -191,7 +192,7 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
 
   const refused = preview?.refused ?? [];
   const delivery = launched ? deliveryToken(launched) : null;
-  const fact = [preview ? modeWord(preview.control_mode) : "", preview?.branch ?? ""].filter(Boolean).join(" · ");
+  const fact = [preview ? modeWord(preview.control_mode) : "", branchFace(preview?.branch)].filter(Boolean).join(" · ");
   const frozen = launching || launched !== null;
   const agentToken = (
     <Button

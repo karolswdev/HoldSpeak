@@ -177,7 +177,7 @@ def _open_lane(page: Any) -> Any:
 
     page.locator(".desk-verbbar-item[data-menu-id='go'] button").click()
     page.locator("[role^=menuitem]").filter(
-        has=page.locator(".desk-menu-label", has_text=_re.compile(r"^Conductor$"))).last.click()
+        has=page.locator(".desk-menu-label", has_text=_re.compile(r"^Agents$"))).last.click()
     conductor = page.locator(".conductor-window")
     conductor.wait_for(timeout=15000)
     agent = conductor.locator("[data-object-id='launch:launch_c2_runbook']")

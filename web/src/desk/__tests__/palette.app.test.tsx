@@ -500,3 +500,35 @@ describe("S1: Search lists Today, People and Components as apps", () => {
     }
   });
 });
+
+/* ── Betterment AG1: one name ──────────────────────────────────────── */
+
+import { fromWireNote, fromWireRecipe } from "../api";
+import type { Persona } from "../../lib/primitives";
+import { hubWire } from "./wire/hubWire";
+
+describe("Betterment AG1: Search \"agent\" finds Agents and Hand to agent, never the thread modes", () => {
+  it("a saved persona is a Mode; the Agents app and Hand to agent (on the selected note) lead", async () => {
+    // The hub's own recipe list (the product seed: Chase, Desk, Draft, ...).
+    const recipes = hubWire<{ recipes: unknown[] }>("recipes.seed").wire.recipes
+      .map((r) => fromWireRecipe(r)).filter((r): r is Persona => r !== null);
+    expect(recipes.length).toBeGreaterThanOrEqual(5);
+    const note = fromWireNote({ id: "note_cutover", title: "Cutover checklist", body_markdown: "", tags: [] }) as Note;
+    useDesk.setState({ items: { ...EMPTY_ITEMS, recipe: recipes, note: [note] }, selectedIds: ["note:note_cutover"] });
+    const input = await deck();
+    await type(input, "agent");
+    const shown = rows().map((o) => o.textContent ?? "");
+    expect(shown.some((t) => /^Agents/.test(t.replace(/^\W+/, "")) || t.includes("Agents"))).toBe(true);
+    expect(shown.some((t) => t.includes("Hand to agent"))).toBe(true);
+    // No row names a saved persona an AGENT, and no row says coder or Conductor.
+    for (const recipe of recipes) {
+      const row = shown.find((t) => t.includes(recipe.name));
+      if (row) expect(row, recipe.name).not.toMatch(/AGENT/);
+    }
+    for (const t of shown) expect(t).not.toMatch(/Conductor|[Cc]oder|CODER/);
+    // A persona typed by name is a MODE row.
+    await type(input, recipes[0].name);
+    const persona = rows().find((o) => (o.textContent ?? "").includes(recipes[0].name));
+    expect(persona?.textContent).toContain("MODE");
+  });
+});

@@ -47,6 +47,9 @@ each, in place of one "this face renders cleanly" file per phase.
               window runs a CSS animation, a CSS transition or a script
               animation (Element.animate) longer than the --duration-micro
               token, from page load on (MOTION_INIT_JS records each start)
+    words     no "Conductor" or "coder" on any face; on the agent faces
+              (Agents, the agent's window) none of the old machine words
+              (Betterment AG1)
     target    at 393, every library Button and every pressable row (a menu
               row, an option, a tab, any other button or link that is not
               inline in prose) owns its 44 x 44 px area: the nine points of
@@ -122,6 +125,18 @@ TOKEN = "desk-sweep"
 SIZES = {1440: 900, 393: 852}
 T = 20_000
 STILL_MS = 1500
+
+#: Betterment AG1 (DECISIONS #3): the words fence. No face says "Conductor"
+#: or "coder" (the app is Agents, the session an agent). On the agent faces
+#: (the Agents window ``conductor``, the agent's window ``lane``) the old
+#: machine words are banned too (agents/DESIGN.md §4, "The words").
+BANNED_WORDS = re.compile(r"\bConductor\b|\b[Cc]oders?\b|\bCODERS?\b")
+AGENT_FACE_WORDS = re.compile(
+    r"Re-brief|RE-BRIEF|Install hooks|ASKS YOU|WANTS APPROVAL|Wants approval|\brider\b|\bNODE\b"
+    r"|\bTARGET\b|INCOMPATIBLE|stopped_by_owner|\bRaw\b"
+)
+AGENT_FACES = {"conductor", "lane"}
+WORDS_JS = "(sel) => { const el = sel ? document.querySelector(sel) : document.body; return el ? el.innerText : ''; }"
 TOLERANCE = 2
 PALETTE_QUERY = "ledger"  # a Project, meetings, a decision, a note of the seed
 
@@ -909,6 +924,10 @@ class _Case:
         fail("still", [f"{r['name']} moved {round(r['worst'])} px" for r in moved])
         fail("still", page.evaluate(MOTION_JS, sel))
         fail("target", page.evaluate(TARGET_JS, sel))
+        text = page.evaluate(WORDS_JS, sel)
+        banned = AGENT_FACE_WORDS if self.wid in AGENT_FACES else None
+        fail("words", sorted({m.group(0) for m in BANNED_WORDS.finditer(text)}
+                             | ({m.group(0) for m in banned.finditer(text)} if banned else set())))
         # After the 1.5 s watch: an error a late read raises is counted too.
         fail("clean", [e for e in self.errors if "ResizeObserver" not in e])
         if not page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"):
@@ -1153,7 +1172,8 @@ HELD = 2500
     ("surface-cadence", ["/api/cadence/loops", "/api/settings/heartbeat"]),
     ("meeting", ["/api/decisions"]),
     ("needs", ["/api/desk/needs-you"]),
-    ("surface-companion", ["/api/delivery/"]),
+    # Betterment AG1: surface-companion (the old Agents application) is
+    # unmapped and its window retired; its held-read case left with it.
     # PHILO-17 flakes: the speech row (useSpeechSetup) drew late and moved
     # the Live deck 46 px; the destinations arrival scrolled the Settings
     # body 764 px; the People drawer's 1:1 caption moved the Conductor 24 px.

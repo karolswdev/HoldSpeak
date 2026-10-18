@@ -62,7 +62,7 @@ describe("HS-93-04 contextual pull-out actions", () => {
         <Pullout o={object} />
       </MemoryRouter>,
     );
-    const editor = screen.getByRole("textbox", { name: "Coder reply draft" });
+    const editor = screen.getByRole("textbox", { name: "Reply to the agent" });
     fireEvent.change(editor, {
       target: { value: "Keep this answer until delivery succeeds." },
     });
@@ -84,7 +84,7 @@ describe("HS-93-04 contextual pull-out actions", () => {
       </MemoryRouter>,
     );
     expect(
-      screen.getByRole("textbox", { name: "Coder reply draft" }),
+      screen.getByRole("textbox", { name: "Reply to the agent" }),
     ).toHaveValue("Keep this answer until delivery succeeds.");
     expect(screen.getByRole("status")).toHaveTextContent("DRAFT RECOVERED");
   });
@@ -110,7 +110,7 @@ describe("HS-93-04 contextual pull-out actions", () => {
     expect(screen.getByText("Ship after checks pass.")).toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("button", {
-        name: "Send Release checklist to App Coder session",
+        name: "Send Release checklist to App agent",
       }),
     );
 

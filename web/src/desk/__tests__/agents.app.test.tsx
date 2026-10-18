@@ -25,6 +25,7 @@ import { CompanionCore } from "../../pages/cores/CompanionCore";
 import { WingSlotContext } from "../surface/wings";
 import { LaneWindow, __resetDraftEgress } from "../lane/LaneWindow";
 import { __resetLane, useLane } from "../lane/laneStore";
+import { branchFace } from "../lane/laneWire";
 import { fromWireFlight, fromWireSessionRow, useAgentFlights } from "../agentFlights";
 import { ConductorWindow } from "../conductor/ConductorWindow";
 import { __resetConductor } from "../conductor/store";
@@ -417,5 +418,56 @@ describe("the Agents list tells the truth about state (Betterment AG0)", () => {
     });
     await waitFor(() => expect(screen.getByTestId("lane-terminal-gone").textContent).toBe("This agent's terminal is gone"));
     expect(screen.queryByTestId("lane-arm")).toBeNull();
+  });
+});
+
+/* ── Betterment AG1: one name, Agents ─────────────────────────────── */
+
+/** The words the agent faces no longer say (DESIGN.md §4, "The words"). */
+const OLD_WORDS = /Conductor|\bcoders?\b|\bCODERS?\b|Re-brief|RE-BRIEF|Install hooks|ASKS YOU|WANTS APPROVAL|Wants approval|\brider\b|\bNODE\b|\bTARGET\b|INCOMPATIBLE|stopped_by_owner|\bRaw\b/;
+
+describe("the agent faces say Agents and agent (Betterment AG1)", () => {
+  beforeEach(() => {
+    __resetConductor();
+    useAgentFlights.setState({ sessions: [], flights: [], loaded: false });
+  });
+
+  it("the Agents window on the hub's C4 and AG0 answers: its title is Agents, no old word, Connect for hooks", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    const c4 = hubWire("coders-sessions.c4");
+    vi.setSystemTime(new Date(c4.captured_at));
+    serve({ "/api/coders/sessions": c4.wire, "/api/onboarding/agents": DETECT.wire,
+      "/api/agent/launches/": hubWire("lane.c4-runbook").wire });
+    render(<ConductorWindow />);
+    await screen.findByRole("button", { name: "Write the rollback runbook" });
+    expect(screen.getAllByText("Agents").length).toBeGreaterThan(0);
+    const plate = screen.getByTestId("conductor-ask-row");
+    expect(plate.querySelector(".cw-ask-label")?.textContent).toBe("Asks you");
+    expect(document.body.textContent).not.toMatch(OLD_WORDS);
+    // Stop confirms in the agent's words.
+    fireEvent.click(within(conductorMember("launch:launch_c4_runbook")!).getByRole("button", { name: "Write the rollback runbook" }));
+    fireEvent.click(await screen.findByTestId("conductor-stop"));
+    expect(screen.getByTestId("conductor-stop-confirm").textContent).toBe("Stop · sure? (ends the agent's session)");
+    expect(document.body.textContent).not.toMatch(OLD_WORDS);
+  });
+
+  it("the agent's window: Terminal and Story, a held call says Wants to run, no old word", async () => {
+    await openLane(LANE_CUT.wire);
+    expect(screen.getByTestId("lane-raw").textContent).toBe("Terminal");
+    expect(screen.getByTestId("lane-approve-well").querySelector(".lw-plate-label")?.textContent).toBe("Wants to run");
+    expect(screen.getByTestId("lane-raw-cut").textContent).toBe("Terminal");
+    // Tell it (was Re-brief) needs a live pane; laneWindow.c2.test.tsx drives it.
+    expect(document.body.textContent).not.toMatch(OLD_WORDS);
+    fireEvent.click(screen.getByTestId("lane-raw"));
+    expect(screen.getByTestId("lane-raw").textContent).toBe("Story");
+  });
+
+  it("branchFace: the hub's id branch reads new branch; a branch with words shows as it is", () => {
+    expect(branchFace("hs/action-action_5f5e1a2b")).toBe("new branch");
+    expect(branchFace("hs/note-0123456789abcdef")).toBe("new branch");
+    expect(branchFace("hs/action-ai_1")).toBe("new branch");
+    expect(branchFace("hs/write-the-rollback-runbook")).toBe("hs/write-the-rollback-runbook");
+    expect(branchFace("feature/flags")).toBe("feature/flags");
+    expect(branchFace(null)).toBe("");
   });
 });

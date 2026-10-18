@@ -71,7 +71,7 @@ function IconsSpecimen() {
         <DeskIcon
           id="conductor"
           kind="conductor"
-          name="Conductor"
+          name="Agents"
           lamp={{ tone: "ask", count: 3, label: "3 need you" }}
           badge={objectSprite("agent", "conductor-badge")}
         />
@@ -247,7 +247,7 @@ export function ObjectSpeciesGallery() {
             <DeskIcon
               id="conductor"
               kind="conductor"
-              name="Conductor"
+              name="Agents"
               drop
               lamp={{ tone: "ask", count: 3, label: "3 need you" }}
               badge={objectSprite("agent", "conductor-badge")}

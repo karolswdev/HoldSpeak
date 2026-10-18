@@ -28,8 +28,10 @@ export const PRODUCT_TERMS = {
   zone: ["Zone", "Zones"],
   knowledge: ["Knowledge", "Knowledge collections"],
   project: ["Project", "Projects"],
-  persona: ["Agent", "Agents"],
-  coder_session: ["Coder session", "Coder sessions"],
+  // Betterment AG1 (DECISIONS #3): "Agent" means only a coding agent
+  // session; a saved persona is a thread Mode.
+  persona: ["Mode", "Modes"],
+  coder_session: ["Agent", "Agents"],
   workflow: ["Workflow", "Workflows"],
   sequence: ["Sequence", "Sequences"],
   integration: ["Integration", "Integrations"],

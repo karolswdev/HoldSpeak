@@ -157,7 +157,7 @@ export function contextualCoderSessions(
       const target = String(session.title || session.project || "").trim();
       return {
         id: session.id,
-        label: `Send ${selected[0].title} to ${target ? `${target} Coder session` : "Coder session"}`,
+        label: `Send ${selected[0].title} to ${target ? `${target} agent` : "an agent"}`,
         session: session as Primitive,
         source: selected[0],
       };

@@ -15,7 +15,7 @@ export function ConductorWindows() {
   return (
     <>
       {open ? (
-        <ApplicationBoundary label="Conductor">
+        <ApplicationBoundary label="Agents">
           <ConductorWindow />
         </ApplicationBoundary>
       ) : null}

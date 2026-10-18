@@ -99,7 +99,6 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
       "desk.new-thought", // PHILO-13-16 (C6)
       "desk.new-decision",
       "desk.new-knowledge",
-      "desk.new-agent",
       "desk.new-workflow",
       "desk.new-workbench",
       "desk.new-thread",

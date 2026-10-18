@@ -363,7 +363,7 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
             </Button>
             {selectedHand ? (
               <Button dense variant="ghost" onClick={handSelected} data-testid="drawer-hand">
-                Hand to coder
+                Hand to agent
               </Button>
             ) : null}
             <Button dense variant="secondary" disabled={!selected || !memberOpens(selected)} onClick={() => open(selected)}>

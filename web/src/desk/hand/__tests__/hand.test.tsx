@@ -162,7 +162,7 @@ async function renderDesk() {
 }
 
 const comms = () => screen.getByRole("button", { name: /^Write the cutover comms, ACTION ITEM/ });
-const conductor = () => screen.getByRole("button", { name: /^Conductor, DRAWER/ });
+const conductor = () => screen.getByRole("button", { name: /^Agents, DRAWER/ });
 const drawer = () => document.querySelector<HTMLElement>(".drawer-window")!;
 
 /** Lift `source`, move the pointer, hover `target` and let go on it. */
@@ -305,7 +305,7 @@ describe("PHILO-14 C3 YOLO: the confirm line", () => {
     await renderDesk();
     dragOnto(comms(), conductor());
     const line = await within(drawer()).findByTestId("hand-confirm");
-    expect(await within(line).findByText("CODER LIMIT REACHED")).toBeTruthy();
+    expect(await within(line).findByText("AGENT LIMIT REACHED")).toBeTruthy();
     expect(within(line).getByRole("button", { name: "Hand" })).toBeDisabled();
   });
 
@@ -319,7 +319,7 @@ describe("PHILO-14 C3 YOLO: the confirm line", () => {
     await factIs(line, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
     fireEvent.click(within(line).getByRole("button", { name: "Hand" }));
     expect(await within(line).findByTestId("hand-confirm-launch-refused")).toHaveTextContent(
-      "NOT LAUNCHED · CODER LIMIT REACHED",
+      "NOT LAUNCHED · AGENT LIMIT REACHED",
     );
     world.hand = () => ({ status: "launched", launch_id: "launch-2", instruction_state: "paste_failed" });
     fireEvent.click(within(line).getByRole("button", { name: "Hand" }));
@@ -436,7 +436,7 @@ describe("PHILO-15 16 the sheet carries the clone through a launch refusal", () 
     expect(before).toHaveAttribute("data-state", "to_clone");
     expect(before).toHaveTextContent("CLONES acme/ledger");
     fireEvent.click(await screen.findByTestId("hand-launch"));
-    expect(await screen.findByTestId("hand-launch-refused")).toHaveTextContent("NOT LAUNCHED · CODER LIMIT REACHED");
+    expect(await screen.findByTestId("hand-launch-refused")).toHaveTextContent("NOT LAUNCHED · AGENT LIMIT REACHED");
     const after = screen.getByTestId("hand-clone");
     expect(after).toHaveAttribute("data-state", "cloned");
     expect(after).toHaveTextContent("CLONED · acme/ledger · 09:05");
@@ -455,10 +455,10 @@ describe("PHILO-14 C3 at 393: no drag; the verb reaches the line", () => {
     const row = await within(drawer()).findByRole("button", { name: /^Write the cutover comms, ACTION ITEM/ });
     for (const el of document.querySelectorAll(".desk-screen .desk-icon")) expect(el).not.toHaveAttribute("draggable", "true");
     // The verb is withheld until a handable object is selected.
-    expect(within(drawer()).queryByRole("button", { name: "Hand to coder" })).toBeNull();
+    expect(within(drawer()).queryByRole("button", { name: "Hand to agent" })).toBeNull();
     fireEvent.click(row);
     fireEvent.click(within(drawer()).getByRole("button", { name: "More actions" }));
-    fireEvent.click(screen.getByRole("menuitem", { name: "Hand to coder" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Hand to agent" }));
     const line = await within(drawer()).findByTestId("hand-confirm");
     await factIs(line, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
     // Over the list (the line comes before it).
@@ -495,7 +495,7 @@ describe("PHILO-15 16 B39: the line's agent is a token the owner flips", () => {
     render(<DrawerWindow drawer={{ projectId: "p-ledger", origin: null }} />);
     fireEvent.click(await within(drawer()).findByRole("button", { name: /^Write the cutover comms, ACTION ITEM/ }));
     fireEvent.click(within(drawer()).getByRole("button", { name: "More actions" }));
-    fireEvent.click(screen.getByRole("menuitem", { name: "Hand to coder" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Hand to agent" }));
     const line = await within(drawer()).findByTestId("hand-confirm");
     await factIs(line, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
     fireEvent.click(within(line).getByTestId("hand-confirm-agent"));
@@ -607,7 +607,7 @@ describe("PHILO-15 16 B38: the first hand clones the Project's repository", () =
     const line = await within(drawer()).findByTestId("hand-confirm");
     expect(await within(line).findByTestId("hand-confirm-clone")).toHaveAttribute("data-state", "to_clone");
     fireEvent.click(within(line).getByRole("button", { name: "Hand" }));
-    expect(await within(line).findByTestId("hand-confirm-launch-refused")).toHaveTextContent("NOT LAUNCHED · CODER LIMIT REACHED");
+    expect(await within(line).findByTestId("hand-confirm-launch-refused")).toHaveTextContent("NOT LAUNCHED · AGENT LIMIT REACHED");
     const clone = within(line).getByTestId("hand-confirm-clone");
     expect(clone).toHaveAttribute("data-state", "cloned");
     expect(clone).toHaveTextContent("CLONED · karolswdev/holdspeak-dayone-rehearsal-1558 · 18:06");
