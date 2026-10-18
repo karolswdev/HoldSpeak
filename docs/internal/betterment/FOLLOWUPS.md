@@ -32,7 +32,7 @@ PR that fixes it merges.
 | #1281 | `scripts/gen_docs.sh` stops at `generate_capability_docs.py`: `docs/internal/philo/data/desk.json` capability `tests[13]` names a TypeScript test title that no longer exists, so later generators do not run. | Small fix |
 | A3 (#1293) | At 393 the NEW chip on the newest result is not visible (pushed off the meta line). | Automations A4 |
 | A3 (#1293) | "What it has learned" shows a bare count ("2"); use words ("2 lessons") or nothing. | Automations A4 |
-| A3 (#1293) | Results carry no cost yet (E2 stores CLI cost per engine run, not on the result). | Automations A6 / MCP M2 |
+| ~~A3 (#1293)~~ FIXED in M2 #1301 | Results carry no cost yet (E2 stores CLI cost per engine run, not on the result). | Automations A6 / MCP M2 |
 | E3 (#1294) | Job token budgets still cap the context: background 16,384, text/structured/tool 32,768 (`inference_capabilities.py:1235-1239`), so a 49,152 engine is capped where those apply. Budgets should follow the engine's real context. | Engines E5 |
 | E3 (#1294) | MCP `model_library.define_endpoint` does not accept `context_tokens`; first-run LAN still auto-picks the first model; re-adding an existing engine keeps its first context. | Engines E4 / MCP M4 / Setup ST3 |
 | AG1 (#1292) | The Automations window still says "No agents yet / New Agent" for saved personas; personas are retired as a face concept (DECISIONS #3). | Automations A4 |
@@ -42,4 +42,15 @@ PR that fixes it merges.
 | D3 (#1296) | `list_action_items(include_completed=False)` reads only `pending`, but Confirm (and now keep-on-arrival) writes `open`; the cadence collector (`holdspeak/cadence/collector.py:94`) probably never makes loops for confirmed items. | Small fix |
 | D2 (#1291) | The desk tool palette is at 27,679 of 27,680 bytes; the next MCP description change will break the guard. Trim descriptions or split the palette. | Watch / MCP M3 |
 | D3 (#1296) | Promises from a plugin run that partly completes then fails stay pending (keep runs only on job completion). | Capture C5 |
+| M2 (#1301) | After each item the runner makes a second engine call ("what should future runs remember?"). On a CLI engine it also gets the desk tools and its own bill. RULING (orchestrator): the memory call runs WITHOUT tools; small fix. | Small fix |
+| M2 (#1301) | Undo on "Wrote" shows only while the desk's delete-receipt bar is on screen. | Automations A6 |
+| Q4 (#1302) | With the Thread window parked, interview, thread modes, slash commands and Thread tool holds have no face until Q7 (Ask my whole desk). A persona chat's follow-ups run as plain Asks. Q7 is now urgent. | Asking Q7 |
+| Q4 (#1302) | Two browser files edited but not run (creation_glass New Thread step, desk_glass Thread rename step); the atlas `case.daily.thread.*` cases describe the parked face. | Next full run |
+| Q4 (#1302) | The LAN chip shows twice (on the answer and in the footer); Send… under an answer is not built. | Asking Q5 |
+| D4 (#1303) | The menu bar still has an "Intelligence" menu when Today is front; it should say Today (PLAN §2: Intelligence is retired as a name). | Daily D5 |
+| D4 (#1303) | On a fresh hub "No engine for summaries" counts 1 even with no meeting waiting; it should appear only when a meeting waits for a summary. | Daily D8 / Setup |
+| D4 (#1303) | Browser files with edited selectors not yet run: today_glass, windows_glass, send_glass, chair_windows.py, windows_follow_the_bus (second half). | Next full run |
+| D4 (#1303) | On a fresh hub "No engine for summaries" counts 1 even with no meeting waiting; it should appear only when a meeting waits for a summary. | Daily D8 / Setup |
+| D4 (#1303) | Browser files with edited selectors not yet run: today_glass, windows_glass, send_glass, chair_windows.py, windows_follow_the_bus (second half). | Next full run |
+| #1306 | `web/scripts/guard-architecture.mjs` is red on main with ~35 entries not in its baseline (not run by any suite). Trace and fix or re-baseline with reasons. | Small fix |
 | S0/S1 | Something emptied a worktree's `web/node_modules` while its quick check waited for the lock. Cause unknown. | Watch |

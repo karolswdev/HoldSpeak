@@ -4,9 +4,23 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-18 (betterment batch two delivered at `8f46d9867`)
+**Last updated:** 2026-10-18 (betterment batch three delivered at `873c95627`)
 
 ## Current phase
+
+**Betterment batch three — delivered 2026-10-18 (main `873c95627`).** A4 #1304
+(When and With edit in place: plain schedules with Next, GitHub event starts,
+engine picker with one-press Add, spend limit per automation; engine change
+re-freezes a live schedule), M2 #1301 (each result shows Looked at / Wrote /
+Prepared from the hub's own call record, plus cost), Q4 #1302 (one Ask window;
+every Ask is a thread; the Thread window parked), Q7 #1305 (Ask uses the desk's
+tools on tool engines; Wrote with Undo; holds with Allow once / Deny; sends
+only prepared), D4 #1303 (Today is one page; the brief made without a press).
+Reds fixed forward: #1306 (incl. the thread tool-gate census and 3 new safety
+tests: an Ask/Thread can never turn on a schedule or change an engine).
+Verified: FAST 16,515 passed / 0 failed; web 0 branch-new; browser green.
+Desk hub restarted from `wt-desk-betterment-20261018c`; 4 checks 200; backend
+`873c95627`. Not walked by eye yet.
 
 **Betterment batch two — delivered 2026-10-18 (main `8f46d9867`).** A3 #1293
 (the Automations window: When/Do/About/With/Put it in, results below),
