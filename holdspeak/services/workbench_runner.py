@@ -20,6 +20,37 @@ def _children(db: Any, broker: Any, parent_id: str) -> list[dict[str,str]]:
     return [{"operation_id":str(r["operation_id"]),"invocation_id":str(r["native_id"]),"receipt_id":str((broker.store.receipt(str(r["operation_id"])) or {}).get("receipt_id") or "")} for r in rows]
 
 
+class _MeteredPromptAdapter(CanonicalPromptAdapter):
+    """The canonical adapter, plus the tokens the provider said it used.
+
+    The sealed result shape stays {output, provider, model}. The count travels
+    on this adapter instance, which the runner keeps for its one child."""
+
+    def __init__(self) -> None:
+        self.tokens = 0
+
+    def dispatch(self, engine: Any, payload: dict[str, Any], cancellation: Any) -> dict[str, str]:
+        result = super().dispatch(engine, payload, cancellation)
+        try:
+            usage = dict(getattr(engine, "last_usage", None) or {})
+            self.tokens += int(usage.get("total_tokens") or 0)
+        except (TypeError, ValueError):
+            pass  # an engine without a provider count reports none, never a guess
+        return result
+
+
+def _failure_words(routed: dict[str, Any]) -> str:
+    """Say why a child failed: the adapter's error, else the route's reason."""
+    error = str(routed.get("error") or "").strip()
+    if error:
+        return error
+    receipt = routed.get("receipt") or {}
+    reasons = [str(c.get("reason_code")) for c in receipt.get("considerations") or [] if c.get("reason_code")]
+    disposition = str(receipt.get("disposition") or "").strip()
+    words = ", ".join(dict.fromkeys([d for d in [disposition, *reasons] if d]))
+    return (words or str(routed.get("outcome") or "failed")).replace("_", " ")
+
+
 class WorkbenchRunner:
     def __init__(self, db: Any, broker: Any) -> None:
         self.db,self.broker=db,broker
@@ -66,6 +97,7 @@ class WorkbenchRunner:
         reserved_output_tokens: int,
         publish: Any,
         planned_node: str,
+        adapter: Any = None,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
         """Attach one child payload to the parent's frozen route and execute it."""
         admitted = await asyncio.to_thread(
@@ -83,7 +115,7 @@ class WorkbenchRunner:
             self.broker.inference_adoption_service.execute,
             principal,
             execution_id=admitted["execution"]["id"],
-            adapter=CanonicalPromptAdapter(),
+            adapter=adapter if adapter is not None else CanonicalPromptAdapter(),
             publish=publish,
             parent_context=parent.context,
             planned_node=planned_node,
@@ -110,17 +142,27 @@ class WorkbenchRunner:
                     winner = self._winner(parent)
             raise
 
-    def _record_terminal(self, run_id: str, parent: Any, receipt: dict[str, Any], *, attempted: int = 0, completed: int = 0, failed: int = 0) -> list[dict[str, str]]:
-        """Make the coordination row point at the one durable terminal receipt."""
+    def _record_terminal(self, run_id: str, parent: Any, receipt: dict[str, Any], *, attempted: int = 0, completed: int = 0, failed: int = 0, ran: dict[str, Any] | None = None) -> list[dict[str, str]]:
+        """Make the coordination row point at the one durable terminal receipt.
+
+        ``ran`` carries what this run really did (counts, egress, model,
+        tokens). A cancelled or expired run keeps the work it finished, so its
+        row says so instead of ``0/0``."""
         links = _children(self.db, self.broker, parent.operation_id)
         outcome = str(receipt.get("outcome") or "indeterminate")
         status = "completed" if outcome == "succeeded" else outcome
         with self.db._connection() as conn:
             conn.execute("UPDATE workbench_runs SET parent_receipt_id=?,child_links_json=?,status=? WHERE id=?", (str(receipt["receipt_id"]), json.dumps(links), status, run_id))
+            if ran is not None:
+                conn.execute(
+                    "UPDATE workbench_runs SET items_attempted=?,items_completed=?,items_failed=?,egress_boundary=?,model=?,total_tokens=? WHERE id=?",
+                    (int(ran["attempted"]), int(ran["completed"]), int(ran["failed"]), str(ran["boundary"]), str(ran["model"]), int(ran["tokens"]), run_id),
+                )
+                attempted, completed, failed = int(ran["attempted"]), int(ran["completed"]), int(ran["failed"])
         # HS-132-03: every terminal — succeeded, cancelled, expired, failed —
         # funnels through here, so this is the one honest place the desk hears
-        # a run end. Adopted terminals carry no counts; the disposition is the
-        # truth they do carry.
+        # a run end. A terminal adopted from the loop carries the counts it
+        # reached; one with no ``ran`` (no items) carries only its disposition.
         self._emit_run_complete(run_id, outcome, attempted=attempted, completed=completed, failed=failed)
         return links
 
@@ -161,7 +203,7 @@ class WorkbenchRunner:
                 (item_id,),
             )
 
-    def _adopt_terminal(self, run_id: str, parent: Any) -> dict[str, Any]:
+    def _adopt_terminal(self, run_id: str, parent: Any, ran: dict[str, Any] | None = None) -> dict[str, Any]:
         # cancel_by_operation_id makes CANCELLING durable before its in-flight
         # child returns; let that closer publish its elected receipt.
         receipt = self._winner(parent)
@@ -173,7 +215,7 @@ class WorkbenchRunner:
                     break
         if receipt is None:
             raise ServiceError("parent_terminal_unresolved", "The Workbench parent did not retain a terminal receipt.", context={"status": 409, "parent_operation_id": parent.operation_id})
-        links = self._record_terminal(run_id, parent, receipt)
+        links = self._record_terminal(run_id, parent, receipt, ran=ran)
         return {"run_id": run_id, "parent_operation_id": parent.operation_id, "receipt_id": receipt["receipt_id"], "terminal_disposition": receipt.get("outcome"), "children": links}
 
     async def run(self, principal: Principal, workbench_id: str, *, memory_enabled: bool=True, request_id: str|None=None, deadline_seconds: float=60, delegation: dict[str, Any] | None = None, due_minute: int | None = None, source_event: dict[str, str] | None = None, item_ids: list[str] | None = None) -> dict[str,Any]:
@@ -199,7 +241,10 @@ class WorkbenchRunner:
             items=[by_id[item_id] for item_id in requested]
         if principal.kind is PrincipalKind.OWNER:
             self.broker.inference_adoption_service.migrate_recipe_workbench_subject_assignments(principal)
-        run_id="wbrun_"+uuid.uuid4().hex[:12]; deadline=time.time()+deadline_seconds
+        # The time limit is per item: a run of four 20 s items must not expire
+        # on the fourth one (recon 2026-10-17, step 14: the 60 s whole-run
+        # limit cancelled the run, skipped item 4 and recorded 0/0).
+        run_id="wbrun_"+uuid.uuid4().hex[:12]; deadline=time.time()+deadline_seconds*max(1,len(items))
         snapshot={"workbench_id":workbench_id,"items":[x.id for x in items],"item_scope":"explicit" if item_ids is not None else "pending_batch","recipe_id":recipe.id,"recipe_revision":str(recipe.last_modified),"memory_enabled":memory_enabled,"request_id":request_id or "","source_event":dict(source_event or {})}
         if delegation is not None:
             route = self._scheduled_route(delegation)
@@ -244,10 +289,15 @@ class WorkbenchRunner:
             memory=recall_for_prompt(workbench_id)
         skills=[s.id for s in self.db.skills.list_for_recipe(recipe.id,active_only=True)]
         attempted=complete=failed=mints=0
+        ran: dict[str, Any] = {"attempted": 0, "completed": 0, "failed": 0, "boundary": "", "model": "", "tokens": 0}
+
+        def tally() -> dict[str, Any]:
+            ran.update(attempted=attempted, completed=complete, failed=failed)
+            return ran
         try:
             for ordinal,item in enumerate(items,1):
                 if self.broker.parent_run_controller.expire_if_due(parent.context,principal):
-                    return self._adopt_terminal(run_id,parent)
+                    return self._adopt_terminal(run_id,parent,tally())
                 # Claim and epoch validation share one transaction. A cancellation
                 # that wins cannot leave this item claimed without a runnable child.
                 now = utc_now_iso()
@@ -281,7 +331,7 @@ class WorkbenchRunner:
                 if claimed != 1:
                     if parked_skip:
                         continue
-                    return self._adopt_terminal(run_id, parent)
+                    return self._adopt_terminal(run_id, parent, tally())
                 attempted += 1
                 emit_item_claimed(workbench_id=workbench_id,run_id=run_id,item_id=item.id,title=item.title,index=ordinal,total=len(items))
                 try:
@@ -293,7 +343,7 @@ class WorkbenchRunner:
                     # call. Cancellation/expiry still own the parent election.
                     if self.broker.parent_run_controller.expire_if_due(parent.context, principal):
                         self._release_unpublished_claim(item.id)
-                        return self._adopt_terminal(run_id, parent)
+                        return self._adopt_terminal(run_id, parent, tally())
                     now = utc_now_iso()
                     with self.db._connection() as conn:
                         conn.execute("BEGIN IMMEDIATE")
@@ -309,7 +359,7 @@ class WorkbenchRunner:
                         ).rowcount
                     if advanced != 1:
                         self._release_unpublished_claim(item.id)
-                        return self._adopt_terminal(run_id, parent)
+                        return self._adopt_terminal(run_id, parent, tally())
                     failed += 1
                     emit_item_failed(workbench_id=workbench_id, run_id=run_id, item_id=item.id,
                                      title=item.title, index=ordinal, total=len(items), error=exc.detail)
@@ -319,9 +369,13 @@ class WorkbenchRunner:
                 item_operation="workbench_item_"+uuid.uuid4().hex
                 payload={"workbench_id":workbench_id,"workbench_revision":str(wb.last_modified),"item_id":item.id,"item_revision":str(item.last_modified),"recipe_id":recipe.id,"recipe_revision":str(recipe.last_modified),"system_prompt":system,"user_prompt":prompt,"rendered_input_sha256":_sha(prompt),"skills":skills,"context_hash":_sha(context),"attempt_ordinal":ordinal}
 
-                def publish_item(value: Any, reservation: dict[str, Any], *, item: Any = item) -> str:
+                adapter = _MeteredPromptAdapter()
+
+                def publish_item(value: Any, reservation: dict[str, Any], *, item: Any = item, adapter: Any = adapter) -> str:
                     target = self._route_target(route, int(reservation["route_leg_ordinal"]))
-                    projection = {"parent_operation_id":parent.operation_id,"execution_epoch":parent.context.epoch,"planned_node":f"item:{item.id}","run_id":run_id,"workbench_id":workbench_id,"item_id":item.id,"output":str(value.get("output") if isinstance(value,dict) else value),"egress":{"boundary":target["boundary"],"model":target["model"]},"artifact_id":"artifact_"+str(reservation["child_invocation_id"])[-12:],"artifact_title":f"{recipe.name or recipe.id}: {item.title}","deployment_revision":target["deployment_revision_id"]}
+                    reported = str(value.get("model") or "") if isinstance(value, dict) else ""
+                    ran.update(boundary=target["boundary"], model=reported or target["model"])
+                    projection = {"tokens":adapter.tokens,"parent_operation_id":parent.operation_id,"execution_epoch":parent.context.epoch,"planned_node":f"item:{item.id}","run_id":run_id,"workbench_id":workbench_id,"item_id":item.id,"output":str(value.get("output") if isinstance(value,dict) else value),"egress":{"boundary":target["boundary"],"model":target["model"]},"artifact_id":"artifact_"+str(reservation["child_invocation_id"])[-12:],"artifact_title":f"{recipe.name or recipe.id}: {item.title}","deployment_revision":target["deployment_revision_id"]}
                     digest = _sha(value)
                     return self.broker.projection_stager.stage(str(reservation["child_invocation_id"]), "workbench-item-output", projection, result_sha256=digest, receipt_result_ref=f"inference-result:{reservation['child_invocation_id']}/{digest}").result_ref
 
@@ -329,30 +383,32 @@ class WorkbenchRunner:
                     principal, parent=parent, route_plan_id=str(route["id"]), capability_id="workbench.item",
                     command_id=f"{item_operation}:admit", operation_id=item_operation, payload=payload,
                     reserved_output_tokens=512, publish=publish_item, planned_node=f"item:{item.id}",
+                    adapter=adapter,
                 )
-                outcome = type("FrozenOutcome", (), {"outcome": routed["outcome"], "error": routed["outcome"]})()
+                ran["tokens"] += adapter.tokens
+                outcome = type("FrozenOutcome", (), {"outcome": routed["outcome"], "error": _failure_words(routed)})()
                 iid = str(routed.get("winning_reservation", {}).get("child_invocation_id") or "")
                 # The deadline is an execution fence: a dispatch that returns
                 # past it must not advance. Expiry bumps the epoch, so the
                 # child's staged output stays receipt-linked but stale.
                 if self.broker.parent_run_controller.expire_if_due(parent.context,principal):
                     self._release_unpublished_claim(item.id)
-                    return self._adopt_terminal(run_id,parent)
+                    return self._adopt_terminal(run_id,parent,tally())
                 if outcome.outcome!="succeeded":
                     # Cancellation can arrive while the provider is in flight.
                     # Do not turn that elected parent outcome into an item failure.
                     if outcome.outcome in {"cancelled", "indeterminate"} or self._winner(parent) is not None:
                         self._release_unpublished_claim(item.id)
-                        return self._adopt_terminal(run_id,parent)
-                    failed+=1; self.db.workbench_items.upsert(item_id=item.id,workbench_id=workbench_id,title=item.title,body=item.body,priority=item.priority,status="failed",result=f"Error: {outcome.error or outcome.outcome}",completed_at=utc_now_iso())
-                    emit_item_failed(workbench_id=workbench_id,run_id=run_id,item_id=item.id,title=item.title,index=ordinal,total=len(items),error=str(outcome.error or outcome.outcome))
+                        return self._adopt_terminal(run_id,parent,tally())
+                    failed+=1; self.db.workbench_items.upsert(item_id=item.id,workbench_id=workbench_id,title=item.title,body=item.body,priority=item.priority,status="failed",result=f"Error: {outcome.error}",completed_at=utc_now_iso())
+                    emit_item_failed(workbench_id=workbench_id,run_id=run_id,item_id=item.id,title=item.title,index=ordinal,total=len(items),error=str(outcome.error))
                     continue
                 check=self.broker.projection_stager.finalize(iid)
                 if not check or not check.get("advanced"):
                     # A checkpoint that cannot advance lost the parent election.
                     # Its child receipt remains durable; never mint a success aggregate.
                     self._release_unpublished_claim(item.id)
-                    return self._adopt_terminal(run_id,parent)
+                    return self._adopt_terminal(run_id,parent,tally())
                 complete+=1
                 emit_item_done(workbench_id=workbench_id,run_id=run_id,item_id=item.id,title=item.title,index=ordinal,total=len(items))
                 if not memory_enabled or self.broker.parent_run_controller.expire_if_due(parent.context,principal): continue
@@ -366,23 +422,26 @@ class WorkbenchRunner:
                     digest = _sha(value)
                     return self.broker.projection_stager.stage(str(reservation["child_invocation_id"]), "workbench-memory-writeback", projection, result_sha256=digest, receipt_result_ref=f"inference-result:{reservation['child_invocation_id']}/{digest}").result_ref
 
+                memory_adapter = _MeteredPromptAdapter()
                 memory_routed, _ = await self._run_frozen_child(
                     principal, parent=parent, route_plan_id=str(route["id"]), capability_id="workbench.item",
                     command_id=f"{memory_operation}:admit", operation_id=memory_operation, payload=mpayload,
                     reserved_output_tokens=128, publish=publish_memory, planned_node=f"memory:{item.id}",
+                    adapter=memory_adapter,
                 )
+                ran["tokens"] += memory_adapter.tokens
                 if memory_routed["outcome"] == "succeeded":
                     self.broker.projection_stager.finalize(str(memory_routed["winning_reservation"]["child_invocation_id"]))
-            ctx=constitutional_receipt(); stage=self.broker.projection_stager.stage(parent.native_id,"workbench-run-result",{"parent_operation_id":parent.operation_id,"run_id":run_id,"attempted":attempted,"completed":complete,"failed":failed,"mint_failures":mints,"egress_boundary":"","model":"","context_revision":ctx["revision"],"context_hash":ctx["content_hash"],"skills":skills})
+            ctx=constitutional_receipt(); stage=self.broker.projection_stager.stage(parent.native_id,"workbench-run-result",{"parent_operation_id":parent.operation_id,"run_id":run_id,"attempted":attempted,"completed":complete,"failed":failed,"mint_failures":mints,"egress_boundary":ran["boundary"],"model":ran["model"],"total_tokens":ran["tokens"],"context_revision":ctx["revision"],"context_hash":ctx["content_hash"],"skills":skills})
             receipt=self._close_or_adopt(parent,"succeeded",principal=principal,result_ref=stage.result_ref)
             if receipt.get("outcome") != "succeeded":
-                return self._adopt_terminal(run_id,parent)
+                return self._adopt_terminal(run_id,parent,tally())
             self.broker.projection_stager.finalize(parent.native_id)
-            links=self._record_terminal(run_id,parent,receipt,attempted=attempted,completed=complete,failed=failed)
+            links=self._record_terminal(run_id,parent,receipt,ran=tally())
             return {"run_id":run_id,"parent_operation_id":parent.operation_id,"receipt_id":receipt["receipt_id"],"children":links,"placement":self._route_target(route)}
         except Exception:
             receipt=self._close_or_adopt(parent,"failed",principal=principal)
-            self._record_terminal(run_id,parent,receipt)
+            self._record_terminal(run_id,parent,receipt,ran=tally())
             raise
 
     async def run_scheduled(self, scheduler_principal: Principal, workbench_id: str, *, due_minute: int | None = None) -> dict[str, Any]:

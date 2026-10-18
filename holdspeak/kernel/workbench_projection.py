@@ -33,7 +33,7 @@ def _child(conn: Any, stage: Any, permit: Any) -> dict[str, Any]:
     now = utc_now_iso()
     if stage.kind == "workbench-item-output":
         artifact_id = str(p["artifact_id"])
-        conn.execute("UPDATE workbench_items SET status='done',result=?,result_egress_json=?,completed_at=?,last_modified=?,result_artifact_id=?,mint_attempted=1 WHERE id=?", (p["output"], json.dumps(p["egress"],sort_keys=True),now,now,artifact_id,str(p["item_id"])))
+        conn.execute("UPDATE workbench_items SET status='done',result=?,result_egress_json=?,completed_at=?,last_modified=?,result_artifact_id=?,mint_attempted=1,tokens_consumed=? WHERE id=?", (p["output"], json.dumps(p["egress"],sort_keys=True),now,now,artifact_id,int(p.get("tokens") or 0),str(p["item_id"])))
         conn.execute("INSERT OR IGNORE INTO artifacts(id,meeting_id,origin,artifact_type,title,body_markdown,structured_json,confidence,status,plugin_id,plugin_version,source_run_id,source_item_id,created_at,updated_at) VALUES(?,NULL,'run','workbench_output',?,?,?,0.0,'pending-review','workbench_run','1',?,?,?,?)", (artifact_id,p["artifact_title"],p["output"],json.dumps({"parent_operation_id":p["parent_operation_id"],"operation_id":stage.operation_id,"receipt_id":p["receipt_id"]},sort_keys=True),p["run_id"],p["item_id"],now,now))
     else:
         from ..workbench_memory import append_memory
@@ -53,7 +53,7 @@ def _run(conn: Any, stage: Any, permit: Any) -> dict[str, Any]:
     if row is None or receipt is None or str(receipt["outcome"]) != "succeeded":
         p["advanced"] = False; return p
     now = utc_now_iso()
-    conn.execute("UPDATE workbench_runs SET completed_at=?,items_attempted=?,items_completed=?,items_failed=?,mint_failures=?,egress_boundary=?,model=?,constitutional_context_revision=?,constitutional_context_hash=?,skills_injected_json=?,status='completed' WHERE id=?", (now,p["attempted"],p["completed"],p["failed"],p["mint_failures"],p["egress_boundary"],p["model"],p["context_revision"],p["context_hash"],json.dumps(p["skills"]),p["run_id"]))
+    conn.execute("UPDATE workbench_runs SET completed_at=?,items_attempted=?,items_completed=?,items_failed=?,mint_failures=?,egress_boundary=?,model=?,total_tokens=?,constitutional_context_revision=?,constitutional_context_hash=?,skills_injected_json=?,status='completed' WHERE id=?", (now,p["attempted"],p["completed"],p["failed"],p["mint_failures"],p["egress_boundary"],p["model"],int(p.get("total_tokens") or 0),p["context_revision"],p["context_hash"],json.dumps(p["skills"]),p["run_id"]))
     p.update({"receipt_id":str(receipt["receipt_id"]),"advanced":True})
     return p
 

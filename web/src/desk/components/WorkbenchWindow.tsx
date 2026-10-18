@@ -297,7 +297,8 @@ function ConfigPanel({
   const selectStartMode = (mode: "manual" | "schedule" | "event" | "idle") => {
     setStartModeTouched(true);
     setStartMode(mode);
-    if (mode !== "schedule" && detail.schedule_enabled) onToggleSchedule(false);
+    // A look at another start mode never changes the schedule. Only the
+    // Enabled switch writes schedule_enabled (recon 2026-10-17, step 19).
     if (mode !== "event" && activeAutomationCount > 0) {
       void write("PAUSE EVENT STARTS", async () => {
         await Promise.all(
@@ -606,9 +607,12 @@ function WorkbenchItemCard({
   onRemove,
   onCopy,
   write,
+  onRerun,
   restored = false,
 }: {
   item: WorkbenchItem;
+  /** Re-run: the item is queued again, then this starts its run. */
+  onRerun?: (itemId: string) => void;
   /** PHILO-13-02 — the item Restore just brought back: in view, marked. */
   restored?: boolean;
   expanded: boolean;
@@ -648,7 +652,11 @@ function WorkbenchItemCard({
     return result.ok;
   };
 
-  const rerunItem = () => void updateItem({ status: "pending", result: null, result_egress: null, tokens_consumed: 0, completed_at: null }, "RE-RUN ITEM");
+  // Re-run means run it now: queue the item, then start a run of that item.
+  const rerunItem = async () => {
+    const queued = await updateItem({ status: "pending", result: null, result_egress: null, tokens_consumed: 0, completed_at: null }, "RE-RUN ITEM");
+    if (queued) onRerun?.(item.id);
+  };
   const dismissItem = () => void updateItem({ status: "dismissed" }, "DISMISS ITEM");
 
   // The workspace keeps every edit, including an emptied instruction.
@@ -884,7 +892,7 @@ function WorkbenchItemCard({
               <Button variant="chrome"
                 type="button"
                 className="desk-chip"
-                onClick={rerunItem}
+                onClick={() => void rerunItem()}
               >
                 Re-run
               </Button>
@@ -1368,9 +1376,10 @@ export function WorkbenchWindow({
     });
   };
 
-  const triggerRun = async () => {
+  const triggerRun = async (itemIds?: string[]) => {
     clearRunTimeout();
-    const pendingCount = detail?.items.filter((i) => i.status === "pending").length || 0;
+    const pendingCount = itemIds?.length
+      || detail?.items.filter((i) => i.status === "pending").length || 0;
     dispatchRun({ type: "start_requested", total: pendingCount });
     const timeout = window.setTimeout(() => {
       if (runTimeoutRef.current !== timeout) return;
@@ -1384,7 +1393,7 @@ export function WorkbenchWindow({
     // "RUN FAILED · HTTP 409".
     const result = await write("RUN", async () => {
       try {
-        await triggerWorkbenchRun(workbenchId);
+        await triggerWorkbenchRun(workbenchId, itemIds);
         return "started" as const;
       } catch (cause) {
         if (!isNoEngineRefusal(cause)) throw cause;
@@ -1898,6 +1907,7 @@ export function WorkbenchWindow({
                   onRemove={handleRemove}
                   onCopy={(text) => void copy(text)}
                   write={write}
+                  onRerun={(itemId) => void triggerRun([itemId])}
                 />
               ))}
             </div>

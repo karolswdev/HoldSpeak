@@ -10,15 +10,20 @@ export function boundaryEgressLamp(
   boundary: string | null | undefined,
 ): EgressLamp {
   switch (boundary) {
+    // The route plans name local / mesh / cloud (inference_capabilities.py
+    // _BOUNDARIES); a run row carries that word, so read it too.
     case "same_device":
+    case "local":
       return { label: "LOCAL", tone: "ok" };
     case "private_network":
       return { label: "LAN", tone: "warn" };
     case "paired_device":
       return { label: "PAIRED", tone: "warn" };
     case "private_mesh":
+    case "mesh":
       return { label: "MESH", tone: "warn" };
     case "external_service":
+    case "cloud":
       return { label: "CLOUD", tone: "fail" };
     default:
       return { label: "NO MODEL", tone: "fail" };

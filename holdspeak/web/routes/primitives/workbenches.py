@@ -228,7 +228,9 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
     async def api_run_workbench(workbench_id: str, request: Request) -> Any:
         try:
             body = await _json_body(request) or {}
-            return JSONResponse({"run": await _svc().run(_principal(request), workbench_id, memory_enabled=bool(body.get("memory_enabled", True)) )})
+            raw_ids = body.get("item_ids")
+            item_ids = [str(item_id) for item_id in raw_ids if item_id] if isinstance(raw_ids, list) else None
+            return JSONResponse({"run": await _svc().run(_principal(request), workbench_id, memory_enabled=bool(body.get("memory_enabled", True)), item_ids=item_ids or None)})
         except NotFound:
             return _not_found("workbench", workbench_id)
         except ServiceError as exc:

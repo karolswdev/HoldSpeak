@@ -155,3 +155,92 @@ def test_a_claimed_item_is_refused_in_place(tmp_path: Path) -> None:
     assert row["parked"] == 0 and row["status"] == "claimed", row
     assert item in _listed(client, wb)
     assert _listed(client, wb, parked=True) == []
+
+
+# ── A0 "Tell the truth" (betterment/workbench/RECIPE.md, recon steps 14–17) ──
+
+def _refusing_engine_rig(tmp_path: Path, monkeypatch) -> tuple[Database, TestClient, str, list[str], dict[str, Any]]:
+    """Three items on the real routes and the real runner; only the provider
+    constructor is a stub. The stub refuses "Item 2" with its own words and
+    reports provider token counts the way MeetingIntel.last_usage does."""
+    from holdspeak.intel.engine import MeetingIntelError
+    from holdspeak.kernel.runtime import _configure
+
+    state: dict[str, Any] = {"calls": 0, "refuse": True}
+
+    class RefusingStub:
+        active_provider = "stub-provider"
+        active_model = "stub-model-7b"
+        last_usage: dict[str, int] = {}
+
+        def run_prompt(self, *, system_prompt, user_prompt, temperature=None, max_tokens=None):
+            state["calls"] += 1
+            if "[TASK]\nItem 2" in user_prompt and state["refuse"]:
+                self.last_usage = {}
+                raise MeetingIntelError("the stub refuses Item 2: no source is attached")
+            memory = user_prompt.startswith("Task: ")
+            self.last_usage = {"prompt_tokens": 3 if memory else 30, "completion_tokens": 2 if memory else 10,
+                               "total_tokens": 5 if memory else 40}
+            return f"result {state['calls']}"
+
+    stub = RefusingStub()
+    monkeypatch.setattr("holdspeak.intel.providers.build_meeting_intel_for_profile", lambda **_: stub)
+    db = Database(tmp_path / "workbench.db")
+    monkeypatch.setattr("holdspeak.db.get_database", lambda *a, **k: db)
+    profile = db.profiles.upsert(profile_id="stub-profile", name="Stub", kind="openAICompatible",
+                                 base_url="http://stub", model="stub-model-7b")
+    recipe = db.recipes.upsert(recipe_id="stub-recipe", name="Stub agent", system_prompt="SYS", user_template="{input}")
+    wb = db.workbenches.upsert(workbench_id="wb-truth", name="Truth bench", recipe_id=recipe.id, profile_id=profile.id)
+    items = [db.workbench_items.upsert(item_id=f"item-{n}", workbench_id=wb.id, title=f"Item {n}", body=f"input {n}").id
+             for n in (1, 2, 3)]
+    _configure(db)
+    return db, _client(db), wb.id, items, state
+
+
+def test_a_run_with_one_refused_item_records_two_of_three_the_model_and_the_tokens(tmp_path: Path, monkeypatch) -> None:
+    """Recon steps 14–16: the record said `0/0 done · NO MODEL`, tokens 0, a
+    run with a failure was green, and the failed item said `Error: failed`."""
+    db, client, wb, items, _ = _refusing_engine_rig(tmp_path, monkeypatch)
+
+    ran = client.post(f"/api/workbenches/{wb}/run", json={})
+    assert ran.status_code == 200, ran.text
+
+    runs = client.get(f"/api/workbenches/{wb}/runs").json()["runs"]
+    assert len(runs) == 1
+    run = runs[0]
+    assert (run["items_completed"], run["items_attempted"], run["items_failed"]) == (2, 3, 1), run
+    assert run["status"] == "completed_with_failures", run
+    assert run["model"] == "stub-model-7b", run
+    assert run["egress_boundary"] == "cloud", run  # http://stub is not a private address
+    # Two items (40 each) and their two memory notes (5 each): the provider's own counts.
+    assert run["total_tokens"] == 90, run
+    assert client.get(f"/api/workbenches/{wb}").json()["workbench"]["last_run"]["status"] == "completed_with_failures"
+
+    failed = db.workbench_items.get(items[1])
+    assert failed.status == "failed"
+    assert failed.result == "Error: the stub refuses Item 2: no source is attached"
+    assert db.workbench_items.get(items[0]).tokens_consumed == 40
+
+
+def test_item_rerun_runs_only_that_item_and_gives_a_new_result(tmp_path: Path, monkeypatch) -> None:
+    """Recon step 17: Re-run only queued the item; nothing ran until the top Run.
+    The face's Re-run is now the PUT it always sent, then POST /run with the
+    item's id (WorkbenchWindow.tsx rerunItem → triggerRun([item.id]))."""
+    db, client, wb, items, state = _refusing_engine_rig(tmp_path, monkeypatch)
+    assert client.post(f"/api/workbenches/{wb}/run", json={}).status_code == 200
+    assert db.workbench_items.get(items[1]).status == "failed"
+
+    state["refuse"] = False
+    queued = client.put(f"/api/workbenches/{wb}/items/{items[1]}", json={
+        "status": "pending", "result": None, "result_egress": None, "tokens_consumed": 0, "completed_at": None})
+    assert queued.status_code == 200, queued.text
+    db.workbench_items.upsert(item_id="item-4", workbench_id=wb, title="Item 4", body="input 4")
+    rerun = client.post(f"/api/workbenches/{wb}/run", json={"item_ids": [items[1]]})
+    assert rerun.status_code == 200, rerun.text
+
+    again = db.workbench_items.get(items[1])
+    assert again.status == "done" and again.result.startswith("result "), again
+    # Only that item ran: the other pending item still waits.
+    assert db.workbench_items.get("item-4").status == "pending"
+    newest = client.get(f"/api/workbenches/{wb}/runs").json()["runs"][0]
+    assert (newest["items_completed"], newest["items_attempted"], newest["status"]) == (1, 1, "completed"), newest

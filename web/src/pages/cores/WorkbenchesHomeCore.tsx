@@ -189,7 +189,7 @@ export function WorkbenchesHomeCore({ hero }: CoreProps) {
                   }
                   cells={
                     <StateChip
-                      state={run.status === "completed" ? "success" : run.status === "running" ? "working" : run.status === "failed" ? "failure" : "idle"}
+                      state={run.status === "completed" ? "success" : run.status === "completed_with_failures" ? "warning" : run.status === "running" ? "working" : run.status === "failed" ? "failure" : "idle"}
                       label={run.status ? run.status.replaceAll("_", " ").replace(/^./, (letter) => letter.toUpperCase()) : "Unknown"}
                       wrap
                     />
