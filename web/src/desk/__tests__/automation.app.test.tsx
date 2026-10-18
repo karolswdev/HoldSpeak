@@ -25,6 +25,15 @@ import withClaudeRan from "./fixtures/automation-hub/with-claude-ran.json";
 // detection with Claude Code found, then after its Add.
 import engines from "../../features/runson/__tests__/fixtures/engines.recorded.json";
 import used from "./fixtures/automation-hub/used.json";
+import aboutNone from "./fixtures/automation-hub/about-none.json";
+import aboutPlatform from "./fixtures/automation-hub/about-platform.json";
+import aboutPlatformRan from "./fixtures/automation-hub/about-platform-ran.json";
+import aboutPicked from "./fixtures/automation-hub/about-picked.json";
+import aboutEvent from "./fixtures/automation-hub/about-event.json";
+import aboutDesk from "./fixtures/automation-hub/about-desk.json";
+import { EMPTY_ITEMS, fromWireDirectory, fromWireNote } from "../api";
+import { useDropHand } from "../hand";
+import type { Directory, Note } from "../../lib/primitives";
 import { openPrimitive, openSurfaceOr } from "../shell";
 import { seatMounted, seatUnmounted } from "../deleteSeat";
 import { OBJECT_DELETE_REQUEST } from "../verbRegistry";
@@ -38,6 +47,7 @@ vi.mock("../shell", async (original) => ({
 type Step = { workbench_id: string; gets: Record<string, unknown> };
 const WB = (empty as Step).workbench_id;
 const DETAIL = `/api/workbenches/${WB}`;
+const DETAIL_OF = (step: unknown) => `/api/workbenches/${(step as Step).workbench_id}`;
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -51,6 +61,8 @@ const hub = {
   /** A4: the step a When press or a With write moves to. */
   afterWhen: [] as Step[],
   afterEngine: [] as Step[],
+  /** A5: the step an About write (PUT sources) moves to. */
+  afterPut: [] as Step[],
   /** The recorded detection answers, before and after Add. */
   detect: [] as unknown[],
 };
@@ -94,7 +106,13 @@ function hubFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Respons
     return Promise.resolve(json({ success: true }));
   }
   if (method === "POST" && url.includes("/results/")) return Promise.resolve(json({ result: {} }));
-  if (method === "PUT" && url === DETAIL) return Promise.resolve(json({ workbench: {} }));
+  if (method === "PUT" && url === detail && body && "sources" in body) {
+    const next = hub.afterPut.shift();
+    if (!next) throw new Error("an unrecorded About");
+    hub.step = next;
+    return Promise.resolve(json({ workbench: {} }));
+  }
+  if (method === "PUT" && url === detail) return Promise.resolve(json({ workbench: {} }));
   const path = url.split("?")[0];
   if (method === "GET" && path === `${detail}/memory` && !(path in hub.step.gets)) return Promise.resolve(json({ entries: [] }));
   if (method === "GET" && path in hub.step.gets) return Promise.resolve(json(structuredClone(hub.step.gets[path])));
@@ -109,6 +127,7 @@ beforeEach(() => {
   hub.afterWhen = [];
   hub.afterEngine = [];
   hub.detect = [];
+  hub.afterPut = [];
   vi.stubGlobal("fetch", vi.fn(hubFetch));
   useDesk.setState({ workbenchWindows: [{ id: WB, origin: null }] });
 });
@@ -168,8 +187,8 @@ describe("the sentence on top", () => {
     await waitFor(() => expect(hub.calls).toContainEqual({
       method: "PUT", url: DETAIL, body: { instruction: "Draft my team update: what shipped and what slipped." },
     }));
-    // About and Put it in show their value: no dead press (their editors are A5, A6).
-    for (const name of ["about", "put"]) expect(within(line(name)).queryByRole("button")).toBeNull();
+    // Put it in shows its value: no dead press (its editor is A6).
+    expect(within(line("put")).queryByRole("button")).toBeNull();
   });
 });
 
@@ -434,5 +453,92 @@ describe("Looked at, Wrote, Prepared", () => {
   it("draws nothing for a result whose agent touched nothing", async () => {
     await open(one as Step);
     expect(within(newest()).queryByTestId("automation-used")).toBeNull();
+  });
+});
+
+/* ── A5: About ──────────────────────────────────────────────────────────
+ * The picker's desk is the hub's own recorded lists (/api/notes,
+ * /api/directories; about-desk.json), read into the store the way loadAll
+ * reads them. */
+function seedDesk() {
+  const gets = (aboutDesk as Step).gets as Record<string, { notes?: unknown[]; directories?: unknown[] }>;
+  useDesk.setState({ items: {
+    ...EMPTY_ITEMS,
+    note: (gets["/api/notes"].notes ?? []).map(fromWireNote).filter((n): n is Note => n !== null),
+    directory: (gets["/api/directories"].directories ?? []).map(fromWireDirectory).filter((d): d is Directory => d !== null),
+  } });
+}
+
+describe("About (A5)", () => {
+  it("adds Platform sync by typing \"plat\" in 2 presses; the chip is named and the result cites it", async () => {
+    seedDesk();
+    await open(aboutNone as Step);
+    expect(line("about")).toHaveTextContent("What is it about?");
+    let presses = 0;
+    fireEvent.click(within(line("about")).getByRole("button")); presses += 1;
+    const well = await screen.findByRole("textbox", { name: "Find by name" });
+    fireEvent.change(well, { target: { value: "plat" } });
+    hub.afterPut = [aboutPlatform as Step];
+    fireEvent.click(screen.getByRole("button", { name: "Add Platform sync" })); presses += 1;
+    await waitFor(() => expect(hub.calls).toContainEqual({ method: "PUT", url: DETAIL_OF(aboutNone), body: { sources: ["note:note-sync"] } }));
+    // The chip on the line and in the editor (with its Remove).
+    const chips = await within(line("about")).findAllByTestId("automation-about-chips");
+    for (const chip of chips) expect(chip).toHaveTextContent("Platform sync");
+    expect(presses).toBe(2);
+    // The typed text is never deleted: it stays for the next pick.
+    expect(screen.getByRole("textbox", { name: "Find by name" })).toHaveValue("plat");
+    expect(screen.getByRole("button", { name: "Platform sync (added)" })).toBeDisabled();
+
+    hub.afterRun = [aboutPlatformRan as Step];
+    fireEvent.click(screen.getByTestId("automation-run-now"));
+    await waitFor(() => expect(within(newest()).getByTestId("automation-reading")).toHaveTextContent("Platform sync"));
+  });
+
+  it("finds drawers and the relative sets by name, and Remove takes a chip off", async () => {
+    seedDesk();
+    await open(aboutPlatform as Step);
+    fireEvent.click(within(line("about")).getByRole("button"));
+    // An empty well offers the relative sets.
+    expect(await screen.findByRole("button", { name: "Add This week's meetings" })).toBeInTheDocument();
+    fireEvent.change(screen.getByRole("textbox", { name: "Find by name" }), { target: { value: "work" } });
+    expect(screen.getByRole("button", { name: "Add Notes in Work" })).toBeInTheDocument();
+    fireEvent.change(screen.getByRole("textbox", { name: "Find by name" }), { target: { value: "zzqx" } });
+    expect(screen.getByText("Nothing on this desk has that name")).toBeInTheDocument();
+    hub.afterPut = [aboutNone as Step];
+    fireEvent.click(screen.getByRole("button", { name: "Remove Platform sync" }));
+    await waitFor(() => expect(hub.calls).toContainEqual({ method: "PUT", url: DETAIL_OF(aboutPlatform), body: { sources: [] } }));
+  });
+
+  it("names every kind of pick (a set, a drawer, a person) and never shows a ref", async () => {
+    await open(aboutPicked as Step);
+    const about = line("about");
+    for (const name of ["Platform sync", "This week's meetings", "Notes in Work", "Mira Chen", "Missing source"]) {
+      expect(about).toHaveTextContent(name);
+    }
+    expect(about.textContent).not.toMatch(/person:|zone:|meetings:this_week|rel-/);
+  });
+
+  it("a desk object dropped on the window becomes a chip", async () => {
+    await open(aboutNone as Step);
+    const body = screen.getByTestId("automation-window");
+    act(() => useDropHand.getState().startDrag({
+      origin: { kind: "note", id: "note-sync", title: "Platform sync" },
+      source: { kind: "note", id: "note-sync" },
+      host: "screen",
+      from: { x: 0, y: 0 },
+    }));
+    fireEvent.dragOver(body);
+    expect(body).toHaveAttribute("data-drop-ready");
+    hub.afterPut = [aboutPlatform as Step];
+    fireEvent.drop(body);
+    await waitFor(() => expect(hub.calls).toContainEqual({ method: "PUT", url: DETAIL_OF(aboutNone), body: { sources: ["note:note-sync"] } }));
+    expect(await within(line("about")).findByText("Platform sync")).toBeInTheDocument();
+    expect(useDropHand.getState().drag).toBeNull();
+  });
+
+  it("an event start reads the thing that happened, and About is not edited", async () => {
+    await open(aboutEvent as Step);
+    expect(line("about")).toHaveTextContent("the review request that came in");
+    expect(within(line("about")).queryByRole("button")).toBeNull();
   });
 });

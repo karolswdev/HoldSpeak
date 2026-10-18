@@ -1,0 +1,89 @@
+{
+ "_source": "The hub's own answers, captured by tests/integration/test_desk_workbenches.py (TestClient, isolated database). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit it.",
+ "workbench_id": "wb-about",
+ "gets": {
+  "/api/notes": {
+   "notes": [
+    {
+     "id": "note_result_b871cf7413aa3657",
+     "title": "Friday team update, Sun 18 Oct 2026",
+     "body_markdown": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.\n\n---\nFrom the automation [Friday team update](/?open=workbench:wb-about).",
+     "tags": [],
+     "created_at": "2026-10-18T15:57:31Z",
+     "updated_at": "2026-10-18T15:57:31Z",
+     "last_modified": "2026-10-18T15:57:31Z",
+     "deleted": false
+    },
+    {
+     "id": "note_result_cf29e25b334b7437",
+     "title": "Friday team update, Sun 18 Oct 2026",
+     "body_markdown": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.\n\n---\nFrom the automation [Friday team update](/?open=workbench:wb-about).",
+     "tags": [],
+     "created_at": "2026-10-18T15:57:31Z",
+     "updated_at": "2026-10-18T15:57:31Z",
+     "last_modified": "2026-10-18T15:57:31Z",
+     "deleted": false
+    },
+    {
+     "id": "note-sync",
+     "title": "Platform sync",
+     "body_markdown": "The cutover moves to Thursday.",
+     "tags": [],
+     "created_at": "2026-10-18T15:57:30Z",
+     "updated_at": "2026-10-18T15:57:30Z",
+     "last_modified": "2026-10-18T15:57:30Z",
+     "deleted": false
+    },
+    {
+     "id": "note-hiring",
+     "title": "Hiring",
+     "body_markdown": "Two loops are booked for next week.",
+     "tags": [],
+     "created_at": "2026-10-18T15:57:30Z",
+     "updated_at": "2026-10-18T15:57:30Z",
+     "last_modified": "2026-10-18T15:57:30Z",
+     "deleted": false
+    },
+    {
+     "id": "note-roadmap",
+     "title": "Roadmap review",
+     "body_markdown": "Q4 scope is frozen.",
+     "tags": [],
+     "created_at": "2026-10-18T15:57:30Z",
+     "updated_at": "2026-10-18T15:57:30Z",
+     "last_modified": "2026-10-18T15:57:30Z",
+     "deleted": false
+    }
+   ]
+  },
+  "/api/directories": {
+   "directories": [
+    {
+     "id": "hs-seed-inbox",
+     "name": "Inbox",
+     "name_normalized": "inbox",
+     "parent_id": null,
+     "created_at": "2026-10-18T15:57:30Z",
+     "last_modified": "2026-10-18T15:57:30Z",
+     "deleted": false,
+     "member_ids": [
+      "note:note_result_b871cf7413aa3657",
+      "note:note_result_cf29e25b334b7437"
+     ]
+    },
+    {
+     "id": "dir-work",
+     "name": "Work",
+     "name_normalized": "work",
+     "parent_id": null,
+     "created_at": "2026-10-18T15:57:30Z",
+     "last_modified": "2026-10-18T15:57:30Z",
+     "deleted": false,
+     "member_ids": [
+      "note:note-roadmap"
+     ]
+    }
+   ]
+  }
+ }
+}

@@ -45,6 +45,8 @@ export interface AutomationEventChoice {
   words: string;
   /** What the event needs from him (a GitHub repository). */
   needs: string;
+  /** Betterment A5: the thing that happened, as the About line reads it. */
+  subject?: string;
   event_pattern: string;
 }
 
@@ -119,6 +121,16 @@ export function whenWords(detail: AutomationDetail): string {
     .map((e) => words.get(e.event_pattern ?? "") ?? e.name).filter(Boolean);
   const parts = [schedule, ...events].filter(Boolean) as string[];
   return parts.length ? parts.join(" · ") : "Only when I press Run now";
+}
+
+/** Betterment A5: an event start's About line, the thing that happened
+ *  ("the review request that came in"); null when no event starts it. */
+export function eventSubjectWords(detail: AutomationDetail): string | null {
+  const starts = detail.event_starts ?? [];
+  if (!starts.length) return null;
+  const subjects = new Map((detail.when_events ?? []).map((c) => [c.event_pattern, c.subject]));
+  const words = starts.map((e) => subjects.get(e.event_pattern ?? "") || "the event that happened");
+  return [...new Set(words)].join(" · ");
 }
 
 /** On means a start is armed: the schedule, or an event start. */

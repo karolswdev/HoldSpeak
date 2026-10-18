@@ -26,6 +26,13 @@ EVENT_WORDS: dict[str, str] = {
     "github-checks-failed": "A pull request's checks fail",
     "github-pr-merged": "A pull request is merged",
 }
+#: Betterment A5: what an event start's About line reads (the thing that
+#: happened is the source; the line is not edited).
+EVENT_SUBJECTS: dict[str, str] = {
+    "github-review-requested": "the review request that came in",
+    "github-checks-failed": "the pull request whose checks failed",
+    "github-pr-merged": "the pull request that was merged",
+}
 
 EVERY = ("day", "weekday", "week", "hour")
 _TIME = re.compile(r"^([01]?\d|2[0-3]):([0-5]\d)$")
@@ -41,6 +48,7 @@ def event_choices() -> list[dict[str, Any]]:
         if not words or not preset.get("adapter_ready") or preset.get("connector_id") != "gh":
             continue
         out.append({"id": preset["id"], "words": words, "needs": "repository",
+                    "subject": EVENT_SUBJECTS.get(preset["id"], "the event that happened"),
                     "event_pattern": preset["event_pattern"]})
     return out
 

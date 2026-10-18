@@ -20,12 +20,12 @@
     "schedule_enabled": false,
     "schedule_revision": 1,
     "item_order": [],
-    "created_at": "2026-10-18T15:01:57Z",
-    "last_modified": "2026-10-18T15:01:57Z",
+    "created_at": "2026-10-18T15:57:30Z",
+    "last_modified": "2026-10-18T15:57:30Z",
     "deleted": false,
     "items": [
      {
-      "id": "wbocc_1963e241670746ba",
+      "id": "wbocc_193daa13e3884916",
       "workbench_id": "wb-bare",
       "title": "Meeting follow-ups, Sun 18 Oct 2026",
       "body": "Write my weekly update from these notes.",
@@ -41,27 +41,27 @@
        "occurrence": true
       },
       "result": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.",
-      "result_artifact_id": "artifact_4d74a338c88c",
+      "result_artifact_id": "artifact_cd0fc33ae34b",
       "result_egress": {
        "boundary": "cloud",
        "model": "agent-claude"
       },
       "mint_attempted": true,
       "tokens_consumed": 40,
-      "created_at": "2026-10-18T15:01:57Z",
-      "last_modified": "2026-10-18T15:01:57.930953+00:00",
-      "claimed_at": "2026-10-18T15:01:57.837959+00:00",
-      "completed_at": "2026-10-18T15:01:57.930953+00:00",
+      "created_at": "2026-10-18T15:57:30Z",
+      "last_modified": "2026-10-18T15:57:30.705256+00:00",
+      "claimed_at": "2026-10-18T15:57:30.610691+00:00",
+      "completed_at": "2026-10-18T15:57:30.705256+00:00",
       "parked": false
      }
     ],
     "item_count": 1,
     "pending_count": 0,
     "last_run": {
-     "id": "wbrun_f0eee4eb85f4",
+     "id": "wbrun_5fe50db97c80",
      "workbench_id": "wb-bare",
-     "started_at": "2026-10-18T15:01:57.837710+00:00",
-     "completed_at": "2026-10-18T15:01:58.020427+00:00",
+     "started_at": "2026-10-18T15:57:30.610391+00:00",
+     "completed_at": "2026-10-18T15:57:30.798086+00:00",
      "items_attempted": 1,
      "items_completed": 1,
      "items_failed": 0,
@@ -78,18 +78,18 @@
     "instruction_from": "automation",
     "results": [
      {
-      "item_id": "wbocc_1963e241670746ba",
+      "item_id": "wbocc_193daa13e3884916",
       "title": "Meeting follow-ups, Sun 18 Oct 2026",
       "status": "done",
-      "artifact_id": "artifact_4d74a338c88c",
+      "artifact_id": "artifact_cd0fc33ae34b",
       "new": true,
       "error": null,
       "text": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.",
-      "completed_at": "2026-10-18T15:01:57.930953+00:00",
+      "completed_at": "2026-10-18T15:57:30.705256+00:00",
       "seconds": 0,
       "model": "stub-model-7b",
       "boundary": "cloud",
-      "note_id": "note_result_c0aaa758ee59794c",
+      "note_id": "note_result_a9aab08d1477c694",
       "cost_usd": null,
       "used": null
      }
@@ -116,18 +116,21 @@
       "id": "github-review-requested",
       "words": "GitHub asks me to review",
       "needs": "repository",
+      "subject": "the review request that came in",
       "event_pattern": "github.pr.review_requested"
      },
      {
       "id": "github-checks-failed",
       "words": "A pull request's checks fail",
       "needs": "repository",
+      "subject": "the pull request whose checks failed",
       "event_pattern": "github.pr.checks_changed"
      },
      {
       "id": "github-pr-merged",
       "words": "A pull request is merged",
       "needs": "repository",
+      "subject": "the pull request that was merged",
       "event_pattern": "github.pr.merged"
      }
     ],

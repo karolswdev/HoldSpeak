@@ -43,6 +43,16 @@ PLAIN_SYSTEM_PROMPT = (
     "Answer in Markdown."
 )
 
+#: Betterment A5: the relative sets About offers. Each one is a set of
+#: sources that a run reads at the time it starts.
+SET_SOURCES: dict[str, str] = {
+    "meetings:this_week": "This week's meetings",
+    "notes:this_week": "This week's notes",
+}
+#: A person (a People relationship). A run reads the name only: the People
+#: record stays on this device (an engine with the desk's tools may read it).
+PERSON_PREFIX = "person:"
+
 
 # ── configuration ──────────────────────────────────────────────────────
 
@@ -59,10 +69,16 @@ def clean_sources(value: Any) -> list[str]:
     for raw in value:
         if not isinstance(raw, str) or not raw.strip():
             raise ValidationError("Each source must be a ref, for example note:<id>")
-        try:
-            ref = qualified_ref(raw.strip())
-        except ValueError as exc:
-            raise ValidationError(f"Unknown source: {raw.strip()} ({exc})") from None
+        text = raw.strip()
+        # Betterment A5: a relative set and a person are About sources too.
+        # They are expanded when a run starts (``expand_sources``).
+        if text in SET_SOURCES or (text.startswith(PERSON_PREFIX) and text[len(PERSON_PREFIX):].strip()):
+            ref = text
+        else:
+            try:
+                ref = qualified_ref(text)
+            except ValueError as exc:
+                raise ValidationError(f"Unknown source: {text} ({exc})") from None
         if ref not in refs:
             refs.append(ref)
     if len(refs) > GROUNDING_MAX_REFS:
@@ -168,6 +184,9 @@ def mint_occurrence(
     if existing is not None:
         return existing
     body = str(wb.instruction or "").strip()
+    refs, about = expand_sources(db, sources_of(wb))
+    if about:
+        body = f"{body}\n\n[ABOUT]\n" + "\n".join(about)
     if event is not None:
         body = f"{body}\n\n{_event_block(event)}"
     return db.workbench_items.upsert(
@@ -175,9 +194,87 @@ def mint_occurrence(
         workbench_id=wb.id,
         title=str(title or occurrence_title(wb)),
         body=body,
-        grounding={"refs": sources_of(wb)} if sources_of(wb) else {},
+        grounding={"refs": refs} if refs else {},
         context={**(context or {}), OCCURRENCE: True},
     )
+
+
+def _week_start(now: Optional[datetime] = None) -> datetime:
+    """Monday 00:00 of this week, on the hub's own clock."""
+    from datetime import timedelta
+
+    today = (now or local_now()).astimezone()
+    return (today - timedelta(days=today.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+
+
+def _set_members(db: Any, ref: str, now: Optional[datetime] = None) -> list[str]:
+    """The sources a relative set holds now, newest first."""
+    from ..timestamps import parse_stamp
+
+    since = _week_start(now)
+    if ref == "meetings:this_week":
+        query = "SELECT id, started_at AS at FROM meetings WHERE parked = 0"
+        kind = "meeting"
+    elif ref == "notes:this_week":
+        # An automation's own results (Inbox notes) are not its sources.
+        query = ("SELECT id, COALESCE(NULLIF(updated_at, ''), created_at) AS at FROM notes "
+                 "WHERE deleted = 0 AND id NOT LIKE 'note\\_result\\_%' ESCAPE '\\'")
+        kind = "note"
+    else:
+        return []
+    with db._connection() as conn:
+        rows = conn.execute(query).fetchall()
+    dated = []
+    for row in rows:
+        at = parse_stamp(row["at"])
+        if at is not None and at >= since:
+            dated.append((at, f"{kind}:{row['id']}"))
+    return [ref for _at, ref in sorted(dated, reverse=True)]
+
+
+def _people_names() -> dict[str, str]:
+    """Each person's name (the owner's People list); empty when People is not
+    set up on this device."""
+    try:
+        from ..mcp.families.people import build_people_service
+        from ..principals import Principal, PrincipalKind
+
+        rows = build_people_service().list_relationships(
+            Principal(PrincipalKind.OWNER, "local-automation-conductor"))
+    except Exception as exc:  # People not set up: a person is named missing
+        log.debug("automation people names: %s", exc)
+        return {}
+    return {str(row.get("id") or ""): str(row.get("display_name") or "") for row in rows}
+
+
+def expand_sources(
+    db: Any, refs: list[str], now: Optional[datetime] = None,
+) -> tuple[list[str], list[str]]:
+    """The run's grounding refs, and the lines it adds to the instruction.
+
+    A relative set becomes the sources it holds now (Friday's run reads the
+    meetings since Monday). A person adds a line with the name. A set that
+    holds nothing says so, so the engine does not guess.
+    """
+    from ..grounding import GROUNDING_MAX_REFS
+
+    grounding: list[str] = []
+    about: list[str] = []
+    people: Optional[dict[str, str]] = None
+    for ref in refs:
+        if ref in SET_SOURCES:
+            members = _set_members(db, ref, now)
+            if not members:
+                about.append(f"{SET_SOURCES[ref]}: none yet.")
+            grounding.extend(m for m in members if m not in grounding)
+        elif ref.startswith(PERSON_PREFIX):
+            people = _people_names() if people is None else people
+            name = people.get(ref[len(PERSON_PREFIX):], "")
+            if name:
+                about.append(f"Person: {name}")
+        elif ref not in grounding:
+            grounding.append(ref)
+    return grounding[:GROUNDING_MAX_REFS], about
 
 
 def occurrence_id(workbench_id: str, key: str) -> str:
@@ -368,8 +465,23 @@ def source_names(db: Any, refs: list[str]) -> list[dict[str, Any]]:
     from ..grounding import _hydrate_qualified
 
     named: list[dict[str, Any]] = []
+    people: Optional[dict[str, str]] = None
     for ref in refs:
         title = ""
+        # Betterment A5: a relative set, a person and a drawer read as words.
+        if ref in SET_SOURCES:
+            named.append({"ref": ref, "kind": "set", "label": SET_SOURCES[ref], "missing": False})
+            continue
+        if ref.startswith(PERSON_PREFIX):
+            people = _people_names() if people is None else people
+            title = people.get(ref[len(PERSON_PREFIX):], "")
+            named.append({"ref": ref, "kind": "person", "label": title, "missing": not title})
+            continue
+        if ref.startswith("zone:"):
+            zone = db.directories.get(ref.split(":", 1)[1])
+            title = f"Notes in {zone.name}" if zone is not None and zone.name else ""
+            named.append({"ref": ref, "kind": "zone", "label": title, "missing": not title})
+            continue
         try:
             blocks, unknown = _hydrate_qualified(db, ref, "summary", set())
             if blocks and not unknown:

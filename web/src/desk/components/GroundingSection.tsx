@@ -20,6 +20,7 @@ import {
   type GroundingSelection,
 } from "../grounding";
 import { CheckGadget, FoldGadget, LedMeter } from "../surface/gadgets";
+import { AboutPicker, type AboutCandidate } from "./about/AboutPicker";
 
 const fmt = (n: number): string =>
   n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
@@ -69,6 +70,23 @@ export function GroundingSection(props: {
   const draggingObject = useDesk(
     (s) => Boolean(s.draggingId) && !String(s.draggingId).startsWith("zone:"),
   );
+
+  // Betterment A5: the one About picker finds these same rows by name
+  // (Automations' About uses it too). A pick is the row's own toggle.
+  const findable: AboutCandidate[] = [
+    ...meetings.map((m) => ({ ref: `meeting:${m.id}`, kind: "meeting", label: m.title })),
+    ...resources.map((r) => ({ ref: r.ref, kind: r.kind, label: r.title })),
+  ];
+  const pickedRefs = [
+    ...selection.meetings.map((m) => `meeting:${m.id}`),
+    ...(selection.resources || []).map((r) => r.ref),
+  ];
+  const pickByName = (pick: AboutCandidate) => {
+    const meeting = meetings.find((m) => `meeting:${m.id}` === pick.ref);
+    if (meeting) { void toggleMeeting(meeting); return; }
+    const resource = resources.find((r) => r.ref === pick.ref);
+    if (resource) void toggleResource(resource);
+  };
 
   const used = groundingTokens(selection);
   const over = used > limitTokens;
@@ -199,6 +217,9 @@ export function GroundingSection(props: {
       >
         {open && (
         <div className="desk-ground-body">
+          {findable.length > 0 && (
+            <AboutPicker candidates={findable} picked={pickedRefs} onPick={pickByName} busy={loading !== null} />
+          )}
           {meter && !groundingIsEmpty(selection) && (
             <LedMeter label="CTX" value={frac} />
           )}

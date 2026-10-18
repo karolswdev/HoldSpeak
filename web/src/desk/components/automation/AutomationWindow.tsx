@@ -8,13 +8,15 @@
  * default, with Forget on each lesson.
  *
  * Do edits in place (a text box with the mic). A4: When and With edit in
- * place too (WhenEditor, WithEditor). About and Put it in show their value;
- * their editors land in A5 and A6.
+ * place too (WhenEditor, WithEditor). A5: About edits in place (the one
+ * About picker, by name), and a desk object dropped on the window becomes
+ * a chip; for an event start, About reads the thing that happened. Put it
+ * in shows its value; its editor lands in A6.
  *
  * The parked queue view (WorkbenchWindow) stays reachable for an old queue
  * automation through RAW in the title strip. */
 import "./automation.css";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type DragEvent } from "react";
 import { useDesk } from "../../store";
 import {
   fetchWorkbenchDetail,
@@ -49,9 +51,12 @@ import { WORKBENCH_RUN_FRAME_TYPES } from "../workbench/runLifecycle";
 import { SentenceLine } from "./SentenceLine";
 import { WhenEditor } from "./WhenEditor";
 import { WithEditor } from "./WithEditor";
+import { AboutChips, AboutEditor } from "./AboutEditor";
+import { useDropHand } from "../../hand";
 import { ResultBody, ResultCard, ResultHead } from "./ResultCard";
 import {
   engineWords,
+  eventSubjectWords,
   failureWords,
   hasStarts,
   isOldQueue,
@@ -69,6 +74,12 @@ import {
 
 /** The window opens large enough for the sentence and the newest result
  *  (RECIPE A3: at least 880 x 640 at 1440). */
+/** What a drop on the window can add to About (the hand's kinds that are
+ *  desk sources; an issue is not one). */
+const ABOUT_DROP_KINDS: ReadonlySet<string> = new Set([
+  "note", "meeting", "artifact", "decision", "decision_record", "action", "project_item",
+]);
+
 export const AUTOMATION_WINDOW_SIZE = { w: 920, h: 680 } as const;
 
 function DoEditor({
@@ -329,6 +340,45 @@ export function AutomationWindow({
     await load();
   };
 
+  // A5: About saves each pick at once (a chip added or removed).
+  const [aboutSaving, setAboutSaving] = useState(false);
+  const saveSources = async (sources: string[]) => {
+    setAboutSaving(true);
+    setSaveError(null);
+    try {
+      await updateWorkbenchField(workbenchId, { sources });
+    } catch (error) {
+      setSaveError(readableError(error));
+    } finally {
+      setAboutSaving(false);
+    }
+    await load();
+  };
+
+  // A5: a desk object dropped on the window (a floor or drawer icon's drag)
+  // becomes an About chip. Anything else is not taken.
+  const [dropReady, setDropReady] = useState(false);
+  const droppable = () => {
+    const drag = useDropHand.getState().drag;
+    return drag && ABOUT_DROP_KINDS.has(drag.origin.kind) ? drag : null;
+  };
+  const onDragOver = (event: DragEvent) => {
+    if (!detail || eventSubjectWords(detail) || !droppable()) return;
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+    if (!dropReady) setDropReady(true);
+  };
+  const onDrop = (event: DragEvent) => {
+    const drag = droppable();
+    setDropReady(false);
+    if (!detail || !drag || eventSubjectWords(detail)) return;
+    event.preventDefault();
+    useDropHand.getState().endDrag();
+    const ref = `${drag.origin.kind}:${drag.origin.id}`;
+    const refs = (detail.sources_shown ?? []).map((source) => source.ref);
+    if (!refs.includes(ref)) void saveSources([...refs, ref]);
+  };
+
   const toggle = (line: string) => { setSaveError(null); setEditing(editing === line ? null : line); };
 
   const forget = async (index: number, entry: MemoryEntry) => {
@@ -352,6 +402,7 @@ export function AutomationWindow({
   const name = detail?.name || "Automation";
   const doText = detail?.instruction_shown ?? "";
   const sources = detail?.sources_shown ?? [];
+  const happened = detail ? eventSubjectWords(detail) : null;
 
   return (
     <DeskWindowFrame
@@ -391,7 +442,13 @@ export function AutomationWindow({
       onClose={() => useDesk.getState().closeWorkbenchWindow(workbenchId)}
       className="desk-pullout automation-window"
     >
-      <div className="desk-surface-body automation-body" data-testid="automation-window">
+      <div className="desk-surface-body automation-body" data-testid="automation-window"
+        data-drop-ready={dropReady || undefined}
+        onDragOver={onDragOver}
+        onDragLeave={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDropReady(false);
+        }}
+        onDrop={onDrop}>
         {readError && !detail ? <SurfaceState error={readError} onRetry={() => void load()} /> : null}
         {!detail && !readError ? <SurfaceState loading /> : null}
         {detail ? (
@@ -423,20 +480,21 @@ export function AutomationWindow({
               >
                 {doText || "What should it do?"}
               </SentenceLine>
-              <SentenceLine name="about" label="About">
-                {sources.length ? (
-                  <span className="automation-chips">
-                    {sources.map((source) => (
-                      <span key={source.ref} className="surface-token" data-chip=""
-                        data-tone={source.missing ? "warn" : undefined}>
-                        {source.missing ? "Missing source" : source.label}
-                      </span>
-                    ))}
-                  </span>
-                ) : (
-                  "Nothing chosen"
-                )}
-              </SentenceLine>
+              {happened ? (
+                <SentenceLine name="about" label="About">{happened}</SentenceLine>
+              ) : (
+                <SentenceLine
+                  name="about"
+                  label="About"
+                  blank={!sources.length}
+                  open={editing === "about"}
+                  onPress={() => toggle("about")}
+                  editor={<AboutEditor sources={sources} busy={aboutSaving}
+                    onChange={(refs) => void saveSources(refs)} />}
+                >
+                  {sources.length ? <AboutChips sources={sources} /> : dropReady ? "Drop it here" : "What is it about?"}
+                </SentenceLine>
+              )}
               <SentenceLine
                 name="with"
                 label="With"
