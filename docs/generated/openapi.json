@@ -3689,6 +3689,46 @@
         "summary": "Api Agent Rebrief Take Back"
       }
     },
+    "/api/agent/launches/{launch_id}/seen": {
+      "post": {
+        "description": "Betterment AG0: the owner opened this agent, so its done turn is\nseen (``seen_wait_id`` on the launch; the flight is no longer\n``new``). ``{wait_id}`` names the turn he saw; without it, the\nlaunch's current done turn. ``{\"seen\": null}`` when no turn is done.",
+        "operationId": "api_agent_launch_seen_api_agent_launches__launch_id__seen_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "launch_id",
+            "required": true,
+            "schema": {
+              "title": "Launch Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Agent Launch Seen Api Agent Launches  Launch Id  Seen Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Agent Launch Seen"
+      }
+    },
     "/api/agents/capabilities": {
       "get": {
         "operationId": "api_agent_capabilities_api_agents_capabilities_get",
@@ -28367,6 +28407,141 @@
         "summary": "Tts Status"
       }
     },
+    "/api/update-jobs/{job_id}": {
+      "get": {
+        "operationId": "api_get_engine_pass_api_update_jobs__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Get Engine Pass Api Update Jobs  Job Id  Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Get Engine Pass"
+      }
+    },
+    "/api/update-jobs/{job_id}/apply": {
+      "post": {
+        "operationId": "api_apply_engine_pass_api_update_jobs__job_id__apply_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Apply Engine Pass Api Update Jobs  Job Id  Apply Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Apply Engine Pass"
+      }
+    },
+    "/api/update-jobs/{job_id}/stop": {
+      "post": {
+        "operationId": "api_stop_engine_pass_api_update_jobs__job_id__stop_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Stop Engine Pass Api Update Jobs  Job Id  Stop Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Stop Engine Pass"
+      }
+    },
     "/api/updates/{update_id}": {
       "get": {
         "description": "One update by id (a steward receipt's `update:<id>` opens it; the\nRoom's list is capped, so a lookup there could miss it).",
@@ -28554,6 +28729,45 @@
           }
         },
         "summary": "Api Mark Update Delivered"
+      }
+    },
+    "/api/updates/{update_id}/engine-pass": {
+      "post": {
+        "operationId": "api_start_engine_pass_api_updates__update_id__engine_pass_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "update_id",
+            "required": true,
+            "schema": {
+              "title": "Update Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Start Engine Pass Api Updates  Update Id  Engine Pass Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Start Engine Pass"
       }
     },
     "/api/updates/{update_id}/markdown": {

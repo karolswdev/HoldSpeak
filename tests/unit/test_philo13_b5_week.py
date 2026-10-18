@@ -193,7 +193,9 @@ def test_deterministic_draft_reads_real_linked_week(week) -> None:
     assert any(ref.startswith("decision:") for ref in refs)
     assert "No decisions in this window." not in body
     assert "No upcoming actions." not in body
-    assert "All sources consulted successfully." in body
+    # Betterment P1: coverage names what was read (no constant).
+    assert "All sources consulted successfully." not in body
+    assert "- Read: 1 meeting, 2 decisions, 3 actions" in body
     assert draft["generator"] == "deterministic"
 
 

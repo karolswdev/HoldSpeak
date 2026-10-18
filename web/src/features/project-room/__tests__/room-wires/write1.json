@@ -1,0 +1,3475 @@
+{
+ "after": {
+  "/api/channels/sends?document_ref=project_update%3Apupd_368d194023434979a3c3221152614f5e": {
+   "sends": []
+  },
+  "/api/channels/sends?document_ref=project_update%3Apupd_5a6fe102a4f64f798f54fad1fd8ad74c": {
+   "sends": []
+  },
+  "/api/channels/sends?document_ref=project_update%3Apupd_8296fa2748c1438ab6bd42da45783f5e": {
+   "sends": []
+  },
+  "/api/channels/sends?document_ref=project_update%3Apupd_96d5da630dea4e68b3616998f6de92ad": {
+   "sends": []
+  },
+  "/api/channels/sends?document_ref=project_update%3Apupd_d197176731f548628b3b56dfe4e1d381": {
+   "sends": []
+  },
+  "/api/channels/sends?document_ref=project_update%3Apupd_f41e81e4e39a45168df9a1943931ed62": {
+   "sends": []
+  }
+ },
+ "apply": {
+  "answer": {
+   "success": true,
+   "update": {
+    "body_md": "## Progress\n\n- **[UNVERIFIED]** The ledger cutover is on track for Thursday.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\n- **[UNVERIFIED]** Card tokenization waits on the security team's HSM key ceremony.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\n- Read: 1 meeting\n- Left out: 1:1 with Mira\n",
+    "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"inference\",\"refs\":[],\"section\":\"progress\",\"span_id\":\"s_progress_0\",\"support\":\"unknown\",\"text\":\"The ledger cutover is on track for Thursday.\",\"verified\":false},{\"acceptance\":\"unreviewed\",\"kind\":\"inference\",\"refs\":[],\"section\":\"risks_blockers\",\"span_id\":\"s_risks_blockers_0\",\"support\":\"unknown\",\"text\":\"Card tokenization waits on the security team's HSM key ceremony.\",\"verified\":false},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"project:proj-5a2ab4a60a08\"],\"section\":\"source_coverage\",\"span_id\":\"s_source_coverage_read_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"sources\"],\"method\":\"field_mapping\",\"source_refs\":[\"project:proj-5a2ab4a60a08\"],\"source_version\":\"project:proj-5a2ab4a60a08@r3\"},\"text\":\"Read: 1 meeting\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"meeting:p1-mira\"],\"section\":\"source_coverage\",\"span_id\":\"s_source_coverage_left_out_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"meeting_id\",\"title\"],\"method\":\"field_mapping\",\"source_refs\":[\"meeting:p1-mira\"],\"source_version\":\"project:proj-5a2ab4a60a08@r3\"},\"text\":\"Left out: 1:1 with Mira\"}]",
+    "created_at": "2026-10-18T06:56:49+00:00",
+    "draft_revision": 2,
+    "fallback_reason": null,
+    "fallback_receipt": null,
+    "generator": "model:ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+    "generatorHost": "127.0.0.1",
+    "generatorModel": "openai compatible",
+    "generator_host": "127.0.0.1",
+    "generator_model": "openai compatible",
+    "id": "pupd_96d5da630dea4e68b3616998f6de92ad",
+    "lifecycle": "draft",
+    "project_id": "proj-5a2ab4a60a08",
+    "project_revision": 3,
+    "published_at": null,
+    "review_id": null,
+    "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":3,\"week_source_refs\":[\"meeting:p1-sync\"]}",
+    "updated_at": "2026-10-18T06:56:49+00:00"
+   }
+  },
+  "method": "POST",
+  "path": "/api/update-jobs/pujob_bffcafc786a44f8c875bbfaf/apply",
+  "request": {
+   "force": false
+  },
+  "status": 200
+ },
+ "edit": {
+  "polls": [
+   {
+    "answer": {
+     "job": {
+      "applied_update_id": null,
+      "base_update_id": "pupd_f41e81e4e39a45168df9a1943931ed62",
+      "body_md": null,
+      "detail": null,
+      "finished_at": null,
+      "generator_host": null,
+      "generator_model": null,
+      "id": "pujob_0ef64aa636fe4bc8a2c73edd",
+      "project_id": "proj-5a2ab4a60a08",
+      "reason": null,
+      "started_at": "2026-10-18T06:56:49.049529+00:00",
+      "state": "running"
+     }
+    },
+    "method": "GET",
+    "path": "/api/update-jobs/pujob_0ef64aa636fe4bc8a2c73edd",
+    "request": null,
+    "status": 200
+   },
+   {
+    "answer": {
+     "job": {
+      "applied_update_id": null,
+      "base_update_id": "pupd_f41e81e4e39a45168df9a1943931ed62",
+      "body_md": "## Progress\n\n- **[UNVERIFIED]** The ledger cutover is on track for Thursday.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\n- **[UNVERIFIED]** Card tokenization waits on the security team's HSM key ceremony.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\n- Read: 1 meeting\n- Left out: 1:1 with Mira\n",
+      "detail": null,
+      "finished_at": "2026-10-18T06:56:50.120631+00:00",
+      "generator_host": "127.0.0.1",
+      "generator_model": "openai compatible",
+      "id": "pujob_0ef64aa636fe4bc8a2c73edd",
+      "project_id": "proj-5a2ab4a60a08",
+      "reason": null,
+      "started_at": "2026-10-18T06:56:49.049529+00:00",
+      "state": "succeeded"
+     }
+    },
+    "method": "GET",
+    "path": "/api/update-jobs/pujob_0ef64aa636fe4bc8a2c73edd",
+    "request": null,
+    "status": 200
+   }
+  ],
+  "put": {
+   "answer": {
+    "success": true,
+    "update": {
+     "body_md": "## Progress\n\n- Meeting summary: Payments platform sync -- The ledger cutover is on track for Thursday. The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\n- Risk (Payments platform sync): The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\n- Read: 1 meeting\n- Left out: 1:1 with Mira\n\nMy own line for Friday.\n",
+     "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"meeting:p1-sync\"],\"section\":\"progress\",\"span_id\":\"s_progress_meeting_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"meeting_id\",\"title\",\"summary\"],\"method\":\"field_mapping\",\"source_refs\":[\"meeting:p1-sync\"],\"source_version\":\"project:proj-5a2ab4a60a08@r3\"},\"text\":\"Meeting summary: Payments platform sync -- The ledger cutover is on track for Thursday. The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"meeting:p1-sync\"],\"section\":\"risks_blockers\",\"span_id\":\"s_risks_blockers_week_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"text\"],\"method\":\"field_mapping\",\"source_refs\":[\"meeting:p1-sync\"],\"source_version\":\"project:proj-5a2ab4a60a08@r3\"},\"text\":\"Risk (Payments platform sync): The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"project:proj-5a2ab4a60a08\"],\"section\":\"source_coverage\",\"span_id\":\"s_source_coverage_read_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"sources\"],\"method\":\"field_mapping\",\"source_refs\":[\"project:proj-5a2ab4a60a08\"],\"source_version\":\"project:proj-5a2ab4a60a08@r3\"},\"text\":\"Read: 1 meeting\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"meeting:p1-mira\"],\"section\":\"source_coverage\",\"span_id\":\"s_source_coverage_left_out_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"meeting_id\",\"title\"],\"method\":\"field_mapping\",\"source_refs\":[\"meeting:p1-mira\"],\"source_version\":\"project:proj-5a2ab4a60a08@r3\"},\"text\":\"Left out: 1:1 with Mira\"},{\"acceptance\":\"accepted\",\"kind\":\"observation\",\"refs\":[],\"section\":\"source_coverage\",\"span_id\":\"s_owner_0\",\"support\":\"unknown\",\"support_record\":{\"checked_at\":\"2026-10-18T06:56:49+00:00\",\"fields\":[\"owner_text\"],\"method\":\"reviewer\",\"reviewer_ref\":\"principal:owner-session\"},\"text\":\"My own line for Friday.\"}]",
+     "created_at": "2026-10-18T06:56:49+00:00",
+     "draft_revision": 4,
+     "fallback_reason": null,
+     "fallback_receipt": null,
+     "generator": "deterministic",
+     "generatorHost": null,
+     "generatorModel": null,
+     "generator_host": null,
+     "generator_model": null,
+     "id": "pupd_f41e81e4e39a45168df9a1943931ed62",
+     "lifecycle": "draft",
+     "project_id": "proj-5a2ab4a60a08",
+     "project_revision": 3,
+     "published_at": null,
+     "review_id": null,
+     "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":3,\"week_source_refs\":[\"meeting:p1-sync\"]}",
+     "updated_at": "2026-10-18T06:56:49+00:00"
+    }
+   },
+   "method": "PUT",
+   "path": "/api/updates/pupd_f41e81e4e39a45168df9a1943931ed62",
+   "request": {
+    "body_md": "## Progress\n\n- Meeting summary: Payments platform sync -- The ledger cutover is on track for Thursday. The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\n- Risk (Payments platform sync): The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\n- Read: 1 meeting\n- Left out: 1:1 with Mira\n\nMy own line for Friday.\n"
+   },
+   "status": 200
+  },
+  "records": {
+   "answer": {
+    "success": true,
+    "update": {
+     "body_md": "## Progress\n\n- Meeting summary: Payments platform sync -- The ledger cutover is on track for Thursday. The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\n- Risk (Payments platform sync): The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\n- Read: 1 meeting\n- Left out: 1:1 with Mira\n",
+     "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"meeting:p1-sync\"],\"section\":\"progress\",\"span_id\":\"s_progress_meeting_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"meeting_id\",\"title\",\"summary\"],\"method\":\"field_mapping\",\"source_refs\":[\"meeting:p1-sync\"],\"source_version\":\"project:proj-5a2ab4a60a08@r3\"},\"text\":\"Meeting summary: Payments platform sync -- The ledger cutover is on track for Thursday. The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"meeting:p1-sync\"],\"section\":\"risks_blockers\",\"span_id\":\"s_risks_blockers_week_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"text\"],\"method\":\"field_mapping\",\"source_refs\":[\"meeting:p1-sync\"],\"source_version\":\"project:proj-5a2ab4a60a08@r3\"},\"text\":\"Risk (Payments platform sync): The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"project:proj-5a2ab4a60a08\"],\"section\":\"source_coverage\",\"span_id\":\"s_source_coverage_read_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"sources\"],\"method\":\"field_mapping\",\"source_refs\":[\"project:proj-5a2ab4a60a08\"],\"source_version\":\"project:proj-5a2ab4a60a08@r3\"},\"text\":\"Read: 1 meeting\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"meeting:p1-mira\"],\"section\":\"source_coverage\",\"span_id\":\"s_source_coverage_left_out_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"meeting_id\",\"title\"],\"method\":\"field_mapping\",\"source_refs\":[\"meeting:p1-mira\"],\"source_version\":\"project:proj-5a2ab4a60a08@r3\"},\"text\":\"Left out: 1:1 with Mira\"}]",
+     "created_at": "2026-10-18T06:56:49+00:00",
+     "draft_revision": 4,
+     "fallback_reason": null,
+     "fallback_receipt": null,
+     "generator": "deterministic",
+     "generatorHost": null,
+     "generatorModel": null,
+     "generator_host": null,
+     "generator_model": null,
+     "id": "pupd_f41e81e4e39a45168df9a1943931ed62",
+     "lifecycle": "draft",
+     "project_id": "proj-5a2ab4a60a08",
+     "project_revision": 3,
+     "published_at": null,
+     "review_id": null,
+     "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":3,\"week_source_refs\":[\"meeting:p1-sync\"]}",
+     "updated_at": "2026-10-18T06:56:49+00:00"
+    }
+   },
+   "method": "POST",
+   "path": "/api/projects/proj-5a2ab4a60a08/updates/draft",
+   "request": {
+    "command_id": "p1-write1-edit",
+    "generator": "deterministic"
+   },
+   "status": 200
+  },
+  "refused": {
+   "answer": {
+    "__status": 409,
+    "body": {
+     "code": "draft_changed",
+     "message": "The draft changed since the engine started.",
+     "success": false
+    }
+   },
+   "method": "POST",
+   "path": "/api/update-jobs/pujob_0ef64aa636fe4bc8a2c73edd/apply",
+   "request": {
+    "force": false
+   },
+   "status": 409
+  },
+  "start": {
+   "answer": {
+    "job": {
+     "applied_update_id": null,
+     "base_update_id": "pupd_f41e81e4e39a45168df9a1943931ed62",
+     "body_md": null,
+     "detail": null,
+     "finished_at": null,
+     "generator_host": null,
+     "generator_model": null,
+     "id": "pujob_0ef64aa636fe4bc8a2c73edd",
+     "project_id": "proj-5a2ab4a60a08",
+     "reason": null,
+     "started_at": "2026-10-18T06:56:49.049529+00:00",
+     "state": "running"
+    },
+    "success": true
+   },
+   "method": "POST",
+   "path": "/api/updates/pupd_f41e81e4e39a45168df9a1943931ed62/engine-pass",
+   "request": {},
+   "status": 200
+  },
+  "use_it": {
+   "answer": {
+    "success": true,
+    "update": {
+     "body_md": "## Progress\n\n- **[UNVERIFIED]** The ledger cutover is on track for Thursday.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\n- **[UNVERIFIED]** Card tokenization waits on the security team's HSM key ceremony.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\n- Read: 1 meeting\n- Left out: 1:1 with Mira\n",
+     "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"inference\",\"refs\":[],\"section\":\"progress\",\"span_id\":\"s_progress_0\",\"support\":\"unknown\",\"text\":\"The ledger cutover is on track for Thursday.\",\"verified\":false},{\"acceptance\":\"unreviewed\",\"kind\":\"inference\",\"refs\":[],\"section\":\"risks_blockers\",\"span_id\":\"s_risks_blockers_0\",\"support\":\"unknown\",\"text\":\"Card tokenization waits on the security team's HSM key ceremony.\",\"verified\":false},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"project:proj-5a2ab4a60a08\"],\"section\":\"source_coverage\",\"span_id\":\"s_source_coverage_read_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"sources\"],\"method\":\"field_mapping\",\"source_refs\":[\"project:proj-5a2ab4a60a08\"],\"source_version\":\"project:proj-5a2ab4a60a08@r3\"},\"text\":\"Read: 1 meeting\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"meeting:p1-mira\"],\"section\":\"source_coverage\",\"span_id\":\"s_source_coverage_left_out_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"meeting_id\",\"title\"],\"method\":\"field_mapping\",\"source_refs\":[\"meeting:p1-mira\"],\"source_version\":\"project:proj-5a2ab4a60a08@r3\"},\"text\":\"Left out: 1:1 with Mira\"}]",
+     "created_at": "2026-10-18T06:56:50+00:00",
+     "draft_revision": 5,
+     "fallback_reason": null,
+     "fallback_receipt": null,
+     "generator": "model:ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+     "generatorHost": "127.0.0.1",
+     "generatorModel": "openai compatible",
+     "generator_host": "127.0.0.1",
+     "generator_model": "openai compatible",
+     "id": "pupd_8296fa2748c1438ab6bd42da45783f5e",
+     "lifecycle": "draft",
+     "project_id": "proj-5a2ab4a60a08",
+     "project_revision": 3,
+     "published_at": null,
+     "review_id": null,
+     "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":3,\"week_source_refs\":[\"meeting:p1-sync\"]}",
+     "updated_at": "2026-10-18T06:56:50+00:00"
+    }
+   },
+   "method": "POST",
+   "path": "/api/update-jobs/pujob_0ef64aa636fe4bc8a2c73edd/apply",
+   "request": {
+    "force": true
+   },
+   "status": 200
+  }
+ },
+ "fail": {
+  "polls": [
+   {
+    "answer": {
+     "job": {
+      "applied_update_id": null,
+      "base_update_id": "pupd_d197176731f548628b3b56dfe4e1d381",
+      "body_md": null,
+      "detail": null,
+      "finished_at": null,
+      "generator_host": null,
+      "generator_model": null,
+      "id": "pujob_7f888952222f480391f86959",
+      "project_id": "proj-5a2ab4a60a08",
+      "reason": null,
+      "started_at": "2026-10-18T06:56:50.229646+00:00",
+      "state": "running"
+     }
+    },
+    "method": "GET",
+    "path": "/api/update-jobs/pujob_7f888952222f480391f86959",
+    "request": null,
+    "status": 200
+   },
+   {
+    "answer": {
+     "job": {
+      "applied_update_id": null,
+      "base_update_id": "pupd_d197176731f548628b3b56dfe4e1d381",
+      "body_md": null,
+      "detail": "it did not return JSON",
+      "finished_at": "2026-10-18T06:56:50.274602+00:00",
+      "generator_host": null,
+      "generator_model": null,
+      "id": "pujob_7f888952222f480391f86959",
+      "project_id": "proj-5a2ab4a60a08",
+      "reason": "not_usable",
+      "started_at": "2026-10-18T06:56:50.229646+00:00",
+      "state": "failed"
+     }
+    },
+    "method": "GET",
+    "path": "/api/update-jobs/pujob_7f888952222f480391f86959",
+    "request": null,
+    "status": 200
+   }
+  ],
+  "records": {
+   "answer": {
+    "success": true,
+    "update": {
+     "body_md": "## Progress\n\n- Meeting summary: Payments platform sync -- The ledger cutover is on track for Thursday. The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\n- Risk (Payments platform sync): The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\n- Read: 1 meeting\n- Left out: 1:1 with Mira\n",
+     "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"meeting:p1-sync\"],\"section\":\"progress\",\"span_id\":\"s_progress_meeting_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"meeting_id\",\"title\",\"summary\"],\"method\":\"field_mapping\",\"source_refs\":[\"meeting:p1-sync\"],\"source_version\":\"project:proj-5a2ab4a60a08@r3\"},\"text\":\"Meeting summary: Payments platform sync -- The ledger cutover is on track for Thursday. The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"meeting:p1-sync\"],\"section\":\"risks_blockers\",\"span_id\":\"s_risks_blockers_week_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"text\"],\"method\":\"field_mapping\",\"source_refs\":[\"meeting:p1-sync\"],\"source_version\":\"project:proj-5a2ab4a60a08@r3\"},\"text\":\"Risk (Payments platform sync): The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"project:proj-5a2ab4a60a08\"],\"section\":\"source_coverage\",\"span_id\":\"s_source_coverage_read_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"sources\"],\"method\":\"field_mapping\",\"source_refs\":[\"project:proj-5a2ab4a60a08\"],\"source_version\":\"project:proj-5a2ab4a60a08@r3\"},\"text\":\"Read: 1 meeting\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"meeting:p1-mira\"],\"section\":\"source_coverage\",\"span_id\":\"s_source_coverage_left_out_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"meeting_id\",\"title\"],\"method\":\"field_mapping\",\"source_refs\":[\"meeting:p1-mira\"],\"source_version\":\"project:proj-5a2ab4a60a08@r3\"},\"text\":\"Left out: 1:1 with Mira\"}]",
+     "created_at": "2026-10-18T06:56:50+00:00",
+     "draft_revision": 6,
+     "fallback_reason": null,
+     "fallback_receipt": null,
+     "generator": "deterministic",
+     "generatorHost": null,
+     "generatorModel": null,
+     "generator_host": null,
+     "generator_model": null,
+     "id": "pupd_d197176731f548628b3b56dfe4e1d381",
+     "lifecycle": "draft",
+     "project_id": "proj-5a2ab4a60a08",
+     "project_revision": 3,
+     "published_at": null,
+     "review_id": null,
+     "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":3,\"week_source_refs\":[\"meeting:p1-sync\"]}",
+     "updated_at": "2026-10-18T06:56:50+00:00"
+    }
+   },
+   "method": "POST",
+   "path": "/api/projects/proj-5a2ab4a60a08/updates/draft",
+   "request": {
+    "command_id": "p1-write1-fail",
+    "generator": "deterministic"
+   },
+   "status": 200
+  },
+  "start": {
+   "answer": {
+    "job": {
+     "applied_update_id": null,
+     "base_update_id": "pupd_d197176731f548628b3b56dfe4e1d381",
+     "body_md": null,
+     "detail": null,
+     "finished_at": null,
+     "generator_host": null,
+     "generator_model": null,
+     "id": "pujob_7f888952222f480391f86959",
+     "project_id": "proj-5a2ab4a60a08",
+     "reason": null,
+     "started_at": "2026-10-18T06:56:50.229646+00:00",
+     "state": "running"
+    },
+    "success": true
+   },
+   "method": "POST",
+   "path": "/api/updates/pupd_d197176731f548628b3b56dfe4e1d381/engine-pass",
+   "request": {},
+   "status": 200
+  }
+ },
+ "gets": {
+  "/api/coders/sessions?include_ended=false": {
+   "count": 0,
+   "flights": [],
+   "history": [],
+   "launches": {
+    "cap": 3,
+    "live": 0
+   },
+   "sessions": []
+  },
+  "/api/connections": {
+   "tools": [
+    {
+     "account": null,
+     "checked_age_seconds": null,
+     "egress_host": "github.com",
+     "error_detail": null,
+     "last_checked_at": null,
+     "next_action": {
+      "kind": "recheck",
+      "label": "Recheck"
+     },
+     "provider_id": "github",
+     "recovery_hint": null,
+     "state": "never_checked"
+    },
+    {
+     "account": null,
+     "checked_age_seconds": null,
+     "connections": [],
+     "egress_host": null,
+     "error_detail": null,
+     "last_checked_at": null,
+     "next_action": {
+      "kind": "add_account",
+      "label": "Add account"
+     },
+     "provider_id": "jira",
+     "recovery_hint": "acli jira auth login --site <site> --email <email> --token",
+     "state": "never_checked"
+    },
+    {
+     "account": null,
+     "checked_age_seconds": null,
+     "connections": [],
+     "egress_host": null,
+     "error_detail": null,
+     "last_checked_at": null,
+     "next_action": {
+      "kind": "setup",
+      "label": "Set up"
+     },
+     "provider_id": "confluence",
+     "recovery_hint": "acli confluence auth login --site <site> --email <email> --token",
+     "state": "never_checked"
+    },
+    {
+     "account": null,
+     "checked_age_seconds": null,
+     "egress_host": null,
+     "error_detail": null,
+     "last_checked_at": null,
+     "next_action": {
+      "kind": "open_module",
+      "label": "Set up"
+     },
+     "provider_id": "calendar",
+     "recovery_hint": null,
+     "state": "not_configured"
+    },
+    {
+     "account": {
+      "assigned": 4,
+      "summary_host": "127.0.0.1",
+      "total": 7
+     },
+     "checked_age_seconds": null,
+     "egress_host": null,
+     "error_detail": null,
+     "last_checked_at": null,
+     "next_action": {
+      "kind": "open_module",
+      "label": "Open Models"
+     },
+     "provider_id": "models",
+     "recovery_hint": null,
+     "state": "connected"
+    }
+   ]
+  },
+  "/api/decisions?project_id=proj-5a2ab4a60a08&limit=500": {
+   "decisions": [],
+   "page": {
+    "count": 0,
+    "limit": 500,
+    "offset": 0
+   }
+  },
+  "/api/inference-targets": {
+   "targets": [
+    {
+     "boundary": "same_device",
+     "context_limit": 16384,
+     "data_scope": {
+      "returned": [
+       "generated_output"
+      ],
+      "sent": [
+       "instruction",
+       "selected_context",
+       "grounding"
+      ]
+     },
+     "endpoint": "",
+     "engine": "configured_local_engine",
+     "id": "this_machine",
+     "kind": "this_device",
+     "model": "Qwen3.5-4B-Q4_K_M",
+     "name": "This device",
+     "node": "",
+     "owner": "you",
+     "profile_id": null,
+     "readiness": {
+      "available": false,
+      "reason": "not set up: Set up local AI downloads this model",
+      "recovery": {
+       "action": "choose_alternate_target",
+       "alternate_target_id": "this_machine",
+       "reason": "not set up: Set up local AI downloads this model"
+      },
+      "state": "unavailable"
+     },
+     "secret": {
+      "present": false,
+      "required": false
+     },
+     "transport": "in_process",
+     "version": 1
+    }
+   ],
+   "version": 1
+  },
+  "/api/inference/assignments": {
+   "issue_count": 2,
+   "rows": [
+    {
+     "assignment": {
+      "created_at": "2026-10-18T06:56:47.295193Z",
+      "effective_retry_policy_id": null,
+      "entries": [
+       {
+        "boundary": "local",
+        "label": "Probe write1-llm",
+        "ordinal": 1,
+        "profile_id": "write1-llm",
+        "profile_revision": 1,
+        "profile_schema_version": 2,
+        "readiness": "ready"
+       }
+      ],
+      "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+      "issues": [
+       {
+        "capability_id": "agent.plan",
+        "code": "structured_output_unsupported",
+        "profile_id": "write1-llm",
+        "profile_revision": 1,
+        "severity": "blocking"
+       },
+       {
+        "capability_id": "agent.tool_turn",
+        "code": "structured_output_unsupported",
+        "profile_id": "write1-llm",
+        "profile_revision": 1,
+        "severity": "blocking"
+       },
+       {
+        "capability_id": "calendar.snapshot_extract",
+        "code": "vision_unsupported",
+        "profile_id": "write1-llm",
+        "profile_revision": 1,
+        "severity": "blocking"
+       },
+       {
+        "capability_id": "memory.embed",
+        "code": "capability_class_unsupported",
+        "profile_id": "write1-llm",
+        "profile_revision": 1,
+        "severity": "blocking"
+       },
+       {
+        "capability_id": "speech.transcribe",
+        "code": "modality_unsupported",
+        "profile_id": "write1-llm",
+        "profile_revision": 1,
+        "severity": "blocking"
+       }
+      ],
+      "retry_policy_id": null,
+      "retry_policy_source": "per_capability_default",
+      "revision": 1,
+      "schema": "InferenceAssignmentProjection@1",
+      "scope": {
+       "kind": "global"
+      },
+      "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+     },
+     "editor_capability_id": "agent.code",
+     "expected_revision": 1,
+     "id": "global",
+     "inherited_from": null,
+     "label": "Default for AI work",
+     "repair": null,
+     "status": "assigned"
+    },
+    {
+     "assignment": {
+      "created_at": "2026-10-18T06:56:47.295193Z",
+      "effective_retry_policy_id": null,
+      "entries": [
+       {
+        "boundary": "local",
+        "label": "Probe write1-llm",
+        "ordinal": 1,
+        "profile_id": "write1-llm",
+        "profile_revision": 1,
+        "profile_schema_version": 2,
+        "readiness": "ready"
+       }
+      ],
+      "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+      "issues": [],
+      "retry_policy_id": null,
+      "retry_policy_source": "per_capability_default",
+      "revision": 1,
+      "schema": "InferenceAssignmentProjection@1",
+      "scope": {
+       "kind": "global"
+      },
+      "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+     },
+     "editor_capability_id": "ask.answer",
+     "expected_revision": 0,
+     "id": "thoughts_notes",
+     "inherited_from": "global",
+     "label": "Thoughts & notes",
+     "repair": null,
+     "status": "assigned"
+    },
+    {
+     "assignment": {
+      "created_at": "2026-10-18T06:56:47.295193Z",
+      "effective_retry_policy_id": null,
+      "entries": [
+       {
+        "boundary": "local",
+        "label": "Probe write1-llm",
+        "ordinal": 1,
+        "profile_id": "write1-llm",
+        "profile_revision": 1,
+        "profile_schema_version": 2,
+        "readiness": "ready"
+       }
+      ],
+      "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+      "issues": [],
+      "retry_policy_id": null,
+      "retry_policy_source": "per_capability_default",
+      "revision": 1,
+      "schema": "InferenceAssignmentProjection@1",
+      "scope": {
+       "kind": "global"
+      },
+      "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+     },
+     "editor_capability_id": "speech.intent_classify",
+     "expected_revision": 0,
+     "id": "writing_dictation",
+     "inherited_from": "global",
+     "label": "Writing & dictation",
+     "repair": null,
+     "status": "assigned"
+    },
+    {
+     "assignment": null,
+     "editor_capability_id": "speech.transcribe",
+     "expected_revision": 0,
+     "id": "speech_recognition",
+     "inherited_from": null,
+     "label": "Speech recognition",
+     "repair": null,
+     "status": "no_assignment"
+    },
+    {
+     "assignment": {
+      "created_at": "2026-10-18T06:56:47.295193Z",
+      "effective_retry_policy_id": null,
+      "entries": [
+       {
+        "boundary": "local",
+        "label": "Probe write1-llm",
+        "ordinal": 1,
+        "profile_id": "write1-llm",
+        "profile_revision": 1,
+        "profile_schema_version": 2,
+        "readiness": "ready"
+       }
+      ],
+      "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+      "issues": [],
+      "retry_policy_id": null,
+      "retry_policy_source": "per_capability_default",
+      "revision": 1,
+      "schema": "InferenceAssignmentProjection@1",
+      "scope": {
+       "kind": "global"
+      },
+      "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+     },
+     "editor_capability_id": "meeting.auto_title",
+     "expected_revision": 0,
+     "id": "meetings",
+     "inherited_from": "global",
+     "label": "Meetings",
+     "repair": null,
+     "status": "assigned"
+    },
+    {
+     "assignment": {
+      "created_at": "2026-10-18T06:56:47.295193Z",
+      "effective_retry_policy_id": null,
+      "entries": [
+       {
+        "boundary": "local",
+        "label": "Probe write1-llm",
+        "ordinal": 1,
+        "profile_id": "write1-llm",
+        "profile_revision": 1,
+        "profile_schema_version": 2,
+        "readiness": "ready"
+       }
+      ],
+      "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+      "issues": [
+       {
+        "capability_id": "agent.plan",
+        "code": "structured_output_unsupported",
+        "profile_id": "write1-llm",
+        "profile_revision": 1,
+        "severity": "blocking"
+       },
+       {
+        "capability_id": "agent.tool_turn",
+        "code": "structured_output_unsupported",
+        "profile_id": "write1-llm",
+        "profile_revision": 1,
+        "severity": "blocking"
+       }
+      ],
+      "retry_policy_id": null,
+      "retry_policy_source": "per_capability_default",
+      "revision": 1,
+      "schema": "InferenceAssignmentProjection@1",
+      "scope": {
+       "kind": "global"
+      },
+      "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+     },
+     "editor_capability_id": "agent.code",
+     "expected_revision": 0,
+     "id": "agents_tools",
+     "inherited_from": "global",
+     "label": "Agents & tools",
+     "repair": "Fix",
+     "status": "no_compatible_assignment"
+    },
+    {
+     "assignment": {
+      "created_at": "2026-10-18T06:56:47.295193Z",
+      "effective_retry_policy_id": null,
+      "entries": [
+       {
+        "boundary": "local",
+        "label": "Probe write1-llm",
+        "ordinal": 1,
+        "profile_id": "write1-llm",
+        "profile_revision": 1,
+        "profile_schema_version": 2,
+        "readiness": "ready"
+       }
+      ],
+      "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+      "issues": [
+       {
+        "capability_id": "calendar.snapshot_extract",
+        "code": "vision_unsupported",
+        "profile_id": "write1-llm",
+        "profile_revision": 1,
+        "severity": "blocking"
+       },
+       {
+        "capability_id": "memory.embed",
+        "code": "capability_class_unsupported",
+        "profile_id": "write1-llm",
+        "profile_revision": 1,
+        "severity": "blocking"
+       }
+      ],
+      "retry_policy_id": null,
+      "retry_policy_source": "per_capability_default",
+      "revision": 1,
+      "schema": "InferenceAssignmentProjection@1",
+      "scope": {
+       "kind": "global"
+      },
+      "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+     },
+     "editor_capability_id": "background.cadence_draft",
+     "expected_revision": 0,
+     "id": "background",
+     "inherited_from": "global",
+     "label": "Background",
+     "repair": "Fix",
+     "status": "no_compatible_assignment"
+    }
+   ],
+   "schema": "InferenceAssignmentSummary@1",
+   "task_overrides": [
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.text.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "agent.code",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "agents_tools",
+      "label": "Agents & tools"
+     },
+     "has_override": false,
+     "id": "agent.code",
+     "issues": [],
+     "label": "Agent code",
+     "queue": null
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.structured.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [
+        {
+         "capability_id": "agent.plan",
+         "code": "structured_output_unsupported",
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "severity": "blocking"
+        }
+       ],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "agent.plan",
+      "inherited_from": "global",
+      "repair": "Choose model",
+      "status": "no_compatible_assignment"
+     },
+     "group": {
+      "id": "agents_tools",
+      "label": "Agents & tools"
+     },
+     "has_override": false,
+     "id": "agent.plan",
+     "issues": [
+      {
+       "capability_id": "agent.plan",
+       "code": "structured_output_unsupported",
+       "profile_id": "write1-llm",
+       "profile_revision": 1,
+       "severity": "blocking"
+      }
+     ],
+     "label": "Agent plan",
+     "queue": null
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.tool.turn",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [
+        {
+         "capability_id": "agent.tool_turn",
+         "code": "structured_output_unsupported",
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "severity": "blocking"
+        }
+       ],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "agent.tool_turn",
+      "inherited_from": "global",
+      "repair": "Choose model",
+      "status": "no_compatible_assignment"
+     },
+     "group": {
+      "id": "agents_tools",
+      "label": "Agents & tools"
+     },
+     "has_override": false,
+     "id": "agent.tool_turn",
+     "issues": [
+      {
+       "capability_id": "agent.tool_turn",
+       "code": "structured_output_unsupported",
+       "profile_id": "write1-llm",
+       "profile_revision": 1,
+       "severity": "blocking"
+      }
+     ],
+     "label": "Agent tool turn",
+     "queue": null
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.text.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "ask.answer",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "thoughts_notes",
+      "label": "Thoughts & notes"
+     },
+     "has_override": false,
+     "id": "ask.answer",
+     "issues": [],
+     "label": "Ask answer",
+     "queue": null
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.background.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "background.cadence_draft",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "background",
+      "label": "Background"
+     },
+     "has_override": false,
+     "id": "background.cadence_draft",
+     "issues": [],
+     "label": "Cadence draft",
+     "queue": null
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.background.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "background.rails_summary",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "background",
+      "label": "Background"
+     },
+     "has_override": false,
+     "id": "background.rails_summary",
+     "issues": [],
+     "label": "Rails summary",
+     "queue": null
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.structured.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [
+        {
+         "capability_id": "calendar.snapshot_extract",
+         "code": "vision_unsupported",
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "severity": "blocking"
+        }
+       ],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "calendar.snapshot_extract",
+      "inherited_from": "global",
+      "repair": "Choose model",
+      "status": "no_compatible_assignment"
+     },
+     "group": {
+      "id": "background",
+      "label": "Background"
+     },
+     "has_override": false,
+     "id": "calendar.snapshot_extract",
+     "issues": [
+      {
+       "capability_id": "calendar.snapshot_extract",
+       "code": "vision_unsupported",
+       "profile_id": "write1-llm",
+       "profile_revision": 1,
+       "severity": "blocking"
+      }
+     ],
+     "label": "Calendar snapshot extraction",
+     "queue": null
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.text.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "chat.turn",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "thoughts_notes",
+      "label": "Thoughts & notes"
+     },
+     "has_override": false,
+     "id": "chat.turn",
+     "issues": [],
+     "label": "Desk chat",
+     "queue": null
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.background.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "decision.promotion_draft",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "background",
+      "label": "Background"
+     },
+     "has_override": false,
+     "id": "decision.promotion_draft",
+     "issues": [],
+     "label": "Decision promotion draft",
+     "queue": null
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.background.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "delivery.pr_review_draft",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "background",
+      "label": "Background"
+     },
+     "has_override": false,
+     "id": "delivery.pr_review_draft",
+     "issues": [],
+     "label": "Pull request review draft",
+     "queue": null
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.text.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "meeting.auto_title",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "meetings",
+      "label": "Meetings"
+     },
+     "has_override": false,
+     "id": "meeting.auto_title",
+     "issues": [],
+     "label": "Meeting title",
+     "queue": {
+      "inherited_from": "global",
+      "policy_id": "meeting-intel-queue@2",
+      "status": "assigned"
+     }
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.text.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "meeting.bookmark_label",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "meetings",
+      "label": "Meetings"
+     },
+     "has_override": false,
+     "id": "meeting.bookmark_label",
+     "issues": [],
+     "label": "Meeting bookmark label",
+     "queue": {
+      "inherited_from": "global",
+      "policy_id": "meeting-intel-queue@2",
+      "status": "assigned"
+     }
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.structured.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "meeting.deferred_analysis",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "meetings",
+      "label": "Meetings"
+     },
+     "has_override": false,
+     "id": "meeting.deferred_analysis",
+     "issues": [],
+     "label": "Deferred meeting analysis",
+     "queue": {
+      "inherited_from": "global",
+      "policy_id": "meeting-intel-queue@2",
+      "status": "assigned"
+     }
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.structured.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "meeting.live_analysis",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "meetings",
+      "label": "Meetings"
+     },
+     "has_override": false,
+     "id": "meeting.live_analysis",
+     "issues": [],
+     "label": "Live meeting analysis",
+     "queue": null
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.structured.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "meeting.plugin.action_owner_enforcer",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "meetings",
+      "label": "Meetings"
+     },
+     "has_override": false,
+     "id": "meeting.plugin.action_owner_enforcer",
+     "issues": [],
+     "label": "Meeting plugin: action owner enforcer",
+     "queue": {
+      "inherited_from": "global",
+      "policy_id": "meeting-intel-queue@2",
+      "status": "assigned"
+     }
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.structured.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "meeting.plugin.adr_drafter",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "meetings",
+      "label": "Meetings"
+     },
+     "has_override": false,
+     "id": "meeting.plugin.adr_drafter",
+     "issues": [],
+     "label": "Meeting plugin: adr drafter",
+     "queue": {
+      "inherited_from": "global",
+      "policy_id": "meeting-intel-queue@2",
+      "status": "assigned"
+     }
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.structured.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "meeting.plugin.customer_signal_extractor",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "meetings",
+      "label": "Meetings"
+     },
+     "has_override": false,
+     "id": "meeting.plugin.customer_signal_extractor",
+     "issues": [],
+     "label": "Meeting plugin: customer signal extractor",
+     "queue": {
+      "inherited_from": "global",
+      "policy_id": "meeting-intel-queue@2",
+      "status": "assigned"
+     }
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.structured.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "meeting.plugin.decision_announcement_drafter",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "meetings",
+      "label": "Meetings"
+     },
+     "has_override": false,
+     "id": "meeting.plugin.decision_announcement_drafter",
+     "issues": [],
+     "label": "Meeting plugin: decision announcement drafter",
+     "queue": {
+      "inherited_from": "global",
+      "policy_id": "meeting-intel-queue@2",
+      "status": "assigned"
+     }
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.structured.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "meeting.plugin.decision_capture",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "meetings",
+      "label": "Meetings"
+     },
+     "has_override": false,
+     "id": "meeting.plugin.decision_capture",
+     "issues": [],
+     "label": "Meeting plugin: decision capture",
+     "queue": {
+      "inherited_from": "global",
+      "policy_id": "meeting-intel-queue@2",
+      "status": "assigned"
+     }
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.structured.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "meeting.plugin.dependency_mapper",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "meetings",
+      "label": "Meetings"
+     },
+     "has_override": false,
+     "id": "meeting.plugin.dependency_mapper",
+     "issues": [],
+     "label": "Meeting plugin: dependency mapper",
+     "queue": {
+      "inherited_from": "global",
+      "policy_id": "meeting-intel-queue@2",
+      "status": "assigned"
+     }
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.structured.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "meeting.plugin.incident_timeline",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "meetings",
+      "label": "Meetings"
+     },
+     "has_override": false,
+     "id": "meeting.plugin.incident_timeline",
+     "issues": [],
+     "label": "Meeting plugin: incident timeline",
+     "queue": {
+      "inherited_from": "global",
+      "policy_id": "meeting-intel-queue@2",
+      "status": "assigned"
+     }
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.structured.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "meeting.plugin.mermaid_architecture",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "meetings",
+      "label": "Meetings"
+     },
+     "has_override": false,
+     "id": "meeting.plugin.mermaid_architecture",
+     "issues": [],
+     "label": "Meeting plugin: mermaid architecture",
+     "queue": {
+      "inherited_from": "global",
+      "policy_id": "meeting-intel-queue@2",
+      "status": "assigned"
+     }
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.structured.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "meeting.plugin.milestone_planner",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "meetings",
+      "label": "Meetings"
+     },
+     "has_override": false,
+     "id": "meeting.plugin.milestone_planner",
+     "issues": [],
+     "label": "Meeting plugin: milestone planner",
+     "queue": {
+      "inherited_from": "global",
+      "policy_id": "meeting-intel-queue@2",
+      "status": "assigned"
+     }
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.structured.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "meeting.plugin.project_detector",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "meetings",
+      "label": "Meetings"
+     },
+     "has_override": false,
+     "id": "meeting.plugin.project_detector",
+     "issues": [],
+     "label": "Meeting plugin: project detector",
+     "queue": {
+      "inherited_from": "global",
+      "policy_id": "meeting-intel-queue@2",
+      "status": "assigned"
+     }
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.structured.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "meeting.plugin.requirements_extractor",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "meetings",
+      "label": "Meetings"
+     },
+     "has_override": false,
+     "id": "meeting.plugin.requirements_extractor",
+     "issues": [],
+     "label": "Meeting plugin: requirements extractor",
+     "queue": {
+      "inherited_from": "global",
+      "policy_id": "meeting-intel-queue@2",
+      "status": "assigned"
+     }
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.structured.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "meeting.plugin.risk_heatmap",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "meetings",
+      "label": "Meetings"
+     },
+     "has_override": false,
+     "id": "meeting.plugin.risk_heatmap",
+     "issues": [],
+     "label": "Meeting plugin: risk heatmap",
+     "queue": {
+      "inherited_from": "global",
+      "policy_id": "meeting-intel-queue@2",
+      "status": "assigned"
+     }
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.structured.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "meeting.plugin.runbook_delta",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "meetings",
+      "label": "Meetings"
+     },
+     "has_override": false,
+     "id": "meeting.plugin.runbook_delta",
+     "issues": [],
+     "label": "Meeting plugin: runbook delta",
+     "queue": {
+      "inherited_from": "global",
+      "policy_id": "meeting-intel-queue@2",
+      "status": "assigned"
+     }
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.structured.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "meeting.plugin.scope_guard",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "meetings",
+      "label": "Meetings"
+     },
+     "has_override": false,
+     "id": "meeting.plugin.scope_guard",
+     "issues": [],
+     "label": "Meeting plugin: scope guard",
+     "queue": {
+      "inherited_from": "global",
+      "policy_id": "meeting-intel-queue@2",
+      "status": "assigned"
+     }
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.structured.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "meeting.plugin.stakeholder_update_drafter",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "meetings",
+      "label": "Meetings"
+     },
+     "has_override": false,
+     "id": "meeting.plugin.stakeholder_update_drafter",
+     "issues": [],
+     "label": "Meeting plugin: stakeholder update drafter",
+     "queue": {
+      "inherited_from": "global",
+      "policy_id": "meeting-intel-queue@2",
+      "status": "assigned"
+     }
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.structured.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "memory.consolidate",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "background",
+      "label": "Background"
+     },
+     "has_override": false,
+     "id": "memory.consolidate",
+     "issues": [],
+     "label": "Memory observations",
+     "queue": null
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.background.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [
+        {
+         "capability_id": "memory.embed",
+         "code": "capability_class_unsupported",
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "severity": "blocking"
+        }
+       ],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "memory.embed",
+      "inherited_from": "global",
+      "repair": "Choose model",
+      "status": "no_compatible_assignment"
+     },
+     "group": {
+      "id": "background",
+      "label": "Background"
+     },
+     "has_override": false,
+     "id": "memory.embed",
+     "issues": [
+      {
+       "capability_id": "memory.embed",
+       "code": "capability_class_unsupported",
+       "profile_id": "write1-llm",
+       "profile_revision": 1,
+       "severity": "blocking"
+      }
+     ],
+     "label": "Memory embedding",
+     "queue": null
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.structured.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "memory.extract",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "background",
+      "label": "Background"
+     },
+     "has_override": false,
+     "id": "memory.extract",
+     "issues": [],
+     "label": "Memory facts",
+     "queue": null
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.structured.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "memory.page",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "background",
+      "label": "Background"
+     },
+     "has_override": false,
+     "id": "memory.page",
+     "issues": [],
+     "label": "Memory pages",
+     "queue": null
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.297320Z",
+       "effective_retry_policy_id": "retry.text.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_b06fdb806b834a3d9ea18b334fc3f59c",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "capability_id": "project.brief_prepare",
+        "kind": "capability"
+       },
+       "sha256": "sha256:8b71cd7da7b4dc9408cd63b1e845410bd70d529a6eaeec1f661c7e3970f410f4"
+      },
+      "capability_id": "project.brief_prepare",
+      "inherited_from": "capability",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "agents_tools",
+      "label": "Agents & tools"
+     },
+     "has_override": true,
+     "id": "project.brief_prepare",
+     "issues": [],
+     "label": "Project preparation brief",
+     "queue": null
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.text.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "project.update_draft",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "agents_tools",
+      "label": "Agents & tools"
+     },
+     "has_override": false,
+     "id": "project.update_draft",
+     "issues": [],
+     "label": "Project update draft",
+     "queue": null
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.text.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "project_doc.suggest_update",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "agents_tools",
+      "label": "Agents & tools"
+     },
+     "has_override": false,
+     "id": "project_doc.suggest_update",
+     "issues": [],
+     "label": "Project document suggestion",
+     "queue": null
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.text.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "recipe.run",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "agents_tools",
+      "label": "Agents & tools"
+     },
+     "has_override": false,
+     "id": "recipe.run",
+     "issues": [],
+     "label": "Recipe run",
+     "queue": null
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.text.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "sequence.step",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "agents_tools",
+      "label": "Agents & tools"
+     },
+     "has_override": false,
+     "id": "sequence.step",
+     "issues": [],
+     "label": "Sequence step",
+     "queue": null
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.structured.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "speech.intent_classify",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "writing_dictation",
+      "label": "Writing & dictation"
+     },
+     "has_override": false,
+     "id": "speech.intent_classify",
+     "issues": [],
+     "label": "Dictation intent",
+     "queue": null
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.text.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "speech.rewrite",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "writing_dictation",
+      "label": "Writing & dictation"
+     },
+     "has_override": false,
+     "id": "speech.rewrite",
+     "issues": [],
+     "label": "Dictation rewrite",
+     "queue": null
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.structured.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "speech.target_classify",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "writing_dictation",
+      "label": "Writing & dictation"
+     },
+     "has_override": false,
+     "id": "speech.target_classify",
+     "issues": [],
+     "label": "Dictation target",
+     "queue": null
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:46.401329Z",
+       "effective_retry_policy_id": "retry.audio.transcription",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Whisper mlx base",
+         "ordinal": 1,
+         "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "unavailable"
+        }
+       ],
+       "id": "ia_afd014d6609b4574bd3483084411c4b1",
+       "issues": [
+        {
+         "code": "binding_not_ready",
+         "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+         "profile_revision": 1,
+         "severity": "repair"
+        }
+       ],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "capability_id": "speech.transcribe",
+        "kind": "capability"
+       },
+       "sha256": "sha256:49389db4e5aa205b977f5431dcf36cad3dd2976e3be314cca7bd05402a0ec3f6"
+      },
+      "capability_id": "speech.transcribe",
+      "inherited_from": "capability",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "speech_recognition",
+      "label": "Speech recognition"
+     },
+     "has_override": true,
+     "id": "speech.transcribe",
+     "issues": [
+      {
+       "code": "binding_not_ready",
+       "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+       "profile_revision": 1,
+       "severity": "repair"
+      }
+     ],
+     "label": "Speech transcription",
+     "queue": null
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.text.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "thought.interview",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "thoughts_notes",
+      "label": "Thoughts & notes"
+     },
+     "has_override": false,
+     "id": "thought.interview",
+     "issues": [],
+     "label": "Thought development",
+     "queue": null
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.text.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "voice.reference_resolve",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "agents_tools",
+      "label": "Agents & tools"
+     },
+     "has_override": false,
+     "id": "voice.reference_resolve",
+     "issues": [],
+     "label": "Voice reference resolution",
+     "queue": null
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.text.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "workbench.item",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "agents_tools",
+      "label": "Agents & tools"
+     },
+     "has_override": false,
+     "id": "workbench.item",
+     "issues": [],
+     "label": "Automation item",
+     "queue": null
+    },
+    {
+     "effective": {
+      "assignment": {
+       "created_at": "2026-10-18T06:56:47.295193Z",
+       "effective_retry_policy_id": "retry.text.standard",
+       "entries": [
+        {
+         "boundary": "local",
+         "label": "Probe write1-llm",
+         "ordinal": 1,
+         "profile_id": "write1-llm",
+         "profile_revision": 1,
+         "profile_schema_version": 2,
+         "readiness": "ready"
+        }
+       ],
+       "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+       "issues": [],
+       "retry_policy_id": null,
+       "retry_policy_source": "capability_default",
+       "revision": 1,
+       "schema": "InferenceAssignmentProjection@1",
+       "scope": {
+        "kind": "global"
+       },
+       "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+      },
+      "capability_id": "workflow.node",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+     },
+     "group": {
+      "id": "agents_tools",
+      "label": "Agents & tools"
+     },
+     "has_override": false,
+     "id": "workflow.node",
+     "issues": [],
+     "label": "Workflow node",
+     "queue": null
+    }
+   ]
+  },
+  "/api/memory/pages?project_id=proj-5a2ab4a60a08": {
+   "pages": []
+  },
+  "/api/projects/proj-5a2ab4a60a08/artifacts": {
+   "artifacts": []
+  },
+  "/api/projects/proj-5a2ab4a60a08/briefs?lifecycle=kept": {
+   "briefs": []
+  },
+  "/api/projects/proj-5a2ab4a60a08/items?limit=200": {
+   "items": [],
+   "limit": 200,
+   "offset": 0
+  },
+  "/api/projects/proj-5a2ab4a60a08/meetings?limit=200": {
+   "meetings": [
+    {
+     "confidence": 1.0,
+     "duration_seconds": null,
+     "id": "p1-mira",
+     "intel_status": "disabled",
+     "source": "manual",
+     "started_at": "2026-10-14T15:00:00+00:00",
+     "title": "1:1 with Mira"
+    },
+    {
+     "confidence": 1.0,
+     "duration_seconds": null,
+     "id": "p1-sync",
+     "intel_status": "disabled",
+     "source": "manual",
+     "started_at": "2026-10-14T15:00:00+00:00",
+     "title": "Payments platform sync"
+    }
+   ]
+  },
+  "/api/projects/proj-5a2ab4a60a08/nudges?state=proposed": {
+   "nudges": []
+  },
+  "/api/projects/proj-5a2ab4a60a08/people": {
+   "expected": 0,
+   "gaps": {
+    "ambiguous": 0,
+    "not_linked": 0,
+    "unreadable": 0
+   },
+   "people": [],
+   "resolved": 0,
+   "state": "unconfigured",
+   "unresolved": []
+  },
+  "/api/projects/proj-5a2ab4a60a08/proposals?state=proposed": {
+   "project_id": "proj-5a2ab4a60a08",
+   "proposals": []
+  },
+  "/api/projects/proj-5a2ab4a60a08/repository": {
+   "cloned": false,
+   "cloned_at": null,
+   "folder": null,
+   "host": "github.com",
+   "project_id": "proj-5a2ab4a60a08",
+   "registered": false,
+   "registered_at": null,
+   "repository": null,
+   "store": "read",
+   "watched": []
+  },
+  "/api/projects/proj-5a2ab4a60a08/resources": {
+   "resources": [
+    {
+     "confidence": 1.0,
+     "created_at": "2026-10-18T06:56:47.255608+00:00",
+     "deleted": false,
+     "id": "proj-5a2ab4a60a08|meeting:p1-mira",
+     "last_modified": "2026-10-18T06:56:47.255608+00:00",
+     "project_id": "proj-5a2ab4a60a08",
+     "relationship": "member",
+     "resource_ref": "meeting:p1-mira",
+     "source": "manual"
+    },
+    {
+     "confidence": 1.0,
+     "created_at": "2026-10-18T06:56:47.244797+00:00",
+     "deleted": false,
+     "id": "proj-5a2ab4a60a08|meeting:p1-sync",
+     "last_modified": "2026-10-18T06:56:47.244797+00:00",
+     "project_id": "proj-5a2ab4a60a08",
+     "relationship": "member",
+     "resource_ref": "meeting:p1-sync",
+     "source": "manual"
+    }
+   ]
+  },
+  "/api/projects/proj-5a2ab4a60a08/room": {
+   "changes": {
+    "recent": [
+     {
+      "actor_ref": "principal:owner-session",
+      "after_hash": null,
+      "before_hash": null,
+      "change_kind": "project.updated",
+      "command_id": "pcmd_5cf63d48eb184e419f004221a15d2f77",
+      "created_at": "2026-10-18T06:56:47.255608+00:00",
+      "id": "pchg_17432def792e8d1c53dade285ac84b9d",
+      "project_id": "proj-5a2ab4a60a08",
+      "project_revision": 3,
+      "summary_json": "{\"meeting_associated\": \"p1-mira\"}",
+      "target_ref": "meeting:p1-mira"
+     },
+     {
+      "actor_ref": "principal:owner-session",
+      "after_hash": null,
+      "before_hash": null,
+      "change_kind": "project.updated",
+      "command_id": "pcmd_d9fb24cef41645e4baf20af200742682",
+      "created_at": "2026-10-18T06:56:47.244797+00:00",
+      "id": "pchg_927823e1ba26936f1cb7a7716635669e",
+      "project_id": "proj-5a2ab4a60a08",
+      "project_revision": 2,
+      "summary_json": "{\"meeting_associated\": \"p1-sync\"}",
+      "target_ref": "meeting:p1-sync"
+     },
+     {
+      "actor_ref": "principal:owner-session",
+      "after_hash": "82ef315b9d12069553333219e57b6ff5",
+      "before_hash": null,
+      "change_kind": "project.created",
+      "command_id": "p1-write1-create",
+      "created_at": "2026-10-18T06:56:47.224657+00:00",
+      "id": "pchg_12331979b62a5f13cc7b84ac8907fee4",
+      "project_id": "proj-5a2ab4a60a08",
+      "project_revision": 1,
+      "summary_json": "{\"name\": \"Payments migration\"}",
+      "target_ref": "project:proj-5a2ab4a60a08"
+     }
+    ],
+    "state": "ok"
+   },
+   "commitments": {
+    "items": [],
+    "state": "ok"
+   },
+   "decisions": {
+    "items": [],
+    "state": "ok"
+   },
+   "health": {
+    "assessment": "on_track",
+    "checked_at": "2026-10-18 06:56:47",
+    "inputs": {
+     "ciFailing": false,
+     "overdue": 0,
+     "overdueMilestones": 0,
+     "reviewWaitingDays": null,
+     "targetPassed": false
+    },
+    "merge_queue_depth": 0,
+    "people": [],
+    "reason": null,
+    "signals": {
+     "ci": {
+      "failures_last_3": 0,
+      "flaky_branch_count": 0,
+      "present": false,
+      "queue": 0,
+      "tone": "green"
+     },
+     "issue_aging": {
+      "aged_count": 0,
+      "present": false,
+      "threshold_days": 14,
+      "tone": "green"
+     },
+     "release": {
+      "blockers": [],
+      "blockers_count": 0,
+      "composite": "green",
+      "present": false,
+      "signals": {
+       "blockers": "green",
+       "ci": "green",
+       "overdue": "green",
+       "review_wait": "green"
+      },
+      "tone": "green"
+     },
+     "review_wait": {
+      "median_days": 0.0,
+      "per_reviewer": [],
+      "present": false,
+      "tone": "green",
+      "waiting_count": 0
+     }
+    },
+    "state": "ok"
+   },
+   "items": {
+    "focus": [],
+    "state": "ok",
+    "total": 0,
+    "totals_by_type": {}
+   },
+   "meetings": {
+    "count": 2,
+    "latest": {
+     "confidence": 1.0,
+     "duration_seconds": null,
+     "id": "p1-mira",
+     "intel_status": "disabled",
+     "source": "manual",
+     "started_at": "2026-10-14T15:00:00+00:00",
+     "title": "1:1 with Mira"
+    },
+    "state": "ok"
+   },
+   "needsYou": {
+    "count": 0,
+    "items": [],
+    "state": "ok"
+   },
+   "nextCheckAt": "2026-10-18T14:00:00+00:00",
+   "observed_at": "2026-10-18T00:56:47.255608",
+   "project": {
+    "context": {},
+    "created_at": "2026-10-18T00:56:47.224657",
+    "description": "Seeded for p1-write1-create.",
+    "detection_threshold": 0.4,
+    "id": "proj-5a2ab4a60a08",
+    "is_archived": false,
+    "keywords": [],
+    "last_review_at": null,
+    "last_review_id": null,
+    "lifecycle": "active",
+    "meeting_count": 2,
+    "modules_json": null,
+    "name": "Payments migration",
+    "next_review_at": null,
+    "outcome_text": null,
+    "owner_ref": null,
+    "posture": null,
+    "posture_reason": null,
+    "purpose": null,
+    "review_cadence_json": null,
+    "revision": 3,
+    "start_at": null,
+    "target_at": null,
+    "team_members": [],
+    "template_key": null,
+    "updated_at": "2026-10-18T00:56:47.255608"
+   },
+   "project_id": "proj-5a2ab4a60a08",
+   "receipts": {
+    "items": [
+     {
+      "at": 1792306607.255411,
+      "caller": null,
+      "id": "9b772e77-3a0c-4f39-bc41-2cc393fb8a23",
+      "identity": null,
+      "label": "ProjectService.associate_meeting",
+      "op": "associate_meeting",
+      "origin": null,
+      "outcome": "ok",
+      "reason": null,
+      "timestamp": 1792306607.255411,
+      "title": "ProjectService.associate_meeting"
+     },
+     {
+      "at": 1792306607.244472,
+      "caller": null,
+      "id": "9d60317f-55b7-4a99-b3d6-a87322a198dc",
+      "identity": null,
+      "label": "ProjectService.associate_meeting",
+      "op": "associate_meeting",
+      "origin": null,
+      "outcome": "ok",
+      "reason": null,
+      "timestamp": 1792306607.244472,
+      "title": "ProjectService.associate_meeting"
+     },
+     {
+      "at": 1792306607.221071,
+      "caller": null,
+      "id": "e595d495-3fd4-4d4e-9b92-4222e57f5235",
+      "identity": null,
+      "label": "ProjectService.create_project",
+      "op": "create_project",
+      "origin": null,
+      "outcome": "ok",
+      "reason": null,
+      "timestamp": 1792306607.221071,
+      "title": "ProjectService.create_project"
+     }
+    ],
+    "state": "ok"
+   },
+   "resources": {
+    "count": 2,
+    "latest": {
+     "confidence": 1.0,
+     "created_at": "2026-10-18T06:56:47.255608+00:00",
+     "deleted": false,
+     "id": "proj-5a2ab4a60a08|meeting:p1-mira",
+     "last_modified": "2026-10-18T06:56:47.255608+00:00",
+     "project_id": "proj-5a2ab4a60a08",
+     "relationship": "member",
+     "resource_ref": "meeting:p1-mira",
+     "source": "manual"
+    },
+    "state": "ok"
+   },
+   "review": {
+    "last_accepted_at": null,
+    "open_review_id": null,
+    "pending_count": 0,
+    "state": "ok"
+   },
+   "revision": 3,
+   "sinceRead": {
+    "groups": [],
+    "readAt": null,
+    "state": "ok"
+   },
+   "sources": {
+    "count": 1,
+    "items": [
+     {
+      "checkedAt": "2026-10-18T06:56:47+00:00",
+      "freshness": "available",
+      "freshnessReason": null,
+      "host": "",
+      "nextCheckAt": "2026-10-18T14:00:00+00:00",
+      "plainReason": null,
+      "provider": "meeting",
+      "quietSince": "2026-10-18T04:00:00+00:00",
+      "quietUntil": "2026-10-18T14:00:00+00:00",
+      "scope": "MEETINGS",
+      "state": "live",
+      "suggested": false,
+      "tokens": [],
+      "watchId": "w_582270393ec1",
+      "watchIds": [
+       "w_582270393ec1"
+      ]
+     }
+    ],
+    "nextCheckAt": "2026-10-18T14:00:00+00:00",
+    "quietUntil": "2026-10-18T14:00:00+00:00",
+    "state": "ok"
+   },
+   "steward": {
+    "enabled": false,
+    "latest_run": null,
+    "state": "ok",
+    "unattended_enabled": false
+   },
+   "target": {
+    "daysLeft": null,
+    "passed": false,
+    "state": "ok",
+    "targetAt": null
+   },
+   "updates": {
+    "count": 0,
+    "counts": {},
+    "latest_published": null,
+    "recent": [],
+    "state": "ok"
+   }
+  },
+  "/api/projects/proj-5a2ab4a60a08/since-last-meeting": {
+   "current_meeting": {
+    "date": "2026-10-14T09:00:00",
+    "id": "p1-sync",
+    "title": "Payments platform sync"
+   },
+   "project_id": "proj-5a2ab4a60a08",
+   "since_last_meeting": {
+    "changed": false,
+    "closed_actions": [],
+    "new_actions": [],
+    "new_decisions": [],
+    "previous_meeting": {
+     "date": "2026-10-14T09:00:00",
+     "id": "p1-mira",
+     "title": "1:1 with Mira"
+    }
+   }
+  },
+  "/api/projects/proj-5a2ab4a60a08/suggested-sources": {
+   "suggestions": []
+  },
+  "/api/projects/proj-5a2ab4a60a08/updates": {
+   "latest_published_update_id": null,
+   "updates": []
+  },
+  "POST /api/inference/assignments/editor": {
+   "candidates": [
+    {
+     "boundary": "local",
+     "issues": [],
+     "label": "Probe write1-llm",
+     "profile_id": "write1-llm",
+     "profile_revision": 1,
+     "readiness": "ready",
+     "status": "compatible"
+    }
+   ],
+   "configured_assignment": null,
+   "draft_base_revision": 0,
+   "effective": {
+    "assignment": {
+     "created_at": "2026-10-18T06:56:47.295193Z",
+     "effective_retry_policy_id": "retry.text.standard",
+     "entries": [
+      {
+       "boundary": "local",
+       "label": "Probe write1-llm",
+       "ordinal": 1,
+       "profile_id": "write1-llm",
+       "profile_revision": 1,
+       "profile_schema_version": 2,
+       "readiness": "ready"
+      }
+     ],
+     "id": "ia_8d8e360fa79e48e7bbeffd7b3f7d91ea",
+     "issues": [],
+     "retry_policy_id": null,
+     "retry_policy_source": "capability_default",
+     "revision": 1,
+     "schema": "InferenceAssignmentProjection@1",
+     "scope": {
+      "kind": "global"
+     },
+     "sha256": "sha256:c5ed3ac6c6bbf8f47cfe65e6181c99284758d926009b62b36e8a859e56925813"
+    },
+    "capability_id": "ask.answer",
+    "inherited_from": "global",
+    "repair": null,
+    "status": "assigned"
+   },
+   "retry_policy": {
+    "default_id": "retry.text.standard",
+    "permitted_ids": [
+     "retry.text.standard"
+    ]
+   },
+   "schema": "AssignmentEditorProjection@1",
+   "scope": {
+    "capability_id": "ask.answer",
+    "kind": "subject",
+    "subject_id": "proj-5a2ab4a60a08",
+    "subject_kind": "project"
+   },
+   "selected_capability": {
+    "allowed_boundaries": [
+     "cloud",
+     "local",
+     "mesh",
+     "private_network"
+    ],
+    "fallback_dispositions": [
+     "context_overflow",
+     "invalid_typed_output",
+     "known_no_generation_transient",
+     "local_capacity_unavailable",
+     "provider_permanent"
+    ],
+    "group": {
+     "id": "thoughts_notes",
+     "label": "Thoughts & notes"
+    },
+    "id": "ask.answer",
+    "label": "Ask answer",
+    "revision": 2
+   }
+  },
+  "POST /api/projects/proj-5a2ab4a60a08/room/read": {
+   "readAt": "2026-10-18T06:56:47.539042+00:00"
+  }
+ },
+ "pid": "proj-5a2ab4a60a08",
+ "polls": [
+  {
+   "answer": {
+    "job": {
+     "applied_update_id": null,
+     "base_update_id": "pupd_368d194023434979a3c3221152614f5e",
+     "body_md": null,
+     "detail": null,
+     "finished_at": null,
+     "generator_host": null,
+     "generator_model": null,
+     "id": "pujob_bffcafc786a44f8c875bbfaf",
+     "project_id": "proj-5a2ab4a60a08",
+     "reason": null,
+     "started_at": "2026-10-18T06:56:47.569374+00:00",
+     "state": "running"
+    }
+   },
+   "method": "GET",
+   "path": "/api/update-jobs/pujob_bffcafc786a44f8c875bbfaf",
+   "request": null,
+   "status": 200
+  },
+  {
+   "answer": {
+    "job": {
+     "applied_update_id": null,
+     "base_update_id": "pupd_368d194023434979a3c3221152614f5e",
+     "body_md": "## Progress\n\n- **[UNVERIFIED]** The ledger cutover is on track for Thursday.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\n- **[UNVERIFIED]** Card tokenization waits on the security team's HSM key ceremony.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\n- Read: 1 meeting\n- Left out: 1:1 with Mira\n",
+     "detail": null,
+     "finished_at": "2026-10-18T06:56:48.887366+00:00",
+     "generator_host": "127.0.0.1",
+     "generator_model": "openai compatible",
+     "id": "pujob_bffcafc786a44f8c875bbfaf",
+     "project_id": "proj-5a2ab4a60a08",
+     "reason": null,
+     "started_at": "2026-10-18T06:56:47.569374+00:00",
+     "state": "succeeded"
+    }
+   },
+   "method": "GET",
+   "path": "/api/update-jobs/pujob_bffcafc786a44f8c875bbfaf",
+   "request": null,
+   "status": 200
+  }
+ ],
+ "recordedBy": "scripts/record_room_wires.py",
+ "records": {
+  "answer": {
+   "success": true,
+   "update": {
+    "body_md": "## Progress\n\n- Meeting summary: Payments platform sync -- The ledger cutover is on track for Thursday. The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\n- Risk (Payments platform sync): The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\n- Read: 1 meeting\n- Left out: 1:1 with Mira\n",
+    "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"meeting:p1-sync\"],\"section\":\"progress\",\"span_id\":\"s_progress_meeting_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"meeting_id\",\"title\",\"summary\"],\"method\":\"field_mapping\",\"source_refs\":[\"meeting:p1-sync\"],\"source_version\":\"project:proj-5a2ab4a60a08@r3\"},\"text\":\"Meeting summary: Payments platform sync -- The ledger cutover is on track for Thursday. The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"meeting:p1-sync\"],\"section\":\"risks_blockers\",\"span_id\":\"s_risks_blockers_week_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"text\"],\"method\":\"field_mapping\",\"source_refs\":[\"meeting:p1-sync\"],\"source_version\":\"project:proj-5a2ab4a60a08@r3\"},\"text\":\"Risk (Payments platform sync): The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"project:proj-5a2ab4a60a08\"],\"section\":\"source_coverage\",\"span_id\":\"s_source_coverage_read_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"sources\"],\"method\":\"field_mapping\",\"source_refs\":[\"project:proj-5a2ab4a60a08\"],\"source_version\":\"project:proj-5a2ab4a60a08@r3\"},\"text\":\"Read: 1 meeting\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"meeting:p1-mira\"],\"section\":\"source_coverage\",\"span_id\":\"s_source_coverage_left_out_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"meeting_id\",\"title\"],\"method\":\"field_mapping\",\"source_refs\":[\"meeting:p1-mira\"],\"source_version\":\"project:proj-5a2ab4a60a08@r3\"},\"text\":\"Left out: 1:1 with Mira\"}]",
+    "created_at": "2026-10-18T06:56:47+00:00",
+    "draft_revision": 1,
+    "fallback_reason": null,
+    "fallback_receipt": null,
+    "generator": "deterministic",
+    "generatorHost": null,
+    "generatorModel": null,
+    "generator_host": null,
+    "generator_model": null,
+    "id": "pupd_368d194023434979a3c3221152614f5e",
+    "lifecycle": "draft",
+    "project_id": "proj-5a2ab4a60a08",
+    "project_revision": 3,
+    "published_at": null,
+    "review_id": null,
+    "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":3,\"week_source_refs\":[\"meeting:p1-sync\"]}",
+    "updated_at": "2026-10-18T06:56:47+00:00"
+   }
+  },
+  "method": "POST",
+  "path": "/api/projects/proj-5a2ab4a60a08/updates/draft",
+  "request": {
+   "command_id": "p1-write1-records",
+   "generator": "deterministic"
+  },
+  "status": 200
+ },
+ "schema": "room-recorded@1",
+ "start": {
+  "answer": {
+   "job": {
+    "applied_update_id": null,
+    "base_update_id": "pupd_368d194023434979a3c3221152614f5e",
+    "body_md": null,
+    "detail": null,
+    "finished_at": null,
+    "generator_host": null,
+    "generator_model": null,
+    "id": "pujob_bffcafc786a44f8c875bbfaf",
+    "project_id": "proj-5a2ab4a60a08",
+    "reason": null,
+    "started_at": "2026-10-18T06:56:47.569374+00:00",
+    "state": "running"
+   },
+   "success": true
+  },
+  "method": "POST",
+  "path": "/api/updates/pupd_368d194023434979a3c3221152614f5e/engine-pass",
+  "request": {},
+  "status": 200
+ },
+ "undo": {
+  "answer": {
+   "success": true,
+   "update": {
+    "body_md": "## Progress\n\n- Meeting summary: Payments platform sync -- The ledger cutover is on track for Thursday. The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\n- Risk (Payments platform sync): The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\n- Read: 1 meeting\n- Left out: 1:1 with Mira\n",
+    "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"meeting:p1-sync\"],\"section\":\"progress\",\"span_id\":\"s_progress_meeting_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"meeting_id\",\"title\",\"summary\"],\"method\":\"field_mapping\",\"source_refs\":[\"meeting:p1-sync\"],\"source_version\":\"project:proj-5a2ab4a60a08@r3\"},\"text\":\"Meeting summary: Payments platform sync -- The ledger cutover is on track for Thursday. The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"meeting:p1-sync\"],\"section\":\"risks_blockers\",\"span_id\":\"s_risks_blockers_week_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"text\"],\"method\":\"field_mapping\",\"source_refs\":[\"meeting:p1-sync\"],\"source_version\":\"project:proj-5a2ab4a60a08@r3\"},\"text\":\"Risk (Payments platform sync): The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"project:proj-5a2ab4a60a08\"],\"section\":\"source_coverage\",\"span_id\":\"s_source_coverage_read_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"sources\"],\"method\":\"field_mapping\",\"source_refs\":[\"project:proj-5a2ab4a60a08\"],\"source_version\":\"project:proj-5a2ab4a60a08@r3\"},\"text\":\"Read: 1 meeting\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"meeting:p1-mira\"],\"section\":\"source_coverage\",\"span_id\":\"s_source_coverage_left_out_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"meeting_id\",\"title\"],\"method\":\"field_mapping\",\"source_refs\":[\"meeting:p1-mira\"],\"source_version\":\"project:proj-5a2ab4a60a08@r3\"},\"text\":\"Left out: 1:1 with Mira\"}]",
+    "created_at": "2026-10-18T06:56:49+00:00",
+    "draft_revision": 3,
+    "fallback_reason": null,
+    "fallback_receipt": null,
+    "generator": "deterministic",
+    "generatorHost": null,
+    "generatorModel": null,
+    "generator_host": null,
+    "generator_model": null,
+    "id": "pupd_5a6fe102a4f64f798f54fad1fd8ad74c",
+    "lifecycle": "draft",
+    "project_id": "proj-5a2ab4a60a08",
+    "project_revision": 3,
+    "published_at": null,
+    "review_id": null,
+    "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":3,\"week_source_refs\":[\"meeting:p1-sync\"]}",
+    "updated_at": "2026-10-18T06:56:49+00:00"
+   }
+  },
+  "method": "POST",
+  "path": "/api/projects/proj-5a2ab4a60a08/updates/draft",
+  "request": {
+   "command_id": "p1-write1-undo",
+   "generator": "deterministic"
+  },
+  "status": 200
+ }
+}

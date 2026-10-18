@@ -315,8 +315,9 @@ class TestGoldenRich:
         result = svc.draft_update(OWNER, pid)
 
         body = result["body_md"]
-        # Coverage section should say all sources consulted
-        assert "All sources consulted successfully." in body
+        # Betterment P1: coverage names what was read, never a constant.
+        assert "All sources consulted successfully." not in body
+        assert "- Read: " in body.split("## Source Coverage", 1)[1]
 
 
 # ── GOLDEN-EMPTY: honest minimal ─────────────────────────────────────

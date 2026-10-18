@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 765 (plus static mounts). iOS-consumed: 89. Web-consumed: 595.
+Routes: 770 (plus static mounts). iOS-consumed: 89. Web-consumed: 601.
 
 ## device_audio_ws
 
@@ -110,6 +110,7 @@ Routes: 765 (plus static mounts). iOS-consumed: 89. Web-consumed: 595.
 | GET | `/api/agent/launches/{launch_id}/lane` | web |
 | POST | `/api/agent/launches/{launch_id}/rebrief` | web |
 | POST | `/api/agent/launches/{launch_id}/rebrief/{press_id}/take-back` | web |
+| POST | `/api/agent/launches/{launch_id}/seen` | web |
 | GET | `/api/projects/{project_id}/repository` | web |
 | POST | `/api/projects/{project_id}/repository` | web |
 
@@ -719,7 +720,7 @@ Routes: 765 (plus static mounts). iOS-consumed: 89. Web-consumed: 595.
 |---|---|---|
 | POST | `/api/ask` | ios, web |
 | POST | `/api/ask/keep` | web |
-| POST | `/api/ask/{invocation_id}/cancel` | server only |
+| POST | `/api/ask/{invocation_id}/cancel` | web |
 | POST | `/api/grounding/resolve` | web |
 | GET | `/api/models` | web |
 
@@ -954,10 +955,14 @@ Routes: 765 (plus static mounts). iOS-consumed: 89. Web-consumed: 595.
 |---|---|---|
 | GET | `/api/projects/{project_id}/updates` | web |
 | POST | `/api/projects/{project_id}/updates/draft` | web |
+| GET | `/api/update-jobs/{job_id}` | web |
+| POST | `/api/update-jobs/{job_id}/apply` | web |
+| POST | `/api/update-jobs/{job_id}/stop` | web |
 | GET | `/api/updates/{update_id}` | web |
 | PUT | `/api/updates/{update_id}` | web |
 | POST | `/api/updates/{update_id}/claims/{span_id}/review` | web |
 | POST | `/api/updates/{update_id}/delivered` | web |
+| POST | `/api/updates/{update_id}/engine-pass` | web |
 | GET | `/api/updates/{update_id}/markdown` | web |
 | POST | `/api/updates/{update_id}/publish` | web |
 | POST | `/api/updates/{update_id}/regenerate` | web |

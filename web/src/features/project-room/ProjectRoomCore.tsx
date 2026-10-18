@@ -441,10 +441,11 @@ function RoomHead({
             variant={quiet || pendingCount > 0 ? "secondary" : "primary"}
             loading={updateCtrl.loading || updateCtrl.draftBusy}
             disabled={updateEngine.state === "unread"}
-            onClick={() => void updateCtrl.draft(updateEngine.state === "set" ? "model" : "deterministic")}
+            // Betterment P1: the records draft at once; the engine's after.
+            onClick={() => void updateCtrl.write(updateEngine.state === "set")}
             data-testid="updates-verb"
           >
-            Draft update
+            Write update
           </Button>
         </span>
       </div>

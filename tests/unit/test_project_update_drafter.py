@@ -825,3 +825,86 @@ def test_p2_speaker_rule() -> None:
     assert not is_one_on_one("Workload", ["Me", "Mira", "Theo"], people)
     assert not is_one_on_one("Workload", ["Me", "Vendor rep"], people)
     assert not is_one_on_one("Workload", ["Me", "Mira"], [])
+
+
+# ---- Betterment P1: the records draft names its risks and its coverage ------
+
+@pytest.fixture()
+def p1_week(p2_week):
+    db, pid = p2_week
+    db.notes.upsert(note_id="note-p1-risks", title="Payments migration: open risks", body_markdown=(
+        "# Open risks\n"
+        "- HSM key ceremony has no date yet\n"
+        "- Rollback runbook is still a draft\n"
+        "- Bus factor 1 on the ledger schema\n"
+        "- Vendor sandbox keys expire on 31 Oct\n"
+    ))
+    db.notes.upsert(note_id="note-p1-friday", title="Notes for Friday update", body_markdown=(
+        "Mention the staging dry run.\nThe Kafka cost estimate may delay the ADR.\n"
+    ))
+    ps = ProjectService(db)
+    for ref in ("note:note-p1-risks", "note:note-p1-friday"):
+        ps.add_resource(OWNER, pid, ref)
+    yield db, pid
+
+
+def _section(body: str, heading: str) -> str:
+    return body.split(f"## {heading}\n", 1)[1].split("\n## ", 1)[0]
+
+
+def test_p1_risks_come_from_meetings_and_notes_filed_as_sources(p1_week) -> None:
+    db, pid = p1_week
+    draft = _p2_service(db).draft_update(OWNER, pid)
+    risks = _section(draft["body_md"], "Risks & Blockers")
+    claims = [c for c in json.loads(draft["claims_json"]) if c["section"] == "risks_blockers"]
+
+    assert "No risks or blockers in this window." not in risks
+    # The meeting named the HSM blocker.
+    assert ("Risk (Payments platform sync): The card tokenization service is blocked "
+            "on the HSM key ceremony.") in risks
+    # Every list line of the note titled as risks; its heading is not a risk.
+    for line in ("HSM key ceremony has no date yet", "Rollback runbook is still a draft",
+                 "Bus factor 1 on the ledger schema", "Vendor sandbox keys expire on 31 Oct"):
+        assert f"Risk (Payments migration: open risks): {line}" in risks
+    assert "Open risks\n" not in risks
+    # Another note gives only its lines that name a risk.
+    assert "Risk (Notes for Friday update): The Kafka cost estimate may delay the ADR." in risks
+    assert "staging dry run" not in risks
+    # Each risk cites where it came from; nothing from the 1:1 is a risk.
+    assert {r for c in claims for r in c["refs"]} >= {"meeting:p2-sync", "note:note-p1-risks", "note:note-p1-friday"}
+    assert "Mira" not in risks
+
+
+def test_p1_coverage_says_what_was_read_and_what_was_left_out(p1_week) -> None:
+    db, pid = p1_week
+    body = _p2_service(db).draft_update(OWNER, pid)["body_md"]
+    coverage = _section(body, "Source Coverage")
+    assert "All sources consulted successfully." not in body
+    assert "- Read: 2 meetings, 2 notes, 1 action" in coverage
+    assert "- Left out: 1:1 with Mira" in coverage
+
+
+def test_p1_an_empty_project_still_drafts_nothing_to_report(rig) -> None:
+    pid = _seed_project(rig)
+    collector = ProjectEvidenceCollector(rig)
+    delta = ProjectDeltaService(rig, collector)
+    svc = ProjectUpdateService(rig, project_service=ProjectService(rig, delta_service=delta), delta_service=delta)
+    assert svc.draft_update(OWNER, pid)["body_md"] == "Nothing to report.\n"
+
+
+def test_p1_outside_sources_read_only_when_the_room_says_available() -> None:
+    from holdspeak.services.project_update_service import _outside_sources
+
+    room = {"sources": {"state": "ok", "items": [
+        {"provider": "github", "scope": "acme/payments", "state": "live", "freshness": "available"},
+        {"provider": "jira", "scope": "PAY", "state": "cant_check", "freshness": "failed",
+         "freshnessReason": "sign-in needed"},
+        {"provider": "confluence", "scope": "", "state": "live", "freshness": "stale",
+         "freshnessReason": "not checked recently"},
+        {"provider": "meeting", "scope": "MEETINGS", "state": "live", "freshness": "available"},
+    ]}}
+    assert _outside_sources(room) == [
+        {"label": "GitHub acme/payments", "state": "live", "reason": "not checked"},
+        {"label": "Jira PAY", "state": "not_read", "reason": "sign-in needed"},
+        {"label": "Confluence", "state": "not_read", "reason": "not checked recently"},
+    ]
