@@ -142,6 +142,13 @@ the window, not as a modal.
 - "NOT SUPPORTED YET" states with no next step are removed. A kind we cannot
   run is not shown.
 
+### The desk's tools
+
+An agent on this Mac, and any engine whose Check reports tool support, gets
+HoldSpeak's own tools when it runs work: it may read the desk and write on
+it, and it never sends or changes settings. See `../mcp/DESIGN.md`. The
+engine row says which engines can use tools.
+
 ### Rules the engine kinds keep
 
 - **The prompt goes where the chip says.** An agent on this Mac is never
@@ -161,9 +168,21 @@ the window, not as a modal.
 2. **Anthropic API as a service:** use Anthropic's OpenAI-compatible
    endpoint first, and add a native adapter only if it fails. Recommended:
    yes. Claude Code covers Claude for him from slice E1 onwards in any case.
-3. **Cost guard for agent CLIs:** a per-call budget where the CLI supports
-   it (Claude Code `--max-budget-usd`), default $0.10, with no other limit.
-   Recommended: yes.
+3. **Cost limits are his, and are set on the engine.** No hard-coded cap.
+   (The $0.10 in the first draft was copied from `agent_summarizer.py:158`,
+   a cap for summarizing one short coding session. It was wrong here.)
+   - Each engine row has **Spend limit per run**, with *No limit* or an
+     amount. An automation can set its own limit, which overrides the
+     engine's.
+   - Where the CLI can enforce a limit (Claude Code `--max-budget-usd`), we
+     pass it. Where it cannot, we say so on the row ("Codex cannot limit
+     spend") and do not invent our own guard (Tenet 1).
+   - Every result shows what it cost when the CLI reports it (Claude Code's
+     JSON output). The Engines row shows the total for today and this week.
+   - Recommended default: **No limit**, with the cost shown on each result.
+     The MCP map (`../mcp/MODEL.md`) will confirm whether limits apply to
+     subscription logins.
+
 
 ## 6. How we know it worked
 

@@ -155,7 +155,9 @@ Engines E1.
   - With: the Engines picker (or, before Engines E5, a list of engines
     plus Found engines, with one-press Add). It writes the subject
     assignment `subject:workbench:<id>:capability:workbench.item`. Show the
-    egress chip. Re-freeze the schedule delegation when With changes, so a
+    egress chip. Under the engine there is an optional **Spend limit per run**
+    for this automation, which overrides the engine's limit. Each result shows
+    its reported cost. Re-freeze the schedule delegation when With changes, so a
     scheduled run uses the new engine (`MODEL.md`: scheduled runs ignore
     later engine changes today).
 - **Done when:** "Every Friday at 3 PM" takes at most 3 presses and shows
