@@ -54,3 +54,13 @@ PR that fixes it merges.
 | D4 (#1303) | Browser files with edited selectors not yet run: today_glass, windows_glass, send_glass, chair_windows.py, windows_follow_the_bus (second half). | Next full run |
 | #1306 | `web/scripts/guard-architecture.mjs` is red on main with ~35 entries not in its baseline (not run by any suite). Trace and fix or re-baseline with reasons. | Small fix |
 | S0/S1 | Something emptied a worktree's `web/node_modules` while its quick check waited for the lock. Cause unknown. | Watch |
+| A7 (#1314) | Run now right after With ▸ Add, before the engine saves, is refused; the refusal still says "workbench" (`holdspeak/web/routes/primitives/workbenches.py:21`). | Small fix |
+| A7 (#1314) | Meeting follow-ups cannot start "when a meeting ends": the hub has no meeting-ended event. It runs on Run now for now. | Automations A8 / Capture |
+| E4 (#1311) | "Another HoldSpeak" tile has no add verb (no face creates a mesh destination). | Backlog |
+| E4 (#1311) | No live OpenRouter / OpenAI / Anthropic / Gemini call made (stub only): Anthropic `/v1/models` auth, `response_format`, Gemini model ids unverified. | Next live walk |
+| E5 (#1315) | Try it exists only for rows with a hub sample (not Automations, Live notes, Thoughts, Drafts, Speech). "Automations" maps to `workbench.item` (lane's choice). | Engines E6 |
+| E5 (#1315) | Speech with no row now reads `no_assignment` (was `no_compatible_assignment`); faces that word it not all checked. | Setup ST1 |
+| AG5 (#1308) | No cancel for a queued hand. | Agents AG8 |
+| AG6 (#1310) | Hand again not built (`worktree_duplicate` refuses); a real `claude --resume <old id>` exit code not seen. | Agents AG7 |
+| #1316 | If tmux restarts while the hub runs, the session watcher can mark a launch `complete` over `stopped_by_restart`, losing Resume. | Agents AG7 |
+| D6 (#1312) | The intermittent People 503 cause is still unknown (D6 only logs it). Older Last-time fallback counts kept promises as decisions. | Daily D8 |
