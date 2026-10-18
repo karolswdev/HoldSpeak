@@ -1,0 +1,35 @@
+{
+  "_source": "Recorded from a real hub by tests/integration/test_desk_meetings.py::test_a_summary_reads_only_earlier_dated_sources_and_its_receipt_lists_them (GET /api/meetings/c2-fri run_receipt). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
+  "run_receipt": {
+    "attempts": [
+      {
+        "host": "same_device",
+        "leg_ordinal": 1,
+        "operation_id": "op_832d94d562ab430a9420109c4986f157",
+        "outcome": "succeeded"
+      }
+    ],
+    "job_id": "ij_6376ab448b884ffad3ba801f4e470cb8bb809b161b681cc9c1831e66f126cb16",
+    "looked_at": [
+      {
+        "at": "2026-10-15",
+        "ref": "meeting:c2-thu",
+        "title": "Thursday sync"
+      },
+      {
+        "at": "2026-10-15",
+        "ref": "artifact:summary-items-c2-thu",
+        "title": "Thursday sync: decisions and actions"
+      },
+      {
+        "at": "2026-10-14",
+        "ref": "meeting:c2-wed",
+        "title": "Wednesday planning"
+      }
+    ],
+    "meeting_id": "c2-fri",
+    "outcome": "succeeded",
+    "receipt_id": "rr_93e806547e7e511fa88402317ed0f4ac",
+    "selection_hash": "sha256:94e59c2d2ea1c2a1823dc18b83e31daf99208559eb04ce7c8f921f5ec7a1efa1"
+  }
+}
