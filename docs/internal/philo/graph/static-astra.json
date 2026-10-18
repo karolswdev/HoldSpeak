@@ -1637,7 +1637,7 @@
       "sha256": "0b11c0d591f1c765f5dd02391118764ea597491c3d4d42bccf6b1c516b37e802"
     },
     {
-      "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+      "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
       "sha256": "c6524b9d5e536632b62d9c5ca2c1350a6b468810cb841ef63953a40820a47864"
     },
     {
@@ -1685,7 +1685,7 @@
       "sha256": "27079670257da446d247571501637fb701537f877a6bce2128d78261b49df7e7"
     },
     {
-      "path": "web/src/desk/pullouts/views/FollowThroughView.tsx",
+      "path": "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
       "sha256": "2aac44acf1b31023fa65ac64266d37e9b9258b775f5c6938bec7c73890f85aea"
     },
     {
@@ -6490,14 +6490,14 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1793,
           "symbol": "ThreadPullout",
           "claim": "ThreadComposer receives handleKeep through its onKeep prop."
         },
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1368,
           "symbol": "handleKeep",
           "claim": "handleKeep forwards the message id and as argument to keepMessage inside attempt error handling."
@@ -15023,7 +15023,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 760,
           "anchor": "onText={(text) => setComment((prev) => (prev ? prev + \" \" + text : text))}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -15039,7 +15039,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 928,
           "anchor": "onDecide={handleDecide}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -15151,7 +15151,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1045,
           "anchor": "onNext={onSiblingNext}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -15199,7 +15199,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1134,
           "anchor": "onDecide={onDecide}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -15263,7 +15263,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1794,
           "anchor": "onFork={(messageId) => { void handleBranch(messageId, \"\"); }}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -15455,7 +15455,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 921,
           "anchor": "onSiblingPrev={() => void loadThread(threadId)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -15823,7 +15823,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1787,
           "anchor": "onRemove={handleAnnotationRemove}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -15951,7 +15951,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1029,
           "anchor": "onCancel={() => setEditing(false)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -16015,7 +16015,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1146,
           "anchor": "onPrev={onSiblingPrev}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -16095,7 +16095,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1177,
           "anchor": "onConfirm={(text) => { setEditing(false); onBranch(msg.id, text); }}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -16223,7 +16223,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/views/FollowThroughView.tsx",
+          "path": "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
           "line": 200,
           "anchor": "onAction={onClearFilter}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -16607,7 +16607,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1793,
           "anchor": "onKeep={handleKeep}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -16911,7 +16911,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1776,
           "anchor": "onTry={(text) => handleSend(text, [])}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -17519,7 +17519,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1667,
           "anchor": "onText={(spoken) => setTitleDraft(spoken)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -17535,7 +17535,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1025,
           "anchor": "onConfirm={(text) => { setEditing(false); onBranch(msg.id, text); }}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -17935,7 +17935,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1798,
           "anchor": "onModeSelect={(recipeId) => void setMode(threadId, recipeId)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -18143,7 +18143,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1797,
           "anchor": "onNewThread={handleNewThread}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -18255,7 +18255,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 924,
           "anchor": "onKeep={handleKeep}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -18767,7 +18767,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/views/FollowThroughView.tsx",
+          "path": "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
           "line": 183,
           "anchor": "onRetry={() => void reload()}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -18783,7 +18783,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 923,
           "anchor": "onRetry={handleRetry}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -18943,7 +18943,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 922,
           "anchor": "onSiblingNext={() => void loadThread(threadId)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -19887,7 +19887,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1147,
           "anchor": "onNext={onSiblingNext}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -20159,7 +20159,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1633,
           "anchor": "onScroll={(event) => { const body = event.currentTarget; followTail.current = body.scrollHeight - body.scrollTop - body.clientHeight < 40; }}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -20927,7 +20927,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 221,
           "anchor": "onText={(spoken) => handleChange(key, spoken)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -21023,7 +21023,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1758,
           "anchor": "onSave={(comment) => void handleAnnotationSave(comment)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -21119,7 +21119,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1624,
           "anchor": "onAction={() => undefined}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -21135,7 +21135,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1799,
           "anchor": "onToggleGuardrail={(guardrailId, enable) => { // HS-153-03: toggle via PATCH /api/threads/:id/guardrail // S2: pass enable boolean so /guardrail off works. void patchThread(threadId, { toggle_guardrai",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -21359,7 +21359,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 677,
           "anchor": "onDecline={() => onDecide(row.callId, \"deny\")}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -21615,7 +21615,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 925,
           "anchor": "onBranch={handleBranch}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -21823,7 +21823,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1181,
           "anchor": "onCancel={() => setEditing(false)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -21839,7 +21839,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/views/FollowThroughView.tsx",
+          "path": "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
           "line": 230,
           "anchor": "onToggle={() => setOpenCardId(open ? null : card.id)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -22431,7 +22431,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 563,
           "anchor": "onToggle={(e) => setRawOpen((e.target as HTMLDetailsElement).open)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -22511,7 +22511,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1780,
           "anchor": "onSelect={(recipeId) => void setMode(threadId, recipeId)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -23583,7 +23583,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1759,
           "anchor": "onCancel={() => { setAnnotationPopover(null); window.getSelection()?.removeAllRanges(); }}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -23615,7 +23615,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1044,
           "anchor": "onPrev={onSiblingPrev}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -24015,7 +24015,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1791,
           "anchor": "onSend={handleSend}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -24127,7 +24127,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1792,
           "anchor": "onStop={handleStop}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -24271,7 +24271,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/views/FollowThroughView.tsx",
+          "path": "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
           "line": 208,
           "anchor": "onRetry={() => void reload()}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -24303,7 +24303,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1655,
           "anchor": "onBlur={commitTitle}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -24655,7 +24655,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1700,
           "anchor": "onReload={() => void loadThread(threadId)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -24703,7 +24703,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1128,
           "anchor": "onDecide={onDecide}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -25487,7 +25487,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1168,
           "symbol": "MessageRow",
           "claim": "The production JSX source declares onClick at this control site."
@@ -25551,7 +25551,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 126,
           "symbol": "SiblingPicker",
           "claim": "The production JSX source declares onClick at this control site."
@@ -25951,7 +25951,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 232,
           "symbol": "ElicitationForm",
           "claim": "The production JSX source declares onClick at this control site."
@@ -25983,7 +25983,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 770,
           "symbol": "AnnotationPopover",
           "claim": "The production JSX source declares onClick at this control site."
@@ -26207,7 +26207,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 240,
           "symbol": "ElicitationForm",
           "claim": "The production JSX source declares onClick at this control site."
@@ -27519,7 +27519,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 811,
           "symbol": "AnnotationChips",
           "claim": "The production JSX source declares onClick at this control site."
@@ -27759,7 +27759,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 184,
           "symbol": "ElicitationForm",
           "claim": "The production JSX source declares onChange at this control site."
@@ -30175,7 +30175,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 751,
           "symbol": "AnnotationPopover",
           "claim": "The production JSX source declares onChange at this control site."
@@ -30639,7 +30639,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 676,
           "symbol": "ToolRowView",
           "claim": "The production JSX source declares onSubmit at this control site."
@@ -30655,7 +30655,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/views/FollowThroughView.tsx",
+          "path": "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
           "line": 255,
           "symbol": "FollowThroughView",
           "claim": "The production JSX source declares onClick at this control site."
@@ -30847,7 +30847,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 654,
           "symbol": "ToolRowView",
           "claim": "The production JSX source declares onClick at this control site."
@@ -30895,7 +30895,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1154,
           "symbol": "MessageRow",
           "claim": "The production JSX source declares onClick at this control site."
@@ -31951,7 +31951,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/views/FollowThroughView.tsx",
+          "path": "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
           "line": 268,
           "symbol": "FollowThroughView",
           "claim": "The production JSX source declares onClick at this control site."
@@ -32863,7 +32863,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1161,
           "symbol": "MessageRow",
           "claim": "The production JSX source declares onClick at this control site."
@@ -33103,7 +33103,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 197,
           "symbol": "ElicitationForm",
           "claim": "The production JSX source declares onChange at this control site."
@@ -33135,7 +33135,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 778,
           "symbol": "AnnotationPopover",
           "claim": "The production JSX source declares onClick at this control site."
@@ -33903,7 +33903,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/views/FollowThroughView.tsx",
+          "path": "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
           "line": 267,
           "symbol": "FollowThroughView",
           "claim": "The production JSX source declares onClick at this control site."
@@ -34159,7 +34159,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/views/FollowThroughView.tsx",
+          "path": "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
           "line": 275,
           "symbol": "FollowThroughView",
           "claim": "The production JSX source declares onChange at this control site."
@@ -34319,7 +34319,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 752,
           "symbol": "AnnotationPopover",
           "claim": "The production JSX source declares onKeyDown at this control site."
@@ -35695,7 +35695,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1081,
           "symbol": "MessageRow",
           "claim": "The production JSX source declares onClick at this control site."
@@ -36959,7 +36959,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1109,
           "symbol": "MessageRow",
           "claim": "The production JSX source declares onClick at this control site."
@@ -37071,7 +37071,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1656,
           "symbol": "ThreadPulloutInner",
           "claim": "The production JSX source declares onKeyDown at this control site."
@@ -37775,7 +37775,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/views/FollowThroughView.tsx",
+          "path": "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
           "line": 270,
           "symbol": "FollowThroughView",
           "claim": "The production JSX source declares onClick at this control site."
@@ -37871,7 +37871,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 114,
           "symbol": "SiblingPicker",
           "claim": "The production JSX source declares onClick at this control site."
@@ -38383,7 +38383,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 207,
           "symbol": "ElicitationForm",
           "claim": "The production JSX source declares onChange at this control site."
@@ -39615,7 +39615,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 645,
           "symbol": "ToolRowView",
           "claim": "The production JSX source declares onClick at this control site."
@@ -39695,7 +39695,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1654,
           "symbol": "ThreadPulloutInner",
           "claim": "The production JSX source declares onChange at this control site."
@@ -39823,7 +39823,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1035,
           "symbol": "MessageRow",
           "claim": "The production JSX source declares onClick at this control site."
@@ -40383,7 +40383,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 217,
           "symbol": "ElicitationForm",
           "claim": "The production JSX source declares onChange at this control site."
@@ -40735,7 +40735,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1674,
           "symbol": "ThreadPulloutInner",
           "claim": "The production JSX source declares onClick at this control site."
@@ -42799,7 +42799,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 662,
           "symbol": "ToolRowView",
           "claim": "The production JSX source declares onClick at this control site."
@@ -43183,7 +43183,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/views/FollowThroughView.tsx",
+          "path": "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
           "line": 269,
           "symbol": "FollowThroughView",
           "claim": "The production JSX source declares onClick at this control site."
@@ -43407,7 +43407,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1645,
           "symbol": "ThreadPulloutInner",
           "claim": "The production JSX source declares onMouseDown at this control site."
@@ -43471,7 +43471,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/views/FollowThroughView.tsx",
+          "path": "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
           "line": 276,
           "symbol": "FollowThroughView",
           "claim": "The production JSX source declares onClick at this control site."
@@ -44239,7 +44239,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/views/FollowThroughView.tsx",
+          "path": "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
           "line": 271,
           "symbol": "FollowThroughView",
           "claim": "The production JSX source declares onClick at this control site."
@@ -45007,7 +45007,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 942,
           "symbol": "ThreadMessageList",
           "claim": "The production JSX source declares onClick at this control site."
@@ -74133,7 +74133,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 721,
           "symbol": "document",
           "claim": "Source registers the browser keydown listener on document; static census records the registration site."
@@ -74165,7 +74165,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1507,
           "symbol": "document",
           "claim": "Source registers the browser selectionchange listener on document; static census records the registration site."
@@ -74213,7 +74213,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1547,
           "symbol": "document",
           "claim": "Source registers the browser keydown listener on document; static census records the registration site."
@@ -74549,7 +74549,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1530,
           "symbol": "document",
           "claim": "Source registers the browser mousedown listener on document; static census records the registration site."
@@ -85689,7 +85689,7 @@
         },
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1793,
           "symbol": "ThreadPullout",
           "claim": "ThreadComposer receives handleKeep through its onKeep prop."
@@ -100494,7 +100494,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1793,
           "symbol": "ThreadPullout",
           "claim": "ThreadComposer receives handleKeep through its onKeep prop."
@@ -112321,7 +112321,7 @@
         },
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1368,
           "symbol": "handleKeep",
           "claim": "handleKeep forwards the message id and as argument to keepMessage inside attempt error handling."

@@ -49,7 +49,7 @@
     "src/desk/pullouts/PeoplePullout.tsx",
     "src/desk/pullouts/_parked/MeetingPullout.tsx",
     "src/desk/pullouts/RecipePullout.tsx",
-    "src/desk/pullouts/ThreadPullout.tsx",
+    "src/desk/pullouts/_parked/ThreadPullout.tsx",
     "src/desk/pullouts/WorkflowPullout.tsx",
     "src/desk/pullouts/editors/KbEditor.tsx",
     "src/desk/pullouts/editors/NoteEditor.tsx",
@@ -60,7 +60,7 @@
     "src/desk/pullouts/shared/ThreadsSection.tsx",
     "src/desk/pullouts/views/BriefView.tsx",
     "src/desk/pullouts/views/DecisionsView.tsx",
-    "src/desk/pullouts/views/FollowThroughView.tsx",
+    "src/desk/pullouts/_parked/FollowThroughView.tsx",
     "src/desk/voice/ProposalStrip.tsx"
   ],
   "library-css-outside": [],

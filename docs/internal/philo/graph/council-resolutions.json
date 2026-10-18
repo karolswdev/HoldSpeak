@@ -453,7 +453,7 @@
         },
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
           "line": 1368,
           "symbol": "handleKeep",
           "claim": "handleKeep forwards the message id and as argument to keepMessage inside attempt error handling."

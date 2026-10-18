@@ -23525,7 +23525,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_threadpullout_tsx.l114.onclick",
    "kind": "edge",
-   "label": "<button> onClick · web/src/desk/pullouts/ThreadPullout.tsx:114 [active] (raw)",
+   "label": "<button> onClick · web/src/desk/pullouts/_parked/ThreadPullout.tsx:114 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -23535,7 +23535,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
      "line": 114,
      "anchor": "onClick",
      "claim": "a raw control's onClick handler on button"
@@ -23546,7 +23546,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_threadpullout_tsx.l126.onclick",
    "kind": "edge",
-   "label": "<button> onClick · web/src/desk/pullouts/ThreadPullout.tsx:126 [active] (raw)",
+   "label": "<button> onClick · web/src/desk/pullouts/_parked/ThreadPullout.tsx:126 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -23556,7 +23556,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
      "line": 126,
      "anchor": "onClick",
      "claim": "a raw control's onClick handler on button"
@@ -23567,7 +23567,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_threadpullout_tsx.l184.onchange",
    "kind": "edge",
-   "label": "<select> onChange · web/src/desk/pullouts/ThreadPullout.tsx:184 [active] (raw)",
+   "label": "<select> onChange · web/src/desk/pullouts/_parked/ThreadPullout.tsx:184 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -23577,7 +23577,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
      "line": 184,
      "anchor": "onChange",
      "claim": "a raw control's onChange handler on select"
@@ -23588,7 +23588,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_threadpullout_tsx.l197.onchange",
    "kind": "edge",
-   "label": "<input> onChange · web/src/desk/pullouts/ThreadPullout.tsx:197 [active] (raw)",
+   "label": "<input> onChange · web/src/desk/pullouts/_parked/ThreadPullout.tsx:197 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -23598,7 +23598,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
      "line": 197,
      "anchor": "onChange",
      "claim": "a raw control's onChange handler on input"
@@ -23609,7 +23609,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_threadpullout_tsx.l207.onchange",
    "kind": "edge",
-   "label": "<input> onChange · web/src/desk/pullouts/ThreadPullout.tsx:207 [active] (raw)",
+   "label": "<input> onChange · web/src/desk/pullouts/_parked/ThreadPullout.tsx:207 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -23619,7 +23619,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
      "line": 207,
      "anchor": "onChange",
      "claim": "a raw control's onChange handler on input"
@@ -23630,7 +23630,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_threadpullout_tsx.l217.onchange",
    "kind": "edge",
-   "label": "<input> onChange · web/src/desk/pullouts/ThreadPullout.tsx:217 [active] (raw)",
+   "label": "<input> onChange · web/src/desk/pullouts/_parked/ThreadPullout.tsx:217 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -23640,7 +23640,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
      "line": 217,
      "anchor": "onChange",
      "claim": "a raw control's onChange handler on input"
@@ -23651,7 +23651,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_threadpullout_tsx.l232.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/pullouts/ThreadPullout.tsx:232 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/pullouts/_parked/ThreadPullout.tsx:232 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -23661,7 +23661,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
      "line": 232,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -23672,7 +23672,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_threadpullout_tsx.l240.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/pullouts/ThreadPullout.tsx:240 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/pullouts/_parked/ThreadPullout.tsx:240 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -23682,7 +23682,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
      "line": 240,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -23693,7 +23693,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_threadpullout_tsx.l563.ontoggle",
    "kind": "edge",
-   "label": "<details> onToggle · web/src/desk/pullouts/ThreadPullout.tsx:563 [active] (raw)",
+   "label": "<details> onToggle · web/src/desk/pullouts/_parked/ThreadPullout.tsx:563 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -23703,7 +23703,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
      "line": 563,
      "anchor": "onToggle",
      "claim": "a raw control's onToggle handler on details"
@@ -23714,7 +23714,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_threadpullout_tsx.l645.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/pullouts/ThreadPullout.tsx:645 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/pullouts/_parked/ThreadPullout.tsx:645 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -23724,7 +23724,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
      "line": 645,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -23735,7 +23735,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_threadpullout_tsx.l654.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/pullouts/ThreadPullout.tsx:654 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/pullouts/_parked/ThreadPullout.tsx:654 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -23745,7 +23745,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
      "line": 654,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -23756,7 +23756,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_threadpullout_tsx.l662.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/pullouts/ThreadPullout.tsx:662 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/pullouts/_parked/ThreadPullout.tsx:662 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -23766,7 +23766,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
      "line": 662,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -23777,7 +23777,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_threadpullout_tsx.l676.onsubmit",
    "kind": "edge",
-   "label": "<ElicitationForm> onSubmit · web/src/desk/pullouts/ThreadPullout.tsx:676 [active] (unclassified)",
+   "label": "<ElicitationForm> onSubmit · web/src/desk/pullouts/_parked/ThreadPullout.tsx:676 [active] (unclassified)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -23787,7 +23787,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
      "line": 676,
      "anchor": "onSubmit",
      "claim": "a unclassified control's onSubmit handler on ElicitationForm"
@@ -23798,7 +23798,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_threadpullout_tsx.l751.onchange",
    "kind": "edge",
-   "label": "<input> onChange · web/src/desk/pullouts/ThreadPullout.tsx:751 [active] (raw)",
+   "label": "<input> onChange · web/src/desk/pullouts/_parked/ThreadPullout.tsx:751 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -23808,7 +23808,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
      "line": 751,
      "anchor": "onChange",
      "claim": "a raw control's onChange handler on input"
@@ -23819,7 +23819,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_threadpullout_tsx.l752.onkeydown",
    "kind": "edge",
-   "label": "<input> onKeyDown · web/src/desk/pullouts/ThreadPullout.tsx:752 [active] (raw)",
+   "label": "<input> onKeyDown · web/src/desk/pullouts/_parked/ThreadPullout.tsx:752 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -23829,7 +23829,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
      "line": 752,
      "anchor": "onKeyDown",
      "claim": "a raw control's onKeyDown handler on input"
@@ -23840,7 +23840,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_threadpullout_tsx.l770.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/pullouts/ThreadPullout.tsx:770 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/pullouts/_parked/ThreadPullout.tsx:770 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -23850,7 +23850,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
      "line": 770,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -23861,7 +23861,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_threadpullout_tsx.l778.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/pullouts/ThreadPullout.tsx:778 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/pullouts/_parked/ThreadPullout.tsx:778 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -23871,7 +23871,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
      "line": 778,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -23882,7 +23882,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_threadpullout_tsx.l811.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/pullouts/ThreadPullout.tsx:811 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/pullouts/_parked/ThreadPullout.tsx:811 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -23892,7 +23892,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
      "line": 811,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -23903,7 +23903,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_threadpullout_tsx.l942.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/pullouts/ThreadPullout.tsx:942 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/pullouts/_parked/ThreadPullout.tsx:942 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -23913,7 +23913,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
      "line": 942,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -23924,7 +23924,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_threadpullout_tsx.l1035.onclick",
    "kind": "edge",
-   "label": "<div> onClick · web/src/desk/pullouts/ThreadPullout.tsx:1035 [active] (raw)",
+   "label": "<div> onClick · web/src/desk/pullouts/_parked/ThreadPullout.tsx:1035 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -23934,7 +23934,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
      "line": 1035,
      "anchor": "onClick",
      "claim": "a raw control's onClick handler on div"
@@ -23945,7 +23945,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_threadpullout_tsx.l1081.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/pullouts/ThreadPullout.tsx:1081 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/pullouts/_parked/ThreadPullout.tsx:1081 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -23955,7 +23955,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
      "line": 1081,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -23966,7 +23966,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_threadpullout_tsx.l1109.onclick",
    "kind": "edge",
-   "label": "<summary> onClick · web/src/desk/pullouts/ThreadPullout.tsx:1109 [active] (raw)",
+   "label": "<summary> onClick · web/src/desk/pullouts/_parked/ThreadPullout.tsx:1109 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -23976,7 +23976,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
      "line": 1109,
      "anchor": "onClick",
      "claim": "a raw control's onClick handler on summary"
@@ -23987,7 +23987,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_threadpullout_tsx.l1154.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/pullouts/ThreadPullout.tsx:1154 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/pullouts/_parked/ThreadPullout.tsx:1154 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -23997,7 +23997,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
      "line": 1154,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -24008,7 +24008,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_threadpullout_tsx.l1161.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/pullouts/ThreadPullout.tsx:1161 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/pullouts/_parked/ThreadPullout.tsx:1161 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -24018,7 +24018,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
      "line": 1161,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -24029,7 +24029,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_threadpullout_tsx.l1168.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/pullouts/ThreadPullout.tsx:1168 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/pullouts/_parked/ThreadPullout.tsx:1168 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -24039,7 +24039,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
      "line": 1168,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -24050,7 +24050,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_threadpullout_tsx.l1654.onchange",
    "kind": "edge",
-   "label": "<input> onChange · web/src/desk/pullouts/ThreadPullout.tsx:1654 [active] (raw)",
+   "label": "<input> onChange · web/src/desk/pullouts/_parked/ThreadPullout.tsx:1654 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -24060,7 +24060,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
      "line": 1654,
      "anchor": "onChange",
      "claim": "a raw control's onChange handler on input"
@@ -24071,7 +24071,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_threadpullout_tsx.l1656.onkeydown",
    "kind": "edge",
-   "label": "<input> onKeyDown · web/src/desk/pullouts/ThreadPullout.tsx:1656 [active] (raw)",
+   "label": "<input> onKeyDown · web/src/desk/pullouts/_parked/ThreadPullout.tsx:1656 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -24081,7 +24081,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
      "line": 1656,
      "anchor": "onKeyDown",
      "claim": "a raw control's onKeyDown handler on input"
@@ -24092,7 +24092,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_threadpullout_tsx.l1674.onclick",
    "kind": "edge",
-   "label": "<button> onClick · web/src/desk/pullouts/ThreadPullout.tsx:1674 [active] (raw)",
+   "label": "<button> onClick · web/src/desk/pullouts/_parked/ThreadPullout.tsx:1674 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -24102,7 +24102,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",
      "line": 1674,
      "anchor": "onClick",
      "claim": "a raw control's onClick handler on button"
@@ -25205,7 +25205,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_views_followthroughview_tsx.l230.ontoggle",
    "kind": "edge",
-   "label": "<SurfaceLedgerRow> onToggle · web/src/desk/pullouts/views/FollowThroughView.tsx:230 [active] (library)",
+   "label": "<SurfaceLedgerRow> onToggle · web/src/desk/pullouts/_parked/FollowThroughView.tsx:230 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -25215,7 +25215,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/views/FollowThroughView.tsx",
+     "path": "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
      "line": 230,
      "anchor": "onToggle",
      "claim": "a library control's onToggle handler on SurfaceLedgerRow"
@@ -25226,7 +25226,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_views_followthroughview_tsx.l255.onclick",
    "kind": "edge",
-   "label": "<button> onClick · web/src/desk/pullouts/views/FollowThroughView.tsx:255 [active] (raw)",
+   "label": "<button> onClick · web/src/desk/pullouts/_parked/FollowThroughView.tsx:255 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -25236,7 +25236,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/views/FollowThroughView.tsx",
+     "path": "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
      "line": 255,
      "anchor": "onClick",
      "claim": "a raw control's onClick handler on button"
@@ -25247,7 +25247,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_views_followthroughview_tsx.l267.onclick",
    "kind": "edge",
-   "label": "<span> onClick · web/src/desk/pullouts/views/FollowThroughView.tsx:267 [active] (raw)",
+   "label": "<span> onClick · web/src/desk/pullouts/_parked/FollowThroughView.tsx:267 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -25257,7 +25257,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/views/FollowThroughView.tsx",
+     "path": "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
      "line": 267,
      "anchor": "onClick",
      "claim": "a raw control's onClick handler on span"
@@ -25268,7 +25268,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_views_followthroughview_tsx.l268.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/pullouts/views/FollowThroughView.tsx:268 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/pullouts/_parked/FollowThroughView.tsx:268 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -25278,7 +25278,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/views/FollowThroughView.tsx",
+     "path": "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
      "line": 268,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -25289,7 +25289,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_views_followthroughview_tsx.l269.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/pullouts/views/FollowThroughView.tsx:269 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/pullouts/_parked/FollowThroughView.tsx:269 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -25299,7 +25299,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/views/FollowThroughView.tsx",
+     "path": "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
      "line": 269,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -25310,7 +25310,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_views_followthroughview_tsx.l270.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/pullouts/views/FollowThroughView.tsx:270 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/pullouts/_parked/FollowThroughView.tsx:270 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -25320,7 +25320,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/views/FollowThroughView.tsx",
+     "path": "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
      "line": 270,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -25331,7 +25331,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_views_followthroughview_tsx.l271.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/pullouts/views/FollowThroughView.tsx:271 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/pullouts/_parked/FollowThroughView.tsx:271 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -25341,7 +25341,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/views/FollowThroughView.tsx",
+     "path": "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
      "line": 271,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -25352,7 +25352,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_views_followthroughview_tsx.l275.onchange",
    "kind": "edge",
-   "label": "<StringGadget> onChange · web/src/desk/pullouts/views/FollowThroughView.tsx:275 [active] (library)",
+   "label": "<StringGadget> onChange · web/src/desk/pullouts/_parked/FollowThroughView.tsx:275 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -25362,7 +25362,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/views/FollowThroughView.tsx",
+     "path": "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
      "line": 275,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on StringGadget"
@@ -25373,7 +25373,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_views_followthroughview_tsx.l276.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/pullouts/views/FollowThroughView.tsx:276 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/pullouts/_parked/FollowThroughView.tsx:276 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -25383,7 +25383,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/views/FollowThroughView.tsx",
+     "path": "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
      "line": 276,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"

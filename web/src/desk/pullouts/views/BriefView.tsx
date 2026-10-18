@@ -100,11 +100,13 @@ export function generatedStampLocal(generatedAt: string | null | undefined): str
 
 /** PHILO-15 05: a source the producer could not read is a NOT READ row
  *  (`source_ref` `not_read:<source>`); such a brief is PARTIAL. */
+const NOT_READ_REF = "not_read:";
+
 export function briefIsPartial(
   sections: Record<string, ReadonlyArray<{ source_ref?: string | null }> | undefined> | null | undefined,
 ): boolean {
   return Object.values(sections ?? {}).some((items) =>
-    (items ?? []).some((item) => String(item?.source_ref ?? "").startsWith("not_read:")),
+    (items ?? []).some((item) => String(item?.source_ref ?? "").startsWith(NOT_READ_REF)),
   );
 }
 
@@ -143,9 +145,10 @@ export function blockerKey(sourceRef: string | null | undefined): string | null 
 }
 
 /** One kind of change, for the folded count line. */
-export type SinceKind = "meeting" | "decision" | "promise" | "failed" | "other";
+export type SinceKind = "meeting" | "decision" | "promise" | "failed" | "unread" | "other";
 
-export function sinceKind(item: Pick<BriefItem, "section" | "text">): SinceKind {
+export function sinceKind(item: Pick<BriefItem, "section" | "text"> & { source_ref?: string | null }): SinceKind {
+  if (String(item.source_ref ?? "").startsWith(NOT_READ_REF)) return "unread";
   if (item.section === "broke") return "failed";
   if (/^Meeting recorded:/.test(item.text)) return "meeting";
   if (/^Commitment due\b/.test(item.text)) return "promise";
@@ -155,8 +158,10 @@ export function sinceKind(item: Pick<BriefItem, "section" | "text">): SinceKind 
 
 /** `2 meetings · 1 decision · 5 promises · 1 failed · 2 more`; a kind with
  *  none is left out (no counters of zero). Empty when nothing changed. */
-export function sinceCounts(items: ReadonlyArray<Pick<BriefItem, "section" | "text">>): string {
-  const n: Record<SinceKind, number> = { meeting: 0, decision: 0, promise: 0, failed: 0, other: 0 };
+export function sinceCounts(
+  items: ReadonlyArray<Pick<BriefItem, "section" | "text"> & { source_ref?: string | null }>,
+): string {
+  const n: Record<SinceKind, number> = { meeting: 0, decision: 0, promise: 0, failed: 0, unread: 0, other: 0 };
   for (const item of items) n[sinceKind(item)] += 1;
   const word = (count: number, one: string, many: string) => (count ? `${count} ${count === 1 ? one : many}` : null);
   return [
@@ -164,6 +169,7 @@ export function sinceCounts(items: ReadonlyArray<Pick<BriefItem, "section" | "te
     word(n.decision, "decision", "decisions"),
     word(n.promise, "promise", "promises"),
     word(n.failed, "failed", "failed"),
+    word(n.unread, "not read", "not read"),
     word(n.other, "more", "more"),
   ].filter(Boolean).join(" · ");
 }
@@ -183,7 +189,12 @@ export function sinceLabel(periodStart: string | null | undefined, now: Date = n
 
 /** The lookback rows of a brief: what changed, what broke, the decisions. */
 export function lookbackItems(brief: Pick<MondayBrief, "sections"> | null | undefined): BriefItem[] {
-  return LOOKBACK_SECTIONS.flatMap((id) => brief?.sections[id] ?? []);
+  // PHILO-15 05: an unread source is never silent. Its NOT READ row sits in
+  // WAITING but is not a Needs-you row: it limits what this brief can claim,
+  // so it comes first here.
+  const unread = (brief?.sections.waiting ?? []).filter((item) =>
+    String(item.source_ref ?? "").startsWith(NOT_READ_REF));
+  return [...unread, ...LOOKBACK_SECTIONS.flatMap((id) => brief?.sections[id] ?? [])];
 }
 
 /** Memory on the Desk (canvas section 2, option B): the desk's standing
