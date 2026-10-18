@@ -549,6 +549,22 @@ class InferenceAssignmentService:
                 raise NotFound("inference assignment", parsed["assignment_key"])
             return self._row_projection(conn, row)
 
+    def _after_subject_write(self, principal: Principal, scope: Mapping[str, Any]) -> None:
+        """Betterment A4: a new engine for an automation re-freezes its live
+        schedule, so a scheduled run uses it (a schedule delegation freezes
+        the route when it is turned on). The assignment is already written;
+        a re-freeze that cannot complete leaves the old delegation live."""
+        if scope.get("subject_kind") != "workbench" or scope.get("capability_id") != "workbench.item":
+            return
+        try:
+            from .workbench_service import WorkbenchService
+
+            WorkbenchService(self._db).refreeze_schedule(principal, str(scope.get("scope_id") or ""))
+        except Exception as exc:  # the write stands; the old route stays frozen
+            import logging
+
+            logging.getLogger(__name__).warning("schedule re-freeze failed for %s: %s", scope.get("scope_id"), exc)
+
     def set_assignment(
         self, principal: Principal, body: Mapping[str, Any], *, made_by: str = "owner"
     ) -> dict[str, Any]:
@@ -702,10 +718,11 @@ class InferenceAssignmentService:
                     context=receipt_context,
                 )
                 conn.commit()
-                return result
             except Exception:
                 conn.rollback()
                 raise
+        self._after_subject_write(principal, request["scope"])
+        return result
 
     def preview_use_default(
         self,
@@ -978,10 +995,11 @@ class InferenceAssignmentService:
                     context=receipt_context,
                 )
                 conn.commit()
-                return result
             except Exception:
                 conn.rollback()
                 raise
+        self._after_subject_write(principal, parsed)
+        return result
 
     def resolve_effective(
         self,

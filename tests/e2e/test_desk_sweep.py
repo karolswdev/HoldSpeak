@@ -238,6 +238,8 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
         ("needs", "chair:needs", None),
         # ... the Chair's other three windows (the 12 px floor walk of
         # PHILO-13-18 read them; tests/e2e/_parked/test_philo13_18_type_floor_glass.py) ...
+        # Betterment D4: Today's Since-yesterday fold, unfolded (the Brief
+        # wing it replaced is parked).
         ("brief", "pullout:intelligence:desk", None),
         ("week", "chair:week", None),
         ("capture", "chair:capture", None),
@@ -539,9 +541,9 @@ SETTLED_JS = r"""(id) => {
 BRIEF_SETTLED_JS = r"""(id) => {
   const w = document.getElementById(id);
   if (!w) return false;
-  if (w.querySelector('[data-testid=brief-no-changes]')) return true;
-  const refresh = w.querySelector('[data-testid=brief-refresh]');
-  return Boolean(refresh && !refresh.disabled && refresh.textContent.trim() === 'Refresh');
+  // Betterment D4: the Since-yesterday fold is open and drawn.
+  const toggle = w.querySelector('[data-testid=today-since-toggle]');
+  return Boolean(toggle && toggle.getAttribute('aria-expanded') === 'true' && w.querySelector('[data-testid=today-since-rows]'));
 }"""
 
 UNSETTLED_JS = r"""(id) => {
@@ -1145,8 +1147,12 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             launch.click()
             page.locator(f'[id="{wid}"] [data-testid=today-day]').wait_for(timeout=T)
             if case_id == "brief":
-                page.locator(f'[id="{wid}"]').get_by_role("button", name="Brief", exact=True).click()
-                page.locator(f'[id="{wid}"] [data-testid=brief-period-label], [id="{wid}"] [data-testid=brief-no-changes]').first.wait_for(timeout=T)
+                # Betterment D4: Today is one page; the brief is its Since
+                # yesterday fold, made when Today opens. Unfold it.
+                toggle = page.locator(f'[id="{wid}"] [data-testid=today-since-toggle]')
+                toggle.wait_for(timeout=T)
+                toggle.click()
+                page.locator(f'[id="{wid}"] [data-testid=today-since-rows]').wait_for(timeout=T)
                 page.wait_for_function(BRIEF_SETTLED_JS, arg=wid, timeout=T)
             page.mouse.move(2, 2)
         if case_id == "door-picked":

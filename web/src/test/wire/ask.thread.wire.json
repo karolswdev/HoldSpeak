@@ -47,22 +47,22 @@
   "output": "You owe Mira feedback on her cutover design doc, due Friday.",
   "profile_id": "glass-lan",
   "provider": "configured_local_engine",
-  "invocation_id": "invoke_e4a1e86a92262357259b554e8909815b",
-  "operation_id": "op_62b22d402bd94a6fbfe4a8ab12e1a401",
-  "receipt_id": "rcpt_a46e3c8f98b044cc86cb06265e7d642e",
-  "result_ref": "inference-result:invoke_e4a1e86a92262357259b554e8909815b/sha256:54edf0af7fbcb4dfc12f12f0745ce65e6bef7bc0c7057bc5ea4c40c718853401",
+  "invocation_id": "invoke_a53634295e059e5b3d78601ff10cce96",
+  "operation_id": "op_dc95989df59e43a59f7529bf4fc296ec",
+  "receipt_id": "rcpt_45da3bb6ef394985b1af5f51fe63c52b",
+  "result_ref": "inference-result:invoke_a53634295e059e5b3d78601ff10cce96/sha256:54edf0af7fbcb4dfc12f12f0745ce65e6bef7bc0c7057bc5ea4c40c718853401",
   "route_execution_receipt": {
    "schema": "RouteExecutionReceipt@1",
-   "execution_id": "ire_730626d2412ebc5ce9eaca1b08aa67ac",
-   "route_plan_id": "irp_dd8bb5534754135ad0e6275b36d620845fcd064e6a113c8d8444e0e44392a6d5",
-   "route_plan_sha256": "sha256:030c121c68039e6d499414e3fa37f8722218c1e8825c2083f360308ac002cd15",
-   "operation_plan_id": "iorp_225dde1efe62b75511c77b8409bdb958d0953e393a9116e1cc9db975fce791c5",
-   "operation_plan_sha256": "sha256:c4dcc1c5ccfe6b8d43f3ad6117e7f5414d91b398535de72fe443f5bf91143235",
+   "execution_id": "ire_98026f4525f344d6416409d8a63e52e4",
+   "route_plan_id": "irp_6196e89c7155478908cdc85d7f88c84bdf5a93a59f2c9f3a4740710808cba516",
+   "route_plan_sha256": "sha256:4dc467c2b1c9a959bc6954ae8f792d2a9e8f87cc046ca9cfe41c3dbcf66e9c68",
+   "operation_plan_id": "iorp_c3e754979273eb586708e1db6ce1269368cf4de1fb9e54a4323384aa1471b8ea",
+   "operation_plan_sha256": "sha256:a2c549694ecc5f34873fc0b5952e92320a62b14c9f3874cf9bcda0169a315a1b",
    "state": "terminal",
    "outcome": "succeeded",
    "disposition": "owner_terminal",
-   "winning_attempt_id": "ira_5a96902dd25c6740d7da4e60dba21063",
-   "result_ref": "inference-result:invoke_e4a1e86a92262357259b554e8909815b/sha256:54edf0af7fbcb4dfc12f12f0745ce65e6bef7bc0c7057bc5ea4c40c718853401",
+   "winning_attempt_id": "ira_05cdb251a2215dce4f27a2c689c8da21",
+   "result_ref": "inference-result:invoke_a53634295e059e5b3d78601ff10cce96/sha256:54edf0af7fbcb4dfc12f12f0745ce65e6bef7bc0c7057bc5ea4c40c718853401",
    "winning_deployment_revision_id": "dep2_4e3a1ff6818887d50f17bd97fd892755fed9499a1a67a78b5dc278a9de8c84de",
    "winning_boundary": "private_network",
    "considerations": [
@@ -82,7 +82,7 @@
    "physically_failed_attempt_count": 0,
    "attempts": [
     {
-     "attempt_id": "ira_5a96902dd25c6740d7da4e60dba21063",
+     "attempt_id": "ira_05cdb251a2215dce4f27a2c689c8da21",
      "route_leg_ordinal": 1,
      "leg_attempt_ordinal": 1,
      "profile_id": "glass-lan",
@@ -91,12 +91,12 @@
      "purpose": "primary",
      "deployment_revision_id": "dep2_4e3a1ff6818887d50f17bd97fd892755fed9499a1a67a78b5dc278a9de8c84de",
      "boundary": "private_network",
-     "child_operation_id": "op_62b22d402bd94a6fbfe4a8ab12e1a401",
+     "child_operation_id": "op_dc95989df59e43a59f7529bf4fc296ec",
      "disposition": "owner_terminal",
      "outcome": "succeeded",
      "send_phase": "provider_returned",
-     "child_receipt_sha256": "sha256:bdb6f196cd449e9f8bfef8da149dc0188832ba5dbec6becd68c85285109b71cd",
-     "disposition_evidence_sha256": "sha256:829a865e210788a22f59cc9003138cf1affbcc936f66979ac1141b20e59b243c"
+     "child_receipt_sha256": "sha256:7b5d09c195f8acd346d0fcd30ebe4baac1b25003fd8a67758e478063628779a4",
+     "disposition_evidence_sha256": "sha256:13c5471324ba04af537a026fd40fe5931b77f48ee9513448e3a4ec20f9812e10"
     }
    ]
   },
@@ -105,12 +105,12 @@
    "host": "192.168.1.43",
    "model": "qwen3.8-27b",
    "fallback": false,
-   "receipt": "ire_730626d2412ebc5ce9eaca1b08aa67ac"
+   "receipt": "ire_98026f4525f344d6416409d8a63e52e4"
   },
-  "thread_id": "th_8d7aea49d8ee",
+  "thread_id": "th_2c60db7316cf",
   "message_ids": {
-   "question": "tm_6717c0ebd0a9",
-   "answer": "tm_7682ef139c93"
+   "question": "tm_a2831f06474d",
+   "answer": "tm_9882c64b6e5b"
   },
   "looked_at": [
    {
@@ -165,22 +165,22 @@
   "output": "Make it a task for Friday, and tell her on Thursday.",
   "profile_id": "glass-lan",
   "provider": "configured_local_engine",
-  "invocation_id": "invoke_a75d44bbdfd86cf6a205d4d9f1bbc16b",
-  "operation_id": "op_72962639a81541f19e6a407e5e716e51",
-  "receipt_id": "rcpt_3a892b99b65e4f709f6c4c789da4e17f",
-  "result_ref": "inference-result:invoke_a75d44bbdfd86cf6a205d4d9f1bbc16b/sha256:949cf2117928931c74c471f8cfc8e51dc7700ac8ccb1e9125bd290a6c68eb888",
+  "invocation_id": "invoke_b439d9a4390f3698a9ac0e244cf47204",
+  "operation_id": "op_ba555cb5e4334c379354ac87d800efaa",
+  "receipt_id": "rcpt_ff7d91d9e17042b28f34d71d9649c668",
+  "result_ref": "inference-result:invoke_b439d9a4390f3698a9ac0e244cf47204/sha256:949cf2117928931c74c471f8cfc8e51dc7700ac8ccb1e9125bd290a6c68eb888",
   "route_execution_receipt": {
    "schema": "RouteExecutionReceipt@1",
-   "execution_id": "ire_afde7e9e7ec99defa0c27eae02da38f8",
-   "route_plan_id": "irp_4577bd9f7623d262325da28b4acf10f56b15f367db78efc361d5c6843d82fe63",
-   "route_plan_sha256": "sha256:99417d8b8a18727ebe947e9e239d9af9d0a027ce3d6e56a3f85c808e2ac3b822",
-   "operation_plan_id": "iorp_ae8f380cdc0d2db31a812a794ea41f53a6ce7915b675457cf92f724a136343f0",
-   "operation_plan_sha256": "sha256:2ad073e0dad06accf1ef26e4afd877f319ab5be80d066a2061cacafff0e93848",
+   "execution_id": "ire_c4e17805ff097d1c44d4431bb77d0269",
+   "route_plan_id": "irp_8ccd4b43b4dbf1a6fd2067ab9863ed77693a2a0eb3183b7595c91f64565cbbc6",
+   "route_plan_sha256": "sha256:d5aa2e3601bbf2f20bc2c1494384abe0cc876d96a3af1ad590c74e5088252c27",
+   "operation_plan_id": "iorp_145d1c659eb402c9a78d24f6359e4a8c8530fc721f8172c890c748235853afda",
+   "operation_plan_sha256": "sha256:219ae4fee8f91450959f5a7958fe8b22479caa0b42971e34e1aca21e97bb123a",
    "state": "terminal",
    "outcome": "succeeded",
    "disposition": "owner_terminal",
-   "winning_attempt_id": "ira_f6b8710c9206ca0629c33f48bb94fc00",
-   "result_ref": "inference-result:invoke_a75d44bbdfd86cf6a205d4d9f1bbc16b/sha256:949cf2117928931c74c471f8cfc8e51dc7700ac8ccb1e9125bd290a6c68eb888",
+   "winning_attempt_id": "ira_b6f26cadc070af1b00f00d2df8a9af3f",
+   "result_ref": "inference-result:invoke_b439d9a4390f3698a9ac0e244cf47204/sha256:949cf2117928931c74c471f8cfc8e51dc7700ac8ccb1e9125bd290a6c68eb888",
    "winning_deployment_revision_id": "dep2_4e3a1ff6818887d50f17bd97fd892755fed9499a1a67a78b5dc278a9de8c84de",
    "winning_boundary": "private_network",
    "considerations": [
@@ -200,7 +200,7 @@
    "physically_failed_attempt_count": 0,
    "attempts": [
     {
-     "attempt_id": "ira_f6b8710c9206ca0629c33f48bb94fc00",
+     "attempt_id": "ira_b6f26cadc070af1b00f00d2df8a9af3f",
      "route_leg_ordinal": 1,
      "leg_attempt_ordinal": 1,
      "profile_id": "glass-lan",
@@ -209,12 +209,12 @@
      "purpose": "primary",
      "deployment_revision_id": "dep2_4e3a1ff6818887d50f17bd97fd892755fed9499a1a67a78b5dc278a9de8c84de",
      "boundary": "private_network",
-     "child_operation_id": "op_72962639a81541f19e6a407e5e716e51",
+     "child_operation_id": "op_ba555cb5e4334c379354ac87d800efaa",
      "disposition": "owner_terminal",
      "outcome": "succeeded",
      "send_phase": "provider_returned",
-     "child_receipt_sha256": "sha256:ce7ed0a4aadbe8ebecbdb3ab06d66fb6cbe9bd4ef3320f7bcbf3d4104968385b",
-     "disposition_evidence_sha256": "sha256:5f31173c42cfec26365eae73f95b5e4455b317ad984bdda2960d0c7b78f542da"
+     "child_receipt_sha256": "sha256:c2ca1a9d94e3193b5cf885bb0ecb42c5fb1831f2f1bfc5acb44d86da270f07ec",
+     "disposition_evidence_sha256": "sha256:0397b63293d9b6c0d5c06aad4b79b6c01b110bb3f49c52ceafc044dfcf794ebc"
     }
    ]
   },
@@ -223,12 +223,12 @@
    "host": "192.168.1.43",
    "model": "qwen3.8-27b",
    "fallback": false,
-   "receipt": "ire_afde7e9e7ec99defa0c27eae02da38f8"
+   "receipt": "ire_c4e17805ff097d1c44d4431bb77d0269"
   },
-  "thread_id": "th_8d7aea49d8ee",
+  "thread_id": "th_2c60db7316cf",
   "message_ids": {
-   "question": "tm_2e61f99496a8",
-   "answer": "tm_7d7ff47d8464"
+   "question": "tm_51e3847a309b",
+   "answer": "tm_76c112929748"
   },
   "looked_at": [
    {
@@ -239,7 +239,7 @@
   "tools": ""
  },
  "thread": {
-  "id": "th_8d7aea49d8ee",
+  "id": "th_2c60db7316cf",
   "title": "What do I owe Mira this week?",
   "recipe_id": "",
   "profile_override": "",
@@ -249,13 +249,13 @@
   "status_line": "",
   "token_in": 0,
   "token_out": 0,
-  "created_at": 1792334462.727007,
-  "updated_at": 1792334462.81728,
-  "last_turn_at": 1792334462.81728,
+  "created_at": 1792335725.440189,
+  "updated_at": 1792335725.52938,
+  "last_turn_at": 1792335725.52938,
   "mode": null,
   "messages": [
    {
-    "id": "tm_6717c0ebd0a9",
+    "id": "tm_a2831f06474d",
     "role": "user",
     "parent_id": null,
     "streaming": false,
@@ -269,7 +269,7 @@
     "stats_json": null,
     "parts": [
      {
-      "id": "tp_8513d50209a4",
+      "id": "tp_565362a22c5d",
       "kind": "text",
       "text": "What do I owe Mira this week?",
       "ordinal": 0,
@@ -277,17 +277,17 @@
       "draft": false
      }
     ],
-    "created_at": 1792334462.727212,
-    "updated_at": 1792334462.727697,
-    "completed_at": 1792334462.727697,
+    "created_at": 1792335725.440382,
+    "updated_at": 1792335725.440783,
+    "completed_at": 1792335725.440783,
     "aborted_at": null
    },
    {
-    "id": "tm_7682ef139c93",
+    "id": "tm_9882c64b6e5b",
     "role": "assistant",
-    "parent_id": "tm_6717c0ebd0a9",
+    "parent_id": "tm_a2831f06474d",
     "streaming": false,
-    "receipt_id": "ire_730626d2412ebc5ce9eaca1b08aa67ac",
+    "receipt_id": "ire_98026f4525f344d6416409d8a63e52e4",
     "egress_scope": "private_network",
     "egress_host": "192.168.1.43",
     "egress_receipt_id": "",
@@ -297,7 +297,7 @@
     "stats_json": null,
     "parts": [
      {
-      "id": "tp_5915e5ae7c42",
+      "id": "tp_514e34a41ace",
       "kind": "text",
       "text": "You owe Mira feedback on her cutover design doc, due Friday.",
       "ordinal": 0,
@@ -305,15 +305,15 @@
       "draft": false
      }
     ],
-    "created_at": 1792334462.727982,
-    "updated_at": 1792334462.7283142,
-    "completed_at": 1792334462.7283142,
+    "created_at": 1792335725.4410481,
+    "updated_at": 1792335725.4412942,
+    "completed_at": 1792335725.4412942,
     "aborted_at": null
    },
    {
-    "id": "tm_2e61f99496a8",
+    "id": "tm_51e3847a309b",
     "role": "user",
-    "parent_id": "tm_7682ef139c93",
+    "parent_id": "tm_9882c64b6e5b",
     "streaming": false,
     "receipt_id": "",
     "egress_scope": "",
@@ -325,7 +325,7 @@
     "stats_json": null,
     "parts": [
      {
-      "id": "tp_37539aa34734",
+      "id": "tp_dbbdecd48700",
       "kind": "text",
       "text": "When should I tell her?",
       "ordinal": 0,
@@ -333,17 +333,17 @@
       "draft": false
      }
     ],
-    "created_at": 1792334462.816891,
-    "updated_at": 1792334462.8171892,
-    "completed_at": 1792334462.8171892,
+    "created_at": 1792335725.528901,
+    "updated_at": 1792335725.529252,
+    "completed_at": 1792335725.529252,
     "aborted_at": null
    },
    {
-    "id": "tm_7d7ff47d8464",
+    "id": "tm_76c112929748",
     "role": "assistant",
-    "parent_id": "tm_2e61f99496a8",
+    "parent_id": "tm_51e3847a309b",
     "streaming": false,
-    "receipt_id": "ire_afde7e9e7ec99defa0c27eae02da38f8",
+    "receipt_id": "ire_c4e17805ff097d1c44d4431bb77d0269",
     "egress_scope": "private_network",
     "egress_host": "192.168.1.43",
     "egress_receipt_id": "",
@@ -353,7 +353,7 @@
     "stats_json": null,
     "parts": [
      {
-      "id": "tp_d1ec1fc6065b",
+      "id": "tp_82cfb39ba334",
       "kind": "text",
       "text": "Make it a task for Friday, and tell her on Thursday.",
       "ordinal": 0,
@@ -361,39 +361,39 @@
       "draft": false
      }
     ],
-    "created_at": 1792334462.81728,
-    "updated_at": 1792334462.817528,
-    "completed_at": 1792334462.817528,
+    "created_at": 1792335725.52938,
+    "updated_at": 1792335725.529664,
+    "completed_at": 1792335725.529664,
     "aborted_at": null
    }
   ],
   "siblings": {},
   "refs": [
    {
-    "id": "tr_4da11c165ada",
+    "id": "tr_b41e2b6ef638",
     "ref_kind": "note",
     "ref_id": "n-mira",
     "frozen_json": "{\"title\":\"1:1 with Mira\"}",
-    "created_at": 1792334462.72783,
-    "message_id": "tm_6717c0ebd0a9",
+    "created_at": 1792335725.440892,
+    "message_id": "tm_a2831f06474d",
     "origin": "reference"
    },
    {
-    "id": "tr_4865e85d5655",
+    "id": "tr_b67f58db7384",
     "ref_kind": "note",
     "ref_id": "n-mira",
     "frozen_json": "{\"title\":\"1:1 with Mira\"}",
-    "created_at": 1792334462.728398,
-    "message_id": "tm_7682ef139c93",
+    "created_at": 1792335725.4413671,
+    "message_id": "tm_9882c64b6e5b",
     "origin": "relevance"
    },
    {
-    "id": "tr_5e3d0d707b23",
+    "id": "tr_a8848eee7b09",
     "ref_kind": "note",
     "ref_id": "n-mira",
     "frozen_json": "{\"title\":\"1:1 with Mira\"}",
-    "created_at": 1792334462.817596,
-    "message_id": "tm_7d7ff47d8464",
+    "created_at": 1792335725.529782,
+    "message_id": "tm_76c112929748",
     "origin": "relevance"
    }
   ],
@@ -402,7 +402,7 @@
  "recent": {
   "threads": [
    {
-    "id": "th_8d7aea49d8ee",
+    "id": "th_2c60db7316cf",
     "title": "What do I owe Mira this week?",
     "recipe_id": "",
     "profile_override": "",
@@ -412,9 +412,9 @@
     "status_line": "",
     "token_in": 0,
     "token_out": 0,
-    "created_at": 1792334462.727007,
-    "updated_at": 1792334462.81728,
-    "last_turn_at": 1792334462.81728,
+    "created_at": 1792335725.440189,
+    "updated_at": 1792335725.52938,
+    "last_turn_at": 1792335725.52938,
     "mode": null
    }
   ]

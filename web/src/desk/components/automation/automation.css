@@ -116,6 +116,52 @@
 .automation-do-editor { display: flex; flex-direction: column; gap: 8px; }
 .automation-editor-verbs { display: flex; flex-wrap: wrap; gap: 6px; }
 
+/* A4: the When and With editors (in place under their line). */
+.automation-when-editor,
+.automation-with-editor { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.automation-when-group,
+.automation-with-editor section { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.automation-editor-head,
+.automation-editor-caption {
+  font: 600 var(--font-size-xs, 12px) / 1.5 var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--wb-muted);
+}
+.automation-picks { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.automation-picks .btn[aria-pressed="true"] { border-color: var(--wb-ink); box-shadow: var(--wb-sunken); }
+.automation-when-time { display: flex; align-items: center; gap: 10px; }
+.automation-next {
+  font: 500 var(--font-size-xs, 12px) / 1.5 var(--font-mono);
+  letter-spacing: 0.02em;
+  color: var(--wb-muted);
+  white-space: nowrap;
+}
+.automation-engine-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; }
+.automation-engine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 6px 0;
+  border-top: 1px solid var(--wb-rule-soft);
+  min-width: 0;
+}
+.automation-engine:first-child { border-top: 0; }
+.automation-engine-name {
+  flex: 1 1 160px;
+  min-width: 0;
+  font: 500 14px / 1.4 var(--font-sans);
+  overflow-wrap: anywhere;
+}
+.automation-engine-using {
+  font: 600 var(--font-size-xs, 12px) / 1.5 var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--wb-text);
+}
+.automation-spend { padding: 4px 0 2px; }
+
 .automation-chips { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 1px; }
 .automation-chips .surface-token { white-space: normal; overflow-wrap: anywhere; }
 

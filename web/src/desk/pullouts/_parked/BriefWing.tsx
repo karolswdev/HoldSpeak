@@ -1,0 +1,652 @@
+import { wireDate } from "../../surface/format";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { Button } from "../../../components/signal/Signal";
+import { apiFetch } from "../../../lib/api"; import { plainFailure } from "../../surface/plainFailure"; // PHILO-13-04: plain words, never the hub's `detail`
+import { useWriteReceipt } from "../../hooks/useWriteReceipt";
+import { refreshIntelligenceAttention } from "../../intelligenceAttention";
+import { useOnDeskChanged } from "../../useDeskChangedRefresh";
+import { openSurfaceOr } from "../../shell";
+import { SurfaceLedgerRow, SurfaceState } from "../../surface/Surface";
+import { SurfaceFooter } from "../../surface/SurfaceFooter";
+import { StateChip, countToken } from "../../surface";
+import { BriefSendWells } from "../../documentSendsLazy";
+import { openPerson, refOpener } from "../../openObject";
+import { StandingPagesSection, useStandingPages } from "../../standingPages";
+import "../attention-records.css";
+
+interface BriefItem {
+  id: string;
+  section: BriefSection;
+  text: string;
+  detail?: string | null;
+  source_ref?: string | null;
+  priority: number;
+}
+
+type BriefSection = "this_week" | "changed" | "broke" | "waiting" | "decisions";
+
+type ShelfState = "acknowledged" | "deferred";
+
+interface PersonSection {
+  relationship_id: string;
+  display_name: string;
+  they_owe_count: number;
+  stalest_age_days: number | null;
+  you_owe_count: number;
+  agenda_backlog: number;
+  next_one_on_one: { event_id: string; title: string; starts_at: string } | null;
+}
+
+type MondayBrief = {
+  id: string;
+  headline: string;
+  sections: Partial<Record<BriefSection, BriefItem[]>>;
+  is_empty: boolean;
+  shelf?: Record<string, ShelfState>;
+  person_sections?: PersonSection[];
+  person_sections_state?: string;
+  period_label?: string | null;
+  generated_label?: string | null;
+  period_start?: string;
+  generated_at?: string;
+  /** PHILO-17: the desk is newer than the brief (a meeting, a decision, an
+   *  engine assignment, or a new day). The view makes the brief again. */
+  stale?: boolean;
+};
+
+const LOOKBACK_SECTIONS: readonly BriefSection[] = ["changed", "broke", "waiting", "decisions"];
+
+const _MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+
+/** SINCE FRIDAY / SINCE THURSDAY / ... from the lookback start day (local). */
+export function sinceFridayLabel(periodStart: string | undefined): string {
+  const d = parseLocal(periodStart);
+  if (!d) return "SINCE FRIDAY";
+  const days = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
+  return `SINCE ${days[d.getDay()]}`;
+}
+
+/** Source emblem chip from source_ref (for SINCE FRIDAY items). */
+
+/** Replace YYYY-MM-DD in a string with MON DD (e.g. "SEP 04"). */
+function humanizeDate(text: string): string {
+  return text.replace(/\d{4}-(\d{2})-(\d{2})/g, (_match, mm, dd) => {
+    const month = _MONTHS[parseInt(mm, 10) - 1] ?? mm;
+    return `${month} ${dd}`;
+  });
+}
+
+/** HS-175 counsel C8: parse an ISO value in the VIEWER's local time.
+ * A bare `YYYY-MM-DD` is a calendar day, not UTC midnight (`new Date`
+ * would shift it a day west of UTC); a timestamp parses as an instant. */
+export function parseLocal(iso: string | null | undefined): Date | null {
+  return wireDate(iso);
+}
+
+/** Extract day-of-week from an ISO date (local). */
+export function dayToken(iso: string | null | undefined): string | null {
+  const d = parseLocal(iso);
+  return d ? ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"][d.getDay()] : null;
+}
+
+/** `SEP 01 – 05` / `AUG 31 – SEP 05`: the local Monday of `generatedAt`'s
+ * week through its local day (the brief's period, viewer's clock). */
+export function periodLabelLocal(generatedAt: string | null | undefined): string | null {
+  const gen = parseLocal(generatedAt);
+  if (!gen) return null;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const daysSinceMonday = (gen.getDay() + 6) % 7;
+  const monday = new Date(gen.getFullYear(), gen.getMonth(), gen.getDate() - daysSinceMonday);
+  const monMonth = _MONTHS[monday.getMonth()];
+  const genMonth = _MONTHS[gen.getMonth()];
+  // A plain hyphen: the vocabulary guard forbids em/en dashes in rendered copy.
+  if (monday.getMonth() === gen.getMonth()) return `${monMonth} ${pad(monday.getDate())}-${pad(gen.getDate())}`;
+  return `${monMonth} ${pad(monday.getDate())} - ${genMonth} ${pad(gen.getDate())}`;
+}
+
+/** `SEP 05 08:00` in the viewer's local time: the brief's one clock
+ *  (PHILO-6-02). The Arrival caption, the Arrival receipt and this view all
+ *  render the producer's `generated_at` through it. */
+export function generatedStampLocal(generatedAt: string | null | undefined): string | null {
+  const gen = parseLocal(generatedAt);
+  if (!gen) return null;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${_MONTHS[gen.getMonth()]} ${pad(gen.getDate())} ${pad(gen.getHours())}:${pad(gen.getMinutes())}`;
+}
+
+/** PHILO-15 05: a source the producer could not read is a NOT READ row
+ *  (`source_ref` `not_read:<source>`); such a brief is PARTIAL. */
+export function briefIsPartial(
+  sections: Record<string, ReadonlyArray<{ source_ref?: string | null }> | undefined> | null | undefined,
+): boolean {
+  return Object.values(sections ?? {}).some((items) =>
+    (items ?? []).some((item) => String(item?.source_ref ?? "").startsWith("not_read:")),
+  );
+}
+
+/** `GENERATED SEP 05 08:00` in the viewer's local time. */
+export function generatedLabelLocal(generatedAt: string | null | undefined): string | null {
+  const stamp = generatedStampLocal(generatedAt);
+  return stamp ? `GENERATED ${stamp}` : null;
+}
+
+/** Parse a lookback item into kind token + primary + detail.
+ *
+ * Item text is e.g. "Review decision: Ania owns the API spec" or
+ * "Commitment due 2026-09-04: Ania owns the API spec".
+ * Kind = prefix before first ": " (uppercased, ISO dates humanized).
+ * Primary = text after the colon. */
+function parseLookbackItem(item: BriefItem): {
+  kind: string | null;
+  primary: string;
+  detail: string | null;
+} {
+  const colonIdx = item.text.indexOf(": ");
+  if (colonIdx > 0) {
+    const rawKind = item.text.slice(0, colonIdx);
+    const kind = humanizeDate(rawKind).toUpperCase();
+    const primary = item.text.slice(colonIdx + 2);
+    return { kind, primary, detail: item.detail ?? null };
+  }
+  return { kind: null, primary: item.text, detail: item.detail ?? null };
+}
+
+/** PHILO-17: a brief row that names a setup blocker (`blocker:<key>`, from
+ *  the needs-you rule): its verb opens Runs on, or reads again for `unknown`. */
+export function blockerKey(sourceRef: string | null | undefined): string | null {
+  const match = /^blocker:(.+)$/.exec(String(sourceRef ?? ""));
+  return match ? match[1] : null;
+}
+
+/** The THIS WEEK refs the composed rows (MEETINGS, NEXT, ARMED, DUE) draw. */
+function composedThisWeek(item: BriefItem): boolean {
+  return (
+    item.source_ref === "calendar:week" ||
+    item.source_ref === "calendar:armed" ||
+    item.source_ref === "meeting_watch:commitments_due" ||
+    item.text.startsWith("Next:")
+  );
+}
+
+/* ================================================================== */
+
+export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; onOpenFollowThrough?: (id: string) => void }) {
+  const [brief, setBrief] = useState<MondayBrief | null>(null);
+  // Activity resumes effects on return. Keep the populated body (and its
+  // open Send well) mounted while that resume read is in flight.
+  const hasBrief = useRef(false);
+  hasBrief.current = brief !== null;
+  const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState("");
+  const [refreshFailed, setRefreshFailed] = useState("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [shelf, setShelf] = useState<Record<string, ShelfState>>({});
+  const [shelving, setShelving] = useState(false);
+  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
+  const [addingAgenda, setAddingAgenda] = useState(false);
+  const { attempt, receipt, clear } = useWriteReceipt();
+  // Memory on the Desk (canvas section 2, option B): the desk's standing
+  // pages live in the Brief, under its head.
+  const standingPages = useStandingPages("desk");
+
+  const reads = useRef({ started: 0, landed: 0 });
+  // PHILO-17: a stale brief is made again once per open view (never a loop).
+  const autoRefreshed = useRef(false);
+  const load = useCallback(async (quiet = false) => {
+    if (!quiet) {
+      setLoading(true);
+      setError("");
+    }
+    const order = ++reads.current.started;
+    try {
+      const latest = await apiFetch<MondayBrief | null>("/api/brief/latest");
+      // A read that started earlier and answers later never replaces a newer one.
+      if (order < reads.current.landed) return;
+      reads.current.landed = order;
+      setBrief(latest);
+      setShelf(latest?.shelf ?? {});
+    } catch (requestError) {
+      // A quiet re-read (the bus) that fails keeps the last Brief.
+      if (!quiet) setError(plainFailure("BRIEF DID NOT LOAD", requestError));
+    } finally {
+      if (!quiet) setLoading(false);
+    }
+  }, []);
+  // A Brief made in another window, or by an agent, shows here.
+  useOnDeskChanged(() => { void load(true); });
+
+  useEffect(() => { void load(hasBrief.current); }, [load]);
+
+  // PHILO-17: the brief was frozen at its first generation. When the hub says
+  // the desk is newer (a meeting, a decision, an engine), make it again.
+  useEffect(() => {
+    if (!brief?.stale || autoRefreshed.current || generating) return;
+    autoRefreshed.current = true;
+    void generate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [brief?.stale]);
+
+  const generate = async () => {
+    setGenerating(true);
+    setError("");
+    setRefreshFailed("");
+    try {
+      const generated = await apiFetch<MondayBrief | null>("/api/brief/generate", { method: "POST" });
+      // PHILO-17 (Astra r2): a rebuild that answers nothing keeps the brief
+      // on the glass; it never blanks a good one.
+      if (generated) {
+        setSelectedId(null);
+        setBrief(generated);
+        setShelf(generated.shelf ?? {});
+      } else if (!brief) {
+        setError("BRIEF NOT MADE");
+      } else {
+        setRefreshFailed("BRIEF NOT MADE AGAIN");
+      }
+    } catch (requestError) {
+      // With a brief on the glass the failure is a footer fact, not a blank face.
+      if (brief) setRefreshFailed(plainFailure("BRIEF NOT MADE AGAIN", requestError));
+      else setError(plainFailure("BRIEF NOT MADE", requestError));
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  /* ── Derived data ─────────────────────────────────────────────── */
+
+  const thisWeekItems = brief?.sections["this_week"] ?? [];
+  // PHILO-17: a THIS WEEK item no composed row draws (e.g. "1 new decision
+  // from meetings") is its own row; the heading never stands over nothing.
+  const thisWeekOther = thisWeekItems.filter((item) => !composedThisWeek(item));
+  const lookbackItems = LOOKBACK_SECTIONS.flatMap((id) => brief?.sections[id] ?? []);
+  const hasLookback = lookbackItems.length > 0;
+  const allItems = [...thisWeekItems, ...lookbackItems];
+  const selected = allItems.find((item) => item.id === selectedId);
+  const selectedPerson = brief?.person_sections?.find((p) => p.relationship_id === selectedPersonId);
+  const selectedWords = selectedPerson ? `PERSON · ${selectedPerson.display_name}`
+    : selected ? (() => {
+      const parsed = parseLookbackItem(selected);
+      return `SELECTED · ${parsed.kind ? `${parsed.kind} · ` : ""}${parsed.primary}`;
+    })() : undefined;
+
+  /* ── THIS WEEK composed rows ──────────────────────────────────── */
+
+  const twMeetings = thisWeekItems.find((i) => i.source_ref === "calendar:week");
+  const twNext = thisWeekItems.find((i) => i.text.startsWith("Next:"));
+  const twArmed = thisWeekItems.find((i) => i.source_ref === "calendar:armed");
+  const twDue = thisWeekItems.find((i) => i.source_ref === "meeting_watch:commitments_due");
+
+  const meetingCount = (() => {
+    if (!twMeetings) return 0;
+    const m = twMeetings.text.match(/^(\d+)\s+meeting/);
+    return m ? parseInt(m[1], 10) : 0;
+  })();
+
+  const nextToken = (() => {
+    if (!twNext) return null;
+    const m = twNext.text.match(/^Next:\s+(.+?)\s+at\s+(\d{2}:\d{2})$/);
+    if (m) return `NEXT ${m[1].toUpperCase()} ${m[2]}`;
+    return `NEXT ${twNext.text.replace(/^Next:\s+/i, "").toUpperCase()}`;
+  })();
+
+  const armedCount = (() => {
+    if (!twArmed) return 0;
+    const m = twArmed.text.match(/^(\d+)\s+armed/);
+    return m ? parseInt(m[1], 10) : 0;
+  })();
+
+  const dueCount = (() => {
+    if (!twDue) return 0;
+    const m = twDue.text.match(/^(\d+)\s+commitment/);
+    return m ? parseInt(m[1], 10) : 0;
+  })();
+
+  // Detail format from backend: "commitment text | YYYY-MM-DD"
+  const dueDetailParts = (twDue?.detail ?? "").split(" | ");
+  const dueCommitmentText = dueDetailParts[0] || null;
+  const dueDayToken = dueDetailParts[1] ? dayToken(dueDetailParts[1]) : null;
+
+  /* ── meetingsLabel / armedLabel / dueLabel via countToken (A.8) ── */
+
+  const meetingsLabel = countToken(meetingCount, "MEETING", "MEETINGS");
+  const armedLabel = countToken(armedCount, "ARMED");
+  const dueLabel = countToken(dueCount, "DUE");
+  const hasThisWeek = Boolean(meetingsLabel || armedLabel || dueLabel || thisWeekOther.length > 0);
+
+  /* ── a setup blocker row opens Runs on (PHILO-17) ─────────────── */
+
+  const openBlocker = (key: string) => {
+    if (key === "unknown") void generate();
+    else openSurfaceOr("open-concierge", "/models", key);
+  };
+
+  /* ── Triage shelf ─────────────────────────────────────────────── */
+
+  const addToAgenda = async (personId: string, personName: string) => {
+    setAddingAgenda(true);
+    await attempt(`${personName} · add to 1:1 agenda`, async () => {
+      const sessionsResp = await apiFetch<{ one_on_ones: Array<{ id: string; state: string }> }>(
+        `/api/people/relationships/${encodeURIComponent(personId)}/one-on-ones`,
+      );
+      let sessionId: string | undefined;
+      const openSession = sessionsResp.one_on_ones?.find((s) => s.state !== "closed");
+      if (openSession) { sessionId = openSession.id; }
+      else {
+        const created = await apiFetch<{ one_on_one: { id: string } }>(
+          `/api/people/relationships/${encodeURIComponent(personId)}/one-on-ones`,
+          { method: "POST", json: { visibility: "shared_intent" } },
+        );
+        sessionId = created.one_on_one.id;
+      }
+      await apiFetch(
+        `/api/people/one-on-ones/${encodeURIComponent(sessionId)}/agenda`,
+        { method: "POST", json: { body: "Follow up from brief", visibility: "shared_intent", state: "open", source: { kind: "brief" } } },
+      );
+      refreshIntelligenceAttention();
+    }, { subject: `person:${personId}` });
+    setAddingAgenda(false);
+  };
+
+  const setShelfState = async (state: ShelfState) => {
+    const itemId = selectedId;
+    if (!itemId || !selected) return;
+    const next: ShelfState | null = shelf[itemId] === state ? null : state;
+    setShelving(true);
+    const result = await attempt(
+      `${parseLookbackItem(selected).primary} · ${next === null ? "clear triage" : next}`,
+      () => apiFetch(`/api/brief/items/${encodeURIComponent(itemId)}/shelf`, { method: "POST", json: { state: next } }),
+      { subject: `brief-item:${itemId}` },
+    );
+    setShelving(false);
+    if (!result.ok) return;
+    setShelf((current) => {
+      const updated = { ...current };
+      if (next === null) delete updated[itemId];
+      else updated[itemId] = next;
+      return updated;
+    });
+    refreshIntelligenceAttention();
+  };
+
+  /* ── Body ─────────────────────────────────────────────────────── */
+
+  const standingAnswers = (
+    <StandingPagesSection
+      pages={[...standingPages.filter((page) => page.slug === "what-i-owe"), ...standingPages.filter((page) => page.slug !== "what-i-owe")]}
+      presentation="questions"
+    />
+  );
+
+  const body = loading ? (
+    <SurfaceState loading />
+  ) : error ? (
+    <SurfaceState error={error} onRetry={() => void load()} />
+  ) : !brief ? (
+    <>
+      <SurfaceState
+        empty
+        emptyLabel="No brief generated."
+        onAction={() => void generate()}
+        actionLabel={generating ? "Generating..." : "Generate"}
+      />
+      {standingAnswers}
+    </>
+  ) : brief.is_empty ? (
+    <>
+      {/* PHILO-17 (owner): one quiet line, never an empty well. */}
+      <p className="intelligence-brief-quiet" data-testid="brief-no-changes">No changes since the last brief</p>
+      {standingAnswers}
+    </>
+  ) : (
+    <>
+      {/* ── HEAD: period (display, ONCE) + generated (caption) ──
+          HS-175 counsel C8: both formatted HERE from generated_at in the
+          viewer's local time; the hub's labels are the fallback. */}
+      {(() => {
+        // PHILO-15-09 (B04, ruling 3): the brief's ONE range is the hub's,
+        // computed from its window; the week-based local label is a
+        // fallback for a payload that carries none.
+        const period = brief.period_label ?? periodLabelLocal(brief.generated_at);
+        return period ? (
+          <div className="intelligence-brief-period" data-testid="brief-period-label" role="heading" aria-level={2}>
+            {period}
+          </div>
+        ) : null;
+      })()}
+      {(() => {
+        const generated = generatedLabelLocal(brief.generated_at) ?? brief.generated_label;
+        return generated ? (
+          <div className="intelligence-brief-generated" data-testid="brief-generated-label">
+            {briefIsPartial(brief.sections) ? `${generated} · PARTIAL` : generated}
+          </div>
+        ) : null;
+      })()}
+
+      {standingAnswers}
+
+      {/* ── SINCE FRIDAY: flat rows, no folds, no "00" ─────────── */}
+      {hasLookback ? (
+        <div className="intelligence-brief-section" data-testid="brief-since-friday">
+          <div className="intelligence-brief-section-caption">{sinceFridayLabel(brief.period_start)}</div>
+          <div className="intelligence-brief-flat" data-testid="brief-lookback-rows">
+            {lookbackItems.map((item) => {
+              const state = shelf[item.id];
+              const parsed = parseLookbackItem(item);
+              const blocker = blockerKey(item.source_ref);
+              if (blocker) {
+                return (
+                  <div key={item.id} className="intelligence-brief-sf-row intelligence-brief-blocker" data-testid="brief-blocker-row">
+                    {/* PHILO-17: one quiet row: the words, then a compact verb
+                        (the Meetings grammar). */}
+                    <span className="kit-pill" data-tone="warn">{parsed.primary}</span>
+                    <Button dense onClick={() => openBlocker(blocker)} data-testid={`brief-blocker-verb-${blocker}`}>
+                      {parsed.detail || "Choose engine"}
+                    </Button>
+                  </div>
+                );
+              }
+              return (
+                <div key={item.id} className="intelligence-brief-sf-row" data-testid="brief-sf-row"
+                  data-selected={selectedId === item.id || undefined}>
+                  <div className="intelligence-brief-sf-body">
+                    <Button variant="chrome" className="intelligence-brief-sf-primary"
+                      aria-current={selectedId === item.id || undefined}
+                      onClick={() => {
+                        const ftId = item.source_ref?.match(/^(?:follow-through|action_item):(.+)$/)?.[1];
+                        if (ftId && onOpenFollowThrough) { onOpenFollowThrough(ftId); return; }
+                        // PHILO-13-06 (B1): the row opens the object it names in
+                        // its own window, and stays selected here for triage.
+                        clear?.();
+                        setSelectedPersonId(null);
+                        setSelectedId(item.id);
+                        refOpener(item.source_ref)?.();
+                      }}
+                    >
+                      {parsed.primary}
+                    </Button>
+                  </div>
+                  <div className="intelligence-brief-sf-facts">
+                    {parsed.kind ? <span className="intelligence-brief-sf-kind" data-testid="brief-sf-kind">{parsed.kind}</span> : null}
+                    {parsed.detail ? <span className="intelligence-brief-sf-detail">{humanizeDate(parsed.detail)}</span> : null}
+                    {state ? <span className="intelligence-brief-shelf-state">{state}</span> : null}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+
+      {/* ── THIS WEEK (absent when empty per A.8) ──────────────── */}
+      {hasThisWeek ? (
+        <div className="intelligence-brief-section" data-testid="brief-this-week">
+          <div className="intelligence-brief-section-caption">THIS WEEK</div>
+
+          {/* MEETINGS row with NEXT token (countToken = null at zero) */}
+          {meetingsLabel ? (
+            <div className="intelligence-brief-tw-row" data-testid="brief-tw-meetings">
+              <span className="intelligence-brief-tw-primary">{meetingsLabel}</span>
+              {nextToken ? (
+                <span className="intelligence-brief-tw-token" data-testid="brief-tw-next">{nextToken}</span>
+              ) : null}
+            </div>
+          ) : null}
+
+          {/* ARMED row (countToken = null at zero) */}
+          {armedLabel ? (
+            <div className="intelligence-brief-tw-row" data-testid="brief-tw-armed">
+              <span className="intelligence-brief-tw-primary">{armedLabel}</span>
+            </div>
+          ) : null}
+
+          {/* DUE row with commitment text + day token */}
+          {dueLabel ? (
+            <div className="intelligence-brief-tw-row intelligence-brief-tw-due" data-testid="brief-tw-due">
+              <div className="intelligence-brief-tw-due-head">
+                <span className="intelligence-brief-tw-primary">{dueLabel}</span>
+              </div>
+              {dueCommitmentText ? (
+                <div className="intelligence-brief-tw-due-detail">
+                  <span className="intelligence-brief-tw-detail-text">{dueCommitmentText}</span>
+                  {dueDayToken ? (
+                    <span className="intelligence-brief-tw-token" data-testid="brief-tw-due-day">{dueDayToken}</span>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          {thisWeekOther.map((item) => (
+            <div key={item.id} className="intelligence-brief-tw-row" data-testid="brief-tw-other">
+              <span className="intelligence-brief-tw-primary">{item.text}</span>
+              {item.detail ? (
+                <span className="intelligence-brief-tw-token">{humanizeDate(item.detail)}</span>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {/* ── People overlay ──────────────────────────────────────── */}
+      {brief.person_sections && brief.person_sections.length > 0 ? (
+        <div className="intelligence-brief-person-sections" data-testid="person-sections">
+          <div className="intelligence-brief-section-caption">PEOPLE</div>
+          <div className="intelligence-brief-flat">
+            {brief.person_sections.map((person) => {
+              const signals: string[] = [];
+              if (person.they_owe_count > 0) {
+                const age = person.stalest_age_days != null ? ` (${person.stalest_age_days}d)` : "";
+                signals.push(`They owe ${person.they_owe_count}${age}`);
+              }
+              if (person.you_owe_count > 0) signals.push(`You owe ${person.you_owe_count}`);
+              if (person.agenda_backlog > 0) signals.push(`${person.agenda_backlog} agenda`);
+              if (person.next_one_on_one) signals.push(`Next: ${person.next_one_on_one.title || "1:1"}`);
+              const isOpen = selectedPersonId === person.relationship_id;
+              return (
+                <SurfaceLedgerRow
+                  key={person.relationship_id}
+                  primary={person.display_name}
+                  open={isOpen}
+                  selected={isOpen}
+                  wrap
+                  onToggle={() => {
+                    clear?.();
+                    setSelectedId(null);
+                    setSelectedPersonId(isOpen ? null : person.relationship_id);
+                  }}
+                  lineLabel={`Person: ${person.display_name}`}
+                  data-testid={`person-row-${person.relationship_id}`}
+                >
+                  <div className="intelligence-brief-item-detail intelligence-brief-person-detail" data-testid={`person-signals-${person.relationship_id}`}>
+                    {signals.map((s, i) => <p key={i}>{s}</p>)}
+                  </div>
+                </SurfaceLedgerRow>
+              );
+            })}
+          </div>
+        </div>
+      ) : brief.person_sections_state === "unavailable" ? (
+        // PHILO-17: the words for why, and the one verb that fixes it.
+        <div className="intelligence-brief-person-unavailable intelligence-brief-blocker" data-testid="person-sections-unavailable">
+          <span className="intelligence-brief-quiet">People is not open, so the brief has no people</span>
+          <Button dense onClick={() => openSurfaceOr("open-people", "/", undefined)} data-testid="person-sections-open">Open People</Button>
+        </div>
+      ) : null}
+
+      {/* PHILO-11-05a (canvas A2, A3, A6): the brief's SEND well, after
+          PEOPLE. One pick and one press with the Chair's seat. */}
+      <BriefSendFold brief={brief} />
+    </>
+  );
+
+  return (
+    <>
+      <div className="desk-pullout-body desk-surface-body intelligence-pullout">
+        {header}
+        <section className="intelligence-view intelligence-brief" aria-live="polite">
+          {body}
+        </section>
+      </div>
+      <SurfaceFooter
+        receipt={
+          receipt ? <div className="attention-brief-receipt">
+            {selectedWords ? <span>{selectedWords}</span> : null}
+            {receipt}
+          </div> : (refreshFailed || undefined) ?? selectedWords
+        }
+        verbs={
+          // PHILO-13-04 ledger, paid in B1 (A.11): a brief that did not load
+          // has nothing to acknowledge, defer or speak; its Try again stands.
+          error ? null : selectedPerson ? (
+            <>
+              <Button dense disabled={addingAgenda} onClick={() => void addToAgenda(selectedPerson.relationship_id, selectedPerson.display_name)} data-testid="verb-add-agenda">
+                Add to 1:1 agenda
+              </Button>
+              <Button dense variant="ghost" onClick={() => openPerson(selectedPerson.relationship_id)} data-testid="verb-open-person">
+                Open person
+              </Button>
+            </>
+          ) : selected ? (
+            // PHILO-17: the triage verbs show only with a selected row, and
+            // the receipt names that row (they acted on nothing visible).
+            <>
+              <Button dense disabled={shelving} aria-pressed={shelf[selected.id] === "acknowledged"} onClick={() => void setShelfState("acknowledged")}>
+                Acknowledge
+              </Button>
+              <Button dense variant="ghost" disabled={shelving} aria-pressed={shelf[selected.id] === "deferred"} onClick={() => void setShelfState("deferred")}>
+                Defer
+              </Button>
+              <Button dense variant="ghost" onClick={() => openSurfaceOr("dictate", "/dictation", selected.source_ref ?? undefined)}>
+                Speak
+              </Button>
+            </>
+          ) : brief ? (
+            <Button dense variant="ghost" disabled={generating} onClick={() => void generate()} data-testid="brief-refresh">
+              {generating ? "Refreshing..." : "Refresh"}
+            </Button>
+          ) : null
+        }
+      />
+    </>
+  );
+}
+
+/** PHILO-17 (owner: the Send well was fully open under the brief): in the
+ *  Brief the well starts folded, one row; Send opens it (the destination,
+ *  the preview and the send itself), Hide folds it again. */
+function BriefSendFold({ brief }: { brief: Parameters<typeof BriefSendWells>[0]["brief"] }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="intelligence-brief-send" data-testid="brief-send-fold">
+      <div className="intelligence-brief-blocker">
+        <span className="intelligence-brief-send-words">Send this brief</span>
+        <Button dense variant={open ? "ghost" : "secondary"} aria-expanded={open} data-testid="brief-send-toggle"
+          onClick={() => setOpen((value) => !value)}>
+          {open ? "Hide" : "Send"}
+        </Button>
+      </div>
+      {open ? <BriefSendWells brief={brief} /> : null}
+    </div>
+  );
+}

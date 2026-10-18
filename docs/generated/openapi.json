@@ -5241,6 +5241,18 @@
     "/api/brief/latest": {
       "get": {
         "operationId": "latest_api_brief_latest_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "ensure",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Ensure",
+              "type": "boolean"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -5260,6 +5272,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "summary": "Latest",
@@ -30006,6 +30028,46 @@
         ]
       }
     },
+    "/api/workbenches/{workbench_id}/engine": {
+      "put": {
+        "description": "Betterment A4: With (the engine, and the Spend limit per run).",
+        "operationId": "api_set_workbench_engine_api_workbenches__workbench_id__engine_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workbench_id",
+            "required": true,
+            "schema": {
+              "title": "Workbench Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Set Workbench Engine Api Workbenches  Workbench Id  Engine Put"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Set Workbench Engine"
+      }
+    },
     "/api/workbenches/{workbench_id}/items": {
       "post": {
         "operationId": "api_add_item_api_workbenches__workbench_id__items_post",
@@ -30842,6 +30904,46 @@
           }
         },
         "summary": "Api Voice Resolve"
+      }
+    },
+    "/api/workbenches/{workbench_id}/when": {
+      "put": {
+        "description": "Betterment A4: one When choice (schedule, event or manual).",
+        "operationId": "api_set_workbench_when_api_workbenches__workbench_id__when_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workbench_id",
+            "required": true,
+            "schema": {
+              "title": "Workbench Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Set Workbench When Api Workbenches  Workbench Id  When Put"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Set Workbench When"
       }
     },
     "/api/workflows": {

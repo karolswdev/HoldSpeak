@@ -397,7 +397,8 @@ describe("Honest faces: a meeting's unowned action is an OPEN HERE row with its 
       expect(screen.getByTestId("room-headline").textContent).toBe("3 open here");
       const target = rows.find((r) => r.textContent?.includes("Shard the reconciliation job"))!;
       fireEvent.click(within(target).getByTestId("needs-you-open-action"));
-      expect(openPullout).toHaveBeenCalledWith("intelligence:desk");
+      // Betterment D4: the drill opens the Needs-you window, not Today.
+      expect(openPullout).not.toHaveBeenCalledWith("intelligence:desk");
       await waitFor(() => expect(navigations).toEqual([{ view: "follow-through", followThroughId: "ai-recon" }]));
     } finally {
       useDesk.setState({ openPullout: realOpen } as never);

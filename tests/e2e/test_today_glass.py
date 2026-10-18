@@ -3,10 +3,10 @@
 Owner, 2026-10-12 (push 2 of the test diet): a browser test only for drag,
 focus, keys, touch, hover or an exact geometry relation.
 
-* PHILO-15 lane 12, B24 (Astra r1): the Today window (the Intelligence
-  window) opens AT its declared size, rendered, with its first Brief items in
-  view and its segments on one row; a size he sets with the grip wins on the
-  next open, after a reload (1440).
+* PHILO-15 lane 12, B24 (Astra r1): the Today window opens AT its declared
+  size, rendered, with its Since-yesterday line in view (Betterment D4: one
+  page, no wings); a size he sets with the grip wins on the next open, after
+  a reload (1440).
 
 The rest of that after-shot walk has cheaper successors: the Dock sprites
 (B19) in web/src/desk/systemSprites.test.ts; the desk labels (B30) in
@@ -20,7 +20,7 @@ import re
 
 import pytest
 
-from .fit_rig import BOX_JS, ITEM, T, TOKEN, FitRig
+from .fit_rig import BOX_JS, T, TOKEN, FitRig
 from .glass_infra import _api, _normal_chair, _settle
 
 pytest.importorskip("playwright.sync_api", reason="the Today glass needs Playwright")
@@ -48,25 +48,20 @@ class TestTheTodayWindowSize(FitRig):
                 dock.locator("[data-app='intelligence:desk']").click()
                 win = page.locator(".desk-pullout:has(.intelligence-pullout)").first
                 win.wait_for(timeout=T)
-                # PHILO-17 (concept C): the window opens on Day; its first
-                # items here are the Brief's, one tab away.
-                win.get_by_role("group", name="Intelligence view", exact=True).filter(visible=True).get_by_role("button", name="Brief", exact=True).click()
-                first = win.locator(ITEM).first
+                # Betterment D4: one page, no wings. Since yesterday (the
+                # brief, made on open) is its folded line.
+                first = win.get_by_test_id("today-since-toggle")
                 first.wait_for(timeout=T)
                 page.wait_for_timeout(900)
                 _settle(page)
                 box = win.evaluate(BOX_JS)
                 item = first.evaluate(BOX_JS)
-                active_header = win.get_by_role("group", name="Intelligence view", exact=True).filter(visible=True)
-                assert active_header.count() == 1, "one active view owns Intelligence navigation"
-                segments = active_header.locator(".intelligence-segment")
-                assert segments.count() == 4, "all four Intelligence views remain reachable"
-                tops = segments.evaluate_all(
-                    "(es) => es.map((e) => Math.round(e.getBoundingClientRect().top))")
-                self.facts["B24"] = {"window": box, "first_item": item, "segment_tops": tops}
+                assert win.get_by_role("group", name="Intelligence view", exact=True).count() == 0, "no wings"
+                self.facts["B24"] = {"window": box, "first_item": item}
                 assert box["w"] >= 600, box
                 assert box["h"] >= 600, box                    # the declared 620, rendered
-                assert len(set(tops)) <= 1, tops
+                first.scroll_into_view_if_needed()
+                item = first.evaluate(BOX_JS)
                 assert item["btm"] <= box["btm"] and item["y"] >= box["y"], (item, box)
                 self._shot(page, "B24-intelligence", width)
                 # He sizes it smaller; the saved size wins on the next open.

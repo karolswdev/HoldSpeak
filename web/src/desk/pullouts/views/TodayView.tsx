@@ -1,18 +1,24 @@
-/** PHILO-17 (owner pick 2026-10-11, concept C): the Today window is the DAY
- *  AS A TIMELINE, drawn in the desk's own material: a time spine in a paper
- *  well, the next meeting as a raised plate with a Workbench title bar and a
- *  four-step stepper, later meetings as compact rows, and a side column
- *  (Owed, To decide). Every fact is a read the hub already serves:
- *  `/api/door` (today's calendar and armed recordings), `/api/meetings`
- *  (the meetings still to finish), `/api/desk/needs-you` (the proposals to
- *  decide) and `/api/people/relationships` (what is owed both ways). */
+/** PHILO-17 (owner pick 2026-10-11, concept C): the day as a timeline, in
+ *  the desk's own material. Betterment daily D4: Today is ONE page, no
+ *  wings. In order: the head (the date, Record now), the top of Needs you
+ *  (the same rows and verbs as the Needs-you window, `All` opens it), the
+ *  day, Since yesterday (the brief, made when Today opens, folded to one
+ *  line of counts) and This week (folded to a count per day). Every fact is
+ *  a read the hub already serves: `/api/door` (the calendar, armed
+ *  recordings, the week), `/api/meetings` (the meetings still to finish),
+ *  `/api/desk/needs-you` (the one list) and `/api/brief/latest?ensure=1`
+ *  (the brief, made by the hub off its event loop when none is current). */
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch } from "../../../lib/api";
 import { openSurfaceOr } from "../../shell";
 import { openSourceRef } from "../../surface/citations";
-import { calendarOpener, openProjectProposal } from "../../openObject";
+import { calendarOpener } from "../../openObject";
 import { useDesk } from "../../store";
+import { useNeedFaces, NeedsDroppedReceipt } from "../../needs/NeedsDrawer";
+import { TodayNeeds } from "../../needs/TodayNeeds";
+import type { NeedFace } from "../../needs/needsFace";
+import { SinceYesterday, type MondayBrief } from "./BriefView";
 import { useOnDeskChanged } from "../../useDeskChangedRefresh";
 import { SurfaceFooter } from "../../surface/SurfaceFooter";
 import { Avatar, Steps } from "../../surface/kit";
@@ -39,12 +45,17 @@ export type DayEvent = {
   armed?: { recording_id: string; arms_at?: string | null; state?: string } | null;
   armed_schedule_id?: string;
 };
-type DoorRead = { upcoming?: DayEvent[]; calendar_configured?: boolean };
+type WeekDay = { date: string; dow: string; count: number };
+type DoorRead = { upcoming?: DayEvent[]; calendar_configured?: boolean; week?: { days?: WeekDay[]; has_calendar?: boolean } };
 type MeetingRow = Record<string, unknown>;
-type NeedsItem = { proposalId?: string; title?: string; proposalKind?: string; meetingTitle?: string; projectId?: string; meetingId?: string; muted?: boolean; waiting?: boolean };
 
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const SHORT_DAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+/** Today's rows of Needs you: five at 1440, three at 393 (the design). */
+const NEEDS_TOP = 5;
+const NEEDS_TOP_PHONE = 3;
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const clock = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -106,24 +117,6 @@ function SpineNode({ time, kind, children, testId }: { time: ReactNode; kind: st
   );
 }
 
-/** PHILO-17 (Astra r1 on #1110, MUST 4): the owed totals from ONE bounded
- *  read: the roster answer with its counts (`?counts=1`). A closed People
- *  store is read as closed (no totals), never as zero. */
-async function readOwed(): Promise<{ state: "ok"; owed: { you: number; them: number } } | { state: "closed" } | { state: "failed" }> {
-  try {
-    const ready = await apiFetch<{ state?: string; readiness?: string }>("/api/people/readiness");
-    if ((ready.state ?? ready.readiness) !== "ready") return { state: "closed" };
-    const list = await apiFetch<{ relationships?: Array<{ you_owe_count?: number; owes_you_count?: number }> }>(
-      "/api/people/relationships?counts=1");
-    const owed = (list.relationships ?? []).reduce(
-      (sum, row) => ({ you: sum.you + (Number(row.you_owe_count) || 0), them: sum.them + (Number(row.owes_you_count) || 0) }),
-      { you: 0, them: 0 });
-    return { state: "ok", owed };
-  } catch {
-    return { state: "failed" };
-  }
-}
-
 /** A source that could not be read: one quiet line and Retry. */
 function ReadFailed({ what, onRetry, testId }: { what: string; onRetry: () => void; testId: string }) {
   return (
@@ -134,13 +127,89 @@ function ReadFailed({ what, onRetry, testId }: { what: string; onRetry: () => vo
   );
 }
 
-export function TodayView({ header }: { header: ReactNode }) {
+/** The local day of `d`, `YYYY-MM-DD`. */
+function localDay(d: Date): string {
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+/** The seven local days of `now`'s week, Monday first. */
+export function weekDays(now: Date): Date[] {
+  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7));
+  return Array.from({ length: 7 }, (_, i) => new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i));
+}
+
+/** One day of This week: its meetings (the calendar's count) and the rows
+ *  of Needs you due that day. */
+export type WeekCount = { day: Date; meetings: number; due: NeedFace[]; events: DayEvent[] };
+
+export function weekCounts(now: Date, door: DoorRead | null, work: readonly NeedFace[]): WeekCount[] {
+  const calendar = new Map((door?.week?.days ?? []).map((d) => [d.date, d.count]));
+  return weekDays(now).map((day) => {
+    const key = localDay(day);
+    const events = (door?.upcoming ?? []).filter((event) => {
+      const start = when(event.starts_at);
+      return start && localDay(start) === key && event.source !== "scheduled_recording";
+    });
+    const due = work.filter((face) => {
+      const at = face.due ? when(face.due.length === 10 ? `${face.due}T00:00:00` : face.due) : null;
+      return at && localDay(at) === key;
+    });
+    return { day, meetings: Math.max(calendar.get(key) ?? 0, events.length), due, events };
+  });
+}
+
+/** `Mon 3 · Tue 2 · Thu 1`: the days with something, never a zero. */
+export function weekLine(days: readonly WeekCount[]): string {
+  return days
+    .map((d) => ({ d, n: d.meetings + d.due.length }))
+    .filter(({ n }) => n > 0)
+    .map(({ d, n }) => `${WEEK_DAYS[d.day.getDay()]} ${n}`)
+    .join(" · ");
+}
+
+/** This week, folded to a count per day; unfolded, each day's meetings and
+ *  the rows due that day. It replaces The week window (D5 parks it). */
+function ThisWeek({ days }: { days: readonly WeekCount[] }) {
+  const [open, setOpen] = useState(false);
+  const line = weekLine(days);
+  const shown = days.filter((d) => d.events.length || d.due.length);
+  return (
+    <section className="today-fold" data-testid="today-week" aria-label="This week">
+      <Button variant="chrome" className="today-fold-head" aria-expanded={open} data-testid="today-week-toggle"
+        onClick={() => setOpen((value) => !value)} disabled={!line}>
+        <span className="today-fold-mark" aria-hidden="true">{line ? (open ? "▾" : "▸") : ""}</span>
+        <span className="today-fold-label">This week</span>
+        <span className="today-fold-counts" data-testid="today-week-counts">{line || "Nothing this week"}</span>
+      </Button>
+      {open && line ? (
+        <div className="today-fold-body" data-testid="today-week-days">
+          {shown.map((d) => (
+            <div key={localDay(d.day)} className="today-week-day">
+              <span className="today-fold-kind">{`${WEEK_DAYS[d.day.getDay()]} ${d.day.getDate()}`}</span>
+              <ul className="today-week-items">
+                {d.events.map((event) => {
+                  const start = when(event.starts_at);
+                  return <li key={event.id}><span className="today-week-time">{start ? clock(start) : ""}</span>{event.title || event.event_title || "Meeting"}</li>;
+                })}
+                {d.due.map((face) => (
+                  <li key={face.id}><span className="today-week-time">DUE</span>{face.personName && face.direction === "theirs" ? `${face.personName}: ${face.name}` : face.name}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
   const [now, setNow] = useState(() => new Date());
   const [door, setDoor] = useState<DoorRead | null>(null);
   const [meetings, setMeetings] = useState<MeetingRow[]>([]);
-  const [needs, setNeeds] = useState<NeedsItem[]>([]);
-  const [owed, setOwed] = useState<{ you: number; them: number } | null>(null);
+  const [brief, setBrief] = useState<MondayBrief | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const rows = useNeedFaces();
   const [loaded, setLoaded] = useState(false);
   // MUST 1 (Astra r1 on #1111): the last summary made from here keeps its
   // receipt (every place the run reached) after its row leaves the spine.
@@ -148,8 +217,8 @@ export function TodayView({ header }: { header: ReactNode }) {
 
   // PHILO-17 (Astra r1 on #1110, MUST 3): a source that could not be read
   // says so (with Retry); it never reads as empty.
-  const [failed, setFailed] = useState<{ door: boolean; meetings: boolean; needs: boolean; people: boolean }>(
-    { door: false, meetings: false, needs: false, people: false });
+  const [failed, setFailed] = useState<{ door: boolean; meetings: boolean; brief: boolean }>(
+    { door: false, meetings: false, brief: false });
   const [actError, setActError] = useState<{ key: string; text: string } | null>(null);
 
   // One load at a time: a desk change while a load runs asks for ONE more
@@ -162,19 +231,18 @@ export function TodayView({ header }: { header: ReactNode }) {
     try {
       do {
         again.current = false;
-        const [doorRead, meetingRead, needsRead, owedRead] = await Promise.all([
+        // Betterment D4: the brief is made by the hub when none is current
+        // (`ensure`), so Since yesterday needs no press.
+        const [doorRead, meetingRead, briefRead] = await Promise.all([
           apiFetch<DoorRead>("/api/door").then((v) => ({ ok: true as const, v }), () => ({ ok: false as const })),
           apiFetch<{ meetings?: MeetingRow[] }>("/api/meetings?limit=40").then((v) => ({ ok: true as const, v }), () => ({ ok: false as const })),
-          apiFetch<{ items?: NeedsItem[] }>("/api/desk/needs-you").then((v) => ({ ok: true as const, v }), () => ({ ok: false as const })),
-          readOwed(),
+          apiFetch<MondayBrief | null>("/api/brief/latest?ensure=1").then((v) => ({ ok: true as const, v }), () => ({ ok: false as const })),
         ]);
         if (doorRead.ok) setDoor(doorRead.v);
         else setDoor((current) => current);
         if (meetingRead.ok) setMeetings(meetingRead.v.meetings ?? []);
-        if (needsRead.ok) setNeeds(needsRead.v.items ?? []);
-        if (owedRead.state === "ok") setOwed(owedRead.owed);
-        else if (owedRead.state === "closed") setOwed(null);
-        setFailed({ door: !doorRead.ok, meetings: !meetingRead.ok, needs: !needsRead.ok, people: owedRead.state === "failed" });
+        if (briefRead.ok) setBrief(briefRead.v ?? null);
+        setFailed({ door: !doorRead.ok, meetings: !meetingRead.ok, brief: !briefRead.ok });
         setLoaded(true);
       } while (again.current);
     } finally {
@@ -214,14 +282,19 @@ export function TodayView({ header }: { header: ReactNode }) {
   const next = events[0] ?? soon;
   const later = events.slice(1);
   const finish = useMemo(() => toFinish(meetings, now), [meetings, now]);
-  const decidable = needs.filter((item) => item.proposalId && !item.muted && !item.waiting);
-  const decide = decidable.find((item) => item.proposalKind === "decision") ?? decidable[0] ?? null;
   const calendar = door?.calendar_configured ?? false;
+  const needsLoaded = rows.needs.room !== null || Object.keys(rows.needs.errors).length > 0;
+  const hasWork = rows.work.length > 0;
+  // An empty desk: no calendar, no meeting, nothing waits. One line says
+  // what fills Today (Betterment D4).
+  const emptyDesk = Boolean(door && !failed.door && !calendar && meetings.length === 0 && !hasWork && needsLoaded);
+  const phone = typeof window !== "undefined" && window.matchMedia?.("(max-width: 600px)").matches;
+  const week = useMemo(() => weekCounts(now, door, rows.work), [now, door, rows.work]);
 
-  // ONE filled primary per window (UX-CANON): the next meeting's record
-  // verb, else the first summary to make, else Connect calendar, else
-  // Record now.
-  const lead = next ? "next" : finish.length ? "finish" : !calendar && door && !failed.door ? "calendar" : "record";
+  // ONE filled primary per window (UX-CANON): the first row of Needs you,
+  // else the next meeting's record verb, else the first summary to make,
+  // else Connect calendar, else Record now.
+  const lead = hasWork ? "needs" : next ? "next" : finish.length ? "finish" : !calendar && door && !failed.door ? "calendar" : "record";
   const recordNow = () => openSurfaceOr("record-live", "/live");
 
   // A press that fails says so beside its verb (MUST 3).
@@ -310,11 +383,11 @@ export function TodayView({ header }: { header: ReactNode }) {
         </div>
         <Stepper step={currentStep(next, now)} />
         <div className="today-next-verbs">
-          {nextOpen ? <Button dense onClick={nextOpen} data-testid="today-open-prep">Open prep</Button> : null}
+          {nextOpen ? <Button dense onClick={nextOpen} data-testid="today-open-prep">Prep</Button> : null}
           {started || armed ? (
-            <Button dense variant="primary" onClick={recordNow} data-testid="today-record">Record</Button>
+            <Button dense variant={lead === "next" ? "primary" : "secondary"} onClick={recordNow} data-testid="today-record">Record</Button>
           ) : next.source === "calendar_event" ? (
-            <Button dense variant="primary" loading={busy === "arm"} data-testid="today-arm"
+            <Button dense variant={lead === "next" ? "primary" : "secondary"} loading={busy === "arm"} data-testid="today-arm"
               onClick={() => void act("arm", "Not armed. Try again", () => useDesk.getState().armEventRecording(next.id))}>
               Record when it starts
             </Button>
@@ -393,7 +466,7 @@ export function TodayView({ header }: { header: ReactNode }) {
   const meetingsFailedNode = failed.meetings ? (
     <li className="today-section"><span /><span /><ReadFailed what="the meetings" onRetry={retry} testId="today-meetings-failed" /></li>
   ) : null;
-  const emptyNode = door && !next && !failed.door ? (
+  const emptyNode = door && !next && !failed.door && !emptyDesk ? (
     <SpineNode kind="empty" testId="today-empty" time="">
       <div className="today-row">
         <div className="today-row-text">
@@ -417,9 +490,8 @@ export function TodayView({ header }: { header: ReactNode }) {
       {/* Busy until the first load ends: the day's rows land after it and
           move what is drawn (the desk sweep's still fence, under load). */}
       <div className="desk-pullout-body desk-surface-body intelligence-pullout today" aria-busy={loaded ? undefined : true}>
-        {header}
         <div className="today-head">
-          <h2 className="today-day" data-testid="today-day">{DAY_NAMES[now.getDay()]}</h2>
+          <h2 className="today-day" data-testid="today-day">{`${DAY_NAMES[now.getDay()]} ${now.getDate()} ${MONTH_NAMES[now.getMonth()]}`}</h2>
           <span className="today-strip">
             {ahead ? <span><b>{ahead}</b> {ahead === 1 ? "meeting ahead" : "meetings ahead"}</span> : null}
             {finish.length ? <span><b>{finish.length}</b> to finish</span> : null}
@@ -428,6 +500,10 @@ export function TodayView({ header }: { header: ReactNode }) {
           <Button dense variant={lead === "record" ? "primary" : "secondary"} onClick={recordNow} data-testid="today-record-now">Record now</Button>
         </div>
         <div className="today-grid">
+          <TodayNeeds work={rows.work} count={rows.needs.count} now={now} limit={phone ? NEEDS_TOP_PHONE : NEEDS_TOP}
+            primary={lead === "needs"} projects={rows.multipleProjects} loaded={needsLoaded} emptyDesk={emptyDesk}
+            failed={rows.needs.room === null && Object.keys(rows.needs.errors).length > 0} calendarLead={lead === "calendar"}
+            next={next && nextStart ? `${title(next)} at ${clock(nextStart)}` : null} />
           <ol className="today-spine" aria-label="Today">
             {nowNode}
             {nextNode}
@@ -439,46 +515,11 @@ export function TodayView({ header }: { header: ReactNode }) {
             {pastToday}
             {finishNodes}
           </ol>
-          <aside className="today-side" aria-label="Owed and to decide">
-            {failed.people ? <ReadFailed what="People" onRetry={() => void load()} testId="today-people-failed" /> : null}
-            {failed.needs ? <ReadFailed what="what to decide" onRetry={() => void load()} testId="today-needs-failed" /> : null}
-            {owed && (owed.you || owed.them) ? (
-              <section className="today-plate" data-testid="today-owed">
-                <h3 className="today-plate-cap">OWED</h3>
-                <div className="today-figures">
-                  {owed.you ? <span className="today-figure" data-tone="warn"><b>{owed.you}</b>you owe</span> : null}
-                  {owed.them ? <span className="today-figure" data-tone="ok"><b>{owed.them}</b>owed to you</span> : null}
-                </div>
-                <Button dense variant="ghost" onClick={() => openSurfaceOr("open-people", "/", undefined)}>People</Button>
-              </section>
-            ) : null}
-            {decide ? (
-              <section className="today-plate" data-testid="today-decide">
-                <h3 className="today-plate-cap">TO DECIDE</h3>
-                <span className="today-decide-title">{decide.title}</span>
-                {decide.meetingTitle ? <span className="today-row-meta">{decide.meetingTitle}</span> : null}
-                {actError?.key === "decide" ? <span className="kit-pill" data-tone="danger" role="status" data-testid="today-decide-failed">{actError.text}</span> : null}
-                <div className="today-plate-verbs">
-                  {decide.projectId ? (
-                    <Button dense variant="secondary" onClick={() => openProjectProposal(decide.projectId!, String(decide.proposalId))}>Open decision</Button>
-                  ) : decide.meetingId ? (
-                    <Button dense variant="secondary" onClick={() => openSourceRef(`meeting:${decide.meetingId}?view=review`)}>Open source</Button>
-                  ) : null}
-                  <Button dense disabled={busy === "decide"} data-testid="today-confirm"
-                    onClick={() => void act("decide", "Not confirmed. Try again", () => apiFetch(`/api/proposals/${encodeURIComponent(String(decide.proposalId))}/confirm`, { method: "POST" }))}>
-                    Confirm
-                  </Button>
-                  <Button dense variant="ghost" disabled={busy === "decide"} data-testid="today-not-now"
-                    onClick={() => void act("decide", "Not moved. Try again", () => apiFetch(`/api/proposals/${encodeURIComponent(String(decide.proposalId))}/defer`, { method: "POST", json: {} }))}>
-                    Not now
-                  </Button>
-                </div>
-              </section>
-            ) : null}
-          </aside>
         </div>
+        <SinceYesterday brief={brief} failed={failed.brief} now={now} openRequest={sinceRequest} onRetry={retry} />
+        <ThisWeek days={week} />
       </div>
-      <SurfaceFooter receipt={summary.receipt ? <span className="surface-footer-receipt-line" role="status">{summary.receipt.text}</span> : undefined} />
+      <SurfaceFooter receipt={summary.receipt ? <span className="surface-footer-receipt-line" role="status">{summary.receipt.text}</span> : <NeedsDroppedReceipt />} />
     </>
   );
 }

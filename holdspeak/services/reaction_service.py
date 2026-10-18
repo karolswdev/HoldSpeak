@@ -571,7 +571,8 @@ class ReactionService:
                 except (KeyError, ValueError):
                     title = f'{event["event_type"]}: {facts.get("entity_title", "")}'
                 target = self._db.workbenches.get(reaction["workbench_id"])
-                if target is not None and str(target.instruction or "").strip():
+                occurrence = target is not None and bool(str(target.instruction or "").strip())
+                if occurrence:
                     # Betterment A2: an automation with an instruction makes one
                     # occurrence about this event (its title, its subject).
                     from .automation_runs import mint_occurrence
@@ -591,7 +592,10 @@ class ReactionService:
                         context={"reaction_id": reaction["id"], "event_id": event["id"]},
                     )
                 operation_id = receipt_id = None
-                if reaction["auto_run"]:
+                # Betterment A4: an occurrence runs at once. "When something
+                # happens" is the start he chose; an occurrence that waited
+                # for a press would never run (Run now makes a fresh one).
+                if reaction["auto_run"] or occurrence:
                     run = await workbenches.run_item(
                         principal, reaction["workbench_id"], item["id"],
                         request_id=f'reaction:{reaction["id"]}:{event["id"]}',

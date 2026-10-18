@@ -17,6 +17,13 @@ import one from "./fixtures/automation-hub/one.json";
 import failed from "./fixtures/automation-hub/failed.json";
 import populated from "./fixtures/automation-hub/populated.json";
 import forgot from "./fixtures/automation-hub/forgot.json";
+import whenFriday from "./fixtures/automation-hub/when-friday.json";
+import withNone from "./fixtures/automation-hub/with-none.json";
+import withClaude from "./fixtures/automation-hub/with-claude.json";
+import withClaudeRan from "./fixtures/automation-hub/with-claude-ran.json";
+// The Engines app's own recorded answers (scripts/record_engines_fixture.py):
+// detection with Claude Code found, then after its Add.
+import engines from "../../features/runson/__tests__/fixtures/engines.recorded.json";
 import used from "./fixtures/automation-hub/used.json";
 import { openPrimitive, openSurfaceOr } from "../shell";
 import { seatMounted, seatUnmounted } from "../deleteSeat";
@@ -41,7 +48,15 @@ const hub = {
   afterRun: [] as Step[],
   calls: [] as Array<{ method: string; url: string; body?: unknown }>,
   hold: null as null | (() => void),
+  /** A4: the step a When press or a With write moves to. */
+  afterWhen: [] as Step[],
+  afterEngine: [] as Step[],
+  /** The recorded detection answers, before and after Add. */
+  detect: [] as unknown[],
 };
+
+const CLAUDE = (engines as unknown as { claude: { steps: Array<{ name: string; gets: Record<string, unknown>; answer?: unknown }> } }).claude.steps;
+const detectOf = (name: string) => CLAUDE.find((s) => s.name === name)!.gets["/api/concierge/detect"];
 
 function hubFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   const url = String(input);
@@ -49,7 +64,25 @@ function hubFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Respons
   const body = init?.body ? JSON.parse(String(init.body)) : undefined;
   if (method !== "GET") hub.calls.push({ method, url, body });
   if (url.startsWith("/api/channels/sends")) return Promise.resolve(json({ sends: [] }));
-  if (method === "POST" && url === `${DETAIL}/run`) {
+  const detail = `/api/workbenches/${hub.step.workbench_id}`;
+  if (method === "GET" && url === "/api/concierge/detect") return Promise.resolve(json(structuredClone(hub.detect[0])));
+  if (method === "POST" && url === "/api/inference/model-library/connect-cli-engine") {
+    hub.detect.shift();
+    return Promise.resolve(json(CLAUDE.find((s) => s.name === "add")!.answer));
+  }
+  if (method === "PUT" && url === `${detail}/when`) {
+    const next = hub.afterWhen.shift();
+    if (!next) throw new Error("an unrecorded When");
+    hub.step = next;
+    return Promise.resolve(json({ workbench: {} }));
+  }
+  if (method === "PUT" && url === `${detail}/engine`) {
+    const next = hub.afterEngine.shift();
+    if (!next) throw new Error("an unrecorded With");
+    hub.step = next;
+    return Promise.resolve(json({ workbench: {} }));
+  }
+  if (method === "POST" && url === `${detail}/run`) {
     const next = hub.afterRun.shift();
     if (!next) throw new Error("an unrecorded run");
     const answer = () => { hub.step = next; return json({ run: {} }); };
@@ -63,6 +96,7 @@ function hubFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Respons
   if (method === "POST" && url.includes("/results/")) return Promise.resolve(json({ result: {} }));
   if (method === "PUT" && url === DETAIL) return Promise.resolve(json({ workbench: {} }));
   const path = url.split("?")[0];
+  if (method === "GET" && path === `${detail}/memory` && !(path in hub.step.gets)) return Promise.resolve(json({ entries: [] }));
   if (method === "GET" && path in hub.step.gets) return Promise.resolve(json(structuredClone(hub.step.gets[path])));
   throw new Error(`unrecorded ${method} ${url}`);
 }
@@ -72,6 +106,9 @@ beforeEach(() => {
   hub.afterRun = [];
   hub.calls = [];
   hub.hold = null;
+  hub.afterWhen = [];
+  hub.afterEngine = [];
+  hub.detect = [];
   vi.stubGlobal("fetch", vi.fn(hubFetch));
   useDesk.setState({ workbenchWindows: [{ id: WB, origin: null }] });
 });
@@ -87,7 +124,7 @@ const artifactOf = (step: unknown, index: number): string =>
 
 async function open(step: Step) {
   hub.step = step;
-  render(<AutomationWindow workbenchId={WB} />);
+  render(<AutomationWindow workbenchId={step.workbench_id} />);
   await screen.findByTestId("automation-sentence");
 }
 
@@ -131,8 +168,8 @@ describe("the sentence on top", () => {
     await waitFor(() => expect(hub.calls).toContainEqual({
       method: "PUT", url: DETAIL, body: { instruction: "Draft my team update: what shipped and what slipped." },
     }));
-    // The other lines show their value: no dead press (their editors are A4 to A6).
-    for (const name of ["when", "about", "with", "put"]) expect(within(line(name)).queryByRole("button")).toBeNull();
+    // About and Put it in show their value: no dead press (their editors are A5, A6).
+    for (const name of ["about", "put"]) expect(within(line(name)).queryByRole("button")).toBeNull();
   });
 });
 
@@ -206,6 +243,8 @@ describe("What it has learned", () => {
     await open(populated as Step);
     const fold = screen.getByText("What it has learned").closest("details")!;
     expect(fold).not.toHaveAttribute("open");
+    // A4: the fold says how many in words, never a bare count.
+    expect(fold.querySelector("summary")).toHaveTextContent("2 lessons");
     const lessons = within(fold).getAllByRole("listitem");
     expect(lessons.map((l) => l.textContent)).toEqual([
       expect.stringContaining("Keep the update under ten lines."),
@@ -217,6 +256,96 @@ describe("What it has learned", () => {
     const stamp = ((populated as Step).gets[`${DETAIL}/memory`] as { entries: Array<{ timestamp: string }> }).entries[0].timestamp;
     expect(forget.url).toBe(`${DETAIL}/memory/0?at=${encodeURIComponent(stamp)}`);
     expect(screen.getByTestId("automation-lessons")).toHaveTextContent("Mira owns the rollback runbook");
+  });
+});
+
+describe("A4: When, in plain choices", () => {
+  it("Every Friday at 3 PM takes three presses and shows when it runs next; looking writes nothing", async () => {
+    await open(empty as Step);
+    expect(line("when")).toHaveTextContent("Only when I press Run now");
+    hub.afterWhen = [whenFriday as Step];
+    // 1: open the When line. Looking at the choices writes nothing.
+    fireEvent.click(within(line("when")).getByRole("button"));
+    const editor = await screen.findByTestId("automation-when-editor");
+    expect(hub.calls).toEqual([]);
+    // Only the events the hub can deliver; each needs its repository first.
+    const events = within(editor).getByRole("group", { name: "Events" });
+    expect(within(events).getAllByRole("button").map((b) => b.textContent)).toEqual([
+      "GitHub asks me to review", "A pull request's checks fail", "A pull request is merged"]);
+    for (const button of within(events).getAllByRole("button")) expect(button).toBeDisabled();
+    expect(editor.textContent).not.toMatch(/meeting ends|Jira/);
+    expect(editor.textContent).not.toMatch(/\* \*|0 15/);
+    // 2: the time. 3: the day.
+    fireEvent.change(within(editor).getByRole("combobox", { name: "At" }), { target: { value: "15:00" } });
+    expect(hub.calls).toEqual([]);
+    fireEvent.click(within(editor).getByRole("button", { name: "Every Friday" }));
+    await waitFor(() => expect(hub.calls).toContainEqual({
+      method: "PUT", url: `${DETAIL}/when`, body: { kind: "schedule", every: "week", time: "15:00", day: 5 },
+    }));
+    await waitFor(() => expect(line("when")).toHaveTextContent("Every Friday at 15:00"));
+    // Next: the recorded fire time, in this machine's zone.
+    const next = new Date(((whenFriday as Step).gets[DETAIL] as { workbench: { next_run_at: string } }).workbench.next_run_at);
+    const day = next.toLocaleDateString("en-US", { weekday: "short" });
+    const at = `${String(next.getHours()).padStart(2, "0")}:${String(next.getMinutes()).padStart(2, "0")}`;
+    expect(screen.getByTestId("automation-next")).toHaveTextContent(`Next: ${day} ${at}`);
+    expect(within(line("when")).getByRole("button", { name: /When/ })).toBeInTheDocument();
+    // Its choice reads as chosen; the switch is on.
+    expect(within(screen.getByTestId("automation-when-editor")).getByRole("button", { name: "Every Friday" }))
+      .toHaveAttribute("aria-pressed", "true");
+    expect(within(screen.getByTestId("automation-on")).getByRole("checkbox")).toBeChecked();
+    expect(hub.calls.filter((c) => c.method !== "POST")).toHaveLength(1);
+  });
+});
+
+describe("A4: With, the engine in place", () => {
+  it("on a desk with no engine, With > Add makes Run now work, with no other window", async () => {
+    hub.detect = [detectOf("found"), detectOf("add")];
+    await open(withNone as Step);
+    const windows = useDesk.getState().workbenchWindows.length;
+    expect(line("with")).toHaveTextContent("Choose an engine");
+    // 1: open With. The found engine says where its prompt goes.
+    fireEvent.click(within(line("with")).getByRole("button"));
+    const editor = await screen.findByTestId("automation-with-editor");
+    const found = await within(editor).findByRole("button", { name: "Add Claude Code" });
+    const row = found.closest("li")!;
+    expect(row).toHaveTextContent("ANTHROPIC");
+    // 2: Add (the Engines app's own path), then this automation uses it.
+    hub.afterEngine = [withClaude as Step];
+    fireEvent.click(found);
+    await waitFor(() => expect(hub.calls.map((c) => [c.method, c.url])).toEqual([
+      ["POST", "/api/inference/model-library/connect-cli-engine"],
+      ["PUT", `/api/workbenches/${(withNone as Step).workbench_id}/engine`],
+    ]));
+    expect(hub.calls[0].body).toMatchObject({ draft: { preset: "claude", profile_id: "agent-claude", expected_profile_revision: 0 } });
+    expect(hub.calls[1].body).toEqual({ profile_id: "agent-claude" });
+    await waitFor(() => expect(line("with")).toHaveTextContent("Claude Code"));
+    expect(line("with")).toHaveTextContent("CLOUD");
+    // The engine in use offers this automation's own Spend limit per run.
+    await waitFor(() => expect(within(screen.getByTestId("automation-with-editor")).getByText("In use")).toBeInTheDocument());
+    expect(screen.getByTestId("automation-spend")).toBeInTheDocument();
+    // 3: Run now gives the result.
+    hub.afterRun = [withClaudeRan as Step];
+    fireEvent.click(screen.getByTestId("automation-run-now"));
+    await waitFor(() => expect(within(newest()).getByRole("heading", { name: "Weekly update" })).toBeInTheDocument());
+    expect(useDesk.getState().workbenchWindows.length).toBe(windows);
+  });
+
+  it("the Spend limit per run saves the automation's own amount, and refuses one out of range", async () => {
+    hub.detect = [detectOf("add")];
+    await open(withClaude as Step);
+    fireEvent.click(within(line("with")).getByRole("button"));
+    const spend = await screen.findByTestId("automation-spend");
+    const box = within(spend).getByRole("textbox", { name: "Spend limit per run" });
+    fireEvent.change(box, { target: { value: "2000" } });
+    fireEvent.click(within(spend).getByRole("button", { name: "Save limit" }));
+    expect(within(spend).getByRole("alert")).toHaveTextContent("Type an amount above $0 and at most $1000.");
+    expect(hub.calls).toEqual([]);
+    hub.afterEngine = [withClaude as Step];
+    fireEvent.change(box, { target: { value: "$0.50" } });
+    fireEvent.click(within(spend).getByRole("button", { name: "Save limit" }));
+    await waitFor(() => expect(hub.calls).toContainEqual({
+      method: "PUT", url: `/api/workbenches/${(withClaude as Step).workbench_id}/engine`, body: { spend_limit_usd: 0.5 },
+    }));
   });
 });
 

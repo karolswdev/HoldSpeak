@@ -295,37 +295,12 @@ function ConfigPanel({
   }, [activeAutomationCount, detail.schedule_enabled, resourcefulPolicy?.enabled, startModeTouched]);
 
   const selectStartMode = (mode: "manual" | "schedule" | "event" | "idle") => {
+    // Betterment A4 (A0 follow-up): looking at another start mode never
+    // changes saved state. Only a start's own switch writes it (the Enabled
+    // switch, an event start's Pause, the idle policy's own verbs); the
+    // automation window's When editor is where a choice replaces the others.
     setStartModeTouched(true);
     setStartMode(mode);
-    // A look at another start mode never changes the schedule. Only the
-    // Enabled switch writes schedule_enabled (recon 2026-10-17, step 19).
-    if (mode !== "event" && activeAutomationCount > 0) {
-      void write("PAUSE EVENT STARTS", async () => {
-        await Promise.all(
-          automations
-            .filter((automation) => automation.enabled)
-            .map((automation) => setWorkbenchAutomationEnabled(
-              workbenchId, automation.id, false,
-            )),
-        );
-        onAutomationsChanged();
-      });
-    }
-    if (mode !== "idle" && resourcefulPolicy?.enabled) {
-      void write("PAUSE RESOURCEFULNESS", async () => {
-        await updateResourcefulPolicy(workbenchId, {
-          enabled: false,
-          idle_after_minutes: resourcefulPolicy.idle_after_minutes,
-          cooldown_hours: resourcefulPolicy.cooldown_hours,
-          nightly_target: resourcefulPolicy.nightly_target,
-          night_only: resourcefulPolicy.night_only,
-          night_start_hour: resourcefulPolicy.night_start_hour,
-          night_end_hour: resourcefulPolicy.night_end_hour,
-          routines: resourcefulPolicy.routines,
-        });
-        onResourcefulChanged();
-      });
-    }
   };
 
   const recipe = recipes.find((r) => r.id === detail.recipe_id);
@@ -410,17 +385,9 @@ function ConfigPanel({
             />
           ))}
         </SurfaceRows>
-        {filteredRecipes.length === 0 && recipes.length === 0 ? (
-          <SurfaceState
-            empty
-            emptyLabel="No agents yet"
-            emptyGlyph="+"
-            actionLabel="New Agent"
-            onAction={() =>
-              void useDesk.getState().createPrimitive("recipe")
-            }
-          />
-        ) : filteredRecipes.length === 0 ? (
+        {/* Betterment A4 (AG1 follow-up): saved personas are retired as a
+            face concept (DECISIONS #3); no "New Agent" here. */}
+        {filteredRecipes.length === 0 && recipes.length > 0 ? (
           <SurfaceState empty emptyLabel="No agents match" />
         ) : null}
         </FoldGadget>

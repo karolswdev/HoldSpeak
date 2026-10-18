@@ -355,14 +355,15 @@ export const VERBS: Verb[] = [
   },
   {
     id: "desk.open-intelligence",
-    label: "Open Intelligence",
-    // PHILO-17 (doors): one index. Go lists Intelligence; the Desk menu does not.
+    label: "Open Today",
+    // PHILO-17 (doors): one index. Go lists Today; the Desk menu does not.
+    // Betterment D4: Today is one page ("Intelligence" leaves every label).
     menu: "go",
     scope: "floor",
     group: "view",
     glyph: "◆",
-    keywords: ["brief", "follow-through", "receipts"],
-    app: "Intelligence",
+    keywords: ["today", "brief", "since yesterday", "this week", "needs you"],
+    app: "Today",
     ghost: never,
     run: () => openIntelligence({ view: "today" }),
   },
@@ -380,17 +381,18 @@ export const VERBS: Verb[] = [
   },
   {
     id: "desk.intelligence-brief",
-    label: "Show today's brief",
+    label: "Show since yesterday",
     scope: "floor",
-    keywords: ["intelligence", "daily", "brief"],
+    keywords: ["today", "daily", "brief", "since yesterday"],
     ghost: never,
     run: () => openIntelligence({ view: "brief" }),
   },
   {
     id: "desk.intelligence-overdue",
-    label: "Show overdue follow-through",
+    label: "Show what is overdue",
     scope: "floor",
-    keywords: ["intelligence", "follow-through", "overdue"],
+    // Betterment D4: Follow-through is parked; its rows are in Needs you.
+    keywords: ["needs you", "follow-through", "overdue"],
     ghost: never,
     run: () => openIntelligence({ view: "follow-through", overdueOnly: true }),
   },

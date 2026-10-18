@@ -297,3 +297,38 @@ def _record_used_step(base: str, bench: str, tmp_path: Path, prepared_ref: str) 
     stored = json.loads(path.read_text())["gets"]
     assert _shape(list(stored.values())) == _shape(list(scrubbed.values())), \
         f"{path.name}: the stored answers are not the hub's shape"
+
+
+def test_the_automation_spend_limit_reaches_the_cli_and_the_result_cost_is_that_run(
+    hub: str, fake_bin: Path,
+) -> None:
+    """Betterment A4 x M2: the automation's own Spend limit per run is the one
+    the agent CLI is given (not the engine's), and the result's cost is the
+    cost that limited run reported, for a finished run and for a run the CLI
+    stopped at its limit."""
+    from tests.fixtures.fake_agent_cli import CLAUDE_COST_USD, set_mode
+
+    bench = _ok(hub, "POST", "/api/workbenches", {"name": "Friday update"})["workbench"]["id"]
+    _ok(hub, "PUT", f"/api/workbenches/{bench}", {"instruction": "Write my Friday update."})
+    _ok(hub, "POST", "/api/inference/model-library/connect-cli-engine", {"draft": {
+        "request_id": "connect-claude-limit", "profile_id": "agent-claude",
+        "expected_profile_revision": 0, "preset": "claude", "spend_limit_usd": 2.0,
+    }})
+    _ok(hub, "PUT", f"/api/workbenches/{bench}/engine", {"profile_id": "agent-claude", "spend_limit_usd": 0.25})
+    set_claude_answer(fake_bin, "## Friday update\n\n- The cutover moves to Friday.")
+
+    _ok(hub, "POST", f"/api/workbenches/{bench}/run", {})
+    runs = calls(fake_bin, "claude")
+    assert runs, "the agent CLI never ran"
+    for run in runs:
+        argv = run["argv"]
+        assert argv[argv.index("--max-budget-usd") + 1] == "0.25", argv
+        assert argv.count("--max-budget-usd") == 1, argv
+    [done] = _ok(hub, "GET", f"/api/workbenches/{bench}")["workbench"]["results"]
+    assert done["status"] == "done" and done["cost_usd"] == pytest.approx(CLAUDE_COST_USD * len(runs)), done
+
+    # The CLI stops at the limit: the result fails, and still says what it cost.
+    set_mode(fake_bin, "claude", "error")
+    _ok(hub, "POST", f"/api/workbenches/{bench}/run", {})
+    stopped = _ok(hub, "GET", f"/api/workbenches/{bench}")["workbench"]["results"][0]
+    assert stopped["status"] == "failed" and stopped["cost_usd"] == pytest.approx(CLAUDE_COST_USD), stopped
