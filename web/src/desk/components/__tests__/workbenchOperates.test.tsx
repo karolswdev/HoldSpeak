@@ -153,17 +153,14 @@ describe("HS-135-15 AGENT section empty vs filtered labels", () => {
     vi.restoreAllMocks();
   });
 
-  it("shows 'No agents yet' with create affordance when no agents exist", async () => {
+  it("shows no 'No agents yet' and no 'New Agent' when no agents exist (Betterment A4: personas are retired)", async () => {
     mockHub({ recipeId: null, recipes: [] });
     render(<WorkbenchWindow workbenchId="wb1" />);
 
     fireEvent.click(await screen.findByRole("button", { name: "Choose agent" }));
-    await waitFor(() =>
-      expect(screen.getByText("No agents yet")).toBeInTheDocument(),
-    );
-
-    // Should show a "New Agent" create affordance
-    expect(screen.getByText("New Agent")).toBeInTheDocument();
+    await screen.findByRole("textbox", { name: "Search agents" });
+    expect(screen.queryByText("No agents yet")).toBeNull();
+    expect(screen.queryByText("New Agent")).toBeNull();
   });
 
   it("shows 'No agents match' when search filters all agents", async () => {
