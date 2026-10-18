@@ -304,8 +304,9 @@ _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
         "Popen",
         1,
     ): (
-        "Betterment E1: one agent CLI run (claude -p, codex exec) with tools "
-        "off in an empty temp folder; it is the sender of the run's "
+        "Betterment E1: one agent CLI run (claude -p, codex exec) with built-in "
+        "tools off in an empty temp folder, and (M1) only HoldSpeak's MCP "
+        "server on a run credential; it is the sender of the run's "
         "`run_external_egress` record (destination = the preset's vendor host)"
     ),
     (
