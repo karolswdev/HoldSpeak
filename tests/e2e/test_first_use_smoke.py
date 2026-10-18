@@ -86,6 +86,10 @@ def _desk(page, base, *, capture=False):
     _loaded(page.get_by_test_id("desk-screen"))
     if capture:
         if page.viewport_size["width"] > 720:
+            # Betterment shell S0/S1 (#1257, #1259): Window > Desk shows only
+            # while a window is open; Go > Needs you opens one first.
+            page.locator(".desk-verbbar-item[data-menu-id='go'] button").click()
+            page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')").click()
             page.locator(".desk-verbbar-item[data-menu-id='window'] button").click()
             page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Desk')").click()
             page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('Capture')").click()
@@ -495,13 +499,23 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                 )
                 page.keyboard.press("Escape")
             else:
-                for name in ("Desk", "Object", "Go", "Window"):
-                    title = page.locator(".desk-verbbar").get_by_role("button", name=name, exact=True, include_hidden=True)
+                # Betterment shell S0 (#1257): with nothing selected the bar
+                # reads Desk Go Window (no Object title), and Window with no
+                # window open holds one line, "No windows open".
+                bar = page.locator(".desk-verbbar")
+                check("menu-Object",
+                      bar.get_by_role("button", name="Object", exact=True, include_hidden=True).count() == 0,
+                      "Object menu is not drawn with nothing selected")
+                for name in ("Desk", "Go", "Window"):
+                    title = bar.get_by_role("button", name=name, exact=True, include_hidden=True)
                     if not check("menu-" + name, _hit(title), name + " menu door is reachable"):
                         continue
                     title.click()
                     menu = page.get_by_role("menu", name=name + " menu", exact=True)
-                    _loaded(menu.get_by_role("menuitem").first)
+                    if name == "Window":
+                        _loaded(menu.locator(".desk-menu-note").filter(has_text="No windows open"))
+                    else:
+                        _loaded(menu.get_by_role("menuitem").first)
                     print("PASS:", name, "menu content loaded")
                     page.keyboard.press("Escape")
 
@@ -580,8 +594,11 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             # Job 2: actual file import, transcript, planned host, admitted run.
             _desk(page, base)
             _meetings(page, recovery=not meetings_ok)
-            page.locator(".meetings-head-verbs").get_by_role("button", name="Import", exact=True).click()
-            page.locator(".surface-dropwell input[type=file]").set_input_files(str(WAV))
+            # Capture C3 (#1271): Import opens the file picker at once; the
+            # chosen file opens the import form.
+            with page.expect_file_chooser() as chooser:
+                page.locator(".meetings-head-verbs").get_by_role("button", name="Import", exact=True).click()
+            chooser.value.set_files(str(WAV))
             page.get_by_role("textbox", name="Title", exact=True).fill(MEETING_TITLE)
             with page.expect_response(lambda response: "/api/meetings/import" in response.url
                                       and response.request.method == "POST") as imported:
