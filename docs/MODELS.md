@@ -26,7 +26,7 @@ Dependent assignments remain **WAITING** until the model is ready.
 
 Cloud rows show **KEY SET** when a key is set.
 The **Check** control on those rows shows `1 TOKEN · $` before a paid probe.
-The Concierge requires that explicit action for a paid cloud check.
+Engines requires that explicit action for a paid cloud check.
 Normal model work can also incur provider charges.
 
 For a keyed provider, enter its key in the engine form
@@ -70,7 +70,7 @@ separate trial. A provider can charge for a trial on its service.
 
 ## Repair states
 
-When something the assigned set depends on is not usable, the Concierge lists it
+When something the assigned set depends on is not usable, Engines lists it
 under **NEEDS YOU**. Each row names the state, the host where the repair
 happens, the capability groups affected, and one control.
 
@@ -111,7 +111,7 @@ They do not move a run that has already started.
 **Model Library** names the underlying availability service.
 It records models, deployment information, and readiness observations.
 An **assignment** selects the compatible model list for a capability or eligible saved item.
-These are separate service contracts beneath the Concierge.
+These are separate service contracts beneath Engines.
 
 **Settings > Engines** and the assignment entry points open the engine picker.
 Use the [MCP reference](MCP_SIDECAR.md) or [API surface](API_SURFACE.md) for programmatic access to those services.
@@ -139,7 +139,7 @@ Capability requirements include supported input types, tool use, structured outp
 A model that works for writing can still be unsuitable for Interview or meeting analysis.
 An available MLX artifact also requires a capability path that supports its runtime.
 
-The Concierge proposes local speech recognition.
+Engines proposes local speech recognition.
 Other groups can use a local engine, LAN endpoint, or selected cloud service.
 Check each host before you apply the set.
 Model requests can send source context to that host.

@@ -88,7 +88,7 @@ _VERBS = [
     ("go.configure-settings", "Settings", "go", "⌘4"),
     ("go.open-workbenches", "Automations", "go", None),
     ("go.open-conductor", "Conductor", "go", "⌘3"),
-    ("go.configure-runs-on", "Runs on", "go", None),
+    ("go.configure-runs-on", "Engines", "go", None),
     ("go.configure-integrations", "Integrations", "go", None),
     ("go.configure-commands", "Commands", "go", None),
     ("go.configure-cadence", "Cadence", "go", None),

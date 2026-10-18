@@ -115,7 +115,7 @@ Whisper backend or mesh worker is an alternate entrance.
 - Ask uses the service contract `holdspeak.ask` (`services/ask_service.py`).
   Saved Agents use `recipe:<id>` and the Agent's `last_modified` revision.
 - Both freeze the destination as a `DeploymentRevision` before dispatch. A
-  later **Runs on** edit cannot retarget a child in flight.
+  later **Engines** edit cannot retarget a child in flight.
 - Provider output waits behind the terminal election. The receipt carries the
   outcome and a result reference. It does not carry the prompt or the domain
   body. The result becomes visible only if that child wins publication.
@@ -585,7 +585,7 @@ flowchart LR
     LL["LLM, when local<br/>(GGUF, MLX)"]
   end
   RT -->|"loopback by default; token required off loopback"| WEB(["Browser and API clients"])
-  RT -->|"admitted attempt when Runs on names an off-machine endpoint"| CLOUD(["Remote model endpoint"])
+  RT -->|"admitted attempt when Engines names an off-machine endpoint"| CLOUD(["Remote model endpoint"])
   RT -->|"paired node; admitted signed offer; prompt and result"| NODE(["Mesh worker you named"])
   RT -->|"owner channel.send; hooks.slack.com:443"| SK(["Slack webhook"])
   RT -->|"approved proposal only; the one configured endpoint"| WHK(["Companion webhook"])

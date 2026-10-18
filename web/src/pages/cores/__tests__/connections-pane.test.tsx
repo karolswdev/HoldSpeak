@@ -356,7 +356,7 @@ describe("ConnectionsPane", () => {
     it("shows assigned summary and Open Models verb", async () => {
       renderPane();
       const card = await screen.findByTestId("connections-models");
-      expect(within(card).getByText("Runs on")).toBeInTheDocument();
+      expect(within(card).getByText("Engines")).toBeInTheDocument();
       expect(within(card).getByText("5 of 7 assigned")).toBeInTheDocument();
       expect(within(card).getByText("Choose engines")).toBeInTheDocument();
     });

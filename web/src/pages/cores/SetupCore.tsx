@@ -184,7 +184,7 @@ export function ParkedSetupCore({ hero }: CoreProps) {
                     openSurfaceOr("configure-runs-on", "/profiles")
                   }
                 >
-                  Runs on
+                  Engines
                 </Button>
               </div>
             </SurfaceSection>

@@ -500,9 +500,11 @@ export function AddEngineRow({ ctrl, lead }: { ctrl: ConciergeController; lead: 
         {ctrl.addEngineState === "READY" ? (
           <span className="concierge-add-engine-answer">
             <StateChip state="success" label="READY" icon="●" />
-            <span className="concierge-token" data-testid="concierge-add-model">
-              {ctrl.addEngineModel}
-            </span>
+            {ctrl.addEngineModel ? (
+              <span className="concierge-token" data-testid="concierge-add-model">
+                {ctrl.addEngineModel}
+              </span>
+            ) : null}
             {/* PHILO-15 10: the server's own answer about tool calls. */}
             {/* PHILO-17: no token when the server cannot say (was TOOLS UNKNOWN). */}
             {ctrl.addEngineTools === "yes" || ctrl.addEngineTools === "no" ? (
@@ -510,6 +512,25 @@ export function AddEngineRow({ ctrl, lead }: { ctrl: ConciergeController; lead: 
                 {ctrl.addEngineTools === "yes" ? "TOOLS" : "NO TOOLS"}
               </span>
             ) : null}
+          </span>
+        ) : null}
+        {/* Betterment E6 (FOLLOWUPS E3): a server with more than one model
+            lists them; he picks one, and Use waits for his pick. */}
+        {ctrl.addEngineState === "READY" && ctrl.addEngineModels.length > 1 ? (
+          <span className="concierge-add-models" role="group" aria-label="Models on this server" data-testid="concierge-add-models">
+            {ctrl.addEngineModels.map((model) => (
+              <Button
+                key={model}
+                dense
+                variant={model === ctrl.addEngineModel ? "primary" : "ghost"}
+                aria-pressed={model === ctrl.addEngineModel}
+                onClick={() => ctrl.pickAddEngineModel(model)}
+                data-testid="concierge-add-pick-model"
+                data-model={model}
+              >
+                {model}
+              </Button>
+            ))}
           </span>
         ) : null}
         {/* PHILO-15 02: a key answer is a word, not an instruction. */}
@@ -539,7 +560,7 @@ export function AddEngineRow({ ctrl, lead }: { ctrl: ConciergeController; lead: 
           dense
           variant={lead ? "primary" : "secondary"}
           onClick={ctrl.useNewEngineForSummaries}
-          disabled={ctrl.addEngineChecking || ctrl.addEngineState !== "READY"}
+          disabled={ctrl.addEngineChecking || ctrl.addEngineState !== "READY" || !ctrl.addEngineModel}
           loading={ctrl.addEngineChecking && ctrl.addEngineState === "READY"}
           data-testid="concierge-add-submit"
         >

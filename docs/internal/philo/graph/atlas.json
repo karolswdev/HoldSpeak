@@ -19262,12 +19262,12 @@
       "sources": [
         {
           "path": "web/src/features/concierge/ConciergeCore.tsx",
-          "symbol": "disabled={ctrl.addEngineChecking || ctrl.addEngineState !== \"READY\"}",
-          "claim": "Use this for summaries is enabled only when the added engine checked READY"
+          "symbol": "disabled={ctrl.addEngineChecking || ctrl.addEngineState !== \"READY\" || !ctrl.addEngineModel}",
+          "claim": "Use this for summaries is enabled only when the added engine checked READY and a model is picked"
         },
         {
           "path": "web/src/features/concierge/ConciergeCore.tsx",
-          "symbol": "concierge-add-model",
+          "symbol": "data-testid=\"concierge-add-model\"",
           "claim": "the checked model name is shown beside it"
         }
       ],

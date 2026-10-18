@@ -50,11 +50,11 @@ is on and what is missing.
 ## 2. Choose the model
 
 The dictation runtime is not set on the dictation face. The **Dictation
-runtime** group in **Configure dictation** says **RUNS ON LIVES IN MODELS**.
-Click **Open Models**.
+runtime** group in **Configure dictation** says **SET IN ENGINES**.
+Click **Open Engines**.
 
-1. In **Settings > Models**, add your endpoint or local model.
-2. Assign it to **Writing & dictation** in the Concierge set.
+1. In **Settings > Engines**, add your endpoint or local model.
+2. Assign it to **Dictation clean-up** in **Settings > Engines**.
 3. Click **Use these**.
 
 See [Models](./MODELS.md) for the full contract, API keys, and the headless

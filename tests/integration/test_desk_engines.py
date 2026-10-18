@@ -470,6 +470,44 @@ def test_an_old_host_only_engine_still_loads_and_runs(hub: str, three_models: st
     assert answer["output"] == f"{PICKED_ANSWER} alpha-7b", answer
 
 
+def test_re_adding_an_engine_takes_the_context_its_check_read(hub: str, three_models: str) -> None:
+    """Betterment E6 (FOLLOWUPS E3): an engine first added with no context
+    (16,384) and added again after a Check that read 49,152 runs at 49,152.
+    It kept its first context before: the deployment was reused."""
+    port = three_models.split(":")[2].split("/")[0]
+    profile = f"engine-127-0-0-1-{port}-alpha-7b"
+    status, first = _define(hub, three_models, profile, "alpha-7b")
+    assert status == 200, first
+    assert _profile_context(profile) == (16384, [16384])
+    revision = int(first["provider"]["profile_revision"])
+    status, again = _call(hub, "POST", "/api/inference/model-library/define-endpoint", {"draft": {
+        "request_id": f"define-again-{profile}", "profile_id": profile, "expected_profile_revision": revision,
+        "label": three_models.split("//")[1].split("/")[0], "provider_family": "openai_compatible",
+        "model": "alpha-7b", "endpoint": three_models, "requires_key": False, "context_tokens": 49152,
+    }, "secret": None})
+    assert status == 200, again
+    limit, ceilings = _profile_context(profile)
+    assert limit == 49152
+    from holdspeak.db import get_database
+
+    with get_database()._connection() as conn:
+        bound = conn.execute(
+            "SELECT d.context_ceiling FROM inference_deployments d JOIN model_profile_binding_revisions b "
+            "ON b.deployment_head_id=d.deployment_id WHERE b.binding_id=? ORDER BY b.revision DESC LIMIT 1",
+            (f"binding-{profile}",)
+        ).fetchone()
+    assert bound is not None and int(bound[0]) == 49152, (bound, ceilings)
+    # The same Check again changes nothing.
+    status, same = _call(hub, "POST", "/api/inference/model-library/define-endpoint", {"draft": {
+        "request_id": f"define-same-{profile}", "profile_id": profile,
+        "expected_profile_revision": int(again["provider"]["profile_revision"]),
+        "label": three_models.split("//")[1].split("/")[0], "provider_family": "openai_compatible",
+        "model": "alpha-7b", "endpoint": three_models, "requires_key": False, "context_tokens": 49152,
+    }, "secret": None})
+    assert status == 200, same
+    assert _profile_context(profile)[1] == ceilings
+
+
 @pytest.mark.parametrize("bad", [0, 100, "49152", 1.5, True, 20_000_000])
 def test_a_junk_context_size_is_refused(hub: str, three_models: str, bad: Any) -> None:
     status, refused = _define(hub, three_models, "engine-junk", "alpha-7b", context_tokens=bad)
@@ -677,3 +715,32 @@ def test_speech_lists_no_agent(hub: str, fake_bin: Path) -> None:
     _connect_claude(hub)
     speech = _editor(hub, {"kind": "group", "group_id": "speech_recognition"}, "speech.transcribe")
     assert not any(c["profile_id"].endswith("agent-claude") for c in speech["candidates"]), speech["candidates"]
+
+
+def test_speech_with_no_row_reads_no_engine_for_speech_on_every_face(hub: str, fallback_engine: str) -> None:
+    """Betterment E6 (FOLLOWUPS E5): with no speech row, speech reads
+    `no_assignment` (E5; was `no_compatible_assignment`). Each face that words
+    it says "no engine for speech", never a broken or incompatible engine."""
+    engine = _define_fallback(hub, fallback_engine)
+    status, written = _call(hub, "POST", "/api/inference/assignments/set", {
+        "command_id": "speech-global", "expected_revision": 0, "scope": {"kind": "global"}, "entries": [_entry(engine)],
+    })
+    assert status < 300, written
+    # The rig hub has its own speech rows (the built-in Whisper): clear them.
+    for n, scope in enumerate(({"kind": "capability", "capability_id": "speech.transcribe"},
+                               {"kind": "group", "group_id": "speech_recognition"})):
+        speech = _editor(hub, scope, "speech.transcribe")
+        if speech["configured_assignment"] is not None:
+            _ok(hub, "POST", "/api/inference/assignments/clear", {
+                "command_id": f"speech-clear-{n}", "expected_revision": speech["draft_base_revision"],
+                "scope": scope, "capability_id": "speech.transcribe",
+            })
+    # The roster (the Chair, Needs you and the Engines window read it).
+    roster = _ok(hub, "GET", "/api/inference/assignments")
+    task = next(t for t in roster["task_overrides"] if t["id"] == "speech.transcribe")
+    assert task["effective"]["status"] == "no_assignment", task["effective"]
+    # Needs you: the meeting-path row says it in words.
+    needs = _ok(hub, "GET", "/api/desk/needs-you?fresh=1")
+    labels = json.dumps(needs)
+    assert "No engine for speech" in labels, labels[:2000]
+    assert "incompatible" not in labels.lower()

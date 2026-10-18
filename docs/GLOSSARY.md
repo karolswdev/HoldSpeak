@@ -18,6 +18,7 @@ Capitalized product names identify specific records, modes, or controls.
 | Coder session | A live coding session that HoldSpeak can observe or steer through supported controls. |
 | Accounts | The Settings section for connections to services. |
 | Concierge | The former name of model setup. Use Settings > Engines. |
+| Runs on | The former name of Engines. Use Settings > Engines. |
 | connector | A component that obtains context from a configured source. Its permissions and data boundary depend on that source. |
 | Control mode | The Secure, Normal, or YOLO policy preset for future operations. |
 | correction | A stored dictation rule. A text correction rewrites a heard phrase in the transcript. A routing correction nudges the block or the delivery target of a similar utterance. |

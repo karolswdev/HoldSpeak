@@ -575,7 +575,7 @@ function SwitchboardList({
             data-job-id={open.id}
             data-state={open.state}
           >
-            <span className="switchboard-job-name">{`${open.name} · runs on`}</span>
+            <span className="switchboard-job-name">{`${open.name} · engine`}</span>
             {pinned && !shown && open.runsOn ? (
               <span className="switchboard-job-tasks" data-testid={`switchboard-shows-${open.id}`}>{open.runsOn}</span>
             ) : null}

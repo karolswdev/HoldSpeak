@@ -509,6 +509,24 @@ describe("Engines — What runs where (Betterment E5)", () => {
     expect(screen.getByTestId("runson-what-output-answers").textContent).toBeTruthy();
   });
 
+  it("Try it runs each row's own sample: Automations, Live meeting notes and Thread have one; Thoughts, Drafts and Speech have none", async () => {
+    width(1440);
+    const sent = whatHub();
+    render(<RunsOnCore />);
+    await screen.findByTestId("runson-what");
+    fireEvent.click(await screen.findByTestId("runson-what-more"));
+    await waitFor(() => expect(within(whatRow("automations")).getByTestId("runson-what-try-automations")).toBeTruthy());
+    for (const id of ["live", "thread"]) expect(within(whatRow(id)).getByTestId(`runson-what-try-${id}`)).toBeTruthy();
+    for (const id of ["thoughts", "drafts", "speech"]) expect(within(whatRow(id)).queryByTestId(`runson-what-try-${id}`)).toBeNull();
+    for (const [id, capability] of [["automations", "workbench.item"], ["live", "meeting.live_analysis"], ["thread", "chat.turn"]]) {
+      await act(async () => {
+        fireEvent.click(within(whatRow(id)).getByTestId(`runson-what-try-${id}`));
+      });
+      expect(sent.filter((s) => s.path === "/api/concierge/probe").pop()!.json).toMatchObject({ task: true, capabilityId: capability });
+      await waitFor(() => expect(screen.getByTestId(`runson-what-state-${id}`).textContent).toMatch(/^Completed · /));
+    }
+  });
+
   it("Undo in the foot writes the row back", async () => {
     width(1440);
     const sent = whatHub();

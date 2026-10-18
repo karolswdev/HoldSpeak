@@ -585,7 +585,7 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
                 _shot(page, "c1-list", width)
                 # Open Meetings and tap an engine to patch it.
                 page.get_by_test_id("switchboard-job-meetings").click()
-                page.get_by_text("Meeting summaries · runs on").wait_for()
+                page.get_by_text("Meeting summaries · engine").wait_for()
                 # The list opens on the selected job's alternatives. Choose
                 # the known loopback engine explicitly; the first tap is not
                 # a stable contract because the list can contain other jobs.

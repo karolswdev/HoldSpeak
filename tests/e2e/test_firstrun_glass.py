@@ -1077,7 +1077,7 @@ def test_first_words_recovery_doors_open_on_glass(
             # 2. No speech model on the hub -> "Runs on" -> the Runs on window.
             page.evaluate("window.__denyMic = false")
             words.get_by_role("button", name="Again", exact=True).click()
-            runs_on = words.get_by_role("button", name="Runs on", exact=True)
+            runs_on = words.get_by_role("button", name="Engines", exact=True)
             try:
                 runs_on.wait_for(timeout=20_000)
                 runs_on.click()
@@ -1141,7 +1141,7 @@ def test_waiting_runs_on_comes_back_through_its_alias(
             dictate = words.get_by_role("button", name="◖ Dictate one sentence", exact=True)
             expect(dictate).to_be_enabled(timeout=60_000)
             dictate.click()
-            runs_on = words.get_by_role("button", name="Runs on", exact=True)
+            runs_on = words.get_by_role("button", name="Engines", exact=True)
             runs_on.wait_for(timeout=20_000)
             runs_on.click()
             if not _on_glass(page, "[data-testid='runson-root']"):

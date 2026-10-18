@@ -126,7 +126,7 @@ elif [ "${swept:-0}" -lt "$SWEEP_MIN" ]; then
 fi
 
 echo "== canon guards"
-lock uv run pytest -q tests/unit/test_interior_canon_guard.py tests/unit/test_ux_canon_ratchet.py tests/unit/test_lan_address_guard.py tests/unit/test_automation_name_guard.py tests/unit/test_agents_name_guard.py >"$H/canon.log" 2>&1 || { echo "   the canon guards failed: RED"; fail=1; }
+lock uv run pytest -q tests/unit/test_interior_canon_guard.py tests/unit/test_ux_canon_ratchet.py tests/unit/test_lan_address_guard.py tests/unit/test_automation_name_guard.py tests/unit/test_agents_name_guard.py tests/unit/test_engines_name_guard.py >"$H/canon.log" 2>&1 || { echo "   the canon guards failed: RED"; fail=1; }
 grep -E '^(FAILED|ERROR)|passed|failed' "$H/canon.log" | tail -4 | sed 's/^/   /'
 
 # The repo guards (2026-10-18): fast whole-repo censuses and ratchets that a

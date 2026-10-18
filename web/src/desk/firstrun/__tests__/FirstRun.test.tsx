@@ -340,14 +340,14 @@ describe("PHILO-17: First words' missing speech model is fixed in place", () => 
     expect(vi.mocked(shell.openSurfaceOr)).not.toHaveBeenCalledWith("project-setup", "/");
   });
 
-  it("speech on this device by the hub's read: the door is Runs on, not New Project", async () => {
+  it("speech on this device by the hub's read: the door is Engines, not New Project", async () => {
     local = status({ all: true, state: "ready" });
     mocks.start.mockRejectedValue(new ApiError(503, "transcription unavailable", null));
     renderExpandedFirstRun();
     fireEvent.click(await screen.findByRole("button", { name: "◖ Dictate one sentence" }));
     await screen.findByTestId("firstrun-take-failure");
     const shell = await import("../../shell");
-    fireEvent.click(await screen.findByRole("button", { name: "Runs on" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Engines" }));
     expect(vi.mocked(shell.openSurfaceOr)).toHaveBeenCalledWith("configure-runs-on", "/profiles");
     expect(vi.mocked(shell.openSurfaceOr)).not.toHaveBeenCalledWith("project-setup", "/");
   });
@@ -359,7 +359,7 @@ describe("PHILO-17: First words' missing speech model is fixed in place", () => 
 // card keeps the speech download beside it, and the press also sets the
 // Default for AI work.
 describe("FirstRun — Use a server", () => {
-  function lanFakes(speechOnDevice: boolean) {
+  function lanFakes(speechOnDevice: boolean, models: string[] = ["qwen3.8-27b"]) {
     local = status({ landed: speechOnDevice });
     const base = mocks.apiFetch.getMockImplementation()!;
     mocks.apiFetch.mockImplementation(async (path: string, init: { method?: string; json?: unknown } = {}) => {
@@ -368,9 +368,10 @@ describe("FirstRun — Use a server", () => {
       // test's server, model and a server that takes tool calls.
       if (path === "/api/setup/discover-models") {
         calls.push({ path, method: "POST", json: init.json });
-        return { ...recorded<Record<string, unknown>>(DISCOVER_WIRE), models: ["qwen3.8-27b"], tools: "yes" };
+        return { ...recorded<Record<string, unknown>>(DISCOVER_WIRE), models, tools: "yes" };
       }
       if (path === "/api/inference/model-library/define-endpoint") {
+        calls.push({ path, method: "POST", json: init.json });
         const hub = recorded<Record<string, any>>(DEFINE_WIRE);
         return { ...hub, provider: { ...hub.provider, profile_id: "engine-192-168-1-43-8080", profile_revision: 1 } };
       }
@@ -403,6 +404,26 @@ describe("FirstRun — Use a server", () => {
     await waitFor(() => expect(screen.getByRole("status", { name: "LAN · 192.168.1.43" })).toBeTruthy());
     expect(screen.queryByRole("button", { name: /^Set up local AI/ })).toBeNull();
     expect(screen.queryByTestId("firstrun-speech-verb")).toBeNull();
+  });
+
+  it("a server with two models: nothing is picked for him; Use saves the one he picks", async () => {
+    lanFakes(true, ["alpha-7b", "qwen3.8-27b"]);
+    renderExpandedFirstRun();
+    await screen.findByRole("button", { name: /^Set up local AI · / });
+    fireEvent.click(screen.getByTestId("firstrun-lan-verb"));
+    fireEvent.change(await screen.findByLabelText("Server address"), { target: { value: "http://192.168.1.43:8080/v1" } });
+    fireEvent.click(screen.getByTestId("concierge-add-check"));
+    const picks = await screen.findAllByTestId("concierge-add-pick-model");
+    expect(picks.map((b) => b.textContent)).toEqual(["alpha-7b", "qwen3.8-27b"]);
+    expect(picks.every((b) => b.getAttribute("aria-pressed") === "false")).toBe(true);
+    expect(screen.queryByTestId("concierge-add-model")).toBeNull();
+    expect(screen.getByTestId("concierge-add-submit")).toBeDisabled();
+    fireEvent.click(picks[1]);
+    expect(screen.getByTestId("concierge-add-model").textContent).toBe("qwen3.8-27b");
+    fireEvent.click(screen.getByTestId("concierge-add-submit"));
+    await screen.findByTestId("firstrun-lan-receipt");
+    const define = calls.find((c) => c.path === "/api/inference/model-library/define-endpoint")?.json as { draft: Record<string, unknown> };
+    expect(define.draft).toMatchObject({ model: "qwen3.8-27b" });
   });
 
   it("no Whisper here: the card keeps the speech download, named and sized", async () => {

@@ -59,8 +59,37 @@ _SAMPLES = {
         "system": "Summarize this software delivery event in one short line.",
         "input": "The settings fix passed review and is ready to ship.",
     },
+    # Betterment E6: one sample for each What runs where row that has a cheap,
+    # honest one. Each runs the row's own capability through its own result
+    # contract. Three rows have none: Thoughts (`thought.interview`), whose
+    # question-or-synthesis result needs a Thought and the refinement
+    # coordinator's adapter; Drafts and updates (`project.update_draft`),
+    # which the shared execution stage refuses as non-executing (the room
+    # runs it on its own path); and Speech to text, which needs audio.
+    "workbench.item": {
+        "group": "agents_tools", "task": "Automation",
+        "system": "Do the task in one short line.",
+        "input": "Write a one-line note that the settings fix is ready to ship.",
+    },
+    "meeting.live_analysis": {
+        "group": "meetings", "task": "Live meeting notes",
+        "system": (
+            "Make notes for this part of a meeting. Return JSON only, with topics "
+            "(a list of strings), summary (a string) and action_items (a list of "
+            "objects with task, owner, and due). Use null for an unknown owner or due. "
+            "Do not add other keys."
+        ),
+        "input": "Alex: We will ship the settings fix on Tuesday.\nSam: I will check the change before then.",
+    },
+    "chat.turn": {
+        "group": "thoughts_notes", "task": "Thread",
+        "system": "Reply to the message in one short line.",
+        "input": "Say hello in five words or fewer.",
+    },
 }
 PROBE_CAPABILITIES: tuple[str, ...] = tuple(_SAMPLES)
+# The samples that answer in meeting JSON through the meeting result adapter.
+_MEETING_JSON = frozenset({"meeting.deferred_analysis", "meeting.live_analysis"})
 DEFAULT_PROBE_CAPABILITY = PROBE_CAPABILITIES[0]
 
 # The Concierge group this capability belongs to (inference_capabilities.py).
@@ -100,7 +129,7 @@ def _sample_adapter(capability_id: str) -> Any:
         return _AskAnswerAdapter(prompt)
     if capability_id == "background.rails_summary":
         return adapter_for(capability_id, prompt.dispatch)
-    if capability_id == "meeting.deferred_analysis":
+    if capability_id in _MEETING_JSON:
         def meeting_sample(engine: Any, payload: Mapping[str, Any], cancellation: Any) -> Any:
             raw = prompt.dispatch(engine, dict(payload), cancellation)
             try:
@@ -280,7 +309,7 @@ def task_probe(
         "temperature": None,
         "max_tokens": PROBE_MAX_TOKENS,
     }
-    if capability_id == "meeting.deferred_analysis":
+    if capability_id in _MEETING_JSON:
         payload["response_format"] = {"type": "json_object"}
 
     started = time.monotonic()
@@ -327,7 +356,7 @@ def task_probe(
     facts = _deployment_facts(db, deployment_id)
     boundary = str(receipt.get("winning_boundary") or winning.get("boundary") or "")
     result = routed.get("result") if isinstance(routed.get("result"), Mapping) else {}
-    output_field = "summary" if capability_id in {"meeting.deferred_analysis", "background.rails_summary"} else "output"
+    output_field = "summary" if capability_id in {*_MEETING_JSON, "background.rails_summary"} else "output"
     output = str((result or {}).get(output_field) or "")
     # The runner has already validated the frozen result schema and the
     # controller has settled its receipt. Preserve that terminal truth even

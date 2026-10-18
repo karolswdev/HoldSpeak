@@ -627,10 +627,24 @@ class ModelLibraryApplicationService:
             # The spend limit lives in the endpoint (`cli:claude?spend_limit_usd=`),
             # so a changed limit is a new deployment the binding moves to.
             deployment_id += "-" + _digest(draft["endpoint"])[7:19]
-        with self._db._connection() as conn:
-            existing = conn.execute(
-                "SELECT execution_revision_id FROM inference_deployments WHERE deployment_id=?", (deployment_id,)
-            ).fetchone()
+        def stored(head: str) -> Any:
+            with self._db._connection() as conn:
+                return conn.execute(
+                    "SELECT execution_revision_id,context_ceiling FROM inference_deployments WHERE deployment_id=?",
+                    (head,),
+                ).fetchone()
+
+        existing = stored(deployment_id)
+        # Betterment E6 (FOLLOWUPS E3): an engine added again after a Check
+        # that read another context size gets a deployment at that size (the
+        # binding moves to it). It kept its first context before.
+        if (
+            existing is not None
+            and draft.get("context_tokens") is not None
+            and int(existing["context_ceiling"] or 0) != self._context_tokens(draft)
+        ):
+            deployment_id += f"-c{self._context_tokens(draft)}"
+            existing = stored(deployment_id)
         if existing is not None:
             return deployment_id, str(existing["execution_revision_id"])
         target = self._db.profiles.get(target_id)

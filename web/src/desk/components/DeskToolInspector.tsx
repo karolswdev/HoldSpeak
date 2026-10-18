@@ -325,7 +325,7 @@ export function DeskToolInspector() {
         <>
           <StateChip state={target.readiness.available ? "success" : "unreachable"} label={target.readiness.available ? "Ready" : "Unavailable"} />
           {!target.readiness.available && target.readiness.reason ? <SurfaceState error={target.readiness.reason} /> : null}
-          <GadgetGroup label="Runs on" material="inset">
+          <GadgetGroup label="Engine" material="inset">
             <Fact label="Boundary" value={target.boundary} />
             <Fact label="Engine" value={target.engine} />
             <Fact label="Model" value={target.model || "Hub default"} />
@@ -417,7 +417,7 @@ export function DeskToolInspector() {
             {project ? <Button dense variant="primary" onClick={() => openSurfaceOr("dictate", "/dictation", `project:${project.id}`)}>Open Project context</Button> : null}
             {target ? <>
               {target.model && models.some((model) => model.name === target.model) ? <Button dense variant="primary" disabled={!target.readiness.available} onClick={() => void openNewThread({ title: target.model, profile_override: target.model })}>Continue in thread</Button> : null}
-              <Button dense variant="ghost" onClick={() => openSurfaceOr("configure-runs-on", "/profiles")}>Configure Runs on</Button>
+              <Button dense variant="ghost" onClick={() => openSurfaceOr("configure-runs-on", "/profiles")}>Engines</Button>
             </> : null}
             {integration ? <>
               {!proposal && integrationAction ? <Button dense variant="primary" loading={busy} onClick={() => void propose()}>{integrationAction.label}</Button> : null}

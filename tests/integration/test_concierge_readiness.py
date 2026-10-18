@@ -164,6 +164,7 @@ def test_the_task_probe_refuses_an_unprobeable_capability(cold) -> None:
 
 @pytest.mark.parametrize("capability_id", [
     "speech.rewrite", "ask.answer", "meeting.deferred_analysis", "recipe.run", "background.rails_summary",
+    "workbench.item", "meeting.live_analysis", "chat.turn",
 ])
 def test_each_bounded_job_sample_is_accepted_on_the_existing_wire(cold, capability_id: str) -> None:
     response = _client().post("/api/concierge/probe", json={

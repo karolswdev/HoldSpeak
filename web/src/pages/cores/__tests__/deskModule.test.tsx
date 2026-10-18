@@ -28,7 +28,7 @@ describe("DeskModule (HS-112-03)", () => {
       screen.getByText(/CLEARS THE DESK · PUTS BACK THE DEFAULT ITEMS/),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/KEEPS · MEETINGS · JOURNAL · SETTINGS · RUNS ON/),
+      screen.getByText(/KEEPS · MEETINGS · JOURNAL · SETTINGS · ENGINES/),
     ).toBeInTheDocument();
   });
 

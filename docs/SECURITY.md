@@ -43,7 +43,7 @@ fact includes a source quote. An inference carries an explicit inferred
 classification.
 
 A model turn can send permitted context to its assigned model endpoint. Check
-the **Runs on** destination and the Receipt when the host matters.
+the **Engines** destination and the Receipt when the host matters.
 
 Removing a fact also removes its dependent suggestions. It does not erase earlier
 Thread messages, kept outputs, or backups. Use the retention controls for those
@@ -363,7 +363,7 @@ actions. This table adds implementation detail. It is not a second inventory.
 
 | Egress | Trigger | What leaves | Control |
 |---|---|---|---|
-| **Remote model endpoint** (`kernel/inference_runner.py`) | An admitted attempt whose frozen **Runs on** revision names an off-machine OpenAI-compatible endpoint | The model input for that attempt and request metadata. Never raw audio or embeddings. | You author and assign the destination. Each attempt has its own child and receipt. Local destinations never cross. A fallback is a separate frozen attempt. |
+| **Remote model endpoint** (`kernel/inference_runner.py`) | An admitted attempt whose frozen **Engines** revision names an off-machine OpenAI-compatible endpoint | The model input for that attempt and request metadata. Never raw audio or embeddings. | You author and assign the destination. Each attempt has its own child and receipt. Local destinations never cross. A fallback is a separate frozen attempt. |
 | **Calendar ICS sources** (`calendar_ingest_conductor.py`) | You add an ICS source (file path or HTTPS URL) in **Settings**. Each source refreshes at boot and every 15 minutes. | One bounded fetch per HTTPS source per refresh. No credentials, headers, cookies, or redirect follow-up. 10 s timeout, 5 MiB cap. | HTTPS only. Redirects are refused. The egress chip names the host. File sources cause no egress. |
 | **Calendar snapshot** (`services/calendar_snapshot_service.py`) | You import a calendar screenshot with **Snapshot** or a Desk drop | The image goes to the vision model assigned to `calendar.snapshot_extract`. A local model means nothing leaves. | No vision assignment gives a named refusal. The generated `.ics` is a local source with the same parser limits. |
 | **Failure webhook** (`intel_queue.py`) | You set `intel_retry_failure_webhook_url` | Queue statistics only. No transcript. | Opt-in. |
@@ -375,7 +375,7 @@ actions. This table adds implementation detail. It is not a second inventory.
 | **Connector CLI enrichment** (`gh`, `jira`) | You enable the connector pack | Entity IDs (PR, issue, ticket numbers) to your own CLI tools | Opt-in. Manifest permissions `shell:exec` and `network:outbound`. |
 | **Mission-control receipts** (`missioncontrol_bridge.py`) | A rails repo is in your project map (`~/.holdspeak/delivery_workbench.json`) and the conveyor is open | Nothing composed. A read of that repo's open pull requests through your `gh`. | You author the map. The routes are GET-only. A `gh` failure shows as a typed absence. |
 | **PR receipts** (`delivery/pr_receipts.py`) | You click **Refresh**, or you set `pr_refresh_seconds` on a source | Nothing composed. One batched read of that repo's pull requests through your `gh`. | Manual by default. The cadence is per source and set by hand. A failure shows as a stale row. |
-| **Mesh relay** (`intel/mesh_relay.py`) | An admitted run against a **Runs on** destination of kind `meshNode` | The prompt and result between the hub and the machine you named. No provider key crosses. | You pair the node. A per-node bearer authenticates it. The pinned hub Ed25519 key verifies each bound offer. The hub private key never leaves the hub. `holdspeak mesh serve` is the live consent. |
+| **Mesh relay** (`intel/mesh_relay.py`) | An admitted run against an **Engines** destination of kind `meshNode` | The prompt and result between the hub and the machine you named. No provider key crosses. | You pair the node. A per-node bearer authenticates it. The pinned hub Ed25519 key verifies each bound offer. The hub private key never leaves the hub. `holdspeak mesh serve` is the live consent. |
 | **Web runtime responses** | A client asks for data | What the API returns | Loopback by default. Token-gated off loopback. |
 | **Device audio link** | A paired device streams audio | Audio in. Status text out. | PSK. Same LAN. |
 | **Browser mic capture** (`POST /api/dictation/transcribe`) | You hold the mic or TALK in the browser, or open-mic detects an utterance | Nothing leaves. The WAV goes to your own hub, local Whisper transcribes it, and HoldSpeak does not keep the audio (16 MB cap). | Off loopback, the hub is token-gated. Open-mic posts one WAV per utterance. The browser detects speech with energy and no model. |

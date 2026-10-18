@@ -154,7 +154,7 @@ export function placementLine(placement: MeetingPlacementWire): string {
   const target = String(
     placement.target_name || placement.node || "HUB DEFAULT",
   ).toUpperCase();
-  const parts = ["RUNS ON", target, String(placement.boundary ?? "").toUpperCase()];
+  const parts = ["ENGINE", target, String(placement.boundary ?? "").toUpperCase()];
   if (placement.model) parts.push(String(placement.model).toUpperCase());
   return parts.filter(Boolean).join(" · ");
 }
@@ -352,7 +352,7 @@ export function DeskModule() {
             CLEARS THE DESK · PUTS BACK THE DEFAULT ITEMS
           </span>
           <span className="gadget-fact" data-testid="desk-reset-keeps">
-            KEEPS · MEETINGS · JOURNAL · SETTINGS · RUNS ON
+            KEEPS · MEETINGS · JOURNAL · SETTINGS · ENGINES
           </span>
         </div>
       </FoldGadget>

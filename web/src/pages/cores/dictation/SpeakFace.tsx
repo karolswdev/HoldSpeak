@@ -971,7 +971,7 @@ function DetailsContent({ deck }: { deck: ReturnType<typeof useSpeakDeck> }) {
         />
       </div>
       <div className="speak-detail-row">
-        <span className="speak-detail-label">Runs on</span>
+        <span className="speak-detail-label">Engine</span>
         <span className="speak-detail-value">
           {presentValue((deck.readinessTarget as Record<string, unknown>).label) || "—"}
         </span>

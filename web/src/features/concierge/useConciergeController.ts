@@ -308,6 +308,10 @@ export interface ConciergeController {
   addEngineState: AddEngineState;
   addEngineReason: string;
   addEngineModel: string;
+  /** Betterment E6 (FOLLOWUPS E3): every model the Check found. With more
+   *  than one, nothing is picked for him; he picks one. */
+  addEngineModels: string[];
+  pickAddEngineModel: (model: string) => void;
   /** PHILO-15 10: the server's answer to "do you take tool calls?". */
   addEngineTools: "yes" | "no" | "unknown" | null;
   /** Astra r1: MY SERVER, the owner's word that the address is his own. */
@@ -794,6 +798,7 @@ export function useConciergeController(): ConciergeController {
     useState<AddEngineState>("IDLE");
   const [addEngineReason, setAddEngineReason] = useState("");
   const [addEngineModel, setAddEngineModel] = useState("");
+  const [addEngineModels, setAddEngineModels] = useState<string[]>([]);
   // Betterment E3: the context each model runs, as the last Check read it.
   const addEngineContexts = useRef<Record<string, number>>({});
   const [addEngineTools, setAddEngineTools] = useState<"yes" | "no" | "unknown" | null>(null);
@@ -816,6 +821,7 @@ export function useConciergeController(): ConciergeController {
       if (previous.trim() !== value.trim()) {
         setAddEngineState("IDLE");
         setAddEngineModel("");
+        setAddEngineModels([]);
         setAddEngineReason("");
       }
       return value;
@@ -830,6 +836,7 @@ export function useConciergeController(): ConciergeController {
       if (previous.trim() !== value.trim()) {
         setAddEngineState("IDLE");
         setAddEngineModel("");
+        setAddEngineModels([]);
         setAddEngineReason("");
       }
       return value;
@@ -843,6 +850,7 @@ export function useConciergeController(): ConciergeController {
     setAddEngineState("IDLE");
     setAddEngineReason("");
     setAddEngineModel("");
+    setAddEngineModels([]);
     addEngineUrlRef.current = "";
   }, []);
 
@@ -857,6 +865,7 @@ export function useConciergeController(): ConciergeController {
     setAddEngineState("CHECKING");
     setAddEngineReason("");
     setAddEngineModel("");
+    setAddEngineModels([]);
     setAddEngineTools(null);
     try {
       const result = await checkEndpoint(url, key, addEngineMyServer);
@@ -872,7 +881,9 @@ export function useConciergeController(): ConciergeController {
         setAddEngineChecking(false);
         if (result.ok && result.models.length > 0) {
           setAddEngineState("READY");
-          setAddEngineModel(result.models[0]);
+          setAddEngineModels(result.models);
+          // One model is no choice; with more, he picks (FOLLOWUPS E3).
+          setAddEngineModel(result.models.length === 1 ? result.models[0] : "");
           addEngineContexts.current = result.contexts ?? {};
           setAddEngineTools(result.tools ?? "unknown");
           setAddEngineReason("");
@@ -971,6 +982,7 @@ export function useConciergeController(): ConciergeController {
         addEngineKeyRef.current = "";
         setAddEngineState("IDLE");
         setAddEngineModel("");
+        setAddEngineModels([]);
         setAddEngineTools(null);
         setAddEngineReason("");
         setApplied(true);
@@ -1088,6 +1100,10 @@ export function useConciergeController(): ConciergeController {
     addEngineState,
     addEngineReason,
     addEngineModel,
+    addEngineModels,
+    pickAddEngineModel: (model: string) => {
+      if (addEngineModels.includes(model)) setAddEngineModel(model);
+    },
     addEngineTools,
     addEngineMyServer,
     setAddEngineMyServer,

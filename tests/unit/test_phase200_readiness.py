@@ -584,6 +584,13 @@ def test_a_successful_empty_output_keeps_the_kernel_terminal_truth(tmp_path: Pat
         })),
         ("recipe.run", "agents_tools", "Recipe", "Check the settings fix."),
         ("background.rails_summary", "background", "Background summary", "The settings fix passed review."),
+        # Betterment E6: the What runs where rows that had no Try it.
+        ("workbench.item", "agents_tools", "Automation", "The settings fix is ready to ship."),
+        ("meeting.live_analysis", "meetings", "Live meeting notes", json.dumps({
+            "topics": ["Settings fix"], "summary": "The settings fix will ship on Tuesday.",
+            "action_items": [{"task": "Check the change", "owner": "Sam", "due": None}],
+        })),
+        ("chat.turn", "thoughts_notes", "Thread", "Hello there."),
     ],
 )
 def test_each_job_sample_runs_its_own_capability_without_domain_writes(

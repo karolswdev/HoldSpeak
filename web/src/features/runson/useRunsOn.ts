@@ -264,7 +264,7 @@ export function useRunsOn(scope?: string) {
       if (mounted.current) setRoster(next);
       return next;
     } catch (err) {
-      if (mounted.current) setError(err instanceof Error ? err.message : "Could not read Runs on.");
+      if (mounted.current) setError(err instanceof Error ? err.message : "Could not read the engines.");
       return null;
     }
   }, []);

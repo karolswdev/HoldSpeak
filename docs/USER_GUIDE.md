@@ -319,7 +319,7 @@ Use `openai_compatible` when another host serves the model.
 Examples are llama.cpp server, LM Studio, the Ollama OpenAI bridge, vLLM, LiteLLM, and hosted APIs.
 
 1. Add the endpoint in **Settings > Engines**.
-2. Select it for **Writing & dictation** in the Concierge set.
+2. Select it for **Dictation clean-up** in **Settings > Engines**.
 3. Select **Use these**.
 
 Assigning the model also sets the dictation backend.
@@ -667,9 +667,9 @@ The hub does not prevent sleep.
 Keep the hub machine awake, for example with `caffeinate -s`.
 See [Reach Runner](REACH_RUNNER.md) for the install steps.
 
-### Rhythm's Runs on row
+### Rhythm's Where it runs row
 
-In **Settings > Rhythm**, the `Runs on` row picks `THIS DEVICE` or a configured remote host.
+In **Settings > Rhythm**, the `Where it runs` row picks `THIS DEVICE` or a configured remote host.
 For a remote host, the caption reads `WHILE THIS MAC IS AWAKE`.
 
 ## The Arrival
@@ -894,7 +894,7 @@ Each row is a module with **Open**.
 
 | Row | Controls |
 | --- | --- |
-| **MODELS** | The Concierge. See below. |
+| **ENGINES** | Your engines and what runs where. See below. |
 | **CONNECTIONS** | GitHub, Jira, Calendar, and Models readiness |
 | **VOICE** | Hotkey, language, typing, spoken symbols, wake word |
 | **MEETINGS** | Intelligence, calendar sources, auto-record |
@@ -935,10 +935,10 @@ It stays in the shade's **PROJECTS** section, dimmed.
 The shade's **PROJECTS** section lists each Room with needs-you items and an **Open** verb.
 In the command deck (Cmd+K), type a project name to open its Room.
 
-## Models: the Concierge
+## Engines
 
 Open **Settings > Engines**.
-The Concierge shows what engines exist, what each capability uses, and whether all are ready.
+Engines shows the engines you have, what each job uses, and whether all are ready.
 The full reference is [Models](MODELS.md).
 
 **FOUND** lists every detected engine with its kind (**LAN**, **THIS MAC**, or **CLOUD**), latency, host, and state (`READY` or `UNREACHABLE`).
@@ -1241,7 +1241,7 @@ See [The Desk](WEB_DESK.md) for the full grammar.
   Dropping a Note on an Agent opens its card with the Note as run material.
   You select **Ask**.
 - **Info.**
-  Right-click and choose **Info** to see identity, where it is filed, where it came from, and, for Agents, **Runs on**.
+  Right-click and choose **Info** to see identity, where it is filed, where it came from, and, for Agents, **Engine**.
 - **The menu bar** has Desk, Object, Go, and Window.
   A verb that cannot run stays visible with its reason.
   Go reaches every application, the same list as the Cmd+K search.

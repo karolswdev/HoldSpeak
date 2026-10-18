@@ -419,7 +419,7 @@ function ModelsCard({
       ? `Summaries · ${summaryHost}`
       : "Unassigned";
 
-  return <div className="connections-engines" data-testid="connections-models"><span className="connections-tool-label">Runs on</span>{summary !== label ? <span className="connections-tool-summary">{summary}</span> : <StateChip wrap state={state} label={label}/>}<Button dense variant="ghost" onClick={onOpen}>Choose engines</Button></div>;
+  return <div className="connections-engines" data-testid="connections-models"><span className="connections-tool-label">Engines</span>{summary !== label ? <span className="connections-tool-summary">{summary}</span> : <StateChip wrap state={state} label={label}/>}<Button dense variant="ghost" onClick={onOpen}>Choose engines</Button></div>;
 }
 
 /* ── ConnectionsPane ── */
