@@ -32,7 +32,7 @@ from holdspeak.services.agent_flights import (
 from holdspeak.services.agent_hand_service import AgentHandRefused
 from holdspeak.services.launch_lane import record_restart_stops
 from tests.unit._spawn_env import command_of
-from tests.unit.test_agent_hand import OWNER, _rig, db  # noqa: F401  (db is a fixture)
+from tests.unit.test_agent_hand import OWNER, _rig, _wait_for, db  # noqa: F401  (db is a fixture)
 
 SID = "3f1c2a9e-7b44-4d0e-9a61-0c2f5e8d1b7a"
 
@@ -66,9 +66,11 @@ def _stopped(tmp_path, db, monkeypatch, sessions):  # noqa: F811
     """A launch that registered and worked, then a restart took tmux."""
     rig = _rig(tmp_path, db, monkeypatch)
     launch_id = rig.hand.hand(OWNER, "action", "ai_1")["launch_id"]
+    # The launch's own first-message watcher may bind the rider first (a
+    # thread): bind here too, then wait for the ledger to say registered.
     rig.service.bind_rider_claims()
-    record = rig.launches.get(launch_id)
-    assert record["state"] == "registered" and record["session_key"] == "claude:smoke-session"
+    record = _wait_for(lambda: rig.launches.get(launch_id), "state", "registered")
+    assert record["session_key"] == "claude:smoke-session"
     # Registration stores what Resume runs.
     assert record["resume_command"] == "claude --resume smoke-session"
     sessions("SessionStart", source="startup")
