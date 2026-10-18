@@ -7110,6 +7110,16 @@
       ]
     },
     {
+      "path": "/api/workbenches/{workbench_id}/memory/{index}",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/workbenches/{workbench_id}/memory/{index}/promote",
       "methods": [
         "POST"
@@ -7155,7 +7165,9 @@
         "POST"
       ],
       "module": "web.routes.primitives.workbenches",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/workbenches/{workbench_id}/run",

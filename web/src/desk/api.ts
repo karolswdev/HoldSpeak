@@ -1191,6 +1191,24 @@ export async function clearWorkbenchMemory(workbenchId: string): Promise<void> {
   );
 }
 
+/** Betterment A3: opening a result reads it (`new` becomes `read`). */
+export async function openAutomationResult(workbenchId: string, artifactId: string): Promise<void> {
+  await apiFetch<Record<string, unknown>>(
+    `/api/workbenches/${encodeURIComponent(workbenchId)}/results/${encodeURIComponent(artifactId)}/open`,
+    { method: "POST" },
+  );
+}
+
+/** Betterment A3: Forget one lesson. `index` counts newest first, as the
+ *  memory read lists them; `at` is its timestamp, so a lesson written
+ *  meanwhile is never forgotten in its place. */
+export async function forgetAutomationLesson(workbenchId: string, index: number, at: string): Promise<void> {
+  await apiFetch<Record<string, unknown>>(
+    `/api/workbenches/${encodeURIComponent(workbenchId)}/memory/${index}?at=${encodeURIComponent(at)}`,
+    { method: "DELETE" },
+  );
+}
+
 export async function promoteMemoryToSkill(
   workbenchId: string,
   index: number,
