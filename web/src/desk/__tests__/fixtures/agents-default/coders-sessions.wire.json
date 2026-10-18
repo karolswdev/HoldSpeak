@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-11T22:26:15.790241Z",
+  "captured_at": "2026-10-18T04:32:39.047201Z",
   "wire": {
     "count": 1,
     "flights": [
@@ -11,7 +11,7 @@
         "id": "m-cutover-a1",
         "kind": "action",
         "launch_id": "launch_c2_runbook",
-        "launched_at": "2026-10-11T22:06:15.643522Z",
+        "launched_at": "2026-10-18T04:12:38.896188Z",
         "merged_at": null,
         "origin_ref": "action:m-cutover-a1",
         "pr": {
@@ -44,7 +44,7 @@
           "id": "m-cutover-a1",
           "kind": "action",
           "launch_id": "launch_c2_runbook",
-          "launched_at": "2026-10-11T22:06:15.643522Z",
+          "launched_at": "2026-10-18T04:12:38.896188Z",
           "merged_at": null,
           "origin_ref": "action:m-cutover-a1",
           "pr": {
@@ -77,7 +77,7 @@
           "agent": "claude",
           "awaiting_response": false,
           "capture_messages": false,
-          "created_at": "2026-10-11T22:26:14.491492Z",
+          "created_at": "2026-10-18T04:32:37.739334Z",
           "cwd": "/tmp/rig/home/dev/wt/hs-action-runbook",
           "event_count": 9,
           "hook_event_name": "Notification",
@@ -102,9 +102,9 @@
           "tmux_session": null,
           "tmux_window": null,
           "transcript_path": null,
-          "updated_at": "2026-10-11T22:26:15.641554Z",
-          "wait_id": "2026-10-11T22:26:15.641554Z#9",
-          "wait_started_at": "2026-10-11T22:26:15.641554Z"
+          "updated_at": "2026-10-18T04:32:38.894156Z",
+          "wait_id": "2026-10-18T04:32:38.894156Z#9",
+          "wait_started_at": "2026-10-18T04:32:38.894156Z"
         }
       }
     ]

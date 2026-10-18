@@ -431,7 +431,7 @@ function ProbeRow({ ctrl }: { ctrl: ConciergeController }) {
 }
 
 /* ── The add-engine row (HS-201-09; PHILO-15 10 reuses it on first run) ──
-   Address + key, Check (the hub asks the server), Use this for summaries.
+   Address + key, Check (the hub asks the server), Use.
    One component, two faces: the Concierge and the first-run Local AI card. */
 
 export function AddEngineRow({ ctrl, lead }: { ctrl: ConciergeController; lead: boolean }) {
@@ -453,7 +453,7 @@ export function AddEngineRow({ ctrl, lead }: { ctrl: ConciergeController; lead: 
         />
         {/* PHILO-15 02: the optional key (llama.cpp --api-key, a vLLM
             or LM Studio token). Secret: no mic, never echoed; Check
-            uses it, and Use this for summaries stores it in the
+            uses it, and Use stores it in the
             profile key store, never in the config file. */}
         <span className="concierge-add-key" data-testid="concierge-add-key">
           <StringGadget
@@ -543,7 +543,10 @@ export function AddEngineRow({ ctrl, lead }: { ctrl: ConciergeController; lead: 
           loading={ctrl.addEngineChecking && ctrl.addEngineState === "READY"}
           data-testid="concierge-add-submit"
         >
-          Use this for summaries
+          {/* Betterment ST0: the press makes it the engine for summaries
+              and for Everything else (once, when no default existed);
+              speech never inherits a chat server. */}
+          Use
         </Button>
       </div>
   );

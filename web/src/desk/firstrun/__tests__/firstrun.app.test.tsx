@@ -37,6 +37,7 @@ vi.mock("../../../lib/micStreamSession", async (importOriginal) => ({
 
 import { ApiError } from "../../../lib/api";
 import { FirstRun } from "../FirstRun";
+import { RunsOnCore } from "../../../features/runson/RunsOnCore";
 
 // These behavior tests enter the optional setup and chat wells explicitly.
 function renderExpandedFirstRun() {
@@ -114,6 +115,8 @@ describe("First run — a LAN box as the default keeps the speech download (reco
     fireEvent.click(screen.getByTestId("concierge-add-check"));
     expect((await screen.findByTestId("concierge-add-tools")).textContent).toBe("TOOLS");
     await waitFor(() => expect((screen.getByTestId("concierge-add-submit") as HTMLButtonElement).disabled).toBe(false));
+    // Betterment ST0: the press is Use (it said "for summaries" and set every job).
+    expect(screen.getByTestId("concierge-add-submit").textContent?.trim()).toBe("Use");
     await act(async () => {
       fireEvent.click(screen.getByTestId("concierge-add-submit"));
     });
@@ -128,6 +131,23 @@ describe("First run — a LAN box as the default keeps the speech download (reco
     expect(screen.getByTestId("firstrun-first-words").getAttribute("data-lit")).not.toBe("true");
     const select = hub.calls.find((c) => c.path === "/api/concierge/summary-selection");
     expect(select?.json).toMatchObject({ setDefault: true });
+    expect(hub.misses).toEqual([]);
+  });
+});
+
+describe("Engines after the first-run Use (recorded hub)", () => {
+  it("no job is broken and Speech to text runs on no chat server", async () => {
+    // Betterment ST0: after the press Engines said `Speech to text · runs on
+    // 192.168.1.43`, TOOL INCOMPATIBLE and 1 BROKEN.
+    // (hub half: tests/integration/test_desk_firstrun.py::test_a_lan_box_as_default_keeps_the_speech_download)
+    hub = new RecordedHub("lan", "1-used");
+    render(<RunsOnCore scope="" />);
+    const strip = await screen.findByTestId("runson-strip");
+    await waitFor(() => expect(strip.textContent).toMatch(/ready/));
+    await waitFor(() => expect(hub.calls.some((c) => c.path === "/api/concierge/detect")).toBe(true));
+    expect(strip.textContent).not.toMatch(/broken/);
+    expect(document.body.textContent).not.toContain("TOOL INCOMPATIBLE");
+    expect(screen.getByTestId("switchboard-job-speech_recognition").getAttribute("data-state")).not.toBe("broken");
     expect(hub.misses).toEqual([]);
   });
 });

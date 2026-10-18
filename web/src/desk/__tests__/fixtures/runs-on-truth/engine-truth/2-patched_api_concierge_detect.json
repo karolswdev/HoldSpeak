@@ -1,8 +1,8 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_runs_on_hub.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-11T22:20:50.531407Z",
+  "captured_at": "2026-10-18T03:58:20.376477Z",
   "wire": {
-    "checkedAt": "2026-10-11T22:20:50.504701+00:00",
+    "checkedAt": "2026-10-18T03:58:20.348025+00:00",
     "engines": [
       {
         "audioCapable": false,
@@ -89,32 +89,12 @@
       },
       "observation": {
         "available_memory_bytes": null,
-        "sha256": "sha256:900bf5c69e7827b77617f57ed8f894a4fa43ae4ad8b98d7f86b39d448d5dfcb5",
-        "storage_available_bytes": 271485734912
+        "sha256": "sha256:789dd475cf182e0365dbc2ac4fea4e65ae2808307cf7237c5d400e565d17c47e",
+        "storage_available_bytes": 263273533440
       }
     },
     "lastApply": null,
-    "repairs": [
-      {
-        "baseUrl": "",
-        "control": "engine_picker",
-        "detail": "This engine does not accept this input.",
-        "engineId": "",
-        "groupLabels": [
-          "Speech recognition"
-        ],
-        "groups": [
-          "speech_recognition"
-        ],
-        "host": "",
-        "id": "tool-incompatible:127.0.0.1:8099",
-        "presetId": "",
-        "scope": "local",
-        "subject": "127.0.0.1:8099",
-        "token": "TOOL INCOMPATIBLE",
-        "verb": "Choose"
-      }
-    ],
+    "repairs": [],
     "runtimes": [
       {
         "id": "llama_cpp_prompt_v1",
