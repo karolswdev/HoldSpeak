@@ -18,6 +18,7 @@ this story only carves it out, adding no new behaviour.
 """
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from datetime import datetime
 from holdspeak.timestamps import utc_now
@@ -291,7 +292,10 @@ async def process_transcript(
 
     skip_target_detection = source == "browser"
 
-    return run_pipeline_corrections_only(
+    # Off the event loop (as routes/dictation/pipeline.py does): the clean-up
+    # and routing passes call an engine, and on the loop they froze the hub.
+    return await asyncio.to_thread(
+        run_pipeline_corrections_only,
         raw_text,
         config=config,
         server=server,
