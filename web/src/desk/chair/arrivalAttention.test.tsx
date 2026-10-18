@@ -375,7 +375,9 @@ describe("Arrival attention (HS-200-15)", () => {
       const review = (owned.querySelector('[data-verb="review"]') as HTMLElement);
       expect(review.textContent).toBe("Review");
       fireEvent.click(review);
-      expect(openPullout).toHaveBeenCalledWith("intelligence:desk");
+      // Betterment D4: Follow-through is parked; the drill opens the
+      // Needs-you window (the card's row), not the Today window.
+      expect(openPullout).not.toHaveBeenCalledWith("intelligence:desk");
       await waitFor(() => expect(navigations).toEqual([
         { view: "follow-through", followThroughId: "ai-owned" },
       ]));

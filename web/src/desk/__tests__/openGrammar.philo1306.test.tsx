@@ -12,7 +12,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError, apiFetch } from "../../lib/api";
 import { openPrimitive, openProjectRoom, openSurfaceOr } from "../shell";
 import { ChairHome } from "../chair/ChairHome";
-import { BriefView } from "../pullouts/views/BriefView";
+import { SinceYesterday } from "../pullouts/views/BriefView";
 import { __resetOwnerCache, takeRoomProposalRequest } from "../openObject";
 import { useDrawers } from "../drawer/store";
 import { asHub } from "../../test/hubNeedsYou";
@@ -298,39 +298,15 @@ describe("PHILO-17 U30: every generic open of a Project opens its Room (one home
   });
 });
 
-describe("PHILO-13-06: Intelligence BRIEF opens its rows; Brief → People works", () => {
-  it("a row opens its decision and names the selection in words, not a raw id", async () => {
-    vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) =>
-      (String(path).startsWith("/api/brief/latest") ? BRIEF : decisionRead(String(path))) as never));
-    render(<BriefView header={null} />);
+describe("PHILO-13-06 / Betterment D4: Today's Since yesterday opens its rows", () => {
+  it("a row opens its decision (the Brief wing's rows, now the fold's)", async () => {
+    render(<SinceYesterday brief={BRIEF as never} failed={false} now={new Date()} defaultOpen onRetry={() => {}} />);
     const row = await screen.findByText("Freeze the old ledger on Nov 5");
+    vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => decisionRead(String(path)) as never));
     fireEvent.click(row);
     await waitFor(() => expect(openPrimitive).toHaveBeenCalledWith("decision:decision_9458"));
-    expect(document.body.textContent).toContain("SELECTED · REVIEW DECISION");
     expect(document.body.textContent).not.toContain("decision_9458");
-    expect(screen.getByRole("button", { name: "Acknowledge" })).toBeTruthy();
-  });
-
-  it("Open person opens People on that relationship", async () => {
-    vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) =>
-      (String(path).startsWith("/api/brief/latest") ? BRIEF : null) as never));
-    render(<BriefView header={null} />);
-    fireEvent.click(await screen.findByTestId("person-row-rel-priya"));
-    fireEvent.click(screen.getByTestId("verb-open-person"));
-    expect(openPrimitive).toHaveBeenCalledWith("people:rel-priya");
-    expect(openSurfaceOr).not.toHaveBeenCalledWith("open-people", "/", expect.anything());
-  });
-
-  it("a failed read withholds Acknowledge, Defer and Speak (A.11)", async () => {
-    vi.mocked(apiFetch).mockImplementation(asHub(async () => {
-      throw new ApiError(500, "injected", null);
-    }));
-    render(<BriefView header={null} />);
-    await screen.findByText(/BRIEF DID NOT LOAD/);
+    // No triage verbs: Acknowledge and Defer left with the Brief wing.
     expect(screen.queryByRole("button", { name: "Acknowledge" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Defer" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Speak" })).toBeNull();
-    expect(document.body.textContent).not.toContain("injected");
-    await act(async () => undefined);
   });
 });
