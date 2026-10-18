@@ -1,0 +1,165 @@
+{
+ "_source": "The hub's own answers, captured by tests/integration/test_desk_engines_tools.py (a real hub, isolated database, the fake claude CLI listing the folder it works in). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit it.",
+ "workbench_id": "workbench_cb86f04c8727",
+ "gets": {
+  "/api/workbenches/workbench_cb86f04c8727": {
+   "workbench": {
+    "id": "workbench_cb86f04c8727",
+    "name": "Review summary",
+    "instruction": "Summarize the PR and the risky files.",
+    "sources": [
+     "repository:src_12846db689a8a791"
+    ],
+    "output_target": "inbox",
+    "spend_limit_usd": null,
+    "recipe_id": null,
+    "profile_id": null,
+    "resolver_profile_id": null,
+    "schedule": null,
+    "schedule_enabled": false,
+    "schedule_revision": 1,
+    "item_order": [],
+    "created_at": "2026-10-18T21:00:43Z",
+    "last_modified": "2026-10-18T21:00:43Z",
+    "deleted": false,
+    "items": [
+     {
+      "id": "wbocc_b24685ea5e4e4b1f",
+      "workbench_id": "workbench_cb86f04c8727",
+      "title": "Review summary, Sun 18 Oct 2026",
+      "body": "Summarize the PR and the risky files.",
+      "priority": 3,
+      "status": "done",
+      "grounding": {},
+      "context": {
+       "occurrence": true
+      },
+      "result": "## ledger\n\n- README.md\n- ledger.py\n- risky_migration.sql",
+      "result_artifact_id": "artifact_97e8eb9120cd",
+      "result_egress": {
+       "boundary": "cloud",
+       "model": "agent-claude"
+      },
+      "mint_attempted": true,
+      "tokens_consumed": 16,
+      "created_at": "2026-10-18T21:00:43Z",
+      "last_modified": "2026-10-18T21:00:43.831899+00:00",
+      "claimed_at": "2026-10-18T21:00:43.368486+00:00",
+      "completed_at": "2026-10-18T21:00:43.831899+00:00",
+      "parked": false
+     }
+    ],
+    "item_count": 1,
+    "pending_count": 0,
+    "last_run": {
+     "id": "wbrun_40e7b16d0c61",
+     "workbench_id": "workbench_cb86f04c8727",
+     "started_at": "2026-10-18T21:00:43.367747+00:00",
+     "completed_at": "2026-10-18T21:00:43.972030+00:00",
+     "items_attempted": 1,
+     "items_completed": 1,
+     "items_failed": 0,
+     "mint_failures": 0,
+     "total_tokens": 32,
+     "egress_boundary": "cloud",
+     "model": "claude-fake-1",
+     "constitutional_context_revision": 0,
+     "constitutional_context_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "skills_injected": [],
+     "status": "completed"
+    },
+    "instruction_shown": "Summarize the PR and the risky files.",
+    "instruction_from": "automation",
+    "results": [
+     {
+      "item_id": "wbocc_b24685ea5e4e4b1f",
+      "title": "Review summary, Sun 18 Oct 2026",
+      "status": "done",
+      "artifact_id": "artifact_97e8eb9120cd",
+      "new": true,
+      "error": null,
+      "text": "## ledger\n\n- README.md\n- ledger.py\n- risky_migration.sql",
+      "completed_at": "2026-10-18T21:00:43.831899+00:00",
+      "seconds": 0,
+      "model": "claude-fake-1",
+      "boundary": "cloud",
+      "note_id": "note_result_67a0d996c1bdce35",
+      "cost_usd": 0.0246,
+      "used": null
+     }
+    ],
+    "sources_shown": [
+     {
+      "ref": "repository:src_12846db689a8a791",
+      "kind": "folder",
+      "label": "ledger",
+      "missing": false
+     }
+    ],
+    "blanks": {},
+    "when_kind": null,
+    "event_starts": [],
+    "next_run_at": null,
+    "when_events": [
+     {
+      "id": "github-review-requested",
+      "words": "GitHub asks me to review",
+      "needs": "repository",
+      "subject": "the review request that came in",
+      "event_pattern": "github.pr.review_requested"
+     },
+     {
+      "id": "github-checks-failed",
+      "words": "A pull request's checks fail",
+      "needs": "repository",
+      "subject": "the pull request whose checks failed",
+      "event_pattern": "github.pr.checks_changed"
+     },
+     {
+      "id": "github-pr-merged",
+      "words": "A pull request is merged",
+      "needs": "repository",
+      "subject": "the pull request that was merged",
+      "event_pattern": "github.pr.merged"
+     }
+    ],
+    "assignment_summary": {
+     "status": "assigned",
+     "source": "subject",
+     "chain": [
+      "Claude Code"
+     ],
+     "repair": null,
+     "profile_id": "agent-claude",
+     "boundary": "cloud",
+     "vendor": "Anthropic"
+    }
+   }
+  },
+  "/api/workbenches/workbench_cb86f04c8727/memory": {
+   "entries": [
+    {
+     "run_id": "wbrun_40e7b16d0c61",
+     "timestamp": "2026-10-18T21:00:43Z",
+     "kind": "observation",
+     "content": "## holdspeak-cli-engine-z_ihhjcs",
+     "item_title": "Review summary, Sun 18 Oct 2026",
+     "provenance": {
+      "operation_id": "op_28264232fdcf46dca56d341123fc38fb",
+      "receipt_id": "rcpt_c2fa2f01013c42bfa90effc4e48bceea"
+     }
+    }
+   ]
+  },
+  "POST /api/repositories": {
+   "repository": {
+    "kind": "repository",
+    "id": "src_12846db689a8a791",
+    "name": "ledger",
+    "source_id": "src_12846db689a8a791",
+    "branch": "master",
+    "created_at": ""
+   }
+  }
+ }
+}

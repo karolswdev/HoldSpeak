@@ -304,6 +304,11 @@
 
 /* A5: About in place (the chips, then the one About picker). */
 .automation-about-editor { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+/* A10: the folders an agent can work in (only when With is an agent). */
+.automation-folders { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.automation-folder-list { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.automation-folder-add { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; min-width: 0; }
+.automation-folder-add > :first-child { flex: 1 1 220px; min-width: 0; }
 .automation-chips .surface-token { display: inline-flex; align-items: center; gap: 2px; }
 .automation-chip-remove.btn { min-height: 0; padding: 0 4px; line-height: 1.2; }
 /* A desk object over the window: the About line lights before the drop. */

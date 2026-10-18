@@ -487,6 +487,8 @@ export function AutomationWindow({
   const sources = detail?.sources_shown ?? [];
   const happened = detail ? eventSubjectWords(detail) : null;
   const tasks = detail ? queueTasks(detail) : [];
+  /** A10: the vendor of an agent engine (Claude Code, Codex); null otherwise. */
+  const vendor = detail?.assignment_summary?.vendor || null;
 
   return (
     <DeskWindowFrame
@@ -574,6 +576,7 @@ export function AutomationWindow({
                   open={editing === "about"}
                   onPress={() => toggle("about")}
                   editor={<AboutEditor sources={sources} busy={aboutSaving}
+                    folders={Boolean(vendor)}
                     onChange={(refs) => void saveSources(refs)} />}
                 >
                   {sources.length ? <AboutChips sources={sources} /> : dropReady ? "Drop it here"
@@ -586,7 +589,10 @@ export function AutomationWindow({
                 blank={!engine}
                 open={editing === "with"}
                 onPress={() => toggle("with")}
-                aside={engine && detail.assignment_summary?.boundary ? (
+                aside={engine && vendor ? (
+                  // A10: an agent engine's prompt goes to its vendor: the chip says which.
+                  <EgressChip label={vendor.toUpperCase()} title={`The prompt goes to ${vendor}`} scope="cloud" />
+                ) : engine && detail.assignment_summary?.boundary ? (
                   <EgressChip label={boundaryEgressLamp(detail.assignment_summary.boundary).label}
                     title={`The prompt goes: ${boundaryEgressLamp(detail.assignment_summary.boundary).label}`}
                     scope={["local", "same_device"].includes(detail.assignment_summary.boundary) ? "local" : "cloud"} />

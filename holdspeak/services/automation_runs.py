@@ -52,6 +52,9 @@ SET_SOURCES: dict[str, str] = {
 #: A person (a People relationship). A run reads the name only: the People
 #: record stays on this device (an engine with the desk's tools may read it).
 PERSON_PREFIX = "person:"
+#: Betterment A10: a folder (a repository on the desk) an agent engine works
+#: in, read only. Its path stays on the hub; the source names its id.
+FOLDER_PREFIX = "repository:"
 
 
 # ── configuration ──────────────────────────────────────────────────────
@@ -72,7 +75,8 @@ def clean_sources(value: Any) -> list[str]:
         text = raw.strip()
         # Betterment A5: a relative set and a person are About sources too.
         # They are expanded when a run starts (``expand_sources``).
-        if text in SET_SOURCES or (text.startswith(PERSON_PREFIX) and text[len(PERSON_PREFIX):].strip()):
+        if text in SET_SOURCES or any(
+                text.startswith(prefix) and text[len(prefix):].strip() for prefix in (PERSON_PREFIX, FOLDER_PREFIX)):
             ref = text
         else:
             try:
@@ -272,9 +276,37 @@ def expand_sources(
             name = people.get(ref[len(PERSON_PREFIX):], "")
             if name:
                 about.append(f"Person: {name}")
+        elif ref.startswith(FOLDER_PREFIX):
+            continue  # A10: the agent reads the folder itself (work_folder_of)
         elif ref not in grounding:
             grounding.append(ref)
     return grounding[:GROUNDING_MAX_REFS], about
+
+
+def _folder_source(source_id: str) -> Any:
+    """The desk repository a folder source names; None when it is gone."""
+    from ..delivery import DeliveryRegistry
+
+    try:
+        return DeliveryRegistry().get(source_id)
+    except Exception as exc:  # an unreadable registry names the folder missing
+        log.debug("automation folder %s: %s", source_id, exc)
+        return None
+
+
+def work_folder_of(wb: Any) -> Optional[str]:
+    """Betterment A10: the folder an agent engine works in for this
+    automation (its first Folder source that is still a folder), or None."""
+    from pathlib import Path
+
+    for ref in sources_of(wb):
+        if not ref.startswith(FOLDER_PREFIX):
+            continue
+        source = _folder_source(ref[len(FOLDER_PREFIX):])
+        path = str(getattr(source, "primary_path", "") or "")
+        if path and Path(path).is_dir():
+            return str(Path(path).resolve())
+    return None
 
 
 def occurrence_id(workbench_id: str, key: str) -> str:
@@ -311,6 +343,24 @@ def item_seconds(db: Any, route: dict[str, Any]) -> float:
     return _seconds_for(endpoints)
 
 
+def cli_endpoint_of(conn: Any, profile_id: str) -> str:
+    """The ``cli:`` endpoint of an engine profile; '' when it is not an agent CLI."""
+    if profile_id.startswith("legacy-"):
+        row = conn.execute(
+            "SELECT kind, base_url FROM profiles WHERE id=?", (profile_id.removeprefix("legacy-"),),
+        ).fetchone()
+        return str(row["base_url"] or "") if row is not None and str(row["kind"]) == "cliCommand" else ""
+    row = conn.execute(
+        """SELECT d.kind, d.endpoint FROM model_profile_binding_heads h
+           JOIN model_profile_binding_revisions b
+             ON b.binding_id = h.binding_id AND b.revision = h.revision
+           JOIN deployment_revisions d ON d.id = b.deployment_revision_id
+           WHERE h.profile_id = ?""",
+        (profile_id,),
+    ).fetchone()
+    return str(row["endpoint"] or "") if row is not None and str(row["kind"]) == "cli_engine" else ""
+
+
 def assigned_item_seconds(db: Any, workbench_id: str) -> float:
     """The same limit for a press or an event: read from the engine assigned
     to this automation's ``workbench.item`` job before the run is admitted
@@ -327,25 +377,9 @@ def assigned_item_seconds(db: Any, workbench_id: str) -> float:
             entries = list((resolved.get("assignment") or {}).get("entries") or [])
             endpoints: list[Any] = []
             for entry in entries:
-                profile_id = str(entry.get("profile_id") or "")
-                if profile_id.startswith("legacy-"):
-                    row = conn.execute(
-                        "SELECT kind, base_url FROM profiles WHERE id=?",
-                        (profile_id.removeprefix("legacy-"),),
-                    ).fetchone()
-                    if row is not None and str(row["kind"]) == "cliCommand":
-                        endpoints.append(row["base_url"])
-                    continue
-                row = conn.execute(
-                    """SELECT d.kind, d.endpoint FROM model_profile_binding_heads h
-                       JOIN model_profile_binding_revisions b
-                         ON b.binding_id = h.binding_id AND b.revision = h.revision
-                       JOIN deployment_revisions d ON d.id = b.deployment_revision_id
-                       WHERE h.profile_id = ?""",
-                    (profile_id,),
-                ).fetchone()
-                if row is not None and str(row["kind"]) == "cli_engine":
-                    endpoints.append(row["endpoint"])
+                endpoint = cli_endpoint_of(conn, str(entry.get("profile_id") or ""))
+                if endpoint:
+                    endpoints.append(endpoint)
     except Exception as exc:  # no readable assignment: the run's own admission says why
         log.debug("automation %s: engine limit read failed: %s", workbench_id, exc)
         return HTTP_ITEM_SECONDS
@@ -504,6 +538,11 @@ def source_names(db: Any, refs: list[str]) -> list[dict[str, Any]]:
             people = _people_names() if people is None else people
             title = people.get(ref[len(PERSON_PREFIX):], "")
             named.append({"ref": ref, "kind": "person", "label": title, "missing": not title})
+            continue
+        if ref.startswith(FOLDER_PREFIX):
+            source = _folder_source(ref[len(FOLDER_PREFIX):])
+            title = str(getattr(source, "label", "") or "") if source is not None else ""
+            named.append({"ref": ref, "kind": "folder", "label": title, "missing": not title})
             continue
         if ref.startswith("zone:"):
             zone = db.directories.get(ref.split(":", 1)[1])
