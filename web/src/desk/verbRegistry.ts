@@ -18,7 +18,7 @@ import { apiFetch } from "../lib/api";
 import { qualifiedRef } from "./api";
 import { objectByRef } from "./world";
 import { DESK_TOOLS, KIND_GLYPH } from "./tools";
-import { applicationForAction } from "./applications";
+import { DESK_APPLICATIONS, applicationForAction, applicationVerbId, parkedSettingsWing } from "./applications";
 import { primitiveCan } from "../lib/primitives";
 import { handKindOf, openHand } from "./agentHand";
 import { usePalette, useShortcutSheet } from "./chromeState";
@@ -672,7 +672,13 @@ export const VERBS: Verb[] = [
   },
   // ── Go (the applications - DESK_TOOLS is the data truth) ────────────
   // HS-148-02: glyph and group flow from DESK_TOOLS (dock-parity).
-  ...DESK_TOOLS.map((tool): Verb => {
+  // Betterment shell S1: Today and People open through their desk verbs,
+  // so they get no `go.*` verb of their own. (A parked Settings row keeps
+  // its `go.*` verb for old callers; its menu door is the Settings wing.)
+  ...DESK_TOOLS.filter((tool) => {
+    const application = applicationForAction(tool.action);
+    return !application || !applicationVerbId(application).startsWith("desk.");
+  }).map((tool): Verb => {
     const application = applicationForAction(tool.action);
     const binding =
       application?.shortcut && application.windowId
@@ -685,7 +691,6 @@ export const VERBS: Verb[] = [
       // rest (Settings, Runs on, Connections, Setup, Change places) keep
       // their verb for ⌘K, the keys and the HoldSpeak menu.
       ...(application?.go ? { menu: "go" as const } : {}),
-      ...(application?.go?.section === "tools" ? { submenu: "Tools" } : {}),
       scope: "go",
       group: tool.group,
       glyph: tool.glyph,
@@ -705,6 +710,21 @@ export const VERBS: Verb[] = [
       },
     };
   }),
+  // ── Settings wings (betterment shell S1): a parked row that Settings
+  // hosts now (Engines, Accounts) opens its wing of Settings. ───────────
+  ...[...new Map(DESK_APPLICATIONS.flatMap((application) => {
+    const wing = parkedSettingsWing(application);
+    return wing ? [[wing, application] as const] : [];
+  })).entries()].map(([wing, application]): Verb => ({
+    id: `settings.${wing}`,
+    label: application.label,
+    scope: "system",
+    glyph: application.glyph,
+    // Search lists the Settings wings as its own SETTINGS rows.
+    palette: false,
+    ghost: never,
+    run: () => openSurfaceOr("configure-settings", "/settings", wing),
+  })),
   // ── Window ──────────────────────────────────────────────────────────
   {
     id: "window.close",

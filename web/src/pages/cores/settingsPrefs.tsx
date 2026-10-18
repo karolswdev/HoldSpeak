@@ -11,9 +11,11 @@ import { useState, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import { CONTROL_MODES, controlModeLabel } from "../../lib/productLanguage";
 import {
+  CheckGadget,
   CycleGadget,
   FoldGadget,
   GadgetGroup,
+  GadgetRow,
 } from "../../desk/surface/gadgets";
 import {
   SurfaceLedger,
@@ -27,6 +29,7 @@ import { useDesk } from "../../desk/store";
 import "./settings.css";
 import { useAtmospherePreference } from "../../desk/gl/atmospherePreference";
 import { resolveAtmosphere } from "../../desk/gl/atmosphereRegistry";
+import { useBuilderTools } from "../../desk/builderTools";
 
 /* ── the roster (owner-named destinations, including the Models/Assignments pair) ── */
 
@@ -278,6 +281,23 @@ export function SettingGlyph({ name }: { name: string }) {
         }
       />
     </svg>
+  );
+}
+
+/* ── Betterment shell S1: the Builder tools switch (Settings ▸ System).
+   Off by default. On, Go shows Builder ▸ and Search lists the builder rows
+   (Activity, Processes, Context, Components, Calendar snapshot, Delivery
+   board, Terminals, Refresh from hub). This browser only. ── */
+
+export function BuilderToolsModule() {
+  const on = useBuilderTools((state) => state.on);
+  const setOn = useBuilderTools((state) => state.setOn);
+  return (
+    <GadgetGroup label="Builder tools" material="inset">
+      <GadgetRow label="Builder tools" fact="GO ▸ BUILDER · SEARCH" controlWidth="short">
+        <CheckGadget variant="state" label="Builder tools" checked={on} onChange={setOn} />
+      </GadgetRow>
+    </GadgetGroup>
   );
 }
 

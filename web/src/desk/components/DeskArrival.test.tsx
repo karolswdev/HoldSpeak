@@ -1,3 +1,4 @@
+import { BUILDER_APPLICATION_ACTIONS } from "../applications";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -47,7 +48,8 @@ describe("Phase 93 Desk arrival", () => {
     // HS-95-04: the shelf is a dispatcher now — every advanced tool is a
     // button that opens its surface in-world (or falls back to the legacy
     // route until its story lands). Every tool remains reachable.
-    for (const tool of DESK_TOOLS) {
+    // Betterment shell S1: builder tools are listed only when Builder tools is on.
+    for (const tool of DESK_TOOLS.filter((t) => !BUILDER_APPLICATION_ACTIONS.has(t.action))) {
       // HS-111-10: the query well's speak-to-fill mic is also a button
       // ("Speak …") — the dispatcher row is the non-mic hit.
       const hits = screen.getAllByRole("option", {

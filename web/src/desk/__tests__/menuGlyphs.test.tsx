@@ -27,7 +27,9 @@ beforeEach(() => {
 
 describe("glyph population (HS-148-02)", () => {
   it("every Go verb carries its DESK_TOOLS glyph — one glyph language", () => {
+    // Betterment shell S1: Today and People open through their desk verbs.
     for (const tool of DESK_TOOLS) {
+      if (tool.action === "open-intelligence" || tool.action === "open-people") continue;
       const verb = VERBS.find((v) => v.id === `go.${tool.action}`);
       expect(verb, `go.${tool.action} missing`).toBeTruthy();
       expect(verb!.glyph).toBe(tool.glyph);
@@ -175,7 +177,8 @@ describe("Go menu grouping separator (HS-148-02)", () => {
   it("Go menu verbs: no retired Tools submenu or setup rows", () => {
     const goVerbs = menuVerbs("go");
     expect(goVerbs.filter((v) => v.submenu === "Tools")).toEqual([]);
-    expect(goVerbs.filter((v) => !v.submenu)).toHaveLength(6);
+    // Betterment shell S1: every manifest Go row (Daily, Work, Builder).
+    expect(goVerbs.filter((v) => !v.submenu)).toHaveLength(14);
     for (const id of ["go.configure-settings", "go.configure-runs-on", "go.configure-integrations", "go.configure-setup", "go.change-places"])
       expect(goVerbs.some((v) => v.id === id), id).toBe(false);
   });

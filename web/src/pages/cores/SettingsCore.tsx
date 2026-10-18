@@ -73,6 +73,7 @@ import {
   CADENCE_PRESSURE_OPTIONS,
   INTELLIGENCE_AUTO_OPTIONS,
   LANGUAGE_OPTIONS,
+  BuilderToolsModule,
   DeskModule,
   MIR_PROFILE_OPTIONS,
   MODULE_ALIASES,
@@ -2519,7 +2520,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
           onGrantAct={(act) => { setGrantAct(act); setGrantReceiptOpen(false); }}
           hubSystem={hub.data.system}
           deviceName={str(["mesh", "device_name"], "Device name")}
-          deskModule={<DeskModule />}
+          deskModule={<><DeskModule /><BuilderToolsModule /></>}
           rawWell={deviceCount ? (
             <GadgetGroup material="inset" label="Device">
               {walkerRows(device, ["device"])}
