@@ -733,30 +733,30 @@ def test_after_a_real_sync_a_promoted_note_attached_by_reference_still_arrives(
     assert PROMOTED_TOKEN in system, system
 
 
-def test_a_seed_ref_records_reference_although_the_fence_can_never_read_it(
+def test_a_seed_ref_is_the_real_ref_and_records_reference(
     tmp_path: Path,
 ) -> None:
-    """The one stamp in this design that is a RECEIPT and not a fence.
+    """A thread opened on an object freezes that object as the real ref.
 
-    `ThreadService.create(seed_refs=[...])` writes rows with `ref_kind='seed'`
-    -- the literal is hardcoded there -- and the L4 replay fence only ever
-    looks at `ref_kind == 'note'`.  So no leak test can kill this stamp, and
-    this test says so plainly rather than dressing a receipt up as a guard.
-
-    It is pinned anyway because the value is the honest one: the caller NAMED
-    these refs when it opened the Thread (`web/src/desk/verbRegistry.ts:461`
-    sends them from an object the owner picked), so `'reference'` is what the
-    database knows, and an unstamped row here would read as UNKNOWN and assert
-    less than the truth.
+    Before Betterment Q0, `ThreadService.create(seed_refs=[...])` wrote rows
+    with `ref_kind='seed'` and no body, so no turn ever read the object.  Now
+    the row is the object's own kind with its body, and the stamp is
+    `'reference'`: the caller NAMED it when it opened the Thread
+    (`web/src/desk/verbRegistry.ts`, Object > Continue in thread), so the L4
+    note fence lets it replay.
     """
     db = Database(tmp_path / "seed-refs.db")
+    _seed_two_notes(db)
     thread = ThreadService(db, broadcast=lambda *_: None).create(
         title="Opened on an object", seed_refs=["note:control"])
 
+    # Betterment Q0: the seed is stored as the real ref (with its body, so
+    # the first reply reads it), no longer as a `seed` row the replay
+    # never read.  The note fence now reads it, and it says 'reference'.
     with db._connection() as conn:
         rows = [(str(r[0]), str(r[1]), str(r[2] or "")) for r in conn.execute(
             "SELECT ref_kind, ref_id, origin FROM thread_refs WHERE thread_id=?",
             (thread["id"],))]
-    assert rows == [("seed", "note:control", "reference")], rows
+    assert rows == [("note", "control", "reference")], rows
     # And the hydrated dataclass carries it, which is where the fence reads.
     assert [ref.origin for ref in db.threads.get_refs(thread["id"])] == ["reference"]
