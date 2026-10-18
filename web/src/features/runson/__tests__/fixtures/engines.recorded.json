@@ -4,7 +4,25 @@
       {
         "gets": {
           "/api/concierge/detect": {
-            "checkedAt": "2026-10-18T06:55:52.274860+00:00",
+            "agents": [
+              {
+                "added": false,
+                "install": "npm install -g @anthropic-ai/claude-code",
+                "installed": true,
+                "name": "Claude Code",
+                "preset": "claude",
+                "vendor": "ANTHROPIC"
+              },
+              {
+                "added": false,
+                "install": "npm install -g @openai/codex",
+                "installed": false,
+                "name": "Codex",
+                "preset": "codex",
+                "vendor": "OPENAI"
+              }
+            ],
+            "checkedAt": "2026-10-18T15:57:34.388924+00:00",
             "engines": [
               {
                 "agentPreset": "claude",
@@ -61,8 +79,8 @@
               },
               "observation": {
                 "available_memory_bytes": null,
-                "sha256": "sha256:1004ba890ff504ad825bddfca5c0a1374cbacd162b4074b90508159cdd77f5a3",
-                "storage_available_bytes": 245401477120
+                "sha256": "sha256:14a250a9dceb76f9d42fdbace83b7463bbd1cb0136dbf6ed1c94d1571a443acb",
+                "storage_available_bytes": 238675189760
               }
             },
             "lastApply": null,
@@ -79,6 +97,79 @@
               {
                 "id": "openai_compatible_v1",
                 "state": "available"
+              }
+            ],
+            "services": [
+              {
+                "baseUrl": "https://openrouter.ai/api/v1",
+                "host": "openrouter.ai",
+                "id": "openrouter",
+                "name": "OpenRouter",
+                "presets": [
+                  {
+                    "contextTokens": 131072,
+                    "id": "preset_openrouter_qwen3_8b",
+                    "label": "OpenRouter \u00b7 Quick Qwen",
+                    "model": "qwen/qwen3-8b",
+                    "summary": "A small, fast Qwen for short Notes and everyday work."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_qwen35_35b_a3b",
+                    "label": "OpenRouter \u00b7 Balanced Qwen",
+                    "model": "qwen/qwen3.5-35b-a3b",
+                    "summary": "Strong general reasoning without using a giant model."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_qwen38_27b",
+                    "label": "OpenRouter \u00b7 Deep Qwen",
+                    "model": "qwen/qwen3.8-27b",
+                    "summary": "Deeper cloud reasoning for harder synthesis."
+                  },
+                  {
+                    "contextTokens": 1000000,
+                    "id": "preset_openrouter_qwen37_flash",
+                    "label": "OpenRouter \u00b7 Qwen Flash",
+                    "model": "qwen/qwen3.7-flash",
+                    "summary": "The quickest economical Qwen choice for everyday work."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_gemma4_26b",
+                    "label": "OpenRouter \u00b7 Gemma 4",
+                    "model": "google/gemma-4-26b-a4b-it",
+                    "summary": "A capable Gemma 4 alternative for writing and synthesis."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_qwen3_coder_next",
+                    "label": "OpenRouter \u00b7 Coding Qwen",
+                    "model": "qwen/qwen3-coder-next",
+                    "summary": "A coding-focused Qwen for technical plans and implementation."
+                  }
+                ]
+              },
+              {
+                "baseUrl": "https://api.openai.com/v1",
+                "host": "api.openai.com",
+                "id": "openai",
+                "name": "OpenAI",
+                "presets": []
+              },
+              {
+                "baseUrl": "https://api.anthropic.com/v1",
+                "host": "api.anthropic.com",
+                "id": "anthropic",
+                "name": "Anthropic",
+                "presets": []
+              },
+              {
+                "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai",
+                "host": "generativelanguage.googleapis.com",
+                "id": "gemini",
+                "name": "Gemini",
+                "presets": []
               }
             ],
             "summaryAssignment": {
@@ -982,7 +1073,7 @@
               {
                 "effective": {
                   "assignment": {
-                    "created_at": "2026-10-18T06:55:51.933376Z",
+                    "created_at": "2026-10-18T15:57:34.124840Z",
                     "effective_retry_policy_id": "retry.audio.transcription",
                     "entries": [
                       {
@@ -995,7 +1086,7 @@
                         "readiness": "unavailable"
                       }
                     ],
-                    "id": "ia_0ed4aa097aa747b89410ac8649209245",
+                    "id": "ia_365296dca0b94a3e828f5aa7e6ba4c6c",
                     "issues": [
                       {
                         "code": "binding_not_ready",
@@ -1012,7 +1103,7 @@
                       "capability_id": "speech.transcribe",
                       "kind": "capability"
                     },
-                    "sha256": "sha256:d032ba1caa7974b2469c2f81e0d3e56c18b936d94f25b79514cb69be60151568"
+                    "sha256": "sha256:4aab947ad45e435639a777964265fce10a5ed0b188e12addf1bea65ef6b91c22"
                   },
                   "capability_id": "speech.transcribe",
                   "inherited_from": "capability",
@@ -1130,24 +1221,24 @@
             "assignments_after": {
               "heads": [
                 {
-                  "assignment_id": "ia_0ed4aa097aa747b89410ac8649209245",
+                  "assignment_id": "ia_365296dca0b94a3e828f5aa7e6ba4c6c",
                   "assignment_key": "capability:speech.transcribe",
                   "cleared": false,
                   "revision": 1
                 }
               ],
-              "sha256": "sha256:03799166e6ac6c7d4e371257e2835e3618af85a7943d35117c2c3f11702deff3"
+              "sha256": "sha256:8eb113648407b6f0e10e92de96df21b81f8d471765b5aeb4a209ace02345b68c"
             },
             "assignments_before": {
               "heads": [
                 {
-                  "assignment_id": "ia_0ed4aa097aa747b89410ac8649209245",
+                  "assignment_id": "ia_365296dca0b94a3e828f5aa7e6ba4c6c",
                   "assignment_key": "capability:speech.transcribe",
                   "cleared": false,
                   "revision": 1
                 }
               ],
-              "sha256": "sha256:03799166e6ac6c7d4e371257e2835e3618af85a7943d35117c2c3f11702deff3"
+              "sha256": "sha256:8eb113648407b6f0e10e92de96df21b81f8d471765b5aeb4a209ace02345b68c"
             },
             "assignments_unchanged": true,
             "kind": "model_library_provider",
@@ -1162,7 +1253,25 @@
         },
         "gets": {
           "/api/concierge/detect": {
-            "checkedAt": "2026-10-18T06:55:52.310236+00:00",
+            "agents": [
+              {
+                "added": true,
+                "install": "npm install -g @anthropic-ai/claude-code",
+                "installed": true,
+                "name": "Claude Code",
+                "preset": "claude",
+                "vendor": "ANTHROPIC"
+              },
+              {
+                "added": false,
+                "install": "npm install -g @openai/codex",
+                "installed": false,
+                "name": "Codex",
+                "preset": "codex",
+                "vendor": "OPENAI"
+              }
+            ],
+            "checkedAt": "2026-10-18T15:57:34.405801+00:00",
             "engines": [
               {
                 "agentPreset": "claude",
@@ -1263,8 +1372,8 @@
               },
               "observation": {
                 "available_memory_bytes": null,
-                "sha256": "sha256:91bca9d93a5a1bfea35891253ee37ef72d2b3554d5c8db2720093995a57e2057",
-                "storage_available_bytes": 245396762624
+                "sha256": "sha256:14a250a9dceb76f9d42fdbace83b7463bbd1cb0136dbf6ed1c94d1571a443acb",
+                "storage_available_bytes": 238675189760
               }
             },
             "lastApply": null,
@@ -1281,6 +1390,79 @@
               {
                 "id": "openai_compatible_v1",
                 "state": "available"
+              }
+            ],
+            "services": [
+              {
+                "baseUrl": "https://openrouter.ai/api/v1",
+                "host": "openrouter.ai",
+                "id": "openrouter",
+                "name": "OpenRouter",
+                "presets": [
+                  {
+                    "contextTokens": 131072,
+                    "id": "preset_openrouter_qwen3_8b",
+                    "label": "OpenRouter \u00b7 Quick Qwen",
+                    "model": "qwen/qwen3-8b",
+                    "summary": "A small, fast Qwen for short Notes and everyday work."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_qwen35_35b_a3b",
+                    "label": "OpenRouter \u00b7 Balanced Qwen",
+                    "model": "qwen/qwen3.5-35b-a3b",
+                    "summary": "Strong general reasoning without using a giant model."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_qwen38_27b",
+                    "label": "OpenRouter \u00b7 Deep Qwen",
+                    "model": "qwen/qwen3.8-27b",
+                    "summary": "Deeper cloud reasoning for harder synthesis."
+                  },
+                  {
+                    "contextTokens": 1000000,
+                    "id": "preset_openrouter_qwen37_flash",
+                    "label": "OpenRouter \u00b7 Qwen Flash",
+                    "model": "qwen/qwen3.7-flash",
+                    "summary": "The quickest economical Qwen choice for everyday work."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_gemma4_26b",
+                    "label": "OpenRouter \u00b7 Gemma 4",
+                    "model": "google/gemma-4-26b-a4b-it",
+                    "summary": "A capable Gemma 4 alternative for writing and synthesis."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_qwen3_coder_next",
+                    "label": "OpenRouter \u00b7 Coding Qwen",
+                    "model": "qwen/qwen3-coder-next",
+                    "summary": "A coding-focused Qwen for technical plans and implementation."
+                  }
+                ]
+              },
+              {
+                "baseUrl": "https://api.openai.com/v1",
+                "host": "api.openai.com",
+                "id": "openai",
+                "name": "OpenAI",
+                "presets": []
+              },
+              {
+                "baseUrl": "https://api.anthropic.com/v1",
+                "host": "api.anthropic.com",
+                "id": "anthropic",
+                "name": "Anthropic",
+                "presets": []
+              },
+              {
+                "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai",
+                "host": "generativelanguage.googleapis.com",
+                "id": "gemini",
+                "name": "Gemini",
+                "presets": []
               }
             ],
             "summaryAssignment": {
@@ -2184,7 +2366,7 @@
               {
                 "effective": {
                   "assignment": {
-                    "created_at": "2026-10-18T06:55:51.933376Z",
+                    "created_at": "2026-10-18T15:57:34.124840Z",
                     "effective_retry_policy_id": "retry.audio.transcription",
                     "entries": [
                       {
@@ -2197,7 +2379,7 @@
                         "readiness": "unavailable"
                       }
                     ],
-                    "id": "ia_0ed4aa097aa747b89410ac8649209245",
+                    "id": "ia_365296dca0b94a3e828f5aa7e6ba4c6c",
                     "issues": [
                       {
                         "code": "binding_not_ready",
@@ -2214,7 +2396,7 @@
                       "capability_id": "speech.transcribe",
                       "kind": "capability"
                     },
-                    "sha256": "sha256:d032ba1caa7974b2469c2f81e0d3e56c18b936d94f25b79514cb69be60151568"
+                    "sha256": "sha256:4aab947ad45e435639a777964265fce10a5ed0b188e12addf1bea65ef6b91c22"
                   },
                   "capability_id": "speech.transcribe",
                   "inherited_from": "capability",
@@ -2319,7 +2501,25 @@
       {
         "gets": {
           "/api/concierge/detect": {
-            "checkedAt": "2026-10-18T06:55:52.938493+00:00",
+            "agents": [
+              {
+                "added": true,
+                "install": "npm install -g @anthropic-ai/claude-code",
+                "installed": true,
+                "name": "Claude Code",
+                "preset": "claude",
+                "vendor": "ANTHROPIC"
+              },
+              {
+                "added": false,
+                "install": "npm install -g @openai/codex",
+                "installed": false,
+                "name": "Codex",
+                "preset": "codex",
+                "vendor": "OPENAI"
+              }
+            ],
+            "checkedAt": "2026-10-18T15:57:34.966153+00:00",
             "engines": [
               {
                 "agentPreset": "claude",
@@ -2420,8 +2620,8 @@
               },
               "observation": {
                 "available_memory_bytes": null,
-                "sha256": "sha256:12c9180759d711cf81c7a7713a3e36f5f9b1c7ec46573370f9880a1136bcbcaf",
-                "storage_available_bytes": 245336653824
+                "sha256": "sha256:4508b21dc81d979f2738494fc6aaa8a998d83f6eff221ddf34abf409cff613df",
+                "storage_available_bytes": 238675169280
               }
             },
             "lastApply": null,
@@ -2438,6 +2638,79 @@
               {
                 "id": "openai_compatible_v1",
                 "state": "available"
+              }
+            ],
+            "services": [
+              {
+                "baseUrl": "https://openrouter.ai/api/v1",
+                "host": "openrouter.ai",
+                "id": "openrouter",
+                "name": "OpenRouter",
+                "presets": [
+                  {
+                    "contextTokens": 131072,
+                    "id": "preset_openrouter_qwen3_8b",
+                    "label": "OpenRouter \u00b7 Quick Qwen",
+                    "model": "qwen/qwen3-8b",
+                    "summary": "A small, fast Qwen for short Notes and everyday work."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_qwen35_35b_a3b",
+                    "label": "OpenRouter \u00b7 Balanced Qwen",
+                    "model": "qwen/qwen3.5-35b-a3b",
+                    "summary": "Strong general reasoning without using a giant model."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_qwen38_27b",
+                    "label": "OpenRouter \u00b7 Deep Qwen",
+                    "model": "qwen/qwen3.8-27b",
+                    "summary": "Deeper cloud reasoning for harder synthesis."
+                  },
+                  {
+                    "contextTokens": 1000000,
+                    "id": "preset_openrouter_qwen37_flash",
+                    "label": "OpenRouter \u00b7 Qwen Flash",
+                    "model": "qwen/qwen3.7-flash",
+                    "summary": "The quickest economical Qwen choice for everyday work."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_gemma4_26b",
+                    "label": "OpenRouter \u00b7 Gemma 4",
+                    "model": "google/gemma-4-26b-a4b-it",
+                    "summary": "A capable Gemma 4 alternative for writing and synthesis."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_qwen3_coder_next",
+                    "label": "OpenRouter \u00b7 Coding Qwen",
+                    "model": "qwen/qwen3-coder-next",
+                    "summary": "A coding-focused Qwen for technical plans and implementation."
+                  }
+                ]
+              },
+              {
+                "baseUrl": "https://api.openai.com/v1",
+                "host": "api.openai.com",
+                "id": "openai",
+                "name": "OpenAI",
+                "presets": []
+              },
+              {
+                "baseUrl": "https://api.anthropic.com/v1",
+                "host": "api.anthropic.com",
+                "id": "anthropic",
+                "name": "Anthropic",
+                "presets": []
+              },
+              {
+                "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai",
+                "host": "generativelanguage.googleapis.com",
+                "id": "gemini",
+                "name": "Gemini",
+                "presets": []
               }
             ],
             "summaryAssignment": {
@@ -2585,7 +2858,7 @@
               {
                 "effective": {
                   "assignment": {
-                    "created_at": "2026-10-18T06:55:52.324904Z",
+                    "created_at": "2026-10-18T15:57:34.411616Z",
                     "effective_retry_policy_id": "retry.text.standard",
                     "entries": [
                       {
@@ -2598,7 +2871,7 @@
                         "readiness": "ready"
                       }
                     ],
-                    "id": "ia_e22f355780e04d9bb6efce7d86b39b76",
+                    "id": "ia_3cadd2c06dc64a98aa4390d7dfac8034",
                     "issues": [],
                     "retry_policy_id": null,
                     "retry_policy_source": "capability_default",
@@ -2608,7 +2881,7 @@
                       "capability_id": "ask.answer",
                       "kind": "capability"
                     },
-                    "sha256": "sha256:f648e6f44157118273228bfc7c52229eaabd907bc37a939aac3a6f2725bd595f"
+                    "sha256": "sha256:721bfd82bbf513e4d56bcb5c9250668f1445c0592b7d493fdc9a3a6ef4775e59"
                   },
                   "capability_id": "ask.answer",
                   "inherited_from": "capability",
@@ -2681,11 +2954,36 @@
               },
               {
                 "effective": {
-                  "assignment": null,
+                  "assignment": {
+                    "created_at": "2026-10-18T15:57:34.411616Z",
+                    "effective_retry_policy_id": "retry.text.standard",
+                    "entries": [
+                      {
+                        "boundary": "cloud",
+                        "label": "Claude Code",
+                        "ordinal": 1,
+                        "profile_id": "agent-claude",
+                        "profile_revision": 1,
+                        "profile_schema_version": 2,
+                        "readiness": "ready"
+                      }
+                    ],
+                    "id": "ia_3cadd2c06dc64a98aa4390d7dfac8034",
+                    "issues": [],
+                    "retry_policy_id": null,
+                    "retry_policy_source": "capability_default",
+                    "revision": 1,
+                    "schema": "InferenceAssignmentProjection@1",
+                    "scope": {
+                      "capability_id": "ask.answer",
+                      "kind": "capability"
+                    },
+                    "sha256": "sha256:721bfd82bbf513e4d56bcb5c9250668f1445c0592b7d493fdc9a3a6ef4775e59"
+                  },
                   "capability_id": "chat.turn",
-                  "inherited_from": null,
-                  "repair": "Choose default",
-                  "status": "no_assignment"
+                  "inherited_from": "capability",
+                  "repair": null,
+                  "status": "assigned"
                 },
                 "group": {
                   "id": "thoughts_notes",
@@ -3366,7 +3664,7 @@
               {
                 "effective": {
                   "assignment": {
-                    "created_at": "2026-10-18T06:55:51.933376Z",
+                    "created_at": "2026-10-18T15:57:34.124840Z",
                     "effective_retry_policy_id": "retry.audio.transcription",
                     "entries": [
                       {
@@ -3379,7 +3677,7 @@
                         "readiness": "unavailable"
                       }
                     ],
-                    "id": "ia_0ed4aa097aa747b89410ac8649209245",
+                    "id": "ia_365296dca0b94a3e828f5aa7e6ba4c6c",
                     "issues": [
                       {
                         "code": "binding_not_ready",
@@ -3396,7 +3694,7 @@
                       "capability_id": "speech.transcribe",
                       "kind": "capability"
                     },
-                    "sha256": "sha256:d032ba1caa7974b2469c2f81e0d3e56c18b936d94f25b79514cb69be60151568"
+                    "sha256": "sha256:4aab947ad45e435639a777964265fce10a5ed0b188e12addf1bea65ef6b91c22"
                   },
                   "capability_id": "speech.transcribe",
                   "inherited_from": "capability",
@@ -3514,36 +3812,36 @@
             "assignments_after": {
               "heads": [
                 {
-                  "assignment_id": "ia_e22f355780e04d9bb6efce7d86b39b76",
+                  "assignment_id": "ia_3cadd2c06dc64a98aa4390d7dfac8034",
                   "assignment_key": "capability:ask.answer",
                   "cleared": false,
                   "revision": 1
                 },
                 {
-                  "assignment_id": "ia_0ed4aa097aa747b89410ac8649209245",
+                  "assignment_id": "ia_365296dca0b94a3e828f5aa7e6ba4c6c",
                   "assignment_key": "capability:speech.transcribe",
                   "cleared": false,
                   "revision": 1
                 }
               ],
-              "sha256": "sha256:9dff051de5bd40171f9498f8e24dd79578909d78feaca66fb8b90229194dcc0c"
+              "sha256": "sha256:9f3c33d2f9b0473bf45144b4597f2ff66df197f9832015eabe3d95973d5a59ce"
             },
             "assignments_before": {
               "heads": [
                 {
-                  "assignment_id": "ia_e22f355780e04d9bb6efce7d86b39b76",
+                  "assignment_id": "ia_3cadd2c06dc64a98aa4390d7dfac8034",
                   "assignment_key": "capability:ask.answer",
                   "cleared": false,
                   "revision": 1
                 },
                 {
-                  "assignment_id": "ia_0ed4aa097aa747b89410ac8649209245",
+                  "assignment_id": "ia_365296dca0b94a3e828f5aa7e6ba4c6c",
                   "assignment_key": "capability:speech.transcribe",
                   "cleared": false,
                   "revision": 1
                 }
               ],
-              "sha256": "sha256:9dff051de5bd40171f9498f8e24dd79578909d78feaca66fb8b90229194dcc0c"
+              "sha256": "sha256:9f3c33d2f9b0473bf45144b4597f2ff66df197f9832015eabe3d95973d5a59ce"
             },
             "assignments_unchanged": true,
             "kind": "model_library_provider",
@@ -3561,7 +3859,25 @@
         },
         "gets": {
           "/api/concierge/detect": {
-            "checkedAt": "2026-10-18T06:55:52.965566+00:00",
+            "agents": [
+              {
+                "added": true,
+                "install": "npm install -g @anthropic-ai/claude-code",
+                "installed": true,
+                "name": "Claude Code",
+                "preset": "claude",
+                "vendor": "ANTHROPIC"
+              },
+              {
+                "added": false,
+                "install": "npm install -g @openai/codex",
+                "installed": false,
+                "name": "Codex",
+                "preset": "codex",
+                "vendor": "OPENAI"
+              }
+            ],
+            "checkedAt": "2026-10-18T15:57:34.985167+00:00",
             "engines": [
               {
                 "agentPreset": "claude",
@@ -3662,8 +3978,8 @@
               },
               "observation": {
                 "available_memory_bytes": null,
-                "sha256": "sha256:1115506a386180ec9e8baed00257e554d3c0208a990d0f930bae2f11af504b76",
-                "storage_available_bytes": 245336473600
+                "sha256": "sha256:4508b21dc81d979f2738494fc6aaa8a998d83f6eff221ddf34abf409cff613df",
+                "storage_available_bytes": 238675169280
               }
             },
             "lastApply": null,
@@ -3680,6 +3996,79 @@
               {
                 "id": "openai_compatible_v1",
                 "state": "available"
+              }
+            ],
+            "services": [
+              {
+                "baseUrl": "https://openrouter.ai/api/v1",
+                "host": "openrouter.ai",
+                "id": "openrouter",
+                "name": "OpenRouter",
+                "presets": [
+                  {
+                    "contextTokens": 131072,
+                    "id": "preset_openrouter_qwen3_8b",
+                    "label": "OpenRouter \u00b7 Quick Qwen",
+                    "model": "qwen/qwen3-8b",
+                    "summary": "A small, fast Qwen for short Notes and everyday work."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_qwen35_35b_a3b",
+                    "label": "OpenRouter \u00b7 Balanced Qwen",
+                    "model": "qwen/qwen3.5-35b-a3b",
+                    "summary": "Strong general reasoning without using a giant model."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_qwen38_27b",
+                    "label": "OpenRouter \u00b7 Deep Qwen",
+                    "model": "qwen/qwen3.8-27b",
+                    "summary": "Deeper cloud reasoning for harder synthesis."
+                  },
+                  {
+                    "contextTokens": 1000000,
+                    "id": "preset_openrouter_qwen37_flash",
+                    "label": "OpenRouter \u00b7 Qwen Flash",
+                    "model": "qwen/qwen3.7-flash",
+                    "summary": "The quickest economical Qwen choice for everyday work."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_gemma4_26b",
+                    "label": "OpenRouter \u00b7 Gemma 4",
+                    "model": "google/gemma-4-26b-a4b-it",
+                    "summary": "A capable Gemma 4 alternative for writing and synthesis."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_qwen3_coder_next",
+                    "label": "OpenRouter \u00b7 Coding Qwen",
+                    "model": "qwen/qwen3-coder-next",
+                    "summary": "A coding-focused Qwen for technical plans and implementation."
+                  }
+                ]
+              },
+              {
+                "baseUrl": "https://api.openai.com/v1",
+                "host": "api.openai.com",
+                "id": "openai",
+                "name": "OpenAI",
+                "presets": []
+              },
+              {
+                "baseUrl": "https://api.anthropic.com/v1",
+                "host": "api.anthropic.com",
+                "id": "anthropic",
+                "name": "Anthropic",
+                "presets": []
+              },
+              {
+                "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai",
+                "host": "generativelanguage.googleapis.com",
+                "id": "gemini",
+                "name": "Gemini",
+                "presets": []
               }
             ],
             "summaryAssignment": {
@@ -3827,7 +4216,7 @@
               {
                 "effective": {
                   "assignment": {
-                    "created_at": "2026-10-18T06:55:52.324904Z",
+                    "created_at": "2026-10-18T15:57:34.411616Z",
                     "effective_retry_policy_id": "retry.text.standard",
                     "entries": [
                       {
@@ -3840,7 +4229,7 @@
                         "readiness": "ready"
                       }
                     ],
-                    "id": "ia_e22f355780e04d9bb6efce7d86b39b76",
+                    "id": "ia_3cadd2c06dc64a98aa4390d7dfac8034",
                     "issues": [],
                     "retry_policy_id": null,
                     "retry_policy_source": "capability_default",
@@ -3850,7 +4239,7 @@
                       "capability_id": "ask.answer",
                       "kind": "capability"
                     },
-                    "sha256": "sha256:f648e6f44157118273228bfc7c52229eaabd907bc37a939aac3a6f2725bd595f"
+                    "sha256": "sha256:721bfd82bbf513e4d56bcb5c9250668f1445c0592b7d493fdc9a3a6ef4775e59"
                   },
                   "capability_id": "ask.answer",
                   "inherited_from": "capability",
@@ -3923,11 +4312,36 @@
               },
               {
                 "effective": {
-                  "assignment": null,
+                  "assignment": {
+                    "created_at": "2026-10-18T15:57:34.411616Z",
+                    "effective_retry_policy_id": "retry.text.standard",
+                    "entries": [
+                      {
+                        "boundary": "cloud",
+                        "label": "Claude Code",
+                        "ordinal": 1,
+                        "profile_id": "agent-claude",
+                        "profile_revision": 1,
+                        "profile_schema_version": 2,
+                        "readiness": "ready"
+                      }
+                    ],
+                    "id": "ia_3cadd2c06dc64a98aa4390d7dfac8034",
+                    "issues": [],
+                    "retry_policy_id": null,
+                    "retry_policy_source": "capability_default",
+                    "revision": 1,
+                    "schema": "InferenceAssignmentProjection@1",
+                    "scope": {
+                      "capability_id": "ask.answer",
+                      "kind": "capability"
+                    },
+                    "sha256": "sha256:721bfd82bbf513e4d56bcb5c9250668f1445c0592b7d493fdc9a3a6ef4775e59"
+                  },
                   "capability_id": "chat.turn",
-                  "inherited_from": null,
-                  "repair": "Choose default",
-                  "status": "no_assignment"
+                  "inherited_from": "capability",
+                  "repair": null,
+                  "status": "assigned"
                 },
                 "group": {
                   "id": "thoughts_notes",
@@ -4608,7 +5022,7 @@
               {
                 "effective": {
                   "assignment": {
-                    "created_at": "2026-10-18T06:55:51.933376Z",
+                    "created_at": "2026-10-18T15:57:34.124840Z",
                     "effective_retry_policy_id": "retry.audio.transcription",
                     "entries": [
                       {
@@ -4621,7 +5035,7 @@
                         "readiness": "unavailable"
                       }
                     ],
-                    "id": "ia_0ed4aa097aa747b89410ac8649209245",
+                    "id": "ia_365296dca0b94a3e828f5aa7e6ba4c6c",
                     "issues": [
                       {
                         "code": "binding_not_ready",
@@ -4638,7 +5052,7 @@
                       "capability_id": "speech.transcribe",
                       "kind": "capability"
                     },
-                    "sha256": "sha256:d032ba1caa7974b2469c2f81e0d3e56c18b936d94f25b79514cb69be60151568"
+                    "sha256": "sha256:4aab947ad45e435639a777964265fce10a5ed0b188e12addf1bea65ef6b91c22"
                   },
                   "capability_id": "speech.transcribe",
                   "inherited_from": "capability",
@@ -4743,7 +5157,25 @@
       {
         "gets": {
           "/api/concierge/detect": {
-            "checkedAt": "2026-10-18T06:55:53.164918+00:00",
+            "agents": [
+              {
+                "added": true,
+                "install": "npm install -g @anthropic-ai/claude-code",
+                "installed": true,
+                "name": "Claude Code",
+                "preset": "claude",
+                "vendor": "ANTHROPIC"
+              },
+              {
+                "added": false,
+                "install": "npm install -g @openai/codex",
+                "installed": false,
+                "name": "Codex",
+                "preset": "codex",
+                "vendor": "OPENAI"
+              }
+            ],
+            "checkedAt": "2026-10-18T15:57:35.140691+00:00",
             "engines": [
               {
                 "agentPreset": "claude",
@@ -4844,8 +5276,8 @@
               },
               "observation": {
                 "available_memory_bytes": null,
-                "sha256": "sha256:a62a8279885afb0b163cbc1edcd3ac8230694e6995202b9f147f730799ed42e4",
-                "storage_available_bytes": 245329866752
+                "sha256": "sha256:92fa2b4c84133bbe9f77c97d0ad21610682aca025a8c9ae9d0e8cec4efbf6c9b",
+                "storage_available_bytes": 238675161088
               }
             },
             "lastApply": null,
@@ -4862,6 +5294,79 @@
               {
                 "id": "openai_compatible_v1",
                 "state": "available"
+              }
+            ],
+            "services": [
+              {
+                "baseUrl": "https://openrouter.ai/api/v1",
+                "host": "openrouter.ai",
+                "id": "openrouter",
+                "name": "OpenRouter",
+                "presets": [
+                  {
+                    "contextTokens": 131072,
+                    "id": "preset_openrouter_qwen3_8b",
+                    "label": "OpenRouter \u00b7 Quick Qwen",
+                    "model": "qwen/qwen3-8b",
+                    "summary": "A small, fast Qwen for short Notes and everyday work."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_qwen35_35b_a3b",
+                    "label": "OpenRouter \u00b7 Balanced Qwen",
+                    "model": "qwen/qwen3.5-35b-a3b",
+                    "summary": "Strong general reasoning without using a giant model."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_qwen38_27b",
+                    "label": "OpenRouter \u00b7 Deep Qwen",
+                    "model": "qwen/qwen3.8-27b",
+                    "summary": "Deeper cloud reasoning for harder synthesis."
+                  },
+                  {
+                    "contextTokens": 1000000,
+                    "id": "preset_openrouter_qwen37_flash",
+                    "label": "OpenRouter \u00b7 Qwen Flash",
+                    "model": "qwen/qwen3.7-flash",
+                    "summary": "The quickest economical Qwen choice for everyday work."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_gemma4_26b",
+                    "label": "OpenRouter \u00b7 Gemma 4",
+                    "model": "google/gemma-4-26b-a4b-it",
+                    "summary": "A capable Gemma 4 alternative for writing and synthesis."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_qwen3_coder_next",
+                    "label": "OpenRouter \u00b7 Coding Qwen",
+                    "model": "qwen/qwen3-coder-next",
+                    "summary": "A coding-focused Qwen for technical plans and implementation."
+                  }
+                ]
+              },
+              {
+                "baseUrl": "https://api.openai.com/v1",
+                "host": "api.openai.com",
+                "id": "openai",
+                "name": "OpenAI",
+                "presets": []
+              },
+              {
+                "baseUrl": "https://api.anthropic.com/v1",
+                "host": "api.anthropic.com",
+                "id": "anthropic",
+                "name": "Anthropic",
+                "presets": []
+              },
+              {
+                "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai",
+                "host": "generativelanguage.googleapis.com",
+                "id": "gemini",
+                "name": "Gemini",
+                "presets": []
               }
             ],
             "summaryAssignment": {
@@ -5009,7 +5514,7 @@
               {
                 "effective": {
                   "assignment": {
-                    "created_at": "2026-10-18T06:55:52.324904Z",
+                    "created_at": "2026-10-18T15:57:34.411616Z",
                     "effective_retry_policy_id": "retry.text.standard",
                     "entries": [
                       {
@@ -5022,7 +5527,7 @@
                         "readiness": "ready"
                       }
                     ],
-                    "id": "ia_e22f355780e04d9bb6efce7d86b39b76",
+                    "id": "ia_3cadd2c06dc64a98aa4390d7dfac8034",
                     "issues": [],
                     "retry_policy_id": null,
                     "retry_policy_source": "capability_default",
@@ -5032,7 +5537,7 @@
                       "capability_id": "ask.answer",
                       "kind": "capability"
                     },
-                    "sha256": "sha256:f648e6f44157118273228bfc7c52229eaabd907bc37a939aac3a6f2725bd595f"
+                    "sha256": "sha256:721bfd82bbf513e4d56bcb5c9250668f1445c0592b7d493fdc9a3a6ef4775e59"
                   },
                   "capability_id": "ask.answer",
                   "inherited_from": "capability",
@@ -5105,11 +5610,36 @@
               },
               {
                 "effective": {
-                  "assignment": null,
+                  "assignment": {
+                    "created_at": "2026-10-18T15:57:34.411616Z",
+                    "effective_retry_policy_id": "retry.text.standard",
+                    "entries": [
+                      {
+                        "boundary": "cloud",
+                        "label": "Claude Code",
+                        "ordinal": 1,
+                        "profile_id": "agent-claude",
+                        "profile_revision": 1,
+                        "profile_schema_version": 2,
+                        "readiness": "ready"
+                      }
+                    ],
+                    "id": "ia_3cadd2c06dc64a98aa4390d7dfac8034",
+                    "issues": [],
+                    "retry_policy_id": null,
+                    "retry_policy_source": "capability_default",
+                    "revision": 1,
+                    "schema": "InferenceAssignmentProjection@1",
+                    "scope": {
+                      "capability_id": "ask.answer",
+                      "kind": "capability"
+                    },
+                    "sha256": "sha256:721bfd82bbf513e4d56bcb5c9250668f1445c0592b7d493fdc9a3a6ef4775e59"
+                  },
                   "capability_id": "chat.turn",
-                  "inherited_from": null,
-                  "repair": "Choose default",
-                  "status": "no_assignment"
+                  "inherited_from": "capability",
+                  "repair": null,
+                  "status": "assigned"
                 },
                 "group": {
                   "id": "thoughts_notes",
@@ -5790,7 +6320,7 @@
               {
                 "effective": {
                   "assignment": {
-                    "created_at": "2026-10-18T06:55:51.933376Z",
+                    "created_at": "2026-10-18T15:57:34.124840Z",
                     "effective_retry_policy_id": "retry.audio.transcription",
                     "entries": [
                       {
@@ -5803,7 +6333,7 @@
                         "readiness": "unavailable"
                       }
                     ],
-                    "id": "ia_0ed4aa097aa747b89410ac8649209245",
+                    "id": "ia_365296dca0b94a3e828f5aa7e6ba4c6c",
                     "issues": [
                       {
                         "code": "binding_not_ready",
@@ -5820,7 +6350,7 @@
                       "capability_id": "speech.transcribe",
                       "kind": "capability"
                     },
-                    "sha256": "sha256:d032ba1caa7974b2469c2f81e0d3e56c18b936d94f25b79514cb69be60151568"
+                    "sha256": "sha256:4aab947ad45e435639a777964265fce10a5ed0b188e12addf1bea65ef6b91c22"
                   },
                   "capability_id": "speech.transcribe",
                   "inherited_from": "capability",
@@ -5926,7 +6456,25 @@
   "codex": {
     "gets": {
       "/api/concierge/detect": {
-        "checkedAt": "2026-10-18T06:55:53.645406+00:00",
+        "agents": [
+          {
+            "added": false,
+            "install": "npm install -g @anthropic-ai/claude-code",
+            "installed": false,
+            "name": "Claude Code",
+            "preset": "claude",
+            "vendor": "ANTHROPIC"
+          },
+          {
+            "added": true,
+            "install": "npm install -g @openai/codex",
+            "installed": true,
+            "name": "Codex",
+            "preset": "codex",
+            "vendor": "OPENAI"
+          }
+        ],
+        "checkedAt": "2026-10-18T15:57:35.480819+00:00",
         "engines": [
           {
             "agentPreset": "codex",
@@ -6027,8 +6575,8 @@
           },
           "observation": {
             "available_memory_bytes": null,
-            "sha256": "sha256:cd67848e98f8ce2d4409ffcdef7c96c4e9cacc3b4dcc7689f663942e02a06943",
-            "storage_available_bytes": 245341323264
+            "sha256": "sha256:96b6dc41947c22809c9e3d8353813b71dd567c2f883fc784a111935885f3a2e2",
+            "storage_available_bytes": 238667530240
           }
         },
         "lastApply": null,
@@ -6045,6 +6593,79 @@
           {
             "id": "openai_compatible_v1",
             "state": "available"
+          }
+        ],
+        "services": [
+          {
+            "baseUrl": "https://openrouter.ai/api/v1",
+            "host": "openrouter.ai",
+            "id": "openrouter",
+            "name": "OpenRouter",
+            "presets": [
+              {
+                "contextTokens": 131072,
+                "id": "preset_openrouter_qwen3_8b",
+                "label": "OpenRouter \u00b7 Quick Qwen",
+                "model": "qwen/qwen3-8b",
+                "summary": "A small, fast Qwen for short Notes and everyday work."
+              },
+              {
+                "contextTokens": 262144,
+                "id": "preset_openrouter_qwen35_35b_a3b",
+                "label": "OpenRouter \u00b7 Balanced Qwen",
+                "model": "qwen/qwen3.5-35b-a3b",
+                "summary": "Strong general reasoning without using a giant model."
+              },
+              {
+                "contextTokens": 262144,
+                "id": "preset_openrouter_qwen38_27b",
+                "label": "OpenRouter \u00b7 Deep Qwen",
+                "model": "qwen/qwen3.8-27b",
+                "summary": "Deeper cloud reasoning for harder synthesis."
+              },
+              {
+                "contextTokens": 1000000,
+                "id": "preset_openrouter_qwen37_flash",
+                "label": "OpenRouter \u00b7 Qwen Flash",
+                "model": "qwen/qwen3.7-flash",
+                "summary": "The quickest economical Qwen choice for everyday work."
+              },
+              {
+                "contextTokens": 262144,
+                "id": "preset_openrouter_gemma4_26b",
+                "label": "OpenRouter \u00b7 Gemma 4",
+                "model": "google/gemma-4-26b-a4b-it",
+                "summary": "A capable Gemma 4 alternative for writing and synthesis."
+              },
+              {
+                "contextTokens": 262144,
+                "id": "preset_openrouter_qwen3_coder_next",
+                "label": "OpenRouter \u00b7 Coding Qwen",
+                "model": "qwen/qwen3-coder-next",
+                "summary": "A coding-focused Qwen for technical plans and implementation."
+              }
+            ]
+          },
+          {
+            "baseUrl": "https://api.openai.com/v1",
+            "host": "api.openai.com",
+            "id": "openai",
+            "name": "OpenAI",
+            "presets": []
+          },
+          {
+            "baseUrl": "https://api.anthropic.com/v1",
+            "host": "api.anthropic.com",
+            "id": "anthropic",
+            "name": "Anthropic",
+            "presets": []
+          },
+          {
+            "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai",
+            "host": "generativelanguage.googleapis.com",
+            "id": "gemini",
+            "name": "Gemini",
+            "presets": []
           }
         ],
         "summaryAssignment": {
@@ -6948,7 +7569,7 @@
           {
             "effective": {
               "assignment": {
-                "created_at": "2026-10-18T06:55:53.252272Z",
+                "created_at": "2026-10-18T15:57:35.208846Z",
                 "effective_retry_policy_id": "retry.audio.transcription",
                 "entries": [
                   {
@@ -6961,7 +7582,7 @@
                     "readiness": "unavailable"
                   }
                 ],
-                "id": "ia_8f6aef72b2cb436481e9131e5b812f4b",
+                "id": "ia_1a7e594b2e3d464a9f0472ad9cb67f27",
                 "issues": [
                   {
                     "code": "binding_not_ready",
@@ -6978,7 +7599,7 @@
                   "capability_id": "speech.transcribe",
                   "kind": "capability"
                 },
-                "sha256": "sha256:6bd9cadfe26b99ca6c01b7129f476c98d94d45ad636c5f90e8b44a54ab112657"
+                "sha256": "sha256:cfdc1e4dcf3ee3a5788c434fa01e9398d36c40739714de7b208e9aafc0f357af"
               },
               "capability_id": "speech.transcribe",
               "inherited_from": "capability",
@@ -7081,7 +7702,25 @@
   "nothingFound": {
     "gets": {
       "/api/concierge/detect": {
-        "checkedAt": "2026-10-18T06:55:51.843916+00:00",
+        "agents": [
+          {
+            "added": false,
+            "install": "npm install -g @anthropic-ai/claude-code",
+            "installed": false,
+            "name": "Claude Code",
+            "preset": "claude",
+            "vendor": "ANTHROPIC"
+          },
+          {
+            "added": false,
+            "install": "npm install -g @openai/codex",
+            "installed": false,
+            "name": "Codex",
+            "preset": "codex",
+            "vendor": "OPENAI"
+          }
+        ],
+        "checkedAt": "2026-10-18T15:57:34.062109+00:00",
         "engines": [
           {
             "downloadHost": "huggingface.co",
@@ -7125,8 +7764,8 @@
           },
           "observation": {
             "available_memory_bytes": null,
-            "sha256": "sha256:e162d44e8fb0920a8d740e0563857f6ee3a529aae4583b9e168e9b1dae4ed94e",
-            "storage_available_bytes": 245451120640
+            "sha256": "sha256:7ee683d2375dd7c757af092ea4d30eed4358e273a959ba0eee5ed58e2971c004",
+            "storage_available_bytes": 238683275264
           }
         },
         "lastApply": null,
@@ -7143,6 +7782,79 @@
           {
             "id": "openai_compatible_v1",
             "state": "available"
+          }
+        ],
+        "services": [
+          {
+            "baseUrl": "https://openrouter.ai/api/v1",
+            "host": "openrouter.ai",
+            "id": "openrouter",
+            "name": "OpenRouter",
+            "presets": [
+              {
+                "contextTokens": 131072,
+                "id": "preset_openrouter_qwen3_8b",
+                "label": "OpenRouter \u00b7 Quick Qwen",
+                "model": "qwen/qwen3-8b",
+                "summary": "A small, fast Qwen for short Notes and everyday work."
+              },
+              {
+                "contextTokens": 262144,
+                "id": "preset_openrouter_qwen35_35b_a3b",
+                "label": "OpenRouter \u00b7 Balanced Qwen",
+                "model": "qwen/qwen3.5-35b-a3b",
+                "summary": "Strong general reasoning without using a giant model."
+              },
+              {
+                "contextTokens": 262144,
+                "id": "preset_openrouter_qwen38_27b",
+                "label": "OpenRouter \u00b7 Deep Qwen",
+                "model": "qwen/qwen3.8-27b",
+                "summary": "Deeper cloud reasoning for harder synthesis."
+              },
+              {
+                "contextTokens": 1000000,
+                "id": "preset_openrouter_qwen37_flash",
+                "label": "OpenRouter \u00b7 Qwen Flash",
+                "model": "qwen/qwen3.7-flash",
+                "summary": "The quickest economical Qwen choice for everyday work."
+              },
+              {
+                "contextTokens": 262144,
+                "id": "preset_openrouter_gemma4_26b",
+                "label": "OpenRouter \u00b7 Gemma 4",
+                "model": "google/gemma-4-26b-a4b-it",
+                "summary": "A capable Gemma 4 alternative for writing and synthesis."
+              },
+              {
+                "contextTokens": 262144,
+                "id": "preset_openrouter_qwen3_coder_next",
+                "label": "OpenRouter \u00b7 Coding Qwen",
+                "model": "qwen/qwen3-coder-next",
+                "summary": "A coding-focused Qwen for technical plans and implementation."
+              }
+            ]
+          },
+          {
+            "baseUrl": "https://api.openai.com/v1",
+            "host": "api.openai.com",
+            "id": "openai",
+            "name": "OpenAI",
+            "presets": []
+          },
+          {
+            "baseUrl": "https://api.anthropic.com/v1",
+            "host": "api.anthropic.com",
+            "id": "anthropic",
+            "name": "Anthropic",
+            "presets": []
+          },
+          {
+            "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai",
+            "host": "generativelanguage.googleapis.com",
+            "id": "gemini",
+            "name": "Gemini",
+            "presets": []
           }
         ],
         "summaryAssignment": {
@@ -8046,7 +8758,7 @@
           {
             "effective": {
               "assignment": {
-                "created_at": "2026-10-18T06:55:51.458954Z",
+                "created_at": "2026-10-18T15:57:33.692911Z",
                 "effective_retry_policy_id": "retry.audio.transcription",
                 "entries": [
                   {
@@ -8059,7 +8771,7 @@
                     "readiness": "unavailable"
                   }
                 ],
-                "id": "ia_8533986ccb554b2eb9b29c14084cca8f",
+                "id": "ia_e041cca8959846929d0c8fa355f15869",
                 "issues": [
                   {
                     "code": "binding_not_ready",
@@ -8076,7 +8788,7 @@
                   "capability_id": "speech.transcribe",
                   "kind": "capability"
                 },
-                "sha256": "sha256:199dc8ab9382f7c142be9288f3f5eb004f12c94f27542134df2ffc4c7493e22d"
+                "sha256": "sha256:d728c1f3bb4808d0a443a558a2cd8f6f9446226e9fcb8870bd96f5f078b0a78e"
               },
               "capability_id": "speech.transcribe",
               "inherited_from": "capability",
@@ -8176,13 +8888,30 @@
       }
     }
   },
-  "recordedBy": "scripts/record_engines_fixture.py",
-  "threeModels": {
+  "openRouter": {
     "steps": [
       {
         "gets": {
           "/api/concierge/detect": {
-            "checkedAt": "2026-10-18T09:50:29.656690+00:00",
+            "agents": [
+              {
+                "added": false,
+                "install": "npm install -g @anthropic-ai/claude-code",
+                "installed": false,
+                "name": "Claude Code",
+                "preset": "claude",
+                "vendor": "ANTHROPIC"
+              },
+              {
+                "added": false,
+                "install": "npm install -g @openai/codex",
+                "installed": false,
+                "name": "Codex",
+                "preset": "codex",
+                "vendor": "OPENAI"
+              }
+            ],
+            "checkedAt": "2026-10-18T16:04:46.802160+00:00",
             "engines": [
               {
                 "downloadHost": "huggingface.co",
@@ -8226,8 +8955,8 @@
               },
               "observation": {
                 "available_memory_bytes": null,
-                "sha256": "sha256:22675733901b64d8e407600ce14bb858c996a509486ce9b5172d4877994346b1",
-                "storage_available_bytes": 243104894976
+                "sha256": "sha256:8cf23d64c893f6a8d99ed5146202d1813f0b35ff7d6194b07b9078e3e76c6cfc",
+                "storage_available_bytes": 238647828480
               }
             },
             "lastApply": null,
@@ -8244,6 +8973,79 @@
               {
                 "id": "openai_compatible_v1",
                 "state": "available"
+              }
+            ],
+            "services": [
+              {
+                "baseUrl": "https://openrouter.ai/api/v1",
+                "host": "openrouter.ai",
+                "id": "openrouter",
+                "name": "OpenRouter",
+                "presets": [
+                  {
+                    "contextTokens": 131072,
+                    "id": "preset_openrouter_qwen3_8b",
+                    "label": "OpenRouter \u00b7 Quick Qwen",
+                    "model": "qwen/qwen3-8b",
+                    "summary": "A small, fast Qwen for short Notes and everyday work."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_qwen35_35b_a3b",
+                    "label": "OpenRouter \u00b7 Balanced Qwen",
+                    "model": "qwen/qwen3.5-35b-a3b",
+                    "summary": "Strong general reasoning without using a giant model."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_qwen38_27b",
+                    "label": "OpenRouter \u00b7 Deep Qwen",
+                    "model": "qwen/qwen3.8-27b",
+                    "summary": "Deeper cloud reasoning for harder synthesis."
+                  },
+                  {
+                    "contextTokens": 1000000,
+                    "id": "preset_openrouter_qwen37_flash",
+                    "label": "OpenRouter \u00b7 Qwen Flash",
+                    "model": "qwen/qwen3.7-flash",
+                    "summary": "The quickest economical Qwen choice for everyday work."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_gemma4_26b",
+                    "label": "OpenRouter \u00b7 Gemma 4",
+                    "model": "google/gemma-4-26b-a4b-it",
+                    "summary": "A capable Gemma 4 alternative for writing and synthesis."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_qwen3_coder_next",
+                    "label": "OpenRouter \u00b7 Coding Qwen",
+                    "model": "qwen/qwen3-coder-next",
+                    "summary": "A coding-focused Qwen for technical plans and implementation."
+                  }
+                ]
+              },
+              {
+                "baseUrl": "https://api.openai.com/v1",
+                "host": "api.openai.com",
+                "id": "openai",
+                "name": "OpenAI",
+                "presets": []
+              },
+              {
+                "baseUrl": "https://api.anthropic.com/v1",
+                "host": "api.anthropic.com",
+                "id": "anthropic",
+                "name": "Anthropic",
+                "presets": []
+              },
+              {
+                "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai",
+                "host": "generativelanguage.googleapis.com",
+                "id": "gemini",
+                "name": "Gemini",
+                "presets": []
               }
             ],
             "summaryAssignment": {
@@ -9147,7 +9949,7 @@
               {
                 "effective": {
                   "assignment": {
-                    "created_at": "2026-10-18T09:50:29.302294Z",
+                    "created_at": "2026-10-18T16:04:46.476237Z",
                     "effective_retry_policy_id": "retry.audio.transcription",
                     "entries": [
                       {
@@ -9160,7 +9962,7 @@
                         "readiness": "unavailable"
                       }
                     ],
-                    "id": "ia_351567c8ffc44a3e8b152976fc0af653",
+                    "id": "ia_6bcb845fab264201b33786ab6eff0b06",
                     "issues": [
                       {
                         "code": "binding_not_ready",
@@ -9177,7 +9979,1276 @@
                       "capability_id": "speech.transcribe",
                       "kind": "capability"
                     },
-                    "sha256": "sha256:36f3e37794f41d04abea2a5a56299efbd6eb263e55d4f4d8ae0a90157ee0fc82"
+                    "sha256": "sha256:8265be3c1592d5b233b6600cb7d72c316099672e819d7843f82b8df895b94938"
+                  },
+                  "capability_id": "speech.transcribe",
+                  "inherited_from": "capability",
+                  "repair": null,
+                  "status": "assigned"
+                },
+                "group": {
+                  "id": "speech_recognition",
+                  "label": "Speech recognition"
+                },
+                "has_override": true,
+                "id": "speech.transcribe",
+                "issues": [
+                  {
+                    "code": "binding_not_ready",
+                    "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+                    "profile_revision": 1,
+                    "severity": "repair"
+                  }
+                ],
+                "label": "Speech transcription",
+                "queue": null
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "thought.interview",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "thoughts_notes",
+                  "label": "Thoughts & notes"
+                },
+                "has_override": false,
+                "id": "thought.interview",
+                "issues": [],
+                "label": "Thought development",
+                "queue": null
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "voice.reference_resolve",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "agents_tools",
+                  "label": "Agents & tools"
+                },
+                "has_override": false,
+                "id": "voice.reference_resolve",
+                "issues": [],
+                "label": "Voice reference resolution",
+                "queue": null
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "workbench.item",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "agents_tools",
+                  "label": "Agents & tools"
+                },
+                "has_override": false,
+                "id": "workbench.item",
+                "issues": [],
+                "label": "Automation item",
+                "queue": null
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "workflow.node",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "agents_tools",
+                  "label": "Agents & tools"
+                },
+                "has_override": false,
+                "id": "workflow.node",
+                "issues": [],
+                "label": "Workflow node",
+                "queue": null
+              }
+            ]
+          }
+        },
+        "name": "open"
+      },
+      {
+        "answer": {
+          "contexts": {
+            "anthropic/claude-x": 200000,
+            "qwen/qwen3-8b": 131072,
+            "qwen/qwen3.5-35b-a3b": 262144
+          },
+          "detail": "Found 3 models.",
+          "models": [
+            "anthropic/claude-x",
+            "qwen/qwen3-8b",
+            "qwen/qwen3.5-35b-a3b"
+          ],
+          "ok": true,
+          "status": 200,
+          "tools": "unknown"
+        },
+        "name": "check"
+      },
+      {
+        "answer": {
+          "provider": {
+            "binding_id": "binding-engine-openrouter-ai-qwen-qwen3-5-35b-a3b",
+            "binding_revision": 1,
+            "profile_id": "engine-openrouter-ai-qwen-qwen3-5-35b-a3b",
+            "profile_revision": 1,
+            "provider_family": "openai_compatible",
+            "secret": {
+              "present": true,
+              "required": true
+            }
+          },
+          "receipt": {
+            "assignments_after": {
+              "heads": [
+                {
+                  "assignment_id": "ia_6bcb845fab264201b33786ab6eff0b06",
+                  "assignment_key": "capability:speech.transcribe",
+                  "cleared": false,
+                  "revision": 1
+                }
+              ],
+              "sha256": "sha256:b37c351656d8434bd75a18c6a948a279b63a03b413c470c719345739107ca7dd"
+            },
+            "assignments_before": {
+              "heads": [
+                {
+                  "assignment_id": "ia_6bcb845fab264201b33786ab6eff0b06",
+                  "assignment_key": "capability:speech.transcribe",
+                  "cleared": false,
+                  "revision": 1
+                }
+              ],
+              "sha256": "sha256:b37c351656d8434bd75a18c6a948a279b63a03b413c470c719345739107ca7dd"
+            },
+            "assignments_unchanged": true,
+            "kind": "model_library_provider",
+            "message": "Added to the Model Library. Assignments are unchanged."
+          }
+        },
+        "body": {
+          "context_tokens": 262144,
+          "endpoint": "https://openrouter.ai/api/v1",
+          "expected_profile_revision": 0,
+          "label": "OpenRouter",
+          "model": "qwen/qwen3.5-35b-a3b",
+          "profile_id": "engine-openrouter-ai-qwen-qwen3-5-35b-a3b",
+          "provider_family": "openai_compatible",
+          "request_id": "record-openrouter",
+          "requires_key": true
+        },
+        "name": "qwen/qwen3.5-35b-a3b",
+        "post": "/api/inference/model-library/define-endpoint"
+      }
+    ]
+  },
+  "recordedBy": "scripts/record_engines_fixture.py",
+  "threeModels": {
+    "steps": [
+      {
+        "gets": {
+          "/api/concierge/detect": {
+            "agents": [
+              {
+                "added": false,
+                "install": "npm install -g @anthropic-ai/claude-code",
+                "installed": false,
+                "name": "Claude Code",
+                "preset": "claude",
+                "vendor": "ANTHROPIC"
+              },
+              {
+                "added": false,
+                "install": "npm install -g @openai/codex",
+                "installed": false,
+                "name": "Codex",
+                "preset": "codex",
+                "vendor": "OPENAI"
+              }
+            ],
+            "checkedAt": "2026-10-18T15:57:35.854182+00:00",
+            "engines": [
+              {
+                "downloadHost": "huggingface.co",
+                "host": "THIS DEVICE",
+                "id": "preset:preset_local_qwen35_4b_gguf_q4km",
+                "installed": false,
+                "kind": "preset",
+                "name": "Quick local Qwen",
+                "presetId": "preset_local_qwen35_4b_gguf_q4km",
+                "sizeBytes": 2740937888,
+                "state": "WAITING"
+              },
+              {
+                "downloadHost": "huggingface.co",
+                "host": "THIS DEVICE",
+                "id": "preset:preset_local_qwen35_08b_gguf_q4km",
+                "installed": false,
+                "kind": "preset",
+                "name": "Tiny local Qwen",
+                "presetId": "preset_local_qwen35_08b_gguf_q4km",
+                "sizeBytes": 532517120,
+                "state": "WAITING"
+              }
+            ],
+            "hardware": {
+              "capability": {
+                "accelerators": [
+                  "metal"
+                ],
+                "apple_silicon": true,
+                "architecture": "arm64",
+                "logical_cpu_count": 12,
+                "sha256": "sha256:28c82ad0634fbe2be400b096a8c33868e646704aa3e2caff5f76ab7d80e86721",
+                "system": "darwin",
+                "total_memory_bytes": 34359738368,
+                "unified_memory": true
+              },
+              "detection": {
+                "reason": null,
+                "state": "available"
+              },
+              "observation": {
+                "available_memory_bytes": null,
+                "sha256": "sha256:3a91b858c1feb593341373a80681b7a3dbf42e0ce3b8c110b92360cb9bd23a5e",
+                "storage_available_bytes": 238666448896
+              }
+            },
+            "lastApply": null,
+            "repairs": [],
+            "runtimes": [
+              {
+                "id": "llama_cpp_prompt_v1",
+                "state": "available"
+              },
+              {
+                "id": "mlx_text_v1",
+                "state": "unavailable"
+              },
+              {
+                "id": "openai_compatible_v1",
+                "state": "available"
+              }
+            ],
+            "services": [
+              {
+                "baseUrl": "https://openrouter.ai/api/v1",
+                "host": "openrouter.ai",
+                "id": "openrouter",
+                "name": "OpenRouter",
+                "presets": [
+                  {
+                    "contextTokens": 131072,
+                    "id": "preset_openrouter_qwen3_8b",
+                    "label": "OpenRouter \u00b7 Quick Qwen",
+                    "model": "qwen/qwen3-8b",
+                    "summary": "A small, fast Qwen for short Notes and everyday work."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_qwen35_35b_a3b",
+                    "label": "OpenRouter \u00b7 Balanced Qwen",
+                    "model": "qwen/qwen3.5-35b-a3b",
+                    "summary": "Strong general reasoning without using a giant model."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_qwen38_27b",
+                    "label": "OpenRouter \u00b7 Deep Qwen",
+                    "model": "qwen/qwen3.8-27b",
+                    "summary": "Deeper cloud reasoning for harder synthesis."
+                  },
+                  {
+                    "contextTokens": 1000000,
+                    "id": "preset_openrouter_qwen37_flash",
+                    "label": "OpenRouter \u00b7 Qwen Flash",
+                    "model": "qwen/qwen3.7-flash",
+                    "summary": "The quickest economical Qwen choice for everyday work."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_gemma4_26b",
+                    "label": "OpenRouter \u00b7 Gemma 4",
+                    "model": "google/gemma-4-26b-a4b-it",
+                    "summary": "A capable Gemma 4 alternative for writing and synthesis."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_qwen3_coder_next",
+                    "label": "OpenRouter \u00b7 Coding Qwen",
+                    "model": "qwen/qwen3-coder-next",
+                    "summary": "A coding-focused Qwen for technical plans and implementation."
+                  }
+                ]
+              },
+              {
+                "baseUrl": "https://api.openai.com/v1",
+                "host": "api.openai.com",
+                "id": "openai",
+                "name": "OpenAI",
+                "presets": []
+              },
+              {
+                "baseUrl": "https://api.anthropic.com/v1",
+                "host": "api.anthropic.com",
+                "id": "anthropic",
+                "name": "Anthropic",
+                "presets": []
+              },
+              {
+                "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai",
+                "host": "generativelanguage.googleapis.com",
+                "id": "gemini",
+                "name": "Gemini",
+                "presets": []
+              }
+            ],
+            "summaryAssignment": {
+              "assignmentRevision": 0,
+              "boundary": null,
+              "capabilityId": "meeting.deferred_analysis",
+              "label": null,
+              "profileId": null,
+              "profileRevision": null,
+              "readiness": null,
+              "schema": "ConciergeSummaryAssignmentProjection@1",
+              "status": "unassigned"
+            }
+          },
+          "/api/inference/assignments": {
+            "issue_count": 1,
+            "rows": [
+              {
+                "assignment": null,
+                "editor_capability_id": "agent.code",
+                "expected_revision": 0,
+                "id": "global",
+                "inherited_from": null,
+                "label": "Default for AI work",
+                "repair": "Choose default",
+                "status": "no_assignment"
+              },
+              {
+                "assignment": null,
+                "editor_capability_id": "ask.answer",
+                "expected_revision": 0,
+                "id": "thoughts_notes",
+                "inherited_from": null,
+                "label": "Thoughts & notes",
+                "repair": null,
+                "status": "no_assignment"
+              },
+              {
+                "assignment": null,
+                "editor_capability_id": "speech.intent_classify",
+                "expected_revision": 0,
+                "id": "writing_dictation",
+                "inherited_from": null,
+                "label": "Writing & dictation",
+                "repair": null,
+                "status": "no_assignment"
+              },
+              {
+                "assignment": null,
+                "editor_capability_id": "speech.transcribe",
+                "expected_revision": 0,
+                "id": "speech_recognition",
+                "inherited_from": null,
+                "label": "Speech recognition",
+                "repair": null,
+                "status": "no_assignment"
+              },
+              {
+                "assignment": null,
+                "editor_capability_id": "meeting.auto_title",
+                "expected_revision": 0,
+                "id": "meetings",
+                "inherited_from": null,
+                "label": "Meetings",
+                "repair": null,
+                "status": "no_assignment"
+              },
+              {
+                "assignment": null,
+                "editor_capability_id": "agent.code",
+                "expected_revision": 0,
+                "id": "agents_tools",
+                "inherited_from": null,
+                "label": "Agents & tools",
+                "repair": null,
+                "status": "no_assignment"
+              },
+              {
+                "assignment": null,
+                "editor_capability_id": "background.cadence_draft",
+                "expected_revision": 0,
+                "id": "background",
+                "inherited_from": null,
+                "label": "Background",
+                "repair": null,
+                "status": "no_assignment"
+              }
+            ],
+            "schema": "InferenceAssignmentSummary@1",
+            "task_overrides": [
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "agent.code",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "agents_tools",
+                  "label": "Agents & tools"
+                },
+                "has_override": false,
+                "id": "agent.code",
+                "issues": [],
+                "label": "Agent code",
+                "queue": null
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "agent.plan",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "agents_tools",
+                  "label": "Agents & tools"
+                },
+                "has_override": false,
+                "id": "agent.plan",
+                "issues": [],
+                "label": "Agent plan",
+                "queue": null
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "agent.tool_turn",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "agents_tools",
+                  "label": "Agents & tools"
+                },
+                "has_override": false,
+                "id": "agent.tool_turn",
+                "issues": [],
+                "label": "Agent tool turn",
+                "queue": null
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "ask.answer",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "thoughts_notes",
+                  "label": "Thoughts & notes"
+                },
+                "has_override": false,
+                "id": "ask.answer",
+                "issues": [],
+                "label": "Ask answer",
+                "queue": null
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "background.cadence_draft",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "background",
+                  "label": "Background"
+                },
+                "has_override": false,
+                "id": "background.cadence_draft",
+                "issues": [],
+                "label": "Cadence draft",
+                "queue": null
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "background.rails_summary",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "background",
+                  "label": "Background"
+                },
+                "has_override": false,
+                "id": "background.rails_summary",
+                "issues": [],
+                "label": "Rails summary",
+                "queue": null
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "calendar.snapshot_extract",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "background",
+                  "label": "Background"
+                },
+                "has_override": false,
+                "id": "calendar.snapshot_extract",
+                "issues": [],
+                "label": "Calendar snapshot extraction",
+                "queue": null
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "chat.turn",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "thoughts_notes",
+                  "label": "Thoughts & notes"
+                },
+                "has_override": false,
+                "id": "chat.turn",
+                "issues": [],
+                "label": "Desk chat",
+                "queue": null
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "decision.promotion_draft",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "background",
+                  "label": "Background"
+                },
+                "has_override": false,
+                "id": "decision.promotion_draft",
+                "issues": [],
+                "label": "Decision promotion draft",
+                "queue": null
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "delivery.pr_review_draft",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "background",
+                  "label": "Background"
+                },
+                "has_override": false,
+                "id": "delivery.pr_review_draft",
+                "issues": [],
+                "label": "Pull request review draft",
+                "queue": null
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "meeting.auto_title",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "meetings",
+                  "label": "Meetings"
+                },
+                "has_override": false,
+                "id": "meeting.auto_title",
+                "issues": [],
+                "label": "Meeting title",
+                "queue": {
+                  "inherited_from": null,
+                  "policy_id": "meeting-intel-queue@2",
+                  "status": "no_assignment"
+                }
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "meeting.bookmark_label",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "meetings",
+                  "label": "Meetings"
+                },
+                "has_override": false,
+                "id": "meeting.bookmark_label",
+                "issues": [],
+                "label": "Meeting bookmark label",
+                "queue": {
+                  "inherited_from": null,
+                  "policy_id": "meeting-intel-queue@2",
+                  "status": "no_assignment"
+                }
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "meeting.deferred_analysis",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "meetings",
+                  "label": "Meetings"
+                },
+                "has_override": false,
+                "id": "meeting.deferred_analysis",
+                "issues": [],
+                "label": "Deferred meeting analysis",
+                "queue": {
+                  "inherited_from": null,
+                  "policy_id": "meeting-intel-queue@2",
+                  "status": "no_assignment"
+                }
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "meeting.live_analysis",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "meetings",
+                  "label": "Meetings"
+                },
+                "has_override": false,
+                "id": "meeting.live_analysis",
+                "issues": [],
+                "label": "Live meeting analysis",
+                "queue": null
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "meeting.plugin.action_owner_enforcer",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "meetings",
+                  "label": "Meetings"
+                },
+                "has_override": false,
+                "id": "meeting.plugin.action_owner_enforcer",
+                "issues": [],
+                "label": "Meeting plugin: action owner enforcer",
+                "queue": {
+                  "inherited_from": null,
+                  "policy_id": "meeting-intel-queue@2",
+                  "status": "no_assignment"
+                }
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "meeting.plugin.adr_drafter",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "meetings",
+                  "label": "Meetings"
+                },
+                "has_override": false,
+                "id": "meeting.plugin.adr_drafter",
+                "issues": [],
+                "label": "Meeting plugin: adr drafter",
+                "queue": {
+                  "inherited_from": null,
+                  "policy_id": "meeting-intel-queue@2",
+                  "status": "no_assignment"
+                }
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "meeting.plugin.customer_signal_extractor",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "meetings",
+                  "label": "Meetings"
+                },
+                "has_override": false,
+                "id": "meeting.plugin.customer_signal_extractor",
+                "issues": [],
+                "label": "Meeting plugin: customer signal extractor",
+                "queue": {
+                  "inherited_from": null,
+                  "policy_id": "meeting-intel-queue@2",
+                  "status": "no_assignment"
+                }
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "meeting.plugin.decision_announcement_drafter",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "meetings",
+                  "label": "Meetings"
+                },
+                "has_override": false,
+                "id": "meeting.plugin.decision_announcement_drafter",
+                "issues": [],
+                "label": "Meeting plugin: decision announcement drafter",
+                "queue": {
+                  "inherited_from": null,
+                  "policy_id": "meeting-intel-queue@2",
+                  "status": "no_assignment"
+                }
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "meeting.plugin.decision_capture",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "meetings",
+                  "label": "Meetings"
+                },
+                "has_override": false,
+                "id": "meeting.plugin.decision_capture",
+                "issues": [],
+                "label": "Meeting plugin: decision capture",
+                "queue": {
+                  "inherited_from": null,
+                  "policy_id": "meeting-intel-queue@2",
+                  "status": "no_assignment"
+                }
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "meeting.plugin.dependency_mapper",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "meetings",
+                  "label": "Meetings"
+                },
+                "has_override": false,
+                "id": "meeting.plugin.dependency_mapper",
+                "issues": [],
+                "label": "Meeting plugin: dependency mapper",
+                "queue": {
+                  "inherited_from": null,
+                  "policy_id": "meeting-intel-queue@2",
+                  "status": "no_assignment"
+                }
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "meeting.plugin.incident_timeline",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "meetings",
+                  "label": "Meetings"
+                },
+                "has_override": false,
+                "id": "meeting.plugin.incident_timeline",
+                "issues": [],
+                "label": "Meeting plugin: incident timeline",
+                "queue": {
+                  "inherited_from": null,
+                  "policy_id": "meeting-intel-queue@2",
+                  "status": "no_assignment"
+                }
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "meeting.plugin.mermaid_architecture",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "meetings",
+                  "label": "Meetings"
+                },
+                "has_override": false,
+                "id": "meeting.plugin.mermaid_architecture",
+                "issues": [],
+                "label": "Meeting plugin: mermaid architecture",
+                "queue": {
+                  "inherited_from": null,
+                  "policy_id": "meeting-intel-queue@2",
+                  "status": "no_assignment"
+                }
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "meeting.plugin.milestone_planner",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "meetings",
+                  "label": "Meetings"
+                },
+                "has_override": false,
+                "id": "meeting.plugin.milestone_planner",
+                "issues": [],
+                "label": "Meeting plugin: milestone planner",
+                "queue": {
+                  "inherited_from": null,
+                  "policy_id": "meeting-intel-queue@2",
+                  "status": "no_assignment"
+                }
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "meeting.plugin.project_detector",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "meetings",
+                  "label": "Meetings"
+                },
+                "has_override": false,
+                "id": "meeting.plugin.project_detector",
+                "issues": [],
+                "label": "Meeting plugin: project detector",
+                "queue": {
+                  "inherited_from": null,
+                  "policy_id": "meeting-intel-queue@2",
+                  "status": "no_assignment"
+                }
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "meeting.plugin.requirements_extractor",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "meetings",
+                  "label": "Meetings"
+                },
+                "has_override": false,
+                "id": "meeting.plugin.requirements_extractor",
+                "issues": [],
+                "label": "Meeting plugin: requirements extractor",
+                "queue": {
+                  "inherited_from": null,
+                  "policy_id": "meeting-intel-queue@2",
+                  "status": "no_assignment"
+                }
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "meeting.plugin.risk_heatmap",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "meetings",
+                  "label": "Meetings"
+                },
+                "has_override": false,
+                "id": "meeting.plugin.risk_heatmap",
+                "issues": [],
+                "label": "Meeting plugin: risk heatmap",
+                "queue": {
+                  "inherited_from": null,
+                  "policy_id": "meeting-intel-queue@2",
+                  "status": "no_assignment"
+                }
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "meeting.plugin.runbook_delta",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "meetings",
+                  "label": "Meetings"
+                },
+                "has_override": false,
+                "id": "meeting.plugin.runbook_delta",
+                "issues": [],
+                "label": "Meeting plugin: runbook delta",
+                "queue": {
+                  "inherited_from": null,
+                  "policy_id": "meeting-intel-queue@2",
+                  "status": "no_assignment"
+                }
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "meeting.plugin.scope_guard",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "meetings",
+                  "label": "Meetings"
+                },
+                "has_override": false,
+                "id": "meeting.plugin.scope_guard",
+                "issues": [],
+                "label": "Meeting plugin: scope guard",
+                "queue": {
+                  "inherited_from": null,
+                  "policy_id": "meeting-intel-queue@2",
+                  "status": "no_assignment"
+                }
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "meeting.plugin.stakeholder_update_drafter",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "meetings",
+                  "label": "Meetings"
+                },
+                "has_override": false,
+                "id": "meeting.plugin.stakeholder_update_drafter",
+                "issues": [],
+                "label": "Meeting plugin: stakeholder update drafter",
+                "queue": {
+                  "inherited_from": null,
+                  "policy_id": "meeting-intel-queue@2",
+                  "status": "no_assignment"
+                }
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "memory.consolidate",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "background",
+                  "label": "Background"
+                },
+                "has_override": false,
+                "id": "memory.consolidate",
+                "issues": [],
+                "label": "Memory observations",
+                "queue": null
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "memory.embed",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "background",
+                  "label": "Background"
+                },
+                "has_override": false,
+                "id": "memory.embed",
+                "issues": [],
+                "label": "Memory embedding",
+                "queue": null
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "memory.extract",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "background",
+                  "label": "Background"
+                },
+                "has_override": false,
+                "id": "memory.extract",
+                "issues": [],
+                "label": "Memory facts",
+                "queue": null
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "memory.page",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "background",
+                  "label": "Background"
+                },
+                "has_override": false,
+                "id": "memory.page",
+                "issues": [],
+                "label": "Memory pages",
+                "queue": null
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "project.brief_prepare",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "agents_tools",
+                  "label": "Agents & tools"
+                },
+                "has_override": false,
+                "id": "project.brief_prepare",
+                "issues": [],
+                "label": "Project preparation brief",
+                "queue": null
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "project.update_draft",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "agents_tools",
+                  "label": "Agents & tools"
+                },
+                "has_override": false,
+                "id": "project.update_draft",
+                "issues": [],
+                "label": "Project update draft",
+                "queue": null
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "project_doc.suggest_update",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "agents_tools",
+                  "label": "Agents & tools"
+                },
+                "has_override": false,
+                "id": "project_doc.suggest_update",
+                "issues": [],
+                "label": "Project document suggestion",
+                "queue": null
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "recipe.run",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "agents_tools",
+                  "label": "Agents & tools"
+                },
+                "has_override": false,
+                "id": "recipe.run",
+                "issues": [],
+                "label": "Recipe run",
+                "queue": null
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "sequence.step",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "agents_tools",
+                  "label": "Agents & tools"
+                },
+                "has_override": false,
+                "id": "sequence.step",
+                "issues": [],
+                "label": "Sequence step",
+                "queue": null
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "speech.intent_classify",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "writing_dictation",
+                  "label": "Writing & dictation"
+                },
+                "has_override": false,
+                "id": "speech.intent_classify",
+                "issues": [],
+                "label": "Dictation intent",
+                "queue": null
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "speech.rewrite",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "writing_dictation",
+                  "label": "Writing & dictation"
+                },
+                "has_override": false,
+                "id": "speech.rewrite",
+                "issues": [],
+                "label": "Dictation rewrite",
+                "queue": null
+              },
+              {
+                "effective": {
+                  "assignment": null,
+                  "capability_id": "speech.target_classify",
+                  "inherited_from": null,
+                  "repair": "Choose default",
+                  "status": "no_assignment"
+                },
+                "group": {
+                  "id": "writing_dictation",
+                  "label": "Writing & dictation"
+                },
+                "has_override": false,
+                "id": "speech.target_classify",
+                "issues": [],
+                "label": "Dictation target",
+                "queue": null
+              },
+              {
+                "effective": {
+                  "assignment": {
+                    "created_at": "2026-10-18T15:57:35.555407Z",
+                    "effective_retry_policy_id": "retry.audio.transcription",
+                    "entries": [
+                      {
+                        "boundary": "local",
+                        "label": "Whisper mlx base",
+                        "ordinal": 1,
+                        "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+                        "profile_revision": 1,
+                        "profile_schema_version": 2,
+                        "readiness": "unavailable"
+                      }
+                    ],
+                    "id": "ia_2491b82f6c3a41cbae28e2d156e5d179",
+                    "issues": [
+                      {
+                        "code": "binding_not_ready",
+                        "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+                        "profile_revision": 1,
+                        "severity": "repair"
+                      }
+                    ],
+                    "retry_policy_id": null,
+                    "retry_policy_source": "capability_default",
+                    "revision": 1,
+                    "schema": "InferenceAssignmentProjection@1",
+                    "scope": {
+                      "capability_id": "speech.transcribe",
+                      "kind": "capability"
+                    },
+                    "sha256": "sha256:df3419599772229f08d9c1413be26adfe279c33212cdab42f19648eb07ffda31"
                   },
                   "capability_id": "speech.transcribe",
                   "inherited_from": "capability",
@@ -9313,24 +11384,24 @@
             "assignments_after": {
               "heads": [
                 {
-                  "assignment_id": "ia_351567c8ffc44a3e8b152976fc0af653",
+                  "assignment_id": "ia_2491b82f6c3a41cbae28e2d156e5d179",
                   "assignment_key": "capability:speech.transcribe",
                   "cleared": false,
                   "revision": 1
                 }
               ],
-              "sha256": "sha256:d9e74842ab75d86c617154413b89a7de8b7b81bd03596a281756e94b43118606"
+              "sha256": "sha256:422ea3b3c14659d828dc04fbaa29ad2835d306a2576c60521ddbd03563bf6ef2"
             },
             "assignments_before": {
               "heads": [
                 {
-                  "assignment_id": "ia_351567c8ffc44a3e8b152976fc0af653",
+                  "assignment_id": "ia_2491b82f6c3a41cbae28e2d156e5d179",
                   "assignment_key": "capability:speech.transcribe",
                   "cleared": false,
                   "revision": 1
                 }
               ],
-              "sha256": "sha256:d9e74842ab75d86c617154413b89a7de8b7b81bd03596a281756e94b43118606"
+              "sha256": "sha256:422ea3b3c14659d828dc04fbaa29ad2835d306a2576c60521ddbd03563bf6ef2"
             },
             "assignments_unchanged": true,
             "kind": "model_library_provider",
@@ -9350,7 +11421,25 @@
         },
         "gets": {
           "/api/concierge/detect": {
-            "checkedAt": "2026-10-18T09:50:29.699371+00:00",
+            "agents": [
+              {
+                "added": false,
+                "install": "npm install -g @anthropic-ai/claude-code",
+                "installed": false,
+                "name": "Claude Code",
+                "preset": "claude",
+                "vendor": "ANTHROPIC"
+              },
+              {
+                "added": false,
+                "install": "npm install -g @openai/codex",
+                "installed": false,
+                "name": "Codex",
+                "preset": "codex",
+                "vendor": "OPENAI"
+              }
+            ],
+            "checkedAt": "2026-10-18T15:57:35.875990+00:00",
             "engines": [
               {
                 "audioCapable": false,
@@ -9437,8 +11526,8 @@
               },
               "observation": {
                 "available_memory_bytes": null,
-                "sha256": "sha256:22675733901b64d8e407600ce14bb858c996a509486ce9b5172d4877994346b1",
-                "storage_available_bytes": 243104894976
+                "sha256": "sha256:3a91b858c1feb593341373a80681b7a3dbf42e0ce3b8c110b92360cb9bd23a5e",
+                "storage_available_bytes": 238666448896
               }
             },
             "lastApply": null,
@@ -9455,6 +11544,79 @@
               {
                 "id": "openai_compatible_v1",
                 "state": "available"
+              }
+            ],
+            "services": [
+              {
+                "baseUrl": "https://openrouter.ai/api/v1",
+                "host": "openrouter.ai",
+                "id": "openrouter",
+                "name": "OpenRouter",
+                "presets": [
+                  {
+                    "contextTokens": 131072,
+                    "id": "preset_openrouter_qwen3_8b",
+                    "label": "OpenRouter \u00b7 Quick Qwen",
+                    "model": "qwen/qwen3-8b",
+                    "summary": "A small, fast Qwen for short Notes and everyday work."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_qwen35_35b_a3b",
+                    "label": "OpenRouter \u00b7 Balanced Qwen",
+                    "model": "qwen/qwen3.5-35b-a3b",
+                    "summary": "Strong general reasoning without using a giant model."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_qwen38_27b",
+                    "label": "OpenRouter \u00b7 Deep Qwen",
+                    "model": "qwen/qwen3.8-27b",
+                    "summary": "Deeper cloud reasoning for harder synthesis."
+                  },
+                  {
+                    "contextTokens": 1000000,
+                    "id": "preset_openrouter_qwen37_flash",
+                    "label": "OpenRouter \u00b7 Qwen Flash",
+                    "model": "qwen/qwen3.7-flash",
+                    "summary": "The quickest economical Qwen choice for everyday work."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_gemma4_26b",
+                    "label": "OpenRouter \u00b7 Gemma 4",
+                    "model": "google/gemma-4-26b-a4b-it",
+                    "summary": "A capable Gemma 4 alternative for writing and synthesis."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_qwen3_coder_next",
+                    "label": "OpenRouter \u00b7 Coding Qwen",
+                    "model": "qwen/qwen3-coder-next",
+                    "summary": "A coding-focused Qwen for technical plans and implementation."
+                  }
+                ]
+              },
+              {
+                "baseUrl": "https://api.openai.com/v1",
+                "host": "api.openai.com",
+                "id": "openai",
+                "name": "OpenAI",
+                "presets": []
+              },
+              {
+                "baseUrl": "https://api.anthropic.com/v1",
+                "host": "api.anthropic.com",
+                "id": "anthropic",
+                "name": "Anthropic",
+                "presets": []
+              },
+              {
+                "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai",
+                "host": "generativelanguage.googleapis.com",
+                "id": "gemini",
+                "name": "Gemini",
+                "presets": []
               }
             ],
             "summaryAssignment": {
@@ -10358,7 +12520,7 @@
               {
                 "effective": {
                   "assignment": {
-                    "created_at": "2026-10-18T09:50:29.302294Z",
+                    "created_at": "2026-10-18T15:57:35.555407Z",
                     "effective_retry_policy_id": "retry.audio.transcription",
                     "entries": [
                       {
@@ -10371,7 +12533,7 @@
                         "readiness": "unavailable"
                       }
                     ],
-                    "id": "ia_351567c8ffc44a3e8b152976fc0af653",
+                    "id": "ia_2491b82f6c3a41cbae28e2d156e5d179",
                     "issues": [
                       {
                         "code": "binding_not_ready",
@@ -10388,7 +12550,7 @@
                       "capability_id": "speech.transcribe",
                       "kind": "capability"
                     },
-                    "sha256": "sha256:36f3e37794f41d04abea2a5a56299efbd6eb263e55d4f4d8ae0a90157ee0fc82"
+                    "sha256": "sha256:df3419599772229f08d9c1413be26adfe279c33212cdab42f19648eb07ffda31"
                   },
                   "capability_id": "speech.transcribe",
                   "inherited_from": "capability",
@@ -10507,24 +12669,24 @@
             "assignments_after": {
               "heads": [
                 {
-                  "assignment_id": "ia_351567c8ffc44a3e8b152976fc0af653",
+                  "assignment_id": "ia_2491b82f6c3a41cbae28e2d156e5d179",
                   "assignment_key": "capability:speech.transcribe",
                   "cleared": false,
                   "revision": 1
                 }
               ],
-              "sha256": "sha256:d9e74842ab75d86c617154413b89a7de8b7b81bd03596a281756e94b43118606"
+              "sha256": "sha256:422ea3b3c14659d828dc04fbaa29ad2835d306a2576c60521ddbd03563bf6ef2"
             },
             "assignments_before": {
               "heads": [
                 {
-                  "assignment_id": "ia_351567c8ffc44a3e8b152976fc0af653",
+                  "assignment_id": "ia_2491b82f6c3a41cbae28e2d156e5d179",
                   "assignment_key": "capability:speech.transcribe",
                   "cleared": false,
                   "revision": 1
                 }
               ],
-              "sha256": "sha256:d9e74842ab75d86c617154413b89a7de8b7b81bd03596a281756e94b43118606"
+              "sha256": "sha256:422ea3b3c14659d828dc04fbaa29ad2835d306a2576c60521ddbd03563bf6ef2"
             },
             "assignments_unchanged": true,
             "kind": "model_library_provider",
@@ -10544,7 +12706,25 @@
         },
         "gets": {
           "/api/concierge/detect": {
-            "checkedAt": "2026-10-18T09:50:29.718255+00:00",
+            "agents": [
+              {
+                "added": false,
+                "install": "npm install -g @anthropic-ai/claude-code",
+                "installed": false,
+                "name": "Claude Code",
+                "preset": "claude",
+                "vendor": "ANTHROPIC"
+              },
+              {
+                "added": false,
+                "install": "npm install -g @openai/codex",
+                "installed": false,
+                "name": "Codex",
+                "preset": "codex",
+                "vendor": "OPENAI"
+              }
+            ],
+            "checkedAt": "2026-10-18T15:57:35.895601+00:00",
             "engines": [
               {
                 "audioCapable": false,
@@ -10674,8 +12854,8 @@
               },
               "observation": {
                 "available_memory_bytes": null,
-                "sha256": "sha256:22675733901b64d8e407600ce14bb858c996a509486ce9b5172d4877994346b1",
-                "storage_available_bytes": 243104894976
+                "sha256": "sha256:3a91b858c1feb593341373a80681b7a3dbf42e0ce3b8c110b92360cb9bd23a5e",
+                "storage_available_bytes": 238666448896
               }
             },
             "lastApply": null,
@@ -10692,6 +12872,79 @@
               {
                 "id": "openai_compatible_v1",
                 "state": "available"
+              }
+            ],
+            "services": [
+              {
+                "baseUrl": "https://openrouter.ai/api/v1",
+                "host": "openrouter.ai",
+                "id": "openrouter",
+                "name": "OpenRouter",
+                "presets": [
+                  {
+                    "contextTokens": 131072,
+                    "id": "preset_openrouter_qwen3_8b",
+                    "label": "OpenRouter \u00b7 Quick Qwen",
+                    "model": "qwen/qwen3-8b",
+                    "summary": "A small, fast Qwen for short Notes and everyday work."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_qwen35_35b_a3b",
+                    "label": "OpenRouter \u00b7 Balanced Qwen",
+                    "model": "qwen/qwen3.5-35b-a3b",
+                    "summary": "Strong general reasoning without using a giant model."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_qwen38_27b",
+                    "label": "OpenRouter \u00b7 Deep Qwen",
+                    "model": "qwen/qwen3.8-27b",
+                    "summary": "Deeper cloud reasoning for harder synthesis."
+                  },
+                  {
+                    "contextTokens": 1000000,
+                    "id": "preset_openrouter_qwen37_flash",
+                    "label": "OpenRouter \u00b7 Qwen Flash",
+                    "model": "qwen/qwen3.7-flash",
+                    "summary": "The quickest economical Qwen choice for everyday work."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_gemma4_26b",
+                    "label": "OpenRouter \u00b7 Gemma 4",
+                    "model": "google/gemma-4-26b-a4b-it",
+                    "summary": "A capable Gemma 4 alternative for writing and synthesis."
+                  },
+                  {
+                    "contextTokens": 262144,
+                    "id": "preset_openrouter_qwen3_coder_next",
+                    "label": "OpenRouter \u00b7 Coding Qwen",
+                    "model": "qwen/qwen3-coder-next",
+                    "summary": "A coding-focused Qwen for technical plans and implementation."
+                  }
+                ]
+              },
+              {
+                "baseUrl": "https://api.openai.com/v1",
+                "host": "api.openai.com",
+                "id": "openai",
+                "name": "OpenAI",
+                "presets": []
+              },
+              {
+                "baseUrl": "https://api.anthropic.com/v1",
+                "host": "api.anthropic.com",
+                "id": "anthropic",
+                "name": "Anthropic",
+                "presets": []
+              },
+              {
+                "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai",
+                "host": "generativelanguage.googleapis.com",
+                "id": "gemini",
+                "name": "Gemini",
+                "presets": []
               }
             ],
             "summaryAssignment": {
@@ -11595,7 +13848,7 @@
               {
                 "effective": {
                   "assignment": {
-                    "created_at": "2026-10-18T09:50:29.302294Z",
+                    "created_at": "2026-10-18T15:57:35.555407Z",
                     "effective_retry_policy_id": "retry.audio.transcription",
                     "entries": [
                       {
@@ -11608,7 +13861,7 @@
                         "readiness": "unavailable"
                       }
                     ],
-                    "id": "ia_351567c8ffc44a3e8b152976fc0af653",
+                    "id": "ia_2491b82f6c3a41cbae28e2d156e5d179",
                     "issues": [
                       {
                         "code": "binding_not_ready",
@@ -11625,7 +13878,7 @@
                       "capability_id": "speech.transcribe",
                       "kind": "capability"
                     },
-                    "sha256": "sha256:36f3e37794f41d04abea2a5a56299efbd6eb263e55d4f4d8ae0a90157ee0fc82"
+                    "sha256": "sha256:df3419599772229f08d9c1413be26adfe279c33212cdab42f19648eb07ffda31"
                   },
                   "capability_id": "speech.transcribe",
                   "inherited_from": "capability",

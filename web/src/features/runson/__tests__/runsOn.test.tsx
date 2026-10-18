@@ -1027,6 +1027,7 @@ describe("Runs on — FOUND, downloads, the add row", () => {
     m.check.mockResolvedValue({ ok: false, models: [], detail: "Nothing answers at this address." });
     await board();
     fireEvent.click(screen.getByTestId("concierge-add-engine"));
+    fireEvent.click(screen.getByTestId("runson-kind-lan")); // Betterment E4: the kind first
     const row = screen.getByTestId("concierge-add-engine-row");
     fireEvent.change(within(row).getAllByRole("textbox")[0], { target: { value: "http://127.0.0.1:9/v1" } });
     fireEvent.click(screen.getByTestId("concierge-add-check"));
@@ -1040,6 +1041,7 @@ describe("Runs on — FOUND, downloads, the add row", () => {
     m.define.mockResolvedValue({ profileId: "engine-x", profileRevision: 1 });
     await board();
     fireEvent.click(screen.getByTestId("concierge-add-engine"));
+    fireEvent.click(screen.getByTestId("runson-kind-lan")); // Betterment E4: the kind first
     const row = screen.getByTestId("concierge-add-engine-row");
     fireEvent.change(within(row).getAllByRole("textbox")[0], { target: { value: "http://10.0.0.5:8080/v1" } });
     expect(screen.getByTestId("concierge-add-egress").textContent).toContain("10.0.0.5:8080");

@@ -84,8 +84,9 @@ def test_model_library_mcp_stages_base64_and_never_returns_secret_or_paths(
         assert forbidden not in provider_rendered
     assert provider["provider"]["secret"] == {"required": True, "present": True}
 
-    # PHILO-15 05 (Astra r1): MCP gets the form's honest answer for Anthropic:
-    # refused with not_supported, nothing stored.
+    # Betterment E4 (DECISIONS #9): MCP gets the form's answer for Anthropic:
+    # refused when its /models does not answer the key, nothing stored.
+    monkeypatch.setattr("holdspeak.setup_runtime.discover_endpoint_models", lambda *_a, **_k: {"ok": False, "models": []})
     with pytest.raises(ServiceError) as refused:
         model_library.dispatch(
             "model_library.connect_hosted_model",
@@ -99,7 +100,7 @@ def test_model_library_mcp_stages_base64_and_never_returns_secret_or_paths(
             },
             OWNER,
         )
-    assert refused.value.code == "not_supported"
+    assert refused.value.code == "anthropic_models_check_failed"
     assert secret not in str(refused.value) and secret not in json.dumps(refused.value.context)
 
 

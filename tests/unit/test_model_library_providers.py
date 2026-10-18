@@ -60,14 +60,12 @@ def _draft(
 def store_stored_anthropic(
     service: ModelLibraryApplicationService, monkeypatch: pytest.MonkeyPatch, *, request_id: str, profile_id: str,
 ) -> None:
-    """An Anthropic profile an older desk stored before PHILO-15 05 refused
-    the family at the service (``_refuse_unsupported``). The row must still
-    read NOT SUPPORTED YET."""
-    with monkeypatch.context() as m:
-        m.setattr(ModelLibraryApplicationService, "_refuse_unsupported", staticmethod(lambda _draft: None))
-        service.connect_hosted_model(
-            OWNER, _draft(request_id=request_id, profile_id=profile_id, provider_family="anthropic"), {"value": "anthropic-key"},
-        )
+    """An Anthropic profile through its OpenAI-compatible endpoint (Betterment
+    E4, DECISIONS #9). The caller's ``discover_endpoint_models`` stub is the
+    ``/models`` answer that lets it in."""
+    service.connect_hosted_model(
+        OWNER, _draft(request_id=request_id, profile_id=profile_id, provider_family="anthropic"), {"value": "anthropic-key"},
+    )
 
 
 def _head_bytes(service: ModelLibraryApplicationService) -> bytes:
@@ -109,11 +107,8 @@ def test_hosted_custom_private_and_anthropic_rows_use_server_truth(monkeypatch: 
     assert _row(service, "openrouter-main")["selected_action"] == "Ready"
     assert _row(service, "custom-main")["selected_action"] == "Ready"
     assert _row(service, "private-main")["selected_action"] == "Ready"
-    anthro_row = _row(service, "anthropic-main")
-    # PHILO-15 05: no execution adapter yet; a state, not a repair.
-    assert anthro_row["status"] == "not_supported"
-    assert anthro_row["repair"] is None
-    assert anthro_row["selected_action"] == "NOT SUPPORTED YET"
+    # Betterment E4: Anthropic's /models answered, so it is Ready like the others.
+    assert _row(service, "anthropic-main")["selected_action"] == "Ready"
     # Canonical v2 profile identity has no private endpoint/slot/key material.
     profile = service._profiles.get_profile(OWNER, "private-main")
     encoded = json.dumps(profile, sort_keys=True)
@@ -201,11 +196,11 @@ def test_each_broken_provider_row_has_exactly_one_server_repair(monkeypatch: pyt
     service.define_endpoint(
         OWNER, _draft(request_id="offline-1", profile_id="offline-main", provider_family="private_endpoint", requires_key=False), None,
     )
-    store_stored_anthropic(service, monkeypatch, request_id="anthro-1", profile_id="anthro-main")
-    # PHILO-15 05: no adapter stays visible as a state, not a repair.
-    anthro = _row(service, "anthro-main")
-    assert anthro["status"] == "not_supported" and anthro["repair"] is None
-    assert anthro["selected_action"] == "NOT SUPPORTED YET"
+    # Betterment E4: an Anthropic key its /models refuses is not added at all.
+    with pytest.raises(ServiceError) as refused:
+        store_stored_anthropic(service, monkeypatch, request_id="anthro-1", profile_id="anthro-main")
+    assert refused.value.code == "anthropic_models_check_failed"
+    assert not [r for r in service.get_library(OWNER)["rows"] if r["id"] == "profile:anthro-main"]
     for profile_id in ("missing-main", "offline-main"):
         row = _row(service, profile_id)
         assert row["status"] == "broken"

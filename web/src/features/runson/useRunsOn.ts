@@ -110,6 +110,8 @@ export interface PendingTry {
 }
 
 export type AddState = "IDLE" | "CHECKING" | "READY" | "UNREACHABLE" | "KEY_REQUIRED" | "KEY_INVALID" | "NOT_ADDED";
+/** Betterment E4: the five kinds on the Add an engine tiles. */
+export type AddKind = "agent" | "service" | "lan" | "local" | "mesh";
 export type LanDiscoveryState = "IDLE" | "CHECKING";
 
 function clock(): string {
@@ -826,6 +828,10 @@ export function useRunsOn(scope?: string) {
   /* ── Add an engine (address + key + Check, inline) ── */
 
   const [addOpen, setAddOpen] = useState(false);
+  /** Betterment E4: the kind he chose (null: the five tiles show). */
+  const [addKind, setAddKindState] = useState<AddKind | null>(null);
+  /** The named service he chose (its base URL is the address). */
+  const [addService, setAddService] = useState<string | null>(null);
   const [addUrl, setAddUrlState] = useState("");
   const [addKey, setAddKeyState] = useState("");
   const [addMine, setAddMine] = useState(false);
@@ -865,7 +871,8 @@ export function useRunsOn(scope?: string) {
     const key = addKey.trim();
     if (!url) return;
     setAddState("CHECKING");
-    const answer = await checkEndpoint(url, key, addMine);
+    // A named service is never "my server" (no billed tool probe).
+    const answer = await checkEndpoint(url, key, addService ? false : addMine);
     // The field moved on: the answer is about another address.
     if (addAsked.current.url.trim() !== url || addAsked.current.key.trim() !== key) return;
     if (!mounted.current) return;
@@ -882,19 +889,21 @@ export function useRunsOn(scope?: string) {
       setAddState("UNREACHABLE");
       setAddReason(answer.detail);
     }
-  }, [addKey, addMine, addUrl]);
+  }, [addKey, addMine, addService, addUrl]);
 
   /** Use: save the model he picked as its own engine (Betterment E3). The
    *  picker stays, so a second model on the same host is one more press. */
   const saveModel = useCallback(async (model: string) => {
     const url = addUrl.trim();
     if (!url || !model || !addModels.includes(model)) return;
+    const service = detection?.services?.find((tile) => tile.id === addService);
     setBusy(true);
     try {
       await defineEndpoint(
         endpointDraft({
           url,
           model,
+          label: service?.name,
           requestId: `runson-add-${Date.now()}`,
           requiresKey: Boolean(addKey.trim()),
           contextTokens: addContexts[model] ?? null,
@@ -913,15 +922,42 @@ export function useRunsOn(scope?: string) {
     } finally {
       if (mounted.current) setBusy(false);
     }
-  }, [addContexts, addKey, addModels, addUrl, engines, loadDetection, loadRoster]);
+  }, [addContexts, addKey, addModels, addService, addUrl, detection, engines, loadDetection, loadRoster]);
 
+  /** Add an engine: the five tiles; a repair's address opens the server row. */
   const openAdd = useCallback((url = "") => {
     setAddOpen(true);
+    setAddKindState(url ? "lan" : null);
+    setAddService(null);
     addAsked.current = { url, key: "" };
     setAddUrlState(url);
     setAddKeyState("");
     resetAnswer();
   }, []);
+
+  const closeAdd = useCallback(() => {
+    setAddOpen(false);
+    setAddKindState(null);
+    setAddService(null);
+    addAsked.current = { url: "", key: "" };
+    setAddUrlState("");
+    setAddKeyState("");
+    resetAnswer();
+  }, []);
+
+  /** Betterment E4: a tile press. A kind clears the last answer; a named
+   *  service carries its own address, so he never types one. */
+  const chooseKind = useCallback((kind: AddKind | null, serviceId: string | null = null) => {
+    const service = serviceId ? detection?.services?.find((tile) => tile.id === serviceId) : undefined;
+    const url = service?.baseUrl ?? "";
+    setAddKindState(kind);
+    setAddService(service ? service.id : null);
+    addAsked.current = { url, key: "" };
+    setAddUrlState(url);
+    setAddKeyState("");
+    setAddMine(false);
+    resetAnswer();
+  }, [detection]);
 
   return {
     roster,
@@ -966,6 +1002,10 @@ export function useRunsOn(scope?: string) {
     add: {
       open: addOpen,
       openRow: openAdd,
+      close: closeAdd,
+      kind: addKind,
+      service: addService,
+      choose: chooseKind,
       url: addUrl,
       setUrl: setAddUrl,
       key: addKey,

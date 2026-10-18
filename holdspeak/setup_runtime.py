@@ -94,6 +94,32 @@ def key_is_header_safe(key: str) -> bool:
     return bool(key) and all(0x21 <= ord(ch) <= 0x7E for ch in key)
 
 
+#: Betterment E4 (DECISIONS #9): Anthropic runs through its OpenAI-compatible
+#: endpoint. Its chat route takes the Bearer key; its ``/models`` route reads
+#: ``x-api-key`` and a version header, so the Check sends both.
+ANTHROPIC_HOST = "api.anthropic.com"
+ANTHROPIC_VERSION = "2023-06-01"
+
+
+def is_anthropic_endpoint(base_url: str) -> bool:
+    """Is this address Anthropic's own API host?"""
+    return (urlparse(str(base_url or "").strip()).hostname or "").lower() == ANTHROPIC_HOST
+
+
+def endpoint_auth_headers(base_url: str, key: str | None) -> dict[str, str]:
+    """The request headers for one ``/models`` read of this endpoint.
+
+    The key must already be header-safe (``key_is_header_safe``)."""
+    headers = {"Accept": "application/json"}
+    key = str(key or "").strip()
+    if key:
+        headers["Authorization"] = f"Bearer {key}"
+        if is_anthropic_endpoint(base_url):
+            headers["x-api-key"] = key
+            headers["anthropic-version"] = ANTHROPIC_VERSION
+    return headers
+
+
 def discover_endpoint_models(
     base_url: str,
     *,
@@ -118,12 +144,13 @@ def discover_endpoint_models(
         }
 
     models_url = f"{base}/models"
-    headers = {"Accept": "application/json"}
     key = str(api_key or "").strip()
-    if key:
-        if not key_is_header_safe(key):
-            return {"ok": False, "models": [], "detail": KEY_NOT_HEADER_SAFE, "reason": "key_invalid"}
-        headers["Authorization"] = f"Bearer {key}"
+    if key and not key_is_header_safe(key):
+        return {"ok": False, "models": [], "detail": KEY_NOT_HEADER_SAFE, "reason": "key_invalid"}
+    headers = endpoint_auth_headers(base, key)
+    if is_anthropic_endpoint(base):
+        # Anthropic lists 20 models a page by default; one page holds them all.
+        models_url += "?limit=1000"
     getter = http_get or _default_http_json
     try:
         code, raw = getter(models_url, headers=headers, timeout=timeout_seconds)
@@ -411,9 +438,7 @@ def probe_runtime(
             api_key = resolve_profile_key(key_env) or ""
         except ProfileKeyStoreError:
             api_key = ""
-        headers = {"Accept": "application/json"}
-        if api_key:
-            headers["Authorization"] = f"Bearer {api_key}"
+        headers = endpoint_auth_headers(base, api_key if key_is_header_safe(api_key) else "")
         getter = http_get or _default_http_get
         try:
             code = getter(f"{base}/models", headers=headers, timeout=timeout_seconds)

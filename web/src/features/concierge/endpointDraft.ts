@@ -83,6 +83,8 @@ export function endpointDraft(args: {
   url: string;
   model: string;
   requestId: string;
+  /** Betterment E4: a named service's name (OpenRouter); else host:port. */
+  label?: string;
   expectedProfileRevision?: number;
   /** PHILO-15 02: true when the owner typed a key in the Key field. */
   requiresKey?: boolean;
@@ -93,7 +95,7 @@ export function endpointDraft(args: {
     request_id: args.requestId,
     profile_id: endpointProfileId(args.url, args.model),
     expected_profile_revision: args.expectedProfileRevision ?? 0,
-    label: endpointLabel(args.url),
+    label: args.label?.trim() || endpointLabel(args.url),
     provider_family: "openai_compatible",
     model: args.model.trim(),
     endpoint: args.url.trim(),

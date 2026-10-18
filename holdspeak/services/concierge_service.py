@@ -51,11 +51,30 @@ STATE_LIMITED = "LIMITED"
 STATE_INCOMPATIBLE = "INCOMPATIBLE"
 #: The authority cannot say (no model record yet): never READY.
 STATE_UNKNOWN = "UNKNOWN"
-#: PHILO-15 05: a cloud provider with no execution adapter (Anthropic). A key
-#: there does nothing, so the row never reads READY.
+#: An engine row HoldSpeak cannot read (an agent profile with a bad preset).
+#: Betterment E4 (DECISIONS #9): Anthropic is no longer one; it runs through
+#: its OpenAI-compatible endpoint.
 STATE_NOT_SUPPORTED = "NOT_SUPPORTED"
-#: Hosts whose provider HoldSpeak cannot run yet.
-_NOT_SUPPORTED_HOSTS = frozenset({"api.anthropic.com"})
+
+#: Betterment E4: the named services on the Add an engine tiles. Each one
+#: carries its OpenAI-compatible base URL, so the owner pastes a key and
+#: never types an address.
+SERVICE_TILES: tuple[dict[str, str], ...] = (
+    {"id": "openrouter", "name": "OpenRouter", "baseUrl": "https://openrouter.ai/api/v1"},
+    {"id": "openai", "name": "OpenAI", "baseUrl": "https://api.openai.com/v1"},
+    {"id": "anthropic", "name": "Anthropic", "baseUrl": "https://api.anthropic.com/v1"},
+    {"id": "gemini", "name": "Gemini", "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai"},
+)
+
+#: Each service's own host: a catalog preset belongs to the service its base
+#: URL names (read once, so a rig that moves a tile's address keeps them).
+_SERVICE_HOSTS = {tile["id"]: tile["baseUrl"].split("/")[2] for tile in SERVICE_TILES}
+
+#: Betterment E4: how to get an agent CLI that is not on this Mac (one line).
+AGENT_INSTALL = {
+    "claude": "npm install -g @anthropic-ai/claude-code",
+    "codex": "npm install -g @openai/codex",
+}
 
 # ---- Assignment group ids (the seven user-visible groups) -------------------
 
@@ -563,6 +582,71 @@ def _found_agent_engines(db: Any, home: Path) -> list[dict[str, Any]]:
     return rows
 
 
+def service_tiles(entries: Any) -> list[dict[str, Any]]:
+    """Betterment E4: the named service tiles, each with its catalog presets.
+
+    A preset belongs to the service whose base URL it names (today: the six
+    signed OpenRouter presets). The face shows them on top of the picker.
+    """
+    from urllib.parse import urlparse
+
+    tiles: list[dict[str, Any]] = []
+    for tile in SERVICE_TILES:
+        base = tile["baseUrl"].rstrip("/")
+        presets = []
+        for entry in entries or []:
+            if not isinstance(entry, dict) or entry.get("kind") != "hosted_profile_preset":
+                continue
+            profile = entry.get("existing_profile") or {}
+            if (urlparse(str(profile.get("base_url") or "")).hostname or "") != _SERVICE_HOSTS.get(tile["id"]):
+                continue
+            presets.append({
+                "id": str(entry.get("id") or ""),
+                "label": str(entry.get("label") or ""),
+                "summary": str(entry.get("summary") or ""),
+                "model": str(entry.get("model_id") or ""),
+                "contextTokens": profile.get("context_limit"),
+            })
+        tiles.append({
+            **tile,
+            "host": (urlparse(base).hostname or "").lower(),
+            "presets": presets,
+        })
+    return tiles
+
+
+def agent_tiles(db: Any) -> list[dict[str, Any]]:
+    """Betterment E4: every agent preset for the *An agent on this Mac* tile.
+
+    ``installed`` reads PATH only (the rig switch ``HOLDSPEAK_CLI_ENGINES=off``
+    says not installed); ``added`` says it is an engine already. A missing
+    one carries its one-line install command.
+    """
+    import shutil
+
+    from ..intel.cli_engine import PRESETS, cli_engines_on, parse_cli_endpoint
+
+    have: set[str] = set()
+    for profile in db.profiles.list():
+        if profile.deleted:
+            continue
+        parsed = parse_cli_endpoint(profile.base_url)
+        if parsed is not None:
+            have.add(parsed[0].id)
+    on = cli_engines_on()
+    return [
+        {
+            "preset": preset.id,
+            "name": preset.label,
+            "vendor": _AGENT_VENDOR.get(preset.vendor_host, preset.vendor_host.upper()),
+            "installed": on and shutil.which(preset.executable) is not None,
+            "added": preset.id in have,
+            "install": AGENT_INSTALL.get(preset.id, ""),
+        }
+        for preset in PRESETS.values()
+    ]
+
+
 def detect(
     *,
     db: Any,
@@ -661,10 +745,7 @@ def detect(
                 "quantToken": quant or None,
                 "legacyLabel": raw_label,
                 "host": host,
-                "state": (
-                    STATE_NOT_SUPPORTED if host.lower() in _NOT_SUPPORTED_HOSTS
-                    else STATE_READY if key_set else STATE_NOT_SET
-                ),
+                "state": STATE_READY if key_set else STATE_NOT_SET,
                 "keySet": key_set,
                 **_detected_profile_fields(db, str(profile.id)),
                 # HS-200-04: the probe needs the endpoint it is meant to reach.
@@ -870,6 +951,10 @@ def detect(
 
     result = {
         "engines": engines,
+        # Betterment E4: the Add an engine tiles (named services with their
+        # catalog presets; every agent preset, on this Mac or not).
+        "services": service_tiles(catalog.get("entries")),
+        "agents": agent_tiles(db),
         "hardware": hardware,
         "runtimes": [
             {"id": rt["id"], "state": rt["availability"]["state"]}
@@ -1268,15 +1353,6 @@ def probe(
     """
     kind = engine.get("kind", "")
     host = engine.get("host", "")
-
-    if kind == KIND_CLOUD and str(host).lower() in _NOT_SUPPORTED_HOSTS:
-        # PHILO-15 05: no execution adapter; never a spend, never READY.
-        return {
-            "state": STATE_NOT_SUPPORTED,
-            "host": host,
-            "keySet": engine.get("keySet", False),
-            "latencyMs": None,
-        }
 
     if kind == KIND_CLOUD and not generate:
         # Cloud probe without generate: key-presence check only
