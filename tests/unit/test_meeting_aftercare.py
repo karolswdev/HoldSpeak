@@ -290,7 +290,9 @@ def test_followup_draft_includes_decisions_owners_and_due(db):
     assert "## What we decided" in draft
     assert "- Use Postgres. Why: Transactions" in draft
     assert "## Open items" in draft
-    assert "- Priya: Wire the rate limiter (due Friday)" in draft
+    # Betterment D0 (docs/internal/betterment/daily/RECIPE.md, D0): the stored
+    # due is the day "Friday" names, read against the meeting's day (Thu 4 Jun).
+    assert "- Priya: Wire the rate limiter (due 2026-06-05)" in draft
     assert "- Unassigned: Pick a name" in draft
     assert "—" not in draft  # no em dashes in the copy
 

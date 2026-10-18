@@ -229,9 +229,12 @@ def test_f13_one_needs_you_count_with_a_muted_project(hub: Hub) -> None:
         title="Cutover planning", tags=[],
         segments=[TranscriptSegment(text="Send the cutover plan.", speaker="Me",
                                     start_time=0.0, end_time=2.0)]))
-    for pid, text in ((loud, "Send the cutover plan"), (quiet, "Book the rehearsal room")):
+    # Betterment D1 (docs/internal/betterment/daily/RECIPE.md, D1): a proposed
+    # action is a promise not kept yet and does not count; a decision to make
+    # does. Decisions keep this test on the rows the one count rule counts.
+    for pid, text in ((loud, "Pick the cutover date"), (quiet, "Pick the rehearsal room")):
         assert hub.db.proposals.create_proposal(
-            meeting_id="m-philo9", project_id=pid, kind="action", text=text,
+            meeting_id="m-philo9", project_id=pid, kind="decision", text=text,
             source_plugin="action_owner_enforcer") is not None
     is_error, muted = _tool(hub.client, "heartbeat.set", {"muted_projects": [quiet]})
     assert not is_error, muted

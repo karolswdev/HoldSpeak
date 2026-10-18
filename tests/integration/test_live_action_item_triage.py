@@ -239,7 +239,13 @@ class TestLiveTriageSurvivesTheSave:
         assert saved_done.completed_at is not None
         assert saved_edit.task == "Rewritten live"
         assert saved_edit.owner is None
-        assert saved_edit.due == "Friday"
+        # Betterment D0 (docs/internal/betterment/daily/RECIPE.md, D0): the save
+        # reads the said due against the meeting's day (Sat 15 Aug -> Fri 21 Aug)
+        # and keeps the said words beside the date.
+        assert saved_edit.due == "2026-08-21"
+        with db._connection() as conn:
+            said = conn.execute("SELECT due_said FROM action_items WHERE id = 'item-002'").fetchone()[0]
+        assert said == "Friday"
         assert saved_edit.review_state == "accepted"
 
 
