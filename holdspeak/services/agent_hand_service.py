@@ -18,6 +18,11 @@ launches on the ungated path and the brief is typed as its first input
 through ``process.input``. The tool gate decides the agent's held Bash
 calls by Control mode (Conductor K5, ``tool_gate_rules``). At most
 :data:`MAX_LIVE_LAUNCHES` launched agents run at one time.
+
+Betterment AG5: the limit is the setting ``agents.working_at_once`` (default
+6), and only an agent that works or needs the owner counts
+(``agent_flights.slot_holders``). At the limit a hand with ``queue`` waits
+in ``agent_hand_queue`` and the heartbeat starts it when an agent is free.
 """
 from __future__ import annotations
 
@@ -54,9 +59,10 @@ from .agent_brief import (
 log = get_logger("agent_hand")
 
 DEFAULT_PROFILE_ID = "claude-default"
-#: The most HoldSpeak-launched agents that run at one time (Conductor K5).
-#: One more Hand to agent refuses ``launch_cap_reached``.
-MAX_LIVE_LAUNCHES = 3
+#: The most HoldSpeak-launched agents that WORK at one time when the setting
+#: is not read (Betterment AG5: ``agents.working_at_once``, default 6). One
+#: more Hand to agent refuses ``launch_cap_reached``, or waits in the queue.
+MAX_LIVE_LAUNCHES = 6
 #: Launch states whose agent may still run.
 _LIVE_STATES = frozenset({"launched", "registered"})
 #: The story-ref project token for an item that belongs to no Project.
@@ -242,7 +248,7 @@ class AgentHandService:
         control_mode: Optional[Callable[[], str]] = None,
         gate_path: Optional[Path] = None,
         project_map: Optional[Mapping[str, Any]] = None,
-        max_live: int = MAX_LIVE_LAUNCHES,
+        max_live: Optional[int] = None,
         issue_reads: Optional[Mapping[str, Any]] = None,
         repositories: Optional[ProjectRepositories] = None,
     ) -> None:
@@ -256,7 +262,23 @@ class AgentHandService:
         self._control_mode = control_mode or _config_control_mode
         self._gate_path = gate_path
         self._project_map = project_map
-        self._max_live = int(max_live)
+        #: ``None``: the setting, read at each hand (a change applies at once).
+        self._max_live = None if max_live is None else int(max_live)
+
+    @property
+    def working_at_once(self) -> int:
+        """The limit now: the set override, else ``agents.working_at_once``."""
+        if self._max_live is not None:
+            return self._max_live
+        return working_at_once()
+
+    def working_count(self, launcher: Any = None) -> int:
+        """How many launched agents hold a slot now (AG5: working or
+        needing the owner; done, quiet and stopped agents do not count)."""
+        return len(working_launches(launcher or self._launch_service(), self._db))
+
+    def has_free_slot(self) -> bool:
+        return self.working_count() < self.working_at_once
 
     def hand(
         self,
@@ -267,6 +289,7 @@ class AgentHandService:
         instruction: Optional[str] = None,
         profile: Optional[str] = None,
         project_id: Optional[str] = None,
+        queue: bool = False,
     ) -> dict[str, Any]:
         """Hand the item. A clone this hand made is named on the answer AND on
         a later refusal (the launch can still fail after it): the face shows
@@ -276,6 +299,7 @@ class AgentHandService:
             answer = self._hand(
                 principal, kind, item_id, made,
                 instruction=instruction, profile=profile, project_id=project_id,
+                queue=queue,
             )
         except ServiceError as exc:
             if made.get("clone"):
@@ -295,6 +319,7 @@ class AgentHandService:
         instruction: Optional[str] = None,
         profile: Optional[str] = None,
         project_id: Optional[str] = None,
+        queue: bool = False,
     ) -> dict[str, Any]:
         try:
             kind, item_id = parse_item_ref({"kind": kind, "id": item_id})
@@ -369,11 +394,30 @@ class AgentHandService:
             raise AgentHandRefused(
                 "worktree_duplicate", f"worktree {spec['name']!r} already exists"
             )
-        live = live_launches(launcher)
-        if len(live) >= self._max_live:
+        working = len(working_launches(launcher, self._db))
+        limit = self.working_at_once
+        if working >= limit:
+            if queue:
+                # AG5: "Start when one is free": the press waits in the queue
+                # and the heartbeat starts it (agent_hand_queue.start_queued).
+                from .agent_hand_queue import HandQueue
+
+                entry = HandQueue().add(
+                    kind, item_id, instruction=instruction, profile=profile, project_id=project_id,
+                )
+                return {
+                    "status": "queued",
+                    "queue_id": entry["queue_id"],
+                    "queued_at": entry["queued_at"],
+                    "profile": profile_id,
+                    "origin_ref": {"kind": kind, "id": item_id},
+                    "project_id": project_id,
+                    "working": working,
+                    "working_at_once": limit,
+                }
             raise AgentHandRefused(
                 "launch_cap_reached",
-                f"{len(live)} agents run now; the limit is {self._max_live}",
+                f"{working} agents work now; the limit is {limit}",
             )
 
         mode = self._control_mode()
@@ -515,11 +559,13 @@ class AgentHandService:
         instruction: Optional[str] = None,
         profile: Optional[str] = None,
         project_id: Optional[str] = None,
+        queue: Optional[bool] = None,
     ) -> dict[str, Any]:
         """The ``agent.hand`` operation (``agent_operations.AGENT_HAND``)."""
         return self.hand(
             principal, kind, id,
             instruction=instruction, profile=profile, project_id=project_id,
+            queue=bool(queue),
         )
 
     # ── Claude Code and Codex: process.spawn, the gate armed for this worktree ──
@@ -678,6 +724,33 @@ def live_launches(launcher: Any) -> list[dict[str, Any]]:
     return rows
 
 
+def working_launches(launcher: Any, db: Any = None, sessions: Any = None) -> list[dict[str, Any]]:
+    """Betterment AG5: the running launches that hold a "working at once"
+    slot: the agent starts, works or needs the owner. A done or quiet turn,
+    and a stopped launch, never block a new hand."""
+    from .agent_flights import slot_holders
+
+    live = live_launches(launcher)
+    if not live:
+        return []
+    if db is None:
+        from ..db import get_database
+
+        db = get_database()
+    return [dict(record) for record in slot_holders(db, live, sessions)]
+
+
+def working_at_once() -> int:
+    """The setting ``agents.working_at_once`` (default 6)."""
+    from ..config import Config
+    from ..config.agents import DEFAULT_WORKING_AT_ONCE
+
+    try:
+        return int(Config.load().agents.working_at_once)
+    except Exception:
+        return DEFAULT_WORKING_AT_ONCE
+
+
 def launch_liveness(launcher: Any) -> Optional[bool]:
     """Whether a HoldSpeak launch runs now: ``True``, ``False``, or ``None``
     when it is not known (a tmux probe failed or timed out and no other
@@ -731,6 +804,8 @@ __all__ = [
     "MAX_LIVE_LAUNCHES",
     "launch_liveness",
     "live_launches",
+    "working_at_once",
+    "working_launches",
     "default_agent_hand_service",
     "resolve_project_repository",
     "worktree_spec",

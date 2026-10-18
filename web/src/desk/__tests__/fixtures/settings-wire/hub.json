@@ -1,4 +1,7 @@
 {
+  "agents": {
+    "workingAtOnce": 6
+  },
   "answers": {
     "engine": null,
     "engineSet": null
@@ -48,5 +51,5 @@
     "speechReady": false,
     "target": "auto"
   },
-  "writtenAt": 1791732730.5288444
+  "writtenAt": 1792341616.3896868
 }

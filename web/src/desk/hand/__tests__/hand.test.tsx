@@ -300,13 +300,19 @@ describe("PHILO-14 C3 YOLO: the confirm line", () => {
     expect((posts("/api/agent/hand/preview")[0].init?.json as { profile: string }).profile).toBe("codex-default");
   });
 
-  it("a launch cap reads on the line as the sheet reads it; Hand cannot be pressed", async () => {
+  it("at the working-at-once limit the verb reads Start when one is free and queues the hand (Betterment AG5)", async () => {
     world.preview = { ...PREVIEW, refused: ["launch_cap_reached"] };
+    world.hand = () => ({ status: "queued", queue_id: "queue_1", queued_at: today });
     await renderDesk();
     dragOnto(comms(), conductor());
     const line = await within(drawer()).findByTestId("hand-confirm");
-    expect(await within(line).findByText("AGENT LIMIT REACHED")).toBeTruthy();
-    expect(within(line).getByRole("button", { name: "Hand" })).toBeDisabled();
+    const start = await within(line).findByRole("button", { name: "Start when one is free" });
+    // Not a dead red line: no refusal token, and the verb can be pressed.
+    expect(within(line).queryByText("AGENT LIMIT REACHED")).toBeNull();
+    await waitFor(() => expect(start).not.toBeDisabled());
+    fireEvent.click(start);
+    expect(await within(line).findByTestId("hand-confirm-receipt")).toHaveTextContent("WAITS FOR A FREE AGENT");
+    expect((posts("/api/agent/hand").at(-1)?.init?.json as { queue?: boolean }).queue).toBe(true);
   });
 
   it("a refused launch reads NOT LAUNCHED with its name; a brief not sent offers Send again", async () => {

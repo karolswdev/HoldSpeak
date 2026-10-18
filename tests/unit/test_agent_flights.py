@@ -270,11 +270,16 @@ def test_sessions_route_serves_history_and_the_hub_launch_count(monkeypatch, tmp
     app = FastAPI()
     app.include_router(build_coders_router(SimpleNamespace(broadcast=None, agent_hand_reads=Reads())))
     body = TestClient(app).get("/api/coders/sessions?include_ended=false").json()
-    assert body["launches"] == {"live": 0, "cap": 3}
+    # Betterment AG5: the cap is the setting `agents.working_at_once` (default 6).
+    assert body["launches"] == {"live": 0, "cap": 6}
     assert body["history"] == []
     assert [f["state"] for f in body["flights"]] == ["pr_open"]
     alive["hs-l1"] = True
-    assert TestClient(app).get("/api/coders/sessions").json()["launches"] == {"live": 1, "cap": 3}
+    # AG5: a live tmux session whose agent ended holds no slot ...
+    assert TestClient(app).get("/api/coders/sessions").json()["launches"] == {"live": 0, "cap": 6}
+    # ... an agent that works does.
+    hook(registry, "claude", "s1", "UserPromptSubmit", prompt="the next step")
+    assert TestClient(app).get("/api/coders/sessions").json()["launches"] == {"live": 1, "cap": 6}
 
 
 # ── Betterment AG0: tell the truth about state ───────────────────────

@@ -350,6 +350,66 @@ def flight_of_launch(
     return _flight(db, record, by_key, clock)
 
 
+#: Betterment AG5: the session states whose agent holds a "working at
+#: once" slot. A done turn, an idle (quiet) one, an ended or expired session
+#: and a launch stopped by a restart hold none: their process waits and
+#: costs nothing.
+_SLOT_STATES = frozenset({"starting", "working", "waiting"})
+
+
+def _bound_session_key(db: Any, record: Mapping[str, Any]) -> str:
+    attempt_id = str(record.get("attempt_id") or "")
+    if not attempt_id:
+        return ""
+    try:
+        attempt = db.work_attempts.get(attempt_id)
+    except Exception:
+        return ""
+    return str(getattr(attempt, "session_id", "") or "")
+
+
+def slot_holders(
+    db: Any,
+    records: Iterable[Mapping[str, Any]],
+    sessions: Optional[Iterable[Any]] = None,
+    *,
+    now: Optional[datetime] = None,
+) -> list[Mapping[str, Any]]:
+    """Betterment AG5: of these running launches, the ones that hold a
+    "working at once" slot: the agent starts, works, or needs the owner (it
+    asks, or a call waits for him). A turn that ended done or idle is
+    finished work: it never blocks a new hand. ``sessions`` is the whole
+    registry (``None`` reads it)."""
+    from ..agent_context.models import TURN_ASKS, turn_end
+
+    if sessions is None:
+        from ..agent_context import list_agent_sessions
+
+        sessions = list_agent_sessions()
+    by_key = _session_index(sessions)
+    clock = now or datetime.now(timezone.utc)
+    held: list[Mapping[str, Any]] = []
+    for record in records:
+        if str(record.get("state") or "") == STOPPED_BY_RESTART:
+            continue
+        key = _bound_session_key(db, record)
+        if not key:
+            held.append(record)   # starting: the agent has not registered yet
+            continue
+        session = by_key.get(key)
+        state = _session_state(session, clock)
+        if state not in _SLOT_STATES:
+            continue
+        if state == "waiting":
+            # The responder's record of the wait first (done / idle is not
+            # the owner's), else how the turn ended.
+            ended = _responder_turn(key, session) or turn_end(session)
+            if ended != TURN_ASKS:
+                continue
+        held.append(record)
+    return held
+
+
 def annotate_sessions(items: list[dict[str, Any]], flights: list[dict[str, Any]]) -> None:
     """Each session row that a flight names gets ``flight`` (its item)."""
     by_session = {f["session_key"]: f for f in flights if f.get("session_key")}
@@ -361,4 +421,4 @@ def annotate_sessions(items: list[dict[str, Any]], flights: list[dict[str, Any]]
             row["flight"] = flight
 
 
-__all__ = ["STOPPED_BY_RESTART", "agent_flights", "annotate_sessions", "flight_of_launch"]
+__all__ = ["STOPPED_BY_RESTART", "agent_flights", "annotate_sessions", "flight_of_launch", "slot_holders"]

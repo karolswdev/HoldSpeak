@@ -156,6 +156,10 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
     });
   }, [launching, launched, origin.projectId]);
 
+  // Betterment AG5: the working-at-once limit is not a dead end: the verb
+  // reads "Start when one is free" and the hand waits in the hub's queue.
+  const atLimit = (preview?.refused ?? []).includes("launch_cap_reached");
+  const refused = (preview?.refused ?? []).filter((code) => code !== "launch_cap_reached");
   const previewed = preview ? agentOfProfile(preview.profile, agent) : agent;
   const actual = launched ? agentOfProfile(launched.profile, previewed) : previewed;
 
@@ -164,7 +168,9 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
     setLaunching(true);
     setLaunchError(null);
     try {
-      const answer = await apiFetch<HandLaunch>(HAND_PATH, { method: "POST", json: JSON.parse(requestKey) });
+      // Betterment AG5: at the working-at-once limit the press queues the hand.
+      const body = { ...JSON.parse(requestKey), ...(atLimit ? { queue: true } : {}) };
+      const answer = await apiFetch<HandLaunch>(HAND_PATH, { method: "POST", json: body });
       if (answer?.clone) setCloneDone(answer.clone);
       setLaunched({ profile: AGENT_PROFILE[previewed], ...(answer ?? {}) });
     } catch (error) {
@@ -175,7 +181,7 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
     } finally {
       setLaunching(false);
     }
-  }, [launching, launched, requestKey, previewed]);
+  }, [launching, launched, requestKey, previewed, atLimit]);
 
   const sendAgain = useCallback(async () => {
     if (!launched?.launch_id || launching) return;
@@ -190,7 +196,6 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
     }
   }, [launched, launching]);
 
-  const refused = preview?.refused ?? [];
   const delivery = launched ? deliveryToken(launched) : null;
   const fact = [preview ? modeWord(preview.control_mode) : "", branchFace(preview?.branch)].filter(Boolean).join(" · ");
   const frozen = launching || launched !== null;
@@ -313,6 +318,7 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
         briefOpen={briefOpen}
         onCancel={cancel}
         onHand={() => void hand()}
+        handLabel={atLimit ? "Start when one is free" : undefined}
         busy={launching}
         disabled={!preview || refused.length > 0}
         egress={<EgressChip {...engineEgress(actual, preview)} />}

@@ -62,6 +62,8 @@ export const PREF_MODULES: PrefModule[] = [
   { id: "system", label: "System", glyph: "system", sprite: "system", keys: ["device", "mesh"] },
   // Conductor R7 (canvas K7a, ratified 2026-10-07): People MCP access.
   { id: "people", label: "People", glyph: "system", sprite: "system", keys: ["people"] },
+  // Betterment AG5 (DECISIONS #23): how many agents work at once.
+  { id: "agents", label: "Agents", glyph: "system", sprite: "system", keys: ["agents"] },
 ];
 
 /** Stable id aliases: deep links and scope params from retired modules
@@ -379,6 +381,8 @@ export type SettingsHubWire = {
     quiet?: { start: number; end: number; held: boolean };
   };
   sounds: { on: boolean };
+  /** Betterment AG5: the working-at-once limit (absent on an older hub). */
+  agents?: { workingAtOnce: number };
   system: { host: string; mesh: boolean; remote?: boolean };
   posture: string;
   writtenAt: number | null;
@@ -548,6 +552,7 @@ export function PrefsFace({
     { id: "sounds", label: "Sounds & Presence", sprite: "sounds", fact: hub.sounds.on ? "Desk sounds on" : "Desk sounds off" },
     { id: "wallpaper", label: "Wallpaper", sprite: "wallpaper", fact: resolveAtmosphere(atmosphereId).name },
     { id: "people", label: "People", sprite: "system", fact: <PeopleHubCells /> },
+    { id: "agents", label: "Agents", sprite: "system", fact: hub.agents ? `Up to ${hub.agents.workingAtOnce} at once` : "" },
     { id: "system", label: "System", sprite: "system", fact: <OtherDevicesChip on={Boolean(hub.system.remote)} /> },
   ];
   const directory = (entries: typeof work, label: string) => (

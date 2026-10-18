@@ -44,8 +44,8 @@ from .agent_hand_service import (
     _config_control_mode,
     _launch_for_origin,
     item_exists,
-    live_launches,
     resolve_project_repository,
+    working_launches,
     free_worktree_spec,
     worktree_spec,
 )
@@ -285,7 +285,9 @@ def preview_hand(
                     refused.append("launch_profile_mismatch")
             else:
                 refused.append("worktree_duplicate")
-        elif len(live_launches(launcher)) >= service._max_live:
+        elif len(working_launches(launcher, db)) >= service.working_at_once:
+            # Betterment AG5: not a dead end. The sheet's Launch reads
+            # "Start when one is free" (the hand with queue: true).
             refused.append("launch_cap_reached")
 
     mode = _read_control_mode(service)

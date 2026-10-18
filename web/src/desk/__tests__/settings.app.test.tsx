@@ -147,7 +147,7 @@ describe("the Settings hub on a cold hub", () => {
       "Open Voice", "Open Meetings", "Open Rhythm", "Open Engines", "Open Accounts",
     ]);
     expect(within(desk).getAllByRole("button", { name: /^Open / }).map((button) => button.textContent)).toEqual([
-      "Open Sounds & Presence", "Open Wallpaper", "Open People", "Open System",
+      "Open Sounds & Presence", "Open Wallpaper", "Open People", "Open Agents", "Open System",
     ]);
     const rows = Array.from(container.querySelectorAll(".surface-ledger-primary")).map((n) => n.textContent);
     expect(rows).toEqual(expect.arrayContaining(["Rhythm", "System"]));
@@ -163,6 +163,24 @@ describe("the Settings hub on a cold hub", () => {
     expect(container.querySelectorAll(".prefs-posture .gadget-fact")).toHaveLength(0);
     expect(rawButtons(container.querySelector(".prefs-hub")!)).toEqual([]);
     expect(hub.state.unknown).toEqual([]);
+  });
+
+  it("Agents: the hub row names the limit; the module sets how many work at once (Betterment AG5)", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"], shouldAdvanceTime: true });
+    const { container } = await openHub();
+    const row = ledgerRow("Agents")!;
+    expect(row.textContent).toContain("Up to 6 at once");
+    fireEvent.click(within(row).getByRole("button", { name: "Open Agents" }));
+    expect(container.querySelector(".prefs-module .gadget-pane-title")?.textContent).toBe("Agents");
+    const field = screen.getByRole("spinbutton", { name: "Working at once" }) as HTMLInputElement;
+    expect(field.value).toBe("6");
+    fireEvent.click(screen.getByRole("button", { name: "Increase Working at once" }));
+    await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+    await waitFor(() => {
+      const put = hub.state.calls.filter((c) => c.method === "PUT" && c.path === "/api/settings").at(-1);
+      expect(put?.body?.agents?.working_at_once).toBe(7);
+    });
+    expect(rawButtons(container)).toEqual([]);
   });
 
   it("a hub with a connection names the count on the Accounts row", async () => {

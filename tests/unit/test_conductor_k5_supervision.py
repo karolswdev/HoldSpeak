@@ -494,11 +494,18 @@ from holdspeak.services.agent_hand_service import MAX_LIVE_LAUNCHES, AgentHandRe
 
 
 def test_the_live_launch_cap_refuses_by_name(tmp_path, db, monkeypatch) -> None:  # noqa: F811
-    assert MAX_LIVE_LAUNCHES == 3
+    assert MAX_LIVE_LAUNCHES == 6  # Betterment AG5 (DECISIONS #23); the setting rules
     rig = _rig(tmp_path, db, monkeypatch)
     rig.hand._max_live = 1
     first = rig.hand.hand(OWNER, "action", "ai_1")
     assert first["status"] == "launched"
+    # Betterment AG5: the agent holds its slot while it works (its hooks say so).
+    registry = tmp_path / "agent_sessions.json"
+    monkeypatch.setattr(agent_context, "AGENT_CONTEXT_FILE", registry)
+    ingest_agent_hook_event(agent="claude", state_path=registry, payload={
+        "session_id": "smoke-session", "cwd": str(rig.worktree), "hook_event_name": "UserPromptSubmit",
+        "prompt": "the brief",
+    })
     with pytest.raises(AgentHandRefused) as exc:
         rig.hand.hand(OWNER, "decision", "d1")
     assert exc.value.reason == "launch_cap_reached" and exc.value.code == "launch_cap_reached"

@@ -33,7 +33,7 @@ import { wireDate } from "../surface/format";
 export const STALE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export type ConductorRole = "ready" | "live" | "stale";
-export type LiveState = "ask" | "held" | "idle" | "pr" | "work" | "done";
+export type LiveState = "ask" | "held" | "idle" | "pr" | "work" | "done" | "queued";
 
 export interface ConductorMember extends ObjectListRow {
   role: ConductorRole;
@@ -109,6 +109,9 @@ function liveLamp(state: LiveState, pr: number | null | undefined): { tone: Obje
       return { tone: "ok", label: pr ? `PR #${pr}` : "PR OPEN" };
     case "done":
       return { tone: "ok", label: "DONE" };
+    case "queued":
+      // Betterment AG5: the hand waits for a free agent.
+      return { tone: "info", label: "WAITS" };
     default:
       return { tone: "info", label: "WORKS" };
   }
@@ -125,6 +128,7 @@ function sessionState(row: CoderSessionRow): LiveState {
 
 function flightState(flight: AgentFlight): LiveState {
   if (flight.state === "done") return "done";
+  if (flight.state === "queued") return "queued";
   if (flight.state === "waiting") return flight.turnEnd === "idle" ? "idle" : "ask";
   if (flight.state === "pr_open" || flight.state === "merged") return "pr";
   return "work";
@@ -259,21 +263,23 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
   // LIVE: a launch in flight with no live session row (starting; its PR is
   // open after the session left).
   for (const flight of reads.flights) {
-    if (!inFlight(flight) || !flight.launchId) continue;
+    // Betterment AG5: a queued hand has no launch yet; its queue id names it.
+    const ref = flight.launchId ? `launch:${flight.launchId}` : flight.queueId ? `queue:${flight.queueId}` : null;
+    if (!inFlight(flight) || !ref) continue;
     if (flight.sessionKey && liveKeys.has(flight.sessionKey)) continue;
     const state = flightState(flight);
     const lamp = flight.state === "starting" ? { tone: "info" as const, label: "STARTS" } : liveLamp(state, flight.pr?.number);
-    const at = reads.launchedAt[flight.launchId];
+    const at = flight.launchId ? reads.launchedAt[flight.launchId] : flight.queuedAt ?? undefined;
     add({
-      id: `launch:${flight.launchId}`,
-      ref: `launch:${flight.launchId}`,
+      id: ref,
+      ref,
       role: "live",
       live: state,
       agent: flight.agent,
       kind: "coder",
       kindWord: "AGENT",
       name: `${titleOf(flight.agent)}: ${shortItemName(flight.title)}`,
-      ...sprites(flight.agent, flight.launchId),
+      ...sprites(flight.agent, ref),
       when: ageWord(at, now),
       whenSort: wireDate(at)?.getTime(),
       state: lamp,
@@ -339,8 +345,9 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
 export interface ConductorHead {
   atWork: number;
   ask: number;
-  /** The hub's own count of running launches and its cap (`live_launches`,
-   *  `MAX_LIVE_LAUNCHES`); null when the hub did not serve it. */
+  /** The hub's own count of agents that work or need him and its limit
+   *  (Betterment AG5: `working_launches`, the setting `agents.working_at_once`);
+   *  null when the hub did not serve it. */
   launches: { live: number; cap: number } | null;
 }
 
@@ -350,8 +357,8 @@ export function conductorHead(
 ): ConductorHead {
   const live = members.filter((m) => m.role === "live");
   const ask = live.filter((m) => m.live === "ask" || m.live === "held").length;
-  // Betterment AG0: a finished agent is not at work.
-  const done = live.filter((m) => m.live === "done").length;
+  // Betterment AG0: a finished agent is not at work; AG5: nor a queued hand.
+  const done = live.filter((m) => m.live === "done" || m.live === "queued").length;
   return { atWork: live.length - ask - done, ask, launches };
 }
 

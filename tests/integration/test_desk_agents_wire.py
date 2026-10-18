@@ -732,3 +732,55 @@ def test_the_agents_read_asks_with_choices_and_answers_without_an_arm(
                          {"keys": ["Enter"], "kind": "answer", "wait_id": held})
     body = _refusal(body)
     assert status == 409 and body["status"] in {"pane_gone", "tmux_absent", "target_gone", "error"}, (status, body)
+
+
+def test_the_agents_read_counts_only_working_agents_and_shows_a_queued_hand(
+    hub: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Betterment AG5 (the hub half): the cap is the setting
+    ``agents.working_at_once``; a done agent holds no slot; a hand that waits
+    for a free agent is a flight in the ``queued`` state on the Agents read.
+    The answer is recorded for agents.app.test.tsx (fixtures/agents-ag5)."""
+    import holdspeak.agent_context as agent_context_pkg
+    from holdspeak.agent_context import event_log, ingest_agent_hook_event
+    from holdspeak.config import Config
+    from holdspeak.db import get_database
+    from holdspeak.services.agent_hand_queue import HandQueue
+    from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
+
+    (tmp_path / "tmux").mkdir()
+    monkeypatch.setenv("TMUX_TMPDIR", str(tmp_path / "tmux"))
+    config = Config.load()
+    config.agents.working_at_once = 2
+    config.save()
+    _ag0_seed(tmp_path / "home")
+    db = get_database()
+    start = (datetime.now() - timedelta(minutes=50)).replace(microsecond=0)
+    db.meetings.save_meeting(MeetingState(
+        id="m-keys", started_at=start, ended_at=start + timedelta(minutes=20), title="Security sync",
+        segments=[TranscriptSegment(text="Rotate the staging keys this week.", speaker="Me", start_time=1.0, end_time=3.0)],
+        intel=IntelSnapshot(timestamp=1.0, topics=["keys"], summary="Rotate keys.", action_items=[{
+            "id": "m-keys-a0", "task": "Rotate the staging keys", "owner": None, "due": None, "status": "pending",
+            "review_state": "accepted", "source_timestamp": None, "created_at": start.isoformat()}]),
+        intel_status="completed"))
+    with db._connection() as conn:
+        third = str(conn.execute(
+            "SELECT id FROM action_items WHERE task=? LIMIT 1", ("Rotate the staging keys",)).fetchone()[0])
+    # A third hand at the limit waits (the hand service's own queue entry).
+    HandQueue().add("action", third, profile="codex-default")
+    spool = {"state_path": agent_context_pkg.AGENT_CONTEXT_FILE, "events_spool_dir": event_log.default_spool_dir()}
+    ingest_agent_hook_event(agent="claude", payload={
+        "session_id": "ag0-done", "cwd": str(tmp_path / "home" / "dev" / "platform"),
+        "hook_event_name": "Notification", "notification_type": "idle_prompt",
+        "message": "Claude is waiting for your input"}, **spool)
+
+    body = _get(hub, "/api/coders/sessions?include_ended=false")
+    assert body["launches"]["cap"] == 2, body["launches"]
+    states = {(f["launch_id"] or f["queue_id"]): f["state"] for f in body["flights"]}
+    assert states["launch_ag0_done"] == "done" and "queued" in states.values(), states
+    [queued] = [f for f in body["flights"] if f["state"] == "queued"]
+    assert queued["agent"] == "codex" and queued["launch_id"] is None and queued["queued_at"], queued
+    assert queued["title"] == "Rotate the staging keys", queued
+    _keep("agents-ag5", "coders-sessions", body, tmp_path, hub)
+    hub_settings = _get(hub, "/api/settings/hub")
+    assert hub_settings["agents"] == {"workingAtOnce": 2}, hub_settings.get("agents")
