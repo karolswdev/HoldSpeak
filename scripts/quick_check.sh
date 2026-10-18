@@ -132,9 +132,10 @@ grep -E '^(FAILED|ERROR)|passed|failed' "$H/canon.log" | tail -4 | sed 's/^/   /
 # The repo guards (2026-10-18): fast whole-repo censuses and ratchets that a
 # "related tests" run never picks, so their reds used to reach main unseen
 # (static SQL, density, copy, API surface, frame registry, model-call census,
-# time census, kernel line budget, residual census, atlas anchors).
+# time census, kernel line budget, residual census, atlas anchors, the
+# thread tool gate, the 12 px type floor, the graph join).
 echo "== repo guards"
-lock uv run pytest -q -n 8 tests/unit/test_static_sql_matches_schema.py tests/unit/test_density_guard.py tests/unit/test_product_copy.py tests/unit/test_api_surface.py tests/unit/test_realtime_frame_registry.py tests/unit/test_one_path_census.py tests/unit/test_aware_time_census.py tests/unit/test_kernel_effect_fence.py tests/unit/test_decisions.py tests/unit/test_philo7_contract.py tests/unit/test_doc_drift_guard.py tests/unit/test_graph_atlas.py tests/unit/test_phase143_surface_fallback_census.py tests/unit/test_ux_canon_scan.py >"$H/repo.log" 2>&1 || { echo "   the repo guards failed: RED"; fail=1; }
+lock uv run pytest -q -n 8 tests/unit/test_static_sql_matches_schema.py tests/unit/test_density_guard.py tests/unit/test_product_copy.py tests/unit/test_api_surface.py tests/unit/test_realtime_frame_registry.py tests/unit/test_one_path_census.py tests/unit/test_aware_time_census.py tests/unit/test_kernel_effect_fence.py tests/unit/test_decisions.py tests/unit/test_philo7_contract.py tests/unit/test_doc_drift_guard.py tests/unit/test_graph_atlas.py tests/unit/test_phase143_surface_fallback_census.py tests/unit/test_ux_canon_scan.py tests/unit/test_thread_tool_gate.py tests/unit/test_philo13_18_type_floor_static.py tests/unit/test_graph_reference.py >"$H/repo.log" 2>&1 || { echo "   the repo guards failed: RED"; fail=1; }
 grep -E '^(FAILED|ERROR)|passed|failed' "$H/repo.log" | tail -8 | sed 's/^/   /'
 
 if [ "$fail" = 0 ]; then echo "QUICK CHECK GREEN: merge; the main watcher runs the whole suite."; else echo "QUICK CHECK RED: fix before merging."; fi

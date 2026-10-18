@@ -381,6 +381,14 @@ class TestClassificationCensus:
             frozenset({"workbench.create", "workbench.update"}),
         ("holdspeak/services/workbench_service.py", "create_workbench"): frozenset({"workbench.create"}),
         ("holdspeak/services/workbench_service.py", "update_workbench"): frozenset({"workbench.update"}),
+        # Betterment A4 (#1304): a new engine for an automation re-freezes its
+        # live schedule. Its one caller is InferenceAssignmentService's
+        # _after_subject_write (set_assignment, clear_assignment); the MCP tools
+        # that reach a workbench subject scope are inference_assignment.set and
+        # .clear (config). The owner HTTP route PUT /api/workbenches/{id}/engine
+        # (set_engine) reaches it too; no MCP tool calls set_engine or set_when.
+        ("holdspeak/services/workbench_service.py", "refreeze_schedule"):
+            frozenset({"inference_assignment.set", "inference_assignment.clear"}),
         # the recording delegation receipt
         ("holdspeak/services/scheduled_recording_service.py", "create_schedule"):
             frozenset({"scheduled_recording.create"}),
@@ -442,6 +450,73 @@ class TestClassificationCensus:
         for site, tools in self.MINTERS.items():
             for tool in tools:
                 assert TOOL_AUTHORITY[tool] != "work" or tool in ARGUMENT_AUTHORITY, (site, tool)
+
+    #: A call that would turn on a schedule or change an automation's engine.
+    SCHEDULE_OR_ENGINE_CALLS: tuple[tuple[str, dict[str, Any]], ...] = (
+        ("workbench.update", {"workbench_id": "w", "fields": {"schedule": "0 9 * * 1", "schedule_enabled": True}}),
+        ("workbench.update", {"workbench_id": "w", "fields": {"schedule_enabled": True}}),
+        ("workbench.create", {"name": "x", "fields": {"schedule": "0 9 * * 1", "schedule_enabled": True}}),
+        ("inference_assignment.set", {"scope": {"kind": "subject", "subject_kind": "workbench",
+                                                "subject_id": "w", "capability_id": "workbench.item"},
+                                      "entries": [{"profile_id": "p"}]}),
+        ("inference_assignment.clear", {"scope": {"kind": "subject", "subject_kind": "workbench",
+                                                  "subject_id": "w", "capability_id": "workbench.item"}}),
+        ("concierge.apply", {}),
+    )
+
+    def test_when_and_with_have_no_mcp_tool(self) -> None:
+        """Betterment A4: When (set_when) and With (set_engine) are the
+        owner's HTTP routes only; the re-freeze is reached only through an
+        engine write, which is config."""
+        from pathlib import Path
+
+        from holdspeak.mcp.tool_authority import TOOL_AUTHORITY
+
+        mcp = Path(__file__).resolve().parents[2] / "holdspeak" / "mcp"
+        for path in sorted(mcp.rglob("*.py")):
+            text = path.read_text(encoding="utf-8")
+            for writer in ("set_when", "set_engine", "refreeze_schedule"):
+                assert f".{writer}(" not in text, (path.name, writer)
+        for name in ("inference_assignment.set", "inference_assignment.clear", "concierge.apply"):
+            assert TOOL_AUTHORITY[name] == "config", name
+
+    def test_an_ask_or_a_thread_never_turns_on_a_schedule_or_changes_an_engine(self, db: Database) -> None:
+        """Owner ruling 2026-09-29: a thread stops for his press on authority
+        and config. Betterment Q7: an Ask on a tool engine runs the same loop
+        with the ASK palette (an HTTP engine) or the CONDUCTOR credential (an
+        agent CLI). No path offers or admits a call that turns on a schedule
+        or changes an automation's engine, in any control mode."""
+        from holdspeak.mcp.palettes import _lazy_ask_tools, _lazy_conductor_tools, conductor_call_allowed
+
+        ask = _lazy_ask_tools()
+        conductor = _lazy_conductor_tools()
+        for name, args in self.SCHEDULE_OR_ENGINE_CALLS:
+            assert name not in ask, name
+            assert not conductor_call_allowed(name, args), name
+            if name.startswith("workbench."):
+                assert name in conductor  # offered as work; the call's arguments make it authority
+            else:
+                assert name not in conductor, name
+            for allowed in (None, ask):
+                executor = ThreadToolExecutor(
+                    db, dispatch_fn=lambda *_: pytest.fail("dispatched"), principal=OWNER,
+                    control_mode_fn=lambda: "yolo", allowed_names=allowed)
+                with pytest.raises(ValueError, match="owner's press|outside the admitted palette"):
+                    executor.admit("turn-op-a4", "th_a4", _call(name, args))
+
+    def test_when_and_with_refuse_a_principal_that_is_not_the_owner(self, db: Database) -> None:
+        from holdspeak.services.errors import ServiceError
+        from holdspeak.services.workbench_service import WorkbenchService
+
+        agent = Principal(PrincipalKind.AGENT, "agent-a4")
+        service = WorkbenchService(db)
+        with pytest.raises(ServiceError) as when:
+            service.set_when(agent, "w", {"kind": "schedule", "every": "day", "time": "09:00"})
+        assert when.value.code == "owner_principal_required"
+        with pytest.raises(ServiceError) as engine:
+            service.set_engine(agent, "w", profile_id="p")
+        assert engine.value.code == "owner_principal_required"
+        assert service.refreeze_schedule(agent, "w") is False
 
     def test_the_mixed_tools_decide_by_their_arguments(self) -> None:
         from holdspeak.mcp.tool_authority import call_class
