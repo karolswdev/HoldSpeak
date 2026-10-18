@@ -154,6 +154,6 @@ describe("HS-93-04 contextual Desk action eligibility", () => {
         action.id,
         action.label,
       ]),
-    ).toEqual([["waiting", "Send Release checklist to App Coder session"]]);
+    ).toEqual([["waiting", "Send Release checklist to App agent"]]);
   });
 });

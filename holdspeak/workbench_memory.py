@@ -108,6 +108,37 @@ def clear_memory(workbench_id: str) -> bool:
         return False
 
 
+def forget_memory(workbench_id: str, index: int, timestamp: str = "") -> bool:
+    """Forget one lesson (Betterment A3): ``index`` counts newest first, as
+    ``read_memory`` lists them. With ``timestamp``, the entry there must carry
+    it, so a lesson written meanwhile is never forgotten in its place. False
+    when there is no such entry."""
+    path = _memory_path(workbench_id)
+    if not path.is_file():
+        return False
+    try:
+        lines = [line for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    except OSError as exc:
+        log.warning(f"Memory read failed for {workbench_id}: {exc}")
+        return False
+    at = len(lines) - 1 - int(index)
+    if index < 0 or at < 0:
+        return False
+    if timestamp:
+        try:
+            if json.loads(lines[at]).get("timestamp") != timestamp:
+                return False
+        except json.JSONDecodeError:
+            return False
+    del lines[at]
+    try:
+        path.write_text("\n".join(lines) + ("\n" if lines else ""), encoding="utf-8")
+    except OSError as exc:
+        log.warning(f"Memory forget failed for {workbench_id}: {exc}")
+        return False
+    return True
+
+
 def _enforce_limit(path: Path) -> None:
     """Keep only the last MAX_ENTRIES lines."""
     try:

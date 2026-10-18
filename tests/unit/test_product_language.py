@@ -31,8 +31,11 @@ def test_registry_is_versioned_complete_and_strict() -> None:
     registry = load_product_language(REGISTRY_PATH)
 
     assert registry.version == 2
-    assert registry.label("recipe") == "Agent"  # HS-100-10: the canon word
-    assert registry.label("agent", plural=True) == "Agents"  # HS-100-10
+    # Betterment AG1 (DECISIONS #3): a saved persona is a Mode; "Agent" means
+    # only a coding agent session (was HS-100-10: recipe -> Agent).
+    assert registry.label("recipe") == "Mode"
+    assert registry.label("agent", plural=True) == "Modes"
+    assert registry.label("coder") == "Agent"
     assert registry.label("directory") == "Zone"
     assert registry.label("kb") == "Knowledge"
     assert registry.label("chain") == "Sequence"
@@ -68,9 +71,9 @@ def test_registry_is_versioned_complete_and_strict() -> None:
 
 
 def test_module_accessor_uses_the_same_registry() -> None:
-    assert product_label("persona") == "Agent"  # HS-100-10
-    assert product_label("recipe") == "Agent"  # HS-100-10
-    assert product_label("coder", plural=True) == "Coder sessions"
+    assert product_label("persona") == "Mode"  # Betterment AG1
+    assert product_label("recipe") == "Mode"  # Betterment AG1
+    assert product_label("coder", plural=True) == "Agents"  # Betterment AG1
     assert control_mode_wire("Secure") == "safe"
     assert control_mode_wire("normal") == "neutral"
     assert control_mode_label("neutral") == "Normal"

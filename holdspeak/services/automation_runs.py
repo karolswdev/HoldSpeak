@@ -281,13 +281,38 @@ def open_result(db: Any, workbench_id: str, artifact_id: str) -> dict[str, Any]:
     return {"artifact_id": artifact_id, "status": "read" if str(row["status"]) in {"new", "read"} else str(row["status"])}
 
 
+def result_note_id(artifact_id: str) -> str:
+    """The Inbox note one result makes (``_to_inbox``): stable per result."""
+    return "note_result_" + hashlib.sha256(str(artifact_id).encode()).hexdigest()[:16]
+
+
+def _seconds_between(start: Any, end: Any) -> Optional[int]:
+    try:
+        began = datetime.fromisoformat(str(start).replace("Z", "+00:00"))
+        ended = datetime.fromisoformat(str(end).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    if (began.tzinfo is None) != (ended.tzinfo is None):
+        return None
+    seconds = int(round((ended - began).total_seconds()))
+    return seconds if seconds >= 0 else None
+
+
 def results_of(db: Any, workbench_id: str, *, limit: int = 20) -> list[dict[str, Any]]:
-    """The occurrence results, newest first: one per run."""
+    """The occurrence results, newest first: one per run.
+
+    Betterment A3: each result also carries what the automation window shows,
+    so the face reads no second record: ``text`` (the engine's answer, for a
+    done result), ``seconds`` (claimed to completed), ``model`` (the run's
+    record) and ``boundary`` (where the prompt went), and ``note_id`` when the Inbox note
+    for it exists."""
     with db._connection() as conn:
         rows = conn.execute(
             """SELECT i.id, i.title, i.status, i.result, i.result_artifact_id, i.completed_at,
-                      i.created_at, a.status AS artifact_status
+                      i.created_at, i.claimed_at, i.result_egress_json, a.status AS artifact_status,
+                      r.model AS run_model
                FROM workbench_items i LEFT JOIN artifacts a ON a.id = i.result_artifact_id
+               LEFT JOIN workbench_runs r ON r.id = a.source_run_id
                WHERE i.workbench_id = ? AND i.parked = 0
                  AND json_extract(i.context_json, '$.occurrence') = 1
                ORDER BY COALESCE(i.completed_at, i.created_at) DESC, i.id DESC LIMIT ?""",
@@ -295,17 +320,54 @@ def results_of(db: Any, workbench_id: str, *, limit: int = 20) -> list[dict[str,
         ).fetchall()
     results = []
     for row in rows:
-        failed = str(row["status"]) == "failed"
+        status = str(row["status"])
+        failed = status == "failed"
+        try:
+            egress = json.loads(row["result_egress_json"] or "{}") or {}
+        except (TypeError, ValueError):
+            egress = {}
+        artifact_id = row["result_artifact_id"]
+        note_id = result_note_id(artifact_id) if artifact_id else None
+        if note_id and db.notes.get(note_id) is None:
+            note_id = None
         results.append({
             "item_id": str(row["id"]),
             "title": str(row["title"] or ""),
-            "status": str(row["status"]),
-            "artifact_id": row["result_artifact_id"],
+            "status": status,
+            "artifact_id": artifact_id,
             "new": str(row["artifact_status"] or "") == "new",
             "error": str(row["result"] or "").removeprefix("Error: ") if failed else None,
+            "text": str(row["result"] or "") if status == "done" else None,
             "completed_at": row["completed_at"],
+            "seconds": _seconds_between(row["claimed_at"], row["completed_at"]) if row["completed_at"] else None,
+            # The run's record names the model that answered (A0); the
+            # egress row names the route's target, which can be a profile id.
+            "model": str(row["run_model"] or ""),
+            "boundary": str(egress.get("boundary") or "") if isinstance(egress, dict) else "",
+            "note_id": note_id,
         })
     return results
+
+
+def source_names(db: Any, refs: list[str]) -> list[dict[str, Any]]:
+    """Each source by name, for the About line (Betterment A3). A source that
+    no longer exists stays listed as ``missing``; its ref is never shown."""
+    from ..grounding import _hydrate_qualified
+
+    named: list[dict[str, Any]] = []
+    for ref in refs:
+        title = ""
+        try:
+            blocks, unknown = _hydrate_qualified(db, ref, "summary", set())
+            if blocks and not unknown:
+                title = " ".join(str(blocks[0].title or "").split())
+                if title == ref.split(":", 1)[-1]:  # an untitled thing is named by its id: hide it
+                    title = "Untitled"
+        except Exception as exc:  # a source that cannot be read is named missing
+            log.debug("automation source %s: %s", ref, exc)
+        kind = ref.split(":", 1)[0]
+        named.append({"ref": ref, "kind": kind, "label": title, "missing": not title})
+    return named
 
 
 def _delivery_principal(principal: Any) -> Any:
@@ -360,7 +422,7 @@ def _deliver_one(db: Any, principal: Any, wb: Any, row: dict[str, Any]) -> dict[
 
 
 def _to_inbox(db: Any, wb: Any, row: dict[str, Any]) -> dict[str, Any]:
-    note_id = "note_result_" + hashlib.sha256(str(row["artifact_id"]).encode()).hexdigest()[:16]
+    note_id = result_note_id(str(row["artifact_id"]))
     if db.notes.get(note_id, include_deleted=True) is not None:
         return {"artifact_id": row["artifact_id"], "target": "inbox", "outcome": "kept", "note_id": note_id}
     body = (

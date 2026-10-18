@@ -105,7 +105,7 @@ export const PHONE_GO_PLACES: readonly (readonly [string, string])[] = [
   ["go.review-meetings", "Meetings"],
   ["go.ask", "Ask AI"],
   ["desk.open-people", "People"],
-  ["go.open-conductor", "Conductor"],
+  ["go.open-conductor", "Agents"],
 ];
 /** The phone has no Desk menu, so its Go ends with New ▸ (four kinds). */
 export const PHONE_NEW: readonly (readonly [string, string])[] = [

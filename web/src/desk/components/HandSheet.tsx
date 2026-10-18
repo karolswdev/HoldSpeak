@@ -37,6 +37,7 @@ import {
 } from "../agentHand";
 import { AGENTS_PATH, AGENT_HOST, AGENT_NAME, type AgentId, type AgentsDetect } from "../firstrun/agentsStep";
 import { codeWords } from "../firstrun/AgentsCard";
+import { branchFace } from "../lane/laneWire";
 import "./hand-sheet.css";
 
 export interface HandPreview {
@@ -226,7 +227,7 @@ export function refusalToken(code: string, agent: AgentId): string {
     case "owner_required":
       return "OWNER ONLY";
     case "launch_cap_reached":
-      return "CODER LIMIT REACHED";
+      return "AGENT LIMIT REACHED";
     case "launch_profile_mismatch":
       // `agent` is the HELD launch's agent here (the sheet passes it).
       return `HELD FOR ${AGENT_NAME[agent].toUpperCase()}`;
@@ -416,8 +417,8 @@ function Sheet({ origin }: { origin: HandOrigin }) {
     <DeskWindowFrame
       id={HAND_WINDOW_ID}
       glyph="⇥"
-      label="Hand to coder"
-      kindWord="Coder launch"
+      label="Hand to agent"
+      kindWord="Agent"
       className="desk-pullout desk-hand"
       defaultW={560}
       defaultH={660}
@@ -427,8 +428,8 @@ function Sheet({ origin }: { origin: HandOrigin }) {
       onClose={close}
     >
       <div className="desk-pullout-body desk-hand-body" data-testid="hand-sheet">
-        <SurfaceSection label="CODER">
-          <ChoiceCardGroup name="hand-agent" value={agent} layout="row" ariaLabel="Coder" onChange={pick} disabled={frozen}>
+        <SurfaceSection label="AGENT">
+          <ChoiceCardGroup name="hand-agent" value={agent} layout="row" ariaLabel="Agent" onChange={pick} disabled={frozen}>
             {AGENTS.map((a) => (
               <ChoiceCard
                 key={a}
@@ -503,7 +504,7 @@ function Sheet({ origin }: { origin: HandOrigin }) {
                   <span className="desk-hand-tokens" data-testid="hand-clone" data-state="to_clone">
                     <EgressChip label={preview.clone.host.toUpperCase()} scope="cloud" />
                     <span className="surface-token" data-chip data-wrap>CLONES {preview.clone.repository}</span>
-                    <span className="surface-token" data-chip>{preview.branch}</span>
+                    <span className="surface-token" data-chip>{branchFace(preview.branch).toUpperCase()}</span>
                   </span>
                 ) : null}
                 {preview.repo ? (
@@ -513,10 +514,9 @@ function Sheet({ origin }: { origin: HandOrigin }) {
                       <span className="surface-token" data-chip data-testid="hand-resume">
                         RESUMES · BRIEF {codeWords(preview.resume.instruction_state || "pending")}
                       </span>
-                    ) : (
-                      <span className="surface-token" data-chip>NEW WORKTREE</span>
-                    )}
-                    <span className="surface-token" data-chip>{preview.branch}</span>
+                    ) : null}
+                    {/* Betterment AG1: the branch as words, never the item's id. */}
+                    <span className="surface-token" data-chip data-testid="hand-branch">{branchFace(preview.branch).toUpperCase()}</span>
                   </>
                 ) : null}
                 <span className="surface-token" data-chip data-testid="hand-control">CONTROL · {mode}</span>

@@ -105,8 +105,11 @@ export const WORKBENCH_WINDOW_CONFIG: WindowTypeConfig<"id"> = {
     if (!get().panelRects[panelId]) {
       const vw = window.innerWidth || 1280;
       const vh = window.innerHeight || 800;
-      const w = Math.min(640, vw - 40);
-      const h = Math.min(520, vh - 100);
+      // Betterment A3: the automation window opens large enough for its
+      // sentence and its newest result (at least 880 x 640 at 1440; the
+      // window's AUTOMATION_WINDOW_SIZE).
+      const w = Math.min(920, vw - 40);
+      const h = Math.min(680, vh - 100);
       const rect: PanelRect = {
         x: Math.round((vw - w) / 2),
         y: Math.round((vh - h) * 0.3),

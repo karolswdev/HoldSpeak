@@ -270,7 +270,7 @@ export function composeScreen(input: ScreenInputs): ScreenObject[] {
     key: "drawer:conductor",
     role: "drawer",
     kind: "conductor",
-    name: "Conductor",
+    name: "Agents",
     ...sprites("conductor", "conductor"),
     badge: spriteUrl("coder", "conductor-badge"),
     // A lamp is for what needs him: the ask/held lamp only when an agent

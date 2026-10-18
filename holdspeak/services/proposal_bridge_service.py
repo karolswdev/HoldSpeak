@@ -89,6 +89,13 @@ _STOP = frozenset(
 )
 
 
+def _title_key(text: str) -> str:
+    """Betterment D3: a promise's normalized title (its words, lower case,
+    no stop words), so "Write up the alert rule changes" and "Write up alert
+    rule changes" are one promise."""
+    return " ".join(w for w in _WORD_RE.findall(str(text or "").lower()) if w not in _STOP)
+
+
 def _norm(text: str) -> str:
     return " ".join(_WORD_RE.findall(str(text or "").lower()))
 
@@ -1207,8 +1214,16 @@ class ProposalBridgeService:
         (follow-through ``dismiss``) removes a wrong one; ``reopen`` undoes it.
         """
         kept: list[dict[str, Any]] = []
+        dropped: dict[str, set[str]] = {}
         for proposal in created:
             if not self.arrival_keeps(proposal):
+                continue
+            if proposal.meeting_id not in dropped:
+                dropped[proposal.meeting_id] = self._dropped_titles(proposal.meeting_id)
+            if _title_key(proposal.text) in dropped[proposal.meeting_id]:
+                # He dropped this promise from an earlier read of the same
+                # meeting: a re-summary never brings it back, kept or pending.
+                self.dismiss_proposal(KEPT_ON_ARRIVAL, proposal.id)
                 continue
             try:
                 result = self.confirm_proposal(KEPT_ON_ARRIVAL, proposal.id)
@@ -1226,6 +1241,20 @@ class ProposalBridgeService:
                     )
             kept.append(result)
         return kept
+
+    def _dropped_titles(self, meeting_id: str) -> set[str]:
+        """The promises he dropped from this meeting, by normalized title: a
+        dismissed action row (Drop on a kept promise) or a dismissed action
+        proposal (Drop or Decline before it was kept). Undo clears both."""
+        with self._db._connection() as conn:
+            rows = conn.execute(
+                """SELECT task FROM action_items WHERE meeting_id = ? AND status = 'dismissed'
+                   UNION ALL
+                   SELECT text FROM follow_through_proposals
+                    WHERE meeting_id = ? AND kind = 'action' AND state = 'dismissed'""",
+                (meeting_id, meeting_id),
+            ).fetchall()
+        return {_title_key(str(row[0] or "")) for row in rows} - {""}
 
     def restore_proposal(self, principal: Principal, proposal_id: str) -> dict[str, Any]:
         """Undo of Drop on a proposal: a dismissed proposal is proposed again.

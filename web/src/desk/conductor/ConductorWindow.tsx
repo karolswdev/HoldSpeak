@@ -10,11 +10,10 @@
  *  This window is where agents live: the Agents application and the
  *  Arrival's AGENTS section fold into it (PROPOSAL §3, Movement C).
  */
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import {
   AppHead,
-  ActionNotice,
   EgressChip,
   StatusStrip,
   SurfaceFooter,
@@ -22,10 +21,6 @@ import {
   objectSprite,
 } from "../surface";
 import { FoldGadget } from "../surface/gadgets";
-import { AgentWords } from "../components/AgentWords";
-import { apiFetch, readableError } from "../../lib/api";
-import { useGate } from "../gate";
-import { gatedHead, type LaneGated } from "../lane/laneWire";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { useAgentFlights } from "../agentFlights";
 import { AGENT_HOST, AGENT_INSTALL, AGENT_NAME, needsHooks, type AgentId, type AgentRow } from "../firstrun/agentsStep";
@@ -34,6 +29,8 @@ import { useDesk } from "../store";
 import { useOnCoderFrame, useOnDeskChanged } from "../useDeskChangedRefresh";
 import { canRun, conductorHead, conductorMembers, headWords, type ConductorMember } from "./members";
 import { answerMember, answers, openMember, stopMember, stops } from "./open";
+import { AgentRow as AgentRowFace } from "../agents/AgentRow";
+import { openAgentLane } from "../shell";
 import { CONDUCTOR_WINDOW_ID, useConductor } from "./store";
 import "../drawer/drawer.css";
 import "./conductor.css";
@@ -64,7 +61,7 @@ export function MemberReceipt({ member }: { member: ConductorMember | null }) {
     const agent = failedFor;
     return (
       <span className="drawer-receipt cw-receipt" data-tone="fail" role="status" data-testid="conductor-install-failed">
-        HOOKS NOT INSTALLED · {failure}
+        NOT CONNECTED · {failure}
         <Button dense variant="ghost" loading={installing === agent} onClick={() => void useConductor.getState().installHooks(agent)}>
           Retry
         </Button>
@@ -86,14 +83,14 @@ export function MemberReceipt({ member }: { member: ConductorMember | null }) {
   if (done && (!member || member.detect?.id === done.agent)) {
     return (
       <span className="drawer-receipt cw-receipt" role="status" data-testid="conductor-install-done">
-        HOOKS INSTALLED · {AGENT_NAME[done.agent].toUpperCase()} · {done.at}
+        CONNECTED · {AGENT_NAME[done.agent].toUpperCase()} · {done.at}
       </span>
     );
   }
   return null;
 }
 
-/** PHILO-17 U32: where Install hooks is offered (the selected agent, or with
+/** PHILO-17 U32: where Connect is offered (the selected agent, or with
  *  nothing selected any agent), one plain line in the body says why. */
 export function HooksLine({ member }: { member: ConductorMember | null }) {
   const agents = useConductor((s) => s.detect?.agents);
@@ -106,29 +103,8 @@ export function HooksLine({ member }: { member: ConductorMember | null }) {
   );
 }
 
-/** PHILO-15 B34: with nothing selected, every ready agent that lacks hooks
- *  has its own Install hooks verb (it was hidden until a selection). */
-export function InstallHooksVerbs({ agents }: { agents: AgentRow[] }) {
-  const installing = useConductor((s) => s.installing);
-  return (
-    <>
-      {agents.filter(needsHooks).map((row, index) => (
-        <Button
-          key={row.id}
-          dense
-          // Astra r1 (#1084): one primary per face; the next ones are secondary.
-          variant={index === 0 ? "primary" : "secondary"}
-          data-testid="conductor-install-hooks"
-          loading={installing === row.id}
-          disabled={Boolean(installing) && installing !== row.id}
-          onClick={() => void useConductor.getState().installHooks(row.id)}
-        >
-          {`Install hooks · ${AGENT_NAME[row.id]}`}
-        </Button>
-      ))}
-    </>
-  );
-}
+/* Betterment AG1: InstallHooksVerbs (unused) is parked in
+ * desk/_parked/agents/InstallHooksVerbs.tsx. */
 
 /** The verbs of one selected member (every verb names what it does). The
  *  Stop confirmation REPLACES the verb row (it is the only question then),
@@ -168,7 +144,7 @@ export function MemberVerbs({ member, onInfo, trim = false }: {
             });
           }}
         >
-          Stop · sure? (ends the coder's session)
+          Stop · sure? (ends the agent's session)
         </Button>
       </>
     );
@@ -194,7 +170,7 @@ export function MemberVerbs({ member, onInfo, trim = false }: {
           loading={installing === detect.id}
           onClick={() => void useConductor.getState().installHooks(detect.id)}
         >
-          Install hooks
+          {`Connect ${AGENT_NAME[detect.id]}`}
         </Button>
       ) : null}
       {member && stops(member) ? (
@@ -225,16 +201,16 @@ export function headFact(head: { atWork: number; ask: number }, members: readonl
   const found = members.filter((m) => m.role === "ready" && m.detect?.installed);
   const ready = found.filter((m) => canRun(m.detect!)).length;
   if (ready > 0) return `${ready} ready`;
-  return found.length ? "No coder ready" : "No coder";
+  return found.length ? "No agent ready" : "No agent";
 }
 
-/** PHILO-17 U32: what hooks do, in one line, where Install hooks is offered. */
-export const HOOKS_LINE = "Hooks: see the coder's work, hand it work";
+/** PHILO-17 U32: what Connect does, in one line, where it is offered. */
+export const HOOKS_LINE = "Connect: see the agent's work, hand it work";
 
-/** `ASKED 6 MIN AGO`, `ASKED 3 H AGO`, `ASKED OCT 5`; `ASKS` with no age. */
+/** `Asked 6 min ago`, `Asked 3 h ago`, `Asked Oct 5`; `Asks` with no age. */
 export function askedWord(when: string | undefined): string {
-  if (!when) return "ASKS";
-  return /\d+ (MIN|H)$/.test(when) ? `ASKED ${when} AGO` : `ASKED ${when}`;
+  if (!when) return "Asks";
+  return `Asked ${agoWord(when)}`;
 }
 
 /** The kind plate of an agent: `CC` Claude Code, `CX` Codex, `PI` pi. */
@@ -262,7 +238,7 @@ export function memberPill(member: ConductorMember): { word: string; tone: "ok" 
     // `not_read`: the hub could not read the hooks; a fact, not a fault.
     if (row.hooks === "not_read") return { word: "Hooks not checked", tone: "idle" };
     if (row.hooks !== "installed") {
-      const word = { missing: "No hooks", partial: "Some hooks missing", unreadable: "Hooks unreadable", broken: "Hooks broken" }[row.hooks] ?? "No hooks";
+      const word = { missing: "Not connected", partial: "Some hooks missing", unreadable: "Hooks unreadable", broken: "Hooks broken" }[row.hooks] ?? "No hooks";
       return { word, tone: "warn" };
     }
     if ((row.signed_in as string) === "no") return { word: "Signed out", tone: "warn" };
@@ -273,7 +249,7 @@ export function memberPill(member: ConductorMember): { word: string; tone: "ok" 
     case "ask":
       return { word: "Asks you", tone: "warn", live: true };
     case "held":
-      return { word: "Wants approval", tone: "warn", live: true };
+      return { word: "Wants to run", tone: "warn", live: true };
     case "idle":
       return { word: "Idle", tone: "idle" };
     case "pr":
@@ -299,7 +275,7 @@ export function agoWord(when: string | undefined): string {
   return when.charAt(0) + when.slice(1).toLowerCase();
 }
 
-/** The row's title: the item the coder works on, else its name. */
+/** The row's title: the item the agent works on, else its name. */
 function rowTitle(member: ConductorMember): string {
   return member.role === "ready" ? member.name : String(member.facts.from || member.name);
 }
@@ -352,156 +328,16 @@ function CoderRow({
   );
 }
 
-/** The call a launched coder holds at the gate (PHILO-17: approve in one
- *  press). Read from the launch's lane (its gated calls are not paged); a
- *  call the hub cannot show whole is never approved here (PHILO-14 A5). */
-export function useHeldCall(member: ConductorMember): { call: LaneGated | null; error: string | null; reread(): Promise<void> } {
-  const [call, setCall] = useState<LaneGated | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const generation = useRef(0);
-  const launchId = member.launchId;
-  const reread = useCallback(async () => {
-    const read = ++generation.current;
-    if (!launchId) return;
-    try {
-      const lane = await apiFetch<{ gated?: LaneGated[] | unknown } | null>(`/api/agent/launches/${encodeURIComponent(launchId)}/lane?after=0&limit=1`);
-      const gated = Array.isArray(lane?.gated) ? (lane!.gated as LaneGated[]) : [];
-      const held = [...gated].reverse().find((g) => (g.state === "held" || g.state === "pending") && g.was_held !== false);
-      if (read === generation.current) {
-        setCall(held ?? null);
-        setError(null);
-      }
-    } catch (cause) {
-      if (read === generation.current) setError(`Call read failed · Calls unchanged · Retry · ${readableError(cause)}`);
-    }
-  }, [launchId]);
-  useEffect(() => {
-    void reread();
-    return () => {
-      generation.current++;
-    };
-  }, [reread, member.live, member.when]);
-  return { call, error, reread };
-}
-
-/** A coder that asks: a raised plate with the title bar, the question, and
- *  ONE first verb. A held call that the hub shows whole is decided here
- *  (Approve, Deny); anything else opens the ask well (Answer). */
-function AskPlate({
-  member,
-  question,
-  lead,
-  selected,
-  onSelect,
-}: {
-  member: ConductorMember;
-  question: string;
-  lead: boolean;
-  selected: boolean;
-  onSelect(): void;
-}) {
-  const { call, error: callError, reread } = useHeldCall(member);
-  const [busy, setBusy] = useState(false);
-  const pending = useRef(false);
-  const [decidedId, setDecidedId] = useState<string | null>(null);
-  const [failure, setFailure] = useState<{ label: string; retry(): void } | null>(null);
-  const held = member.live === "held" || Boolean(call);
-  const recoverRead = async () => {
-    if (pending.current) return;
-    pending.current = true;
-    setBusy(true);
-    try {
-      await useGate.getState().refresh();
-      await reread();
-      const error = useGate.getState().error;
-      setFailure(error ? { label: `Gate read failed · Decisions unchanged · Retry · ${error}`, retry: () => void recoverRead() } : null);
-    } finally {
-      pending.current = false;
-      setBusy(false);
-      void useConductor.getState().readFlights();
-    }
-  };
-  const decide = async (decision: "approved" | "denied", id = call?.id) => {
-    if (!id || pending.current || decidedId === id) return;
-    pending.current = true;
-    setBusy(true);
-    setFailure(null);
-    try {
-      await useGate.getState().decide(id, decision);
-      setDecidedId(id);
-      const error = useGate.getState().error;
-      if (error) setFailure({ label: `Decision saved · Gate read failed · Retry · ${error}`, retry: () => void recoverRead() });
-    } catch (error) {
-      setFailure({
-        label: `${decision === "approved" ? "Approve" : "Deny"} failed · ${readableError(error)}`,
-        retry: () => void decide(decision, id),
-      });
-    } finally {
-      await reread();
-      pending.current = false;
-      setBusy(false);
-      void useConductor.getState().readFlights();
-    }
-  };
-  return (
-    <article
-      className="cw-ask"
-      data-object-id={member.id}
-      data-selected={selected ? "" : undefined}
-      data-testid="conductor-ask-row"
-      aria-label={`${titleOfAgent(member)} asks`}
-    >
-      <header className="cw-ask-bar">
-        <span className="cw-ask-label">{held ? "WANTS APPROVAL" : "ASKS YOU"}</span>
-        <span className="cw-ask-age">{askedWord(member.when)}</span>
-      </header>
-      <div className="cw-ask-body">
-        <Sprite member={member} size="plate" />
-        <div className="cw-ask-text">
-          <Button variant="chrome" className="cw-row-title" aria-pressed={selected} onClick={onSelect}>
-            {rowTitle(member)}
-          </Button>
-          <span className="cw-row-meta">
-            <span>{titleOfAgent(member)}</span>
-            {member.facts.where ? <span className="kit-pill" data-tone="info">{String(member.facts.where)}</span> : null}
-          </span>
-          {call ? (
-            <code className="cw-ask-call" data-testid="conductor-held-call">
-              {call.hold_reason ? <span className="cw-ask-why">{call.hold_reason}</span> : null}
-              {gatedHead(call)}
-            </code>
-          ) : question ? (
-            <AgentWords compact lines={3} className="cw-ask-q" text={question} />
-          ) : null}
-        </div>
-      </div>
-      {failure ? <ActionNotice tone="danger" role="alert" action={busy ? undefined : { label: "Retry", onClick: failure.retry }}>{failure.label}</ActionNotice> : null}
-      {!failure && callError ? <SurfaceState error={callError} onRetry={busy ? undefined : () => void reread()} /> : null}
-      <div className="cw-ask-verbs">
-        {call && !call.args_cut && call.id !== decidedId ? (
-          <>
-            <Button dense variant="ghost" disabled={busy} onClick={() => void decide("denied")} data-testid="conductor-deny">
-              Deny
-            </Button>
-            <Button dense variant={lead ? "primary" : "secondary"} loading={busy} onClick={() => void decide("approved")} data-testid="conductor-approve">
-              Approve
-            </Button>
-          </>
-        ) : call?.id === decidedId ? null : (
-          <Button dense variant={lead ? "primary" : "secondary"} onClick={() => answerMember(member)} data-testid="conductor-answer">
-            {held ? "See the call" : "Answer"}
-          </Button>
-        )}
-      </div>
-    </article>
-  );
-}
+/* Betterment AG2: the asking plate (AskPlate) became AgentRow
+ * (desk/agents/AgentRow.tsx): answer and allow in one press, the command
+ * shown first. `useHeldCall` moved with it. */
+export { useHeldCall } from "../agents/AgentRow";
 
 function titleOfAgent(member: ConductorMember): string {
   return AGENT_NAME[member.agent as AgentId] ?? member.agent;
 }
 
-/** The verb of a coder on this Mac: the one that fixes it, or none. */
+/** The verb of an agent on this Mac: the one that fixes it, or none. */
 function ReadyVerb({ member, lead }: { member: ConductorMember; lead: boolean }) {
   const installing = useConductor((s) => s.installing);
   const { copy, receipt } = useCopyReceipt();
@@ -522,13 +358,13 @@ function ReadyVerb({ member, lead }: { member: ConductorMember; lead: boolean })
     <Button
       dense
       variant={lead ? "primary" : "secondary"}
-      aria-label={`Install hooks · ${member.name}`}
+      aria-label={`Connect ${member.name}`}
       data-testid="conductor-install-hooks"
       loading={installing === row.id}
       disabled={Boolean(installing) && installing !== row.id}
       onClick={() => void useConductor.getState().installHooks(row.id)}
     >
-      Install hooks
+      {`Connect ${AGENT_NAME[row.id]}`}
     </Button>
   );
 }
@@ -562,7 +398,7 @@ export function ConductorWindow() {
 
   const loading = (reads.flightsState === "idle" || reads.flightsState === "loading") && !members.length;
   const failed = [
-    reads.detectState === "failed" ? { part: "CODERS", token: reads.detectFailure } : null,
+    reads.detectState === "failed" ? { part: "AGENTS", token: reads.detectFailure } : null,
     reads.flightsState === "failed" ? { part: "SESSIONS", token: "" } : null,
   ].filter((f): f is { part: string; token: string } => f !== null);
   const retry = () => {
@@ -581,19 +417,24 @@ export function ConductorWindow() {
   const ended = members.filter((m) => m.role === "stale");
   const fixable = ready.filter((m) => m.detect && m.detect.installed && needsHooks(m.detect));
   const question = (m: ConductorMember) => sessions.find((row) => row.key === m.sessionKey)?.question ?? "";
+  const waitIdOf = (m: ConductorMember) => {
+    const raw = sessions.find((row) => row.key === m.sessionKey)?.raw ?? {};
+    const session = ((raw as Record<string, unknown>).session ?? raw) as Record<string, unknown>;
+    return session.wait_id ? String(session.wait_id) : null;
+  };
   // ONE filled primary per window: the first ask's Answer, else the first
-  // coder that lacks hooks.
+  // agent that lacks hooks.
   const leadAsk = asks[0]?.id ?? null;
   const leadFix = leadAsk ? null : fixable[0]?.id ?? null;
-  // The coders on this Mac fold away while coders work and none needs a fix.
+  // The agents on this Mac fold away while agents work and none needs a fix.
   const coldFolded = coldOpen === null ? !(fixable.length > 0 || (!asks.length && !atWork.length)) : !coldOpen;
   const select = (id: string) => setSelectedId((now) => (now === id ? null : id));
 
   return (
     <DeskWindowFrame
       id={CONDUCTOR_WINDOW_ID}
-      title="Conductor"
-      label="Conductor"
+      title="Agents"
+      label="Agents"
       kindWord="Drawer"
       glyph="◉"
       icon={<img className="drawer-winicon" src={objectSprite("conductor", "conductor")} alt="" />}
@@ -628,7 +469,7 @@ export function ConductorWindow() {
                     lamp: w.endsWith(" ASK") ? ("ask" as const) : undefined,
                     text: w,
                   })),
-                  installed > 0 ? { key: "agents", text: `${installed} ${installed === 1 ? "CODER" : "CODERS"}` } : null,
+                  installed > 0 ? { key: "agents", text: `${installed} ON THIS MAC` } : null,
                 ]}
               />
             </AppHead>
@@ -640,19 +481,26 @@ export function ConductorWindow() {
           </div>
 
           {loading ? <SurfaceState loading /> : null}
-          {!loading && !members.length && !failed.length ? <SurfaceState empty emptyLabel="No coder found" /> : null}
+          {!loading && !members.length && !failed.length ? <SurfaceState empty emptyLabel="No agent found" /> : null}
 
           {asks.length ? (
             <section className="cw-section" data-testid="conductor-asks" aria-label="Needs you">
               <h3 className="cw-cap">NEEDS YOU</h3>
               {asks.map((m) => (
-                <AskPlate
+                <AgentRowFace
                   key={m.id}
                   member={m}
                   question={question(m)}
+                  waitId={waitIdOf(m)}
                   lead={m.id === leadAsk}
                   selected={m.id === selectedId}
                   onSelect={() => select(m.id)}
+                  onTerminal={() => {
+                    if (m.launchId) openAgentLane(m.launchId, { sessionKey: m.sessionKey, raw: true });
+                    else openMember(m);
+                  }}
+                  onOpenAnswer={() => answerMember(m)}
+                  onOpen={() => openMember(m)}
                 />
               ))}
             </section>
@@ -690,11 +538,11 @@ export function ConductorWindow() {
             coldFolded ? (
               <div className="cw-fold">
                 <Button dense variant="ghost" aria-expanded={false} onClick={() => setColdOpen(true)} data-testid="conductor-coders-fold">
-                  Coders on this Mac
+                  Agents on this Mac
                 </Button>
               </div>
             ) : (
-              <section className="cw-section" data-testid="conductor-coders" aria-label="Coders on this Mac">
+              <section className="cw-section" data-testid="conductor-coders" aria-label="Agents on this Mac">
                 <h3 className="cw-cap">
                   ON THIS MAC
                   {asks.length || atWork.length ? (

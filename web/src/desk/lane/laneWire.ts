@@ -579,7 +579,7 @@ export function rebriefEntry(receipt: LaneRebriefReceipt): LaneEntry {
     at: at(receipt.at),
     time: wireClock(receipt.at),
     kind: "rebrief",
-    word: "RE-BRIEF",
+    word: "TOLD IT",
     tone: sent ? "ok" : "warn",
     text: rebriefWords(receipt),
     quote: receipt.text_head ?? undefined,
@@ -662,4 +662,15 @@ export function laneStations(lane: LaneWire, events: readonly LaneEvent[]): Stat
 /** `<Agent>: <item>`, the item's own name; with no name, the agent alone. */
 export function laneTitle(agent: string | null | undefined, item: string | null | undefined): string {
   return windowName({ kind: "lane", agent: agentName(agent), item });
+}
+
+/** Betterment AG1: a branch on the face, never an internal id. The hub names
+ * a hand's branch `hs/<kind>-<item id>`; when that id is a machine id (a hex
+ * run, or `<word>_<hex>`), the face says "new branch". A branch with words
+ * (`hs/write-the-rollback-runbook`) shows as it is. */
+export function branchFace(branch: string | null | undefined): string {
+  const name = String(branch ?? "").trim();
+  if (!name) return "";
+  const machine = /(?:^|[-_/])[0-9a-f]{8,}(?=$|[-_])|[a-z]+_[0-9a-z]*\d[0-9a-z]*/i;
+  return name.startsWith("hs/") && machine.test(name.slice(3)) ? "new branch" : name;
 }

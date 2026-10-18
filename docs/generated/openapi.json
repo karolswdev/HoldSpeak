@@ -30371,6 +30371,65 @@
         "summary": "Api List Memory"
       }
     },
+    "/api/workbenches/{workbench_id}/memory/{index}": {
+      "delete": {
+        "description": "Betterment A3: Forget one lesson; ``at`` is its timestamp.",
+        "operationId": "api_forget_memory_api_workbenches__workbench_id__memory__index__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workbench_id",
+            "required": true,
+            "schema": {
+              "title": "Workbench Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "index",
+            "required": true,
+            "schema": {
+              "title": "Index",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "at",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "At",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Forget Memory Api Workbenches  Workbench Id  Memory  Index  Delete"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Forget Memory"
+      }
+    },
     "/api/workbenches/{workbench_id}/memory/{index}/promote": {
       "post": {
         "operationId": "api_promote_memory_api_workbenches__workbench_id__memory__index__promote_post",

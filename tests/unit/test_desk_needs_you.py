@@ -1134,3 +1134,51 @@ def test_a_plugins_promise_is_kept_only_when_it_stands_for_a_said_thing(hub: Hub
     assert not keeps(proposal())  # a plugin's unsupported sentence
     assert not keeps(proposal(owner_hint=None, source_plugin="meeting_summary"))  # Whose?
     assert not keeps(proposal(kind="decision", source_plugin="meeting_summary"))  # Decide
+
+
+def test_a_re_summary_never_brings_back_a_dropped_promise(hub: Hub) -> None:
+    """He drops a kept promise; the same meeting is summarised again (a new
+    transcript revision, new rows). The dropped promise is not kept again and
+    is not shown again; the promise he kept is kept again."""
+    from holdspeak.intel.models import ActionItem
+    from holdspeak.intel_queue import _on_intel_complete
+    from holdspeak.kernel.summary_items_projection import write_summary_items
+    from holdspeak.meeting_session.models import IntelSnapshot, MeetingState, TranscriptSegment
+
+    start = datetime.now().replace(microsecond=0) - timedelta(hours=1)
+
+    def summarise(job: str, extra: list[TranscriptSegment], alert: str = "Write up the alert rule changes") -> None:
+        items = [ActionItem(task=alert, owner="Theo"),
+                 ActionItem(task="Send the notes", owner="Me")]
+        hub.db.meetings.save_meeting(MeetingState(
+            id="m-resum", started_at=start, ended_at=start + timedelta(minutes=20), title="Alert sync",
+            segments=[TranscriptSegment(text="Theo writes up the alert rules.", speaker="Theo", start_time=0, end_time=5),
+                      *extra],
+            intel=IntelSnapshot(timestamp=9.0, summary="Alerts.", action_items=items), intel_status="complete"))
+        with hub.db._connection() as conn:
+            write_summary_items(conn, {"job_id": job, "decisions": []}, "m-resum",
+                                [{"task": i.task, "owner": i.owner, "due": None, "id": i.id} for i in items])
+        _on_intel_complete(hub.db, "m-resum")
+
+    summarise("job-1", [])
+    assert "Write up the alert rule changes" in [r["title"] for r in _needs(hub)["items"]]
+    with hub.db._connection() as conn:
+        dropped = conn.execute(
+            "SELECT id FROM action_items WHERE meeting_id='m-resum' AND task LIKE 'Write up%' "
+            "AND status = 'open'").fetchone()[0]
+    _ok(hub.client.post("/api/follow-through/complete", json={"card_id": dropped, "verb": "dismiss", "payload": {}}))
+
+    # The engine words it a little differently this time (the exact text is
+    # already refused by the proposal fingerprint; the normalized title is not).
+    summarise("job-2", [TranscriptSegment(text="And I send the notes.", speaker="Me", start_time=5, end_time=9)],
+              alert="Write up alert rule changes")
+    titles = [r["title"] for r in _needs(hub)["items"]]
+    assert not any(t.startswith("Write up") for t in titles), titles
+    assert "Send the notes" in titles
+    with hub.db._connection() as conn:
+        live = conn.execute(
+            "SELECT COUNT(*) FROM action_items WHERE meeting_id='m-resum' AND task LIKE 'Write up%' "
+            "AND status NOT IN ('dismissed', 'done')").fetchone()[0]
+        states = [r[0] for r in conn.execute(
+            "SELECT state FROM follow_through_proposals WHERE meeting_id='m-resum' AND text LIKE 'Write up%'")]
+    assert live == 0 and "proposed" not in states, (live, states)

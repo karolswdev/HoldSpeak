@@ -370,6 +370,17 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to clear memory")
 
+    @router.delete("/api/workbenches/{workbench_id}/memory/{index}")
+    async def api_forget_memory(workbench_id: str, index: int, request: Request, at: str = "") -> Any:
+        """Betterment A3: Forget one lesson; ``at`` is its timestamp."""
+        try:
+            _svc().forget_memory(_principal(request), workbench_id, index, at)
+            return JSONResponse({"success": True})
+        except NotFound:
+            return _not_found("lesson", str(index))
+        except Exception as exc:
+            return error_500(exc, log, "Failed to forget the lesson")
+
     @router.post("/api/workbenches/{workbench_id}/memory/{index}/promote")
     async def api_promote_memory(workbench_id: str, index: int, request: Request) -> Any:
         try:

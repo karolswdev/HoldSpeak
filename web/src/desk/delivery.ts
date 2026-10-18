@@ -377,7 +377,7 @@ export function activeAttempts(attempts: WorkAttempt[]): WorkAttempt[] {
  *  active Work attempt — never a dump of every historical Story. */
 export interface DeliveryListRow {
   key: string;
-  kind: "Story" | "Coder session";
+  kind: "Story" | "Agent";
   label: string;
   detail: string;
   freshness: SourceStatus;
@@ -415,7 +415,7 @@ export function deliveryListRows(
   for (const attempt of activeAttempts(attempts)) {
     rows.push({
       key: `attempt:${attempt.attemptId}`,
-      kind: "Coder session",
+      kind: "Agent",
       label: attempt.storyRef.storyId || attempt.attemptId,
       detail: `${attempt.state}${attempt.nodeId ? ` · ${attempt.nodeId}` : ""}`,
       freshness: storySourceStatus(sources, {

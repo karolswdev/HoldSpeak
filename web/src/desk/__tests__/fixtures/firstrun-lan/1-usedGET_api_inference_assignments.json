@@ -1,58 +1,58 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_firstrun.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-18T03:49:25.657771Z",
+  "captured_at": "2026-10-18T09:46:21.400676Z",
   "wire": {
     "issue_count": 2,
     "rows": [
       {
         "assignment": {
-          "created_at": "2026-10-18T03:49:25.521747Z",
+          "created_at": "2026-10-18T09:46:21.263797Z",
           "effective_retry_policy_id": null,
           "entries": [
             {
               "boundary": "local",
               "label": "127.0.0.1:8099",
               "ordinal": 1,
-              "profile_id": "engine-127-0-0-1-8099",
+              "profile_id": "engine-127-0-0-1-8099-stub-qwen",
               "profile_revision": 1,
               "profile_schema_version": 2,
               "readiness": "ready"
             }
           ],
-          "id": "ia_941c76847dd240e59c268fa3bf28b695",
+          "id": "ia_10ea4273f283492ba17414dba5c5f13d",
           "issues": [
             {
               "capability_id": "agent.plan",
               "code": "structured_output_unsupported",
-              "profile_id": "engine-127-0-0-1-8099",
+              "profile_id": "engine-127-0-0-1-8099-stub-qwen",
               "profile_revision": 1,
               "severity": "blocking"
             },
             {
               "capability_id": "agent.tool_turn",
               "code": "structured_output_unsupported",
-              "profile_id": "engine-127-0-0-1-8099",
+              "profile_id": "engine-127-0-0-1-8099-stub-qwen",
               "profile_revision": 1,
               "severity": "blocking"
             },
             {
               "capability_id": "calendar.snapshot_extract",
               "code": "vision_unsupported",
-              "profile_id": "engine-127-0-0-1-8099",
+              "profile_id": "engine-127-0-0-1-8099-stub-qwen",
               "profile_revision": 1,
               "severity": "blocking"
             },
             {
               "capability_id": "memory.embed",
               "code": "capability_class_unsupported",
-              "profile_id": "engine-127-0-0-1-8099",
+              "profile_id": "engine-127-0-0-1-8099-stub-qwen",
               "profile_revision": 1,
               "severity": "blocking"
             },
             {
               "capability_id": "speech.transcribe",
               "code": "modality_unsupported",
-              "profile_id": "engine-127-0-0-1-8099",
+              "profile_id": "engine-127-0-0-1-8099-stub-qwen",
               "profile_revision": 1,
               "severity": "blocking"
             }
@@ -64,7 +64,7 @@
           "scope": {
             "kind": "global"
           },
-          "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+          "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
         },
         "editor_capability_id": "agent.code",
         "expected_revision": 1,
@@ -76,20 +76,20 @@
       },
       {
         "assignment": {
-          "created_at": "2026-10-18T03:49:25.521747Z",
+          "created_at": "2026-10-18T09:46:21.263797Z",
           "effective_retry_policy_id": null,
           "entries": [
             {
               "boundary": "local",
               "label": "127.0.0.1:8099",
               "ordinal": 1,
-              "profile_id": "engine-127-0-0-1-8099",
+              "profile_id": "engine-127-0-0-1-8099-stub-qwen",
               "profile_revision": 1,
               "profile_schema_version": 2,
               "readiness": "ready"
             }
           ],
-          "id": "ia_941c76847dd240e59c268fa3bf28b695",
+          "id": "ia_10ea4273f283492ba17414dba5c5f13d",
           "issues": [],
           "retry_policy_id": null,
           "retry_policy_source": "per_capability_default",
@@ -98,7 +98,7 @@
           "scope": {
             "kind": "global"
           },
-          "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+          "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
         },
         "editor_capability_id": "ask.answer",
         "expected_revision": 0,
@@ -110,20 +110,20 @@
       },
       {
         "assignment": {
-          "created_at": "2026-10-18T03:49:25.521747Z",
+          "created_at": "2026-10-18T09:46:21.263797Z",
           "effective_retry_policy_id": null,
           "entries": [
             {
               "boundary": "local",
               "label": "127.0.0.1:8099",
               "ordinal": 1,
-              "profile_id": "engine-127-0-0-1-8099",
+              "profile_id": "engine-127-0-0-1-8099-stub-qwen",
               "profile_revision": 1,
               "profile_schema_version": 2,
               "readiness": "ready"
             }
           ],
-          "id": "ia_941c76847dd240e59c268fa3bf28b695",
+          "id": "ia_10ea4273f283492ba17414dba5c5f13d",
           "issues": [],
           "retry_policy_id": null,
           "retry_policy_source": "per_capability_default",
@@ -132,7 +132,7 @@
           "scope": {
             "kind": "global"
           },
-          "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+          "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
         },
         "editor_capability_id": "speech.intent_classify",
         "expected_revision": 0,
@@ -154,20 +154,20 @@
       },
       {
         "assignment": {
-          "created_at": "2026-10-18T03:49:25.521747Z",
+          "created_at": "2026-10-18T09:46:21.263797Z",
           "effective_retry_policy_id": null,
           "entries": [
             {
               "boundary": "local",
               "label": "127.0.0.1:8099",
               "ordinal": 1,
-              "profile_id": "engine-127-0-0-1-8099",
+              "profile_id": "engine-127-0-0-1-8099-stub-qwen",
               "profile_revision": 1,
               "profile_schema_version": 2,
               "readiness": "ready"
             }
           ],
-          "id": "ia_941c76847dd240e59c268fa3bf28b695",
+          "id": "ia_10ea4273f283492ba17414dba5c5f13d",
           "issues": [],
           "retry_policy_id": null,
           "retry_policy_source": "per_capability_default",
@@ -176,7 +176,7 @@
           "scope": {
             "kind": "global"
           },
-          "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+          "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
         },
         "editor_capability_id": "meeting.auto_title",
         "expected_revision": 0,
@@ -188,32 +188,32 @@
       },
       {
         "assignment": {
-          "created_at": "2026-10-18T03:49:25.521747Z",
+          "created_at": "2026-10-18T09:46:21.263797Z",
           "effective_retry_policy_id": null,
           "entries": [
             {
               "boundary": "local",
               "label": "127.0.0.1:8099",
               "ordinal": 1,
-              "profile_id": "engine-127-0-0-1-8099",
+              "profile_id": "engine-127-0-0-1-8099-stub-qwen",
               "profile_revision": 1,
               "profile_schema_version": 2,
               "readiness": "ready"
             }
           ],
-          "id": "ia_941c76847dd240e59c268fa3bf28b695",
+          "id": "ia_10ea4273f283492ba17414dba5c5f13d",
           "issues": [
             {
               "capability_id": "agent.plan",
               "code": "structured_output_unsupported",
-              "profile_id": "engine-127-0-0-1-8099",
+              "profile_id": "engine-127-0-0-1-8099-stub-qwen",
               "profile_revision": 1,
               "severity": "blocking"
             },
             {
               "capability_id": "agent.tool_turn",
               "code": "structured_output_unsupported",
-              "profile_id": "engine-127-0-0-1-8099",
+              "profile_id": "engine-127-0-0-1-8099-stub-qwen",
               "profile_revision": 1,
               "severity": "blocking"
             }
@@ -225,7 +225,7 @@
           "scope": {
             "kind": "global"
           },
-          "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+          "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
         },
         "editor_capability_id": "agent.code",
         "expected_revision": 0,
@@ -237,32 +237,32 @@
       },
       {
         "assignment": {
-          "created_at": "2026-10-18T03:49:25.521747Z",
+          "created_at": "2026-10-18T09:46:21.263797Z",
           "effective_retry_policy_id": null,
           "entries": [
             {
               "boundary": "local",
               "label": "127.0.0.1:8099",
               "ordinal": 1,
-              "profile_id": "engine-127-0-0-1-8099",
+              "profile_id": "engine-127-0-0-1-8099-stub-qwen",
               "profile_revision": 1,
               "profile_schema_version": 2,
               "readiness": "ready"
             }
           ],
-          "id": "ia_941c76847dd240e59c268fa3bf28b695",
+          "id": "ia_10ea4273f283492ba17414dba5c5f13d",
           "issues": [
             {
               "capability_id": "calendar.snapshot_extract",
               "code": "vision_unsupported",
-              "profile_id": "engine-127-0-0-1-8099",
+              "profile_id": "engine-127-0-0-1-8099-stub-qwen",
               "profile_revision": 1,
               "severity": "blocking"
             },
             {
               "capability_id": "memory.embed",
               "code": "capability_class_unsupported",
-              "profile_id": "engine-127-0-0-1-8099",
+              "profile_id": "engine-127-0-0-1-8099-stub-qwen",
               "profile_revision": 1,
               "severity": "blocking"
             }
@@ -274,7 +274,7 @@
           "scope": {
             "kind": "global"
           },
-          "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+          "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
         },
         "editor_capability_id": "background.cadence_draft",
         "expected_revision": 0,
@@ -290,20 +290,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.text.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -312,7 +312,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "agent.code",
           "inherited_from": "global",
@@ -332,25 +332,25 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [
               {
                 "capability_id": "agent.plan",
                 "code": "structured_output_unsupported",
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "severity": "blocking"
               }
@@ -362,7 +362,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "agent.plan",
           "inherited_from": "global",
@@ -379,7 +379,7 @@
           {
             "capability_id": "agent.plan",
             "code": "structured_output_unsupported",
-            "profile_id": "engine-127-0-0-1-8099",
+            "profile_id": "engine-127-0-0-1-8099-stub-qwen",
             "profile_revision": 1,
             "severity": "blocking"
           }
@@ -390,25 +390,25 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.tool.turn",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [
               {
                 "capability_id": "agent.tool_turn",
                 "code": "structured_output_unsupported",
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "severity": "blocking"
               }
@@ -420,7 +420,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "agent.tool_turn",
           "inherited_from": "global",
@@ -437,7 +437,7 @@
           {
             "capability_id": "agent.tool_turn",
             "code": "structured_output_unsupported",
-            "profile_id": "engine-127-0-0-1-8099",
+            "profile_id": "engine-127-0-0-1-8099-stub-qwen",
             "profile_revision": 1,
             "severity": "blocking"
           }
@@ -448,20 +448,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.text.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -470,7 +470,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "ask.answer",
           "inherited_from": "global",
@@ -490,20 +490,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.background.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -512,7 +512,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "background.cadence_draft",
           "inherited_from": "global",
@@ -532,20 +532,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.background.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -554,7 +554,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "background.rails_summary",
           "inherited_from": "global",
@@ -574,25 +574,25 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [
               {
                 "capability_id": "calendar.snapshot_extract",
                 "code": "vision_unsupported",
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "severity": "blocking"
               }
@@ -604,7 +604,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "calendar.snapshot_extract",
           "inherited_from": "global",
@@ -621,7 +621,7 @@
           {
             "capability_id": "calendar.snapshot_extract",
             "code": "vision_unsupported",
-            "profile_id": "engine-127-0-0-1-8099",
+            "profile_id": "engine-127-0-0-1-8099-stub-qwen",
             "profile_revision": 1,
             "severity": "blocking"
           }
@@ -632,20 +632,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.text.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -654,7 +654,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "chat.turn",
           "inherited_from": "global",
@@ -674,20 +674,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.background.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -696,7 +696,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "decision.promotion_draft",
           "inherited_from": "global",
@@ -716,20 +716,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.background.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -738,7 +738,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "delivery.pr_review_draft",
           "inherited_from": "global",
@@ -758,20 +758,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.text.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -780,7 +780,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "meeting.auto_title",
           "inherited_from": "global",
@@ -804,20 +804,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.text.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -826,7 +826,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "meeting.bookmark_label",
           "inherited_from": "global",
@@ -850,20 +850,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.520124Z",
+            "created_at": "2026-10-18T09:46:21.262229Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_686dc12d939048cfb9f8f03181de2c72",
+            "id": "ia_71778a0248a14f2a83fcbb0d527d7053",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -873,7 +873,7 @@
               "capability_id": "meeting.deferred_analysis",
               "kind": "capability"
             },
-            "sha256": "sha256:091f299c8e0d327b1eea22ba696fa4dbcd11b4e11d48bca32bc225b64ac64d02"
+            "sha256": "sha256:0d5bbe1383a8c49f9e20151c263fabce63eeafdf53fbdd0f8bd352261bfd900c"
           },
           "capability_id": "meeting.deferred_analysis",
           "inherited_from": "capability",
@@ -897,20 +897,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -919,7 +919,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "meeting.live_analysis",
           "inherited_from": "global",
@@ -939,20 +939,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -961,7 +961,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "meeting.plugin.action_owner_enforcer",
           "inherited_from": "global",
@@ -985,20 +985,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -1007,7 +1007,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "meeting.plugin.adr_drafter",
           "inherited_from": "global",
@@ -1031,20 +1031,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -1053,7 +1053,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "meeting.plugin.customer_signal_extractor",
           "inherited_from": "global",
@@ -1077,20 +1077,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -1099,7 +1099,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "meeting.plugin.decision_announcement_drafter",
           "inherited_from": "global",
@@ -1123,20 +1123,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -1145,7 +1145,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "meeting.plugin.decision_capture",
           "inherited_from": "global",
@@ -1169,20 +1169,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -1191,7 +1191,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "meeting.plugin.dependency_mapper",
           "inherited_from": "global",
@@ -1215,20 +1215,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -1237,7 +1237,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "meeting.plugin.incident_timeline",
           "inherited_from": "global",
@@ -1261,20 +1261,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -1283,7 +1283,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "meeting.plugin.mermaid_architecture",
           "inherited_from": "global",
@@ -1307,20 +1307,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -1329,7 +1329,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "meeting.plugin.milestone_planner",
           "inherited_from": "global",
@@ -1353,20 +1353,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -1375,7 +1375,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "meeting.plugin.project_detector",
           "inherited_from": "global",
@@ -1399,20 +1399,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -1421,7 +1421,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "meeting.plugin.requirements_extractor",
           "inherited_from": "global",
@@ -1445,20 +1445,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -1467,7 +1467,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "meeting.plugin.risk_heatmap",
           "inherited_from": "global",
@@ -1491,20 +1491,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -1513,7 +1513,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "meeting.plugin.runbook_delta",
           "inherited_from": "global",
@@ -1537,20 +1537,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -1559,7 +1559,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "meeting.plugin.scope_guard",
           "inherited_from": "global",
@@ -1583,20 +1583,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -1605,7 +1605,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "meeting.plugin.stakeholder_update_drafter",
           "inherited_from": "global",
@@ -1629,20 +1629,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -1651,7 +1651,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "memory.consolidate",
           "inherited_from": "global",
@@ -1671,25 +1671,25 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.background.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [
               {
                 "capability_id": "memory.embed",
                 "code": "capability_class_unsupported",
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "severity": "blocking"
               }
@@ -1701,7 +1701,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "memory.embed",
           "inherited_from": "global",
@@ -1718,7 +1718,7 @@
           {
             "capability_id": "memory.embed",
             "code": "capability_class_unsupported",
-            "profile_id": "engine-127-0-0-1-8099",
+            "profile_id": "engine-127-0-0-1-8099-stub-qwen",
             "profile_revision": 1,
             "severity": "blocking"
           }
@@ -1729,20 +1729,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -1751,7 +1751,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "memory.extract",
           "inherited_from": "global",
@@ -1771,20 +1771,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -1793,7 +1793,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "memory.page",
           "inherited_from": "global",
@@ -1813,20 +1813,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.text.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -1835,7 +1835,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "project.brief_prepare",
           "inherited_from": "global",
@@ -1855,20 +1855,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.text.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -1877,7 +1877,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "project.update_draft",
           "inherited_from": "global",
@@ -1897,20 +1897,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.text.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -1919,7 +1919,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "project_doc.suggest_update",
           "inherited_from": "global",
@@ -1939,20 +1939,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.text.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -1961,7 +1961,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "recipe.run",
           "inherited_from": "global",
@@ -1981,20 +1981,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.text.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -2003,7 +2003,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "sequence.step",
           "inherited_from": "global",
@@ -2023,20 +2023,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -2045,7 +2045,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "speech.intent_classify",
           "inherited_from": "global",
@@ -2065,20 +2065,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.text.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -2087,7 +2087,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "speech.rewrite",
           "inherited_from": "global",
@@ -2107,20 +2107,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -2129,7 +2129,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "speech.target_classify",
           "inherited_from": "global",
@@ -2149,7 +2149,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.092685Z",
+            "created_at": "2026-10-18T09:46:21.007614Z",
             "effective_retry_policy_id": "retry.audio.transcription",
             "entries": [
               {
@@ -2162,7 +2162,7 @@
                 "readiness": "unavailable"
               }
             ],
-            "id": "ia_5763f12ab5e3405ea83c1eed6619dbb6",
+            "id": "ia_d756f104645346debe844b50e2c74ef7",
             "issues": [
               {
                 "code": "binding_not_ready",
@@ -2179,7 +2179,7 @@
               "capability_id": "speech.transcribe",
               "kind": "capability"
             },
-            "sha256": "sha256:0fda3294538809456687288d2e429e7ba5da8d360e16ae5cc7ff84d35a8519b1"
+            "sha256": "sha256:d5f6621b43583b565bf7e78fff7c44f2127dfa1ffac658d9a786c9a22a8f39ca"
           },
           "capability_id": "speech.transcribe",
           "inherited_from": "capability",
@@ -2206,20 +2206,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.text.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -2228,7 +2228,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "thought.interview",
           "inherited_from": "global",
@@ -2248,20 +2248,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.text.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -2270,7 +2270,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "voice.reference_resolve",
           "inherited_from": "global",
@@ -2290,20 +2290,20 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.text.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -2312,7 +2312,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "workbench.item",
           "inherited_from": "global",
@@ -2326,26 +2326,26 @@
         "has_override": false,
         "id": "workbench.item",
         "issues": [],
-        "label": "Workbench item",
+        "label": "Automation item",
         "queue": null
       },
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.521747Z",
+            "created_at": "2026-10-18T09:46:21.263797Z",
             "effective_retry_policy_id": "retry.text.standard",
             "entries": [
               {
                 "boundary": "local",
                 "label": "127.0.0.1:8099",
                 "ordinal": 1,
-                "profile_id": "engine-127-0-0-1-8099",
+                "profile_id": "engine-127-0-0-1-8099-stub-qwen",
                 "profile_revision": 1,
                 "profile_schema_version": 2,
                 "readiness": "ready"
               }
             ],
-            "id": "ia_941c76847dd240e59c268fa3bf28b695",
+            "id": "ia_10ea4273f283492ba17414dba5c5f13d",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -2354,7 +2354,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:574454ae9cab7a5902d0c2993e7444f7ebcc922041aac93ce0324e14a658d0c7"
+            "sha256": "sha256:ba8cc0cf604eb8dbb14f3081e18a7bf0df3c7513109c95d848a58b74061c7c85"
           },
           "capability_id": "workflow.node",
           "inherited_from": "global",

@@ -53,6 +53,11 @@
 }
 .runson-add-verbs, .runson-add-answer { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .runson-add-answer .surface-token { overflow-wrap: anywhere; }
+/* Betterment E3: the model picker Check fills. */
+.runson-picker { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.runson-picker-list { margin: 0; padding: 0; list-style: none; max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+.runson-picker-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.runson-picker-model { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
 .runson-engine-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .runson-choice { min-width:0; }
 .runson-catalog > .switchboard { grid-template-columns:minmax(0,1fr); }

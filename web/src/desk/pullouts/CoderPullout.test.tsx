@@ -26,7 +26,7 @@ describe("Coder reply custody", () => {
     let release!: (ok: boolean) => void;
     speak.mockImplementation(() => new Promise<boolean>((resolve) => { release = resolve; }));
     const view = mount();
-    const field = screen.getByRole("textbox", { name: "Coder reply draft" });
+    const field = screen.getByRole("textbox", { name: "Reply to the agent" });
     const send = screen.getByRole("button", { name: "Send reply" });
     fireEvent.change(field, { target: { value: "  Jordan owns rollback.  " } });
     fireEvent.click(send);
@@ -40,13 +40,13 @@ describe("Coder reply custody", () => {
     expect(readDurableDraft(scope)?.text).toBe("Avery reviews the plan.");
     view.unmount();
     mount();
-    expect(screen.getByRole("textbox", { name: "Coder reply draft" })).toHaveValue("Avery reviews the plan.");
+    expect(screen.getByRole("textbox", { name: "Reply to the agent" })).toHaveValue("Avery reviews the plan.");
   });
 
   it("retains a refused reply and clears only that snapshot after Retry succeeds", async () => {
     speak.mockResolvedValueOnce(false).mockResolvedValueOnce(true);
     mount();
-    const field = screen.getByRole("textbox", { name: "Coder reply draft" });
+    const field = screen.getByRole("textbox", { name: "Reply to the agent" });
     fireEvent.change(field, { target: { value: "Jordan owns rollback." } });
     fireEvent.click(screen.getByRole("button", { name: "Send reply" }));
     expect(await screen.findByText("REPLY FAILED · RETRY")).toBeVisible();
@@ -62,7 +62,7 @@ describe("Coder reply custody", () => {
   it("names a rejected send and keeps the reply for Retry", async () => {
     speak.mockRejectedValueOnce(new Error("Unavailable"));
     mount();
-    fireEvent.change(screen.getByRole("textbox", { name: "Coder reply draft" }), { target: { value: "Keep this reply" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Reply to the agent" }), { target: { value: "Keep this reply" } });
     fireEvent.click(screen.getByRole("button", { name: "Send reply" }));
     expect(await screen.findByRole("button", { name: "Retry reply" })).toBeEnabled();
     expect(readDurableDraft(scope)?.text).toBe("Keep this reply");

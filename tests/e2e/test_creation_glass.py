@@ -17,7 +17,8 @@ it). Every record is made by the product's own verb.
   is still there after the old read and the new read have both landed.
 * New Decision asks the name first (PHILO-13-08): no record before the name;
   after the name its window opens inside 1.5 s.
-* The palette is the same door (1440, the Chair): New Agent, Enter.
+* The palette is the same door (1440, the Chair): New Knowledge, Enter.
+  (Betterment AG1: New Agent left the Desk menu.)
 
 Was tests/e2e/test_new_verbs_open_glass.py. The press-to-window facts are also
 web/src/desk/__tests__/creation.app.test.tsx; this file keeps what needs a
@@ -63,7 +64,6 @@ WINDOW_IDS = "() => [...document.querySelectorAll('.desk-window')].map((w) => w.
 VERBS = [
     ("New Note", "/api/notes", True),
     ("New Knowledge", "/api/kbs", True),
-    ("New Agent", "/api/recipes", True),
     ("New Thread", "/api/threads", False),
 ]
 
@@ -214,17 +214,17 @@ class TestEveryNewVerbOpensItsWindow:
                     # The palette is the same door.
                     before, sent = page.evaluate(WINDOW_IDS), len(posts)
                     page.locator("[aria-controls=desk-tool-shelf]").first.click()
-                    page.locator("[aria-controls=desk-palette-listbox]").fill("New Agent")
-                    # Object matches own the default press. The Agent made
+                    page.locator("[aria-controls=desk-palette-listbox]").fill("New Knowledge")
+                    # Object matches own the default press. The Knowledge made
                     # above also matches this query, so select the command
                     # through the palette's actual pointer selection first.
-                    command = page.locator("[id='desk-palette-option-desk.new-agent']")
+                    command = page.locator("[id='desk-palette-option-desk.new-knowledge']")
                     command.hover()
-                    page.locator("[id='desk-palette-option-desk.new-agent'][aria-selected=true]").wait_for()
+                    page.locator("[id='desk-palette-option-desk.new-knowledge'][aria-selected=true]").wait_for()
                     page.keyboard.press("Enter")
-                    win = self._new_window(page, before, "New Agent from the palette")
-                    assert posts[sent:].count("/api/recipes") == 1, posts[sent:]
-                    proof.append("palette New Agent: one POST /api/recipes, its window in front")
+                    win = self._new_window(page, before, "New Knowledge from the palette")
+                    assert posts[sent:].count("/api/kbs") == 1, posts[sent:]
+                    proof.append("palette New Knowledge: one POST /api/kbs, its window in front")
 
                 (SHOTS / f"proof-{face}-{width}.txt").write_text("\n".join(proof) + "\n")
                 real = [e for e in errors if "ResizeObserver" not in e]
@@ -244,7 +244,7 @@ class TestEveryNewVerbOpensItsWindow:
             browser, page, errors, posts = self._page(pw, width)
             try:
                 proof: list[str] = []
-                legs = [("New Note", "/api/notes", "notes"), ("New Agent", "/api/recipes", "recipes"),
+                legs = [("New Note", "/api/notes", "notes"), ("New Knowledge", "/api/kbs", "kbs"),
                         ("New Thread", "/api/threads", "threads")]
                 for label, path, key in legs:
                     before, sent, kept = page.evaluate(WINDOW_IDS), len(posts), count(page, path, key)

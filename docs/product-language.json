@@ -75,16 +75,16 @@
       "meaning": "An ongoing endeavor or work scope, distinct from placement and grounding."
     },
     "persona": {
-      "singular": "Agent",
-      "plural": "Agents",
+      "singular": "Mode",
+      "plural": "Modes",
       "category": "capability",
-      "meaning": "Saved reusable behavior made from instructions, tools, and knowledge."
+      "meaning": "Saved reusable behavior made from instructions, tools, and knowledge; a thread runs in it. Never called an agent (Betterment DECISIONS #3)."
     },
     "coder_session": {
-      "singular": "Coder session",
-      "plural": "Coder sessions",
+      "singular": "Agent",
+      "plural": "Agents",
       "category": "presence",
-      "meaning": "A live Claude or Codex process, never a saved agent."
+      "meaning": "A coding agent session (Claude Code, Codex or pi) that works on one item in its own branch. The only thing the face calls an agent (Betterment DECISIONS #3)."
     },
     "workflow": {
       "singular": "Workflow",

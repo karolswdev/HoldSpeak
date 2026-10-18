@@ -17,12 +17,14 @@ ROOT = "[data-testid='runson-root']"
 RECEIPT = "[data-testid='runson-receipt']"
 
 
-def engine_key_for(url: str) -> str:
+def engine_key_for(url: str, model: str = "") -> str:
     """The board key of an engine added at ``url`` (endpointDraft.ts
-    `endpointProfileId`: ``engine-<host-port slug>``)."""
+    `endpointProfileId`: ``engine-<host-port slug>-<model slug>``; Betterment
+    E3: one engine for each model, and no model is the old host-only id)."""
     host = re.sub(r"^[a-z]+://", "", url.strip(), flags=re.I).split("/")[0]
-    slug = re.sub(r"[^a-z0-9]+", "-", host.lower()).strip("-")
-    return f"engine-{slug or 'endpoint'}"[:96]
+    slug = re.sub(r"[^a-z0-9]+", "-", host.lower()).strip("-") or "endpoint"
+    name = re.sub(r"[^a-z0-9]+", "-", model.lower()).strip("-")
+    return (f"engine-{slug}-{name}" if name else f"engine-{slug}")[:96].rstrip("-")
 
 
 def open_runs_on(page: Any, *, scope: str | None = None, staged: bool = True) -> Any:

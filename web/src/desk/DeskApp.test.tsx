@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import DeskApp from "./DeskApp";
 import { stageFirstValueNoteOpen } from "./firstValue";
 import { useSettleState } from "./settleState";
+import { useBuilderTools } from "./builderTools";
 import * as deskApi from "./api";
 
 const state = vi.hoisted(() => ({
@@ -90,7 +91,7 @@ vi.mock("./components/DeliveryDossierWindow", () => ({ DeliveryDossierWindow: ma
 vi.mock("./components/DeliveryTerminalWindow", () => ({ DeliveryTerminalWindow: marker("delivery-terminal") }));
 vi.mock("./components/RoadmapWindow", () => ({ RoadmapWindow: marker("roadmap-window") }));
 vi.mock("./components/RepoWindow", () => ({ RepoWindow: marker("repo-window") }));
-vi.mock("./components/WorkbenchWindow", () => ({ WorkbenchWindow: marker("workbench-window") }));
+vi.mock("./components/automation/AutomationHost", () => ({ AutomationHost: marker("automation-window") }));
 vi.mock("./components/NewWorkbenchChooser", () => ({ NewWorkbenchChooser: marker("workbench-chooser") }));
 vi.mock("./components/ScheduleCreateWindow", () => ({ ScheduleCreateWindow: marker("schedule-create") }));
 vi.mock("./components/AttentionDrawer", () => ({ AttentionDrawer: marker("attention-drawer") }));
@@ -235,8 +236,13 @@ describe("DeskApp arrival state", () => {
     expect(screen.getByTestId("normal-chair")).toBeInTheDocument();
     expect(screen.getByTestId("desk-chrome")).toBeInTheDocument();
     expect(screen.getByTestId("dock")).toBeInTheDocument();
+    // Betterment AG1: Mission Control and Terminals are builder tools.
+    expect(screen.queryByTestId("mission-control")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("pane-picker")).not.toBeInTheDocument();
+    act(() => useBuilderTools.getState().setOn(true));
     expect(screen.getByTestId("mission-control")).toBeInTheDocument();
     expect(screen.getByTestId("pane-picker")).toBeInTheDocument();
+    act(() => useBuilderTools.getState().setOn(false));
   });
 
   it("mounts the existing Ask panel when the normal Chair opens it", () => {

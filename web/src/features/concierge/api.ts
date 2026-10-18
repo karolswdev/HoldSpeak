@@ -429,6 +429,8 @@ export interface EndpointCheck {
   reason?: string;
   /** PHILO-15 10: the server's own answer: does it take tool calls? */
   tools?: "yes" | "no" | "unknown";
+  /** Betterment E3: the context size each model runs, when the server says. */
+  contexts?: Record<string, number>;
 }
 
 export async function checkEndpoint(
@@ -473,7 +475,17 @@ export async function checkEndpoint(
       raw.tools === "yes" || raw.tools === "no" || raw.tools === "unknown"
         ? raw.tools
         : undefined,
+    contexts: readContexts(raw.contexts),
   };
+}
+
+function readContexts(value: unknown): Record<string, number> | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const out: Record<string, number> = {};
+  for (const [model, size] of Object.entries(value as Record<string, unknown>)) {
+    if (typeof size === "number" && Number.isInteger(size) && size > 0) out[model] = size;
+  }
+  return Object.keys(out).length ? out : undefined;
 }
 
 /* HS-201-09 — define one endpoint through the Model Library command the

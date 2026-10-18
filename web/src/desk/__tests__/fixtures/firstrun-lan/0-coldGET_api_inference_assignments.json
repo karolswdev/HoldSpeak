@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_firstrun.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-18T03:49:25.506645Z",
+  "captured_at": "2026-10-18T09:46:21.249372Z",
   "wire": {
     "issue_count": 1,
     "rows": [
@@ -890,7 +890,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-18T03:49:25.092685Z",
+            "created_at": "2026-10-18T09:46:21.007614Z",
             "effective_retry_policy_id": "retry.audio.transcription",
             "entries": [
               {
@@ -903,7 +903,7 @@
                 "readiness": "unavailable"
               }
             ],
-            "id": "ia_5763f12ab5e3405ea83c1eed6619dbb6",
+            "id": "ia_d756f104645346debe844b50e2c74ef7",
             "issues": [
               {
                 "code": "binding_not_ready",
@@ -920,7 +920,7 @@
               "capability_id": "speech.transcribe",
               "kind": "capability"
             },
-            "sha256": "sha256:0fda3294538809456687288d2e429e7ba5da8d360e16ae5cc7ff84d35a8519b1"
+            "sha256": "sha256:d5f6621b43583b565bf7e78fff7c44f2127dfa1ffac658d9a786c9a22a8f39ca"
           },
           "capability_id": "speech.transcribe",
           "inherited_from": "capability",
@@ -995,7 +995,7 @@
         "has_override": false,
         "id": "workbench.item",
         "issues": [],
-        "label": "Workbench item",
+        "label": "Automation item",
         "queue": null
       },
       {

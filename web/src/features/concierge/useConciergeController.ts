@@ -794,6 +794,8 @@ export function useConciergeController(): ConciergeController {
     useState<AddEngineState>("IDLE");
   const [addEngineReason, setAddEngineReason] = useState("");
   const [addEngineModel, setAddEngineModel] = useState("");
+  // Betterment E3: the context each model runs, as the last Check read it.
+  const addEngineContexts = useRef<Record<string, number>>({});
   const [addEngineTools, setAddEngineTools] = useState<"yes" | "no" | "unknown" | null>(null);
   // Astra r1 (finding 4): the owner says this address is his own server.
   // Only then may the Check send its 1-token request to a keyed or named
@@ -871,6 +873,7 @@ export function useConciergeController(): ConciergeController {
         if (result.ok && result.models.length > 0) {
           setAddEngineState("READY");
           setAddEngineModel(result.models[0]);
+          addEngineContexts.current = result.contexts ?? {};
           setAddEngineTools(result.tools ?? "unknown");
           setAddEngineReason("");
           return;
@@ -926,11 +929,12 @@ export function useConciergeController(): ConciergeController {
           url,
           model: addEngineModel,
           requestId: `concierge-${Date.now()}`,
+          contextTokens: addEngineContexts.current[addEngineModel] ?? null,
           requiresKey: Boolean(key),
           // An engine already saved for this address re-saves at its own
           // revision (a changed record mints the next one).
           expectedProfileRevision:
-            engines.find((e) => e.profileId === endpointProfileId(url))?.profileRevision ?? 0,
+            engines.find((e) => e.profileId === endpointProfileId(url, addEngineModel))?.profileRevision ?? 0,
         }),
         key,
       );

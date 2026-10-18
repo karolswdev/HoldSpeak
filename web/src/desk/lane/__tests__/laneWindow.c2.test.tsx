@@ -451,24 +451,23 @@ describe("the agent's window", () => {
     expect(field.value).toBe("Late.");
   });
 
-  it("Normal, unarmed: the ARM is on the lane with the mode; Answer says ARM FIRST and sends nothing; ARM arms the lane's session", async () => {
+  it("Normal, unarmed: Answer needs no ARM (Betterment AG2); it sends the answer with its wait", async () => {
     await openLane(fixture({ control: { mode: "neutral", armed: false, direct: false } }));
-    const arm = screen.getByTestId("lane-arm");
-    expect(arm.textContent).toContain("ARM FIRST");
+    // The ARM left the answer (it stays behind Terminal with the keys).
+    expect(screen.queryByTestId("lane-arm")).toBeNull();
+    answer({ "/steer": [200, { status: "delivered", pane_id: "%0" }] });
     const field = screen.getByRole("textbox", { name: "Answer" }) as HTMLInputElement;
     fireEvent.change(field, { target: { value: "Jordan." } });
     fireEvent.keyDown(field, { key: "Enter" });
-    await waitFor(() => expect(screen.getByTestId("lane-receipt").textContent).toContain("ARM FIRST"));
-    expect(posts("/steer")).toEqual([]);
-    answer({ "/arm": [200, { status: "armed", pane_id: "%0" }] });
-    fireEvent.click(within(arm).getByRole("button", { name: /ARM/ }));
-    await waitFor(() => expect(posts(ARM)).toHaveLength(1));
+    await waitFor(() => expect(posts(STEER)).toEqual([{ text: "Jordan.", submit: true, kind: "answer", wait_id: "w-1" }]));
+    expect(posts(ARM)).toEqual([]);
+    expect(screen.getByTestId("lane-receipt").textContent).not.toContain("ARM FIRST");
   });
 
   it("Stop: Normal unarmed never arms by itself; YOLO arms per press, then kills", async () => {
     await openLane(fixture({ control: { mode: "neutral", armed: false, direct: false } }));
     fireEvent.click(screen.getByTestId("lane-stop"));
-    expect(screen.getByTestId("lane-stop-confirm").textContent).toBe("Stop · sure? (ends the coder's session)");
+    expect(screen.getByTestId("lane-stop-confirm").textContent).toBe("Stop · sure? (ends the agent's session)");
     fireEvent.click(screen.getByTestId("lane-stop-confirm"));
     await waitFor(() => expect(screen.getByTestId("lane-receipt").textContent).toContain("ARM FIRST"));
     expect(posts("/arm")).toEqual([]);
@@ -590,11 +589,11 @@ describe("the agent's window", () => {
     expect(screen.getByTestId("lane-rail")).toBeTruthy();
   });
 
-  it("Re-brief opens the steer well prefilled; its receipt stays after the well closes", async () => {
+  it("Tell it (was Re-brief) opens the steer well empty; its receipt stays after the well closes", async () => {
     await openLane(fixture({ wait: null }));
     fireEvent.click(screen.getByTestId("lane-rebrief"));
-    const field = within(screen.getByTestId("lane-rebrief-well")).getByRole("textbox", { name: "Re-brief" }) as HTMLInputElement;
-    expect(field.value).toBe("Re-brief: ");
+    const field = within(screen.getByTestId("lane-rebrief-well")).getByRole("textbox", { name: "Tell it" }) as HTMLInputElement;
+    expect(field.value).toBe("");
     fireEvent.change(field, { target: { value: "Re-brief: name Jordan as the owner." } });
     fireEvent.keyDown(field, { key: "Enter" });
     // PHILO-15 B46: the Re-brief route of the launch (typed now, or queued mid-turn).
@@ -693,7 +692,7 @@ describe("PHILO-15 lane 14: the stations tell the truth", () => {
     answer({ [REBRIEF]: [202, { status: "queued", at: "2026-10-07T16:40:00Z" }] });
     serve(fixture({ wait: null, launch: { ...fixture().launch, queued_rebrief: { text: "Re-brief: use the security address.", at: "2026-10-07T16:40:00Z" } } }));
     fireEvent.click(screen.getByTestId("lane-rebrief"));
-    const field = within(screen.getByTestId("lane-rebrief-well")).getByRole("textbox", { name: "Re-brief" }) as HTMLInputElement;
+    const field = within(screen.getByTestId("lane-rebrief-well")).getByRole("textbox", { name: "Tell it" }) as HTMLInputElement;
     fireEvent.change(field, { target: { value: "Re-brief: use the security address." } });
     fireEvent.keyDown(field, { key: "Enter" });
     await waitFor(() => expect(screen.getByTestId("lane-queued").textContent).toBe("QUEUED · AFTER THIS TURN · Re-brief: use the security address."));

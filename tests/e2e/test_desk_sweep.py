@@ -47,6 +47,9 @@ each, in place of one "this face renders cleanly" file per phase.
               window runs a CSS animation, a CSS transition or a script
               animation (Element.animate) longer than the --duration-micro
               token, from page load on (MOTION_INIT_JS records each start)
+    words     no "Conductor" or "coder" on any face; on the agent faces
+              (Agents, the agent's window) none of the old machine words
+              (Betterment AG1)
     target    at 393, every library Button and every pressable row (a menu
               row, an option, a tab, any other button or link that is not
               inline in prose) owns its 44 x 44 px area: the nine points of
@@ -122,6 +125,18 @@ TOKEN = "desk-sweep"
 SIZES = {1440: 900, 393: 852}
 T = 20_000
 STILL_MS = 1500
+
+#: Betterment AG1 (DECISIONS #3): the words fence. No face says "Conductor"
+#: or "coder" (the app is Agents, the session an agent). On the agent faces
+#: (the Agents window ``conductor``, the agent's window ``lane``) the old
+#: machine words are banned too (agents/DESIGN.md §4, "The words").
+BANNED_WORDS = re.compile(r"\bConductor\b|\b[Cc]oders?\b|\bCODERS?\b")
+AGENT_FACE_WORDS = re.compile(
+    r"Re-brief|RE-BRIEF|Install hooks|ASKS YOU|WANTS APPROVAL|Wants approval|\brider\b|\bNODE\b"
+    r"|\bTARGET\b|INCOMPATIBLE|stopped_by_owner|\bRaw\b"
+)
+AGENT_FACES = {"conductor", "lane"}
+WORDS_JS = "(sel) => { const el = sel ? document.querySelector(sel) : document.body; return el ? el.innerText : ''; }"
 TOLERANCE = 2
 PALETTE_QUERY = "ledger"  # a Project, meetings, a decision, a note of the seed
 
@@ -215,6 +230,9 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
         ("meeting", "surface-meetings", "meeting:{meeting}"),
         ("note", "pullout:note:{note}", None),
         ("person", "pullout:people:{person}", None),
+        # Betterment A3: an automation's window (an object window, so a seeded
+        # subject: the sentence, its newest result, an older failed one).
+        ("automation", "workbench:{automation}", None),
         # Not applications, opened the same way: the Chair's Needs-you window
         # (its seed rows: accepted requests, a failed summary) ...
         ("needs", "chair:needs", None),
@@ -419,9 +437,56 @@ def desk(tmp_path_factory: pytest.TempPathFactory, pw_browser: Any) -> Any:
             note_id = thought["thought"]["working_note"]["id"]
             ctx.close()
             _seed_finished_receipts()
-            yield {"base": base, "room": room, "meeting": "m-standup", "person": week["priya"], "note": note_id}
+            automation = _seed_automation(note_id)
+            yield {"base": base, "room": room, "meeting": "m-standup", "person": week["priya"], "note": note_id,
+                   "automation": automation}
         finally:
             server.stop()
+
+
+def _seed_automation(note_id: str) -> str:
+    """Betterment A3: an automation with its sentence and two results, the
+    rows a run writes (automation_runs / workbench_projection): the newest
+    done (NEW, a run record naming its model), an older one failed with the
+    engine's reason. No engine runs in the sweep."""
+    import json as _json
+
+    from holdspeak.db import get_database
+
+    db = get_database()
+    wb = db.workbenches.upsert(
+        workbench_id="wb-sweep-friday", name="Friday team update",
+        instruction="Draft my team update: what shipped, what slipped, and what I need from each person.",
+        sources=[f"note:{note_id}"], output_target="inbox")
+    answer = ("## Team update, week 42\n\n**Shipped:** the ledger rollback runbook (Mira).\n\n"
+              "**Slipped:** the shard benchmark moves to Tuesday.\n\n"
+              "- Mira: review the cutover plan by Thursday.\n- Theo: book the second hiring loop.")
+    occurrence = {"occurrence": 1}
+    db.workbench_items.upsert(
+        item_id="wbocc_sweep_old", workbench_id=wb.id, title="Friday team update, Fri 9 Oct 2026",
+        body=wb.instruction, status="failed", context=occurrence, grounding={"refs": [f"note:{note_id}"]},
+        result="Error: the LAN engine did not answer in 60 s",
+        claimed_at="2026-10-09T15:00:00+00:00", completed_at="2026-10-09T15:01:00+00:00")
+    db.workbench_items.upsert(
+        item_id="wbocc_sweep_new", workbench_id=wb.id, title="Friday team update, Fri 16 Oct 2026",
+        body=wb.instruction, status="done", context=occurrence, grounding={"refs": [f"note:{note_id}"]},
+        result=answer, result_egress={"boundary": "private_network", "model": "qwen3.8-27b"},
+        result_artifact_id="artifact_sweep_friday",
+        claimed_at="2026-10-16T15:00:00+00:00", completed_at="2026-10-16T15:00:41+00:00")
+    with db._connection() as conn:
+        conn.execute(
+            "INSERT INTO workbench_runs (id, workbench_id, started_at, completed_at, items_attempted, "
+            "items_completed, egress_boundary, model, status) VALUES (?,?,?,?,1,1,?,?,'completed')",
+            ("wbrun_sweep_friday", wb.id, "2026-10-16T15:00:00+00:00", "2026-10-16T15:00:41+00:00",
+             "private_network", "qwen3.8-27b"))
+        conn.execute(
+            "INSERT INTO artifacts (id, meeting_id, origin, artifact_type, title, body_markdown, structured_json, "
+            "confidence, status, plugin_id, plugin_version, source_run_id, source_item_id) "
+            "VALUES (?, NULL, 'run', 'workbench_output', ?, ?, ?, 0.0, 'new', 'workbench_run', '1', ?, ?)",
+            ("artifact_sweep_friday", "Friday team update, Fri 16 Oct 2026", answer, _json.dumps({}),
+             "wbrun_sweep_friday", "wbocc_sweep_new"))
+        conn.commit()
+    return wb.id
 
 
 def _seed_finished_receipts() -> None:
@@ -909,6 +974,10 @@ class _Case:
         fail("still", [f"{r['name']} moved {round(r['worst'])} px" for r in moved])
         fail("still", page.evaluate(MOTION_JS, sel))
         fail("target", page.evaluate(TARGET_JS, sel))
+        text = page.evaluate(WORDS_JS, sel)
+        banned = AGENT_FACE_WORDS if self.wid in AGENT_FACES else None
+        fail("words", sorted({m.group(0) for m in BANNED_WORDS.finditer(text)}
+                             | ({m.group(0) for m in banned.finditer(text)} if banned else set())))
         # After the 1.5 s watch: an error a late read raises is counted too.
         fail("clean", [e for e in self.errors if "ResizeObserver" not in e])
         if not page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"):
@@ -1153,7 +1222,8 @@ HELD = 2500
     ("surface-cadence", ["/api/cadence/loops", "/api/settings/heartbeat"]),
     ("meeting", ["/api/decisions"]),
     ("needs", ["/api/desk/needs-you"]),
-    ("surface-companion", ["/api/delivery/"]),
+    # Betterment AG1: surface-companion (the old Agents application) is
+    # unmapped and its window retired; its held-read case left with it.
     # PHILO-17 flakes: the speech row (useSpeechSetup) drew late and moved
     # the Live deck 46 px; the destinations arrival scrolled the Settings
     # body 764 px; the People drawer's 1:1 caption moved the Conductor 24 px.

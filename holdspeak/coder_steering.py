@@ -591,7 +591,10 @@ def _require_delivery_authority(
             ),
         }
     basis = str(policy.get("authority_basis") or "")
-    if basis in {"control_posture", "direct_gesture"}:
+    # Betterment AG2: ``owner_answer`` (his press on the current wait) needs
+    # the same fresh pane identity as the posture; the wait is checked in
+    # ``deliver`` just before the keystroke.
+    if basis in {"control_posture", "direct_gesture", "owner_answer"}:
         return require_posture_authority(
             current_target, expected_pane_id, runner=runner
         )
@@ -865,6 +868,7 @@ def deliver_keys(
     current_target: Optional[str],
     agent: str = "",
     expected_pane_id: Optional[str] = None,
+    expected_wait_id: Optional[str] = None,
     operation: Optional[Mapping[str, Any]] = None,
     policy_snapshot: Optional[Mapping[str, Any]] = None,
     runner: Optional[Runner] = None,
@@ -873,7 +877,8 @@ def deliver_keys(
     audit: Optional[Callable[..., int]] = None,
 ) -> dict[str, Any]:
     """Deliver keys through the same policy → verify ``%N`` → send → audit
-    chokepoint as :func:`deliver`.
+    chokepoint as :func:`deliver`. ``expected_wait_id`` (Betterment AG2:
+    Allow / Deny) binds the keys to the wait episode, as in :func:`deliver`.
 
     Statuses: ``delivered``, ``empty_keys``, ``unknown_key`` (with the
     offending key in ``detail``), the `require_grant` refusals verbatim, or
@@ -915,6 +920,14 @@ def deliver_keys(
     if check["status"] != "ok":
         return _audited(dict(check), pane_id=None)
     pane_id = check["pane_id"]
+    if expected_wait_id is not None:
+        current = current_wait_episode(key)
+        if current != str(expected_wait_id):
+            return _audited(
+                {"status": "wait_not_current", "detail": "the agent's wait changed — nothing was sent",
+                 "wait_id": current or None},
+                pane_id=pane_id,
+            )
     send = transport
     if send is None:
         from .tmux_transport import send_keys_to_pane

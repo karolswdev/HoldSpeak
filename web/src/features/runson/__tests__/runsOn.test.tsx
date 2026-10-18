@@ -1043,14 +1043,15 @@ describe("Runs on — FOUND, downloads, the add row", () => {
     const row = screen.getByTestId("concierge-add-engine-row");
     fireEvent.change(within(row).getAllByRole("textbox")[0], { target: { value: "http://10.0.0.5:8080/v1" } });
     expect(screen.getByTestId("concierge-add-egress").textContent).toContain("10.0.0.5:8080");
-    expect((screen.getByTestId("concierge-add-submit") as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.queryByTestId("concierge-add-use")).toBeNull();
     fireEvent.click(screen.getByTestId("concierge-add-check"));
-    await waitFor(() => expect(screen.getByTestId("concierge-add-model").textContent).toBe("stub-model"));
+    await waitFor(() => expect(screen.getByTestId("concierge-add-pick").getAttribute("data-model")).toBe("stub-model"));
     expect(screen.getByTestId("concierge-add-tools").textContent).toBe("NO TOOLS");
-    fireEvent.click(screen.getByTestId("concierge-add-submit"));
+    fireEvent.click(screen.getByTestId("concierge-add-use"));
     await waitFor(() => expect(m.define).toHaveBeenCalled());
     expect(m.define.mock.calls[0][0]).toMatchObject({ endpoint: "http://10.0.0.5:8080/v1", model: "stub-model" });
     expect(m.summary).not.toHaveBeenCalled(); // joins the column; no assignment
-    await waitFor(() => expect(screen.queryByTestId("concierge-add-engine-row")).toBeNull());
+    // Betterment E3: the picker stays, the used model says ADDED.
+    await waitFor(() => expect(within(screen.getByTestId("concierge-add-pick")).getByText("ADDED")).toBeTruthy());
   });
 });

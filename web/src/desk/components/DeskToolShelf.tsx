@@ -623,7 +623,7 @@ export function DeskToolShelf() {
         section: "VERBS",
         glyph: "◇",
         label: action.label,
-        kind: "AGENT",
+        kind: "MODE",
         run: () => openPullout(qualifiedRef(action.kind, action.id)),
       });
     for (const action of contextualIntegrationActions(
@@ -645,7 +645,7 @@ export function DeskToolShelf() {
         section: "VERBS",
         glyph: "◉",
         label: action.label,
-        kind: "CODER",
+        kind: "AGENT",
         run: () => openPullout(qualifiedRef("coder", action.id)),
       });
     for (const v of VERBS) {

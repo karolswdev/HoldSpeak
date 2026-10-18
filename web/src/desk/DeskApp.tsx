@@ -16,6 +16,7 @@ import { DeskChrome } from "./components/DeskChrome";
 import { RecordOrb } from "./components/RecordOrb";
 import { useChatImport } from "./hooks/useChatImport";
 import { MissionControlConveyor } from "./components/MissionControlConveyor";
+import { useBuilderTools } from "./builderTools";
 import { SessionPullout, PanePicker } from "./components/SessionPullout";
 import { LaneWindow } from "./lane/LaneWindow";
 import { DeliveryBoard } from "./components/DeliveryBoard";
@@ -59,9 +60,11 @@ const RepoWindow = lazy(() =>
     default: module.RepoWindow,
   })),
 );
-const WorkbenchWindow = lazy(() =>
-  import("./components/WorkbenchWindow").then((module) => ({
-    default: module.WorkbenchWindow,
+// Betterment A3: an automation opens its automation window; the parked
+// queue view (WorkbenchWindow) is behind RAW for an old queue automation.
+const AutomationHost = lazy(() =>
+  import("./components/automation/AutomationHost").then((module) => ({
+    default: module.AutomationHost,
   })),
 );
 
@@ -151,6 +154,7 @@ function DeskFaces() {
   const serverArrival = shownSetup?.arrival_required === true;
   const firstRunOpen = useFirstRunOpen((s) => s.open);
   const arrivalRequired = serverArrival || firstRunOpen;
+  const builder = useBuilderTools((state) => state.on);
   useEffect(() => {
     if (arrivalRequired) useSettleState.getState().setSettled(false);
   }, [arrivalRequired]);
@@ -249,8 +253,10 @@ function DeskFaces() {
       ))}
       {/* PersonaChat retired by HS-151-07; threads pullout is the one chat surface. */}
       {!arrivalRequired && <><ReturningWindows /* PHILO-13-07 (B2): the other families return once */ /><DeskToolInspector /></>}
-      {!arrivalRequired && <MissionControlConveyor />}
-      {!arrivalRequired && <DeliveryBoard />}
+      {/* Betterment AG1: Mission Control (the rails), the Delivery board and
+          Terminals are builder tools: they mount only with Builder tools on. */}
+      {!arrivalRequired && builder && <MissionControlConveyor />}
+      {!arrivalRequired && builder && <DeliveryBoard />}
       {!arrivalRequired && <DeliveryDossierWindow />}
       {!arrivalRequired && <DeliveryTerminalWindow />}
       {!arrivalRequired && roadmapWindows.map((roadmap) => (
@@ -270,13 +276,13 @@ function DeskFaces() {
       {!arrivalRequired && workbenchWindows.map((wb) => (
         <ApplicationBoundary key={wb.id} label="Automation">
           <Suspense fallback={null}>
-              <WorkbenchWindow workbenchId={wb.id} origin={wb.origin} />
+              <AutomationHost workbenchId={wb.id} origin={wb.origin} />
           </Suspense>
         </ApplicationBoundary>
       ))}
       {!arrivalRequired && <NewWorkbenchChooser />}
       {!arrivalRequired && <ScheduleCreateWindow />}
-      {!arrivalRequired && <PanePicker />}
+      {!arrivalRequired && builder && <PanePicker />}
       {!arrivalRequired && <SessionPullout />}
       {/* PHILO-14 A2: a Project opens as a drawer; Get Info is its own window. */}
       {!arrivalRequired && <DrawerWindows />}

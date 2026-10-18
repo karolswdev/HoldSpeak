@@ -120,7 +120,7 @@ export function CoderPullout({ object: o, onClose }: PulloutContentProps) {
                     />
                     <textarea
                       className="desk-coder-draft-input"
-                      aria-label="Coder reply draft"
+                      aria-label="Reply to the agent"
                       value={coderDraft}
                       placeholder="Reply"
                       rows={2}

@@ -355,3 +355,122 @@ def test_a_codex_run_is_recorded_through_its_json_parser(
     assert _runs() == [("library_provider_agent-codex", "answered", None)], _runs()
     (engine,) = _agent_rows(hub)
     assert engine["spend"]["reportsCost"] is False and engine["spend"]["weekUsd"] == 0.0, engine
+
+
+# ── Betterment E3: the model picker, one engine for each model ──────────────
+
+# The shape the owner's LAN llama.cpp server really answers on /v1/models
+# (read 2026-10-18 from 192.168.1.43:8080; trimmed): the context is meta.n_ctx.
+_SERVED = [
+    {"id": "alpha-7b", "object": "model", "owned_by": "llamacpp", "meta": {"n_ctx": 49152, "n_ctx_train": 262144}},
+    {"id": "beta-13b", "object": "model", "owned_by": "llamacpp", "meta": {"n_ctx": 32768}},
+    {"id": "gamma-3b", "object": "model", "owned_by": "llamacpp"},
+]
+PICKED_ANSWER = "ANSWER FROM THE PICKED MODEL"
+
+
+class _ThreeModels(_ChatEngine):
+    """One host, three models; the chat answer names the model it was asked for."""
+
+    def do_GET(self) -> None:  # noqa: N802
+        if self.path.rstrip("/").endswith("/models"):
+            self._json({"object": "list", "data": _SERVED})
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+    def do_POST(self) -> None:  # noqa: N802
+        body = json.loads(self.rfile.read(int(self.headers.get("Content-Length") or 0)) or b"{}")
+        self._json({"choices": [{"message": {"role": "assistant", "content": f"{PICKED_ANSWER} {body.get('model')}"}}]})
+
+
+@pytest.fixture()
+def three_models():
+    server = ThreadingHTTPServer(("127.0.0.1", 0), _ThreeModels)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        yield f"http://127.0.0.1:{server.server_address[1]}/v1"
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def _define(base: str, url: str, profile_id: str, model: str, **extra: Any) -> tuple[int, Any]:
+    return _call(base, "POST", "/api/inference/model-library/define-endpoint", {"draft": {
+        "request_id": f"define-{profile_id}", "profile_id": profile_id, "expected_profile_revision": 0,
+        "label": url.split("//")[1].split("/")[0], "provider_family": "openai_compatible",
+        "model": model, "endpoint": url, "requires_key": False, **extra,
+    }, "secret": None})
+
+
+def _profile_context(profile_id: str) -> tuple[int, list[int]]:
+    from holdspeak.db import get_database
+
+    target = f"library_provider_{profile_id}"
+    with get_database()._connection() as conn:
+        limit = conn.execute("SELECT context_limit FROM profiles WHERE id=?", (target,)).fetchone()[0]
+        ceilings = [int(r[0]) for r in conn.execute(
+            "SELECT context_ceiling FROM inference_deployments WHERE destination_id=?", (target,)
+        ).fetchall()]
+    return int(limit), ceilings
+
+
+def test_check_lists_three_models_and_two_of_them_become_two_engines(hub: str, three_models: str) -> None:
+    status, checked = _call(hub, "POST", "/api/setup/discover-models", {"base_url": three_models, "check_tools": True})
+    assert status == 200, checked
+    assert checked["models"] == ["alpha-7b", "beta-13b", "gamma-3b"]
+    # The server's own context, by model; a model that does not say has none.
+    assert checked["contexts"] == {"alpha-7b": 49152, "beta-13b": 32768}
+
+    port = three_models.split(":")[2].split("/")[0]
+    alpha, beta = f"engine-127-0-0-1-{port}-alpha-7b", f"engine-127-0-0-1-{port}-beta-13b"
+    status, added_alpha = _define(hub, three_models, alpha, "alpha-7b", context_tokens=49152)
+    assert status == 200, added_alpha
+    status, added_beta = _define(hub, three_models, beta, "beta-13b", context_tokens=32768)
+    assert status == 200, added_beta
+    assert {added_alpha["provider"]["profile_id"], added_beta["provider"]["profile_id"]} == {alpha, beta}
+
+    rows = _ok(hub, "GET", "/api/concierge/detect")["engines"]
+    mine = {r["profileId"]: r for r in rows if r.get("profileId") in {alpha, beta}}
+    assert set(mine) == {alpha, beta}, rows
+    # Each engine is named by its own model, not by the first model served.
+    assert mine[alpha]["name"] != mine[beta]["name"], (mine[alpha]["name"], mine[beta]["name"])
+
+    # The context the Check read is stored on the profile and its deployment.
+    assert _profile_context(alpha) == (49152, [49152])
+    assert _profile_context(beta) == (32768, [32768])
+
+    # And a job runs on the model he picked, with the real context in its route.
+    status, assigned = _assign(hub, "ask.answer", [_entry(added_beta)])
+    assert status < 300, assigned
+    answer = _ok(hub, "POST", "/api/ask", {"prompt": "Which model are you?"})
+    assert answer["output"] == f"{PICKED_ANSWER} beta-13b", answer
+    from holdspeak.db import get_database
+
+    with get_database()._connection() as conn:
+        support = json.loads(conn.execute(
+            "SELECT context_support_json FROM inference_route_plan_entries ORDER BY rowid DESC LIMIT 1"
+        ).fetchone()[0])
+    assert support["maximum_tokens"] == 32768, support
+
+
+def test_an_old_host_only_engine_still_loads_and_runs(hub: str, three_models: str) -> None:
+    # Before E3 the face minted the id from host and port only, and sent no context.
+    port = three_models.split(":")[2].split("/")[0]
+    legacy = f"engine-127-0-0-1-{port}"
+    status, added = _define(hub, three_models, legacy, "alpha-7b")
+    assert status == 200, added
+    assert _profile_context(legacy) == (16384, [16384])
+
+    rows = _ok(hub, "GET", "/api/concierge/detect")["engines"]
+    assert [r["profileId"] for r in rows if r.get("profileId") == legacy] == [legacy], rows
+    status, assigned = _assign(hub, "ask.answer", [_entry(added)])
+    assert status < 300, assigned
+    answer = _ok(hub, "POST", "/api/ask", {"prompt": "Still here?"})
+    assert answer["output"] == f"{PICKED_ANSWER} alpha-7b", answer
+
+
+@pytest.mark.parametrize("bad", [0, 100, "49152", 1.5, True, 20_000_000])
+def test_a_junk_context_size_is_refused(hub: str, three_models: str, bad: Any) -> None:
+    status, refused = _define(hub, three_models, "engine-junk", "alpha-7b", context_tokens=bad)
+    assert status == 400, refused

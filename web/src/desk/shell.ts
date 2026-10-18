@@ -184,7 +184,7 @@ export function openCoderSession(key: string, opts?: { answer?: boolean; raw?: b
 }
 
 /** PHILO-14 C2: open a launched agent's lane window by its launch id. */
-export function openAgentLane(launchId: string, opts?: { sessionKey?: string | null; answer?: boolean }): void {
+export function openAgentLane(launchId: string, opts?: { sessionKey?: string | null; answer?: boolean; raw?: boolean }): void {
   void import("./lane/laneStore").then((m) => {
     m.useLane.getState().open(launchId, opts);
     presentLane();

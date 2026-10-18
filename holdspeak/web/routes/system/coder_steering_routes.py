@@ -91,6 +91,25 @@ def build_coder_steering_router(
             )
         return session
 
+    def _owner_answer(body: Any) -> bool:
+        """Betterment AG2: the owner's press on the agent's current wait
+        (``kind: "answer"`` with its ``wait_id``; the route already refused
+        a stale one). It carries its own authority for that one wait."""
+        return str(body.get("kind") or "") == "answer" and bool(str(body.get("wait_id") or ""))
+
+    async def _registered_pane(target: Optional[str]) -> Optional[str]:
+        """The ``%N`` the registry's target names now (None when it cannot
+        prove itself); the chokepoint resolves it again before the send."""
+        from .... import coder_steering
+
+        if not target:
+            return None
+        direct = canonical_pane_id(target)
+        if direct:
+            return direct
+        identity = await asyncio.to_thread(coder_steering.resolve_pane_identity, target)
+        return canonical_pane_id(identity.get("pane_id")) if identity.get("status") == "ok" else None
+
     def _session_is_stale(session: Any) -> tuple[bool, Optional[int]]:
         from ....agent_context import DEFAULT_RECENT_MAX_AGE_SECONDS
 
@@ -408,7 +427,10 @@ def build_coder_steering_router(
         target = coder_steering.resolve_pane_target(session)
         stale, _age = _session_is_stale(session)
         grant = active_policy_grant(key)
-        pane_id = expected_pane_id(key, body, grant)
+        answer = _owner_answer(body)
+        pane_id = expected_pane_id(key, body, grant) or (
+            await _registered_pane(target) if answer else None
+        )
         operation, policy = steering_policy(
             key,
             pane_id,
@@ -416,6 +438,7 @@ def build_coder_steering_router(
             data_classes=("typed_text",),
             registered=not stale,
             grant=grant,
+            owner_answer=answer,
         )
         submit = bool(body.get("submit", True))
         if bool(body.get("preview")):
@@ -439,6 +462,9 @@ def build_coder_steering_router(
                 "text": str(composed["text"]),
                 "submit": submit,
                 "grounding_refs": list(composed["refs"]),
+                # Betterment AG2: an answer is checked against the wait it
+                # names again just before the keystroke.
+                **({"expected_wait_id": coder_steering.wait_episode(session)} if answer else {}),
             },
             policy=policy, principal=request.state.principal,
         )
@@ -466,10 +492,18 @@ def build_coder_steering_router(
         if isinstance(session, JSONResponse):
             return session
         body = payload if isinstance(payload, dict) else {}
+        # Betterment AG2: Allow / Deny answer a wait (``kind: "answer"`` and
+        # its ``wait_id``); a stale wait is refused before anything is sent.
+        stale_wait = wait_not_current(session, body)
+        if stale_wait is not None:
+            return stale_wait
         target = coder_steering.resolve_pane_target(session)
         stale, _age = _session_is_stale(session)
         grant = active_policy_grant(key)
-        pane_id = expected_pane_id(key, body, grant)
+        answer = _owner_answer(body)
+        pane_id = expected_pane_id(key, body, grant) or (
+            await _registered_pane(target) if answer else None
+        )
         operation, policy = steering_policy(
             key,
             pane_id,
@@ -477,6 +511,7 @@ def build_coder_steering_router(
             data_classes=("key_events",),
             registered=not stale,
             grant=grant,
+            owner_answer=answer,
         )
         result = await deliver_process_input(
             process_input,
@@ -485,7 +520,10 @@ def build_coder_steering_router(
             agent=session.agent,
             pane_id=pane_id,
             verb="terminal.keys",
-            payload={"keys": body.get("keys") or []},
+            payload={
+                "keys": body.get("keys") or [],
+                **({"expected_wait_id": coder_steering.wait_episode(session)} if answer else {}),
+            },
             policy=policy,
             principal=request.state.principal,
         )

@@ -273,7 +273,7 @@ describe("PHILO-14 C4 the Conductor window", () => {
     fireEvent.click(screen.getByRole("button", { name: "Answer" }));
     expect(shell.lanes).toEqual([["l-runbook", { sessionKey: "claude:c1", answer: true }]]);
     fireEvent.click(screen.getByTestId("conductor-stop"));
-    expect(screen.getByTestId("conductor-stop-confirm").textContent).toContain("ends the coder's session");
+    expect(screen.getByTestId("conductor-stop-confirm").textContent).toContain("ends the agent's session");
     // The confirmation REPLACES the foot's verbs: only Back and the confirm.
     const foot = document.querySelector(".cw-footer") as HTMLElement;
     expect(within(foot).queryByRole("button", { name: "Get Info" })).toBeNull();
@@ -349,10 +349,10 @@ describe("PHILO-14 C4 the Conductor window", () => {
     const [claude] = conductorMembers({ detect: missing.agents as never, sessions: [], flights: [], launchedAt: {}, now: NOW });
     render(<ConductorInfoWindow member={claude} />);
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Install hooks" }));
+      fireEvent.click(screen.getByRole("button", { name: "Connect Claude Code" }));
     });
     const failed = await screen.findByTestId("conductor-install-failed");
-    expect(failed.textContent).toContain("HOOKS NOT INSTALLED · HUB OFFLINE");
+    expect(failed.textContent).toContain("NOT CONNECTED · HUB OFFLINE");
     apiFetch.mockImplementation(base);
     detectReply = () => DETECT;
     await act(async () => {
@@ -369,13 +369,13 @@ describe("PHILO-14 C4 the Conductor window", () => {
     await screen.findByRole("button", { name: "Codex" });
     expect(pillOf("Codex")).toBe("Not installed");
     expect(within(rowOf("Codex")).getByRole("button", { name: "Copy install: Codex" })).toBeTruthy();
-    expect(pillOf("Claude Code")).toBe("No hooks");
+    expect(pillOf("Claude Code")).toBe("Not connected");
     detectReply = () => DETECT;
     await act(async () => {
-      fireEvent.click(within(rowOf("Claude Code")).getByRole("button", { name: "Install hooks · Claude Code" }));
+      fireEvent.click(within(rowOf("Claude Code")).getByRole("button", { name: "Connect Claude Code" }));
     });
     expect(apiFetch).toHaveBeenCalledWith("/api/onboarding/agents/use", { method: "POST", json: { agent: "claude" } });
-    await waitFor(() => expect(screen.queryByRole("button", { name: "Install hooks · Claude Code" })).toBeNull());
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Connect Claude Code" })).toBeNull());
   });
 
   it("PHILO-15 B34/B35: every ready agent without hooks has its own Install hooks; a success has a receipt", async () => {
@@ -391,20 +391,20 @@ describe("PHILO-14 C4 the Conductor window", () => {
     sessionsReply = () => ({ sessions: [], flights: [], history: [], launches: { live: 0, cap: 3 } });
     render(<ConductorWindow />);
     // Nothing selected: one verb per agent (it was hidden until a selection).
-    const claude = await screen.findByRole("button", { name: "Install hooks · Claude Code" });
-    expect(screen.getByRole("button", { name: "Install hooks · Codex" })).toBeTruthy();
+    const claude = await screen.findByRole("button", { name: "Connect Claude Code" });
+    expect(screen.getByRole("button", { name: "Connect Codex" })).toBeTruthy();
     // Astra r1 (#1084): one primary per face; the next Install hooks is secondary.
     expect(claude.className).toContain("btn--primary");
-    expect(screen.getByRole("button", { name: "Install hooks · Codex" }).className).toContain("btn--secondary");
+    expect(screen.getByRole("button", { name: "Connect Codex" }).className).toContain("btn--secondary");
     detectReply = () => ({ ...both, agents: [{ ...both.agents[0], hooks: "installed" }, both.agents[1]] });
     await act(async () => {
       fireEvent.click(claude);
     });
     expect(apiFetch).toHaveBeenCalledWith("/api/onboarding/agents/use", { method: "POST", json: { agent: "claude" } });
     const done = await screen.findByTestId("conductor-install-done");
-    expect(done.textContent).toMatch(/^HOOKS INSTALLED · CLAUDE CODE · \d\d:\d\d$/);
-    await waitFor(() => expect(screen.queryByRole("button", { name: "Install hooks · Claude Code" })).toBeNull());
-    expect(screen.getByRole("button", { name: "Install hooks · Codex" })).toBeTruthy();
+    expect(done.textContent).toMatch(/^CONNECTED · CLAUDE CODE · \d\d:\d\d$/);
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Connect Claude Code" })).toBeNull());
+    expect(screen.getByRole("button", { name: "Connect Codex" })).toBeTruthy();
   });
 
   // PHILO-17 U32 (walk D 8): "3 ready · 3 HARNESSES" beside NO HOOKS · SIGN-IN UNKNOWN.
@@ -420,18 +420,18 @@ describe("PHILO-14 C4 the Conductor window", () => {
     expect(canRun({ ...claude, signed_in: "no" } as never)).toBe(false);
     expect(readyMember(rows[2]).facts.more?.find((f) => f.key === "signin")?.value).toBe("NOT CHECKED");
     expect(headFact({ atWork: 0, ask: 0 }, rows.map((r) => readyMember(r)))).toBe("2 ready");
-    expect(headFact({ atWork: 0, ask: 0 }, rows.slice(1, 2).map((r) => readyMember(r)))).toBe("No coder ready");
-    expect(headFact({ atWork: 0, ask: 0 }, [])).toBe("No coder");
+    expect(headFact({ atWork: 0, ask: 0 }, rows.slice(1, 2).map((r) => readyMember(r)))).toBe("No agent ready");
+    expect(headFact({ atWork: 0, ask: 0 }, [])).toBe("No agent");
 
     sessionsReply = () => ({ sessions: [], flights: [], history: [], launches: { live: 0, cap: 3 } });
     detectReply = () => ({ ...DETECT, agents: rows });
     render(<ConductorWindow />);
     const head = await screen.findByTestId("conductor-head");
     await waitFor(() => expect(head.textContent).toContain("2 ready"));
-    expect(head.textContent).toContain("3 CODERS");
+    expect(head.textContent).toContain("3 ON THIS MAC");
     expect(head.textContent).not.toMatch(/harness/i);
     // Nothing selected, Codex lacks hooks: Install hooks with its one line.
-    expect(screen.getByRole("button", { name: "Install hooks · Codex" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Connect Codex" })).toBeTruthy();
     expect(screen.getByTestId("conductor-hooks-line").textContent).toBe(HOOKS_LINE);
     // A selected agent with its hooks in: no line.
     fireEvent.click(screen.getByRole("button", { name: "Claude Code" }));
@@ -443,7 +443,7 @@ describe("PHILO-14 C4 the Conductor window", () => {
     render(<ConductorWindow />);
     const notRead = await screen.findByText(/SESSIONS ·/);
     expect(notRead.textContent).toContain("NOT READ");
-    expect(screen.queryByText("No coder found")).toBeNull();
+    expect(screen.queryByText("No agent found")).toBeNull();
     expect(screen.queryByText(/No sessions/i)).toBeNull();
     // The ready agents still show; no live agent is claimed gone.
     expect(await screen.findByRole("button", { name: "Claude Code" })).toBeTruthy();
@@ -465,7 +465,7 @@ describe("PHILO-14 C4 the Conductor window", () => {
     act(() => {
       for (const h of bus.handlers.get("intel_status") ?? []) h({ type: "intel_status", data: { state: "ready", scope: "coder" } });
     });
-    await waitFor(() => expect(rowOf("Write the rollback runbook").querySelector(".cw-ask-label")?.textContent).toBe("ASKS YOU"));
+    await waitFor(() => expect(rowOf("Write the rollback runbook").querySelector(".cw-ask-label")?.textContent).toBe("Asks you"));
   });
 
   it("a ready agent's Get Info: version, hooks, sign-in", async () => {
@@ -499,11 +499,12 @@ describe("PHILO-17 the Conductor reads like Today", () => {
     const asks = await screen.findByTestId("conductor-asks");
     const rows = within(asks).getAllByTestId("conductor-ask-row");
     expect(rows).toHaveLength(1);
-    expect(rows[0].querySelector(".cw-ask-label")?.textContent).toBe("ASKS YOU");
-    expect(rows[0].querySelector(".cw-ask-age")?.textContent).toMatch(/^ASK/);
+    expect(rows[0].querySelector(".cw-ask-label")?.textContent).toBe("Asks you");
+    expect(rows[0].querySelector(".cw-ask-age")?.textContent).toMatch(/^Ask/);
     expect(rows[0].textContent).toContain("Claude Code");
     expect(rows[0].textContent).toContain(QUESTION.slice(0, 20));
-    expect(within(rows[0]).getAllByRole("button").map((b) => b.textContent)).toEqual(["Write the rollback runbook", "Answer"]);
+    // No wait id in this read: Answer opens the agent's ask well (Betterment AG2 fallback).
+    expect(within(rows[0]).getAllByRole("button").map((b) => b.textContent)).toEqual(["Write the rollback runbook", "Answer", "Open"]);
     expect(document.querySelectorAll(".kit-disp")).toHaveLength(1);
   });
 
@@ -525,11 +526,11 @@ describe("PHILO-17 the Conductor reads like Today", () => {
     const call = await screen.findByTestId("conductor-held-call");
     expect(call.textContent).toContain("psql -h staging-ledger");
     const plate = screen.getByTestId("conductor-ask-row");
-    expect(plate.querySelector(".cw-ask-label")?.textContent).toBe("WANTS APPROVAL");
-    expect(within(plate).getByRole("button", { name: "Approve" }).className).toContain("btn--primary");
-    expect(within(plate).getByRole("button", { name: "Deny" }).className).toContain("btn--ghost");
+    expect(plate.querySelector(".cw-ask-label")?.textContent).toBe("Wants to run");
+    expect(within(plate).getByRole("button", { name: "Allow" }).className).toContain("btn--primary");
+    expect(within(plate).getByRole("button", { name: "Deny" }).className).toContain("btn--secondary");
     await act(async () => {
-      fireEvent.click(within(plate).getByRole("button", { name: "Approve" }));
+      fireEvent.click(within(plate).getByRole("button", { name: "Allow" }));
     });
     expect(apiFetch).toHaveBeenCalledWith("/api/gate/proposals/toolu_psql/decide", expect.objectContaining({
       method: "POST", json: expect.objectContaining({ decision: "approved" }),
@@ -556,19 +557,19 @@ describe("PHILO-17 the Conductor reads like Today", () => {
       return base(url, init);
     });
     render(<ConductorWindow />);
-    const approve = await screen.findByRole("button", { name: "Approve" });
+    const approve = await screen.findByRole("button", { name: "Allow" });
     fireEvent.click(approve);
     fireEvent.click(approve);
     expect(approve).toBeDisabled();
     expect(attempts).toBe(1);
     await act(async () => { release(); });
-    expect(await screen.findByRole("alert")).toHaveTextContent("Approve failed · Approval refused");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Allow failed · Approval refused");
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
     const posts = apiFetch.mock.calls.filter(([url]) => String(url).endsWith("/decide"));
     expect(posts).toHaveLength(2);
     expect(posts[1]).toEqual(posts[0]);
-    expect(screen.queryByRole("button", { name: "Approve" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Allow" })).toBeNull();
   });
 
   it.each([false, true])("retries reads only after a settled approval with unavailable truth, race=%s", async (race) => {
@@ -592,10 +593,10 @@ describe("PHILO-17 the Conductor reads like Today", () => {
       return base(url, init);
     });
     render(<ConductorWindow />);
-    fireEvent.click(await screen.findByRole("button", { name: "Approve" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Allow" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Decision saved · Gate read failed · Retry · Gate read unavailable");
     await waitFor(() => expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled());
-    expect(screen.queryByRole("button", { name: "Approve" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Allow" })).toBeNull();
     unavailable = false;
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
@@ -617,11 +618,11 @@ describe("PHILO-17 the Conductor reads like Today", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Call read failed · Calls unchanged · Retry · Call unavailable");
     unavailable = false;
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
-    expect(await screen.findByRole("button", { name: "Approve" })).toBeEnabled();
+    expect(await screen.findByRole("button", { name: "Allow" })).toBeEnabled();
     expect(apiFetch.mock.calls.filter(([url]) => String(url).endsWith("/decide"))).toHaveLength(0);
   });
 
-  it("a cut call is never approved on the plate: it opens the lane", async () => {
+  it("a cut call is never allowed on the plate: Terminal opens the lane on its screen", async () => {
     const base = apiFetch.getMockImplementation()!;
     apiFetch.mockImplementation(async (url: string, init?: { method?: string }) => {
       if (url.startsWith("/api/agent/launches/l-runbook/lane"))
@@ -630,9 +631,9 @@ describe("PHILO-17 the Conductor reads like Today", () => {
     });
     render(<ConductorWindow />);
     await screen.findByTestId("conductor-held-call");
-    expect(screen.queryByRole("button", { name: "Approve" })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "See the call" }));
-    expect(shell.lanes).toEqual([["l-runbook", { sessionKey: "claude:c1", answer: true }]]);
+    expect(screen.queryByRole("button", { name: "Allow" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Terminal" }));
+    expect(shell.lanes).toEqual([["l-runbook", { sessionKey: "claude:c1", raw: true }]]);
   });
 
   it("the coders on this Mac fold while coders work; ended launches fold", async () => {

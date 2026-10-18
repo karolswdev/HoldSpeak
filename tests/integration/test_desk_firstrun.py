@@ -141,12 +141,13 @@ def test_a_lan_box_as_default_keeps_the_speech_download(
                       {"base_url": tools_engine, "check_tools": True})
         assert checked["ok"] is True and checked["models"] == [TOOLS_MODEL] and checked["tools"] == "yes"
         rec.keep("check", checked)
-        key = _key_for(tools_engine)
+        key = _key_for(tools_engine, TOOLS_MODEL)
         defined = rec.keep("define", _ok(base, "POST", "/api/inference/model-library/define-endpoint", {
             "draft": {
                 "request_id": "firstrun-lan", "profile_id": key, "expected_profile_revision": 0,
                 "label": tools_engine.split("://", 1)[1].split("/")[0], "provider_family": "openai_compatible",
                 "model": TOOLS_MODEL, "endpoint": tools_engine, "requires_key": False,
+                "context_tokens": None,
             },
             "secret": None,
         }))
