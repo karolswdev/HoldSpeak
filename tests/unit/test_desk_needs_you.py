@@ -998,3 +998,139 @@ def test_an_old_rows_said_due_becomes_a_date_on_open(hub: Hub) -> None:
     assert rows["ai-old"] == ("2026-10-23", "Friday next week")
     assert rows["ai-words"] == ("after the launch", "after the launch")
     assert rows["ai-iso"] == ("2026-10-20", None)
+
+
+# ── Betterment daily D3: promises from a meeting are kept on arrival ─────────
+
+
+def test_a_finished_summary_keeps_its_promises_and_decisions_wait(hub: Hub) -> None:
+    """Owner decision 24: on the recon's week, through the hub's own
+    post-summary hook, the seven promises with an owner are kept with no
+    Confirm press, NEW under their meeting; the four decisions wait for
+    Decide. Nothing kept is a proposal row any more."""
+    from datetime import date
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from tests.fixtures.daily_week import WEEK, seed
+
+    seeded = seed(hub, monday=date.today(), engine=True, arrival=True)
+    answer = _needs(hub)
+    rows = {row["title"]: row for row in answer["items"]}
+    # The faces' half (web/src/desk/__tests__/needs-you.app.test.tsx) renders this answer.
+    from tests.unit.test_desk_speak import _record
+
+    wire = json.loads(json.dumps({"needsYou": answer}).replace(seeded["project"], "proj-daily-week"))
+    _record("needs-you-arrival", wire, Path(hub.db.db_path).parent,
+            "tests/unit/test_desk_needs_you.py::test_a_finished_summary_keeps_its_promises_and_decisions_wait",
+            folder=Path(__file__).resolve().parents[2] / "web" / "src" / "desk" / "__tests__"
+            / "fixtures" / "daily-week")
+    promises = {a["task"] for m in WEEK["meetings"] for a in m["actions"]}
+    decisions = {d["decision"] for m in WEEK["meetings"] for d in m["decisions"]}
+    assert len(promises) == 7 and len(decisions) == 4
+    for title in promises:
+        row = rows[title]
+        assert not row.get("proposalId"), row
+        assert row["source"] == "commitment" and row["actionItemId"], row
+        assert row["arrival"]["meetingTitle"], row
+    for title in decisions:
+        assert rows[title]["direction"] == "decide" and rows[title]["proposalKind"] == "decision"
+    # One group per meeting; its decisions join it.
+    titles = {m["id"]: m["title"] for m in WEEK["meetings"]}
+    for meeting in WEEK["meetings"]:
+        group = sorted(t for t, r in rows.items() if (r.get("arrival") or {}).get("meetingId") == meeting["id"])
+        assert group == sorted([a["task"] for a in meeting["actions"]] + [d["decision"] for d in meeting["decisions"]])
+        assert all(rows[t]["arrival"]["meetingTitle"] == titles[meeting["id"]] for t in group)
+    # The kept rows say who kept them.
+    with hub.db._connection() as conn:
+        kept_by = {r[0] for r in conn.execute(
+            "SELECT DISTINCT principal_identity FROM service_events WHERE event_type = 'proposal.confirmed'")}
+    assert kept_by == {"kept-on-arrival"}, kept_by
+    # The number: mine due today (2) + to decide (4); theirs never counts.
+    assert answer["count"] == 6, sorted(r["title"] for r in answer["items"] if r["counted"])
+
+    # Seen: the group goes; the rows stay.
+    _ok(hub.client.post("/api/desk/needs-you/seen", json={"meeting_ids": [m["id"] for m in WEEK["meetings"]]}))
+    after = _needs(hub)
+    assert not any(row.get("arrival") for row in after["items"])
+    assert {row["title"] for row in after["items"]} == set(rows)
+
+
+def test_drop_and_undo_on_a_kept_promise_and_a_decision(hub: Hub) -> None:
+    """Drop on a kept promise removes it; Undo (reopen) brings it back. Drop on
+    "Do it" (a decision) removes it; Undo (restore) brings it back to Decide."""
+    from datetime import date
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from tests.fixtures.daily_week import seed
+
+    seed(hub, monday=date.today(), engine=True, arrival=True)
+    rows = {row["title"]: row for row in _needs(hub)["items"]}
+    action = rows["Write up alert rule changes"]["actionItemId"]
+    _ok(hub.client.post("/api/follow-through/complete", json={"card_id": action, "verb": "dismiss", "payload": {}}))
+    assert "Write up alert rule changes" not in {r["title"] for r in _needs(hub)["items"]}
+    _ok(hub.client.post("/api/follow-through/complete", json={"card_id": action, "verb": "reopen", "payload": {}}))
+    assert "Write up alert rule changes" in {r["title"] for r in _needs(hub)["items"]}
+
+    proposal = rows["Do it"]["proposalId"]
+    _ok(hub.client.post(f"/api/proposals/{proposal}/dismiss"))
+    assert "Do it" not in {r["title"] for r in _needs(hub)["items"]}
+    restored = _ok(hub.client.post(f"/api/proposals/{proposal}/restore"))
+    assert restored["state"] == "proposed"
+    back = next(r for r in _needs(hub)["items"] if r["title"] == "Do it")
+    assert back["direction"] == "decide" and back["counted"]
+    # A second Undo replays.
+    assert _ok(hub.client.post(f"/api/proposals/{proposal}/restore"))["replayed"] is True
+
+
+def test_a_promise_with_no_owner_waits_and_asks_whose(hub: Hub) -> None:
+    """A promise with no owner is not kept; its row offers the meeting's
+    speakers. Confirm with one of them keeps it with that owner."""
+    from holdspeak.intel.models import ActionItem
+    from holdspeak.intel_queue import _on_intel_complete
+    from holdspeak.kernel.summary_items_projection import write_summary_items
+    from holdspeak.meeting_session.models import IntelSnapshot, MeetingState, TranscriptSegment
+
+    start = datetime.now().replace(microsecond=0) - timedelta(hours=1)
+    items = [ActionItem(task="Book the dry run", owner=None), ActionItem(task="Send the notes", owner="Me")]
+    hub.db.meetings.save_meeting(MeetingState(
+        id="m-whose", started_at=start, ended_at=start + timedelta(minutes=20), title="Dry run sync",
+        segments=[TranscriptSegment(text="Someone books the dry run.", speaker="Mira", start_time=0, end_time=5),
+                  TranscriptSegment(text="I send the notes.", speaker="Me", start_time=5, end_time=9)],
+        intel=IntelSnapshot(timestamp=9.0, summary="Dry run.", action_items=items), intel_status="complete"))
+    with hub.db._connection() as conn:
+        write_summary_items(conn, {"job_id": "job-whose", "decisions": []}, "m-whose",
+                            [{"task": i.task, "owner": i.owner, "due": None, "id": i.id} for i in items])
+    _on_intel_complete(hub.db, "m-whose")
+    rows = {row["title"]: row for row in _needs(hub)["items"]}
+    assert rows["Book the dry run"]["proposalId"] and rows["Book the dry run"]["whose"] == ["Mira", "Me"]
+    assert not rows["Send the notes"].get("proposalId")  # kept: it had an owner
+    pid = rows["Book the dry run"]["proposalId"]
+    kept = _ok(hub.client.post(f"/api/proposals/{pid}/confirm", json={"owner": "Mira"}))
+    assert kept["action_item_id"]
+    row = next(r for r in _needs(hub)["items"] if r["title"] == "Book the dry run")
+    assert row["owner"] == "Mira" and row["direction"] == "theirs"
+
+
+def test_a_plugins_promise_is_kept_only_when_it_stands_for_a_said_thing(hub: Hub) -> None:
+    """C4's note: plugin promises reach Needs you. One that stands for the
+    summary's own row, or whose words are in the transcript, is kept; an
+    unsupported one waits for Confirm (no flood)."""
+    from holdspeak.db.proposals import Proposal
+    from holdspeak.services.proposal_bridge_service import ProposalBridgeService
+
+    def proposal(**kw: Any) -> Proposal:
+        base = dict(id="p", meeting_id="m", project_id=None, kind="action", text="t", owner_hint="Mira",
+                    due_hint=None, source_artifact_id=None, source_plugin="action_owner_enforcer",
+                    segment_timestamp=None, speaker_label=None, model_host=None, fingerprint="f",
+                    state="proposed", original_text=None, decision_record_id=None, commitment_id=None,
+                    created_at="2026-10-18T00:00:00Z", decided_at=None)
+        base.update(kw)
+        return Proposal(**base)
+
+    keeps = ProposalBridgeService.arrival_keeps
+    assert keeps(proposal(source_plugin="meeting_summary"))
+    assert keeps(proposal(action_item_id="ai-1"))
+    assert keeps(proposal(support="supported"))
+    assert not keeps(proposal())  # a plugin's unsupported sentence
+    assert not keeps(proposal(owner_hint=None, source_plugin="meeting_summary"))  # Whose?
+    assert not keeps(proposal(kind="decision", source_plugin="meeting_summary"))  # Decide

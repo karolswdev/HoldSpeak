@@ -9,7 +9,7 @@
  *  Movement C repairs (PROPOSAL §3): an item an agent works is that
  *  agent's, never UNASSIGNED; a question is the `ask` lamp, never ⚠.
  */
-import { SELF_OWNER_NAMES, type NeedsYouMember, type NeedsYouRoomItem } from "../needsYou";
+import { SELF_OWNER_NAMES, type NeedsArrival, type NeedsYouMember, type NeedsYouRoomItem } from "../needsYou";
 import type { AgentFlight, CoderSessionRow } from "../agentFlights";
 import { flightForItem, isInFlight } from "../agentFlights";
 import type { ObjectTone } from "../surface/objects";
@@ -36,6 +36,9 @@ export type NeedVerbs =
   /** Betterment D2: a decision from a meeting: Decide opens Accept, Not now
    *  and Drop in place. */
   | { kind: "decide"; proposalId: string; projectId: string; meetingId: string }
+  /** Betterment D3: a promise with no owner: Whose? offers the meeting's
+   *  speakers, one press each (it keeps the promise with that owner). */
+  | { kind: "whose"; proposalId: string; speakers: string[] }
   | { kind: "name-owner"; cardId: string | null; openRef: string | null }
   /** A proposal from a meeting, Project or not: Confirm / Defer / Decline
    *  (PHILO-15 08, B03). */
@@ -118,6 +121,8 @@ export interface NeedFace {
   personName?: string;
   /** Betterment D2: the row's Project id (the project picker reads it). */
   projectId?: string;
+  /** Betterment D3: kept on arrival, not seen yet: drawn NEW under its meeting. */
+  arrival?: NeedsArrival;
 }
 
 export type NeedDirection = "mine" | "theirs" | "decide" | "setup";
@@ -194,7 +199,7 @@ export function passesChips(face: NeedFace, chips: NeedsChips, now: Date = new D
  *  AGENT. A setup blocker and a source row are not objects: no word. */
 export function kindWordOf(face: Pick<NeedFace, "kind" | "verbs" | "source">): string | undefined {
   if (face.source) return undefined;
-  if (face.verbs.kind === "confirm" || face.verbs.kind === "decide") return "PROPOSAL";
+  if (face.verbs.kind === "confirm" || face.verbs.kind === "decide" || face.verbs.kind === "whose") return "PROPOSAL";
   switch (face.kind) {
     case "decision": return "DECISION";
     case "action": return "ACTION";
@@ -593,6 +598,11 @@ function memberFace(member: NeedsYouMember, ctx: NeedCtx): NeedFace {
   const person = personOf(item);
   if (person) { face.personKey = person.key; face.personName = person.name; }
   if (item.projectId) face.projectId = String(item.projectId);
+  // Betterment D3: NEW under its meeting; a promise with no owner asks Whose?
+  if (item.arrival?.meetingId) face.arrival = { ...item.arrival };
+  if (face.verbs.kind === "confirm" && Array.isArray(item.whose) && item.whose.length > 0) {
+    face.verbs = { kind: "whose", proposalId: face.verbs.proposalId, speakers: item.whose.map(String) };
+  }
   return face;
 }
 

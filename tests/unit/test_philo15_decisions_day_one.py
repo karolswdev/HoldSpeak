@@ -85,7 +85,15 @@ def _meeting(db: Database, meeting_id: str) -> MeetingState:
     return state
 
 
-def _run(tmp_path, monkeypatch, meeting_id: str = "m-day-one") -> Database:
+def _run(tmp_path, monkeypatch, meeting_id: str = "m-day-one", *, arrival: bool = False) -> Database:
+    """One real queue run of the day-one meeting.
+
+    These tests prove the Confirm, Decline and Defer verbs on proposals, so
+    the run leaves every proposal proposed: Betterment D3's kept-on-arrival
+    step is off unless ``arrival`` (its own test below keeps it on).
+    """
+    if not arrival:
+        monkeypatch.setattr("holdspeak.intel_queue._keep_on_arrival", lambda *a, **k: None)
     db, _broker, _engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
     engine = ParsedIntel(COMPLETION)
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **kwargs: engine)
@@ -216,6 +224,22 @@ def test_confirm_accepts_the_summary_row_and_decline_dismisses_it(tmp_path, monk
             "SELECT status FROM action_items WHERE id=?", (leo["action_item_id"],)
         ).fetchone()["status"]
     assert status == "dismissed"
+
+
+def test_a_real_summary_run_keeps_its_owned_promises_and_leaves_decisions(tmp_path, monkeypatch) -> None:
+    """Betterment D3 (owner decision 24) through the real queue: the three
+    promises with an owner are kept on arrival (the summary's own rows,
+    accepted and open); the three decisions stay proposed for Decide."""
+    db = _run(tmp_path, monkeypatch, arrival=True)
+    rows = _proposals(db, "m-day-one")
+    assert sorted(p["state"] for p in rows if p["kind"] == "action") == ["confirmed"] * 3
+    assert sorted(p["state"] for p in rows if p["kind"] == "decision") == ["proposed"] * 3
+    with db._connection() as conn:
+        kept = conn.execute(
+            "SELECT review_state, status, arrived_at FROM action_items WHERE meeting_id='m-day-one'"
+        ).fetchall()
+    assert len(kept) == 3
+    assert all((r["review_state"], r["status"]) == ("accepted", "open") and r["arrived_at"] for r in kept)
 
 
 # ── NEEDS YOU: a meeting in no Project ───────────────────────────────
@@ -381,6 +405,9 @@ def test_two_similar_obligations_are_never_merged(tmp_path, monkeypatch) -> None
     Confirm keeps both obligations."""
     import tests.unit.test_phase200_meeting_outcomes as rig
     from holdspeak.services.proposal_bridge_service import ProposalBridgeService
+
+    # The Confirm path is under test: the run leaves the proposals proposed.
+    monkeypatch.setattr("holdspeak.intel_queue._keep_on_arrival", lambda *a, **k: None)
 
     staging = "Rotate the staging database credentials"
     production = "Rotate the production database credentials"

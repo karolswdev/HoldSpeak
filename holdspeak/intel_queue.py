@@ -353,27 +353,52 @@ def _bridge_proposals(db: Any, meeting_id: str, job: Any = None, *, required: bo
         created = bridge.bridge_meeting_artifacts(meeting_id, job=job)
         if created:
             log.info("HS-172-03: bridged %d proposals for meeting %s", len(created), meeting_id)
-            # Betterment D3 (owner decision 24): the promises with an owner
-            # are kept on arrival; decisions wait for Decide.
-            kept = bridge.keep_on_arrival(created)
-            if kept:
-                log.info("D3: kept %d promises on arrival for meeting %s", len(kept), meeting_id)
     except Exception as exc:
         if required:
             raise
         log.warning("HS-172-03: proposal bridge failed for meeting %s: %s", meeting_id, exc)
 
 
+def _keep_on_arrival(db: Any, meeting_id: str, job: Any = None) -> None:
+    """Betterment D3 (owner decision 24): the finished summary's promises
+    with an owner are kept with no press; decisions wait for Decide.
+
+    Runs once the job is complete, over THIS job's proposals that are still
+    proposed (no job: the meeting's current transcript revision), so a
+    promise he dropped or left is never kept again by a later read.
+    """
+    try:
+        from .services.proposal_bridge_service import ProposalBridgeService
+
+        job_id = str(getattr(job, "job_id", "") or "")
+        revision = str(getattr(job, "transcript_hash", "") or "")
+        if not job_id and not revision:
+            meeting = db.meetings.get_meeting(meeting_id)
+            revision = meeting.transcript_hash() if meeting is not None else ""
+        proposals = [
+            p for p in db.proposals.list_proposals(meeting_id=meeting_id, state="proposed")
+            if (job_id and p.job_id == job_id) or (not job_id and revision and p.extraction_revision == revision)
+        ]
+        kept = ProposalBridgeService(db).keep_on_arrival(proposals)
+        if kept:
+            log.info("D3: kept %d promises on arrival for meeting %s", len(kept), meeting_id)
+    except Exception as exc:
+        log.warning("D3: promises not kept on arrival for meeting %s: %s", meeting_id, exc)
+
+
 def _on_intel_complete(db: Any, meeting_id: str, job: Any = None, *, bridge: bool = True) -> None:
     """HS-172-03: post-completion hooks, each in its own failure boundary.
 
     (a) Bridge extractor artifacts to follow-through proposals.
+    (a2) Betterment D3: keep the promises on arrival.
     (b) Scan transcript for source suggestions.
     (c) Invalidate the needs-you aggregate cache.
     """
     # (a) Proposal bridge.
     if bridge:
         _bridge_proposals(db, meeting_id, job)
+    # (a2) Kept on arrival.
+    _keep_on_arrival(db, meeting_id, job)
 
     # (b) Source suggestions for each linked Room.
     try:

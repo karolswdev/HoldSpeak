@@ -58,7 +58,7 @@ def seed_meetings(db: Any, *, monday: date = MONDAY, file_into: Any = None, arri
     ``file_into(meeting_id)`` files each meeting before its summary is
     bridged (the recon's Project held all three). ``arrival``: the summary
     ends through the hub's own post-summary hook (``intel_queue
-    ._bridge_proposals``), which keeps the promises on arrival (D3).
+    ._on_intel_complete``), which keeps the promises on arrival (D3).
     """
     from holdspeak.intel.models import ActionItem
     from holdspeak.kernel.summary_items_projection import write_summary_items
@@ -93,9 +93,9 @@ def seed_meetings(db: Any, *, monday: date = MONDAY, file_into: Any = None, arri
         if file_into is not None:
             file_into(meeting["id"])
         if arrival:
-            from holdspeak.intel_queue import _bridge_proposals
+            from holdspeak.intel_queue import _on_intel_complete
 
-            _bridge_proposals(db, meeting["id"], required=True)
+            _on_intel_complete(db, meeting["id"])
         else:
             ProposalBridgeService(db).bridge_meeting_artifacts(meeting["id"])
 
