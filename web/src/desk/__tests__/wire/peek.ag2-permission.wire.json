@@ -1,0 +1,40 @@
+{
+  "_": "Betterment AG2: the fake Claude Code's real screen at its permission prompt (Do you want to proceed?), read by the hub's own holdspeak.coder_steering.peek_pane (the /api/coders/{key}/peek route's reader) from a tmux pane in an isolated HOME (docs/internal/betterment/agents/rig/fake_claude.py). The envelope's other fields are the route's; only `peek` is read.",
+  "captured_at": "2026-10-18T04:20:00Z",
+  "wire": {
+    "key": "claude:c1a0de00-runbook",
+    "agent": "claude",
+    "peek": {
+      "status": "live",
+      "hash": "6e5315605d4dc5cd96f71f09bcb27685c9d55badc541a3f29925a75fb7254a36",
+      "lines": [
+        "╭─────────────────────────────────────────╮",
+        "│ ✻ FAKE Claude Code (betterment walk rig) │",
+        "╰─────────────────────────────────────────╯",
+        "cwd: /private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/2628cfce-17bb-4a8e-a3b0-fa062943aa12/scratchpad/rec",
+        ">",
+        "Write the on-call note for the new flag",
+        "● Read: the brief and the repo",
+        "  ⎿  esc to interrupt",
+        "● Bash: git status",
+        "  ⎿  esc to interrupt",
+        "● Bash: rg rollback",
+        "  ⎿  esc to interrupt",
+        "● I found two places for the rollback flag. Should it live in config/flags.yaml (shared with staging) or in an env var (",
+        "per host)? Answer 1 for config, 2 for env.",
+        "1",
+        ">",
+        "● Got it: 1",
+        "● Edit: config/flags.yaml",
+        "  ⎿  esc to interrupt",
+        "● Bash: pytest -q tests/test_rollback.py",
+        "  ⎿  esc to interrupt",
+        "● Bash command",
+        "  rm -rf build/ && make release",
+        "  Do you want to proceed?",
+        "  ❯ 1. Yes",
+        "    2. No, and tell Claude what to do differently (esc)"
+      ]
+    }
+  }
+}

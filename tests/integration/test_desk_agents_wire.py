@@ -658,3 +658,77 @@ def test_the_agents_read_says_done_new_quiet_and_stopped_by_restart(
     quiet = _get(hub, "/api/coders/sessions?include_ended=false")
     assert [(f["state"], f["new"]) for f in quiet["flights"] if f["launch_id"] == "launch_ag0_done"] == [("done", False)]
     _keep("agents-ag0", "coders-sessions.seen", quiet, tmp_path, hub)
+
+
+AG2_HELD = "Claude needs your permission to use Bash"
+
+
+def _refusal(body: Any) -> dict[str, Any]:
+    """A refusal's status (an HTTPError body comes back as cut text)."""
+    if isinstance(body, dict):
+        return body
+    match = re.search(r'"status":\s*"(\w+)"', str(body))
+    return {"status": match.group(1) if match else None, "text": str(body)[:200]}
+
+
+def test_the_agents_read_asks_with_choices_and_answers_without_an_arm(
+    hub: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Betterment AG2 (the hub half): in Normal mode, with no ARM, one agent
+    asks "Answer 1 for config, 2 for env." and one waits at a permission
+    prompt. An Answer that names the current wait passes the authority and
+    reaches the pane check (the rig has no tmux server: pane gone, never
+    "unarmed"); a stale wait is refused. The answers are recorded for
+    agents.app.test.tsx (fixtures/agents-ag2)."""
+    from holdspeak.agent_context import event_log, ingest_agent_hook_event
+    import holdspeak.agent_context as agent_context_pkg
+    from tests.e2e.agents_lane_rig import TOKEN, _http
+
+    (tmp_path / "tmux").mkdir()
+    monkeypatch.setenv("TMUX_TMPDIR", str(tmp_path / "tmux"))
+    from holdspeak.config import Config
+
+    config = Config.load()
+    config.control_mode = "neutral"   # Normal on the face
+    config.save()
+    _ag0_seed(tmp_path / "home")
+    spool = {"state_path": agent_context_pkg.AGENT_CONTEXT_FILE, "events_spool_dir": event_log.default_spool_dir()}
+
+    def hook(event: str, **payload: Any) -> None:
+        ingest_agent_hook_event(agent="claude", payload={
+            "session_id": "ag2-held", "cwd": str(tmp_path / "home" / "dev" / "platform"),
+            "hook_event_name": event, "tmux_pane": "%4243", **payload}, **spool)
+
+    # The fake Claude Code's permission prompt (rig/fake_claude.py).
+    hook("SessionStart", source="startup")
+    hook("UserPromptSubmit", prompt="the brief")
+    hook("PostToolUse", tool_name="Bash", tool_input={"command": "pytest -q tests/test_rollback.py"})
+    hook("Notification", notification_type="permission_prompt", message=AG2_HELD)
+
+    sessions = _get(hub, "/api/coders/sessions?include_ended=false")
+    rows = {r["session"]["session_id"]: r["session"] for r in sessions["sessions"]}
+    assert rows["ag0-ghost"]["question"] == AG0_QUESTION and rows["ag0-ghost"]["wait_id"], rows["ag0-ghost"]
+    assert rows["ag2-held"]["notification_type"] == "permission_prompt" and rows["ag2-held"]["wait_id"]
+    _keep("agents-ag2", "coders-sessions", sessions, tmp_path, hub)
+    lane = _get(hub, "/api/agent/launches/launch_ag0_ghost/lane")
+    assert lane["wait"]["wait_id"] == rows["ag0-ghost"]["wait_id"] and lane["control"]["armed"] is False
+    _keep("agents-ag2", "lane.asks", lane, tmp_path, hub)
+
+    wait = rows["ag0-ghost"]["wait_id"]
+    status, body = _http(hub, "POST", "/api/coders/claude:ag0-ghost/steer", TOKEN,
+                         {"text": "1", "submit": True, "kind": "answer", "wait_id": wait})
+    body = _refusal(body)
+    # Past the authority (no "unarmed" in Normal), refused at the pane.
+    assert status == 409 and body["status"] in {"pane_gone", "tmux_absent", "target_gone", "error"}, (status, body)
+    status, body = _http(hub, "POST", "/api/coders/claude:ag0-ghost/steer", TOKEN, {"text": "1"})
+    body = _refusal(body)
+    assert status == 409 and body["status"] == "unarmed", body   # a plain steer still needs its ARM
+    status, body = _http(hub, "POST", "/api/coders/claude:ag0-ghost/steer", TOKEN,
+                         {"text": "1", "kind": "answer", "wait_id": "an-old-wait"})
+    body = _refusal(body)
+    assert status == 409 and body["status"] == "wait_not_current", body
+    held = rows["ag2-held"]["wait_id"]
+    status, body = _http(hub, "POST", "/api/coders/claude:ag2-held/keys", TOKEN,
+                         {"keys": ["Enter"], "kind": "answer", "wait_id": held})
+    body = _refusal(body)
+    assert status == 409 and body["status"] in {"pane_gone", "tmux_absent", "target_gone", "error"}, (status, body)

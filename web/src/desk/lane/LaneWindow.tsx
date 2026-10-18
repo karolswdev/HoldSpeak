@@ -471,13 +471,22 @@ function AnswerWell({ lane, wait, agent }: { lane: LaneWire; wait: LaneWait; age
       listenSignal={answerSeq}
       draftScope={scope}
       inputRef={inputRef}
-      arm={lane.control && !isNotRead(lane.control) && lane.control.pane === false ? <span className="surface-token">Terminal unavailable</span> : <ArmLine lane={lane} />}
+      // Betterment AG2: Answer needs no ARM (the press is the authority for
+      // this wait); the ARM stays behind Terminal with the keys.
+      arm={lane.control && !isNotRead(lane.control) && lane.control.pane === false ? <span className="surface-token">Terminal unavailable</span> : <TerminalGone />}
     />
   );
 }
 
 /** Secure and Normal: the lane's ARM, where the action is, with the mode.
  * Absent when the session is armed or the policy lets the owner type (YOLO). */
+/** Betterment AG0/AG2: an answer or ARM the hub refused because the pane is
+ * gone says so where the ARM was. */
+function TerminalGone() {
+  const terminalGone = useLane((s) => s.terminalGone);
+  return terminalGone ? <span className="lw-fact" data-testid="lane-terminal-gone">{TERMINAL_GONE_WORDS}</span> : null;
+}
+
 function ArmLine({ lane, compact = false }: { lane: LaneWire; compact?: boolean }) {
   const control = lane.control;
   const terminalGone = useLane((s) => s.terminalGone);

@@ -243,7 +243,11 @@ export const useLane = create<LaneState>((set, get) => ({
     const clean = text.trim();
     if (!key || !clean || get().sending) return false;
     const control = get().lane?.control;
-    const needsArm = control && !isNotRead(control) && !control.direct && !control.armed;
+    // Betterment AG2: an answer to the current wait carries its own
+    // authority (the hub checks the pane and the wait); only a plain steer
+    // (Tell it) still needs the ARM in Secure and Normal.
+    const answering = Boolean(opts && "waitId" in opts && opts.waitId);
+    const needsArm = !answering && control && !isNotRead(control) && !control.direct && !control.armed;
     if (needsArm) {
       set({ receipt: { word: "ARM FIRST", at: Date.now(), text: firstWords(clean), tone: "fail" } });
       return false;

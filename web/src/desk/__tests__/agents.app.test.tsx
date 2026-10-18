@@ -26,6 +26,7 @@ import { WingSlotContext } from "../surface/wings";
 import { LaneWindow, __resetDraftEgress } from "../lane/LaneWindow";
 import { __resetLane, useLane } from "../lane/laneStore";
 import { branchFace } from "../lane/laneWire";
+import { menuChoices, questionChoices, wantsToRun } from "../agents/choices";
 import { fromWireFlight, fromWireSessionRow, useAgentFlights } from "../agentFlights";
 import { ConductorWindow } from "../conductor/ConductorWindow";
 import { __resetConductor } from "../conductor/store";
@@ -392,8 +393,10 @@ describe("the Agents list tells the truth about state (Betterment AG0)", () => {
     expect(useAgentFlights.getState().flights.find((f) => f.launchId === "launch_ag0_done")?.isNew).toBe(false);
   });
 
-  it("ARM on an agent whose terminal is gone says so in place of ARM FIRST", async () => {
-    const lane = ag0<{ launch: { session_key: string } }>("lane.ghost");
+  it("an Answer to an agent whose terminal is gone says so; no ARM step (Betterment AG2)", async () => {
+    const lane = ag0<{ launch: { session_key: string }; wait: { wait_id: string } }>("lane.ghost");
+    // The hub's refusal when the pane is gone (recorded for the ARM; the
+    // steer route refuses with the same status).
     const refused = ag0("arm.refused");
     serve({
       "/api/agent/launches/": lane.wire,
@@ -401,23 +404,29 @@ describe("the Agents list tells the truth about state (Betterment AG0)", () => {
       "/api/inference/assignments": ASSIGNMENTS.wire,
       "/api/gate/proposals": { proposals: [] },
     });
-    api.request.mockImplementation(async (url: string) =>
-      String(url).endsWith("/arm")
+    const posted: Array<[string, unknown]> = [];
+    api.request.mockImplementation(async (url: string, init?: RequestInit) => {
+      posted.push([String(url), init?.body ? JSON.parse(String(init.body)) : null]);
+      return String(url).endsWith("/steer")
         ? ({ ok: false, status: 409, json: async () => refused.wire } as unknown as Response)
-        : ({ ok: true, status: 200, json: async () => ({}) } as unknown as Response),
-    );
+        : ({ ok: true, status: 200, json: async () => ({}) } as unknown as Response);
+    });
     steering();
     render(<LaneWindow />);
     await act(async () => {
       await useLane.getState().open("launch_ag0_ghost", { sessionKey: lane.wire.launch.session_key });
     });
-    const arm = await screen.findByTestId("lane-arm");
-    expect(arm.textContent).toContain("ARM FIRST");
+    const well = await screen.findByTestId("lane-ask");
+    // Normal mode, not armed: no ARM on the face.
+    expect(screen.queryByTestId("lane-arm")).toBeNull();
+    expect(document.body.textContent).not.toContain("ARM FIRST");
+    fireEvent.change(within(well).getByRole("textbox", { name: "Answer" }), { target: { value: "1" } });
     await act(async () => {
-      fireEvent.click(within(arm).getByRole("button", { name: "ARM" }));
+      fireEvent.click(within(well).getByRole("button", { name: "Answer" }));
     });
     await waitFor(() => expect(screen.getByTestId("lane-terminal-gone").textContent).toBe("This agent's terminal is gone"));
-    expect(screen.queryByTestId("lane-arm")).toBeNull();
+    const steer = posted.find(([url]) => url.endsWith("/steer"));
+    expect(steer?.[1]).toMatchObject({ text: "1", kind: "answer", wait_id: lane.wire.wait.wait_id });
   });
 });
 
@@ -469,5 +478,112 @@ describe("the agent faces say Agents and agent (Betterment AG1)", () => {
     expect(branchFace("hs/write-the-rollback-runbook")).toBe("hs/write-the-rollback-runbook");
     expect(branchFace("feature/flags")).toBe("feature/flags");
     expect(branchFace(null)).toBe("");
+  });
+});
+
+/* ── Betterment AG2: one press to answer and to allow ─────────────────
+ * Recorded on a real hub by tests/integration/test_desk_agents_wire.py::
+ * test_the_agents_read_asks_with_choices_and_answers_without_an_arm
+ * (fixtures/agents-ag2: one agent asks "Answer 1 for config, 2 for env.",
+ * one waits at a permission prompt; Normal mode, nothing armed). The screens
+ * are the fake Claude Code's real panes read by the hub's own peek_pane
+ * (wire/peek.ag2-*.wire.json). */
+function ag2<T = unknown>(name: string): { captured_at: string; wire: T } {
+  return hubWire<T>(`../fixtures/agents-ag2/${name}`);
+}
+
+describe("one press to answer and to allow (Betterment AG2)", () => {
+  const SESSIONS = ag2<{ sessions: Array<{ session: Record<string, unknown> }> }>("coders-sessions");
+  const LANE_ASKS = ag2<{ wait: { wait_id: string; question: string } }>("lane.asks");
+  const waitOf = (sid: string) => String(SESSIONS.wire.sessions.find((r) => r.session.session_id === sid)?.session.wait_id ?? "");
+  const posts = () => api.fetch.mock.calls
+    .filter(([, init]) => (init as { method?: string } | undefined)?.method === "POST")
+    .map(([url, init]) => [String(url), (init as { json?: unknown }).json] as const);
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(SESSIONS.captured_at));
+    __resetConductor();
+    useAgentFlights.setState({ sessions: [], flights: [], loaded: false });
+    serve({
+      "/api/coders/sessions": SESSIONS.wire,
+      "/api/onboarding/agents": DETECT.wire,
+      "/api/agent/launches/launch_ag0_ghost/lane": LANE_ASKS.wire,
+      "/api/agent/launches/": { gated: [], wait: null },
+      "/api/coders/claude%3Aag0-ghost/peek": hubWire("peek.ag2-asks").wire,
+      "/api/coders/claude%3Aag2-held/peek": hubWire("peek.ag2-permission").wire,
+      "/api/coders/claude%3Aag0-ghost/steer": { status: "delivered", pane_id: "%4242" },
+      "/api/coders/claude%3Aag2-held/keys": { status: "delivered", pane_id: "%4243" },
+    });
+  });
+
+  async function rows() {
+    render(<ConductorWindow />);
+    await screen.findByRole("button", { name: "Write the on-call note" });
+    const asks = within(screen.getByTestId("conductor-asks")).getAllByTestId("conductor-ask-row");
+    const asking = asks.find((row) => row.dataset.objectId === "launch:launch_ag0_ghost")!;
+    const held = asks.find((row) => row.dataset.objectId === "coder:claude:ag2-held")!;
+    return { asking, held };
+  }
+
+  it("the row shows the whole question and 1 · config / 2 · env; one press sends 1 with the wait", async () => {
+    const { asking } = await rows();
+    expect(asking.querySelector(".cw-ask-label")?.textContent).toBe("Asks you");
+    expect(asking.textContent).toContain(LANE_ASKS.wire.wait.question);
+    await waitFor(() => expect(within(asking).getAllByTestId("agent-row-choice").map((b) => b.textContent))
+      .toEqual(["1 · config", "2 · env"]));
+    expect(document.body.textContent).not.toMatch(/ARM/);
+    await act(async () => {
+      fireEvent.click(within(asking).getByRole("button", { name: "1 · config" }));
+    });
+    expect(posts()).toEqual([["/api/coders/claude%3Aag0-ghost/steer",
+      { text: "1", submit: true, kind: "answer", wait_id: waitOf("ag0-ghost") }]]);
+    expect(LANE_ASKS.wire.wait.wait_id).toBe(waitOf("ag0-ghost"));
+    await waitFor(() => expect(within(asking).getByTestId("agent-row-receipt").textContent).toBe("Sent · 1 · config"));
+  });
+
+  it("a typed answer goes in one press too (Answer)", async () => {
+    const { asking } = await rows();
+    const field = within(asking).getByTestId("agent-row-answer-field") as HTMLInputElement;
+    fireEvent.change(field, { target: { value: "Use config, and add a test" } });
+    await act(async () => {
+      fireEvent.click(within(asking).getByRole("button", { name: "Answer" }));
+    });
+    expect(posts()).toEqual([["/api/coders/claude%3Aag0-ghost/steer",
+      { text: "Use config, and add a test", submit: true, kind: "answer", wait_id: waitOf("ag0-ghost") }]]);
+  });
+
+  it("Wants to run shows the command from the agent's screen; Allow sends Enter, Deny sends Escape", async () => {
+    const { held } = await rows();
+    expect(held.querySelector(".cw-ask-label")?.textContent).toBe("Wants to run");
+    await waitFor(() => expect(within(held).getByTestId("agent-row-command").textContent).toBe("rm -rf build/ && make release"));
+    await act(async () => {
+      fireEvent.click(within(held).getByRole("button", { name: "Allow" }));
+    });
+    expect(posts()).toEqual([["/api/coders/claude%3Aag2-held/keys",
+      { keys: ["Enter"], kind: "answer", wait_id: waitOf("ag2-held") }]]);
+    await waitFor(() => expect(within(held).getByTestId("agent-row-receipt").textContent).toBe("Sent · Allowed"));
+    api.fetch.mockClear();
+    await act(async () => {
+      fireEvent.click(within(held).getByRole("button", { name: "Deny" }));
+    });
+    expect(posts()).toEqual([["/api/coders/claude%3Aag2-held/keys",
+      { keys: ["Escape"], kind: "answer", wait_id: waitOf("ag2-held") }]]);
+  });
+});
+
+describe("the screen parse on the recorded fake Claude Code panes (Betterment AG2)", () => {
+  it("reads the permission prompt's command and its own menu; the question screen has no menu", () => {
+    const permission = hubWire<{ peek: { lines: string[] } }>("peek.ag2-permission").wire.peek.lines;
+    expect(wantsToRun(permission)).toBe("rm -rf build/ && make release");
+    expect(menuChoices(permission)).toEqual([
+      { n: "1", label: "Yes" }, { n: "2", label: "No, and tell Claude what to do differently" },
+    ]);
+    const asks = hubWire<{ peek: { lines: string[] } }>("peek.ag2-asks").wire.peek.lines;
+    expect(menuChoices(asks)).toEqual([]);
+    expect(wantsToRun(asks)).toBeNull();
+    expect(questionChoices("Ship it now? Answer 1 for yes, 2 for no, 3 for later.").map((c) => `${c.n} · ${c.label}`))
+      .toEqual(["1 · yes", "2 · no", "3 · later"]);
+    expect(questionChoices("Jordan or Avery?")).toEqual([]);
   });
 });

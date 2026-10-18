@@ -48,6 +48,7 @@ def steering_policy(
     data_classes: tuple[str, ...],
     registered: bool,
     grant: Optional[Mapping[str, Any]] = None,
+    owner_answer: bool = False,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """Describe one exact pane effect and consume the central resolver."""
     from ....config import Config
@@ -69,6 +70,7 @@ def steering_policy(
         mode=Config.load().control_mode,
         source="config",
         grant=grant,
+        owner_answer=owner_answer,
     )
     return operation.to_dict(), decision.to_dict()
 

@@ -451,18 +451,17 @@ describe("the agent's window", () => {
     expect(field.value).toBe("Late.");
   });
 
-  it("Normal, unarmed: the ARM is on the lane with the mode; Answer says ARM FIRST and sends nothing; ARM arms the lane's session", async () => {
+  it("Normal, unarmed: Answer needs no ARM (Betterment AG2); it sends the answer with its wait", async () => {
     await openLane(fixture({ control: { mode: "neutral", armed: false, direct: false } }));
-    const arm = screen.getByTestId("lane-arm");
-    expect(arm.textContent).toContain("ARM FIRST");
+    // The ARM left the answer (it stays behind Terminal with the keys).
+    expect(screen.queryByTestId("lane-arm")).toBeNull();
+    answer({ "/steer": [200, { status: "delivered", pane_id: "%0" }] });
     const field = screen.getByRole("textbox", { name: "Answer" }) as HTMLInputElement;
     fireEvent.change(field, { target: { value: "Jordan." } });
     fireEvent.keyDown(field, { key: "Enter" });
-    await waitFor(() => expect(screen.getByTestId("lane-receipt").textContent).toContain("ARM FIRST"));
-    expect(posts("/steer")).toEqual([]);
-    answer({ "/arm": [200, { status: "armed", pane_id: "%0" }] });
-    fireEvent.click(within(arm).getByRole("button", { name: /ARM/ }));
-    await waitFor(() => expect(posts(ARM)).toHaveLength(1));
+    await waitFor(() => expect(posts(STEER)).toEqual([{ text: "Jordan.", submit: true, kind: "answer", wait_id: "w-1" }]));
+    expect(posts(ARM)).toEqual([]);
+    expect(screen.getByTestId("lane-receipt").textContent).not.toContain("ARM FIRST");
   });
 
   it("Stop: Normal unarmed never arms by itself; YOLO arms per press, then kills", async () => {

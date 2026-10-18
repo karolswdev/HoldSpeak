@@ -503,7 +503,8 @@ describe("PHILO-17 the Conductor reads like Today", () => {
     expect(rows[0].querySelector(".cw-ask-age")?.textContent).toMatch(/^Ask/);
     expect(rows[0].textContent).toContain("Claude Code");
     expect(rows[0].textContent).toContain(QUESTION.slice(0, 20));
-    expect(within(rows[0]).getAllByRole("button").map((b) => b.textContent)).toEqual(["Write the rollback runbook", "Answer"]);
+    // No wait id in this read: Answer opens the agent's ask well (Betterment AG2 fallback).
+    expect(within(rows[0]).getAllByRole("button").map((b) => b.textContent)).toEqual(["Write the rollback runbook", "Answer", "Open"]);
     expect(document.querySelectorAll(".kit-disp")).toHaveLength(1);
   });
 
@@ -526,10 +527,10 @@ describe("PHILO-17 the Conductor reads like Today", () => {
     expect(call.textContent).toContain("psql -h staging-ledger");
     const plate = screen.getByTestId("conductor-ask-row");
     expect(plate.querySelector(".cw-ask-label")?.textContent).toBe("Wants to run");
-    expect(within(plate).getByRole("button", { name: "Approve" }).className).toContain("btn--primary");
-    expect(within(plate).getByRole("button", { name: "Deny" }).className).toContain("btn--ghost");
+    expect(within(plate).getByRole("button", { name: "Allow" }).className).toContain("btn--primary");
+    expect(within(plate).getByRole("button", { name: "Deny" }).className).toContain("btn--secondary");
     await act(async () => {
-      fireEvent.click(within(plate).getByRole("button", { name: "Approve" }));
+      fireEvent.click(within(plate).getByRole("button", { name: "Allow" }));
     });
     expect(apiFetch).toHaveBeenCalledWith("/api/gate/proposals/toolu_psql/decide", expect.objectContaining({
       method: "POST", json: expect.objectContaining({ decision: "approved" }),
@@ -556,19 +557,19 @@ describe("PHILO-17 the Conductor reads like Today", () => {
       return base(url, init);
     });
     render(<ConductorWindow />);
-    const approve = await screen.findByRole("button", { name: "Approve" });
+    const approve = await screen.findByRole("button", { name: "Allow" });
     fireEvent.click(approve);
     fireEvent.click(approve);
     expect(approve).toBeDisabled();
     expect(attempts).toBe(1);
     await act(async () => { release(); });
-    expect(await screen.findByRole("alert")).toHaveTextContent("Approve failed · Approval refused");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Allow failed · Approval refused");
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
     const posts = apiFetch.mock.calls.filter(([url]) => String(url).endsWith("/decide"));
     expect(posts).toHaveLength(2);
     expect(posts[1]).toEqual(posts[0]);
-    expect(screen.queryByRole("button", { name: "Approve" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Allow" })).toBeNull();
   });
 
   it.each([false, true])("retries reads only after a settled approval with unavailable truth, race=%s", async (race) => {
@@ -592,10 +593,10 @@ describe("PHILO-17 the Conductor reads like Today", () => {
       return base(url, init);
     });
     render(<ConductorWindow />);
-    fireEvent.click(await screen.findByRole("button", { name: "Approve" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Allow" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Decision saved · Gate read failed · Retry · Gate read unavailable");
     await waitFor(() => expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled());
-    expect(screen.queryByRole("button", { name: "Approve" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Allow" })).toBeNull();
     unavailable = false;
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
@@ -617,11 +618,11 @@ describe("PHILO-17 the Conductor reads like Today", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Call read failed · Calls unchanged · Retry · Call unavailable");
     unavailable = false;
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
-    expect(await screen.findByRole("button", { name: "Approve" })).toBeEnabled();
+    expect(await screen.findByRole("button", { name: "Allow" })).toBeEnabled();
     expect(apiFetch.mock.calls.filter(([url]) => String(url).endsWith("/decide"))).toHaveLength(0);
   });
 
-  it("a cut call is never approved on the plate: it opens the lane", async () => {
+  it("a cut call is never allowed on the plate: Terminal opens the lane on its screen", async () => {
     const base = apiFetch.getMockImplementation()!;
     apiFetch.mockImplementation(async (url: string, init?: { method?: string }) => {
       if (url.startsWith("/api/agent/launches/l-runbook/lane"))
@@ -630,9 +631,9 @@ describe("PHILO-17 the Conductor reads like Today", () => {
     });
     render(<ConductorWindow />);
     await screen.findByTestId("conductor-held-call");
-    expect(screen.queryByRole("button", { name: "Approve" })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "See the call" }));
-    expect(shell.lanes).toEqual([["l-runbook", { sessionKey: "claude:c1", answer: true }]]);
+    expect(screen.queryByRole("button", { name: "Allow" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Terminal" }));
+    expect(shell.lanes).toEqual([["l-runbook", { sessionKey: "claude:c1", raw: true }]]);
   });
 
   it("the coders on this Mac fold while coders work; ended launches fold", async () => {

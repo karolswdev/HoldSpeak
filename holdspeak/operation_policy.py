@@ -198,6 +198,7 @@ def resolve_policy(
     grant: Optional[Mapping[str, Any]] = None,
     configured_preview: bool = False,
     explicit_authorization: bool = False,
+    owner_answer: bool = False,
     tool_call: Optional[Mapping[str, Any]] = None,
 ) -> PolicyDecision:
     """Resolve one future operation; unknown families always fail closed.
@@ -252,6 +253,26 @@ def resolve_policy(
             next_state="awaiting_review" if review else "execute_now",
             eligible=True,
             requires_review=review,
+            requires_authorization=False,
+            requires_grant=False,
+        )
+
+    if operation.family == "coder_steering" and owner_answer and operation.fixed_destination:
+        # Betterment AG2: the owner's press on Answer / Allow / Deny names
+        # the agent's CURRENT wait (the route refused a stale one). The press
+        # is the authority for that one wait, in every Control mode; the
+        # chokepoint still checks the pane and the wait before the keystroke.
+        return PolicyDecision(
+            mode=selected,
+            source=source,
+            precedence=precedence,
+            outcome="allowed",
+            reason_code="owner_answer_press",
+            consequence="execute_now",
+            authority_basis="owner_answer",
+            next_state="execute_now",
+            eligible=True,
+            requires_review=False,
             requires_authorization=False,
             requires_grant=False,
         )
