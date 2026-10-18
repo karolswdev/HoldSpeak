@@ -35,7 +35,7 @@ TOOLS: list[dict[str, Any]] = [
         "concierge.detect",
         {},
         [],
-        description="Detect every engine: LAN endpoints, local files, cloud keys present, presets not yet downloaded.",
+        description="Detect every engine: LAN servers, agent CLIs on this Mac, local files, cloud keys, presets.",
     ),
     _schema(
         "concierge.propose",

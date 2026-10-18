@@ -748,11 +748,11 @@
     }
   ],
   "measurements": {
-    "residual_identities": 252,
-    "residual_mcp": 197,
+    "residual_identities": 253,
+    "residual_mcp": 198,
     "residual_http": 55,
     "http_constructions": 56,
-    "public_tools": 269
+    "public_tools": 270
   },
   "entries": [
     {
@@ -1292,6 +1292,12 @@
     {
       "transport": "mcp",
       "entry_point": "model_library.get",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/model_library.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "model_library.set_spend_limit",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/model_library.py)"
     },
