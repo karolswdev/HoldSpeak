@@ -50,7 +50,7 @@ class FinishRig:
             server.stop()
 
 
-    def _page(self, pw: Any, width: int) -> tuple[Any, Any, list[str]]:
+    def _page(self, pw: Any, width: int, *, builder_tools: bool = False) -> tuple[Any, Any, list[str]]:
         browser = pw.chromium.launch(headless=True, args=["--disable-smooth-scrolling"])
         ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]}, device_scale_factor=1,
                                   has_touch=width < 720, reduced_motion="reduce")
@@ -61,6 +61,11 @@ class FinishRig:
         page.set_default_navigation_timeout(120_000)
         page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
         _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+        if builder_tools:
+            # Betterment shell S1 (#1259): Processes, Refresh from hub and the
+            # other builder tools are in Go and Search only with Settings ▸
+            # System ▸ Builder tools on (web/src/desk/builderTools.ts).
+            page.evaluate("() => localStorage.setItem('hs.desk.builderTools', 'on')")
         page.reload(wait_until="load")
         # The first /api/setup/status runs every doctor check cold (imports);
         # on a loaded machine that took 36 s. The desk waits for it.

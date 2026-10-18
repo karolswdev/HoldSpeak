@@ -550,7 +550,6 @@ class TestTheGadgets:
         if not menu:
             fails["G3 the window menu opens"] = menus
             return
-        # a ghosted row carries its reason after the name ("Zoom · Fills the screen")
         got = [(r["label"].split(" · ")[0], r["keycap"]) for r in menu["rows"]]
         # PHILO-16 §5: Zoom ⌘⇧Z, To back ⌘⇧`. PHILO-17 windows (#1070, U27):
         # the menus show ⌃M and ⌃W (a browser tab keeps the ⌘ keys).
@@ -559,12 +558,14 @@ class TestTheGadgets:
         if width < 720:
             # PHILO-15 11 (B21): a phone has no ⌘ key, so no row at 393 draws
             # a keycap (DeskMenu.tsx `entry.keycap && !NARROW()`).
-            want = [(label, None) for label, _ in want]
+            # Betterment shell S0 (#1257, UX-CANON A.11 "withhold, never
+            # ghost"): a window fills the phone screen, so Zoom cannot run
+            # there and is not drawn.
+            want = [(label, None) for label, _ in want if label != "Zoom"]
         if got != want:
             fails["G3 the menu bar with its key caps"] = got
-        zoom = menu["rows"][1] if len(menu["rows"]) > 1 else {}
-        if width < 720 and not zoom.get("ghost"):
-            fails["G3 393: Zoom stays, ghosted with its reason"] = zoom
+        if any(r.get("ghost") for r in menu["rows"]):
+            fails["G3 no ghosted row (withheld, never ghosted)"] = [r for r in menu["rows"] if r.get("ghost")]
         if width < 720:
             small = [r for r in menu["rows"] if r["h"] < 44]
             if small:

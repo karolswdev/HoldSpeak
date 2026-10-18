@@ -17,7 +17,9 @@ two actions with owner and due date) is opened at 393 touch and 1440 mouse:
      clipped text and no overlap in the editor;
   W2 nothing in the editor scrolls sideways;
   W3 every line's last words (the owner and the due date) are inside the
-     editor's visible box.
+     editor's visible box. Betterment P1 (#1283): the draft is the library
+     TextArea, so W3 reads that its text wraps (white-space), that nothing
+     runs past its client box, and that the box sits inside its window.
   W4 the draft's claim text reads at least 4.5:1 against its rendered paper.
 
 Shots go to assets/story-18-shots/ (``.tmp/evidence-shots/`` unless
@@ -114,24 +116,22 @@ def _seed_draft(project_id: str) -> None:
 
 
 _ENDS_JS = """(ends) => {
-  const ed = document.querySelector('[data-testid="update-body-editor"] .cm-editor');
-  const box = ed.getBoundingClientRect();
-  const out = {box: [box.left, box.right].map(Math.round), missing: [], sideways: []};
-  for (const end of ends) {
-    const line = [...ed.querySelectorAll('.cm-line')].find((l) => l.textContent.includes(end));
-    if (!line) { out.missing.push(end + ' (no line)'); continue; }
-    const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT);
-    let hit = null;
-    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
-      const i = n.textContent.indexOf(end.slice(-6));
-      if (i >= 0) { const r = document.createRange(); r.setStart(n, i); r.setEnd(n, i + 6); hit = r.getBoundingClientRect(); }
-    }
-    if (!hit || hit.right > box.right + 1 || hit.left < box.left - 1)
-      out.missing.push(end + ' at ' + (hit ? Math.round(hit.right) : 'none'));
-  }
-  for (const e of [ed, ...ed.querySelectorAll('*')])
-    if (e.scrollWidth > e.clientWidth + 1 && ['auto', 'scroll'].includes(getComputedStyle(e).overflowX))
-      out.sideways.push((e.className || e.tagName).toString().slice(0, 40) + ' ' + e.scrollWidth + '>' + e.clientWidth);
+  // Betterment P1 (#1283): the draft is the library TextArea, plain text.
+  // A textarea wraps when its white-space wraps and nothing runs past its
+  // client box sideways; then every line's last words are inside the box.
+  const ta = document.querySelector('[data-testid="update-plain-text"]');
+  const box = ta.getBoundingClientRect();
+  const cs = getComputedStyle(ta);
+  const out = {box: [box.left, box.right].map(Math.round), missing: [], sideways: [],
+               whiteSpace: cs.whiteSpace, wrap: ta.getAttribute('wrap')};
+  for (const end of ends) if (!ta.value.includes(end)) out.missing.push(end + ' (not in the draft)');
+  if (!['pre-wrap', 'normal', 'pre-line', 'break-spaces'].includes(cs.whiteSpace) || ta.getAttribute('wrap') === 'off')
+    out.missing.push('the draft does not wrap: white-space ' + cs.whiteSpace);
+  if (ta.scrollWidth > ta.clientWidth + 1) out.sideways.push('textarea ' + ta.scrollWidth + '>' + ta.clientWidth);
+  const shell = ta.closest('.desk-window-shell') || document.documentElement;
+  const sb = shell.getBoundingClientRect();
+  if (box.right > Math.min(sb.right, innerWidth) + 1 || box.left < Math.max(sb.left, 0) - 1)
+    out.missing.push('the draft box runs off its window: ' + Math.round(box.left) + '..' + Math.round(box.right));
   return out;
 }"""
 
@@ -204,11 +204,12 @@ def test_the_update_draft_wraps(tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
             seeded = page.get_by_test_id("update-list-item").filter(
                 has=page.locator("[data-update-id='pupd_p1318_wrap']"))
             press(seeded)
-            editor = page.locator('[data-testid="update-body-editor"] .cm-editor')
+            # Betterment P1 (#1283): the draft is a plain TextArea, not the old editor.
+            editor = page.get_by_test_id("update-plain-text")
             editor.wait_for()
             editor.scroll_into_view_if_needed()
             _settle(page)
-            assert "Owner: Morgan" in editor.inner_text(), "the seeded draft is not in the editor"
+            assert "Owner: Morgan" in editor.input_value(), "the seeded draft is not in the editor"
             faults = _rendered_text_faults(page, '[data-testid="update-body-editor"]', on_glass=True)
             ends = page.evaluate(_ENDS_JS, ENDS)
             page.screenshot(path=str(SHOTS / f"update-editor-wrap-{width}.png"))
