@@ -1,0 +1,38 @@
+{
+  "about": "Two answers of `gh pr list --repo acme/ledger --state open --json number,title,url,state,isDraft,reviewRequests,reviewDecision,statusCheckRollup,headRefOid,headRefName,updatedAt,createdAt,mergedAt`, before and after a review request (Betterment A2). The rows use the gh JSON field shape (reviewRequests as objects with login, statusCheckRollup as check runs). They are not a live recording: the A2 brief says nothing leaves the machine.",
+  "repository": "acme/ledger",
+  "before": [
+    {
+      "number": 418,
+      "title": "Move the ledger cutover behind a flag",
+      "url": "https://github.com/acme/ledger/pull/418",
+      "state": "OPEN",
+      "isDraft": false,
+      "reviewRequests": [],
+      "reviewDecision": "",
+      "statusCheckRollup": [{"__typename": "CheckRun", "name": "test", "status": "COMPLETED", "conclusion": "SUCCESS"}],
+      "headRefOid": "9f2c1e7",
+      "headRefName": "feat/cutover-flag",
+      "updatedAt": "2026-10-17T15:02:11Z",
+      "createdAt": "2026-10-16T09:40:00Z",
+      "mergedAt": null
+    }
+  ],
+  "after": [
+    {
+      "number": 418,
+      "title": "Move the ledger cutover behind a flag",
+      "url": "https://github.com/acme/ledger/pull/418",
+      "state": "OPEN",
+      "isDraft": false,
+      "reviewRequests": [{"__typename": "User", "login": "karolswdev"}],
+      "reviewDecision": "REVIEW_REQUIRED",
+      "statusCheckRollup": [{"__typename": "CheckRun", "name": "test", "status": "COMPLETED", "conclusion": "SUCCESS"}],
+      "headRefOid": "9f2c1e7",
+      "headRefName": "feat/cutover-flag",
+      "updatedAt": "2026-10-17T15:20:43Z",
+      "createdAt": "2026-10-16T09:40:00Z",
+      "mergedAt": null
+    }
+  ]
+}

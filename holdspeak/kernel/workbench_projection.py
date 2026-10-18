@@ -34,7 +34,7 @@ def _child(conn: Any, stage: Any, permit: Any) -> dict[str, Any]:
     if stage.kind == "workbench-item-output":
         artifact_id = str(p["artifact_id"])
         conn.execute("UPDATE workbench_items SET status='done',result=?,result_egress_json=?,completed_at=?,last_modified=?,result_artifact_id=?,mint_attempted=1,tokens_consumed=? WHERE id=?", (p["output"], json.dumps(p["egress"],sort_keys=True),now,now,artifact_id,int(p.get("tokens") or 0),str(p["item_id"])))
-        conn.execute("INSERT OR IGNORE INTO artifacts(id,meeting_id,origin,artifact_type,title,body_markdown,structured_json,confidence,status,plugin_id,plugin_version,source_run_id,source_item_id,created_at,updated_at) VALUES(?,NULL,'run','workbench_output',?,?,?,0.0,'pending-review','workbench_run','1',?,?,?,?)", (artifact_id,p["artifact_title"],p["output"],json.dumps({"parent_operation_id":p["parent_operation_id"],"operation_id":stage.operation_id,"receipt_id":p["receipt_id"]},sort_keys=True),p["run_id"],p["item_id"],now,now))
+        conn.execute("INSERT OR IGNORE INTO artifacts(id,meeting_id,origin,artifact_type,title,body_markdown,structured_json,confidence,status,plugin_id,plugin_version,source_run_id,source_item_id,created_at,updated_at) VALUES(?,NULL,'run','workbench_output',?,?,?,0.0,?,'workbench_run','1',?,?,?,?)", (artifact_id,p["artifact_title"],p["output"],json.dumps({"parent_operation_id":p["parent_operation_id"],"operation_id":stage.operation_id,"receipt_id":p["receipt_id"]},sort_keys=True),str(p.get("artifact_status") or "pending-review"),p["run_id"],p["item_id"],now,now))
     else:
         from ..workbench_memory import append_memory
         text = str(p.get("observation") or "").strip()

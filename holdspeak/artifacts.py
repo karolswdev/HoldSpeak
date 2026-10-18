@@ -6,7 +6,11 @@ from dataclasses import dataclass, field
 from typing import Any
 
 
-VALID_ARTIFACT_STATUSES = frozenset({"draft", "needs_review", "accepted", "rejected", "pending-review"})
+# Betterment A2 (decision 5): an automation result is ``new`` until it is
+# opened, then ``read``. It is never "awaiting review".
+VALID_ARTIFACT_STATUSES = frozenset(
+    {"draft", "needs_review", "accepted", "rejected", "pending-review", "new", "read"}
+)
 
 
 def artifact_status_from_confidence(confidence: float) -> str:

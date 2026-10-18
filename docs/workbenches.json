@@ -9,7 +9,10 @@
     "recipe_id": "TEXT (FK to recipes, nullable)",
     "profile_id": "TEXT (FK to profiles/inference targets, nullable)",
     "schedule": "TEXT (cron expression, nullable for manual)",
-    "schedule_enabled": "BOOLEAN (default false)"
+    "schedule_enabled": "BOOLEAN (default false)",
+    "instruction": "TEXT (the Do text; default ''). With it, each run makes one occurrence item and one result; empty keeps the item queue.",
+    "sources": "JSON array of qualified refs (note:<id>, meeting:<id>, ...), stored as sources_json; the run reads them all in one prompt",
+    "output_target": "inbox (default) | needs_you | destination:<id> (channel.prepare only; the owner presses Send)"
   },
   "item_identity": {
     "id": "TEXT PRIMARY KEY",
@@ -45,17 +48,33 @@
     "principal": "owner",
     "authority_basis": "recipe system_prompt + constitutional_context + item grounding",
     "target": "workbench.profile_id",
-    "receipt_fields": ["items_attempted", "items_completed", "items_failed", "egress_boundary", "model", "tokens_consumed"]
+    "receipt_fields": [
+      "items_attempted",
+      "items_completed",
+      "items_failed",
+      "egress_boundary",
+      "model",
+      "tokens_consumed"
+    ]
   },
   "api_surface": {
     "GET /api/workbenches": "list all workbenches with items and last run",
     "POST /api/workbenches": "create a workbench",
-    "GET /api/workbenches/{id}": "single workbench with items and last run",
+    "GET /api/workbenches/{id}": "single workbench with items, last run, results, instruction_shown and instruction_from",
     "PUT /api/workbenches/{id}": "update workbench config",
     "DELETE /api/workbenches/{id}": "tombstone (refuses with active items)",
     "POST /api/workbenches/{id}/items": "add an item",
     "PUT /api/workbenches/{id}/items/{item_id}": "update an item",
     "DELETE /api/workbenches/{id}/items/{item_id}": "remove an item (refuses claimed)",
-    "GET /api/workbenches/{id}/runs": "list run receipts"
+    "GET /api/workbenches/{id}/runs": "list run receipts",
+    "POST /api/workbenches/{id}/run": "run: an automation with an instruction runs one new occurrence; else the pending queue (or item_ids)",
+    "POST /api/workbenches/{id}/results/{artifact_id}/open": "open a result: new becomes read"
+  },
+  "result": {
+    "artifact_status": "new until opened, then read (an occurrence result); queue results stay pending-review",
+    "occurrence_title": "<name>, <date>, or the event's title for an event start",
+    "time_limit": "per item, from the engine: 60 s for an HTTP engine, the preset's timeout for a CLI engine",
+    "inbox": "one Note filed in the Inbox zone (hs-seed-inbox, when it exists) with a link back to the automation",
+    "needs_you": "one Door item owned by the owner (me) and due today, source_ref artifact:<id>"
   }
 }

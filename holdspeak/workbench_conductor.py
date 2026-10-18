@@ -564,12 +564,16 @@ class WorkbenchConductor:
                 from .kernel.runtime import _service
                 from .services.workbench_runner import WorkbenchRunner
                 from .principals import Principal, PrincipalKind
+                scheduler = Principal(PrincipalKind.SCHEDULER, "local-workbench-conductor")
                 loop = asyncio.new_event_loop()
-                loop.run_until_complete(WorkbenchRunner(db, _service()).run_scheduled(
-                    Principal(PrincipalKind.SCHEDULER, "local-workbench-conductor"), wb.id,
-                    due_minute=int(now_minute),
+                ran = loop.run_until_complete(WorkbenchRunner(db, _service()).run_scheduled(
+                    scheduler, wb.id, due_minute=int(now_minute),
                 ))
                 loop.close()
+                # Betterment A2: an instruction automation's one result goes to
+                # its output target (the Inbox by default).
+                from .services.automation_runs import deliver_run
+                deliver_run(db, scheduler, ran)
             except Exception as exc:
                 log.error(f"Conductor: workbench '{wb.name}' run failed: {exc}", exc_info=True)
 
