@@ -89,3 +89,17 @@ def lock_keys(name: str, arguments: Mapping[str, Any]) -> list[str]:
     if name in PROVIDER_TOOLS or name.startswith("provider."):
         keys.add("providers")
     return sorted(keys)
+
+
+def run_lock_keys(name: str, arguments: Mapping[str, Any]) -> list[str]:
+    """The lock keys of a call made by an agent CLI run (Betterment M1).
+
+    The run's parent call may hold any object key: ``workbench.run`` holds
+    ``workbench_id=<id>`` for the whole run, so the agent's own
+    ``workbench.get`` on that automation waited until the run timed out
+    (``betterment/mcp/MODEL.md`` section 3). A run's call takes no object key.
+    Its writes touch only what it made in the run (the launch rules,
+    ``services/conductor_launch.py``), which no other call names. The one
+    ``providers`` key stays: ``acli`` switches one global account."""
+    return [key for key in lock_keys(name, arguments) if key == "providers"]
+

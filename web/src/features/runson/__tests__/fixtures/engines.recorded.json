@@ -4,7 +4,7 @@
       {
         "gets": {
           "/api/concierge/detect": {
-            "checkedAt": "2026-10-18T06:29:38.023491+00:00",
+            "checkedAt": "2026-10-18T06:55:52.274860+00:00",
             "engines": [
               {
                 "agentPreset": "claude",
@@ -61,8 +61,8 @@
               },
               "observation": {
                 "available_memory_bytes": null,
-                "sha256": "sha256:85be74a7518c84db77df1ab9ff7dbc50e48950af286ae8295b27498b619ac527",
-                "storage_available_bytes": 245444960256
+                "sha256": "sha256:1004ba890ff504ad825bddfca5c0a1374cbacd162b4074b90508159cdd77f5a3",
+                "storage_available_bytes": 245401477120
               }
             },
             "lastApply": null,
@@ -982,7 +982,7 @@
               {
                 "effective": {
                   "assignment": {
-                    "created_at": "2026-10-18T06:29:37.676954Z",
+                    "created_at": "2026-10-18T06:55:51.933376Z",
                     "effective_retry_policy_id": "retry.audio.transcription",
                     "entries": [
                       {
@@ -995,7 +995,7 @@
                         "readiness": "unavailable"
                       }
                     ],
-                    "id": "ia_541e6ecfd93244fdb79d2eaae4f0e061",
+                    "id": "ia_0ed4aa097aa747b89410ac8649209245",
                     "issues": [
                       {
                         "code": "binding_not_ready",
@@ -1012,7 +1012,7 @@
                       "capability_id": "speech.transcribe",
                       "kind": "capability"
                     },
-                    "sha256": "sha256:cef70242db986fc3776869e6640f8e528862c292d5c57bfea7946f2d8e3086b4"
+                    "sha256": "sha256:d032ba1caa7974b2469c2f81e0d3e56c18b936d94f25b79514cb69be60151568"
                   },
                   "capability_id": "speech.transcribe",
                   "inherited_from": "capability",
@@ -1130,24 +1130,24 @@
             "assignments_after": {
               "heads": [
                 {
-                  "assignment_id": "ia_541e6ecfd93244fdb79d2eaae4f0e061",
+                  "assignment_id": "ia_0ed4aa097aa747b89410ac8649209245",
                   "assignment_key": "capability:speech.transcribe",
                   "cleared": false,
                   "revision": 1
                 }
               ],
-              "sha256": "sha256:240336517349738def277eda8a5d2e1abca6487280721356031aa55ba286ca07"
+              "sha256": "sha256:03799166e6ac6c7d4e371257e2835e3618af85a7943d35117c2c3f11702deff3"
             },
             "assignments_before": {
               "heads": [
                 {
-                  "assignment_id": "ia_541e6ecfd93244fdb79d2eaae4f0e061",
+                  "assignment_id": "ia_0ed4aa097aa747b89410ac8649209245",
                   "assignment_key": "capability:speech.transcribe",
                   "cleared": false,
                   "revision": 1
                 }
               ],
-              "sha256": "sha256:240336517349738def277eda8a5d2e1abca6487280721356031aa55ba286ca07"
+              "sha256": "sha256:03799166e6ac6c7d4e371257e2835e3618af85a7943d35117c2c3f11702deff3"
             },
             "assignments_unchanged": true,
             "kind": "model_library_provider",
@@ -1162,7 +1162,7 @@
         },
         "gets": {
           "/api/concierge/detect": {
-            "checkedAt": "2026-10-18T06:29:38.053215+00:00",
+            "checkedAt": "2026-10-18T06:55:52.310236+00:00",
             "engines": [
               {
                 "agentPreset": "claude",
@@ -1263,8 +1263,8 @@
               },
               "observation": {
                 "available_memory_bytes": null,
-                "sha256": "sha256:85be74a7518c84db77df1ab9ff7dbc50e48950af286ae8295b27498b619ac527",
-                "storage_available_bytes": 245444960256
+                "sha256": "sha256:91bca9d93a5a1bfea35891253ee37ef72d2b3554d5c8db2720093995a57e2057",
+                "storage_available_bytes": 245396762624
               }
             },
             "lastApply": null,
@@ -2184,7 +2184,7 @@
               {
                 "effective": {
                   "assignment": {
-                    "created_at": "2026-10-18T06:29:37.676954Z",
+                    "created_at": "2026-10-18T06:55:51.933376Z",
                     "effective_retry_policy_id": "retry.audio.transcription",
                     "entries": [
                       {
@@ -2197,7 +2197,7 @@
                         "readiness": "unavailable"
                       }
                     ],
-                    "id": "ia_541e6ecfd93244fdb79d2eaae4f0e061",
+                    "id": "ia_0ed4aa097aa747b89410ac8649209245",
                     "issues": [
                       {
                         "code": "binding_not_ready",
@@ -2214,7 +2214,7 @@
                       "capability_id": "speech.transcribe",
                       "kind": "capability"
                     },
-                    "sha256": "sha256:cef70242db986fc3776869e6640f8e528862c292d5c57bfea7946f2d8e3086b4"
+                    "sha256": "sha256:d032ba1caa7974b2469c2f81e0d3e56c18b936d94f25b79514cb69be60151568"
                   },
                   "capability_id": "speech.transcribe",
                   "inherited_from": "capability",
@@ -2319,7 +2319,7 @@
       {
         "gets": {
           "/api/concierge/detect": {
-            "checkedAt": "2026-10-18T06:29:38.542293+00:00",
+            "checkedAt": "2026-10-18T06:55:52.938493+00:00",
             "engines": [
               {
                 "agentPreset": "claude",
@@ -2420,8 +2420,8 @@
               },
               "observation": {
                 "available_memory_bytes": null,
-                "sha256": "sha256:89897c291dfc2a76a3b3a569858befdff598d0475e24e6b1f5d0eb2cc8d7dfed",
-                "storage_available_bytes": 245444943872
+                "sha256": "sha256:12c9180759d711cf81c7a7713a3e36f5f9b1c7ec46573370f9880a1136bcbcaf",
+                "storage_available_bytes": 245336653824
               }
             },
             "lastApply": null,
@@ -2585,7 +2585,7 @@
               {
                 "effective": {
                   "assignment": {
-                    "created_at": "2026-10-18T06:29:38.063194Z",
+                    "created_at": "2026-10-18T06:55:52.324904Z",
                     "effective_retry_policy_id": "retry.text.standard",
                     "entries": [
                       {
@@ -2598,7 +2598,7 @@
                         "readiness": "ready"
                       }
                     ],
-                    "id": "ia_0dde3b053bf34fbf9bde6a977af7c341",
+                    "id": "ia_e22f355780e04d9bb6efce7d86b39b76",
                     "issues": [],
                     "retry_policy_id": null,
                     "retry_policy_source": "capability_default",
@@ -2608,7 +2608,7 @@
                       "capability_id": "ask.answer",
                       "kind": "capability"
                     },
-                    "sha256": "sha256:eb8e3ca53cb953be8daf2f4ac214f41a9a9de8f95d98df87178726631c15e371"
+                    "sha256": "sha256:f648e6f44157118273228bfc7c52229eaabd907bc37a939aac3a6f2725bd595f"
                   },
                   "capability_id": "ask.answer",
                   "inherited_from": "capability",
@@ -3366,7 +3366,7 @@
               {
                 "effective": {
                   "assignment": {
-                    "created_at": "2026-10-18T06:29:37.676954Z",
+                    "created_at": "2026-10-18T06:55:51.933376Z",
                     "effective_retry_policy_id": "retry.audio.transcription",
                     "entries": [
                       {
@@ -3379,7 +3379,7 @@
                         "readiness": "unavailable"
                       }
                     ],
-                    "id": "ia_541e6ecfd93244fdb79d2eaae4f0e061",
+                    "id": "ia_0ed4aa097aa747b89410ac8649209245",
                     "issues": [
                       {
                         "code": "binding_not_ready",
@@ -3396,7 +3396,7 @@
                       "capability_id": "speech.transcribe",
                       "kind": "capability"
                     },
-                    "sha256": "sha256:cef70242db986fc3776869e6640f8e528862c292d5c57bfea7946f2d8e3086b4"
+                    "sha256": "sha256:d032ba1caa7974b2469c2f81e0d3e56c18b936d94f25b79514cb69be60151568"
                   },
                   "capability_id": "speech.transcribe",
                   "inherited_from": "capability",
@@ -3514,36 +3514,36 @@
             "assignments_after": {
               "heads": [
                 {
-                  "assignment_id": "ia_0dde3b053bf34fbf9bde6a977af7c341",
+                  "assignment_id": "ia_e22f355780e04d9bb6efce7d86b39b76",
                   "assignment_key": "capability:ask.answer",
                   "cleared": false,
                   "revision": 1
                 },
                 {
-                  "assignment_id": "ia_541e6ecfd93244fdb79d2eaae4f0e061",
+                  "assignment_id": "ia_0ed4aa097aa747b89410ac8649209245",
                   "assignment_key": "capability:speech.transcribe",
                   "cleared": false,
                   "revision": 1
                 }
               ],
-              "sha256": "sha256:22c6884185d3b37aed009cc884df34ee8fad36b8580dd0457419934a26fa35dc"
+              "sha256": "sha256:9dff051de5bd40171f9498f8e24dd79578909d78feaca66fb8b90229194dcc0c"
             },
             "assignments_before": {
               "heads": [
                 {
-                  "assignment_id": "ia_0dde3b053bf34fbf9bde6a977af7c341",
+                  "assignment_id": "ia_e22f355780e04d9bb6efce7d86b39b76",
                   "assignment_key": "capability:ask.answer",
                   "cleared": false,
                   "revision": 1
                 },
                 {
-                  "assignment_id": "ia_541e6ecfd93244fdb79d2eaae4f0e061",
+                  "assignment_id": "ia_0ed4aa097aa747b89410ac8649209245",
                   "assignment_key": "capability:speech.transcribe",
                   "cleared": false,
                   "revision": 1
                 }
               ],
-              "sha256": "sha256:22c6884185d3b37aed009cc884df34ee8fad36b8580dd0457419934a26fa35dc"
+              "sha256": "sha256:9dff051de5bd40171f9498f8e24dd79578909d78feaca66fb8b90229194dcc0c"
             },
             "assignments_unchanged": true,
             "kind": "model_library_provider",
@@ -3561,7 +3561,7 @@
         },
         "gets": {
           "/api/concierge/detect": {
-            "checkedAt": "2026-10-18T06:29:38.567210+00:00",
+            "checkedAt": "2026-10-18T06:55:52.965566+00:00",
             "engines": [
               {
                 "agentPreset": "claude",
@@ -3662,8 +3662,8 @@
               },
               "observation": {
                 "available_memory_bytes": null,
-                "sha256": "sha256:89897c291dfc2a76a3b3a569858befdff598d0475e24e6b1f5d0eb2cc8d7dfed",
-                "storage_available_bytes": 245444943872
+                "sha256": "sha256:1115506a386180ec9e8baed00257e554d3c0208a990d0f930bae2f11af504b76",
+                "storage_available_bytes": 245336473600
               }
             },
             "lastApply": null,
@@ -3827,7 +3827,7 @@
               {
                 "effective": {
                   "assignment": {
-                    "created_at": "2026-10-18T06:29:38.063194Z",
+                    "created_at": "2026-10-18T06:55:52.324904Z",
                     "effective_retry_policy_id": "retry.text.standard",
                     "entries": [
                       {
@@ -3840,7 +3840,7 @@
                         "readiness": "ready"
                       }
                     ],
-                    "id": "ia_0dde3b053bf34fbf9bde6a977af7c341",
+                    "id": "ia_e22f355780e04d9bb6efce7d86b39b76",
                     "issues": [],
                     "retry_policy_id": null,
                     "retry_policy_source": "capability_default",
@@ -3850,7 +3850,7 @@
                       "capability_id": "ask.answer",
                       "kind": "capability"
                     },
-                    "sha256": "sha256:eb8e3ca53cb953be8daf2f4ac214f41a9a9de8f95d98df87178726631c15e371"
+                    "sha256": "sha256:f648e6f44157118273228bfc7c52229eaabd907bc37a939aac3a6f2725bd595f"
                   },
                   "capability_id": "ask.answer",
                   "inherited_from": "capability",
@@ -4608,7 +4608,7 @@
               {
                 "effective": {
                   "assignment": {
-                    "created_at": "2026-10-18T06:29:37.676954Z",
+                    "created_at": "2026-10-18T06:55:51.933376Z",
                     "effective_retry_policy_id": "retry.audio.transcription",
                     "entries": [
                       {
@@ -4621,7 +4621,7 @@
                         "readiness": "unavailable"
                       }
                     ],
-                    "id": "ia_541e6ecfd93244fdb79d2eaae4f0e061",
+                    "id": "ia_0ed4aa097aa747b89410ac8649209245",
                     "issues": [
                       {
                         "code": "binding_not_ready",
@@ -4638,7 +4638,7 @@
                       "capability_id": "speech.transcribe",
                       "kind": "capability"
                     },
-                    "sha256": "sha256:cef70242db986fc3776869e6640f8e528862c292d5c57bfea7946f2d8e3086b4"
+                    "sha256": "sha256:d032ba1caa7974b2469c2f81e0d3e56c18b936d94f25b79514cb69be60151568"
                   },
                   "capability_id": "speech.transcribe",
                   "inherited_from": "capability",
@@ -4743,7 +4743,7 @@
       {
         "gets": {
           "/api/concierge/detect": {
-            "checkedAt": "2026-10-18T06:29:38.758799+00:00",
+            "checkedAt": "2026-10-18T06:55:53.164918+00:00",
             "engines": [
               {
                 "agentPreset": "claude",
@@ -4844,8 +4844,8 @@
               },
               "observation": {
                 "available_memory_bytes": null,
-                "sha256": "sha256:0f59c4dbabc2ab108acf8b163b309f0e1573d33ccad085facc111bcad7e74739",
-                "storage_available_bytes": 245444902912
+                "sha256": "sha256:a62a8279885afb0b163cbc1edcd3ac8230694e6995202b9f147f730799ed42e4",
+                "storage_available_bytes": 245329866752
               }
             },
             "lastApply": null,
@@ -5009,7 +5009,7 @@
               {
                 "effective": {
                   "assignment": {
-                    "created_at": "2026-10-18T06:29:38.063194Z",
+                    "created_at": "2026-10-18T06:55:52.324904Z",
                     "effective_retry_policy_id": "retry.text.standard",
                     "entries": [
                       {
@@ -5022,7 +5022,7 @@
                         "readiness": "ready"
                       }
                     ],
-                    "id": "ia_0dde3b053bf34fbf9bde6a977af7c341",
+                    "id": "ia_e22f355780e04d9bb6efce7d86b39b76",
                     "issues": [],
                     "retry_policy_id": null,
                     "retry_policy_source": "capability_default",
@@ -5032,7 +5032,7 @@
                       "capability_id": "ask.answer",
                       "kind": "capability"
                     },
-                    "sha256": "sha256:eb8e3ca53cb953be8daf2f4ac214f41a9a9de8f95d98df87178726631c15e371"
+                    "sha256": "sha256:f648e6f44157118273228bfc7c52229eaabd907bc37a939aac3a6f2725bd595f"
                   },
                   "capability_id": "ask.answer",
                   "inherited_from": "capability",
@@ -5790,7 +5790,7 @@
               {
                 "effective": {
                   "assignment": {
-                    "created_at": "2026-10-18T06:29:37.676954Z",
+                    "created_at": "2026-10-18T06:55:51.933376Z",
                     "effective_retry_policy_id": "retry.audio.transcription",
                     "entries": [
                       {
@@ -5803,7 +5803,7 @@
                         "readiness": "unavailable"
                       }
                     ],
-                    "id": "ia_541e6ecfd93244fdb79d2eaae4f0e061",
+                    "id": "ia_0ed4aa097aa747b89410ac8649209245",
                     "issues": [
                       {
                         "code": "binding_not_ready",
@@ -5820,7 +5820,7 @@
                       "capability_id": "speech.transcribe",
                       "kind": "capability"
                     },
-                    "sha256": "sha256:cef70242db986fc3776869e6640f8e528862c292d5c57bfea7946f2d8e3086b4"
+                    "sha256": "sha256:d032ba1caa7974b2469c2f81e0d3e56c18b936d94f25b79514cb69be60151568"
                   },
                   "capability_id": "speech.transcribe",
                   "inherited_from": "capability",
@@ -5926,7 +5926,7 @@
   "codex": {
     "gets": {
       "/api/concierge/detect": {
-        "checkedAt": "2026-10-18T06:29:39.123473+00:00",
+        "checkedAt": "2026-10-18T06:55:53.645406+00:00",
         "engines": [
           {
             "agentPreset": "codex",
@@ -6027,8 +6027,8 @@
           },
           "observation": {
             "available_memory_bytes": null,
-            "sha256": "sha256:0a1013990dfc8c3c5f3b86f8b34c6271a2e8f3fa7fa2d7806392c30f08f450b4",
-            "storage_available_bytes": 245440081920
+            "sha256": "sha256:cd67848e98f8ce2d4409ffcdef7c96c4e9cacc3b4dcc7689f663942e02a06943",
+            "storage_available_bytes": 245341323264
           }
         },
         "lastApply": null,
@@ -6948,7 +6948,7 @@
           {
             "effective": {
               "assignment": {
-                "created_at": "2026-10-18T06:29:38.832315Z",
+                "created_at": "2026-10-18T06:55:53.252272Z",
                 "effective_retry_policy_id": "retry.audio.transcription",
                 "entries": [
                   {
@@ -6961,7 +6961,7 @@
                     "readiness": "unavailable"
                   }
                 ],
-                "id": "ia_da612a7a69dd40f287b86ed33a457ddf",
+                "id": "ia_8f6aef72b2cb436481e9131e5b812f4b",
                 "issues": [
                   {
                     "code": "binding_not_ready",
@@ -6978,7 +6978,7 @@
                   "capability_id": "speech.transcribe",
                   "kind": "capability"
                 },
-                "sha256": "sha256:ebc9f557a7839ba75be6a9167de6d92065ac979e2c7affb15c15101522fc870f"
+                "sha256": "sha256:6bd9cadfe26b99ca6c01b7129f476c98d94d45ad636c5f90e8b44a54ab112657"
               },
               "capability_id": "speech.transcribe",
               "inherited_from": "capability",
@@ -7081,7 +7081,7 @@
   "nothingFound": {
     "gets": {
       "/api/concierge/detect": {
-        "checkedAt": "2026-10-18T06:29:37.591581+00:00",
+        "checkedAt": "2026-10-18T06:55:51.843916+00:00",
         "engines": [
           {
             "downloadHost": "huggingface.co",
@@ -7125,8 +7125,8 @@
           },
           "observation": {
             "available_memory_bytes": null,
-            "sha256": "sha256:3626e1750f53a07d498f8587f83043b38c695515b723ab190a42d4ebae84a4f8",
-            "storage_available_bytes": 245478690816
+            "sha256": "sha256:e162d44e8fb0920a8d740e0563857f6ee3a529aae4583b9e168e9b1dae4ed94e",
+            "storage_available_bytes": 245451120640
           }
         },
         "lastApply": null,
@@ -8046,7 +8046,7 @@
           {
             "effective": {
               "assignment": {
-                "created_at": "2026-10-18T06:29:37.220006Z",
+                "created_at": "2026-10-18T06:55:51.458954Z",
                 "effective_retry_policy_id": "retry.audio.transcription",
                 "entries": [
                   {
@@ -8059,7 +8059,7 @@
                     "readiness": "unavailable"
                   }
                 ],
-                "id": "ia_006d11292b3d4ac7b760787b5fc88ba3",
+                "id": "ia_8533986ccb554b2eb9b29c14084cca8f",
                 "issues": [
                   {
                     "code": "binding_not_ready",
@@ -8076,7 +8076,7 @@
                   "capability_id": "speech.transcribe",
                   "kind": "capability"
                 },
-                "sha256": "sha256:805ab1c972a2d5ee12207bdb8ddbb428d7c01b8b216e9268adfcdae2d36177dc"
+                "sha256": "sha256:199dc8ab9382f7c142be9288f3f5eb004f12c94f27542134df2ffc4c7493e22d"
               },
               "capability_id": "speech.transcribe",
               "inherited_from": "capability",

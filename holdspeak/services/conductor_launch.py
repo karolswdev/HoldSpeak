@@ -178,18 +178,23 @@ def install_revoke_hook() -> None:
 # recorded where the record is INSERTED (never a bare id, never a replay).
 
 LAUNCH_IDENTITY_PREFIX = "agent:launch:"
+#: Betterment M1: an agent CLI engine's one-shot run (``intel/cli_engine.py``).
+#: Its credential is bound to the run id the same way, so every launch rule
+#: below holds for a run too: it changes only what it made in the run.
+RUN_IDENTITY_PREFIX = "agent:run:"
 
 
 def launch_id_of(principal: Any) -> Optional[str]:
-    """The launch id of a launch principal (live or not), else None."""
+    """The launch (or run) id of a launch or run principal (live or not), else None."""
     from ..principals import PrincipalKind
 
     if getattr(principal, "kind", None) is not PrincipalKind.AGENT:
         return None
     identity = str(getattr(principal, "identity", "") or "")
-    if not identity.startswith(LAUNCH_IDENTITY_PREFIX):
-        return None
-    return identity[len(LAUNCH_IDENTITY_PREFIX):] or None
+    for prefix in (LAUNCH_IDENTITY_PREFIX, RUN_IDENTITY_PREFIX):
+        if identity.startswith(prefix):
+            return identity[len(prefix):] or None
+    return None
 
 
 def refuse(ref: str, detail: str = "") -> None:
@@ -512,6 +517,7 @@ def after_call(name: str, arguments: Any, result: Any, principal: Any) -> None:
 __all__ = [
     "LAUNCH_RULES",
     "NOT_OFFERED",
+    "RUN_IDENTITY_PREFIX",
     "after_call",
     "gate_call",
     "NOT_THIS_LAUNCH",

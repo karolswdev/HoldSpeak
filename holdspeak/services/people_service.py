@@ -49,6 +49,8 @@ class OwnerAliasTaken(PeopleServiceError):
 
 _VISIBILITIES = frozenset({"shared_intent", "leader_private"})
 _RESERVED_OWNER_ALIASES = frozenset({"me", "remote", "you"})
+#: A capitalised word of a task ("Theo's" reads "Theo"): a name it may say.
+_NAME_WORD = re.compile(r"\b([A-Z][a-z]+)(?:'s)?\b")
 _RELATIONSHIP_KINDS = frozenset({"direct_report", "peer", "extended"})
 _ENTRY_KINDS = frozenset({"one_on_one"})
 _RECORD_KINDS = frozenset({"request", "commitment", "grounding_note"})
@@ -503,6 +505,10 @@ class PeopleService:
         open_meeting_actions = self._brief_owned_actions(
             db, relationship_id=relationship_id,
         )
+        # Betterment D0: the owner's own meeting actions for this person
+        # ("I'll review your design doc", said in the 1:1 with Theo): his
+        # side of "I owe", beside the typed ``open_commitments``.
+        i_owe_meeting_actions = self._brief_my_actions(db, relationship_id)
 
         # HS-172-05: Watch-derived summary from persisted snapshots.
         # Reads are free (Article V.5); never triggers an evaluation.
@@ -535,6 +541,7 @@ class PeopleService:
             "calendar_link_suggestions": calendar_context["calendar_link_suggestions"],
             "next_one_on_one": calendar_context["next_one_on_one"],
             "open_meeting_actions": open_meeting_actions,
+            "i_owe_meeting_actions": i_owe_meeting_actions,
             "projects": calendar_context["projects"],
             "watch_summary": watch_summary,
             "last_meeting": last_meeting,
@@ -684,6 +691,42 @@ class PeopleService:
         except Exception as exc:
             raise PeopleServiceError("people_plaintext_unavailable") from exc
 
+    def _brief_my_actions(self, db: Any, relationship_id: str) -> list[dict[str, Any]]:
+        """The owner's accepted open meeting actions for this person."""
+        if db is None:
+            return []
+        from .needs_you_membership import self_check
+
+        try:
+            ids = {
+                action_id for action_id, rel in self.my_action_people(
+                    db, self_check(self.person_names()), accepted_only=True,
+                ).items()
+                if rel == relationship_id
+            }
+            if not ids:
+                return []
+            with db._connection() as conn:
+                marks = ",".join("?" * len(ids))
+                rows = conn.execute(
+                    f"""SELECT ai.id, ai.task, ai.owner, ai.due, ai.due_said, ai.status,
+                               m.id AS meeting_id, m.title AS meeting_title,
+                               m.started_at AS meeting_started_at
+                          FROM action_items ai LEFT JOIN meetings m ON m.id = ai.meeting_id
+                         WHERE ai.id IN ({marks}) ORDER BY ai.created_at, ai.id""",
+                    sorted(ids),
+                ).fetchall()
+        except PeopleServiceError:
+            raise
+        except Exception as exc:
+            raise PeopleServiceError("people_plaintext_unavailable") from exc
+        return [{
+            "id": str(row["id"]), "task": str(row["task"]), "owner": row["owner"],
+            "due": row["due"], "due_said": row["due_said"], "status": row["status"],
+            "meeting_id": str(row["meeting_id"] or ""), "meeting_title": row["meeting_title"],
+            "meeting_started_at": str(row["meeting_started_at"] or ""),
+        } for row in rows]
+
     def _brief_owned_actions(
         self,
         db: Any,
@@ -702,7 +745,7 @@ class PeopleService:
         try:
             with db._connection() as conn:
                 rows = conn.execute(
-                    """SELECT ai.id, ai.task, ai.owner, ai.due, ai.delegated_at,
+                    """SELECT ai.id, ai.task, ai.owner, ai.due, ai.due_said, ai.delegated_at,
                                ai.status, ai.source_type, ai.source_ref,
                                m.id AS meeting_id, m.title AS meeting_title,
                                m.started_at AS meeting_started_at,
@@ -735,6 +778,7 @@ class PeopleService:
                         "task": str(row["task"]),
                         "owner": row["owner"],
                         "due": row["due"],
+                        "due_said": row["due_said"],
                         "status": row["status"],
                         "delegated_at": row["delegated_at"],
                         "meeting_id": str(row["meeting_id"] or ""),
@@ -747,6 +791,69 @@ class PeopleService:
                 return result
         except Exception as exc:
             raise PeopleServiceError("people_plaintext_unavailable") from exc
+
+    def my_action_people(
+        self, db: Any, is_self: Any, *, accepted_only: bool = False,
+    ) -> dict[str, str]:
+        """Betterment D0: ``{action_item_id: relationship_id}`` for the owner's
+        own open meeting actions that are FOR one person.
+
+        The person is one named in the task text ("Share the checklist with
+        Jun"), else the other speaker of a two-person meeting (the 1:1 with
+        Theo). The name resolves through :meth:`resolve_owner_candidates`;
+        two people, or none, leave the action with no person. ``is_self``
+        tells the owner's own owner strings ("Me", his name).
+        """
+        if db is None:
+            return {}
+        with db._connection() as conn:
+            rows = conn.execute(
+                """SELECT ai.id, ai.task, ai.owner, ai.meeting_id FROM action_items ai
+                    LEFT JOIN meetings m ON m.id = ai.meeting_id
+                    WHERE COALESCE(m.parked, 0) = 0
+                      AND ai.status NOT IN ('done', 'dismissed', 'completed')
+                      AND TRIM(COALESCE(ai.owner, '')) <> ''"""
+                + (" AND ai.review_state = 'accepted'" if accepted_only else ""),
+            ).fetchall()
+            mine = [row for row in rows if is_self(row["owner"])]
+            meeting_ids = sorted({str(row["meeting_id"]) for row in mine if row["meeting_id"]})
+            speakers: dict[str, set[str]] = {}
+            for meeting_id in meeting_ids:
+                speakers[meeting_id] = {
+                    " ".join(str(r["speaker"] or "").split())
+                    for r in conn.execute(
+                        "SELECT DISTINCT speaker FROM segments WHERE meeting_id = ?", (meeting_id,),
+                    )
+                    if str(r["speaker"] or "").strip()
+                }
+        known = self.person_names() or set()
+        resolved: dict[str, str | None] = {}
+
+        def person(name: str) -> str | None:
+            key = name.casefold()
+            if key not in resolved:
+                found = self.resolve_owner_candidates(name)
+                rel = found.get("relationship") if found.get("link") == "linked" else None
+                resolved[key] = (str(rel.get("id") or "") or None) if rel else None
+            return resolved[key]
+
+        result: dict[str, str] = {}
+        for row in mine:
+            named = {
+                rel for rel in (
+                    person(word) for word in _NAME_WORD.findall(str(row["task"] or ""))
+                    if word.casefold() in known and not is_self(word)
+                ) if rel
+            }
+            if len(named) == 1:
+                result[str(row["id"])] = next(iter(named))
+                continue
+            if named:
+                continue  # two people named: nobody's on a guess
+            others = [s for s in speakers.get(str(row["meeting_id"] or ""), set()) if not is_self(s)]
+            if len(others) == 1 and person(others[0]):
+                result[str(row["id"])] = person(others[0]) or ""
+        return result
 
     def _brief_watch_summary(
         self, db: Any, relationship: dict[str, Any],
@@ -1243,38 +1350,20 @@ class PeopleService:
         return self._relationship_view(self._replace(relationship_id, value))
 
     def resolve_relationship_by_owner(self, owner_string: str) -> dict[str, Any]:
-        """Find the relationship whose owner_aliases contain this string.
+        """Find the one relationship an owner string names.
 
         Readiness-guarded: a locked/absent store returns
         ``{"state": "unavailable"}``, NEVER a bare no-match.  A ready store
-        with no matching alias returns ``{"state": "ready", "relationship": None}``.
-        Case-insensitive compare in memory; never logged or persisted as comparison.
+        with no single match returns ``{"state": "ready", "relationship": None}``.
+        Betterment D0: the same rule as :meth:`resolve_owner_candidates`
+        (an alias, a unique full name, or a unique first name); two matches
+        resolve to nobody.
         """
-        try:
-            state = self._store.readiness()
-            if str(getattr(state, "value", state)) != "ready":
-                return {"state": "unavailable"}
-        except Exception:
+        resolved = self.resolve_owner_candidates(owner_string)
+        if resolved.get("state") != "ready":
             return {"state": "unavailable"}
-
-        clean = str(owner_string or "").strip()
-        if not clean:
-            return {"state": "ready", "relationship": None}
-
-        try:
-            relationships = self._store.list(kind="relationship")
-        except Exception:
-            return {"state": "unavailable"}
-
-        folded = clean.casefold()
-        for record in relationships:
-            if not isinstance(record, dict):
-                continue
-            if str(record.get("state") or "") == "archived":
-                continue
-            for alias in record.get("owner_aliases") or []:
-                if isinstance(alias, str) and alias.casefold() == folded:
-                    return {"state": "ready", "relationship": self._relationship_view(record)}
+        if resolved.get("link") == "linked":
+            return {"state": "ready", "relationship": resolved.get("relationship")}
         return {"state": "ready", "relationship": None}
 
     def person_names(self, principal: Any = None) -> set[str] | None:
@@ -1399,18 +1488,19 @@ class PeopleService:
         otherwise ``{"state": "ready", "link": L, "relationship": R,
         "candidates": [...]}`` where ``link`` is one of:
 
-        * ``linked``     -- exactly one exact match (an owner alias, which
-                            invariant P2 keeps unique, or a display name
-                            held by exactly one active relationship);
+        * ``linked``     -- exactly one match (an owner alias, which
+                            invariant P2 keeps unique, a display name held
+                            by exactly one active relationship, or, since
+                            Betterment D0, a first name exactly one active
+                            relationship has);
         * ``ambiguous``  -- two or more people could be meant (two share
                             the display name, or two share the first name
                             the owner string names); ``candidates`` lists
                             them and ``relationship`` is ``None``;
-        * ``not_linked`` -- nobody matches exactly; a single near match
-                            (one person whose first name is the owner
-                            string) rides in ``candidates`` as a
-                            SUGGESTION and is never attributed (design D1:
-                            "never a hedged guess").
+        * ``not_linked`` -- nobody matches; a single near match (one
+                            person whose LAST name is the owner string)
+                            rides in ``candidates`` as a SUGGESTION and is
+                            never attributed.
 
         Case-insensitive, in memory, never persisted (Article III).
         """
@@ -1457,8 +1547,26 @@ class PeopleService:
                 "candidates": [self._candidate_view(record) for record in by_name],
             }
 
-        # Near matches: the owner string names a first name (or any one
-        # word of the display name).  Never resolved on its own.
+        # Betterment D0: a first name that exactly one person has is that
+        # person ("Mira" in a meeting is Mira Okafor, with no alias press).
+        # Two people with that first name stay unresolved (``ambiguous``).
+        by_first = [
+            record for record in relationships
+            if (str(record.get("display_name") or "").split() or [""])[0].casefold() == folded
+        ]
+        if len(by_first) == 1:
+            return {
+                "state": "ready", "link": "linked",
+                "relationship": self._relationship_view(by_first[0]), "candidates": [],
+            }
+        if len(by_first) > 1:
+            return {
+                "state": "ready", "link": "ambiguous", "relationship": None,
+                "candidates": [self._candidate_view(record) for record in by_first],
+            }
+
+        # Near matches: the owner string names another word of the display
+        # name (a last name).  Never resolved on its own.
         near = [
             record for record in relationships
             if folded in [

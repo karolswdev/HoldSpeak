@@ -403,9 +403,12 @@ def test_two_similar_obligations_are_never_merged(tmp_path, monkeypatch) -> None
     assert prop["action_item_id"] is None, prop
     ProposalBridgeService(db).confirm_proposal(OWNER, prop["id"])
     with db._connection() as conn:
-        rows = {r["task"]: (r["owner"], r["due"]) for r in conn.execute(
-            "SELECT task, owner, due FROM action_items WHERE meeting_id='m-distinct'")}
+        rows = {r["task"]: (r["owner"], r["due_said"]) for r in conn.execute(
+            "SELECT task, owner, due_said FROM action_items WHERE meeting_id='m-distinct'")}
+        dues = [r["due"] for r in conn.execute("SELECT due FROM action_items WHERE meeting_id='m-distinct'")]
     assert rows == {staging: ("Maya", "Friday"), production: ("Leo", "Tuesday")}, rows
+    # Betterment D0: each said due is stored as the day it names.
+    assert all(len(due) == 10 and due[4] == "-" for due in dues), dues
 
 
 def test_a_confirmed_action_reads_as_an_action_on_every_reader(tmp_path, monkeypatch) -> None:

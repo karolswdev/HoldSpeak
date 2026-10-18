@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from holdspeak.timestamps import aware, local_wall, parse_stamp, parse_wall, utc_iso, utc_now, utc_now_iso
 from typing import TYPE_CHECKING, Optional, Any
 
+from ..due_dates import anchor_for_meeting, stored_due
 from ..logging_config import get_logger
 from ..transcript_guard import count_unclear
 from .base import BaseRepository
@@ -638,7 +639,9 @@ class MeetingRepository(BaseRepository):
                 VALUES (?, ?, ?)
             """, (meeting_id, topic, intel.timestamp))
 
-        # Upsert action items (preserve status across extractions)
+        # Upsert action items (preserve status across extractions).
+        # Betterment D0: a said due is read against the meeting's own day.
+        anchor = anchor_for_meeting(conn, meeting_id)
         for item in intel.action_items:
             if hasattr(item, 'id'):
                 action_item = item
@@ -680,11 +683,12 @@ class MeetingRepository(BaseRepository):
                 reviewed_at = utc_now_iso()
 
             now_iso = utc_now_iso()
+            due, due_said = stored_due(due, anchor)
             conn.execute("""
                 INSERT INTO action_items
                 (id, meeting_id, task, owner, due, status, review_state, reviewed_at,
-                 source_timestamp, created_at, completed_at, delegated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 source_timestamp, created_at, completed_at, delegated_at, due_said)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     meeting_id = excluded.meeting_id,
                     task = excluded.task,
@@ -695,6 +699,7 @@ class MeetingRepository(BaseRepository):
                         ELSE excluded.owner
                     END,
                     due = excluded.due,
+                    due_said = COALESCE(excluded.due_said, action_items.due_said),
                     source_timestamp = excluded.source_timestamp,
                     status = CASE
                         WHEN excluded.status = 'pending' THEN action_items.status
@@ -731,6 +736,7 @@ class MeetingRepository(BaseRepository):
                 created_at,
                 completed_at,
                 None,
+                due_said,
                 now_iso,
             ))
 

@@ -1,0 +1,80 @@
+{
+  "about": "The daily-surface recon seed (docs/internal/betterment/daily/RECON.md): three meetings of one week, Mira, Theo and Jun. The transcripts and the summary results are written here from the recon's shots and friction log; the recon's own LLM replies were not kept. Dates are the recon's week: the fixture's Monday is 2026-10-19 (the morning of the job).",
+  "monday": "2026-10-19",
+  "project": "Payments ledger cutover",
+  "people": [
+    {"display_name": "Mira Okafor", "kind": "report"},
+    {"display_name": "Theo Park", "kind": "report"},
+    {"display_name": "Jun Sato", "kind": "report"}
+  ],
+  "meetings": [
+    {
+      "id": "m-daily-platform-sync",
+      "title": "Payments platform sync",
+      "started_at": "2026-10-15T18:00:00",
+      "minutes": 30,
+      "segments": [
+        ["Me", "Let's go through the ledger cutover. We freeze ledger writes during the cutover window."],
+        ["Mira", "I'll draft the rollback runbook by Tuesday."],
+        ["Theo", "I can profile the reconciliation job, Friday next week at the latest."],
+        ["Jun", "I'll confirm the vendor freeze dates this week."],
+        ["Me", "And I'll email Dana about the cutover window on Monday."]
+      ],
+      "summary": "The team agreed to freeze ledger writes during the cutover. Mira drafts the rollback runbook; Theo profiles the reconciliation job; Jun confirms the vendor freeze dates.",
+      "actions": [
+        {"task": "Draft the rollback runbook", "owner": "Mira", "due": "Tuesday"},
+        {"task": "Profile the reconciliation job", "owner": "Theo", "due": "Friday next week"},
+        {"task": "Confirm the vendor freeze dates", "owner": "Jun", "due": "this week"},
+        {"task": "Email Dana about the cutover window", "owner": "Me", "due": "Monday"}
+      ],
+      "decisions": [
+        {"decision": "Freeze ledger writes during the cutover", "rationale": "A write during the cutover cannot be reconciled."}
+      ]
+    },
+    {
+      "id": "m-daily-theo-1on1",
+      "title": "1:1 with Theo",
+      "started_at": "2026-10-16T10:00:00",
+      "minutes": 30,
+      "segments": [
+        ["Theo", "I wrote the design doc on settlement retries. Can you review it?"],
+        ["Me", "I'll review your design doc by Monday."],
+        ["Theo", "I'll write up the alert rule changes by Thursday."],
+        ["Me", "Do it."],
+        ["Me", "Let's talk about the staff path in our next one-on-one."]
+      ],
+      "summary": "Theo asked for a review of his design doc on settlement retries and will write up the alert rule changes.",
+      "actions": [
+        {"task": "Review design doc on settlement retries", "owner": "Me", "due": "Monday"},
+        {"task": "Write up alert rule changes", "owner": "Theo", "due": "Thursday"}
+      ],
+      "decisions": [
+        {"decision": "Do it", "rationale": null},
+        {"decision": "Talk about the staff path in our next one-on-one", "rationale": null}
+      ]
+    },
+    {
+      "id": "m-daily-architecture-review",
+      "title": "Architecture review",
+      "started_at": "2026-10-16T14:00:00",
+      "minutes": 45,
+      "segments": [
+        ["Me", "The question is how we retry settlement calls safely."],
+        ["Theo", "Idempotent retries with a dedupe key. The doc has the details."],
+        ["Me", "Agreed, we adopt idempotent retries with a dedupe key."],
+        ["Jun", "I'll load-test the dedupe key path. Friday next week."]
+      ],
+      "summary": "The review adopted idempotent retries with a dedupe key; Jun load-tests the dedupe key path.",
+      "actions": [
+        {"task": "Load-test the dedupe key path", "owner": "Jun", "due": "Friday next week"}
+      ],
+      "decisions": [
+        {"decision": "Adopt idempotent retries with a dedupe key", "rationale": "A retried settlement call must not pay twice."}
+      ]
+    }
+  ],
+  "kept": {
+    "about": "The recon's nine Confirm presses: every action and the two real decisions. 'Do it' and the staff-path row stay to decide.",
+    "unkept_decisions": ["Do it", "Talk about the staff path in our next one-on-one"]
+  }
+}

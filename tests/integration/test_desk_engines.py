@@ -309,3 +309,49 @@ def test_a_new_spend_limit_reaches_the_next_run(
     _ok(hub, "POST", "/api/ask", {"prompt": "Hi"})
     argv = calls(fake_bin, "claude")[-1]["argv"]
     assert argv[argv.index("--max-budget-usd") + 1] == "0.50", argv
+
+
+def _runs() -> list[tuple]:
+    from holdspeak.db import get_database
+
+    with get_database()._connection() as conn:
+        return [tuple(r) for r in conn.execute(
+            "SELECT profile_id, outcome, cost_usd FROM cli_engine_runs ORDER BY id"
+        ).fetchall()]
+
+
+def test_a_run_stopped_at_its_spend_limit_still_counts_its_cost(
+    hub: str, fake_bin: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from tests.fixtures.fake_agent_cli import CLAUDE_COST_USD
+
+    _only_claude_on_path(fake_bin, monkeypatch)
+    connected = _connect_claude(hub, spend_limit_usd=0.01)
+    status, assigned = _assign(hub, "ask.answer", [_entry(connected)])
+    assert status < 300, assigned
+    set_mode(fake_bin, "claude", "error")  # error_max_budget_usd, with its cost
+    _call(hub, "POST", "/api/ask", {"prompt": "Long question"})
+    assert ("library_provider_agent-claude", "failed", pytest.approx(CLAUDE_COST_USD)) in _runs(), _runs()
+    (engine,) = _agent_rows(hub)
+    assert engine["spend"]["todayUsd"] == pytest.approx(CLAUDE_COST_USD), engine["spend"]
+
+
+def test_a_codex_run_is_recorded_through_its_json_parser(
+    hub: str, fake_bin: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from tests.fixtures.fake_agent_cli import CODEX_ANSWER
+
+    (fake_bin / "claude").unlink()
+    monkeypatch.setenv("PATH", f"{fake_bin}:/usr/bin:/bin")
+    connected = _ok(hub, "POST", "/api/inference/model-library/connect-cli-engine", {"draft": {
+        "request_id": "connect-codex", "profile_id": "agent-codex", "expected_profile_revision": 0, "preset": "codex",
+    }})
+    status, assigned = _assign(hub, "ask.answer", [_entry(connected)])
+    assert status < 300, assigned
+    answer = _ok(hub, "POST", "/api/ask", {"prompt": "Hi"})
+    assert answer["output"] == CODEX_ANSWER, answer
+    assert "--json" in calls(fake_bin, "codex")[-1]["argv"]
+    # Codex reports tokens, not dollars: one answered run, no cost.
+    assert _runs() == [("library_provider_agent-codex", "answered", None)], _runs()
+    (engine,) = _agent_rows(hub)
+    assert engine["spend"]["reportsCost"] is False and engine["spend"]["weekUsd"] == 0.0, engine

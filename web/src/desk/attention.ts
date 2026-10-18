@@ -66,6 +66,8 @@ export interface AttentionSource {
   verbHref?: string | null;
   /** The owner the projection names, when it names one. */
   owner?: string | null;
+  /** Betterment D1: the projection's own due, when it has one. */
+  dueAt?: string | null;
 }
 
 /** What the ranking and the dedup read. Every attention row has these. */
@@ -234,8 +236,11 @@ function projection(item: RankableItem): AttentionSource {
   // needs-you rule reads each projection's own reason and owner, also after
   // a merge (`waitsOnOther`).
   const owner = String((item as { owner?: string | null }).owner ?? "").trim();
+  const dueAt = (item as { dueAt?: string | null }).dueAt;
   return {
     ...(owner ? { owner } : {}),
+    // Betterment D1: the one count reads each of his projections' own due.
+    ...(dueAt ? { dueAt } : {}),
     id: item.id,
     source: item.source,
     title: item.title,

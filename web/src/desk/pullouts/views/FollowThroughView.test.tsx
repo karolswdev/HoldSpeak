@@ -668,3 +668,29 @@ describe("Follow-through cadence authority", () => {
     expect(localStorage.getItem("hs.follow-through.done-receipt")).toBeNull();
   });
 });
+
+// Betterment daily D1: on the recon week (the hub's recorded board,
+// tests/unit/test_desk_needs_you.py::test_the_one_number_is_mine_due_today_and_to_decide),
+// a kept action opens its meeting, never "Open decision", and its due shows
+// once, as a date ("Tue 20 Oct"), never "Friday nex".
+import DAILY_WEEK from "../../__tests__/fixtures/daily-week/needs-you.json";
+
+describe("FollowThroughView: the daily week's labels", () => {
+  beforeEach(() => apiFetch.mockReset());
+
+  it("every kept action reads Open meeting and one whole date", async () => {
+    apiFetch.mockResolvedValue(DAILY_WEEK.followThrough);
+    render(<FollowThroughView />);
+    const board = DAILY_WEEK.followThrough as Record<string, Array<{ text: string; due: string | null }>>;
+    const cards = ["now", "waiting", "unassigned", "overdue"].flatMap((lane) => board[lane]);
+    expect(cards).toHaveLength(7);
+    for (const card of cards) {
+      expect(await screen.findByRole("button", { name: `Open meeting for ${card.text}` })).toBeTruthy();
+      expect(screen.queryByRole("button", { name: `Open decision for ${card.text}` })).toBeNull();
+      const day = new Date(`${card.due}T00:00:00`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+      const row = screen.getByText(card.text).closest("li, [role='row'], .surface-ledger-row") as HTMLElement;
+      expect(within(row).getAllByText(day)).toHaveLength(1);
+      expect(row.textContent).not.toMatch(/Due in|\d{4}-\d{2}-\d{2}/);
+    }
+  });
+});

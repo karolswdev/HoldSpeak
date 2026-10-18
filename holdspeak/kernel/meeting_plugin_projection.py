@@ -23,7 +23,7 @@ import time
 from typing import Any
 
 from .model import KernelRefused
-from .summary_items_projection import summary_action_id, write_summary_items
+from .summary_items_projection import write_summary_actions, write_summary_items
 from .projection_stager import _PublicationPermit, ProjectionDiscarded
 
 
@@ -282,20 +282,7 @@ def _write_bound_analysis(conn: Any, projection: dict[str, Any]) -> dict[str, An
             "INSERT INTO topics (meeting_id,topic,extracted_at) VALUES (?,?,?)",
             (meeting_id, str(topic), timestamp),
         )
-    # The closed semantic result omits persistence IDs. Derive one from the
-    # immutable job descriptor and ordinal, so replay writes the same action item
-    # without putting transcript/prompt material in queue evidence.
-    for ordinal, item in enumerate(action_items, 1):
-        if not isinstance(item, dict):
-            continue
-        item_id = summary_action_id(projection, ordinal, item)
-        conn.execute(
-            """INSERT INTO action_items (id,meeting_id,task,owner,due,status,review_state,created_at)
-               VALUES (?,?,?,?,?,'pending','pending',?)
-               ON CONFLICT(id) DO UPDATE SET task=excluded.task,owner=excluded.owner,due=excluded.due""",
-            (item_id, meeting_id, str(item.get("task") or ""), item.get("owner"),
-             item.get("due"), time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())),
-        )
+    write_summary_actions(conn, projection, meeting_id, action_items)
     write_summary_items(conn, projection, meeting_id, action_items)
     now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     conn.execute(

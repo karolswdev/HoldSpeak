@@ -260,11 +260,14 @@ class TestAmbiguousOwners:
         assert {c["id"] for c in two["candidates"]} == {sharma, nair}
         assert set(two["candidates"][0]) == {"id", "display_name"}
 
-        # One near match is a SUGGESTION, not an attribution (D1: never a
-        # hedged guess).
+        # Betterment D0: a first name exactly one person has is that person.
         one = people.resolve_owner_candidates("Anil")
-        assert one["link"] == "not_linked" and one["relationship"] is None
-        assert [c["id"] for c in one["candidates"]] == [kumar]
+        assert one["link"] == "linked" and one["relationship"]["id"] == kumar
+
+        # A last name is a SUGGESTION, not an attribution.
+        near = people.resolve_owner_candidates("Kumar")
+        assert near["link"] == "not_linked" and near["relationship"] is None
+        assert [c["id"] for c in near["candidates"]] == [kumar]
 
         # An exact alias or an exact, unique display name links.
         assert people.resolve_owner_candidates("anil-k")["link"] == "linked"
