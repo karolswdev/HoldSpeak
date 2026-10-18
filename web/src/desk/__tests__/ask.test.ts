@@ -105,6 +105,10 @@ describe("the run/keep wire", () => {
       groundingReceipt: null,
       threadId: "",
       lookedAt: [],
+      // Betterment Q7: no desk tools on a plain answer.
+      used: null,
+      deskTools: false,
+      answerId: "",
     });
   });
 

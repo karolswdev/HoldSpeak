@@ -17,6 +17,8 @@ import BUSY from "../../test/wire/ask.busy.wire.json";
 import RETRY from "../../test/wire/ask.retry.wire.json";
 import THREAD from "../../test/wire/ask.thread.wire.json";
 import NOTE_WIRE from "../../test/wire/notes-create.wire.json";
+import TOOLS from "../../test/wire/ask.tools.wire.json";
+import HOLD from "../../test/wire/ask.hold.wire.json";
 import { verbById } from "../verbRegistry";
 
 const bus = vi.hoisted(() => ({ handlers: new Map<string, Set<(frame: unknown) => void>>() }));
@@ -296,5 +298,123 @@ describe("Betterment Q4: Stop while a question runs", () => {
     expect(line.dataset.state).toBe("failure");
     expect(line).toHaveTextContent("Stopped");
     expect(screen.getByRole("button", { name: "Ask again" })).toBeInTheDocument();
+  });
+});
+
+/* ── Betterment Q7: Ask my whole desk ─────────────────────────────────────
+ *
+ * The hub half is tests/integration/test_desk_ask_tools.py. Its tool engine
+ * replays the LAN engine's real reply (tests/fixtures/ask_tool_turn_lan.json):
+ * it reads the 1:1 and adds the task. It records the Ask's answer, the
+ * thread read, a Make it a task write and a held call's frame
+ * (web/src/test/wire/ask.tools.wire.json, ask.hold.wire.json;
+ * HOLDSPEAK_WIRE_WRITE=1 rewrites them). */
+
+const TOOL_TID = TOOLS.answer.thread_id;
+
+function hubWithTools(askAnswer: () => Promise<Response> = () => Promise.resolve(reply(TOOLS.answer))) {
+  vi.stubGlobal("fetch", vi.fn((input: string, init: RequestInit = {}) => {
+    const url = String(input);
+    const method = String(init.method ?? "GET");
+    calls.push({ url, method, body: init.body ? JSON.parse(String(init.body)) : undefined });
+    if (method === "GET" && url.endsWith("/api/ask/engine")) return Promise.resolve(reply(TOOLS.engine));
+    if (method === "GET" && url.endsWith("/api/inference/assignments")) return Promise.resolve(reply(TOOLS.assignments));
+    if (method === "POST" && url.endsWith("/api/ask")) return askAnswer();
+    if (method === "GET" && url.endsWith("/api/threads")) return Promise.resolve(reply({ threads: [{ id: TOOL_TID, title: "What do I owe Mira this week?" }] }));
+    if (method === "GET" && url.endsWith(`/api/threads/${TOOL_TID}`)) return Promise.resolve(reply(TOOLS.thread));
+    if (method === "POST" && url.endsWith(`/api/threads/${TOOL_TID}/todo`)) return Promise.resolve(reply(TOOLS.todo));
+    if (method === "POST" && url.endsWith("/decide")) return Promise.resolve(reply(HOLD.decided));
+    if (method === "PATCH" && url.includes("/api/all-action-items/")) return Promise.resolve(reply({ success: true }));
+    return Promise.resolve(reply({}));
+  }));
+}
+
+async function askTool(text: string) {
+  fireEvent.change(askBox(), { target: { value: text } });
+  fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+  await screen.findByTestId("ask-turn");
+}
+
+describe("Betterment Q7: Ask my whole desk", () => {
+  beforeEach(() => {
+    useDesk.setState({ items: EMPTY_ITEMS, selectedIds: [], askThread: null });
+  });
+
+  it("the engine line says it can use the desk", async () => {
+    hubWithTools();
+    render(<AskPanel />);
+    const line = await screen.findByTestId("engine-line");
+    await waitFor(() => expect(line).toHaveTextContent(
+      "Can use your desk: reads meetings, people, projects, Jira, GitHub; writes notes and drafts; never sends"));
+    expect(line).not.toHaveTextContent("reads only what is in About");
+  });
+
+  it("the answer shows Looked at (the 1:1) and Wrote (the task, with Undo); Undo sets the task aside", async () => {
+    hubWithTools();
+    render(<AskPanel />);
+    await askTool("What do I owe Mira this week?");
+    expect(screen.getByText(/Looked at/)).toHaveTextContent("1:1 with Mira");
+    const wrote = screen.getByTestId("ask-wrote");
+    const [task] = TOOLS.answer.used.wrote;
+    expect(wrote).toHaveTextContent(task.label);
+    expect(screen.getByText("Wrote").closest("details")?.textContent).toContain("1 task");
+    expect(screen.queryByTestId("ask-prepared")).toBeNull();
+    // The agent made the task: Make it a task is not offered twice.
+    expect(screen.queryByRole("button", { name: "Make it a task" })).toBeNull();
+
+    fireEvent.click(screen.getByTestId("ask-wrote-undo"));
+    const id = task.ref.slice("action_item:".length);
+    await waitFor(() => expect(calls.some((c) => c.method === "PATCH" && c.url === `/api/all-action-items/${id}`)).toBe(true));
+    const patch = calls.find((c) => c.method === "PATCH")!;
+    expect(patch.body).toEqual({ status: "dismissed" });
+    expect(screen.queryByTestId("ask-wrote-undo")).toBeNull();
+    expect(screen.getByText("Undone")).toBeInTheDocument();
+  });
+
+  it("Make it a task makes the agent's own write and shows it under Wrote", async () => {
+    hubWithTools(() => Promise.resolve(reply({ ...TOOLS.answer, used: { looked_at: [], wrote: [], prepared: [] } })));
+    render(<AskPanel />);
+    await askTool("What do I owe Mira this week?");
+    expect(screen.queryByTestId("ask-wrote")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Make it a task" }));
+    await waitFor(() => expect(screen.getByTestId("ask-wrote")).toBeInTheDocument());
+    const todo = calls.find((c) => c.method === "POST" && c.url.endsWith(`/api/threads/${TOOL_TID}/todo`))!;
+    expect(String(todo.body?.text)).not.toMatch(/^[#*-]/);
+    expect(screen.getByTestId("ask-wrote-undo")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Make it a task" })).toBeNull();
+  });
+
+  it("a reopened thread draws Wrote from the hub's record", async () => {
+    hubWithTools();
+    render(<AskPanel />);
+    fireEvent.click(screen.getByRole("button", { name: "Recent" }));
+    fireEvent.click(await screen.findByRole("button", { name: /What do I owe Mira this week\?/ }));
+    await screen.findByTestId("ask-wrote");
+    expect(screen.getByTestId("ask-wrote")).toHaveTextContent(TOOLS.answer.used.wrote[0].label);
+    expect(screen.getByText(/Looked at/)).toHaveTextContent("1:1 with Mira");
+  });
+
+  it("a held call waits with Allow once and Deny; Deny goes to the thread's decide", async () => {
+    vi.mocked(crypto.randomUUID).mockReturnValue("cccccccc-cccc-cccc-cccc-cccccccccccc");
+    let answer: (() => void) | null = null;
+    hubWithTools(() => new Promise<Response>((resolve) => { answer = () => resolve(reply(HOLD.answer)); }));
+    render(<AskPanel />);
+    fireEvent.change(askBox(), { target: { value: "What do I owe Mira this week?" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    await waitFor(() => expect(calls.some((c) => c.url.endsWith("/api/ask"))).toBe(true));
+    expect(calls.find((c) => c.url.endsWith("/api/ask"))!.body?.invocation_id).toBe(HOLD.hold.invocation_id);
+
+    act(() => deliver("ask_progress", HOLD.hold));
+    const hold = await screen.findByTestId("ask-hold");
+    expect(hold).toHaveTextContent(`${HOLD.hold.holds[0].words}?`);
+    expect(screen.getByRole("button", { name: "Allow once" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Deny" }));
+    await waitFor(() => expect(screen.queryByTestId("ask-hold")).toBeNull());
+    const decide = calls.find((c) => c.url.endsWith(`/api/threads/${HOLD.hold.thread_id}/decide`))!;
+    expect(decide.body).toEqual({ call_id: HOLD.hold.holds[0].call_id, decision: "deny" });
+
+    await act(async () => { answer?.(); });
+    await screen.findByTestId("ask-turn");
+    expect(screen.queryByTestId("ask-wrote")).toBeNull();
   });
 });

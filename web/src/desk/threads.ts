@@ -10,6 +10,7 @@ import { create } from "zustand";
 import { apiFetch } from "../lib/api";
 import type { InterviewState } from "./interview";
 import { clearThreadComposerDraft } from "./threadComposerDrafts";
+import { parseUse, type AgentUse } from "./used";
 
 // ── wire types (snake_case from the hub) ──────────────────────────────
 
@@ -310,6 +311,9 @@ export interface ThreadDetail {
   refs: ThreadRef[];
   /** HS-153-04: draft annotation parts from the server. */
   draftAnnotations: DraftAnnotation[];
+  /** Betterment Q7: what each answer's tools read, wrote and prepared, by
+   *  the answer's message id. */
+  used?: Record<string, AgentUse>;
 }
 
 /** The done frame's error as the stored `error_json` shape: the words, and
@@ -420,7 +424,16 @@ export async function getThread(id: string): Promise<ThreadDetail> {
     };
   });
 
-  return { thread, messages, siblings, refs, draftAnnotations };
+  // Betterment Q7: Looked at / Wrote / Prepared of each answer.
+  const used: Record<string, AgentUse> = {};
+  if (d.used && typeof d.used === "object") {
+    for (const [messageId, raw] of Object.entries(d.used as Record<string, unknown>)) {
+      const parsed = parseUse(raw);
+      if (parsed) used[messageId] = parsed;
+    }
+  }
+
+  return { thread, messages, siblings, refs, draftAnnotations, used };
 }
 
 export async function patchThread(

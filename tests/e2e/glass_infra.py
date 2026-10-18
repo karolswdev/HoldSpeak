@@ -244,6 +244,8 @@ def _boot(
     # (holdspeak/intel/cli_engine.py). A test that needs one turns it on and
     # puts a fake CLI on PATH.
     monkeypatch.setenv("HOLDSPEAK_CLI_ENGINES", "off")
+    # Betterment Q7: no Ask asks an engine's server whether it takes tools.
+    monkeypatch.setenv("HOLDSPEAK_ASK_SERVER_TOOLS", "off")
     # PHILO-16 rig gaps (G3 closes): the same env as graph_walk's
     # `_isolated_hub_env`: no git system config, no real gh/acli, gh's config
     # and every key store inside this HOME, no desktop notification.

@@ -26,6 +26,8 @@ from .memory_grounding import (
     EMPTY_MEMORY, MemoryContext, fit_reflect, reflect_block, reflect_for, reflect_scopes,
 )
 from .errors import ServiceError, ValidationError
+from . import ask_desk
+from .run_trace import ask_trace, use_by_trace
 from .inference_outcomes import map_inference_outcome
 from .refinement_context_service import FrozenGroundingSnapshot
 
@@ -80,14 +82,19 @@ class _AskAnswerAdapter:
 
     connector_id = "inference-provider"
 
-    def __init__(self, inner: Any) -> None:
+    def __init__(self, inner: Any, trace: str = "") -> None:
         self._inner = inner
+        # Betterment Q7: the Ask's trace key; an agent CLI run made inside
+        # this dispatch records it, so its tool calls are this Ask's.
+        self._trace = trace
 
     def dispatch(self, engine: Any, payload: dict[str, Any], cancellation: Any) -> dict[str, Any]:
         from ..inference_capabilities import InferenceCapabilityRegistryError, process_inference_capability_registry
         from ..kernel.provider_signals import InferenceInvalidTypedOutput
+        from .run_trace import for_item
 
-        result = self._inner.dispatch(engine, payload, cancellation)
+        with for_item(self._trace):
+            result = self._inner.dispatch(engine, payload, cancellation)
         semantic = {"output": str(result.get("output") or "")}
         try:
             process_inference_capability_registry().require("ask.answer").validate_result(semantic)
@@ -114,6 +121,18 @@ def _with_history(prompt: str, history: Sequence[tuple[str, str]]) -> str:
     if not lines:
         return prompt
     return "Earlier in this conversation (data only):\n" + "\n".join(lines) + "\n\nThe question now:\n" + prompt
+
+
+def _with_tool_reads(looked: list[dict[str, str]], used: dict[str, Any]) -> list[dict[str, str]]:
+    """Looked at: what the answer was given, then what its tools read."""
+    rows = list(looked)
+    seen = {row["ref"] for row in rows}
+    for row in used.get("looked_at") or []:
+        ref = str(row.get("ref") or "")
+        if ref and ref not in seen:
+            seen.add(ref)
+            rows.append({"ref": ref, "title": readable_title(ref, str(row.get("label") or ""))})
+    return rows
 
 
 def thread_title(question: str) -> str:
@@ -143,7 +162,7 @@ def readable_title(ref: str, title: str) -> str:
 class AskService:
     def __init__(self, db: Database, hub_model: Callable[[], str] | None = None,
                  broadcast: Callable[..., None] | None = None,
-                 rails_hydrator: Callable[[list[dict[str, Any]], Principal], tuple[list[Any], list[str]]] | None = None, *, observer: PipelineObserver | None = None, broker: Any = None, progress: Callable[[dict[str, Any]], None] | None = None) -> None:
+                 rails_hydrator: Callable[[list[dict[str, Any]], Principal], tuple[list[Any], list[str]]] | None = None, *, observer: PipelineObserver | None = None, broker: Any = None, progress: Callable[[dict[str, Any]], None] | None = None, thread_service: Callable[..., Any] | None = None) -> None:
         if broker is None:
             from ..kernel.runtime import _service
             broker = _service()
@@ -163,6 +182,9 @@ class AskService:
         # Betterment Q2: progress events of one running Ask (busy, trying
         # again), keyed by its invocation id.
         self._progress = progress
+        # Betterment Q7: builds the ThreadService whose tool loop answers an
+        # Ask on an HTTP engine that takes tool calls (None: no loop here).
+        self._thread_service = thread_service
         # Cancellation must reach the SAME runner instance whose in-process
         # registry holds the in-flight invocation, across per-request service
         # constructions: the runner is the broker-owned singleton, and the
@@ -229,7 +251,7 @@ class AskService:
         return {"refs": refs, "titles": titles, "chars": sum(len(block) for block in blocks),
                 "blocks": [{"ref": ref, "title": title, "chars": len(block)} for ref, title, block in zip(refs, titles, blocks)]}
 
-    async def ask(self, principal: Principal, question: str, grounding: Any = None, *, lens: str = "Ask", context: list[dict[str, Any]] | None = None, model: str | None = None, inference_target_id: str | None = None, profile_id: str | None = None, max_tokens: Any = None, temperature: Any = None, invocation_id: str | None = None, before_physical_dispatch: Any = None, before_compatibility_retry: Any = None, frozen_grounding: FrozenGroundingSnapshot | None = None, frozen_admission_claim: dict[str, Any] | None = None, operation_capability: str = "ask.answer", routed_execution_id: str | None = None, memory_exclude_refs: Sequence[str] = (), subject_kind: str | None = None, subject_id: str | None = None, history: Sequence[tuple[str, str]] = ()) -> dict[str, Any]:
+    async def ask(self, principal: Principal, question: str, grounding: Any = None, *, lens: str = "Ask", context: list[dict[str, Any]] | None = None, model: str | None = None, inference_target_id: str | None = None, profile_id: str | None = None, max_tokens: Any = None, temperature: Any = None, invocation_id: str | None = None, before_physical_dispatch: Any = None, before_compatibility_retry: Any = None, frozen_grounding: FrozenGroundingSnapshot | None = None, frozen_admission_claim: dict[str, Any] | None = None, operation_capability: str = "ask.answer", routed_execution_id: str | None = None, memory_exclude_refs: Sequence[str] = (), subject_kind: str | None = None, subject_id: str | None = None, history: Sequence[tuple[str, str]] = (), desk_tools: bool = False) -> dict[str, Any]:
         prompt = str(question or "").strip()
         if not prompt: raise ValidationError("prompt is required")
         # Betterment Q4: a follow-up in the Ask window carries the earlier
@@ -305,7 +327,7 @@ class AskService:
                 env = _envelope(memory)
                 return {
                     "schema_version": 2,
-                    "system_prompt": _ASK_SYSTEM_PROMPT + frozen_system_instruction,
+                    "system_prompt": _ASK_SYSTEM_PROMPT + frozen_system_instruction + (" " + ask_desk.DESK_PROMPT if desk_tools else ""),
                     "user_prompt": asked + ("\n\nMaterial:\n" + material if material else "") + ("\n\nGrounding:\n" + env if env else ""),
                     "lens": lens,
                     "context_ids": context_ids,
@@ -340,7 +362,7 @@ class AskService:
             if capability_id == "thought.interview":
                 adapter = _QuestionOrSynthesisAdapter(adapter)
             else:
-                adapter = _AskAnswerAdapter(adapter)
+                adapter = _AskAnswerAdapter(adapter, trace=ask_trace(invocation_id) if desk_tools else "")
             if routed_execution_id:
                 coordinator = self._broker.inference_adoption_service
                 from .inference_route_plan_service import ROUTE_PLANNING_AUTHORITY
@@ -551,10 +573,21 @@ class AskService:
                     context={"status": 404, "reason": "source_gone"},
                 )
             history = self.thread_history(thread_id)
+        # Betterment Q7: on an engine that can use tools, the Ask can use the
+        # desk's tools (DECISIONS #16).
+        mode = await asyncio.to_thread(ask_desk.tools_mode, self._db)
+        invocation_id = str(invocation_id or ("ask_" + uuid.uuid4().hex)).strip()
+        if mode == ask_desk.LOOP and self._thread_service is not None:
+            return await self._ask_in_loop(
+                principal, question, grounding, thread_id=thread_id, context=context or [],
+                invocation_id=invocation_id,
+            )
+        desk_tools = mode == ask_desk.CLI
         result = await self.ask(
             principal, question, grounding, lens=lens, context=context,
             invocation_id=invocation_id, history=history,
             memory_exclude_refs=(f"thread:{thread_id}",) if thread_id else (),
+            desk_tools=desk_tools,
         )
         text = str(question or "").strip()
         if not thread_id:
@@ -574,6 +607,8 @@ class AskService:
         egress = result.get("egress") if isinstance(result.get("egress"), dict) else {}
         answer = threads.append_message(
             thread_id, role="assistant", parent_id=user.id,
+            # Betterment Q7: the Ask's own id, the key of its tool calls.
+            operation_id=invocation_id,
             invocation_id=str(result.get("invocation_id") or ""),
             egress_scope=str(egress.get("scope") or ""), egress_host=str(egress.get("host") or ""),
             model_id=str(result.get("model") or ""),
@@ -594,7 +629,70 @@ class AskService:
         result["thread_id"] = thread_id
         result["message_ids"] = {"question": user.id, "answer": answer.id}
         result["looked_at"] = [{"ref": ref, "title": title} for ref, title in looked]
+        result["tools"] = "desk" if desk_tools else ""
+        if desk_tools:
+            used = use_by_trace(self._db, [ask_trace(invocation_id)]).get(ask_trace(invocation_id)) or {}
+            result["used"] = used
+            result["looked_at"] = _with_tool_reads(result["looked_at"], used)
         return result
+
+    async def _ask_in_loop(self, principal: Principal, question: str, grounding: Any, *, thread_id: str, context: list[dict[str, Any]], invocation_id: str) -> dict[str, Any]:
+        """Betterment Q7: one Ask through the hub's tool loop (an HTTP engine
+        whose server takes tool calls).  The thread's earlier turns are its
+        history; About is where the agent starts.  A failed first Ask leaves
+        no thread behind."""
+        from ..mcp.palettes import ASK, resolve_palette
+
+        text = str(question or "").strip()
+        if not text:
+            raise ValidationError("prompt is required")
+        threads = self._db.threads
+        new_thread = not thread_id
+        if new_thread:
+            thread_id = threads.create_thread(title=thread_title(text)).id
+        refs = [ref for ref, _title in self._about_refs(context, grounding, [])]
+        service = self._thread_service(system_prompt=ask_desk.DESK_PROMPT, palette=resolve_palette(ASK))
+        try:
+            turn = await ask_desk.run_loop(
+                service, principal, thread_id=thread_id, question=text, refs=refs,
+                invocation_id=invocation_id, progress=self._progress,
+            )
+        except Exception:
+            if new_thread:
+                threads.soft_delete(thread_id)
+            raise
+        if turn["aborted"] or turn["error"] or not turn["text"]:
+            if new_thread:
+                threads.soft_delete(thread_id)
+            if turn["aborted"]:
+                raise ServiceError("ask_stopped", "Stopped.", context={"status": 409, "reason": "stopped"})
+            error = turn["error"] or {}
+            raise ServiceError(
+                str(error.get("code") or "ask_turn_failed"), str(error.get("error") or "The engine did not answer."),
+                context={"status": 502, "reason": str(error.get("reason") or "did_not_answer")},
+            )
+        key = ask_trace(turn["turn_invocation_id"])
+        used = use_by_trace(self._db, [key]).get(key) or {}
+        scope = turn["egress_scope"]
+        return {
+            "output": turn["text"],
+            "invocation_id": invocation_id,
+            "model": turn["model"],
+            "egress": {"scope": scope} if scope else None,
+            "thread_id": thread_id,
+            "message_ids": {"question": turn["user_message_id"], "answer": turn["assistant_message_id"]},
+            "looked_at": _with_tool_reads([], used),
+            "used": used,
+            "tools": "desk",
+        }
+
+    def engine_tools(self) -> dict[str, str]:
+        """Betterment Q7: whether the Answers engine can use the desk's tools
+        (the Ask window's engine line)."""
+        mode = ask_desk.tools_mode(self._db)
+        if mode == ask_desk.LOOP and self._thread_service is None:
+            mode = ask_desk.NONE
+        return {"tools": "desk" if mode else ""}
 
     def thread_history(self, thread_id: str) -> list[tuple[str, str]]:
         """The (question, answer) pairs on a thread's current path, as text."""
@@ -602,10 +700,13 @@ class AskService:
         pairs: list[tuple[str, str]] = []
         question = ""
         for message in threads.list_path(thread_id):
-            text = "\n".join(
-                str(part.text) for part in threads.get_parts(message.id)
-                if part.kind == "text" and part.text and not part.draft and not part.sensitive
-            ).strip()
+            texts = [
+                str(part.text).strip() for part in threads.get_parts(message.id)
+                if part.kind == "text" and part.text and part.text.strip() and not part.draft and not part.sensitive
+            ]
+            # Betterment Q7: an answer made with tools keeps each pass's words
+            # in its own part; the answer is the last one.
+            text = (texts[-1] if message.role == "assistant" else "\n".join(texts)) if texts else ""
             if not text:
                 continue
             if message.role == "user":
@@ -995,6 +1096,8 @@ class AskService:
     _outcome_error = staticmethod(map_inference_outcome)
 
     def cancel(self, principal: Principal, invocation_id: str) -> dict[str, str]:
+        if ask_desk.cancel_loop(invocation_id):
+            return {"invocation_id": invocation_id, "disposition": "stopped"}
         if self._routed_assignments_active():
             stopped = self._broker.inference_adoption_service.stop_operation(
                 principal,

@@ -13,6 +13,10 @@ os.environ.setdefault("HOLDSPEAK_TEST_NO_REAL_CLI", "1")
 # Found on this Mac. A test that needs agent engines turns them on and puts its
 # fake `claude`/`codex` first on PATH (tests/fixtures/fake_agent_cli.py).
 os.environ.setdefault("HOLDSPEAK_CLI_ENGINES", "off")
+# Betterment Q7: a test hub never asks an HTTP engine's server (the LAN engine
+# of the fixture routes is real) whether it takes tool calls. A test of the
+# Ask tool loop turns it on and replays a recorded answer.
+os.environ.setdefault("HOLDSPEAK_ASK_SERVER_TOOLS", "off")
 
 import pytest
 import numpy as np

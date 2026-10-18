@@ -1,0 +1,268 @@
+{
+  "recorded_at": "2026-10-18T13:55:03+00:00",
+  "base_url": "http://192.168.1.43:8080/v1",
+  "model": "qwen3.8-27b",
+  "props_chat_template_caps": {
+    "supports_object_arguments": true,
+    "supports_parallel_tool_calls": true,
+    "supports_preserve_reasoning": true,
+    "supports_reasoning_effort": true,
+    "supports_string_content": true,
+    "supports_system_role": true,
+    "supports_tool_calls": true,
+    "supports_tools": true,
+    "supports_typed_content": true
+  },
+  "question": "About: the meeting m-mira-1on1 (1:1 with Mira).\n\nWhat do I owe Mira this week? Make the feedback a task for Friday 2026-10-23.",
+  "tool_results_sent": {
+    "memory.page": {
+      "pages": []
+    },
+    "memory.search": {
+      "results": []
+    },
+    "meeting.get": {
+      "meeting": {
+        "id": "m-mira-1on1",
+        "title": "1:1 with Mira",
+        "started_at": "2026-10-15T10:00:00",
+        "summary": "Mira asked for feedback on her cutover design doc by Friday.",
+        "action_items": [
+          {
+            "task": "Give Mira feedback on the cutover design doc",
+            "owner": "Me",
+            "due": "2026-10-23"
+          }
+        ]
+      }
+    },
+    "meeting.list": {
+      "meetings": [
+        {
+          "id": "m-mira-1on1",
+          "title": "1:1 with Mira",
+          "started_at": "2026-10-15T10:00:00"
+        }
+      ]
+    },
+    "door.add_item": {
+      "id": "ai_recorded",
+      "task": "Give Mira feedback on the cutover design doc",
+      "owner": "Me",
+      "due": "2026-10-23",
+      "status": "open"
+    }
+  },
+  "passes": [
+    {
+      "choices": [
+        {
+          "finish_reason": "tool_calls",
+          "index": 0,
+          "message": {
+            "role": "assistant",
+            "content": "I'll look into the meeting with Mira and what's owed. Let me start by reading the meeting and the relevant memory pages.\n\n",
+            "reasoning_content": "The user is asking about the 1:1 meeting with Mira (m-mira-1on1). What they want to know is:\n1. What do I owe Mira this week?\n2. Make the feedback a task for Friday 2026-10-23.\n\nLet me start by reading the meeting, and also checking the \"what I owe\" memory page, and the needs_you tool.\n\nFirst, let me fetch the meeting and the memory page.\n",
+            "tool_calls": [
+              {
+                "type": "function",
+                "function": {
+                  "name": "meeting.get",
+                  "arguments": "{\"meeting_id\":\"m-mira-1on1\"}"
+                },
+                "id": "n75kEsmMwleNubsCQoclP1An4coEdDwI"
+              },
+              {
+                "type": "function",
+                "function": {
+                  "name": "memory.page",
+                  "arguments": "{\"slug\":\"what-i-owe\"}"
+                },
+                "id": "VlL9U6uEXjbKALGPLqYOqSQjHM1WV10m"
+              },
+              {
+                "type": "function",
+                "function": {
+                  "name": "desk.needs_you",
+                  "arguments": "{\"week\":true}"
+                },
+                "id": "Fg2Uec3m7DSyvq9SXBKxKQUefLpmchbl"
+              }
+            ]
+          }
+        }
+      ],
+      "created": 1792331697,
+      "model": "qwen3.8-27b",
+      "system_fingerprint": "b1-11fe021",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 225,
+        "prompt_tokens": 5391,
+        "total_tokens": 5616,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "id": "chatcmpl-8rdAqoKWFxTlV0bubCoASkfrPYLqSvWl",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 5391,
+        "prompt_ms": 3430.908,
+        "prompt_per_token_ms": 0.6364140233722871,
+        "prompt_per_second": 1571.3041562175376,
+        "predicted_n": 225,
+        "predicted_ms": 2323.514,
+        "predicted_per_token_ms": 10.372830357142858,
+        "predicted_per_second": 96.40570274162324,
+        "draft_n": 198,
+        "draft_n_accepted": 158
+      }
+    },
+    {
+      "choices": [
+        {
+          "finish_reason": "tool_calls",
+          "index": 0,
+          "message": {
+            "role": "assistant",
+            "content": "Let me check the follow-through board and any proposals from the meeting to make sure I'm not missing anything owed to Mira.\n\n",
+            "reasoning_content": "The meeting shows an action item: \"Give Mira feedback on the cutover design doc\" due 2026-10-23. The needs_you returned ok but no rows shown. Let me check the proposals and the follow-through board to be thorough.\n\nActually, the meeting is clear. Let me check the follow-through board and proposals to see if there's anything else owed to Mira this week.\n",
+            "tool_calls": [
+              {
+                "type": "function",
+                "function": {
+                  "name": "follow_through.board",
+                  "arguments": "{}"
+                },
+                "id": "DinvZhVpFchbgcenpRoUwk6skZ87bYJJ"
+              },
+              {
+                "type": "function",
+                "function": {
+                  "name": "meeting.proposals",
+                  "arguments": "{\"meeting_id\":\"m-mira-1on1\"}"
+                },
+                "id": "S9pYEi7piHbOCOhyFd6KClnJghVJ5BiA"
+              }
+            ]
+          }
+        }
+      ],
+      "created": 1792331699,
+      "model": "qwen3.8-27b",
+      "system_fingerprint": "b1-11fe021",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 166,
+        "prompt_tokens": 5659,
+        "total_tokens": 5825,
+        "prompt_tokens_details": {
+          "cached_tokens": 5387
+        }
+      },
+      "id": "chatcmpl-owk1lWNQeIa9tqytk53M5mXfmMXerK9i",
+      "timings": {
+        "cache_n": 5387,
+        "prompt_n": 272,
+        "prompt_ms": 339.986,
+        "prompt_per_token_ms": 1.2499485294117647,
+        "prompt_per_second": 800.0329425329279,
+        "predicted_n": 166,
+        "predicted_ms": 1715.294,
+        "predicted_per_token_ms": 10.395721212121213,
+        "predicted_per_second": 96.1934222354885,
+        "draft_n": 147,
+        "draft_n_accepted": 116
+      }
+    },
+    {
+      "choices": [
+        {
+          "finish_reason": "tool_calls",
+          "index": 0,
+          "message": {
+            "role": "assistant",
+            "content": "The board and proposals are empty, so the meeting's action item is the only thing owed. Now I'll create the task as requested.\n\n",
+            "reasoning_content": "The board and proposals came back empty. The meeting has one action item: \"Give Mira feedback on the cutover design doc\" due 2026-10-23. That's what I owe Mira this week.\n\nNow I need to make the feedback a task for Friday 2026-10-23. I'll use door.add_item.\n",
+            "tool_calls": [
+              {
+                "type": "function",
+                "function": {
+                  "name": "door.add_item",
+                  "arguments": "{\"task\":\"Give Mira feedback on the cutover design doc\",\"owner\":\"Me\",\"due\":\"2026-10-23\",\"source_type\":\"meeting\",\"source_ref\":\"meeting:m-mira-1on1\"}"
+                },
+                "id": "VaitvNv5sXJHFhU8i42tMaevEtuoiqrD"
+              }
+            ]
+          }
+        }
+      ],
+      "created": 1792331701,
+      "model": "qwen3.8-27b",
+      "system_fingerprint": "b1-11fe021",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 215,
+        "prompt_tokens": 5768,
+        "total_tokens": 5983,
+        "prompt_tokens_details": {
+          "cached_tokens": 5655
+        }
+      },
+      "id": "chatcmpl-Wf4Oas5Fr5CqJfWGCVk6YMzhuDFPNs5z",
+      "timings": {
+        "cache_n": 5655,
+        "prompt_n": 113,
+        "prompt_ms": 218.464,
+        "prompt_per_token_ms": 1.9333097345132744,
+        "prompt_per_second": 517.247692983741,
+        "predicted_n": 215,
+        "predicted_ms": 2116.631,
+        "predicted_per_token_ms": 9.89079906542056,
+        "predicted_per_second": 101.10406584803872,
+        "draft_n": 180,
+        "draft_n_accepted": 154
+      }
+    },
+    {
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "index": 0,
+          "message": {
+            "role": "assistant",
+            "content": "Here's what you owe Mira this week, from the 1:1 (m-mira-1on1, 2026-10-15):\n\n**Give Mira feedback on her cutover design doc** \u2014 due Friday 2026-10-23.\n\nThat's the only open item owed to her. The follow-through board and the meeting's proposals are both empty, so there's nothing else pending from that conversation.\n\nI've made it a task:\n- **Task:** Give Mira feedback on the cutover design doc\n- **Owner:** Me\n- **Due:** 2026-10-23 (Friday)\n- **Source:** meeting m-mira-1on1\n\nIt's now on your Door as an open item.",
+            "reasoning_content": "The task is created. Let me summarize what I found.\n"
+          }
+        }
+      ],
+      "created": 1792331704,
+      "model": "qwen3.8-27b",
+      "system_fingerprint": "b1-11fe021",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 187,
+        "prompt_tokens": 5967,
+        "total_tokens": 6154,
+        "prompt_tokens_details": {
+          "cached_tokens": 5764
+        }
+      },
+      "id": "chatcmpl-7vizeL3sFEQffFMBYQd2TieEogvB3nJH",
+      "timings": {
+        "cache_n": 5764,
+        "prompt_n": 203,
+        "prompt_ms": 281.942,
+        "prompt_per_token_ms": 1.3888768472906405,
+        "prompt_per_second": 720.0062424186535,
+        "predicted_n": 187,
+        "predicted_ms": 2042.453,
+        "predicted_per_token_ms": 10.980930107526882,
+        "predicted_per_second": 91.0669670244554,
+        "draft_n": 174,
+        "draft_n_accepted": 128
+      }
+    }
+  ]
+}

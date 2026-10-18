@@ -35,7 +35,10 @@ def build_ask_service(ctx: WebContext) -> AskService:
     ``invocation_id`` instead of assembling a second, divergent one.
     """
     from ..sync import _hub_model_name
-    return AskService(_database(),hub_model=lambda: _hub_model_name(ctx),broadcast=lambda state, **frame: _run_frame(ctx,state,**frame),rails_hydrator=lambda refs,principal: hydrate_rails_refs(refs,principal=principal),observer=get_observer(),progress=lambda event: _ask_progress(ctx,event))
+    from .._thread_factory import thread_service_from_ctx
+    # Betterment Q7: an Ask on an HTTP engine that takes tool calls runs the
+    # hub's tool loop (the Thread turn) with the Ask's prompt and palette.
+    return AskService(_database(),hub_model=lambda: _hub_model_name(ctx),broadcast=lambda state, **frame: _run_frame(ctx,state,**frame),rails_hydrator=lambda refs,principal: hydrate_rails_refs(refs,principal=principal),observer=get_observer(),progress=lambda event: _ask_progress(ctx,event),thread_service=lambda **overrides: thread_service_from_ctx(ctx,**overrides))
 
 def _ask_progress(ctx: WebContext, event: dict[str, Any]) -> None:
     """Betterment Q2: one running Ask's progress (busy, trying again) to the face."""
@@ -53,6 +56,14 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
     async def api_list_models(request: Request) -> Any:
         try: return JSONResponse({"models":service().list_models(principal(request))})
         except Exception as exc: return error_500(exc,log,"Failed to list models")
+    @router.get("/api/ask/engine")
+    async def api_ask_engine(request: Request) -> Any:
+        # Betterment Q7: can the Answers engine use the desk's tools? The
+        # Ask window's engine line says so.
+        try:
+            import asyncio
+            return JSONResponse(await asyncio.to_thread(service().engine_tools))
+        except Exception as exc: return error_500(exc,log,"Failed to read the Answers engine")
     @router.post("/api/grounding/resolve")
     async def api_resolve_grounding(request: Request) -> Any:
         body=await _json_body(request)

@@ -6,6 +6,7 @@
 import type { Primitive } from "../lib/primitives";
 import { qualifiedRef, type Items } from "./api";
 import { apiRequest } from "../lib/api";
+import { parseUse, type AgentUse } from "./used";
 
 /** One lasso'd card, as the ask reads it. */
 export interface AskContext {
@@ -174,6 +175,13 @@ export interface AskRunResult {
   threadId: string;
   /** Betterment Q4: what the answer read, by his names for it. */
   lookedAt: LookedAt[];
+  /** Betterment Q7: what the answer's tools read, wrote and prepared (null
+   *  for an engine without the desk's tools). */
+  used: AgentUse | null;
+  /** Betterment Q7: the answer could use the desk's tools. */
+  deskTools: boolean;
+  /** Betterment Q7: the answer's message id in its thread. */
+  answerId?: string;
 }
 
 /** Betterment Q4: one record an answer read, as a link. */
@@ -233,6 +241,8 @@ export async function runAsk(opts: {
       groundingReceipt: null,
       threadId: "",
       lookedAt: [],
+      used: null,
+      deskTools: false,
     };
     if (reason) result.reason = reason;
     return result;
@@ -355,6 +365,9 @@ export function parseAskResult(data: Record<string, any>): AskRunResult {
           .filter((row: Record<string, unknown>) => row && typeof row.ref === "string" && row.ref.includes(":"))
           .map((row: Record<string, unknown>) => ({ ref: String(row.ref), title: sourceName(String(row.ref), String(row.title || "")) }))
       : [],
+    used: parseUse(data.used),
+    deskTools: data.tools === "desk",
+    answerId: String(data.message_ids?.answer || ""),
 };
 }
 
@@ -385,6 +398,68 @@ export interface AskTurn {
   question: string;
   answer: string;
   lookedAt: LookedAt[];
+  /** Betterment Q7: what its tools wrote and prepared (Looked at is above). */
+  used?: AgentUse | null;
+}
+
+/** Betterment Q7: Looked at with what the tools read after it, once each. */
+export function withToolReads(lookedAt: LookedAt[], used: AgentUse | null | undefined): LookedAt[] {
+  const rows = [...lookedAt];
+  for (const row of used?.looked_at ?? []) {
+    if (!rows.some((known) => known.ref === row.ref)) rows.push({ ref: row.ref, title: sourceName(row.ref, row.label) });
+  }
+  return rows;
+}
+
+/** Betterment Q7: can the Answers engine use the desk's tools? */
+export async function readAskEngineTools(): Promise<boolean> {
+  try {
+    const res = await apiRequest("/api/ask/engine");
+    if (!res.ok) return false;
+    const data = await res.json().catch(() => ({}));
+    return data?.tools === "desk";
+  } catch {
+    return false;
+  }
+}
+
+/** Betterment Q7: Make it a task. The same write the agent makes
+ *  (`door.add_item`, through the thread's `/todo`): the task text is the
+ *  answer's first line. Returns the task's ref, or null. */
+export async function makeTaskFromAnswer(threadId: string, answer: string): Promise<{ ref: string; label: string } | null> {
+  const line = answer
+    .split("\n")
+    .map((text) => text.replace(/^[\s>#*\-•]+/, "").replace(/[*_`]/g, "").trim())
+    .find(Boolean) || "";
+  const text = line.length > 140 ? `${line.slice(0, 139).trimEnd()}…` : line;
+  if (!threadId || !text) return null;
+  try {
+    const res = await apiRequest(`/api/threads/${encodeURIComponent(threadId)}/todo`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json().catch(() => ({}));
+    const id = String(data?.result?.id || "");
+    return id && data?.status === "ok" ? { ref: `action_item:${id}`, label: text } : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Betterment Q7: his press on a call the desk's tool loop holds. */
+export async function decideHeldCall(threadId: string, callId: string, decision: "approve" | "deny"): Promise<boolean> {
+  try {
+    const res = await apiRequest(`/api/threads/${encodeURIComponent(threadId)}/decide`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ call_id: callId, decision }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
 }
 
 function frozenTitle(raw: unknown): string {
@@ -401,9 +476,14 @@ function frozenTitle(raw: unknown): string {
 export function askTurnsFromThread(detail: {
   messages: Array<{ id: string; role: string; parts: Array<{ kind: string; text: string }> }>;
   refs: Array<{ messageId: string; refKind: string; refId: string; frozenJson: unknown; origin?: string }>;
+  used?: Record<string, AgentUse>;
 }): { turns: AskTurn[]; about: LookedAt[] } {
   const textOf = (message: { parts: Array<{ kind: string; text: string }> }) =>
     message.parts.filter((part) => part.kind === "text" && part.text).map((part) => part.text).join("\n").trim();
+  // Betterment Q7: an answer made with the desk's tools keeps each pass's
+  // words in its own part; the answer is the last one.
+  const answerOf = (message: { parts: Array<{ kind: string; text: string }> }) =>
+    message.parts.filter((part) => part.kind === "text" && part.text?.trim()).map((part) => part.text.trim()).at(-1) ?? "";
   const refsFor = (messageId: string, origin: string) => {
     const seen = new Set<string>();
     const out: LookedAt[] = [];
@@ -420,14 +500,18 @@ export function askTurnsFromThread(detail: {
   const about: LookedAt[] = [];
   let question: { id: string; text: string } | null = null;
   for (const message of detail.messages) {
-    const text = textOf(message);
+    const text = message.role === "assistant" ? answerOf(message) : textOf(message);
     if (message.role === "user") {
       question = text ? { id: message.id, text } : null;
       for (const row of refsFor(message.id, "reference")) {
         if (!about.some((known) => known.ref === row.ref)) about.push(row);
       }
     } else if (message.role === "assistant" && question && text) {
-      turns.push({ key: message.id, question: question.text, answer: text, lookedAt: refsFor(message.id, "relevance") });
+      const used = detail.used?.[message.id] ?? null;
+      turns.push({
+        key: message.id, question: question.text, answer: text,
+        lookedAt: withToolReads(refsFor(message.id, "relevance"), used), used,
+      });
       question = null;
     }
   }
