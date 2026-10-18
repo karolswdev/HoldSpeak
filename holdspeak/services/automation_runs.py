@@ -378,6 +378,34 @@ def open_result(db: Any, workbench_id: str, artifact_id: str) -> dict[str, Any]:
     return {"artifact_id": artifact_id, "status": "read" if str(row["status"]) in {"new", "read"} else str(row["status"])}
 
 
+def new_results(db: Any) -> list[dict[str, Any]]:
+    """The automations that hold a NEW result, newest first (Betterment A6).
+
+    One row per automation: its name, how many results are NEW, and the
+    newest one's title and time. Today shows "<name> has a new result" from
+    it, and the Automations dock tile counts it. A result stops being NEW
+    when it is opened (``open_result``), so the row goes everywhere at once.
+    These rows are not Needs-you rows: an automation whose Put it in is
+    Needs you adds its own Door item (``_to_needs_you``)."""
+    with db._connection() as conn:
+        rows = conn.execute(
+            """SELECT w.id AS workbench_id, w.name, COUNT(*) AS new_count,
+                      MAX(COALESCE(i.completed_at, i.created_at)) AS newest_at
+               FROM artifacts a
+               JOIN workbench_items i ON i.id = a.source_item_id
+               JOIN workbenches w ON w.id = i.workbench_id
+               WHERE a.status = 'new' AND i.status = 'done' AND i.parked = 0 AND w.deleted = 0
+                 AND json_extract(i.context_json, '$.occurrence') = 1
+               GROUP BY w.id ORDER BY newest_at DESC, w.id""",
+        ).fetchall()
+    return [{
+        "workbench_id": str(row["workbench_id"]),
+        "name": str(row["name"] or "Automation"),
+        "new_count": int(row["new_count"]),
+        "newest_at": row["newest_at"],
+    } for row in rows]
+
+
 def result_note_id(artifact_id: str) -> str:
     """The Inbox note one result makes (``_to_inbox``): stable per result."""
     return "note_result_" + hashlib.sha256(str(artifact_id).encode()).hexdigest()[:16]
@@ -546,6 +574,27 @@ def _deliver_one(db: Any, principal: Any, wb: Any, row: dict[str, Any]) -> dict[
     return _to_inbox(db, wb, row)
 
 
+def inbox_directory_id(db: Any) -> Optional[str]:
+    """The Inbox a result note is filed in (Betterment A6).
+
+    The seeded Inbox, else a live drawer named Inbox. A desk that never had
+    one (an unseeded, fresh desk) gets it, with the seed's own id, so a later
+    seed finds it and adds no second one. An Inbox he deleted is not brought
+    back: the note stays on the floor.
+    """
+    seeded = db.directories.get(INBOX_DIRECTORY_ID, include_deleted=True)
+    if seeded is not None and not seeded.deleted:
+        return INBOX_DIRECTORY_ID
+    named = db.directories.find_by_normalized_name("Inbox")
+    if named is not None:
+        return str(named.id)
+    if seeded is not None:
+        return None
+    db.directories.upsert(directory_id=INBOX_DIRECTORY_ID, name="Inbox")
+    _changed("directory", INBOX_DIRECTORY_ID)
+    return INBOX_DIRECTORY_ID
+
+
 def _to_inbox(db: Any, wb: Any, row: dict[str, Any]) -> dict[str, Any]:
     note_id = result_note_id(str(row["artifact_id"]))
     if db.notes.get(note_id, include_deleted=True) is not None:
@@ -556,11 +605,9 @@ def _to_inbox(db: Any, wb: Any, row: dict[str, Any]) -> dict[str, Any]:
     )
     db.notes.upsert(note_id=note_id, title=str(row["title"] or wb.name or "Result"), body_markdown=body)
     filed = False
-    directory = db.directories.get(INBOX_DIRECTORY_ID)
-    if directory is not None:
-        # The Inbox exists on a seeded desk. A desk without it keeps the note
-        # on the floor; this never makes or restores the Inbox.
-        db.directory_memberships.upsert(primitive_id=f"note:{note_id}", directory_id=INBOX_DIRECTORY_ID)
+    inbox_id = inbox_directory_id(db)
+    if inbox_id:
+        db.directory_memberships.upsert(primitive_id=f"note:{note_id}", directory_id=inbox_id)
         filed = True
     _changed("note", note_id)
     return {"artifact_id": row["artifact_id"], "target": "inbox", "outcome": "noted",

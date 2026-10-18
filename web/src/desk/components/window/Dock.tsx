@@ -18,7 +18,8 @@ import { windowIcons } from "./seatIcons";
 import { toggleExpose } from "./Expose";
 import { VerbGlyph } from "./VerbGlyph";
 import { ShortcutSheet } from "./ShortcutSheet";
-import { DOCK_APPLICATIONS } from "../../applications";
+import { DOCK_APPLICATIONS, applicationForAction } from "../../applications";
+import { useAutomationNews } from "../../automationNews";
 import { useCompactViewport } from "../../useCompactViewport";
 import { openChairWindow, useChairWindows } from "../../chair/chairWindows";
 import {
@@ -250,6 +251,9 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   // The Dock opts out of the hook's minute poll; RuntimeBus invalidations
   // call the explicit refresh path in useDockLiveReads.
   const { live, reads, offline, lastSuccessfulAt } = useDockLiveReads();
+  // Betterment A6: the Automations tile stands on the Dock while a result is
+  // NEW, with the NEW count (absent at zero: no tile, no "0").
+  const news = useAutomationNews();
   // PHILO-17 (needsyou, walker TAXES): the one number is on the Needs-you
   // icon and the bell only; the Intelligence tile carries no copy of it.
   // HS-99-04 — the dock chip menu (one menu vocabulary).
@@ -383,8 +387,10 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   const visibleWindowChips = windows.filter((window) => !DOCK_APP_IDS.has(window.id));
   // PHILO-16 (A1) §5: the seated windows no tile above seats (an application
   // opened as a pullout, a launcher, or a project already has its tile).
+  const automations = !compact && !offline && news.count > 0 ? applicationForAction("open-workbenches") : undefined;
   const tiledIds = new Set<string>([
     ...DOCK_FACE_APPLICATIONS.map((application) => `pullout:${application.windowId}`),
+    ...(automations ? [automations.windowId] : []),
   ]);
   const seatedWithoutTile = NUB_CHIPS
     ? []
@@ -476,6 +482,44 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
           </Button>
         );
         })}
+      {automations ? (() => {
+        const winId = automations.windowId;
+        const running = Boolean(windowsById[winId]);
+        const minimized = running && panelMin.includes(winId);
+        const words = `${news.count} new ${news.count === 1 ? "result" : "results"}`;
+        return (
+          <Button
+            key={winId}
+            ref={seatRef(winId)}
+            variant="chrome"
+            data-app={winId}
+            data-testid="desk-dock-automations"
+            className={
+              "desk-dock-launch desk-dock-app" +
+              (running && !minimized ? " is-run" : "") +
+              (minimized ? " is-seated" : "") +
+              (running && winId === front && !minimized ? " is-front" : "")
+            }
+            aria-label={`${automations.label}, ${words}${minimized ? ", iconified" : ""}`}
+            onClick={() => {
+              const s = useDesk.getState();
+              if (running && minimized) s.restorePanel(winId);
+              else if (running) s.focusPanel(winId);
+              else
+                void import("../../shell").then((m) =>
+                  m.openSurfaceOr(automations.action, automations.href, undefined, { origin: "dock" }),
+                );
+            }}
+          >
+            <span aria-hidden="true">{automations.glyph}</span>
+            <span className="desk-dock-label">{automations.label}</span>
+            {minimized ? seatLamp : null}
+            <span className="desk-dock-badge" data-tone="new" data-testid="desk-dock-automations-new" aria-hidden="true">
+              {news.count}
+            </span>
+          </Button>
+        );
+      })() : null}
       {compact ? (
         <>
           {/* The phone has four doors: Today, Capture, Meetings and People. */}

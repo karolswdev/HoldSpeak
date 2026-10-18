@@ -39,6 +39,8 @@ import homeRows from "./fixtures/automation-hub/home-rows.json";
 import oldQueue from "./fixtures/automation-hub/old-queue.json";
 import oldQueueRan from "./fixtures/automation-hub/old-queue-ran.json";
 import oldMadeOne from "./fixtures/automation-hub/old-made-one.json";
+import putNew from "./fixtures/automation-hub/put-new.json";
+import putFolder from "./fixtures/automation-hub/put-folder.json";
 import { WorkbenchesHomeCore } from "../../pages/cores/WorkbenchesHomeCore";
 import { NewWorkbenchChooser } from "../components/NewWorkbenchChooser";
 import { EMPTY_ITEMS, fromWireDirectory, fromWireNote } from "../api";
@@ -79,6 +81,10 @@ const hub = {
   detect: [] as unknown[],
   /** A9: the step Make this one automation moves to. */
   afterMakeOne: [] as Step[],
+  /** A6: an engine write held open until the test releases it. */
+  holdEngine: null as null | (() => void),
+  /** A6: the step a Put it in write (PUT output_target) moves to. */
+  afterTarget: [] as Step[],
 };
 
 const CLAUDE = (engines as unknown as { claude: { steps: Array<{ name: string; gets: Record<string, unknown>; answer?: unknown }> } }).claude.steps;
@@ -111,8 +117,9 @@ function hubFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Respons
   if (method === "PUT" && url === `${detail}/engine`) {
     const next = hub.afterEngine.shift();
     if (!next) throw new Error("an unrecorded With");
-    hub.step = next;
-    return Promise.resolve(json({ workbench: {} }));
+    const answer = () => { hub.step = next; return json({ workbench: {} }); };
+    if (hub.holdEngine === null) return Promise.resolve(answer());
+    return new Promise((resolve) => { hub.holdEngine = () => resolve(answer()); });
   }
   if (method === "POST" && url === `${detail}/run`) {
     const next = hub.afterRun.shift();
@@ -138,6 +145,12 @@ function hubFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Respons
     hub.step = next;
     return Promise.resolve(json({ workbench: {} }));
   }
+  if (method === "PUT" && url === detail && body && "output_target" in body) {
+    const next = hub.afterTarget.shift();
+    if (!next) throw new Error("an unrecorded Put it in");
+    hub.step = next;
+    return Promise.resolve(json({ workbench: {} }));
+  }
   if (method === "PUT" && url === detail) return Promise.resolve(json({ workbench: {} }));
   const path = url.split("?")[0];
   if (method === "GET" && path === `${detail}/memory` && !(path in hub.step.gets)) return Promise.resolve(json({ entries: [] }));
@@ -156,6 +169,8 @@ beforeEach(() => {
   hub.afterPut = [];
   hub.afterCreate = [];
   hub.afterMakeOne = [];
+  hub.holdEngine = null;
+  hub.afterTarget = [];
   vi.stubGlobal("fetch", vi.fn(hubFetch));
   useDesk.setState({ workbenchWindows: [{ id: WB, origin: null }] });
 });
@@ -215,8 +230,8 @@ describe("the sentence on top", () => {
     await waitFor(() => expect(hub.calls).toContainEqual({
       method: "PUT", url: DETAIL, body: { instruction: "Draft my team update: what shipped and what slipped." },
     }));
-    // Put it in shows its value: no dead press (its editor is A6).
-    expect(within(line("put")).queryByRole("button")).toBeNull();
+    // A6: Put it in is pressable now (its editor unfolds in place).
+    expect(within(line("put")).getByRole("button", { name: /Put it in/ })).toBeInTheDocument();
   });
 });
 
@@ -457,9 +472,36 @@ describe("Looked at, Wrote, Prepared", () => {
     expect(slot.textContent).not.toMatch(/meeting:|note:|note_|chs_/);
   });
 
-  it("with no delete receipt seat on the desk, Undo is withheld (no dead verb)", async () => {
+  it("with no delete receipt seat on the desk, Undo keeps its own receipt in place (A6)", async () => {
     await openUsed();
-    expect(within(newest()).queryByTestId("automation-wrote-undo")).toBeNull();
+    const note = result().used.wrote[0];
+    const id = note.ref.split(":").slice(1).join(":");
+    // The receipt's own Undo keeps the note: nothing is deleted.
+    fireEvent.click(within(newest()).getByTestId("automation-wrote-undo"));
+    const receipt = within(newest()).getByTestId("automation-wrote-receipt");
+    expect(receipt).toHaveTextContent(`Removed ${note.label}`);
+    fireEvent.click(within(receipt).getByRole("button", { name: "Undo" }));
+    expect(receipt).toHaveTextContent(`Restored ${note.label}`);
+    expect(hub.calls.filter((c) => c.method === "DELETE")).toEqual([]);
+    // Undo again, and the receipt's window ends: the desk's delete runs.
+    const deleted: string[] = [];
+    const fetchNow = globalThis.fetch;
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      if ((init?.method ?? "GET") === "DELETE" && String(input).startsWith("/api/notes/")) {
+        deleted.push(decodeURIComponent(String(input).slice("/api/notes/".length)));
+        return Promise.resolve(json({ success: true }));
+      }
+      return (fetchNow as typeof fetch)(input, init);
+    }));
+    await waitFor(() => expect(within(newest()).getByTestId("automation-wrote-undo")).toBeInTheDocument(), { timeout: 3000 });
+    vi.useFakeTimers({ toFake: ["setInterval", "setTimeout", "Date"] });
+    try {
+      fireEvent.click(within(newest()).getByTestId("automation-wrote-undo"));
+      await act(async () => { vi.advanceTimersByTime(9000); });
+    } finally {
+      vi.useRealTimers();
+    }
+    await waitFor(() => expect(deleted).toEqual([id]));
   });
 
   it("Undo asks the desk's one delete for the note the run made", async () => {
@@ -727,5 +769,60 @@ describe("an old automation (A9)", () => {
     expect(within(screen.getByTestId("automation-tasks")).getAllByTestId("automation-task"))
       .toHaveLength(itemsOf(oldQueueRan).length);
     expect(screen.queryByTestId("automation-raw")).toBeNull();
+  });
+});
+
+/* ── A6: Put it in, and the race of Run now after With ─────────────────────
+ * The hub's own answers from tests/integration/test_desk_workbenches.py
+ * (test_put_it_in_files_a_fresh_desk_inbox_and_new_results_show_until_opened):
+ * put-new (a scheduled result in My Inbox), put-folder (Put it in the
+ * HoldSpeak folder). */
+describe("A6: Put it in", () => {
+  type Dest = { id: string; name: string };
+  const FOLDER = ((putFolder as Step).gets["/api/channels/destinations"] as { destinations: Dest[] }).destinations[0];
+
+  it("unfolds in place: My Inbox in use, Needs you, and each saved destination; one press saves it", async () => {
+    await open(putNew as Step);
+    expect(line("put")).toHaveTextContent("My Inbox");
+    const windows = useDesk.getState().workbenchWindows.length;
+    fireEvent.click(within(line("put")).getByRole("button"));
+    const editor = await screen.findByTestId("automation-put-editor");
+    const choices = () => within(editor).getAllByTestId("automation-put-choice");
+    await waitFor(() => expect(choices().map((c) => c.querySelector(".automation-engine-name")?.textContent))
+      .toEqual(["My Inbox", "Needs you", FOLDER.name]));
+    expect(choices()[0]).toHaveTextContent("In use");
+    // A destination only prepares the send: the words say he presses Send.
+    expect(editor).toHaveTextContent("Prepare a send (you press Send)");
+    hub.afterTarget = [putFolder as Step];
+    fireEvent.click(within(editor).getByRole("button", { name: `Put it in ${FOLDER.name}` }));
+    await waitFor(() => expect(line("put")).toHaveTextContent(`${FOLDER.name} (you press Send)`));
+    // Showing the NEW result read it (its open), then the one Put it in write.
+    expect(hub.calls.filter((c) => c.method === "PUT")).toEqual([
+      { method: "PUT", url: DETAIL_OF(putNew), body: { output_target: `destination:${FOLDER.id}` } }]);
+    expect(useDesk.getState().workbenchWindows.length).toBe(windows);
+    expect(screen.getByTestId("automation-window").textContent).not.toMatch(/destination:|holdspeak-folder/);
+  });
+
+  it("Run now right after With > Add waits for the engine to be saved, then runs on it", async () => {
+    hub.detect = [detectOf("found"), detectOf("add")];
+    await open(withNone as Step);
+    fireEvent.click(within(line("with")).getByRole("button"));
+    const found = await within(await screen.findByTestId("automation-with-editor"))
+      .findByRole("button", { name: "Add Claude Code" });
+    hub.afterEngine = [withClaude as Step];
+    hub.afterRun = [withClaudeRan as Step];
+    hub.holdEngine = () => undefined;  // the engine write is still on its way
+    fireEvent.click(found);
+    await waitFor(() => expect(hub.calls.map((c) => c.url)).toContain(`/api/workbenches/${(withNone as Step).workbench_id}/engine`));
+    fireEvent.click(screen.getByTestId("automation-run-now"));
+    await act(async () => { await Promise.resolve(); });
+    // Nothing runs before the engine is saved.
+    expect(hub.calls.map((c) => c.url)).not.toContain(`/api/workbenches/${(withNone as Step).workbench_id}/run`);
+    expect(newest()).toHaveAttribute("data-working");
+    act(() => { hub.holdEngine?.(); });
+    await waitFor(() => expect(within(newest()).getByRole("heading", { name: "Weekly update" })).toBeInTheDocument());
+    const order = hub.calls.map((c) => `${c.method} ${c.url.replace(/^\/api\/workbenches\/[^/]+/, "")}`);
+    expect(order.indexOf("PUT /engine")).toBeLessThan(order.indexOf("POST /run"));
+    expect(screen.queryByTestId("automation-refusal")).toBeNull();
   });
 });

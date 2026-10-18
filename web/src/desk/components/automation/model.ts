@@ -183,10 +183,15 @@ export function lessonWords(count: number): string | undefined {
   return count === 1 ? "1 lesson" : `${count} lessons`;
 }
 
-export function putWords(target: string | null | undefined): string {
+/** The Put it in line. A destination reads by its saved name (Betterment
+ *  A6); it only prepares the send, so the words say he presses Send. */
+export function putWords(target: string | null | undefined, destinationName?: string | null): string {
   const value = String(target ?? "inbox");
   if (value === "needs_you") return "Needs you";
-  if (value.startsWith("destination:")) return "A saved destination (you press Send)";
+  if (value.startsWith("destination:")) {
+    const name = String(destinationName ?? "").trim();
+    return name ? `${name} (you press Send)` : "A saved destination (you press Send)";
+  }
   return "My Inbox";
 }
 

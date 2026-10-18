@@ -692,6 +692,16 @@
       ]
     },
     {
+      "path": "/api/automations/new",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/automations/practice-recipes",
       "methods": [
         "GET"

@@ -257,7 +257,7 @@ class WorkbenchRunner:
         # Betterment A2: an automation with an instruction needs no agent.
         from . import automation_runs as automation
         instructed=bool(str(wb.instruction or "").strip())
-        if recipe is None and not instructed: return {"error":f"workbench {wb.name}: no recipe assigned"}
+        if recipe is None and not instructed: return {"error":f"The automation {wb.name} has nothing to do yet: write what it should do."}
         recipe=recipe or automation.plain_agent(wb)
         if request_id and delegation is None:
             with self.db._connection() as conn:

@@ -1234,6 +1234,21 @@ export async function makeOneAutomation(workbenchId: string): Promise<void> {
   );
 }
 
+/** Betterment A6: one automation that holds a NEW result. */
+export interface AutomationNews {
+  workbench_id: string;
+  name: string;
+  new_count: number;
+  newest_at: string | null;
+}
+
+/** Betterment A6: the automations with a NEW result, newest first (Today's
+ *  rows and the Automations dock tile's count). */
+export async function fetchAutomationNews(): Promise<AutomationNews[]> {
+  const body = await apiFetch<{ automations?: AutomationNews[] }>("/api/automations/new");
+  return Array.isArray(body?.automations) ? body.automations : [];
+}
+
 /** Betterment A3: Forget one lesson. `index` counts newest first, as the
  *  memory read lists them; `at` is its timestamp, so a lesson written
  *  meanwhile is never forgotten in its place. */

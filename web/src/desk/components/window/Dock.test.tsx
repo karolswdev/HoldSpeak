@@ -146,7 +146,12 @@ vi.mock("../../applications", () => {
     { windowId: "surface-meetings", action: "open-meetings", href: "/meetings", label: "Meetings", glyph: "M", surface: true, dock: { order: 2, launch: "surface" } },
   ];
   // PHILO-17 (doors): the Dock seats Intelligence, Speak and Meetings only.
-  return { DOCK_APPLICATIONS: applications };
+  // Betterment A6: Automations stands on it only while a result is NEW.
+  const automations = { windowId: "surface-workbenches", action: "open-workbenches", href: "/workbenches", label: "Automations", glyph: "A", surface: true };
+  return {
+    DOCK_APPLICATIONS: applications,
+    applicationForAction: (action: string) => (action === automations.action ? automations : undefined),
+  };
 });
 vi.mock("./RoomActions", () => ({ RoomActions: () => null }));
 
@@ -437,5 +442,33 @@ describe("the Missed launcher (HS-200-07)", () => {
     } finally {
       dockLaunchers.list = [];
     }
+  });
+});
+
+
+/* Betterment A6: the Automations tile carries the NEW count, on the hub's own
+ * new-result rows (automation-hub/put-new.json, put-opened.json, recorded by
+ * tests/integration/test_desk_workbenches.py). */
+import PUT_NEW from "../../__tests__/fixtures/automation-hub/put-new.json";
+import PUT_OPENED from "../../__tests__/fixtures/automation-hub/put-opened.json";
+
+describe("the Automations tile: the NEW count (Betterment A6)", () => {
+  const answer = (step: { gets: Record<string, unknown> }) => (path: string) =>
+    path === "/api/automations/new" ? Promise.resolve(structuredClone(step.gets[path])) : mocks.defaultApiFetch(path);
+  afterEach(() => { mocks.apiFetch.mockImplementation(mocks.defaultApiFetch); });
+
+  it("stands on the Dock with the count while a result is NEW", async () => {
+    mocks.apiFetch.mockImplementation(answer(PUT_NEW));
+    render(<Dock />);
+    const tile = await screen.findByTestId("desk-dock-automations");
+    expect(tile).toHaveAttribute("aria-label", "Automations, 1 new result");
+    expect(screen.getByTestId("desk-dock-automations-new")).toHaveTextContent("1");
+  });
+
+  it("is absent when nothing is NEW (no tile, no zero)", async () => {
+    mocks.apiFetch.mockImplementation(answer(PUT_OPENED));
+    render(<Dock />);
+    await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalledWith("/api/automations/new"));
+    expect(screen.queryByTestId("desk-dock-automations")).toBeNull();
   });
 });
