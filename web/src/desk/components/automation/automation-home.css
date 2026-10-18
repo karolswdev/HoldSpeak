@@ -74,3 +74,12 @@
   gap: 4px;
   min-width: 0;
 }
+
+/* A home row: the name, and under it When · With (· Off), never cut. */
+.automation-home-row { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.automation-home-name { font: 500 var(--desk-type-primary-size, 15px) / 1.35 var(--font-sans); }
+.automation-home-facts {
+  font: 500 var(--font-size-xs, 12px) / 1.4 var(--font-mono);
+  color: var(--wb-muted);
+  overflow-wrap: anywhere;
+}

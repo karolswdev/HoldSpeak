@@ -1,10 +1,10 @@
 {
  "_source": "The hub's own answers, captured by tests/integration/test_desk_workbenches.py (TestClient, isolated database, the A2 rig's recorded engine replies). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit it.",
- "workbench_id": "workbench_98125a3fc5fb",
+ "workbench_id": "workbench_611aa58d942c",
  "gets": {
-  "/api/workbenches/workbench_98125a3fc5fb": {
+  "/api/workbenches/workbench_611aa58d942c": {
    "workbench": {
-    "id": "workbench_98125a3fc5fb",
+    "id": "workbench_611aa58d942c",
     "name": "Friday team update",
     "instruction": "Draft my team update for this week: what shipped, what slipped, and what I need from each person. Name the meeting or note each point comes from.",
     "sources": [
@@ -20,13 +20,13 @@
     "schedule_enabled": false,
     "schedule_revision": 1,
     "item_order": [],
-    "created_at": "2026-10-18T16:26:27Z",
-    "last_modified": "2026-10-18T16:26:27Z",
+    "created_at": "2026-10-18T18:22:44Z",
+    "last_modified": "2026-10-18T18:22:44Z",
     "deleted": false,
     "items": [
      {
-      "id": "wbocc_9a7ad9d6002f4f86",
-      "workbench_id": "workbench_98125a3fc5fb",
+      "id": "wbocc_d19222e897d24005",
+      "workbench_id": "workbench_611aa58d942c",
       "title": "Friday team update, Sun 18 Oct 2026",
       "body": "Draft my team update for this week: what shipped, what slipped, and what I need from each person. Name the meeting or note each point comes from.",
       "priority": 3,
@@ -42,27 +42,27 @@
        "occurrence": true
       },
       "result": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.",
-      "result_artifact_id": "artifact_a8e22817bb04",
+      "result_artifact_id": "artifact_694f30f8adf1",
       "result_egress": {
        "boundary": "cloud",
        "model": "agent-claude"
       },
       "mint_attempted": true,
       "tokens_consumed": 40,
-      "created_at": "2026-10-18T16:26:28Z",
-      "last_modified": "2026-10-18T16:26:28.200525+00:00",
-      "claimed_at": "2026-10-18T16:26:28.099809+00:00",
-      "completed_at": "2026-10-18T16:26:28.200525+00:00",
+      "created_at": "2026-10-18T18:22:44Z",
+      "last_modified": "2026-10-18T18:22:44.948184+00:00",
+      "claimed_at": "2026-10-18T18:22:44.857188+00:00",
+      "completed_at": "2026-10-18T18:22:44.948184+00:00",
       "parked": false
      }
     ],
     "item_count": 1,
     "pending_count": 0,
     "last_run": {
-     "id": "wbrun_02f362828485",
-     "workbench_id": "workbench_98125a3fc5fb",
-     "started_at": "2026-10-18T16:26:28.099461+00:00",
-     "completed_at": "2026-10-18T16:26:28.295636+00:00",
+     "id": "wbrun_99a7e05966b5",
+     "workbench_id": "workbench_611aa58d942c",
+     "started_at": "2026-10-18T18:22:44.856958+00:00",
+     "completed_at": "2026-10-18T18:22:45.035492+00:00",
      "items_attempted": 1,
      "items_completed": 1,
      "items_failed": 0,
@@ -79,18 +79,18 @@
     "instruction_from": "automation",
     "results": [
      {
-      "item_id": "wbocc_9a7ad9d6002f4f86",
+      "item_id": "wbocc_d19222e897d24005",
       "title": "Friday team update, Sun 18 Oct 2026",
       "status": "done",
-      "artifact_id": "artifact_a8e22817bb04",
+      "artifact_id": "artifact_694f30f8adf1",
       "new": true,
       "error": null,
       "text": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.",
-      "completed_at": "2026-10-18T16:26:28.200525+00:00",
+      "completed_at": "2026-10-18T18:22:44.948184+00:00",
       "seconds": 0,
       "model": "stub-model-7b",
       "boundary": "cloud",
-      "note_id": "note_result_5fb31866817f1588",
+      "note_id": "note_result_cf509d6d89290482",
       "cost_usd": null,
       "used": null
      }
@@ -148,7 +148,7 @@
     }
    }
   },
-  "/api/workbenches/workbench_98125a3fc5fb/memory": {
+  "/api/workbenches/workbench_611aa58d942c/memory": {
    "entries": []
   }
  }

@@ -88,8 +88,13 @@ export function WorkbenchesHomeCore({ hero }: CoreProps) {
             return (
               <SurfaceLedgerRow
                 key={automation.id}
-                primary={automation.name || "Automation"}
-                meta={automationRowWords(automation)}
+                primary={
+                  <span className="automation-home-row">
+                    <span className="automation-home-name">{automation.name || "Automation"}</span>
+                    <span className="automation-home-facts">{automationRowWords(automation)}</span>
+                  </span>
+                }
+                wrap
                 cells={fresh ? <StateChip state="active" label={`${fresh} NEW`} /> : undefined}
                 expands={false}
                 onToggle={() => useDesk.getState().openWorkbenchWindow(automation.id)}
