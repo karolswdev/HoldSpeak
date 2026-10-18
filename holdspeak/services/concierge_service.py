@@ -148,6 +148,10 @@ def engine_display_name(
     4. host:port fallback (caller provides)
     """
     candidates: list[str] = []
+    # Betterment E3: one engine per model; a server that serves several
+    # names this engine by its own model, not by the first one served.
+    if served_models and profile_model in served_models:
+        candidates.append(profile_model)
     if served_models:
         candidates.extend(served_models)
     if profile_model and profile_model.lower() not in ("default", ""):

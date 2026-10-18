@@ -112,26 +112,19 @@ function AddEngineRow({ ctrl }: { ctrl: RunsOnController }) {
         >
           Check
         </Button>
-        <Button
-          dense
-          variant="primary"
-          onClick={() => void a.submit()}
-          disabled={a.state !== "READY" || ctrl.busy}
-          data-testid="concierge-add-submit"
-        >
-          Add
-        </Button>
       </span>
       {a.state === "READY" ? (
-        <span className="runson-add-answer">
-          <StateChip state="success" label="READY" icon="●" />
-          <span className="surface-token" data-testid="concierge-add-model">{a.model}</span>
-          {a.tools ? (
-            <span className="surface-token" data-testid="concierge-add-tools">
-              {a.tools === "yes" ? "TOOLS" : a.tools === "no" ? "NO TOOLS" : "TOOLS UNKNOWN"}
-            </span>
-          ) : null}
-        </span>
+        <>
+          <span className="runson-add-answer">
+            <StateChip state="success" label="READY" icon="●" />
+            {a.tools ? (
+              <span className="surface-token" data-testid="concierge-add-tools">
+                {a.tools === "yes" ? "TOOLS" : a.tools === "no" ? "NO TOOLS" : "TOOLS UNKNOWN"}
+              </span>
+            ) : null}
+          </span>
+          <ModelPicker ctrl={ctrl} />
+        </>
       ) : null}
       {a.state === "KEY_REQUIRED" ? (
         <span className="runson-add-answer" role="alert" data-testid="concierge-add-key-answer">
@@ -158,6 +151,50 @@ function AddEngineRow({ ctrl }: { ctrl: RunsOnController }) {
           <span className="surface-token" data-testid="concierge-add-reason">{a.reason}</span>
         </span>
       ) : null}
+    </div>
+  );
+}
+
+/** More models than this, and the picker has a search field. */
+const PICKER_SEARCH_FROM = 7;
+
+/** Betterment E3: Check fills this list; nothing is picked for him. Use on a
+ *  row saves that model as its own engine; the list stays, so a second model
+ *  on the same host is one more press. */
+function ModelPicker({ ctrl }: { ctrl: RunsOnController }) {
+  const a = ctrl.add;
+  const query = a.query.trim().toLowerCase();
+  const shown = query ? a.models.filter((m) => m.toLowerCase().includes(query)) : a.models;
+  return (
+    <div className="runson-picker" data-testid="concierge-add-picker">
+      {a.models.length >= PICKER_SEARCH_FROM ? (
+        <span data-testid="concierge-add-search">
+          <StringGadget label="Find a model" caption value={a.query} onChange={a.setQuery} placeholder="Model name" />
+        </span>
+      ) : null}
+      {shown.length ? (
+        <ul className="runson-picker-list">
+          {shown.map((model) => {
+            const context = a.contexts[model];
+            const used = a.used.includes(model);
+            return (
+              <li key={model} className="runson-picker-row" data-testid="concierge-add-pick" data-model={model}>
+                <span className="surface-token runson-picker-model">{model}</span>
+                {context ? <span className="surface-token">{context.toLocaleString("en-US")} TOKENS</span> : null}
+                {used ? (
+                  <StateChip state="success" label="ADDED" icon="●" />
+                ) : (
+                  <Button dense variant="primary" disabled={ctrl.busy} onClick={() => void a.save(model)} data-testid="concierge-add-use">
+                    Use
+                  </Button>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <span className="surface-token" data-testid="concierge-add-no-match">NO MODEL MATCHES</span>
+      )}
     </div>
   );
 }

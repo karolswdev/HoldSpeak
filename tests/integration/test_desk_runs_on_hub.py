@@ -10,6 +10,7 @@ answers are fenced in web/src/desk/__tests__/runs-on.app.test.tsx.
 from __future__ import annotations
 
 import json
+import re
 import threading
 import urllib.error
 import urllib.request
@@ -70,11 +71,12 @@ def engine():
         server.server_close()
 
 
-def _key_for(url: str) -> str:
-    """endpointDraft.ts `endpointProfileId`: ``engine-<host-port slug>``."""
-    host = url.split("://", 1)[1].split("/")[0]
-    slug = "".join(c if c.isalnum() else "-" for c in host.lower()).strip("-")
-    return f"engine-{slug}"[:96]
+def _key_for(url: str, model: str = "") -> str:
+    """endpointDraft.ts `endpointProfileId`: ``engine-<host-port slug>-<model slug>``
+    (Betterment E3: one engine for each model; no model = the old host-only id)."""
+    host = re.sub(r"[^a-z0-9]+", "-", url.split("://", 1)[1].split("/")[0].lower()).strip("-")
+    name = re.sub(r"[^a-z0-9]+", "-", model.lower()).strip("-")
+    return (f"engine-{host}-{name}" if name else f"engine-{host}")[:96].rstrip("-")
 
 
 def _rows(base: str) -> dict[str, dict]:
@@ -99,7 +101,7 @@ def test_a_stranger_connects_an_engine_and_the_hub_keeps_his_choice(hub: str, en
     tombstone.
     """
     base = hub
-    key = _key_for(engine)
+    key = _key_for(engine, _StubHandler.MODEL)
 
     # Nothing is assigned on this desk yet.
     assert _summary(base)["status"] == "unassigned"
@@ -120,7 +122,7 @@ def test_a_stranger_connects_an_engine_and_the_hub_keeps_his_choice(hub: str, en
         "draft": {
             "request_id": "runs-on-hub-add", "profile_id": key, "expected_profile_revision": 0,
             "label": host_port, "provider_family": "openai_compatible", "model": _StubHandler.MODEL,
-            "endpoint": engine, "requires_key": False,
+            "endpoint": engine, "requires_key": False, "context_tokens": None,
         },
         "secret": None,
     })
@@ -311,7 +313,7 @@ def test_ready_means_ready_and_a_default_engine_is_limited_where_it_serves_part(
     """
     base, tmp_path = hub_dir
     engine = tools_engine
-    key = _key_for(engine)
+    key = _key_for(engine, TOOLS_MODEL)
     _ok(base, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
     _record_reads("engine-truth", "0-open", base, tmp_path, engine)
 
@@ -324,7 +326,7 @@ def test_ready_means_ready_and_a_default_engine_is_limited_where_it_serves_part(
         "draft": {
             "request_id": "engine-truth-add", "profile_id": key, "expected_profile_revision": 0,
             "label": host_port, "provider_family": "openai_compatible", "model": TOOLS_MODEL,
-            "endpoint": engine, "requires_key": False,
+            "endpoint": engine, "requires_key": False, "context_tokens": None,
         },
         "secret": None,
     })

@@ -1,8 +1,8 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_runs_on_hub.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-18T03:58:20.376477Z",
+  "captured_at": "2026-10-18T09:46:20.341064Z",
   "wire": {
-    "checkedAt": "2026-10-18T03:58:20.348025+00:00",
+    "checkedAt": "2026-10-18T09:46:20.312263+00:00",
     "engines": [
       {
         "audioCapable": false,
@@ -38,11 +38,11 @@
           }
         },
         "host": "127.0.0.1",
-        "id": "local:library_provider_engine-127-0-0-1-8099",
+        "id": "local:library_provider_engine-127-0-0-1-8099-stub-qwen",
         "kind": "local",
         "legacyLabel": "127.0.0.1:8099",
         "name": "stub Qwen",
-        "profileId": "engine-127-0-0-1-8099",
+        "profileId": "engine-127-0-0-1-8099-stub-qwen",
         "profileRevision": 1,
         "quantToken": null,
         "state": "READY"
@@ -89,8 +89,8 @@
       },
       "observation": {
         "available_memory_bytes": null,
-        "sha256": "sha256:789dd475cf182e0365dbc2ac4fea4e65ae2808307cf7237c5d400e565d17c47e",
-        "storage_available_bytes": 263273533440
+        "sha256": "sha256:7e43f670b283764ae67bb9189201a1f5d6fc2c3d9c5c05d216bc1611c1cbb508",
+        "storage_available_bytes": 243231453184
       }
     },
     "lastApply": null,
@@ -115,7 +115,7 @@
       "capabilityId": "meeting.deferred_analysis",
       "inheritedFrom": "global",
       "label": "127.0.0.1:8099",
-      "profileId": "engine-127-0-0-1-8099",
+      "profileId": "engine-127-0-0-1-8099-stub-qwen",
       "profileRevision": 1,
       "readiness": "ready",
       "schema": "ConciergeSummaryAssignmentProjection@1",

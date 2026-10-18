@@ -167,3 +167,103 @@ describe("Engines — an agent engine's Spend limit per run (Betterment E2)", ()
     expect(within(engine).getByTestId("switchboard-lamp-agent-claude").getAttribute("data-lamp")).not.toBe("ok");
   });
 });
+
+/* ── Betterment E3: the model picker, one engine for each model ── */
+
+type ThreeStep = { name: string; gets?: Gets; post?: string; body?: Record<string, unknown>; answer?: unknown };
+const THREE = (recorded as unknown as { threeModels: { steps: ThreeStep[] } }).threeModels.steps;
+const three = (name: string) => THREE.find((s) => s.name === name)!;
+const STUB_URL = "http://127.0.0.1:8099/v1";
+
+/** The hub of `threeModels`: the Check answer, then one recorded define per model. */
+function threeHub(check: unknown = three("check").answer) {
+  let gets = three("open").gets!;
+  const defined: Array<Record<string, unknown>> = [];
+  vi.mocked(apiFetch).mockImplementation(async (path: string, init?: { method?: string; json?: unknown }) => {
+    if (init?.method === "POST" && path === "/api/setup/discover-models") return structuredClone(check) as never;
+    if (init?.method === "POST") {
+      const draft = ((init.json ?? {}) as { draft?: Record<string, unknown> }).draft ?? {};
+      defined.push(draft);
+      const next = three(String(draft.model));
+      if (!next || path !== next.post) throw new Error(`unrecorded POST ${path} ${String(draft.model)}`);
+      gets = next.gets!;
+      return structuredClone(next.answer) as never;
+    }
+    return recordedGet(gets, String(path).split("?")[0]) as never;
+  });
+  return defined;
+}
+
+async function checkStub() {
+  render(<RunsOnCore />);
+  fireEvent.click(await screen.findByTestId("concierge-add-engine"));
+  fireEvent.change(screen.getByLabelText("Server address"), { target: { value: STUB_URL } });
+  await act(async () => {
+    fireEvent.click(screen.getByTestId("concierge-add-check"));
+  });
+  return screen.findByTestId("concierge-add-picker");
+}
+
+const row = (model: string) =>
+  screen.getAllByTestId("concierge-add-pick").find((r) => r.getAttribute("data-model") === model)!;
+
+describe("Engines — the model picker (Betterment E3)", () => {
+  it.each([1440, 393])("at %i Check lists all three models, picks none, and two of them become two engines", async (px) => {
+    width(px);
+    const defined = threeHub();
+    const picker = await checkStub();
+
+    // All three, in the server's order; nothing is picked for him.
+    expect(within(picker).getAllByTestId("concierge-add-pick").map((r) => r.getAttribute("data-model"))).toEqual([
+      "alpha-7b", "beta-13b", "gamma-3b",
+    ]);
+    expect(within(picker).getAllByRole("button", { name: "Use" })).toHaveLength(3);
+    expect(within(picker).queryByText("ADDED")).toBeNull();
+    expect(defined).toEqual([]);
+    // The context the server said it runs; a model that did not say shows none.
+    expect(row("alpha-7b").textContent).toContain("49,152 TOKENS");
+    expect(row("gamma-3b").textContent).not.toContain("TOKENS");
+    // Three models need no search field.
+    expect(screen.queryByTestId("concierge-add-search")).toBeNull();
+
+    await act(async () => {
+      fireEvent.click(within(row("alpha-7b")).getByRole("button", { name: "Use" }));
+    });
+    await waitFor(() => expect(within(row("alpha-7b")).getByText("ADDED")).toBeTruthy());
+    await act(async () => {
+      fireEvent.click(within(row("gamma-3b")).getByRole("button", { name: "Use" }));
+    });
+    await waitFor(() => expect(within(row("gamma-3b")).getByText("ADDED")).toBeTruthy());
+
+    // One engine for each model: the id is host + model, and the context goes with it.
+    expect(defined).toEqual([
+      expect.objectContaining({ profile_id: "engine-127-0-0-1-8099-alpha-7b", model: "alpha-7b", context_tokens: 49152, endpoint: STUB_URL }),
+      expect.objectContaining({ profile_id: "engine-127-0-0-1-8099-gamma-3b", model: "gamma-3b", context_tokens: null, endpoint: STUB_URL }),
+    ]);
+    expect(within(row("beta-13b")).getByRole("button", { name: "Use" })).toBeTruthy();
+    expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^ADDED \d\d:\d\d · gamma-3b · 127\.0\.0\.1:8099$/);
+    // Both are on the board: plates at 1440; at 393 the list shows them as
+    // the taps of the job he opens.
+    const board = screen.getByTestId("runson-assignments");
+    const kind = px === 393 ? "tap" : "engine";
+    if (px === 393) fireEvent.click(within(board).getByTestId("switchboard-job-default"));
+    expect(await within(board).findByTestId(`switchboard-${kind}-engine-127-0-0-1-8099-alpha-7b`)).toBeTruthy();
+    expect(within(board).getByTestId(`switchboard-${kind}-engine-127-0-0-1-8099-gamma-3b`)).toBeTruthy();
+  });
+
+  it("a long list has a search field that narrows it", async () => {
+    // The recorded answer with more names: the search is the face's own filter.
+    const answer = structuredClone(three("check").answer) as { models: string[] };
+    answer.models = [...answer.models, "delta-1b", "epsilon-2b", "zeta-4b", "eta-8b"];
+    threeHub(answer);
+    await checkStub();
+    const search = within(screen.getByTestId("concierge-add-search")).getByLabelText("Find a model");
+    fireEvent.change(search, { target: { value: "ETA" } });
+    expect(screen.getAllByTestId("concierge-add-pick").map((r) => r.getAttribute("data-model"))).toEqual([
+      "beta-13b", "zeta-4b", "eta-8b",
+    ]);
+    fireEvent.change(search, { target: { value: "nothing-like-this" } });
+    expect(screen.queryAllByTestId("concierge-add-pick")).toHaveLength(0);
+    expect(screen.getByTestId("concierge-add-no-match").textContent).toBe("NO MODEL MATCHES");
+  });
+});

@@ -302,7 +302,9 @@ describe("Add an engine (defect 1)", () => {
       unknown
     >;
     expect(Object.keys(draft).sort()).toEqual([...ENDPOINT_DRAFT_KEYS].sort());
-    expect(draft.profile_id).toBe("engine-192-168-1-43-8080");
+    // Betterment E3: one engine for each model, so the model is in the id.
+    expect(draft.profile_id).toBe("engine-192-168-1-43-8080-qwen3-6-35b-a3b-ud-q5-k-xl-gguf");
+    expect(draft.context_tokens).toBeNull();
     expect(draft.provider_family).toBe("openai_compatible");
     expect(draft.model).toBe(LAN_MODEL);
     expect(draft.endpoint).toBe(LAN_URL);

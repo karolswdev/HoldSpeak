@@ -85,7 +85,11 @@ EXECUTING_CAPABILITIES = tuple(
 )
 EVIDENCE_PROVIDER_ID = "phase143-production-adopters"
 EVIDENCE_PROVIDER_REVISION = 1
-TOKEN_ACCOUNTING_REVISION = "utf8-byte-upper-bound@1"
+# Betterment E3 (Q0 follow-up): about 3.5 characters make one token, so the
+# old one-token-per-byte law took three times the room a request needs. The
+# old law stays here so evidence written under it still verifies.
+TOKEN_ACCOUNTING_REVISION = "chars-per-3.5@2"
+LEGACY_TOKEN_ACCOUNTING_REVISION = "utf8-byte-upper-bound@1"
 MIGRATION_FAMILY = "thoughts-writing-route-assignments"
 MEETING_MIGRATION_FAMILY = "meeting-route-assignments"
 MEETING_DEFERRED_MIGRATION_FAMILY = "meeting-deferred-route-assignments"
@@ -145,16 +149,39 @@ def _safe(value: Any, *, field: str) -> str:
     return clean
 
 
-def _input_token_upper_bound(serialized: str) -> int:
+def _input_token_upper_bound(
+    serialized: str, revision: str = TOKEN_ACCOUNTING_REVISION
+) -> int:
     """Deterministic reservation, never a claim about provider token usage.
 
-    Every token in supported text tokenizers is backed by at least one UTF-8
-    byte.  Reserving ceil(bytes/3) would not be conservative for arbitrary
-    Unicode, so the v1 law reserves one token per byte plus a fixed envelope.
-    The deliberately explicit revision lets a future tokenizer-aware law coexist
-    with historical evidence without reinterpretation.
+    v2 (``chars-per-3.5@2``): one token for each 3.5 characters, rounded up,
+    plus a fixed envelope. The serialized request is canonical JSON with
+    ``ensure_ascii``, so a non-ASCII character is six characters (``\\uXXXX``)
+    here, which keeps the estimate high for such text.
+    v1 (``utf8-byte-upper-bound@1``): one token per UTF-8 byte; only for
+    evidence written under it.
     """
-    return len(serialized.encode("utf-8")) + 16
+    if revision == LEGACY_TOKEN_ACCOUNTING_REVISION:
+        return len(serialized.encode("utf-8")) + 16
+    if revision != TOKEN_ACCOUNTING_REVISION:
+        raise ConflictError(
+            "Token accounting revision is unknown.",
+            code="inference_adoption_evidence_invalid",
+        )
+    return -(-len(serialized) * 2 // 7) + 16
+
+
+def _evidence_token_accounting(evidence: Mapping[str, Any]) -> str:
+    """The token law one stored evidence was written under (the current law
+    when it holds no request)."""
+    requests = evidence.get("serialized_requests")
+    for request in requests if isinstance(requests, list) else ():
+        plan = request.get("context_plan") if isinstance(request, dict) else None
+        if isinstance(plan, dict) and plan.get("token_accounting_revision") in {
+            TOKEN_ACCOUNTING_REVISION, LEGACY_TOKEN_ACCOUNTING_REVISION,
+        }:
+            return str(plan["token_accounting_revision"])
+    return TOKEN_ACCOUNTING_REVISION
 
 
 class ProductionRouteEvidence:
@@ -608,6 +635,8 @@ class ProductionRouteEvidence:
             capability_id = str(definition["id"])
             capability_revision = int(definition["revision"])
             capability_schema_sha256 = str(definition["schema_sha256"])
+        # Evidence is verified under the token law it was written with.
+        accounting = _evidence_token_accounting(evidence)
         material_snapshot = {
             "schema": "AdoptedInferenceMaterial@1",
             "planning_reference": str(material["planning_reference"]),
@@ -620,7 +649,7 @@ class ProductionRouteEvidence:
             "payload_sha256": str(material["payload_sha256"]),
             "reserved_output_tokens": int(material["reserved_output_tokens"]),
             "reserved_tool_calls": int(material["reserved_tool_calls"]),
-            "token_accounting_revision": TOKEN_ACCOUNTING_REVISION,
+            "token_accounting_revision": accounting,
         }
         if (
             str(material["operation_id"]) != evidence["operation_id"]
@@ -674,7 +703,7 @@ class ProductionRouteEvidence:
                 "deployment_revision": str(leg["deployment_revision_id"]),
                 "payload": payload,
             }
-            input_tokens = _input_token_upper_bound(_canonical(expected_serialized))
+            input_tokens = _input_token_upper_bound(_canonical(expected_serialized), accounting)
             context_support = json.loads(str(leg["context_support_json"]))
             maximum = int(context_support["maximum_tokens"])
             if (
@@ -693,7 +722,7 @@ class ProductionRouteEvidence:
             request_id = f"request:{evidence_ref}:{ordinal}" if executable else None
             expected_context = {
                 "schema": "AdoptedContextPlan@1",
-                "token_accounting_revision": TOKEN_ACCOUNTING_REVISION,
+                "token_accounting_revision": accounting,
                 "input_tokens": input_tokens,
                 "reserved_output_tokens": output_tokens,
                 "context_ceiling": maximum,

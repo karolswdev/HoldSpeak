@@ -23,6 +23,7 @@ export const ENDPOINT_DRAFT_KEYS = [
   "model",
   "endpoint",
   "requires_key",
+  "context_tokens",
 ] as const;
 
 export interface EndpointDraft {
@@ -34,6 +35,9 @@ export interface EndpointDraft {
   model: string;
   endpoint: string;
   requires_key: boolean;
+  /** Betterment E3: the context the server said this model runs (Check);
+   *  null when it did not say. The hub then keeps 16,384. */
+  context_tokens: number | null;
 }
 
 /** host:port for a base URL — the label and the id both read from it. */
@@ -47,18 +51,26 @@ export function endpointHostPort(url: string): string {
   }
 }
 
-/** A stable, lawful profile id for one endpoint.
- *
- * The service's `_PROFILE_ID` is `^[a-z][a-z0-9_-]{0,95}$`, so the id is
- * derived, not typed: the same address always mints the same id, which is
- * what lets a second Add of the same engine replay instead of duplicating.
- */
-export function endpointProfileId(url: string): string {
-  const slug = endpointHostPort(url)
+function slug(text: string): string {
+  return text
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
-  return `engine-${slug || "endpoint"}`.slice(0, 96);
+}
+
+/** A stable, lawful profile id for one model on one endpoint.
+ *
+ * The service's `_PROFILE_ID` is `^[a-z][a-z0-9_-]{0,95}$`, so the id is
+ * derived, not typed: the same address and model always mint the same id,
+ * which is what lets a second Add of the same engine replay instead of
+ * duplicating. Betterment E3: the model is part of the id, so two models on
+ * one host are two engines. With no model it is the old host-only id, which
+ * engines added before E3 still carry.
+ */
+export function endpointProfileId(url: string, model = ""): string {
+  const host = slug(endpointHostPort(url)) || "endpoint";
+  const name = slug(model);
+  return (name ? `engine-${host}-${name}` : `engine-${host}`).slice(0, 96).replace(/-+$/, "");
 }
 
 /** The label the library row carries. `_safe_field` refuses "/", so this
@@ -74,16 +86,19 @@ export function endpointDraft(args: {
   expectedProfileRevision?: number;
   /** PHILO-15 02: true when the owner typed a key in the Key field. */
   requiresKey?: boolean;
+  /** Betterment E3: the model's context, as Check read it from the server. */
+  contextTokens?: number | null;
 }): EndpointDraft {
   return {
     request_id: args.requestId,
-    profile_id: endpointProfileId(args.url),
+    profile_id: endpointProfileId(args.url, args.model),
     expected_profile_revision: args.expectedProfileRevision ?? 0,
     label: endpointLabel(args.url),
     provider_family: "openai_compatible",
     model: args.model.trim(),
     endpoint: args.url.trim(),
     requires_key: args.requiresKey ?? false,
+    context_tokens: args.contextTokens ?? null,
   };
 }
 

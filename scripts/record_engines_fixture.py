@@ -145,13 +145,70 @@ def codex_added() -> dict[str, Any]:
             _close()
 
 
+DEFINE = "/api/inference/model-library/define-endpoint"
+#: The address the face test types; the stub's real port is scrubbed to it.
+STUB_URL = "http://127.0.0.1:8099/v1"
+
+
+def three_models() -> dict[str, Any]:
+    """Betterment E3: one server with three models (the owner's llama.cpp
+    shape). Check lists all three; two of them become two engines."""
+    import threading
+    from http.server import ThreadingHTTPServer
+
+    from tests.integration.test_desk_engines import _ThreeModels
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), _ThreeModels)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    port = server.server_address[1]
+    url = f"http://127.0.0.1:{port}/v1"
+
+    def scrub(value: Any) -> Any:
+        text = json.dumps(value).replace(f"127.0.0.1:{port}", "127.0.0.1:8099").replace(
+            f"127-0-0-1-{port}", "127-0-0-1-8099")
+        return json.loads(text)
+
+    def draft(model: str, context: int | None) -> dict[str, Any]:
+        # endpointDraft.ts: the id is host + model.
+        slug = model.replace(".", "-")
+        return {"request_id": f"record-{slug}", "profile_id": f"engine-127-0-0-1-{port}-{slug}",
+                "expected_profile_revision": 0, "label": f"127.0.0.1:{port}",
+                "provider_family": "openai_compatible", "model": model, "endpoint": url,
+                "requires_key": False, "context_tokens": context}
+
+    with pytest.MonkeyPatch.context() as mp:
+        hub = _hub(mp, "three", claude=False)
+        try:
+            before = _gets(hub)
+            checked = _post(hub, "/api/setup/discover-models", {"base_url": url, "check_tools": True})
+            contexts = checked.get("contexts", {})
+            steps = [{"name": "open", "gets": before}, {"name": "check", "answer": checked}]
+            for model in ("alpha-7b", "gamma-3b"):
+                body = draft(model, contexts.get(model))
+                answer = _post(hub, DEFINE, {"draft": body, "secret": None})
+                steps.append({"name": model, "post": DEFINE, "body": body, "answer": answer, "gets": _gets(hub)})
+            return scrub({"steps": steps})
+        finally:
+            _close()
+            server.shutdown()
+            server.server_close()
+
+
 def main() -> None:
-    fixture = {
-        "recordedBy": "scripts/record_engines_fixture.py",
-        "nothingFound": nothing_found(),
-        "claude": found_then_added(),
-        "codex": codex_added(),
+    only = sys.argv[1:]
+    scenarios = {
+        "nothingFound": nothing_found,
+        "claude": found_then_added,
+        "codex": codex_added,
+        "threeModels": three_models,
     }
+    # `record_engines_fixture.py threeModels` records one scenario and keeps
+    # the others as they are.
+    fixture = json.loads(OUT.read_text()) if only and OUT.exists() else {}
+    fixture["recordedBy"] = "scripts/record_engines_fixture.py"
+    for name, record in scenarios.items():
+        if not only or name in only:
+            fixture[name] = record()
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(fixture, indent=2, sort_keys=True) + "\n")
     print(f"wrote {OUT.relative_to(REPO)}")

@@ -1109,3 +1109,38 @@ def test_migrated_ask_cancelled_after_provider_return_publishes_nothing(
         ).fetchall()
     assert len(children) == 1
     assert_provider_return_on_record(db, str(children[0][0]), fenced=True)
+
+
+# ---- Betterment E3: the token law (Q0 follow-up) -----------------------------
+
+
+def test_the_token_law_counts_about_three_and_a_half_characters_a_token() -> None:
+    from holdspeak.services.inference_adoption_service import (
+        LEGACY_TOKEN_ACCOUNTING_REVISION,
+        TOKEN_ACCOUNTING_REVISION,
+        _input_token_upper_bound,
+    )
+
+    text = "x" * 7000
+    assert TOKEN_ACCOUNTING_REVISION == "chars-per-3.5@2"
+    assert _input_token_upper_bound(text) == 2000 + 16
+    assert _input_token_upper_bound("x" * 8) == 3 + 16  # rounded up
+    # The old law stays for evidence written under it.
+    assert _input_token_upper_bound(text, LEGACY_TOKEN_ACCOUNTING_REVISION) == 7000 + 16
+    with pytest.raises(ConflictError):
+        _input_token_upper_bound(text, "unknown@9")
+
+
+def test_evidence_is_verified_under_the_law_it_was_written_with() -> None:
+    from holdspeak.services.inference_adoption_service import (
+        LEGACY_TOKEN_ACCOUNTING_REVISION,
+        TOKEN_ACCOUNTING_REVISION,
+        _evidence_token_accounting,
+    )
+
+    def evidence(revision: Any) -> dict:
+        return {"serialized_requests": [{"context_plan": {"token_accounting_revision": revision}}]}
+
+    assert _evidence_token_accounting(evidence(LEGACY_TOKEN_ACCOUNTING_REVISION)) == LEGACY_TOKEN_ACCOUNTING_REVISION
+    assert _evidence_token_accounting(evidence(TOKEN_ACCOUNTING_REVISION)) == TOKEN_ACCOUNTING_REVISION
+    assert _evidence_token_accounting({"serialized_requests": []}) == TOKEN_ACCOUNTING_REVISION

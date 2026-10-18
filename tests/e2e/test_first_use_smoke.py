@@ -373,10 +373,12 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             assert len(setup_checks) == 1
             assert setup_checks[0].post_data_json == {"base_url": endpoint, "check_tools": True}
             expect(address).to_have_value(endpoint)
-            expect(page.get_by_test_id("concierge-add-model")).to_have_text(_StubHandler.MODEL)
+            # Betterment E3: Check fills the picker; he presses Use on the model.
+            pick = page.locator(f"[data-testid='concierge-add-pick'][data-model='{_StubHandler.MODEL}']")
+            expect(pick).to_be_visible()
             with page.expect_response(lambda response: response.url.endswith("/define-endpoint")
                                       and response.request.method == "POST") as defined:
-                page.get_by_test_id("concierge-add-submit").click()
+                pick.get_by_test_id("concierge-add-use").click()
             assert defined.value.ok, defined.value.text()
             assert len(endpoint_writes) == 1
             assert defined.value.request.post_data_json["draft"]["endpoint"] == endpoint
@@ -388,7 +390,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             board.wait_for()
             # The engine joins the column; one patch onto Meetings sets the
             # summaries. The window stays: the receipt is in its foot.
-            engine_key = engine_key_for(endpoint)
+            engine_key = engine_key_for(endpoint, _StubHandler.MODEL)
             with page.expect_response(lambda response: response.url.endswith("/api/inference/assignments/set")) as assigned:
                 if board.get_attribute("data-layout") == "list":
                     board.get_by_test_id("switchboard-job-meetings").click()
