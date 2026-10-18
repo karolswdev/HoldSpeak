@@ -34,6 +34,7 @@ import {
   JOB_PROBE_CAPABILITIES,
   MEETINGS_JOB,
   SPEECH_JOB,
+  agentChip,
   costTokens,
   enginePlace,
   foundAgentName,
@@ -330,7 +331,7 @@ function AddByKind({
             return (
               <li key={agent.preset} className="runson-kind-row" data-testid={`runson-agent-tile-${agent.preset}`}>
                 <span className="runson-kind-row-name">{agent.name}</span>
-                <EgressChip label={agent.vendor} scope="cloud" />
+                <EgressChip {...agentChip(agent.vendor, agent.vendorScope)} />
                 {agent.added ? (
                   <StateChip state="success" label="ADDED" icon="●" />
                 ) : found ? (
@@ -598,7 +599,7 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
       // Betterment E2: the prompt goes to the agent's vendor; the row
       // unfolds in place to its spend limit and cost.
       const open = ctrl.agent.open === engine.key;
-      egress = <EgressChip label={engine.vendor || hostLabel(engine)} scope="cloud" />;
+      egress = <EgressChip {...agentChip(engine.vendor || hostLabel(engine), engine.vendorScope)} />;
       verb = (
         <Button
           dense
@@ -658,7 +659,7 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
         name: foundAgentName(engine),
         tokens: [],
         lamp: lampFor(engine, false),
-        egress: <EgressChip label={engine.vendor || hostLabel(engine)} scope="cloud" />,
+        egress: <EgressChip {...agentChip(engine.vendor || hostLabel(engine), engine.vendorScope)} />,
         verb: (
           <Button dense variant="secondary" disabled={ctrl.busy} data-testid={`runson-add-${engine.key}`} onClick={() => void ctrl.useFound(engine.key)}>
             Add

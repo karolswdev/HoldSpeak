@@ -100,6 +100,16 @@ class CliPreset:
     enforces_spend_limit: bool
     #: True when the CLI reports what one run cost.
     reports_cost: bool
+    #: Betterment E7: the argv for a preset the summarizer does not know (the
+    #: prompt still goes on stdin). Empty for claude and codex.
+    base_argv: tuple[str, ...] = ()
+    #: How stdout is read: ``claude`` (``--output-format json``), ``codex``
+    #: (``--json`` events), ``text`` (the answer as is) or ``gemini``
+    #: (``--output-format json``: ``response``, ``stats``, ``error``).
+    output: str = "claude"
+    #: Betterment E7: True when the CLI's own config decides the provider, so
+    #: the owner (or that config, read at Add) names the egress host.
+    host_from_owner: bool = False
 
 
 PRESETS: dict[str, CliPreset] = {
@@ -112,17 +122,70 @@ PRESETS: dict[str, CliPreset] = {
         id="codex", label="Codex", executable="codex",
         # The host can come from his Codex config; this is the preset's vendor.
         vendor_host="api.openai.com", timeout_seconds=240.0, model_flag="-m",
-        enforces_spend_limit=False, reports_cost=False,
+        enforces_spend_limit=False, reports_cost=False, output="codex",
+    ),
+    # Betterment E7. Flags from `pi --help` (pi 1.1.0) and pi's docs/cli.md,
+    # never from a run: --print answers once and exits (piped stdin is the
+    # prompt; stdin must close), --no-tools turns every tool off, and the
+    # --no-* switches keep extensions, skills, templates, AGENTS.md/CLAUDE.md,
+    # MCP servers and the session file out. --offline skips pi's start-up
+    # network calls. pi's own config decides the provider, so the egress
+    # host comes from the owner (or that config, read when he adds it).
+    "pi": CliPreset(
+        id="pi", label="pi", executable="pi",
+        vendor_host="", timeout_seconds=240.0, model_flag="--model",
+        enforces_spend_limit=False, reports_cost=False, output="text", host_from_owner=True,
+        base_argv=(
+            "--print", "--no-tools", "--no-session", "--no-extensions", "--no-skills",
+            "--no-prompt-templates", "--no-context-files", "--no-mcp", "--no-approve", "--offline",
+        ),
+    ),
+    # Betterment E7. Flags from `gemini --help` (Gemini CLI 0.18.4) and its
+    # source, never from a run: with piped stdin and no query it answers once
+    # (non-interactive); --approval-mode default then leaves out every tool
+    # that needs approval (shell, edit, write); -e none loads no extension;
+    # an allow-list that names no server loads no MCP server. Read-only tools
+    # (read a file in the empty run folder, web search) stay: Gemini CLI has
+    # no switch that turns every tool off.
+    "gemini": CliPreset(
+        id="gemini", label="Gemini CLI", executable="gemini",
+        vendor_host="generativelanguage.googleapis.com", timeout_seconds=240.0, model_flag="-m",
+        enforces_spend_limit=False, reports_cost=False, output="gemini",
+        base_argv=(
+            "--output-format", "json", "--approval-mode", "default", "-e", "none",
+            "--allowed-mcp-server-names", "holdspeak-no-server",
+        ),
     ),
 }
 
 
-def cli_endpoint(preset_id: str, spend_limit_usd: Optional[float] = None) -> str:
-    """The ``base_url`` value that stores a preset (and its spend limit)."""
+def cli_endpoint(
+    preset_id: str, spend_limit_usd: Optional[float] = None, host: str = "",
+) -> str:
+    """The ``base_url`` value that stores a preset (its spend limit, and for a
+    preset whose config decides the provider, the egress host)."""
     preset = PRESETS[preset_id]
-    if spend_limit_usd is None:
-        return f"{ENDPOINT_PREFIX}{preset.id}"
-    return f"{ENDPOINT_PREFIX}{preset.id}?spend_limit_usd={_money(spend_limit_usd)}"
+    query: list[str] = []
+    if spend_limit_usd is not None:
+        query.append(f"spend_limit_usd={_money(spend_limit_usd)}")
+    if host and preset.host_from_owner:
+        query.append(f"host={clean_host(host)}")
+    return f"{ENDPOINT_PREFIX}{preset.id}" + (f"?{'&'.join(query)}" if query else "")
+
+
+def clean_host(value: Any) -> str:
+    """One host name or address (no scheme, path or port); '' if it is not one."""
+    import re
+
+    raw = str(value or "").strip().lower()
+    if "://" in raw:
+        from urllib.parse import urlparse
+
+        raw = (urlparse(raw).hostname or "").lower()
+    raw = raw.split("/")[0]
+    if raw.count(":") == 1:
+        raw = raw.split(":")[0]
+    return raw if re.fullmatch(r"[a-z0-9][a-z0-9.\-]{0,252}", raw) else ""
 
 
 def is_cli_endpoint(endpoint: Any) -> bool:
@@ -140,7 +203,12 @@ def parse_cli_endpoint(endpoint: Any) -> tuple[CliPreset, Optional[float]] | Non
     if preset is None:
         return None
     limit: Optional[float] = None
-    values = parse_qs(query).get("spend_limit_usd") if query else None
+    fields = parse_qs(query) if query else {}
+    if set(fields) - {"spend_limit_usd", "host"}:
+        return None
+    if "host" in fields and (not preset.host_from_owner or clean_host(fields["host"][0]) != fields["host"][0]):
+        return None
+    values = fields.get("spend_limit_usd")
     if values:
         try:
             limit = float(values[0])
@@ -151,10 +219,73 @@ def parse_cli_endpoint(endpoint: Any) -> tuple[CliPreset, Optional[float]] | Non
     return preset, limit
 
 
+#: The egress word for a ``host_from_owner`` preset whose host nobody named:
+#: its own config decides, so the least private lamp (cloud) is shown.
+UNKNOWN_HOST = "provider-in-cli-config"
+
+
 def cli_vendor_host(endpoint: Any) -> str:
-    """The vendor host a ``cli:`` endpoint egresses to; '' for any other value."""
+    """The host a ``cli:`` endpoint egresses to; '' for any other value.
+
+    The preset's vendor; for pi, the host the owner named (or pi's config
+    named when he added it), else ``UNKNOWN_HOST``."""
     parsed = parse_cli_endpoint(endpoint)
-    return parsed[0].vendor_host if parsed else ""
+    if not parsed:
+        return ""
+    preset = parsed[0]
+    if preset.host_from_owner:
+        query = str(endpoint).partition("?")[2]
+        return (parse_qs(query).get("host") or [""])[0] or UNKNOWN_HOST
+    return preset.vendor_host
+
+
+def pi_config_host(model: str = DEFAULT_MODEL, *, home: Optional[Path] = None) -> str:
+    """The host pi's own config sends *model* to; '' when it does not say.
+
+    Betterment E7: read when he adds pi, so the egress chip names his LAN
+    box for ``lan-qwen/qwen3.8-27b``. Only ``baseUrl`` is read out of
+    ``models.json`` (never a key). A built-in provider (no ``baseUrl``) gives
+    '': the chip then says the provider is in pi's config, as cloud. The rig
+    switch ``HOLDSPEAK_AGENT_STATE=off`` reads nothing outside HOME.
+    """
+    from ..services.onboarding_service import agent_state_read
+
+    env_dir = os.environ.get("PI_CODING_AGENT_DIR", "").strip() if agent_state_read() else ""
+    directory = Path(env_dir) if env_dir else (home or Path.home()) / ".pi" / "agent"
+    try:
+        providers = json.loads((directory / "models.json").read_text(encoding="utf-8")).get("providers")
+    except (OSError, ValueError, AttributeError):
+        return ""
+    if not isinstance(providers, dict):
+        return ""
+    provider = ""
+    if model and model != DEFAULT_MODEL and "/" in model:
+        provider = model.split("/", 1)[0]
+    else:
+        try:
+            settings = json.loads((directory / "settings.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            settings = {}
+        provider = str(settings.get("defaultProvider") or "") if isinstance(settings, dict) else ""
+    entry = providers.get(provider)
+    if not isinstance(entry, dict):
+        return ""
+    return clean_host(entry.get("baseUrl"))
+
+
+def cli_boundary(endpoint: Any) -> str:
+    """The boundary of a ``cli:`` endpoint: ``cloud``, or ``private_network``
+    when its host is on his network (pi on his LAN model; Betterment E7).
+
+    A loopback host is ``private_network`` too: HoldSpeak does not pin the
+    CLI's own connection, so it never says THIS DEVICE."""
+    host = cli_vendor_host(endpoint)
+    if not host or host == UNKNOWN_HOST:
+        return BOUNDARY
+    from .providers import egress_boundary
+
+    verdict = egress_boundary(cloud=True, base_url=f"http://{host}/")
+    return "private_network" if verdict in {"local", "private_network"} else BOUNDARY
 
 
 def _money(value: float) -> str:
@@ -229,6 +360,13 @@ def build_cli_argv(
     """
     from ..delivery import agent_mcp
 
+    if preset.base_argv:
+        # Betterment E7 (pi, gemini): tools off, no desk tools yet (M1 has
+        # only Claude Code and Codex), the prompt on stdin.
+        argv = [executable, *preset.base_argv]
+        if model and model != DEFAULT_MODEL:
+            argv += [preset.model_flag, model]
+        return validate_summarizer_command(argv)
     argv = build_summarizer_command(preset.id, executable=executable)  # type: ignore[arg-type]
     if "--max-budget-usd" in argv:
         index = argv.index("--max-budget-usd")
@@ -471,6 +609,58 @@ def parse_codex_output(raw: str) -> CliAnswer:
     return CliAnswer(text=text, cost_usd=None, usage=usage_out, model="")
 
 
+def parse_text_output(raw: str) -> CliAnswer:
+    """A CLI that prints only the answer (``pi --print``): the text as is.
+
+    It is not read as JSON: a typed job's JSON answer must reach the job's
+    own check unchanged."""
+    return CliAnswer(text=raw.strip(), cost_usd=None, usage={}, model="")
+
+
+def parse_gemini_output(raw: str) -> CliAnswer:
+    """Read ``gemini --output-format json``: ``response``, ``stats``, ``error``
+    (``JsonFormatter`` in gemini-cli-core). An ``error`` is no generation.
+    Tokens come from ``stats.models.<model>.tokens``; there is no cost."""
+    try:
+        parsed = json.loads(raw)
+    except (json.JSONDecodeError, ValueError):
+        return parse_text_output(raw)
+    if not isinstance(parsed, dict):
+        return parse_text_output(raw)
+    if parsed.get("error"):
+        raise ProviderPermanentNoGeneration()
+    text = str(parsed.get("response") or "").strip()
+    prompt = completion = 0
+    model = ""
+    models = (parsed.get("stats") or {}).get("models") if isinstance(parsed.get("stats"), dict) else None
+    if isinstance(models, dict):
+        for name, entry in models.items():
+            tokens = entry.get("tokens") if isinstance(entry, dict) else None
+            if not isinstance(tokens, dict):
+                continue
+            model = model or str(name)
+            for key, add in (("prompt", True), ("candidates", False)):
+                value = tokens.get(key)
+                if isinstance(value, int) and not isinstance(value, bool):
+                    if add:
+                        prompt += value
+                    else:
+                        completion += value
+    usage = (
+        {"prompt_tokens": prompt, "completion_tokens": completion, "total_tokens": prompt + completion}
+        if prompt or completion else {}
+    )
+    return CliAnswer(text=text, cost_usd=None, usage=usage, model=model)
+
+
+_PARSERS = {
+    "claude": parse_cli_output,
+    "codex": parse_codex_output,
+    "text": parse_text_output,
+    "gemini": parse_gemini_output,
+}
+
+
 class CliEngine(MeetingIntel):
     """``MeetingIntel`` over one agent CLI process per call.
 
@@ -494,6 +684,8 @@ class CliEngine(MeetingIntel):
         #: M1: each run gets the desk's tools; a caller turns them off for
         #: one call on a copy (the automation's memory call, M2 follow-up).
         self.desk_tools = True
+        #: The stored ``cli:`` value (its egress host, for pi).
+        self.endpoint = cli_endpoint(preset.id, spend_limit_usd)
         self._executable: str = ""
         self._live: set[subprocess.Popen] = set()
         self._live_lock = threading.Lock()
@@ -505,7 +697,9 @@ class CliEngine(MeetingIntel):
         if parsed is None:
             raise ProviderPermanentNoGeneration()
         preset, limit = parsed
-        return cls(preset, model=model or DEFAULT_MODEL, spend_limit_usd=limit, profile_id=profile_id)
+        engine = cls(preset, model=model or DEFAULT_MODEL, spend_limit_usd=limit, profile_id=profile_id)
+        engine.endpoint = str(endpoint)
+        return engine
 
     # -- what the run reported ------------------------------------------------
 
@@ -560,7 +754,7 @@ class CliEngine(MeetingIntel):
                     raw = self._egress(
                         argv, prompt, timeout=timeout, cwd=cwd, env=tools.env if tools else {},
                     )
-            answer = parse_codex_output(raw) if self.preset.id == "codex" else parse_cli_output(raw)
+            answer = _PARSERS[self.preset.output](raw)
             if not answer.text:
                 raise ProviderPermanentNoGeneration()
         except (ProviderPermanentNoGeneration, ProviderKnownNoGenerationTransient) as exc:
@@ -649,7 +843,8 @@ class CliEngine(MeetingIntel):
         from ..mcp.palettes import CONDUCTOR, resolve_palette
         from ..principals import CredentialPersistError, agent_credentials
 
-        if not self.desk_tools:
+        # Betterment E7: pi and Gemini CLI get no desk tools yet.
+        if not self.desk_tools or self.preset.base_argv:
             yield None
             return
         servers_off: tuple[str, ...] = ()
@@ -701,7 +896,7 @@ class CliEngine(MeetingIntel):
         """Run the process under its egress record: the prompt goes to the vendor."""
         from ..kernel.external_egress import run_external_egress
 
-        host = self.preset.vendor_host
+        host = cli_vendor_host(self.endpoint) or self.preset.vendor_host
         return run_external_egress(
             connector_id="meeting-intel-cli-agent",
             destination=host,
@@ -787,13 +982,18 @@ __all__ = [
     "build_cli_argv",
     "cli_endpoint",
     "cli_engines_on",
+    "cli_boundary",
     "cli_vendor_host",
+    "clean_host",
     "codex_user_servers",
     "is_cli_endpoint",
     "messages_to_prompt",
     "parse_cli_endpoint",
     "parse_cli_output",
     "parse_codex_output",
+    "pi_config_host",
+    "parse_gemini_output",
+    "parse_text_output",
     "run_config_dir",
     "run_identity",
 ]

@@ -74,6 +74,9 @@ _SERVICE_HOSTS = {tile["id"]: tile["baseUrl"].split("/")[2] for tile in SERVICE_
 AGENT_INSTALL = {
     "claude": "npm install -g @anthropic-ai/claude-code",
     "codex": "npm install -g @openai/codex",
+    # Betterment E7: the npm packages this Mac's pi and gemini come from.
+    "pi": "npm install -g @earendil-works/pi-coding-agent",
+    "gemini": "npm install -g @google/gemini-cli",
 }
 
 # ---- Assignment group ids (the seven user-visible groups) -------------------
@@ -480,7 +483,23 @@ def _device_whisper(db: Any, home: Path) -> dict[str, Any] | None:
 # ---- Detect -----------------------------------------------------------------
 
 #: The vendor word on an agent engine's egress chip (its prompt goes there).
-_AGENT_VENDOR = {"api.anthropic.com": "ANTHROPIC", "api.openai.com": "OPENAI"}
+_AGENT_VENDOR = {
+    "api.anthropic.com": "ANTHROPIC", "api.openai.com": "OPENAI",
+    "generativelanguage.googleapis.com": "GOOGLE",
+    # Betterment E7: pi's provider is in pi's own config; nobody named it.
+    "provider-in-cli-config": "PI CONFIG",
+}
+
+
+def _agent_egress(endpoint: Any, preset: Any) -> dict[str, Any]:
+    """The egress words of an agent engine: ``vendor`` and its ``vendorScope``
+    (``private_network`` for pi on his LAN model, else ``cloud``)."""
+    from ..intel.cli_engine import cli_boundary, cli_vendor_host
+
+    host = cli_vendor_host(endpoint) if endpoint else preset.vendor_host
+    host = host or preset.vendor_host
+    vendor = _AGENT_VENDOR.get(host, host.upper())
+    return {"host": host, "vendor": vendor, "vendorScope": cli_boundary(endpoint) if endpoint else "cloud"}
 
 
 def _agent_signed_in(preset_id: str, home: Path) -> str:
@@ -526,8 +545,7 @@ def _agent_engine_row(db: Any, profile: Any, home: Path) -> dict[str, Any]:
         "name": label if model in ("", DEFAULT_MODEL) else f"{label} · {model}",
         "legacyLabel": label,
         "model": model or DEFAULT_MODEL,
-        "host": preset.vendor_host,
-        "vendor": _AGENT_VENDOR.get(preset.vendor_host, preset.vendor_host.upper()),
+        **_agent_egress(profile.base_url, preset),
         "agentPreset": preset.id,
         "installed": installed,
         "signedIn": signed_in,
@@ -541,6 +559,14 @@ def _agent_engine_row(db: Any, profile: Any, home: Path) -> dict[str, Any]:
         },
         **fields,
     }
+
+
+def _found_endpoint(preset: Any) -> str:
+    """The ``cli:`` value Add would store: for pi, with the host pi's config
+    names for its default model (Betterment E7)."""
+    from ..intel.cli_engine import cli_endpoint, pi_config_host
+
+    return cli_endpoint(preset.id, None, pi_config_host() if preset.host_from_owner else "")
 
 
 def _found_agent_engines(db: Any, home: Path) -> list[dict[str, Any]]:
@@ -571,8 +597,7 @@ def _found_agent_engines(db: Any, home: Path) -> list[dict[str, Any]]:
             "kind": KIND_AGENT,
             "name": preset.label,
             "legacyLabel": preset.label,
-            "host": preset.vendor_host,
-            "vendor": _AGENT_VENDOR.get(preset.vendor_host, preset.vendor_host.upper()),
+            **_agent_egress(_found_endpoint(preset), preset),
             "agentPreset": preset.id,
             "installed": True,
             # yes · unknown (try once) · not_read; never no.
@@ -638,7 +663,8 @@ def agent_tiles(db: Any) -> list[dict[str, Any]]:
         {
             "preset": preset.id,
             "name": preset.label,
-            "vendor": _AGENT_VENDOR.get(preset.vendor_host, preset.vendor_host.upper()),
+            "vendor": _agent_egress(_found_endpoint(preset), preset)["vendor"],
+            "vendorScope": _agent_egress(_found_endpoint(preset), preset)["vendorScope"],
             "installed": on and shutil.which(preset.executable) is not None,
             "added": preset.id in have,
             "install": AGENT_INSTALL.get(preset.id, ""),

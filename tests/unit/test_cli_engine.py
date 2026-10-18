@@ -397,3 +397,102 @@ def test_an_is_error_result_keeps_its_reported_cost() -> None:
         cli_engine.parse_cli_output(raw)
     assert stopped.value.cost_usd == 0.42
     assert isinstance(stopped.value, ProviderPermanentNoGeneration)  # the chain still falls back
+
+
+# ── Betterment E7: pi and Gemini CLI ────────────────────────────────────────
+
+from tests.fixtures.fake_agent_cli import GEMINI_ANSWER, PI_ANSWER, set_answer  # noqa: E402
+
+
+@pytest.fixture()
+def more_bin(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    bin_dir = install_fake_agent_clis(tmp_path / "bin", names=("pi", "gemini"))
+    monkeypatch.setenv("PATH", path_with(bin_dir))
+    monkeypatch.setenv(cli_engine.CLI_ENGINES_ENV, "on")
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.delenv("PI_CODING_AGENT_DIR", raising=False)
+    return bin_dir
+
+
+def test_pi_argv_has_every_tool_and_extra_off_and_the_prompt_on_stdin() -> None:
+    argv = build_cli_argv(PRESETS["pi"], executable="pi", model="lan-qwen/qwen3.8-27b")
+    assert argv[:2] == ["pi", "--print"]
+    for flag in ("--no-tools", "--no-session", "--no-extensions", "--no-skills", "--no-prompt-templates",
+                 "--no-context-files", "--no-mcp", "--offline"):
+        assert flag in argv, flag
+    assert argv[argv.index("--model") + 1] == "lan-qwen/qwen3.8-27b"
+    assert "--model" not in build_cli_argv(PRESETS["pi"], executable="pi")
+
+
+def test_gemini_argv_is_one_shot_json_with_no_approval_tools_extensions_or_mcp() -> None:
+    argv = build_cli_argv(PRESETS["gemini"], executable="gemini", model="gemini-2.5-pro")
+    assert argv[argv.index("--output-format") + 1] == "json"
+    assert argv[argv.index("--approval-mode") + 1] == "default"
+    assert argv[argv.index("-e") + 1] == "none"
+    assert "--allowed-mcp-server-names" in argv
+    assert argv[argv.index("-m") + 1] == "gemini-2.5-pro"
+    for flag in ("-y", "--yolo", "-p", "--prompt", "-i"):
+        assert flag not in argv, flag
+
+
+def test_pi_endpoint_carries_the_owners_host_and_its_boundary() -> None:
+    assert cli_endpoint("pi", None, "http://192.168.1.43:8080/v1") == "cli:pi?host=192.168.1.43"
+    assert parse_cli_endpoint("cli:pi?host=192.168.1.43") == (PRESETS["pi"], None)
+    # Only pi takes a host; a junk host is no endpoint.
+    assert parse_cli_endpoint("cli:claude?host=192.168.1.43") is None
+    assert parse_cli_endpoint("cli:pi?host=a b") is None
+    assert cli_vendor_host("cli:pi?host=192.168.1.43") == "192.168.1.43"
+    assert cli_engine.cli_boundary("cli:pi?host=192.168.1.43") == "private_network"
+    assert cli_engine.cli_boundary("cli:pi?host=127.0.0.1") == "private_network"
+    # Nobody named it: pi's config decides, shown as the least private lamp.
+    assert cli_vendor_host("cli:pi") == cli_engine.UNKNOWN_HOST
+    assert cli_engine.cli_boundary("cli:pi") == "cloud"
+    assert cli_engine.cli_boundary("cli:gemini") == "cloud"
+    assert cli_vendor_host("cli:gemini") == "generativelanguage.googleapis.com"
+    from holdspeak.inference_locality import deployment_lamp
+
+    assert deployment_lamp("cloud", "cli:pi?host=192.168.1.43") == "private_network"
+    assert deployment_lamp("cloud", "cli:claude") == "cloud"
+
+
+def test_pi_config_names_the_host_for_its_model_never_a_key(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    agent = tmp_path / "home" / ".pi" / "agent"
+    agent.mkdir(parents=True)
+    (agent / "models.json").write_text(json.dumps({"providers": {"lan-qwen": {
+        "baseUrl": "http://192.168.1.43:8080/v1", "apiKey": "SECRET", "models": [{"id": "qwen3.8-27b"}],
+    }}}))
+    (agent / "settings.json").write_text(json.dumps({"defaultProvider": "kimi-coding"}))
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.delenv("PI_CODING_AGENT_DIR", raising=False)
+    assert cli_engine.pi_config_host("lan-qwen/qwen3.8-27b") == "192.168.1.43"
+    # The default provider is built in (no baseUrl): pi's config decides.
+    assert cli_engine.pi_config_host() == ""
+
+
+def test_pi_answers_as_text_and_a_typed_answer_stays_json(more_bin: Path, egress: list) -> None:
+    engine = CliEngine.from_endpoint("cli:pi?host=192.168.1.43", model="lan-qwen/qwen3.8-27b")
+    assert engine.run_prompt(system_prompt="One word.", user_prompt="Two plus two?") == PI_ANSWER
+    (call,) = calls(more_bin, "pi")
+    assert "Two plus two?" in call["prompt"] and "Two plus two?" not in " ".join(call["argv"])
+    assert call["cwd_entries"] == [] and not call["credential"]  # no desk tools for pi yet
+    assert egress[0]["destination"] == "192.168.1.43"
+    typed = json.dumps({"summary": "Ship it.", "result": "not the answer"})
+    set_answer(more_bin, "pi", typed)
+    assert engine.run_prompt(user_prompt="Summarize.") == typed
+
+
+def test_gemini_answers_from_its_json_with_tokens(more_bin: Path, egress: list) -> None:
+    engine = CliEngine.from_endpoint("cli:gemini")
+    assert engine.run_prompt(user_prompt="Hi") == GEMINI_ANSWER
+    assert egress[0]["destination"] == "generativelanguage.googleapis.com"
+    assert engine.last_usage == {"prompt_tokens": 9, "completion_tokens": 4, "total_tokens": 13}
+    assert engine.last_cost_usd is None and engine.active_model == "gemini-fake-1"
+    set_mode(more_bin, "gemini", "error")
+    with pytest.raises(ProviderPermanentNoGeneration):
+        engine.run_prompt(user_prompt="Hi")
+
+
+def test_the_real_pi_and_gemini_are_refused_in_tests(monkeypatch: pytest.MonkeyPatch) -> None:
+    from holdspeak.cli_guard import GUARDED
+
+    assert {"pi", "gemini"} <= GUARDED

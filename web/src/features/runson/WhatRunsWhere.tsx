@@ -12,13 +12,13 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import { EgressChip, StateChip, SurfaceWell } from "../../desk/surface";
 import type { RowEditor } from "./api";
-import { enginePlace, hostLabel, type BoardEngine } from "./model";
+import { agentChip, enginePlace, hostLabel, type BoardEngine } from "./model";
 import type { RunsOnController } from "./useRunsOn";
 import { EVERYTHING_ELSE, WHAT_ROWS, type WhatRow } from "./whatRows";
 
 function chipOf(engine: BoardEngine | undefined): ReactNode {
   if (!engine) return null;
-  if (engine.vendor) return <EgressChip label={engine.vendor} scope="cloud" />;
+  if (engine.vendor) return <EgressChip {...agentChip(engine.vendor, engine.vendorScope)} />;
   const place = enginePlace(engine).place;
   return <EgressChip label={hostLabel(engine)} scope={place === "cloud" ? "cloud" : "local"} />;
 }

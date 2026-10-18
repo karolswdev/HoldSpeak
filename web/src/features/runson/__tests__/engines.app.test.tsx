@@ -106,6 +106,27 @@ describe("Engines — Found on this Mac (Betterment E2)", () => {
   });
 });
 
+describe("Engines — pi on his LAN model (Betterment E7)", () => {
+  const PI = (recorded as unknown as { pi: { steps: Step[] } }).pi.steps;
+  const piStep = (name: string) => PI.find((s) => s.name === name)!;
+
+  it.each([1440, 393])("at %i pi is found with his LAN box as its egress; Add keeps it on his network", async (px) => {
+    width(px);
+    const sent = hub(piStep("found").gets, { add: piStep("add") });
+    render(<RunsOnCore />);
+    const found = await screen.findByTestId("runson-found-engines");
+    const plate = within(found).getByTestId("switchboard-engine-agent:found:pi");
+    // pi's own config sends its model to 192.168.1.43: a LAN chip, never a vendor's cloud.
+    expect(within(plate).getByText("192.168.1.43 · LAN")).toBeTruthy();
+    await act(async () => {
+      fireEvent.click(within(plate).getByRole("button", { name: "Add" }));
+    });
+    expect(sent[0]).toMatchObject({ preset: "pi" });
+    const engine = await within(screen.getByTestId("runson-engines")).findByTestId("switchboard-engine-agent-pi");
+    expect(within(engine).getByText("192.168.1.43 · LAN")).toBeTruthy();
+  });
+});
+
 describe("Engines — an agent engine's Spend limit per run (Betterment E2)", () => {
   it("unfolds to No limit and the week's cost; Save sends the limit and the row shows it", async () => {
     width(1440);

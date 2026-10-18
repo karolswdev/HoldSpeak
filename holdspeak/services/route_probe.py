@@ -207,6 +207,12 @@ def host_for(boundary: str, facts: Mapping[str, str]) -> str:
     if boundary == "mesh":
         return str(facts.get("node") or "") or "THIS DEVICE"
     endpoint = str(facts.get("endpoint") or "").strip()
+    if endpoint.startswith("cli:"):
+        # Betterment E7: an agent CLI's prompt goes to its vendor (or, for pi,
+        # the host its owner named); the chip named "cli:claude" before.
+        from ..intel.cli_engine import cli_vendor_host
+
+        return cli_vendor_host(endpoint) or endpoint
     if endpoint:
         return urlparse(endpoint).hostname or endpoint
     return str(facts.get("node") or "")

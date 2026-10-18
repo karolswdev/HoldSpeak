@@ -188,9 +188,13 @@ def tools_mode(db: Any) -> str:
     deployment = _answers_deployment(db)
     if deployment is None:
         return NONE
-    from ..intel.cli_engine import cli_engines_on, is_cli_endpoint
+    from ..intel.cli_engine import cli_engines_on, is_cli_endpoint, parse_cli_endpoint
 
     if is_cli_endpoint(deployment.endpoint):
+        parsed = parse_cli_endpoint(deployment.endpoint)
+        # Betterment E7: pi and Gemini CLI get no desk tools yet.
+        if parsed is not None and parsed[0].base_argv:
+            return NONE
         return CLI if cli_engines_on() else NONE
     scheme = urlparse(deployment.endpoint).scheme
     if scheme not in {"http", "https"} or not server_tools_on():

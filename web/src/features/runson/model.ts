@@ -101,8 +101,16 @@ export interface BoardEngine {
   agentModel?: string;
   signedIn?: string;
   vendor?: string;
+  vendorScope?: string;
   installed?: boolean;
   spend?: AgentSpend;
+}
+
+/** Betterment E7: an agent's egress chip. pi on his LAN model reads like any
+ *  LAN host (`192.168.1.43 · LAN`, the local tone); every other agent names
+ *  its vendor in the cloud tone. */
+export function agentChip(vendor: string, vendorScope?: string): { label: string; scope: "local" | "cloud" } {
+  return vendorScope === "private_network" ? { label: `${vendor} · LAN`, scope: "local" } : { label: vendor, scope: "cloud" };
 }
 
 export function emblemFor(kind: string, boundary?: string): BoardEngine["emblem"] {
@@ -279,6 +287,7 @@ export function buildEngines(roster: Roster | null, detection: Detection | null)
       agentModel: e.model,
       signedIn: e.signedIn,
       vendor: e.vendor,
+      vendorScope: e.vendorScope,
       installed: e.installed,
       spend: e.spend,
     });

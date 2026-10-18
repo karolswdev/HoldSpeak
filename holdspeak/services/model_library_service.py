@@ -45,7 +45,7 @@ _PROVIDER_FAMILIES = frozenset({
 })
 #: The closed draft of ``connect_cli_engine``: required keys, then optional ones.
 _CLI_DRAFT_REQUIRED = frozenset({"request_id", "profile_id", "expected_profile_revision", "preset"})
-_CLI_DRAFT_OPTIONAL = frozenset({"label", "model", "spend_limit_usd"})
+_CLI_DRAFT_OPTIONAL = frozenset({"label", "model", "spend_limit_usd", "egress_host"})
 # Betterment E3: an engine's context. The default is what an engine got before
 # the Check read the server's own size; the bounds refuse junk.
 _DEFAULT_CONTEXT_TOKENS = 16_384
@@ -256,7 +256,7 @@ class ModelLibraryApplicationService:
         self.require_owner(principal)
         if not isinstance(body, dict) or set(body) != {"request_id", "profile_id", "spend_limit_usd"}:
             raise ServiceError("model_library_provider_invalid", "Spend limit request is invalid.", context={"status": 400})
-        from ..intel.cli_engine import parse_cli_endpoint
+        from ..intel.cli_engine import UNKNOWN_HOST, cli_vendor_host, parse_cli_endpoint
 
         profile_id = self._profile_id(body.get("profile_id"))
         target = self._db.profiles.get(f"library_provider_{profile_id}")
@@ -278,6 +278,9 @@ class ModelLibraryApplicationService:
             "label": str(getattr(target, "name", "") or parsed[0].label),
             "model": str(getattr(target, "model", "") or ""),
             "spend_limit_usd": body.get("spend_limit_usd"),
+            # Betterment E7: pi keeps the host its owner (or its config) named.
+            **({"egress_host": host} if (host := cli_vendor_host(getattr(target, "base_url", "")))
+               and parsed[0].host_from_owner and host != UNKNOWN_HOST else {}),
         })
 
     def connect_paired_device(self, principal: Principal, draft: dict[str, Any]) -> dict[str, Any]:
@@ -486,7 +489,8 @@ class ModelLibraryApplicationService:
     def _cli_draft(self, body: dict[str, Any]) -> dict[str, Any]:
         """Normalize one ``connect_cli_engine`` draft into the provider draft shape."""
         from ..intel.cli_engine import (
-            DEFAULT_MODEL, MAX_SPEND_LIMIT_USD, PRESETS, PROVIDER_FAMILY, cli_endpoint, cli_engines_on,
+            DEFAULT_MODEL, MAX_SPEND_LIMIT_USD, PRESETS, PROVIDER_FAMILY, clean_host, cli_endpoint,
+            cli_engines_on, pi_config_host,
         )
 
         if not isinstance(body, dict) or not (_CLI_DRAFT_REQUIRED <= set(body) <= _CLI_DRAFT_REQUIRED | _CLI_DRAFT_OPTIONAL):
@@ -523,7 +527,20 @@ class ModelLibraryApplicationService:
                     context={"status": 422, "preset": preset.id},
                 )
             limit = round(float(raw_limit), 2)
-        endpoint = cli_endpoint(preset.id, limit)
+        # Betterment E7: for pi the owner names where the prompt goes (his LAN
+        # box); with no name, pi's own config for this model says it.
+        host = ""
+        if body.get("egress_host") is not None:
+            host = clean_host(body.get("egress_host"))
+            if not preset.host_from_owner or not host:
+                raise ServiceError(
+                    "cli_engine_host_invalid",
+                    "Only pi takes a host, and it must be a host name or address.",
+                    context={"status": 400},
+                )
+        elif preset.host_from_owner:
+            host = pi_config_host(model)
+        endpoint = cli_endpoint(preset.id, limit, host)
         hash_material = {
             "profile_id": profile_id,
             "expected_profile_revision": expected,
@@ -532,6 +549,7 @@ class ModelLibraryApplicationService:
             "preset": preset.id,
             "model": model,
             "spend_limit_usd": limit,
+            **({"egress_host": host} if host else {}),
         }
         return {
             "request_id": self._request_id(body.get("request_id")),

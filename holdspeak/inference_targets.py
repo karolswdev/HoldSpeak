@@ -480,13 +480,14 @@ def target_from_profile(profile: Any, db: Any = None) -> InferenceTarget:
         # Betterment E1: an agent CLI on this Mac. Its prompt goes to the
         # CLI's vendor, so the boundary is cloud, never this device.
         from .intel.cli_engine import (
-            BOUNDARY as CLI_BOUNDARY, RUNTIME_FAMILY, TARGET_KIND, TRANSPORT,
-            cli_engines_on, parse_cli_endpoint,
+            RUNTIME_FAMILY, TARGET_KIND, TRANSPORT,
+            cli_boundary, cli_engines_on, parse_cli_endpoint,
         )
         import shutil
 
+        # Betterment E7: pi on his LAN model is private_network.
         kind, boundary, owner, transport, engine = (
-            TARGET_KIND, CLI_BOUNDARY, "service_provider", TRANSPORT, RUNTIME_FAMILY,
+            TARGET_KIND, cli_boundary(base_url), "service_provider", TRANSPORT, RUNTIME_FAMILY,
         )
         parsed_cli = parse_cli_endpoint(base_url)
         if parsed_cli is None:
