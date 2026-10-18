@@ -5,13 +5,23 @@
   "/api/notes": {
    "notes": [
     {
+     "id": "note_result_bd766e15cb647ec7",
+     "title": "Friday team update, Sun 18 Oct 2026",
+     "body_markdown": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.\n\n---\nFrom the automation [Friday team update](/?open=workbench:wb-about).",
+     "tags": [],
+     "created_at": "2026-10-18T22:44:36Z",
+     "updated_at": "2026-10-18T22:44:36Z",
+     "last_modified": "2026-10-18T22:44:36Z",
+     "deleted": false
+    },
+    {
      "id": "note-sync",
      "title": "Platform sync",
      "body_markdown": "The cutover moves to Thursday.",
      "tags": [],
-     "created_at": "2026-10-18T22:20:36Z",
-     "updated_at": "2026-10-18T22:20:36Z",
-     "last_modified": "2026-10-18T22:20:36Z",
+     "created_at": "2026-10-18T22:44:35Z",
+     "updated_at": "2026-10-18T22:44:35Z",
+     "last_modified": "2026-10-18T22:44:35Z",
      "deleted": false
     },
     {
@@ -19,9 +29,9 @@
      "title": "Hiring",
      "body_markdown": "Two loops are booked for next week.",
      "tags": [],
-     "created_at": "2026-10-18T22:20:36Z",
-     "updated_at": "2026-10-18T22:20:36Z",
-     "last_modified": "2026-10-18T22:20:36Z",
+     "created_at": "2026-10-18T22:44:35Z",
+     "updated_at": "2026-10-18T22:44:35Z",
+     "last_modified": "2026-10-18T22:44:35Z",
      "deleted": false
     },
     {
@@ -29,29 +39,19 @@
      "title": "Roadmap review",
      "body_markdown": "Q4 scope is frozen.",
      "tags": [],
-     "created_at": "2026-10-18T22:20:36Z",
-     "updated_at": "2026-10-18T22:20:36Z",
-     "last_modified": "2026-10-18T22:20:36Z",
+     "created_at": "2026-10-18T22:44:35Z",
+     "updated_at": "2026-10-18T22:44:35Z",
+     "last_modified": "2026-10-18T22:44:35Z",
      "deleted": false
     },
     {
-     "id": "note_result_a90d5db8716c8a7c",
+     "id": "note_result_6289635856bbe152",
      "title": "Friday team update, Sun 18 Oct 2026",
      "body_markdown": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.\n\n---\nFrom the automation [Friday team update](/?open=workbench:wb-about).",
      "tags": [],
-     "created_at": "2026-10-18T22:20:36Z",
-     "updated_at": "2026-10-18T22:20:36Z",
-     "last_modified": "2026-10-18T22:20:36Z",
-     "deleted": false
-    },
-    {
-     "id": "note_result_a2f6c4eec7445670",
-     "title": "Friday team update, Sun 18 Oct 2026",
-     "body_markdown": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.\n\n---\nFrom the automation [Friday team update](/?open=workbench:wb-about).",
-     "tags": [],
-     "created_at": "2026-10-18T22:20:36Z",
-     "updated_at": "2026-10-18T22:20:36Z",
-     "last_modified": "2026-10-18T22:20:36Z",
+     "created_at": "2026-10-18T22:44:35Z",
+     "updated_at": "2026-10-18T22:44:35Z",
+     "last_modified": "2026-10-18T22:44:35Z",
      "deleted": false
     }
    ]
@@ -63,12 +63,12 @@
      "name": "Inbox",
      "name_normalized": "inbox",
      "parent_id": null,
-     "created_at": "2026-10-18T22:20:36Z",
-     "last_modified": "2026-10-18T22:20:36Z",
+     "created_at": "2026-10-18T22:44:35Z",
+     "last_modified": "2026-10-18T22:44:35Z",
      "deleted": false,
      "member_ids": [
-      "note:note_result_a90d5db8716c8a7c",
-      "note:note_result_a2f6c4eec7445670"
+      "note:note_result_bd766e15cb647ec7",
+      "note:note_result_6289635856bbe152"
      ]
     },
     {
@@ -76,8 +76,8 @@
      "name": "Work",
      "name_normalized": "work",
      "parent_id": null,
-     "created_at": "2026-10-18T22:20:36Z",
-     "last_modified": "2026-10-18T22:20:36Z",
+     "created_at": "2026-10-18T22:44:35Z",
+     "last_modified": "2026-10-18T22:44:35Z",
      "deleted": false,
      "member_ids": [
       "note:note-roadmap"

@@ -20,8 +20,8 @@
     "schedule_enabled": false,
     "schedule_revision": 1,
     "item_order": [],
-    "created_at": "2026-10-18T22:20:36Z",
-    "last_modified": "2026-10-18T22:20:36Z",
+    "created_at": "2026-10-18T22:44:35Z",
+    "last_modified": "2026-10-18T22:44:35Z",
     "deleted": false,
     "items": [],
     "item_count": 0,
@@ -79,7 +79,8 @@
      ],
      "repair": null,
      "profile_id": "agent-claude",
-     "boundary": "cloud"
+     "boundary": "cloud",
+     "vendor": "Anthropic"
     }
    }
   },

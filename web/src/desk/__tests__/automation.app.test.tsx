@@ -39,10 +39,10 @@ import homeRows from "./fixtures/automation-hub/home-rows.json";
 import oldQueue from "./fixtures/automation-hub/old-queue.json";
 import oldQueueRan from "./fixtures/automation-hub/old-queue-ran.json";
 import oldMadeOne from "./fixtures/automation-hub/old-made-one.json";
-import putNew from "./fixtures/automation-hub/put-new.json";
-import putFolder from "./fixtures/automation-hub/put-folder.json";
 import folderRan from "./fixtures/automation-hub/folder-ran.json";
 import folderEvent from "./fixtures/automation-hub/folder-event.json";
+import putNew from "./fixtures/automation-hub/put-new.json";
+import putFolder from "./fixtures/automation-hub/put-folder.json";
 import { WorkbenchesHomeCore } from "../../pages/cores/WorkbenchesHomeCore";
 import { NewWorkbenchChooser } from "../components/NewWorkbenchChooser";
 import { EMPTY_ITEMS, fromWireDirectory, fromWireNote } from "../api";
@@ -869,6 +869,9 @@ describe("A8: park what the sentence replaces", () => {
     fireEvent.click(await screen.findByTestId("automation-raw"));
     expect(await screen.findByTestId("parked-queue-window")).toHaveAttribute("data-id", WB);
     expect(screen.queryByTestId("automation-sentence")).toBeNull();
+  });
+});
+
 describe("an agent works in a folder (A10)", () => {
   type Repo = { repository: { id: string; name: string } };
   const recorded = (folderRan as Step).gets["POST /api/repositories"] as Repo;
