@@ -36,6 +36,7 @@ meetings) through their services and applies it to a Room aggregate.
 """
 from __future__ import annotations
 
+import json
 import logging
 from datetime import date, datetime, timedelta, timezone
 from holdspeak.timestamps import local_wall, parse_stamp, utc_now_iso
@@ -1202,13 +1203,12 @@ def attach_arrivals(items: list[dict[str, Any]], db: Any) -> None:
         with db._connection() as conn:
             arrived: dict[str, dict[str, Any]] = {}
             if action_ids:
-                marks = ",".join("?" * len(action_ids))
                 for row in conn.execute(
-                    f"""SELECT ai.id, ai.meeting_id, m.title, m.started_at
+                    """SELECT ai.id, ai.meeting_id, m.title, m.started_at
                           FROM action_items ai JOIN meetings m ON m.id = ai.meeting_id
-                         WHERE ai.id IN ({marks}) AND ai.arrived_at IS NOT NULL
+                         WHERE ai.id IN (SELECT value FROM json_each(?)) AND ai.arrived_at IS NOT NULL
                            AND ai.arrival_seen_at IS NULL""",
-                    tuple(action_ids),
+                    (json.dumps(sorted(action_ids)),),
                 ).fetchall():
                     arrived[str(row[0])] = {
                         "meetingId": str(row[1]), "meetingTitle": str(row[2] or ""),
@@ -1216,11 +1216,10 @@ def attach_arrivals(items: list[dict[str, Any]], db: Any) -> None:
                     }
             proposals: dict[str, tuple[str, str, str]] = {}
             if proposal_ids:
-                marks = ",".join("?" * len(proposal_ids))
                 for row in conn.execute(
-                    f"""SELECT id, meeting_id, kind, COALESCE(owner_supplied, owner_hint, '')
-                          FROM follow_through_proposals WHERE id IN ({marks})""",
-                    tuple(proposal_ids),
+                    """SELECT id, meeting_id, kind, COALESCE(owner_supplied, owner_hint, '')
+                          FROM follow_through_proposals WHERE id IN (SELECT value FROM json_each(?))""",
+                    (json.dumps(sorted(proposal_ids)),),
                 ).fetchall():
                     proposals[str(row[0])] = (str(row[1] or ""), str(row[2] or ""), str(row[3] or "").strip())
             unowned = {mid for mid, kind, owner in proposals.values() if kind == "action" and not owner}
@@ -1254,12 +1253,12 @@ def mark_arrivals_seen(db: Any, meeting_ids: Iterable[str]) -> int:
     ids = sorted({str(mid) for mid in meeting_ids if str(mid or "").strip()})
     if not ids:
         return 0
-    marks = ",".join("?" * len(ids))
     with db._connection() as conn:
         changed = conn.execute(
-            f"""UPDATE action_items SET arrival_seen_at = ?
-                 WHERE meeting_id IN ({marks}) AND arrived_at IS NOT NULL AND arrival_seen_at IS NULL""",
-            (utc_now_iso(), *ids),
+            """UPDATE action_items SET arrival_seen_at = ?
+                 WHERE meeting_id IN (SELECT value FROM json_each(?))
+                   AND arrived_at IS NOT NULL AND arrival_seen_at IS NULL""",
+            (utc_now_iso(), json.dumps(ids)),
         ).rowcount
     return int(changed or 0)
 

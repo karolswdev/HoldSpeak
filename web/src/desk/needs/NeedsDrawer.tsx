@@ -487,7 +487,7 @@ function CommitWell({ face, which, onDone }: { face: NeedFace; which: Well; onDo
 
 /** Betterment D2: Decide, in place: Accept writes the decision (the
  *  proposal's Confirm), Not now holds it back (Defer), Drop removes it
- *  (Decline). Open shows it where it came from. */
+ *  (Decline). Open item shows it where it came from. */
 function DecideWell({ face, onDone }: { face: NeedFace; onDone(): void }) {
   const [busy, setBusy] = useState(false);
   const v = face.verbs;
@@ -520,7 +520,7 @@ function DecideWell({ face, onDone }: { face: NeedFace; onDone(): void }) {
       <Button dense variant="ghost" disabled={busy} aria-label={`Drop: ${face.name}`}
         onClick={() => void run("Drop", "dismiss").then(() => offerUndo(face.name, () => apiFetch(
           `/api/proposals/${encodeURIComponent(v.proposalId)}/restore`, { method: "POST" }))).catch(() => undefined)}>Drop</Button>
-      {opener ? <Button dense variant="ghost" aria-label={`Open: ${face.name}`} onClick={() => opener()}>Open</Button> : null}
+      {opener ? <Button dense variant="ghost" aria-label={`Open item: ${face.name}`} onClick={() => opener()}>Open item</Button> : null}
     </li>
   );
 }

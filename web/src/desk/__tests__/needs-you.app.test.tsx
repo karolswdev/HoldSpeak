@@ -212,7 +212,7 @@ describe("Needs you on the daily week: the chips and one verb per row (Bettermen
     const row = weekRows().find((li) => li.textContent?.includes("Do it"))!;
     fireEvent.click(row.querySelector<HTMLElement>("[data-verb='decide']")!);
     const well = await screen.findByTestId("needs-decide");
-    expect(within(well).getAllByRole("button").map((b) => b.textContent)).toEqual(["Accept", "Not now", "Drop", "Open"]);
+    expect(within(well).getAllByRole("button").map((b) => b.textContent)).toEqual(["Accept", "Not now", "Drop", "Open item"]);
     fireEvent.click(within(well).getByRole("button", { name: "Drop: Do it" }));
     await waitFor(() => expect(posts.some((p) => /\/api\/proposals\/prop-[^/]+\/dismiss$/.test(p.url))).toBe(true));
   });

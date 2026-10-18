@@ -510,10 +510,21 @@ class TestOneNeedsYou:
                 said = _numbers_said(before["said"])
                 assert said and all(n == 6 for n in said), before["said"]
 
-                # ── the drawer's rows are the members the head counts ──
+                # ── the drawer's counted rows are the members the head counts ──
+                # Betterment D1 (#1277): the drawer also lists the rows the one
+                # count rule leaves out (what a person owes him: A3 waits on
+                # Priya), marked not counted. They never change the number.
                 rows = page.locator("[data-testid='needs-list'] ul.needs-list > [data-testid='needs-row']")
+                counted = page.locator(
+                    "[data-testid='needs-list'] ul.needs-list > [data-testid='needs-row'][data-counted='true']")
+                listed_only = page.locator(
+                    "[data-testid='needs-list'] ul.needs-list > [data-testid='needs-row'][data-counted='false']")
                 record["chair_rows"] = rows.count()
-                assert rows.count() == 6, rows.all_inner_texts()
+                record["chair_counted_rows"] = counted.count()
+                record["chair_listed_only"] = listed_only.all_inner_texts()
+                assert counted.count() == 6, counted.all_inner_texts()
+                assert rows.count() == counted.count() + listed_only.count(), rows.all_inner_texts()
+                assert all(A1_TASK not in text for text in record["chair_listed_only"]), record["chair_listed_only"]
                 assert not re.search(r"needs? you", page.locator("[data-testid='needs-list']").inner_text(), re.IGNORECASE)
                 self._shot(page, "a2w-chair-6", width)
 
