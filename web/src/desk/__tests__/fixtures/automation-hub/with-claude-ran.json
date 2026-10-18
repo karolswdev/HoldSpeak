@@ -1,0 +1,150 @@
+{
+ "_source": "The hub's own answers, captured by tests/integration/test_desk_workbenches.py (TestClient, isolated database, the A2 rig's recorded engine replies). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit it.",
+ "workbench_id": "wb-bare",
+ "gets": {
+  "/api/workbenches/wb-bare": {
+   "workbench": {
+    "id": "wb-bare",
+    "name": "Meeting follow-ups",
+    "instruction": "Write my weekly update from these notes.",
+    "sources": [
+     "note:note-sync",
+     "note:note-hiring"
+    ],
+    "output_target": "inbox",
+    "spend_limit_usd": null,
+    "recipe_id": null,
+    "profile_id": null,
+    "resolver_profile_id": null,
+    "schedule": null,
+    "schedule_enabled": false,
+    "schedule_revision": 1,
+    "item_order": [],
+    "created_at": "2026-10-18T14:35:36Z",
+    "last_modified": "2026-10-18T14:35:36Z",
+    "deleted": false,
+    "items": [
+     {
+      "id": "wbocc_2ce241c3531242b6",
+      "workbench_id": "wb-bare",
+      "title": "Meeting follow-ups, Sun 18 Oct 2026",
+      "body": "Write my weekly update from these notes.",
+      "priority": 3,
+      "status": "done",
+      "grounding": {
+       "refs": [
+        "note:note-sync",
+        "note:note-hiring"
+       ]
+      },
+      "context": {
+       "occurrence": true
+      },
+      "result": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.",
+      "result_artifact_id": "artifact_c03f15b02423",
+      "result_egress": {
+       "boundary": "cloud",
+       "model": "agent-claude"
+      },
+      "mint_attempted": true,
+      "tokens_consumed": 40,
+      "created_at": "2026-10-18T14:35:36Z",
+      "last_modified": "2026-10-18T14:35:36.248926+00:00",
+      "claimed_at": "2026-10-18T14:35:36.156493+00:00",
+      "completed_at": "2026-10-18T14:35:36.248926+00:00",
+      "parked": false
+     }
+    ],
+    "item_count": 1,
+    "pending_count": 0,
+    "last_run": {
+     "id": "wbrun_0a5dd346663d",
+     "workbench_id": "wb-bare",
+     "started_at": "2026-10-18T14:35:36.156281+00:00",
+     "completed_at": "2026-10-18T14:35:36.339130+00:00",
+     "items_attempted": 1,
+     "items_completed": 1,
+     "items_failed": 0,
+     "mint_failures": 0,
+     "total_tokens": 45,
+     "egress_boundary": "cloud",
+     "model": "stub-model-7b",
+     "constitutional_context_revision": 0,
+     "constitutional_context_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "skills_injected": [],
+     "status": "completed"
+    },
+    "instruction_shown": "Write my weekly update from these notes.",
+    "instruction_from": "automation",
+    "results": [
+     {
+      "item_id": "wbocc_2ce241c3531242b6",
+      "title": "Meeting follow-ups, Sun 18 Oct 2026",
+      "status": "done",
+      "artifact_id": "artifact_c03f15b02423",
+      "new": true,
+      "error": null,
+      "text": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.",
+      "completed_at": "2026-10-18T14:35:36.248926+00:00",
+      "seconds": 0,
+      "model": "stub-model-7b",
+      "boundary": "cloud",
+      "note_id": "note_result_41583fc570ec0bba",
+      "cost_usd": null,
+      "used": null
+     }
+    ],
+    "sources_shown": [
+     {
+      "ref": "note:note-sync",
+      "kind": "note",
+      "label": "Platform sync",
+      "missing": false
+     },
+     {
+      "ref": "note:note-hiring",
+      "kind": "note",
+      "label": "Hiring",
+      "missing": false
+     }
+    ],
+    "when_kind": null,
+    "event_starts": [],
+    "next_run_at": null,
+    "when_events": [
+     {
+      "id": "github-review-requested",
+      "words": "GitHub asks me to review",
+      "needs": "repository",
+      "event_pattern": "github.pr.review_requested"
+     },
+     {
+      "id": "github-checks-failed",
+      "words": "A pull request's checks fail",
+      "needs": "repository",
+      "event_pattern": "github.pr.checks_changed"
+     },
+     {
+      "id": "github-pr-merged",
+      "words": "A pull request is merged",
+      "needs": "repository",
+      "event_pattern": "github.pr.merged"
+     }
+    ],
+    "assignment_summary": {
+     "status": "assigned",
+     "source": "subject",
+     "chain": [
+      "Claude Code"
+     ],
+     "repair": null,
+     "profile_id": "agent-claude",
+     "boundary": "cloud"
+    }
+   }
+  },
+  "/api/workbenches/wb-bare/memory": {
+   "entries": []
+  }
+ }
+}

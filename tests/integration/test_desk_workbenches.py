@@ -664,3 +664,236 @@ def test_the_automation_window_reads_its_sentence_results_and_lessons(tmp_path: 
         "sources": ["note:note-sync", "note:note-gone", "note:note-never"]}).status_code == 200
     shown = client.get(f"/api/workbenches/{wb}").json()["workbench"]["sources_shown"]
     assert [(s["label"], s["missing"]) for s in shown] == [("Platform sync", False), ("Untitled", False), ("", True)]
+
+
+# ── A4 "When, and With" (betterment/workbench/RECIPE.md, slice A4) ─────────
+# The hub half: a When choice is stored (a schedule as cron, never shown),
+# turned on, and says when it fires next; With writes the automation's own
+# engine and re-freezes a live schedule, so a scheduled run uses the new
+# engine; the Spend limit per run is the automation's own; an event start's
+# occurrence runs at once.
+
+
+def _live(db: Database, wb: str) -> dict[str, Any] | None:
+    from holdspeak.services.schedule_delegation import ScheduleDelegationService
+
+    return ScheduleDelegationService(db).live(wb)
+
+
+def test_when_every_friday_at_three_is_stored_as_cron_turned_on_and_says_when_next(tmp_path: Path, monkeypatch) -> None:
+    """Done when (A4): "Every Friday at 3 PM" is one choice; the hub turns it
+    on (a live delegation) and gives next_run_at, a Friday at 15:00 on the
+    hub's clock. Only when I press Run now turns every start off."""
+    db, client, _prompts, _ = _instruction_rig(tmp_path, monkeypatch, "wb-when")
+    wb = _make_automation(client, "wb-when")
+
+    chosen = client.put(f"/api/workbenches/{wb}/when", json={"kind": "schedule", "every": "week", "day": 5, "time": "15:00"})
+    assert chosen.status_code == 200, chosen.text
+    body = chosen.json()["workbench"]
+    assert (body["schedule"], body["schedule_enabled"], body["when_kind"]) == ("0 15 * * 5", True, "schedule")
+    fires = datetime.fromisoformat(body["next_run_at"].replace("Z", "+00:00")).astimezone()
+    assert (fires.weekday(), fires.hour, fires.minute) == (4, 15, 0)  # Friday 15:00 local
+    assert _live(db, wb) is not None and _live(db, wb)["cadence"] == "0 15 * * 5"
+
+    for when, cron in [({"every": "day", "time": "08:30"}, "30 8 * * *"),
+                       ({"every": "weekday", "time": "07:00"}, "0 7 * * 1-5"),
+                       ({"every": "hour"}, "0 * * * *")]:
+        again = client.put(f"/api/workbenches/{wb}/when", json={"kind": "schedule", **when})
+        assert again.status_code == 200 and again.json()["workbench"]["schedule"] == cron, again.text
+    refused = client.put(f"/api/workbenches/{wb}/when", json={"kind": "schedule", "every": "week", "time": "15:00"})
+    assert refused.status_code == 400 and refused.json()["error"] == "Choose a day of the week"
+
+    manual = client.put(f"/api/workbenches/{wb}/when", json={"kind": "manual"}).json()["workbench"]
+    assert (manual["schedule"], manual["schedule_enabled"], manual["next_run_at"], manual["when_kind"]) == (
+        None, False, None, "manual")
+    assert _live(db, wb) is None
+    # The events the editor offers are the ones the hub can deliver: GitHub,
+    # never Jira (its preset carries no connection) or "A meeting ends".
+    assert [e["id"] for e in manual["when_events"]] == [
+        "github-review-requested", "github-checks-failed", "github-pr-merged"]
+
+
+def test_with_writes_the_automation_engine_and_refreezes_its_live_schedule(tmp_path: Path, monkeypatch) -> None:
+    """Done when (A4, T1): With writes
+    subject:workbench:<id>:capability:workbench.item; a live schedule is
+    re-frozen on the new engine (scheduled runs ignored engine changes
+    before); an off schedule stays off."""
+    from holdspeak.kernel.runtime import _configure
+    from holdspeak.services.workbench_runner import WorkbenchRunner
+
+    db, client, _prompts, _ = _instruction_rig(tmp_path, monkeypatch, "wb-with")
+    db.profiles.upsert(profile_id="lan-profile", name="LAN Qwen", kind="openAICompatible",
+                       base_url="http://192.168.1.43:8080/v1", model="qwen")
+    wb = _make_automation(client, "wb-with")
+    assert client.put(f"/api/workbenches/{wb}/when", json={"kind": "schedule", "every": "day", "time": "09:00"}).status_code == 200
+    before = _live(db, wb)
+    runner = WorkbenchRunner(db, _configure(db))
+    assert [e["profile_id"] for e in runner._scheduled_route(before)["entries"]] == ["legacy-stub-profile"]
+
+    used = client.put(f"/api/workbenches/{wb}/engine", json={"profile_id": "legacy-lan-profile"})
+    assert used.status_code == 200, used.text
+    summary = used.json()["workbench"]["assignment_summary"]
+    assert (summary["chain"], summary["profile_id"]) == (["LAN Qwen"], "legacy-lan-profile")
+    with db._connection() as conn:
+        head = conn.execute("SELECT cleared FROM inference_assignment_heads WHERE assignment_key=?",
+                            (f"subject:workbench:{wb}:capability:workbench.item",)).fetchone()
+        old = conn.execute("SELECT state, revocation_reason FROM kernel_schedule_delegations WHERE id=?",
+                           (before["id"],)).fetchone()
+    assert head is not None and head["cleared"] == 0
+    assert (old["state"], old["revocation_reason"]) == ("REVOKED", "engine_changed")
+    after = _live(db, wb)
+    assert after["id"] != before["id"]
+    assert [e["profile_id"] for e in runner._scheduled_route(after)["entries"]] == ["legacy-lan-profile"]
+
+    # An off schedule has nothing to re-freeze; the engine is still written.
+    assert client.put(f"/api/workbenches/{wb}", json={"schedule_enabled": False}).status_code == 200
+    back = client.put(f"/api/workbenches/{wb}/engine", json={"profile_id": "legacy-stub-profile"})
+    assert back.status_code == 200 and back.json()["workbench"]["assignment_summary"]["profile_id"] == "legacy-stub-profile"
+    assert _live(db, wb) is None
+
+
+def test_the_spend_limit_per_run_is_the_automation_own_and_overrides_the_engine(tmp_path: Path, monkeypatch) -> None:
+    """With's Spend limit per run: stored on the automation (null = the
+    engine's own), refused outside $0-$1000, and the run hands it to an
+    agent CLI that stops at a limit (a copy: the routed engine is shared)."""
+    from holdspeak.intel.cli_engine import CliEngine, parse_cli_endpoint
+    from holdspeak.services.workbench_runner import _MeteredPromptAdapter
+
+    db, client, _prompts, _ = _instruction_rig(tmp_path, monkeypatch, "wb-spend")
+    wb = _make_automation(client, "wb-spend")
+    set_ = client.put(f"/api/workbenches/{wb}/engine", json={"spend_limit_usd": 0.5})
+    assert set_.status_code == 200 and set_.json()["workbench"]["spend_limit_usd"] == 0.5, set_.text
+    for bad in (0, -1, 1001, "1", True):
+        assert client.put(f"/api/workbenches/{wb}/engine", json={"spend_limit_usd": bad}).status_code == 400
+    cleared = client.put(f"/api/workbenches/{wb}/engine", json={"spend_limit_usd": None})
+    assert cleared.json()["workbench"]["spend_limit_usd"] is None
+    # An upsert (the Do editor's PUT) never clears it.
+    client.put(f"/api/workbenches/{wb}/engine", json={"spend_limit_usd": 0.25})
+    client.put(f"/api/workbenches/{wb}", json={"instruction": DO})
+    assert db.workbenches.get(wb).spend_limit_usd == 0.25
+
+    claude = CliEngine(parse_cli_endpoint("cli:claude?spend_limit_usd=2")[0], spend_limit_usd=2.0)
+    limited = _MeteredPromptAdapter(0.25)._limited(claude)
+    assert limited is not claude and (limited.spend_limit_usd, claude.spend_limit_usd) == (0.25, 2.0)
+    codex = CliEngine(parse_cli_endpoint("cli:codex")[0])
+    assert _MeteredPromptAdapter(0.25)._limited(codex) is codex  # Codex cannot stop at a limit
+    assert _MeteredPromptAdapter(None)._limited(claude) is claude
+
+
+def test_an_event_choice_turns_its_start_on_and_its_occurrence_runs_without_a_press(tmp_path: Path, monkeypatch) -> None:
+    """When something happens: the choice installs and turns on the start
+    (a quiet baseline first), stops the schedule, and the event's
+    occurrence runs at once although the preset's auto-run is off (A2
+    follow-up: it used to wait for a press that never came)."""
+    import asyncio
+    import subprocess
+
+    import holdspeak.services.watch_sources as watch_sources
+    from holdspeak.services.reaction_service import ReactionService
+    from holdspeak.services.watch_sources import GitHubWatchSource
+
+    db, client, prompts, _ = _instruction_rig(tmp_path, monkeypatch, "wb-event")
+    wb = _make_automation(client, "wb-event")
+    wire = _json.loads((_FIXTURES / "gh_pr_review_requested.json").read_text())
+
+    def snapshot(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        def replay(command, **_kwargs):
+            assert command[:3] == ["gh", "pr", "list"]
+            return subprocess.CompletedProcess(command, 0, _json.dumps(rows), "")
+        return GitHubWatchSource(runner=replay).snapshot(
+            OWNER, query_kind="pull_requests", query={"repository": wire["repository"]})
+
+    monkeypatch.setattr(watch_sources, "fetch_watch_snapshot", lambda *_a, **_k: snapshot(wire["before"]))
+    assert client.put(f"/api/workbenches/{wb}/when", json={"kind": "schedule", "every": "day", "time": "09:00"}).status_code == 200
+    bad = client.put(f"/api/workbenches/{wb}/when", json={"kind": "event", "event_id": "jira-assigned-to-me",
+                                                           "repository": wire["repository"]})
+    assert bad.status_code == 400, bad.text
+    chosen = client.put(f"/api/workbenches/{wb}/when", json={
+        "kind": "event", "event_id": "github-review-requested", "repository": wire["repository"]})
+    assert chosen.status_code == 200, chosen.text
+    body = chosen.json()["workbench"]
+    assert (body["schedule"], body["schedule_enabled"], body["when_kind"]) == (None, False, "event")
+    [start] = body["event_starts"]
+    assert start["enabled"] is True and start["event_pattern"] == "github.pr.review_requested"
+    reaction = db.automations.get_reaction(start["id"])
+    assert reaction["auto_run"] in (0, False)  # the preset's own; the occurrence runs anyway
+
+    changed = asyncio.run(ReactionService(db).refresh_watch(OWNER, reaction["watch_id"], snapshot(wire["after"])))
+    assert [p["status"] for p in changed["projections"]] == ["projected"]
+    assert len(prompts) == 1 and "https://github.com/acme/ledger/pull/418" in prompts[0]
+    results = client.get(f"/api/workbenches/{wb}").json()["workbench"]["results"]
+    assert [(r["title"], r["status"]) for r in results] == [("Move the ledger cutover behind a flag", "done")]
+
+    # The same choice again turns the same start back on (no second start);
+    # Run now only stops it.
+    again = client.put(f"/api/workbenches/{wb}/when", json={
+        "kind": "event", "event_id": "github-review-requested", "repository": wire["repository"]})
+    assert [s["id"] for s in again.json()["workbench"]["event_starts"]] == [start["id"]]
+    manual = client.put(f"/api/workbenches/{wb}/when", json={"kind": "manual"}).json()["workbench"]
+    assert manual["event_starts"] == [] and db.automations.get_reaction(start["id"])["enabled"] in (0, False)
+
+
+def test_a_schedule_with_no_engine_is_kept_off_and_says_why(tmp_path: Path) -> None:
+    """A fresh desk has no engine to freeze: the schedule is saved, off, and
+    the refusal says to choose an engine under With."""
+    from holdspeak.kernel.runtime import _configure
+
+    db = Database(tmp_path / "bare.db")
+    _configure(db)
+    client = _client(db)
+    wb = client.post("/api/workbenches", json={"name": "Friday team update"}).json()["workbench"]["id"]
+    assert client.put(f"/api/workbenches/{wb}", json={"instruction": DO}).status_code == 200
+    refused = client.put(f"/api/workbenches/{wb}/when", json={"kind": "schedule", "every": "week", "day": 5, "time": "15:00"})
+    assert refused.status_code == 400, refused.text
+    assert refused.json()["error"] == "The schedule is saved but off: choose an engine under With, then turn it on."
+    kept = client.get(f"/api/workbenches/{wb}").json()["workbench"]
+    assert (kept["schedule"], kept["schedule_enabled"], kept["next_run_at"]) == ("0 15 * * 5", False, None)
+
+
+def test_the_when_and_with_lines_record_their_answers(tmp_path: Path, monkeypatch) -> None:
+    """The face half of A4 replays these answers
+    (web/src/desk/__tests__/automation.app.test.tsx): Run now only, then
+    Every Friday at 15:00; an automation with no engine, then With set to
+    Claude Code (an agent CLI engine) and its first Run now."""
+    import holdspeak.workbench_memory as memory
+
+    monkeypatch.setattr(memory, "WORKBENCH_DIR", tmp_path / "workbenches")
+    db, client, _prompts, _ = _instruction_rig(tmp_path, monkeypatch, "wb-friday", engine_name="LAN Qwen")
+    wb = _make_automation(client, "wb-friday")
+    assert client.put(f"/api/workbenches/{wb}", json={"name": "Friday team update"}).status_code == 200
+    friday = client.put(f"/api/workbenches/{wb}/when", json={"kind": "schedule", "every": "week", "day": 5, "time": "15:00"})
+    assert friday.status_code == 200, friday.text
+    shown = _record_window("when-friday", client, wb, tmp_path)[f"/api/workbenches/{wb}"]["workbench"]
+    assert shown["schedule"] == "0 15 * * 5" and shown["next_run_at"]
+
+    # No engine: a new automation on a desk whose only engines are other
+    # automations' own (no default).
+    bare = client.post("/api/workbenches", json={"name": "Meeting follow-ups", "id": "wb-bare"})
+    assert bare.status_code == 201, bare.text
+    assert client.put("/api/workbenches/wb-bare", json={
+        "instruction": DO, "sources": ["note:note-sync", "note:note-hiring"]}).status_code == 200
+    none = _record_window("with-none", client, "wb-bare", tmp_path)["/api/workbenches/wb-bare"]["workbench"]
+    assert none["assignment_summary"]["chain"] == [] and none["assignment_summary"]["profile_id"] is None
+
+    # Add: the Engines app's own path for a found agent CLI (the face posts
+    # connect-cli-engine; its answer is recorded in engines.recorded.json).
+    from holdspeak.config import Config
+    from holdspeak.intel.cli_engine import CLI_ENGINES_ENV
+    from holdspeak.services.inference_setup_service import InferenceSetupApplicationService
+    from holdspeak.services.inference_acquisition_service import InferenceAcquisitionApplicationService
+    from holdspeak.services.model_library_service import ModelLibraryApplicationService
+
+    setup = InferenceSetupApplicationService(db, config_provider=Config, home_provider=lambda: tmp_path / "home")
+    acquisition = InferenceAcquisitionApplicationService(
+        db, setup_service=setup, model_root=tmp_path / "custody", home_provider=lambda: tmp_path / "home")
+    monkeypatch.setenv(CLI_ENGINES_ENV, "on")  # the engine stays the recorded stub; no CLI runs
+    ModelLibraryApplicationService(db, setup_service=setup, acquisition_service=acquisition).connect_cli_engine(
+        OWNER, {"request_id": "record-add", "profile_id": "agent-claude", "expected_profile_revision": 0,
+                "preset": "claude"})
+    used = client.put("/api/workbenches/wb-bare/engine", json={"profile_id": "agent-claude"})
+    assert used.status_code == 200, used.text
+    claude = _record_window("with-claude", client, "wb-bare", tmp_path)["/api/workbenches/wb-bare"]["workbench"]
+    assert claude["assignment_summary"]["chain"] == ["Claude Code"]
+    assert client.post("/api/workbenches/wb-bare/run", json={}).status_code == 200
+    ran = _record_window("with-claude-ran", client, "wb-bare", tmp_path)["/api/workbenches/wb-bare"]["workbench"]
+    assert [r["status"] for r in ran["results"]] == ["done"]

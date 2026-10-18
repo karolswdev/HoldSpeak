@@ -1143,6 +1143,11 @@ class WorkbenchRecord:
     instruction: str = ""
     sources_json: str = "[]"
     output_target: str = "inbox"
+    #: Betterment A4: the Spend limit per run for this automation; None keeps
+    #: the engine's own limit.
+    spend_limit_usd: Optional[float] = None
+    #: Betterment A4: the When he chose (JSON); '' before A4.
+    when_json: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         try:
@@ -1155,6 +1160,7 @@ class WorkbenchRecord:
             "instruction": self.instruction,
             "sources": sources if isinstance(sources, list) else [],
             "output_target": self.output_target or "inbox",
+            "spend_limit_usd": self.spend_limit_usd,
             "recipe_id": self.recipe_id,
             "profile_id": self.profile_id,
             "resolver_profile_id": self.resolver_profile_id,

@@ -102,6 +102,45 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to update workbench")
 
+    def _a4_error(exc: ServiceError) -> JSONResponse:
+        """A When or With refusal, in its own words and status."""
+        status = int(exc.context.get("status") or 0)
+        if not status:
+            status = 400 if isinstance(exc, ValidationError) else 409 if isinstance(exc, ConflictError) else 502
+        return JSONResponse({"error": exc.detail, "code": exc.code}, status_code=status)
+
+    @router.put("/api/workbenches/{workbench_id}/when")
+    async def api_set_workbench_when(workbench_id: str, request: Request) -> Any:
+        """Betterment A4: one When choice (schedule, event or manual)."""
+        body = await _json_body(request)
+        if body is None:
+            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
+        try:
+            wb = _svc().set_when(_principal(request), workbench_id, body)
+            return JSONResponse({"workbench": wb})
+        except NotFound:
+            return _not_found("workbench", workbench_id)
+        except ServiceError as exc:
+            return _a4_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to change when the automation runs")
+
+    @router.put("/api/workbenches/{workbench_id}/engine")
+    async def api_set_workbench_engine(workbench_id: str, request: Request) -> Any:
+        """Betterment A4: With (the engine, and the Spend limit per run)."""
+        body = await _json_body(request)
+        if body is None:
+            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
+        try:
+            wb = _svc().set_engine(_principal(request), workbench_id, **body)
+            return JSONResponse({"workbench": wb})
+        except NotFound:
+            return _not_found("workbench", workbench_id)
+        except ServiceError as exc:
+            return _a4_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to choose the automation's engine")
+
     @router.delete("/api/workbenches/{workbench_id}")
     async def api_delete_workbench(workbench_id: str, request: Request) -> Any:
         try:

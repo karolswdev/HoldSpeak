@@ -218,7 +218,33 @@ class WorkbenchRepository(BaseRepository):
             instruction=str(row["instruction"] or "") if "instruction" in row.keys() else "",
             sources_json=str(row["sources_json"] or "[]") if "sources_json" in row.keys() else "[]",
             output_target=str(row["output_target"] or "inbox") if "output_target" in row.keys() else "inbox",
+            spend_limit_usd=(
+                float(row["spend_limit_usd"])
+                if "spend_limit_usd" in row.keys() and row["spend_limit_usd"] is not None else None
+            ),
+            when_json=str(row["when_json"] or "") if "when_json" in row.keys() else "",
         )
+
+    def set_when_json(self, workbench_id: str, when: dict[str, Any]) -> bool:
+        """Betterment A4: the When he chose. Its own write, like the spend limit."""
+        with self._connection() as conn:
+            cur = conn.execute(
+                "UPDATE workbenches SET when_json = ?, last_modified = ? WHERE id = ? AND deleted = 0",
+                (self._json_dumps(when, fallback=""), _now_iso(), str(workbench_id).strip()),
+            )
+            return bool(cur.rowcount)
+
+    def set_spend_limit(self, workbench_id: str, spend_limit_usd: Optional[float]) -> bool:
+        """Betterment A4: the automation's Spend limit per run (None = the
+        engine's own). Its own write: an upsert never names this column, so no
+        other writer clears it."""
+        now = _now_iso()
+        with self._connection() as conn:
+            cur = conn.execute(
+                "UPDATE workbenches SET spend_limit_usd = ?, last_modified = ? WHERE id = ? AND deleted = 0",
+                (None if spend_limit_usd is None else float(spend_limit_usd), now, str(workbench_id).strip()),
+            )
+            return bool(cur.rowcount)
 
 
 class WorkbenchItemRepository(BaseRepository):

@@ -1069,6 +1069,32 @@ export async function updateWorkbenchField(
   });
 }
 
+/** Betterment A4: one When choice. The hub stores a schedule as cron, turns
+ *  on an event start, or keeps it to Run now; the other starts stop. */
+export type AutomationWhenChoice =
+  | { kind: "schedule"; every: "day" | "weekday" | "week" | "hour"; time?: string; day?: number }
+  | { kind: "event"; event_id: string; repository: string }
+  | { kind: "manual" };
+
+export async function setAutomationWhen(id: string, when: AutomationWhenChoice): Promise<void> {
+  await apiFetch<Record<string, unknown>>(`/api/workbenches/${encodeURIComponent(id)}/when`, {
+    method: "PUT",
+    json: when,
+  });
+}
+
+/** Betterment A4: With. The engine (its subject assignment) and the
+ *  optional Spend limit per run (null = the engine's own). */
+export async function setAutomationEngine(
+  id: string,
+  fields: { profile_id?: string; spend_limit_usd?: number | null },
+): Promise<void> {
+  await apiFetch<Record<string, unknown>>(`/api/workbenches/${encodeURIComponent(id)}/engine`, {
+    method: "PUT",
+    json: fields,
+  });
+}
+
 export async function addWorkbenchItem(
   workbenchId: string,
   payload: Record<string, unknown>,

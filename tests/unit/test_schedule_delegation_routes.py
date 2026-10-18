@@ -34,7 +34,10 @@ def _route_profile(db: object, plan_id: str) -> str:
 def test_schedule_fire_consumes_enabled_route_and_owner_reapproval_mints_later_route(
     tmp_path: Path, monkeypatch
 ) -> None:
-    """A current assignment edit cannot retarget a live delegation's fire."""
+    """A fire consumes only a frozen route. Betterment A4 (RECIPE A4, "Re-freeze
+    the schedule delegation when With changes"): the owner's engine edit for
+    this automation is an owner re-approval: the old delegation is revoked
+    and a new one freezes the new route, so the next fire uses it."""
     db, service, workbench_id = _rig(tmp_path)
     db.workbench_items.upsert(item_id="scheduled-item", workbench_id=workbench_id, title="Scheduled")
     replacement = db.profiles.upsert(
@@ -47,8 +50,8 @@ def test_schedule_fire_consumes_enabled_route_and_owner_reapproval_mints_later_r
     enabled_plan_id = _frozen_plan_id(db, str(enabled["id"]))
     assert _route_profile(db, enabled_plan_id) == "legacy-p"
 
-    # This is a real canonical edit after enablement, not a SQL mutation. The
-    # live delegation remains valid, while its already-frozen source route wins.
+    # This is a real canonical edit after enablement, not a SQL mutation. It
+    # re-freezes: a new live delegation with its own frozen route.
     assignments = InferenceAssignmentService(db)
     scope = {
         "kind": "subject", "subject_kind": "workbench", "subject_id": workbench_id,
@@ -59,6 +62,12 @@ def test_schedule_fire_consumes_enabled_route_and_owner_reapproval_mints_later_r
         "command_id": "later-workbench-assignment", "expected_revision": current["revision"],
         "scope": scope, "entries": [{"profile_id": f"legacy-{replacement.id}"}],
     })
+
+    refrozen = ScheduleDelegationService(db).live(workbench_id)
+    assert refrozen is not None and refrozen["id"] != enabled["id"]
+    refrozen_plan_id = _frozen_plan_id(db, str(refrozen["id"]))
+    assert _route_profile(db, refrozen_plan_id) == f"legacy-{replacement.id}"
+    assert _route_profile(db, enabled_plan_id) == "legacy-p"  # the old evidence stays
 
     class Engine:
         def run_prompt(self, **_kwargs: object) -> str:
@@ -82,9 +91,9 @@ def test_schedule_fire_consumes_enabled_route_and_owner_reapproval_mints_later_r
         ).fetchone()
         frozen = conn.execute(
             "SELECT deployment_revision_id FROM inference_route_plan_entries WHERE plan_id=? AND route_leg_ordinal=1",
-            (enabled_plan_id,),
+            (refrozen_plan_id,),
         ).fetchone()
-    assert parent is not None and f'"route_plan_id":"{enabled_plan_id}"' in str(parent["input_json"])
+    assert parent is not None and f'"route_plan_id":"{refrozen_plan_id}"' in str(parent["input_json"])
     assert child is not None and frozen is not None
     assert child["target_ref"] == f"deployment-revision:{frozen['deployment_revision_id']}"
 
@@ -104,5 +113,5 @@ def test_schedule_fire_consumes_enabled_route_and_owner_reapproval_mints_later_r
     amended = ScheduleDelegationService(db).live(workbench_id)
     assert amended is not None and amended["id"] != enabled["id"]
     amended_plan_id = _frozen_plan_id(db, str(amended["id"]))
-    assert amended_plan_id != enabled_plan_id
+    assert amended_plan_id not in (enabled_plan_id, refrozen_plan_id)
     assert _route_profile(db, amended_plan_id) == f"legacy-{replacement.id}"

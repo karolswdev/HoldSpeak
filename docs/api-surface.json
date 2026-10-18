@@ -7040,6 +7040,16 @@
       ]
     },
     {
+      "path": "/api/workbenches/{workbench_id}/engine",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/workbenches/{workbench_id}/items",
       "methods": [
         "POST"
@@ -7221,6 +7231,16 @@
       "path": "/api/workbenches/{workbench_id}/voice/resolve",
       "methods": [
         "POST"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/workbenches/{workbench_id}/when",
+      "methods": [
+        "PUT"
       ],
       "module": "web.routes.primitives.workbenches",
       "consumers": [

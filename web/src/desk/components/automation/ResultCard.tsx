@@ -135,10 +135,11 @@ export function ResultHead({ result, isNew }: { result: AutomationResult; isNew:
   ].filter(Boolean);
   return (
     <span className="automation-card-facts">
+      {/* A4: NEW leads the line, so a narrow card never pushes it off. */}
+      {isNew ? <StateChip state="active" label="NEW" data-testid="automation-new" /> : null}
       <span className="automation-card-when">{facts.join(" · ")}</span>
       {result.status === "failed" ? <StateChip state="failure" label="FAILED" /> : null}
       <Egress boundary={result.boundary} />
-      {isNew ? <StateChip state="active" label="NEW" data-testid="automation-new" /> : null}
     </span>
   );
 }
