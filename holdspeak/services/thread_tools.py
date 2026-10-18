@@ -162,6 +162,7 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "people.owner_alias.link":     ("effect_proposal",   True),
     "people.owner_alias.unlink":   ("effect_proposal",   True),
     "people.resolve":              ("evidence_read",     True),   # HS-172-04
+    "people.suggestions":          ("evidence_read",     True),   # Betterment D6
     # --- plugin_job ---
     "plugin_job.list":    ("evidence_read",     False),
     "plugin_job.summary": ("evidence_read",     False),

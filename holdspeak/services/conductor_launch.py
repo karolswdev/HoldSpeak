@@ -266,6 +266,7 @@ LAUNCH_RULES: dict[str, tuple[str, str, str]] = {
     # read: a People read whose verb the shared read classifier does not name
     # (Conductor R7, owner ruling 2026-10-06: agents read People)
     "people.one_on_one.brief": (READ, "", ""),
+    "people.suggestions": (READ, "", ""),
     # create
     "door.add_item": (CREATE, "action", "id"),
     "thought.create": (CREATE, "thought", "id"),

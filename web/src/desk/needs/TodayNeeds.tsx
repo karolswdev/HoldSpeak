@@ -13,6 +13,7 @@ import { NeedsList } from "../surface/objects";
 import { wireDate } from "../surface/format";
 import { faceOpener, NeedRow, useRowMarks } from "./NeedsDrawer";
 import type { NeedFace } from "./needsFace";
+import { PeopleReadFailed } from "../people/PeopleReadFailed";
 
 /** The local day of `d`, `YYYY-MM-DD`. */
 function localDay(d: Date): string {
@@ -33,7 +34,7 @@ export function todayRows(work: readonly NeedFace[], now: Date, limit: number): 
     .slice(0, limit);
 }
 
-export function TodayNeeds({ work, count, now, limit, primary, projects, loaded, failed, emptyDesk, calendarLead, next }: {
+export function TodayNeeds({ work, count, now, limit, primary, projects, loaded, failed, emptyDesk, calendarLead, next, peopleUnread = false }: {
   /** `useNeedFaces().work`: the rows of the one list, ranked. */
   work: readonly NeedFace[];
   /** The hub's one number (the bell and the Dock say it too). */
@@ -53,6 +54,8 @@ export function TodayNeeds({ work, count, now, limit, primary, projects, loaded,
   emptyDesk: boolean;
   /** `1:1 with Mira at 09:30`: the next meeting, for the line when nothing waits. */
   next: string | null;
+  /** Betterment D6: the hub could not read People: one line, Today stays. */
+  peopleUnread?: boolean;
 }) {
   const listRef = useRef<HTMLDivElement>(null);
   const rows = todayRows(work, now, limit);
@@ -76,6 +79,7 @@ export function TodayNeeds({ work, count, now, limit, primary, projects, loaded,
         <Button dense variant="ghost" aria-label="All: open Needs you" data-testid="today-needs-all"
           onClick={() => openChairWindow("chair:needs")}>All</Button>
       </header>
+      {peopleUnread ? <PeopleReadFailed testId="today-people-read-failed" onRetry={() => void refreshNeedsYou(true)} /> : null}
       {rows.length > 0 ? (
         <div ref={listRef} onClick={onRowPress} className="today-needs-list" data-testid="needs-list">
           <NeedsList label="Needs you">

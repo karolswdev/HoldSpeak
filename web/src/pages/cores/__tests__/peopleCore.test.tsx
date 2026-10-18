@@ -243,13 +243,12 @@ describe("Context keeps the report's working note", () => {
 });
 
 describe("PeopleCore encrypted local plane", () => {
-  it("names an unconfigured store with the joy pattern leading with the act", async () => {
-    stub({ "/api/people/readiness": () => json({ readiness: "unconfigured" }) });
+  it("an unconfigured store is an empty roster: no Set up step, one line (Betterment D6)", async () => {
+    stub({ "/api/people/readiness": () => json({ readiness: "unconfigured" }), "/api/people/suggestions": () => json({ suggestions: [] }) });
     render(<PeopleCore />);
-    expect(await screen.findByTestId("people-joy-state")).toBeTruthy();
-    expect(screen.getByTestId("people-joy-action")).toHaveTextContent("Set up People");
-    expect(screen.getByText("Encrypted, local-only relationship context")).toBeTruthy();
-    expect(screen.queryByLabelText("Add person")).toBeNull();
+    expect((await screen.findByTestId("people-empty-roster")).textContent).toBe("People you meet appear here.");
+    expect(screen.queryByText("Set up People")).toBeNull();
+    expect(screen.queryByTestId("people-joy-state")).toBeNull();
   });
 
   it("clears roster data when a relationship read becomes locked", async () => {
@@ -261,7 +260,8 @@ describe("PeopleCore encrypted local plane", () => {
     });
     render(<PeopleCore />);
     fireEvent.click(await screen.findByRole("button", { name: /Avery/ }));
-    expect(await screen.findByTestId("people-joy-state")).toBeTruthy();
+    // Betterment D6: a People read that failed is one line in place.
+    expect(await screen.findByTestId("people-read-failed")).toBeTruthy();
     expect(screen.queryByText("Avery")).toBeNull();
     expect(screen.queryByLabelText("Add person")).toBeNull();
   });
@@ -483,14 +483,14 @@ describe("PeopleCore HS-149-03 gesture", () => {
     expect(screen.queryByTestId("people-next-1on1")).toBeNull();
   });
 
-  it("empty roster leads with the create act", async () => {
+  it("an empty roster is one line (Betterment D6)", async () => {
     stub({
       "/api/people/readiness": () => json({ readiness: "ready", store: "encrypted" }),
       "/api/people/relationships": () => json({ relationships: [] }),
     });
     render(<PeopleCore />);
     expect(await screen.findByTestId("people-empty-roster")).toBeTruthy();
-    expect(screen.getByText("Add a person to start")).toBeTruthy();
+    expect(screen.getByText("People you meet appear here.")).toBeTruthy();
   });
 
   it("suggestion ordering is case-insensitive", async () => {
@@ -688,7 +688,7 @@ describe("PeopleCore scoped to a Project (HS-200-14)", () => {
     const listener = vi.fn();
     window.addEventListener("holdspeak:settings-updated", listener);
     const view = render(<PeopleCore />);
-    await screen.findByText("Add a person to start");
+    await screen.findByText("People you meet appear here.");
     view.unmount();
     expect(listener).not.toHaveBeenCalled();
     window.removeEventListener("holdspeak:settings-updated", listener);

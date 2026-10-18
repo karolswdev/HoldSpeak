@@ -236,3 +236,130 @@ describe("People: Remove on a TO RAISE row", () => {
     expect(JSON.parse(String(posted[0][1]?.body))).toEqual({ to: "removed" });
   });
 });
+
+/* ── Betterment D6: people come from his work ────────────────────────── */
+
+const WEEK_WIRE = join(dirname(fileURLToPath(import.meta.url)), "fixtures", "daily-week");
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const week = (name: string): any => JSON.parse(readFileSync(join(WEEK_WIRE, `${name}.json`), "utf8"));
+
+describe("People from his work (Betterment daily D6), on the recorded week", () => {
+  /** The hub's own answers (tests/integration/test_desk_people.py::
+   *  test_people_from_work_wire): the week with no people, the three Add
+   *  answers, and the reads after them. */
+  function replayWeek() {
+    const wire = week("people-from-work");
+    let added = 0;
+    const posts: Array<{ url: string; body: unknown }> = [];
+    const fetchSpy = vi.fn(async (input: string, opts?: { method?: string; body?: string }) => {
+      const path = String(input);
+      if (opts?.method && opts.method !== "GET") {
+        const body = opts.body ? JSON.parse(String(opts.body)) : null;
+        posts.push({ url: path, body });
+        if (path === "/api/people/suggestions/add") {
+          added += 1;
+          return json(wire.added[body.key], 201);
+        }
+        if (path === "/api/people/suggestions/hide") return json({ hidden: body.key });
+        if (path === "/api/settings") return json(wire.before["/api/settings"]);
+        throw new Error(`no recorded hub answer for ${opts.method} ${path}`);
+      }
+      // Before the three adds the week reads as it did; after them, as after.
+      // Between the adds: the recorded rows, less the ones already added.
+      if (path === "/api/people/suggestions" && added > 0 && added < 3) {
+        const left = Object.keys(wire.added).slice(added);
+        return json({ suggestions: wire.before[path].suggestions.filter((s: { key: string }) => left.includes(s.key)) });
+      }
+      if (path === "/api/people/readiness" && added > 0) return json(wire.after[path]);
+      if (path === "/api/people/relationships?counts=1" && added < 3) {
+        return json({ relationships: wire.after[path].relationships.slice(0, added) });
+      }
+      const phase = added >= 3 ? wire.after : wire.before;
+      if (path in phase) return json(phase[path]);
+      throw new Error(`no recorded hub answer for GET ${path}`);
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+    return { wire, posts };
+  }
+
+  it("with no people, FROM YOUR MEETINGS names Theo, Jun and Mira, each with Add and Not a person; no Set up step", async () => {
+    replayWeek();
+    render(<PeopleCore />);
+    const section = await screen.findByTestId("people-suggestions");
+    const rows = within(section).getAllByTestId("people-suggestion");
+    expect(rows.map((row) => row.textContent ?? "")).toEqual([
+      expect.stringContaining("Theo"), expect.stringContaining("Jun"), expect.stringContaining("Mira"),
+    ]);
+    expect(rows[2].textContent).toContain("named in Payments platform sync · 1 promise");
+    for (const row of rows) {
+      expect(within(row).getByRole("button", { name: /^Add / })).toBeTruthy();
+      expect(within(row).getByRole("button", { name: /is not a person$/ })).toBeTruthy();
+      expect(rawButtons(row)).toEqual([]);
+    }
+    expect(screen.queryByText("Set up People")).toBeNull();
+    expect(screen.queryByText("Do it")).toBeNull();
+    // His own name is not set: People asks it once.
+    expect(await screen.findByTestId("people-who-are-you")).toBeTruthy();
+  });
+
+  it("three Add presses make them, and Mira's prep shows her promise with no other step", async () => {
+    const { wire, posts } = replayWeek();
+    render(<PeopleCore />);
+    for (const name of ["Theo", "Jun", "Mira"]) {
+      fireEvent.click(await screen.findByRole("button", { name: `Add ${name}` }));
+      await waitFor(() => expect(screen.queryByRole("button", { name: `Add ${name}` })).toBeNull());
+    }
+    expect(posts.filter((p) => p.url === "/api/people/suggestions/add").map((p) => (p.body as { key: string }).key))
+      .toEqual(["theo", "jun", "mira"]);
+    await waitFor(() => expect(screen.queryByTestId("people-suggestions")).toBeNull());
+    expect(await screen.findByRole("button", { name: /Mira/ })).toBeTruthy();
+    // Mira's prep: her promise, from the meeting, with no alias press.
+    cleanupAndOpen(wire.added.mira.relationship.id);
+    const owed = await screen.findByTestId("people-they-owe", {}, { timeout: 5000 });
+    expect(owed.textContent).toContain("Draft the rollback runbook");
+  });
+
+  it("Not a person takes the name off for good", async () => {
+    const { posts } = replayWeek();
+    render(<PeopleCore />);
+    fireEvent.click(await screen.findByRole("button", { name: "Jun is not a person" }));
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Add Jun" })).toBeNull());
+    expect(posts).toEqual([{ url: "/api/people/suggestions/hide", body: { key: "jun" } }]);
+  });
+
+  it("no people and no suggestions: one line", async () => {
+    const wire = week("people-from-work");
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      const path = String(input);
+      if (path === "/api/people/suggestions") return json({ suggestions: [] });
+      if (path in wire.before) return json(wire.before[path]);
+      throw new Error(`no recorded hub answer for GET ${path}`);
+    }));
+    render(<PeopleCore />);
+    expect((await screen.findByTestId("people-empty-roster")).textContent).toBe("People you meet appear here.");
+    expect(screen.queryByTestId("people-suggestions")).toBeNull();
+  });
+
+  it("a People read that fails is one line in place: People could not be read · Try again", async () => {
+    let fail = true;
+    const wire = week("people-from-work");
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      const path = String(input);
+      if (fail && path === "/api/people/readiness") return json({ detail: "people_store_unavailable" }, 503);
+      if (path in wire.after) return json(wire.after[path]);
+      throw new Error(`no recorded hub answer for GET ${path}`);
+    }));
+    render(<PeopleCore />);
+    const line = await screen.findByTestId("people-read-failed");
+    expect(line.textContent).toContain("People could not be read");
+    fail = false;
+    fireEvent.click(within(line).getByRole("button", { name: "Try again" }));
+    expect(await screen.findByRole("button", { name: /Mira/ })).toBeTruthy();
+    expect(screen.queryByTestId("people-read-failed")).toBeNull();
+  });
+});
+
+function cleanupAndOpen(id: string) {
+  document.body.innerHTML = "";
+  render(<PeopleCore scope={`people:${id}:prep`} />);
+}

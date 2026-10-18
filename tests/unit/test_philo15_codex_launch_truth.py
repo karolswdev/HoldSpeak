@@ -316,7 +316,9 @@ def test_the_codex_launch_mounts_the_conductor_palette_with_its_mutators() -> No
     # owner's desk windows; the writes meet the launch's `window` rule).
     assert {"desk_window.list", "desk_window.open", "desk_window.close", "desk_window.raise",
             "desk_window.arrange", "desk_window.seat"} <= palette
-    assert len(palette) == 138 + 6
+    # Betterment D6: + people.suggestions (agents read People; owner ruling 2026-10-06).
+    assert "people.suggestions" in palette
+    assert len(palette) == 138 + 6 + 1
 
 
 # ── 6. Astra r2 on #996: the wait episode, the FIFO, expiry, provenance ──

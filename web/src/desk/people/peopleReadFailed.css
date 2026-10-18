@@ -1,0 +1,12 @@
+/* Betterment D6: a People read that failed, as one line in place. */
+.people-read-failed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+}
+.people-read-failed-line {
+  color: var(--wb-text, var(--text));
+  font: 500 13px / 1.4 var(--font-sans);
+}

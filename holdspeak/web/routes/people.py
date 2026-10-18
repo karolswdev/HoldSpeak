@@ -1,9 +1,11 @@
 """Authenticated, content-redacting transport for the encrypted People sidecar."""
 from __future__ import annotations
 
+import logging
+from contextvars import ContextVar
 from typing import Any
 
-from fastapi import APIRouter, Body, HTTPException, Request
+from fastapi import APIRouter, Body, Depends, HTTPException, Request
 
 from ...principals import UNAUTHENTICATED
 from ...services.people_service import OwnerAliasTaken, PeopleServiceError, SeriesAlreadyLinked
@@ -13,9 +15,30 @@ from ... import operations
 from ..context import WebContext
 
 
+log = logging.getLogger(__name__)
+
+#: Betterment D6: the request a People failure answers, for the 503 log line.
+_CALLER: ContextVar[str] = ContextVar("people_route_caller", default="")
+#: The service whose readiness a 503 log line reads (set per router).
+_SERVICE: ContextVar[Any] = ContextVar("people_route_service", default=None)
+
+
+def _log_unavailable(code: str) -> None:
+    """Every People 503 says the store's readiness and who asked, so the
+    open intermittent 503 (daily MODEL.md §1) can be traced. No content."""
+    service = _SERVICE.get()
+    try:
+        readiness = service.readiness_state() if service is not None else "no_service"
+    except Exception as exc:  # the read that failed is itself the answer
+        readiness = f"readiness_raised:{type(exc).__name__}"
+    log.warning("people 503: code=%s readiness=%s caller=%s", code, readiness, _CALLER.get() or "unknown")
+
+
 def _failure(exc: PeopleServiceError) -> HTTPException:
     """The public error code deliberately never contains relationship content."""
     code = str(exc)
+    if code in {"people_plaintext_unavailable", "people_store_unavailable", "people_store_write_failed"}:
+        _log_unavailable(code)
     if code == "people_owner_required":
         return HTTPException(status_code=403, detail=code)
     if code == "people_plaintext_unavailable":
@@ -42,12 +65,18 @@ def _failure(exc: PeopleServiceError) -> HTTPException:
 
 
 def build_people_router(ctx: WebContext) -> APIRouter:
-    router = APIRouter(prefix="/api/people", tags=["people"])
     service = ctx.people_service
     if service is None:
         # Isolated route fixtures must inject the encrypted service.  There is no
         # fallback to the ordinary database or an in-memory plaintext notebook.
         raise RuntimeError("People service is not configured")
+
+    async def note_caller(request: Request) -> None:
+        # The face that asked (its Referer) and the route; never a body.
+        _CALLER.set(f"{request.method} {request.url.path} from {request.headers.get('referer') or '-'}")
+        _SERVICE.set(service)
+
+    router = APIRouter(prefix="/api/people", tags=["people"], dependencies=[Depends(note_caller)])
 
     def principal(request: Request) -> Any:
         return getattr(request.state, "principal", UNAUTHENTICATED)
@@ -84,6 +113,35 @@ def build_people_router(ctx: WebContext) -> APIRouter:
             result = service.resolve_relationship_by_watch_identity(identity)
             rel = result.get("relationship")
             return {"relationship_id": rel.get("id") if rel else None}
+        except PeopleServiceError as exc:
+            raise _failure(exc) from exc
+
+    @router.get("/suggestions")
+    async def suggestions(request: Request) -> dict[str, Any]:
+        """Betterment D6: names from his meetings, calendar and Jira that no
+        Person has yet. A read; adding one is the owner's press."""
+        try:
+            from ...db import get_database
+            return {"suggestions": service.suggestions(principal(request), db=get_database())}
+        except PeopleServiceError as exc:
+            raise _failure(exc) from exc
+
+    @router.post("/suggestions/add", status_code=201)
+    async def add_suggestion(request: Request, body: dict[str, Any] = Body(default={})) -> dict[str, Any]:
+        try:
+            from ...db import get_database
+            kind = body.get("relationship_kind")
+            return {"relationship": service.add_suggestion(
+                principal(request), str(body.get("key") or ""), db=get_database(),
+                relationship_kind=str(kind) if kind else None,
+            )}
+        except PeopleServiceError as exc:
+            raise _failure(exc) from exc
+
+    @router.post("/suggestions/hide")
+    async def hide_suggestion(request: Request, body: dict[str, Any] = Body(default={})) -> dict[str, Any]:
+        try:
+            return service.hide_suggestion(principal(request), str(body.get("key") or ""))
         except PeopleServiceError as exc:
             raise _failure(exc) from exc
 

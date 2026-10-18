@@ -20462,6 +20462,120 @@
         ]
       }
     },
+    "/api/people/suggestions": {
+      "get": {
+        "description": "Betterment D6: names from his meetings, calendar and Jira that no\nPerson has yet. A read; adding one is the owner's press.",
+        "operationId": "suggestions_api_people_suggestions_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Suggestions Api People Suggestions Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Suggestions",
+        "tags": [
+          "people"
+        ]
+      }
+    },
+    "/api/people/suggestions/add": {
+      "post": {
+        "operationId": "add_suggestion_api_people_suggestions_add_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "default": {},
+                "title": "Body",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Add Suggestion Api People Suggestions Add Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Suggestion",
+        "tags": [
+          "people"
+        ]
+      }
+    },
+    "/api/people/suggestions/hide": {
+      "post": {
+        "operationId": "hide_suggestion_api_people_suggestions_hide_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "default": {},
+                "title": "Body",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Hide Suggestion Api People Suggestions Hide Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Hide Suggestion",
+        "tags": [
+          "people"
+        ]
+      }
+    },
     "/api/plugin-jobs": {
       "get": {
         "operationId": "list_jobs_api_plugin_jobs_get",

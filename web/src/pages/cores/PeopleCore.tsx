@@ -34,6 +34,8 @@ import { Disclosure } from "../../desk/surface/patterns/Disclosure";
 import { countToken } from "../../desk/surface";
 import { AppTile, Avatar } from "../../desk/surface/kit";
 import { renderHeroSlot } from "./core-layout";
+import { useOwnerName } from "../../desk/firstrun/ownerName";
+import { PeopleReadFailed } from "../../desk/people/PeopleReadFailed";
 import { useWindowTitle } from "../../desk/surface/title";
 import "./people.css";
 import { openProjectRoom } from "../../desk/shell";
@@ -99,6 +101,21 @@ type OneOnOneBrief = {
   last_meeting?: BriefLastMeeting | null;
   /** The brief's memory: plaintext desk excerpts on this person's projects. */
   memory?: { excerpts?: Array<{ ref: string; kind: string; title: string; text: string; project_id?: string }> } | null;
+};
+/** Betterment D6: a name his work mentions that no Person has yet
+ *  (`GET /api/people/suggestions`, PeopleService.suggestions). */
+type Suggestion = {
+  key: string;
+  name: string;
+  said: string;
+  relationship_kind: RelationshipKind;
+  source: "meeting" | "1:1 series" | "jira";
+  one_on_one: boolean;
+  series: { uid: string; source_id: string; label: string; next_starts_at: string } | null;
+  jira: boolean;
+  meeting_count: number;
+  promise_count: number;
+  meetings: Array<{ id: string; title: string; started_at: string }>;
 };
 type RelationshipDetail = Relationship & {
   commitments?: Commitment[];
@@ -205,8 +222,17 @@ export function PeopleCore({ hero, scope }: CoreProps) {
   }, []);
 
   // PHILO-17 ALIVE: one way to add. Add person opens the add row at the
-  // top of the roster (it is open on an empty roster).
+  // top of the roster.
   const [adding, setAdding] = useState(false);
+  // Betterment D6: the people his work names that People does not hold.
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [suggestionBusy, setSuggestionBusy] = useState("");
+  const readSuggestions = useCallback(async () => {
+    try {
+      const read = await apiFetch<{ suggestions?: Suggestion[] }>("/api/people/suggestions");
+      setSuggestions(read.suggestions ?? []);
+    } catch { /* the last read stays; the roster's own read names a failure */ }
+  }, []);
   const clearProtected = useCallback(() => {
     setRelationships([]);
     setSelectedId(null);
@@ -219,15 +245,19 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     try {
       const next = await apiFetch<Readiness>("/api/people/readiness");
       setReadiness(next);
+      // Betterment D6: no Set up step. With no store yet the roster is
+      // empty and the suggestions still come; the first Add makes the store.
+      if (stateOf(next) === "unconfigured") { clearProtected(); void readSuggestions(); return; }
       if (stateOf(next) !== "ready") { clearProtected(); return; }
       const list = await apiFetch<{ relationships?: Relationship[] }>(ROSTER_READ);
       setRelationships(list.relationships ?? []);
+      void readSuggestions();
     } catch (cause) {
       clearProtected();
       setReadiness(readinessForError(cause));
       setError(plainFailure("PEOPLE DID NOT LOAD", cause));
     } finally { setLoading(false); }
-  }, [clearProtected]);
+  }, [clearProtected, readSuggestions]);
   useEffect(() => { void load(); }, [load]);
   // A write in another window (a commitment, a 1:1, an agent's write) shows
   // here with no reload. A quiet re-read: no loading state, the person stays
@@ -292,7 +322,8 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     void select(id);
   };
 
-  const unavailable = stateOf(readiness) !== "ready";
+  const unconfigured = stateOf(readiness) === "unconfigured";
+  const unavailable = stateOf(readiness) !== "ready" && !unconfigured;
   const openSettings = () => openSurfaceOr("configure-settings", "/settings", "people-security");
   const recover = () => {
     if (stateOf(readiness) === "locked" || stateOf(readiness) === "unavailable") { void load(); return; }
@@ -351,6 +382,24 @@ export function PeopleCore({ hero, scope }: CoreProps) {
       document.getElementById("people-new-relationship")?.focus();
     }
   };
+  // Betterment D6: Add makes the person in one press (the full name, the
+  // kind, the spoken name and the 1:1 series ride along); Not a person
+  // hides the name for good.
+  const addSuggestion = async (suggestion: Suggestion) => {
+    setSuggestionBusy(suggestion.key); setError("");
+    try {
+      await apiFetch("/api/people/suggestions/add", { method: "POST", json: { key: suggestion.key } });
+      setSuggestions((rows) => rows.filter((row) => row.key !== suggestion.key));
+      await load();
+    } catch (cause) { protectedFailure(cause); } finally { setSuggestionBusy(""); }
+  };
+  const hideSuggestion = async (suggestion: Suggestion) => {
+    setSuggestionBusy(suggestion.key); setError("");
+    try {
+      await apiFetch("/api/people/suggestions/hide", { method: "POST", json: { key: suggestion.key } });
+      setSuggestions((rows) => rows.filter((row) => row.key !== suggestion.key));
+    } catch (cause) { protectedFailure(cause); } finally { setSuggestionBusy(""); }
+  };
   function protectedFailure(cause: unknown) {
     if (isStoreOutage(cause) && (selectedId || relationships.length)) {
       setError(plainFailure("PEOPLE STORE", cause));
@@ -366,17 +415,19 @@ export function PeopleCore({ hero, scope }: CoreProps) {
   }
   const selected = detail ?? relationships.find((row) => row.id === selectedId) ?? null;
   // PHILO-17: the head verb names what it does; on a person's page it is gone.
-  const addOpen = adding || !relationships.length;
+  const addOpen = adding;
   const verbs = unavailable || selected || addOpen ? null : <Button dense variant="primary" onClick={() => { setAdding(true); window.setTimeout(() => document.getElementById("people-new-relationship")?.focus(), 0); }}>Add person</Button>;
 
   if (loading) return <SurfaceState loading />;
   if (unavailable) {
-    const face = readinessFace(stateOf(readiness));
-    const isUnconfigured = stateOf(readiness) === "unconfigured";
+    const state = stateOf(readiness);
+    // Betterment D6: a People read that failed is one line in place.
+    if (state === "unavailable" || state === "locked") return <PeopleReadFailed onRetry={() => void load()} detail={error} />;
+    const face = readinessFace(state);
     return <div className="people-joy-state" data-testid="people-joy-state">
       <div className="people-joy-lead">
-        <Button variant="primary" onClick={recover} data-testid="people-joy-action">{isUnconfigured ? "Set up People" : face.action}</Button>
-        <span className="people-joy-line">{isUnconfigured ? "Encrypted, local-only relationship context" : face.label}</span>
+        <Button variant="primary" onClick={recover} data-testid="people-joy-action">{face.action}</Button>
+        <span className="people-joy-line">{face.label}</span>
       </div>
       {error ? <span className="sr-only">{error}</span> : null}
     </div>;
@@ -446,9 +497,18 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     {peopleHead}
     {nextReading ? <span hidden aria-busy="true" data-testid="people-next-reading" /> : null}
     {nextPlate}
+    {selected ? null : <WhoAreYou />}
     <SurfaceSplit
       detailOpen={Boolean(selected)}
-      main={<Roster rowFacts={rowFacts} addOpen={addOpen} onCloseAdd={relationships.length ? () => setAdding(false) : undefined} onPlan={planOneOnOne} relationships={relationships} selectedId={selectedId} newName={newName} setNewName={setNewName} newKind={newKind} setNewKind={setNewKind} busy={busy} duplicateOf={duplicateShown?.display_name ?? null} onCreate={() => void createRelationship()} onSelect={(id) => void select(id)} projectFilter={projectFilter} onClearProjectFilter={() => setProjectFilter(null)} />}
+      main={!relationships.length && !addOpen && !projectFilter ? (
+        <>
+          {suggestions.length ? null : <p className="people-empty-lead people-empty-line" data-testid="people-empty-roster">People you meet appear here.</p>}
+          <FromYourWork suggestions={suggestions} busyKey={suggestionBusy} onAdd={(row) => void addSuggestion(row)} onHide={(row) => void hideSuggestion(row)} />
+        </>
+      ) : <>
+        <Roster rowFacts={rowFacts} addOpen={addOpen} onCloseAdd={relationships.length ? () => setAdding(false) : undefined} onPlan={planOneOnOne} relationships={relationships} selectedId={selectedId} newName={newName} setNewName={setNewName} newKind={newKind} setNewKind={setNewKind} busy={busy} duplicateOf={duplicateShown?.display_name ?? null} onCreate={() => void createRelationship()} onSelect={(id) => void select(id)} projectFilter={projectFilter} onClearProjectFilter={() => setProjectFilter(null)} />
+        {projectFilter ? null : <FromYourWork suggestions={suggestions} busyKey={suggestionBusy} onAdd={(row) => void addSuggestion(row)} onHide={(row) => void hideSuggestion(row)} />}
+      </>}
       detail={selected ? <RelationshipPane relationship={selected} initialLens={requestedLens} lensRequest={lensRequest} onRefresh={() => void select(selected.id)} onProtectedFailure={protectedFailure} onArchived={() => { clearProtected(); void load(); }} onBack={() => { setSelectedId(null); setDetail(null); keepPlace(PEOPLE_PERSON_PLACE, ""); }} /> : undefined}
     />
     {/* One foot per window: with a person open, the Prep's foot (THIS
@@ -456,6 +516,46 @@ export function PeopleCore({ hero, scope }: CoreProps) {
         was cut off at 393. */}
     {selected ? null : <SurfaceFooter egress={<span className="people-lock" title="Encrypted · Local storage · Notes only" data-testid="people-lock"><span aria-hidden="true">⚿</span> Encrypted</span>} />}
   </div>;
+}
+
+/** Where a suggested name came from, in words. */
+function suggestionSource(row: Suggestion): string {
+  const parts: string[] = [];
+  if (row.series) parts.push(row.series.next_starts_at ? `1:1 ${oneOnOneWhen(row.series.next_starts_at)}` : row.series.label || "1:1 series");
+  else if (row.meetings[0]) parts.push(`named in ${row.meetings[0].title || "a meeting"}`);
+  else if (row.jira) parts.push("assigned in Jira");
+  if (row.promise_count) parts.push(row.promise_count === 1 ? "1 promise" : `${row.promise_count} promises`);
+  return parts.join(" · ");
+}
+
+/** Betterment D6: FROM YOUR MEETINGS: each name with Add and Not a person. */
+function FromYourWork({ suggestions, busyKey, onAdd, onHide }: { suggestions: Suggestion[]; busyKey: string; onAdd(row: Suggestion): void; onHide(row: Suggestion): void }) {
+  if (!suggestions.length) return null;
+  return <SurfaceSection label="From your meetings" data-testid="people-suggestions">
+    <SurfaceRows>{suggestions.map((row) => <div key={row.key} className="people-suggestion" data-testid="people-suggestion">
+      <SurfaceRow
+        glyph={<Avatar name={row.name} />}
+        title={row.name}
+        detail={<><span className="people-role-chip" data-kind={row.relationship_kind}>{relationshipLabel(row.relationship_kind)}</span><span className="people-row-fact" data-quiet="">{suggestionSource(row)}</span></>}
+        verbs={<span className="people-suggestion-verbs">
+          <Button dense variant="primary" loading={busyKey === row.key} disabled={Boolean(busyKey)} onClick={() => onAdd(row)} aria-label={`Add ${row.name}`}>Add</Button>
+          <Button dense variant="ghost" disabled={Boolean(busyKey)} onClick={() => onHide(row)} aria-label={`${row.name} is not a person`}>Not a person</Button>
+        </span>}
+      />
+    </div>)}</SurfaceRows>
+  </SurfaceSection>;
+}
+
+/** FOLLOWUPS D1: an owner string the hub cannot tell is him counts as
+ *  theirs. While his own name is not set, People asks it once. */
+function WhoAreYou() {
+  const owner = useOwnerName();
+  const [asked, setAsked] = useState(false);
+  useEffect(() => { if (!owner.loading && !owner.readError && !owner.isSet) setAsked(true); }, [owner.loading, owner.readError, owner.isSet]);
+  if (!asked) return null;
+  return <SurfaceSection label="Who are you?" className="people-whoami" data-testid="people-who-are-you">
+    <StringGadget label="Your name" value={owner.name} onChange={owner.setName} placeholder="Your name" inputProps={{ onBlur: () => void owner.flush() }} />
+  </SurfaceSection>;
 }
 
 function nameKey(name: string): string {

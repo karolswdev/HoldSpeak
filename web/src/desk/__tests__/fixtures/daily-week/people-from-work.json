@@ -1,0 +1,1869 @@
+{
+ "_source": "The hub's own answers, captured by tests/integration/test_desk_people.py::test_people_from_work_wire (MeetingWebServer + TestClient, isolated HOME, the browser rigs' seeds). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
+ "recordedAt": "2026-10-18T13:18:07.413923-06:00",
+ "before": {
+  "/api/people/readiness": {
+   "readiness": "unconfigured",
+   "state": "unconfigured",
+   "store": "absent",
+   "sync": "local_only",
+   "capture": "notes_only",
+   "reason_code": "people_store_unconfigured"
+  },
+  "/api/people/suggestions": {
+   "suggestions": [
+    {
+     "key": "theo",
+     "name": "Theo",
+     "said": "",
+     "relationship_kind": "direct_report",
+     "source": "meeting",
+     "one_on_one": true,
+     "series": null,
+     "jira": false,
+     "meeting_count": 3,
+     "promise_count": 2,
+     "meetings": [
+      {
+       "id": "m-daily-architecture-review",
+       "title": "Architecture review",
+       "started_at": "2026-10-16T20:00:00+00:00"
+      },
+      {
+       "id": "m-daily-theo-1on1",
+       "title": "1:1 with Theo",
+       "started_at": "2026-10-16T16:00:00+00:00"
+      },
+      {
+       "id": "m-daily-platform-sync",
+       "title": "Payments platform sync",
+       "started_at": "2026-10-16T00:00:00+00:00"
+      }
+     ]
+    },
+    {
+     "key": "jun",
+     "name": "Jun",
+     "said": "",
+     "relationship_kind": "peer",
+     "source": "meeting",
+     "one_on_one": false,
+     "series": null,
+     "jira": false,
+     "meeting_count": 2,
+     "promise_count": 2,
+     "meetings": [
+      {
+       "id": "m-daily-architecture-review",
+       "title": "Architecture review",
+       "started_at": "2026-10-16T20:00:00+00:00"
+      },
+      {
+       "id": "m-daily-platform-sync",
+       "title": "Payments platform sync",
+       "started_at": "2026-10-16T00:00:00+00:00"
+      }
+     ]
+    },
+    {
+     "key": "mira",
+     "name": "Mira",
+     "said": "",
+     "relationship_kind": "peer",
+     "source": "meeting",
+     "one_on_one": false,
+     "series": null,
+     "jira": false,
+     "meeting_count": 1,
+     "promise_count": 1,
+     "meetings": [
+      {
+       "id": "m-daily-platform-sync",
+       "title": "Payments platform sync",
+       "started_at": "2026-10-16T00:00:00+00:00"
+      }
+     ]
+    }
+   ]
+  },
+  "/api/door": {
+   "board": {
+    "now": [
+     {
+      "id": "a96151278717",
+      "text": "Review design doc on settlement retries",
+      "owner": "Me",
+      "due": "2026-10-19",
+      "status": "open",
+      "meeting_id": "m-daily-theo-1on1",
+      "decision_id": "dec-c7e5e38016f841d6",
+      "stale_score": null,
+      "source": "action_item",
+      "lane": "now",
+      "provenance": {
+       "meeting_id": "m-daily-theo-1on1",
+       "segment_text": "I wrote the design doc on settlement retries. Can you review it?",
+       "segment_speaker": "Theo",
+       "segment_start": 0.0,
+       "moment": {
+        "meeting_id": "m-daily-theo-1on1",
+        "source_timestamp": 0.0,
+        "segment_id": 6,
+        "segment_index": 0,
+        "segment_start": 0.0,
+        "segment_end": 20.0,
+        "speaker": "Theo",
+        "text": "I wrote the design doc on settlement retries. Can you review it?"
+       },
+       "available": true,
+       "thread_id": null,
+       "source_ref": null
+      },
+      "target_ref": "action_item:a96151278717",
+      "delegated_at": "2026-10-18T19:18:07.311821+00:00",
+      "created_at": "2026-10-18T19:18:07.287859+00:00",
+      "snoozed_until": null,
+      "deferred_until": null,
+      "lawful_verbs": [
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "a96151278717",
+         "verb": "done"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "a96151278717",
+         "verb": "dismiss"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "a96151278717",
+         "verb": "snooze"
+        },
+        "required_arguments": [
+         "payload.until"
+        ]
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "a96151278717",
+         "verb": "delegate"
+        },
+        "required_arguments": [
+         "payload.to"
+        ]
+       },
+       {
+        "name": "agent.hand",
+        "arguments": {
+         "kind": "action",
+         "id": "a96151278717"
+        }
+       }
+      ]
+     },
+     {
+      "id": "691f0d01b037",
+      "text": "Email Dana about the cutover window",
+      "owner": "Me",
+      "due": "2026-10-19",
+      "status": "open",
+      "meeting_id": "m-daily-platform-sync",
+      "decision_id": "dec-ca308a889d204a3f",
+      "stale_score": null,
+      "source": "action_item",
+      "lane": "now",
+      "provenance": {
+       "meeting_id": "m-daily-platform-sync",
+       "segment_text": "And I'll email Dana about the cutover window on Monday.",
+       "segment_speaker": "Me",
+       "segment_start": 80.0,
+       "moment": {
+        "meeting_id": "m-daily-platform-sync",
+        "source_timestamp": 80.0,
+        "segment_id": 5,
+        "segment_index": 4,
+        "segment_start": 80.0,
+        "segment_end": 100.0,
+        "speaker": "Me",
+        "text": "And I'll email Dana about the cutover window on Monday."
+       },
+       "available": true,
+       "thread_id": null,
+       "source_ref": null
+      },
+      "target_ref": "action_item:691f0d01b037",
+      "delegated_at": "2026-10-18T19:18:07.298122+00:00",
+      "created_at": "2026-10-18T19:18:07.284612+00:00",
+      "snoozed_until": null,
+      "deferred_until": null,
+      "lawful_verbs": [
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "691f0d01b037",
+         "verb": "done"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "691f0d01b037",
+         "verb": "dismiss"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "691f0d01b037",
+         "verb": "snooze"
+        },
+        "required_arguments": [
+         "payload.until"
+        ]
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "691f0d01b037",
+         "verb": "delegate"
+        },
+        "required_arguments": [
+         "payload.to"
+        ]
+       },
+       {
+        "name": "agent.hand",
+        "arguments": {
+         "kind": "action",
+         "id": "691f0d01b037"
+        }
+       }
+      ]
+     },
+     {
+      "id": "82c1cea5e925",
+      "text": "Draft the rollback runbook",
+      "owner": "Mira",
+      "due": "2026-10-20",
+      "status": "open",
+      "meeting_id": "m-daily-platform-sync",
+      "decision_id": "dec-85b6d86863264c3a",
+      "stale_score": null,
+      "source": "action_item",
+      "lane": "now",
+      "provenance": {
+       "meeting_id": "m-daily-platform-sync",
+       "segment_text": "I'll draft the rollback runbook by Tuesday.",
+       "segment_speaker": "Mira",
+       "segment_start": 20.0,
+       "moment": {
+        "meeting_id": "m-daily-platform-sync",
+        "source_timestamp": 20.0,
+        "segment_id": 2,
+        "segment_index": 1,
+        "segment_start": 20.0,
+        "segment_end": 40.0,
+        "speaker": "Mira",
+        "text": "I'll draft the rollback runbook by Tuesday."
+       },
+       "available": true,
+       "thread_id": null,
+       "source_ref": null
+      },
+      "target_ref": "action_item:82c1cea5e925",
+      "delegated_at": "2026-10-18T19:18:07.304850+00:00",
+      "created_at": "2026-10-18T19:18:07.284576+00:00",
+      "snoozed_until": null,
+      "deferred_until": null,
+      "lawful_verbs": [
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "82c1cea5e925",
+         "verb": "done"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "82c1cea5e925",
+         "verb": "dismiss"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "82c1cea5e925",
+         "verb": "snooze"
+        },
+        "required_arguments": [
+         "payload.until"
+        ]
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "82c1cea5e925",
+         "verb": "delegate"
+        },
+        "required_arguments": [
+         "payload.to"
+        ]
+       },
+       {
+        "name": "agent.hand",
+        "arguments": {
+         "kind": "action",
+         "id": "82c1cea5e925"
+        }
+       }
+      ]
+     }
+    ],
+    "waiting": [
+     {
+      "id": "6db59a99968b",
+      "text": "Load-test the dedupe key path",
+      "owner": "Jun",
+      "due": "2026-10-23",
+      "status": "open",
+      "meeting_id": "m-daily-architecture-review",
+      "decision_id": "dec-1b20fc69c36e4ef9",
+      "stale_score": null,
+      "source": "action_item",
+      "lane": "waiting",
+      "provenance": {
+       "meeting_id": "m-daily-architecture-review",
+       "segment_text": "I'll load-test the dedupe key path. Friday next week.",
+       "segment_speaker": "Jun",
+       "segment_start": 60.0,
+       "moment": {
+        "meeting_id": "m-daily-architecture-review",
+        "source_timestamp": 60.0,
+        "segment_id": 14,
+        "segment_index": 3,
+        "segment_start": 60.0,
+        "segment_end": 80.0,
+        "speaker": "Jun",
+        "text": "I'll load-test the dedupe key path. Friday next week."
+       },
+       "available": true,
+       "thread_id": null,
+       "source_ref": null
+      },
+      "target_ref": "action_item:6db59a99968b",
+      "delegated_at": "2026-10-18T19:18:07.315101+00:00",
+      "created_at": "2026-10-18T19:18:07.289490+00:00",
+      "snoozed_until": null,
+      "deferred_until": null,
+      "lawful_verbs": [
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "6db59a99968b",
+         "verb": "done"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "6db59a99968b",
+         "verb": "dismiss"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "6db59a99968b",
+         "verb": "snooze"
+        },
+        "required_arguments": [
+         "payload.until"
+        ]
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "6db59a99968b",
+         "verb": "delegate"
+        },
+        "required_arguments": [
+         "payload.to"
+        ]
+       },
+       {
+        "name": "agent.hand",
+        "arguments": {
+         "kind": "action",
+         "id": "6db59a99968b"
+        }
+       }
+      ]
+     },
+     {
+      "id": "22208d9d83ce",
+      "text": "Write up alert rule changes",
+      "owner": "Theo",
+      "due": "2026-10-22",
+      "status": "open",
+      "meeting_id": "m-daily-theo-1on1",
+      "decision_id": "dec-9b47ba77f06347ef",
+      "stale_score": null,
+      "source": "action_item",
+      "lane": "waiting",
+      "provenance": {
+       "meeting_id": "m-daily-theo-1on1",
+       "segment_text": "I'll write up the alert rule changes by Thursday.",
+       "segment_speaker": "Theo",
+       "segment_start": 40.0,
+       "moment": {
+        "meeting_id": "m-daily-theo-1on1",
+        "source_timestamp": 40.0,
+        "segment_id": 8,
+        "segment_index": 2,
+        "segment_start": 40.0,
+        "segment_end": 60.0,
+        "speaker": "Theo",
+        "text": "I'll write up the alert rule changes by Thursday."
+       },
+       "available": true,
+       "thread_id": null,
+       "source_ref": null
+      },
+      "target_ref": "action_item:22208d9d83ce",
+      "delegated_at": "2026-10-18T19:18:07.309945+00:00",
+      "created_at": "2026-10-18T19:18:07.287863+00:00",
+      "snoozed_until": null,
+      "deferred_until": null,
+      "lawful_verbs": [
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "22208d9d83ce",
+         "verb": "done"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "22208d9d83ce",
+         "verb": "dismiss"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "22208d9d83ce",
+         "verb": "snooze"
+        },
+        "required_arguments": [
+         "payload.until"
+        ]
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "22208d9d83ce",
+         "verb": "delegate"
+        },
+        "required_arguments": [
+         "payload.to"
+        ]
+       },
+       {
+        "name": "agent.hand",
+        "arguments": {
+         "kind": "action",
+         "id": "22208d9d83ce"
+        }
+       }
+      ]
+     },
+     {
+      "id": "6a994ec7e2ca",
+      "text": "Profile the reconciliation job",
+      "owner": "Theo",
+      "due": "2026-10-23",
+      "status": "open",
+      "meeting_id": "m-daily-platform-sync",
+      "decision_id": "dec-d65c432f161d4469",
+      "stale_score": null,
+      "source": "action_item",
+      "lane": "waiting",
+      "provenance": {
+       "meeting_id": "m-daily-platform-sync",
+       "segment_text": "I can profile the reconciliation job, Friday next week at the latest.",
+       "segment_speaker": "Theo",
+       "segment_start": 40.0,
+       "moment": {
+        "meeting_id": "m-daily-platform-sync",
+        "source_timestamp": 40.0,
+        "segment_id": 3,
+        "segment_index": 2,
+        "segment_start": 40.0,
+        "segment_end": 60.0,
+        "speaker": "Theo",
+        "text": "I can profile the reconciliation job, Friday next week at the latest."
+       },
+       "available": true,
+       "thread_id": null,
+       "source_ref": null
+      },
+      "target_ref": "action_item:6a994ec7e2ca",
+      "delegated_at": "2026-10-18T19:18:07.302860+00:00",
+      "created_at": "2026-10-18T19:18:07.284605+00:00",
+      "snoozed_until": null,
+      "deferred_until": null,
+      "lawful_verbs": [
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "6a994ec7e2ca",
+         "verb": "done"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "6a994ec7e2ca",
+         "verb": "dismiss"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "6a994ec7e2ca",
+         "verb": "snooze"
+        },
+        "required_arguments": [
+         "payload.until"
+        ]
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "6a994ec7e2ca",
+         "verb": "delegate"
+        },
+        "required_arguments": [
+         "payload.to"
+        ]
+       },
+       {
+        "name": "agent.hand",
+        "arguments": {
+         "kind": "action",
+         "id": "6a994ec7e2ca"
+        }
+       }
+      ]
+     }
+    ],
+    "unassigned": [],
+    "overdue": [
+     {
+      "id": "931d9391783f",
+      "text": "Confirm the vendor freeze dates",
+      "owner": "Jun",
+      "due": "2026-10-16",
+      "status": "open",
+      "meeting_id": "m-daily-platform-sync",
+      "decision_id": "dec-0f106415fc304071",
+      "stale_score": null,
+      "source": "action_item",
+      "lane": "overdue",
+      "provenance": {
+       "meeting_id": "m-daily-platform-sync",
+       "segment_text": "I'll confirm the vendor freeze dates this week.",
+       "segment_speaker": "Jun",
+       "segment_start": 60.0,
+       "moment": {
+        "meeting_id": "m-daily-platform-sync",
+        "source_timestamp": 60.0,
+        "segment_id": 4,
+        "segment_index": 3,
+        "segment_start": 60.0,
+        "segment_end": 80.0,
+        "speaker": "Jun",
+        "text": "I'll confirm the vendor freeze dates this week."
+       },
+       "available": true,
+       "thread_id": null,
+       "source_ref": null
+      },
+      "target_ref": "action_item:931d9391783f",
+      "delegated_at": "2026-10-18T19:18:07.300917+00:00",
+      "created_at": "2026-10-18T19:18:07.284610+00:00",
+      "snoozed_until": null,
+      "deferred_until": null,
+      "lawful_verbs": [
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "931d9391783f",
+         "verb": "done"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "931d9391783f",
+         "verb": "dismiss"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "931d9391783f",
+         "verb": "snooze"
+        },
+        "required_arguments": [
+         "payload.until"
+        ]
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "931d9391783f",
+         "verb": "delegate"
+        },
+        "required_arguments": [
+         "payload.to"
+        ]
+       },
+       {
+        "name": "agent.hand",
+        "arguments": {
+         "kind": "action",
+         "id": "931d9391783f"
+        }
+       }
+      ]
+     }
+    ],
+    "active": []
+   },
+   "upcoming": [],
+   "counts": {
+    "overdue": 1,
+    "now": 3,
+    "waiting": 3,
+    "active": 0,
+    "upcoming_today": 0
+   },
+   "calendar_configured": false,
+   "week": {
+    "days": [],
+    "total": 0,
+    "has_calendar": false,
+    "starts_at": "2026-10-12T06:00:00+00:00",
+    "ends_at": "2026-10-19T06:00:00+00:00"
+   },
+   "people_store_state": "unconfigured"
+  },
+  "/api/settings": {
+   "config_version": 1,
+   "control_mode": "yolo",
+   "hotkey": {
+    "key": "alt_r",
+    "display": "⌥R"
+   },
+   "model": {
+    "name": "base",
+    "warm_on_start": true,
+    "backend": "auto",
+    "language": "auto",
+    "transcribe_timeout_seconds": 120.0,
+    "local_model_preload_authority": ""
+   },
+   "ui": {
+    "desk_sounds": true
+   },
+   "meeting": {
+    "mic_device": null,
+    "system_audio_device": null,
+    "mic_label": "Me",
+    "remote_label": "Remote",
+    "auto_export": false,
+    "export_format": "markdown",
+    "intel_enabled": false,
+    "intel_provider": "local",
+    "intel_realtime_model": "~/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
+    "intel_temperature": 0.2,
+    "intel_summary_model": null,
+    "intel_deferred_enabled": true,
+    "intelligence_auto": "every",
+    "auto_record": "off",
+    "auto_record_lead_minutes": 5,
+    "intel_retry_base_seconds": 30,
+    "intel_retry_max_seconds": 900,
+    "intel_retry_max_attempts": 6,
+    "intel_retry_failure_webhook_header_name": null,
+    "intel_cloud_reasoning_effort": null,
+    "intel_cloud_store": false,
+    "intel_profile_id": null,
+    "mir_enabled": true,
+    "routing_profile": "balanced",
+    "intent_router_enabled": true,
+    "intent_window_seconds": 90,
+    "intent_step_seconds": 30,
+    "intent_score_threshold": 0.6,
+    "intent_hysteresis_windows": 1,
+    "disabled_plugins": [],
+    "intent_segment_probe_enabled": false,
+    "allow_actuators": true,
+    "allowed_actuators": [
+     "*"
+    ],
+    "webhook_allowed_hosts": [
+     "*"
+    ],
+    "companion_github_repo": "",
+    "diarization_enabled": false,
+    "diarize_mic": false,
+    "cross_meeting_recognition": true,
+    "similarity_threshold": 0.75
+   },
+   "dictation": {
+    "pipeline": {
+     "enabled": true,
+     "stages": [
+      "intent-router",
+      "kb-enricher"
+     ],
+     "max_total_latency_ms": 600,
+     "target_profile_override": "auto",
+     "rewrite_passes": 1,
+     "corrections_enabled": true,
+     "target_detect_llm_enabled": false,
+     "target_detect_llm_below": 0.8,
+     "journal_enabled": true,
+     "journal_retention": 500
+    },
+    "runtime": {
+     "backend": "auto",
+     "mlx_model": "",
+     "llama_cpp_model_path": "~/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
+     "profile_id": null,
+     "openai_compatible_timeout_seconds": 8.0,
+     "n_ctx": 2048,
+     "n_threads": null,
+     "n_gpu_layers": -1,
+     "warm_on_start": false,
+     "eviction_idle_seconds": 0
+    },
+    "macros": {
+     "enabled": false,
+     "items": []
+    },
+    "spoken_symbols": [],
+    "preview_before_type": false
+   },
+   "device": {},
+   "presence": {
+    "enabled": false,
+    "mascot": false
+   },
+   "wake_word": {
+    "enabled": false,
+    "model": "hey_jarvis",
+    "threshold": 0.5,
+    "armed_window_seconds": 8.0,
+    "action": "preview"
+   },
+   "mesh": {
+    "device_name": ""
+   },
+   "cadence": {
+    "enabled": false,
+    "brief_enabled": true,
+    "brief_hour": 6,
+    "pressure": "normal",
+    "use_llm": false,
+    "tick_interval_seconds": 300,
+    "quiet_hours_start": 22,
+    "quiet_hours_end": 8,
+    "max_nudges_per_day": 12
+   },
+   "cadence_telegram": {
+    "enabled": false,
+    "allowed_chat_ids": []
+   },
+   "rails_observer": {
+    "enabled": false,
+    "profile_id": null,
+    "poll_seconds": 30,
+    "tail": 20
+   },
+   "thoughts": {
+    "inference_target_id": null
+   },
+   "calendar": {
+    "sources": [],
+    "subscription": ""
+   },
+   "owner": {
+    "name": "",
+    "aliases": []
+   },
+   "people": {
+    "mcp_access": "write"
+   },
+   "agents": {
+    "working_at_once": 6
+   },
+   "_revision": "997b3842a65dcdb4",
+   "_calendar_subscription": {
+    "kind": "disabled",
+    "host": "",
+    "refresh_seconds": 900,
+    "egress": false
+   },
+   "_calendar_sources": [],
+   "_placement": {
+    "meeting": {
+     "placement_source": "provider",
+     "placement_reason": "",
+     "provider_intent": "local",
+     "provider_honored": true,
+     "boundary": "local",
+     "target_id": "",
+     "target_name": "",
+     "engine": "local",
+     "model": "Qwen3.5-4B-Q4_K_M",
+     "node": "",
+     "runnable": false,
+     "runnable_reason": "No language model on this hub. Pick one in Settings under Intelligence."
+    }
+   },
+   "_secrets": {
+    "web_token": {
+     "configured": false
+    },
+    "device_psk": {
+     "configured": false
+    },
+    "telegram_bot_token": {
+     "configured": false
+    },
+    "telegram_pairing_code": {
+     "configured": false
+    },
+    "failure_webhook_url": {
+     "configured": false
+    },
+    "failure_webhook_credential": {
+     "configured": false
+    },
+    "companion_webhook_url": {
+     "configured": false
+    }
+   },
+   "_runtime_status": {
+    "counters": {
+     "model_loads": 0,
+     "classify_calls": 0,
+     "classify_failures": 0,
+     "constrained_retries": 0
+    },
+    "session": {
+     "llm_disabled_for_session": false,
+     "disabled_reason": null
+    }
+   }
+  }
+ },
+ "added": {
+  "theo": {
+   "relationship": {
+    "id": "rel-theo",
+    "display_name": "Theo",
+    "relationship_kind": "direct_report",
+    "role_context": "",
+    "timezone": "",
+    "cadence": "",
+    "project_refs": null,
+    "calendar_links": null,
+    "owner_aliases": null,
+    "state": "active",
+    "created_at": "2026-10-18T19:18:07Z",
+    "updated_at": "2026-10-18T19:18:07Z"
+   }
+  },
+  "jun": {
+   "relationship": {
+    "id": "rel-jun",
+    "display_name": "Jun",
+    "relationship_kind": "peer",
+    "role_context": "",
+    "timezone": "",
+    "cadence": "",
+    "project_refs": null,
+    "calendar_links": null,
+    "owner_aliases": null,
+    "state": "active",
+    "created_at": "2026-10-18T19:18:07Z",
+    "updated_at": "2026-10-18T19:18:07Z"
+   }
+  },
+  "mira": {
+   "relationship": {
+    "id": "rel-mira",
+    "display_name": "Mira",
+    "relationship_kind": "peer",
+    "role_context": "",
+    "timezone": "",
+    "cadence": "",
+    "project_refs": null,
+    "calendar_links": null,
+    "owner_aliases": null,
+    "state": "active",
+    "created_at": "2026-10-18T19:18:07Z",
+    "updated_at": "2026-10-18T19:18:07Z"
+   }
+  }
+ },
+ "after": {
+  "/api/people/readiness": {
+   "readiness": "ready",
+   "state": "ready",
+   "store": "encrypted",
+   "sync": "local_only",
+   "capture": "notes_only"
+  },
+  "/api/people/suggestions": {
+   "suggestions": []
+  },
+  "/api/door": {
+   "board": {
+    "now": [
+     {
+      "id": "a96151278717",
+      "text": "Review design doc on settlement retries",
+      "owner": "Me",
+      "due": "2026-10-19",
+      "status": "open",
+      "meeting_id": "m-daily-theo-1on1",
+      "decision_id": "dec-c7e5e38016f841d6",
+      "stale_score": null,
+      "source": "action_item",
+      "lane": "now",
+      "provenance": {
+       "meeting_id": "m-daily-theo-1on1",
+       "segment_text": "I wrote the design doc on settlement retries. Can you review it?",
+       "segment_speaker": "Theo",
+       "segment_start": 0.0,
+       "moment": {
+        "meeting_id": "m-daily-theo-1on1",
+        "source_timestamp": 0.0,
+        "segment_id": 6,
+        "segment_index": 0,
+        "segment_start": 0.0,
+        "segment_end": 20.0,
+        "speaker": "Theo",
+        "text": "I wrote the design doc on settlement retries. Can you review it?"
+       },
+       "available": true,
+       "thread_id": null,
+       "source_ref": null
+      },
+      "target_ref": "action_item:a96151278717",
+      "delegated_at": "2026-10-18T19:18:07.311821+00:00",
+      "created_at": "2026-10-18T19:18:07.287859+00:00",
+      "snoozed_until": null,
+      "deferred_until": null,
+      "lawful_verbs": [
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "a96151278717",
+         "verb": "done"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "a96151278717",
+         "verb": "dismiss"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "a96151278717",
+         "verb": "snooze"
+        },
+        "required_arguments": [
+         "payload.until"
+        ]
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "a96151278717",
+         "verb": "delegate"
+        },
+        "required_arguments": [
+         "payload.to"
+        ]
+       },
+       {
+        "name": "agent.hand",
+        "arguments": {
+         "kind": "action",
+         "id": "a96151278717"
+        }
+       }
+      ]
+     },
+     {
+      "id": "691f0d01b037",
+      "text": "Email Dana about the cutover window",
+      "owner": "Me",
+      "due": "2026-10-19",
+      "status": "open",
+      "meeting_id": "m-daily-platform-sync",
+      "decision_id": "dec-ca308a889d204a3f",
+      "stale_score": null,
+      "source": "action_item",
+      "lane": "now",
+      "provenance": {
+       "meeting_id": "m-daily-platform-sync",
+       "segment_text": "And I'll email Dana about the cutover window on Monday.",
+       "segment_speaker": "Me",
+       "segment_start": 80.0,
+       "moment": {
+        "meeting_id": "m-daily-platform-sync",
+        "source_timestamp": 80.0,
+        "segment_id": 5,
+        "segment_index": 4,
+        "segment_start": 80.0,
+        "segment_end": 100.0,
+        "speaker": "Me",
+        "text": "And I'll email Dana about the cutover window on Monday."
+       },
+       "available": true,
+       "thread_id": null,
+       "source_ref": null
+      },
+      "target_ref": "action_item:691f0d01b037",
+      "delegated_at": "2026-10-18T19:18:07.298122+00:00",
+      "created_at": "2026-10-18T19:18:07.284612+00:00",
+      "snoozed_until": null,
+      "deferred_until": null,
+      "lawful_verbs": [
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "691f0d01b037",
+         "verb": "done"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "691f0d01b037",
+         "verb": "dismiss"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "691f0d01b037",
+         "verb": "snooze"
+        },
+        "required_arguments": [
+         "payload.until"
+        ]
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "691f0d01b037",
+         "verb": "delegate"
+        },
+        "required_arguments": [
+         "payload.to"
+        ]
+       },
+       {
+        "name": "agent.hand",
+        "arguments": {
+         "kind": "action",
+         "id": "691f0d01b037"
+        }
+       }
+      ]
+     },
+     {
+      "id": "82c1cea5e925",
+      "text": "Draft the rollback runbook",
+      "owner": "Mira",
+      "due": "2026-10-20",
+      "status": "open",
+      "meeting_id": "m-daily-platform-sync",
+      "decision_id": "dec-85b6d86863264c3a",
+      "stale_score": null,
+      "source": "action_item",
+      "lane": "now",
+      "provenance": {
+       "meeting_id": "m-daily-platform-sync",
+       "segment_text": "I'll draft the rollback runbook by Tuesday.",
+       "segment_speaker": "Mira",
+       "segment_start": 20.0,
+       "moment": {
+        "meeting_id": "m-daily-platform-sync",
+        "source_timestamp": 20.0,
+        "segment_id": 2,
+        "segment_index": 1,
+        "segment_start": 20.0,
+        "segment_end": 40.0,
+        "speaker": "Mira",
+        "text": "I'll draft the rollback runbook by Tuesday."
+       },
+       "available": true,
+       "thread_id": null,
+       "source_ref": null
+      },
+      "target_ref": "action_item:82c1cea5e925",
+      "delegated_at": "2026-10-18T19:18:07.304850+00:00",
+      "created_at": "2026-10-18T19:18:07.284576+00:00",
+      "snoozed_until": null,
+      "deferred_until": null,
+      "lawful_verbs": [
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "82c1cea5e925",
+         "verb": "done"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "82c1cea5e925",
+         "verb": "dismiss"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "82c1cea5e925",
+         "verb": "snooze"
+        },
+        "required_arguments": [
+         "payload.until"
+        ]
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "82c1cea5e925",
+         "verb": "delegate"
+        },
+        "required_arguments": [
+         "payload.to"
+        ]
+       },
+       {
+        "name": "agent.hand",
+        "arguments": {
+         "kind": "action",
+         "id": "82c1cea5e925"
+        }
+       }
+      ],
+      "person_label": "Mira",
+      "person_relationship_id": "rel-mira"
+     }
+    ],
+    "waiting": [
+     {
+      "id": "6db59a99968b",
+      "text": "Load-test the dedupe key path",
+      "owner": "Jun",
+      "due": "2026-10-23",
+      "status": "open",
+      "meeting_id": "m-daily-architecture-review",
+      "decision_id": "dec-1b20fc69c36e4ef9",
+      "stale_score": null,
+      "source": "action_item",
+      "lane": "waiting",
+      "provenance": {
+       "meeting_id": "m-daily-architecture-review",
+       "segment_text": "I'll load-test the dedupe key path. Friday next week.",
+       "segment_speaker": "Jun",
+       "segment_start": 60.0,
+       "moment": {
+        "meeting_id": "m-daily-architecture-review",
+        "source_timestamp": 60.0,
+        "segment_id": 14,
+        "segment_index": 3,
+        "segment_start": 60.0,
+        "segment_end": 80.0,
+        "speaker": "Jun",
+        "text": "I'll load-test the dedupe key path. Friday next week."
+       },
+       "available": true,
+       "thread_id": null,
+       "source_ref": null
+      },
+      "target_ref": "action_item:6db59a99968b",
+      "delegated_at": "2026-10-18T19:18:07.315101+00:00",
+      "created_at": "2026-10-18T19:18:07.289490+00:00",
+      "snoozed_until": null,
+      "deferred_until": null,
+      "lawful_verbs": [
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "6db59a99968b",
+         "verb": "done"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "6db59a99968b",
+         "verb": "dismiss"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "6db59a99968b",
+         "verb": "snooze"
+        },
+        "required_arguments": [
+         "payload.until"
+        ]
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "6db59a99968b",
+         "verb": "delegate"
+        },
+        "required_arguments": [
+         "payload.to"
+        ]
+       },
+       {
+        "name": "agent.hand",
+        "arguments": {
+         "kind": "action",
+         "id": "6db59a99968b"
+        }
+       }
+      ],
+      "person_label": "Jun",
+      "person_relationship_id": "rel-jun"
+     },
+     {
+      "id": "22208d9d83ce",
+      "text": "Write up alert rule changes",
+      "owner": "Theo",
+      "due": "2026-10-22",
+      "status": "open",
+      "meeting_id": "m-daily-theo-1on1",
+      "decision_id": "dec-9b47ba77f06347ef",
+      "stale_score": null,
+      "source": "action_item",
+      "lane": "waiting",
+      "provenance": {
+       "meeting_id": "m-daily-theo-1on1",
+       "segment_text": "I'll write up the alert rule changes by Thursday.",
+       "segment_speaker": "Theo",
+       "segment_start": 40.0,
+       "moment": {
+        "meeting_id": "m-daily-theo-1on1",
+        "source_timestamp": 40.0,
+        "segment_id": 8,
+        "segment_index": 2,
+        "segment_start": 40.0,
+        "segment_end": 60.0,
+        "speaker": "Theo",
+        "text": "I'll write up the alert rule changes by Thursday."
+       },
+       "available": true,
+       "thread_id": null,
+       "source_ref": null
+      },
+      "target_ref": "action_item:22208d9d83ce",
+      "delegated_at": "2026-10-18T19:18:07.309945+00:00",
+      "created_at": "2026-10-18T19:18:07.287863+00:00",
+      "snoozed_until": null,
+      "deferred_until": null,
+      "lawful_verbs": [
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "22208d9d83ce",
+         "verb": "done"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "22208d9d83ce",
+         "verb": "dismiss"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "22208d9d83ce",
+         "verb": "snooze"
+        },
+        "required_arguments": [
+         "payload.until"
+        ]
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "22208d9d83ce",
+         "verb": "delegate"
+        },
+        "required_arguments": [
+         "payload.to"
+        ]
+       },
+       {
+        "name": "agent.hand",
+        "arguments": {
+         "kind": "action",
+         "id": "22208d9d83ce"
+        }
+       }
+      ],
+      "person_label": "Theo",
+      "person_relationship_id": "rel-theo"
+     },
+     {
+      "id": "6a994ec7e2ca",
+      "text": "Profile the reconciliation job",
+      "owner": "Theo",
+      "due": "2026-10-23",
+      "status": "open",
+      "meeting_id": "m-daily-platform-sync",
+      "decision_id": "dec-d65c432f161d4469",
+      "stale_score": null,
+      "source": "action_item",
+      "lane": "waiting",
+      "provenance": {
+       "meeting_id": "m-daily-platform-sync",
+       "segment_text": "I can profile the reconciliation job, Friday next week at the latest.",
+       "segment_speaker": "Theo",
+       "segment_start": 40.0,
+       "moment": {
+        "meeting_id": "m-daily-platform-sync",
+        "source_timestamp": 40.0,
+        "segment_id": 3,
+        "segment_index": 2,
+        "segment_start": 40.0,
+        "segment_end": 60.0,
+        "speaker": "Theo",
+        "text": "I can profile the reconciliation job, Friday next week at the latest."
+       },
+       "available": true,
+       "thread_id": null,
+       "source_ref": null
+      },
+      "target_ref": "action_item:6a994ec7e2ca",
+      "delegated_at": "2026-10-18T19:18:07.302860+00:00",
+      "created_at": "2026-10-18T19:18:07.284605+00:00",
+      "snoozed_until": null,
+      "deferred_until": null,
+      "lawful_verbs": [
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "6a994ec7e2ca",
+         "verb": "done"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "6a994ec7e2ca",
+         "verb": "dismiss"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "6a994ec7e2ca",
+         "verb": "snooze"
+        },
+        "required_arguments": [
+         "payload.until"
+        ]
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "6a994ec7e2ca",
+         "verb": "delegate"
+        },
+        "required_arguments": [
+         "payload.to"
+        ]
+       },
+       {
+        "name": "agent.hand",
+        "arguments": {
+         "kind": "action",
+         "id": "6a994ec7e2ca"
+        }
+       }
+      ],
+      "person_label": "Theo",
+      "person_relationship_id": "rel-theo"
+     }
+    ],
+    "unassigned": [],
+    "overdue": [
+     {
+      "id": "931d9391783f",
+      "text": "Confirm the vendor freeze dates",
+      "owner": "Jun",
+      "due": "2026-10-16",
+      "status": "open",
+      "meeting_id": "m-daily-platform-sync",
+      "decision_id": "dec-0f106415fc304071",
+      "stale_score": null,
+      "source": "action_item",
+      "lane": "overdue",
+      "provenance": {
+       "meeting_id": "m-daily-platform-sync",
+       "segment_text": "I'll confirm the vendor freeze dates this week.",
+       "segment_speaker": "Jun",
+       "segment_start": 60.0,
+       "moment": {
+        "meeting_id": "m-daily-platform-sync",
+        "source_timestamp": 60.0,
+        "segment_id": 4,
+        "segment_index": 3,
+        "segment_start": 60.0,
+        "segment_end": 80.0,
+        "speaker": "Jun",
+        "text": "I'll confirm the vendor freeze dates this week."
+       },
+       "available": true,
+       "thread_id": null,
+       "source_ref": null
+      },
+      "target_ref": "action_item:931d9391783f",
+      "delegated_at": "2026-10-18T19:18:07.300917+00:00",
+      "created_at": "2026-10-18T19:18:07.284610+00:00",
+      "snoozed_until": null,
+      "deferred_until": null,
+      "lawful_verbs": [
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "931d9391783f",
+         "verb": "done"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "931d9391783f",
+         "verb": "dismiss"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "931d9391783f",
+         "verb": "snooze"
+        },
+        "required_arguments": [
+         "payload.until"
+        ]
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "931d9391783f",
+         "verb": "delegate"
+        },
+        "required_arguments": [
+         "payload.to"
+        ]
+       },
+       {
+        "name": "agent.hand",
+        "arguments": {
+         "kind": "action",
+         "id": "931d9391783f"
+        }
+       }
+      ],
+      "person_label": "Jun",
+      "person_relationship_id": "rel-jun"
+     }
+    ],
+    "active": []
+   },
+   "upcoming": [],
+   "counts": {
+    "overdue": 1,
+    "now": 3,
+    "waiting": 3,
+    "active": 0,
+    "upcoming_today": 0
+   },
+   "calendar_configured": false,
+   "week": {
+    "days": [],
+    "total": 0,
+    "has_calendar": false,
+    "starts_at": "2026-10-12T06:00:00+00:00",
+    "ends_at": "2026-10-19T06:00:00+00:00"
+   },
+   "people_store_state": "ready"
+  },
+  "/api/settings": {
+   "config_version": 1,
+   "control_mode": "yolo",
+   "hotkey": {
+    "key": "alt_r",
+    "display": "⌥R"
+   },
+   "model": {
+    "name": "base",
+    "warm_on_start": true,
+    "backend": "auto",
+    "language": "auto",
+    "transcribe_timeout_seconds": 120.0,
+    "local_model_preload_authority": ""
+   },
+   "ui": {
+    "desk_sounds": true
+   },
+   "meeting": {
+    "mic_device": null,
+    "system_audio_device": null,
+    "mic_label": "Me",
+    "remote_label": "Remote",
+    "auto_export": false,
+    "export_format": "markdown",
+    "intel_enabled": false,
+    "intel_provider": "local",
+    "intel_realtime_model": "~/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
+    "intel_temperature": 0.2,
+    "intel_summary_model": null,
+    "intel_deferred_enabled": true,
+    "intelligence_auto": "every",
+    "auto_record": "off",
+    "auto_record_lead_minutes": 5,
+    "intel_retry_base_seconds": 30,
+    "intel_retry_max_seconds": 900,
+    "intel_retry_max_attempts": 6,
+    "intel_retry_failure_webhook_header_name": null,
+    "intel_cloud_reasoning_effort": null,
+    "intel_cloud_store": false,
+    "intel_profile_id": null,
+    "mir_enabled": true,
+    "routing_profile": "balanced",
+    "intent_router_enabled": true,
+    "intent_window_seconds": 90,
+    "intent_step_seconds": 30,
+    "intent_score_threshold": 0.6,
+    "intent_hysteresis_windows": 1,
+    "disabled_plugins": [],
+    "intent_segment_probe_enabled": false,
+    "allow_actuators": true,
+    "allowed_actuators": [
+     "*"
+    ],
+    "webhook_allowed_hosts": [
+     "*"
+    ],
+    "companion_github_repo": "",
+    "diarization_enabled": false,
+    "diarize_mic": false,
+    "cross_meeting_recognition": true,
+    "similarity_threshold": 0.75
+   },
+   "dictation": {
+    "pipeline": {
+     "enabled": true,
+     "stages": [
+      "intent-router",
+      "kb-enricher"
+     ],
+     "max_total_latency_ms": 600,
+     "target_profile_override": "auto",
+     "rewrite_passes": 1,
+     "corrections_enabled": true,
+     "target_detect_llm_enabled": false,
+     "target_detect_llm_below": 0.8,
+     "journal_enabled": true,
+     "journal_retention": 500
+    },
+    "runtime": {
+     "backend": "auto",
+     "mlx_model": "",
+     "llama_cpp_model_path": "~/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
+     "profile_id": null,
+     "openai_compatible_timeout_seconds": 8.0,
+     "n_ctx": 2048,
+     "n_threads": null,
+     "n_gpu_layers": -1,
+     "warm_on_start": false,
+     "eviction_idle_seconds": 0
+    },
+    "macros": {
+     "enabled": false,
+     "items": []
+    },
+    "spoken_symbols": [],
+    "preview_before_type": false
+   },
+   "device": {},
+   "presence": {
+    "enabled": false,
+    "mascot": false
+   },
+   "wake_word": {
+    "enabled": false,
+    "model": "hey_jarvis",
+    "threshold": 0.5,
+    "armed_window_seconds": 8.0,
+    "action": "preview"
+   },
+   "mesh": {
+    "device_name": ""
+   },
+   "cadence": {
+    "enabled": false,
+    "brief_enabled": true,
+    "brief_hour": 6,
+    "pressure": "normal",
+    "use_llm": false,
+    "tick_interval_seconds": 300,
+    "quiet_hours_start": 22,
+    "quiet_hours_end": 8,
+    "max_nudges_per_day": 12
+   },
+   "cadence_telegram": {
+    "enabled": false,
+    "allowed_chat_ids": []
+   },
+   "rails_observer": {
+    "enabled": false,
+    "profile_id": null,
+    "poll_seconds": 30,
+    "tail": 20
+   },
+   "thoughts": {
+    "inference_target_id": null
+   },
+   "calendar": {
+    "sources": [],
+    "subscription": ""
+   },
+   "owner": {
+    "name": "",
+    "aliases": []
+   },
+   "people": {
+    "mcp_access": "write"
+   },
+   "agents": {
+    "working_at_once": 6
+   },
+   "_revision": "997b3842a65dcdb4",
+   "_calendar_subscription": {
+    "kind": "disabled",
+    "host": "",
+    "refresh_seconds": 900,
+    "egress": false
+   },
+   "_calendar_sources": [],
+   "_placement": {
+    "meeting": {
+     "placement_source": "provider",
+     "placement_reason": "",
+     "provider_intent": "local",
+     "provider_honored": true,
+     "boundary": "local",
+     "target_id": "",
+     "target_name": "",
+     "engine": "local",
+     "model": "Qwen3.5-4B-Q4_K_M",
+     "node": "",
+     "runnable": false,
+     "runnable_reason": "No language model on this hub. Pick one in Settings under Intelligence."
+    }
+   },
+   "_secrets": {
+    "web_token": {
+     "configured": false
+    },
+    "device_psk": {
+     "configured": false
+    },
+    "telegram_bot_token": {
+     "configured": false
+    },
+    "telegram_pairing_code": {
+     "configured": false
+    },
+    "failure_webhook_url": {
+     "configured": false
+    },
+    "failure_webhook_credential": {
+     "configured": false
+    },
+    "companion_webhook_url": {
+     "configured": false
+    }
+   },
+   "_runtime_status": {
+    "counters": {
+     "model_loads": 0,
+     "classify_calls": 0,
+     "classify_failures": 0,
+     "constrained_retries": 0
+    },
+    "session": {
+     "llm_disabled_for_session": false,
+     "disabled_reason": null
+    }
+   }
+  },
+  "/api/people/relationships?counts=1": {
+   "relationships": [
+    {
+     "id": "rel-theo",
+     "display_name": "Theo",
+     "relationship_kind": "direct_report",
+     "role_context": "",
+     "timezone": "",
+     "cadence": "",
+     "project_refs": null,
+     "calendar_links": null,
+     "owner_aliases": null,
+     "state": "active",
+     "created_at": "2026-10-18T19:18:07Z",
+     "updated_at": "2026-10-18T19:18:07Z",
+     "you_owe_count": 0,
+     "owes_you_count": 0
+    },
+    {
+     "id": "rel-jun",
+     "display_name": "Jun",
+     "relationship_kind": "peer",
+     "role_context": "",
+     "timezone": "",
+     "cadence": "",
+     "project_refs": null,
+     "calendar_links": null,
+     "owner_aliases": null,
+     "state": "active",
+     "created_at": "2026-10-18T19:18:07Z",
+     "updated_at": "2026-10-18T19:18:07Z",
+     "you_owe_count": 0,
+     "owes_you_count": 0
+    },
+    {
+     "id": "rel-mira",
+     "display_name": "Mira",
+     "relationship_kind": "peer",
+     "role_context": "",
+     "timezone": "",
+     "cadence": "",
+     "project_refs": null,
+     "calendar_links": null,
+     "owner_aliases": null,
+     "state": "active",
+     "created_at": "2026-10-18T19:18:07Z",
+     "updated_at": "2026-10-18T19:18:07Z",
+     "you_owe_count": 0,
+     "owes_you_count": 0
+    }
+   ]
+  },
+  "/api/people/relationships/rel-mira": {
+   "relationship": {
+    "id": "rel-mira",
+    "display_name": "Mira",
+    "relationship_kind": "peer",
+    "role_context": "",
+    "timezone": "",
+    "cadence": "",
+    "project_refs": null,
+    "calendar_links": null,
+    "owner_aliases": null,
+    "state": "active",
+    "created_at": "2026-10-18T19:18:07Z",
+    "updated_at": "2026-10-18T19:18:07Z",
+    "sessions": [],
+    "requests": [],
+    "commitments": [],
+    "owed_to_you": [],
+    "notes": [],
+    "next_one_on_one": null,
+    "next_one_on_one_event": null
+   }
+  },
+  "/api/people/relationships/rel-mira/one-on-ones": {
+   "one_on_ones": []
+  },
+  "/api/people/relationships/rel-mira/brief": {
+   "brief": {
+    "relationship_id": "rel-mira",
+    "display_name": "Mira",
+    "open_commitments": [],
+    "owed_to_you": [],
+    "agenda_items": [],
+    "grounding_note_count": 0,
+    "linked_meetings": [],
+    "unlinked_meeting_count": 0,
+    "calendar_link_suggestions": [],
+    "next_one_on_one": null,
+    "open_meeting_actions": [
+     {
+      "id": "82c1cea5e925",
+      "task": "Draft the rollback runbook",
+      "owner": "Mira",
+      "due": "2026-10-20",
+      "due_said": "Tuesday",
+      "status": "open",
+      "delegated_at": "2026-10-18T19:18:07.304850+00:00",
+      "meeting_id": "m-daily-platform-sync",
+      "meeting_title": "Payments platform sync",
+      "meeting_started_at": "2026-10-16T00:00:00+00:00",
+      "calendar_event_id": null,
+      "source_type": "meeting",
+      "source_ref": ""
+     }
+    ],
+    "i_owe_meeting_actions": [],
+    "projects": [],
+    "watch_summary": {
+     "prs_waiting": [],
+     "oldest_waiting_days": 0,
+     "open_assignments": []
+    },
+    "last_meeting": null,
+    "memory": {
+     "excerpts": [],
+     "refs": []
+    }
+   }
+  }
+ }
+}
