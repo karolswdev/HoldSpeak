@@ -285,3 +285,14 @@ under the existing 143-12 owner-surface migration family.
 `/api/inference/defaults/use-proposal`; the server
 (`InferenceDefaultService`) writes the global assignment as the owner's choice.
 The browser selects nothing itself.
+
+**2026-10-18, Betterment A4 (the automation's With line).**
+`web/src/desk/components/automation/WithEditor.tsx` is an `inference-route`
+web surface under the 143-13 assignment family: the owner's Use (or Add, then
+Use) press posts `PUT /api/workbenches/{id}/engine` with one profile id; the
+server (`WorkbenchService.set_engine`) writes the subject assignment
+`subject:workbench:<id>:capability:workbench.item` and re-freezes a live
+schedule delegation. `web/src/desk/components/automation/AutomationWindow.tsx`
+and `web/src/desk/components/automation/model.ts` are `display-transport`:
+they show the engine the hub reports (`assignment_summary`). The browser
+selects nothing itself.

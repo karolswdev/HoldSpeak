@@ -226,7 +226,6 @@ function SpendLimit({
         value={draft}
         onChange={(next) => { setDraft(next); setInvalid(false); }}
         placeholder={engineLimit != null ? `${usd(engineLimit)} (the engine's)` : "No limit"}
-        mic={false}
       />
       <div className="automation-editor-verbs">
         <Button dense variant="secondary" loading={saving}

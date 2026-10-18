@@ -153,6 +153,13 @@ WEB_ROUTING_SURFACES: dict[str, tuple[str, str]] = {
     # First run FOUND (#859): the owner's "Use it" press on a #855 proposal; the
     # server (InferenceDefaultService.use_proposal) writes the assignment.
     "web/src/desk/firstrun/Found.tsx": ("inference-route", "143-13"),
+    # Betterment A4: the automation's With line. The owner's Use / Add press
+    # names one engine; the hub (WorkbenchService.set_engine) writes the
+    # subject assignment and re-freezes a live schedule. The window and its
+    # model only show the engine the hub reports (assignment_summary).
+    "web/src/desk/components/automation/WithEditor.tsx": ("inference-route", "143-13"),
+    "web/src/desk/components/automation/AutomationWindow.tsx": ("display-transport", "143-13"),
+    "web/src/desk/components/automation/model.ts": ("display-transport", "143-13"),
 }
 
 POINTER_TOKENS = ("inference_target_id", "intel_profile_id", "profile_id", "resolver_profile_id")

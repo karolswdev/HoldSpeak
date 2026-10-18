@@ -101,8 +101,7 @@ export function WhenEditor({
             value={repository}
             onChange={setRepository}
             placeholder="owner/name"
-            mic={false}
-          />
+              />
           <div className="automation-picks" role="group" aria-label="Events">
             {events.map((event) => {
               const active = activeEvents.some((e) => e.event_pattern === event.event_pattern);
