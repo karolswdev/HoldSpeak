@@ -142,8 +142,39 @@ export interface RunsOnEngine extends Engine {
   audioCapable?: boolean;
 }
 
+/** Betterment E4: a catalog preset on a service tile (shown on top of the picker). */
+export interface ServicePreset {
+  id: string;
+  label: string;
+  summary: string;
+  model: string;
+  contextTokens: number | null;
+}
+
+/** Betterment E4: a named service on the Add an engine tiles. */
+export interface ServiceTile {
+  id: string;
+  name: string;
+  baseUrl: string;
+  host: string;
+  presets: ServicePreset[];
+}
+
+/** Betterment E4: an agent preset on the *An agent on this Mac* tile. */
+export interface AgentTile {
+  preset: string;
+  name: string;
+  vendor: string;
+  installed: boolean;
+  added: boolean;
+  /** The one-line install command, for a CLI that is not on this Mac. */
+  install: string;
+}
+
 export interface Detection {
   engines: RunsOnEngine[];
+  services?: ServiceTile[];
+  agents?: AgentTile[];
   hardware: { capability?: { apple_silicon?: boolean; ram_gb?: number; total_memory_bytes?: number } };
   checkedAt: string;
   repairs: Repair[];
@@ -248,12 +279,43 @@ function decodeSummary(raw: unknown): SummaryAssignment | null {
   };
 }
 
+function decodeService(raw: Record<string, unknown>): ServiceTile {
+  return {
+    id: String(raw.id ?? ""),
+    name: String(raw.name ?? ""),
+    baseUrl: String(raw.baseUrl ?? ""),
+    host: String(raw.host ?? ""),
+    presets: Array.isArray(raw.presets)
+      ? (raw.presets as Record<string, unknown>[]).map((preset) => ({
+          id: String(preset.id ?? ""),
+          label: String(preset.label ?? ""),
+          summary: String(preset.summary ?? ""),
+          model: String(preset.model ?? ""),
+          contextTokens: num(preset.contextTokens),
+        }))
+      : [],
+  };
+}
+
+function decodeAgent(raw: Record<string, unknown>): AgentTile {
+  return {
+    preset: String(raw.preset ?? ""),
+    name: String(raw.name ?? ""),
+    vendor: String(raw.vendor ?? ""),
+    installed: raw.installed === true,
+    added: raw.added === true,
+    install: String(raw.install ?? ""),
+  };
+}
+
 export async function readDetection(): Promise<Detection> {
   const raw = await apiFetch<Record<string, unknown>>("/api/concierge/detect");
   return {
     engines: Array.isArray(raw.engines)
       ? (raw.engines as Record<string, unknown>[]).map(decodeEngine)
       : [],
+    services: Array.isArray(raw.services) ? (raw.services as Record<string, unknown>[]).map(decodeService) : [],
+    agents: Array.isArray(raw.agents) ? (raw.agents as Record<string, unknown>[]).map(decodeAgent) : [],
     hardware: (raw.hardware ?? {}) as Detection["hardware"],
     checkedAt: String(raw.checkedAt ?? ""),
     repairs: Array.isArray(raw.repairs)

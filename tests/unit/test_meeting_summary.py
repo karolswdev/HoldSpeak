@@ -225,7 +225,10 @@ def test_old_v1_manifest_stays_incompatible_while_producer_mints_v2(
 def test_manifest_result_schema_claim_excludes_unexecuted_provider_families(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
 ) -> None:
-    """Anthropic, paired, and future families retain language-only claims."""
+    """Paired and future families retain language-only claims. (Betterment
+    E4, DECISIONS #9: Anthropic runs through its OpenAI-compatible endpoint,
+    so it carries the same claims as any OpenAI-compatible engine; the typed
+    job's own check decides.)"""
     monkeypatch.setattr(
         "holdspeak.setup_runtime.discover_endpoint_models",
         lambda *_args, **_kwargs: {"ok": True, "models": ["fixture"]},
@@ -233,7 +236,7 @@ def test_manifest_result_schema_claim_excludes_unexecuted_provider_families(
     # These families are deliberately checked at the producer mint seam only:
     # existing provider tests cover their readiness/binding refusals, while
     # this fence proves no unsupported family receives the Meeting claim.
-    for family in ("anthropic", "future_backend", "paired_device"):
+    for family in ("future_backend", "paired_device"):
         body = ModelLibraryApplicationService._profile_body(
             {
                 "profile_id": f"excluded-{family}",

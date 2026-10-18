@@ -1,4 +1,8 @@
-"""PHILO-15 lane 05, ruling 3 (inventory gap 5, honesty): an Anthropic key
+"""PARKED 2026-10-18 by Betterment E4 (DECISIONS #9): Anthropic now runs through
+its OpenAI-compatible endpoint when its /models answers the key. The new truth is
+tests/unit/test_engines_add_by_kind.py and tests/integration/test_desk_engines.py.
+
+PHILO-15 lane 05, ruling 3 (inventory gap 5, honesty): an Anthropic key
 does nothing today, so no face may read it as if it worked.
 
 There is no Anthropic execution adapter. The Model Library's readiness for

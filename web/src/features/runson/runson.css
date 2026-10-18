@@ -191,3 +191,44 @@
 /* Betterment E2: an agent engine's plate, unfolded (Spend limit per run). */
 .runson-agent-spend { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 6px 10px; min-width: 0; width: 100%; }
 .runson-agent-spend .surface-token { overflow-wrap: anywhere; }
+
+/* Betterment E4: Add an engine, by kind. The five kinds are plated tiles in
+   one wrapping row; a kind unfolds below them, in place (no modal). */
+.runson-kinds {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.runson-kind-tiles { display: flex; flex-wrap: wrap; gap: 6px; align-items: stretch; min-width: 0; }
+.runson-kind-tile {
+  flex: 1 1 150px;
+  min-width: 0;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  text-align: left;
+  white-space: normal;
+}
+.runson-kind-name { font-weight: 600; }
+.runson-kind-hint {
+  font: 500 var(--font-size-xs, 12px) var(--font-mono, "JetBrains Mono", monospace);
+  letter-spacing: .04em;
+  opacity: .8;
+  overflow-wrap: anywhere;
+}
+.runson-kind-close { align-self: center; }
+.runson-kind-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.runson-kind-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.runson-kind-row-name { font-weight: 600; min-width: 0; }
+.runson-kind-install { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.runson-kind-install code {
+  font: 500 var(--font-size-xs, 12px) var(--font-mono, "JetBrains Mono", monospace);
+  padding: 2px 6px;
+  background: var(--wb-well);
+  border: 1px solid var(--wb-ink);
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+.runson-picker-preset { font-weight: 600; }

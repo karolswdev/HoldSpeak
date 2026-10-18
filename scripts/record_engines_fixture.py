@@ -194,6 +194,62 @@ def three_models() -> dict[str, Any]:
             server.server_close()
 
 
+OPENROUTER = "https://openrouter.ai/api/v1"
+
+
+def open_router() -> dict[str, Any]:
+    """Betterment E4: Add an engine, by kind. The OpenRouter tile points at a
+    stub OpenRouter (tests/integration/test_desk_engines.py `_StubOpenRouter`);
+    its address is scrubbed back to OpenRouter's own. Recorded: the open
+    reads (the service tiles), the Check with the pasted key, and the Use of
+    the chosen model. The reads after Use are not recorded: on the stub the
+    engine would read as this Mac's, which OpenRouter is not."""
+    import threading
+    from http.server import ThreadingHTTPServer
+
+    from holdspeak.services import concierge_service
+    from tests.integration.test_desk_engines import OPENROUTER_KEY, _StubOpenRouter
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), _StubOpenRouter)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    port = server.server_address[1]
+    url = f"http://127.0.0.1:{port}/api/v1"
+
+    def scrub(value: Any) -> Any:
+        text = json.dumps(value).replace(url, OPENROUTER).replace(f"127-0-0-1-{port}", "openrouter-ai").replace(
+            f"127.0.0.1:{port}", "openrouter.ai")
+        out = json.loads(text)
+        for step in out.get("steps", []):
+            for tile in (step.get("gets") or {}).get("/api/concierge/detect", {}).get("services", []):
+                if tile["id"] == "openrouter":
+                    tile["host"] = "openrouter.ai"
+        return out
+
+    model = "qwen/qwen3.5-35b-a3b"
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(concierge_service, "SERVICE_TILES", tuple(
+            {**tile, "baseUrl": url} if tile["id"] == "openrouter" else tile for tile in concierge_service.SERVICE_TILES
+        ))
+        hub = _hub(mp, "openrouter", claude=False)
+        try:
+            before = _gets(hub)
+            checked = _post(hub, "/api/setup/discover-models", {"base_url": url, "api_key": OPENROUTER_KEY, "check_tools": True})
+            body = {"request_id": "record-openrouter", "profile_id": f"engine-127-0-0-1-{port}-qwen-qwen3-5-35b-a3b",
+                    "expected_profile_revision": 0, "label": "OpenRouter", "provider_family": "openai_compatible",
+                    "model": model, "endpoint": url, "requires_key": True,
+                    "context_tokens": checked.get("contexts", {}).get(model)}
+            answer = _post(hub, DEFINE, {"draft": body, "secret": {"value": OPENROUTER_KEY}})
+            return scrub({"steps": [
+                {"name": "open", "gets": before},
+                {"name": "check", "answer": checked},
+                {"name": model, "post": DEFINE, "body": body, "answer": answer},
+            ]})
+        finally:
+            _close()
+            server.shutdown()
+            server.server_close()
+
+
 def main() -> None:
     only = sys.argv[1:]
     scenarios = {
@@ -201,6 +257,7 @@ def main() -> None:
         "claude": found_then_added,
         "codex": codex_added,
         "threeModels": three_models,
+        "openRouter": open_router,
     }
     # `record_engines_fixture.py threeModels` records one scenario and keeps
     # the others as they are.

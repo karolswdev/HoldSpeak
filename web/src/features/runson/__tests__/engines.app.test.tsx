@@ -197,6 +197,8 @@ function threeHub(check: unknown = three("check").answer) {
 async function checkStub() {
   render(<RunsOnCore />);
   fireEvent.click(await screen.findByTestId("concierge-add-engine"));
+  // Betterment E4: a server on his network is one of the five kinds.
+  fireEvent.click(screen.getByTestId("runson-kind-lan"));
   fireEvent.change(screen.getByLabelText("Server address"), { target: { value: STUB_URL } });
   await act(async () => {
     fireEvent.click(screen.getByTestId("concierge-add-check"));
@@ -265,5 +267,140 @@ describe("Engines — the model picker (Betterment E3)", () => {
     fireEvent.change(search, { target: { value: "nothing-like-this" } });
     expect(screen.queryAllByTestId("concierge-add-pick")).toHaveLength(0);
     expect(screen.getByTestId("concierge-add-no-match").textContent).toBe("NO MODEL MATCHES");
+  });
+});
+
+/* ── Betterment E4: Add an engine, by kind ── */
+
+type OrStep = { name: string; gets?: Gets; post?: string; body?: Record<string, unknown>; answer?: unknown };
+const OR = (recorded as unknown as { openRouter: { steps: OrStep[] } }).openRouter.steps;
+const orStep = (name: string) => OR.find((s) => s.name === name)!;
+const OPENROUTER = "https://openrouter.ai/api/v1";
+const OR_KEY = "sk-or-stub-key";
+const CHOSEN = "qwen/qwen3.5-35b-a3b";
+
+/** The hub of `openRouter`: the open reads, the Check, and the recorded Use. */
+function orHub() {
+  const sent: Array<{ path: string; json: Record<string, unknown> }> = [];
+  vi.mocked(apiFetch).mockImplementation(async (path: string, init?: { method?: string; json?: unknown }) => {
+    if (init?.method === "POST") {
+      const json = (init.json ?? {}) as Record<string, unknown>;
+      sent.push({ path, json });
+      if (path === "/api/setup/discover-models") return structuredClone(orStep("check").answer) as never;
+      const draft = (json.draft ?? {}) as Record<string, unknown>;
+      const next = orStep(String(draft.model));
+      if (!next || path !== next.post) throw new Error(`unrecorded POST ${path}`);
+      return structuredClone(next.answer) as never;
+    }
+    return recordedGet(orStep("open").gets!, String(path).split("?")[0]) as never;
+  });
+  return sent;
+}
+
+/** Count the presses he makes (a paste is not a press). */
+function press(counter: { n: number }, el: HTMLElement) {
+  counter.n += 1;
+  fireEvent.click(el);
+}
+
+describe("Engines — Add an engine, by kind (Betterment E4)", () => {
+  it.each([1440, 393])("at %i OpenRouter with a chosen model takes 5 presses and one paste, with no address typed", async (px) => {
+    width(px);
+    const sent = orHub();
+    const presses = { n: 0 };
+    render(<RunsOnCore />);
+
+    press(presses, await screen.findByTestId("concierge-add-engine"));
+    const kinds = screen.getByTestId("runson-add-kinds");
+    expect(within(kinds).getAllByRole("button", { pressed: false }).map((b) => b.querySelector(".runson-kind-name")?.textContent))
+      .toEqual(["An agent on this Mac", "A service", "A server on my network", "A model on this Mac", "Another HoldSpeak"]);
+    press(presses, within(kinds).getByTestId("runson-kind-service"));
+    expect(["OpenRouter", "OpenAI", "Anthropic", "Gemini"].map((name) => within(kinds).getByRole("button", { name }))).toHaveLength(4);
+    press(presses, within(kinds).getByRole("button", { name: "OpenRouter" }));
+
+    // No address to know: the tile carries it, and the chip names the host.
+    expect(screen.queryByLabelText("Server address")).toBeNull();
+    expect(screen.queryByTestId("concierge-add-my-server")).toBeNull();
+    expect(within(screen.getByTestId("concierge-add-egress")).getByText("OPENROUTER.AI")).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("OpenRouter key"), { target: { value: OR_KEY } });
+    await act(async () => {
+      press(presses, screen.getByTestId("concierge-add-check"));
+    });
+    expect(sent[0]).toEqual({ path: "/api/setup/discover-models", json: { base_url: OPENROUTER, api_key: OR_KEY, check_tools: true } });
+
+    // The catalog presets the service serves are on top, with their short name.
+    const picker = await screen.findByTestId("concierge-add-picker");
+    const rows = within(picker).getAllByTestId("concierge-add-pick");
+    expect(rows.map((r) => r.getAttribute("data-model"))).toEqual(["qwen/qwen3-8b", CHOSEN, "anthropic/claude-x"]);
+    expect(rows.map((r) => r.hasAttribute("data-preset"))).toEqual([true, true, false]);
+    expect(rows[1].textContent).toContain("Balanced Qwen");
+    expect(within(picker).queryByText("ADDED")).toBeNull();
+
+    await act(async () => {
+      press(presses, within(rows[1]).getByRole("button", { name: "Use" }));
+    });
+    await waitFor(() => expect(within(row(CHOSEN)).getByText("ADDED")).toBeTruthy());
+    expect(presses.n).toBe(5);
+    expect(sent[1].path).toBe("/api/inference/model-library/define-endpoint");
+    expect(sent[1].json).toEqual({
+      draft: expect.objectContaining({
+        profile_id: "engine-openrouter-ai-qwen-qwen3-5-35b-a3b", label: "OpenRouter", provider_family: "openai_compatible",
+        model: CHOSEN, endpoint: OPENROUTER, requires_key: true, context_tokens: 262144,
+      }),
+      secret: { value: OR_KEY },
+    });
+    // The draft the hub recorded for this Use, but for its request id.
+    const { request_id: _id, ...recordedDraft } = orStep(CHOSEN).body!;
+    expect(sent[1].json.draft).toMatchObject(recordedDraft);
+    expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^ADDED \d\d:\d\d · qwen\/qwen3\.5-35b-a3b · OPENROUTER\.AI$/);
+  });
+
+  it("Anthropic is a working service tile, never a NOT SUPPORTED YET dead end", async () => {
+    width(1440);
+    const sent = orHub();
+    render(<RunsOnCore />);
+    fireEvent.click(await screen.findByTestId("concierge-add-engine"));
+    fireEvent.click(screen.getByTestId("runson-kind-service"));
+    fireEvent.click(screen.getByRole("button", { name: "Anthropic" }));
+    expect(within(screen.getByTestId("concierge-add-egress")).getByText("API.ANTHROPIC.COM")).toBeTruthy();
+    expect(screen.getByLabelText("Anthropic key")).toBeTruthy();
+    expect(screen.getByTestId("runson-root").textContent).not.toMatch(/NOT SUPPORTED/);
+    fireEvent.change(screen.getByLabelText("Anthropic key"), { target: { value: "sk-ant" } });
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("concierge-add-check"));
+    });
+    expect(sent[0].json).toMatchObject({ base_url: "https://api.anthropic.com/v1", api_key: "sk-ant" });
+  });
+
+  it("an agent on this Mac: Add for the one found, one install line for the one missing", async () => {
+    width(1440);
+    const sent = hub(step("found").gets, { add: step("add") });
+    render(<RunsOnCore />);
+    fireEvent.click(await screen.findByTestId("concierge-add-engine"));
+    fireEvent.click(screen.getByTestId("runson-kind-agent"));
+    const codex = screen.getByTestId("runson-agent-tile-codex");
+    expect(within(codex).getByTestId("runson-agent-install-codex").textContent).toBe("npm install -g @openai/codex");
+    expect(within(codex).queryByRole("button")).toBeNull();
+    const claude = screen.getByTestId("runson-agent-tile-claude");
+    expect(within(claude).getByText("ANTHROPIC")).toBeTruthy();
+    await act(async () => {
+      fireEvent.click(within(claude).getByRole("button", { name: "Add" }));
+    });
+    expect(sent).toEqual([expect.objectContaining({ preset: "claude", profile_id: "agent-claude" })]);
+  });
+
+  it("a server on my network keeps the address row and Find on LAN; Close folds the kinds away", async () => {
+    width(1440);
+    orHub();
+    render(<RunsOnCore />);
+    fireEvent.click(await screen.findByTestId("concierge-add-engine"));
+    fireEvent.click(screen.getByTestId("runson-kind-lan"));
+    expect(screen.getByLabelText("Server address")).toBeTruthy();
+    expect(within(screen.getByTestId("runson-add-kinds")).getByTestId("runson-kind-find-lan")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("runson-kind-local"));
+    expect(screen.getByTestId("runson-local-models")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("runson-add-close"));
+    expect(screen.queryByTestId("runson-add-kinds")).toBeNull();
+    expect(screen.getByTestId("concierge-add-engine")).toBeTruthy();
   });
 });

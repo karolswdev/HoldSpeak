@@ -386,11 +386,12 @@ def test_a_record_less_engine_is_on_the_board_with_no_revision_and_the_hub_refus
     assert after["thoughts_notes"]["assignment"] == before["thoughts_notes"]["assignment"], after["thoughts_notes"]
 
 
-def test_an_anthropic_profile_reads_not_supported_on_the_hub(hub_dir) -> None:
+def test_an_anthropic_profile_is_a_service_on_the_hub(hub_dir) -> None:
     """replaces: tests/e2e/test_philo15_05_strong_defaults_glass.py::test_the_runs_on_anthropic_plate_reads_not_supported_yet (hub half)
 
-    The glass's two legacy cloud profiles through the real detect: the
-    provider with no execution adapter is NOT_SUPPORTED, never READY.
+    Betterment E4 (DECISIONS #9): Anthropic runs through its OpenAI-compatible
+    endpoint. The glass's two legacy cloud profiles through the real detect:
+    with no key held, both read NOT_SET (a key to add), never NOT_SUPPORTED.
     """
     from holdspeak.db import get_database
 
@@ -403,4 +404,4 @@ def test_an_anthropic_profile_reads_not_supported_on_the_hub(hub_dir) -> None:
                        base_url="https://openrouter.ai/api/v1", model="qwen/qwen3", requires_key=True)
     reads = _record_reads("anthropic", "0-open", base, tmp_path)
     claude = next(e for e in reads["/api/concierge/detect"]["engines"] if e.get("profileId") == "cloud-anthropic")
-    assert claude["state"] == "NOT_SUPPORTED", claude
+    assert claude["state"] == "NOT_SET", claude

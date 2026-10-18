@@ -328,9 +328,11 @@ describe("Runs on — speech not set up", () => {
   });
 });
 
-/* ── a provider HoldSpeak cannot run (PHILO-15 05) ── */
+/* ── a NOT_SUPPORTED row (PHILO-15 05). Since Betterment E4 the hub sends
+   this state only for an agent profile it cannot read; the face's rule for
+   the state is unchanged. ── */
 
-describe("Runs on — the Anthropic plate reads NOT SUPPORTED YET", () => {
+describe("Runs on — a NOT_SUPPORTED plate reads NOT SUPPORTED YET", () => {
   it("never READY, no verb, a broken lamp, and a job refuses it", async () => {
     // replaces: tests/e2e/test_philo15_05_strong_defaults_glass.py::test_the_runs_on_anthropic_plate_reads_not_supported_yet
     // (the hub's NOT_SUPPORTED is tests/unit/test_philo15_05_anthropic_not_supported.py; the refusal reads
@@ -389,6 +391,7 @@ describe("Runs on — a stranger connects an engine and the face keeps his choic
     expect(add.className.split(" ")).toContain("btn");
     expect(add.textContent?.trim()).toBe("Add an engine");
     fireEvent.click(add);
+    fireEvent.click(screen.getByTestId("runson-kind-lan")); // Betterment E4: the kind first
 
     // A bad address: the token sits in the add row, beside the verb; Add stays off.
     fireEvent.change(field(), { target: { value: BAD } });
@@ -532,6 +535,7 @@ describe("Runs on — the engine tells the truth (recorded hub)", () => {
     await openRecorded(rec);
 
     fireEvent.click(screen.getByTestId("concierge-add-engine"));
+    fireEvent.click(screen.getByTestId("runson-kind-lan")); // Betterment E4: the kind first
     const field = within(screen.getByTestId("concierge-add-engine-row")).getAllByRole("textbox")[0];
     fireEvent.change(field, { target: { value: ENGINE } });
     fireEvent.click(screen.getByTestId("concierge-add-check"));
@@ -606,26 +610,23 @@ describe("Runs on — a record-less engine is refused on the drop (recorded hub)
   });
 });
 
-describe("Runs on — Anthropic reads NOT SUPPORTED YET (recorded hub)", () => {
-  it("never READY, no verb, a broken lamp, and a job refuses it; the phone list never offers it", async () => {
-    // replaces: tests/e2e/test_philo15_05_strong_defaults_glass.py::test_the_runs_on_anthropic_plate_reads_not_supported_yet
-    // (on the hub's own detect rows: hub half test_desk_runs_on_hub.py::test_an_anthropic_profile_reads_not_supported_on_the_hub)
+describe("Runs on — Anthropic is a service, never a NOT SUPPORTED YET dead end (recorded hub)", () => {
+  it("with no key held the plate reads NO KEY, never NOT SUPPORTED YET or READY", async () => {
+    // Betterment E4 (DECISIONS #9): Anthropic runs through its OpenAI-compatible
+    // endpoint. The hub half is test_desk_runs_on_hub.py::test_an_anthropic_profile_is_a_service_on_the_hub.
     const rec = new RecordedHub("anthropic", "0-open");
     await openRecorded(rec);
     const plate = await screen.findByTestId("switchboard-engine-cloud-anthropic");
-    expect(plate.textContent).toContain("NOT SUPPORTED YET");
+    expect(plate.textContent).toContain("NO KEY");
+    expect(plate.textContent).not.toContain("NOT SUPPORTED");
     expect(plate.textContent).not.toContain("READY");
-    expect(plate.querySelectorAll("button")).toHaveLength(0);
-    expect(screen.getByTestId("switchboard-lamp-cloud-anthropic").getAttribute("data-lamp")).toBe("broken");
-    fireEvent.click(screen.getByTestId("switchboard-job-thoughts_notes"));
-    fireEvent.keyDown(plate, { key: "Enter" });
-    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/REFUSED .* NOT SUPPORTED/));
     expect(rec.calls.filter((c) => c.method !== "GET")).toEqual([]);
     expect(rec.misses).toEqual([]);
   });
 
   it("at 393 the job list offers no tap for it", async () => {
     // replaces: tests/e2e/test_philo15_05_strong_defaults_glass.py::test_the_runs_on_anthropic_plate_reads_not_supported_yet [393]
+    // Since E4 the reason is the legacy profile's missing model record, not the provider.
     const spy = atPhoneWidth();
     try {
       const rec = new RecordedHub("anthropic", "0-open");

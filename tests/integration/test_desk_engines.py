@@ -474,3 +474,132 @@ def test_an_old_host_only_engine_still_loads_and_runs(hub: str, three_models: st
 def test_a_junk_context_size_is_refused(hub: str, three_models: str, bad: Any) -> None:
     status, refused = _define(hub, three_models, "engine-junk", "alpha-7b", context_tokens=bad)
     assert status == 400, refused
+
+
+# ── Betterment E4: Add an engine, by kind ───────────────────────────────────
+
+# The shape OpenRouter answers on /api/v1/models (trimmed): the context is
+# `context_length`. The first two are catalog preset models.
+_OPENROUTER = [
+    {"id": "qwen/qwen3-8b", "name": "Qwen: Qwen3 8B", "context_length": 131072},
+    {"id": "qwen/qwen3.5-35b-a3b", "name": "Qwen: Qwen3.5 35B A3B", "context_length": 262144},
+    {"id": "anthropic/claude-x", "name": "Anthropic: Claude X", "context_length": 200000},
+]
+OPENROUTER_KEY = "sk-or-stub-key"
+
+
+class _StubOpenRouter(_ChatEngine):
+    """A stub OpenRouter: it lists models only for its key, and answers chat
+    with the model it was asked for. Nothing leaves this machine."""
+
+    def _keyed(self) -> bool:
+        return self.headers.get("Authorization") == f"Bearer {OPENROUTER_KEY}"
+
+    def do_GET(self) -> None:  # noqa: N802
+        if not self._keyed():
+            self.send_response(401)
+            self.end_headers()
+        elif self.path.rstrip("/").endswith("/api/v1/models"):
+            self._json({"data": _OPENROUTER})
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+    def do_POST(self) -> None:  # noqa: N802
+        body = json.loads(self.rfile.read(int(self.headers.get("Content-Length") or 0)) or b"{}")
+        if not self._keyed():
+            self.send_response(401)
+            self.end_headers()
+            return
+        self._json({"choices": [{"message": {"role": "assistant", "content": f"{PICKED_ANSWER} {body.get('model')}"}}]})
+
+
+@pytest.fixture()
+def stub_openrouter(monkeypatch: pytest.MonkeyPatch):
+    """The OpenRouter tile points at the stub (the rig's only change)."""
+    from holdspeak.services import concierge_service
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), _StubOpenRouter)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    url = f"http://127.0.0.1:{server.server_address[1]}/api/v1"
+    monkeypatch.setattr(concierge_service, "SERVICE_TILES", tuple(
+        {**tile, "baseUrl": url} if tile["id"] == "openrouter" else tile for tile in concierge_service.SERVICE_TILES
+    ))
+    try:
+        yield url
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def test_detect_names_the_four_services_with_their_addresses_and_presets(hub: str) -> None:
+    detected = _ok(hub, "GET", "/api/concierge/detect")
+    tiles = {tile["id"]: tile for tile in detected["services"]}
+    assert [tile["name"] for tile in detected["services"]] == ["OpenRouter", "OpenAI", "Anthropic", "Gemini"]
+    assert tiles["openrouter"]["baseUrl"] == "https://openrouter.ai/api/v1"
+    assert tiles["openai"]["baseUrl"] == "https://api.openai.com/v1"
+    assert tiles["anthropic"]["baseUrl"] == "https://api.anthropic.com/v1"
+    assert tiles["gemini"]["baseUrl"] == "https://generativelanguage.googleapis.com/v1beta/openai"
+    assert tiles["anthropic"]["host"] == "api.anthropic.com"
+    # The six signed catalog presets are OpenRouter's; the face shows them on top.
+    presets = tiles["openrouter"]["presets"]
+    assert len(presets) == 6, presets
+    assert presets[0] == {
+        "id": "preset_openrouter_qwen3_8b", "label": "OpenRouter · Quick Qwen",
+        "summary": "A small, fast Qwen for short Notes and everyday work.",
+        "model": "qwen/qwen3-8b", "contextTokens": 131072,
+    }
+    assert all(not tiles[name]["presets"] for name in ("openai", "anthropic", "gemini"))
+    # The rig switch is off: no agent is on this Mac, and each one says how to get it.
+    agents = {agent["preset"]: agent for agent in detected["agents"]}
+    assert set(agents) == {"claude", "codex"}
+    assert agents["claude"] == {
+        "preset": "claude", "name": "Claude Code", "vendor": "ANTHROPIC", "installed": False, "added": False,
+        "install": "npm install -g @anthropic-ai/claude-code",
+    }
+
+
+def test_the_agent_tile_says_installed_then_added(hub: str, fake_bin: Path) -> None:
+    agents = {a["preset"]: a for a in _ok(hub, "GET", "/api/concierge/detect")["agents"]}
+    assert agents["claude"]["installed"] is True and agents["claude"]["added"] is False
+    _connect_claude(hub)
+    agents = {a["preset"]: a for a in _ok(hub, "GET", "/api/concierge/detect")["agents"]}
+    assert agents["claude"]["added"] is True and agents["codex"]["added"] is False
+
+
+def test_openrouter_with_a_chosen_model_runs_with_no_address_typed(hub: str, stub_openrouter: str) -> None:
+    """The face's five presses on the hub: the tile's address, Check with the
+    pasted key, Use on the chosen model; then a job runs on that model."""
+    tile = next(t for t in _ok(hub, "GET", "/api/concierge/detect")["services"] if t["id"] == "openrouter")
+    url = tile["baseUrl"]
+    assert url == stub_openrouter
+    status, checked = _call(hub, "POST", "/api/setup/discover-models", {
+        "base_url": url, "api_key": OPENROUTER_KEY, "check_tools": True,
+    })
+    assert status == 200 and checked["ok"] is True, checked
+    assert checked["models"] == ["anthropic/claude-x", "qwen/qwen3-8b", "qwen/qwen3.5-35b-a3b"]
+    assert checked["contexts"]["qwen/qwen3.5-35b-a3b"] == 262144
+
+    port = url.split(":")[2].split("/")[0]
+    profile_id = f"engine-127-0-0-1-{port}-qwen-qwen3-5-35b-a3b"
+    added = _ok(hub, "POST", "/api/inference/model-library/define-endpoint", {"draft": {
+        "request_id": "openrouter-use", "profile_id": profile_id, "expected_profile_revision": 0,
+        "label": "OpenRouter", "provider_family": "openai_compatible", "model": "qwen/qwen3.5-35b-a3b",
+        "endpoint": url, "requires_key": True, "context_tokens": 262144,
+    }, "secret": {"value": OPENROUTER_KEY}})
+    status, assigned = _assign(hub, "ask.answer", [_entry(added)])
+    assert status < 300, assigned
+    answer = _ok(hub, "POST", "/api/ask", {"prompt": "Which model are you?"})
+    assert answer["output"] == f"{PICKED_ANSWER} qwen/qwen3.5-35b-a3b", answer
+
+
+def test_an_anthropic_engine_is_no_dead_end(hub: str) -> None:
+    """DECISIONS #9: an Anthropic profile reads as a service (NOT_SET with no
+    key), never NOT_SUPPORTED."""
+    from holdspeak.db import get_database
+
+    get_database().profiles.upsert(profile_id="cloud-anthropic", name="Anthropic", kind="openAICompatible",
+                                   base_url="https://api.anthropic.com/v1", model="claude-x", requires_key=True)
+    rows = _ok(hub, "GET", "/api/concierge/detect")["engines"]
+    claude = next(r for r in rows if r.get("legacyLabel") == "Anthropic")
+    assert claude["state"] == "NOT_SET", claude

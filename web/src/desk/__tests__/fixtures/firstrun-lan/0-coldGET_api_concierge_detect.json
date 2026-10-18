@@ -1,8 +1,26 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_firstrun.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-18T09:46:21.248625Z",
+  "captured_at": "2026-10-18T15:56:29.330192Z",
   "wire": {
-    "checkedAt": "2026-10-18T09:46:21.230117+00:00",
+    "agents": [
+      {
+        "added": false,
+        "install": "npm install -g @anthropic-ai/claude-code",
+        "installed": false,
+        "name": "Claude Code",
+        "preset": "claude",
+        "vendor": "ANTHROPIC"
+      },
+      {
+        "added": false,
+        "install": "npm install -g @openai/codex",
+        "installed": false,
+        "name": "Codex",
+        "preset": "codex",
+        "vendor": "OPENAI"
+      }
+    ],
+    "checkedAt": "2026-10-18T15:56:29.303909+00:00",
     "engines": [
       {
         "downloadHost": "huggingface.co",
@@ -46,8 +64,8 @@
       },
       "observation": {
         "available_memory_bytes": null,
-        "sha256": "sha256:b52bf2df41c96db0fda23673d27e743c80b526a0b09d2562b8b5cbc361dc548d",
-        "storage_available_bytes": 243239022592
+        "sha256": "sha256:55ee609ce5e4f31a28f6987568a9bbd610d2dbc712797b59eb77f456ab7ecca3",
+        "storage_available_bytes": 238649098240
       }
     },
     "lastApply": null,
@@ -64,6 +82,79 @@
       {
         "id": "openai_compatible_v1",
         "state": "available"
+      }
+    ],
+    "services": [
+      {
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "host": "openrouter.ai",
+        "id": "openrouter",
+        "name": "OpenRouter",
+        "presets": [
+          {
+            "contextTokens": 131072,
+            "id": "preset_openrouter_qwen3_8b",
+            "label": "OpenRouter · Quick Qwen",
+            "model": "qwen/qwen3-8b",
+            "summary": "A small, fast Qwen for short Notes and everyday work."
+          },
+          {
+            "contextTokens": 262144,
+            "id": "preset_openrouter_qwen35_35b_a3b",
+            "label": "OpenRouter · Balanced Qwen",
+            "model": "qwen/qwen3.5-35b-a3b",
+            "summary": "Strong general reasoning without using a giant model."
+          },
+          {
+            "contextTokens": 262144,
+            "id": "preset_openrouter_qwen38_27b",
+            "label": "OpenRouter · Deep Qwen",
+            "model": "qwen/qwen3.8-27b",
+            "summary": "Deeper cloud reasoning for harder synthesis."
+          },
+          {
+            "contextTokens": 1000000,
+            "id": "preset_openrouter_qwen37_flash",
+            "label": "OpenRouter · Qwen Flash",
+            "model": "qwen/qwen3.7-flash",
+            "summary": "The quickest economical Qwen choice for everyday work."
+          },
+          {
+            "contextTokens": 262144,
+            "id": "preset_openrouter_gemma4_26b",
+            "label": "OpenRouter · Gemma 4",
+            "model": "google/gemma-4-26b-a4b-it",
+            "summary": "A capable Gemma 4 alternative for writing and synthesis."
+          },
+          {
+            "contextTokens": 262144,
+            "id": "preset_openrouter_qwen3_coder_next",
+            "label": "OpenRouter · Coding Qwen",
+            "model": "qwen/qwen3-coder-next",
+            "summary": "A coding-focused Qwen for technical plans and implementation."
+          }
+        ]
+      },
+      {
+        "baseUrl": "https://api.openai.com/v1",
+        "host": "api.openai.com",
+        "id": "openai",
+        "name": "OpenAI",
+        "presets": []
+      },
+      {
+        "baseUrl": "https://api.anthropic.com/v1",
+        "host": "api.anthropic.com",
+        "id": "anthropic",
+        "name": "Anthropic",
+        "presets": []
+      },
+      {
+        "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai",
+        "host": "generativelanguage.googleapis.com",
+        "id": "gemini",
+        "name": "Gemini",
+        "presets": []
       }
     ],
     "summaryAssignment": {

@@ -252,13 +252,19 @@ class ModelLibraryApplicationService:
         return self._connect_provider(principal, draft, None, hosted=False, paired=True)
 
     @staticmethod
-    def _refuse_unsupported(draft: dict[str, Any]) -> None:
-        """PHILO-15 05 (Astra r1): a provider with no execution adapter is
-        refused before anything is reserved or stored; no key is written and
-        no receipt says it was added.  HTTP and MCP get this same answer."""
-        if draft.get("provider_family") == "anthropic":
+    def _check_anthropic(draft: dict[str, Any], key_value: str | None) -> None:
+        """Betterment E4 (DECISIONS #9): Anthropic runs through its
+        OpenAI-compatible endpoint, and only when its ``/models`` answers to
+        this key. Otherwise it is refused before anything is reserved or
+        stored; no key is written. HTTP and MCP get this same answer."""
+        if draft.get("provider_family") != "anthropic":
+            return
+        from .. import setup_runtime
+
+        answer = setup_runtime.discover_endpoint_models(draft["endpoint"], api_key=key_value)
+        if not (answer.get("ok") and answer.get("models")):
             raise ServiceError(
-                NOT_SUPPORTED, "Anthropic is not supported yet. Use OpenRouter or an OpenAI-compatible endpoint.",
+                "anthropic_models_check_failed", "Anthropic did not list its models for this key.",
                 context={"status": 422, "provider_family": "anthropic"},
             )
 
@@ -277,7 +283,6 @@ class ModelLibraryApplicationService:
             self._cli_draft(raw_draft) if cli
             else self._provider_draft(raw_draft, hosted=hosted, paired=paired)
         )
-        self._refuse_unsupported(draft)
         # Validate the write-only body before reserving a command.  This retains
         # the value only on the stack, never in a ServiceError/context/receipt.
         key_value = self._secret_value(secret, required=draft["requires_key"])
@@ -288,6 +293,7 @@ class ModelLibraryApplicationService:
             response = replay
             self._assert_assignment_unchanged(principal, before, response)
             return response
+        self._check_anthropic(draft, key_value)
 
         # A custody failure leaves this reservation pending.  Replaying the
         # exact nonsecret draft is therefore safe after a delayed/unavailable
@@ -714,11 +720,6 @@ class ModelLibraryApplicationService:
         if existing is not None:
             return str(existing["observation_id"])
         reason = self._provider_readiness_reason(draft["provider_family"])
-        if reason == NOT_SUPPORTED:
-            # There is no Anthropic execution adapter in this product yet. A
-            # key may be durably held, but it never turns this row into Ready
-            # (PHILO-15 05: the row says NOT SUPPORTED YET, not "broken").
-            return self._record_readiness(deployment_id, deployment_revision_id, "unavailable", reason)
         if reason == "runtime_unavailable":
             return self._record_readiness(deployment_id, deployment_revision_id, "unavailable", reason)
         observation = self._profiles.probe_profile(principal, {
@@ -735,8 +736,7 @@ class ModelLibraryApplicationService:
         """Return the runtime adapter family used by this producer seam."""
         return {
             "openrouter": "openai_compatible_v1",
-            # Custody may understand Anthropic before execution does. Readiness
-            # keeps that family unavailable until an execution adapter exists.
+            # Betterment E4: Anthropic's OpenAI-compatible endpoint.
             "anthropic": "openai_compatible_v1",
             "openai_compatible": "openai_compatible_v1",
             "private_endpoint": "openai_compatible_v1",
@@ -748,8 +748,6 @@ class ModelLibraryApplicationService:
     @staticmethod
     def _provider_readiness_reason(provider_family: str) -> str | None:
         """Share the existing execution exclusions with manifest minting."""
-        if provider_family == "anthropic":
-            return NOT_SUPPORTED
         if provider_family == "future_backend":
             return "runtime_unavailable"
         return None
@@ -1062,11 +1060,6 @@ class ModelLibraryApplicationService:
         family = _text(item.get("provider_family"), "unknown")
         if binding is None:
             status, action, repair = "configured", "Add model", self._repair("binding_missing", "Model needs a deployment binding")
-        elif family == "anthropic":
-            # Exact orchestrator ruling: stored custody is not an executable adapter.
-            # PHILO-15 05: there is nothing to repair until the adapter exists,
-            # so the row is a state, not a repair: NOT SUPPORTED YET.
-            status, action, repair = NOT_SUPPORTED, NOT_SUPPORTED_LABEL, None
         elif readiness and readiness.get("state") == "ready":
             status, action, repair = "ready", "Ready", None
         elif (readiness or {}).get("reason_code") == "artifact_unobserved":

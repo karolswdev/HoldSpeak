@@ -51,7 +51,8 @@ import {
   type BoardEngine,
 } from "./model";
 import { stateClass, stateWord } from "./stateWord";
-import { useRunsOn, type RunsOnController } from "./useRunsOn";
+import { useRunsOn, type AddKind, type RunsOnController } from "./useRunsOn";
+import type { ServicePreset, ServiceTile } from "./api";
 import { SpeechSetup, useSpeechSetup } from "../../desk/firstrun/SpeechSetup";
 // The Meaning search row draws with the Concierge's ledger cells.
 import "../concierge/concierge.css";
@@ -77,25 +78,41 @@ function hardwareToken(det: RunsOnController["detection"]): string | null {
   return parts.join(" · ");
 }
 
-function AddEngineRow({ ctrl }: { ctrl: RunsOnController }) {
+function AddEngineRow({ ctrl, service }: { ctrl: RunsOnController; service?: ServiceTile }) {
   const a = ctrl.add;
   const host = endpointHostPort(a.url).toUpperCase();
   return (
     <div className="runson-add" data-testid="concierge-add-engine-row">
-      <StringGadget
-        label="Server address"
-        caption
-        value={a.url}
-        onChange={a.setUrl}
-        placeholder="http://<host>:<port>/v1"
-        autoFocus
-      />
+      {service ? null : (
+        <StringGadget
+          label="Server address"
+          caption
+          value={a.url}
+          onChange={a.setUrl}
+          placeholder="http://<host>:<port>/v1"
+          autoFocus
+        />
+      )}
       <span className="runson-add-key" data-testid="concierge-add-key">
-        <StringGadget label="Key" caption type="password" mic={false} value={a.key} onChange={a.setKey} placeholder="optional" />
+        <StringGadget
+          label={service ? `${service.name} key` : "Key"}
+          caption
+          type="password"
+          mic={false}
+          value={a.key}
+          onChange={a.setKey}
+          placeholder={service ? "Paste the key" : "optional"}
+          autoFocus={Boolean(service)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && a.url.trim()) void a.check();
+          }}
+        />
       </span>
-      <span data-testid="concierge-add-my-server">
-        <CheckGadget variant="token" label="MY SERVER" checked={a.mine} onChange={a.setMine} />
-      </span>
+      {service ? null : (
+        <span data-testid="concierge-add-my-server">
+          <CheckGadget variant="token" label="MY SERVER" checked={a.mine} onChange={a.setMine} />
+        </span>
+      )}
       <span className="runson-add-verbs">
         {host ? (
           <span data-testid="concierge-add-egress">
@@ -123,7 +140,7 @@ function AddEngineRow({ ctrl }: { ctrl: RunsOnController }) {
               </span>
             ) : null}
           </span>
-          <ModelPicker ctrl={ctrl} />
+          <ModelPicker ctrl={ctrl} presets={service?.presets ?? []} />
         </>
       ) : null}
       {a.state === "KEY_REQUIRED" ? (
@@ -161,10 +178,18 @@ const PICKER_SEARCH_FROM = 7;
 /** Betterment E3: Check fills this list; nothing is picked for him. Use on a
  *  row saves that model as its own engine; the list stays, so a second model
  *  on the same host is one more press. */
-function ModelPicker({ ctrl }: { ctrl: RunsOnController }) {
+function ModelPicker({ ctrl, presets = [] }: { ctrl: RunsOnController; presets?: ServicePreset[] }) {
   const a = ctrl.add;
   const query = a.query.trim().toLowerCase();
-  const shown = query ? a.models.filter((m) => m.toLowerCase().includes(query)) : a.models;
+  // Betterment E4: the catalog presets the service serves go on top, with
+  // their short name; every other model follows in the server's order.
+  const served = new Set(a.models);
+  const top = presets.filter((preset) => served.has(preset.model));
+  const named = new Map(top.map((preset) => [preset.model, preset.label.replace(/^.*·\s*/, "")]));
+  const ordered = [...top.map((preset) => preset.model), ...a.models.filter((model) => !named.has(model))];
+  const shown = query
+    ? ordered.filter((m) => m.toLowerCase().includes(query) || (named.get(m) ?? "").toLowerCase().includes(query))
+    : ordered;
   return (
     <div className="runson-picker" data-testid="concierge-add-picker">
       {a.models.length >= PICKER_SEARCH_FROM ? (
@@ -177,8 +202,10 @@ function ModelPicker({ ctrl }: { ctrl: RunsOnController }) {
           {shown.map((model) => {
             const context = a.contexts[model];
             const used = a.used.includes(model);
+            const preset = named.get(model);
             return (
-              <li key={model} className="runson-picker-row" data-testid="concierge-add-pick" data-model={model}>
+              <li key={model} className="runson-picker-row" data-testid="concierge-add-pick" data-model={model} data-preset={preset ? "" : undefined}>
+                {preset ? <span className="surface-token runson-picker-preset">{preset}</span> : null}
                 <span className="surface-token runson-picker-model">{model}</span>
                 {context ? <span className="surface-token">{context.toLocaleString("en-US")} TOKENS</span> : null}
                 {used ? (
@@ -244,6 +271,137 @@ function AgentSpend({ ctrl, engine }: { ctrl: RunsOnController; engine: BoardEng
         {costTokens(spend, label).join(" · ")}
       </span>
     </span>
+  );
+}
+
+/** Betterment E4: the five kinds, named by where the prompt goes. */
+const KINDS: Array<{ kind: AddKind; name: string; hint: string }> = [
+  { kind: "agent", name: "An agent on this Mac", hint: "CLAUDE CODE · CODEX" },
+  { kind: "service", name: "A service", hint: "OPENROUTER · OPENAI · ANTHROPIC · GEMINI" },
+  { kind: "lan", name: "A server on my network", hint: "LLAMA.CPP · VLLM · OLLAMA" },
+  { kind: "local", name: "A model on this Mac", hint: "DOWNLOAD" },
+  { kind: "mesh", name: "Another HoldSpeak", hint: "MESH" },
+];
+
+/** Betterment E4: Add an engine unfolds in place into the five kinds; a
+ *  kind asks only what it needs. */
+function AddByKind({
+  ctrl,
+  foundAgents,
+  meshEngines,
+  local,
+}: {
+  ctrl: RunsOnController;
+  foundAgents: BoardEngine[];
+  meshEngines: BoardEngine[];
+  local: ReactNode;
+}) {
+  const a = ctrl.add;
+  const services = ctrl.detection?.services ?? [];
+  const agents = ctrl.detection?.agents ?? [];
+  const service = services.find((tile) => tile.id === a.service);
+  return (
+    <div className="runson-kinds" data-testid="runson-add-kinds">
+      <div className="runson-kind-tiles" role="group" aria-label="Kind of engine">
+        {KINDS.map((tile) => (
+          <Button
+            key={tile.kind}
+            variant={a.kind === tile.kind ? "primary" : "secondary"}
+            className="runson-kind-tile"
+            aria-pressed={a.kind === tile.kind}
+            data-testid={`runson-kind-${tile.kind}`}
+            onClick={() => a.choose(a.kind === tile.kind ? null : tile.kind)}
+          >
+            <span className="runson-kind-name">{tile.name}</span>
+            <span className="runson-kind-hint">{tile.hint}</span>
+          </Button>
+        ))}
+        <Button dense variant="ghost" className="runson-kind-close" data-testid="runson-add-close" onClick={a.close}>
+          Close
+        </Button>
+      </div>
+
+      {a.kind === "agent" ? (
+        <ul className="runson-kind-list" data-testid="runson-kind-agents">
+          {agents.map((agent) => {
+            const found = foundAgents.find((engine) => engine.agentPreset === agent.preset);
+            return (
+              <li key={agent.preset} className="runson-kind-row" data-testid={`runson-agent-tile-${agent.preset}`}>
+                <span className="runson-kind-row-name">{agent.name}</span>
+                <EgressChip label={agent.vendor} scope="cloud" />
+                {agent.added ? (
+                  <StateChip state="success" label="ADDED" icon="●" />
+                ) : found ? (
+                  <Button dense variant="primary" disabled={ctrl.busy} data-testid={`runson-agent-add-${agent.preset}`} onClick={() => void ctrl.useFound(found.key)}>
+                    Add
+                  </Button>
+                ) : agent.install ? (
+                  <span className="runson-kind-install">
+                    <span className="surface-token">NOT ON THIS MAC · INSTALL</span>
+                    <code data-testid={`runson-agent-install-${agent.preset}`}>{agent.install}</code>
+                  </span>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+
+      {a.kind === "service" ? (
+        <>
+          <div className="runson-kind-tiles" role="group" aria-label="Service">
+            {services.map((tile) => (
+              <Button
+                key={tile.id}
+                dense
+                variant={a.service === tile.id ? "primary" : "secondary"}
+                aria-pressed={a.service === tile.id}
+                data-testid={`runson-service-${tile.id}`}
+                onClick={() => a.choose("service", tile.id)}
+              >
+                {tile.name}
+              </Button>
+            ))}
+          </div>
+          {service ? <AddEngineRow ctrl={ctrl} service={service} /> : null}
+        </>
+      ) : null}
+
+      {a.kind === "lan" ? (
+        <>
+          <span className="runson-engine-actions">
+            <Button
+              dense
+              variant="secondary"
+              data-testid="runson-kind-find-lan"
+              onClick={() => void ctrl.findOnLan()}
+              disabled={ctrl.busy || ctrl.lanDiscovery === "CHECKING"}
+              loading={ctrl.lanDiscovery === "CHECKING"}
+            >
+              Find on LAN
+            </Button>
+          </span>
+          <AddEngineRow ctrl={ctrl} />
+        </>
+      ) : null}
+
+      {a.kind === "local" ? <div data-testid="runson-local-models">{local}</div> : null}
+
+      {a.kind === "mesh" ? (
+        <div className="runson-kind-list" data-testid="runson-mesh-nodes">
+          {meshEngines.map((engine) => (
+            <span key={engine.key} className="runson-kind-row">
+              <span className="runson-kind-row-name">{engine.name}</span>
+              <StateChip state="success" label="ADDED" icon="●" />
+            </span>
+          ))}
+          <span className="runson-kind-install">
+            <span className="surface-token">ON THE OTHER MAC, RUN</span>
+            <code data-testid="runson-mesh-command">{`holdspeak mesh serve --hub ${typeof window === "undefined" ? "http://<this-mac>:8765" : window.location.origin}`}</code>
+          </span>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -532,8 +690,28 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
   // Betterment E2: when every found row is on this Mac, the caption says so.
   const foundOnMac = found.every((engine) => engine.emblem === "MAC" || engine.emblem === "CLI");
 
+  // The local downloads: in their own fold, or in the "A model on this Mac"
+  // kind while that is open.
+  const localContent: ReactNode = (
+    <>
+      {localDownloads.length ? <div className="runson-catalog">
+        <SurfaceSwitchboard layout="board" jobs={[]} engines={localDownloads} wires={[]} />
+      </div> : null}
+      {roster ? <div className="concierge-root runson-meaning-host">
+        <ul className="concierge-set-list runson-meaning"><MeaningSearchRow /></ul>
+      </div> : null}
+    </>
+  );
+  const localInKind = ctrl.add.open && ctrl.add.kind === "local";
+  const meshEngines = have.filter((engine) => engine.kind === "lan" && !engine.baseUrl && engine.profileId);
+
   const engineFoot = ctrl.add.open ? (
-    <AddEngineRow ctrl={ctrl} />
+    <AddByKind
+      ctrl={ctrl}
+      foundAgents={found.filter((engine) => engine.agentPreset)}
+      meshEngines={meshEngines}
+      local={localContent}
+    />
   ) : (
     <span className="runson-engine-actions">
       <Button
@@ -615,14 +793,9 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
         <span className="surface-token" data-tone="danger" role="alert">NOT READ</span>
       ) : null}
 
-      {localDownloads.length || roster ? (
+      {(localDownloads.length || roster) && !localInKind ? (
         <FoldGadget title="Download a local model" className="runson-downloads">
-          {localDownloads.length ? <div className="runson-catalog">
-            <SurfaceSwitchboard layout="board" jobs={[]} engines={localDownloads} wires={[]} />
-          </div> : null}
-          {roster ? <div className="concierge-root runson-meaning-host">
-            <ul className="concierge-set-list runson-meaning"><MeaningSearchRow /></ul>
-          </div> : null}
+          {localContent}
         </FoldGadget>
       ) : null}
 
