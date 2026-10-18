@@ -3980,7 +3980,7 @@
       "phase1_refs": [],
       "sources": [
         {
-          "path": "web/src/desk/components/DeskToolShelf.tsx",
+          "path": "web/src/desk/searchRank.ts",
           "symbol": "export function wordScore(",
           "claim": "a body matches by whole-word prefix only"
         },
