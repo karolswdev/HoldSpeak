@@ -372,16 +372,97 @@ describe("the summary face (HS-201-04 seed shapes)", () => {
   });
 
   /* replaces: tests/e2e/test_hs201_summary_face_glass.py::test_import_transcribes_then_queues_the_disclosed_summary (station 1: the Import door) */
-  it("the head's Import opens the drop well in the Meetings window", async () => {
+  it("the head's Import opens the file picker at once; the chosen file opens the form", async () => {
     at(hs170 as Fixture);
     hub(hs170 as Fixture);
     render(<Shell><HistoryCore /></Shell>);
     await screen.findByTestId("meeting-row-m-off-words");
+    const picker = screen.getByTestId("meetings-import-picker") as HTMLInputElement;
+    const opened = vi.spyOn(picker, "click").mockImplementation(() => undefined);
     fireEvent.click(within(document.querySelector(".meetings-head-verbs") as HTMLElement).getByRole("button", { name: "Import" }));
-    await waitFor(() => expect(document.querySelector(".surface-dropwell input[type=file]")).toBeTruthy());
-    const input = document.querySelector(".surface-dropwell input[type=file]") as HTMLInputElement;
-    fireEvent.change(input, { target: { files: [new File(["RIFF"], "core_path_smoke_16k.wav", { type: "audio/wav" })] } });
+    // Capture C3: one press opens the picker; no wing switch, no drop well.
+    expect(opened).toHaveBeenCalledTimes(1);
+    expect(document.querySelector(".surface-dropwell")).toBeNull();
+    fireEvent.change(picker, { target: { files: [new File(["RIFF"], "core_path_smoke_16k.wav", { type: "audio/wav" })] } });
     expect(await screen.findByRole("textbox", { name: "Title" })).toBeTruthy();
+    expect(screen.getByTestId("import-when")).toBeTruthy();
+  });
+});
+
+describe("Import asks when it was (betterment/capture C3)", () => {
+  // Thursday 15 October 2026, 10:00 local: the 1:1 the capture walk dated Saturday.
+  const thursday = new Date(2026, 9, 15, 10, 0);
+
+  async function chooseInPicker(file: File) {
+    const calls = hub(hs170 as Fixture);
+    render(<Shell><HistoryCore /></Shell>);
+    await screen.findByTestId("meeting-row-m-off-words");
+    const picker = screen.getByTestId("meetings-import-picker") as HTMLInputElement;
+    vi.spyOn(picker, "click").mockImplementation(() => undefined);
+    fireEvent.click(screen.getByTestId("meetings-import"));
+    fireEvent.change(picker, { target: { files: [file] } });
+    const when = (await screen.findByTestId("import-when")) as HTMLInputElement;
+    return { calls, when };
+  }
+
+  function importBody(calls: Call[]): FormData {
+    const post = calls.find((c) => c.path === "/api/meetings/import" && c.init?.method === "POST");
+    expect(post).toBeTruthy();
+    return (post!.init as unknown as { body: FormData }).body;
+  }
+
+  it("fills from the file's modified time and sends it as started_at_ms", async () => {
+    at(hs170 as Fixture);
+    const file = new File(["Me: Thanks for the time, Theo."], "one-on-one-theo.txt", {
+      type: "text/plain", lastModified: thursday.getTime(),
+    });
+    const { calls, when } = await chooseInPicker(file);
+    await waitFor(() => expect(when.value).toBe("2026-10-15T10:00"));
+    fireEvent.click(screen.getByRole("button", { name: "Import" }));
+    await waitFor(() => expect(calls.some((c) => c.path === "/api/meetings/import")).toBe(true));
+    expect(importBody(calls).get("started_at_ms")).toBe(String(thursday.getTime()));
+  });
+
+  it("a date in the file name wins over the modified time", async () => {
+    at(hs170 as Fixture);
+    const file = new File(["Me: hello"], "1on1-theo-2026-10-15 10.00.txt", {
+      type: "text/plain", lastModified: new Date(2026, 9, 17, 20, 22).getTime(),
+    });
+    const { when } = await chooseInPicker(file);
+    await waitFor(() => expect(when.value).toBe("2026-10-15T10:00"));
+  });
+
+  it("a date in a VTT header wins over the name and the modified time", async () => {
+    at(hs170 as Fixture);
+    const vtt = "WEBVTT\n\nNOTE recorded 2026-10-15T10:00\n\n00:00:00.000 --> 00:00:04.000\n<v Me>Thanks, Theo.\n";
+    const file = new File([vtt], "export-2026-10-17.vtt", {
+      type: "text/vtt", lastModified: new Date(2026, 9, 17, 20, 22).getTime(),
+    });
+    const { when } = await chooseInPicker(file);
+    await waitFor(() => expect(when.value).toBe("2026-10-15T10:00"));
+  });
+
+  it("the owner can change the date before Import", async () => {
+    at(hs170 as Fixture);
+    const file = new File(["Me: hello"], "notes.txt", { type: "text/plain", lastModified: thursday.getTime() });
+    const { calls, when } = await chooseInPicker(file);
+    await waitFor(() => expect(when.value).toBe("2026-10-15T10:00"));
+    fireEvent.change(when, { target: { value: "2026-10-14T16:30" } });
+    fireEvent.click(screen.getByRole("button", { name: "Import" }));
+    await waitFor(() => expect(calls.some((c) => c.path === "/api/meetings/import")).toBe(true));
+    expect(importBody(calls).get("started_at_ms")).toBe(String(new Date(2026, 9, 14, 16, 30).getTime()));
+  });
+
+  it("a file dropped on the Meetings window opens the same form", async () => {
+    at(hs170 as Fixture);
+    hub(hs170 as Fixture);
+    render(<Shell><HistoryCore /></Shell>);
+    await screen.findByTestId("meeting-row-m-off-words");
+    const file = new File(["Me: hello"], "one-on-one-theo.txt", { type: "text/plain", lastModified: thursday.getTime() });
+    fireEvent.drop(screen.getByTestId("meetings-drop"), { dataTransfer: { files: [file] } });
+    const when = (await screen.findByTestId("import-when")) as HTMLInputElement;
+    await waitFor(() => expect(when.value).toBe("2026-10-15T10:00"));
+    expect(rawButtons()).toEqual([]);
   });
 });
 

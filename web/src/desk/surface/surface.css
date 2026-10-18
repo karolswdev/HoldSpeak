@@ -5185,6 +5185,12 @@ button.surface-edit-in-place:hover {
   color: var(--wb-muted);
 }
 /* Import: two plates side by side, record now or bring one in. */
+/* Capture C3: the Meetings window takes a dropped file; the wrapper draws
+   nothing of its own. */
+.desk-next .meetings-drop {
+  display: contents;
+}
+
 .desk-next .meetings-import-plates {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);

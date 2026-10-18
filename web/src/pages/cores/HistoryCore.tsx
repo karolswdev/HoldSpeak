@@ -41,6 +41,7 @@ import {
   ImportSection, CatalogRail, DoorSection, meetingFailed,
 } from "./history";
 import { useSummaryRun } from "./history/useSummaryRun";
+import { IMPORT_ACCEPT } from "./history/importWhen";
 import { leadRunRowId } from "./history/CatalogRail";
 import { AppTile, FigureStrip, type Figure } from "../../desk/surface/kit";
 import { MeetingWindow } from "../../desk/pullouts/MeetingWindow";
@@ -85,6 +86,19 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   const [parked, setParked] = useState<ParkedRow[]>([]);
   const [parkedOn, setParkedOn] = useState(false);
   const [restoredId, setRestoredId] = useState<string | null>(null);
+  // Capture C3: Import opens the file picker at once, and a file dropped on
+  // the Meetings window does the same; the chosen file opens the import form.
+  const importPicker = useRef<HTMLInputElement | null>(null);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const startImport = (file: File | null | undefined) => {
+    if (!file) return;
+    setImportFile(file);
+    wings.setDoorOpen(false);
+    wings.setView("record");
+  };
+  useEffect(() => {
+    if (wings.view !== "record") setImportFile(null);
+  }, [wings.view]);
 
   // Intelligence run state
   // HS-200-42 (counsel N1): the same drainer fact the Chair reads, from the
@@ -351,13 +365,23 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       <Button
         dense
         variant="ghost"
-        onClick={() => {
-          wings.setDoorOpen(false);
-          wings.setView("record");
-        }}
+        data-testid="meetings-import"
+        onClick={() => importPicker.current?.click()}
       >
         Import
       </Button>
+      <input
+        ref={importPicker}
+        type="file"
+        hidden
+        accept={IMPORT_ACCEPT}
+        aria-label="Choose a recording or transcript"
+        data-testid="meetings-import-picker"
+        onChange={(event) => {
+          startImport(event.target.files?.[0]);
+          event.target.value = "";
+        }}
+      />
     </>
   );
 
@@ -414,9 +438,13 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     />
   ) : wings.view === "record" ? (
     <ImportSection
-      onDone={() => wings.setView("outcomes")}
+      onDone={() => {
+        setImportFile(null);
+        wings.setView("outcomes");
+      }}
       onImported={() => void meetings.reload()}
       scope={scope}
+      initialFile={importFile}
     />
   ) : (
     <>
@@ -478,7 +506,17 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   return (
     <>
       {renderHeroSlot(hero, null)}
-      {face}
+      <div
+        className="meetings-drop"
+        data-testid="meetings-drop"
+        onDragOver={(event) => event.preventDefault()}
+        onDrop={(event) => {
+          event.preventDefault();
+          startImport(event.dataTransfer?.files?.[0]);
+        }}
+      >
+        {face}
+      </div>
       <SurfaceFooter
         egress={footerEgress}
         receipt={
