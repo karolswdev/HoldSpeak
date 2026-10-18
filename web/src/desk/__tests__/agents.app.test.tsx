@@ -587,3 +587,45 @@ describe("the screen parse on the recorded fake Claude Code panes (Betterment AG
     expect(questionChoices("Jordan or Avery?")).toEqual([]);
   });
 });
+
+/* ── Betterment AG5: working at once, and a queue ─────────────────────
+ * Recorded on a real hub by tests/integration/test_desk_agents_wire.py::
+ * test_the_agents_read_counts_only_working_agents_and_shows_a_queued_hand
+ * (fixtures/agents-ag5): the limit is 2; one agent is done, one asks, and a
+ * third hand waits for a free agent. */
+const AG5 = hubWire<{ flights: Array<Record<string, unknown>>; launches: { live: number; cap: number } }>(
+  "../fixtures/agents-ag5/coders-sessions",
+);
+
+describe("working at once, and a queue (Betterment AG5)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(AG5.captured_at));
+    __resetConductor();
+    useAgentFlights.setState({ sessions: [], flights: [], loaded: false });
+  });
+
+  it("a queued hand reads Waits for a free agent, has no Open, and is not at work", async () => {
+    const queued = AG5.wire.flights.find((f) => f.state === "queued")!;
+    serve({ "/api/coders/sessions": AG5.wire, "/api/onboarding/agents": DETECT.wire });
+    render(<ConductorWindow />);
+    await screen.findByRole("button", { name: "Rotate the staging keys" });
+    const id = `queue:${String(queued.queue_id)}`;
+    expect(pillOf(id)).toBe("Waits for a free agent");
+    expect(within(conductorMember(id)!).queryByTestId("conductor-open")).toBeNull();
+    expect(pillOf("launch:launch_ag0_done")).toBe("Done · New");
+    // The head: the done agent and the queued hand are not at work.
+    expect(screen.getByTestId("conductor-head").querySelector(".kit-disp")?.textContent).not.toMatch(/at work/);
+    // Selecting the queued row offers no Stop (nothing runs yet).
+    fireEvent.click(within(conductorMember(id)!).getByRole("button", { name: "Rotate the staging keys" }));
+    expect(screen.queryByTestId("conductor-stop")).toBeNull();
+  });
+
+  it("the flight wire carries the queued state and its queue id", () => {
+    const flight = fromWireFlight(AG5.wire.flights.find((f) => f.state === "queued"));
+    expect(flight.state).toBe("queued");
+    expect(flight.queueId).toMatch(/^queue_/);
+    expect(flight.launchId).toBeNull();
+    expect(AG5.wire.launches.cap).toBe(2);
+  });
+});

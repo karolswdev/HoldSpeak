@@ -117,7 +117,7 @@ def build_agent_hand_router(ctx: WebContext) -> APIRouter:
                 return JSONResponse({"error": "agent_hand_failed"}, status_code=500)
             status = 404 if reason in _NOT_FOUND else (400 if reason == "invalid_arguments" else 409)
             return JSONResponse({"error": reason, "code": reason, "detail": str(exc)}, status_code=status)
-        status = 202 if result.get("status") == "launched" else 409
+        status = 202 if result.get("status") in ("launched", "queued") else 409
         return JSONResponse(result, status_code=status)
 
     @router.post("/api/agent/hand/preview")

@@ -2538,6 +2538,13 @@ function SettingsFace({ hero, scope }: CoreProps) {
             <SurfaceColumns variant="preferences" main={<OwnerNameGroup />} side={<PeopleAccessModule />} />
           </>
         );
+      /* ── Agents: how many work at once (Betterment AG5) ── */
+      case "agents":
+        return (
+          <GadgetGroup material="inset" label="Agents">
+            {num(["agents", "working_at_once"], "Working at once", { min: 1, max: 20, step: 1 })}
+          </GadgetGroup>
+        );
       default:
         return null;
     }
@@ -2546,7 +2553,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
   const module = moduleId
     ? PREF_MODULES.find((entry) => entry.id === moduleId)
     : null;
-  const insetModule = ["voice", "meetings", "rhythm", "sounds", "people", "system"].includes(moduleId ?? "");
+  const insetModule = ["voice", "meetings", "rhythm", "sounds", "people", "system", "agents"].includes(moduleId ?? "");
   const receipt = { saving: saving || Boolean(secretBusy), writtenAt, refusal };
   return (
     <>

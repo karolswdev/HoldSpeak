@@ -276,6 +276,28 @@ def _record_restart_stops() -> None:
         log.warning(f"restart stop check failed: {exc}")
 
 
+def _start_queued_hands(web_ctx: Any = None) -> None:
+    """Betterment AG5: a hand that waits for a free agent starts when one is
+    free (about each minute, beside the restart check). With nothing queued
+    a tick is one read of the queue file. A failure is logged and never
+    stops the hub's timer."""
+    try:
+        from .services.agent_hand_queue import HandQueue, start_queued
+
+        queue = HandQueue()
+        if not queue.list():
+            return
+        from .services.agent_hand_service import default_agent_hand_service
+
+        service = getattr(web_ctx, "agent_hand_service", None) or default_agent_hand_service(
+            delivery_service=getattr(web_ctx, "delivery_service", None)
+        )
+        for answer in start_queued(service, queue=queue):
+            log.info(f"queued hand {answer.get('queue_id')}: {answer.get('status')}")
+    except Exception as exc:
+        log.warning(f"queued hands not started: {exc}")
+
+
 def _expire_queued_rebriefs() -> None:
     try:
         from .db import get_database
@@ -2049,6 +2071,8 @@ class MeetingWebServer:
                 await asyncio.to_thread(_expire_queued_rebriefs)
                 # Betterment AG0: a tmux session gone since hub start.
                 await asyncio.to_thread(_record_restart_stops)
+                # Betterment AG5: a queued hand starts when an agent is free.
+                await asyncio.to_thread(_start_queued_hands, web_ctx)
             await asyncio.sleep(event_log.SpoolTimer.INTERVAL)
 
     async def _agent_pr_poll_loop(self) -> None:

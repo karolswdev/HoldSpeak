@@ -7,7 +7,8 @@ import { MODULE_ALIASES, PREF_MODULES } from "../settingsPrefs";
 describe("Settings face roster", () => {
   it("has one Engines destination (PHILO-16 C: Models + Assignments merged)", () => {
     // Conductor R7 (canvas K7a, ratified 2026-10-07): + People.
-    expect(PREF_MODULES).toHaveLength(9);
+    // Betterment AG5 (DECISIONS #23): + Agents (working at once).
+    expect(PREF_MODULES).toHaveLength(10);
     expect(PREF_MODULES.find((m) => m.id === "models")?.label).toBe("Engines");
     expect(MODULE_ALIASES.assignments).toBe("models");
   });
@@ -24,6 +25,7 @@ describe("Settings face roster", () => {
       "integrations",
       "system",
       "people",
+      "agents",
     ]);
   });
 

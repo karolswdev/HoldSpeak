@@ -351,6 +351,8 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
                 "answers": answers_fact,
                 "rhythm": heartbeat_rhythm,
                 "sounds": {"on": sounds_on},
+                # Betterment AG5: how many agents work at once.
+                "agents": {"workingAtOnce": config.agents.working_at_once},
                 "system": {
                     "host": "THIS DEVICE",
                     "mesh": mesh_on,

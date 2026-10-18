@@ -341,6 +341,7 @@ class SettingsService:
 
     def _update(self, patch: dict[str, Any]) -> dict[str, Any]:
         from holdspeak.config import (
+            AgentsConfig,
             Config,
             CalendarConfig,
             CalendarSource,
@@ -1024,6 +1025,8 @@ class SettingsService:
             cadence_cfg = CadenceConfig(**merged.get("cadence", {}))
             telegram_cfg = TelegramConfig(**merged.get("cadence_telegram", {}))
             mesh_cfg = MeshConfig(**merged.get("mesh", {}))
+            # Betterment AG5: the working-at-once limit (clamped 1 to 20).
+            agents_cfg = AgentsConfig(**(merged.get("agents") or {}))
         except (TypeError, ValueError) as exc:
             return {"success": False, "error": f"Invalid preference: {exc}"}
 
@@ -1044,6 +1047,7 @@ class SettingsService:
             cadence=cadence_cfg,
             cadence_telegram=telegram_cfg,
             mesh=mesh_cfg,
+            agents=agents_cfg,
         )
         updated.save()
 

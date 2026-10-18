@@ -344,12 +344,24 @@ def build_coders_router(ctx: WebContext) -> APIRouter:
         except Exception as e:
             log.warning(f"agent launch history unread: {e}")
         try:
+            from ....db import get_database
+            from ....services.agent_hand_queue import queued_flights
+
+            # Betterment AG5: a hand that waits for a free agent is a flight
+            # in the `queued` state ("Waits for a free agent").
+            flights = [*flights, *queued_flights(get_database())]
+        except Exception as e:
+            log.warning(f"queued hands unread: {e}")
+        try:
             from ....services.agent_hand_preview import LaunchReads
-            from ....services.agent_hand_service import MAX_LIVE_LAUNCHES, live_launches
+            from ....db import get_database
+            from ....services.agent_hand_service import working_at_once, working_launches
 
             reads = getattr(ctx, "agent_hand_reads", None) or LaunchReads()
-            live = await asyncio.to_thread(lambda: len(live_launches(reads.launcher())))
-            extra["launches"] = {"live": live, "cap": MAX_LIVE_LAUNCHES}
+            # Betterment AG5: the agents that work or need him, against the
+            # setting `agents.working_at_once` (done and quiet do not count).
+            live = await asyncio.to_thread(lambda: len(working_launches(reads.launcher(), get_database())))
+            extra["launches"] = {"live": live, "cap": working_at_once()}
         except Exception as e:
             log.warning(f"agent launch count unread: {e}")
         # PHILO-14 C0: the coder frame drains the hook's event spool into

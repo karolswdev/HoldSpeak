@@ -41,6 +41,9 @@ AGENT_HAND = OperationDescriptor(
                         "description": "Agent profile id: claude-default (the default), codex-default or pi-default."},
             "project_id": {"type": ["string", "null"],
                            "description": "Optional Project id, when the item names no Project."},
+            "queue": {"type": ["boolean", "null"],
+                      "description": "At the working-at-once limit, wait for a free agent and start then "
+                                     "(status queued) instead of the launch_cap_reached refusal."},
         },
         "required": ["kind", "id"],
         "additionalProperties": False,
@@ -48,7 +51,8 @@ AGENT_HAND = OperationDescriptor(
     principal="derived by the transport (HTTP auth middleware; MCP auth resolver); the owner's press",
     effect="write",
     result=(
-        "{status: launched or failed, resumed (true when an earlier launch of this item got its held "
+        "{status: launched or failed (or queued: at the working-at-once limit with queue, the hand waits "
+        "for a free agent and the answer carries queue_id and queued_at), resumed (true when an earlier launch of this item got its held "
         "brief again), instruction_state (pending, sent, hooks_missing or the steering refusal: the "
         "brief is typed when the agent session registers and is sent only on a delivered receipt), "
         "trust_state, launch_id, attempt_id, operation_id, state, failure, gate, session, "
@@ -60,7 +64,7 @@ AGENT_HAND = OperationDescriptor(
         "item_kind_unsupported", "item_unknown", "profile_unknown", "tmux_absent", "executable_absent",
         "no_repository", "repository_not_registered: the Room watches a repository nobody registered",
         "clone_failed", "clone_timed_out", "gh_not_installed", "worktree_duplicate", "worktree_name_invalid", "brief_over_cap",
-        "launch_cap_reached: 3 HoldSpeak-launched agents run now (the limit)",
+        "launch_cap_reached: as many agents work now as the setting agents.working_at_once allows (default 6)",
         "story_ref_invalid", "process_spawn_not_gated", "kernel_unavailable",
     ),
     completion=(

@@ -183,7 +183,7 @@ export function MemberVerbs({ member, onInfo, trim = false }: {
           Answer
         </Button>
       ) : null}
-      {!trim && member && member.role !== "ready" ? (
+      {!trim && member && member.role !== "ready" && member.live !== "queued" ? (
         <Button dense variant="secondary" onClick={() => openMember(member)}>
           Open
         </Button>
@@ -254,6 +254,9 @@ export function memberPill(member: ConductorMember): { word: string; tone: "ok" 
       return { word: "Idle", tone: "idle" };
     case "pr":
       return { word: member.lamp?.label.startsWith("PR #") ? `${member.lamp.label} open` : "PR open", tone: "ok" };
+    case "queued":
+      // Betterment AG5: at the working-at-once limit the hand waits.
+      return { word: "Waits for a free agent", tone: "idle" };
     case "done":
       // Betterment AG0: Done · New until he opens it, then Quiet.
       return member.isNew ? { word: "Done · New", tone: "ok" } : { word: "Quiet", tone: "idle" };
@@ -524,9 +527,11 @@ export function ConductorWindow() {
                       </>
                     }
                     verb={
-                      <Button dense variant="ghost" onClick={() => openMember(m)} data-testid="conductor-open">
-                        Open
-                      </Button>
+                      m.live === "queued" ? undefined : (
+                        <Button dense variant="ghost" onClick={() => openMember(m)} data-testid="conductor-open">
+                          Open
+                        </Button>
+                      )
                     }
                   />
                 ))}

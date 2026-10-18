@@ -22,7 +22,7 @@
       "target_name": ""
     }
   },
-  "_revision": "c7e3ea89d107a4bb",
+  "_revision": "997b3842a65dcdb4",
   "_runtime_status": {
     "counters": {
       "classify_calls": 0,
@@ -57,6 +57,9 @@
     "web_token": {
       "configured": false
     }
+  },
+  "agents": {
+    "working_at_once": 6
   },
   "cadence": {
     "brief_enabled": true,
@@ -104,7 +107,7 @@
     "runtime": {
       "backend": "auto",
       "eviction_idle_seconds": 0,
-      "llama_cpp_model_path": "~/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+      "llama_cpp_model_path": "~/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
       "mlx_model": "",
       "n_ctx": 2048,
       "n_gpu_layers": -1,
@@ -139,7 +142,7 @@
     "intel_enabled": false,
     "intel_profile_id": null,
     "intel_provider": "local",
-    "intel_realtime_model": "~/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+    "intel_realtime_model": "~/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
     "intel_retry_base_seconds": 30,
     "intel_retry_failure_webhook_header_name": null,
     "intel_retry_max_attempts": 6,

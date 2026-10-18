@@ -23,6 +23,7 @@ from .model import LLMRuntimeConfig, ModelConfig
 from .ui import HotkeyConfig, MacrosConfig, UIConfig
 from .owner import OwnerConfig
 from .people import PeopleConfig
+from .agents import AgentsConfig
 from .device import DeviceConfig, MeshConfig, PresenceConfig, WakeWordConfig
 from .integrations import (
     CadenceConfig,
@@ -309,6 +310,8 @@ class Config:
     owner: OwnerConfig = field(default_factory=OwnerConfig)
     # Conductor R7: the People MCP access (off | read | write; default on).
     people: PeopleConfig = field(default_factory=PeopleConfig)
+    # Betterment AG5: how many agents work at once (default 6).
+    agents: AgentsConfig = field(default_factory=AgentsConfig)
 
     @classmethod
     def load(cls, path: Optional[Path] = None) -> "Config":
@@ -382,6 +385,11 @@ class Config:
                     PeopleConfig,
                     data["people"] if isinstance(data.get("people"), dict) else {},
                     section="people",
+                ),
+                agents=_coerce(
+                    AgentsConfig,
+                    data["agents"] if isinstance(data.get("agents"), dict) else {},
+                    section="agents",
                 ),
             )
             # HS-112-01: the one-time legacy-endpoint migration runs only on

@@ -138,6 +138,8 @@ export function agentOfProfile(profile: string | null | undefined, fallback: Age
 
 /** The launch's delivery as one token: the brief is pending, held, sent or refused. */
 export function deliveryToken(launch: HandLaunch): { label: string; tone: "ok" | "warning" | "danger" | undefined; done: boolean } {
+  // Betterment AG5: at the working-at-once limit the hand waits in the queue.
+  if (launch.status === "queued") return { label: "WAITS FOR A FREE AGENT", tone: undefined, done: true };
   const state = String(launch.instruction_state ?? "");
   if (state === "sent") return { label: "LAUNCHED · BRIEF SENT", tone: "ok", done: true };
   // Not known yet: the brief waits for the agent (pending), or its typing has
@@ -370,14 +372,18 @@ function Sheet({ origin }: { origin: HandOrigin }) {
     }
   }, [launched, launching]);
 
-  const launch = useCallback(async (launchProfile: string) => {
+  const launch = useCallback(async (launchProfile: string, queue = false) => {
     if (launching) return;
     setLaunching(true);
     setLaunchError(null);
     try {
       const answer = await apiFetch<HandLaunch>(HAND_PATH, {
         method: "POST",
-        json: { kind: origin.kind, id: origin.id, profile: AGENT_PROFILE[agent], project_id: origin.projectId || null },
+        json: {
+          kind: origin.kind, id: origin.id, profile: AGENT_PROFILE[agent], project_id: origin.projectId || null,
+          // Betterment AG5: "Start when one is free" queues the hand at the limit.
+          ...(queue ? { queue: true } : {}),
+        },
       });
       // The receipt belongs to the launch: its agent is frozen with it.
       if (answer?.clone) setCloneDone(answer.clone);
@@ -395,7 +401,10 @@ function Sheet({ origin }: { origin: HandOrigin }) {
   // The preview on screen is the one for THIS item and THIS pick; a late answer
   // for another pick never arms Launch.
   const current = preview !== null && preview.requestKey === requestKey;
-  const blocked = preview?.refused ?? [];
+  // Betterment AG5: the working-at-once limit is not a dead end: Launch
+  // becomes "Start when one is free" (the hand waits in the hub's queue).
+  const atLimit = (preview?.refused ?? []).includes("launch_cap_reached");
+  const blocked = (preview?.refused ?? []).filter((code) => code !== "launch_cap_reached");
   const sources = preview?.sources ?? [];
   const mode = modeWord(preview?.control_mode);
   // The agent the launch really runs: a held launch keeps its own.
@@ -571,10 +580,10 @@ function Sheet({ origin }: { origin: HandOrigin }) {
                 variant="primary"
                 loading={launching}
                 disabled={!canLaunch}
-                onClick={() => void launch(AGENT_PROFILE[actual])}
+                onClick={() => void launch(AGENT_PROFILE[actual], atLimit)}
                 data-testid="hand-launch"
               >
-                Launch
+                {atLimit ? "Start when one is free" : "Launch"}
               </Button>
             </>
           )

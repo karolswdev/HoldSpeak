@@ -16,7 +16,9 @@ import { useOnCoderFrame, useOnDeskChanged } from "./useDeskChangedRefresh";
 import { coderTurnEnd, isBlockedCoder, type NeedsYouCoder } from "./needsYou";
 
 export type FlightState =
-  | "starting" | "working" | "waiting" | "done" | "pr_open" | "merged" | "ended" | "expired" | "stopped_by_restart";
+  | "starting" | "working" | "waiting" | "done" | "pr_open" | "merged" | "ended" | "expired" | "stopped_by_restart"
+  /** Betterment AG5: a hand that waits for a free agent (no launch yet). */
+  | "queued";
 export type AgentName = "claude" | "codex" | "pi";
 
 export interface AgentFlight {
@@ -46,6 +48,9 @@ export interface AgentFlight {
   mergedAt: string | null;
   /** PHILO-14 C2: the launch, the agent's lane window opens on it. */
   launchId: string | null;
+  /** Betterment AG5: a queued hand's id and when he pressed it. */
+  queueId?: string | null;
+  queuedAt?: string | null;
 }
 
 export interface CoderSessionRow {
@@ -71,7 +76,7 @@ export function agentWord(agent: string): string {
 }
 
 const FLIGHT_STATES: readonly string[] = [
-  "starting", "working", "waiting", "done", "pr_open", "merged", "ended", "expired", "stopped_by_restart",
+  "starting", "working", "waiting", "done", "pr_open", "merged", "ended", "expired", "stopped_by_restart", "queued",
 ];
 
 export function fromWireFlight(body: any): AgentFlight {
@@ -94,6 +99,8 @@ export function fromWireFlight(body: any): AgentFlight {
     sessionCleanup: body?.session_cleanup ? String(body.session_cleanup) : null,
     mergedAt: body?.merged_at ? String(body.merged_at) : null,
     launchId: body?.launch_id ? String(body.launch_id) : null,
+    queueId: body?.queue_id ? String(body.queue_id) : null,
+    queuedAt: body?.queued_at ? String(body.queued_at) : null,
   };
 }
 
@@ -123,6 +130,7 @@ export function flightLabel(flight: AgentFlight): string | null {
     return `PR #${flight.pr.number} · ${flight.state === "pr_open" ? "OPEN" : "MERGED"}`;
   }
   if (flight.state === "starting") return `${agentWord(flight.agent)} · STARTING`;
+  if (flight.state === "queued") return `${agentWord(flight.agent)} · WAITS FOR A FREE AGENT`;
   if (flight.state === "working") return `${agentWord(flight.agent)} · WORKING`;
   if (flight.state === "done") return `${agentWord(flight.agent)} · ${flight.isNew ? "DONE · NEW" : "DONE"}`;
   if (flight.state === "waiting") return `${agentWord(flight.agent)} · ${flight.turnEnd === "idle" ? "IDLE" : "WAITING"}`;
@@ -130,7 +138,7 @@ export function flightLabel(flight: AgentFlight): string | null {
 }
 
 export function flightTone(state: FlightState): "working" | "warning" | "active" | "success" | "idle" {
-  if (state === "starting") return "idle";
+  if (state === "starting" || state === "queued") return "idle";
   if (state === "done") return "success";
   return state === "waiting" ? "warning" : state === "pr_open" ? "active" : state === "merged" ? "success" : "working";
 }
@@ -181,12 +189,12 @@ export function flightForItem(flights: readonly AgentFlight[], item: Parameters<
   return flights.find((f) => refs.includes(f.originRef) && !GONE.has(f.state)) ?? null;
 }
 
-/** An agent holds the item: STARTING, WORKING, WAITING, DONE, PR OPEN, or MERGED
+/** An agent holds the item: QUEUED (AG5), STARTING, WORKING, WAITING, DONE, PR OPEN, or MERGED
  * with the close still awaiting the owner's confirmation (Secure). Such a row
  * shows its flight and not Hand to coder. */
 export function isInFlight(flight: AgentFlight | null | undefined): flight is AgentFlight {
   if (!flight) return false;
-  if (["starting", "working", "waiting", "done", "pr_open"].includes(flight.state)) return true;
+  if (["queued", "starting", "working", "waiting", "done", "pr_open"].includes(flight.state)) return true;
   return flight.state === "merged" && flight.close === "awaiting_confirm";
 }
 
