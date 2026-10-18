@@ -784,3 +784,30 @@ def test_the_agents_read_counts_only_working_agents_and_shows_a_queued_hand(
     _keep("agents-ag5", "coders-sessions", body, tmp_path, hub)
     hub_settings = _get(hub, "/api/settings/hub")
     assert hub_settings["agents"] == {"workingAtOnce": 2}, hub_settings.get("agents")
+
+
+def test_the_agents_read_offers_resume_for_agents_a_restart_stopped(
+    hub: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Betterment AG6 (the hub half): both agents a restart took read
+    ``stopped_by_restart`` (the Agents window shows Resume on each and Resume
+    all); a Resume the hub cannot run (this rig's launches have no
+    worktree) is refused by name and leaves the launch stopped. The answers
+    are recorded for agents.app.test.tsx (fixtures/agents-ag6)."""
+    from holdspeak.services.launch_lane import record_restart_stops
+    from tests.e2e.agents_lane_rig import TOKEN, _http
+
+    (tmp_path / "tmux").mkdir()
+    monkeypatch.setenv("TMUX_TMPDIR", str(tmp_path / "tmux"))
+    _ag0_seed(tmp_path / "home")
+    assert sorted(record_restart_stops(alive=lambda _name: False)) == ["launch_ag0_done", "launch_ag0_ghost"]
+    stopped = _get(hub, "/api/coders/sessions?include_ended=false")
+    assert sorted((f["launch_id"], f["state"]) for f in stopped["history"]) == [
+        ("launch_ag0_done", "stopped_by_restart"), ("launch_ag0_ghost", "stopped_by_restart")]
+    _keep("agents-ag6", "coders-sessions", stopped, tmp_path, hub)
+    status, refused = _http(hub, "POST", "/api/agent/launches/launch_ag0_ghost/resume", TOKEN, {})
+    refused = refused if isinstance(refused, dict) else json.loads(refused)   # an HTTPError body
+    assert status == 409 and refused["code"] == "worktree_gone", (status, refused)
+    _keep("agents-ag6", "resume.refused", refused, tmp_path, hub)
+    after = _get(hub, "/api/coders/sessions?include_ended=false")
+    assert [f["state"] for f in after["history"] if f["launch_id"] == "launch_ag0_ghost"] == ["stopped_by_restart"]

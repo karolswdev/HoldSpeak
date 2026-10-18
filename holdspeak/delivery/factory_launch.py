@@ -404,6 +404,32 @@ class AgentProfileStore:
         return argv
 
 
+def _resume_words(profile_id: Any, session_key: str) -> Optional[str]:
+    """``claude --resume <id>`` for a bound session (shown, never run)."""
+    _agent, _, session_id = str(session_key or "").partition(":")
+    try:
+        return " ".join(resume_argv(agent_of_profile(profile_id), [agent_of_profile(profile_id)], session_id))
+    except LaunchRefused:
+        return None
+
+
+def resume_argv(executable: str, argv: list[str], session_id: str) -> list[str]:
+    """The agent's own resume (Betterment AG6; herdr's resume table, checked
+    against each CLI's ``--help`` on 2026-10-18): Claude Code
+    ``claude [flags] --resume <id>``; Codex ``codex resume [flags] <id>`` (the
+    subcommand takes the same flags); pi ``pi [flags] --session <id>`` (a
+    session file or a partial id, looked up in the launch's ``--session-dir``)."""
+    if not _SAFE_TOKEN_RE.match(str(session_id or "")):
+        raise LaunchRefused("no_session_to_resume", "the session id is not a safe token")
+    if executable == "claude":
+        return [*argv, "--resume", session_id]
+    if executable == "codex":
+        return [argv[0], "resume", *argv[1:], session_id]
+    if executable == "pi":
+        return [*argv, "--session", session_id]
+    raise LaunchRefused("resume_unsupported", f"{executable!r} has no resume")
+
+
 # ── the worktree-create op (node-side executor) ──────────────────────
 
 
@@ -1045,16 +1071,82 @@ class LaunchService:
 
     # command composition ---------------------------------------------------
 
+    def _agent_argv(
+        self, executable: str, argv: list[str], launch_id: str, mode: Any, parent_operation_id: str,
+    ) -> dict[str, Any]:
+        """The agent's own flags on top of the profile argv: the rider and
+        gate hooks, the HoldSpeak MCP, the Control mode's permission flags,
+        pi's folder and engine. One composition for a launch and for its
+        Resume after a restart (Betterment AG6). ``codex_tail`` goes after
+        Codex's mode flags (they need the worktree, added at the spawn)."""
+        from . import agent_mcp
+
+        env: dict[str, str] = {}
+        model_key_slot = ""
+        codex_tail: list[str] = []
+        gated = False
+        if executable == "claude":
+            # Every Claude launch carries HoldSpeak's spawn settings: the
+            # rider hooks (so the launch registers with no manual
+            # ``agent-hook install``) and the gate hooks (inert unless the
+            # gate holds this worktree).
+            from .. import coder_gate
+
+            settings_path = coder_gate.write_spawn_settings()
+            argv = [*argv, "--settings", str(settings_path)]
+            # Conductor K6: the HoldSpeak MCP, from the launch's credential.
+            mcp_config = agent_mcp.write_mcp_config(launch_id, self._mcp_config_dir)
+            allowed: tuple[str, ...] = ("Bash",) if parent_operation_id else ()
+            # Conductor R1: Normal and YOLO accept edits in the worktree.
+            argv = [*argv, *agent_mcp.claude_permission_args(mode, argv)]
+            argv = [*argv, *agent_mcp.claude_args(mcp_config, mode, allowed=allowed)]
+            gated = bool(parent_operation_id)
+        elif executable == "codex":
+            from .. import coder_gate
+            from ..principals import agent_credentials
+
+            # Conductor R3: every Codex launch runs in its own process with the
+            # rider and gate hooks (inert unless the gate holds this worktree).
+            argv = [*argv, *coder_gate.codex_spawn_args()]
+            # The approval and sandbox flags need the worktree's git folder:
+            # added once the worktree exists (before the spawn).
+            codex_tail = agent_mcp.codex_args(agent_credentials.hub_url, mode)
+            gated = bool(parent_operation_id)
+        elif executable == "pi":
+            from .. import coder_gate
+            from ..principals import agent_credentials
+            from . import pi_launch
+
+            # pi spike #1020: the launch's own pi folder (the engine, the
+            # HoldSpeak MCP, the gate and rider commands), the transcript
+            # folder and the extension. The engine's key rides the spawn's
+            # one-shot file (by its slot), never argv.
+            engine = self.pi_engine()
+            pi_folder = pi_launch.write_pi_dir(
+                launch_id, engine, hub_url=agent_credentials.hub_url,
+                hooks=coder_gate.pi_spawn_hooks(coder_gate.spawn_prefix()),
+                keyed=bool(engine.key_slot), directory=self._mcp_config_dir,
+            )
+            argv = [*argv, *pi_launch.launch_args(engine, pi_folder)]
+            env = pi_launch.launch_env(pi_folder, mcp_hold=not agent_mcp.pre_approved(mode))
+            model_key_slot = engine.key_slot
+            gated = bool(parent_operation_id)
+        return {"argv": argv, "codex_tail": codex_tail, "env": env,
+                "model_key_slot": model_key_slot, "gated": gated}
+
     @staticmethod
     def compose_command(
         argv: list[str], worktree_path: str, story_env: str,
         *, parent_operation_id: str = "", env: Optional[Mapping[str, str]] = None,
+        shell_after_failure: bool = False,
     ) -> str:
         """The ONE shell string tmux receives. Every substitution is a
         pre-validated safe token or a server-side path, individually
         quoted — a client never contributes a byte of it directly.
         ``env``: server-side variables of the launch (pi's folder and its
-        offline switches); never a secret."""
+        offline switches); never a secret. ``shell_after_failure`` (a
+        Resume, Betterment AG6): when the agent exits with an error (an old
+        session id), the pane keeps a login shell in the worktree."""
         quoted = " ".join(shlex.quote(token) for token in argv)
         parent = (
             f"HOLDSPEAK_PARENT_OPERATION_ID={shlex.quote(parent_operation_id)} "
@@ -1065,6 +1157,12 @@ class LaunchService:
             f"{name}={shlex.quote(str(value))} " for name, value in sorted((env or {}).items())
             if re.match(r"^[A-Z][A-Z0-9_]{0,63}$", str(name))
         )
+        if shell_after_failure:
+            return (
+                f"cd {shlex.quote(str(worktree_path))} && "
+                f"HOLDSPEAK_STORY_REF={shlex.quote(story_env)} {parent}{extra}{quoted} "
+                '|| exec "${SHELL:-/bin/sh}" -l'
+            )
         return (
             f"cd {shlex.quote(str(worktree_path))} && "
             f"HOLDSPEAK_STORY_REF={shlex.quote(story_env)} {parent}{extra}exec {quoted}"
@@ -1117,57 +1215,11 @@ class LaunchService:
 
         mode = self._control_mode()
         executable = str(profile.get("executable") or "")
-        launch_env: dict[str, str] = {}
-        model_key_slot = ""
-        if executable == "claude":
-            # Every Claude launch carries HoldSpeak's spawn settings: the
-            # rider hooks (so the launch registers with no manual
-            # ``agent-hook install``) and the gate hooks (inert unless the
-            # gate holds this worktree).
-            from .. import coder_gate
-
-            settings_path = coder_gate.write_spawn_settings()
-            argv = [*argv, "--settings", str(settings_path)]
-            # Conductor K6: the HoldSpeak MCP, from the launch's credential.
-            mcp_config = agent_mcp.write_mcp_config(launch_id, self._mcp_config_dir)
-            allowed: tuple[str, ...] = ("Bash",) if parent_operation_id else ()
-            # Conductor R1: Normal and YOLO accept edits in the worktree.
-            argv = [*argv, *agent_mcp.claude_permission_args(mode, argv)]
-            argv = [*argv, *agent_mcp.claude_args(mcp_config, mode, allowed=allowed)]
-            if parent_operation_id:
-                gate_state = "gated"
-        elif executable == "codex":
-            from .. import coder_gate
-            from ..principals import agent_credentials
-
-            # Conductor R3: every Codex launch runs in its own process with the
-            # rider and gate hooks (inert unless the gate holds this worktree).
-            argv = [*argv, *coder_gate.codex_spawn_args()]
-            # The approval and sandbox flags need the worktree's git folder:
-            # added once the worktree exists (before the spawn below).
-            codex_tail = agent_mcp.codex_args(agent_credentials.hub_url, mode)
-            if parent_operation_id:
-                gate_state = "gated"
-        elif executable == "pi":
-            from .. import coder_gate
-            from ..principals import agent_credentials
-            from . import pi_launch
-
-            # pi spike #1020: the launch's own pi folder (the engine, the
-            # HoldSpeak MCP, the gate and rider commands), the transcript
-            # folder and the extension. The engine's key rides the spawn's
-            # one-shot file (by its slot), never argv.
-            engine = self.pi_engine()
-            pi_folder = pi_launch.write_pi_dir(
-                launch_id, engine, hub_url=agent_credentials.hub_url,
-                hooks=coder_gate.pi_spawn_hooks(coder_gate.spawn_prefix()),
-                keyed=bool(engine.key_slot), directory=self._mcp_config_dir,
-            )
-            argv = [*argv, *pi_launch.launch_args(engine, pi_folder)]
-            launch_env = pi_launch.launch_env(pi_folder, mcp_hold=not agent_mcp.pre_approved(mode))
-            model_key_slot = engine.key_slot
-            if parent_operation_id:
-                gate_state = "gated"
+        agent_argv = self._agent_argv(executable, argv, launch_id, mode, parent_operation_id)
+        argv, codex_tail = agent_argv["argv"], agent_argv["codex_tail"]
+        launch_env, model_key_slot = agent_argv["env"], agent_argv["model_key_slot"]
+        if agent_argv["gated"]:
+            gate_state = "gated"
         record: dict[str, Any] = {
             "launch_schema": LAUNCHES_SCHEMA,
             "launch_id": launch_id,
@@ -1532,6 +1584,93 @@ class LaunchService:
         """Deliver the held brief of an existing launch (no relaunch)."""
         return self._first.resume(launch_id)
 
+    def resume_session(self, launch_id: str) -> dict[str, Any]:
+        """Betterment AG6: bring an agent a restart stopped back to its
+        conversation. A new tmux session (the launch's own name) in the
+        launch's worktree, through the same start-up as the launch
+        (``factory.spawn``: a fresh launch credential, the rider and gate
+        hooks, the HoldSpeak MCP), runs the agent's own resume
+        (:func:`resume_argv`). The launch keeps its id, its Work attempt and
+        its bound session; it reads ``registered`` again with ``resume =
+        {state: resuming, at, session_id, command}``. When the resume fails
+        (an old id), a login shell stays in the worktree; the flight reads
+        ``resume_failed`` once the agent has not reported in the usual
+        window. Refusals are typed and leave the launch as it was."""
+        from ..services.agent_flights import STOPPED_BY_RESTART
+
+        record = self._ledger.get(launch_id)
+        if not record:
+            raise LaunchRefused("launch_unknown", f"unknown launch {launch_id!r}")
+        if str(record.get("state") or "") != STOPPED_BY_RESTART:
+            raise LaunchRefused("launch_not_stopped", "only an agent a restart stopped resumes")
+        key = str(record.get("session_key") or "")
+        if not key and record.get("attempt_id"):
+            try:
+                key = str(getattr(self._attempts.get(str(record["attempt_id"])), "session_id", "") or "")
+            except Exception:
+                key = ""
+        _agent, _, session_id = key.partition(":")
+        if not session_id or not _SAFE_TOKEN_RE.match(session_id):
+            raise LaunchRefused("no_session_to_resume", "the agent never reported its session")
+        profile_id = str(record.get("profile_id") or "")
+        profile = self._profiles.get(profile_id)
+        if profile is None:
+            raise LaunchRefused("profile_unknown", f"unknown agent profile {profile_id!r}")
+        worktree_path = self._worktree_path(record)
+        if not worktree_path or not Path(worktree_path).is_dir():
+            raise LaunchRefused("worktree_gone", "the agent's worktree is gone")
+        self._preflight(profile)
+        parent = str(record.get("operation_id") or "")
+        if parent:
+            self._require_process_gate(profile, worktree_path)
+        executable = str(profile.get("executable") or "")
+        mode = self._control_mode()
+        composed = self._agent_argv(executable, [executable, *profile["args"]], launch_id, mode, parent)
+        argv = composed["argv"]
+        if executable == "codex":
+            argv = [*argv, *self._codex_mode_args(argv, mode, worktree_path), *composed["codex_tail"]]
+        argv = resume_argv(executable, argv, session_id)
+        story = record.get("story_ref") or {}
+        command = self.compose_command(
+            argv, worktree_path, f"{story.get('project')}/{story.get('story_id')}",
+            parent_operation_id=parent, env=composed["env"], shell_after_failure=True,
+        )
+        origin = record.get("origin_ref") or {}
+        project = str(story.get("project") or "")
+        session_name = str(record.get("session") or "")
+        spawned = self._commands.submit({
+            "node_id": self._local_node_id,
+            "operation": {"family": "coder_factory", "verb": "factory.spawn"},
+            "payload": {
+                "name": session_name, "command": command, "launch_id": launch_id,
+                "scope_items": [f"{origin['kind']}:{origin['id']}"] if origin.get("kind") else [],
+                "project_id": project if origin.get("kind") and project != "desk" else None,
+                **({"model_key_slot": composed["model_key_slot"]} if composed["model_key_slot"] else {}),
+            },
+        })
+        stamp = _iso_now(self._wall_now())
+        resume = {
+            "at": stamp, "session_id": session_id, "command_id": spawned.get("command_id"),
+            "command": " ".join(resume_argv(executable, [executable], session_id)),
+        }
+        outcome = str((spawned.get("receipt") or {}).get("outcome") or spawned.get("state") or "")
+        if outcome != "spawned":
+            return self._ledger.update(launch_id, resume={**resume, "state": "failed", "outcome": outcome}) or record
+        pane_id = self._first_pane(session_name)
+        issued = self._targets.issue(f"pane:{pane_id}") if pane_id else {"status": "pane_gone"}
+        fields: dict[str, Any] = {
+            "state": "registered", "stopped": None, "control_mode": mode,
+            "resume": {**resume, "state": "resuming"},
+        }
+        if issued.get("status") == "issued":
+            fields["target"] = {
+                "target_id": issued["target_id"],
+                "target_generation": issued["target_generation"],
+                "pane_id": issued["pane_id"],
+            }
+            fields["process_group"] = coder_factory.pane_process_group(str(issued["pane_id"]), runner=self._runner)
+        return self._ledger.update(launch_id, **fields) or record
+
     def _session_alive(self, session_name: str) -> bool:
         run = self._runner or coder_steering._default_runner
         try:
@@ -1631,7 +1770,9 @@ class LaunchService:
             launch = self._ledger.by_attempt(attempt.attempt_id)
             if launch:
                 self._ledger.update(
-                    launch["launch_id"], state="registered", session_key=session_key
+                    launch["launch_id"], state="registered", session_key=session_key,
+                    # Betterment AG6: what Resume runs after a restart.
+                    resume_command=_resume_words(launch.get("profile_id"), session_key),
                 )
             summary["bound"] += 1
         return summary

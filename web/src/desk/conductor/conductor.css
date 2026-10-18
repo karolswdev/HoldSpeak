@@ -281,6 +281,9 @@
 .desk-next .cw-ask .cw-ask-call [data-testid="agent-row-command"] { white-space: pre-wrap; overflow-wrap: anywhere; }
 .desk-next .conductor-window .drawer-scroll.cw { container: cwrow / inline-size; }
 @container cwrow (max-width: 520px) {
-  .desk-next .cw-ask .cw-choices > .btn,
-  .desk-next .cw-ask .cw-ask-verbs--wide > .btn { flex: 1 1 100%; max-width: 100%; white-space: normal; }
+  .desk-next .cw-ask .cw-choices > .btn { flex: 1 1 100%; max-width: 100%; white-space: normal; }
+  /* AG2 follow-up: at 393 Allow, Deny and Terminal share one line in equal
+     parts (they stood one under the other, with large gaps). */
+  .desk-next .cw-ask .cw-ask-verbs--wide { flex-wrap: nowrap; justify-content: stretch; }
+  .desk-next .cw-ask .cw-ask-verbs--wide > .btn { flex: 1 1 0; min-width: 0; max-width: none; white-space: nowrap; }
 }

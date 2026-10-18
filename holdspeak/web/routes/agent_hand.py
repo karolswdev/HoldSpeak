@@ -331,6 +331,34 @@ def build_agent_hand_router(ctx: WebContext) -> APIRouter:
             )
         return JSONResponse(result, status_code=202)
 
+    @router.post("/api/agent/launches/{launch_id}/resume")
+    async def api_agent_resume(launch_id: str, request: Request) -> Any:
+        """Betterment AG6: Resume an agent a restart stopped: a new terminal
+        in its worktree runs the agent's own resume (``claude --resume``,
+        ``codex resume``, ``pi --session``). 202 with the launch's resume
+        state; a refusal is 409 (404 for an unknown launch) with its code."""
+        from ...services.agent_hand_service import default_agent_hand_service
+
+        principal = getattr(
+            request.state, "principal", Principal(PrincipalKind.OWNER, "owner-session")
+        )
+        service = getattr(ctx, "agent_hand_service", None) or default_agent_hand_service(
+            delivery_service=getattr(ctx, "delivery_service", None)
+        )
+        try:
+            result = await asyncio.to_thread(service.resume_after_restart, principal, launch_id)
+        except ServiceError as exc:
+            payload = dict(exc.context)
+            status = int(payload.pop("status", 409))
+            return JSONResponse(
+                {"error": exc.code, "code": exc.code, "detail": exc.detail, **payload}, status_code=status
+            )
+        except Exception as exc:
+            log.error(f"agent resume failed: {exc}")
+            return JSONResponse({"error": "agent_resume_failed"}, status_code=500)
+        status = 202 if (result.get("resume") or {}).get("state") == "resuming" else 409
+        return JSONResponse(result, status_code=status)
+
     # ── PHILO-15 16 (B38): a Project knows its repository ──────────────
 
     @router.get("/api/projects/{project_id}/repository")

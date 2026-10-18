@@ -37,6 +37,31 @@ export function stops(member: ConductorMember): boolean {
   return member.role === "live" && Boolean(member.launchId && member.sessionKey);
 }
 
+/** Betterment AG6: Resume an agent a restart stopped (one press): the hub
+ *  opens a new terminal in its worktree running the agent's own resume.
+ *  The receipt lands on the member; the flights read again. */
+export async function resumeMember(member: ConductorMember): Promise<boolean> {
+  const launchId = member.launchId;
+  if (!launchId) return false;
+  const at = Date.now();
+  try {
+    await apiFetch(`/api/agent/launches/${encodeURIComponent(launchId)}/resume`, { method: "POST" });
+    useConductor.getState().setStop(member.ref, { word: "RESUMING", at, text: "the agent's own resume runs", tone: "ok" });
+    return true;
+  } catch (error) {
+    const code = String(((error as { payload?: Record<string, unknown> })?.payload ?? {}).code ?? "") || "hub_unreachable";
+    useConductor.getState().setStop(member.ref, { word: "NOT RESUMED", at, text: code.replace(/_/g, " "), tone: "fail" });
+    return false;
+  } finally {
+    void useConductor.getState().readFlights();
+  }
+}
+
+/** Resume all: every agent a restart stopped, in one press. */
+export async function resumeAll(members: readonly ConductorMember[]): Promise<void> {
+  for (const member of members) await resumeMember(member);
+}
+
 /** Stop the pressed member's launch. Its launch id and session key are taken
  *  at the press and passed to the lane store's bound path
  *  (`stopLaunch`): no await re-reads the lane that is open now, so opening
