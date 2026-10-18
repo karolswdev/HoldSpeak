@@ -33,8 +33,8 @@ describe("Prep owns each obligation and pending Add draft", () => {
   const session = RECORDED_SESSIONS.one_on_ones[0];
   const scenarios = [
     { label: "Add to the agenda", section: "people-next-plate", button: "Add to agenda", path: `/api/people/one-on-ones/${session.id}/agenda` },
-    { label: "You owe", section: "people-you-owe", button: "Add", path: `/api/people/requests/${person.requests[0].id}/accept` },
-    { label: "They owe you", section: "people-they-owe", button: "Add", path: `/api/people/relationships/${person.id}/owed` },
+    { label: "I owe Priya", section: "people-you-owe", button: "Add", path: `/api/people/requests/${person.requests[0].id}/accept` },
+    { label: "Priya owes me", section: "people-they-owe", button: "Add", path: `/api/people/relationships/${person.id}/owed` },
   ];
   function mount(id = person.id, refresh = vi.fn(), failure = vi.fn()) {
     const relationship = { ...person, id, sessions: [session], owed_to_you: [report] };
@@ -139,8 +139,8 @@ describe("Prep owns each obligation and pending Add draft", () => {
     await act(async () => finish(accepted ? json({ commitment: report }, 201) : json({ error: "Writer refused" }, 409)));
     await waitFor(() => expect(accepted ? refresh : failure).toHaveBeenCalledOnce());
     expect(screen.getByLabelText(label)).toHaveValue("Newer task for the next Add");
-    fireEvent.click(screen.getByRole("tab", { name: "History" }));
-    fireEvent.click(screen.getByRole("tab", { name: "Prep" }));
+    fireEvent.click(screen.getByRole("button", { name: "History" }));
+    // Betterment D7: the prep stays on the page; the folds sit under it.
     expect(await screen.findByLabelText(label)).toHaveValue("Newer task for the next Add");
     view.unmount();
     view = mount("another-report");
@@ -185,8 +185,8 @@ describe("Context keeps the report's working note", () => {
     typeNote();
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
     expect(screen.queryByLabelText("Note")).toBeNull();
-    fireEvent.click(screen.getByRole("tab", { name: "History" }));
-    fireEvent.click(screen.getByRole("tab", { name: "Context" }));
+    fireEvent.click(screen.getByRole("button", { name: "History" }));
+    fireEvent.click(screen.getByRole("button", { name: "Context" }));
     expect(screen.getByLabelText("Note")).toHaveValue("Priya can lead the release after the rollback review.");
     expect(screen.getByLabelText("Visibility")).toHaveValue("shared_intent");
     view.unmount();
@@ -283,11 +283,11 @@ describe("PeopleCore encrypted local plane", () => {
     expect(lock.getAttribute("title")).toBe("Encrypted · Local storage · Notes only");
     roster.unmount();
     render(<PeopleCore scope="people:r1" />);
-    await waitFor(() => expect(screen.getByRole("tab", { name: "Prep" })).toBeTruthy());
+    await screen.findByTestId("people-prep-lens");
     // One foot per window: with a person open, the Prep's foot stands alone.
     await waitFor(() => expect(screen.queryByTestId("people-lock")).toBeNull());
     expect(document.querySelectorAll(".surface-footer").length).toBe(1);
-    fireEvent.click(screen.getByRole("tab", { name: "Context" }));
+    fireEvent.click(screen.getByRole("button", { name: "Context" }));
     expect(await screen.findByRole("button", { name: /Platform/ })).toBeTruthy();
     expect(screen.getByText("Prefers written context")).toBeTruthy();
     expect(screen.queryByLabelText("Note")).toBeNull();
@@ -315,9 +315,10 @@ describe("PeopleCore encrypted local plane", () => {
     expect(screen.queryByTitle("Workbench model")).toBeNull();
     expect(screen.queryByText("Workbench model")).toBeNull();
     expect(screen.getByRole("button", { name: "Mark satisfied" })).toBeTruthy();
-    fireEvent.click(screen.getByRole("tab", { name: "History" }));
+    fireEvent.click(screen.getByRole("button", { name: "History" }));
     expect(screen.getByText("Accepted")).toBeTruthy();
-    expect(screen.getByText("Discuss the next architecture step")).toBeTruthy();
+    // Betterment D7: the prep stays above the History fold, so the item shows in both.
+    expect(screen.getAllByText("Discuss the next architecture step").length).toBeGreaterThanOrEqual(2);
   });
 });
 
@@ -336,8 +337,8 @@ describe("PeopleCore HS-149-03 gesture", () => {
       ] }),
     });
     render(<PeopleCore scope="people:r1" />);
-    await waitFor(() => expect(screen.getByRole("tab", { name: "Context" })).toBeTruthy());
-    fireEvent.click(screen.getByRole("tab", { name: "Context" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Context" })).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Context" }));
     fireEvent.click(screen.getByRole("button", { name: "Links" }));
     // Open picker
     fireEvent.click(await screen.findByTestId("people-link-event"));
@@ -373,8 +374,8 @@ describe("PeopleCore HS-149-03 gesture", () => {
     });
     vi.stubGlobal("fetch", fetchSpy);
     render(<PeopleCore scope="people:r1" />);
-    await waitFor(() => expect(screen.getByRole("tab", { name: "Context" })).toBeTruthy());
-    fireEvent.click(screen.getByRole("tab", { name: "Context" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Context" })).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Context" }));
     fireEvent.click(screen.getByRole("button", { name: "Links" }));
     await screen.findByTestId("people-link-event");
     // Pin: no link POST was made without clicking a picker row
@@ -403,8 +404,8 @@ describe("PeopleCore HS-149-03 gesture", () => {
     });
     vi.stubGlobal("fetch", fetchSpy);
     render(<PeopleCore scope="people:r1" />);
-    await waitFor(() => expect(screen.getByRole("tab", { name: "Context" })).toBeTruthy());
-    fireEvent.click(screen.getByRole("tab", { name: "Context" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Context" })).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Context" }));
     fireEvent.click(screen.getByRole("button", { name: "Links" }));
     fireEvent.click(await screen.findByTestId("people-link-event"));
     // Click the event row to link
@@ -438,8 +439,8 @@ describe("PeopleCore HS-149-03 gesture", () => {
     });
     vi.stubGlobal("fetch", fetchSpy);
     render(<PeopleCore scope="people:r1" />);
-    await waitFor(() => expect(screen.getByRole("tab", { name: "Context" })).toBeTruthy());
-    fireEvent.click(screen.getByRole("tab", { name: "Context" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Context" })).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Context" }));
     fireEvent.click(screen.getByRole("button", { name: "Links" }));
     // Beat 1: "Unlink" button
     const unlinkBtn = await screen.findByRole("button", { name: "Unlink" });
@@ -506,8 +507,8 @@ describe("PeopleCore HS-149-03 gesture", () => {
       ] }),
     });
     render(<PeopleCore scope="people:r1" />);
-    await waitFor(() => expect(screen.getByRole("tab", { name: "Context" })).toBeTruthy());
-    fireEvent.click(screen.getByRole("tab", { name: "Context" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Context" })).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Context" }));
     fireEvent.click(screen.getByRole("button", { name: "Links" }));
     fireEvent.click(await screen.findByTestId("people-link-event"));
     // "1:1 w/ EWA" should be SUGGESTED even though name is lowercase "ewa"
@@ -536,8 +537,8 @@ describe("PeopleCore HS-149-04 Prep lens", () => {
       "/api/door": () => json({ upcoming: [] }),
     });
     render(<PeopleCore scope="people:r1" />);
-    await waitFor(() => expect(screen.getByRole("tab", { name: "Prep" })).toBeTruthy());
-    fireEvent.click(screen.getByRole("tab", { name: "Prep" }));
+    await screen.findByTestId("people-prep-lens");
+    // Betterment D7: the prep stays on the page; the folds sit under it.
     // HS-172-05: display step + summary rows + agenda
     expect(await screen.findByTestId("people-prep-lens")).toBeTruthy();
     expect(screen.getByTestId("prep-display-name")).toHaveTextContent("Ewa");
@@ -570,8 +571,8 @@ describe("PeopleCore HS-149-04 Prep lens", () => {
     });
     vi.stubGlobal("fetch", fetchSpy);
     render(<PeopleCore scope="people:r1" />);
-    await waitFor(() => expect(screen.getByRole("tab", { name: "Context" })).toBeTruthy());
-    fireEvent.click(screen.getByRole("tab", { name: "Context" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Context" })).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Context" }));
     fireEvent.click(screen.getByRole("button", { name: "Links" }));
     // Section renders with existing aliases
     const section = await screen.findByTestId("people-owner-aliases");
@@ -621,8 +622,8 @@ describe("PeopleCore HS-149-04 Prep lens", () => {
     // Prep tab should be active on load
     expect(await screen.findByTestId("people-prep-lens")).toBeTruthy();
     // Verify the Prep tab is selected
-    const prepTab = screen.getByRole("tab", { name: "Prep" });
-    expect(prepTab.getAttribute("aria-selected")).toBe("true");
+    // Betterment D7: the prep is the page; every fold under it starts closed.
+    for (const fold of ["Context", "History", "Info"]) expect(screen.getByRole("button", { name: fold }).getAttribute("aria-expanded")).toBe("false");
   });
 });
 
@@ -728,13 +729,13 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
     });
     render(<PeopleCore scope="people:r1" />);
     const owed = await screen.findByTestId("people-they-owe");
-    expect(within(owed).getByRole("heading").textContent).toBe("THEY OWE YOU1");
+    expect(within(owed).getByRole("heading").textContent).toBe("Maya owes me1");
     expect(within(owed).getByText("Send the rollout plan")).toBeTruthy();
     expect(within(owed).queryByText("Old item")).toBeNull();
     expect(screen.getByText("Asked of you")).toBeTruthy();
     expect(screen.queryByText(/Open requests/i)).toBeNull();
     fireEvent.click(within(owed).getByRole("button", { name: "Add" }));
-    fireEvent.change(within(owed).getByLabelText("They owe you"), { target: { value: "Send me the API migration estimate" } });
+    fireEvent.change(within(owed).getByLabelText("Maya owes me"), { target: { value: "Send me the API migration estimate" } });
     fireEvent.click(within(owed).getByRole("button", { name: "Add" }));
     await waitFor(() => expect(posts(fetchSpy, "/api/people/relationships/r1/owed")).toHaveLength(1));
     expect(JSON.parse(String(posts(fetchSpy, "/api/people/relationships/r1/owed")[0][1]?.body)).body).toBe("Send me the API migration estimate");
@@ -794,11 +795,11 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
       "/api/door": () => json({ upcoming: [] }),
     });
     render(<PeopleCore scope="people:r1" />);
-    fireEvent.click(await screen.findByRole("tab", { name: "History" }));
+    fireEvent.click(await screen.findByRole("button", { name: "History" }));
     expect(screen.queryByTestId("people-history-facts")).toBeNull();
     expect(document.body.textContent).not.toContain("—");
     expect(screen.queryByRole("button", { name: "Add person" })).toBeNull();
-    fireEvent.click(screen.getByRole("tab", { name: "Info" }));
+    fireEvent.click(screen.getByRole("button", { name: "Info" }));
     expect(screen.queryByText("Role context")).toBeNull();
     expect(screen.queryByText("Not set")).toBeNull();
   });

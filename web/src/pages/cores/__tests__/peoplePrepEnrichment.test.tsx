@@ -242,7 +242,7 @@ describe("People Prep enrichment HS-172-05", () => {
     // Each PR should be a row with its own Open.
     expect(within(detail).getByText(/#612/)).toBeTruthy();
     expect(within(detail).getByText(/#618/)).toBeTruthy();
-    expect(screen.getByRole("tab", { name: "Prep" }).getAttribute("aria-selected")).toBe("true");
+    expect(screen.getByTestId("people-prep-lens")).toBeTruthy();
   });
 
   it("Show on the ASSIGNMENTS row draws the assignment rows", async () => {

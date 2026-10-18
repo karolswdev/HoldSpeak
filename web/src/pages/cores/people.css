@@ -767,3 +767,11 @@
 .people-suggestion .surface-row-verbs { opacity: 1; transform: none; }
 .people-suggestion .surface-row-text small { flex-wrap: wrap; white-space: normal; }
 .people-whoami .gadget-string { width: 100%; }
+
+/* Betterment D7: the 1:1 prep. Her rows carry Nudge beside Done; the
+   Nudge well drafts the message under the column. */
+.people-plate-verbs { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.people-nudge { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.people-nudge-text { margin: 0; font: 500 13px / 1.4 var(--font-sans); color: var(--wb-text, var(--text)); }
+/* The two column heads read as the other caps ("MIRA OWES ME"). */
+.people-owe-grid .people-cap { text-transform: uppercase; }

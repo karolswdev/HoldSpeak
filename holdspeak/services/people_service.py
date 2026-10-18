@@ -514,6 +514,10 @@ class PeopleService:
         # side of "I owe", beside the typed ``open_commitments``.
         i_owe_meeting_actions = self._brief_my_actions(db, relationship_id)
 
+        # Betterment D7: Last time: the last 1:1 with this person (else the
+        # last meeting she was in), its points and decisions.
+        last_time = self._brief_last_time(db, relationship_id, str(relationship.get("display_name") or ""))
+
         # HS-172-05: Watch-derived summary from persisted snapshots.
         # Reads are free (Article V.5); never triggers an evaluation.
         watch_summary = self._brief_watch_summary(db, relationship)
@@ -549,6 +553,7 @@ class PeopleService:
             "projects": calendar_context["projects"],
             "watch_summary": watch_summary,
             "last_meeting": last_meeting,
+            "last_time": last_time,
             "memory": self._brief_memory(db, calendar_context["projects"], owner_aliases),
         }
 
@@ -694,6 +699,98 @@ class PeopleService:
                 }
         except Exception as exc:
             raise PeopleServiceError("people_plaintext_unavailable") from exc
+
+    def _brief_last_time(self, db: Any, relationship_id: str, display_name: str) -> dict[str, Any] | None:
+        """Betterment D7: the newest 1:1 with this person, else the newest
+        meeting she spoke in or was given a promise in; its accepted action
+        items (the points) and its decisions. A read; ``None`` when none."""
+        if db is None:
+            return None
+        from .meeting_kind import is_one_on_one
+        from .needs_you_membership import self_check
+
+        is_self = self_check(self.person_names())
+        resolved: dict[str, bool] = {}
+
+        def is_her(name: Any) -> bool:
+            key = " ".join(str(name or "").split()).casefold()
+            if not key:
+                return False
+            if key not in resolved:
+                found = self.resolve_owner_candidates(key)
+                rel = found.get("relationship") if found.get("link") == "linked" else None
+                resolved[key] = bool(rel) and str(rel.get("id") or "") == relationship_id
+            return resolved[key]
+
+        try:
+            with db._connection() as conn:
+                meetings = conn.execute(
+                    """SELECT id, title, started_at FROM meetings
+                        WHERE COALESCE(parked, 0) = 0 ORDER BY started_at DESC, id LIMIT 60""",
+                ).fetchall()
+                chosen = None
+                fallback = None
+                for row in meetings:
+                    meeting_id = str(row["id"])
+                    speakers = {
+                        " ".join(str(r["speaker"] or "").split())
+                        for r in conn.execute("SELECT DISTINCT speaker FROM segments WHERE meeting_id = ?", (meeting_id,))
+                        if str(r["speaker"] or "").strip()
+                    }
+                    owners = [r["owner"] for r in conn.execute(
+                        "SELECT owner FROM action_items WHERE meeting_id = ? AND TRIM(COALESCE(owner, '')) <> ''",
+                        (meeting_id,),
+                    )]
+                    if not any(is_her(n) for n in [*speakers, *owners]):
+                        continue
+                    others = {s for s in speakers if not is_self(s)}
+                    if is_one_on_one(row["title"], others | {"Me"}, [display_name]) and len(others) <= 1:
+                        chosen = row
+                        break
+                    if fallback is None:
+                        fallback = row
+                row = chosen or fallback
+                if row is None:
+                    return None
+                meeting_id = str(row["id"])
+                points = [
+                    {"id": str(r["id"]), "task": str(r["task"]), "owner": r["owner"], "due": r["due"],
+                     "status": r["status"]}
+                    for r in conn.execute(
+                        """SELECT id, task, owner, due, status FROM action_items
+                            WHERE meeting_id = ? AND review_state = 'accepted'
+                              AND status NOT IN ('dismissed')
+                            ORDER BY created_at, id""",
+                        (meeting_id,),
+                    )
+                ]
+                # A confirmed action writes a record too (kind 'action', PHILO-15 08): not a decision.
+                kinds = {str(r[1]) for r in conn.execute("PRAGMA table_info(decision_records)")}
+                rows = conn.execute(
+                    """SELECT dr.id, dr.decision_text, dr.lifecycle, dr.kind FROM decision_records dr
+                         JOIN decision_record_sources drs ON drs.record_id = dr.id
+                        WHERE drs.source_type = 'meeting' AND drs.source_ref = ? AND dr.deleted = 0
+                        ORDER BY dr.created_at, dr.id""",
+                    (meeting_id,),
+                ).fetchall() if "kind" in kinds else conn.execute(
+                    """SELECT dr.id, dr.decision_text, dr.lifecycle, 'decision' AS kind FROM decision_records dr
+                         JOIN decision_record_sources drs ON drs.record_id = dr.id
+                        WHERE drs.source_type = 'meeting' AND drs.source_ref = ? AND dr.deleted = 0
+                        ORDER BY dr.created_at, dr.id""",
+                    (meeting_id,),
+                ).fetchall()
+                decisions = [
+                    {"id": str(r["id"]), "decision_text": str(r["decision_text"]), "lifecycle": str(r["lifecycle"])}
+                    for r in rows if str(r["kind"] or "decision") == "decision"
+                ]
+        except PeopleServiceError:
+            raise
+        except Exception as exc:
+            raise PeopleServiceError("people_plaintext_unavailable") from exc
+        return {
+            "meeting_id": meeting_id, "title": row["title"], "started_at": str(row["started_at"]),
+            "one_on_one": chosen is not None, "points": points, "decisions": decisions,
+        }
 
     def _brief_my_actions(self, db: Any, relationship_id: str) -> list[dict[str, Any]]:
         """The owner's accepted open meeting actions for this person."""

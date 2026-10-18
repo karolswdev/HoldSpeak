@@ -273,3 +273,66 @@ def test_needs_you_says_when_people_could_not_be_read_wire(hub: Any, monkeypatch
         "gets": {"/api/desk/needs-you?fresh=1": answer, "/api/people/readiness": _ok(hub.client.get("/api/people/readiness"))},
     }).replace(seeded["project"], "proj-daily-week")), Path(hub.db.db_path).parent,
         "tests/integration/test_desk_people.py::test_needs_you_says_when_people_could_not_be_read_wire", folder=_WIRES)
+
+
+# ── Betterment D7: the 1:1 prep ──────────────────────────────────────────
+
+
+def test_last_time_is_the_last_one_on_one_with_its_points(hub: Any) -> None:
+    people = seed(hub)
+    theo = _brief(hub, people["Theo"])["last_time"]
+    # The Architecture review is newer, but the 1:1 with Theo is the last 1:1.
+    assert (theo["title"], theo["one_on_one"]) == ("1:1 with Theo", True)
+    assert [p["task"] for p in theo["points"]] == [
+        "Review design doc on settlement retries", "Write up alert rule changes"]
+
+
+def test_last_time_falls_back_to_the_last_meeting_she_was_in(hub: Any) -> None:
+    people = seed(hub)
+    mira = _brief(hub, people["Mira"])["last_time"]
+    assert (mira["title"], mira["one_on_one"]) == ("Payments platform sync", False)
+    assert "Draft the rollback runbook" in [p["task"] for p in mira["points"]]
+    assert [d["decision_text"] for d in mira["decisions"]] == ["Freeze ledger writes during the cutover"]
+
+
+def test_no_meeting_with_a_person_is_no_last_time(hub: Any) -> None:
+    seed(hub)
+    other = _ok(hub.client.post("/api/people/relationships", json={"display_name": "Priya Raman"}), 201)["relationship"]["id"]
+    assert _brief(hub, other)["last_time"] is None
+
+
+def test_one_on_one_prep_wire(hub: Any) -> None:
+    """Today's reads and Mira's prep reads, from ONE boot of the week with her
+    1:1 in 90 minutes (today.app.test.tsx presses Prep on the NEXT card;
+    people.app.test.tsx draws the prep it opens)."""
+    from datetime import date, datetime
+
+    from tests.unit.test_desk_brief import _calendar_today, _ensured
+    from tests.unit.test_desk_speak import _record
+
+    seeded = seed(hub, monday=date.today(), engine=True)
+    _calendar_today(hub, seeded["Mira"])
+    mira = seeded["Mira"]
+    gets = {
+        "/api/desk/needs-you?fresh=1": _ok(hub.client.get("/api/desk/needs-you?fresh=1")),
+        "/api/door": _ok(hub.client.get("/api/door")),
+        "/api/brief/latest?ensure=1": _ensured(hub),
+        "/api/meetings?limit=40": _ok(hub.client.get("/api/meetings?limit=40")),
+        "/api/people/readiness": _ok(hub.client.get("/api/people/readiness")),
+    }
+    for rid in (mira, seeded["Theo"]):
+        for path in (f"/api/people/relationships/{rid}", f"/api/people/relationships/{rid}/one-on-ones",
+                     f"/api/people/relationships/{rid}/brief"):
+            gets[path] = _ok(hub.client.get(path))
+    theo = gets[f"/api/people/relationships/{seeded['Theo']}/brief"]["brief"]
+    assert [a["task"] for a in theo["i_owe_meeting_actions"]] == ["Review design doc on settlement retries"]
+    brief = gets[f"/api/people/relationships/{mira}/brief"]["brief"]
+    assert brief["next_one_on_one"]["title"] == "1:1 with Mira"
+    assert brief["last_time"]["title"] == "Payments platform sync"
+    assert [a["task"] for a in brief["open_meeting_actions"]] == ["Draft the rollback runbook"]
+    text = json.dumps({"recordedAt": datetime.now().astimezone().isoformat(), "gets": gets})
+    text = text.replace(seeded["project"], "proj-daily-week")
+    for name in ("Mira", "Theo", "Jun"):
+        text = text.replace(seeded[name], f"rel-{name.lower()}")
+    _record("one-on-one-prep", json.loads(text), Path(hub.db.db_path).parent,
+            "tests/integration/test_desk_people.py::test_one_on_one_prep_wire", folder=_WIRES)

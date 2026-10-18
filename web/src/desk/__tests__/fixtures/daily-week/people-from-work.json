@@ -1,6 +1,6 @@
 {
  "_source": "The hub's own answers, captured by tests/integration/test_desk_people.py::test_people_from_work_wire (MeetingWebServer + TestClient, isolated HOME, the browser rigs' seeds). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
- "recordedAt": "2026-10-18T13:18:07.413923-06:00",
+ "recordedAt": "2026-10-18T13:30:30.671905-06:00",
  "before": {
   "/api/people/readiness": {
    "readiness": "unconfigured",
@@ -96,7 +96,7 @@
       "due": "2026-10-19",
       "status": "open",
       "meeting_id": "m-daily-theo-1on1",
-      "decision_id": "dec-c7e5e38016f841d6",
+      "decision_id": "dec-5296a3885f6c483f",
       "stale_score": null,
       "source": "action_item",
       "lane": "now",
@@ -120,8 +120,8 @@
        "source_ref": null
       },
       "target_ref": "action_item:a96151278717",
-      "delegated_at": "2026-10-18T19:18:07.311821+00:00",
-      "created_at": "2026-10-18T19:18:07.287859+00:00",
+      "delegated_at": "2026-10-18T19:30:30.562177+00:00",
+      "created_at": "2026-10-18T19:30:30.535840+00:00",
       "snoozed_until": null,
       "deferred_until": null,
       "lawful_verbs": [
@@ -175,7 +175,7 @@
       "due": "2026-10-19",
       "status": "open",
       "meeting_id": "m-daily-platform-sync",
-      "decision_id": "dec-ca308a889d204a3f",
+      "decision_id": "dec-d3fc3427a05141bc",
       "stale_score": null,
       "source": "action_item",
       "lane": "now",
@@ -199,8 +199,8 @@
        "source_ref": null
       },
       "target_ref": "action_item:691f0d01b037",
-      "delegated_at": "2026-10-18T19:18:07.298122+00:00",
-      "created_at": "2026-10-18T19:18:07.284612+00:00",
+      "delegated_at": "2026-10-18T19:30:30.545690+00:00",
+      "created_at": "2026-10-18T19:30:30.532585+00:00",
       "snoozed_until": null,
       "deferred_until": null,
       "lawful_verbs": [
@@ -254,7 +254,7 @@
       "due": "2026-10-20",
       "status": "open",
       "meeting_id": "m-daily-platform-sync",
-      "decision_id": "dec-85b6d86863264c3a",
+      "decision_id": "dec-4c5192308de2476b",
       "stale_score": null,
       "source": "action_item",
       "lane": "now",
@@ -278,8 +278,8 @@
        "source_ref": null
       },
       "target_ref": "action_item:82c1cea5e925",
-      "delegated_at": "2026-10-18T19:18:07.304850+00:00",
-      "created_at": "2026-10-18T19:18:07.284576+00:00",
+      "delegated_at": "2026-10-18T19:30:30.554627+00:00",
+      "created_at": "2026-10-18T19:30:30.532552+00:00",
       "snoozed_until": null,
       "deferred_until": null,
       "lawful_verbs": [
@@ -335,7 +335,7 @@
       "due": "2026-10-23",
       "status": "open",
       "meeting_id": "m-daily-architecture-review",
-      "decision_id": "dec-1b20fc69c36e4ef9",
+      "decision_id": "dec-a23e0295e59e4a36",
       "stale_score": null,
       "source": "action_item",
       "lane": "waiting",
@@ -359,8 +359,8 @@
        "source_ref": null
       },
       "target_ref": "action_item:6db59a99968b",
-      "delegated_at": "2026-10-18T19:18:07.315101+00:00",
-      "created_at": "2026-10-18T19:18:07.289490+00:00",
+      "delegated_at": "2026-10-18T19:30:30.565428+00:00",
+      "created_at": "2026-10-18T19:30:30.537591+00:00",
       "snoozed_until": null,
       "deferred_until": null,
       "lawful_verbs": [
@@ -414,7 +414,7 @@
       "due": "2026-10-22",
       "status": "open",
       "meeting_id": "m-daily-theo-1on1",
-      "decision_id": "dec-9b47ba77f06347ef",
+      "decision_id": "dec-eebaf2d3b18c4186",
       "stale_score": null,
       "source": "action_item",
       "lane": "waiting",
@@ -438,8 +438,8 @@
        "source_ref": null
       },
       "target_ref": "action_item:22208d9d83ce",
-      "delegated_at": "2026-10-18T19:18:07.309945+00:00",
-      "created_at": "2026-10-18T19:18:07.287863+00:00",
+      "delegated_at": "2026-10-18T19:30:30.560158+00:00",
+      "created_at": "2026-10-18T19:30:30.535845+00:00",
       "snoozed_until": null,
       "deferred_until": null,
       "lawful_verbs": [
@@ -493,7 +493,7 @@
       "due": "2026-10-23",
       "status": "open",
       "meeting_id": "m-daily-platform-sync",
-      "decision_id": "dec-d65c432f161d4469",
+      "decision_id": "dec-cb593c4c20a84f5b",
       "stale_score": null,
       "source": "action_item",
       "lane": "waiting",
@@ -517,8 +517,8 @@
        "source_ref": null
       },
       "target_ref": "action_item:6a994ec7e2ca",
-      "delegated_at": "2026-10-18T19:18:07.302860+00:00",
-      "created_at": "2026-10-18T19:18:07.284605+00:00",
+      "delegated_at": "2026-10-18T19:30:30.552094+00:00",
+      "created_at": "2026-10-18T19:30:30.532577+00:00",
       "snoozed_until": null,
       "deferred_until": null,
       "lawful_verbs": [
@@ -575,7 +575,7 @@
       "due": "2026-10-16",
       "status": "open",
       "meeting_id": "m-daily-platform-sync",
-      "decision_id": "dec-0f106415fc304071",
+      "decision_id": "dec-b8753d111e1843de",
       "stale_score": null,
       "source": "action_item",
       "lane": "overdue",
@@ -599,8 +599,8 @@
        "source_ref": null
       },
       "target_ref": "action_item:931d9391783f",
-      "delegated_at": "2026-10-18T19:18:07.300917+00:00",
-      "created_at": "2026-10-18T19:18:07.284610+00:00",
+      "delegated_at": "2026-10-18T19:30:30.549673+00:00",
+      "created_at": "2026-10-18T19:30:30.532582+00:00",
       "snoozed_until": null,
       "deferred_until": null,
       "lawful_verbs": [
@@ -893,8 +893,8 @@
     "calendar_links": null,
     "owner_aliases": null,
     "state": "active",
-    "created_at": "2026-10-18T19:18:07Z",
-    "updated_at": "2026-10-18T19:18:07Z"
+    "created_at": "2026-10-18T19:30:30Z",
+    "updated_at": "2026-10-18T19:30:30Z"
    }
   },
   "jun": {
@@ -909,8 +909,8 @@
     "calendar_links": null,
     "owner_aliases": null,
     "state": "active",
-    "created_at": "2026-10-18T19:18:07Z",
-    "updated_at": "2026-10-18T19:18:07Z"
+    "created_at": "2026-10-18T19:30:30Z",
+    "updated_at": "2026-10-18T19:30:30Z"
    }
   },
   "mira": {
@@ -925,8 +925,8 @@
     "calendar_links": null,
     "owner_aliases": null,
     "state": "active",
-    "created_at": "2026-10-18T19:18:07Z",
-    "updated_at": "2026-10-18T19:18:07Z"
+    "created_at": "2026-10-18T19:30:30Z",
+    "updated_at": "2026-10-18T19:30:30Z"
    }
   }
  },
@@ -951,7 +951,7 @@
       "due": "2026-10-19",
       "status": "open",
       "meeting_id": "m-daily-theo-1on1",
-      "decision_id": "dec-c7e5e38016f841d6",
+      "decision_id": "dec-5296a3885f6c483f",
       "stale_score": null,
       "source": "action_item",
       "lane": "now",
@@ -975,8 +975,8 @@
        "source_ref": null
       },
       "target_ref": "action_item:a96151278717",
-      "delegated_at": "2026-10-18T19:18:07.311821+00:00",
-      "created_at": "2026-10-18T19:18:07.287859+00:00",
+      "delegated_at": "2026-10-18T19:30:30.562177+00:00",
+      "created_at": "2026-10-18T19:30:30.535840+00:00",
       "snoozed_until": null,
       "deferred_until": null,
       "lawful_verbs": [
@@ -1030,7 +1030,7 @@
       "due": "2026-10-19",
       "status": "open",
       "meeting_id": "m-daily-platform-sync",
-      "decision_id": "dec-ca308a889d204a3f",
+      "decision_id": "dec-d3fc3427a05141bc",
       "stale_score": null,
       "source": "action_item",
       "lane": "now",
@@ -1054,8 +1054,8 @@
        "source_ref": null
       },
       "target_ref": "action_item:691f0d01b037",
-      "delegated_at": "2026-10-18T19:18:07.298122+00:00",
-      "created_at": "2026-10-18T19:18:07.284612+00:00",
+      "delegated_at": "2026-10-18T19:30:30.545690+00:00",
+      "created_at": "2026-10-18T19:30:30.532585+00:00",
       "snoozed_until": null,
       "deferred_until": null,
       "lawful_verbs": [
@@ -1109,7 +1109,7 @@
       "due": "2026-10-20",
       "status": "open",
       "meeting_id": "m-daily-platform-sync",
-      "decision_id": "dec-85b6d86863264c3a",
+      "decision_id": "dec-4c5192308de2476b",
       "stale_score": null,
       "source": "action_item",
       "lane": "now",
@@ -1133,8 +1133,8 @@
        "source_ref": null
       },
       "target_ref": "action_item:82c1cea5e925",
-      "delegated_at": "2026-10-18T19:18:07.304850+00:00",
-      "created_at": "2026-10-18T19:18:07.284576+00:00",
+      "delegated_at": "2026-10-18T19:30:30.554627+00:00",
+      "created_at": "2026-10-18T19:30:30.532552+00:00",
       "snoozed_until": null,
       "deferred_until": null,
       "lawful_verbs": [
@@ -1192,7 +1192,7 @@
       "due": "2026-10-23",
       "status": "open",
       "meeting_id": "m-daily-architecture-review",
-      "decision_id": "dec-1b20fc69c36e4ef9",
+      "decision_id": "dec-a23e0295e59e4a36",
       "stale_score": null,
       "source": "action_item",
       "lane": "waiting",
@@ -1216,8 +1216,8 @@
        "source_ref": null
       },
       "target_ref": "action_item:6db59a99968b",
-      "delegated_at": "2026-10-18T19:18:07.315101+00:00",
-      "created_at": "2026-10-18T19:18:07.289490+00:00",
+      "delegated_at": "2026-10-18T19:30:30.565428+00:00",
+      "created_at": "2026-10-18T19:30:30.537591+00:00",
       "snoozed_until": null,
       "deferred_until": null,
       "lawful_verbs": [
@@ -1273,7 +1273,7 @@
       "due": "2026-10-22",
       "status": "open",
       "meeting_id": "m-daily-theo-1on1",
-      "decision_id": "dec-9b47ba77f06347ef",
+      "decision_id": "dec-eebaf2d3b18c4186",
       "stale_score": null,
       "source": "action_item",
       "lane": "waiting",
@@ -1297,8 +1297,8 @@
        "source_ref": null
       },
       "target_ref": "action_item:22208d9d83ce",
-      "delegated_at": "2026-10-18T19:18:07.309945+00:00",
-      "created_at": "2026-10-18T19:18:07.287863+00:00",
+      "delegated_at": "2026-10-18T19:30:30.560158+00:00",
+      "created_at": "2026-10-18T19:30:30.535845+00:00",
       "snoozed_until": null,
       "deferred_until": null,
       "lawful_verbs": [
@@ -1354,7 +1354,7 @@
       "due": "2026-10-23",
       "status": "open",
       "meeting_id": "m-daily-platform-sync",
-      "decision_id": "dec-d65c432f161d4469",
+      "decision_id": "dec-cb593c4c20a84f5b",
       "stale_score": null,
       "source": "action_item",
       "lane": "waiting",
@@ -1378,8 +1378,8 @@
        "source_ref": null
       },
       "target_ref": "action_item:6a994ec7e2ca",
-      "delegated_at": "2026-10-18T19:18:07.302860+00:00",
-      "created_at": "2026-10-18T19:18:07.284605+00:00",
+      "delegated_at": "2026-10-18T19:30:30.552094+00:00",
+      "created_at": "2026-10-18T19:30:30.532577+00:00",
       "snoozed_until": null,
       "deferred_until": null,
       "lawful_verbs": [
@@ -1438,7 +1438,7 @@
       "due": "2026-10-16",
       "status": "open",
       "meeting_id": "m-daily-platform-sync",
-      "decision_id": "dec-0f106415fc304071",
+      "decision_id": "dec-b8753d111e1843de",
       "stale_score": null,
       "source": "action_item",
       "lane": "overdue",
@@ -1462,8 +1462,8 @@
        "source_ref": null
       },
       "target_ref": "action_item:931d9391783f",
-      "delegated_at": "2026-10-18T19:18:07.300917+00:00",
-      "created_at": "2026-10-18T19:18:07.284610+00:00",
+      "delegated_at": "2026-10-18T19:30:30.549673+00:00",
+      "created_at": "2026-10-18T19:30:30.532582+00:00",
       "snoozed_until": null,
       "deferred_until": null,
       "lawful_verbs": [
@@ -1757,8 +1757,8 @@
      "calendar_links": null,
      "owner_aliases": null,
      "state": "active",
-     "created_at": "2026-10-18T19:18:07Z",
-     "updated_at": "2026-10-18T19:18:07Z",
+     "created_at": "2026-10-18T19:30:30Z",
+     "updated_at": "2026-10-18T19:30:30Z",
      "you_owe_count": 0,
      "owes_you_count": 0
     },
@@ -1773,8 +1773,8 @@
      "calendar_links": null,
      "owner_aliases": null,
      "state": "active",
-     "created_at": "2026-10-18T19:18:07Z",
-     "updated_at": "2026-10-18T19:18:07Z",
+     "created_at": "2026-10-18T19:30:30Z",
+     "updated_at": "2026-10-18T19:30:30Z",
      "you_owe_count": 0,
      "owes_you_count": 0
     },
@@ -1789,8 +1789,8 @@
      "calendar_links": null,
      "owner_aliases": null,
      "state": "active",
-     "created_at": "2026-10-18T19:18:07Z",
-     "updated_at": "2026-10-18T19:18:07Z",
+     "created_at": "2026-10-18T19:30:30Z",
+     "updated_at": "2026-10-18T19:30:30Z",
      "you_owe_count": 0,
      "owes_you_count": 0
     }
@@ -1808,8 +1808,8 @@
     "calendar_links": null,
     "owner_aliases": null,
     "state": "active",
-    "created_at": "2026-10-18T19:18:07Z",
-    "updated_at": "2026-10-18T19:18:07Z",
+    "created_at": "2026-10-18T19:30:30Z",
+    "updated_at": "2026-10-18T19:30:30Z",
     "sessions": [],
     "requests": [],
     "commitments": [],
@@ -1842,7 +1842,7 @@
       "due": "2026-10-20",
       "due_said": "Tuesday",
       "status": "open",
-      "delegated_at": "2026-10-18T19:18:07.304850+00:00",
+      "delegated_at": "2026-10-18T19:30:30.554627+00:00",
       "meeting_id": "m-daily-platform-sync",
       "meeting_title": "Payments platform sync",
       "meeting_started_at": "2026-10-16T00:00:00+00:00",
@@ -1859,6 +1859,49 @@
      "open_assignments": []
     },
     "last_meeting": null,
+    "last_time": {
+     "meeting_id": "m-daily-platform-sync",
+     "title": "Payments platform sync",
+     "started_at": "2026-10-16T00:00:00+00:00",
+     "one_on_one": false,
+     "points": [
+      {
+       "id": "82c1cea5e925",
+       "task": "Draft the rollback runbook",
+       "owner": "Mira",
+       "due": "2026-10-20",
+       "status": "open"
+      },
+      {
+       "id": "6a994ec7e2ca",
+       "task": "Profile the reconciliation job",
+       "owner": "Theo",
+       "due": "2026-10-23",
+       "status": "open"
+      },
+      {
+       "id": "931d9391783f",
+       "task": "Confirm the vendor freeze dates",
+       "owner": "Jun",
+       "due": "2026-10-16",
+       "status": "open"
+      },
+      {
+       "id": "691f0d01b037",
+       "task": "Email Dana about the cutover window",
+       "owner": "Me",
+       "due": "2026-10-19",
+       "status": "open"
+      }
+     ],
+     "decisions": [
+      {
+       "id": "record-7fb912a1e7ed429f",
+       "decision_text": "Freeze ledger writes during the cutover",
+       "lifecycle": "active"
+      }
+     ]
+    },
     "memory": {
      "excerpts": [],
      "refs": []

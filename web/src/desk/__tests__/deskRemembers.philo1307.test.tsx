@@ -209,7 +209,8 @@ describe("B2: unsent drafts return, per object, and clear on save", () => {
       return (handlers[String(input).replace("?counts=1", "")] ?? (() => json({})))();
     }));
   }
-  const selectedTab = () => screen.getAllByRole("tab").find((t) => t.getAttribute("aria-selected") === "true")?.textContent;
+  // Betterment D7: the lens is the open fold under the prep (none open: Prep).
+  const selectedTab = () => [...document.querySelectorAll('[data-testid="people-folds"] button[aria-expanded="true"] .surface-disclosure-label')].map((n) => n.textContent)[0] ?? "Prep";
 
   // PHILO-17 refit: the agenda row lives on Prep (the 1:1s tab folded into it).
   it("People: the person, the tab and the unsent agenda item return after a close and a reload; Add clears it", async () => {
@@ -217,7 +218,7 @@ describe("B2: unsent drafts return, per object, and clear on save", () => {
     let { PeopleCore } = await import("../../pages/cores/PeopleCore");
     const first = render(<PeopleCore />);
     fireEvent.click(await screen.findByText("Priya Nair"));
-    fireEvent.click(await screen.findByRole("tab", { name: "Prep" }));
+    // Betterment D7: the prep stays on the page; the folds sit under it.
     expect(screen.queryByLabelText("Add to the agenda")).toBeNull();
     fireEvent.click(await screen.findByRole("button", { name: "Add to agenda" }));
     fireEvent.change(await screen.findByLabelText("Add to the agenda"), { target: { value: "Ask about the EU shard backup plan" } });
@@ -228,8 +229,8 @@ describe("B2: unsent drafts return, per object, and clear on save", () => {
     vi.resetModules(); // reload
     ({ PeopleCore } = await import("../../pages/cores/PeopleCore"));
     const second = render(<PeopleCore />);
-    await waitFor(() => expect(selectedTab()).toBe("Prep"));
-    expect(screen.getByRole("tablist", { name: "Priya Nair lenses" })).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByTestId("prep-display-name").textContent).toBe("Priya Nair"));
+    expect(selectedTab()).toBe("Prep");
     expect(await screen.findByLabelText("Add to the agenda")).toHaveValue("Ask about the EU shard backup plan");
     expect(posted).toEqual([]); // restore never sends
 
@@ -253,7 +254,7 @@ describe("B2: unsent drafts return, per object, and clear on save", () => {
     fireEvent.change(await screen.findByLabelText("Add to the agenda"), { target: { value: "For Priya only" } });
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
     fireEvent.click(await screen.findByText("Sam Lee"));
-    await screen.findByRole("tablist", { name: "Sam Lee lenses" });
+    await waitFor(() => expect(screen.getByTestId("prep-display-name").textContent).toBe("Sam Lee"));
     expect(screen.queryByLabelText("Add to the agenda")).toBeNull();
     fireEvent.click(await screen.findByRole("button", { name: "Add to agenda" }));
     expect(await screen.findByLabelText("Add to the agenda")).toHaveValue("");

@@ -155,8 +155,8 @@ describe("a People store failure keeps the window and the note", () => {
       return handler();
     }));
     render(<PeopleCore scope="people:r1" />);
-    await waitFor(() => expect(screen.getByRole("tab", { name: "Context" })).toBeTruthy());
-    fireEvent.click(screen.getByRole("tab", { name: "Context" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Context" })).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Context" }));
     fireEvent.click(screen.getByRole("button", { name: "Add note" }));
     const note = await screen.findByLabelText("Note");
     fireEvent.change(note, { target: { value: "Wants the cutover plan in writing" } });
@@ -222,7 +222,9 @@ describe("People Try again re-reads the person", () => {
     fireEvent.click(within(screen.getByTestId("people-failure")).getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(calls["/api/people/relationships/r1"]).toBe(2));
     await waitFor(() => expect(screen.queryByText("PEOPLE STORE · NOT AVAILABLE NOW")).toBeNull());
-    fireEvent.click(screen.getByRole("tab", { name: "Context" }));
+    // Betterment D7: Context is a fold; the kept place may already hold it open.
+    const context = screen.getByRole("button", { name: "Context" });
+    if (context.getAttribute("aria-expanded") !== "true") fireEvent.click(context);
     expect(await screen.findByText("Wants to lead the EU shard work.")).toBeTruthy();
   });
 
