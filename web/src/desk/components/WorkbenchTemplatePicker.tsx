@@ -1,19 +1,40 @@
+/** Betterment A7 — New automation: the starters, plus Start from scratch
+ * (docs/internal/betterment/workbench/DESIGN.md §4, "Starters").
+ *
+ * Each starter is one automation's sentence: what it does, when it runs and
+ * where the result goes. A press makes exactly one automation with that
+ * sentence (no agent is copied) and opens its window; a blank the starter
+ * cannot guess ("About: which people?") is shown here and in the window.
+ * Start from scratch makes one empty automation.
+ *
+ * HS-130-09 still holds: one press, one record, no orphan. The HS-116-05
+ * template cards are parked (`_parked/WorkbenchTemplatePicker.tsx`). */
+import "./automation/automation-home.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiFetch, readableError } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import { useDesk } from "../store";
-import { SurfaceSection, SurfaceState } from "../surface/Surface";
+import { SurfaceState } from "../surface/Surface";
 import { useRovingRows } from "../surface/roving";
+import { putWords, scheduleWords } from "./automation/model";
 
-interface Template {
+/** One starter (`holdspeak/workbench_templates.py` STARTERS). */
+export interface AutomationStarter {
   id: string;
   name: string;
   description: string;
-  icon: string;
-  recipe: { name: string; role: string };
-  workbench: { schedule: string | null };
-  starter_items: Array<{ title: string }>;
-  skill_names?: string[];
+  instruction: string;
+  sources: string[];
+  when: { kind: string };
+  /** The schedule as cron (shown in words); null when it is not scheduled. */
+  schedule: string | null;
+  output_target: string;
+  /** The lines it cannot guess, in words: `{ about: "which people?" }`. */
+  blanks: Record<string, string>;
+}
+
+function starterWhen(starter: AutomationStarter): string {
+  return scheduleWords(starter.schedule) ?? "Only when I press Run now";
 }
 
 export function WorkbenchTemplatePicker({
@@ -21,127 +42,97 @@ export function WorkbenchTemplatePicker({
 }: {
   onCreated?: (workbenchId: string) => void;
 }) {
-  const [templates, setTemplates] = useState<Template[]>([]);
+  const [starters, setStarters] = useState<AutomationStarter[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [createError, setCreateError] = useState("");
-  const [readError, setReadError] = useState("");
-  const [created, setCreated] = useState<{ id: string; name: string } | null>(null);
+  const [created, setCreated] = useState<string | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
-  useRovingRows(gridRef, { selector: ".wb-picker-card" });
+  useRovingRows(gridRef, { selector: ".automation-starter" });
 
-  const loadTemplates = useCallback(() => {
+  const loadStarters = useCallback(() => {
     setError(false);
     setLoading(true);
-    return apiFetch<any>("/api/workbench-templates")
-      .then((d) => setTemplates(d.templates || []))
+    return apiFetch<{ templates?: AutomationStarter[] }>("/api/workbench-templates")
+      .then((answer) => setStarters(answer.templates || []))
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => {
-    void loadTemplates();
-  }, [loadTemplates]);
+  useEffect(() => { void loadStarters(); }, [loadStarters]);
 
-  const refreshCreated = async (id: string, name: string) => {
-    setBusy(true);
-    setReadError("");
-    try {
-      await useDesk.getState().refresh();
-      const error = useDesk.getState().error;
-      if (error) throw new Error(error);
-      onCreated?.(id);
-    } catch (error) {
-      setReadError(`${name} created · Automation saved · Desk read failed · Retry · ${readableError(error)}`);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const create = async (templateId: string | null) => {
+  const create = async (starter: AutomationStarter | null) => {
     if (busy || created) return;
-    const name = templates.find((t) => t.id === templateId)?.name ?? "Blank";
-    setSelected(templateId ?? "blank");
+    const name = starter?.name ?? "New automation";
+    setSelected(starter?.id ?? "scratch");
     setBusy(true);
     setCreateError("");
     try {
-      const res = await apiFetch<any>(
-        templateId ? `/api/workbench-templates/${templateId}/instantiate` : "/api/workbenches",
-        {
-          method: "POST",
-          json: templateId ? {} : { name: "New Automation" },
-        },
+      const answer = await apiFetch<{ workbench?: { id?: string } }>(
+        starter ? `/api/workbench-templates/${encodeURIComponent(starter.id)}/instantiate` : "/api/workbenches",
+        { method: "POST", json: starter ? {} : { name } },
       );
-      const wbId = res.workbench?.id;
-      if (wbId) {
-        // The POST saved this object. Its window reads by ID, so a desk
-        // refresh failure must not prevent opening or repeat the create.
-        setCreated({ id: wbId, name });
-        useDesk.getState().openWorkbenchWindow(wbId);
-        await refreshCreated(wbId, name);
-      } else {
-        setCreateError(`${name} result missing · Reload automations`);
+      const id = answer.workbench?.id;
+      if (!id) {
+        setCreateError(`${name} was not made. Try again.`);
+        return;
       }
-    } catch (error) {
-      setCreateError(`${name} not created · ${readableError(error)}`);
+      // The POST saved it; its window reads it by id, so open it now. The
+      // desk read after it only refreshes the lists.
+      setCreated(id);
+      useDesk.getState().openWorkbenchWindow(id);
+      onCreated?.(id);
+      void useDesk.getState().refresh();
+    } catch (failure) {
+      setCreateError(`${name} was not made: ${readableError(failure)}`);
     } finally {
       setBusy(false);
     }
   };
 
+  if (error) {
+    return <SurfaceState error="The starters did not load. Retry." onRetry={() => void loadStarters()} />;
+  }
+  if (loading) return <SurfaceState loading />;
+
   return (
-    <div className="wb-picker">
+    <div className="automation-starters" data-testid="automation-starters">
       {createError ? <SurfaceState error={createError} /> : null}
-      {readError ? <SurfaceState error={readError} onRetry={busy || !created ? undefined : () => void refreshCreated(created.id, created.name)} /> : null}
-      {created ? <Button dense variant="ghost" onClick={() => useDesk.getState().openWorkbenchWindow(created.id)}>Open automation</Button> : null}
-      <SurfaceSection label="START FROM A TEMPLATE">
-        {error ? (
-          <SurfaceState
-            error="Templates failed to load. Current work is unchanged. Retry."
-            onRetry={() => void loadTemplates()}
-          />
-        ) : loading ? (
-          <SurfaceState loading />
-        ) : (
-          <>
-          {!templates.length ? <SurfaceState empty emptyLabel="No templates · Start Blank" /> : null}
-          <div ref={gridRef} className="wb-picker-grid">
-            {templates.map((t) => (
-              <Button
-                key={t.id}
-                variant="chrome"
-                className="wb-picker-card"
-                aria-pressed={selected === t.id}
-                disabled={busy || Boolean(created)}
-                onClick={() => void create(t.id)}
-              >
-                <span className="wb-picker-card-icon">{t.icon + "︎"}</span>
-                <span className="wb-picker-card-name">{t.name}</span>
-                <span className="wb-picker-card-desc">{t.description}</span>
-                <span className="wb-picker-card-meta">
-                  {t.workbench.schedule ? `⏱ ${t.workbench.schedule}` : "Manual"}
-                  {t.starter_items.length ? ` · ${t.starter_items.length} items` : ""}
-                  {t.skill_names?.length ? ` · ${t.skill_names.length} skills` : ""}
-                </span>
-              </Button>
-            ))}
-            <Button
-              variant="chrome"
-              className="wb-picker-card wb-picker-card-blank"
-              aria-pressed={selected === "blank"}
-              disabled={busy || Boolean(created)}
-              onClick={() => void create(null)}
-            >
-              <span className="wb-picker-card-icon">○</span>
-              <span className="wb-picker-card-name">Blank</span>
-              <span className="wb-picker-card-desc">Start from scratch</span>
-            </Button>
-          </div>
-          </>
-        )}
-      </SurfaceSection>
+      <div ref={gridRef} className="automation-starter-grid">
+        {starters.map((starter) => (
+          <Button
+            key={starter.id}
+            variant="chrome"
+            className="automation-starter"
+            aria-pressed={selected === starter.id}
+            disabled={busy || Boolean(created)}
+            onClick={() => void create(starter)}
+            data-testid={`automation-starter-${starter.id}`}
+          >
+            <span className="automation-starter-name">{starter.name}</span>
+            <span className="automation-starter-words">{starter.description}</span>
+            <span className="automation-starter-facts">
+              {starterWhen(starter)} · {putWords(starter.output_target)}
+            </span>
+            {starter.blanks.about ? (
+              <span className="automation-starter-blank">About: {starter.blanks.about}</span>
+            ) : null}
+          </Button>
+        ))}
+        <Button
+          variant="chrome"
+          className="automation-starter automation-starter-scratch"
+          aria-pressed={selected === "scratch"}
+          disabled={busy || Boolean(created)}
+          onClick={() => void create(null)}
+          data-testid="automation-starter-scratch"
+        >
+          <span className="automation-starter-name">Start from scratch</span>
+          <span className="automation-starter-words">Say what it does, when, and with which engine.</span>
+        </Button>
+      </div>
     </div>
   );
 }
