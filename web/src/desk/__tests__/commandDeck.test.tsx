@@ -130,8 +130,8 @@ describe("the deck", () => {
     expect(
       screen.getByRole("option", { name: /Workbenches/ }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("option", { name: /Processes/ }),
-    ).toBeInTheDocument();
+    // Betterment shell S1: Processes is a builder tool, listed only when
+    // Builder tools is on (Settings ▸ System).
+    expect(screen.queryByRole("option", { name: /Processes/ })).toBeNull();
   });
 });

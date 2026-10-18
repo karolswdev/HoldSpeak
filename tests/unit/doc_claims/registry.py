@@ -107,7 +107,9 @@ def web_verb_registry_ids() -> set[str]:
     for block in body.split("\n  },"):
         action = re.search(r'^\s{4}action:\s*"([a-z0-9-]+)"', block, re.M)
         group = re.search(r'^\s{4}group:\s*"(app|tool)"', block, re.M)
-        if action and group:
+        # Betterment shell S1: Today and People open through their desk
+        # verbs (applications.ts applicationVerbId); they mint no go.* verb.
+        if action and group and action.group(1) not in {"open-intelligence", "open-people"}:
             ids.add(f"go.{action.group(1)}")
     return ids
 
@@ -753,17 +755,17 @@ CLAIMS: list[Claim] = [
     ),
     Claim(
         doc="docs/internal/philo/data/voice.json",
-        anchor='Models window verb \\"Use this for summaries\\"',
+        anchor='Models window add-engine verb \\"Use\\"',
         sentence=(
             "model.assignment: exposure user; surfaces: arrival SETUP row \"No "
-            "engine for summaries\" (opens Models); Models window verb \"Use this "
-            "for summaries\"."
+            "engine for summaries\" (opens Models); Models window add-engine verb "
+            "\"Use\"."
         ),
         predicate=lambda: model_assignment_exposure_holds(),
         state="holds",
         truth=(
-            "the record's exposure is 'user'; ConciergeCore.tsx:571 draws 'Use this "
-            "for summaries', whose handler useNewEngineForSummaries calls "
+            "the record's exposure is 'user'; ConciergeCore.tsx draws 'Use' on the "
+            "add-engine row (betterment ST0, was 'Use this for summaries'), whose handler useNewEngineForSummaries calls "
             "conciergeSummarySelection; meetingPathBlocker.ts:95 states 'No engine "
             "for summaries' for the arrival's SETUP row (ChairHome.tsx:953). The "
             "owner has not observed it (fnd.docs.model_assignment_exposure, "

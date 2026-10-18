@@ -928,6 +928,29 @@ button.surface-edit-in-place:hover {
   margin: 0;
   min-width: 0;
 }
+/* betterment/capture C2: what a summary read, each source with its date. */
+.desk-surface-body .meetings-looked-at {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.desk-surface-body .meetings-looked-at li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+.desk-surface-body .meetings-looked-at time {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size);
+  font-variant-numeric: tabular-nums;
+}
 /* HS-170-04 — speaker token in the transcript well. */
 .desk-surface-body .transcript-list .transcript-speaker {
   flex-shrink: 0;

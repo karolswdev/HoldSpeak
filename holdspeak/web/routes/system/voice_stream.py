@@ -12,6 +12,7 @@ open-mic legs can never end up reading two different registries.
 """
 from __future__ import annotations
 
+import asyncio
 import json
 from typing import Any, Callable
 
@@ -188,10 +189,20 @@ def build_voice_stream_router(
         # HS-132-05: a refusal ENDS the utterance. Nothing may transcribe and
         # deliver a final behind an error the client was already told about.
         refused = False
+        # A client that went away mid-utterance keeps its words (they are still
+        # transcribed and journaled) but is sent nothing: there is no one to
+        # send a final to.
+        client_gone = False
+
+        async def send(payload: dict[str, Any]) -> None:
+            if not client_gone:
+                await websocket.send_json(payload)
+
         try:
             while True:
                 message = await websocket.receive()
                 if message.get("type") == "websocket.disconnect":
+                    client_gone = True
                     break
 
                 # HS-132-05: the floor claim is a LEASE and a dictation can run
@@ -242,9 +253,11 @@ def build_voice_stream_router(
                 combined = b"".join(all_chunks)
                 audio = np.frombuffer(combined, dtype=np.int16).astype(np.float32) / 32768.0
                 try:
-                    raw_text = transcribe(audio)
+                    # Off the event loop: speech-to-text takes seconds, and on
+                    # the loop it froze every other window of the desk.
+                    raw_text = await asyncio.to_thread(transcribe, audio)
                 except SpeechSessionRefused as exc:
-                    await websocket.send_json(
+                    await send(
                         {"type": "error", "error": "The microphone session closed.",
                          "mic_interval": MIC_INTERVAL_CLOSED, "reason": exc.reason,
                          "failure_category": "speech_session_refused"}
@@ -252,7 +265,7 @@ def build_voice_stream_router(
                     return
                 except Exception as exc:
                     log.error(f"Final transcription failed: {exc}")
-                    await websocket.send_json(
+                    await send(
                         {
                             "type": "error",
                             "error": "Transcription failed.",
@@ -267,7 +280,7 @@ def build_voice_stream_router(
                     # A speak-to-fill: the words the user said, unchanged, into
                     # the field. Nothing is classified, enriched, rewritten or
                     # journaled — there is no second author on this utterance.
-                    await websocket.send_json({"type": "final", "text": final_text})
+                    await send({"type": "final", "text": final_text})
                     return
 
                 config_snapshot = getattr(ctx, "_config", None) or _resolve_config(ctx)
@@ -294,7 +307,7 @@ def build_voice_stream_router(
                         "browser stream voice-command dispatch", _fire
                     )
                     if not elected:
-                        await websocket.send_json(
+                        await send(
                             {
                                 "type": "error",
                                 "error": "The microphone session closed.",
@@ -308,7 +321,7 @@ def build_voice_stream_router(
                 if fired is not None and fired.handled:
                     # The command consumed the utterance: no pipeline pass, no
                     # journal row, and nothing typed as prose.
-                    await websocket.send_json(
+                    await send(
                         {
                             "type": "final",
                             "text": "",
@@ -345,7 +358,7 @@ def build_voice_stream_router(
                     )
                     final_text = corrected
                 except SpeechSessionRefused as exc:
-                    await websocket.send_json(
+                    await send(
                         {
                             "type": "error",
                             "error": exc.reason,
@@ -355,7 +368,7 @@ def build_voice_stream_router(
                     )
                     return
                 except SpeechProviderFailure as exc:
-                    await websocket.send_json(
+                    await send(
                         {
                             "type": "error",
                             "error": f"{exc.contract}:{exc.reason}",
@@ -379,9 +392,9 @@ def build_voice_stream_router(
                         run_facts.get("corrections_applied") or []
                     )
                     final_frame["journal_id"] = run_facts.get("journal_id")
-                await websocket.send_json(final_frame)
+                await send(final_frame)
             else:
-                await websocket.send_json({"type": "final", "text": ""})
+                await send({"type": "final", "text": ""})
 
         except WebSocketDisconnect:
             pass

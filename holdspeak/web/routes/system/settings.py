@@ -249,6 +249,16 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
             # Voice: pipeline live + target.
             voice_live = config.dictation.pipeline.enabled
             voice_target = config.dictation.pipeline.target_profile_override or "auto"
+            # Betterment ST0: the Voice fact reads whether speech works, the
+            # same speech-model read Setup and doctor make (disk only). A
+            # switch is not a working path. None: unknown.
+            speech_ready: bool | None = None
+            try:
+                from ....whisper_models import configured_speech_readiness
+
+                speech_ready = bool(configured_speech_readiness(config=config).get("ready"))
+            except Exception:
+                pass
 
             # Meetings: intelligence enabled.
             intel_on = config.meeting.intel_enabled
@@ -325,6 +335,7 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
                     "live": voice_live,
                     "target": voice_target,
                     "engineSet": group_engine.get("voice"),
+                    "speechReady": speech_ready,
                 },
                 "meetings": {
                     "intelligence": intel_on,

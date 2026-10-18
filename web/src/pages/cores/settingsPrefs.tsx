@@ -11,9 +11,11 @@ import { useState, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import { CONTROL_MODES, controlModeLabel } from "../../lib/productLanguage";
 import {
+  CheckGadget,
   CycleGadget,
   FoldGadget,
   GadgetGroup,
+  GadgetRow,
 } from "../../desk/surface/gadgets";
 import {
   SurfaceLedger,
@@ -27,6 +29,7 @@ import { useDesk } from "../../desk/store";
 import "./settings.css";
 import { useAtmospherePreference } from "../../desk/gl/atmospherePreference";
 import { resolveAtmosphere } from "../../desk/gl/atmosphereRegistry";
+import { useBuilderTools } from "../../desk/builderTools";
 
 /* ── the roster (owner-named destinations, including the Models/Assignments pair) ── */
 
@@ -281,6 +284,23 @@ export function SettingGlyph({ name }: { name: string }) {
   );
 }
 
+/* ── Betterment shell S1: the Builder tools switch (Settings ▸ System).
+   Off by default. On, Go shows Builder ▸ and Search lists the builder rows
+   (Activity, Processes, Context, Components, Calendar snapshot, Delivery
+   board, Terminals, Refresh from hub). This browser only. ── */
+
+export function BuilderToolsModule() {
+  const on = useBuilderTools((state) => state.on);
+  const setOn = useBuilderTools((state) => state.setOn);
+  return (
+    <GadgetGroup label="Builder tools" material="inset">
+      <GadgetRow label="Builder tools" fact="GO ▸ BUILDER · SEARCH" controlWidth="short">
+        <CheckGadget variant="state" label="Builder tools" checked={on} onChange={setOn} />
+      </GadgetRow>
+    </GadgetGroup>
+  );
+}
+
 /* ── the Desk module (HS-112-03): reset-to-seed, the desk's FIRST
    destructive verb. Armed in-world in the kit's own grammar (the
    GadgetTable delete pattern — press, RESET DESK?, press again), never
@@ -345,7 +365,7 @@ export type SettingsHubWire = {
   connections: { connected: number };
   /** `engineSet`: the group resolves to an engine (its own or the default).
    *  A switch that is on with no engine is not a working path (A.10). */
-  voice: { live: boolean; target: string; engineSet?: boolean };
+  voice: { live: boolean; target: string; engineSet?: boolean; speechReady?: boolean | null };
   /** PHILO-15 B33: `engineSet` is the summary ROUTE the queue takes (exact,
    *  group, global default); `summariesOff` the owner's explicit OFF. */
   meetings: { intelligence: boolean; engineSet?: boolean; engine?: string | null; summariesOff?: boolean; auto?: string; host?: string; lastRunAt?: string | null; lastRunS?: number | null };
@@ -498,11 +518,15 @@ export function PrefsFace({
             data-testid="settings-hub-summary-chip"
           />
         : <StateChip state="warning" label="SUMMARY SET OFF" />;
-  const voiceFact = hub.voice.live && hub.voice.engineSet === false
-    ? <StateChip state="warning" label="NO ENGINE" />
-    : hub.voice.live
-      ? <><StateChip state="success" label="LIVE" />{hub.voice.target ? <span>{hub.voice.target.toUpperCase()}</span> : null}</>
-      : <span>Voice typing off</span>;
+  // Betterment ST0: the Voice fact is whether speech works (the speech
+  // model Setup reads), never the pipeline switch alone. Unknown: no claim.
+  const voiceFact = !hub.voice.live
+    ? <span>Voice typing off</span>
+    : hub.voice.speechReady === true
+      ? <StateChip state="success" label="Works" data-testid="settings-hub-voice-fact" />
+      : hub.voice.speechReady === false
+        ? <StateChip state="warning" label="Speech is not set up" data-testid="settings-hub-voice-fact" />
+        : null;
   const rhythmFact = <>
     {hub.rhythm.sweepEveryMinutes != null
       ? <span>{hub.rhythm.sweepEveryMinutes >= 60

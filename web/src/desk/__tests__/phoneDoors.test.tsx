@@ -66,19 +66,19 @@ describe("the phone menu bar has one door that carries every verb", () => {
     expect(ids).toEqual(["go"]);
   });
 
-  it("keeps all four menus at desk width", () => {
+  // Betterment shell S0: the Object menu is drawn only with a thing in front.
+  it("keeps Desk, Go and Window at desk width (Object only with a thing in front)", () => {
     compact = false;
     const { container } = render(<DeskMenuBar />);
     const ids = Array.from(
       container.querySelectorAll("[data-menu-id]"),
       (el) => el.getAttribute("data-menu-id"),
     );
-    expect(ids).toEqual(["desk", "object", "go", "window"]);
+    expect(ids).toEqual(["desk", "go", "window"]);
   });
 
-  // PHILO-15 11 (B21, owner ruling 2026-10-07; supersedes C7 Q3): Go at 393
-  // is Needs you / Brief / The week / Capture, the Dock's places, the
-  // projects, then New ▸ Note / Meeting / Project / Person. No ⌘ hint.
+  // Betterment shell S1 (supersedes PHILO-15 11 B21): Go at 393 is the
+  // manifest's Go groups, then New ▸ Note / Meeting / Project / Person. No ⌘ hint.
   it("carries a new note (owner job 3's door) at Go ▸ New ▸ Note at phone width", () => {
     compact = true;
     render(<DeskMenuBar />);
@@ -96,11 +96,12 @@ describe("the phone menu bar has one door that carries every verb", () => {
     expect(screen.getByRole("menuitem", { name: "Meetings" })).toBeTruthy();
     expect(screen.getByRole("menuitem", { name: "Ask AI" })).toBeTruthy();
     expect(screen.getByRole("menuitem", { name: "Note" })).toBeTruthy();
-    expect(screen.queryByText("Today")).toBeNull();
-    expect(screen.getAllByRole("heading").map((heading) => heading.textContent)).toEqual(["Apps", "New"]);
+    // Betterment shell S1: the manifest's Go groups, as at 1440, then New.
+    expect(screen.getAllByRole("heading").map((heading) => heading.textContent)).toEqual(["Apps", "Work", "New"]);
     expect(screen.getByRole("menu", { name: "Go menu" })).toHaveClass("desk-menu-list");
     expect(screen.getAllByRole("menuitem").map((row) => row.querySelector(".desk-menu-label")?.textContent)).toEqual([
-      "Needs you", "Brief", "The week", "Capture", "Meetings", "Ask AI", "People", "Conductor", "Note", "Meeting", "Project", "Person",
+      "Today", "Needs you", "Meetings", "People", "Conductor", "Ask AI", "Speak",
+      "Workbenches", "Memory", "Voice commands", "Note", "Meeting", "Project", "Person",
     ]);
   });
 
@@ -123,21 +124,14 @@ describe("the phone menu bar has one door that carries every verb", () => {
     expect(run).toHaveBeenLastCalledWith({ selectedRef: null });
   });
 
-  it("keeps a ghosted home verb focusable with its reason and refuses pointer and native keys", async () => {
+  // Betterment shell S0 (UX-CANON A.11): a home verb that cannot run is withheld.
+  it("withholds a home verb that cannot run", () => {
     compact = true;
-    const user = userEvent.setup();
     const verb = VERBS.find((candidate) => candidate.id === "go.ask")!;
     vi.spyOn(verb, "ghost").mockReturnValue("Select an object");
-    const run = vi.spyOn(verb, "run").mockImplementation(() => {});
     render(<GoHome />);
-    const row = screen.getByRole("menuitem", { name: "Ask AI Select an object" });
-    expect(row).toHaveAttribute("aria-disabled", "true");
-    expect(row).toHaveClass("btn--chrome", "is-ghost");
-    row.focus();
-    expect(row).toHaveFocus();
-    await user.keyboard("{Enter} ");
-    await user.click(row);
-    expect(run).not.toHaveBeenCalled();
+    expect(screen.queryByRole("menuitem", { name: /Ask AI/ })).toBeNull();
+    expect(document.querySelector(".is-ghost,[aria-disabled='true']")).toBeNull();
   });
 
   it("shows Projects only when present and opens the exact project id", async () => {
@@ -146,7 +140,7 @@ describe("the phone menu bar has one door that carries every verb", () => {
     const open = vi.spyOn(shell, "openProjectRoom").mockImplementation(() => {});
     useDesk.setState({ projects: [{ id: "p-go-exact", name: "Architecture rollout", description: "", keywords: [], team_members: [], is_archived: false, meeting_count: 0, updated_at: "2026-10-16T00:00:00Z" }] });
     render(<GoHome />);
-    expect(screen.getAllByRole("heading").map((heading) => heading.textContent)).toEqual(["Apps", "Projects", "New"]);
+    expect(screen.getAllByRole("heading").map((heading) => heading.textContent)).toEqual(["Apps", "Projects", "Work", "New"]);
     await user.click(screen.getByRole("menuitem", { name: "Architecture rollout" }));
     expect(open).toHaveBeenCalledOnce();
     expect(open).toHaveBeenCalledWith("p-go-exact");

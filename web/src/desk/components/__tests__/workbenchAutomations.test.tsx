@@ -111,6 +111,25 @@ describe("Workbench STARTS WHEN automations", () => {
     )).toBe(true));
   });
 
+  it("a look at Event and Idle never turns the schedule off (recon step 19)", async () => {
+    const calls = await open([], { schedule: "0 2 * * *", schedule_enabled: true });
+    const mode = screen.getByRole("combobox", { name: "Workbench start condition" });
+    expect(mode).toHaveValue("schedule");
+    expect(screen.getByRole("checkbox", { name: "Schedule enabled" })).toBeChecked();
+
+    fireEvent.change(mode, { target: { value: "event" } });
+    fireEvent.change(mode, { target: { value: "idle" } });
+    fireEvent.change(mode, { target: { value: "manual" } });
+    fireEvent.change(mode, { target: { value: "schedule" } });
+
+    expect(screen.getByRole("checkbox", { name: "Schedule enabled" })).toBeChecked();
+    const scheduleWrites = calls.mock.calls.filter(([url, init]) =>
+      String(url).endsWith("/api/workbenches/wb1") && init?.method === "PUT" &&
+      "schedule_enabled" in JSON.parse(String(init.body)),
+    );
+    expect(scheduleWrites).toHaveLength(0);
+  });
+
   it("reveals one start mode at a time and requires a repository for Event", async () => {
     await open();
     expect(screen.getByRole("region", { name: "Starts when" })).toHaveAttribute("data-material", "inset");

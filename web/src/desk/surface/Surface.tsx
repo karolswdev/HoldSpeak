@@ -220,6 +220,7 @@ export function SurfaceState({
   emptyImage,
   emptyContent,
   onRetry,
+  retryLabel = "Try again",
   onAction,
   actionLabel,
   children,
@@ -235,6 +236,8 @@ export function SurfaceState({
   /** Compact custom content inside the shared in-flow empty-state material. */
   emptyContent?: ReactNode;
   onRetry?: () => void;
+  /** The retry verb's label (default "Try again"). */
+  retryLabel?: string;
   /** An optional in-flow action for the empty state. */
   onAction?: () => void;
   /** The visible label for the empty-state action. */
@@ -262,7 +265,7 @@ export function SurfaceState({
         <span>{error}</span>
         {onRetry ? (
           <Button dense variant="ghost" onClick={onRetry}>
-            Try again
+            {retryLabel}
           </Button>
         ) : null}
       </div>

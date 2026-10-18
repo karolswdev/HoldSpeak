@@ -308,6 +308,21 @@ export interface ThreadDetail {
   draftAnnotations: DraftAnnotation[];
 }
 
+/** The done frame's error as the stored `error_json` shape: the words, and
+ *  the reason token the face renders with `runWords.ts` (Betterment Q0). */
+function doneError(raw: unknown): Record<string, unknown> {
+  if (typeof raw === "string") return { error: raw };
+  if (typeof raw === "object" && raw !== null) {
+    const e = raw as Record<string, unknown>;
+    return {
+      error: String(e.message || "turn failed"),
+      ...(typeof e.code === "string" && e.code ? { code: e.code } : {}),
+      ...(typeof e.reason === "string" && e.reason ? { reason: e.reason } : {}),
+    };
+  }
+  return { error: "turn failed" };
+}
+
 export async function createThread(opts: {
   title?: string;
   recipe_id?: string;
@@ -870,14 +885,7 @@ export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set
           ? new Date().toISOString() : m.completedAt,
         abortedAt: outcome === "aborted" ? new Date().toISOString() : m.abortedAt,
         errorJson: (outcome === "failed" || outcome === "error")
-          ? {
-              error:
-                typeof stats?.error === "string"
-                  ? stats.error
-                  : typeof stats?.error === "object" && stats.error !== null
-                    ? String((stats.error as Record<string, unknown>).message || "turn failed")
-                    : "turn failed",
-            }
+          ? doneError(stats?.error)
           : m.errorJson,
         statsJson: stats ? { prompt_tokens: stats.prompt_tokens, completion_tokens: stats.completion_tokens } : m.statsJson,
         // A late start frame may leave only the tail of the answer in the

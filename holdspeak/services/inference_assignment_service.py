@@ -254,6 +254,14 @@ class InferenceAssignmentService:
                             )
                         )
                     projection["issues"] = self._dedupe_issues(issues)
+                    if group_row is None and self._default_serves_none(
+                        projection["issues"], capabilities
+                    ):
+                        # Betterment ST0: a group never inherits a default
+                        # its engine cannot serve at all (a chat server
+                        # cannot transcribe). The same checks as ``fit``;
+                        # the group stays unassigned, not broken.
+                        projection = None
                 rows.append(
                     {
                         "id": group_id,
@@ -261,7 +269,11 @@ class InferenceAssignmentService:
                         "editor_capability_id": capabilities[0].id if capabilities else None,
                         "inherited_from": "group"
                         if group_row is not None
-                        else ("global" if global_row is not None else None),
+                        else (
+                            "global"
+                            if global_row is not None and projection is not None
+                            else None
+                        ),
                         "expected_revision": self._expected_revision(
                             conn, f"group:{group_id}"
                         ),
@@ -780,6 +792,29 @@ class InferenceAssignmentService:
             ],
             "saveable": not self._save_blockers(parsed, entries, affected, issues),
         }
+
+    @staticmethod
+    def _default_serves_none(
+        issues: Iterable[Mapping[str, Any]],
+        capabilities: Iterable[InferenceCapabilityDefinition],
+    ) -> bool:
+        """True when the inherited default blocks EVERY capability of a group.
+
+        An issue with no capability (a missing binding) is the engine's own
+        fault, not a fit: such a group still inherits and says it is broken.
+        """
+        ids = {c.id for c in capabilities}
+        if not ids:
+            return False
+        blocked: set[str] = set()
+        for issue in issues:
+            if issue.get("severity") != "blocking":
+                continue
+            cap = issue.get("capability_id")
+            if not cap:
+                return False
+            blocked.add(str(cap))
+        return ids <= blocked
 
     def capability_override_ready(self, principal: Principal, capability_id: str) -> bool:
         """True when the capability's OWN assignment would serve it now.

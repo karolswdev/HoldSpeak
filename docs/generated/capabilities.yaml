@@ -2863,7 +2863,7 @@
           "symbol": "_CANONICAL_GROUPS"
         },
         {
-          "claim": "The Models window verb \"Use this for summaries\" writes the summary assignment (useConciergeController.useNewEngineForSummaries).",
+          "claim": "The Models window add-engine verb \"Use\" writes the summary assignment (useConciergeController.useNewEngineForSummaries).",
           "line": 571,
           "path": "web/src/features/concierge/ConciergeCore.tsx",
           "symbol": "ConciergeCore"
@@ -2885,7 +2885,7 @@
       "status_reason": "The owner-only assignment service and readiness projection are implemented as configuration control plane; execution remains a later route step.",
       "surfaces": [
         "arrival SETUP row \"No engine for summaries\" (opens Models)",
-        "Models window verb \"Use this for summaries\""
+        "Models window add-engine verb \"Use\""
       ],
       "tests": [
         {

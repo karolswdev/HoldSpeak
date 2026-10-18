@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_firstrun.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-11T22:25:05.465304Z",
+  "captured_at": "2026-10-18T03:49:25.508477Z",
   "wire": {
     "board": {
       "active": [],
@@ -21,9 +21,9 @@
     "upcoming": [],
     "week": {
       "days": [],
-      "ends_at": "2026-10-12T06:00:00+00:00",
+      "ends_at": "2026-10-19T06:00:00+00:00",
       "has_calendar": false,
-      "starts_at": "2026-10-05T06:00:00+00:00",
+      "starts_at": "2026-10-12T06:00:00+00:00",
       "total": 0
     }
   }

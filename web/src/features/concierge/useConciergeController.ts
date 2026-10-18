@@ -133,7 +133,7 @@ export interface SetRow {
 
 /** PHILO-15 10 (B10): what the last press did, said on this face. */
 export interface ApplyReceipt {
-  /** `set` = Use these; `summaries` = Use this for summaries. */
+  /** `set` = Use these; `summaries` = the add-engine row's Use. */
   kind: "set" | "summaries";
   engine: string;
   host: string;

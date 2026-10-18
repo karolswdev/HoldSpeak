@@ -29,7 +29,15 @@ import { StringGadget } from "../surface/gadgets";
 import { allObjects } from "../world";
 import { DESK_TOOLS, KIND_GLYPH, KIND_LABEL } from "../tools";
 import {
-  VERBS, offeredHere, verbLabel, weekVerbs, type VerbContext, type WeekPerson,
+  BUILDER_APPLICATION_ACTIONS,
+  DESK_APPLICATIONS,
+  GO_EXTRA_ROWS,
+  applicationForAction,
+  applicationVerbId,
+} from "../applications";
+import { useBuilderTools } from "../builderTools";
+import {
+  VERBS, offeredHere, verbById, verbLabel, weekVerbs, type VerbContext, type WeekPerson,
 } from "../verbRegistry";
 import { openPerson, refOpener } from "../openObject";
 import { primeSendTo, sendChoices, useSendToTick } from "../windowSend";
@@ -212,6 +220,15 @@ export function rankRow(
 const OBJECT_SECTIONS = new Set(["OBJECTS", "MEETINGS", "PROJECTS", "PEOPLE", "SETTINGS"]);
 const FIRST_PRESS_OBJECT_SECTIONS = new Set(["OBJECTS", "MEETINGS", "PROJECTS", "PEOPLE"]);
 
+/** Betterment shell S1: the verbs that open an application (its App row
+ * stands for them) and the builder verbs (listed behind Builder tools). */
+const APPLICATION_VERB_IDS: ReadonlySet<string> = new Set(
+  DESK_APPLICATIONS.map(applicationVerbId).filter((id) => !id.startsWith("go.")),
+);
+const BUILDER_VERB_IDS: ReadonlySet<string> = new Set(
+  GO_EXTRA_ROWS.flatMap((row) => (row.kind === "verb" && row.go.group === "builder" ? [row.verbId] : [])),
+);
+
 function isObjectRow(row: { section?: string }): boolean {
   return OBJECT_SECTIONS.has(String(row.section ?? ""));
 }
@@ -354,6 +371,7 @@ export function DeskToolShelf() {
   const diveInto = useDesk((state) => state.diveInto);
   const integrations = setup?.trust?.destinations ?? [];
   const launchers = useLaunchers();
+  const builder = useBuilderTools((state) => state.on);
   // PHILO-13-14 (C4): his week, from the real routes. People come from the
   // People store (a locked or unset store answers nothing: no rows); the
   // front window's document and its destinations from C5's composition.
@@ -623,11 +641,18 @@ export function DeskToolShelf() {
       });
     for (const v of VERBS) {
       if (v.palette === false || v.scope === "go" || !offeredHere(v)) continue;
+      // Betterment shell S1: an application's own verb (Today, People) is
+      // its App row below, never a second VERB row; a builder verb (Refresh
+      // from hub) is listed only when Builder tools is on.
+      if (APPLICATION_VERB_IDS.has(v.id)) continue;
+      if (BUILDER_VERB_IDS.has(v.id) && !builder) continue;
       const label = verbLabel(v, ctx);
       const ghost = v.ghost(ctx);
+      // Betterment shell S0 (UX-CANON A.11): a verb that cannot run now is
+      // not a row ("Hand to coder · Select an object" was a dead row).
+      if (ghost) continue;
       // A cold deck begins with the Desk's creation verbs; other verbs
-      // appear after use. A query still reaches every verb (ghosted ones
-      // say why).
+      // appear after use. A query still reaches every runnable verb.
       if (!normalized && v.group !== "new" && !recents.includes(v.id)) continue;
       push({
         id: v.id,
@@ -644,22 +669,33 @@ export function DeskToolShelf() {
     }
 
     // ── PROGRAMS: the go.* registry face + open drawers ──
-    for (const v of VERBS) {
-      if (v.scope !== "go") continue;
-      const tool = DESK_TOOLS.find((t) => `go.${t.action}` === v.id);
+    // Betterment shell S1: one App row per grouped application, through the
+    // verb that opens it (Today and People through their desk verbs, Engines
+    // and Accounts through their Settings wings); builder applications only
+    // when Builder tools is on.
+    for (const tool of DESK_TOOLS) {
+      if (BUILDER_APPLICATION_ACTIONS.has(tool.action) && !builder) continue;
+      const application = applicationForAction(tool.action);
+      const v = application ? verbById(applicationVerbId(application)) : undefined;
+      if (!v) continue;
       push({
         id: v.id,
         section: "PROGRAMS",
-        glyph: tool?.glyph ?? "▸",
-        label: verbLabel(v, ctx),
+        glyph: tool.glyph,
+        // The application's own name (Today, People), not its verb's.
+        label: tool.label,
         kind: "PROGRAM",
         keycap: v.key,
-        terms: tool?.description.toLocaleLowerCase(),
+        terms: tool.description.toLocaleLowerCase(),
+        name: tool.label,
         run: () => v.run(ctx),
       });
     }
     for (const l of launchers) {
       if (l.id === "attention") continue;
+      // Betterment shell S1: the launchers (Delivery board, Terminals) are
+      // builder tools: Go ▸ Builder, and Search only when Builder tools is on.
+      if (!builder) continue;
       push({
         id: `drawer:${l.id}`,
         section: "PROGRAMS",
@@ -773,6 +809,7 @@ export function DeskToolShelf() {
     integrations,
     items,
     launchers,
+    builder,
     models,
     normalized,
     openPullout,

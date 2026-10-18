@@ -57,6 +57,8 @@ export function WorkbenchRunsWing({
           const statusChip =
             run.status === "completed"
               ? { label: "COMPLETED", tone: "ok" }
+              : run.status === "completed_with_failures"
+                ? { label: "SOME FAILED", tone: "warn" }
               : run.status === "running"
                 ? { label: "RUNNING", tone: "warn" }
                 : { label: "FAILED", tone: "fail" };

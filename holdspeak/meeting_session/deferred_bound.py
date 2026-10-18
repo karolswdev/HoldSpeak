@@ -152,6 +152,7 @@ class BoundDeferredIntelJob:
         self._members = {str(key): dict(value) for key, value in members.items()}
         self._principal = queue_service_principal()
         self._closed = False
+        self.memory_sent: Any = None  # the memory staged on the last execute
         # Set immediately after route admission.  If a later provider or
         # projection boundary raises, this lets the queue recover the durable
         # controller evidence instead of manufacturing an empty receipt.
@@ -364,13 +365,16 @@ class BoundDeferredIntelJob:
                     staged["memory_refs"] = candidate.refs
                 return staged
 
-            material = with_memory(fit_memory(memory, lambda candidate: adoption.payload_room(
+            sent = fit_memory(memory, lambda candidate: adoption.payload_room(
                 route_plan_id=str(member["route_plan_id"]),
                 capability_id=capability,
                 operation_id=operation_id,
                 payload=with_memory(candidate),
                 reserved_output_tokens=512,
-            ) >= 0))
+            ) >= 0)
+            # What was staged, for the run receipt's "Looked at".
+            self.memory_sent = sent
+            material = with_memory(sent)
         admitted = adoption.admit_on_frozen_route(
             self._principal,
             command_id=command_id,

@@ -297,7 +297,7 @@ describe("ThreadPullout rows", () => {
     expect(screen.queryByText("import-fingerprint")).toBeNull();
   });
 
-  it("names seeded material from the live desk, prefers frozen titles and keeps an honest unavailable ref", () => {
+  it("names seeded material from the live desk, prefers frozen titles and says a gone source was deleted", () => {
     seedStore([makeMsg()]);
     const priorItems = useDesk.getState().items;
     useDesk.setState({ items: { ...priorItems, note: [{ id: "n-seed", title: "Current release plan" }] as never } });
@@ -310,8 +310,10 @@ describe("ThreadPullout rows", () => {
     fireEvent.click(screen.getByText("Sources · 2"));
     expect(screen.getByText("Sent release plan")).toBeTruthy();
     expect(screen.queryByText("Current release plan")).toBeNull();
-    expect(screen.getByText("Source unavailable")).toBeTruthy();
-    expect(screen.getByText("note:n-live")).toBeTruthy();
+    // Betterment Q0: a source the desk holds no more says so in words.
+    expect(screen.getByText("Note")).toBeTruthy();
+    expect(screen.getByText("was deleted")).toBeTruthy();
+    expect(screen.queryByText("note:n-live")).toBeNull();
     view.unmount();
     useThreadStore.getState().threads["t-1"].refs = [
       { id: "seed", threadId: "t-1", messageId: "", refKind: "seed", refId: "note:n-seed", frozenJson: null, createdAt: "" },
@@ -344,16 +346,16 @@ describe("ThreadPullout rows", () => {
       }),
     ]);
     renderPullout();
-    expect(screen.getByText("Reply failed")).toBeTruthy();
-    expect(screen.getByText("Details")).toBeTruthy();
-    expect(screen.getByText(/Provider unreachable/)).toBeTruthy();
+    // Betterment Q0: an older row without a reason shows its stored words.
+    expect(screen.getByRole("alert")).toHaveTextContent("Provider unreachable");
+    expect(screen.getByText("Raw")).toBeTruthy();
   });
 
   it("retries the failed message through the existing regenerate writer", async () => {
     seedStore([makeMsg({ errorJson: { error: "transport details" }, parts: [] })]);
     const retry = vi.spyOn(threads, "regenerateThread").mockResolvedValue({} as any);
     renderPullout();
-    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ask again" }));
     await waitFor(() => expect(retry).toHaveBeenCalledExactlyOnceWith("t-1", { message_id: "msg-1" }));
   });
 
@@ -470,8 +472,8 @@ describe("ThreadPullout rows", () => {
       }),
     ]);
     renderPullout();
-    expect(screen.getByText("Reply failed")).toBeTruthy();
-    expect(screen.getByText(/Provider unreachable: fake engine error/).closest("details")?.open).toBe(false);
+    expect(screen.getByRole("alert")).toHaveTextContent("Provider unreachable: fake engine error");
+    expect(screen.getByText("Raw").closest("details")?.open).toBe(false);
   });
 
   it("hydrates a persisted deny as primary and focused", () => {

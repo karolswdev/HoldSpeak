@@ -114,6 +114,22 @@ export function keyContext(): VerbContext {
   return { selectedRef: ids.length === 1 ? ids[0] : null };
 }
 
+/** Betterment shell S0: the menu title of a verb run by its key flashes
+ * once (an inverse flash of `FLASH_MS`), so the hand learns where the verb
+ * lives. None under reduced motion. Returns the title it flashed. */
+export const FLASH_MS = 120;
+export function flashMenuTitle(menu: string | undefined): HTMLElement | null {
+  if (!menu || typeof document === "undefined") return null;
+  if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return null;
+  const title = document.querySelector<HTMLElement>(
+    `.desk-verbbar-item[data-menu-id="${menu}"] .desk-verbbar-title`,
+  );
+  if (!title) return null;
+  title.classList.add("is-flash");
+  setTimeout(() => title.classList.remove("is-flash"), FLASH_MS);
+  return title;
+}
+
 /** The one handler (exported for tests). Returns the verb it ran. */
 export function dispatchKey(e: KeyboardEvent): Verb | null {
   if (e.repeat || e.defaultPrevented || e.isComposing) return null;
@@ -125,6 +141,7 @@ export function dispatchKey(e: KeyboardEvent): Verb | null {
     if (verb.ghost(ctx)) return null; // a ghosted verb refuses quietly
     e.preventDefault();
     verb.run(ctx);
+    flashMenuTitle(verb.menu);
     return verb;
   }
   return null;

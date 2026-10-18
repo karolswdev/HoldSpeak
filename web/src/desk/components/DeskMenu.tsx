@@ -7,11 +7,15 @@
 // chrome z-trap), separators, a right-aligned key column, type-ahead,
 // and ONE-deep submenus (adjacent at 1440; at 393 a submenu REPLACES
 // the panel with a back row - it never floats beside it).
-// HS-148-01 - the grammar core: stipple ghosting, drawn keycap wells,
-// checkable lane (menuitemcheckbox/menuitemradio), the lane law,
-// recessed separators, ghost-reason collapse, submenu indicator.
+// HS-148-01 - the grammar core: drawn keycap wells, checkable lane
+// (menuitemcheckbox/menuitemradio), the lane law, recessed separators,
+// submenu indicator.
 // PHILO-13-15 (C5) - at 393 a submenu inside a submenu opens (the back row
 // climbs one level); at 1440 a submenu opens next to its parent panel.
+// Betterment shell S0 (UX-CANON A.11, "withhold, never ghost"): a WorkMenu
+// entry whose `ghost` is a string is not drawn. The stipple and the
+// ghost-reason footer are gone; `ghost` stays on the entry (the registry,
+// the keys and the tests read it), and the menu shows only rows that run.
 import {
   useEffect,
   useLayoutEffect,
@@ -134,8 +138,9 @@ export function DeskMenuItem({
   keycap?: ReactNode;
   ariaLabel?: string;
   onSelect(): void;
-  /** HS-105-05 - ghosting over hiding: a disabled item stays visible
-   * (aria-disabled) and refuses to run; the caller renders the reason. */
+  /** A disabled item refuses to run (aria-disabled). UX-CANON A.11
+   * ("withhold, never ghost"): a caller withholds a verb that cannot run;
+   * it does not pass it here disabled. */
   disabled?: boolean;
   /** HS-148-01 - checkable: boolean = checkbox, "exclusive" = radio. */
   checked?: boolean | "exclusive";
@@ -161,7 +166,6 @@ export function DeskMenuItem({
       aria-label={ariaLabel}
       aria-disabled={disabled || undefined}
       aria-checked={ariaChecked}
-      className={disabled ? "is-ghost" : ""}
       onClick={() => {
         if (!disabled) onSelect();
       }}
@@ -195,6 +199,8 @@ export type WorkMenuEntry =
       onSelect(): void;
     }
   | { type: "sep"; id?: string }
+  /** One line of plain text that is not a verb ("No windows open"). */
+  | { type: "note"; id: string; label: string }
   | {
       type: "sub";
       id: string;
@@ -262,32 +268,24 @@ function panelHasLane(entries: WorkMenuEntry[]): boolean {
   );
 }
 
-/** HS-148-01: compute ghost-reason MAJORITY collapse for a panel.
- * The single most common ghost reason, when it appears on >=3 ghosted
- * rows, collapses to the panel footer; rows carrying a DIFFERENT reason
- * keep their per-row echo. On tie, collapse only the first-encountered. */
-function collapseGhostReason(
-  entries: WorkMenuEntry[],
-): string | null {
-  const ghosts = entries.filter(
-    (e): e is Extract<WorkMenuEntry, { type: "item" }> =>
-      e.type === "item" && typeof e.ghost === "string",
-  );
-  if (ghosts.length < 3) return null;
-  // Count occurrences, track first-encountered order.
-  const counts = new Map<string, number>();
-  for (const g of ghosts) {
-    counts.set(g.ghost!, (counts.get(g.ghost!) ?? 0) + 1);
-  }
-  let best: string | null = null;
-  let bestCount = 0;
-  for (const [reason, count] of counts) {
-    if (count > bestCount) {
-      best = reason;
-      bestCount = count;
+/** Betterment shell S0 (UX-CANON A.11): the rows a menu draws. An item
+ * whose `ghost` is a string is withheld; a submenu left empty goes with it;
+ * separators never lead, trail or double. Pure. */
+export function withholdGhosts(entries: readonly WorkMenuEntry[]): WorkMenuEntry[] {
+  const out: WorkMenuEntry[] = [];
+  for (const entry of entries) {
+    if (entry.type === "item" && typeof entry.ghost === "string") continue;
+    if (entry.type === "sub") {
+      const inner = withholdGhosts(entry.entries);
+      if (!inner.some((e) => e.type !== "sep")) continue;
+      out.push({ ...entry, entries: inner });
+      continue;
     }
+    if (entry.type === "sep" && (!out.length || out[out.length - 1].type === "sep")) continue;
+    out.push(entry);
   }
-  return bestCount >= 3 ? best : null;
+  while (out.length && out[out.length - 1].type === "sep") out.pop();
+  return out;
 }
 
 function WorkMenuRows({
@@ -297,7 +295,6 @@ function WorkMenuRows({
   setOpenSub,
   onSubAnchor,
   hasLane,
-  collapsedReason,
 }: {
   entries: WorkMenuEntry[];
   onClose(): void;
@@ -306,8 +303,6 @@ function WorkMenuRows({
   onSubAnchor(id: string, el: HTMLElement): void;
   /** HS-148-01: lane law — every row reserves the lane when the panel has any. */
   hasLane: boolean;
-  /** HS-148-01: collapsed ghost reason (null = show per-row reasons). */
-  collapsedReason: string | null;
 }) {
   const intent = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(
@@ -321,6 +316,12 @@ function WorkMenuRows({
       {entries.map((entry, i) => {
         if (entry.type === "sep")
           return <WorkMenuSep key={entry.id ?? `sep-${i}`} />;
+        if (entry.type === "note")
+          return (
+            <span key={entry.id} className="desk-menu-note" role="none">
+              {entry.label}
+            </span>
+          );
         if (entry.type === "sub") {
           return (
             <Button
@@ -365,7 +366,6 @@ function WorkMenuRows({
             </Button>
           );
         }
-        const ghost = entry.ghost ?? null;
         const isCheckable = entry.checked !== undefined;
         // HS-148-01: role is conditional on checkable props.
         const role = isCheckable
@@ -398,18 +398,12 @@ function WorkMenuRows({
             <span className="desk-menu-glyph" aria-hidden="true" />
           );
         }
-        // HS-148-01: per-row ghost reason — suppressed when collapsed.
-        // HS-148-01: majority collapse — suppress per-row reason only
-        // when it matches the collapsed majority; different reasons stay.
-        const showPerRowReason = ghost && ghost !== collapsedReason;
         return (
           <Button
             key={entry.id}
             variant="chrome"
             role={role}
-            aria-disabled={ghost ? true : undefined}
             aria-checked={ariaChecked}
-            className={ghost ? "is-ghost" : ""}
             onPointerEnter={() => {
               if (intent.current) clearTimeout(intent.current);
               // Sliding onto a plain item retires an open submenu.
@@ -422,20 +416,12 @@ function WorkMenuRows({
               if (intent.current) clearTimeout(intent.current);
             }}
             onClick={() => {
-              if (ghost) return;
               onClose();
               entry.onSelect();
             }}
           >
             {laneMark}
-            <span className="desk-menu-label">
-              {entry.label}
-              {showPerRowReason ? (
-                <small className="quiet"> &middot; {ghost}</small>
-              ) : null}
-            </span>
-            {/* HS-148-01: keycaps render on ghosted rows too (stippled with
-                the row) — the `&& !ghost` suppression is removed. */}
+            <span className="desk-menu-label">{entry.label}</span>
             {/* PHILO-15 11 (B21): a phone has no ⌘ key, so no menu at 393
                 draws a keycap (the window menu and its Desk ▸ too). */}
             {entry.keycap && !NARROW() ? <KeycapWells keycap={entry.keycap} /> : null}
@@ -455,7 +441,7 @@ export function WorkMenu({
   y,
   className,
   anchor = "below",
-  entries,
+  entries: given,
   onClose,
   opener,
   returnFocus,
@@ -476,6 +462,8 @@ export function WorkMenu({
   /** HS-148-01: panel-level context declaration (mechanism — default "verb"). */
   menuContext?: string;
 }) {
+  // Betterment shell S0 (UX-CANON A.11): only the rows that run are drawn.
+  const entries = withholdGhosts(given);
   const [openSub, setOpenSub] = useState<string | null>(null);
   // PHILO-13-15 (C5, Astra canvas r1 condition 2): at 393 a submenu inside a
   // submenu opens too (Go ▸ Object ▸ Send to ▸). `deeper` is the path below
@@ -593,9 +581,8 @@ export function WorkMenu({
     setSubAt({ x: r.right + 1, y: r.top - 3 });
   };
 
-  // HS-148-01: lane law + ghost collapse computed once per render.
+  // HS-148-01: lane law computed once per render.
   const hasLane = panelHasLane(entries);
-  const collapsedReason = collapseGhostReason(entries);
 
   const panel = (
     <nav
@@ -656,7 +643,6 @@ export function WorkMenu({
             setOpenSub={openDeeper}
             onSubAnchor={() => {}}
             hasLane={panelHasLane(current.entries)}
-            collapsedReason={collapseGhostReason(current.entries)}
           />
         </>
       ) : (
@@ -667,13 +653,8 @@ export function WorkMenu({
           setOpenSub={setOpenSub}
           onSubAnchor={onSubAnchor}
           hasLane={hasLane}
-          collapsedReason={collapsedReason}
         />
       )}
-      {/* HS-148-01: ghost-reason collapse footer. */}
-      {collapsedReason && !narrow ? (
-        <span className="desk-menu-ghost-hint">{collapsedReason}</span>
-      ) : null}
       {!narrow && sub && subAt ? (
         <nav
           ref={subRef}
@@ -703,7 +684,6 @@ export function WorkMenu({
             setOpenSub={() => {}}
             onSubAnchor={() => {}}
             hasLane={panelHasLane(sub.entries)}
-            collapsedReason={collapseGhostReason(sub.entries)}
           />
         </nav>
       ) : null}

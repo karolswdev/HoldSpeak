@@ -415,3 +415,88 @@ describe("Enter on the first row opens the note it names", () => {
     expect(writes()).toEqual([]);
   });
 });
+
+// ── Betterment shell S0: Search shows only rows that run (UX-CANON A.11) ──
+import { announceLauncher, retractLauncher } from "../components/window/launcherRegistry";
+
+describe("S0: Search lists no dead row", () => {
+  it("\"agents\" lists no verb that waits for a selection", async () => {
+    const input = await deck();
+    await type(input, "agents");
+    const opts = rows();
+    expect(opts.length).toBeGreaterThan(0);
+    for (const o of opts) {
+      expect(o.textContent).not.toContain("Select an object");
+      expect(o.getAttribute("aria-disabled")).not.toBe("true");
+    }
+    expect(opts.map((o) => o.id)).not.toContain("desk-palette-option-object.hand-to-agent");
+  });
+
+  // Betterment shell S1 (supersedes the S0 Terminals rule): the launchers
+  // are builder rows, listed only when Builder tools is on.
+  it("the launchers (Delivery, Terminals) are rows only when Builder tools is on", async () => {
+    announceLauncher({ id: "panes", label: "Terminals", glyph: "⧉", open: false, activate: () => {} });
+    announceLauncher({ id: "delivery-board", label: "Delivery", glyph: "▤", open: false, activate: () => {} });
+    try {
+      const input = await deck();
+      await type(input, "terminals");
+      expect(rows().map((o) => o.id)).not.toContain("desk-palette-option-drawer:panes");
+      await type(input, "delivery");
+      expect(rows().map((o) => o.id)).not.toContain("desk-palette-option-drawer:delivery-board");
+      act(() => useBuilderTools.getState().setOn(true));
+      await type(input, "terminals");
+      expect(rows().map((o) => o.id)).toContain("desk-palette-option-drawer:panes");
+      await type(input, "delivery");
+      expect(rows().map((o) => o.id)).toContain("desk-palette-option-drawer:delivery-board");
+    } finally {
+      useBuilderTools.getState().setOn(false);
+      retractLauncher("panes");
+      retractLauncher("delivery-board");
+    }
+  });
+});
+
+// ── Betterment shell S1: Search finds every app; builder rows are gated ──
+import { useBuilderTools } from "../builderTools";
+
+describe("S1: Search lists Today, People and Components as apps", () => {
+  const ids = () => rows().map((o) => o.id.replace("desk-palette-option-", ""));
+  it("\"people\" finds People as an App, first, and one press opens it", async () => {
+    const input = await deck();
+    await type(input, "people");
+    expect(ids()[0]).toBe("desk.open-people");
+    expect(rows()[0].textContent).toContain("People");
+    expect(ids()).not.toContain("go.open-people");
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(openedSurfaces.calls).toContainEqual(["open-people", undefined]);
+  });
+
+  it("\"today\" finds Today as an App", async () => {
+    const input = await deck();
+    await type(input, "today");
+    const today = rows().find((o) => o.id === "desk-palette-option-desk.open-intelligence");
+    expect(today?.textContent).toContain("Today");
+  });
+
+  it("builder apps and Refresh from hub are listed only when Builder tools is on", async () => {
+    try {
+      const input = await deck();
+      for (const q of ["components", "activity", "calendar snapshot", "refresh"]) {
+        await type(input, q);
+        expect(ids(), q).not.toEqual(expect.arrayContaining(["go.design-components"]));
+        expect(ids(), q).not.toContain("go.inspect-activity");
+        expect(ids(), q).not.toContain("go.review-calendar-snapshot");
+        expect(ids(), q).not.toContain("desk.refresh");
+      }
+      act(() => useBuilderTools.getState().setOn(true));
+      await type(input, "components");
+      expect(ids()).toContain("go.design-components");
+      await type(input, "calendar snapshot");
+      expect(ids()).toContain("go.review-calendar-snapshot");
+      await type(input, "refresh");
+      expect(ids()).toContain("desk.refresh");
+    } finally {
+      useBuilderTools.getState().setOn(false);
+    }
+  });
+});

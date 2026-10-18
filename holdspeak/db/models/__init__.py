@@ -1242,5 +1242,7 @@ class WorkbenchRunRecord:
             "constitutional_context_revision": self.constitutional_context_revision,
             "constitutional_context_hash": self.constitutional_context_hash,
             "skills_injected": json.loads(self.skills_injected_json) if self.skills_injected_json else [],
-            "status": self.status,
+            # The stored CHECK keeps 'completed'; a run with any failed item
+            # reads as completed_with_failures, never as a clean success.
+            "status": "completed_with_failures" if self.status == "completed" and self.items_failed > 0 else self.status,
         }

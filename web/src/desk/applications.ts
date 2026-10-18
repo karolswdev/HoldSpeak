@@ -39,16 +39,19 @@ export interface DeskApplication {
   dock?: { order: number; launch: "surface" | "intelligence"; phone?: number };
   /** Parked surfaces keep their manifest and hub id without a live host. */
   parked?: string;
-  /** PHILO-17 (doors): the row in the menu bar's Go. `app` rows lead Go in
-   * `order`; `tools` rows ride Go ▸ Tools. No `go`: not in Go (the palette
-   * still finds a grouped application). */
-  go?: { order: number; section: "app" | "tools" };
+  /** Betterment shell S1: the row in Go, on the desktop and the phone. Go
+   * draws Daily, then Work, then Builder ▸ (only when the Builder tools
+   * setting is on), each in `order`. `label` is Go's word when it differs.
+   * No `go`: not in Go (Search still finds a grouped application). */
+  go?: { group: GoGroup; order: number; label?: string };
   shortcut?: string;
   /** PHILO-17 (doors): the row in the HoldSpeak menu, in this order. */
   mark?: number;
   toolLabel?: string;
   toolGlyph?: string;
 }
+
+export type GoGroup = "daily" | "work" | "builder";
 
 export type SurfaceApplication = DeskApplication & {
   surface: DeskSurfaceSpec;
@@ -78,8 +81,10 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     description: "Briefs, follow-through, receipts, and reasons.",
     glyph: "◈",
     href: "/",
+    // Betterment shell S1: a group, so Search lists it.
+    group: "app",
     dock: { order: 0, launch: "intelligence", phone: 0 },
-    go: { order: 3, section: "app" },
+    go: { group: "daily", order: 0 },
   },
   {
     action: "dictate",
@@ -90,7 +95,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     href: "/dictation",
     group: "app",
     dock: { order: 1, launch: "surface" },
-    go: { order: 1, section: "app" },
+    go: { group: "daily", order: 7 },
     shortcut: "⌃1",
     surface: {
       eyebrow: "Daily cockpit",
@@ -110,7 +115,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     glyph: "✦",
     href: "/ask",
     group: "app",
-    go: { order: 4, section: "app" },
+    go: { group: "daily", order: 6 },
   },
   {
     action: "review-meetings",
@@ -121,7 +126,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     href: "/history",
     group: "app",
     dock: { order: 2, launch: "surface", phone: 2 },
-    go: { order: 2, section: "app" },
+    go: { group: "daily", order: 2 },
     shortcut: "⌃2",
     surface: {
       eyebrow: "Meeting memory",
@@ -150,7 +155,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     group: "tool",
     // PHILO-17 (doors): the Conductor's door is its desk drawer, Dock and Go.
     dock: { order: 4, launch: "surface" },
-    go: { order: 6, section: "app" },
+    go: { group: "daily", order: 5 },
     shortcut: "⌃3",
   },
   // PARKED (PHILO-14 C4): the old Agents application. It folded into the
@@ -273,6 +278,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     description: "The always-on briefing every agent receives.",
     glyph: "§",
     href: "/context",
+    go: { group: "builder", order: 2 },
     group: "tool",
     surface: {
       eyebrow: "Owner",
@@ -290,6 +296,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     description: "Mission control for your agent workbenches.",
     glyph: "⚒",
     href: "/workbenches",
+    go: { group: "work", order: 0 },
     group: "tool",
     surface: {
       eyebrow: "Work",
@@ -307,6 +314,9 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     description: "The executable Signal component catalog.",
     glyph: "▦",
     href: "/components",
+    // Betterment shell S1: a group, so Search lists it.
+    group: "tool",
+    go: { group: "builder", order: 3 },
     surface: {
       eyebrow: "Signal React",
       minW: 640,
@@ -324,6 +334,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     description: "Inspect work context and source records.",
     glyph: "⊙",
     href: "/activity",
+    go: { group: "builder", order: 0 },
     group: "tool",
     surface: {
       eyebrow: "This-device context",
@@ -342,6 +353,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     description: "Search connected evidence across the Desk or within a Project.",
     glyph: "▤",
     href: "/project-memory",
+    go: { group: "work", order: 1 },
     group: "tool",
     surface: {
       eyebrow: "Long memory",
@@ -391,6 +403,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     description: "See what the kernel is running.",
     glyph: "∷",
     href: "/#processes",
+    go: { group: "builder", order: 1 },
     group: "tool",
     surface: {
       eyebrow: "Kernel",
@@ -408,6 +421,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     description: "Map spoken phrases to registered actions.",
     glyph: "⌘",
     href: "/commands",
+    go: { group: "work", order: 2, label: "Voice commands" },
     group: "tool",
     surface: {
       eyebrow: "Voice commands",
@@ -425,9 +439,11 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     description: "Relationships, commitments, and follow-through.",
     glyph: "♧",
     href: "/",
+    // Betterment shell S1: a group, so Search lists it.
+    group: "app",
     dock: { order: 3, launch: "surface", phone: 3 },
     // PHILO-17 (doors): the People drawer on the desk, and Go.
-    go: { order: 5, section: "app" },
+    go: { group: "daily", order: 3 },
     surface: {
       eyebrow: "Follow-through",
       minW: 560,
@@ -444,6 +460,9 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     description: "Review calendar evidence before it enters the Desk.",
     glyph: "▦",
     href: "/calendar-snapshot",
+    // Betterment shell S1: a group, so Search lists it.
+    group: "tool",
+    go: { group: "builder", order: 4 },
     surface: {
       eyebrow: "Calendar",
       minW: 640,
@@ -498,9 +517,18 @@ export const DOCK_APPLICATIONS: readonly DockApplication[] =
 /** The registry verb that opens an application: Intelligence and People
  * open through their desk verbs, every other application through `go.*`. */
 export function applicationVerbId(application: DeskApplication): string {
+  // Betterment shell S1: a parked row that Settings now hosts opens the
+  // Settings wing verb (`settings.<wing>`), never its parked surface.
+  const wing = parkedSettingsWing(application);
+  if (wing) return `settings.${wing}`;
   return application.action === "open-intelligence" || application.action === "open-people"
     ? `desk.${application.action}`
     : `go.${application.action}`;
+}
+
+/** The Settings wing a parked row moved to (`parked: "settings:<wing>"`). */
+export function parkedSettingsWing(application: DeskApplication): string | null {
+  return application.parked?.startsWith("settings:") ? application.parked.slice("settings:".length) : null;
 }
 
 /** PHILO-17 (doors): the HoldSpeak menu holds the setup applications only:
@@ -511,15 +539,50 @@ export const MARK_APPLICATION_COMMANDS = DESK_APPLICATIONS.filter(
   .sort((left, right) => (left.mark ?? 0) - (right.mark ?? 0))
   .map(applicationVerbId);
 
-function goRows(section: "app" | "tools"): readonly DeskApplication[] {
-  return DESK_APPLICATIONS.filter((application) => application.go?.section === section)
-    .sort((left, right) => (left.go?.order ?? 0) - (right.go?.order ?? 0));
+/** Betterment shell S1: Go rows that are not applications, in the same
+ * grammar as the manifest's `go`: the Chair's Needs you window, the desk's
+ * projects and drawers (submenus), the builder launchers and Refresh. */
+export type GoExtra =
+  | { kind: "verb"; verbId: string; label?: string }
+  | { kind: "projects" }
+  | { kind: "drawers" }
+  | { kind: "launcher"; launcherId: string; label: string; glyph: string };
+
+export const GO_EXTRA_ROWS: readonly (GoExtra & { go: { group: GoGroup; order: number } })[] = [
+  { kind: "verb", verbId: "chair.window.needs", label: "Needs you", go: { group: "daily", order: 1 } },
+  { kind: "projects", go: { group: "daily", order: 4 } },
+  { kind: "drawers", go: { group: "work", order: 3 } },
+  { kind: "launcher", launcherId: "delivery-board", label: "Delivery board", glyph: "▤", go: { group: "builder", order: 5 } },
+  { kind: "launcher", launcherId: "panes", label: "Terminals", glyph: "⧉", go: { group: "builder", order: 6 } },
+  { kind: "verb", verbId: "desk.refresh", go: { group: "builder", order: 7 } },
+];
+
+/** One Go row: an application or one of the rows above. */
+export type GoRow = (GoExtra | { kind: "app"; app: DeskApplication; label: string }) & {
+  group: GoGroup;
+  order: number;
+};
+
+export const GO_GROUPS: readonly GoGroup[] = ["daily", "work", "builder"];
+
+/** Betterment shell S1: the rows of one Go group, in order, from the
+ * manifest and GO_EXTRA_ROWS. Go on the desktop, Go on the phone and the
+ * phone home draw these and nothing else. */
+export function goRows(group: GoGroup): GoRow[] {
+  const apps: GoRow[] = DESK_APPLICATIONS.filter((application) => application.go?.group === group)
+    .map((app) => ({
+      kind: "app" as const, app, label: app.go?.label ?? app.toolLabel ?? app.label,
+      group, order: app.go?.order ?? 0,
+    }));
+  const extras: GoRow[] = GO_EXTRA_ROWS.filter((row) => row.go.group === group)
+    .map(({ go, ...row }) => ({ ...row, group, order: go.order }));
+  return [...apps, ...extras].sort((left, right) => left.order - right.order);
 }
 
-/** PHILO-17 (doors): Go is the index of the applications. Its lead rows,
- * in order; then Projects ▸; then Tools ▸ with `GO_TOOL_APPLICATIONS`. */
-export const GO_APPLICATIONS = goRows("app");
-export const GO_TOOL_APPLICATIONS = goRows("tools");
+/** The applications Go lists only behind Builder tools. Search gates them too. */
+export const BUILDER_APPLICATION_ACTIONS: ReadonlySet<string> = new Set(
+  DESK_APPLICATIONS.filter((application) => application.go?.group === "builder").map((a) => a.action),
+);
 
 export const DESK_APPLICATION_ALIASES = Object.fromEntries(
   DESK_APPLICATIONS.flatMap((application) =>

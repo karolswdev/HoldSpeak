@@ -30,7 +30,9 @@ def test_runtime_discovery_routes_are_real() -> None:
 
 
 def test_discover_models_uses_the_typed_key_before_the_env_fallback(monkeypatch) -> None:
-    """PHILO-15 02: the Concierge's Key field reaches Check; empty falls back."""
+    """PHILO-15 02: the Concierge's Key field reaches Check. #1248: an empty
+    key falls back to the environment key only for https://api.openai.com;
+    a LAN address gets no key."""
     client = _client()
     seen: list = []
 
@@ -49,4 +51,6 @@ def test_discover_models_uses_the_typed_key_before_the_env_fallback(monkeypatch)
     assert blank.status_code == 200
     absent = client.post("/api/setup/discover-models", json={"base_url": url})
     assert absent.status_code == 200
-    assert seen == ["local", "env-key", "env-key"]
+    openai = client.post("/api/setup/discover-models", json={"base_url": "https://api.openai.com/v1"})
+    assert openai.status_code == 200
+    assert seen == ["local", None, None, "env-key"]

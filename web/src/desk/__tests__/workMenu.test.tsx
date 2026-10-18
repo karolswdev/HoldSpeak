@@ -1,7 +1,8 @@
 /** HS-111-07 — the WorkMenu species v2: portal to the body (the z
  * fix), separators, key column, type-ahead, one-deep submenus.
- * HS-148-01 — the grammar core: stipple ghosting, drawn keycap wells,
- * checkable lane, lane law, ghost-reason collapse, submenu indicator. */
+ * HS-148-01 — the grammar core: drawn keycap wells, checkable lane, lane
+ * law, submenu indicator. Betterment shell S0 (UX-CANON A.11): a ghosted
+ * entry is withheld (the stipple and the ghost-reason footer are gone). */
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { WorkMenu, type WorkMenuEntry } from "../components/DeskMenu";
@@ -63,7 +64,7 @@ describe("WorkMenu (HS-111-07 species v2)", () => {
     expect(document.body.contains(menu)).toBe(true);
   });
 
-  it("renders separator, drawn keycap wells, and the ghost reason", () => {
+  it("renders separator and drawn keycap wells; the ghosted item is withheld", () => {
     render(
       <WorkMenu
         label="Test menu"
@@ -79,12 +80,11 @@ describe("WorkMenu (HS-111-07 species v2)", () => {
     expect(keycaps).toBeTruthy();
     const wells = keycaps!.querySelectorAll(".desk-menu-well");
     expect(wells.length).toBe(3); // ⌘, ⇧, 1
-    const ghost = screen.getByRole("menuitem", { name: /Arrange desk/ });
-    expect(ghost).toHaveAttribute("aria-disabled", "true");
-    expect(ghost).toHaveTextContent("Nothing moved");
+    expect(screen.queryByRole("menuitem", { name: /Arrange desk/ })).toBeNull();
+    expect(document.body.textContent).not.toContain("Nothing moved");
   });
 
-  it("a ghosted item refuses to run; a live one runs and closes", () => {
+  it("a live item runs and closes", () => {
     const onSpeak = vi.fn();
     const onClose = vi.fn();
     render(
@@ -96,8 +96,6 @@ describe("WorkMenu (HS-111-07 species v2)", () => {
         onClose={onClose}
       />,
     );
-    fireEvent.click(screen.getByRole("menuitem", { name: /Arrange desk/ }));
-    expect(onClose).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("menuitem", { name: /Speak/ }));
     expect(onSpeak).toHaveBeenCalled();
     expect(onClose).toHaveBeenCalled();
@@ -142,157 +140,52 @@ describe("WorkMenu (HS-111-07 species v2)", () => {
 });
 
 describe("WorkMenu grammar (HS-148-01)", () => {
-  it("ghosted items carry the is-ghost class for stipple", () => {
-    render(
-      <WorkMenu
-        label="T"
-        x={0}
-        y={0}
-        entries={[
-          {
-            type: "item",
-            id: "g",
-            label: "Ghost",
-            ghost: "reason",
-            onSelect: vi.fn(),
-          },
-        ]}
-        onClose={() => {}}
-      />,
-    );
-    const btn = screen.getByRole("menuitem", { name: /Ghost/ });
-    expect(btn.classList.contains("is-ghost")).toBe(true);
-  });
-
-  it("keycap visible on ghosted rows (stippled with the row)", () => {
-    render(
-      <WorkMenu
-        label="T"
-        x={0}
-        y={0}
-        entries={[
-          {
-            type: "item",
-            id: "g",
-            label: "Ghost",
-            keycap: "⌘G",
-            ghost: "reason",
-            onSelect: vi.fn(),
-          },
-        ]}
-        onClose={() => {}}
-      />,
-    );
-    const btn = screen.getByRole("menuitem", { name: /Ghost/ });
-    // Keycap wells must exist even on ghosted rows.
-    const wells = btn.querySelectorAll(".desk-menu-well");
-    expect(wells.length).toBeGreaterThan(0);
-  });
-
-  it("ghost-reason collapse: uniform reasons render one footer", () => {
-    const reason = "Select an object";
-    const ghostEntries: WorkMenuEntry[] = Array.from({ length: 4 }, (_, i) => ({
-      type: "item" as const,
-      id: `g${i}`,
-      label: `Verb ${i}`,
-      ghost: reason,
-      onSelect: vi.fn(),
-    }));
-    render(
-      <WorkMenu
-        label="T"
-        x={0}
-        y={0}
-        entries={ghostEntries}
-        onClose={() => {}}
-      />,
-    );
-    // The collapsed footer is present.
-    const footer = document.querySelector(".desk-menu-ghost-hint");
-    expect(footer).toBeTruthy();
-    expect(footer!.textContent).toBe(reason);
-    // Per-row reasons are suppressed — no <small> tags.
-    const smalls = document.querySelectorAll(".desk-menu-list .quiet");
-    expect(smalls.length).toBe(0);
-  });
-
-  it("ghost-reason collapse: mixed reasons below threshold keep per-row display", () => {
+  // Betterment shell S0 (UX-CANON A.11, "withhold, never ghost").
+  it("withholds every ghosted row; no stipple, no reason footer", () => {
     const ghostEntries: WorkMenuEntry[] = [
-      {
-        type: "item",
-        id: "g1",
-        label: "V1",
-        ghost: "Reason A",
-        onSelect: vi.fn(),
-      },
-      {
-        type: "item",
-        id: "g2",
-        label: "V2",
-        ghost: "Reason B",
-        onSelect: vi.fn(),
-      },
-      {
-        type: "item",
-        id: "g3",
-        label: "V3",
-        ghost: "Reason A",
-        onSelect: vi.fn(),
-      },
-    ];
-    render(
-      <WorkMenu
-        label="T"
-        x={0}
-        y={0}
-        entries={ghostEntries}
-        onClose={() => {}}
-      />,
-    );
-    // No collapsed footer (neither reason hits 3).
-    const footer = document.querySelector(".desk-menu-ghost-hint");
-    expect(footer).toBeNull();
-    // Per-row reasons shown on all 3.
-    const smalls = document.querySelectorAll(".desk-menu-list .quiet");
-    expect(smalls.length).toBe(3);
-  });
-
-  it("ghost-reason collapse: majority collapses, minority stays inline", () => {
-    // 7x "Select an object" + 1x "Select a Project" + 1 sep
-    const ghostEntries: WorkMenuEntry[] = [
-      ...Array.from({ length: 7 }, (_, i) => ({
-        type: "item" as const,
-        id: `obj${i}`,
-        label: `Verb ${i}`,
-        ghost: "Select an object",
-        onSelect: vi.fn(),
+      ...Array.from({ length: 4 }, (_, i) => ({
+        type: "item" as const, id: `g${i}`, label: `Verb ${i}`, keycap: "⌘G",
+        ghost: "Select an object", onSelect: vi.fn(),
       })),
-      { type: "sep" as const },
-      {
-        type: "item" as const,
-        id: "proj",
-        label: "Ask this project",
-        ghost: "Select a Project",
-        onSelect: vi.fn(),
-      },
+      { type: "item", id: "live", label: "Open", onSelect: vi.fn() },
     ];
+    render(<WorkMenu label="T" x={0} y={0} entries={ghostEntries} onClose={() => {}} />);
+    const menu = screen.getByRole("menu", { name: "T" });
+    expect(within(menu).getAllByRole("menuitem").map((b) => b.textContent)).toEqual(["Open"]);
+    expect(document.querySelector(".is-ghost, .desk-menu-ghost-hint, [aria-disabled='true']")).toBeNull();
+    expect(menu.textContent).not.toContain("Select an object");
+  });
+
+  it("drops a submenu left empty and never leads, trails or doubles a separator", () => {
+    const dead = (id: string): WorkMenuEntry => ({ type: "item", id, label: id, ghost: "no", onSelect: vi.fn() });
     render(
       <WorkMenu
         label="T"
         x={0}
         y={0}
-        entries={ghostEntries}
+        entries={[
+          dead("a"),
+          { type: "sep", id: "s1" },
+          { type: "item", id: "live", label: "Live", onSelect: vi.fn() },
+          { type: "sep", id: "s2" },
+          dead("b"),
+          { type: "sep", id: "s3" },
+          { type: "sub", id: "sub", label: "Empty", entries: [dead("c")] },
+          { type: "sep", id: "s4" },
+        ]}
         onClose={() => {}}
       />,
     );
-    // The majority reason collapses to a footer.
-    const footer = document.querySelector(".desk-menu-ghost-hint");
-    expect(footer).toBeTruthy();
-    expect(footer!.textContent).toBe("Select an object");
-    // The minority reason stays inline (1 per-row echo for "Select a Project").
-    const smalls = document.querySelectorAll(".desk-menu-list .quiet");
-    expect(smalls.length).toBe(1);
-    expect(smalls[0].textContent).toContain("Select a Project");
+    const menu = screen.getByRole("menu", { name: "T" });
+    expect(within(menu).getAllByRole("menuitem").map((b) => b.textContent)).toEqual(["Live"]);
+    expect(within(menu).queryAllByRole("separator")).toHaveLength(0);
+  });
+
+  it("a note entry is one plain line, not a verb", () => {
+    render(<WorkMenu label="T" x={0} y={0} entries={[{ type: "note", id: "none", label: "No windows open" }]} onClose={() => {}} />);
+    const menu = screen.getByRole("menu", { name: "T" });
+    expect(menu.textContent).toBe("No windows open");
+    expect(within(menu).queryAllByRole("menuitem")).toHaveLength(0);
   });
 
   it("checkable item: boolean checked renders menuitemcheckbox + check mark", () => {

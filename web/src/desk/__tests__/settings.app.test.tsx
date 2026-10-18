@@ -787,16 +787,17 @@ describe("Settings › System › runtime identity", () => {
 // ── fork C2 rows: the hub rows' words, Meetings off, Sounds, the grants ──
 
 describe("Settings hub rows name what the hub says", () => {
-  it("a cold hub: SUMMARY · NO ENGINE and Voice NO ENGINE, never SUMMARY SET ON or LIVE", async () => {
+  it("a cold hub: SUMMARY · NO ENGINE and Voice Speech is not set up, never SUMMARY SET ON or LIVE", async () => {
     // replaces: tests/e2e/test_honest_faces_glass.py::test_settings_names_the_missing_engine
-    // (the hub half: tests/unit/test_settings_hub_engine_set.py, before the selection)
-    expect([hubWire.meetings.engineSet, hubWire.voice.live, hubWire.voice.engineSet]).toEqual([false, true, false]);
+    // (the hub half: tests/unit/test_settings_hub_engine_set.py, before the selection;
+    // betterment ST0: tests/integration/test_desk_settings.py::test_the_voice_fact_says_what_setup_says_about_speech)
+    expect([hubWire.meetings.engineSet, hubWire.voice.live, hubWire.voice.speechReady]).toEqual([false, true, false]);
     await openHub();
     expect(screen.getByText("SUMMARY · NO ENGINE")).toBeInTheDocument();
     expect(document.body.textContent).not.toMatch(/SUMMARY SET ON/);
     expect(document.body.textContent).not.toMatch(/SUMMARY (ON|OFF)\b/);
     const voice = ledgerRow("Voice")!;
-    expect(voice.textContent).toContain("NO ENGINE");
+    expect(voice.textContent).toContain("Speech is not set up");
     expect(voice.textContent).not.toContain("LIVE");
   });
 
