@@ -43,31 +43,14 @@
 }
 
 /* ── The grid: the spine and the side column ── */
-/* Betterment D4: the day on the left, the top of Needs you on the right
-   (first in reading order: at 393 it leads the one column). */
+/* Betterment D4: one column, in reading order: the top of Needs you (its
+   rows keep the Needs-you window's width; side by side they were cut to a
+   letter a line), then the day. */
 .desk-next .today-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   align-items: start;
-}
-.desk-next .today-grid > .today-needs {
-  grid-column: 2;
-  grid-row: 1;
-}
-.desk-next .today-grid > .today-spine {
-  grid-column: 1;
-  grid-row: 1;
-}
-@container surface (max-width: 639.9px) {
-  .desk-next .today-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .desk-next .today-grid > .today-needs,
-  .desk-next .today-grid > .today-spine {
-    grid-column: 1;
-    grid-row: auto;
-  }
 }
 
 /* ── The spine: a paper well; the gutter holds the time, the rail a
@@ -700,4 +683,24 @@
   font: 700 12px / 1.4 var(--font-mono);
   color: var(--wb-muted);
   font-variant-numeric: tabular-nums;
+}
+
+/* The fold heads and their rows are text that opens: no button chrome
+   (the pattern of .today-row-title). */
+.desk-next .today-fold-head,
+.desk-next .today-fold-primary {
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  cursor: pointer;
+  min-height: 28px;
+}
+.desk-next .today-fold-head:hover .today-fold-label,
+.desk-next .today-fold-primary:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.desk-next .today-fold-head:disabled {
+  cursor: default;
 }
