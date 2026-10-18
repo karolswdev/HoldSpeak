@@ -296,3 +296,14 @@
   .automation-card { padding: 10px 12px 12px; }
   .automation-lesson { align-items: flex-start; }
 }
+
+/* A5: About in place (the chips, then the one About picker). */
+.automation-about-editor { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.automation-chips .surface-token { display: inline-flex; align-items: center; gap: 2px; }
+.automation-chip-remove.btn { min-height: 0; padding: 0 4px; line-height: 1.2; }
+/* A desk object over the window: the About line lights before the drop. */
+.automation-body[data-drop-ready] .automation-line[data-line="about"] {
+  outline: 1px dashed var(--wb-ember-ink);
+  outline-offset: 2px;
+  border-radius: 4px;
+}

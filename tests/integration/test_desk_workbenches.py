@@ -792,6 +792,9 @@ def test_an_event_choice_turns_its_start_on_and_its_occurrence_runs_without_a_pr
     from holdspeak.services.reaction_service import ReactionService
     from holdspeak.services.watch_sources import GitHubWatchSource
 
+    import holdspeak.workbench_memory as memory
+
+    monkeypatch.setattr(memory, "WORKBENCH_DIR", tmp_path / "workbenches")
     db, client, prompts, _ = _instruction_rig(tmp_path, monkeypatch, "wb-event")
     wb = _make_automation(client, "wb-event")
     wire = _json.loads((_FIXTURES / "gh_pr_review_requested.json").read_text())
@@ -815,6 +818,8 @@ def test_an_event_choice_turns_its_start_on_and_its_occurrence_runs_without_a_pr
     assert (body["schedule"], body["schedule_enabled"], body["when_kind"]) == (None, False, "event")
     [start] = body["event_starts"]
     assert start["enabled"] is True and start["event_pattern"] == "github.pr.review_requested"
+    # A5: the face's About line for an event start (the thing that happened).
+    _record_window("about-event", client, wb, tmp_path)
     reaction = db.automations.get_reaction(start["id"])
     assert reaction["auto_run"] in (0, False)  # the preset's own; the occurrence runs anyway
 
@@ -897,3 +902,123 @@ def test_the_when_and_with_lines_record_their_answers(tmp_path: Path, monkeypatc
     assert client.post("/api/workbenches/wb-bare/run", json={}).status_code == 200
     ran = _record_window("with-claude-ran", client, "wb-bare", tmp_path)["/api/workbenches/wb-bare"]["workbench"]
     assert [r["status"] for r in ran["results"]] == ["done"]
+
+
+# ── A5 "About" (betterment/workbench/RECIPE.md, slice A5) ──────────────────
+# The hub half: About takes meetings, notes, drawers, projects and people by
+# name, and two relative sets. A set is read when the run starts (Friday's
+# run reads the meetings since Monday); a drawer reads as "Notes in <name>";
+# a person adds the name only (the People record stays on this device).
+
+
+def _record_gets(name: str, client: TestClient, paths: list[str], wb: str, tmp_path: Path) -> dict[str, Any]:
+    """Other reads a face test replays (the same file rule as _record_window)."""
+    answers = {path: client.get(path).json() for path in paths}
+    scrubbed = _json.loads(_re.sub(_re.escape(str(tmp_path)), "/tmp/rig", _json.dumps(answers)))
+    path = AUTOMATION_HUB / f"{name}.json"
+    if _os.environ.get("HOLDSPEAK_WIRE_WRITE") == "1":
+        path.write_text(_json.dumps({
+            "_source": "The hub's own answers, captured by tests/integration/test_desk_workbenches.py "
+                       "(TestClient, isolated database). "
+                       "HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit it.",
+            "workbench_id": wb, "gets": scrubbed}, indent=1, ensure_ascii=False) + "\n")
+    assert path.exists(), f"no stored answers {path}; run with HOLDSPEAK_WIRE_WRITE=1"
+    assert _shape(_json.loads(path.read_text())["gets"]) == _shape(scrubbed), f"{path.name}: not the hub's shape"
+    return scrubbed
+
+
+def test_about_reads_sets_drawers_and_people_by_name_and_the_run_reads_them(tmp_path: Path, monkeypatch) -> None:
+    """Done when (A5, hub half): About names each pick (This week's meetings,
+    Notes in Work, a person); the run reads this week's meeting and not last
+    month's, the note, and the person's name; a set or person it does not
+    know is refused."""
+    import holdspeak.services.automation_runs as automation
+    import holdspeak.workbench_memory as memory
+    from holdspeak.timestamps import local_now, utc_iso
+    from holdspeak.web.routes.primitives.directories import build_directories_router
+    from holdspeak.web.routes.primitives.notes import build_notes_router
+
+    monkeypatch.setattr(memory, "WORKBENCH_DIR", tmp_path / "workbenches")
+    db, client, prompts, _ = _instruction_rig(tmp_path, monkeypatch, "wb-about", engine_name="LAN Qwen")
+    wb = _make_automation(client, "wb-about")
+    assert client.put(f"/api/workbenches/{wb}", json={"name": "Friday team update"}).status_code == 200
+    # The People list is the encrypted store's; the rig has none, so its one
+    # read (the owner's list of names) answers what a set-up store would.
+    monkeypatch.setattr(automation, "_people_names", lambda: {"rel-mira": "Mira Chen"})
+    db.directories.upsert(directory_id="dir-work", name="Work")
+    db.notes.upsert(note_id="note-roadmap", title="Roadmap review", body_markdown="Q4 scope is frozen.")
+    db.directory_memberships.upsert(primitive_id="note:note-roadmap", directory_id="dir-work")
+    now = utc_iso(local_now())
+    with db._connection() as conn:
+        conn.execute("INSERT INTO meetings (id, title, started_at, created_at) VALUES (?,?,?,?)",
+                     ("m-week", "Platform sync meeting", now, now))
+        conn.execute("INSERT INTO meetings (id, title, started_at, created_at) VALUES (?,?,?,?)",
+                     ("m-old", "Old planning", "2020-01-06T10:00:00Z", "2020-01-06T10:00:00Z"))
+
+    for bad in (["meetings:last_year"], ["person:"], ["people:rel-mira"]):
+        refused = client.put(f"/api/workbenches/{wb}", json={"sources": bad})
+        assert refused.status_code == 400, (bad, refused.text)
+
+    # The face's two presses (About, then the "plat" match): no sources, then
+    # Platform sync; Run now's result cites it.
+    assert client.put(f"/api/workbenches/{wb}", json={"sources": []}).status_code == 200
+    none = _record_window("about-none", client, wb, tmp_path)[f"/api/workbenches/{wb}"]["workbench"]
+    assert none["sources_shown"] == []
+    assert client.put(f"/api/workbenches/{wb}", json={"sources": ["note:note-sync"]}).status_code == 200
+    one = _record_window("about-platform", client, wb, tmp_path)[f"/api/workbenches/{wb}"]["workbench"]
+    assert [s["label"] for s in one["sources_shown"]] == ["Platform sync"]
+    assert client.post(f"/api/workbenches/{wb}/run", json={}).status_code == 200
+    assert "The cutover moves to Thursday." in prompts[-1]
+    ran = _record_window("about-platform-ran", client, wb, tmp_path)[f"/api/workbenches/{wb}"]["workbench"]
+    assert "Platform sync" in ran["results"][0]["text"]
+
+    picked = client.put(f"/api/workbenches/{wb}", json={"sources": [
+        "note:note-sync", "meetings:this_week", "zone:dir-work", "person:rel-mira", "person:rel-gone"]})
+    assert picked.status_code == 200, picked.text
+    shown = _record_window("about-picked", client, wb, tmp_path)[f"/api/workbenches/{wb}"]["workbench"]
+    assert [(s["label"], s["kind"], s["missing"]) for s in shown["sources_shown"]] == [
+        ("Platform sync", "note", False), ("This week's meetings", "set", False),
+        ("Notes in Work", "zone", False), ("Mira Chen", "person", False), ("", "person", True)]
+    # An event start's About line reads the thing that happened.
+    assert {e["id"]: e["subject"] for e in shown["when_events"]}["github-review-requested"] == (
+        "the review request that came in")
+
+    assert client.post(f"/api/workbenches/{wb}/run", json={}).status_code == 200
+    prompt = prompts[-1]
+    assert "The cutover moves to Thursday." in prompt  # the note
+    assert "Platform sync meeting" in prompt and "Old planning" not in prompt  # this week only
+    assert "Q4 scope is frozen." in prompt  # the drawer's note
+    assert "Person: Mira Chen" in prompt and "rel-gone" not in prompt
+    result = client.get(f"/api/workbenches/{wb}").json()["workbench"]["results"][0]
+    item = db.workbench_items.get(result["item_id"])
+    refs = _json.loads(item.grounding_json)["refs"]
+    assert refs == ["note:note-sync", "meeting:m-week", "zone:dir-work"], refs
+
+    # This week's notes are his notes, never an automation's own results.
+    week_notes, _ = automation.expand_sources(db, ["notes:this_week"])
+    assert "note:note-sync" in week_notes and not [r for r in week_notes if r.startswith("note:note_result_")]
+    assert any(n.id.startswith("note_result_") for n in [db.notes.get(result["note_id"])] if n)
+
+    # A set that holds nothing says so; the engine does not guess.
+    assert automation.expand_sources(db, ["notes:this_week"], now=datetime(2001, 1, 3).astimezone())[1] == []
+    assert automation.expand_sources(db, ["meetings:this_week"], now=datetime(2030, 1, 9).astimezone()) == (
+        [], ["This week's meetings: none yet."])
+
+    # What the picker finds by name: the desk's notes and drawers (the face
+    # replays these reads; the palette reads the same lists).
+    lists = TestClient(_mount(FastAPI(), db, build_notes_router, build_directories_router))
+    _record_gets("about-desk", lists, ["/api/notes", "/api/directories"], wb, tmp_path)
+
+
+def _mount(app: FastAPI, db: Database, *builders: Any) -> FastAPI:
+    from holdspeak.services.primitive_service import PrimitiveService
+
+    @app.middleware("http")
+    async def owner_principal(request: Request, call_next):
+        request.state.principal = OWNER
+        return await call_next(request)
+
+    ctx = WebContext(get_state=lambda: {}, primitive_service=PrimitiveService(db))
+    for build in builders:
+        app.include_router(build(ctx))
+    return app

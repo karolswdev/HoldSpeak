@@ -11,7 +11,7 @@
     "schedule": "TEXT (cron expression, nullable for manual)",
     "schedule_enabled": "BOOLEAN (default false)",
     "instruction": "TEXT (the Do text; default ''). With it, each run makes one occurrence item and one result; empty keeps the item queue.",
-    "sources": "JSON array of qualified refs (note:<id>, meeting:<id>, ...), stored as sources_json; the run reads them all in one prompt",
+    "sources": "JSON array of qualified refs (note:<id>, meeting:<id>, zone:<id>, ...), person:<id>, or a set (meetings:this_week, notes:this_week, read when the run starts), stored as sources_json; the run reads them all in one prompt",
     "output_target": "inbox (default) | needs_you | destination:<id> (channel.prepare only; the owner presses Send)"
   },
   "item_identity": {
