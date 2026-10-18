@@ -1147,7 +1147,7 @@ Routes: 775 (plus static mounts). iOS-consumed: 89. Web-consumed: 606.
 | POST | `/api/coders/factory/rename` | ios, web |
 | POST | `/api/coders/factory/spawn` | ios, web |
 
-## web.routes.system.coder_steering_routes
+## web.routes.system.coder_relay_routes
 
 | Method | Path | Consumers |
 |---|---|---|
@@ -1156,6 +1156,11 @@ Routes: 775 (plus static mounts). iOS-consumed: 89. Web-consumed: 606.
 | POST | `/api/coders/relay/{node}/keys` | ios, web |
 | GET | `/api/coders/relay/{node}/peek` | ios, web |
 | POST | `/api/coders/relay/{node}/steer` | ios, web |
+
+## web.routes.system.coder_steering_routes
+
+| Method | Path | Consumers |
+|---|---|---|
 | GET | `/api/coders/steering/audit` | ios, web |
 | GET | `/api/coders/steering/grants` | web |
 | GET | `/api/coders/steering/nodes` | ios, web |
