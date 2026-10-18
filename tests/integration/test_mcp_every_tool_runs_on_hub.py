@@ -83,11 +83,15 @@ KNOWN_CODE = re.compile(
     r"|^inference_target_unavailable$"  # ask.run: no model on a fresh HOME
     r"|^inbox_unavailable$"  # thought.create: no inbox on a fresh HOME
     r"|^cli_engines_off$"  # model_library.connect_cli_engine: tests/conftest.py turns agent engines off
+    r"|^model_library_not_agent_engine$"  # model_library.set_spend_limit: no engine "x" (404; Betterment M4)
 )
 KNOWN_MESSAGE = re.compile(
     r"^people_store_unavailable$"  # no People keystore on a fresh HOME
     r"|must be qualified as kind:id|^parent_operation_unknown$|not allowlisted for MCP"
     r"|is retired|live capture controller|not found: x$|^Unknown shelf state: x$"
+    # workbench.update / automation.update with only the id (Betterment M3:
+    # ``fields`` is optional now, as a sentence word can stand in for it).
+    r"|^Give fields or at least one sentence word$"
 )
 # Tools allowed a code-less raw exception text. Empty since 2026-10-05: the
 # three that were here (decision_record.create_from_meeting / create_from_desk

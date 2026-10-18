@@ -1,11 +1,11 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_firstrun.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-18T20:05:10.788443Z",
+  "captured_at": "2026-10-18T23:37:03.252792Z",
   "wire": {
     "capabilityId": "meeting.deferred_analysis",
     "defaultSet": true,
     "receipt": {
-      "id": "concierge-summary-ed9fdec78862",
+      "id": "concierge-summary-0adaaff477bd",
       "visible": true
     },
     "result": {

@@ -1,9 +1,9 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_runs_on_hub.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-18T09:46:20.273803Z",
+  "captured_at": "2026-10-18T23:37:03.303636Z",
   "wire": {
     "committed_effect": {
-      "created_at": "2026-10-18T09:46:20.272455Z",
+      "created_at": "2026-10-18T23:37:03.302007Z",
       "entries": [
         {
           "ordinal": 1,
@@ -12,18 +12,18 @@
           "profile_schema_version": 2
         }
       ],
-      "id": "ia_b8833b53b4034f8388bd5505f22e6600",
+      "id": "ia_5767348bda4942fb836b81aa76e116af",
       "retry_policy_id": null,
       "revision": 1,
       "schema": "InferenceAssignment@1",
       "scope": {
         "kind": "global"
       },
-      "sha256": "sha256:f75b18cea93a7e4ea0bc1372ee62296cb16faf86ec6a60531f8bb08f56edba49"
+      "sha256": "sha256:1c342cbb94548ff584d04f39d56885170ff610c0c585916d5e672edcc34b4c58"
     },
-    "created_at": "2026-10-18T09:46:20.272455Z",
+    "created_at": "2026-10-18T23:37:03.302007Z",
     "current": {
-      "created_at": "2026-10-18T09:46:20.272455Z",
+      "created_at": "2026-10-18T23:37:03.302007Z",
       "effective_retry_policy_id": null,
       "entries": [
         {
@@ -36,7 +36,7 @@
           "readiness": "ready"
         }
       ],
-      "id": "ia_b8833b53b4034f8388bd5505f22e6600",
+      "id": "ia_5767348bda4942fb836b81aa76e116af",
       "issues": [
         {
           "capability_id": "agent.plan",
@@ -81,7 +81,7 @@
       "scope": {
         "kind": "global"
       },
-      "sha256": "sha256:f75b18cea93a7e4ea0bc1372ee62296cb16faf86ec6a60531f8bb08f56edba49"
+      "sha256": "sha256:1c342cbb94548ff584d04f39d56885170ff610c0c585916d5e672edcc34b4c58"
     },
     "effective_retry_policy_id": null,
     "entries": [
@@ -95,7 +95,7 @@
         "readiness": "ready"
       }
     ],
-    "id": "ia_b8833b53b4034f8388bd5505f22e6600",
+    "id": "ia_5767348bda4942fb836b81aa76e116af",
     "issues": [
       {
         "capability_id": "agent.plan",
@@ -140,6 +140,6 @@
     "scope": {
       "kind": "global"
     },
-    "sha256": "sha256:f75b18cea93a7e4ea0bc1372ee62296cb16faf86ec6a60531f8bb08f56edba49"
+    "sha256": "sha256:1c342cbb94548ff584d04f39d56885170ff610c0c585916d5e672edcc34b4c58"
   }
 }

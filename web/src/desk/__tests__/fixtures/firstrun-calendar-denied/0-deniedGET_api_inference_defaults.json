@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_firstrun.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-18T03:49:25.508275Z",
+  "captured_at": "2026-10-18T23:37:03.263880Z",
   "wire": {
     "capabilities": [
       {
@@ -403,7 +403,7 @@
         "group": "agents_tools",
         "id": "workbench.item",
         "inherited_from": null,
-        "label": "Workbench item",
+        "label": "Automation item",
         "lamp": null,
         "reason": "no_default",
         "state": "needs_setup"
