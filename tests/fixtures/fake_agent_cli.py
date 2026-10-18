@@ -32,6 +32,10 @@ from pathlib import Path
 CLAUDE_ANSWER = "FAKE CLAUDE ANSWER"
 CODEX_ANSWER = "FAKE CODEX ANSWER"
 CLAUDE_COST_USD = 0.0123
+#: Betterment E7: the fake ``pi`` (``--print``: the answer as text) and the
+#: fake ``gemini`` (``--output-format json``: ``response`` and ``stats``).
+PI_ANSWER = "FAKE PI ANSWER"
+GEMINI_ANSWER = "FAKE GEMINI ANSWER"
 
 _SCRIPT = '''#!{python}
 import json, os, re, sys, time, pathlib, urllib.request, urllib.error
@@ -133,6 +137,15 @@ if name == "claude":
     print(json.dumps({{"type": "result", "subtype": "success", "is_error": False, "result": answer,
                       "total_cost_usd": {cost!r}, "usage": {{"input_tokens": 11, "output_tokens": 5}},
                       "modelUsage": {{"claude-fake-1": {{}}}}}}))
+elif name == "pi":
+    print((here / "pi-answer").read_text() if (here / "pi-answer").exists() else {pi_answer!r})
+elif name == "gemini":
+    if mode == "error":
+        print(json.dumps({{"error": {{"type": "Error", "message": "quota", "code": 1}}}}))
+        sys.exit(0)
+    text = (here / "gemini-answer").read_text() if (here / "gemini-answer").exists() else {gemini_answer!r}
+    print(json.dumps({{"response": text, "stats": {{"models": {{"gemini-fake-1": {{
+        "tokens": {{"prompt": 9, "candidates": 4, "total": 13}}}}}}}}}}, indent=2))
 else:
     if answer is None:
         answer = {codex_answer!r}
@@ -150,13 +163,14 @@ else:
 '''
 
 
-def install_fake_agent_clis(bin_dir: Path) -> Path:
+def install_fake_agent_clis(bin_dir: Path, names: tuple[str, ...] = ("claude", "codex")) -> Path:
     bin_dir.mkdir(parents=True, exist_ok=True)
-    for name in ("claude", "codex"):
+    for name in names:
         path = bin_dir / name
         path.write_text(_SCRIPT.format(
             python=sys.executable, name=name, claude_answer=CLAUDE_ANSWER,
             codex_answer=CODEX_ANSWER, cost=CLAUDE_COST_USD,
+            pi_answer=PI_ANSWER, gemini_answer=GEMINI_ANSWER,
         ))
         path.chmod(0o755)
     return bin_dir
@@ -184,6 +198,11 @@ def mcp_runs(bin_dir: Path, name: str) -> list[dict]:
 
 def set_claude_answer(bin_dir: Path, text: str) -> None:
     (bin_dir / "claude-answer").write_text(text)
+
+
+def set_answer(bin_dir: Path, name: str, text: str) -> None:
+    """The next answers of the fake ``pi`` or ``gemini`` (Betterment E7)."""
+    (bin_dir / f"{name}-answer").write_text(text)
 
 
 def calls(bin_dir: Path, name: str) -> list[dict]:

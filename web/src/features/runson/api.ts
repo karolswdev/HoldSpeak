@@ -132,6 +132,8 @@ export interface RunsOnEngine extends Engine {
   signedIn?: string;
   /** The vendor word on the egress chip (ANTHROPIC). */
   vendor?: string;
+  /** Betterment E7: `private_network` for pi on his LAN model, else `cloud`. */
+  vendorScope?: string;
   /** The model the agent engine asks for (`default` = the CLI's own). */
   model?: string;
   spend?: AgentSpend;
@@ -165,6 +167,8 @@ export interface AgentTile {
   preset: string;
   name: string;
   vendor: string;
+  /** Betterment E7: `private_network` for pi on his LAN model, else `cloud`. */
+  vendorScope: string;
   installed: boolean;
   added: boolean;
   /** The one-line install command, for a CLI that is not on this Mac. */
@@ -226,6 +230,7 @@ function decodeEngine(raw: Record<string, unknown>): RunsOnEngine {
     agentPreset: str(raw.agentPreset),
     signedIn: str(raw.signedIn),
     vendor: str(raw.vendor),
+    vendorScope: str(raw.vendorScope),
     model: str(raw.model),
     spend: decodeSpend(raw.spend),
   };
@@ -302,6 +307,7 @@ function decodeAgent(raw: Record<string, unknown>): AgentTile {
     preset: String(raw.preset ?? ""),
     name: String(raw.name ?? ""),
     vendor: String(raw.vendor ?? ""),
+    vendorScope: String(raw.vendorScope ?? "cloud"),
     installed: raw.installed === true,
     added: raw.added === true,
     install: String(raw.install ?? ""),

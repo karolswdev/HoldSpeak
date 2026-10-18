@@ -18,7 +18,7 @@ from typing import Sequence
 
 TEST_FLAG = "HOLDSPEAK_TEST_NO_REAL_CLI"
 #: Betterment E1: the agent CLIs a CLI engine runs are guarded the same way.
-GUARDED = frozenset({"gh", "acli", "claude", "codex"})
+GUARDED = frozenset({"gh", "acli", "claude", "codex", "pi", "gemini"})
 
 
 class RealCliRefusedInTests(PermissionError):

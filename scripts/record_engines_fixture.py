@@ -66,10 +66,10 @@ def _close() -> None:
     composition.install(composition.bare(label="record"))
 
 
-def _hub(mp: pytest.MonkeyPatch, name: str, *, claude: bool, codex: bool = False) -> Any:
+def _hub(mp: pytest.MonkeyPatch, name: str, *, claude: bool, codex: bool = False, more: tuple[str, ...] = ()) -> Any:
     root = Path(tempfile.mkdtemp(prefix=f"engines-{name}-"))
     hub = seeds._boot(root, mp)
-    bin_dir = install_fake_agent_clis(root / "bin")
+    bin_dir = install_fake_agent_clis(root / "bin", names=("claude", "codex", *more))
     hub.bin_dir = bin_dir
     if not codex:
         (bin_dir / "codex").unlink()
@@ -141,6 +141,29 @@ def codex_added() -> dict[str, Any]:
             _post(hub, CONNECT, {"draft": {"request_id": "record-codex", "profile_id": "agent-codex",
                                            "expected_profile_revision": 0, "preset": "codex"}})
             return {"gets": _gets(hub)}
+        finally:
+            _close()
+
+
+def pi_added() -> dict[str, Any]:
+    """Betterment E7: a fake pi whose own config sends its model to the LAN
+    box: found with that host, then added as an engine on his network."""
+    with pytest.MonkeyPatch.context() as mp:
+        hub = _hub(mp, "pi", claude=False, more=("pi",))
+        try:
+            agent = Path(os.environ["HOME"]) / ".pi" / "agent"
+            agent.mkdir(parents=True, exist_ok=True)
+            (agent / "models.json").write_text(json.dumps({"providers": {"lan-qwen": {
+                "baseUrl": "http://192.168.1.43:8080/v1", "models": [{"id": "qwen3.8-27b"}]}}}))
+            (agent / "settings.json").write_text(json.dumps({"defaultProvider": "lan-qwen"}))
+            before = _gets(hub)
+            draft = {"request_id": "record-pi", "profile_id": "agent-pi", "expected_profile_revision": 0,
+                     "preset": "pi", "model": "lan-qwen/qwen3.8-27b"}
+            added = _post(hub, CONNECT, {"draft": draft})
+            return {"steps": [
+                {"name": "found", "gets": before},
+                {"name": "add", "post": CONNECT, "body": draft, "answer": added, "gets": _gets(hub)},
+            ]}
         finally:
             _close()
 
@@ -341,6 +364,7 @@ def main() -> None:
         "nothingFound": nothing_found,
         "claude": found_then_added,
         "codex": codex_added,
+        "pi": pi_added,
         "threeModels": three_models,
         "openRouter": open_router,
         "whatRunsWhere": what_runs_where,

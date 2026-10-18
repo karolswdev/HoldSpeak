@@ -42,6 +42,12 @@ def deployment_lamp(boundary: Any, endpoint: Any = "") -> str:
     """
     word = _BOUNDARY_LAMP.get(str(boundary or "").strip(), "")
     endpoint = str(endpoint or "").strip()
+    if endpoint.startswith("cli:"):
+        # Betterment E7: an agent CLI's bytes go to its host (pi on his LAN
+        # model: private_network), never this device.
+        from .intel.cli_engine import cli_boundary
+
+        return cli_boundary(endpoint)
     if endpoint and word != "mesh":
         # The endpoint decides, through the ONE classifier
         # (intel.providers.egress_boundary via loopback_http.endpoint_lamp):

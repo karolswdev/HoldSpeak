@@ -590,11 +590,12 @@ def test_detect_names_the_four_services_with_their_addresses_and_presets(hub: st
     assert all(not tiles[name]["presets"] for name in ("openai", "anthropic", "gemini"))
     # The rig switch is off: no agent is on this Mac, and each one says how to get it.
     agents = {agent["preset"]: agent for agent in detected["agents"]}
-    assert set(agents) == {"claude", "codex"}
+    assert set(agents) == {"claude", "codex", "pi", "gemini"}
     assert agents["claude"] == {
-        "preset": "claude", "name": "Claude Code", "vendor": "ANTHROPIC", "installed": False, "added": False,
-        "install": "npm install -g @anthropic-ai/claude-code",
+        "preset": "claude", "name": "Claude Code", "vendor": "ANTHROPIC", "vendorScope": "cloud",
+        "installed": False, "added": False, "install": "npm install -g @anthropic-ai/claude-code",
     }
+    assert agents["gemini"]["install"] == "npm install -g @google/gemini-cli"
 
 
 def test_the_agent_tile_says_installed_then_added(hub: str, fake_bin: Path) -> None:
@@ -744,3 +745,91 @@ def test_speech_with_no_row_reads_no_engine_for_speech_on_every_face(hub: str, f
     labels = json.dumps(needs)
     assert "No engine for speech" in labels, labels[:2000]
     assert "incompatible" not in labels.lower()
+
+# ── Betterment E7: pi and Gemini CLI ────────────────────────────────────────
+
+from tests.fixtures.fake_agent_cli import GEMINI_ANSWER, PI_ANSWER  # noqa: E402
+
+
+@pytest.fixture()
+def more_bin(hub: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    bin_dir = install_fake_agent_clis(tmp_path / "home" / "bin", names=("pi", "gemini"))
+    # Only the fakes: this machine's own CLIs stay off PATH.
+    monkeypatch.setenv("PATH", f"{bin_dir}:/usr/bin:/bin")
+    monkeypatch.setenv("HOLDSPEAK_CLI_ENGINES", "on")
+    return bin_dir
+
+
+def _pi_config(tmp_path: Path) -> None:
+    """pi's own config inside the rig's HOME: a LAN provider (no key read)."""
+    agent = tmp_path / "home" / ".pi" / "agent"
+    agent.mkdir(parents=True, exist_ok=True)
+    (agent / "models.json").write_text(json.dumps({"providers": {"lan-qwen": {
+        "baseUrl": "http://192.168.1.43:8080/v1", "apiKey": "local", "models": [{"id": "qwen3.8-27b"}],
+    }}}))
+    (agent / "settings.json").write_text(json.dumps({"defaultProvider": "lan-qwen", "defaultModel": "qwen3.8-27b"}))
+
+
+def _connect(base: str, preset: str, **extra: Any) -> dict:
+    return _ok(base, "POST", "/api/inference/model-library/connect-cli-engine", {"draft": {
+        "request_id": f"connect-{preset}", "profile_id": f"agent-{preset}",
+        "expected_profile_revision": 0, "preset": preset, **extra,
+    }})
+
+
+def _try(base: str, connected: dict) -> dict:
+    """Try it under Answers: the hub's sample on the engine (the face's probe)."""
+    status, assigned = _assign(base, "ask.answer", [_entry(connected)])
+    assert status < 300, assigned
+    return _ok(base, "POST", "/api/concierge/probe", {
+        "task": True, "capabilityId": "ask.answer", "confirmOffMachine": True,
+        "expectedProfileIds": [connected["provider"]["profile_id"]],
+    })
+
+
+def test_pi_and_gemini_are_found_when_installed_and_named_by_their_egress(
+    hub: str, more_bin: Path, tmp_path: Path,
+) -> None:
+    _pi_config(tmp_path)
+    found = {row["agentPreset"]: row for row in _agent_rows(hub)}
+    assert set(found) == {"pi", "gemini"}, found
+    assert found["gemini"]["name"] == "Gemini CLI" and found["gemini"]["vendor"] == "GOOGLE"
+    assert found["gemini"]["vendorScope"] == "cloud"
+    # pi's config sends its default model to the LAN box: that is the chip.
+    assert (found["pi"]["host"], found["pi"]["vendorScope"]) == ("192.168.1.43", "private_network"), found["pi"]
+    # The sign-in of either cannot be read: try once.
+    assert found["pi"]["signedIn"] == "unknown" and found["gemini"]["signedIn"] == "unknown"
+
+
+def test_pi_on_his_lan_model_answers_try_it_on_his_network(hub: str, more_bin: Path, tmp_path: Path) -> None:
+    _pi_config(tmp_path)
+    connected = _connect(hub, "pi", model="lan-qwen/qwen3.8-27b")
+    (engine,) = [row for row in _agent_rows(hub) if row.get("profileId") == "agent-pi"]
+    assert (engine["state"], engine["host"], engine["vendorScope"]) == ("READY", "192.168.1.43", "private_network")
+    answer = _try(hub, connected)
+    assert answer["ok"] is True and answer["state"] == "READY", answer
+    assert answer["sampleOutput"] == PI_ANSWER
+    assert answer["boundary"] == "private_network" and answer["host"] == "192.168.1.43", answer
+    (call,) = calls(more_bin, "pi")
+    assert call["argv"][:2] == ["--print", "--no-tools"] and "lan-qwen/qwen3.8-27b" in call["argv"]
+    assert "What is 2 + 2?" in call["prompt"]
+
+
+def test_the_owner_names_pis_host_and_only_pi_takes_one(hub: str, more_bin: Path) -> None:
+    _connect(hub, "pi", egress_host="192.168.1.50")
+    (engine,) = [row for row in _agent_rows(hub) if row.get("profileId") == "agent-pi"]
+    assert engine["host"] == "192.168.1.50" and engine["vendorScope"] == "private_network"
+    status, refused = _call(hub, "POST", "/api/inference/model-library/connect-cli-engine", {"draft": {
+        "request_id": "connect-gemini-host", "profile_id": "agent-gemini", "expected_profile_revision": 0,
+        "preset": "gemini", "egress_host": "192.168.1.50",
+    }})
+    assert status == 400 and refused["code"] == "cli_engine_host_invalid", refused
+
+
+def test_gemini_answers_try_it_through_google(hub: str, more_bin: Path) -> None:
+    connected = _connect(hub, "gemini")
+    answer = _try(hub, connected)
+    assert answer["ok"] is True and answer["sampleOutput"] == GEMINI_ANSWER, answer
+    assert answer["boundary"] == "cloud" and answer["host"].upper() == "GENERATIVELANGUAGE.GOOGLEAPIS.COM", answer
+    (call,) = calls(more_bin, "gemini")
+    assert "--output-format" in call["argv"] and "What is 2 + 2?" in call["prompt"]

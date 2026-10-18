@@ -114,10 +114,11 @@ _CLI_DRAFT = {
         "request_id": _REQUEST_ID,
         "profile_id": _PROFILE_ID,
         "expected_profile_revision": {"type": "integer", "minimum": 0},
-        "preset": {"type": "string", "enum": ["claude", "codex"]},
+        "preset": {"type": "string", "enum": ["claude", "codex", "pi", "gemini"]},
         "label": {"type": "string", "minLength": 1, "maxLength": 200},
         "model": {"type": "string", "minLength": 1, "maxLength": 200},
         "spend_limit_usd": {"type": ["number", "null"], "exclusiveMinimum": 0, "maximum": 1000},
+        "egress_host": {"type": "string", "minLength": 1, "maxLength": 253},
     },
     "required": ["request_id", "profile_id", "expected_profile_revision", "preset"],
     "additionalProperties": False,
@@ -160,9 +161,9 @@ TOOLS: list[dict[str, Any]] = [
         {"draft": _CLI_DRAFT},
         ["draft"],
         description=(
-            "Add an agent CLI on this Mac (preset claude or codex) as an engine. Tools stay off. "
+            "Add an agent CLI on this Mac (claude, codex, pi, gemini) as an engine. Tools stay off. "
             "The CLI uses its own sign-in. model 'default' keeps the CLI's model. spend_limit_usd "
-            "is optional (no limit when absent); codex cannot enforce one. Assignments stay unchanged."
+            "is optional; only claude enforces one. egress_host: pi only. Assignments stay unchanged."
         ),
     ),
     _schema(
