@@ -185,7 +185,9 @@ function fromDetectEngine(engine: Engine, fallbackLabel: string): ResolvedEngine
     case "lan":
       return { name, egressLabel: `${engine.host} · LAN`, egressHost: engine.host, engineState: state, keySet };
     case "cloud":
-      // Article III: the host is named on the egress chip.
+    case "agent":
+      // Article III: the host is named on the egress chip (an agent CLI's
+      // prompt goes to its vendor, never THIS DEVICE).
       return {
         name,
         egressLabel: engine.host ? `${engine.host.toUpperCase()}` : "CLOUD",

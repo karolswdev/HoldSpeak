@@ -618,7 +618,7 @@
         },
         {
           "path": "web/src/desk/components/WorkbenchWindow.tsx",
-          "symbol": "const rerunItem = () => void updateItem({ status: \"pending\", result: null, result_egress: null, tokens_consumed: 0, completed_at: null }, \"RE-RUN ITEM\");",
+          "symbol": "const rerunItem = async () => {",
           "claim": "The existing Re-run resets the same item."
         }
       ],
@@ -646,7 +646,7 @@
         },
         {
           "path": "web/src/desk/components/WorkbenchWindow.tsx",
-          "symbol": "const rerunItem = () => void updateItem({ status: \"pending\", result: null, result_egress: null, tokens_consumed: 0, completed_at: null }, \"RE-RUN ITEM\");",
+          "symbol": "const rerunItem = async () => {",
           "claim": "The existing Re-run resets the same item."
         }
       ],

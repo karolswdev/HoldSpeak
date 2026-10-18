@@ -371,7 +371,13 @@ describe("Ask's sent request", () => {
     fireEvent.click(retry);
     await waitFor(() => expect(asks).toBe(2));
     const retriedCall = calls.filter((call) => call.url.endsWith("/api/ask"))[1];
-    expect(JSON.parse(String(retriedCall.init?.body))).toEqual(first);
+    // Betterment Q2: each run carries its own invocation id (progress frames
+    // and cancel key on it), so Retry sends the same snapshot under a new id.
+    const { invocation_id: retriedId, ...retriedBody } = JSON.parse(String(retriedCall.init?.body));
+    const { invocation_id: firstId, ...firstBody } = first;
+    expect(retriedBody).toEqual(firstBody);
+    expect(retriedId).toMatch(/^ask_/);
+    expect(retriedId).not.toBe(firstId);
     expect(prompt).toHaveValue("Newer question");
     expect(JSON.parse(localStorage.getItem(durableDraftKey("desk-ask"))!).text).toBe("Newer question");
     await act(async () => { retried.resolve(response({ output: "Original answer" })); });

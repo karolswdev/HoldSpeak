@@ -40,7 +40,12 @@ _ACTIONS = frozenset({
 _SUMMARY_STATES = frozenset({"empty", "ready", "attention", "none_ready"})
 _PROVIDER_FAMILIES = frozenset({
     "openrouter", "anthropic", "openai_compatible", "private_endpoint", "paired_device", "future_backend",
+    # Betterment E1: an agent CLI on this Mac (holdspeak/intel/cli_engine.py).
+    "cli_agent",
 })
+#: The closed draft of ``connect_cli_engine``: required keys, then optional ones.
+_CLI_DRAFT_REQUIRED = frozenset({"request_id", "profile_id", "expected_profile_revision", "preset"})
+_CLI_DRAFT_OPTIONAL = frozenset({"label", "model", "spend_limit_usd"})
 #: PHILO-15 05: a provider family with no execution adapter (Anthropic).
 #: Its readiness reason and its row status; the face shows the label.
 NOT_SUPPORTED = "not_supported"
@@ -227,6 +232,16 @@ class ModelLibraryApplicationService:
         """Define one explicit OpenAI-compatible/private endpoint draft."""
         return self._connect_provider(principal, draft, secret, hosted=False)
 
+    def connect_cli_engine(self, principal: Principal, draft: dict[str, Any]) -> dict[str, Any]:
+        """Add an agent CLI on this Mac (Claude Code, Codex) as an engine.
+
+        The draft names a closed preset; there is no free command. The CLI
+        uses its own sign-in, so there is no key. ``spend_limit_usd`` is
+        optional (default: no limit, decision #10); a preset that cannot
+        enforce a limit refuses one. Assignments are unchanged.
+        """
+        return self._connect_provider(principal, draft, None, hosted=False, cli=True)
+
     def connect_paired_device(self, principal: Principal, draft: dict[str, Any]) -> dict[str, Any]:
         """Add an existing paired/mesh destination without creating a target."""
         return self._connect_provider(principal, draft, None, hosted=False, paired=True)
@@ -250,9 +265,13 @@ class ModelLibraryApplicationService:
         *,
         hosted: bool,
         paired: bool = False,
+        cli: bool = False,
     ) -> dict[str, Any]:
         self.require_owner(principal)
-        draft = self._provider_draft(raw_draft, hosted=hosted, paired=paired)
+        draft = (
+            self._cli_draft(raw_draft) if cli
+            else self._provider_draft(raw_draft, hosted=hosted, paired=paired)
+        )
         self._refuse_unsupported(draft)
         # Validate the write-only body before reserving a command.  This retains
         # the value only on the stack, never in a ServiceError/context/receipt.
@@ -410,6 +429,73 @@ class ModelLibraryApplicationService:
             "hash_material": hash_material,
         }
 
+    def _cli_draft(self, body: dict[str, Any]) -> dict[str, Any]:
+        """Normalize one ``connect_cli_engine`` draft into the provider draft shape."""
+        from ..intel.cli_engine import (
+            DEFAULT_MODEL, MAX_SPEND_LIMIT_USD, PRESETS, PROVIDER_FAMILY, cli_endpoint, cli_engines_on,
+        )
+
+        if not isinstance(body, dict) or not (_CLI_DRAFT_REQUIRED <= set(body) <= _CLI_DRAFT_REQUIRED | _CLI_DRAFT_OPTIONAL):
+            raise ServiceError("model_library_provider_invalid", "Agent engine draft is invalid.", context={"status": 400})
+        if not cli_engines_on():
+            raise ServiceError(
+                "cli_engines_off", "Agent engines are off on this hub.", context={"status": 409},
+            )
+        preset = PRESETS.get(str(body.get("preset") or "").strip())
+        if preset is None:
+            raise ServiceError(
+                "cli_engine_preset_unknown", "Use one of these agents: " + ", ".join(sorted(PRESETS)) + ".",
+                context={"status": 400},
+            )
+        profile_id = self._profile_id(body.get("profile_id"))
+        expected = body.get("expected_profile_revision")
+        if type(expected) is not int or expected < 0:
+            raise ServiceError("model_library_provider_invalid", "Provider revision is invalid.", context={"status": 400})
+        label = self._safe_field(body.get("label") or preset.label, "Agent engine")
+        model = self._safe_field(body.get("model") or DEFAULT_MODEL, "model", allow_slash=True)
+        raw_limit = body.get("spend_limit_usd")
+        limit: float | None = None
+        if raw_limit is not None:
+            if isinstance(raw_limit, bool) or not isinstance(raw_limit, (int, float)) or not (0 < float(raw_limit) <= MAX_SPEND_LIMIT_USD):
+                raise ServiceError(
+                    "cli_engine_spend_limit_invalid",
+                    f"The spend limit must be more than 0 and not more than {MAX_SPEND_LIMIT_USD:.0f} US dollars.",
+                    context={"status": 400},
+                )
+            if not preset.enforces_spend_limit:
+                raise ServiceError(
+                    "cli_engine_spend_limit_unsupported",
+                    f"{preset.label} cannot stop a run at a spend limit. Use no limit.",
+                    context={"status": 422, "preset": preset.id},
+                )
+            limit = round(float(raw_limit), 2)
+        endpoint = cli_endpoint(preset.id, limit)
+        hash_material = {
+            "profile_id": profile_id,
+            "expected_profile_revision": expected,
+            "label": label,
+            "provider_family": PROVIDER_FAMILY,
+            "preset": preset.id,
+            "model": model,
+            "spend_limit_usd": limit,
+        }
+        return {
+            "request_id": self._request_id(body.get("request_id")),
+            # The command table's CHECK names three kinds; an agent engine is a
+            # defined endpoint (`cli:<preset>`), so no schema change is needed.
+            # The hash material (it holds the preset) keeps replays apart.
+            "command_kind": "define_endpoint",
+            "profile_id": profile_id,
+            "expected_profile_revision": expected,
+            "label": label,
+            "provider_family": PROVIDER_FAMILY,
+            "model": model,
+            "requires_key": False,
+            "endpoint": endpoint,
+            "paired_target_id": "",
+            "hash_material": hash_material,
+        }
+
     def _ensure_profile(self, principal: Principal, draft: dict[str, Any]) -> dict[str, Any]:
         desired = self._profile_body(draft)
         try:
@@ -442,7 +528,9 @@ class ModelLibraryApplicationService:
         # The existing OpenAI-compatible execution adapter accepts the closed
         # Meeting result schema.  Carry that adapter support as a manifest
         # claim; readiness remains the separate endpoint observation below.
-        if runtime == "openai_compatible_v1" and ModelLibraryApplicationService._provider_readiness_reason(draft["provider_family"]) is None:
+        # An agent CLI gets the same claims: a typed job adds its schema to the
+        # prompt (cli_engine.messages_to_prompt) and the job's own check decides.
+        if runtime in {"openai_compatible_v1", "cli_v1"} and ModelLibraryApplicationService._provider_readiness_reason(draft["provider_family"]) is None:
             # PHILO-15 10 (Astra r1, finding 5): every structured work whose
             # executor path checks the typed result before it succeeds. It
             # holds both meeting analysis schemas (PHILO-15 08,
@@ -474,7 +562,7 @@ class ModelLibraryApplicationService:
                 raise ServiceError("model_library_paired_target_invalid", "Paired device is unavailable.", context={"status": 400})
             return str(getattr(target, "id"))
         target_id = f"library_provider_{draft['profile_id']}"
-        kind = "openAICompatible"
+        kind = "cliCommand" if draft["provider_family"] == "cli_agent" else "openAICompatible"
         fields = {
             "id": target_id,
             "name": draft["label"],
@@ -507,6 +595,10 @@ class ModelLibraryApplicationService:
     ) -> tuple[str, str]:
         profile_revision = int(profile["revision"])
         deployment_id = f"library-provider-{draft['profile_id']}-r{profile_revision}"
+        if draft["provider_family"] == "cli_agent":
+            # The spend limit lives in the endpoint (`cli:claude?spend_limit_usd=`),
+            # so a changed limit is a new deployment the binding moves to.
+            deployment_id += "-" + _digest(draft["endpoint"])[7:19]
         with self._db._connection() as conn:
             existing = conn.execute(
                 "SELECT execution_revision_id FROM inference_deployments WHERE deployment_id=?", (deployment_id,)
@@ -627,6 +719,7 @@ class ModelLibraryApplicationService:
             "private_endpoint": "openai_compatible_v1",
             "paired_device": "paired_device_v1",
             "future_backend": "future_backend_v1",
+            "cli_agent": "cli_v1",
         }[provider_family]
 
     @staticmethod

@@ -221,8 +221,8 @@ function useDockLiveReads(): {
     offline: Boolean(lastSuccessfulAt !== null && runtimeState !== "connected"),
     lastSuccessfulAt,
     needsYouCount: needs.count,
-    // A row the owner waits on someone else for is not counted on a badge.
-    needsYouItems: needs.unmutedItems.filter((item) => !item.waiting),
+    // Betterment D1: the badge counts the rows the hub's one rule counts.
+    needsYouItems: needs.unmutedItems.filter((item) => !item.waiting && !item.foldedInto && item.counted !== false),
   };
 }
 

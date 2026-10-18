@@ -182,3 +182,7 @@
   .desk-next .runson-root .switchboard-job,
   .desk-next .runson-root .switchboard-engine { transition: none; }
 }
+
+/* Betterment E2: an agent engine's plate, unfolded (Spend limit per run). */
+.runson-agent-spend { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 6px 10px; min-width: 0; width: 100%; }
+.runson-agent-spend .surface-token { overflow-wrap: anywhere; }

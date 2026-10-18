@@ -14548,6 +14548,24 @@
         "summary": "Add Detected Model"
       }
     },
+    "/api/inference/model-library/connect-cli-engine": {
+      "post": {
+        "operationId": "connect_cli_engine_api_inference_model_library_connect_cli_engine_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Connect Cli Engine Api Inference Model Library Connect Cli Engine Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Connect Cli Engine"
+      }
+    },
     "/api/inference/model-library/connect-hosted-model": {
       "post": {
         "operationId": "connect_hosted_model_api_inference_model_library_connect_hosted_model_post",
@@ -30385,6 +30403,55 @@
         "tags": [
           "automations"
         ]
+      }
+    },
+    "/api/workbenches/{workbench_id}/results/{artifact_id}/open": {
+      "post": {
+        "description": "Betterment A2: opening a result reads it (``new`` becomes ``read``).",
+        "operationId": "api_open_result_api_workbenches__workbench_id__results__artifact_id__open_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workbench_id",
+            "required": true,
+            "schema": {
+              "title": "Workbench Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "artifact_id",
+            "required": true,
+            "schema": {
+              "title": "Artifact Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Open Result Api Workbenches  Workbench Id  Results  Artifact Id  Open Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Open Result"
       }
     },
     "/api/workbenches/{workbench_id}/run": {

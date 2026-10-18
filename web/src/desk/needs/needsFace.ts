@@ -106,11 +106,12 @@ export interface NeedFace {
 
 /** Phase 16 (the interior kit, the Ledger's kind plate): the row's kind in
  *  at most three letters. An agent row is its agent (`CC` Claude Code,
- *  `CX` Codex, `PI` pi); a source `SRC`; a setup blocker `SET`; a recording
- *  that arms `REC`. */
+ *  `CX` Codex, `PI` pi); a source `SRC`; a recording that arms `REC`.
+ *  Betterment D1: a setup blocker has no plate (it drew `SET` beside its
+ *  one verb, two "set up" words on one row); its sprite stands there. */
 export function plateOf(face: Pick<NeedFace, "kind" | "verbs" | "source" | "agent">): string {
   if (face.source) return "SRC";
-  if (face.verbs.kind === "setup" || face.kind === "conductor") return "SET";
+  if (face.verbs.kind === "setup" || face.kind === "conductor") return "";
   if (face.verbs.kind === "arming") return "REC";
   if (face.kind === "agent") {
     if (face.agent === "claude") return "CC";

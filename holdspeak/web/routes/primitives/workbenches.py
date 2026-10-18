@@ -97,6 +97,8 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"workbench": wb})
         except NotFound:
             return _not_found("workbench", workbench_id)
+        except ValidationError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
         except Exception as exc:
             return error_500(exc, log, "Failed to update workbench")
 
@@ -241,6 +243,16 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             return _service_error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to run workbench")
+
+    @router.post("/api/workbenches/{workbench_id}/results/{artifact_id}/open")
+    async def api_open_result(workbench_id: str, artifact_id: str, request: Request) -> Any:
+        """Betterment A2: opening a result reads it (``new`` becomes ``read``)."""
+        try:
+            return JSONResponse({"result": _svc().open_result(_principal(request), workbench_id, artifact_id)})
+        except NotFound:
+            return _not_found("result", artifact_id)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to open the result")
 
     @router.post("/api/workbenches/{workbench_id}/runs/{parent_operation_id}/cancel")
     async def api_cancel_workbench_run(workbench_id: str, parent_operation_id: str, request: Request) -> Any:

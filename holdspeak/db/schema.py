@@ -121,7 +121,10 @@ CREATE TABLE IF NOT EXISTS action_items (
     completed_at TEXT,
     delegated_at TEXT,
     source_type TEXT NOT NULL DEFAULT 'meeting',
-    source_ref TEXT NOT NULL DEFAULT ''
+    source_ref TEXT NOT NULL DEFAULT '',
+    -- Betterment D0: the due as the meeting said it ("Friday next week");
+    -- `due` holds the ISO day it names, read against the meeting's date.
+    due_said TEXT
 );
 
 -- Topics extracted from meetings
@@ -1735,7 +1738,15 @@ CREATE TABLE IF NOT EXISTS workbenches (
     item_order_json TEXT NOT NULL DEFAULT '[]',
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     last_modified TEXT NOT NULL DEFAULT (datetime('now')),
-    deleted INTEGER NOT NULL DEFAULT 0
+    deleted INTEGER NOT NULL DEFAULT 0,
+    -- Betterment A2: one automation = one instruction + sources. A run of an
+    -- automation with an instruction makes one occurrence item (one result).
+    -- An empty instruction keeps the old queue run. ``sources_json`` is a list
+    -- of qualified refs (note:<id>, meeting:<id>, ...). ``output_target`` is
+    -- inbox | needs_you | destination:<id>.
+    instruction TEXT NOT NULL DEFAULT '',
+    sources_json TEXT NOT NULL DEFAULT '[]',
+    output_target TEXT NOT NULL DEFAULT 'inbox'
 );
 CREATE TABLE IF NOT EXISTS workbench_items (
     id TEXT PRIMARY KEY,
@@ -5092,4 +5103,16 @@ CREATE TABLE IF NOT EXISTS memory_jobs (
     boundary TEXT NOT NULL DEFAULT '',
     UNIQUE (kind, target, input_sha, version)
 );
+-- Betterment E2: one row per run of an agent CLI engine (Claude Code, Codex):
+-- when it ran, how it ended (answered, not_signed_in, failed) and the cost the
+-- CLI reported (NULL when it reports none). The Engines window sums it for
+-- today and this week, and reads NOT SIGNED IN from the last run.
+CREATE TABLE IF NOT EXISTS cli_engine_runs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    profile_id TEXT NOT NULL,
+    ran_at TEXT NOT NULL,
+    outcome TEXT NOT NULL,
+    cost_usd REAL
+);
+CREATE INDEX IF NOT EXISTS idx_cli_engine_runs_profile ON cli_engine_runs(profile_id, ran_at);
 """

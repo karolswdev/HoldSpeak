@@ -723,6 +723,26 @@ def _codex_signed_in(home: Path, env: dict[str, str]) -> tuple[str, Optional[str
     return "unknown", None
 
 
+def cli_signed_in(
+    agent: str, *, home: Optional[Path] = None, environ: Optional[dict[str, str]] = None,
+) -> str:
+    """One agent CLI's sign-in, read the way ``detect_agents`` reads it.
+
+    ``yes`` · ``unknown`` (try once: the hub cannot tell) · ``not_read`` (the
+    rig switch keeps agent state out). Never ``no``. Reads no credential
+    value out and runs no process (Betterment E2: Found on this Mac).
+    """
+    reader = {"claude": _claude_signed_in, "codex": _codex_signed_in}.get(agent)
+    if reader is None:
+        return "unknown"
+    env = dict(os.environ if environ is None else environ)
+    state_read = agent_state_read(env)
+    signed_in, _ = reader(home or Path.home(), home_scoped_env(env))
+    if not state_read and signed_in != "yes":
+        return NOT_READ
+    return signed_in
+
+
 def detect_agents(
     *,
     which: Callable[[str], Optional[str]] = shutil.which,

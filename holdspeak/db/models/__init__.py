@@ -1138,11 +1138,23 @@ class WorkbenchRecord:
     created_at: str = ""
     last_modified: str = ""
     deleted: bool = False
+    #: Betterment A2: the Do text, its sources (qualified refs) and where a
+    #: result goes (inbox | needs_you | destination:<id>).
+    instruction: str = ""
+    sources_json: str = "[]"
+    output_target: str = "inbox"
 
     def to_dict(self) -> dict[str, Any]:
+        try:
+            sources = json.loads(self.sources_json or "[]")
+        except (TypeError, ValueError):
+            sources = []
         return {
             "id": self.id,
             "name": self.name,
+            "instruction": self.instruction,
+            "sources": sources if isinstance(sources, list) else [],
+            "output_target": self.output_target or "inbox",
             "recipe_id": self.recipe_id,
             "profile_id": self.profile_id,
             "resolver_profile_id": self.resolver_profile_id,

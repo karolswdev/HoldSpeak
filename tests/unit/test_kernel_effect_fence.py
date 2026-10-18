@@ -299,6 +299,17 @@ _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
         1,
     ): "process site outside plugin/connector scope",
     (
+        "holdspeak/intel/cli_engine.py",
+        "CliEngine._run_process",
+        "Popen",
+        1,
+    ): (
+        "Betterment E1: one agent CLI run (claude -p, codex exec) with built-in "
+        "tools off in an empty temp folder, and (M1) only HoldSpeak's MCP "
+        "server on a run credential; it is the sender of the run's "
+        "`run_external_egress` record (destination = the preset's vendor host)"
+    ),
+    (
         "holdspeak/delivery/dossiers.py",
         "_default_runner",
         "run",
@@ -1420,7 +1431,7 @@ _BROKER_BUDGET_DEBT: dict[str, int] = {
     "holdspeak/kernel/inference_runner.py": 855,
     "holdspeak/kernel/inference_stream.py": 311,
     "holdspeak/kernel/journal.py": 485,  # PHILO-9-02 carved create_operation into journal_atomic
-    "holdspeak/kernel/meeting_plugin_projection.py": 368,
+    "holdspeak/kernel/meeting_plugin_projection.py": 355,  # Betterment D0 carved the summary action write
     "holdspeak/kernel/parent_run.py": 353,
     "holdspeak/kernel/projection_stager.py": 395,
 }

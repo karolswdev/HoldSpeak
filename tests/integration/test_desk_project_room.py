@@ -834,6 +834,25 @@ def test_the_engine_never_overwrites_his_words_and_a_failure_keeps_the_records_d
         assert hub.client.post(f"/api/update-jobs/{job['id']}/apply", json={"force": True}).status_code == 409
 
 
+def test_a_hub_restart_ends_a_running_engine_pass_with_a_reason(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Betterment P1: the pass's thread dies with the old process. On start
+    the hub marks a job left running as failed, so the face shows Try again."""
+    with _hub(tmp_path, monkeypatch) as hub:
+        pid = hub.ok("POST", "/api/projects", {"name": "Restart"})["project"]["id"]
+        records = hub.ok("POST", f"/api/projects/{pid}/updates/draft", {"generator": "deterministic"})["update"]
+        with hub.db._connection() as conn:  # a pass the old process left running
+            conn.execute(
+                "INSERT INTO project_update_jobs (id, project_id, base_update_id, state) VALUES (?, ?, ?, 'running')",
+                ("pujob_left_running", pid, records["id"]),
+            )
+    with _hub(tmp_path, monkeypatch, lifespan=True) as hub:
+        job = hub.ok("GET", "/api/update-jobs/pujob_left_running")["job"]
+        assert (job["state"], job["reason"], job["detail"]) == (
+            "failed", "did_not_answer", "the hub restarted"), job
+
+
 # ── the merge receipt (PHILO-15 lane 17): the hub's own poll ─────────
 
 MERGE_PROJECT = "proj-philo1517abcd"
@@ -1457,10 +1476,9 @@ def test_a_project_carries_work_across_two_working_days(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, llm: FakeLLM,
 ) -> None:
     """Day 1 on hub #1: a brief is prepared over the wire and kept; a
-    transcript is imported with a day-1 start, linked and summarised on the
-    analysis-only route (no plugin call, no proposal); the HISTORICAL FIXTURE
-    seeds one decision and one commitment, both confirmed; the commitment is
-    attention. The hub stops; hub #2 opens the SAME database file. Day 2:
+    transcript is imported with a day-1 start, linked and summarised; its
+    plugins run on the disclosed route (Capture C4) and propose one decision
+    and one commitment, both confirmed; the commitment is attention. The hub stops; hub #2 opens the SAME database file. Day 2:
     recall returns the decision first with its rationale, dated day 1, and the
     commitment still owed; the person carries it; explicit acts complete it;
     the person no longer owes it; day 2's manifest carries the decision and
@@ -1537,14 +1555,14 @@ def test_a_project_carries_work_across_two_working_days(
                 review(), engine.plugin_calls)
             first = review()
             assert first["coverage"]["turns"] == 3 and first["coverage"]["read"] == 3, first["coverage"]
-            assert first["proposals"] == [] and engine.plugin_calls == [], (first["proposals"], engine.plugin_calls)
+            # Capture C4: the job's plugins run on its disclosed route, and the
+            # two real extractors' output is the day-1 decision and commitment.
+            assert sorted(engine.plugin_calls) == [ACT_PLUGIN, DEC_PLUGIN], engine.plugin_calls
             detail = hub.ok("GET", f"/api/meetings/{meeting_id}")
             assert detail["intel"]["summary"] == engine.result.summary, detail["intel"]
             started_at = detail.get("started_at") or (detail.get("meeting") or {}).get("started_at")
             assert str(started_at)[:10] == day1.date().isoformat(), started_at
 
-            # The HISTORICAL FIXTURE (not summary output) seeds the day-2 chain.
-            _seed_historical_proposal_fixture(meeting_id, engine)
             proposals = review()["proposals"]
             assert sorted(p["kind"] for p in proposals) == ["action", "decision"], proposals
 

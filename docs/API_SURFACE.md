@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 770 (plus static mounts). iOS-consumed: 89. Web-consumed: 601.
+Routes: 772 (plus static mounts). iOS-consumed: 89. Web-consumed: 602.
 
 ## device_audio_ws
 
@@ -623,6 +623,7 @@ Routes: 770 (plus static mounts). iOS-consumed: 89. Web-consumed: 601.
 |---|---|---|
 | GET | `/api/inference/model-library` | web |
 | POST | `/api/inference/model-library/add-to-library` | web |
+| POST | `/api/inference/model-library/connect-cli-engine` | web |
 | POST | `/api/inference/model-library/connect-hosted-model` | web |
 | POST | `/api/inference/model-library/connect-paired-device` | server only |
 | POST | `/api/inference/model-library/define-endpoint` | web |
@@ -885,6 +886,7 @@ Routes: 770 (plus static mounts). iOS-consumed: 89. Web-consumed: 601.
 | DELETE | `/api/workbenches/{workbench_id}/memory` | web |
 | GET | `/api/workbenches/{workbench_id}/memory` | web |
 | POST | `/api/workbenches/{workbench_id}/memory/{index}/promote` | web |
+| POST | `/api/workbenches/{workbench_id}/results/{artifact_id}/open` | server only |
 | POST | `/api/workbenches/{workbench_id}/run` | web |
 | GET | `/api/workbenches/{workbench_id}/runs` | web |
 | POST | `/api/workbenches/{workbench_id}/runs/{parent_operation_id}/cancel` | server only |

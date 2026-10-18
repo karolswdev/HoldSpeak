@@ -5114,6 +5114,9 @@ def _isolated_hub_env(
         # CODEX_HOME, ANTHROPIC_API_KEY; pi's claims): it answers `not_read`
         # (holdspeak/services/onboarding_service.py).
         "HOLDSPEAK_AGENT_STATE": "off",
+        # Betterment E1: no agent CLI on this machine (claude, codex) is read
+        # or run as an engine (holdspeak/intel/cli_engine.py).
+        "HOLDSPEAK_CLI_ENGINES": "off",
         # PHILO-16 rig gaps (G3 closes): git reads no system config (RIG LAW);
         # no default runner starts the real gh/acli (holdspeak/cli_guard.py);
         # gh's config resolves inside this HOME, never the owner's

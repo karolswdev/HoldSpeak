@@ -44,6 +44,7 @@ from holdspeak.timestamps import utc_now_iso
 from typing import Any, Callable, Optional
 
 from ..db.core import Database
+from ..due_dates import anchor_for_meeting, stored_due
 from ..db.proposals import Proposal
 from ..logging_config import get_logger
 from ..principals import Principal
@@ -935,6 +936,10 @@ class ProposalBridgeService:
                     ),
                 )
 
+            # Betterment D0: the said due becomes the day it names, read
+            # against the meeting's own day; the words stay as ``due_said``.
+            final_due, due_said = stored_due(final_due, anchor_for_meeting(conn, proposal.meeting_id))
+
             # 4. action_items row (an action only).  PHILO-15 08: a summary
             #    or plugin action proposal stands for the summary's own row;
             #    Confirm accepts THAT row (no second copy of one obligation).
@@ -954,6 +959,7 @@ class ProposalBridgeService:
                 # Follow-through action; confirmation preserves terminal work.
                 conn.execute(
                     """UPDATE action_items SET task = ?, owner = ?, due = ?,
+                       due_said = COALESCE(?, due_said),
                        status = CASE WHEN status IN ('done', 'dismissed', 'completed')
                          THEN status ELSE 'open' END,
                        review_state = 'accepted', reviewed_at = ?,
@@ -961,7 +967,7 @@ class ProposalBridgeService:
                        source_timestamp = COALESCE(source_timestamp, ?)
                        WHERE id = ?""",
                     (
-                        final_text, final_owner, final_due, now, delegated_at,
+                        final_text, final_owner, final_due, due_said, now, delegated_at,
                         proposal.span_start if anchored else proposal.segment_timestamp,
                         action_id,
                     ),
@@ -969,13 +975,13 @@ class ProposalBridgeService:
             elif is_action:
                 conn.execute(
                     """INSERT INTO action_items
-                       (id, meeting_id, task, owner, due, status,
+                       (id, meeting_id, task, owner, due, due_said, status,
                         review_state, source_timestamp, created_at, delegated_at,
                         source_type, source_ref)
-                       VALUES (?, ?, ?, ?, ?, 'open', 'accepted', ?, ?, ?, 'meeting', ?)""",
+                       VALUES (?, ?, ?, ?, ?, ?, 'open', 'accepted', ?, ?, ?, 'meeting', ?)""",
                     (
                         action_id, proposal.meeting_id, final_text,
-                        final_owner, final_due,
+                        final_owner, final_due, due_said,
                         proposal.span_start if anchored else proposal.segment_timestamp,
                         now, delegated_at, proposal.meeting_id,
                     ),

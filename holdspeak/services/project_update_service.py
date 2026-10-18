@@ -2298,6 +2298,20 @@ class ProjectUpdateService:
                  utc_now_iso(), job_id),
             )
 
+    def recover_engine_passes(self) -> int:
+        """At hub start: a pass left ``running`` lost its thread with the old
+        process. It is marked failed with a reason in words, so the face
+        offers Try again instead of polling forever. Returns the count."""
+        with self._db._connection() as conn:
+            cur = conn.execute(
+                """UPDATE project_update_jobs
+                   SET state = 'failed', reason = 'did_not_answer',
+                       detail = 'the hub restarted', finished_at = ?
+                   WHERE state = 'running'""",
+                (utc_now_iso(),),
+            )
+            return int(cur.rowcount or 0)
+
     def _job_row(self, job_id: str) -> dict[str, Any]:
         with self._db._connection() as conn:
             row = conn.execute(

@@ -67,7 +67,11 @@ def _make_plain_db(tmp_path: Path) -> Any:
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
         delegated_at TEXT,
         source_type TEXT NOT NULL DEFAULT 'meeting',
-        source_ref TEXT NOT NULL DEFAULT '')""")
+        source_ref TEXT NOT NULL DEFAULT '',
+        due_said TEXT)""")
+    conn.execute("""CREATE TABLE segments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, meeting_id TEXT NOT NULL,
+        text TEXT NOT NULL, speaker TEXT, start_time REAL, end_time REAL)""")
     conn.execute("""CREATE TABLE decision_records (
         id TEXT PRIMARY KEY, decision_text TEXT NOT NULL, rationale TEXT,
         lifecycle TEXT NOT NULL DEFAULT 'active',

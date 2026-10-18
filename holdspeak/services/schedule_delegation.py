@@ -15,7 +15,8 @@ def _terms(
 ) -> dict[str, Any]:
     """Freeze owner-approved placement once, rather than re-resolving at fire."""
     recipe = db.recipes.get(wb.recipe_id) if wb.recipe_id else None
-    if recipe is None:
+    if recipe is None and not str(getattr(wb, "instruction", "") or "").strip():
+        # Betterment A2: an automation with an instruction needs no agent.
         raise ServiceError("delegation_stale_work", "Automation has no agent", context={"status": 409})
     from ..kernel.runtime import _configure
     route = _configure(db).inference_adoption_service.plans.freeze_route_plan_in_transaction(
@@ -27,7 +28,7 @@ def _terms(
         deadline_at=time.time() + 365 * 24 * 60 * 60,
     )
     primary = dict(route["entries"][0])
-    return {"recipe_id": recipe.id, "recipe_revision": str(recipe.last_modified),
+    return {"recipe_id": recipe.id if recipe else "", "recipe_revision": str(recipe.last_modified) if recipe else "",
             "workbench_revision": str(wb.last_modified), "schedule_revision": str(wb.schedule_revision),
             "cadence": str(wb.schedule or ""),
             "deployment_revision_id": str(primary["deployment_revision_id"]),

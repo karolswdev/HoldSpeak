@@ -111,9 +111,30 @@ export interface GroupFit {
   blocked?: string[];
 }
 
+/** Betterment E2: an agent engine's spend limit and its reported cost. */
+export interface AgentSpend {
+  /** The limit per run in US dollars; null = No limit. */
+  limitUsd: number | null;
+  /** The CLI stops a run at the limit itself (Claude Code); Codex cannot. */
+  canLimit: boolean;
+  /** The CLI reports what a run cost. */
+  reportsCost: boolean;
+  todayUsd: number;
+  weekUsd: number;
+}
+
 export interface RunsOnEngine extends Engine {
   /** The machine has it; the library does not (one verb: Use it). */
   found?: boolean;
+  /** Betterment E2: the agent CLI preset (`claude`, `codex`). */
+  agentPreset?: string;
+  /** yes · no (its last run said so) · unknown (try once) · not_read. */
+  signedIn?: string;
+  /** The vendor word on the egress chip (ANTHROPIC). */
+  vendor?: string;
+  /** The model the agent engine asks for (`default` = the CLI's own). */
+  model?: string;
+  spend?: AgentSpend;
   /** The host a preset's file comes from. */
   downloadHost?: string;
   /** The authority's answer per group (PHILO-16 C, concierge detect route). */
@@ -171,6 +192,23 @@ function decodeEngine(raw: Record<string, unknown>): RunsOnEngine {
     downloadHost: str(raw.downloadHost),
     fits: Object.keys(fits).length ? fits : undefined,
     audioCapable: raw.audioCapable === true,
+    agentPreset: str(raw.agentPreset),
+    signedIn: str(raw.signedIn),
+    vendor: str(raw.vendor),
+    model: str(raw.model),
+    spend: decodeSpend(raw.spend),
+  };
+}
+
+function decodeSpend(raw: unknown): AgentSpend | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const row = raw as Record<string, unknown>;
+  return {
+    limitUsd: num(row.limitUsd),
+    canLimit: row.canLimit === true,
+    reportsCost: row.reportsCost === true,
+    todayUsd: num(row.todayUsd) ?? 0,
+    weekUsd: num(row.weekUsd) ?? 0,
   };
 }
 
@@ -280,6 +318,32 @@ export async function writeChain(args: {
           ? { profile_id: entry.profile_id, profile_revision: entry.profile_revision }
           : { profile_id: entry.profile_id },
       ),
+    },
+  });
+}
+
+/** Betterment E2: add (or change) an agent CLI engine. The same profile id
+ *  with its current revision changes the spend limit in place. */
+export async function connectCliEngine(draft: {
+  preset: string;
+  profileId: string;
+  expectedProfileRevision: number;
+  label?: string;
+  model?: string;
+  spendLimitUsd?: number | null;
+}): Promise<Record<string, unknown>> {
+  return apiFetch<Record<string, unknown>>("/api/inference/model-library/connect-cli-engine", {
+    method: "POST",
+    json: {
+      draft: {
+        request_id: newCommandId("runson-agent"),
+        profile_id: draft.profileId,
+        expected_profile_revision: draft.expectedProfileRevision,
+        preset: draft.preset,
+        ...(draft.label ? { label: draft.label } : {}),
+        ...(draft.model ? { model: draft.model } : {}),
+        ...(draft.spendLimitUsd != null ? { spend_limit_usd: draft.spendLimitUsd } : {}),
+      },
     },
   });
 }

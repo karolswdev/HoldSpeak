@@ -1,0 +1,10 @@
+Me: Hi Theo. How is the week going?
+Theo: Busy. The reconciliation profiling is interesting. I think the batch size of ten thousand is too big, the job spills to disk.
+Me: Good. What do you need from me?
+Theo: Honestly, I want to talk about the staff engineer path. I don't know what the bar is.
+Me: Fair. I'll send you the staff engineer expectations document by Monday, and we talk about the path in our next one-on-one.
+Theo: Thanks. Also, the design doc for the reconciliation rewrite. Can you review it?
+Me: Yes. I'll review your design doc by Monday.
+Theo: And I would like to pair with Jun on the dedupe work. He knows the gateway.
+Me: Do it. Tell Jun I asked.
+Theo: Will do.

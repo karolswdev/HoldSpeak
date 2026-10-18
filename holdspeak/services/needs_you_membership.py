@@ -37,8 +37,8 @@ meetings) through their services and applies it to a Room aggregate.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
-from holdspeak.timestamps import local_wall, utc_now_iso
+from datetime import date, datetime, timezone
+from holdspeak.timestamps import local_wall, parse_stamp, utc_now_iso
 from typing import Any, Callable, Iterable
 
 from .attention_ranking import dedup_items, rank_items
@@ -543,6 +543,20 @@ def _person_identity(row: dict[str, Any]) -> str:
     return str(row.get("person_relationship_id") or card.get("person_relationship_id") or "")
 
 
+def _names_another(row: dict[str, Any], personal_names: Iterable[str]) -> bool:
+    """The row names a Person explicitly, and that Person is not the owner.
+
+    Betterment D0: a unique first name now links to its Person, so the
+    owner's own "Karol" links to a Person "Karol Nowak" when he keeps
+    himself in People. A linked Person whose name is his own is him.
+    """
+    if not _person_identity(row):
+        return False
+    card = row.get("_doorCard") if isinstance(row.get("_doorCard"), dict) else {}
+    label = " ".join(str(row.get("person_label") or card.get("person_label") or "").split()).casefold()
+    return not label or label not in {" ".join(str(n or "").split()).casefold() for n in personal_names}
+
+
 def _is_me(
     row: dict[str, Any],
     self_names: Iterable[str],
@@ -562,7 +576,7 @@ def _is_me(
     owner = row.get("owner")
     if _is_self(owner, self_names):
         return True
-    if _person_identity(row) or str(row.get("id") or "") in set(identified):
+    if _names_another(row, personal_names) or str(row.get("id") or "") in set(identified):
         return False
     if _is_self(owner, personal_names):
         return True
@@ -663,6 +677,29 @@ def waits_on_other(
     REVIEW`` names no owner and is the owner's own work.
     """
     return _waiting_on(row) and not _is_me(row, self_names, personal_names, identified, known_people)
+
+
+def configured_owner_names() -> tuple[list[str], list[str]]:
+    """``(names, personal)``: the reserved names with his speaker label, and
+    the name and aliases he gave on first run (``config.owner``)."""
+    speaker: list[Any] = []
+    personal: list[str] = []
+    try:
+        from holdspeak.config import Config
+
+        config = Config.load()
+        speaker = [config.meeting.mic_label]
+        personal = [name.strip().casefold() for name in config.owner.names()]
+    except Exception as exc:
+        log.warning("needs-you: the owner names read failed: %s", exc)
+    return owner_names(speaker), personal
+
+
+def self_check(known_people: Iterable[str] | None = None) -> Callable[[Any], bool]:
+    """A test of one owner string: is it the owner himself (``_is_me``)?"""
+    names, personal = configured_owner_names()
+    persons = None if known_people is None else {str(n).strip().casefold() for n in known_people}
+    return lambda owner: _is_me({"owner": owner}, names, personal, (), persons)
 
 
 def owner_names(extra: Iterable[Any] = ()) -> list[str]:
@@ -828,6 +865,71 @@ def fold_asks(items: list[dict[str, Any]], flights: Iterable[dict[str, Any]]) ->
             item["foldedInto"] = target
 
 
+#: Betterment D0: the four directions of a row. ``mine``: the owner's own
+#: work. ``theirs``: a person owes it to him. ``decide``: a decision, an
+#: approval, or an agent's question waits for his answer. ``setup``: an
+#: engine or a connection is missing (the blockers, a failed summary).
+DIRECTIONS: tuple[str, ...] = ("mine", "theirs", "decide", "setup")
+
+_DECIDE_SOURCES = frozenset({DECISION_SOURCE, CODER_SOURCE, GATE_SOURCE})
+
+
+def row_direction(row: dict[str, Any], is_me: Callable[[dict[str, Any]], bool]) -> str:
+    """Whose move a ranked attention row is (``DIRECTIONS``)."""
+    if (
+        row.get("source") in _DECIDE_SOURCES
+        or row.get("kind") in _DECIDE_SOURCES
+        or row.get("proposalKind") == "decision"
+    ):
+        return "decide"
+    if row.get("waiting"):
+        return "theirs"
+    if "_his" in row:  # a merged row: his when one of its projections is
+        return "mine" if row["_his"] else "theirs"
+    owner = str(row.get("owner") or "").strip()
+    if owner and row.get("why") != YOURS and not is_me(row):
+        return "theirs"
+    return "mine"
+
+
+def _due_day(due: Any) -> date | None:
+    """A row's due as a local day (a bare ISO day is that day)."""
+    text = str(due or "").strip()
+    if not text:
+        return None
+    if len(text) <= 10:
+        try:
+            return date.fromisoformat(text)
+        except ValueError:
+            return None
+    stamp = parse_stamp(text)
+    return stamp.date() if stamp is not None else None
+
+
+def counts_in_number(item: dict[str, Any], today: date) -> bool:
+    """Betterment D1, the one count rule: *mine* due today or late, *decide*
+    (decisions, approvals, an agent's question), and *setup* (counted apart:
+    the blockers and failed summaries). *Theirs* never counts. A promise not
+    kept yet (a proposed action, a To review card) does not count until kept.
+
+    A *mine* row with no due date (a review asked of him, a red build, an
+    item nobody owns yet) has no later day to wait for: it counts. Only a
+    *mine* row due on a later day waits for that day.
+    """
+    if item.get("askOverrides"):
+        return True  # an agent asks about this item: his answer is due now
+    direction = item.get("direction")
+    if direction == "decide":
+        return True
+    if direction != "mine" or item.get("waiting"):
+        return False
+    if item.get("_toReview") or (item.get("proposalId") and item.get("proposalKind") != "decision"):
+        return False
+    dues = item.get("_hisDues") if item.get("_hisDues") else [item.get("dueAt")]
+    days = [_due_day(due) for due in dues]
+    return any(day is None or day <= today for day in days)
+
+
 def compute_needs_you(
     *,
     door: dict[str, Any] | None = None,
@@ -874,7 +976,7 @@ def compute_needs_you(
     names = list(self_names)
     personal = [str(n) for n in personal_names]
     # Rows that name a person explicitly: the owner's own name never claims them.
-    identified = {str(row.get("id") or "") for row in combined if _person_identity(row)}
+    identified = {str(row.get("id") or "") for row in combined if _names_another(row, personal)}
     persons = None if known_people is None else {str(n).strip().casefold() for n in known_people}
 
     def other(row: dict[str, Any]) -> bool:
@@ -903,6 +1005,15 @@ def compute_needs_you(
             continue
         marks = [other(source) for source in sources]
         row["waiting"] = all(marks)
+        # Betterment D1: a projection that names no owner, or names him, is
+        # his; their due days decide the count, and one makes the row his.
+        his = [
+            source for source in sources
+            if not str(source.get("owner") or "").strip()
+            or _is_me(source, names, personal, identified, persons)
+        ]
+        row["_his"] = bool(his)
+        row["_hisDues"] = [source.get("dueAt") for source in his]
         if not row["waiting"] and other(row):
             his = next(source for source, mark in zip(sources, marks) if not mark)
             row["why"] = YOURS if _waiting_on(his) else (his.get("why") or row.get("why"))
@@ -928,6 +1039,9 @@ def compute_needs_you(
         if item.get("source") not in (CODER_SOURCE, GATE_SOURCE) and _item_ref(item) in asked:
             item["askOverrides"] = True
             item["waiting"] = False
+    # Betterment D0: each row says whose move it is.
+    for item in ranked:
+        item["direction"] = row_direction(item, lambda row: _is_me(row, names, personal, identified, persons))
     muted_projects = {str(pid) for pid in muted_project_ids}
     unmuted_items: list[dict[str, Any]] = []
     muted_items: list[dict[str, Any]] = []
@@ -944,15 +1058,24 @@ def compute_needs_you(
             unmuted_items.append(item)
     # What the owner waits on someone else for is listed and is not counted.
     waiting_items = [item for item in unmuted_items if item["waiting"]]
-    counted_items = [item for item in unmuted_items if not item["waiting"]]
+    # Betterment D1: the one count rule (``counts_in_number``) marks each row.
     # The asks folded above are listed (the desk draws each on its item's
     # row) and are not members of their own.
-    counted_items = [item for item in counted_items if not item.get("foldedInto")]
+    for item in muted_items:
+        item["counted"] = False
+    for item in unmuted_items:
+        item["counted"] = not item.get("foldedInto") and counts_in_number(item, clock.date())
+    counted_items = [item for item in unmuted_items if item["counted"]]
 
-    blockers = meeting_path_blockers(
-        None if assignment_read == "failed" else assignments, assignment_read,
-    )
-    failed_meetings = [meeting for meeting in meetings if meeting_needs_you(meeting)]
+    blockers = [
+        {**blocker, "direction": "setup"}
+        for blocker in meeting_path_blockers(
+            None if assignment_read == "failed" else assignments, assignment_read,
+        )
+    ]
+    failed_meetings = [
+        {**meeting, "direction": "setup"} for meeting in meetings if meeting_needs_you(meeting)
+    ]
     members = (
         [{"ref": _item_ref(item), "kind": "attention"} for item in counted_items]
         + [{"ref": f"blocker:{blocker['key']}", "kind": "blocker"} for blocker in blockers]
@@ -998,6 +1121,56 @@ def _read_people_names(principal: Any) -> set[str] | None:
     except Exception as exc:
         log.warning("needs-you: the People names read failed: %s", exc)
         return None
+
+
+def _row_action_id(row: dict[str, Any]) -> str:
+    """The action item a row stands for, or ``""``."""
+    if row.get("_isDoor") and row.get("source") == "action_item":
+        return str(row.get("ref") or "")
+    return str(row.get("actionItemId") or row.get("proposalActionItemId") or "")
+
+
+def attach_person_ids(
+    items: list[dict[str, Any]], db: Any, principal: Any, is_self: Callable[[Any], bool],
+) -> None:
+    """Betterment D0: ``person_id`` on every row: the Person it is about.
+
+    *theirs*: the owner, when it names exactly one Person. *mine*: the Person
+    it is for (``PeopleService.my_action_people``). A People commitment: its
+    relationship. Else ``""``. A store that cannot be read leaves ``""``.
+    """
+    for item in items:
+        item["person_id"] = _person_identity(item)
+        card = item.get("_doorCard") if isinstance(item.get("_doorCard"), dict) else {}
+        target = str(card.get("target_ref") or "")
+        if not item["person_id"] and target.startswith("people:") and is_people_row(item):
+            item["person_id"] = target.removeprefix("people:")
+    try:
+        from holdspeak.people.key_free import people_reads_allowed
+
+        people = _hub_service("people_service", lambda: None)
+        if people is None or not people_reads_allowed():
+            return
+        if people.readiness_state() != "ready":
+            return
+        mine = people.my_action_people(db, is_self) if any(
+            item.get("direction") == "mine" and _row_action_id(item) for item in items
+        ) else {}
+        owners: dict[str, str] = {}
+        for item in items:
+            if item["person_id"]:
+                continue
+            if item.get("direction") == "mine":
+                item["person_id"] = mine.get(_row_action_id(item), "")
+            elif item.get("direction") == "theirs":
+                owner = str(item.get("owner") or "").strip()
+                if owner and owner not in owners:
+                    found = people.resolve_owner_candidates(owner)
+                    rel = found.get("relationship") if found.get("link") == "linked" else None
+                    owners[owner] = str((rel or {}).get("id") or "")
+                item["person_id"] = owners.get(owner, "")
+    except Exception as exc:
+        log.warning("needs-you: the People read for row people failed: %s", exc)
 
 
 def _read_door(db: Any, principal: Any) -> dict[str, Any]:
@@ -1316,19 +1489,7 @@ def compose(
         log.warning("needs-you: the gate read failed: %s", exc)
         errors["gate"] = _reason(exc)
 
-    # The names that mean the owner: the reserved ones, his speaker label,
-    # and the name and aliases he gave on first run (``config.owner``).
-    speaker: list[Any] = []
-    personal: list[str] = []
-    try:
-        from holdspeak.config import Config
-
-        config = Config.load()
-        speaker = [config.meeting.mic_label]
-        personal = [name.strip().casefold() for name in config.owner.names()]
-    except Exception as exc:
-        log.warning("needs-you: the owner names read failed: %s", exc)
-    names = owner_names(speaker)
+    names, personal = configured_owner_names()
     # PHILO-15 B57 (Astra r1 P1): the People on the desk, so a one-edit
     # mishearing never takes a real colleague's work.
     known_people = _read_people_names(principal)
@@ -1357,6 +1518,10 @@ def compose(
         personal_names=personal,
         known_people=known_people,
         now=now,
+    )
+    attach_person_ids(
+        result["unmutedItems"] + result["mutedItems"], db, principal,
+        lambda owner: _is_me({"owner": owner}, names, personal, (), known_people),
     )
     answer = dict(aggregate)
     # One coder coverage record: a recomposed cached answer carries the last
@@ -1393,7 +1558,7 @@ def compose(
         "failedMeetings": result["failedMeetings"],
         "projects": sorted({
             str(item["projectId"]) for item in result["unmutedItems"]
-            if item.get("projectId") and not item.get("waiting")
+            if item.get("projectId") and item.get("counted")
         }),
         # The members by Project: the per-Project number every face shows
         # (the shade's Projects list, the palette's project badge). It is
@@ -1428,14 +1593,17 @@ _MEMBERSHIP_KEYS = (
 def project_counts(unmuted_items: Iterable[dict[str, Any]]) -> dict[str, int]:
     """The counted attention rows by Project: ``{projectId: n}``.
 
-    A row counts when it is a member (unmuted and not ``waiting``). The sum is
-    the attention part of ``count``; a member with no Project (a Door card,
-    a blocker, a failed meeting) is in ``count`` and in no Project.
+    A row counts when it is a member (unmuted, not ``waiting``, and marked
+    ``counted`` by the one count rule). The sum is the attention part of
+    ``count``; a member with no Project (a Door card, a blocker, a failed
+    meeting) is in ``count`` and in no Project.
     """
     counts: dict[str, int] = {}
     for item in unmuted_items:
         project_id = item.get("projectId")
         if not project_id or item.get("muted") or item.get("waiting") or item.get("foldedInto"):
+            continue
+        if item.get("counted") is False:
             continue
         counts[str(project_id)] = counts.get(str(project_id), 0) + 1
     return counts

@@ -241,8 +241,9 @@ export function composeScreen(input: ScreenInputs): ScreenObject[] {
       kind: "project",
       name: project.name || "Project",
       ...sprites("project", project.id),
-      // The Room's own count and words (its head's "N open here"): one
-      // Project, one number. A failed membership read wears NOT READ.
+      // Betterment D1: the hub's one count rule filtered to this Project
+      // (`projectCounts`), the bell's number in its Project's share. A
+      // failed membership read wears NOT READ.
       lamp: failed ? { ...NOT_READ, count: n || undefined } : n > 0 ? { tone: "ask", count: n } : undefined,
       ariaExtra: n > 0 ? `${n} open here` : undefined,
       notRead: failed ? { retry: { type: "project", id: project.id } } : undefined,

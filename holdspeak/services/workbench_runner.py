@@ -218,19 +218,31 @@ class WorkbenchRunner:
         links = self._record_terminal(run_id, parent, receipt, ran=ran)
         return {"run_id": run_id, "parent_operation_id": parent.operation_id, "receipt_id": receipt["receipt_id"], "terminal_disposition": receipt.get("outcome"), "children": links}
 
-    async def run(self, principal: Principal, workbench_id: str, *, memory_enabled: bool=True, request_id: str|None=None, deadline_seconds: float=60, delegation: dict[str, Any] | None = None, due_minute: int | None = None, source_event: dict[str, str] | None = None, item_ids: list[str] | None = None) -> dict[str,Any]:
+    async def run(self, principal: Principal, workbench_id: str, *, memory_enabled: bool=True, request_id: str|None=None, deadline_seconds: float|None=None, delegation: dict[str, Any] | None = None, due_minute: int | None = None, source_event: dict[str, str] | None = None, item_ids: list[str] | None = None) -> dict[str,Any]:
         if principal is None or principal.kind is PrincipalKind.NONE:
             from ..kernel.model import KernelRefused
             raise KernelRefused("principal_authentication_required")
         wb=self.db.workbenches.get(workbench_id)
         if wb is None: raise ServiceError("not_found","Unknown automation",context={"status":404})
         recipe=self.db.recipes.get(wb.recipe_id) if wb.recipe_id else None
-        if recipe is None: return {"error":f"workbench {wb.name}: no recipe assigned"}
+        # Betterment A2: an automation with an instruction needs no agent.
+        from . import automation_runs as automation
+        instructed=bool(str(wb.instruction or "").strip())
+        if recipe is None and not instructed: return {"error":f"workbench {wb.name}: no recipe assigned"}
+        recipe=recipe or automation.plain_agent(wb)
         if request_id and delegation is None:
             with self.db._connection() as conn:
                 existing=conn.execute("SELECT p.operation_id FROM kernel_parent_runs p JOIN kernel_operations o ON o.operation_id=p.operation_id WHERE o.principal_kind=? AND o.principal_identity=? AND o.idempotency_key=? AND p.kind='workbench' AND p.definition_ref=?",(principal.name,principal.identity,request_id,f"workbench:{workbench_id}")).fetchone()
             if existing is not None and self.broker.store.receipt(str(existing["operation_id"])) is not None:
                 return self._replayed_result(str(existing["operation_id"]))
+        if instructed and item_ids is None:
+            # One run = one result: mint the occurrence item and run only it.
+            # A scheduled minute or a request id names it, so a replay finds it.
+            key=f"schedule:{due_minute}" if delegation is not None else (f"request:{request_id}" if request_id else None)
+            occurrence=automation.mint_occurrence(self.db,wb,item_id=automation.occurrence_id(workbench_id,key) if key else None)
+            # A finished occurrence is a replay: the parent's idempotency
+            # key returns its receipt below; nothing runs twice.
+            item_ids=[occurrence.id] if occurrence.status=="pending" else []
         items=self.db.workbench_items.list_for_workbench(workbench_id,status="pending")
         if item_ids is not None:
             requested=list(dict.fromkeys(str(item_id) for item_id in item_ids if item_id))
@@ -244,10 +256,15 @@ class WorkbenchRunner:
         # The time limit is per item: a run of four 20 s items must not expire
         # on the fourth one (recon 2026-10-17, step 14: the 60 s whole-run
         # limit cancelled the run, skipped item 4 and recorded 0/0).
-        run_id="wbrun_"+uuid.uuid4().hex[:12]; deadline=time.time()+deadline_seconds*max(1,len(items))
+        # Betterment A2: the limit is per item and comes from the engine (60 s
+        # HTTP, the CLI preset's timeout); a caller's own limit is kept.
+        per_item=deadline_seconds if deadline_seconds is not None else automation.assigned_item_seconds(self.db, workbench_id)
+        run_id="wbrun_"+uuid.uuid4().hex[:12]; deadline=time.time()+per_item*max(1,len(items))
         snapshot={"workbench_id":workbench_id,"items":[x.id for x in items],"item_scope":"explicit" if item_ids is not None else "pending_batch","recipe_id":recipe.id,"recipe_revision":str(recipe.last_modified),"memory_enabled":memory_enabled,"request_id":request_id or "","source_event":dict(source_event or {})}
         if delegation is not None:
             route = self._scheduled_route(delegation)
+            if deadline_seconds is None:  # the frozen route names the engine
+                deadline=time.time()+automation.item_seconds(self.db, route)*max(1,len(items))
             snapshot.update({"delegation_id": delegation["id"], "terms_sha256": delegation["terms_sha256"],
                              "delegator_kind": delegation["delegator_kind"], "delegator_identity": delegation["delegator_identity"],
                              "deployment_revision_id": delegation["deployment_revision_id"],
@@ -375,7 +392,8 @@ class WorkbenchRunner:
                     target = self._route_target(route, int(reservation["route_leg_ordinal"]))
                     reported = str(value.get("model") or "") if isinstance(value, dict) else ""
                     ran.update(boundary=target["boundary"], model=reported or target["model"])
-                    projection = {"tokens":adapter.tokens,"parent_operation_id":parent.operation_id,"execution_epoch":parent.context.epoch,"planned_node":f"item:{item.id}","run_id":run_id,"workbench_id":workbench_id,"item_id":item.id,"output":str(value.get("output") if isinstance(value,dict) else value),"egress":{"boundary":target["boundary"],"model":target["model"]},"artifact_id":"artifact_"+str(reservation["child_invocation_id"])[-12:],"artifact_title":f"{recipe.name or recipe.id}: {item.title}","deployment_revision":target["deployment_revision_id"]}
+                    occurrence = automation.is_occurrence(item)
+                    projection = {"artifact_status":"new" if occurrence else "pending-review","tokens":adapter.tokens,"parent_operation_id":parent.operation_id,"execution_epoch":parent.context.epoch,"planned_node":f"item:{item.id}","run_id":run_id,"workbench_id":workbench_id,"item_id":item.id,"output":str(value.get("output") if isinstance(value,dict) else value),"egress":{"boundary":target["boundary"],"model":target["model"]},"artifact_id":"artifact_"+str(reservation["child_invocation_id"])[-12:],"artifact_title":item.title if occurrence else f"{recipe.name or recipe.id}: {item.title}","deployment_revision":target["deployment_revision_id"]}
                     digest = _sha(value)
                     return self.broker.projection_stager.stage(str(reservation["child_invocation_id"]), "workbench-item-output", projection, result_sha256=digest, receipt_result_ref=f"inference-result:{reservation['child_invocation_id']}/{digest}").result_ref
 
@@ -400,7 +418,7 @@ class WorkbenchRunner:
                     if outcome.outcome in {"cancelled", "indeterminate"} or self._winner(parent) is not None:
                         self._release_unpublished_claim(item.id)
                         return self._adopt_terminal(run_id,parent,tally())
-                    failed+=1; self.db.workbench_items.upsert(item_id=item.id,workbench_id=workbench_id,title=item.title,body=item.body,priority=item.priority,status="failed",result=f"Error: {outcome.error}",completed_at=utc_now_iso())
+                    failed+=1; self.db.workbench_items.upsert(item_id=item.id,workbench_id=workbench_id,title=item.title,body=item.body,priority=item.priority,status="failed",result=f"Error: {outcome.error}",completed_at=utc_now_iso(),grounding=json.loads(item.grounding_json or "{}"),context=json.loads(item.context_json or "{}"))  # a failure keeps its sources and its occurrence mark (A2)
                     emit_item_failed(workbench_id=workbench_id,run_id=run_id,item_id=item.id,title=item.title,index=ordinal,total=len(items),error=str(outcome.error))
                     continue
                 check=self.broker.projection_stager.finalize(iid)

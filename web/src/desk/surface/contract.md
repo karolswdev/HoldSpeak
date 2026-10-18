@@ -1052,10 +1052,13 @@ nowhere). It decides nothing: the app answers `accepts` and writes in
   green, amber, red, steel, dim steel), `verb` (Try it), `result` (the
   answer on the job), `isDefault` (the Default for AI work row).
 - `engines: SwitchEngine[]` — the right column. Each: `emblem`
-  (`MAC · LAN · API` plate), `name`, `tokens`, `lamp`
+  (`MAC · LAN · API · CLI` plate), `name`, `tokens`, `lamp`
   (`ok · busy · warn · broken · off`), `progress` (0..100 fills the bar on
   the plate; `null` draws no bar), `verb` + `egress` (the plate's one verb
-  and the host it reaches), `draggable` (only an engine with a model record).
+  and the host it reaches), `draggable` (only an engine with a model record),
+  `detail` (the plate unfolded in place, full width under its verb: an
+  agent engine's Spend limit per run; a press or key inside it never drags
+  or patches; a phone tap verb never carries it).
 - `found: SwitchEngine[]` — under the engines, caption `Found · n`; a
   found plate has no plug and carries its one verb (Use it). No row, no
   caption (UX-CANON A8).

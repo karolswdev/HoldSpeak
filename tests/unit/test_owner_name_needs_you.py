@@ -4,6 +4,8 @@ The "You" card on the first-run face writes ``owner.name`` and
 ``owner.aliases`` through ``PUT /api/settings``. The needs-you rule reads
 them as "me": an action "Karol to send X" is the owner's own work once he
 said his name is Karol, and before that it waits on someone else.
+Betterment D1: his own item counts on the day it is due; these items are
+due next week, so each test reads the row's ``direction`` (``mine``).
 
 The hub boots on an isolated HOME; the action item is minted through the
 real Door producer (``door.add_item``) and read through the real route.
@@ -94,8 +96,9 @@ def test_karol_to_send_needs_you_once_the_name_is_set(hub: Hub) -> None:
     after = _ok(hub.client.get("/api/desk/needs-you"))
     row = _row(after, ref)
     assert row["waiting"] is False and row["why"] == "YOURS", row
-    assert ref in [member["ref"] for member in after["members"]]
-    assert after["count"] == before["count"] + 1
+    # Betterment D1: his now, and due next week, so it waits for its day.
+    assert row["direction"] == "mine" and row["counted"] is False, row
+    assert after["count"] == before["count"]
     assert "karol" in after["ownerNames"]
 
 
@@ -104,7 +107,7 @@ def test_an_alias_counts_as_me_case_insensitive(hub: Hub) -> None:
     _ok(hub.client.put("/api/settings", json={"owner": {"name": "Karol Sane", "aliases": ["  KAROL "]}}))
     answer = _ok(hub.client.get("/api/desk/needs-you"))
     assert _row(answer, ref)["why"] == "YOURS"
-    assert ref in [member["ref"] for member in answer["members"]]
+    assert _row(answer, ref)["direction"] == "mine"
 
 
 def test_a_named_other_person_is_never_claimed_by_the_owner_alias(hub: Hub) -> None:
@@ -143,7 +146,7 @@ def test_b57_carol_is_karol_when_speech_misheard_his_name(hub: Hub) -> None:
 
     answer = _ok(hub.client.get("/api/desk/needs-you"))
     members = [member["ref"] for member in answer["members"]]
-    assert _row(answer, carol)["why"] == "YOURS" and carol in members
+    assert _row(answer, carol)["why"] == "YOURS" and _row(answer, carol)["direction"] == "mine"
     row = _row(answer, carl)
     assert row["why"] == "WAITING ON CARL" and row["waiting"] is True and carl not in members
 
@@ -213,7 +216,7 @@ def test_b57_a_locked_people_store_keeps_his_first_name_work(hub: Hub, monkeypat
     _ok(hub.client.put("/api/settings", json={"owner": {"name": "Karol Nowak", "aliases": []}}))
     answer = _ok(hub.client.get("/api/desk/needs-you"))
     members = [member["ref"] for member in answer["members"]]
-    assert _row(answer, karol)["why"] == "YOURS" and karol in members
+    assert _row(answer, karol)["why"] == "YOURS" and _row(answer, karol)["direction"] == "mine"
     assert _row(answer, carol)["why"] == "WAITING ON CAROL" and carol not in members  # unreadable: no fuzzy
 
 
@@ -226,5 +229,5 @@ def test_b57_a_person_named_like_him_does_not_take_his_first_name(hub: Hub) -> N
     _ok(hub.client.put("/api/settings", json={"owner": {"name": "Karol Nowak", "aliases": []}}))
     answer = _ok(hub.client.get("/api/desk/needs-you"))
     assert _row(answer, karol)["why"] == "YOURS"
-    assert karol in [member["ref"] for member in answer["members"]]
+    assert _row(answer, karol)["direction"] == "mine"
 

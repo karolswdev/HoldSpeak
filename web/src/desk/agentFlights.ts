@@ -11,6 +11,7 @@
 import { useCallback, useEffect } from "react";
 import { create } from "zustand";
 import { apiFetch } from "../lib/api";
+import { reportWriteFailure } from "./hooks/useWriteReceipt";
 import { useOnCoderFrame, useOnDeskChanged } from "./useDeskChangedRefresh";
 import { coderTurnEnd, isBlockedCoder, type NeedsYouCoder } from "./needsYou";
 
@@ -258,8 +259,9 @@ export async function markLaunchSeen(launchId: string, turnId: string | null): P
   }));
   try {
     await apiFetch(`/api/agent/launches/${encodeURIComponent(launchId)}/seen`, { method: "POST", json: turnId ? { wait_id: turnId } : {} });
-  } catch {
+  } catch (cause) {
     // The next read says NEW again; the next open marks it again.
+    reportWriteFailure("Mark seen", cause, () => void markLaunchSeen(launchId, turnId), `agent:${launchId}`);
   }
 }
 

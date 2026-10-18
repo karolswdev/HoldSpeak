@@ -35,6 +35,8 @@ KIND_LAN = "lan"
 KIND_LOCAL = "local"
 KIND_CLOUD = "cloud"
 KIND_PRESET = "preset"
+#: Betterment E2: an agent CLI on this Mac (holdspeak/intel/cli_engine.py).
+KIND_AGENT = "agent"
 
 # ---- Engine states ----------------------------------------------------------
 
@@ -454,6 +456,109 @@ def _device_whisper(db: Any, home: Path) -> dict[str, Any] | None:
 
 # ---- Detect -----------------------------------------------------------------
 
+#: The vendor word on an agent engine's egress chip (its prompt goes there).
+_AGENT_VENDOR = {"api.anthropic.com": "ANTHROPIC", "api.openai.com": "OPENAI"}
+
+
+def _agent_signed_in(preset_id: str, home: Path) -> str:
+    from .onboarding_service import cli_signed_in
+
+    return cli_signed_in(preset_id, home=home)
+
+
+def _agent_engine_row(db: Any, profile: Any, home: Path) -> dict[str, Any]:
+    """Betterment E2: one agent CLI engine (a ``cli:<preset>`` profile).
+
+    READY when the CLI is on PATH; NOT_SET when its last run said it has no
+    sign-in (``signedIn: "no"``, the face says NOT SIGNED IN); UNREACHABLE
+    when the CLI is gone or agent engines are off. The spend block carries
+    the limit, whether the CLI can enforce one, and today's and this week's
+    reported cost (``cli_engine_runs``).
+    """
+    import shutil
+
+    from ..intel import cli_engine_runs
+    from ..intel.cli_engine import DEFAULT_MODEL, cli_engines_on, parse_cli_endpoint
+
+    fields = _detected_profile_fields(db, str(profile.id))
+    parsed = parse_cli_endpoint(profile.base_url)
+    label = str(profile.name or profile.id)
+    model = str(getattr(profile, "model", "") or "")
+    if parsed is None:
+        return {
+            "id": f"{KIND_AGENT}:{profile.id}", "kind": KIND_AGENT, "name": label, "legacyLabel": label,
+            "host": "", "state": STATE_NOT_SUPPORTED, **fields,
+        }
+    preset, limit = parsed
+    runs = cli_engine_runs.spend_summary(db, [str(profile.id), str(fields.get("profileId") or "")])
+    installed = cli_engines_on() and shutil.which(preset.executable) is not None
+    if runs["lastOutcome"] == cli_engine_runs.NOT_SIGNED_IN:
+        signed_in = "no"
+    else:
+        signed_in = _agent_signed_in(preset.id, home) if installed else "unknown"
+    state = STATE_UNREACHABLE if not installed else STATE_NOT_SET if signed_in == "no" else STATE_READY
+    return {
+        "id": f"{KIND_AGENT}:{profile.id}",
+        "kind": KIND_AGENT,
+        "name": label if model in ("", DEFAULT_MODEL) else f"{label} · {model}",
+        "legacyLabel": label,
+        "model": model or DEFAULT_MODEL,
+        "host": preset.vendor_host,
+        "vendor": _AGENT_VENDOR.get(preset.vendor_host, preset.vendor_host.upper()),
+        "agentPreset": preset.id,
+        "installed": installed,
+        "signedIn": signed_in,
+        "state": state,
+        "spend": {
+            "limitUsd": limit,
+            "canLimit": preset.enforces_spend_limit,
+            "reportsCost": preset.reports_cost,
+            "todayUsd": runs["todayUsd"],
+            "weekUsd": runs["weekUsd"],
+        },
+        **fields,
+    }
+
+
+def _found_agent_engines(db: Any, home: Path) -> list[dict[str, Any]]:
+    """Betterment E2: each agent CLI on PATH that is not an engine yet.
+
+    Reads PATH and the sign-in files only (no process, no network). The
+    rig switch ``HOLDSPEAK_CLI_ENGINES=off`` lists none.
+    """
+    import shutil
+
+    from ..intel.cli_engine import PRESETS, cli_engines_on, parse_cli_endpoint
+
+    if not cli_engines_on():
+        return []
+    have: set[str] = set()
+    for profile in db.profiles.list():
+        if profile.deleted:
+            continue
+        parsed = parse_cli_endpoint(profile.base_url)
+        if parsed is not None:
+            have.add(parsed[0].id)
+    rows: list[dict[str, Any]] = []
+    for preset in PRESETS.values():
+        if preset.id in have or shutil.which(preset.executable) is None:
+            continue
+        rows.append({
+            "id": f"{KIND_AGENT}:found:{preset.id}",
+            "kind": KIND_AGENT,
+            "name": preset.label,
+            "legacyLabel": preset.label,
+            "host": preset.vendor_host,
+            "vendor": _AGENT_VENDOR.get(preset.vendor_host, preset.vendor_host.upper()),
+            "agentPreset": preset.id,
+            "installed": True,
+            # yes · unknown (try once) · not_read; never no.
+            "signedIn": _agent_signed_in(preset.id, home),
+            "state": STATE_READY,
+        })
+    return rows
+
+
 def detect(
     *,
     db: Any,
@@ -522,6 +627,10 @@ def detect(
             continue
         base = str(profile.base_url or "").strip()
         if not base:
+            continue
+        if base.startswith("cli:"):
+            # Betterment E2: an agent CLI engine, never an address to read.
+            engines.append(_agent_engine_row(db, profile, effective_home))
             continue
         host = _host_for_profile(profile)
         is_cloud = not _is_lan_host(host)
@@ -631,6 +740,9 @@ def detect(
                 "baseUrl": str(found["base_url"]),
                 "loopbackPort": int(found["port"]),
             })
+
+    # 1c. Betterment E2: agent CLIs on this Mac that are not engines yet.
+    engines.extend(_found_agent_engines(db, effective_home))
 
     # 2. Paired devices (mesh nodes)
     for profile in db.profiles.list():
@@ -1323,6 +1435,7 @@ _INCOMPATIBILITY_REASONS: dict[str, str] = {
     "capability_class_unsupported": "This engine cannot do this work.",
     "context_unsupported": "This engine holds too little text.",
     "boundary_unsupported": "This engine is not permitted on this network.",
+    "cli_engine_speech_unsupported": "An agent engine cannot do speech work.",
     "profile_missing": "This engine record is not available.",
     "binding_missing": "This engine has no ready record.",
     "binding_disabled": "This engine is turned off.",

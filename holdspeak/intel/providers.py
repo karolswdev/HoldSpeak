@@ -176,36 +176,28 @@ def resolve_intel_provider(
     )
 
 
-def resolve_llm_capability(meeting_config: Any) -> bool:
+def resolve_llm_capability(meeting_config: Any, *, db: Any = None) -> bool:
     """Whether the ``"llm"`` plugin capability should be enabled.
 
-    True iff meeting intelligence is enabled in config *and* an intel provider
-    resolves (HS-16-02). The check is cheap — `resolve_intel_provider` only
-    inspects config + file existence, it does not warm a model. Any failure
-    (including a malformed config) is non-fatal and yields ``False`` so the host
-    is still constructed; LLM-backed plugins then cleanly block at execute time.
+    Capture C4: True iff meeting intelligence is enabled in config *and* the
+    "Meeting summaries" job resolves to an engine in Engines -- the same route
+    resolution the summary uses (``project_route``: the exact capability, then
+    the Meetings group, then the default engine).  The old
+    ``meeting.intel_provider`` setting and a model file on disk no longer
+    decide it.  The read is cheap (assignment heads only, no model is warmed).
+    Any failure is non-fatal and yields ``False`` so the host is still
+    constructed; LLM-backed plugins then cleanly block at execute time.
     """
     try:
         if not bool(getattr(meeting_config, "intel_enabled", False)):
             return False
-        # HS-130-05: judge the ONE placement decision (an adopted destination
-        # wins over the local/auto/cloud intent), not ``intel_provider`` alone.
-        placement = resolve_meeting_placement(meeting_config)
-        if placement.node:
-            # a mesh-adopted endpoint has no base_url for the resolver to
-            # judge; the capability EXISTS (the relay provider is the engine)
-            # and node liveness is a run-time question with a named refusal
-            return True
-        kwargs: dict[str, Any] = {
-            "cloud_model": placement.model,
-            "cloud_api_key_env": placement.api_key_env,
-            "cloud_base_url": placement.base_url,
-        }
-        model_path = getattr(meeting_config, "intel_realtime_model", None)
-        if model_path:
-            kwargs["model_path"] = model_path
-        resolved, _reason = _intel_pkg.resolve_intel_provider(placement.provider, **kwargs)
-        return resolved is not None
+        from ..services.meeting_route_projection import project_route
+
+        if db is None:
+            from ..db import get_database
+
+            db = get_database()
+        return project_route(db).get("status") == "ready"
     except Exception:
         return False
 
@@ -830,6 +822,13 @@ def _profile_engine(
             node=str(node).strip(), model_hint=str(model or ""),
             deployment_revision=deployment_revision, warrant=warrant,
         )  # type: ignore[return-value]
+    if kind == "cliCommand":
+        # Betterment E1: an agent CLI on this Mac (`cli:<preset>` in base_url).
+        from .cli_engine import CliEngine
+
+        return CliEngine.from_endpoint(
+            str(base_url or ""), model=str(model or ""), profile_id=str(profile_id or ""),
+        )
     if kind == "openAICompatible" and str(base_url or "").strip():
         # Refuse on ambiguity: a blank profile id has no unique secret slot, and
         # borrowing a shared env name would let an unidentified destination read

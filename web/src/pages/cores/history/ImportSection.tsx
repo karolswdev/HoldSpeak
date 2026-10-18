@@ -1,5 +1,5 @@
 // HS-117-09 — extracted from HistoryCore.tsx (lines 201-315).
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { openSurfaceOr } from "../../../desk/shell";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch } from "../../../lib/api";
@@ -13,21 +13,42 @@ import {
   SurfaceState,
 } from "../../../desk/surface/Surface";
 import { useAction } from "../core-hooks";
+import { IMPORT_ACCEPT, startedAtMs, toDatetimeLocal, whenFromFile } from "./importWhen";
 
 export function ImportSection({
   onDone,
   onImported,
   scope,
+  initialFile = null,
 }: {
   onDone(): void;
   onImported(): void;
   scope?: string;
+  /** Capture C3: the file the head's Import (or a drop on the window) chose. */
+  initialFile?: File | null;
 }) {
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [speaker, setSpeaker] = useState("");
   const [tags, setTags] = useState("");
+  const [when, setWhen] = useState("");
   const action = useAction();
+  // Capture C3: "When was this?" fills from the file (its VTT/SRT header
+  // date, a date in its name, else its modified time). HS-201-10 (rehearsal
+  // defect 10) sent `lastModified` unseen, so a WAV copied in June landed
+  // under JUN 03; the value is now shown and the owner can change it.
+  const choose = (next: File | null) => {
+    setFile(next);
+    setWhen("");
+    if (!next) return;
+    void whenFromFile(next).then((found) => {
+      if (found) setWhen((current) => current || toDatetimeLocal(found));
+    });
+  };
+  useEffect(() => {
+    if (initialFile) choose(initialFile);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialFile]);
   const submit = async () => {
     if (!file) return;
     await action.run(async () => {
@@ -36,16 +57,14 @@ export function ImportSection({
       if (title.trim()) body.append("title", title.trim());
       if (speaker.trim()) body.append("speaker", speaker.trim());
       if (tags.trim()) body.append("tags", tags.trim());
-      // HS-201-10 (rehearsal defect 10): this used to send the FILE's
-      // `lastModified` as the meeting's start, so a WAV copied onto the disk
-      // in June landed the meeting under JUN 03 — three months back in the
-      // ledger, where the owner had no reason to look. The import moment is
-      // the one fact this gesture actually knows, and the hub stamps it.
+      const started = startedAtMs(when);
+      if (started !== null) body.append("started_at_ms", String(started));
       await apiFetch("/api/meetings/import", { method: "POST", body });
       setFile(null);
       setTitle("");
       setSpeaker("");
       setTags("");
+      setWhen("");
       onImported();
       onDone();
     });
@@ -80,13 +99,13 @@ export function ImportSection({
           event.preventDefault();
           event.stopPropagation();
           const dropped = event.dataTransfer?.files?.[0];
-          if (dropped) setFile(dropped);
+          if (dropped) choose(dropped);
         }}
       >
         <input
           type="file"
-          accept="audio/*,.wav,.mp3,.m4a,.ogg,.flac,.vtt,.srt,.txt"
-          onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+          accept={IMPORT_ACCEPT}
+          onChange={(event) => choose(event.target.files?.[0] ?? null)}
         />
         {file ? (
           <>
@@ -111,6 +130,16 @@ export function ImportSection({
       </div>
       {file ? (
         <GadgetGroup>
+          <GadgetRow label="When was this?" controlWidth="full">
+            <StringGadget
+              type="datetime-local"
+              label="When was this?"
+              value={when}
+              onChange={setWhen}
+              micDraftScope="import-when"
+              inputProps={{ "data-testid": "import-when" } as Record<string, string>}
+            />
+          </GadgetRow>
           <GadgetRow label="TITLE">
             <StringGadget label="Title" value={title} onChange={setTitle} />
           </GadgetRow>

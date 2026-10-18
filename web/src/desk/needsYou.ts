@@ -68,6 +68,13 @@ export interface NeedsYouRoomItem extends RankableItem {
   /** True when the owner waits on someone else for this row: it is listed
    * (the WAITING filter shows it) and it is not counted. */
   waiting?: boolean;
+  /** Betterment D0: whose move it is (`mine`, `theirs`, `decide`, `setup`). */
+  direction?: "mine" | "theirs" | "decide" | "setup";
+  /** Betterment D0: the Person the row is about (`""` when none). */
+  person_id?: string;
+  /** Betterment D1: the hub's one count rule counts this row
+   *  (`needs_you_membership.counts_in_number`). */
+  counted?: boolean;
   [key: string]: unknown;
 }
 
@@ -526,6 +533,57 @@ export function foldAsks(
   }
 }
 
+const DECIDE_SOURCES = new Set(["decision", "coder", "gate"]);
+
+/** Whose move a ranked row is. The twin of `row_direction` in
+ *  `holdspeak/services/needs_you_membership.py`. */
+export function rowDirection(
+  row: NeedsYouRoomItem, selfNames: readonly string[] = SELF_OWNER_NAMES,
+): "mine" | "theirs" | "decide" {
+  if (DECIDE_SOURCES.has(String(row.source ?? "")) || DECIDE_SOURCES.has(String(row.kind ?? ""))
+    || row.proposalKind === "decision") return "decide";
+  if (row.waiting) return "theirs";
+  if (typeof row._his === "boolean") return row._his ? "mine" : "theirs";
+  const owner = String(row.owner ?? "").trim();
+  if (owner && row.why !== YOURS && !isSelf(owner, selfNames)) return "theirs";
+  return "mine";
+}
+
+function dayOf(at: Date): string {
+  return `${at.getFullYear()}-${String(at.getMonth() + 1).padStart(2, "0")}-${String(at.getDate()).padStart(2, "0")}`;
+}
+
+/** A row's due as a local day (a bare ISO day is that day). */
+function localDayOf(due: unknown): string | null {
+  const text = String(due ?? "").trim();
+  if (!text) return null;
+  if (text.length <= 10) return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : null;
+  const at = new Date(text);
+  return Number.isFinite(at.getTime()) ? dayOf(at) : null;
+}
+
+/** Betterment D1, the one count rule: *mine* due today or late (or with no
+ *  date), *decide*, and an agent's ask on an item. *Theirs* never counts; a
+ *  promise not kept yet does not count. The twin of `counts_in_number`. */
+export function countsInNumber(row: NeedsYouRoomItem, now: Date): boolean {
+  if (row.askOverrides) return true;
+  if (row.direction === "decide") return true;
+  if (row.direction !== "mine" || row.waiting) return false;
+  if (row._toReview || (row.proposalId && row.proposalKind !== "decision")) return false;
+  // A mine row with no due date has no later day to wait for: it counts.
+  const his = Array.isArray(row._hisDues) && row._hisDues.length ? row._hisDues : [row.dueAt];
+  return his.some((due) => {
+    const day = localDayOf(due);
+    return day === null || day <= dayOf(now);
+  });
+}
+
+/** A row is a member of the one number: unmuted, not waited on, not an ask
+ *  folded into its item, and counted by the hub's rule. */
+export function isCountedRow(row: NeedsYouRoomItem): boolean {
+  return !row.muted && !row.waiting && !row.foldedInto && row.counted !== false;
+}
+
 /**
  * The one meaning of `needs you`, as a pure function.
  *
@@ -585,10 +643,15 @@ export function computeNeedsYou(
     if (sources.length < 2) return { ...row, waiting: waitsOnOther(row, selfNames) };
     const marks = sources.map((source) => waitsOnOther(source, selfNames));
     const waiting = marks.every(Boolean);
-    if (waiting || !waitsOnOther(row, selfNames)) return { ...row, waiting };
+    // Betterment D1: a projection that names no owner, or names him, is his;
+    // their due days decide the count, and one makes the row his.
+    const mine = sources.filter((source) => !String(source.owner ?? "").trim() || isSelf(source.owner, selfNames));
+    const d1 = { _his: mine.length > 0, _hisDues: mine.map((source) => source.dueAt) };
+    if (waiting || !waitsOnOther(row, selfNames)) return { ...row, waiting, ...d1 };
     const his = sources[marks.indexOf(false)];
     return {
       ...row,
+      ...d1,
       waiting,
       why: waitingOn(his) ? YOURS : (his.why || row.why),
       severity: his.severity || row.severity,
@@ -625,7 +688,11 @@ export function computeNeedsYou(
   }
   // What the owner waits on someone else for is listed and is not counted.
   const waitingItems = unmutedItems.filter((item) => item.waiting);
-  const countedItems = unmutedItems.filter((item) => !item.waiting && !item.foldedInto);
+  // Betterment D1: the one count rule (the twin of `counts_in_number`).
+  for (const item of ranked) item.direction = rowDirection(item, selfNames);
+  for (const item of mutedItems) item.counted = false;
+  for (const item of unmutedItems) item.counted = !item.foldedInto && countsInNumber(item, now);
+  const countedItems = unmutedItems.filter((item) => item.counted);
 
   const assignmentRead = input.assignmentRead ?? "pending";
   const assignments = input.assignments ?? null;
@@ -658,6 +725,9 @@ export interface NeedsYouSnapshot extends NeedsYouResult {
   /** PHILO-14 A1: each Room's own count (its head's "N open here"), by
    *  Project; null when the hub's answer did not carry it. */
   roomCounts: Record<string, number> | null;
+  /** Betterment D1: the hub's `projectCounts` (the one rule by Project);
+   *  null when the answer did not carry it. */
+  projectCounts: Record<string, number> | null;
   complete: boolean;
   loading: boolean;
   errors: NeedsYouErrors;
@@ -708,12 +778,12 @@ export interface NeedsYouAnswer {
  *  `waiting`). The twin of `project_counts` in
  *  `holdspeak/services/needs_you_membership.py`. */
 export function projectCountsOf(
-  items: readonly { projectId?: unknown; muted?: unknown; waiting?: unknown; foldedInto?: unknown }[],
+  items: readonly { projectId?: unknown; muted?: unknown; waiting?: unknown; foldedInto?: unknown; counted?: unknown }[],
 ): Record<string, number> {
   const counts: Record<string, number> = {};
   for (const item of items) {
     const projectId = item.projectId ? String(item.projectId) : "";
-    if (!projectId || item.muted || item.waiting || item.foldedInto) continue;
+    if (!projectId || item.muted || item.waiting || item.foldedInto || item.counted === false) continue;
     counts[projectId] = (counts[projectId] ?? 0) + 1;
   }
   return counts;
@@ -740,13 +810,15 @@ export function readProjectCounts(
   return projectCountsOf(items);
 }
 
-/** PHILO-14 A1 — one Project, one number: the Room's own count (its head's
- *  "N open here") on the screen's drawer and the Dock. A snapshot without
- *  the hub's `roomCounts` falls back to the members by Project. */
+/** Betterment D1 — one Project, one number: the hub's one count rule split
+ *  by Project (`projectCounts`) on the screen's Project icon. It was the
+ *  Room's own count (`roomCounts`), which counted rows the bell does not
+ *  (the recon's 12 against the bell's 11). A snapshot without the hub's
+ *  `projectCounts` falls back to the counted rows by Project. */
 export function projectOpenHere(
-  snapshot: { roomCounts?: Record<string, number> | null; unmutedItems: readonly NeedsYouRoomItem[] },
+  snapshot: { projectCounts?: Record<string, number> | null; unmutedItems: readonly NeedsYouRoomItem[] },
 ): Record<string, number> {
-  if (snapshot.roomCounts) return snapshot.roomCounts;
+  if (snapshot.projectCounts) return snapshot.projectCounts;
   return projectCountsOf(snapshot.unmutedItems);
 }
 
@@ -776,7 +848,7 @@ export function readNeedsYouAnswer(answer: NeedsYouAnswer | null | undefined): N
   // PHILO-14 A5: an agent's ask the hub folded into its item (`foldedInto`)
   // is listed and is not a member of its own: one object, one count.
   const members: NeedsYouMember[] = [
-    ...unmutedItems.filter((item) => !item.waiting && !item.foldedInto)
+    ...unmutedItems.filter(isCountedRow)
       .map((item) => ({ ref: itemRef(item), kind: "attention" as const, item })),
     ...blockers.map((blocker) => ({ ref: `blocker:${blocker.key}`, kind: "blocker" as const, blocker })),
     ...failedMeetings.map((meeting) => ({ ref: meeting.id, kind: "meeting" as const, meeting })),
@@ -806,6 +878,7 @@ const EMPTY_RESULT: NeedsYouResult = {
 let snapshot: NeedsYouSnapshot = {
   ...EMPTY_RESULT,
   roomCounts: null,
+  projectCounts: null,
   complete: false,
   loading: false,
   errors: {},
@@ -867,6 +940,7 @@ async function refreshNeedsYou(fresh = true): Promise<void> {
     publish({
       ...readNeedsYouAnswer(value),
       roomCounts: readRoomCounts(value.roomCounts),
+      projectCounts: value.projectCounts ? readProjectCounts(value) : null,
       complete:
         Object.keys(errors).length === 0 &&
         readCoverage(room.coverage, room.complete ?? undefined, false).complete &&
@@ -942,7 +1016,7 @@ export function resetNeedsYou(): void {
   inflight = null;
   inflightFresh = false;
   generation += 1;
-  snapshot = { ...EMPTY_RESULT, roomCounts: null, complete: false, loading: false, errors: {}, room: null };
+  snapshot = { ...EMPTY_RESULT, roomCounts: null, projectCounts: null, complete: false, loading: false, errors: {}, room: null };
 }
 // The test setup resets through this handle and never imports this module:
 // an import there would bind the real API client before a test's mock.

@@ -34,6 +34,10 @@ import uuid as _stdlib_uuid
 
 ORACLE_SCHEMA = "philo13-needs-you-oracle@1"
 OWNER_IDENTITY = "Karol"
+#: The owner as a meeting names him on his own items (the speaker label).
+#: Betterment D1: an owner string the hub cannot tell is him is *theirs*,
+#: and the fixture's hub has no configured owner name.
+OWNER_SAID = "Me"
 
 PROJECT_ID = "philo13-a2-project"
 MUTED_PROJECT_ID = "philo13-a2-muted-project"
@@ -360,10 +364,10 @@ def _seed_meetings_and_projects(db: Any, now: datetime) -> dict[str, Any]:
     # a second MeetingState action here would make the merged Door/Room graph
     # show two candidates for one commitment.
     main_actions = [
-        _action(A1_ID, A1_TASK, owner=OWNER_IDENTITY, due=yesterday.isoformat(), created_at=main_started.isoformat()),
+        _action(A1_ID, A1_TASK, owner=OWNER_SAID, due=yesterday.isoformat(), created_at=main_started.isoformat()),
         _action(A3_ID, A3_TASK, owner="Priya", due=(today + timedelta(days=7)).isoformat(), created_at=main_started.isoformat()),
         _action(A4_ID, A4_TASK, owner=None, due=None, created_at=main_started.isoformat()),
-        _action(D1_ID, D1_TASK, owner=OWNER_IDENTITY, due=yesterday.isoformat(), status="done", created_at=main_started.isoformat()),
+        _action(D1_ID, D1_TASK, owner=OWNER_SAID, due=yesterday.isoformat(), status="done", created_at=main_started.isoformat()),
     ]
     main_segments = [(A1_TASK, 1.0), (A2_TASK, 2.0), (A3_TASK, 3.0), (A4_TASK, 4.0)]
     db.meetings.save_meeting(_meeting(
@@ -452,7 +456,7 @@ def _confirm_a2(db: Any, *, due: str) -> dict[str, Any]:
         artifact_type="action_items",
         title="A2 oracle action extraction",
         structured_json={"action_items": [{
-            "task": A2_TASK, "owner": OWNER_IDENTITY,
+            "task": A2_TASK, "owner": OWNER_SAID,
             "due": "", "source_timestamp": 2.0,
         }]},
         status="accepted",
@@ -897,7 +901,9 @@ def dedup_probe(db_path: Path, *, home: Path | None = None, now: datetime | None
     db = Database(path)
     try:
         project_id = str(seeded["ids"]["project"])
-        tomorrow = (clock.date() + timedelta(days=1)).isoformat()
+        # Betterment D1: the duplicate is his with no date (it counts, and
+        # ranks after the Room's due-today row, which stays the head), so a
+        # rule that skips the merge counts it twice. Priya's never counted.
         db.meetings.save_meeting(_meeting(
             DEDUP_MEETING_ID,
             "A2 dedup producer meeting",
@@ -907,8 +913,8 @@ def dedup_probe(db_path: Path, *, home: Path | None = None, now: datetime | None
             action_items=[_action(
                 DEDUP_ACTION_ID,
                 A2_TASK,
-                owner="Priya",
-                due=tomorrow,
+                owner=OWNER_SAID,
+                due=None,
                 created_at=clock.isoformat(),
             )],
             segments=[(A2_TASK, 1.0)],

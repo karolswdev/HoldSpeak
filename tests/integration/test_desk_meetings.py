@@ -132,12 +132,11 @@ def test_an_imported_meeting_run_with_the_disclosed_hash_reaches_a_six_turn_summ
     test_meeting_partial_chain_retry_stays_live_under_amendment).
 
     The real import route, the disclosed selection hash, the hub's own
-    lifespan drainer, the real summary. The plugin -> proposal pipeline is
-    parked (the HS-201 analysis-only amendment): the run calls no meeting
-    plugin, and no plugin output becomes a proposal (the only proposals are
-    the summary's own action items). If it comes back, this test
-    fails, as the strict xfails did; then restore the review assertions from
-    tests/e2e/_parked/test_hs200_meeting_outcomes_glass.py."""
+    lifespan drainer, the real summary. Capture C4 brought the plugin ->
+    proposal pipeline back (it was parked by the HS-201 analysis-only
+    amendment): the job's plugins run on its disclosed route, and the review
+    holds the plugins' five proposals, as
+    tests/e2e/_parked/test_hs200_meeting_outcomes_glass.py asserted."""
     from holdspeak import intel_queue_conductor as conductor
     from holdspeak.db import get_database
     from holdspeak.runtime_lock import claim_database, current_lock, release_database
@@ -198,13 +197,16 @@ def test_an_imported_meeting_run_with_the_disclosed_hash_reaches_a_six_turn_summ
         assert review["job"]["status"] == "succeeded", review["job"]
         assert (review["coverage"]["turns"], review["coverage"]["read"], review["coverage"]["state"]) == (
             6, 6, "available"), review["coverage"]
-        # The parked pipeline (the two strict-xfail rows' tripwire): no meeting
-        # plugin ran, so none of the scripted plugin output became a proposal.
-        # The proposals there are the summary's own action items.
-        assert engine.plugin_calls == [], "the meeting plugin chain is live again"
-        summary_tasks = {item.task for item in engine.result.action_items}
-        assert {p["text"] for p in review["proposals"]} <= summary_tasks, review["proposals"]
-        assert not [p for p in review["proposals"] if p["kind"] == "decision"], review["proposals"]
+        # Capture C4: the plugin chain is live again. The job's plugins run on
+        # its disclosed route, and their output becomes the proposals (the
+        # bridge takes decisions and actions from the plugins, never twice).
+        assert sorted(engine.plugin_calls) == [ACT, DEC], engine.plugin_calls
+        proposals = review["proposals"]
+        assert sorted(p["kind"] for p in proposals) == ["action", "action", "action", "decision", "decision"], proposals
+        assert {p["text"] for p in proposals if p["kind"] == "decision"} == {
+            item["decision"] for item in json.loads(DECISIONS_JSON)["decisions"]
+        }, proposals
+        assert all(p["job_id"] == review["job"]["job_id"] for p in proposals), proposals
     finally:
         _stop(server)
         conductor.stop_intel_queue_conductor()
@@ -607,3 +609,40 @@ def _recorded_looked_at(receipt: dict[str, Any]) -> None:
     stored = json.loads(LOOKED_AT_FIXTURE.read_text())["run_receipt"]
     assert stored["looked_at"] == receipt["looked_at"], "re-record with HOLDSPEAK_WIRE_WRITE=1"
     assert set(stored) == set(receipt), "re-record with HOLDSPEAK_WIRE_WRITE=1"
+
+
+# ── Capture C3: Import asks when it was ──────────────────────────────────────
+
+WHEN_TOKEN = "desk-meetings-when"
+THEO_TXT = Path(__file__).parents[1] / "fixtures" / "capture_one_on_one_theo.txt"
+
+
+def test_an_import_with_a_stated_start_is_listed_on_that_day(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The face sends "When was this?" as ``started_at_ms``. The hub stores
+    that start: the Thursday 1:1 (imported on a Saturday) lists under
+    Thursday 15 October 10:00, not under the import moment."""
+    thursday = datetime(2026, 10, 15, 10, 0, 0)
+    server, base = _boot(tmp_path, monkeypatch, token=WHEN_TOKEN)
+    try:
+        api = lambda method, path, body=None: _api(base, method, path, body, token=WHEN_TOKEN)  # noqa: E731
+        status, imported = _call(
+            base, "POST", "/api/meetings/import", token=WHEN_TOKEN, ok=False,
+            files={"file": ("one-on-one-theo.txt", THEO_TXT.read_bytes(), "text/plain")},
+            data={"title": "1:1 with Theo", "started_at_ms": str(int(thursday.timestamp() * 1000))},
+        )
+        assert status == 202, imported
+        meeting_id = str(imported["meeting_id"])
+        assert _wait(lambda: bool(api("GET", f"/api/meetings/{meeting_id}").get("segments")), timeout=30), (
+            "the import never produced its segments")
+        detail = api("GET", f"/api/meetings/{meeting_id}")
+        started = datetime.fromisoformat(str(detail["started_at"]).replace("Z", "+00:00"))
+        assert started.astimezone().replace(tzinfo=None) == thursday, detail["started_at"]
+        listed = [row for row in api("GET", "/api/meetings?limit=100")["meetings"] if row["id"] == meeting_id]
+        assert listed, "the imported meeting is not in the list"
+        row_start = datetime.fromisoformat(str(listed[0]["started_at"]).replace("Z", "+00:00"))
+        assert row_start.astimezone().date() == thursday.date(), listed[0]
+        assert row_start.astimezone().strftime("%A") == "Thursday"
+    finally:
+        _stop(server)

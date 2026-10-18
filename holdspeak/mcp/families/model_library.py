@@ -105,6 +105,20 @@ _PAIRED_DRAFT = {
     ],
     "additionalProperties": False,
 }
+_CLI_DRAFT = {
+    "type": "object",
+    "properties": {
+        "request_id": _REQUEST_ID,
+        "profile_id": _PROFILE_ID,
+        "expected_profile_revision": {"type": "integer", "minimum": 0},
+        "preset": {"type": "string", "enum": ["claude", "codex"]},
+        "label": {"type": "string", "minLength": 1, "maxLength": 200},
+        "model": {"type": "string", "minLength": 1, "maxLength": 200},
+        "spend_limit_usd": {"type": ["number", "null"], "exclusiveMinimum": 0, "maximum": 1000},
+    },
+    "required": ["request_id", "profile_id", "expected_profile_revision", "preset"],
+    "additionalProperties": False,
+}
 _PROVIDER_INPUT = {"draft": _HOSTED_DRAFT, "secret": _SECRET}
 
 
@@ -137,6 +151,16 @@ TOOLS: list[dict[str, Any]] = [
         {"draft": _ENDPOINT_DRAFT, "secret": _SECRET},
         ["draft", "secret"],
         description="Define a provider endpoint. secret is write-only and is never returned, logged, or receipted.",
+    ),
+    _schema(
+        "model_library.connect_cli_engine",
+        {"draft": _CLI_DRAFT},
+        ["draft"],
+        description=(
+            "Add an agent CLI on this Mac (preset claude or codex) as an engine. Tools stay off. "
+            "The CLI uses its own sign-in. model 'default' keeps the CLI's model. spend_limit_usd "
+            "is optional (no limit when absent); codex cannot enforce one. Assignments stay unchanged."
+        ),
     ),
     _schema(
         "model_library.connect_paired_device",
@@ -249,6 +273,10 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
             secret=True,
         )
         return service.define_endpoint(principal, draft, secret)
+    if name == "model_library.connect_cli_engine":
+        if set(arguments) != {"draft"} or not isinstance(arguments.get("draft"), dict):
+            raise ServiceError("model_library_provider_invalid", "Provider request is invalid.", context={"status": 400})
+        return service.connect_cli_engine(principal, dict(arguments["draft"]))
     if name == "model_library.connect_paired_device":
         draft, _ = _provider_arguments(
             arguments,

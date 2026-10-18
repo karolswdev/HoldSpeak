@@ -206,6 +206,7 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "model_library.connect_hosted_model":   ("effect_proposal", False),
     "model_library.define_endpoint":        ("effect_proposal", False),
     "model_library.connect_paired_device":  ("effect_proposal", False),
+    "model_library.connect_cli_engine":     ("effect_proposal", False),
     "model_library.use_model_file":         ("effect_proposal", False),
     "model_library.get":                    ("evidence_read",   False),
     # --- inference_assignment family ---

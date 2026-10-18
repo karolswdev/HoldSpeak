@@ -170,6 +170,7 @@ class ProfileService:
             "private_endpoint": "openAICompatible", "external_service": "openAICompatible",
             "mesh_node": "meshNode", "onDevice": "onDevice", "desktop": "desktop",
             "openAICompatible": "openAICompatible", "meshNode": "meshNode",
+            "cli_engine": "cliCommand", "cliCommand": "cliCommand",
         }
         adapted = dict(body)
         def pick(key: str, default: Any) -> Any:
