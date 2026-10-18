@@ -262,6 +262,9 @@
   background: var(--wb-well);
 }
 
+/* A9: an old queue automation's one verb, above its tasks. */
+.automation-make-one { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; }
+
 
 /* ── what it has learned ──────────────────────────────────────────────── */
 

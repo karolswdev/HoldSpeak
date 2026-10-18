@@ -36,6 +36,9 @@ import fridayNew from "./fixtures/automation-hub/friday-new.json";
 import fridayClaude from "./fixtures/automation-hub/friday-claude.json";
 import fridayRan from "./fixtures/automation-hub/friday-ran.json";
 import homeRows from "./fixtures/automation-hub/home-rows.json";
+import oldQueue from "./fixtures/automation-hub/old-queue.json";
+import oldQueueRan from "./fixtures/automation-hub/old-queue-ran.json";
+import oldMadeOne from "./fixtures/automation-hub/old-made-one.json";
 import { WorkbenchesHomeCore } from "../../pages/cores/WorkbenchesHomeCore";
 import { NewWorkbenchChooser } from "../components/NewWorkbenchChooser";
 import { EMPTY_ITEMS, fromWireDirectory, fromWireNote } from "../api";
@@ -74,6 +77,8 @@ const hub = {
   afterCreate: [] as Step[],
   /** The recorded detection answers, before and after Add. */
   detect: [] as unknown[],
+  /** A9: the step Make this one automation moves to. */
+  afterMakeOne: [] as Step[],
 };
 
 const CLAUDE = (engines as unknown as { claude: { steps: Array<{ name: string; gets: Record<string, unknown>; answer?: unknown }> } }).claude.steps;
@@ -120,6 +125,12 @@ function hubFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Respons
     hub.step = forgot as Step;
     return Promise.resolve(json({ success: true }));
   }
+  if (method === "POST" && url === `${detail}/make-one`) {
+    const next = hub.afterMakeOne.shift();
+    if (!next) throw new Error("an unrecorded Make this one automation");
+    hub.step = next;
+    return Promise.resolve(json({ workbench: {} }));
+  }
   if (method === "POST" && url.includes("/results/")) return Promise.resolve(json({ result: {} }));
   if (method === "PUT" && url === detail && body && "sources" in body) {
     const next = hub.afterPut.shift();
@@ -144,6 +155,7 @@ beforeEach(() => {
   hub.detect = [];
   hub.afterPut = [];
   hub.afterCreate = [];
+  hub.afterMakeOne = [];
   vi.stubGlobal("fetch", vi.fn(hubFetch));
   useDesk.setState({ workbenchWindows: [{ id: WB, origin: null }] });
 });
@@ -668,5 +680,52 @@ describe("A7: home, New automation and starters", () => {
     const prep = await screen.findByTestId("automation-starter-one-on-one-prep");
     expect(prep).toHaveTextContent("About: which people?");
     expect(screen.getByTestId("automation-starter-meeting-follow-ups")).toHaveTextContent("Only when I press Run now · Needs you");
+  });
+});
+
+describe("an old automation (A9)", () => {
+  type Item = { id: string; title: string; status: string; result: string | null };
+  const itemsOf = (step: unknown): Item[] =>
+    ((step as Step).gets[DETAIL_OF(step)] as { workbench: { items: Item[] } }).workbench.items;
+  const doOf = (step: unknown): string =>
+    ((step as Step).gets[DETAIL_OF(step)] as { workbench: { instruction_shown: string } }).workbench.instruction_shown;
+
+  it("a recorded TODO automation shows its tasks waiting, its agent's prompt as Do, and RAW", async () => {
+    hub.step = oldQueue as Step;
+    render(<AutomationWindow workbenchId={(oldQueue as Step).workbench_id} onRaw={() => undefined} />);
+    await screen.findByTestId("automation-sentence");
+    expect(line("do")).toHaveTextContent(doOf(oldQueue).split("\n")[0]);
+    const rows = within(screen.getByTestId("automation-tasks")).getAllByTestId("automation-task");
+    expect(rows.map((row) => row.textContent)).toEqual(
+      itemsOf(oldQueue).map((item) => expect.stringContaining(item.title)));
+    rows.forEach((row) => expect(row).toHaveTextContent("Waiting"));
+    // No empty card above its tasks; the old queue view stays behind RAW.
+    expect(screen.queryByTestId("automation-newest")).toBeNull();
+    expect(screen.getByTestId("automation-raw")).toBeInTheDocument();
+    expect(screen.getByTestId("automation-make-one")).toHaveTextContent("Make this one automation");
+  });
+
+  it("its done tasks open in place to their answers, and one press makes it one automation; nothing is lost", async () => {
+    hub.step = oldQueueRan as Step;
+    render(<AutomationWindow workbenchId={(oldQueueRan as Step).workbench_id} onRaw={() => undefined} />);
+    await screen.findByTestId("automation-sentence");
+    const [first] = itemsOf(oldQueueRan);
+    const row = within(screen.getByTestId("automation-tasks")).getAllByTestId("automation-task")[0];
+    expect(row).toHaveTextContent("Done");
+    expect(row).toHaveAttribute("aria-label", `${first.title}: Done`);
+    fireEvent.click(row);
+    const reading = await screen.findByTestId("automation-reading");
+    expect(reading.textContent?.trim().length).toBeGreaterThan(0);
+    expect(reading.textContent).not.toMatch(/##|\*\*/);
+
+    hub.afterMakeOne = [oldMadeOne as Step];
+    fireEvent.click(screen.getByTestId("automation-make-one"));
+    await waitFor(() => expect(screen.queryByTestId("automation-make-one")).toBeNull());
+    expect(hub.calls).toContainEqual({ method: "POST", url: `${DETAIL_OF(oldQueueRan)}/make-one`, body: undefined });
+    expect(line("do")).toHaveTextContent(doOf(oldMadeOne).split("\n")[0]);
+    // Its tasks and their answers stay; it is no longer a queue (no RAW).
+    expect(within(screen.getByTestId("automation-tasks")).getAllByTestId("automation-task"))
+      .toHaveLength(itemsOf(oldQueueRan).length);
+    expect(screen.queryByTestId("automation-raw")).toBeNull();
   });
 });

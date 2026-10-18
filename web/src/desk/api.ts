@@ -1225,6 +1225,15 @@ export async function openAutomationResult(workbenchId: string, artifactId: stri
   );
 }
 
+/** Betterment A9: an old queue automation takes its agent's prompt as its Do
+ *  (one press; its items, results, agent and lessons stay). */
+export async function makeOneAutomation(workbenchId: string): Promise<void> {
+  await apiFetch<Record<string, unknown>>(
+    `/api/workbenches/${encodeURIComponent(workbenchId)}/make-one`,
+    { method: "POST" },
+  );
+}
+
 /** Betterment A3: Forget one lesson. `index` counts newest first, as the
  *  memory read lists them; `at` is its timestamp, so a lesson written
  *  meanwhile is never forgotten in its place. */

@@ -293,6 +293,18 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to open the result")
 
+    @router.post("/api/workbenches/{workbench_id}/make-one")
+    async def api_make_one_automation(workbench_id: str, request: Request) -> Any:
+        """Betterment A9: an old queue automation takes its agent's prompt as Do."""
+        try:
+            return JSONResponse({"workbench": _svc().make_one_automation(_principal(request), workbench_id)})
+        except NotFound:
+            return _not_found("workbench", workbench_id)
+        except ValidationError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to make this one automation")
+
     @router.post("/api/workbenches/{workbench_id}/runs/{parent_operation_id}/cancel")
     async def api_cancel_workbench_run(workbench_id: str, parent_operation_id: str, request: Request) -> Any:
         try:

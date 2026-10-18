@@ -68,7 +68,8 @@
     "DELETE /api/workbenches/{id}/items/{item_id}": "remove an item (refuses claimed)",
     "GET /api/workbenches/{id}/runs": "list run receipts",
     "POST /api/workbenches/{id}/run": "run: an automation with an instruction runs one new occurrence; else the pending queue (or item_ids)",
-    "POST /api/workbenches/{id}/results/{artifact_id}/open": "open a result: new becomes read"
+    "POST /api/workbenches/{id}/results/{artifact_id}/open": "open a result: new becomes read",
+    "POST /api/workbenches/{id}/make-one": "an old queue automation takes its agent's prompt as its instruction; items, results, agent and lessons stay"
   },
   "result": {
     "artifact_status": "new until opened, then read (an occurrence result); queue results stay pending-review",

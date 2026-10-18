@@ -1,0 +1,160 @@
+{
+ "_source": "The hub's own answers, captured by tests/integration/test_desk_workbenches.py (TestClient, isolated database, the A2 rig's recorded engine replies). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit it.",
+ "workbench_id": "workbench_a9_2",
+ "gets": {
+  "/api/workbenches/workbench_a9_2": {
+   "workbench": {
+    "id": "workbench_a9_2",
+    "name": "TODO",
+    "instruction": "",
+    "sources": [],
+    "output_target": "inbox",
+    "spend_limit_usd": null,
+    "recipe_id": "recipe_a9_1",
+    "profile_id": "stub-profile",
+    "resolver_profile_id": null,
+    "schedule": "0 2 * * *",
+    "schedule_enabled": false,
+    "schedule_revision": 1,
+    "item_order": [],
+    "created_at": "2026-10-18T20:31:16Z",
+    "last_modified": "2026-10-18T20:31:16Z",
+    "deleted": false,
+    "items": [
+     {
+      "id": "wbi_a9_3",
+      "workbench_id": "workbench_a9_2",
+      "title": "Review open PRs",
+      "body": "",
+      "priority": 2,
+      "status": "done",
+      "grounding": {},
+      "context": {},
+      "result": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.",
+      "result_artifact_id": "artifact_c07e36621eb6",
+      "result_egress": {
+       "boundary": "cloud",
+       "model": "stub-profile"
+      },
+      "mint_attempted": true,
+      "tokens_consumed": 40,
+      "created_at": "2026-10-18T20:31:16Z",
+      "last_modified": "2026-10-18T20:31:17.286893+00:00",
+      "claimed_at": "2026-10-18T20:31:17.179511+00:00",
+      "completed_at": "2026-10-18T20:31:17.286893+00:00",
+      "parked": false
+     },
+     {
+      "id": "wbi_a9_4",
+      "workbench_id": "workbench_a9_2",
+      "title": "Summarize yesterday's meeting notes",
+      "body": "",
+      "priority": 3,
+      "status": "done",
+      "grounding": {},
+      "context": {},
+      "result": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.",
+      "result_artifact_id": "artifact_15cc64545c35",
+      "result_egress": {
+       "boundary": "cloud",
+       "model": "stub-profile"
+      },
+      "mint_attempted": true,
+      "tokens_consumed": 40,
+      "created_at": "2026-10-18T20:31:16Z",
+      "last_modified": "2026-10-18T20:31:17.447189+00:00",
+      "claimed_at": "2026-10-18T20:31:17.366707+00:00",
+      "completed_at": "2026-10-18T20:31:17.447189+00:00",
+      "parked": false
+     },
+     {
+      "id": "wbi_a9_5",
+      "workbench_id": "workbench_a9_2",
+      "title": "Draft the weekly status update",
+      "body": "",
+      "priority": 3,
+      "status": "done",
+      "grounding": {},
+      "context": {},
+      "result": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.",
+      "result_artifact_id": "artifact_50b5eef71f39",
+      "result_egress": {
+       "boundary": "cloud",
+       "model": "stub-profile"
+      },
+      "mint_attempted": true,
+      "tokens_consumed": 40,
+      "created_at": "2026-10-18T20:31:16Z",
+      "last_modified": "2026-10-18T20:31:17.594731+00:00",
+      "claimed_at": "2026-10-18T20:31:17.520635+00:00",
+      "completed_at": "2026-10-18T20:31:17.594731+00:00",
+      "parked": false
+     }
+    ],
+    "item_count": 3,
+    "pending_count": 0,
+    "last_run": {
+     "id": "wbrun_519574bb2cc8",
+     "workbench_id": "workbench_a9_2",
+     "started_at": "2026-10-18T20:31:17.179138+00:00",
+     "completed_at": "2026-10-18T20:31:17.668951+00:00",
+     "items_attempted": 3,
+     "items_completed": 3,
+     "items_failed": 0,
+     "mint_failures": 0,
+     "total_tokens": 135,
+     "egress_boundary": "cloud",
+     "model": "stub-model-7b",
+     "constitutional_context_revision": 0,
+     "constitutional_context_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "skills_injected": [],
+     "status": "completed"
+    },
+    "instruction_shown": "You are the TODO Agent. Your job is to work through items on your workbench, one by one. For each item:\n\n1. Read the item title, body, and any grounding material.\n2. Do what the item asks — summarize, draft, review, research, analyze.\n3. Produce a short, concrete receipt: what you did, what you found, what the owner should know.\n4. If the item requires an action you cannot take (sending an email, merging a PR, deploying code), say so clearly and propose the action for the owner to approve.\n\nNever fabricate. Never execute actions beyond your scope. Propose, never act. Be concise.",
+    "instruction_from": "agent",
+    "results": [],
+    "sources_shown": [],
+    "blanks": {},
+    "when_kind": null,
+    "event_starts": [],
+    "next_run_at": null,
+    "when_events": [
+     {
+      "id": "github-review-requested",
+      "words": "GitHub asks me to review",
+      "needs": "repository",
+      "subject": "the review request that came in",
+      "event_pattern": "github.pr.review_requested"
+     },
+     {
+      "id": "github-checks-failed",
+      "words": "A pull request's checks fail",
+      "needs": "repository",
+      "subject": "the pull request whose checks failed",
+      "event_pattern": "github.pr.checks_changed"
+     },
+     {
+      "id": "github-pr-merged",
+      "words": "A pull request is merged",
+      "needs": "repository",
+      "subject": "the pull request that was merged",
+      "event_pattern": "github.pr.merged"
+     }
+    ],
+    "assignment_summary": {
+     "status": "assigned",
+     "source": "subject",
+     "chain": [
+      "Stub"
+     ],
+     "repair": null,
+     "profile_id": "legacy-stub-profile",
+     "boundary": "cloud"
+    }
+   }
+  },
+  "/api/workbenches/workbench_a9_2/memory": {
+   "entries": []
+  }
+ }
+}
