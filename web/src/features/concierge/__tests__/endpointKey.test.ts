@@ -76,3 +76,13 @@ describe("defineEndpoint", () => {
     expect(body.draft.requires_key).toBe(false);
   });
 });
+
+describe("endpointProfileId (Betterment E3)", () => {
+  it("is host + model, so two models on one host are two engines; no model is the old host-only id", async () => {
+    const { endpointProfileId } = await import("../endpointDraft");
+    expect(endpointProfileId(URL_, "qwen3.8-27b")).toBe("engine-192-168-1-43-8080-qwen3-8-27b");
+    expect(endpointProfileId(URL_, "gemma-4")).toBe("engine-192-168-1-43-8080-gemma-4");
+    expect(endpointProfileId(URL_)).toBe("engine-192-168-1-43-8080");
+    expect(endpointProfileId(URL_, "x".repeat(200))).toHaveLength(96);
+  });
+});

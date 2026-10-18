@@ -360,7 +360,8 @@ describe("Runs on — the Anthropic plate reads NOT SUPPORTED YET", () => {
 describe("Runs on — a stranger connects an engine and the face keeps his choice", () => {
   const BAD = "http://127.0.0.1:9/v1";
   const GOOD = "http://192.168.1.50:8080/v1";
-  const KEY = "engine-192-168-1-50-8080";
+  // Betterment E3: one engine for each model, so the model is in the id.
+  const KEY = "engine-192-168-1-50-8080-stub-openai-compatible";
   const MODEL = "stub-openai-compatible";
 
   function field(): HTMLInputElement {
@@ -399,23 +400,23 @@ describe("Runs on — a stranger connects an engine and the face keeps his choic
     expect(row.contains(reason)).toBe(true);
     expect(row.textContent).toContain("UNREACHABLE");
     expect(row.textContent).not.toContain("Nothing answers"); // tokens, never the server's sentence
-    expect((screen.getByTestId("concierge-add-submit") as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.queryByTestId("concierge-add-use")).toBeNull();
 
-    // The engine's address: READY and the model named; an edit drops it.
+    // The engine's address: READY and the picker lists its model, picked by
+    // nobody (Betterment E3); an edit drops it.
     fireEvent.change(field(), { target: { value: GOOD } });
     fireEvent.click(screen.getByTestId("concierge-add-check"));
-    expect((await screen.findByTestId("concierge-add-model")).textContent).toBe(MODEL);
-    expect(screen.getByTestId("concierge-add-submit").textContent?.trim()).toBe("Add");
-    expect((screen.getByTestId("concierge-add-submit") as HTMLButtonElement).disabled).toBe(false);
+    const pick = await screen.findByTestId("concierge-add-pick");
+    expect(pick.getAttribute("data-model")).toBe(MODEL);
+    expect(within(pick).getByTestId("concierge-add-use").textContent?.trim()).toBe("Use");
     fireEvent.change(field(), { target: { value: GOOD.replace("/v1", "/v2") } });
-    await waitFor(() => expect(screen.queryByTestId("concierge-add-model")).toBeNull());
-    expect((screen.getByTestId("concierge-add-submit") as HTMLButtonElement).disabled).toBe(true);
+    await waitFor(() => expect(screen.queryByTestId("concierge-add-picker")).toBeNull());
     fireEvent.change(field(), { target: { value: GOOD } });
     fireEvent.click(screen.getByTestId("concierge-add-check"));
-    await screen.findByTestId("concierge-add-model");
+    await screen.findByTestId("concierge-add-pick");
 
-    // Add: the engine joins the column, with no wire and no assignment.
-    fireEvent.click(screen.getByTestId("concierge-add-submit"));
+    // Use: the engine joins the column, with no wire and no assignment.
+    fireEvent.click(screen.getByTestId("concierge-add-use"));
     await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^ADDED /));
     await screen.findByTestId(`switchboard-engine-${KEY}`);
     expect(screen.queryAllByTestId("switchboard-wire").filter((w) => w.getAttribute("data-engine") === KEY)).toHaveLength(0);
@@ -517,7 +518,7 @@ async function openRecorded(rec: RecordedHub) {
 
 describe("Runs on — the engine tells the truth (recorded hub)", () => {
   const ENGINE = "http://127.0.0.1:8099/v1";
-  const KEY = "engine-127-0-0-1-8099";
+  const KEY = "engine-127-0-0-1-8099-stub-qwen";
 
   it("Check names TOOLS; Add keeps the window (ADDED); the Default patch says PATCHED; Agents reads LIMITED with WITHOUT AGENTS", async () => {
     // replaces: tests/e2e/test_philo15_10_engine_truth_glass.py::TestEngineTruth::test_ready_means_ready_and_every_press_leaves_a_receipt
@@ -536,7 +537,7 @@ describe("Runs on — the engine tells the truth (recorded hub)", () => {
     fireEvent.click(screen.getByTestId("concierge-add-check"));
     expect((await screen.findByTestId("concierge-add-tools")).textContent).toBe("TOOLS");
 
-    fireEvent.click(screen.getByTestId("concierge-add-submit"));
+    fireEvent.click(screen.getByTestId("concierge-add-use"));
     await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^ADDED .* · stub-qwen · 127\.0\.0\.1:8099$/));
     await screen.findByTestId(`switchboard-engine-${KEY}`);
     expect(screen.getAllByTestId("runson-root")).toHaveLength(1);

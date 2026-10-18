@@ -1,8 +1,8 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_firstrun.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-18T03:49:25.505992Z",
+  "captured_at": "2026-10-18T09:46:21.248625Z",
   "wire": {
-    "checkedAt": "2026-10-18T03:49:25.486020+00:00",
+    "checkedAt": "2026-10-18T09:46:21.230117+00:00",
     "engines": [
       {
         "downloadHost": "huggingface.co",
@@ -46,8 +46,8 @@
       },
       "observation": {
         "available_memory_bytes": null,
-        "sha256": "sha256:d80767289c616afc4cbfafa0d633c60f2f3bd17c93a460047adc2edcacd786bc",
-        "storage_available_bytes": 263362048000
+        "sha256": "sha256:b52bf2df41c96db0fda23673d27e743c80b526a0b09d2562b8b5cbc361dc548d",
+        "storage_available_bytes": 243239022592
       }
     },
     "lastApply": null,

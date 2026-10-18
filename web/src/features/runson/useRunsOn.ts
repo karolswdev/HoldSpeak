@@ -720,15 +720,16 @@ export function useRunsOn(scope?: string) {
         return;
       }
       if (!engine?.baseUrl) return;
+      const model = engine.model || engine.name;
       setBusy(true);
       try {
         await defineEndpoint(
           endpointDraft({
             url: engine.baseUrl,
-            model: engine.model || engine.name,
+            model,
             requestId: `runson-use-${Date.now()}`,
             expectedProfileRevision:
-              engines.find((e) => e.profileId === endpointProfileId(engine.baseUrl ?? ""))?.profileRevision ?? 0,
+              engines.find((e) => e.profileId === endpointProfileId(engine.baseUrl ?? "", model))?.profileRevision ?? 0,
           }),
         );
         if (!mounted.current) return;
@@ -829,14 +830,22 @@ export function useRunsOn(scope?: string) {
   const [addKey, setAddKeyState] = useState("");
   const [addMine, setAddMine] = useState(false);
   const [addState, setAddState] = useState<AddState>("IDLE");
-  const [addModel, setAddModel] = useState("");
+  // Betterment E3: Check fills the picker; nothing is picked for him.
+  const [addModels, setAddModels] = useState<string[]>([]);
+  const [addContexts, setAddContexts] = useState<Record<string, number>>({});
+  const [addQuery, setAddQuery] = useState("");
+  /** The models he used from this answer (each is now its own engine). */
+  const [addUsed, setAddUsed] = useState<string[]>([]);
   const [addTools, setAddTools] = useState<"yes" | "no" | "unknown" | null>(null);
   const [addReason, setAddReason] = useState("");
   const addAsked = useRef({ url: "", key: "" });
 
   const resetAnswer = () => {
     setAddState("IDLE");
-    setAddModel("");
+    setAddModels([]);
+    setAddContexts({});
+    setAddQuery("");
+    setAddUsed([]);
     setAddReason("");
     setAddTools(null);
   };
@@ -862,7 +871,10 @@ export function useRunsOn(scope?: string) {
     if (!mounted.current) return;
     if (answer.ok && answer.models.length) {
       setAddState("READY");
-      setAddModel(answer.models[0]);
+      setAddModels(answer.models);
+      setAddContexts(answer.contexts ?? {});
+      setAddQuery("");
+      setAddUsed([]);
       setAddTools(answer.tools ?? "unknown");
     } else if (answer.reason === "key_required") setAddState("KEY_REQUIRED");
     else if (answer.reason === "key_invalid") setAddState("KEY_INVALID");
@@ -872,29 +884,28 @@ export function useRunsOn(scope?: string) {
     }
   }, [addKey, addMine, addUrl]);
 
-  const submitAdd = useCallback(async () => {
+  /** Use: save the model he picked as its own engine (Betterment E3). The
+   *  picker stays, so a second model on the same host is one more press. */
+  const saveModel = useCallback(async (model: string) => {
     const url = addUrl.trim();
-    if (!url || !addModel) return;
+    if (!url || !model || !addModels.includes(model)) return;
     setBusy(true);
     try {
       await defineEndpoint(
         endpointDraft({
           url,
-          model: addModel,
+          model,
           requestId: `runson-add-${Date.now()}`,
           requiresKey: Boolean(addKey.trim()),
+          contextTokens: addContexts[model] ?? null,
           expectedProfileRevision:
-            engines.find((e) => e.profileId === endpointProfileId(url))?.profileRevision ?? 0,
+            engines.find((e) => e.profileId === endpointProfileId(url, model))?.profileRevision ?? 0,
         }),
         addKey,
       );
       if (!mounted.current) return;
-      setReceipt({ text: `ADDED ${clock()} · ${addModel} · ${endpointHostPort(url).toUpperCase()}` });
-      setAddOpen(false);
-      setAddUrlState("");
-      setAddKeyState("");
-      addAsked.current = { url: "", key: "" };
-      resetAnswer();
+      setReceipt({ text: `ADDED ${clock()} · ${model} · ${endpointHostPort(url).toUpperCase()}` });
+      setAddUsed((used) => (used.includes(model) ? used : [...used, model]));
       await Promise.all([loadDetection(), loadRoster()]);
     } catch (err) {
       setAddState("NOT_ADDED");
@@ -902,7 +913,7 @@ export function useRunsOn(scope?: string) {
     } finally {
       if (mounted.current) setBusy(false);
     }
-  }, [addKey, addModel, addUrl, engines, loadDetection, loadRoster]);
+  }, [addContexts, addKey, addModels, addUrl, engines, loadDetection, loadRoster]);
 
   const openAdd = useCallback((url = "") => {
     setAddOpen(true);
@@ -962,11 +973,15 @@ export function useRunsOn(scope?: string) {
       mine: addMine,
       setMine: setAddMine,
       state: addState,
-      model: addModel,
+      models: addModels,
+      contexts: addContexts,
+      query: addQuery,
+      setQuery: setAddQuery,
+      used: addUsed,
       tools: addTools,
       reason: addReason,
       check: checkAdd,
-      submit: submitAdd,
+      save: saveModel,
     },
   };
 }

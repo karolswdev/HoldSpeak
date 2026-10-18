@@ -489,11 +489,13 @@ def _long_matching_decisions(db: Database, count: int = 5) -> list[str]:
 
 
 def test_memory_never_turns_a_fitting_pr_review_into_a_failing_one(rig, tmp_path, monkeypatch):
-    """Astra P1 repro: an 11,915-char diff fits the 16,384-token budget alone;
-    five matching notes used to push it to 17,502 tokens and a 500."""
+    """Astra P1 repro: an 11,915-char diff fit the 16,384-token budget alone;
+    five matching notes used to push it to 17,502 tokens and a 500.
+    (Betterment E3: about 3.5 characters make one token now, so the diff that
+    fills the budget is 48,000 characters.)"""
     _long_matching_decisions(rig)
-    diff = "diff --git a/x b/x\n" + ("+" + "x" * 99 + "\n") * 119
-    diff = diff[:11915]
+    diff = "diff --git a/x b/x\n" + ("+" + "x" * 99 + "\n") * 600
+    diff = diff[:48000]
     review = _ReviewRig(rig, tmp_path, monkeypatch, diff=diff)
 
     response = review.post()
@@ -526,7 +528,9 @@ def test_memory_never_turns_a_fitting_rails_batch_into_a_failing_one(rig):
     filler = "quorumdb ledger " + "y" * 230
     events = [
         {"ts": f"t{index}", "event": "gate_pass", "story": "", "repo": "code", "detail": {"subject": filler}}
-        for index in range(54)
+        # Betterment E3: about 3.5 characters a token, so 197 events fill
+        # the budget the way 54 did under the one-token-per-byte law.
+        for index in range(197)
     ]
     batch = rails_observer.summarize_batch(
         events,

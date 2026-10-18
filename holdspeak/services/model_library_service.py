@@ -46,6 +46,11 @@ _PROVIDER_FAMILIES = frozenset({
 #: The closed draft of ``connect_cli_engine``: required keys, then optional ones.
 _CLI_DRAFT_REQUIRED = frozenset({"request_id", "profile_id", "expected_profile_revision", "preset"})
 _CLI_DRAFT_OPTIONAL = frozenset({"label", "model", "spend_limit_usd"})
+# Betterment E3: an engine's context. The default is what an engine got before
+# the Check read the server's own size; the bounds refuse junk.
+_DEFAULT_CONTEXT_TOKENS = 16_384
+_MIN_CONTEXT_TOKENS = 512
+_MAX_CONTEXT_TOKENS = 10_000_000
 #: PHILO-15 05: a provider family with no execution adapter (Anthropic).
 #: Its readiness reason and its row status; the face shows the label.
 NOT_SUPPORTED = "not_supported"
@@ -376,8 +381,16 @@ class ModelLibraryApplicationService:
                 "request_id", "profile_id", "expected_profile_revision", "label", "provider_family",
                 "model", "endpoint", "requires_key",
             }
-        if set(body) != allowed:
+        # Betterment E3: an endpoint draft may carry the context size its
+        # Check read from the server (`context_tokens`; null = not known).
+        optional = {"context_tokens"} if not hosted and not paired else set()
+        if not (allowed <= set(body) <= allowed | optional):
             raise ServiceError("model_library_provider_invalid", "Provider draft is invalid.", context={"status": 400})
+        context_tokens = body.get("context_tokens")
+        if context_tokens is not None and not (
+            type(context_tokens) is int and _MIN_CONTEXT_TOKENS <= context_tokens <= _MAX_CONTEXT_TOKENS
+        ):
+            raise ServiceError("model_library_provider_invalid", "Provider context size is invalid.", context={"status": 400})
         family = self._clean_provider_family(body.get("provider_family"))
         if hosted and family not in {"openrouter", "anthropic"}:
             raise ServiceError("model_library_provider_invalid", "Hosted provider is invalid.", context={"status": 400})
@@ -414,6 +427,7 @@ class ModelLibraryApplicationService:
             # Only a SHA reaches durable replay material, not the locator itself.
             "endpoint_sha256": _digest(endpoint) if endpoint else "",
             "paired_target_id": paired_target_id,
+            **({"context_tokens": context_tokens} if context_tokens is not None else {}),
         }
         return {
             "request_id": self._request_id(body.get("request_id")),
@@ -426,6 +440,7 @@ class ModelLibraryApplicationService:
             "requires_key": requires_key,
             "endpoint": endpoint,
             "paired_target_id": paired_target_id,
+            "context_tokens": context_tokens,
             "hash_material": hash_material,
         }
 
@@ -570,6 +585,7 @@ class ModelLibraryApplicationService:
             "base_url": draft["endpoint"],
             "model": draft["model"],
             "requires_key": draft["requires_key"],
+            "context_limit": self._context_tokens(draft),
         }
         existing = self._db.profiles.get(target_id)
         if existing is None:
@@ -588,7 +604,13 @@ class ModelLibraryApplicationService:
             and str(getattr(target, "base_url", "")) == str(fields["base_url"])
             and str(getattr(target, "model", "")) == str(fields["model"])
             and bool(getattr(target, "requires_key", False)) == bool(fields["requires_key"])
+            and int(getattr(target, "context_limit", 0) or 0) == int(fields["context_limit"])
         )
+
+    @staticmethod
+    def _context_tokens(draft: dict[str, Any]) -> int:
+        """The context the server said it runs (Betterment E3), else 16,384."""
+        return int(draft.get("context_tokens") or _DEFAULT_CONTEXT_TOKENS)
 
     def _ensure_provider_deployment(
         self, draft: dict[str, Any], profile: dict[str, Any], target_id: str,
@@ -615,7 +637,7 @@ class ModelLibraryApplicationService:
             raise ServiceError("model_library_provider_invalid", "Provider destination is unavailable.", context={"status": 409})
         revision = _replace(
             DeploymentRevision.from_identity(identity),
-            context_ceiling=16_384,
+            context_ceiling=self._context_tokens(draft),
         )
         artifact_id = f"provider-material-{draft['profile_id']}-r{profile_revision}"
         material = {
@@ -662,7 +684,8 @@ class ModelLibraryApplicationService:
                         created_at,updated_at)
                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                     (
-                        deployment_id, target_id, "", "", artifact_id, draft["model"], 16_384, 16_384,
+                        deployment_id, target_id, "", "", artifact_id, draft["model"],
+                        self._context_tokens(draft), self._context_tokens(draft),
                         "{}", "", revision.id, 1, 0, now, now,
                     ),
                 )

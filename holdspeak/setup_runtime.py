@@ -47,6 +47,8 @@ def _default_http_json(
 
 
 CONTEXT_WINDOW_PRESETS = [8192, 16384, 32768, 65536, 131072, 200000, 1000000]
+# The largest context a served model may claim (a guard against junk).
+MAX_CONTEXT_TOKENS = 10_000_000
 
 
 def unreachable_reason(exc: BaseException) -> str:
@@ -166,6 +168,14 @@ def discover_endpoint_models(
         },
         key=str.casefold,
     )
+    # Betterment E3: the context each model really has. llama.cpp puts it in
+    # `meta.n_ctx`, OpenRouter in `context_length`, vLLM in `max_model_len`.
+    contexts = {
+        str(row.get("id")).strip(): size
+        for row in rows or []
+        if isinstance(row, dict) and str(row.get("id") or "").strip()
+        and (size := _served_context(row)) is not None
+    }
     # PHILO-15 10: an Ollama-style row names its capabilities ("tools").
     listed = payload.get("models") if isinstance(payload, dict) else None
     tools_claimed = any(
@@ -177,6 +187,7 @@ def discover_endpoint_models(
     return {
         "ok": True,
         "models": models,
+        **({"contexts": contexts} if contexts else {}),
         **({"toolsClaimed": True} if tools_claimed else {}),
         "detail": (
             f"Found {len(models)} model{'s' if len(models) != 1 else ''}."
@@ -185,6 +196,15 @@ def discover_endpoint_models(
         ),
         "status": int(code),
     }
+
+
+def _served_context(row: dict[str, Any]) -> int | None:
+    """The context size one `/models` row says the server runs, or None."""
+    meta = row.get("meta") if isinstance(row.get("meta"), dict) else {}
+    for value in (meta.get("n_ctx"), row.get("context_length"), row.get("max_model_len")):
+        if type(value) is int and 0 < value <= MAX_CONTEXT_TOKENS:
+            return value
+    return None
 
 
 def _default_http_post_json(

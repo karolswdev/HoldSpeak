@@ -199,7 +199,7 @@ def test_the_part_never_pushes_an_ask_over_its_route(tmp_path: Path) -> None:
     db = _desk(tmp_path)
     _many_beliefs(db)
     service, engine = _ask_rig(db, ceiling=8192)
-    question = "What about topic00? " + "Context words. " * 200
+    question = "What about topic00? " + "Context words. " * 1400  # Betterment E3: 3.5 characters a token
     prompt = _ask(service, engine, question, ATLAS)
     full = reflect_for("ask.answer", db, scopes=[ATLAS], query=question)
     sent = prompt.count("\n- ")
@@ -526,7 +526,8 @@ def test_every_pass_fits_the_part_again_so_a_continuation_never_overflows(hub) -
         _filed_note(hub.db, f"n{index:02d}", f"Desk topic{index:02d} is value{index:02d}-" + "x" * 60 + ".", None)
     _built(hub.db)
     hub.engine.tool = ("memory.search", {"query": "ZZZNOTFOUNDZZZ"})
-    turn = _turn(hub, "Proceed. " + "a" * 25500, mode="hs-seed-mode-plan")
+    # Betterment E3: 3.5 characters a token, so this question fills 32k.
+    turn = _turn(hub, "Proceed. " + "a" * 106500, mode="hs-seed-mode-plan")
     assert turn["outcome"] == "succeeded" and len(turn["calls"]) == 2, turn
     first, second = (json.dumps(call) for call in turn["calls"])
     assert "[MEMORY PAGE:" in first or "[MEMORY OBSERVATIONS:" in first  # the part was sent on pass 1
@@ -591,7 +592,8 @@ def test_a_part_fitted_to_empty_stays_empty_on_every_later_pass(hub) -> None:
     engine = _SearchFourTimes()
     hub.broker.inference_runner._engine_factory = lambda _rev, **_kw: engine
     hub.engine = engine
-    turn = _turn(hub, "Proceed. " + "a" * 25500, mode="hs-seed-mode-plan")
+    # Betterment E3: 3.5 characters a token, so this question fills 32k.
+    turn = _turn(hub, "Proceed. " + "a" * 106500, mode="hs-seed-mode-plan")
     assert turn["outcome"] == "succeeded" and len(turn["calls"]) == 5, turn
 
     def memory_lines(call: list[dict]) -> int:

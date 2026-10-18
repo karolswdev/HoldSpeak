@@ -936,7 +936,9 @@ def test_face_draft_keys_are_exactly_the_endpoint_drafts_the_service_accepts() -
         "endpoint",
         "requires_key",
     }
-    assert _face_draft_keys() == allowed
+    # Betterment E3: the face always sends the context its Check read (null
+    # when the server did not say); the service also takes a draft without it.
+    assert _face_draft_keys() == allowed | {"context_tokens"}
 
 
 def test_define_endpoint_accepts_the_face_draft(
@@ -958,6 +960,7 @@ def test_define_endpoint_accepts_the_face_draft(
         "endpoint": LAN_URL,
         "requires_key": False,
     }
+    body["context_tokens"] = None
     assert set(body) == _face_draft_keys()
 
     receipt = service.define_endpoint(OWNER_09, body, None)
