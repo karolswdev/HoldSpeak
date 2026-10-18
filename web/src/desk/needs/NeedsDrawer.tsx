@@ -26,24 +26,28 @@ import { refreshNeedsYou, useNeedsYou } from "../needsYou";
 import { openProjectProposal, refOpener, type Opener } from "../openObject";
 import { openCoderSession, openProjectRoom, openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
-import { AppHead, EgressChip, FilterBar, ScrollHint, StatusStrip, StringGadget, SurfaceFooter, SurfaceSection, SurfaceState } from "../surface";
+import { AppHead, EgressChip, ScrollHint, StatusStrip, StringGadget, SurfaceFooter, SurfaceSection, SurfaceState } from "../surface";
 import { openSourceRef } from "../surface/citations";
 import { NeedsList, NeedsRow } from "../surface/objects";
 import { spriteUrl } from "../sprites";
 import { groupGaps, readCoverage } from "../coverage";
 import {
   armingFace,
+  chipsOn,
   coverageGroupFace,
   needFace,
   needFaces,
   needsHead,
   nextWord,
-  passesNeedsFilter,
+  NO_CHIPS,
+  passesChips,
   plateOf,
   urlHost,
   type NeedFace,
-  type NeedsFilter,
+  type NeedsChips,
 } from "./needsFace";
+import { NoteSendWells } from "../documentSendsLazy";
+import { wireDate } from "../surface/format";
 import { cancelArming, useArmingOutcome } from "./arming";
 import { WorkMenu, type WorkMenuEntry } from "../components/DeskMenu";
 import { Disclosure } from "../surface/patterns/Disclosure";
@@ -72,7 +76,35 @@ export function faceOpener(face: NeedFace): Opener | null {
   return refOpener(face.openRef);
 }
 
-type Well = "owner" | "date" | "detail" | "project";
+type Well = "owner" | "date" | "detail" | "project" | "nudge" | "decide";
+
+const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** `Thu 22 Oct`: a due day as the rows say it. */
+export function dayWord(iso: string | null | undefined): string {
+  const d = iso ? wireDate(iso) : null;
+  return d ? `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}` : "";
+}
+
+/** Betterment D2: the short message Nudge drafts. He reads it, can change
+ *  it in the note, and presses Send himself. */
+export function nudgeText(task: string, person: string, due: string | null | undefined): string {
+  const first = person.trim().split(/\s+/)[0] || "Hi";
+  const when = dayWord(due);
+  return `${first}, is "${task}" on track${when ? ` for ${when}` : ""}? Tell me if you need help.`;
+}
+
+/** Later: the row comes back tomorrow (the follow-through snooze is by day). */
+export function tomorrowDay(now: Date = new Date()): string {
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** One follow-through verb on an action item (the hub's one write path). */
+function followThrough(cardId: string, verb: string, payload: Record<string, unknown> = {}) {
+  return apiFetch("/api/follow-through/complete", { method: "POST", json: { card_id: cardId, verb, payload } });
+}
 
 /** PHILO-15 B61: the receipt a source Retry leaves in the drawer. */
 type SourceReceipt = { tone: "ok" | "fail"; text: string };
@@ -181,10 +213,52 @@ function NeedVerbsView({ face, primary, onWell, well }: {
         <Button dense variant={lead} aria-label={named("Open the agent")} data-testid="needs-row-verb" data-verb="open"
           onClick={() => openCoderSession(v.sessionKey)}>Open session</Button>
       );
-    case "review":
+    case "review": {
+      const label = v.label ?? "Review";
       return (
-        <Button dense variant={lead} aria-label={named("Review")} data-testid="needs-row-verb" data-verb="review"
-          onClick={() => refOpener(v.ref)?.()}>Review</Button>
+        <Button dense variant={lead} aria-label={named(label)} data-testid="needs-row-verb"
+          data-verb={label === "Decide" ? "decide" : "review"}
+          onClick={() => refOpener(v.ref)?.()}>{label}</Button>
+      );
+    }
+    case "work": {
+      const opener = faceOpener(face);
+      const key = `action-item:${v.cardId}`;
+      const entries: WorkMenuEntry[] = [
+        ...(opener ? [{ type: "item" as const, id: "open", label: "Open", onSelect: opener }] : []),
+        ...(v.direction === "theirs"
+          ? [{ type: "item" as const, id: "done", label: "Done", ghost: busy ? "Busy" : undefined,
+            onSelect: () => void act("Done", () => followThrough(v.cardId, "done"), key) }]
+          : []),
+        ...(v.next === "set_date"
+          ? [{ type: "item" as const, id: "date", label: "Set a date", onSelect: () => onWell("date") }]
+          : []),
+        { type: "item", id: "later", label: "Later", ghost: busy ? "Busy" : undefined,
+          onSelect: () => void act("Later", () => followThrough(v.cardId, "snooze", { until: tomorrowDay() }), key) },
+        { type: "item", id: "drop", label: "Drop", ghost: busy ? "Busy" : undefined,
+          onSelect: () => void act("Drop", () => followThrough(v.cardId, "dismiss"), key) },
+      ];
+      return <>
+        {v.direction === "theirs" ? (
+          <Button dense variant={lead} aria-label={named("Nudge")} aria-expanded={well === "nudge"}
+            data-testid="needs-row-verb" data-verb="nudge"
+            onClick={() => onWell(well === "nudge" ? null : "nudge")}>Nudge</Button>
+        ) : (
+          <Button dense variant={lead} disabled={busy} aria-label={named("Done")} data-testid="needs-row-verb" data-verb="done"
+            onClick={() => void act("Done", () => followThrough(v.cardId, "done"), key)}>Done</Button>
+        )}
+        <Button ref={moreRef} dense variant="ghost" aria-label={named("More")} aria-haspopup="menu" aria-expanded={more}
+          data-testid="needs-row-verb" data-verb="more" onClick={() => setMore((value) => !value)}>More</Button>
+        {more && moreRef.current ? <WorkMenu label={named("More")} x={moreRef.current.getBoundingClientRect().left}
+          y={moreRef.current.getBoundingClientRect().bottom} entries={entries} autoFocus onClose={() => setMore(false)}
+          returnFocus={() => moreRef.current?.focus()} /> : null}
+      </>;
+    }
+    case "decide":
+      return (
+        <Button dense variant={lead} aria-label={named("Decide")} aria-expanded={well === "decide"}
+          data-testid="needs-row-verb" data-verb="decide"
+          onClick={() => onWell(well === "decide" ? null : "decide")}>Decide</Button>
       );
     case "commitment": {
       if (v.next === "mark_done") {
@@ -333,7 +407,7 @@ function CommitWell({ face, which, onDone }: { face: NeedFace; which: Well; onDo
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const v = face.verbs;
-  const cardId = v.kind === "commitment" || v.kind === "name-owner" ? v.cardId : null;
+  const cardId = v.kind === "commitment" || v.kind === "name-owner" || v.kind === "work" ? v.cardId : null;
   const save = async () => {
     const value = draft.trim();
     if (!value || !cardId || busy) return;
@@ -375,6 +449,92 @@ function CommitWell({ face, which, onDone }: { face: NeedFace; which: Well; onDo
       <Button dense variant="secondary" disabled={!draft.trim() || busy}
         aria-label={`Save ${which === "owner" ? "owner" : "date"}: ${face.name}`}
         data-testid="needs-well-save" onClick={() => void save()}>Save</Button>
+    </li>
+  );
+}
+
+/** Betterment D2: Decide, in place: Accept writes the decision (the
+ *  proposal's Confirm), Not now holds it back (Defer), Drop removes it
+ *  (Decline). Open shows it where it came from. */
+function DecideWell({ face, onDone }: { face: NeedFace; onDone(): void }) {
+  const [busy, setBusy] = useState(false);
+  const v = face.verbs;
+  if (v.kind !== "decide") return null;
+  const opener = faceOpener(face);
+  const run = async (label: string, path: string, json?: unknown) => {
+    if (busy) return;
+    setBusy(true);
+    const key = `proposal:${v.proposalId}`;
+    try {
+      await apiFetch(`/api/proposals/${encodeURIComponent(v.proposalId)}/${path}`, { method: "POST", ...(json ? { json } : {}) });
+      clearWriteFailure(key);
+      onDone();
+      void refreshNeedsYou(true);
+    } catch (error) {
+      reportWriteFailure(label, error, () => void run(label, path, json), key);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <li className="needs-drawer-well needs-drawer-decide" role="region" aria-label={`Decide: ${face.name}`}
+      data-testid="needs-decide"
+      onKeyDown={(event) => { if (event.key === "Escape") { event.stopPropagation(); onDone(); } }}>
+      <Button dense variant="primary" disabled={busy} aria-label={`Accept: ${face.name}`} data-testid="needs-decide-accept"
+        autoFocus onClick={() => void run("Accept", "confirm")}>Accept</Button>
+      <Button dense variant="secondary" disabled={busy} aria-label={`Not now: ${face.name}`}
+        onClick={() => void run("Not now", "defer", {})}>Not now</Button>
+      <Button dense variant="ghost" disabled={busy} aria-label={`Drop: ${face.name}`}
+        onClick={() => void run("Drop", "dismiss")}>Drop</Button>
+      {opener ? <Button dense variant="ghost" aria-label={`Open: ${face.name}`} onClick={() => opener()}>Open</Button> : null}
+    </li>
+  );
+}
+
+/** Betterment D2: Nudge prepares; it never sends. The drafted message is
+ *  kept as a note and its Send well opens here, on his saved destination for
+ *  that person when exactly one has the person's name. He presses Send. */
+function NudgeWell({ face }: { face: NeedFace }) {
+  const v = face.verbs;
+  const [note, setNote] = useState<{ id: string; title: string } | null>(null);
+  const [failed, setFailed] = useState(false);
+  const started = useRef(false);
+  const person = v.kind === "work" ? v.person : "";
+  const text = v.kind === "work" ? nudgeText(face.name, person, v.due) : "";
+  useEffect(() => {
+    if (started.current || v.kind !== "work") return;
+    started.current = true;
+    const title = `Nudge: ${face.name}`;
+    void (async () => {
+      try {
+        const made = await apiFetch<{ note?: { id?: string } }>("/api/notes", {
+          method: "POST", json: { title, body_markdown: text, tags: ["nudge"] },
+        });
+        const id = String(made.note?.id ?? "");
+        if (!id) { setFailed(true); return; }
+        const first = person.split(/\s+/)[0]?.toLowerCase();
+        try {
+          const read = await apiFetch<{ destinations?: Array<{ id: string; name: string; state?: string }> }>("/api/channels/destinations");
+          const theirs = (read?.destinations ?? []).filter((d) => d.state !== "parked" && first && d.name.toLowerCase().includes(first));
+          if (theirs.length === 1) {
+            const { pickDestination } = await import("../surface/send");
+            pickDestination(`note:${id}`, theirs[0].id);
+          }
+        } catch { /* no saved destination read: he picks one in the well */ }
+        setNote({ id, title });
+      } catch (error) {
+        setFailed(true);
+        reportWriteFailure("Nudge", error);
+      }
+    })();
+  }, [face.name, person, text, v.kind]);
+  return (
+    <li className="needs-drawer-well needs-drawer-nudge" role="region" aria-label={`Nudge: ${face.name}`}
+      data-testid="needs-nudge">
+      <p className="needs-nudge-text" data-testid="needs-nudge-text">{text}</p>
+      {failed ? <SurfaceState error="The message was not prepared." />
+        : note ? <NoteSendWells id={note.id} title={note.title} />
+          : <SurfaceState loading />}
     </li>
   );
 }
@@ -423,7 +583,11 @@ function NeedRow({ face, primary, projects }: { face: NeedFace; primary: boolean
           </>
         )}
       />
-      {well === "project" && face.verbs.kind === "confirm" ? <li className="needs-drawer-well"><AddToProject meetingId={face.verbs.meetingId} /></li> : well === "detail" ? <DetailWell face={face} /> : well === "owner" || well === "date" ? <CommitWell face={face} which={well} onDone={() => setWell(null)} /> : null}
+      {well === "project" && face.verbs.kind === "confirm" ? <li className="needs-drawer-well"><AddToProject meetingId={face.verbs.meetingId} /></li>
+        : well === "detail" ? <DetailWell face={face} />
+          : well === "nudge" ? <NudgeWell face={face} />
+            : well === "decide" ? <DecideWell face={face} onDone={() => setWell(null)} />
+              : well === "owner" || well === "date" ? <CommitWell face={face} which={well} onDone={() => setWell(null)} /> : null}
     </>
   );
 }
@@ -450,7 +614,8 @@ function useRowMarks(
       // A row the hub counts (one member): the head, the Dock and the notch
       // say the number of these rows.
       li.setAttribute("data-counted", members.has(face.memberRef ?? face.id) ? "true" : "false");
-      if (face.verbs.kind === "confirm") li.setAttribute("data-proposal", "true");
+      if (face.verbs.kind === "confirm" || face.verbs.kind === "decide") li.setAttribute("data-proposal", "true");
+      if (face.direction) li.setAttribute("data-direction", face.direction);
       if (faceOpener(face)) li.setAttribute("data-opens", "true");
       else li.removeAttribute("data-opens");
     }
@@ -467,15 +632,108 @@ export function checkedWord(at: string | null | undefined, now: Date = new Date(
   return `Checked ${hhmm(d)}`;
 }
 
-const FILTERS: Array<{ value: NeedsFilter; label: string }> = [
-  { value: "ranked", label: "All" },
-  { value: "overdue", label: "Overdue" },
-  { value: "today", label: "Due today" },
-  { value: "not-run", label: "Not run" },
-  { value: "no-due", label: "No due date" },
-  { value: "waiting", label: "Waiting" },
-  { value: "muted", label: "Muted" },
-];
+/** Betterment D2: one chip of the row. Pressed = on; a second press clears
+ *  it. The count is what the list shows with the chip on. */
+function Chip({ label, count, on, onPress, menu, testId }: {
+  label: string;
+  count?: number | null;
+  on: boolean;
+  onPress(event: React.MouseEvent<HTMLButtonElement>): void;
+  menu?: boolean;
+  testId: string;
+}) {
+  return (
+    <Button dense variant={on ? "secondary" : "ghost"} className="surface-filter-token needs-chip"
+      data-filter-active={on || undefined} aria-pressed={menu ? undefined : on}
+      aria-haspopup={menu ? "menu" : undefined} data-testid={testId}
+      aria-label={count != null ? `${label} · ${count}` : label}
+      onClick={onPress}>
+      {label}{count != null ? <span className="needs-chip-count">{count}</span> : null}{menu && !on ? " ▾" : ""}
+    </Button>
+  );
+}
+
+type Pick = { key: string; name: string; count: number };
+
+/** Betterment D2: the chips over the one list (Mine, They owe me, To decide,
+ *  This week, a person, a Project; More holds the muted projects). Chips
+ *  combine; one at zero is not drawn unless it is on. At the phone width the
+ *  row scrolls in one line. */
+function NeedsChipRow({ chips, setChips, counts, people, projects, muted, showMuted, setShowMuted }: {
+  chips: NeedsChips;
+  setChips(next: NeedsChips): void;
+  counts: { mine: number; theirs: number; decide: number; week: number };
+  people: Pick[];
+  projects: Pick[];
+  muted: number;
+  showMuted: boolean;
+  setShowMuted(next: boolean): void;
+}) {
+  const [menu, setMenu] = useState<{ kind: "person" | "project" | "more"; x: number; y: number } | null>(null);
+  const anchors = useRef<Record<string, HTMLButtonElement | null>>({});
+  const at = (kind: "person" | "project" | "more", event: React.MouseEvent<HTMLButtonElement>) => {
+    const box = event.currentTarget.getBoundingClientRect();
+    anchors.current[kind] = event.currentTarget;
+    setMenu({ kind, x: box.left, y: box.bottom });
+  };
+  const direction = (value: "mine" | "theirs" | "decide") =>
+    setChips({ ...chips, direction: chips.direction === value ? null : value });
+  const person = people.find((p) => p.key === chips.person);
+  const project = projects.find((p) => p.key === chips.project);
+  const entries: WorkMenuEntry[] = !menu ? [] : menu.kind === "more"
+    ? [{ type: "item", id: "muted", label: `Muted projects · ${muted}`, checked: showMuted, onSelect: () => setShowMuted(!showMuted) }]
+    : (menu.kind === "person" ? people : projects).map((p) => ({
+      type: "item" as const, id: `${menu.kind}-${p.key}`, label: `${p.name} · ${p.count}`,
+      onSelect: () => setChips({ ...chips, [menu.kind]: p.key }),
+    }));
+  const directions: Array<["mine" | "theirs" | "decide", string, number]> = [
+    ["mine", "Mine", counts.mine], ["theirs", "They owe me", counts.theirs], ["decide", "To decide", counts.decide],
+  ];
+  return (
+    <div className="kit-filterbar needs-chips" data-testid="needs-filter">
+      <span className="surface-filter-tokens needs-chip-row" role="group" aria-label="Needs you filter">
+        {directions.map(([value, label, count]) => (count > 0 || chips.direction === value ? (
+          <Chip key={value} label={label} count={count > 0 ? count : null} on={chips.direction === value} testId={`needs-chip-${value}`}
+            onPress={() => direction(value)} />
+        ) : null))}
+        {counts.week > 0 || chips.week ? (
+          <Chip label="This week" count={counts.week > 0 ? counts.week : null} on={chips.week} testId="needs-chip-week"
+            onPress={() => setChips({ ...chips, week: !chips.week })} />
+        ) : null}
+        {people.length > 0 || person ? (
+          <Chip label={person?.name ?? "Person"} on={Boolean(person)} menu testId="needs-chip-person"
+            onPress={(event) => (person ? setChips({ ...chips, person: null }) : at("person", event))} />
+        ) : null}
+        {projects.length > 1 || project ? (
+          <Chip label={project?.name ?? "Project"} on={Boolean(project)} menu testId="needs-chip-project"
+            onPress={(event) => (project ? setChips({ ...chips, project: null }) : at("project", event))} />
+        ) : null}
+        {muted > 0 ? (
+          <Chip label="More" on={showMuted} menu testId="needs-chip-more" onPress={(event) => at("more", event)} />
+        ) : null}
+      </span>
+      {menu ? (
+        <WorkMenu label={menu.kind === "person" ? "Person" : menu.kind === "project" ? "Project" : "More"}
+          x={menu.x} y={menu.y} entries={entries} autoFocus onClose={() => setMenu(null)}
+          returnFocus={() => anchors.current[menu.kind]?.focus()} />
+      ) : null}
+    </div>
+  );
+}
+
+/** The person and Project choices of the rows, with how many rows each has. */
+function picksOf(faces: readonly NeedFace[], key: (f: NeedFace) => [string, string] | null): Pick[] {
+  const out = new Map<string, Pick>();
+  for (const face of faces) {
+    const hit = key(face);
+    if (!hit) continue;
+    const [k, name] = hit;
+    const row = out.get(k) ?? { key: k, name, count: 0 };
+    row.count += 1;
+    out.set(k, row);
+  }
+  return [...out.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
 
 /** The Needs-you window body. Phase 16 (the interior kit; the canvas window
  *  "Needs you"): AppHead (`N need you` + the status strip) → FilterBar →
@@ -494,7 +752,8 @@ export function NeedsDrawer() {
   const arming = useDesk((s) => s.scheduledArming);
   const [, tick] = useState(0);
   const [door, setDoor] = useState<DoorRead | null>(null);
-  const [filter, setFilter] = useState<NeedsFilter>("ranked");
+  const [chips, setChips] = useState<NeedsChips>(NO_CHIPS);
+  const [showMuted, setShowMuted] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
   // The countdown ticks while a recording arms.
@@ -584,10 +843,11 @@ export function NeedsDrawer() {
     .filter((item) => item.foldedInto && !item.waiting)
     .map((item) => ({ ref: String(item.ref ?? item.id ?? ""), kind: "attention" as const, item }));
   // Betterment D1: a row the one count rule leaves out (a promise not kept
-  // yet, what a person owes that is not "waiting", his own work due on a
-  // later day) is listed after the counted rows, marked not counted.
+  // yet, what a person owes, his own work due on a later day) is listed
+  // after the counted rows, marked not counted. Betterment D2: what a person
+  // owes is in the one list too (They owe me), never a list of its own.
   const listedOnly = needs.unmutedItems
-    .filter((item) => item.counted === false && !item.waiting && !item.foldedInto)
+    .filter((item) => (item.counted === false || item.waiting) && !item.foldedInto)
     .map((item) => ({ ref: String(item.ref ?? item.id ?? ""), kind: "attention" as const, item }));
   const faces = [
     ...armed,
@@ -597,24 +857,31 @@ export function NeedsDrawer() {
   ];
   const asFace = (item: (typeof needs.mutedItems)[number]) =>
     needFace({ ref: String(item.id ?? item.ref ?? ""), kind: "attention", item }, ctx);
-  // Listed, never counted: what he waits on someone else for, and the muted.
-  const waiting = needs.waitingItems.map(asFace);
+  // Listed, never counted: the muted (More ▸ Muted projects).
   const muted = needs.mutedItems.map(asFace);
   // PHILO-15-09 (B11, the A5 ruling): the head is the hub's one number, the
   // number the Dock badge and the bell say, and it counts every row under
   // it: a member, a source the hub could not read, a recording that arms.
   const head = needsHead(needs.count, needs.complete && coverage.complete);
-  // One filled primary on a face with work; a SETUP, repair or offer verb is
-  // never filled (the quiet face has none: HS-201-01 ruling 2).
-  const primaryId = faces.find((f) => !f.source && f.verbs.kind !== "setup")?.id ?? null;
-
-  // The FilterBar: a filter that matches nothing is not drawn (HS-201-11),
-  // except the one that is on (the way back) and Ranked (all).
-  const listOf = (f: NeedsFilter) => (f === "waiting" ? waiting : f === "muted" ? muted : faces);
-  const matching = (f: NeedsFilter) => listOf(f).filter((face) => passesNeedsFilter(face, f, now));
-  const options = FILTERS.filter((o) => o.value === "ranked" || o.value === filter || matching(o.value).length > 0);
-  const shown = matching(filter);
-  const all = [...faces, ...waiting, ...muted];
+  // Betterment D2: the chips narrow the one ranked list. Each chip's count
+  // is what the list shows with that chip on (the others as they are).
+  const base = showMuted ? muted : faces;
+  const shown = base.filter((face) => passesChips(face, chips, now));
+  const countWith = (next: Partial<NeedsChips>) =>
+    base.filter((face) => passesChips(face, { ...chips, ...next }, now)).length;
+  const counts = {
+    mine: countWith({ direction: "mine" }), theirs: countWith({ direction: "theirs" }),
+    decide: countWith({ direction: "decide" }), week: countWith({ week: true }),
+  };
+  const narrowed = base.filter((face) => passesChips(face, { ...chips, person: null, project: null }, now));
+  const people = picksOf(narrowed.filter((f) => !chips.project || f.projectId === chips.project),
+    (f) => (f.personKey ? [f.personKey, f.personName ?? f.personKey] : null));
+  const projects = picksOf(narrowed.filter((f) => !chips.person || f.personKey === chips.person),
+    (f) => (f.projectId ? [f.projectId, f.project?.name ?? f.projectId] : null));
+  // One filled primary on a face with work: the first row shown; a SETUP,
+  // repair or offer verb is never filled (HS-201-01 ruling 2).
+  const primaryId = showMuted ? null : shown.find((f) => !f.source && f.verbs.kind !== "setup")?.id ?? null;
+  const all = [...faces, ...muted];
   const memberRefs = new Set(faces.filter((f) => !f.uncounted).map((f) => f.memberRef ?? f.id));
   const sourceReceipt = useSourceReceipt((st) => st.receipt);
   useRowMarks(listRef, all, memberRefs);
@@ -635,9 +902,6 @@ export function NeedsDrawer() {
     if (face) faceOpener(face)?.();
   };
 
-  const caption = filter === "waiting" ? "Waiting" : filter === "muted" ? "Muted" : "Work";
-  const sectionTestId = filter === "waiting" ? "needs-waiting" : filter === "muted" ? "needs-muted" : undefined;
-  const listed = filter === "waiting" || filter === "muted";
 
   return (
     <div className="needs-drawer kit-face" data-testid="needs-drawer"
@@ -672,27 +936,27 @@ export function NeedsDrawer() {
           {[...coverage.gaps, ...coverage.quiet].map((source, index) => <li key={index}>{source.label || source.source_id}</li>)}
         </ul> : null}
       </Disclosure> : null}
-      {faces.length + waiting.length + muted.length > 0 ? (
-        <FilterBar
-          label="Needs you filter"
-          data-testid="needs-filter"
-          options={options}
-          value={filter}
-          onChange={(next) => setFilter(next as NeedsFilter)}
-        />
+      {faces.length + muted.length > 0 ? (
+        <NeedsChipRow chips={chips} setChips={setChips} counts={counts} people={people} projects={projects}
+          muted={muted.length > 0 ? muted.length : 0} showMuted={showMuted} setShowMuted={setShowMuted} />
       ) : null}
       {/* A press on a row body opens it; each row's verbs carry the keyboard. */}
       <div ref={listRef} onClick={onRowPress} data-testid="needs-list" className="needs-drawer-list">
         <ScrollHint axis="y" scrollRef={listRef}>
-          {shown.length > 0 ? (
-            <SurfaceSection label={caption} count={shown.length || null} data-testid={sectionTestId}
-            className={filter === "muted" ? "needs-drawer-muted" : undefined}>
-              <NeedsList label={listed ? caption : "Needs you"}>
-                {shown.map((face) => (
-                  <NeedRow key={face.id} face={face} primary={!listed && face.id === primaryId} projects={multipleProjects} />
-                ))}
+          {showMuted && shown.length > 0 ? (
+            <SurfaceSection label="Muted" count={shown.length || null} data-testid="needs-muted" className="needs-drawer-muted">
+              <NeedsList label="Muted">
+                {shown.map((face) => <NeedRow key={face.id} face={face} primary={false} projects={multipleProjects} />)}
               </NeedsList>
             </SurfaceSection>
+          ) : shown.length > 0 ? (
+            <NeedsList label="Needs you">
+              {shown.map((face) => (
+                <NeedRow key={face.id} face={face} primary={face.id === primaryId} projects={multipleProjects} />
+              ))}
+            </NeedsList>
+          ) : chipsOn(chips) ? (
+            <p className="needs-drawer-none" data-testid="needs-none">Nothing matches these filters.</p>
           ) : null}
         </ScrollHint>
       </div>

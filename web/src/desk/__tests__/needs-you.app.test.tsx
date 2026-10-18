@@ -20,6 +20,11 @@ vi.mock("../shell", async (importOriginal) => ({
   openSurfaceOr: vi.fn(),
 }));
 vi.mock("../components/MicButton", () => ({ MicButton: () => null }));
+// The Send well species has its own app test (send.app.test.tsx); here it is
+// the seat Nudge opens, named by the note it sends.
+vi.mock("../documentSendsLazy", () => ({
+  NoteSendWells: ({ id }: { id: string }) => <div data-testid="note-send-wells" data-note={id} />,
+}));
 
 import { openCoderSession } from "../shell";
 import { useAgentFlights } from "../agentFlights";
@@ -114,5 +119,101 @@ describe("a held call on Needs you (Conductor R1, PHILO-14 A5)", () => {
     expect(within(cut).getByTestId("shade-gate-command").textContent?.endsWith("… +90 CHARS")).toBe(true);
     expect(within(cut).queryByRole("button", { name: "Approve" })).toBeNull();
     expect(within(cut).getAllByRole("button", { name: "Deny" })).toHaveLength(1);
+  });
+});
+
+// ── Betterment daily D2: the chips and one verb per row, on the recorded week ──
+import dailyWeek from "./fixtures/daily-week/needs-you.json";
+import { recordedGet, type Gets } from "../../test/recordedHub";
+import notesCreate from "../../test/wire/notes-create.wire.json";
+import destinationsTwo from "./fixtures/destinations-wire/list-two.json";
+
+function weekRows(): HTMLElement[] {
+  return [...document.querySelectorAll<HTMLElement>("[data-testid='needs-drawer'] li.needs-row")];
+}
+const names = () => weekRows().map((li) => li.querySelector(".needs-row-name")?.textContent ?? "").sort();
+
+describe("Needs you on the daily week: the chips and one verb per row (Betterment D2)", () => {
+  let posts: Array<{ url: string; json: unknown }>;
+  beforeEach(() => {
+    vi.setSystemTime(new Date(String(dailyWeek.needsYou.computedAt)));
+    posts = [];
+    const gets: Gets = {
+      "/api/desk/needs-you?fresh=1": dailyWeek.needsYou,
+      "/api/door": hubWire("door.empty").wire,
+      "/api/channels/destinations": destinationsTwo,
+    };
+    api.fetch.mockImplementation(async (url: string, init?: { method?: string; json?: unknown }) => {
+      if (init?.method === "POST") {
+        posts.push({ url: String(url), json: init.json });
+        if (url === "/api/notes") return structuredClone(notesCreate.wire);
+        return {};
+      }
+      return recordedGet(gets, String(url));
+    });
+  });
+
+  it("They owe me + Theo shows exactly Theo's two rows, each with Nudge", async () => {
+    render(<NeedsDrawer />);
+    await waitFor(() => expect(weekRows().length).toBe(9));
+    const bar = screen.getByTestId("needs-filter");
+    // A chip says its count; the head still says the one number.
+    expect(within(bar).getByRole("button", { name: "They owe me · 5" })).toBeTruthy();
+    expect(within(bar).getByRole("button", { name: "Mine · 2" })).toBeTruthy();
+    expect(within(bar).getByRole("button", { name: "To decide · 2" })).toBeTruthy();
+    fireEvent.click(within(bar).getByRole("button", { name: "They owe me · 5" }));
+    fireEvent.click(within(bar).getByTestId("needs-chip-person"));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Theo Park · 2" }));
+    await waitFor(() => expect(names()).toEqual(["Profile the reconciliation job", "Write up alert rule changes"]));
+    for (const row of weekRows()) {
+      const verbs = [...row.querySelectorAll<HTMLElement>("[data-testid='needs-row-verb']")].map((b) => b.dataset.verb);
+      expect(verbs).toEqual(["nudge", "more"]);
+    }
+    expect(screen.getByTestId("arrival-display").textContent).toBe("4 need you");
+    // A second press clears a chip: the whole list again.
+    fireEvent.click(within(bar).getByTestId("needs-chip-person"));
+    fireEvent.click(within(bar).getByTestId("needs-chip-theirs"));
+    await waitFor(() => expect(weekRows().length).toBe(9));
+  });
+
+  it("Mine shows his two rows with Done, and Done closes the item through follow-through", async () => {
+    render(<NeedsDrawer />);
+    await waitFor(() => expect(weekRows().length).toBe(9));
+    fireEvent.click(within(screen.getByTestId("needs-filter")).getByTestId("needs-chip-mine"));
+    await waitFor(() => expect(names()).toEqual([
+      "Email Dana about the cutover window", "Review design doc on settlement retries"]));
+    const done = weekRows()[0].querySelector<HTMLElement>("[data-verb='done']")!;
+    expect(done.textContent).toBe("Done");
+    fireEvent.click(done);
+    await waitFor(() => expect(posts).toContainEqual(expect.objectContaining({
+      url: "/api/follow-through/complete", json: expect.objectContaining({ verb: "done" }),
+    })));
+  });
+
+  it("Nudge prepares a message in the Send well and sends nothing", async () => {
+    render(<NeedsDrawer />);
+    await waitFor(() => expect(weekRows().length).toBe(9));
+    const row = weekRows().find((li) => li.textContent?.includes("Write up alert rule changes"))!;
+    fireEvent.click(row.querySelector<HTMLElement>("[data-verb='nudge']")!);
+    const well = await screen.findByTestId("needs-nudge");
+    expect(within(well).getByTestId("needs-nudge-text").textContent)
+      .toMatch(/^Theo, is "Write up alert rule changes" on track for \w{3} \d{1,2} \w{3}\? Tell me if you need help\.$/);
+    const seat = await within(well).findByTestId("note-send-wells");
+    expect(seat.dataset.note).toBe(notesCreate.wire.note.id);
+    expect(posts.map((p) => p.url)).toEqual(["/api/notes"]);
+    expect(posts.some((p) => p.url.startsWith("/api/channels"))).toBe(false);
+  });
+
+  it("a decision waits for Decide; Accept, Not now and Drop are in place", async () => {
+    render(<NeedsDrawer />);
+    await waitFor(() => expect(weekRows().length).toBe(9));
+    fireEvent.click(within(screen.getByTestId("needs-filter")).getByTestId("needs-chip-decide"));
+    await waitFor(() => expect(names()).toEqual(["Do it", "Talk about the staff path in our next one-on-one"]));
+    const row = weekRows().find((li) => li.textContent?.includes("Do it"))!;
+    fireEvent.click(row.querySelector<HTMLElement>("[data-verb='decide']")!);
+    const well = await screen.findByTestId("needs-decide");
+    expect(within(well).getAllByRole("button").map((b) => b.textContent)).toEqual(["Accept", "Not now", "Drop", "Open"]);
+    fireEvent.click(within(well).getByRole("button", { name: "Drop: Do it" }));
+    await waitFor(() => expect(posts.some((p) => /\/api\/proposals\/prop-[^/]+\/dismiss$/.test(p.url))).toBe(true));
   });
 });

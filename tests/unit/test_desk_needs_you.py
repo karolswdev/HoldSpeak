@@ -912,3 +912,89 @@ def test_follow_through_due_is_a_date_or_the_whole_words(hub: Hub) -> None:
     dues = {card["text"]: card["due"] for lane in ("now", "waiting", "unassigned", "overdue") for card in board[lane]}
     assert dues["Profile the reconciliation job"] == "2026-10-23"
     assert dues["Write up alert rule changes"] == "after the launch"
+
+
+# ── Betterment daily D2: the filters of the one list ──────────────────────────
+
+
+def _titles(answer: dict[str, Any]) -> list[str]:
+    return sorted(row["title"] for row in answer["items"])
+
+
+def test_the_filters_narrow_the_list_and_never_the_number(hub: Hub) -> None:
+    """On the recon's week (today its Monday, the nine keeps): They owe me +
+    Theo is exactly Theo's two rows; Mine is his two; the count stays 4."""
+    from datetime import date
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from tests.fixtures.daily_week import seed
+
+    seeded = seed(hub, monday=date.today(), engine=True)
+
+    def read(query: str) -> dict[str, Any]:
+        return _ok(hub.client.get(f"/api/desk/needs-you?{query}"))
+
+    theirs_theo = read("direction=theirs&person=Theo")
+    assert _titles(theirs_theo) == ["Profile the reconciliation job", "Write up alert rule changes"]
+    assert theirs_theo["count"] == 4 and theirs_theo["shown"] == 2
+    assert theirs_theo["filter"] == {"direction": "theirs", "person": "Theo"}
+    assert {row["person_name"] for row in theirs_theo["items"]} == {"Theo Park"}
+    assert _titles(read("direction=mine")) == [
+        "Email Dana about the cutover window", "Review design doc on settlement retries"]
+    # Mine + Theo: what I owe Theo. The full name and the id find him too.
+    assert _titles(read("direction=mine&person=theo%20park")) == ["Review design doc on settlement retries"]
+    assert _titles(read(f"person={seeded['Theo']}")) == [
+        "Profile the reconciliation job", "Review design doc on settlement retries",
+        "Write up alert rule changes"]
+    assert _titles(read("direction=decide")) == ["Do it", "Talk about the staff path in our next one-on-one"]
+    # The Project by name or id: every row of the week is in it.
+    assert len(read("project=Payments%20ledger%20cutover")["items"]) == 9
+    assert len(read(f"project={seeded['project']}")["items"]) == 9
+    # This week: due by Sunday, the late row too; the decisions have no date.
+    week = _titles(read("week=1"))
+    assert "Confirm the vendor freeze dates" in week and "Do it" not in week
+    assert hub.client.get("/api/desk/needs-you?direction=nobody").status_code == 400
+    # No filter: the answer is the whole list, with no filter keys.
+    whole = _needs(hub)
+    assert len(whole["items"]) == 9 and "filter" not in whole
+
+
+def test_desk_needs_you_over_mcp_takes_the_same_filters(hub: Hub) -> None:
+    from datetime import date
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from tests.fixtures.daily_week import seed
+
+    seed(hub, monday=date.today(), engine=True)
+    is_error, answer = hub.mcp("desk.needs_you", {"direction": "theirs", "person": "Theo"})
+    assert not is_error, answer
+    assert _titles(answer) == ["Profile the reconciliation job", "Write up alert rule changes"]
+    assert answer["count"] == 4
+    is_error, answer = hub.mcp("desk.needs_you", {"direction": "mine", "week": True})
+    assert not is_error and _titles(answer) == [
+        "Email Dana about the cutover window", "Review design doc on settlement retries"]
+
+
+def test_an_old_rows_said_due_becomes_a_date_on_open(hub: Hub) -> None:
+    """The D0 follow-up: a row written before D0 keeps "Monday" as its due
+    and no due_said. The next open resolves it once against its meeting's
+    day; words that name no day stay words. Every reader then sees a date."""
+    from holdspeak.db.reconcile import _resolve_said_dues
+
+    with hub.db._connection() as conn:
+        conn.execute(
+            "INSERT INTO meetings (id, started_at, title, intel_status, capture_status, provenance) "
+            "VALUES ('m-old', '2026-10-15T18:00:00', 'Old', 'complete', 'finalized', 'desktop')")
+        for action_id, due in (("ai-old", "Friday next week"), ("ai-words", "after the launch"),
+                               ("ai-iso", "2026-10-20")):
+            conn.execute(
+                "INSERT INTO action_items (id, meeting_id, task, owner, due, status, review_state, created_at) "
+                "VALUES (?, 'm-old', ?, 'Theo', ?, 'open', 'accepted', '2026-10-15T18:30:00')",
+                (action_id, action_id, due))
+        conn.commit()
+        assert _resolve_said_dues(conn) == 2
+        rows = {r[0]: (r[1], r[2]) for r in conn.execute("SELECT id, due, due_said FROM action_items")}
+        assert _resolve_said_dues(conn) == 0  # once
+    assert rows["ai-old"] == ("2026-10-23", "Friday next week")
+    assert rows["ai-words"] == ("after the launch", "after the launch")
+    assert rows["ai-iso"] == ("2026-10-20", None)

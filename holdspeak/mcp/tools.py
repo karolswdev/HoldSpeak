@@ -413,7 +413,12 @@ TOOLS.extend([
         ["entry_id"],
     ),
     _mcp_tool("desk.snapshot", "Read one coherent snapshot of the durable HoldSpeak desk.", {}),
-    _mcp_tool("desk.needs_you", "What needs me, by the one rule every face uses: follow-through cards that ask me (overdue, due, unassigned), every project room's attention items, decisions that wait for my review, engine blockers on the meeting path and meetings whose summary failed. One count. An item I wait on someone else for is marked waiting and is not counted (waitingCount). Muted projects are marked and not counted. Returns {count, waitingCount, members, items, blockers, failedMeetings, projects, next, coverage, complete} -- coverage names every expected source that was not observed. The text of a 1:1 commitment is withheld; it is still counted.", {}),
+    _mcp_tool("desk.needs_you", "What needs me, by the one rule every face uses: Door cards, Room items, decisions to review, engine blockers, failed summaries. One count; waiting rows and muted projects are not counted. Each row has direction, person_id, person_name. Filters combine; they narrow the rows, never the count. A 1:1 commitment's text is withheld.", {
+        "direction": {"type": "string", "enum": ["mine", "theirs", "decide", "setup"], "description": "theirs: owed to me"},
+        "person": {"type": "string", "description": "a name (Theo) or People id"},
+        "project": {"type": "string", "description": "a name, or an id from project.list"},
+        "week": {"type": "boolean", "description": "due by this Sunday, late too"},
+    }),
     _mcp_tool("settings.hub", "Read the settings hub row facts: module state tokens for the settings truth table.", {}),
     _mcp_tool(
         "decision_record.list", "List decision records, newest first.",
@@ -1162,8 +1167,10 @@ def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal)
         # counted; their text never leaves the People custody boundary: the
         # operation itself withholds it (its result is observed), before any
         # transport sees it.
+        filters = {key: args[key] for key in ("direction", "person", "project", "week")
+                   if args.get(key) not in (None, "")}
         return ops().invoke(
-            principal, "desk.needs_you", {},
+            principal, "desk.needs_you", filters,
             held={"door_upcoming": getattr(door, "_upcoming", None) if door else None})
     if name == "settings.hub":
         from holdspeak.config import Config, CONFIG_FILE

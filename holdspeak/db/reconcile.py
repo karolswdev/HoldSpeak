@@ -759,6 +759,20 @@ def reconcile_schema(
     if columns_added:
         shape_changed = True
 
+    # Betterment D0 follow-up (D2): action items stored before D0 keep their
+    # said due ("Wednesday") with no ``due_said``. Read each against its
+    # meeting's day once, so every reader (Needs you, People, the brief) sees
+    # a date. UNGATED like the watch arming above (D0's column add already
+    # spent the shape change on his desk); idempotent by ``due_said IS NULL``.
+    try:
+        resolved = _resolve_said_dues(conn)
+        if resolved:
+            log.info("Reconcile: resolved %d said due(s) to dates", resolved)
+    except Exception as exc:  # pragma: no cover - never block a reconcile
+        log.warning(
+            "Reconcile: said-due backfill skipped (%s: %s)", type(exc).__name__, exc,
+        )
+
     # HS-142-02: this index depends on a column added to an existing canonical
     # table. Creating it in SCHEMA_SQL would make SQLite evaluate the index
     # before the additive column reconcile and strand every Story-01 database.
@@ -1342,6 +1356,46 @@ def _backfill_watch_graduation(conn: sqlite3.Connection) -> None:
             "watch-graduation backfill: graduated %d row(s) to WatchSpec@1",
             graduated,
         )
+
+
+def _resolve_said_dues(conn: Any) -> int:
+    """Betterment D0 follow-up: an old row's said due becomes a date.
+
+    A row whose ``due`` is words and whose ``due_said`` is empty was written
+    before D0. Its words move to ``due_said`` and ``due`` becomes the ISO day
+    they name against the meeting's start (``due_dates.stored_due``); words
+    that name no day stay as they are. Either way ``due_said`` is set, so a
+    second run matches nothing. Its own SAVEPOINT, RELEASEd on every path.
+    """
+    from ..due_dates import meeting_anchor, stored_due
+
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(action_items)")}
+    if "due_said" not in columns:
+        return 0
+    rows = conn.execute(
+        """SELECT ai.id, ai.due, m.started_at
+             FROM action_items ai LEFT JOIN meetings m ON m.id = ai.meeting_id
+            WHERE ai.due_said IS NULL AND ai.due IS NOT NULL AND TRIM(ai.due) != ''
+              AND ai.due NOT GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]*'"""
+    ).fetchall()
+    if not rows:
+        return 0
+    conn.execute("SAVEPOINT resolve_said_dues")
+    try:
+        changed = 0
+        for action_id, due, started_at in rows:
+            day, said = stored_due(due, meeting_anchor(started_at))
+            conn.execute(
+                "UPDATE action_items SET due = ?, due_said = ? WHERE id = ?",
+                (day, said or str(due), action_id),
+            )
+            changed += 1
+    except Exception:
+        conn.execute("ROLLBACK TO SAVEPOINT resolve_said_dues")
+        conn.execute("RELEASE SAVEPOINT resolve_said_dues")
+        raise
+    conn.execute("RELEASE SAVEPOINT resolve_said_dues")
+    return changed
 
 
 def _arm_unarmed_watches(conn: Any) -> int:

@@ -27,8 +27,15 @@ export type NeedVerbs =
   | { kind: "gate-cut"; proposalId: string; sessionKey: string }
   | { kind: "pr"; url: string; number: number | null }
   | { kind: "session"; sessionKey: string }
-  | { kind: "review"; ref: string }
+  | { kind: "review"; ref: string; label?: string }
   | { kind: "commitment"; next: "name_owner" | "set_date" | "mark_done"; cardId: string }
+  /** Betterment D2: an action item by its direction. *mine*: Done; *theirs*:
+   *  Nudge (it prepares a message; he presses Send). More holds Open, Set a
+   *  date, Done (theirs), Later and Drop. */
+  | { kind: "work"; direction: "mine" | "theirs"; cardId: string; next: "set_date" | "mark_done"; person: string; due: string | null }
+  /** Betterment D2: a decision from a meeting: Decide opens Accept, Not now
+   *  and Drop in place. */
+  | { kind: "decide"; proposalId: string; projectId: string; meetingId: string }
   | { kind: "name-owner"; cardId: string | null; openRef: string | null }
   /** A proposal from a meeting, Project or not: Confirm / Defer / Decline
    *  (PHILO-15 08, B03). */
@@ -102,7 +109,18 @@ export interface NeedFace {
    *  name and the hub's own reason (a raw error line stays here, never on
    *  the fact line). Shown by the row's Details verb. */
   detail?: Array<{ name: string; reason: string }>;
+  /** Betterment D2: whose move the row is (the chips read it). */
+  direction?: NeedDirection;
+  /** Betterment D2: the Person the row is about: the People id, else
+   *  `owner:<name>` for an owner the desk has no Person for. */
+  personKey?: string;
+  /** Betterment D2: that Person's name, as the person picker shows it. */
+  personName?: string;
+  /** Betterment D2: the row's Project id (the project picker reads it). */
+  projectId?: string;
 }
+
+export type NeedDirection = "mine" | "theirs" | "decide" | "setup";
 
 /** Phase 16 (the interior kit, the Ledger's kind plate): the row's kind in
  *  at most three letters. An agent row is its agent (`CC` Claude Code,
@@ -128,28 +146,47 @@ export function plateOf(face: Pick<NeedFace, "kind" | "verbs" | "source" | "agen
   }
 }
 
-/** Phase 16 (the Needs-you FilterBar): the filter a row passes. */
-export type NeedsFilter = "ranked" | "overdue" | "today" | "not-run" | "no-due" | "waiting" | "muted";
+/** Betterment D2: the chips over the one list. They combine; null/false
+ *  is "any". The direction chips are one choice (Mine, They owe me, To
+ *  decide); This week, the person and the Project add to it. */
+export interface NeedsChips {
+  direction: "mine" | "theirs" | "decide" | null;
+  week: boolean;
+  person: string | null;
+  project: string | null;
+}
+
+export const NO_CHIPS: NeedsChips = { direction: null, week: false, person: null, project: null };
+
+export function chipsOn(chips: NeedsChips): boolean {
+  return Boolean(chips.direction || chips.week || chips.person || chips.project);
+}
 
 function localDay(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-/** True when `face` passes `filter` (`waiting` and `muted` are their own
- *  lists, so every face of those lists passes them). Overdue and Due today
- *  read the item's due day against the local today; No due date is an
- *  action or decision with none; Not run is a meeting whose summary did not
- *  run. */
-export function passesNeedsFilter(face: NeedFace, filter: NeedsFilter, now: Date = new Date()): boolean {
-  if (filter === "ranked" || filter === "waiting" || filter === "muted") return true;
-  if (filter === "not-run") return face.verbs.kind === "summarize";
-  const work = !face.source && (face.kind === "action" || face.kind === "decision");
-  if (filter === "no-due") return work && !face.due;
-  const due = face.due ? wireDate(face.due) : null;
-  if (!work || !due) return false;
-  const day = localDay(due);
-  const today = localDay(now);
-  return filter === "today" ? day === today : day < today;
+/** The last day of `now`'s week (Sunday), as a local day. */
+export function weekEnd(now: Date): string {
+  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  end.setDate(end.getDate() + ((7 - end.getDay()) % 7));
+  return localDay(end);
+}
+
+/** True when `face` passes every chip that is on (the twin of the hub's
+ *  `needs_you_membership.row_passes`). This week: due on or before this
+ *  Sunday, a late row too. A source row has no direction: any chip hides it. */
+export function passesChips(face: NeedFace, chips: NeedsChips, now: Date = new Date()): boolean {
+  if (!chipsOn(chips)) return true;
+  if (face.source) return false;
+  if (chips.direction && face.direction !== chips.direction) return false;
+  if (chips.person && face.personKey !== chips.person) return false;
+  if (chips.project && face.projectId !== chips.project) return false;
+  if (chips.week) {
+    const due = face.due ? wireDate(face.due) : null;
+    if (!due || localDay(due) > weekEnd(now)) return false;
+  }
+  return true;
 }
 
 /** PHILO-15-09 (B12): every member row says what it is. A proposal from a
@@ -157,7 +194,7 @@ export function passesNeedsFilter(face: NeedFace, filter: NeedsFilter, now: Date
  *  AGENT. A setup blocker and a source row are not objects: no word. */
 export function kindWordOf(face: Pick<NeedFace, "kind" | "verbs" | "source">): string | undefined {
   if (face.source) return undefined;
-  if (face.verbs.kind === "confirm") return "PROPOSAL";
+  if (face.verbs.kind === "confirm" || face.verbs.kind === "decide") return "PROPOSAL";
   switch (face.kind) {
     case "decision": return "DECISION";
     case "action": return "ACTION";
@@ -399,7 +436,7 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
   // R4: a decision that waits for the owner's review.
   if (source === "decision" && item.openRef) {
     return { id, kind: "decision", name: title, fact: factProject, lamp, group: "rest",
-      verbs: { kind: "review", ref: String(item.openRef) }, openRef: String(item.openRef) };
+      verbs: { kind: "review", ref: String(item.openRef), label: "Decide" }, openRef: String(item.openRef) };
   }
   // A proposal from a meeting: Confirm.
   if (item.proposalId) {
@@ -415,8 +452,9 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
       // The act the proposal asks for: decide it, or confirm it.
       lamp: { label: item.proposalKind === "decision" ? "TO DECIDE" : "TO CONFIRM", tone: "warn" },
       group: "rest",
+      // Betterment D2: a decision waits for Decide; an action for Confirm.
       verbs: {
-        kind: "confirm",
+        kind: item.proposalKind === "decision" ? "decide" : "confirm",
         proposalId: String(item.proposalId),
         projectId: String(item.projectId ?? ""),
         meetingId: String(item.meetingId ?? ""),
@@ -437,11 +475,23 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
     const next = item.nextAction
       ?? (item.unknowns?.includes("owner") ? "name_owner"
         : item.unknowns?.includes("due") ? "set_date" : "mark_done");
+    const cardId = String(item.actionItemId);
     return { id, kind: "action", name: title, fact, lamp, group: "rest",
-      verbs: { kind: "commitment", next, cardId: String(item.actionItemId) },
-      openRef: openRef ?? `action_item:${String(item.actionItemId)}` };
+      // Betterment D2: one verb by direction (Done or Nudge); an item with
+      // no owner still asks for one.
+      verbs: next === "name_owner"
+        ? { kind: "commitment", next, cardId }
+        : workVerbs(item, cardId, next),
+      openRef: openRef ?? `action_item:${cardId}` };
   }
-  const ext = item as { _isUnassigned?: boolean; _toReview?: boolean };
+  const ext = item as { _isUnassigned?: boolean; _toReview?: boolean; _isDoor?: boolean };
+  // Betterment D2: a Door card that is a meeting's action item takes the
+  // same verbs as a Room commitment.
+  if (ext._isDoor && source === "action_item" && item.ref && !ext._toReview && !ext._isUnassigned
+    && (item.direction === "mine" || item.direction === "theirs" || item.waiting)) {
+    return { id, kind: "action", name: title, fact, lamp, group: "rest",
+      verbs: workVerbs(item, String(item.ref), item.dueAt ? "mark_done" : "set_date"), openRef };
+  }
   if (ext._toReview && card) {
     const ref = String(card.open_ref || card.target_ref || "");
     return { id, kind: "action", name: title, fact, lamp, group: "rest",
@@ -465,6 +515,29 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
     verbs: ref ? { kind: "open", ref } : { kind: "none" }, openRef: ref || undefined };
 }
 
+/** Betterment D2: an action item's verbs by its direction. */
+function workVerbs(item: NeedsYouRoomItem, cardId: string, next: "set_date" | "mark_done"): NeedVerbs {
+  return {
+    kind: "work",
+    // A row from an older hub has no direction: what he waits on is theirs.
+    direction: item.direction === "theirs" || (!item.direction && item.waiting) ? "theirs" : "mine",
+    cardId,
+    next,
+    person: String(item.person_name || item.owner || "").trim(),
+    due: item.dueAt ? String(item.dueAt) : null,
+  };
+}
+
+/** Betterment D2: the Person a row is about, as the person picker keys it. */
+export function personOf(item: NeedsYouRoomItem): { key: string; name: string } | null {
+  const id = String(item.person_id ?? "").trim();
+  const name = String(item.person_name ?? "").trim();
+  if (id) return { key: id, name: name || String(item.owner ?? "").trim() || id };
+  const owner = String(item.owner ?? "").trim();
+  if (owner && item.direction === "theirs") return { key: `owner:${owner.toLowerCase()}`, name: owner };
+  return null;
+}
+
 /** One hub member as its object face. */
 export function needFace(member: NeedsYouMember, ctx: NeedCtx): NeedFace {
   const face = memberFace(member, ctx);
@@ -482,6 +555,7 @@ function memberFace(member: NeedsYouMember, ctx: NeedCtx): NeedFace {
       lamp: { label: "SETUP", tone: "warn" },
       group: "rest",
       verbs: { kind: "setup", key: member.blocker.key, verb: member.blocker.verb },
+      direction: "setup",
     };
   }
   if (member.kind === "meeting" && member.meeting) {
@@ -498,6 +572,7 @@ function memberFace(member: NeedsYouMember, ctx: NeedCtx): NeedFace {
       group: "rest",
       verbs: { kind: "summarize", meetingId: meeting.id },
       openRef: `meeting:${meeting.id}`,
+      direction: "setup",
     };
   }
   const item = member.item ?? ({} as NeedsYouRoomItem);
@@ -512,6 +587,12 @@ function memberFace(member: NeedsYouMember, ctx: NeedCtx): NeedFace {
   }
   face.memberRef = String(item.ref ?? item.id ?? "");
   if (item.foldedInto) face.foldedInto = String(item.foldedInto);
+  // Betterment D2: what the chips read.
+  const direction = item.direction ?? (item.waiting ? "theirs" : undefined);
+  if (direction) face.direction = direction;
+  const person = personOf(item);
+  if (person) { face.personKey = person.key; face.personName = person.name; }
+  if (item.projectId) face.projectId = String(item.projectId);
   return face;
 }
 

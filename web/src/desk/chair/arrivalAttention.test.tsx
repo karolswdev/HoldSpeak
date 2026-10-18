@@ -385,11 +385,13 @@ describe("Arrival attention (HS-200-15)", () => {
     }
   });
 
+  // Betterment D2: Done is the verb of HIS own work; what a person owes him
+  // takes Nudge (needs-you.app.test.tsx, the daily week).
   it("Done is the verb only when owner and date are known, and it posts the explicit act", async () => {
     const commitment = row("p1:commitment:Priya confirms the freeze window", {
       title: "Priya confirms the freeze window", source: "commitment", kind: "commitment",
       why: "DUE TODAY", severity: "warning", rankClass: "due_today", dueAt: new Date().toISOString().slice(0, 10),
-      commitmentId: "cmt-1", actionItemId: "action-1", owner: "Priya", unknowns: [],
+      commitmentId: "cmt-1", actionItemId: "action-1", owner: "Me", unknowns: [],
       nextAction: "mark_done", verbHref: null,
     });
     vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => {

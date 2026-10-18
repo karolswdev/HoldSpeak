@@ -669,7 +669,16 @@ class ProjectService:
             })
         return needs
 
-    def needs_you(self, principal: Principal, *, door_upcoming: Any = None) -> dict[str, Any]:
+    def needs_you(
+        self,
+        principal: Principal,
+        *,
+        door_upcoming: Any = None,
+        direction: str | None = None,
+        person: str | None = None,
+        project: str | None = None,
+        week: bool = False,
+    ) -> dict[str, Any]:
         """What needs the owner: ONE rule, ONE count, every face.
 
         The answer is the R1-R3 membership (``needs_you_membership``): Door
@@ -683,9 +692,13 @@ class ProjectService:
         through the declared ``desk.needs_you`` operation now. ``door_upcoming``
         is the hub's calendar read (``DoorService._upcoming``), held by the
         transport; ``None`` when the process has none.
+
+        Betterment D2: ``direction``, ``person``, ``project`` and ``week``
+        narrow the rows (``needs_you_membership.filter_answer``); the number
+        stays the desk's one number.
         """
         from .needs_you_aggregate import build_aggregate, shared_last_known
-        from .needs_you_membership import compose, withhold_people_content
+        from .needs_you_membership import compose, filter_answer, withhold_people_content
 
         aggregate = build_aggregate(
             list_projects=self.list_projects,
@@ -703,7 +716,10 @@ class ProjectService:
         # through it, so the commitments are counted here and their text is
         # withheld. The owner's own HTTP route composes the full rows outside
         # any observed call (``needs_you_membership.compose``, unobserved).
-        return withhold_people_content(compose(self._db, principal, aggregate))
+        return withhold_people_content(filter_answer(
+            compose(self._db, principal, aggregate),
+            direction=direction, person=person, project=project, week=week,
+        ))
 
     # ── room projection (HS-158-04, SS6.2) ────────────────────────────
 
