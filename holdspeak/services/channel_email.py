@@ -412,6 +412,10 @@ class NativeEmailKeyStore:
     CHAINER = "keyring.backends.chainer.ChainerBackend"
 
     def __init__(self, backend: Any = None) -> None:
+        from holdspeak.people.keys import home_has_a_keychain
+
+        # No keychain in HOME (a rig's scratch HOME): never make macOS ask.
+        self._no_keychain = backend is None and not home_has_a_keychain()
         if backend is None:
             import keyring
 
@@ -431,6 +435,8 @@ class NativeEmailKeyStore:
         raise EmailKeyError("email_key_store_not_native")
 
     def get(self, key_ref: str) -> str:
+        if self._no_keychain:
+            raise EmailKeyError("email_key_store_unavailable")
         try:
             value = self._backend.get_password(self.service_name, key_ref)
         except Exception:
@@ -444,6 +450,8 @@ class NativeEmailKeyStore:
         return str(value)
 
     def put(self, key_ref: str, key: str) -> None:
+        if self._no_keychain:
+            raise EmailKeyError("email_key_store_unavailable")
         try:
             self._backend.set_password(self.service_name, key_ref, str(key))
         except Exception:
