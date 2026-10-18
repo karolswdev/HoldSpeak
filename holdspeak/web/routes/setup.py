@@ -244,7 +244,18 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
                 key = resolve_profile_key(profile_key_env(profile_id)) if profile_id else ""
             except ProfileKeyStoreError:
                 key = ""
-            fallback_key = os.environ.get("OPENAI_API_KEY") or None
+            # The environment key goes only to OpenAI itself (https,
+            # api.openai.com). Any other address gets no key unless one was
+            # typed or a profile was named: a caller-supplied address must
+            # never receive the owner's OpenAI key.
+            from urllib.parse import urlparse as _key_urlparse
+
+            _target = _key_urlparse(str(body.get("base_url") or "").strip())
+            fallback_key = (
+                os.environ.get("OPENAI_API_KEY") or None
+                if _target.scheme == "https" and _target.netloc.lower() in {"api.openai.com", "api.openai.com:443"}
+                else None
+            )
             # PHILO-15 02: the Concierge's optional Key field. A key typed on
             # the face is the one Check uses; it is used for this one call
             # and never stored or echoed (the saved key goes through the
