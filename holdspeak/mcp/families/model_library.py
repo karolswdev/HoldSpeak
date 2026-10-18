@@ -166,6 +166,19 @@ TOOLS: list[dict[str, Any]] = [
         ),
     ),
     _schema(
+        "model_library.set_spend_limit",
+        {
+            "request_id": _REQUEST_ID,
+            "profile_id": _PROFILE_ID,
+            "spend_limit_usd": {"type": ["number", "null"], "exclusiveMinimum": 0, "maximum": 1000},
+        },
+        ["request_id", "profile_id", "spend_limit_usd"],
+        description=(
+            "Change an agent engine's spend limit per run (US dollars); null is no limit. "
+            "codex cannot enforce one. Assignments stay unchanged."
+        ),
+    ),
+    _schema(
         "model_library.connect_paired_device",
         {"draft": _PAIRED_DRAFT},
         ["draft"],
@@ -283,6 +296,8 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         if set(arguments) != {"draft"} or not isinstance(arguments.get("draft"), dict):
             raise ServiceError("model_library_provider_invalid", "Provider request is invalid.", context={"status": 400})
         return service.connect_cli_engine(principal, dict(arguments["draft"]))
+    if name == "model_library.set_spend_limit":
+        return service.set_spend_limit(principal, dict(arguments))
     if name == "model_library.connect_paired_device":
         draft, _ = _provider_arguments(
             arguments,

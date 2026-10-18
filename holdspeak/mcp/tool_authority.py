@@ -191,6 +191,7 @@ TOOL_AUTHORITY: dict[str, str] = {
     "model_library.define_endpoint": CONFIG,  # a model endpoint and its secret
     "model_library.connect_paired_device": CONFIG,  # the model library
     "model_library.connect_cli_engine": CONFIG,  # an agent CLI on this Mac as an engine
+    "model_library.set_spend_limit": CONFIG,  # what an agent engine may spend per run
     "model_library.use_model_file": CONFIG,  # the model library
     "inference_assignment.summary": WORK,
     "inference_assignment.editor": WORK,

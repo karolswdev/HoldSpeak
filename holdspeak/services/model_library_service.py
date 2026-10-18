@@ -247,6 +247,39 @@ class ModelLibraryApplicationService:
         """
         return self._connect_provider(principal, draft, None, hosted=False, cli=True)
 
+    def set_spend_limit(self, principal: Principal, body: dict[str, Any]) -> dict[str, Any]:
+        """Betterment M4: change an agent engine's Spend limit per run, in place.
+
+        The same command the Engines window sends (``connect_cli_engine`` with
+        the engine's current revision, its preset, label and model); only the
+        limit changes. ``spend_limit_usd`` null is No limit."""
+        self.require_owner(principal)
+        if not isinstance(body, dict) or set(body) != {"request_id", "profile_id", "spend_limit_usd"}:
+            raise ServiceError("model_library_provider_invalid", "Spend limit request is invalid.", context={"status": 400})
+        from ..intel.cli_engine import parse_cli_endpoint
+
+        profile_id = self._profile_id(body.get("profile_id"))
+        target = self._db.profiles.get(f"library_provider_{profile_id}")
+        parsed = parse_cli_endpoint(getattr(target, "base_url", "")) if target is not None else None
+        if parsed is None:
+            raise ServiceError(
+                "model_library_not_agent_engine", "Only an agent engine on this Mac has a spend limit.",
+                context={"status": 404, "profile_id": profile_id},
+            )
+        with self._db._connection() as conn:
+            row = conn.execute(
+                "SELECT MAX(revision) AS revision FROM model_profile_revisions WHERE profile_id=?", (profile_id,)
+            ).fetchone()
+        return self.connect_cli_engine(principal, {
+            "request_id": body.get("request_id"),
+            "profile_id": profile_id,
+            "expected_profile_revision": int(row["revision"] or 0),
+            "preset": parsed[0].id,
+            "label": str(getattr(target, "name", "") or parsed[0].label),
+            "model": str(getattr(target, "model", "") or ""),
+            "spend_limit_usd": body.get("spend_limit_usd"),
+        })
+
     def connect_paired_device(self, principal: Principal, draft: dict[str, Any]) -> dict[str, Any]:
         """Add an existing paired/mesh destination without creating a target."""
         return self._connect_provider(principal, draft, None, hosted=False, paired=True)

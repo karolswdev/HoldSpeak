@@ -1,7 +1,7 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-269 tools across 46 families. Any MCP client (Claude Code, Cursor, a
+270 tools across 46 families. Any MCP client (Claude Code, Cursor, a
 custom script) can read and drive the desk without the web UI.
 
 This page is the MCP transport reference. Each tool description in the
@@ -263,8 +263,12 @@ the readable detail and `code` holds the stable service code.
 
 - `model_library.*` are owner-only commands over the Model Library service:
   `get`, `download`, `add_to_library`, `use_model_file`,
-  `connect_hosted_model`, `define_endpoint`, `connect_cli_engine` and
-  `connect_paired_device`. They add or connect models. They never select a model for a capability.
+  `connect_hosted_model`, `define_endpoint`, `connect_cli_engine`,
+  `set_spend_limit` and `connect_paired_device`. They add or connect models.
+  They never select a model for a capability. `define_endpoint` takes the
+  server's `context_tokens` (16,384 when you do not give it).
+  `set_spend_limit` changes the spend limit per run of an agent engine;
+  `null` is no limit.
   File intake accepts a request id, a basename and base64 bytes, up to
   16 MiB decoded. Client paths are refused. Hosted-provider secrets go in a
   write-only `secret` field. They never appear in errors, logs or receipts.
@@ -276,7 +280,7 @@ the readable detail and `code` holds the stable service code.
 - `inference_assignment.summary`, `.editor`, `.set`,
   `.preview_use_default` and `.clear` read and change assignments.
 - `concierge.detect`, `.propose`, `.probe`, `.apply` and `.download` detect
-  engines and apply a proposed assignment. A paid cloud probe needs
+  engines (the agent CLIs on this Mac too) and apply a proposed assignment. A paid cloud probe needs
   `generate: true`.
 - `settings.get` returns the configuration with secrets removed and a
   `_revision` value. `settings.update` applies a partial patch.
@@ -363,7 +367,7 @@ database, FTS index or Cadence.
 
 <!-- BEGIN MCP TOOL ROSTER (machine-generated -- do not edit) -->
 
-**Registry totals:** 269 tools across 46 families.
+**Registry totals:** 270 tools across 46 families.
 
 #### agent (1)
 
@@ -539,7 +543,7 @@ database, FTS index or Cadence.
 - `memory.page`
 - `memory.search`
 
-#### model_library (8)
+#### model_library (9)
 
 - `model_library.add_to_library`
 - `model_library.connect_cli_engine`
@@ -548,6 +552,7 @@ database, FTS index or Cadence.
 - `model_library.define_endpoint`
 - `model_library.download`
 - `model_library.get`
+- `model_library.set_spend_limit`
 - `model_library.use_model_file`
 
 #### monday_brief (4)
@@ -876,7 +881,7 @@ use it.
 
 `tools_for_palette(palette)` returns only the tools in the palette. A
 client that lists tools through this filter sees 65 tools
-instead of 269.
+instead of 270.
 
 `dispatch_for_palette(name, arguments, principal, palette)` runs a tool
 only if `name` is in the palette. A name outside the palette gets a typed

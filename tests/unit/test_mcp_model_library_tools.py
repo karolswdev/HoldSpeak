@@ -25,6 +25,7 @@ _EXPECTED = {
     "model_library.define_endpoint",
     "model_library.connect_paired_device",
     "model_library.connect_cli_engine",
+    "model_library.set_spend_limit",
 }
 
 
