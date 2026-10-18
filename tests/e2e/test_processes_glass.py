@@ -41,7 +41,7 @@ class TestProcessNames(FinishRig):
             return {text, shown: Math.round(Math.max(0, right - left)), firstWord: Math.ceil(c.measureText('· ' + text.split(' ')[0]).width)};
           })"""
         with sync_playwright() as pw:
-            browser, page, errors = self._page(pw, 393)
+            browser, page, errors = self._page(pw, 393, builder_tools=True)
             try:
                 for title in ("Freeze the old ledger on Nov 5", "Adopt OpenTelemetry"):
                     _api(page, "POST", "/api/decisions", {"title": title, "status": "proposed"}, token=TOKEN)

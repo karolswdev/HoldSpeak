@@ -131,7 +131,7 @@ class TestDockGlass:
             if not self.stopped:
                 server.stop()
 
-    def _page(self, pw: Any, width: int) -> tuple[Any, Any, list[str]]:
+    def _page(self, pw: Any, width: int, *, builder_tools: bool = False) -> tuple[Any, Any, list[str]]:
         browser = pw.chromium.launch(headless=True, args=["--disable-smooth-scrolling"])
         ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]},
                                   device_scale_factor=1, has_touch=width < 720,
@@ -142,6 +142,10 @@ class TestDockGlass:
         page.on("pageerror", lambda e: errors.append(str(e)[:200]))
         page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
         _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+        if builder_tools:
+            # Betterment shell S1 (#1259): Refresh from hub is a builder tool;
+            # Search lists it only with Settings ▸ System ▸ Builder tools on.
+            page.evaluate("() => localStorage.setItem('hs.desk.builderTools', 'on')")
         page.reload(wait_until="load")
         _normal_chair(page)
         page.locator(DOCK).wait_for()
@@ -197,7 +201,7 @@ class TestDockGlass:
         from playwright.sync_api import sync_playwright
 
         with sync_playwright() as pw:
-            browser, page, errors = self._page(pw, width)
+            browser, page, errors = self._page(pw, width, builder_tools=True)
             try:
                 self.server.stop()
                 self.stopped = True
@@ -331,6 +335,9 @@ class TestDockPagesOnWholeIcons(FinishRig):
                 for n, project in enumerate(projects):
                     page.locator(".desk-verbbar-item[data-menu-id='go'] button").tap()
                     menu = page.locator(".desk-verbbar-menu")
+                    # Betterment shell S1 (#1259): projects sit under Go ▸ Projects
+                    # (at 393 the submenu replaces the panel).
+                    menu.get_by_role("menuitem",name="Projects",exact=True).tap()
                     menu.get_by_role("menuitem",name=project["name"],exact=True).tap()
                     room = page.locator('#surface-project-memory')
                     room.wait_for(state="visible")
