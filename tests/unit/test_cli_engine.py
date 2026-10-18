@@ -496,3 +496,49 @@ def test_the_real_pi_and_gemini_are_refused_in_tests(monkeypatch: pytest.MonkeyP
     from holdspeak.cli_guard import GUARDED
 
     assert {"pi", "gemini"} <= GUARDED
+
+
+# -- Betterment A10: an agent works in a folder, read only ---------------------
+
+
+def test_claude_in_a_folder_gets_read_tools_only_and_never_the_folders_settings() -> None:
+    argv = build_cli_argv(PRESETS["claude"], executable="/x/claude", tools=_tools(), cwd="/r/ledger", folder=True)
+    assert argv[:4] == ["/x/claude", "-p", "--tools", "Read,Glob,Grep"]
+    assert argv[argv.index("--setting-sources") + 1] == "user"  # no project hooks or settings
+    assert "--strict-mcp-config" in argv and argv[argv.index("--permission-prompts") + 1] == "none"
+    assert argv[argv.index("--allowedTools") + 1] == "mcp__holdspeak"
+    # Without a folder nothing changes: built-in tools off.
+    assert build_cli_argv(PRESETS["claude"], executable="/x/claude")[:4] == ["/x/claude", "-p", "--tools", ""]
+
+
+def test_codex_in_a_folder_keeps_its_read_only_sandbox_there_and_can_read() -> None:
+    argv = build_cli_argv(PRESETS["codex"], executable="/x/codex", tools=_tools(codex_servers_off=("pixellab",)),
+                          cwd="/r/ledger", folder=True)
+    assert argv[:5] == ["/x/codex", "exec", "--sandbox", "read-only", "--ephemeral"] and argv[-1] == "-"
+    assert argv[argv.index("-C") + 1] == "/r/ledger"
+    settings = _settings(argv)
+    assert "features.apps=false" in settings and "mcp_servers.pixellab.enabled=false" in settings
+    # It reads with shell commands, which the read-only sandbox keeps read only.
+    assert "features.shell_tool=false" not in settings and "features.unified_exec=false" not in settings
+    assert set(cli_engine.CODEX_SWITCHES) - cli_engine.CODEX_FOLDER_KEEPS_ON <= set(settings)
+
+
+def test_an_engine_with_a_work_folder_runs_in_that_folder(fake_bin: Path, egress: list, tmp_path: Path) -> None:
+    from tests.fixtures.fake_agent_cli import set_mode
+
+    folder = tmp_path / "ledger"
+    folder.mkdir()
+    (folder / "ledger.py").write_text("print('x')\n")
+    (folder / "risky_migration.sql").write_text("DROP TABLE x;\n")
+    set_mode(fake_bin, "claude", "list")
+    engine = CliEngine.from_endpoint("cli:claude")
+    engine.work_folder = str(folder)
+    out = engine.run_prompt(user_prompt="Which files are risky?")
+    assert "ledger.py" in out and "risky_migration.sql" in out
+    (call,) = calls(fake_bin, "claude")
+    assert call["cwd"] == str(folder.resolve()) and sorted(call["cwd_entries"]) == ["ledger.py", "risky_migration.sql"]
+    assert f"You work in the folder {folder}" in call["prompt"]
+    assert call["argv"][:3] == ["-p", "--tools", "Read,Glob,Grep"]
+    assert folder.exists() and sorted(p.name for p in folder.iterdir()) == ["ledger.py", "risky_migration.sql"]
+    assert cli_engine.cli_vendor("cli:claude") == "Anthropic" and cli_engine.cli_vendor("cli:codex") == "OpenAI"
+    assert cli_engine.cli_vendor("http://lan:8080") == ""

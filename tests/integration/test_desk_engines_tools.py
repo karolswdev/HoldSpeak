@@ -332,3 +332,129 @@ def test_the_automation_spend_limit_reaches_the_cli_and_the_result_cost_is_that_
     _ok(hub, "POST", f"/api/workbenches/{bench}/run", {})
     stopped = _ok(hub, "GET", f"/api/workbenches/{bench}")["workbench"]["results"][0]
     assert stopped["status"] == "failed" and stopped["cost_usd"] == pytest.approx(CLAUDE_COST_USD), stopped
+
+
+# ── Betterment A10: an agent works in a folder (workbench/RECIPE.md A10) ──────
+
+
+def _git_folder(root: Path) -> Path:
+    import subprocess
+
+    root.mkdir(parents=True)
+    subprocess.run(["git", "init", "-q", str(root)], check=True, capture_output=True)
+    (root / "ledger.py").write_text("def cut_over():\n    return True\n")
+    (root / "risky_migration.sql").write_text("ALTER TABLE ledger DROP COLUMN legacy_id;\n")
+    (root / "README.md").write_text("# Ledger\n")
+    return root
+
+
+def test_an_agent_works_in_the_chosen_folder_read_only_for_a_press_and_a_review_request(
+    hub: str, fake_bin: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Done when (A10): with a fake CLI that lists its cwd, the result names the
+    folder's files; a recorded review-request event produces the summary, run
+    in the same folder. Claude Code gets its read tools only, never the
+    folder's own settings, and only HoldSpeak's MCP server; the egress chip
+    names the vendor; the folder is unchanged."""
+    import asyncio
+    import subprocess
+
+    import holdspeak.delivery.registry as registry
+    from holdspeak.db import get_database
+    from holdspeak.services.reaction_service import ReactionService
+    from holdspeak.services.watch_sources import GitHubWatchSource
+    from tests.fixtures.fake_agent_cli import set_mode
+
+    from holdspeak.principals import Principal, PrincipalKind
+
+    monkeypatch.setattr(registry, "DEFAULT_REGISTRY_PATH", tmp_path / "home" / ".holdspeak" / "delivery_sources.json")
+    folder = _git_folder(tmp_path / "repos" / "ledger")
+    before = sorted(p.name for p in folder.iterdir())
+    registered = _ok(hub, "POST", "/api/repositories", {"path": str(folder)})
+    repo = registered["repository"]
+
+    bench = _ok(hub, "POST", "/api/workbenches", {"name": "Review summary"})["workbench"]["id"]
+    _ok(hub, "PUT", f"/api/workbenches/{bench}", {
+        "instruction": "Summarize the PR and the risky files.", "sources": [f"repository:{repo['id']}"]})
+    _connect(hub, "claude")
+    _ok(hub, "PUT", f"/api/workbenches/{bench}/engine", {"profile_id": "agent-claude"})
+    detail = _ok(hub, "GET", f"/api/workbenches/{bench}")["workbench"]
+    assert [(s["kind"], s["label"], s["missing"]) for s in detail["sources_shown"]] == [("folder", "ledger", False)]
+    assert detail["assignment_summary"]["vendor"] == "Anthropic"
+    assert str(folder) not in json.dumps(detail)  # the path stays on the hub
+
+    # Run now: the agent works in the folder and names its files.
+    set_mode(fake_bin, "claude", "list")
+    _ok(hub, "POST", f"/api/workbenches/{bench}/run", {})
+    first = calls(fake_bin, "claude")[0]
+    assert first["cwd"] == str(folder.resolve()), first["cwd"]
+    assert first["argv"][:3] == ["-p", "--tools", "Read,Glob,Grep"]
+    assert first["argv"][first["argv"].index("--setting-sources") + 1] == "user"
+    assert "--strict-mcp-config" in first["argv"]
+    assert "Summarize the PR and the risky files." in first["prompt"]
+    assert f"You work in the folder {folder.resolve()}" in first["prompt"]
+    [done] = _ok(hub, "GET", f"/api/workbenches/{bench}")["workbench"]["results"]
+    assert done["status"] == "done" and "ledger.py" in done["text"] and "risky_migration.sql" in done["text"], done
+    _record_folder_step(hub, bench, tmp_path, registered)
+
+    # A recorded review-request event: one result about that PR, made in the folder.
+    wire = json.loads((Path(__file__).resolve().parents[1] / "fixtures" / "automations"
+                       / "gh_pr_review_requested.json").read_text())
+
+    def snapshot(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        def replay(command, **_kwargs):
+            assert command[:3] == ["gh", "pr", "list"]
+            return subprocess.CompletedProcess(command, 0, json.dumps(rows), "")
+        return GitHubWatchSource(runner=replay).snapshot(
+            owner, query_kind="pull_requests", query={"repository": wire["repository"]})
+
+    owner = Principal(PrincipalKind.OWNER, "desk-engines-a10")
+    reactions = ReactionService(get_database())
+    watch = reactions.create_watch(owner, connector_id="gh", query_kind="pull_requests",
+                                   query={"repository": wire["repository"]}, watch_id="watch-a10")
+    reactions.create_reaction(owner, watch_id=watch["id"], event_pattern="github.pr.review_requested",
+                              workbench_id=bench, reaction_id="reaction-a10", enabled=True, auto_run=True)
+    asyncio.run(reactions.refresh_watch(owner, watch["id"], snapshot(wire["before"])))
+    seen = len(calls(fake_bin, "claude"))
+    asyncio.run(reactions.refresh_watch(owner, watch["id"], snapshot(wire["after"])))
+    event_run = calls(fake_bin, "claude")[seen]
+    assert event_run["cwd"] == str(folder.resolve())
+    assert "https://github.com/acme/ledger/pull/418" in event_run["prompt"]
+    newest = _ok(hub, "GET", f"/api/workbenches/{bench}")["workbench"]["results"][0]
+    assert newest["title"] == "Move the ledger cutover behind a flag" and newest["status"] == "done", newest
+    assert "risky_migration.sql" in newest["text"]
+    event_step = _record_folder_step(hub, bench, tmp_path, registered, "folder-event")
+    assert event_step[f"/api/workbenches/{bench}"]["workbench"]["event_starts"], "the event start is listed"
+
+    # Read only: the folder is as it was.
+    assert sorted(p.name for p in folder.iterdir()) == before
+
+
+def _record_folder_step(base: str, bench: str, tmp_path: Path, registered: dict,
+                        name: str = "folder-ran") -> dict[str, Any]:
+    """The automation window's reads after the folder run, for its vitest
+    (automation-hub/folder-ran.json; HOLDSPEAK_WIRE_WRITE=1 rewrites it, else
+    this fences its shape)."""
+    import os
+    import re
+
+    answers = {
+        f"/api/workbenches/{bench}": _ok(base, "GET", f"/api/workbenches/{bench}"),
+        f"/api/workbenches/{bench}/memory": _ok(base, "GET", f"/api/workbenches/{bench}/memory"),
+        # The Add folder press's answer (the folder's path never comes back).
+        "POST /api/repositories": registered,
+    }
+    text = re.sub(re.escape(str(tmp_path)), "/tmp/rig", json.dumps(answers))
+    scrubbed = json.loads(re.sub(re.escape(base), "http://127.0.0.1:0", text))
+    path = AUTOMATION_HUB / f"{name}.json"
+    if os.environ.get("HOLDSPEAK_WIRE_WRITE") == "1":
+        path.write_text(json.dumps({
+            "_source": "The hub's own answers, captured by tests/integration/test_desk_engines_tools.py "
+                       "(a real hub, isolated database, the fake claude CLI listing the folder it works in). "
+                       "HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit it.",
+            "workbench_id": bench, "gets": scrubbed}, indent=1, ensure_ascii=False) + "\n")
+    assert path.exists(), f"no stored answers {path}; run with HOLDSPEAK_WIRE_WRITE=1"
+    stored = json.loads(path.read_text())["gets"]
+    assert _shape(list(stored.values())) == _shape(list(scrubbed.values())), \
+        f"{path.name}: the stored answers are not the hub's shape"
+    return scrubbed

@@ -55,6 +55,8 @@ export interface AutomationDetail extends WorkbenchDetail {
     /** Betterment A4: the engine in use, and where its prompt goes. */
     profile_id?: string | null;
     boundary?: string | null;
+    /** Betterment A10: an agent engine's vendor ("Anthropic"); absent otherwise. */
+    vendor?: string | null;
   };
   /** Betterment A4: when the schedule fires next (only while it is on). */
   next_run_at?: string | null;

@@ -248,6 +248,8 @@ export function AutomationWindow({
   const [openOlder, setOpenOlder] = useState<string | null>(null);
   const [openTask, setOpenTask] = useState<string | null>(null);
   const [makingOne, setMakingOne] = useState(false);
+  // A long Do (an old agent's prompt) is clamped to 3 lines on a phone.
+  const [doExpanded, setDoExpanded] = useState(false);
   // A result shown as NEW keeps its NEW mark while this window is open,
   // although showing it has read it on the hub.
   const [shownNew, setShownNew] = useState<Set<string>>(() => new Set());
@@ -484,9 +486,12 @@ export function AutomationWindow({
   const builder = useBuilderTools((state) => state.on);
   const name = detail?.name || "Automation";
   const doText = detail?.instruction_shown ?? "";
+  const doLong = doText.split("\n").length > 3 || doText.length > 180;
   const sources = detail?.sources_shown ?? [];
   const happened = detail ? eventSubjectWords(detail) : null;
   const tasks = detail ? queueTasks(detail) : [];
+  /** A10: the vendor of an agent engine (Claude Code, Codex); null otherwise. */
+  const vendor = detail?.assignment_summary?.vendor || null;
 
   return (
     <DeskWindowFrame
@@ -557,14 +562,37 @@ export function AutomationWindow({
                 blank={!doText}
                 open={editing === "do"}
                 onPress={() => toggle("do")}
+                aside={doLong && editing !== "do" ? (
+                  <Button dense variant="ghost" className="automation-do-more"
+                    aria-expanded={doExpanded} onClick={() => setDoExpanded(!doExpanded)}
+                    data-testid="automation-do-more">
+                    {doExpanded ? "less" : "more"}
+                  </Button>
+                ) : undefined}
                 editor={
                   <DoEditor key={doText} value={doText} saving={saving}
                     onSave={(next) => void saveDo(next)} onCancel={() => setEditing(null)} />
                 }
               >
-                {doText || "What should it do?"}
+                <span className="automation-do-text" data-clamped={doLong && !doExpanded ? "" : undefined}>
+                  {doText || "What should it do?"}
+                </span>
               </SentenceLine>
-              {happened ? (
+              {happened && vendor ? (
+                // A10: an event start reads the thing that happened; with an
+                // agent engine, a folder can still be added for it to read.
+                <SentenceLine
+                  name="about"
+                  label="About"
+                  open={editing === "about"}
+                  onPress={() => toggle("about")}
+                  editor={<AboutEditor sources={sources} busy={aboutSaving} folders foldersOnly
+                    onChange={(refs) => void saveSources(refs)} />}
+                >
+                  {happened}
+                  <AboutChips sources={sources.filter((source) => source.kind === "folder")} />
+                </SentenceLine>
+              ) : happened ? (
                 <SentenceLine name="about" label="About">{happened}</SentenceLine>
               ) : (
                 <SentenceLine
@@ -574,6 +602,7 @@ export function AutomationWindow({
                   open={editing === "about"}
                   onPress={() => toggle("about")}
                   editor={<AboutEditor sources={sources} busy={aboutSaving}
+                    folders={Boolean(vendor)}
                     onChange={(refs) => void saveSources(refs)} />}
                 >
                   {sources.length ? <AboutChips sources={sources} /> : dropReady ? "Drop it here"
@@ -586,7 +615,10 @@ export function AutomationWindow({
                 blank={!engine}
                 open={editing === "with"}
                 onPress={() => toggle("with")}
-                aside={engine && detail.assignment_summary?.boundary ? (
+                aside={engine && vendor ? (
+                  // A10: an agent engine's prompt goes to its vendor: the chip says which.
+                  <EgressChip label={vendor.toUpperCase()} title={`The prompt goes to ${vendor}`} scope="cloud" />
+                ) : engine && detail.assignment_summary?.boundary ? (
                   <EgressChip label={boundaryEgressLamp(detail.assignment_summary.boundary).label}
                     title={`The prompt goes: ${boundaryEgressLamp(detail.assignment_summary.boundary).label}`}
                     scope={["local", "same_device"].includes(detail.assignment_summary.boundary) ? "local" : "cloud"} />

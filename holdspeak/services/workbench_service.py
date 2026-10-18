@@ -1091,6 +1091,14 @@ class WorkbenchService:
                 subject_id=wb.id,
             )
             assignment = effective.get("assignment") or {}
+            # Betterment A10: an agent engine (a CLI) names its vendor, so the
+            # egress chip says where the prompt goes and About offers a Folder.
+            first = str((assignment.get("entries") or [{}])[0].get("profile_id") or "")
+            from ..intel.cli_engine import cli_vendor
+            from .automation_runs import cli_endpoint_of
+
+            with self._db._connection() as conn:
+                vendor = cli_vendor(cli_endpoint_of(conn, first)) if first else ""
             payload["assignment_summary"] = {
                 "status": effective["status"],
                 "source": effective.get("inherited_from"),
@@ -1101,6 +1109,8 @@ class WorkbenchService:
                 "profile_id": str((assignment.get("entries") or [{}])[0].get("profile_id") or "") or None,
                 "boundary": str((assignment.get("entries") or [{}])[0].get("boundary") or "") or None,
             }
+            if vendor:
+                payload["assignment_summary"]["vendor"] = vendor
         return payload
 
     @staticmethod

@@ -8,7 +8,8 @@ Each call appends one JSON line to ``<bin>/<name>-calls.jsonl``: argv, cwd,
 the cwd's entries, the stdin prompt, the pid, and (M1) the run credential,
 hub URL and ``--mcp-config`` path (with its mode) the child was given. ``set_mode(bin_dir, name,
 mode)`` picks the behaviour: ``answer`` (default), ``sleep`` (60 s, for the
-timeout kill), ``fail`` (exit 1) or ``error`` (Claude's ``is_error`` result).
+timeout kill), ``fail`` (exit 1), ``error`` (Claude's ``is_error`` result) or
+``list`` (A10: the answer is the cwd's name and its files).
 
 Betterment M1: the fakes speak MCP to the hub the way the real CLIs are told
 to. ``set_tool_plan(bin_dir, name, [{"name": ..., "arguments": ...}])`` makes
@@ -100,6 +101,11 @@ def rpc(target, message, timeout):
         return 0, {{"transport_error": type(exc).__name__ + ": " + str(exc)}}
 
 answer = None
+if mode == "list":
+    # Betterment A10: an agent that reads its folder (its cwd) answers with
+    # the folder's name and its files.
+    answer = "## " + os.path.basename(os.getcwd()) + "\\n\\n" + "\\n".join(
+        "- " + entry for entry in sorted(os.listdir(".")) if not entry.startswith("."))
 plan_file = here / (name + "-plan.json")
 if plan_file.exists():
     plan = json.loads(plan_file.read_text())

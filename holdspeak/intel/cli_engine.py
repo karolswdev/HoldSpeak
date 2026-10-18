@@ -110,19 +110,21 @@ class CliPreset:
     #: Betterment E7: True when the CLI's own config decides the provider, so
     #: the owner (or that config, read at Add) names the egress host.
     host_from_owner: bool = False
+    #: The vendor the prompt goes to, in words (the egress chip; A10).
+    vendor: str = ""
 
 
 PRESETS: dict[str, CliPreset] = {
     "claude": CliPreset(
         id="claude", label="Claude Code", executable="claude",
         vendor_host="api.anthropic.com", timeout_seconds=240.0, model_flag="--model",
-        enforces_spend_limit=True, reports_cost=True,
+        enforces_spend_limit=True, reports_cost=True, vendor="Anthropic",
     ),
     "codex": CliPreset(
         id="codex", label="Codex", executable="codex",
         # The host can come from his Codex config; this is the preset's vendor.
         vendor_host="api.openai.com", timeout_seconds=240.0, model_flag="-m",
-        enforces_spend_limit=False, reports_cost=False, output="codex",
+        enforces_spend_limit=False, reports_cost=False, output="codex", vendor="OpenAI",
     ),
     # Betterment E7. Flags from `pi --help` (pi 1.1.0) and pi's docs/cli.md,
     # never from a run: --print answers once and exits (piped stdin is the
@@ -288,6 +290,19 @@ def cli_boundary(endpoint: Any) -> str:
     return "private_network" if verdict in {"local", "private_network"} else BOUNDARY
 
 
+def cli_vendor(endpoint: Any) -> str:
+    """The vendor a ``cli:`` endpoint's prompt goes to, in words; '' for any other."""
+    parsed = parse_cli_endpoint(endpoint)
+    return parsed[0].vendor if parsed else ""
+
+
+#: Betterment A10: Claude Code's read-only file tools, for a run in a folder.
+CLAUDE_READ_TOOLS = "Read,Glob,Grep"
+#: Codex switches a run in a folder leaves out: Codex reads files with
+#: shell commands, which its read-only sandbox keeps read only.
+CODEX_FOLDER_KEEPS_ON = frozenset({"features.shell_tool=false", "features.unified_exec=false"})
+
+
 def _money(value: float) -> str:
     return f"{float(value):.2f}"
 
@@ -342,6 +357,7 @@ def build_cli_argv(
     tools: Optional[DeskTools] = None,
     cwd: Optional[str] = None,
     codex_servers_off: tuple[str, ...] = (),
+    folder: bool = False,
 ) -> list[str]:
     """THE one place that builds a CLI engine's argv (the M1 seam).
 
@@ -357,6 +373,12 @@ def build_cli_argv(
     environment variable the config names. Without ``tools`` (a run with no
     desk tools), Codex still turns off ``codex_servers_off`` (the servers of
     the owner's own Codex config): such a run gets no MCP server at all.
+
+    Betterment A10: ``folder`` = the run works in a folder he chose (``cwd``),
+    read only. Claude Code gets its read-only file tools (Read, Glob, Grep)
+    and loads only the owner's user settings (never the folder's project
+    settings or hooks). Codex keeps its read-only sandbox in that folder, with
+    its shell on so it can read (the sandbox keeps it read only).
     """
     from ..delivery import agent_mcp
 
@@ -371,11 +393,15 @@ def build_cli_argv(
     if "--max-budget-usd" in argv:
         index = argv.index("--max-budget-usd")
         del argv[index:index + 2]
+    if folder and preset.id == "claude" and "--tools" in argv:
+        argv[argv.index("--tools") + 1] = CLAUDE_READ_TOOLS
     extra: list[str] = []
     if preset.id == "claude":
         # Never without --strict-mcp-config: the claude.ai connectors (Gmail,
         # Drive, Calendar, Docs) load otherwise (M0).
         extra += ["--strict-mcp-config", "--permission-prompts", "none"]
+        if folder:
+            extra += ["--setting-sources", "user"]
         if tools is not None and tools.config_path is not None:
             extra += ["--mcp-config", str(tools.config_path), "--allowedTools", agent_mcp.CLAUDE_ALLOW_RULE]
     elif preset.id == "codex":
@@ -383,6 +409,8 @@ def build_cli_argv(
         if cwd:
             extra += ["-C", cwd]
         for switch in CODEX_SWITCHES:
+            if folder and switch in CODEX_FOLDER_KEEPS_ON:
+                continue
             extra += ["-c", switch]
         for name in (tools.codex_servers_off if tools is not None else codex_servers_off):
             extra += ["-c", f"mcp_servers.{name}.enabled=false"]
@@ -690,6 +718,9 @@ class CliEngine(MeetingIntel):
         self._live: set[subprocess.Popen] = set()
         self._live_lock = threading.Lock()
         self._cost_local = threading.local()
+        #: Betterment A10: the folder this run works in, read only (an
+        #: automation's Folder source); None = an empty temporary folder.
+        self.work_folder: Optional[str] = None
 
     @classmethod
     def from_endpoint(cls, endpoint: str, *, model: str = "", profile_id: str = "") -> "CliEngine":
@@ -740,8 +771,15 @@ class CliEngine(MeetingIntel):
         # reported (also for a run that stopped at its spend limit).
         self._cost_local.outcome = cli_engine_runs.FAILED
         run_id: Optional[str] = None
+        # A10: only a preset whose read-only folder mode is set up here (Claude
+        # Code, Codex: the ones that name a vendor) works in a folder.
+        folder = (self.work_folder if self.preset.vendor and self.work_folder
+                  and os.path.isdir(self.work_folder) else None)
+        if folder:
+            prompt = (f"You work in the folder {folder}. Read the files you need there; "
+                      f"you cannot change them.\n\n{prompt}")
         try:
-            with tempfile.TemporaryDirectory(prefix="holdspeak-cli-engine-") as cwd:
+            with self._run_folder(folder) as cwd:
                 with self._desk_tools(timeout) as tools:
                     run_id = tools.run_id if tools else None
                     argv = build_cli_argv(
@@ -750,6 +788,7 @@ class CliEngine(MeetingIntel):
                         codex_servers_off=(
                             codex_user_servers() if tools is None and self.preset.id == "codex" else ()
                         ),
+                        folder=bool(folder),
                     )
                     raw = self._egress(
                         argv, prompt, timeout=timeout, cwd=cwd, env=tools.env if tools else {},
@@ -830,6 +869,16 @@ class CliEngine(MeetingIntel):
             if expires:
                 timeout = min(timeout, expires - time.time() - 1.0)
         return max(1.0, timeout)
+
+    @staticmethod
+    @contextmanager
+    def _run_folder(folder: Optional[str]) -> Iterator[str]:
+        """The run's cwd: his folder (A10), or an empty temporary folder."""
+        if folder:
+            yield folder
+            return
+        with tempfile.TemporaryDirectory(prefix="holdspeak-cli-engine-") as cwd:
+            yield cwd
 
     @contextmanager
     def _desk_tools(self, timeout: float) -> Iterator[Optional[DeskTools]]:
@@ -983,6 +1032,7 @@ __all__ = [
     "cli_endpoint",
     "cli_engines_on",
     "cli_boundary",
+    "cli_vendor",
     "cli_vendor_host",
     "clean_host",
     "codex_user_servers",

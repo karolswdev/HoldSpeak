@@ -289,7 +289,19 @@
 
 /* ── the phone: the same order, each line full width, value under label ── */
 
+/* A long Do clamps on a phone only; "more" shows there only. */
+.automation-do-more { display: none; }
+.automation-do-text { white-space: pre-line; }
+
 @container surface (max-width: 559.9px) {
+  .automation-do-more { display: inline-flex; }
+  .automation-do-text[data-clamped] {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+  }
   .automation-body { padding: 12px 12px 16px; gap: 14px; }
   .automation-line { grid-template-columns: minmax(0, 1fr); row-gap: 0; }
   .automation-line-label { padding-top: 4px; }
@@ -304,6 +316,11 @@
 
 /* A5: About in place (the chips, then the one About picker). */
 .automation-about-editor { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+/* A10: the folders an agent can work in (only when With is an agent). */
+.automation-folders { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.automation-folder-list { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.automation-folder-add { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; min-width: 0; }
+.automation-folder-add > :first-child { flex: 1 1 220px; min-width: 0; }
 .automation-chips .surface-token { display: inline-flex; align-items: center; gap: 2px; }
 .automation-chip-remove.btn { min-height: 0; padding: 0 4px; line-height: 1.2; }
 /* A desk object over the window: the About line lights before the drop. */

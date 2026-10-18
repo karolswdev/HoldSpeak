@@ -26,7 +26,8 @@ class _MeteredPromptAdapter(CanonicalPromptAdapter):
     The sealed result shape stays {output, provider, model}. The count travels
     on this adapter instance, which the runner keeps for its one child."""
 
-    def __init__(self, spend_limit_usd: float | None = None, *, desk_tools: bool = True) -> None:
+    def __init__(self, spend_limit_usd: float | None = None, work_folder: str | None = None, *,
+                 desk_tools: bool = True) -> None:
         self.tokens = 0
         #: Betterment A4: the automation's Spend limit per run; it overrides
         #: the engine's own limit on an agent CLI that enforces one.
@@ -34,13 +35,17 @@ class _MeteredPromptAdapter(CanonicalPromptAdapter):
         #: Betterment M2 follow-up (orchestrator ruling): the memory call
         #: after an item runs WITHOUT the desk's tools on an agent CLI.
         self.desk_tools = desk_tools
+        #: Betterment A10: the folder an agent CLI works in, read only (the
+        #: automation's Folder source). An HTTP engine has no folder: ignored.
+        self.work_folder = work_folder
 
     def _limited(self, engine: Any) -> Any:
         preset = getattr(engine, "preset", None)
         limit = (self.spend_limit_usd is not None and hasattr(engine, "spend_limit_usd")
                  and getattr(preset, "enforces_spend_limit", False))
         no_tools = not self.desk_tools and getattr(engine, "desk_tools", False)
-        if not limit and not no_tools:
+        folder = bool(self.work_folder) and hasattr(engine, "work_folder")
+        if not limit and not no_tools and not folder:
             return engine
         # A copy for this one call: the routed engine may be shared.
         import copy
@@ -50,6 +55,8 @@ class _MeteredPromptAdapter(CanonicalPromptAdapter):
             limited.spend_limit_usd = self.spend_limit_usd
         if no_tools:
             limited.desk_tools = False
+        if folder:
+            limited.work_folder = self.work_folder
         return limited
 
     def dispatch(self, engine: Any, payload: dict[str, Any], cancellation: Any) -> dict[str, str]:
@@ -328,7 +335,12 @@ class WorkbenchRunner:
             self._record_terminal(run_id,parent,receipt)
             return {"skipped":True,"reason":"no pending items","run_id":run_id,"parent_operation_id":parent.operation_id,"receipt_id":receipt["receipt_id"]}
         from ..workbench_conductor import _assemble_recipe_context,_hydrate_item_grounding,inject_skills,constitutional_receipt
-        system=inject_skills(self.db,recipe.system_prompt or f"You are {recipe.name}, a helpful assistant.",recipe.id)
+        # Orchestrator ruling (A9 follow-up): an automation with its own
+        # instruction (a made-one automation included) sends that instruction
+        # once, as the task; its agent's old system prompt is not sent again.
+        # Its skills still apply.
+        base_system=automation.PLAIN_SYSTEM_PROMPT if instructed else (recipe.system_prompt or f"You are {recipe.name}, a helpful assistant.")
+        system=inject_skills(self.db,base_system,recipe.id)
         context=_assemble_recipe_context(self.db,recipe); memory=""
         if memory_enabled:
             from ..workbench_memory import recall_for_prompt
@@ -383,6 +395,8 @@ class WorkbenchRunner:
                 try:
                     grounding = _hydrate_item_grounding(
                         self.db, item.grounding_json, query=f"{item.title}\n{item.body}",
+                        # The item never recalls itself: its body goes once, as the task.
+                        exclude_refs=[f"workbench_item:{item.id}"],
                     )
                 except ServiceError as exc:
                     # A missing attachment fails this item before any provider
@@ -415,7 +429,8 @@ class WorkbenchRunner:
                 item_operation="workbench_item_"+uuid.uuid4().hex
                 payload={"workbench_id":workbench_id,"workbench_revision":str(wb.last_modified),"item_id":item.id,"item_revision":str(item.last_modified),"recipe_id":recipe.id,"recipe_revision":str(recipe.last_modified),"system_prompt":system,"user_prompt":prompt,"rendered_input_sha256":_sha(prompt),"skills":skills,"context_hash":_sha(context),"attempt_ordinal":ordinal}
 
-                adapter = _MeteredPromptAdapter(wb.spend_limit_usd)
+                adapter = _MeteredPromptAdapter(
+                    wb.spend_limit_usd, automation.work_folder_of(wb) if instructed else None)
 
                 def publish_item(value: Any, reservation: dict[str, Any], *, item: Any = item, adapter: Any = adapter) -> str:
                     target = self._route_target(route, int(reservation["route_leg_ordinal"]))

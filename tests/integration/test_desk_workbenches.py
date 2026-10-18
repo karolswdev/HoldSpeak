@@ -256,6 +256,8 @@ import json as _json  # noqa: E402
 _FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "automations"
 INBOX = "hs-seed-inbox"
 DO = "Write my weekly update from these notes."
+#: The system prompt of each engine call the rig's stub answered (not the memory note).
+_SYSTEMS: list[str] = []
 
 
 def _instruction_rig(tmp_path: Path, monkeypatch, *benches: str, template: bool = False,
@@ -270,6 +272,7 @@ def _instruction_rig(tmp_path: Path, monkeypatch, *benches: str, template: bool 
 
     replies = _json.loads((_FIXTURES / "engine_replies.json").read_text())
     prompts: list[str] = []
+    _SYSTEMS.clear()
 
     class RecordingStub:
         active_provider = "stub-provider"
@@ -281,6 +284,7 @@ def _instruction_rig(tmp_path: Path, monkeypatch, *benches: str, template: bool 
                 self.last_usage = {"total_tokens": 5}
                 return lessons.pop(0) if lessons else replies["memory"]
             prompts.append(user_prompt)
+            _SYSTEMS.append(str(system_prompt or ""))
             if "Refuse this one." in user_prompt:
                 from holdspeak.intel.engine import MeetingIntelError
 
@@ -1167,6 +1171,10 @@ def test_an_old_todo_automation_shows_its_tasks_and_becomes_one_automation_in_on
     before = len(prompts)
     assert client.post(f"/api/workbenches/{wb}/run", json={}).status_code == 200
     assert len(prompts) == before + 1 and agent_prompt in prompts[-1]
+    # Orchestrator ruling: the agent's prompt goes once (as the task), never
+    # again as the system prompt.
+    assert agent_prompt not in _SYSTEMS[-1] and prompts[-1].count(agent_prompt) == 1
+    assert agent_prompt in _SYSTEMS[0]  # the queue run before the press still used the agent
     after = client.get(f"/api/workbenches/{wb}").json()["workbench"]
     [result] = after["results"]
     assert result["status"] == "done" and result["new"] is True

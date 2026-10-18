@@ -39,6 +39,8 @@ import homeRows from "./fixtures/automation-hub/home-rows.json";
 import oldQueue from "./fixtures/automation-hub/old-queue.json";
 import oldQueueRan from "./fixtures/automation-hub/old-queue-ran.json";
 import oldMadeOne from "./fixtures/automation-hub/old-made-one.json";
+import folderRan from "./fixtures/automation-hub/folder-ran.json";
+import folderEvent from "./fixtures/automation-hub/folder-event.json";
 import putNew from "./fixtures/automation-hub/put-new.json";
 import putFolder from "./fixtures/automation-hub/put-folder.json";
 import { WorkbenchesHomeCore } from "../../pages/cores/WorkbenchesHomeCore";
@@ -131,6 +133,11 @@ function hubFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Respons
   if (method === "DELETE" && url.startsWith(`${DETAIL}/memory/`)) {
     hub.step = forgot as Step;
     return Promise.resolve(json({ success: true }));
+  }
+  if (method === "POST" && url === "/api/repositories") {
+    const answer = hub.step.gets["POST /api/repositories"];
+    if (!answer) throw new Error("an unrecorded Add folder");
+    return Promise.resolve(json(structuredClone(answer)));
   }
   if (method === "POST" && url === `${detail}/make-one`) {
     const next = hub.afterMakeOne.shift();
@@ -381,7 +388,8 @@ describe("A4: With, the engine in place", () => {
     expect(hub.calls[0].body).toMatchObject({ draft: { preset: "claude", profile_id: "agent-claude", expected_profile_revision: 0 } });
     expect(hub.calls[1].body).toEqual({ profile_id: "agent-claude" });
     await waitFor(() => expect(line("with")).toHaveTextContent("Claude Code"));
-    expect(line("with")).toHaveTextContent("CLOUD");
+    // A10: an agent engine's egress chip names its vendor.
+    expect(line("with")).toHaveTextContent("ANTHROPIC");
     // The engine in use offers this automation's own Spend limit per run.
     await waitFor(() => expect(within(screen.getByTestId("automation-with-editor")).getByText("In use")).toBeInTheDocument());
     expect(screen.getByTestId("automation-spend")).toBeInTheDocument();
@@ -745,6 +753,12 @@ describe("an old automation (A9)", () => {
     expect(screen.queryByTestId("automation-newest")).toBeNull();
     expect(screen.getByTestId("automation-raw")).toBeInTheDocument();
     expect(screen.getByTestId("automation-make-one")).toHaveTextContent("Make this one automation");
+    // A long Do (the agent's prompt) clamps to 3 lines on a phone; "more" opens it.
+    const text = line("do").querySelector(".automation-do-text")!;
+    expect(text).toHaveAttribute("data-clamped");
+    fireEvent.click(screen.getByTestId("automation-do-more"));
+    expect(text).not.toHaveAttribute("data-clamped");
+    expect(screen.getByTestId("automation-do-more")).toHaveTextContent("less");
   });
 
   it("its done tasks open in place to their answers, and one press makes it one automation; nothing is lost", async () => {
@@ -855,5 +869,66 @@ describe("A8: park what the sentence replaces", () => {
     fireEvent.click(await screen.findByTestId("automation-raw"));
     expect(await screen.findByTestId("parked-queue-window")).toHaveAttribute("data-id", WB);
     expect(screen.queryByTestId("automation-sentence")).toBeNull();
+  });
+});
+
+describe("an agent works in a folder (A10)", () => {
+  type Repo = { repository: { id: string; name: string } };
+  const recorded = (folderRan as Step).gets["POST /api/repositories"] as Repo;
+
+  it("a Folder is offered only when With is an agent engine", async () => {
+    useDesk.setState({ items: { ...EMPTY_ITEMS, repository: [
+      { kind: "repository", id: "src_billing", name: "billing", sourceId: "src_billing", branch: "main", createdAt: "" },
+    ] } });
+    await open(empty as Step);  // With: LAN Qwen, an HTTP engine
+    fireEvent.click(within(line("about")).getByRole("button"));
+    await screen.findByTestId("automation-about-editor");
+    expect(screen.queryByTestId("automation-folders")).toBeNull();
+    // ... and its egress chip says where the prompt goes, not a vendor.
+    expect(line("with")).not.toHaveTextContent("ANTHROPIC");
+  });
+
+  it("names the folder and the vendor; the result names the folder's files; a folder adds in place", async () => {
+    useDesk.setState({ items: { ...EMPTY_ITEMS, repository: [
+      { kind: "repository", id: "src_billing", name: "billing", sourceId: "src_billing", branch: "main", createdAt: "" },
+    ] } });
+    hub.step = folderRan as Step;
+    render(<AutomationWindow workbenchId={(folderRan as Step).workbench_id} />);
+    await screen.findByTestId("automation-sentence");
+    expect(within(line("about")).getByTestId("automation-about-chips")).toHaveTextContent("Folder ledger");
+    expect(line("with")).toHaveTextContent("Claude Code");
+    expect(line("with")).toHaveTextContent("ANTHROPIC");
+    const reading = within(newest()).getByTestId("automation-reading");
+    expect(reading).toHaveTextContent("ledger.py");
+    expect(reading).toHaveTextContent("risky_migration.sql");
+    expect(screen.getByTestId("automation-window").textContent).not.toMatch(/\/tmp\/rig|repos\/ledger/);
+
+    // A desk repository is one press; a path he types is Add folder.
+    fireEvent.click(within(line("about")).getByRole("button"));
+    const folders = await screen.findByTestId("automation-folders");
+    const refs = ((folderRan as Step).gets[DETAIL_OF(folderRan)] as { workbench: { sources: string[] } }).workbench.sources;
+    hub.afterPut = [folderRan as Step, folderRan as Step];
+    fireEvent.click(within(folders).getByRole("button", { name: "Add folder billing" }));
+    await waitFor(() => expect(hub.calls).toContainEqual({
+      method: "PUT", url: DETAIL_OF(folderRan), body: { sources: [...refs, "repository:src_billing"] } }));
+    fireEvent.change(within(folders).getByRole("textbox", { name: "Folder" }), { target: { value: "/Users/me/code/payments" } });
+    fireEvent.click(within(folders).getByTestId("automation-folder-add"));
+    await waitFor(() => expect(hub.calls).toContainEqual({
+      method: "POST", url: "/api/repositories", body: { path: "/Users/me/code/payments" } }));
+    // The recorded answer is the ledger folder, already chosen: it is not added twice.
+    expect(refs).toContain(`repository:${recorded.repository.id}`);
+    await waitFor(() => expect(within(folders).getByRole("textbox", { name: "Folder" })).toHaveValue(""));
+    expect(hub.calls.filter((c) => c.method === "PUT")).toHaveLength(1);
+  });
+
+  it("a review-request start reads the thing that happened, keeps its folder, and offers only folders", async () => {
+    hub.step = folderEvent as Step;
+    render(<AutomationWindow workbenchId={(folderEvent as Step).workbench_id} />);
+    await screen.findByTestId("automation-sentence");
+    expect(line("about")).toHaveTextContent("Folder ledger");
+    expect(within(newest()).getByTestId("automation-reading")).toHaveTextContent("risky_migration.sql");
+    fireEvent.click(within(line("about")).getByRole("button"));
+    expect(await screen.findByTestId("automation-folders")).toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "Find by name" })).toBeNull();
   });
 });
