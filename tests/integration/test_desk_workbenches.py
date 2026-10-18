@@ -1042,7 +1042,13 @@ def test_a_starter_makes_one_automation_and_the_friday_walk_reads_a_result(tmp_p
     from holdspeak.services.model_library_service import ModelLibraryApplicationService
     from holdspeak.workbench_templates import get_template
 
+    import itertools
+
     monkeypatch.setattr(memory, "WORKBENCH_DIR", tmp_path / "workbenches")
+    # Stable ids, so the recorded answers keep their paths from run to run.
+    made_ids = itertools.count(1)
+    monkeypatch.setattr("holdspeak.services.workbench_service._new_id",
+                        lambda prefix: f"{prefix}_a7_{next(made_ids)}")
     db, client, prompts, _ = _instruction_rig(tmp_path, monkeypatch)
     with db._connection() as conn:
         now = datetime.now().astimezone().isoformat()
