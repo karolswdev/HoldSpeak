@@ -5,13 +5,19 @@
  * as note, Copy, Send), and a failure in words with Run again. While a run is
  * working, the head says so in place and nothing under it moves.
  *
- * The slot for what the agent used (Looked at / Wrote / Prepared; MCP M2)
- * draws nothing until the hub sends that record. */
+ * Under the answer, what the run's agent used and did (MCP M2): Looked at
+ * (each read object, a link), Wrote (each desk write, with Undo for what the
+ * run made) and Prepared (each prepared send, with Send). Nothing when the
+ * agent touched nothing. */
+import { useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { AgentWords } from "../AgentWords";
 import { EgressChip, FoldGadget, RunLine, StateChip } from "../../surface";
 import { SendWellsFold } from "../../surface/send";
-import { artifactDoc } from "../../documentSends";
+import type { DocRef } from "../../surface/send";
+import { artifactDoc, deskDecisionDoc, noteDoc } from "../../documentSends";
+import { deleteSeatShown } from "../../deleteSeat";
+import { OBJECT_DELETE_REQUEST } from "../../verbRegistry";
 import { boundaryEgressLamp } from "../../inferenceEgress";
 import { openRef } from "../../openObject";
 import { useCopyReceipt } from "../../hooks/useCopyReceipt";
@@ -20,9 +26,12 @@ import {
   failureWords,
   resultWhen,
   secondsWords,
+  sendWords,
+  usedWords,
   withoutIds,
   type AutomationResult,
   type AutomationUse,
+  type UsedRow,
 } from "./model";
 
 function egressScope(boundary: string): "local" | "remote" | "cloud" | undefined {
@@ -38,30 +47,81 @@ function Egress({ boundary }: { boundary: string }) {
   return <EgressChip label={lamp.label} scope={egressScope(boundary)} title={`The prompt went: ${lamp.label}`} />;
 }
 
-/** Looked at / Wrote / Prepared (MCP M2). Nothing when absent or empty:
- *  never a counter of zero. */
+/** The document a prepared send carries, for its send fold. */
+function preparedDoc(row: UsedRow): DocRef {
+  const [kind, ...rest] = row.ref.split(":");
+  const id = rest.join(":");
+  if (kind === "note") return noteDoc(id, row.label);
+  if (kind === "artifact") return artifactDoc(id, row.label, "automation result");
+  if (kind === "decision") return deskDecisionDoc(id, row.label);
+  return { ref: row.ref, title: row.label, label: kind.toUpperCase() };
+}
+
+/** A thing the agent made: open it; Undo hands it to the desk's one delete
+ *  (its receipt keeps the Undo of that). Withheld where no receipt seat is
+ *  shown (UX-CANON A.11: a verb that does nothing is a lie). */
+function WroteRow({ row }: { row: UsedRow & { undo?: boolean } }) {
+  const [undone, setUndone] = useState(false);
+  const canUndo = Boolean(row.undo) && !undone && deleteSeatShown();
+  return (
+    <li className="automation-used-row" data-testid="automation-wrote-row">
+      <Button dense variant="ghost" onClick={() => openRef(row.ref)}>{row.label}</Button>
+      {canUndo ? (
+        <Button dense variant="secondary" data-testid="automation-wrote-undo"
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent(OBJECT_DELETE_REQUEST, { detail: { ref: row.ref } }));
+            setUndone(true);
+          }}>
+          Undo
+        </Button>
+      ) : null}
+    </li>
+  );
+}
+
+/** Looked at / Wrote / Prepared (MCP M2): three folded lines, each says what
+ *  in words (`3 meetings`). Nothing when absent or empty: never a counter of
+ *  zero. */
 function UsedSlot({ used }: { used?: AutomationUse | null }) {
   if (!used) return null;
-  const groups: Array<[string, Array<{ ref: string; label: string }> | undefined]> = [
-    ["Looked at", used.looked_at],
-    ["Wrote", used.wrote],
-    ["Prepared", used.prepared],
-  ];
-  const shown = groups.filter(([, rows]) => rows && rows.length);
-  if (!shown.length) return null;
+  const looked = used.looked_at ?? [];
+  const wrote = used.wrote ?? [];
+  const prepared = used.prepared ?? [];
+  if (!looked.length && !wrote.length && !prepared.length) return null;
   return (
     <div className="automation-used" data-testid="automation-used">
-      {shown.map(([label, rows]) => (
-        <FoldGadget key={label} title={label} token={rows!.length > 0 ? rows!.length : undefined}>
-          <ul className="automation-used-list">
-            {rows!.map((row) => (
+      {looked.length ? (
+        <FoldGadget title="Looked at" token={usedWords(looked)} className="automation-used-fold">
+          <ul className="automation-used-list" data-testid="automation-looked-at">
+            {looked.map((row) => (
               <li key={row.ref}>
                 <Button dense variant="ghost" onClick={() => openRef(row.ref)}>{row.label}</Button>
               </li>
             ))}
           </ul>
         </FoldGadget>
-      ))}
+      ) : null}
+      {wrote.length ? (
+        <FoldGadget title="Wrote" token={usedWords(wrote)} className="automation-used-fold">
+          <ul className="automation-used-list" data-testid="automation-wrote">
+            {wrote.map((row) => <WroteRow key={row.ref} row={row} />)}
+          </ul>
+        </FoldGadget>
+      ) : null}
+      {prepared.length ? (
+        <FoldGadget title="Prepared" token={sendWords(prepared.length)} className="automation-used-fold">
+          <ul className="automation-used-sends" data-testid="automation-prepared">
+            {prepared.map((row) => (
+              <li key={row.send_id || row.ref} className="automation-used-send">
+                <Button dense variant="ghost" onClick={() => openRef(row.ref)}>
+                  {row.destination ? `${row.label} to ${row.destination}` : row.label}
+                </Button>
+                <SendWellsFold doc={preparedDoc(row)} />
+              </li>
+            ))}
+          </ul>
+        </FoldGadget>
+      ) : null}
     </div>
   );
 }

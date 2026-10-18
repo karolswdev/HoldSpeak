@@ -5111,12 +5111,33 @@ CREATE TABLE IF NOT EXISTS memory_jobs (
 -- when it ran, how it ended (answered, not_signed_in, failed) and the cost the
 -- CLI reported (NULL when it reports none). The Engines window sums it for
 -- today and this week, and reads NOT SIGNED IN from the last run.
+-- Betterment M2: run_id is the run's credential id (agent:run:<run_id>, NULL
+-- when the run had no desk tools); item_id is the automation item it ran for
+-- (NULL outside an automation), so a result shows its cost.
 CREATE TABLE IF NOT EXISTS cli_engine_runs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     profile_id TEXT NOT NULL,
     ran_at TEXT NOT NULL,
     outcome TEXT NOT NULL,
-    cost_usd REAL
+    cost_usd REAL,
+    run_id TEXT,
+    item_id TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_cli_engine_runs_profile ON cli_engine_runs(profile_id, ran_at);
+CREATE INDEX IF NOT EXISTS idx_cli_engine_runs_item ON cli_engine_runs(item_id);
+-- Betterment M2: each tool call an agent CLI run made with its run credential
+-- (agent:run:<run_id>): the tool, what it did (read, write, prepare), the
+-- object it touched (a qualified ref, '' for a list) with its title, and when.
+-- An automation result shows them as Looked at, Wrote and Prepared.
+CREATE TABLE IF NOT EXISTS agent_run_calls (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    run_id TEXT NOT NULL,
+    tool TEXT NOT NULL,
+    effect TEXT NOT NULL,
+    ref TEXT NOT NULL DEFAULT '',
+    title TEXT NOT NULL DEFAULT '',
+    detail_json TEXT NOT NULL DEFAULT '{}',
+    called_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_agent_run_calls_run ON agent_run_calls(run_id, id);
 """
