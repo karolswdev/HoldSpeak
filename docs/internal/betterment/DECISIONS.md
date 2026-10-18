@@ -1,6 +1,9 @@
 # Decisions for the owner, one page
 
-Every open decision from the plan and the eleven designs. Each one has a
+**ADOPTED 2026-10-17: the owner answered "defaults". Every default below
+is now a ruling.**
+
+Every decision from the plan and the eleven designs. Each one has a
 recommended default, so building can start on the default. Answer
 "defaults", or name the numbers you want to change.
 
