@@ -1683,6 +1683,15 @@ class MeetingWebServer:
                 recover_inference_on_startup()
             except Exception as e:
                 log.error(f"inference startup recovery failed: {e}")
+            # Betterment P1: an engine pass's thread dies with the process; a
+            # job still running ends failed ("the hub restarted"), never polled forever.
+            try:
+                if web_ctx.project_update_service is not None:
+                    recovered_passes = web_ctx.project_update_service.recover_engine_passes()
+                    if recovered_passes:
+                        log.info(f"updates: {recovered_passes} interrupted engine pass(es) ended failed")
+            except Exception as e:
+                log.error(f"update engine pass startup recovery failed: {e}")
             # PHILO-15-03: no import worker survives a restart; a row still
             # importing/active ends import_failed + failed (import it again).
             try:

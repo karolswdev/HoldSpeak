@@ -24,7 +24,7 @@ import { ApiError } from "../../../lib/api";
 // The final diet lane's recorded wires (scripts/record_room_wires.py: the real
 // hub through TestClient on each browser test's own seed; nothing typed).
 import U173 from "./room-wires/update173.json";
-import D409 from "./room-wires/draft409.json";
+import W1 from "./room-wires/write1.json";
 import { clearEngineCache } from "../../../desk/hooks/useEngine";
 import C200 from "./room-wires/claims200.json";
 import N10 from "./room-wires/nudge10.json";
@@ -650,7 +650,7 @@ describe("PHILO-14 A5b: a proposal request over the Room", () => {
   async function openEditor() {
     await waitFor(() => expect(screen.getByTestId("updates-verb")).not.toBeDisabled());
     fireEvent.click(await screen.findByTestId("updates-verb"));
-    return (await screen.findByTestId("update-body-textarea")) as HTMLTextAreaElement;
+    return (await screen.findByTestId("update-plain-text")) as HTMLTextAreaElement;
   }
 
   for (const save of ["pending", "failed"] as const) {
@@ -686,7 +686,7 @@ describe("PHILO-14 A5b: a proposal request over the Room", () => {
       if (save === "pending") await act(async () => { release(); await Promise.resolve(); });
 
       fireEvent.click(screen.getByTestId("updates-verb"));
-      editor = (await screen.findByTestId("update-body-textarea")) as HTMLTextAreaElement;
+      editor = (await screen.findByTestId("update-plain-text")) as HTMLTextAreaElement;
       expect(editor.value).toContain("AAA-saved-words");
       expect(editor.value).toContain("BBB-newer-words");
       expect(screen.getByTestId("update-footer-receipt").textContent).toContain("UNSAVED");
@@ -716,7 +716,7 @@ describe("PHILO-14 A5b: a proposal request over the Room", () => {
           await screen.findByTestId("room-history");
         } else {
           await waitFor(() => expect(screen.getByTestId("updates-verb")).not.toBeDisabled());
-          fireEvent.click(screen.getByRole("button", { name: "Draft update" }));
+          fireEvent.click(screen.getByRole("button", { name: "Write update" }));
           await screen.findByTestId("update-posture");
         }
         await waitFor(() => expect(selected()).toBeNull());
@@ -1377,54 +1377,125 @@ describe("History reader states", () => {
   });
 });
 
-describe("P0: a refused Draft update says why in the Room head, with Try again and the records draft", () => {
-  // The hub's own answers (scripts/record_room_wires.py draft409): a real
-  // engine route to a stub that answered prose; the 409 not_usable, then the
-  // records draft.
-  it("the 409 not_usable draws one line with the reason; Try again asks the engine again; the records verb opens the draft", async () => {
-    const { pid, gets, model, records, after } = D409 as unknown as {
-      pid: string; gets: Gets; after: Gets;
-      model: { path: string; answer: unknown }; records: { answer: unknown };
-    };
-    replay(gets, {
-      [`POST ${model.path}`]: (init) => {
-        if (init.json?.generator === "model") return model.answer;
-        Object.assign(hubGets, after);
-        return records.answer;
-      },
-    });
-    // The engine roster as the hub recorded it (the stub route assigned).
-    const inner = apiFetch.getMockImplementation()!;
-    apiFetch.mockImplementation((url: string, init: Init = {}) =>
-      url.split("?")[0] === "/api/inference/assignments"
-        ? hubAnswer(gets["/api/inference/assignments"])
-        : inner(url, init));
-    clearEngineCache(); // the roster is one desk fact; read this hub's
-    render(<WindowHarness scope={`project:${pid}`} />);
+/* ── Betterment P1: Write update, the records draft first, the engine after ──
+ * The hub's own answers (scripts/record_room_wires.py write1): a real engine
+ * route to a stub. It replaces the P0 head test: the press no longer asks the
+ * engine first, so a refused engine draft never leaves him with nothing. */
+
+type Call = { method: string; path: string; status: number; answer: unknown; request?: Record<string, unknown> };
+type W1 = {
+  pid: string; gets: Gets; after: Gets;
+  records: Call; start: Call; polls: Call[]; apply: Call; undo: Call;
+  edit: { records: Call; start: Call; put: Call; polls: Call[]; refused: Call; use_it: Call };
+  fail: { records: Call; start: Call; polls: Call[] };
+};
+
+describe("Betterment P1: Write update shows the records draft at once; the engine's draft follows", () => {
+  const w = W1 as unknown as W1;
+  const uidOf = (c: Call) => (c.answer as { update: { id: string } }).update.id;
+  const jobOf = (c: Call) => (c.answer as { job: { id: string } }).job.id;
+  /** Answers in order; the last one repeats (a poll that settled). */
+  const seq = (answers: unknown[]) => { let i = 0; return () => answers[Math.min(i++, answers.length - 1)]; };
+  const text = () => (screen.getByTestId("update-plain-text") as HTMLTextAreaElement).value;
+  const pass = () => screen.getByTestId("update-engine-pass");
+  const posts = (suffix: string) => calls.filter((c) => c.key.startsWith("POST ") && c.key.endsWith(suffix));
+
+  async function press() {
+    clearEngineCache();
+    render(<WindowHarness scope={`project:${w.pid}`} />);
     await waitFor(() => expect(screen.getByTestId("updates-verb")).not.toBeDisabled());
+    expect(screen.getByTestId("updates-verb").textContent).toBe("Write update");
+    const pressedAt = Date.now();
     fireEvent.click(screen.getByTestId("updates-verb"));
+    await screen.findByTestId("update-plain-text");
+    return Date.now() - pressedAt;
+  }
 
-    const run = await screen.findByTestId("room-head-draft-run");
-    await waitFor(() => expect(within(run).getByTestId("run-line").getAttribute("data-state")).toBe("failure"));
-    expect(within(run).getByTestId("run-line").textContent).toContain("The answer was not usable (it did not return JSON)");
-    expect(rawButtons(run)).toEqual([]);
-    const drafts = () => calls.filter((c) => c.key === `POST ${model.path}`);
-    expect(drafts()).toHaveLength(1);
-    expect(drafts()[0].json?.generator).toBe("model");
-    expect(typeof drafts()[0].json?.command_id).toBe("string");
+  it("the records draft names the HSM blocker in under a second, as text; the engine's draft replaces it; Undo brings the records draft back", async () => {
+    const { pid } = w;
+    const uid = uidOf(w.records);
+    const jid = jobOf(w.start);
+    const drafts = seq([w.records.answer, w.undo.answer]);
+    replay({ ...w.gets, ...w.after }, {
+      [`POST /api/projects/${pid}/updates/draft`]: drafts,
+      [`POST /api/updates/${uid}/engine-pass`]: () => w.start.answer,
+      [`GET /api/update-jobs/${jid}`]: seq(w.polls.map((p) => p.answer)),
+      [`POST /api/update-jobs/${jid}/apply`]: () => w.apply.answer,
+    }, true);
 
-    fireEvent.click(within(run).getByRole("button", { name: "Try again" }));
-    await waitFor(() => expect(drafts()).toHaveLength(2));
-    expect(drafts()[1].json?.generator).toBe("model");
-    expect(drafts()[1].json?.command_id).not.toBe(drafts()[0].json?.command_id);
-    await waitFor(() => expect(screen.getByTestId("room-head-draft-run").textContent).toContain("it did not return JSON"));
+    expect(await press()).toBeLessThan(1000);
+    expect(text()).toContain("The card tokenization service is blocked on the security team's HSM key ceremony");
+    expect(text()).toContain("Risks & Blockers\n\n- Risk (Payments platform sync):");
+    expect(text()).toContain("Left out: 1:1 with Mira");
+    expect(text()).not.toMatch(/##|\[UNVERIFIED\]|\*\*/);
+    expect(text()).not.toContain("Mira reported");
+    expect(posts("/updates/draft")[0].json?.generator).toBe("deterministic");
+    expect(pass().getAttribute("data-state")).toBe("running");
+    expect(pass().textContent).toContain("QWEN3 32B Q6 is improving this draft");
+    expect(within(pass()).getByRole("button", { name: "Stop" })).toBeTruthy();
+    // No format toolbar in the Update state.
+    expect(screen.queryByRole("button", { name: "H1" })).toBeNull();
 
-    fireEvent.click(within(screen.getByTestId("room-head-draft-run")).getByRole("button", { name: "Use a draft from your records" }));
-    await screen.findByTestId("update-editor");
-    expect(drafts()[2].json?.generator).toBe("deterministic");
-    expect(screen.queryByTestId("room-head-draft-run")).toBeNull();
+    await waitFor(() => expect(pass().getAttribute("data-state")).toBe("success"), { timeout: 5000 });
+    expect(pass().textContent).toMatch(/^Written by QWEN3 32B Q6 · \d+ s/);
+    expect(text()).toContain("The ledger cutover is on track for Thursday.");
+    expect(text()).not.toContain("[UNVERIFIED]");
+    expect(posts("/apply")[0].json?.force).toBe(false);
+
+    fireEvent.click(within(pass()).getByRole("button", { name: "Undo" }));
+    await waitFor(() => expect(posts("/updates/draft")).toHaveLength(2));
+    expect(posts("/updates/draft")[1].json?.generator).toBe("deterministic");
+    await waitFor(() => expect(text()).toContain("blocked on the security team's HSM key ceremony"));
+    expect(screen.queryByTestId("update-engine-pass")).toBeNull();
+    expect(rawButtons(screen.getByTestId("update-posture"))).toEqual([]);
     expect(misses).toEqual([]);
-  });
+  }, 15000);
+
+  it("after his edit the engine's draft waits: A better draft is ready, and Use it takes it", async () => {
+    const { pid } = w;
+    const { records, start, polls, use_it } = w.edit;
+    const uid = uidOf(records);
+    const jid = jobOf(start);
+    replay({ ...w.gets, ...w.after }, {
+      [`POST /api/projects/${pid}/updates/draft`]: () => records.answer,
+      [`POST /api/updates/${uid}/engine-pass`]: () => start.answer,
+      [`GET /api/update-jobs/${jid}`]: seq(polls.map((p) => p.answer)),
+      [`POST /api/update-jobs/${jid}/apply`]: () => use_it.answer,
+    }, true);
+
+    await press();
+    fireEvent.change(screen.getByTestId("update-plain-text"), { target: { value: `${text()}\nMy own line for Friday.` } });
+    await waitFor(() => expect(pass().getAttribute("data-state")).toBe("ready"), { timeout: 5000 });
+    expect(pass().textContent).toContain("A better draft is ready");
+    expect(posts("/apply")).toHaveLength(0);
+    expect(text()).toContain("My own line for Friday.");
+
+    fireEvent.click(within(pass()).getByRole("button", { name: "Use it" }));
+    await waitFor(() => expect(pass().getAttribute("data-state")).toBe("success"));
+    expect(posts("/apply")[0].json?.force).toBe(true);
+    expect(text()).toContain("The ledger cutover is on track for Thursday.");
+    expect(misses).toEqual([]);
+  }, 15000);
+
+  it("a failed engine pass says why in words with Try again; the records draft stays", async () => {
+    const { pid } = w;
+    const { records, start, polls } = w.fail;
+    const uid = uidOf(records);
+    const jid = jobOf(start);
+    replay({ ...w.gets, ...w.after }, {
+      [`POST /api/projects/${pid}/updates/draft`]: () => records.answer,
+      [`POST /api/updates/${uid}/engine-pass`]: () => start.answer,
+      [`GET /api/update-jobs/${jid}`]: seq(polls.map((p) => p.answer)),
+    }, true);
+
+    await press();
+    await waitFor(() => expect(pass().getAttribute("data-state")).toBe("failure"), { timeout: 5000 });
+    expect(pass().textContent).toContain("The answer was not usable (it did not return JSON)");
+    expect(text()).toContain("blocked on the security team's HSM key ceremony");
+    fireEvent.click(within(pass()).getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(posts("/engine-pass")).toHaveLength(2));
+    expect(misses).toEqual([]);
+  }, 15000);
 });
 
 /* ── Betterment Q1: the Room's Ask tells the truth ─────────────────── */

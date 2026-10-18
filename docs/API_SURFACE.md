@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 768 (plus static mounts). iOS-consumed: 89. Web-consumed: 598.
+Routes: 772 (plus static mounts). iOS-consumed: 89. Web-consumed: 602.
 
 ## device_audio_ws
 
@@ -957,10 +957,14 @@ Routes: 768 (plus static mounts). iOS-consumed: 89. Web-consumed: 598.
 |---|---|---|
 | GET | `/api/projects/{project_id}/updates` | web |
 | POST | `/api/projects/{project_id}/updates/draft` | web |
+| GET | `/api/update-jobs/{job_id}` | web |
+| POST | `/api/update-jobs/{job_id}/apply` | web |
+| POST | `/api/update-jobs/{job_id}/stop` | web |
 | GET | `/api/updates/{update_id}` | web |
 | PUT | `/api/updates/{update_id}` | web |
 | POST | `/api/updates/{update_id}/claims/{span_id}/review` | web |
 | POST | `/api/updates/{update_id}/delivered` | web |
+| POST | `/api/updates/{update_id}/engine-pass` | web |
 | GET | `/api/updates/{update_id}/markdown` | web |
 | POST | `/api/updates/{update_id}/publish` | web |
 | POST | `/api/updates/{update_id}/regenerate` | web |

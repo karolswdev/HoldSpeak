@@ -52,7 +52,9 @@ from __future__ import annotations
 import hashlib
 import json
 import re as _re
+import threading
 import time as _time
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from holdspeak.timestamps import utc_now_iso
@@ -334,7 +336,10 @@ _HONEST_MINIMAL: dict[str, str] = {
     "risks_blockers": "No risks or blockers in this window.",
     "dependencies": "No dependencies tracked.",
     "next_actions": "No upcoming actions.",
-    "source_coverage": "All sources consulted successfully.",
+    # Betterment P1: the old constant ("All sources consulted successfully.")
+    # was said whatever was read. Coverage now names what was read; this
+    # line shows only when nothing was.
+    "source_coverage": "Nothing linked to this project was read.",
 }
 
 
@@ -1944,6 +1949,11 @@ class ProjectUpdateService:
             )
 
         model_sections, model_claims = parsed
+        # Betterment P1: coverage is a record of what was read, never prose.
+        model_sections["source_coverage"] = det_sections.get(
+            "source_coverage", _HONEST_MINIMAL["source_coverage"])
+        model_claims = [c for c in model_claims if c.section != "source_coverage"] + [
+            c for c in det_claims if c.section == "source_coverage"]
         body_md = _assemble_body(model_sections)
         claims_json = json.dumps(
             [c.to_dict() for c in model_claims],
@@ -1960,6 +1970,7 @@ class ProjectUpdateService:
         *,
         generator: str = "deterministic",
         strict_model_failure: bool = False,
+        persist: bool = True,
     ) -> dict[str, Any]:
         """Draft a project update.
 
@@ -1977,6 +1988,10 @@ class ProjectUpdateService:
             strict_model_failure: when true, refuse a requested model draft
                        if the model cannot produce a valid result. The normal
                        service path keeps its deterministic fallback.
+            persist: when false, return the composed draft (body, claims,
+                       manifest, generator) without saving it (Betterment P1:
+                       the engine pass saves only when the owner's draft
+                       allows it).
 
         Returns:
             The persisted draft as a dict (from the updates repo).
@@ -2049,6 +2064,8 @@ class ProjectUpdateService:
                 room, caveats, det_claims, source_version),
         }
 
+        week["items_read"] = len(items_section.get("focus", []))
+        week["project_ref"] = format_ref("project", project_id)
         det_body_md = _assemble_body(_append_week_sources(det_sections, det_claims, source_version, week))
         if not det_claims:
             # PHILO-15 B64 (Astra r2 ruling): nothing observed is one claim,
@@ -2151,6 +2168,26 @@ class ProjectUpdateService:
             claims_json = det_claims_json
             actual_generator = "deterministic"
 
+        composed = {
+            "body_md": body_md, "claims_json": claims_json,
+            "source_manifest_json": manifest_json, "generator": actual_generator,
+            "generator_host": actual_host, "generator_model": actual_model,
+            "project_revision": revision, "review_id": review_id,
+        }
+        if not persist:
+            return composed
+        return self._persist_draft(project_id, composed)
+
+    def _persist_draft(self, project_id: str, composed: dict[str, Any]) -> dict[str, Any]:
+        """Save a composed draft: supersede the newest draft, or insert one."""
+        body_md = composed["body_md"]
+        claims_json = composed["claims_json"]
+        manifest_json = composed["source_manifest_json"]
+        actual_generator = composed["generator"]
+        actual_host = composed.get("generator_host")
+        actual_model = composed.get("generator_model")
+        revision = composed.get("project_revision") or 0
+        review_id = composed.get("review_id")
         # 8. Persist: check for existing unaccepted draft to supersede
         existing_drafts = self._db.project_updates.list_updates(
             project_id, lifecycle="draft",
@@ -2197,6 +2234,161 @@ class ProjectUpdateService:
             generator_model=actual_model,
         )
         return self._project_axes(self._db.project_updates.get_update(new_id))
+
+    # ── Betterment P1: the engine pass behind Write update ──────────────
+    #
+    # Write update saves the records draft at once (``draft_update``), then
+    # the face starts this pass. It composes the engine's draft on a daemon
+    # thread, off the hub's request loop, and keeps the result on its job
+    # row. The result becomes a new draft revision only through
+    # ``apply_engine_pass``: at once when the owner has not touched the draft,
+    # or on his press ("Use it") when he has. It never overwrites his words.
+
+    def start_engine_pass(
+        self, principal: Principal, update_id: str, *, background: bool = True,
+    ) -> dict[str, Any]:
+        base = self._db.project_updates.get_update(update_id)
+        if base is None:
+            raise NotFound("update", update_id)
+        if base.get("lifecycle") != "draft":
+            raise ConflictError(
+                "Only a draft can be improved.", code="engine_pass_not_draft",
+                context={"status": 409},
+            )
+        project_id = str(base["project_id"])
+        job_id = "pujob_" + uuid.uuid4().hex[:24]
+        with self._db._connection() as conn:
+            conn.execute(
+                """INSERT INTO project_update_jobs
+                   (id, project_id, base_update_id, base_body_sha, state, started_at)
+                   VALUES (?, ?, ?, ?, 'running', ?)""",
+                (job_id, project_id, update_id, _body_sha(base.get("body_md")), utc_now_iso()),
+            )
+        if background:
+            threading.Thread(
+                target=self._run_engine_pass, args=(principal, job_id, project_id),
+                name=f"update-engine-pass-{job_id}", daemon=True,
+            ).start()
+        else:
+            self._run_engine_pass(principal, job_id, project_id)
+        return self.get_engine_pass(job_id)
+
+    def _run_engine_pass(self, principal: Principal, job_id: str, project_id: str) -> None:
+        state, reason, detail, result = "succeeded", None, None, None
+        try:
+            result = self.draft_update(
+                principal, project_id, generator="model",
+                strict_model_failure=True, persist=False,
+            )
+        except ServiceError as exc:
+            state = "failed"
+            reason = str(exc.context.get("reason") or "did_not_answer")
+            detail = exc.context.get("detail")
+        except Exception:
+            _log.warning("update engine pass failed", exc_info=True,
+                         extra={"project_id": project_id, "job_id": job_id})
+            state, reason = "failed", "did_not_answer"
+        with self._db._connection() as conn:
+            # A stopped pass keeps its state: its late answer is dropped.
+            conn.execute(
+                """UPDATE project_update_jobs
+                   SET state = ?, reason = ?, detail = ?, result_json = ?, finished_at = ?
+                   WHERE id = ? AND state = 'running'""",
+                (state, reason, detail, json.dumps(result) if result else None,
+                 utc_now_iso(), job_id),
+            )
+
+    def recover_engine_passes(self) -> int:
+        """At hub start: a pass left ``running`` lost its thread with the old
+        process. It is marked failed with a reason in words, so the face
+        offers Try again instead of polling forever. Returns the count."""
+        with self._db._connection() as conn:
+            cur = conn.execute(
+                """UPDATE project_update_jobs
+                   SET state = 'failed', reason = 'did_not_answer',
+                       detail = 'the hub restarted', finished_at = ?
+                   WHERE state = 'running'""",
+                (utc_now_iso(),),
+            )
+            return int(cur.rowcount or 0)
+
+    def _job_row(self, job_id: str) -> dict[str, Any]:
+        with self._db._connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM project_update_jobs WHERE id = ?", (str(job_id),),
+            ).fetchone()
+        if row is None:
+            raise NotFound("update_job", job_id)
+        return dict(row)
+
+    def get_engine_pass(self, job_id: str) -> dict[str, Any]:
+        """The job as the face reads it (the result's text, never its rows)."""
+        row = self._job_row(job_id)
+        result = json.loads(row["result_json"]) if row.get("result_json") else None
+        return {
+            "id": row["id"],
+            "project_id": row["project_id"],
+            "base_update_id": row["base_update_id"],
+            "state": row["state"],
+            "reason": row.get("reason"),
+            "detail": row.get("detail"),
+            "started_at": row["started_at"],
+            "finished_at": row.get("finished_at"),
+            "applied_update_id": row.get("applied_update_id"),
+            "body_md": (result or {}).get("body_md"),
+            "generator_model": (result or {}).get("generator_model"),
+            "generator_host": (result or {}).get("generator_host"),
+        }
+
+    def stop_engine_pass(self, principal: Principal, job_id: str) -> dict[str, Any]:
+        self._job_row(job_id)
+        with self._db._connection() as conn:
+            conn.execute(
+                """UPDATE project_update_jobs SET state = 'stopped', reason = 'stopped',
+                   finished_at = ? WHERE id = ? AND state = 'running'""",
+                (utc_now_iso(), job_id),
+            )
+        return self.get_engine_pass(job_id)
+
+    def apply_engine_pass(
+        self, principal: Principal, job_id: str, *, force: bool = False,
+    ) -> dict[str, Any]:
+        """Save the engine's draft as the next revision.
+
+        Without ``force`` it refuses (``draft_changed``) when the draft the
+        pass started from is no longer the newest draft or its words changed:
+        the owner edited, so the face offers "Use it" instead.
+        """
+        row = self._job_row(job_id)
+        if row["state"] == "applied" and row.get("applied_update_id"):
+            return self._project_axes(self._db.project_updates.get_update(row["applied_update_id"]))
+        if row["state"] != "succeeded" or not row.get("result_json"):
+            raise ConflictError(
+                "The engine draft is not ready.", code="engine_pass_not_ready",
+                context={"status": 409},
+            )
+        drafts = self._db.project_updates.list_updates(row["project_id"], lifecycle="draft")
+        latest = drafts[0] if drafts else None
+        if latest is None:
+            raise ConflictError(
+                "The draft was published.", code="draft_changed", context={"status": 409},
+            )
+        changed = (
+            latest["id"] != row["base_update_id"]
+            or _body_sha(latest.get("body_md")) != row["base_body_sha"]
+        )
+        if changed and not force:
+            raise ConflictError(
+                "The draft changed since the engine started.", code="draft_changed",
+                context={"status": 409},
+            )
+        saved = self._persist_draft(row["project_id"], json.loads(row["result_json"]))
+        with self._db._connection() as conn:
+            conn.execute(
+                "UPDATE project_update_jobs SET state = 'applied', applied_update_id = ? WHERE id = ?",
+                (saved["id"], job_id),
+            )
+        return saved
 
     def _period_closures(
         self, principal: Principal, project_id: str, observations: list[dict[str, Any]],
@@ -2603,6 +2795,8 @@ class ProjectUpdateService:
         source_refs: list[str] = []
         left_out: list[dict[str, str]] = []
         one_on_one_ids: set[str] = set()
+        risks: list[dict[str, str]] = []
+        notes_read = 0
         people_names: list[str] = []
         if self._people_names is not None:
             try:
@@ -2685,12 +2879,50 @@ class ProjectUpdateService:
                     "summary": summary,
                 })
                 source_refs.append(meeting_ref)
+                # Betterment P1: a risk the meeting named is a risk.
+                for sentence in _risk_sentences(summary):
+                    risks.append({"ref": meeting_ref, "source": title, "text": sentence})
             except Exception:
                 caveats.append({
                     "section": "meetings",
                     "state": "degraded",
                     "reason": "meeting_summary_read_failed",
                 })
+
+        # Betterment P1: the risks a meeting's artifacts list (risk_heatmap).
+        try:
+            for artifact in self._db.projects.get_project_artifacts(project_id):
+                if str(artifact.meeting_id or "") in one_on_one_ids:
+                    continue
+                for entry in (artifact.structured_json or {}).get("risks") or []:
+                    text = entry.get("risk") if isinstance(entry, dict) else entry
+                    text = " ".join(str(text or "").split())
+                    if text:
+                        risks.append({
+                            "ref": format_ref("meeting", str(artifact.meeting_id)),
+                            "source": str(artifact.title or "Meeting"), "text": text,
+                        })
+        except Exception:
+            caveats.append({"section": "meetings", "state": "degraded", "reason": "meeting_risks_read_failed"})
+
+        # Betterment P1: notes filed as the project's sources. A line that
+        # names a risk (or every line of a note titled as risks) is a risk.
+        try:
+            for resource in self._project_service.list_resources(principal, project_id):
+                kind, _, note_id = str(resource.get("resource_ref") or "").partition(":")
+                if kind != "note" or not note_id:
+                    continue
+                note = self._db.notes.get(note_id)
+                if note is None:
+                    continue
+                notes_read += 1
+                note_ref = format_ref("note", note_id)
+                source_refs.append(note_ref)
+                note_title = " ".join(str(getattr(note, "title", "") or "").split()) or "Note"
+                for line in _note_risk_lines(note_title, str(getattr(note, "body_markdown", "") or "")):
+                    risks.append({"ref": note_ref, "source": note_title, "text": line})
+        except Exception:
+            caveats.append({"section": "resources", "state": "degraded", "reason": "notes_read_failed"})
 
         try:
             actions = self._project_service.list_action_items(
@@ -2772,6 +3004,9 @@ class ProjectUpdateService:
             "caveats": caveats,
             "source_refs": sorted(set(source_refs)),
             "left_out": sorted(left_out, key=lambda m: (m["title"], m["id"])),
+            "risks": risks,
+            "notes_read": notes_read,
+            "sources": _outside_sources(room),
         }
 
     def _records_from_meetings(self, meeting_ids: set[str]) -> set[str]:
@@ -3121,6 +3356,54 @@ def _append_week_sources(
         actions.append(f"- {text}")
     add_lines("next_actions", actions)
 
+    # Betterment P1: risks named in meetings and in notes filed as sources.
+    risk_lines: list[str] = []
+    seen_risks: set[str] = set()
+    for ordinal, risk in enumerate(week.get("risks", [])):
+        body = str(risk.get("text") or "").strip()
+        if not body or body.casefold() in seen_risks:
+            continue
+        seen_risks.add(body.casefold())
+        text = f"Risk ({risk.get('source') or 'source'}): {body}"
+        ref = str(risk.get("ref") or "")
+        claims.append(Claim(
+            span_id=f"s_risks_blockers_week_{ordinal}", text=text, refs=[ref] if ref else [],
+            section="risks_blockers", kind=KIND_OBSERVATION,
+            support=SUPPORT_SUPPORTED if ref else SUPPORT_UNKNOWN,
+            support_record=_field_mapping_support(source_version, [ref], ["text"]) if ref else None,
+        ))
+        risk_lines.append(f"- {text}")
+    add_lines("risks_blockers", risk_lines)
+
+    # Betterment P1: what was read, and what was not.
+    coverage: list[str] = []
+    read = [
+        _plural(n, one, many) for n, one, many in (
+            (len(week.get("meeting_summaries", [])), "meeting", "meetings"),
+            (int(week.get("notes_read") or 0), "note", "notes"),
+            (len(week.get("linked_decisions", [])), "decision", "decisions"),
+            (len(week.get("linked_actions", [])), "action", "actions"),
+            (int(week.get("items_read") or 0), "project item", "project items"),
+        ) if n
+    ]
+    sources = week.get("sources", [])
+    read += [src["label"] for src in sources if src.get("state") == "live"]
+    if read:
+        coverage.append("Read: " + ", ".join(read))
+    for src in sources:
+        if src.get("state") == "live":
+            continue
+        coverage.append(f"Not read: {src['label']} ({src.get('reason') or 'not checked'})")
+    project_ref = str(week.get("project_ref") or "")
+    for ordinal, text in enumerate(coverage):
+        claims.append(Claim(
+            span_id=f"s_source_coverage_read_{ordinal}", text=text,
+            refs=[project_ref] if project_ref else [], section="source_coverage",
+            kind=KIND_OBSERVATION, support=SUPPORT_SUPPORTED,
+            support_record=_field_mapping_support(source_version, [project_ref], ["sources"]),
+        ))
+    add_lines("source_coverage", [f"- {line}" for line in coverage])
+
     # Betterment P2 (decision 18): a 1:1 is named as left out, never quoted.
     left_out: list[str] = []
     for ordinal, meeting in enumerate(week.get("left_out", [])):
@@ -3140,6 +3423,76 @@ def _append_week_sources(
         left_out.append(f"- {text}")
     add_lines("source_coverage", left_out)
     return sections
+
+
+# ── Betterment P1: risks and coverage from the records ──────────────
+
+#: The words that mark a risk (the memory page "risks and disputes" uses the
+#: same family, ``holdspeak/memory/pages.py``).
+_RISK_WORDS = _re.compile(
+    r"\b(risks?|risky|at risk|blocker|blockers|blocked|blocking|concerns?|"
+    r"delay|delays|delayed|slip|slips|slipped|disputes?)\b",
+    _re.IGNORECASE,
+)
+_SENTENCE_END = _re.compile(r"(?<=[.!?])\s+(?=[A-Z0-9])")
+_BULLET = _re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+")
+_TITLE_MARK = _re.compile(r"^#+\s*")
+
+_PROVIDER_WORDS = {"github": "GitHub", "jira": "Jira", "confluence": "Confluence"}
+
+
+def _risk_sentences(text: str) -> list[str]:
+    return [
+        sentence.strip() for sentence in _SENTENCE_END.split(" ".join(str(text or "").split()))
+        if sentence.strip() and _RISK_WORDS.search(sentence)
+    ]
+
+
+def _note_risk_lines(title: str, body: str, *, cap: int = 8) -> list[str]:
+    """The risk lines of a note: every list line when its title names risks,
+    otherwise the lines that name a risk."""
+    whole = bool(_RISK_WORDS.search(title))
+    lines: list[str] = []
+    for raw in str(body or "").splitlines():
+        if not raw.strip() or _TITLE_MARK.match(raw):
+            continue
+        is_item = bool(_BULLET.match(raw))
+        line = " ".join(_BULLET.sub("", raw).split())
+        if line and ((whole and is_item) or _RISK_WORDS.search(line)):
+            lines.append(line)
+        if len(lines) >= cap:
+            break
+    return lines
+
+
+def _outside_sources(room: dict[str, Any]) -> list[dict[str, str]]:
+    """The Room's outside sources (GitHub, Jira, Confluence) with their state."""
+    section = room.get("sources") or {}
+    if section.get("state") != "ok":
+        return []
+    out: list[dict[str, str]] = []
+    for item in section.get("items") or []:
+        provider = str(item.get("provider") or "")
+        if provider == "meeting" or item.get("suggested"):
+            continue
+        label = " ".join(p for p in (_PROVIDER_WORDS.get(provider, provider.capitalize()),
+                                     str(item.get("scope") or "").strip()) if p)
+        # The Room's one freshness rule (``needs_you_aggregate.source_freshness``):
+        # only an available source counts as read; stale, paused, never
+        # checked or failing is "not read", with the Room's own reason.
+        freshness = str(item.get("freshness") or "")
+        if freshness:
+            read = freshness == "available"
+            reason = str(item.get("freshnessReason") or "").strip()
+        else:
+            read = str(item.get("state") or "") == "live"
+            reason = str(item.get("plainReason") or "").strip()
+        out.append({"label": label, "state": "live" if read else "not_read", "reason": reason or "not checked"})
+    return out
+
+
+def _plural(n: int, one: str, many: str) -> str:
+    return f"{n} {one if n == 1 else many}"
 
 
 #: PHILO-15 B64 (Astra r2): the one claim of a draft with nothing observed.
@@ -3239,6 +3592,10 @@ def _invalidate_edited_support(
     if not changed:
         return None
     return json.dumps(claims, sort_keys=True, separators=(",", ":"))
+
+
+def _body_sha(body_md: Any) -> str:
+    return hashlib.sha256(str(body_md or "").encode("utf-8")).hexdigest()
 
 
 def _request_hash(payload: dict[str, Any]) -> str:

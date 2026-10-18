@@ -5,6 +5,10 @@ POST /api/projects/{id}/updates/draft -- draft (body {generator})
 PUT  /api/updates/{id}                -- save the owner's edit (draft only)
 POST /api/updates/{id}/regenerate     -- supersede + fresh draft
 POST /api/updates/{id}/publish        -- lifecycle publish + project revision law
+POST /api/updates/{id}/engine-pass    -- Betterment P1: improve a draft in the background
+GET  /api/update-jobs/{id}            -- the engine pass, polled
+POST /api/update-jobs/{id}/stop       -- stop it (its late answer is dropped)
+POST /api/update-jobs/{id}/apply      -- save its draft (refused if the owner edited, unless force)
 GET  /api/updates/{id}/markdown       -- the copyable artifact (text/markdown)
 
 Parse-and-serialize ONLY; the service owns logic.
@@ -134,6 +138,54 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
             )
         except Exception as exc:
             return error_500(exc, log, "Failed to draft update")
+
+    # ── Betterment P1: the engine pass behind Write update ─────────
+
+    def _job_error(exc: Exception) -> Any:
+        if isinstance(exc, NotFound):
+            return JSONResponse({"success": False, "code": exc.code, "message": exc.detail}, status_code=404)
+        if isinstance(exc, ServiceError):
+            return JSONResponse(
+                {"success": False, "code": exc.code, "message": exc.detail},
+                status_code=int(exc.context.get("status") or 409),
+            )
+        return error_500(exc, log, "Engine pass failed")
+
+    @router.post("/api/updates/{update_id}/engine-pass")
+    async def api_start_engine_pass(update_id: str, request: Request) -> Any:
+        try:
+            job = await asyncio.to_thread(
+                ctx.project_update_service.start_engine_pass, principal(request), update_id,
+            )
+            return JSONResponse({"success": True, "job": job})
+        except Exception as exc:
+            return _job_error(exc)
+
+    @router.get("/api/update-jobs/{job_id}")
+    async def api_get_engine_pass(job_id: str, request: Request) -> Any:
+        try:
+            return JSONResponse({"job": ctx.project_update_service.get_engine_pass(job_id)})
+        except Exception as exc:
+            return _job_error(exc)
+
+    @router.post("/api/update-jobs/{job_id}/stop")
+    async def api_stop_engine_pass(job_id: str, request: Request) -> Any:
+        try:
+            job = ctx.project_update_service.stop_engine_pass(principal(request), job_id)
+            return JSONResponse({"success": True, "job": job})
+        except Exception as exc:
+            return _job_error(exc)
+
+    @router.post("/api/update-jobs/{job_id}/apply")
+    async def api_apply_engine_pass(job_id: str, request: Request, payload: dict[str, Any] | None = None) -> Any:
+        try:
+            update = await asyncio.to_thread(
+                ctx.project_update_service.apply_engine_pass, principal(request), job_id,
+                force=bool((payload or {}).get("force")),
+            )
+            return JSONResponse({"success": True, "update": _enrich_update(update)})
+        except Exception as exc:
+            return _job_error(exc)
 
     # ── PUT /api/updates/{update_id} ───────────────────────────────
 

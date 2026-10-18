@@ -434,10 +434,10 @@ describe("HS-169-03: Room head", () => {
     expect(screen.getByText("ARCHIVED")).toBeTruthy();
   });
 
-  it("renders Draft update button", async () => {
+  it("renders Write update button (Betterment P1)", async () => {
     render(<WindowHarness scope="project:p1" />);
     const btn = await screen.findByTestId("updates-verb");
-    expect(btn.textContent).toBe("Draft update");
+    expect(btn.textContent).toBe("Write update");
   });
 });
 

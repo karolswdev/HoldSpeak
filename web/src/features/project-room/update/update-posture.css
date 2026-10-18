@@ -46,31 +46,29 @@
   min-width: 0;
 }
 
-/* DeskEditor body wrapper: mic at the right end of the editor toolbar. */
+/* Betterment P1: the draft is plain text, edited in place; the mic sits
+   under it, right-aligned (it never covers the words). */
 .update-body-editor {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  position: relative;
+  gap: var(--space-1);
+}
+
+.update-plain-text {
+  width: 100%;
+  min-width: 0;
+  font-family: var(--font-sans);
+  line-height: 1.5;
 }
 
 .update-body-editor-mic {
-  position: absolute;
-  top: var(--space-1);
-  right: var(--space-1);
-  z-index: var(--desk-z-local);
+  align-self: flex-end;
 }
 
 /* PHILO-9-03: CONTENT layout follows the `surface` container (UX-CANON D;
    Codex Astra canvases r2 F2): a narrow window on a wide desktop gets the
    same repair as a phone. */
 @container surface (max-width: 559px) {
-  /* The body mic sat absolute over the rail's "List" and "1." chips; in a
-     narrow window it takes its own line, right-aligned. */
-  .update-body-editor-mic {
-    position: static;
-    align-self: flex-end;
-  }
   /* The editor column took its content's width (flex items default to
      min-width: auto): the rail ran past the body. */
   .update-editor > *,

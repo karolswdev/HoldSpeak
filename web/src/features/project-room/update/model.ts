@@ -472,3 +472,38 @@ export function humanFallbackReason(code: string | null): string | null {
   // Unknown code: generic phrasing
   return `Fallback: ${code.replace(/_/g, " ")} -- drafted deterministically`;
 }
+
+/* ── Betterment P1: the update as plain text, edited in place ──
+   The draft reads as text (no `##`, no `**`, no `[UNVERIFIED]`). An edit is
+   saved back over the stored body: a line he did not change keeps its stored
+   form (its heading, its desk mark), so formatting is never authorship; a
+   line he changed is his words. */
+
+const SECTION_NAMES = new Set([
+  "Progress", "Decisions", "Risks & Blockers", "Dependencies", "Next Actions", "Source Coverage",
+]);
+
+export function plainLine(line: string): string {
+  return line
+    .replace(/\*\*\[UNVERIFIED\]\*\*\s?|\[UNVERIFIED\]\s?/g, "")
+    .replace(/^#{1,6}\s+/, "")
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/(^|\s)_(\S(?:.*?\S)?)_(?=[\s.,;:!?]|$)/g, "$1$2");
+}
+
+export function plainUpdateText(bodyMd: string): string {
+  return bodyMd.split("\n").map(plainLine).join("\n");
+}
+
+export function bodyFromPlain(plain: string, storedMd: string): string {
+  const stored = new Map<string, string>();
+  for (const line of storedMd.split("\n")) {
+    const key = plainLine(line);
+    if (!stored.has(key)) stored.set(key, line);
+  }
+  return plain.split("\n").map((line) => {
+    const kept = stored.get(line);
+    if (kept !== undefined) return kept;
+    return SECTION_NAMES.has(line.trim()) ? `## ${line.trim()}` : line;
+  }).join("\n");
+}
