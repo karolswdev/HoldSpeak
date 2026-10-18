@@ -153,7 +153,7 @@ def _cron_is_due(cron_expr: str) -> bool:
 
 
 def _hydrate_item_grounding(
-    db: Any, grounding_json: str, *, query: str = ""
+    db: Any, grounding_json: str, *, query: str = "", exclude_refs: Optional[list[str]] = None,
 ) -> str:
     """Hydrate an item's grounding refs into text blocks.
 
@@ -202,6 +202,7 @@ def _hydrate_item_grounding(
             qualified_refs=refs if refs else None,
             query=query,
             include_memory=memory_enabled("workbench.item"),
+            exclude_refs=exclude_refs,
         )
     except Exception as exc:
         if explicit:

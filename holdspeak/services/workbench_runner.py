@@ -335,7 +335,12 @@ class WorkbenchRunner:
             self._record_terminal(run_id,parent,receipt)
             return {"skipped":True,"reason":"no pending items","run_id":run_id,"parent_operation_id":parent.operation_id,"receipt_id":receipt["receipt_id"]}
         from ..workbench_conductor import _assemble_recipe_context,_hydrate_item_grounding,inject_skills,constitutional_receipt
-        system=inject_skills(self.db,recipe.system_prompt or f"You are {recipe.name}, a helpful assistant.",recipe.id)
+        # Orchestrator ruling (A9 follow-up): an automation with its own
+        # instruction (a made-one automation included) sends that instruction
+        # once, as the task; its agent's old system prompt is not sent again.
+        # Its skills still apply.
+        base_system=automation.PLAIN_SYSTEM_PROMPT if instructed else (recipe.system_prompt or f"You are {recipe.name}, a helpful assistant.")
+        system=inject_skills(self.db,base_system,recipe.id)
         context=_assemble_recipe_context(self.db,recipe); memory=""
         if memory_enabled:
             from ..workbench_memory import recall_for_prompt
@@ -390,6 +395,8 @@ class WorkbenchRunner:
                 try:
                     grounding = _hydrate_item_grounding(
                         self.db, item.grounding_json, query=f"{item.title}\n{item.body}",
+                        # The item never recalls itself: its body goes once, as the task.
+                        exclude_refs=[f"workbench_item:{item.id}"],
                     )
                 except ServiceError as exc:
                     # A missing attachment fails this item before any provider

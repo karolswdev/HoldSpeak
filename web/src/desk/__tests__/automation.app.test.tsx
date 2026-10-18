@@ -753,6 +753,12 @@ describe("an old automation (A9)", () => {
     expect(screen.queryByTestId("automation-newest")).toBeNull();
     expect(screen.getByTestId("automation-raw")).toBeInTheDocument();
     expect(screen.getByTestId("automation-make-one")).toHaveTextContent("Make this one automation");
+    // A long Do (the agent's prompt) clamps to 3 lines on a phone; "more" opens it.
+    const text = line("do").querySelector(".automation-do-text")!;
+    expect(text).toHaveAttribute("data-clamped");
+    fireEvent.click(screen.getByTestId("automation-do-more"));
+    expect(text).not.toHaveAttribute("data-clamped");
+    expect(screen.getByTestId("automation-do-more")).toHaveTextContent("less");
   });
 
   it("its done tasks open in place to their answers, and one press makes it one automation; nothing is lost", async () => {

@@ -248,6 +248,8 @@ export function AutomationWindow({
   const [openOlder, setOpenOlder] = useState<string | null>(null);
   const [openTask, setOpenTask] = useState<string | null>(null);
   const [makingOne, setMakingOne] = useState(false);
+  // A long Do (an old agent's prompt) is clamped to 3 lines on a phone.
+  const [doExpanded, setDoExpanded] = useState(false);
   // A result shown as NEW keeps its NEW mark while this window is open,
   // although showing it has read it on the hub.
   const [shownNew, setShownNew] = useState<Set<string>>(() => new Set());
@@ -484,6 +486,7 @@ export function AutomationWindow({
   const builder = useBuilderTools((state) => state.on);
   const name = detail?.name || "Automation";
   const doText = detail?.instruction_shown ?? "";
+  const doLong = doText.split("\n").length > 3 || doText.length > 180;
   const sources = detail?.sources_shown ?? [];
   const happened = detail ? eventSubjectWords(detail) : null;
   const tasks = detail ? queueTasks(detail) : [];
@@ -559,12 +562,21 @@ export function AutomationWindow({
                 blank={!doText}
                 open={editing === "do"}
                 onPress={() => toggle("do")}
+                aside={doLong && editing !== "do" ? (
+                  <Button dense variant="ghost" className="automation-do-more"
+                    aria-expanded={doExpanded} onClick={() => setDoExpanded(!doExpanded)}
+                    data-testid="automation-do-more">
+                    {doExpanded ? "less" : "more"}
+                  </Button>
+                ) : undefined}
                 editor={
                   <DoEditor key={doText} value={doText} saving={saving}
                     onSave={(next) => void saveDo(next)} onCancel={() => setEditing(null)} />
                 }
               >
-                {doText || "What should it do?"}
+                <span className="automation-do-text" data-clamped={doLong && !doExpanded ? "" : undefined}>
+                  {doText || "What should it do?"}
+                </span>
               </SentenceLine>
               {happened && vendor ? (
                 // A10: an event start reads the thing that happened; with an
