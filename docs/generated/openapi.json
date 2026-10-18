@@ -3689,6 +3689,46 @@
         "summary": "Api Agent Rebrief Take Back"
       }
     },
+    "/api/agent/launches/{launch_id}/resume": {
+      "post": {
+        "description": "Betterment AG6: Resume an agent a restart stopped: a new terminal\nin its worktree runs the agent's own resume (``claude --resume``,\n``codex resume``, ``pi --session``). 202 with the launch's resume\nstate; a refusal is 409 (404 for an unknown launch) with its code.",
+        "operationId": "api_agent_resume_api_agent_launches__launch_id__resume_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "launch_id",
+            "required": true,
+            "schema": {
+              "title": "Launch Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Agent Resume Api Agent Launches  Launch Id  Resume Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Agent Resume"
+      }
+    },
     "/api/agent/launches/{launch_id}/seen": {
       "post": {
         "description": "Betterment AG0: the owner opened this agent, so its done turn is\nseen (``seen_wait_id`` on the launch; the flight is no longer\n``new``). ``{wait_id}`` names the turn he saw; without it, the\nlaunch's current done turn. ``{\"seen\": null}`` when no turn is done.",

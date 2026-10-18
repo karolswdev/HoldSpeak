@@ -8,6 +8,7 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import { useState, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { hubWire } from "./wire/hubWire";
+import { ApiError } from "../../lib/api";
 
 const api = vi.hoisted(() => ({ fetch: vi.fn(), request: vi.fn() }));
 vi.mock("../../lib/api", async (importOriginal) => ({
@@ -348,10 +349,11 @@ describe("the Agents list tells the truth about state (Betterment AG0)", () => {
     const head = screen.getByTestId("conductor-head");
     expect(head.textContent).not.toContain("ASK");
     expect(head.querySelector(".kit-disp")?.textContent).not.toMatch(/at work/);
-    // The ghost is in the folded "Ended today", in words.
-    const ended = screen.getByTestId("conductor-ended");
-    expect(within(ended).getByRole("button", { name: "Write the on-call note" })).toBeTruthy();
+    // The ghost stands under STOPPED BY RESTART, in words, with Resume (AG6).
+    const stopped = screen.getByTestId("conductor-stopped");
+    expect(within(stopped).getByRole("button", { name: "Write the on-call note" })).toBeTruthy();
     expect(pillOf("launch:launch_ag0_ghost")).toBe("Stopped by restart");
+    expect(within(stopped).getByRole("button", { name: "Resume" })).toBeTruthy();
     expect(document.body.textContent).not.toContain("Working");
   });
 
@@ -627,5 +629,64 @@ describe("working at once, and a queue (Betterment AG5)", () => {
     expect(flight.queueId).toMatch(/^queue_/);
     expect(flight.launchId).toBeNull();
     expect(AG5.wire.launches.cap).toBe(2);
+  });
+});
+
+/* ── Betterment AG6: Resume after a restart ───────────────────────────
+ * Recorded on a real hub by tests/integration/test_desk_agents_wire.py::
+ * test_the_agents_read_offers_resume_for_agents_a_restart_stopped
+ * (fixtures/agents-ag6): a restart took both agents; this rig's launches
+ * have no worktree, so the hub refuses the Resume by name. */
+const AG6 = hubWire<{ history: Array<Record<string, unknown>> }>("../fixtures/agents-ag6/coders-sessions");
+const AG6_REFUSED = hubWire<Record<string, unknown>>("../fixtures/agents-ag6/resume.refused");
+
+describe("Resume after a restart (Betterment AG6)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(AG6.captured_at));
+    __resetConductor();
+    useAgentFlights.setState({ sessions: [], flights: [], loaded: false });
+  });
+
+  it("each agent a restart stopped has Resume; two or more give Resume all in the head", async () => {
+    serve({ "/api/coders/sessions": AG6.wire, "/api/onboarding/agents": DETECT.wire });
+    render(<ConductorWindow />);
+    const stopped = await screen.findByTestId("conductor-stopped");
+    expect(within(stopped).getAllByRole("button", { name: "Resume" })).toHaveLength(2);
+    expect(pillOf("launch:launch_ag0_done")).toBe("Stopped by restart");
+    expect(pillOf("launch:launch_ag0_ghost")).toBe("Stopped by restart");
+    expect(screen.getByTestId("conductor-resume-all").textContent).toBe("Resume all");
+    expect(screen.queryByTestId("conductor-ended")).toBeNull();
+  });
+
+  it("one press posts the resume; the hub's refusal reads NOT RESUMED with its reason", async () => {
+    serve({ "/api/coders/sessions": AG6.wire, "/api/onboarding/agents": DETECT.wire });
+    const served = api.fetch.getMockImplementation()!;
+    api.fetch.mockImplementation(async (url: string, init?: unknown) => {
+      if (String(url).endsWith("/resume")) throw new ApiError(409, "refused", AG6_REFUSED.wire);
+      return served(url, init);
+    });
+    render(<ConductorWindow />);
+    const row = (await screen.findByTestId("conductor-stopped")).querySelector<HTMLElement>("[data-object-id='launch:launch_ag0_ghost']")!;
+    fireEvent.click(within(row).getByRole("button", { name: "Resume" }));
+    const receipt = await screen.findByTestId("conductor-stop-receipt");
+    expect(receipt.textContent).toBe(`NOT RESUMED · ${String(AG6_REFUSED.wire.code).replace(/_/g, " ")}`);
+    const posts = api.fetch.mock.calls.filter(([u, i]) => String(u).endsWith("/resume") && (i as { method?: string })?.method === "POST");
+    expect(posts.map(([u]) => u)).toEqual(["/api/agent/launches/launch_ag0_ghost/resume"]);
+  });
+
+  it("Resume all posts every stopped agent in one press", async () => {
+    serve({ "/api/coders/sessions": AG6.wire, "/api/onboarding/agents": DETECT.wire });
+    const served = api.fetch.getMockImplementation()!;
+    api.fetch.mockImplementation(async (url: string, init?: unknown) => {
+      if (String(url).endsWith("/resume")) throw new ApiError(409, "refused", AG6_REFUSED.wire);
+      return served(url, init);
+    });
+    render(<ConductorWindow />);
+    fireEvent.click(await screen.findByTestId("conductor-resume-all"));
+    await waitFor(() => {
+      const posts = api.fetch.mock.calls.filter(([u]) => String(u).endsWith("/resume")).map(([u]) => String(u)).sort();
+      expect(posts).toEqual(["/api/agent/launches/launch_ag0_done/resume", "/api/agent/launches/launch_ag0_ghost/resume"]);
+    });
   });
 });

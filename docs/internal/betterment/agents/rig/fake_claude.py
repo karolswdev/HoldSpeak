@@ -17,7 +17,10 @@ import uuid
 
 HOME = os.environ.get("HOME", "/tmp")
 LOG = os.path.join(HOME, "fake-agent.log")
-SID = str(uuid.uuid4())
+# Betterment AG6: `--resume <id>` continues that session (its transcript
+# must exist, as the real CLI's must); an unknown id fails like the real one.
+RESUME = sys.argv[sys.argv.index("--resume") + 1] if "--resume" in sys.argv[1:-1] else None
+SID = RESUME or str(uuid.uuid4())
 CWD = os.getcwd()
 TRANSCRIPT = os.path.join(HOME, f"fake-transcript-{SID}.jsonl")
 
@@ -111,6 +114,20 @@ def work(steps):
         time.sleep(2)
     title("✳ fake-claude")
 
+
+if RESUME is not None:
+    if not os.path.exists(TRANSCRIPT):
+        log(f"resume refused: no conversation {RESUME}")
+        print(f"No conversation found with session ID: {RESUME}", file=sys.stderr)
+        sys.exit(1)
+    log(f"resumed {RESUME}")
+    say("✻ FAKE Claude Code resumed the conversation")
+    fire("SessionStart", source="resume")
+    say("> ", 0)
+    rest = read_block()
+    log(f"after resume, got: {rest!r}")
+    while True:
+        time.sleep(60)
 
 say("╭─────────────────────────────────────────╮")
 say("│ ✻ FAKE Claude Code (betterment walk rig) │")

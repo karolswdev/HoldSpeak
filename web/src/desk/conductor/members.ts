@@ -57,6 +57,8 @@ export interface ConductorMember extends ObjectListRow {
   isNew?: boolean;
   /** live, done: the done turn's id (the seen mark names it). */
   turnId?: string | null;
+  /** stale: the flight's state (Betterment AG6: `stopped_by_restart` offers Resume). */
+  flightState?: AgentFlight["state"];
 }
 
 export interface ConductorReads {
@@ -140,6 +142,7 @@ export function closeReceipt(flight: AgentFlight): string {
   if (flight.state === "merged") words.push(flight.pr?.number ? `PR #${flight.pr.number} MERGED` : "MERGED");
   else if (flight.state === "expired") words.push("SESSION GONE");
   else if (flight.state === "stopped_by_restart") words.push("STOPPED BY RESTART");
+  else if (flight.state === "resume_failed") words.push("COULD NOT RESUME");
   else words.push("ENDED");
   if (flight.close === "closed") words.push("ITEM CLOSED");
   else if (flight.close === "linked") words.push("ITEM LINKED");
@@ -268,7 +271,11 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
     if (!inFlight(flight) || !ref) continue;
     if (flight.sessionKey && liveKeys.has(flight.sessionKey)) continue;
     const state = flightState(flight);
-    const lamp = flight.state === "starting" ? { tone: "info" as const, label: "STARTS" } : liveLamp(state, flight.pr?.number);
+    const lamp = flight.state === "starting"
+      ? { tone: "info" as const, label: "STARTS" }
+      : flight.state === "resuming"
+        ? { tone: "info" as const, label: "RESUMES" }
+        : liveLamp(state, flight.pr?.number);
     const at = flight.launchId ? reads.launchedAt[flight.launchId] : flight.queuedAt ?? undefined;
     add({
       id: ref,
@@ -322,6 +329,7 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
       whenSort: when.getTime(),
       state,
       receipt,
+      flightState: flight.state,
       sessionKey: flight.sessionKey,
       launchId: flight.launchId,
       group: GROUP.stale,

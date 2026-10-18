@@ -690,6 +690,32 @@ class AgentHandService:
             "trust_state": record.get("trust_state"),
         }
 
+    def resume_after_restart(self, principal: Any, launch_id: str) -> dict[str, Any]:
+        """Betterment AG6: Resume an agent a restart stopped, in its own
+        worktree and conversation (``LaunchService.resume_session``). The
+        owner's press only; nothing resumes by itself."""
+        from ..principals import PrincipalKind
+
+        if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
+            raise ServiceError(
+                "owner_required", "Only the owner resumes an agent.", context={"status": 403}
+            )
+        launcher = self._launch_service()
+        try:
+            record = launcher.resume_session(str(launch_id))
+        except LaunchRefused as exc:
+            raise AgentHandRefused.from_launch(exc) from exc
+        return _resume_answer(record)
+
+
+def _resume_answer(record: Mapping[str, Any]) -> dict[str, Any]:
+    resume = record.get("resume") or {}
+    return {
+        "launch_id": record.get("launch_id"),
+        "state": record.get("state"),
+        "resume": {key: resume.get(key) for key in ("state", "at", "command", "outcome")},
+    }
+
 
 def _iso_now() -> str:
     from datetime import datetime, timezone

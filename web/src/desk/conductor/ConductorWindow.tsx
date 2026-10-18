@@ -28,7 +28,7 @@ import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { useDesk } from "../store";
 import { useOnCoderFrame, useOnDeskChanged } from "../useDeskChangedRefresh";
 import { canRun, conductorHead, conductorMembers, headWords, type ConductorMember } from "./members";
-import { answerMember, answers, openMember, stopMember, stops } from "./open";
+import { answerMember, answers, openMember, resumeAll, stopMember, stops } from "./open";
 import { AgentRow as AgentRowFace } from "../agents/AgentRow";
 import { openAgentLane } from "../shell";
 import { CONDUCTOR_WINDOW_ID, useConductor } from "./store";
@@ -261,6 +261,7 @@ export function memberPill(member: ConductorMember): { word: string; tone: "ok" 
       // Betterment AG0: Done · New until he opens it, then Quiet.
       return member.isNew ? { word: "Done · New", tone: "ok" } : { word: "Quiet", tone: "idle" };
     default:
+      if (member.lamp?.label === "RESUMES") return { word: "Resuming", tone: "info", live: true };
       return { word: member.lamp?.label === "STARTS" ? "Starting" : "Working", tone: "info", live: true };
   }
 }
@@ -417,7 +418,17 @@ export function ConductorWindow() {
   const asks = members.filter((m) => m.role === "live" && (m.live === "ask" || m.live === "held"));
   const atWork = members.filter((m) => m.role === "live" && !(m.live === "ask" || m.live === "held"));
   const ready = members.filter((m) => m.role === "ready");
-  const ended = members.filter((m) => m.role === "stale");
+  // Betterment AG6: an agent a restart stopped stands in its own section
+  // with Resume (one press); the rest of today's ended agents fold.
+  const stopped = members.filter((m) => m.role === "stale" && m.flightState === "stopped_by_restart" && m.launchId);
+  const ended = members.filter((m) => m.role === "stale" && !stopped.includes(m));
+  const [resuming, setResuming] = useState<string | null>(null);
+  const resume = (targets: ConductorMember[], key: string) => {
+    // The receipt shows in the foot of the selected agent: one Resume selects it.
+    if (targets.length === 1) setSelectedId(targets[0].id);
+    setResuming(key);
+    void resumeAll(targets).finally(() => setResuming(null));
+  };
   const fixable = ready.filter((m) => m.detect && m.detect.installed && needsHooks(m.detect));
   const question = (m: ConductorMember) => sessions.find((row) => row.key === m.sessionKey)?.question ?? "";
   const waitIdOf = (m: ConductorMember) => {
@@ -479,6 +490,18 @@ export function ConductorWindow() {
             {failed.length ? (
               <Button dense variant="ghost" onClick={retry}>
                 Retry
+              </Button>
+            ) : null}
+            {stopped.length >= 2 ? (
+              <Button
+                dense
+                variant={leadAsk || leadFix ? "secondary" : "primary"}
+                loading={resuming === "all"}
+                disabled={resuming !== null}
+                onClick={() => resume(stopped, "all")}
+                data-testid="conductor-resume-all"
+              >
+                Resume all
               </Button>
             ) : null}
           </div>
@@ -571,6 +594,40 @@ export function ConductorWindow() {
                 <HooksLine member={selected?.role === "ready" ? selected : null} />
               </section>
             )
+          ) : null}
+
+          {stopped.length ? (
+            <section className="cw-section" data-testid="conductor-stopped" aria-label="Stopped by restart">
+              <h3 className="cw-cap">STOPPED BY RESTART</h3>
+              <ul className="cw-well">
+                {stopped.map((m) => (
+                  <CoderRow
+                    key={m.id}
+                    member={m}
+                    selected={m.id === selectedId}
+                    onSelect={() => select(m.id)}
+                    meta={
+                      <>
+                        <span>{titleOfAgent(m)}</span>
+                        {m.when ? <span className="cw-mono">{agoWord(m.when)}</span> : null}
+                      </>
+                    }
+                    verb={
+                      <Button
+                        dense
+                        variant={stopped.length === 1 && !leadAsk && !leadFix ? "primary" : "secondary"}
+                        loading={resuming === m.id}
+                        disabled={resuming !== null}
+                        onClick={() => resume([m], m.id)}
+                        data-testid="conductor-resume"
+                      >
+                        Resume
+                      </Button>
+                    }
+                  />
+                ))}
+              </ul>
+            </section>
           ) : null}
 
           {ended.length ? (

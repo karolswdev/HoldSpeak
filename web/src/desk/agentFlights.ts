@@ -18,7 +18,10 @@ import { coderTurnEnd, isBlockedCoder, type NeedsYouCoder } from "./needsYou";
 export type FlightState =
   | "starting" | "working" | "waiting" | "done" | "pr_open" | "merged" | "ended" | "expired" | "stopped_by_restart"
   /** Betterment AG5: a hand that waits for a free agent (no launch yet). */
-  | "queued";
+  | "queued"
+  /** Betterment AG6: Resume was pressed; the agent has not reported yet,
+   *  or not within the window (a shell waits in its worktree). */
+  | "resuming" | "resume_failed";
 export type AgentName = "claude" | "codex" | "pi";
 
 export interface AgentFlight {
@@ -77,6 +80,7 @@ export function agentWord(agent: string): string {
 
 const FLIGHT_STATES: readonly string[] = [
   "starting", "working", "waiting", "done", "pr_open", "merged", "ended", "expired", "stopped_by_restart", "queued",
+  "resuming", "resume_failed",
 ];
 
 export function fromWireFlight(body: any): AgentFlight {
@@ -131,6 +135,7 @@ export function flightLabel(flight: AgentFlight): string | null {
   }
   if (flight.state === "starting") return `${agentWord(flight.agent)} · STARTING`;
   if (flight.state === "queued") return `${agentWord(flight.agent)} · WAITS FOR A FREE AGENT`;
+  if (flight.state === "resuming") return `${agentWord(flight.agent)} · RESUMING`;
   if (flight.state === "working") return `${agentWord(flight.agent)} · WORKING`;
   if (flight.state === "done") return `${agentWord(flight.agent)} · ${flight.isNew ? "DONE · NEW" : "DONE"}`;
   if (flight.state === "waiting") return `${agentWord(flight.agent)} · ${flight.turnEnd === "idle" ? "IDLE" : "WAITING"}`;
@@ -138,7 +143,7 @@ export function flightLabel(flight: AgentFlight): string | null {
 }
 
 export function flightTone(state: FlightState): "working" | "warning" | "active" | "success" | "idle" {
-  if (state === "starting" || state === "queued") return "idle";
+  if (state === "starting" || state === "queued" || state === "resuming") return "idle";
   if (state === "done") return "success";
   return state === "waiting" ? "warning" : state === "pr_open" ? "active" : state === "merged" ? "success" : "working";
 }
@@ -181,7 +186,7 @@ export function itemOriginRefs(item: {
 }
 
 /** The flights whose agent left: no row shows them as its agent. */
-export const GONE: ReadonlySet<FlightState> = new Set<FlightState>(["ended", "expired", "stopped_by_restart"]);
+export const GONE: ReadonlySet<FlightState> = new Set<FlightState>(["ended", "expired", "stopped_by_restart", "resume_failed"]);
 
 export function flightForItem(flights: readonly AgentFlight[], item: Parameters<typeof itemOriginRefs>[0]): AgentFlight | null {
   const refs = itemOriginRefs(item);
@@ -194,7 +199,7 @@ export function flightForItem(flights: readonly AgentFlight[], item: Parameters<
  * shows its flight and not Hand to coder. */
 export function isInFlight(flight: AgentFlight | null | undefined): flight is AgentFlight {
   if (!flight) return false;
-  if (["queued", "starting", "working", "waiting", "done", "pr_open"].includes(flight.state)) return true;
+  if (["queued", "starting", "resuming", "working", "waiting", "done", "pr_open"].includes(flight.state)) return true;
   return flight.state === "merged" && flight.close === "awaiting_confirm";
 }
 

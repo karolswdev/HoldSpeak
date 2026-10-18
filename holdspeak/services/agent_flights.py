@@ -24,6 +24,11 @@ A flight is one launch, newest per item. Its ``state``:
 - ``working``: the bound session runs a turn;
 - ``stopped_by_restart``: the launch's tmux session was gone at a check on
   hub start or a heartbeat (``launch_lane.record_restart_stops``);
+- ``resuming`` / ``resume_failed`` (Betterment AG6): the owner pressed
+  Resume; the agent has not reported since. Past
+  :data:`RESUME_WINDOW_SECONDS` it is ``resume_failed`` (the pane keeps a
+  shell in the worktree). The first report of the resumed session ends
+  both: the flight reads the session's own state again;
 - ``starting``: no session is bound yet (the agent has not registered);
 - ``ended``: the bound session ended (SessionEnd, sticky);
 - ``expired``: the bound session is past the dead window or gone from the
@@ -46,6 +51,10 @@ log = get_logger("agent_flights")
 
 #: The launch state of an agent whose tmux session a restart took (AG0).
 STOPPED_BY_RESTART = "stopped_by_restart"
+
+#: Betterment AG6: how long a resumed agent has to report before its
+#: Resume reads failed (the launch's own registration window).
+RESUME_WINDOW_SECONDS = 120
 
 #: Launch states that never ran an agent (``follow_through.UNLAUNCHED_STATES``).
 _UNLAUNCHED = frozenset({"failed", "admitted", "approved", "rejected", "starting"})
@@ -158,6 +167,8 @@ def _ended_at(record: Mapping[str, Any], state: str, session: Any, close: Any) -
             return None
         evidence = (record.get("follow_through") or {}).get("evidence") or {}
         return str(evidence.get("merged_at") or "") or None
+    if state == "resume_failed":
+        return str((record.get("resume") or {}).get("at") or "") or None
     if state in ("ended", "expired"):
         stamp = _field(session, "updated_at") if session is not None else None
         return str(stamp or record.get("launched_at") or "") or None
@@ -190,6 +201,8 @@ def _flight(db: Any, record: Mapping[str, Any], by_key: Mapping[str, Any], clock
         state = "starting"
     else:
         state = _session_state(session, clock)
+    if state not in ("merged", "pr_open"):
+        state = _resume_state(record, session, clock) or state
     responder_turn = _responder_turn(session_key, session) if state in ("waiting", "pr_open") else None
     if state == "waiting" and responder_turn == "done":
         state = "done"   # the responder read the turn end as a completion report
@@ -237,6 +250,24 @@ def _flight(db: Any, record: Mapping[str, Any], by_key: Mapping[str, Any], clock
         "launched_at": record.get("launched_at") or None,
         "ended_at": _ended_at(record, state, session, follow.get("close")),
     }
+
+
+def _resume_state(record: Mapping[str, Any], session: Any, clock: datetime) -> Optional[str]:
+    """Betterment AG6: ``resuming`` until the resumed session reports (a hook
+    event after the press), ``resume_failed`` past the window; ``None`` once
+    it reported, or with no Resume pending."""
+    resume = record.get("resume") or {}
+    if not isinstance(resume, Mapping) or resume.get("state") != "resuming":
+        return None
+    pressed = _stamp(resume.get("at"))
+    if pressed is None:
+        return None
+    from ..agent_context.models import LIFECYCLE_ENDED
+
+    reported = _stamp(_field(session, "updated_at")) if session is not None else None
+    if reported is not None and reported > pressed and str(_field(session, "lifecycle") or "") != LIFECYCLE_ENDED:
+        return None
+    return "resume_failed" if (clock - pressed).total_seconds() > RESUME_WINDOW_SECONDS else "resuming"
 
 
 def _turn_id(session: Any) -> Optional[str]:
@@ -305,7 +336,7 @@ def agent_flights(
 
 
 #: The states whose agent still holds the item (the faces' ``isInFlight``).
-_IN_FLIGHT = frozenset({"starting", "working", "waiting", "done", "pr_open"})
+_IN_FLIGHT = frozenset({"starting", "working", "waiting", "done", "pr_open", "resuming"})
 
 #: An ended launch stays in the Conductor's history this long.
 HISTORY_WINDOW = timedelta(hours=24)
@@ -398,6 +429,11 @@ def slot_holders(
             continue
         session = by_key.get(key)
         state = _session_state(session, clock)
+        # AG6: an agent resuming after a restart is starting again; a failed
+        # Resume holds nothing.
+        resumed = _resume_state(record, session, clock)
+        if resumed is not None:
+            state = "starting" if resumed == "resuming" else resumed
         if state not in _SLOT_STATES:
             continue
         if state == "waiting":
