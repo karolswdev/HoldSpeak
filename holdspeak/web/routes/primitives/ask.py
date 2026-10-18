@@ -31,7 +31,13 @@ def build_ask_service(ctx: WebContext) -> AskService:
     ``invocation_id`` instead of assembling a second, divergent one.
     """
     from ..sync import _hub_model_name
-    return AskService(_database(),hub_model=lambda: _hub_model_name(ctx),broadcast=lambda state, **frame: _run_frame(ctx,state,**frame),rails_hydrator=lambda refs,principal: hydrate_rails_refs(refs,principal=principal),observer=get_observer())
+    return AskService(_database(),hub_model=lambda: _hub_model_name(ctx),broadcast=lambda state, **frame: _run_frame(ctx,state,**frame),rails_hydrator=lambda refs,principal: hydrate_rails_refs(refs,principal=principal),observer=get_observer(),progress=lambda event: _ask_progress(ctx,event))
+
+def _ask_progress(ctx: WebContext, event: dict[str, Any]) -> None:
+    """Betterment Q2: one running Ask's progress (busy, trying again) to the face."""
+    if ctx.broadcast is None: return
+    try: ctx.broadcast("ask_progress", event)
+    except Exception as exc: log.debug(f"ask progress frame dropped: {exc}")
 
 def build_ask_router(ctx: WebContext) -> APIRouter:
     router=APIRouter()

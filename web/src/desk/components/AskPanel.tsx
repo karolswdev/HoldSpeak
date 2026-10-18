@@ -77,6 +77,32 @@ import { useEngine, refreshEngine } from "../hooks/useEngine";
 import { ActionNotice, StateChip, EngineLine, RunLine, reasonVerb, reasonWords } from "../surface";
 import { openRef } from "../openObject";
 import { openSurfaceOr } from "../shell";
+import { useOptionalRuntimeBus } from "../../runtime/RuntimeBus";
+import { busyWords, otherEngineVerb, retryWords } from "../surface/waitWords";
+
+/** Betterment Q2: one running Ask's `ask_progress` frame from the hub. */
+type AskProgress =
+  | {
+      state: "busy";
+      job: string;
+      engine: { model?: string; boundary?: string };
+      alternatives: Array<{ profile_id: string; profile_revision: number; label: string; boundary?: string }>;
+    }
+  | { state: "retry"; attempt: number; of: number };
+
+function mintInvocationId(): string {
+  const hex = typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID().replace(/-/g, "")
+    : Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+  return `ask_${hex}`;
+}
+
+/** The running line's words while the hub says the Ask waits. */
+function progressWords(progress: AskProgress | null): string {
+  if (!progress) return "Asking";
+  if (progress.state === "busy") return busyWords(progress.job, progress.engine?.boundary);
+  return retryWords(progress.attempt, progress.of);
+}
 
 /** The budget figure the audit names: 0.3K / 16.4K. */
 const fmtK = (n: number): string => `${(n / 1000).toFixed(1)}K`;
@@ -141,6 +167,28 @@ export function AskPanel() {
   const requestId = useRef(0);
   const pendingRequest = useRef<{ id: number; controller: AbortController } | null>(null);
   const keeping = useRef(false);
+  // Betterment Q2: the running Ask's identity, so its progress frames
+  // (busy, trying again) reach this window and no other.
+  const invocationRef = useRef("");
+  const [progress, setProgress] = useState<AskProgress | null>(null);
+  const bus = useOptionalRuntimeBus();
+  useEffect(() => {
+    if (!bus) return undefined;
+    return bus.subscribe("ask_progress", (frame) => {
+      const data = (frame as { data?: Record<string, unknown> }).data;
+      if (!data || !invocationRef.current || data.invocation_id !== invocationRef.current) return;
+      if (data.state === "busy") {
+        setProgress({
+          state: "busy",
+          job: String(data.job || ""),
+          engine: (data.engine as { model?: string; boundary?: string }) || {},
+          alternatives: Array.isArray(data.alternatives) ? data.alternatives as never : [],
+        });
+      } else if (data.state === "retry") {
+        setProgress({ state: "retry", attempt: Number(data.attempt) || 1, of: Number(data.of) || 1 });
+      }
+    });
+  }, [bus]);
 
   useEffect(() => {
     mounted.current = true;
@@ -258,9 +306,11 @@ export function AskPanel() {
     setPrompt(next);
   };
 
-  const run = async (snapshot: AskRequestSnapshot) => {
+  const run = async (snapshot: AskRequestSnapshot, invocationId = mintInvocationId()) => {
     if (pendingRequest.current || abandoned.current || !mounted.current) return;
     const controller = new AbortController();
+    invocationRef.current = invocationId;
+    setProgress(null);
     const id = ++requestId.current;
     const generation = questionGeneration.current;
     pendingRequest.current = { id, controller };
@@ -281,9 +331,12 @@ export function AskPanel() {
       context: snapshot.context,
       grounding: snapshot.grounding,
       signal: controller.signal,
+      invocationId,
     });
     if (!mounted.current || abandoned.current || controller.signal.aborted || pendingRequest.current?.id !== id) return;
     pendingRequest.current = null;
+    invocationRef.current = "";
+    setProgress(null);
     setRoute(routeFromWire(r.route));
     const elapsedSeconds = Math.max(0, Math.round((Date.now() - startedAt) / 1000));
     setFinishedElapsedSeconds(elapsedSeconds);
@@ -321,6 +374,33 @@ export function AskPanel() {
       railSources: rails.map((source) => ({ ...source })),
     };
     return run(snapshot);
+  };
+
+  /** Betterment Q2: the engine is busy; run this one Ask on another engine.
+   *  The waiting run is stopped, and the new run gets its own identity with a
+   *  one-run assignment (scope `invocation`), so his settings do not change. */
+  const askElsewhere = async (alternative: { profile_id: string; profile_revision: number }) => {
+    if (!sent) return;
+    const waiting = invocationRef.current;
+    requestId.current += 1;
+    pendingRequest.current?.controller.abort();
+    pendingRequest.current = null;
+    if (waiting) void apiFetch(`/api/ask/${encodeURIComponent(waiting)}/cancel`, { method: "POST" }).catch(() => undefined);
+    const next = mintInvocationId();
+    try {
+      await apiFetch("/api/inference/assignments/set", {
+        method: "POST",
+        json: {
+          command_id: `ask-elsewhere-${next}`,
+          expected_revision: 0,
+          scope: { kind: "invocation", invocation_id: next, capability_id: "ask.answer" },
+          entries: [{ profile_id: alternative.profile_id, profile_revision: alternative.profile_revision }],
+        },
+      });
+    } catch {
+      // The run below still goes; the hub answers with the reason if it cannot.
+    }
+    await run(sent, next);
   };
 
   const keep = async () => {
@@ -414,7 +494,18 @@ export function AskPanel() {
           ) : null}
           {phase === "routing" ? (
             <SurfaceTrafficTurn prefix="Answer">
-              <RunLine phase="running" verb="Asking" model={engine.model} place={engine.place} startedAt={runStartedAt} />
+              <RunLine
+                phase="running"
+                verb={progressWords(progress)}
+                model={progress?.state === "busy" ? "" : engine.model}
+                place={progress?.state === "busy" ? "" : engine.place}
+                startedAt={runStartedAt}
+              />
+              {progress?.state === "busy" && progress.alternatives[0] ? (
+                <Button dense variant="ghost" data-testid="ask-elsewhere" onClick={() => void askElsewhere(progress.alternatives[0])}>
+                  {otherEngineVerb(progress.alternatives[0].label, progress.alternatives[0].boundary)}
+                </Button>
+              ) : null}
             </SurfaceTrafficTurn>
           ) : null}
           {sent && failedRun ? (

@@ -1,0 +1,9 @@
+{
+ "_source": "The hub's own answers, captured by tests/integration/test_desk_ask_priority.py::test_a_second_attempt_is_said (MeetingWebServer + TestClient, isolated HOME, the browser rigs' seeds). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
+ "retry": {
+  "invocation_id": "ask_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "state": "retry",
+  "attempt": 1,
+  "of": 1
+ }
+}

@@ -32,6 +32,9 @@ from .refinement_context_service import FrozenGroundingSnapshot
 _MATERIAL_CAP = 6000
 _ASK_SYSTEM_PROMPT = "You are the desk's AI core. Follow the instruction using the material provided. Be concrete and brief."
 ASK_SERVICE_CONTRACT = "holdspeak.ask"
+# Betterment Q2: an Ask still waiting this long on an engine that background
+# work holds says so, with the job's words.
+BUSY_AFTER_SECONDS = 5.0
 ASK_SERVICE_SCHEMA_VERSION = "1"
 ASK_PAYLOAD_SCHEMA_VERSION = 1
 #: The operation id the Thought's pages and observations are fitted with,
@@ -100,7 +103,7 @@ class _AskAnswerAdapter:
 class AskService:
     def __init__(self, db: Database, hub_model: Callable[[], str] | None = None,
                  broadcast: Callable[..., None] | None = None,
-                 rails_hydrator: Callable[[list[dict[str, Any]], Principal], tuple[list[Any], list[str]]] | None = None, *, observer: PipelineObserver | None = None, broker: Any = None) -> None:
+                 rails_hydrator: Callable[[list[dict[str, Any]], Principal], tuple[list[Any], list[str]]] | None = None, *, observer: PipelineObserver | None = None, broker: Any = None, progress: Callable[[dict[str, Any]], None] | None = None) -> None:
         if broker is None:
             from ..kernel.runtime import _service
             broker = _service()
@@ -117,6 +120,9 @@ class AskService:
         from ..kernel.ask_projection import register
         register(self._broker.projection_stager)
         self._observer = observer or NullObserver()
+        # Betterment Q2: progress events of one running Ask (busy, trying
+        # again), keyed by its invocation id.
+        self._progress = progress
         # Cancellation must reach the SAME runner instance whose in-process
         # registry holds the in-flight invocation, across per-request service
         # constructions: the runner is the broker-owned singleton, and the
@@ -324,38 +330,51 @@ class AskService:
                     )
                 except ServiceError as exc:
                     raise self._with_route_reason(exc) from exc
+            # Betterment Q2, Ask goes first: the turn holds its engines, so
+            # background work starts no new call on them until it ends; the
+            # owner hears it when the engine is still busy after 5 s, and
+            # every second attempt is said.
+            from ..engine_lanes import LANES
+            lanes = self._route_lanes(admitted["route_plan"])
+            watch = self._watch_busy(invocation_id, lanes, capability_id)
+            dispatch_hook = self._attempt_progress(
+                invocation_id, admitted["execution"], before_physical_dispatch,
+            )
             try:
-                routed = await asyncio.to_thread(
-                    self._broker.inference_adoption_service.execute,
-                    principal,
-                    execution_id=admitted["execution"]["id"],
-                    adapter=adapter,
-                    publish=lambda output, reservation: self._broker.projection_stager.stage(
-                        str(reservation["child_invocation_id"]),
-                        "ask-result",
-                        self._routed_projection(
-                            dict(output), payload, None, admitted["route_plan"],
-                            route_leg_ordinal=int(reservation["route_leg_ordinal"]),
-                        ),
-                        result_sha256=(
-                            result_sha256 := "sha256:" + hashlib.sha256(
-                                json.dumps(
-                                    output,
-                                    sort_keys=True,
-                                    separators=(",", ":"),
-                                    ensure_ascii=True,
-                                    allow_nan=False,
-                                ).encode()
-                            ).hexdigest()
-                        ),
-                        receipt_result_ref=(
-                            f"inference-result:{reservation['child_invocation_id']}/{result_sha256}"
-                        ),
-                    ).result_ref,
-                    before_physical_dispatch=before_physical_dispatch,
-                )
+                with LANES.foreground([lane["key"] for lane in lanes]):
+                    routed = await asyncio.to_thread(
+                        self._broker.inference_adoption_service.execute,
+                        principal,
+                        execution_id=admitted["execution"]["id"],
+                        adapter=adapter,
+                        publish=lambda output, reservation: self._broker.projection_stager.stage(
+                            str(reservation["child_invocation_id"]),
+                            "ask-result",
+                            self._routed_projection(
+                                dict(output), payload, None, admitted["route_plan"],
+                                route_leg_ordinal=int(reservation["route_leg_ordinal"]),
+                            ),
+                            result_sha256=(
+                                result_sha256 := "sha256:" + hashlib.sha256(
+                                    json.dumps(
+                                        output,
+                                        sort_keys=True,
+                                        separators=(",", ":"),
+                                        ensure_ascii=True,
+                                        allow_nan=False,
+                                    ).encode()
+                                ).hexdigest()
+                            ),
+                            receipt_result_ref=(
+                                f"inference-result:{reservation['child_invocation_id']}/{result_sha256}"
+                            ),
+                        ).result_ref,
+                        before_physical_dispatch=dispatch_hook,
+                    )
             except ServiceError as exc:
                 raise self._with_route_reason(exc) from exc
+            finally:
+                watch.cancel()
             if routed["outcome"] != "succeeded" or not isinstance(routed["result"], dict):
                 # A failed Ask keeps where its bytes went (Astra, #875).
                 raise ServiceError(
@@ -464,6 +483,124 @@ class AskService:
             raise ServiceError("projection_not_published", "Ask result is awaiting receipt reconciliation", context={"invocation_id": invocation_id, "operation_id": outcome.operation_id, "receipt": dict(outcome.receipt), "result_ref": outcome.result_ref, "status": 409})
         self._emit("ready", kind="ask", ref="ask", name=lens)
         return dict(result)
+
+    # ── Betterment Q2: Ask goes first ────────────────────────────────
+
+    def _route_lanes(self, route_plan: Any) -> list[dict[str, Any]]:
+        """One row per leg of the frozen route: its engine (lane) and words."""
+        from ..engine_lanes import engine_key
+
+        lanes: list[dict[str, Any]] = []
+        for leg in (route_plan or {}).get("entries") or ():
+            revision = str(leg.get("deployment_revision_id") or "")
+            model = ""
+            try:
+                with self._db._connection() as conn:
+                    row = conn.execute(
+                        "SELECT model FROM deployment_revisions WHERE id=?", (revision,),
+                    ).fetchone()
+                model = "" if row is None else str(row["model"] or "")
+            except Exception:
+                model = ""
+            lanes.append({
+                "key": engine_key(self._db, revision),
+                "profile_id": str(leg.get("profile_id") or ""),
+                "boundary": str(leg.get("boundary") or ""),
+                "model": model,
+            })
+        return lanes
+
+    def _send_progress(self, event: dict[str, Any]) -> None:
+        if self._progress is None:
+            return
+        try:
+            self._progress(event)
+        except Exception:  # a progress event is never a gate
+            pass
+
+    def _watch_busy(self, invocation_id: str, lanes: list[dict[str, Any]], capability_id: str) -> Any:
+        """After ``BUSY_AFTER_SECONDS``, say so when background work holds the engine."""
+        import threading
+
+        if self._progress is None or not lanes:
+            return threading.Timer(0, lambda: None)
+
+        def check() -> None:
+            from ..engine_lanes import LANES
+
+            first = lanes[0]
+            job = LANES.busy_with(first["key"])
+            if not job:
+                return
+            self._send_progress({
+                "invocation_id": invocation_id,
+                "state": "busy",
+                "job": job,
+                "engine": {"model": first["model"], "boundary": first["boundary"]},
+                "alternatives": self._other_engines(capability_id, first["key"]),
+            })
+
+        timer = threading.Timer(BUSY_AFTER_SECONDS, check)
+        timer.daemon = True
+        timer.start()
+        return timer
+
+    def _other_engines(self, capability_id: str, busy_key: str) -> list[dict[str, Any]]:
+        """Ready engines that can answer this capability, on another server."""
+        from ..engine_lanes import engine_key
+        from ..principals import Principal, PrincipalKind
+        from .inference_assignment_service import InferenceAssignmentService
+
+        try:
+            editor = InferenceAssignmentService(self._db).assignment_editor_projection(
+                Principal(PrincipalKind.OWNER, "owner-session"),
+                {"scope": {"kind": "capability", "capability_id": capability_id},
+                 "capability_id": capability_id},
+            )
+        except Exception:
+            return []
+        others: list[dict[str, Any]] = []
+        for candidate in editor.get("candidates") or ():
+            if candidate.get("status") != "compatible" or candidate.get("readiness") != "ready":
+                continue
+            with self._db._connection() as conn:
+                binding = conn.execute(
+                    """SELECT b.deployment_revision_id FROM model_profile_binding_heads h
+                         JOIN model_profile_binding_revisions b
+                           ON b.binding_id=h.binding_id AND b.revision=h.revision
+                        WHERE h.profile_id=? AND b.profile_revision=?""",
+                    (candidate["profile_id"], candidate["profile_revision"]),
+                ).fetchone()
+            if binding is None or engine_key(self._db, str(binding["deployment_revision_id"])) == busy_key:
+                continue
+            others.append({
+                "profile_id": candidate["profile_id"],
+                "profile_revision": candidate["profile_revision"],
+                "label": candidate.get("label") or "",
+                "boundary": candidate.get("boundary") or "",
+            })
+        # The most private engine first: a press should not send his words
+        # further than it must.
+        order = {"local": 0, "same_device": 0, "private_network": 1, "lan": 1, "mesh": 2, "cloud": 3}
+        others.sort(key=lambda other: order.get(str(other["boundary"]), 4))
+        return others
+
+    def _attempt_progress(self, invocation_id: str, execution: Any, inner: Any) -> Any:
+        """Say every attempt after the first ("Trying again, 1 of 3")."""
+        limit = int((execution or {}).get("total_attempt_limit") or 0)
+
+        def hook(operation_id: str, child_invocation_id: str, attempt_ordinal: int) -> None:
+            if int(attempt_ordinal or 1) > 1:
+                self._send_progress({
+                    "invocation_id": invocation_id,
+                    "state": "retry",
+                    "attempt": int(attempt_ordinal) - 1,
+                    "of": max(1, limit - 1) if limit else int(attempt_ordinal) - 1,
+                })
+            if inner is not None:
+                inner(operation_id, child_invocation_id, attempt_ordinal)
+
+        return hook
 
     def _receipt_route(self, receipt: Any) -> dict[str, Any] | None:
         from ..inference_locality import served_route
