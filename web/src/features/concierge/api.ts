@@ -6,7 +6,8 @@ import type { EndpointDraft } from "./endpointDraft";
 
 /* ── Wire types ── */
 
-export type EngineKind = "lan" | "local" | "cloud" | "preset";
+/** `agent`: an agent CLI on this Mac (Claude Code, Codex; Betterment E2). */
+export type EngineKind = "lan" | "local" | "cloud" | "preset" | "agent";
 export type EngineState =
   | "READY"
   | "WAITING"

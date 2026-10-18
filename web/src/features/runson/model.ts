@@ -3,7 +3,7 @@
 
 import type { Repair } from "../concierge/api";
 import { hostPlace } from "../../desk/surface/egress";
-import type { Detection, Roster, RosterEntry, RosterRow, RunsOnEngine } from "./api";
+import type { AgentSpend, Detection, Roster, RosterEntry, RosterRow, RunsOnEngine } from "./api";
 import { stateWord, type StateWord } from "./stateWord";
 
 /** The default job's board id; the roster calls it `global`. */
@@ -79,9 +79,10 @@ export interface BoardEngine {
   profileId?: string;
   profileRevision?: number;
   name: string;
-  kind: "local" | "lan" | "cloud" | "preset";
+  kind: "local" | "lan" | "cloud" | "preset" | "agent";
   host: string;
-  emblem: "MAC" | "LAN" | "API";
+  /** CLI: an agent CLI on this Mac; its prompt goes to its vendor. */
+  emblem: "MAC" | "LAN" | "API" | "CLI";
   /** The raw state (detection's, or the binding's readiness). */
   state: string;
   latencyMs?: number | null;
@@ -95,9 +96,17 @@ export interface BoardEngine {
   presetId?: string;
   downloadHost?: string;
   keySet?: boolean;
+  /** Betterment E2: an agent CLI engine (or a found one). */
+  agentPreset?: string;
+  agentModel?: string;
+  signedIn?: string;
+  vendor?: string;
+  installed?: boolean;
+  spend?: AgentSpend;
 }
 
-export function emblemFor(kind: string, boundary?: string): "MAC" | "LAN" | "API" {
+export function emblemFor(kind: string, boundary?: string): BoardEngine["emblem"] {
+  if (kind === "agent") return "CLI";
   if (kind === "cloud" || boundary === "cloud") return "API";
   if (kind === "lan" || boundary === "private_network" || boundary === "lan" || boundary === "mesh") return "LAN";
   return "MAC";
@@ -112,7 +121,7 @@ export function offMachine(engine: BoardEngine): boolean {
  *  hostPlace): its address when it has one, else its host, read with its
  *  emblem's kind. */
 export function enginePlace(engine: BoardEngine): ReturnType<typeof hostPlace> {
-  const kind = engine.emblem === "API" ? "cloud" : engine.emblem === "LAN" ? "lan" : "local";
+  const kind = engine.emblem === "API" || engine.emblem === "CLI" ? "cloud" : engine.emblem === "LAN" ? "lan" : "local";
   return hostPlace(engine.baseUrl || engine.host, kind);
 }
 
@@ -203,6 +212,11 @@ function engineTokens(e: RunsOnEngine): string[] {
     tokens.push("$");
   }
   if (e.kind === "preset") tokens.push("NOT DOWNLOADED");
+  // Betterment E2: an agent engine says what stops it, in words.
+  if (e.kind === "agent" && !e.found) {
+    if (e.installed === false) tokens.push("NOT INSTALLED");
+    else if (e.signedIn === "no") tokens.push("NOT SIGNED IN");
+  }
   if (typeof e.latencyMs === "number") tokens.push(`${e.latencyMs} MS`);
   return tokens;
 }
@@ -261,6 +275,12 @@ export function buildEngines(roster: Roster | null, detection: Detection | null)
       presetId: e.presetId,
       downloadHost: e.downloadHost,
       keySet: e.keySet,
+      agentPreset: e.agentPreset,
+      agentModel: e.model,
+      signedIn: e.signedIn,
+      vendor: e.vendor,
+      installed: e.installed,
+      spend: e.spend,
     });
   }
   return [...out.values()];
@@ -272,8 +292,34 @@ export function splitEngines(engines: BoardEngine[]): { have: BoardEngine[]; fou
   const have = engines.filter((e) => !e.found);
   // A found row must carry its one verb; only an address can be accepted
   // through the Model Library from here (define-endpoint).
-  const found = engines.filter((e) => e.found && Boolean(e.baseUrl));
+  // Betterment E2: a found agent CLI is accepted with connect-cli-engine.
+  const found = engines.filter((e) => e.found && (Boolean(e.baseUrl) || Boolean(e.agentPreset)));
   return { have, found };
+}
+
+/** Betterment E2: the found agent's name with its sign-in, in words
+ *  (`Claude Code · signed in`). The hub never says "no" before a run: a
+ *  sign-in it cannot read is "not known", and Add tries it once. */
+export function foundAgentName(engine: BoardEngine): string {
+  return `${engine.name} · ${engine.signedIn === "yes" ? "signed in" : "sign-in not known"}`;
+}
+
+/** US dollars for a cost or a limit (`$0.25`; a cost under a cent says so). */
+export function usd(value: number): string {
+  if (value > 0 && value < 0.005) return "under $0.01";
+  return `$${value.toFixed(2)}`;
+}
+
+/** The unfolded agent row's cost words: today and this week, never a zero
+ *  counter (UX canon A8). */
+export function costTokens(spend: AgentSpend | undefined, label: string): string[] {
+  if (!spend) return [];
+  if (!spend.reportsCost) return [`${label.toUpperCase()} REPORTS NO COST`];
+  if (!(spend.weekUsd > 0)) return ["NOTHING SPENT THIS WEEK"];
+  const tokens: string[] = [];
+  if (spend.todayUsd > 0) tokens.push(`TODAY ${usd(spend.todayUsd)}`);
+  tokens.push(`THIS WEEK ${usd(spend.weekUsd)}`);
+  return tokens;
 }
 
 /** The job's own chain (empty when it follows its parent). */

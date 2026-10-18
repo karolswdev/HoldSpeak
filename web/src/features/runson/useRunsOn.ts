@@ -25,6 +25,7 @@ import { startCapture, stopAndTranscribe, cancelCapture } from "../../lib/speakT
 import { patchChain } from "../../desk/surface/switchboardGeometry";
 import {
   clearChain,
+  connectCliEngine,
   newCommandId,
   readAcquisition,
   readDetection,
@@ -47,6 +48,7 @@ import {
   enginePlace,
   hostLabel,
   jobName,
+  usd,
   jobForScope,
   leadEngine,
   offMachine,
@@ -697,6 +699,26 @@ export function useRunsOn(scope?: string) {
   const useFound = useCallback(
     async (key: string) => {
       const engine = engineByKey(key);
+      if (engine?.agentPreset) {
+        // Betterment E2: one press adds the agent CLI as an engine.
+        const profileId = `agent-${engine.agentPreset}`;
+        setBusy(true);
+        try {
+          await connectCliEngine({
+            preset: engine.agentPreset,
+            profileId,
+            expectedProfileRevision: engines.find((e) => e.profileId === profileId)?.profileRevision ?? 0,
+          });
+          if (!mounted.current) return;
+          setReceipt({ text: `ADDED ${clock()} · ${engine.name}` });
+          await Promise.all([loadDetection(), loadRoster()]);
+        } catch (err) {
+          setReceipt({ text: `NOT ADDED · ${codeToken(err)}`, tone: "danger" });
+        } finally {
+          if (mounted.current) setBusy(false);
+        }
+        return;
+      }
       if (!engine?.baseUrl) return;
       setBusy(true);
       try {
@@ -719,6 +741,60 @@ export function useRunsOn(scope?: string) {
       }
     },
     [engineByKey, engines, loadDetection, loadRoster],
+  );
+
+  /* ── An agent engine's row unfolds: Spend limit per run (Betterment E2) ── */
+
+  const [agentOpen, setAgentOpen] = useState<string | null>(null);
+  const [spendDraft, setSpendDraft] = useState("");
+  const [spendInvalid, setSpendInvalid] = useState(false);
+
+  const toggleAgent = useCallback(
+    (key: string) => {
+      const engine = engineByKey(key);
+      setSpendInvalid(false);
+      setAgentOpen((open) => (open === key ? null : key));
+      const limit = engine?.spend?.limitUsd;
+      setSpendDraft(limit != null ? limit.toFixed(2) : "");
+    },
+    [engineByKey],
+  );
+
+  /** Save the limit in the draft; an empty draft is No limit. */
+  const saveSpend = useCallback(
+    async (key: string, noLimit = false) => {
+      const engine = engineByKey(key);
+      if (!engine?.agentPreset || !engine.profileId) return;
+      const text = noLimit ? "" : spendDraft.trim().replace(/^\$/, "");
+      const limit = text ? Number(text) : null;
+      if (limit != null && !(Number.isFinite(limit) && limit > 0 && limit <= 1000)) {
+        setSpendInvalid(true);
+        return;
+      }
+      setSpendInvalid(false);
+      setBusy(true);
+      try {
+        await connectCliEngine({
+          preset: engine.agentPreset,
+          profileId: engine.profileId,
+          expectedProfileRevision: engine.profileRevision ?? 0,
+          label: engine.model,
+          model: engine.agentModel,
+          spendLimitUsd: limit,
+        });
+        if (!mounted.current) return;
+        setSpendDraft(limit != null ? limit.toFixed(2) : "");
+        setReceipt({
+          text: `${limit != null ? `SPEND LIMIT ${usd(limit)} PER RUN` : "NO SPEND LIMIT"} · ${engine.name}`,
+        });
+        await loadDetection();
+      } catch (err) {
+        setReceipt({ text: `NOT SAVED · ${codeToken(err)}`, tone: "danger" });
+      } finally {
+        if (mounted.current) setBusy(false);
+      }
+    },
+    [engineByKey, loadDetection, spendDraft],
   );
 
   /* ── Find on LAN (one owner press, transient rows only) ── */
@@ -862,6 +938,17 @@ export function useRunsOn(scope?: string) {
     failedDownloads,
     download,
     useFound,
+    agent: {
+      open: agentOpen,
+      toggle: toggleAgent,
+      draft: spendDraft,
+      setDraft: (value: string) => {
+        setSpendInvalid(false);
+        setSpendDraft(value);
+      },
+      invalid: spendInvalid,
+      save: saveSpend,
+    },
     findOnLan,
     lanDiscovery,
     busy,

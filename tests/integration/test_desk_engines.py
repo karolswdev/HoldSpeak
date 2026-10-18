@@ -209,3 +209,149 @@ def test_the_rig_switch_keeps_agent_engines_off(hub: str) -> None:
         "request_id": "connect-off", "profile_id": "agent-claude", "expected_profile_revision": 0, "preset": "claude",
     }})
     assert status == 409 and refused.get("code") == "cli_engines_off", (status, refused)
+    # Nothing on this machine's PATH is listed either (Found on this Mac).
+    assert _agent_rows(hub) == []
+
+
+# -- Betterment E2: Found on this Mac, one-press Add, spend and cost ---------
+
+
+def _only_claude_on_path(bin_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Only the fake ``claude``: this machine's own CLIs stay off PATH."""
+    (bin_dir / "codex").unlink()
+    monkeypatch.setenv("PATH", f"{bin_dir}:/usr/bin:/bin")
+
+
+def _sign_in_fake_claude(tmp_path: Path) -> None:
+    """A stored Claude Code token inside the rig's HOME (presence only is read)."""
+    folder = tmp_path / "home" / ".claude"
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / ".credentials.json").write_text(json.dumps({"claudeAiOauth": {"accessToken": "fake-token"}}))
+
+
+def _agent_rows(base: str) -> list[dict]:
+    return [e for e in _ok(base, "GET", "/api/concierge/detect")["engines"] if e["kind"] == "agent"]
+
+
+def test_found_on_this_mac_lists_a_signed_in_claude_and_add_makes_it_an_engine(
+    hub: str, fake_bin: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _only_claude_on_path(fake_bin, monkeypatch)
+    _sign_in_fake_claude(tmp_path)
+
+    (found,) = _agent_rows(hub)
+    assert found["found"] is True and "profileId" not in found, found
+    assert (found["name"], found["agentPreset"], found["signedIn"]) == ("Claude Code", "claude", "yes"), found
+    assert (found["host"], found["vendor"]) == ("api.anthropic.com", "ANTHROPIC"), found
+
+    _connect_claude(hub)
+    (engine,) = _agent_rows(hub)
+    assert not engine.get("found"), engine
+    assert (engine["profileId"], engine["profileRevision"], engine["state"]) == ("agent-claude", 1, "READY"), engine
+    assert (engine["name"], engine["vendor"], engine["signedIn"]) == ("Claude Code", "ANTHROPIC", "yes"), engine
+    assert engine["spend"] == {
+        "limitUsd": None, "canLimit": True, "reportsCost": True, "todayUsd": 0.0, "weekUsd": 0.0,
+    }, engine["spend"]
+    # The authority's fits ride on it: speech work is refused, answers are not.
+    assert engine["fits"]["speech_recognition"]["state"] != "READY", engine["fits"]
+
+
+def test_a_sign_in_the_hub_cannot_read_is_found_as_unknown(
+    hub: str, fake_bin: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _only_claude_on_path(fake_bin, monkeypatch)
+    (found,) = _agent_rows(hub)
+    # The rig keeps agent state out: never "no", so the owner may try once.
+    assert found["signedIn"] in {"unknown", "not_read"}, found
+
+
+def test_the_engine_row_sums_the_reported_cost_and_says_not_signed_in(
+    hub: str, fake_bin: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from tests.fixtures.fake_agent_cli import CLAUDE_COST_USD
+
+    _only_claude_on_path(fake_bin, monkeypatch)
+    _sign_in_fake_claude(tmp_path)
+    connected = _connect_claude(hub)
+    status, assigned = _assign(hub, "ask.answer", [_entry(connected)])
+    assert status < 300, assigned
+    _ok(hub, "POST", "/api/ask", {"prompt": "One"})
+    _ok(hub, "POST", "/api/ask", {"prompt": "Two"})
+    (engine,) = _agent_rows(hub)
+    assert engine["spend"]["todayUsd"] == pytest.approx(2 * CLAUDE_COST_USD), engine["spend"]
+    assert engine["spend"]["weekUsd"] == pytest.approx(2 * CLAUDE_COST_USD), engine["spend"]
+
+    set_mode(fake_bin, "claude", "fail")  # "Invalid API key. Please run /login"
+    _call(hub, "POST", "/api/ask", {"prompt": "Three"})
+    (engine,) = _agent_rows(hub)
+    assert (engine["signedIn"], engine["state"]) == ("no", "NOT_SET"), engine
+
+    set_mode(fake_bin, "claude", "answer")
+    _ok(hub, "POST", "/api/ask", {"prompt": "Four"})
+    (engine,) = _agent_rows(hub)
+    assert (engine["signedIn"], engine["state"]) == ("yes", "READY"), engine
+
+
+def test_a_new_spend_limit_reaches_the_next_run(
+    hub: str, fake_bin: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _only_claude_on_path(fake_bin, monkeypatch)
+    connected = _connect_claude(hub)
+    status, assigned = _assign(hub, "ask.answer", [_entry(connected)])
+    assert status < 300, assigned
+    _ok(hub, "POST", "/api/inference/model-library/connect-cli-engine", {"draft": {
+        "request_id": "limit-claude", "profile_id": "agent-claude",
+        "expected_profile_revision": int(connected["provider"]["profile_revision"]),
+        "preset": "claude", "label": "Claude Code", "model": "default", "spend_limit_usd": 0.5,
+    }})
+    (engine,) = _agent_rows(hub)
+    assert engine["spend"]["limitUsd"] == 0.5 and engine["profileRevision"] == 1, engine
+    _ok(hub, "POST", "/api/ask", {"prompt": "Hi"})
+    argv = calls(fake_bin, "claude")[-1]["argv"]
+    assert argv[argv.index("--max-budget-usd") + 1] == "0.50", argv
+
+
+def _runs() -> list[tuple]:
+    from holdspeak.db import get_database
+
+    with get_database()._connection() as conn:
+        return [tuple(r) for r in conn.execute(
+            "SELECT profile_id, outcome, cost_usd FROM cli_engine_runs ORDER BY id"
+        ).fetchall()]
+
+
+def test_a_run_stopped_at_its_spend_limit_still_counts_its_cost(
+    hub: str, fake_bin: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from tests.fixtures.fake_agent_cli import CLAUDE_COST_USD
+
+    _only_claude_on_path(fake_bin, monkeypatch)
+    connected = _connect_claude(hub, spend_limit_usd=0.01)
+    status, assigned = _assign(hub, "ask.answer", [_entry(connected)])
+    assert status < 300, assigned
+    set_mode(fake_bin, "claude", "error")  # error_max_budget_usd, with its cost
+    _call(hub, "POST", "/api/ask", {"prompt": "Long question"})
+    assert ("library_provider_agent-claude", "failed", pytest.approx(CLAUDE_COST_USD)) in _runs(), _runs()
+    (engine,) = _agent_rows(hub)
+    assert engine["spend"]["todayUsd"] == pytest.approx(CLAUDE_COST_USD), engine["spend"]
+
+
+def test_a_codex_run_is_recorded_through_its_json_parser(
+    hub: str, fake_bin: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from tests.fixtures.fake_agent_cli import CODEX_ANSWER
+
+    (fake_bin / "claude").unlink()
+    monkeypatch.setenv("PATH", f"{fake_bin}:/usr/bin:/bin")
+    connected = _ok(hub, "POST", "/api/inference/model-library/connect-cli-engine", {"draft": {
+        "request_id": "connect-codex", "profile_id": "agent-codex", "expected_profile_revision": 0, "preset": "codex",
+    }})
+    status, assigned = _assign(hub, "ask.answer", [_entry(connected)])
+    assert status < 300, assigned
+    answer = _ok(hub, "POST", "/api/ask", {"prompt": "Hi"})
+    assert answer["output"] == CODEX_ANSWER, answer
+    assert "--json" in calls(fake_bin, "codex")[-1]["argv"]
+    # Codex reports tokens, not dollars: one answered run, no cost.
+    assert _runs() == [("library_provider_agent-codex", "answered", None)], _runs()
+    (engine,) = _agent_rows(hub)
+    assert engine["spend"]["reportsCost"] is False and engine["spend"]["weekUsd"] == 0.0, engine

@@ -202,6 +202,17 @@
   justify-content: flex-end;
   gap: 6px;
 }
+.switchboard-engine-detail {
+  grid-column: 1 / 4;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 6px 10px;
+  padding-top: 6px;
+  margin-top: 2px;
+  border-top: 1px solid var(--sb-ink-dim);
+  cursor: default;
+}
 .switchboard-engine.is-found { background: var(--sb-field); box-shadow: var(--sb-raised-soft); cursor: default; }
 
 /* ── 393: the job list ── */

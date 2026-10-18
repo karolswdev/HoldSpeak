@@ -77,6 +77,9 @@ export interface SwitchEngine {
   egress?: ReactNode;
   /** Only an engine with a model record can be dragged onto a job. */
   draggable?: boolean;
+  /** The plate unfolded in place (Betterment E2: an agent's spend limit).
+   *  A press or a key inside it never drags or patches the plate. */
+  detail?: ReactNode;
 }
 
 export interface SwitchWire {
@@ -217,6 +220,16 @@ function EnginePlate({
         <span className="switchboard-engine-verb">
           {engine.egress}
           {engine.verb}
+        </span>
+      ) : null}
+      {engine.detail ? (
+        <span
+          className="switchboard-engine-detail"
+          data-testid={`switchboard-detail-${engine.id}`}
+          onPointerDown={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
+        >
+          {engine.detail}
         </span>
       ) : null}
     </Tag>
@@ -592,7 +605,7 @@ function SwitchboardList({
                   data-testid={`switchboard-tap-${engine.id}`}
                   onClick={() => onPatch?.(open.id, engine.id, false)}
                 >
-                  <EnginePlate inline engine={{ ...engine, verb: undefined, egress: undefined }} />
+                  <EnginePlate inline engine={{ ...engine, verb: undefined, egress: undefined, detail: undefined }} />
                 </Button>
               ))}
             </>
@@ -602,7 +615,7 @@ function SwitchboardList({
       {/* PHILO-17 REFIT: an engine with a verb (Download, Use it) sits
           before the other jobs, so the first move is in view on a phone. */}
       {engines
-        .filter((engine) => engine.id !== first?.id && (engine.progress != null || Boolean(engine.verb)))
+        .filter((engine) => engine.id !== first?.id && (engine.progress != null || Boolean(engine.verb) || Boolean(engine.detail)))
         .map((engine) => (
           <EnginePlate key={`more-${engine.id}`} engine={engine} />
         ))}

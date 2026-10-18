@@ -119,7 +119,9 @@ if plan_file.exists():
     answer = json.dumps(results)
 if name == "claude":
     if mode == "error":
-        print(json.dumps({{"type": "result", "subtype": "error_max_budget_usd", "is_error": True}}))
+        # Claude Code reports what a run cost even when it stops at its limit.
+        print(json.dumps({{"type": "result", "subtype": "error_max_budget_usd", "is_error": True,
+                          "total_cost_usd": {cost!r}}}))
         sys.exit(0)
     if answer is None:
         answer = (here / "claude-answer").read_text() if (here / "claude-answer").exists() else {claude_answer!r}

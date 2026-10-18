@@ -367,3 +367,12 @@ def test_a_codex_config_with_its_own_holdspeak_server_gets_no_desk_tools(
     assert not any(part.startswith("mcp_servers.holdspeak.") for part in _settings(call["argv"]))
     assert "features.apps=false" in _settings(call["argv"])  # the switches stay
 
+
+
+def test_an_is_error_result_keeps_its_reported_cost() -> None:
+    """Betterment E2: a run that stopped at its spend limit still cost money."""
+    raw = json.dumps({"type": "result", "subtype": "error_max_budget_usd", "is_error": True, "total_cost_usd": 0.42})
+    with pytest.raises(cli_engine.CliRunFailed) as stopped:
+        cli_engine.parse_cli_output(raw)
+    assert stopped.value.cost_usd == 0.42
+    assert isinstance(stopped.value, ProviderPermanentNoGeneration)  # the chain still falls back

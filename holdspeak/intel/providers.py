@@ -826,7 +826,9 @@ def _profile_engine(
         # Betterment E1: an agent CLI on this Mac (`cli:<preset>` in base_url).
         from .cli_engine import CliEngine
 
-        return CliEngine.from_endpoint(str(base_url or ""), model=str(model or ""))
+        return CliEngine.from_endpoint(
+            str(base_url or ""), model=str(model or ""), profile_id=str(profile_id or ""),
+        )
     if kind == "openAICompatible" and str(base_url or "").strip():
         # Refuse on ambiguity: a blank profile id has no unique secret slot, and
         # borrowing a shared env name would let an unidentified destination read
