@@ -30,7 +30,7 @@ class _MeteredPromptAdapter(CanonicalPromptAdapter):
         self.tokens = 0
 
     def dispatch(self, engine: Any, payload: dict[str, Any], cancellation: Any) -> dict[str, str]:
-        from ..intel.cli_engine_runs import for_item
+        from .run_trace import for_item
 
         # Betterment M2: an agent CLI run records the item it ran for, so the
         # result shows the run's cost and what its agent used.

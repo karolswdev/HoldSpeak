@@ -21,6 +21,9 @@ A write here never breaks a call: a failed write is logged.
 from __future__ import annotations
 
 import json
+from collections.abc import Iterator
+from contextlib import contextmanager
+from contextvars import ContextVar
 from typing import Any, Mapping, Optional
 
 from ..logging_config import get_logger
@@ -50,6 +53,28 @@ _DESK_ID_FIELDS = {
     "workflows": "workflow_id",
     "chains": "chain_id",
 }
+
+
+#: The automation item the current engine call runs for ('' = none). The
+#: workbench runner sets it around its engine call (:func:`for_item`); a CLI
+#: run's ``cli_engine_runs`` row records it, so a result finds its runs. Kept
+#: here, not in ``holdspeak.intel`` (that package costs ~0.3 s to import, and
+#: the runner sets this inside a timed item).
+_ITEM: ContextVar[str] = ContextVar("agent_run_item", default="")
+
+
+@contextmanager
+def for_item(item_id: str) -> Iterator[None]:
+    """Name the automation item of the engine calls made inside this block."""
+    token = _ITEM.set(str(item_id or ""))
+    try:
+        yield
+    finally:
+        _ITEM.reset(token)
+
+
+def current_item() -> str:
+    return _ITEM.get()
 
 
 def _effect(name: str) -> str:
@@ -241,4 +266,4 @@ def run_id_of(identity: Optional[str]) -> str:
     return text[len(RUN_IDENTITY_PREFIX):] if text.startswith(RUN_IDENTITY_PREFIX) else ""
 
 
-__all__ = ["PREPARE", "READ", "WRITE", "record_call", "run_id_of", "use_by_item"]
+__all__ = ["PREPARE", "READ", "WRITE", "current_item", "for_item", "record_call", "run_id_of", "use_by_item"]

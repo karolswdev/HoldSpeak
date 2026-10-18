@@ -9,15 +9,12 @@ A write never breaks a run: a failed write is logged and the answer goes on.
 
 Betterment M2: a row also names the run (``run_id``, the id in the run's
 credential ``agent:run:<run_id>``) and the automation item it ran for
-(``item_id``). The workbench runner sets the item around its engine call
-(:func:`for_item`); an automation result reads its cost by item.
+(``item_id``). The workbench runner names the item around its engine call
+(``services/run_trace.for_item``); an automation result reads its cost by item.
 """
 from __future__ import annotations
 
 import json
-from collections.abc import Iterator
-from contextlib import contextmanager
-from contextvars import ContextVar
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
@@ -33,24 +30,6 @@ OUTCOMES = frozenset({ANSWERED, NOT_SIGNED_IN, FAILED})
 #: Words an agent CLI prints when it has no sign-in (Claude Code:
 #: "Invalid API key. Please run /login"; Codex: "Not logged in").
 _SIGN_IN_WORDS = ("/login", "not logged in", "please log in", "please login", "invalid api key", "sign in")
-
-
-#: The automation item the current engine call runs for ('' = none).
-_ITEM: ContextVar[str] = ContextVar("cli_engine_run_item", default="")
-
-
-@contextmanager
-def for_item(item_id: str) -> Iterator[None]:
-    """Name the automation item of the engine calls made inside this block."""
-    token = _ITEM.set(str(item_id or ""))
-    try:
-        yield
-    finally:
-        _ITEM.reset(token)
-
-
-def current_item() -> str:
-    return _ITEM.get()
 
 
 def says_not_signed_in(stderr: str) -> bool:
@@ -74,10 +53,12 @@ def record_run(
 ) -> None:
     """Add one run row. No profile id = no row (an engine built outside a job).
 
-    The row names the run (``run_id``) and the item of :func:`for_item`."""
+    The row names the run (``run_id``) and the item of ``run_trace.for_item``."""
     if not str(profile_id or "").strip() or outcome not in OUTCOMES:
         return
     try:
+        from ..services.run_trace import current_item
+
         if db is None:
             from ..db import get_database
 
@@ -161,7 +142,6 @@ def cost_by_item(db: Any, item_ids: list[str]) -> dict[str, float]:
 __all__ = [
     "ANSWERED",
     "FAILED",
-    "for_item",
     "cost_by_item",
     "NOT_SIGNED_IN",
     "record_run",
