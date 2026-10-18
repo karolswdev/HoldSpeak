@@ -4621,6 +4621,25 @@
         ]
       }
     },
+    "/api/automations/new": {
+      "get": {
+        "description": "Betterment A6: one row per automation with a NEW result.",
+        "operationId": "api_new_results_api_automations_new_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api New Results Api Automations New Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api New Results"
+      }
+    },
     "/api/automations/practice-recipes": {
       "get": {
         "operationId": "list_practice_recipes_api_automations_practice_recipes_get",

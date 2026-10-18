@@ -17,6 +17,8 @@ import { OBJECT_DELETE_REQUEST } from "../verbRegistry";
 import { openRef } from "../openObject";
 import { apiFetch } from "../../lib/api";
 import { reportWriteFailure } from "../hooks/useWriteReceipt";
+import { useUndoReceipt } from "../hooks/useUndoReceipt";
+import { useDesk } from "../store";
 import { sendWords, usedWords, type AgentUse, type UsedRow } from "../used";
 
 /** The document a prepared send carries, for its send fold. */
@@ -35,14 +37,22 @@ async function dismissTask(ref: string): Promise<void> {
   await apiFetch(`/api/all-action-items/${encodeURIComponent(id)}`, { method: "PATCH", json: { status: "dismissed" } });
 }
 
+/** The desk objects whose Undo is the desk's delete (`deletePrimitive`). */
+const DELETABLE = new Set(["note", "decision"]);
+
 /** A thing the agent made: open it; Undo takes it back. A task is
  *  dismissed; a desk object goes to the desk's one delete (its receipt keeps
- *  the Undo of that), withheld where no receipt seat is shown (UX-CANON
- *  A.11: a verb that does nothing is a lie). */
+ *  the Undo of that). Betterment A6 (the M2 follow-up): where no desk
+ *  receipt seat is shown (the Screen's foot is hidden or another face is
+ *  front), the row keeps its own receipt in place, with its own Undo, so the
+ *  verb never depends on what else is on the glass. */
 function WroteRow({ row, testPrefix }: { row: UsedRow & { undo?: boolean }; testPrefix: string }) {
   const [undone, setUndone] = useState(false);
+  const own = useUndoReceipt();
   const isTask = row.ref.startsWith("action_item:");
-  const canUndo = Boolean(row.undo) && !undone && (isTask || deleteSeatShown());
+  const [kind, ...rest] = row.ref.split(":");
+  const id = rest.join(":");
+  const canUndo = Boolean(row.undo) && !undone && (isTask || DELETABLE.has(kind));
   return (
     <li className="used-lines-row" data-testid={`${testPrefix}-wrote-row`}>
       <Button dense variant="ghost" onClick={() => openRef(row.ref)}>{row.label}</Button>
@@ -58,12 +68,22 @@ function WroteRow({ row, testPrefix }: { row: UsedRow & { undo?: boolean }; test
               });
               return;
             }
-            window.dispatchEvent(new CustomEvent(OBJECT_DELETE_REQUEST, { detail: { ref: row.ref } }));
             setUndone(true);
+            if (deleteSeatShown()) {
+              window.dispatchEvent(new CustomEvent(OBJECT_DELETE_REQUEST, { detail: { ref: row.ref } }));
+              return;
+            }
+            own.remove(
+              row.label,
+              () => useDesk.getState().deletePrimitive(id, kind as "note" | "decision"),
+              () => setUndone(false),
+              row.ref,
+            );
           }}>
           Undo
         </Button>
       ) : null}
+      {own.receipt ? <span className="used-lines-receipt" data-testid={`${testPrefix}-wrote-receipt`}>{own.receipt}</span> : null}
     </li>
   );
 }

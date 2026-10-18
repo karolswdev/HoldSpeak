@@ -50,11 +50,14 @@ export function WithEditor({
   detail,
   onUse,
   onSpendLimit,
+  onPending,
 }: {
   detail: AutomationDetail;
   /** Use this engine for the automation (the hub writes and re-freezes). */
   onUse: (profileId: string) => Promise<void>;
   onSpendLimit: (limit: number | null) => Promise<void>;
+  /** Betterment A6: an Add or Use press in flight (Run now waits for it). */
+  onPending?: (pending: Promise<unknown>) => void;
 }) {
   const [found, setFound] = useState<RunsOnEngine[]>([]);
   const [engines, setEngines] = useState<BoardEngine[] | null>(null);
@@ -88,7 +91,13 @@ export function WithEditor({
   const foundRows = all.filter((e) => e.found);
   const current = mine.find((e) => assignedId(e) === inUse) ?? null;
 
-  const press = async (engine: BoardEngine) => {
+  const press = (engine: BoardEngine) => {
+    const pending = save(engine);
+    onPending?.(pending);
+    return pending;
+  };
+
+  const save = async (engine: BoardEngine) => {
     setBusy(engine.key);
     setRefusal(null);
     try {

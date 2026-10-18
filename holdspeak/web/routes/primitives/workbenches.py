@@ -18,8 +18,8 @@ log = get_logger("web.routes.workbenches")
 # The route-plan refusals a Run can meet when no usable engine is assigned
 # (inference_route_plan_service._effective_assignment).
 _NO_ENGINE_WORDS = {
-    "no_assignment": "No engine is set for this workbench.",
-    "no_compatible_assignment": "The engine set for this workbench cannot run it.",
+    "no_assignment": "No engine is set for this automation.",
+    "no_compatible_assignment": "The engine set for this automation cannot run it.",
 }
 
 
@@ -54,7 +54,16 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
         try:
             return JSONResponse({"workbenches": _svc().list_workbenches(_principal(request))})
         except Exception as exc:
-            return error_500(exc, log, "Failed to list workbenches")
+            return error_500(exc, log, "Failed to list automations")
+
+    @router.get("/api/automations/new")
+    async def api_new_results(request: Request) -> Any:
+        """Betterment A6: one row per automation with a NEW result."""
+        try:
+            rows = _svc().new_results(_principal(request))
+            return JSONResponse({"automations": rows, "new_count": sum(r["new_count"] for r in rows)})
+        except Exception as exc:
+            return error_500(exc, log, "Failed to read new automation results")
 
     @router.post("/api/workbenches")
     async def api_create_workbench(request: Request) -> Any:
@@ -70,7 +79,7 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
         except (ValidationError, ValueError) as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
         except Exception as exc:
-            return error_500(exc, log, "Failed to create workbench")
+            return error_500(exc, log, "Failed to create automation")
 
     @router.get("/api/workbenches/{workbench_id}")
     async def api_get_workbench(
@@ -83,9 +92,9 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
                 )}
             )
         except NotFound:
-            return _not_found("workbench", workbench_id)
+            return _not_found("automation", workbench_id)
         except Exception as exc:
-            return error_500(exc, log, "Failed to get workbench")
+            return error_500(exc, log, "Failed to get automation")
 
     @router.put("/api/workbenches/{workbench_id}")
     async def api_update_workbench(workbench_id: str, request: Request) -> Any:
@@ -96,11 +105,11 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             wb = _svc().update_workbench(_principal(request), workbench_id, **body)
             return JSONResponse({"workbench": wb})
         except NotFound:
-            return _not_found("workbench", workbench_id)
+            return _not_found("automation", workbench_id)
         except ValidationError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
         except Exception as exc:
-            return error_500(exc, log, "Failed to update workbench")
+            return error_500(exc, log, "Failed to update automation")
 
     def _a4_error(exc: ServiceError) -> JSONResponse:
         """A When or With refusal, in its own words and status."""
@@ -119,7 +128,7 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             wb = _svc().set_when(_principal(request), workbench_id, body)
             return JSONResponse({"workbench": wb})
         except NotFound:
-            return _not_found("workbench", workbench_id)
+            return _not_found("automation", workbench_id)
         except ServiceError as exc:
             return _a4_error(exc)
         except Exception as exc:
@@ -135,7 +144,7 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             wb = _svc().set_engine(_principal(request), workbench_id, **body)
             return JSONResponse({"workbench": wb})
         except NotFound:
-            return _not_found("workbench", workbench_id)
+            return _not_found("automation", workbench_id)
         except ServiceError as exc:
             return _a4_error(exc)
         except Exception as exc:
@@ -149,9 +158,9 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
         except ConflictError as exc:
             return JSONResponse({"error": str(exc)}, status_code=409)
         except NotFound:
-            return _not_found("workbench", workbench_id)
+            return _not_found("automation", workbench_id)
         except Exception as exc:
-            return error_500(exc, log, "Failed to delete workbench")
+            return error_500(exc, log, "Failed to delete automation")
 
     @router.post("/api/workbenches/{workbench_id}/items")
     async def api_add_item(workbench_id: str, request: Request) -> Any:
@@ -165,7 +174,7 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             )
             return JSONResponse({"item": item}, status_code=201)
         except NotFound:
-            return _not_found("workbench", workbench_id)
+            return _not_found("automation", workbench_id)
         except (ValidationError, ValueError) as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
         except Exception as exc:
@@ -273,7 +282,7 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             item_ids = [str(item_id) for item_id in raw_ids if item_id] if isinstance(raw_ids, list) else None
             return JSONResponse({"run": await _svc().run(_principal(request), workbench_id, memory_enabled=bool(body.get("memory_enabled", True)), item_ids=item_ids or None)})
         except NotFound:
-            return _not_found("workbench", workbench_id)
+            return _not_found("automation", workbench_id)
         except ServiceError as exc:
             # No engine is a state the owner can repair, not a hub fault: a
             # named 409 with plain words, so the face can show its door.
@@ -281,7 +290,7 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
                 return JSONResponse({"error": _NO_ENGINE_WORDS[exc.code], "code": exc.code}, status_code=409)
             return _service_error(exc)
         except Exception as exc:
-            return error_500(exc, log, "Failed to run workbench")
+            return error_500(exc, log, "Failed to run automation")
 
     @router.post("/api/workbenches/{workbench_id}/results/{artifact_id}/open")
     async def api_open_result(workbench_id: str, artifact_id: str, request: Request) -> Any:
@@ -312,7 +321,7 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
         except ServiceError as exc:
             return _service_error(exc)
         except Exception as exc:
-            return error_500(exc, log, "Failed to cancel workbench run")
+            return error_500(exc, log, "Failed to cancel automation run")
 
     @router.post("/api/workbenches/{workbench_id}/voice/resolve")
     async def api_voice_resolve(workbench_id: str, request: Request) -> Any:
@@ -326,7 +335,7 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             )
             return JSONResponse(result)
         except NotFound:
-            return _not_found("workbench", workbench_id)
+            return _not_found("automation", workbench_id)
         except ValidationError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
         except ServiceError as exc:

@@ -253,3 +253,45 @@ describe("I owe Theo (Betterment D7), on the same recorded boot", () => {
     expect(within(screen.getByTestId("prep-last")).getByTestId("prep-last-title").textContent).toMatch(/^1:1 on /);
   });
 });
+
+// ── Betterment A6: an automation's NEW result is a row in Today ─────────────
+// The new-result rows are the hub's own answers from
+// tests/integration/test_desk_workbenches.py
+// (test_put_it_in_files_a_fresh_desk_inbox_and_new_results_show_until_opened):
+// put-new holds one NEW result of "Friday team update"; put-opened, the same
+// automation after the result was opened.
+import PUT_NEW from "./fixtures/automation-hub/put-new.json";
+import PUT_OPENED from "./fixtures/automation-hub/put-opened.json";
+import { useDesk } from "../store";
+
+describe("Today names an automation's NEW result (Betterment A6)", () => {
+  const news = (step: { gets: Gets }) => ({ "/api/automations/new": step.gets["/api/automations/new"] });
+
+  it("says '<name> has a new result' with Open, which opens the automation window", async () => {
+    vi.setSystemTime(new Date(String(EMPTY.recordedAt)));
+    replay({ ...(EMPTY.gets as Gets), ...news(PUT_NEW as { gets: Gets }) });
+    const openWorkbenchWindow = vi.fn();
+    const before = useDesk.getState().openWorkbenchWindow;
+    useDesk.setState({ openWorkbenchWindow });
+    try {
+      render(<TodayView />);
+      const row = await screen.findByTestId("today-new-result");
+      expect(row).toHaveTextContent("Friday team update has a new result");
+      // A desk with a NEW result is not an empty desk.
+      expect(screen.queryByTestId("today-empty-desk")).toBeNull();
+      fireEvent.click(within(row).getByRole("button", { name: "Open Friday team update" }));
+      expect(openWorkbenchWindow).toHaveBeenCalledWith((PUT_NEW as { workbench_id: string }).workbench_id);
+      expect(row.textContent).not.toMatch(/wb-|artifact_/);
+    } finally {
+      useDesk.setState({ openWorkbenchWindow: before });
+    }
+  });
+
+  it("once the result is opened, the row is gone", async () => {
+    vi.setSystemTime(new Date(String(EMPTY.recordedAt)));
+    replay({ ...(EMPTY.gets as Gets), ...news(PUT_OPENED as { gets: Gets }) });
+    render(<TodayView />);
+    await screen.findByTestId("today-empty-desk");
+    expect(screen.queryByTestId("today-new-result")).toBeNull();
+  });
+});

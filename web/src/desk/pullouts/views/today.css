@@ -131,6 +131,8 @@
   background: var(--wb-sel);
 }
 .desk-next .today-node[data-kind="empty"] > .today-bead { background: var(--wb-field); }
+/* Betterment A6: an automation's NEW result: the accent lamp. */
+.desk-next .today-node[data-kind="result"] > .today-bead { background: var(--accent-ink); }
 .desk-next .today-node-body {
   min-width: 0;
 }

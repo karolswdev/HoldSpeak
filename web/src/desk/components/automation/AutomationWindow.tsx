@@ -10,8 +10,10 @@
  * Do edits in place (a text box with the mic). A4: When and With edit in
  * place too (WhenEditor, WithEditor). A5: About edits in place (the one
  * About picker, by name), and a desk object dropped on the window becomes
- * a chip; for an event start, About reads the thing that happened. Put it
- * in shows its value; its editor lands in A6.
+ * a chip; for an event start, About reads the thing that happened. A6: Put
+ * it in edits in place too (PutEditor: My Inbox, Needs you, a saved
+ * destination that he sends). Run now waits for an engine choice that is
+ * still being saved, so it runs on the engine he just chose.
  *
  * The parked queue view (WorkbenchWindow) stays reachable for an old queue
  * automation through RAW in the title strip. */
@@ -53,6 +55,7 @@ import { SentenceLine } from "./SentenceLine";
 import { WhenEditor } from "./WhenEditor";
 import { WithEditor } from "./WithEditor";
 import { AboutChips, AboutEditor } from "./AboutEditor";
+import { PutEditor, PutValue } from "./PutEditor";
 import { useDropHand } from "../../hand";
 import { ResultBody, ResultCard, ResultHead } from "./ResultCard";
 import {
@@ -65,7 +68,6 @@ import {
   isOn,
   lessonWords,
   nextWords,
-  putWords,
   queueTasks,
   resultDay,
   resultLine,
@@ -310,11 +312,22 @@ export function AutomationWindow({
   const isNew = (result: AutomationResult) =>
     Boolean(result.artifact_id && (result.new || shownNew.has(result.artifact_id)));
 
+  // A6 (the A7 follow-up): With > Add and Use save the engine first. A Run
+  // now pressed meanwhile waits for that save, so it never runs (or is
+  // refused) on the engine from before the press.
+  const engineSave = useRef<Promise<unknown> | null>(null);
+  const savingEngine = (pending: Promise<unknown>) => {
+    const settled = pending.catch(() => undefined);
+    engineSave.current = settled;
+    void settled.then(() => { if (engineSave.current === settled) engineSave.current = null; });
+  };
+
   const runNow = async () => {
     if (runStart) return;
     setRunRefusal(null);
     setRunStart(Date.now());
     try {
+      if (engineSave.current) await engineSave.current;
       await triggerWorkbenchRun(workbenchId);
     } catch (error) {
       setRunRefusal(readableError(error));
@@ -364,6 +377,12 @@ export function AutomationWindow({
     } finally {
       setWhenSaving(null);
     }
+    await load();
+  };
+
+  const choosePut = async (target: string) => {
+    setSaveError(null);
+    await updateWorkbenchField(workbenchId, { output_target: target });
     await load();
   };
 
@@ -567,11 +586,19 @@ export function AutomationWindow({
                     scope={["local", "same_device"].includes(detail.assignment_summary.boundary) ? "local" : "cloud"} />
                 ) : undefined}
                 editor={<WithEditor detail={detail} onUse={chooseEngine}
-                  onSpendLimit={saveSpendLimit} />}
+                  onSpendLimit={saveSpendLimit} onPending={savingEngine} />}
               >
                 {engine ?? "Choose an engine"}
               </SentenceLine>
-              <SentenceLine name="put" label="Put it in">{putWords(detail.output_target)}</SentenceLine>
+              <SentenceLine
+                name="put"
+                label="Put it in"
+                open={editing === "put"}
+                onPress={() => toggle("put")}
+                editor={<PutEditor target={detail.output_target} onChoose={choosePut} />}
+              >
+                <PutValue target={detail.output_target} />
+              </SentenceLine>
             </div>
             {saveError ? (
               <p className="automation-refusal" role="alert">{saveError}</p>

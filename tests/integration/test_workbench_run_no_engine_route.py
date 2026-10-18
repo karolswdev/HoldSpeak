@@ -45,7 +45,7 @@ def test_run_with_no_engine_is_a_named_409(client) -> None:
     assert run.status_code == 409, run.text
     body = run.json()
     assert body["code"] == "no_assignment"
-    assert body["error"] == "No engine is set for this workbench."
+    assert body["error"] == "No engine is set for this automation."
     # Nothing ran and nothing was spent: the item is still pending.
     items = client.get(f"/api/workbenches/{bench_id}").json()
     statuses = [row["status"] for row in items["workbench"]["items"]]

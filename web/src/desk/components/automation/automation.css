@@ -118,9 +118,11 @@
 
 /* A4: the When and With editors (in place under their line). */
 .automation-when-editor,
-.automation-with-editor { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.automation-with-editor,
+.automation-put-editor { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .automation-when-group,
-.automation-with-editor section { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.automation-with-editor section,
+.automation-put-editor section { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .automation-editor-head,
 .automation-editor-caption {
   font: 600 var(--font-size-xs, 12px) / 1.5 var(--font-mono);

@@ -732,6 +732,13 @@ class WorkbenchService:
             raise ValidationError("This automation has no agent prompt to copy")
         return self.update_workbench(principal, workbench_id, instruction=shown)
 
+    def new_results(self, principal: Principal) -> list[dict[str, Any]]:
+        """Betterment A6: the automations that hold a NEW result (Today's
+        rows and the Automations dock tile's count)."""
+        from .automation_runs import new_results
+
+        return new_results(self._db)
+
     def cancel_run(self, principal: Principal, parent_operation_id: str) -> str:
         """Cancel exactly the authenticated parent, never a Workbench lookup."""
         from holdspeak.kernel.runtime import _service

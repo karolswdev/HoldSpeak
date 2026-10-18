@@ -202,7 +202,7 @@ describe("HS-135-15 AGENT section empty vs filtered labels", () => {
 // the named refusal too.
 describe("Run with no engine", () => {
   const AGENT = [{ id: "r1", name: "Agent", avatar: "", role: "" }];
-  const NO_ENGINE = { status: 409, body: { error: "No engine is set for this workbench.", code: "no_assignment" } };
+  const NO_ENGINE = { status: 409, body: { error: "No engine is set for this automation.", code: "no_assignment" } };
   beforeEach(() => {
     localStorage.clear();
     mocks.listeners.clear();

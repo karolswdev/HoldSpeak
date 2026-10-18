@@ -260,7 +260,8 @@ DO = "Write my weekly update from these notes."
 
 def _instruction_rig(tmp_path: Path, monkeypatch, *benches: str, template: bool = False,
                      cli_bench: str = "", engine_name: str = "Stub",
-                     lessons: list[str] | None = None) -> tuple[Database, TestClient, list[str], dict[str, Any]]:
+                     lessons: list[str] | None = None,
+                     inbox: bool = True) -> tuple[Database, TestClient, list[str], dict[str, Any]]:
     """The A0 rig's shape: the engine (a legacy profile on each automation)
     is bound before the kernel starts, so the owner's first write seeds the
     subject assignment. ``benches`` are plain automations; ``template`` adds
@@ -303,7 +304,8 @@ def _instruction_rig(tmp_path: Path, monkeypatch, *benches: str, template: bool 
     made: dict[str, Any] = {}
     if template:
         made = WorkbenchService(db).instantiate_template(OWNER, "todo-agent", profile_id="stub-profile")
-    db.directories.upsert(directory_id=INBOX, name="Inbox")
+    if inbox:  # a seeded desk; a fresh desk has no Inbox until a result needs one (A6)
+        db.directories.upsert(directory_id=INBOX, name="Inbox")
     db.notes.upsert(note_id="note-sync", title="Platform sync", body_markdown="The cutover moves to Thursday.")
     db.notes.upsert(note_id="note-hiring", title="Hiring", body_markdown="Two loops are booked for next week.")
     _configure(db)
@@ -1179,3 +1181,133 @@ def test_make_one_refuses_an_automation_with_no_agent_prompt(tmp_path: Path) -> 
     refused = client.post("/api/workbenches/wb-bare/make-one")
     assert refused.status_code == 400 and "no agent prompt" in refused.json()["error"]
     assert client.post("/api/workbenches/wb-missing/make-one").status_code == 404
+
+
+# ── A6 "Put it in, and where results show up" (betterment/workbench/RECIPE.md,
+# slice A6) ───────────────────────────────────────────────────────────────
+# The hub half: Put it in takes My Inbox, Needs you or a saved destination; a
+# scheduled run on a FRESH desk (no seed, no Inbox) still files its note in an
+# Inbox; the "new result" row source names each automation with a NEW result
+# until it is opened, and an opened result leaves it everywhere at once.
+
+
+def _destinations_answer(db: Database) -> dict[str, Any]:
+    """The hub's own ``GET /api/channels/destinations`` answer (the route is
+    ``channel.destinations`` and nothing else)."""
+    from holdspeak import operations
+    from holdspeak.services.channel_service import ChannelService
+    from holdspeak.web.routes._room_kernel import kernel_fields
+
+    registry = operations.for_runtime(channel_service=lambda: ChannelService(db))
+    result, kernel = registry.invoke_receipted(OWNER, "channel.destinations", {})
+    return _json.loads(_json.dumps({**result, **kernel_fields(kernel)}, default=str))
+
+
+def _record_put(name: str, client: TestClient, db: Database, wb: str, tmp_path: Path) -> dict[str, Any]:
+    """The window's reads, the destinations list and the new-result rows."""
+    answers = {
+        f"/api/workbenches/{wb}": client.get(f"/api/workbenches/{wb}").json(),
+        f"/api/workbenches/{wb}/memory": client.get(f"/api/workbenches/{wb}/memory").json(),
+        "/api/automations/new": client.get("/api/automations/new").json(),
+        "/api/channels/destinations": _destinations_answer(db),
+    }
+    text = _re.sub(_re.escape(str(tmp_path)), "/tmp/rig", _json.dumps(answers))
+    # The built-in folder lives in the (isolated) HOME: never a machine path.
+    text = _re.sub(_re.escape(_json.dumps(str(Path.home().resolve()))[1:-1]), "/tmp/home", text)
+    text = _re.sub(_re.escape(_json.dumps(str(Path.home()))[1:-1]), "/tmp/home", text)
+    scrubbed = _json.loads(text)
+    path = AUTOMATION_HUB / f"{name}.json"
+    if _os.environ.get("HOLDSPEAK_WIRE_WRITE") == "1":
+        path.write_text(_json.dumps({
+            "_source": "The hub's own answers, captured by tests/integration/test_desk_workbenches.py "
+                       "(TestClient, isolated database, the A2 rig's recorded engine replies). "
+                       "HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit it.",
+            "workbench_id": wb, "gets": scrubbed}, indent=1, ensure_ascii=False) + "\n")
+    assert path.exists(), f"no stored answers {path}; run with HOLDSPEAK_WIRE_WRITE=1"
+    assert _shape(_json.loads(path.read_text())["gets"]) == _shape(scrubbed), f"{path.name}: not the hub's shape"
+    return scrubbed
+
+
+def test_put_it_in_files_a_fresh_desk_inbox_and_new_results_show_until_opened(tmp_path: Path, monkeypatch) -> None:
+    """Done when (A6, hub half): a scheduled run makes the Inbox note (on a
+    fresh desk too), the new-result row names the automation, and opening the
+    result clears it; Put it in takes Needs you and a saved destination."""
+    from types import SimpleNamespace
+
+    import holdspeak.workbench_memory as memory
+    from holdspeak.db.channels import BUILTIN_FOLDER_ID
+    from holdspeak.workbench_conductor import WorkbenchConductor
+
+    monkeypatch.setattr(memory, "WORKBENCH_DIR", tmp_path / "workbenches")
+    db, client, _prompts, _ = _instruction_rig(tmp_path, monkeypatch, "wb-put", inbox=False)
+    assert db.directories.get(INBOX, include_deleted=True) is None  # a fresh desk: no Inbox
+    wb = _make_automation(client, "wb-put")
+    assert client.put(f"/api/workbenches/{wb}", json={"name": "Friday team update"}).status_code == 200
+    assert client.get("/api/automations/new").json() == {"automations": [], "new_count": 0}
+
+    # A scheduled run (the conductor's tick on a controlled clock).
+    assert client.put(f"/api/workbenches/{wb}", json={"schedule": "* * * * *", "schedule_enabled": True}).status_code == 200
+    clock = {"now": 1_800_000_000.0}
+    monkeypatch.setattr("holdspeak.workbench_conductor.time", SimpleNamespace(time=lambda: clock["now"]))
+    WorkbenchConductor()._tick_body()
+    assert client.put(f"/api/workbenches/{wb}", json={"schedule_enabled": False}).status_code == 200
+
+    inbox = db.directories.get(INBOX)
+    assert inbox is not None and inbox.name == "Inbox"  # made for the first result
+    [note] = _inbox_notes(db)
+    assert note.title.startswith("Friday team update, ")
+    new = _record_put("put-new", client, db, wb, tmp_path)
+    rows = new["/api/automations/new"]
+    assert rows["new_count"] == 1
+    assert [(r["workbench_id"], r["name"], r["new_count"]) for r in rows["automations"]] == [
+        (wb, "Friday team update", 1)]
+    destinations = new["/api/channels/destinations"]["destinations"]
+    assert BUILTIN_FOLDER_ID in [d["id"] for d in destinations]
+
+    # Put it in: Needs you, then a saved destination (a folder: he presses Send).
+    needs = client.put(f"/api/workbenches/{wb}", json={"output_target": "needs_you"})
+    assert needs.status_code == 200 and needs.json()["workbench"]["output_target"] == "needs_you"
+    to_folder = client.put(f"/api/workbenches/{wb}", json={"output_target": f"destination:{BUILTIN_FOLDER_ID}"})
+    assert to_folder.status_code == 200, to_folder.text
+    _record_put("put-folder", client, db, wb, tmp_path)
+
+    # Opening the result reads it: the row goes, and the count with it.
+    artifact = new[f"/api/workbenches/{wb}"]["workbench"]["results"][0]["artifact_id"]
+    assert client.post(f"/api/workbenches/{wb}/results/{artifact}/open").status_code == 200
+    opened = _record_put("put-opened", client, db, wb, tmp_path)
+    assert opened["/api/automations/new"] == {"automations": [], "new_count": 0}
+    assert [r["new"] for r in opened[f"/api/workbenches/{wb}"]["workbench"]["results"]] == [False]
+
+    # An Inbox he deleted is not brought back: the next note stays on the floor.
+    assert client.put(f"/api/workbenches/{wb}", json={"output_target": "inbox"}).status_code == 200
+    db.directories.upsert(directory_id=INBOX, name="Inbox", deleted=True)
+    ran = client.post(f"/api/workbenches/{wb}/run", json={})
+    assert ran.status_code == 200, ran.text
+    [delivery] = ran.json()["run"]["deliveries"]
+    assert (delivery["outcome"], delivery["filed"]) == ("noted", False)
+    assert db.directories.get(INBOX) is None
+
+
+def test_a_desk_with_its_own_inbox_drawer_gets_the_note_there(tmp_path: Path, monkeypatch) -> None:
+    """A desk whose Inbox is a drawer he made (not the seed's) files there."""
+    db, client, _prompts, _ = _instruction_rig(tmp_path, monkeypatch, "wb-own", inbox=False)
+    db.directories.upsert(directory_id="dir-mine", name="inbox")
+    wb = _make_automation(client, "wb-own")
+    ran = client.post(f"/api/workbenches/{wb}/run", json={})
+    [delivery] = ran.json()["run"]["deliveries"]
+    assert delivery["filed"] is True
+    assert db.directories.get(INBOX, include_deleted=True) is None
+    with db._connection() as conn:
+        filed = conn.execute("SELECT directory_id FROM directory_memberships WHERE primitive_id=?",
+                             (f"note:{delivery['note_id']}",)).fetchone()
+    assert filed["directory_id"] == "dir-mine"
+
+
+def test_run_refusals_say_automation_never_workbench(tmp_path: Path) -> None:
+    """The A7 follow-up: the words he can see say automation."""
+    from holdspeak.web.routes.primitives import workbenches as route
+
+    assert all("workbench" not in words.lower() for words in route._NO_ENGINE_WORDS.values())
+    db = Database(tmp_path / "words.db")
+    missing = _client(db).get("/api/workbenches/wb-nowhere")
+    assert missing.status_code == 404 and missing.json()["error"] == "Unknown automation: wb-nowhere"

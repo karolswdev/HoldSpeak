@@ -20,6 +20,7 @@ import { TodayNeeds } from "../../needs/TodayNeeds";
 import type { NeedFace } from "../../needs/needsFace";
 import { SinceYesterday, type MondayBrief } from "./BriefView";
 import { useOnDeskChanged } from "../../useDeskChangedRefresh";
+import { newsWords, useAutomationNews } from "../../automationNews";
 import { SurfaceFooter } from "../../surface/SurfaceFooter";
 import { Avatar, Steps } from "../../surface/kit";
 import { meetingRowState } from "../../../pages/cores/history/helpers";
@@ -210,6 +211,8 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
   const [brief, setBrief] = useState<MondayBrief | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const rows = useNeedFaces();
+  // Betterment A6: an automation's NEW result ("<name> has a new result").
+  const news = useAutomationNews();
   const [loaded, setLoaded] = useState(false);
   // MUST 1 (Astra r1 on #1111): the last summary made from here keeps its
   // receipt (every place the run reached) after its row leaves the spine.
@@ -287,7 +290,8 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
   const hasWork = rows.work.length > 0;
   // An empty desk: no calendar, no meeting, nothing waits. One line says
   // what fills Today (Betterment D4).
-  const emptyDesk = Boolean(door && !failed.door && !calendar && meetings.length === 0 && !hasWork && needsLoaded);
+  const emptyDesk = Boolean(door && !failed.door && !calendar && meetings.length === 0 && !hasWork && needsLoaded
+    && !news.rows?.length);
   const phone = typeof window !== "undefined" && window.matchMedia?.("(max-width: 600px)").matches;
   const week = useMemo(() => weekCounts(now, door, rows.work), [now, door, rows.work]);
 
@@ -480,6 +484,30 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
     </SpineNode>
   ) : null;
 
+  // Betterment A6: each automation with a NEW result, newest first. Opening
+  // its window reads the result, and the row goes (here, on the Dock, at home).
+  const newsNodes = (news.rows ?? []).map((row) => {
+    const at = when(row.newest_at);
+    return (
+      <SpineNode key={row.workbench_id} kind="result" testId="today-new-result"
+        time={at ? (startOfDay(at) === today ? clock(at) : SHORT_DAYS[at.getDay()]) : ""}>
+        <div className="today-row">
+          <div className="today-row-text">
+            <Button variant="chrome" className="today-row-title"
+              onClick={() => useDesk.getState().openWorkbenchWindow(row.workbench_id)}>
+              {newsWords(row)}
+            </Button>
+          </div>
+          <Button dense variant="secondary" data-testid="today-open-result"
+            aria-label={`Open ${row.name}`}
+            onClick={() => useDesk.getState().openWorkbenchWindow(row.workbench_id)}>
+            Open
+          </Button>
+        </div>
+      </SpineNode>
+    );
+  });
+
   const pastToday = finish.length ? (
     <li className="today-section" aria-hidden="true"><span>TO FINISH</span></li>
   ) : null;
@@ -512,6 +540,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
             {doorFailedNode}
             {emptyNode}
             {justMadeNode}
+            {newsNodes}
             {meetingsFailedNode}
             {pastToday}
             {finishNodes}
