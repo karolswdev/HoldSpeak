@@ -65,8 +65,12 @@ Evidence paths go in a footnote, not in the prose.
 
 ## Index
 
+The master plan is `PLAN.md`; the feature inventory is `INVENTORY.md`;
+cluster workers follow `CLUSTER-BRIEF.md`.
+
 | Feature | Folder | State |
 |---|---|---|
 | Automations (today "Workbench") | `workbench/` | draft, owner decisions open |
 | Engines | `engines/` | draft, owner decisions open |
 | The desk's tools for every engine (MCP) | `mcp/` | draft, owner decisions open |
+| Agents vs herdr (study) | `herdr/` | studied |
