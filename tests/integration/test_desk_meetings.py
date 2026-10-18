@@ -607,3 +607,40 @@ def _recorded_looked_at(receipt: dict[str, Any]) -> None:
     stored = json.loads(LOOKED_AT_FIXTURE.read_text())["run_receipt"]
     assert stored["looked_at"] == receipt["looked_at"], "re-record with HOLDSPEAK_WIRE_WRITE=1"
     assert set(stored) == set(receipt), "re-record with HOLDSPEAK_WIRE_WRITE=1"
+
+
+# ── Capture C3: Import asks when it was ──────────────────────────────────────
+
+WHEN_TOKEN = "desk-meetings-when"
+THEO_TXT = Path(__file__).parents[1] / "fixtures" / "capture_one_on_one_theo.txt"
+
+
+def test_an_import_with_a_stated_start_is_listed_on_that_day(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The face sends "When was this?" as ``started_at_ms``. The hub stores
+    that start: the Thursday 1:1 (imported on a Saturday) lists under
+    Thursday 15 October 10:00, not under the import moment."""
+    thursday = datetime(2026, 10, 15, 10, 0, 0)
+    server, base = _boot(tmp_path, monkeypatch, token=WHEN_TOKEN)
+    try:
+        api = lambda method, path, body=None: _api(base, method, path, body, token=WHEN_TOKEN)  # noqa: E731
+        status, imported = _call(
+            base, "POST", "/api/meetings/import", token=WHEN_TOKEN, ok=False,
+            files={"file": ("one-on-one-theo.txt", THEO_TXT.read_bytes(), "text/plain")},
+            data={"title": "1:1 with Theo", "started_at_ms": str(int(thursday.timestamp() * 1000))},
+        )
+        assert status == 202, imported
+        meeting_id = str(imported["meeting_id"])
+        assert _wait(lambda: bool(api("GET", f"/api/meetings/{meeting_id}").get("segments")), timeout=30), (
+            "the import never produced its segments")
+        detail = api("GET", f"/api/meetings/{meeting_id}")
+        started = datetime.fromisoformat(str(detail["started_at"]).replace("Z", "+00:00"))
+        assert started.astimezone().replace(tzinfo=None) == thursday, detail["started_at"]
+        listed = [row for row in api("GET", "/api/meetings?limit=100")["meetings"] if row["id"] == meeting_id]
+        assert listed, "the imported meeting is not in the list"
+        row_start = datetime.fromisoformat(str(listed[0]["started_at"]).replace("Z", "+00:00"))
+        assert row_start.astimezone().date() == thursday.date(), listed[0]
+        assert row_start.astimezone().strftime("%A") == "Thursday"
+    finally:
+        _stop(server)
