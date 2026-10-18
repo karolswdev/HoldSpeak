@@ -24,6 +24,7 @@ from datetime import datetime
 from typing import Any, Optional
 
 from ..logging_config import get_logger
+from ..timestamps import local_now
 from .errors import ValidationError
 
 log = get_logger("services.automation_runs")
@@ -130,7 +131,7 @@ def is_occurrence(item: Any) -> bool:
 
 
 def occurrence_title(wb: Any, now: Optional[datetime] = None) -> str:
-    when = (now or datetime.now()).astimezone()
+    when = (now or local_now()).astimezone()
     return f"{wb.name or 'Automation'}, {when:%a} {when.day} {when:%b %Y}"
 
 

@@ -82,6 +82,7 @@ KNOWN_CODE = re.compile(
     r"not_found|unknown|invalid|validation|conflict|mismatch|stale|not_saved|not_absolute"
     r"|^inference_target_unavailable$"  # ask.run: no model on a fresh HOME
     r"|^inbox_unavailable$"  # thought.create: no inbox on a fresh HOME
+    r"|^cli_engines_off$"  # model_library.connect_cli_engine: tests/conftest.py turns agent engines off
 )
 KNOWN_MESSAGE = re.compile(
     r"^people_store_unavailable$"  # no People keystore on a fresh HOME

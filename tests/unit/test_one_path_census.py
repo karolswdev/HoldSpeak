@@ -475,6 +475,14 @@ ADAPTER_ALLOWLIST: dict[tuple[str, str], str] = {
     ("holdspeak/intel/engine.py", "MeetingIntel._analyze_stream"): "L: the streaming analysis leaf an admitted meeting child dispatches",
     ("holdspeak/intel/engine.py", "MeetingIntel.generate_title"): "L: the auto-title leaf an admitted child dispatches",
     ("holdspeak/intel/engine.py", "MeetingIntel.generate_bookmark_label_with_context"): "L: the ONE bookmark-label leaf; both the live and the deferred admitted children dispatch it",
+    # Betterment E1/M1: an agent CLI on this Mac as an engine. `CliEngine` is
+    # constructed ONLY by the allowlisted `_profile_engine` (a `cliCommand`
+    # profile), so the runner builds it under the child's context and its
+    # leaves run inside that adapter dispatch, exactly as MeetingIntel's do.
+    ("holdspeak/intel/cli_engine.py", "CliEngine"): "L: the class base names MeetingIntel (a subclass, constructs nothing); its instances come only from `_profile_engine`",
+    ("holdspeak/intel/cli_engine.py", "CliEngine._ensure_model_loaded"): "L: the legacy alias of the load entrance; finds the CLI on PATH, starts no process",
+    ("holdspeak/intel/cli_engine.py", "CliEngine._chat_completion_stream"): "L: the one-delta stream over the CLI's ONE process run (`_chat_completion_text`)",
+    ("holdspeak/intel/cli_engine.py", "CliEngine.run_prompt_stream"): "L: the streaming prompt leaf the stream adapter dispatches; one CLI process run, then usage",
     ("holdspeak/intel/mesh_relay.py", "MeshRelayIntel._chat_completion_text"): "L: the mesh envelope leaf; carries the frozen revision + warrant",
     ("holdspeak/kernel/prompt_adapter.py", "CanonicalPromptAdapter.dispatch"): "L: the canonical adapter the runner hands an engine to",
     ("holdspeak/memory/engine.py", "EmbeddingAdapter._local_model"): "L: the ONE embedding-mode llama.cpp load, reached only from the memory.embed adapter's dispatch",

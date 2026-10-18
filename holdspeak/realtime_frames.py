@@ -43,6 +43,10 @@ RUNTIME_FRAME_TYPES: tuple[str, ...] = (
     "actuator_proposed",        # a proposal awaits a decision
     "actuator_result",          # a proposal was decided/executed
     "aftercare_ready",          # a finished meeting has aftercare
+    "ask_progress",             # a running Ask is waiting on a busy engine or
+                                #   trying again (Betterment Q2)
+                                # payload: {invocation_id, state: busy|retry, job?,
+                                #           engine?, alternatives?, attempt?, of?}
     "audio_level",              # live mic level
     "bookmark",                 # a moment was named mid-meeting
     "capture_recovery",         # capture degraded and wants a choice

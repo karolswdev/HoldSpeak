@@ -211,7 +211,7 @@ MIC_ALLOWLIST: tuple[tuple[str, str, str], ...] = (
      "Provider key (password) — a secret is never dictated"),
     ("pages/cores/TopologyMapView.tsx", 'placeholder="Provider"',
      "Provider key (password) — a secret is never dictated"),
-    ("pages/cores/history/ImportSection.tsx", "audio/*,.wav",
+    ("pages/cores/history/ImportSection.tsx", "accept={IMPORT_ACCEPT}",
      "Audio/transcript import chooser — an OS file picker, not a text input"),
     # -- 4 justified `mic={false}` opt-outs (census §3) ---------------------
     ("desk/components/ScheduleCreateWindow.tsx", 'label="Cron expression"',

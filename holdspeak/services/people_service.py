@@ -6,6 +6,7 @@ encrypted sidecar for the manual People slice.
 """
 from __future__ import annotations
 
+import json
 import re
 from datetime import datetime, timezone
 from holdspeak.timestamps import local_wall
@@ -707,14 +708,14 @@ class PeopleService:
             if not ids:
                 return []
             with db._connection() as conn:
-                marks = ",".join("?" * len(ids))
                 rows = conn.execute(
-                    f"""SELECT ai.id, ai.task, ai.owner, ai.due, ai.due_said, ai.status,
-                               m.id AS meeting_id, m.title AS meeting_title,
-                               m.started_at AS meeting_started_at
-                          FROM action_items ai LEFT JOIN meetings m ON m.id = ai.meeting_id
-                         WHERE ai.id IN ({marks}) ORDER BY ai.created_at, ai.id""",
-                    sorted(ids),
+                    """SELECT ai.id, ai.task, ai.owner, ai.due, ai.due_said, ai.status,
+                              m.id AS meeting_id, m.title AS meeting_title,
+                              m.started_at AS meeting_started_at
+                         FROM action_items ai LEFT JOIN meetings m ON m.id = ai.meeting_id
+                        WHERE ai.id IN (SELECT value FROM json_each(?))
+                        ORDER BY ai.created_at, ai.id""",
+                    (json.dumps(sorted(ids)),),
                 ).fetchall()
         except PeopleServiceError:
             raise
@@ -812,8 +813,9 @@ class PeopleService:
                     LEFT JOIN meetings m ON m.id = ai.meeting_id
                     WHERE COALESCE(m.parked, 0) = 0
                       AND ai.status NOT IN ('done', 'dismissed', 'completed')
-                      AND TRIM(COALESCE(ai.owner, '')) <> ''"""
-                + (" AND ai.review_state = 'accepted'" if accepted_only else ""),
+                      AND TRIM(COALESCE(ai.owner, '')) <> ''
+                      AND (? = 0 OR ai.review_state = 'accepted')""",
+                (1 if accepted_only else 0,),
             ).fetchall()
             mine = [row for row in rows if is_self(row["owner"])]
             meeting_ids = sorted({str(row["meeting_id"]) for row in mine if row["meeting_id"]})

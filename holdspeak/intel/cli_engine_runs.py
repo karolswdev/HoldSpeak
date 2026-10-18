@@ -9,6 +9,7 @@ A write never breaks a run: a failed write is logged and the answer goes on.
 """
 from __future__ import annotations
 
+import json
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
@@ -81,18 +82,20 @@ def spend_summary(db: Any, profile_ids: list[str], *, now: Optional[datetime] = 
     local_now = (now or datetime.now(timezone.utc)).astimezone()
     today = _stamp(local_now.replace(hour=0, minute=0, second=0, microsecond=0))
     week = _stamp(_week_start(local_now))
-    marks = ",".join("?" for _ in ids)
+    id_list = json.dumps(ids)
     try:
         with db._connection() as conn:
             row = conn.execute(
-                f"SELECT COALESCE(SUM(CASE WHEN ran_at >= ? THEN cost_usd END), 0) AS today,"
-                f" COALESCE(SUM(cost_usd), 0) AS week"
-                f" FROM cli_engine_runs WHERE profile_id IN ({marks}) AND ran_at >= ?",
-                (today, *ids, week),
+                "SELECT COALESCE(SUM(CASE WHEN ran_at >= ? THEN cost_usd END), 0) AS today,"
+                " COALESCE(SUM(cost_usd), 0) AS week"
+                " FROM cli_engine_runs"
+                " WHERE profile_id IN (SELECT value FROM json_each(?)) AND ran_at >= ?",
+                (today, id_list, week),
             ).fetchone()
             last = conn.execute(
-                f"SELECT outcome FROM cli_engine_runs WHERE profile_id IN ({marks}) ORDER BY id DESC LIMIT 1",
-                tuple(ids),
+                "SELECT outcome FROM cli_engine_runs"
+                " WHERE profile_id IN (SELECT value FROM json_each(?)) ORDER BY id DESC LIMIT 1",
+                (id_list,),
             ).fetchone()
     except Exception as exc:
         log.info(f"agent engine runs not read: {exc}")
