@@ -115,7 +115,7 @@ class StakeholderUpdateDrafterPlugin(IntelligenceConsumer):
 
     #: This plugin's decoding envelope; the host supplies the engine.
     intel_temperature: float = 0.3
-    intel_max_tokens: int = 1000
+    intel_max_tokens: int = 3000
 
     def run(self, context: dict[str, Any]) -> dict[str, Any]:
         transcript = str(context.get("transcript") or "").strip()

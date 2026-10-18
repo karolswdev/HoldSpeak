@@ -180,38 +180,27 @@ def test_configured_intel_adopts_the_assigned_profile(monkeypatch) -> None:
     assert intel.cloud_model == "Qwen3.5-9B-Q6_K"
 
 
-def test_llm_capability_judges_the_effective_endpoint(monkeypatch) -> None:
-    captured: dict = {}
-
-    def _capture(provider, **kwargs):
-        captured.update(kwargs, provider=provider)
-        return "cloud", None
-
-    monkeypatch.setattr(intel_module, "resolve_intel_provider", _capture)
+def test_llm_capability_reads_engines_not_the_profile_pointer(monkeypatch) -> None:
+    """Capture C4: the legacy ``intel_profile_id`` pointer no longer decides the
+    ``llm`` capability. The "Meeting summaries" route in Engines does: a profile
+    pointer with no ready route is no; a ready route is yes."""
     monkeypatch.setattr(
         "holdspeak.intel.providers._lookup_profile_record", lambda pid: _profile()
-    )
-    ok = resolve_llm_capability(_meeting_cfg(intel_profile_id="p-43"))
-    # the capability probe must see the PROFILE's endpoint, not the legacy one
-    assert ok is True
-    assert captured["cloud_base_url"] == "http://192.168.1.43:8080/v1"
-    assert captured["cloud_model"] == "Qwen3.5-9B-Q6_K"
-
-
-def test_llm_capability_knows_the_mesh(monkeypatch) -> None:
-    """The HS-85-05 walk find: a mesh-adopted endpoint has no base_url, so the
-    endpoint resolver says no — and every LLM plugin silently skipped while the
-    reroute still reported executed=True. The capability must say yes for a
-    named node; liveness is judged at run time with a named refusal."""
-    monkeypatch.setattr(
-        "holdspeak.intel.providers._lookup_profile_record",
-        lambda pid: _profile(kind="meshNode", base_url=None, node="walk-edge"),
     )
     monkeypatch.setattr(
         intel_module, "resolve_intel_provider",
         lambda *a, **k: (_ for _ in ()).throw(AssertionError("must not consult the endpoint resolver")),
     )
-    assert resolve_llm_capability(_meeting_cfg(intel_profile_id="p-43")) is True
+    routes = iter([
+        {"status": "unavailable", "reason_code": "no assignment", "legs": []},
+        {"status": "ready", "legs": [{"host": "192.168.1.43"}]},
+    ])
+    monkeypatch.setattr(
+        "holdspeak.services.meeting_route_projection.project_route",
+        lambda _db, **_k: next(routes),
+    )
+    assert resolve_llm_capability(_meeting_cfg(intel_profile_id="p-43"), db=object()) is False
+    assert resolve_llm_capability(_meeting_cfg(intel_profile_id="p-43"), db=object()) is True
 
 
 # ── config + settings carry the knob ─────────────────────────────────────

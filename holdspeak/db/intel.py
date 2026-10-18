@@ -340,7 +340,7 @@ def has_recoverable_bound_publication(conn: Any, parent_operation_id: str) -> bo
 
 
 def _plan_installed_plugin_members(
-    conn: Any, meeting_id: str,
+    conn: Any, meeting_id: str, planned_route: Mapping[str, Any] | None = None,
 ) -> tuple[tuple[dict[str, Any], ...], dict[str, Any]]:
     """Freeze the routed installed-plugin set from the composed registry.
 
@@ -356,6 +356,12 @@ def _plan_installed_plugin_members(
     ``meeting.auto_title``) remain strict -- a missing assignment is still
     terminal.  The probe uses the SAME ``resolve_route_plan_for_feature``
     path the binder uses, reading persisted assignment heads only.
+
+    Capture C4: a job with a disclosed ``planned_route`` (HS-201) plans its
+    plugins on that same route.  A plugin whose own route resolves to the
+    disclosed legs is a member; a plugin that would go anywhere else is
+    EXCLUDED with the receipt ``route_not_shown``, so no transcript reaches a
+    destination the owner was not shown.
     """
     from ..inference_capabilities import process_inference_capability_registry
     from ..plugins.router import preview_route_from_transcript
@@ -387,16 +393,17 @@ def _plan_installed_plugin_members(
         ):
             raise ValueError(f"installed plugin capability is not exact: {plugin_id}")
         # HS-151-03: probe assignment reachability BEFORE freezing.
-        if not _plugin_assignment_reachable(capability_id):
+        reason = _plugin_assignment_refusal(conn, capability_id, planned_route)
+        if reason is not None:
             skipped.append({
                 "plugin_id": plugin_id,
                 "capability_id": capability_id,
-                "reason": "no_assignment",
+                "reason": reason,
             })
             log.info(
-                "Plugin %s excluded from bound claim: no model assignment "
-                "can be frozen (HS-151-03 skip-with-receipt)",
-                plugin_id,
+                "Plugin %s excluded from bound claim: %s "
+                "(HS-151-03 skip-with-receipt)",
+                plugin_id, reason,
             )
             continue
         canonical = definition.canonical_dict()
@@ -432,12 +439,49 @@ def _plan_installed_plugin_members(
     return tuple(members), route
 
 
-def _plugin_assignment_reachable(capability_id: str) -> bool:
-    """Probe whether a plugin capability has a freezable assignment.
+def _route_legs_key(legs: Any) -> list[tuple[int, str, int, str]]:
+    """The identity of a route's legs: order, profile revision, deployment."""
+    return [
+        (
+            int(leg.get("ordinal") or 0),
+            str(leg.get("profile_id") or ""),
+            int(leg.get("profile_revision") or 0),
+            str(leg.get("deployment_revision_id") or ""),
+        )
+        for leg in (legs or ())
+        if isinstance(leg, Mapping)
+    ]
+
+
+def _plugin_assignment_refusal(
+    conn: Any, capability_id: str, planned_route: Mapping[str, Any] | None,
+) -> str | None:
+    """``None`` when the plugin may be frozen; else the skip receipt's reason.
+
+    ``no_assignment``: the plugin capability resolves to no engine.
+    ``route_not_shown``: a disclosed job route exists and the plugin's own
+    route does not resolve to exactly those legs.
+    """
+    route = _plugin_route_plan(capability_id)
+    if route is None:
+        return "no_assignment"
+    if planned_route is None:
+        return None
+    from ..services.meeting_route_projection import selection_hash_for_route_plan
+
+    _hash, legs = selection_hash_for_route_plan(conn, route)
+    planned = _route_legs_key(planned_route.get("legs"))
+    if not legs or not planned or _route_legs_key(legs) != planned:
+        return "route_not_shown"
+    return None
+
+
+def _plugin_route_plan(capability_id: str) -> Mapping[str, Any] | None:
+    """Resolve a plugin capability's route plan, or ``None`` with no assignment.
 
     Uses the SAME ``resolve_route_plan_for_feature`` path the binder uses,
     reading persisted assignment heads only (no Config, no live host).
-    Returns False on ``no_assignment``; any other refusal propagates.
+    Returns None on ``no_assignment``; any other refusal propagates.
     """
     from ..kernel.runtime import _service
     from ..meeting_session.deferred_bound import PARENT_KIND, queue_service_principal
@@ -448,7 +492,7 @@ def _plugin_assignment_reachable(capability_id: str) -> bool:
     plans = broker.inference_adoption_service.plans
     principal = queue_service_principal()
     try:
-        plans.resolve_route_plan_for_feature(
+        return plans.resolve_route_plan_for_feature(
             ROUTE_PLANNING_AUTHORITY,
             feature_principal=principal,
             parent_kind=PARENT_KIND,
@@ -456,10 +500,9 @@ def _plugin_assignment_reachable(capability_id: str) -> bool:
             invocation_id="probe",
             deadline_at=time.time() + 300.0,
         )
-        return True
     except _SvcValidationError as exc:
         if getattr(exc, "code", None) == "no_assignment":
-            return False
+            return None
         raise
 
 
@@ -1627,15 +1670,20 @@ class IntelRepository(BaseRepository):
             # and closed result schema.  A claimed legacy row never reaches here.
             if not _frozen_plugin_members(row):
                 try:
-                    # An explicit HS-201 run discloses only the selected summary
-                    # route.  Do not append the ambient installed-plugin chain or
-                    # displaced Stop work to that job: those destinations were
-                    # never shown to the user and cannot receive transcript bytes.
-                    if row["planned_route_json"]:
+                    # An explicit HS-201 run discloses the selected summary
+                    # route.  Capture C4: its routed plugins run on that SAME
+                    # route; a plugin whose route goes anywhere else is skipped
+                    # with a receipt, so no transcript reaches a destination
+                    # the owner was not shown.
+                    planned_route = (
+                        json.loads(str(row["planned_route_json"]))
+                        if row["planned_route_json"] else None
+                    )
+                    if planned_route is not None and not isinstance(planned_route, Mapping):
                         plugin_members, plugin_route = (), {}
                     else:
                         plugin_members, plugin_route = _plan_installed_plugin_members(
-                            conn, meeting_id,
+                            conn, meeting_id, planned_route=planned_route,
                         )
                 except Exception as exc:
                     # An unknown/non-exact plugin can never be smuggled through

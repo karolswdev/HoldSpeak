@@ -1353,10 +1353,9 @@ def test_a_project_carries_work_across_two_working_days(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, llm: FakeLLM,
 ) -> None:
     """Day 1 on hub #1: a brief is prepared over the wire and kept; a
-    transcript is imported with a day-1 start, linked and summarised on the
-    analysis-only route (no plugin call, no proposal); the HISTORICAL FIXTURE
-    seeds one decision and one commitment, both confirmed; the commitment is
-    attention. The hub stops; hub #2 opens the SAME database file. Day 2:
+    transcript is imported with a day-1 start, linked and summarised; its
+    plugins run on the disclosed route (Capture C4) and propose one decision
+    and one commitment, both confirmed; the commitment is attention. The hub stops; hub #2 opens the SAME database file. Day 2:
     recall returns the decision first with its rationale, dated day 1, and the
     commitment still owed; the person carries it; explicit acts complete it;
     the person no longer owes it; day 2's manifest carries the decision and
@@ -1433,14 +1432,14 @@ def test_a_project_carries_work_across_two_working_days(
                 review(), engine.plugin_calls)
             first = review()
             assert first["coverage"]["turns"] == 3 and first["coverage"]["read"] == 3, first["coverage"]
-            assert first["proposals"] == [] and engine.plugin_calls == [], (first["proposals"], engine.plugin_calls)
+            # Capture C4: the job's plugins run on its disclosed route, and the
+            # two real extractors' output is the day-1 decision and commitment.
+            assert sorted(engine.plugin_calls) == [ACT_PLUGIN, DEC_PLUGIN], engine.plugin_calls
             detail = hub.ok("GET", f"/api/meetings/{meeting_id}")
             assert detail["intel"]["summary"] == engine.result.summary, detail["intel"]
             started_at = detail.get("started_at") or (detail.get("meeting") or {}).get("started_at")
             assert str(started_at)[:10] == day1.date().isoformat(), started_at
 
-            # The HISTORICAL FIXTURE (not summary output) seeds the day-2 chain.
-            _seed_historical_proposal_fixture(meeting_id, engine)
             proposals = review()["proposals"]
             assert sorted(p["kind"] for p in proposals) == ["action", "decision"], proposals
 
