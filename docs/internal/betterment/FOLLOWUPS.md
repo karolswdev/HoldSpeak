@@ -64,3 +64,11 @@ PR that fixes it merges.
 | AG6 (#1310) | Hand again not built (`worktree_duplicate` refuses); a real `claude --resume <old id>` exit code not seen. | Agents AG7 |
 | #1316 | If tmux restarts while the hub runs, the session watcher can mark a launch `complete` over `stopped_by_restart`, losing Resume. | Agents AG7 |
 | D6 (#1312) | The intermittent People 503 cause is still unknown (D6 only logs it). Older Last-time fallback counts kept promises as decisions. | Daily D8 |
+| M4 (#1321) | `model_library.remove` not built: a deleted profile can never be re-created, so removing `agent-claude` would break Add for good. RULING (orchestrator): Remove = retire (hide) + move its jobs to Everything else; never delete. | Engines / MCP |
+| E7 (#1323) | Gemini CLI has no switch to turn web search and file reads off; accepted (the prompt already goes to Google). pi and Gemini get no desk tools yet. Sign-in for both reads "not known". | MCP M5 / Engines |
+| A10 (#1324) | Folder mode unverified on the real CLIs (Codex shell to read; read-only sandbox refuses apply_patch; `--setting-sources user` keeps Claude sign-in). A folder must be a git worktree. Result card chip still says CLOUD. | Next live walk |
+| A6 (#1322) | The phone Dock has no Automations tile; a NEW result shows in Today only. | Shell S3 |
+| A8 (#1325) | `docs/WEB_DESK.md` and `docs/DESK_OBJECT_MODEL.md` still list New Agent and New Zone (parked earlier). | Small fix |
+| #1328 | Only the keyring stores are guarded; a `security` CLI call (e.g. acli) from a scratch HOME could still pop. | Watch |
+| Sweep | `conductor at 393: still … moved 220 px` flakes in the desk sweep under load (seen in 3 lanes). | Small fix |
+| A6 lane | `tests/unit/test_project_mcp.py:370` writes and deletes a file inside `holdspeak/` while `test_thread_tool_gate.py` walks it in parallel: FileNotFoundError race. | Small fix |

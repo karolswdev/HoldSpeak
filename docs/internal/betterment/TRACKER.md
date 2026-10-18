@@ -5,8 +5,7 @@ file in the same PR as `pm/STATUS.md`, after each batch. "Done" means
 merged to main. "On his desk" is the backend commit in `pm/STATUS.md`.
 Open work that is not a slice is in `FOLLOWUPS.md`.
 
-**Last updated:** 2026-10-18, main `c8401c507` (batch five merged; its reds
-are being fixed; his desk is still on batch four, `eff269a6b`).
+**Last updated:** 2026-10-18, main `87e1f742c` (batch five on his desk).
 
 **Total: 52 of 117 slices done.**
 
