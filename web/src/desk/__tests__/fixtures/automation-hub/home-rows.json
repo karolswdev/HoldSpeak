@@ -21,12 +21,12 @@
      "schedule_enabled": false,
      "schedule_revision": 1,
      "item_order": [],
-     "created_at": "2026-10-18T18:40:34Z",
-     "last_modified": "2026-10-18T18:40:34Z",
+     "created_at": "2026-10-18T22:20:36Z",
+     "last_modified": "2026-10-18T22:20:36Z",
      "deleted": false,
      "items": [
       {
-       "id": "wbocc_b8dccf27cc7a4436",
+       "id": "wbocc_10868d1e6eb745bc",
        "workbench_id": "workbench_a7_1",
        "title": "Friday team update, Sun 18 Oct 2026",
        "body": "Draft my team update for this week: what shipped, what slipped, and what I need from each person. Name the meeting or note each point comes from.",
@@ -43,27 +43,27 @@
         "occurrence": true
        },
        "result": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.",
-       "result_artifact_id": "artifact_d41c7ed5fb8b",
+       "result_artifact_id": "artifact_18039b9260c9",
        "result_egress": {
         "boundary": "cloud",
         "model": "agent-claude"
        },
        "mint_attempted": true,
        "tokens_consumed": 40,
-       "created_at": "2026-10-18T18:40:34Z",
-       "last_modified": "2026-10-18T18:40:34.593823+00:00",
-       "claimed_at": "2026-10-18T18:40:34.497397+00:00",
-       "completed_at": "2026-10-18T18:40:34.593823+00:00",
+       "created_at": "2026-10-18T22:20:36Z",
+       "last_modified": "2026-10-18T22:20:36.749871+00:00",
+       "claimed_at": "2026-10-18T22:20:36.659386+00:00",
+       "completed_at": "2026-10-18T22:20:36.749871+00:00",
        "parked": false
       }
      ],
      "item_count": 1,
      "pending_count": 0,
      "last_run": {
-      "id": "wbrun_c9de63998c81",
+      "id": "wbrun_7d7d56cf326e",
       "workbench_id": "workbench_a7_1",
-      "started_at": "2026-10-18T18:40:34.497105+00:00",
-      "completed_at": "2026-10-18T18:40:34.683342+00:00",
+      "started_at": "2026-10-18T22:20:36.659156+00:00",
+      "completed_at": "2026-10-18T22:20:36.835311+00:00",
       "items_attempted": 1,
       "items_completed": 1,
       "items_failed": 0,
@@ -80,18 +80,18 @@
      "instruction_from": "automation",
      "results": [
       {
-       "item_id": "wbocc_b8dccf27cc7a4436",
+       "item_id": "wbocc_10868d1e6eb745bc",
        "title": "Friday team update, Sun 18 Oct 2026",
        "status": "done",
-       "artifact_id": "artifact_d41c7ed5fb8b",
+       "artifact_id": "artifact_18039b9260c9",
        "new": true,
        "error": null,
        "text": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.",
-       "completed_at": "2026-10-18T18:40:34.593823+00:00",
+       "completed_at": "2026-10-18T22:20:36.749871+00:00",
        "seconds": 0,
        "model": "stub-model-7b",
        "boundary": "cloud",
-       "note_id": "note_result_3f6ce40a2f4ac94f",
+       "note_id": "note_result_58c8a2c1267429aa",
        "cost_usd": null,
        "used": null
       }

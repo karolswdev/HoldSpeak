@@ -20,8 +20,8 @@
     "schedule_enabled": false,
     "schedule_revision": 3,
     "item_order": [],
-    "created_at": "2026-10-18T20:55:40Z",
-    "last_modified": "2026-10-18T20:55:40Z",
+    "created_at": "2026-10-18T22:20:37Z",
+    "last_modified": "2026-10-18T22:20:37Z",
     "deleted": false,
     "items": [
      {
@@ -41,27 +41,27 @@
        "occurrence": true
       },
       "result": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.",
-      "result_artifact_id": "artifact_4c2341445b93",
+      "result_artifact_id": "artifact_3d1bb4e7c8e3",
       "result_egress": {
        "boundary": "cloud",
        "model": "stub-profile"
       },
       "mint_attempted": true,
       "tokens_consumed": 40,
-      "created_at": "2026-10-18T20:55:40Z",
-      "last_modified": "2026-10-18T20:55:40.195235+00:00",
-      "claimed_at": "2026-10-18T20:55:40.118205+00:00",
-      "completed_at": "2026-10-18T20:55:40.195235+00:00",
+      "created_at": "2026-10-18T22:20:37Z",
+      "last_modified": "2026-10-18T22:20:37.733282+00:00",
+      "claimed_at": "2026-10-18T22:20:37.661748+00:00",
+      "completed_at": "2026-10-18T22:20:37.733282+00:00",
       "parked": false
      }
     ],
     "item_count": 1,
     "pending_count": 0,
     "last_run": {
-     "id": "wbrun_1cc84da7f4e6",
+     "id": "wbrun_818a3a1abde7",
      "workbench_id": "wb-put",
-     "started_at": "2026-10-18T20:55:40.117945+00:00",
-     "completed_at": "2026-10-18T20:55:40.270837+00:00",
+     "started_at": "2026-10-18T22:20:37.661559+00:00",
+     "completed_at": "2026-10-18T22:20:37.804145+00:00",
      "items_attempted": 1,
      "items_completed": 1,
      "items_failed": 0,
@@ -81,15 +81,15 @@
       "item_id": "wbocc_bdca415235a6b45c3419",
       "title": "Friday team update, Sun 18 Oct 2026",
       "status": "done",
-      "artifact_id": "artifact_4c2341445b93",
+      "artifact_id": "artifact_3d1bb4e7c8e3",
       "new": true,
       "error": null,
       "text": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.",
-      "completed_at": "2026-10-18T20:55:40.195235+00:00",
+      "completed_at": "2026-10-18T22:20:37.733282+00:00",
       "seconds": 0,
       "model": "stub-model-7b",
       "boundary": "cloud",
-      "note_id": "note_result_01a13a5e397c078a",
+      "note_id": "note_result_cb7f95f107209357",
       "cost_usd": null,
       "used": null
      }
@@ -156,7 +156,7 @@
      "workbench_id": "wb-put",
      "name": "Friday team update",
      "new_count": 1,
-     "newest_at": "2026-10-18T20:55:40.195235+00:00"
+     "newest_at": "2026-10-18T22:20:37.733282+00:00"
     }
    ],
    "new_count": 1
@@ -178,7 +178,7 @@
      "synced": false,
      "state": "active",
      "badge": "local",
-     "created_at": "2026-10-18T20:55:40+00:00",
+     "created_at": "2026-10-18T22:20:37+00:00",
      "parked_at": null,
      "connection": null
     }
