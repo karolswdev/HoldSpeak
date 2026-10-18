@@ -972,7 +972,8 @@ describe("Runs on — FOUND, downloads, the add row", () => {
   it("FOUND → Use it adds the engine through the Model Library; it joins with no wire", async () => {
     m.define.mockResolvedValue({ profileId: "engine-127-0-0-1-11434", profileRevision: 1 });
     await board();
-    expect(screen.getByTestId("switchboard-found-cap").textContent).toBe("Found · 1");
+    // Betterment E2: a loopback server is on this Mac, and the caption says so.
+    expect(screen.getByTestId("switchboard-found-cap").textContent).toBe("Found on this Mac · 1");
     const found = screen.getByTestId("switchboard-engine-local:ollama:11434:llama3.3");
     const reads = m.readDetection.mock.calls.length;
     fireEvent.click(within(found).getByRole("button", { name: "Use it" }));

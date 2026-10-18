@@ -5072,4 +5072,16 @@ CREATE TABLE IF NOT EXISTS memory_jobs (
     boundary TEXT NOT NULL DEFAULT '',
     UNIQUE (kind, target, input_sha, version)
 );
+-- Betterment E2: one row per run of an agent CLI engine (Claude Code, Codex):
+-- when it ran, how it ended (answered, not_signed_in, failed) and the cost the
+-- CLI reported (NULL when it reports none). The Engines window sums it for
+-- today and this week, and reads NOT SIGNED IN from the last run.
+CREATE TABLE IF NOT EXISTS cli_engine_runs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    profile_id TEXT NOT NULL,
+    ran_at TEXT NOT NULL,
+    outcome TEXT NOT NULL,
+    cost_usd REAL
+);
+CREATE INDEX IF NOT EXISTS idx_cli_engine_runs_profile ON cli_engine_runs(profile_id, ran_at);
 """

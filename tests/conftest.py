@@ -9,6 +9,10 @@ import os
 # inherits the flag; a test's own stub under the temp directory still runs.
 # A real-metal run may set it to 0.
 os.environ.setdefault("HOLDSPEAK_TEST_NO_REAL_CLI", "1")
+# Betterment E2: a test hub lists no agent CLI from this machine's PATH under
+# Found on this Mac. A test that needs agent engines turns them on and puts its
+# fake `claude`/`codex` first on PATH (tests/fixtures/fake_agent_cli.py).
+os.environ.setdefault("HOLDSPEAK_CLI_ENGINES", "off")
 
 import pytest
 import numpy as np

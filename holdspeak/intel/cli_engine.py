@@ -42,6 +42,7 @@ from ..kernel.provider_signals import (
 )
 from ..logging_config import get_logger
 from ..redaction import redact_error
+from . import cli_engine_runs
 from .engine import MeetingIntel
 
 log = get_logger("intel.cli_engine")
@@ -293,10 +294,12 @@ class CliEngine(MeetingIntel):
 
     def __init__(
         self, preset: CliPreset, *, model: str = DEFAULT_MODEL,
-        spend_limit_usd: Optional[float] = None,
+        spend_limit_usd: Optional[float] = None, profile_id: str = "",
     ) -> None:
         super().__init__(provider="cloud", cloud_model=model or DEFAULT_MODEL)
         self.preset = preset
+        #: The engine's profile row; each run adds one ``cli_engine_runs`` row (E2).
+        self.profile_id = str(profile_id or "")
         self.cli_model = model or DEFAULT_MODEL
         self.spend_limit_usd = spend_limit_usd
         self._executable: str = ""
@@ -305,12 +308,12 @@ class CliEngine(MeetingIntel):
         self._cost_local = threading.local()
 
     @classmethod
-    def from_endpoint(cls, endpoint: str, *, model: str = "") -> "CliEngine":
+    def from_endpoint(cls, endpoint: str, *, model: str = "", profile_id: str = "") -> "CliEngine":
         parsed = parse_cli_endpoint(endpoint)
         if parsed is None:
             raise ProviderPermanentNoGeneration()
         preset, limit = parsed
-        return cls(preset, model=model or DEFAULT_MODEL, spend_limit_usd=limit)
+        return cls(preset, model=model or DEFAULT_MODEL, spend_limit_usd=limit, profile_id=profile_id)
 
     # -- what the run reported ------------------------------------------------
 
@@ -350,10 +353,16 @@ class CliEngine(MeetingIntel):
         prompt = messages_to_prompt(messages, response_format)
         self._record_usage(None)
         self._cost_local.cost = None
-        raw = self._egress(argv, prompt)
-        answer = parse_cli_output(raw)
-        if not answer.text:
-            raise ProviderPermanentNoGeneration()
+        self._cost_local.outcome = cli_engine_runs.FAILED
+        try:
+            raw = self._egress(argv, prompt)
+            answer = parse_cli_output(raw)
+            if not answer.text:
+                raise ProviderPermanentNoGeneration()
+        except (ProviderPermanentNoGeneration, ProviderKnownNoGenerationTransient):
+            cli_engine_runs.record_run(self.profile_id, self._cost_local.outcome)
+            raise
+        cli_engine_runs.record_run(self.profile_id, cli_engine_runs.ANSWERED, answer.cost_usd)
         self._record_usage(answer.usage or None)
         self._cost_local.cost = answer.cost_usd
         if answer.model and self.cli_model == DEFAULT_MODEL:
@@ -465,6 +474,8 @@ class CliEngine(MeetingIntel):
                 with self._live_lock:
                     self._live.discard(process)
         if process.returncode != 0:
+            if cli_engine_runs.says_not_signed_in(stderr or ""):
+                self._cost_local.outcome = cli_engine_runs.NOT_SIGNED_IN
             detail = " ".join(redact_error(stderr or "").split())[:300]
             log.warning(f"{self.preset.label} stopped with code {process.returncode}: {detail}")
             raise ProviderPermanentNoGeneration()

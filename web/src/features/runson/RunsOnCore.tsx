@@ -34,7 +34,10 @@ import {
   JOB_PROBE_CAPABILITIES,
   MEETINGS_JOB,
   SPEECH_JOB,
+  costTokens,
   enginePlace,
+  foundAgentName,
+  hostLabel,
   jobName,
   jobState,
   jobOf,
@@ -156,6 +159,54 @@ function AddEngineRow({ ctrl }: { ctrl: RunsOnController }) {
         </span>
       ) : null}
     </div>
+  );
+}
+
+/** Betterment E2: an agent engine's row, unfolded: Spend limit per run (No
+ *  limit, or an amount the CLI enforces) and today's and this week's
+ *  reported cost. A CLI that cannot stop a run at a limit says so. */
+function AgentSpend({ ctrl, engine }: { ctrl: RunsOnController; engine: BoardEngine }) {
+  const a = ctrl.agent;
+  const spend = engine.spend;
+  const label = engine.model || engine.name;
+  return (
+    <span className="runson-agent-spend" data-testid={`runson-agent-spend-${engine.key}`}>
+      {spend?.canLimit ? (
+        <>
+          <StringGadget
+            label="Spend limit per run"
+            caption
+            value={a.draft}
+            onChange={a.setDraft}
+            placeholder="No limit"
+            inputProps={{ inputMode: "decimal" }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") void a.save(engine.key);
+            }}
+          />
+          <Button dense variant="primary" disabled={ctrl.busy} data-testid="runson-agent-spend-save" onClick={() => void a.save(engine.key)}>
+            Save
+          </Button>
+          {spend.limitUsd != null ? (
+            <Button dense variant="ghost" disabled={ctrl.busy} data-testid="runson-agent-spend-clear" onClick={() => void a.save(engine.key, true)}>
+              No limit
+            </Button>
+          ) : null}
+          {a.invalid ? (
+            <span role="alert" data-testid="runson-agent-spend-invalid">
+              <StateChip state="failure" label="MORE THAN $0, UP TO $1000" />
+            </span>
+          ) : null}
+        </>
+      ) : (
+        <span className="surface-token" data-testid={`runson-agent-no-limit-${engine.key}`}>
+          {`${label.toUpperCase()} CAN'T LIMIT SPEND`}
+        </span>
+      )}
+      <span className="surface-token" data-testid={`runson-agent-cost-${engine.key}`}>
+        {costTokens(spend, label).join(" · ")}
+      </span>
+    </span>
   );
 }
 
@@ -342,6 +393,25 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
     const downloading = progress != null;
     let verb: ReactNode = repairVerb(engine);
     let egress: ReactNode;
+    let detail: ReactNode;
+    if (engine.kind === "agent") {
+      // Betterment E2: the prompt goes to the agent's vendor; the row
+      // unfolds in place to its spend limit and cost.
+      const open = ctrl.agent.open === engine.key;
+      egress = <EgressChip label={engine.vendor || hostLabel(engine)} scope="cloud" />;
+      verb = (
+        <Button
+          dense
+          variant="ghost"
+          aria-expanded={open}
+          data-testid={`runson-agent-open-${engine.key}`}
+          onClick={() => ctrl.agent.toggle(engine.key)}
+        >
+          Spend
+        </Button>
+      );
+      detail = open ? <AgentSpend ctrl={ctrl} engine={engine} /> : undefined;
+    }
     const tokens = [...engine.tokens];
     const stopped = ctrl.failedDownloads[engine.key];
     if (engine.kind === "preset") {
@@ -372,6 +442,7 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
       progress: downloading ? progress : null,
       verb,
       egress,
+      detail,
       draggable: Boolean(engine.profileId),
     };
   };
@@ -379,6 +450,22 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
   const haveEngines = have.filter((engine) => engine.kind !== "preset").map(plate);
   const localDownloads = have.filter((engine) => engine.kind === "preset").map(plate);
   const foundEngines: SwitchEngine[] = found.map((engine) => {
+    if (engine.agentPreset) {
+      // Betterment E2: an agent CLI on this Mac; one press adds it.
+      return {
+        id: engine.key,
+        emblem: engine.emblem,
+        name: foundAgentName(engine),
+        tokens: [],
+        lamp: lampFor(engine, false),
+        egress: <EgressChip label={engine.vendor || hostLabel(engine)} scope="cloud" />,
+        verb: (
+          <Button dense variant="secondary" disabled={ctrl.busy} data-testid={`runson-add-${engine.key}`} onClick={() => void ctrl.useFound(engine.key)}>
+            Add
+          </Button>
+        ),
+      };
+    }
     const endpoint = engine.baseUrl ? endpointHostPort(engine.baseUrl).toUpperCase() : "";
     let host = "";
     if (engine.baseUrl) {
@@ -404,6 +491,9 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
       ),
     };
   });
+
+  // Betterment E2: when every found row is on this Mac, the caption says so.
+  const foundOnMac = found.every((engine) => engine.emblem === "MAC" || engine.emblem === "CLI");
 
   const engineFoot = ctrl.add.open ? (
     <AddEngineRow ctrl={ctrl} />
@@ -464,7 +554,7 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
       <div className="runson-choice" data-testid="runson-engine-choice">{engineFoot}</div>
       {foundEngines.length ? (
         <div className="runson-catalog" data-testid="runson-found-engines">
-          <SurfaceSwitchboard layout="board" jobs={[]} engines={[]} found={foundEngines} wires={[]} captions={{ found: "Found" }} />
+          <SurfaceSwitchboard layout="board" jobs={[]} engines={[]} found={foundEngines} wires={[]} captions={{ found: foundOnMac ? "Found on this Mac" : "Found" }} />
         </div>
       ) : null}
       {noEngine && speech.notSetUp ? <SpeechSetup setup={speech} primary={false} testId="runson-speech-setup" /> : null}
