@@ -406,7 +406,7 @@ switch" covers this case.
 | Dictation intent and rewrite | Yes, when assigned | Otherwise the old `dictation.runtime.profile_id` path. Only local, endpoint or mesh engines can bind.[^dictation] |
 | Speech transcription | Local only | the boundary is fixed to `local` |
 | Ask | Yes, plus a per-call target | `ask_service.py:186` |
-| Thought interview | Yes | plus the old `thoughts.inference_target_id` setting (`inference_targets.py:627`) |
+| Thought interview | Yes | plus the old per-Thought engine setting (`inference_targets.py:627`) |
 | Thread (desk chat) | Yes (`chat.turn`) | `thread_service.py:2099` |
 | Draft update | Yes | `project_update_service.py:1831` |
 | Preparation brief | Yes | `preparation_brief_service.py:790` |
