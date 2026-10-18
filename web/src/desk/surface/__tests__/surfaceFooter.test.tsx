@@ -90,5 +90,45 @@ describe("SurfaceFooter", () => {
     expect(custom).toHaveBeenCalledOnce();
   });
 
+  // Betterment shell S0 (UX-CANON A.11): More holds only extras that can
+  // run; with none, More is not drawn (it opened an empty menu before).
+  it("withholds a disabled extra, and More with it, at phone width", () => {
+    vi.stubGlobal("matchMedia", () => ({
+      matches: true,
+      media: "(max-width: 720px)",
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      onchange: null,
+      dispatchEvent: () => false,
+    }));
+    const { rerender } = render(
+      <SurfaceFooter
+        verbs={
+          <span className="surface-footer-verbs-group">
+            <Button variant="primary" onClick={() => {}}>Send</Button>
+            <Button variant="ghost" disabled onClick={() => {}}>Open</Button>
+          </span>
+        }
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Send" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "More actions" })).toBeNull();
+    rerender(
+      <SurfaceFooter
+        verbs={
+          <span className="surface-footer-verbs-group">
+            <Button variant="primary" onClick={() => {}}>Send</Button>
+            <Button variant="ghost" disabled onClick={() => {}}>Open</Button>
+            <Button variant="ghost" onClick={() => {}}>Copy</Button>
+          </span>
+        }
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "More actions" }));
+    expect(screen.getAllByRole("menuitem").map((row) => row.textContent)).toEqual(["Copy"]);
+  });
+
   afterEach(() => vi.unstubAllGlobals());
 });

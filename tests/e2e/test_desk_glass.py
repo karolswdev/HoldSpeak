@@ -119,11 +119,20 @@ class TestObjectVerbsOnTheChair:
             editor.wait_for(state="detached", timeout=T)
 
     def _object_rename_disabled(self, page: Any, shot: str | None = None) -> bool:
-        """Open the menu bar Object menu; True when Rename is ghosted."""
-        page.locator(".desk-verbbar").get_by_role("button", name="Object", exact=True).click()
-        menu = page.get_by_role("menu", name="Object menu")
+        """True when the menu bar offers no live Rename for an object.
+
+        Betterment shell S0 (#1257): the Object menu mirrors right-click and
+        is titled by the target's kind ("Note"); with no target its title is
+        not drawn, and a row that cannot run is withheld, not ghosted."""
+        title = page.locator(".desk-verbbar").get_by_role("button", name="Note", exact=True)
+        if not title.count():
+            assert not page.locator(".desk-verbbar").get_by_role("button", name="Object", exact=True).count()
+            return True
+        title.click()
+        menu = page.get_by_role("menu", name="Note menu")
         menu.wait_for(timeout=T)
-        disabled = menu.get_by_role("menuitem", name=re.compile(r"^Rename")).get_attribute("aria-disabled") == "true"
+        rename = menu.get_by_role("menuitem", name=re.compile(r"^Rename"))
+        disabled = not rename.count() or rename.get_attribute("aria-disabled") == "true"
         if shot:
             page.screenshot(path=str(SHOTS / shot))
         page.keyboard.press("Escape")
@@ -138,13 +147,13 @@ class TestObjectVerbsOnTheChair:
             browser, page, errors = self._page(pw, 1440)
             try:
                 icon = page.locator(ICON)
-                # Nothing selected: Object ▸ Rename is ghosted.
+                # Nothing selected: no Object menu, so no Rename (S0 #1257).
                 assert self._object_rename_disabled(page) is True
                 icon.click()
                 assert icon.get_attribute("aria-pressed") == "true"
                 # Selected on the Chair: the menu bar Object menu reads the same selection.
                 assert self._object_rename_disabled(page, shot="objverbs-1440-object-menu.png") is False
-                # A press on empty glass clears the selection: ghosted again.
+                # A press on empty glass clears the selection: the Note menu goes.
                 page.mouse.click(720, 600)
                 assert icon.get_attribute("aria-pressed") == "false"
                 assert self._object_rename_disabled(page) is True

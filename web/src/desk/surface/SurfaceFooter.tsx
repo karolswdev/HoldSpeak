@@ -93,7 +93,11 @@ export function SurfaceFooter({
   const opaqueVerbs: ReactNode[] = [];
   collectVerbs(verbs, footerVerbs, opaqueVerbs);
   const primary = footerVerbs.find((verb) => verb.primary) ?? footerVerbs[0];
-  const extras = primary ? footerVerbs.filter((verb) => verb !== primary) : footerVerbs;
+  // Betterment shell S0 (UX-CANON A.11, "withhold, never ghost"): More
+  // holds only the extras that can run, and is not drawn when none can.
+  const extras = (primary ? footerVerbs.filter((verb) => verb !== primary) : footerVerbs).filter(
+    (verb) => !verb.disabled,
+  );
   const compactVerbs = compact ? (
     <>
       {primary ? primary.node : null}
@@ -119,7 +123,6 @@ export function SurfaceFooter({
             type: "item",
             id: `surface-footer-action-${index}`,
             label: verb.label,
-            ghost: verb.disabled ? "Busy" : undefined,
             onSelect: () => verb.onClick(),
           }))}
           onClose={() => setMoreOpen(false)}

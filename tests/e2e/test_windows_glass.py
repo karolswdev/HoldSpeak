@@ -418,7 +418,10 @@ class TestThePhoneDesk:
                 assert go.get_attribute("aria-expanded") == "true"
                 rows = menu.locator(".desk-menu-label").all_inner_texts()
                 facts["go_rows"] = rows
-                if rows[:4] != ["Needs you", "Brief", "The week", "Capture"]:
+                # Betterment shell S1 (#1259): the phone's Go is the
+                # manifest's Daily group first, as at 1440: Today, then the
+                # Chair's windows (Go is their door on an empty desk).
+                if rows[:5] != ["Today", "Needs you", "Brief", "The week", "Capture"]:
                     fails.append(f"S3: Go lists {rows}")
                 self._board(page, width, "C7-4a-go-open", facts, fails)
                 self._tap(page, go, width, 600)
@@ -1999,12 +2002,14 @@ class TestTheDeskRemembers(_Rig):
                 # The Room's Draft update now creates the draft directly,
                 # rather than entering a list with a second generator verb.
                 room.locator('[data-testid="update-posture"][data-phase="editor"]').wait_for()
-                editor = room.locator("[contenteditable=true]").first
+                # Betterment P1 (#1283): a draft is plain text, edited in place
+                # (a TextArea), no longer the contenteditable DeskEditor.
+                editor = room.get_by_test_id("update-plain-text")
                 editor.wait_for()
                 self._press(page, editor, width)
                 page.keyboard.press("Control+End")
                 page.keyboard.type(" " + ROOM_WORDS)
-                assert ROOM_WORDS in editor.inner_text()
+                assert ROOM_WORDS in editor.input_value()
                 page.wait_for_timeout(400)
                 if width >= 720:
                     head = room.locator(".desk-window-head, .desk-window-title").first
@@ -2035,10 +2040,10 @@ class TestTheDeskRemembers(_Rig):
                 page.reload(wait_until="load")
                 _normal_chair(page)
                 room = page.locator("#surface-project-memory")
-                editor = room.locator("[contenteditable=true]").first
+                editor = room.get_by_test_id("update-plain-text")
                 editor.wait_for(timeout=20_000)
                 page.wait_for_function(
-                    "(w) => [...document.querySelectorAll('#surface-project-memory [contenteditable=true]')].some(e => e.innerText.includes(w))",
+                    "(w) => [...document.querySelectorAll('#surface-project-memory [data-testid=update-plain-text]')].some(e => e.value.includes(w))",
                     arg=ROOM_WORDS, timeout=15_000)
                 people = page.locator(PERSON).first
                 if width < 720:
@@ -2099,3 +2104,4 @@ class TestTheDeskRemembers(_Rig):
                 assert not errors, errors
             finally:
                 browser.close()
+

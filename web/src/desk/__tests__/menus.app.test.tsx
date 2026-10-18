@@ -213,6 +213,8 @@ import { GO_GROUPS, goRows } from "../applications";
 import { useBuilderTools } from "../builderTools";
 import { GoHome } from "../screen/GoHome";
 import { announceLauncher, retractLauncher } from "../components/window/launcherRegistry";
+import { CHAIR_WINDOWS, useChairWindows } from "../chair/chairWindows";
+import { openWindowCount } from "../components/window/windowRegistry";
 
 describe.each([[1440, false], [393, true]] as const)("S1: Go at %i is the manifest's Go groups", (_width, isPhone) => {
   const goMenu = () => {
@@ -239,7 +241,7 @@ describe.each([[1440, false], [393, true]] as const)("S1: Go at %i is the manife
     useDesk.setState({ items: { ...EMPTY_ITEMS }, projects: [] } as never);
   });
 
-  const DAILY_WORK = ["Today", "Needs you", "Meetings", "People", "Projects", "Conductor", "Ask AI", "Speak",
+  const DAILY_WORK = ["Today", "Needs you", "Brief", "The week", "Capture", "Meetings", "People", "Projects", "Conductor", "Ask AI", "Speak",
     "Automations", "Memory", "Voice commands"];
 
   it("Go shows Daily then Work; Builder ▸ only when Builder tools is on, with eight rows", () => {
@@ -261,10 +263,33 @@ describe.each([[1440, false], [393, true]] as const)("S1: Go at %i is the manife
     ]);
   });
 
+  // S0 left the Window menu with one line on an empty desk, so Go is the
+  // door to every Chair window there (PLAN: no app only by a detour).
+  it("on an empty desk, each Chair window has a Go row that opens it", () => {
+    phone(isPhone);
+    expect(openWindowCount()).toBe(0);
+    render(<DeskMenuBar />);
+    const menu = goMenu();
+    for (const w of CHAIR_WINDOWS) {
+      const row = Array.from(menu.querySelectorAll<HTMLElement>("[role^=menuitem]")).find(
+        (el) => el.querySelector(".desk-menu-label")?.textContent?.trim() === w.title);
+      expect(row, w.title).toBeTruthy();
+      expect(row!.getAttribute("aria-disabled"), w.title).not.toBe("true");
+    }
+    // The desktop row opens the Chair window itself.
+    if (!isPhone) {
+      const week = Array.from(menu.querySelectorAll<HTMLElement>("[role^=menuitem]")).find(
+        (el) => el.querySelector(".desk-menu-label")?.textContent?.trim() === "The week")!;
+      fireEvent.click(week);
+      expect(useChairWindows.getState().closed["chair:week"]).toBe(false);
+    }
+  });
+
   it("every Go row comes from goRows (no hand list)", () => {
     phone(isPhone);
     const fromManifest = GO_GROUPS.flatMap(goRows).length;
-    expect(fromManifest).toBe(8 + 4 + 8);
+    // Daily: eight plus the Chair's Brief, The week and Capture.
+    expect(fromManifest).toBe(11 + 4 + 8);
   });
 });
 

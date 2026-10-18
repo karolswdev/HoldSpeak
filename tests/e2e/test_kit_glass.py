@@ -116,7 +116,8 @@ def test_every_verb_is_one_plate_height(tmp_path: Path, monkeypatch: pytest.Monk
             verbs = window.evaluate(MEASURE)
             words = {v["word"] for v in verbs}
             expected = {"Icons", "List", "Room", "History", "Watch sources", "Get Info"}
-            expected.add("More" if width == 393 else "Open")
+            if width == 1440:
+                expected.add("Open")
             assert expected <= words, verbs
             if width == 1440:
                 heights = {v["h"] for v in verbs}
@@ -125,17 +126,10 @@ def test_every_verb_is_one_plate_height(tmp_path: Path, monkeypatch: pytest.Monk
                 small = [v for v in verbs if max(v["h"], v["halo"]) < 44]
                 assert not small, small
                 assert page.evaluate("document.scrollingElement.scrollWidth <= window.innerWidth")
-                # The extra footer action lives in More at phone width. Its
-                # disabled state still exposes the actual Open command.
-                window.get_by_role("button", name="More actions", exact=True).click()
-                menu = page.get_by_role("menu", name="More actions", exact=True)
-                open_action = menu.get_by_role("menuitem", name="Open · Busy", exact=True)
-                open_action.wait_for()
-                assert open_action.get_attribute("aria-disabled") == "true"
-                open_box = open_action.bounding_box()
-                assert open_box and open_box["height"] >= 44, open_box
-                page.keyboard.press("Escape")
-                menu.wait_for(state="detached")
+                # Betterment shell S0 (#1257, UX-CANON A.11): a footer extra
+                # that cannot run (Open, busy here) is withheld, and More is
+                # not drawn when it would hold nothing (SurfaceFooter.tsx).
+                assert not window.get_by_role("button", name="More actions", exact=True).count(), verbs
                 assert window.is_visible()
             page.screenshot(path=str(SHOTS / f"kit-verb-{width}.png"))
             _assert_clean(page, errors)
