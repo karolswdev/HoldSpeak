@@ -349,7 +349,7 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       kb: ["/api/kbs", "kb", { name: "New Knowledge" }],
       recipe: ["/api/recipes", "recipe", { name: "New Agent", avatar: "" }],
       zone: ["/api/directories", "directory", { name: "New zone" }],
-      workbench: ["/api/workbenches", "workbench", { name: "New Workbench" }],
+      workbench: ["/api/workbenches", "workbench", { name: "New Automation" }],
       workflow: [
         "/api/workflows",
         "workflow",

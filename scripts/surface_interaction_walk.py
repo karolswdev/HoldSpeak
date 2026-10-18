@@ -1120,7 +1120,7 @@ def main() -> int:
     # web/src/desk/applications.ts and web/src/desk/tools.ts).
     SURFACE_QUERIES = (queries.split(",") if queries else [
         "Intelligence", "Speak", "Meetings", "Agents", "Settings",
-        "Change places", "Rhythm", "Context", "Workbenches", "Activity",
+        "Change places", "Rhythm", "Context", "Automations", "Activity",
         "Desk memory", "Processes", "Commands", "Models", "Ask AI",
     ])
 

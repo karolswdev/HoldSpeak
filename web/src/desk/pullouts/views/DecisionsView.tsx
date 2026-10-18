@@ -547,5 +547,5 @@ function ReceiptDetail({
 }
 
 function workName(type: string): string {
-  return ({ story: "story", project: "project", meeting: "meeting", decision: "decision", note: "note", workbench: "Workbench", thread: "thread" } as Record<string, string>)[type] ?? "work";
+  return ({ story: "story", project: "project", meeting: "meeting", decision: "decision", note: "note", workbench: "automation", thread: "thread" } as Record<string, string>)[type] ?? "work";
 }

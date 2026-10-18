@@ -41,8 +41,11 @@ export const OBJECT_KIND_WORD: Readonly<Record<ObjectKind, string>> = {
   parked: "DRAWER",
 };
 
+/** Betterment A1: a desk kind whose stored name is not its word. */
+const STORED_KIND_WORD: Readonly<Record<string, string>> = { workbench: "AUTOMATION" };
+
 export function objectKindWord(kind: string): string {
-  return OBJECT_KIND_WORD[kind as ObjectKind] ?? kind.toUpperCase();
+  return OBJECT_KIND_WORD[kind as ObjectKind] ?? STORED_KIND_WORD[kind] ?? kind.toUpperCase();
 }
 
 /** The one sprite for an object of `kind`, at the icon size (64) or the

@@ -68,7 +68,7 @@ describe("Prep owns each obligation and pending Add draft", () => {
       const title = within(section).getByRole("button", { name: item.body });
       title.focus();
       fireEvent.click(title);
-      expect(within(section).getByRole("button", { name: "Send to Workbench" })).toBeTruthy();
+      expect(within(section).getByRole("button", { name: "Send to automation" })).toBeTruthy();
       expect(section.querySelector(".people-commitment-body")).toHaveTextContent(item.body);
       await waitFor(() => expect(vi.mocked(fetch).mock.calls.some(([url]) => String(url) === `/api/people/commitments/${item.id}/execution`)).toBe(true));
       expect(document.querySelectorAll(".people-commitment-inspector")).toHaveLength(1);
@@ -311,7 +311,7 @@ describe("PeopleCore encrypted local plane", () => {
     });
     render(<PeopleCore scope="people:r1" />);
     fireEvent.click(await screen.findByRole("button", { name: /Discuss the next architecture step/ }));
-    expect(await screen.findByRole("button", { name: "Send to Workbench" })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: "Send to automation" })).toBeTruthy();
     expect(screen.queryByTitle("Workbench model")).toBeNull();
     expect(screen.queryByText("Workbench model")).toBeNull();
     expect(screen.getByRole("button", { name: "Mark satisfied" })).toBeTruthy();

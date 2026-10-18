@@ -104,7 +104,7 @@ class WorkbenchService:
 
     def create_workbench(self, principal: Principal, *, name: str, **fields: Any) -> dict[str, Any]:
         if not name.strip():
-            raise ValidationError("Workbench name is required")
+            raise ValidationError("Automation name is required")
         self._refuse_post_marker_pointer_write(principal, fields)
         body = {"name": name, **fields}
         fields = self._wb_fields(body)
@@ -371,7 +371,7 @@ class WorkbenchService:
         if not run_id:
             runs = self._db.workbench_runs.list_for_workbench(workbench_id, limit=1)
             if not runs:
-                raise ValidationError("No runs found for this workbench")
+                raise ValidationError("No runs found for this automation")
             run_id = runs[0].id
 
         from holdspeak.workbench_conductor import _auto_mint_artifact
@@ -552,7 +552,7 @@ class WorkbenchService:
             raise ValidationError("Invalid memory index")
         wb = self._db.workbenches.get(workbench_id)
         if not wb or not wb.recipe_id:
-            raise ValidationError("Workbench has no recipe")
+            raise ValidationError("Automation has no agent")
         entry = entries[index]
         skill = self._db.skills.upsert(
             skill_id=_new_id("skill"), title=f"Learned: {entry.get('content', '')[:60]}",
@@ -685,7 +685,7 @@ class WorkbenchService:
         if reason == "not_parked":
             raise ConflictError("Item is not parked")
         action = "park" if parked else "restore"
-        raise ConflictError(f"Cannot {action} Workbench item {item_id}")
+        raise ConflictError(f"Cannot {action} automation item {item_id}")
 
     def _wb_payload(
         self, wb: Any, principal: Principal, *, parked: bool = False

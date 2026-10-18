@@ -77,7 +77,7 @@ export function WorkbenchesHomeCore({ hero }: CoreProps) {
       ].sort((a, b) => (b.started_at || "").localeCompare(a.started_at || "")).slice(0, 10));
       setRunsError(failures.length ? `Runs not loaded · ${failures.join("; ")}` : "");
     } catch (error) {
-      setLoadError(`Workbenches not loaded · ${readableError(error)}`);
+      setLoadError(`Automations not loaded · ${readableError(error)}`);
     } finally {
       setLoading(false);
     }
@@ -106,7 +106,7 @@ export function WorkbenchesHomeCore({ hero }: CoreProps) {
       {loaded && workbenches.length === 0 ? (
         <SurfaceState
           empty
-          emptyLabel="No workbenches yet"
+          emptyLabel="An automation does one job for you, again and again."
           emptyGlyph="⊞"
         />
       ) : (

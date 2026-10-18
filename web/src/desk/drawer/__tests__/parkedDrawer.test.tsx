@@ -98,7 +98,7 @@ describe("the Parked drawer", () => {
     const list = await screen.findByRole("grid", { name: "Archive" });
     expect(within(list).getAllByRole("row")).toHaveLength(4); // the head + three rows
     expect(rowOf(/^Vendor call, MEETING/)).toBeTruthy();
-    expect(rowOf(/^Draft the runbook, WORKBENCH ITEM/)).toBeTruthy();
+    expect(rowOf(/^Draft the runbook, AUTOMATION ITEM/)).toBeTruthy();
     expect(rowOf(/^Old migration, PROJECT/)).toBeTruthy();
     expect(screen.getByText("3 OBJECTS")).toBeTruthy();
   });
@@ -156,7 +156,7 @@ describe("the Parked drawer", () => {
     parked = [];
     notRead = ["workbench_item"];
     const { unmount } = render(<ParkedDrawer origin={null} />);
-    expect((await screen.findByTestId("parked-not-read")).textContent).toBe("WORKBENCH ITEMS · NOT READ");
+    expect((await screen.findByTestId("parked-not-read")).textContent).toBe("AUTOMATION ITEMS · NOT READ");
     unmount();
     notRead = [];
     render(<ParkedDrawer origin={null} />);
@@ -175,7 +175,7 @@ describe("the Parked drawer", () => {
 
   it("a workbench item row wears its own kind word and the workbench sprite", () => {
     const row = parkedRow(ITEMS[1], new Date("2026-10-07T10:00:00"));
-    expect(row.kindWord).toBe("WORKBENCH ITEM");
+    expect(row.kindWord).toBe("AUTOMATION ITEM");
     expect(row.sprite).toMatch(/cartridge|workbench/);
   });
 });

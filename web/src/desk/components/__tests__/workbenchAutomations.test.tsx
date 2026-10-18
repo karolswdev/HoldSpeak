@@ -113,7 +113,7 @@ describe("Workbench STARTS WHEN automations", () => {
 
   it("a look at Event and Idle never turns the schedule off (recon step 19)", async () => {
     const calls = await open([], { schedule: "0 2 * * *", schedule_enabled: true });
-    const mode = screen.getByRole("combobox", { name: "Workbench start condition" });
+    const mode = screen.getByRole("combobox", { name: "Automation start condition" });
     expect(mode).toHaveValue("schedule");
     expect(screen.getByRole("checkbox", { name: "Schedule enabled" })).toBeChecked();
 
@@ -133,15 +133,15 @@ describe("Workbench STARTS WHEN automations", () => {
   it("reveals one start mode at a time and requires a repository for Event", async () => {
     await open();
     expect(screen.getByRole("region", { name: "Starts when" })).toHaveAttribute("data-material", "inset");
-    expect(screen.getByRole("combobox", { name: "Workbench start condition" })).toHaveValue("manual");
+    expect(screen.getByRole("combobox", { name: "Automation start condition" })).toHaveValue("manual");
     expect(screen.queryByText("Starts only when you press Run.")).toBeNull();
     expect(screen.queryByLabelText("GitHub repository")).not.toBeInTheDocument();
 
-    fireEvent.change(screen.getByRole("combobox", { name: "Workbench start condition" }), { target: { value: "schedule" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "Automation start condition" }), { target: { value: "schedule" } });
     expect(screen.getByRole("combobox", { name: "Schedule" })).toBeInTheDocument();
     expect(screen.queryByLabelText("GitHub repository")).not.toBeInTheDocument();
 
-    fireEvent.change(screen.getByRole("combobox", { name: "Workbench start condition" }), { target: { value: "event" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "Automation start condition" }), { target: { value: "event" } });
     expect(screen.getByLabelText("GitHub repository")).toBeInTheDocument();
     expect(screen.queryByRole("combobox", { name: "Schedule" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /GitHub · Review requested/i })).toBeDisabled();
@@ -151,7 +151,7 @@ describe("Workbench STARTS WHEN automations", () => {
   it("creates the GitHub review-requested preset with an explicit repository", async () => {
     const calls = await open();
     const user = userEvent.setup();
-    fireEvent.change(screen.getByRole("combobox", { name: "Workbench start condition" }), { target: { value: "event" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "Automation start condition" }), { target: { value: "event" } });
     await user.type(screen.getByLabelText("GitHub repository"), "karolswdev/HoldSpeak");
     await user.click(screen.getByRole("button", { name: /GitHub · Review requested/i }));
 
@@ -172,7 +172,7 @@ describe("Workbench STARTS WHEN automations", () => {
   it("tests without delivering work, then enables and pauses the trigger", async () => {
     const calls = await open([automation(false)]);
     const user = userEvent.setup();
-    fireEvent.change(screen.getByRole("combobox", { name: "Workbench start condition" }), { target: { value: "event" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "Automation start condition" }), { target: { value: "event" } });
     await screen.findByText("GitHub · Review requested");
     const automationButton = screen
       .getAllByRole("button", { name: /GitHub · Review requested/ })
@@ -201,9 +201,9 @@ describe("Workbench STARTS WHEN automations", () => {
 
   it("pauses an active event automation when Manual is selected", async () => {
     const calls = await open([automation(true)]);
-    expect(screen.getByRole("combobox", { name: "Workbench start condition" })).toHaveValue("event");
+    expect(screen.getByRole("combobox", { name: "Automation start condition" })).toHaveValue("event");
 
-    fireEvent.change(screen.getByRole("combobox", { name: "Workbench start condition" }), { target: { value: "manual" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "Automation start condition" }), { target: { value: "manual" } });
 
     await waitFor(() => expect(calls.mock.calls.some(([url, init]) => {
       if (!String(url).endsWith("/automations/auto-1") || (init as RequestInit).method !== "PATCH") {
@@ -217,7 +217,7 @@ describe("Workbench STARTS WHEN automations", () => {
     const calls = await open();
     const user = userEvent.setup();
 
-    fireEvent.change(screen.getByRole("combobox", { name: "Workbench start condition" }), { target: { value: "idle" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "Automation start condition" }), { target: { value: "idle" } });
 
     expect(screen.getByText("6H COOLDOWN")).toBeInTheDocument();
     expect(screen.getByText("TARGET 2 / NIGHT")).toBeInTheDocument();
@@ -250,7 +250,7 @@ describe("Workbench STARTS WHEN automations", () => {
 
   it.each([0, 1])("enabled policy with %s completed items keeps stored progress honest while editing", async (nightlyCount) => {
     await open([], {}, { enabled: true, nightly_count: nightlyCount });
-    fireEvent.change(screen.getByRole("combobox", { name: "Workbench start condition" }), { target: { value: "idle" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "Automation start condition" }), { target: { value: "idle" } });
     expect(screen.getByText("READY WHEN IDLE")).toBeInTheDocument();
     expect(screen.getByText("LOCAL DATA")).toBeInTheDocument();
     expect(screen.getByText("ONE ITEM / RUN")).toBeInTheDocument();
@@ -264,7 +264,7 @@ describe("Workbench STARTS WHEN automations", () => {
 
   it("resourcefulness Retry owns the pending guard and replays the original policy write", async () => {
     const calls = await open();
-    fireEvent.change(screen.getByRole("combobox", { name: "Workbench start condition" }), { target: { value: "idle" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "Automation start condition" }), { target: { value: "idle" } });
     fireEvent.click(screen.getByRole("button", { name: "Decrease Cooldown hours" }));
     const writes: RequestInit[] = [];
     let resolveWrite!: (response: Response) => void;
@@ -299,7 +299,7 @@ describe("Workbench STARTS WHEN automations", () => {
 
   it("Save policy names its failure and Retry replays that same save", async () => {
     const calls = await open([], {}, { enabled: true });
-    fireEvent.change(screen.getByRole("combobox", { name: "Workbench start condition" }), { target: { value: "idle" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "Automation start condition" }), { target: { value: "idle" } });
     fireEvent.click(screen.getByRole("button", { name: "Increase Nightly target" }));
     const writes: RequestInit[] = [];
     vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL, init?: RequestInit) => {

@@ -128,10 +128,34 @@ describe("the deck", () => {
     await drawn();
     expect(screen.getByText("PROGRAMS")).toBeInTheDocument();
     expect(
-      screen.getByRole("option", { name: /Workbenches/ }),
+      screen.getByRole("option", { name: /Automations/ }),
     ).toBeInTheDocument();
     // Betterment shell S1: Processes is a builder tool, listed only when
     // Builder tools is on (Settings ▸ System).
     expect(screen.queryByRole("option", { name: /Processes/ })).toBeNull();
+  });
+
+  // Betterment A1: "automation" and "automations" find the Automations
+  // program, and the program comes before the automations of that kind.
+  it.each(["automation", "automations", "Automation"])("%s finds the Automations program first", async (query) => {
+    useDesk.setState({
+      items: {
+        ...useDesk.getState().items,
+        workbench: [{ kind: "workbench", id: "wb1", name: "Friday update", title: "Friday update" } as never],
+      },
+    });
+    const deck = open();
+    fireEvent.change(deck, { target: { value: query } });
+    await drawn();
+    const options = screen.getAllByRole("option").map((o) => o.textContent ?? "");
+    const program = options.findIndex((t) => /Automations/.test(t) && /PROGRAM/.test(t));
+    const object = options.findIndex((t) => /Friday update/.test(t));
+    expect(program, options.join(" / ")).toBe(0);
+    expect(object).toBeGreaterThan(program);
+  });
+
+  it("the name matches in either number", () => {
+    expect(rankRow({ label: "Automations", name: "Automations" }, "automation", false)).toBe(100);
+    expect(rankRow({ label: "Automations", name: "Automations" }, "automations", false)).toBe(100);
   });
 });

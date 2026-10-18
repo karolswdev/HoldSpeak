@@ -101,7 +101,7 @@ describe("the phone menu bar has one door that carries every verb", () => {
     expect(screen.getByRole("menu", { name: "Go menu" })).toHaveClass("desk-menu-list");
     expect(screen.getAllByRole("menuitem").map((row) => row.querySelector(".desk-menu-label")?.textContent)).toEqual([
       "Today", "Needs you", "Meetings", "People", "Conductor", "Ask AI", "Speak",
-      "Workbenches", "Memory", "Voice commands", "Note", "Meeting", "Project", "Person",
+      "Automations", "Memory", "Voice commands", "Note", "Meeting", "Project", "Person",
     ]);
   });
 

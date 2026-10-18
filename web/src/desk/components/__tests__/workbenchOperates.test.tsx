@@ -132,12 +132,12 @@ describe("HS-135-15 Run button ghosting", () => {
     render(<WorkbenchWindow workbenchId="wb1" />);
 
     await waitFor(() => {
-      const runButton = screen.getByRole("button", { name: /Run this workbench/ });
+      const runButton = screen.getByRole("button", { name: /Run this automation/ });
       expect(runButton).toBeEnabled();
     });
 
     const runButton = screen.getByRole("button", {
-      name: /Run this workbench/,
+      name: /Run this automation/,
     });
     expect(runButton.textContent).not.toContain("Bind an agent");
   });
@@ -255,7 +255,7 @@ describe("Run with no engine", () => {
     const fetchMock = vi.mocked(fetch);
     render(<WorkbenchWindow workbenchId="wb1" />);
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Run this workbench now" })).not.toBeDisabled(),
+      expect(screen.getByRole("button", { name: "Run this automation now" })).not.toBeDisabled(),
     );
     expect(screen.queryByTestId("wb-no-engine")).toBeNull();
     // The window does not ask the subject-blind assignment editor.
@@ -282,7 +282,7 @@ describe("Run with no engine", () => {
     // The detail carries no summary, so Run is live; the hub then refuses by name.
     mockHub({ recipeId: "r1", recipes: AGENT, runAnswers: [NO_ENGINE] });
     const { container } = render(<WorkbenchWindow workbenchId="wb1" />);
-    const run = await screen.findByRole("button", { name: "Run this workbench now" });
+    const run = await screen.findByRole("button", { name: "Run this automation now" });
     await waitFor(() => expect(run).not.toBeDisabled());
     await act(async () => { fireEvent.click(run); });
     await screen.findByTestId("wb-no-engine");
@@ -298,7 +298,7 @@ describe("Run with no engine", () => {
       runAnswers: [{ status: 500, body: { error: "boom" } }, NO_ENGINE],
     });
     const { container } = render(<WorkbenchWindow workbenchId="wb1" />);
-    const run = await screen.findByRole("button", { name: "Run this workbench now" });
+    const run = await screen.findByRole("button", { name: "Run this automation now" });
     await waitFor(() => expect(run).not.toBeDisabled());
     await act(async () => { fireEvent.click(run); });
     expect((await screen.findByText("RUN FAILED · HTTP 500"))).toBeTruthy();

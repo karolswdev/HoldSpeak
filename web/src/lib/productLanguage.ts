@@ -44,7 +44,7 @@ export const PRODUCT_TERMS = {
    * take the desk down). */
   decision: ["Decision", "Decisions"],
   thread: ["Thread", "Threads"],
-  workbench: ["Workbench", "Workbenches"],
+  workbench: ["Automation", "Automations"],
 } as const;
 
 export type CanonicalProductTerm = keyof typeof PRODUCT_TERMS;

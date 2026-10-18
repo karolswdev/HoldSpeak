@@ -848,7 +848,7 @@ export async function loadAll(): Promise<LoadResult> {
           .map(fromWireWorkbench).filter((x): x is Workbench => x !== null);
         status.workbench = "live";
       })
-      .catch((e) => fail("workbench", "Workbenches", e)),
+      .catch((e) => fail("workbench", "Automations", e)),
     // HS-134-02: profiles derived from inference targets (read routes retired).
     apiFetch<Record<string, unknown>>("/api/projects")
       .then((d) => {

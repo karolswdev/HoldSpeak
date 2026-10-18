@@ -16,7 +16,7 @@ def _terms(
     """Freeze owner-approved placement once, rather than re-resolving at fire."""
     recipe = db.recipes.get(wb.recipe_id) if wb.recipe_id else None
     if recipe is None:
-        raise ServiceError("delegation_stale_work", "Workbench has no recipe", context={"status": 409})
+        raise ServiceError("delegation_stale_work", "Automation has no agent", context={"status": 409})
     from ..kernel.runtime import _configure
     route = _configure(db).inference_adoption_service.plans.freeze_route_plan_in_transaction(
         ROUTE_PLANNING_AUTHORITY, conn,
