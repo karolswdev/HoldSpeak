@@ -145,9 +145,10 @@ class TestFridayWalk:
         set_claude_answer(bin_dir, "## Team update, this week\n\n- Shipped: the rollback runbook.\n"
                                    "- Slipped: the ledger cutover moves to Thursday.\n- From Mira: the review.")
         monkeypatch.setenv("PATH", path_with(bin_dir))
-        monkeypatch.setenv(CLI_ENGINES_ENV, "on")
         _ensure_build()
         server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+        # The rig turns agent CLIs off; this walk turns them on, with the fake.
+        monkeypatch.setenv(CLI_ENGINES_ENV, "on")
         self.server, self.base = server, base
         try:
             yield
@@ -175,14 +176,16 @@ class TestFridayWalk:
                 _normal_chair(page)
                 # Find it (A1, one press; not counted): Go ▸ Automations.
                 page.get_by_role("button", name="Go", exact=True).first.click()
-                page.get_by_role("menuitem", name="Automations").first.click()
+                go = page.locator("nav[aria-label='Go menu']")
+                go.wait_for(timeout=T)
+                go.get_by_role("menuitem", name="Automations").first.evaluate("el => el.click()")
                 new = page.get_by_test_id("automation-new")
                 new.wait_for(timeout=T)
                 page.screenshot(path=str(SHOTS / f"walk-0-home-{width}.png"))
 
                 started, presses = time.monotonic(), 0
                 new.click(); presses += 1
-                friday = page.get_by_test_id("automation-starter-friday-team-update").last
+                friday = page.locator("[id='workbench:__new__']").get_by_test_id("automation-starter-friday-team-update")
                 friday.wait_for(timeout=T)
                 page.screenshot(path=str(SHOTS / f"walk-1-new-{width}.png"))
                 friday.click(); presses += 1
@@ -193,10 +196,16 @@ class TestFridayWalk:
                 add = page.get_by_role("button", name="Add Claude Code")
                 add.wait_for(timeout=T)
                 add.click(); presses += 1
-                with_line.get_by_text("Claude Code").first.wait_for(timeout=T)
+                # Add writes the engine, then this automation uses it ("In use").
+                with_line.get_by_text("In use", exact=True).wait_for(timeout=T)
                 page.get_by_test_id("automation-run-now").click(); presses += 1
                 reading = page.get_by_test_id("automation-newest").get_by_test_id("automation-reading")
-                reading.get_by_role("heading", name="Team update, this week").wait_for(timeout=60_000)
+                try:
+                    reading.get_by_role("heading", name="Team update, this week").wait_for(timeout=60_000)
+                except Exception:
+                    page.screenshot(path=str(SHOTS / f"walk-fail-{width}.png"))
+                    print("NEWEST:", page.get_by_test_id("automation-newest").inner_text())
+                    raise
                 seconds = time.monotonic() - started
                 reading.scroll_into_view_if_needed()
                 page.screenshot(path=str(SHOTS / f"walk-3-result-{width}.png"))
