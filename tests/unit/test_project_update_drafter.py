@@ -687,3 +687,141 @@ class TestPromptContent:
 
         # The prompt must instruct the model not to add facts.
         assert "do not add" in system.lower() or "not add facts" in system.lower()
+
+
+# ---- Betterment P2: 1:1s stay out of the update (decision 18) ---------------
+
+def _p2_meeting(db, project_id, meeting_id, title, summary, speakers=(), actions=()):
+    from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
+
+    db.meetings.save_meeting(MeetingState(
+        id=meeting_id,
+        started_at=datetime(2026, 10, 14, 9, 0),
+        title=title,
+        segments=[
+            TranscriptSegment(text=f"line {i}", speaker=s, start_time=float(i), end_time=float(i) + 1)
+            for i, s in enumerate(speakers)
+        ],
+        intel=IntelSnapshot(timestamp=1.0, summary=summary, action_items=list(actions)),
+    ))
+    db.projects.associate_meeting_project(
+        meeting_id=meeting_id, project_id=project_id, source="test", confidence=1.0,
+    )
+
+
+@pytest.fixture()
+def p2_week(tmp_path, monkeypatch):
+    import holdspeak.db as hsdb
+    from holdspeak.db.decisions import backfill_decisions
+    from holdspeak.services.decision_record_service import DecisionRecordService
+
+    reset_database()
+    db = Database(tmp_path / "p2_week.db")
+    monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
+    project = ProjectService(db).create_project(OWNER, {"name": "Payments migration"})
+    pid = project["id"]
+    _p2_meeting(
+        db, pid, "p2-sync", "Payments platform sync",
+        "The card tokenization service is blocked on the HSM key ceremony.",
+        speakers=("Me", "Theo", "Jun"),
+        actions=[{"id": "p2-sync-a", "task": "Get a date for the HSM ceremony",
+                  "owner": "Jun", "status": "pending", "review_state": "accepted"}],
+    )
+    _p2_meeting(
+        db, pid, "p2-one-on-one", "1:1 with Mira",
+        "Mira reported a heavy cutover load.",
+        speakers=("Me", "Mira"),
+        actions=[{"id": "p2-oneonone-a", "task": "Ask Theo to pair with Mira",
+                  "owner": "Karol", "status": "pending", "review_state": "accepted"}],
+    )
+    # No 1:1 in the title: two speakers, one of them is one of his People.
+    _p2_meeting(
+        db, pid, "p2-by-speakers", "Workload check",
+        "Mira asked to drop the November guild talk.",
+        speakers=("Me", "Mira"),
+    )
+    # Two speakers, neither is one of his People: an ordinary meeting.
+    _p2_meeting(
+        db, pid, "p2-vendor", "Vendor call",
+        "The vendor confirmed the sandbox keys.",
+        speakers=("Me", "Vendor rep"),
+    )
+    db.plugins.record_artifact(
+        artifact_id="p2-oneonone-decisions", meeting_id="p2-one-on-one",
+        artifact_type="decisions", title="1:1 decisions",
+        structured_json={"decisions": [{"decision": "Mira presents at the guild", "rationale": "growth"}]},
+        plugin_id="p2-test-producer",
+    )
+    with db._connection() as conn:
+        backfill_decisions(conn)
+    DecisionRecordService(db).create_from_meeting(
+        OWNER, db.decisions.list(meeting_id="p2-one-on-one")[0].id,
+    )
+    yield db, pid
+    reset_database()
+
+
+def _p2_service(db, people=("Mira Okafor", "Theo Lindqvist", "Jun Park")):
+    collector = ProjectEvidenceCollector(db)
+    delta = ProjectDeltaService(db, collector)
+    return ProjectUpdateService(
+        db, project_service=ProjectService(db, delta_service=delta), delta_service=delta,
+        people_names=(lambda _principal: list(people)) if people is not None else None,
+    )
+
+
+def test_p2_update_leaves_out_one_on_ones_and_names_them(p2_week) -> None:
+    db, pid = p2_week
+    draft = _p2_service(db).draft_update(OWNER, pid)
+    body = draft["body_md"]
+    refs = {r for c in json.loads(draft["claims_json"]) for r in c["refs"]}
+    manifest = json.loads(draft["source_manifest_json"])
+
+    # The team meeting and the vendor call stay.
+    assert "blocked on the HSM key ceremony" in body
+    assert "Get a date for the HSM ceremony" in body
+    assert "The vendor confirmed the sandbox keys." in body
+    # Nothing from the 1:1s: no summary, no action, no decision.
+    assert "heavy cutover load" not in body
+    assert "Ask Theo to pair with Mira" not in body
+    assert "Mira presents at the guild" not in body
+    assert "drop the November guild talk" not in body
+    assert "action_item:p2-oneonone-a" not in refs
+    assert "meeting:p2-one-on-one" not in manifest["week_source_refs"]
+    assert "meeting:p2-by-speakers" not in manifest["week_source_refs"]
+    # The coverage line names what was left out.
+    coverage = body.split("## Source Coverage\n", 1)[1]
+    assert "Left out: 1:1 with Mira" in coverage
+    assert "Left out: Workload check (1:1)" in coverage
+    assert "All sources consulted successfully." not in coverage
+
+
+def test_p2_without_people_names_the_title_rule_still_holds(p2_week) -> None:
+    db, pid = p2_week
+    body = _p2_service(db, people=None).draft_update(OWNER, pid)["body_md"]
+    assert "heavy cutover load" not in body
+    assert "Left out: 1:1 with Mira" in body
+    # Without his People the speaker rule cannot fire: the meeting stays.
+    assert "drop the November guild talk" in body
+
+
+@pytest.mark.parametrize("title, expected", [
+    ("1:1 with Mira", True), ("Mira 1:1", True), ("Mira / Karol 1-on-1", True),
+    ("One-on-one: Theo", True), ("Payments platform sync", False),
+    ("Standup 10:15", False), ("11:11 review", False), ("Q1-1 planning", False),
+])
+def test_p2_title_rule(title, expected) -> None:
+    from holdspeak.services.meeting_kind import title_says_one_on_one
+
+    assert title_says_one_on_one(title) is expected
+
+
+def test_p2_speaker_rule() -> None:
+    from holdspeak.services.meeting_kind import is_one_on_one
+
+    people = ["Mira Okafor"]
+    assert is_one_on_one("Workload", ["Me", "Mira"], people)
+    assert is_one_on_one("Workload", ["Me", "Mira Okafor"], people)
+    assert not is_one_on_one("Workload", ["Me", "Mira", "Theo"], people)
+    assert not is_one_on_one("Workload", ["Me", "Vendor rep"], people)
+    assert not is_one_on_one("Workload", ["Me", "Mira"], [])

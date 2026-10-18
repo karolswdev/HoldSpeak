@@ -1110,6 +1110,7 @@ class MeetingWebServer:
         from .services.meeting_intel_service import MeetingIntelService
         from .services.meeting_service import MeetingService
         from .services.people_service import PeopleService, UnavailablePeopleStore
+        from .people.key_free import people_reads_allowed
         from .people import production_people_store
         from .services.reaction_service import ReactionService
         from .services.watch_service import WatchService
@@ -1439,6 +1440,11 @@ class MeetingWebServer:
                 project_service=_project_service,
                 delta_service=_project_delta_service,
                 broker=broker,
+                # Betterment P2: a 1:1 is told by its speakers too.
+                people_names=lambda principal: [
+                    str(rel.get("display_name") or "")
+                    for rel in people_service.list_relationships(principal)
+                ] if people_reads_allowed() else [],
             )),
             project_brief_service=PreparationBriefService(
                 get_database(),
