@@ -3,9 +3,8 @@
 // DeskEditor stays (sanctioned non-barrel import). CitationChips per section.
 // ActionNotice for unverified claims. Dead hand-rolled blocks removed.
 
-import { useCallback, type KeyboardEvent } from "react";
-import { Button } from "../../../components/signal/Signal";
-import { DeskEditor } from "../../../desk/components/DeskEditor";
+import { useCallback, useEffect, useState, type KeyboardEvent } from "react";
+import { Button, TextArea } from "../../../components/signal/Signal";
 import {
   SurfaceFooter,
   SurfaceLedger,
@@ -29,7 +28,7 @@ import {
 } from "../../../desk/surface";
 import { openRef } from "../../../desk/openObject";
 import { egressFor } from "../../../desk/surface/egress";
-import type { UpdateController } from "./useUpdateController";
+import type { EnginePass, UpdateController } from "./useUpdateController";
 import type { ProjectUpdate, UpdateClaim } from "./model";
 import { claimSends } from "./model";
 import {
@@ -444,16 +443,18 @@ function UpdateEditor({
         <span className="surface-token">Rev {update.draftRevision}</span>
       </div>
 
-      {/* Body: DeskEditor for drafts, Material for published */}
+      {/* Betterment P1: a draft reads as text and is edited in place (no
+          format toolbar, no markdown marks); published updates render. */}
       {isDraft ? (
         <div className="update-body-editor" data-testid="update-body-editor">
-          <DeskEditor
+          <TextArea
+            className="update-plain-text"
             value={ctrl.editBody}
-            onChange={ctrl.handleEditBody}
+            onChange={(e) => ctrl.handleEditBody(e.target.value)}
             placeholder="Write your update"
-            ariaLabel="Update body"
-            autoFocus
-            minHeight="200px"
+            aria-label="Update body"
+            data-testid="update-plain-text"
+            rows={Math.min(40, Math.max(10, ctrl.editBody.split("\n").length + 1))}
           />
           <div className="update-body-editor-mic">
             <MicButton
@@ -496,6 +497,73 @@ function UpdateEditor({
   );
 }
 
+/* ── Betterment P1: the engine pass, under the text ── */
+
+function EnginePassLine({
+  pass,
+  engineModel,
+  onStop,
+  onUndo,
+  onUse,
+  onRetry,
+  onChooseEngine,
+}: {
+  pass: EnginePass;
+  engineModel: string;
+  onStop: () => void;
+  onUndo: () => void;
+  onUse: () => void;
+  onRetry: () => void;
+  onChooseEngine: () => void;
+}) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (pass.phase !== "running") return;
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [pass.phase]);
+  if (pass.phase === "idle") return null;
+  const who = engineModel || "The engine";
+  if (pass.phase === "running") {
+    const s = Math.max(0, Math.round((now - pass.startedAt) / 1000));
+    return (
+      <div className="surface-run-line" data-testid="update-engine-pass" data-state="running" role="status">
+        <span>{who} is improving this draft · {s} s</span>
+        <Button dense variant="ghost" onClick={onStop}>Stop</Button>
+      </div>
+    );
+  }
+  if (pass.phase === "written") {
+    return (
+      <div className="surface-run-line" data-testid="update-engine-pass" data-state="success" role="status">
+        <span>Written by {engineModel || pass.model || "the engine"} · {pass.seconds} s</span>
+        <Button dense variant="ghost" onClick={onUndo}>Undo</Button>
+      </div>
+    );
+  }
+  if (pass.phase === "ready") {
+    return (
+      <div className="surface-run-line" data-testid="update-engine-pass" data-state="ready" role="status">
+        <span>A better draft is ready</span>
+        <Button dense variant="secondary" onClick={onUse}>Use it</Button>
+      </div>
+    );
+  }
+  return (
+    <div data-testid="update-engine-pass" data-state="failure">
+      <RunLine
+        phase="failure"
+        model={who}
+        elapsedSeconds={pass.seconds}
+        reason={pass.reason}
+        detail={pass.detail}
+        onRetry={onRetry}
+        onAction={pass.reason === "no_engine" ? onChooseEngine : undefined}
+      />
+    </div>
+  );
+}
+
 /* ── Main Update posture ── */
 
 export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
@@ -522,11 +590,11 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
             variant="primary"
             loading={ctrl.draftBusy}
             disabled={engine.state === "unread"}
-            onClick={() => void ctrl.draft(engine.state === "set" ? "model" : "deterministic")}
+            onClick={() => void ctrl.write(engine.state === "set")}
             data-testid="update-verb-draft"
             data-verb="draft-update"
           >
-            Draft update
+            Write update
           </Button>
         </SurfaceVerbs>
 
@@ -585,7 +653,12 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
           <SurfaceState error={ctrl.error} onRetry={ctrl.retryFailed ?? undefined} />
         ) : null}
 
-        {ctrl.draftRun.phase !== "idle" ? (
+        {/* Betterment P1: the records draft is made in under a second; its
+            line shows only while it runs or when it failed. */}
+        {/* With no engine the records draft is the draft: the engine line
+            says so. */}
+        {engine.state !== "set" && ctrl.draftRun.phase === "success" ? <EngineLine engine={engine} /> : null}
+        {ctrl.draftRun.phase === "running" || ctrl.draftRun.phase === "failure" ? (
           <>
             <EngineLine engine={engine} />
             <RunLine
@@ -602,6 +675,16 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
         ) : null}
 
         <UpdateEditor ctrl={ctrl} onOpenRef={onOpenRef} />
+
+        <EnginePassLine
+          pass={ctrl.enginePass}
+          engineModel={engine.model}
+          onStop={() => void ctrl.stopEnginePass()}
+          onUndo={() => void ctrl.undoEngineDraft()}
+          onUse={() => void ctrl.takeBetterDraft()}
+          onRetry={() => void ctrl.retryEnginePass()}
+          onChooseEngine={() => openSurfaceOr("configure-runs-on", "/settings", "models")}
+        />
 
         <SurfaceFooter
           egress={

@@ -730,6 +730,129 @@ def test_a_slow_model_draft_never_freezes_the_hub_and_a_bad_answer_says_why(
         assert hub.ok("GET", f"/api/projects/{pid}/updates")["updates"] == [], "nothing is saved"
 
 
+# ── Betterment P1: Write update, the records draft first, the engine after ──
+
+ENGINE_UPDATE = json.dumps({"sections": [
+    {"key": "progress", "sentences": [{"text": "The ledger cutover is on track for Thursday.", "cited_refs": []}]},
+    {"key": "risks_blockers", "sentences": [{"text": "Card tokenization waits on the HSM key ceremony.", "cited_refs": []}]},
+]})
+
+
+def _poll_job(hub: Hub, job_id: str, *, until: tuple[str, ...], timeout: float = 30.0) -> dict[str, Any]:
+    deadline = time.monotonic() + timeout
+    while True:
+        job = hub.ok("GET", f"/api/update-jobs/{job_id}")["job"]
+        if job["state"] in until or time.monotonic() > deadline:
+            return job
+        time.sleep(0.1)
+
+
+def test_write_update_saves_the_records_draft_then_the_engine_improves_it_in_the_background(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, llm: FakeLLM,
+) -> None:
+    """Betterment P1: the press saves the records draft at once; the engine
+    pass runs as a job the face polls, off the request loop; its draft becomes
+    the next revision only on apply; Undo is the records draft again."""
+    llm.reply = ENGINE_UPDATE
+    llm.delay_s = 3.0
+    with _hub(tmp_path, monkeypatch, lifespan=True) as hub:
+        pid = hub.ok("POST", "/api/projects", {"name": "Write update"})["project"]["id"]
+        _define_route(hub.home, llm.endpoint, "p1-llm")
+
+        started = time.monotonic()
+        records = hub.ok("POST", f"/api/projects/{pid}/updates/draft",
+                         {"generator": "deterministic", "command_id": "p1-records"})["update"]
+        assert time.monotonic() - started < 1.0
+        assert records["generator"] == "deterministic"
+
+        job = hub.ok("POST", f"/api/updates/{records['id']}/engine-pass")["job"]
+        assert (job["state"], job["base_update_id"]) == ("running", records["id"]), job
+        deadline = time.monotonic() + 10
+        while not llm.posts and time.monotonic() < deadline:
+            time.sleep(0.05)
+        assert llm.posts, "the pass reached the engine"
+        t0 = time.monotonic()
+        assert hub.client.get("/health").status_code == 200
+        assert time.monotonic() - t0 < 1.0, "the hub answers while the engine works"
+        assert hub.ok("GET", f"/api/update-jobs/{job['id']}")["job"]["state"] == "running"
+        # Nothing is saved until the face applies it.
+        assert [u["id"] for u in hub.ok("GET", f"/api/projects/{pid}/updates")["updates"]] == [records["id"]]
+
+        done = _poll_job(hub, job["id"], until=("succeeded", "failed"))
+        assert done["state"] == "succeeded", done
+        assert "The ledger cutover is on track for Thursday." in done["body_md"]
+        assert done["generator_model"]  # the engine that wrote it, for "Written by"
+
+        applied = hub.ok("POST", f"/api/update-jobs/{job['id']}/apply", {})["update"]
+        assert applied["generator"].startswith("model:") and applied["draft_revision"] == 2
+        assert "The ledger cutover is on track for Thursday." in applied["body_md"]
+        # The coverage is still the record of what was read, not the engine's prose.
+        assert "## Source Coverage" in applied["body_md"]
+        assert hub.ok("GET", f"/api/update-jobs/{job['id']}")["job"]["state"] == "applied"
+
+        undo = hub.ok("POST", f"/api/projects/{pid}/updates/draft",
+                      {"generator": "deterministic", "command_id": "p1-undo"})["update"]
+        assert (undo["generator"], undo["draft_revision"]) == ("deterministic", 3)
+
+
+def test_the_engine_never_overwrites_his_words_and_a_failure_keeps_the_records_draft(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, llm: FakeLLM,
+) -> None:
+    llm.reply = ENGINE_UPDATE
+    with _hub(tmp_path, monkeypatch) as hub:
+        pid = hub.ok("POST", "/api/projects", {"name": "His words"})["project"]["id"]
+        _define_route(hub.home, llm.endpoint, "p1-words")
+        records = hub.ok("POST", f"/api/projects/{pid}/updates/draft", {"generator": "deterministic"})["update"]
+        job = hub.ok("POST", f"/api/updates/{records['id']}/engine-pass")["job"]
+        hub.ok("PUT", f"/api/updates/{records['id']}", {"body_md": "My own words for Friday."})
+        assert _poll_job(hub, job["id"], until=("succeeded", "failed"))["state"] == "succeeded"
+
+        refused = hub.client.post(f"/api/update-jobs/{job['id']}/apply", json={})
+        assert refused.status_code == 409 and refused.json()["code"] == "draft_changed", refused.text
+        assert hub.ok("GET", f"/api/updates/{records['id']}")["update"]["body_md"] == "My own words for Friday."
+        used = hub.ok("POST", f"/api/update-jobs/{job['id']}/apply", {"force": True})["update"]
+        assert "The ledger cutover is on track for Thursday." in used["body_md"]
+
+        # A failed pass: one reason in words; the records draft stays the draft.
+        llm.reply = "Here is your update. Progress is good."
+        records = hub.ok("POST", f"/api/projects/{pid}/updates/draft", {"generator": "deterministic"})["update"]
+        job = hub.ok("POST", f"/api/updates/{records['id']}/engine-pass")["job"]
+        failed = _poll_job(hub, job["id"], until=("succeeded", "failed"))
+        assert (failed["state"], failed["reason"], failed["detail"]) == (
+            "failed", "not_usable", "it did not return JSON"), failed
+        drafts = hub.ok("GET", f"/api/projects/{pid}/updates?lifecycle=draft")["updates"]
+        assert [d["id"] for d in drafts] == [records["id"]]
+        assert hub.client.post(f"/api/update-jobs/{job['id']}/apply", json={}).status_code == 409
+
+        # Stop: the late answer is dropped.
+        llm.reply, llm.delay_s = ENGINE_UPDATE, 1.5
+        job = hub.ok("POST", f"/api/updates/{records['id']}/engine-pass")["job"]
+        stopped = hub.ok("POST", f"/api/update-jobs/{job['id']}/stop")["job"]
+        assert (stopped["state"], stopped["reason"]) == ("stopped", "stopped")
+        time.sleep(2.5)
+        assert hub.ok("GET", f"/api/update-jobs/{job['id']}")["job"]["state"] == "stopped"
+        assert hub.client.post(f"/api/update-jobs/{job['id']}/apply", json={"force": True}).status_code == 409
+
+
+def test_a_hub_restart_ends_a_running_engine_pass_with_a_reason(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Betterment P1: the pass's thread dies with the old process. On start
+    the hub marks a job left running as failed, so the face shows Try again."""
+    with _hub(tmp_path, monkeypatch) as hub:
+        pid = hub.ok("POST", "/api/projects", {"name": "Restart"})["project"]["id"]
+        records = hub.ok("POST", f"/api/projects/{pid}/updates/draft", {"generator": "deterministic"})["update"]
+        with hub.db._connection() as conn:  # a pass the old process left running
+            conn.execute(
+                "INSERT INTO project_update_jobs (id, project_id, base_update_id, state) VALUES (?, ?, ?, 'running')",
+                ("pujob_left_running", pid, records["id"]),
+            )
+    with _hub(tmp_path, monkeypatch, lifespan=True) as hub:
+        job = hub.ok("GET", "/api/update-jobs/pujob_left_running")["job"]
+        assert (job["state"], job["reason"], job["detail"]) == (
+            "failed", "did_not_answer", "the hub restarted"), job
+
+
 # ── the merge receipt (PHILO-15 lane 17): the hub's own poll ─────────
 
 MERGE_PROJECT = "proj-philo1517abcd"

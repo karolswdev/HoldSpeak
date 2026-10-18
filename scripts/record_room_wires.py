@@ -721,6 +721,109 @@ def draft409(hub: Any, _mp: pytest.MonkeyPatch) -> dict[str, Any]:
         llm.stop()
 
 
+# ── Betterment P1: Write update, the records draft first, the engine after ──
+
+P1_ENGINE_UPDATE = json.dumps({"sections": [
+    {"key": "progress", "sentences": [{"text": "The ledger cutover is on track for Thursday.", "cited_refs": []}]},
+    {"key": "risks_blockers", "sentences": [
+        {"text": "Card tokenization waits on the security team's HSM key ceremony.", "cited_refs": []}]},
+]})
+
+
+def _p1_seed(hub: Any, pid: str) -> None:
+    """The RECON shape in small: a team sync that names the HSM blocker and a
+    1:1 that must stay out (P2)."""
+    from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
+
+    for mid, title, summary, speakers in (
+        ("p1-sync", "Payments platform sync",
+         "The ledger cutover is on track for Thursday. The card tokenization service is blocked on the "
+         "security team's HSM key ceremony, flagged as a risk to the October release.", ("Me", "Theo", "Jun")),
+        ("p1-mira", "1:1 with Mira", "Mira reported a heavy cutover load.", ("Me", "Mira")),
+    ):
+        hub.db.meetings.save_meeting(MeetingState(
+            id=mid, started_at=datetime(2026, 10, 14, 9, 0), title=title,
+            segments=[TranscriptSegment(text="...", speaker=s, start_time=float(i), end_time=float(i) + 1)
+                      for i, s in enumerate(speakers)],
+            intel=IntelSnapshot(timestamp=1.0, summary=summary),
+        ))
+        hub.ok("POST", f"/api/projects/{pid}/meetings/{mid}")
+
+
+def _p1_poll(hub: Any, job_id: str) -> list[dict[str, Any]]:
+    """Every distinct answer of the job poll until it settles."""
+    import time
+
+    seen: list[dict[str, Any]] = []
+    deadline = time.monotonic() + 30
+    while time.monotonic() < deadline:
+        answer = _call(hub, "GET", f"/api/update-jobs/{job_id}")
+        state = answer["answer"]["job"]["state"]
+        if not seen or seen[-1]["answer"]["job"]["state"] != state:
+            seen.append(answer)
+        if state != "running":
+            return seen
+        time.sleep(0.1)
+    raise AssertionError(f"the engine pass never settled: {seen}")
+
+
+def write1(hub: Any, _mp: pytest.MonkeyPatch) -> dict[str, Any]:
+    """Write update on a real engine route to a stub: the records draft, the
+    pass running then succeeded, its apply; an edit then the apply refused
+    (draft_changed) and Use it; a pass on prose (failed, not_usable)."""
+    llm = rig.FakeLLM()
+    llm.reply, llm.delay_s = P1_ENGINE_UPDATE, 1.0
+    try:
+        pid = _project(hub, "Payments migration", "p1-write1-create")
+        _p1_seed(hub, pid)
+        rig._define_route(hub.home, llm.endpoint, "write1-llm")
+        gets = _gets(hub, pid, ROOM_GETS, UPDATE_GETS)
+
+        records = _call(hub, "POST", f"/api/projects/{pid}/updates/draft",
+                        {"generator": "deterministic", "command_id": "p1-write1-records"})
+        uid = records["answer"]["update"]["id"]
+        start = _call(hub, "POST", f"/api/updates/{uid}/engine-pass", {})
+        jid = start["answer"]["job"]["id"]
+        polls = _p1_poll(hub, jid)
+        apply = _call(hub, "POST", f"/api/update-jobs/{jid}/apply", {"force": False})
+        undo = _call(hub, "POST", f"/api/projects/{pid}/updates/draft",
+                     {"generator": "deterministic", "command_id": "p1-write1-undo"})
+
+        # He edits while the engine works: the apply is refused; Use it forces it.
+        edited_records = _call(hub, "POST", f"/api/projects/{pid}/updates/draft",
+                               {"generator": "deterministic", "command_id": "p1-write1-edit"})
+        euid = edited_records["answer"]["update"]["id"]
+        edit_start = _call(hub, "POST", f"/api/updates/{euid}/engine-pass", {})
+        ejid = edit_start["answer"]["job"]["id"]
+        body = edited_records["answer"]["update"]["body_md"] + "\nMy own line for Friday.\n"
+        edit_put = _call(hub, "PUT", f"/api/updates/{euid}", {"body_md": body})
+        edit_polls = _p1_poll(hub, ejid)
+        refused = _call(hub, "POST", f"/api/update-jobs/{ejid}/apply", {"force": False})
+        use_it = _call(hub, "POST", f"/api/update-jobs/{ejid}/apply", {"force": True})
+
+        # The engine answers prose: the pass fails; the records draft stays.
+        llm.reply, llm.delay_s = "Here is your update. Progress is good this week.", 0.0
+        failed_records = _call(hub, "POST", f"/api/projects/{pid}/updates/draft",
+                               {"generator": "deterministic", "command_id": "p1-write1-fail"})
+        fuid = failed_records["answer"]["update"]["id"]
+        fail_start = _call(hub, "POST", f"/api/updates/{fuid}/engine-pass", {})
+        fail_polls = _p1_poll(hub, fail_start["answer"]["job"]["id"])
+        # The editor's own reads of every update made here (their sends).
+        after = {k: v for k, v in _update_gets(hub, pid).items()}
+        assert [p["answer"]["job"]["state"] for p in polls][-1] == "succeeded", polls
+        assert refused["status"] == 409 and use_it["status"] == 200, (refused, use_it)
+        assert fail_polls[-1]["answer"]["job"]["state"] == "failed", fail_polls
+        return {
+            "pid": pid, "gets": gets, "after": after, "records": records, "start": start, "polls": polls,
+            "apply": apply, "undo": undo,
+            "edit": {"records": edited_records, "start": edit_start, "put": edit_put, "polls": edit_polls,
+                     "refused": refused, "use_it": use_it},
+            "fail": {"records": failed_records, "start": fail_start, "polls": fail_polls},
+        }
+    finally:
+        llm.stop()
+
+
 # ── HS-200-06: the claim axes, a real draft then a real edit; every state ──
 
 
@@ -1084,6 +1187,7 @@ def main() -> int:
     jobs: list[tuple[Path, str, Callable[..., dict[str, Any]], Any]] = [
         (ROOM_DIR, "update173", update173, {}),
         (ROOM_DIR, "draft409", draft409, {}),
+        (ROOM_DIR, "write1", write1, {}),
         (ROOM_DIR, "claims200", claims200, {}),
         (ROOM_DIR, "nudge10", nudge10, {}),
         (ROOM_DIR, "hs175", hs175, {}),

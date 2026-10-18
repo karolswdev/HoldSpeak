@@ -117,3 +117,68 @@ export async function fetchUpdateMarkdown(
   );
   return String(text);
 }
+
+/* ── Betterment P1: the engine pass behind Write update ── */
+
+export type EngineJob = {
+  id: string;
+  baseUpdateId: string;
+  state: "running" | "succeeded" | "failed" | "stopped" | "applied";
+  reason: string | null;
+  detail: string | null;
+  startedAt: string;
+  finishedAt: string | null;
+  appliedUpdateId: string | null;
+  generatorModel: string | null;
+};
+
+function decodeJob(raw: Record<string, unknown>): EngineJob {
+  const text = (v: unknown) => (typeof v === "string" && v ? v : null);
+  return {
+    id: String(raw.id ?? ""),
+    baseUpdateId: String(raw.base_update_id ?? ""),
+    state: String(raw.state ?? "running") as EngineJob["state"],
+    reason: text(raw.reason),
+    detail: text(raw.detail),
+    startedAt: String(raw.started_at ?? ""),
+    finishedAt: text(raw.finished_at),
+    appliedUpdateId: text(raw.applied_update_id),
+    generatorModel: text(raw.generator_model),
+  };
+}
+
+/** POST /api/updates/{id}/engine-pass — the engine improves this draft in the background. */
+export async function startEnginePass(updateId: string): Promise<EngineJob> {
+  const raw = await apiFetch<{ job: Record<string, unknown> }>(
+    `/api/updates/${encodeURIComponent(updateId)}/engine-pass`,
+    { method: "POST", json: {} },
+  );
+  return decodeJob(raw.job);
+}
+
+/** GET /api/update-jobs/{id} — the pass, polled. */
+export async function fetchEngineJob(jobId: string): Promise<EngineJob> {
+  const raw = await apiFetch<{ job: Record<string, unknown> }>(
+    `/api/update-jobs/${encodeURIComponent(jobId)}`,
+  );
+  return decodeJob(raw.job);
+}
+
+/** POST /api/update-jobs/{id}/stop — its late answer is dropped. */
+export async function stopEngineJob(jobId: string): Promise<EngineJob> {
+  const raw = await apiFetch<{ job: Record<string, unknown> }>(
+    `/api/update-jobs/${encodeURIComponent(jobId)}/stop`,
+    { method: "POST", json: {} },
+  );
+  return decodeJob(raw.job);
+}
+
+/** POST /api/update-jobs/{id}/apply — the engine's draft becomes the next
+ *  revision. Refused 409 `draft_changed` when he edited, unless `force`. */
+export async function applyEngineJob(jobId: string, force = false): Promise<ProjectUpdate> {
+  const raw = await apiFetch<{ update: Record<string, unknown> }>(
+    `/api/update-jobs/${encodeURIComponent(jobId)}/apply`,
+    { method: "POST", json: { force } },
+  );
+  return decodeUpdate(raw.update);
+}

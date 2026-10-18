@@ -270,6 +270,18 @@ function setupUpdatePosture(opts: {
       const generator = (init?.json as { generator?: string } | undefined)?.generator;
       return Promise.resolve({ success: true, update: generator === "model" ? modelDraftResult : draftResult });
     }
+    // Betterment P1: the engine pass behind Write update (typed double; the
+    // recorded hub answers are replayed in room.app.test.tsx).
+    if (url.includes("/engine-pass")) {
+      return Promise.resolve({ success: true, job: { id: "pujob-1", base_update_id: draftResult.id, state: "running" } });
+    }
+    if (url.includes("/api/update-jobs/") && url.endsWith("/apply")) {
+      return Promise.resolve({ success: true, update: modelDraftResult });
+    }
+    if (url.includes("/api/update-jobs/")) {
+      return Promise.resolve({ job: { id: "pujob-1", base_update_id: draftResult.id, state: "succeeded",
+        generator_model: (modelDraftResult as { generatorModel?: string }).generatorModel ?? "qwen" } });
+    }
     // Save
     if (url.match(/\/api\/updates\/[^/]+$/) && init?.method === "PUT") {
       const body = init?.json as Record<string, unknown> | undefined;
@@ -354,12 +366,15 @@ describe("Mounted-path: full draft-to-publish walk", () => {
 
     expect(screen.getByTestId("update-posture").getAttribute("data-phase")).toBe("editor");
 
-    // DeskEditor textarea is present and editable
-    const textarea = screen.getByTestId("update-body-textarea") as HTMLTextAreaElement;
-    expect(textarea.value).toContain("## Progress");
+    // Betterment P1: the draft reads as plain text (no markdown marks) and
+    // is edited in place.
+    const textarea = screen.getByTestId("update-plain-text") as HTMLTextAreaElement;
+    expect(textarea.value).toContain("Progress\n\nWidget development on track.");
+    expect(textarea.value).not.toContain("##");
+    expect(screen.queryByRole("button", { name: "B" })).toBeNull();
 
     // Edit the body
-    fireEvent.change(textarea, { target: { value: "## Progress\n\nOwner edited.\n" } });
+    fireEvent.change(textarea, { target: { value: "Progress\n\nOwner edited.\n" } });
 
     // Save
     const saveBtn = screen.getByTestId("update-verb-save");
@@ -371,6 +386,9 @@ describe("Mounted-path: full draft-to-publish walk", () => {
         expect.objectContaining({ method: "PUT" }),
       );
     });
+    // The unchanged heading line keeps its stored form; his words are new.
+    const put = apiFetch.mock.calls.find(([, init]) => (init as { method?: string } | undefined)?.method === "PUT");
+    expect((put![1] as { json: { body_md: string } }).json.body_md).toBe("## Progress\n\nOwner edited.\n");
 
     // Publish
     const publishBtn = screen.getByTestId("update-verb-publish");
@@ -609,7 +627,9 @@ describe("Five verbs as separate controls", () => {
     await draftFromRoom();
     expect(screen.getByTestId("engine-line").textContent).toContain("No engine");
     expect(screen.getByTestId("update-generator-label").textContent).toBe("Deterministic");
-    expect(screen.getByTestId("run-line").getAttribute("data-state")).toBe("success");
+    // Betterment P1: no engine, no engine pass.
+    expect(screen.queryByTestId("update-engine-pass")).toBeNull();
+    expect(apiFetch.mock.calls.some(([u]) => String(u).includes("/engine-pass"))).toBe(false);
   });
 
   it("shows Save, Regenerate, Copy Markdown, Publish in the editor for a draft", async () => {
@@ -676,7 +696,9 @@ describe("Egress badge on model drafting", () => {
     render(<WindowHarness scope="project:p1" />);
 
     await draftFromRoom();
-    expect(screen.getByTestId("engine-line").textContent).toContain("qwen");
+    // Betterment P1: the engine's draft replaces the records draft when ready.
+    await waitFor(() => expect(screen.getByTestId("update-engine-pass").getAttribute("data-state")).toBe("success"),
+      { timeout: 4000 });
     expect(document.querySelector(".surface-footer-egress")?.textContent).toContain("192.168.1.43");
     expect(apiFetch.mock.calls.some(([u]) => String(u).includes("/api/inference/assignments"))).toBe(true);
   });
@@ -710,14 +732,18 @@ describe("Draft update picks its generator from the engine read", () => {
     expect(screen.getByTestId("update-generator-label").textContent).toBe("Deterministic");
   });
 
-  it("an engine set: Draft asks for a model draft and shows the model's draft", async () => {
+  it("an engine set: Write update saves the records draft, then the engine's draft replaces it", async () => {
     setupUpdatePosture({ listUpdates: [] });
     withAssignment(LAN);
     render(<WindowHarness scope="project:p1" />);
     await draftFromRoom();
-    expect((draftCall()![1] as { json: { generator: string } }).json.generator).toBe("model");
-    expect(screen.getByTestId("update-generator-label").textContent).toMatch(/^Model/);
-  });
+    expect((draftCall()![1] as { json: { generator: string } }).json.generator).toBe("deterministic");
+    expect(screen.getByTestId("update-generator-label").textContent).toBe("Deterministic");
+    expect(screen.getByTestId("update-engine-pass").getAttribute("data-state")).toBe("running");
+    await waitFor(() => expect(screen.getByTestId("update-generator-label").textContent).toMatch(/^Model/),
+      { timeout: 4000 });
+    expect(screen.getByTestId("update-engine-pass").textContent).toContain("Written by");
+  }, 10000);
 
   it("a failed engine read uses the deterministic draft", async () => {
     setupUpdatePosture({ listUpdates: [] });

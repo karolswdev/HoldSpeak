@@ -4337,6 +4337,26 @@ CREATE INDEX IF NOT EXISTS idx_project_updates_project
 CREATE INDEX IF NOT EXISTS idx_project_updates_review
     ON project_updates(project_id, review_id);
 
+-- Betterment P1: the engine pass behind Write update. One row per pass: the
+-- records draft it improves (base_update_id), its state, and, when it
+-- finished, the engine's composed draft (result_json) or its reason. The
+-- draft is saved to project_updates only when the owner's draft allows it.
+CREATE TABLE IF NOT EXISTS project_update_jobs (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    base_update_id TEXT NOT NULL,
+    base_body_sha TEXT NOT NULL DEFAULT '',
+    state TEXT NOT NULL DEFAULT 'running',
+    reason TEXT,
+    detail TEXT,
+    result_json TEXT,
+    applied_update_id TEXT,
+    started_at TEXT NOT NULL DEFAULT (datetime('now')),
+    finished_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_project_update_jobs_project
+    ON project_update_jobs(project_id, started_at);
+
 -- PHILO-9-01: delivery by copy and confirm (the owner's Q0 ruling, "Several
 -- per update").  One row per confirmation that the owner delivered a
 -- PUBLISHED update himself; the product sends nothing.  delivered_at is his

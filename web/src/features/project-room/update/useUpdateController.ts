@@ -12,6 +12,7 @@ import { ApiError } from "../../../lib/api";
 import { plainFailure } from "../../../desk/surface/plainFailure";
 import { forgetDraft, keepDraft, keepPlace, keptDraft, keptPlace } from "../../../desk/deskMemory";
 import type { ProjectUpdate, UpdateLifecycle } from "./model";
+import { bodyFromPlain, plainUpdateText } from "./model";
 import * as updateApi from "./api";
 
 export type UpdatePosture = "off" | "list" | "editor";
@@ -24,6 +25,17 @@ export type DraftRun = {
   detail?: string;
   generator?: "deterministic" | "model";
 };
+
+/** Betterment P1: the engine pass that improves the records draft. */
+export type EnginePass =
+  | { phase: "idle" }
+  | { phase: "running"; jobId: string; startedAt: number }
+  | { phase: "written"; seconds: number; model: string }
+  | { phase: "ready"; jobId: string; seconds: number; model: string }
+  | { phase: "failure"; reason: string; detail?: string; seconds: number };
+
+/** How often the face asks the hub about a running pass. */
+export const ENGINE_POLL_MS = 1500;
 
 function draftCommandId(): string {
   const entropy = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
@@ -67,6 +79,9 @@ export function useUpdateController(
   const editBodyNow = useRef("");
   // The draft update the editor holds now (B2's draft key), for the handler.
   const currentId = useRef<string | null>(null);
+  // Close stops the engine pass (declared below; reached through refs).
+  const stopPollingRef = useRef<() => void>(() => {});
+  const setEnginePassRef = useRef<(p: EnginePass) => void>(() => {});
 
   // ── Editor state ──
   const [current, setCurrent] = useState<ProjectUpdate | null>(null);
@@ -167,6 +182,8 @@ export function useUpdateController(
 
   // ── Exit update posture ──
   const exitUpdates = useCallback(() => {
+    stopPollingRef.current();
+    setEnginePassRef.current({ phase: "idle" });
     if (projectId) keepPlace(updatePlaceKey(projectId), "");
     setPosture("off");
     setUpdates([]);
@@ -182,8 +199,9 @@ export function useUpdateController(
     setCurrent(update);
     // An emptied body is kept as "" (its own state, never "no draft").
     const kept = update.lifecycle === "draft" ? keptDraft(updateDraftKey(update.id)) : null;
-    setEditBody(kept ?? update.bodyMd);
-    setDirty(kept !== null && kept !== update.bodyMd);
+    const plain = plainUpdateText(update.bodyMd);
+    setEditBody(kept ?? plain);
+    setDirty(kept !== null && kept !== plain);
     setPosture("editor");
     setError("");
     if (projectId) keepPlace(updatePlaceKey(projectId), `editor:${update.id}`);
@@ -211,15 +229,15 @@ export function useUpdateController(
   }, [projectId]);
 
   // ── Draft verb ──
-  const draft = useCallback(async (generator: "deterministic" | "model") => {
-    if (!projectId) return;
+  const draft = useCallback(async (generator: "deterministic" | "model"): Promise<ProjectUpdate | null> => {
+    if (!projectId) return null;
     // A proposal request can step aside while an editor is dirty or holding a
     // failed save.  The next Draft update press returns to that same editor;
     // it does not mint a second draft or discard the owner's words.
     if (posture === "off" && current) {
       setPosture("editor");
       keepPlace(updatePlaceKey(projectId), `editor:${current.id}`);
-      return;
+      return null;
     }
     const startedAt = Date.now();
     setDraftRun({ phase: "running", startedAt, generator });
@@ -228,7 +246,7 @@ export function useUpdateController(
     try {
       const update = await updateApi.draftUpdate(projectId, generator, draftCommandId());
       setCurrent(update);
-      setEditBody(update.bodyMd);
+      setEditBody(plainUpdateText(update.bodyMd));
       setDirty(false);
       setPosture("editor");
       keepPlace(updatePlaceKey(projectId), `editor:${update.id}`);
@@ -240,6 +258,7 @@ export function useUpdateController(
       });
       // Refresh list in background
       updateApi.fetchUpdates(projectId).then(setUpdates).catch(() => {});
+      return update;
     } catch (reason) {
       const payload = reason instanceof ApiError && reason.payload && typeof reason.payload === "object"
         ? reason.payload as Record<string, unknown>
@@ -253,10 +272,132 @@ export function useUpdateController(
         generator,
       });
       fail("DRAFT NOT MADE", reason, () => void draft(generator));
+      return null;
     } finally {
       setDraftBusy(false);
     }
   }, [current, posture, projectId]);
+
+  // ── Betterment P1: the engine pass (Write update) ──
+  // The records draft opens at once; the engine improves it on the hub, off
+  // its request loop. The face polls the job. Its draft replaces the records
+  // draft (a new revision, with Undo) only while he has not edited; after an
+  // edit it waits as "A better draft is ready · Use it". A failure keeps the
+  // records draft and says why, with Try again.
+  const [enginePass, setEnginePass] = useState<EnginePass>({ phase: "idle" });
+  const dirtyNow = useRef(false);
+  const pollTimer = useRef<number | null>(null);
+  const passToken = useRef(0);
+  const stopPolling = () => {
+    passToken.current += 1;
+    if (pollTimer.current !== null) window.clearTimeout(pollTimer.current);
+    pollTimer.current = null;
+  };
+  useEffect(() => stopPolling, []);
+  stopPollingRef.current = stopPolling;
+  setEnginePassRef.current = setEnginePass;
+  const seconds = (startedAt: number) => Math.max(0, Math.round((Date.now() - startedAt) / 1000));
+
+  const takeEngineDraft = useCallback(async (jobId: string, startedAt: number, model: string, force: boolean) => {
+    try {
+      const update = await updateApi.applyEngineJob(jobId, force);
+      if (currentId.current) forgetDraft(updateDraftKey(currentId.current));
+      setCurrent(update);
+      setEditBody(plainUpdateText(update.bodyMd));
+      setDirty(false);
+      if (projectId) keepPlace(updatePlaceKey(projectId), `editor:${update.id}`);
+      setEnginePass({ phase: "written", seconds: seconds(startedAt), model: update.generatorModel || model });
+      if (projectId) updateApi.fetchUpdates(projectId).then(setUpdates).catch(() => {});
+    } catch (reason) {
+      const code = reason instanceof ApiError && reason.payload && typeof reason.payload === "object"
+        ? String((reason.payload as Record<string, unknown>).code ?? "") : "";
+      if (code === "draft_changed" && !force) {
+        setEnginePass({ phase: "ready", jobId, seconds: seconds(startedAt), model });
+      } else {
+        setEnginePass({ phase: "failure", reason: "did_not_answer", seconds: seconds(startedAt) });
+      }
+    }
+  }, [projectId]);
+
+  const startEnginePass = useCallback(async (updateId: string) => {
+    stopPolling();
+    const token = passToken.current;
+    const startedAt = Date.now();
+    let jobId: string;
+    try {
+      jobId = (await updateApi.startEnginePass(updateId)).id;
+    } catch {
+      if (token === passToken.current) {
+        setEnginePass({ phase: "failure", reason: "did_not_answer", seconds: seconds(startedAt) });
+      }
+      return;
+    }
+    if (token !== passToken.current) return;
+    setEnginePass({ phase: "running", jobId, startedAt });
+    const poll = async () => {
+      if (token !== passToken.current) return;
+      let job: updateApi.EngineJob;
+      try {
+        job = await updateApi.fetchEngineJob(jobId);
+      } catch {
+        pollTimer.current = window.setTimeout(() => void poll(), ENGINE_POLL_MS);
+        return;
+      }
+      if (token !== passToken.current) return;
+      if (job.state === "running") {
+        pollTimer.current = window.setTimeout(() => void poll(), ENGINE_POLL_MS);
+        return;
+      }
+      pollTimer.current = null;
+      const model = job.generatorModel ?? "";
+      if (job.state === "succeeded") {
+        if (dirtyNow.current) setEnginePass({ phase: "ready", jobId, seconds: seconds(startedAt), model });
+        else await takeEngineDraft(jobId, startedAt, model, false);
+      } else if (job.state === "failed") {
+        setEnginePass({
+          phase: "failure", reason: job.reason || "did_not_answer",
+          detail: job.detail ?? undefined, seconds: seconds(startedAt),
+        });
+      } else {
+        setEnginePass({ phase: "idle" });
+      }
+    };
+    pollTimer.current = window.setTimeout(() => void poll(), ENGINE_POLL_MS);
+  }, [takeEngineDraft]);
+
+  /** Write update: the records draft at once, then (with an engine) the pass. */
+  const write = useCallback(async (withEngine: boolean) => {
+    const stepBack = posture === "off" && current;
+    if (!stepBack) {
+      stopPolling();
+      setEnginePass({ phase: "idle" });
+    }
+    const update = await draft("deterministic");
+    if (update && withEngine) void startEnginePass(update.id);
+  }, [current, draft, posture, startEnginePass]);
+
+  const stopEnginePass = useCallback(async () => {
+    if (enginePass.phase !== "running") return;
+    const { jobId } = enginePass;
+    stopPolling();
+    setEnginePass({ phase: "idle" });
+    await updateApi.stopEngineJob(jobId).catch(() => undefined);
+  }, [enginePass]);
+
+  const takeBetterDraft = useCallback(async () => {
+    if (enginePass.phase !== "ready") return;
+    await takeEngineDraft(enginePass.jobId, Date.now() - enginePass.seconds * 1000, enginePass.model, true);
+  }, [enginePass, takeEngineDraft]);
+
+  /** Undo: back to the draft from his records (a new revision). */
+  const undoEngineDraft = useCallback(async () => {
+    setEnginePass({ phase: "idle" });
+    await draft("deterministic");
+  }, [draft]);
+
+  const retryEnginePass = useCallback(async () => {
+    if (current?.lifecycle === "draft") await startEnginePass(current.id);
+  }, [current, startEnginePass]);
 
   // ── Save verb (draft only) ──
   const save = useCallback(async () => {
@@ -265,11 +406,13 @@ export function useUpdateController(
     setError("");
     const sent = editBody;
     try {
-      const saved = await updateApi.saveUpdate(current.id, sent);
+      // Betterment P1: his plain text, saved over the stored body (a line he
+      // did not change keeps its stored form).
+      const saved = await updateApi.saveUpdate(current.id, bodyFromPlain(sent, current.bodyMd));
       setCurrent(saved);
       // Words typed while the save was in flight stay, and stay unsaved.
       if (editBodyNow.current === sent) {
-        setEditBody(saved.bodyMd);
+        setEditBody(plainUpdateText(saved.bodyMd));
         setDirty(false);
         forgetDraft(updateDraftKey(current.id));
       }
@@ -309,7 +452,7 @@ export function useUpdateController(
       const newDraft = await updateApi.regenerateUpdate(current.id, generator);
       forgetDraft(updateDraftKey(current.id));
       setCurrent(newDraft);
-      setEditBody(newDraft.bodyMd);
+      setEditBody(plainUpdateText(newDraft.bodyMd));
       setDirty(false);
       if (projectId) keepPlace(updatePlaceKey(projectId), `editor:${newDraft.id}`);
     } catch (reason) {
@@ -416,6 +559,7 @@ export function useUpdateController(
     if (currentId.current) keepDraft(updateDraftKey(currentId.current), value);
   }, []);
   verbs.current = { save, publish };
+  dirtyNow.current = dirty;
   currentId.current = current?.lifecycle === "draft" ? current.id : null;
 
   // PHILO-13-07 (B2): the Room comes back where it was — on the update list,
@@ -479,6 +623,12 @@ export function useUpdateController(
 
     // Verbs
     draft,
+    write,
+    enginePass,
+    stopEnginePass,
+    takeBetterDraft,
+    undoEngineDraft,
+    retryEnginePass,
     save,
     regenerate,
     publish,
