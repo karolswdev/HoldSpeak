@@ -11,6 +11,7 @@ import base64
 import json
 import os
 import secrets
+import sys
 import threading
 import uuid
 from pathlib import Path
@@ -50,6 +51,14 @@ class MemoryKeyStore:
         self.values.pop(key_id, None)
 
 
+def home_has_a_keychain() -> bool:
+    """On macOS, True only when HOME holds a login keychain; True elsewhere."""
+    if sys.platform != "darwin":
+        return True
+    keychains = Path.home() / "Library" / "Keychains"
+    return any((keychains / name).exists() for name in ("login.keychain-db", "login.keychain"))
+
+
 class NativeKeyStore:
     """macOS Keychain / Linux Secret Service only; no file or env fallback."""
 
@@ -65,12 +74,17 @@ class NativeKeyStore:
         except ImportError as exc:  # pragma: no cover - dependency packaging proof
             raise PeopleKeyError("people_key_store_unavailable") from exc
         self._keyring = keyring
+        # A HOME with no keychain (a test rig's scratch HOME): asking would
+        # make macOS show "A keychain cannot be found" on the owner's screen.
+        self._no_keychain = backend is None and not home_has_a_keychain()
         self._backend = backend if backend is not None else keyring.get_keyring()
         backend_name = f"{type(self._backend).__module__}.{type(self._backend).__name__}"
         if backend_name not in self._ALLOWED_BACKENDS:
             raise PeopleKeyError("people_key_store_not_native")
 
     def get(self, key_id: str) -> bytes:
+        if self._no_keychain:
+            raise PeopleKeyError("people_key_store_unavailable")
         try:
             encoded = self._backend.get_password(self.service_name, key_id)
         except Exception as exc:
@@ -86,6 +100,8 @@ class NativeKeyStore:
         return key
 
     def put(self, key_id: str, key: bytes) -> None:
+        if self._no_keychain:
+            raise PeopleKeyError("people_key_store_unavailable")
         if len(key) != KEY_BYTES:
             raise PeopleKeyError("people_key_invalid")
         try:
@@ -96,6 +112,8 @@ class NativeKeyStore:
             raise PeopleKeyError("people_key_store_locked") from exc
 
     def delete(self, key_id: str) -> None:
+        if self._no_keychain:
+            raise PeopleKeyError("people_key_store_unavailable")
         try:
             self._backend.delete_password(self.service_name, key_id)
         except Exception as exc:
