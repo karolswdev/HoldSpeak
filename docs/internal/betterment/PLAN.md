@@ -74,10 +74,10 @@ ready.
 | 0 | H. Engines (part of 4) | `engines/` | Engines, agent CLIs, What runs where | drafted |
 | 0 | The desk's tools | `mcp/` | CONDUCTOR set for runs; MCP parity | drafted |
 | 0 | Agents vs herdr | `herdr/STUDY.md` | state on the desk, hand-offs, resume, fleet | studied |
-| 1 | E. Asking, thinking and memory (2) | `asking/` | Ask, Threads, Notes, Knowledge, Memory, Search | — |
-| 1 | C. Projects, updates and decisions (3) | `projects/` | Room, New Project, Draft update, Steward, Watches, Decisions | — |
-| 1 | F. Agents (5) | `agents/` | Conductor, Hand to agent, Agents, Delivery board, plus the herdr ideas | — |
-| 1 | D + B. The daily surface, People and commitments (6, 7) | `daily/` | Today, Brief, Needs you, The week, Notifications, People, Follow-through | — |
+| 1 | E. Asking, thinking and memory (2) | `asking/` | Ask, Threads, Notes, Knowledge, Memory, Search | drafted |
+| 1 | C. Projects, updates and decisions (3) | `projects/` | Room, New Project, Draft update, Steward, Watches, Decisions | drafted |
+| 1 | F. Agents (5) | `agents/` | Conductor, Hand to agent, Agents, Delivery board, plus the herdr ideas | drafted |
+| 1 | D + B. The daily surface, People and commitments (6, 7) | `daily/` | Today, Brief, Needs you, The week, Notifications, People, Follow-through | drafted |
 | 2 | H. Settings and setup (rest of 4) | `setup/` | Settings, Accounts, First run | — |
 | 2 | I. The desk shell (10) | `shell/` | Windows, Menus, Dock, Desk and drawers, Wallpapers, Builder tools | — |
 | 2 | J. Delivery and send (8) | `send/` | Send to, destinations, real sends | — |

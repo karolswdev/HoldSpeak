@@ -74,3 +74,7 @@ cluster workers follow `CLUSTER-BRIEF.md`.
 | Engines | `engines/` | draft, owner decisions open |
 | The desk's tools for every engine (MCP) | `mcp/` | draft, owner decisions open |
 | Agents vs herdr (study) | `herdr/` | studied |
+| Asking, thinking and memory (Ask, Threads, Notes, Memory, Search) | `asking/` | draft, owner decisions open |
+| Projects, updates and decisions | `projects/` | draft, owner decisions open; P0 in build |
+| Agents (Conductor, herdr ideas) | `agents/` | draft, owner decisions open |
+| The daily surface, People and commitments | `daily/` | draft, owner decisions open |
