@@ -154,7 +154,7 @@ describe("Engines — an agent engine's Spend limit per run (Betterment E2)", ()
     expect(within(engine).getByText("OPENAI")).toBeTruthy();
     fireEvent.click(within(engine).getByRole("button", { name: "Spend" }));
     expect(within(engine).queryByLabelText("Spend limit per run")).toBeNull();
-    expect(within(engine).getByTestId("runson-agent-no-limit-agent-codex").textContent).toBe("CODEX CAN'T LIMIT SPEND");
+    expect(within(engine).getByTestId("runson-agent-no-limit-agent-codex").textContent).toBe("NO SPEND LIMIT IN CODEX");
     expect(within(engine).getByTestId("runson-agent-cost-agent-codex").textContent).toBe("CODEX REPORTS NO COST");
   });
 

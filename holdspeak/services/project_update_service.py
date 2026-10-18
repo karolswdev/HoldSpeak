@@ -2778,13 +2778,13 @@ class ProjectUpdateService:
         """The decision records whose source is one of these meetings."""
         if not meeting_ids:
             return set()
-        marks = ",".join("?" * len(meeting_ids))
         try:
             with self._db._connection() as conn:
                 rows = conn.execute(
-                    f"SELECT record_id FROM decision_record_sources "
-                    f"WHERE source_type = 'meeting' AND source_ref IN ({marks})",
-                    sorted(meeting_ids),
+                    "SELECT record_id FROM decision_record_sources "
+                    "WHERE source_type = 'meeting' "
+                    "AND source_ref IN (SELECT value FROM json_each(?))",
+                    (json.dumps(sorted(meeting_ids)),),
                 ).fetchall()
         except Exception:
             _log.debug("update draft: 1:1 decision records not read", exc_info=True)

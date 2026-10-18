@@ -70,6 +70,8 @@ BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
     ("holdspeak/services/inference_route_plan_service.py", "_validate_route_material"): ("canonical closed route-plan validator", "143-05"),
     ("holdspeak/services/inference_fallback_controller.py", "_route_execution_receipt"): ("immutable route execution receipt reconstruction", "143-06"),
     ("holdspeak/services/ask_service.py", "_routed_projection"): ("controller-winner application projection", "143-07"),
+    ("holdspeak/services/ask_service.py", "_route_lanes"): ("Betterment Q2: names each leg of the Ask's frozen route plan (engine lane key, profile, boundary, model) so a busy engine can be said and the foreground lane claimed; selects and dispatches nothing", "143-07"),
+    ("holdspeak/db/intel.py", "_route_legs_key"): ("Betterment C4: the identity tuple of a route's legs, compared so a meeting plugin freezes only when its own route resolves to the disclosed job route; a compare, never a selection", "143-08"),
     ("holdspeak/services/ask_service.py", "_route_reason"): ("closed runner receipt disposition to face reason projection; no route selection, retry or dispatch", "143-07"),
     ("holdspeak/services/preparation_brief_service.py", "_route_state"): ("names the frozen route the brief drafter's assignment already resolved (host, model, boundary) and quotes the target's own readiness state beside it; a read for the face's route token and the refusal receipt, dispatches nothing and selects nothing", "200-11"),
     ("holdspeak/services/route_probe.py", "_unresolved"): ("task-probe refusal receipt when no frozen route plan resolves; names the cause in reasonCode and invents no model, boundary or host; selects and dispatches nothing", "200-04"),
@@ -116,6 +118,9 @@ BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
 WEB_ROUTING_SURFACES: dict[str, tuple[str, str]] = {
     "web/src/desk/api.ts": ("display-transport", "143-11"),
     "web/src/desk/ask.ts": ("inference-route", "143-07"),
+    # Betterment Q2: "Use another engine" on a busy Ask writes a one-run
+    # (scope `invocation`) assignment through the assignment authority.
+    "web/src/desk/components/AskPanel.tsx": ("inference-route", "143-07"),
     "web/src/desk/components/DeliveryBoard.tsx": ("unrelated", "143-01"),
     "web/src/desk/components/Pullout.tsx": ("display-transport", "143-11"),
     "web/src/desk/lane/LaneWindow.tsx": ("display-transport", "143-11"),

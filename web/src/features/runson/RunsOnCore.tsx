@@ -200,7 +200,7 @@ function AgentSpend({ ctrl, engine }: { ctrl: RunsOnController; engine: BoardEng
         </>
       ) : (
         <span className="surface-token" data-testid={`runson-agent-no-limit-${engine.key}`}>
-          {`${label.toUpperCase()} CAN'T LIMIT SPEND`}
+          {`NO SPEND LIMIT IN ${label.toUpperCase()}`}
         </span>
       )}
       <span className="surface-token" data-testid={`runson-agent-cost-${engine.key}`}>

@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 768 (plus static mounts). iOS-consumed: 89. Web-consumed: 597.
+Routes: 768 (plus static mounts). iOS-consumed: 89. Web-consumed: 598.
 
 ## device_audio_ws
 
@@ -623,7 +623,7 @@ Routes: 768 (plus static mounts). iOS-consumed: 89. Web-consumed: 597.
 |---|---|---|
 | GET | `/api/inference/model-library` | web |
 | POST | `/api/inference/model-library/add-to-library` | web |
-| POST | `/api/inference/model-library/connect-cli-engine` | server only |
+| POST | `/api/inference/model-library/connect-cli-engine` | web |
 | POST | `/api/inference/model-library/connect-hosted-model` | web |
 | POST | `/api/inference/model-library/connect-paired-device` | server only |
 | POST | `/api/inference/model-library/define-endpoint` | web |

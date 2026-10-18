@@ -221,16 +221,15 @@ def _excerpt(block: GroundingBlock, cap: int, at: str = "") -> MemoryExcerpt | N
 # a decision, an action item or an artifact a meeting made has that meeting's
 # start; anything else its own creation time.  A kind not named here falls
 # back to the time memory keeps for it.
-_MEETING_START = "(SELECT started_at FROM meetings WHERE id={column})"
 _SOURCE_TIME_SQL = {
     "meeting": "SELECT started_at FROM meetings WHERE id=?",
     "note": "SELECT created_at FROM notes WHERE id=?",
-    "artifact": "SELECT COALESCE(" + _MEETING_START.format(column="a.meeting_id")
-    + ",a.created_at) FROM artifacts a WHERE a.id=?",
-    "decision": "SELECT COALESCE(" + _MEETING_START.format(column="d.source_meeting_id")
-    + ",d.created_at) FROM decisions d WHERE d.id=?",
-    "action_item": "SELECT COALESCE(" + _MEETING_START.format(column="a.meeting_id")
-    + ",a.created_at) FROM action_items a WHERE a.id=?",
+    "artifact": "SELECT COALESCE((SELECT started_at FROM meetings WHERE id=a.meeting_id),"
+    "a.created_at) FROM artifacts a WHERE a.id=?",
+    "decision": "SELECT COALESCE((SELECT started_at FROM meetings WHERE id=d.source_meeting_id),"
+    "d.created_at) FROM decisions d WHERE d.id=?",
+    "action_item": "SELECT COALESCE((SELECT started_at FROM meetings WHERE id=a.meeting_id),"
+    "a.created_at) FROM action_items a WHERE a.id=?",
     "desk_decision": "SELECT created_at FROM desk_decisions WHERE id=?",
     "decision_record": "SELECT created_at FROM decision_records WHERE id=?",
     "thread": "SELECT datetime(created_at,'unixepoch') FROM threads WHERE id=?",

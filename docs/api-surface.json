@@ -3282,7 +3282,9 @@
         "POST"
       ],
       "module": "web.routes.model_library",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/inference/model-library/connect-hosted-model",
