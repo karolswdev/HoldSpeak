@@ -176,20 +176,17 @@ describe("a New verb opens its window at once, while the desk read is slow", () 
     expect(hub.posts).toEqual([path]);
   });
 
-  it("New Thread: one POST, its window is open before the read ends", async () => {
-    // replaces: tests/e2e/test_new_verbs_open_glass.py::TestEveryNewVerbOpensItsWindow::test_a_new_verb_opens_its_window_at_once (New Thread)
+  it("New Thread opens a new Ask at once and makes no record (Betterment Q4)", async () => {
+    // The thread is kept when its first question is answered (tests/unit/test_desk_ask.py).
     const before = useDesk.getState().refresh();
     await settle();
     await act(async () => { await press("desk.new-thread"); });
-    expect(hub.posts).toEqual(["/api/threads"]);
-    expect(hub.gated.length).toBeGreaterThan(0);
-    const id = hub.threads[0].id as string;
-    expect(useDesk.getState().pullouts.map((p) => p.id)).toContain(`thread:${id}`);
-    expect(useDesk.getState().items.thread.map((t) => t.id)).toContain(id);   // the window has its object
+    expect(hub.posts).toEqual([]);
+    expect(useDesk.getState().askOpen).toBe(true);
+    expect(useDesk.getState().askThread?.threadId).toBeNull();
+    expect(useDesk.getState().pullouts.some((p) => p.id.startsWith("thread:"))).toBe(false);
     await letReadsLand();
     await before;
-    expect(useDesk.getState().pullouts.map((p) => p.id)).toContain(`thread:${id}`);
-    expect(useDesk.getState().items.thread.map((t) => t.id)).toContain(id);
   });
 
   it("the palette is the same door: New Knowledge, Enter, one POST and its window", async () => {
@@ -215,7 +212,6 @@ describe("two quick presses make one record", () => {
   it.each([
     ["desk.new-note", "/api/notes", "notes"],
     ["desk.new-knowledge", "/api/kbs", "kbs"],
-    ["desk.new-thread", "/api/threads", "threads"],
   ] as const)("%s twice: one POST, one record, one window", async (id, path, bucket) => {
     // replaces: tests/e2e/test_new_verbs_open_glass.py::TestEveryNewVerbOpensItsWindow::test_two_quick_presses_make_one_record
     render(<Desk />);
@@ -231,12 +227,7 @@ describe("two quick presses make one record", () => {
     await letReadsLand();
     expect(hub.posts).toEqual([path]);
     const madeId = String(hub[bucket][hub[bucket].length - 1].id);
-    if (id === "desk.new-thread") {
-      expect(useDesk.getState().pullouts.filter((p) => p.id.startsWith("thread:")).map((p) => p.id))
-        .toEqual([`thread:${madeId}`]);
-    } else {
-      expect(useDesk.getState().editingId).toBe(madeId);
-      expect(document.querySelectorAll("[id^='editor:']")).toHaveLength(1);
-    }
+    expect(useDesk.getState().editingId).toBe(madeId);
+    expect(document.querySelectorAll("[id^='editor:']")).toHaveLength(1);
   });
 });

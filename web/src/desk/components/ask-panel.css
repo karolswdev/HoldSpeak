@@ -216,3 +216,67 @@
 @media (prefers-reduced-motion: reduce) {
   .desk-ask .surface-run-line[data-state="running"]::before { animation: none; }
 }
+
+/* Betterment Q4: one Ask window over a kept thread. */
+.desk-ask-about-label {
+  font: 600 12px / 1.5 var(--font-sans);
+  margin-inline-end: 4px;
+}
+.desk-ask-about-desk {
+  font: 400 13px / 1.5 var(--font-sans);
+  color: var(--text-muted);
+}
+.desk-ask-turn {
+  display: grid;
+  gap: 4px;
+}
+.desk-ask-saved {
+  display: block;
+  margin-top: 4px;
+  font: 400 12px / 1.5 var(--font-sans);
+}
+.desk-ask-recent {
+  flex: none;
+  max-height: 240px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--border);
+  background: var(--alive-paper);
+  padding: 4px;
+}
+.desk-ask-recent-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+.desk-ask-recent-row.btn {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: start;
+  white-space: normal;
+}
+.desk-ask-recent-title {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.desk-ask-recent-age {
+  flex: none;
+  font: 400 12px / 1.5 var(--font-sans);
+}
+.desk-ask-recent-note {
+  display: block;
+  padding: 6px 8px;
+  font: 400 13px / 1.5 var(--font-sans);
+}
+.desk-ask-more {
+  display: inline-block;
+}
+.desk-ask-more > summary {
+  font: 600 12px / 1.5 var(--font-sans);
+  text-transform: none;
+  letter-spacing: normal;
+}

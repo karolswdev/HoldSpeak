@@ -254,10 +254,9 @@ export const VERBS: Verb[] = [
     glyph: KIND_GLYPH.thread,
     keywords: ["create", "chat", "conversation"],
     ghost: never,
-    run: async () => {
-      const { openNewThread } = await import("./newThread");
-      await openNewThread();
-    },
+    // Betterment Q4: a new thread is a new Ask; the thread is kept when the
+    // first question is answered.
+    run: () => useDesk.getState().openAskThread(null),
   },
   // HS-159-05: Project creation joins the shared creation grammar (WEB-CR-001)
   {
@@ -527,11 +526,14 @@ export const VERBS: Verb[] = [
       const threadable = new Set(["meeting", "note", "artifact", "decision", "recipe", "people"]);
       return threadable.has(o.kind) ? null : "Not threadable";
     },
-    run: async (ctx) => {
+    // Betterment Q4: Ask with the object in About (Q5 renames this verb
+    // Ask about this).
+    run: (ctx) => {
       const o = selected(ctx);
       if (!o) return;
-      const { openNewThread } = await import("./newThread");
-      await openNewThread({ seed_refs: [{ ref_kind: o.kind, ref_id: o.id }] });
+      const desk = useDesk.getState();
+      desk.setSelected([`${o.kind}:${o.id}`]);
+      desk.openAskThread(null);
     },
   },
   {

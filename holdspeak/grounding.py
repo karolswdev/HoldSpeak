@@ -662,7 +662,11 @@ def _hydrate_qualified(
             GroundingBlock(
                 kind,
                 thread_id,
-                thread.title or thread_id,
+                # Betterment Q4: never a raw id as a source's name.
+                thread.title or next(
+                    (line.split(": ", 1)[1][:80] for line in lines if line.startswith("user: ")),
+                    "A conversation",
+                ),
                 "conversation",
                 body,
             )

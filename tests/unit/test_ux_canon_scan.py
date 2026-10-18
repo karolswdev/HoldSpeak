@@ -521,22 +521,22 @@ class TestMicAllowlist:
         assert not stale, "stale allowlist entries:\n  " + "\n  ".join(stale)
 
     def test_the_ledger_matches_the_census(self):
-        """23 census - retired Thread checkbox + R13 + Workbench grammar = 24."""
+        """23 census - retired Thread checkbox + R13 + Workbench grammar
+        - the Thread number field parked with the Thread window (Q4) = 23."""
         mod = _load_scanner()
-        assert len(mod.MIC_ALLOWLIST) == 24
-        assert len({(p, n) for p, n, _ in mod.MIC_ALLOWLIST}) == 24
+        assert len(mod.MIC_ALLOWLIST) == 23
+        assert len({(p, n) for p, n, _ in mod.MIC_ALLOWLIST}) == 23
 
 
 _MIC_HOST_FIELDS = (
     ("desk/components/AskPanel.tsx", "PadGadget", 'label="Ask about your work"'),
     ("desk/components/ThreadComposer.tsx", "PadGadget", 'label="Thread message"'),
     ("desk/components/ThreadComposer.tsx", "PadGadget", 'label={placeholder ?? "Edit message"}'),
-    ("desk/pullouts/ThreadPullout.tsx", "StringGadget", 'label="Comment"'),
-)
+)  # Betterment Q4: the Thread window's Comment field is parked with it.
 
 
 class TestMicHostAuthorities:
-    """Four host fields must prove their explicit mic in their own component."""
+    """Three host fields must prove their explicit mic in their own component."""
 
     @staticmethod
     def _body(species: str, label: str, mic: str = "") -> str:
@@ -590,7 +590,7 @@ class TestMicHostAuthorities:
         assert {(path, label) for path, label, _ in scanner.MIC_HOST_AUTHORITIES} == {
             (path, label) for path, _species, label in _MIC_HOST_FIELDS
         }
-        assert len(scanner.MIC_HOST_AUTHORITIES) == 4
+        assert len(scanner.MIC_HOST_AUTHORITIES) == 3  # Betterment Q4: the Thread Comment field is parked
         src = Path(__file__).resolve().parents[2] / "web" / "src"
         for path, label, reason in scanner.MIC_HOST_AUTHORITIES:
             assert label in (src / path).read_text()

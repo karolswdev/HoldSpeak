@@ -99,7 +99,7 @@ it("a failed Projects refresh retains known choices, the question, selected pass
   latchAskSelection({ noteRef, text: "HoldSpeak does three jobs for you." });
   render(<AskPanel />);
   fireEvent.change(screen.getByRole("textbox", { name: "Ask about your work" }), { target: { value: "Explain these jobs" } });
-  fireEvent.click(screen.getByText("Add notes"));
+  fireEvent.click(screen.getByText("Add to About"));
   expect(await screen.findByRole("checkbox", { name: "Payments ledger cutover" })).toBeInTheDocument();
   failed = true;
   act(() => projectRefresh.current!());

@@ -222,6 +222,9 @@ export interface ThreadRef {
   refId: string;
   frozenJson: Record<string, unknown> | null;
   createdAt: string;
+  /** Betterment Q4: 'reference' (About on a question) or 'relevance'
+   * (Looked at on an answer). Absent on an older hub. */
+  origin?: string;
 }
 
 // ── wire → app mappers ───────────────────────────────────────────────
@@ -294,6 +297,7 @@ function toRef(w: Record<string, unknown>): ThreadRef {
     refId: String(w.ref_id ?? ""),
     frozenJson: (w.frozen_json as Record<string, unknown>) ?? null,
     createdAt: wireTimestamp(w.created_at),
+    ...(typeof w.origin === "string" && w.origin ? { origin: w.origin } : {}),
   };
 }
 

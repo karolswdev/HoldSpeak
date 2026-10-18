@@ -51,6 +51,7 @@ export type DeskSlice = Pick<
   | "renamingZoneId"
   | "selectedIds"
   | "askOpen"
+  | "askThread"
   | "chatPersonaId"
   | "toolInspector"
   | "viewMode"
@@ -66,6 +67,7 @@ export type DeskSlice = Pick<
   | "setSelected"
   | "clearSelection"
   | "openAsk"
+  | "openAskThread"
   | "closeAsk"
   | "openChat"
   | "closeChat"
@@ -85,6 +87,7 @@ export const createDeskSlice: SliceCreator<DeskSlice> = (set, get) => ({
   renamingZoneId: null,
   selectedIds: [],
   askOpen: false,
+  askThread: null,
   chatPersonaId: null,
   toolInspector: null,
   viewMode: loadViewMode(),
@@ -150,8 +153,13 @@ export const createDeskSlice: SliceCreator<DeskSlice> = (set, get) => ({
     // Dock (an iconified or phone-hidden window): restore = show + raise.
     get().restorePanel("ask");
   },
+  openAskThread(threadId) {
+    const nonce = (get().askThread?.nonce ?? 0) + 1;
+    set({ askThread: { threadId, nonce } });
+    get().openAsk();
+  },
   closeAsk() {
-    set({ askOpen: false });
+    set({ askOpen: false, askThread: null });
   },
   openChat(personaId) {
     set({ chatPersonaId: personaId, editingId: null });

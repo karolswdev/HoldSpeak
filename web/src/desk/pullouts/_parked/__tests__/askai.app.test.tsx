@@ -11,9 +11,9 @@
  * result) is in tests/unit/test_desk_ask_ai.py. */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { useThreadStore, type ThreadDetail, type ThreadMessage, type ToolRow } from "../threads";
-import { ThreadPullout } from "../pullouts/ThreadPullout";
-import { RuntimeBusProvider } from "../../runtime/RuntimeBus";
+import { useThreadStore, type ThreadDetail, type ThreadMessage, type ToolRow } from "../../../threads";
+import { ThreadPullout } from "../ThreadPullout";
+import { RuntimeBusProvider } from "../../../../runtime/RuntimeBus";
 
 type Call = { url: string; method: string; body: unknown };
 let calls: Call[] = [];
@@ -245,8 +245,8 @@ describe("Ask AI: the decision box sends the owner's decision", () => {
 // kernel route with a fixture engine, its PATCH call_mode=1 answer and the read
 // after it, and the TTS status without the extra. Only fetch is mocked; the
 // window loads the thread itself (ThreadPullout's mount read).
-import CALL from "./fixtures/speak-hub/call.json";
-import { _resetForTest as resetTts } from "../../lib/tts";
+import CALL from "../../../__tests__/fixtures/speak-hub/call.json";
+import { _resetForTest as resetTts } from "../../../../lib/tts";
 
 const TID = CALL.thread_id as string;
 let threadRead: unknown = CALL.fresh;
