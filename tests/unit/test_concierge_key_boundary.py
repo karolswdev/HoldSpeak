@@ -113,3 +113,59 @@ def test_a_failed_contact_with_a_key_logs_the_class_not_the_text(caplog) -> None
     assert result["ok"] is False
     _no_secret(caplog, SECRET, "Bearer")
     assert any("ValueError" in r.getMessage() for r in caplog.records)
+
+
+# The environment OPENAI_API_KEY goes only to https://api.openai.com. A
+# caller-supplied address with no typed key and no profile gets no key.
+ENV_SECRET = "env-openai-synthetic-secret"
+
+
+class _Recorder(BaseHTTPRequestHandler):
+    seen: list[str | None] = []
+
+    def do_GET(self):  # noqa: N802
+        type(self).seen.append(self.headers.get("Authorization"))
+        body = b'{"data":[{"id":"qwen3.8-27b"}]}'
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, *_args):
+        pass
+
+
+def test_the_env_key_never_reaches_a_non_openai_address(monkeypatch) -> None:
+    monkeypatch.setenv("OPENAI_API_KEY", ENV_SECRET)
+    _Recorder.seen = []
+    httpd = HTTPServer(("127.0.0.1", 0), _Recorder)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    try:
+        response = _client().post(
+            "/api/setup/discover-models",
+            json={"base_url": f"http://127.0.0.1:{httpd.server_address[1]}/v1"},
+        )
+    finally:
+        httpd.shutdown()
+    assert response.status_code == 200
+    assert response.json()["models"] == ["qwen3.8-27b"]
+    assert _Recorder.seen == [None]
+    assert ENV_SECRET not in response.text
+
+
+def test_the_env_key_still_goes_to_openai(monkeypatch) -> None:
+    monkeypatch.setenv("OPENAI_API_KEY", ENV_SECRET)
+    calls: list[tuple[str, dict]] = []
+
+    def getter(url, *, headers, timeout):
+        calls.append((url, dict(headers)))
+        return 200, b'{"data":[{"id":"gpt-5"}]}'
+
+    monkeypatch.setattr(setup_runtime, "_default_http_json", getter)
+    response = _client().post("/api/setup/discover-models", json={"base_url": "https://api.openai.com/v1"})
+    assert response.status_code == 200
+    assert calls and calls[0][0] == "https://api.openai.com/v1/models"
+    assert calls[0][1].get("Authorization") == f"Bearer {ENV_SECRET}"
+    assert ENV_SECRET not in response.text
