@@ -1442,6 +1442,23 @@ class MondayBriefService:
         title = str(row["title"] or "").strip() if row is not None else ""
         return title or None
 
+    @staticmethod
+    def _later_success(conn: Any, failure: Any) -> bool:
+        """The same call (service, method and subject) succeeded after ``failure``."""
+        def subject(args_summary: Any) -> str:
+            match = _ARG_ID.search(str(args_summary or ""))
+            return match.group(0) if match else str(args_summary or "")
+
+        wanted = subject(failure["args_summary"])
+        return any(
+            subject(row["args_summary"]) == wanted
+            for row in conn.execute(
+                """SELECT args_summary FROM pipeline_events
+                   WHERE service = ? AND method = ? AND error IS NULL AND timestamp > ?""",
+                (failure["service"], failure["method"], failure["timestamp"]),
+            )
+        )
+
     def _breakage_text(
         self, conn: Any, service: str, method: str, args_summary: str
     ) -> str:
@@ -1688,6 +1705,11 @@ class MondayBriefService:
                 service = str(row["service"])
                 method = str(row["method"])
                 if (service, method) in seen_methods:
+                    continue
+                # Betterment D1: a failure the same call later did without
+                # error is not broken any more ("Summary did not start" after
+                # the summary ran).
+                if self._later_success(conn, row):
                     continue
                 seen_methods.add((service, method))
                 # PHILO-15 B73: the reason in words and the local time.

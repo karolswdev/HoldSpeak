@@ -458,8 +458,11 @@ def test_arrival_proposal_rows_carry_their_meeting_kind_and_date(hub: Hub) -> No
     for row in rows.values():
         assert row["meetingTitle"] == "Standup" and row["projectId"] == "proj-a", row
     assert next(r for r in rows.values() if r["proposalKind"] == "action")["proposalDue"] == "Fri"
+    # Betterment D1: the decision to make counts; a promise counts once kept.
     members = {m["ref"] for m in answer["members"]}
-    assert all((r.get("ref") if r.get("ref") is not None else r["id"]) in members for r in rows.values())
+    counted = {r["proposalKind"]: (r.get("ref") if r.get("ref") is not None else r["id"]) in members
+               for r in rows.values()}
+    assert counted == {"decision": True, "action": False}, counted
 
 
 def test_arrival_confirm_removes_exactly_that_proposal_and_files_the_obligation(hub: Hub) -> None:
@@ -495,8 +498,12 @@ def test_arrival_confirm_removes_exactly_that_proposal_and_files_the_obligation(
         assert row["source"] == "commitment" and row.get("actionItemId"), row
         # The commitment owns its action item: no Door card for it.
         assert not [r for r in after["items"] if r.get("_isDoor") and r.get("ref") == row["actionItemId"]]
+        # Betterment D1: kept, it is his (no owner named) and due on Friday
+        # ("Fri", read against the meeting's day): it counts on that day.
+        assert row["direction"] == "mine", row
         members = {m["ref"] for m in after["members"]}
-        assert (row.get("ref") if row.get("ref") is not None else row["id"]) in members, (row, members)
+        ref = row.get("ref") if row.get("ref") is not None else row["id"]
+        assert (ref in members) == bool(row["counted"]), (row, members)
 
     confirmed = _ok(hub.client.get("/api/projects/proj-a/proposals?state=confirmed"))["proposals"]
     assert {p["id"] for p in confirmed} >= {by_kind["action"]["id"], by_kind["decision"]["id"]}
@@ -725,9 +732,12 @@ def test_the_overdue_door_item_ranks_first_and_an_active_thought_is_no_member(hu
     # "OVERDUE · <n>D": n counts from the hub's day, so only the word is pinned.
     assert str(door_rows[0]["why"]).startswith("OVERDUE"), door_rows[0]
     assert door_rows[3]["why"] == "WAITING ON CY" and door_rows[3]["waiting"] is True
+    # Betterment D1: what Ada and Bea owe is theirs and never counts, late or
+    # not; the item nobody owns is his to place.
     members = {m["ref"] for m in answer["members"]}
-    assert {"hs144-overdue", "hs144-now", "hs144-unassigned"} <= members
-    assert "hs144-waiting" not in members
+    assert "hs144-unassigned" in members
+    assert not {"hs144-overdue", "hs144-now", "hs144-waiting"} & members
+    assert [row["direction"] for row in door_rows] == ["theirs", "theirs", "mine", "theirs"]
     titles = [str(row.get("title") or "") for row in answer["items"]]
     assert not any("active thought" in title.lower() for title in titles), titles
     assert not any(str(m.get("ref") or "").startswith("thought") for m in answer["members"]), answer["members"]
@@ -829,3 +839,76 @@ def test_a_row_stored_with_words_still_gets_a_lane_from_its_meeting_day(hub: Hub
     row = next(r for r in _needs(hub)["items"] if r["title"] == "Send the legacy note")
     assert row["dueAt"] == (start + timedelta(days=1)).date().isoformat(), row
     assert row["why"] == "DUE TODAY" and row["direction"] == "mine", row
+
+
+# ── Betterment daily D1: one number, true labels ─────────────────────────────
+
+
+def test_the_one_number_is_mine_due_today_and_to_decide(hub: Hub) -> None:
+    """The recon's week with today as its Monday, after the nine keeps, with
+    the LAN engine set: the bell, the Dock and the Project icon read 4. Mine
+    due today (2) + to decide (2); theirs (5, one of them overdue) never counts."""
+    from datetime import date
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from tests.fixtures.daily_week import seed
+
+    seeded = seed(hub, monday=date.today(), engine=True)
+    answer = _needs(hub)
+    counted = sorted(row["title"] for row in answer["items"] if row["counted"])
+    assert counted == [
+        "Do it", "Email Dana about the cutover window",
+        "Review design doc on settlement retries",
+        "Talk about the staff path in our next one-on-one",
+    ]
+    assert answer["count"] == len(answer["members"]) == 4
+    assert answer["blockers"] == []
+    # The Project icon reads the same rule filtered to the Project; the Room's
+    # own count (9: it counts theirs) is not the badge.
+    assert answer["projectCounts"] == {seeded["project"]: 4}
+    overdue = next(row for row in answer["items"] if row["title"] == "Confirm the vendor freeze dates")
+    assert overdue["direction"] == "theirs" and overdue["why"].startswith("OVERDUE") and not overdue["counted"]
+    # The faces' half (web/src/desk/__tests__/bell.app.test.tsx) renders this answer.
+    from tests.unit.test_desk_speak import _record
+
+    projects = _ok(hub.client.get("/api/projects"))
+    board = _ok(hub.client.get("/api/follow-through/board"))
+    # The Project id is minted per run; the stored answer names it one way.
+    wire = json.loads(json.dumps({"needsYou": answer, "projects": projects, "followThrough": board})
+                      .replace(seeded["project"], "proj-daily-week"))
+    _record("needs-you", wire,
+            Path(hub.db.db_path).parent,
+            "tests/unit/test_desk_needs_you.py::test_the_one_number_is_mine_due_today_and_to_decide",
+            folder=Path(__file__).resolve().parents[2] / "web" / "src" / "desk" / "__tests__"
+            / "fixtures" / "daily-week")
+
+
+def test_a_promise_not_kept_yet_does_not_count(hub: Hub) -> None:
+    """Before the keeps: the two decisions count; no proposed action does."""
+    from datetime import date
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from tests.fixtures.daily_week import seed
+
+    seed(hub, monday=date.today(), engine=True, keep=False)
+    answer = _needs(hub)
+    assert sorted(row["title"] for row in answer["items"] if row["counted"]) == [
+        "Adopt idempotent retries with a dedupe key", "Do it",
+        "Freeze ledger writes during the cutover",
+        "Talk about the staff path in our next one-on-one",
+    ]
+    assert answer["count"] == 4
+
+
+def test_follow_through_due_is_a_date_or_the_whole_words(hub: Hub) -> None:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from tests.fixtures.daily_week import seed
+
+    seed(hub)
+    with hub.db._connection() as conn:
+        conn.execute("UPDATE action_items SET due = 'after the launch' WHERE task = 'Write up alert rule changes'")
+        conn.commit()
+    board = _ok(hub.client.get("/api/follow-through/board"))
+    dues = {card["text"]: card["due"] for lane in ("now", "waiting", "unassigned", "overdue") for card in board[lane]}
+    assert dues["Profile the reconciliation job"] == "2026-10-23"
+    assert dues["Write up alert rule changes"] == "after the launch"

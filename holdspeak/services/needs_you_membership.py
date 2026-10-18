@@ -37,8 +37,8 @@ meetings) through their services and applies it to a Room aggregate.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
-from holdspeak.timestamps import local_wall, utc_now_iso
+from datetime import date, datetime, timezone
+from holdspeak.timestamps import local_wall, parse_stamp, utc_now_iso
 from typing import Any, Callable, Iterable
 
 from .attention_ranking import dedup_items, rank_items
@@ -884,10 +884,50 @@ def row_direction(row: dict[str, Any], is_me: Callable[[dict[str, Any]], bool]) 
         return "decide"
     if row.get("waiting"):
         return "theirs"
+    if "_his" in row:  # a merged row: his when one of its projections is
+        return "mine" if row["_his"] else "theirs"
     owner = str(row.get("owner") or "").strip()
     if owner and row.get("why") != YOURS and not is_me(row):
         return "theirs"
     return "mine"
+
+
+def _due_day(due: Any) -> date | None:
+    """A row's due as a local day (a bare ISO day is that day)."""
+    text = str(due or "").strip()
+    if not text:
+        return None
+    if len(text) <= 10:
+        try:
+            return date.fromisoformat(text)
+        except ValueError:
+            return None
+    stamp = parse_stamp(text)
+    return stamp.date() if stamp is not None else None
+
+
+def counts_in_number(item: dict[str, Any], today: date) -> bool:
+    """Betterment D1, the one count rule: *mine* due today or late, *decide*
+    (decisions, approvals, an agent's question), and *setup* (counted apart:
+    the blockers and failed summaries). *Theirs* never counts. A promise not
+    kept yet (a proposed action, a To review card) does not count until kept.
+
+    A *mine* row with no due date (a review asked of him, a red build, an
+    item nobody owns yet) has no later day to wait for: it counts. Only a
+    *mine* row due on a later day waits for that day.
+    """
+    if item.get("askOverrides"):
+        return True  # an agent asks about this item: his answer is due now
+    direction = item.get("direction")
+    if direction == "decide":
+        return True
+    if direction != "mine" or item.get("waiting"):
+        return False
+    if item.get("_toReview") or (item.get("proposalId") and item.get("proposalKind") != "decision"):
+        return False
+    dues = item.get("_hisDues") if item.get("_hisDues") else [item.get("dueAt")]
+    days = [_due_day(due) for due in dues]
+    return any(day is None or day <= today for day in days)
 
 
 def compute_needs_you(
@@ -965,6 +1005,15 @@ def compute_needs_you(
             continue
         marks = [other(source) for source in sources]
         row["waiting"] = all(marks)
+        # Betterment D1: a projection that names no owner, or names him, is
+        # his; their due days decide the count, and one makes the row his.
+        his = [
+            source for source in sources
+            if not str(source.get("owner") or "").strip()
+            or _is_me(source, names, personal, identified, persons)
+        ]
+        row["_his"] = bool(his)
+        row["_hisDues"] = [source.get("dueAt") for source in his]
         if not row["waiting"] and other(row):
             his = next(source for source, mark in zip(sources, marks) if not mark)
             row["why"] = YOURS if _waiting_on(his) else (his.get("why") or row.get("why"))
@@ -1009,10 +1058,14 @@ def compute_needs_you(
             unmuted_items.append(item)
     # What the owner waits on someone else for is listed and is not counted.
     waiting_items = [item for item in unmuted_items if item["waiting"]]
-    counted_items = [item for item in unmuted_items if not item["waiting"]]
+    # Betterment D1: the one count rule (``counts_in_number``) marks each row.
     # The asks folded above are listed (the desk draws each on its item's
     # row) and are not members of their own.
-    counted_items = [item for item in counted_items if not item.get("foldedInto")]
+    for item in muted_items:
+        item["counted"] = False
+    for item in unmuted_items:
+        item["counted"] = not item.get("foldedInto") and counts_in_number(item, clock.date())
+    counted_items = [item for item in unmuted_items if item["counted"]]
 
     blockers = [
         {**blocker, "direction": "setup"}
@@ -1505,7 +1558,7 @@ def compose(
         "failedMeetings": result["failedMeetings"],
         "projects": sorted({
             str(item["projectId"]) for item in result["unmutedItems"]
-            if item.get("projectId") and not item.get("waiting")
+            if item.get("projectId") and item.get("counted")
         }),
         # The members by Project: the per-Project number every face shows
         # (the shade's Projects list, the palette's project badge). It is
@@ -1540,14 +1593,17 @@ _MEMBERSHIP_KEYS = (
 def project_counts(unmuted_items: Iterable[dict[str, Any]]) -> dict[str, int]:
     """The counted attention rows by Project: ``{projectId: n}``.
 
-    A row counts when it is a member (unmuted and not ``waiting``). The sum is
-    the attention part of ``count``; a member with no Project (a Door card,
-    a blocker, a failed meeting) is in ``count`` and in no Project.
+    A row counts when it is a member (unmuted, not ``waiting``, and marked
+    ``counted`` by the one count rule). The sum is the attention part of
+    ``count``; a member with no Project (a Door card, a blocker, a failed
+    meeting) is in ``count`` and in no Project.
     """
     counts: dict[str, int] = {}
     for item in unmuted_items:
         project_id = item.get("projectId")
         if not project_id or item.get("muted") or item.get("waiting") or item.get("foldedInto"):
+            continue
+        if item.get("counted") is False:
             continue
         counts[str(project_id)] = counts.get(str(project_id), 0) + 1
     return counts

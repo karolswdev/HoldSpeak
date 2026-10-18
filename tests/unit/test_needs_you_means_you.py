@@ -245,12 +245,16 @@ def test_an_item_the_owner_himself_holds_is_his_and_is_counted(hub: Hub) -> None
     answer = _ok(hub.client.get("/api/desk/needs-you"))
     rows = {row["ref"]: row for row in answer["items"]}
     members = [member["ref"] for member in answer["members"]]
-    # His own items count and read as his, at any due date.
+    # His own items read as his at any due date. Betterment D1: one counts
+    # on its day (today, or late, or with no date); a later one waits for it.
     assert rows[made["mine_today"]]["why"] == "DUE TODAY" and rows[made["mine_today"]]["waiting"] is False
     assert rows[made["mine_later"]]["why"] == "YOURS" and rows[made["mine_later"]]["waiting"] is False
     assert rows[made["commitment"]]["waiting"] is False
     for key in ("mine_today", "mine_later", "commitment"):
+        assert rows[made[key]]["direction"] == "mine", key
+    for key in ("mine_today", "commitment"):
         assert made[key] in members, key
+    assert made["mine_later"] not in members
     # Priya's is waited on.
     assert rows[made["priya"]]["why"] == "WAITING ON PRIYA" and rows[made["priya"]]["waiting"] is True
     assert made["priya"] not in members
@@ -308,9 +312,11 @@ def test_his_own_item_is_counted_when_it_merges_with_a_row_that_waits(hub: Hub) 
     assert len(rows) == 1, rows
     row = rows[0]
     assert row["dedupCount"] == 2
-    # One projection is his: the row is his, leads with his reason, is counted.
+    # One projection is his: the row is his and leads with his reason.
+    # Betterment D1: his projection is due in nine days, so it waits for its day.
     assert row["waiting"] is False and row["why"] == "YOURS", row
-    assert row["ref"] in [member["ref"] for member in after["members"]]
+    assert row["direction"] == "mine" and row["counted"] is False, row
+    assert row["ref"] not in [member["ref"] for member in after["members"]]
     # PHILO-15-09 (B11): the one number counts every row the desk draws: the
     # members and each source that could not be read (a Watch row is one).
     # PHILO-17 (needsyou): the sources of one cause are one row.
@@ -320,7 +326,7 @@ def test_his_own_item_is_counted_when_it_merges_with_a_row_that_waits(hub: Hub) 
         return len(answer["members"]) + len(unread_source_groups(answer["coverage"])) + len(answer.get("arming") or [])
 
     assert after["count"] == rows_of(after) and before["count"] == rows_of(before)
-    assert len(after["members"]) == len(before["members"]) + 1, (before["coverage"], after["coverage"])
+    assert len(after["members"]) == len(before["members"]), (before["coverage"], after["coverage"])
     assert after["waitingCount"] == before["waitingCount"] - 1
     assert _one_number(hub, brief=True) == after["count"]
 

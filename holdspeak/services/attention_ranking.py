@@ -224,8 +224,11 @@ def _projection(item: dict[str, Any]) -> dict[str, Any]:
     merge (``needs_you_membership.waits_on_other``).
     """
     owner = str(item.get("owner") or "").strip()
+    due = item.get("dueAt")
     return {
         **({"owner": owner} if owner else {}),
+        # Betterment D1: the one count reads each of his projections' own due.
+        **({"dueAt": due} if due else {}),
         "id": item.get("id"),
         "source": item.get("source", ""),
         "title": item.get("title", ""),

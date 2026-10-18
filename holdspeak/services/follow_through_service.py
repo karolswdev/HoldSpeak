@@ -223,7 +223,9 @@ class FollowThroughService:
                 id=str(action["id"]),
                 text=str(action["task"]),
                 owner=action["owner"],
-                due=self._date_text(due),
+                # Betterment D1: a day is cut to YYYY-MM-DD; words stay whole
+                # ("Friday next week", never "Friday nex").
+                due=self._date_text(due) if _ISO_DAY.match(str(due or "")) else ((str(due).strip() or None) if due else None),
                 status=status,
                 meeting_id=action["meeting_id"],
                 decision_id=action["decision_id"],
