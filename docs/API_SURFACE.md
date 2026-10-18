@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 775 (plus static mounts). iOS-consumed: 89. Web-consumed: 606.
+Routes: 777 (plus static mounts). iOS-consumed: 89. Web-consumed: 608.
 
 ## device_audio_ws
 
@@ -876,6 +876,7 @@ Routes: 775 (plus static mounts). iOS-consumed: 89. Web-consumed: 606.
 | DELETE | `/api/workbenches/{workbench_id}` | web |
 | GET | `/api/workbenches/{workbench_id}` | web |
 | PUT | `/api/workbenches/{workbench_id}` | web |
+| PUT | `/api/workbenches/{workbench_id}/engine` | web |
 | POST | `/api/workbenches/{workbench_id}/items` | web |
 | POST | `/api/workbenches/{workbench_id}/items/park` | web |
 | POST | `/api/workbenches/{workbench_id}/items/restore` | web |
@@ -892,6 +893,7 @@ Routes: 775 (plus static mounts). iOS-consumed: 89. Web-consumed: 606.
 | GET | `/api/workbenches/{workbench_id}/runs` | web |
 | POST | `/api/workbenches/{workbench_id}/runs/{parent_operation_id}/cancel` | server only |
 | POST | `/api/workbenches/{workbench_id}/voice/resolve` | web |
+| PUT | `/api/workbenches/{workbench_id}/when` | web |
 
 ## web.routes.primitives.workflows
 

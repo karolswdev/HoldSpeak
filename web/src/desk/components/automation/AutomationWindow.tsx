@@ -7,8 +7,9 @@
  * switch sit in the title strip. What it has learned is a fold, closed by
  * default, with Forget on each lesson.
  *
- * Do edits in place (a text box with the mic). When, About, With and Put it
- * in show their value; their editors land in A4 to A6.
+ * Do edits in place (a text box with the mic). A4: When and With edit in
+ * place too (WhenEditor, WithEditor). About and Put it in show their value;
+ * their editors land in A5 and A6.
  *
  * The parked queue view (WorkbenchWindow) stays reachable for an old queue
  * automation through RAW in the title strip. */
@@ -20,7 +21,10 @@ import {
   fetchWorkbenchMemory,
   forgetAutomationLesson,
   openAutomationResult,
+  setAutomationEngine,
+  setAutomationWhen,
   setWorkbenchAutomationEnabled,
+  type AutomationWhenChoice,
   triggerWorkbenchRun,
   updateWorkbenchField,
 } from "../../api";
@@ -37,10 +41,14 @@ import {
   SurfaceSection,
   SurfaceState,
   StateChip,
+  EgressChip,
 } from "../../surface";
+import { boundaryEgressLamp } from "../../inferenceEgress";
 import { useOptionalRuntimeBus } from "../../../runtime/RuntimeBus";
 import { WORKBENCH_RUN_FRAME_TYPES } from "../workbench/runLifecycle";
 import { SentenceLine } from "./SentenceLine";
+import { WhenEditor } from "./WhenEditor";
+import { WithEditor } from "./WithEditor";
 import { ResultBody, ResultCard, ResultHead } from "./ResultCard";
 import {
   engineWords,
@@ -48,6 +56,8 @@ import {
   hasStarts,
   isOldQueue,
   isOn,
+  lessonWords,
+  nextWords,
   putWords,
   resultDay,
   resultLine,
@@ -106,7 +116,7 @@ function Lessons({
   // Nothing learned yet: the fold would hold nothing (no counter of zero).
   if (!entries.length) return null;
   return (
-    <FoldGadget title="What it has learned" token={entries.length > 0 ? entries.length : undefined} className="automation-lessons">
+    <FoldGadget title="What it has learned" token={lessonWords(entries.length)} className="automation-lessons">
       <ul className="automation-lesson-list" data-testid="automation-lessons">
         {entries.map((entry, index) => (
           <li key={`${entry.timestamp}-${index}`} className="automation-lesson">
@@ -288,6 +298,39 @@ export function AutomationWindow({
     await load();
   };
 
+  // A4: one When press saves that choice at once; looking never does.
+  const [whenSaving, setWhenSaving] = useState<string | null>(null);
+  const chooseWhen = async (choice: AutomationWhenChoice, key: string) => {
+    setWhenSaving(key);
+    setSaveError(null);
+    try {
+      await setAutomationWhen(workbenchId, choice);
+    } catch (error) {
+      setSaveError(readableError(error));
+    } finally {
+      setWhenSaving(null);
+    }
+    await load();
+  };
+
+  const chooseEngine = async (profileId: string) => {
+    setSaveError(null);
+    await setAutomationEngine(workbenchId, { profile_id: profileId });
+    await load();
+  };
+
+  const saveSpendLimit = async (limit: number | null) => {
+    setSaveError(null);
+    try {
+      await setAutomationEngine(workbenchId, { spend_limit_usd: limit });
+    } catch (error) {
+      setSaveError(readableError(error));
+    }
+    await load();
+  };
+
+  const toggle = (line: string) => { setSaveError(null); setEditing(editing === line ? null : line); };
+
   const forget = async (index: number, entry: MemoryEntry) => {
     try {
       await forgetAutomationLesson(workbenchId, index, entry.timestamp);
@@ -354,13 +397,25 @@ export function AutomationWindow({
         {detail ? (
           <>
             <div className="automation-sentence" data-testid="automation-sentence">
-              <SentenceLine name="when" label="When">{whenWords(detail)}</SentenceLine>
+              <SentenceLine
+                name="when"
+                label="When"
+                open={editing === "when"}
+                onPress={() => toggle("when")}
+                aside={nextWords(detail.next_run_at) ? (
+                  <span className="automation-next" data-testid="automation-next">{nextWords(detail.next_run_at)}</span>
+                ) : undefined}
+                editor={<WhenEditor detail={detail} saving={whenSaving}
+                  onChoose={(choice, key) => void chooseWhen(choice, key)} />}
+              >
+                {whenWords(detail)}
+              </SentenceLine>
               <SentenceLine
                 name="do"
                 label="Do"
                 blank={!doText}
                 open={editing === "do"}
-                onPress={() => { setSaveError(null); setEditing(editing === "do" ? null : "do"); }}
+                onPress={() => toggle("do")}
                 editor={
                   <DoEditor key={doText} value={doText} saving={saving}
                     onSave={(next) => void saveDo(next)} onCancel={() => setEditing(null)} />
@@ -382,8 +437,21 @@ export function AutomationWindow({
                   "Nothing chosen"
                 )}
               </SentenceLine>
-              <SentenceLine name="with" label="With" blank={!engine}>
-                {engine ?? "No engine"}
+              <SentenceLine
+                name="with"
+                label="With"
+                blank={!engine}
+                open={editing === "with"}
+                onPress={() => toggle("with")}
+                aside={engine && detail.assignment_summary?.boundary ? (
+                  <EgressChip label={boundaryEgressLamp(detail.assignment_summary.boundary).label}
+                    title={`The prompt goes: ${boundaryEgressLamp(detail.assignment_summary.boundary).label}`}
+                    scope={["local", "same_device"].includes(detail.assignment_summary.boundary) ? "local" : "cloud"} />
+                ) : undefined}
+                editor={<WithEditor detail={detail} onUse={chooseEngine}
+                  onSpendLimit={saveSpendLimit} />}
+              >
+                {engine ?? "Choose an engine"}
               </SentenceLine>
               <SentenceLine name="put" label="Put it in">{putWords(detail.output_target)}</SentenceLine>
             </div>

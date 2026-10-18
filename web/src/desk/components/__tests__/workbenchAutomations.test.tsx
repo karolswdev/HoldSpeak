@@ -199,18 +199,20 @@ describe("Workbench STARTS WHEN automations", () => {
     )).toHaveLength(2));
   });
 
-  it("pauses an active event automation when Manual is selected", async () => {
+  it("looking at Manual never pauses an active event automation (Betterment A4)", async () => {
     const calls = await open([automation(true)]);
     expect(screen.getByRole("combobox", { name: "Automation start condition" })).toHaveValue("event");
 
     fireEvent.change(screen.getByRole("combobox", { name: "Automation start condition" }), { target: { value: "manual" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "Automation start condition" }), { target: { value: "idle" } });
 
-    await waitFor(() => expect(calls.mock.calls.some(([url, init]) => {
-      if (!String(url).endsWith("/automations/auto-1") || (init as RequestInit).method !== "PATCH") {
-        return false;
-      }
-      return JSON.parse(String((init as RequestInit).body)).enabled === false;
-    })).toBe(true));
+    // Looking at another start mode writes nothing: no PATCH, no PUT (the
+    // engine editors' POSTs are reads of their projection).
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(calls.mock.calls.filter(([url, init]) => {
+      const method = String((init as RequestInit | undefined)?.method ?? "GET").toUpperCase();
+      return method !== "GET" && !String(url).endsWith("/assignments/editor");
+    })).toEqual([]);
   });
 
   it("starts from the six-hour nightly preset but persists per-Workbench policy changes", async () => {

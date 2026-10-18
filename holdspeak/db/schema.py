@@ -1750,7 +1750,13 @@ CREATE TABLE IF NOT EXISTS workbenches (
     -- inbox | needs_you | destination:<id>.
     instruction TEXT NOT NULL DEFAULT '',
     sources_json TEXT NOT NULL DEFAULT '[]',
-    output_target TEXT NOT NULL DEFAULT 'inbox'
+    output_target TEXT NOT NULL DEFAULT 'inbox',
+    -- Betterment A4: the Spend limit per run for this automation (US dollars).
+    -- NULL keeps the engine's own limit.
+    spend_limit_usd REAL,
+    -- Betterment A4: the When he chose, as JSON ({"kind": "schedule" | "event"
+    -- | "manual", "reaction_id"}); '' for an automation from before A4.
+    when_json TEXT NOT NULL DEFAULT ''
 );
 CREATE TABLE IF NOT EXISTS workbench_items (
     id TEXT PRIMARY KEY,

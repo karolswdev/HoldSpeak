@@ -41,14 +41,33 @@ export interface AutomationSource {
   missing: boolean;
 }
 
+/** An event the hub can deliver (When > When something happens). */
+export interface AutomationEventChoice {
+  id: string;
+  words: string;
+  /** What the event needs from him (a GitHub repository). */
+  needs: string;
+  event_pattern: string;
+}
+
 export interface AutomationDetail extends WorkbenchDetail {
+  assignment_summary?: WorkbenchDetail["assignment_summary"] & {
+    /** Betterment A4: the engine in use, and where its prompt goes. */
+    profile_id?: string | null;
+    boundary?: string | null;
+  };
+  /** Betterment A4: when the schedule fires next (only while it is on). */
+  next_run_at?: string | null;
+  /** Betterment A4: this automation's Spend limit per run; null = the engine's. */
+  spend_limit_usd?: number | null;
+  when_events?: AutomationEventChoice[];
   instruction?: string;
   instruction_shown?: string;
   instruction_from?: string;
   output_target?: string;
   results?: AutomationResult[];
   sources_shown?: AutomationSource[];
-  event_starts?: Array<{ id?: string; name: string; enabled: boolean }>;
+  event_starts?: Array<{ id?: string; name: string; enabled: boolean; event_pattern?: string }>;
 }
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -96,7 +115,10 @@ export function scheduleWords(cron: string | null | undefined): string | null {
 /** The When line: the schedule, the events that start it, or the press. */
 export function whenWords(detail: AutomationDetail): string {
   const schedule = scheduleWords(detail.schedule);
-  const events = (detail.event_starts ?? []).map((e) => e.name).filter(Boolean);
+  // Betterment A4: an event start reads in the When editor's words.
+  const words = new Map((detail.when_events ?? []).map((c) => [c.event_pattern, c.words]));
+  const events = (detail.event_starts ?? [])
+    .map((e) => words.get(e.event_pattern ?? "") ?? e.name).filter(Boolean);
   const parts = [schedule, ...events].filter(Boolean) as string[];
   return parts.length ? parts.join(" · ") : "Only when I press Run now";
 }
@@ -109,6 +131,43 @@ export function hasStarts(detail: AutomationDetail): boolean {
 export function isOn(detail: AutomationDetail): boolean {
   return (Boolean(detail.schedule) && detail.schedule_enabled)
     || (detail.event_starts ?? []).some((e) => e.enabled);
+}
+
+const SHORT_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+/** `Next: Fri 15:00` in the viewer's zone; nothing when it is not on. */
+export function nextWords(value: string | null | undefined): string | null {
+  const date = wireDate(value);
+  if (!date) return null;
+  return `Next: ${SHORT_DAYS[date.getDay()]} ${wireClock(date)}`;
+}
+
+/** The stored schedule as the When editor's picks; null when the pickers
+ *  cannot show it (a cron that no picker makes). */
+export interface SchedulePick {
+  every: "day" | "weekday" | "week" | "hour";
+  time: string;
+  day: number | null;
+}
+
+export function schedulePick(cron: string | null | undefined): SchedulePick | null {
+  const f = String(cron ?? "").trim().split(/\s+/);
+  if (f.length !== 5) return null;
+  const [minute, hour, dom, month, dow] = f;
+  if (dom !== "*" || month !== "*") return null;
+  if (hour === "*" && minute === "0" && dow === "*") return { every: "hour", time: "09:00", day: null };
+  const time = clock(minute, hour);
+  if (!time) return null;
+  if (dow === "*") return { every: "day", time, day: null };
+  if (dow === "1-5") return { every: "weekday", time, day: null };
+  if (/^[0-6]$/.test(dow)) return { every: "week", time, day: Number(dow) };
+  return null;
+}
+
+/** The lessons fold's token: words, never a bare count. */
+export function lessonWords(count: number): string | undefined {
+  if (count <= 0) return undefined;
+  return count === 1 ? "1 lesson" : `${count} lessons`;
 }
 
 export function putWords(target: string | null | undefined): string {

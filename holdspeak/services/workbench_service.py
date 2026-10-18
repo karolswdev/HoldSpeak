@@ -189,6 +189,149 @@ class WorkbenchService:
         self._changed("workbench", workbench_id, "delete")
         return True
 
+    # ── Betterment A4: When and With ─────────────────────────────────────
+
+    def set_when(self, principal: Principal, workbench_id: str, when: Any) -> dict[str, Any]:
+        """Store one When choice: ``{"kind": "schedule", "every", "time", "day"}``,
+        ``{"kind": "event", "event_id", "repository"}`` or ``{"kind": "manual"}``.
+
+        The choice the owner presses is what starts it, and the other starts
+        of this automation stop (one When). A schedule is stored as cron and
+        turned on; with no engine to freeze yet it is kept, off, and the
+        refusal says so."""
+        if principal.kind is not PrincipalKind.OWNER:
+            raise ServiceError("owner_principal_required", "Only the owner can change when it runs",
+                               context={"status": 403})
+        _launch_own(principal, f"workbench:{workbench_id}")
+        self._require_workbench(workbench_id)
+        if not isinstance(when, dict):
+            raise ValidationError("when must be a choice")
+        kind = str(when.get("kind") or "")
+        from .automation_when import cron_for, event_choices
+        from .reaction_service import ReactionService
+
+        reactions = ReactionService(self._db, observer=self._observer, on_changed=self._on_changed)
+        own = [r for r in self._db.automations.list_reactions() if r.get("workbench_id") == workbench_id]
+
+        def stop_events(keep: str = "") -> None:
+            for reaction in own:
+                if reaction["id"] != keep and reaction.get("enabled"):
+                    reactions.set_workbench_automation_enabled(
+                        principal, workbench_id=workbench_id, reaction_id=reaction["id"], enabled=False)
+
+        if kind == "manual":
+            self.update_workbench(principal, workbench_id, schedule=None, schedule_enabled=False)
+            stop_events()
+            self._db.workbenches.set_when_json(workbench_id, {"kind": "manual"})
+        elif kind == "schedule":
+            cron = cron_for(when)
+            try:
+                self.update_workbench(principal, workbench_id, schedule=cron, schedule_enabled=True)
+            except ServiceError as exc:
+                if exc.code not in {"no_assignment", "no_compatible_assignment", "delegation_stale_work"}:
+                    raise
+                self.update_workbench(principal, workbench_id, schedule=cron, schedule_enabled=False)
+                stop_events()
+                self._db.workbenches.set_when_json(workbench_id, {"kind": "schedule"})
+                raise ValidationError(
+                    "The schedule is saved but off: choose an engine under With, then turn it on.",
+                    code="automation_schedule_needs_engine",
+                ) from exc
+            stop_events()
+            self._db.workbenches.set_when_json(workbench_id, {"kind": "schedule"})
+        elif kind == "event":
+            event_id = str(when.get("event_id") or "")
+            choice = next((c for c in event_choices() if c["id"] == event_id), None)
+            if choice is None:
+                raise ValidationError("Choose one of the events the hub can deliver")
+            repository = str(when.get("repository") or "").strip()
+            # The same event on the same repository is turned back on, not
+            # made again.
+            same = next((r for r in own if r.get("event_pattern") == choice["event_pattern"]
+                         and ((self._db.automations.get_watch(r["watch_id"]) or {}).get("query") or {})
+                         .get("repository") == repository), None) if repository else None
+            reaction_id = same["id"] if same else reactions.create_preset_automation(
+                principal, workbench_id=workbench_id, preset_id=event_id, repository=repository)["id"]
+            # Turning it on reads the source now (the quiet baseline): a
+            # source that cannot be read refuses here, before anything else
+            # changes.
+            reactions.set_workbench_automation_enabled(
+                principal, workbench_id=workbench_id, reaction_id=reaction_id, enabled=True)
+            stop_events(keep=reaction_id)
+            self.update_workbench(principal, workbench_id, schedule=None, schedule_enabled=False)
+            self._db.workbenches.set_when_json(workbench_id, {"kind": "event", "reaction_id": reaction_id})
+        else:
+            raise ValidationError("when.kind must be schedule, event or manual")
+        return self.get_workbench(principal, workbench_id)
+
+    def set_engine(self, principal: Principal, workbench_id: str, **fields: Any) -> dict[str, Any]:
+        """With: the engine for this automation's runs (the subject assignment
+        ``subject:workbench:<id>:capability:workbench.item``) and its optional
+        Spend limit per run. A changed engine re-freezes a live schedule
+        (``InferenceAssignmentService.set_assignment``), so a scheduled run
+        uses it too."""
+        if principal.kind is not PrincipalKind.OWNER:
+            raise ServiceError("owner_principal_required", "Only the owner can choose the engine",
+                               context={"status": 403})
+        _launch_own(principal, f"workbench:{workbench_id}")
+        self._require_workbench(workbench_id)
+        unknown = set(fields) - {"profile_id", "spend_limit_usd"}
+        if unknown:
+            raise ValidationError(f"Unknown fields: {', '.join(sorted(unknown))}")
+        if "spend_limit_usd" in fields:
+            limit = fields["spend_limit_usd"]
+            if limit is not None:
+                if isinstance(limit, bool) or not isinstance(limit, (int, float)) or not 0 < float(limit) <= 1000:
+                    raise ValidationError("The spend limit is a dollar amount above 0 and at most 1000")
+                limit = round(float(limit), 2)
+            self._db.workbenches.set_spend_limit(workbench_id, limit)
+        profile_id = str(fields.get("profile_id") or "").strip()
+        if profile_id:
+            from holdspeak.kernel.runtime import _configure
+
+            from .inference_assignment_service import InferenceAssignmentService
+
+            _configure(self._db)
+            assignments = InferenceAssignmentService(self._db)
+            key = f"subject:workbench:{workbench_id}:capability:workbench.item"
+            with self._db._connection() as conn:
+                expected = assignments._expected_revision(conn, key)
+            assignments.set_assignment(principal, {
+                "command_id": _new_id("automation-with"),
+                "expected_revision": expected,
+                "scope": {"kind": "subject", "subject_kind": "workbench",
+                          "subject_id": workbench_id, "capability_id": "workbench.item"},
+                "entries": [{"profile_id": profile_id}],
+            })
+        self._changed("workbench", workbench_id, "update")
+        return self.get_workbench(principal, workbench_id)
+
+    def refreeze_schedule(self, principal: Principal, workbench_id: str) -> bool:
+        """Re-approve a live schedule on the current engine.
+
+        A schedule delegation freezes the route when it is turned on
+        (``schedule_delegation._terms``); without this, a scheduled run keeps
+        the engine of that moment after he changes With. The old delegation
+        is revoked and a new one is frozen in one transaction; an off
+        schedule has nothing to re-freeze."""
+        if principal.kind is not PrincipalKind.OWNER:
+            return False
+        wb = self._db.workbenches.get(workbench_id)
+        if wb is None or not wb.schedule_enabled or not wb.schedule:
+            return False
+        from holdspeak.kernel.runtime import _configure
+
+        from .schedule_delegation import ScheduleDelegationService
+
+        _configure(self._db)
+        service = ScheduleDelegationService(self._db)
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            fenced = service.revoke_in_transaction(conn, workbench_id, "engine_changed")
+            service.enable_from_owner_in_transaction(principal, wb, conn)
+        service.complete_fenced(fenced)
+        return True
+
     # ── Items ────────────────────────────────────────────────────────────
 
     def get_item(
@@ -751,11 +894,29 @@ class WorkbenchService:
         payload["results"] = results_of(self._db, wb.id)
         # Betterment A3: the About line names each source (never its ref).
         payload["sources_shown"] = source_names(self._db, sources_of(wb))
-        # ... and the When line names an event start by its name.
+        # ... and the When line names an event start by its name. Betterment
+        # A4: after a When choice, only the start he chose is this
+        # automation's start (the others stay stored, off); before A4, all.
+        try:
+            chosen = json.loads(wb.when_json) if wb.when_json else {}
+        except (TypeError, ValueError):
+            chosen = {}
+        payload.pop("when_json", None)
+        payload["when_kind"] = str(chosen.get("kind") or "") or None
         payload["event_starts"] = [
-            {"id": str(r.get("id") or ""), "name": str(r.get("name") or ""), "enabled": bool(r.get("enabled"))}
+            {"id": str(r.get("id") or ""), "name": str(r.get("name") or ""), "enabled": bool(r.get("enabled")),
+             "event_pattern": str(r.get("event_pattern") or "")}
             for r in self._db.automations.list_reactions() if r.get("workbench_id") == wb.id
+            and (not chosen or r.get("id") == chosen.get("reaction_id"))
         ]
+        # Betterment A4: when the schedule fires next (only while it is on),
+        # and the events the When editor can offer.
+        from .automation_when import event_choices, next_run_at
+
+        payload["next_run_at"] = next_run_at(wb.schedule, wb.schedule_enabled)
+        payload["when_events"] = [{"id": c["id"], "words": c["words"], "needs": c["needs"],
+                                   "event_pattern": c["event_pattern"]}
+                                  for c in event_choices()]
         if principal.kind is PrincipalKind.OWNER:
             from .inference_assignment_service import InferenceAssignmentService
 
@@ -771,6 +932,10 @@ class WorkbenchService:
                 "source": effective.get("inherited_from"),
                 "chain": [str(entry["label"]) for entry in assignment.get("entries", [])],
                 "repair": effective.get("repair"),
+                # Betterment A4: the With picker marks the engine in use and
+                # shows where its prompt goes.
+                "profile_id": str((assignment.get("entries") or [{}])[0].get("profile_id") or "") or None,
+                "boundary": str((assignment.get("entries") or [{}])[0].get("boundary") or "") or None,
             }
         return payload
 

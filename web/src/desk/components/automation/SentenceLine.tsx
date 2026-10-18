@@ -3,7 +3,7 @@
  * The label (When, Do, About, With, Put it in) and its value. A line with an
  * editor is the control: pressing it unfolds the editor in place, under the
  * line, and never opens another window. A line whose editor has not landed
- * yet (A4 to A6) shows its value and is not pressable (UX-CANON A.11: a verb
+ * yet (A5, A6) shows its value and is not pressable (UX-CANON A.11: a verb
  * that does nothing is a lie). */
 import { useId, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
