@@ -6,10 +6,18 @@ The Engines window reads two sums from it (today and this week, in the hub's
 own time zone) and NOT SIGNED IN from the last run.
 
 A write never breaks a run: a failed write is logged and the answer goes on.
+
+Betterment M2: a row also names the run (``run_id``, the id in the run's
+credential ``agent:run:<run_id>``) and the automation item it ran for
+(``item_id``). The workbench runner sets the item around its engine call
+(:func:`for_item`); an automation result reads its cost by item.
 """
 from __future__ import annotations
 
 import json
+from collections.abc import Iterator
+from contextlib import contextmanager
+from contextvars import ContextVar
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
@@ -25,6 +33,24 @@ OUTCOMES = frozenset({ANSWERED, NOT_SIGNED_IN, FAILED})
 #: Words an agent CLI prints when it has no sign-in (Claude Code:
 #: "Invalid API key. Please run /login"; Codex: "Not logged in").
 _SIGN_IN_WORDS = ("/login", "not logged in", "please log in", "please login", "invalid api key", "sign in")
+
+
+#: The automation item the current engine call runs for ('' = none).
+_ITEM: ContextVar[str] = ContextVar("cli_engine_run_item", default="")
+
+
+@contextmanager
+def for_item(item_id: str) -> Iterator[None]:
+    """Name the automation item of the engine calls made inside this block."""
+    token = _ITEM.set(str(item_id or ""))
+    try:
+        yield
+    finally:
+        _ITEM.reset(token)
+
+
+def current_item() -> str:
+    return _ITEM.get()
 
 
 def says_not_signed_in(stderr: str) -> bool:
@@ -44,8 +70,11 @@ def record_run(
     *,
     db: Any = None,
     now: Optional[datetime] = None,
+    run_id: Optional[str] = None,
 ) -> None:
-    """Add one run row. No profile id = no row (an engine built outside a job)."""
+    """Add one run row. No profile id = no row (an engine built outside a job).
+
+    The row names the run (``run_id``) and the item of :func:`for_item`."""
     if not str(profile_id or "").strip() or outcome not in OUTCOMES:
         return
     try:
@@ -55,9 +84,10 @@ def record_run(
             db = get_database()
         with db._connection() as conn:
             conn.execute(
-                "INSERT INTO cli_engine_runs (profile_id, ran_at, outcome, cost_usd) VALUES (?, ?, ?, ?)",
+                "INSERT INTO cli_engine_runs (profile_id, ran_at, outcome, cost_usd, run_id, item_id)"
+                " VALUES (?, ?, ?, ?, ?, ?)",
                 (str(profile_id), _stamp(now or datetime.now(timezone.utc)), outcome,
-                 None if cost_usd is None else float(cost_usd)),
+                 None if cost_usd is None else float(cost_usd), run_id or None, current_item() or None),
             )
     except Exception as exc:  # never break the run for its ledger
         log.warning(f"agent engine run not recorded: {exc}")
@@ -108,9 +138,31 @@ def spend_summary(db: Any, profile_ids: list[str], *, now: Optional[datetime] = 
     return summary
 
 
+def cost_by_item(db: Any, item_ids: list[str]) -> dict[str, float]:
+    """The cost the CLI reported for each item's runs (items with no reported
+    cost are absent)."""
+    ids = [str(i) for i in item_ids if str(i or "").strip()]
+    if not ids or db is None:
+        return {}
+    try:
+        with db._connection() as conn:
+            rows = conn.execute(
+                "SELECT item_id, SUM(cost_usd) AS cost FROM cli_engine_runs"
+                " WHERE item_id IN (SELECT value FROM json_each(?)) AND cost_usd IS NOT NULL"
+                " GROUP BY item_id",
+                (json.dumps(ids),),
+            ).fetchall()
+    except Exception as exc:
+        log.info(f"agent engine run cost not read: {exc}")
+        return {}
+    return {str(row["item_id"]): round(float(row["cost"]), 6) for row in rows if row["cost"] is not None}
+
+
 __all__ = [
     "ANSWERED",
     "FAILED",
+    "for_item",
+    "cost_by_item",
     "NOT_SIGNED_IN",
     "record_run",
     "says_not_signed_in",

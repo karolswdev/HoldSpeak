@@ -305,7 +305,12 @@ def results_of(db: Any, workbench_id: str, *, limit: int = 20) -> list[dict[str,
     so the face reads no second record: ``text`` (the engine's answer, for a
     done result), ``seconds`` (claimed to completed), ``model`` (the run's
     record) and ``boundary`` (where the prompt went), and ``note_id`` when the Inbox note
-    for it exists."""
+    for it exists.
+
+    Betterment M2: ``cost_usd``, the cost an agent CLI engine reported for the
+    item's runs (``cli_engine_runs``; None when none was reported), and
+    ``used``, what its agent looked at, wrote and prepared
+    (``services/run_trace.py``; None when it touched nothing)."""
     with db._connection() as conn:
         rows = conn.execute(
             """SELECT i.id, i.title, i.status, i.result, i.result_artifact_id, i.completed_at,
@@ -318,6 +323,12 @@ def results_of(db: Any, workbench_id: str, *, limit: int = 20) -> list[dict[str,
                ORDER BY COALESCE(i.completed_at, i.created_at) DESC, i.id DESC LIMIT ?""",
             (workbench_id, max(1, int(limit))),
         ).fetchall()
+    from ..intel.cli_engine_runs import cost_by_item
+    from .run_trace import use_by_item
+
+    item_ids = [str(row["id"]) for row in rows]
+    costs = cost_by_item(db, item_ids)
+    uses = use_by_item(db, item_ids)
     results = []
     for row in rows:
         status = str(row["status"])
@@ -345,6 +356,8 @@ def results_of(db: Any, workbench_id: str, *, limit: int = 20) -> list[dict[str,
             "model": str(row["run_model"] or ""),
             "boundary": str(egress.get("boundary") or "") if isinstance(egress, dict) else "",
             "note_id": note_id,
+            "cost_usd": costs.get(str(row["id"])),
+            "used": uses.get(str(row["id"])),
         })
     return results
 

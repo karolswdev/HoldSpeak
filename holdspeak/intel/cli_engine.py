@@ -539,9 +539,11 @@ class CliEngine(MeetingIntel):
         # E2: every run adds one cli_engine_runs row, with the cost the CLI
         # reported (also for a run that stopped at its spend limit).
         self._cost_local.outcome = cli_engine_runs.FAILED
+        run_id: Optional[str] = None
         try:
             with tempfile.TemporaryDirectory(prefix="holdspeak-cli-engine-") as cwd:
                 with self._desk_tools(timeout) as tools:
+                    run_id = tools.run_id if tools else None
                     argv = build_cli_argv(
                         self.preset, executable=self._executable, model=self.cli_model,
                         spend_limit_usd=self.spend_limit_usd, tools=tools, cwd=cwd,
@@ -554,10 +556,10 @@ class CliEngine(MeetingIntel):
                 raise ProviderPermanentNoGeneration()
         except (ProviderPermanentNoGeneration, ProviderKnownNoGenerationTransient) as exc:
             cli_engine_runs.record_run(
-                self.profile_id, self._cost_local.outcome, getattr(exc, "cost_usd", None),
+                self.profile_id, self._cost_local.outcome, getattr(exc, "cost_usd", None), run_id=run_id,
             )
             raise
-        cli_engine_runs.record_run(self.profile_id, cli_engine_runs.ANSWERED, answer.cost_usd)
+        cli_engine_runs.record_run(self.profile_id, cli_engine_runs.ANSWERED, answer.cost_usd, run_id=run_id)
         self._record_usage(answer.usage or None)
         self._cost_local.cost = answer.cost_usd
         if answer.model and self.cli_model == DEFAULT_MODEL:

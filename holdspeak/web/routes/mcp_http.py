@@ -267,6 +267,7 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
             # time, whichever path they take; calls on different objects run
             # in parallel. Taken in sorted order, so no two calls deadlock.
             held: list[Any] = []
+            call: dict[str, Any] = {}
             if body.get("method") == "tools/call":
                 call = body.get("params") if isinstance(body.get("params"), dict) else {}
                 arguments = call.get("arguments") if isinstance(call.get("arguments"), dict) else {}
@@ -285,7 +286,17 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
                     if call_gate is not None or resource_gate is not None
                     else {}
                 )
-                return handle_message_for_principal(body, principal, palette=palette, **gates)
+                response = handle_message_for_principal(body, principal, palette=palette, **gates)
+                if run_agent and body.get("method") == "tools/call":
+                    # Betterment M2: the run's call, against its run (Looked
+                    # at / Wrote / Prepared on the automation's result).
+                    from ...services import run_trace
+
+                    run_trace.record_call(
+                        run_trace.run_id_of(cred.principal.identity),
+                        str(call.get("name") or ""), call.get("arguments"), response,
+                    )
+                return response
             finally:
                 _origin.reset(origin_token)
                 _caller.reset(caller_token)

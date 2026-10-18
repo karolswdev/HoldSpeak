@@ -30,7 +30,12 @@ class _MeteredPromptAdapter(CanonicalPromptAdapter):
         self.tokens = 0
 
     def dispatch(self, engine: Any, payload: dict[str, Any], cancellation: Any) -> dict[str, str]:
-        result = super().dispatch(engine, payload, cancellation)
+        from ..intel.cli_engine_runs import for_item
+
+        # Betterment M2: an agent CLI run records the item it ran for, so the
+        # result shows the run's cost and what its agent used.
+        with for_item(str(payload.get("item_id") or "")):
+            result = super().dispatch(engine, payload, cancellation)
         try:
             usage = dict(getattr(engine, "last_usage", None) or {})
             self.tokens += int(usage.get("total_tokens") or 0)

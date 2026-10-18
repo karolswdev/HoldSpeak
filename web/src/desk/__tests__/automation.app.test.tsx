@@ -17,6 +17,16 @@ import one from "./fixtures/automation-hub/one.json";
 import failed from "./fixtures/automation-hub/failed.json";
 import populated from "./fixtures/automation-hub/populated.json";
 import forgot from "./fixtures/automation-hub/forgot.json";
+import used from "./fixtures/automation-hub/used.json";
+import { openPrimitive, openSurfaceOr } from "../shell";
+import { seatMounted, seatUnmounted } from "../deleteSeat";
+import { OBJECT_DELETE_REQUEST } from "../verbRegistry";
+
+vi.mock("../shell", async (original) => ({
+  ...(await original<typeof import("../shell")>()),
+  openPrimitive: vi.fn(),
+  openSurfaceOr: vi.fn(),
+}));
 
 type Step = { workbench_id: string; gets: Record<string, unknown> };
 const WB = (empty as Step).workbench_id;
@@ -207,5 +217,93 @@ describe("What it has learned", () => {
     const stamp = ((populated as Step).gets[`${DETAIL}/memory`] as { entries: Array<{ timestamp: string }> }).entries[0].timestamp;
     expect(forget.url).toBe(`${DETAIL}/memory/0?at=${encodeURIComponent(stamp)}`);
     expect(screen.getByTestId("automation-lessons")).toHaveTextContent("Mira owns the rollback runbook");
+  });
+});
+
+/* MCP M2: what the run's agent used, on tests/integration/test_desk_engines_tools.py's
+ * recorded answers (a real hub; the fake claude CLI read 3 meetings, wrote 1 note
+ * and prepared 1 send over MCP; automation-hub/used.json). */
+describe("Looked at, Wrote, Prepared", () => {
+  const USED = used as Step;
+  type UsedResult = {
+    cost_usd: number;
+    used: {
+      looked_at: Array<{ ref: string; label: string }>;
+      wrote: Array<{ ref: string; label: string }>;
+      prepared: Array<{ ref: string; label: string; destination: string }>;
+    };
+  };
+  const result = () =>
+    (USED.gets[`/api/workbenches/${USED.workbench_id}`] as { workbench: { results: UsedResult[] } })
+      .workbench.results[0];
+
+  async function openUsed() {
+    hub.step = USED;
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = decodeURIComponent(String(input));
+      if ((init?.method ?? "GET") === "GET" && url in USED.gets) {
+        return Promise.resolve(json(structuredClone(USED.gets[url])));
+      }
+      return hubFetch(input, init);
+    }));
+    useDesk.setState({ workbenchWindows: [{ id: USED.workbench_id, origin: null }] });
+    render(<AutomationWindow workbenchId={USED.workbench_id} />);
+    await screen.findByTestId("automation-used");
+  }
+
+  it("says what it looked at, wrote and prepared in words, each a link, and its cost", async () => {
+    await openUsed();
+    const slot = within(newest()).getByTestId("automation-used");
+    const folds = slot.querySelectorAll("details");
+    expect([...folds].map((f) => f.querySelector("summary")?.textContent)).toEqual([
+      expect.stringMatching(/Looked at.*3 meetings/),
+      expect.stringMatching(/Wrote.*1 note/),
+      expect.stringMatching(/Prepared.*1 send/),
+    ]);
+    // Each read object by its name, never its ref; a press opens it.
+    const looked = within(slot).getByTestId("automation-looked-at");
+    const names = result().used.looked_at.map((r) => r.label);
+    expect(within(looked).getAllByRole("button").map((b) => b.textContent)).toEqual(names);
+    fireEvent.click(within(looked).getByRole("button", { name: names[0] }));
+    expect(openSurfaceOr).toHaveBeenCalledWith("review-meetings", "/history", result().used.looked_at[0].ref);
+    const wrote = within(slot).getByTestId("automation-wrote");
+    fireEvent.click(within(wrote).getByRole("button", { name: result().used.wrote[0].label }));
+    expect(openPrimitive).toHaveBeenCalledWith(result().used.wrote[0].ref);
+    // The prepared send: its document to its destination, and the Send fold
+    // that holds it (PREPARED ×1 from the hub's own sends read).
+    const prepared = within(slot).getByTestId("automation-prepared");
+    const [send] = result().used.prepared;
+    expect(prepared).toHaveTextContent(`${send.label} to ${send.destination}`);
+    expect(await within(prepared).findByText("PREPARED ×1")).toBeInTheDocument();
+    expect(within(prepared).getByRole("button", { name: "Send" })).toBeInTheDocument();
+    // The run's reported cost is in the head line.
+    expect(newest()).toHaveTextContent(`$${result().cost_usd.toFixed(2)}`);
+    expect(slot.textContent).not.toMatch(/meeting:|note:|note_|chs_/);
+  });
+
+  it("with no delete receipt seat on the desk, Undo is withheld (no dead verb)", async () => {
+    await openUsed();
+    expect(within(newest()).queryByTestId("automation-wrote-undo")).toBeNull();
+  });
+
+  it("Undo asks the desk's one delete for the note the run made", async () => {
+    seatMounted();
+    const asked: string[] = [];
+    const listen = (event: Event) => asked.push(String((event as CustomEvent<{ ref: string }>).detail.ref));
+    window.addEventListener(OBJECT_DELETE_REQUEST, listen);
+    try {
+      await openUsed();
+      fireEvent.click(within(newest()).getByTestId("automation-wrote-undo"));
+      expect(asked).toEqual([result().used.wrote[0].ref]);
+      expect(within(newest()).queryByTestId("automation-wrote-undo")).toBeNull();
+    } finally {
+      window.removeEventListener(OBJECT_DELETE_REQUEST, listen);
+      seatUnmounted();
+    }
+  });
+
+  it("draws nothing for a result whose agent touched nothing", async () => {
+    await open(one as Step);
+    expect(within(newest()).queryByTestId("automation-used")).toBeNull();
   });
 });
