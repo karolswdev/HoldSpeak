@@ -55,6 +55,8 @@ _WORKING_EVENTS = {
 # Codex has no Notification: its approval prompt is ``PermissionRequest``.
 _WAITING_EVENTS = {"Notification", "Stop", "PermissionRequest"}
 _ENDED_EVENTS = {"SessionEnd"}
+#: The events that are the agent's own work inside a turn (Betterment AG0).
+_WORK_EVENTS = {"PreToolUse", "PostToolUse", "PreCompact", "SubagentStop", "PermissionRequest"}
 
 #: Conductor K2: a Hand-to-agent launch carries the rider hooks in its
 #: ``--settings`` file, and the owner may also have them in
@@ -352,6 +354,23 @@ def ingest_agent_hook_event(
             question = _filter_question(assistant_text or stop_text or "")
             notification_type = None
 
+        # Betterment AG0 (herdr's completion sequence): a turn completes on
+        # the Stop that follows a prompt. A SessionStart (a start-up, a
+        # restored session) never completes one and clears an old one; work
+        # after the Stop (a Stop hook that sent it on) reopens the turn.
+        turn_prompted = bool(previous.get("turn_prompted"))
+        done_id = _optional_str(previous.get("done_id"))
+        if not duplicate and not passive:
+            if is_user_prompt:
+                turn_prompted, done_id = True, None
+            elif hook_event_name == "Stop":
+                if turn_prompted:
+                    turn_prompted, done_id = False, f"{timestamp}#{event_count}"
+            elif hook_event_name == "SessionStart":
+                turn_prompted, done_id = False, None
+            elif hook_event_name in _WORK_EVENTS and done_id:
+                turn_prompted, done_id = True, None
+
         session = AgentSession(
             agent=normalized_agent,
             session_id=session_id,
@@ -381,6 +400,8 @@ def ingest_agent_hook_event(
             lifecycle=lifecycle,
             question=question,
             notification_type=notification_type,
+            turn_prompted=turn_prompted,
+            done_id=done_id,
         )
         # Conductor K3: the wait episode. A session that becomes blocked
         # starts a new episode (start time + id); one that stays blocked keeps

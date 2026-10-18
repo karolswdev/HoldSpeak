@@ -25,7 +25,9 @@ import { CompanionCore } from "../../pages/cores/CompanionCore";
 import { WingSlotContext } from "../surface/wings";
 import { LaneWindow, __resetDraftEgress } from "../lane/LaneWindow";
 import { __resetLane, useLane } from "../lane/laneStore";
-import { fromWireFlight, useAgentFlights } from "../agentFlights";
+import { fromWireFlight, fromWireSessionRow, useAgentFlights } from "../agentFlights";
+import { ConductorWindow } from "../conductor/ConductorWindow";
+import { __resetConductor } from "../conductor/store";
 import { useSteering } from "../steering";
 
 const QUESTION = "The runbook needs a rollback owner. Jordan or Avery?";
@@ -306,5 +308,114 @@ describe("the lane's draft chip names the Default for AI work (PHILO-15 05)", ()
     const draft = screen.getByTestId("lane-ask").querySelector(".ask-well-draft")!;
     await waitFor(() => expect(draft.querySelector(".gadget-chip-egress")).toBeNull());
     expect(draft.textContent).not.toContain("NOT SET");
+  });
+});
+
+/* ── Betterment AG0: tell the truth about state ───────────────────────
+ * Recorded on a real hub by tests/integration/test_desk_agents_wire.py::
+ * test_the_agents_read_says_done_new_quiet_and_stopped_by_restart
+ * (fixtures/agents-ag0): one agent finished its turn with no PR, one asked
+ * and then a restart took its tmux session. */
+function ag0<T = unknown>(name: string): { captured_at: string; wire: T } {
+  return hubWire<T>(`../fixtures/agents-ag0/${name}`);
+}
+const AG0 = ag0<{ sessions: unknown[]; flights: Array<Record<string, unknown>> }>("coders-sessions");
+const AG0_SEEN = ag0("coders-sessions.seen");
+const DETECT = hubWire("onboarding-agents.isolated");
+const conductorMember = (id: string) => document.querySelector<HTMLElement>(`[data-object-id='${id}']`);
+
+function pillOf(id: string): string {
+  return conductorMember(id)?.querySelector("[data-testid='conductor-pill']")?.textContent ?? "";
+}
+
+describe("the Agents list tells the truth about state (Betterment AG0)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(AG0.captured_at));
+    __resetConductor();
+    useAgentFlights.setState({ sessions: [], flights: [], loaded: false });
+  });
+
+  it("a finished turn with no PR reads Done · New; an agent a restart took reads Stopped by restart and never asks", async () => {
+    serve({ "/api/coders/sessions": AG0.wire, "/api/onboarding/agents": DETECT.wire });
+    render(<ConductorWindow />);
+    await screen.findByRole("button", { name: "Draft test scaffolding for flags" });
+    expect(pillOf("launch:launch_ag0_done")).toBe("Done · New");
+    // Nothing asks: no NEEDS YOU plate, no ASK in the head, and Done is not "at work".
+    expect(screen.queryByTestId("conductor-asks")).toBeNull();
+    const head = screen.getByTestId("conductor-head");
+    expect(head.textContent).not.toContain("ASK");
+    expect(head.querySelector(".kit-disp")?.textContent).not.toMatch(/at work/);
+    // The ghost is in the folded "Ended today", in words.
+    const ended = screen.getByTestId("conductor-ended");
+    expect(within(ended).getByRole("button", { name: "Write the on-call note" })).toBeTruthy();
+    expect(pillOf("launch:launch_ag0_ghost")).toBe("Stopped by restart");
+    expect(document.body.textContent).not.toContain("Working");
+  });
+
+  it("after the seen mark the same agent reads Quiet", async () => {
+    serve({ "/api/coders/sessions": AG0_SEEN.wire, "/api/onboarding/agents": DETECT.wire });
+    render(<ConductorWindow />);
+    await screen.findByRole("button", { name: "Draft test scaffolding for flags" });
+    expect(pillOf("launch:launch_ag0_done")).toBe("Quiet");
+  });
+
+  it("opening the agent's window marks its done turn seen (the hub's seen route, then Quiet)", async () => {
+    const lane = ag0<{ launch: { session_key: string } }>("lane.done");
+    const seen = ag0<{ seen: string }>("seen");
+    serve({
+      "/api/agent/launches/launch_ag0_done/seen": seen.wire,
+      "/api/agent/launches/": lane.wire,
+      "/api/coders/sessions": AG0.wire,
+      "/api/inference/assignments": ASSIGNMENTS.wire,
+      "/api/gate/proposals": { proposals: [] },
+    });
+    steering();
+    useAgentFlights.setState({
+      flights: AG0.wire.flights.map((f) => fromWireFlight(f as never)),
+      sessions: AG0.wire.sessions.map(fromWireSessionRow),
+      loaded: true,
+    });
+    const [done] = useAgentFlights.getState().flights.filter((f) => f.launchId === "launch_ag0_done");
+    expect(done.isNew).toBe(true);
+    render(<LaneWindow />);
+    await act(async () => {
+      await useLane.getState().open("launch_ag0_done", { sessionKey: lane.wire.launch.session_key });
+    });
+    // On open the lane asks the hub to mark its current done turn; the hub's
+    // answer names that turn.
+    await waitFor(() =>
+      expect(api.fetch).toHaveBeenCalledWith("/api/agent/launches/launch_ag0_done/seen", { method: "POST", json: {} }),
+    );
+    expect(seen.wire.seen).toBe(done.turnId);
+    expect(useAgentFlights.getState().flights.find((f) => f.launchId === "launch_ag0_done")?.isNew).toBe(false);
+  });
+
+  it("ARM on an agent whose terminal is gone says so in place of ARM FIRST", async () => {
+    const lane = ag0<{ launch: { session_key: string } }>("lane.ghost");
+    const refused = ag0("arm.refused");
+    serve({
+      "/api/agent/launches/": lane.wire,
+      "/api/coders/sessions": AG0.wire,
+      "/api/inference/assignments": ASSIGNMENTS.wire,
+      "/api/gate/proposals": { proposals: [] },
+    });
+    api.request.mockImplementation(async (url: string) =>
+      String(url).endsWith("/arm")
+        ? ({ ok: false, status: 409, json: async () => refused.wire } as unknown as Response)
+        : ({ ok: true, status: 200, json: async () => ({}) } as unknown as Response),
+    );
+    steering();
+    render(<LaneWindow />);
+    await act(async () => {
+      await useLane.getState().open("launch_ag0_ghost", { sessionKey: lane.wire.launch.session_key });
+    });
+    const arm = await screen.findByTestId("lane-arm");
+    expect(arm.textContent).toContain("ARM FIRST");
+    await act(async () => {
+      fireEvent.click(within(arm).getByRole("button", { name: "ARM" }));
+    });
+    await waitFor(() => expect(screen.getByTestId("lane-terminal-gone").textContent).toBe("This agent's terminal is gone"));
+    expect(screen.queryByTestId("lane-arm")).toBeNull();
   });
 });

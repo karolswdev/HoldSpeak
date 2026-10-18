@@ -210,6 +210,41 @@ def build_agent_hand_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": "launch_unknown", "code": "launch_unknown"}, status_code=404)
         return JSONResponse(lane)
 
+    @router.post("/api/agent/launches/{launch_id}/seen")
+    async def api_agent_launch_seen(launch_id: str, request: Request) -> Any:
+        """Betterment AG0: the owner opened this agent, so its done turn is
+        seen (``seen_wait_id`` on the launch; the flight is no longer
+        ``new``). ``{wait_id}`` names the turn he saw; without it, the
+        launch's current done turn. ``{"seen": null}`` when no turn is done."""
+        from ...db import get_database
+        from ...delivery.factory_launch import LaunchLedger
+        from ...services.agent_flights import flight_of_launch
+
+        try:
+            body = await request.json()
+        except Exception:
+            body = None
+        body = body if isinstance(body, dict) else {}
+
+        def run() -> Any:
+            ledger = LaunchLedger()
+            flight = flight_of_launch(get_database(), launch_id, ledger=ledger)
+            if flight is None:
+                return None
+            turn = str(body.get("wait_id") or flight.get("turn_id") or "")
+            if turn:
+                ledger.update(launch_id, seen_wait_id=turn)
+            return {"launch_id": launch_id, "seen": turn or None}
+
+        try:
+            result = await asyncio.to_thread(run)
+        except Exception as exc:
+            log.error(f"launch seen failed: {exc}")
+            return JSONResponse({"error": "launch_seen_failed"}, status_code=500)
+        if result is None:
+            return JSONResponse({"error": "launch_unknown", "code": "launch_unknown"}, status_code=404)
+        return JSONResponse(result)
+
     @router.post("/api/agent/launches/{launch_id}/rebrief")
     async def api_agent_rebrief(launch_id: str, request: Request) -> Any:
         """PHILO-15 B46: the owner's Re-brief ``{text}``. Typed into the

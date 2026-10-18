@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-11T20:37:24.509863Z",
+  "captured_at": "2026-10-18T03:35:25.732713Z",
   "wire": {
     "count": 2,
     "flights": [
@@ -11,8 +11,9 @@
         "id": "m-cutover-a0",
         "kind": "action",
         "launch_id": "launch_c4_runbook",
-        "launched_at": "2026-10-11T20:07:24.482851Z",
+        "launched_at": "2026-10-18T03:05:25.692843Z",
         "merged_at": null,
+        "new": false,
         "origin_ref": "action:m-cutover-a0",
         "pr": null,
         "project_id": "",
@@ -21,7 +22,8 @@
         "session_key": "claude:c1a0de00-runbook",
         "state": "waiting",
         "title": "Write the rollback runbook",
-        "turn_end": "asks"
+        "turn_end": "asks",
+        "turn_id": null
       },
       {
         "agent": "codex",
@@ -30,8 +32,9 @@
         "id": "m-cutover-a1",
         "kind": "action",
         "launch_id": "launch_c4_recon",
-        "launched_at": "2026-10-11T20:07:24.482851Z",
+        "launched_at": "2026-10-18T03:05:25.692843Z",
         "merged_at": null,
+        "new": false,
         "origin_ref": "action:m-cutover-a1",
         "pr": null,
         "project_id": "",
@@ -40,7 +43,8 @@
         "session_key": "codex:c0dex000-recon",
         "state": "working",
         "title": "Shard the reconciliation job",
-        "turn_end": null
+        "turn_end": null,
+        "turn_id": null
       },
       {
         "agent": "claude",
@@ -49,8 +53,9 @@
         "id": "m-cutover-a2",
         "kind": "action",
         "launch_id": "launch_c4_flag",
-        "launched_at": "2026-10-11T20:07:24.482851Z",
+        "launched_at": "2026-10-18T03:05:25.692843Z",
         "merged_at": null,
+        "new": false,
         "origin_ref": "action:m-cutover-a2",
         "pr": {
           "number": 412,
@@ -64,7 +69,8 @@
         "session_key": null,
         "state": "pr_open",
         "title": "Add the ledger freeze flag",
-        "turn_end": null
+        "turn_end": null,
+        "turn_id": null
       }
     ],
     "history": [],
@@ -82,8 +88,9 @@
           "id": "m-cutover-a1",
           "kind": "action",
           "launch_id": "launch_c4_recon",
-          "launched_at": "2026-10-11T20:07:24.482851Z",
+          "launched_at": "2026-10-18T03:05:25.692843Z",
           "merged_at": null,
+          "new": false,
           "origin_ref": "action:m-cutover-a1",
           "pr": null,
           "project_id": "",
@@ -92,7 +99,8 @@
           "session_key": "codex:c0dex000-recon",
           "state": "working",
           "title": "Shard the reconciliation job",
-          "turn_end": null
+          "turn_end": null,
+          "turn_id": null
         },
         "identity": {
           "agent_label": "Codex",
@@ -110,8 +118,9 @@
           "agent": "codex",
           "awaiting_response": false,
           "capture_messages": false,
-          "created_at": "2026-10-11T20:37:24.482206Z",
+          "created_at": "2026-10-18T03:35:25.691909Z",
           "cwd": "/tmp/rig/home/dev/payments-ledger-recon",
+          "done_id": null,
           "event_count": 1,
           "hook_event_name": "PreToolUse",
           "last_assistant_text": null,
@@ -135,7 +144,8 @@
           "tmux_session": null,
           "tmux_window": null,
           "transcript_path": null,
-          "updated_at": "2026-10-11T20:37:24.482206Z",
+          "turn_prompted": false,
+          "updated_at": "2026-10-18T03:35:25.691909Z",
           "wait_id": null,
           "wait_started_at": null
         }
@@ -149,8 +159,9 @@
           "id": "m-cutover-a0",
           "kind": "action",
           "launch_id": "launch_c4_runbook",
-          "launched_at": "2026-10-11T20:07:24.482851Z",
+          "launched_at": "2026-10-18T03:05:25.692843Z",
           "merged_at": null,
+          "new": false,
           "origin_ref": "action:m-cutover-a0",
           "pr": null,
           "project_id": "",
@@ -159,7 +170,8 @@
           "session_key": "claude:c1a0de00-runbook",
           "state": "waiting",
           "title": "Write the rollback runbook",
-          "turn_end": "asks"
+          "turn_end": "asks",
+          "turn_id": null
         },
         "identity": {
           "agent_label": "Claude",
@@ -177,8 +189,9 @@
           "agent": "claude",
           "awaiting_response": false,
           "capture_messages": false,
-          "created_at": "2026-10-11T20:37:24.481282Z",
+          "created_at": "2026-10-18T03:35:25.690524Z",
           "cwd": "/tmp/rig/home/dev/payments-ledger-runbook",
+          "done_id": null,
           "event_count": 1,
           "hook_event_name": "Notification",
           "last_assistant_text": null,
@@ -202,9 +215,10 @@
           "tmux_session": null,
           "tmux_window": null,
           "transcript_path": null,
-          "updated_at": "2026-10-11T20:37:24.481282Z",
-          "wait_id": "2026-10-11T20:37:24.481282Z#1",
-          "wait_started_at": "2026-10-11T20:37:24.481282Z"
+          "turn_prompted": false,
+          "updated_at": "2026-10-18T03:35:25.690524Z",
+          "wait_id": "2026-10-18T03:35:25.690524Z#1",
+          "wait_started_at": "2026-10-18T03:35:25.690524Z"
         }
       }
     ]

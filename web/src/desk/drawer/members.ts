@@ -8,7 +8,7 @@
  */
 import type { GetInfoFacts, ObjectListRow, ObjectTone } from "../surface";
 import type { AgentFlight, CoderSessionRow } from "../agentFlights";
-import { agentWord } from "../agentFlights";
+import { GONE, agentWord } from "../agentFlights";
 import { objectSprite } from "../surface/objects/kinds";
 import type { Items } from "../api";
 import { objectByRef } from "../world";
@@ -217,7 +217,7 @@ export function drawerMembers(reads: DrawerReads): DrawerMember[] {
   // The agents on this Project's items: the action rows wear their state.
   const flights = reads.flights.filter((f) => f.projectId === reads.projectId);
   const flightFor = (originRef: string) =>
-    flights.find((f) => f.originRef === originRef && f.state !== "ended" && f.state !== "expired") ?? null;
+    flights.find((f) => f.originRef === originRef && !GONE.has(f.state)) ?? null;
 
   for (const m of reads.meetings) {
     const id = text(m.id);

@@ -374,14 +374,14 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
         workedBy: flight.sessionKey ?? undefined,
       };
     }
-    const state = flight.state === "waiting" ? "WAITING" : flight.state === "starting" ? "STARTING" : "WORKING";
+    const state = flight.state === "waiting" ? "WAITING" : flight.state === "starting" ? "STARTING" : flight.state === "done" ? "DONE" : "WORKING";
     return {
       id,
       kind: item.source === "decision" ? "decision" : "action",
       name: title,
       fact: [who, named ? "" : flight.projectName || project].filter(Boolean).join(" · "),
       // The fact line names the agent; the lamp says what it does (one word).
-      lamp: { label: state, tone: flight.state === "waiting" ? "ask" : "info" },
+      lamp: { label: state, tone: flight.state === "waiting" ? "ask" : flight.state === "done" ? "ok" : "info" },
       group: "agents",
       verbs: flight.sessionKey ? { kind: "session", sessionKey: flight.sessionKey } : { kind: "none" },
       openRef,

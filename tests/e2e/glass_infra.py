@@ -257,6 +257,9 @@ def _boot(
     monkeypatch.setenv("PI_CODING_AGENT_DIR", str(home / ".pi" / "agent"))
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     monkeypatch.setenv("HOLDSPEAK_ACTIVE_TARGET", "off")
+    # Betterment AG0: the hub asks tmux nothing about the seeded launches
+    # (this hub shares the owner's tmux socket; the launches had no session).
+    monkeypatch.setenv("HOLDSPEAK_RESTART_CHECK", "off")
     monkeypatch.setattr(config_module, "CONFIG_FILE", home / ".holdspeak" / "config.json")
     monkeypatch.setattr(db_core, "DEFAULT_DB_PATH", tmp_path / "holdspeak.db")
     reset_database()

@@ -24,7 +24,7 @@ from __future__ import annotations
 import json
 import os
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -547,3 +547,114 @@ def test_an_owner_stop_ends_the_launch_and_its_wait(hub: str, tmp_path: Path) ->
     stopped = lane["launch"]["stopped"]
     assert (stopped["by"], stopped["audit_id"], stopped["scope"]) == ("owner", 41, "session"), stopped
     assert lane["wait"] is None, lane["wait"]
+
+
+# ── Betterment AG0: Done, New, Quiet and Stopped by restart ──────────
+
+AG0_QUESTION = ("I found two places for the rollback flag. Should it live in "
+                "config/flags.yaml (shared with staging) or in an env var (per host)? "
+                "Answer 1 for config, 2 for env.")
+AG0_DONE = ("Done. The rollback flag now lives in the place you chose, with a test. "
+            "Branch is ready for review; I did not open a PR.")
+
+
+def _ag0_seed(home: Path) -> None:
+    """Two launches on two actions, their sessions reported through the hook
+    ingest in the fake Claude Code's order (docs/internal/betterment/agents/
+    rig/fake_claude.py): one finished its turn, one asks."""
+    import holdspeak.agent_context as agent_context_pkg
+    from holdspeak.agent_context import event_log, ingest_agent_hook_event
+    from holdspeak.db import get_database
+    from holdspeak.delivery.factory_launch import LaunchLedger
+    from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
+
+    db = get_database()
+    start = (datetime.now() - timedelta(hours=1)).replace(microsecond=0)
+    tasks = ["Draft test scaffolding for flags", "Write the on-call note"]
+    db.meetings.save_meeting(MeetingState(
+        id="m-platform", started_at=start, ended_at=start + timedelta(minutes=30), title="Platform sync",
+        segments=[TranscriptSegment(text="The rollback flag moves into config.", speaker="Me", start_time=1.0, end_time=4.0)],
+        intel=IntelSnapshot(timestamp=1.0, topics=["flags"], summary="The flag moves.", action_items=[{
+            "id": f"m-platform-a{i}", "task": task, "owner": None, "due": None, "status": "pending",
+            "review_state": "accepted", "source_timestamp": None, "created_at": start.isoformat()}
+            for i, task in enumerate(tasks)]),
+        intel_status="completed"))
+    with db._connection() as conn:
+        ids = [str(conn.execute("SELECT id FROM action_items WHERE task=? LIMIT 1", (t,)).fetchone()[0]) for t in tasks]
+    spool = {"state_path": agent_context_pkg.AGENT_CONTEXT_FILE, "events_spool_dir": event_log.default_spool_dir()}
+
+    def hook(sid: str, event: str, **payload: Any) -> None:
+        ingest_agent_hook_event(agent="claude", payload={
+            "session_id": sid, "cwd": str(home / "dev" / "platform"), "hook_event_name": event, **payload}, **spool)
+
+    for sid, words, pane in (("ag0-done", AG0_DONE, {}), ("ag0-ghost", AG0_QUESTION, {"tmux_pane": "%4242"})):
+        hook(sid, "SessionStart", source="startup", **pane)
+        hook(sid, "UserPromptSubmit", prompt="the brief")
+        hook(sid, "PostToolUse", tool_name="Bash", tool_input={"command": "git status"})
+        hook(sid, "Stop", last_assistant_message=words, stop_hook_active=False)
+    iso = (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat().replace("+00:00", "Z")
+    ledger = LaunchLedger()
+    for launch_id, item, key in (("launch_ag0_done", ids[0], "claude:ag0-done"),
+                                 ("launch_ag0_ghost", ids[1], "claude:ag0-ghost")):
+        attempt = db.work_attempts.create(
+            source_id="src_platform", worktree_id=f"wt_{launch_id}", project="platform",
+            story_id=f"action-{item}", node_id="this-node", session_id=key, target_id=f"tgt_{launch_id}",
+            kind="launch", exact=True, claimed_by="launch:claude-default", state="working", origin_ref=f"action:{item}")
+        ledger.record({
+            "launch_schema": 1, "launch_id": launch_id, "state": "launched", "node_id": "this-node",
+            "profile_id": "claude-default", "gate": "gated", "branch": f"hs/action-{item}", "session": f"hs-{launch_id}",
+            "origin_ref": {"kind": "action", "id": item}, "attempt_id": attempt.attempt_id,
+            "launched_at": iso, "control_mode": "yolo", "instruction_state": "sent",
+        })
+
+
+def test_the_agents_read_says_done_new_quiet_and_stopped_by_restart(
+    hub: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Betterment AG0 (RECON steps 13 and 21): a finished turn with no PR is
+    Done and New; the seen mark makes it Quiet; an agent whose tmux session a
+    restart took is Stopped by restart and leaves Needs you. The answers are
+    recorded for agents.app.test.tsx (fixtures/agents-ag0)."""
+    from holdspeak.services.launch_lane import record_restart_stops
+    from tests.e2e.agents_lane_rig import TOKEN, _http
+
+    # The rig's own tmux socket folder, with no server: the restart took it.
+    (tmp_path / "tmux").mkdir()
+    monkeypatch.setenv("TMUX_TMPDIR", str(tmp_path / "tmux"))
+    # Normal mode (the recon's step 21): the lane offers ARM before Answer.
+    from holdspeak.config import Config
+
+    config = Config.load()
+    config.control_mode = "neutral"   # Normal on the face
+    config.save()
+    _ag0_seed(tmp_path / "home")
+    before = _get(hub, "/api/coders/sessions?include_ended=false")
+    states = {f["launch_id"]: (f["state"], f["new"]) for f in before["flights"]}
+    assert states == {"launch_ag0_done": ("done", True), "launch_ag0_ghost": ("waiting", False)}, states
+    assert any(r["id"] == "coder:claude:ag0-ghost" for r in _get(hub, "/api/desk/needs-you")["items"])
+    # ARM on the asking agent whose terminal is gone: the hub's refusal (409).
+    status, refused = _http(hub, "POST", "/api/coders/claude:ag0-ghost/arm", TOKEN, {})
+    refused = json.loads(refused) if isinstance(refused, str) else refused   # an HTTPError body
+    assert status == 409 and refused["status"] in {"pane_gone", "tmux_absent"}, (status, refused)
+    _keep("agents-ag0", "arm.refused", refused, tmp_path, hub)
+    ghost_lane = _get(hub, "/api/agent/launches/launch_ag0_ghost/lane")
+    assert ghost_lane["control"]["pane"] is True and ghost_lane["wait"]["question"] == AG0_QUESTION, ghost_lane["control"]
+    _keep("agents-ag0", "lane.ghost", ghost_lane, tmp_path, hub)
+
+    # The restart: hs-launch_ag0_ghost is gone, hs-launch_ag0_done is alive.
+    assert record_restart_stops(alive=lambda name: name != "hs-launch_ag0_ghost") == ["launch_ag0_ghost"]
+    after = _get(hub, "/api/coders/sessions?include_ended=false")
+    assert [f["state"] for f in after["flights"] if f["launch_id"] == "launch_ag0_ghost"] == ["stopped_by_restart"]
+    assert [(f["launch_id"], f["state"]) for f in after["history"]] == [("launch_ag0_ghost", "stopped_by_restart")]
+    assert [r["session"]["session_id"] for r in after["sessions"]] == ["ag0-done"]
+    assert not any(r["id"] == "coder:claude:ag0-ghost" for r in _get(hub, "/api/desk/needs-you")["items"])
+    _keep("agents-ag0", "coders-sessions", after, tmp_path, hub)
+
+    _keep("agents-ag0", "lane.done", _get(hub, "/api/agent/launches/launch_ag0_done/lane"), tmp_path, hub)
+    # Opening the agent: the seen mark. Done stays, New goes.
+    status, seen = _http(hub, "POST", "/api/agent/launches/launch_ag0_done/seen", TOKEN, {})
+    assert status == 200 and seen["seen"], seen
+    _keep("agents-ag0", "seen", seen, tmp_path, hub)
+    quiet = _get(hub, "/api/coders/sessions?include_ended=false")
+    assert [(f["state"], f["new"]) for f in quiet["flights"] if f["launch_id"] == "launch_ag0_done"] == [("done", False)]
+    _keep("agents-ag0", "coders-sessions.seen", quiet, tmp_path, hub)
