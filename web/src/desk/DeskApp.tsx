@@ -59,9 +59,11 @@ const RepoWindow = lazy(() =>
     default: module.RepoWindow,
   })),
 );
-const WorkbenchWindow = lazy(() =>
-  import("./components/WorkbenchWindow").then((module) => ({
-    default: module.WorkbenchWindow,
+// Betterment A3: an automation opens its automation window; the parked
+// queue view (WorkbenchWindow) is behind RAW for an old queue automation.
+const AutomationHost = lazy(() =>
+  import("./components/automation/AutomationHost").then((module) => ({
+    default: module.AutomationHost,
   })),
 );
 
@@ -270,7 +272,7 @@ function DeskFaces() {
       {!arrivalRequired && workbenchWindows.map((wb) => (
         <ApplicationBoundary key={wb.id} label="Automation">
           <Suspense fallback={null}>
-              <WorkbenchWindow workbenchId={wb.id} origin={wb.origin} />
+              <AutomationHost workbenchId={wb.id} origin={wb.origin} />
           </Suspense>
         </ApplicationBoundary>
       ))}

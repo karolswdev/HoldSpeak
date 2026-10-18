@@ -578,6 +578,14 @@ class WorkbenchService:
         clear_memory(workbench_id)
         return True
 
+    def forget_memory(self, principal: Principal, workbench_id: str, index: int, timestamp: str = "") -> bool:
+        """Forget one lesson (Betterment A3); NotFound when it is not there."""
+        _launch_own(principal, f"workbench:{workbench_id}")
+        from holdspeak.workbench_memory import forget_memory
+        if not forget_memory(workbench_id, index, timestamp):
+            raise NotFound("lesson", str(index))
+        return True
+
     def promote_memory(self, principal: Principal, workbench_id: str, index: int) -> dict[str, Any]:
         _launch_own(principal, f"workbench:{workbench_id}")
         from holdspeak.workbench_memory import read_memory
@@ -735,12 +743,19 @@ class WorkbenchService:
         payload["last_run"] = runs[0].to_dict() if runs else None
         # Betterment A2: the Do text to show (an old automation reads its
         # agent's prompt; nothing is written) and the results, one per run.
-        from .automation_runs import effective_instruction, results_of
+        from .automation_runs import effective_instruction, results_of, source_names, sources_of
 
         shown, source = effective_instruction(self._db, wb)
         payload["instruction_shown"] = shown
         payload["instruction_from"] = source
         payload["results"] = results_of(self._db, wb.id)
+        # Betterment A3: the About line names each source (never its ref).
+        payload["sources_shown"] = source_names(self._db, sources_of(wb))
+        # ... and the When line names an event start by its name.
+        payload["event_starts"] = [
+            {"id": str(r.get("id") or ""), "name": str(r.get("name") or ""), "enabled": bool(r.get("enabled"))}
+            for r in self._db.automations.list_reactions() if r.get("workbench_id") == wb.id
+        ]
         if principal.kind is PrincipalKind.OWNER:
             from .inference_assignment_service import InferenceAssignmentService
 

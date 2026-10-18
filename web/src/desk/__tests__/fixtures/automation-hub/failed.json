@@ -1,0 +1,176 @@
+{
+ "_source": "The hub's own answers, captured by tests/integration/test_desk_workbenches.py (TestClient, isolated database, the A2 rig's recorded engine replies). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit it.",
+ "workbench_id": "wb-friday",
+ "gets": {
+  "/api/workbenches/wb-friday": {
+   "workbench": {
+    "id": "wb-friday",
+    "name": "Friday team update",
+    "instruction": "Refuse this one.",
+    "sources": [
+     "note:note-sync",
+     "note:note-hiring"
+    ],
+    "output_target": "inbox",
+    "recipe_id": null,
+    "profile_id": "stub-profile",
+    "resolver_profile_id": null,
+    "schedule": null,
+    "schedule_enabled": false,
+    "schedule_revision": 1,
+    "item_order": [],
+    "created_at": "2026-10-18T09:27:54Z",
+    "last_modified": "2026-10-18T09:27:54Z",
+    "deleted": false,
+    "items": [
+     {
+      "id": "wbocc_294cbe12045d440b",
+      "workbench_id": "wb-friday",
+      "title": "Friday team update, Sun 18 Oct 2026",
+      "body": "Write my weekly update from these notes.",
+      "priority": 3,
+      "status": "done",
+      "grounding": {
+       "refs": [
+        "note:note-sync",
+        "note:note-hiring"
+       ]
+      },
+      "context": {
+       "occurrence": true
+      },
+      "result": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.",
+      "result_artifact_id": "artifact_36a90324c6ce",
+      "result_egress": {
+       "boundary": "cloud",
+       "model": "stub-profile"
+      },
+      "mint_attempted": true,
+      "tokens_consumed": 40,
+      "created_at": "2026-10-18T09:27:54Z",
+      "last_modified": "2026-10-18T09:27:54.298117+00:00",
+      "claimed_at": "2026-10-18T09:27:54.207887+00:00",
+      "completed_at": "2026-10-18T09:27:54.298117+00:00",
+      "parked": false
+     },
+     {
+      "id": "wbocc_9c57370ebf094128",
+      "workbench_id": "wb-friday",
+      "title": "Friday team update, Sun 18 Oct 2026",
+      "body": "Refuse this one.",
+      "priority": 3,
+      "status": "failed",
+      "grounding": {
+       "refs": [
+        "note:note-sync",
+        "note:note-hiring"
+       ]
+      },
+      "context": {
+       "occurrence": true
+      },
+      "result": "Error: the stub refuses: no source is attached",
+      "result_artifact_id": null,
+      "result_egress": null,
+      "mint_attempted": false,
+      "tokens_consumed": 0,
+      "created_at": "2026-10-18T09:27:54Z",
+      "last_modified": "2026-10-18T09:27:54Z",
+      "claimed_at": null,
+      "completed_at": "2026-10-18T09:27:54.524930+00:00",
+      "parked": false
+     }
+    ],
+    "item_count": 2,
+    "pending_count": 0,
+    "last_run": {
+     "id": "wbrun_78766d35b358",
+     "workbench_id": "wb-friday",
+     "started_at": "2026-10-18T09:27:54.444890+00:00",
+     "completed_at": "2026-10-18T09:27:54.526272+00:00",
+     "items_attempted": 1,
+     "items_completed": 0,
+     "items_failed": 1,
+     "mint_failures": 0,
+     "total_tokens": 0,
+     "egress_boundary": "",
+     "model": "",
+     "constitutional_context_revision": 0,
+     "constitutional_context_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "skills_injected": [],
+     "status": "completed_with_failures"
+    },
+    "instruction_shown": "Refuse this one.",
+    "instruction_from": "automation",
+    "results": [
+     {
+      "item_id": "wbocc_9c57370ebf094128",
+      "title": "Friday team update, Sun 18 Oct 2026",
+      "status": "failed",
+      "artifact_id": null,
+      "new": false,
+      "error": "the stub refuses: no source is attached",
+      "text": null,
+      "completed_at": "2026-10-18T09:27:54.524930+00:00",
+      "seconds": null,
+      "model": "",
+      "boundary": "",
+      "note_id": null
+     },
+     {
+      "item_id": "wbocc_294cbe12045d440b",
+      "title": "Friday team update, Sun 18 Oct 2026",
+      "status": "done",
+      "artifact_id": "artifact_36a90324c6ce",
+      "new": true,
+      "error": null,
+      "text": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.",
+      "completed_at": "2026-10-18T09:27:54.298117+00:00",
+      "seconds": 0,
+      "model": "stub-model-7b",
+      "boundary": "cloud",
+      "note_id": "note_result_07dffd148412e8b5"
+     }
+    ],
+    "sources_shown": [
+     {
+      "ref": "note:note-sync",
+      "kind": "note",
+      "label": "Platform sync",
+      "missing": false
+     },
+     {
+      "ref": "note:note-hiring",
+      "kind": "note",
+      "label": "Hiring",
+      "missing": false
+     }
+    ],
+    "event_starts": [],
+    "assignment_summary": {
+     "status": "assigned",
+     "source": "subject",
+     "chain": [
+      "LAN Qwen"
+     ],
+     "repair": null
+    }
+   }
+  },
+  "/api/workbenches/wb-friday/memory": {
+   "entries": [
+    {
+     "run_id": "wbrun_49db4d064418",
+     "timestamp": "2026-10-18T09:27:54Z",
+     "kind": "observation",
+     "content": "Mira owns the rollback runbook; name her first.",
+     "item_title": "Friday team update, Sun 18 Oct 2026",
+     "provenance": {
+      "operation_id": "op_fca4528d7dde47db928ba36d749713d6",
+      "receipt_id": "rcpt_51d2d0c0bc4b4accbf949967b0f7e46b"
+     }
+    }
+   ]
+  }
+ }
+}

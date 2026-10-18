@@ -215,6 +215,9 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
         ("meeting", "surface-meetings", "meeting:{meeting}"),
         ("note", "pullout:note:{note}", None),
         ("person", "pullout:people:{person}", None),
+        # Betterment A3: an automation's window (an object window, so a seeded
+        # subject: the sentence, its newest result, an older failed one).
+        ("automation", "workbench:{automation}", None),
         # Not applications, opened the same way: the Chair's Needs-you window
         # (its seed rows: accepted requests, a failed summary) ...
         ("needs", "chair:needs", None),
@@ -419,9 +422,56 @@ def desk(tmp_path_factory: pytest.TempPathFactory, pw_browser: Any) -> Any:
             note_id = thought["thought"]["working_note"]["id"]
             ctx.close()
             _seed_finished_receipts()
-            yield {"base": base, "room": room, "meeting": "m-standup", "person": week["priya"], "note": note_id}
+            automation = _seed_automation(note_id)
+            yield {"base": base, "room": room, "meeting": "m-standup", "person": week["priya"], "note": note_id,
+                   "automation": automation}
         finally:
             server.stop()
+
+
+def _seed_automation(note_id: str) -> str:
+    """Betterment A3: an automation with its sentence and two results, the
+    rows a run writes (automation_runs / workbench_projection): the newest
+    done (NEW, a run record naming its model), an older one failed with the
+    engine's reason. No engine runs in the sweep."""
+    import json as _json
+
+    from holdspeak.db import get_database
+
+    db = get_database()
+    wb = db.workbenches.upsert(
+        workbench_id="wb-sweep-friday", name="Friday team update",
+        instruction="Draft my team update: what shipped, what slipped, and what I need from each person.",
+        sources=[f"note:{note_id}"], output_target="inbox")
+    answer = ("## Team update, week 42\n\n**Shipped:** the ledger rollback runbook (Mira).\n\n"
+              "**Slipped:** the shard benchmark moves to Tuesday.\n\n"
+              "- Mira: review the cutover plan by Thursday.\n- Theo: book the second hiring loop.")
+    occurrence = {"occurrence": 1}
+    db.workbench_items.upsert(
+        item_id="wbocc_sweep_old", workbench_id=wb.id, title="Friday team update, Fri 9 Oct 2026",
+        body=wb.instruction, status="failed", context=occurrence, grounding={"refs": [f"note:{note_id}"]},
+        result="Error: the LAN engine did not answer in 60 s",
+        claimed_at="2026-10-09T15:00:00+00:00", completed_at="2026-10-09T15:01:00+00:00")
+    db.workbench_items.upsert(
+        item_id="wbocc_sweep_new", workbench_id=wb.id, title="Friday team update, Fri 16 Oct 2026",
+        body=wb.instruction, status="done", context=occurrence, grounding={"refs": [f"note:{note_id}"]},
+        result=answer, result_egress={"boundary": "private_network", "model": "qwen3.8-27b"},
+        result_artifact_id="artifact_sweep_friday",
+        claimed_at="2026-10-16T15:00:00+00:00", completed_at="2026-10-16T15:00:41+00:00")
+    with db._connection() as conn:
+        conn.execute(
+            "INSERT INTO workbench_runs (id, workbench_id, started_at, completed_at, items_attempted, "
+            "items_completed, egress_boundary, model, status) VALUES (?,?,?,?,1,1,?,?,'completed')",
+            ("wbrun_sweep_friday", wb.id, "2026-10-16T15:00:00+00:00", "2026-10-16T15:00:41+00:00",
+             "private_network", "qwen3.8-27b"))
+        conn.execute(
+            "INSERT INTO artifacts (id, meeting_id, origin, artifact_type, title, body_markdown, structured_json, "
+            "confidence, status, plugin_id, plugin_version, source_run_id, source_item_id) "
+            "VALUES (?, NULL, 'run', 'workbench_output', ?, ?, ?, 0.0, 'new', 'workbench_run', '1', ?, ?)",
+            ("artifact_sweep_friday", "Friday team update, Fri 16 Oct 2026", answer, _json.dumps({}),
+             "wbrun_sweep_friday", "wbocc_sweep_new"))
+        conn.commit()
+    return wb.id
 
 
 def _seed_finished_receipts() -> None:

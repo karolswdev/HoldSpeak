@@ -1,0 +1,254 @@
+/* Betterment A3 — the automation window (betterment/workbench/DESIGN.md §4).
+   The Workbench interior: the sentence on the slate ground, the newest
+   result on paper (a sunken well), older results as one ledger line each.
+   Type steps: primary 15 (the sentence values), body 14 (the reading),
+   secondary/caption 12 mono (labels, facts). One chip style: the library
+   surface-token[data-chip]. Phone: the named `surface` container. */
+
+.automation-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 14px 16px 18px;
+  min-width: 0;
+  color: var(--wb-text);
+}
+
+.automation-title-verbs {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.automation-switch { display: inline-flex; align-items: center; }
+
+/* ── the sentence ─────────────────────────────────────────────────────── */
+
+.automation-sentence {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 0 2px;
+}
+
+.automation-line {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr) auto;
+  align-items: baseline;
+  column-gap: 12px;
+  min-width: 0;
+}
+
+.automation-line-label {
+  font: 600 var(--font-size-xs, 12px) / 1.6 var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--wb-muted);
+  padding-top: 6px;
+}
+
+.automation-line-static,
+.automation-line-press {
+  min-width: 0;
+  padding: 5px 8px;
+  margin-left: -8px;
+}
+
+.automation-line-value {
+  display: block;
+  min-width: 0;
+  font: 500 var(--desk-type-primary-size, 15px) / 1.45 var(--font-sans);
+  color: var(--wb-text);
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+/* A blank he has to fill: the ember ink and a dashed rule, never gray. */
+.automation-line-value[data-blank] {
+  color: var(--wb-ember-ink);
+  text-decoration: underline dashed var(--wb-ember-ink);
+  text-underline-offset: 4px;
+}
+
+/* The line is the control: it reads as the sentence, it presses as a row. */
+.automation-line-press.btn--chrome {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm, 3px);
+  cursor: pointer;
+}
+.automation-line-press.btn--chrome:hover {
+  background: var(--wb-hover);
+  border-color: var(--wb-rule-soft);
+}
+.automation-line-press.btn--chrome:focus-visible {
+  outline: 2px solid var(--wb-sel);
+  outline-offset: 1px;
+}
+.automation-line[data-open] .automation-line-press.btn--chrome {
+  background: var(--wb-well);
+  border-color: var(--wb-ink);
+  box-shadow: var(--wb-sunken);
+}
+.automation-line-press-value { flex: 1 1 auto; min-width: 0; }
+.automation-line-chevron {
+  flex: none;
+  font: 600 var(--font-size-xs, 12px) / 1.9 var(--font-mono);
+  color: var(--wb-muted);
+}
+
+.automation-line-aside { display: inline-flex; gap: 6px; align-items: center; }
+
+.automation-line-editor {
+  grid-column: 2 / -1;
+  padding: 6px 0 10px;
+  min-width: 0;
+}
+
+.automation-do-editor { display: flex; flex-direction: column; gap: 8px; }
+.automation-editor-verbs { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.automation-chips { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 1px; }
+.automation-chips .surface-token { white-space: normal; overflow-wrap: anywhere; }
+
+.automation-refusal {
+  margin: 0;
+  font: 500 13px / 1.4 var(--font-sans);
+  color: var(--wb-danger-ink);
+}
+
+/* ── results ──────────────────────────────────────────────────────────── */
+
+.automation-results { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+
+.automation-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px 16px 14px;
+  background: var(--wb-well);
+  border: 1px solid var(--wb-ink);
+  box-shadow: var(--wb-sunken);
+}
+
+/* The head keeps one height in every state (facts, working, empty), so
+   nothing under it moves when a run starts or ends. */
+.automation-card-head {
+  display: flex;
+  align-items: center;
+  min-height: 28px;
+  min-width: 0;
+}
+.automation-card-head .surface-run-line { margin: 0; }
+
+.automation-card-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  min-width: 0;
+}
+.automation-card-when,
+.automation-card-empty {
+  font: 500 var(--font-size-xs, 12px) / 1.5 var(--font-mono);
+  letter-spacing: 0.02em;
+  color: var(--wb-muted);
+}
+.automation-card-empty { font-family: var(--font-sans); font-size: 14px; letter-spacing: 0; }
+
+.automation-card-body { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.automation-card[data-working] .automation-card-body { color: var(--wb-muted); }
+
+.automation-reading {
+  min-width: 0;
+  max-width: 76ch;
+  font: 400 14px / 1.55 var(--font-sans);
+  color: inherit;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.automation-reading .agent-words { --scroll-hint-background: var(--wb-well); }
+
+.automation-quiet { margin: 0; color: var(--wb-muted); }
+
+.automation-card-verbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+}
+/* The Send fold rides the verbs row: its head is one more verb (no rule of
+   its own); opened, its well grows under the row's verbs. */
+.automation-card-verbs .send-fold { flex: 1 1 240px; min-width: 0; }
+.automation-card-verbs .send-fold-head { padding-top: 0; border-top: 0; }
+
+.automation-failure {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  min-width: 0;
+}
+.automation-failure-words {
+  margin: 0;
+  flex: 1 1 260px;
+  min-width: 0;
+  font: 500 14px / 1.45 var(--font-sans);
+  color: var(--wb-danger-ink);
+  overflow-wrap: anywhere;
+}
+
+.automation-older-open {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 12px 12px;
+  background: var(--wb-well);
+}
+
+.automation-used { display: flex; flex-direction: column; gap: 4px; }
+.automation-used-list { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* ── what it has learned ──────────────────────────────────────────────── */
+
+.automation-lesson-list { margin: 0; padding: 4px 0 0; list-style: none; display: flex; flex-direction: column; }
+.automation-lesson {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+  border-top: 1px solid var(--wb-rule-soft);
+  min-width: 0;
+}
+.automation-lesson:first-child { border-top: 0; }
+.automation-lesson-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  font: 400 14px / 1.45 var(--font-sans);
+  overflow-wrap: anywhere;
+}
+
+/* ── the phone: the same order, each line full width, value under label ── */
+
+@container surface (max-width: 559.9px) {
+  .automation-body { padding: 12px 12px 16px; gap: 14px; }
+  .automation-line { grid-template-columns: minmax(0, 1fr); row-gap: 0; }
+  .automation-line-label { padding-top: 4px; }
+  .automation-line-static,
+  .automation-line-press { margin-left: -8px; }
+  .automation-line-press.btn--chrome { min-height: 44px; align-items: center; }
+  .automation-line-aside { justify-self: start; }
+  .automation-line-editor { grid-column: 1 / -1; }
+  .automation-card { padding: 10px 12px 12px; }
+  .automation-lesson { align-items: flex-start; }
+}

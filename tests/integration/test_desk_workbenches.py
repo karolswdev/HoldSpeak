@@ -259,7 +259,8 @@ DO = "Write my weekly update from these notes."
 
 
 def _instruction_rig(tmp_path: Path, monkeypatch, *benches: str, template: bool = False,
-                     cli_bench: str = "") -> tuple[Database, TestClient, list[str], dict[str, Any]]:
+                     cli_bench: str = "", engine_name: str = "Stub",
+                     lessons: list[str] | None = None) -> tuple[Database, TestClient, list[str], dict[str, Any]]:
     """The A0 rig's shape: the engine (a legacy profile on each automation)
     is bound before the kernel starts, so the owner's first write seeds the
     subject assignment. ``benches`` are plain automations; ``template`` adds
@@ -277,7 +278,7 @@ def _instruction_rig(tmp_path: Path, monkeypatch, *benches: str, template: bool 
         def run_prompt(self, *, system_prompt, user_prompt, temperature=None, max_tokens=None):
             if user_prompt.startswith("Task: "):  # the memory note after an item
                 self.last_usage = {"total_tokens": 5}
-                return replies["memory"]
+                return lessons.pop(0) if lessons else replies["memory"]
             prompts.append(user_prompt)
             if "Refuse this one." in user_prompt:
                 from holdspeak.intel.engine import MeetingIntelError
@@ -291,7 +292,7 @@ def _instruction_rig(tmp_path: Path, monkeypatch, *benches: str, template: bool 
     monkeypatch.setattr("holdspeak.intel.providers.build_meeting_intel_for_profile", lambda **_: stub)
     db = Database(tmp_path / "automation.db")
     monkeypatch.setattr("holdspeak.db.get_database", lambda *a, **k: db)
-    db.profiles.upsert(profile_id="stub-profile", name="Stub", kind="openAICompatible",
+    db.profiles.upsert(profile_id="stub-profile", name=engine_name, kind="openAICompatible",
                        base_url="http://stub", model="stub-model-7b")
     for bench in benches:
         db.workbenches.upsert(workbench_id=bench, name="Weekly update", profile_id="stub-profile")
@@ -552,3 +553,114 @@ def test_a_failed_result_keeps_its_reason_its_sources_and_its_place(tmp_path: Pa
     item = db.workbench_items.get(result["item_id"])
     assert _json.loads(item.grounding_json) == {"refs": ["note:note-sync", "note:note-hiring"]}
     assert _inbox_notes(db) == []
+
+
+# ── A3 "The automation window" (betterment/workbench/RECIPE.md, slice A3) ──
+# The hub half of the window: each result carries what the card shows (the
+# answer, seconds, model, the Inbox note), the About line names its sources,
+# and Forget removes one lesson. The face half replays the answers recorded
+# here (web/src/desk/__tests__/fixtures/automation-hub/*.json;
+# HOLDSPEAK_WIRE_WRITE=1 rewrites them, else this test fences their shape).
+
+import os as _os  # noqa: E402
+import re as _re  # noqa: E402
+
+AUTOMATION_HUB = Path(__file__).resolve().parents[2] / "web" / "src" / "desk" / "__tests__" / "fixtures" / "automation-hub"
+LESSONS = ["Mira owns the rollback runbook; name her first.", "Keep the update under ten lines."]
+
+
+def _shape(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {k: _shape(v) for k, v in sorted(value.items())}
+    if isinstance(value, list):
+        return [_shape(v) for v in value]
+    return "null" if value is None else type(value).__name__
+
+
+def _record_window(name: str, client: TestClient, wb: str, tmp_path: Path) -> dict[str, Any]:
+    """What the automation window reads: the automation and its lessons."""
+    answers = {
+        f"/api/workbenches/{wb}": client.get(f"/api/workbenches/{wb}").json(),
+        f"/api/workbenches/{wb}/memory": client.get(f"/api/workbenches/{wb}/memory").json(),
+    }
+    text = _re.sub(_re.escape(str(tmp_path)), "/tmp/rig", _json.dumps(answers))
+    scrubbed = _json.loads(text)
+    path = AUTOMATION_HUB / f"{name}.json"
+    if _os.environ.get("HOLDSPEAK_WIRE_WRITE") == "1":
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(_json.dumps({
+            "_source": "The hub's own answers, captured by tests/integration/test_desk_workbenches.py "
+                       "(TestClient, isolated database, the A2 rig's recorded engine replies). "
+                       "HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit it.",
+            "workbench_id": wb, "gets": scrubbed}, indent=1, ensure_ascii=False) + "\n")
+    assert path.exists(), f"no stored answers {path}; run with HOLDSPEAK_WIRE_WRITE=1"
+    stored = _json.loads(path.read_text())["gets"]
+    assert _shape(stored) == _shape(scrubbed), f"{path.name}: the stored answers are not the hub's shape"
+    return scrubbed
+
+
+def test_the_automation_window_reads_its_sentence_results_and_lessons(tmp_path: Path, monkeypatch) -> None:
+    """Done when (A3, hub half): an automation's one read gives the sentence
+    (Do, About by name, When, With) and its results newest first, each with
+    the answer, the seconds, the model and its Inbox note; a failed run gives
+    its reason; Forget removes one lesson and keeps the rest."""
+    import holdspeak.workbench_memory as memory
+
+    monkeypatch.setattr(memory, "WORKBENCH_DIR", tmp_path / "workbenches")
+    db, client, _prompts, _ = _instruction_rig(
+        tmp_path, monkeypatch, "wb-friday", engine_name="LAN Qwen", lessons=list(LESSONS))
+    wb = _make_automation(client, "wb-friday")
+    assert client.put(f"/api/workbenches/{wb}", json={"name": "Friday team update"}).status_code == 200
+    db.notes.upsert(note_id="note-gone", title="", body_markdown="An untitled note.")
+
+    empty = _record_window("empty", client, wb, tmp_path)[f"/api/workbenches/{wb}"]["workbench"]
+    assert empty["results"] == []
+    assert empty["instruction_shown"] == DO and empty["event_starts"] == []
+    assert [(s["label"], s["kind"], s["missing"]) for s in empty["sources_shown"]] == [
+        ("Platform sync", "note", False), ("Hiring", "note", False)]
+
+    assert client.post(f"/api/workbenches/{wb}/run", json={}).status_code == 200
+    one = _record_window("one", client, wb, tmp_path)[f"/api/workbenches/{wb}"]["workbench"]
+    [first] = one["results"]
+    assert first["status"] == "done" and first["new"] is True and first["error"] is None
+    assert first["text"].startswith("## Weekly update") and "cutover moves to Thursday" in first["text"]
+    assert first["model"] == "stub-model-7b" and first["boundary"] == "cloud"
+    assert isinstance(first["seconds"], int) and first["seconds"] >= 0
+    assert first["note_id"] and db.notes.get(first["note_id"]) is not None  # the Inbox note exists
+
+    # A failed run: its reason in words, no answer, no note.
+    assert client.put(f"/api/workbenches/{wb}", json={"instruction": "Refuse this one."}).status_code == 200
+    assert client.post(f"/api/workbenches/{wb}/run", json={}).status_code == 200
+    failed = _record_window("failed", client, wb, tmp_path)[f"/api/workbenches/{wb}"]["workbench"]
+    newest = failed["results"][0]
+    assert newest["status"] == "failed" and newest["error"] == "the stub refuses: no source is attached"
+    assert newest["text"] is None and newest["note_id"] is None
+
+    # Run again with the real instruction: the newest is a good result again.
+    assert client.put(f"/api/workbenches/{wb}", json={"instruction": DO}).status_code == 200
+    assert client.post(f"/api/workbenches/{wb}/run", json={}).status_code == 200
+    populated = _record_window("populated", client, wb, tmp_path)
+    detail = populated[f"/api/workbenches/{wb}"]["workbench"]
+    assert [r["status"] for r in detail["results"]] == ["done", "failed", "done"]
+    lessons = populated[f"/api/workbenches/{wb}/memory"]["entries"]
+    assert [e["content"] for e in lessons] == list(reversed(LESSONS))
+
+    # Forget the newest lesson (index 0, with its timestamp): the other stays.
+    stale = client.delete(f"/api/workbenches/{wb}/memory/0", params={"at": "2000-01-01T00:00:00Z"})
+    assert stale.status_code == 404, stale.text  # a lesson written meanwhile is never forgotten in its place
+    forgot = client.delete(f"/api/workbenches/{wb}/memory/0", params={"at": lessons[0]["timestamp"]})
+    assert forgot.status_code == 200, forgot.text
+    after = _record_window("forgot", client, wb, tmp_path)[f"/api/workbenches/{wb}/memory"]["entries"]
+    assert [e["content"] for e in after] == [LESSONS[0]]
+
+    # Opening the newest result reads it: NEW goes, the others stay NEW.
+    artifact = detail["results"][0]["artifact_id"]
+    assert client.post(f"/api/workbenches/{wb}/results/{artifact}/open").status_code == 200
+    opened = _record_window("opened", client, wb, tmp_path)[f"/api/workbenches/{wb}"]["workbench"]
+    assert [r["new"] for r in opened["results"]] == [False, False, True]
+
+    # A source that is gone stays listed as missing, never by its id.
+    assert client.put(f"/api/workbenches/{wb}", json={
+        "sources": ["note:note-sync", "note:note-gone", "note:note-never"]}).status_code == 200
+    shown = client.get(f"/api/workbenches/{wb}").json()["workbench"]["sources_shown"]
+    assert [(s["label"], s["missing"]) for s in shown] == [("Platform sync", False), ("Untitled", False), ("", True)]
