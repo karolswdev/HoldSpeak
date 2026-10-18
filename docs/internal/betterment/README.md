@@ -62,3 +62,11 @@ and never half-broken on the owner's desk.
 Plain English, short sentences (ASD-STE100 for product text). No proof
 notation ("GREEN:304", "PID", "custody", build hashes) in these documents.
 Evidence paths go in a footnote, not in the prose.
+
+## Index
+
+| Feature | Folder | State |
+|---|---|---|
+| Automations (today "Workbench") | `workbench/` | draft, owner decisions open |
+| Engines | `engines/` | draft, owner decisions open |
+| The desk's tools for every engine (MCP) | `mcp/` | draft, owner decisions open |

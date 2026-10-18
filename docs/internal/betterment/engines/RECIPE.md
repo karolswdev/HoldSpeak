@@ -51,7 +51,10 @@ a slice here.
   - Use a closed preset table: `claude` and `codex`, with the argv from
     `agent_summarizer.py` (`build_summarizer_command`). Reuse
     `validate_summarizer_command` and `_extract_summary_text`; do not write
-    them a second time. Claude gets `--max-budget-usd 0.10`.
+    them a second time. No fixed spend cap: the profile stores an optional
+    `spend_limit_usd` (default none). When it is set and the preset supports
+    it, pass it (`--max-budget-usd <limit>`). Read the reported cost from the
+    JSON output into the run record.
   - For typed jobs, add the JSON schema to the prompt. A bad answer is
     `invalid_typed_output`, and the chain goes to its fallback.
   - Set the egress boundary to `cloud`, with the preset's vendor host.
@@ -80,7 +83,9 @@ a slice here.
   "try once"). The face shows them under **Found on this Mac**, with an
   agent emblem and the vendor egress chip, and **Add** calls
   `connect_cli_engine`. The engine row shows NOT SIGNED IN in words when
-  that applies.
+  that applies. The unfolded engine row has **Spend limit per run** (No
+  limit / an amount) and shows today's and this week's reported cost; a
+  preset that cannot enforce a limit says so in words.
 - **Done when:** on a hub with a fake signed-in `claude`, the Engines window
   shows "Claude Code · signed in" under Found. Add moves it into Your
   engines as READY with the ANTHROPIC chip, at 1440 and 393. With nothing

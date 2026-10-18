@@ -152,12 +152,19 @@ opens large enough to show both (at least 880×640 at 1440).
     meetings", "Notes in Work"), and the sentence text stays whole. A desk
     object dropped on the window becomes a chip. For *when something
     happens*, the thing that happened is the source, and the line says so
-    ("the meeting that ended").
+    ("the meeting that ended"). With an engine that uses the desk's tools, About is a
+    starting point, not a fence: the agent may look further.
   - **With**: the engine picker from Engines (`../engines/DESIGN.md`), the
     same list in the same order, including agents on this Mac and services.
     The egress chip shows where the prompt goes. If no engine exists, the
     picker shows what is **Found** and adds it in one press. Run now then
     works, with no trip to Settings.
+    Under the engine, one line says what it may do. An engine that can use
+    tools gets **the desk's tools** (`../mcp/DESIGN.md`): "Can use your
+    desk: reads meetings, people, projects, Jira, GitHub; writes notes and
+    drafts; never sends." For an engine without tools, the line reads
+    "Reads only what is in About." The optional **Spend limit per run**
+    sits here as well.
   - **Put it in**: My Inbox (the default, as a note); Needs you; a file; or
     a saved destination. A destination *prepares* a send, and he presses
     Send. That is the egress rule, unchanged.
@@ -165,6 +172,10 @@ opens large enough to show both (at least 880×640 at 1440).
   no `**`, no ids). Older ones are one line each and open in place. A
   result is **NEW** until he opens it. There is no "awaiting review": a
   result is not a decision.
+- **Each result shows what the agent used**: folded *Looked at* (each
+  meeting, person, issue and decision it read, as links), *Wrote* (desk
+  writes, with Undo) and *Prepared* (sends waiting for his press). Its cost
+  shows when the engine reports one.
 - **A failure says why**, in words ("Claude Code is not signed in", "the LAN
   engine did not answer in 60 s", "the note 'Platform sync' was deleted"),
   with **Run again**, which runs at once.
