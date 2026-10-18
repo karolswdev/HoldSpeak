@@ -56,7 +56,7 @@ import time as _time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from holdspeak.timestamps import utc_now_iso
-from typing import Any, Optional
+from typing import Any, Callable, Iterable, Optional
 
 from ..db.updates import PublishedUpdateError
 from ..logging_config import get_logger
@@ -69,6 +69,7 @@ from ..project_contracts import (
     generate_pupd_id,
 )
 from ..refs import format as format_ref, parse as parse_ref
+from .meeting_kind import is_one_on_one, meeting_speakers, title_says_one_on_one
 from .memory_grounding import memory_for, project_pages
 
 #: The marked block the project's memory travels in, inside the draft prompt.
@@ -1760,11 +1761,15 @@ class ProjectUpdateService:
         project_service: Any,
         delta_service: Any | None = None,
         broker: Any | None = None,
+        people_names: Callable[[Principal], Iterable[str]] | None = None,
     ) -> None:
         self._db = db
         self._project_service = project_service
         self._delta_service = delta_service
         self._broker = broker
+        # Betterment P2: his People's names, to tell a 1:1 by its speakers.
+        # None (MCP, tests): the title rule alone.
+        self._people_names = people_names
 
     # ── C2 read projection (HS-200-06) ───────────────────────────────
 
@@ -2586,12 +2591,24 @@ class ProjectUpdateService:
         project_id: str,
         room: dict[str, Any],
     ) -> dict[str, Any]:
-        """Read the persisted, non-parked sources linked to a project."""
+        """Read the persisted, non-parked sources linked to a project.
+
+        Betterment P2 (decision 18): a 1:1 meeting's summary, actions and
+        decisions stay out of the update; it is named in ``left_out``.
+        """
         meeting_summaries: list[dict[str, Any]] = []
         linked_actions: list[dict[str, Any]] = []
         linked_decisions: list[dict[str, Any]] = []
         caveats: list[dict[str, str]] = []
         source_refs: list[str] = []
+        left_out: list[dict[str, str]] = []
+        one_on_one_ids: set[str] = set()
+        people_names: list[str] = []
+        if self._people_names is not None:
+            try:
+                people_names = [str(n) for n in self._people_names(principal) if str(n).strip()]
+            except Exception:
+                _log.debug("update draft: People names not read; title rule only", exc_info=True)
 
         meetings: list[dict[str, Any]] = []
         try:
@@ -2629,6 +2646,11 @@ class ProjectUpdateService:
                     "reason": "meeting_id_missing",
                 })
                 continue
+            row_title = str(meeting_row.get("title") or "")
+            if title_says_one_on_one(row_title):
+                one_on_one_ids.add(meeting_id)
+                left_out.append({"id": meeting_id, "title": row_title})
+                continue
             try:
                 meeting = self._db.meetings.get_meeting(meeting_id)
                 if meeting is None:
@@ -2637,6 +2659,11 @@ class ProjectUpdateService:
                         "state": "degraded",
                         "reason": "meeting_unavailable",
                     })
+                    continue
+                title = str(meeting.title or row_title or "Meeting")
+                if is_one_on_one(title, meeting_speakers(meeting), people_names):
+                    one_on_one_ids.add(meeting_id)
+                    left_out.append({"id": meeting_id, "title": title})
                     continue
                 intel = meeting.intel
                 summary = " ".join(
@@ -2673,6 +2700,8 @@ class ProjectUpdateService:
                 owner = " ".join(str(action.get("owner") or "").split())
                 action_id = str(action.get("id") or "").strip()
                 status = str(action.get("status") or "pending").strip().lower()
+                if str(action.get("meeting_id") or "") in one_on_one_ids:
+                    continue
                 if (
                     action_id
                     and owner
@@ -2705,7 +2734,10 @@ class ProjectUpdateService:
                 ),
             })
         else:
+            one_on_one_records = self._records_from_meetings(one_on_one_ids)
             for decision in decisions_section.get("items", []):
+                if str(decision.get("id") or "") in one_on_one_records:
+                    continue
                 # The Room keeps action-kind confirmed proposals in its
                 # decision projection for continuity.  Their action item is
                 # already read above; drawing them as decisions duplicates
@@ -2739,7 +2771,25 @@ class ProjectUpdateService:
             "linked_actions": linked_actions,
             "caveats": caveats,
             "source_refs": sorted(set(source_refs)),
+            "left_out": sorted(left_out, key=lambda m: (m["title"], m["id"])),
         }
+
+    def _records_from_meetings(self, meeting_ids: set[str]) -> set[str]:
+        """The decision records whose source is one of these meetings."""
+        if not meeting_ids:
+            return set()
+        marks = ",".join("?" * len(meeting_ids))
+        try:
+            with self._db._connection() as conn:
+                rows = conn.execute(
+                    f"SELECT record_id FROM decision_record_sources "
+                    f"WHERE source_type = 'meeting' AND source_ref IN ({marks})",
+                    sorted(meeting_ids),
+                ).fetchall()
+        except Exception:
+            _log.debug("update draft: 1:1 decision records not read", exc_info=True)
+            return set()
+        return {str(row["record_id"]) for row in rows}
 
     def publish_update(
         self,
@@ -3070,6 +3120,25 @@ def _append_week_sources(
         ))
         actions.append(f"- {text}")
     add_lines("next_actions", actions)
+
+    # Betterment P2 (decision 18): a 1:1 is named as left out, never quoted.
+    left_out: list[str] = []
+    for ordinal, meeting in enumerate(week.get("left_out", [])):
+        meeting_id = str(meeting.get("id") or "").strip()
+        title = " ".join(str(meeting.get("title") or "").split()) or "Meeting"
+        if not meeting_id:
+            continue
+        named = title if title_says_one_on_one(title) else f"{title} (1:1)"
+        text = f"Left out: {named}"
+        ref = format_ref("meeting", meeting_id)
+        claims.append(Claim(
+            span_id=f"s_source_coverage_left_out_{ordinal}", text=text, refs=[ref],
+            section="source_coverage", kind=KIND_OBSERVATION,
+            support=SUPPORT_SUPPORTED,
+            support_record=_field_mapping_support(source_version, [ref], ["meeting_id", "title"]),
+        ))
+        left_out.append(f"- {text}")
+    add_lines("source_coverage", left_out)
     return sections
 
 
