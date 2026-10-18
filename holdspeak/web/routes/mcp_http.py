@@ -164,6 +164,16 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
             and cred.launch_id is not None
             and is_loopback_host(probe_host)
         )
+        # Betterment M1: an agent CLI run is a call INSIDE another call (a
+        # model call the queue or a long tool is waiting on). Its calls never
+        # wait behind that parent: no object lock, and not the one queue.
+        from ...services.conductor_launch import RUN_IDENTITY_PREFIX
+
+        run_agent = (
+            cred is not None
+            and cred.launch_id is not None
+            and str(cred.principal.identity).startswith(RUN_IDENTITY_PREFIX)
+        )
 
         # Gate: return 404 when the REMOTE transport is not enabled. A loopback
         # OWNER is the hub's own local transport (HS-200-45 R3) and passes with
@@ -260,9 +270,10 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
             if body.get("method") == "tools/call":
                 call = body.get("params") if isinstance(body.get("params"), dict) else {}
                 arguments = call.get("arguments") if isinstance(call.get("arguments"), dict) else {}
-                from ...mcp.long_tools import lock_keys
+                from ...mcp.long_tools import lock_keys, run_lock_keys
 
-                held = _locks_for(lock_keys(str(call.get("name") or ""), arguments))
+                keys = run_lock_keys if run_agent else lock_keys
+                held = _locks_for(keys(str(call.get("name") or ""), arguments))
             for lock in held:
                 lock.acquire()
             origin_token = _origin.set(origin_value)
@@ -295,12 +306,14 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
         # (``OperationDescriptor.blocking_io``) and a tool named in
         # ``holdspeak/mcp/long_tools.py`` (a model call, gh, acli). Every call
         # takes its per-key locks first (``handle`` above), so a slow tool
-        # holds only the calls on its own objects.
+        # holds only the calls on its own objects. A third: every call of an
+        # agent CLI run (``run_agent`` above), whose parent may be the very
+        # call the queue is running.
         # The flag decides ordering only; no tool needs it to work.
         params = body.get("params") if isinstance(body.get("params"), dict) else {}
         if body.get("method") != "tools/call":
             response = handle()
-        elif params.get("name") in _blocking_io_tools():
+        elif run_agent or params.get("name") in _blocking_io_tools():
             from starlette.concurrency import run_in_threadpool
 
             response = await run_in_threadpool(handle)
