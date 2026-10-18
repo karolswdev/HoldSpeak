@@ -7,6 +7,7 @@ import threading
 import time
 import uuid
 from collections.abc import Mapping
+from contextlib import contextmanager
 from dataclasses import dataclass, field, replace
 from typing import Any, Protocol
 
@@ -150,7 +151,31 @@ class InferenceRunner:
         with active.condition:
             active.closing=False; active.state="CLOSURE_FAILED"; active.closure_error=error; active.condition.notify_all()
         raise error from last
+    @contextmanager
+    def _lane(self, request):
+        """Betterment Q2, Ask goes first (``holdspeak/engine_lanes.py``).
+
+        A foreground turn holds its engine while it runs; a background call
+        waits until no foreground turn holds the engine it goes to.
+        """
+        from ..engine_lanes import FOREGROUND_CONTRACTS, LANES, background_label, contract_of, engine_key
+        if contract_of(request) in FOREGROUND_CONTRACTS:
+            with LANES.foreground([engine_key(self._database, request.deployment_revision)]):
+                yield
+            return
+        label = background_label(request)
+        if label:
+            with LANES.background(engine_key(self._database, request.deployment_revision), label):
+                yield
+            return
+        yield
     def invoke(self, request, adapter, *, publish=None, parent_context=None, planned_node: str = ""):
+        with self._lane(request):
+            return self._invoke(request, adapter, publish=publish, parent_context=parent_context, planned_node=planned_node)
+    def invoke_stream(self, request, adapter, *, on_delta, publish=None, parent_context=None, planned_node: str = ""):
+        with self._lane(request):
+            return self._invoke_stream(request, adapter, on_delta=on_delta, publish=publish, parent_context=parent_context, planned_node=planned_node)
+    def _invoke(self, request, adapter, *, publish=None, parent_context=None, planned_node: str = ""):
         """The one admission path; a dialect retry is a SECOND admitted child.
 
         Sol Amendment 3 / `provider_signals.compatibility_follow_up`: one physical
@@ -188,7 +213,7 @@ class InferenceRunner:
             return self._attempt(follow,adapter,publish=retarget_publisher(publish,follow.invocation_id),parent_context=parent_context,planned_node=planned_node,signal=None,sequence=sequence)
         finally:
             self._sequences.close(sequence)
-    def invoke_stream(self, request, adapter, *, on_delta, publish=None, parent_context=None, planned_node: str = ""):
+    def _invoke_stream(self, request, adapter, *, on_delta, publish=None, parent_context=None, planned_node: str = ""):
         """Streaming twin of ``invoke``: same admission/plan/receipt envelope.
 
         The adapter's ``dispatch_stream`` yields ``Delta`` objects; the runner
