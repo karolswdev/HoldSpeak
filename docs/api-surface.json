@@ -457,6 +457,16 @@
       ]
     },
     {
+      "path": "/api/agent/launches/{launch_id}/seen",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.agent_hand",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/agents/capabilities",
       "methods": [
         "GET"
@@ -579,7 +589,9 @@
         "POST"
       ],
       "module": "web.routes.primitives.ask",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/authority/control-mode",
@@ -3263,6 +3275,14 @@
       "consumers": [
         "web"
       ]
+    },
+    {
+      "path": "/api/inference/model-library/connect-cli-engine",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.model_library",
+      "consumers": []
     },
     {
       "path": "/api/inference/model-library/connect-hosted-model",
@@ -7086,6 +7106,14 @@
       "consumers": [
         "web"
       ]
+    },
+    {
+      "path": "/api/workbenches/{workbench_id}/results/{artifact_id}/open",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": []
     },
     {
       "path": "/api/workbenches/{workbench_id}/run",
