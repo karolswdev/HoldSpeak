@@ -151,6 +151,20 @@ def build_proposal_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to dismiss proposal")
 
+    @router.post("/api/proposals/{proposal_id}/restore")
+    async def api_restore_proposal(
+        proposal_id: str,
+        request: Request,
+    ) -> Any:
+        """Betterment D3: Undo of Drop on a proposal (dismissed -> proposed)."""
+        try:
+            result = _service(ctx).restore_proposal(_principal(request), proposal_id)
+            if "error" in result:
+                return JSONResponse({"success": False, **result}, status_code=_status(result))
+            return JSONResponse({"success": True, **result})
+        except Exception as exc:
+            return error_500(exc, log, "Failed to restore proposal")
+
     @router.post("/api/proposals/{proposal_id}/defer")
     async def api_defer_proposal(
         proposal_id: str,

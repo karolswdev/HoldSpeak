@@ -353,6 +353,11 @@ def _bridge_proposals(db: Any, meeting_id: str, job: Any = None, *, required: bo
         created = bridge.bridge_meeting_artifacts(meeting_id, job=job)
         if created:
             log.info("HS-172-03: bridged %d proposals for meeting %s", len(created), meeting_id)
+            # Betterment D3 (owner decision 24): the promises with an owner
+            # are kept on arrival; decisions wait for Decide.
+            kept = bridge.keep_on_arrival(created)
+            if kept:
+                log.info("D3: kept %d promises on arrival for meeting %s", len(kept), meeting_id)
     except Exception as exc:
         if required:
             raise

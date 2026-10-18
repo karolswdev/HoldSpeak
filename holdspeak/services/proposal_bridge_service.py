@@ -47,7 +47,7 @@ from ..db.core import Database
 from ..due_dates import anchor_for_meeting, stored_due
 from ..db.proposals import Proposal
 from ..logging_config import get_logger
-from ..principals import Principal
+from ..principals import Principal, PrincipalKind
 from ..services.observer import current_correlation_id
 from ..services.service_event_ledger import ServiceEventLedger
 from .project_update_service import (
@@ -68,6 +68,13 @@ _ACTION_PLUGIN = "action_owner_enforcer"
 # reads them for a kind no plugin artifact covers, so a meeting yields
 # proposals on day one and a plugin run never doubles them.
 _SUMMARY_PLUGIN = "meeting_summary"
+
+#: Betterment D3 (owner decision 24, DECISIONS.md): the identity that keeps
+#: a finished summary's promises on arrival. Its receipts say who kept them.
+KEPT_ON_ARRIVAL = Principal(
+    PrincipalKind.SERVICE, "kept-on-arrival",
+    authority_basis="owner decision 24: promises from a meeting are kept on arrival",
+)
 _SUMMARY_CAPABILITY = "meeting.deferred_analysis"
 
 # The deterministic quote match: a proposal whose content words are (almost)
@@ -1171,6 +1178,102 @@ class ProposalBridgeService:
             "proposal_id": proposal_id, "state": "proposed", "deferred_until": stamp,
             "proposal": self._serialize(deferred),
         }
+
+    # ── kept on arrival (Betterment D3, owner decision 24) ──────────
+
+    @staticmethod
+    def arrival_keeps(p: Proposal) -> bool:
+        """True when a new proposal is kept with no press.
+
+        A promise (an action) with an owner is kept: the meeting is the
+        record (ledger, not gate). A decision is never kept silently: it
+        waits for Decide. A promise with no owner waits for "Whose?". A
+        plugin's promise is kept only when it stands for the summary's own
+        row or its words are in the transcript, so a plugin cannot flood
+        Needs you with unsupported rows.
+        """
+        if p.kind != "action" or p.state != "proposed" or not str(p.owner or "").strip():
+            return False
+        if p.source_plugin == _SUMMARY_PLUGIN:
+            return True
+        return bool(p.action_item_id) or p.support in {SUPPORT_SUPPORTED, SUPPORT_SOURCE_LINKED}
+
+    def keep_on_arrival(self, created: list[Proposal]) -> list[dict[str, Any]]:
+        """Keep the new promises that ``arrival_keeps`` names.
+
+        The same write Confirm does (``confirm_proposal``), as
+        ``KEPT_ON_ARRIVAL``; the kept row is stamped ``arrived_at`` so Needs
+        you shows it NEW under its meeting until he has seen it. Drop
+        (follow-through ``dismiss``) removes a wrong one; ``reopen`` undoes it.
+        """
+        kept: list[dict[str, Any]] = []
+        for proposal in created:
+            if not self.arrival_keeps(proposal):
+                continue
+            try:
+                result = self.confirm_proposal(KEPT_ON_ARRIVAL, proposal.id)
+            except Exception as exc:  # one refused keep never stops the rest
+                log.warning("kept on arrival: proposal %s was not kept: %s", proposal.id, exc)
+                continue
+            if "error" in result or result.get("replayed"):
+                continue
+            action_id = result.get("action_item_id")
+            if action_id:
+                with self._db._connection() as conn:
+                    conn.execute(
+                        "UPDATE action_items SET arrived_at = ? WHERE id = ? AND arrived_at IS NULL",
+                        (utc_now_iso(), action_id),
+                    )
+            kept.append(result)
+        return kept
+
+    def restore_proposal(self, principal: Principal, proposal_id: str) -> dict[str, Any]:
+        """Undo of Drop on a proposal: a dismissed proposal is proposed again.
+
+        Its summary action row (dismissed with it) is open again. Idempotent:
+        a proposed proposal answers ``replayed``.
+        """
+        proposal = self._db.proposals.get_proposal(proposal_id)
+        if proposal is None:
+            return {"error": "Proposal not found"}
+        if proposal.state == "proposed":
+            return {"proposal_id": proposal_id, "state": "proposed", "replayed": True,
+                    "proposal": self._serialize(proposal)}
+        if proposal.state != "dismissed":
+            return {"error": "Proposal already confirmed", "code": proposal.state}
+        with self._db._connection() as conn:
+            flipped = conn.execute(
+                "UPDATE follow_through_proposals SET state = 'proposed', decided_at = NULL "
+                "WHERE id = ? AND state = 'dismissed'",
+                (proposal_id,),
+            ).rowcount
+            if flipped and proposal.action_item_id:
+                conn.execute(
+                    "UPDATE action_items SET status = 'open' "
+                    "WHERE id = ? AND status = 'dismissed' AND review_state != 'accepted'",
+                    (proposal.action_item_id,),
+                )
+            ServiceEventLedger(self._db).append_in_transaction(
+                conn, principal,
+                event_type="proposal.restored",
+                producer="ProposalBridgeService",
+                subject_ref=f"proposal:{proposal_id}",
+                source_revision="",
+                facts={"proposal_id": proposal_id, "kind": proposal.kind, "text": proposal.text},
+                refs=[f"proposal:{proposal_id}", f"meeting:{proposal.meeting_id}"],
+                correlation_id=current_correlation_id(),
+                causation_id=f"proposal:{proposal_id}",
+            )
+        restored = self._db.proposals.get_proposal(proposal_id)
+        try:
+            from .needs_you_aggregate import mark_needs_you_dirty
+            mark_needs_you_dirty(self._db)
+        except Exception:
+            pass
+        if restored is not None:
+            self._notify_changed(restored, "restore")
+        return {"proposal_id": proposal_id, "state": "proposed", "replayed": False,
+                "proposal": self._serialize(restored) if restored is not None else None}
 
     # ── accept reviewed (HS-200-12, counsel P1-1) ───────────────────
 

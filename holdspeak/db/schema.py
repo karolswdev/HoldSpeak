@@ -124,7 +124,11 @@ CREATE TABLE IF NOT EXISTS action_items (
     source_ref TEXT NOT NULL DEFAULT '',
     -- Betterment D0: the due as the meeting said it ("Friday next week");
     -- `due` holds the ISO day it names, read against the meeting's date.
-    due_said TEXT
+    due_said TEXT,
+    -- Betterment D3: kept on arrival (a finished summary kept this promise
+    -- with no press), and when he saw it in Needs you (NEW until then).
+    arrived_at TEXT,
+    arrival_seen_at TEXT
 );
 
 -- Topics extracted from meetings
