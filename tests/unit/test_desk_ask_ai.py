@@ -484,7 +484,10 @@ def test_incompatible_chosen_assignment_is_named_and_never_uses_legacy_download(
         asyncio.run(AskService(hub.db, broker=hub.broker).ask(OWNER, "This must refuse"))
 
     assert refused.value.code == "inference_route_failed"
-    assert refused.value.context.get("reason") == "no_engine"
+    # Betterment Q1 (FOLLOWUPS, from Q0): the assigned engine is not ready
+    # (its check could not reach it), so the face says "not reachable",
+    # never "No engine for answers".
+    assert refused.value.context.get("reason") == "not_reachable"
     # Admission records the refused route receipt, but never reaches the
     # runner (the engine factory above would fail if a legacy fallback ran).
     assert len(_executions(hub.db)) == 1

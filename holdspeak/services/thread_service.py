@@ -128,6 +128,7 @@ _GUARDRAIL_TIMEOUT_S = 10.0
 # `runWords.ts`; the sentence is for every other reader (MCP, the raw fold).
 _TURN_FAILURE_WORDS = {
     "no_engine": "No engine is ready for answers.",
+    "not_reachable": "The engine cannot be reached.",
     "engine_busy": "The engine was busy and did not answer.",
     "did_not_answer": "The engine did not answer.",
     "refused": "The engine refused the request.",

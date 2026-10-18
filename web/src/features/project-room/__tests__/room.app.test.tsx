@@ -32,6 +32,10 @@ import H175 from "./room-wires/hs175.json";
 import S17 from "./room-wires/sources17.json";
 import F17 from "./room-wires/files17.json";
 import R174 from "./room-wires/receipts174.json";
+// Betterment Q1: Ask this project on an engine that does not answer, then Ask
+// again (tests/unit/test_desk_room_ask.py records it from the real routes).
+import Q1 from "./room-wires/roomAskQ1.json";
+import { runAsk } from "../../../desk/ask";
 
 vi.mock("../../../desk/ask", async () => {
   const actual = await vi.importActual<typeof import("../../../desk/ask")>("../../../desk/ask");
@@ -1420,5 +1424,80 @@ describe("P0: a refused Draft update says why in the Room head, with Try again a
     expect(drafts()[2].json?.generator).toBe("deterministic");
     expect(screen.queryByTestId("room-head-draft-run")).toBeNull();
     expect(misses).toEqual([]);
+  });
+});
+
+/* ── Betterment Q1: the Room's Ask tells the truth ─────────────────── */
+
+describe("Betterment Q1: Ask this project says why in words, and Ask again answers", () => {
+  // The /api/ask and /api/ask-tasks reads go through `apiRequest` (fetch), so
+  // the recorded answers are served at fetch; the Room's other reads at apiFetch.
+  const realRunAsk = vi.importActual<typeof import("../../../desk/ask")>("../../../desk/ask");
+  const fetched: string[] = [];
+  let unfinished: unknown = Q1.unfinished_after_resume;
+
+  function reply(status: number, body: unknown): Response {
+    return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
+  }
+
+  beforeEach(async () => {
+    const actual = await realRunAsk;
+    vi.mocked(runAsk).mockImplementation(actual.runAsk);
+    fetched.length = 0;
+    unfinished = Q1.unfinished_after_resume;
+    vi.stubGlobal("fetch", vi.fn(async (input: string, init: RequestInit = {}) => {
+      const path = String(input).split("?")[0];
+      const key = `${init.method ?? "GET"} ${path}`;
+      fetched.push(key);
+      const task = Q1.save.task.id;
+      if (key === `POST /api/projects/${Q1.project_id}/ask-tasks`) return reply(201, Q1.save);
+      if (key === "POST /api/ask") return reply(Q1.ask_failed.status, Q1.ask_failed.body);
+      if (key === `POST /api/ask-tasks/${task}/stopped`) { unfinished = Q1.unfinished_after_stop; return reply(200, Q1.stopped); }
+      if (key === `POST /api/ask-tasks/${task}/resume`) { unfinished = Q1.unfinished_after_resume; return reply(200, Q1.resume); }
+      if (key === "GET /api/ask-tasks") return reply(200, unfinished);
+      return reply(404, {});
+    }));
+    wire({ [room(Q1.project_id)]: () => clone(Q1.room) });
+  });
+  afterEach(() => { vi.unstubAllGlobals(); });
+
+  it("the failure is the reason in words with Ask again, never the hub's sentence; Ask again answers", async () => {
+    const { container } = render(<WindowHarness scope={`project:${Q1.project_id}`} />);
+    const well = await screen.findByLabelText("Ask this project");
+    fireEvent.change(well, { target: { value: Q1.save.task.purpose } });
+    fireEvent.keyDown(well, { key: "Enter" });
+
+    const row = await screen.findByTestId(`room-unfinished-${Q1.save.task.id}`);
+    // The reason token the hub sent, in words (runWords.ts).
+    expect(within(row).getByText("Engine did not answer")).toBeInTheDocument();
+    // The hub's sentence and its route token never reach the face.
+    expect(container.textContent).not.toContain(Q1.ask_failed.body.error);
+    expect(container.textContent).not.toContain("did_not_answer");
+    // The code the row got is the reason token, never a sentence (B5).
+    expect(fetched).toContain(`POST /api/ask-tasks/${Q1.save.task.id}/stopped`);
+    expect(screen.queryByTestId("room-ask-error")).toBeNull();          // said once
+    expect(rawButtons(row)).toEqual([]);
+
+    fireEvent.click(within(row).getByRole("button", { name: `Ask again: ${Q1.save.task.purpose}` }));
+    expect(await screen.findByText(Q1.resume.answer.output)).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByTestId(`room-unfinished-${Q1.save.task.id}`)).toBeNull());
+    expect(screen.queryByTestId("room-ask-error")).toBeNull();
+  });
+
+  it("a Resume the hub refuses says why in words; a raw error never prints", async () => {
+    // The pre-fix hub's answer to this Resume (RECON step 9): a 500 whose
+    // `error` is the database's own sentence and no reason token.
+    unfinished = Q1.unfinished_after_stop;
+    const raw = "UNIQUE constraint failed: inference_adoption_material_snapshots.operation_id";
+    const base = vi.mocked(fetch).getMockImplementation()!;
+    vi.mocked(fetch).mockImplementation(async (input, init = {}) =>
+      String(input).endsWith("/resume") ? reply(500, { error: raw }) : base(input, init));
+    const { container } = render(<WindowHarness scope={`project:${Q1.project_id}`} />);
+    const row = await screen.findByTestId(`room-unfinished-${Q1.save.task.id}`);
+    fireEvent.click(within(row).getByRole("button", { name: `Ask again: ${Q1.save.task.purpose}` }));
+    const line = await screen.findByTestId("room-ask-error");
+    expect(line.textContent).toContain("Not answered");
+    expect(within(line).getByRole("button", { name: "Try again" })).toBeInTheDocument();
+    expect(container.textContent).not.toContain(raw);
   });
 });

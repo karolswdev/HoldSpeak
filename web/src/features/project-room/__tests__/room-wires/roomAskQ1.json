@@ -1,0 +1,392 @@
+{
+ "_source": "The hub's own answers, captured by tests/unit/test_desk_room_ask.py::test_record_the_room_ask_that_fails_then_answers (MeetingWebServer + TestClient, isolated HOME, the browser rigs' seeds). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
+ "project_id": "proj-b9147f80e763",
+ "room": {
+  "project_id": "proj-b9147f80e763",
+  "revision": 1,
+  "observed_at": "2026-10-17T23:11:20.510400",
+  "nextCheckAt": null,
+  "project": {
+   "id": "proj-b9147f80e763",
+   "name": "Ledger migration",
+   "description": "",
+   "keywords": [],
+   "team_members": [],
+   "context": {},
+   "detection_threshold": 0.4,
+   "is_archived": false,
+   "meeting_count": 0,
+   "created_at": "2026-10-17T23:11:20.510400",
+   "updated_at": "2026-10-17T23:11:20.510400",
+   "purpose": null,
+   "outcome_text": null,
+   "owner_ref": null,
+   "lifecycle": "active",
+   "posture": null,
+   "posture_reason": null,
+   "start_at": null,
+   "target_at": null,
+   "review_cadence_json": null,
+   "next_review_at": null,
+   "template_key": null,
+   "modules_json": null,
+   "revision": 1,
+   "last_review_id": null,
+   "last_review_at": null
+  },
+  "items": {
+   "focus": [],
+   "totals_by_type": {},
+   "total": 0,
+   "state": "ok"
+  },
+  "meetings": {
+   "count": 0,
+   "latest": null,
+   "state": "ok"
+  },
+  "resources": {
+   "count": 0,
+   "latest": null,
+   "state": "ok"
+  },
+  "changes": {
+   "recent": [
+    {
+     "id": "pchg_6ac4b63be9dd1a958e1ed5b8c31bbee3",
+     "project_id": "proj-b9147f80e763",
+     "project_revision": 1,
+     "change_kind": "project.created",
+     "target_ref": "project:proj-b9147f80e763",
+     "actor_ref": "principal:ask-ai-owner",
+     "command_id": "pcmd_8cd83291b4dd495598eb6daa98607fc4",
+     "before_hash": null,
+     "after_hash": "707972e1b79fff95727c0592dd85c6b1",
+     "summary_json": "{\"name\": \"Ledger migration\"}",
+     "created_at": "2026-10-18T05:11:20.510400+00:00"
+    }
+   ],
+   "state": "ok"
+  },
+  "review": {
+   "state": "absent",
+   "reason": "not_yet_built"
+  },
+  "needsYou": {
+   "items": [],
+   "count": 0,
+   "state": "ok"
+  },
+  "sources": {
+   "items": [],
+   "count": 0,
+   "nextCheckAt": null,
+   "quietUntil": "2026-10-18T14:00:00+00:00",
+   "state": "ok"
+  },
+  "health": {
+   "assessment": "on_track",
+   "reason": null,
+   "inputs": {
+    "overdue": 0,
+    "overdueMilestones": 0,
+    "ciFailing": false,
+    "reviewWaitingDays": null,
+    "targetPassed": false
+   },
+   "signals": {
+    "review_wait": {
+     "present": false,
+     "tone": "green",
+     "median_days": 0.0,
+     "waiting_count": 0,
+     "per_reviewer": []
+    },
+    "issue_aging": {
+     "present": false,
+     "tone": "green",
+     "aged_count": 0,
+     "threshold_days": 14
+    },
+    "ci": {
+     "present": false,
+     "tone": "green",
+     "failures_last_3": 0,
+     "flaky_branch_count": 0,
+     "queue": 0
+    },
+    "release": {
+     "present": false,
+     "tone": "green",
+     "composite": "green",
+     "signals": {
+      "review_wait": "green",
+      "ci": "green",
+      "blockers": "green",
+      "overdue": "green"
+     },
+     "blockers_count": 0,
+     "blockers": []
+    }
+   },
+   "checked_at": null,
+   "merge_queue_depth": 0,
+   "people": [],
+   "state": "ok"
+  },
+  "sinceRead": {
+   "readAt": null,
+   "groups": [],
+   "state": "ok"
+  },
+  "decisions": {
+   "items": [],
+   "state": "ok"
+  },
+  "commitments": {
+   "items": [],
+   "state": "ok"
+  },
+  "target": {
+   "targetAt": null,
+   "daysLeft": null,
+   "passed": false,
+   "state": "ok"
+  },
+  "updates": {
+   "count": 0,
+   "counts": {},
+   "recent": [],
+   "latest_published": null,
+   "state": "ok"
+  },
+  "steward": {
+   "latest_run": null,
+   "enabled": false,
+   "unattended_enabled": false,
+   "state": "ok"
+  },
+  "receipts": {
+   "items": [],
+   "state": "ok"
+  }
+ },
+ "save": {
+  "task": {
+   "id": "asktask_29fac038af164d789acea447a9dd4f68",
+   "projectId": "proj-b9147f80e763",
+   "invocationId": "ask_b2d159a3976044b3ad2af60acc9db826",
+   "purpose": "What blocks the November 5 freeze?",
+   "lens": "Project",
+   "state": "saved",
+   "savedAt": "2026-10-18T05:11:20.535398Z",
+   "updatedAt": "2026-10-18T05:11:20.535398Z",
+   "resumeOrder": 1,
+   "grounding": {
+    "artifact_ids": [],
+    "expand": "summary",
+    "meeting_ids": [],
+    "refs": [
+     "project:proj-b9147f80e763"
+    ]
+   },
+   "custody": "here"
+  }
+ },
+ "ask_failed": {
+  "status": 409,
+  "body": {
+   "route": {
+    "lamp": "private_network",
+    "host": "192.168.1.43",
+    "model": "qwen3.8-27b",
+    "fallback": false,
+    "receipt": "ire_ff8fea759a7dc902068a73a983153510"
+   },
+   "reason": "did_not_answer",
+   "error": "No assigned model completed this request"
+  }
+ },
+ "stopped": {
+  "task": {
+   "id": "asktask_29fac038af164d789acea447a9dd4f68",
+   "projectId": "proj-b9147f80e763",
+   "invocationId": "ask_b2d159a3976044b3ad2af60acc9db826",
+   "purpose": "What blocks the November 5 freeze?",
+   "lens": "Project",
+   "state": "failed",
+   "savedAt": "2026-10-18T05:11:20.535398Z",
+   "updatedAt": "2026-10-18T05:11:20.634866Z",
+   "resumeOrder": 1,
+   "grounding": {
+    "artifact_ids": [],
+    "expand": "summary",
+    "meeting_ids": [],
+    "refs": [
+     "project:proj-b9147f80e763"
+    ]
+   },
+   "stoppedCode": "did_not_answer",
+   "settledAt": "2026-10-18T05:11:20.634866Z",
+   "custody": "here"
+  },
+  "changed": true
+ },
+ "unfinished_after_stop": {
+  "items": [
+   {
+    "id": "asktask_29fac038af164d789acea447a9dd4f68",
+    "projectId": "proj-b9147f80e763",
+    "invocationId": "ask_b2d159a3976044b3ad2af60acc9db826",
+    "purpose": "What blocks the November 5 freeze?",
+    "lens": "Project",
+    "state": "failed",
+    "savedAt": "2026-10-18T05:11:20.535398Z",
+    "updatedAt": "2026-10-18T05:11:20.634866Z",
+    "resumeOrder": 1,
+    "grounding": {
+     "artifact_ids": [],
+     "expand": "summary",
+     "meeting_ids": [],
+     "refs": [
+      "project:proj-b9147f80e763"
+     ]
+    },
+    "stoppedCode": "did_not_answer",
+    "settledAt": "2026-10-18T05:11:20.634866Z",
+    "custody": "here"
+   }
+  ],
+  "next_cursor": null
+ },
+ "resume": {
+  "task": {
+   "id": "asktask_29fac038af164d789acea447a9dd4f68",
+   "projectId": "proj-b9147f80e763",
+   "invocationId": "ask_5fff28096ef240f4acc3b5ba25dfe45d",
+   "purpose": "What blocks the November 5 freeze?",
+   "lens": "Project",
+   "state": "accepted",
+   "savedAt": "2026-10-18T05:11:20.535398Z",
+   "updatedAt": "2026-10-18T05:11:20.723081Z",
+   "resumeOrder": 1,
+   "grounding": {
+    "artifact_ids": [],
+    "expand": "summary",
+    "meeting_ids": [],
+    "refs": [
+     "project:proj-b9147f80e763"
+    ]
+   },
+   "settledAt": "2026-10-18T05:11:20.723081Z",
+   "custody": "here"
+  },
+  "answer": {
+   "actual_placement": {
+    "boundary": "private_network",
+    "data_classes": [
+     "prompt",
+     "grounding"
+    ],
+    "engine": "configured_local_engine",
+    "fallback_reason": null,
+    "model": "qwen3.8-27b",
+    "owner": "hub",
+    "target_id": "glass-lan",
+    "target_kind": "assigned_profile",
+    "target_name": "glass-lan",
+    "transport": "private_network"
+   },
+   "context_ids": [],
+   "context_titles": [],
+   "egress": {
+    "scope": "private_network",
+    "host": "192.168.1.43"
+   },
+   "grounding": {
+    "artifact_ids": [],
+    "expand": "summary",
+    "matched_count": 0,
+    "meeting_ids": [],
+    "overflow_count": 0,
+    "refs": [
+     "project:proj-b9147f80e763"
+    ],
+    "selection": "relevance",
+    "source_refs": [],
+    "titles": []
+   },
+   "lens": "Project",
+   "model": "qwen3.8-27b",
+   "output": "The freeze waits on the reconciliation job; it has no owner yet.",
+   "profile_id": "glass-lan",
+   "provider": "configured_local_engine",
+   "invocation_id": "invoke_3979423a7aa92baf427cc59e4db6c6e4",
+   "operation_id": "op_053920ff219747058b7ccfbc0b45e3a7",
+   "receipt_id": "rcpt_640111fb80d94d85990d77efeb552532",
+   "result_ref": "inference-result:invoke_3979423a7aa92baf427cc59e4db6c6e4/sha256:23a3b091fd6df768f6d03ad6b5c910f054f3bb1d8b4a929dbcc8a0349b6a0ed1",
+   "route_execution_receipt": {
+    "schema": "RouteExecutionReceipt@1",
+    "execution_id": "ire_65eb4e826cbc57a2c608961282607469",
+    "route_plan_id": "irp_babbefbc6574d6cd1b0dbe3396ccc0a70389b7360792caf684ad0b46739ba687",
+    "route_plan_sha256": "sha256:af57332d648fc3488a89dfce4d48db2d9b7fc8ad1671f997415d827fdacd5f4d",
+    "operation_plan_id": "iorp_87bdfcf8a490525b689cf2173b671622866f0ddcedce844f2096e7749254a512",
+    "operation_plan_sha256": "sha256:4065ebb7ef194f1d83ba330f8bc2d136e6b9f49a0c8c0da4a57f7d49a08cd988",
+    "state": "terminal",
+    "outcome": "succeeded",
+    "disposition": "owner_terminal",
+    "winning_attempt_id": "ira_5ec554c428988579e34d2249242357af",
+    "result_ref": "inference-result:invoke_3979423a7aa92baf427cc59e4db6c6e4/sha256:23a3b091fd6df768f6d03ad6b5c910f054f3bb1d8b4a929dbcc8a0349b6a0ed1",
+    "winning_deployment_revision_id": "dep2_4e3a1ff6818887d50f17bd97fd892755fed9499a1a67a78b5dc278a9de8c84de",
+    "winning_boundary": "private_network",
+    "considerations": [
+     {
+      "route_leg_ordinal": 1,
+      "profile_id": "glass-lan",
+      "profile_revision": 1,
+      "deployment_revision_id": "dep2_4e3a1ff6818887d50f17bd97fd892755fed9499a1a67a78b5dc278a9de8c84de",
+      "boundary": "private_network",
+      "status": "attempted",
+      "disposition": null,
+      "reason_code": null,
+      "physical_attempts": 1
+     }
+    ],
+    "all_models_physically_failed": false,
+    "physically_failed_attempt_count": 0,
+    "attempts": [
+     {
+      "attempt_id": "ira_5ec554c428988579e34d2249242357af",
+      "route_leg_ordinal": 1,
+      "leg_attempt_ordinal": 1,
+      "profile_id": "glass-lan",
+      "profile_revision": 1,
+      "physical_attempt_ordinal": 1,
+      "purpose": "primary",
+      "deployment_revision_id": "dep2_4e3a1ff6818887d50f17bd97fd892755fed9499a1a67a78b5dc278a9de8c84de",
+      "boundary": "private_network",
+      "child_operation_id": "op_053920ff219747058b7ccfbc0b45e3a7",
+      "disposition": "owner_terminal",
+      "outcome": "succeeded",
+      "send_phase": "provider_returned",
+      "child_receipt_sha256": "sha256:77aac284c344f348f544f9741063b1e5c8f7695eeecafdf008564c39415e5095",
+      "disposition_evidence_sha256": "sha256:5217ed985c71a7928ee6942da7b9d50b60a89f3e98ddbd9a43ced46d593a3007"
+     }
+    ]
+   },
+   "route": {
+    "lamp": "private_network",
+    "host": "192.168.1.43",
+    "model": "qwen3.8-27b",
+    "fallback": false,
+    "receipt": "ire_65eb4e826cbc57a2c608961282607469"
+   }
+  },
+  "claimed": false,
+  "dispatched": true
+ },
+ "unfinished_after_resume": {
+  "items": [],
+  "next_cursor": null
+ }
+}

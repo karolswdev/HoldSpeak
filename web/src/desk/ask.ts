@@ -486,6 +486,9 @@ export interface AskResumeOutcome {
   dispatched: boolean;
   /** The hub's own words when it refused; never composed here (B5). */
   error: string;
+  /** The hub's reason token for a refused Resume (Betterment Q1); the face
+   *  prints `reasonWords(reason)`, never `error`. Empty when the hub sent none. */
+  reason: string;
 }
 
 /** Return to one saved ask. This is also how a finished ask SETTLES: the
@@ -495,7 +498,7 @@ export interface AskResumeOutcome {
  *  exactly the double-spend ruling B3 forbids. */
 export async function resumeAskTask(taskId: string): Promise<AskResumeOutcome> {
   const empty: AskResumeOutcome = {
-    ok: false, task: null, answer: null, claimed: false, dispatched: false, error: "",
+    ok: false, task: null, answer: null, claimed: false, dispatched: false, error: "", reason: "",
   };
   try {
     const res = await apiRequest(
@@ -510,6 +513,7 @@ export async function resumeAskTask(taskId: string): Promise<AskResumeOutcome> {
           data && typeof data.error === "string" && data.error
             ? data.error
             : humanizeError(res),
+        reason: data && typeof data.reason === "string" ? data.reason : "",
       };
     }
     return {
@@ -522,6 +526,7 @@ export async function resumeAskTask(taskId: string): Promise<AskResumeOutcome> {
       claimed: Boolean(data.claimed),
       dispatched: Boolean(data.dispatched),
       error: "",
+      reason: "",
     };
   } catch (error) {
     return { ...empty, error: humanizeError(error) };
