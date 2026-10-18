@@ -1,0 +1,6 @@
+page.keyboard.press("Meta+k") if vp==1440 else page.get_by_role("button", name="Search").first.click()
+wait(1.2); page.keyboard.type("commands"); wait(1.5); page.keyboard.press("Enter"); wait(2.5)
+page.get_by_role("button", name="Add command").first.click(); wait(2)
+shot("62-voice-command-add"); text("body", 3000)
+print("INPUTS", [(i.get_attribute("aria-label"), i.get_attribute("placeholder")) for i in page.locator("input:visible, select:visible, textarea:visible").all()])
+print("BUTTONS", [b for b in page.get_by_role("button").all_inner_texts() if b.strip()][-30:])

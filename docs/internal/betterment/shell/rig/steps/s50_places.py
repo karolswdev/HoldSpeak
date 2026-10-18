@@ -1,0 +1,5 @@
+exec(open("steps/lib.py").read())
+close_all(page, wait); wait(0.5)
+page.keyboard.press("Meta+Shift+p"); wait(2.5)
+shot("50-change-places"); print("BOX", boxes(page)); text('[role="region"][aria-label]', 3000)
+print(page.evaluate("""() => [...document.querySelectorAll('[role=region] button')].map(b => b.innerText.replace(/\\n/g,' ').slice(0,40))"""))

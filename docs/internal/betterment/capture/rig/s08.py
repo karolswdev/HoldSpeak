@@ -1,0 +1,8 @@
+page.get_by_role("button", name="Default engine").last.click(); wait(2)
+shot("26-default-engine-open")
+print("BUTTONS", [b for b in page.get_by_role("button").all_inner_texts() if b.strip()][-30:])
+rows = page.get_by_role("button", name="Qwen3.8 27B")
+print("rows", rows.count())
+rows.last.click(); wait(3)
+shot("26-default-engine-assigned"); text("body", 600)
+print("BUTTONS", [b for b in page.get_by_role("button").all_inner_texts() if b.strip()][-30:])

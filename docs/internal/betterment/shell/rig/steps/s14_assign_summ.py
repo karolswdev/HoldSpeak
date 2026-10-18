@@ -1,0 +1,6 @@
+page.locator(".desk-mark").first.click(); wait(0.6)
+page.get_by_role("menuitem", name="Engines").first.click(); wait(3)
+page.get_by_text("Meeting summaries").first.click(); wait(2)
+q = page.get_by_role("button", name="Qwen3.8 27B"); print("q", q.count())
+if q.count(): q.first.click(); wait(3)
+text("body", 900)

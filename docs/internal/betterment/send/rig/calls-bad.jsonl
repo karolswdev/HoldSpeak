@@ -1,0 +1,9 @@
+{"argv": ["gh", "api", "user", "--hostname", "github.com"], "body_sha256": null, "pid": 59959, "at": "2026-10-18T02:28:37.089818+00:00", "answer": 0, "hold": false}
+{"argv": ["gh", "api", "user", "--hostname", "github.com"], "body_sha256": null, "pid": 59959, "at": "2026-10-18T02:42:32.329738+00:00", "answer": 0, "hold": false}
+{"argv": ["gh", "issue", "comment", "42", "--repo", "acme/payments", "--body-file", "<tmp>/payload.md"], "body_sha256": "1cf3f20f17a013ec9e1cd51c99c0f5f8c869eed0954b7182e1c893bddd008463", "pid": 59959, "at": "2026-10-18T02:42:32.333283+00:00", "answer": 1, "hold": false}
+{"argv": ["https", "POST", "hooks.slack.com", "/services/[redacted]"], "body_sha256": "d1ebb056d9ba433c66b00b3b64ed77be8b5ebac3d46e1ca38b86ca7d4e6c91b0", "pid": 59959, "at": "2026-10-18T02:42:40.501127+00:00", "answer": 0, "auth": null, "user_agent": "HoldSpeak"}
+{"argv": ["acli", "jira", "auth", "switch", "--site", "acme.atlassian.net", "--email", "karol@acme.example"], "body_sha256": null, "pid": 59959, "at": "2026-10-18T02:42:48.660966+00:00", "answer": 2, "hold": false}
+{"argv": ["acli", "jira", "auth", "status"], "body_sha256": null, "pid": 59959, "at": "2026-10-18T02:42:48.661127+00:00", "answer": 3, "hold": false}
+{"argv": ["acli", "jira", "auth", "switch", "--site", "acme.atlassian.net", "--email", "karol@acme.example"], "body_sha256": null, "pid": 59959, "at": "2026-10-18T02:42:48.663553+00:00", "answer": 2, "hold": false}
+{"argv": ["acli", "jira", "auth", "status"], "body_sha256": null, "pid": 59959, "at": "2026-10-18T02:42:48.665134+00:00", "answer": 3, "hold": false}
+{"argv": ["acli", "jira", "workitem", "comment", "create", "--key", "PAY-12", "--body-file", "<tmp>/payload.txt", "--json"], "body_sha256": "1cf3f20f17a013ec9e1cd51c99c0f5f8c869eed0954b7182e1c893bddd008463", "pid": 59959, "at": "2026-10-18T02:42:48.666858+00:00", "answer": 4, "hold": true}

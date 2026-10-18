@@ -65,7 +65,7 @@ Evidence paths go in a footnote, not in the prose.
 
 ## Index
 
-The master plan is `PLAN.md`; the feature inventory is `INVENTORY.md`;
+The master plan is `PLAN.md`; every open owner decision is in `DECISIONS.md`; the feature inventory is `INVENTORY.md`;
 cluster workers follow `CLUSTER-BRIEF.md`.
 
 | Feature | Folder | State |
@@ -78,3 +78,7 @@ cluster workers follow `CLUSTER-BRIEF.md`.
 | Projects, updates and decisions | `projects/` | draft, owner decisions open; P0 in build |
 | Agents (Conductor, herdr ideas) | `agents/` | draft, owner decisions open |
 | The daily surface, People and commitments | `daily/` | draft, owner decisions open |
+| Settings and setup | `setup/` | draft, owner decisions open |
+| The desk shell | `shell/` | draft, owner decisions open |
+| Delivery and send | `send/` | draft, owner decisions open |
+| Capture | `capture/` | draft, owner decisions open |

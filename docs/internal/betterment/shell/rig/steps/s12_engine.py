@@ -1,0 +1,11 @@
+page.locator(".desk-mark").first.click(); wait(0.6)
+page.get_by_role("menuitem", name="Engines").first.click(); wait(3)
+shot("12-settings-engines"); text("body", 1200)
+b = page.get_by_role("button", name="Find on LAN")
+print("find", b.count())
+if b.count(): b.first.click(); wait(6)
+shot("12-find-lan"); 
+u = page.get_by_role("button", name="Use it")
+print("use", u.count())
+if u.count(): u.first.click(); wait(3)
+shot("12-used"); text(".desk-window, [role='dialog'], body", 2500)

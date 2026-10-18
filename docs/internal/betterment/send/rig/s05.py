@@ -1,0 +1,17 @@
+import time
+page.keyboard.press("Meta+k"); wait(1); page.keyboard.type("Accounts"); wait(1.5); page.keyboard.press("Enter"); wait(3)
+page.get_by_role("button", name="Add destination").first.click(); wait(1.5)
+sel = page.locator("[data-testid=dest-form] select").first
+print("selects", page.locator("[data-testid=dest-form] select").count())
+sel.select_option(label="GitHub comment"); wait(1)
+shot("05-new-dest-github")
+text("[data-testid=dest-form]", 1500)
+t=time.time()
+page.locator("[data-testid=dest-repo]").fill("acme/payments")
+page.locator("[data-testid=dest-number]").fill("42")
+page.locator("[data-testid=dest-name]").fill("Payments issue 42")
+wait(0.5); text("[data-testid=dest-form]", 1500)
+page.locator("[data-testid=dest-save]").click(); wait(4)
+print("save gh", round(time.time()-t,1))
+shot("05-github-saved")
+text("[data-testid=destinations]", 2000)

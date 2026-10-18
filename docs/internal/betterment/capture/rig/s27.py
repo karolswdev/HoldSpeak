@@ -1,0 +1,5 @@
+if page.get_by_role("menuitem", name="Meetings").count()==0: page.get_by_role("button", name="Go").first.click(); wait(1)
+page.get_by_role("menuitem", name="Meetings").first.click(); wait(2.5)
+page.get_by_role("button", name="Import").last.click(); wait(2)
+shot("21-import-press")
+print("speak in go", page.get_by_role("menuitem", name="Speak").count())

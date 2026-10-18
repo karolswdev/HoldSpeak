@@ -1,0 +1,7 @@
+Karol: How are you, Mira?
+Mira: Good. A bit stretched with the cutover.
+Karol: What can I take off your plate?
+Mira: The payments team update. Can you send it this week?
+Karol: Yes, I will send the payments update by Wednesday.
+Mira: I want to lead the ledger retro after the cutover.
+Karol: Good. You lead the retro. Put it on the calendar for November 12.
