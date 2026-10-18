@@ -465,6 +465,14 @@ def _summary_rig(tmp_path, monkeypatch):
     return db, engine
 
 
+def _dated_before_the_meeting(db: Database) -> None:
+    """A summary reads only sources dated before its meeting (betterment/capture
+    C2); the queued meeting starts 2026-08-10, so the project's decisions are
+    dated before it."""
+    with db._connection() as conn:
+        conn.execute("UPDATE desk_decisions SET created_at='2026-08-01T09:00:00+00:00'")
+
+
 def _staged_material(db: Database) -> list[dict]:
     with db._connection() as conn:
         rows = conn.execute(
@@ -482,6 +490,7 @@ def test_meeting_summary_prompt_carries_the_projects_earlier_decision(tmp_path, 
     project_id, inside = _project_with_decision(db, items=False)
     state = _queued_meeting(db, "m-memory", text="we reviewed the ledger rollout plan")
     _make_service(db)._project_service.associate_meeting(OWNER, project_id, state.id)
+    _dated_before_the_meeting(db)
 
     assert process_next_intel_job() is True
 
@@ -550,6 +559,7 @@ def test_meeting_summary_retry_after_memory_changed_still_runs(tmp_path, monkeyp
     process_next_intel_job(retry_base_seconds=0, retry_max_seconds=0)
     later = _decide(db, "Freeze the ledger schema", "The ledger schema is frozen until May.")
     projects.add_resource(OWNER, project_id, f"desk_decision:{later}")
+    _dated_before_the_meeting(db)
     engine.error = None
     process_next_intel_job(include_scheduled=True)
 

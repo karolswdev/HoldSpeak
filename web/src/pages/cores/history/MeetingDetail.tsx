@@ -37,6 +37,7 @@ import { SendWellReadContext } from "../../../desk/surface/send/SendWell";
 import { MeetingDecideWell } from "../../../meetings/MeetingDecideWell";
 import { NeedsYouTable, showsRunSummary } from "./NeedsYouTable";
 import { TranscriptWell } from "./TranscriptWell";
+import { LookedAtWell } from "./LookedAtWell";
 import { AudioOnlyVerb } from "./TranscribeVerb";
 import { CycleGadget, StringGadget } from "../../../desk/surface/gadgets";
 import { WorkMenu, type WorkMenuEntry } from "../../../desk/components/DeskMenu";
@@ -813,6 +814,8 @@ export function MeetingDetail({
               emptyLabel={speechWasMissing(detail ?? meeting) ? NO_TRANSCRIPT_SPEECH : undefined}
             />
           </div>
+          {/* betterment/capture C2: what the summary read, each with its date. */}
+          <LookedAtWell items={runReceipt?.looked_at} />
           {/* RAW · ROUTING — the intent timeline section (only when data present) */}
           {timelineRows.length > 0 ? (
             <div className="meetings-detail-routing">

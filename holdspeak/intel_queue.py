@@ -462,6 +462,9 @@ def _meeting_memory(db, meeting):
             # The project's standing answers first, when memory has them
             # (MEMORY-DESIGN.md §6); none: the read is today's.
             pages=project_pages(project_ids[0], "what-we-decided", "what-is-open"),
+            # Only what came before this meeting: a summary never reports a
+            # later meeting as history (betterment/capture C2).
+            before=meeting.started_at,
         )
     except Exception as exc:
         log.warning(f"Meeting memory not read ({exc}); the summary runs without it")
@@ -618,6 +621,8 @@ def _process_bound_intel_job(
                 (getattr(job, "planned_route", {}) or {}).get("selection_hash"),
                 str(routed.get("outcome") or "failed"),
                 route_receipt if isinstance(route_receipt, dict) else None,
+                # What the summary read: the memory refs actually sent.
+                looked_at=getattr(getattr(bound, "memory_sent", None), "looked_at", None),
             )
             # A dispatched leg that cannot be mapped to the frozen disclosure
             # is a truthful execution failure.  The receipt keeps the

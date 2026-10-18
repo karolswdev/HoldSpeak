@@ -2666,8 +2666,12 @@ class IntelRepository(BaseRepository):
     def record_run_receipt(
         self, meeting_id: str, job_id: str, selection_hash: str | None,
         outcome: str, route_receipt: Mapping[str, Any] | None = None,
+        *, looked_at: list[Mapping[str, Any]] | None = None,
     ) -> dict[str, Any]:
         """Project physically dispatched legs from a kernel receipt.
+
+        ``looked_at`` is the memory the run sent (ref, title, date); it is kept
+        on the receipt so the meeting can show what its summary read.
 
         The kernel is authoritative about what was sent.  If a malformed or
         stale kernel row names a leg that is absent from the frozen route, keep
@@ -2733,6 +2737,12 @@ class IntelRepository(BaseRepository):
             "outcome": public_outcome,
             "attempts": attempts,
         }
+        if looked_at:
+            receipt["looked_at"] = [
+                {"ref": str(item.get("ref") or ""), "title": str(item.get("title") or ""),
+                 "at": str(item.get("at") or "")}
+                for item in looked_at if isinstance(item, Mapping) and item.get("ref")
+            ]
         self.set_run_receipt(meeting_id, receipt)
         return receipt
 

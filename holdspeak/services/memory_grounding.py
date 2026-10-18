@@ -27,10 +27,14 @@ Contract:
   A source with no Desk window is left out.
 - The size is bounded whole: each rendered excerpt (ref, title and text) and
   the complete block.
+- With ``before`` (a meeting's start), only sources dated before it are read:
+  a summary never reports a later meeting as history.  Each line then leads
+  with its source date, and a source with no date is left out.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any, Callable, Iterable, Mapping
 
 from ..grounding import GroundingBlock, hydrate_refs_detailed, memory_defense
@@ -126,11 +130,13 @@ class MemoryExcerpt:
     title: str
     text: str
     citable: bool = True  # False: a no-window kind, plain context only
+    at: str = ""  # the source's own time (ISO), read only for a dated read
 
     @property
     def label(self) -> str:
         """What the prompt line leads with: the ref, or a no-ref marker."""
-        return self.ref if self.citable else f"({self.kind.replace('_', ' ')}, context only)"
+        lead = self.ref if self.citable else f"({self.kind.replace('_', ' ')}, context only)"
+        return f"{self.at[:10]} {lead}" if self.at else lead
 
     def line(self) -> str:
         if self.title and self.text:
@@ -158,6 +164,14 @@ class MemoryContext:
         return [excerpt.ref for excerpt in self.excerpts if not excerpt.citable]
 
     @property
+    def looked_at(self) -> list[dict[str, str]]:
+        """The citable sources as the run receipt keeps them: ref, title, date."""
+        return [
+            {"ref": e.ref, "title": e.title or e.ref, "at": e.at}
+            for e in self.excerpts if e.citable
+        ]
+
+    @property
     def texts(self) -> dict[str, str]:
         """citable ref -> the words behind it (title and excerpt)."""
         return {e.ref: f"{e.title} {e.text}".strip() for e in self.excerpts if e.citable}
@@ -175,14 +189,14 @@ class MemoryContext:
 EMPTY_MEMORY = MemoryContext()
 
 
-def _excerpt(block: GroundingBlock, cap: int) -> MemoryExcerpt | None:
+def _excerpt(block: GroundingBlock, cap: int, at: str = "") -> MemoryExcerpt | None:
     """One block as a Desk-openable excerpt whose RENDERED line fits ``cap``."""
     kind = _DESK_KIND.get(block.kind, block.kind)
     citable = kind in DESK_REF_KINDS
     if not citable and kind not in NO_WINDOW_REF_KINDS:
         return None  # neither a window nor a named plain-context kind
     ref = f"{kind}:{str(block.ref).split('#', 1)[0]}"
-    probe = MemoryExcerpt(ref=ref, kind=kind, title="", text="", citable=citable)
+    probe = MemoryExcerpt(ref=ref, kind=kind, title="", text="", citable=citable, at=at)
     prefix = len(f"- {probe.label}: ")
     if cap - prefix <= len(_CUT):
         return None  # the bound has no room for any words
@@ -200,7 +214,49 @@ def _excerpt(block: GroundingBlock, cap: int) -> MemoryExcerpt | None:
     text = _clip(text, room) if text and room > len(_CUT) else ""
     if not text and not title:
         return None
-    return MemoryExcerpt(ref=ref, kind=kind, title=title, text=text, citable=citable)
+    return MemoryExcerpt(ref=ref, kind=kind, title=title, text=text, citable=citable, at=at)
+
+
+# When a source happened, for a dated read (``before``): a meeting's start;
+# a decision, an action item or an artifact a meeting made has that meeting's
+# start; anything else its own creation time.  A kind not named here falls
+# back to the time memory keeps for it.
+_MEETING_START = "(SELECT started_at FROM meetings WHERE id={column})"
+_SOURCE_TIME_SQL = {
+    "meeting": "SELECT started_at FROM meetings WHERE id=?",
+    "note": "SELECT created_at FROM notes WHERE id=?",
+    "artifact": "SELECT COALESCE(" + _MEETING_START.format(column="a.meeting_id")
+    + ",a.created_at) FROM artifacts a WHERE a.id=?",
+    "decision": "SELECT COALESCE(" + _MEETING_START.format(column="d.source_meeting_id")
+    + ",d.created_at) FROM decisions d WHERE d.id=?",
+    "action_item": "SELECT COALESCE(" + _MEETING_START.format(column="a.meeting_id")
+    + ",a.created_at) FROM action_items a WHERE a.id=?",
+    "desk_decision": "SELECT created_at FROM desk_decisions WHERE id=?",
+    "decision_record": "SELECT created_at FROM decision_records WHERE id=?",
+    "thread": "SELECT datetime(created_at,'unixepoch') FROM threads WHERE id=?",
+}
+
+
+def _source_time(db: Any, block: GroundingBlock) -> datetime | None:
+    """The source's own time (aware), or None when it cannot be read."""
+    from ..timestamps import parse_stamp
+
+    kind = _DESK_KIND.get(block.kind, block.kind)
+    resource_id = str(block.ref).split("#", 1)[0]
+    try:
+        with db._connection() as conn:
+            sql = _SOURCE_TIME_SQL.get(kind)
+            if sql is not None:
+                row = conn.execute(sql, (resource_id,)).fetchone()
+                value = row[0] if row else None
+            else:
+                from ..memory.retain import current_source
+
+                source = current_source(conn, f"{block.kind}:{resource_id}")
+                value = source.occurred_at if source is not None else None
+    except Exception:
+        return None
+    return parse_stamp(value)
 
 
 def memory_context(
@@ -214,8 +270,13 @@ def memory_context(
     excerpt_chars: int = MEMORY_EXCERPT_CHARS,
     block_chars: int = MEMORY_BLOCK_CHARS,
     block_filter: Callable[[GroundingBlock], GroundingBlock | None] | None = None,
+    before: datetime | None = None,
 ) -> MemoryContext:
     """Read memory for one scope with the grounding call Ask uses.
+
+    ``before`` keeps only sources dated before it (a meeting summary passes
+    the meeting's start): a source at or after it, or with no date, is left
+    out, and each line leads with its source date.
 
     ``block_filter`` sees each source block whole (headings and lines
     intact) BEFORE it is flattened into an excerpt; it returns the block to
@@ -235,6 +296,10 @@ def memory_context(
         return EMPTY_MEMORY
     excluded = _exclusion_names(exclude_refs)
     own_texts = [t for t in (_fold(text) for text in exclude_texts) if len(t) >= _OWN_TEXT_MIN]
+    if before is not None:
+        from ..timestamps import aware
+
+        before = aware(before)
     scope = [f"project:{project}"] if project else None
 
     passes: list[str | None] = []
@@ -269,7 +334,13 @@ def memory_context(
                 if kept is None:
                     continue
                 block = kept
-            excerpt = _excerpt(block, excerpt_chars)
+            at = ""
+            if before is not None:
+                when = _source_time(db, block)
+                if when is None or when >= before:
+                    continue  # not earlier work: later, or of no known time
+                at = when.date().isoformat()
+            excerpt = _excerpt(block, excerpt_chars, at)
             if excerpt is None or excerpt.ref in seen:
                 continue
             cost = len(excerpt.line()) + 1
@@ -361,6 +432,7 @@ def memory_for(
     pages: Iterable[tuple[str, str, str]] = (),
     block_filter: Callable[[GroundingBlock], GroundingBlock | None] | None = None,
     sentence_filter: Callable[[Mapping[str, Any]], bool] | None = None,
+    before: datetime | None = None,
 ) -> MemoryContext:
     """THE call an AI job makes to read memory: the job's policy, then the read.
 
@@ -373,6 +445,7 @@ def memory_for(
     ``pages`` names memory pages ``(scope_kind, scope_id, slug)`` the job
     reads first (MEMORY-DESIGN.md §6), as plain-context excerpts inside the
     same budget.  No page served: the result is exactly ``memory_context``'s.
+    ``before`` is ``memory_context``'s: only sources dated before it.
     """
     from ..inference_memory_policy import memory_policy
 
@@ -399,6 +472,7 @@ def memory_for(
                 excerpt_chars=min(MEMORY_EXCERPT_CHARS, policy.block_chars),
                 block_chars=policy.block_chars,
                 block_filter=block_filter,
+                before=before,
             )
         used = sum(len(excerpt.line()) + 1 for excerpt in read_pages)
         rest = memory_context(
@@ -411,6 +485,7 @@ def memory_for(
             excerpt_chars=min(MEMORY_EXCERPT_CHARS, policy.block_chars),
             block_chars=policy.block_chars - used,
             block_filter=block_filter,
+            before=before,
         )
         return MemoryContext(tuple(read_pages) + rest.excerpts)
     except Exception as exc:  # memory never fails a job

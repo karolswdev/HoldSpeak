@@ -33,6 +33,7 @@ import hs170 from "./fixtures/meetings-hub/hs170.json";
 import hs172 from "./fixtures/meetings-hub/hs172.json";
 import p17t from "./fixtures/meetings-hub/p17t.json";
 import p17tReady from "./fixtures/meetings-hub/p17t-ready.json";
+import lookedAt from "./fixtures/meetings-hub/looked-at.json";
 
 vi.mock("../shell", async (original) => ({
   ...(await original<typeof import("../shell")>()),
@@ -450,5 +451,41 @@ describe("an audio-only meeting is transcribed in place (PHILO-17)", () => {
     expect(calls).toContainEqual({ path: "/api/meetings/p17-audio-only/transcribe", init: { method: "POST" } });
     expect(screen.queryByTestId("meeting-transcribe-verb")).toBeNull();
     expect(screen.queryByTestId("meeting-speech-missing")).toBeNull();
+  });
+});
+
+describe("what the summary read (betterment/capture C2)", () => {
+  /* The run receipt the hub served for Friday's summary
+   * (fixtures/meetings-hub/looked-at.json, recorded by
+   * tests/integration/test_desk_meetings.py), on the HS-172 record. */
+  it("a folded Looked at · 3 under the transcript; each source a link with its date", async () => {
+    at(hs172 as Fixture);
+    const detailPath = "/api/meetings/m-ran?include_parked=true";
+    const detail = (hs172 as Fixture)[detailPath] as Record<string, unknown>;
+    hub(hs172 as Fixture, { [detailPath]: { ...detail, run_receipt: lookedAt.run_receipt } });
+    render(<Shell><MeetingRecord meetingId="m-ran" onClose={() => undefined} /></Shell>);
+    const fold = await screen.findByRole("button", { name: /Looked at · 3/ });
+    const transcript = screen.getByRole("button", { name: /^Transcript/ });
+    expect(transcript.compareDocumentPosition(fold) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByTestId("meeting-looked-at")).toBeNull();
+    fireEvent.click(fold);
+    const list = await screen.findByTestId("meeting-looked-at");
+    const rows = [...list.querySelectorAll("li")].map((li) => li.textContent ?? "");
+    expect(rows[0]).toContain("Thursday sync");
+    expect(rows[0]).toContain("Thu 15 Oct");
+    expect(rows[2]).toContain("Wednesday planning");
+    expect(rows[2]).toContain("Wed 14 Oct");
+    expect(list.textContent).not.toContain("Friday");
+    fireEvent.click(within(list).getByRole("button", { name: "Thursday sync" }));
+    expect(openSurfaceOr).toHaveBeenCalledWith("review-meetings", "/history", "meeting:c2-thu");
+    expect(rawButtons()).toEqual([]);
+  });
+
+  it("no memory read: no fold, no zero counter", async () => {
+    at(hs172 as Fixture);
+    hub(hs172 as Fixture);
+    render(<Shell><MeetingRecord meetingId="m-ran" onClose={() => undefined} /></Shell>);
+    await screen.findByTestId("meeting-decisions");
+    expect(screen.queryByRole("button", { name: /Looked at/ })).toBeNull();
   });
 });

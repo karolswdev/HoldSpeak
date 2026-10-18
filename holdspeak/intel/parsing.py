@@ -95,14 +95,15 @@ def intel_response_format() -> dict[str, Any]:
 
 
 def _json_only_messages(transcript: str, memory_context: str = "") -> list[dict[str, str]]:
-    """The analysis prompt.  ``memory_context`` is the marked block of earlier
-    decisions and open work on the meeting's project; empty leaves the prompt
+    """The analysis prompt.  ``memory_context`` is the marked block of work on
+    the meeting's project from before the meeting, each line dated; empty leaves the prompt
     byte-identical to the one before memory existed."""
     memory = str(memory_context or "").strip()
     memory_part = (
-        "Earlier work on this project is in the block below. Use it in the "
-        "summary to say what changed and what is still open. Do not copy its "
-        "entries into topics or action_items; those come from the transcript only.\n"
+        "Work on this project before this meeting is in the block below "
+        "(each line has its date). Use it in the summary to say what changed "
+        "and what is still open. Do not copy its entries into topics or "
+        "action_items; those come from the transcript only.\n"
         f"{memory}\n\n"
     ) if memory else ""
     return [

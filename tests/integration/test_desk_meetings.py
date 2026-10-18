@@ -485,3 +485,125 @@ def test_a_decision_from_a_meeting_is_saved_with_the_meeting_and_its_project(
         assert "New decision" not in rows
     finally:
         _stop(server)
+
+
+# ── a summary reads only earlier, dated sources (betterment/capture C2) ──────
+
+EARLIER_TOKEN = "desk-meetings-earlier"
+
+
+def test_a_summary_reads_only_earlier_dated_sources_and_its_receipt_lists_them(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Three meetings on one project: Wednesday, Thursday, Friday. Thursday is
+    summarised last. The memory block sent to the engine names Wednesday and
+    not Friday, each line leads with its date, and the run receipt lists what
+    was read. Friday's summary then lists the Thursday sync, dated 2026-10-15."""
+    from holdspeak.db import get_database
+    from holdspeak.intel_queue import process_next_intel_job
+    from holdspeak.kernel.runtime import _configure
+    from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
+    from tests.unit.test_meeting_deferred_admission import FakeHost, FakeIntel, _Route
+    from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
+
+    class RecordingIntel(FakeIntel):
+        def __init__(self) -> None:
+            super().__init__()
+            self.memory: list[str] = []
+
+        def analyze(self, transcript: str, *, stream: bool = False, memory_context: str = "") -> Any:
+            self.memory.append(memory_context)
+            return super().analyze(transcript, stream=stream, memory_context=memory_context)
+
+    server, base = _boot(tmp_path, monkeypatch, token=EARLIER_TOKEN)
+    try:
+        db = get_database()
+        _configure(db)
+        engine = RecordingIntel()
+        monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **kw: engine)
+        monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: engine)
+        monkeypatch.setattr("holdspeak.intel_queue.get_database", lambda: db)
+        monkeypatch.setattr("holdspeak.meeting_plugins.build_bound_meeting_plugin_host", lambda: FakeHost(()))
+        monkeypatch.setattr("holdspeak.plugins.router.preview_route_from_transcript", lambda **kw: _Route(()))
+        _profile(db, "earlier-summary", claims=("language", _result_claim("meeting.deferred_analysis")))
+        api = lambda method, path, body=None: _api(base, method, path, body, token=EARLIER_TOKEN)  # noqa: E731
+        api("POST", "/api/desk/seed")
+        api("PUT", "/api/setup/onboarding", {"disposition": "completed"})
+        selected = api("POST", "/api/concierge/summary-selection", {
+            "commandId": "earlier-selection", "expectedAssignmentRevision": 0,
+            "profileId": "earlier-summary", "profileRevision": 1,
+        })
+        assert selected["status"] == "succeeded", selected
+        project_id = api("POST", "/api/projects", {"name": "Payments cut-over"})["project"]["id"]
+
+        days = {"wed": ("Wednesday planning", 14), "thu": ("Thursday sync", 15), "fri": ("Friday review", 16)}
+        for key, (title, day) in days.items():
+            started = datetime(2026, 10, day, 10, 0, 0)
+            db.meetings.save_meeting(MeetingState(
+                id=f"c2-{key}", title=title, started_at=started, ended_at=started + timedelta(minutes=30),
+                capture_status="finalized", transcription_status="final",
+                segments=[TranscriptSegment(f"{title}: the payments cut-over freeze window.", "Priya", 0.0, 2.0)],
+                intel=None if key == "thu" else IntelSnapshot(
+                    timestamp=1.0, topics=["Cut-over"], summary=f"{title} on the cut-over freeze window.",
+                    action_items=[],
+                ),
+            ))
+            db.projects.associate_meeting_project(
+                meeting_id=f"c2-{key}", project_id=project_id, source="manual", confidence=1.0,
+            )
+
+        def summarise(meeting_id: str) -> dict[str, Any]:
+            before = len(engine.memory)
+            planned = api("GET", f"/api/meetings/{meeting_id}")["planned_route"]
+            assert planned["status"] == "ready", planned
+            queued = api("POST", f"/api/meetings/{meeting_id}/intelligence/run",
+                         {"expected_selection_hash": planned["selection_hash"]})
+            assert queued["state"] == "queued", queued
+            for _ in range(100):
+                if len(engine.memory) > before and db.intel.get_run_receipt(meeting_id):
+                    break
+                process_next_intel_job()
+                time.sleep(0.05)
+            assert len(engine.memory) == before + 1, engine.memory
+            return api("GET", f"/api/meetings/{meeting_id}")["run_receipt"]
+
+        thursday = summarise("c2-thu")
+        block = engine.memory[-1]
+        assert "meeting:c2-wed" in block, block
+        assert "c2-fri" not in block and "Friday" not in block, block
+        assert "2026-10-14 meeting:c2-wed" in block, block
+        assert [item["ref"] for item in thursday.get("looked_at", [])] == ["meeting:c2-wed"], thursday
+        assert thursday["looked_at"][0]["at"] == "2026-10-14", thursday
+
+        friday = summarise("c2-fri")
+        looked = {item["ref"]: item for item in friday.get("looked_at", [])}
+        assert "meeting:c2-thu" in looked, friday
+        assert looked["meeting:c2-thu"]["at"] == "2026-10-15"
+        assert looked["meeting:c2-thu"]["title"] == "Thursday sync"
+        _recorded_looked_at(friday)
+    finally:
+        _stop(server)
+
+
+LOOKED_AT_FIXTURE = (
+    Path(__file__).parents[2] / "web" / "src" / "desk" / "__tests__" / "fixtures" / "meetings-hub" / "looked-at.json"
+)
+
+
+def _recorded_looked_at(receipt: dict[str, Any]) -> None:
+    """The face test's recorded answer (meetings.app.test.tsx): Friday's run
+    receipt as the hub served it. HOLDSPEAK_WIRE_WRITE=1 rewrites the file;
+    otherwise the stored `looked_at` must equal the live one."""
+    import os
+
+    if os.environ.get("HOLDSPEAK_WIRE_WRITE") == "1":
+        LOOKED_AT_FIXTURE.write_text(json.dumps({
+            "_source": "Recorded from a real hub by tests/integration/test_desk_meetings.py::"
+                       "test_a_summary_reads_only_earlier_dated_sources_and_its_receipt_lists_them "
+                       "(GET /api/meetings/c2-fri run_receipt). HOLDSPEAK_WIRE_WRITE=1 rewrites this "
+                       "file; never hand-edit a field a test reads.",
+            "run_receipt": receipt,
+        }, indent=2, sort_keys=True) + "\n")
+    stored = json.loads(LOOKED_AT_FIXTURE.read_text())["run_receipt"]
+    assert stored["looked_at"] == receipt["looked_at"], "re-record with HOLDSPEAK_WIRE_WRITE=1"
+    assert set(stored) == set(receipt), "re-record with HOLDSPEAK_WIRE_WRITE=1"

@@ -37,6 +37,14 @@ export interface RunAttempt {
   operation_id?: string | null;
 }
 
+/** One source the summary read from memory (betterment/capture C2): a ref
+ *  the Desk opens, its title, and the source's own time (ISO). */
+export interface LookedAt {
+  ref: string;
+  title: string;
+  at: string;
+}
+
 export interface RunReceipt {
   receipt_id?: string;
   job_id?: string;
@@ -44,6 +52,8 @@ export interface RunReceipt {
   selection_hash?: string | null;
   outcome: string;
   attempts: RunAttempt[];
+  /** What the run read from memory; absent when it read nothing. */
+  looked_at?: LookedAt[];
 }
 
 function record(value: unknown): Record<string, unknown> | null {
@@ -124,7 +134,20 @@ function readReceiptField(source: unknown, field: string): RunReceipt | null {
           attempt.operation_id == null ? null : String(attempt.operation_id),
       }))
       .filter((attempt) => attempt.host !== ""),
+    ...(Array.isArray(raw.looked_at) ? { looked_at: readLookedAt(raw.looked_at) } : {}),
   };
+}
+
+function readLookedAt(items: unknown[]): LookedAt[] {
+  return items
+    .map((item) => record(item))
+    .filter((item): item is Record<string, unknown> => item !== null)
+    .map((item) => ({
+      ref: String(item.ref ?? ""),
+      title: String(item.title ?? ""),
+      at: String(item.at ?? ""),
+    }))
+    .filter((item) => item.ref !== "");
 }
 
 /**
