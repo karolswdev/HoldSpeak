@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 783 (plus static mounts). iOS-consumed: 89. Web-consumed: 613.
+Routes: 783 (plus static mounts). iOS-consumed: 89. Web-consumed: 614.
 
 ## device_audio_ws
 
@@ -889,7 +889,7 @@ Routes: 783 (plus static mounts). iOS-consumed: 89. Web-consumed: 613.
 | PUT | `/api/workbenches/{workbench_id}/items/{item_id}` | web |
 | POST | `/api/workbenches/{workbench_id}/items/{item_id}/restore` | web |
 | POST | `/api/workbenches/{workbench_id}/items/{item_id}/retry-mint` | web |
-| POST | `/api/workbenches/{workbench_id}/make-one` | server only |
+| POST | `/api/workbenches/{workbench_id}/make-one` | web |
 | DELETE | `/api/workbenches/{workbench_id}/memory` | web |
 | GET | `/api/workbenches/{workbench_id}/memory` | web |
 | DELETE | `/api/workbenches/{workbench_id}/memory/{index}` | web |

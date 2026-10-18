@@ -7175,7 +7175,9 @@
         "POST"
       ],
       "module": "web.routes.primitives.workbenches",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/workbenches/{workbench_id}/memory",
