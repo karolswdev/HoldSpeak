@@ -915,7 +915,7 @@ class WorkbenchService:
 
         payload["next_run_at"] = next_run_at(wb.schedule, wb.schedule_enabled)
         payload["when_events"] = [{"id": c["id"], "words": c["words"], "needs": c["needs"],
-                                   "event_pattern": c["event_pattern"]}
+                                   "subject": c["subject"], "event_pattern": c["event_pattern"]}
                                   for c in event_choices()]
         if principal.kind is PrincipalKind.OWNER:
             from .inference_assignment_service import InferenceAssignmentService

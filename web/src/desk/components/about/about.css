@@ -1,0 +1,52 @@
+/* Betterment A5 — the About picker (one picker: Ask and Automations).
+   The well, then the matches as full-width rows (the library Button, ghost):
+   the name at body size, the kind at caption size on the right. */
+
+.about-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.about-matches {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.about-match { min-width: 0; }
+
+.about-match-press.btn {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  text-align: left;
+}
+
+.about-match-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 500 var(--font-size-sm, 14px) / 1.4 var(--font-sans);
+}
+
+.about-match-kind {
+  flex: none;
+  font: 500 var(--font-size-xs, 12px) / 1.4 var(--font-mono);
+  color: var(--wb-muted, currentColor);
+}
+
+.about-none {
+  margin: 0;
+  font: 400 var(--font-size-xs, 12px) / 1.5 var(--font-sans);
+  color: var(--wb-muted, currentColor);
+}
