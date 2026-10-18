@@ -248,6 +248,44 @@ export function failureWords(error: string | null | undefined): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
+/** Betterment A9: an old queue automation's typed tasks (not its run
+ *  occurrences, not parked), as results the window can show: a done task
+ *  reads its answer, a failed one its reason, a waiting one its title. */
+export function queueTasks(detail: AutomationDetail): AutomationResult[] {
+  return (detail.items ?? [])
+    .filter((item) => !item.parked && !(item as { context?: { occurrence?: unknown } }).context?.occurrence)
+    .map((item) => {
+      const failed = item.status === "failed";
+      return {
+        item_id: item.id,
+        title: item.title,
+        status: item.status,
+        artifact_id: item.result_artifact_id,
+        new: false,
+        error: failed ? String(item.result ?? "").replace(/^Error: /, "") : null,
+        text: item.status === "done" ? item.result : null,
+        completed_at: item.completed_at,
+        seconds: null,
+        model: "",
+        boundary: String(item.result_egress?.boundary ?? ""),
+        note_id: null,
+      };
+    });
+}
+
+/** A task's state in words (its ledger meta). */
+export function taskStateWords(status: string): string {
+  if (status === "done") return "Done";
+  if (status === "failed") return "Failed";
+  if (status === "claimed") return "Working…";
+  return "Waiting";
+}
+
+/** Betterment A9: the agent's prompt can become this automation's Do. */
+export function canMakeOne(detail: AutomationDetail): boolean {
+  return detail.instruction_from === "agent" && Boolean(String(detail.instruction_shown ?? "").trim());
+}
+
 /** An old queue automation: its Do comes from an agent and it holds typed
  *  tasks. The parked queue view stays reachable for it (RAW). */
 export function isOldQueue(detail: AutomationDetail): boolean {

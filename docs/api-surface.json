@@ -7170,6 +7170,16 @@
       ]
     },
     {
+      "path": "/api/workbenches/{workbench_id}/make-one",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/workbenches/{workbench_id}/memory",
       "methods": [
         "DELETE"

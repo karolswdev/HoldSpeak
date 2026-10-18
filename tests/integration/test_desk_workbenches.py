@@ -1111,3 +1111,71 @@ def test_a_starter_makes_one_automation_and_the_friday_walk_reads_a_result(tmp_p
     assert result["status"] == "done" and result["text"].startswith("## Weekly update") and result["new"] is True
     rows = _record_gets("home-rows", client, ["/api/workbenches"], wb, tmp_path)["/api/workbenches"]["workbenches"]
     assert [r["name"] for r in rows] == ["Friday team update"]
+
+
+# ── A9 "Old automations" (betterment/workbench/RECIPE.md, slice A9) ────────
+# The hub half: an old TODO automation (the template as instantiated before
+# A2) shows its typed tasks and their results; one press (make-one) writes
+# its agent's prompt as its Do, and nothing is lost: the tasks, their
+# results, the agent and its skills stay. Its next run makes one result.
+
+
+def test_an_old_todo_automation_shows_its_tasks_and_becomes_one_automation_in_one_press(
+        tmp_path: Path, monkeypatch) -> None:
+    import itertools
+
+    import holdspeak.workbench_memory as memory
+
+    monkeypatch.setattr(memory, "WORKBENCH_DIR", tmp_path / "workbenches")
+    made_ids = itertools.count(1)
+    monkeypatch.setattr("holdspeak.services.workbench_service._new_id",
+                        lambda prefix: f"{prefix}_a9_{next(made_ids)}")
+    db, client, prompts, made = _instruction_rig(tmp_path, monkeypatch, template=True)
+    wb = made["workbench"]["id"]
+    recipe = db.recipes.get(made["workbench"]["recipe_id"])
+    agent_prompt = (recipe.user_template or "").strip() or recipe.system_prompt.strip()
+
+    old = _record_window("old-queue", client, wb, tmp_path)[f"/api/workbenches/{wb}"]["workbench"]
+    assert (old["instruction"], old["instruction_from"], old["instruction_shown"]) == ("", "agent", agent_prompt)
+    titles = [item["title"] for item in old["items"]]
+    assert titles and all(item["status"] == "pending" for item in old["items"])
+    assert old["results"] == []
+
+    # The queue runs as before: each task gets its own answer.
+    assert client.post(f"/api/workbenches/{wb}/run", json={}).status_code == 200
+    ran = _record_window("old-queue-ran", client, wb, tmp_path)[f"/api/workbenches/{wb}"]["workbench"]
+    assert [i["title"] for i in ran["items"]] == titles
+    assert all(i["status"] == "done" and i["result"] and i["result_artifact_id"] for i in ran["items"])
+    answers = {i["id"]: (i["result"], i["result_artifact_id"]) for i in ran["items"]}
+
+    # One press: the agent's prompt becomes Do. Nothing else changes.
+    pressed = client.post(f"/api/workbenches/{wb}/make-one")
+    assert pressed.status_code == 200, pressed.text
+    one = _record_window("old-made-one", client, wb, tmp_path)[f"/api/workbenches/{wb}"]["workbench"]
+    assert (one["instruction"], one["instruction_from"], one["instruction_shown"]) == (
+        agent_prompt, "automation", agent_prompt)
+    assert one["recipe_id"] == recipe.id and db.recipes.get(recipe.id) is not None
+    assert {i["id"]: (i["result"], i["result_artifact_id"]) for i in one["items"]} == answers
+    assert all(db.plugins.get_artifact(a) is not None for _r, a in answers.values())
+    # A second press changes nothing.
+    again = client.post(f"/api/workbenches/{wb}/make-one").json()["workbench"]
+    assert again["instruction"] == agent_prompt
+
+    # Its next run makes one result (one occurrence), the old tasks untouched.
+    before = len(prompts)
+    assert client.post(f"/api/workbenches/{wb}/run", json={}).status_code == 200
+    assert len(prompts) == before + 1 and agent_prompt in prompts[-1]
+    after = client.get(f"/api/workbenches/{wb}").json()["workbench"]
+    [result] = after["results"]
+    assert result["status"] == "done" and result["new"] is True
+    kept = {i["id"]: (i["result"], i["result_artifact_id"]) for i in after["items"] if i["id"] in answers}
+    assert kept == answers
+
+
+def test_make_one_refuses_an_automation_with_no_agent_prompt(tmp_path: Path) -> None:
+    db = Database(tmp_path / "plain.db")
+    client = _client(db)
+    db.workbenches.upsert(workbench_id="wb-bare", name="Bare")
+    refused = client.post("/api/workbenches/wb-bare/make-one")
+    assert refused.status_code == 400 and "no agent prompt" in refused.json()["error"]
+    assert client.post("/api/workbenches/wb-missing/make-one").status_code == 404

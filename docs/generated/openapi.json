@@ -30529,6 +30529,46 @@
         "summary": "Api Retry Mint"
       }
     },
+    "/api/workbenches/{workbench_id}/make-one": {
+      "post": {
+        "description": "Betterment A9: an old queue automation takes its agent's prompt as Do.",
+        "operationId": "api_make_one_automation_api_workbenches__workbench_id__make_one_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workbench_id",
+            "required": true,
+            "schema": {
+              "title": "Workbench Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Make One Automation Api Workbenches  Workbench Id  Make One Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Make One Automation"
+      }
+    },
     "/api/workbenches/{workbench_id}/memory": {
       "delete": {
         "operationId": "api_clear_memory_api_workbenches__workbench_id__memory_delete",

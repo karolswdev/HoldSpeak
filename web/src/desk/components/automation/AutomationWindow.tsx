@@ -22,6 +22,7 @@ import {
   fetchWorkbenchDetail,
   fetchWorkbenchMemory,
   forgetAutomationLesson,
+  makeOneAutomation,
   openAutomationResult,
   setAutomationEngine,
   setAutomationWhen,
@@ -55,6 +56,7 @@ import { AboutChips, AboutEditor } from "./AboutEditor";
 import { useDropHand } from "../../hand";
 import { ResultBody, ResultCard, ResultHead } from "./ResultCard";
 import {
+  canMakeOne,
   engineWords,
   eventSubjectWords,
   failureWords,
@@ -64,9 +66,11 @@ import {
   lessonWords,
   nextWords,
   putWords,
+  queueTasks,
   resultDay,
   resultLine,
   secondsWords,
+  taskStateWords,
   whenWords,
   type AutomationDetail,
   type AutomationResult,
@@ -182,6 +186,43 @@ function OlderResult({
   );
 }
 
+/** Betterment A9: one typed task of an old queue automation. A done or a
+ *  failed task opens in place to its answer or its reason. */
+function QueueTask({
+  task,
+  open,
+  onToggle,
+  onRunAgain,
+  running,
+}: {
+  task: AutomationResult;
+  open: boolean;
+  onToggle: () => void;
+  onRunAgain: () => void;
+  running: boolean;
+}) {
+  const ended = task.status === "done" || task.status === "failed";
+  return (
+    <SurfaceLedgerRow
+      time={resultDay(task.completed_at)}
+      primary={task.title || resultLine(task)}
+      meta={taskStateWords(task.status)}
+      metaTone={task.status === "failed" ? "fail" : task.status === "done" ? "ok" : undefined}
+      expands={ended}
+      open={ended ? open : undefined}
+      onToggle={ended ? onToggle : undefined}
+      lineLabel={ended ? `${task.title}: ${taskStateWords(task.status)}` : undefined}
+      data-testid="automation-task"
+    >
+      {ended ? (
+        <div className="automation-older-open">
+          <ResultBody result={task} onRunAgain={onRunAgain} runAgainDisabled={running} />
+        </div>
+      ) : null}
+    </SurfaceLedgerRow>
+  );
+}
+
 export function AutomationWindow({
   workbenchId,
   origin,
@@ -201,6 +242,8 @@ export function AutomationWindow({
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [openOlder, setOpenOlder] = useState<string | null>(null);
+  const [openTask, setOpenTask] = useState<string | null>(null);
+  const [makingOne, setMakingOne] = useState(false);
   // A result shown as NEW keeps its NEW mark while this window is open,
   // although showing it has read it on the hub.
   const [shownNew, setShownNew] = useState<Set<string>>(() => new Set());
@@ -381,6 +424,21 @@ export function AutomationWindow({
 
   const toggle = (line: string) => { setSaveError(null); setEditing(editing === line ? null : line); };
 
+  // A9: one press makes an old queue automation one automation (its
+  // agent's prompt becomes Do); its tasks and their results stay listed.
+  const makeOne = async () => {
+    setMakingOne(true);
+    setSaveError(null);
+    try {
+      await makeOneAutomation(workbenchId);
+    } catch (error) {
+      setSaveError(readableError(error));
+    } finally {
+      setMakingOne(false);
+    }
+    await load();
+  };
+
   const forget = async (index: number, entry: MemoryEntry) => {
     try {
       await forgetAutomationLesson(workbenchId, index, entry.timestamp);
@@ -403,6 +461,7 @@ export function AutomationWindow({
   const doText = detail?.instruction_shown ?? "";
   const sources = detail?.sources_shown ?? [];
   const happened = detail ? eventSubjectWords(detail) : null;
+  const tasks = detail ? queueTasks(detail) : [];
 
   return (
     <DeskWindowFrame
@@ -527,12 +586,24 @@ export function AutomationWindow({
                   </Button>
                 </div>
               ) : null}
-              <ResultCard
-                result={newest}
-                isNew={newest ? isNew(newest) : false}
-                working={working}
-                onRunAgain={() => void runNow()}
-              />
+              {detail && canMakeOne(detail) ? (
+                <div className="automation-make-one">
+                  <Button dense variant="secondary" loading={makingOne} onClick={() => void makeOne()}
+                    data-testid="automation-make-one">
+                    Make this one automation
+                  </Button>
+                </div>
+              ) : null}
+              {/* A9: an old queue automation with no run result yet shows its
+                  tasks, not an empty card. */}
+              {newest || working || !tasks.length ? (
+                <ResultCard
+                  result={newest}
+                  isNew={newest ? isNew(newest) : false}
+                  working={working}
+                  onRunAgain={() => void runNow()}
+                />
+              ) : null}
               {older.length ? (
                 <SurfaceLedger label="Older results" data-testid="automation-older-list">
                   {older.map((result) => (
@@ -542,6 +613,20 @@ export function AutomationWindow({
                       isNew={isNew(result)}
                       open={openOlder === result.item_id}
                       onToggle={() => openOlderResult(result)}
+                      onRunAgain={() => void runNow()}
+                      running={Boolean(working)}
+                    />
+                  ))}
+                </SurfaceLedger>
+              ) : null}
+              {tasks.length ? (
+                <SurfaceLedger label="Tasks" data-testid="automation-tasks">
+                  {tasks.map((task) => (
+                    <QueueTask
+                      key={task.item_id}
+                      task={task}
+                      open={openTask === task.item_id}
+                      onToggle={() => setOpenTask(openTask === task.item_id ? null : task.item_id)}
                       onRunAgain={() => void runNow()}
                       running={Boolean(working)}
                     />

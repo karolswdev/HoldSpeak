@@ -715,6 +715,23 @@ class WorkbenchService:
         self._changed("workbench", workbench_id, "update")
         return opened
 
+    def make_one_automation(self, principal: Principal, workbench_id: str) -> dict[str, Any]:
+        """Betterment A9: an old queue automation becomes one automation.
+
+        Its agent's prompt (the Do text it already shows) is written as its
+        instruction, so each run makes one result. Nothing else changes: its
+        agent, skills, lessons, items and their results stay. An automation
+        that already has its own instruction is returned as it is."""
+        wb = self._require_workbench(workbench_id)
+        from .automation_runs import effective_instruction
+
+        shown, source = effective_instruction(self._db, wb)
+        if source == "automation":
+            return self._wb_payload(wb, principal)
+        if not shown:
+            raise ValidationError("This automation has no agent prompt to copy")
+        return self.update_workbench(principal, workbench_id, instruction=shown)
+
     def cancel_run(self, principal: Principal, parent_operation_id: str) -> str:
         """Cancel exactly the authenticated parent, never a Workbench lookup."""
         from holdspeak.kernel.runtime import _service
