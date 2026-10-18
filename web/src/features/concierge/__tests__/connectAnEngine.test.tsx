@@ -676,7 +676,7 @@ describe("one filled primary, measured (counsel 4a)", () => {
     });
     fireEvent.click(screen.getByTestId("concierge-add-check"));
     await screen.findByTestId("concierge-add-model");
-    expect(filled()).toEqual(["Use this for summaries"]);
+    expect(filled()).toEqual(["Use"]);
   });
 
   it("gives it to a preset Download when nothing else claims it", async () => {

@@ -107,6 +107,25 @@ def test_a_cold_hub_has_no_default_engine_and_sweeps_every_15_minutes(hub: Any) 
     assert _get(hub, "/api/settings")["meeting"]["intelligence_auto"] == "every"
 
 
+def test_the_voice_fact_says_what_setup_says_about_speech(
+    hub: Any, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Betterment ST0: Settings said ``Voice LIVE`` while Setup said
+    ``Speech model · Not working``. The Voice fact reads the speech model
+    (the read Setup's row makes), not the pipeline switch."""
+    from holdspeak.commands.doctor import _check_speech_model
+
+    empty = tmp_path / "hf-empty"
+    empty.mkdir()
+    monkeypatch.setenv("HF_HOME", str(empty))
+    monkeypatch.setenv("HF_HUB_CACHE", str(empty / "hub"))
+    voice = _get(hub, "/api/settings/hub")["voice"]
+    assert voice["live"] is True  # the switch is on: the old face said LIVE
+    assert voice["speechReady"] is False, voice
+    # Setup's row, from the same read: not working.
+    assert _check_speech_model().status == "FAIL"
+
+
 def test_the_hub_names_remote_access_on_after_the_switch(hub: Any) -> None:
     """replaces: tests/e2e/test_hs174_remote_settings_glass.py::test_remote_on_issue_revoke (the System row: Other devices: on)"""
     assert _get(hub, "/api/settings/hub")["system"]["remote"] is False

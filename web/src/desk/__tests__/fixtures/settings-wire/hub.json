@@ -45,6 +45,7 @@
   "voice": {
     "engineSet": false,
     "live": true,
+    "speechReady": false,
     "target": "auto"
   },
   "writtenAt": 1791732730.5288444

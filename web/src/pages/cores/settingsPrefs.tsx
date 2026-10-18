@@ -365,7 +365,7 @@ export type SettingsHubWire = {
   connections: { connected: number };
   /** `engineSet`: the group resolves to an engine (its own or the default).
    *  A switch that is on with no engine is not a working path (A.10). */
-  voice: { live: boolean; target: string; engineSet?: boolean };
+  voice: { live: boolean; target: string; engineSet?: boolean; speechReady?: boolean | null };
   /** PHILO-15 B33: `engineSet` is the summary ROUTE the queue takes (exact,
    *  group, global default); `summariesOff` the owner's explicit OFF. */
   meetings: { intelligence: boolean; engineSet?: boolean; engine?: string | null; summariesOff?: boolean; auto?: string; host?: string; lastRunAt?: string | null; lastRunS?: number | null };
@@ -518,11 +518,15 @@ export function PrefsFace({
             data-testid="settings-hub-summary-chip"
           />
         : <StateChip state="warning" label="SUMMARY SET OFF" />;
-  const voiceFact = hub.voice.live && hub.voice.engineSet === false
-    ? <StateChip state="warning" label="NO ENGINE" />
-    : hub.voice.live
-      ? <><StateChip state="success" label="LIVE" />{hub.voice.target ? <span>{hub.voice.target.toUpperCase()}</span> : null}</>
-      : <span>Voice typing off</span>;
+  // Betterment ST0: the Voice fact is whether speech works (the speech
+  // model Setup reads), never the pipeline switch alone. Unknown: no claim.
+  const voiceFact = !hub.voice.live
+    ? <span>Voice typing off</span>
+    : hub.voice.speechReady === true
+      ? <StateChip state="success" label="Works" data-testid="settings-hub-voice-fact" />
+      : hub.voice.speechReady === false
+        ? <StateChip state="warning" label="Speech is not set up" data-testid="settings-hub-voice-fact" />
+        : null;
   const rhythmFact = <>
     {hub.rhythm.sweepEveryMinutes != null
       ? <span>{hub.rhythm.sweepEveryMinutes >= 60

@@ -89,15 +89,24 @@ describe("the Settings hub names a missing engine", () => {
     expect(document.body.textContent ?? "").not.toMatch(/SUMMARY SET ON/);
   });
 
-  it("Voice: NO ENGINE, never LIVE, when the switch is on and no engine is set", () => {
-    faceWith({ voice: { live: true, target: "auto", engineSet: false } });
-    expect(screen.getByText("NO ENGINE")).toBeInTheDocument();
+  // Betterment ST0: the Voice fact reads whether speech works (the speech
+  // model Setup reads), not the pipeline switch.
+  it("Voice: Speech is not set up, never LIVE, when the switch is on and no speech model is here", () => {
+    faceWith({ voice: { live: true, target: "auto", engineSet: true, speechReady: false } });
+    expect(screen.getByText("Speech is not set up")).toBeInTheDocument();
     expect(screen.queryByText("LIVE")).toBeNull();
+    expect(screen.queryByText("Works")).toBeNull();
+  });
+
+  it("Voice: Works when the speech model is here", () => {
+    faceWith({ voice: { live: true, target: "auto", engineSet: false, speechReady: true } });
+    expect(screen.getByText("Works")).toBeInTheDocument();
     expect(screen.queryByText("AUTO")).toBeNull();
   });
 
-  it("Voice: LIVE when the switch is on and an engine is set", () => {
-    faceWith({ voice: { live: true, target: "auto", engineSet: true } });
-    expect(screen.getByText("LIVE")).toBeInTheDocument();
+  it("Voice: Voice typing off when the switch is off", () => {
+    faceWith({ voice: { live: false, target: "auto", speechReady: true } });
+    expect(screen.getByText("Voice typing off")).toBeInTheDocument();
+    expect(screen.queryByText("Works")).toBeNull();
   });
 });

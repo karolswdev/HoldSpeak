@@ -35,11 +35,12 @@ TOKEN = "firstrun-hub"
 REPO = Path(__file__).resolve().parents[2]
 FIXTURES = REPO / "web" / "src" / "desk" / "__tests__" / "fixtures"
 #: The reads the first-run face makes (FirstRun and its cards, the
-#: Concierge controller of "Use a server on my network").
+#: Concierge controller of "Use a server on my network"), and the Engines
+#: window's one more read (betterment ST0: Engines after the press).
 FACE_READS = (
     "/api/setup/local-ai", "/api/settings", "/api/onboarding/calendar", "/api/onboarding/connections",
     "/api/onboarding/agents", "/api/concierge/detect", "/api/inference/assignments", "/api/inference/defaults",
-    "/api/door",
+    "/api/door", "/api/memory/meaning-search",
 )
 
 pytestmark = pytest.mark.timeout(120, method="thread")
@@ -161,6 +162,29 @@ def test_a_lan_box_as_default_keeps_the_speech_download(
         after = rec.reads("1-used")
         glob = next(r for r in after["/api/inference/assignments"]["rows"] if r["id"] == "global")
         assert glob["status"] == "assigned", glob
+        # Betterment ST0: the press made the chat server the Default for
+        # every job, speech included, and Engines said TOOL INCOMPATIBLE and
+        # 1 BROKEN. Speech never inherits a chat server: it stays unassigned,
+        # and no job is broken.
+        rows = {r["id"]: r for r in after["/api/inference/assignments"]["rows"]}
+        speech = rows["speech_recognition"]
+        assert speech["status"] == "no_assignment", speech
+        assert speech["assignment"] is None and speech["inherited_from"] is None, speech
+        # A job some of whose work the engine cannot do is LIMITED, never
+        # BROKEN: the engine still serves part of every assigned group.
+        roster = after["/api/inference/assignments"]
+        for row in rows.values():
+            if row["id"] == "global" or row["assignment"] is None:
+                continue
+            work = {t["id"] for t in roster["task_overrides"] if t["group"]["id"] == row["id"]}
+            blocked = {
+                i.get("capability_id") for i in row["assignment"]["issues"] if i["severity"] == "blocking"
+            }
+            assert work - blocked, (row["id"], blocked)
+        for group in ("thoughts_notes", "writing_dictation", "meetings", "background"):
+            assert rows[group]["assignment"] is not None, rows[group]
+        repairs = after["/api/concierge/detect"].get("repairs") or []
+        assert not [r for r in repairs if "speech_recognition" in (r.get("groups") or [])], repairs
         # Speech is still missing: the download stays.
         assert after["/api/setup/local-ai"]["speech"]["state"] in {"will_download", "not_covered"}, after
     finally:
