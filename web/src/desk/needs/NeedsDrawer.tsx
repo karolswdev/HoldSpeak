@@ -23,6 +23,7 @@ import { commandForDoorVerb, labelFor, supportsDoorVerb, type DoorVerb } from ".
 import { useGate } from "../gate";
 import { clearWriteFailure, reportWriteFailure } from "../hooks/useWriteReceipt";
 import { refreshNeedsYou, useNeedsYou } from "../needsYou";
+import { PeopleReadFailed } from "../people/PeopleReadFailed";
 import { openProjectProposal, refOpener, type Opener } from "../openObject";
 import { openCoderSession, openProjectRoom, openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
@@ -1059,6 +1060,7 @@ export function NeedsDrawer() {
           {[...coverage.gaps, ...coverage.quiet].map((source, index) => <li key={index}>{source.label || source.source_id}</li>)}
         </ul> : null}
       </Disclosure> : null}
+      {needs.peopleUnread ? <PeopleReadFailed testId="needs-people-read-failed" onRetry={() => void refreshNeedsYou()} /> : null}
       {faces.length + muted.length > 0 ? (
         <NeedsChipRow chips={chips} setChips={setChips} counts={counts} people={people} projects={projects}
           muted={muted.length > 0 ? muted.length : 0} showMuted={showMuted} setShowMuted={setShowMuted} />

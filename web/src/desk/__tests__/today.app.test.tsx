@@ -161,3 +161,24 @@ describe("Today is one page (Betterment daily D4), on the recorded week", () => 
     expect(screen.queryByTestId("today-needs-count")).toBeNull();
   });
 });
+
+// ── Betterment daily D6: a People read that failed is one line, Today stays ──
+import PEOPLE_LOCKED from "./fixtures/daily-week/needs-you-people-locked.json";
+
+describe("Today when People could not be read (Betterment D6)", () => {
+  it("draws one line in Needs you with Try again; the day still draws", async () => {
+    replay({ ...GETS, "/api/desk/needs-you?fresh=1": (PEOPLE_LOCKED.gets as Gets)["/api/desk/needs-you?fresh=1"] });
+    render(<TodayView />);
+    const line = await screen.findByTestId("today-people-read-failed");
+    expect(line.textContent).toContain("People could not be read");
+    expect(within(line).getByRole("button", { name: "Try again" })).toBeTruthy();
+    expect(screen.getByTestId("today-needs")).toBeTruthy();
+  });
+
+  it("the recorded week (People readable) draws no such line", async () => {
+    replay();
+    render(<TodayView />);
+    await screen.findByTestId("today-needs-count");
+    expect(screen.queryByTestId("today-people-read-failed")).toBeNull();
+  });
+});

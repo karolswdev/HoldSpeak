@@ -4693,6 +4693,36 @@
       ]
     },
     {
+      "path": "/api/people/suggestions",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.people",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/people/suggestions/add",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.people",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/people/suggestions/hide",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.people",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/plugin-jobs",
       "methods": [
         "GET"

@@ -7,6 +7,7 @@ isolated one (``MeetingWebServer`` + ``TestClient``).
 """
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -96,3 +97,179 @@ def test_a_full_or_first_name_resolves(hub: Any, name: str) -> None:
     people = seed(hub, keep=False)
     resolved = _people().resolve_relationship_by_owner(name)
     assert resolved["relationship"]["id"] == people["Theo"]
+
+
+# ── Betterment D6: people come from his work ─────────────────────────────
+
+
+def _week_without_people(hub: Any) -> None:
+    """The recon's three meetings and nine keeps, and no People store at all."""
+    from tests.fixtures.daily_week import keep_nine, seed_meetings
+
+    seed_meetings(hub.db)
+    keep_nine(hub.client)
+
+
+def _suggestions(hub: Any) -> list[dict[str, Any]]:
+    return _ok(hub.client.get("/api/people/suggestions"))["suggestions"]
+
+
+def test_his_three_reports_come_from_his_meetings(hub: Any) -> None:
+    _week_without_people(hub)
+    assert _ok(hub.client.get("/api/people/readiness"))["state"] == "unconfigured"
+    found = _suggestions(hub)
+    # Theo first (a 1:1), then by promises: Jun owes two, Mira one.
+    assert [s["name"] for s in found] == ["Theo", "Jun", "Mira"]
+    by_name = {s["name"]: s for s in found}
+    # Theo had a 1:1 with him: a Report. Mira and Jun only shared a meeting: Peers.
+    assert by_name["Theo"]["relationship_kind"] == "direct_report"
+    assert by_name["Mira"]["relationship_kind"] == "peer"
+    assert by_name["Mira"]["promise_count"] == 1
+    assert by_name["Mira"]["meetings"][0]["title"] == "Payments platform sync"
+    # A decision's words, "Me" and the speaker label are never a person.
+    assert not {"Do it", "Me", "Remote"} & set(by_name)
+
+
+def test_three_add_presses_make_them_and_mira_prep_shows_her_promise(hub: Any) -> None:
+    _week_without_people(hub)
+    made = {}
+    for key in ("mira", "theo", "jun"):
+        made[key] = _ok(hub.client.post("/api/people/suggestions/add", json={"key": key}), 201)["relationship"]
+    assert _ok(hub.client.get("/api/people/readiness"))["state"] == "ready", "the first Add made the store"
+    assert _suggestions(hub) == []
+    mira = _brief(hub, made["mira"]["id"])
+    assert [(a["task"], a["due"]) for a in mira["open_meeting_actions"]] == [("Draft the rollback runbook", "2026-10-20")]
+    theo = _brief(hub, made["theo"]["id"])
+    assert [a["task"] for a in theo["i_owe_meeting_actions"]] == ["Review design doc on settlement retries"]
+    assert made["theo"]["relationship_kind"] == "direct_report"
+
+
+def test_not_a_person_hides_the_name_for_good(hub: Any) -> None:
+    _week_without_people(hub)
+    assert _ok(hub.client.post("/api/people/suggestions/hide", json={"key": "Jun"})) == {"hidden": "jun"}
+    assert [s["name"] for s in _suggestions(hub)] == ["Theo", "Mira"]
+    assert _ok(hub.client.get("/api/people/relationships"))["relationships"] == []
+
+
+def test_a_one_on_one_series_names_the_full_person_and_links_the_series(hub: Any) -> None:
+    import json as _json
+
+    _week_without_people(hub)
+    with hub.db._connection() as conn:
+        for day in ("2099-10-19T09:30:00", "2099-10-26T09:30:00"):
+            conn.execute(
+                """INSERT INTO calendar_events (id, uid, title, starts_at, ends_at, last_seen_at,
+                       subscription_revision, source_id, source_label, attendees_json)
+                   VALUES (?, 'mira-1on1', '1:1 with Mira', ?, ?, 0, 'r1', 'work', 'Work', ?)""",
+                (f"ev-{day}", day, day.replace("09:30", "10:00"),
+                 _json.dumps(["karol@example.com", "mira.okafor@example.com"])),
+            )
+    found = {s["name"]: s for s in _suggestions(hub)}
+    assert "Mira" not in found, "the spoken Mira and the series are one person"
+    mira = found["Mira Okafor"]
+    assert mira["said"] == "Mira" and mira["relationship_kind"] == "direct_report"
+    assert mira["series"]["next_starts_at"] == "2099-10-19T09:30:00"
+    made = _ok(hub.client.post("/api/people/suggestions/add", json={"key": mira["key"]}), 201)["relationship"]
+    assert made["display_name"] == "Mira Okafor"
+    assert made["owner_aliases"] == ["Mira"]
+    assert [link["uid"] for link in made["calendar_links"]] == ["mira-1on1"]
+    brief = _brief(hub, made["id"])
+    assert brief["next_one_on_one"]["starts_at"] == "2099-10-19T09:30:00"
+    assert [a["task"] for a in brief["open_meeting_actions"]] == ["Draft the rollback runbook"]
+
+
+def test_a_jira_assignee_on_his_watched_issues_is_suggested(hub: Any) -> None:
+    import json as _json
+
+    with hub.db._connection() as conn:
+        conn.execute(
+            """INSERT INTO connector_watches (id, connector_id, query_kind, snapshot_json)
+               VALUES ('w-jira', 'jira', 'issues', ?)""",
+            (_json.dumps({"entities": {"PAY-1": {"key": "PAY-1", "assignee": "Priya Raman"},
+                                       "PAY-2": {"key": "PAY-2", "assignee": "unassigned"}}}),),
+        )
+    found = _suggestions(hub)
+    assert [(s["name"], s["source"], s["jira"]) for s in found] == [("Priya Raman", "jira", True)]
+
+
+def test_a_people_503_logs_the_readiness_and_the_caller(
+    hub: Any, caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from holdspeak.services.people_service import PeopleService, PeopleUnavailable
+
+    seed(hub, keep=False)
+
+    def refuse(self: Any, principal: Any, read: bool = False) -> None:
+        raise PeopleUnavailable("people_store_unavailable")
+
+    monkeypatch.setattr(PeopleService, "readiness_state", lambda self: "locked")
+    monkeypatch.setattr(PeopleService, "_require_ready_owner", refuse)
+    with caplog.at_level("WARNING", logger="holdspeak.web.routes.people"):
+        response = hub.client.get("/api/people/relationships?counts=1", headers={"Referer": "http://hub/desk"})
+    assert response.status_code == 503
+    lines = [r.getMessage() for r in caplog.records if "people 503" in r.getMessage()]
+    assert lines == ["people 503: code=people_store_unavailable readiness=locked "
+                     "caller=GET /api/people/relationships from http://hub/desk"]
+
+
+def test_mcp_reads_the_suggestions(hub: Any) -> None:
+    from holdspeak.mcp.families import people as family
+    from holdspeak.principals import Principal, PrincipalKind
+
+    _week_without_people(hub)
+    answer = family.dispatch("people.suggestions", {}, Principal(PrincipalKind.OWNER, "mcp-owner"))
+    assert [s["name"] for s in answer["suggestions"]] == ["Theo", "Jun", "Mira"]
+    assert "people.suggestions" in family.READ_TOOLS
+
+
+_WIRES = Path(__file__).resolve().parents[2] / "web" / "src" / "desk" / "__tests__" / "fixtures" / "daily-week"
+
+
+def test_people_from_work_wire(hub: Any) -> None:
+    """The People face's reads on the week with no people, before and after
+    the three Add presses (people.app.test.tsx replays them)."""
+    from datetime import datetime
+
+    from tests.unit.test_desk_speak import _record
+
+    _week_without_people(hub)
+    reads = ("/api/people/readiness", "/api/people/suggestions", "/api/door", "/api/settings")
+    before = {path: _ok(hub.client.get(path)) for path in reads}
+    assert before["/api/people/readiness"]["state"] == "unconfigured"
+    assert not (before["/api/settings"].get("owner") or {}).get("name"), "his own name is not set"
+    added = {key: _ok(hub.client.post("/api/people/suggestions/add", json={"key": key}), 201)
+             for key in ("theo", "jun", "mira")}
+    after = {path: _ok(hub.client.get(path)) for path in (*reads, "/api/people/relationships?counts=1")}
+    mira = added["mira"]["relationship"]["id"]
+    for path in (f"/api/people/relationships/{mira}", f"/api/people/relationships/{mira}/one-on-ones",
+                 f"/api/people/relationships/{mira}/brief"):
+        after[path] = _ok(hub.client.get(path))
+    assert [a["task"] for a in after[f"/api/people/relationships/{mira}/brief"]["brief"]["open_meeting_actions"]] == [
+        "Draft the rollback runbook"]
+    # The ids are minted per run; the stored answers name them one way.
+    text = json.dumps({"recordedAt": datetime.now().astimezone().isoformat(),
+                       "before": before, "added": added, "after": after})
+    for key, answer in added.items():
+        text = text.replace(answer["relationship"]["id"], f"rel-{key}")
+    _record("people-from-work", json.loads(text), Path(hub.db.db_path).parent, "tests/integration/test_desk_people.py::test_people_from_work_wire", folder=_WIRES)
+
+
+def test_needs_you_says_when_people_could_not_be_read_wire(hub: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A People store that exists but cannot be read (locked): the hub's
+    Needs-you answer names it, and the faces draw one line (needs-you and
+    today app tests replay this answer)."""
+    from datetime import datetime
+
+    from holdspeak.people.store import EncryptedPeopleStore
+    from tests.unit.test_desk_speak import _record
+
+    seeded = seed(hub)
+    monkeypatch.setattr(EncryptedPeopleStore, "readiness", lambda self: "locked")
+    answer = _ok(hub.client.get("/api/desk/needs-you?fresh=1"))
+    assert answer["peopleStoreState"] == "locked"
+    assert hub.client.get("/api/people/relationships?counts=1").status_code == 503
+    _record("needs-you-people-locked", json.loads(json.dumps({
+        "recordedAt": datetime.now().astimezone().isoformat(),
+        "gets": {"/api/desk/needs-you?fresh=1": answer, "/api/people/readiness": _ok(hub.client.get("/api/people/readiness"))},
+    }).replace(seeded["project"], "proj-daily-week")), Path(hub.db.db_path).parent,
+        "tests/integration/test_desk_people.py::test_needs_you_says_when_people_could_not_be_read_wire", folder=_WIRES)

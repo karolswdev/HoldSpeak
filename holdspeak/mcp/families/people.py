@@ -206,6 +206,14 @@ TOOLS: list[dict[str, Any]] = [
         },
         ["relationship_id", "alias"],
     ),
+    # Betterment D6: the people his work names that People does not hold yet.
+    _tool(
+        "people.suggestions",
+        _BOUNDARY + "Read the names his meetings (speakers, action-item owners), calendar (1:1 series) "
+        "and Jira assignees mention that no Person has yet, with where each came from. "
+        "A read: adding a person stays the owner's press.",
+        {},
+    ),
     # HS-172-04: resolve a Watch identity to a People relationship.
     _tool(
         "people.resolve",
@@ -230,6 +238,7 @@ READ_TOOLS: frozenset[str] = frozenset({
     "people.relationship.get",
     "people.grounding.get",
     "people.one_on_one.brief",
+    "people.suggestions",
 })
 
 
@@ -359,6 +368,11 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         return _grounding_bundle(detail)
     if name == "people.one_on_one.brief":
         return one_on_one_brief(principal, _required_id(arguments, "relationship_id"))
+    if name == "people.suggestions":
+        _require_access(write=False)
+        from holdspeak.db import get_database
+
+        return {"suggestions": build_people_service().suggestions(principal, db=get_database())}
 
     _require_access(write=True)
     service = build_people_service()

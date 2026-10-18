@@ -751,3 +751,19 @@
 @media (prefers-reduced-motion: reduce) {
   .desk-next .people-raise-row > .people-raise-remove { transition: none; }
 }
+
+/* Betterment D6: people from his work. With no people and no suggestions,
+   one line; the suggestions sit under the roster with Add and Not a person;
+   while his own name is not set, People asks it. */
+.people-empty-line { padding: 16px 0; }
+.people-suggestion-verbs {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
+}
+/* The suggestion verbs are the row's point: always shown, never on hover
+   only; the source line wraps rather than cut at 393. */
+.people-suggestion .surface-row-verbs { opacity: 1; transform: none; }
+.people-suggestion .surface-row-text small { flex-wrap: wrap; white-space: normal; }
+.people-whoami .gadget-string { width: 100%; }

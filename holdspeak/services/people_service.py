@@ -56,6 +56,8 @@ _RELATIONSHIP_KINDS = frozenset({"direct_report", "peer", "extended"})
 _ENTRY_KINDS = frozenset({"one_on_one"})
 _RECORD_KINDS = frozenset({"request", "commitment", "grounding_note"})
 _OPEN_COMMITMENT = "open"
+# Betterment D6: a name he marked "Not a person" (never suggested again).
+_HIDDEN_NAME = "hidden_name"
 # PHILO-17: where an open agenda item may go (owner web route only).
 _AGENDA_END_STATES = frozenset({"removed", "done"})
 # PHILO-17 (U09): a commitment runs one of two ways. ``leader_owes`` is what
@@ -139,7 +141,8 @@ class PeopleService:
         return out
 
     def create_relationship(self, principal: Any, payload: dict[str, Any]) -> dict[str, Any]:
-        self._require_ready_owner(principal)
+        # Betterment D6: no "Set up People" step; the first add creates the store.
+        self._ensure_store(principal)
         name = self._text(payload, "display_name", required=True, limit=240)
         kind = str(payload.get("relationship_kind") or "direct_report")
         if kind not in _RELATIONSHIP_KINDS:
@@ -1639,6 +1642,90 @@ class PeopleService:
                 if isinstance(link, dict) and str(link.get("uid") or "") == clean_uid and str(link.get("source_id") or "") == clean_source:
                     return {"state": "ready", "relationship": self._relationship_view(record)}
         return {"state": "ready", "relationship": None}
+
+    # -- Betterment D6: people from his work --------------------------------------
+
+    def suggestions(self, principal: Any, *, db: Any) -> list[dict[str, Any]]:
+        """The names his meetings, calendar and Jira mention that no Person has.
+
+        A read (agents may read it). With no store yet every name is new;
+        a store that exists but cannot be read raises, never a guess.
+        """
+        from holdspeak.people.key_free import people_reads_allowed
+        from .needs_you_membership import self_check
+        from .people_suggestions import collect
+
+        self._require_reader(principal)
+        state = self.readiness_state()
+        if state not in {"ready", "unconfigured"} or not people_reads_allowed():
+            raise PeopleUnavailable("people_store_unavailable")
+        if db is None:
+            return []
+        ready = state == "ready"
+        known = self.person_names() if ready else set()
+        if known is None:
+            raise PeopleUnavailable("people_store_unavailable")
+        is_self = self_check(known)
+
+        def is_known(name: str) -> bool:
+            if not ready:
+                return False
+            found = self.resolve_owner_candidates(name)
+            if found.get("state") != "ready":
+                raise PeopleUnavailable("people_store_unavailable")
+            return found.get("link") in {"linked", "ambiguous"}
+
+        hidden = [str(item.get("name") or "") for item in self._list(_HIDDEN_NAME)] if ready else []
+        try:
+            return collect(db, is_self=lambda name: bool(name) and is_self(name), is_known=is_known,
+                           hidden=hidden, now_iso=_now())
+        except PeopleServiceError:
+            raise
+        except Exception as exc:
+            raise PeopleServiceError("people_plaintext_unavailable") from exc
+
+    def add_suggestion(self, principal: Any, key: str, *, db: Any, relationship_kind: str | None = None) -> dict[str, Any]:
+        """Add one suggested person in one press: the full name the calendar
+        or Jira knows, the kind (Report for a 1:1, else Peer), the spoken
+        name as an alias and the 1:1 series. Owner only."""
+        self._ensure_store(principal)
+        wanted = " ".join(str(key or "").split()).casefold()
+        found = next((s for s in self.suggestions(principal, db=db) if s["key"] == wanted), None)
+        if found is None:
+            raise PeopleServiceError("people_suggestion_not_found")
+        kind = relationship_kind or found["relationship_kind"]
+        relationship = self.create_relationship(principal, {"display_name": found["name"], "relationship_kind": kind})
+        rid = str(relationship["id"])
+        if found["said"]:
+            try:
+                relationship = self.link_owner_alias(principal, rid, found["said"])
+            except PeopleServiceError:
+                pass  # a taken or reserved alias: the name still resolves by first name
+        series = found.get("series")
+        if series:
+            try:
+                relationship = self.link_calendar_series(principal, rid, series["uid"], series["source_id"], series["label"])
+            except PeopleServiceError:
+                pass  # the series already belongs to another person
+        return relationship
+
+    def hide_suggestion(self, principal: Any, key: str) -> dict[str, str]:
+        """"Not a person": the name never comes back as a suggestion. Owner only."""
+        self._ensure_store(principal)
+        name = " ".join(str(key or "").split()).casefold()[:240]
+        if not name:
+            raise PeopleServiceError("people_payload_required")
+        if not any(str(item.get("name") or "") == name for item in self._list(_HIDDEN_NAME)):
+            self._create(_HIDDEN_NAME, {"name": name, "state": "active", "lifecycle": "active",
+                                        "created_at": _now(), "updated_at": _now()})
+        return {"hidden": name}
+
+    def _ensure_store(self, principal: Any) -> None:
+        """The owner's first write creates the encrypted store (no Set up step)."""
+        self._require_owner(principal)
+        if self.readiness_state() == "unconfigured":
+            self.setup(principal)
+        self._require_ready_owner(principal)
 
     # -- Follow-through projection -------------------------------------------------
 

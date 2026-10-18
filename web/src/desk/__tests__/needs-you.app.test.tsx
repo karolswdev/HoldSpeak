@@ -296,3 +296,32 @@ describe("Needs you after the week's summaries: kept on arrival, Drop and Undo (
     await waitFor(() => expect(posts.some((p) => /\/api\/proposals\/prop-[^/]+\/restore$/.test(p.url))).toBe(true));
   });
 });
+
+// ── Betterment daily D6: a People read that failed is one line in place ──
+import peopleLocked from "./fixtures/daily-week/needs-you-people-locked.json";
+
+describe("Needs you when People could not be read (Betterment D6)", () => {
+  it("says it in one line with Try again; the rows stay", async () => {
+    vi.setSystemTime(new Date(String(peopleLocked.recordedAt)));
+    const gets: Gets = { ...(peopleLocked.gets as Gets), "/api/door": hubWire("door.empty").wire };
+    const reads: string[] = [];
+    api.fetch.mockImplementation(async (url: string) => { reads.push(String(url)); return recordedGet(gets, String(url)); });
+    render(<NeedsDrawer />);
+    const line = await screen.findByTestId("needs-people-read-failed");
+    expect(line.textContent).toContain("People could not be read");
+    await waitFor(() => expect(weekRows().length).toBeGreaterThan(0));
+    const before = reads.filter((u) => u.startsWith("/api/desk/needs-you")).length;
+    fireEvent.click(within(line).getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(reads.filter((u) => u.startsWith("/api/desk/needs-you")).length).toBe(before + 1));
+  });
+
+  it("the week with People readable draws no such line", async () => {
+    vi.setSystemTime(new Date(String(dailyWeek.needsYou.computedAt)));
+    api.fetch.mockImplementation(async (url: string) => recordedGet({
+      "/api/desk/needs-you?fresh=1": dailyWeek.needsYou, "/api/door": hubWire("door.empty").wire,
+    }, String(url)));
+    render(<NeedsDrawer />);
+    await waitFor(() => expect(weekRows().length).toBe(9));
+    expect(screen.queryByTestId("needs-people-read-failed")).toBeNull();
+  });
+});

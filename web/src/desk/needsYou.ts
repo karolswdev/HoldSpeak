@@ -745,6 +745,9 @@ export interface NeedsYouSnapshot extends NeedsYouResult {
   loading: boolean;
   errors: NeedsYouErrors;
   room: NeedsYouRoomEnvelope | null;
+  /** Betterment D6: the hub could not read the People store (it exists but
+   *  is locked or failed): the face says so in one line. */
+  peopleUnread?: boolean;
 }
 
 /** The hub's answer (`desk.needs_you`, `GET /api/desk/needs-you`).
@@ -785,6 +788,8 @@ export interface NeedsYouAnswer {
   stale?: unknown;
   next?: unknown;
   sweepId?: unknown;
+  /** The People store readiness the hub read (`ready`, `unconfigured`, `locked`, ...). */
+  peopleStoreState?: string;
 }
 
 /** The members by Project, from rows the hub has marked (`muted`,
@@ -961,6 +966,7 @@ async function refreshNeedsYou(fresh = true): Promise<void> {
       loading: false,
       errors,
       room,
+      peopleUnread: ["locked", "key_unavailable", "corrupt", "unavailable"].includes(String(value.peopleStoreState ?? "")),
     });
   })().catch((error) => {
     // The read failed: the last result stays visible and the retryable state

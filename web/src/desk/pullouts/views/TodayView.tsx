@@ -503,7 +503,8 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
           <TodayNeeds work={rows.work} count={rows.needs.count} now={now} limit={phone ? NEEDS_TOP_PHONE : NEEDS_TOP}
             primary={lead === "needs"} projects={rows.multipleProjects} loaded={needsLoaded} emptyDesk={emptyDesk}
             failed={rows.needs.room === null && Object.keys(rows.needs.errors).length > 0} calendarLead={lead === "calendar"}
-            next={next && nextStart ? `${title(next)} at ${clock(nextStart)}` : null} />
+            next={next && nextStart ? `${title(next)} at ${clock(nextStart)}` : null}
+            peopleUnread={Boolean(rows.needs.peopleUnread)} />
           <ol className="today-spine" aria-label="Today">
             {nowNode}
             {nextNode}

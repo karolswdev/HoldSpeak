@@ -48,8 +48,9 @@ if TYPE_CHECKING:
 # (``test_memory_slice6_reflect.MAIN_PALETTE_BYTES``): the page's schema
 # words are short, and the People tools' operator note leaves the chat
 # rendering (``thread_tools.tool_schemas_for``).  A tool here is gate-only,
-# MCP only.
-_MCP_ONLY: frozenset[str] = frozenset()
+# MCP only.  Betterment D6: ``people.suggestions`` is an agent's MCP read;
+# the seeded palettes do not grow for it.
+_MCP_ONLY: frozenset[str] = frozenset({"people.suggestions"})
 
 
 def _thread_side(name: str) -> bool:

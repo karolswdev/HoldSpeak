@@ -1357,6 +1357,12 @@
     },
     {
       "transport": "mcp",
+      "entry_point": "people.suggestions",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/people.py)"
+    },
+    {
+      "transport": "mcp",
       "entry_point": "pipeline.events",
       "discriminator": "",
       "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
