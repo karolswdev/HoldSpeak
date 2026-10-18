@@ -427,7 +427,8 @@ describe("the SEND well species on a brief (not an update)", () => {
     const row = screen.getByTestId("destination-row");
     expect(row.querySelector(".send-target")).toBeNull();
     expect(row.querySelector(".send-cells")?.textContent).toContain("SLACK");
-    expect(row.querySelector(".send-cells")?.textContent).toContain("WEBHOOK SET");
+    // Betterment send S1: an account chip only for a sign-in failure; a webhook that is set says nothing.
+    expect(row.querySelector(".send-cells")?.textContent).not.toContain("WEBHOOK SET");
     expect(within(screen.getByTestId("send-verbs")).getByText("HOOKS.SLACK.COM")).toBeTruthy();
     fireEvent.click(within(row).getByText("Slack #leads"));
     expect(row.querySelector(".send-target")?.textContent).toBe("#leads");
@@ -478,7 +479,7 @@ describe("the SEND well species on a brief (not an update)", () => {
     render(<SendWells doc={BRIEF} />);
     const row = await pick("Slack #leads");
     expect(row.textContent).toContain("HOOKS.SLACK.COM");
-    expect(row.textContent).toContain("WEBHOOK SET");
+    expect(row.textContent).not.toContain("WEBHOOK SET");   // betterment send S1: no chip beside a good send
     const sent = await screen.findByTestId("send-sent");
     expect(sent.textContent).toContain("POSTED");
     const proof = within(sent).getByTestId("proof");

@@ -674,6 +674,9 @@ class EmailChannel:
     name = "email"
     #: Its bytes name the sender and the recipients: serialized per destination.
     addressed = True
+    #: Seconds the effect may take; a send still running past it (plus the read
+    #: path's grace) reads as no answer (``ChannelService._send_view``).
+    answer_limit = TIMEOUT
 
     @staticmethod
     def badge(synced: bool) -> str:

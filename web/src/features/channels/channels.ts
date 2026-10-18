@@ -83,6 +83,8 @@ export const SEND_WORDS = {
   section: "SEND",
   send: "Send",
   sendAgain: "Send again",
+  /** After a send that failed or got no answer (betterment send S1). */
+  tryAgain: "Try again",
   retry: "Retry",
   discard: "Discard",
   discardArmed: "Discard?",
@@ -293,6 +295,8 @@ const FAILED_PREFIX: [string, string][] = [
 /** UNKNOWN reasons: HoldSpeak cannot know. */
 const UNKNOWN: Record<string, string> = {
   no_answer: "NO ANSWER",
+  /* Betterment send S1: the hub's read of a send still running past its channel's limit. */
+  no_answer_in_time: "NO ANSWER",
   interrupted: "INTERRUPTED",
   github_interrupted: "INTERRUPTED",
   jira_interrupted: "INTERRUPTED",
@@ -347,6 +351,16 @@ const word = (table: Record<string, string>, prefixes: [string, string][], code:
 export const refusedWord = (c: string) => REFUSED[c] ?? byPrefix(REFUSED_PREFIX, c) ?? refusalWord(c);
 export const failedWord = (c: string) => word(FAILED, FAILED_PREFIX, c);
 export const unknownWord = (c: string) => word(UNKNOWN, UNKNOWN_PREFIX, c);
+
+/** Who did not answer, by name (betterment send S1). */
+const CHANNEL_NAME: Record<Channel, string> = {
+  file: "the folder", github: "GitHub", jira: "Jira", confluence: "Confluence", email: "the email provider", slack: "Slack",
+};
+/** A send still running past its channel's limit: what to do next, in one line. */
+export function noAnswerWords(channel: Channel, account: Record<string, unknown>, target: Record<string, string | number>): string {
+  const who = channel === "email" ? emailProvider(account).label : CHANNEL_NAME[channel] ?? channel;
+  return `No answer from ${who}. Check ${targetToken(channel, target)} before you try again.`;
+}
 
 const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 export function stamp(iso: string | null | undefined): string {

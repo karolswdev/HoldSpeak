@@ -245,6 +245,14 @@ class ChannelSendsRepository(BaseRepository):
             return [dict(r) for r in conn.execute(
                 "SELECT * FROM channel_sends WHERE document_ref=? ORDER BY created_at, rowid", (document_ref,))]
 
+    def settled_on(self, channel: str, limit: int = 50) -> list[dict[str, Any]]:
+        """The newest sent or failed sends of one channel, newest first (what a send says about its account)."""
+        with self._connection() as conn:
+            return [dict(r) for r in conn.execute(
+                "SELECT * FROM channel_sends WHERE channel=? AND state IN ('sent', 'failed')"
+                " AND settled_at IS NOT NULL ORDER BY settled_at DESC, rowid DESC LIMIT ?",
+                (str(channel), int(limit)))]
+
     def list_recent(self, limit: int = 100) -> list[dict[str, Any]]:
         with self._connection() as conn:
             return [dict(r) for r in conn.execute(

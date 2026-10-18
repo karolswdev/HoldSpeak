@@ -61,9 +61,6 @@ const mocks = vi.hoisted(() => {
     resetLayout: vi.fn(),
   });
   const defaultApiFetch = async (path: string): Promise<unknown> => {
-      if (path === "/api/channels/sends") {
-        return { sends: [{ state: "failed", dispatch_seq: 7 }] };
-      }
       if (path === "/api/meetings/ready") return { meetings: durable.readyRows };
       if (path === "/api/people/readiness") {
         if (people.readinessError) throw people.readinessError;
@@ -293,6 +290,13 @@ describe("H-C3 Dock rendering", () => {
     // PHILO-17 (doors): People left the Dock; its 1:1 read moved to the People drawer (screen/nextOneOnOne.ts).
     expect(screen.queryByTestId("desk-dock-people-state")).toBeNull();
     expect(mocks.apiFetch).not.toHaveBeenCalledWith("/api/people/readiness");
+  });
+
+  // Betterment send S1: nothing in the Dock draws a send, so it reads none.
+  it("reads no sends on its refresh", async () => {
+    render(<Dock />);
+    await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalledWith("/api/meetings/ready"));
+    expect(mocks.apiFetch.mock.calls.some(([path]) => String(path).startsWith("/api/channels/sends"))).toBe(false);
   });
 
   // PHILO-15-09 (B11, Astra r2): the shared seed (an item with a folded

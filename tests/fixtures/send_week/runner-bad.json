@@ -1,0 +1,13 @@
+{
+  "about": "Send betterment walk, the bad day: gh not signed in after save; Jira comment held after the boundary (no answer); Slack 500.",
+  "answers": [
+    {"argv_prefix": ["gh", "api", "user"], "code": 0, "stdout": "{\"login\": \"karol-arch\", \"id\": 7}", "stderr": ""},
+    {"argv_prefix": ["gh", "issue", "comment"], "code": 1, "stdout": "", "stderr": "GraphQL: Could not resolve to an issue or pull request with the number of 4242. (repository.issue)"},
+    {"argv_prefix": ["acli", "jira", "auth", "switch"], "code": 0, "stdout": "Switched", "stderr": ""},
+    {"argv_prefix": ["acli", "jira", "auth", "status"], "code": 0, "stdout": "✓ Authenticated\n  Site: acme.atlassian.net\n  Email: karol@acme.example\n  Authentication Type: oauth\n", "stderr": ""},
+    {"argv_prefix": ["acli", "jira", "workitem", "comment", "create"], "hold": true}
+  ],
+  "https": [
+    {"host": "hooks.slack.com", "path": "/services/T_WALK/B_WALK/synthetic", "status": 500, "body": "internal_error"}
+  ]
+}

@@ -184,3 +184,167 @@ describe("a Phase 11 brief send to a saved folder with the built-in present", ()
     expect(posted.map((p) => p.destination_id)).toEqual(["chd_team", "holdspeak-folder"]);
   });
 });
+
+// ── Betterment send S1: the Send face tells the truth ──────────────────────
+//
+// Every answer below is the REAL hub's, recorded by tests/unit/test_desk_send.py
+// (fixtures/send-hub/*.json; HOLDSPEAK_WIRE_WRITE=1 rewrites them) through the
+// recon's runner scripts (gh and acli never ran, nothing left the machine).
+
+import BEFORE from "./fixtures/send-hub/destinations-before-send.json";
+import POSTED from "./fixtures/send-hub/destinations-after-posted.json";
+import NO_ANSWER from "./fixtures/send-hub/sends-no-answer.json";
+import { MeetingSendWell } from "../../meetings/MeetingSendWell";
+import { pickFor, resetSendTo } from "../windowSend";
+import { keepPlace } from "../deskMemory";
+import { useDesk } from "../store";
+
+type Recorded = {
+  document_ref: string;
+  destinations: { id: string; name: string; channel: string }[];
+  sends: unknown[];
+  previews: { destination_id: string }[];
+};
+
+function replay(rec: Recorded, posted: Record<string, unknown>[] = []) {
+  apiFetch.mockImplementation((path: string, init: Init = {}) => {
+    const key = `${init.method ?? "GET"} ${path.split("?")[0]}`;
+    if (key === "GET /api/channels/destinations") return Promise.resolve({ destinations: rec.destinations });
+    if (key === "GET /api/channels/sends") {
+      const asked = new URLSearchParams(path.split("?")[1] ?? "").get("document_ref");
+      return Promise.resolve({ sends: asked === rec.document_ref ? rec.sends : [] });
+    }
+    if (key === "POST /api/channels/preview") return Promise.resolve(rec.previews.find((p) => p.destination_id === init.json?.destination_id));
+    if (key === "POST /api/channels/send") { posted.push(init.json ?? {}); return new Promise(() => {}); }
+    return Promise.reject(new TypeError(`unrouted ${path}`));
+  });
+}
+
+const docOf = (rec: Recorded): DocRef => ({ ref: rec.document_ref, title: "Brief", label: "BRIEF" });
+const destId = (rec: Recorded, name: string) => rec.destinations.find((d) => d.name === name)!.id;
+
+async function openRow(name: string) {
+  fireEvent.click((await rowOf(name)).querySelector<HTMLElement>(`.surface-primary[data-destination='${name}']`)!);
+  return waitFor(() => {
+    const o = openOf(name);
+    expect(o?.querySelector("[data-testid=send-verbs]")).toBeTruthy();
+    return o!;
+  });
+}
+
+describe("betterment send S1: the account chip says only a sign-in failure, and a good send is a good check", () => {
+  it("the Accounts check said Unreachable: the GitHub row says so; after a recorded POSTED it says nothing", async () => {
+    replay(BEFORE as Recorded);
+    const first = render(<SendWells doc={docOf(BEFORE as Recorded)} />);
+    expect(line(await rowOf("acme/payments #42"))).toContain("UNREACHABLE");
+    // Jira was never checked: no NEVER CHECKED chip (nothing failed).
+    expect(line(await rowOf("PAY-12 ticket"))).not.toContain("NEVER CHECKED");
+    first.unmount();
+
+    resetSendStore();
+    replay(POSTED as Recorded);
+    render(<SendWells doc={docOf(POSTED as Recorded)} />);
+    for (const name of ["acme/payments #42", "PAY-12 ticket"]) {
+      const words = line(await waitFor(async () => {
+        const r = await rowOf(name);
+        expect(line(r)).toMatch(/POSTED|COMMENTED/);
+        return r;
+      }));
+      expect(words).not.toMatch(/UNREACHABLE|NEVER CHECKED|CONNECTED/);
+    }
+    // After a send that worked, the verb stays "Send again".
+    const open = await openRow("acme/payments #42");
+    expect(within(open).getByTestId("send-verb").textContent).toBe("Send again");
+  });
+});
+
+describe("betterment send S1: a failed send says Try again; a send with no answer says what to do", () => {
+  it("FAILED: the verb is Try again, not Send again", async () => {
+    replay(NO_ANSWER as Recorded);
+    render(<SendWells doc={docOf(NO_ANSWER as Recorded)} />);
+    const open = await openRow("acme/payments #4242");
+    expect(within(open).getByTestId("send-failed")).toBeTruthy();
+    expect(within(open).getByTestId("send-verb").textContent).toBe("Try again");
+  });
+
+  it.each([["first read", false], ["after a reload", true]] as const)(
+    "no answer in time (%s): the line, Check PAY-12, Try again; never SENDING",
+    async (_when, reload) => {
+      replay(NO_ANSWER as Recorded);
+      if (reload) resetSendStore(true);
+      render(<SendWells doc={docOf(NO_ANSWER as Recorded)} />);
+      const open = await openRow("PAY-12 ticket");
+      expect(within(open).getByTestId("send-no-answer").textContent)
+        .toBe("No answer from Jira. Check PAY-12 before you try again.");
+      const check = within(open).getByTestId("send-check");
+      expect(check.textContent).toBe("Check PAY-12");
+      expect(check.getAttribute("data-href")).toBe("https://acme.atlassian.net/browse/PAY-12");
+      const verb = within(open).getByTestId("send-verb") as HTMLButtonElement;
+      expect(verb.textContent).toBe("Try again");
+      expect(verb.disabled).toBe(false);
+      expect(line(open)).not.toContain("SENDING");
+      expect(line(await rowOf("PAY-12 ticket"))).not.toContain("SENDING");
+    },
+  );
+});
+
+describe("betterment send S1: Send to ▸ opens the well with THAT destination, on the form it shows", () => {
+  it("the meeting's well opens on Digest (his last form): Send to ▸ PAY-12 picks PAY-12 there, not the last-used row", async () => {
+    const rec = NO_ANSWER as Recorded;
+    replay({ ...rec, sends: [] });
+    resetSendTo();
+    const meeting = "m-s1-pick";
+    keepPlace(`meeting/form/${meeting}`, "meeting_digest");
+    keepPlace(`send/pick/meeting_digest:${meeting}`, destId(rec, "acme/payments #4242"));   // the last-used row
+    useDesk.setState({ windowsById: {
+      "surface-meetings": { id: "surface-meetings", kind: "surface", applicationKey: "meetings", scope: `meeting:${meeting}`, persistence: "workspace" },
+    } } as never);
+    const front = vi.spyOn(useDesk.getState(), "restorePanel").mockImplementation(() => {});
+    try {
+      // The well is not mounted yet (the recon's case); the meeting read gets no answer.
+      pickFor("surface-meetings", destId(rec, "PAY-12 ticket"));
+      render(<MeetingSendWell meetingId={meeting} title="Payments platform sync" />);
+      await waitFor(() => expect(screen.getByTestId("send-well").getAttribute("data-doc")).toBe(`meeting_digest:${meeting}`));
+      await waitFor(() => expect(openOf("PAY-12 ticket")).not.toBeNull());
+      expect(openOf("acme/payments #4242")).toBeNull();
+      expect(document.querySelectorAll("[data-testid=send-open]")).toHaveLength(1);
+    } finally {
+      front.mockRestore();
+      keepPlace(`meeting/form/${meeting}`, "");
+      keepPlace(`send/pick/meeting_digest:${meeting}`, "");
+    }
+  });
+});
+
+describe("betterment send S1: a GitHub destination saves from the form", () => {
+  it("the Accounts row knows no login: Save still works (the hub asks gh), and the saved row shows the login gh named", async () => {
+    const { Destinations } = await import("../../pages/cores/connections/Destinations");
+    const rec = BEFORE as Recorded & { destinations: Record<string, unknown>[] };
+    const github = rec.destinations.find((d) => d.channel === "github")!;
+    let listed: unknown[] = [];
+    const saved: Record<string, unknown>[] = [];
+    apiFetch.mockImplementation((path: string, init: Init = {}) => {
+      const key = `${init.method ?? "GET"} ${path.split("?")[0]}`;
+      if (key === "GET /api/channels/destinations") return Promise.resolve({ destinations: listed });
+      if (key === "POST /api/channels/destinations") {
+        saved.push(init.json ?? {});
+        listed = rec.destinations;
+        return Promise.resolve({ destination: github, replaced: null });
+      }
+      return Promise.reject(new TypeError(`unrouted ${path}`));
+    });
+    render(<Destinations />);
+    const form = await screen.findByTestId("dest-form");
+    fireEvent.change(within(form).getByLabelText("Channel"), { target: { value: "github" } });
+    const account = screen.getByTestId("dest-github-account");
+    expect(line(account)).not.toMatch(/UNREACHABLE|Set up account/);
+    fireEvent.change(screen.getByTestId("dest-repo"), { target: { value: "acme/payments" } });
+    fireEvent.change(screen.getByTestId("dest-number"), { target: { value: "42" } });
+    const save = screen.getByTestId("dest-save") as HTMLButtonElement;
+    expect(save.disabled).toBe(false);
+    fireEvent.click(save);
+    await waitFor(() => expect(saved).toEqual([expect.objectContaining({ channel: "github", repo: "acme/payments", number: 42 })]));
+    const open = await screen.findByTestId("dest-open");
+    expect(line(open)).toContain("@karol-arch");
+  });
+});

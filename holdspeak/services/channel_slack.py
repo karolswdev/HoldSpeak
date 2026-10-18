@@ -399,6 +399,8 @@ class SlackChannel:
 
     name = "slack"
     addressed = False
+    #: Seconds the post may take (see ``EmailChannel.answer_limit``).
+    answer_limit = TIMEOUT
     host = HOST
     port = PORT
     max_text_characters = MAX_TEXT_CHARACTERS

@@ -1,0 +1,15 @@
+{
+  "about": "Send betterment walk: gh and acli answer as recorded; email (Resend) and Slack answer at the recording HTTPS edge. Nothing leaves the machine.",
+  "answers": [
+    {"argv_prefix": ["gh", "api", "user"], "code": 0, "stdout": "{\"login\": \"karol-arch\", \"id\": 7}", "stderr": ""},
+    {"argv_prefix": ["gh", "issue", "comment"], "code": 0, "stdout": "https://github.com/acme/payments/issues/42#issuecomment-99001\n", "stderr": ""},
+    {"argv_prefix": ["gh", "pr", "comment"], "code": 0, "stdout": "https://github.com/acme/payments/pull/57#issuecomment-99002\n", "stderr": ""},
+    {"argv_prefix": ["acli", "jira", "auth", "switch"], "code": 0, "stdout": "Switched", "stderr": ""},
+    {"argv_prefix": ["acli", "jira", "auth", "status"], "code": 0, "stdout": "✓ Authenticated\n  Site: acme.atlassian.net\n  Email: karol@acme.example\n  Authentication Type: oauth\n", "stderr": ""},
+    {"argv_prefix": ["acli", "jira", "workitem", "comment", "create"], "code": 0, "stdout": "{\"id\": \"10501\", \"self\": \"https://acme.atlassian.net/rest/api/3/issue/PAY-12/comment/10501\"}", "stderr": ""}
+  ],
+  "https": [
+    {"host": "api.resend.com", "path": "/emails", "status": 200, "headers": {"Content-Type": "application/json"}, "body": {"id": "re-walk-0001"}},
+    {"host": "hooks.slack.com", "path": "/services/T_WALK/B_WALK/synthetic", "status": 200, "body": "ok"}
+  ]
+}

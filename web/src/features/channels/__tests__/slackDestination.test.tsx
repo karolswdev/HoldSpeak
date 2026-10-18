@@ -158,7 +158,8 @@ describe("Slack in the Destination form", () => {
     const result = await screen.findByTestId("dest-check-result");
     expect(result.textContent).toContain("WEBHOOK SET · HOST OK");
     expect(screen.getByTestId("dest-open").textContent).toContain("SET · hooks.slack.com");
-    await waitFor(() => expect(screen.getByTestId("dest-row").textContent).toContain("WEBHOOK SET"));
+    // Betterment send S1: the row's chip is only for a failure; the Check result above says SET.
+    expect(screen.getByTestId("dest-row").querySelector(".connections-tool-chips")?.textContent).not.toContain("WEBHOOK SET");
     // Check is the destination check route only: no send, no preview, no webhook call.
     expect(calls.filter((c) => c.method === "POST").map((c) => c.path)).toEqual(["/api/channels/destinations/chd_slack/check"]);
   });

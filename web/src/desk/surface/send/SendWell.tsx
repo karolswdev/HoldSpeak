@@ -40,7 +40,7 @@ import { useDesk } from "../../store";
 import { fetchConnections, type ConnectionsResponse, type ConnectionState } from "../../../pages/cores/connections/api";
 import { chipLabel } from "../../../pages/cores/connections/ConnectionsPane";
 import {
-  CHANNEL_WORD, DEST_CHANGED, SEND_WORDS, syncEgress, commandId, egressOf, failedWord, farSide, previewOf,
+  CHANNEL_WORD, DEST_CHANGED, SEND_WORDS, syncEgress, commandId, egressOf, failedWord, farSide, noAnswerWords, previewOf,
   refusalSize, refusedWord, requestDestinationsFocus, sentWord, stamp, targetName, targetToken, unknownWord, wire, Refusal,
   type Channel, type Destination, type Preview, type Send, type WirePreview,
 } from "../../../features/channels/channels";
@@ -184,9 +184,15 @@ export function useConnections(): ConnectionsResponse | null {
   return c;
 }
 
-/** The account state a destination depends on (the Phase 9 B1 words, the
- *  Connections chip words). Null for a folder. Email and Slack: the key only
- *  present or absent (never the key). */
+/** The account states that say "this account did not sign in". */
+const SIGN_IN_FAILED = new Set<string>(["owner_action_required", "unavailable", "degraded"]);
+
+/** The account warning a destination row shows (the Phase 9 B1 words, the
+ *  Connections chip words), or null. Betterment send S1: a chip shows ONLY
+ *  when the newest word on that account (a check or a send: the hub's
+ *  `connection`, where a good send counts as a good check) says it failed to
+ *  sign in. Never CONNECTED, NEVER CHECKED or KEY SET beside a good send.
+ *  Null for a folder. Email and Slack: only a key known to be absent. */
 export function accountChip(
   d: Pick<Destination, "channel" | "account"> & { connection?: Destination["connection"] },
   c: ConnectionsResponse | null,
@@ -194,14 +200,9 @@ export function accountChip(
   if (d.channel === "file") return null;
   if (d.channel === "email" || d.channel === "slack") {
     // Present or absent only, and only when known (the list read does not open the keychain).
-    if (typeof d.account.key_present !== "boolean") return null;
-    if (d.channel === "slack") {
-      return d.account.key_present
-        ? { state: "success", label: "WEBHOOK SET", code: "webhook_present" }
-        : { state: "warning", label: "NO WEBHOOK", code: "slack_webhook_missing" };
-    }
-    return d.account.key_present
-      ? { state: "success", label: "KEY SET", code: "key_present" }
+    if (d.account.key_present !== false) return null;
+    return d.channel === "slack"
+      ? { state: "warning", label: "NO WEBHOOK", code: "slack_webhook_missing" }
       : { state: "warning", label: "NO KEY", code: "email_key_missing" };
   }
   const tool = c?.tools.find((t) => t.provider_id === d.channel);
@@ -216,11 +217,11 @@ export function accountChip(
     const conn = tool?.connections?.find((x) => x.account.site === d.account.site && x.account.email === d.account.email);
     state = (d.connection?.state ?? conn?.state ?? "not_configured") as ConnectionState;
   }
-  const map: Record<string, "success" | "warning" | "idle" | "failure"> = {
-    connected: "success", owner_action_required: "warning", never_checked: "idle", not_configured: "idle",
-    unavailable: "failure", degraded: "warning",
+  if (!SIGN_IN_FAILED.has(state)) return null;
+  const map: Record<string, "warning" | "failure"> = {
+    owner_action_required: "warning", unavailable: "failure", degraded: "warning",
   };
-  return { state: map[state] ?? "idle", label: chipLabel(state, d.channel).toUpperCase(), code: state };
+  return { state: map[state] ?? "warning", label: chipLabel(state, d.channel).toUpperCase(), code: state };
 }
 
 /* ── pieces ────────────────────────────────────────────────────────── */
@@ -653,16 +654,31 @@ export function SendWell({ doc, sendsRead, onSettled, head }: {
                 const waitingForHistory = !held && (sendsRead.data === null || sendsRead.failed);
                 const waitingForSend = running && !held;
                 const far = farSide(d.channel, d.target, d.account);
+                // Betterment send S1: the hub reads a send still running past its
+                // channel's limit as no answer. The face says what to do (Check,
+                // Try again) and never stays SENDING; a press still waiting in
+                // this tab lets go, and Try again replays its held command.
+                const noAnswer = last?.state === "unknown" && last.reason === "no_answer_in_time";
                 const verbs = (
                   <div className="send-verbs" data-testid="send-verbs">
-                    <Button dense variant="primary" loading={busy || waitingForSend}
+                    {noAnswer ? (
+                      <span className="send-line send-no-answer" data-testid="send-no-answer" data-receipt="latest" data-state="unknown">
+                        {noAnswerWords(d.channel, d.account, d.target)}
+                      </span>
+                    ) : null}
+                    <Button dense variant="primary" loading={(busy && !noAnswer) || waitingForSend}
                       disabled={!activePreview || waitingForSend || waitingForHistory}
-                      data-testid={lost ? "send-retry" : "send-verb"}
-                      onClick={() => void press(ref, d.id, () => ({
-                        document_ref: ref, destination_id: d.id,
-                        preview_digest: (pv as { digest: string }).digest,
-                      }), reload, onSettled, activePreview ?? undefined)}>
-                      {lost ? SEND_WORDS.retry : last ? SEND_WORDS.sendAgain : SEND_WORDS.send}
+                      data-testid={lost && !noAnswer ? "send-retry" : "send-verb"}
+                      onClick={() => {
+                        if (noAnswer) store.busy.delete(k);
+                        void press(ref, d.id, () => ({
+                          document_ref: ref, destination_id: d.id,
+                          preview_digest: (pv as { digest: string }).digest,
+                        }), reload, onSettled, activePreview ?? undefined);
+                      }}>
+                      {lost && !noAnswer ? SEND_WORDS.retry
+                        : last?.state === "failed" || last?.state === "unknown" ? SEND_WORDS.tryAgain
+                          : last ? SEND_WORDS.sendAgain : SEND_WORDS.send}
                     </Button>
                     <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
                     {last?.state === "unknown" && far ? (
@@ -673,7 +689,8 @@ export function SendWell({ doc, sendsRead, onSettled, head }: {
                     {/* ONE source: the latest send by dispatch_started_at. The press
                         cache keeps only what no record holds: a lost answer (with its
                         Retry), and a refusal newer than the latest send. */}
-                    {lost ? <OutcomeLine o={o} />
+                    {noAnswer ? null
+                      : lost ? <OutcomeLine o={o} />
                       : o.kind === "refused" && (!last?.dispatch_started_at || o.at > Date.parse(last.dispatch_started_at))
                         ? <OutcomeLine o={o} />
                         : <LatestReceipt s={last} />}
