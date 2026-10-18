@@ -303,6 +303,8 @@ A one-shot CLI call already exists, without MCP: the summarizer runs
 ### The installed CLIs (this Mac, 2026-10-17)
 
 - Claude Code **2.1.302**; Codex CLI **0.161.0**; pi **1.1.0**.
+- At the M0 live check (2026-10-17, late): Codex CLI is **0.163.0**
+  (`codex --version`); Claude Code and pi unchanged.
 
 Flags confirmed in `--help` (no prompt sent):
 
@@ -327,6 +329,8 @@ The prompt goes on stdin. The hub sets `HOLDSPEAK_HUB_URL` and
 `HOLDSPEAK_AGENT_CREDENTIAL` in the child's environment only. The cwd is an
 empty temporary folder.
 
+Corrected by the M0 live check (2026-10-17; see Unknown):
+
 ```
 claude -p --output-format json --no-session-persistence \
   --strict-mcp-config --mcp-config <0600 file from claude_mcp_document()> \
@@ -334,14 +338,34 @@ claude -p --output-format json --no-session-persistence \
   [--model M] [--max-budget-usd N]
 
 codex exec --ephemeral --sandbox read-only --skip-git-repo-check -C <tmp> --json \
+  -c features.apps=false -c web_search="disabled" \
+  -c features.plugins=false -c features.multi_agent=false \
+  -c features.image_generation=false -c features.browser_use=false \
+  -c features.computer_use=false -c features.in_app_browser=false \
+  -c features.tool_suggest=false -c features.skill_search=false \
+  -c features.goals=false -c features.sleep_tool=false \
+  -c features.view_image=false -c features.shell_tool=false \
+  -c features.unified_exec=false \
+  -c mcp_servers.<each name from `codex mcp list --json`>.enabled=false \
   -c mcp_servers.holdspeak.url="<hub>/api/mcp" \
   -c mcp_servers.holdspeak.bearer_token_env_var="HOLDSPEAK_AGENT_CREDENTIAL" \
   -c mcp_servers.holdspeak.default_tools_approval_mode="approve" \
   [-m M] -
 
-PI_CODING_AGENT_DIR=<launch folder with mcp.json> \
+PI_CODING_AGENT_DIR=<launch folder with models.json + mcp.json> \
+PI_OFFLINE=1 PI_SKIP_VERSION_CHECK=1 PI_TELEMETRY=0 \
   pi -p --no-session --mode json --no-builtin-tools --model lan/<model>
 ```
+
+- **Codex:** `features.apps=false` is required. Without it, the ChatGPT
+  login's apps (`mcp__codex_apps__*`: GitHub writes up to
+  `github_merge_pull_request`, Sites deploys, pets, parental controls)
+  reach the agent. Do NOT set `features.code_mode_host=false`: MCP calls go
+  through code mode, and with it off the MCP tool is not callable.
+  `include_apply_patch_tool` is not a 0.163 key (Codex says "ignored").
+- **pi:** the prompt goes on stdin, and stdin MUST be closed (EOF). With an
+  open stdin and the prompt as an argument, pi waited and sent nothing for
+  more than 300 s.
 
 **What is new code** (small): a launch path that needs no tmux. Issue the
 CONDUCTOR credential the same way `spawn` does (`agent_credentials.issue(...,
@@ -356,12 +380,13 @@ hub, so the hub is always up.
 **Things to know:**
 
 - The owner's `~/.codex/config.toml` holds an `mcp_servers.pixellab`
-  server. A plain `codex exec` loads it too. `--ignore-user-config` drops it,
-  but also drops his Codex model and provider choices.
+  server. A plain `codex exec` loads it too. `-c
+  mcp_servers.pixellab.enabled=false` keeps it out and keeps his model
+  (`codex mcp list` shows `disabled`; resolved in M0).
 - Claude Code tool names use underscores: `mcp__holdspeak__channel_send`
   for `channel.send` (`agent_context/hooks.py:290-291`).
-- `--tools ""` is documented as "the built-in set". That the HoldSpeak MCP
-  tools stay available with it is **unverified** (see Unknown).
+- `--tools ""` removes the built-in set only; MCP tools from
+  `--mcp-config` stay callable (resolved in M0, see Unknown).
 
 ---
 
@@ -372,9 +397,9 @@ hub, so the hub is always up.
 | Does `claude -p --output-format json` report the cost? | **Yes.** The result has `total_cost_usd`, `usage` (input, output, cache read, cache creation, thinking tokens), `modelUsage` per model (with `costUSD`), `num_turns`, `duration_ms`, `is_error`, `subtype`, and `permission_denials`. | A recorded result in the tree: `pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/checks/story-03-check-response-astra-invoked-claude.json:5-10` (2026-09-24, an older CLI version) |
 | Is that the money he pays? | **Not always.** The same result says `"costBasis": "list"`: the figure is computed at list price. On a subscription login, it is an estimate, not a bill. | same file, `modelUsage` |
 | Does `--max-budget-usd` exist? | **Yes**, in 2.1.302: "Maximum dollar amount to spend on API calls (only works with --print)". | `claude --help` |
-| Does it apply to a subscription login? | **Unverified.** The help says "API calls". Most likely it stops on the same list-price estimate, whatever the login, but this was not run. | — |
-| Codex | No budget flag in `codex exec --help`. `--json` prints events; whether a dollar cost or only token counts are in them is **unverified** on 0.161. | `codex exec --help` |
-| pi | `--mode json` exists. Cost fields **unknown**. | `pi --help` |
+| Does it apply to a subscription login? | **Yes** (M0, Max login). It stops on the list-price estimate. It is checked after a turn, so the run overshoots: cap $0.0001, spent $0.0045, one turn, the tool not called. Result: `subtype: "error_max_budget_usd"`, `is_error: true`, `terminal_reason: "budget_exhausted"`, `errors: ["Reached maximum budget ($0.0001)"]`, `result: null`, exit 1. | M0, Unknown below |
+| Codex | No budget flag. `--json` (0.163) gives **tokens only, no dollars**: `turn.completed.usage` = `input_tokens`, `cached_input_tokens`, `cache_write_input_tokens`, `output_tokens`, `reasoning_output_tokens`. The model is not named in the events. | M0, Unknown below |
+| pi | `--mode json`: each `turn_end.message` has `provider`, `model`, `usage` {`input`, `output`, `cacheRead`, `cacheWrite`, `reasoning`, `totalTokens`, `cost` {`input`, `output`, `cacheRead`, `cacheWrite`, `total`}}. On the LAN model every cost is 0. | M0, Unknown below |
 
 For the Engines design (decision 3): show `total_cost_usd` on each Claude
 Code result and label it "estimate" when the login is a subscription; pass
@@ -431,19 +456,87 @@ Nothing on this list needs a new gate. Each new tool takes one row in
 
 ## Unknown
 
-- Whether `claude -p --tools ""` keeps the `mcp__holdspeak__*` tools. The
-  help names only built-in tools. A one-prompt test settles it. If it does
-  not, use `--disallowedTools` on the built-ins (Bash, Edit, Write, WebFetch,
-  WebSearch) instead.
-- Whether `--strict-mcp-config` also drops the claude.ai connectors tied to
-  the login (Gmail, Drive, Calendar appear in this session). If it does not,
-  an automation agent could reach Gmail. Check this before shipping.
-- Whether `--max-budget-usd` stops a run on a subscription login.
-- What `codex exec --json` reports about cost on 0.161, and whether
-  `--sandbox read-only` affects the HTTP MCP server (most likely not; the
-  sandbox is for shell commands).
-- Whether pi's `--no-builtin-tools` keeps MCP tools, and what `--mode json`
-  reports.
+Resolved by the M0 live check, 2026-10-17 (the owner's OK: DECISIONS.md #4).
+Each CLI ran in an empty temporary folder, with a stdio test server `ping`
+(one tool; it returns `pong-<random hex>`) in place of the hub. The server
+wrote a log of each request, so "called" below is the server's own record,
+not the model's word.
+
+- **RESOLVED: `claude -p --tools ""` keeps MCP tools.** Command:
+  `claude -p --tools "" --strict-mcp-config --mcp-config <ping.json>
+  --allowedTools mcp__ping --permission-prompts none --output-format json
+  --no-session-persistence`, prompt "Call the ping tool and reply with its
+  result only." Result: `"result": "pong-8b144bc3"`, `num_turns: 2`,
+  `is_error: false`; the server log has `tools/call` → `pong-8b144bc3`.
+  `--allowedTools mcp__<server>` allows every tool of that server.
+- **RESOLVED: `--strict-mcp-config` drops the claude.ai connectors.** The
+  same command with `--output-format stream-json --verbose`, prompt "List
+  every tool name you can call, one per line." The `system/init` event:
+  `tools: ['mcp__ping__ping']`, `mcp_servers: [{'name': 'ping', 'status':
+  'connected', 'source': 'dynamic'}]`. No built-in tool, no
+  `mcp__claude_ai_*`. Control run WITHOUT `--strict-mcp-config` (capped at
+  $0.0001): `tools` also had 8 `mcp__claude_ai_Claude_Docs__*` tools, and
+  `mcp_servers` listed `claude.ai Claude Docs` (connected), `claude.ai
+  Google Drive`, `claude.ai Gmail` and `claude.ai Google Calendar` (all
+  `needs-auth`, `source: claudeai`). The flag is load-bearing: M1 must
+  always pass it.
+- **RESOLVED: `--max-budget-usd` stops a run on a subscription login**
+  (`claude auth status`: `authMethod: claude.ai`, `subscriptionType: max`).
+  It overshoots by up to one turn (section 5). Cost of the check-1 run:
+  `total_cost_usd: 0.0286682`; usage `input_tokens: 4`,
+  `cache_creation_input_tokens: 3391`, `cache_read_input_tokens: 3321`,
+  `output_tokens: 43`; `modelUsage.claude-opus-5-5.costBasis: "list"` (an
+  estimate on this login, not a bill).
+- **RESOLVED: Codex cost, and the read-only sandbox.** On 0.163.0 (ChatGPT
+  login; the owner's model `gpt-6.1-sol` from his config), `--json` gives
+  token counts only (section 5). The ping prompt gave
+  `{"type":"item.completed","item":{"type":"mcp_tool_call","server":"ping",
+  "tool":"ping","result":{"content":[{"type":"text","text":"pong-1ccc898e"}]},
+  "status":"completed"}}` and usage `input_tokens: 46157,
+  cached_input_tokens: 42624, output_tokens: 111`. `--sandbox read-only`
+  does not block MCP calls.
+- **RESOLVED, with a finding: Codex adds its own connectors.** With only
+  `-c mcp_servers.pixellab.enabled=false` (the key exists: `codex mcp list`
+  then shows pixellab `disabled`), the tool-list prompt named more than 190
+  tools: `exec_command`, `apply_patch`, `web__run`, `image_gen__imagegen`,
+  `collaboration.spawn_agent`, and about 170 `mcp__codex_apps__*` tools
+  (GitHub `create_commit`, `merge_pull_request`, `update_file`; Sites
+  `deploy_site_version`; parental controls). With the `features.*=false`
+  and `web_search="disabled"` settings of section 4, the list fell to
+  `apply_patch`, `clock__curr_time`, `collaboration.*` (6), `functions.exec`,
+  `functions.wait`, `functions.request_user_input(_async)`,
+  `list_mcp_resources`, `list_mcp_resource_templates`, `read_mcp_resource`
+  and `mcp__ping__ping`, and ping was still called (`pong-69149f23`, server
+  log). `features.code_mode_host=false` breaks MCP ("Code Mode is
+  unavailable because code-mode host is disabled"; the reply was "Ping
+  unavailable"). The Codex lists are the model's own report: Codex has no
+  command that prints the tool set without a model call (`codex debug
+  prompt-input` leaves the tools out).
+- **RESOLVED: pi keeps MCP tools with `--no-builtin-tools`.** Command:
+  `PI_CODING_AGENT_DIR=<tmp with models.json + mcp.json> PI_OFFLINE=1 pi -p
+  --no-session --mode json --no-builtin-tools --model lan-qwen/qwen3.8-27b`.
+  pi's configured default is `kimi-coding/k2p6`
+  (`~/.pi/agent/settings.json`); the check used the owner's LAN model
+  (`lan-qwen/qwen3.8-27b` at 192.168.1.43, the engine HoldSpeak gives pi),
+  at zero cost. pi shows the model one tool, `codemode` (JavaScript that
+  calls the other tools); MCP tools are reached in it as
+  `tools.mcp__ping__ping(...)`. The run: `tool_execution_start` `codemode`
+  → nested `tool_execution_start` `mcp__ping__ping` (with
+  `parentToolCallId`) → result `pong-b30566e5`; final text
+  `pong-b30566e5`. JSON shape: one event per line; types `session` (`id`,
+  `cwd`, `version: 3`), `agent_start`, `turn_start`,
+  `message_start/update/end`, `tool_execution_start/update/end`
+  (`toolName`, `args`, `result`, `isError`, `durationMs`), `turn_end`
+  (`message` with `provider`, `model`, `usage`, `stopReason`;
+  `toolResults`), `agent_end` (`messages`), `agent_settled` (`aborted`).
+  The tool-list prompt answered "codemode (directly), mcp__ping__ping (via
+  codemode)".
+- **Still unknown:** whether Codex `apply_patch` or `functions.exec` can
+  write under `--sandbox read-only` (expected: no; not run); whether Codex
+  `collaboration.spawn_agent` still works with `features.multi_agent=false`
+  (the model still listed it); whether pi's `codemode` JavaScript can reach
+  the file system or the network by itself (its prompt says it "calls other
+  tools"; not run).
 - The `workbench_id` lock risk in section 3: read from code, not run.
 
 [^people-ruling]: `holdspeak/mcp/palettes.py:52-56`; `holdspeak/services/conductor_launch.py:7-9`.

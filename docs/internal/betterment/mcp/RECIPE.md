@@ -32,6 +32,12 @@ Automations A2 → M3 and M4 → M5 → M6.
   5. pi `--no-builtin-tools`: MCP tools are kept; `--mode json` shape.
 - **Done when:** the answers are written into `MODEL.md` "Unknown", and
   the M1 commands are fixed to match them.
+- **Done 2026-10-17.** All five answered (`MODEL.md` "Unknown"): (1) yes;
+  (2) yes, strict drops them (without it, 4 claude.ai connectors load);
+  (3) yes, with up to one turn of overshoot; (4) tokens only, no dollars;
+  `mcp_servers.pixellab.enabled=false` works, and Codex needs
+  `features.apps=false` too (its own ChatGPT apps reach the agent
+  otherwise); (5) yes, through pi's `codemode` tool. Codex is now 0.163.0.
 
 ## M1. One-shot runs with the desk's tools
 
@@ -49,8 +55,29 @@ Automations A2 → M3 and M4 → M5 → M6.
     the 0600 config. Put `HOLDSPEAK_HUB_URL` and
     `HOLDSPEAK_AGENT_CREDENTIAL` into the child's environment only. After it
     exits (or is killed), revoke the credential and remove the config.
-  - Use the commands in `MODEL.md` §4, as corrected by M0. Built-in tools
-    are off unless the automation has a folder (Automations A10).
+  - Use the commands in `MODEL.md` §4 (corrected by M0). Built-in tools
+    are off unless the automation has a folder (Automations A10). In short:
+    - Claude Code: `claude -p --output-format json --no-session-persistence
+      --strict-mcp-config --mcp-config <0600 file> --tools ""
+      --allowedTools mcp__holdspeak --permission-prompts none [--model M]
+      [--max-budget-usd N]`. Never drop `--strict-mcp-config`: without it
+      the login's claude.ai connectors (Gmail, Drive, Calendar, Docs) load.
+      Read `total_cost_usd` (an estimate on a subscription; `costBasis:
+      "list"`); a cap ends with `subtype: "error_max_budget_usd"` and can
+      overshoot by one turn, so set the cap below the real limit.
+    - Codex: `codex exec --ephemeral --sandbox read-only
+      --skip-git-repo-check -C <tmp> --json`, plus `-c features.apps=false
+      -c web_search="disabled"` and the other `features.*=false` of §4,
+      plus `-c mcp_servers.<name>.enabled=false` for each name in
+      `codex mcp list --json` (today `pixellab`), plus the three
+      `mcp_servers.holdspeak.*` settings. Keep `features.code_mode_host`
+      on (MCP needs it). Not `--ignore-user-config`. Cost: tokens only,
+      from `turn.completed.usage`; show "Codex cannot limit spend".
+    - pi: `PI_CODING_AGENT_DIR=<folder with models.json + mcp.json>
+      PI_OFFLINE=1 PI_SKIP_VERSION_CHECK=1 PI_TELEMETRY=0 pi -p --no-session
+      --mode json --no-builtin-tools --model lan/<model>`, the prompt on
+      stdin and stdin closed after it (an open stdin hangs pi). Cost from
+      `turn_end.message.usage.cost.total`.
   - Remove the 13 MODEL-class tools from the run's set (decision 3): a
     subset of CONDUCTOR, about ten lines in `palettes.py`.
   - Fix the deadlock risk: a run must not hold the automation's lock while
