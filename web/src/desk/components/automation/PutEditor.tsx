@@ -96,7 +96,7 @@ export function PutEditor({
       ) : null}
       {destinations.failed ? (
         <div className="automation-failure">
-          <p className="automation-failure-words">Could not read the saved destinations</p>
+          <p className="automation-failure-words">Could not read the saved destinations. Press Try again.</p>
           <Button dense variant="ghost" onClick={destinations.reload}>Try again</Button>
         </div>
       ) : null}
