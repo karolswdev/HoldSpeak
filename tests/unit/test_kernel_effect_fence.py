@@ -299,6 +299,16 @@ _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
         1,
     ): "process site outside plugin/connector scope",
     (
+        "holdspeak/intel/cli_engine.py",
+        "CliEngine._run_process",
+        "Popen",
+        1,
+    ): (
+        "Betterment E1: one agent CLI run (claude -p, codex exec) with tools "
+        "off in an empty temp folder; it is the sender of the run's "
+        "`run_external_egress` record (destination = the preset's vendor host)"
+    ),
+    (
         "holdspeak/delivery/dossiers.py",
         "_default_runner",
         "run",

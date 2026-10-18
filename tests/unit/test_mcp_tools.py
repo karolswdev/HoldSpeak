@@ -34,6 +34,7 @@ REQUIRED_TOOLS = {
     "model_library.get", "model_library.download", "model_library.add_to_library",
     "model_library.use_model_file", "model_library.connect_hosted_model",
     "model_library.define_endpoint", "model_library.connect_paired_device",
+    "model_library.connect_cli_engine",
     "inference_assignment.summary", "inference_assignment.editor", "inference_assignment.set",
     "inference_assignment.preview_use_default", "inference_assignment.clear",
 }

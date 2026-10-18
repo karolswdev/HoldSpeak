@@ -1,4 +1,4 @@
-"""The test suite never runs the owner's real ``gh`` or ``acli``.
+"""The test suite never runs the owner's real ``gh``, ``acli``, ``claude`` or ``codex``.
 
 ``tests/conftest.py`` sets ``HOLDSPEAK_TEST_NO_REAL_CLI=1`` (a hub the
 tests start inherits it). With the flag set, a production default runner
@@ -17,7 +17,8 @@ from pathlib import Path
 from typing import Sequence
 
 TEST_FLAG = "HOLDSPEAK_TEST_NO_REAL_CLI"
-GUARDED = frozenset({"gh", "acli"})
+#: Betterment E1: the agent CLIs a CLI engine runs are guarded the same way.
+GUARDED = frozenset({"gh", "acli", "claude", "codex"})
 
 
 class RealCliRefusedInTests(PermissionError):

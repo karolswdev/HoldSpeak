@@ -3689,6 +3689,46 @@
         "summary": "Api Agent Rebrief Take Back"
       }
     },
+    "/api/agent/launches/{launch_id}/seen": {
+      "post": {
+        "description": "Betterment AG0: the owner opened this agent, so its done turn is\nseen (``seen_wait_id`` on the launch; the flight is no longer\n``new``). ``{wait_id}`` names the turn he saw; without it, the\nlaunch's current done turn. ``{\"seen\": null}`` when no turn is done.",
+        "operationId": "api_agent_launch_seen_api_agent_launches__launch_id__seen_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "launch_id",
+            "required": true,
+            "schema": {
+              "title": "Launch Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Agent Launch Seen Api Agent Launches  Launch Id  Seen Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Agent Launch Seen"
+      }
+    },
     "/api/agents/capabilities": {
       "get": {
         "operationId": "api_agent_capabilities_api_agents_capabilities_get",
@@ -14506,6 +14546,24 @@
           }
         },
         "summary": "Add Detected Model"
+      }
+    },
+    "/api/inference/model-library/connect-cli-engine": {
+      "post": {
+        "operationId": "connect_cli_engine_api_inference_model_library_connect_cli_engine_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Connect Cli Engine Api Inference Model Library Connect Cli Engine Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Connect Cli Engine"
       }
     },
     "/api/inference/model-library/connect-hosted-model": {

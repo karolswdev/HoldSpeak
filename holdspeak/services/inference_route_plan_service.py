@@ -1622,6 +1622,9 @@ class InferenceRoutePlanService:
                 "private_network" if private else "external_service",
                 None,
             )
+        elif kind == "cliCommand":
+            # Betterment E1: an agent CLI on this Mac; its vendor is the cloud.
+            values = ("cli_engine", "cli_v1", "cloud", None)
         else:
             values = ("unsupported", "unknown", "unknown", None)
         deployment = DeploymentIdentity(

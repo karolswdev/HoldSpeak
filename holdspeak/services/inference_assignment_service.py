@@ -2182,6 +2182,10 @@ class InferenceAssignmentService:
         modalities: set[str],
         capability: InferenceCapabilityDefinition,
     ) -> str | None:
+        # Betterment E1: an agent CLI never serves speech work. Dictation is a
+        # hot path with a latency cap, and transcription is local only.
+        if str(getattr(profile, "runtime_family", "")) == "cli_v1" and capability.id.startswith("speech."):
+            return "cli_engine_speech_unsupported"
         required_modalities = set(capability.input_modalities)
         if "text" in required_modalities and not ({"text", "language"} & modalities):
             return "modality_unsupported"

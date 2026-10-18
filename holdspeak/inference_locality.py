@@ -76,6 +76,11 @@ def _attempt_route(conn: Any, attempt: dict) -> dict[str, str]:
         host = ""
     elif lamp == "mesh":
         host = node
+    elif endpoint.startswith("cli:"):
+        # Betterment E1: an agent CLI's bytes go to its vendor's host.
+        from .intel.cli_engine import cli_vendor_host
+
+        host = cli_vendor_host(endpoint)
     else:
         from urllib.parse import urlparse
 
@@ -135,6 +140,8 @@ def _entry_lamp(conn: Any, row: Any) -> str:
             return "mesh"
         if kind == "openAICompatible":
             return deployment_lamp("private_network", legacy["base_url"])
+        if kind == "cliCommand":
+            return "cloud"
         return "unknown"
     binding = conn.execute(
         """SELECT b.deployment_revision_id FROM model_profile_binding_heads h
