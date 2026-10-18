@@ -39,7 +39,7 @@ def test_registry_is_versioned_complete_and_strict() -> None:
     assert registry.label("directory") == "Zone"
     assert registry.label("kb") == "Knowledge"
     assert registry.label("chain") == "Sequence"
-    assert registry.label("profile") == "Runs on"
+    assert registry.label("profile") == "Engine"  # Betterment E6
     assert registry.label("connector") == "Integration"
     assert registry.destination_classes == tuple(DestinationClass)
     assert registry.decision_kinds == tuple(DecisionKind)

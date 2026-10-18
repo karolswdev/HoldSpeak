@@ -682,7 +682,7 @@ export function DeskToolShelf() {
         section: "SETTINGS",
         glyph: "▣",
         label: target.name,
-        kind: target.readiness.available ? "RUNS ON" : "UNAVAILABLE",
+        kind: target.readiness.available ? "ENGINE" : "UNAVAILABLE",
         terms:
           `${target.kind} ${target.boundary} ${target.model}`.toLocaleLowerCase(),
         run: () => openToolInspector("target", target.id),

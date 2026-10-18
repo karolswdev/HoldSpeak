@@ -35,7 +35,7 @@ export const PRODUCT_TERMS = {
   workflow: ["Workflow", "Workflows"],
   sequence: ["Sequence", "Sequences"],
   integration: ["Integration", "Integrations"],
-  runs_on: ["Runs on", "Runs on"],
+  runs_on: ["Engine", "Engines"],
   proposed_action: ["Proposed action", "Proposed actions"],
   review: ["Review", "Reviews"],
   approval: ["Approval", "Approvals"],

@@ -105,8 +105,8 @@
       "meaning": "A named connection to a service or system."
     },
     "runs_on": {
-      "singular": "Runs on",
-      "plural": "Runs on",
+      "singular": "Engine",
+      "plural": "Engines",
       "category": "placement",
       "meaning": "The user-facing answer to where intelligence executes."
     },
@@ -332,7 +332,7 @@
       {
         "id": "legacy-product-nouns",
         "pattern": "\\b(?:Agent Desk|Personas?|Profiles?|Recipes?|Chains?|Knowledge Base)\\b",
-        "reason": "Primary UI uses Coder session, Runs on, Agent, Sequence, and Knowledge."
+        "reason": "Primary UI uses Coder session, Engine, Agent, Sequence, and Knowledge."
       },
       {
         "id": "raw-control-mode-labels",

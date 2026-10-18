@@ -601,7 +601,7 @@ describe("Runs on — a record-less engine is refused on the drop (recorded hub)
       await waitFor(() => expect(screen.getByTestId("runson-assignments").querySelector(".switchboard")!.getAttribute("data-layout")).toBe("list"));
       for (const job of ["thoughts_notes", "agents_tools"]) {
         fireEvent.click(screen.getByTestId(`switchboard-job-${job}`));
-        await screen.findByText(/ · runs on$/i); // the job's card is open
+        await screen.findByText(/ · engine$/i); // the job's card is open
         expect(screen.queryByTestId("switchboard-tap-old-box")).toBeNull();
       }
       expect(rec.calls.filter((c) => c.method !== "GET")).toEqual([]);
@@ -634,7 +634,7 @@ describe("Runs on — Anthropic is a service, never a NOT SUPPORTED YET dead end
       await openRecorded(rec);
       await waitFor(() => expect(screen.getByTestId("runson-assignments").querySelector(".switchboard")!.getAttribute("data-layout")).toBe("list"));
       fireEvent.click(screen.getByTestId("switchboard-job-thoughts_notes"));
-      await screen.findByText(/ · runs on$/i); // the job's card is open
+      await screen.findByText(/ · engine$/i); // the job's card is open
       expect(screen.queryByTestId("switchboard-tap-cloud-anthropic")).toBeNull();
     } finally {
       spy.mockRestore();

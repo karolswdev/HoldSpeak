@@ -430,7 +430,7 @@ export function CadenceCore({ hero }: CoreProps) {
       <div className="rhythm-section">
       <SurfaceLedger count="" cols="hub">
         <SurfaceLedgerRow
-          primary="Runs on"
+          primary="Where it runs"
           expands={false}
           data-testid="rhythm-runs-on-row"
           cells={

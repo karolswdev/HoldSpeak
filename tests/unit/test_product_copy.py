@@ -355,5 +355,5 @@ def test_inventory_contains_shared_product_language_in_real_surfaces() -> None:
     assert ("web", "Normal") in values
     assert ("swift", "Secure") in values
     assert ("swift", "Normal") in values
-    assert any(client == "web" and "Runs on" in text for client, text in values)
+    assert any(client == "web" and "Engines" in text for client, text in values)
     assert any(client == "swift" and "Coder session" in text for client, text in values)

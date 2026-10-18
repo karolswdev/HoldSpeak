@@ -185,7 +185,7 @@ describe("SurfaceSwitchboard (list, 393)", () => {
     );
     const board = screen.getByTestId("switchboard");
     expect(board.getAttribute("data-layout")).toBe("list");
-    expect(screen.getByText("Meetings · runs on")).toBeTruthy();
+    expect(screen.getByText("Meetings · engine")).toBeTruthy();
     // The engine it runs on, then `Or` the alternatives it accepts.
     expect(screen.getByTestId("switchboard-engine-q27")).toBeTruthy();
     expect(screen.queryByTestId("switchboard-tap-whisper")).toBeNull(); // refused: speech only
@@ -200,7 +200,7 @@ describe("SurfaceSwitchboard (list, 393)", () => {
   it("shows the EFFECTIVE engine of a job that follows the default, with its token; not as an alternative (C4)", () => {
     const jobs = JOBS.map((j) => (j.id === "bg" ? { ...j, current: "q27", currentToken: "FOLLOWS DEFAULT" } : j));
     render(<SurfaceSwitchboard layout="list" jobs={jobs} engines={ENGINES} wires={WIRES} selected="bg" />);
-    expect(screen.getByText("Background · runs on")).toBeTruthy();
+    expect(screen.getByText("Background · engine")).toBeTruthy();
     const current = screen.getByTestId("switchboard-engine-q27");
     expect(current.textContent).toContain("FOLLOWS DEFAULT");
     expect(screen.queryByTestId("switchboard-tap-q27")).toBeNull();

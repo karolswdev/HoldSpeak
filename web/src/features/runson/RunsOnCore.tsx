@@ -417,7 +417,7 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
   const layout = useSwitchboardLayout(rootRef);
 
   useEffect(() => {
-    setTitle?.(title ?? "Runs on");
+    setTitle?.(title ?? "Engines");
   }, [setTitle, title]);
 
   const { roster, detection, engines } = ctrl;
@@ -759,7 +759,7 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
     <div className="runson-root" ref={rootRef} data-testid="runson-root" aria-busy={reading || undefined}>
       <div className="runson-apphead">
         <h1 className="surface-display runson-fact" data-testid="runson-fact">
-          {roster ? fact : "Runs on"}
+          {roster ? fact : "Engines"}
         </h1>
         <ul className="runson-strip" data-testid="runson-strip">
           {ready ? <li data-tone="ok"><span className="runson-sq" />{`${ready} ready`}</li> : null}

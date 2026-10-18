@@ -468,7 +468,7 @@ class MeetingService:
             self._db.meetings.release_transcription(meeting_id, token)
             if isinstance(exc, Exception):
                 _LOG.warning("meeting transcribe %s not admitted: %s", meeting_id, exc)
-                raise ConflictError("Speech cannot run now. Check speech in Runs on.", code="speech_not_admitted") from exc
+                raise ConflictError("Speech cannot run now. Check speech in Engines.", code="speech_not_admitted") from exc
             raise
         if not ready:
             session.cancel_and_close()

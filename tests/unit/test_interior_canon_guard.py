@@ -147,8 +147,8 @@ def test_runs_on_room_stays_folded_into_the_models_module() -> None:
         "HS-156-04 regression: the front door must host the Model Library "
         "in its Advanced fold, never revive target CRUD."
     )
-    assert 'FoldGadget title="Runs on"' in core and "SurfaceFacts" in core, (
-        "HS-112-01 regression: Runs on technical facts must remain folded in "
+    assert 'FoldGadget title="Where it runs"' in core and "SurfaceFacts" in core, (
+        "HS-112-01 regression: Where it runs technical facts must remain folded in "
         "the one Models/Model Library surface."
     )
     assert "<Field" not in core and "<Select" not in core, (
@@ -186,7 +186,7 @@ def test_dictation_core_speech_settings_never_regresses() -> None:
     # HS-112-01: the runtime destination is edited ONLY in the Prefs
     # models module — the Speak face states the fact and hands over,
     # never re-deriving a second endpoint editor.
-    assert "RUNS ON LIVES IN MODELS" in source, (
+    assert "SET IN ENGINES" in source, (  # Betterment E6 (was RUNS ON LIVES IN MODELS)
         "HS-112-01 regression: the Speak runtime face must hand over to "
         "the Prefs models module (the one dial), never embed or "
         "re-derive an endpoint editor."

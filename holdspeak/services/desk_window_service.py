@@ -118,7 +118,7 @@ RETIRED_APPS: dict[str, str] = {
 #: the hub both need to retire the old Concierge row without retiring the
 #: canonical Settings window that now hosts Engines.
 RETIRED_WINDOWS: dict[str, str] = {
-    "surface-concierge": "Runs on is the Engines section of Settings (PHILO-17)",
+    "surface-concierge": "Engines is a section of Settings (PHILO-17)",
     "surface-companion": "the old Agents application is unmapped; Agents is the Conductor window (Betterment AG1)",
 }
 

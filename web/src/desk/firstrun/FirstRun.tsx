@@ -369,9 +369,9 @@ function FirstWordsCard({
                   <SpeechSetup setup={speechFix} bare primary={false} testId="firstrun-words-speech" />
                 ) : (
                   /* Speech is on this device by the hub's read: the model
-                     choice lives on Runs on's Speech row. */
+                     choice lives on the Engines window's Speech row. */
                   <Button dense variant="secondary" onClick={() => openSurfaceOr("configure-runs-on", "/profiles")}>
-                    Runs on
+                    Engines
                   </Button>
                 )
               ) : null}

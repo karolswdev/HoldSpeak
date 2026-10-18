@@ -122,7 +122,7 @@ See [The Desk](WEB_DESK.md) for windows and navigation.
 ## Set up models
 
 1. Open **Settings > Models**.
-2. Read the engines that the Concierge lists.
+2. Read the engines that **Settings > Engines** lists.
 3. Add an endpoint or download a model if no engine fits.
 4. Check the host and engine proposed for each capability group.
 5. Select **Use these** when the required groups are ready.

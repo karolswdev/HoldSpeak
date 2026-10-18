@@ -76,7 +76,7 @@ describe("product language contract", () => {
     expect(productLabel("recipe")).toBe("Mode" /* Betterment AG1, DECISIONS #3 */);
     expect(productLabel("coder")).toBe("Agent" /* Betterment AG1 */);
     expect(productLabel("directory", true)).toBe("Zones");
-    expect(productLabel("profile")).toBe("Runs on");
+    expect(productLabel("profile")).toBe("Engine" /* Betterment E6 */);
   });
 
   it("rejects unknown values rather than inventing a generic label", () => {

@@ -168,7 +168,7 @@ export function CapabilitySection({ object: o }: { object: WorldObject }) {
       ) : null}
       <div className="desk-pullout-capability-foot">
         <span className="quiet">
-          Runs on{" "}
+          Where it runs:{" "}
           {supportedPlacements
             .map((value: string) => humanizeWireValue(value))
             .join(" · ")}

@@ -470,7 +470,7 @@ def _check_speech_model(config: Config | None = None) -> DoctorCheck:
     return DoctorCheck(
         name="Speech model", status="FAIL",
         detail=f"Speech is not set up: {label} is not on this device, and setup cannot get it",
-        fix="Select the base model in Runs on, or add the model yourself",
+        fix="Select the base model in Engines, or add the model yourself",
     )
 
 

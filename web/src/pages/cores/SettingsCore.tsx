@@ -213,7 +213,7 @@ export function calendarSourceEgressChips(
 const FRIENDLY_FIELDS: Record<string, string> = {
   mlx_model: "MLX model",
   llama_cpp_model_path: "llama.cpp model file",
-  profile_id: "Runs on",
+  profile_id: "Engine",
   max_total_latency_ms: "Latency budget",
   journal_retention: "Journal retention",
   n_ctx: "Context window",

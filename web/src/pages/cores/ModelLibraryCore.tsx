@@ -337,7 +337,7 @@ export function ModelLibraryCore() {
         <span className="model-library-provider-fact">{selected.source === "provider" ? "Connected provider" : "Provider custody"}</span>
       </FoldGadget>
       {projection ? (
-        <FoldGadget title="Runs on" token={projection.artifact_detection.state}>
+        <FoldGadget title="Where it runs" token={projection.artifact_detection.state}>
           <SurfaceFacts value={{ source: selected.source, artifact_detection: projection.artifact_detection.state }} />
         </FoldGadget>
       ) : null}

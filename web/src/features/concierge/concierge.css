@@ -431,6 +431,16 @@
   flex: 1 1 200px;
 }
 
+/* Betterment E6: the models a server serves, one press to pick (a full
+   line of its own, so a long model name wraps instead of clipping). */
+.concierge-add-models {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
 .concierge-add-engine-reason {
   font: 400 12px/1.4 "JetBrains Mono", monospace;
   color: var(--danger, #f87171);

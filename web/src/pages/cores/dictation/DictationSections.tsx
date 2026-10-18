@@ -30,12 +30,12 @@ export function Runtime() {
   return (
     <GadgetGroup label="Dictation runtime">
       <div className="prefs-elsewhere">
-        <span className="prefs-elsewhere-fact">RUNS ON LIVES IN MODELS</span>
+        <span className="prefs-elsewhere-fact">SET IN ENGINES</span>
         <Button
           dense
           onClick={() => openSurfaceOr("configure-runs-on", "/settings", "writing_dictation")}
         >
-          Open Models
+          Open Engines
         </Button>
       </div>
     </GadgetGroup>
