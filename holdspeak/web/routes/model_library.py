@@ -139,6 +139,20 @@ def build_model_library_router(ctx: WebContext) -> APIRouter:
         except Exception:
             return _provider_error_500("Failed to define provider endpoint")
 
+    @router.post("/api/inference/model-library/connect-cli-engine")
+    async def connect_cli_engine(request: Request) -> Any:
+        try:
+            body = await _json(request)
+            if set(body) != {"draft"} or not isinstance(body.get("draft"), dict):
+                raise ServiceError("model_library_provider_invalid", "Provider request is invalid.", context={"status": 400})
+            result = service.connect_cli_engine(request.state.principal, body["draft"])
+            _engine_changed("connect_cli_engine")
+            return JSONResponse(result, status_code=200)
+        except ServiceError as exc:
+            return _safe_error(exc)
+        except Exception:
+            return _provider_error_500("Failed to add agent engine")
+
     @router.post("/api/inference/model-library/connect-paired-device")
     async def connect_paired_device(request: Request) -> Any:
         try:

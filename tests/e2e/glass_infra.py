@@ -240,6 +240,10 @@ def _boot(
     # PHILO-16 rig gap G1: the Agents detector reads no agent state from
     # outside this HOME (holdspeak/services/onboarding_service.py).
     monkeypatch.setenv("HOLDSPEAK_AGENT_STATE", "off")
+    # Betterment E1: no agent CLI on this machine is read or run as an engine
+    # (holdspeak/intel/cli_engine.py). A test that needs one turns it on and
+    # puts a fake CLI on PATH.
+    monkeypatch.setenv("HOLDSPEAK_CLI_ENGINES", "off")
     # PHILO-16 rig gaps (G3 closes): the same env as graph_walk's
     # `_isolated_hub_env`: no git system config, no real gh/acli, gh's config
     # and every key store inside this HOME, no desktop notification.

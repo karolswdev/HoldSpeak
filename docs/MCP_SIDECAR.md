@@ -1,7 +1,7 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-257 tools across 45 families. Any MCP client (Claude Code, Cursor, a
+258 tools across 45 families. Any MCP client (Claude Code, Cursor, a
 custom script) can read and drive the desk without the web UI.
 
 This page is the MCP transport reference. Each tool description in the
@@ -250,8 +250,8 @@ the readable detail and `code` holds the stable service code.
 
 - `model_library.*` are owner-only commands over the Model Library service:
   `get`, `download`, `add_to_library`, `use_model_file`,
-  `connect_hosted_model`, `define_endpoint` and `connect_paired_device`.
-  They add or connect models. They never select a model for a capability.
+  `connect_hosted_model`, `define_endpoint`, `connect_cli_engine` and
+  `connect_paired_device`. They add or connect models. They never select a model for a capability.
   File intake accepts a request id, a basename and base64 bytes, up to
   16 MiB decoded. Client paths are refused. Hosted-provider secrets go in a
   write-only `secret` field. They never appear in errors, logs or receipts.
@@ -350,7 +350,7 @@ database, FTS index or Cadence.
 
 <!-- BEGIN MCP TOOL ROSTER (machine-generated -- do not edit) -->
 
-**Registry totals:** 257 tools across 45 families.
+**Registry totals:** 258 tools across 45 families.
 
 #### agent (1)
 
@@ -515,9 +515,10 @@ database, FTS index or Cadence.
 - `memory.page`
 - `memory.search`
 
-#### model_library (7)
+#### model_library (8)
 
 - `model_library.add_to_library`
+- `model_library.connect_cli_engine`
 - `model_library.connect_hosted_model`
 - `model_library.connect_paired_device`
 - `model_library.define_endpoint`
@@ -848,7 +849,7 @@ use it.
 
 `tools_for_palette(palette)` returns only the tools in the palette. A
 client that lists tools through this filter sees 65 tools
-instead of 257.
+instead of 258.
 
 `dispatch_for_palette(name, arguments, principal, palette)` runs a tool
 only if `name` is in the palette. A name outside the palette gets a typed

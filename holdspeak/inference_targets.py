@@ -48,7 +48,7 @@ GLOBAL_DEFAULT_TARGET_ID = THIS_MACHINE_ID
 PLACEMENT_SOURCES = ("invocation", "workbench", "agent", "global")
 
 SUPPORTED_PROFILE_KINDS = frozenset(
-    {"onDevice", "openAICompatible", "desktop", "meshNode"}
+    {"onDevice", "openAICompatible", "desktop", "meshNode", "cliCommand"}
 )
 
 
@@ -476,6 +476,25 @@ def target_from_profile(profile: Any, db: Any = None) -> InferenceTarget:
 
             state = "needs_key"
             reason = f"Destination '{name}' needs a key in ${profile_key_env(pid)}"
+    elif legacy_kind == "cliCommand":
+        # Betterment E1: an agent CLI on this Mac. Its prompt goes to the
+        # CLI's vendor, so the boundary is cloud, never this device.
+        from .intel.cli_engine import (
+            BOUNDARY as CLI_BOUNDARY, RUNTIME_FAMILY, TARGET_KIND, TRANSPORT,
+            cli_engines_on, parse_cli_endpoint,
+        )
+        import shutil
+
+        kind, boundary, owner, transport, engine = (
+            TARGET_KIND, CLI_BOUNDARY, "service_provider", TRANSPORT, RUNTIME_FAMILY,
+        )
+        parsed_cli = parse_cli_endpoint(base_url)
+        if parsed_cli is None:
+            state, reason = "unsupported", f"Destination '{name}' names no known agent"
+        elif not cli_engines_on():
+            state, reason = "unavailable", "Agent engines are off on this hub"
+        elif shutil.which(parsed_cli[0].executable) is None:
+            state, reason = "unavailable", f"{parsed_cli[0].label} is not installed on this Mac"
     else:
         kind, boundary, owner, transport, engine = (
             "unsupported",
@@ -786,6 +805,7 @@ def _engine_for_revision(
         "private_endpoint": "openAICompatible",
         "external_service": "openAICompatible",
         "this_device": "onDevice",
+        "cli_engine": "cliCommand",
     }.get(revision.kind)
     if profile_kind is not None and revision.destination_id:
         return build_meeting_intel_for_profile(

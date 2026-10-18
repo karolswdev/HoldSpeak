@@ -1323,6 +1323,7 @@ _INCOMPATIBILITY_REASONS: dict[str, str] = {
     "capability_class_unsupported": "This engine cannot do this work.",
     "context_unsupported": "This engine holds too little text.",
     "boundary_unsupported": "This engine is not permitted on this network.",
+    "cli_engine_speech_unsupported": "An agent engine cannot do speech work.",
     "profile_missing": "This engine record is not available.",
     "binding_missing": "This engine has no ready record.",
     "binding_disabled": "This engine is turned off.",

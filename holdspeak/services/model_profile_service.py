@@ -69,6 +69,8 @@ _LEGACY_RUNTIME_FAMILIES = {
     "openai_compatible_v1": frozenset({"openai_compatible", "openai_compatible_v1"}),
     "mesh_relay_v1": frozenset({"mesh_relay", "node_runtime"}),
     "paired_device_v1": frozenset({"paired_runtime", "configured_hub_engine", "mesh_relay", "node_runtime"}),
+    # Betterment E1: an agent CLI on this Mac (holdspeak/intel/cli_engine.py).
+    "cli_v1": frozenset({"cli_v1"}),
 }
 
 DependencyProvider = Callable[[Any, str], list[dict[str, str]]]
@@ -300,12 +302,14 @@ def adapt_v1_profile(profile: Any) -> dict[str, Any]:
         "openAICompatible": "openai_compatible",
         "meshNode": "mesh",
         "desktop": "paired_device",
+        "cliCommand": "cli_agent",
     }.get(kind, "legacy")
     runtime_family = {
         "onDevice": "legacy_local",
         "openAICompatible": "openai_compatible_v1",
         "meshNode": "mesh_relay_v1",
         "desktop": "paired_device_v1",
+        "cliCommand": "cli_v1",
     }.get(kind, "legacy_v1")
     manifest = {
         "revision": "legacy-v1",
