@@ -542,9 +542,12 @@ class IntelligenceConsumer:
     context and dies with it.
     """
 
-    #: This plugin's decoding envelope for its single prompt.
+    #: This plugin's decoding envelope for its single prompt.  Capture C4: the
+    #: budget is the summary's (3000).  A reasoning engine (the LAN qwen3.8-27b)
+    #: spends its thinking from the same budget; at 800 it stopped on
+    #: ``length`` with an empty or cut JSON reply.
     intel_temperature: float = 0.2
-    intel_max_tokens: int = 800
+    intel_max_tokens: int = 3000
 
     def _call_intel(
         self,
