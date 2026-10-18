@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_firstrun.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-18T15:56:29.490847Z",
+  "captured_at": "2026-10-18T20:05:10.920535Z",
   "wire": {
     "agents": [
       {
@@ -20,7 +20,7 @@
         "vendor": "OPENAI"
       }
     ],
-    "checkedAt": "2026-10-18T15:56:29.403785+00:00",
+    "checkedAt": "2026-10-18T20:05:10.837683+00:00",
     "engines": [
       {
         "audioCapable": false,
@@ -107,8 +107,8 @@
       },
       "observation": {
         "available_memory_bytes": null,
-        "sha256": "sha256:124acdd89eade671a9efeeed90bb5a574a5ad694effa5e205bed0dbbf06ab9b4",
-        "storage_available_bytes": 238647934976
+        "sha256": "sha256:7991b1e01188298008c9c75fedd8904b989bf2b25c0a2df426bbe0bc6c080f6e",
+        "storage_available_bytes": 234145263616
       }
     },
     "lastApply": null,

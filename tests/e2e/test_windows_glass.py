@@ -1964,16 +1964,16 @@ class TestTheDeskRemembers(_Rig):
             page.on("request", lambda r: puts.append(f"{r.method} {r.url}")
                     if r.method in ("PUT", "POST") and ("/api/updates/" in r.url or "/agenda" in r.url) else None)
             try:
-                # 3. People on Priya, the Prep tab (PHILO-17: the 1:1s tab folded into
-                #    Prep), an agenda item typed, not added
+                # 3. People on Priya, the Prep (Betterment D7: the prep is the page;
+                #    Context, History and Info are folds under it, not tabs), an
+                #    agenda item typed, not added
                 self._chair_window(page, width, "Needs you")
                 # PHILO-14 A5: the Needs-you drawer row's body opens it (`needs-row`).
                 commitment = page.locator(".desk-window-shell[aria-label='Needs you'] [data-testid='needs-row']",
                                           has_text=COMMITMENT).first.locator(".needs-row-name")
                 self._press(page, commitment, width)
                 people = page.locator(PERSON).first
-                people.get_by_role("tab", name="Prep").wait_for()
-                self._press(page, people.get_by_role("tab", name="Prep"), width)
+                people.get_by_test_id("people-add-agenda").wait_for()
                 self._press(page, people.get_by_test_id("people-add-agenda"), width)
                 pad = people.get_by_role("textbox", name="Add to the agenda")
                 pad.wait_for()
@@ -2061,7 +2061,10 @@ class TestTheDeskRemembers(_Rig):
                 _settle(page)
                 after_windows = self._windows(page)
                 page.screenshot(path=str(_h1_SHOTS / f"B2-02-after-reload-{width}.png"))
-                tab = people.locator(".people-lenses [role=tab][aria-selected=true]").inner_text().strip()
+                # The lens is the open fold under the prep; none open reads Prep.
+                open_folds = people.locator(
+                    "[data-testid='people-folds'] button[aria-expanded='true'] .surface-disclosure-label")
+                tab = open_folds.first.inner_text().strip() if open_folds.count() else "Prep"
                 agenda = people.get_by_role("textbox", name="Add to the agenda").input_value()
                 person = people.locator(".people-detail-head .people-name").inner_text().strip()
                 room_after = next((w["rect"] for w in after_windows if w["id"] == "surface-project-memory"), None)
