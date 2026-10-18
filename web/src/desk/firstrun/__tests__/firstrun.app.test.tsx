@@ -9,7 +9,8 @@
  * reads the face makes, the answer to each press, the reads after it. A read
  * the recording does not hold is a miss, and every test asserts none. */
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi, onTestFinished } from "vitest";
+import { useBuilderTools } from "../../builderTools";
 
 const mocks = vi.hoisted(() => ({
   apiFetch: vi.fn(),
@@ -141,6 +142,9 @@ describe("Engines after the first-run Use (recorded hub)", () => {
     // 192.168.1.43`, TOOL INCOMPATIBLE and 1 BROKEN.
     // (hub half: tests/integration/test_desk_firstrun.py::test_a_lan_box_as_default_keeps_the_speech_download)
     hub = new RecordedHub("lan", "1-used");
+    // Betterment E5: the job board this reads is parked behind Builder tools.
+    useBuilderTools.getState().setOn(true);
+    onTestFinished(() => useBuilderTools.getState().setOn(false));
     render(<RunsOnCore scope="" />);
     const strip = await screen.findByTestId("runson-strip");
     await waitFor(() => expect(strip.textContent).toMatch(/ready/));

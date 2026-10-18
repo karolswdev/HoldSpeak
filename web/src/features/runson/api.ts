@@ -353,7 +353,68 @@ export async function discoverLan(): Promise<LanDiscovery> {
 
 /* ── writes ── */
 
-export type AssignmentScope = { kind: "global" } | { kind: "group"; group_id: string };
+export type AssignmentScope =
+  | { kind: "global" }
+  | { kind: "group"; group_id: string }
+  /** Betterment E5: one job everywhere (`capability:<cap>`). */
+  | { kind: "capability"; capability_id: string };
+
+/** Betterment E5: one row of What runs where, as the hub's assignment
+ *  editor decides it (`POST /api/inference/assignments/editor`). */
+export interface EditorCandidate {
+  profileId: string;
+  profileRevision: number;
+  label: string;
+  boundary: string;
+  readiness: string;
+  /** compatible · savable_with_repair */
+  status: string;
+}
+
+export interface RowEditor {
+  /** The revision a write to this row presents. */
+  baseRevision: number;
+  /** The row's own first engine (null: it follows another row). */
+  own: { profileId: string; profileRevision: number; label: string } | null;
+  /** The engine the job runs on now, and the row it comes from. */
+  effective: { profileId: string; label: string; inheritedFrom: string } | null;
+  candidates: EditorCandidate[];
+}
+
+function firstEntry(raw: unknown): Record<string, unknown> | null {
+  const projection = (raw ?? null) as Record<string, unknown> | null;
+  const entries = projection && Array.isArray(projection.entries) ? (projection.entries as Record<string, unknown>[]) : [];
+  return entries[0] ?? null;
+}
+
+export async function readEditor(scope: AssignmentScope, capabilityId: string): Promise<RowEditor> {
+  const raw = await apiFetch<Record<string, unknown>>("/api/inference/assignments/editor", {
+    method: "POST",
+    json: { scope, capability_id: capabilityId },
+  });
+  const own = firstEntry(raw.configured_assignment);
+  const effective = (raw.effective ?? {}) as Record<string, unknown>;
+  const lead = effective.status === "no_assignment" ? null : firstEntry(effective.assignment);
+  return {
+    baseRevision: typeof raw.draft_base_revision === "number" ? raw.draft_base_revision : 0,
+    own: own
+      ? { profileId: String(own.profile_id ?? ""), profileRevision: Number(own.profile_revision ?? 0), label: String(own.label ?? "") }
+      : null,
+    effective: lead
+      ? { profileId: String(lead.profile_id ?? ""), label: String(lead.label ?? ""), inheritedFrom: String(effective.inherited_from ?? "") }
+      : null,
+    candidates: Array.isArray(raw.candidates)
+      ? (raw.candidates as Record<string, unknown>[]).map((c) => ({
+          profileId: String(c.profile_id ?? ""),
+          profileRevision: Number(c.profile_revision ?? 0),
+          label: String(c.label ?? ""),
+          boundary: String(c.boundary ?? ""),
+          readiness: String(c.readiness ?? ""),
+          status: String(c.status ?? ""),
+        }))
+      : [],
+  };
+}
 
 export function newCommandId(prefix: string): string {
   const entropy =

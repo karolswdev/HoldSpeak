@@ -32,7 +32,9 @@ import {
   readRoster,
   writeChain,
   discoverLan,
+  readEditor,
   type AssignmentScope,
+  type RowEditor,
   type Detection,
   type Roster,
   type RosterEntry,
@@ -56,6 +58,7 @@ import {
   rosterId,
   type BoardEngine,
 } from "./model";
+import { WHAT_ROWS, rosterIdOf, type WhatRow } from "./whatRows";
 
 const POLL_MS = 1000;
 
@@ -84,6 +87,9 @@ export interface Receipt {
  *  the row since, Undo refuses instead of overwriting them. */
 interface UndoStep {
   job: string;
+  /** Betterment E5: a What runs where row writes its own scope. */
+  scope?: AssignmentScope;
+  capabilityId?: string;
   entries: Array<{ profile_id: string; profile_revision: number }>;
   produced: number;
   /** Meetings also wrote the exact summary row (C2). `own` says whether the
@@ -350,6 +356,127 @@ export function useRunsOn(scope?: string) {
     [loadDetection],
   );
 
+  /* ── Betterment E5: What runs where (one row for each job) ── */
+
+  const [editors, setEditors] = useState<Record<string, RowEditor | "failed">>({});
+
+  /** The capability a row's editor reads: its own, or the roster's for a
+   *  group or global row. */
+  const editorCapability = useCallback(
+    (row: WhatRow, from: Roster | null = roster): string => {
+      if (row.capability) return row.capability;
+      const id = rosterIdOf(row);
+      return from?.rows.find((r) => r.id === id)?.editor_capability_id ?? "";
+    },
+    [roster],
+  );
+
+  const loadEditors = useCallback(async (from?: Roster | null) => {
+    const source = from ?? roster;
+    if (!source) return;
+    const answers = await Promise.all(
+      WHAT_ROWS.map(async (row) => {
+        const capability = editorCapability(row, source);
+        if (!capability) return [row.id, "failed"] as const;
+        try {
+          return [row.id, await readEditor(row.scope, capability)] as const;
+        } catch {
+          return [row.id, "failed"] as const;
+        }
+      }),
+    );
+    if (mounted.current) setEditors(Object.fromEntries(answers));
+  }, [editorCapability, roster]);
+
+
+  /** Set one row at once: an engine, or null for "Everything else" (the
+   *  row's own assignment is cleared). Undo writes the row back. */
+  const setRow = useCallback(
+    async (rowId: string, profileId: string | null) => {
+      const row = WHAT_ROWS.find((r) => r.id === rowId);
+      const editor = editors[rowId];
+      if (!row || !editor || editor === "failed") return;
+      const capability = editorCapability(row);
+      if (!capability) return;
+      const candidate = profileId ? editor.candidates.find((c) => c.profileId === profileId) : null;
+      if (profileId && !candidate) return;
+      const before = editor.own ? [{ profile_id: editor.own.profileId, profile_revision: editor.own.profileRevision }] : [];
+      setBusy(true);
+      try {
+        let produced: number;
+        if (candidate) {
+          const written = await writeChain({
+            scope: row.scope,
+            expectedRevision: editor.baseRevision,
+            entries: [{ profile_id: candidate.profileId, profile_revision: candidate.profileRevision }],
+          });
+          produced = Number(written.revision ?? 0);
+        } else {
+          if (!editor.own) return;
+          const cleared = await clearChain({ scope: row.scope, capabilityId: capability, expectedRevision: editor.baseRevision });
+          produced = Number(cleared.revision ?? 0);
+        }
+        if (!mounted.current) return;
+        setUndoStack((stack) => [...stack, { job: row.id, scope: row.scope, capabilityId: capability, entries: before, produced }]);
+        const engine = candidate ? engines.find((e) => e.profileId === candidate.profileId) : undefined;
+        setReceipt({ text: `SET ${clock()} · ${row.name} → ${candidate ? engine?.name || candidate.label : "Everything else"}` });
+        if (candidate) {
+          setEgress(engine ? { label: hostLabel(engine), scope: enginePlace(engine).place === "cloud" ? "cloud" : "local" } : null);
+        }
+        setResults((prev) => {
+          const next = { ...prev };
+          delete next[`what:${row.id}`];
+          return next;
+        });
+      } catch (err) {
+        if (isConflict(err)) setReceipt({ text: `CHANGED ELSEWHERE · ${row.name}`, tone: "danger" });
+        else setReceipt({ text: `REFUSED · ${codeToken(err)}`, tone: "danger" });
+      } finally {
+        if (mounted.current) setBusy(false);
+        const next = await loadRoster();
+        await loadEditors(next);
+        void loadDetection();
+      }
+    },
+    [editorCapability, editors, engines, loadDetection, loadEditors, loadRoster],
+  );
+
+  /** Try it under a row: the hub's sample on the engine the row shows. The
+   *  press is his consent for an engine off this Mac (the chip says where). */
+  const tryRow = useCallback(async (rowId: string) => {
+    const row = WHAT_ROWS.find((r) => r.id === rowId);
+    const editor = editors[rowId];
+    if (!row?.probe || !editor || editor === "failed" || !editor.effective || activeTry.current) return;
+    const key = `what:${row.id}`;
+    const engine = engines.find((e) => e.profileId === editor.effective!.profileId);
+    activeTry.current = key;
+    setTrying({ job: key, engine: engine?.key ?? "" });
+    setResults((prev) => ({ ...prev, [key]: { tone: "busy", tokens: ["Trying"] } }));
+    try {
+      const answer = await conciergeTaskProbe(
+        row.probe,
+        engine ? offMachine(engine) || undefined : undefined,
+        [editor.effective.profileId],
+      );
+      if (!mounted.current) return;
+      const completed = answer.state === "READY" && answer.ok;
+      const empty = completed && answer.emptyOutput;
+      setResults((prev) => ({ ...prev, [key]: {
+        tone: completed ? (empty ? "idle" : "ok") : "danger",
+        tokens: completed
+          ? ["Completed", answer.model || editor.effective!.label, ...msToken(answer.latencyMs), ...(empty ? ["No text returned"] : [])]
+          : [answer.state === "REFUSED" ? "Not tried" : "Not completed", probeReason(answer.reasonCode)],
+        sampleInput: answer.sampleInput,
+        sampleOutput: completed ? answer.sampleOutput : undefined,
+      } }));
+    } catch {
+      if (mounted.current) setResults((prev) => ({ ...prev, [key]: { tone: "danger", tokens: ["Not completed", "No answer"] } }));
+    } finally {
+      activeTry.current = null;
+      if (mounted.current) setTrying(null);
+    }
+  }, [editors, engines]);
+
   /* ── a drop ── */
 
   const patch = useCallback(
@@ -432,7 +559,8 @@ export function useRunsOn(scope?: string) {
     const step = undoStack[undoStack.length - 1];
     if (!step) return;
     const row = rowOf(step.job);
-    const label = jobName(step.job, row);
+    const what = WHAT_ROWS.find((r) => r.id === step.job && step.scope);
+    const label = what ? what.name : jobName(step.job, row);
     setBusy(true);
     // The step leaves the stack whatever happens: a refused Undo is not
     // retried against a row someone else now owns.
@@ -441,12 +569,12 @@ export function useRunsOn(scope?: string) {
       // CAS against the revision THIS patch produced (C1).
       let restored: number;
       if (step.entries.length) {
-        const written = await writeChain({ scope: scopeFor(step.job), expectedRevision: step.produced, entries: step.entries });
+        const written = await writeChain({ scope: step.scope ?? scopeFor(step.job), expectedRevision: step.produced, entries: step.entries });
         restored = Number(written.revision ?? 0);
       } else {
-        const capability = row?.editor_capability_id;
+        const capability = step.capabilityId ?? row?.editor_capability_id;
         if (!capability) throw new Error("no capability");
-        const cleared = await clearChain({ scope: scopeFor(step.job), capabilityId: capability, expectedRevision: step.produced });
+        const cleared = await clearChain({ scope: step.scope ?? scopeFor(step.job), capabilityId: capability, expectedRevision: step.produced });
         restored = Number(cleared.revision ?? 0);
       }
       let text = `UNDONE ${clock()} · ${label}`;
@@ -498,8 +626,9 @@ export function useRunsOn(scope?: string) {
     } finally {
       if (mounted.current) setBusy(false);
       await loadRoster();
+      if (step.scope) void loadEditors();
     }
-  }, [loadRoster, rowOf, undoStack, writeSummary]);
+  }, [loadEditors, loadRoster, rowOf, undoStack, writeSummary]);
 
   /* ── Try it ── */
 
@@ -996,6 +1125,7 @@ export function useRunsOn(scope?: string) {
       invalid: spendInvalid,
       save: saveSpend,
     },
+    what: { editors, set: setRow, tryRow, reload: () => void loadEditors() },
     findOnLan,
     lanDiscovery,
     busy,

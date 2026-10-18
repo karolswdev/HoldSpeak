@@ -170,11 +170,11 @@ def test_a_cli_past_its_timeout_is_killed_and_the_chain_falls_back(
 
     answer = _ok(hub, "POST", "/api/ask", {"prompt": "Say hello."})
     assert answer["output"] == FALLBACK_ANSWER, answer
-    # The retry policy may try the transient leg again before the fallback;
-    # every attempt was killed at its timeout.
+    # Betterment E5 (FOLLOWUPS E1): one attempt, killed at its timeout, then
+    # the fallback; a timed-out CLI is not tried a second time.
     attempts = calls(fake_bin, "claude")
-    assert attempts, "the CLI never ran"
-    assert all(process_gone(call["pid"]) for call in attempts), "a sleeping CLI was not killed"
+    assert len(attempts) == 1, attempts
+    assert process_gone(attempts[0]["pid"]), "a sleeping CLI was not killed"
 
 
 def test_spend_limit_is_passed_and_speech_work_is_refused(hub: str, fake_bin: Path, fallback_engine: str) -> None:
@@ -603,3 +603,77 @@ def test_an_anthropic_engine_is_no_dead_end(hub: str) -> None:
     rows = _ok(hub, "GET", "/api/concierge/detect")["engines"]
     claude = next(r for r in rows if r.get("legacyLabel") == "Anthropic")
     assert claude["state"] == "NOT_SET", claude
+
+# ── Betterment E5: What runs where ──────────────────────────────────────────
+
+def _editor(base: str, scope: dict, capability: str) -> dict:
+    return _ok(base, "POST", "/api/inference/assignments/editor", {"scope": scope, "capability_id": capability})
+
+
+def _define_fallback(base: str, url: str) -> dict:
+    return _ok(base, "POST", "/api/inference/model-library/define-endpoint", {"draft": {
+        "request_id": "define-what", "profile_id": "engine-what", "expected_profile_revision": 0,
+        "label": "Stub", "provider_family": "openai_compatible", "model": "stub-fallback",
+        "endpoint": url, "requires_key": False,
+    }, "secret": None})
+
+
+def test_a_single_job_is_set_with_a_capability_scope_and_read_back(hub: str, fallback_engine: str) -> None:
+    """The face's row write: `capability:<cap>`; the editor reads it back as
+    the row's own engine, and a sibling job still reads Everything else."""
+    engine = _define_fallback(hub, fallback_engine)
+    scope = {"kind": "capability", "capability_id": "meeting.deferred_analysis"}
+    before = _editor(hub, scope, "meeting.deferred_analysis")
+    assert before["configured_assignment"] is None
+    assert any(c["profile_id"] == "engine-what" for c in before["candidates"]), before["candidates"]
+    status, written = _call(hub, "POST", "/api/inference/assignments/set", {
+        "command_id": "what-summaries", "expected_revision": before["draft_base_revision"],
+        "scope": scope, "entries": [_entry(engine)],
+    })
+    assert status < 300, written
+    after = _editor(hub, scope, "meeting.deferred_analysis")
+    assert after["configured_assignment"]["entries"][0]["profile_id"] == "engine-what"
+    assert after["effective"]["inherited_from"] == "capability"
+    live = _editor(hub, {"kind": "capability", "capability_id": "meeting.live_analysis"}, "meeting.live_analysis")
+    assert live["configured_assignment"] is None and live["effective"]["status"] == "no_assignment", live["effective"]
+
+
+def test_meeting_plugins_follow_the_summarys_engine(hub: str, fallback_engine: str) -> None:
+    """FOLLOWUPS C4: with only Meeting summaries set, a plugin is no longer
+    skipped as no_assignment; it runs on the summary's engine."""
+    from holdspeak.inference_capabilities import installed_meeting_plugin_capability_definitions
+
+    plugin = installed_meeting_plugin_capability_definitions()[0].id
+    engine = _define_fallback(hub, fallback_engine)
+    status, written = _assign(hub, "meeting.deferred_analysis", [_entry(engine)])
+    assert status < 300, written
+    effective = _editor(hub, {"kind": "capability", "capability_id": plugin}, plugin)["effective"]
+    assert effective["status"] == "assigned", effective
+    assert effective["inherited_from"] == "capability"
+    assert effective["assignment"]["entries"][0]["profile_id"] == "engine-what"
+
+
+def test_speech_never_takes_the_default_chat_engine(hub: str, fallback_engine: str) -> None:
+    """FOLLOWUPS ST0: with Everything else on a chat server and no speech
+    row, speech has no engine; it never routes to the chat server."""
+    engine = _define_fallback(hub, fallback_engine)
+    status, written = _call(hub, "POST", "/api/inference/assignments/set", {
+        "command_id": "what-global", "expected_revision": 0, "scope": {"kind": "global"}, "entries": [_entry(engine)],
+    })
+    assert status < 300, written
+    speech = _editor(hub, {"kind": "group", "group_id": "speech_recognition"}, "speech.transcribe")
+    # The rig hub has its own speech row (the built-in Whisper); with none,
+    # speech has no engine (tests/unit/test_what_runs_where_resolve.py).
+    assert speech["effective"].get("inherited_from") != "global", speech["effective"]
+    assert all(e["profile_id"] != "engine-what" for e in (speech["effective"].get("assignment") or {}).get("entries", []))
+    # And the speech picker lists no chat engine.
+    assert not any(c["profile_id"] == "engine-what" for c in speech["candidates"]), speech["candidates"]
+    # A text job still follows Everything else.
+    answers = _editor(hub, {"kind": "capability", "capability_id": "ask.answer"}, "ask.answer")
+    assert answers["effective"]["inherited_from"] == "global"
+
+
+def test_speech_lists_no_agent(hub: str, fake_bin: Path) -> None:
+    _connect_claude(hub)
+    speech = _editor(hub, {"kind": "group", "group_id": "speech_recognition"}, "speech.transcribe")
+    assert not any(c["profile_id"].endswith("agent-claude") for c in speech["candidates"]), speech["candidates"]

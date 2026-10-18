@@ -250,6 +250,91 @@ def open_router() -> dict[str, Any]:
             server.server_close()
 
 
+EDITOR = "/api/inference/assignments/editor"
+SET = "/api/inference/assignments/set"
+#: Betterment E5: the What runs where rows (web/src/features/runson/whatRows.ts).
+WHAT_ROWS = (
+    ("default", {"kind": "global"}, None),
+    ("summaries", {"kind": "capability", "capability_id": "meeting.deferred_analysis"}, "meeting.deferred_analysis"),
+    ("answers", {"kind": "capability", "capability_id": "ask.answer"}, "ask.answer"),
+    ("automations", {"kind": "capability", "capability_id": "workbench.item"}, "workbench.item"),
+    ("live", {"kind": "capability", "capability_id": "meeting.live_analysis"}, "meeting.live_analysis"),
+    ("thread", {"kind": "capability", "capability_id": "chat.turn"}, "chat.turn"),
+    ("thoughts", {"kind": "capability", "capability_id": "thought.interview"}, "thought.interview"),
+    ("drafts", {"kind": "capability", "capability_id": "project.update_draft"}, "project.update_draft"),
+    ("memory", {"kind": "group", "group_id": "background"}, None),
+    ("dictation", {"kind": "group", "group_id": "writing_dictation"}, None),
+    ("speech", {"kind": "group", "group_id": "speech_recognition"}, None),
+)
+
+
+def _editors(hub: Any) -> dict[str, Any]:
+    """Each row's editor answer, as the face asks for it (the roster names a
+    group or global row's editor capability)."""
+    roster = _get(hub, "/api/inference/assignments")
+    out = {}
+    for row_id, scope, capability in WHAT_ROWS:
+        if capability is None:
+            roster_id = "global" if scope["kind"] == "global" else scope["group_id"]
+            capability = next(r["editor_capability_id"] for r in roster["rows"] if r["id"] == roster_id)
+        out[row_id] = _post(hub, EDITOR, {"scope": scope, "capability_id": capability})
+    return out
+
+
+def what_runs_where() -> dict[str, Any]:
+    """Betterment E5: a desk with a stub chat server as Everything else and
+    a fake Claude Code added. Meeting summaries goes to the server, Answers
+    to Claude Code (one write each), then Try it on Answers."""
+    import threading
+    from http.server import ThreadingHTTPServer
+
+    from tests.integration.test_desk_engines import _ChatEngine
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), _ChatEngine)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    port = server.server_address[1]
+    url = f"http://127.0.0.1:{port}/v1"
+
+    def scrub(value: Any) -> Any:
+        return json.loads(json.dumps(value).replace(f"127.0.0.1:{port}", "127.0.0.1:8099").replace(
+            f"127-0-0-1-{port}", "127-0-0-1-8099"))
+
+    with pytest.MonkeyPatch.context() as mp:
+        hub = _hub(mp, "what", claude=True)
+        try:
+            stub = _post(hub, DEFINE, {"draft": {
+                "request_id": "record-stub", "profile_id": "engine-stub", "expected_profile_revision": 0,
+                "label": "Stub server", "provider_family": "openai_compatible", "model": "stub-fallback",
+                "endpoint": url, "requires_key": False}, "secret": None})
+            claude = _post(hub, CONNECT, {"draft": {"request_id": "record-claude", "profile_id": "agent-claude",
+                                                    "expected_profile_revision": 0, "preset": "claude"}})
+
+            def entry(added: dict) -> dict:
+                return {"profile_id": added["provider"]["profile_id"],
+                        "profile_revision": int(added["provider"]["profile_revision"])}
+
+            _post(hub, SET, {"command_id": "record-global", "expected_revision": 0,
+                             "scope": {"kind": "global"}, "entries": [entry(stub)]})
+            steps = [{"name": "open", "gets": _gets(hub), "editors": _editors(hub)}]
+            for name, scope, added in (
+                ("summaries", WHAT_ROWS[1][1], stub),
+                ("answers", WHAT_ROWS[2][1], claude),
+            ):
+                body = {"command_id": f"record-{name}", "expected_revision": 0, "scope": scope, "entries": [entry(added)]}
+                answer = _post(hub, SET, body)
+                steps.append({"name": name, "post": SET, "body": body, "answer": answer,
+                              "gets": _gets(hub), "editors": _editors(hub)})
+            probe = _post(hub, "/api/concierge/probe", {"task": True, "capabilityId": "ask.answer",
+                                                        "confirmOffMachine": True,
+                                                        "expectedProfileIds": [claude["provider"]["profile_id"]]})
+            steps.append({"name": "tryAnswers", "answer": probe})
+            return scrub({"steps": steps})
+        finally:
+            _close()
+            server.shutdown()
+            server.server_close()
+
+
 def main() -> None:
     only = sys.argv[1:]
     scenarios = {
@@ -258,6 +343,7 @@ def main() -> None:
         "codex": codex_added,
         "threeModels": three_models,
         "openRouter": open_router,
+        "whatRunsWhere": what_runs_where,
     }
     # `record_engines_fixture.py threeModels` records one scenario and keeps
     # the others as they are.

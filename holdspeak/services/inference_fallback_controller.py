@@ -6,7 +6,7 @@ import hashlib
 import json
 import secrets
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Mapping
 
 from ..principals import Principal, PrincipalKind
 from .errors import ConflictError, ValidationError
@@ -36,6 +36,18 @@ def _sha256(value: Any) -> str:
 
 def _timestamp(value: datetime) -> str:
     return value.isoformat(timespec="microseconds").replace("+00:00", "Z")
+
+
+
+def _token_limit(policy_budget: int, leg: Mapping[str, Any]) -> int:
+    """Betterment E5 (FOLLOWUPS E3): a job's token budget follows the engine's
+    real context. The policy budget (16,384 or 32,768) is the floor; a leg
+    whose frozen context is larger (a 49,152 LAN engine) may use all of it."""
+    try:
+        context = int(((leg or {}).get("context_support") or {}).get("maximum_tokens") or 0)
+    except (TypeError, ValueError):
+        context = 0
+    return max(policy_budget, context)
 
 
 class InferenceFallbackController:
@@ -344,7 +356,9 @@ class InferenceFallbackController:
                 total_limit = int(row["total_attempt_limit"])
                 if int(row["attempts_reserved"]) + 1 > total_limit:
                     raise ConflictError("Physical attempt budget is exhausted.", code="inference_route_attempt_budget_exhausted")
-                if row["token_budget"] is not None and int(row["tokens_reserved"]) + tokens > int(row["token_budget"]):
+                if row["token_budget"] is not None and int(row["tokens_reserved"]) + tokens > _token_limit(
+                    int(row["token_budget"]), route["entries"][leg_ordinal - 1]
+                ):
                     raise ConflictError("Token budget is exhausted.", code="inference_route_token_budget_exhausted")
                 aggregate = self._bundle_aggregate_budget_in_transaction(conn, str(route["id"]))
                 if aggregate is not None:

@@ -836,10 +836,9 @@ def test_heterogeneous_global_chain_is_never_filtered_or_substituted(
     ask = service.resolve_effective(OWNER, capability_id="ask.answer")
     speech = service.resolve_effective(OWNER, capability_id="speech.transcribe")
     assert ask["status"] == "assigned"
-    assert speech["status"] == "no_compatible_assignment"
-    assert [entry["profile_id"] for entry in speech["assignment"]["entries"]] == [
-        "text-only"
-    ]
+    # Betterment E5 (FOLLOWUPS ST0): speech never takes the default (a chat
+    # engine); with no speech row of its own it has no assignment.
+    assert speech["status"] == "no_assignment"
 
 
 def test_legacy_boundary_uses_actual_adapter_and_paired_unknown_fails_closed(

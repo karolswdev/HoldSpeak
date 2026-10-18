@@ -54,6 +54,8 @@ import { stateClass, stateWord } from "./stateWord";
 import { useRunsOn, type AddKind, type RunsOnController } from "./useRunsOn";
 import type { ServicePreset, ServiceTile } from "./api";
 import { SpeechSetup, useSpeechSetup } from "../../desk/firstrun/SpeechSetup";
+import { useBuilderTools } from "../../desk/builderTools";
+import { WhatRunsWhere } from "./WhatRunsWhere";
 // The Meaning search row draws with the Concierge's ledger cells.
 import "../concierge/concierge.css";
 import "./runson.css";
@@ -407,6 +409,9 @@ function AddByKind({
 
 export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: string; onBack?: () => void }) {
   const ctrl = useRunsOn(scope);
+  // Betterment E5 (DECISIONS #8): the drag switchboard is parked behind
+  // Builder tools; What runs where is the face.
+  const builder = useBuilderTools((state) => state.on);
   const setTitle = useContext(TitleSlotContext);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const layout = useSwitchboardLayout(rootRef);
@@ -773,7 +778,14 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
         </div>
       ) : null}
       {noEngine && speech.notSetUp ? <SpeechSetup setup={speech} primary={false} testId="runson-speech-setup" /> : null}
-      {roster ? (
+      {roster && !builder ? (
+        <div className="runson-catalog runson-engine-list" data-testid="runson-engines">
+          {/* No wires here (What runs where assigns): plates are not dragged. */}
+          <SurfaceSwitchboard layout="board" jobs={[]} engines={haveEngines.map((e) => ({ ...e, draggable: false }))} wires={[]} captions={{ engines: "Your engines" }} />
+        </div>
+      ) : null}
+      {roster && !noEngine && !builder ? <WhatRunsWhere ctrl={ctrl} /> : null}
+      {roster && builder ? (
         <div className={noEngine ? "runson-catalog" : undefined} data-testid="runson-assignments">
         <SurfaceSwitchboard
           layout={layout}

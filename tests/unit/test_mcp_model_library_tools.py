@@ -129,3 +129,28 @@ def test_model_library_mcp_refuses_paths_and_oversized_encoded_input_before_stag
             {"request_id": "empty", "filename": "empty.gguf", "bytes_base64": ""}, OWNER,
         )
     assert empty.value.code == "model_library_upload_invalid"
+
+
+def test_define_endpoint_over_mcp_keeps_the_servers_context(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """Betterment E5 (FOLLOWUPS E3): an agent defines an engine with the
+    context its server runs, as the face does since E3."""
+    db = Database(tmp_path / "library-mcp.db")
+    monkeypatch.setattr(model_library, "get_database", lambda: db)
+    monkeypatch.setattr(
+        "holdspeak.setup_runtime.discover_endpoint_models", lambda *_a, **_k: {"ok": True, "models": ["lan-model"]},
+    )
+    draft = {
+        "request_id": "mcp-context", "profile_id": "mcp-lan", "expected_profile_revision": 0,
+        "label": "LAN", "provider_family": "private_endpoint", "model": "lan-model",
+        "endpoint": "http://192.168.1.43:8080/v1", "requires_key": False, "context_tokens": 49152,
+    }
+    model_library.dispatch("model_library.define_endpoint", {"draft": draft, "secret": None}, OWNER)
+    with db._connection() as conn:
+        limit = conn.execute("SELECT context_limit FROM profiles WHERE id='library_provider_mcp-lan'").fetchone()[0]
+    assert int(limit) == 49152
+    # Still a closed draft: an unknown key is refused.
+    with pytest.raises(ServiceError) as refused:
+        model_library.dispatch(
+            "model_library.define_endpoint", {"draft": {**draft, "request_id": "x", "extra": 1}, "secret": None}, OWNER,
+        )
+    assert refused.value.code == "model_library_provider_invalid"

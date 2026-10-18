@@ -150,6 +150,8 @@ WEB_ROUTING_SURFACES: dict[str, tuple[str, str]] = {
     "web/src/features/runson/model.ts": ("display-transport", "16-03"),
     "web/src/features/runson/useRunsOn.ts": ("inference-route", "16-03"),
     "web/src/features/runson/RunsOnCore.tsx": ("display-transport", "16-03"),
+    # Betterment E5: What runs where; its presses write through useRunsOn.
+    "web/src/features/runson/WhatRunsWhere.tsx": ("display-transport", "16-03"),
     # First run FOUND (#859): the owner's "Use it" press on a #855 proposal; the
     # server (InferenceDefaultService.use_proposal) writes the assignment.
     "web/src/desk/firstrun/Found.tsx": ("inference-route", "143-13"),

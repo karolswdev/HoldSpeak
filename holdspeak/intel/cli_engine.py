@@ -728,7 +728,9 @@ class CliEngine(MeetingIntel):
             _kill(process)
             process.communicate()
             log.warning(f"{self.preset.label} did not answer in {timeout:.0f} s; stopped it")
-            raise ProviderKnownNoGenerationTransient() from None
+            # Betterment E5 (FOLLOWUPS E1): a timed-out CLI is not tried again
+            # (a second wait of the same length); the chain goes to its fallback.
+            raise ProviderPermanentNoGeneration() from None
         finally:
             with self._live_lock:
                 self._live.discard(process)

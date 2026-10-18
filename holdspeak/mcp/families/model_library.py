@@ -81,6 +81,9 @@ _ENDPOINT_DRAFT = {
         "model": {"type": "string", "minLength": 1, "maxLength": 200},
         "endpoint": {"type": "string", "minLength": 1, "maxLength": 1024},
         "requires_key": {"type": "boolean"},
+        # Betterment E5 (FOLLOWUPS E3): the context the server runs, as its
+        # /models says (optional; absent = 16,384).
+        "context_tokens": {"type": "integer", "minimum": 512, "maximum": 10_000_000},
     },
     "required": [
         "request_id", "profile_id", "expected_profile_revision", "label", "provider_family",
@@ -229,12 +232,14 @@ def _staged_file(arguments: dict[str, Any]) -> tuple[str, str, bytes]:
     return str(arguments["request_id"]), filename, payload
 
 
-def _provider_arguments(arguments: dict[str, Any], expected_draft: set[str], *, secret: bool) -> tuple[dict[str, Any], dict[str, Any] | None]:
+def _provider_arguments(
+    arguments: dict[str, Any], expected_draft: set[str], *, secret: bool, optional: frozenset[str] = frozenset(),
+) -> tuple[dict[str, Any], dict[str, Any] | None]:
     allowed = {"draft", "secret"} if secret else {"draft"}
     if set(arguments) != allowed or not isinstance(arguments.get("draft"), dict):
         raise ServiceError("model_library_provider_invalid", "Provider request is invalid.", context={"status": 400})
     draft = arguments["draft"]
-    if set(draft) != expected_draft:
+    if not (expected_draft <= set(draft) <= expected_draft | optional):
         raise ServiceError("model_library_provider_invalid", "Provider request is invalid.", context={"status": 400})
     value = arguments.get("secret")
     if secret and value is not None and not isinstance(value, dict):
@@ -271,6 +276,7 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
             arguments,
             {"request_id", "profile_id", "expected_profile_revision", "label", "provider_family", "model", "endpoint", "requires_key"},
             secret=True,
+            optional=frozenset({"context_tokens"}),
         )
         return service.define_endpoint(principal, draft, secret)
     if name == "model_library.connect_cli_engine":

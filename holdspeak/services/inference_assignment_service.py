@@ -52,6 +52,24 @@ _BOUNDARY_ALIASES = {
 }
 #: Betterment Q4: a capability with no assignment of its own uses this one's.
 _FOLLOWS = {"chat.turn": "ask.answer"}
+#: Betterment E5: a meeting plugin with no row of its own follows the
+#: meeting summary's engine (FOLLOWUPS C4: plugins skipped as no_assignment
+#: when only Meeting summaries was set).
+_PLUGIN_FOLLOWS = "meeting.deferred_analysis"
+
+
+def _follows(capability: InferenceCapabilityDefinition) -> str | None:
+    """The capability whose row this one uses when it has none of its own."""
+    if capability.id in _FOLLOWS:
+        return _FOLLOWS[capability.id]
+    if "meeting_plugin" in tuple(getattr(capability.requires, "capability_classes", ()) or ()):
+        return _PLUGIN_FOLLOWS
+    return None
+
+
+def _speech(capability: InferenceCapabilityDefinition) -> bool:
+    """Betterment E5: speech work never takes the default (a chat engine)."""
+    return "audio" in tuple(getattr(capability, "input_modalities", ()) or ())
 
 _CANONICAL_GROUPS = (
     ("thoughts_notes", "Thoughts & notes"),
@@ -2293,15 +2311,16 @@ class InferenceAssignmentService:
             )
         keys.append((f"capability:{capability.id}", "capability"))
         # Betterment Q4: one engine row, Answers. A capability with no head
-        # of its own follows the one it answers for (desk chat follows Ask).
-        if capability.id in _FOLLOWS:
-            keys.append((f"capability:{_FOLLOWS[capability.id]}", "capability"))
-        keys.extend(
-            (
-                (f"group:{capability.group_id}", "group"),
-                ("global", "global"),
-            )
-        )
+        # of its own follows the one it answers for (desk chat follows Ask;
+        # E5: a meeting plugin follows the meeting summary).
+        followed = _follows(capability)
+        if followed:
+            keys.append((f"capability:{followed}", "capability"))
+        keys.append((f"group:{capability.group_id}", "group"))
+        # Betterment E5 (FOLLOWUPS ST0): speech never routes to the default,
+        # which is a chat engine; with no speech row it has no assignment.
+        if not _speech(capability):
+            keys.append(("global", "global"))
         permitted = None if sources is None else set(sources)
         for key, inherited_from in keys:
             if key == excluded_key:
