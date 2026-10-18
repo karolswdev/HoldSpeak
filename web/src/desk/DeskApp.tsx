@@ -268,7 +268,7 @@ function DeskFaces() {
         </ApplicationBoundary>
       ))}
       {!arrivalRequired && workbenchWindows.map((wb) => (
-        <ApplicationBoundary key={wb.id} label="Workbench">
+        <ApplicationBoundary key={wb.id} label="Automation">
           <Suspense fallback={null}>
               <WorkbenchWindow workbenchId={wb.id} origin={wb.origin} />
           </Suspense>

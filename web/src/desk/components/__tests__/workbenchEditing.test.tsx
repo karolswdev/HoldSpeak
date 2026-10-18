@@ -480,7 +480,7 @@ describe("Workbench inlet draft custody", () => {
     act(() => useDesk.setState({ items: { ...useDesk.getState().items, workbench: [] } }));
     expect(screen.getByText("Draft the brief")).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "New item instruction" })).toHaveValue(instruction);
-    expect(screen.getByRole("button", { name: "Edit Workbench name" })).toHaveTextContent("Daily");
+    expect(screen.getByRole("button", { name: "Edit Automation name" })).toHaveTextContent("Daily");
     fireEvent.click(screen.getByRole("button", { name: "Add" }));
     await waitFor(() => expect(screen.getByRole("combobox", { name: "New item instruction" })).toHaveValue(""));
     expect(screen.getByText("Draft the brief")).toBeInTheDocument();
@@ -582,14 +582,14 @@ describe("HS-132-07 drop-target honesty", () => {
       accepted: false,
     });
     expect(workbenchDropVerb(["text/plain"])).toEqual({
-      verb: "NOT A WORKBENCH ITEM",
+      verb: "NOT AN AUTOMATION ITEM",
       accepted: false,
     });
     expect(dropIntentLabel(workbenchDropVerb(["Files"]))).toBe(
       "DROP TARGET · IMPORT AS MEETING",
     );
     expect(dropIntentLabel(workbenchDropVerb([]))).toBe(
-      "NO DROP · NOT A WORKBENCH ITEM",
+      "NO DROP · NOT AN AUTOMATION ITEM",
     );
     expect(dropTypes({ types: ["Files"] } as unknown as DataTransfer)).toEqual([
       "Files",
@@ -615,7 +615,7 @@ describe("HS-132-07 drop-target honesty", () => {
 
     fireEvent.dragOver(body, { dataTransfer: { types: ["text/uri-list"] } });
     expect(dropChip()?.textContent).toBe(
-      "NO DROP · NOT A WORKBENCH ITEM",
+      "NO DROP · NOT AN AUTOMATION ITEM",
     );
 
     fireEvent.dragLeave(body);
@@ -642,7 +642,7 @@ describe("HS-132-07 drop-target honesty", () => {
       dataTransfer: { types: ["text/plain"], getData: () => "" },
     });
     await waitFor(() =>
-      expect(receiptText()).toBe("DROP TO WORK FAILED · NOT A WORKBENCH ITEM"),
+      expect(receiptText()).toBe("DROP TO WORK FAILED · NOT AN AUTOMATION ITEM"),
     );
   });
 });
@@ -690,7 +690,7 @@ describe("HS-132-07 no bare disabled control", () => {
 
   it("offers RUN NOW from the empty ledger once an agent is bound", async () => {
     await openWindow();
-    const run = screen.getByRole("button", { name: "Run this workbench now" });
+    const run = screen.getByRole("button", { name: "Run this automation now" });
     expect(run).toBeEnabled();
 
     await userEvent.setup().click(screen.getByRole("tab", { name: "Runs" }));

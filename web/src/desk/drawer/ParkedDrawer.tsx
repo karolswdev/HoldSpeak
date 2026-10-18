@@ -59,7 +59,7 @@ export interface ParkedRead {
 /** The NOT READ word of a kind the hub could not read. */
 export const PARKED_KIND_WORD: Record<ParkedKind, string> = {
   meeting: "MEETINGS",
-  workbench_item: "WORKBENCH ITEMS",
+  workbench_item: "AUTOMATION ITEMS",
   project: "PROJECTS",
 };
 
@@ -74,7 +74,7 @@ export function parkedRow(item: ParkedItem, now: Date = new Date()): ObjectListR
     whenSort: valid ? valid.getTime() : undefined,
   };
   if (item.kind === "workbench_item") {
-    return { ...base, kind: "workbench", kindWord: "WORKBENCH ITEM", sprite: objectSprite("workbench", item.id) };
+    return { ...base, kind: "workbench", kindWord: "AUTOMATION ITEM", sprite: objectSprite("workbench", item.id) };
   }
   return { ...base, kind: item.kind };
 }

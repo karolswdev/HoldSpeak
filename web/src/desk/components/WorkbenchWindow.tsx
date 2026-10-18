@@ -454,7 +454,7 @@ function ConfigPanel({
       {/* ── start condition ───────────────────────────────────────── */}
       <GadgetGroup label="Starts when" material="inset">
         <GadgetRow label="Mode" controlWidth="standard">
-          <CycleGadget label="Workbench start condition" value={startMode}
+          <CycleGadget label="Automation start condition" value={startMode}
             options={[
               { value: "manual", label: "Manual" },
               { value: "schedule", label: "Schedule" },
@@ -578,12 +578,12 @@ export function workbenchDropVerb(types: readonly string[]): DropIntent {
   // Files never stop here: the desk's glass layer imports them (HS-101 B7).
   if (types.includes("Files"))
     return { verb: "IMPORT AS MEETING", accepted: false };
-  return { verb: "NOT A WORKBENCH ITEM", accepted: false };
+  return { verb: "NOT AN AUTOMATION ITEM", accepted: false };
 }
 
 /** The chip the overlay wears before the release. */
 export function dropIntentLabel(intent: DropIntent): string {
-  return intent.verb === "NOT A WORKBENCH ITEM"
+  return intent.verb === "NOT AN AUTOMATION ITEM"
     ? `NO DROP · ${intent.verb}`
     : `DROP TARGET · ${intent.verb}`;
 }
@@ -1255,7 +1255,7 @@ export function WorkbenchWindow({
   /* ── mutations ──────────────────────────────────────────────────── */
 
   const updateField = async (fields: Record<string, unknown>) => {
-    const result = await write("SAVE WORKBENCH", () =>
+    const result = await write("SAVE AUTOMATION", () =>
       updateWorkbenchField(workbenchId, fields),
     );
     if (!result.ok) return;
@@ -1549,7 +1549,7 @@ export function WorkbenchWindow({
   // A failed aggregate read can omit this bucket. The successful object
   // read still names the open workbench and keeps its work on the glass.
   if (!wb && !detail) return null;
-  const name = String(wb?.name || detail?.name || "Workbench");
+  const name = String(wb?.name || detail?.name || "Automation");
   const items = detail?.items || [];
   const doneCount = items.filter((i) => i.status === "done" || i.status === "dismissed").length;
   const lastRun = detail?.last_run;
@@ -1581,7 +1581,7 @@ export function WorkbenchWindow({
   const runDisabledReason = running
     ? "Run in progress"
     : !detail
-      ? "Workbench still loading"
+      ? "Automation still loading"
       : !detail.recipe_id
         ? "Bind an agent first"
         : engine === "none"
@@ -1597,7 +1597,7 @@ export function WorkbenchWindow({
         <EditInPlace
           value={name}
           onCommit={updateName}
-          label="Workbench name"
+          label="Automation name"
           className="wb-title-edit"
         />
       }
@@ -1632,11 +1632,11 @@ export function WorkbenchWindow({
           data-tone={running ? "warn" : undefined}
           disabled={!!runDisabledReason}
           onClick={() => void triggerRun()}
-          title={runDisabledReason ?? "Run this workbench now"}
+          title={runDisabledReason ?? "Run this automation now"}
           aria-label={
             runDisabledReason
               ? `Run: ${runDisabledReason}`
-              : "Run this workbench now"
+              : "Run this automation now"
           }
         >
           {runButtonLabel}
@@ -1937,7 +1937,7 @@ export function WorkbenchWindow({
                   {voiceProposal.intentId === "add-item"
                     ? `Add: "${(voiceProposal.params as Record<string, unknown>).title}" P${(voiceProposal.params as Record<string, unknown>).priority || 3}`
                     : voiceProposal.intentId === "run"
-                      ? "Run this workbench"
+                      ? "Run this automation"
                       : voiceProposal.intentId === "clear-done"
                         ? "Clear done items"
                         : voiceProposal.intentId === "set-agent"

@@ -278,7 +278,7 @@ describe("Go at 393 is the manifest's Go groups (betterment shell S1)", () => {
     const out = phoneGo({ row, projects: [{ id: "p-1", name: "Ledger cutover" }], openProject: () => {} });
     expect(words(out)).toEqual([
       "Today", "Needs you", "Meetings", "People", "Projects", "Conductor", "Ask AI", "Speak", "—",
-      "Workbenches", "Memory", "Voice commands", "—", "New"]);
+      "Automations", "Memory", "Voice commands", "—", "New"]);
     const nu = out[out.length - 1] as Extract<WorkMenuEntry, { type: "sub" }>;
     expect(nu.entries.map((e) => (e.type === "item" ? e.label : "—"))).toEqual(["Note", "Meeting", "Project", "Person"]);
     expect(words(phoneGo({ row, projects: [], openProject: () => {}, builder: true }))).toContain("Builder");

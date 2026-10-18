@@ -639,10 +639,10 @@ export const PRIMITIVES = {
   },
   workbench: {
     kind: "workbench",
-    label: "Workbench",
-    plural: "Workbenches",
+    label: "Automation",
+    plural: "Automations",
     syncClass: "capability",
-    blurb: "An agent workbench with a schedule, targets, and items.",
+    blurb: "A job that runs for you, again and again.",
     icon: "M3 6h18M3 6v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6M3 6l3-3h12l3 3M8 10h8M8 14h5",
     authorable: true,
     capabilities: ["duplicate"],

@@ -498,7 +498,7 @@ def leg_send_to_workbench(shooter: Shooter, hub: Hub, ids: dict) -> None:
         # The SPECIFIC point-of-decision badge, not any .egress-badge on the
         # page (the desk chrome carries a global badge that must not satisfy
         # this check — counsel S1).
-        workbench_btn = page.get_by_role("button", name="Send to Workbench")
+        workbench_btn = page.get_by_role("button", name="Send to automation")
         egress_badge = page.locator('span.egress-badge.is-cloud[title="Workbench model"]')
 
         has_send = workbench_btn.count() > 0

@@ -264,7 +264,7 @@ APPLICATIONS: list[Surface] = [
     Surface("app-settings", "Settings", "application", "go:Settings", "#surface-settings", "Dock / Go > Settings"),
     Surface("app-rhythm", "Rhythm (cadence)", "application", "go:Rhythm", "#surface-cadence", "Go > Rhythm"),
     Surface("app-context", "Context", "application", "go:Context", "#surface-constitutional-context", "Go > Context"),
-    Surface("app-workbenches", "Workbenches", "application", "go:Workbenches", "#surface-workbenches", "Go > Workbenches"),
+    Surface("app-workbenches", "Automations", "application", "go:Automations", "#surface-workbenches", "Go > Automations"),
     Surface("app-activity", "Activity", "application", "go:Activity", "#surface-activity", "Go > Activity"),
     Surface("app-desk-memory", "Desk memory", "application", "go:Desk memory", "#surface-project-memory", "Go > Desk memory"),
     Surface("app-processes", "Processes", "application", "go:Processes", "#surface-processes", "Go > Processes"),
@@ -501,9 +501,9 @@ EXTRA_SURFACES: list[Surface] = [
     Surface("win-schedule-create", "Schedule a meeting", "state", "custom:schedule",
             '[id="schedule:__create__"]',
             "the Chair's 'Schedule' verb (web/src/desk/chair/ChairHome.tsx:2293)", cold=True),
-    Surface("win-new-workbench", "New Workbench chooser", "state", "custom:new-workbench",
+    Surface("win-new-workbench", "New Automation chooser", "state", "custom:new-workbench",
             '[id="workbench:__new__"]',
-            "Desk menu > New Workbench (createPrimitive('workbench') never persists — "
+            "Desk menu > New Automation (createPrimitive('workbench') never persists — "
             "web/src/desk/store/dataSlice.ts:182)", cold=True),
     Surface("win-workbench", "Workbench window", "state", "pullout:workbench",
             '[id^="workbench:"]', "Workbenches > a row", needs="a seeded workbench", cold=False),
@@ -1482,13 +1482,13 @@ class Walker:
             self.pass_gate()
             self.close_windows()
             try:
-                self.open_palette("New Workbench")
+                self.open_palette("New Automation")
             except Exception:
-                return False, None, "the ⌘K palette has no 'New Workbench' row"
+                return False, None, "the ⌘K palette has no 'New Automation' row"
             try:
                 page.locator('[id="workbench:__new__"]').wait_for(timeout=10000)
             except Exception:
-                return False, None, f"'New Workbench' drew no chooser ({self._what_opened()})"
+                return False, None, f"'New Automation' drew no chooser ({self._what_opened()})"
             return True, '[id="workbench:__new__"]', None
         if what == "thought-workspace":
             if seed is None or "note" not in seed.refs:

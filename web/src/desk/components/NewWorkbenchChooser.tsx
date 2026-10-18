@@ -18,8 +18,8 @@ export function NewWorkbenchChooser() {
     <DeskWindowFrame
       id="workbench:__new__"
       glyph="W"
-      label="New Workbench"
-      title="New Workbench"
+      label="New Automation"
+      title="New Automation"
       minW={480}
       minH={340}
       open

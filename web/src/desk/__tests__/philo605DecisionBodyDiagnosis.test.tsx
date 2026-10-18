@@ -182,8 +182,8 @@ describe("shared collection read truth", () => {
 
     expect(useDesk.getState().items.workbench).toEqual(workbenches);
     expect(useDesk.getState().status.workbench).toBe("unreachable");
-    expect(useDesk.getState().error).toBe("Workbenches: workbench read unavailable");
-    expect(currentWriteFailure()?.verb).toBe("READ WORKBENCHES");
+    expect(useDesk.getState().error).toBe("Automations: workbench read unavailable");
+    expect(currentWriteFailure()?.verb).toBe("READ AUTOMATIONS");
     expect(currentWriteFailure()?.reason).toBe("HTTP 503");
     expect(currentWriteFailure()?.retry).toBeTypeOf("function");
     expect(useDesk.getState().status.decision).toBe("live");

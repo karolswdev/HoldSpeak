@@ -61,24 +61,24 @@ describe("Workbenches read truth", () => {
       ? fail ? Promise.reject(new Error("Hub unavailable")) : Promise.resolve({ workbenches })
       : Promise.resolve({ runs: [] }));
     render(<WorkbenchesHomeCore />);
-    await screen.findByText("No workbenches yet");
+    await screen.findByText("An automation does one job for you, again and again.");
     workbenches = [ALPHA];
     act(() => mocks.reload?.());
     await screen.findByRole("button", { name: /Alpha.*PENDING/ });
-    expect(screen.queryByText("No workbenches yet")).toBeNull();
+    expect(screen.queryByText("An automation does one job for you, again and again.")).toBeNull();
     fail = true;
     act(() => mocks.reload?.());
-    expect(await screen.findByRole("alert")).toHaveTextContent("Workbenches not loaded · Hub unavailable");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Automations not loaded · Hub unavailable");
     expect(screen.getByRole("button", { name: /Alpha.*PENDING/ })).toBeVisible();
   });
 
   it("shows a failed list read with Retry, then the actual empty collection", async () => {
     mocks.apiFetch.mockRejectedValueOnce(new Error("Hub unavailable")).mockResolvedValue({ workbenches: [] });
     render(<WorkbenchesHomeCore />);
-    expect(await screen.findByRole("alert")).toHaveTextContent("Workbenches not loaded · Hub unavailable");
-    expect(screen.queryByText("No workbenches yet")).toBeNull();
+    expect(await screen.findByRole("alert")).toHaveTextContent("Automations not loaded · Hub unavailable");
+    expect(screen.queryByText("An automation does one job for you, again and again.")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
-    expect(await screen.findByText("No workbenches yet")).toBeVisible();
+    expect(await screen.findByText("An automation does one job for you, again and again.")).toBeVisible();
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
@@ -103,13 +103,13 @@ describe("Workbenches read truth", () => {
     expect(mocks.open).toHaveBeenCalledWith("alpha");
     expect(screen.getByText(/Alpha · 1\/2 done/)).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Workbenches not loaded · List unavailable");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Automations not loaded · List unavailable");
     expect(screen.getByRole("button", { name: /Alpha.*PENDING/ })).toBeVisible();
     expect(screen.getByRole("button", { name: /Beta.*PENDING/ })).toBeVisible();
     expect(screen.getByText(/Alpha · 1\/2 done/)).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Runs not loaded · Alpha · Alpha runs unavailable"));
     expect(screen.getByText(/Alpha · 1\/2 done/)).toBeVisible();
-    expect(screen.queryByText("No workbenches yet")).toBeNull();
+    expect(screen.queryByText("An automation does one job for you, again and again.")).toBeNull();
   });
 });

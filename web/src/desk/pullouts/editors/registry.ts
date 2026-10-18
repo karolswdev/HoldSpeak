@@ -23,7 +23,7 @@ export const EDITOR_LABELS: Record<PrimitiveKind, string> = {
   repository: "Repository",
   roadmap: "Roadmap",
   story: "Story",
-  workbench: "Workbench",
+  workbench: "Automation",
   intelligence: "Intelligence",
   people: "People",
   thread: "Thread",

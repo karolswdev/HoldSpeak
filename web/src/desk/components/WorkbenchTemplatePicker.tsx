@@ -54,7 +54,7 @@ export function WorkbenchTemplatePicker({
       if (error) throw new Error(error);
       onCreated?.(id);
     } catch (error) {
-      setReadError(`${name} created · Workbench saved · Desk read failed · Retry · ${readableError(error)}`);
+      setReadError(`${name} created · Automation saved · Desk read failed · Retry · ${readableError(error)}`);
     } finally {
       setBusy(false);
     }
@@ -71,7 +71,7 @@ export function WorkbenchTemplatePicker({
         templateId ? `/api/workbench-templates/${templateId}/instantiate` : "/api/workbenches",
         {
           method: "POST",
-          json: templateId ? {} : { name: "New Workbench" },
+          json: templateId ? {} : { name: "New Automation" },
         },
       );
       const wbId = res.workbench?.id;
@@ -82,7 +82,7 @@ export function WorkbenchTemplatePicker({
         useDesk.getState().openWorkbenchWindow(wbId);
         await refreshCreated(wbId, name);
       } else {
-        setCreateError(`${name} result missing · Reload workbenches`);
+        setCreateError(`${name} result missing · Reload automations`);
       }
     } catch (error) {
       setCreateError(`${name} not created · ${readableError(error)}`);
@@ -95,7 +95,7 @@ export function WorkbenchTemplatePicker({
     <div className="wb-picker">
       {createError ? <SurfaceState error={createError} /> : null}
       {readError ? <SurfaceState error={readError} onRetry={busy || !created ? undefined : () => void refreshCreated(created.id, created.name)} /> : null}
-      {created ? <Button dense variant="ghost" onClick={() => useDesk.getState().openWorkbenchWindow(created.id)}>Open workbench</Button> : null}
+      {created ? <Button dense variant="ghost" onClick={() => useDesk.getState().openWorkbenchWindow(created.id)}>Open automation</Button> : null}
       <SurfaceSection label="START FROM A TEMPLATE">
         {error ? (
           <SurfaceState

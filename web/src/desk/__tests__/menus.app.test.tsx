@@ -240,7 +240,7 @@ describe.each([[1440, false], [393, true]] as const)("S1: Go at %i is the manife
   });
 
   const DAILY_WORK = ["Today", "Needs you", "Meetings", "People", "Projects", "Conductor", "Ask AI", "Speak",
-    "Workbenches", "Memory", "Voice commands"];
+    "Automations", "Memory", "Voice commands"];
 
   it("Go shows Daily then Work; Builder ▸ only when Builder tools is on, with eight rows", () => {
     phone(isPhone);

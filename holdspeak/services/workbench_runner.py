@@ -223,7 +223,7 @@ class WorkbenchRunner:
             from ..kernel.model import KernelRefused
             raise KernelRefused("principal_authentication_required")
         wb=self.db.workbenches.get(workbench_id)
-        if wb is None: raise ServiceError("not_found","Unknown Workbench",context={"status":404})
+        if wb is None: raise ServiceError("not_found","Unknown automation",context={"status":404})
         recipe=self.db.recipes.get(wb.recipe_id) if wb.recipe_id else None
         if recipe is None: return {"error":f"workbench {wb.name}: no recipe assigned"}
         if request_id and delegation is None:
@@ -237,7 +237,7 @@ class WorkbenchRunner:
             by_id={item.id:item for item in items}
             missing=[item_id for item_id in requested if item_id not in by_id]
             if missing:
-                raise ServiceError("item_not_pending","A scoped Workbench item is missing or no longer pending",context={"status":409,"item_ids":missing})
+                raise ServiceError("item_not_pending","An automation item is missing or no longer pending",context={"status":409,"item_ids":missing})
             items=[by_id[item_id] for item_id in requested]
         if principal.kind is PrincipalKind.OWNER:
             self.broker.inference_adoption_service.migrate_recipe_workbench_subject_assignments(principal)

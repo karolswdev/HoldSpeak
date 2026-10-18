@@ -24,7 +24,7 @@ export const workbenchVoiceGrammar: VoiceGrammar = {
     {
       id: "run",
       patterns: [
-        /\b(?:run|run\s+this\s+workbench|go)\b/i,
+        /\b(?:run|run\s+this\s+(?:automation|workbench)|go)\b/i,
       ],
       requiresLLM: false,
       verbId: null,

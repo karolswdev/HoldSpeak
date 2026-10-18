@@ -153,10 +153,10 @@
       "meaning": "A conversation with an engine, kept as one object with its messages."
     },
     "workbench": {
-      "singular": "Workbench",
-      "plural": "Workbenches",
+      "singular": "Automation",
+      "plural": "Automations",
       "category": "capability",
-      "meaning": "A list of work items that an Agent runs, one at a time or in bulk."
+      "meaning": "A job that an Agent does for you, again and again: on a schedule, when something happens, or when you press Run now."
     }
   },
   "legacy_aliases": {

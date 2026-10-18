@@ -10,13 +10,13 @@ describe("the Desk's own objects are product words", () => {
     expect(productLabel("decision", true)).toBe("Decisions");
     expect(productLabel("thread")).toBe("Thread");
     expect(productLabel("thread", true)).toBe("Threads");
-    expect(productLabel("workbench")).toBe("Workbench");
-    expect(productLabel("workbench", true)).toBe("Workbenches");
+    expect(productLabel("workbench")).toBe("Automation");
+    expect(productLabel("workbench", true)).toBe("Automations");
   });
 
   it("Get Info reads the registry word for them", () => {
     expect(kindLabel("decision")).toBe("Decision");
     expect(kindLabel("thread")).toBe("Thread");
-    expect(kindLabel("workbench")).toBe("Workbench");
+    expect(kindLabel("workbench")).toBe("Automation");
   });
 });

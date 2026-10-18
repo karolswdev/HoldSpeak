@@ -97,7 +97,7 @@ describe("DeskOS application manifest", () => {
     expect(names("daily")).toEqual([
       "Today", "Needs you", "Meetings", "People", "projects", "Conductor", "Ask AI", "Speak",
     ]);
-    expect(names("work")).toEqual(["Workbenches", "Memory", "Voice commands", "drawers"]);
+    expect(names("work")).toEqual(["Automations", "Memory", "Voice commands", "drawers"]);
     expect(names("builder")).toEqual([
       "Activity", "Processes", "Context", "Components", "Calendar snapshot", "Delivery board", "Terminals", "desk.refresh",
     ]);

@@ -174,7 +174,7 @@ permission. It supports kind, Project and time filters. Search selects
 evidence. It does not grant authority. An empty result is a real empty
 result. See [Memory](RELATIONSHIP_AWARE_MEMORY.md).
 
-Workbench memory is separate. Each Workbench keeps an append-only JSONL
+Automation memory is separate. Each automation keeps an append-only JSONL
 file of at most 100 entries. A run recalls the most recent entries, up to
 20 entries and 2,048 bytes, and adds them to the prompt in a `[MEMORY]`
 block (`holdspeak/workbench_memory.py`). Memory informs a run. It never

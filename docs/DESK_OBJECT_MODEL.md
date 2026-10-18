@@ -25,7 +25,7 @@ A verb that the table does not list is not available for that kind.
 | `recipe` | Agent | capability | yes | ask, edit, rename, duplicate, delete | pullout |
 | `chain` | Sequence | capability | yes | delete | pullout |
 | `workflow` | Workflow | capability | yes | ask, edit, rename, duplicate, delete | pullout |
-| `workbench` | Workbench | capability | yes | duplicate | workbench window |
+| `workbench` | Automation | capability | yes | duplicate | workbench window |
 | `coder` | Coder session | presence | no | none | pullout |
 | `roadmap` | Roadmap | organization | no | none | roadmap window |
 | `intelligence` | Intelligence | local | no | none | pullout |
@@ -64,7 +64,7 @@ The menu shows an unavailable verb dimmed, with that reason.
 
 | Menu | Verbs |
 | --- | --- |
-| **Desk** | **New Note**, **Write a thought**, **New Decision**, **New Knowledge**, **New Agent**, **New Workflow**, **New Workbench**, **New Zone**, **New Thread**, **New Project**, **Hide the menus** (Settle in), **List view** or **Spatial view**, **Arrange desk**, **Overview**, **Reset layout**, **Reset to seed…**, **Refresh from hub**, **Open Intelligence**, **Open People** |
+| **Desk** | **New Note**, **Write a thought**, **New Decision**, **New Knowledge**, **New Agent**, **New Workflow**, **New Automation**, **New Zone**, **New Thread**, **New Project**, **Hide the menus** (Settle in), **List view** or **Spatial view**, **Arrange desk**, **Overview**, **Reset layout**, **Reset to seed…**, **Refresh from hub**, **Open Intelligence**, **Open People** |
 | **Object** | **Open**, **Get Info**, **Ask this project**, **Ask AI**, **Continue in thread**, **Edit**, **Rename**, **Duplicate**, **Move to Zone**, **Delete**, **Focus** (Zone) |
 | **Go** | One entry for each tool in `DESK_APPLICATIONS`. An open window gets focus instead of a second copy. |
 | **Window** | **Close window**, **Iconify**, **Cycle windows**, **Cycle windows (reverse)**, **Snap left**, **Snap right**, **Zoom**, **To back**, and the four Chair windows |

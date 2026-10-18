@@ -104,16 +104,16 @@ def walk(page: Page, fixture: HubFixture) -> list[Path]:
     # Creation uses the exact same keyboard-only palette path. The new object
     # opens in its own labelled region, which proves both mint and visibility.
     desk.open_palette()
-    palette.search("New Workbench")
-    selected_option(page, "New Workbench")
+    palette.search("New Automation")
+    selected_option(page, "New Automation")
     shots.append(capture(page, "05-create-search"))
     combobox.press("Enter")
     expect(palette.region).to_be_hidden()
-    created = page.get_by_role("region", name="New Workbench", exact=True)
+    created = page.get_by_role("region", name="New Automation", exact=True)
     expect(created).to_be_visible()
-    expect(created.get_by_role("button", name="Close New Workbench", exact=True)).to_be_visible()
+    expect(created.get_by_role("button", name="Close New Automation", exact=True)).to_be_visible()
     shots.append(capture(page, "06-created-workbench"))
-    close_region_with_keyboard(page, "New Workbench")
+    close_region_with_keyboard(page, "New Automation")
 
     # Closing the window does not discard the created primitive: its semantic
     # world control remains on the desk, alongside the seeded workbench.

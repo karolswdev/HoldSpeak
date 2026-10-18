@@ -80,6 +80,8 @@ interface DeckRow {
   ghost?: string | null;
   /** Extra match terms beyond the label. */
   terms?: string;
+  /** An object's kind word: a weak match (Betterment A1). */
+  kindWord?: string;
   /** PHILO-13-14 (C4): the words inside the thing (a note's body, a
    * meeting's speakers, a person's aliases), matched by word only. */
   body?: string;
@@ -192,18 +194,25 @@ export function wordScore(query: string, text: string | undefined): number {
 
 /** Fuzzy relevance with a recency boost; 0 = no match. */
 export function rankRow(
-  row: { label: string; terms?: string; body?: string; name?: string },
+  row: { label: string; terms?: string; body?: string; name?: string; kindWord?: string },
   query: string,
   recent: boolean,
   recentBoostsEmpty = false,
 ): number {
   if (!query) return recent && recentBoostsEmpty ? 2 : 1;
-  const named = row.name && row.name.toLocaleLowerCase() === query.toLocaleLowerCase() ? 100 : 0;
+  // Betterment A1: the name matches in either number ("automation" finds the
+  // Automations program at 100, so the program leads the objects of that kind).
+  const name = row.name?.toLocaleLowerCase();
+  const asked = query.toLocaleLowerCase();
+  const named = name && (name === asked || stem(name) === stem(asked)) ? 100 : 0;
   const score = Math.max(
     named,
     fuzzyScore(query, row.label),
     fuzzyScore(query, row.terms ?? ""),
     wordScore(query, row.body),
+    // Betterment A1: an object's kind word ("automation") is a weak match,
+    // below a word of its title, so the program of that name leads it.
+    fuzzyScore(query, row.kindWord ?? "") ? 50 : 0,
   );
   return score ? score + (recent ? 10 : 0) : 0;
 }
@@ -717,7 +726,7 @@ export function DeskToolShelf() {
           glyph: item.kind === "meeting" ? "▣" : "○",
           label: item.title,
           kind,
-          terms: kind.toLocaleLowerCase(),
+          kindWord: kind.toLocaleLowerCase(),
           // PHILO-13-14 (C4): a word inside a thought (a note's body) or a
           // speaker of a meeting finds it.
           body: objectBody(item.ref),

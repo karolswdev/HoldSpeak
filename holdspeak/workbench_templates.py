@@ -9,7 +9,7 @@ from __future__ import annotations
 TEMPLATES = [
     {
         "id": "todo-agent",
-        "name": "TODO Agent",
+        "name": "TODO",
         "description": "An overnight backlog worker that processes items and leaves receipts.",
         "icon": "⚡",
         "recipe": {
@@ -39,7 +39,7 @@ TEMPLATES = [
     },
     {
         "id": "triage-agent",
-        "name": "Triage Agent",
+        "name": "Triage",
         "description": "Classifies and prioritizes incoming items by urgency.",
         "icon": "◈",
         "recipe": {
@@ -63,7 +63,7 @@ TEMPLATES = [
     },
     {
         "id": "meeting-prep-agent",
-        "name": "Meeting Prep Agent",
+        "name": "Meeting Prep",
         "description": "Prepares context packs for upcoming meetings.",
         "icon": "▣",
         "recipe": {
@@ -120,7 +120,7 @@ TEMPLATES = [
         },
         "starter_items": [
             {"title": "Yesterday's meetings", "body": "Summarize any meetings from the last 24 hours.", "priority": 1},
-            {"title": "Open workbench receipts", "body": "Summarize what other workbenches did overnight.", "priority": 2},
+            {"title": "Open automation receipts", "body": "Summarize what other automations did overnight.", "priority": 2},
             {"title": "Delivery status", "body": "Report the current phase, next story, and any blockers from the delivery roadmap.", "priority": 2},
         ],
     },

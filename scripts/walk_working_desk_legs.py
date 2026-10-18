@@ -223,7 +223,7 @@ def leg_workbench(shooter: Shooter, hub: Hub) -> None:
         )
         shooter.shot("workbench", "run-chip-disabled-reason", "HS-132-07: RUN names its disabled reason")
     else:
-        runnable = page.get_by_role("button", name="Run this workbench now")
+        runnable = page.get_by_role("button", name="Run this automation now")
         check(
             "the RUN chip is either enabled-with-a-reason-free title or disabled-with-a-name",
             runnable.count() > 0,

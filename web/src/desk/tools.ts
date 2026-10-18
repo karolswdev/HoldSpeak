@@ -44,7 +44,7 @@ export const KIND_LABEL: Record<string, string> = {
   note: "Note",
   project: "Project",
   recipe: "Agent",
-  workbench: "Workbench",
+  workbench: "Automation",
   workflow: "Workflow",
   thread: "Thread",
 };

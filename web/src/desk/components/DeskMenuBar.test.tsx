@@ -117,7 +117,7 @@ describe("DeskMenuBar Go at 1440 (PHILO-17 doors)", () => {
     // Betterment shell S1: Daily, then Work (Builder ▸ only behind its switch).
     expect(top(menu)).toEqual([
       "Today", "Needs you", "Meetings", "People", "Projects", "Conductor", "Ask AI", "Speak",
-      "Workbenches", "Memory", "Voice commands",
+      "Automations", "Memory", "Voice commands",
     ]);
     expect(menu.textContent).not.toMatch(/Settings|Runs on|Connections|Setup|Desk memory|List view/);
     // The ⌃ keys stay on their rows (PHILO-17 U27).
@@ -207,7 +207,7 @@ describe("DeskMenuBar at 393", () => {
     const menu = screen.getByRole("menu", { name: "Go menu" });
     expect(labels(menu)).toEqual([
       "Today", "Needs you", "Meetings", "People", "Projects", "Conductor", "Ask AI", "Speak",
-      "Workbenches", "Memory", "Voice commands",
+      "Automations", "Memory", "Voice commands",
       "New",
     ]);
     expect(menu.querySelectorAll(".desk-menu-keycaps, kbd")).toHaveLength(0);

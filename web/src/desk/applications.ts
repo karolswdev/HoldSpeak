@@ -292,8 +292,8 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
     action: "open-workbenches",
     windowId: "surface-workbenches",
-    label: "Workbenches",
-    description: "Mission control for your agent workbenches.",
+    label: "Automations",
+    description: "Jobs that run for you on a schedule or when something happens.",
     glyph: "⚒",
     href: "/workbenches",
     go: { group: "work", order: 0 },
