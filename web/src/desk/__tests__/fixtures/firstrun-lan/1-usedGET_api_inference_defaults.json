@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_firstrun.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-18T09:46:21.403283Z",
+  "captured_at": "2026-10-18T20:05:10.924449Z",
   "wire": {
     "capabilities": [
       {
@@ -132,137 +132,137 @@
       {
         "group": "meetings",
         "id": "meeting.plugin.action_owner_enforcer",
-        "inherited_from": "global",
+        "inherited_from": "capability",
         "label": "Meeting plugin: action owner enforcer",
         "lamp": "local",
         "reason": null,
-        "state": "inherited_from_default"
+        "state": "assigned"
       },
       {
         "group": "meetings",
         "id": "meeting.plugin.adr_drafter",
-        "inherited_from": "global",
+        "inherited_from": "capability",
         "label": "Meeting plugin: adr drafter",
         "lamp": "local",
         "reason": null,
-        "state": "inherited_from_default"
+        "state": "assigned"
       },
       {
         "group": "meetings",
         "id": "meeting.plugin.customer_signal_extractor",
-        "inherited_from": "global",
+        "inherited_from": "capability",
         "label": "Meeting plugin: customer signal extractor",
         "lamp": "local",
         "reason": null,
-        "state": "inherited_from_default"
+        "state": "assigned"
       },
       {
         "group": "meetings",
         "id": "meeting.plugin.decision_announcement_drafter",
-        "inherited_from": "global",
+        "inherited_from": "capability",
         "label": "Meeting plugin: decision announcement drafter",
         "lamp": "local",
         "reason": null,
-        "state": "inherited_from_default"
+        "state": "assigned"
       },
       {
         "group": "meetings",
         "id": "meeting.plugin.decision_capture",
-        "inherited_from": "global",
+        "inherited_from": "capability",
         "label": "Meeting plugin: decision capture",
         "lamp": "local",
         "reason": null,
-        "state": "inherited_from_default"
+        "state": "assigned"
       },
       {
         "group": "meetings",
         "id": "meeting.plugin.dependency_mapper",
-        "inherited_from": "global",
+        "inherited_from": "capability",
         "label": "Meeting plugin: dependency mapper",
         "lamp": "local",
         "reason": null,
-        "state": "inherited_from_default"
+        "state": "assigned"
       },
       {
         "group": "meetings",
         "id": "meeting.plugin.incident_timeline",
-        "inherited_from": "global",
+        "inherited_from": "capability",
         "label": "Meeting plugin: incident timeline",
         "lamp": "local",
         "reason": null,
-        "state": "inherited_from_default"
+        "state": "assigned"
       },
       {
         "group": "meetings",
         "id": "meeting.plugin.mermaid_architecture",
-        "inherited_from": "global",
+        "inherited_from": "capability",
         "label": "Meeting plugin: mermaid architecture",
         "lamp": "local",
         "reason": null,
-        "state": "inherited_from_default"
+        "state": "assigned"
       },
       {
         "group": "meetings",
         "id": "meeting.plugin.milestone_planner",
-        "inherited_from": "global",
+        "inherited_from": "capability",
         "label": "Meeting plugin: milestone planner",
         "lamp": "local",
         "reason": null,
-        "state": "inherited_from_default"
+        "state": "assigned"
       },
       {
         "group": "meetings",
         "id": "meeting.plugin.project_detector",
-        "inherited_from": "global",
+        "inherited_from": "capability",
         "label": "Meeting plugin: project detector",
         "lamp": "local",
         "reason": null,
-        "state": "inherited_from_default"
+        "state": "assigned"
       },
       {
         "group": "meetings",
         "id": "meeting.plugin.requirements_extractor",
-        "inherited_from": "global",
+        "inherited_from": "capability",
         "label": "Meeting plugin: requirements extractor",
         "lamp": "local",
         "reason": null,
-        "state": "inherited_from_default"
+        "state": "assigned"
       },
       {
         "group": "meetings",
         "id": "meeting.plugin.risk_heatmap",
-        "inherited_from": "global",
+        "inherited_from": "capability",
         "label": "Meeting plugin: risk heatmap",
         "lamp": "local",
         "reason": null,
-        "state": "inherited_from_default"
+        "state": "assigned"
       },
       {
         "group": "meetings",
         "id": "meeting.plugin.runbook_delta",
-        "inherited_from": "global",
+        "inherited_from": "capability",
         "label": "Meeting plugin: runbook delta",
         "lamp": "local",
         "reason": null,
-        "state": "inherited_from_default"
+        "state": "assigned"
       },
       {
         "group": "meetings",
         "id": "meeting.plugin.scope_guard",
-        "inherited_from": "global",
+        "inherited_from": "capability",
         "label": "Meeting plugin: scope guard",
         "lamp": "local",
         "reason": null,
-        "state": "inherited_from_default"
+        "state": "assigned"
       },
       {
         "group": "meetings",
         "id": "meeting.plugin.stakeholder_update_drafter",
-        "inherited_from": "global",
+        "inherited_from": "capability",
         "label": "Meeting plugin: stakeholder update drafter",
         "lamp": "local",
         "reason": null,
-        "state": "inherited_from_default"
+        "state": "assigned"
       },
       {
         "group": "background",

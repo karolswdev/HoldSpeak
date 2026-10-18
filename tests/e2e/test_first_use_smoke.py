@@ -35,7 +35,6 @@ from .concierge_rig import _quiet_concierge
 from .meeting_rig import _FixtureImportTranscriber, _chip_label, _wait_record_host
 from tests._evidence import evidence_dir
 from .chair_windows import go_group, open_chair_window
-from .runs_on import engine_key_for
 from . import runs_on
 
 TOKEN = "hs202-first-use"
@@ -348,6 +347,9 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             models.wait_for()
             _loaded(models.get_by_test_id("concierge-add-engine"))
             page.get_by_test_id("concierge-add-engine").click()
+            # Betterment E4: Add an engine unfolds into the kinds; the LAN
+            # fixture is "A server on my network", which asks for its address.
+            page.get_by_test_id("runson-kind-lan").click()
             address = page.locator("[data-testid='concierge-add-engine-row'] input").first
             endpoint = fixture_endpoint
             address.fill(endpoint)
@@ -386,24 +388,23 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             page.remove_listener("request", record_setup_request)
             provider = defined.value.json()["provider"]
             assert provider["profile_id"] and provider["profile_revision"] > 0
-            board = models.get_by_test_id("runson-assignments").get_by_test_id("switchboard")
-            board.wait_for()
-            # The engine joins the column; one patch onto Meetings sets the
-            # summaries. The window stays: the receipt is in its foot.
-            engine_key = engine_key_for(endpoint, _StubHandler.MODEL)
+            # Betterment E5: What runs where is the face (the drag switchboard
+            # is parked behind Builder tools). One pick on Meeting summaries
+            # sets the summaries. The window stays: the receipt is in its foot.
+            what = models.get_by_test_id("runson-what")
+            what.wait_for()
+            pick_row = what.get_by_test_id("runson-what-pick-summaries")
+            expect(pick_row).to_be_enabled()
+            pick_row.click()
+            option = what.get_by_test_id(f"runson-what-option-summaries-{provider['profile_id']}")
             with page.expect_response(lambda response: response.url.endswith("/api/inference/assignments/set")) as assigned:
-                if board.get_attribute("data-layout") == "list":
-                    board.get_by_test_id("switchboard-job-meetings").click()
-                    board.get_by_test_id(f"switchboard-tap-{engine_key}").click()
-                else:
-                    board.get_by_test_id(f"switchboard-engine-{engine_key}").drag_to(
-                        board.get_by_test_id("switchboard-job-meetings"))
+                option.click()
             assert assigned.value.ok, assigned.value.text()
             assignment = assigned.value.request.post_data_json
-            assert assignment["scope"] == {"kind": "group", "group_id": "meetings"}, assignment
+            assert assignment["scope"] == {"kind": "capability", "capability_id": "meeting.deferred_analysis"}, assignment
             assert assignment["entries"][0]["profile_id"] == provider["profile_id"], assignment
-            runs_on.wait_receipt(page, r"^PATCHED ")
-            assert runs_on.receipt(page).upper().startswith("PATCHED "), runs_on.receipt(page)
+            runs_on.wait_receipt(page, r"^SET ")
+            assert runs_on.receipt(page).upper().startswith("SET "), runs_on.receipt(page)
             assert page.locator("[data-testid='runson-undo']").count() == 1
             choose.wait_for(state="detached")
             settings = page.locator("#surface-settings")

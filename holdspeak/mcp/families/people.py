@@ -372,7 +372,7 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         _require_access(write=False)
         from holdspeak.db import get_database
 
-        return {"suggestions": build_people_service().suggestions(principal, db=get_database())}
+        return {"suggestions": build_people_service().suggestions(principal, db=db_or(get_database))}
 
     _require_access(write=True)
     service = build_people_service()

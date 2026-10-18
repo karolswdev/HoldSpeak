@@ -15,6 +15,7 @@ from __future__ import annotations
 import os
 import stat
 import subprocess
+import threading
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -76,7 +77,16 @@ def _stopped(tmp_path, db, monkeypatch, sessions):  # noqa: F811
     sessions("SessionStart", source="startup")
     sessions("UserPromptSubmit", prompt="the brief")
     sessions("PostToolUse", tool_name="Bash")
-    # The Mac restarts: tmux and every session in it are gone.
+    # The Mac restarts: the hub goes down with it (its session watchers stop
+    # without settling the launch; the next hub watches again), then tmux
+    # and every session in it are gone. A watcher left running would see
+    # the session gone and settle the launch "complete" in a race with the
+    # restart stop (the intermittent red on main f9a6ce2af).
+    rig.service._first.close()
+    for thread in threading.enumerate():
+        if thread.name == f"launch-{launch_id}":
+            thread.join(5)
+    rig.service._first._stop.clear()
     rig.tmux.sessions.clear()
     rig.tmux.meta.clear()
     assert record_restart_stops(db=db, ledger=rig.launches, alive=lambda _name: False) == [launch_id]

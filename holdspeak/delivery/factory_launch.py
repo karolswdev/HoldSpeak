@@ -599,8 +599,20 @@ class LaunchLedger:
     kept). Records are path-free by construction — every field is an
     opaque ID, a label, or a receipt reference."""
 
+    #: One lock per ledger file, shared by every instance in the process:
+    #: the rider binding, the first-message waiter, the session watcher and
+    #: a restart stop each read-modify-write the same file from their own
+    #: thread. Without it a reader's reload replaced ``_records`` under a
+    #: writer, and the writer saved the stale list (a lost "registered").
+    _LOCKS: dict[str, threading.RLock] = {}
+    _LOCKS_GUARD = threading.Lock()
+
     def __init__(self, path: Optional[Path] = None) -> None:
         self._path = Path(path) if path else DEFAULT_LAUNCHES_PATH
+        with LaunchLedger._LOCKS_GUARD:
+            self._lock = LaunchLedger._LOCKS.setdefault(
+                str(self._path.expanduser().absolute()), threading.RLock()
+            )
         self._records: list[dict[str, Any]] = []
         #: PHILO-15 lane 19 (Astra r1): why the last read of a file that
         #: EXISTS could not be used; None when it was read (or is absent).
@@ -632,10 +644,11 @@ class LaunchLedger:
     def read_all(self) -> list[dict[str, Any]]:
         """Every launch record, read now; a file that exists and cannot be
         read raises :class:`LaunchLedgerNotRead` (never an empty list)."""
-        self._load()
-        if self.not_read:
-            raise LaunchLedgerNotRead(self.not_read)
-        return [dict(row) for row in self._records]
+        with self._lock:
+            self._load()
+            if self.not_read:
+                raise LaunchLedgerNotRead(self.not_read)
+            return [dict(row) for row in self._records]
 
     def _park_unread(self) -> None:
         """Astra r2 (1), the never-delete law: before a save replaces a file
@@ -665,47 +678,53 @@ class LaunchLedger:
         _write_document(self._path, doc)
 
     def record(self, launch: dict[str, Any]) -> None:
-        # The kernel codec and the launch executor may hold separate ledger
-        # instances over the same durable file. Reload before each mutation and
-        # upsert by launch id so admission becomes execution without a twin row.
-        self._load()
-        launch_id = str(launch.get("launch_id") or "")
-        self._records = [row for row in self._records if row.get("launch_id") != launch_id]
-        self._records.append(dict(launch))
-        self._records = self._records[-LAUNCH_LEDGER_MAX_ROWS:]
-        self._save()
+        with self._lock:
+            # The kernel codec and the launch executor may hold separate ledger
+            # instances over the same durable file. Reload before each mutation and
+            # upsert by launch id so admission becomes execution without a twin row.
+            self._load()
+            launch_id = str(launch.get("launch_id") or "")
+            self._records = [row for row in self._records if row.get("launch_id") != launch_id]
+            self._records.append(dict(launch))
+            self._records = self._records[-LAUNCH_LEDGER_MAX_ROWS:]
+            self._save()
 
     def update(self, launch_id: str, **fields: Any) -> Optional[dict[str, Any]]:
-        self._load()
-        for row in self._records:
-            if row.get("launch_id") == launch_id:
-                row.update(fields)
-                self._save()
-                return dict(row)
-        return None
+        with self._lock:
+            self._load()
+            for row in self._records:
+                if row.get("launch_id") == launch_id:
+                    row.update(fields)
+                    self._save()
+                    return dict(row)
+            return None
 
     def get(self, launch_id: str) -> Optional[dict[str, Any]]:
-        self._load()
-        for row in self._records:
-            if row.get("launch_id") == launch_id:
-                return dict(row)
-        return None
+        with self._lock:
+            self._load()
+            for row in self._records:
+                if row.get("launch_id") == launch_id:
+                    return dict(row)
+            return None
 
     def by_session(self, session: str) -> Optional[dict[str, Any]]:
-        for row in reversed(self._records):
-            if row.get("session") == str(session or ""):
-                return dict(row)
-        return None
+        with self._lock:
+            for row in reversed(self._records):
+                if row.get("session") == str(session or ""):
+                    return dict(row)
+            return None
 
     def by_attempt(self, attempt_id: str) -> Optional[dict[str, Any]]:
-        for row in reversed(self._records):
-            if row.get("attempt_id") == str(attempt_id or ""):
-                return dict(row)
-        return None
+        with self._lock:
+            for row in reversed(self._records):
+                if row.get("attempt_id") == str(attempt_id or ""):
+                    return dict(row)
+            return None
 
     def list(self) -> list[dict[str, Any]]:
-        self._load()
-        return [dict(row) for row in self._records]
+        with self._lock:
+            self._load()
+            return [dict(row) for row in self._records]
 
 
 # ── the launch service (hub-side agent.launch executor) ──────────────
