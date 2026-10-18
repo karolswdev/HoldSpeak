@@ -7,11 +7,11 @@ import threading
 import time
 import uuid
 from collections.abc import Mapping
-from contextlib import contextmanager
 from dataclasses import dataclass, field, replace
 from typing import Any, Protocol
 
 from ..deployment_revisions import resolve_deployment_revision
+from ..engine_lanes import lane
 from ..inference_targets import build_intel_for_revision
 from ..principals import Principal, PrincipalKind
 from .dispatch_context import (
@@ -23,7 +23,7 @@ from .dispatch_context import (
     require_dispatch_context,
 )
 from .inference import executor_identity
-from .inference_cancel_signal import cancelled_evidence, perform_cancel
+from .inference_cancel_signal import cancelled_evidence, perform_cancel, request_cancel
 from .invocation_sequence import SequenceRegistry
 from .local_runtime_slot import takes_local_runtime_lease
 from .model import KernelRefused, valid_ref
@@ -84,39 +84,7 @@ class InferenceRunner:
         self._broker,self._database,self._engine_factory=broker,database,engine_factory; self._principal_provider=principal_provider or self._runtime_principal; self._clock=clock; self._cancel_timeout=cancel_timeout; self._receipt_attempts=receipt_attempts; self._routed_attempt_runtime=routed_attempt_runtime; self._active={}; self._pending={}; self._pending_cancellations=self._pending; self._active_lock=threading.Lock(); self._sequences=SequenceRegistry()
     def cancel(self, invocation_id: str) -> str: return self._request_cancel(invocation_id,self._principal_provider())
     def _cancel_internal(self, invocation_id: str, principal: Principal) -> str: return self._request_cancel(invocation_id,principal)
-    def _request_cancel(self, iid, principal):
-        forward=""
-        with self._active_lock:
-            active=self._active.get(iid)
-            # The caller names the LOGICAL invocation. Fence it first, so a retry
-            # that has not started yet never will, then reach whichever physical
-            # attempt is live through the ordinary machinery below.
-            sequence=self._sequences.get(iid)
-            if sequence is not None:
-                target=sequence.mark_cancelled(principal)
-                if active is None:
-                    if target and target!=iid and target in self._active: forward=target
-                    elif sequence.attempts>=1: return "cancelled"
-            if active is None and not forward:
-                completed=self._broker.store.operation_for_native(iid)
-                receipt=self._broker.store.receipt(completed["operation_id"]) if completed else None
-                if receipt:
-                    return {"succeeded":"completed", "indeterminate":"unknown"}.get(receipt["outcome"], receipt["outcome"])
-                self._pending[iid]=principal; return "pending"
-        if forward: return self._request_cancel(forward,principal)
-        with active.condition:
-            if active.closing:
-                while active.closing: active.condition.wait()
-                return self._terminal_disposition(active)
-            if active.state in {"PUBLISHING","PUBLISHED"}: return "completed"
-            if active.state=="RUNNING":
-                active.state="CANCEL_REQUESTED"; active.cancel_principal=principal; active.cancel_performing=True; active.condition.notify_all(); perform=True
-            elif active.state=="DISPATCHING" and active.cancel_principal is None:
-                active.cancel_principal=principal; active.cancel_performing=True; active.condition.notify_all(); perform=True
-            else: perform=False
-            while not perform and active.state in {"CANCEL_REQUESTED","CANCELLING","DISPATCHING"}: active.condition.wait()
-            if not perform: return self._terminal_disposition(active)
-        return self._perform_cancel(iid,active,principal)
+    def _request_cancel(self, iid, principal): return request_cancel(self,iid,principal)
     def _perform_cancel(self,iid,active,principal): return perform_cancel(self,iid,active,principal)
     @staticmethod
     def _terminal_disposition(active):
@@ -151,29 +119,11 @@ class InferenceRunner:
         with active.condition:
             active.closing=False; active.state="CLOSURE_FAILED"; active.closure_error=error; active.condition.notify_all()
         raise error from last
-    @contextmanager
-    def _lane(self, request):
-        """Betterment Q2, Ask goes first (``holdspeak/engine_lanes.py``).
-
-        A foreground turn holds its engine while it runs; a background call
-        waits until no foreground turn holds the engine it goes to.
-        """
-        from ..engine_lanes import FOREGROUND_CONTRACTS, LANES, background_label, contract_of, engine_key
-        if contract_of(request) in FOREGROUND_CONTRACTS:
-            with LANES.foreground([engine_key(self._database, request.deployment_revision)]):
-                yield
-            return
-        label = background_label(request)
-        if label:
-            with LANES.background(engine_key(self._database, request.deployment_revision), label):
-                yield
-            return
-        yield
     def invoke(self, request, adapter, *, publish=None, parent_context=None, planned_node: str = ""):
-        with self._lane(request):
+        with lane(getattr(self, "_database", None), request):
             return self._invoke(request, adapter, publish=publish, parent_context=parent_context, planned_node=planned_node)
     def invoke_stream(self, request, adapter, *, on_delta, publish=None, parent_context=None, planned_node: str = ""):
-        with self._lane(request):
+        with lane(getattr(self, "_database", None), request):
             return self._invoke_stream(request, adapter, on_delta=on_delta, publish=publish, parent_context=parent_context, planned_node=planned_node)
     def _invoke(self, request, adapter, *, publish=None, parent_context=None, planned_node: str = ""):
         """The one admission path; a dialect retry is a SECOND admitted child.

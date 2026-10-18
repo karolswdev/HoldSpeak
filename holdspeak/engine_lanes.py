@@ -165,3 +165,23 @@ class EngineLanes:
 
 
 LANES = EngineLanes()
+
+
+@contextmanager
+def lane(database: Any, request: Any) -> Iterator[None]:
+    """The gate around one physical call (``InferenceRunner.invoke``/``invoke_stream``).
+
+    A foreground turn holds its engine while it runs; a background call waits
+    until no foreground turn holds the engine it goes to.  Any other call
+    passes straight through.
+    """
+    if contract_of(request) in FOREGROUND_CONTRACTS:
+        with LANES.foreground([engine_key(database, request.deployment_revision)]):
+            yield
+        return
+    label = background_label(request)
+    if label:
+        with LANES.background(engine_key(database, request.deployment_revision), label):
+            yield
+        return
+    yield

@@ -112,4 +112,45 @@ def perform_cancel(runner: Any, iid: str, active: Any, principal: Any) -> str:
         return "refused"
 
 
-__all__ = ["cancelled_evidence", "perform_cancel"]
+def request_cancel(runner: Any, iid: str, principal: Any) -> str:
+    """Request a cancellation of one logical invocation; perform it when this caller wins.
+
+    Lifted out of ``InferenceRunner._request_cancel`` verbatim (Betterment Q2
+    follow-up, the runner line budget). The runner method still exists and
+    delegates here, so a forwarded request re-enters through it.
+    """
+    forward=""
+    with runner._active_lock:
+        active=runner._active.get(iid)
+        # The caller names the LOGICAL invocation. Fence it first, so a retry
+        # that has not started yet never will, then reach whichever physical
+        # attempt is live through the ordinary machinery below.
+        sequence=runner._sequences.get(iid)
+        if sequence is not None:
+            target=sequence.mark_cancelled(principal)
+            if active is None:
+                if target and target!=iid and target in runner._active: forward=target
+                elif sequence.attempts>=1: return "cancelled"
+        if active is None and not forward:
+            completed=runner._broker.store.operation_for_native(iid)
+            receipt=runner._broker.store.receipt(completed["operation_id"]) if completed else None
+            if receipt:
+                return {"succeeded":"completed", "indeterminate":"unknown"}.get(receipt["outcome"], receipt["outcome"])
+            runner._pending[iid]=principal; return "pending"
+    if forward: return runner._request_cancel(forward,principal)
+    with active.condition:
+        if active.closing:
+            while active.closing: active.condition.wait()
+            return runner._terminal_disposition(active)
+        if active.state in {"PUBLISHING","PUBLISHED"}: return "completed"
+        if active.state=="RUNNING":
+            active.state="CANCEL_REQUESTED"; active.cancel_principal=principal; active.cancel_performing=True; active.condition.notify_all(); perform=True
+        elif active.state=="DISPATCHING" and active.cancel_principal is None:
+            active.cancel_principal=principal; active.cancel_performing=True; active.condition.notify_all(); perform=True
+        else: perform=False
+        while not perform and active.state in {"CANCEL_REQUESTED","CANCELLING","DISPATCHING"}: active.condition.wait()
+        if not perform: return runner._terminal_disposition(active)
+    return runner._perform_cancel(iid,active,principal)
+
+
+__all__ = ["cancelled_evidence", "perform_cancel", "request_cancel"]
