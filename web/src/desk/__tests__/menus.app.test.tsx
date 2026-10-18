@@ -183,7 +183,7 @@ describe("S0: the menu bar withholds what cannot run", () => {
     render(<DeskMenuBar />);
     const menu = openTitle("Window");
     expect(menu.textContent).toBe("No windows open");
-    expect(within(menu).queryAllByRole(/menuitem/)).toHaveLength(0);
+    expect(within(menu).queryAllByRole("menuitem")).toHaveLength(0);
   });
 
   it.each([

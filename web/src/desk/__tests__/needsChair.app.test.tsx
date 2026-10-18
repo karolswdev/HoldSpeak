@@ -87,7 +87,7 @@ describe("Chair app: the fresh arrival", () => {
     fireEvent.click(screen.getByRole("button", { name: "Window" }), { detail: 0 });
     const empty = screen.getByRole("menu", { name: "Window menu" });
     expect(empty.textContent).toBe("No windows open");
-    expect(within(empty).queryAllByRole(/menuitem/)).toHaveLength(0);
+    expect(within(empty).queryAllByRole("menuitem")).toHaveLength(0);
     fireEvent.keyDown(document.body, { key: "Escape" });
     // Needs you opens from its registry verb (the bell's and Go's door) ...
     const { verbById } = await import("../verbRegistry");
