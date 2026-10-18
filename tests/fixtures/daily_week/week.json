@@ -1,6 +1,7 @@
 {
   "about": "The daily-surface recon seed (docs/internal/betterment/daily/RECON.md): three meetings of one week, Mira, Theo and Jun. The transcripts and the summary results are written here from the recon's shots and friction log; the recon's own LLM replies were not kept. Dates are the recon's week: the fixture's Monday is 2026-10-19 (the morning of the job).",
   "monday": "2026-10-19",
+  "project": "Payments ledger cutover",
   "people": [
     {"display_name": "Mira Okafor", "kind": "report"},
     {"display_name": "Theo Park", "kind": "report"},

@@ -583,7 +583,18 @@ export function NeedsDrawer() {
   const foldedAsks = needs.unmutedItems
     .filter((item) => item.foldedInto && !item.waiting)
     .map((item) => ({ ref: String(item.ref ?? item.id ?? ""), kind: "attention" as const, item }));
-  const faces = [...armed, ...needFaces([...needs.members, ...foldedAsks], ctx), ...sources];
+  // Betterment D1: a row the one count rule leaves out (a promise not kept
+  // yet, what a person owes that is not "waiting", his own work due on a
+  // later day) is listed after the counted rows, marked not counted.
+  const listedOnly = needs.unmutedItems
+    .filter((item) => item.counted === false && !item.waiting && !item.foldedInto)
+    .map((item) => ({ ref: String(item.ref ?? item.id ?? ""), kind: "attention" as const, item }));
+  const faces = [
+    ...armed,
+    ...needFaces([...needs.members, ...foldedAsks], ctx),
+    ...needFaces(listedOnly, ctx).map((face) => ({ ...face, uncounted: true })),
+    ...sources,
+  ];
   const asFace = (item: (typeof needs.mutedItems)[number]) =>
     needFace({ ref: String(item.id ?? item.ref ?? ""), kind: "attention", item }, ctx);
   // Listed, never counted: what he waits on someone else for, and the muted.

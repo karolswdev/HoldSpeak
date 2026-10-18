@@ -52,8 +52,12 @@ def seed_people(client: Any) -> dict[str, str]:
     return ids
 
 
-def seed_meetings(db: Any, *, monday: date = MONDAY) -> None:
-    """The three meetings, their summaries and their proposals (nothing kept)."""
+def seed_meetings(db: Any, *, monday: date = MONDAY, file_into: Any = None) -> None:
+    """The three meetings, their summaries and their proposals (nothing kept).
+
+    ``file_into(meeting_id)`` files each meeting before its summary is
+    bridged (the recon's Project held all three).
+    """
     from holdspeak.intel.models import ActionItem
     from holdspeak.kernel.summary_items_projection import write_summary_items
     from holdspeak.meeting_session.models import IntelSnapshot, MeetingState, TranscriptSegment
@@ -84,7 +88,26 @@ def seed_meetings(db: Any, *, monday: date = MONDAY) -> None:
                 conn, {"job_id": f"job-{meeting['id']}", "decisions": meeting["decisions"]},
                 meeting["id"], [{**a, "id": item.id} for a, item in zip(actions, items)],
             )
+        if file_into is not None:
+            file_into(meeting["id"])
         ProposalBridgeService(db).bridge_meeting_artifacts(meeting["id"])
+
+
+def seed_engine(client: Any) -> None:
+    """The recon's engine: the LAN model, added to the Model Library and made
+    the Default (``Default engine`` → the LAN row). Nothing is called."""
+    defined = _ok(client.post("/api/inference/model-library/define-endpoint", json={"draft": {
+        "request_id": "daily-week-engine", "profile_id": "lan-qwen", "expected_profile_revision": 0,
+        "label": "192.168.1.43:8080", "provider_family": "openai_compatible", "model": "qwen3.8-27b",
+        "endpoint": "http://192.168.1.43:8080/v1", "requires_key": False,
+    }, "secret": None}))
+    provider = defined["provider"]
+    rows = {row["id"]: row for row in _ok(client.get("/api/inference/assignments"))["rows"]}
+    _ok(client.post("/api/inference/assignments/set", json={
+        "command_id": "daily-week-default", "expected_revision": rows["global"]["expected_revision"],
+        "scope": {"kind": "global"},
+        "entries": [{"profile_id": provider["profile_id"], "profile_revision": int(provider["profile_revision"])}],
+    }))
 
 
 def keep_nine(client: Any) -> list[str]:
@@ -101,10 +124,21 @@ def keep_nine(client: Any) -> list[str]:
     return kept
 
 
-def seed(hub: Any, *, monday: date = MONDAY, keep: bool = True) -> dict[str, str]:
-    """The whole week on ``hub`` (a ``tests/unit/test_desk_needs_you.py`` Hub)."""
+def seed(hub: Any, *, monday: date = MONDAY, keep: bool = True, engine: bool = False) -> dict[str, str]:
+    """The whole week on ``hub`` (a ``tests/unit/test_desk_needs_you.py`` Hub).
+
+    Returns the People ids by first name, and the Project's id (``project``).
+
+    ``engine``: the recon's LAN engine is the Default (no "No engine" row).
+    """
+    if engine:
+        seed_engine(hub.client)
     people = seed_people(hub.client)
-    seed_meetings(hub.db, monday=monday)
+    project = _ok(hub.client.post("/api/projects", json={
+        "name": WEEK["project"], "command_id": "daily-week-project"}))["project"]["id"]
+    people["project"] = project
+    seed_meetings(hub.db, monday=monday, file_into=lambda meeting_id: _ok(
+        hub.client.post(f"/api/projects/{project}/meetings/{meeting_id}")))
     if keep:
         keep_nine(hub.client)
     return people

@@ -29,6 +29,11 @@ vi.mock("../../lib/api", async (original) => ({
   apiFetch: vi.fn(),
 }));
 
+vi.mock("../../runtime/RuntimeBus", () => ({
+  useRuntimeBus: () => ({ state: "offline", lastFrame: null, subscribe: () => () => undefined }),
+  useOptionalRuntimeBus: () => ({ state: "offline", lastFrame: null, subscribe: () => () => undefined }),
+}));
+
 const shell = vi.hoisted(() => ({ openSurfaceOr: vi.fn(), openProjectRoom: vi.fn() }));
 vi.mock("../shell", async (original) => ({
   ...(await original<typeof import("../shell")>()),
@@ -238,5 +243,51 @@ describe("a remote write in the shade's Finished rows (HS-174-04)", () => {
     const chips = within(finished).getAllByTestId("shade-finished-egress").map((slot) => slot.querySelector(".gadget-chip-egress")!);
     expect(chips.map((c) => [c.textContent, c.getAttribute("data-scope")])).toEqual([[`REMOTE · ${remote.caller}`, "remote"]]);
     expect(finished.textContent).not.toContain("Service.");
+  });
+});
+
+/* ── Betterment daily D1: one number on the bell and the Project icon ──────────
+ * The recon week (tests/fixtures/daily_week) on the real hub, today as its
+ * Monday, after the nine keeps: the hub counts 4 (mine due today 2, to decide
+ * 2; what Mira, Theo and Jun owe never counts). The recorded answer is
+ * tests/unit/test_desk_needs_you.py::test_the_one_number_is_mine_due_today_and_to_decide
+ * (fixtures/daily-week/needs-you.json). The bell said 11 and the Project icon
+ * 12 in the recon (RECON.md §2). */
+import dailyWeek from "./fixtures/daily-week/needs-you.json";
+import { DeskChrome } from "../components/DeskChrome";
+import { projectOpenHere, readNeedsYouAnswer, readProjectCounts, refreshNeedsYou, resetNeedsYou } from "../needsYou";
+import { composeScreen } from "../screen/compose";
+import { EMPTY_ITEMS } from "../api";
+
+describe("Bell: the daily week's one number", () => {
+  it("the bell, the members and the Project icon all say 4", async () => {
+    resetNeedsYou();
+    const gets: Gets = { "/api/desk/needs-you?fresh=1": dailyWeek.needsYou };
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => recordedGet(gets, path) as never);
+    render(<DeskChrome />);
+    await act(async () => { await refreshNeedsYou(true); });
+    const bell = await screen.findByTestId("desk-bell");
+    await waitFor(() => expect(bell.querySelector("strong")?.textContent).toBe("4"));
+
+    const read = readNeedsYouAnswer(dailyWeek.needsYou as never);
+    expect(read.count).toBe(4);
+    expect(read.members.map((m) => m.item?.title).filter(Boolean).sort()).toEqual([
+      "Do it", "Email Dana about the cutover window",
+      "Review design doc on settlement retries",
+      "Talk about the staff path in our next one-on-one",
+    ]);
+
+    const project = dailyWeek.projects.projects as Array<{ id: string; name: string }>;
+    const counts = projectOpenHere({ projectCounts: readProjectCounts(dailyWeek.needsYou as never), unmutedItems: read.unmutedItems });
+    expect(Object.values(counts)).toEqual([4]);
+    // The Room's own count (it counts what others owe) is not the badge.
+    expect(Object.values(dailyWeek.needsYou.roomCounts)).toEqual([9]);
+    const screenObjects = composeScreen({
+      items: { ...EMPTY_ITEMS, project: project.map((p) => ({ id: p.id, name: p.name })) },
+      projectCounts: counts, needsCount: read.count, needsRefs: new Set(), heldCalls: 0,
+      sessions: [], flights: [], filed: new Set(), persons: [], membersLoaded: true,
+    } as never);
+    const icon = (screenObjects as Array<{ kind?: string; lamp?: { count?: number } }>).find((o) => o.kind === "project");
+    expect(icon?.lamp?.count).toBe(4);
   });
 });

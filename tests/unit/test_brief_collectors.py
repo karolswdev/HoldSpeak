@@ -111,13 +111,14 @@ def _breakage_event(
     method: str = "push",
     error: str | None = "network unavailable",
     error_code: str | None = "NETWORK",
+    args_summary: str | None = None,
 ) -> None:
     with service._db._connection() as conn:
         conn.execute(
             """INSERT INTO pipeline_events
-               (event_id, timestamp, service, method, principal_kind, error, error_code)
-               VALUES (?, ?, ?, ?, 'owner', ?, ?)""",
-            (event_id, timestamp.timestamp(), service_name, method, error, error_code),
+               (event_id, timestamp, service, method, principal_kind, error, error_code, args_summary)
+               VALUES (?, ?, ?, ?, 'owner', ?, ?, ?)""",
+            (event_id, timestamp.timestamp(), service_name, method, error, error_code, args_summary or ""),
         )
 
 
@@ -169,6 +170,26 @@ def test_breakage_repeated_service_method_failures_deduplicate(tmp_path):
     assert len(items) == 1
     assert items[0].source_ref == "pipeline-event:evt-latest"
     assert items[0].detail.split(" · ")[0] == "retry exhausted"
+
+
+def test_breakage_drops_a_failure_the_same_call_later_did(tmp_path):
+    """Betterment D1: "Summary did not start" leaves the brief once the same
+    meeting's summary run succeeds; another meeting's success does not hide it."""
+    service = _service(tmp_path)
+    run = {"service_name": "MeetingIntelService", "method": "run_intelligence"}
+    _breakage_event(service, event_id="evt-refused-a", timestamp=datetime(2026, 8, 1, 11, 5),
+                    error="selection_hash_required", error_code="CONFLICT",
+                    args_summary='{"meeting_id": "m-a"}', **run)
+    _breakage_event(service, event_id="evt-refused-b", timestamp=datetime(2026, 8, 1, 11),
+                    error="selection_hash_required", error_code="CONFLICT",
+                    args_summary='{"meeting_id": "m-b"}', **run)
+    _breakage_event(service, event_id="evt-ran-a", timestamp=datetime(2026, 8, 1, 12),
+                    error=None, error_code=None,
+                    args_summary='{"meeting_id": "m-a", "expected_selection_hash": "h1"}', **run)
+
+    items = service._collect_breakage(*_breakage_window(), "brief-test")
+
+    assert [item.source_ref for item in items] == ["pipeline-event:evt-refused-b"]
 
 
 def test_breakage_events_outside_window_are_excluded(tmp_path):

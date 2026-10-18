@@ -88,19 +88,21 @@ function tomorrow(): string {
   date.setDate(date.getDate() + 1);
   return dayText(date);
 }
-function dueLabel(due: string | null): { label: string; overdue: boolean } {
-  if (!due) return { label: "No date", overdue: false };
-  const dueAt = new Date(`${due.slice(0, 10)}T00:00:00`);
-  if (!Number.isFinite(dueAt.getTime())) return { label: due, overdue: false };
+/** The due as a YYYY-MM-DD day for the date field; words give "". */
+function isoDay(due: string | null | undefined): string {
+  return due && /^\d{4}-\d{2}-\d{2}/.test(due) ? due.slice(0, 10) : "";
+}
+/** Betterment D1: the due shows once, as a date ("Tue 20 Oct"), never cut.
+ *  Words that name no day show as they were said. */
+function dueLabel(due: string | null): { label: string; overdue: boolean; day: string | null } {
+  if (!due) return { label: "No date", overdue: false, day: null };
+  const day = /^\d{4}-\d{2}-\d{2}/.test(due) ? due.slice(0, 10) : null;
+  const dueAt = day ? new Date(`${day}T00:00:00`) : null;
+  if (!dueAt || !Number.isFinite(dueAt.getTime())) return { label: due, overdue: false, day: null };
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const days = Math.round((dueAt.getTime() - today.getTime()) / 86_400_000);
-  const amount = Math.abs(days);
-  return {
-    label: days === 0 ? "Today" : days === 1 ? "Tomorrow" : days < 0
-      ? `${amount} ${amount === 1 ? "day" : "days"} overdue` : `Due in ${days} days`,
-    overdue: days < 0,
-  };
+  const label = dueAt.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+  return { label, overdue: dueAt.getTime() < today.getTime(), day };
 }
 function ageLabel(card: FollowThroughCard): string | null {
   const timestamp = card.delegated_at || card.created_at;
@@ -113,20 +115,26 @@ function sourceFor(card: FollowThroughCard): { ref: string; label: string; kind:
   if (card.source === "people_commitment") return /^people:.+/.test(card.target_ref ?? "")
     ? { ref: card.target_ref!, label: "Open People", kind: "people", people: true } : null;
   const refs = [card.open_ref, card.provenance?.source_ref, card.source_ref];
-  const ref = refs.find((value) => /^(note|thread|meeting|decision):.+/.test(value ?? ""));
+  // Betterment D1: an action item opens where it was said (its meeting), not
+  // the decision record its Keep linked it to.
+  const action = card.source === "action_item";
+  const ref = refs.find((value) => (action ? /^(note|thread|meeting):.+/ : /^(note|thread|meeting|decision):.+/)
+    .test(value ?? ""));
   if (ref) {
     const kind = ref.split(":")[0];
     return { ref, label: `Open ${kind}`, kind };
   }
-  if (card.decision_id) return { ref: `decision:${card.decision_id}`, label: "Open decision", kind: "decision" };
   const meetingId = card.provenance?.meeting_id || card.meeting_id;
+  if (card.decision_id && !(action && meetingId)) {
+    return { ref: `decision:${card.decision_id}`, label: "Open decision", kind: "decision" };
+  }
   if (!meetingId) return null;
   const index = card.provenance?.moment?.segment_index;
   const segment = Number.isInteger(index) ? `?view=review&segment=${index}` : "?view=review";
   return { ref: `meeting:${meetingId}${segment}`, label: "Open meeting", kind: "meeting" };
 }
 function draftFor(card: FollowThroughCard): Draft {
-  return { owner: card.owner ?? "", due: card.due?.slice(0, 10) ?? "", ownerDirty: false, dueDirty: false };
+  return { owner: card.owner ?? "", due: isoDay(card.due), ownerDirty: false, dueDirty: false };
 }
 
 /** Existing board authorities, expressed as readable task rows and in-place controls. */
@@ -172,7 +180,7 @@ export function FollowThroughView({ overdueOnly = false, focusCardId, onClearFil
         if (prior) updated[card.id] = {
           ...prior,
           owner: prior.ownerDirty ? prior.owner : card.owner ?? "",
-          due: prior.dueDirty ? prior.due : card.due?.slice(0, 10) ?? "",
+          due: prior.dueDirty ? prior.due : isoDay(card.due),
         };
       }
       draftsRef.current = updated;
@@ -324,8 +332,9 @@ export function FollowThroughView({ overdueOnly = false, focusCardId, onClearFil
                     <span className="follow-through-owner" data-testid={card.person_label ? "follow-through-person-chip" : undefined}>{card.person_label || card.owner || "No owner"}</span>
                     {age ? <span className="follow-through-staleness" data-testid="follow-through-staleness">{age}</span> : null}
                   </span>}
-                  cells={<span className="follow-through-facts"><StateChip state={due.overdue ? "warning" : "idle"} label={due.label} wrap />
-                    {card.due ? <time dateTime={card.due.slice(0, 10)}>{card.due.slice(0, 10)}</time> : null}
+                  cells={<span className="follow-through-facts">{due.day
+                    ? <time dateTime={due.day}><StateChip state={due.overdue ? "warning" : "idle"} label={due.label} wrap /></time>
+                    : <StateChip state="idle" label={due.label} wrap />}
                     {card.snoozed_until ? <StateChip state="idle" label={`Snoozed until ${card.snoozed_until.slice(0, 10)}`} wrap /> : null}
                     {card.deferred_until ? <StateChip state="idle" label={`Deferred until ${card.deferred_until.slice(0, 10)}`} wrap /> : null}
                     {!source ? <span>Source unavailable</span> : null}

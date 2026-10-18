@@ -47,10 +47,13 @@ def _ok(response: Any, status: int = 200) -> dict[str, Any]:
 
 
 def _mint(hub: Hub) -> dict[str, str]:
-    """A decision waiting, an overdue action and a People commitment."""
+    """A decision waiting, his overdue action and a People commitment.
+
+    Betterment D1: the action is his (``Me``); one Dana owes would be
+    *theirs* and never counts."""
     yesterday = (date.today() - timedelta(days=1)).isoformat()
     is_error, action = hub.mcp("door.add_item", {
-        "task": "Send the capacity plan", "owner": "Dana", "due": yesterday,
+        "task": "Send the capacity plan", "owner": "Me", "due": yesterday,
     })
     assert not is_error, action
     is_error, decision = hub.mcp("desk.create", {
@@ -247,7 +250,8 @@ def test_a_people_row_never_merges_with_another_row(hub: Hub) -> None:
     yesterday = (date.today() - timedelta(days=1)).isoformat()
     title = "Send the capacity plan"
     commitment_id = _commit(hub, title)
-    is_error, action = hub.mcp("door.add_item", {"task": "send the  capacity plan", "owner": "Dana", "due": yesterday})
+    # Betterment D1: his own overdue action (one Dana owes would never count).
+    is_error, action = hub.mcp("door.add_item", {"task": "send the  capacity plan", "owner": "Me", "due": yesterday})
     assert not is_error, action
 
     route = _ok(hub.client.get("/api/desk/needs-you"))

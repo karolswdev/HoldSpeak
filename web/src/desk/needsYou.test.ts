@@ -167,7 +167,10 @@ describe("the one needs-you membership", () => {
     const result = computeNeedsYou(input);
     expect(result.unmutedItems).toHaveLength(1);
     expect(result.unmutedItems[0]).toMatchObject({ waiting: false, why: "YOURS", dedupCount: 2 });
-    expect(result.count).toBe(1);
+    // Betterment D1: the row is his; his projection is due on a later day,
+    // so it waits for that day and is not in the number yet.
+    expect(result.unmutedItems[0]).toMatchObject({ direction: "mine", counted: false });
+    expect(result.count).toBe(0);
     expect(result.waitingCount).toBe(0);
     // Every projection waits on someone else: the merged row waits.
     const both = computeNeedsYou({
