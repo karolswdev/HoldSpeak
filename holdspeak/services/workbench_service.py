@@ -106,6 +106,7 @@ class WorkbenchService:
         if not name.strip():
             raise ValidationError("Automation name is required")
         self._refuse_post_marker_pointer_write(principal, fields)
+        self._clean_automation_fields(fields)
         body = {"name": name, **fields}
         fields = self._wb_fields(body)
         if fields["schedule_enabled"] and principal.kind is not PrincipalKind.OWNER:
@@ -146,6 +147,7 @@ class WorkbenchService:
             from holdspeak.kernel.runtime import _configure
             _configure(self._db).inference_adoption_service.migrate_recipe_workbench_subject_assignments(principal)
         self._refuse_post_marker_pointer_write(principal, fields)
+        self._clean_automation_fields(fields)
         proposed = self._wb_fields(fields, existing)
         bound_changed = any(proposed[key] != getattr(existing, key) for key in ("schedule", "schedule_enabled", "recipe_id", "profile_id"))
         enabling = not existing.schedule_enabled and proposed["schedule_enabled"]
@@ -387,18 +389,23 @@ class WorkbenchService:
                   request_id: str | None = None,
                   source_event: dict[str, str] | None = None,
                   item_ids: list[str] | None = None) -> dict[str, Any]:
-        """Run the pending queue, or only ``item_ids`` (an item's Re-run)."""
+        """Run the pending queue, or only ``item_ids`` (an item's Re-run).
+
+        An automation with an instruction runs one new occurrence instead, and
+        its result goes where ``output_target`` says (Betterment A2)."""
         self._require_workbench(workbench_id)
         from holdspeak.workbench_conductor import run_workbench
         if request_id or source_event or item_ids:
             from holdspeak.kernel.runtime import _service
             from holdspeak.services.workbench_runner import WorkbenchRunner
-            return await WorkbenchRunner(self._db, _service()).run(
+            result = await WorkbenchRunner(self._db, _service()).run(
                 principal, workbench_id, memory_enabled=memory_enabled,
                 request_id=request_id, source_event=source_event,
                 item_ids=item_ids,
             )
-        return await run_workbench(workbench_id, principal, memory_enabled=memory_enabled)
+        else:
+            result = await run_workbench(workbench_id, principal, memory_enabled=memory_enabled)
+        return self._deliver(principal, result)
 
     async def run_item(
         self,
@@ -416,7 +423,7 @@ class WorkbenchService:
         from holdspeak.kernel.runtime import _service
         from holdspeak.services.workbench_runner import WorkbenchRunner
 
-        return await WorkbenchRunner(self._db, _service()).run(
+        result = await WorkbenchRunner(self._db, _service()).run(
             principal,
             workbench_id,
             memory_enabled=memory_enabled,
@@ -425,6 +432,33 @@ class WorkbenchService:
             deadline_seconds=deadline_seconds,
             item_ids=[item_id],
         )
+        return self._deliver(principal, result)
+
+    def _deliver(self, principal: Principal, result: Any) -> Any:
+        """Send each new occurrence result to its output target (Betterment A2)."""
+        if not isinstance(result, dict) or not result.get("run_id"):
+            return result
+        from .automation_runs import deliver_run
+
+        deliveries = deliver_run(self._db, principal, result)
+        if deliveries:
+            result = {**result, "deliveries": deliveries}
+            self._changed("workbench", str(self._run_workbench_id(result["run_id"]) or ""), "update")
+        return result
+
+    def _run_workbench_id(self, run_id: str) -> str | None:
+        with self._db._connection() as conn:
+            row = conn.execute("SELECT workbench_id FROM workbench_runs WHERE id=?", (run_id,)).fetchone()
+        return str(row["workbench_id"]) if row is not None else None
+
+    def open_result(self, principal: Principal, workbench_id: str, artifact_id: str) -> dict[str, Any]:
+        """Open one result: a ``new`` result becomes ``read`` (decision 5)."""
+        self._require_workbench(workbench_id)
+        from .automation_runs import open_result
+
+        opened = open_result(self._db, workbench_id, artifact_id)
+        self._changed("workbench", workbench_id, "update")
+        return opened
 
     def cancel_run(self, principal: Principal, parent_operation_id: str) -> str:
         """Cancel exactly the authenticated parent, never a Workbench lookup."""
@@ -699,6 +733,14 @@ class WorkbenchService:
         )
         runs = self._db.workbench_runs.list_for_workbench(wb.id, limit=1)
         payload["last_run"] = runs[0].to_dict() if runs else None
+        # Betterment A2: the Do text to show (an old automation reads its
+        # agent's prompt; nothing is written) and the results, one per run.
+        from .automation_runs import effective_instruction, results_of
+
+        shown, source = effective_instruction(self._db, wb)
+        payload["instruction_shown"] = shown
+        payload["instruction_from"] = source
+        payload["results"] = results_of(self._db, wb.id)
         if principal.kind is PrincipalKind.OWNER:
             from .inference_assignment_service import InferenceAssignmentService
 
@@ -730,4 +772,20 @@ class WorkbenchService:
             "schedule_enabled": bool(pick("schedule_enabled", existing.schedule_enabled if existing else False)),
             "schedule_revision": int(pick("schedule_revision", existing.schedule_revision if existing else 1)),
             "item_order": list(pick("item_order", [])),
+            "instruction": str(pick("instruction", existing.instruction if existing else "") or ""),
+            "sources": list(pick("sources", json.loads(existing.sources_json or "[]") if existing else [])),
+            "output_target": str(pick("output_target", existing.output_target if existing else "inbox") or "inbox"),
         }
+
+    def _clean_automation_fields(self, fields: dict[str, Any]) -> None:
+        """Validate the instruction, sources and output target in place."""
+        from .automation_runs import clean_output_target, clean_sources
+
+        if "instruction" in fields:
+            if fields["instruction"] is not None and not isinstance(fields["instruction"], str):
+                raise ValidationError("instruction must be text")
+            fields["instruction"] = str(fields["instruction"] or "").strip()
+        if "sources" in fields:
+            fields["sources"] = clean_sources(fields["sources"])
+        if "output_target" in fields:
+            fields["output_target"] = clean_output_target(self._db, fields["output_target"])

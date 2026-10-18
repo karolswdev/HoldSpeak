@@ -47,6 +47,9 @@ class WorkbenchRepository(BaseRepository):
         last_modified: Optional[str] = None,
         deleted: bool = False,
         created_at: Optional[str] = None,
+        instruction: Optional[str] = None,
+        sources: Optional[list[str]] = None,
+        output_target: Optional[str] = None,
     ) -> WorkbenchRecord:
         clean_id = str(workbench_id or "").strip()
         if not clean_id:
@@ -54,16 +57,19 @@ class WorkbenchRepository(BaseRepository):
         now = _now_iso()
         with self._connection() as conn:
             existing = conn.execute(
-                "SELECT created_at FROM workbenches WHERE id = ?", (clean_id,)
+                "SELECT created_at, instruction, sources_json, output_target FROM workbenches WHERE id = ?",
+                (clean_id,),
             ).fetchone()
             created = created_at or (existing["created_at"] if existing else now)
+            a2 = self._a2_values(existing, instruction, sources, output_target)
             conn.execute(
                 """
                 INSERT INTO workbenches (id, name, recipe_id, profile_id,
                                         resolver_profile_id, schedule,
                                         schedule_enabled, schedule_revision, item_order_json,
-                                        created_at, last_modified, deleted)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                        created_at, last_modified, deleted,
+                                        instruction, sources_json, output_target)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     name = excluded.name,
                     recipe_id = excluded.recipe_id,
@@ -74,7 +80,10 @@ class WorkbenchRepository(BaseRepository):
                     schedule_revision = excluded.schedule_revision,
                     item_order_json = excluded.item_order_json,
                     last_modified = excluded.last_modified,
-                    deleted = excluded.deleted
+                    deleted = excluded.deleted,
+                    instruction = excluded.instruction,
+                    sources_json = excluded.sources_json,
+                    output_target = excluded.output_target
                 """,
                 (
                     clean_id,
@@ -89,9 +98,26 @@ class WorkbenchRepository(BaseRepository):
                     created,
                     last_modified or now,
                     1 if deleted else 0,
+                    *a2,
                 ),
             )
         return self.get(clean_id, include_deleted=True)  # type: ignore[return-value]
+
+    def _a2_values(
+        self, existing: Any, instruction: Optional[str],
+        sources: Optional[list[str]], output_target: Optional[str],
+    ) -> tuple[str, str, str]:
+        """The instruction, sources and output target to write.
+
+        ``None`` keeps the stored value, so a caller that does not name these
+        fields (an older writer, a template) never clears them."""
+        keep = existing is not None
+        return (
+            str(instruction) if instruction is not None else (str(existing["instruction"] or "") if keep else ""),
+            self._json_dumps(list(sources), fallback="[]") if sources is not None
+            else (str(existing["sources_json"] or "[]") if keep else "[]"),
+            str(output_target) if output_target else (str(existing["output_target"] or "inbox") if keep else "inbox"),
+        )
 
     def upsert_in_transaction(
         self, conn: Any, **kwargs: Any,
@@ -102,17 +128,24 @@ class WorkbenchRepository(BaseRepository):
         if not clean_id:
             raise ValueError("workbench id is required")
         now = _now_iso()
-        existing = conn.execute("SELECT created_at FROM workbenches WHERE id = ?", (clean_id,)).fetchone()
+        existing = conn.execute(
+            "SELECT created_at, instruction, sources_json, output_target FROM workbenches WHERE id = ?",
+            (clean_id,),
+        ).fetchone()
         created = kwargs.get("created_at") or (existing["created_at"] if existing else now)
+        a2 = self._a2_values(existing, kwargs.get("instruction"), kwargs.get("sources"), kwargs.get("output_target"))
         conn.execute(
             """INSERT INTO workbenches (id, name, recipe_id, profile_id, resolver_profile_id,
                schedule, schedule_enabled, schedule_revision, item_order_json, created_at,
-               last_modified, deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+               last_modified, deleted, instruction, sources_json, output_target)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                ON CONFLICT(id) DO UPDATE SET name=excluded.name, recipe_id=excluded.recipe_id,
                profile_id=excluded.profile_id, resolver_profile_id=excluded.resolver_profile_id,
                schedule=excluded.schedule, schedule_enabled=excluded.schedule_enabled,
                schedule_revision=excluded.schedule_revision, item_order_json=excluded.item_order_json,
-               last_modified=excluded.last_modified, deleted=excluded.deleted""",
+               last_modified=excluded.last_modified, deleted=excluded.deleted,
+               instruction=excluded.instruction, sources_json=excluded.sources_json,
+               output_target=excluded.output_target""",
             (clean_id, str(kwargs.get("name") or ""),
              str(kwargs.get("recipe_id")).strip() if kwargs.get("recipe_id") else None,
              str(kwargs.get("profile_id")).strip() if kwargs.get("profile_id") else None,
@@ -121,7 +154,7 @@ class WorkbenchRepository(BaseRepository):
              1 if kwargs.get("schedule_enabled", False) else 0,
              int(kwargs.get("schedule_revision") if kwargs.get("schedule_revision") is not None else 1),
              self._json_dumps(kwargs.get("item_order") or [], fallback="[]"), created,
-             kwargs.get("last_modified") or now, 1 if kwargs.get("deleted", False) else 0),
+             kwargs.get("last_modified") or now, 1 if kwargs.get("deleted", False) else 0, *a2),
         )
         return self._row(conn.execute("SELECT * FROM workbenches WHERE id = ?", (clean_id,)).fetchone())
 
@@ -182,6 +215,9 @@ class WorkbenchRepository(BaseRepository):
             created_at=row["created_at"],
             last_modified=row["last_modified"],
             deleted=bool(row["deleted"]),
+            instruction=str(row["instruction"] or "") if "instruction" in row.keys() else "",
+            sources_json=str(row["sources_json"] or "[]") if "sources_json" in row.keys() else "[]",
+            output_target=str(row["output_target"] or "inbox") if "output_target" in row.keys() else "inbox",
         )
 
 

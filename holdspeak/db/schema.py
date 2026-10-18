@@ -1735,7 +1735,15 @@ CREATE TABLE IF NOT EXISTS workbenches (
     item_order_json TEXT NOT NULL DEFAULT '[]',
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     last_modified TEXT NOT NULL DEFAULT (datetime('now')),
-    deleted INTEGER NOT NULL DEFAULT 0
+    deleted INTEGER NOT NULL DEFAULT 0,
+    -- Betterment A2: one automation = one instruction + sources. A run of an
+    -- automation with an instruction makes one occurrence item (one result).
+    -- An empty instruction keeps the old queue run. ``sources_json`` is a list
+    -- of qualified refs (note:<id>, meeting:<id>, ...). ``output_target`` is
+    -- inbox | needs_you | destination:<id>.
+    instruction TEXT NOT NULL DEFAULT '',
+    sources_json TEXT NOT NULL DEFAULT '[]',
+    output_target TEXT NOT NULL DEFAULT 'inbox'
 );
 CREATE TABLE IF NOT EXISTS workbench_items (
     id TEXT PRIMARY KEY,

@@ -570,13 +570,26 @@ class ReactionService:
                     title = reaction["title_template"].format_map(values)
                 except (KeyError, ValueError):
                     title = f'{event["event_type"]}: {facts.get("entity_title", "")}'
-                item = workbenches.add_item(
-                    principal, reaction["workbench_id"], title=title,
-                    id=item_id,
-                    body=json.dumps({"event": event}, sort_keys=True, indent=2),
-                    grounding={"refs": event.get("refs", [])},
-                    context={"reaction_id": reaction["id"], "event_id": event["id"]},
-                )
+                target = self._db.workbenches.get(reaction["workbench_id"])
+                if target is not None and str(target.instruction or "").strip():
+                    # Betterment A2: an automation with an instruction makes one
+                    # occurrence about this event (its title, its subject).
+                    from .automation_runs import mint_occurrence
+
+                    item = mint_occurrence(
+                        self._db, target, item_id=item_id,
+                        title=str(facts.get("entity_title") or "").strip() or title, event=event,
+                        context={"reaction_id": reaction["id"], "event_id": event["id"]},
+                    ).to_dict()
+                    workbenches._changed("workbench_item", item["id"], "create")
+                else:
+                    item = workbenches.add_item(
+                        principal, reaction["workbench_id"], title=title,
+                        id=item_id,
+                        body=json.dumps({"event": event}, sort_keys=True, indent=2),
+                        grounding={"refs": event.get("refs", [])},
+                        context={"reaction_id": reaction["id"], "event_id": event["id"]},
+                    )
                 operation_id = receipt_id = None
                 if reaction["auto_run"]:
                     run = await workbenches.run_item(

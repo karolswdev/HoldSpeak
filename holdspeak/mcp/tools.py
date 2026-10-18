@@ -238,6 +238,9 @@ _WORKBENCH_FIELDS_SCHEMA: dict[str, Any] = {
         "schedule_enabled": {"type": "boolean"},
         "schedule_revision": {"type": "integer", "minimum": 1},
         "item_order": {"type": "array", "items": {"type": "string"}},
+        "instruction": {"type": "string", "description": "The Do text. With it, each run makes one result; empty keeps the item queue."},
+        "sources": {"type": "array", "items": {"type": "string"}, "description": "Refs the run reads, for example note:<id> or meeting:<id>."},
+        "output_target": {"type": "string", "description": "Where a result goes: inbox (default), needs_you, or destination:<id> (prepared only; the owner presses Send)."},
     },
     "additionalProperties": False,
 }

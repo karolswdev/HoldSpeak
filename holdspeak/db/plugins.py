@@ -719,7 +719,9 @@ class PluginArtifactRepository(BaseRepository):
         # v6 (Phase 74): a run-born artifact has no meeting anchor — its anchor
         # is the capability lineage. Empty meeting_id stores NULL, origin='run'.
         origin = "meeting" if clean_meeting_id else "run"
-        if clean_status not in {"draft", "needs_review", "accepted", "rejected", "pending-review"}:
+        from ..artifacts import VALID_ARTIFACT_STATUSES
+
+        if clean_status not in VALID_ARTIFACT_STATUSES:
             raise ValueError(f"Invalid artifact status: {clean_status!r}")
 
         normalized_sources: list[tuple[str, str]] = []

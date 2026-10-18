@@ -1,0 +1,6 @@
+{
+  "about": "Engine replies for the Betterment A2 hub tests, keyed by what the prompt asks. Not a live recording (nothing leaves the machine in this slice); each test also checks the prompt the engine got.",
+  "weekly_update": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.",
+  "pr_summary": "## PR 418: Move the ledger cutover behind a flag\n\nThe change puts the cutover behind `LEDGER_CUTOVER`. Risky files: none named in the event.",
+  "memory": "nothing"
+}
