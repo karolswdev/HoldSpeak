@@ -65,6 +65,8 @@ Evidence paths go in a footnote, not in the prose.
 
 ## Index
 
+- [TRACKER.md](TRACKER.md): every slice, done or open, with its PR. Updated after each batch.
+
 The master plan is `PLAN.md`; every open owner decision is in `DECISIONS.md`; the feature inventory is `INVENTORY.md`;
 cluster workers follow `CLUSTER-BRIEF.md`.
 
