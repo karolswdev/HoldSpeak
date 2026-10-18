@@ -2,7 +2,7 @@
 
 Covers both halves of the wiring:
 - `resolve_llm_capability` decides whether `"llm"` should be enabled, from
-  config + a cheap provider-resolution check (non-fatal on error).
+  the "Meeting summaries" route in Engines (non-fatal on error; Capture C4).
 - `PluginHost` blocks an `["llm"]`-requiring plugin when the capability is
   absent and runs it when present.
 """
@@ -43,34 +43,54 @@ def _meeting(**overrides):
 
 
 # --- resolve_llm_capability ------------------------------------------------
+# Capture C4: the capability follows the "Meeting summaries" route in Engines
+# (``project_route``), never the old ``meeting.intel_provider`` setting.
 
 
-def test_capability_true_when_provider_resolves(monkeypatch) -> None:
+def _route(monkeypatch, answer) -> list[object]:
+    seen: list[object] = []
+
+    def _project(db, **_kwargs):
+        seen.append(db)
+        if isinstance(answer, Exception):
+            raise answer
+        return answer
+
+    monkeypatch.setattr(
+        "holdspeak.services.meeting_route_projection.project_route", _project
+    )
+    return seen
+
+
+def test_capability_true_when_the_summary_route_is_ready(monkeypatch) -> None:
+    seen = _route(monkeypatch, {"status": "ready", "legs": [{"host": "192.168.1.43"}]})
+    db = object()
+    assert resolve_llm_capability(_meeting(), db=db) is True
+    assert seen == [db]
+
+
+def test_capability_false_when_the_summary_route_is_unavailable(monkeypatch) -> None:
+    _route(monkeypatch, {"status": "unavailable", "reason_code": "no assignment", "legs": []})
+    assert resolve_llm_capability(_meeting(), db=object()) is False
+
+
+def test_capability_ignores_the_old_provider_setting(monkeypatch) -> None:
+    # The old config resolver says yes; with no engine in Engines the answer is no.
     monkeypatch.setattr(intel_module, "resolve_intel_provider", lambda *a, **k: ("cloud", None))
-    assert resolve_llm_capability(_meeting()) is True
-
-
-def test_capability_false_when_provider_unresolved(monkeypatch) -> None:
-    monkeypatch.setattr(intel_module, "resolve_intel_provider", lambda *a, **k: (None, "no provider"))
-    assert resolve_llm_capability(_meeting()) is False
+    _route(monkeypatch, {"status": "unavailable", "reason_code": "no assignment", "legs": []})
+    assert resolve_llm_capability(_meeting(), db=object()) is False
 
 
 def test_capability_false_when_intel_disabled(monkeypatch) -> None:
-    # Gated before resolution: the resolver must not even be consulted.
-    def _boom(*a, **k):
-        raise AssertionError("resolve_intel_provider should not be called")
-
-    monkeypatch.setattr(intel_module, "resolve_intel_provider", _boom)
-    assert resolve_llm_capability(_meeting(intel_enabled=False)) is False
+    # Gated before resolution: the route must not even be read.
+    _route(monkeypatch, AssertionError("project_route should not be called"))
+    assert resolve_llm_capability(_meeting(intel_enabled=False), db=object()) is False
 
 
 def test_capability_false_when_resolution_raises(monkeypatch) -> None:
-    def _raise(*a, **k):
-        raise RuntimeError("provider blew up")
-
-    monkeypatch.setattr(intel_module, "resolve_intel_provider", _raise)
-    # Non-fatal: a broken resolver must not crash host construction.
-    assert resolve_llm_capability(_meeting()) is False
+    _route(monkeypatch, RuntimeError("route read blew up"))
+    # Non-fatal: a broken read must not crash host construction.
+    assert resolve_llm_capability(_meeting(), db=object()) is False
 
 
 # --- PluginHost capability gate --------------------------------------------

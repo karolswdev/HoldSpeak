@@ -132,12 +132,11 @@ def test_an_imported_meeting_run_with_the_disclosed_hash_reaches_a_six_turn_summ
     test_meeting_partial_chain_retry_stays_live_under_amendment).
 
     The real import route, the disclosed selection hash, the hub's own
-    lifespan drainer, the real summary. The plugin -> proposal pipeline is
-    parked (the HS-201 analysis-only amendment): the run calls no meeting
-    plugin, and no plugin output becomes a proposal (the only proposals are
-    the summary's own action items). If it comes back, this test
-    fails, as the strict xfails did; then restore the review assertions from
-    tests/e2e/_parked/test_hs200_meeting_outcomes_glass.py."""
+    lifespan drainer, the real summary. Capture C4 brought the plugin ->
+    proposal pipeline back (it was parked by the HS-201 analysis-only
+    amendment): the job's plugins run on its disclosed route, and the review
+    holds the plugins' five proposals, as
+    tests/e2e/_parked/test_hs200_meeting_outcomes_glass.py asserted."""
     from holdspeak import intel_queue_conductor as conductor
     from holdspeak.db import get_database
     from holdspeak.runtime_lock import claim_database, current_lock, release_database
@@ -198,13 +197,16 @@ def test_an_imported_meeting_run_with_the_disclosed_hash_reaches_a_six_turn_summ
         assert review["job"]["status"] == "succeeded", review["job"]
         assert (review["coverage"]["turns"], review["coverage"]["read"], review["coverage"]["state"]) == (
             6, 6, "available"), review["coverage"]
-        # The parked pipeline (the two strict-xfail rows' tripwire): no meeting
-        # plugin ran, so none of the scripted plugin output became a proposal.
-        # The proposals there are the summary's own action items.
-        assert engine.plugin_calls == [], "the meeting plugin chain is live again"
-        summary_tasks = {item.task for item in engine.result.action_items}
-        assert {p["text"] for p in review["proposals"]} <= summary_tasks, review["proposals"]
-        assert not [p for p in review["proposals"] if p["kind"] == "decision"], review["proposals"]
+        # Capture C4: the plugin chain is live again. The job's plugins run on
+        # its disclosed route, and their output becomes the proposals (the
+        # bridge takes decisions and actions from the plugins, never twice).
+        assert sorted(engine.plugin_calls) == [ACT, DEC], engine.plugin_calls
+        proposals = review["proposals"]
+        assert sorted(p["kind"] for p in proposals) == ["action", "action", "action", "decision", "decision"], proposals
+        assert {p["text"] for p in proposals if p["kind"] == "decision"} == {
+            item["decision"] for item in json.loads(DECISIONS_JSON)["decisions"]
+        }, proposals
+        assert all(p["job_id"] == review["job"]["job_id"] for p in proposals), proposals
     finally:
         _stop(server)
         conductor.stop_intel_queue_conductor()
