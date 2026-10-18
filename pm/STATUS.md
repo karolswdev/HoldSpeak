@@ -4,9 +4,29 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-18 (betterment batch three delivered at `873c95627`)
+**Last updated:** 2026-10-18 (betterment batch four delivered at `eff269a6b`)
 
 ## Current phase
+
+**Betterment batch four — delivered 2026-10-18 (main `eff269a6b`).** A5 #1309
+(one About picker, by name, shared with Ask; drop a note or meeting; event
+subject), A7 #1314 (Automations home, one row each; four starters; schedules
+saved Off; the §6 Friday-update job in 5 presses at 1440 and 393), E4 #1311
+(Add an engine by kind: service / agent on this Mac / server on my network /
+model on this Mac / another HoldSpeak; Anthropic supported), E5 #1315 (What
+runs where: one row per job, Try it, Undo; the switchboard behind Builder
+tools; speech never routes to a chat engine; no retry on CLI timeout; budgets
+follow the engine's real context; plugins follow the summary's engine),
+D6 #1312 (People suggested from meetings, 1:1 series and Jira; Who are you?),
+D7 #1313 (1:1 prep: owes me / I owe with Nudge and Done; last time; folds),
+AG5 #1308 (working at once, default 6, a queue), AG6 #1310 (Resume after a
+restart, Resume all). Reds fixed forward: #1316 (incl. a real launch-ledger
+race: concurrent read-modify-write lost the "registered" state).
+Verified on `f9a6ce2af` before the fix: FAST 4 red, web 0 branch-new, browser
+13 red; all 17 fixed in #1316 (109/109 on the failing files). Desk hub
+restarted from `wt-desk-betterment-2026-10-18`; /health, /, /conductor,
+/models 200; backend `eff269a6b`. Not walked by eye yet.
+Progress: ~52 of 117 recipe slices merged.
 
 **Betterment batch three — delivered 2026-10-18 (main `873c95627`).** A4 #1304
 (When and With edit in place: plain schedules with Next, GitHub event starts,
