@@ -696,6 +696,31 @@ def update173(hub: Any, _mp: pytest.MonkeyPatch) -> dict[str, Any]:
     }
 
 
+# ── P0 (betterment/projects): Draft update refused 409 not_usable, then the records draft ──
+
+
+def draft409(hub: Any, _mp: pytest.MonkeyPatch) -> dict[str, Any]:
+    """A real engine route to a stub that answers prose, not the update JSON:
+    the hub's 409 for the model press, then the records draft (200)."""
+    llm = rig.FakeLLM()
+    llm.reply = "Here is your update. Progress is good this week."
+    try:
+        pid = _project(hub, "Draft 409 Project", "p0-draft409-create")
+        rig._define_route(hub.home, llm.endpoint, "draft409-llm")
+        gets = _gets(hub, pid, ROOM_GETS, UPDATE_GETS)
+        model = _call(hub, "POST", f"/api/projects/{pid}/updates/draft",
+                      {"generator": "model", "command_id": "p0-draft409-model"})
+        records = _call(hub, "POST", f"/api/projects/{pid}/updates/draft",
+                        {"generator": "deterministic", "command_id": "p0-draft409-records"})
+        assert model["status"] == 409 and records["status"] == 200, (model, records)
+        # The reads the face makes once the records draft is open.
+        after = _gets(hub, pid, UPDATE_GETS)
+        after = {k: v for k, v in after.items() if "/updates" in k or "/channels/sends" in k}
+        return {"pid": pid, "gets": gets, "model": model, "records": records, "after": after}
+    finally:
+        llm.stop()
+
+
 # ── HS-200-06: the claim axes, a real draft then a real edit; every state ──
 
 
@@ -1058,6 +1083,7 @@ def main() -> int:
     wanted = set(sys.argv[1:])
     jobs: list[tuple[Path, str, Callable[..., dict[str, Any]], Any]] = [
         (ROOM_DIR, "update173", update173, {}),
+        (ROOM_DIR, "draft409", draft409, {}),
         (ROOM_DIR, "claims200", claims200, {}),
         (ROOM_DIR, "nudge10", nudge10, {}),
         (ROOM_DIR, "hs175", hs175, {}),

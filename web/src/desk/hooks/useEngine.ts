@@ -48,7 +48,8 @@ function factFromSummary(capabilityId: string): EngineFact {
   }
   const entry = effective.assignment.entries?.[0] || {};
   return {
-    state: status === "assigned" || status === "no_compatible_assignment" ? "set" : "none",
+    // P0: an assignment with no compatible engine cannot answer: not "set".
+    state: status === "assigned" ? "set" : "none",
     // A profile id is an implementation key and is not useful on the Desk.
     model: String(entry.label || "Selected engine"),
     place: placeFor(entry.boundary),

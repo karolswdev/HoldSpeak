@@ -1821,7 +1821,10 @@ class ProjectUpdateService:
 
         broker = self._broker
         if broker is None:
-            raise _ModelDraftFailed("no_broker", FALLBACK_MODEL_UNAVAILABLE)
+            raise _ModelDraftFailed(
+                "no_broker", FALLBACK_MODEL_UNAVAILABLE,
+                detail="the hub has no engine service",
+            )
 
         runner = broker.inference_runner
 
@@ -1833,6 +1836,7 @@ class ProjectUpdateService:
         except RuntimeError as exc:
             raise _ModelDraftFailed(
                 f"route_unresolved: {exc}", FALLBACK_ROUTE_UNRESOLVED,
+                detail="no engine is set for updates",
             ) from exc
 
         # HS-173-02: derive generator provenance from the deployment revision.
@@ -1901,6 +1905,7 @@ class ProjectUpdateService:
         except Exception as exc:
             raise _ModelDraftFailed(
                 f"runner_error: {exc}", FALLBACK_MODEL_UNAVAILABLE,
+                detail="the call to the engine failed",
             ) from exc
 
         # Extract raw output -- try direct result first, then captured.
@@ -1914,13 +1919,23 @@ class ProjectUpdateService:
                 raw = str(adapter_result["output"])
 
         if raw is None:
-            raise _ModelDraftFailed("no_output", FALLBACK_NO_OUTPUT)
+            raise _ModelDraftFailed(
+                "no_output", FALLBACK_NO_OUTPUT,
+                detail="it returned no text",
+            )
 
         # Parse and constrain to the claim schema.
         parsed = _parse_model_output(raw, inventory_refs, inventory_texts, known_names)
         if parsed is None:
+            # P0 (betterment/projects): carry WHY up, in plain words.
+            structured = _extract_structured_json(raw)
             raise _ModelDraftFailed(
-                "unparseable_output", FALLBACK_UNPARSEABLE_OUTPUT,
+                f"unparseable_output: {len(raw)} chars, starts {raw[:120]!r}",
+                FALLBACK_UNPARSEABLE_OUTPUT,
+                detail=(
+                    "it did not return JSON" if structured is None
+                    else "it did not return the expected fields"
+                ),
             )
 
         model_sections, model_claims = parsed
@@ -2102,12 +2117,18 @@ class ProjectUpdateService:
             except _ModelDraftFailed as exc:
                 if strict_model_failure:
                     reason = model_draft_reason(exc.code)
+                    _log.warning(
+                        "Project update model draft failed: %s (%s): %s",
+                        exc.code, exc.detail, exc.reason,
+                        extra={"project_id": project_id, "failure_code": exc.code},
+                    )
                     raise ServiceError(
                         "project_update_model_failed",
                         "The update engine did not make a draft.",
                         context={
                             "status": 409,
                             "reason": reason,
+                            "detail": exc.detail,
                             "generator": "model",
                             "failure_code": exc.code,
                         },
@@ -2257,11 +2278,14 @@ class ProjectUpdateService:
                 generator=generator,
                 strict_model_failure=strict_model_failure,
             )
-        except BaseException:
+        except BaseException as exc:
             if command_id is not None:
                 # The claim is released: the same command_id may try again.
+                # The record keeps the reason (P0): not_usable, no_engine ...
+                context = getattr(exc, "context", None) or {}
                 self._db.projects.complete_project_command(
-                    command_id, status="failed", error_code="draft_failed",
+                    command_id, status="failed",
+                    error_code=str(context.get("reason") or "draft_failed"),
                 )
             raise
 
@@ -3172,7 +3196,11 @@ class _ModelDraftFailed(Exception):
     ``reason`` stays the full human detail for the log.
     """
 
-    def __init__(self, reason: str, code: str = FALLBACK_MODEL_UNAVAILABLE) -> None:
+    def __init__(
+        self, reason: str, code: str = FALLBACK_MODEL_UNAVAILABLE, *, detail: str = "",
+    ) -> None:
         self.reason = reason
         self.code = code
+        # Plain words for the face (P0): why the draft was not made.
+        self.detail = detail
         super().__init__(reason)

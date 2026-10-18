@@ -30,10 +30,14 @@ export async function fetchUpdate(updateId: string): Promise<ProjectUpdate> {
 export async function draftUpdate(
   projectId: string,
   generator: "deterministic" | "model",
+  commandId?: string,
 ): Promise<ProjectUpdate> {
+  // P0: each press sends a command_id, so a failed draft leaves a record.
+  const json: Record<string, unknown> = { generator };
+  if (commandId) json.command_id = commandId;
   const raw = await apiFetch<{ success: boolean; update: Record<string, unknown> }>(
     `/api/projects/${encodeURIComponent(projectId)}/updates/draft`,
-    { method: "POST", json: { generator } },
+    { method: "POST", json },
   );
   return decodeUpdate(raw.update);
 }

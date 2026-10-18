@@ -685,6 +685,14 @@
 .room-head-strip [data-tone="danger"] b { color: var(--wb-danger-ink); }
 .room-head-strip [data-tone="warn"] { color: var(--wb-warn-ink); }
 .room-head .room-head-trailing { margin-left: auto; }
+/* P0: the draft's run under the head line (RunLine + the records verb). */
+.room-head-run {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  min-width: 0;
+}
 .room-head .room-head-outcome {
   margin: 0;
   font: 500 13px / 1.4 var(--font-sans);

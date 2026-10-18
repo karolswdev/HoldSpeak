@@ -683,6 +683,53 @@ def test_manual_model_draft_refuses_then_deliberate_retry_and_steward_falls_back
         assert fallback["fallback_reason"] == "model_unavailable"
 
 
+def test_a_slow_model_draft_never_freezes_the_hub_and_a_bad_answer_says_why(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, llm: FakeLLM,
+) -> None:
+    """P0 (betterment/projects): Draft update runs off the event loop. While a
+    slow engine thinks, /health answers at once; the engine's prose (not the
+    update JSON) comes back 409 not_usable with the reason in plain words,
+    and the failed command keeps that reason."""
+    llm.reply = "Here is your update. Progress is good this week."
+    llm.delay_s = 4.0
+    # lifespan: ONE event loop serves every request, as on the real hub.
+    with _hub(tmp_path, monkeypatch, lifespan=True) as hub:
+        pid = hub.ok("POST", "/api/projects", {"name": "Slow engine"})["project"]["id"]
+        _define_route(hub.home, llm.endpoint, "slow-llm")
+
+        answer: dict[str, Any] = {}
+
+        def press() -> None:
+            resp = hub.client.post(
+                f"/api/projects/{pid}/updates/draft",
+                json={"generator": "model", "command_id": "p0-slow-draft"},
+            )
+            answer["status"], answer["body"] = resp.status_code, resp.json()
+
+        drafting = threading.Thread(target=press)
+        drafting.start()
+        deadline = time.monotonic() + 10
+        while not llm.posts and time.monotonic() < deadline:
+            time.sleep(0.05)
+        assert llm.posts, "the draft reached the engine"
+
+        started = time.monotonic()
+        health = hub.client.get("/health")
+        took = time.monotonic() - started
+        assert health.status_code == 200, health.text
+        assert took < 1.0, f"/health took {took:.2f} s while the draft ran"
+        assert drafting.is_alive(), "the draft was still running when /health answered"
+
+        drafting.join(timeout=30)
+        assert answer["status"] == 409, answer
+        body = answer["body"]
+        assert (body["code"], body["reason"]) == ("project_update_model_failed", "not_usable"), body
+        assert body["detail"] == "it did not return JSON", body
+        command = hub.db.projects.get_project_command("p0-slow-draft")
+        assert command and (command["status"], command["error_code"]) == ("failed", "not_usable"), command
+        assert hub.ok("GET", f"/api/projects/{pid}/updates")["updates"] == [], "nothing is saved"
+
+
 # ── the merge receipt (PHILO-15 lane 17): the hub's own poll ─────────
 
 MERGE_PROJECT = "proj-philo1517abcd"
