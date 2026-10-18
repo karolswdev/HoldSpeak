@@ -1,7 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PERSON_OPEN_EVENT } from "../../objectWindows";
-import { takeRoomProposalRequest } from "../../openObject";
 import { TodayView, countdown, currentStep, toFinish } from "./TodayView";
 
 const shell = vi.hoisted(() => ({ openSurfaceOr: vi.fn() }));
@@ -63,7 +62,7 @@ describe("PHILO-17 Today: the day as a timeline", () => {
     expect(toFinish(rows, now).map((row) => row.id)).toEqual(["a"]);
   });
 
-  it("draws the next meeting with its steps, later meetings, the owed and the decision", async () => {
+  it("draws the next meeting with its steps and later meetings (D4: no Owed or To decide plate)", async () => {
     const calls = hub({
       "/api/door": () => json({ calendar_configured: true, upcoming: [
         { id: "ev1", source: "calendar_event", title: "1:1 Priya", starts_at: inMinutes(50), ends_at: inMinutes(80), person_label: "Priya Nair", person_relationship_id: "r1" },
@@ -75,25 +74,23 @@ describe("PHILO-17 Today: the day as a timeline", () => {
       "/api/people/relationships?counts=1": () => json({ relationships: [{ id: "r1", you_owe_count: 1, owes_you_count: 1 }] }),
       "/api/proposals/pr1/confirm": () => json({ ok: true }),
     });
-    render(<TodayView header={null} />);
+    render(<TodayView />);
     const next = await screen.findByTestId("today-next");
     expect(within(next).getByText("1:1 Priya")).toBeTruthy();
     expect(within(next).getByTestId("today-countdown").textContent).toBe("in 50 min");
-    expect(within(next).getByText("Prep").closest("li")?.getAttribute("aria-current")).toBe("step");
-    expect(within(next).getByRole("button", { name: "Open prep" })).toBeTruthy();
-    expect(within(next).getByRole("button", { name: "Record when it starts" }).className).toContain("btn--primary");
+    expect(within(next).getByText("Prep", { selector: ".kit-step-word" }).closest("li")?.getAttribute("aria-current")).toBe("step");
+    expect(within(next).getByRole("button", { name: "Prep" })).toBeTruthy();
+    // Betterment D4: a row of Needs you leads; the record verb is secondary.
+    await waitFor(() => expect(screen.getByTestId("today-needs").querySelector(".btn--primary")).toBeTruthy());
+    expect(within(next).getByRole("button", { name: "Record when it starts" }).className).not.toContain("btn--primary");
     expect(screen.getAllByTestId("today-later")).toHaveLength(1);
     expect(screen.getByTestId("today-now")).toBeTruthy();
     expect(next.compareDocumentPosition(screen.getByTestId("today-finish")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    const owed = await screen.findByTestId("today-owed");
-    await waitFor(() => expect(owed.textContent).toContain("1you owe"));
-    expect(owed.textContent).toContain("1owed to you");
-    const decide = screen.getByTestId("today-decide");
-    fireEvent.click(within(decide).getByRole("button", { name: "Open decision" }));
-    expect(takeRoomProposalRequest("p1")).toBe("pr1");
+    // Betterment D4: the Owed and To decide plates left; their rows are the
+    // top of Needs you (the same rows as the Needs-you window).
+    expect(screen.queryByTestId("today-owed")).toBeNull();
+    expect(screen.queryByTestId("today-decide")).toBeNull();
     expect(calls.some(([url, init]) => url.includes("/proposals/") && init?.method === "POST")).toBe(false);
-    fireEvent.click(within(decide).getByRole("button", { name: "Confirm" }));
-    await waitFor(() => expect(calls.some(([url, init]) => url === "/api/proposals/pr1/confirm" && init?.method === "POST")).toBe(true));
     // One filled primary in the window.
     expect(document.querySelectorAll(".btn--primary")).toHaveLength(1);
   });
@@ -105,29 +102,14 @@ describe("PHILO-17 Today: the day as a timeline", () => {
       "/api/desk/needs-you": () => json({ items: [] }),
       "/api/people/relationships": () => json({ relationships: [] }),
     });
-    render(<TodayView header={null} />);
-    const empty = await screen.findByTestId("today-empty");
-    expect(within(empty).getByText("No calendar yet")).toBeTruthy();
+    render(<TodayView />);
+    // Betterment D4: the empty desk is ONE line under Needs you.
+    const empty = await screen.findByTestId("today-empty-desk");
+    expect(empty.textContent).toContain("Your meetings and calendar fill this.");
     expect(within(empty).getByRole("button", { name: "Connect calendar" }).className).toContain("btn--primary");
+    expect(screen.queryByTestId("today-empty")).toBeNull();
     expect(screen.getByRole("button", { name: "Record now" }).className).not.toContain("btn--primary");
     expect(screen.queryByTestId("today-owed")).toBeNull();
-  });
-
-  it("MUST 4: the owed totals are ONE bounded read (the roster with counts), never one read per person", async () => {
-    const calls = hub({
-      "/api/door": () => json({ calendar_configured: true, upcoming: [] }),
-      "/api/meetings?limit=40": () => json({ meetings: [] }),
-      "/api/desk/needs-you": () => json({ items: [] }),
-      "/api/people/readiness": () => json({ readiness: "ready" }),
-      "/api/people/relationships?counts=1": () => json({ relationships: [
-        { id: "r1", you_owe_count: 2, owes_you_count: 0 }, { id: "r2", you_owe_count: 1, owes_you_count: 3 },
-      ] }),
-    });
-    render(<TodayView header={null} />);
-    const owed = await screen.findByTestId("today-owed");
-    expect(owed.textContent).toContain("3you owe");
-    expect(owed.textContent).toContain("3owed to you");
-    expect(calls.filter(([url]) => url.startsWith("/api/people/relationships/"))).toHaveLength(0);
   });
 
   it("MUST 3: a failed read says so with Retry; it never reads as empty", async () => {
@@ -138,17 +120,16 @@ describe("PHILO-17 Today: the day as a timeline", () => {
       "/api/people/readiness": () => json({ readiness: "ready" }),
       "/api/people/relationships?counts=1": () => json({ detail: "down" }, 503),
     });
-    render(<TodayView header={null} />);
+    render(<TodayView />);
     expect(await screen.findByTestId("today-door-failed")).toHaveTextContent("Could not read the calendar");
     expect(screen.queryByText("No calendar yet")).toBeNull();
     expect(screen.getByTestId("today-meetings-failed")).toHaveTextContent("Could not read the meetings");
-    expect(screen.getByTestId("today-needs-failed")).toHaveTextContent("Could not read what to decide");
-    expect(screen.getByTestId("today-people-failed")).toHaveTextContent("Could not read People");
+    expect(await screen.findByTestId("today-needs-failed")).toHaveTextContent("Needs you could not be read");
     expect(screen.queryByTestId("today-owed")).toBeNull();
     expect(within(screen.getByTestId("today-door-failed")).getByRole("button", { name: "Retry" })).toBeTruthy();
   });
 
-  it("MUST 3: a refused Confirm and a refused arm say so beside their verb", async () => {
+  it("MUST 3: a refused arm says so beside its verb", async () => {
     hub({
       "/api/door": () => json({ calendar_configured: true, upcoming: [
         { id: "ev1", source: "calendar_event", title: "1:1 Priya", starts_at: inMinutes(50), ends_at: inMinutes(80) },
@@ -158,10 +139,8 @@ describe("PHILO-17 Today: the day as a timeline", () => {
       "/api/proposals/pr1/confirm": () => json({ detail: "proposal_not_open" }, 409),
       "/api/scheduled-recordings": () => json({ detail: "calendar_event_not_found" }, 404),
     });
-    render(<TodayView header={null} />);
-    fireEvent.click(await screen.findByRole("button", { name: "Confirm" }));
-    expect(await screen.findByTestId("today-decide-failed")).toHaveTextContent("Not confirmed. Try again");
-    fireEvent.click(screen.getByRole("button", { name: "Record when it starts" }));
+    render(<TodayView />);
+    fireEvent.click(await screen.findByRole("button", { name: "Record when it starts" }));
     expect(await screen.findByTestId("today-arm-failed")).toHaveTextContent("Not armed. Try again");
   });
 
@@ -175,7 +154,7 @@ describe("PHILO-17 Today: the day as a timeline", () => {
       "/api/meetings?limit=40": () => json({ meetings: [] }),
       "/api/desk/needs-you": () => json({ items: [] }),
     });
-    render(<TodayView header={null} />);
+    render(<TodayView />);
     const pad = (n: number) => String(n).padStart(2, "0");
     expect(await screen.findByTestId("today-armed")).toHaveTextContent(`Armed for ${pad(start.getHours())}:${pad(start.getMinutes())}`);
   });
@@ -192,7 +171,7 @@ describe("PHILO-17 Today: the day as a timeline", () => {
       }] }),
       "/api/desk/needs-you": () => json({ items: [] }),
     });
-    render(<TodayView header={null} />);
+    render(<TodayView />);
     const row = await screen.findByTestId("today-finish");
     const route = within(row).getByTestId("today-route");
     // The lead host and its fallback, said before the press.
@@ -226,7 +205,7 @@ describe("PHILO-17 Today: the day as a timeline", () => {
       "/api/desk/needs-you": () => json({ items: [] }),
       "/api/meetings/m1/intelligence/run": () => { ran = true; return json({ jobId: "j1", state: "queued", drainer: "absent" }); },
     });
-    render(<TodayView header={null} />);
+    render(<TodayView />);
     const row = await screen.findByTestId("today-finish");
     fireEvent.click(within(row).getByRole("button", { name: "Make the summary" }));
     const made = await screen.findByTestId("today-just-made");
@@ -249,14 +228,14 @@ describe("PHILO-17 Today: the day as a timeline", () => {
       "/api/meetings?limit=40": () => json({ meetings: [] }),
       "/api/desk/needs-you": () => json({ items: [] }),
     });
-    render(<TodayView header={null} />);
+    render(<TodayView />);
     const next = await screen.findByTestId("today-next");
     expect(next.textContent).toContain("TUE");
     expect(within(next).getByTestId("today-countdown").textContent).toBe("in 50 min");
     expect(screen.queryByTestId("today-empty")).toBeNull();
   });
 
-  it("Open prep opens the 1:1's person on the Prep lens; Choose engine opens Runs on", async () => {
+  it("Prep opens the 1:1's person on the Prep lens; Choose engine opens Runs on", async () => {
     // replaces: tests/e2e/test_philo17_today_glass.py::test_open_prep_and_make_the_summary_land_in_one_press
     const opened: unknown[] = [];
     const onPerson = (e: Event) => opened.push((e as CustomEvent).detail);
@@ -273,7 +252,7 @@ describe("PHILO-17 Today: the day as a timeline", () => {
       "/api/desk/needs-you": () => json({ items: [] }),
     });
     try {
-      render(<TodayView header={null} />);
+      render(<TodayView />);
       fireEvent.click(await screen.findByTestId("today-open-prep"));
       expect(opened).toEqual([expect.objectContaining({ relationshipId: "r1", lens: "prep" })]);
       fireEvent.click(await screen.findByRole("button", { name: "Choose engine" }));
@@ -283,21 +262,4 @@ describe("PHILO-17 Today: the day as a timeline", () => {
     }
   });
 
-  it("Confirm records the decision: the hub's next read has none, and the plate leaves", async () => {
-    // replaces: tests/e2e/test_philo17_today_glass.py::test_confirm_records_the_decision (the face half;
-    // the confirm route is tests/unit/test_desk_needs_you.py)
-    let open = true;
-    const calls = hub({
-      "/api/door": () => json({ calendar_configured: true, upcoming: [] }),
-      "/api/meetings?limit=40": () => json({ meetings: [] }),
-      "/api/desk/needs-you": () => json({ items: open ? [{ proposalId: "pr1", title: "Freeze the ledger on Nov 12" }] : [] }),
-      "/api/proposals/pr1/confirm": () => { open = false; return json({ ok: true }); },
-    });
-    render(<TodayView header={null} />);
-    const plate = await screen.findByTestId("today-decide");
-    expect(within(plate).getByText("Freeze the ledger on Nov 12")).toBeTruthy();
-    fireEvent.click(within(plate).getByRole("button", { name: "Confirm" }));
-    await waitFor(() => expect(screen.queryByTestId("today-decide")).toBeNull());
-    expect(calls.some(([url, init]) => url === "/api/proposals/pr1/confirm" && init?.method === "POST")).toBe(true);
-  });
 });

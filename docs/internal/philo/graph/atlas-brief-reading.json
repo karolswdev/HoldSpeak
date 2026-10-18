@@ -196,7 +196,7 @@
       "phase1_refs": [],
       "sources": [
         {
-          "path": "web/src/desk/pullouts/views/FollowThroughView.tsx",
+          "path": "web/src/desk/pullouts/_parked/FollowThroughView.tsx",
           "symbol": "export function FollowThroughView",
           "claim": "The exact source read has a visible lifecycle-aware result."
         }

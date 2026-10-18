@@ -68,6 +68,9 @@ const OBJECT_TITLE: Record<string, string> = {
   project: "Project",
   decision: "Decision",
   directory: "Drawer",
+  // Betterment D4 (PLAN §2): "Intelligence" leaves every visible name; the
+  // Today window's menu is Today (the code name stays).
+  intelligence: "Today",
 };
 export function objectMenuTitle(kind: string): string {
   return OBJECT_TITLE[kind] ?? KIND_LABEL[kind] ?? kind.charAt(0).toUpperCase() + kind.slice(1);

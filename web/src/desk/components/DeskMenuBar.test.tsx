@@ -136,11 +136,11 @@ describe("DeskMenuBar Go at 1440 (PHILO-17 doors)", () => {
     expect(top(menu)).not.toContain("Tools");
   });
 
-  it("the Desk menu does not open People or Intelligence", () => {
+  it("the Desk menu does not open People or Today", () => {
     render(<DeskMenuBar />);
     fireEvent.click(screen.getByRole("button", { name: /^Desk$/ }), { detail: 0 });
     const menu = screen.getByRole("menu", { name: "Desk menu" });
-    expect(menu.textContent).not.toMatch(/Open People|Open Intelligence/);
+    expect(menu.textContent).not.toMatch(/Open People|Open Intelligence|Open Today/);
   });
 });
 

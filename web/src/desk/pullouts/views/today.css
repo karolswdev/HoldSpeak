@@ -43,16 +43,14 @@
 }
 
 /* ── The grid: the spine and the side column ── */
+/* Betterment D4: one column, in reading order: the top of Needs you (its
+   rows keep the Needs-you window's width; side by side they were cut to a
+   letter a line), then the day. */
 .desk-next .today-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 220px;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   align-items: start;
-}
-@container surface (max-width: 639.9px) {
-  .desk-next .today-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 
 /* ── The spine: a paper well; the gutter holds the time, the rail a
@@ -553,4 +551,156 @@
 .desk-next .today-row,
 .desk-next .today-next-sprite {
   border-radius: 0;
+}
+
+/* ── Betterment D4: the top of Needs you (the Needs-you rows, as they are
+   in the Needs-you window) ── */
+.desk-next .today-needs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  align-self: start;
+}
+.desk-next .today-needs-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+}
+.desk-next .today-needs-head b {
+  color: var(--wb-text);
+  font-variant-numeric: tabular-nums;
+}
+.desk-next .today-needs-list {
+  min-width: 0;
+}
+.desk-next .today-needs-none {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 6px 0;
+  font: 500 var(--desk-type-primary-size, 14px) / 1.4 var(--font-ui, inherit);
+  color: var(--wb-text);
+}
+
+/* ── Since yesterday and This week: one folded line each ── */
+.desk-next .today-fold {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  border-top: 1px solid color-mix(in srgb, var(--wb-ink) 25%, transparent);
+  padding-top: 6px;
+}
+.desk-next .today-fold-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  min-width: 0;
+  text-align: left;
+}
+.desk-next .today-fold-mark {
+  display: inline-block;
+  width: 12px;
+  color: var(--wb-muted);
+}
+.desk-next .today-fold-label {
+  font: 700 12px / 1.4 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--wb-text);
+}
+.desk-next .today-fold-counts {
+  font: 600 12px / 1.4 var(--font-mono);
+  letter-spacing: 0.04em;
+  color: var(--wb-muted);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.desk-next .today-fold-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 22px;
+  min-width: 0;
+}
+.desk-next .today-fold-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  min-width: 0;
+}
+.desk-next .today-fold-primary {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: left;
+  font-size: var(--desk-type-primary-size, 14px);
+  color: var(--wb-text);
+}
+.desk-next .today-fold-facts {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  font: 600 12px / 1.4 var(--font-mono);
+  color: var(--wb-muted);
+}
+.desk-next .today-fold-kind {
+  font: 700 12px / 1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+  color: var(--wb-muted);
+}
+.desk-next .today-fold-verbs {
+  display: flex;
+  gap: 8px;
+}
+.desk-next .today-week-day {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 8px;
+  align-items: baseline;
+}
+.desk-next .today-week-items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-size: var(--desk-type-primary-size, 14px);
+  color: var(--wb-text);
+  overflow-wrap: anywhere;
+}
+.desk-next .today-week-time {
+  display: inline-block;
+  min-width: 44px;
+  margin-right: 8px;
+  font: 700 12px / 1.4 var(--font-mono);
+  color: var(--wb-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The fold heads and their rows are text that opens: no button chrome
+   (the pattern of .today-row-title). */
+.desk-next .today-fold-head,
+.desk-next .today-fold-primary {
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  cursor: pointer;
+  min-height: 28px;
+}
+.desk-next .today-fold-head:hover .today-fold-label,
+.desk-next .today-fold-primary:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.desk-next .today-fold-head:disabled {
+  cursor: default;
 }

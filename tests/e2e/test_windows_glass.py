@@ -361,14 +361,16 @@ class TestThePhoneDesk:
                 if f["front"] != ["Needs you"] or f["title"] != "Needs you":
                     fails.append(f"C7-1: Needs you is not the one front window {f['front']} {f['title']}")
 
-                # Phone Brief is Today's Brief view. Meetings then holds the
+                # Phone Brief is Today with Since yesterday open (Betterment
+                # D4: Today is one page). Meetings then holds the
                 # selected record in its one host; no duplicate record pane.
                 self._tap(page, page.locator(".desk-verbbar-item[data-menu-id='go'] button"), width)
                 self._tap(page, page.locator(".desk-verbbar-menu").get_by_role("menuitem", name="Brief", exact=True), width)
                 today = chair_window(page, "Brief")
                 today.wait_for()
-                assert today.get_by_role("group", name="Intelligence view").filter(visible=True).get_by_role(
-                    "button", name="Brief", exact=True).get_attribute("aria-pressed") == "true"
+                since = today.get_by_test_id("today-since-toggle")
+                since.wait_for()
+                assert since.get_attribute("aria-expanded") == "true"
                 self._open_meeting(page, width)
                 self._board(page, width, "C7-3a-meeting-window", facts, fails)
                 ring = ["Needs you", "The week", "Today", MEETING]
@@ -1841,8 +1843,10 @@ class TestCloseMeansGone:
                 _normal_chair(page)
                 if width < 720:
                     open_chair_window(page, "Brief")
-                    brief = chair_window(page, "Brief").locator(".intelligence-brief").filter(visible=True)
-                    retry = brief.get_by_role("button", name="Try again", exact=True)
+                    # Betterment D4: the brief is Today's Since-yesterday
+                    # fold; a failed read is its one line and Retry.
+                    brief = chair_window(page, "Brief").get_by_test_id("today-since-failed").filter(visible=True)
+                    retry = brief.get_by_role("button", name="Retry", exact=True)
                     retry.wait_for()
                     proof = self._close_and_prove(page, width, "Today", "j1-retry")
                     # Closing leaves no stale pane over the next owner's
@@ -1856,8 +1860,9 @@ class TestCloseMeansGone:
                     with page.expect_response(lambda response: "/api/brief/latest" in response.url and response.status == 200):
                         self._press(page, retry, width)
                     retry.wait_for(state="detached", timeout=10_000)
-                    brief.locator("[data-testid=brief-generated-label], [data-testid=brief-no-changes]").first.wait_for()
-                    result = brief.inner_text()[:200]
+                    since = chair_window(page, "Brief").get_by_test_id("today-since").filter(visible=True)
+                    since.wait_for()
+                    result = since.inner_text()[:200]
                 else:
                     retry = page.get_by_test_id("arrival-brief-retry")
                     retry.wait_for()

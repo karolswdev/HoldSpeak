@@ -206,6 +206,18 @@ describe("S0: the menu bar withholds what cannot run", () => {
     expect(["note", "meeting", "people", "project", "decision", "directory"].map(objectMenuTitle))
       .toEqual(["Note", "Meeting", "Person", "Project", "Decision", "Drawer"]);
   });
+
+  it("Today as the target: the third title is Today, never Intelligence (Betterment D4)", () => {
+    // EMPTY_ITEMS holds the one Today object (`intelligence:desk`), as the hub's desk does.
+    // The front Today window names the same object (windowObjectRef); the
+    // title is the same function either way.
+    useDesk.setState({ items: { ...useDesk.getState().items, intelligence: EMPTY_ITEMS.intelligence },
+      selectedIds: ["intelligence:desk"] } as never);
+    render(<DeskMenuBar />);
+    expect(titles()).toContain("Today");
+    expect(titles()).not.toContain("Intelligence");
+    expect(objectMenuTitle("intelligence")).toBe("Today");
+  });
 });
 
 // ── Betterment shell S1: Go lists every app; Builder tools switch ──

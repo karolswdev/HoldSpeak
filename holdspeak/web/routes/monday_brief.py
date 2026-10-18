@@ -6,10 +6,12 @@ observed service returns -- the MondayBrief dataclass NEVER carries it.
 from __future__ import annotations
 
 import datetime
+import threading
 from dataclasses import asdict
 from typing import Any
 
 from fastapi import APIRouter, Body, HTTPException, Request
+from starlette.concurrency import run_in_threadpool
 
 from ... import operations
 from ...db import get_database, get_observer
@@ -77,6 +79,18 @@ def _compose_overlay(brief_dict: dict[str, Any], service: MondayBriefService, re
     return brief_dict
 
 
+# Betterment daily D4: one generation at a time. Two Today windows that open
+# together make the brief once; the second read waits and finds it made.
+_ENSURE_LOCK = threading.Lock()
+
+
+def _is_stale(service: Any, brief: Any) -> bool:
+    try:
+        return bool(service.is_stale(brief))
+    except Exception:  # a read never blocks the brief
+        return False
+
+
 def build_monday_brief_router(ctx: WebContext) -> APIRouter:
     """Expose the durable Monday Brief through the web API.
 
@@ -95,10 +109,27 @@ def build_monday_brief_router(ctx: WebContext) -> APIRouter:
             get_database(), observer=get_observer(), clock=getattr(ctx, "brief_clock", None),
         ))
 
+    def _ensure(request: Request) -> Any:
+        """Betterment daily D4: Today's Since yesterday is made without a
+        press. With no brief for the period (none yet, or one of an earlier
+        day) or a desk newer than the brief, make it now, once, through the
+        owner's own Generate. Called off the event loop."""
+        with _ENSURE_LOCK:
+            registry = ops()
+            brief = registry.invoke(principal(request), "brief.latest", {})
+            if brief is not None and not _is_stale(registry.target("brief.latest"), brief):
+                return brief
+            return registry.invoke(principal(request), "brief.generate", {})
+
     @router.get("/latest")
-    async def latest(request: Request) -> dict[str, Any] | None:
+    async def latest(request: Request, ensure: bool = False) -> dict[str, Any] | None:
         registry = ops()
+        service = registry.target("brief.latest")
         brief = registry.invoke(principal(request), "brief.latest", {})
+        if ensure and (brief is None or _is_stale(service, brief)):
+            # The generation reads the desk and writes one row: it runs in a
+            # worker thread, so the hub keeps answering while it runs.
+            brief = await run_in_threadpool(_ensure, request)
         if brief is None:
             return None
         result = asdict(brief)
@@ -106,11 +137,7 @@ def build_monday_brief_router(ctx: WebContext) -> APIRouter:
         result["generated_label"] = _generated_label(result)
         result["title"] = brief_title(result.get("period_end"))
         # PHILO-17: the view makes the brief again when the desk is newer.
-        service = registry.target("brief.latest")
-        try:
-            result["stale"] = bool(service.is_stale(brief))
-        except Exception:  # a read never blocks the brief
-            result["stale"] = False
+        result["stale"] = _is_stale(service, brief)
         return _compose_overlay(result, service, request)
 
     @router.post("/generate")

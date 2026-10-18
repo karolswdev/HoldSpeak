@@ -623,7 +623,7 @@ function DetailWell({ face }: { face: NeedFace }) {
   );
 }
 
-function NeedRow({ face, primary, projects }: { face: NeedFace; primary: boolean; projects: boolean }) {
+export function NeedRow({ face, primary, projects }: { face: NeedFace; primary: boolean; projects: boolean }) {
   const [well, setWell] = useState<Well | null>(null);
   const project = projects && face.project ? face.project : null;
   return (
@@ -667,7 +667,7 @@ interface DoorRead {
 /** Stamp the stable testids and the row-open mark on the species' rows
  *  (NeedsRow takes no testid prop; B1 owns it): `needs-row` on a member,
  *  `needs-source-row` on a source row, `data-opens` where the body opens. */
-function useRowMarks(
+export function useRowMarks(
   ref: React.RefObject<HTMLDivElement | null>,
   faces: readonly NeedFace[],
   members: ReadonlySet<string>,
@@ -814,16 +814,16 @@ function picksOf(faces: readonly NeedFace[], key: (f: NeedFace) => [string, stri
  *  Room's cap, roomReads.ts ROOM_READS_CAP_MS). */
 const NEEDS_READS_CAP_MS = 8000;
 
-export function NeedsDrawer() {
+/** The one list's rows, as both of its faces draw them (the Needs-you
+ *  window and Today's top, Betterment daily D4): the recording that arms,
+ *  the hub's members (with the asks folded into them), the rows the count
+ *  leaves out, and the sources that could not be read. One read, one rank. */
+export function useNeedFaces() {
   const needs = useNeedsYou();
   const flights = useAgentFlights((s) => s.flights);
   const sessions = useAgentFlights((s) => s.sessions);
   const arming = useDesk((s) => s.scheduledArming);
   const [, tick] = useState(0);
-  const [door, setDoor] = useState<DoorRead | null>(null);
-  const [chips, setChips] = useState<NeedsChips>(NO_CHIPS);
-  const [showMuted, setShowMuted] = useState(false);
-  const listRef = useRef<HTMLDivElement>(null);
 
   // The countdown ticks while a recording arms.
   const live = Boolean(arming && !arming.outcome);
@@ -832,31 +832,6 @@ export function NeedsDrawer() {
     const t = window.setInterval(() => tick((n) => n + 1), 250);
     return () => window.clearInterval(t);
   }, [live]);
-  // The Door read: the next event and whether a calendar is connected.
-  const computedAt = needs.room?.computedAt ?? null;
-  const [doorRead, setDoorRead] = useState(false);
-  useEffect(() => {
-    let alive = true;
-    void apiFetch<DoorRead>("/api/door")
-      .then((body) => { if (alive) setDoor(body ?? null); })
-      .catch(() => undefined)
-      .finally(() => { if (alive) setDoorRead(true); });
-    return () => { alive = false; };
-  }, [computedAt, needs.count]);
-  // PHILO-17 (the desk sweep, sweepreds r2): the drawer is drawn once its
-  // first reads end (the hub's answer and the Door read), or at the cap: the
-  // strip, the filter and the rows never move under his eye (UX-CANON D; the
-  // Room's pattern). Once drawn it stays drawn.
-  const needsRead = needs.room !== null || Object.keys(needs.errors).length > 0;
-  const [capped, setCapped] = useState(false);
-  useEffect(() => {
-    const timer = window.setTimeout(() => setCapped(true), NEEDS_READS_CAP_MS);
-    return () => window.clearTimeout(timer);
-  }, []);
-  const [drawn, setDrawn] = useState(false);
-  const ready = capped || (needsRead && doorRead);
-  useLayoutEffect(() => { if (ready && !drawn) setDrawn(true); }, [ready, drawn]);
-  const settling = !(drawn || ready);
 
   const now = new Date();
   // The rows name their Project when two or more Projects need him (the
@@ -873,7 +848,6 @@ export function NeedsDrawer() {
   // PHILO-17 (needsyou): the sources of one cause are ONE row (the hub
   // counts the cause once); each source stays in the row's detail.
   const sources = [...groupGaps(coverage.gaps), ...groupGaps(coverage.quiet)].map((rows) => coverageGroupFace(rows, now));
-  const noCalendar = Boolean(door && door.calendar_configured === false);
   const outcome = useArmingOutcome();
   const liveArming = arming && !arming.outcome ? arming : null;
   // PHILO-15-09 (B11): the hub counts a recording that arms; the desk draws
@@ -918,12 +892,67 @@ export function NeedsDrawer() {
   const listedOnly = needs.unmutedItems
     .filter((item) => (item.counted === false || item.waiting) && !item.foldedInto)
     .map((item) => ({ ref: String(item.ref ?? item.id ?? ""), kind: "attention" as const, item }));
-  const faces = [
+  const work = [
     ...armed,
     ...needFaces([...needs.members, ...foldedAsks], ctx),
     ...needFaces(listedOnly, ctx).map((face) => ({ ...face, uncounted: true })),
-    ...sources,
   ];
+  const faces = [...work, ...sources];
+  return { needs, now, ctx, coverage, multipleProjects, outcome, work, faces };
+}
+
+/** Betterment D3: the Undo receipt of the last Drop (8 s), in the foot of
+ *  every face that draws the rows (the Needs-you window, Today). */
+export function NeedsDroppedReceipt() {
+  const dropped = useDropped((st) => st.dropped);
+  if (!dropped) return null;
+  return (
+    <span className="surface-footer-receipt-line needs-dropped" role="status" data-testid="needs-dropped">
+      {`Dropped · ${dropped.name}`}
+      <Button dense variant="secondary" aria-label={`Undo: ${dropped.name}`} data-testid="needs-undo"
+        onClick={() => {
+          useDropped.getState().set(null);
+          void dropped.undo().then(() => refreshNeedsYou(true)).catch((error) =>
+            reportWriteFailure("Undo", error, () => void dropped.undo()));
+        }}>Undo</Button>
+    </span>
+  );
+}
+
+export function NeedsDrawer() {
+  const { needs, now, ctx, coverage, multipleProjects, outcome, faces } = useNeedFaces();
+  const [door, setDoor] = useState<DoorRead | null>(null);
+  const [chips, setChips] = useState<NeedsChips>(NO_CHIPS);
+  const [showMuted, setShowMuted] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  // The Door read: the next event and whether a calendar is connected.
+  const computedAt = needs.room?.computedAt ?? null;
+  const [doorRead, setDoorRead] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    void apiFetch<DoorRead>("/api/door")
+      .then((body) => { if (alive) setDoor(body ?? null); })
+      .catch(() => undefined)
+      .finally(() => { if (alive) setDoorRead(true); });
+    return () => { alive = false; };
+  }, [computedAt, needs.count]);
+  // PHILO-17 (the desk sweep, sweepreds r2): the drawer is drawn once its
+  // first reads end (the hub's answer and the Door read), or at the cap: the
+  // strip, the filter and the rows never move under his eye (UX-CANON D; the
+  // Room's pattern). Once drawn it stays drawn.
+  const needsRead = needs.room !== null || Object.keys(needs.errors).length > 0;
+  const [capped, setCapped] = useState(false);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setCapped(true), NEEDS_READS_CAP_MS);
+    return () => window.clearTimeout(timer);
+  }, []);
+  const [drawn, setDrawn] = useState(false);
+  const ready = capped || (needsRead && doorRead);
+  useLayoutEffect(() => { if (ready && !drawn) setDrawn(true); }, [ready, drawn]);
+  const settling = !(drawn || ready);
+
+  const noCalendar = Boolean(door && door.calendar_configured === false);
   const asFace = (item: (typeof needs.mutedItems)[number]) =>
     needFace({ ref: String(item.id ?? item.ref ?? ""), kind: "attention", item }, ctx);
   // Listed, never counted: the muted (More ▸ Muted projects).
@@ -1071,15 +1100,7 @@ export function NeedsDrawer() {
       <SurfaceFooter
         receipt={
           dropped ? (
-            <span className="surface-footer-receipt-line needs-dropped" role="status" data-testid="needs-dropped">
-              {`Dropped · ${dropped.name}`}
-              <Button dense variant="secondary" aria-label={`Undo: ${dropped.name}`} data-testid="needs-undo"
-                onClick={() => {
-                  useDropped.getState().set(null);
-                  void dropped.undo().then(() => refreshNeedsYou(true)).catch((error) =>
-                    reportWriteFailure("Undo", error, () => void dropped.undo()));
-                }}>Undo</Button>
-            </span>
+            <NeedsDroppedReceipt />
           ) : outcome.receipt ? (
             <span className="surface-footer-receipt-line" role="status" data-testid="needs-receipt">
               {outcome.receipt}
