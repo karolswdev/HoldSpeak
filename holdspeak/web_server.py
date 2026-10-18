@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 import concurrent.futures
 import errno
+import os
 import socket
 import threading
 import time
@@ -140,6 +141,10 @@ def _listen_sockets_for_host(host: str) -> list[socket.socket]:
     raise OSError(errno.EADDRINUSE, f"no free port on every address of {host!r}")
 
 
+#: The watcher snapshot's key suffix for a session's completed turn (AG0).
+_DONE_SUFFIX = "#done"
+
+
 def _coder_watch_step(
     snapshot: Optional[dict[str, str]], path: Path,
 ) -> tuple[dict[str, str], list[str], list[str]]:
@@ -158,17 +163,28 @@ def _coder_watch_step(
 
     sessions = agent_context.list_agent_sessions(state_path=path) if path.exists() else []
     current = coder_steering.wait_snapshot(sessions)
+    # Betterment AG0: a turn that completed is a frame too (never a wait), so
+    # every face reads "Done" at once. Kept beside the waits, under a suffix.
+    dones = {
+        f"{s.agent}:{s.session_id}{_DONE_SUFFIX}": str(s.done_id or "")
+        for s in sessions
+    }
     if snapshot is None:
-        return current, [], [key for key, wait in current.items() if wait]
-    transitions = coder_steering.awaiting_transitions(snapshot, current)
+        return {**current, **dones}, [], [key for key, wait in current.items() if wait]
+    waits = {key: wait for key, wait in snapshot.items() if not key.endswith(_DONE_SUFFIX)}
+    transitions = coder_steering.awaiting_transitions(waits, current)
     entered = [key for key in transitions if current.get(key)]
     # PHILO-14 C3: a session that registers (a launched agent coming up) is a
     # frame too, so every face re-reads the flights and draws the new agent.
     # It is never `entered` (no wait began).
-    for key in coder_steering.registration_edges(snapshot, current):
+    for key in coder_steering.registration_edges(waits, current):
         if key not in transitions:
             transitions.append(key)
-    return current, transitions, entered
+    for key, done in dones.items():
+        base = key[: -len(_DONE_SUFFIX)]
+        if done and snapshot.get(key) != done and base not in transitions:
+            transitions.append(base)
+    return {**current, **dones}, transitions, entered
 
 
 def _coder_awaiting_edge(keys: list[str]) -> Optional[dict]:
@@ -238,6 +254,26 @@ def _poll_agent_prs() -> Optional[dict[str, Any]]:
     except Exception as exc:
         log.warning(f"agent PR poll failed: {exc}")
         return None
+
+
+#: Betterment AG0: ``HOLDSPEAK_RESTART_CHECK=off`` asks tmux nothing about
+#: the launches (a rig hub on the shared tmux socket, with seeded launches
+#: that never had a session). Default: on.
+RESTART_CHECK_ENV = "HOLDSPEAK_RESTART_CHECK"
+
+
+def _record_restart_stops() -> None:
+    """Betterment AG0: a launch whose tmux session is gone reads "Stopped by
+    restart" (hub start, then about each minute). A failure is logged and
+    never stops the hub's timer."""
+    if os.environ.get(RESTART_CHECK_ENV, "").strip().lower() in {"0", "off", "false", "no"}:
+        return
+    try:
+        from .services.launch_lane import record_restart_stops
+
+        record_restart_stops()
+    except Exception as exc:
+        log.warning(f"restart stop check failed: {exc}")
 
 
 def _expire_queued_rebriefs() -> None:
@@ -1674,6 +1710,8 @@ class MeetingWebServer:
             # PHILO-15 B51: an open agent PR is read every 2 minutes, so its
             # merge closes the item within one poll, with no press.
             self._agent_pr_poll_task = asyncio.create_task(self._agent_pr_poll_loop())
+            # Betterment AG0: agents a restart took read "Stopped by restart".
+            await asyncio.to_thread(_record_restart_stops)
             await asyncio.to_thread(_kernel_service().reap_and_recover_projections)
             try:
                 await refinement_coordinator.start()
@@ -1994,6 +2032,8 @@ class MeetingWebServer:
                 # PHILO-15 (Astra r2 on #996): a queued Re-brief whose agent
                 # never ended a turn expires with a receipt (about each minute).
                 await asyncio.to_thread(_expire_queued_rebriefs)
+                # Betterment AG0: a tmux session gone since hub start.
+                await asyncio.to_thread(_record_restart_stops)
             await asyncio.sleep(event_log.SpoolTimer.INTERVAL)
 
     async def _agent_pr_poll_loop(self) -> None:

@@ -123,7 +123,9 @@ def test_the_rider_reads_a_pi_turn_end_as_its_wait(tmp_path) -> None:
                                                         "last_assistant_message": "There are 0 projects. DONE"},
                                    state_path=state, env={})
     # As for Codex, every turn end is a wait; the lane reads how it ended.
-    assert turn_end(asks) == "asks" and turn_end(done) == "idle"
+    # Betterment AG0: a turn end after a prompt that asks nothing is done,
+    # with or without a PR (was: idle until a PR opened).
+    assert turn_end(asks) == "asks" and turn_end(done) == "done"
     assert turn_end(done, work_done=True) == "done"
 
 

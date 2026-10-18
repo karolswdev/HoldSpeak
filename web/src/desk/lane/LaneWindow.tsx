@@ -18,7 +18,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { useDurableDraft } from "../../lib/durableDraft";
-import { useAgentFlights } from "../agentFlights";
+import { markLaunchSeen, useAgentFlights } from "../agentFlights";
 import { AgentWords, cutAtWord } from "../components/AgentWords";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { ArmStrip, KeyPalette, PANE_STATE_LABEL } from "../components/SessionPullout";
@@ -68,7 +68,7 @@ import {
   type LaneWait,
   type LaneWire,
 } from "./laneWire";
-import { laneSessionKey, launchForSession, useLane, useLaneLaunchId } from "./laneStore";
+import { TERMINAL_GONE_WORDS, laneSessionKey, launchForSession, useLane, useLaneLaunchId } from "./laneStore";
 import "./lane.css";
 
 
@@ -138,6 +138,16 @@ function LaneFrame({ launchId }: { launchId: string }) {
     const tick = setInterval(reload, LANE_FRONT_POLL_MS);
     return () => clearInterval(tick);
   }, [front, reload]);
+  // Betterment AG0: an open agent window has seen its done turn (Done · New
+  // becomes Quiet): on open (the hub's current done turn), and when the
+  // shared read shows a new done turn while the window is open.
+  useEffect(() => {
+    void markLaunchSeen(launchId, null);
+  }, [launchId]);
+  const unseenTurn = flight?.state === "done" && flight.isNew ? flight.turnId ?? null : null;
+  useEffect(() => {
+    if (unseenTurn) void markLaunchSeen(launchId, unseenTurn);
+  }, [launchId, unseenTurn]);
 
   const agent = agentName(lane?.launch.agent ?? flight?.agent);
   const title = laneTitle(lane?.launch.agent ?? flight?.agent, flight?.title);
@@ -470,6 +480,10 @@ function AnswerWell({ lane, wait, agent }: { lane: LaneWire; wait: LaneWait; age
  * Absent when the session is armed or the policy lets the owner type (YOLO). */
 function ArmLine({ lane, compact = false }: { lane: LaneWire; compact?: boolean }) {
   const control = lane.control;
+  const terminalGone = useLane((s) => s.terminalGone);
+  if (terminalGone) {
+    return <span className="lw-fact" data-testid={compact ? "lane-terminal-gone-footer" : "lane-terminal-gone"}>{TERMINAL_GONE_WORDS}</span>;
+  }
   if (!control || isNotRead(control) || control.pane === false || control.direct || control.armed || !laneSessionKey(lane)) return null;
   return (
     <span className="lw-arm" data-testid={compact ? "lane-arm-footer" : "lane-arm"}>

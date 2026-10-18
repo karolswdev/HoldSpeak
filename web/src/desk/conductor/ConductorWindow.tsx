@@ -279,7 +279,8 @@ export function memberPill(member: ConductorMember): { word: string; tone: "ok" 
     case "pr":
       return { word: member.lamp?.label.startsWith("PR #") ? `${member.lamp.label} open` : "PR open", tone: "ok" };
     case "done":
-      return { word: "Done", tone: "ok" };
+      // Betterment AG0: Done · New until he opens it, then Quiet.
+      return member.isNew ? { word: "Done · New", tone: "ok" } : { word: "Quiet", tone: "idle" };
     default:
       return { word: member.lamp?.label === "STARTS" ? "Starting" : "Working", tone: "info", live: true };
   }

@@ -14,7 +14,8 @@ import { apiFetch } from "../lib/api";
 import { useOnCoderFrame, useOnDeskChanged } from "./useDeskChangedRefresh";
 import { coderTurnEnd, isBlockedCoder, type NeedsYouCoder } from "./needsYou";
 
-export type FlightState = "starting" | "working" | "waiting" | "pr_open" | "merged" | "ended" | "expired";
+export type FlightState =
+  | "starting" | "working" | "waiting" | "done" | "pr_open" | "merged" | "ended" | "expired" | "stopped_by_restart";
 export type AgentName = "claude" | "codex" | "pi";
 
 export interface AgentFlight {
@@ -32,6 +33,10 @@ export interface AgentFlight {
   /** PHILO-15 B48: how a waiting agent's turn ended (`asks`, `idle`, `done`);
    * PHILO-15 15: the responder's DONE / IDLE first (also with the PR open). */
   turnEnd?: "asks" | "idle" | "done" | null;
+  /** Betterment AG0: the done turn's id, and whether the owner has not
+   * opened the agent since (`POST /api/agent/launches/{id}/seen`). */
+  turnId?: string | null;
+  isNew?: boolean;
   close: string | null;
   /** K4's cleanup of the agent's session (`killed`, `session_gone`,
    * `no_session`): the evidence that it left. Null while the close waits
@@ -64,7 +69,9 @@ export function agentWord(agent: string): string {
   return AGENT_WORD[agent as AgentName] ?? agent.toUpperCase();
 }
 
-const FLIGHT_STATES: readonly string[] = ["starting", "working", "waiting", "pr_open", "merged", "ended", "expired"];
+const FLIGHT_STATES: readonly string[] = [
+  "starting", "working", "waiting", "done", "pr_open", "merged", "ended", "expired", "stopped_by_restart",
+];
 
 export function fromWireFlight(body: any): AgentFlight {
   const pr = body?.pr;
@@ -80,6 +87,8 @@ export function fromWireFlight(body: any): AgentFlight {
     sessionKey: body?.session_key ? String(body.session_key) : null,
     pr: pr ? { number: pr.number == null ? null : Number(pr.number), url: String(pr.url ?? ""), state: String(pr.state ?? ""), title: String(pr.title ?? "") } : null,
     turnEnd: ["asks", "idle", "done"].includes(body?.turn_end) ? body.turn_end : null,
+    turnId: body?.turn_id ? String(body.turn_id) : null,
+    isNew: body?.new === true,
     close: body?.close ? String(body.close) : null,
     sessionCleanup: body?.session_cleanup ? String(body.session_cleanup) : null,
     mergedAt: body?.merged_at ? String(body.merged_at) : null,
@@ -114,12 +123,14 @@ export function flightLabel(flight: AgentFlight): string | null {
   }
   if (flight.state === "starting") return `${agentWord(flight.agent)} · STARTING`;
   if (flight.state === "working") return `${agentWord(flight.agent)} · WORKING`;
+  if (flight.state === "done") return `${agentWord(flight.agent)} · ${flight.isNew ? "DONE · NEW" : "DONE"}`;
   if (flight.state === "waiting") return `${agentWord(flight.agent)} · ${flight.turnEnd === "idle" ? "IDLE" : "WAITING"}`;
   return null;
 }
 
 export function flightTone(state: FlightState): "working" | "warning" | "active" | "success" | "idle" {
   if (state === "starting") return "idle";
+  if (state === "done") return "success";
   return state === "waiting" ? "warning" : state === "pr_open" ? "active" : state === "merged" ? "success" : "working";
 }
 
@@ -160,18 +171,21 @@ export function itemOriginRefs(item: {
   return [...refs];
 }
 
+/** The flights whose agent left: no row shows them as its agent. */
+export const GONE: ReadonlySet<FlightState> = new Set<FlightState>(["ended", "expired", "stopped_by_restart"]);
+
 export function flightForItem(flights: readonly AgentFlight[], item: Parameters<typeof itemOriginRefs>[0]): AgentFlight | null {
   const refs = itemOriginRefs(item);
   if (!refs.length) return null;
-  return flights.find((f) => refs.includes(f.originRef) && f.state !== "ended" && f.state !== "expired") ?? null;
+  return flights.find((f) => refs.includes(f.originRef) && !GONE.has(f.state)) ?? null;
 }
 
-/** An agent holds the item: STARTING, WORKING, WAITING, PR OPEN, or MERGED
+/** An agent holds the item: STARTING, WORKING, WAITING, DONE, PR OPEN, or MERGED
  * with the close still awaiting the owner's confirmation (Secure). Such a row
  * shows its flight and not Hand to coder. */
 export function isInFlight(flight: AgentFlight | null | undefined): flight is AgentFlight {
   if (!flight) return false;
-  if (["starting", "working", "waiting", "pr_open"].includes(flight.state)) return true;
+  if (["starting", "working", "waiting", "done", "pr_open"].includes(flight.state)) return true;
   return flight.state === "merged" && flight.close === "awaiting_confirm";
 }
 
@@ -231,6 +245,23 @@ export const useAgentFlights = create<AgentFlightsState>((set, get) => ({
     return inflight;
   },
 }));
+
+/** Betterment AG0: the owner opened this agent, so its done turn is seen
+ * (Done · New becomes Quiet). The store says so at once; the hub keeps it. */
+export async function markLaunchSeen(launchId: string, turnId: string | null): Promise<void> {
+  // `null`: the hub marks the launch's current done turn (the window opened).
+  const mark = (flights: AgentFlight[]) =>
+    flights.map((f) => (f.launchId === launchId && (turnId === null || f.turnId === turnId) ? { ...f, isNew: false } : f));
+  useAgentFlights.setState((s) => ({
+    flights: mark(s.flights),
+    sessions: s.sessions.map((row) => (row.flight ? { ...row, flight: mark([row.flight])[0] } : row)),
+  }));
+  try {
+    await apiFetch(`/api/agent/launches/${encodeURIComponent(launchId)}/seen`, { method: "POST", json: turnId ? { wait_id: turnId } : {} });
+  } catch {
+    // The next read says NEW again; the next open marks it again.
+  }
+}
 
 /** Read on mount and again when an agent moves (the `scope:"coder"` frame)
  * or the desk changes (a merge closed an item). */

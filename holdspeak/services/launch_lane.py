@@ -576,4 +576,87 @@ def record_owner_stop(
     return str(record.get("launch_id")) if record is not None else None
 
 
-__all__ = ["DECIDING_KIND", "record_owner_stop", "FACTS_TTL_SECONDS", "clear_facts_cache", "launch_lane", "worktree_facts"]
+def _tmux_session_alive(name: str) -> Optional[bool]:
+    """``tmux has-session``: ``True`` / ``False``, or ``None`` when tmux could
+    not be asked (not installed, timed out): never read as "gone"."""
+    from .. import coder_steering
+
+    try:
+        completed = coder_steering._default_runner(["tmux", "has-session", "-t", name])
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    return completed.returncode == 0
+
+
+#: The launch states whose agent should still run (``agent_hand_service``).
+_RUNNING_LAUNCH_STATES = frozenset({"launched", "registered"})
+
+
+def record_restart_stops(
+    *, db: Any = None, ledger: Any = None, sessions: Any = None,
+    alive: Optional[Callable[[str], Optional[bool]]] = None, now: Optional[datetime] = None,
+) -> list[str]:
+    """Betterment AG0: a launch whose tmux session is gone (a Mac or tmux
+    restart) is ``stopped_by_restart`` (``stopped = {by: "restart", at}``),
+    and its session ends through the hook ingest (``SessionEnd``, reason
+    ``stopped_by_restart``), so its question leaves Needs you and the
+    Conductor. Run on hub start and on each heartbeat. A session that ended
+    by itself, a launch whose follow-through is done, and a tmux that could
+    not be asked are left alone. Returns the launch ids it stopped."""
+    from ..agent_context import ingest_agent_hook_event, list_agent_sessions
+    from ..agent_context.models import LIFECYCLE_ENDED
+    from .agent_flights import STOPPED_BY_RESTART
+
+    if db is None:
+        from ..db import get_database
+
+        db = get_database()
+    if ledger is None:
+        from ..delivery.factory_launch import LaunchLedger
+
+        ledger = LaunchLedger()
+    alive = alive or _tmux_session_alive
+    registry = {
+        f"{s.agent}:{s.session_id}": s
+        for s in (sessions if sessions is not None else list_agent_sessions())
+    }
+    stamp = (now or datetime.now(timezone.utc)).astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+    stopped: list[str] = []
+    for record in ledger.list():
+        if str(record.get("state") or "") not in _RUNNING_LAUNCH_STATES:
+            continue
+        if (record.get("follow_through") or {}).get("done"):
+            continue
+        name = str(record.get("session") or "")
+        if not name:
+            continue
+        key = ""
+        attempt_id = str(record.get("attempt_id") or "")
+        if attempt_id:
+            try:
+                key = str(getattr(db.work_attempts.get(attempt_id), "session_id", "") or "")
+            except Exception:
+                key = ""
+        session = registry.get(key) if key else None
+        if session is not None and str(session.lifecycle or "") == LIFECYCLE_ENDED:
+            continue   # it ended by itself
+        if alive(name) is not False:
+            continue
+        launch_id = str(record.get("launch_id") or "")
+        ledger.update(launch_id, state=STOPPED_BY_RESTART, stopped={"by": "restart", "at": stamp})
+        agent, _, session_id = key.partition(":")
+        if session is not None and agent and session_id:
+            try:
+                ingest_agent_hook_event(agent=agent, payload={
+                    "session_id": session_id, "cwd": str(session.cwd or ""),
+                    "hook_event_name": "SessionEnd", "reason": STOPPED_BY_RESTART,
+                })
+            except Exception as exc:
+                log.warning(f"restart stop: session {key} not ended ({exc})")
+        stopped.append(launch_id)
+    if stopped:
+        log.info(f"{len(stopped)} launch(es) stopped by restart: {', '.join(stopped)}")
+    return stopped
+
+
+__all__ = ["DECIDING_KIND", "record_owner_stop", "record_restart_stops", "FACTS_TTL_SECONDS", "clear_facts_cache", "launch_lane", "worktree_facts"]

@@ -57,6 +57,9 @@ interface LaneState {
   answerSeq: number;
   receipt: LaneReceipt | null;
   sending: boolean;
+  /** Betterment AG0: the hub refused an ARM or a send because the agent's
+   * tmux pane is gone (a restart): the lane says so in place of ARM FIRST. */
+  terminalGone: boolean;
   /** `raw`: open on Raw (PHILO-15 20, B63: a cut held call is approved there). */
   open(launchId: string, opts?: { sessionKey?: string | null; answer?: boolean; raw?: boolean }): void;
   close(): void;
@@ -98,6 +101,7 @@ const EMPTY = {
   rebrief: false,
   receipt: null,
   sending: false,
+  terminalGone: false,
 };
 
 /** The lane's own session key, from the lane JSON (never the steering selection). */
@@ -123,6 +127,11 @@ const REFUSAL_WORD: Record<string, string> = {
   no_session: "NO SESSION YET",
   target_gone: "PANE GONE",
 };
+
+/** Betterment AG0: the refusals that mean the agent's terminal is gone
+ * (the ARM route's identity probe; a pane a restart took). */
+const TERMINAL_GONE = new Set(["pane_gone", "tmux_absent", "no_pane", "target_gone"]);
+export const TERMINAL_GONE_WORDS = "This agent's terminal is gone";
 
 /** How long a send waits for the hub's answer before Answer returns. After
  * it the receipt says NOT CONFIRMED (the hub may have delivered): the lane
@@ -269,6 +278,7 @@ export const useLane = create<LaneState>((set, get) => ({
       sfx("error");
       const status = String(res.body.status ?? "");
       const word = REFUSAL_WORD[status];
+      if (TERMINAL_GONE.has(status)) set({ terminalGone: true });
       set({
         receipt: word === "ARM FIRST"
           ? { word: "ARM FIRST", at: Date.now(), text: firstWords(clean), tone: "fail" }
@@ -354,6 +364,10 @@ export const useLane = create<LaneState>((set, get) => ({
         return true;
       }
       const status = String(res.body.status ?? "");
+      if (mine() && TERMINAL_GONE.has(status)) {
+        set({ terminalGone: true, receipt: { word: "NOT SENT", at: Date.now(), text: TERMINAL_GONE_WORDS, tone: "fail" } });
+        return false;
+      }
       if (mine()) set({ receipt: { word: "NOT SENT", at: Date.now(), text: REFUSAL_WORD[status] ?? String(res.body.detail ?? status), tone: "fail" } });
       return false;
     } catch {

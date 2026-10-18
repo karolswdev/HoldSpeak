@@ -53,6 +53,10 @@ export interface ConductorMember extends ObjectListRow {
   detect?: AgentRow;
   /** stale: the close receipt (`PR #413 MERGED · ITEM CLOSED`). */
   receipt?: string;
+  /** live, done: the turn the owner has not opened yet (Betterment AG0). */
+  isNew?: boolean;
+  /** live, done: the done turn's id (the seen mark names it). */
+  turnId?: string | null;
 }
 
 export interface ConductorReads {
@@ -120,6 +124,7 @@ function sessionState(row: CoderSessionRow): LiveState {
 }
 
 function flightState(flight: AgentFlight): LiveState {
+  if (flight.state === "done") return "done";
   if (flight.state === "waiting") return flight.turnEnd === "idle" ? "idle" : "ask";
   if (flight.state === "pr_open" || flight.state === "merged") return "pr";
   return "work";
@@ -130,6 +135,7 @@ export function closeReceipt(flight: AgentFlight): string {
   const words: string[] = [];
   if (flight.state === "merged") words.push(flight.pr?.number ? `PR #${flight.pr.number} MERGED` : "MERGED");
   else if (flight.state === "expired") words.push("SESSION GONE");
+  else if (flight.state === "stopped_by_restart") words.push("STOPPED BY RESTART");
   else words.push("ENDED");
   if (flight.close === "closed") words.push("ITEM CLOSED");
   else if (flight.close === "linked") words.push("ITEM LINKED");
@@ -237,6 +243,8 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
       lamp,
       sessionKey: row.key,
       launchId,
+      isNew: state === "done" && Boolean(flight?.isNew),
+      turnId: flight?.turnId ?? null,
       group: liveGroup(state),
       facts: {
         where: flight?.projectName || undefined,
@@ -272,6 +280,8 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
       lamp,
       sessionKey: flight.sessionKey,
       launchId: flight.launchId,
+      isNew: state === "done" && Boolean(flight.isNew),
+      turnId: flight.turnId ?? null,
       group: liveGroup(state),
       facts: {
         where: flight.projectName || undefined,
@@ -340,7 +350,9 @@ export function conductorHead(
 ): ConductorHead {
   const live = members.filter((m) => m.role === "live");
   const ask = live.filter((m) => m.live === "ask" || m.live === "held").length;
-  return { atWork: live.length - ask, ask, launches };
+  // Betterment AG0: a finished agent is not at work.
+  const done = live.filter((m) => m.live === "done").length;
+  return { atWork: live.length - ask - done, ask, launches };
 }
 
 /** `2 AT WORK · 1 ASK`, then `3 OF 3` only at the hub's cap; a zero is never said (A.8). */

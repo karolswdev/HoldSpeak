@@ -1,0 +1,115 @@
+{
+  "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
+  "captured_at": "2026-10-18T04:23:26.990083Z",
+  "wire": {
+    "answers": [],
+    "attempt_events": [
+      {
+        "from": null,
+        "occurred_at": "2026-10-18T04:23:26.903757Z",
+        "reason": "created:launch",
+        "to": "working"
+      }
+    ],
+    "control": {
+      "armed": false,
+      "direct": false,
+      "expires_in_seconds": null,
+      "mode": "neutral",
+      "pane": false,
+      "pane_id": null
+    },
+    "events": [
+      {
+        "detail": {
+          "source": "startup"
+        },
+        "event": "SessionStart",
+        "head": null,
+        "id": 1,
+        "text": null,
+        "tool": null,
+        "ts": "2026-10-18T04:23:26.888531Z"
+      },
+      {
+        "detail": {},
+        "event": "UserPromptSubmit",
+        "head": null,
+        "id": 2,
+        "text": "the brief",
+        "tool": null,
+        "ts": "2026-10-18T04:23:26.889411Z"
+      },
+      {
+        "detail": {},
+        "event": "PostToolUse",
+        "head": "git status",
+        "id": 3,
+        "text": null,
+        "tool": "Bash",
+        "ts": "2026-10-18T04:23:26.890106Z"
+      },
+      {
+        "detail": {},
+        "event": "Stop",
+        "head": null,
+        "id": 4,
+        "text": "Done. The rollback flag now lives in the place you chose, with a test. Branch is ready for review; I did not open a PR.",
+        "tool": null,
+        "ts": "2026-10-18T04:23:26.890724Z"
+      }
+    ],
+    "events_next_after": null,
+    "follow_through": {
+      "cleanup": null,
+      "close": null,
+      "done": false,
+      "merged": null,
+      "pr": null,
+      "pr_state": null
+    },
+    "gated": [],
+    "launch": {
+      "agent": "claude",
+      "attempt_id": "att_433c0fb338874fb4",
+      "branch": "hs/action-m-platform-a0",
+      "brief_sent_at": null,
+      "brief_text": null,
+      "control_mode": "yolo",
+      "failure": null,
+      "gate": "gated",
+      "instruction_state": "sent",
+      "launch_id": "launch_ag0_done",
+      "launched_at": "2026-10-18T04:13:26.903705Z",
+      "origin_ref": {
+        "id": "m-platform-a0",
+        "kind": "action"
+      },
+      "profile_id": "claude-default",
+      "queued_rebrief": null,
+      "queued_rebriefs": [],
+      "rebriefs": [],
+      "session_key": "claude:ag0-done",
+      "state": "launched",
+      "stopped": null,
+      "story_ref": null,
+      "tmux_session": "hs-launch_ag0_done",
+      "worktree_path": null
+    },
+    "session": {
+      "created_at": "2026-10-18T04:23:26.888531Z",
+      "event_count": 4,
+      "last_tool_name": "Bash",
+      "lifecycle": "waiting",
+      "model": null,
+      "state": "waiting",
+      "updated_at": "2026-10-18T04:23:26.890724Z"
+    },
+    "usage": null,
+    "wait": null,
+    "worktree": {
+      "not_read": "the launch has no worktree",
+      "read_at": 1792297406.98895
+    }
+  }
+}

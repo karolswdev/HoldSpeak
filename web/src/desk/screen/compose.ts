@@ -193,8 +193,11 @@ export function agentName(row: CoderSessionRow): string {
   return `${agent}: ${item}`;
 }
 
-/** ask (it asks you) · work (it works) · pr (a PR is open). */
-export function agentState(row: CoderSessionRow): "ask" | "idle" | "work" | "pr" {
+/** ask (it asks you) · done (its turn ended after work) · work (it works) · pr (a PR is open). */
+export function agentState(row: CoderSessionRow): "ask" | "idle" | "done" | "work" | "pr" {
+  // Betterment AG0: the hub reads a finished turn as done (never an ask; an
+  // idle reminder after it does not make it one).
+  if (row.flight?.state === "done") return "done";
   // PHILO-15 B48: a turn that ended with no question is IDLE, not ASKS.
   if (row.blocked) return row.idle ? "idle" : "ask";
   if (row.flight?.state === "waiting") return row.flight.turnEnd === "idle" ? "idle" : "ask";
@@ -202,12 +205,13 @@ export function agentState(row: CoderSessionRow): "ask" | "idle" | "work" | "pr"
   return "work";
 }
 
-const AGENT_LAMP: Record<"ask" | "idle" | "work" | "pr", ObjectTone> = { ask: "ask", idle: "info", work: "info", pr: "ok" };
+const AGENT_LAMP: Record<"ask" | "idle" | "done" | "work" | "pr", ObjectTone> = { ask: "ask", idle: "info", done: "ok", work: "info", pr: "ok" };
 
 function agentWordFor(row: CoderSessionRow): string {
   const state = agentState(row);
   if (state === "ask") return "ASKS";
   if (state === "idle") return "IDLE";
+  if (state === "done") return row.flight?.isNew ? "NEW" : "DONE";
   if (state === "pr") return row.flight?.pr?.number ? `PR #${row.flight.pr.number}` : "PR OPEN";
   return "WORKS";
 }

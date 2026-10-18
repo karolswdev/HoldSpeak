@@ -155,6 +155,13 @@ class AgentSession:
     notification_type: Optional[str] = None
     wait_started_at: Optional[str] = None
     wait_id: Optional[str] = None
+    # Betterment AG0 (herdr's completion sequence): ``turn_prompted`` is
+    # True from a UserPromptSubmit until the Stop that ends that turn;
+    # ``done_id`` names the turn that such a Stop completed (a SessionStart
+    # alone, or a Stop with no prompt before it, never completes a turn).
+    # A new prompt or new work clears it. The seen bit compares it.
+    turn_prompted: bool = False
+    done_id: Optional[str] = None
 
     @classmethod
     def from_mapping(cls, raw: Mapping[str, Any]) -> "AgentSession":
@@ -189,6 +196,8 @@ class AgentSession:
             notification_type=_optional_str(raw.get("notification_type")),
             wait_started_at=_optional_str(raw.get("wait_started_at")),
             wait_id=_optional_str(raw.get("wait_id")),
+            turn_prompted=bool(raw.get("turn_prompted")),
+            done_id=_optional_str(raw.get("done_id")),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -223,6 +232,8 @@ class AgentSession:
             "notification_type": self.notification_type,
             "wait_started_at": self.wait_started_at,
             "wait_id": self.wait_id,
+            "turn_prompted": self.turn_prompted,
+            "done_id": self.done_id,
         }
 
 
@@ -349,16 +360,23 @@ def reports_a_problem(text: Any) -> bool:
     return bool(_PROBLEM_RE.search(body))
 
 
+def completed_turn(session: Any) -> Optional[str]:
+    """The id of the turn the session's last Stop completed (a prompt came
+    before it), or ``None`` (Betterment AG0, herdr's completion sequence)."""
+    return _optional_str(_field(session, "done_id"))
+
+
 def turn_end(session: Any, *, work_done: bool = False) -> str:
-    """How a blocked session's turn ended: ``asks`` for a permission prompt,
-    a real question or a reported problem, else ``done`` when the work is
-    delivered (``work_done``: the launch's PR is open) or ``idle``."""
+    """How a session's turn ended: ``asks`` for a permission prompt, a real
+    question or a reported problem, else ``done`` when the turn completed
+    (a Stop after a prompt, ``completed_turn``) or the work is delivered
+    (``work_done``: the launch's PR is open), else ``idle``."""
     if wait_kind(session) == "approve":
         return TURN_ASKS
     question = _field(session, "question")
     if asks_a_question(question) or reports_a_problem(question):
         return TURN_ASKS
-    return TURN_DONE if work_done else TURN_IDLE
+    return TURN_DONE if work_done or completed_turn(session) else TURN_IDLE
 
 
 def wait_kind(session: Any) -> str:

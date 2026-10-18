@@ -275,3 +275,152 @@ def test_sessions_route_serves_history_and_the_hub_launch_count(monkeypatch, tmp
     assert [f["state"] for f in body["flights"]] == ["pr_open"]
     alive["hs-l1"] = True
     assert TestClient(app).get("/api/coders/sessions").json()["launches"] == {"live": 1, "cap": 3}
+
+
+# ── Betterment AG0: tell the truth about state ───────────────────────
+#
+# The hook sequence is the fake Claude Code's (docs/internal/betterment/
+# agents/rig/fake_claude.py), which the recon walk recorded end to end.
+
+QUESTION = ("I found two places for the rollback flag. Should it live in "
+            "config/flags.yaml (shared with staging) or in an env var (per host)? "
+            "Answer 1 for config, 2 for env.")
+DONE = ("Done. The rollback flag now lives in the place you chose, with a test. "
+        "Branch is ready for review; I did not open a PR.")
+
+
+def _turn(registry, sid: str, words: str, *, now=None) -> None:
+    hook(registry, "claude", sid, "UserPromptSubmit", prompt="the brief", now=now)
+    hook(registry, "claude", sid, "PostToolUse", tool_name="Bash", now=now)
+    hook(registry, "claude", sid, "Stop", last_assistant_message=words, now=now)
+
+
+def test_a_stop_without_a_question_is_done_without_a_pr(db, tmp_path, registry):
+    """RECON step 13: "Done. … I did not open a PR." read "Working" forever.
+    Now it is done and new, and Claude Code's idle reminder after it (the
+    Notification `idle_prompt`) keeps it done, never an ask."""
+    hook(registry, "claude", "s1", "SessionStart", source="startup")
+    _turn(registry, "s1", DONE)
+    ledger = LaunchLedger(tmp_path / "launches.json")
+    _launch(ledger, "l1", ("action", "ai_1"), attempt_id=_attempt(db, "claude:s1", "action:ai_1"))
+    [flight] = agent_flights(db, ledger=ledger)
+    assert (flight["state"], flight["turn_end"], flight["new"]) == ("done", "done", True)
+    assert flight["turn_id"] and flight["pr"] is None
+    hook(registry, "claude", "s1", "Notification", notification_type="idle_prompt",
+         message="Claude is waiting for your input")
+    [after] = agent_flights(db, ledger=ledger)
+    assert (after["state"], after["turn_id"], after["new"]) == ("done", flight["turn_id"], True)
+
+
+def test_a_stop_with_a_question_asks(db, tmp_path, registry):
+    _turn(registry, "s1", QUESTION)
+    ledger = LaunchLedger(tmp_path / "launches.json")
+    _launch(ledger, "l1", ("action", "ai_1"), attempt_id=_attempt(db, "claude:s1", "action:ai_1"))
+    [flight] = agent_flights(db, ledger=ledger)
+    assert (flight["state"], flight["turn_end"], flight["new"]) == ("waiting", "asks", False)
+
+
+def test_a_session_start_alone_is_never_done(db, tmp_path, registry):
+    """herdr's completion sequence: a start-up (or a restored session) that
+    goes idle, or stops with no prompt before it, finished nothing."""
+    hook(registry, "claude", "s1", "SessionStart", source="startup")
+    hook(registry, "claude", "s1", "Notification", notification_type="idle_prompt",
+         message="Claude is waiting for your input")
+    hook(registry, "claude", "s2", "SessionStart", source="resume")
+    hook(registry, "claude", "s2", "Stop", last_assistant_message="Ready.")
+    ledger = LaunchLedger(tmp_path / "launches.json")
+    _launch(ledger, "l1", ("action", "ai_1"), attempt_id=_attempt(db, "claude:s1", "action:ai_1"))
+    _launch(ledger, "l2", ("decision", "d1"), attempt_id=_attempt(db, "claude:s2", "decision:d1"))
+    states = {f["launch_id"]: (f["state"], f["turn_end"], f["new"]) for f in agent_flights(db, ledger=ledger)}
+    assert states == {"l1": ("waiting", "idle", False), "l2": ("waiting", "idle", False)}
+
+
+def test_seen_makes_a_done_turn_quiet_and_the_next_turn_is_new_again(monkeypatch, tmp_path, registry):
+    """`POST /api/agent/launches/{id}/seen` stores the done turn's id as
+    `seen_wait_id`: the flight is no longer new. The next done turn is."""
+    from types import SimpleNamespace
+
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    import holdspeak.db as dbmod
+    from holdspeak.delivery import factory_launch
+    from holdspeak.web.routes.agent_hand import build_agent_hand_router
+
+    database = Database(tmp_path / "hub.db")
+    _seed(database)
+    launches = tmp_path / "launches.json"
+    ledger = LaunchLedger(launches)
+    _launch(ledger, "l1", ("action", "ai_1"), attempt_id=_attempt(database, "claude:s1", "action:ai_1"))
+    monkeypatch.setattr(dbmod, "get_database", lambda: database)
+    monkeypatch.setattr(factory_launch, "DEFAULT_LAUNCHES_PATH", launches)
+    app = FastAPI()
+    app.include_router(build_agent_hand_router(SimpleNamespace()))
+    client = TestClient(app)
+
+    assert client.post("/api/agent/launches/l1/seen", json={}).json()["seen"] is None
+    _turn(registry, "s1", DONE)
+    [first] = agent_flights(database, ledger=ledger)
+    assert first["new"] is True
+    seen = client.post("/api/agent/launches/l1/seen", json={})
+    assert seen.status_code == 200 and seen.json()["seen"] == first["turn_id"]
+    [quiet] = agent_flights(database, ledger=ledger)
+    assert (quiet["state"], quiet["new"]) == ("done", False)
+
+    later = datetime.now(timezone.utc) + timedelta(seconds=30)
+    _turn(registry, "s1", "Done. The test now covers the env var too.", now=later)
+    [second] = agent_flights(database, ledger=ledger)
+    assert second["turn_id"] != first["turn_id"] and second["new"] is True
+    assert client.post("/api/agent/launches/nope/seen", json={}).status_code == 404
+
+
+def test_a_missing_tmux_session_is_stopped_by_restart(db, tmp_path, registry):
+    """RECON step 21: after `tmux kill-server` and a hub restart both agents
+    still asked. The check on hub start marks each launch whose tmux session
+    is gone; its session ends, so Needs you and the Conductor drop the ask."""
+    from holdspeak.agent_context import list_agent_sessions
+    from holdspeak.services.agent_flights import launch_history
+    from holdspeak.services.launch_lane import record_restart_stops
+    from holdspeak.services.needs_you_membership import coder_items
+
+    _turn(registry, "s1", QUESTION)
+    _turn(registry, "s2", QUESTION)
+    _turn(registry, "s3", DONE)
+    hook(registry, "claude", "s4", "SessionEnd")
+    ledger = LaunchLedger(tmp_path / "launches.json")
+    for n, origin in (("1", ("action", "ai_1")), ("2", ("decision", "d1")),
+                      ("3", ("decision_record", "dr1")), ("4", ("note", "n1"))):
+        _launch(ledger, f"l{n}", origin, attempt_id=_attempt(db, f"claude:s{n}", f"{origin[0]}:{origin[1]}"))
+    assert len(coder_items(list_agent_sessions(), datetime.now(timezone.utc))) == 2
+
+    # hs-l1 and hs-l4 are gone; hs-l2 is alive; tmux could not be asked for hs-l3.
+    alive = {"hs-l1": False, "hs-l2": True, "hs-l3": None, "hs-l4": False}
+    stopped = record_restart_stops(db=db, ledger=ledger, alive=alive.get)
+    assert stopped == ["l1"]   # l4's session ended by itself
+    states = {f["launch_id"]: f["state"] for f in agent_flights(db, ledger=ledger)}
+    assert states == {"l1": "stopped_by_restart", "l2": "waiting", "l3": "done", "l4": "ended"}
+    assert ledger.get("l1")["stopped"]["by"] == "restart"
+    assert [s.session_id for s in list_agent_sessions() if s.lifecycle == "ended"] == ["s1", "s4"]
+    [row] = coder_items(list_agent_sessions(), datetime.now(timezone.utc))
+    assert row["sessionKey"] == "claude:s2"
+    history = {f["launch_id"]: f["state"] for f in launch_history(db, ledger=ledger)}
+    assert history == {"l1": "stopped_by_restart", "l4": "ended"}
+    # A second check changes nothing.
+    assert record_restart_stops(db=db, ledger=ledger, alive=alive.get) == []
+
+
+def test_a_done_turn_is_a_coder_frame_and_never_a_wait(registry):
+    """The watcher frames a completed turn within one 2 s read (the faces
+    read Done at once), and never runs the notify decision for it."""
+    from holdspeak.web_server import _coder_watch_step
+
+    hook(registry, "claude", "s1", "SessionStart", source="startup")
+    snapshot, _, _ = _coder_watch_step(None, registry)
+    hook(registry, "claude", "s1", "UserPromptSubmit", prompt="the brief")
+    snapshot, transitions, entered = _coder_watch_step(snapshot, registry)
+    assert (transitions, entered) == ([], [])
+    hook(registry, "claude", "s1", "Stop", last_assistant_message=DONE)
+    snapshot, transitions, entered = _coder_watch_step(snapshot, registry)
+    assert (transitions, entered) == (["claude:s1"], [])
+    _, transitions, entered = _coder_watch_step(snapshot, registry)
+    assert (transitions, entered) == ([], [])

@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-18T04:32:39.047201Z",
+  "captured_at": "2026-10-18T05:00:36.318960Z",
   "wire": {
     "count": 1,
     "flights": [
@@ -11,8 +11,9 @@
         "id": "m-cutover-a1",
         "kind": "action",
         "launch_id": "launch_c2_runbook",
-        "launched_at": "2026-10-18T04:12:38.896188Z",
+        "launched_at": "2026-10-18T04:40:36.141579Z",
         "merged_at": null,
+        "new": false,
         "origin_ref": "action:m-cutover-a1",
         "pr": {
           "number": 413,
@@ -26,7 +27,8 @@
         "session_key": "claude:c1a0de00-runbook",
         "state": "pr_open",
         "title": "Write the rollback runbook",
-        "turn_end": null
+        "turn_end": null,
+        "turn_id": null
       }
     ],
     "history": [],
@@ -44,8 +46,9 @@
           "id": "m-cutover-a1",
           "kind": "action",
           "launch_id": "launch_c2_runbook",
-          "launched_at": "2026-10-18T04:12:38.896188Z",
+          "launched_at": "2026-10-18T04:40:36.141579Z",
           "merged_at": null,
+          "new": false,
           "origin_ref": "action:m-cutover-a1",
           "pr": {
             "number": 413,
@@ -59,7 +62,8 @@
           "session_key": "claude:c1a0de00-runbook",
           "state": "pr_open",
           "title": "Write the rollback runbook",
-          "turn_end": null
+          "turn_end": null,
+          "turn_id": null
         },
         "identity": {
           "agent_label": "Claude",
@@ -77,8 +81,9 @@
           "agent": "claude",
           "awaiting_response": false,
           "capture_messages": false,
-          "created_at": "2026-10-18T04:32:37.739334Z",
+          "created_at": "2026-10-18T05:00:34.982501Z",
           "cwd": "/tmp/rig/home/dev/wt/hs-action-runbook",
+          "done_id": null,
           "event_count": 9,
           "hook_event_name": "Notification",
           "last_assistant_text": null,
@@ -102,9 +107,10 @@
           "tmux_session": null,
           "tmux_window": null,
           "transcript_path": null,
-          "updated_at": "2026-10-18T04:32:38.894156Z",
-          "wait_id": "2026-10-18T04:32:38.894156Z#9",
-          "wait_started_at": "2026-10-18T04:32:38.894156Z"
+          "turn_prompted": true,
+          "updated_at": "2026-10-18T05:00:36.139241Z",
+          "wait_id": "2026-10-18T05:00:36.139241Z#9",
+          "wait_started_at": "2026-10-18T05:00:36.139241Z"
         }
       }
     ]

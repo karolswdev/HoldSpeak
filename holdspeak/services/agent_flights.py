@@ -16,8 +16,14 @@ A flight is one launch, newest per item. Its ``state``:
 
 - ``merged`` / ``pr_open``: once a PR exists the PR is the fact (K4's
   selected PR), whatever the session does;
-- ``waiting`` / ``working``: the session the Work attempt is BOUND to (the
-  rider's report, the authoritative binding) is live, blocked or not;
+- ``waiting``: the bound session waits on the owner, or its turn ended with
+  no completed work (``turn_end`` says ``asks`` or ``idle``);
+- ``done``: the bound session's last turn completed (a Stop after a prompt,
+  Betterment AG0) and asks nothing; ``new`` until the owner opened it (the
+  launch's ``seen_wait_id`` is that turn's id);
+- ``working``: the bound session runs a turn;
+- ``stopped_by_restart``: the launch's tmux session was gone at a check on
+  hub start or a heartbeat (``launch_lane.record_restart_stops``);
 - ``starting``: no session is bound yet (the agent has not registered);
 - ``ended``: the bound session ended (SessionEnd, sticky);
 - ``expired``: the bound session is past the dead window or gone from the
@@ -37,6 +43,9 @@ from typing import Any, Iterable, Mapping, Optional
 from ..logging_config import get_logger
 
 log = get_logger("agent_flights")
+
+#: The launch state of an agent whose tmux session a restart took (AG0).
+STOPPED_BY_RESTART = "stopped_by_restart"
 
 #: Launch states that never ran an agent (``follow_through.UNLAUNCHED_STATES``).
 _UNLAUNCHED = frozenset({"failed", "admitted", "approved", "rejected", "starting"})
@@ -71,7 +80,11 @@ def _session_state(session: Any, now: datetime) -> str:
     from ..agent_context.models import (
         DEFAULT_LIFECYCLE_DEAD_SECONDS,
         LIFECYCLE_ENDED,
+        LIFECYCLE_WAITING,
+        TURN_ASKS,
+        completed_turn,
         is_blocked,
+        turn_end,
     )
 
     if session is None:
@@ -86,7 +99,15 @@ def _session_state(session: Any, now: datetime) -> str:
         updated = None
     if updated is not None and (now - updated).total_seconds() > DEFAULT_LIFECYCLE_DEAD_SECONDS:
         return "expired"
-    return "waiting" if is_blocked(session) else "working"
+    if is_blocked(session) and turn_end(session) == TURN_ASKS:
+        return "waiting"
+    # Betterment AG0: a turn that ended after a prompt is done, with or
+    # without a PR (was: "working" until a PR opened, and forever after).
+    if completed_turn(session):
+        return "done"
+    if is_blocked(session) or str(_field(session, "lifecycle") or "") == LIFECYCLE_WAITING:
+        return "waiting"   # a turn end with no work behind it: idle
+    return "working"
 
 
 def _turn_end(session: Any, pr_state: str) -> str:
@@ -163,10 +184,16 @@ def _flight(db: Any, record: Mapping[str, Any], by_key: Mapping[str, Any], clock
         state = "merged"
     elif pr and pr_state == "open":
         state = "pr_open"
+    elif str(record.get("state") or "") == STOPPED_BY_RESTART:
+        state = STOPPED_BY_RESTART
     elif not session_key:
         state = "starting"
     else:
         state = _session_state(session, clock)
+    responder_turn = _responder_turn(session_key, session) if state in ("waiting", "pr_open") else None
+    if state == "waiting" and responder_turn == "done":
+        state = "done"   # the responder read the turn end as a completion report
+    turn_id = _turn_id(session) if state == "done" else None
     project_id, project_name = _project_of(db, kind, item_id)
     evidence = follow.get("evidence") or {}
     return {
@@ -183,10 +210,14 @@ def _flight(db: Any, record: Mapping[str, Any], by_key: Mapping[str, Any], clock
         # PHILO-15 B48 (lane 14) and 15: the responder's record of the
         # current wait (done / idle: not the owner's) first, else the turn
         # end the session's last words read as.
-        "turn_end": (
-            _responder_turn(session_key, session)
+        "turn_end": "done" if state == "done" else (
+            responder_turn
             or (_turn_end(session, pr_state) if state == "waiting" else None)
         ) if state in ("waiting", "pr_open") else None,
+        # Betterment AG0: the done turn's id, and whether the owner has not
+        # opened the agent since (``POST /api/agent/launches/{id}/seen``).
+        "turn_id": turn_id,
+        "new": bool(turn_id) and turn_id != str(record.get("seen_wait_id") or ""),
         "session_key": session_key or None,
         "pr": {
             "number": pr.get("number"),
@@ -206,6 +237,16 @@ def _flight(db: Any, record: Mapping[str, Any], by_key: Mapping[str, Any], clock
         "launched_at": record.get("launched_at") or None,
         "ended_at": _ended_at(record, state, session, follow.get("close")),
     }
+
+
+def _turn_id(session: Any) -> Optional[str]:
+    """The id of a done turn: the completed turn's, else the wait's (a
+    completion report the responder read on a wait)."""
+    from ..agent_context.models import completed_turn
+
+    if session is None:
+        return None
+    return completed_turn(session) or (str(_field(session, "wait_id") or "") or None)
 
 
 def _responder_turn(session_key: str, session: Any) -> Optional[str]:
@@ -264,7 +305,7 @@ def agent_flights(
 
 
 #: The states whose agent still holds the item (the faces' ``isInFlight``).
-_IN_FLIGHT = frozenset({"starting", "working", "waiting", "pr_open"})
+_IN_FLIGHT = frozenset({"starting", "working", "waiting", "done", "pr_open"})
 
 #: An ended launch stays in the Conductor's history this long.
 HISTORY_WINDOW = timedelta(hours=24)
@@ -298,6 +339,17 @@ def launch_history(
     return [flight for _ended, flight in out]
 
 
+def flight_of_launch(
+    db: Any, launch_id: str, sessions: Optional[Iterable[Any]] = None, *, ledger: Any = None,
+) -> Optional[dict[str, Any]]:
+    """The flight of one launch (any state), or ``None`` for an unknown one."""
+    ledger, by_key, clock = _registry(db, sessions, ledger, None)
+    record = ledger.get(launch_id)
+    if not record or not _launched(record):
+        return None
+    return _flight(db, record, by_key, clock)
+
+
 def annotate_sessions(items: list[dict[str, Any]], flights: list[dict[str, Any]]) -> None:
     """Each session row that a flight names gets ``flight`` (its item)."""
     by_session = {f["session_key"]: f for f in flights if f.get("session_key")}
@@ -309,4 +361,4 @@ def annotate_sessions(items: list[dict[str, Any]], flights: list[dict[str, Any]]
             row["flight"] = flight
 
 
-__all__ = ["agent_flights", "annotate_sessions"]
+__all__ = ["STOPPED_BY_RESTART", "agent_flights", "annotate_sessions", "flight_of_launch"]
