@@ -1,0 +1,80 @@
+{
+ "_source": "The hub's own answers, captured by tests/integration/test_desk_workbenches.py (TestClient, isolated database). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit it.",
+ "workbench_id": "",
+ "gets": {
+  "/api/workbench-templates": {
+   "templates": [
+    {
+     "id": "friday-team-update",
+     "name": "Friday team update",
+     "description": "Drafts your team update from this week's meetings and notes.",
+     "instruction": "Draft my team update for this week: what shipped, what slipped, and what I need from each person. Name the meeting or note each point comes from.",
+     "sources": [
+      "meetings:this_week",
+      "notes:this_week"
+     ],
+     "when": {
+      "kind": "schedule",
+      "every": "week",
+      "day": 5,
+      "time": "15:00"
+     },
+     "output_target": "inbox",
+     "blanks": {},
+     "schedule": "0 15 * * 5"
+    },
+    {
+     "id": "meeting-follow-ups",
+     "name": "Meeting follow-ups",
+     "description": "Lists the decisions and follow-ups of a meeting, with owners and dates.",
+     "instruction": "List the decisions and the follow-ups from this meeting. Give each follow-up an owner and a date when the meeting names them.",
+     "sources": [],
+     "when": {
+      "kind": "manual"
+     },
+     "output_target": "needs_you",
+     "blanks": {
+      "about": "which meeting?"
+     },
+     "schedule": null
+    },
+    {
+     "id": "one-on-one-prep",
+     "name": "1:1 prep",
+     "description": "Prepares your 1:1s: open commitments, the last 1:1, what to raise.",
+     "instruction": "For each person: their open commitments, what we said in our last 1:1, and what I should raise this week.",
+     "sources": [],
+     "when": {
+      "kind": "schedule",
+      "every": "week",
+      "day": 1,
+      "time": "08:00"
+     },
+     "output_target": "inbox",
+     "blanks": {
+      "about": "which people?"
+     },
+     "schedule": "0 8 * * 1"
+    },
+    {
+     "id": "summarize-a-drawer",
+     "name": "Summarize a drawer",
+     "description": "Summarizes what is new in a drawer.",
+     "instruction": "Summarize what is new in these notes. Start with what needs me.",
+     "sources": [],
+     "when": {
+      "kind": "manual"
+     },
+     "output_target": "inbox",
+     "blanks": {
+      "about": "which drawer?"
+     },
+     "schedule": null
+    }
+   ]
+  },
+  "/api/workbenches": {
+   "workbenches": []
+  }
+ }
+}

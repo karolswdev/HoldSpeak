@@ -6,6 +6,9 @@
 // chooser BEFORE any record exists. Exactly one of the picker's exits
 // persists exactly one Workbench, then this window closes. One gesture →
 // one record, no orphan.
+//
+// Betterment A7: the picker offers the four starters and Start from scratch;
+// the window opens wide enough for the starter cards.
 import { useDesk } from "../store";
 import { DeskWindowFrame } from "./DeskWindow";
 import { WorkbenchTemplatePicker } from "./WorkbenchTemplatePicker";
@@ -22,6 +25,8 @@ export function NewWorkbenchChooser() {
       title="New Automation"
       minW={480}
       minH={340}
+      defaultW={720}
+      defaultH={460}
       open
       origin={chooser.origin}
       onClose={close}

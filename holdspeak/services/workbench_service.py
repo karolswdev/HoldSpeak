@@ -614,20 +614,44 @@ class WorkbenchService:
     # ── Templates and skills ─────────────────────────────────────────────
 
     def list_templates(self, principal: Principal) -> list[dict[str, Any]]:
+        """Betterment A7: the starters New automation offers, each with its
+        schedule as cron (the face reads it in words, never as cron)."""
         from holdspeak.workbench_templates import list_templates
-        return list_templates()
+        from .automation_when import cron_for
+
+        return [{**starter, "schedule": cron_for(starter["when"]) if starter["when"]["kind"] == "schedule" else None}
+                for starter in list_templates()]
+
+    def make_from_starter(self, principal: Principal, starter: dict[str, Any]) -> dict[str, Any]:
+        """Betterment A7: one automation with the starter's sentence and no
+        agent (nothing is copied). A schedule is stored and stays Off: he
+        turns it On (a starter is not a recurring-inference approval)."""
+        from .automation_when import cron_for
+
+        when = dict(starter["when"])
+        made = self.create_workbench(
+            principal, name=starter["name"], instruction=starter["instruction"],
+            sources=list(starter["sources"]), output_target=starter["output_target"],
+            schedule=cron_for(when) if when["kind"] == "schedule" else None, schedule_enabled=False,
+        )
+        self._db.workbenches.set_when_json(made["id"], {"kind": when["kind"]})
+        return self._wb_payload(self._require_workbench(made["id"]), principal)
 
     def instantiate_template(
         self, principal: Principal, template_id: str, profile_id: str | None = None
     ) -> dict[str, Any]:
-        from holdspeak.workbench_templates import get_template
-        template = get_template(template_id)
-        if template is None:
+        from holdspeak.workbench_templates import get_starter, get_template
+        starter = get_starter(template_id)
+        template = None if starter is not None else get_template(template_id)
+        if starter is None and template is None:
             raise NotFound("template", template_id)
         if profile_id is not None:
             self._refuse_post_marker_pointer_write(
                 principal, {"profile_id": profile_id}
             )
+        if starter is not None:
+            return {"workbench": self.make_from_starter(principal, starter)}
+        # A retired template (hidden from New automation): the old path.
         recipe_data = template["recipe"]
         recipe = self._db.recipes.upsert(
             recipe_id=_new_id("recipe"), name=recipe_data.get("name", "Agent"),
@@ -894,6 +918,10 @@ class WorkbenchService:
         payload["results"] = results_of(self._db, wb.id)
         # Betterment A3: the About line names each source (never its ref).
         payload["sources_shown"] = source_names(self._db, sources_of(wb))
+        # Betterment A7: a blank a starter could not guess, while it is open.
+        from holdspeak.workbench_templates import starter_blanks
+
+        payload["blanks"] = starter_blanks(str(wb.instruction or ""), sources_of(wb))
         # ... and the When line names an event start by its name. Betterment
         # A4: after a When choice, only the start he chose is this
         # automation's start (the others stay stored, off); before A4, all.

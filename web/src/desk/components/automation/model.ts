@@ -61,6 +61,9 @@ export interface AutomationDetail extends WorkbenchDetail {
   /** Betterment A4: this automation's Spend limit per run; null = the engine's. */
   spend_limit_usd?: number | null;
   when_events?: AutomationEventChoice[];
+  /** Betterment A7: a blank its starter could not guess, while it is open
+   *  (`{ about: "which people?" }`). */
+  blanks?: Record<string, string>;
   instruction?: string;
   instruction_shown?: string;
   instruction_from?: string;

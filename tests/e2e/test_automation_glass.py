@@ -128,3 +128,91 @@ class TestAboutDrop:
                 assert not errors, errors
             finally:
                 browser.close()
+
+
+class TestFridayWalk:
+    """Betterment A7, DESIGN §6: New automation → Friday team update → With →
+    Claude Code → Run now → a readable result, in at most 6 presses, in one
+    window, at 1440 and 393. Claude Code is the fake CLI of
+    tests/fixtures/fake_agent_cli.py (never the owner's own)."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        from holdspeak.intel.cli_engine import CLI_ENGINES_ENV
+        from tests.fixtures.fake_agent_cli import install_fake_agent_clis, path_with, set_claude_answer
+
+        bin_dir = install_fake_agent_clis(tmp_path / "bin")
+        set_claude_answer(bin_dir, "## Team update, this week\n\n- Shipped: the rollback runbook.\n"
+                                   "- Slipped: the ledger cutover moves to Thursday.\n- From Mira: the review.")
+        monkeypatch.setenv("PATH", path_with(bin_dir))
+        _ensure_build()
+        server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+        # The rig turns agent CLIs off; this walk turns them on, with the fake.
+        monkeypatch.setenv(CLI_ENGINES_ENV, "on")
+        self.server, self.base = server, base
+        try:
+            yield
+        finally:
+            server.stop()
+
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_friday_team_update_reads_a_result_in_six_presses(self, width: int) -> None:
+        import time
+
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]}, device_scale_factor=1,
+                                      has_touch=width < 720, reduced_motion="reduce")
+            page = ctx.new_page()
+            page.set_default_timeout(45_000)
+            errors: list[str] = []
+            page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+            try:
+                page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+                _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+                page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+                _normal_chair(page)
+                # Find it (A1, one press; not counted): Go ▸ Automations.
+                page.get_by_role("button", name="Go", exact=True).first.click()
+                go = page.locator("nav[aria-label='Go menu']")
+                go.wait_for(timeout=T)
+                go.get_by_role("menuitem", name="Automations").first.evaluate("el => el.click()")
+                new = page.get_by_test_id("automation-new")
+                new.wait_for(timeout=T)
+                page.screenshot(path=str(SHOTS / f"walk-0-home-{width}.png"))
+
+                started, presses = time.monotonic(), 0
+                new.click(); presses += 1
+                friday = page.locator("[id='workbench:__new__']").get_by_test_id("automation-starter-friday-team-update")
+                friday.wait_for(timeout=T)
+                page.screenshot(path=str(SHOTS / f"walk-1-new-{width}.png"))
+                friday.click(); presses += 1
+                with_line = page.get_by_test_id("automation-line-with")
+                with_line.wait_for(timeout=T)
+                page.screenshot(path=str(SHOTS / f"walk-2-sentence-{width}.png"))
+                with_line.get_by_role("button").first.click(); presses += 1
+                add = page.get_by_role("button", name="Add Claude Code")
+                add.wait_for(timeout=T)
+                add.click(); presses += 1
+                # Add writes the engine, then this automation uses it ("In use").
+                with_line.get_by_text("In use", exact=True).wait_for(timeout=T)
+                page.get_by_test_id("automation-run-now").click(); presses += 1
+                reading = page.get_by_test_id("automation-newest").get_by_test_id("automation-reading")
+                try:
+                    reading.get_by_role("heading", name="Team update, this week").wait_for(timeout=60_000)
+                except Exception:
+                    page.screenshot(path=str(SHOTS / f"walk-fail-{width}.png"))
+                    print("NEWEST:", page.get_by_test_id("automation-newest").inner_text())
+                    raise
+                seconds = time.monotonic() - started
+                reading.scroll_into_view_if_needed()
+                page.screenshot(path=str(SHOTS / f"walk-3-result-{width}.png"))
+                assert presses <= 6, presses
+                assert "##" not in reading.inner_text()
+                print(f"FRIDAY WALK {width}: {presses} presses, {seconds:.1f} s")
+                (SHOTS / f"walk-{width}.txt").write_text(f"{presses} presses, {seconds:.1f} s\n")
+                assert not errors, errors
+            finally:
+                browser.close()

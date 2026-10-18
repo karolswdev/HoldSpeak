@@ -1,10 +1,75 @@
-"""Pre-built Workbench templates (HS-116-05).
+"""Starters for a new automation (Betterment A7), and the parked templates.
 
-Each template ships a recipe (the agent persona), a workbench config,
-and optional starter items. The user picks a template, picks a target,
-and they're running in thirty seconds.
+A starter is one automation's sentence (DESIGN §4, "Starters"): the
+instruction (Do), its sources (About), when it runs (When) and where the
+result goes (Put it in). A press makes one automation with that sentence and
+no agent: nothing is copied (before A7 each press copied a new recipe). A
+blank the starter cannot guess ("which people?") is named in ``blanks``; the
+automation window shows it highlighted until he fills it.
+
+The four HS-116-05 templates (TODO, Triage, Meeting Prep, Morning Brief) are
+retired as starters: Today and cadence do that work. They stay below, hidden
+(``get_template`` still finds them, so an old caller keeps working).
 """
 from __future__ import annotations
+
+#: Betterment A7: the four starters, in the order New automation shows them.
+#: ``when`` is a When choice (``WorkbenchService.set_when``'s shape); a
+#: schedule is stored and stays Off until he turns it On (a starter is not a
+#: recurring-inference approval). "When a meeting ends" is not a start the hub
+#: can deliver today (``services/automation_when.py``), so Meeting follow-ups
+#: runs when he presses Run now, about the meeting he names.
+STARTERS = [
+    {
+        "id": "friday-team-update",
+        "name": "Friday team update",
+        "description": "Drafts your team update from this week's meetings and notes.",
+        "instruction": (
+            "Draft my team update for this week: what shipped, what slipped, "
+            "and what I need from each person. Name the meeting or note each point comes from."
+        ),
+        "sources": ["meetings:this_week", "notes:this_week"],
+        "when": {"kind": "schedule", "every": "week", "day": 5, "time": "15:00"},
+        "output_target": "inbox",
+        "blanks": {},
+    },
+    {
+        "id": "meeting-follow-ups",
+        "name": "Meeting follow-ups",
+        "description": "Lists the decisions and follow-ups of a meeting, with owners and dates.",
+        "instruction": (
+            "List the decisions and the follow-ups from this meeting. "
+            "Give each follow-up an owner and a date when the meeting names them."
+        ),
+        "sources": [],
+        "when": {"kind": "manual"},
+        "output_target": "needs_you",
+        "blanks": {"about": "which meeting?"},
+    },
+    {
+        "id": "one-on-one-prep",
+        "name": "1:1 prep",
+        "description": "Prepares your 1:1s: open commitments, the last 1:1, what to raise.",
+        "instruction": (
+            "For each person: their open commitments, what we said in our last 1:1, "
+            "and what I should raise this week."
+        ),
+        "sources": [],
+        "when": {"kind": "schedule", "every": "week", "day": 1, "time": "08:00"},
+        "output_target": "inbox",
+        "blanks": {"about": "which people?"},
+    },
+    {
+        "id": "summarize-a-drawer",
+        "name": "Summarize a drawer",
+        "description": "Summarizes what is new in a drawer.",
+        "instruction": "Summarize what is new in these notes. Start with what needs me.",
+        "sources": [],
+        "when": {"kind": "manual"},
+        "output_target": "inbox",
+        "blanks": {"about": "which drawer?"},
+    },
+]
 
 TEMPLATES = [
     {
@@ -128,11 +193,28 @@ TEMPLATES = [
 
 
 def list_templates() -> list[dict]:
-    return TEMPLATES
+    """What New automation offers: the starters only (the templates are hidden)."""
+    return STARTERS
+
+
+def get_starter(starter_id: str) -> dict | None:
+    return next((s for s in STARTERS if s["id"] == starter_id), None)
 
 
 def get_template(template_id: str) -> dict | None:
+    """A retired template (hidden from New automation; still callable)."""
     for t in TEMPLATES:
         if t["id"] == template_id:
             return t
     return None
+
+
+def starter_blanks(instruction: str, sources: list[str]) -> dict[str, str]:
+    """The blanks still open on an automation made from a starter: its Do is
+    still the starter's own and the line is still empty. Edited, it has none."""
+    text = str(instruction or "").strip()
+    for starter in STARTERS:
+        if starter["instruction"] == text:
+            return {line: words for line, words in starter["blanks"].items()
+                    if not (line == "about" and sources)}
+    return {}

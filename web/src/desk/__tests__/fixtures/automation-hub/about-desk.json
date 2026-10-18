@@ -5,33 +5,13 @@
   "/api/notes": {
    "notes": [
     {
-     "id": "note_result_b871cf7413aa3657",
-     "title": "Friday team update, Sun 18 Oct 2026",
-     "body_markdown": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.\n\n---\nFrom the automation [Friday team update](/?open=workbench:wb-about).",
-     "tags": [],
-     "created_at": "2026-10-18T15:57:31Z",
-     "updated_at": "2026-10-18T15:57:31Z",
-     "last_modified": "2026-10-18T15:57:31Z",
-     "deleted": false
-    },
-    {
-     "id": "note_result_cf29e25b334b7437",
-     "title": "Friday team update, Sun 18 Oct 2026",
-     "body_markdown": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.\n\n---\nFrom the automation [Friday team update](/?open=workbench:wb-about).",
-     "tags": [],
-     "created_at": "2026-10-18T15:57:31Z",
-     "updated_at": "2026-10-18T15:57:31Z",
-     "last_modified": "2026-10-18T15:57:31Z",
-     "deleted": false
-    },
-    {
      "id": "note-sync",
      "title": "Platform sync",
      "body_markdown": "The cutover moves to Thursday.",
      "tags": [],
-     "created_at": "2026-10-18T15:57:30Z",
-     "updated_at": "2026-10-18T15:57:30Z",
-     "last_modified": "2026-10-18T15:57:30Z",
+     "created_at": "2026-10-18T18:22:44Z",
+     "updated_at": "2026-10-18T18:22:44Z",
+     "last_modified": "2026-10-18T18:22:44Z",
      "deleted": false
     },
     {
@@ -39,9 +19,9 @@
      "title": "Hiring",
      "body_markdown": "Two loops are booked for next week.",
      "tags": [],
-     "created_at": "2026-10-18T15:57:30Z",
-     "updated_at": "2026-10-18T15:57:30Z",
-     "last_modified": "2026-10-18T15:57:30Z",
+     "created_at": "2026-10-18T18:22:44Z",
+     "updated_at": "2026-10-18T18:22:44Z",
+     "last_modified": "2026-10-18T18:22:44Z",
      "deleted": false
     },
     {
@@ -49,9 +29,29 @@
      "title": "Roadmap review",
      "body_markdown": "Q4 scope is frozen.",
      "tags": [],
-     "created_at": "2026-10-18T15:57:30Z",
-     "updated_at": "2026-10-18T15:57:30Z",
-     "last_modified": "2026-10-18T15:57:30Z",
+     "created_at": "2026-10-18T18:22:44Z",
+     "updated_at": "2026-10-18T18:22:44Z",
+     "last_modified": "2026-10-18T18:22:44Z",
+     "deleted": false
+    },
+    {
+     "id": "note_result_d10aa53dfe7256ae",
+     "title": "Friday team update, Sun 18 Oct 2026",
+     "body_markdown": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.\n\n---\nFrom the automation [Friday team update](/?open=workbench:wb-about).",
+     "tags": [],
+     "created_at": "2026-10-18T18:22:44Z",
+     "updated_at": "2026-10-18T18:22:44Z",
+     "last_modified": "2026-10-18T18:22:44Z",
+     "deleted": false
+    },
+    {
+     "id": "note_result_60f33cf3cc12dcf3",
+     "title": "Friday team update, Sun 18 Oct 2026",
+     "body_markdown": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.\n\n---\nFrom the automation [Friday team update](/?open=workbench:wb-about).",
+     "tags": [],
+     "created_at": "2026-10-18T18:22:44Z",
+     "updated_at": "2026-10-18T18:22:44Z",
+     "last_modified": "2026-10-18T18:22:44Z",
      "deleted": false
     }
    ]
@@ -63,12 +63,12 @@
      "name": "Inbox",
      "name_normalized": "inbox",
      "parent_id": null,
-     "created_at": "2026-10-18T15:57:30Z",
-     "last_modified": "2026-10-18T15:57:30Z",
+     "created_at": "2026-10-18T18:22:44Z",
+     "last_modified": "2026-10-18T18:22:44Z",
      "deleted": false,
      "member_ids": [
-      "note:note_result_b871cf7413aa3657",
-      "note:note_result_cf29e25b334b7437"
+      "note:note_result_d10aa53dfe7256ae",
+      "note:note_result_60f33cf3cc12dcf3"
      ]
     },
     {
@@ -76,8 +76,8 @@
      "name": "Work",
      "name_normalized": "work",
      "parent_id": null,
-     "created_at": "2026-10-18T15:57:30Z",
-     "last_modified": "2026-10-18T15:57:30Z",
+     "created_at": "2026-10-18T18:22:44Z",
+     "last_modified": "2026-10-18T18:22:44Z",
      "deleted": false,
      "member_ids": [
       "note:note-roadmap"

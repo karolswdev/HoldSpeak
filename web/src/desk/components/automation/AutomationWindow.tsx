@@ -492,7 +492,8 @@ export function AutomationWindow({
                   editor={<AboutEditor sources={sources} busy={aboutSaving}
                     onChange={(refs) => void saveSources(refs)} />}
                 >
-                  {sources.length ? <AboutChips sources={sources} /> : dropReady ? "Drop it here" : "What is it about?"}
+                  {sources.length ? <AboutChips sources={sources} /> : dropReady ? "Drop it here"
+                    : detail.blanks?.about ?? "What is it about?"}
                 </SentenceLine>
               )}
               <SentenceLine
