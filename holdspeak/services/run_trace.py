@@ -16,6 +16,12 @@ An automation result reads the rows of the runs made for its item
   run made (the desk's own delete, with its Undo, takes it back);
 - ``prepared``: the sends it prepared (``send_id``); he presses Send.
 
+Betterment Q7 (Ask my whole desk) records the same rows for an Ask: a CLI
+engine's runs are linked by the Ask's trace key (:func:`ask_trace`, set with
+:func:`for_item` around the engine call), and the hub's own tool loop
+(``thread_service``) records each call it serves with :func:`record_value`
+under that key as the run id. :func:`use_by_trace` reads both.
+
 A write here never breaks a call: a failed write is logged.
 """
 from __future__ import annotations
@@ -77,6 +83,20 @@ def current_item() -> str:
     return _ITEM.get()
 
 
+#: Tools whose object is not their family's name: ``door.add_item`` makes a
+#: task (an action item, which opens in Follow-through).
+_TOOL_REF_KINDS = {"door.add_item": "action_item"}
+#: Writes the face can take back: a task it added is dismissed (Q7, Wrote).
+_UNDO_OPS = {("action_item", "add_item")}
+
+ASK_TRACE_PREFIX = "ask:"
+
+
+def ask_trace(invocation_id: str) -> str:
+    """The trace key of one Ask (its invocation id), for its tool calls."""
+    return ASK_TRACE_PREFIX + str(invocation_id or "")
+
+
 def _effect(name: str) -> str:
     from ..mcp.tools import is_read_tool
 
@@ -113,7 +133,7 @@ def _records(value: Any) -> list[Mapping[str, Any]]:
 
 
 def _title_of(record: Mapping[str, Any]) -> str:
-    for key in ("title", "name", "display_name"):
+    for key in ("title", "name", "display_name", "task"):
         text = " ".join(str(record.get(key) or "").split())
         if text:
             return text
@@ -147,6 +167,10 @@ def _object(name: str, arguments: Mapping[str, Any], value: Any) -> tuple[str, s
     from .. import operations
 
     kind, obj_id, _op = operations.changed_for(name, arguments, value)
+    if name in _TOOL_REF_KINDS:
+        kind = _TOOL_REF_KINDS[name]
+        record = value if isinstance(value, Mapping) else {}
+        obj_id = str(record.get("id") or obj_id or "")
     if not obj_id:
         return "", ""
     title = ""
@@ -179,6 +203,14 @@ def record_call(run_id: str, name: str, arguments: Any, response: Any, *, db: An
     value = _answer_value(response)
     if value is None:
         return
+    record_value(run_id, name, arguments, value, db=db)
+
+
+def record_value(run_id: str, name: str, arguments: Any, value: Any, *, db: Any = None) -> None:
+    """Add one row for a tool call that answered ``value`` (the tool's own
+    value, not a JSON-RPC answer): the hub's tool loop records its calls so."""
+    if not run_id or not name or value is None:
+        return
     args = arguments if isinstance(arguments, Mapping) else {}
     try:
         effect = _effect(name)
@@ -207,6 +239,38 @@ def _row(ref: str, title: str) -> dict[str, Any]:
     return {"ref": ref, "label": title or "Untitled", "kind": ref.split(":", 1)[0]}
 
 
+def _fold(rows: Any, key_of: Any) -> dict[str, dict[str, list[dict[str, Any]]]]:
+    used: dict[str, dict[str, dict[str, dict[str, Any]]]] = {}
+    for row in rows:
+        lists = used.setdefault(str(key_of(row)), {"looked_at": {}, "wrote": {}, "prepared": {}})
+        try:
+            detail = json.loads(row["detail_json"] or "{}")
+        except ValueError:
+            detail = {}
+        ref, title, effect = str(row["ref"]), str(row["title"] or ""), str(row["effect"])
+        if effect == READ:
+            entry = lists["looked_at"].setdefault(ref, _row(ref, title))
+        elif effect == WRITE:
+            entry = lists["wrote"].setdefault(ref, {**_row(ref, title), "undo": False})
+            op = str(detail.get("op") or "")
+            kind = ref.split(":", 1)[0]
+            if (op == "create" and kind in _DESK_REF_KINDS.values()) or (kind, op) in _UNDO_OPS:
+                entry["undo"] = True
+            if op == "delete":
+                entry["undo"] = False
+        else:
+            send_id = str(detail.get("send_id") or "")
+            entry = lists["prepared"].setdefault(send_id or ref, {
+                **_row(ref, title), "send_id": send_id, "destination": str(detail.get("destination") or ""),
+            })
+        if title:
+            entry["label"] = title
+    return {
+        key: {name: list(values.values()) for name, values in lists.items()}
+        for key, lists in used.items()
+    }
+
+
 def use_by_item(db: Any, item_ids: list[str]) -> dict[str, dict[str, list[dict[str, Any]]]]:
     """Looked at, Wrote and Prepared for each item whose runs touched an object.
 
@@ -228,34 +292,31 @@ def use_by_item(db: Any, item_ids: list[str]) -> dict[str, dict[str, list[dict[s
     except Exception as exc:
         log.info(f"agent run calls not read: {exc}")
         return {}
-    used: dict[str, dict[str, dict[str, dict[str, Any]]]] = {}
-    for row in rows:
-        lists = used.setdefault(str(row["item_id"]), {"looked_at": {}, "wrote": {}, "prepared": {}})
-        try:
-            detail = json.loads(row["detail_json"] or "{}")
-        except ValueError:
-            detail = {}
-        ref, title, effect = str(row["ref"]), str(row["title"] or ""), str(row["effect"])
-        if effect == READ:
-            entry = lists["looked_at"].setdefault(ref, _row(ref, title))
-        elif effect == WRITE:
-            entry = lists["wrote"].setdefault(ref, {**_row(ref, title), "undo": False})
-            op = str(detail.get("op") or "")
-            if op == "create" and ref.split(":", 1)[0] in _DESK_REF_KINDS.values():
-                entry["undo"] = True
-            if op == "delete":
-                entry["undo"] = False
-        else:
-            send_id = str(detail.get("send_id") or "")
-            entry = lists["prepared"].setdefault(send_id or ref, {
-                **_row(ref, title), "send_id": send_id, "destination": str(detail.get("destination") or ""),
-            })
-        if title:
-            entry["label"] = title
-    return {
-        item: {key: list(values.values()) for key, values in lists.items()}
-        for item, lists in used.items()
-    }
+    return _fold(rows, lambda row: row["item_id"])
+
+
+def use_by_trace(db: Any, keys: list[str]) -> dict[str, dict[str, list[dict[str, Any]]]]:
+    """Looked at, Wrote and Prepared for each trace key (Q7: an Ask), from the
+    calls recorded under the key itself (the hub's tool loop) and from the
+    CLI runs linked to it (``cli_engine_runs.item_id``)."""
+    ids = [str(k) for k in keys if str(k or "").strip()]
+    if not ids or db is None:
+        return {}
+    try:
+        with db._connection() as conn:
+            rows = conn.execute(
+                """SELECT COALESCE(r.item_id, c.run_id) AS trace, c.effect, c.ref, c.title, c.detail_json
+                   FROM agent_run_calls c LEFT JOIN cli_engine_runs r ON r.run_id = c.run_id
+                   WHERE c.ref != '' AND (
+                     c.run_id IN (SELECT value FROM json_each(?))
+                     OR r.item_id IN (SELECT value FROM json_each(?)))
+                   ORDER BY c.id""",
+                (json.dumps(ids), json.dumps(ids)),
+            ).fetchall()
+    except Exception as exc:
+        log.info(f"agent run calls not read: {exc}")
+        return {}
+    return _fold(rows, lambda row: row["trace"])
 
 
 def run_id_of(identity: Optional[str]) -> str:
@@ -266,4 +327,7 @@ def run_id_of(identity: Optional[str]) -> str:
     return text[len(RUN_IDENTITY_PREFIX):] if text.startswith(RUN_IDENTITY_PREFIX) else ""
 
 
-__all__ = ["PREPARE", "READ", "WRITE", "current_item", "for_item", "record_call", "run_id_of", "use_by_item"]
+__all__ = [
+    "PREPARE", "READ", "WRITE", "ask_trace", "current_item", "for_item", "record_call", "record_value",
+    "run_id_of", "use_by_item", "use_by_trace",
+]

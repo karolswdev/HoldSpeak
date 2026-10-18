@@ -280,3 +280,17 @@
   text-transform: none;
   letter-spacing: normal;
 }
+
+/* Betterment Q7: a call the desk's tool loop holds for his press. */
+.desk-ask-hold {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+.desk-ask-hold-words {
+  font: 500 13px / 1.4 var(--font-sans);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}

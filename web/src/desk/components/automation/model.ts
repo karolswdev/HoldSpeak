@@ -5,6 +5,7 @@
  * The user never sees a cron string, a ref or an internal id. */
 import type { WorkbenchDetail } from "../../detail-types";
 import { wireClock, wireDate } from "../../surface/format";
+import type { AgentUse } from "../../used";
 
 /** One run's result (`automation_runs.results_of`). */
 export interface AutomationResult {
@@ -25,58 +26,11 @@ export interface AutomationResult {
   cost_usd?: number | null;
   /** What the run's agent looked at, wrote and prepared (MCP M2); null when
    *  it touched nothing. */
-  used?: AutomationUse | null;
+  used?: AgentUse | null;
 }
 
-/** One object a run's agent touched: its qualified ref, title and kind. */
-export interface UsedRow {
-  ref: string;
-  label: string;
-  kind?: string;
-}
-
-export interface AutomationUse {
-  looked_at?: UsedRow[];
-  /** `undo`: the run made it, so the desk's delete (with its Undo) takes it back. */
-  wrote?: Array<UsedRow & { undo?: boolean }>;
-  /** A send the agent prepared; he presses Send. */
-  prepared?: Array<UsedRow & { send_id?: string; destination?: string }>;
-}
-
-const KIND_NOUNS: Record<string, [string, string]> = {
-  meeting: ["meeting", "meetings"],
-  note: ["note", "notes"],
-  decision: ["decision", "decisions"],
-  knowledge: ["knowledge base", "knowledge bases"],
-  zone: ["zone", "zones"],
-  sequence: ["sequence", "sequences"],
-  workflow: ["workflow", "workflows"],
-  project: ["project", "projects"],
-  people: ["person", "people"],
-  person: ["person", "people"],
-  workbench: ["automation", "automations"],
-  artifact: ["result", "results"],
-};
-
-/** `1 send`, `2 sends`. */
-export function sendWords(n: number): string {
-  return n === 1 ? "1 send" : `${n} sends`;
-}
-
-/** `3 meetings, 1 note`: the rows counted by kind, in first-seen order. */
-export function usedWords(rows: UsedRow[]): string {
-  const counts = new Map<string, number>();
-  for (const row of rows) {
-    const kind = row.kind || row.ref.split(":", 1)[0] || "";
-    counts.set(kind, (counts.get(kind) ?? 0) + 1);
-  }
-  return [...counts.entries()]
-    .map(([kind, n]) => {
-      const [one, many] = KIND_NOUNS[kind] ?? ["item", "items"];
-      return `${n} ${n === 1 ? one : many}`;
-    })
-    .join(", ");
-}
+export type { UsedRow, AgentUse as AutomationUse } from "../../used";
+export { sendWords, usedWords } from "../../used";
 
 export interface AutomationSource {
   ref: string;

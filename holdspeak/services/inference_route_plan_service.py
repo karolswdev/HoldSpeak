@@ -415,7 +415,14 @@ class InferenceRoutePlanService:
             if subject_kind not in {"thought", "workbench", "agent", "recipe", "project"} or not subject_id:
                 raise ValidationError("subject is invalid", code="inference_route_plan_invalid")
             keys.append((f"subject:{subject_kind}:{_safe_id(subject_id, field='subject_id')}:capability:{capability.id}", "subject"))
-        keys.extend(((f"capability:{capability.id}", "capability"), (f"group:{capability.group_id}", "group"), ("global", "global")))
+        keys.append((f"capability:{capability.id}", "capability"))
+        # Betterment Q4/Q7: a capability with no head of its own follows the
+        # one it answers for (desk chat follows Answers), here as on the face
+        # (``InferenceAssignmentService._FOLLOWS``); before Q7 only the face did.
+        from .inference_assignment_service import _FOLLOWS
+        if capability.id in _FOLLOWS:
+            keys.append((f"capability:{_FOLLOWS[capability.id]}", "capability"))
+        keys.extend(((f"group:{capability.group_id}", "group"), ("global", "global")))
         permitted = None if assignment_sources is None else set(assignment_sources)
         if permitted is not None and self._assignments.capability_off(conn, capability.id):
             # PHILO-15 01 ruling: the owner's OFF holds. A service route stops

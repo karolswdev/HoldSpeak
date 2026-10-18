@@ -41,7 +41,8 @@ describe("Ask: visible receipt egress and ordinary status, no host and no receip
 
   async function askWith(payload: Record<string, unknown>, status = 200, onAsk?: () => void) {
     vi.stubGlobal("fetch", vi.fn((url: string) => {
-      const isAsk = String(url).includes("/api/ask");
+      // Betterment Q7: the window also reads /api/ask/engine (the engine line).
+      const isAsk = String(url).includes("/api/ask") && !String(url).endsWith("/api/ask/engine");
       if (isAsk) onAsk?.();
       return Promise.resolve({
         ok: !(isAsk && status >= 400),

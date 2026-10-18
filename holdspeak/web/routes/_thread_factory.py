@@ -11,8 +11,11 @@ from typing import Any
 from ..context import WebContext
 
 
-def thread_service_from_ctx(ctx: WebContext) -> Any:
-    """Build a ThreadService wired to the kernel broker and bus broadcast."""
+def thread_service_from_ctx(ctx: WebContext, **overrides: Any) -> Any:
+    """Build a ThreadService wired to the kernel broker and bus broadcast.
+
+    ``overrides`` (Betterment Q7: the Ask's ``system_prompt`` and
+    ``palette``) go to the ThreadService as they are."""
     from ...db import get_database
     from ...kernel.runtime import _service as _kernel_service
     from ...services.thread_service import ThreadService
@@ -30,4 +33,5 @@ def thread_service_from_ctx(ctx: WebContext) -> Any:
         # truth table reads is the desk's own control_mode.
         tool_dispatch_fn=mcp_dispatch,
         control_mode_fn=lambda: Config.load().control_mode,
+        **overrides,
     )

@@ -266,12 +266,19 @@ class ThreadService:
         broker: Any = None,
         tool_dispatch_fn: Callable[..., Any] | None = None,
         control_mode_fn: Callable[[], str] | None = None,
+        system_prompt: str | None = None,
+        palette: frozenset[str] | None = None,
     ) -> None:
         self._db = db
         self._broadcast = broadcast
         self._broker = broker
         self._tool_dispatch_fn = tool_dispatch_fn
         self._control_mode_fn = control_mode_fn or (lambda: "yolo")
+        # Betterment Q7: Ask runs its turns through this loop with its own
+        # system prompt and tool palette (``services/ask_desk.py``).  A
+        # thread's mode, when one is bound, still decides both.
+        self._system_prompt = system_prompt
+        self._palette = palette
 
     @property
     def _threads(self) -> ThreadRepository:
@@ -446,6 +453,18 @@ class ThreadService:
                 siblings_map[m.id] = [n, total]
         result["siblings"] = siblings_map
         result["refs"] = [self._ref_dict(r) for r in self._threads.get_refs(thread_id)]
+        # Betterment Q7: what each answer looked at, wrote and prepared with
+        # the desk's tools, by its message id (the key is absent when no
+        # answer used a tool).
+        from . import run_trace
+        traces = {
+            run_trace.ask_trace(str(key)): m.id
+            for m in visible_path if m.role == "assistant"
+            for key in {getattr(m, "operation_id", ""), getattr(m, "invocation_id", "")} if key
+        }
+        used = run_trace.use_by_trace(self._db, list(traces))
+        if used:
+            result["used"] = {traces[key]: lists for key, lists in used.items() if key in traces}
         # HS-153-04: expose draft annotations for the composer chips.
         draft_parts = self._threads.draft_parts(thread_id)
         result["draft_annotations"] = [
@@ -709,7 +728,11 @@ class ThreadService:
             from .thread_tools import tool_schemas_for, CHAT_PALETTE
 
             palette = self._palette_for(thread_id)
-            effective_palette = palette if palette is not None else CHAT_PALETTE
+            effective_palette = (
+                palette if palette is not None
+                else self._palette if self._palette is not None
+                else CHAT_PALETTE
+            )
             if effective_palette:
                 payload["tools"] = tool_schemas_for(effective_palette)
 
@@ -1465,6 +1488,14 @@ class ThreadService:
                     tool_calls_this_pass.clear()
                 if tool_calls_this_pass:
                     any_tool_calls = True
+                    if part_id is not None:
+                        # Betterment Q7: each pass that calls tools keeps its
+                        # words in their own text part, so the answer (the
+                        # last pass) reads apart from what was said on the way.
+                        if cadence.pending:
+                            self._threads.extend_part_text(part_id, cadence.pending)
+                            cadence.mark_flushed()
+                        part_id = None
 
                 # -- No tool calls: text answer, done --
                 if not tool_calls_this_pass:
@@ -1872,6 +1903,13 @@ class ThreadService:
                     )
                     if interview and name == "interview.suggest" and not is_error:
                         interview_answer_only = True
+                    if not is_error:
+                        # Betterment Q7: what the turn looked at, wrote and
+                        # prepared, recorded as an agent run's calls are (M2).
+                        from . import run_trace
+                        run_trace.record_value(
+                            run_trace.ask_trace(turn_operation_id), name, handle.args, result.payload, db=self._db,
+                        )
                     emit_thread_tool_result(
                         self._broadcast,
                         thread_id=thread_id,
@@ -2622,7 +2660,7 @@ class ThreadService:
         goes in a system message just before the frozen ref leaves.
         """
         # Get the system prompt from the recipe, if any.
-        system_prompt = "You are the desk's AI core. Be concrete and brief."
+        system_prompt = self._system_prompt or "You are the desk's AI core. Be concrete and brief."
         if thread.recipe_id:
             try:
                 recipe = self._db.recipes.get(thread.recipe_id)

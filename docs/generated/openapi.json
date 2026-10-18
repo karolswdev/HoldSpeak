@@ -4235,6 +4235,24 @@
         "summary": "Api Record Ask Stop"
       }
     },
+    "/api/ask/engine": {
+      "get": {
+        "operationId": "api_ask_engine_api_ask_engine_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Ask Engine Api Ask Engine Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Ask Engine"
+      }
+    },
     "/api/ask/keep": {
       "post": {
         "operationId": "api_ask_keep_api_ask_keep_post",

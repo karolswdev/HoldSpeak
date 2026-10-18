@@ -143,6 +143,46 @@ def conductor_resource_allowed(uri: str) -> bool:
     return not str(uri or "").startswith(PEOPLE_RESOURCE_PREFIX) or bool(_people_reads())
 
 
+# ── ASK: what Ask may call on an engine served by the hub's tool loop ──
+#
+# Betterment Q7 (DECISIONS #16). An agent CLI on this Mac gets the whole
+# CONDUCTOR set through its run credential (``intel/cli_engine.py``). An HTTP
+# engine gets the tool schemas inside its prompt, and all of CONDUCTOR is
+# about 84 KB of schemas: too long for a 49k-token local engine with room to
+# answer. ASK is the part of CONDUCTOR an Ask needs: reads of the desk,
+# meetings, people, projects, decisions, memory pages and Jira, and the desk
+# writes he asks for (notes, tasks, proposed decisions, Needs-you items,
+# project items) plus a prepared send. Every name is also a CONDUCTOR name,
+# so nothing an Ask calls is outside the automation rule (DECISIONS #11).
+
+ASK = "ASK"
+
+_ASK_TOOLS: frozenset[str] = frozenset({
+    # the desk: notes, decisions, drawers (desk.create of a decision is a proposal)
+    "desk.list", "desk.get", "desk.create", "desk.update", "desk.snapshot", "desk.needs_you",
+    "zone.list_members", "zone.file",
+    # memory pages first, then recall
+    "memory.page", "memory.search",
+    # tasks and the week
+    "door.get", "door.add_item", "follow_through.board", "follow_through.complete", "monday_brief.get",
+    # meetings and what came out of them
+    "meeting.list", "meeting.get", "meeting.proposals",
+    "decision_record.list", "decision_record.search", "decision_record.get",
+    # people (reads only)
+    "people.readiness", "people.relationship.list", "people.relationship.get", "people.one_on_one.brief",
+    # projects
+    "project.list", "project.get_room", "project.item.list", "project.item.create",
+    # Jira
+    "provider.jira_search",
+    # a send is prepared, never sent: he presses Send
+    "channel.destinations", "channel.prepare",
+})
+
+
+def _lazy_ask_tools() -> frozenset[str]:
+    return _ASK_TOOLS & _lazy_conductor_tools()
+
+
 # ── Public API ──────────────────────────────────────────────────────────
 
 #: The names the owner may issue in the Reach credential well. CONDUCTOR is
@@ -166,4 +206,6 @@ def resolve_palette(name: str) -> frozenset[str]:
         return _lazy_all_tools()
     if upper == CONDUCTOR:
         return _lazy_conductor_tools()
+    if upper == ASK:
+        return _lazy_ask_tools()
     raise ValueError(f"Unknown palette: {name!r}")

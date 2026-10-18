@@ -9,6 +9,13 @@ import { SurfaceFooter } from "../surface/SurfaceFooter";
 // the engine line, and Stop while a question runs. The face is docked
 // in-world, never a modal; the desk stays alive behind it.
 //
+// Betterment Q7 (Ask my whole desk; DECISIONS #16): on an engine that can
+// use tools, the engine line says "Can use your desk"; each answer shows
+// Looked at, and Wrote (desk changes, with Undo) and Prepared (sends, with
+// Send) from the hub's record of the calls it served (MCP M2's UsedLines).
+// A call the hub's tool loop holds for his press waits here with Allow once
+// and Deny. Make it a task makes the same write the agent makes.
+//
 // Before Q4 this was HSM-16-04's Ask AI card (keep or bin one answer) and
 // HS-111-05's query console; the Thread window is parked
 // (`pullouts/_parked/ThreadPullout.tsx`).
@@ -21,7 +28,10 @@ import {
   ASK_LENSES,
   askContexts,
   askTurnsFromThread,
+  decideHeldCall,
   latchAskSelection,
+  makeTaskFromAnswer,
+  readAskEngineTools,
   saveAnswerAsNote,
   selectionPrompt,
   takeAskSelection,
@@ -65,6 +75,18 @@ import { openSurfaceOr } from "../shell";
 import { useOptionalRuntimeBus } from "../../runtime/RuntimeBus";
 import { busyWords, otherEngineVerb, retryWords } from "../surface/waitWords";
 import { deleteThread, getThread, listThreads, type ThreadWire } from "../threads";
+import { UsedLines } from "./UsedLines";
+import type { AgentUse } from "../used";
+
+/** The engine line of an engine that can use the desk's tools (MCP design). */
+export const DESK_TOOLS_WORDS = "Can use your desk: reads meetings, people, projects, Jira, GitHub; writes notes and drafts; never sends";
+
+/** One call the hub's tool loop holds for his press. */
+interface HeldCall {
+  call_id: string;
+  tool: string;
+  words: string;
+}
 
 /** PHILO-13-04 (A3): an Ask that did not answer says so in plain words; the
  * hub's own text (a model path, a refusal sentence) never reaches the face,
@@ -82,6 +104,13 @@ type AskProgress =
       alternatives: Array<{ profile_id: string; profile_revision: number; label: string; boundary?: string }>;
     }
   | { state: "retry"; attempt: number; of: number };
+
+/** What an answer wrote, with the tasks he made from it here. */
+function usedWithTasks(used: AgentUse | null | undefined, made: { ref: string; label: string } | undefined): AgentUse | null {
+  if (!made) return used ?? null;
+  const wrote = (used?.wrote ?? []).filter((row) => row.ref !== made.ref);
+  return { ...(used ?? {}), wrote: [...wrote, { ref: made.ref, label: made.label, kind: "action_item", undo: true }] };
+}
 
 function mintInvocationId(): string {
   const hex = typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -114,6 +143,7 @@ function stoppedRun(): AskRunResult {
     ok: false, output: "", reason: "stopped", invocationId: "", refusalCode: "", egress: null,
     model: "", profileId: null, inferenceTarget: null, actualPlacement: null, contextIds: [],
     contextTitles: [], groundingClaims: [], groundingReceipt: null, threadId: "", lookedAt: [],
+    used: null, deskTools: false,
   };
 }
 
@@ -179,13 +209,24 @@ export function AskPanel() {
   // (busy, trying again) reach this window and no other.
   const invocationRef = useRef("");
   const [progress, setProgress] = useState<AskProgress | null>(null);
+  // Betterment Q7: the calls the running Ask's tool loop holds for his press.
+  const [held, setHeld] = useState<{ threadId: string; calls: HeldCall[] }>({ threadId: "", calls: [] });
+  const [deciding, setDeciding] = useState<string | null>(null);
+  const [deskTools, setDeskTools] = useState(false);
+  const [tasks, setTasks] = useState<Record<string, { ref: string; label: string }>>({});
+  const [makingTask, setMakingTask] = useState<string | null>(null);
   const bus = useOptionalRuntimeBus();
   useEffect(() => {
     if (!bus) return undefined;
     return bus.subscribe("ask_progress", (frame) => {
       const data = (frame as { data?: Record<string, unknown> }).data;
       if (!data || !invocationRef.current || data.invocation_id !== invocationRef.current) return;
-      if (data.state === "busy") {
+      if (data.state === "hold") {
+        setHeld({
+          threadId: String(data.thread_id || ""),
+          calls: Array.isArray(data.holds) ? (data.holds as HeldCall[]).filter((row) => row && row.call_id) : [],
+        });
+      } else if (data.state === "busy") {
         setProgress({
           state: "busy",
           job: String(data.job || ""),
@@ -236,7 +277,9 @@ export function AskPanel() {
     setFailedRun(null);
     setRoute(null);
     setProgress(null);
+    setHeld({ threadId: "", calls: [] });
     setSaved({});
+    setTasks({});
     setThreadRead({ loading: false, error: "" });
   }, [abandonRun]);
 
@@ -317,6 +360,12 @@ export function AskPanel() {
   }, []);
   useEffect(() => { void readProjects(); }, [readProjects]);
   useOnDeskChanged(() => { void readProjects(); });
+  // Betterment Q7: can the Answers engine use the desk? (the engine line)
+  const readDeskTools = useCallback(async () => {
+    const can = await readAskEngineTools();
+    if (mounted.current) setDeskTools(can);
+  }, []);
+  useEffect(() => { void readDeskTools(); }, [readDeskTools, engine.model]);
   const groundableResources = useMemo(
     () => [
       ...(items.note || []).map((item) => ({ ref: qualifiedRef("note", item.id), kind: "Note", id: item.id, title: String(item.title || "Note with no title") })),
@@ -374,8 +423,10 @@ export function AskPanel() {
     pendingRequest.current = null;
     invocationRef.current = "";
     setProgress(null);
+    setHeld({ threadId: "", calls: [] });
     setRunning(false);
     setRoute(routeFromWire(r.route));
+    if (r.deskTools) setDeskTools(true);
     setFinishedElapsedSeconds(Math.max(0, Math.round((Date.now() - startedAt) / 1000)));
     if (!r.ok) {
       setFailedRun({ ...r, reason: r.reason || "did_not_answer" });
@@ -383,10 +434,11 @@ export function AskPanel() {
     }
     if (r.threadId) setThreadId(r.threadId);
     setTurns((current) => [...current, {
-      key: `${r.threadId || "ask"}:${current.length}:${invocationId}`,
+      key: r.answerId || `${r.threadId || "ask"}:${current.length}:${invocationId}`,
       question: snapshot.question,
       answer: r.output,
       lookedAt: r.lookedAt,
+      used: r.used,
     }]);
     setSent(null);
     // The question was asked: the follow-up box starts empty.
@@ -422,6 +474,7 @@ export function AskPanel() {
     abandonRun();
     setRunning(false);
     setProgress(null);
+    setHeld({ threadId: "", calls: [] });
     setFinishedElapsedSeconds(runStartedAt ? Math.max(0, Math.round((Date.now() - runStartedAt) / 1000)) : undefined);
     setFailedRun(stoppedRun());
   };
@@ -467,6 +520,35 @@ export function AskPanel() {
     }
     setSaved((current) => ({ ...current, [turn.key]: ref }));
     markNew(ref.slice("note:".length));
+    void useDesk.getState().refresh();
+  };
+
+  /** Betterment Q7: Allow once / Deny on a held call. */
+  const decide = async (call: HeldCall, decision: "approve" | "deny") => {
+    if (!held.threadId || deciding) return;
+    setDeciding(call.call_id);
+    const ok = await decideHeldCall(held.threadId, call.call_id, decision);
+    if (!mounted.current) return;
+    setDeciding(null);
+    if (!ok) {
+      reportWriteFailure(decision === "approve" ? "Allow once" : "Deny", new Error("The press did not reach the hub. Try again."));
+      return;
+    }
+    setHeld((current) => ({ ...current, calls: current.calls.filter((row) => row.call_id !== call.call_id) }));
+  };
+
+  /** Betterment Q7: Make it a task from an answer (Wrote, with Undo). */
+  const makeTask = async (turn: AskTurn) => {
+    if (!threadId || makingTask || tasks[turn.key]) return;
+    setMakingTask(turn.key);
+    const made = await makeTaskFromAnswer(threadId, turn.answer);
+    if (!mounted.current) return;
+    setMakingTask(null);
+    if (!made) {
+      reportWriteFailure("Make it a task", new Error("The task was not made. The answer is still here; try again."));
+      return;
+    }
+    setTasks((current) => ({ ...current, [turn.key]: made }));
     void useDesk.getState().refresh();
   };
 
@@ -620,6 +702,9 @@ export function AskPanel() {
                 prefix="Answer"
                 meta={index === turns.length - 1 && lastRoute ? <TurnLamp lamp={lastRoute.lamp} /> : null}
                 verbs={<>
+                  {threadId && !tasks[turn.key] && !(turn.used?.wrote ?? []).some((row) => row.ref.startsWith("action_item:")) ? (
+                    <Button dense loading={makingTask === turn.key} onClick={() => void makeTask(turn)}>Make it a task</Button>
+                  ) : null}
                   {saved[turn.key] ? (
                     <Button dense variant="ghost" onClick={() => openRef(saved[turn.key])}>Open note</Button>
                   ) : (
@@ -638,6 +723,7 @@ export function AskPanel() {
                     </div>
                   </FoldGadget>
                 ) : null}
+                <UsedLines used={usedWithTasks(turn.used, tasks[turn.key])} testPrefix="ask" lookedAt={false} />
                 {saved[turn.key] ? <span className="desk-ask-saved" role="status">Saved to your desk</span> : null}
               </SurfaceTrafficTurn>
             </div>
@@ -656,6 +742,13 @@ export function AskPanel() {
                 place={progress?.state === "busy" ? "" : engine.place}
                 startedAt={runStartedAt}
               />
+              {held.calls.map((call) => (
+                <div className="desk-ask-hold" data-testid="ask-hold" key={call.call_id} role="group" aria-label={call.words}>
+                  <span className="desk-ask-hold-words">{call.words}?</span>
+                  <Button dense variant="primary" loading={deciding === call.call_id} onClick={() => void decide(call, "approve")}>Allow once</Button>
+                  <Button dense variant="ghost" disabled={deciding === call.call_id} onClick={() => void decide(call, "deny")}>Deny</Button>
+                </div>
+              ))}
               {progress?.state === "busy" && progress.alternatives[0] ? (
                 <Button dense variant="ghost" data-testid="ask-elsewhere" onClick={() => void askElsewhere(progress.alternatives[0])}>
                   {otherEngineVerb(progress.alternatives[0].label, progress.alternatives[0].boundary)}
@@ -721,7 +814,7 @@ export function AskPanel() {
               {!running ? (
                 engine.state === "set" ? (
                   <div className="surface-engine-line" data-testid="engine-line">
-                    {[engine.model, engine.place, "reads only what is in About"].filter(Boolean).join(" · ")}
+                    {[engine.model, engine.place, deskTools ? DESK_TOOLS_WORDS : "reads only what is in About"].filter(Boolean).join(" · ")}
                   </div>
                 ) : (
                   <EngineLine
