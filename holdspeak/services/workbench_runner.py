@@ -26,23 +26,30 @@ class _MeteredPromptAdapter(CanonicalPromptAdapter):
     The sealed result shape stays {output, provider, model}. The count travels
     on this adapter instance, which the runner keeps for its one child."""
 
-    def __init__(self, spend_limit_usd: float | None = None) -> None:
+    def __init__(self, spend_limit_usd: float | None = None, *, desk_tools: bool = True) -> None:
         self.tokens = 0
         #: Betterment A4: the automation's Spend limit per run; it overrides
         #: the engine's own limit on an agent CLI that enforces one.
         self.spend_limit_usd = spend_limit_usd
+        #: Betterment M2 follow-up (orchestrator ruling): the memory call
+        #: after an item runs WITHOUT the desk's tools on an agent CLI.
+        self.desk_tools = desk_tools
 
     def _limited(self, engine: Any) -> Any:
-        if self.spend_limit_usd is None:
-            return engine
         preset = getattr(engine, "preset", None)
-        if not hasattr(engine, "spend_limit_usd") or not getattr(preset, "enforces_spend_limit", False):
+        limit = (self.spend_limit_usd is not None and hasattr(engine, "spend_limit_usd")
+                 and getattr(preset, "enforces_spend_limit", False))
+        no_tools = not self.desk_tools and getattr(engine, "desk_tools", False)
+        if not limit and not no_tools:
             return engine
         # A copy for this one call: the routed engine may be shared.
         import copy
 
         limited = copy.copy(engine)
-        limited.spend_limit_usd = self.spend_limit_usd
+        if limit:
+            limited.spend_limit_usd = self.spend_limit_usd
+        if no_tools:
+            limited.desk_tools = False
         return limited
 
     def dispatch(self, engine: Any, payload: dict[str, Any], cancellation: Any) -> dict[str, str]:
@@ -462,7 +469,7 @@ class WorkbenchRunner:
                     digest = _sha(value)
                     return self.broker.projection_stager.stage(str(reservation["child_invocation_id"]), "workbench-memory-writeback", projection, result_sha256=digest, receipt_result_ref=f"inference-result:{reservation['child_invocation_id']}/{digest}").result_ref
 
-                memory_adapter = _MeteredPromptAdapter(wb.spend_limit_usd)
+                memory_adapter = _MeteredPromptAdapter(wb.spend_limit_usd, desk_tools=False)
                 memory_routed, _ = await self._run_frozen_child(
                     principal, parent=parent, route_plan_id=str(route["id"]), capability_id="workbench.item",
                     command_id=f"{memory_operation}:admit", operation_id=memory_operation, payload=mpayload,

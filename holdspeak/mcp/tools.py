@@ -254,15 +254,46 @@ def _workbench_fields(value: Any) -> dict[str, Any]:
     return fields
 
 
+#: Betterment M3: an automation's sentence, in the words of its window
+#: (``WorkbenchService.create_automation``). ``when``, ``with`` and
+#: ``spend_limit`` are the owner's: a Thread or a run stops for his press.
+_SENTENCE_PROPERTIES: dict[str, Any] = {
+    "do": {"type": "string", "description": "What each run does (the Do text)."},
+    "about": {"type": "array", "items": {"type": "string"}, "description": "What it reads: refs as fields.sources."},
+    "when": {
+        "type": "object",
+        "description": "One start: {schedule: {every: day|weekday|week|hour, day: friday, time: '15:00'}}, {event: <id>, repository: 'owner/repo'} or {manual: true}.",
+        "properties": {
+            "schedule": {"type": "object", "properties": {
+                "every": {"type": "string", "enum": ["day", "weekday", "week", "hour"]},
+                "day": {"type": ["string", "integer"]}, "time": {"type": "string"},
+            }, "additionalProperties": False},
+            "event": {"type": "string"}, "repository": {"type": "string"},
+            "manual": {"type": "boolean", "enum": [True]},
+        },
+        "additionalProperties": False,
+    },
+    "with": {"type": "string", "description": "The engine: a profile id from model_library.get."},
+    "put_in": {"type": "string", "description": "Where results go: inbox, needs_you or destination:<id>."},
+    "spend_limit": {"type": ["number", "null"], "description": "Dollars per run; null = the engine's own."},
+}
+
+
+def _sentence(args: dict[str, Any]) -> dict[str, Any]:
+    return {word: args[word] for word in _SENTENCE_PROPERTIES if word in args}
+
+
 TOOLS.extend([
     _workbench_tool("workbench.list", "List Workbenches.", {}),
     _workbench_tool("workbench.get", "Get a Workbench.", {"workbench_id": {"type": "string"}}, ["workbench_id"]),
-    _workbench_tool("workbench.create", "Create a Workbench with closed optional configuration fields.", {"name": {"type": "string", "description": "Non-empty Workbench name."}, "fields": _WORKBENCH_FIELDS_SCHEMA}, ["name"]),
-    _workbench_tool("workbench.update", "Update supplied closed Workbench configuration fields.", {"workbench_id": {"type": "string"}, "fields": _WORKBENCH_FIELDS_SCHEMA}, ["workbench_id", "fields"]),
+    _workbench_tool("workbench.create", "Create an automation (a Workbench) from its sentence words and closed optional fields.", {"name": {"type": "string", "description": "Non-empty Workbench name."}, "fields": _WORKBENCH_FIELDS_SCHEMA, **_SENTENCE_PROPERTIES}, ["name"]),
+    _workbench_tool("workbench.update", "Update the given sentence words and closed fields of an automation.", {"workbench_id": {"type": "string"}, "fields": _WORKBENCH_FIELDS_SCHEMA, **_SENTENCE_PROPERTIES}, ["workbench_id"]),
     _workbench_tool("workbench.delete", "Delete a Workbench.", {"workbench_id": {"type": "string"}}, ["workbench_id"]),
     _workbench_tool("workbench.update_item", "Update supplied fields of a Workbench item.", {"workbench_id": {"type": "string"}, "item_id": {"type": "string"}, "fields": {"type": "object", "description": "Item patch fields."}}, ["workbench_id", "item_id", "fields"]),
     _workbench_tool("workbench.delete_item", "Park a Workbench item; its retained work stays available.", {"workbench_id": {"type": "string"}, "item_id": {"type": "string"}}, ["workbench_id", "item_id"]),
     _workbench_tool("workbench.list_runs", "List Workbench runs.", {"workbench_id": {"type": "string"}}, ["workbench_id"]),
+    _workbench_tool("workbench.results", "An automation's newest results: text, what it looked at, wrote and prepared, cost, failure reason.", {"workbench_id": {"type": "string"}, "limit": {"type": "integer", "minimum": 1, "maximum": 20}}, ["workbench_id"]),
+    _workbench_tool("workbench.cancel", "Cancel an automation's run that is running (the newest, or run_id).", {"workbench_id": {"type": "string"}, "run_id": {"type": "string"}}, ["workbench_id"]),
     _workbench_tool("recipe.list", "List Agent recipes.", {}),
     _workbench_tool("recipe.get", "Get an Agent recipe.", {"recipe_id": {"type": "string"}}, ["recipe_id"]),
     _workbench_tool("recipe.run", "Run an Agent recipe and return its lifecycle-backed result and minted artifact reference.", {"recipe_id": {"type": "string"}, "input": {"type": "string"}, "options": _RECIPE_RUN_OPTIONS_SCHEMA}, ["recipe_id"]),
@@ -273,6 +304,19 @@ TOOLS.extend([
     _workbench_tool("kb.add_member", "Add a resource reference to a knowledge base. Add a note to a knowledge base: kb_id and ref note:<id>.", {"kb_id": {"type": "string", "description": "The knowledge base id, from desk.list kind=kbs."}, "ref": {"type": "string", "description": "A kind:id reference: for a note, note:<id> with the id from desk.list kind=notes."}}, ["kb_id", "ref"]),
     _workbench_tool("kb.remove_member", "Remove a resource reference from a knowledge base.", {"kb_id": {"type": "string", "description": "The knowledge base id, from desk.list kind=kbs."}, "ref": {"type": "string", "description": "The reference to remove, as kind:id: for a note, note:<id> with the id from desk.list kind=notes."}}, ["kb_id", "ref"]),
     _workbench_tool("kb.list_members", "List knowledge-base members.", {"kb_id": {"type": "string", "description": "The knowledge base id, from desk.list kind=kbs."}}, ["kb_id"]),
+])
+
+#: Betterment M3: the same tools by the user's word. An automation is a
+#: Workbench (the stored kind stays ``workbench``); each alias dispatches to
+#: its Workbench tool, with the same schema and the same authority.
+AUTOMATION_ALIASES: dict[str, str] = {
+    f"automation.{verb}": f"workbench.{verb}"
+    for verb in ("list", "get", "create", "update", "delete", "run", "results", "cancel")
+}
+TOOLS.extend([
+    {**tool, "name": alias, "description": f"{tool['description']} Same as {tool['name']}."}
+    for alias, canonical in AUTOMATION_ALIASES.items()
+    for tool in TOOLS if tool["name"] == canonical
 ])
 
 
@@ -942,7 +986,7 @@ READ_VERBS: frozenset[str] = frozenset({
     "needs_you", "observations", "page", "readiness", "suggested_sources",
     "evaluate", "inspect", "presets", "hub", "nudges", "shelf", "shelf_read",
     "resolve_grounding", "preview_use_default", "export", "proposals",
-    "summary", "audit", "editor", "receipt", "detect", "probe",
+    "summary", "audit", "editor", "receipt", "detect", "probe", "results",
     "confluence_connections", "confluence_discover", "confluence_validate_space",
     "github_connection", "github_discover", "github_validate_repo",
     "jira_connection", "jira_connections", "jira_discover", "jira_search",
@@ -1033,6 +1077,7 @@ def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal)
             ),
         )
 
+    name = AUTOMATION_ALIASES.get(name, name)
     if name == "desk.list":
         return _primitive_list(ops, primitives, principal, _kind(args.get("kind")))
     if name == "desk.get":
@@ -1057,11 +1102,16 @@ def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal)
         fields = _workbench_fields(args.get("fields"))
         if "name" in fields:
             raise ToolError("Workbench name belongs at the top level")
+        if sentence := _sentence(args):
+            return workbenches.create_automation(principal, name=str(args.get("name") or ""), sentence=sentence, **fields)
         return workbenches.create_workbench(principal, name=str(args.get("name") or ""), **fields)
     if name == "workbench.update":
-        return workbenches.update_workbench(
-            principal, str(args.get("workbench_id") or ""), **_workbench_fields(args.get("fields"))
-        )
+        fields = _workbench_fields(args.get("fields"))
+        if sentence := _sentence(args):
+            return workbenches.update_automation(principal, str(args.get("workbench_id") or ""), sentence=sentence, **fields)
+        if "fields" not in args:
+            raise ToolError("Give fields or at least one sentence word")
+        return workbenches.update_workbench(principal, str(args.get("workbench_id") or ""), **fields)
     if name == "workbench.delete":
         workbenches.delete_workbench(principal, str(args.get("workbench_id") or ""))
         return {"deleted": True, "id": str(args.get("workbench_id") or "")}
@@ -1073,6 +1123,10 @@ def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal)
         return {"parked": True, "id": item_id}
     if name == "workbench.list_runs":
         return workbenches.list_runs(principal, str(args.get("workbench_id") or ""))
+    if name == "workbench.results":
+        return workbenches.results(principal, str(args.get("workbench_id") or ""), limit=int(args.get("limit") or 1))
+    if name == "workbench.cancel":
+        return workbenches.cancel_latest_run(principal, str(args.get("workbench_id") or ""), str(args.get("run_id") or ""))
     if name == "recipe.list":
         return recipes.list_recipes(principal)
     if name == "recipe.get":

@@ -87,3 +87,41 @@ def next_run_at(cron: Optional[str], enabled: bool) -> Optional[str]:
     if fire is None:
         return None
     return datetime.fromtimestamp(fire, tz=timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+
+
+#: Betterment M3: a day of the week by its name (cron counts Sunday as 0).
+DAY_NAMES = {"sunday": 0, "monday": 1, "tuesday": 2, "wednesday": 3,
+             "thursday": 4, "friday": 5, "saturday": 6}
+
+_WHEN_WORDS = "when is one of {schedule: {every, day, time}}, {event: <name>, repository} or {manual: true}"
+
+
+def choice_from_mcp(when: Any) -> dict[str, Any]:
+    """Betterment M3: the structured When an agent sends, as the choice the
+    When editor stores (``WorkbenchService.set_when``). Refuses before
+    anything is written: a bad schedule, an event the hub cannot deliver,
+    or more than one start."""
+    if not isinstance(when, dict):
+        raise ValidationError(_WHEN_WORDS)
+    starts = [key for key in ("schedule", "event", "manual") if key in when]
+    if len(starts) != 1 or set(when) - {"schedule", "event", "manual", "repository"}:
+        raise ValidationError(_WHEN_WORDS)
+    if starts == ["manual"]:
+        if when["manual"] is not True or "repository" in when:
+            raise ValidationError(_WHEN_WORDS)
+        return {"kind": "manual"}
+    if starts == ["event"]:
+        event_id = str(when.get("event") or "")
+        if event_id not in {choice["id"] for choice in event_choices()}:
+            raise ValidationError("Choose one of the events the hub can deliver: "
+                                  + ", ".join(choice["id"] for choice in event_choices()))
+        return {"kind": "event", "event_id": event_id, "repository": str(when.get("repository") or "").strip()}
+    schedule = when["schedule"]
+    if not isinstance(schedule, dict) or "repository" in when:
+        raise ValidationError(_WHEN_WORDS)
+    day = schedule.get("day")
+    if isinstance(day, str):
+        day = DAY_NAMES.get(day.strip().lower(), day)
+    choice = {"kind": "schedule", "every": schedule.get("every"), "time": schedule.get("time"), "day": day}
+    cron_for(choice)  # refuses what the pickers cannot make
+    return choice

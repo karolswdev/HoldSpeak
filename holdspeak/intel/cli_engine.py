@@ -210,6 +210,7 @@ def build_cli_argv(
     spend_limit_usd: Optional[float] = None,
     tools: Optional[DeskTools] = None,
     cwd: Optional[str] = None,
+    codex_servers_off: tuple[str, ...] = (),
 ) -> list[str]:
     """THE one place that builds a CLI engine's argv (the M1 seam).
 
@@ -222,7 +223,9 @@ def build_cli_argv(
     M1: only HoldSpeak's server, in every run (with or without ``tools``).
     With ``tools``, the run's server is added: Claude Code reads the 0600
     config; Codex reads the URL from ``-c`` and the token from the
-    environment variable the config names.
+    environment variable the config names. Without ``tools`` (a run with no
+    desk tools), Codex still turns off ``codex_servers_off`` (the servers of
+    the owner's own Codex config): such a run gets no MCP server at all.
     """
     from ..delivery import agent_mcp
 
@@ -243,9 +246,9 @@ def build_cli_argv(
             extra += ["-C", cwd]
         for switch in CODEX_SWITCHES:
             extra += ["-c", switch]
+        for name in (tools.codex_servers_off if tools is not None else codex_servers_off):
+            extra += ["-c", f"mcp_servers.{name}.enabled=false"]
         if tools is not None:
-            for name in tools.codex_servers_off:
-                extra += ["-c", f"mcp_servers.{name}.enabled=false"]
             extra += agent_mcp.codex_args(tools.hub_url, "yolo")
     if model and model != DEFAULT_MODEL:
         extra += [preset.model_flag, model]
@@ -488,6 +491,9 @@ class CliEngine(MeetingIntel):
         self.profile_id = str(profile_id or "")
         self.cli_model = model or DEFAULT_MODEL
         self.spend_limit_usd = spend_limit_usd
+        #: M1: each run gets the desk's tools; a caller turns them off for
+        #: one call on a copy (the automation's memory call, M2 follow-up).
+        self.desk_tools = True
         self._executable: str = ""
         self._live: set[subprocess.Popen] = set()
         self._live_lock = threading.Lock()
@@ -547,6 +553,9 @@ class CliEngine(MeetingIntel):
                     argv = build_cli_argv(
                         self.preset, executable=self._executable, model=self.cli_model,
                         spend_limit_usd=self.spend_limit_usd, tools=tools, cwd=cwd,
+                        codex_servers_off=(
+                            codex_user_servers() if tools is None and self.preset.id == "codex" else ()
+                        ),
                     )
                     raw = self._egress(
                         argv, prompt, timeout=timeout, cwd=cwd, env=tools.env if tools else {},
@@ -640,6 +649,9 @@ class CliEngine(MeetingIntel):
         from ..mcp.palettes import CONDUCTOR, resolve_palette
         from ..principals import CredentialPersistError, agent_credentials
 
+        if not self.desk_tools:
+            yield None
+            return
         servers_off: tuple[str, ...] = ()
         if self.preset.id == "codex":
             user_servers = codex_user_servers()

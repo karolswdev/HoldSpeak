@@ -365,8 +365,28 @@ def test_a_codex_config_with_its_own_holdspeak_server_gets_no_desk_tools(
     assert CliEngine.from_endpoint("cli:codex").run_prompt(user_prompt="Hi") == CODEX_ANSWER
     (call,) = calls(fake_bin, "codex")
     assert call["credential"] == ""
-    assert not any(part.startswith("mcp_servers.holdspeak.") for part in _settings(call["argv"]))
+    # No run server is merged into his entry; his own entry is turned off
+    # (a run without desk tools gets no MCP server at all).
+    holdspeak = [part for part in _settings(call["argv"]) if part.startswith("mcp_servers.holdspeak.")]
+    assert holdspeak == ["mcp_servers.holdspeak.enabled=false"], holdspeak
     assert "features.apps=false" in _settings(call["argv"])  # the switches stay
+
+
+def test_a_run_without_desk_tools_gets_no_server_of_his_codex_config(
+    fake_bin: Path, egress: list, tmp_path: Path,
+) -> None:
+    """Betterment M2 follow-up: a call with the desk's tools off (an
+    automation's memory call) gets no MCP server: not the run's, and none of
+    his own Codex config."""
+    codex_home = tmp_path / "home" / ".codex"
+    codex_home.mkdir(parents=True)
+    (codex_home / "config.toml").write_text('[mcp_servers.pixellab]\nurl = "https://example.invalid"\n')
+    engine = CliEngine.from_endpoint("cli:codex")
+    engine.desk_tools = False
+    assert engine.run_prompt(user_prompt="Hi") == CODEX_ANSWER
+    (call,) = calls(fake_bin, "codex")
+    servers = [part for part in _settings(call["argv"]) if part.startswith("mcp_servers.")]
+    assert call["credential"] == "" and servers == ["mcp_servers.pixellab.enabled=false"], servers
 
 
 

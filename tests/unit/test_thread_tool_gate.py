@@ -378,17 +378,24 @@ class TestClassificationCensus:
         # the workbench schedule delegation (ScheduleDelegationService)
         ("holdspeak/services/schedule_delegation.py", "enable_from_owner"): frozenset(),  # no caller today
         ("holdspeak/services/schedule_delegation.py", "enable_from_owner_in_transaction"):
-            frozenset({"workbench.create", "workbench.update"}),
-        ("holdspeak/services/workbench_service.py", "create_workbench"): frozenset({"workbench.create"}),
-        ("holdspeak/services/workbench_service.py", "update_workbench"): frozenset({"workbench.update"}),
+            frozenset({"workbench.create", "workbench.update", "automation.create", "automation.update"}),
+        # Betterment M3: automation.* are the same tools by the user's word.
+        ("holdspeak/services/workbench_service.py", "create_workbench"):
+            frozenset({"workbench.create", "automation.create"}),
+        ("holdspeak/services/workbench_service.py", "update_workbench"):
+            frozenset({"workbench.update", "automation.update", "workbench.create", "automation.create"}),
         # Betterment A4 (#1304): a new engine for an automation re-freezes its
         # live schedule. Its one caller is InferenceAssignmentService's
         # _after_subject_write (set_assignment, clear_assignment); the MCP tools
         # that reach a workbench subject scope are inference_assignment.set and
         # .clear (config). The owner HTTP route PUT /api/workbenches/{id}/engine
-        # (set_engine) reaches it too; no MCP tool calls set_engine or set_when.
+        # (set_engine) reaches it too. Betterment M3: so do the sentence's
+        # ``with`` and ``when`` words of workbench/automation create and update
+        # (create_automation, update_automation), which their predicates make
+        # config or authority.
         ("holdspeak/services/workbench_service.py", "refreeze_schedule"):
-            frozenset({"inference_assignment.set", "inference_assignment.clear"}),
+            frozenset({"inference_assignment.set", "inference_assignment.clear", "workbench.create",
+                       "workbench.update", "automation.create", "automation.update"}),
         # the recording delegation receipt
         ("holdspeak/services/scheduled_recording_service.py", "create_schedule"):
             frozenset({"scheduled_recording.create"}),
@@ -462,12 +469,26 @@ class TestClassificationCensus:
         ("inference_assignment.clear", {"scope": {"kind": "subject", "subject_kind": "workbench",
                                                   "subject_id": "w", "capability_id": "workbench.item"}}),
         ("concierge.apply", {}),
+        # Betterment M3: the sentence words. when turns a start on; with and
+        # spend_limit choose the engine and what a run may spend.
+        ("workbench.create", {"name": "x", "do": "Write my update.",
+                              "when": {"schedule": {"every": "week", "day": "friday", "time": "15:00"}}}),
+        ("automation.create", {"name": "x", "when": {"event": "github-review-requested", "repository": "o/r"}}),
+        ("workbench.update", {"workbench_id": "w", "when": {"manual": True}}),
+        ("automation.update", {"workbench_id": "w", "with": "agent-claude"}),
+        ("automation.update", {"workbench_id": "w", "spend_limit": 0.5}),
+        ("automation.update", {"workbench_id": "w", "fields": {"schedule_enabled": True}}),
     )
 
-    def test_when_and_with_have_no_mcp_tool(self) -> None:
+    def test_when_and_with_reach_mcp_only_as_sentence_words(self) -> None:
         """Betterment A4: When (set_when) and With (set_engine) are the
-        owner's HTTP routes only; the re-freeze is reached only through an
-        engine write, which is config."""
+        owner's; the re-freeze is reached only through an engine write, which
+        is config. Betterment M3: MCP reaches them only through the service's
+        create_automation/update_automation, as the sentence words when
+        (authority) and with/spend_limit (config); no MCP module calls the
+        writers itself."""
+        from holdspeak.mcp.tool_authority import call_class
+
         from pathlib import Path
 
         from holdspeak.mcp.tool_authority import TOOL_AUTHORITY
@@ -479,6 +500,11 @@ class TestClassificationCensus:
                 assert f".{writer}(" not in text, (path.name, writer)
         for name in ("inference_assignment.set", "inference_assignment.clear", "concierge.apply"):
             assert TOOL_AUTHORITY[name] == "config", name
+        for name in ("workbench.create", "automation.create", "workbench.update", "automation.update"):
+            assert call_class(name, {"when": {"manual": True}}) == "authority", name
+            assert call_class(name, {"with": "p"}) == "config", name
+            assert call_class(name, {"spend_limit": None}) == "config", name
+            assert call_class(name, {"do": "d", "about": ["note:n"], "put_in": "inbox"}) == "work", name
 
     def test_an_ask_or_a_thread_never_turns_on_a_schedule_or_changes_an_engine(self, db: Database) -> None:
         """Owner ruling 2026-09-29: a thread stops for his press on authority
@@ -493,7 +519,7 @@ class TestClassificationCensus:
         for name, args in self.SCHEDULE_OR_ENGINE_CALLS:
             assert name not in ask, name
             assert not conductor_call_allowed(name, args), name
-            if name.startswith("workbench."):
+            if name.startswith(("workbench.", "automation.")):
                 assert name in conductor  # offered as work; the call's arguments make it authority
             else:
                 assert name not in conductor, name

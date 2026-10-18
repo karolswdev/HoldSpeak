@@ -91,7 +91,13 @@ class LoopCollector:
 
     # ── meeting action items ────────────────────────────────────────────────
     def _collect_meeting_actions(self, now: datetime) -> list[OpenLoop]:
-        items = self._db.meetings.list_action_items(include_completed=False)
+        # Pending (to review) and open (kept) items. A decision commitment's
+        # action is the decision's loop (below), never a second one.
+        with self._db._connection() as conn:
+            committed = {str(row[0]) for row in conn.execute(
+                "SELECT action_item_id FROM decision_commitments WHERE action_item_id IS NOT NULL")}
+        items = [it for it in self._db.meetings.list_action_items(include_completed=False)
+                 if it.id not in committed]
         present_ids = [it.id for it in items]
         out = []
         for it in items:

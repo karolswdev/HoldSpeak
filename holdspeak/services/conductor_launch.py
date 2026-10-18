@@ -387,6 +387,15 @@ LAUNCH_RULES: dict[str, tuple[str, str, str]] = {
     "interview.suggest": (COMPOSER, "", ""),
     "project.draft_update": (COMPOSER, "", ""),
 }
+# Betterment M3: a run that is running is cancelled only on an automation the
+# launch made (the kernel cancels only its caller's own run as well); the
+# ``automation.*`` aliases keep their Workbench tool's rule.
+LAUNCH_RULES["workbench.cancel"] = (OWN, "workbench", "workbench_id")
+LAUNCH_RULES.update({
+    name.replace("workbench.", "automation.", 1): rule
+    for name, rule in list(LAUNCH_RULES.items())
+    if name in {"workbench.create", "workbench.update", "workbench.delete", "workbench.run", "workbench.cancel"}
+})
 
 #: Not offered to a launch at all (the palette leaves them out).
 NOT_OFFERED: frozenset[str] = frozenset(n for n, (rule, _k, _a) in LAUNCH_RULES.items() if rule in (NEVER, COMPOSER))

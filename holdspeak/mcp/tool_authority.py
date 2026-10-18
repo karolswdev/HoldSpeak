@@ -54,6 +54,8 @@ TOOL_AUTHORITY: dict[str, str] = {
     "workbench.update_item": WORK,
     "workbench.delete_item": WORK,
     "workbench.list_runs": WORK,
+    "workbench.results": WORK,
+    "workbench.cancel": WORK,  # the kernel cancels only its caller's own run
     "recipe.list": WORK,
     "recipe.get": WORK,
     "recipe.run": WORK,
@@ -299,6 +301,12 @@ TOOL_AUTHORITY: dict[str, str] = {
     "desk_window.seat": WORK,
 }
 
+# Betterment M3: the same tools by the user's word, in the same class.
+TOOL_AUTHORITY.update({
+    f"automation.{verb}": TOOL_AUTHORITY[f"workbench.{verb}"]
+    for verb in ("list", "get", "create", "update", "delete", "run", "results", "cancel")
+})
+
 #: What a thread never offers or admits, in any mode.
 THREAD_EXCLUDED: frozenset[str] = frozenset(name for name, cls in TOOL_AUTHORITY.items() if cls != WORK)
 
@@ -311,20 +319,34 @@ THREAD_EXCLUDED: frozenset[str] = frozenset(name for name, cls in TOOL_AUTHORITY
 # mints it); anything else is ordinary content work.
 
 _SCHEDULE_FIELDS = frozenset({"schedule", "schedule_enabled", "schedule_revision"})
+#: Betterment M3: the sentence's trigger word. ``when`` turns a schedule or an
+#: event start on (``WorkbenchService.set_when``): authority, as a schedule is.
+_TRIGGER_WORDS = frozenset({"when"})
+#: ... and its engine words: ``with`` and ``spend_limit`` choose the engine of
+#: its runs and what a run may spend (``set_engine``): config.
+_ENGINE_WORDS = frozenset({"with", "spend_limit"})
+
+
+def _sentence_class(args: Mapping[str, Any]) -> str:
+    if _TRIGGER_WORDS & set(args):
+        return AUTHORITY
+    return CONFIG if _ENGINE_WORDS & set(args) else WORK
 
 
 def _workbench_create(args: Mapping[str, Any]) -> str:
     # WorkbenchService.create_workbench mints a LIVE schedule delegation when
     # schedule_enabled is true (ScheduleDelegationService.enable_from_owner_in_transaction).
     fields = args.get("fields") or {}
-    return AUTHORITY if any(fields.get(key) not in (None, False, "") for key in _SCHEDULE_FIELDS) else WORK
+    if any(fields.get(key) not in (None, False, "") for key in _SCHEDULE_FIELDS):
+        return AUTHORITY
+    return _sentence_class(args)
 
 
 def _workbench_update(args: Mapping[str, Any]) -> str:
     # update_workbench re-fences or re-mints the delegation when a schedule
     # field changes; name, recipe and item order are content.
     fields = args.get("fields") or {}
-    return AUTHORITY if _SCHEDULE_FIELDS & set(fields) else WORK
+    return AUTHORITY if _SCHEDULE_FIELDS & set(fields) else _sentence_class(args)
 
 
 def _recording_create(args: Mapping[str, Any]) -> str:
@@ -345,6 +367,8 @@ def _recording_update(args: Mapping[str, Any]) -> str:
 ARGUMENT_AUTHORITY: dict[str, Callable[[Mapping[str, Any]], str]] = {
     "workbench.create": _workbench_create,
     "workbench.update": _workbench_update,
+    "automation.create": _workbench_create,
+    "automation.update": _workbench_update,
     "scheduled_recording.create": _recording_create,
     "scheduled_recording.update": _recording_update,
 }

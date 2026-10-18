@@ -52,6 +52,9 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "workbench.update_item":  ("effect_proposal",   False),
     "workbench.delete_item":  ("effect_proposal",   False),
     "workbench.list_runs":    ("evidence_read",     False),
+    # Betterment M3 (MCP only: in no seeded thread palette, thread_modes).
+    "workbench.results":      ("evidence_read",     False),
+    "workbench.cancel":       ("effect_proposal",   False),
     # --- recipe ---
     "recipe.list":        ("evidence_read",     False),
     "recipe.get":         ("evidence_read",     False),
@@ -332,6 +335,11 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "channel.send": ("effect_proposal", False),
     "project.mark_update_delivered": ("effect_proposal", False),
 }
+# Betterment M3: the ``automation.*`` aliases, each in its Workbench tool's class.
+_ALL_TOOL_CLASSES.update({
+    f"automation.{verb}": _ALL_TOOL_CLASSES[f"workbench.{verb}"]
+    for verb in ("list", "get", "create", "update", "delete", "run", "results", "cancel")
+})
 
 # Public accessors
 #: #694, the owner's ruling (2026-09-29): a thread acting as him does WORK;
