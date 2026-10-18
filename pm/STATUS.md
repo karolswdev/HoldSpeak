@@ -4,9 +4,26 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-17 (continued Decision, Ask and Thread usability; exact delivery/tape linked below)
+**Last updated:** 2026-10-17 (betterment designs: Automations and Engines; #1248 key-scope fix)
 
 ## Current phase
+
+**Betterment: design documents that become recipes (owner, 2026-10-17).** The
+orchestrator now writes job-first designs for existing features before any
+build. Format: `docs/internal/betterment/README.md`. First two, drafts for
+the owner:
+
+- **Automations** (today "Workbench"): `docs/internal/betterment/workbench/`
+  (DESIGN, RECIPE A0-A10, RECON with 88 shots, MODEL). One automation = When /
+  Do / About / With / Put it in; each run makes one result.
+- **Engines**: `docs/internal/betterment/engines/` (DESIGN, RECIPE E0-E7,
+  MODEL). Adds agent CLIs (Claude Code, Codex, pi, Gemini) as engines, named
+  service tiles with a model picker, and a "What runs where" list.
+
+Open owner decisions: three in each DESIGN §5, each with a default.
+
+**#1248 merged:** `/api/setup/discover-models` sends the environment
+`OPENAI_API_KEY` only to `https://api.openai.com` (found by the Engines map).
 
 **Daily work: readable documents and useful save/return paths — #1247.** Decision now
 keeps unfinished writing across close/reload and clears only acknowledged
