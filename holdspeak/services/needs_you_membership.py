@@ -37,7 +37,7 @@ meetings) through their services and applies it to a Room aggregate.
 from __future__ import annotations
 
 import logging
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from holdspeak.timestamps import local_wall, parse_stamp, utc_now_iso
 from typing import Any, Callable, Iterable
 
@@ -1169,6 +1169,12 @@ def attach_person_ids(
                     rel = found.get("relationship") if found.get("link") == "linked" else None
                     owners[owner] = str((rel or {}).get("id") or "")
                 item["person_id"] = owners.get(owner, "")
+        # Betterment D2: the Person's name rides with its id, so the person
+        # picker and an agent's ``person="Theo"`` need no second read.
+        names = people.display_names() if any(item["person_id"] for item in items) else {}
+        for item in items:
+            if item["person_id"] and names.get(item["person_id"]):
+                item["person_name"] = names[item["person_id"]]
     except Exception as exc:
         log.warning("needs-you: the People read for row people failed: %s", exc)
 
@@ -1609,6 +1615,95 @@ def project_counts(unmuted_items: Iterable[dict[str, Any]]) -> dict[str, int]:
     return counts
 
 
+#: Betterment D2: the filters of the one list (the face's chips, the route's
+#: query, ``desk.needs_you``'s arguments).
+FILTER_KEYS: tuple[str, ...] = ("direction", "person", "project", "week")
+
+
+def _folded(text: Any) -> str:
+    return " ".join(str(text or "").split()).casefold()
+
+
+def _row_due_day(row: dict[str, Any]) -> date | None:
+    return _due_day(row.get("dueAt") or row.get("proposalDue"))
+
+
+def row_passes(
+    row: dict[str, Any],
+    *,
+    direction: str | None = None,
+    person: str | None = None,
+    project: str | None = None,
+    week: bool = False,
+    today: date | None = None,
+) -> bool:
+    """True when ``row`` passes every given filter (they combine).
+
+    ``direction``: the row's ``direction``. ``person``: a Person id, or a
+    name (the whole name or its first word) of the row's Person or of its
+    owner. ``project``: a Project id or its name. ``week``: the row is due
+    on or before this week's Sunday (a late row is due this week too).
+    """
+    if direction and row.get("direction") != direction:
+        return False
+    if person:
+        wanted = _folded(person)
+        names = [_folded(row.get("person_name")), _folded(row.get("owner")) if not row.get("person_id") else ""]
+        ids = {_folded(row.get("person_id"))} - {""}
+        if wanted not in ids and not any(
+            name and (wanted == name or wanted == name.split(" ")[0]) for name in names
+        ):
+            return False
+    if project:
+        wanted = _folded(project)
+        if wanted not in {_folded(row.get("projectId")), _folded(row.get("projectName"))} - {""}:
+            return False
+    if week:
+        day = _row_due_day(row)
+        clock = today or local_wall().date()
+        if day is None or day > clock + timedelta(days=6 - clock.weekday()):
+            return False
+    return True
+
+
+def filter_answer(
+    answer: dict[str, Any],
+    *,
+    direction: str | None = None,
+    person: str | None = None,
+    project: str | None = None,
+    week: bool = False,
+    now: datetime | None = None,
+) -> dict[str, Any]:
+    """Betterment D2: the one answer narrowed to the rows that pass the filters.
+
+    ``items``, ``blockers`` and ``failedMeetings`` keep the rows that pass
+    (a blocker or a failed summary is a *setup* row with no person, Project
+    or date). ``count`` and ``members`` stay the desk's one number: a filter
+    narrows the list, never the number. ``filter`` says what was applied and
+    ``shown`` how many rows passed. No filter given: the answer unchanged.
+    """
+    given = {
+        "direction": direction or None, "person": person or None,
+        "project": project or None, "week": bool(week),
+    }
+    if not any(given.values()):
+        return answer
+    today = (now or local_wall()).date()
+
+    def passes(row: dict[str, Any]) -> bool:
+        return row_passes(row, direction=given["direction"], person=given["person"],
+                          project=given["project"], week=given["week"], today=today)
+
+    out = dict(answer)
+    out["items"] = [row for row in answer.get("items") or [] if isinstance(row, dict) and passes(row)]
+    for key in ("blockers", "failedMeetings"):
+        out[key] = [row for row in answer.get(key) or [] if isinstance(row, dict) and passes(row)]
+    out["filter"] = {key: value for key, value in given.items() if value}
+    out["shown"] = len(out["items"]) + len(out["blockers"]) + len(out["failedMeetings"])
+    return out
+
+
 def room_part(answer: dict[str, Any]) -> dict[str, Any]:
     """The Room read of an answer, alone: what a cache may hold.
 
@@ -1677,6 +1772,9 @@ def withhold_people_content(answer: dict[str, Any]) -> dict[str, Any]:
             "rankClass": row.get("rankClass"), "rank": row.get("rank"),
             "projectId": "", "muted": bool(row.get("muted")),
             "waiting": bool(row.get("waiting")),
+            # Betterment D2: whose move it is and whether it counts are not
+            # People content; a ``direction`` filter still finds the row.
+            "direction": row.get("direction"), "counted": row.get("counted"),
         })
     out["items"] = items
     out["members"] = [
@@ -1698,6 +1796,8 @@ __all__ = [
     "DOOR_COLUMNS",
     "compose",
     "compute_needs_you",
+    "filter_answer",
+    "row_passes",
     "decision_items",
     "meeting_decision_asks_elsewhere",
     "owner_names",

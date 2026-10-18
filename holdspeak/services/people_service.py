@@ -1403,6 +1403,29 @@ class PeopleService:
                     names.add(" ".join(alias.split()).casefold())
         return names
 
+    def display_names(self) -> dict[str, str]:
+        """Betterment D2: every non-archived Person's display name by id.
+
+        The Needs-you rows name the Person they are about (``person_name``),
+        so the person picker needs no second read. Empty when the store is
+        not ready or cannot be read now.
+        """
+        from holdspeak.people.key_free import people_reads_allowed
+
+        if self.readiness_state() != "ready" or not people_reads_allowed():
+            return {}
+        try:
+            relationships = self._store.list(kind="relationship")
+        except Exception:
+            return {}
+        return {
+            str(record.get("id")): " ".join(str(record.get("display_name") or "").split())
+            for record in relationships
+            if isinstance(record, dict) and record.get("id")
+            and str(record.get("state") or "") != "archived"
+            and str(record.get("display_name") or "").strip()
+        }
+
     def resolve_relationship_by_watch_identity(
         self, identity_string: str,
     ) -> dict[str, Any]:

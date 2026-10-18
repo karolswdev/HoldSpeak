@@ -620,12 +620,26 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
     ctx._needs_you_cache = _needs_you_cache  # type: ignore[attr-defined]
 
     @router.get("/api/desk/needs-you")
-    async def api_desk_needs_you(request: Request, fresh: str | None = None) -> Any:
+    async def api_desk_needs_you(
+        request: Request,
+        fresh: str | None = None,
+        direction: str | None = None,
+        person: str | None = None,
+        project: str | None = None,
+        week: str | None = None,
+    ) -> Any:
         """HS-171-03: cached needs-you aggregate.
 
         Reads from the in-memory cache; ``?fresh=1`` forces a rebuild.
         Response includes ``computedAt``, ``stale``, ``sweepId``.
+
+        Betterment D2: ``direction``, ``person``, ``project`` and ``week=1``
+        narrow the rows (``desk.needs_you``'s arguments); the count stays the
+        one number.
         """
+        if direction and direction not in ("mine", "theirs", "decide", "setup"):
+            return JSONResponse(
+                {"success": False, "error": "direction is mine, theirs, decide or setup"}, status_code=400)
         try:
             nonlocal _owner_principal
             _owner_principal = principal(request)
@@ -634,9 +648,13 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             # The Room read is cached; the Door, the engine blockers and the
             # failed summaries are local reads, so the one rule is applied on
             # every request and the number is current.
-            from holdspeak.services.needs_you_membership import compose
+            from holdspeak.services.needs_you_membership import compose, filter_answer
 
             data = compose(_get_db(), _owner_principal, data)
+            data = filter_answer(
+                data, direction=direction, person=person, project=project,
+                week=str(week or "").lower() in ("1", "true", "yes"),
+            )
             return JSONResponse(data)
         except Exception as exc:
             return error_500(exc, log, "Failed to build desk needs-you")

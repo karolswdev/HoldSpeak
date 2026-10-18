@@ -1921,11 +1921,22 @@ DESK_NEEDS_YOU = OperationDescriptor(
     description="What needs me, by the one rule every face uses: Door cards that ask me, every Room's attention "
                 "items, decisions that wait for my review, meeting-path engine blockers and failed summaries, with "
                 "one count. An item I wait on someone else for is marked waiting and is not counted "
-                "(waitingCount). Muted projects are marked and not counted.",
-    args_schema={"type": "object", "properties": {}, "additionalProperties": False},
+                "(waitingCount). Muted projects are marked and not counted. Optional filters narrow the rows "
+                "(they combine); the count stays the one number.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "direction": {"type": "string", "enum": ["mine", "theirs", "decide", "setup"],
+                          "description": "Optional: mine (my work), theirs (what a person owes me), decide, or setup."},
+            "person": {"type": "string", "description": "Optional: a person's name (\"Theo\") or People id; the rows about that person."},
+            "project": {"type": "string", "description": "Optional: a Project name or its id from project.list."},
+            "week": {"type": "boolean", "description": "Optional: true keeps the rows due on or before this Sunday (late rows too)."},
+        },
+        "additionalProperties": False,
+    },
     principal=_ROOM_PRINCIPAL,
     effect="read",
-    result="the needs-you answer (count, waitingCount, members, items, blockers, failedMeetings, roomItems, projects, projectCounts, mutedCount, computedAt, coverage, complete, sourceErrors)",
+    result="the needs-you answer (count, waitingCount, members, items, blockers, failedMeetings, roomItems, projects, projectCounts, mutedCount, computedAt, coverage, complete, sourceErrors; with a filter also filter and shown)",
     refusals=_CONTRACT_REFUSALS,
     completion="synchronous; the HTTP route serves it from a cache (computedAt, stale, sweepId)",
     exposure=("http:GET /api/desk/needs-you", "mcp:desk.needs_you"),

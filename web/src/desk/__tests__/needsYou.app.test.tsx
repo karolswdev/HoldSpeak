@@ -194,20 +194,23 @@ describe("Needs you: the head counts what needs him; Waiting lists the rest", ()
     useDesk.setState({ items: { ...useDesk.getState().items, meeting: [] } } as never);
     render(<ChairHome />);
     await waitFor(() => expect(head()).toMatch(/^6 need you/), { timeout: 3000 });
-    const ranked = needsRows().map((r) => r.textContent ?? "");
-    expect(ranked).toHaveLength(6);
-    expect(ranked.some((t) => t.includes("A3 wait for Priya's review") || t.includes("WAITING ON"))).toBe(false);
+    // Betterment D2: one list. The six counted rows, then A3 (Priya owes it):
+    // listed, not counted.
+    const counted = needsRows().filter((r) => r.getAttribute("data-counted") === "true").map((r) => r.textContent ?? "");
+    expect(counted).toHaveLength(6);
+    expect(counted.some((t) => t.includes("A3 wait for Priya's review") || t.includes("WAITING ON"))).toBe(false);
 
-    fireEvent.click(within(screen.getByTestId("needs-filter")).getByRole("button", { name: "Waiting" }));
-    const waiting = await screen.findByTestId("needs-waiting");
-    const waitingRows = [...waiting.querySelectorAll<HTMLElement>('[data-testid="needs-row"]')].map((r) => r.textContent ?? "");
+    fireEvent.click(within(screen.getByTestId("needs-filter")).getByTestId("needs-chip-theirs"));
+    await waitFor(() => expect(needsRows().every((r) => r.getAttribute("data-direction") === "theirs")).toBe(true));
+    const waitingRows = needsRows().map((r) => r.textContent ?? "");
     expect(waitingRows.some((t) => t.includes("A3 wait for Priya's review") && t.includes("WAITING ON PRIYA"))).toBe(true);
     expect(waitingRows.some((t) => t.includes("A4 assign the owner"))).toBe(false);
     expect(head()).toMatch(/^6 need you/);
 
-    fireEvent.click(within(screen.getByTestId("needs-filter")).getByRole("button", { name: "All" }));
+    fireEvent.click(within(screen.getByTestId("needs-filter")).getByTestId("needs-chip-theirs"));
+    await waitFor(() => expect(rowNamed("R1 adopt the release checklist")).toBeTruthy());
     const decision = rowNamed("R1 adopt the release checklist")!;
-    fireEvent.click(within(decision).getByRole("button", { name: "Review: R1 adopt the release checklist" }));
+    fireEvent.click(within(decision).getByRole("button", { name: "Decide: R1 adopt the release checklist" }));
     // The real opener (shell.ts openPrimitive) runs against the real desk store:
     // the decision's own window opens, in front.
     await waitFor(() =>
@@ -249,9 +252,11 @@ describe("Needs you: proposal rows on arrival", () => {
     expect(proposalRows()).toHaveLength(2);
     for (const r of proposalRows()) {
       expect(r.querySelector(".needs-row-fact")?.textContent).toMatch(/^from Standup/);
-      expect(r.querySelectorAll('[data-verb="confirm"]')).toHaveLength(1);
+      // Betterment D2: an action asks for Confirm; a decision for Decide.
+      expect(r.querySelectorAll('[data-verb="confirm"], [data-verb="decide"]')).toHaveLength(1);
       expect(r.getAttribute("data-opens")).toBe("true");
     }
+    expect(rowNamed(decision)!.querySelectorAll('[data-verb="decide"]')).toHaveLength(1);
     expect(proposalRows().map(lampOf).sort()).toEqual(["TO CONFIRM", "TO DECIDE"]);
     const face = document.querySelector('[data-testid="needs-drawer"]')?.textContent ?? "";
     expect(face).not.toContain("LOCAL");
@@ -300,22 +305,19 @@ describe("Needs you: Confirm and Defer on a meeting in no Project", () => {
     expect(lampOf(rowNamed(action)!)).toBe("TO CONFIRM");
     expect(counted()).toContain(decision);
 
-    // Confirm: the hub accepts the action; it now waits on its owner, Priya Shah.
+    // Confirm: the hub accepts the action; it now waits on its owner, Priya
+    // Shah: listed (They owe me), not counted, with Nudge (Betterment D2).
     fireEvent.click(screen.getByRole("button", { name: `Confirm: ${action}` }));
-    await waitFor(() => expect(counted()).not.toContain(action));
+    await waitFor(() => expect(rowNamed(action)?.getAttribute("data-counted")).toBe("false"));
     expect(posted).toEqual([steps[1].post]);
-    fireEvent.click(within(screen.getByTestId("needs-filter")).getByRole("button", { name: "Waiting" }));
-    const waiting = await screen.findByTestId("needs-waiting");
-    const held = [...waiting.querySelectorAll<HTMLElement>('[data-testid="needs-row"]')]
-      .find((r) => r.querySelector(".needs-row-name")?.textContent === action);
-    expect(held, "the confirmed action is listed under Waiting").toBeTruthy();
-    expect(held!.textContent).toMatch(/WAITING ON PRIYA/i);
-    fireEvent.click(within(screen.getByTestId("needs-filter")).getByRole("button", { name: "All" }));
+    const held = rowNamed(action)!;
+    expect(held.textContent).toMatch(/WAITING ON PRIYA/i);
+    expect(held.querySelector('[data-verb="nudge"]')).toBeTruthy();
 
-    // Defer: the decision leaves the face.
+    // Decide ▸ Not now: the decision leaves the face.
     await waitFor(() => expect(rowNamed(decision)).toBeTruthy());
-    fireEvent.click(within(rowNamed(decision)!).getByRole("button", { name: `More: ${decision}` }));
-    fireEvent.click(screen.getByRole("menuitem", { name: "Defer" }));
+    fireEvent.click(within(rowNamed(decision)!).getByRole("button", { name: `Decide: ${decision}` }));
+    fireEvent.click(await screen.findByRole("button", { name: `Not now: ${decision}` }));
     await waitFor(() => expect(rowNamed(decision)).toBeUndefined());
     expect(posted).toEqual([steps[1].post, steps[2].post]);
   });
