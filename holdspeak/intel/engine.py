@@ -221,6 +221,28 @@ class MeetingIntel:
         self._openai_client = None
         self._active_provider: Optional[str] = None
         self._active_model: str = ""
+        self._usage_local = _threading.local()
+
+    def _record_usage(self, usage: Any) -> None:
+        """Keep the provider's own token count for the last call on this thread."""
+        counts: dict[str, int] = {}
+        for field in ("prompt_tokens", "completion_tokens", "total_tokens"):
+            value = usage.get(field) if isinstance(usage, dict) else getattr(usage, field, None)
+            if isinstance(value, int) and not isinstance(value, bool) and value >= 0:
+                counts[field] = value
+        if counts and "total_tokens" not in counts:
+            counts["total_tokens"] = counts.get("prompt_tokens", 0) + counts.get("completion_tokens", 0)
+        local = getattr(self, "_usage_local", None)
+        if local is None:
+            local = self._usage_local = _threading.local()
+        local.counts = counts
+
+    @property
+    def last_usage(self) -> dict[str, int]:
+        """The token counts the provider reported for this thread's last call.
+
+        Empty when the provider reported none. It is never an estimate."""
+        return dict(getattr(getattr(self, "_usage_local", None), "counts", None) or {})
 
     @property
     def active_provider(self) -> Optional[str]:
@@ -407,7 +429,9 @@ class MeetingIntel:
             # HS-153-06: pass response_format for structured_output capabilities.
             if response_format is not None:
                 local_kwargs["response_format"] = _llama_cpp_response_format(response_format)
+            self._record_usage(None)
             response = self._llm.create_chat_completion(**local_kwargs)
+            self._record_usage(response.get("usage") if isinstance(response, dict) else None)
             raw = (
                 response.get("choices", [{}])[0]
                 .get("message", {})
@@ -440,6 +464,7 @@ class MeetingIntel:
             base_kwargs["store"] = True
 
         started = time.monotonic()
+        self._record_usage(None)
         try:
             # HS-131-10 (Sol Amendment 3): ONE physical request per admitted child.
             # The `max_completion_tokens` fallback used to fire a second `.create`
@@ -472,6 +497,7 @@ class MeetingIntel:
             endpoint_key, latency_ms=(time.monotonic() - started) * 1000
         )
 
+        self._record_usage(getattr(response, "usage", None))
         raw = response.choices[0].message.content if response.choices else ""
         return _extract_openai_message_text(raw)
 

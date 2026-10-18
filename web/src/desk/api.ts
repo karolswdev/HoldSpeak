@@ -1163,10 +1163,13 @@ export async function deleteWorkbenchItem(
   await parkWorkbenchItem(workbenchId, itemId);
 }
 
-export async function triggerWorkbenchRun(workbenchId: string): Promise<void> {
+/** Run the pending queue, or only the named items (an item's Re-run). */
+export async function triggerWorkbenchRun(workbenchId: string, itemIds?: string[]): Promise<void> {
   await apiFetch<Record<string, unknown>>(
     `/api/workbenches/${encodeURIComponent(workbenchId)}/run`,
-    { method: "POST" },
+    itemIds && itemIds.length
+      ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ item_ids: itemIds }) }
+      : { method: "POST" },
   );
 }
 

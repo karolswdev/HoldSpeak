@@ -322,7 +322,7 @@ describe("Workbench required source recovery", () => {
   beforeEach(() => { localStorage.clear(); mocks.listeners.clear(); });
   afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
-  it("renders the actual missing source and Re-run returns the same grounded instruction to pending", async () => {
+  it("renders the actual missing source and Re-run queues the same grounded instruction and runs it", async () => {
     let snapshot: typeof groundingRetryRecording.failed | typeof groundingRetryRecording.pending =
       structuredClone(groundingRetryRecording.failed);
     const bench = snapshot.id;
@@ -369,6 +369,10 @@ describe("Workbench required source recovery", () => {
     expect(snapshot.items[0].grounding).toEqual(original.grounding);
     expect(snapshot.items[0].context).toEqual(original.context);
     expect(calls.mock.calls.filter(([, init]) => init?.method === "PUT")).toHaveLength(1);
-    expect(calls.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(0);
+    // Re-run runs it (recon step 17): after the PUT, one run of exactly this item.
+    await waitFor(() => expect(calls.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(1));
+    const [runUrl, runInit] = calls.mock.calls.find(([, init]) => init?.method === "POST")!;
+    expect(new URL(String(runUrl), "http://test").pathname).toBe(`/api/workbenches/${bench}/run`);
+    expect(JSON.parse(String(runInit!.body))).toEqual({ item_ids: [original.id] });
   });
 });

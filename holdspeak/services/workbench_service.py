@@ -385,15 +385,18 @@ class WorkbenchService:
 
     async def run(self, principal: Principal, workbench_id: str, *, memory_enabled: bool = True,
                   request_id: str | None = None,
-                  source_event: dict[str, str] | None = None) -> dict[str, Any]:
+                  source_event: dict[str, str] | None = None,
+                  item_ids: list[str] | None = None) -> dict[str, Any]:
+        """Run the pending queue, or only ``item_ids`` (an item's Re-run)."""
         self._require_workbench(workbench_id)
         from holdspeak.workbench_conductor import run_workbench
-        if request_id or source_event:
+        if request_id or source_event or item_ids:
             from holdspeak.kernel.runtime import _service
             from holdspeak.services.workbench_runner import WorkbenchRunner
             return await WorkbenchRunner(self._db, _service()).run(
                 principal, workbench_id, memory_enabled=memory_enabled,
                 request_id=request_id, source_event=source_event,
+                item_ids=item_ids,
             )
         return await run_workbench(workbench_id, principal, memory_enabled=memory_enabled)
 

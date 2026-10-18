@@ -42,6 +42,7 @@ def _setup_runner(tmp_path: Path, monkeypatch, *, item_count: int = 1):
             state["entered"].set()
             if state["block_call"] == call:
                 assert state["release"].wait(5), "test provider was never released"
+            time.sleep(state.get("delays", {}).get(call, 0))
             return f"provider-output-{call}"
 
     engine = FakeIntel()
@@ -702,3 +703,33 @@ def test_cancellation_before_claim_does_not_strand_item_and_next_run_processes_i
     completed = _run(db, broker, workbench.id, memory_enabled=False)
     assert completed["receipt_id"]
     assert db.workbench_items.get(items[0].id).status == "done"
+
+
+def test_the_time_limit_is_per_item_so_a_long_queue_finishes(tmp_path, monkeypatch):
+    """Recon 2026-10-17 step 14: four ~20 s items under one 60 s run limit.
+    The run expired on item 4, skipped it and recorded 0/0 · cancelled."""
+    db, broker, workbench, items, state = _setup_runner(tmp_path, monkeypatch, item_count=3)
+    state["delays"] = {1: .3, 2: .3, 3: .3}
+    from holdspeak.services.workbench_runner import WorkbenchRunner
+
+    result = asyncio.run(WorkbenchRunner(db, broker).run(OWNER, workbench.id, memory_enabled=False, deadline_seconds=.5))
+
+    run = _run_row(db, result["run_id"])
+    assert (run["status"], run["items_attempted"], run["items_completed"]) == ("completed", 3, 3)
+    assert [db.workbench_items.get(item.id).status for item in items] == ["done"] * 3
+    assert run["model"] == "test-model"
+
+
+def test_an_expired_run_keeps_the_work_it_finished_on_its_record(tmp_path, monkeypatch):
+    """A run that does expire says what it did, never `0/0 · NO MODEL`."""
+    db, broker, workbench, items, state = _setup_runner(tmp_path, monkeypatch, item_count=3)
+    state["delays"] = {2: 1.7}
+    from holdspeak.services.workbench_runner import WorkbenchRunner
+
+    result = asyncio.run(WorkbenchRunner(db, broker).run(OWNER, workbench.id, memory_enabled=False, deadline_seconds=.5))
+
+    assert result["terminal_disposition"] == "cancelled"
+    run = _run_row(db, result["run_id"])
+    assert (run["status"], run["items_attempted"], run["items_completed"], run["items_failed"]) == ("cancelled", 2, 1, 0)
+    assert run["model"] == "test-model" and run["egress_boundary"]
+    assert [db.workbench_items.get(item.id).status for item in items] == ["done", "pending", "pending"]
