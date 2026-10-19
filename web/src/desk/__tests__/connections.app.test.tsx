@@ -62,8 +62,8 @@ describe("each card shows its own check age", () => {
     expect(chipWords(screen.getByTestId(`connections-jira-conn-${betaRef}`))).toBe("Not checked");
     expect(chipWords(screen.getByTestId("connections-confluence"))).toBe("Not checked");
     expect(chipWords(screen.getByTestId("connections-calendar"))).toBe("Not set up");
-    expect(chipWords(screen.getByTestId("connections-models"))).not.toContain("Checked");
-    // Betterment ST2: plus the Found read (gh and acli files only, no CLI).
+    // Engines has its own home; Found reads account files without a CLI.
+    expect(screen.queryByTestId("connections-models")).toBeNull();
     expect([...reads].sort()).toEqual(["GET /api/connections", "GET /api/onboarding/connections"]);
   });
 });
@@ -144,7 +144,7 @@ describe("a sign-in read from gh's config", () => {
 });
 
 describe("the cold Connections face", () => {
-  it("an isolated HOME with no gh sign-in draws the GitHub, Calendar and Models cards, GitHub Not checked with its Check", async () => {
+  it("a cold HOME draws account and Calendar cards, with GitHub Not checked and Check", async () => {
     // replaces: tests/e2e/test_hs168_connections_glass.py::test_connections_cold_at_both_widths (the cards; the 1440/393 page-error fence is the sweep's surface-settings@integration:destinations case)
     // replaces: tests/e2e/test_hs168_connections_glass.py::test_connections_fold_sign_in_state (an empty GH_CONFIG_DIR: the GitHub card is drawn)
     // The hub's own cold answer (connections-cold.json, recorded and fenced by
@@ -154,8 +154,9 @@ describe("the cold Connections face", () => {
     const gh = await screen.findByTestId("connections-github");
     expect(chipWords(gh)).toBe("Not checked");
     expect(within(gh).getByRole("button", { name: "Check" })).toBeTruthy();
-    for (const id of ["connections-calendar", "connections-models", "connections-jira", "connections-confluence"])
+    for (const id of ["connections-calendar", "connections-jira", "connections-confluence"])
       expect(screen.getByTestId(id), id).toBeTruthy();
+    expect(screen.queryByTestId("connections-models")).toBeNull();
     expect(screen.getByTestId("connections-add-open-jira").closest(".surface-ledger-row"))
       .toBe(screen.getByTestId("connections-jira").closest(".surface-ledger-row"));
     expect(chipWords(screen.getByTestId("connections-calendar"))).toBe("Not set up");

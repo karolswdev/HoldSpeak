@@ -104,7 +104,10 @@ class CadenceMixin:
             db = get_database()
             policy = db.cadence.get_policy("daily_brief")
             last_sent = (policy.config.get("last_sent_date") if policy else None)
-            earliest = int(getattr(self.config.cadence, "quiet_hours_end", 8))
+            from ..services.heartbeat_service import read_quiet_hours
+
+            # Betterment setup ST1: the one quiet-hours store.
+            earliest = read_quiet_hours(db)[1]
             now = local_now()
             if not should_send_daily_brief(now, last_sent_date=last_sent, earliest_hour=earliest):
                 return

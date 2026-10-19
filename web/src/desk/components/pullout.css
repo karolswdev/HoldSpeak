@@ -647,6 +647,12 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
     flex-direction: row;
     width: auto;
   }
+  /* The short desktop well is 84 px. Its phone arrows alone need 88 px;
+     use the value column so the number and unit remain readable too. */
+  .desk-next .desk-window-shell.is-sheet :is(.desk-pullout-body, .desk-surface-body) .gadget-stepper {
+    width: var(--gadget-value-width, 172px);
+    max-width: 100%;
+  }
   .desk-next .desk-window-shell.is-sheet :is(.desk-pullout-body, .desk-surface-body) .gadget-arrows button + button {
     border-top: 0;
     /* the seam is the aerogel inset edge, never a left rail (HS-101 rule 6) */

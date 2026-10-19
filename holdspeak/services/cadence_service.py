@@ -50,10 +50,14 @@ class CadenceService:
         counts: dict[str, int] = {}
         for loop in self._db.cadence.list_loops(include_terminal=True):
             counts[loop.status] = counts.get(loop.status, 0) + 1
+        from .heartbeat_service import read_quiet_hours
+
         c = self._config
+        # Betterment setup ST1: quiet hours have one store, the heartbeat policy.
+        quiet_start, quiet_end = read_quiet_hours(self._db)
         return {"enabled": c.enabled, "pressure": c.pressure,
                 "tick_interval_seconds": c.tick_interval_seconds,
-                "quiet_hours": {"start": c.quiet_hours_start, "end": c.quiet_hours_end},
+                "quiet_hours": {"start": quiet_start, "end": quiet_end},
                 "max_nudges_per_day": c.max_nudges_per_day,
                 # PHILO-15 05: the morning Brief job (ON by default), its own setting.
                 "brief_job": {"enabled": bool(getattr(c, "brief_enabled", False)),

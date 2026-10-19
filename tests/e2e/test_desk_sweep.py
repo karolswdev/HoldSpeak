@@ -1225,7 +1225,9 @@ HELD = 2500
 
 @pytest.mark.timeout(240)
 @pytest.mark.parametrize(("case_id", "held"), [
-    ("surface-cadence", ["/api/cadence/loops", "/api/settings/heartbeat"]),
+    # Betterment setup ST1: the Rhythm window is parked; its home is
+    # Settings ▸ Rhythm, whose quiet hours and Notify read the heartbeat.
+    ("surface-settings@rhythm", ["/api/settings/heartbeat"]),
     ("meeting", ["/api/decisions"]),
     ("needs", ["/api/desk/needs-you"]),
     # Betterment AG1: surface-companion (the old Agents application) is

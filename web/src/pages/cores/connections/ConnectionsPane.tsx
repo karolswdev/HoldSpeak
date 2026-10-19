@@ -413,11 +413,9 @@ function AtlassianCards({ tool, onRecheck, onAddAccount, onRemove, busyRef }: {
 
 function CalendarCard({
   tool,
-  onOpen,
   onChoose,
 }: {
   tool: ConnectionTool | undefined;
-  onOpen: () => void;
   onChoose: () => void;
 }) {
   const sources = tool?.account?.sources;
@@ -425,13 +423,14 @@ function CalendarCard({
   const state: ChipState = isConnected ? "success" : "idle";
   const label = isConnected ? "Connected" : "Not set up";
   const summary = isConnected && sources ? `${sources} sources` : undefined;
-  const verb = isConnected ? "Sources" : "Set up";
 
   return <SurfaceLedgerRow data-testid="connections-calendar" wrap expands={false}
     lead={<CalendarEmblem/>}
     primary={<span className="connections-tool-identity"><strong className="connections-tool-label">Calendar</strong>{summary ? <span className="connections-tool-summary">{summary}</span> : null}</span>}
     cells={<span className="surface-ledger-cells connections-tool-chips"><StateChip wrap state={state} label={label}/></span>}
-    trailing={<span className="connections-tool-actions">{isConnected ? <Button dense variant="ghost" onClick={onOpen}>{verb}</Button> : null}<Button dense variant="secondary" onClick={onChoose}>Choose calendar</Button></span>}/>;
+    // Betterment setup ST1: the sources are under this row now (no
+    // `Sources` verb that went to Meetings).
+    trailing={<span className="connections-tool-actions"><Button dense variant="secondary" onClick={onChoose}>Choose calendar</Button></span>}/>;
 }
 
 function CalendarChooser({ onCalendarChanged, onBeforeCalendarChange }: {
@@ -440,31 +439,6 @@ function CalendarChooser({ onCalendarChanged, onBeforeCalendarChange }: {
 }) {
   const step = useCalendarStep();
   return <div className="connections-calendar-setup"><CalendarSetupCard step={step} lit={false} reselectNative onUsed={onCalendarChanged} beforeUse={onBeforeCalendarChange} /></div>;
-}
-
-function ModelsCard({
-  tool,
-  onOpen,
-}: {
-  tool: ConnectionTool | undefined;
-  onOpen: () => void;
-}) {
-  const assigned = tool?.account?.assigned ?? 0;
-  const total = tool?.account?.total ?? 7;
-  // PHILO-15 B33: summaries that run on the route (the default or a pick)
-  // are in use even when no group row is assigned.
-  const summaryHost = tool?.account?.summary_host ?? null;
-  const hasAssigned = assigned > 0;
-  const inUse = hasAssigned || Boolean(summaryHost);
-  const state: ChipState = inUse ? "active" : "idle";
-  const label = hasAssigned ? "Assigned" : summaryHost ? "In use" : "Unassigned";
-  const summary = hasAssigned
-    ? `${assigned} of ${total} assigned`
-    : summaryHost
-      ? `Summaries · ${summaryHost}`
-      : "Unassigned";
-
-  return <div className="connections-engines" data-testid="connections-models"><span className="connections-tool-label">Engines</span>{summary !== label ? <span className="connections-tool-summary">{summary}</span> : <StateChip wrap state={state} label={label}/>}<Button dense variant="ghost" onClick={onOpen}>Choose engines</Button></div>;
 }
 
 /* ── ConnectionsPane ── */
@@ -476,15 +450,16 @@ export interface ConnectionsFoot {
 
 export function ConnectionsPane({
   onFooterUpdate,
-  onOpenModule,
   focusProvider,
   onCalendarChanged,
   onBeforeCalendarChange,
 }: {
   /** Lifts the connections receipt to the parent footer. */
   onFooterUpdate: (foot: ConnectionsFoot) => void;
-  /** Navigate to another settings module (calendar -> "meetings", models -> "models"). */
-  onOpenModule: (moduleId: string) => void;
+  /** Navigate to another settings module. Betterment setup ST1: nothing in
+   *  Accounts navigates away now (Calendar's sources and the engine row
+   *  moved); kept for callers. */
+  onOpenModule?: (moduleId: string) => void;
   /** PHILO-17 (needsyou): the provider to bring into view and focus
    *  (`github`, `jira`, `confluence`): Needs you's Reconnect lands here. */
   focusProvider?: string | null;
@@ -642,7 +617,6 @@ export function ConnectionsPane({
   const jira = tools.find((t) => t.provider_id === "jira");
   const confluence = tools.find((t) => t.provider_id === "confluence");
   const calendar = tools.find((t) => t.provider_id === "calendar");
-  const models = tools.find((t) => t.provider_id === "models");
   // Found on this Mac: accounts in gh's and acli's own files that HoldSpeak
   // does not use yet, each with Use.  Absent when there is none.
   const usedRefs = new Set<string>([
@@ -705,16 +679,13 @@ export function ConnectionsPane({
       <SurfaceSection label="Calendar"><SurfaceLedger cols="accounts"><ul className="surface-ledger-rows">
       <CalendarCard
         tool={calendar}
-        onOpen={() => onOpenModule("meetings")}
         onChoose={() => setCalendarOpen((value) => !value)}
       />
       </ul></SurfaceLedger>
       {calendarOpen ? <CalendarChooser onCalendarChanged={async () => { await onCalendarChanged?.(); await load(); }} onBeforeCalendarChange={onBeforeCalendarChange} /> : null}
       </SurfaceSection>
-      <ModelsCard
-        tool={models}
-        onOpen={() => onOpenModule("models")}
-      />
+      {/* Betterment setup ST1: the `Runs on N of 7 assigned` row is parked
+          (pages/cores/_parked/ConnectionsModelsCard.tsx); Engines owns it. */}
     </div>
   );
 }

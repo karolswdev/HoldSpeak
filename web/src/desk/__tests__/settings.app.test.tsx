@@ -12,6 +12,8 @@ import authorityWire from "./fixtures/settings-wire/authority-policy.json";
 import calendarWire from "./fixtures/settings-wire/calendar-sources.json";
 import calendarOneWire from "./fixtures/settings-wire/calendar-sources-one.json";
 import hubWire from "./fixtures/settings-wire/hub.json";
+import heartbeatWire from "./fixtures/settings-wire/heartbeat.json";
+import heartbeatPutWire from "./fixtures/settings-wire/heartbeat-put.json";
 import peopleWire from "./fixtures/settings-wire/people-access.json";
 import projectsWire from "./fixtures/settings-wire/projects.json";
 import remoteIssueWire from "./fixtures/settings-wire/remote-issue.json";
@@ -37,6 +39,7 @@ function hubDouble() {
     hub: clone(hubWire) as Json,
     calendar: clone(calendarWire) as Json,
     remote: clone(remoteOffWire) as Json,
+    heartbeat: clone(heartbeatWire) as Json,
     calls: [] as Array<{ method: string; path: string; body?: Json; keepalive?: boolean }>,
     unknown: [] as string[],
   };
@@ -65,6 +68,16 @@ function hubDouble() {
         return answer(200, { ...clone(settingsPutWire), settings: state.settings });
       }
       case "GET /api/settings/hub": return answer(200, state.hub);
+      // Betterment setup ST1: Settings ▸ Rhythm reads and writes the one
+      // quiet-hours store, the heartbeat policy (recorded answers).
+      case "GET /api/settings/heartbeat": return answer(200, state.heartbeat);
+      case "PUT /api/settings/heartbeat": {
+        const next = clone(state.heartbeat);
+        if (body?.notify) next.notify = body.notify;
+        if (body?.quiet_hours) next.quiet_hours = { ...next.quiet_hours, ...body.quiet_hours };
+        state.heartbeat = { ...clone(heartbeatPutWire), ...next };
+        return answer(200, state.heartbeat);
+      }
       case "GET /api/authority/policy": return answer(200, authorityWire);
       case "GET /api/calendar/sources": return answer(200, state.calendar);
       case "GET /api/settings/people-access": return answer(200, peopleWire);
@@ -378,7 +391,7 @@ describe("Settings › Meetings", () => {
   const meetingsText = () => document.querySelector(".prefs-module")?.textContent ?? "";
   const summaryRow = () => screen.getByTestId("settings-summary-controls").closest(".gadget-row") as HTMLElement;
 
-  it("cold: After every meeting, the cycle, NO MODEL + Choose model and no egress chip; Mic device, Auto export; Summary, never Intelligence", async () => {
+  it("cold: After every meeting, the cycle, Summaries run on NO ENGINE + Engines › and no egress chip; Mic device, Auto export; Summary, never Intelligence", async () => {
     // replaces: tests/e2e/test_hs172_settings_meetings_glass.py::TestSettingsMeetingsAutoRun::test_settings_meetings_nomodel
     const { container } = render(<SettingsCore scope="meetings" />);
     await screen.findByRole("combobox", { name: "Auto-run the summary" });
@@ -388,7 +401,10 @@ describe("Settings › Meetings", () => {
     expect(container.querySelectorAll(".gadget-cycle select").length).toBeGreaterThanOrEqual(1);
     expect(summaryRow().querySelector(".surface-state-chip[data-state='warning']")).not.toBeNull();
     expect(summaryRow().querySelector(".gadget-chip-egress")).toBeNull();
-    expect(screen.getByTestId("settings-choose-model")).toBeInTheDocument();
+    // Betterment setup ST1: the engine is a fact line; Engines is its home.
+    expect(summaryRow().querySelector(".gadget-row-label")?.textContent).toBe("Summaries run on");
+    expect(screen.getByTestId("settings-no-model").textContent).toContain("NO ENGINE");
+    expect(screen.getByTestId("settings-engines-link").textContent).toBe("Engines ›");
     for (const word of ["Mic device", "Auto export", "Summary"]) expect(meetingsText()).toContain(word);
     expect(meetingsText()).not.toContain("Intelligence");
     expect(rawButtons(container.querySelector(".prefs-module")!)).toEqual([]);
@@ -400,13 +416,15 @@ describe("Settings › Meetings", () => {
     const { container } = render(<SettingsCore scope="meetings" />);
     await waitFor(() => expect(summaryRow().querySelector(".gadget-chip-egress")?.textContent).toBe("192.168.1.43 · LAN"));
     expect(screen.queryByTestId("settings-no-model")).toBeNull();
-    expect(screen.queryByTestId("settings-choose-model")).toBeNull();
-    expect(meetingsText()).toContain("Mic device");
+    expect(summaryRow().textContent).toContain("Qwen 27B");
+    fireEvent.click(screen.getByTestId("settings-engines-link"));
+    await waitFor(() => expect(document.querySelector(".prefs-module .gadget-pane-title")?.textContent).toBe("Engines"));
+    expect(meetingsText()).not.toContain("Mic device");
     expect(rawButtons(container.querySelector(".prefs-module")!)).toEqual([]);
   });
 
-  it("CALENDAR under Capture + export: the source row, Connect calendar, Auto-record 5 MIN BEFORE and MATCHED THIS WEEK; no zero counter", async () => {
-    // replaces: tests/e2e/test_hs175_settings_meetings_glass.py::TestSettingsCalendarSection::test_calendar_section
+  it("Auto-record 5 MIN BEFORE and MATCHED THIS WEEK; Meetings has no calendar block (Betterment setup ST1)", async () => {
+    // replaces: tests/e2e/test_hs175_settings_meetings_glass.py::TestSettingsCalendarSection::test_calendar_section (the auto-record leg)
     hub.state.settings.calendar = { ...hub.state.settings.calendar, sources: [{ id: "src-work", label: "WORK", url: "/Users/owner/work.ics", enabled: true }] };
     hub.state.calendar = { ...clone(calendarOneWire), matched_this_week: 1 };
     hub.state.settings.meeting.auto_record = "room_linked";
@@ -415,20 +433,34 @@ describe("Settings › Meetings", () => {
     await waitFor(() => expect(within(auto).getByTestId("matched-this-week").textContent).toBe("1 MATCHED THIS WEEK"));
     expect(auto.textContent).toContain("5 MIN BEFORE");
     expect(auto.querySelector("select")).not.toBeNull();
-    const text = meetingsText();
-    expect(text.indexOf("CALENDAR")).toBeLessThan(text.indexOf("Auto export"));
-    const row = screen.getByTestId("calendar-source-src-work");
+    // Betterment setup ST1: Calendar's one home is Accounts.
+    expect(document.querySelector(".prefs-calendar-section")).toBeNull();
+    expect(screen.queryByTestId("calendar-source-src-work")).toBeNull();
+    expect(screen.queryByTestId("calendar-connect-row")).toBeNull();
+  });
+
+  it("Accounts holds the calendar: the source row, Add feed and Import image; no zero counter (Betterment setup ST1)", async () => {
+    // replaces: tests/e2e/test_hs175_settings_meetings_glass.py::TestSettingsCalendarSection::test_calendar_section (the source rows, moved to Accounts)
+    hub.state.settings.calendar = { ...hub.state.settings.calendar, sources: [{ id: "src-work", label: "WORK", url: "/Users/owner/work.ics", enabled: true }] };
+    hub.state.calendar = { ...clone(calendarOneWire), matched_this_week: 1 };
+    render(<SettingsCore scope="integrations" />);
+    const row = await screen.findByTestId("calendar-source-src-work");
     expect(within(row).getByText("Calendar feed")).toBeInTheDocument();
     expect(within(row).queryByText("THIS DEVICE")).toBeNull();
     fireEvent.click(within(row).getByRole("button", { name: "Edit" }));
     for (const verb of ["Disable", "Remove"]) expect(within(row.closest(".surface-ledger-row") as HTMLElement).getByRole("button", { name: verb })).toBeInTheDocument();
-    expect(screen.getByTestId("calendar-connect-row")).toBeInTheDocument();
+    const connect = screen.getByTestId("calendar-connect-row");
+    expect(within(connect).getByRole("button", { name: "Add feed" })).toBeInTheDocument();
+    expect(within(connect).getByRole("button", { name: "Import image" })).toBeInTheDocument();
+    // Accounts' own Calendar row chooses a calendar; no "Add calendar" goes round.
+    expect(within(connect).queryByRole("button", { name: "Add calendar" })).toBeNull();
     expect(document.querySelector(".prefs-calendar-section")?.textContent ?? "").not.toMatch(/\b0\s+(SOURCE|CALENDAR|EVENT|RECORDING|MATCHED)/i);
+    expect(rawButtons(document.querySelector(".prefs-calendar-section")!)).toEqual([]);
   });
 
-  it("Add unfolds the connect well: the field names ICS, carries the mic, Cancel and Save", async () => {
+  it("Add unfolds the connect well in Accounts: the field names ICS, carries the mic, Cancel and Save", async () => {
     // replaces: tests/e2e/test_hs175_settings_meetings_glass.py::TestSettingsCalendarSection::test_calendar_well_unfold
-    render(<SettingsCore scope="meetings" />);
+    render(<SettingsCore scope="integrations" />);
     fireEvent.click(await screen.findByTestId("calendar-add-btn"));
     const well = screen.getByTestId("calendar-well");
     expect(within(well).getByRole("textbox", { name: "Calendar URL or file path" }).getAttribute("placeholder")).toMatch(/ICS|file/);
@@ -456,7 +488,8 @@ describe("Settings repair: ordinary choices and recoverable writes", () => {
     expect(columns).toHaveLength(2);
     expect(columns[0].textContent).toContain("Summary");
     expect(columns[0].textContent).toContain("Recording");
-    expect(columns[1].textContent).toContain("Calendar");
+    // Betterment setup ST1: the calendar block moved to Accounts.
+    expect(columns[1].textContent).not.toContain("Calendar");
     expect(columns[1].textContent).toContain("Export");
     expect(screen.getByRole("checkbox", { name: "Auto export" })).toBeInTheDocument();
   });
@@ -574,7 +607,7 @@ describe("Settings repair: ordinary choices and recoverable writes", () => {
     const feed = { ...native, id: "team-feed", label: "Team", url: "https://work.example/calendar.ics", enabled: false };
     hub.state.settings.calendar = { ...original, sources: [native, feed] };
     hub.state.calendar = { ...clone(calendarOneWire), sources: [{ ...clone(calendarOneWire.sources[0]), id: native.id, label: "", type: "MACOS" }] };
-    render(<SettingsCore scope="meetings" />);
+    render(<SettingsCore scope="integrations" />);
     const row = await screen.findByTestId("calendar-source-native-work");
     expect(row.textContent).toContain("Mac calendar");
     expect(row.textContent).not.toContain("6A0B9E7C");
@@ -827,6 +860,43 @@ describe("Settings hub rows name what the hub says", () => {
     const rhythm = ledgerRow("Rhythm")!.textContent ?? "";
     expect(rhythm).toContain("EVERY 15 MIN");
     expect(rhythm).not.toContain("NO LOOPS");
+  });
+});
+
+describe("Settings › Rhythm is Rhythm's one home (Betterment setup ST1)", () => {
+  it("Notify and quiet hours read and write the heartbeat; no cadence.quiet_hours row; Saved in the foot", async () => {
+    // The hub half: tests/integration/test_desk_settings.py::test_quiet_hours_set_in_settings_are_what_the_heartbeat_and_cadence_read
+    expect(heartbeatWire.quiet_hours).toEqual({ start: 22, end: 8 });
+    render(<SettingsCore scope="rhythm" />);
+    const from = await screen.findByRole("spinbutton", { name: "Quiet from" }) as HTMLInputElement;
+    await waitFor(() => expect(from.value).toBe("22"));
+    expect((screen.getByRole("spinbutton", { name: "Quiet until" }) as HTMLInputElement).value).toBe("8");
+    expect((screen.getByRole("combobox", { name: "Notify" }) as HTMLSelectElement).value).toBe(heartbeatWire.notify);
+    fireEvent.click(screen.getByRole("button", { name: "Decrease Quiet from" }));
+    await waitFor(() => expect(hub.state.heartbeat.quiet_hours).toEqual({ start: 21, end: 8 }));
+    const puts = hub.state.calls.filter((c) => c.method === "PUT");
+    expect(puts.map((c) => [c.path, c.body])).toEqual([["/api/settings/heartbeat", { quiet_hours: { start: 21 } }]]);
+    fireEvent.change(screen.getByRole("combobox", { name: "Notify" }), { target: { value: "off" } });
+    await waitFor(() => expect(hub.state.heartbeat.notify).toBe("off"));
+    // Nothing writes the retired cadence.quiet_hours_* keys.
+    expect(hub.state.calls.some((c) => c.path === "/api/settings" && c.method === "PUT")).toBe(false);
+    await waitFor(() => expect(document.querySelector(".surface-footer-layout")?.textContent ?? "").toMatch(/Saved/));
+    expect(rawButtons(document.querySelector(".prefs-module")!)).toEqual([]);
+  });
+
+  it("the sweep and the loops are behind Advanced, read only when he opens them", async () => {
+    render(<SettingsCore scope="rhythm" />);
+    await screen.findByRole("spinbutton", { name: "Quiet from" });
+    expect(hub.state.calls.some((c) => c.path.startsWith("/api/cadence/"))).toBe(false);
+    const fold = screen.getByText("Sweep and loops").closest("details") as HTMLDetailsElement;
+    fold.open = true;
+    fireEvent(fold, new Event("toggle"));
+    await screen.findByTestId("rhythm-sweep-row");
+    expect(screen.getByTestId("rhythm-run-now").textContent).toBe("Run now");
+    // The section says Notify once; the embedded face has no headline or foot of its own.
+    expect(screen.queryByTestId("rhythm-notify-row")).toBeNull();
+    expect(screen.queryByTestId("rhythm-headline")).toBeNull();
+    expect(document.querySelectorAll(".surface-footer-layout")).toHaveLength(1);
   });
 });
 

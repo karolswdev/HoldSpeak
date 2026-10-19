@@ -99,7 +99,10 @@ def _cmd_status(out: TextIO, db, config) -> int:
     print(f"  enabled:        {c.enabled}", file=out)
     print(f"  pressure:       {c.pressure}", file=out)
     print(f"  tick interval:  {c.tick_interval_seconds}s", file=out)
-    print(f"  quiet hours:    {c.quiet_hours_start:02d}:00–{c.quiet_hours_end:02d}:00", file=out)
+    from ..services.heartbeat_service import read_quiet_hours
+
+    quiet_start, quiet_end = read_quiet_hours(db)
+    print(f"  quiet hours:    {quiet_start:02d}:00–{quiet_end:02d}:00", file=out)
     print(f"  max nudges/day: {c.max_nudges_per_day}", file=out)
     print(f"  policies:       {len(db.cadence.list_policies())}", file=out)
     if by_status:
