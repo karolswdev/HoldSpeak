@@ -138,6 +138,15 @@ describe("Betterment Q3: Search asks", () => {
     expect(calls.some((c) => c.url.endsWith("/api/ask"))).toBe(false);
   });
 
+  it("text that is not a question puts Ask \"…\" above the MEMORY band, which lands later below it", async () => {
+    await search("freeze");
+    const rows = options();
+    const ask = rows.findIndex((o) => o.textContent?.includes('Ask "freeze"'));
+    const firstMemory = rows.findIndex((o) => o.querySelector(".desk-deck-hit"));
+    expect(ask).toBeGreaterThan(0);
+    expect(firstMemory).toBe(ask + 1);
+  });
+
   it("reads like a question: a question mark, or a question word first", () => {
     for (const text of ["freeze?", "Who owns the cutover", "did we ship", "Is it frozen", "how", "which one"])
       expect(readsLikeQuestion(text), text).toBe(true);

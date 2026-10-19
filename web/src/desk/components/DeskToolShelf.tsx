@@ -863,7 +863,9 @@ export function DeskToolShelf() {
     );
     drawnRef.current = { query: normalized, open, ids: ranked ? next.map((r) => r.id) : null };
     // Betterment Q3: Ask "…" — first when the text reads like a question,
-    // else last. Enter on it opens Ask with the text and runs it.
+    // else after the desk's own rows. The MEMORY band lands later, below it,
+    // so the row never moves under his eye. Enter on it opens Ask with the
+    // text and runs it.
     const asked = query.trim();
     if (prompt || asked.length < MEMORY_MIN_QUERY) return next;
     const askRow: DeckRow = {
@@ -875,7 +877,9 @@ export function DeskToolShelf() {
       wrap: true,
       run: () => useDesk.getState().askQuestion(asked),
     };
-    return readsLikeQuestion(asked) ? [askRow, ...next] : [...next, askRow];
+    if (readsLikeQuestion(asked)) return [askRow, ...next];
+    const memoryAt = next.findIndex((row) => row.section === "MEMORY");
+    return memoryAt < 0 ? [...next, askRow] : [...next.slice(0, memoryAt), askRow, ...next.slice(memoryAt)];
   }, [localRows, localCapped, memoryRows, normalized, open, prompt, query, ranked]);
 
   // The runnable list the selection index walks (ghosts stay visible
@@ -892,8 +896,10 @@ export function DeskToolShelf() {
     : -1;
   const firstObject = runnable.findIndex((row) => FIRST_PRESS_OBJECT_SECTIONS.has(row.section));
   // A question's first press is Ask (Betterment Q3).
-  const askFirst = runnable[0]?.id === "ask.question";
-  const defaultIndex = askFirst ? 0 : exactNamed >= 0 ? exactNamed : firstObject >= 0 ? firstObject : 0;
+  const askFirst = runnable[0]?.id === "ask.question" && readsLikeQuestion(query);
+  // Text that is not a question never gives its first press to Ask.
+  const firstNotAsk = Math.max(0, runnable.findIndex((row) => row.section !== "ASK"));
+  const defaultIndex = askFirst ? 0 : exactNamed >= 0 ? exactNamed : firstObject >= 0 ? firstObject : firstNotAsk;
   const selectedIndex = sel < 0 ? defaultIndex : Math.min(sel, runnable.length - 1);
   const selected = runnable.length ? runnable[selectedIndex] : null;
   const activeId = selected ? `desk-palette-option-${selected.id}` : undefined;

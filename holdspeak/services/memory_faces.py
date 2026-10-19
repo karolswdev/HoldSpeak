@@ -316,12 +316,12 @@ def _answered_threads(db: Any, thread_ids: set[str]) -> set[str]:
     assistant message)."""
     if not thread_ids:
         return set()
-    marks = ",".join("?" for _ in thread_ids)
     with db._connection() as conn:
         rows = conn.execute(
-            f"SELECT DISTINCT thread_id FROM thread_messages WHERE thread_id IN ({marks})"
+            "SELECT DISTINCT thread_id FROM thread_messages"
+            " WHERE thread_id IN (SELECT value FROM json_each(?))"
             " AND role='assistant' AND deleted_at IS NULL AND aborted_at IS NULL",
-            tuple(thread_ids),
+            (json.dumps(sorted(thread_ids)),),
         ).fetchall()
     return {str(row[0]) for row in rows}
 
