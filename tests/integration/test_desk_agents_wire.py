@@ -1219,3 +1219,121 @@ def test_the_lane_serves_the_result_of_a_done_turn(hub: str, tmp_path: Path) -> 
     assert lane["last_words"] == AG0_DONE
     assert [row["ref"] for row in lane["used"]["looked_at"]] == [f"note:{note_id}"], lane["used"]
     _keep("agents-ag10", "lane.done", lane, tmp_path, hub)
+
+
+def test_secure_helper_allow_is_owner_only_idempotent_and_in_needs_you(
+    hub: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """AG11's Secure ask crosses the real MCP and HTTP edges.
+
+    The hand service is replaced only at its process-launch seam: the route,
+    principal checks, durable request, flight projection and Needs You read
+    remain real hub paths.
+    """
+    from holdspeak import coder_factory
+    from holdspeak.config import Config
+    from holdspeak.delivery.factory_launch import LaunchLedger
+    from holdspeak.mcp.palettes import CONDUCTOR, resolve_palette
+    from holdspeak.principals import agent_credentials
+    from holdspeak.services import agent_hand_service
+    from tests.e2e.agents_lane_rig import TOKEN, _http
+
+    _ag0_seed(tmp_path / "home")
+    config = Config.load()
+    # Settings stores the owner's Secure label as the policy's ``safe`` mode.
+    config.control_mode = "safe"
+    config.save()
+    parent_id = "launch_ag0_ghost"
+
+    credential = agent_credentials.issue(
+        coder_factory.launch_identity(parent_id), palette=resolve_palette(CONDUCTOR),
+        palette_name=CONDUCTOR, launch_id=parent_id,
+    )
+
+    def mcp_call(token: str, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+        status, body = _http(hub, "POST", "/api/mcp", token, {
+            "jsonrpc": "2.0", "id": 1, "method": "tools/call",
+            "params": {"name": name, "arguments": arguments},
+        })
+        assert status == 200 and isinstance(body, dict), (status, body)
+        assert body.get("result", {}).get("isError") is False, body
+        text = body["result"]["content"][0]["text"]
+        return json.loads(text)
+
+    class FakeHand:
+        calls = 0
+
+        def hand(self, _principal: Any, kind: str, item_id: str, **kwargs: Any) -> dict[str, Any]:
+            self.calls += 1
+            assert kind == "action" and item_id
+            helper_id = "launch_ag11_http_helper"
+            parent = LaunchLedger().get(parent_id) or {}
+            launched = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+            LaunchLedger().record({
+                "launch_schema": 1, "launch_id": helper_id, "state": "launched",
+                "node_id": "this-node", "profile_id": str(kwargs.get("profile") or "codex-default"),
+                "gate": "gated", "branch": "hs/ag11-http-helper", "session": "hs-ag11-http-helper",
+                "origin_ref": parent.get("origin_ref") or {"kind": kind, "id": item_id},
+                "helper_of": parent_id, "launched_at": launched, "control_mode": "secure",
+                "instruction_state": "sent",
+            })
+            return {"launch_id": helper_id, "status": "launched", "worktree": {"name": "hs-ag11-http-helper"}}
+
+    fake = FakeHand()
+    monkeypatch.setattr(agent_hand_service, "default_agent_hand_service", lambda **_kwargs: fake)
+    # The running web context may already hold its composed service; keep the
+    # replacement at the same hand operation in that case as well.
+    monkeypatch.setattr(
+        agent_hand_service.AgentHandService, "hand",
+        lambda _service, principal, kind, item_id, **kwargs: fake.hand(principal, kind, item_id, **kwargs),
+    )
+    try:
+        asked = mcp_call(credential.token, "agent.start_helper", {
+            "instruction": "Review the parent result", "profile": "codex-default",
+        })
+        assert asked["status"] == "awaiting_owner"
+        request_id = asked["owner_action"]["request_id"]
+
+        flights = _get(hub, "/api/coders/sessions?include_ended=false")
+        parent = next(f for f in flights["flights"] if f.get("launch_id") == parent_id)
+        assert parent["helper_request"] == {
+            "request_id": request_id, "status": "awaiting_owner",
+            "instruction": "Review the parent result", "profile": "codex-default",
+        }
+
+        needs = _get(hub, "/api/desk/needs-you?fresh=1")
+        pending = [
+            row for row in needs["items"]
+            if row.get("launchId") == parent_id
+            and row.get("helperRequest", {}).get("requestId") == request_id
+        ]
+        assert len(pending) == 1 and pending[0]["why"] == "TO APPROVE", pending
+        assert any(member.get("ref") == pending[0]["ref"] for member in needs["members"]), needs
+        assert needs["count"] >= 1
+
+        status, other = _http(hub, "POST", "/api/principals/agents", TOKEN, {"identity": "agent:ag11-other"})
+        assert status == 201, other
+        status, refused = _http(
+            hub, "POST", f"/api/agent/launches/{parent_id}/helper/allow", other["credential"],
+            {"request_id": request_id},
+        )
+        if not isinstance(refused, dict):
+            refused = json.loads(refused)
+        assert status == 403, refused
+        assert fake.calls == 0
+
+        status, allowed = _http(
+            hub, "POST", f"/api/agent/launches/{parent_id}/helper/allow", TOKEN,
+            {"request_id": request_id},
+        )
+        assert status == 202 and allowed["status"] == "launched", allowed
+        assert fake.calls == 1
+
+        status, repeated = _http(
+            hub, "POST", f"/api/agent/launches/{parent_id}/helper/allow", TOKEN,
+            {"request_id": request_id},
+        )
+        assert status == 202 and repeated["launch_id"] == "launch_ag11_http_helper", repeated
+        assert fake.calls == 1
+    finally:
+        agent_credentials.revoke(credential.principal.identity)

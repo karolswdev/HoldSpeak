@@ -116,7 +116,7 @@ describe("DeskMenuBar Go at 1440 (PHILO-17 doors)", () => {
     const menu = screen.getByRole("menu", { name: "Go menu" });
     // Betterment shell S1: Daily, then Work (Builder ▸ only behind its switch).
     expect(top(menu)).toEqual([
-      "Today", "Needs you", "Capture", "Meetings", "People", "Projects", "Agents", "Ask AI", "Speak",
+      "Today", "Needs you", "Capture", "Meetings", "People", "Projects", "Decisions", "Agents", "Ask AI", "Speak",
       "Automations", "Memory", "Voice commands",
     ]);
     expect(menu.textContent).not.toMatch(/Settings|Runs on|Connections|Setup|Desk memory|List view/);
@@ -124,15 +124,17 @@ describe("DeskMenuBar Go at 1440 (PHILO-17 doors)", () => {
     expect(within(menu).getByRole("menuitem", { name: /Speak/ }).textContent).toContain("⌃1");
 
     fireEvent.click(within(menu).getByRole("menuitem", { name: /^Projects\W*$/ }));
-    expect(top(screen.getAllByRole("menu").at(-1)!)).toEqual(["Alpha", "Beta", "Gamma"]);
+    // Betterment P4: All projects (the Projects window) leads.
+    expect(top(screen.getAllByRole("menu").at(-1)!)).toEqual(["All projects", "Alpha", "Beta", "Gamma"]);
   });
 
   it("does not offer a retired empty Tools ▸", () => {
     render(<DeskMenuBar />);
     fireEvent.click(screen.getByRole("button", { name: /^Go$/ }), { detail: 0 });
     const menu = screen.getByRole("menu", { name: "Go menu" });
-    // No projects: no Projects ▸ row (no empty submenu).
-    expect(top(menu)).not.toContain("Projects");
+    // Betterment P4: no projects: Projects ▸ is All projects alone (never empty).
+    fireEvent.click(within(menu).getByRole("menuitem", { name: /^Projects\W*$/ }));
+    expect(top(screen.getAllByRole("menu").at(-1)!)).toEqual(["All projects"]);
     expect(top(menu)).not.toContain("Tools");
   });
 
@@ -206,7 +208,7 @@ describe("DeskMenuBar at 393", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Go$/ }), { detail: 0 });
     const menu = screen.getByRole("menu", { name: "Go menu" });
     expect(labels(menu)).toEqual([
-      "Today", "Needs you", "Capture", "Meetings", "People", "Projects", "Agents", "Ask AI", "Speak",
+      "Today", "Needs you", "Capture", "Meetings", "People", "Projects", "Decisions", "Agents", "Ask AI", "Speak",
       "Automations", "Memory", "Voice commands",
       "New",
     ]);

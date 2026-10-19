@@ -21,6 +21,7 @@ import { commandForDoorVerb, supportsDoorVerb, type DoorVerb } from "../chair/do
 /** The verb set a row carries (the drawer turns it into library Buttons). */
 export type NeedVerbs =
   | { kind: "answer"; sessionKey: string }
+  | { kind: "allow-helper"; launchId: string; requestId: string }
   | { kind: "gate"; proposalId: string }
   /** A held call whose command the hub cannot show whole: Deny, and Open on
    *  the agent's lane (Raw shows the whole command there); never Approve. */
@@ -50,7 +51,7 @@ export type NeedVerbs =
   | { kind: "open"; ref: string }
   /** PHILO-15 B61: `watchIds` are the Watches Retry re-checks. */
   | { kind: "repair"; verb: string; href: string; projectId: string; watchIds?: string[]; host?: string; provider?: string }
-  | { kind: "arming"; scheduleId: string; refused: boolean }
+  | { kind: "arming"; scheduleId: string; refused: boolean; failed?: boolean; calendarEventId?: string }
   | { kind: "calendar" }
   | { kind: "none" };
 
@@ -335,6 +336,20 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
   const project = String(item.projectName ?? "");
   const source = String(item.source ?? "");
 
+  // AG11: a Secure helper has no session yet. Its owner action remains
+  // directly available here instead of opening an unrelated parent question.
+  const helper = item.helperRequest as { status?: string; requestId?: string } | undefined;
+  if (source === "coder" && helper?.status === "awaiting_owner" && helper.requestId && item.launchId) {
+    const launchId = String(item.launchId);
+    const agent = String(item.agent || "agent");
+    return {
+      id, kind: "agent", name: agentRowName(agent, project || "Helper"),
+      fact: String(item.question || item.title || ""), factWords: true,
+      lamp: { label: "TO APPROVE", tone: "ask" }, group: "agents", agent,
+      verbs: { kind: "allow-helper", launchId, requestId: helper.requestId },
+      openRef: `launch:${launchId}`,
+    };
+  }
   // R5: an agent asks (a question, or an input or permission prompt).
   if (source === "coder" && item.sessionKey) {
     const key = String(item.sessionKey);
@@ -763,21 +778,29 @@ export function armsWord(seconds: number): string {
 
 /** A scheduled recording about to start: first while it is live. */
 export function armingFace(
-  arming: { scheduleId: string; title: string },
+  arming: { scheduleId: string; title: string; calendarEventId?: string },
   secondsLeft: number,
   refusal?: string | null,
+  didNotRecord?: { at: string | null; reason: string } | null,
 ): NeedFace {
   const word = armsWord(secondsLeft);
+  const failedAt = didNotRecord?.at ? wireDate(didNotRecord.at) : null;
+  const failedClock = failedAt
+    ? `${String(failedAt.getHours()).padStart(2, "0")}:${String(failedAt.getMinutes()).padStart(2, "0")}`
+    : null;
+  const failed = Boolean(didNotRecord);
   return {
     id: `arming:${arming.scheduleId}`,
     kind: "meeting",
     name: arming.title || "Scheduled recording",
     // A refused Cancel is named here, by the hub's own reason.
-    fact: refusal ? `NOT CANCELLED · ${refusal}` : `Arms in ${word.toLowerCase()}`,
-    lamp: { label: `ARMS · ${word}`, tone: refusal ? "fail" : "ask" },
+    fact: failed
+      ? `Did not record${failedClock ? ` · ${failedClock}` : ""} · ${didNotRecord?.reason || "Something went wrong"}`
+      : refusal ? `NOT CANCELLED · ${refusal}` : `Arms in ${word.toLowerCase()}`,
+    lamp: { label: failed ? "FAILED" : `ARMS · ${word}`, tone: failed || refusal ? "fail" : "ask" },
     kindWord: "MEETING",
     group: "agents",
-    verbs: { kind: "arming", scheduleId: arming.scheduleId, refused: Boolean(refusal) },
+    verbs: { kind: "arming", scheduleId: arming.scheduleId, refused: Boolean(refusal), failed, calendarEventId: arming.calendarEventId },
   };
 }
 

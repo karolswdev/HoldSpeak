@@ -541,6 +541,8 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             thought = page.get_by_test_id("arrival-develop-thought")
             assert _hit(thought)
             thought.click()
+            # Betterment C8: New note makes its record on the first character.
+            page.get_by_test_id("arrival-new-note").locator("textarea").press("P")
             page.wait_for_function("""() => !!document.querySelector(
               '.speak-face textarea, [id^="editor:note:"] .cm-content, .thought-note-document [aria-label="Note body"]')""")
             note_editor = page.locator(

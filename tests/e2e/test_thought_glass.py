@@ -376,12 +376,9 @@ class TestTheThoughtSends:
         return row[0], row[1]
 
     def _note_action(self, page: Any, win: Any, width: int, name: str) -> Any:
+        # Betterment Q8: the note's verbs never fold into More, at 393 too.
         foot = win.locator(".thought-note-foot")
-        if width < 720:
-            self._tap(page, foot.get_by_role("button", name="More actions", exact=True))
-            action = page.get_by_role("menu", name="More actions", exact=True).get_by_role("menuitem", name=name, exact=True)
-        else:
-            action = foot.get_by_role("button", name=name, exact=True)
+        action = foot.get_by_role("button", name=name, exact=True)
         action.wait_for(timeout=T)
         return action
 
@@ -396,7 +393,7 @@ class TestTheThoughtSends:
             self._tap(page, back)
         win.locator(".thought-note-body .cm-content").wait_for(timeout=T)
         assert win.locator("[data-testid=thought-send]").count() == 0
-        name = "More actions" if width < 720 else "Send…"
+        name = "Send…"
         door = win.locator(".thought-note-foot").get_by_role("button", name=name, exact=True)
         page.wait_for_function("(el) => el.isConnected && el === document.activeElement", arg=door.element_handle(), timeout=T)
         assert door.is_visible()
@@ -477,7 +474,7 @@ class TestTheThoughtSends:
                 page.keyboard.type(SEND_WORDS)  # the opening key buffer owns these words
 
                 foot = win.locator(".thought-note-foot")
-                door = foot.get_by_role("button", name="More actions" if width < 720 else "Send…", exact=True)
+                door = foot.get_by_role("button", name="Send…", exact=True)
                 opening = win.evaluate("""win => ({
                     loading: Boolean(win.querySelector('.thought-workspace-opening[aria-busy=true]')),
                     editor: Boolean(win.querySelector('.thought-note-body .cm-content')),
@@ -559,12 +556,7 @@ class TestTheThoughtSends:
                 assert held, "the edit was never saved"
                 assert not self._db_sends(note_ref), "Send dispatched while the edit was not saved"
                 assert win.locator("[data-testid=thought-send], [data-testid=send-preview], [data-testid=send-verb]").count() == 0
-                if width >= 720:
-                    assert foot.get_by_role("button", name="Send…", exact=True).is_disabled()
-                else:
-                    # Betterment Q8: the foot has four verbs; at 393 they fold
-                    # into More only when they do not fit.
-                    assert page.get_by_role("menu", name="More actions", exact=True).count() == 0
+                assert foot.get_by_role("button", name="Send…", exact=True).is_disabled()
                 assert self._saved_note(note_ref) == (revision, saved_body)
                 page.screenshot(path=str(SEND_SHOTS / f"thought-send-waits-{width}.png"))
                 mode["saves"] = "pass"

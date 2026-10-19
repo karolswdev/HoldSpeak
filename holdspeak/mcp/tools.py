@@ -1,6 +1,7 @@
 """MCP tool schemas and transport-neutral HoldSpeak service dispatch."""
 from __future__ import annotations
 
+
 from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
 from holdspeak import operations
 
@@ -463,6 +464,11 @@ TOOLS.extend([
         "project": {"type": "string", "description": "a name, or an id from project.list"},
         "week": {"type": "boolean", "description": "due by this Sunday, late too"},
     }),
+    _mcp_tool(
+        "today.get",
+        "Read Today as one page of data: the top of Needs you, the day, Since yesterday, and Prepared.",
+        {},
+    ),
     _mcp_tool("settings.hub", "Read the settings hub row facts: module state tokens for the settings truth table.", {}),
     _mcp_tool(
         "decision_record.list", "List decision records, newest first.",
@@ -1060,6 +1066,8 @@ def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal)
     # bare composition it binds over the same services this dispatcher built
     # before. Resolved only when a contract operation is called.
     def ops() -> operations.OperationRegistry:
+        from holdspeak.services.today_service import TodayService
+
         return operations.for_runtime(
             lambda: primitives,
             meeting_service=lambda: meetings,
@@ -1074,6 +1082,9 @@ def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal)
             ),
             # PHILO-9-01: desk.needs_you is the declared operation on the
             # hub's ProjectService (a bare one off-hub, as before).
+            today_service=lambda: runtime_service(
+                "today_service", lambda: TodayService(db)
+            ),
             project_service=lambda: runtime_service(
                 "project_service", lambda: _bare_project_service(db, obs)
             ),
@@ -1228,6 +1239,16 @@ def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal)
         return ops().invoke(
             principal, "desk.needs_you", filters,
             held={"door_upcoming": getattr(door, "_upcoming", None) if door else None})
+    if name == "today.get":
+        from holdspeak.mcp.families import door as door_family
+
+        registry = ops()
+        result = registry.invoke(principal, "today.get", {}, held={
+            "ops": registry, "door_service": door_family._service(), "workbenches": workbenches,
+        })
+        if result.get("since_yesterday") is not None:
+            result["since_yesterday"] = _compose_brief_overlay_mcp(result["since_yesterday"], db, principal)
+        return result
     if name == "settings.hub":
         from holdspeak.config import Config, CONFIG_FILE
         from holdspeak.services.inference_assignment_service import InferenceAssignmentService

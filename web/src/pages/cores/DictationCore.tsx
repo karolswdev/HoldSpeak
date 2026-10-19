@@ -14,6 +14,7 @@ import { Button } from "../../components/signal/Signal";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { countToken, FoldGadget } from "../../desk/surface";
 import { useResource } from "../pageSupport";
+import { useBuilderTools } from "../../desk/builderTools";
 import {
   SpeakFace,
   Journal,
@@ -48,16 +49,20 @@ const WINGS = [
    stacked behind the gear. HS-111-02: the stack is ONE gadget sheet
    on the window material — full width, 26px rows, no settings mile. */
 function Configure() {
+  // Betterment C8: the diagnostics fold is behind RAW (Builder tools).
+  const raw = useBuilderTools((state) => state.on);
   return (
     <div className="surface-door">
       <Readiness />
-      <FoldGadget title="More diagnostics">
-      <Memory />
-      <Knowledge />
-      <Runtime />
-      <Hooks />
-      <Nudges />
-      </FoldGadget>
+      {raw ? (
+        <FoldGadget title="More diagnostics">
+        <Memory />
+        <Knowledge />
+        <Runtime />
+        <Hooks />
+        <Nudges />
+        </FoldGadget>
+      ) : null}
     </div>
   );
 }

@@ -51,7 +51,7 @@ import { useStandingPagesRead } from "../../desk/standingPages";
 import { apiFetch } from "../../lib/api";
 import type { InferenceTarget } from "../../desk/api";
 import { openSurfaceOr } from "../../desk/shell";
-import { ROOM_AT_EVENT, ROOM_PROPOSAL_EVENT, ROOM_UPDATES_EVENT, refOpener, takeRoomAtRequest, takeRoomProposalRequest, takeRoomUpdatesRequest, type RoomPlace } from "../../desk/openObject";
+import { ROOM_AT_EVENT, ROOM_PROPOSAL_EVENT, ROOM_UPDATES_EVENT, ROOM_WRITE_EVENT, refOpener, takeRoomAtRequest, takeRoomProposalRequest, takeRoomUpdatesRequest, takeRoomWriteRequest, type RoomPlace } from "../../desk/openObject";
 import { useDesk } from "../../desk/store";
 import type { CoreProps } from "../../pages/cores/core-types";
 import type {
@@ -2093,6 +2093,25 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
     window.addEventListener(ROOM_UPDATES_EVENT, take);
     return () => window.removeEventListener(ROOM_UPDATES_EVENT, take);
   }, [ctrl.projectId, enterUpdates]);
+  // Betterment P4 (projects): the palette's and the Object menu's `Write
+  // update` press the head's own Write update here, once the engine roster
+  // is read (the head's Button waits for the same read).
+  const writeEngine = useEngine("project.update_draft");
+  const [writeAsked, setWriteAsked] = useState(false);
+  useEffect(() => {
+    const projectId = ctrl.projectId;
+    if (!projectId) return;
+    const take = () => { if (takeRoomWriteRequest(projectId)) setWriteAsked(true); };
+    take();
+    window.addEventListener(ROOM_WRITE_EVENT, take);
+    return () => window.removeEventListener(ROOM_WRITE_EVENT, take);
+  }, [ctrl.projectId]);
+  const { write } = updateCtrl;
+  useEffect(() => {
+    if (!writeAsked || writeEngine.state === "unread") return;
+    setWriteAsked(false);
+    void write(writeEngine.state === "set");
+  }, [writeAsked, writeEngine.state, write]);
   // PHILO-14 A2b: a proposal row elsewhere (Needs you) opens this Room with
   // that proposal selected in OPEN HERE. `seq` counts the requests, so the
   // same proposal asked for again is revealed again (A5b, Astra r1).

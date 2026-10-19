@@ -145,11 +145,9 @@ def test_uncertain_send_reload_keeps_the_exact_command(tmp_path: Path, monkeypat
             def open_send() -> Any:
                 win = page.locator(".thought-workspace-window").first
                 win.locator(".thought-note-body .cm-content").wait_for()
-                if width < 720:
-                    win.get_by_role("button", name="More actions", exact=True).click()
-                    page.get_by_role("menu", name="More actions", exact=True).get_by_role("menuitem", name="Send", exact=True).click()
-                else:
-                    win.locator(".thought-note-foot").get_by_role("button", name="Send", exact=True).click()
+                # Q8 keeps Send… directly in the note footer at both sizes.
+                # The Send well's own Send/Retry still owns dispatch.
+                win.locator(".thought-note-foot").get_by_role("button", name="Send…", exact=True).click()
                 well = win.locator("[data-testid=send-well]")
                 well.locator("[data-testid=send-preview-body]").wait_for()
                 return well

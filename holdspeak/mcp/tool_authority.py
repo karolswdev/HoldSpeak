@@ -83,6 +83,7 @@ TOOL_AUTHORITY: dict[str, str] = {
     "dictation.get": WORK,
     "desk.snapshot": WORK,
     "desk.needs_you": WORK,
+    "today.get": WORK,
     "settings.hub": WORK,
     "decision_record.list": WORK,
     "decision_record.get": WORK,
@@ -113,6 +114,13 @@ TOOL_AUTHORITY: dict[str, str] = {
     "coder.list": WORK,
     "coder.get": WORK,
     "coder.audit": WORK,
+    # Betterment AG11: a launched agent and its one helper (decision 3:
+    # work under Normal and YOLO; Secure records an owner Allow ask at the call).
+    "agent.start_helper": WORK,
+    "agent.prompt": WORK,
+    "agent.wait": WORK,
+    "agent.read": WORK,
+    "agent.answer": WORK,
     "coder.explain": WORK,
     "cadence.status": WORK,
     "cadence.loops": WORK,

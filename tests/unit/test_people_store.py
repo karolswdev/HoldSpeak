@@ -98,3 +98,57 @@ def test_store_owns_canonical_ids_and_payload_cannot_override_metadata(tmp_path)
     replaced = store.replace(created["id"], {"id": "second-lie", "lifecycle": "active", "display_name": "updated"})
     assert replaced["id"] == created["id"]
     assert store.get(created["id"])["display_name"] == "updated"
+
+
+@pytest.mark.parametrize("suffix", ["-wal", "-shm"])
+def test_optional_sqlite_file_disappearing_during_permission_check_keeps_store_ready(tmp_path, monkeypatch, suffix) -> None:
+    store = _store(tmp_path)
+    assert store.initialize() == PeopleReadiness.READY
+    # Close setup's SQLite connections before modelling an optional file;
+    # deleting a journal that still holds committed setup data is not a
+    # last-connection cleanup and would exercise a different failure.
+    import gc
+    gc.collect()
+    sidecar = store.path.with_name(store.path.name + suffix)
+    assert not sidecar.exists()
+    sidecar.touch(mode=0o600)
+    check = store._require_private_path
+    removed = []
+
+    def close_last_connection(path):
+        if path == sidecar and not removed:
+            # SQLite removes these optional files when its last connection
+            # closes, including between exists() and the permissions stat.
+            path.unlink()
+            removed.append(path)
+        return check(path)
+
+    monkeypatch.setattr(store, "_require_private_path", close_last_connection)
+    assert store.readiness() == PeopleReadiness.READY
+    assert removed == [sidecar]
+
+
+@pytest.mark.parametrize("phase", ["initialize", "ready", "missing_key"])
+def test_setup_and_readiness_release_sqlite_connection_without_waiting_for_gc(tmp_path, monkeypatch, phase):
+    import sqlite3
+    store = _store(tmp_path)
+    if phase != "initialize":
+        assert store.initialize() == PeopleReadiness.READY
+    if phase == "missing_key":
+        store.key_store.values.clear()
+    connect = store._connect
+    opened = []
+    def track(**kwargs):
+        conn = connect(**kwargs)
+        opened.append(conn)
+        return conn
+    monkeypatch.setattr(store, "_connect", track)
+    try:
+        result = store.initialize() if phase == "initialize" else store.readiness()
+        assert result == (PeopleReadiness.KEY_UNAVAILABLE if phase == "missing_key" else PeopleReadiness.READY)
+        assert len(opened) == 1
+        with pytest.raises(sqlite3.ProgrammingError, match="closed"):
+            opened[0].execute("SELECT 1")
+    finally:
+        for conn in opened:
+            conn.close()

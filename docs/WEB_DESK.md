@@ -1,152 +1,107 @@
 # The Desk
 
-The Desk is the HoldSpeak web app.
-It holds your records and opens the tools you use to work with them.
-The Chair shows current work. The Floor shows your records as objects.
+The Desk is the HoldSpeak web app. It holds your records and opens your tools.
 
-## Start a task
+## Start work
 
-1. Open the URL that `holdspeak` prints.
-2. Use the Chair for current work, or open the Floor to arrange records.
-3. Open the **Desk** menu to create a record.
-4. Open the **Go** menu to open a tool.
+1. Open the address that `holdspeak` prints.
+2. Open **Today** to see current work.
+3. Open **Needs you** for items that need your action.
+4. Use **Go** to open an app, project or drawer.
 
-On a new installation, the Desk first offers **Dictate one sentence**.
-See [Getting Started](GETTING_STARTED.md) for that first capture.
+On a phone, **Go** lists the apps. An app fills the screen.
+See [Getting Started](GETTING_STARTED.md) for the first capture.
 
-## The Chair and the Floor
+## Create work
 
-The Chair is the home screen. It has four windows:
+The **Desk** menu offers **New Note**, **New Decision**, **New Automation**,
+**New Thread** and **New Project**. On a phone, use **Go > New** or Search.
+**New Project** opens project setup. See [Project Rooms](PROJECT_ROOMS.md).
+**New Thread** opens Ask.
 
-| Window | Content |
-| --- | --- |
-| **Needs you** | Items that wait for you, ranked. |
-| **Brief** | The current brief. |
-| **The week** | Upcoming recordings and calendar events. |
-| **Capture** | **Talk**, **Write a thought**, **Record meeting**, and **Schedule**. |
+**New Note** opens a sticky note. Use **Ask about this**, **Find the tasks**,
+**Project** or **Send…** from the note. **Done** finishes the note.
+Asking about a note does not move it to another drawer.
 
-Close a Chair window to hide it. Open it again from **Window > Chair**.
-See [The Arrival](USER_GUIDE.md#the-arrival) for the controls.
+## Open and file records
 
-The Floor shows Meetings, Notes, Artifacts, Projects, and other records as objects.
-Drag an object to move it. Open a Zone to see the records filed in it.
-A coder session stays on the Floor even when you file other records.
-The Floor has a spatial view and a list view.
-With no saved choice, a compact screen with more than 16 objects opens the list view.
+On a desktop, select an object, then press Enter or open it with a double
+click. The **Object** menu shows the verbs that apply to the selection.
+Use **Ask about this** to ask about that record. A person has **Ask about
+<name>**.
 
-## Create and open work
+A drawer shows its contents. Existing knowledge collections appear as
+named drawers. Their members can also remain on the desk. Use Search to
+find a drawer by name, including on a phone.
 
-Use the **Desk** menu to create a record.
-It offers **New Note**, **Write a thought**, **New Decision**, **New Knowledge**, **New Automation**, **New Thread**, and **New Project**.
-**New Project** opens the Project setup window. See [Project Rooms](PROJECT_ROOMS.md).
-
-Select an object, then use the **Object** menu.
-It offers **Open**, **Get Info**, **Ask AI**, **Continue in thread**, **Edit**, **Rename**, **Duplicate**, **Move to Zone**, and **Delete**.
-An unavailable verb stays visible and shows its reason.
-The object kind decides which verbs apply.
-
-## Arrange the Floor
-
-- **Move to Zone** files an object in a Zone.
-- **Arrange desk** resets the objects you moved to the automatic grid.
-- **List view** and **Spatial view** switch the Floor view.
-- **Hide the menus** starts Settle in. **Back to Desk** ends it.
-
-Object positions are view preferences on this device.
-The records stay on the hub.
+Drag an object to change its position. Use its filing controls to change
+where it is kept. A view change does not move the stored record to another
+hub.
 
 ## Use windows
 
-Speak, Meetings, Agents, Settings, and other tools open in Desk windows.
-Drag a window by its title bar. Resize it with a window edge or corner.
-Iconify a window to keep it in the dock.
-Select its dock entry to bring it back.
+Speak, Meetings, Agents, Settings and other apps open in Desk windows.
+Drag a desktop window by its title bar. Use its edge or corner to resize it.
+Iconify a window to keep it in the dock. Select its dock entry to return to it.
+Use **Window** to close, cycle, snap, zoom or send a window to the back.
 
-Use the **Window** menu for **Close window**, **Iconify**, **Cycle windows**, **Snap left**, **Snap right**, **Zoom**, and **To back**.
-Use **Overview** to see all open windows.
-On a phone, a window fills the screen.
+The Desk keeps the window layout in your browser. On a phone, **Back**
+returns to the previous window.
 
-The Desk saves the window layout in your browser.
-An iconified window stays iconified when you return.
+## Ask about your work
 
-These addresses open the matching window:
+1. Open **Ask** from Go, or press **⌘I**.
+2. Use **+** beside **About** to select a meeting, note, drawer, project or
+   person. With no selection, Ask is about your whole desk.
+3. Enter your question, then press **Ask**.
 
-| Address | Window |
-| --- | --- |
-| `/dictation` | Speak |
-| `/history`, `/meetings` | Meetings |
-| `/settings`, `/studio` | Settings |
-| `/setup` | New Project |
-| `/live` | Live meeting |
-| `/activity` | Activity |
-| `/commands` | Commands |
-| `/cadence` | Rhythm |
-| `/workbenches` | Automations |
-
-Other addresses open the Desk. `/welcome` and `/presence` are separate pages.
-See [Desk object model](DESK_OBJECT_MODEL.md) for the window and key reference.
+You can also select **Ask about this** on a record. Its name appears in
+About. On an engine that can use tools, the answer shows **Looked at**,
+**Wrote** and **Prepared**. A prepared send waits for your **Send** press.
+When Ask was opened from a note, **Add to note** keeps an answer in that note.
 
 ## Record a meeting
 
-Select **Record meeting** on the Chair, or the recorder control on the Floor.
-The hub records the meeting. This is not browser microphone input.
-Use the stop control to end the recording.
-Then open the Meeting to read its transcript and results.
-See [Meeting mode](MEETING_MODE_GUIDE.md) for microphone selection, system audio, and import.
+Use the recorder control to start or stop a meeting. The hub records the
+meeting; this is separate from browser microphone input. Open Meetings to
+read the transcript and results.
+See [Meeting mode](MEETING_MODE_GUIDE.md) for microphone selection, system
+audio and import.
 
-You can also drop a transcript or audio file onto the Floor to import it.
-Drop a calendar screenshot to read events from it.
+You can drop a transcript or audio file on the desk to import it. Drop a
+calendar screenshot to read events from it.
 
-## Use a Thread
+## Set preferences
 
-1. Select **Desk > New Thread**.
-2. Enter your request in the composer.
-3. Type `@` to attach a record.
-4. Select **Send**.
+Open **Settings** from the HoldSpeak menu. Rhythm, Wallpaper and Calendar
+each have one Settings home. Engines has the model and job assignments;
+Accounts has the external service accounts. Use Search to find a setting.
 
-Routine tool calls stay collapsed under **Actions**.
-Tool questions, approval requests, and failures stay visible.
-The Thread stores sent messages on the hub.
-Keep a reply when you want a Note or Artifact outside the conversation.
-Use **Interview** mode for repeatable working context. See [Interview](INTERVIEW.md).
-See [Threads](USER_GUIDE.md#threads) for all controls.
+## Keys
 
-## Ask with selected context
+| Key | Action |
+| --- | --- |
+| **⌃N**, **⌃T** | New Note |
+| **⌃⇧N** | New Decision |
+| **⌘I** | Ask |
+| **⌘K** | Search |
+| **⌃1** to **⌃4** | Speak, Meetings, Agents, Settings |
+| **⌘/** | Keyboard shortcuts |
 
-Select objects on the Floor, then select **Ask AI** (**Command/Ctrl+I**).
-The Ask uses the selected records as source context.
-Check the result and its sources before you keep it.
-A kept result becomes an Artifact with its lineage.
-
-## Use speech input
-
-The Thread composer and text fields use a microphone button.
-Select it once to start and again to stop.
-Voice typing in other apps uses the global hold-to-talk hotkey.
-Browser microphone input goes to the hub for transcription.
-A reply can deliver text to a live coder session under your control mode.
-See [Coder steering](USER_GUIDE.md#steer-a-session-from-the-desk).
-
-## Change the environment
-
-Open **Places** to select a scene or Quiet Desk.
-See [Places](ENVIRONMENTS.md).
+The browser keeps some **⌘** keys. The menus show **⌃** alternatives for them.
 
 ## Troubleshooting
 
 | Problem | Action |
 | --- | --- |
-| A window is missing | Check the dock and the **Window** menu. |
-| A tool cannot run | Read its reason. Check the connection, the selection, or the model assignment. |
-| A Thread send fails | Read the failure. The composer keeps your text. |
-| The menus are hidden | Select **Back to Desk**, or press **Escape**. |
-| A result is not in Notes | Open the Thread. Keep the reply as a Note. |
+| A window is missing | Check the dock and Window menu. |
+| A verb is missing | Select the record the verb needs. |
+| Ask cannot answer | Read the failure and check its engine. |
+| The menus are hidden | Select Back to Desk, or press Escape. |
 
 ## See also
 
 - [User Guide](USER_GUIDE.md)
-- [Desk object model](DESK_OBJECT_MODEL.md): object kinds, verbs, keys, window geometry.
-- [Desk architecture](DESK_ARCHITECTURE.md): how the web app is built.
-- [Interview](INTERVIEW.md)
-- [Places](ENVIRONMENTS.md)
+- [Desk object model](DESK_OBJECT_MODEL.md)
+- [Desk architecture](DESK_ARCHITECTURE.md)
 - [Control modes](AUTHORITY.md)

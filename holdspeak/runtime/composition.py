@@ -100,6 +100,7 @@ class RuntimeServices:
     meeting_aftercare_service: Optional[Any] = None  # notify= -> the /ws bus
     # PHILO-5-02 (gap A): the brief's producer clock (``WebContext.brief_clock``).
     monday_brief_service: Optional[Any] = None
+    today_service: Optional[Any] = None
 
     # --- project rooms ---------------------------------------------------
     project_service: Optional[Any] = None          # delta_service= (mutual)
@@ -393,57 +394,8 @@ def services_from_web_context(
     """
     from holdspeak.db.core import get_database, get_observer
 
-    names = (
-        "primitive_service",
-        "workbench_service",
-        "meeting_service",
-        "meeting_intel_service",
-        "meeting_aftercare_service",
-        "monday_brief_service",
-        "project_service",
-        "project_delta_service",
-        "project_update_service",
-        "project_steward_service",
-        "project_setup_service",
-        "project_door_service",
-        "project_evidence_collector",
-        "watch_service",
-        "connections_service",
-        "suggested_source_service",
-        "channel_service",
-        "onboarding_service",
-        "inference_setup_service",
-        "inference_acquisition_service",
-        "model_library_service",
-        "inference_assignment_service",
-        "inference_capability_service",
-        "projection_service",
-        "authority_service",
-        "sync_service",
-        "gate_service",
-        "setup_service",
-        "delivery_service",
-        "mesh_service",
-        "profile_key_service",
-        "cadence_service",
-        "follow_through_service",
-        "door_service",
-        "actuator_service",
-        "mission_control_service",
-        "reaction_service",
-        "memory_service",
-        "coder_service",
-        "settings_service",
-        "credential_service",
-        "dictation_service",
-        "people_service",
-        "needs_you_last_known",
-        "refinement_coordinator",
-        "refinement_service",
-        "github_provider",
-        "jira_provider",
-        "confluence_provider",
-    )
+    from holdspeak.runtime.web_context_services import SERVICE_NAMES
+
     return RuntimeServices(
         db=db if db is not None else get_database(),
         observer=observer if observer is not None else get_observer(),
@@ -451,7 +403,7 @@ def services_from_web_context(
         web_context=ctx,
         bare_root=False,
         label="hub",
-        **{name: getattr(ctx, name, None) for name in names},
+        **{name: getattr(ctx, name, None) for name in SERVICE_NAMES},
     )
 
 
@@ -537,6 +489,7 @@ def install_from_web_context(
     from holdspeak.services.agent_hand_service import default_agent_hand_service
     from holdspeak.services.desk_window_service import DeskWindowService
     from holdspeak.services.note_outcomes_service import NoteOutcomesService
+    from holdspeak.services.today_service import TodayService
 
     def _intel_notify(topic: str, value: Any) -> None:
         if services.broadcast is not None:
@@ -554,6 +507,7 @@ def install_from_web_context(
         "refinement_service": lambda: RefinementApplicationService(
             resolved_db, coordinator=getattr(ctx, "refinement_coordinator", None)
         ),
+        "today_service": lambda: TodayService(resolved_db),
         "kernel_read_service": lambda: KernelReadService(resolved_db),
         # Memory slice 4: memory.observations.read binds to it.
         "memory_service": lambda: MemoryService(resolved_db, observer=resolved_observer),

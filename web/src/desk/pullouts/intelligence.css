@@ -290,6 +290,15 @@
 .receipts-view button:focus-visible,
 .receipt-detail button:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 
+/* Betterment P4 (the Decisions window, the desk sweep at 393): a decision's
+   words take the whole line; its date and meeting fall under them (beside a
+   narrow line the words shrank to 95 px and ran under the date). */
+@container surface (max-width: 559.9px) {
+  .receipts-view .surface-ledger-row[data-wrap] .surface-ledger-primary {
+    flex: 1 1 100%;
+  }
+}
+
 /* HS-129-06 — Receipt detail follows the Intelligence window body. */
 @container surface (max-width: 420px) {
   .receipt-revisions li { grid-template-columns: 1fr; gap: 2px; }

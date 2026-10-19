@@ -248,6 +248,45 @@ describe("PHILO-14 C4 the Conductor window", () => {
     expect(document.body.textContent).not.toMatch(/personas?/i);
   });
 
+  it("keeps an asking helper's Answer row nested under a working parent", async () => {
+    const parent = {
+      ...FLIGHT_RECON,
+      origin_ref: "action:ai-parent",
+      id: "ai-parent",
+      title: "Build the parent result",
+      launch_id: "l-parent",
+      session_key: "codex:p1",
+      state: "working",
+    };
+    const helper = {
+      ...FLIGHT_RUNBOOK,
+      origin_ref: "action:ai-helper",
+      id: "ai-helper",
+      title: "Review the parent result",
+      agent: "claude",
+      launch_id: "l-helper",
+      session_key: "claude:h1",
+      state: "waiting",
+      helper_of: "l-parent",
+    };
+    sessionsReply = () => ({
+      sessions: [
+        { session: { agent: "codex", session_id: "p1", state: "working", question: "" }, flight: parent },
+        { session: { agent: "claude", session_id: "h1", state: "waiting", question: "Is the parent result ready?", hook_event_name: "Notification" }, flight: helper },
+      ],
+      flights: [parent, helper],
+      history: [],
+      launches: { live: 2, cap: 3 },
+    });
+
+    render(<ConductorWindow />);
+    await screen.findByRole("button", { name: "Build the parent result" });
+    const helperRow = document.querySelector("[data-object-id='launch:l-helper']") as HTMLElement;
+    expect(helperRow).toBeTruthy();
+    expect(helperRow.closest("[data-testid='conductor-helpers']")).toBeTruthy();
+    expect(within(helperRow).getByRole("button", { name: "Answer" })).toBeTruthy();
+  });
+
   it("Open on a live agent opens its lane; a plain session its window; a ready agent's Get Info is in the foot", async () => {
     render(<ConductorWindow />);
     await screen.findByRole("button", { name: "Shard the reconciliation job" });

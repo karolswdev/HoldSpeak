@@ -763,6 +763,12 @@ def _p_note_outcome(verb: str) -> Callable[[Hub, Any, Path], Any]:
     return produce
 
 
+def _p_today_get(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    is_error, result = hub.mcp("today.get", {})
+    assert not is_error, result
+    return result
+
+
 PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "meeting.list": _p_meeting_list,
     "meeting.import": _p_meeting_import,
@@ -825,6 +831,7 @@ PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "note.outcome.edit": _p_note_outcome("edit"),
     "note.outcome.dismiss": _p_note_outcome("dismiss"),
     "note.outcome.confirm": _p_note_outcome("confirm"),
+    "today.get": _p_today_get,
 }
 
 

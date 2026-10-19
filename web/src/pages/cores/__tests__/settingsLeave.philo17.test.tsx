@@ -48,14 +48,14 @@ afterEach(() => vi.useRealTimers());
 describe("Settings leave send", () => {
   it("a save in flight + a newer edit + pagehide: the leave PUT goes out in the same tick", async () => {
     // Betterment setup ST1: the calendar rows moved to Accounts; the first
-    // (in-flight) edit is Auto export, the newer one Auto-record.
+    // (in-flight) edit is Auto export, the newer one summary timing (Auto-record lives in Meetings).
     render(<SettingsCore scope="meetings" />);
     fireEvent.click(screen.getByRole("checkbox", { name: "Auto export" }));
     await act(async () => { await vi.advanceTimersByTimeAsync(700); });
     expect(puts()).toHaveLength(1); // in flight, never answers
 
     // An unsent edit (debounced), then the page hides before the delay ends.
-    fireEvent.change(screen.getByRole("combobox", { name: "Auto-record mode" }), { target: { value: "room_linked" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "Auto-run the summary" }), { target: { value: "every" } });
     window.dispatchEvent(new Event("pagehide"));
 
     expect(puts()).toHaveLength(2);
@@ -65,7 +65,7 @@ describe("Settings leave send", () => {
     // Only the changed paths (never the whole stale document): the newer
     // unsent edit, plus the in-flight change (newest values win either way).
     expect(Object.keys(init.json).sort()).toEqual(["meeting"]);
-    expect(init.json.meeting).toEqual({ auto_export: true, auto_record: "room_linked" });
+    expect(init.json.meeting).toEqual({ auto_export: true, intelligence_auto: "every" });
   });
 
   it("nothing unsent and nothing queued sends nothing on pagehide", () => {

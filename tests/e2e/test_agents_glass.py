@@ -1,5 +1,5 @@
-"""The Agents app in a real browser: a compact agent line at 393 keeps its
-ellipsis inside its box (jsdom has no layout; Astra r1 on #1026).
+"""The Agents app in a real browser: long questions wrap inside the phone
+Needs you row and the agent window, with their full source text intact.
 
 Kept by the test diet (push 2, 2026-10-12). Was
 tests/e2e/test_phase16_agent_words_glass.py; its render leg (the marks on the
@@ -208,38 +208,6 @@ def _isolate(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setattr(event_log, "default_spool_dir", lambda: state / "agent-events")
 
 
-#: Reads one compact line in the browser: its box, its content height, and
-#: where its ellipsis is drawn (a `…` unit, or the CSS ellipsis of a cut
-#: token), so a test can say the ellipsis is SEEN inside the box.
-_COMPACT_BOX = """(el) => {
-  const box = el.getBoundingClientRect();
-  const ell = el.querySelector('.aw-ell');
-  const clip = el.querySelector('.aw-clip');
-  const r = (ell || clip) ? (ell || clip).getBoundingClientRect() : null;
-  return {
-    text: el.textContent.slice(0, 80),
-    clientHeight: el.clientHeight, scrollHeight: el.scrollHeight,
-    box: {left: box.left, right: box.right, top: box.top, bottom: box.bottom},
-    ell: r && {left: r.left, right: r.right, top: r.top, bottom: r.bottom, text: (ell || clip).textContent},
-    clip: !!clip,
-    clipOverflow: clip ? getComputedStyle(clip).textOverflow : null,
-    clipCut: clip ? clip.scrollWidth > clip.clientWidth : null,
-  };
-}"""
-
-
-def _ellipsis_seen(read: dict) -> None:
-    """The content never exceeds the box, and the ellipsis is inside it."""
-    assert read["scrollHeight"] <= read["clientHeight"] + 1, read
-    ell, box = read["ell"], read["box"]
-    assert ell is not None, read
-    assert ell["left"] >= box["left"] - 1 and ell["right"] <= box["right"] + 1, read
-    assert ell["top"] >= box["top"] - 1 and ell["bottom"] <= box["bottom"] + 1, read
-    if read["clip"]:
-        # A token cut at the width: its own CSS ellipsis, drawn in the line.
-        assert read["clipOverflow"] == "ellipsis" and read["clipCut"], read
-
-
 #: Astra r1 on #1026 (MUST 1, 2): one unbreakable 4000-character token, and a
 #: long id after a short head. Ends with `?`: a real ask, a Needs row.
 UNBREAKABLE = "X" * 3999 + "?"
@@ -248,9 +216,9 @@ LONG_ID = "May I merge `" + "d25d3fc020be4d8cbc90269fc17da3f7" * 6 + "`?"
 
 @pytest.mark.timeout(240)
 @pytest.mark.parametrize("question", [UNBREAKABLE, LONG_ID], ids=["unbreakable-4000", "long-id"])
-def test_a_compact_line_at_393_keeps_its_ellipsis_in_the_box(tmp_path: Path, monkeypatch, question: str) -> None:
-    """At 393 the compact Needs row keeps its ellipsis inside the box;
-    the current question is shown once, whole, in the Lane's Ask well."""
+def test_a_full_question_at_393_wraps_inside_needs_you_and_the_agent_window(tmp_path: Path, monkeypatch, question: str) -> None:
+    """AG9 uses the shared full-question row in Needs you; neither that
+    row nor the agent window can clip or lose a long question at 393."""
     _ensure_build()
     _isolate(tmp_path, monkeypatch)
     server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
@@ -269,14 +237,21 @@ def test_a_compact_line_at_393_keeps_its_ellipsis_in_the_box(tmp_path: Path, mon
             _normal_chair(page)
             _settle(page)
             drawer = _open_needs(page)
-            row = drawer.locator("[data-testid='needs-row']").filter(has=page.locator(".needs-row-words")).first
+            row = drawer.locator("[data-testid='needs-agent-row']").first
             row.wait_for(timeout=15000)
-            page.wait_for_timeout(300)
-            two = row.locator(".needs-row-words").evaluate(_COMPACT_BOX)
-            assert two["clientHeight"] > 0, two
-            _ellipsis_seen(two)
+            words = row.locator("[data-testid='agent-row-question']")
+            words.wait_for()
+            assert words.text_content().strip() == question.replace("`", "")
+            fit = words.evaluate("""el => {
+              const r=el.getBoundingClientRect(), d=el.closest('[data-testid=needs-drawer]').getBoundingClientRect();
+              return {width:el.clientWidth, content:el.scrollWidth, height:el.clientHeight,
+                contentHeight:el.scrollHeight, left:r.left, right:r.right, drawerLeft:d.left, drawerRight:d.right};
+            }""")
+            assert fit["width"] > 0 and fit["content"] <= fit["width"] + 1, fit
+            assert fit["contentHeight"] <= fit["height"] + 1, fit
+            assert fit["drawerLeft"] - 1 <= fit["left"] < fit["right"] <= fit["drawerRight"] + 1, fit
             tag = "unbreakable" if question == UNBREAKABLE else "long-id"
-            row.screenshot(path=str(SHOTS / f"compact-{tag}-needs-row-393.png"))
+            row.screenshot(path=str(SHOTS / f"full-{tag}-needs-row-393.png"))
             page.keyboard.press("Escape")
             window = _open_lane(page)
             question_well = window.locator("[data-testid='lane-ask'] .ask-well-question")
