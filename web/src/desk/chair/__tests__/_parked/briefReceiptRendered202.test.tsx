@@ -1,3 +1,7 @@
+// Parked by Betterment daily D5: this file tests the Chair's Brief or The week
+// window, retired into Today (the sections: chair/_parked/ArrivalSections.tsx).
+// Not run (vitest excludes _parked).
+
 /* HS-202-02 — rendered receipt transition with retained producer payloads.
  *
  * This fence starts with one real `/api/brief/latest` response, then presses

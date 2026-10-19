@@ -1,3 +1,7 @@
+// Parked by Betterment daily D5: this file tests the Chair's Brief or The week
+// window, retired into Today (the sections: chair/_parked/ArrivalSections.tsx).
+// Not run (vitest excludes _parked).
+
 // PHILO-6-02 — the brief's truth: the rendered links of the fences.
 //
 // The fixture is the REAL producer's brief (tests/unit/test_philo6_02_brief_truth.py

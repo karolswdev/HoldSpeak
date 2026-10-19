@@ -14,6 +14,9 @@
 // Window ▸ Chair, and float like every desk window; a closed one leaves the
 // screen, not a reopen Button. The tiles above are PARKED behind
 // `data-layout="tiles"` (no `screen` prop; ChairHome always passes one).
+//
+// Betterment daily D5: Brief and The week retired into Today; the Chair has
+// two windows of its own, Needs you and Capture (chairWindows.ts).
 import { useEffect, useLayoutEffect, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import { DeskWindowFrame } from "../components/DeskWindow";
@@ -40,8 +43,8 @@ export type ChairDeskProps = Record<ChairWindowKey, ReactNode> & {
    * Chair; they float like every desk window. Without it the PARKED
    * Phase-13 tiles return (`data-layout="tiles"`; ChairHome never sets it). */
   screen?: ReactNode;
-  /** PHILO-15-09 (B04): a window's title from its content (the Brief's
-   *  `Brief · Wednesday 7 Oct 2026`); its name (aria, menus) stays. */
+  /** PHILO-15-09 (B04): a window's title from its content; its name (aria,
+   *  menus) stays. */
   titles?: Partial<Record<ChairWindowKey, string>>;
 };
 

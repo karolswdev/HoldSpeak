@@ -361,30 +361,28 @@ class TestThePhoneDesk:
                 if f["front"] != ["Needs you"] or f["title"] != "Needs you":
                     fails.append(f"C7-1: Needs you is not the one front window {f['front']} {f['title']}")
 
-                # Phone Brief is Today with Since yesterday open (Betterment
-                # D4: Today is one page). Meetings then holds the
+                # Today from Go (Betterment D4: Today is one page; D5: Brief
+                # and The week are part of it). Meetings then holds the
                 # selected record in its one host; no duplicate record pane.
                 self._tap(page, page.locator(".desk-verbbar-item[data-menu-id='go'] button"), width)
-                self._tap(page, page.locator(".desk-verbbar-menu").get_by_role("menuitem", name="Brief", exact=True), width)
+                self._tap(page, page.locator(".desk-verbbar-menu").get_by_role("menuitem", name="Today", exact=True), width)
                 today = chair_window(page, "Brief")
                 today.wait_for()
-                since = today.get_by_test_id("today-since-toggle")
-                since.wait_for()
-                assert since.get_attribute("aria-expanded") == "true"
+                today.get_by_test_id("today-since-toggle").wait_for()
                 self._open_meeting(page, width)
                 self._board(page, width, "C7-3a-meeting-window", facts, fails)
-                ring = ["Needs you", "The week", "Today", MEETING]
+                ring = ["Needs you", "Today", MEETING]
 
-                # Five real forward gestures still prove the wrap, followed
+                # Four real forward gestures still prove the wrap, followed
                 # by a reverse gesture to the selected meeting's same host.
                 landed: list[str | None] = []
-                for _ in range(5):
+                for _ in range(4):
                     self._swipe(page, +1)
                     fr = self._front(page)["front"]
                     landed.append(fr[0] if len(fr) == 1 else None)
                 facts["swipe_forward"] = landed
                 if landed != ring + ring[:1]:
-                    fails.append(f"S2: 5 swipes landed {landed}, the ring says {ring + ring[:1]}")
+                    fails.append(f"S2: 4 swipes landed {landed}, the ring says {ring + ring[:1]}")
                 self._swipe(page, -1)
                 back = self._front(page)["front"]
                 facts["swipe_back"] = back
@@ -395,7 +393,7 @@ class TestThePhoneDesk:
                 if self._front(page)["front"] != ["Today"]:
                     fails.append(f"S2: past Meetings the swipe landed {self._front(page)['front']}")
                 self._swipe(page, -1)
-                if self._front(page)["front"] != ["The week"]:
+                if self._front(page)["front"] != ["Needs you"]:
                     fails.append(f"S2: past Today the swipe landed {self._front(page)['front']}")
                 self._board(page, width, "C7-3c-swipe-to-the-chair", facts, fails)
 
@@ -423,7 +421,7 @@ class TestThePhoneDesk:
                 # Betterment shell S1 (#1259): the phone's Go is the
                 # manifest's Daily group first, as at 1440: Today, then the
                 # Chair's windows (Go is their door on an empty desk).
-                if rows[:5] != ["Today", "Needs you", "Brief", "The week", "Capture"]:
+                if rows[:3] != ["Today", "Needs you", "Capture"]:
                     fails.append(f"S3: Go lists {rows}")
                 self._board(page, width, "C7-4a-go-open", facts, fails)
                 self._tap(page, go, width, 600)
@@ -622,11 +620,12 @@ class TestCompositor:
             browser, page, errors = self._page(pw, 1440)
             try:
                 band = page.evaluate(C_BAND_JS)
-                for name in ("Brief", "The week", "Needs you"):
+                # Betterment daily D5: Today (with Since yesterday open), Capture, Needs you.
+                for name in ("Brief", "Capture", "Needs you"):
                     open_chair_window(page, name)
                 wins = _c_wins(page)
                 names = [w["name"] for w in wins]
-                if not {"Brief", "The week", "Needs you"} <= set(names):
+                if not {"Today", "Capture", "Needs you"} <= set(names):
                     fails["C1 three windows open"] = names
                 planes = {w["name"]: w["plane"] for w in wins}
                 if sorted(planes.values()).count("front") != 1 or "near" not in planes.values() or "far" not in planes.values():
@@ -641,9 +640,13 @@ class TestCompositor:
                 page.screenshot(path=str(C_SHOTS / "1440-1-planes.png"))
 
                 # A raise: the far window comes forward; the old front is NEAR.
+                # Window ▸ Desk ▸ <name> (Today's seat sits under Needs you's).
                 old_front = _c_fronts(wins)[0]
                 far = next(w["name"] for w in wins if w["plane"] == "far")
-                page.locator(f".desk-window-shell[aria-label='{far}'] .desk-pullout-title").first.click()
+                page.locator(".desk-verbbar-item[data-menu-id='window'] button").click()
+                page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Desk')").click()
+                page.locator(f".desk-menu-list [role='menuitemcheckbox']:has-text('{far}')").first.click()
+                page.wait_for_timeout(300)
                 wins = _c_wins(page)
                 if _c_fronts(wins) != [far] or _c_by(wins, old_front)["plane"] != "near":
                     fails["C1 raise: far to front, old front to near"] = {w["name"]: w["plane"] for w in wins}
@@ -849,15 +852,15 @@ class TestCompositor:
                 if back != rects:
                     fails["M1 Esc restores the free rects"] = {"before": rects, "after": back}
 
-                # M4: resize Brief (behind Needs you) by its grip: no lift runs
+                # M4: resize Today (behind Needs you) by its grip: no lift runs
                 # while the pointer is held.
                 page.locator(f"{needs} .desk-pullout-title").first.click()
                 _c_wins(page)
                 running: list[int] = []
-                _c_drag(page, ".desk-window-shell[aria-label='Brief'] .desk-window-grip", -40, -30,
-                      hold=lambda: (page.wait_for_timeout(60), running.append(page.evaluate(C_RUNNING_JS, "Brief"))))
+                _c_drag(page, ".desk-window-shell[aria-label='Today'] .desk-window-grip", -40, -30,
+                      hold=lambda: (page.wait_for_timeout(60), running.append(page.evaluate(C_RUNNING_JS, "Today"))))
                 if running != [0]:
-                    fails["M4 no lift during a resize"] = {"lifts": running, "all": page.evaluate(C_ALL_RUNNING_JS, "Brief")}
+                    fails["M4 no lift during a resize"] = {"lifts": running, "all": page.evaluate(C_ALL_RUNNING_JS, "Today")}
 
                 # M2: two surface windows (min-width 420) tiled; the divider
                 # dragged past both minimums.
@@ -969,8 +972,21 @@ class TestCompositor:
 # ── PHILO-16 16b the hub owns the windows (moved whole: several browser views of ONE hub, a drag, the MCP arrange) ──
 H_TOKEN = "philo16-hub-windows"
 H_SHOTS = evidence_dir("docs/internal/philo/phase-16/b-shots")
-H_THREE = ("Brief", "The week", "Needs you")
-H_IDS = {"Brief": "chair:brief", "The week": "chair:week", "Needs you": "chair:needs"}
+# Betterment daily D5: Brief and The week retired into Today; the three are
+# Capture (dragged), Meetings (seated) and Needs you (in front).
+H_THREE = ("Capture", "Meetings", "Needs you")
+H_IDS = {"Capture": "chair:capture", "Meetings": "surface-meetings", "Needs you": "chair:needs"}
+
+
+def _h_open(page: Any, name: str) -> None:
+    """Open one of H_THREE from Go (Meetings is an application window)."""
+    if name != "Meetings":
+        open_chair_window(page, name)
+        return
+    page.locator(".desk-verbbar-item[data-menu-id='go'] button").click()
+    page.locator(".desk-verbbar-menu").wait_for()
+    page.locator(".desk-verbbar-menu").get_by_role("menuitem", name=re.compile(r"^Meetings")).first.click()
+    page.locator(".desk-window-shell[aria-label='Meetings']").wait_for()
 
 H_WINS_JS = r"""() => {
   const visible = (e) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e);
@@ -1107,23 +1123,26 @@ class TestHubWindows:
             try:
                 # ── B1: context A opens three, drags one, seats one ─────────
                 ctx_a, a, errors_a = self._page(browser, 1440, onboard=True)
-                for name in H_THREE:
-                    open_chair_window(a, name)
+                # Capture first (dragged), then Needs you, then Meetings in
+                # front, which he iconifies.
+                _h_open(a, "Capture")
                 a.wait_for_timeout(500)
-                _h_drag(a, ".desk-window-shell[aria-label='Brief'] .desk-pullout-title", -160, 70)
+                _h_drag(a, ".desk-window-shell[aria-label='Capture'] .desk-pullout-title", -160, 70)
                 a.wait_for_timeout(400)
-                _h_to_front(a, "The week")
+                _h_open(a, "Needs you")
+                _h_open(a, "Meetings")
+                a.wait_for_timeout(300)
                 _h_window_menu(a, "Iconify")
                 rows = _h_until(lambda: self._rows(a), lambda r: (
-                    set(H_IDS.values()) <= set(r) and r["chair:week"]["minimized"] and r["chair:brief"]["arranged"]))
+                    set(H_IDS.values()) <= set(r) and r["surface-meetings"]["minimized"] and r["chair:capture"]["arranged"]))
                 if not set(H_IDS.values()) <= set(rows):
                     fails["B1 the hub holds the three windows"] = sorted(rows)
                 else:
-                    if not rows["chair:week"]["minimized"]:
-                        fails["B1 The week is seated on the hub"] = rows["chair:week"]
-                    brief = rows["chair:brief"]
-                    if not brief["arranged"] or not all(isinstance(brief[k], str) and "%" in brief[k] for k in "xywh"):
-                        fails["B1 Brief's rect is share+px on the hub"] = brief
+                    if not rows["surface-meetings"]["minimized"]:
+                        fails["B1 Meetings is seated on the hub"] = rows["surface-meetings"]
+                    capture = rows["chair:capture"]
+                    if not capture["arranged"] or not all(isinstance(capture[k], str) and "%" in capture[k] for k in "xywh"):
+                        fails["B1 Capture's rect is share+px on the hub"] = capture
                 (H_SHOTS / "hub-rows.json").write_text(json.dumps(
                     _api(a, "GET", "/api/desk/windows", token=H_TOKEN), indent=2) + "\n")
                 wins_a = _h_wins(a)
@@ -1131,19 +1150,19 @@ class TestHubWindows:
 
                 # ── B2: context B, a fresh load, shows the same desk ────────
                 ctx_b, b, errors_b = self._page(browser, 1440)
-                wins_b = _h_until(lambda: _h_wins(b), lambda w: {"Brief", "Needs you"} <= set(w))
-                if not {"Brief", "Needs you"} <= set(wins_b):
+                wins_b = _h_until(lambda: _h_wins(b), lambda w: {"Capture", "Needs you"} <= set(w))
+                if not {"Capture", "Needs you"} <= set(wins_b):
                     fails["B2 B shows the open windows"] = sorted(wins_b)
-                if "The week" in wins_b:
-                    fails["B2 The week is seated in B (not on the glass)"] = wins_b["The week"]
-                if "Brief" in wins_a and "Brief" in wins_b and wins_a["Brief"]["rect"] != wins_b["Brief"]["rect"]:
-                    fails["B2 Brief at the same rect in A and B"] = {"A": wins_a["Brief"]["rect"], "B": wins_b["Brief"]["rect"]}
+                if "Meetings" in wins_b:
+                    fails["B2 Meetings is seated in B (not on the glass)"] = wins_b["Meetings"]
+                if "Capture" in wins_a and "Capture" in wins_b and wins_a["Capture"]["rect"] != wins_b["Capture"]["rect"]:
+                    fails["B2 Capture at the same rect in A and B"] = {"A": wins_a["Capture"]["rect"], "B": wins_b["Capture"]["rect"]}
                 fronts = {label: [n for n, w in wins.items() if w["plane"] == "front"]
                           for label, wins in (("A", wins_a), ("B", wins_b))}
                 if fronts["A"] != fronts["B"] or len(fronts["A"]) != 1:
                     fails["B2 one front, the same in A and B"] = fronts
                 cache_b = b.evaluate(H_CACHE_JS)
-                if "chair:week" not in cache_b["min"] or any(H_IDS[n] in cache_b["closed"] for n in H_THREE):
+                if "surface-meetings" not in cache_b["min"] or any(H_IDS[n] in cache_b["closed"] for n in H_THREE):
                     fails["B2 B's cache is the hub's rows"] = cache_b
                 b.screenshot(path=str(H_SHOTS / "1440-B.png"))
                 _h_side_by_side(browser, H_SHOTS / "1440-A.png", H_SHOTS / "1440-B.png", H_SHOTS / "1440-A-and-B.png")
@@ -1165,16 +1184,16 @@ class TestHubWindows:
                 owner = Principal(PrincipalKind.OWNER, "philo16-owner")
                 a_before, b_before = len(a.hub_writes), len(b.hub_writes)
                 mcp_tools.dispatch("desk_window.arrange", {"rects": {
-                    "chair:brief": {"x": "-1/2", "y": "-1/2", "w": "1/2", "h": "100%"},
+                    "chair:capture": {"x": "-1/2", "y": "-1/2", "w": "1/2", "h": "100%"},
                     "chair:needs": {"x": "0%", "y": "-1/2", "w": "1/2", "h": "100%"},
                 }}, owner)
                 band = a.evaluate(H_BAND_JS)
                 half = band["w"] / 2
 
                 def tiled(w: dict[str, Any]) -> bool:
-                    if "Brief" not in w or "Needs you" not in w:
+                    if "Capture" not in w or "Needs you" not in w:
                         return False
-                    bx, _, bw, _ = w["Brief"]["rect"]
+                    bx, _, bw, _ = w["Capture"]["rect"]
                     nx, _, nw, _ = w["Needs you"]["rect"]
                     return abs(bx - band["x"]) <= 2 and abs(bw - half) <= 3 and abs(nx - (band["x"] + half)) <= 3
 
@@ -1194,22 +1213,23 @@ class TestHubWindows:
 
                 # ── B5: 393, a fresh load: the same set, the same seat ──────
                 ctx_c, c, errors_c = self._page(browser, 393)
-                cache_c = _h_until(lambda: c.evaluate(H_CACHE_JS), lambda v: "chair:week" in v["min"])
-                if "chair:week" not in cache_c["min"] or any(H_IDS[n] in cache_c["closed"] for n in H_THREE):
+                cache_c = _h_until(lambda: c.evaluate(H_CACHE_JS), lambda v: "surface-meetings" in v["min"])
+                if "surface-meetings" not in cache_c["min"] or any(H_IDS[n] in cache_c["closed"] for n in H_THREE):
                     fails["B5 393 holds the hub's set and seat"] = cache_c
                 c.locator(".desk-verbbar-item[data-menu-id='go'] button").click()
                 c.locator(".desk-verbbar-menu").wait_for()
                 checked = {}
-                for name in ("The week", "Needs you"):
+                for name in ("Capture", "Needs you"):
                     row = c.locator(f".desk-menu-list [role='menuitemcheckbox']:has-text('{name}')").first
                     checked[name] = row.get_attribute("aria-checked") if row.count() else None
                 if any(value != "true" for value in checked.values()):
                     fails["B5 393 Go lists the open Chair windows"] = checked
-                # Phone Brief is a command into Today's Brief view, rather
-                # than the desktop Chair window's open/closed checkbox.
-                brief_door = c.locator(".desk-verbbar-menu").get_by_role("menuitem", name="Brief", exact=True)
-                if not brief_door.count() or not brief_door.is_enabled():
-                    fails["B5 393 Go offers Brief in Today"] = brief_door.count()
+                # Betterment daily D5: Brief and The week are part of Today;
+                # Go offers neither, and Today is its own row.
+                go_menu = c.locator(".desk-verbbar-menu")
+                retired = [n for n in ("Brief", "The week") if go_menu.locator(".desk-menu-label", has_text=re.compile(rf"^{n}$")).count()]
+                if retired or not go_menu.get_by_role("menuitem", name="Today", exact=True).count():
+                    fails["B5 393 Go offers Today, not Brief or The week"] = retired
                 c.screenshot(path=str(H_SHOTS / "393-C-go-chair.png"))
                 c.keyboard.press("Escape")
 
@@ -1790,8 +1810,12 @@ class TestCloseMeansGone:
                     assert head
                     TestThePhoneDesk._long_press(page, head["x"] + head["width"] / 2, head["y"] + head["height"] / 2)
                     window_menu = page.get_by_role("menu", name=f"{CLOSE_DECISION} window menu", exact=True)
-                    self._press(page, window_menu.get_by_role("menuitem", name="Object", exact=True), width)
                     object_menu = page.get_by_role("menu", name="Object submenu", exact=True)
+                    # Betterment daily D5: the phone's window menu is shorter
+                    # (no Brief, no The week in the ring), so the finger that
+                    # held the head can lift on the Object row and open it.
+                    if not object_menu.count():
+                        self._press(page, window_menu.get_by_role("menuitem", name="Object", exact=True), width)
                     self._press(page, object_menu.get_by_role("menuitem", name="Open", exact=True), width)
                     _close_control(page, width, CLOSE_DECISION).wait_for()
                     assert decision.count() == 1, "Object Open duplicated the existing decision"
@@ -1841,38 +1865,26 @@ class TestCloseMeansGone:
                     status=500, body='{"detail":"injected"}', content_type="application/json"))
                 page.reload(wait_until="load")
                 _normal_chair(page)
-                if width < 720:
-                    open_chair_window(page, "Brief")
-                    # Betterment D4: the brief is Today's Since-yesterday
-                    # fold; a failed read is its one line and Retry.
-                    brief = chair_window(page, "Brief").get_by_test_id("today-since-failed").filter(visible=True)
-                    retry = brief.get_by_role("button", name="Retry", exact=True)
-                    retry.wait_for()
-                    proof = self._close_and_prove(page, width, "Today", "j1-retry")
-                    # Closing leaves no stale pane over the next owner's
-                    # action. Go reopens Brief; its visible Retry performs
-                    # the successful read in that exact canonical host.
-                    go = page.locator(".desk-verbbar-item[data-menu-id='go'] button")
-                    self._press(page, go, width)
-                    self._press(page, page.get_by_role("menu", name="Go menu").get_by_role("menuitem", name="Brief", exact=True), width)
-                    retry.wait_for()
-                    page.unroute("**/api/brief/latest*")
-                    with page.expect_response(lambda response: "/api/brief/latest" in response.url and response.status == 200):
-                        self._press(page, retry, width)
-                    retry.wait_for(state="detached", timeout=10_000)
-                    since = chair_window(page, "Brief").get_by_test_id("today-since").filter(visible=True)
-                    since.wait_for()
-                    result = since.inner_text()[:200]
-                else:
-                    retry = page.get_by_test_id("arrival-brief-retry")
-                    retry.wait_for()
-                    self._press(page, page.locator(".desk-dock-launch[aria-label^='Today']"), width)
-                    _close_control(page, width, "Today").wait_for()
-                    page.unroute("**/api/brief/latest*")
-                    proof = self._close_and_prove(page, width, "Today", "j1-retry")
+                # Betterment D4: the brief is Today's Since-yesterday fold; a
+                # failed read is its one line and Retry. D5: at both widths
+                # (the Brief window retired into Today).
+                open_chair_window(page, "Brief")
+                brief = chair_window(page, "Brief").get_by_test_id("today-since-failed").filter(visible=True)
+                retry = brief.get_by_role("button", name="Retry", exact=True)
+                retry.wait_for()
+                proof = self._close_and_prove(page, width, "Today", "j1-retry")
+                # Closing leaves no stale pane over the next owner's action.
+                # Go reopens Today; its visible Retry performs the successful
+                # read in that exact canonical host.
+                open_chair_window(page, "Brief")
+                retry.wait_for()
+                page.unroute("**/api/brief/latest*")
+                with page.expect_response(lambda response: "/api/brief/latest" in response.url and response.status == 200):
                     self._press(page, retry, width)
-                    retry.wait_for(state="detached", timeout=10_000)
-                    result = page.get_by_test_id("arrival-brief").first.inner_text()[:200]
+                retry.wait_for(state="detached", timeout=10_000)
+                since = chair_window(page, "Brief").get_by_test_id("today-since").filter(visible=True)
+                since.wait_for()
+                result = since.inner_text()[:200]
                 _settle(page)
                 page.screenshot(path=str(CLOSE_SHOTS / f"j1-retry-reached-{width}.png"))
                 (CLOSE_SHOTS / f"j1-retry-{width}.txt").write_text(f"{proof}\nafter Retry: {result!r}\n")

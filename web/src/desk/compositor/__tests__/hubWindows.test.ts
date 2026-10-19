@@ -44,7 +44,7 @@ beforeAll(() => {
   }
 });
 const REGISTRY = {
-  static: { "chair:needs": "chair", "chair:brief": "chair", "chair:week": "chair", "chair:capture": "chair", lane: "lane", conductor: "conductor",
+  static: { "chair:needs": "chair", "chair:brief": "chair", "chair:week": "chair", "chair:capture": "chair", "drawer:parked": "drawer", lane: "lane", conductor: "conductor",
     "surface-project-memory": "surface", "surface-calendar-snapshot": "surface", "surface-concierge": "open-concierge" },
   families: { "zone:": "zone", "drawer:project:": "drawer", "pullout:": "pullout" },
   retired: { zone: "no face", "surface-concierge": "Settings owns Engines", "open-concierge": "Settings owns Engines" },
@@ -140,7 +140,7 @@ beforeEach(() => {
     panelZoom: {}, windowsById: {}, zoneWindows: [], pullouts: [],
   });
   useChairWindows.setState({
-    closed: { "chair:needs": true, "chair:brief": true, "chair:week": true, "chair:capture": true },
+    closed: { "chair:needs": true, "chair:capture": true },
     phone: "",
   });
   useDrawers.setState({ drawers: [], infos: [], parked: null });
@@ -168,7 +168,7 @@ function start(rows: HubWindowRow[], adopted = true, cacheOpen: string[] = [], b
   return { fake, hub: seeded };
 }
 
-const CHAIR = ["chair:brief", "chair:week", "chair:needs"];
+const CHAIR = ["chair:capture", "drawer:parked", "chair:needs"];
 
 describe("hubWindows", () => {
   // PHILO-17 (mainreds3, Astra r1): a hub open is passive. The real Conductor
@@ -178,14 +178,14 @@ describe("hubWindows", () => {
     __resetConductor();
     const { hub } = start([
       row("conductor", { app: "conductor", depth: 3, minimized: true }),
-      row("chair:brief", { depth: 5 }),
+      row("chair:capture", { depth: 5 }),
     ]);
     await hub.start();
     await flush(hub);
     await new Promise((r) => setTimeout(r, 0));
     expect(useConductor.getState().open).toBe(true);
     expect(useDesk.getState().panelMin).toContain("conductor");
-    expect(order(["conductor", "chair:brief"])).toEqual(["conductor", "chair:brief"]);
+    expect(order(["conductor", "chair:capture"])).toEqual(["conductor", "chair:capture"]);
   });
 
   // PHILO-17 (the desk sweep, needs-393; Astra r1 on #1108): the phone draws
@@ -222,7 +222,7 @@ describe("hubWindows", () => {
 
     it("takes it from a phone window that is closed", async () => {
       phoneWidth(true);
-      useChairWindows.setState({ phone: "chair:brief" }); // closed in beforeEach
+      useChairWindows.setState({ phone: "chair:capture" }); // closed in beforeEach
       const { fake, hub } = start([]);
       await hub.start();
       await hubOpensNeeds(fake, hub);
@@ -265,13 +265,13 @@ describe("hubWindows", () => {
 
     it("waits behind the Chair window the phone shows: the ring keeps it", async () => {
       phoneWidth(true);
-      useChairWindows.setState((s) => ({ phone: "chair:brief", closed: { ...s.closed, "chair:brief": false } }));
-      const { fake, hub } = start([row("chair:brief", { depth: 2, revision: 2 })]);
+      useChairWindows.setState((s) => ({ phone: "chair:capture", closed: { ...s.closed, "chair:capture": false } }));
+      const { fake, hub } = start([row("chair:capture", { depth: 2, revision: 2 })]);
       await hub.start();
       await hubOpensNeeds(fake, hub);
       expect(useChairWindows.getState().closed["chair:needs"]).toBe(false);
-      expect(useChairWindows.getState().phone).toBe("chair:brief");
-      expect(front()).toBe("chair:brief");
+      expect(useChairWindows.getState().phone).toBe("chair:capture");
+      expect(front()).toBe("chair:capture");
     });
 
     it("comes to the front when the window it waited behind closes", async () => {
@@ -299,48 +299,48 @@ describe("hubWindows", () => {
 
   it("seeds the desk from the hub's rows: open, order, seat, rect as share+px", async () => {
     const { hub } = start([
-      row("chair:brief", { depth: 4, arranged: true, x: "-1/2", y: "-1/2", w: "1/2", h: "100%" }),
-      row("chair:week", { depth: 7, minimized: true }),
+      row("chair:capture", { depth: 4, arranged: true, x: "-1/2", y: "-1/2", w: "1/2", h: "100%" }),
+      row("drawer:parked", { depth: 7, minimized: true }),
       row("chair:needs", { depth: 9 }),
     ]);
     await hub.start();
     const s = useDesk.getState();
-    expect(useChairWindows.getState().closed["chair:brief"]).toBe(false);
-    expect(useChairWindows.getState().closed["chair:week"]).toBe(false);
-    expect(order(CHAIR)).toEqual(["chair:brief", "chair:week", "chair:needs"]);
-    expect(s.panelMin).toContain("chair:week");
+    expect(useChairWindows.getState().closed["chair:capture"]).toBe(false);
+    expect(useDrawers.getState().parked).not.toBeNull();
+    expect(order(CHAIR)).toEqual(["chair:capture", "drawer:parked", "chair:needs"]);
+    expect(s.panelMin).toContain("drawer:parked");
     // "-1/2" of the band from its centre is its left edge; "1/2" is half its width.
-    expect(s.panelRects["chair:brief"]).toEqual({ x: 10, y: 38, w: 710, h: 772 });
-    expect(s.panelSaved).toContain("chair:brief");
+    expect(s.panelRects["chair:capture"]).toEqual({ x: 10, y: 38, w: 710, h: 772 });
+    expect(s.panelSaved).toContain("chair:capture");
     // The cache is overwritten by the hub's rows (the next first paint).
     const cached = JSON.parse(localStorage.getItem(DESK_WORKSPACE_STORAGE_KEY) || "{}");
-    expect(orderFromDepth(cached.panel.depth)).toEqual(["chair:brief", "chair:week", "chair:needs"]);
-    expect(cached.panel.min).toContain("chair:week");
+    expect(orderFromDepth(cached.panel.depth)).toEqual(["chair:capture", "drawer:parked", "chair:needs"]);
+    expect(cached.panel.min).toContain("drawer:parked");
   });
 
   it("a raise shows at once, holds while in flight, then follows the hub", async () => {
-    const { fake, hub } = start([row("chair:brief", { depth: 1 }), row("chair:week", { depth: 2 })]);
+    const { fake, hub } = start([row("chair:capture", { depth: 1 }), row("drawer:parked", { depth: 2 })]);
     await hub.start();
     const answer = deferred<HubWindowRow>();
     fake.answers.push(() => answer.promise);
-    useDesk.getState().focusPanel("chair:brief");
-    expect(useDesk.getState().panelOrder.at(-1)).toBe("chair:brief"); // at once
+    useDesk.getState().focusPanel("chair:capture");
+    expect(useDesk.getState().panelOrder.at(-1)).toBe("chair:capture"); // at once
     await Promise.resolve();
     await Promise.resolve();
-    expect(fake.calls).toEqual([{ verb: "raise", id: "chair:brief", body: { expected_revision: 1 } }]);
-    expect(hub.presentations.pending("chair:brief")).toBe(1);
-    answer.resolve(row("chair:brief", { depth: 40, revision: 2 }));
+    expect(fake.calls).toEqual([{ verb: "raise", id: "chair:capture", body: { expected_revision: 1 } }]);
+    expect(hub.presentations.pending("chair:capture")).toBe(1);
+    answer.resolve(row("chair:capture", { depth: 40, revision: 2 }));
     await flush(hub);
-    expect(hub.presentations.pending("chair:brief")).toBe(0);
-    expect(order(["chair:brief", "chair:week"])).toEqual(["chair:week", "chair:brief"]);
-    expect(hub.rows.get("chair:brief")?.revision).toBe(2);
+    expect(hub.presentations.pending("chair:capture")).toBe(0);
+    expect(order(["chair:capture", "drawer:parked"])).toEqual(["drawer:parked", "chair:capture"]);
+    expect(hub.rows.get("chair:capture")?.revision).toBe(2);
   });
 
   it("sends rects as share+px against this view, never pixels", async () => {
-    const { fake, hub } = start([row("chair:brief", { depth: 1 })]);
+    const { fake, hub } = start([row("chair:capture", { depth: 1 })]);
     await hub.start();
     const rect = { x: 300, y: 120, w: 640, h: 480 };
-    useDesk.getState().setPanelRect("chair:brief", rect, true);
+    useDesk.getState().setPanelRect("chair:capture", rect, true);
     await flush(hub);
     const sent = fake.calls.find((c) => c.verb === "set_geometry");
     expect(sent?.body.rect).toEqual(record(rect, VIEW));
@@ -351,51 +351,51 @@ describe("hubWindows", () => {
   });
 
   it("two rects in one change are ONE arrange request", async () => {
-    const { fake, hub } = start([row("chair:brief", { depth: 1 }), row("chair:week", { depth: 2 })]);
+    const { fake, hub } = start([row("chair:capture", { depth: 1 }), row("drawer:parked", { depth: 2 })]);
     await hub.start();
     useDesk.setState({
-      panelRects: { "chair:brief": { x: 10, y: 38, w: 710, h: 772 }, "chair:week": { x: 720, y: 38, w: 710, h: 772 } },
-      panelSaved: ["chair:brief", "chair:week"],
+      panelRects: { "chair:capture": { x: 10, y: 38, w: 710, h: 772 }, "drawer:parked": { x: 720, y: 38, w: 710, h: 772 } },
+      panelSaved: ["chair:capture", "drawer:parked"],
     });
-    useDesk.getState().setPanelRect("chair:week", { x: 720, y: 38, w: 710, h: 772 }, true);
+    useDesk.getState().setPanelRect("drawer:parked", { x: 720, y: 38, w: 710, h: 772 }, true);
     await flush(hub);
     expect(fake.transport.arrange).toHaveBeenCalledTimes(1);
     expect(fake.calls.filter((c) => c.verb === "set_geometry")).toEqual([]);
   });
 
   it("a 409 re-reads and follows the hub's row", async () => {
-    const { fake, hub } = start([row("chair:brief", { depth: 1 }), row("chair:week", { depth: 2 })]);
+    const { fake, hub } = start([row("chair:capture", { depth: 1 }), row("drawer:parked", { depth: 2 })]);
     await hub.start();
     fake.answers.push(async () => {
       // Another client moved and raised the window first.
       fake.state.windows = [
-        row("chair:week", { depth: 2 }),
-        row("chair:brief", { depth: 5, revision: 3, arranged: true, x: "0%", y: "-1/2", w: "1/2", h: "100%" }),
+        row("drawer:parked", { depth: 2 }),
+        row("chair:capture", { depth: 5, revision: 3, arranged: true, x: "0%", y: "-1/2", w: "1/2", h: "100%" }),
       ];
       throw new ApiError(409, "window_stale", { error: "window_stale" });
     });
-    useDesk.getState().setPanelRect("chair:brief", { x: 100, y: 100, w: 300, h: 300 }, true);
+    useDesk.getState().setPanelRect("chair:capture", { x: 100, y: 100, w: 300, h: 300 }, true);
     await flush(hub);
     expect(fake.transport.list).toHaveBeenCalledTimes(2);
-    expect(useDesk.getState().panelRects["chair:brief"]).toEqual({ x: 720, y: 38, w: 710, h: 772 });
-    expect(order(["chair:brief", "chair:week"])).toEqual(["chair:week", "chair:brief"]);
-    expect(hub.rows.get("chair:brief")?.revision).toBe(3);
+    expect(useDesk.getState().panelRects["chair:capture"]).toEqual({ x: 720, y: 38, w: 710, h: 772 });
+    expect(order(["chair:capture", "drawer:parked"])).toEqual(["drawer:parked", "chair:capture"]);
+    expect(hub.rows.get("chair:capture")?.revision).toBe(3);
   });
 
   it("another client's frame re-seeds the changed ids: a raise, a seat, a close", async () => {
     const { fake, hub } = start([
-      row("chair:brief", { depth: 1 }), row("chair:week", { depth: 2 }), row("chair:needs", { depth: 3 }),
+      row("chair:capture", { depth: 1 }), row("drawer:parked", { depth: 2 }), row("chair:needs", { depth: 3 }),
     ]);
     await hub.start();
-    fake.state.windows = [row("chair:week", { depth: 2, minimized: true, revision: 5 }), row("chair:brief", { depth: 4, revision: 6 })];
+    fake.state.windows = [row("drawer:parked", { depth: 2, minimized: true, revision: 5 }), row("chair:capture", { depth: 4, revision: 6 })];
     hub.onFrame({
-      kind: "windows", id: "chair:brief", op: "raise",
-      changes: [{ kind: "windows", id: "chair:brief" }, { kind: "windows", id: "chair:week" }, { kind: "windows", id: "chair:needs" }],
+      kind: "windows", id: "chair:capture", op: "raise",
+      changes: [{ kind: "windows", id: "chair:capture" }, { kind: "windows", id: "drawer:parked" }, { kind: "windows", id: "chair:needs" }],
     });
     await flush(hub);
     const s = useDesk.getState();
-    expect(order(CHAIR)).toEqual(["chair:week", "chair:brief"]);
-    expect(s.panelMin).toContain("chair:week");
+    expect(order(CHAIR)).toEqual(["drawer:parked", "chair:capture"]);
+    expect(s.panelMin).toContain("drawer:parked");
     expect(useChairWindows.getState().closed["chair:needs"]).toBe(true);
     expect(s.panelDepth).not.toHaveProperty("chair:needs");
     // Following another client sends nothing back.
@@ -403,76 +403,76 @@ describe("hubWindows", () => {
   });
 
   it("an id with a request in flight is not clobbered by a frame", async () => {
-    const { fake, hub } = start([row("chair:brief", { depth: 1 }), row("chair:week", { depth: 2 })]);
+    const { fake, hub } = start([row("chair:capture", { depth: 1 }), row("drawer:parked", { depth: 2 })]);
     await hub.start();
     const answer = deferred<HubWindowRow>();
     fake.answers.push(() => answer.promise);
-    useDesk.getState().focusPanel("chair:brief");
+    useDesk.getState().focusPanel("chair:capture");
     await Promise.resolve();
     await Promise.resolve();
     // A frame arrives naming both, from before the raise landed.
-    fake.state.windows = [row("chair:brief", { depth: 1 }), row("chair:week", { depth: 2, minimized: true, revision: 2 })];
-    hub.onFrame({ kind: "windows", id: "chair:week", changes: [{ kind: "windows", id: "chair:brief" }, { kind: "windows", id: "chair:week" }] });
+    fake.state.windows = [row("chair:capture", { depth: 1 }), row("drawer:parked", { depth: 2, minimized: true, revision: 2 })];
+    hub.onFrame({ kind: "windows", id: "drawer:parked", changes: [{ kind: "windows", id: "chair:capture" }, { kind: "windows", id: "drawer:parked" }] });
     await Promise.resolve();
     await Promise.resolve();
     await Promise.resolve();
-    expect(order(["chair:brief", "chair:week"])).toEqual(["chair:week", "chair:brief"]); // held on top
-    expect(useDesk.getState().panelMin).toContain("chair:week"); // the other id follows
-    answer.resolve(row("chair:brief", { depth: 9, revision: 3 }));
+    expect(order(["chair:capture", "drawer:parked"])).toEqual(["drawer:parked", "chair:capture"]); // held on top
+    expect(useDesk.getState().panelMin).toContain("drawer:parked"); // the other id follows
+    answer.resolve(row("chair:capture", { depth: 9, revision: 3 }));
     await flush(hub);
-    expect(order(["chair:brief", "chair:week"])).toEqual(["chair:week", "chair:brief"]);
-    expect(hub.rows.get("chair:brief")?.revision).toBe(3);
+    expect(order(["chair:capture", "drawer:parked"])).toEqual(["drawer:parked", "chair:capture"]);
+    expect(hub.rows.get("chair:capture")?.revision).toBe(3);
   });
 
   it("M1: a delayed read older than a settled write is dropped", async () => {
-    const { fake, hub } = start([row("chair:brief", { depth: 1, revision: 1 })]);
+    const { fake, hub } = start([row("chair:capture", { depth: 1, revision: 1 })]);
     await hub.start();
     // A read leaves while revision 2 is current, and answers late.
     const late = deferred<HubWindowList>();
-    const rev2 = row("chair:brief", { depth: 1, revision: 2, arranged: true, x: "-1/2", y: "-1/2", w: "1/2", h: "100%" });
+    const rev2 = row("chair:capture", { depth: 1, revision: 2, arranged: true, x: "-1/2", y: "-1/2", w: "1/2", h: "100%" });
     (fake.transport.list as ReturnType<typeof vi.fn>).mockImplementationOnce(() => late.promise);
-    hub.onFrame({ kind: "windows", id: "chair:brief", changes: [{ kind: "windows", id: "chair:brief" }] });
+    hub.onFrame({ kind: "windows", id: "chair:capture", changes: [{ kind: "windows", id: "chair:capture" }] });
     // This view's own move settles at revision 3.
-    fake.answers.push(async () => row("chair:brief", { depth: 1, revision: 3, arranged: true, x: "0%", y: "-1/2", w: "1/2", h: "100%" }));
-    useDesk.getState().setPanelRect("chair:brief", { x: 720, y: 38, w: 710, h: 772 }, true);
+    fake.answers.push(async () => row("chair:capture", { depth: 1, revision: 3, arranged: true, x: "0%", y: "-1/2", w: "1/2", h: "100%" }));
+    useDesk.getState().setPanelRect("chair:capture", { x: 720, y: 38, w: 710, h: 772 }, true);
     for (let i = 0; i < 30; i += 1) await Promise.resolve(); // the write settles; the read is still out
-    expect(hub.rows.get("chair:brief")?.revision).toBe(3);
+    expect(hub.rows.get("chair:capture")?.revision).toBe(3);
     late.resolve({ windows: [rev2], stage_shelf: "left", revision: 2, adopted: true, registry: REGISTRY });
     await flush(hub);
-    expect(useDesk.getState().panelRects["chair:brief"]).toEqual({ x: 720, y: 38, w: 710, h: 772 });
-    expect(hub.rows.get("chair:brief")?.revision).toBe(3);
+    expect(useDesk.getState().panelRects["chair:capture"]).toEqual({ x: 720, y: 38, w: 710, h: 772 });
+    expect(hub.rows.get("chair:capture")?.revision).toBe(3);
     const cached = JSON.parse(localStorage.getItem(DESK_WORKSPACE_STORAGE_KEY) || "{}");
-    expect(cached.panel.rects["chair:brief"]).toEqual({ x: 720, y: 38, w: 710, h: 772 });
+    expect(cached.panel.rects["chair:capture"]).toEqual({ x: 720, y: 38, w: 710, h: 772 });
   });
 
   it("M2: an adopted empty desk stays empty; a stale cache opens nothing", async () => {
-    // This view's cache still has Brief open; on the hub it was closed.
-    useChairWindows.setState((s) => ({ closed: { ...s.closed, "chair:brief": false } }));
-    useDesk.setState({ panelDepth: { "chair:brief": 3 }, panelOrder: ["chair:brief"] });
-    const { fake, hub } = start([], true, ["chair:brief"]);
+    // This view's cache still has Capture open; on the hub it was closed.
+    useChairWindows.setState((s) => ({ closed: { ...s.closed, "chair:capture": false } }));
+    useDesk.setState({ panelDepth: { "chair:capture": 3 }, panelOrder: ["chair:capture"] });
+    const { fake, hub } = start([], true, ["chair:capture"]);
     fake.state.desk = 7;
     await hub.start();
     await flush(hub);
     expect(fake.calls).toEqual([]);
-    expect(useChairWindows.getState().closed["chair:brief"]).toBe(true);
-    expect(useDesk.getState().panelDepth).not.toHaveProperty("chair:brief");
+    expect(useChairWindows.getState().closed["chair:capture"]).toBe(true);
+    expect(useDesk.getState().panelDepth).not.toHaveProperty("chair:capture");
   });
 
   it("an open and a close here reach the hub; a hub never adopted takes this view's windows", async () => {
-    useChairWindows.setState((s) => ({ closed: { ...s.closed, "chair:brief": false } }));
-    useDesk.setState({ panelDepth: { "chair:brief": 3 }, panelOrder: ["chair:brief"] });
+    useChairWindows.setState((s) => ({ closed: { ...s.closed, "chair:capture": false } }));
+    useDesk.setState({ panelDepth: { "chair:capture": 3 }, panelOrder: ["chair:capture"] });
     const { fake, hub } = start([], false);
     await hub.start();
     await flush(hub);
-    expect(fake.calls.map((c) => [c.verb, c.id])).toEqual([["open", "chair:brief"]]);
-    useChairWindows.setState((s) => ({ closed: { ...s.closed, "chair:week": false } }));
-    useDesk.getState().focusPanel("chair:week");
+    expect(fake.calls.map((c) => [c.verb, c.id])).toEqual([["open", "chair:capture"]]);
+    useChairWindows.setState((s) => ({ closed: { ...s.closed, "chair:needs": false } }));
+    useDesk.getState().focusPanel("chair:needs");
     await flush(hub);
-    expect(fake.calls.map((c) => [c.verb, c.id]).slice(1)).toEqual([["open", "chair:week"]]);
-    useChairWindows.setState((s) => ({ closed: { ...s.closed, "chair:week": true } }));
-    useDesk.getState().retirePanel("chair:week");
+    expect(fake.calls.map((c) => [c.verb, c.id]).slice(1)).toEqual([["open", "chair:needs"]]);
+    useChairWindows.setState((s) => ({ closed: { ...s.closed, "chair:needs": true } }));
+    useDesk.getState().retirePanel("chair:needs");
     await flush(hub);
-    expect(fake.calls.map((c) => [c.verb, c.id]).at(-1)).toEqual(["close", "chair:week"]);
+    expect(fake.calls.map((c) => [c.verb, c.id]).at(-1)).toEqual(["close", "chair:needs"]);
   });
 
   it("M4: a Project drawer on the hub opens here through the drawer's own path", async () => {
@@ -488,68 +488,68 @@ describe("hubWindows", () => {
   });
 
   it("a window this view stacks alone keeps its place above the hub window it sat on", async () => {
-    // `inspector` is not on the hub (no row can open it); Brief was below it.
-    useDesk.setState({ panelDepth: { "chair:brief": 1, inspector: 50, "chair:week": 60 }, panelOrder: [] });
-    const { fake, hub } = start([row("chair:brief", { depth: 1 }), row("chair:week", { depth: 2 })]);
+    // `inspector` is not on the hub (no row can open it); Capture was below it.
+    useDesk.setState({ panelDepth: { "chair:capture": 1, inspector: 50, "drawer:parked": 60 }, panelOrder: [] });
+    const { fake, hub } = start([row("chair:capture", { depth: 1 }), row("drawer:parked", { depth: 2 })]);
     await hub.start();
-    expect(order(["chair:brief", "inspector", "chair:week"])).toEqual(["chair:brief", "inspector", "chair:week"]);
-    useDesk.getState().focusPanel("chair:brief");
+    expect(order(["chair:capture", "inspector", "drawer:parked"])).toEqual(["chair:capture", "inspector", "drawer:parked"]);
+    useDesk.getState().focusPanel("chair:capture");
     await flush(hub);
-    expect(fake.calls.map((c) => [c.verb, c.id])).toEqual([["raise", "chair:brief"]]);
-    expect(order(["chair:brief", "inspector", "chair:week"]).at(-1)).toBe("chair:brief");
+    expect(fake.calls.map((c) => [c.verb, c.id])).toEqual([["raise", "chair:capture"]]);
+    expect(order(["chair:capture", "inspector", "drawer:parked"]).at(-1)).toBe("chair:capture");
   });
 
   it("a window that leaves the stacking without closing is not sent back", async () => {
-    const { fake, hub } = start([row("chair:week", { depth: 2 }), row("chair:needs", { depth: 3 }), row("chair:brief", { depth: 4 })]);
+    const { fake, hub } = start([row("chair:needs", { depth: 2 }), row("chair:capture", { depth: 4 })]);
     await hub.start();
-    useDesk.getState().minimizePanel("chair:week");
-    useDesk.getState().retirePanel("chair:week"); // an iconified Chair window unmounts
+    useDesk.getState().minimizePanel("chair:needs");
+    useDesk.getState().retirePanel("chair:needs"); // an iconified Chair window unmounts
     await flush(hub);
-    expect(fake.calls.map((c) => [c.verb, c.id])).toEqual([["seat", "chair:week"]]);
-    expect(useChairWindows.getState().closed["chair:week"]).toBe(false);
+    expect(fake.calls.map((c) => [c.verb, c.id])).toEqual([["seat", "chair:needs"]]);
+    expect(useChairWindows.getState().closed["chair:needs"]).toBe(false);
   });
 
   it("two writes queued on one window carry the first answer's revision (no self-409)", async () => {
-    const { fake, hub } = start([row("chair:brief", { depth: 1, revision: 2 })]);
+    const { fake, hub } = start([row("chair:capture", { depth: 1, revision: 2 })]);
     await hub.start();
-    useDesk.getState().toggleMaximizePanel("chair:brief");
-    useDesk.getState().setPanelRect("chair:brief", { x: 100, y: 100, w: 300, h: 300 }, true);
+    useDesk.getState().toggleMaximizePanel("chair:capture");
+    useDesk.getState().setPanelRect("chair:capture", { x: 100, y: 100, w: 300, h: 300 }, true);
     await flush(hub);
     const sent = fake.calls.map((c) => [c.verb, c.body.expected_revision]);
     expect(sent).toEqual([["zoom", 2], ["set_geometry", 3]]);
     expect(fake.transport.list).toHaveBeenCalledTimes(1); // no 409 re-read
-    expect(useDesk.getState().panelSaved).toContain("chair:brief");
+    expect(useDesk.getState().panelSaved).toContain("chair:capture");
   });
 
   it("Astra r2 M1: a raced list never hides a live window for good", async () => {
-    // Her race: the first list was read at revision 1 without Brief (written
+    // Her race: the first list was read at revision 1 without Capture (written
     // at revision 1). The service now lists one snapshot; this view still
     // takes the real row at that revision when it arrives.
-    useChairWindows.setState((s) => ({ closed: { ...s.closed, "chair:brief": false } }));
-    useDesk.setState({ panelDepth: { "chair:brief": 1 }, panelOrder: ["chair:brief"] });
+    useChairWindows.setState((s) => ({ closed: { ...s.closed, "chair:capture": false } }));
+    useDesk.setState({ panelDepth: { "chair:capture": 1 }, panelOrder: ["chair:capture"] });
     const { fake, hub } = start([]);
     (fake.transport.list as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce({ windows: [], stage_shelf: "left", revision: 1, adopted: true, registry: REGISTRY })
-      .mockResolvedValue({ windows: [row("chair:brief", { depth: 1, revision: 1 })], stage_shelf: "left", revision: 1, adopted: true, registry: REGISTRY });
+      .mockResolvedValue({ windows: [row("chair:capture", { depth: 1, revision: 1 })], stage_shelf: "left", revision: 1, adopted: true, registry: REGISTRY });
     await hub.start();
-    hub.onFrame({ kind: "windows", id: "chair:brief" });
+    hub.onFrame({ kind: "windows", id: "chair:capture" });
     await flush(hub);
-    expect(useChairWindows.getState().closed["chair:brief"]).toBe(false);
-    expect(hub.rows.get("chair:brief")?.revision).toBe(1);
+    expect(useChairWindows.getState().closed["chair:capture"]).toBe(false);
+    expect(hub.rows.get("chair:capture")?.revision).toBe(1);
   });
 
   it("Astra r2 M2: a failed write returns to the hub's row at the same revision", async () => {
-    const { fake, hub } = start([row("chair:brief", { revision: 2, arranged: true, x: "-1/2", y: "-1/2", w: "1/2", h: "100%" })]);
+    const { fake, hub } = start([row("chair:capture", { revision: 2, arranged: true, x: "-1/2", y: "-1/2", w: "1/2", h: "100%" })]);
     await hub.start();
-    const before = useDesk.getState().panelRects["chair:brief"];
+    const before = useDesk.getState().panelRects["chair:capture"];
     fake.answers.push(async () => {
       throw new Error("write refused");
     });
-    useDesk.getState().setPanelRect("chair:brief", { x: 100, y: 100, w: 300, h: 300 }, true);
+    useDesk.getState().setPanelRect("chair:capture", { x: 100, y: 100, w: 300, h: 300 }, true);
     await flush(hub);
-    expect(useDesk.getState().panelRects["chair:brief"]).toEqual(before);
+    expect(useDesk.getState().panelRects["chair:capture"]).toEqual(before);
     const cached = JSON.parse(localStorage.getItem(DESK_WORKSPACE_STORAGE_KEY) || "{}");
-    expect(cached.panel.rects["chair:brief"]).toEqual(before);
+    expect(cached.panel.rects["chair:capture"]).toEqual(before);
   });
 
   it("Astra r2 M3: the agent lane follows on its launch, and re-targets", async () => {
@@ -609,18 +609,18 @@ describe("hubWindows", () => {
   });
 
   it("PHILO-17 U28: a row the hub holds unarranged keeps this view's seat on the glass", async () => {
-    useChairWindows.setState((st) => ({ closed: { ...st.closed, "chair:brief": false } }));
-    useDesk.setState({ panelDepth: { "chair:brief": 1 }, panelRects: { "chair:brief": { x: 150, y: 80, w: 500, h: 400 } },
-      panelSaved: ["chair:brief"] });
-    const { hub } = start([row("chair:brief", { depth: 1 })], true, ["chair:brief"]);
+    useChairWindows.setState((st) => ({ closed: { ...st.closed, "chair:capture": false } }));
+    useDesk.setState({ panelDepth: { "chair:capture": 1 }, panelRects: { "chair:capture": { x: 150, y: 80, w: 500, h: 400 } },
+      panelSaved: ["chair:capture"] });
+    const { hub } = start([row("chair:capture", { depth: 1 })], true, ["chair:capture"]);
     await hub.start();
     const s = useDesk.getState();
-    expect(s.panelSaved).not.toContain("chair:brief");
-    expect(s.panelRects["chair:brief"]).toEqual({ x: 150, y: 80, w: 500, h: 400 });
+    expect(s.panelSaved).not.toContain("chair:capture");
+    expect(s.panelRects["chair:capture"]).toEqual({ x: 150, y: 80, w: 500, h: 400 });
   });
 
   it("Astra r2 (glass B7): a window the hub opened here does not write its mount back", async () => {
-    const fake = fakeHub([row("chair:brief", { depth: 1 }), row("chair:week", { depth: 2 })]);
+    const fake = fakeHub([row("chair:capture", { depth: 1 }), row("drawer:parked", { depth: 2 })]);
     hub = createHubWindows({ transport: fake.transport, view: () => VIEW, compact: () => false, settleMs: 40 });
     await hub.start();
     await new Promise((r) => setTimeout(r, 60));
@@ -637,35 +637,35 @@ describe("hubWindows", () => {
   });
 
   it("the first seed keeps a window this load opened itself before the hub answered", async () => {
-    // The arrival opened Needs you; the cache had Brief open (stale). The
-    // hub holds neither: Brief closes, Needs you stays and goes to the hub.
-    useChairWindows.setState((s) => ({ closed: { ...s.closed, "chair:brief": false, "chair:needs": false } }));
-    useDesk.setState({ panelDepth: { "chair:brief": 1, "chair:needs": 2 }, panelOrder: ["chair:brief", "chair:needs"] });
-    const { fake, hub } = start([], true, ["chair:brief"]);
+    // The arrival opened Needs you; the cache had Capture open (stale). The
+    // hub holds neither: Capture closes, Needs you stays and goes to the hub.
+    useChairWindows.setState((s) => ({ closed: { ...s.closed, "chair:capture": false, "chair:needs": false } }));
+    useDesk.setState({ panelDepth: { "chair:capture": 1, "chair:needs": 2 }, panelOrder: ["chair:capture", "chair:needs"] });
+    const { fake, hub } = start([], true, ["chair:capture"]);
     fake.state.desk = 3;
     await hub.start();
     await flush(hub);
-    expect(useChairWindows.getState().closed["chair:brief"]).toBe(true);
+    expect(useChairWindows.getState().closed["chair:capture"]).toBe(true);
     expect(useChairWindows.getState().closed["chair:needs"]).toBe(false);
     expect(fake.calls.map((c) => [c.verb, c.id])).toEqual([["open", "chair:needs"]]);
   });
 
   it("a window this load raised before the hub answered stays in front", async () => {
-    // The cache had Brief over Week; a route raised Week before the seed.
-    useChairWindows.setState((s) => ({ closed: { ...s.closed, "chair:brief": false, "chair:week": false } }));
-    useDesk.setState({ panelDepth: { "chair:week": 1, "chair:brief": 2 }, panelOrder: ["chair:week", "chair:brief"] });
-    const boot = { "chair:week": 1, "chair:brief": 2 };
-    useDesk.getState().focusPanel("chair:week"); // the route's raise (before the hub answered)
+    // The cache had Capture over Needs you; a route raised Needs you before the seed.
+    useChairWindows.setState((s) => ({ closed: { ...s.closed, "chair:capture": false, "chair:needs": false } }));
+    useDesk.setState({ panelDepth: { "chair:needs": 1, "chair:capture": 2 }, panelOrder: ["chair:needs", "chair:capture"] });
+    const boot = { "chair:needs": 1, "chair:capture": 2 };
+    useDesk.getState().focusPanel("chair:needs"); // the route's raise (before the hub answered)
     const { fake, hub } = start(
-      [row("chair:week", { depth: 1 }), row("chair:brief", { depth: 2 })], true, ["chair:brief", "chair:week"], boot);
+      [row("chair:needs", { depth: 1 }), row("chair:capture", { depth: 2 })], true, ["chair:capture", "chair:needs"], boot);
     await hub.start();
     await flush(hub);
-    expect(order(["chair:brief", "chair:week"])).toEqual(["chair:brief", "chair:week"]);
-    expect(fake.calls.map((c) => [c.verb, c.id])).toEqual([["raise", "chair:week"]]);
+    expect(order(["chair:capture", "chair:needs"])).toEqual(["chair:capture", "chair:needs"]);
+    expect(fake.calls.map((c) => [c.verb, c.id])).toEqual([["raise", "chair:needs"]]);
   });
 
   it("a window frame is not a desk data change", () => {
-    expect(isWindowsOnlyFrame({ kind: "windows", id: "chair:brief", changes: [{ kind: "windows", id: "chair:brief" }] })).toBe(true);
+    expect(isWindowsOnlyFrame({ kind: "windows", id: "chair:capture", changes: [{ kind: "windows", id: "chair:capture" }] })).toBe(true);
     expect(isWindowsOnlyFrame({ kind: "note", id: "n1", changes: [{ kind: "note", id: "n1" }] })).toBe(false);
     expect(isWindowsOnlyFrame({ kind: "windows", id: "a", changes: [{ kind: "windows", id: "a" }, { kind: "note", id: "n" }] })).toBe(false);
     expect(isWindowsOnlyFrame({})).toBe(false);
@@ -728,5 +728,60 @@ describe("PHILO-17: retired zone windows", () => {
     expect(fake.calls.filter((call) => call.verb === "close" && call.id === "surface-concierge")).toHaveLength(1);
     expect(fake.state.windows.map((window) => window.id)).not.toContain("surface-concierge");
     expect(useDesk.getState().windowsById["surface-concierge"]).toBeUndefined();
+  });
+});
+
+// Betterment daily D5: Brief and The week retired into Today. A desk restored
+// with one of them open closes it on the hub and opens Today in its place,
+// once; nothing is refused and nothing loops.
+describe("Betterment daily D5: Brief and The week give way to Today", () => {
+  const todayOpens = () => {
+    const opens: string[] = [];
+    const real = useDesk.getState().openPullout;
+    useDesk.setState({ openPullout: ((id: string, ...rest: unknown[]) => {
+      opens.push(id);
+      return (real as (...a: unknown[]) => unknown)(id, ...rest);
+    }) as typeof real });
+    return opens;
+  };
+
+  it("a restored chair:week and chair:brief close on the hub and Today opens once", async () => {
+    const opens = todayOpens();
+    const { fake, hub } = start([
+      row("chair:week", { depth: 2, revision: 2 }),
+      row("chair:brief", { depth: 3, revision: 3 }),
+      row("chair:needs", { depth: 4, revision: 4 }),
+    ]);
+    await hub.start();
+    await flush(hub);
+    const closes = fake.calls.filter((c) => c.verb === "close").map((c) => c.id).sort();
+    expect(closes).toEqual(["chair:brief", "chair:week"]);
+    expect(fake.state.windows.map((w) => w.id)).not.toContain("chair:week");
+    expect(fake.state.windows.map((w) => w.id)).not.toContain("chair:brief");
+    expect(opens).toEqual(["intelligence:desk"]);
+    expect(Object.keys(useDesk.getState().panelDepth)).not.toContain("chair:week");
+    expect(hub.rows.has("chair:week")).toBe(false);
+    expect(useChairWindows.getState().closed["chair:needs"]).toBe(false);
+    // A later frame (another client re-reads) opens nothing again.
+    hub.onFrame({ kind: "windows", id: "chair:needs" });
+    await flush(hub);
+    expect(opens).toEqual(["intelligence:desk"]);
+  });
+
+  it("a hub that refuses the close does not open Today again on every read", async () => {
+    const opens = todayOpens();
+    const { fake, hub } = start([row("chair:week", { depth: 2, revision: 2 })]);
+    const verb = fake.transport.verb;
+    fake.transport.verb = vi.fn(async (id, v, body) => {
+      if (v === "close") {
+        fake.calls.push({ verb: v, id, body });
+        throw new ApiError(409, "window_stale", { error: "window_stale" });
+      }
+      return verb(id, v, body);
+    });
+    await hub.start();
+    for (let i = 0; i < 6; i += 1) await flush(hub);
+    expect(fake.calls.filter((c) => c.verb === "close")).toHaveLength(3);
+    expect(opens).toEqual(["intelligence:desk"]);
   });
 });

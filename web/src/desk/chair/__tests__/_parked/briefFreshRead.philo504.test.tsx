@@ -1,3 +1,7 @@
+// Parked by Betterment daily D5: this file tests the Chair's Brief or The week
+// window, retired into Today (the sections: chair/_parked/ArrivalSections.tsx).
+// Not run (vitest excludes _parked).
+
 /* PHILO-5-04 C2-C3 — a fresh Chair read owns the rendered receipt.
  *
  * The populated answer is a complete retained producer response. The null

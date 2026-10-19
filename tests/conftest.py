@@ -401,8 +401,9 @@ _launch_chromium_on_the_gpu()
 # PHILO-14 A1: the Chair is the screen of objects
 # ============================================================
 #
-# Board A-1 (ratified 2026-10-07): a fresh desk opens with the four Chair
-# windows (Needs you, Brief, The week, Capture) closed; the owner opens them
+# Board A-1 (ratified 2026-10-07): a fresh desk opens with the Chair
+# windows (Needs you, Capture; Betterment daily D5 retired Brief and The week
+# into Today) closed; the owner opens them
 # from the screen, the Dock or Window > Chair. A browser spec that reads a
 # Chair window's body declares `pytest.mark.chair_windows_open`: every
 # context and page it makes then starts with the four windows open (a stored
@@ -425,7 +426,7 @@ CHAIR_WINDOWS_OPEN_JS = """(() => { try {
   if (!/^https?:$/.test(location.protocol)) return;
   const token = new URLSearchParams(location.search).get("token") || localStorage.getItem("hs.web.token") || sessionStorage.getItem("hs.web.token");
   if (!token) return;
-  for (const id of ["chair:brief", "chair:week", "chair:capture", "chair:needs"]) {
+  for (const id of ["chair:capture", "chair:needs"]) {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", "/api/desk/windows/" + encodeURIComponent(id) + "/open", false);
     xhr.setRequestHeader("Authorization", "Bearer " + token);

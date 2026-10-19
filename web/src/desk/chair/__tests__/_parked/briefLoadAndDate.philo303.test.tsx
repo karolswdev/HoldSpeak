@@ -1,3 +1,7 @@
+// Parked by Betterment daily D5: this file tests the Chair's Brief or The week
+// window, retired into Today (the sections: chair/_parked/ArrivalSections.tsx).
+// Not run (vitest excludes _parked).
+
 /* PHILO-3-03 (A3) — the BRIEF section tells the truth about its read.
  *
  * The defect: the Chair's `GET /api/brief/latest` caught every failure as

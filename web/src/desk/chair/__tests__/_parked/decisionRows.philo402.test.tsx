@@ -1,3 +1,7 @@
+// Parked by Betterment daily D5: this file tests the Chair's Brief or The week
+// window, retired into Today (the sections: chair/_parked/ArrivalSections.tsx).
+// Not run (vitest excludes _parked).
+
 /* PHILO-4-02 — the Arrival puts the newest decision in its visible rows.
  *
  * The payload mirrors the API shape produced by the real brief producer,

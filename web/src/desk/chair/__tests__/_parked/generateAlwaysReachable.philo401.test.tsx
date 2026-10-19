@@ -1,3 +1,7 @@
+// Parked by Betterment daily D5: this file tests the Chair's Brief or The week
+// window, retired into Today (the sections: chair/_parked/ArrivalSections.tsx).
+// Not run (vitest excludes _parked).
+
 /* PHILO-4-01 — Generate is always reachable (ratified 2026-09-23, round six).
  *
  * The defect: the BRIEF section drew Ack and Defer but no Generate while a

@@ -1,3 +1,7 @@
+// Parked by Betterment daily D5: this file tests the Chair's Brief or The week
+// window, retired into Today (the sections: chair/_parked/ArrivalSections.tsx).
+// Not run (vitest excludes _parked).
+
 // HS-200-42 (counsel N1) — the Chair's meeting row stops being optimistic.
 //
 // A meeting whose server-side intel status is `queued` used to read QUEUED

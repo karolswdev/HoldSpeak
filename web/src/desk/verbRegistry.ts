@@ -829,7 +829,22 @@ export const VERBS: Verb[] = [
       arrangeBack();
     },
   },
-  // ── Window ▸ Chair (PHILO-13-11 C1, R1): the Chair's four windows, a
+  // ── Window ▸ Desk (Betterment daily D5): Today, then the Chair's own
+  // windows (Needs you, Capture). Brief and The week retired into Today. ──
+  {
+    id: "window.today",
+    label: "Today",
+    menu: "window",
+    scope: "window",
+    group: "chair",
+    submenu: "Desk",
+    palette: false,
+    keywords: ["today", "window"],
+    checked: () => useDesk.getState().pullouts.some((p) => p.id === "intelligence:desk"),
+    ghost: never,
+    run: () => openIntelligence({ view: "today" }),
+  },
+  // ── Window ▸ Chair (PHILO-13-11 C1, R1): the Chair's windows, a
   // check on each open one; picking one opens it in front. Only on the
   // Chair (its windows are not mounted on the Floor). ─────────────────────
   ...CHAIR_WINDOWS.map((w): Verb => ({

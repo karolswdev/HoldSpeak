@@ -96,21 +96,42 @@ def test_a_row_open_is_a_hub_window_on_top_and_in_front(hub: Any) -> None:
     listed = _http(base, "GET", "/api/desk/windows")
     assert [w["id"] for w in listed["windows"] if w["id"].startswith("chair:")] == []
 
-    # The week, then the 1:1 row's open: THAT person, in her own window, in front.
-    post("chair:week", "open")
+    # Needs you, then the 1:1 row's open: THAT person, in her own window, in front.
+    post("chair:needs", "open")
     person = f"pullout:people:{ids['priya']}"
     opened = post(person, "open")
     assert opened["front"] is True
     listed = _http(base, "GET", "/api/desk/windows")
     assert [w["id"] for w in listed["windows"] if w["front"]] == [person]
-    assert {w["id"] for w in listed["windows"]} == {"chair:week", person}
+    assert {w["id"] for w in listed["windows"]} == {"chair:needs", person}
 
     # A second open of the same person raises the one window; no second window.
-    post("chair:week", "raise")
+    post("chair:needs", "raise")
     again = post(person, "open")
     assert again["front"] is True
     listed = _http(base, "GET", "/api/desk/windows")
     assert [w["id"] for w in listed["windows"]].count(person) == 1
+
+
+def test_a_retired_brief_or_week_row_still_closes_on_the_hub(hub: Any) -> None:
+    """Betterment daily D5: Brief and The week retired into Today. A desk saved
+    with one open still holds its row; the hub keeps the ids so the browser's
+    close (web/src/desk/compositor/hubWindows.ts, then Today opens in its
+    place) is taken, and the list is clean after it."""
+    base, _ids = hub
+
+    def post(wid: str, verb: str) -> dict[str, Any]:
+        return _http(base, "POST", f"/api/desk/windows/{quote(wid, safe='')}/{verb}", {})
+
+    for wid in ("chair:brief", "chair:week"):
+        post(wid, "open")
+    listed = _http(base, "GET", "/api/desk/windows")
+    assert {w["id"] for w in listed["windows"]} >= {"chair:brief", "chair:week"}
+    assert listed["registry"]["static"]["chair:brief"] == "chair"
+    for wid in ("chair:brief", "chair:week"):
+        assert post(wid, "close")["closed"] is True
+    listed = _http(base, "GET", "/api/desk/windows")
+    assert not {w["id"] for w in listed["windows"]} & {"chair:brief", "chair:week"}
 
 
 # ── People: Add on "They owe you", then the saved item (Astra r1 on #1100) ──
