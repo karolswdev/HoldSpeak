@@ -1329,7 +1329,7 @@ FACTS = r"""() => {
     headline: text('[data-testid=room-headline]')[0] ?? null,
     head_chips: text('[data-testid=room-health-word], [data-testid=room-head-chips] > span'),
     needs_you: text('[data-testid=needs-you-row]'),
-    items_head: head('[data-section=items]'),
+    items_head: text('[data-testid=room-fold-plan] summary')[0] ?? head('[data-section=items]'),
     items_section_present: !!win.querySelector('[data-section=items] .surface-section, [data-section=items] section'),
     item_rows: text('[data-testid=item-row]'),
     item_titles: text('[data-testid=item-row] .room-row-title, [data-testid=item-row] .room-focus-title'),
@@ -1626,7 +1626,11 @@ class TestRoomFaceGlass:
                 room = _api(page, "GET", f"/api/projects/{pid}/room", token=RF_TOKEN)
                 first = self._facts(page)
                 _rf_shot(page, "items-late-first-view", width)
-                assert first["item_rows"], "the Room shows no item: the late milestone is not on the face"
+                assert first["items_head"] == "PLAN 5", first["items_head"]
+                plan = page.get_by_test_id("room-fold-plan").locator("details")
+                if not plan.evaluate("el => el.open"):
+                    plan.locator("summary").click()
+                page.get_by_test_id("item-row").first.wait_for(state="visible")
                 page.locator("[data-section=items]").scroll_into_view_if_needed()
                 page.wait_for_timeout(300)
                 facts = self._facts(page)
@@ -1640,7 +1644,7 @@ class TestRoomFaceGlass:
                 # date (TODAY between the past and the future), the undated
                 # after; the most late milestone on the LATE plate; plain pills.
                 rows = facts["item_rows"]
-                assert facts["items_head"] == "PLAN · 5", facts["items_head"]
+                assert facts["items_head"] == "PLAN 5", facts["items_head"]
                 assert facts["item_titles"] == ["Parallel run", "Cutover rehearsal", "Vendor shadow run",
                                                 "Ledger go-live", "Old ledger freeze slips"], facts["item_titles"]
                 assert "7 days late" in rows[1] and "Milestone" in rows[1] and "LATE" in rows[1]
@@ -1651,12 +1655,11 @@ class TestRoomFaceGlass:
                 assert facts["controls_in_items"] == 0
                 # Health and NEEDS YOU: the hub's, rendered (story 01's words).
                 assert room["health"]["assessment"] == "at_risk"
-                assert "At risk" in first["head_chips"], first["head_chips"]
+                assert first["headline"] == "At risk: Old ledger freeze slips", first["headline"]
                 # Muad'Dib's ruling 3 (2026-09-28): the canvas words on the face,
                 # the hub's words unchanged (test_the_late_words_are_the_canvas_words).
-                assert "1 MILESTONE LATE" in first["head_chips"], first["head_chips"]
-                # PHILO-13-03: the Room's own count names what it counts.
-                assert first["headline"] == "1 open here", first["headline"]
+                # The adopted Now head names the risk; the owed milestone
+                # retains its title and lateness in the Needs you row.
                 assert any("Cutover rehearsal" in r for r in first["needs_you"]), first["needs_you"]
                 assert facts["small_text_count"] == 0, facts["small_text"]
                 assert facts["raw_buttons"] == [], facts["raw_buttons"]
@@ -1669,6 +1672,9 @@ class TestRoomFaceGlass:
                 # A failed items read is UNAVAILABLE + Retry, never empty.
                 page.route("**/api/projects/*/items?*", lambda r: r.fulfill(status=503, body="{}"))
                 self._room(page, pid)
+                plan = page.get_by_test_id("room-fold-plan").locator("details")
+                if not plan.evaluate("el => el.open"):
+                    plan.locator("summary").click()
                 page.locator("[data-testid=items-unavailable]").wait_for(timeout=10_000)
                 page.locator("[data-section=items]").scroll_into_view_if_needed()
                 failed = self._facts(page)
@@ -1707,7 +1713,7 @@ class TestRoomFaceGlass:
                 room = _api(page, "GET", f"/api/projects/{pid}/room", token=RF_TOKEN)
                 page.locator("[data-testid=needs-you-why]").first.wait_for(timeout=T)
                 # The head's tokens (the same locator on the base and the branch).
-                reason = [t.strip() for t in page.locator("[data-testid=room-head-chips] > span").all_inner_texts()]
+                reason = page.get_by_test_id("room-headline").inner_text().strip()
                 why = [w.strip() for w in page.locator("[data-testid=needs-you-why]").all_inner_texts()]
                 _rf_record("late-words", width, {"hub_reason": room["health"]["reason"],
                                               "hub_why": [i["why"] for i in room["needsYou"]["items"]],
@@ -1715,7 +1721,8 @@ class TestRoomFaceGlass:
                 _rf_shot(page, "late-words", width)
                 assert room["health"]["reason"] == "1 OVERDUE"
                 assert [i["why"] for i in room["needsYou"]["items"]] == ["OVERDUE · 7 DAYS"]
-                assert "1 MILESTONE LATE" in reason and "1 OVERDUE" not in reason, reason
+                assert reason == "At risk: Cutover rehearsal is 7 days late", reason
+                assert "OVERDUE" not in reason
                 assert why == ["MILESTONE · 7 DAYS LATE"], why
                 assert not errors, errors
             finally:
@@ -2516,25 +2523,33 @@ class TestLateSectionsHoldStill(_Rig):
     def test_two_late_sections_land_below_each_other_393(self) -> None:
         from playwright.sync_api import sync_playwright
 
+        seeded = _http(self.base, "POST", "/api/projects/p-ledger/items", {
+            "item_type": "milestone", "title": "Verify the rollout",
+            "due_at": (date.today() + timedelta(days=14)).isoformat(),
+        })
+        assert seeded.get("item", {}).get("id"), seeded
         width = 393
         with sync_playwright() as pw:
             browser, page, errors = self._page(pw, width)
             try:
                 page.add_style_tag(content=STILL)
                 # The cap is 8 s after the Room's own read (~1 s after these
-                # holds start): FILES lands at ~10 s, SOURCES at ~11.5 s.
+                # holds start): PLAN lands at ~10 s, SOURCES at ~11.5 s.
+                # P3 parked Files; both active reads still exercise ordering.
                 _hold_in_page(page, r"/api/connections$", 11.5)
-                _hold_in_page(page, r"/api/projects/p-ledger/resources$", 10.0)
+                _hold_in_page(page, r"/api/projects/p-ledger/items(?:\?|$)", 10.0)
                 # Both late sections stand at the foot, below the fold at 393:
                 # every drawn row counts here, on screen or not.
                 room = self._open_room(page, width, 15000, anywhere=True)
                 _settle(page)
                 page.screenshot(path=str(PHONE_SHOTS / "room-two-late-393.png"))
                 (PHONE_SHOTS / "room-two-late-393.json").write_text(json.dumps(room, indent=1) + "\n")
-                verb = [r for r in room if r["name"] == "room-files-info"]
-                assert verb, [r["name"] for r in room]
-                assert verb[0]["at"] > 8000, verb  # FILES was late (drawn after the cap)
-                assert verb[0]["worst"] <= TOLERANCE, verb
+                plan = next((r for r in room if r["name"] == "room-fold-plan"), None)
+                sources = next((r for r in room if r["name"] == "room-fold-sources"), None)
+                assert plan and sources, [r["name"] for r in room]
+                assert 8000 < plan["at"] < sources["at"], (plan, sources)
+                assert plan["last"] < sources["last"], (plan, sources)
+                assert plan["worst"] <= TOLERANCE and sources["worst"] <= TOLERANCE, (plan, sources)
                 assert page.locator("#surface-project-memory [data-testid^='door-row-']").count()
                 assert not _moved(room), _moved(room)
                 assert not errors, errors
