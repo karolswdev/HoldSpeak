@@ -4,18 +4,26 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (P4 #1349 verified; delivery follows merge)
+**Last updated:** 2026-10-19 (note editor and uncertain-send regression recovery)
 
 ## Current phase
 
 **Betterment recovery: 78/117 recipe implementations merged.** Codex owns
 recovery and delivery at the owner's request. The desk is currently on
-backend `0a1b80414`, frontend `015ebf0bbd34af21`, PID 20782 (AG11).
+backend `f33270e06`, frontend `03f75c9d51aaedaf`, PID 32793 (P4).
 Four HTTP checks pass and the actual desk renders at 1440/393. These are
 delivery observations; owner acceptance remains separate. All three baseline non-browser
 regression shards passed: 16,784 checks, 27 skips and one expected failure.
 Remaining browser shards use the low-priority machine lock at
 `wt-betterment-tape-20261019`, pinned to `bd3acff8f`.
+
+Note regression recovery updates the browser checks to the adopted Q8 note
+window. The real saved body, direct footer verbs and keyboard focus ring are
+checked at 1440/393. The uncertain-send check now opens Send… from that footer;
+it still proves one send and one result after an uncertain response and retry.
+The two affected browser files pass 14 checks. The retired formatting-rail
+case is parked. This closes the six known browser failures in baseline shards
+one through three together with #1370; the remaining baseline shards are open.
 
 P4 #1349 puts Projects and Decisions in Go and offers Write update for the
 chosen project in Search. Project rows retain the Now state and reason;
@@ -26,7 +34,8 @@ checks passed 22 pytest and 47 web checks. Broad recovery checks passed
 8 checks. Browser recovery now opens Plan, checks the adopted Now head, and
 holds two populated active folds rather than the retired Files fold. Final
 quick check: 8 web, 36 browser, 110 sweep, 27 canon and 1,116 repo guards.
-The earlier affected non-browser checks passed unchanged. Delivery follows merge.
+The earlier affected non-browser checks passed unchanged. P4 is on the running
+desk; Projects is observed at 1440/393 without page errors.
 
 AG11 #1369 gives launched agents one owned helper with prompt, wait, read and
 question-only answer tools. The owner can Allow a Secure helper from Needs you;
