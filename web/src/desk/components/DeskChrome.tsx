@@ -16,6 +16,8 @@ import { useKeymap } from "../keymap";
 import { egressBadge, inboundBadge } from "../setup";
 import { EgressChip, LampGadget } from "../surface/gadgets";
 import { subscribeMicPhase, type MicPhase } from "../../lib/micSession";
+import { callLoopState, stopCallLoop } from "../../lib/callLoop";
+import { TALK_STOP_EVENT } from "./MicButton";
 import { DeskToolShelf } from "./DeskToolShelf";
 import { DeskMenuBar } from "./DeskMenuBar";
 import { useFrontWindowId, useAllOpenWindows } from "./window/windowRegistry";
@@ -73,27 +75,35 @@ function AttentionBell() {
 }
 
 /* HS-112-06 — the mic lamp: while the Desk holds a microphone grant the
-   chrome says so, in the session's own words, from every room. It is
-   absent only when the device is released (tracks stopped) — so its
-   presence, not a colour, is the honest signal that audio is live. */
-const MIC_LAMP_FACT: Record<Exclude<MicPhase, "closed">, string> = {
-  suspended: "Mic idle",
-  open: "Mic open",
-  segmenting: "Mic speech",
-  held: "Mic held",
-};
-
-function MicLamp() {
+   chrome says so, from every room. It is absent only when the device is
+   released (tracks stopped) — so its presence, not a colour, is the honest
+   signal that audio is live.
+   Betterment C8: while it listens the lamp says `Listening` and carries the
+   verb that ends it, `Stop` (TALK_STOP_EVENT reaches the Talk that listens;
+   an open mic is dropped). `MIC HELD` is gone from the face. */
+export function MicLamp() {
   const [phase, setPhase] = useState<MicPhase>("closed");
   useEffect(() => subscribeMicPhase(setPhase), []);
   if (phase === "closed") return null;
+  const listening = phase !== "suspended";
   return (
-    <span className="desk-mic-lamp" role="status">
-      <LampGadget
-        label={MIC_LAMP_FACT[phase]}
-        on={phase !== "suspended"}
-        tone={phase === "suspended" ? "warn" : "ok"}
-      />
+    <span className="desk-mic-lamp" role="status" data-testid="desk-mic-lamp">
+      <LampGadget label={listening ? "Listening" : "Mic idle"} on={listening} tone={listening ? "ok" : "warn"} />
+      {listening ? (
+        <Button
+          dense
+          variant="ghost"
+          data-testid="desk-mic-lamp-stop"
+          onClick={() => {
+            // The Talk that listens (a held capture) and Speak's open mic
+            // stop themselves on the event; a hands-free call loop stops here.
+            window.dispatchEvent(new Event(TALK_STOP_EVENT));
+            if (phase !== "held" && callLoopState() !== "idle") stopCallLoop();
+          }}
+        >
+          Stop
+        </Button>
+      ) : null}
     </span>
   );
 }

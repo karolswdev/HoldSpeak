@@ -51,7 +51,7 @@ export type NeedVerbs =
   | { kind: "open"; ref: string }
   /** PHILO-15 B61: `watchIds` are the Watches Retry re-checks. */
   | { kind: "repair"; verb: string; href: string; projectId: string; watchIds?: string[]; host?: string; provider?: string }
-  | { kind: "arming"; scheduleId: string; refused: boolean }
+  | { kind: "arming"; scheduleId: string; refused: boolean; failed?: boolean; calendarEventId?: string }
   | { kind: "calendar" }
   | { kind: "none" };
 
@@ -778,21 +778,29 @@ export function armsWord(seconds: number): string {
 
 /** A scheduled recording about to start: first while it is live. */
 export function armingFace(
-  arming: { scheduleId: string; title: string },
+  arming: { scheduleId: string; title: string; calendarEventId?: string },
   secondsLeft: number,
   refusal?: string | null,
+  didNotRecord?: { at: string | null; reason: string } | null,
 ): NeedFace {
   const word = armsWord(secondsLeft);
+  const failedAt = didNotRecord?.at ? wireDate(didNotRecord.at) : null;
+  const failedClock = failedAt
+    ? `${String(failedAt.getHours()).padStart(2, "0")}:${String(failedAt.getMinutes()).padStart(2, "0")}`
+    : null;
+  const failed = Boolean(didNotRecord);
   return {
     id: `arming:${arming.scheduleId}`,
     kind: "meeting",
     name: arming.title || "Scheduled recording",
     // A refused Cancel is named here, by the hub's own reason.
-    fact: refusal ? `NOT CANCELLED · ${refusal}` : `Arms in ${word.toLowerCase()}`,
-    lamp: { label: `ARMS · ${word}`, tone: refusal ? "fail" : "ask" },
+    fact: failed
+      ? `Did not record${failedClock ? ` · ${failedClock}` : ""} · ${didNotRecord?.reason || "Something went wrong"}`
+      : refusal ? `NOT CANCELLED · ${refusal}` : `Arms in ${word.toLowerCase()}`,
+    lamp: { label: failed ? "FAILED" : `ARMS · ${word}`, tone: failed || refusal ? "fail" : "ask" },
     kindWord: "MEETING",
     group: "agents",
-    verbs: { kind: "arming", scheduleId: arming.scheduleId, refused: Boolean(refusal) },
+    verbs: { kind: "arming", scheduleId: arming.scheduleId, refused: Boolean(refusal), failed, calendarEventId: arming.calendarEventId },
   };
 }
 

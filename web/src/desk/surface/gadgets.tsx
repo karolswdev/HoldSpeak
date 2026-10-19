@@ -712,8 +712,12 @@ export function LedMeter({
   value,
   segments = 12,
   scanning,
+  labelHidden = false,
 }: {
   label: string;
+  /** The meter's name is its accessible name only (betterment C8: Speak's
+   *  meter draws no `LEVEL` word beside Talk). */
+  labelHidden?: boolean;
   /** 0..1 — how many segments light. */
   value: number;
   segments?: number;
@@ -733,7 +737,7 @@ export function LedMeter({
       aria-valuetext={scanning ? "scanning" : undefined}
       data-scanning={scanning || undefined}
     >
-      <span className="gadget-ledmeter-label">{label}</span>
+      {labelHidden ? null : <span className="gadget-ledmeter-label">{label}</span>}
       <span className="gadget-ledmeter-track" aria-hidden="true">
         {Array.from({ length: segments }, (_, index) => (
           <span

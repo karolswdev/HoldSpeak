@@ -1882,10 +1882,13 @@ class MeetingWebServer:
                 # calendar seam set on the bound method's owner (the
                 # runtime), and `on_meeting_stop()` which IS the
                 # fallback-free stop (meeting_glue.py:509-510).
+                # Capture C7: `voice_session` is ALWAYS an attribute (set
+                # from the callbacks above, None on a server with no runtime),
+                # so the old `hasattr` guard never guarded: a None session
+                # raised AttributeError in the fire thread and the schedule
+                # died in `arming` (RECON.md §6). No arbiter = no holder.
                 start_scheduled_recording_conductor(
-                    voice_floor_fn=lambda: self.voice_session.active_owner
-                    if hasattr(self, "voice_session")
-                    else None,
+                    voice_floor_fn=lambda: getattr(self.voice_session, "active_owner", None),
                     start_meeting_fn=self._conductor_start_meeting,
                     stop_meeting_fn=self._conductor_stop_meeting,
                 )
