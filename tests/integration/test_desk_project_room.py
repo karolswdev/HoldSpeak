@@ -1865,3 +1865,150 @@ def test_two_conductor_ticks_make_two_completed_unattended_runs_with_no_duplicat
             assert hub.ok("GET", f"/api/steward/runs/{run_id}").get("steps"), run_id
         texts = hs164_door_texts(hub)
         assert len(texts) == len(set(texts)), texts
+
+
+# ── Betterment P3: the Now wing (where it stands in ten seconds) ──────
+#
+# The RECON seed (docs/internal/betterment/projects/RECON.md): a payments
+# platform sync that names the HSM blocker, an architecture review with a
+# decision to confirm, a 1:1 with Mira, the "open risks" note filed as a
+# source, one confirmed decision, and owed items for Theo, Jun, Mira and him.
+
+P3_WIRE = (Path(__file__).resolve().parents[2] / "web" / "src" / "features" / "project-room"
+           / "__tests__" / "room-wires" / "nowP3.json")
+
+
+def _p3_meeting(db: Any, project_id: str, meeting_id: str, title: str, summary: str,
+                started: datetime, speakers: tuple[str, ...], actions: list[dict[str, Any]]) -> None:
+    from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
+
+    db.meetings.save_meeting(MeetingState(
+        id=meeting_id, started_at=started, title=title,
+        segments=[TranscriptSegment(text=f"line {i}", speaker=s, start_time=float(i), end_time=float(i) + 1)
+                  for i, s in enumerate(speakers)],
+        intel=IntelSnapshot(timestamp=1.0, summary=summary, action_items=actions),
+    ))
+    db.projects.associate_meeting_project(meeting_id=meeting_id, project_id=project_id,
+                                          source="test", confidence=1.0)
+
+
+def _seed_payments_week(hub: Hub) -> str:
+    from holdspeak.db.decisions import backfill_decisions
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.decision_record_service import DecisionRecordService
+
+    owner = Principal(PrincipalKind.OWNER, "p3-now-test")
+    project_id = hub.ok("POST", "/api/projects", {
+        "name": "Payments migration", "command_id": f"p3-{uuid.uuid4().hex[:8]}",
+    })["project"]["id"]
+    db = hub.db
+    day = (datetime.now() - timedelta(days=1)).replace(hour=10, minute=0, second=0, microsecond=0)
+    in_days = lambda n: (datetime.now() + timedelta(days=n)).date().isoformat()  # noqa: E731
+    _p3_meeting(
+        db, project_id, "p3-sync", "Payments platform sync",
+        "The staging dry run passed. Card tokenization is blocked on the HSM key ceremony. "
+        "Jun will get a date from Security.",
+        day, ("Me", "Theo", "Jun", "Mira"),
+        [
+            {"id": "p3-theo-1", "task": "Review the rollback runbook", "owner": "Theo",
+             "due": in_days(2), "status": "pending", "review_state": "accepted"},
+            {"id": "p3-theo-2", "task": "Estimate the Kafka cost", "owner": "Theo",
+             "due": in_days(1), "status": "pending", "review_state": "accepted"},
+            {"id": "p3-jun-1", "task": "Get a date for the HSM ceremony", "owner": "Jun",
+             "due": in_days(3), "status": "pending", "review_state": "accepted"},
+            {"id": "p3-jun-2", "task": "Write the ledger ADR", "owner": "Jun",
+             "due": in_days(5), "status": "pending", "review_state": "accepted"},
+            {"id": "p3-mira-1", "task": "Review PLAT-212", "owner": "Mira",
+             "due": in_days(0), "status": "pending", "review_state": "accepted"},
+            {"id": "p3-me-1", "task": "Put Mira on the guild agenda (Nov)", "owner": "Me",
+             "status": "pending", "review_state": "accepted"},
+        ],
+    )
+    _p3_meeting(
+        db, project_id, "p3-arch", "Architecture review",
+        "We keep the old ledger read-only for 30 days after cutover. Kafka looks right for ledger events.",
+        day + timedelta(hours=3), ("Me", "Theo", "Jun"), [],
+    )
+    _p3_meeting(
+        db, project_id, "p3-one-on-one", "1:1 with Mira",
+        "Mira reported a heavy cutover load and a risk of burnout.",
+        day + timedelta(hours=5), ("Me", "Mira"), [],
+    )
+    db.proposals.create_proposal(
+        meeting_id="p3-arch", project_id=project_id, kind="decision",
+        text="Kafka for ledger events", source_plugin="p3-test",
+    )
+    db.plugins.record_artifact(
+        artifact_id="p3-arch-decisions", meeting_id="p3-arch", artifact_type="decisions",
+        title="Architecture review decisions",
+        structured_json={"decisions": [{"decision": "Keep the old ledger read-only for 30 days",
+                                        "rationale": "rollback"}]},
+        plugin_id="p3-test",
+    )
+    with db._connection() as conn:
+        backfill_decisions(conn)
+    DecisionRecordService(db).create_from_meeting(owner, db.decisions.list(meeting_id="p3-arch")[0].id)
+    db.notes.upsert(note_id="p3-risks", title="Payments migration: open risks", body_markdown=(
+        "# Open risks\n- Rollback runbook is still a draft\n- Bus factor 1 on the ledger schema\n"))
+    from holdspeak.services.project_service import ProjectService
+
+    ProjectService(db).add_resource(owner, project_id, "note:p3-risks")
+    return project_id
+
+
+def test_the_now_wing_says_where_it_stands_from_this_weeks_meetings_and_notes(tmp_path, monkeypatch):
+    with _hub(tmp_path, monkeypatch) as hub:
+        project_id = _seed_payments_week(hub)
+        room = hub.ok("GET", f"/api/projects/{project_id}/room")
+
+        # The head: at risk, and why, in words from the sync (not "On track").
+        health = room["health"]
+        assert health["state"] == "ok"
+        assert health["assessment"] == "at_risk"
+        assert health["project_state"] == "at_risk"
+        assert health["state_reason"] == "Card tokenization is blocked on the HSM key ceremony"
+        assert health["state_ref"] == "meeting:p3-sync"
+
+        # Needs you: his own owed item and the decision to confirm; the
+        # others' owed items are theirs (Waiting on), never his.
+        rows = room["needsYou"]["items"]
+        mine = [r["title"] for r in rows if r.get("direction") == "mine"]
+        assert "Put Mira on the guild agenda (Nov)" in mine
+        assert any(r.get("proposal_id") and r["title"] == "Kafka for ledger events" for r in rows)
+        theirs: dict[str, int] = {}
+        for r in rows:
+            if r.get("direction") == "theirs":
+                theirs[r["owner"]] = theirs.get(r["owner"], 0) + 1
+        assert theirs == {"Theo": 2, "Jun": 2, "Mira": 1}
+
+        # This week: the confirmed decision and the runbook risk, each with
+        # its source; the 1:1's words never reach it.
+        now = room["now"]
+        assert now["state"] == "ok"
+        assert [d["text"] for d in now["decided"]] == ["Keep the old ledger read-only for 30 days"]
+        assert now["decided"][0]["ref"].startswith("decision_record:")
+        assert now["decided"][0]["source_ref"] == "meeting:p3-arch"
+        risks = {r["text"]: r for r in now["risks"]}
+        assert risks["Rollback runbook is still a draft"]["ref"] == "note:p3-risks"
+        assert risks["Card tokenization is blocked on the HSM key ceremony."]["token"].startswith("MTG ")
+        assert not any("burnout" in text for text in risks)
+        assert now["meetings_this_week"] in (0, 3)  # the seed sits on yesterday: Monday splits it
+        assert now["last_update_at"] is None
+
+        if __import__("os").environ.get("HOLDSPEAK_WIRE_WRITE") == "1":
+            P3_WIRE.write_text(json.dumps({
+                "_recorded": "tests/integration/test_desk_project_room.py::"
+                             "test_the_now_wing_says_where_it_stands_from_this_weeks_meetings_and_notes "
+                             "(HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads)",
+                "room": room,
+                "proposals": hub.ok("GET", f"/api/projects/{project_id}/proposals"),
+            }, indent=1, sort_keys=True) + "\n")
+
+
+def test_a_quiet_project_is_on_track_with_no_reason(tmp_path, monkeypatch):
+    with _hub(tmp_path, monkeypatch) as hub:
+        project_id = hub.ok("POST", "/api/projects", {"name": "Quiet", "command_id": "p3-quiet"})["project"]["id"]
+        room = hub.ok("GET", f"/api/projects/{project_id}/room")
+        assert (room["health"]["project_state"], room["health"]["state_reason"]) == ("on_track", None)
+        assert room["health"]["assessment"] == "on_track"
+        assert room["now"]["risks"] == [] and room["now"]["decided"] == []

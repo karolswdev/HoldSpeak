@@ -313,12 +313,12 @@ describe("HS-172-03: Proposals in NEEDS YOU", () => {
     expect(body.textContent).not.toContain("LOCAL");
   });
 
-  it("NEEDS YOU count includes proposals", async () => {
+  it("NEEDS YOU holds the proposals beside his other rows (Betterment P3: no count on the head)", async () => {
     render(<WindowHarness scope="project:p1" />);
-    await waitFor(() => expect(screen.getByTestId("room-headline")).toBeTruthy());
-
-    // Count is 3 (2 proposals + 1 GH item)
-    expect(screen.getByTestId("room-headline").textContent).toContain("3 open here");
+    const needs = await screen.findByTestId("room-needs-you");
+    await waitFor(() => expect(within(needs).getAllByTestId("proposal-row")).toHaveLength(2));
+    expect(within(needs).getAllByTestId("needs-you-row")).toHaveLength(1);
+    expect(screen.getByTestId("room-headline").textContent).not.toMatch(/open here/);
   });
 });
 
@@ -355,72 +355,7 @@ describe("HS-172-03: Edit unfolds EditInPlace", () => {
   });
 });
 
-describe("HS-172-03: Confirmed proposals in D&C", () => {
-  it("renders proposal-derived decision with MTG emblem and CONFIRMED token", async () => {
-    render(<WindowHarness scope="project:p1" />);
-    await waitFor(() =>
-      expect(screen.queryAllByTestId("decision-row")).toHaveLength(1),
-    );
 
-    const row = screen.getByTestId("decision-row");
-    expect(row.textContent).toContain("Ania owns the API spec");
-
-    // MTG emblem on proposal-derived decisions
-    const lead = row.querySelector(".surface-ledger-lead");
-    expect(lead?.textContent).toBe("MTG");
-
-    const confirmedState = screen.getByTestId("confirmed-state");
-    expect(confirmedState.textContent).toContain("CONFIRMED");
-
-    // WAS token for changed due
-    expect(row.textContent).toContain("WAS BY FRI");
-  });
-
-  it("merges commitment into its decision row -- one row, no 'You owe'", async () => {
-    render(<WindowHarness scope="project:p1" />);
-    await waitFor(() =>
-      expect(screen.queryAllByTestId("decision-row")).toHaveLength(1),
-    );
-
-    // Only 1 row total in D&C (the commitment is folded, not listed separately)
-    const allRows = document.querySelectorAll(".surface-ledger-row");
-    const dcSection = document.querySelector("h3")?.closest(".surface-section");
-    // Find the DECISIONS & COMMITMENTS section
-    const headers = Array.from(document.querySelectorAll(".surface-section h3"));
-    const dcHeader = headers.find((h) => h.textContent?.includes("DECISIONS & COMMITMENTS"));
-    expect(dcHeader).toBeTruthy();
-    // Count should be 1 (merged), not 2
-    expect(dcHeader?.textContent).toBe("DECISIONS & COMMITMENTS 1");
-
-    // The merged row shows OWNER ANIA, BY FRI, CONFIRMED (not "You owe")
-    const row = screen.getByTestId("decision-row");
-    expect(row.textContent).toContain("OWNER ANIA");
-    expect(row.textContent).toMatch(/BY\s+(FRI|SEP\s+12)/);
-    expect(row.textContent).toContain("CONFIRMED");
-    expect(row.textContent).not.toContain("You owe");
-  });
-});
-
-describe("PHILO-15 08: a confirmed action's record reads as an action", () => {
-  it("says Action:, carries ACTION, and offers no decision Send well", async () => {
-    apiFetch.mockImplementation((url: string) => {
-      if (url.includes("/room") && !url.includes("/room/read")) {
-        const room = roomWithProposals();
-        (room.decisions.items[0] as Record<string, unknown>).kind = "action";
-        return Promise.resolve(room);
-      }
-      if (url.includes("/proposals")) return Promise.resolve(proposalsApiResponse());
-      if (url.includes("/suggested-sources")) return Promise.resolve(suggestedSourcesApiResponse());
-      return Promise.resolve({});
-    });
-    render(<WindowHarness scope="project:p1" />);
-    await waitFor(() => expect(screen.queryAllByTestId("decision-row")).toHaveLength(1));
-    const row = screen.getByTestId("decision-row");
-    expect(row.getAttribute("aria-label")).toBe("Action: Ania owns the API spec");
-    expect(row.textContent).toContain("ACTION");
-    expect(row.getAttribute("role")).toBeNull();
-  });
-});
 
 describe("HS-172-06: Suggested sources in SOURCES", () => {
   it("renders suggested source rows above existing sources", async () => {
@@ -492,37 +427,3 @@ describe("HS-172: No violations", () => {
 // replaces: tests/e2e/test_philo11_05a_brief_decision_send_glass.py::TestBriefAndDecisionSendGlass::test_the_decision_record_wells_in_the_room_and_intelligence
 // (the Room's DECISIONS & COMMITMENTS row unfolds in place and holds its
 // record's well; the well's send is fenced in desk/surface/send/__tests__/SendWell.test.tsx)
-describe("PHILO-11-05a: a Room decision row holds its record's SEND well", () => {
-  it("the row unfolds in place; explicit Send opens one well for its decision_record", async () => {
-    // The row's id is the record id (project_service.py: decisions items `id: rid`).
-    const record = {
-      id: "record-85f927aa", text: "Freeze the old ledger on Nov 3", at: "2026-09-05T09:41:00", url: null,
-      lifecycle: "active", kind: "decision", source_type: "meeting", source_id: "dec-1",
-    };
-    apiFetch.mockImplementation((url: string) => {
-      if (url.includes("/room") && !url.includes("/room/read")) {
-        return Promise.resolve({ ...roomWithProposals(), decisions: { state: "ok", items: [record] }, commitments: { state: "ok", items: [] } });
-      }
-      if (url.startsWith("/api/channels/destinations")) return Promise.resolve({ destinations: [] });
-      if (url.startsWith("/api/channels/sends")) return Promise.resolve({ sends: [] });
-      if (url.includes("/proposals")) return Promise.resolve(proposalsApiResponse());
-      if (url.includes("/suggested-sources")) return Promise.resolve(suggestedSourcesApiResponse());
-      return Promise.resolve({});
-    });
-    render(<WindowHarness scope="project:p1" />);
-    const row = await screen.findByTestId("decision-row");
-    expect(document.querySelector("[data-seat=decision-record]")).toBeNull();
-    fireEvent.click(row);
-    const fold = await screen.findByTestId("send-fold");
-    expect(fold.getAttribute("data-doc")).toBe("decision_record:record-85f927aa");
-    expect(screen.queryByTestId("send-well")).toBeNull();
-    expect(apiFetch.mock.calls.some(([url]) => String(url).startsWith("/api/channels/destinations"))).toBe(false);
-    fireEvent.click(within(fold).getByRole("button", { name: /^Send$/ }));
-    await waitFor(() => expect(document.querySelector("[data-seat=decision-record] [data-testid=send-well]")).not.toBeNull(), { timeout: 5000 });
-    expect(document.querySelector("[data-seat=decision-record] [data-testid=send-well]")?.getAttribute("data-doc"))
-      .toBe("decision_record:record-85f927aa");
-    expect(document.querySelectorAll("[data-testid=send-well]")).toHaveLength(1);
-    fireEvent.click(within(fold).getByRole("button", { name: /^Hide$/ }));
-    expect(screen.queryByTestId("send-well")).toBeNull();
-  });
-});

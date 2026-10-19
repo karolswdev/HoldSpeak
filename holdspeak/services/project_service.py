@@ -92,6 +92,20 @@ def local_week_bounds(now: datetime | None = None) -> tuple[datetime, datetime]:
     return localize(monday_wall), localize(monday_wall + timedelta(days=7))
 
 
+def _wall(value: Any) -> datetime | None:
+    """A stored stamp as a naive LOCAL wall clock (aware stamps converted)."""
+    text = str(value or "").strip()
+    if not text:
+        return None
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is not None:
+        parsed = parsed.astimezone().replace(tzinfo=None)
+    return parsed
+
+
 def utc_z(value: datetime) -> str:
     """Aware datetime -> the stored calendar_events form ``...Z``."""
     return (
@@ -778,6 +792,16 @@ class ProjectService:
             else None
         )
 
+        # Betterment P3: this week's material, read once for the state and
+        # the Now wing (the health reason and This week say the same thing).
+        try:
+            week = self._room_week(principal, project_id)
+        except Exception as exc:
+            _log.warning("room week material failed for %s: %s", project_id, exc)
+            week = None
+        decisions_section = self._room_section(
+            "decisions", lambda: self._read_room_decisions(project_id))
+
         return {
             "project_id": project_id,
             "revision": revision,
@@ -804,11 +828,13 @@ class ProjectService:
                 "needsYou", lambda: self._read_room_needs_you(project_id)),
             "sources": sources_section,
             "health": self._room_section(
-                "health", lambda: self._read_room_health(project_id, target_at)),
+                "health", lambda: self._read_room_health(project_id, target_at, week)),
+            # Betterment P3: the Now wing (the head's second line, This week).
+            "now": self._room_section(
+                "now", lambda: self._read_room_now(project_id, target_at, week, decisions_section)),
             "sinceRead": self._room_section(
                 "sinceRead", lambda: self._read_room_since_read(project_id, room_read_at)),
-            "decisions": self._room_section(
-                "decisions", lambda: self._read_room_decisions(project_id)),
+            "decisions": decisions_section,
             "commitments": self._room_section(
                 "commitments", lambda: self._read_room_commitments(project_id)),
             "target": self._room_section(
@@ -1318,6 +1344,25 @@ class ProjectService:
                     })
         except Exception:
             pass
+
+        # Betterment P3: whose move each row is. An owed item with an owner
+        # who is not the owner himself is "theirs" (the Now wing's Waiting
+        # on); everything else is his (Needs you). The one is-me rule is the
+        # desk's (needs_you_membership.self_check: his names, his aliases,
+        # the speaker label, the People on the desk).
+        try:
+            from .needs_you_membership import _read_people_names, self_check
+
+            is_me = self_check(_read_people_names(None))
+            for row in needs:
+                owner = str(row.get("owner") or "").strip()
+                theirs = (
+                    row.get("kind") in ("action_item", "commitment")
+                    and bool(owner) and not is_me(owner)
+                )
+                row["direction"] = "theirs" if theirs else "mine"
+        except Exception as exc:
+            _log.warning("room needs-you direction failed for %s: %s", project_id, exc)
 
         # Sort: danger > warning > info, then by age (oldest first = most urgent)
         needs.sort(key=lambda r: (
@@ -1892,8 +1937,18 @@ class ProjectService:
                 src["nextCheckAt"] = ahead.isoformat(timespec="seconds")
         return quiet_iso
 
-    def _read_room_health(self, project_id: str, target_at: str | None) -> dict[str, Any]:
-        """HEALTH: AT RISK / ON TRACK derivation + HS-173 health signals."""
+    def _read_room_health(
+        self, project_id: str, target_at: str | None, week: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """HEALTH: AT RISK / ON TRACK derivation + HS-173 health signals.
+
+        Betterment P3: ``state`` and ``state_reason`` say where the project
+        stands in words, from this week's meeting risks, the risk notes and
+        risk items, the owed items past their date and failing CI
+        (``room_health_service.project_state``). A risk named this week makes
+        the project at risk, so the head never reads "On track" while a
+        meeting said the release is blocked.
+        """
         from holdspeak.services.room_health_service import (
             ci_health as _ci_health,
             issue_aging as _issue_aging,
@@ -2049,9 +2104,57 @@ class ProjectService:
         except Exception:
             pass
 
+        from holdspeak.services.room_health_service import project_state as _project_state
+
+        week = week or {}
+        overdue_owed: list[dict[str, Any]] = []
+        try:
+            for row in (self._room_meeting_action_items(project_id, now)
+                        + self._room_commitment_items(project_id, now)):
+                why = str(row.get("why") or "")
+                if why.startswith("OVERDUE · "):
+                    days = int(why.split("· ", 1)[1].split(" ", 1)[0] or 0)
+                    ref = (f"action_item:{row['action_item_id']}" if row.get("action_item_id")
+                           else f"commitment:{row.get('commitment_id')}")
+                    overdue_owed.append({"title": row.get("title"), "owner": row.get("owner"),
+                                         "days": days, "ref": ref})
+        except Exception as exc:
+            _log.warning("room health owed items failed for %s: %s", project_id, exc)
+        try:
+            for item, days in self._overdue_milestones(project_id, now):
+                overdue_owed.append({"title": item.get("title") or "A milestone", "owner": None,
+                                     "days": days, "ref": f"project_item:{item['id']}"})
+        except Exception as exc:
+            _log.warning("room health milestones failed for %s: %s", project_id, exc)
+        state = _project_state(
+            risks=week.get("risks") or [],
+            risk_items=week.get("risk_items") or [],
+            overdue_owed=overdue_owed,
+            ci_failing=ci_failing,
+            broken_dependencies=week.get("broken") or [],
+        )
+        if state["state"] == "on_track" and at_risk:
+            # The older inputs still say at risk, in words.
+            jira_overdue = overdue_count - overdue_milestones
+            if jira_overdue > 0:
+                words = f"{jira_overdue} Jira issue{'' if jira_overdue == 1 else 's'} past the due date"
+            elif review_waiting_days is not None and review_waiting_days > 3:
+                words = f"a review has waited {review_waiting_days} days for you"
+            elif target_passed:
+                words = "the target date has passed"
+            else:
+                words = None
+            state = {"state": "at_risk", "reason": words, "ref": None}
+        at_risk = at_risk or state["state"] != "on_track"
+
         return {
             "assessment": "at_risk" if at_risk else "on_track",
             "reason": reason,
+            # "state" is the section's own (ok / degraded): the project's is
+            # ``project_state``.
+            "project_state": state["state"],
+            "state_reason": state["reason"],
+            "state_ref": state["ref"],
             "inputs": {
                 "overdue": overdue_count,
                 "overdueMilestones": overdue_milestones,
@@ -2069,6 +2172,184 @@ class ProjectService:
             "checked_at": newest_snapshot_at,
             "merge_queue_depth": queue_depth,
             "people": people,
+        }
+
+    #: Betterment P3: the days a meeting's risks stay "this week".
+    _WEEK_DAYS = 7
+
+    def _room_week(self, principal: Principal, project_id: str) -> dict[str, Any]:
+        """This week's material for the state and the Now wing (Betterment P3).
+
+        ``risks``: the risk sentences of the project's meetings of the last
+        seven days (their summaries and their risk lists, 1:1s left out, as
+        the update leaves them out) and the risk lines of the notes filed as
+        its sources. ``risk_items``: open risk items. ``broken``: broken
+        dependency items. ``meetings_this_week``: linked meetings since the
+        local Monday. Each risk keeps its ref and a short source token.
+        """
+        from .meeting_kind import is_one_on_one, meeting_speakers, title_says_one_on_one
+        from .needs_you_membership import _read_people_names
+        from .room_health_service import note_risk_lines, risk_sentences
+
+        now = local_wall().replace(tzinfo=None)
+        since = now - timedelta(days=self._WEEK_DAYS)
+        monday, _next = local_week_bounds()
+        monday_wall = monday.replace(tzinfo=None)
+        people = sorted(_read_people_names(principal) or set())
+
+        risks: list[dict[str, Any]] = []
+        seen: set[str] = set()
+
+        def add_risk(text: str, ref: str, token: str, source: str) -> None:
+            clean = " ".join(str(text or "").split())
+            if not clean or clean.casefold() in seen:
+                return
+            seen.add(clean.casefold())
+            risks.append({"text": clean, "ref": ref, "token": token, "source": source, "opens": True})
+
+        meetings = self._db.projects.get_project_meetings(project_id, limit=200)
+        week_ids: dict[str, tuple[str, str]] = {}
+        meetings_this_week = 0
+        for row in meetings:
+            started = _wall(row.get("started_at"))
+            if started is None or started < since:
+                continue
+            if started >= monday_wall:
+                meetings_this_week += 1
+            meeting_id = str(row.get("id") or "")
+            title = str(row.get("title") or "Meeting")
+            if not meeting_id or title_says_one_on_one(title):
+                continue
+            meeting = self._db.meetings.get_meeting(meeting_id)
+            if meeting is None or is_one_on_one(title, meeting_speakers(meeting), people):
+                continue
+            token = f"MTG {started.strftime('%m-%d')}"
+            week_ids[meeting_id] = (title, token)
+            summary = str(getattr(getattr(meeting, "intel", None), "summary", "") or "")
+            for sentence in risk_sentences(summary):
+                add_risk(sentence, f"meeting:{meeting_id}", token, title)
+        if week_ids:
+            for artifact in self._db.projects.get_project_artifacts(project_id):
+                found = week_ids.get(str(artifact.meeting_id or ""))
+                if not found:
+                    continue
+                for entry in (artifact.structured_json or {}).get("risks") or []:
+                    text = entry.get("risk") if isinstance(entry, dict) else entry
+                    add_risk(str(text or ""), f"meeting:{artifact.meeting_id}", found[1], found[0])
+        for resource in self._db.project_relationships.list_for_project(project_id):
+            kind, _, note_id = str(resource.to_dict().get("resource_ref") or "").partition(":")
+            if kind != "note" or not note_id:
+                continue
+            note = self._db.notes.get(note_id)
+            if note is None:
+                continue
+            note_title = " ".join(str(getattr(note, "title", "") or "").split()) or "Note"
+            for line in note_risk_lines(note_title, str(getattr(note, "body_markdown", "") or "")):
+                add_risk(line, f"note:{note_id}", "NOTE", note_title)
+
+        risk_items: list[dict[str, Any]] = []
+        broken: list[dict[str, Any]] = []
+        with self._db._connection() as conn:
+            rows = conn.execute(
+                "SELECT id, item_type, title, lifecycle, severity FROM project_items "
+                "WHERE project_id = ? AND item_type IN ('risk', 'dependency')",
+                (project_id,),
+            ).fetchall()
+        for row in rows:
+            item = dict(row)
+            lifecycle = str(item.get("lifecycle") or "").lower()
+            entry = {"title": item.get("title"), "severity": item.get("severity"),
+                     "ref": f"project_item:{item['id']}"}
+            if item["item_type"] == "risk" and lifecycle in ("open", "at_risk"):
+                risk_items.append(entry)
+            elif item["item_type"] == "dependency" and lifecycle == "broken":
+                broken.append(entry)
+        for item in risk_items:
+            add_risk(str(item.get("title") or ""), str(item["ref"]), "RISK", "Risk")
+        return {
+            "risks": risks,
+            "risk_items": risk_items,
+            "broken": broken,
+            "meetings_this_week": meetings_this_week,
+        }
+
+    def _read_room_now(
+        self,
+        project_id: str,
+        target_at: str | None,
+        week: dict[str, Any] | None,
+        decisions_section: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Betterment P3: the Now wing's reads beside the head's state.
+
+        ``next_date``: the target, or the next planned milestone, whichever
+        is first. ``last_update_at``: the newest published update.
+        ``meetings_this_week``. ``risks``: this week's risks with their
+        sources. ``decided``: the decisions recorded in the last seven days
+        (the decision record is the one store the face shows).
+        """
+        if week is None:
+            raise RuntimeError("week material not read")
+        today = local_wall().date()
+        candidates: list[tuple[str, str]] = []
+        if target_at:
+            try:
+                day = datetime.fromisoformat(str(target_at).split("T")[0]).date()
+                if day >= today:
+                    candidates.append((day.isoformat(), "Target"))
+            except (ValueError, TypeError):
+                pass
+        with self._db._connection() as conn:
+            rows = conn.execute(
+                "SELECT title, due_at FROM project_items WHERE project_id = ? "
+                "AND item_type = 'milestone' AND lifecycle = 'planned' "
+                "AND due_at IS NOT NULL AND due_at != ''",
+                (project_id,),
+            ).fetchall()
+            published = conn.execute(
+                "SELECT published_at FROM project_updates WHERE project_id = ? "
+                "AND lifecycle = 'published' AND published_at IS NOT NULL "
+                "ORDER BY published_at DESC LIMIT 1",
+                (project_id,),
+            ).fetchone()
+        for row in rows:
+            try:
+                day = datetime.fromisoformat(str(row["due_at"]).replace("Z", "+00:00").split("T")[0]).date()
+            except (ValueError, TypeError):
+                continue
+            if day >= today:
+                candidates.append((day.isoformat(), " ".join(str(row["title"] or "").split()) or "Milestone"))
+        candidates.sort()
+        next_date = {"at": candidates[0][0], "label": candidates[0][1]} if candidates else None
+
+        decided: list[dict[str, Any]] = []
+        since = local_wall().replace(tzinfo=None) - timedelta(days=self._WEEK_DAYS)
+        if decisions_section.get("state") == "ok":
+            for item in decisions_section.get("items") or []:
+                if str(item.get("kind") or "decision") != "decision":
+                    continue
+                if str(item.get("lifecycle") or "active") not in ("active", "accepted", "current"):
+                    continue
+                at = _wall(item.get("confirmed_at") or item.get("at"))
+                if at is None or at < since:
+                    continue
+                source_ref = str(item.get("source_ref") or "")
+                if source_ref and not source_ref.startswith("meeting:"):
+                    source_ref = f"meeting:{source_ref}"
+                decided.append({
+                    "id": item.get("id"),
+                    "text": item.get("text"),
+                    "at": item.get("confirmed_at") or item.get("at"),
+                    "ref": f"decision_record:{item.get('id')}",
+                    "source": item.get("meeting_title") or "",
+                    "source_ref": source_ref,
+                })
+        return {
+            "next_date": next_date,
+            "last_update_at": published["published_at"] if published else None,
+            "meetings_this_week": int(week.get("meetings_this_week") or 0),
+            "risks": list(week.get("risks") or []),
+            "decided": decided,
         }
 
     def _load_ci_history(self, project_id: str) -> list[dict[str, Any]] | None:
@@ -2306,6 +2587,7 @@ class ProjectService:
                 f"""SELECT DISTINCT r.id, r.decision_text, r.created_at, r.lifecycle,
                            r.kind AS record_kind,
                            r.source_type AS record_source_type, r.source_id AS record_source_id,
+                           s.source_ref AS record_source_ref,
                            p.id AS proposal_id,
                            p.meeting_id AS proposal_meeting_id,
                            p.kind AS proposal_kind,
@@ -2381,6 +2663,7 @@ class ProjectService:
                 # opens and dedupes by identity, never by the text.
                 "source_type": row["record_source_type"],
                 "source_id": row["record_source_id"],
+                "source_ref": row["record_source_ref"],
             }
             if item["lifecycle"] == "superseded":
                 with self._db._connection() as succ_conn:

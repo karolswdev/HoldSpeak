@@ -1,0 +1,436 @@
+{
+ "_recorded": "tests/integration/test_desk_project_room.py::test_the_now_wing_says_where_it_stands_from_this_weeks_meetings_and_notes (HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads)",
+ "proposals": {
+  "project_id": "proj-706e6b35c4f4",
+  "proposals": [
+   {
+    "acceptance": "unreviewed",
+    "action_item_id": null,
+    "claim_kind": "proposal",
+    "commitment_id": null,
+    "created_at": "2026-10-19T18:52:48.090028+00:00",
+    "decided_at": null,
+    "decision_record_id": null,
+    "deferred_until": null,
+    "due": null,
+    "due_hint": null,
+    "due_supplied": null,
+    "edited_at": null,
+    "extraction_model": null,
+    "extraction_revision": null,
+    "id": "prop-e79c67bd98cd49f0",
+    "job_attempt": null,
+    "job_id": null,
+    "kind": "decision",
+    "meeting_id": "p3-arch",
+    "model_host": null,
+    "original_text": "Kafka for ledger events",
+    "owner": null,
+    "owner_hint": null,
+    "owner_supplied": null,
+    "project_id": "proj-706e6b35c4f4",
+    "rationale": null,
+    "retry_key": null,
+    "segment_index": null,
+    "segment_timestamp": null,
+    "source_artifact_id": null,
+    "source_plugin": "p3-test",
+    "span_end": null,
+    "span_start": null,
+    "speaker_label": null,
+    "state": "proposed",
+    "support": "unknown",
+    "support_record": null,
+    "text": "Kafka for ledger events",
+    "text_edited": false,
+    "unknowns": []
+   }
+  ]
+ },
+ "room": {
+  "changes": {
+   "recent": [
+    {
+     "actor_ref": "principal:p3-now-test",
+     "after_hash": null,
+     "before_hash": null,
+     "change_kind": "project.resource.linked",
+     "command_id": "pcmd_406dc51a910a4fff840487a3d01dee3b",
+     "created_at": "2026-10-19T18:52:48.092181+00:00",
+     "id": "pchg_4acc64dbd3f94a8273ea1236268709ba",
+     "project_id": "proj-706e6b35c4f4",
+     "project_revision": 2,
+     "summary_json": "{\"resource_ref\": \"note:p3-risks\"}",
+     "target_ref": "note:p3-risks"
+    },
+    {
+     "actor_ref": "principal:owner-session",
+     "after_hash": "82ef315b9d12069553333219e57b6ff5",
+     "before_hash": null,
+     "change_kind": "project.created",
+     "command_id": "p3-f3e28fbd",
+     "created_at": "2026-10-19T18:52:48.083960+00:00",
+     "id": "pchg_d1c91b1c88adc8f2b24c71d1f1d40b9e",
+     "project_id": "proj-706e6b35c4f4",
+     "project_revision": 1,
+     "summary_json": "{\"name\": \"Payments migration\"}",
+     "target_ref": "project:proj-706e6b35c4f4"
+    }
+   ],
+   "state": "ok"
+  },
+  "commitments": {
+   "items": [],
+   "state": "ok"
+  },
+  "decisions": {
+   "items": [
+    {
+     "at": "2026-10-19T18:52:48.090992+00:00",
+     "id": "record-74245798b6ef485292c0c596d2c791a4",
+     "kind": "decision",
+     "lifecycle": "active",
+     "source_id": "dec-901b285036dd4f3cec0b",
+     "source_ref": "p3-arch",
+     "source_type": "meeting",
+     "text": "Keep the old ledger read-only for 30 days",
+     "url": null
+    }
+   ],
+   "state": "ok"
+  },
+  "health": {
+   "assessment": "at_risk",
+   "checked_at": null,
+   "inputs": {
+    "ciFailing": false,
+    "overdue": 0,
+    "overdueMilestones": 0,
+    "reviewWaitingDays": null,
+    "targetPassed": false
+   },
+   "merge_queue_depth": 0,
+   "people": [],
+   "project_state": "at_risk",
+   "reason": null,
+   "signals": {
+    "ci": {
+     "failures_last_3": 0,
+     "flaky_branch_count": 0,
+     "present": false,
+     "queue": 0,
+     "tone": "green"
+    },
+    "issue_aging": {
+     "aged_count": 0,
+     "present": false,
+     "threshold_days": 14,
+     "tone": "green"
+    },
+    "release": {
+     "blockers": [],
+     "blockers_count": 0,
+     "composite": "green",
+     "present": false,
+     "signals": {
+      "blockers": "green",
+      "ci": "green",
+      "overdue": "green",
+      "review_wait": "green"
+     },
+     "tone": "green"
+    },
+    "review_wait": {
+     "median_days": 0.0,
+     "per_reviewer": [],
+     "present": false,
+     "tone": "green",
+     "waiting_count": 0
+    }
+   },
+   "state": "ok",
+   "state_reason": "Card tokenization is blocked on the HSM key ceremony",
+   "state_ref": "meeting:p3-sync"
+  },
+  "items": {
+   "focus": [],
+   "state": "ok",
+   "total": 0,
+   "totals_by_type": {}
+  },
+  "meetings": {
+   "count": 3,
+   "latest": {
+    "confidence": 1.0,
+    "duration_seconds": null,
+    "id": "p3-one-on-one",
+    "intel_status": "disabled",
+    "source": "test",
+    "started_at": "2026-10-18T21:00:00+00:00",
+    "title": "1:1 with Mira"
+   },
+   "state": "ok"
+  },
+  "needsYou": {
+   "count": 7,
+   "items": [
+    {
+     "action_item_id": "p3-mira-1",
+     "direction": "theirs",
+     "due_at": "2026-10-19",
+     "kind": "action_item",
+     "meeting_id": "p3-sync",
+     "owner": "Mira",
+     "severity": "warning",
+     "since": "2026-10-19T18:52:48.088602+00:00",
+     "source": "meeting",
+     "title": "Review PLAT-212",
+     "url": null,
+     "verb": "open",
+     "why": "DUE TODAY"
+    },
+    {
+     "action_item_id": "p3-theo-1",
+     "direction": "theirs",
+     "due_at": "2026-10-21",
+     "kind": "action_item",
+     "meeting_id": "p3-sync",
+     "owner": "Theo",
+     "severity": "info",
+     "since": "2026-10-19T18:52:48.088426+00:00",
+     "source": "meeting",
+     "title": "Review the rollback runbook",
+     "url": null,
+     "verb": "open",
+     "why": "WAITING ON THEO"
+    },
+    {
+     "action_item_id": "p3-theo-2",
+     "direction": "theirs",
+     "due_at": "2026-10-20",
+     "kind": "action_item",
+     "meeting_id": "p3-sync",
+     "owner": "Theo",
+     "severity": "info",
+     "since": "2026-10-19T18:52:48.088564+00:00",
+     "source": "meeting",
+     "title": "Estimate the Kafka cost",
+     "url": null,
+     "verb": "open",
+     "why": "WAITING ON THEO"
+    },
+    {
+     "action_item_id": "p3-jun-1",
+     "direction": "theirs",
+     "due_at": "2026-10-22",
+     "kind": "action_item",
+     "meeting_id": "p3-sync",
+     "owner": "Jun",
+     "severity": "info",
+     "since": "2026-10-19T18:52:48.088581+00:00",
+     "source": "meeting",
+     "title": "Get a date for the HSM ceremony",
+     "url": null,
+     "verb": "open",
+     "why": "WAITING ON JUN"
+    },
+    {
+     "action_item_id": "p3-jun-2",
+     "direction": "theirs",
+     "due_at": "2026-10-24",
+     "kind": "action_item",
+     "meeting_id": "p3-sync",
+     "owner": "Jun",
+     "severity": "info",
+     "since": "2026-10-19T18:52:48.088592+00:00",
+     "source": "meeting",
+     "title": "Write the ledger ADR",
+     "url": null,
+     "verb": "open",
+     "why": "WAITING ON JUN"
+    },
+    {
+     "action_item_id": "p3-me-1",
+     "direction": "mine",
+     "due_at": null,
+     "kind": "action_item",
+     "meeting_id": "p3-sync",
+     "owner": "Me",
+     "severity": "info",
+     "since": "2026-10-19T18:52:48.088612+00:00",
+     "source": "meeting",
+     "title": "Put Mira on the guild agenda (Nov)",
+     "url": null,
+     "verb": "open",
+     "why": "DUE \u00b7 UNKNOWN"
+    },
+    {
+     "action_item_id": null,
+     "created_at": "2026-10-19T18:52:48.090028+00:00",
+     "direction": "mine",
+     "due_hint": null,
+     "host": null,
+     "kind": "proposal",
+     "meeting_id": "p3-arch",
+     "meeting_started_at": "2026-10-18T13:00:00",
+     "meeting_title": "Architecture review",
+     "original_text": "Kafka for ledger events",
+     "owner_hint": null,
+     "proposal_id": "prop-e79c67bd98cd49f0",
+     "proposal_kind": "decision",
+     "severity": "info",
+     "since": "2026-10-19T18:52:48.090028+00:00",
+     "source": "proposal",
+     "speaker_label": null,
+     "title": "Kafka for ledger events",
+     "url": null,
+     "verb": "confirm",
+     "verbHref": "/api/proposals/prop-e79c67bd98cd49f0/confirm",
+     "why": "PROPOSED \u00b7 Architecture review"
+    }
+   ],
+   "state": "ok"
+  },
+  "nextCheckAt": null,
+  "now": {
+   "decided": [
+    {
+     "at": "2026-10-19T18:52:48.090992+00:00",
+     "id": "record-74245798b6ef485292c0c596d2c791a4",
+     "ref": "decision_record:record-74245798b6ef485292c0c596d2c791a4",
+     "source": "",
+     "source_ref": "meeting:p3-arch",
+     "text": "Keep the old ledger read-only for 30 days"
+    }
+   ],
+   "last_update_at": null,
+   "meetings_this_week": 0,
+   "next_date": null,
+   "risks": [
+    {
+     "opens": true,
+     "ref": "meeting:p3-sync",
+     "source": "Payments platform sync",
+     "text": "Card tokenization is blocked on the HSM key ceremony.",
+     "token": "MTG 10-18"
+    },
+    {
+     "opens": true,
+     "ref": "note:p3-risks",
+     "source": "Payments migration: open risks",
+     "text": "Rollback runbook is still a draft",
+     "token": "NOTE"
+    },
+    {
+     "opens": true,
+     "ref": "note:p3-risks",
+     "source": "Payments migration: open risks",
+     "text": "Bus factor 1 on the ledger schema",
+     "token": "NOTE"
+    }
+   ],
+   "state": "ok"
+  },
+  "observed_at": "2026-10-19T12:52:48.092181",
+  "project": {
+   "context": {},
+   "created_at": "2026-10-19T12:52:48.083960",
+   "description": "",
+   "detection_threshold": 0.4,
+   "id": "proj-706e6b35c4f4",
+   "is_archived": false,
+   "keywords": [],
+   "last_review_at": null,
+   "last_review_id": null,
+   "lifecycle": "active",
+   "meeting_count": 3,
+   "modules_json": null,
+   "name": "Payments migration",
+   "next_review_at": null,
+   "outcome_text": null,
+   "owner_ref": null,
+   "posture": null,
+   "posture_reason": null,
+   "purpose": null,
+   "review_cadence_json": null,
+   "revision": 2,
+   "start_at": null,
+   "target_at": null,
+   "team_members": [],
+   "template_key": null,
+   "updated_at": "2026-10-19T12:52:48.092181"
+  },
+  "project_id": "proj-706e6b35c4f4",
+  "receipts": {
+   "items": [
+    {
+     "at": 1792435968.080987,
+     "caller": null,
+     "id": "1e73c15c-a503-4732-8063-db08e3be8b86",
+     "identity": null,
+     "label": "ProjectService.create_project",
+     "op": "create_project",
+     "origin": null,
+     "outcome": "ok",
+     "reason": null,
+     "timestamp": 1792435968.080987,
+     "title": "ProjectService.create_project"
+    }
+   ],
+   "state": "ok"
+  },
+  "resources": {
+   "count": 4,
+   "latest": {
+    "confidence": 1.0,
+    "created_at": "2026-10-19T18:52:48.092181+00:00",
+    "deleted": false,
+    "id": "proj-706e6b35c4f4|note:p3-risks",
+    "last_modified": "2026-10-19T18:52:48.092181+00:00",
+    "project_id": "proj-706e6b35c4f4",
+    "relationship": "member",
+    "resource_ref": "note:p3-risks",
+    "source": "manual"
+   },
+   "state": "ok"
+  },
+  "review": {
+   "last_accepted_at": null,
+   "open_review_id": null,
+   "pending_count": 0,
+   "state": "ok"
+  },
+  "revision": 2,
+  "sinceRead": {
+   "groups": [],
+   "readAt": null,
+   "state": "ok"
+  },
+  "sources": {
+   "count": 0,
+   "items": [],
+   "nextCheckAt": null,
+   "quietUntil": null,
+   "state": "ok"
+  },
+  "steward": {
+   "enabled": false,
+   "latest_run": null,
+   "state": "ok",
+   "unattended_enabled": false
+  },
+  "target": {
+   "daysLeft": null,
+   "passed": false,
+   "state": "ok",
+   "targetAt": null
+  },
+  "updates": {
+   "count": 0,
+   "counts": {},
+   "latest_published": null,
+   "recent": [],
+   "state": "ok"
+  }
+ }
+}
