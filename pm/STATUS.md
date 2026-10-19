@@ -4,7 +4,7 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (Capture default placement verified)
+**Last updated:** 2026-10-19 (Memory first-read and browser repairs verified)
 
 ## Current phase
 
@@ -26,7 +26,7 @@ hardware is not exercised; C10’s child-process boundary remains in progress.
 
 **Betterment recovery: 85/117 recipe implementations merged.** Codex owns
 recovery and delivery at the owner's request. The desk is currently on
-backend `9700d4c5c`, frontend `17244ee6934f6d61`, PID 49752 (#1379).
+backend `b2c642b42`, frontend `2d4a0039bcaa5db4`, PID 51055 (#1380).
 Four HTTP checks pass and the actual desk renders at 1440/393. These are
 delivery observations; owner acceptance remains separate. All three baseline non-browser
 regression shards passed: 16,784 checks, 27 skips and one expected failure.
@@ -47,9 +47,10 @@ pinned full tape does not cover subsequent main revisions. The twelve browser
 failures are five retired Rhythm-host expectations, three retired Conductor
 controls, two retired note-editor expectations, one 1px Button census and one
 Capture seat shift. The web failure is the explicit Record-home auto-record
-projection missing from the writer allowlist. The Capture seat shift is repaired. Eleven browser expectation repairs and
-the Record-home writer allowlist correction remain in a checked delivery branch;
-their final required quick check is still pending. #1376 is deployed;
+projection missing from the writer allowlist. All twelve identified browser failures and the Record-home writer allowlist
+are repaired in verified delivery slices. The pinned tape retains its original
+results; a fresh low-priority tape is queued at `b2c642b42` and does not include
+this Memory/browser slice. #1376 is deployed;
 identity, database ownership and four HTTP checks pass. The populated Projects sweep also found rows
 moving as independent status reads finish; its regression fails before the
 atomic first-read repair. After the repair, 4,090 web checks, 110 sweep cases,
@@ -107,10 +108,11 @@ Conductor, note, graph-walk and kit checks (30 browser checks). The graph and
 current atlas checks also pass 756 focused cases. The next required sweep
 found the Memory RAW fold moving 421px on a held first read. Its independent
 answer, directory and belief reads now hold the lower controls until their
-first batch settles; Ask stays available. Focused verification is pending.
-Capture's separate default seat shift is traced to a Coming-up loading
-placeholder that reserves 240px before an empty result; the arranged-window
-checks remain green. That placement repair is still open.
+first batch settles; Ask stays available. Final required quick: 4,110 web,
+30 affected browser, 110 desk sweep, 27 canon and 1,116 repository guards pass.
+Earlier HTML-route settlement timeouts did not recur in the focused rerun or
+the final sweep. Timeout diagnostics now report actual unsettled elements;
+no timeout or assertion was relaxed. Capture default placement shipped in #1380.
 
 AG13 #1374 packages the HoldSpeak skill and prints it with `holdspeak --skill`.
 Claude launches discover the private copy through `--add-dir`; Codex launches
