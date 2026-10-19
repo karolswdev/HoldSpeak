@@ -29,7 +29,7 @@ ROOM_ADMITTED: frozenset[str] = frozenset({
 })
 #: this story's admitted rows (the charter's admission table).
 STEWARD_AND_CONNECTORS_ADMITTED: frozenset[str] = frozenset({
-    "project.door.count", "project.configure_steward", "project.run_steward",
+    "project.door.count", "project.door.preview", "project.configure_steward", "project.run_steward",
     "project.stop_steward", "project.steward.trigger", "nudge.send",
     "project.watch.test", "project.watch.evaluate", "project.watch.set_rules",
     "project.watch.pause", "project.watch.resume", "project.watch.retire",

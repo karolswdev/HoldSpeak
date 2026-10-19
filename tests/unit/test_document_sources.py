@@ -1,4 +1,4 @@
-"""PHILO-11-01 — the nine stored channel document sources."""
+"""PHILO-11-01 — the stored channel document sources."""
 from __future__ import annotations
 
 import re
@@ -39,6 +39,21 @@ def mint_note(db, title: str = "Plan for the pilot", body: str = "We start on Mo
     return f"note:{PrimitiveService(db).create_note(OWNER, title=title, body_markdown=body)['id']}"
 
 
+def mint_project_nudge(db) -> str:
+    from holdspeak.meeting_session import IntelSnapshot, MeetingState
+
+    db.projects.create_project(project_id="project-nudge", name="Payments migration")
+    db.meetings.save_meeting(MeetingState(
+        id="meeting-nudge", started_at=datetime(2026, 10, 19, 10, 0, 0), title="Migration review",
+        intel=IntelSnapshot(timestamp=1.0, summary="Review the item.", action_items=[{
+            "id": "action-nudge", "task": "Review PAY-123", "owner": "Ania", "status": "pending",
+        }]),
+    ))
+    db.projects.associate_meeting_project(meeting_id="meeting-nudge", project_id="project-nudge",
+                                          source="test", confidence=1.0)
+    return "project_nudge:project-nudge:action-nudge"
+
+
 def test_a_note_sends_its_title_and_words(db) -> None:
     document = render_document(db, mint_note(db))
     assert document.title == "Plan for the pilot"
@@ -62,7 +77,7 @@ def test_a_note_with_no_words_is_named_note_empty(db) -> None:
     assert placeholder.value.code == "note_empty"
 
 
-def test_registry_declares_the_nine_kinds() -> None:
+def test_registry_declares_the_stored_kinds() -> None:
     assert tuple(DOCUMENT_SOURCES) == (
         "project_update",
         "monday_brief",
@@ -74,10 +89,19 @@ def test_registry_declares_the_nine_kinds() -> None:
         "meeting_followup",
         "artifact",
         "note",
+        "project_nudge",
     )
 
 
-def test_real_producers_render_all_nine_sources(db, tmp_path: Path) -> None:
+def test_project_nudge_is_rendered_from_the_stored_action(db) -> None:
+    document = render_document(db, mint_project_nudge(db))
+    assert document.label == "NUDGE"
+    assert document.body_md == (
+        "# Payments migration · Review request\n\nPlease review: Review PAY-123\n"
+    )
+
+
+def test_real_producers_render_all_stored_sources(db, tmp_path: Path) -> None:
     refs = mint_documents(
         db,
         OWNER,
@@ -86,6 +110,7 @@ def test_real_producers_render_all_nine_sources(db, tmp_path: Path) -> None:
     )
     refs["artifact"] = mint_meeting_synthesis(db)
     refs["note"] = mint_note(db)
+    refs["project_nudge"] = mint_project_nudge(db)
     rendered = {kind: render_document(db, ref) for kind, ref in refs.items()}
 
     assert set(rendered) == set(DOCUMENT_SOURCES)

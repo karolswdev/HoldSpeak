@@ -185,7 +185,7 @@ def test_the_atlas_pages_hold_one_stale_page_and_the_desk_its_own(hub: Hub) -> N
     assert stale == [("what-changed-this-week", 1)], stale  # the face: STALE · 1 NEW SOURCE
     assert "Harbor" not in json.dumps(atlas)
     desk = _pages(hub, scope="desk")
-    assert [p["slug"] for p in desk] in (["what-i-owe", "what-changed-this-week"], ["what-changed-this-week"]), desk
+    assert [p["slug"] for p in desk] == ["what-i-owe", "what-they-owe-me", "what-changed-this-week"], desk
     text = json.dumps(desk)
     assert "Atlas" not in text and "Cutover" not in text
 

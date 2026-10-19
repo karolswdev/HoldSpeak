@@ -115,6 +115,7 @@ You get new facts (f1, f2, ...) and the current observations (o1, o2, ...) of on
 Rules:
 - Prefer an update to a create. Make a new observation only for a facet that no observation holds.
 - One facet per observation: one short, clear sentence that is true alone. Use names, not "he", "she" or "they".
+- The reader is the desk owner. Write to the reader in the second person: where a fact says "the owner", write "you" ("You will send the plan", "You owe Dana the review"). Never write "the owner".
 - updates: "observation_id" is an o label. "relation" is one of:
   - "supports": the facts say the same as the observation. Set "text" to "".
   - "refines": the facts add detail to the observation. "text" is the new full sentence.

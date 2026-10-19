@@ -51,7 +51,7 @@ import { useStandingPagesRead } from "../../desk/standingPages";
 import { apiFetch } from "../../lib/api";
 import type { InferenceTarget } from "../../desk/api";
 import { openSurfaceOr } from "../../desk/shell";
-import { ROOM_AT_EVENT, ROOM_PROPOSAL_EVENT, ROOM_UPDATES_EVENT, refOpener, takeRoomAtRequest, takeRoomProposalRequest, takeRoomUpdatesRequest, type RoomPlace } from "../../desk/openObject";
+import { ROOM_AT_EVENT, ROOM_PROPOSAL_EVENT, ROOM_UPDATES_EVENT, ROOM_WRITE_EVENT, refOpener, takeRoomAtRequest, takeRoomProposalRequest, takeRoomUpdatesRequest, takeRoomWriteRequest, type RoomPlace } from "../../desk/openObject";
 import { useDesk } from "../../desk/store";
 import type { CoreProps } from "../../pages/cores/core-types";
 import type {
@@ -65,11 +65,9 @@ import type {
   RoomProposalItem,
   RoomSuggestedSourceItem,
   RoomHealthPerson,
-  NudgeCardState,
   NudgeLocal,
-  NudgeCardAction,
 } from "./model";
-import { lifecycleLabel, nudgeCardReducer, initialNudgeCard, formatDays, needsYouWhyWords } from "./model";
+import { lifecycleLabel, formatDays, needsYouWhyWords } from "./model";
 import { StringGadget, CycleGadget, FoldGadget } from "../../desk/surface/gadgets";
 import { egressFor, egressForEvent, receiptFace, receiptLabel, refusalWord } from "../../desk/surface/egress";
 import { useProjectRoomController } from "./useProjectRoomController";
@@ -88,6 +86,8 @@ import { AddSourcesWell } from "./door/DoorCore";
 import "./project-room.css";
 import { RecallFace } from "./recall/RecallFace";
 import { ThisWeekSection, WaitingOnSection } from "./now/NowSections";
+import { NudgeCard } from "./NudgeCard";
+export { NudgeCard };
 import { headFacts, isMine, stateLine, type StateLine } from "./now/model";
 import { fetchUpdate, fetchUpdates } from "./update/api";
 import { Unreadable } from "../../desk/surface/send";
@@ -435,196 +435,6 @@ function HealthNotRead({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-/* ── HS-173-04: Nudge card (inline under a bottleneck row) ── */
-
-function NudgeCard({
-  person,
-  needsYouItem,
-  nudgeItem,
-  onReload,
-  onSent,
-  persistedState,
-  local,
-  onLocal,
-}: {
-  person: RoomHealthPerson | undefined;
-  needsYouItem: RoomNeedsYouItem;
-  nudgeItem: api.NudgeItem | undefined;
-  onReload: () => void;
-  onSent?: () => void;
-  /** The step's persisted state (the wire). */
-  persistedState?: string | null;
-  /** The Room's own state of a Send it pressed (outlives this card: the card can close mid-send). */
-  local?: NudgeLocal;
-  onLocal?: (next: NudgeLocal) => void;
-}) {
-  const displayName = person?.displayName || needsYouItem.title;
-  // Bind PR from the nudge step (the wire's authoritative source)
-  const prNumber = nudgeItem?.pr_number ?? person?.nudge?.prNumber ?? person?.prs?.[0]?.number ?? 0;
-  const prTitle = nudgeItem?.pr_title ?? person?.prs?.[0]?.title ?? "";
-  const prUrl = nudgeItem?.pr_url ?? person?.prs?.[0]?.url ?? "";
-  const stepId = nudgeItem?.step_id ?? person?.nudge?.stepId ?? "";
-  const waitDays = Math.round(person?.medianDays || needsYouItem.medianDays || 1);
-  const defaultText = nudgeItem?.comment_text
-    || person?.nudge?.text
-    || `This PR has been waiting for review for ${waitDays} days. Flagged by HoldSpeak.`;
-
-  // PHILO-10-02: the card starts from the step's persisted state, never blindly open.
-  // The parent keys this card by the live state, so a late answer re-seeds the CURRENT card.
-  const [card, dispatch] = useReducer(nudgeCardReducer, initialNudgeCard(
-    local?.state ?? persistedState, defaultText, prNumber,
-    { displayName, sentAt: local?.sentAt, reason: local?.reason, text: local?.text }));
-
-  const handleSend = async () => {
-    if (card.phase !== "open" && card.phase !== "failed") return;
-    if (card.phase === "open" && card.busy) return;
-    if (!stepId) return;
-    dispatch({ type: "sending" });
-    const submitted = card.text;
-    onLocal?.({ state: "pending", text: submitted });
-    try {
-      const result = await api.sendNudge(stepId, card.text);
-      if (result.success) {
-        const sentAt = typeof result.sent_at === "string"
-          ? result.sent_at : new Date().toISOString();
-        dispatch({
-          type: "sent",
-          displayName,
-          prNumber,
-          sentAt,
-        });
-        // The receipt row stays visible; notify parent for cooldown token.
-        onSent?.();
-        onLocal?.({ state: "sent", sentAt });
-      } else if (result.outcome === "unknown") {
-        // PHILO-10-02 (F4): not known to be posted, not known to be lost.
-        dispatch({ type: "unknown", prNumber });
-        onLocal?.({ state: "unknown" });
-      } else {
-        const reason = String(result.message || "Send failed");
-        dispatch({ type: "failed", reason });
-        onLocal?.({ state: "failed", reason, text: submitted });
-      }
-    } catch (err) {
-      dispatch({ type: "failed", reason: String(err) });
-      onLocal?.({ state: "failed", reason: String(err), text: submitted });
-    }
-  };
-
-  const handleDismiss = async () => {
-    if (stepId) {
-      try { await api.dismissNudge(stepId); } catch { /* non-fatal */ }
-    }
-    dispatch({ type: "dismiss" });
-    onReload();
-  };
-
-  // Receipt row (after Send)
-  if (card.phase === "sent") {
-    return (
-      <SurfaceLedgerRow
-        data-testid="nudge-receipt-row"
-        lead={<StateChip state="success" label="" icon={"●"} wordless />}
-        primary={<span className="surface-primary">SENT</span>}
-        wrap
-        cells={
-          <>
-            <span className="room-nudge-receipt-name">{displayName}</span>
-            {prNumber ? (
-              <span className="surface-token">
-                {prUrl ? (
-                  <a href={prUrl} target="_blank" rel="noopener noreferrer" className="room-nudge-pr-link">#{prNumber}</a>
-                ) : `#${prNumber}`}
-              </span>
-            ) : null}
-            <span className="surface-token">{formatTimeShort(card.sentAt)}</span>
-            <EgressChip label="GITHUB.COM" scope="cloud" />
-          </>
-        }
-      />
-    );
-  }
-
-  // PHILO-10-02 (F4): the result is unknown -- no Send verb; check the pull request.
-  if (card.phase === "unknown") {
-    return (
-      <SurfaceLedgerRow
-        data-testid="nudge-unknown-row"
-        lead={<StateChip state="warning" label="" icon={"●"} wordless />}
-        primary={<span className="surface-primary">RESULT UNKNOWN</span>}
-        wrap
-        cells={
-          <>
-            <span className="room-nudge-receipt-name">{displayName}</span>
-            <span className="surface-token">
-              {prUrl ? (
-                <a href={prUrl} target="_blank" rel="noopener noreferrer" className="room-nudge-pr-link">CHECK #{card.prNumber}</a>
-              ) : `CHECK #${card.prNumber}`}
-            </span>
-            <EgressChip label="GITHUB.COM" scope="cloud" />
-          </>
-        }
-      />
-    );
-  }
-
-  // Nudge card (open / failed state)
-  if (card.phase === "open" || card.phase === "failed") {
-    return (
-      <li className="surface-ledger-row room-nudge-card-row" data-testid="nudge-card" data-open>
-        <SurfaceWell>
-          <div className="room-nudge-card-who surface-primary" data-testid="nudge-card-who">{displayName}</div>
-          {prNumber ? (
-            <div className="room-nudge-card-pr">
-              <a href={prUrl || "#"} target="_blank" rel="noopener noreferrer" className="surface-token room-nudge-pr-link" data-testid="nudge-card-pr">
-                #{prNumber} · {prTitle}
-              </a>
-            </div>
-          ) : null}
-          {person?.prs && person.prs.length > 1 ? (
-            <div className="room-nudge-pr-list" data-testid="nudge-card-pr-list">
-              {person.prs.map((pr) => (
-                <div key={pr.number} className="room-nudge-pr-item">
-                  <a href={pr.url || "#"} target="_blank" rel="noopener noreferrer" className="surface-token room-nudge-pr-link">
-                    #{pr.number} · {pr.title}
-                  </a>
-                </div>
-              ))}
-            </div>
-          ) : null}
-          <div className="room-nudge-card-text" data-testid="nudge-card-text">
-            <StringGadget
-              label="Comment"
-              value={card.text}
-              onChange={(v) => dispatch({ type: "setText", text: v })}
-            />
-          </div>
-          {card.phase === "failed" ? (
-            <div className="room-nudge-card-error">
-              <StateChip state="failure" label="FAILED" icon={"●"} />
-              <span className="surface-token">{card.reason}</span>
-            </div>
-          ) : null}
-          <div className="room-nudge-card-footer">
-            <EgressChip label="GITHUB.COM" scope="cloud" data-testid="nudge-card-egress" />
-            <span className="room-nudge-card-verbs">
-              <Button dense variant="primary" loading={card.phase === "open" && card.busy} onClick={() => void handleSend()} data-testid="nudge-send">
-                Send
-              </Button>
-              <Button dense variant="ghost" onClick={() => void handleDismiss()} data-testid="nudge-dismiss">
-                Dismiss
-              </Button>
-            </span>
-          </div>
-        </SurfaceWell>
-      </li>
-    );
-  }
-
-  // Closed — render as the bottleneck row's trailing verb
-  return null;
-}
-
 /* ── HS-173: nudge cooling token (NUDGED N D AGO / NUDGED JUST NOW) ── */
 
 export function nudgeCooldownToken(nudge: RoomHealthPerson["nudge"]): string | null {
@@ -854,6 +664,8 @@ function NeedsYouSection({
   // PHILO-10-02: the Room's own state of each Send it pressed (pending, unknown, failed, sent)
   // survives closing and reopening the card, and a late answer reaches the current card.
   const [localNudges, setLocalNudges] = useState<Record<string, NudgeLocal>>({});
+  // Betterment P5: one producer-matched meeting can be filed from its row.
+  const [meetingBusy, setMeetingBusy] = useState<string | null>(null);
   // Conductor F2 (K4b): each row wears its agent where it lives.
   const flights = useAgentFlights((s) => s.flights);
 
@@ -897,6 +709,38 @@ function NeedsYouSection({
                 />
               );
             }
+            if (item.kind === "meeting_match" && item.meetingId) {
+              const meetingId = item.meetingId;
+              return (
+                <SurfaceLedgerRow
+                  key={`meeting-match-${meetingId}`}
+                  data-testid="meeting-match-row"
+                  lead={<RowSprite source="meeting" kind="meeting_match" />}
+                  primary={<span className="surface-primary">{item.title}</span>}
+                  wrap
+                  cells={item.meetingTitle ? (
+                    <span className="surface-token" data-testid="meeting-match-title">{item.meetingTitle}</span>
+                  ) : undefined}
+                  trailing={
+                    <Button
+                      dense
+                      variant="ghost"
+                      loading={meetingBusy === meetingId}
+                      disabled={meetingBusy === meetingId}
+                      data-testid="meeting-match-add"
+                      onClick={() => {
+                        setMeetingBusy(meetingId);
+                        void api.associateMeeting(ctrl.projectId, meetingId)
+                          .then(() => ctrl.load())
+                          .finally(() => setMeetingBusy(null));
+                      }}
+                    >
+                      Add
+                    </Button>
+                  }
+                />
+              );
+            }
             // HS-173: bottleneck rows
             if (item.kind === "review_bottleneck") {
               const relId = item.relationshipId || "";
@@ -907,7 +751,16 @@ function NeedsYouSection({
               const cooldown = sentNudgeRelIds.has(relId)
                 ? "NUDGED JUST NOW"
                 : (person ? nudgeCooldownToken(person.nudge) : null);
-              const hasNudgeStep = !!(matchedNudge?.step_id || person?.nudge?.stepId);
+              // A nudge has a real place only when the producer named the PR.
+              // Keep the verb out of rows whose destination is unreadable or absent.
+              const hasDestination = Boolean(
+                matchedNudge?.pr_url
+                || person?.prs?.some((pr) => pr.url)
+                // A persisted result can retain only the PR number; it is
+                // still the place to inspect an indeterminate send.
+                || person?.nudge?.prNumber,
+              );
+              const hasNudgeStep = Boolean((matchedNudge?.step_id || person?.nudge?.stepId) && hasDestination);
               const isNudgeOpen = openNudge === relId;
 
               // Build why from structured fields (correct plurals + day format)
@@ -2093,6 +1946,25 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
     window.addEventListener(ROOM_UPDATES_EVENT, take);
     return () => window.removeEventListener(ROOM_UPDATES_EVENT, take);
   }, [ctrl.projectId, enterUpdates]);
+  // Betterment P4 (projects): the palette's and the Object menu's `Write
+  // update` press the head's own Write update here, once the engine roster
+  // is read (the head's Button waits for the same read).
+  const writeEngine = useEngine("project.update_draft");
+  const [writeAsked, setWriteAsked] = useState(false);
+  useEffect(() => {
+    const projectId = ctrl.projectId;
+    if (!projectId) return;
+    const take = () => { if (takeRoomWriteRequest(projectId)) setWriteAsked(true); };
+    take();
+    window.addEventListener(ROOM_WRITE_EVENT, take);
+    return () => window.removeEventListener(ROOM_WRITE_EVENT, take);
+  }, [ctrl.projectId]);
+  const { write } = updateCtrl;
+  useEffect(() => {
+    if (!writeAsked || writeEngine.state === "unread") return;
+    setWriteAsked(false);
+    void write(writeEngine.state === "set");
+  }, [writeAsked, writeEngine.state, write]);
   // PHILO-14 A2b: a proposal row elsewhere (Needs you) opens this Room with
   // that proposal selected in OPEN HERE. `seq` counts the requests, so the
   // same proposal asked for again is revealed again (A5b, Astra r1).
@@ -2417,7 +2289,11 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
                   </RoomSlot>
                   {ctrl.room.needsYou.state === "ok" ? (
                     <div className="room-section-rise" style={{ animationDelay: "50ms" }}>
-                      <WaitingOnSection items={ctrl.room.needsYou.items} />
+                      <WaitingOnSection
+                        items={ctrl.room.needsYou.items}
+                        nudges={ctrl.nudges}
+                        onReload={() => void ctrl.load()}
+                      />
                     </div>
                   ) : null}
                 </div>

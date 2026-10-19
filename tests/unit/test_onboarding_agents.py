@@ -195,6 +195,8 @@ def test_use_it_is_admitted_with_a_receipt_and_is_idempotent(hub, tmp_path) -> N
     assert answer.status_code == 200, answer.text
     body = answer.json()
     assert body["used"]["agent"] == "claude" and body["used"]["path"] == str(claude)
+    assert body["used"]["skill"] == str(home / ".claude" / "skills" / "holdspeak" / "SKILL.md")
+    assert (home / ".claude" / "skills" / "holdspeak" / "SKILL.md").is_file()
     assert _rows(body)["claude"]["hooks"] == "installed" and _rows(body)["claude"]["ready"] is True
     assert body["operation_id"] and body["receipt"]["outcome"] == "succeeded"
     written = json.loads(claude.read_text())
@@ -281,6 +283,8 @@ def test_install_follows_codex_home_and_reads_back_ready(hub, tmp_path, monkeypa
     answer = hub.client.post("/api/onboarding/agents/use", json={"agent": "codex"})
     assert answer.status_code == 200, answer.text
     assert answer.json()["used"]["path"] == str(tmp_path / "codex-home" / "hooks.json")
+    assert answer.json()["used"]["skill"] == str(home / ".agents" / "skills" / "holdspeak" / "SKILL.md")
+    assert (home / ".agents" / "skills" / "holdspeak" / "SKILL.md").is_file()
     assert answer.json()["used"]["trust"]["state"] == "trusted"
     assert (tmp_path / "codex-home" / "hooks.json").is_file()
     assert not (home / ".codex").exists()

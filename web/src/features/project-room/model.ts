@@ -199,6 +199,15 @@ export type RoomReviewData = {
 /* ── HS-169-04: the four questions ── */
 
 /** A "needs you" row: something the owner must act on. */
+export type RoomNudgeDestination = {
+  documentRef: string;
+  destinationId: string;
+  destinationName: string;
+  channel: string;
+  target: string;
+  title: string;
+};
+
 export type RoomNeedsYouItem = {
   source: string;
   title: string;
@@ -223,6 +232,8 @@ export type RoomNeedsYouItem = {
   kind?: string;
   /** A meeting's open action (kind `action_item`): the follow-through card it opens. */
   actionItemId?: string;
+  /** Betterment P5: an unfiled transcript match offered for project linking. */
+  meetingId?: string;
   /** HS-173: relationship_id for People window open. */
   relationshipId?: string;
   /** HS-173: reviewer median wait in days. */
@@ -239,6 +250,8 @@ export type RoomNeedsYouItem = {
   /** Betterment P3: an owed item's owner and due date (Waiting on). */
   owner?: string;
   dueAt?: string;
+  /** P6: a source-owned document and exact saved destination for a Nudge. */
+  nudge?: RoomNudgeDestination;
 };
 
 /** Needs-you section data shape (when ok). */
@@ -627,6 +640,21 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
     needsYou: decodeSection<RoomNeedsYouData>(raw.needsYou, (s) => ({
       items: Array.isArray(s.items)
         ? (s.items as Record<string, unknown>[]).map((r) => ({
+            ...(() => {
+              const nudge = r.nudge && typeof r.nudge === "object" ? r.nudge as Record<string, unknown> : null;
+              return nudge && nudge.document_ref && nudge.destination_id
+                ? {
+                    nudge: {
+                      documentRef: String(nudge.document_ref),
+                      destinationId: String(nudge.destination_id),
+                      destinationName: String(nudge.destination_name ?? ""),
+                      channel: String(nudge.channel ?? ""),
+                      target: String(nudge.target ?? ""),
+                      title: String(nudge.title ?? "Review request"),
+                    } satisfies RoomNudgeDestination,
+                  }
+                : {};
+            })(),
             source: String(r.source ?? ""),
             title: String(r.title ?? ""),
             why: String(r.why ?? ""),
@@ -647,6 +675,7 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
             createdAt: r.created_at != null ? String(r.created_at) : undefined,
             kind: r.kind != null ? String(r.kind) : undefined,
             actionItemId: r.action_item_id != null && r.action_item_id !== "" ? String(r.action_item_id) : undefined,
+            meetingId: r.meeting_id != null && r.meeting_id !== "" ? String(r.meeting_id) : undefined,
             relationshipId: r.relationship_id != null ? String(r.relationship_id) : undefined,
             medianDays: r.median_days != null ? Number(r.median_days) : undefined,
             prCount: r.count != null ? Number(r.count) : undefined,
@@ -784,8 +813,8 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
       return {
         assessment: (s.assessment === "at_risk" ? "at_risk" : "on_track") as "at_risk" | "on_track",
         reason: s.reason != null ? String(s.reason) : null,
-        projectState: (s.project_state === "blocked" ? "blocked" : s.project_state === "at_risk" ? "at_risk"
-          : s.project_state === "on_track" ? "on_track" : undefined) as RoomHealthData["projectState"],
+        projectState: s.project_state === "blocked" ? "blocked" : s.project_state === "at_risk" ? "at_risk"
+          : s.project_state === "on_track" ? "on_track" : undefined,
         stateReason: typeof s.state_reason === "string" && s.state_reason ? s.state_reason : null,
         stateRef: typeof s.state_ref === "string" && s.state_ref ? s.state_ref : null,
         inputs: {

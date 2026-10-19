@@ -95,6 +95,23 @@ describe("PHILO-17 Today: the day as a timeline", () => {
     expect(document.querySelectorAll(".btn--primary")).toHaveLength(1);
   });
 
+  it("shows the changed page on Monday after what I owe", async () => {
+    hub({
+      "/api/door": () => json({ calendar_configured: false, upcoming: [] }),
+      "/api/meetings?limit=40": () => json({ meetings: [] }),
+      "/api/desk/needs-you": () => json({ items: [] }),
+      "/api/people/readiness": () => json({ readiness: "ready" }),
+      "/api/people/relationships?counts=1": () => json({ relationships: [] }),
+      "/api/memory/pages?scope=desk": () => json({ pages: [
+        { slug: "what-i-owe", question: "What do I owe?", sentences: [{ text: "You owe Mira feedback by Friday.", refs: [] }], built_at: "2026-10-12T09:00:00Z", stale: false, new_sources: 0, model: "pages", boundary: "local" },
+        { slug: "what-changed-this-week", question: "What changed this week?", sentences: [{ text: "The cutover review moved to Friday.", refs: [] }], built_at: "2026-10-12T09:00:00Z", stale: false, new_sources: 0, model: "pages", boundary: "local" },
+      ] }),
+    });
+    render(<TodayView />);
+    expect((await screen.findByTestId("today-owe")).textContent).toContain("You owe Mira feedback by Friday.");
+    expect(screen.getByTestId("today-changed").textContent).toContain("The cutover review moved to Friday.");
+  });
+
   it("an empty day with no calendar names the next step", async () => {
     hub({
       "/api/door": () => json({ calendar_configured: false, upcoming: [] }),

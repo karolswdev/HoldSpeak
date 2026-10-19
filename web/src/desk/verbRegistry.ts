@@ -14,7 +14,7 @@ import { aboutTarget, askAboutLabel, askAboutRef } from "./askAbout";
 import { useDesk } from "./store";
 import { openIntelligence } from "./intelligenceNavigation";
 import { openSurfaceOr } from "./shell";
-import { openPerson, openProjectRename, openProjectUpdates } from "./openObject";
+import { openPerson, openProjectRename, openProjectUpdates, writeProjectUpdate } from "./openObject";
 import { apiFetch } from "../lib/api";
 import { qualifiedRef } from "./api";
 import { objectByRef } from "./world";
@@ -441,19 +441,21 @@ export const VERBS: Verb[] = [
     run: (ctx) => { askAboutRef(ctx.selectedRef); },
   },
   {
+    // Betterment P4 (projects): the Room's own press, Write update (the
+    // records draft at once, the engine's after), never the update list.
     id: "object.draft-update",
-    label: "Draft update",
+    label: "Write update",
     menu: "object",
     scope: "object",
     glyph: "✦",
-    keywords: ["draft", "update", "project"],
+    keywords: ["write", "draft", "update", "status", "project"],
     ghost: (ctx) => {
       const o = selected(ctx);
       return o?.kind === "project" ? null : "Select a Project";
     },
     run: (ctx) => {
       const o = selected(ctx);
-      if (o?.kind === "project") openProjectUpdates(o.id);
+      if (o?.kind === "project") writeProjectUpdate(o.id);
     },
   },
   {
@@ -1007,10 +1009,22 @@ export const VERB_FAMILIES: VerbFamily[] = [
     })),
   },
   {
+    // Betterment P4 (projects): the row writes the update (the Room's own
+    // Write update press); it no longer only opens the update list.
     id: "week.draft-update",
     rows: (week) => week.projects.map((p) => ({
       id: `week.draft-update.${p.id}`, family: "week.draft-update",
-      label: `Draft update for ${p.name}`, keywords: "draft update status weekly project",
+      label: `Write update for ${p.name}`, keywords: "draft update status weekly project write",
+      run: () => writeProjectUpdate(p.id),
+    })),
+  },
+  {
+    // The saved updates of a project (the list the old row opened): the one
+    // door to past updates until History shows them (DESIGN.md "History").
+    id: "week.updates",
+    rows: (week) => week.projects.map((p) => ({
+      id: `week.updates.${p.id}`, family: "week.updates",
+      label: `Saved updates of ${p.name}`, keywords: "saved sent past updates history",
       run: () => openProjectUpdates(p.id),
     })),
   },

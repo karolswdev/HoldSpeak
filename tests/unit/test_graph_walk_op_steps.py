@@ -44,7 +44,7 @@ def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_tar
     # Conductor K2's one (agent.hand), then Conductor R7's (people_access.set),
     # then PHILO-16 16b's six (the desk's windows), then PHILO-17's
     # meeting.transcribe, then Betterment Q9's five (Find the tasks).
-    assert len(gw.OP_MCP_PROJECTIONS) == 112
+    assert len(gw.OP_MCP_PROJECTIONS) == 113
     assert set(gw.OP_MCP_PROJECTIONS) == {
         "decision.create", "decision.update", "decision.read", "decision.list",
         "meeting.list", "meeting.read", "meeting.import", "meeting.transcribe", "meeting.summary.run",
@@ -61,7 +61,7 @@ def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_tar
         "project.archive", "project.restore", "project.link", "project.unlink",
         "project.open_review", "project.get_delta", "project.decide_proposal", "project.accept_review",
         "project.list_updates", "project.draft_update", "project.update_draft", "project.publish_update",
-        "desk.needs_you", "project.item.list", "project.item.create", "project.item.update",
+        "desk.needs_you", "today.get", "project.item.list", "project.item.create", "project.item.update",
         "project.item.transition", "project.resource.list", "project.resource.add", "project.resource.remove",
         "project.configure_steward", "project.run_steward", "project.stop_steward", "project.get_steward_run",
         "project.steward.trigger", "steward.nudges", "nudge.send", "nudge.dismiss",
@@ -77,7 +77,7 @@ def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_tar
         "windows.list", "windows.open", "windows.close", "windows.raise", "windows.arrange", "windows.seat",
         "note.outcomes.read", "note.find_tasks", "note.outcome.edit", "note.outcome.dismiss", "note.outcome.confirm",
     }
-    assert gw.OP_HTTP_ONLY == {"decision.status", "project.door.create",
+    assert gw.OP_HTTP_ONLY == {"decision.status", "project.door.create", "project.door.preview",
                                "project.door.count", "project.watch.update", "project.watch.baseline",
                                "channel.save_email_key", "channel.save_slack_webhook",
                                "agent_hooks.install", "calendar.open_settings",

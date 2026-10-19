@@ -236,6 +236,21 @@ export function oneBandPerSection<T extends { section: string }>(rows: readonly 
   return [...bands.values()].flat();
 }
 
+/** Betterment P4 (projects): a saved mode named like a project word (the
+ *  seeded "Project" mode) never stands above his projects. Every MODE row
+ *  ranked before the last PROJECTS row moves to just after it; the other
+ *  rows keep their order. */
+export function modesAfterProjects<T extends { section: string; kind?: string }>(rows: readonly T[]): T[] {
+  const lastProject = rows.map((row) => row.section).lastIndexOf("PROJECTS");
+  if (lastProject < 0) return [...rows];
+  const isMode = (row: T, i: number) => i < lastProject && row.kind === "MODE";
+  const moved = rows.filter(isMode);
+  if (!moved.length) return [...rows];
+  const rest = rows.filter((row, i) => !isMode(row, i));
+  const at = rest.map((row) => row.section).lastIndexOf("PROJECTS") + 1;
+  return [...rest.slice(0, at), ...moved, ...rest.slice(at)];
+}
+
 const QUESTION_WORDS = new Set([
   "who", "what", "when", "why", "how", "which", "did", "do", "does", "is", "are",
 ]);
@@ -763,7 +778,7 @@ export function DeskToolShelf() {
     });
     // PHILO-17 (phonepass): every candidate, ranked; the section limits
     // apply below (stableDeck keeps a drawn row past them).
-    return ranked.map(({ row }) => row);
+    return modesAfterProjects(ranked.map(({ row }) => row));
   }, [
     ctx.selectedRef,
     frontId,

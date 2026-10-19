@@ -883,6 +883,7 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
     "project.update_draft": {"kind": "tool", "name": "project.update_draft"},
     "project.publish_update": {"kind": "tool", "name": "project.publish_update"},
     "desk.needs_you": {"kind": "tool", "name": "desk.needs_you"},
+    "today.get": {"kind": "tool", "name": "today.get"},
     "project.item.list": {"kind": "tool", "name": "project.item.list"},
     "project.item.create": {"kind": "tool", "name": "project.item.create"},
     "project.item.update": {"kind": "tool", "name": "project.item.update"},
@@ -931,7 +932,7 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
 }
 
 #: Declared operations with no MCP exposure: the rig refuses them by name.
-OP_HTTP_ONLY = frozenset({"decision.status", "project.door.create",
+OP_HTTP_ONLY = frozenset({"decision.status", "project.door.create", "project.door.preview",
                           # Betterment capture C5b: the meeting window's Prepare… press (HTTP only).
                           "meeting.result.prepare",
                           # PHILO-9-02: the charter's HTTP capability exceptions.
@@ -964,7 +965,7 @@ OP_READ_OBSERVATIONS = frozenset({
     "zone.members", "kb.members", "kernel.receipt.read",
     # PHILO-9-01: the Room's reads.
     "project.list", "project.get", "project.get_room", "project.get_delta", "project.list_updates",
-    "desk.needs_you", "project.item.list", "project.resource.list",
+    "desk.needs_you", "today.get", "project.item.list", "project.resource.list",
     # PHILO-9-02: the steward's and the connectors' reads.
     "project.get_steward_run", "steward.nudges", "project.watch.inspect", "project.suggested_sources",
     "connection.list",

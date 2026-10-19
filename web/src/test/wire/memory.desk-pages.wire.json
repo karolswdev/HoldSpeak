@@ -1,0 +1,100 @@
+{
+ "_source": "The hub's own answers, captured by tests/integration/test_desk_memory_pages.py::test_the_desk_says_what_others_owe_him_and_the_read_serves_it (MeetingWebServer + TestClient, isolated HOME, the browser rigs' seeds). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
+ "pages": {
+  "pages": [
+   {
+    "slug": "what-i-owe",
+    "question": "What do I owe?",
+    "sentences": [
+     {
+      "text": "You owe Theo the on-call handbook, due Friday.",
+      "refs": [
+       {
+        "ref": "note:n-theo",
+        "opens": true,
+        "token": "NOTE 10-19"
+       }
+      ]
+     },
+     {
+      "text": "You owe Mira feedback on the cutover design document, due Friday.",
+      "refs": [
+       {
+        "ref": "meeting:m-mira-1on1",
+        "opens": true,
+        "token": "MTG 09-19 · 10:00"
+       }
+      ]
+     }
+    ],
+    "built_at": "2026-10-19T21:59:48+00:00",
+    "stale": false,
+    "new_sources": 0,
+    "model": "pages",
+    "boundary": "local"
+   },
+   {
+    "slug": "what-they-owe-me",
+    "question": "What do others owe me?",
+    "sentences": [
+     {
+      "text": "Mira owes you the rollback runbook, due Thursday.",
+      "refs": [
+       {
+        "ref": "note:n-owed",
+        "opens": true,
+        "token": "NOTE 10-19"
+       }
+      ]
+     }
+    ],
+    "built_at": "2026-10-19T21:59:48+00:00",
+    "stale": false,
+    "new_sources": 0,
+    "model": "pages",
+    "boundary": "local"
+   },
+   {
+    "slug": "what-changed-this-week",
+    "question": "What changed this week?",
+    "sentences": [
+     {
+      "text": "You owe Theo the on-call handbook, due Friday.",
+      "refs": [
+       {
+        "ref": "note:n-theo",
+        "opens": true,
+        "token": "NOTE 10-19"
+       }
+      ]
+     },
+     {
+      "text": "Mira owes you the rollback runbook, due Thursday.",
+      "refs": [
+       {
+        "ref": "note:n-owed",
+        "opens": true,
+        "token": "NOTE 10-19"
+       }
+      ]
+     },
+     {
+      "text": "You owe Mira feedback on the cutover design document, due Friday.",
+      "refs": [
+       {
+        "ref": "meeting:m-mira-1on1",
+        "opens": true,
+        "token": "MTG 09-19 · 10:00"
+       }
+      ]
+     }
+    ],
+    "built_at": "2026-10-19T21:59:48+00:00",
+    "stale": false,
+    "new_sources": 0,
+    "model": "pages",
+    "boundary": "local"
+   }
+  ]
+ }
+}

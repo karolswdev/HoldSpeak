@@ -21,6 +21,7 @@ import { commandForDoorVerb, supportsDoorVerb, type DoorVerb } from "../chair/do
 /** The verb set a row carries (the drawer turns it into library Buttons). */
 export type NeedVerbs =
   | { kind: "answer"; sessionKey: string }
+  | { kind: "allow-helper"; launchId: string; requestId: string }
   | { kind: "gate"; proposalId: string }
   /** A held call whose command the hub cannot show whole: Deny, and Open on
    *  the agent's lane (Raw shows the whole command there); never Approve. */
@@ -335,6 +336,20 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
   const project = String(item.projectName ?? "");
   const source = String(item.source ?? "");
 
+  // AG11: a Secure helper has no session yet. Its owner action remains
+  // directly available here instead of opening an unrelated parent question.
+  const helper = item.helperRequest as { status?: string; requestId?: string } | undefined;
+  if (source === "coder" && helper?.status === "awaiting_owner" && helper.requestId && item.launchId) {
+    const launchId = String(item.launchId);
+    const agent = String(item.agent || "agent");
+    return {
+      id, kind: "agent", name: agentRowName(agent, project || "Helper"),
+      fact: String(item.question || item.title || ""), factWords: true,
+      lamp: { label: "TO APPROVE", tone: "ask" }, group: "agents", agent,
+      verbs: { kind: "allow-helper", launchId, requestId: helper.requestId },
+      openRef: `launch:${launchId}`,
+    };
+  }
   // R5: an agent asks (a question, or an input or permission prompt).
   if (source === "coder" && item.sessionKey) {
     const key = String(item.sessionKey);

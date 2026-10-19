@@ -64,7 +64,8 @@ describe("PHILO-14 A1 — the Chair is the screen", () => {
     try {
       useDesk.setState({ items: { ...EMPTY_ITEMS, directory: [directory] }, projects: [], selectedIds: [], openPullout });
       render(<GoHome />);
-      expect(screen.getAllByRole("heading").map((heading) => heading.textContent)).toEqual(["Apps", "Work", "Drawers", "New"]);
+      // Betterment P4: Projects (All projects) is drawn on an empty desk too.
+      expect(screen.getAllByRole("heading").map((heading) => heading.textContent)).toEqual(["Apps", "Projects", "Work", "Drawers", "New"]);
       const appRow = within(screen.getByRole("heading", { name: "Apps" }).closest("section")!).getByRole("menuitem", { name: "Meetings" });
       const drawerRow = within(screen.getByRole("heading", { name: "Drawers" }).closest("section")!).getByRole("menuitem", { name: "Meetings" });
       expect(appRow).not.toHaveAttribute("data-object-id");

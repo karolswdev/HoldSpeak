@@ -1,0 +1,514 @@
+{
+ "gets": {
+  "/api/projects": {
+   "projects": [
+    {
+     "context": {},
+     "created_at": "2026-10-18T21:34:13.670988",
+     "description": "Seeded for p4-projects-payments.",
+     "detection_threshold": 0.4,
+     "id": "proj-26fad6d50422",
+     "is_archived": false,
+     "keywords": [],
+     "meeting_count": 0,
+     "name": "Payments migration",
+     "team_members": [],
+     "updated_at": "2026-10-18T21:34:13.755387"
+    },
+    {
+     "context": {},
+     "created_at": "2026-10-18T21:34:13.697230",
+     "description": "Seeded for p4-projects-vendor.",
+     "detection_threshold": 0.4,
+     "id": "proj-1f01a586c422",
+     "is_archived": false,
+     "keywords": [],
+     "meeting_count": 0,
+     "name": "Vendor review",
+     "team_members": [],
+     "updated_at": "2026-10-18T21:34:13.697230"
+    }
+   ]
+  },
+  "/api/projects/proj-1f01a586c422/room": {
+   "changes": {
+    "recent": [
+     {
+      "actor_ref": "principal:owner-session",
+      "after_hash": "37e453ea623f7204d1c5ddcaaf699f45",
+      "before_hash": null,
+      "change_kind": "project.created",
+      "command_id": "p4-projects-vendor",
+      "created_at": "2026-10-19T03:34:13.697230+00:00",
+      "id": "pchg_9af6b4d48c5a234df0d42276f59dd2d7",
+      "project_id": "proj-1f01a586c422",
+      "project_revision": 1,
+      "summary_json": "{\"name\": \"Vendor review\"}",
+      "target_ref": "project:proj-1f01a586c422"
+     }
+    ],
+    "state": "ok"
+   },
+   "commitments": {
+    "items": [],
+    "state": "ok"
+   },
+   "decisions": {
+    "items": [],
+    "state": "ok"
+   },
+   "health": {
+    "assessment": "on_track",
+    "checked_at": null,
+    "inputs": {
+     "ciFailing": false,
+     "overdue": 0,
+     "overdueMilestones": 0,
+     "reviewWaitingDays": null,
+     "targetPassed": false
+    },
+    "merge_queue_depth": 0,
+    "people": [],
+    "reason": null,
+    "signals": {
+     "ci": {
+      "failures_last_3": 0,
+      "flaky_branch_count": 0,
+      "present": false,
+      "queue": 0,
+      "tone": "green"
+     },
+     "issue_aging": {
+      "aged_count": 0,
+      "present": false,
+      "threshold_days": 14,
+      "tone": "green"
+     },
+     "release": {
+      "blockers": [],
+      "blockers_count": 0,
+      "composite": "green",
+      "present": false,
+      "signals": {
+       "blockers": "green",
+       "ci": "green",
+       "overdue": "green",
+       "review_wait": "green"
+      },
+      "tone": "green"
+     },
+     "review_wait": {
+      "median_days": 0.0,
+      "per_reviewer": [],
+      "present": false,
+      "tone": "green",
+      "waiting_count": 0
+     }
+    },
+    "state": "ok"
+   },
+   "items": {
+    "focus": [],
+    "state": "ok",
+    "total": 0,
+    "totals_by_type": {}
+   },
+   "meetings": {
+    "count": 0,
+    "latest": null,
+    "state": "ok"
+   },
+   "needsYou": {
+    "count": 0,
+    "items": [],
+    "state": "ok"
+   },
+   "nextCheckAt": null,
+   "observed_at": "2026-10-18T21:34:13.697230",
+   "project": {
+    "context": {},
+    "created_at": "2026-10-18T21:34:13.697230",
+    "description": "Seeded for p4-projects-vendor.",
+    "detection_threshold": 0.4,
+    "id": "proj-1f01a586c422",
+    "is_archived": false,
+    "keywords": [],
+    "last_review_at": null,
+    "last_review_id": null,
+    "lifecycle": "active",
+    "meeting_count": 0,
+    "modules_json": null,
+    "name": "Vendor review",
+    "next_review_at": null,
+    "outcome_text": null,
+    "owner_ref": null,
+    "posture": null,
+    "posture_reason": null,
+    "purpose": null,
+    "review_cadence_json": null,
+    "revision": 1,
+    "start_at": null,
+    "target_at": null,
+    "team_members": [],
+    "template_key": null,
+    "updated_at": "2026-10-18T21:34:13.697230"
+   },
+   "project_id": "proj-1f01a586c422",
+   "receipts": {
+    "items": [
+     {
+      "at": 1792380853.6971478,
+      "caller": null,
+      "id": "912ee833-680c-4fa6-95ac-eb20792e4178",
+      "identity": null,
+      "label": "ProjectService.create_project",
+      "op": "create_project",
+      "origin": null,
+      "outcome": "ok",
+      "reason": null,
+      "timestamp": 1792380853.6971478,
+      "title": "ProjectService.create_project"
+     }
+    ],
+    "state": "ok"
+   },
+   "resources": {
+    "count": 0,
+    "latest": null,
+    "state": "ok"
+   },
+   "review": {
+    "last_accepted_at": null,
+    "open_review_id": null,
+    "pending_count": 0,
+    "state": "ok"
+   },
+   "revision": 1,
+   "sinceRead": {
+    "groups": [],
+    "readAt": null,
+    "state": "ok"
+   },
+   "sources": {
+    "count": 0,
+    "items": [],
+    "nextCheckAt": null,
+    "quietUntil": null,
+    "state": "ok"
+   },
+   "steward": {
+    "enabled": false,
+    "latest_run": null,
+    "state": "ok",
+    "unattended_enabled": false
+   },
+   "target": {
+    "daysLeft": null,
+    "passed": false,
+    "state": "ok",
+    "targetAt": null
+   },
+   "updates": {
+    "count": 0,
+    "counts": {},
+    "latest_published": null,
+    "recent": [],
+    "state": "ok"
+   }
+  },
+  "/api/projects/proj-26fad6d50422/room": {
+   "changes": {
+    "recent": [
+     {
+      "actor_ref": "principal:owner-session",
+      "after_hash": "110bcf266a17a2f31da9354dcff02c83",
+      "before_hash": null,
+      "change_kind": "project.updated",
+      "command_id": "p4-late-item",
+      "created_at": "2026-10-19T03:34:13.755387+00:00",
+      "id": "pchg_e5aeb4c4773a3dfc1068ea90c5dee63c",
+      "project_id": "proj-26fad6d50422",
+      "project_revision": 3,
+      "summary_json": "{\"action\": \"item.created\", \"item_id\": \"pitem_77a28453c1d742378c5369ba6e28df3d\", \"item_type\": \"milestone\", \"title\": \"Staging dry run\"}",
+      "target_ref": "project:proj-26fad6d50422"
+     },
+     {
+      "actor_ref": "principal:owner-session",
+      "after_hash": "2679fbe2a29d88f648b3b5e30ae66b13",
+      "before_hash": null,
+      "change_kind": "project.updated",
+      "command_id": "p4-target",
+      "created_at": "2026-10-19T03:34:13.733117+00:00",
+      "id": "pchg_d8247f1f08c02cf460076496750f60f5",
+      "project_id": "proj-26fad6d50422",
+      "project_revision": 2,
+      "summary_json": "{\"fields\": [\"target_at\"]}",
+      "target_ref": "project:proj-26fad6d50422"
+     },
+     {
+      "actor_ref": "principal:owner-session",
+      "after_hash": "82ef315b9d12069553333219e57b6ff5",
+      "before_hash": null,
+      "change_kind": "project.created",
+      "command_id": "p4-projects-payments",
+      "created_at": "2026-10-19T03:34:13.670988+00:00",
+      "id": "pchg_d282d3455d17be23158836802e6772bb",
+      "project_id": "proj-26fad6d50422",
+      "project_revision": 1,
+      "summary_json": "{\"name\": \"Payments migration\"}",
+      "target_ref": "project:proj-26fad6d50422"
+     }
+    ],
+    "state": "ok"
+   },
+   "commitments": {
+    "items": [],
+    "state": "ok"
+   },
+   "decisions": {
+    "items": [],
+    "state": "ok"
+   },
+   "health": {
+    "assessment": "at_risk",
+    "checked_at": null,
+    "inputs": {
+     "ciFailing": false,
+     "overdue": 1,
+     "overdueMilestones": 1,
+     "reviewWaitingDays": null,
+     "targetPassed": false
+    },
+    "merge_queue_depth": 0,
+    "people": [],
+    "reason": "1 OVERDUE",
+    "signals": {
+     "ci": {
+      "failures_last_3": 0,
+      "flaky_branch_count": 0,
+      "present": false,
+      "queue": 0,
+      "tone": "green"
+     },
+     "issue_aging": {
+      "aged_count": 0,
+      "present": false,
+      "threshold_days": 14,
+      "tone": "green"
+     },
+     "release": {
+      "blockers": [],
+      "blockers_count": 0,
+      "composite": "green",
+      "present": false,
+      "signals": {
+       "blockers": "green",
+       "ci": "green",
+       "overdue": "green",
+       "review_wait": "green"
+      },
+      "tone": "green"
+     },
+     "review_wait": {
+      "median_days": 0.0,
+      "per_reviewer": [],
+      "present": false,
+      "tone": "green",
+      "waiting_count": 0
+     }
+    },
+    "state": "ok"
+   },
+   "items": {
+    "focus": [
+     {
+      "created_at": "2026-10-19T03:34:13.755387+00:00",
+      "created_by_ref": "principal:owner-session",
+      "details_json": "{}",
+      "due_at": "2026-10-16",
+      "id": "pitem_77a28453c1d742378c5369ba6e28df3d",
+      "item_type": "milestone",
+      "lifecycle": "planned",
+      "owner_ref": null,
+      "project_id": "proj-26fad6d50422",
+      "provenance_kind": "owner",
+      "revision": 0,
+      "severity": null,
+      "sort_key": null,
+      "source_observation_id": null,
+      "summary": null,
+      "title": "Staging dry run",
+      "updated_at": "2026-10-19T03:34:13.755387+00:00"
+     }
+    ],
+    "state": "ok",
+    "total": 1,
+    "totals_by_type": {
+     "milestone": 1
+    }
+   },
+   "meetings": {
+    "count": 0,
+    "latest": null,
+    "state": "ok"
+   },
+   "needsYou": {
+    "count": 1,
+    "items": [
+     {
+      "due_at": "2026-10-16",
+      "item_id": "pitem_77a28453c1d742378c5369ba6e28df3d",
+      "item_type": "milestone",
+      "kind": "milestone",
+      "severity": "danger",
+      "since": "2026-10-16",
+      "source": "item",
+      "title": "Staging dry run",
+      "url": null,
+      "verb": "open",
+      "why": "OVERDUE \u00b7 2 DAYS"
+     }
+    ],
+    "state": "ok"
+   },
+   "nextCheckAt": null,
+   "observed_at": "2026-10-18T21:34:13.755387",
+   "project": {
+    "context": {},
+    "created_at": "2026-10-18T21:34:13.670988",
+    "description": "Seeded for p4-projects-payments.",
+    "detection_threshold": 0.4,
+    "id": "proj-26fad6d50422",
+    "is_archived": false,
+    "keywords": [],
+    "last_review_at": null,
+    "last_review_id": null,
+    "lifecycle": "active",
+    "meeting_count": 0,
+    "modules_json": null,
+    "name": "Payments migration",
+    "next_review_at": null,
+    "outcome_text": null,
+    "owner_ref": null,
+    "posture": null,
+    "posture_reason": null,
+    "purpose": null,
+    "review_cadence_json": null,
+    "revision": 3,
+    "start_at": null,
+    "target_at": "2026-10-23",
+    "team_members": [],
+    "template_key": null,
+    "updated_at": "2026-10-18T21:34:13.755387"
+   },
+   "project_id": "proj-26fad6d50422",
+   "receipts": {
+    "items": [
+     {
+      "at": 1792380853.7552052,
+      "caller": null,
+      "id": "730831bb-b987-443f-a666-8ad05a04473e",
+      "identity": null,
+      "label": "ProjectService.create_item",
+      "op": "create_item",
+      "origin": null,
+      "outcome": "ok",
+      "reason": null,
+      "timestamp": 1792380853.7552052,
+      "title": "ProjectService.create_item"
+     },
+     {
+      "at": 1792380853.7329578,
+      "caller": null,
+      "id": "e44d612e-fd08-41b0-a575-aa929248665b",
+      "identity": null,
+      "label": "ProjectService.update_project",
+      "op": "update_project",
+      "origin": null,
+      "outcome": "ok",
+      "reason": null,
+      "timestamp": 1792380853.7329578,
+      "title": "ProjectService.update_project"
+     },
+     {
+      "at": 1792380853.666413,
+      "caller": null,
+      "id": "f2abb691-fd5a-49a4-99a6-52a459fa5896",
+      "identity": null,
+      "label": "ProjectService.create_project",
+      "op": "create_project",
+      "origin": null,
+      "outcome": "ok",
+      "reason": null,
+      "timestamp": 1792380853.666413,
+      "title": "ProjectService.create_project"
+     }
+    ],
+    "state": "ok"
+   },
+   "resources": {
+    "count": 0,
+    "latest": null,
+    "state": "ok"
+   },
+   "review": {
+    "last_accepted_at": null,
+    "open_review_id": null,
+    "pending_count": 0,
+    "state": "ok"
+   },
+   "revision": 3,
+   "sinceRead": {
+    "groups": [],
+    "readAt": null,
+    "state": "ok"
+   },
+   "sources": {
+    "count": 0,
+    "items": [],
+    "nextCheckAt": null,
+    "quietUntil": null,
+    "state": "ok"
+   },
+   "steward": {
+    "enabled": false,
+    "latest_run": null,
+    "state": "ok",
+    "unattended_enabled": false
+   },
+   "target": {
+    "daysLeft": 4,
+    "passed": false,
+    "state": "ok",
+    "targetAt": "2026-10-23"
+   },
+   "updates": {
+    "count": 1,
+    "counts": {
+     "draft": 1
+    },
+    "latest_published": null,
+    "recent": [
+     {
+      "created_at": "2026-10-19T03:34:13+00:00",
+      "deliveries": [],
+      "draft_revision": 1,
+      "generator": "deterministic",
+      "id": "pupd_db570d6f57a343deac0ca20f395d61b5",
+      "lifecycle": "draft",
+      "project_id": "proj-26fad6d50422",
+      "published_at": null,
+      "review_id": null,
+      "updated_at": "2026-10-19T03:34:13+00:00"
+     }
+    ],
+    "state": "ok"
+   }
+  }
+ },
+ "payments": "proj-26fad6d50422",
+ "recordedBy": "scripts/record_projects_go_wire.py",
+ "schema": "projects-go-recorded@1",
+ "today": "2026-10-18",
+ "vendor": "proj-1f01a586c422"
+}

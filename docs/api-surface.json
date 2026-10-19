@@ -457,6 +457,16 @@
       ]
     },
     {
+      "path": "/api/agent/launches/{launch_id}/helper/allow",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.agent_hand",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/agent/launches/{launch_id}/lane",
       "methods": [
         "GET"
@@ -5078,6 +5088,16 @@
     },
     {
       "path": "/api/projects/door/count",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_door",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/projects/door/preview",
       "methods": [
         "POST"
       ],
