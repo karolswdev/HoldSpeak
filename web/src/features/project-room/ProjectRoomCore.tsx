@@ -52,7 +52,7 @@ import {
 import { onReturnToTask, rememberTaskFocus } from "../../desk/returnToTask";
 import { useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
 import { useEngine } from "../../desk/hooks/useEngine";
-import { StandingPagesSection, useStandingPagesRead } from "../../desk/standingPages";
+import { roomPageOrder, StandingPagesSection, useStandingPagesRead } from "../../desk/standingPages";
 import { apiFetch } from "../../lib/api";
 import type { InferenceTarget } from "../../desk/api";
 import { openPrimitive, openSurfaceOr } from "../../desk/shell";
@@ -2890,18 +2890,20 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
                 />
               </div>
               <div className="room-folds" data-testid="room-folds">
+                {/* Betterment Q11 (Memory where he looks): the pages lead, open:
+                    What is open, then What we decided. */}
+                <RoomSlot id="pages" place={place("pages")} own={{ pages: pagesLoaded }}
+                  empty={!standingPages.length} delay="75ms">
+                  {standingPages.length ? (
+                    <RoomFold title="Pages" token={standingPages.length || undefined} open testId="room-fold-pages">
+                      <StandingPagesSection pages={roomPageOrder(standingPages)} />
+                    </RoomFold>
+                  ) : null}
+                </RoomSlot>
                 <RoomSlot id="sources" place={place("sources")} own={{ extras: extrasRead }} delay="80ms">
                   <RoomFold title="Sources" token={sourceCount || undefined} open={addingSources || undefined} testId="room-fold-sources">
                     <SourcesSection room={ctrl.room} onReload={() => ctrl.load()} stewardCtrl={stewardCtrl} ctrl={ctrl} onAdding={setAddingSources} />
                   </RoomFold>
-                </RoomSlot>
-                <RoomSlot id="pages" place={place("pages")} own={{ pages: pagesLoaded }}
-                  empty={!standingPages.length} delay="85ms">
-                  {standingPages.length ? (
-                    <RoomFold title="Pages" token={standingPages.length || undefined} testId="room-fold-pages">
-                      <StandingPagesSection pages={standingPages} />
-                    </RoomFold>
-                  ) : null}
                 </RoomSlot>
                 <div className="room-section-rise" style={{ animationDelay: "90ms" }}>
                   <RoomFold title="Decisions and owed" token={decisionCount || undefined} testId="room-fold-decisions">

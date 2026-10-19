@@ -1413,7 +1413,7 @@ MEMORY_PAGE_READ = OperationDescriptor(
         "type": "object",
         "properties": {
             "slug": {"type": "string", "enum": ["what-we-decided", "what-is-open", "risks-and-disputes",
-                                                 "what-changed-this-week", "what-i-owe"]},
+                                                 "what-changed-this-week", "what-i-owe", "what-they-owe-me"]},
             "project_id": {"type": ["string", "null"]},
             "scope": {"type": ["string", "null"], "enum": ["desk", "project", None],
                       "description": "Default: project when project_id is set."},

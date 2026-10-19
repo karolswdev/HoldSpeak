@@ -1,5 +1,6 @@
 // HS-135-04: People is a single protected Desk application.  Its roster is
 // a relationship projection, never a field of person tiles or a scorecard.
+import { PersonPages } from "../../desk/standingPages";
 import { wireDate } from "../../desk/surface/format";
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import type { CoreProps } from "./core-types";
@@ -689,6 +690,9 @@ export function PersonWindowBody({ relationshipId, onClose }: { relationshipId: 
         <Button dense variant="ghost" onClick={() => void read()}>Try again</Button>
       </span>
     ) : null}
+    {/* Betterment Q11: what you owe her and what she owes you, first, from
+        the desk's memory pages (no Ask). */}
+    {detail ? <PersonPages displayName={detail.display_name} /> : null}
     {detail ? (
       <RelationshipPane relationship={detail} initialLens={initialLens} lensRequest={lensRequest}
         onRefresh={() => void read()} onProtectedFailure={protectedFailure}

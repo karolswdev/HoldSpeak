@@ -1,0 +1,160 @@
+{
+ "_source": "The hub's own answers, captured by tests/integration/test_desk_memory_pages.py::test_the_desk_says_what_others_owe_him_and_the_read_serves_it (MeetingWebServer + TestClient, isolated HOME, the browser rigs' seeds). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
+ "pages": {
+  "pages": [
+   {
+    "slug": "what-i-owe",
+    "question": "What do I owe?",
+    "sentences": [
+     {
+      "text": "Feedback for Mira is due.",
+      "refs": [
+       {
+        "ref": "note:n-owe",
+        "opens": true,
+        "token": "NOTE 10-19"
+       }
+      ]
+     },
+     {
+      "text": "Handbook for Theo is due.",
+      "refs": [
+       {
+        "ref": "note:n-theo",
+        "opens": true,
+        "token": "NOTE 10-19"
+       }
+      ]
+     },
+     {
+      "text": "Runbook from Mira is due.",
+      "refs": [
+       {
+        "ref": "note:n-owed",
+        "opens": true,
+        "token": "NOTE 10-19"
+       }
+      ]
+     }
+    ],
+    "built_at": "2026-10-19T13:17:35+00:00",
+    "stale": false,
+    "new_sources": 0,
+    "model": "pages",
+    "boundary": "local"
+   },
+   {
+    "slug": "what-they-owe-me",
+    "question": "What do others owe me?",
+    "sentences": [
+     {
+      "text": "Feedback for Mira is due.",
+      "refs": [
+       {
+        "ref": "note:n-owe",
+        "opens": true,
+        "token": "NOTE 10-19"
+       }
+      ]
+     },
+     {
+      "text": "Handbook for Theo is due.",
+      "refs": [
+       {
+        "ref": "note:n-theo",
+        "opens": true,
+        "token": "NOTE 10-19"
+       }
+      ]
+     },
+     {
+      "text": "Runbook from Mira is due.",
+      "refs": [
+       {
+        "ref": "note:n-owed",
+        "opens": true,
+        "token": "NOTE 10-19"
+       }
+      ]
+     }
+    ],
+    "built_at": "2026-10-19T13:17:35+00:00",
+    "stale": false,
+    "new_sources": 0,
+    "model": "pages",
+    "boundary": "local"
+   },
+   {
+    "slug": "what-changed-this-week",
+    "question": "What changed this week?",
+    "sentences": [
+     {
+      "text": "Feedback for Mira is due.",
+      "refs": [
+       {
+        "ref": "note:n-owe",
+        "opens": true,
+        "token": "NOTE 10-19"
+       }
+      ]
+     },
+     {
+      "text": "Handbook for Theo is due.",
+      "refs": [
+       {
+        "ref": "note:n-theo",
+        "opens": true,
+        "token": "NOTE 10-19"
+       }
+      ]
+     },
+     {
+      "text": "Runbook from Mira is due.",
+      "refs": [
+       {
+        "ref": "note:n-owed",
+        "opens": true,
+        "token": "NOTE 10-19"
+       }
+      ]
+     },
+     {
+      "text": "Note n-owe Feedback for Mira is due. You owe Mira feedback on her cutover design doc by Friday.",
+      "refs": [
+       {
+        "ref": "note:n-owe",
+        "opens": true,
+        "token": "NOTE 10-19"
+       }
+      ]
+     },
+     {
+      "text": "Note n-owed Runbook from Mira is due. Mira owes you the rollback runbook by Thursday.",
+      "refs": [
+       {
+        "ref": "note:n-owed",
+        "opens": true,
+        "token": "NOTE 10-19"
+       }
+      ]
+     },
+     {
+      "text": "Note n-theo Handbook for Theo is due. Theo owns the on-call handbook.",
+      "refs": [
+       {
+        "ref": "note:n-theo",
+        "opens": true,
+        "token": "NOTE 10-19"
+       }
+      ]
+     }
+    ],
+    "built_at": "2026-10-19T13:17:35+00:00",
+    "stale": false,
+    "new_sources": 0,
+    "model": "pages",
+    "boundary": "local"
+   }
+  ]
+ }
+}

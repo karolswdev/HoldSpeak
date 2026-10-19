@@ -28,6 +28,7 @@ import { meetingRowState } from "../../../pages/cores/history/helpers";
 import { useSummaryRun } from "../../../pages/cores/history/useSummaryRun";
 import { executedReceipt, readPlannedRoute, readRunReceipt, routeReady } from "../../../meetings/summaryRoute";
 import { RouteDisclosure, RunAttempts } from "../../../meetings/RouteDisclosure";
+import { StandingPagesSection, useStandingPages } from "../../standingPages";
 import { useAgentFlights, useAgentFlightsLive, type AgentFlight } from "../../agentFlights";
 import { conductorMembers, fleetCounts } from "../../conductor/members";
 import { AGENT_NAME, type AgentId } from "../../firstrun/agentsStep";
@@ -221,6 +222,11 @@ function ThisWeek({ days }: { days: readonly WeekCount[] }) {
       ) : null}
     </section>
   );
+}
+
+function TodayOwe() {
+  const owe = useStandingPages("desk").filter((page) => page.slug === "what-i-owe");
+  return owe.length ? <div data-testid="today-owe"><StandingPagesSection pages={owe} presentation="questions" /></div> : null;
 }
 
 export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
@@ -616,6 +622,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
             {finishNodes}
           </ol>
         </div>
+        <TodayOwe />
         <SinceYesterday brief={brief} failed={failed.brief} now={now} openRequest={sinceRequest} onRetry={retry} />
         <ThisWeek days={week} />
       </div>
