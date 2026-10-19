@@ -545,7 +545,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
           {actError?.key === "prepare" ? <span className="kit-pill" data-tone="danger" role="status">{actError.text}</span> : null}
           <Button dense variant={lead === "record" ? "primary" : "secondary"} onClick={recordNow} data-testid="today-record-now">Record now</Button>
         </div>
-        <PreparedBlock read={prepared} events={events} />
+        <PreparedBlock read={prepared} events={door?.upcoming ?? []} />
         <div className="today-grid">
           <TodayNeeds work={rows.work} count={rows.needs.count} now={now} limit={phone ? NEEDS_TOP_PHONE : NEEDS_TOP}
             primary={lead === "needs"} projects={rows.multipleProjects} loaded={needsLoaded} emptyDesk={emptyDesk}
