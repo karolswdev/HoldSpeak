@@ -58,7 +58,9 @@ function draftText(result: PreparedResult): string {
   return body.replace(echo, "");
 }
 
-function ResultVerbs({ meetingId, result }: { meetingId: string; result: PreparedResult }) {
+function ResultVerbs({ meetingId, result, reading, onRead }: {
+  meetingId: string; result: PreparedResult; reading: boolean; onRead(): void;
+}) {
   const { copy, state: copyState } = useCopyReceipt();
   const [noting, setNoting] = useState(false);
   const [noteFailed, setNoteFailed] = useState(false);
@@ -90,7 +92,10 @@ function ResultVerbs({ meetingId, result }: { meetingId: string; result: Prepare
     }
   };
   return (
-    <span className="meeting-prepared-verbs">
+    <div className="meeting-prepared-verbs">
+      <Button dense variant="ghost" aria-expanded={reading} onClick={onRead} data-testid="prepared-read">
+        {reading ? "Fold" : "Read"}
+      </Button>
       <Button dense variant="secondary" loading={noting} onClick={() => void openAsNote()}
         data-testid="prepared-open-note">
         {noteFailed ? "Note not made · Try again" : "Open as note"}
@@ -99,7 +104,7 @@ function ResultVerbs({ meetingId, result }: { meetingId: string; result: Prepare
         {copyState === "copied" ? "Copied" : copyState === "failed" ? "Copy failed" : "Copy"}
       </Button>
       {doc ? <SendWellsFold doc={doc} /> : null}
-    </span>
+    </div>
   );
 }
 
@@ -139,22 +144,29 @@ export function PreparedResults({ meetingId, results }: { meetingId: string; res
                   meta={result.title && result.title !== result.label ? result.label : undefined}
                   metaTone={failed ? "fail" : undefined}
                   wrap
-                  open={isOpen || failed}
+                  open={ready || failed}
                   onToggle={ready ? () => setOpen(isOpen ? null : result.kind) : undefined}
-                  expands={ready}
+                  expands={false}
                   lineLabel={ready ? `${isOpen ? "Fold" : "Read"} ${name}` : undefined}
-                  trailing={ready ? <ResultVerbs meetingId={meetingId} result={result} />
-                    : result.state === "writing" ? (
-                      <span data-testid="meeting-prepared-writing">
-                        <RunLine phase="running" verb="Writing…"
-                          startedAt={result.since ? Date.parse(result.since) : undefined} />
-                      </span>
-                    ) : undefined}
+                  trailing={result.state === "writing" ? (
+                    <span data-testid="meeting-prepared-writing">
+                      <RunLine phase="running" verb="Writing…"
+                        startedAt={result.since ? Date.parse(result.since) : undefined} />
+                    </span>
+                  ) : undefined}
                 >
-                  {isOpen ? (
-                    <div className="meeting-prepared-draft" data-testid="meeting-prepared-draft">
-                      <AgentWords text={draftText(result)} />
-                    </div>
+                  {ready ? (
+                    <>
+                      {isOpen ? (
+                        <div className="meeting-prepared-draft" data-testid="meeting-prepared-draft">
+                          <AgentWords text={draftText(result)} />
+                        </div>
+                      ) : null}
+                      {/* The verbs sit under the row, full width: the Send
+                          well opens here, never in the narrow trailing slot. */}
+                      <ResultVerbs meetingId={meetingId} result={result} reading={isOpen}
+                        onRead={() => setOpen(isOpen ? null : result.kind)} />
+                    </>
                   ) : failed ? (
                     <p className="meeting-prepared-failed" data-testid="meeting-prepared-failed">
                       {result.reason || "This draft did not run."}

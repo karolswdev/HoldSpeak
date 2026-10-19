@@ -634,7 +634,9 @@ describe("the meeting prepares its Results (betterment/capture C5)", () => {
     expect(within(section).getByTestId("meeting-prepared-stakeholder_update").textContent).toContain("Update for stakeholders");
     expect(section.textContent).not.toMatch(/Drafter|ART 0|artifact/i);
     expect(screen.queryByTestId("meeting-prepared-draft")).toBeNull();
-    fireEvent.click(adr);
+    const read = within(adr.closest("li") as HTMLElement).getByRole("button", { name: "Read" });
+    expect(read.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(read);
     const draft = await screen.findByTestId("meeting-prepared-draft");
     expect(draft.textContent).toMatch(/idempoten/i);
     expect(draft.textContent).not.toContain("###");
@@ -660,7 +662,7 @@ describe("the meeting prepares its Results (betterment/capture C5)", () => {
     at(fixture);
     const calls = hub(fixture);
     render5();
-    const adr = await screen.findByTestId("meeting-prepared-adr");
+    const adr = (await screen.findByTestId("meeting-prepared-adr")).closest("li") as HTMLElement;
     fireEvent.click(within(adr).getByRole("button", { name: "Open as note" }));
     await waitFor(() => expect(calls.some((c) => c.path === "/api/notes" && c.init?.method === "POST")).toBe(true));
     const note = calls.find((c) => c.path === "/api/notes")!.init!.json as { title: string; body_markdown: string };
@@ -688,7 +690,8 @@ describe("the meeting prepares its Results (betterment/capture C5)", () => {
     render5();
     const section = await screen.findByTestId("meeting-prepared");
     expect(within(section).getByTestId("meeting-prepared-failed").textContent).toBe("The engine did not finish this draft.");
-    expect(within(section).getByTestId("meeting-prepared-stakeholder_update").textContent).toContain("Open as note");
+    const update = screen.getByTestId("meeting-prepared-stakeholder_update").closest("li") as HTMLElement;
+    expect(within(update).getByRole("button", { name: "Open as note" })).toBeTruthy();
   });
 
   it("the meeting window has one wing, Outcomes; no Artifacts wing", async () => {
