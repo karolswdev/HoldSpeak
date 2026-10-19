@@ -457,6 +457,16 @@
       ]
     },
     {
+      "path": "/api/agent/launches/{launch_id}/helper/allow",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.agent_hand",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/agent/launches/{launch_id}/lane",
       "methods": [
         "GET"
@@ -4413,6 +4423,22 @@
       "consumers": []
     },
     {
+      "path": "/api/notes/{note_id}/outcomes/{row_id}/dismiss",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.note_outcomes",
+      "consumers": []
+    },
+    {
+      "path": "/api/notes/{note_id}/outcomes/{row_id}/edit",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.note_outcomes",
+      "consumers": []
+    },
+    {
       "path": "/api/nudges/{step_id}/dismiss",
       "methods": [
         "POST"
@@ -5703,6 +5729,16 @@
       ],
       "module": "web.routes.providers",
       "consumers": []
+    },
+    {
+      "path": "/api/providers/{provider}/connections/{ref}",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.providers",
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/recipes",

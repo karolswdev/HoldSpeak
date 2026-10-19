@@ -67,7 +67,9 @@ def _thread_side(name: str) -> bool:
     # MCP-only families: an agent composes the desk over MCP; the seeded
     # thread palettes do not widen (no palette grows versus main).
     return name not in _MCP_ONLY and not name.startswith(
-        ("project.", "provider.", "interview.", "practice_recipe.", "channel.", "desk_window.", "automation.")
+        ("project.", "provider.", "interview.", "practice_recipe.", "channel.", "desk_window.", "automation.",
+         # Betterment Q9: Find the tasks on a note (the note.* MCP family).
+         "note.")
     )
 
 

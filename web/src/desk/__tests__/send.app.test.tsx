@@ -233,12 +233,12 @@ async function openRow(name: string) {
 }
 
 describe("betterment send S1: the account chip says only a sign-in failure, and a good send is a good check", () => {
-  it("the Accounts check said Unreachable: the GitHub row says so; after a recorded POSTED it says nothing", async () => {
+  it("the Accounts check could not reach GitHub: the GitHub row says so; after a recorded POSTED it says nothing", async () => {
     replay(BEFORE as Recorded);
     const first = render(<SendWells doc={docOf(BEFORE as Recorded)} />);
-    expect(line(await rowOf("acme/payments #42"))).toContain("UNREACHABLE");
+    expect(line(await rowOf("acme/payments #42"))).toContain("COULD NOT CHECK");
     // Jira was never checked: no NEVER CHECKED chip (nothing failed).
-    expect(line(await rowOf("PAY-12 ticket"))).not.toContain("NEVER CHECKED");
+    expect(line(await rowOf("PAY-12 ticket"))).not.toMatch(/NEVER CHECKED|NOT CHECKED/);
     first.unmount();
 
     resetSendStore();
@@ -250,7 +250,7 @@ describe("betterment send S1: the account chip says only a sign-in failure, and 
         expect(line(r)).toMatch(/POSTED|COMMENTED/);
         return r;
       }));
-      expect(words).not.toMatch(/UNREACHABLE|NEVER CHECKED|CONNECTED/);
+      expect(words).not.toMatch(/COULD NOT CHECK|UNREACHABLE|NOT CHECKED|NEVER CHECKED|CONNECTED|WORKS/);
     }
     // After a send that worked, the verb stays "Send again".
     const open = await openRow("acme/payments #42");
@@ -337,7 +337,7 @@ describe("betterment send S1: a GitHub destination saves from the form", () => {
     const form = await screen.findByTestId("dest-form");
     fireEvent.change(within(form).getByLabelText("Channel"), { target: { value: "github" } });
     const account = screen.getByTestId("dest-github-account");
-    expect(line(account)).not.toMatch(/UNREACHABLE|Set up account/);
+    expect(line(account)).not.toMatch(/COULD NOT CHECK|UNREACHABLE|Set up account/);
     fireEvent.change(screen.getByTestId("dest-repo"), { target: { value: "acme/payments" } });
     fireEvent.change(screen.getByTestId("dest-number"), { target: { value: "42" } });
     const save = screen.getByTestId("dest-save") as HTMLButtonElement;

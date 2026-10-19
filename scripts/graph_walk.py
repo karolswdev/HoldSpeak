@@ -922,6 +922,12 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
     "windows.raise": {"kind": "tool", "name": "desk_window.raise"},
     "windows.arrange": {"kind": "tool", "name": "desk_window.arrange"},
     "windows.seat": {"kind": "tool", "name": "desk_window.seat"},
+    # Betterment Q9: Find the tasks on a note.
+    "note.outcomes.read": {"kind": "tool", "name": "note.outcomes"},
+    "note.find_tasks": {"kind": "tool", "name": "note.find_tasks"},
+    "note.outcome.edit": {"kind": "tool", "name": "note.outcome.edit"},
+    "note.outcome.dismiss": {"kind": "tool", "name": "note.outcome.dismiss"},
+    "note.outcome.confirm": {"kind": "tool", "name": "note.outcome.confirm"},
 }
 
 #: Declared operations with no MCP exposure: the rig refuses them by name.

@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 794 (plus static mounts). iOS-consumed: 89. Web-consumed: 623.
+Routes: 799 (plus static mounts). iOS-consumed: 89. Web-consumed: 626.
 
 ## device_audio_ws
 
@@ -110,6 +110,7 @@ Routes: 794 (plus static mounts). iOS-consumed: 89. Web-consumed: 623.
 | POST | `/api/agent/launches/{launch_id}/answer` | web |
 | POST | `/api/agent/launches/{launch_id}/deliver` | server only |
 | GET | `/api/agent/launches/{launch_id}/explain` | web |
+| POST | `/api/agent/launches/{launch_id}/helper/allow` | web |
 | GET | `/api/agent/launches/{launch_id}/lane` | web |
 | POST | `/api/agent/launches/{launch_id}/rebrief` | web |
 | POST | `/api/agent/launches/{launch_id}/rebrief/{press_id}/take-back` | web |
@@ -814,6 +815,8 @@ Routes: 794 (plus static mounts). iOS-consumed: 89. Web-consumed: 623.
 | GET | `/api/notes/{note_id}/outcomes` | web |
 | POST | `/api/notes/{note_id}/outcomes/find` | server only |
 | POST | `/api/notes/{note_id}/outcomes/{row_id}/confirm` | server only |
+| POST | `/api/notes/{note_id}/outcomes/{row_id}/dismiss` | server only |
+| POST | `/api/notes/{note_id}/outcomes/{row_id}/edit` | server only |
 
 ## web.routes.primitives.notes
 
@@ -1077,6 +1080,7 @@ Routes: 794 (plus static mounts). iOS-consumed: 89. Web-consumed: 623.
 | GET | `/api/providers/jira/discover` | server only |
 | POST | `/api/providers/jira/search` | server only |
 | POST | `/api/providers/jira/validate-scope` | server only |
+| DELETE | `/api/providers/{provider}/connections/{ref}` | web |
 | POST | `/api/watches/{watch_id}/evaluate` | web |
 
 ## web.routes.repositories

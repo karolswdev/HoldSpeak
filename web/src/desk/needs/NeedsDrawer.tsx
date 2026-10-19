@@ -429,7 +429,7 @@ function NeedVerbsView({ face, primary, onWell, well }: {
     case "calendar":
       return (
         <Button dense variant="secondary" aria-label="Connect calendar" data-testid="needs-row-verb" data-verb="connect-calendar"
-          onClick={() => openSurfaceOr("configure-settings", "/settings", "meetings")}>Connect calendar</Button>
+          onClick={() => openSurfaceOr("configure-settings", "/settings", "integration:calendar")}>Connect calendar</Button>
       );
     case "open": {
       const open = refOpener(v.ref);
@@ -1091,7 +1091,7 @@ export function NeedsDrawer() {
                   <span className="needs-calendar-offer" data-testid="needs-no-calendar">
                     NO CALENDAR
                     <Button dense variant="ghost" aria-label="Connect calendar" data-testid="needs-row-verb" data-verb="connect-calendar"
-                      onClick={() => openSurfaceOr("configure-settings", "/settings", "meetings")}>Connect calendar</Button>
+                      onClick={() => openSurfaceOr("configure-settings", "/settings", "integration:calendar")}>Connect calendar</Button>
                   </span>
                 ),
               }

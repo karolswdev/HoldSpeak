@@ -4,9 +4,75 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-18 (betterment batch six delivered at `b8908dc72`)
+**Last updated:** 2026-10-19 (P3 #1350 delivered; ST2 #1346 merged)
 
 ## Current phase
+
+**Betterment recovery: 73/117 recipe implementations merged.** Codex owns
+recovery and delivery at the owner's request. The desk is currently on
+backend `50e7502a7`, frontend `e78bdddb6ee00c5d`, PID 44875 (P3).
+Four HTTP checks pass and the actual desk renders at 1440/393. These are
+delivery observations; owner acceptance remains separate. All three baseline non-browser
+regression shards passed: 16,784 checks, 27 skips and one expected failure.
+Remaining browser shards use the low-priority machine lock at
+`wt-betterment-tape-20261019`, pinned to `bd3acff8f`.
+
+ST1 #1347 gives Rhythm, Wallpaper and Calendar one Settings home, preserves
+old doors and unifies quiet hours. Recovery fixed a real phone defect: two
+44 px stepper arrows left no room for the value. Its two-size browser test
+fails on the old CSS and passes after the fix, including a saved Increase
+press. The initial broad check passed 4,062 related web and 1,383 affected
+pytest checks but found two stale browser selectors. After updating the
+Engines navigation assertion, the final incremental quick check is green:
+18 browser, 106 sweep, 27 canon and 1,116 repo guards. ST1 is on the
+owner's running desk; Rhythm is observed at 1440/393 without page errors.
+
+Q9 follow-up #1365 uses declared operations through HTTP and MCP, with Edit
+and Dismiss before Confirm. Dismissed rows stay dismissed. Quick check:
+118 related web, 6,457 affected pytest (7 skipped), 106 sweep, 27 canon,
+1,116 repo guards. Q9 is on the owner's running desk.
+
+AG10 #1367 recovers the local fixes absent from superseded #1364. A real-hub
+fake-agent walk reads a meeting through MCP, commits a file and shows Done,
+one file changed, branch and Looked at at 1440/393. Quick check: 142 related
+web, 243 affected pytest, 106 sweep, 27 canon, 1,116 repo guards.
+
+P3 #1350 gives the project Now wing its state and reason, head facts,
+owner actions, Waiting on by person and This week with source links.
+Recovery carries each confirmed decision's source meeting through the wire
+and renders its chip. Current isolated-hub shots show the populated head
+facts at 1440/393; the original recovered seed also shows owed items and the
+confirmed decision. Broad check: 4,083 web passed with one old People test
+checking folds before Prep completed, 2,233 pytest passed (2 skipped),
+106 sweep, 27 canon and 1,116 repo guards. The asynchronous assertion now
+waits for the folds; final incremental check is green: 40 web, 106 sweep,
+27 canon and 1,116 repo guards. P3 is on the owner's running desk; runtime identity and four HTTP checks pass.
+
+ST2 #1346 recovers truthful Accounts states, Found on this Mac, Use and
+Remove/Undo. Check restores the previous Jira/Confluence acli profile. Four
+recovery tests failed before the fix when restoration returned nonzero or
+raised; the service now persists and returns the plain restoration failure.
+Provider behavior is exercised with an isolated stub. Broad check: 4,069
+web and 385 pytest passed; the sweep hit an intermittent People brief 503.
+The final incremental quick check passed 335 pytest, 106 sweep, 27 canon
+and 1,116 repo guards. The People 503 remains open; this retry does not
+prove it fixed. ST2 awaits deployment.
+
+**Initial recovery snapshot — owner ruling 2026-10-19.**
+Batch seven stopped at Claude's usage limit. At recovery, main had 69 of
+117 slice implementations merged and the desk served batch six at
+`b8908dc72` (runtime identity checked). Eight betterment PRs were open:
+#1346, #1347, #1349, #1350, #1355, #1363, #1364 and #1365.
+Local-only commits and unfinished edits are preserved in their original
+worktrees. In particular, AG10's latest fixes are not on its PR branch;
+Q11, AG11 and the remaining atlas repairs are uncommitted. The four confirmed failures are repaired in this recovery PR: API
+markdown/manifest parity and three recorded-wire checks in People/Today.
+The hub re-records its own answers; the Today face checks keep the task in
+its correct Needs-you home. Focused validation: four pytest checks and 28
+Today/People web checks pass. Pending-PR recovery and delivery continue. This is not a completion or owner-acceptance claim.
+Exact recovery map: `docs/internal/betterment/RECOVERY-2026-10-19.md`.
+Codex owns delivery for this task at the owner's request; implementation
+workers hold for SHIP and Codex verifies and merges.
 
 **Betterment batch six — delivered 2026-10-18 (main `b8908dc72`).** The
 desk's tools are complete (7 of 7): M5 #1330 (HTTP engines get the Ask

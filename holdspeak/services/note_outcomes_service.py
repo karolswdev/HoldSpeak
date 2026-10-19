@@ -56,6 +56,13 @@ class NoteOutcomesService:
         self._people = people_service
         self._door = door_service
 
+    @classmethod
+    def composed(cls, db: Any, services: Any, ctx: Any) -> "NoteOutcomesService":
+        """The hub's one instance (runtime/composition.py): the note.outcome*
+        operations bind to it, over HTTP and MCP alike."""
+        return cls(db, people_service=getattr(services, "people_service", None) or getattr(ctx, "people_service", None),
+                   door_service=getattr(services, "door_service", None) or getattr(ctx, "door_service", None))
+
     # ── reads ─────────────────────────────────────────────────────────
 
     def _note(self, note_id: str) -> Any:
@@ -64,11 +71,17 @@ class NoteOutcomesService:
             raise NotFound("note", str(note_id))
         return note
 
-    def _rows(self, note_id: str) -> list[dict[str, Any]]:
+    def _rows(self, note_id: str, *, dismissed: bool = False) -> list[dict[str, Any]]:
+        """The note's rows; a dismissed row only when asked (Find reads it so
+        it never proposes that row again)."""
         with self._db._connection() as conn:
-            rows = conn.execute(
-                "SELECT * FROM note_outcomes WHERE note_id=? ORDER BY ordinal", (note_id,)
-            ).fetchall()
+            if dismissed:
+                rows = conn.execute(
+                    "SELECT * FROM note_outcomes WHERE note_id=? ORDER BY ordinal", (note_id,)).fetchall()
+            else:
+                rows = conn.execute(
+                    "SELECT * FROM note_outcomes WHERE note_id=? AND state<>'dismissed' ORDER BY ordinal",
+                    (note_id,)).fetchall()
         return [{
             "id": row["id"], "kind": row["kind"], "text": row["text"],
             "owner": row["owner"], "due": row["due"],
@@ -174,7 +187,8 @@ class NoteOutcomesService:
             raise NoteFindRefused("note_empty", "The note has no words yet.", status=422)
         (items, decisions), model = self._extract(principal, text)
         now = utc_now_iso()
-        kept = [row for row in self._rows(note.id) if row["state"] == "confirmed"]
+        # Confirmed and dismissed rows stay; neither is proposed again.
+        kept = [row for row in self._rows(note.id, dismissed=True) if row["state"] in ("confirmed", "dismissed")]
         kept_keys = {(row["kind"], _key(row["text"])) for row in kept}
         found: list[dict[str, Any]] = []
         for item in items:
@@ -206,15 +220,54 @@ class NoteOutcomesService:
                 )
         return self.read(principal, note.id)
 
-    # ── Confirm ───────────────────────────────────────────────────────
+    # ── Edit and Dismiss, before Confirm (as a meeting's rows) ────────
 
-    def confirm(self, principal: Principal, note_id: str, row_id: str) -> dict[str, Any]:
+    def _proposed(self, note_id: str, row_id: str) -> tuple[Any, dict[str, Any]]:
         note = self._note(note_id)
         row = next((r for r in self._rows(note.id) if r["id"] == row_id), None)
         if row is None:
             raise NotFound("note outcome", str(row_id))
+        if row["state"] != "proposed":
+            raise ConflictError("only a proposed row changes", code="note_outcome_not_proposed")
+        return note, row
+
+    def edit(self, principal: Principal, note_id: str, row_id: str, *, text: str | None = None,
+             owner_name: str | None = None, due: str | None = None) -> dict[str, Any]:
+        """Change a proposed row's words, owner or date before Confirm. A new
+        owner is matched to People again."""
+        note, row = self._proposed(note_id, row_id)
+        new_text = row["text"] if text is None else " ".join(str(text).split())
+        if not new_text:
+            raise ValidationError("the row needs words", code="note_outcome_text_required")
+        new_owner = row["owner"]
+        if owner_name is not None and row["kind"] == "task":
+            new_owner = self._owner(owner_name)
+        new_due = row["due"] if due is None else " ".join(str(due).split())
+        with self._db._connection() as conn:
+            conn.execute(
+                "UPDATE note_outcomes SET text=?, owner=?, due=? WHERE id=? AND state='proposed'",
+                (new_text, new_owner, new_due, row_id),
+            )
+        return self.read(principal, note.id)
+
+    def dismiss(self, principal: Principal, note_id: str, row_id: str) -> dict[str, Any]:
+        """Take a proposed row away. It is kept (never proposed again), not drawn."""
+        note, _row = self._proposed(note_id, row_id)
+        with self._db._connection() as conn:
+            conn.execute("UPDATE note_outcomes SET state='dismissed' WHERE id=? AND state='proposed'", (row_id,))
+        return self.read(principal, note.id)
+
+    # ── Confirm ───────────────────────────────────────────────────────
+
+    def confirm(self, principal: Principal, note_id: str, row_id: str) -> dict[str, Any]:
+        note = self._note(note_id)
+        row = next((r for r in self._rows(note.id, dismissed=True) if r["id"] == row_id), None)
+        if row is None:
+            raise NotFound("note outcome", str(row_id))
         if row["state"] == "confirmed":
             return self.read(principal, note.id)
+        if row["state"] == "dismissed":
+            raise ConflictError("a dismissed row is not confirmed", code="note_outcome_dismissed")
         source_ref = f"note:{note.id}"
         if row["kind"] == "task":
             if self._door is None:

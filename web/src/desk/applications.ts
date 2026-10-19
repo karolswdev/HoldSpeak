@@ -67,6 +67,10 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     href: "/",
     group: "tool",
     shortcut: "⌘⇧P",
+    // Betterment setup ST1: Wallpaper has one home, Settings ▸ Wallpaper.
+    // The row keeps its id, its Search words and ⌘⇧P; each opens Settings
+    // there (the `change-places` alias on Settings). ChangePlacesCore stays.
+    parked: "settings:wallpaper",
     surface: {
       eyebrow: "Places to think",
       minW: 600,
@@ -177,6 +181,9 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
       { key: "configure-runs-on", scope: "models" },
       { key: "open-concierge", scope: "models" },
       { key: "read-runtime-docs", scope: "guide" },
+      // Betterment setup ST1: the parked Rhythm window and Change places.
+      { key: "configure-cadence", scope: "rhythm" },
+      { key: "change-places", scope: "wallpaper" },
     ],
     surface: {
       eyebrow: "Configuration",
@@ -213,6 +220,10 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     glyph: "◷",
     href: "/cadence",
     group: "tool",
+    // Betterment setup ST1: Rhythm has one home, Settings ▸ Rhythm. The
+    // sweep and the loops are under its Advanced fold (CadenceCore, embedded
+    // there); the window is parked, its id and Search word open Settings.
+    parked: "settings:rhythm",
     surface: {
       eyebrow: "Follow-through",
       minW: 520,

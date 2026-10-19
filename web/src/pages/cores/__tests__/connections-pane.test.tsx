@@ -11,6 +11,16 @@ import RECORDED from "../../../desk/__tests__/fixtures/needsYou.recorded.json";
 import CALENDAR_WIRE from "../../../test/wire/onboarding-calendar.wire.json";
 import CALENDAR_USE_WIRE from "../../../test/wire/onboarding-calendar.use.wire.json";
 import CALENDAR_CHECK_WIRE from "../../../test/wire/onboarding-calendar.check.wire.json";
+/* Betterment ST2: Accounts that say Works. The doubles are the hub's OWN
+   answers, recorded by tests/integration/test_desk_connections.py
+   (test_the_st2_wire_fixtures_are_the_hubs_own): two Jira sites checked, a
+   third only in acli's file, its Use, and a Remove. */
+import ST2_CONNECTIONS from "../../../desk/__tests__/fixtures/connections-wire/st2-connections.json";
+import ST2_FOUND from "../../../desk/__tests__/fixtures/connections-wire/st2-found.json";
+import ST2_USE from "../../../desk/__tests__/fixtures/connections-wire/st2-use.json";
+import ST2_AFTER_USE from "../../../desk/__tests__/fixtures/connections-wire/st2-connections-after-use.json";
+import ST2_FOUND_AFTER_USE from "../../../desk/__tests__/fixtures/connections-wire/st2-found-after-use.json";
+import ST2_REMOVE from "../../../desk/__tests__/fixtures/connections-wire/st2-remove.json";
 
 const RECORDED_CONNECTIONS = RECORDED.grouped.gets["/api/connections"] as unknown as ConnectionsResponse;
 function recordedTool(id: string): ConnectionTool {
@@ -85,6 +95,7 @@ function degradedGithub(): ConnectionTool {
     state: "degraded",
     account: {},
     error_detail: "Connection timed out",
+    reason: "gh did not answer",
     last_checked_at: "2026-09-04T13:00:00Z",
     egress_host: "github.com",
   };
@@ -197,14 +208,15 @@ describe("ConnectionsPane", () => {
 
   // replaces (the face half): tests/e2e/test_hs168_connections_glass.py::test_connections_real_readiness
   describe("GitHub connected", () => {
-    it("shows Connected chip, login summary, and quiet Recheck verb", async () => {
+    it("shows Works chip, login and host, and the Check verb", async () => {
       renderPane();
       const card = (await screen.findByTestId("connections-github")).closest("li")!;
       expect(within(card).getByText("GitHub")).toBeInTheDocument();
       expect(within(card).getByText("karolswdev")).toBeInTheDocument();
       // PHILO-9-02 B1: the chip carries the row's own check age.
-      expect(within(card).getByText(/^Connected · Checked /)).toBeInTheDocument();
-      expect(within(card).getByText("Recheck")).toBeInTheDocument();
+      expect(within(card).getByText(/^Works · Checked /)).toBeInTheDocument();
+      expect(within(card).getByText("github.com")).toBeInTheDocument();
+      expect(within(card).getByText("Check")).toBeInTheDocument();
     });
   });
 
@@ -217,55 +229,52 @@ describe("ConnectionsPane", () => {
       const card = (await screen.findByTestId("connections-github")).closest("li")!;
       // PHILO-17 U29: the cause in plain words.
       expect(within(card).getByText("Not signed in")).toBeInTheDocument();
-      expect(within(card).queryByText("Copy command")).toBeNull();
+      expect(within(card).queryByText("gh auth login")).toBeNull();
       fireEvent.click(within(card).getByRole("button", { name: "Sign in" }));
-      expect(within(card).getByText("Sign in to GitHub")).toBeInTheDocument();
-      expect(within(card).getByText("Copy command")).toBeInTheDocument();
       expect(within(card).getByText("gh auth login")).toBeInTheDocument();
-      // Primary Recheck in the fold
-      const recheckButtons = within(card).getAllByText("Recheck");
-      expect(recheckButtons.length).toBeGreaterThanOrEqual(1);
+      expect(within(card).getByRole("button", { name: "Copy" })).toBeInTheDocument();
+      expect(within(card).getByRole("button", { name: "Check" })).toBeInTheDocument();
     });
   });
 
   describe("GitHub unavailable", () => {
-    it("shows gh missing chip with fold and install hint", async () => {
+    it("says Could not check: gh is not installed, and Install gh shows the command", async () => {
       const response: ConnectionsResponse = {
         tools: [unavailableGithub(), emptyJira(), connectedCalendar(), connectedModels()],
       };
       renderPane(response);
       const card = (await screen.findByTestId("connections-github")).closest("li")!;
-      expect(within(card).getByText("gh missing")).toBeInTheDocument();
-      expect(within(card).queryByText("Install gh")).toBeNull();
-      fireEvent.click(within(card).getByRole("button", { name: "Details" }));
-      expect(within(card).getByText("Install gh")).toBeInTheDocument();
+      expect(within(card).getByText(/^Could not check: gh is not installed/)).toBeInTheDocument();
+      expect(within(card).queryByText("brew install gh")).toBeNull();
+      fireEvent.click(within(card).getByRole("button", { name: "Install gh" }));
       expect(within(card).getByText("brew install gh")).toBeInTheDocument();
     });
   });
 
   describe("GitHub degraded", () => {
-    it("shows Unreachable chip with error_detail as title", async () => {
+    it("says Could not check with the hub's reason, never Unreachable", async () => {
       const response: ConnectionsResponse = {
         tools: [degradedGithub(), emptyJira(), connectedCalendar(), connectedModels()],
       };
       renderPane(response);
       const card = (await screen.findByTestId("connections-github")).closest("li")!;
       // PHILO-9-02 B1: the chip carries the row's own check age.
-      expect(within(card).getByText(/^Unreachable · Checked /)).toBeInTheDocument();
-      expect(within(card).getByText("Retry")).toBeInTheDocument();
+      expect(within(card).getByText(/^Could not check: gh did not answer · Checked /)).toBeInTheDocument();
+      expect(within(card).queryByText(/Unreachable/)).toBeNull();
+      expect(within(card).getByText("Check")).toBeInTheDocument();
       expect(within(card).queryByText("gh auth login")).toBeNull();
     });
   });
 
   describe("GitHub never checked", () => {
-    it("shows Never checked and the Recheck verb", async () => {
+    it("shows Not checked and the Check verb", async () => {
       const response: ConnectionsResponse = {
         tools: [neverCheckedGithub(), emptyJira(), connectedCalendar(), connectedModels()],
       };
       renderPane(response);
       const card = (await screen.findByTestId("connections-github")).closest("li")!;
-      expect(within(card).getByText("Never checked")).toBeInTheDocument();
-      expect(within(card).getByText("Recheck")).toBeInTheDocument();
+      expect(within(card).getByText("Not checked")).toBeInTheDocument();
+      expect(within(card).getByText("Check")).toBeInTheDocument();
     });
   });
 
@@ -282,7 +291,7 @@ describe("ConnectionsPane", () => {
       // PHILO-9-02 B1: the empty card says the tool's own state; the hub's
       // empty Jira is `never_checked` (the old typed `not_configured` row
       // read "Not set up", a state the hub never sends for it).
-      expect(within(card).getByText("Never checked")).toBeInTheDocument();
+      expect(within(card).getByText("Not checked")).toBeInTheDocument();
       // PHILO-17 REFIT: Add account unfolds the Site and Email inputs.
       fireEvent.click(within(card).getByTestId("connections-add-open-jira"));
       // Ghost card has Site and Email inputs
@@ -299,7 +308,8 @@ describe("ConnectionsPane", () => {
       expect(within(conn).getByText("Jira")).toBeInTheDocument();
       expect(within(conn).getByText("ALPHA.ATLASSIAN.NET")).toBeInTheDocument();
       expect(within(conn).getByText("user@example.com")).toBeInTheDocument();
-      const chips = within(conn).getAllByText("Connected");
+      expect(within(conn).getByText("alpha.atlassian.net")).toBeInTheDocument();
+      const chips = within(conn).getAllByText("Works");
       expect(chips.length).toBeGreaterThanOrEqual(1);
     });
   });
@@ -325,7 +335,7 @@ describe("ConnectionsPane", () => {
       };
       renderPane(response);
       const alpha = await screen.findByTestId("connections-jira-conn-alpha-user");
-      expect(within(alpha).getByText("Connected")).toBeInTheDocument();
+      expect(within(alpha).getByText("Works")).toBeInTheDocument();
       const beta = await screen.findByTestId("connections-jira-conn-beta-admin");
       expect(within(beta).getByText("Not signed in")).toBeInTheDocument();
     });
@@ -334,39 +344,27 @@ describe("ConnectionsPane", () => {
   /* ── Calendar + Models link cards ── */
 
   describe("Calendar card", () => {
-    it("shows Connected with sources summary and Sources verb", async () => {
-      renderPane();
+    it("shows Connected with sources summary; Choose calendar is its verb (Betterment setup ST1: no Sources verb to Meetings)", async () => {
+      const onOpen = vi.fn();
+      renderPane(fullResponse(), { onOpen });
       const card = await screen.findByTestId("connections-calendar");
       expect(within(card).getByText("Calendar")).toBeInTheDocument();
       expect(within(card).getByText("2 sources")).toBeInTheDocument();
       expect(within(card).getByText("Connected")).toBeInTheDocument();
-      expect(within(card).getByText("Sources")).toBeInTheDocument();
-    });
-
-    it("opens meetings module when Sources is clicked", async () => {
-      const onOpen = vi.fn();
-      renderPane(fullResponse(), { onOpen });
-      const card = await screen.findByTestId("connections-calendar");
-      fireEvent.click(within(card).getByText("Sources"));
-      expect(onOpen).toHaveBeenCalledWith("meetings");
+      expect(within(card).queryByText("Sources")).toBeNull();
+      expect(within(card).getByRole("button", { name: "Choose calendar" })).toBeInTheDocument();
+      expect(onOpen).not.toHaveBeenCalled();
     });
   });
 
-  describe("Models card", () => {
-    it("shows assigned summary and Open Models verb", async () => {
+  // Betterment setup ST1: Accounts no longer shows `Runs on N of 7 assigned`;
+  // Engines is its one home (the card is parked in _parked/ConnectionsModelsCard.tsx).
+  describe("no engine row in Accounts", () => {
+    it("draws no Models card", async () => {
       renderPane();
-      const card = await screen.findByTestId("connections-models");
-      expect(within(card).getByText("Engines")).toBeInTheDocument();
-      expect(within(card).getByText("5 of 7 assigned")).toBeInTheDocument();
-      expect(within(card).getByText("Choose engines")).toBeInTheDocument();
-    });
-
-    it("opens models module when Open Models is clicked", async () => {
-      const onOpen = vi.fn();
-      renderPane(fullResponse(), { onOpen });
-      const card = await screen.findByTestId("connections-models");
-      fireEvent.click(within(card).getByText("Choose engines"));
-      expect(onOpen).toHaveBeenCalledWith("models");
+      await screen.findByTestId("connections-calendar");
+      expect(screen.queryByTestId("connections-models")).toBeNull();
+      expect(screen.queryByText(/of 7 assigned/)).toBeNull();
     });
   });
 
@@ -389,14 +387,14 @@ describe("ConnectionsPane", () => {
       const alpha = await screen.findByTestId("connections-jira-conn-alpha-user");
       const beta = screen.getByTestId("connections-jira-conn-beta-admin").closest("li")!;
       fireEvent.click(within(beta).getByRole("button", { name: "Sign in" }));
-      fireEvent.click(within(beta).getByRole("button", { name: "Recheck" }));
+      fireEvent.click(within(beta).getByRole("button", { name: "Check" }));
       expect(mockRecheckProvider).toHaveBeenCalledWith("jira", "beta-admin");
-      expect(within(alpha).getByRole("button", { name: "Recheck" })).toBeDisabled();
-      fireEvent.click(within(alpha).getByRole("button", { name: "Recheck" }));
+      expect(within(alpha).getByRole("button", { name: "Check" })).toBeDisabled();
+      fireEvent.click(within(alpha).getByRole("button", { name: "Check" }));
       expect(mockRecheckProvider).toHaveBeenCalledTimes(1);
       await act(async () => reject(new Error("offline")));
       mockRecheckProvider.mockResolvedValueOnce(twoJiraConnections());
-      fireEvent.click(within(screen.getByRole("alert")).getByRole("button", { name: "Retry" }));
+      fireEvent.click(within(screen.getByRole("alert")).getByRole("button", { name: "Check" }));
       await waitFor(() => expect(mockRecheckProvider).toHaveBeenCalledTimes(2));
       expect(mockRecheckProvider).toHaveBeenLastCalledWith("jira", "beta-admin");
     });
@@ -413,7 +411,7 @@ describe("ConnectionsPane", () => {
       renderPane(response, { onFooter });
 
       const card = (await screen.findByTestId("connections-github")).closest("li")!;
-      fireEvent.click(within(card).getByText("Recheck"));
+      fireEvent.click(within(card).getByText("Check"));
 
       await waitFor(() => {
         expect(mockRecheckProvider).toHaveBeenCalledWith("github");
@@ -553,11 +551,16 @@ describe("ConnectionsPane", () => {
       expect(checkedAgo("2026-09-26T12:00:00Z", undefined, now)).toBe("Checked 2 d ago");
       expect(checkedAgo(undefined, 125, now)).toBe("Checked 2 min ago");
       expect(checkedAgo(undefined, undefined, now)).toBeUndefined();
-      expect(stateWords("never_checked", "github", {})).toBe("Never checked");
-      expect(stateWords("connected", "jira", {})).toBe("Connected");
+      expect(stateWords("never_checked", "github", {})).toBe("Not checked");
+      expect(stateWords("connected", "jira", {})).toBe("Works");
+      // Betterment ST2: the four row states in words.
+      expect(stateWords("owner_action_required", "jira", {})).toBe("Not signed in");
+      expect(stateWords("degraded", "jira", { other_account: true })).toBe("Signed in as another account");
+      expect(stateWords("degraded", "github", { reason: "gh was not run" })).toBe("Could not check: gh was not run");
+      expect(stateWords("unavailable", "confluence", {})).toBe("Could not check: acli is not installed");
     });
 
-    it("each card shows its own age, and Never checked", async () => {
+    it("each card shows its own age, and Not checked", async () => {
       const recent = new Date(Date.now() - 5 * 60_000).toISOString();
       const older = new Date(Date.now() - 3 * 3_600_000).toISOString();
       const response: ConnectionsResponse = {
@@ -591,14 +594,14 @@ describe("ConnectionsPane", () => {
       };
       renderPane(response);
       const gh = await screen.findByTestId("connections-github");
-      expect(within(gh).getByText("Never checked")).toBeInTheDocument();
-      expect(within(gh).getByText("Recheck")).toBeInTheDocument();
+      expect(within(gh).getByText("Not checked")).toBeInTheDocument();
+      expect(within(gh).getByText("Check")).toBeInTheDocument();
       const alpha = await screen.findByTestId("connections-jira-conn-alpha-user");
-      expect(within(alpha).getByText("Connected · Checked 5 min ago")).toBeInTheDocument();
+      expect(within(alpha).getByText("Works · Checked 5 min ago")).toBeInTheDocument();
       const beta = await screen.findByTestId("connections-jira-conn-beta-user");
-      expect(within(beta).getByText("Never checked")).toBeInTheDocument();
+      expect(within(beta).getByText("Not checked")).toBeInTheDocument();
       const gamma = await screen.findByTestId("connections-confluence-conn-gamma-user");
-      expect(within(gamma).getByText("Connected · Checked 3 h ago")).toBeInTheDocument();
+      expect(within(gamma).getByText("Works · Checked 3 h ago")).toBeInTheDocument();
       // Calendar and Models are local reads: no age.
       const cal = await screen.findByTestId("connections-calendar");
       expect(within(cal).getByText("Connected")).toBeInTheDocument();
@@ -609,14 +612,14 @@ describe("ConnectionsPane", () => {
     it("the producer's owner_action_required reads Not signed in; a degraded check never does", async () => {
       const degraded: ConnectionTool = {
         provider_id: "github", state: "degraded", account: {},
-        error_detail: "connect to 10.0.0.1:401 timed out",
+        error_detail: "connect to 10.0.0.1:401 timed out", reason: "gh did not answer",
         last_checked_at: "2026-09-04T13:00:00Z", egress_host: "github.com",
       };
       renderPane({ tools: [degraded, emptyJira(), connectedCalendar(), connectedModels()] });
       const card = (await screen.findByTestId("connections-github")).closest("li")!;
-      expect(within(card).getByText(/^Unreachable · Checked /)).toBeInTheDocument();
-      expect(within(card).queryByText("Copy command")).toBeNull();
-      expect(within(card).getByRole("button", { name: "Retry" })).toBeInTheDocument();
+      expect(within(card).getByText(/^Could not check: gh did not answer · Checked /)).toBeInTheDocument();
+      expect(within(card).queryByText("Not signed in")).toBeNull();
+      expect(within(card).getByRole("button", { name: "Check" })).toBeInTheDocument();
     });
 
     it("Jira Add posts the account and checks it at once", async () => {
@@ -707,7 +710,8 @@ describe("Accounts recovery", () => {
     rows.forEach((row, index) => {
       expect(within(row).getByText(tool.connections![index].account.site)).toBeVisible();
       expect(within(row).getByText("same@example.com")).toBeVisible();
-      expect(row.querySelector(".gadget-chip-egress")).toBeNull();
+      // The egress chip sits on Check, where the check goes out (once per row).
+      expect(row.querySelectorAll(".gadget-chip-egress")).toHaveLength(1);
     });
   });
 
@@ -721,8 +725,8 @@ describe("Accounts recovery", () => {
     expect(confluenceRow.querySelector(".connections-tool-label")?.textContent).toBe("Confluence");
     screen.queryAllByText(/acli .* auth login/).forEach(command => expect(command).not.toBeVisible());
     const github = screen.getByTestId("connections-github");
-    expect(within(github).queryByText(/Sign in to GitHub/)).toBeNull();
-    fireEvent.click(within(github).getByRole("button", { name: "Recheck" }));
+    expect(within(github).queryByText("gh auth login")).toBeNull();
+    fireEvent.click(within(github).getByRole("button", { name: "Check" }));
     await waitFor(() => expect(mockRecheckProvider).toHaveBeenCalledWith("github"));
   });
 
@@ -936,7 +940,7 @@ describe("Accounts recovery", () => {
     renderPane({ tools: [connectedGithub()] });
     const row = (await screen.findByTestId("connections-github")).closest("li")!;
     mockRecheckProvider.mockRejectedValue(new Error("Hub unavailable"));
-    fireEvent.click(within(row).getByRole("button", { name: "Recheck" }));
+    fireEvent.click(within(row).getByRole("button", { name: "Check" }));
     expect(await screen.findByText("Check failed")).toBeInTheDocument();
   });
 
@@ -944,8 +948,95 @@ describe("Accounts recovery", () => {
     Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: vi.fn().mockRejectedValue(new Error("Refused")) } });
     renderPane({ tools: [signInGithub()] });
     fireEvent.click(await screen.findByRole("button", { name: "Sign in" }));
-    fireEvent.click(screen.getByTestId("connections-github-copy"));
+    fireEvent.click(within(screen.getByTestId("connections-github-unfold")).getByRole("button", { name: "Copy" }));
     expect(await screen.findByText("Copy failed")).toBeInTheDocument();
     expect(screen.queryByText("Copied")).toBeNull();
+  });
+});
+
+describe("Accounts that say Works (betterment ST2)", () => {
+  const decoded = (raw: unknown) => decodeConnectionsResponse(structuredClone(raw));
+  const BETA = "beta.atlassian.net|owner@example.com";
+  const GAMMA_ID = (ST2_FOUND.candidates.find((c: { site: string }) => c.site === "gamma.atlassian.net"))!.id;
+
+  it("tells two Jira sites apart by the site in the row, each with its own Check", async () => {
+    vi.mocked(apiFetch).mockImplementation(async (path) => path === "/api/onboarding/connections" ? structuredClone(ST2_FOUND) : {});
+    renderPane(decoded(ST2_CONNECTIONS));
+    for (const site of ["alpha.atlassian.net", "beta.atlassian.net"]) {
+      const row = await screen.findByTestId(`connections-jira-conn-${site}|owner@example.com`);
+      expect(within(row).getByText(site)).toBeInTheDocument();
+      expect(within(row).getByText(/^Works · Checked/)).toBeInTheDocument();
+      expect(within(row).getByRole("button", { name: "Check" })).toBeInTheDocument();
+    }
+  });
+
+  it("lists the acli profile HoldSpeak does not use under Found on this Mac, and one Use connects it", async () => {
+    let used = false;
+    vi.mocked(apiFetch).mockImplementation(async (path, init) => {
+      if (path === "/api/onboarding/connections/use" && init?.method === "POST") { used = true; return structuredClone(ST2_USE); }
+      if (path === "/api/onboarding/connections") return structuredClone(used ? ST2_FOUND_AFTER_USE : ST2_FOUND);
+      return {};
+    });
+    mockFetchConnections.mockImplementation(async () => decoded(used ? ST2_AFTER_USE : ST2_CONNECTIONS));
+    render(<ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} />);
+    const found = await screen.findByTestId(`connections-found-${GAMMA_ID}`);
+    expect(within(found).getByText("gamma.atlassian.net")).toBeInTheDocument();
+    // Only accounts HoldSpeak does not use yet: the two checked Jira sites are not under Found.
+    const list = screen.getByTestId("connections-found");
+    expect(within(list).queryByTestId("connections-found-jira:alpha.atlassian.net|owner@example.com")).toBeNull();
+    expect(within(list).queryByTestId("connections-found-jira:beta.atlassian.net|owner@example.com")).toBeNull();
+    fireEvent.click(within(found).getByRole("button", { name: "Use" }));
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith(
+      "/api/onboarding/connections/use", { method: "POST", json: { id: GAMMA_ID } }));
+    act(() => { window.dispatchEvent(new Event(ACCOUNTS_CHANGED)); });
+    const gamma = await screen.findByTestId("connections-jira-conn-gamma.atlassian.net|owner@example.com");
+    await waitFor(() => expect(within(gamma).getByText(/^Works · Checked/)).toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByTestId(`connections-found-${GAMMA_ID}`)).toBeNull());
+  });
+
+  it("pressing a row unfolds what uses it, Sign in again and Remove; Undo adds it back and checks it", async () => {
+    let removed = false;
+    vi.mocked(apiFetch).mockImplementation(async (path, init) => {
+      if (init?.method === "DELETE") { removed = true; return structuredClone(ST2_REMOVE); }
+      if (path === "/api/onboarding/connections") return structuredClone(ST2_FOUND_AFTER_USE);
+      return {};
+    });
+    const afterRemove = decoded(ST2_CONNECTIONS);
+    afterRemove.tools.find((t) => t.provider_id === "jira")!.connections =
+      afterRemove.tools.find((t) => t.provider_id === "jira")!.connections!.filter((c) => c.connection_ref !== BETA);
+    mockFetchConnections.mockImplementation(async () => removed ? afterRemove : decoded(ST2_CONNECTIONS));
+    mockRecheckProvider.mockResolvedValue(null);
+    render(<ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} />);
+    const line = await screen.findByTestId(`connections-jira-conn-${BETA}`);
+    fireEvent.click(line);
+    const unfold = await screen.findByTestId(`connections-jira-unfold-${BETA}`);
+    expect(within(unfold).getByText("Nothing yet")).toBeInTheDocument();
+    expect(within(unfold).queryByText(/acli jira auth login/)).toBeNull();
+    fireEvent.click(within(unfold).getByRole("button", { name: "Sign in again" }));
+    expect(within(unfold).getByText(`acli jira auth login --site beta.atlassian.net --email owner@example.com --token`)).toBeInTheDocument();
+    fireEvent.click(within(unfold).getByRole("button", { name: "Remove" }));
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith(
+      `/api/providers/jira/connections/${encodeURIComponent(BETA)}`, { method: "DELETE" }));
+    const bar = await screen.findByTestId("connections-removed");
+    expect(within(bar).getByText("Jira · beta.atlassian.net")).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByTestId(`connections-jira-conn-${BETA}`)).toBeNull());
+    removed = false;
+    fireEvent.click(within(bar).getByRole("button", { name: "Undo" }));
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith(
+      "/api/providers/jira/connections", { method: "POST", json: { site: "beta.atlassian.net", email: "owner@example.com" } }));
+    await waitFor(() => expect(mockRecheckProvider).toHaveBeenCalledWith("jira"));
+    expect(await screen.findByTestId(`connections-jira-conn-${BETA}`)).toBeInTheDocument();
+  });
+
+  it("names what uses an account in its unfold", async () => {
+    vi.mocked(apiFetch).mockResolvedValue({});
+    const wire = decoded(ST2_CONNECTIONS);
+    const beta = wire.tools.find((t) => t.provider_id === "jira")!.connections!.find((c) => c.connection_ref === BETA)!;
+    beta.used_by = [{ kind: "project", name: "Atlas" }, { kind: "destination", name: "Team Jira" }];
+    renderPane(wire);
+    fireEvent.click(await screen.findByTestId(`connections-jira-conn-${BETA}`));
+    const unfold = await screen.findByTestId(`connections-jira-unfold-${BETA}`);
+    expect(within(unfold).getByText("Project · Atlas")).toBeInTheDocument();
+    expect(within(unfold).getByText("Send to · Team Jira")).toBeInTheDocument();
   });
 });

@@ -139,6 +139,14 @@ TOOL_AUTHORITY: dict[str, str] = {
     "memory.search": WORK,
     "memory.observations": WORK,
     "memory.page": WORK,
+    # Betterment Q9: Find the tasks on a note. A model run on his assigned
+    # route and proposals kept with the note; Confirm makes one Door task or
+    # one PROPOSED decision (as door.add_item): work.
+    "note.outcomes": WORK,
+    "note.find_tasks": WORK,
+    "note.outcome.edit": WORK,
+    "note.outcome.dismiss": WORK,
+    "note.outcome.confirm": WORK,
     "people.readiness": WORK,
     "people.relationship.list": WORK,
     "people.relationship.get": WORK,

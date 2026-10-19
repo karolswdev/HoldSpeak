@@ -30,3 +30,7 @@ export const readNoteOutcomes = (noteId: string) => apiFetch<NoteOutcomes>(base(
 export const findNoteOutcomes = (noteId: string) => apiFetch<NoteOutcomes>(`${base(noteId)}/find`, { method: "POST" });
 export const confirmNoteOutcome = (noteId: string, rowId: string) =>
   apiFetch<NoteOutcomes>(`${base(noteId)}/${encodeURIComponent(rowId)}/confirm`, { method: "POST" });
+export const dismissNoteOutcome = (noteId: string, rowId: string) =>
+  apiFetch<NoteOutcomes>(`${base(noteId)}/${encodeURIComponent(rowId)}/dismiss`, { method: "POST" });
+export const editNoteOutcome = (noteId: string, rowId: string, fields: { text?: string; owner_name?: string; due?: string }) =>
+  apiFetch<NoteOutcomes>(`${base(noteId)}/${encodeURIComponent(rowId)}/edit`, { method: "POST", json: fields });

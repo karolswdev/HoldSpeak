@@ -3660,6 +3660,46 @@
         "summary": "Api Agent Launch Explain"
       }
     },
+    "/api/agent/launches/{launch_id}/helper/allow": {
+      "post": {
+        "description": "The owner's one press for a helper requested under Secure.\n\nThe agent's request is durable, but this route consumes it through\n``AgentHandService.hand`` so the ordinary worktree and process.spawn\nkernel checks still decide whether the helper can start.",
+        "operationId": "api_agent_helper_allow_api_agent_launches__launch_id__helper_allow_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "launch_id",
+            "required": true,
+            "schema": {
+              "title": "Launch Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Agent Helper Allow Api Agent Launches  Launch Id  Helper Allow Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Agent Helper Allow"
+      }
+    },
     "/api/agent/launches/{launch_id}/lane": {
       "get": {
         "description": "One launch's lane (PHILO-14 C0): the launch with its brief, the\nfollow-through with the PR checks, the current wait with its draft,\nthe session's events (paged: ``?after=<event id>&limit=``), the gated\ncalls, the answers typed, the attempt's state changes, the worktree's\ncommits and files, and the usage. Owner only (the edge default).\nReads only (``services.launch_lane``).",
@@ -19160,6 +19200,102 @@
         "summary": "Confirm"
       }
     },
+    "/api/notes/{note_id}/outcomes/{row_id}/dismiss": {
+      "post": {
+        "operationId": "dismiss_api_notes__note_id__outcomes__row_id__dismiss_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "note_id",
+            "required": true,
+            "schema": {
+              "title": "Note Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "row_id",
+            "required": true,
+            "schema": {
+              "title": "Row Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Dismiss Api Notes  Note Id  Outcomes  Row Id  Dismiss Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Dismiss"
+      }
+    },
+    "/api/notes/{note_id}/outcomes/{row_id}/edit": {
+      "post": {
+        "operationId": "edit_api_notes__note_id__outcomes__row_id__edit_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "note_id",
+            "required": true,
+            "schema": {
+              "title": "Note Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "row_id",
+            "required": true,
+            "schema": {
+              "title": "Row Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Edit Api Notes  Note Id  Outcomes  Row Id  Edit Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Edit"
+      }
+    },
     "/api/nudges/{step_id}/dismiss": {
       "post": {
         "operationId": "api_dismiss_nudge_api_nudges__step_id__dismiss_post",
@@ -25092,6 +25228,58 @@
           }
         },
         "summary": "Jira Validate Scope",
+        "tags": [
+          "providers"
+        ]
+      }
+    },
+    "/api/providers/{provider}/connections/{ref}": {
+      "delete": {
+        "description": "Remove one Jira or Confluence connection row.",
+        "operationId": "atlassian_remove_connection_api_providers__provider__connections__ref__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "title": "Provider",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "ref",
+            "required": true,
+            "schema": {
+              "title": "Ref",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Atlassian Remove Connection Api Providers  Provider  Connections  Ref  Delete"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Atlassian Remove Connection",
         "tags": [
           "providers"
         ]

@@ -329,7 +329,7 @@ describe("Needs you: Reconnect opens Settings on the GitHub row", () => {
 // real ingest conductor), recorded by scripts/record_needs_you_fixture.py
 // (`calendar`). The hub half is tests/unit/test_desk_calendar.py.
 describe("Needs you: the calendar offer and the quiet calendar", () => {
-  it("no calendar: the foot offers NO CALENDAR · Connect calendar; the press opens Settings on Meetings, at its Connect row", async () => {
+  it("no calendar: the foot offers NO CALENDAR · Connect calendar; the press opens Settings on Accounts, at its Calendar row (Betterment setup ST1)", async () => {
     // replaces: tests/e2e/test_hs145_door_polish_glass.py::test_hs145_connect_calendar_affordance_and_quiet_state (the no-calendar leg)
     const misses: string[] = [];
     vi.mocked(apiFetch).mockImplementation(async (path: string) =>
@@ -340,7 +340,7 @@ describe("Needs you: the calendar offer and the quiet calendar", () => {
     expect(offer.textContent).toContain("NO CALENDAR");
     expect(head()).toBe("Nothing needs you");
     fireEvent.click(within(offer).getByRole("button", { name: "Connect calendar" }));
-    await waitFor(() => expect(useDesk.getState().windowsById["surface-settings"]?.scope).toBe("meetings"));
+    await waitFor(() => expect(useDesk.getState().windowsById["surface-settings"]?.scope).toBe("integration:calendar"));
     await screen.findByTestId("calendar-connect-row", undefined, { timeout: 5000 });
   });
 

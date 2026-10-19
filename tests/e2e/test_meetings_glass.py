@@ -312,19 +312,10 @@ class TestOneMeetingOneWindow:
                 self._press(page.locator(f"#surface-meetings [data-testid='meeting-row-{ONE}'] .meetings-stream-row-body"))
                 self._one_front(ONE, "list")
 
-                # 5. The SAME meeting, filed in a Project now: the Room's FILES
-                # row fronts its one window.
-                _http(self.base, "POST", f"/api/projects/{PROJECT}/meetings/{ONE}", {})
-                self._palette("Payments ledger cutover")
-                self._press(page.locator("#desk-palette-listbox [role=option]", has_text="Payments ledger cutover"))
-                # PHILO-17 refit (room): Files is a fold in the Room; open it.
-                self._press(page.locator("#surface-project-memory [data-testid=room-fold-files] summary").first)
-                files = page.locator("#surface-project-memory [data-testid=room-files]")
-                files.wait_for(timeout=T)
-                self._press(files.get_by_text("Platform sync").first)
-                self._press(files.locator("[data-testid=room-files-open]"))
-                self._one_front(ONE, "room")
-                self._shot("meeting-window-room")
+                # 5. (Betterment P3) The Room's FILES fold left the Now wing
+                # (parked in web/src/features/project-room/_parked/nowWingFolds.tsx);
+                # the hub half of "park from Files" stays in
+                # tests/integration/test_desk_project_room.py.
                 assert not errors, errors
             finally:
                 browser.close()

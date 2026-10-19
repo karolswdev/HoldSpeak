@@ -286,6 +286,12 @@ LAUNCH_RULES: dict[str, tuple[str, str, str]] = {
     "decision.supersede": (DESK, "", ""),
     # own
     "thought.adopt_note": (OWN, "note", "note_id"),
+    # Betterment Q9: Find the tasks on a note the launch made.
+    "note.outcomes": (READ, "", ""),
+    "note.find_tasks": (OWN, "note", "note_id"),
+    "note.outcome.edit": (OWN, "note", "note_id"),
+    "note.outcome.dismiss": (OWN, "note", "note_id"),
+    "note.outcome.confirm": (OWN, "note", "note_id"),
     "thought.accept_review": (OWN, "thought", "thought_id"),
     "thought.answer_review": (OWN, "thought", "thought_id"),
     "thought.attach_context": (OWN, "thought", "thought_id"),
