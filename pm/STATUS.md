@@ -4,11 +4,21 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (betterment delivery recovered; current main `eef501294`, desk `b8908dc72`)
+**Last updated:** 2026-10-19 (AG10 #1367 delivered; Q9 follow-up #1365 merged)
 
 ## Current phase
 
-**Betterment delivery — Codex takes delivery, owner ruling 2026-10-19.**
+**Betterment recovery — Q9 follow-up #1365 merged.** Find the tasks now uses
+the declared operations through HTTP and MCP. Proposed outcomes support Edit
+and Dismiss before Confirm; dismissal prevents a later re-proposal. Recovered
+against repaired main, its quick check is green: 118 related web, 6,457
+affected pytest (7 skipped), 106 desktop/phone sweep, 27 canon and 1,116 repo
+guards. Agent Result #1367 is already deployed at backend `bfe8bf5dd`, frontend
+`bedf96ae4c253a4c`, PID 46690. Q9 has not yet been deployed. Main contains
+70/117 merged recipe implementations; this follow-up adds no new slice.
+
+
+**Initial recovery snapshot — Codex takes delivery, owner ruling 2026-10-19.**
 Batch seven stopped at Claude's usage limit. Main has 69 of 117 slice
 implementations merged; the owner's running desk still serves batch six
 at `b8908dc72` (runtime identity checked). Eight betterment PRs are open:

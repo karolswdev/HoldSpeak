@@ -2233,6 +2233,126 @@ from holdspeak.agent_operations import AGENT_OPERATIONS  # noqa: E402
 from holdspeak.desk_window_operations import DESK_WINDOW_OPERATIONS  # noqa: E402
 
 #: The whole catalogue, in export order.
+# ── Betterment Q9: Find the tasks on a note ───────────────────────────────
+#
+# The meeting's extraction over one note (services/note_outcomes_service.py):
+# its rows (a task with owner and date, or a proposed decision) stay with the
+# note; Edit and Dismiss work on a proposed row; Confirm makes the task (a
+# Door item) or the proposed decision, with the note as its source.
+
+_NOTE_OUTCOMES_RESULT = (
+    "{note_id, rows: [{id, kind: task|decision, text, owner, person_id, due, rationale, "
+    "state: proposed|confirmed, made_ref, found_at, model}]}"
+)
+_NOTE_ROW_ARGS = {
+    "note_id": {"type": "string"},
+    "row_id": {"type": "string", "description": "A row id from note.outcomes.read."},
+}
+_NOTE_OUTCOME_PRINCIPAL = "derived by the transport; the HTTP routes take the owner only"
+
+NOTE_OUTCOMES_READ = OperationDescriptor(
+    name="note.outcomes.read",
+    version=1,
+    description="Read the tasks and decisions found in one note. Read only.",
+    args_schema={"type": "object", "properties": {"note_id": {"type": "string"}},
+                 "required": ["note_id"], "additionalProperties": False},
+    principal=_NOTE_OUTCOME_PRINCIPAL,
+    effect="read",
+    result=_NOTE_OUTCOMES_RESULT,
+    refusals=_CONTRACT_REFUSALS + ("NotFound: unknown note",),
+    completion="synchronous",
+    exposure=("http:GET /api/notes/{note_id}/outcomes", "mcp:note.outcomes"),
+    service="note_outcomes_service",
+    method="read",
+    admission=_EXEMPT_READ,
+)
+
+NOTE_OUTCOMES_FIND = OperationDescriptor(
+    name="note.find_tasks",
+    version=1,
+    description=(
+        "Find the tasks in one note: the meeting's extraction over the note, on the meeting-analysis "
+        "engine. Rows are proposed; nothing else is made."
+    ),
+    args_schema={"type": "object", "properties": {"note_id": {"type": "string"}},
+                 "required": ["note_id"], "additionalProperties": False},
+    principal=_NOTE_OUTCOME_PRINCIPAL,
+    effect="write",
+    result=_NOTE_OUTCOMES_RESULT,
+    refusals=_CONTRACT_REFUSALS + ("NotFound: unknown note", "no_engine", "engine_failed",
+                                   "engine_unusable", "note_empty"),
+    completion="synchronous (one engine call); note.outcomes.read returns the rows",
+    exposure=("http:POST /api/notes/{note_id}/outcomes/find", "mcp:note.find_tasks"),
+    service="note_outcomes_service",
+    method="find",
+    blocking_io=True,
+    admission=Admission("exempt", "A model reads the note; its rows are proposals kept with the note."),
+)
+
+NOTE_OUTCOME_EDIT = OperationDescriptor(
+    name="note.outcome.edit",
+    version=1,
+    description="Change a proposed row's words, owner or date before Confirm.",
+    args_schema={"type": "object", "properties": {
+        **_NOTE_ROW_ARGS,
+        "text": {"type": "string"},
+        "owner_name": {"type": "string", "description": "Who owns the task: a name, or Me."},
+        "due": {"type": "string"},
+    }, "required": ["note_id", "row_id"], "additionalProperties": False},
+    principal=_NOTE_OUTCOME_PRINCIPAL,
+    effect="write",
+    result=_NOTE_OUTCOMES_RESULT,
+    refusals=_CONTRACT_REFUSALS + ("NotFound: unknown note or row", "note_outcome_not_proposed",
+                                   "note_outcome_text_required"),
+    completion="synchronous; note.outcomes.read returns the row",
+    exposure=("http:POST /api/notes/{note_id}/outcomes/{row_id}/edit", "mcp:note.outcome.edit"),
+    service="note_outcomes_service",
+    method="edit",
+    admission=Admission("exempt", "A proposal's words, before the press that makes anything."),
+)
+
+NOTE_OUTCOME_DISMISS = OperationDescriptor(
+    name="note.outcome.dismiss",
+    version=1,
+    description="Take a proposed row away. It is never proposed again.",
+    args_schema={"type": "object", "properties": dict(_NOTE_ROW_ARGS),
+                 "required": ["note_id", "row_id"], "additionalProperties": False},
+    principal=_NOTE_OUTCOME_PRINCIPAL,
+    effect="write",
+    result=_NOTE_OUTCOMES_RESULT,
+    refusals=_CONTRACT_REFUSALS + ("NotFound: unknown note or row", "note_outcome_not_proposed"),
+    completion="synchronous; note.outcomes.read no longer lists the row",
+    exposure=("http:POST /api/notes/{note_id}/outcomes/{row_id}/dismiss", "mcp:note.outcome.dismiss"),
+    service="note_outcomes_service",
+    method="dismiss",
+    admission=Admission("exempt", "A proposal is set aside; nothing is made."),
+)
+
+NOTE_OUTCOME_CONFIRM = OperationDescriptor(
+    name="note.outcome.confirm",
+    version=1,
+    description=(
+        "Confirm a row: a task becomes a Door item (Needs you, the person's window), a decision a proposed "
+        "desk decision; the note is the source. Confirm again replays."
+    ),
+    args_schema={"type": "object", "properties": dict(_NOTE_ROW_ARGS),
+                 "required": ["note_id", "row_id"], "additionalProperties": False},
+    principal=_NOTE_OUTCOME_PRINCIPAL,
+    effect="write",
+    result=_NOTE_OUTCOMES_RESULT + "; the row's made_ref names the task (action_item:<id>) or decision",
+    refusals=_CONTRACT_REFUSALS + ("NotFound: unknown note or row", "note_outcome_dismissed", "door_unavailable"),
+    completion="synchronous; made_ref names the record made",
+    exposure=("http:POST /api/notes/{note_id}/outcomes/{row_id}/confirm", "mcp:note.outcome.confirm"),
+    service="note_outcomes_service",
+    method="confirm",
+    admission=Admission("exempt", "One task or one PROPOSED decision, as door.add_item; nothing is decided."),
+)
+
+NOTE_OUTCOME_OPERATIONS: tuple[OperationDescriptor, ...] = (
+    NOTE_OUTCOMES_READ, NOTE_OUTCOMES_FIND, NOTE_OUTCOME_EDIT, NOTE_OUTCOME_DISMISS, NOTE_OUTCOME_CONFIRM,
+)
+
+
 DESCRIPTORS: tuple[OperationDescriptor, ...] = (
     DECISION_CREATE, DECISION_UPDATE, DECISION_READ, DECISION_LIST,
     MEETING_LIST, MEETING_READ, MEETING_IMPORT, MEETING_TRANSCRIBE, MEETING_SUMMARY_RUN, MEETING_RESULT_PREPARE,
@@ -2245,7 +2365,7 @@ DESCRIPTORS: tuple[OperationDescriptor, ...] = (
     DECISION_DELETE, DECISION_STATUS, DECISION_SUPERSEDE,
     KERNEL_RECEIPT_READ, MEMORY_OBSERVATIONS_READ, MEMORY_PAGE_READ,
 ) + ROOM_OPERATIONS + STEWARD_CONNECTOR_OPERATIONS + CHANNEL_OPERATIONS + ONBOARDING_OPERATIONS + AGENT_OPERATIONS \
-    + DESK_WINDOW_OPERATIONS
+    + DESK_WINDOW_OPERATIONS + NOTE_OUTCOME_OPERATIONS
 
 #: The RuntimeServices / WebContext fields the catalogue binds to.
 BOUND_SERVICES: tuple[str, ...] = tuple(dict.fromkeys(d.service for d in DESCRIPTORS))

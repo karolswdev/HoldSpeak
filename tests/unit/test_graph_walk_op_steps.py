@@ -43,8 +43,8 @@ def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_tar
     # its baseline are HTTP only), then PHILO-10-01's nine (the Send), then
     # Conductor K2's one (agent.hand), then Conductor R7's (people_access.set),
     # then PHILO-16 16b's six (the desk's windows), then PHILO-17's
-    # meeting.transcribe.
-    assert len(gw.OP_MCP_PROJECTIONS) == 107
+    # meeting.transcribe, then Betterment Q9's five (Find the tasks).
+    assert len(gw.OP_MCP_PROJECTIONS) == 112
     assert set(gw.OP_MCP_PROJECTIONS) == {
         "decision.create", "decision.update", "decision.read", "decision.list",
         "meeting.list", "meeting.read", "meeting.import", "meeting.transcribe", "meeting.summary.run",
@@ -75,6 +75,7 @@ def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_tar
         "memory.observations.read", "memory.page.read",
         "agent.hand", "people_access.set",
         "windows.list", "windows.open", "windows.close", "windows.raise", "windows.arrange", "windows.seat",
+        "note.outcomes.read", "note.find_tasks", "note.outcome.edit", "note.outcome.dismiss", "note.outcome.confirm",
     }
     assert gw.OP_HTTP_ONLY == {"decision.status", "project.door.create",
                                "project.door.count", "project.watch.update", "project.watch.baseline",
