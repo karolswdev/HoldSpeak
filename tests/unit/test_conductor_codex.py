@@ -898,7 +898,7 @@ def _launch_principal(rig: Any) -> Principal:
 
 ESCAPES = [
     "git -c alias.publish=push publish origin main",
-    "git -c alias.p=push p origin hs/action-ai_1",
+    "git -c alias.p=push p origin hs/fix-the-login-timeout",
     "git --config-env=alias.p=X p origin main",
     "GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=alias.p GIT_CONFIG_VALUE_0=push git p origin main",
     "git publish origin main",
@@ -929,8 +929,8 @@ def test_yolo_holds_every_network_escape(codex_launched, tmp_path, monkeypatch, 
 
 
 @pytest.mark.parametrize("command", [
-    "git push origin hs/action-ai_1",
-    "gh pr create --title fix --body done --head hs/action-ai_1",
+    "git push origin hs/fix-the-login-timeout",
+    "gh pr create --title fix --body done --head hs/fix-the-login-timeout",
     "git add -A && git commit -m fix",
     "git --no-pager log --oneline",
 ])

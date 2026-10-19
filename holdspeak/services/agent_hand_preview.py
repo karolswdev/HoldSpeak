@@ -47,6 +47,7 @@ from .agent_hand_service import (
     resolve_project_repository,
     working_launches,
     free_worktree_spec,
+    item_title,
     worktree_spec,
 )
 from .errors import ServiceError
@@ -244,9 +245,10 @@ def preview_hand(
         target = str(registrations.clone_path(str(record["repository"])))
         clone = {"repository": str(record["repository"]), "host": CLONE_HOST, "state": "to_clone",
                  "label": _home_as_tilde(target)}
+    title = item_title(db, kind, item_id)
     spec = (
-        free_worktree_spec(reads.registry(), repo, kind, item_id) if repo is not None
-        else worktree_spec(kind, item_id)
+        free_worktree_spec(reads.registry(), repo, kind, item_id, title) if repo is not None
+        else worktree_spec(kind, item_id, 1, title)
     )
     launcher = reads.launcher()
     resume: Optional[dict[str, Any]] = None

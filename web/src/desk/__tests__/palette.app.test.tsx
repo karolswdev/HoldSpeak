@@ -386,6 +386,22 @@ describe("Enter on the first row opens the note it names", () => {
     expect(writes()).toEqual([]);
   });
 
+  it("Betterment AG4: the selected note offers Hand to agent; one press opens the sheet on it and closes Search", async () => {
+    const { useAgentHand } = await import("../agentHand");
+    useAgentHand.setState({ origin: null });
+    await replay(enterHub.before);
+    const input = await deck();
+    await type(input, "ledger");
+    expect(rows()[0]?.getAttribute("aria-selected")).toBe("true");
+    // One Hand to agent, on the selected row only.
+    expect(screen.getAllByTestId("palette-hand")).toHaveLength(1);
+    fireEvent.click(screen.getByTestId("palette-hand"));
+    expect(useAgentHand.getState().origin).toEqual({ kind: "note", id: enterHub.note_id, title: enterHub.title });
+    expect(usePalette.getState().open).toBe(false);
+    expect(useDesk.getState().openPullout).not.toHaveBeenCalled();
+    expect(writes()).toEqual([]);
+  });
+
   it("the phone's press on the first row opens the same note, and writes nothing", async () => {
     // replaces: tests/e2e/test_palette_enter_opens_the_note_glass.py::TestEnterOpensTheFirstRow::test_enter_opens_the_note_the_first_row_names[393] (part 1, the tap)
     await replay(enterHub.before);

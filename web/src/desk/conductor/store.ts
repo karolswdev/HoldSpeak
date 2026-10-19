@@ -53,7 +53,11 @@ interface ConductorState {
   installFailedAgent: AgentId | null;
   /** PHILO-15 B35: the last install the hub did, and when (hh:mm). */
   installDone: { agent: AgentId; at: string } | null;
-  openWindow(origin?: { x: number; y: number } | null): void;
+  openWindow(origin?: { x: number; y: number } | null, focus?: string | null): void;
+  /** Betterment AG4: the row the window shows selected once it is drawn (a
+   *  hand's new agent, `launch:<id>`); null when none is asked for. */
+  focus: string | null;
+  clearFocus(): void;
   /** The hub says the Conductor is open (hydration, replay): mount it and
    *  keep the hub's seat and depth. No gesture, so no raise. */
   showFromHub(): void;
@@ -91,7 +95,12 @@ export const useConductor = create<ConductorState>((set, get) => ({
     else delete next[ref];
     set({ stops: next });
   },
-  openWindow(origin = null) {
+  focus: null,
+  clearFocus() {
+    if (get().focus !== null) set({ focus: null });
+  },
+  openWindow(origin = null, focus = null) {
+    if (focus) set({ focus });
     // A deliberate open (Go, the drawer, /conductor) asks for the front, also
     // from the Dock: restore = show + raise. PHILO-17 (mainreds3): this holds
     // when the window is not mounted too. A seat remembered from another view
@@ -193,6 +202,6 @@ export function __resetConductor(): void {
   useConductor.setState({
     open: false, origin: null, infos: [], detect: null, detectState: "idle", detectFailure: "",
     flightsState: "idle", launchedAt: {}, endedAt: {}, history: [], launches: null, stops: {},
-    installing: null, installFailure: "", installFailedAgent: null, installDone: null,
+    installing: null, installFailure: "", installFailedAgent: null, installDone: null, focus: null,
   });
 }

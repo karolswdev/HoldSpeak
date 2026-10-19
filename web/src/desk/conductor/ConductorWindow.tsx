@@ -396,6 +396,17 @@ export function ConductorWindow() {
   );
   const head = conductorHead(members, flightsKnown ? reads.launches : null);
   const selected = useMemo(() => members.find((m) => m.id === selectedId) ?? null, [members, selectedId]);
+  // Betterment AG4: a hand opens Agents on its new agent: that row is
+  // selected and in view once the read draws it.
+  const focus = useConductor((s) => s.focus);
+  useEffect(() => {
+    if (!focus || !members.some((m) => m.id === focus)) return;
+    setSelectedId(focus);
+    useConductor.getState().clearFocus();
+    window.requestAnimationFrame(() => {
+      document.querySelector(`.conductor-window [data-object-id="${CSS.escape(focus)}"]`)?.scrollIntoView?.({ block: "nearest" });
+    });
+  }, [focus, members]);
   useEffect(() => {
     if (selectedId && !selected) setSelectedId(null);
   }, [selectedId, selected]);

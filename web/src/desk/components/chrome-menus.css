@@ -1223,3 +1223,10 @@
   justify-content: flex-end;
   padding-top: var(--space-3);
 }
+/* Betterment AG4: the selected work item's Hand to agent, under its row,
+   at the row's right edge (one verb, never on every row). */
+.desk-next .desk-deck-hand {
+  display: block;
+  width: fit-content;
+  margin: 2px 8px 4px auto;
+}

@@ -4,7 +4,16 @@
  * rules; the registry verb (Object menu, context menu, ⌘K). */
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { HandSheet, kb, modeWord, refusalToken, sourceFact, type HandPreview } from "../HandSheet";
+
+/* Betterment AG4: the window in front (the hand verb reads it when no icon is selected). */
+const front = vi.hoisted(() => ({ id: null as string | null }));
+vi.mock("../window/windowRegistry", async (actual) => ({
+  ...(await actual<typeof import("../window/windowRegistry")>()),
+  frontWindowId: () => front.id,
+}));
+
+import { HandSheet, kb, modeWord, refusalToken, sourceFact, whereWords, type HandPreview } from "../HandSheet";
+import { __resetConductor, useConductor } from "../../conductor/store";
 import { handKindOf, handOriginOfRow, handRefOf, useAgentHand } from "../../agentHand";
 import { HandRowVerb } from "../HandRowVerb";
 import { VERBS } from "../../verbRegistry";
@@ -58,6 +67,8 @@ let launchAnswer: () => Answer;
 let calls: { url: string; body: Record<string, unknown> | null }[];
 
 beforeEach(() => {
+  front.id = null;
+  __resetConductor();
   Element.prototype.scrollIntoView = () => {};
   localStorage.clear();
   useDesk.setState({ items: EMPTY_ITEMS, selectedIds: [], pullouts: [], panelRects: {}, panelSaved: [], panelOrder: [] });
@@ -107,7 +118,7 @@ describe("the launch sheet", () => {
     expect(within(sheet).getByText("3 OPEN")).toBeTruthy();
     const where = within(sheet).getByTestId("hand-where").textContent ?? "";
     expect(where).toContain("~/dev/payments-ledger");
-    expect(where).toContain("NEW BRANCH"); // Betterment AG1: never the item id
+    expect(where).toContain("new branch"); // Betterment AG1: never the item id (AG4: words)
     expect(where).not.toContain("ai_1");
     expect(where).toContain("CONTROL · YOLO");
     const footer = document.querySelector(".desk-hand-footer")!;
@@ -146,15 +157,39 @@ describe("the launch sheet", () => {
     expect(refused.textContent).toContain("ITEM NOT FOUND");
   });
 
-  it("Launch posts the hand-off with the picked profile and keeps the sheet with its receipt", async () => {
+  it("Launch posts the hand-off with the picked profile and his sentence; Agents opens on the new agent; the sheet closes once the brief is sent", async () => {
     openSheet();
     const sheet = await screen.findByTestId("hand-sheet");
     await within(sheet).findByText("Ledger cutover sync");
+    fireEvent.change(screen.getByTestId("hand-sentence"), { target: { value: "Keep the old flag name for one release." } });
     fireEvent.click(screen.getByTestId("hand-launch"));
-    await screen.findByTestId("hand-launch-receipt");
+    await waitFor(() => expect(useAgentHand.getState().origin).toBeNull());
     const hand = calls.find((c) => c.url.endsWith("/api/agent/hand"))!;
-    expect(hand.body).toMatchObject({ kind: "action", id: "ai_1", profile: "claude-default", project_id: "p-ledger" });
-    expect(useAgentHand.getState().origin).not.toBeNull();
+    expect(hand.body).toMatchObject({
+      kind: "action", id: "ai_1", profile: "claude-default", project_id: "p-ledger",
+      instruction: "Keep the old flag name for one release.",
+    });
+    expect(useConductor.getState().open).toBe(true);
+    expect(useConductor.getState().focus).toBe("launch:l1");
+  });
+
+  it("no sentence: no instruction is posted", async () => {
+    openSheet();
+    await screen.findByText("Ledger cutover sync");
+    fireEvent.click(screen.getByTestId("hand-launch"));
+    await waitFor(() => expect(calls.some((c) => c.url.endsWith("/api/agent/hand"))).toBe(true));
+    expect(calls.find((c) => c.url.endsWith("/api/agent/hand"))!.body).not.toHaveProperty("instruction");
+  });
+
+  it("Where is one line: the Project and the branch named by the item", async () => {
+    useDesk.setState({ projects: [{ id: "p-ledger", name: "Payments ledger" }] as never });
+    previewAnswer = (profile) => ({ status: 200, body: preview({ requested_profile: profile, profile, branch: "hs/write-the-rollback-runbook" }) });
+    openSheet();
+    expect((await screen.findByTestId("hand-branch")).textContent).toBe("Payments ledger · new branch write-the-rollback-runbook");
+    expect(whereWords("Platform", "hs/draft-test-scaffolding")).toBe("Platform · new branch draft-test-scaffolding");
+    // An older hub's id branch: no id on the face.
+    expect(whereWords("Platform", "hs/action-ai_1")).toBe("Platform · new branch");
+    expect(whereWords(null, "hs/x-y")).toBe("new branch x-y");
   });
 
   it("a refused launch keeps the sheet and names the refusal in the footer", async () => {
@@ -240,6 +275,19 @@ describe("Hand to coder: where the verb reaches", () => {
     expect(verb.keywords).toEqual(expect.arrayContaining(["agent", "claude", "codex"]));
     expect(verb.ghost?.({ selectedRef: null } as never)).toBe("Select an object");
   });
+
+  it("Betterment AG4: with no icon selected, the verb takes the object of the window in front", () => {
+    const verb = VERBS.find((v) => v.id === "object.hand-to-agent")!;
+    const note = { kind: "note", id: "note_1", title: "Draft test scaffolding for flags" };
+    useDesk.setState({ items: { ...EMPTY_ITEMS, note: [note] } as never, selectedIds: [] });
+    front.id = "pullout:note:note_1";
+    expect(verb.ghost({ selectedRef: null })).toBeNull();
+    verb.run({ selectedRef: null });
+    expect(useAgentHand.getState().origin).toMatchObject({ kind: "note", id: "note_1", title: "Draft test scaffolding for flags" });
+    // A window whose object is not a work item still asks for one.
+    front.id = "conductor";
+    expect(verb.ghost({ selectedRef: null })).toBe("Select an object");
+  });
 });
 
 
@@ -267,7 +315,9 @@ describe("the launch sheet follows the real answers (Astra #905)", () => {
       expect(screen.getByTestId("hand-launch-receipt").textContent).toBe("LAUNCHED · BRIEF PENDING");
       state = "sent";
       await act(async () => { await vi.advanceTimersByTimeAsync(2100); });
-      await waitFor(() => expect(screen.getByTestId("hand-launch-receipt").textContent).toBe("LAUNCHED · BRIEF SENT"));
+      // Betterment AG4: the brief is in: the sheet closes; Agents shows the agent.
+      await waitFor(() => expect(useAgentHand.getState().origin).toBeNull());
+      expect(useConductor.getState().focus).toBe(`launch:${REAL_PENDING.launch_id}`);
     } finally {
       vi.useRealTimers();
     }
@@ -290,7 +340,7 @@ describe("the launch sheet follows the real answers (Astra #905)", () => {
       return stub(url, init);
     }));
     fireEvent.click(screen.getByTestId("hand-send-again"));
-    await waitFor(() => expect(screen.getByTestId("hand-launch-receipt").textContent).toBe("LAUNCHED · BRIEF SENT"));
+    await waitFor(() => expect(useAgentHand.getState().origin).toBeNull());
   });
 
   it("a real worktree-create failure is named WORKTREE EXISTS, never HUB UNREACHABLE", async () => {
@@ -380,8 +430,7 @@ describe("after Launch (Astra #905 round 2)", () => {
       expect(calls.filter((c) => c.url.includes("/api/agent/launches/")).length).toBeGreaterThan(reads);
       step = "sent";
       await act(async () => { await vi.advanceTimersByTimeAsync(2100); });
-      await waitFor(() => expect(screen.getByTestId("hand-launch-receipt").textContent).toBe("LAUNCHED · BRIEF SENT"));
-      expect(screen.queryByTestId("hand-send-again")).toBeNull();
+      await waitFor(() => expect(useAgentHand.getState().origin).toBeNull());
     } finally {
       vi.useRealTimers();
     }

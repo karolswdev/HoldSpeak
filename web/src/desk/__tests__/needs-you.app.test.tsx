@@ -176,6 +176,19 @@ describe("Needs you on the daily week: the chips and one verb per row (Bettermen
     await waitFor(() => expect(weekRows().length).toBe(9));
   });
 
+  it("More ▸ Hand to agent opens the launch sheet on the row's action (Betterment AG4)", async () => {
+    const { useAgentHand } = await import("../agentHand");
+    useAgentHand.setState({ origin: null });
+    render(<NeedsDrawer />);
+    await waitFor(() => expect(weekRows().length).toBe(9));
+    const row = weekRows().find((li) => li.textContent?.includes("Email Dana about the cutover window"))!;
+    fireEvent.click(row.querySelector<HTMLElement>("[data-verb='more']")!);
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Hand to agent" }));
+    const card = (dailyWeek.needsYou.items as Array<{ title: string; actionItemId?: string }>)
+      .find((i) => i.title === "Email Dana about the cutover window")!.actionItemId;
+    expect(useAgentHand.getState().origin).toEqual({ kind: "action", id: card, title: "Email Dana about the cutover window" });
+  });
+
   it("Mine shows his two rows with Done, and Done closes the item through follow-through", async () => {
     render(<NeedsDrawer />);
     await waitFor(() => expect(weekRows().length).toBe(9));

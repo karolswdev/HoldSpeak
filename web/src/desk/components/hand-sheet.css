@@ -70,3 +70,22 @@
   overflow-wrap: anywhere;
   line-height: 1.4;
 }
+
+/* Betterment AG4: *Where* is one line of words (the Project and the branch). */
+.desk-hand-where {
+  flex: 1 1 100%;
+  min-width: 0;
+  font: 500 13px / 1.4 var(--font-sans);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+/* Betterment AG4: the agent cards stack when the sheet is narrow (the phone):
+   side by side at 393 their chips were cut ("SIGN-IN UNI"). The library's
+   own stacking rule reads the `surface` container, which this sheet is not. */
+.desk-hand-body { container: handsheet / inline-size; }
+@container handsheet (max-width: 520px) {
+  .desk-next .desk-hand-body .surface-choice-group[data-layout="row"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
