@@ -27482,6 +27482,24 @@
         "summary": "For Note"
       }
     },
+    "/api/thoughts/open-note": {
+      "post": {
+        "operationId": "open_note_api_thoughts_open_note_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Open Note Api Thoughts Open Note Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Open Note"
+      }
+    },
     "/api/thoughts/{thought_id}": {
       "get": {
         "operationId": "get_api_thoughts__thought_id__get",

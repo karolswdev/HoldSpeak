@@ -852,6 +852,7 @@ Routes: 786 (plus static mounts). iOS-consumed: 89. Web-consumed: 617.
 | GET | `/api/thoughts/default-context` | web |
 | PUT | `/api/thoughts/default-context` | web |
 | GET | `/api/thoughts/for-note/{note_id}` | web |
+| POST | `/api/thoughts/open-note` | web |
 | GET | `/api/thoughts/{thought_id}` | web |
 | POST | `/api/thoughts/{thought_id}/complete` | web |
 | GET | `/api/thoughts/{thought_id}/context` | web |
