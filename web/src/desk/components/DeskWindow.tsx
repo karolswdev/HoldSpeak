@@ -676,7 +676,10 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
   const cardBandCap = rect
     ? Math.max(minH, (typeof window === "undefined" ? 800 : window.innerHeight) - workBand().bottom - rect.y)
     : undefined;
-  const style: React.CSSProperties = rect
+  // Capture follows its CSS seat until the owner moves or sizes it.
+  // A temporary Coming-up loading height must not pin its later top edge.
+  const captureCssSeat = id === "chair:capture" && !arranged && !liveResize && !zoomed;
+  const style: React.CSSProperties = rect && !captureCssSeat
     ? {
         top: rect.y,
         left: rect.x,
