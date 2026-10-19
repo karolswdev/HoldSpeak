@@ -569,7 +569,18 @@ class JiraProviderAdapter:
             return result
 
         with _ACLI_LOCK:
-            return self._probe_under_lock(principal, site, email, canonical_ref)
+            # Betterment ST2: a Check never moves the account he uses in his
+            # terminal.  Read acli's current profile from its own file before
+            # the switch, and switch back to it after the status read.
+            before = current_acli_profile(self._registry_path)
+            try:
+                result = self._probe_under_lock(principal, site, email, canonical_ref)
+            finally:
+                restore_error = switch_back_acli(self._run_acli, principal, "jira", before, site, email)
+            if restore_error:
+                result.update(state=STATE_DEGRADED, error_code=CODE_UNAVAILABLE, error_detail=restore_error)
+                self._persist_connection(canonical_ref, result)
+            return result
 
     def _probe_under_lock(
         self,
@@ -1752,6 +1763,51 @@ def config_read_failure(exc: BaseException) -> str:
     if mark is not None:
         return f"{type(exc).__name__} at line {int(mark.line) + 1}, column {int(mark.column) + 1}"
     return type(exc).__name__
+
+
+def current_acli_profile(path: Path) -> dict[str, Any] | None:
+    """The profile acli marks as current in its registry file (``None`` when unknown).
+
+    A local file read: no ``acli`` process.
+    """
+    return next((p for p in read_acli_profiles(path) if p.get("current")), None)
+
+
+def switch_back_acli(
+    run: Callable[..., Any],
+    principal: Principal,
+    product: str,
+    before: dict[str, Any] | None,
+    site: str,
+    email: str,
+) -> str | None:
+    """Betterment ST2: put acli back on the account it was on before a Check.
+
+    ``run`` is the adapter's admitted ``_run_acli``; the caller holds
+    ``_ACLI_LOCK``.  No switch when the previous account is unknown or is the
+    one just checked. Return a plain reason if restoration fails so Check
+    cannot report Works after moving the terminal's account.
+    """
+    if not before:
+        return
+    prev_site = str(before.get("site") or "")
+    prev_email = str(before.get("email") or "").lower()
+    try:
+        prev_norm = _normalize_site(prev_site)
+    except Exception:
+        prev_norm = prev_site.strip().lower()
+    if not prev_site or not prev_email or (prev_norm, prev_email) == (site, email.lower()):
+        return
+    try:
+        restored = run(["acli", product, "auth", "switch", "--site", prev_site, "--email", prev_email],
+                       principal, timeout=10.0)
+        if restored.returncode != 0:
+            _log.warning("acli %s could not restore the previous account", product)
+            return "acli could not restore the previous account"
+    except Exception as exc:
+        _log.warning("acli %s switch-back failed: %s", product, type(exc).__name__)
+        return "acli could not restore the previous account"
+    return None
 
 
 def read_acli_profiles(path: Path) -> list[dict[str, Any]]:

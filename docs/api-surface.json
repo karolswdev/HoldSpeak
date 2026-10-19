@@ -5721,6 +5721,16 @@
       "consumers": []
     },
     {
+      "path": "/api/providers/{provider}/connections/{ref}",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.providers",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/recipes",
       "methods": [
         "GET"

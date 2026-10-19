@@ -227,8 +227,10 @@ describe("HS-169-03: NEEDS YOU section", () => {
     });
 
     render(<WindowHarness scope="project:p1" />);
-    const empty = await screen.findByTestId("needs-you-empty");
-    expect(empty.textContent).toContain("Nothing open");
+    await screen.findByTestId("room-body");
+    // Betterment P3: Needs you is absent when it holds nothing (no "Nothing open").
+    expect(screen.queryByTestId("room-needs-you")).toBeNull();
+    expect(screen.queryByTestId("needs-you-empty")).toBeNull();
   });
 });
 
@@ -284,69 +286,22 @@ describe("HS-169-03: SOURCES section", () => {
 
 /* ── SINCE YOU LOOKED section ── */
 
-describe("HS-169-03: SINCE YOU LOOKED section", () => {
-  it("renders groups and entries with phrases (not raw field names)", async () => {
-    render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("room-body");
-
-    // Group headings
-    const groups = screen.getAllByTestId("since-read-group");
-    expect(groups.length).toBe(3); // GitHub, Jira, Room
-    expect(screen.getByText("GitHub · 2 opened · 1 merged")).toBeTruthy();
-    expect(screen.getByText("Jira · 1 moved")).toBeTruthy();
-  });
-
-  it("renders SINCE CREATED when readAt is null", async () => {
-    apiFetch.mockImplementation((url: string) => {
-      if (url.includes("/room/read")) return Promise.resolve({ read_at: new Date().toISOString() });
-      if (url.includes("/room")) return Promise.resolve(quietRoomResponse());
-      return Promise.resolve(detailResponse(url));
-    });
-
-    render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("room-body");
-    expect(screen.getByText("Created just now")).toBeTruthy();
-  });
-});
 
 /* ── DECISIONS & COMMITMENTS section ── */
 
-describe("HS-169-03: DECISIONS & COMMITMENTS section", () => {
-  it("renders decision and commitment rows", async () => {
-    render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("room-body");
-
-    expect(screen.getByText(/use acli for Jira, never REST/)).toBeTruthy();
-    expect(screen.getByText(/a review of #612/)).toBeTruthy();
-  });
-
-  it("hides entirely when both are empty", async () => {
-    apiFetch.mockImplementation((url: string) => {
-      if (url.includes("/room/read")) return Promise.resolve({ read_at: new Date().toISOString() });
-      if (url.includes("/room")) return Promise.resolve(quietRoomResponse());
-      return Promise.resolve(detailResponse(url));
-    });
-
-    render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("room-body");
-
-    // The section should not exist
-    expect(screen.queryByText("DECISIONS & COMMITMENTS")).toBeNull();
-  });
-});
 
 /* ── Room head ── */
 
 describe("HS-169-03: Room head", () => {
-  it("shows headline count at display step with accent", async () => {
+  it("says the state at the display step (Betterment P3: never a count)", async () => {
     render(<WindowHarness scope="project:p1" />);
     const headline = await screen.findByTestId("room-headline");
-    expect(headline.textContent).toBe("3 open here");
+    expect(headline.textContent).toBe("At risk");
     expect(headline.classList.contains("surface-display")).toBe(true);
-    expect(headline.getAttribute("data-accent")).toBeTruthy();
+    expect(headline.getAttribute("data-tone")).toBe("warn");
   });
 
-  it("shows Nothing needs you in muted when count is zero", async () => {
+  it("says On track when nothing is at risk", async () => {
     apiFetch.mockImplementation((url: string) => {
       if (url.includes("/room/read")) return Promise.resolve({ read_at: new Date().toISOString() });
       if (url.includes("/room")) return Promise.resolve(quietRoomResponse());
@@ -355,56 +310,38 @@ describe("HS-169-03: Room head", () => {
 
     render(<WindowHarness scope="project:p1" />);
     const headline = await screen.findByTestId("room-headline");
-    expect(headline.textContent).toBe("Clear here");
-    expect(headline.getAttribute("data-accent")).toBeNull();
+    expect(headline.textContent).toBe("On track");
+    expect(headline.getAttribute("data-tone")).toBe("ok");
   });
 
-  it("renders health chip AT RISK with reason", async () => {
-    render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("room-head-chips");
-
-    expect(screen.getByText("At risk")).toBeTruthy();
-    // The reason token sits in the chip row
-    const chips = screen.getByTestId("room-head-chips");
-    expect(chips.textContent).toContain("3 OVERDUE");
-  });
-
-  it("renders health chip ON TRACK when healthy", async () => {
-    apiFetch.mockImplementation((url: string) => {
-      if (url.includes("/room/read")) return Promise.resolve({ read_at: new Date().toISOString() });
-      if (url.includes("/room")) return Promise.resolve(quietRoomResponse());
-      return Promise.resolve(detailResponse(url));
-    });
-
-    render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("room-head-chips");
-    expect(screen.getByText("On track")).toBeTruthy();
-  });
-
-  it("renders target date chip when present", async () => {
-    render(<WindowHarness scope="project:p1" />);
-    const chip = await screen.findByTestId("room-target-chip");
-    // PHILO-17 refit: plain words (the strip draws them in mono capitals).
-    expect(chip.textContent).toMatch(/target/i);
-    expect(chip.textContent).toMatch(/41 days/i);
-  });
-
-  it("renders OVERDUE when target is passed", async () => {
+  it("says At risk with the hub's reason in words, and the next date and the week under it", async () => {
     apiFetch.mockImplementation((url: string) => {
       if (url.includes("/room/read")) return Promise.resolve({ read_at: new Date().toISOString() });
       if (url.includes("/room")) {
-        return Promise.resolve(roomResponse({
-          target: { state: "ok", targetAt: "2026-08-01", daysLeft: -34, passed: true },
-        }));
+        return Promise.resolve({
+          ...roomResponse({
+            health: {
+              state: "ok", assessment: "at_risk", reason: "3 OVERDUE", project_state: "at_risk",
+              state_reason: "3 Jira issues past the due date", state_ref: null,
+              inputs: { overdue: 3, ciFailing: true, reviewWaitingDays: 3, targetPassed: false },
+            },
+          }),
+          now: { state: "ok", next_date: { at: "2026-10-15", label: "Target" }, last_update_at: null,
+            meetings_this_week: 2, risks: [], decided: [] },
+        });
       }
       return Promise.resolve(detailResponse(url));
     });
-
     render(<WindowHarness scope="project:p1" />);
-    const chip = await screen.findByTestId("room-target-chip");
-    expect(chip.textContent).toMatch(/overdue by 34 days/i);
-    expect(chip.getAttribute("data-tone")).toBe("danger");
+    const headline = await screen.findByTestId("room-headline");
+    expect(headline.textContent).toBe("At risk: 3 Jira issues past the due date");
+    const facts = screen.getByTestId("room-head-facts");
+    expect(facts.textContent).toContain("Target Thu 15 Oct");
+    expect(facts.textContent).toContain("2 meetings this week");
+    expect(facts.textContent).not.toContain("last update");
   });
+
+
 
   it("shows no target chip when absent", async () => {
     apiFetch.mockImplementation((url: string) => {
@@ -430,7 +367,7 @@ describe("HS-169-03: Room head", () => {
     });
 
     render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("room-head-chips");
+    await screen.findByTestId("room-head");
     expect(screen.getByText("ARCHIVED")).toBeTruthy();
   });
 
@@ -456,25 +393,6 @@ describe("HS-169-03: POST /room/read timing", () => {
     });
   });
 
-  it("calls POST /room/read on Refresh", async () => {
-    render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("room-body");
-
-    // Clear existing calls
-    apiFetch.mockClear();
-    apiFetch.mockImplementation((url: string) => Promise.resolve(response(url)));
-
-    // Click Refresh
-    const refreshBtn = screen.getByTestId("room-refresh");
-    refreshBtn.click();
-
-    await waitFor(() => {
-      const readCalls = apiFetch.mock.calls.filter(
-        (call: unknown[]) => String(call[0]).includes("/room/read"),
-      );
-      expect(readCalls.length).toBeGreaterThanOrEqual(1);
-    });
-  });
 });
 
 /* ── exactly one display-step element ── */
@@ -486,21 +404,21 @@ describe("HS-169-03: display step", () => {
 
     const displays = document.querySelectorAll(".room-body .surface-display");
     expect(displays.length).toBe(1);
-    expect(displays[0].textContent).toBe("3 open here");
+    expect(displays[0].textContent).toBe("At risk");
   });
 });
 
 /* ── wings ── */
 
 describe("HS-169-03: wings", () => {
-  it("renders exactly ROOM and HISTORY wings", async () => {
+  it("renders exactly NOW and HISTORY wings", async () => {
     render(<WindowHarness scope="project:p1" />);
     await screen.findByTestId("room-body");
 
     const wingSlot = screen.getByTestId("wing-slot");
     const tabs = wingSlot.querySelectorAll("[role='tab']");
     expect(tabs.length).toBe(2);
-    expect(tabs[0].textContent).toBe("Room");
+    expect(tabs[0].textContent).toBe("Now");
     expect(tabs[1].textContent).toBe("History");
   });
 });
@@ -521,20 +439,6 @@ describe("HS-169-03: Ask well", () => {
 
 /* ── footer ── */
 
-describe("HS-169-03: footer", () => {
-  it("renders READ time in footer receipt", async () => {
-    render(<WindowHarness scope="project:p1" />);
-    const receipt = await screen.findByTestId("room-footer-receipt");
-    // readAt from the wire is "2026-09-03T09:21:00"
-    expect(receipt.textContent).toContain("READ");
-  });
-
-  it("renders Refresh button in footer", async () => {
-    render(<WindowHarness scope="project:p1" />);
-    const btn = await screen.findByTestId("room-refresh");
-    expect(btn.textContent).toBe("Refresh");
-  });
-});
 
 /* ── change row field names guard ── */
 
@@ -619,5 +523,17 @@ describe("HS-169-03: source grouping by (provider, scope)", () => {
     expect(snapshot.sources.items[0].watchIds).toEqual(["w1", "w2"]);
     // checkedAt is the most recent
     expect(snapshot.sources.items[0].checkedAt).toBe("2026-09-04T10:00:00");
+  });
+});
+
+/* ── Betterment P3: no footer receipt, no Refresh in the Now wing ── */
+
+describe("Betterment P3: the Now wing has no READ · NEXT CHECK receipt and no Refresh", () => {
+  it("draws neither (the window refreshes itself)", async () => {
+    render(<WindowHarness scope="project:p1" />);
+    await screen.findByTestId("room-head");
+    expect(screen.queryByTestId("room-footer-receipt")).toBeNull();
+    expect(screen.queryByTestId("room-refresh")).toBeNull();
+    expect(screen.queryByText("Refresh")).toBeNull();
   });
 });

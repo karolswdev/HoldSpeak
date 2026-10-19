@@ -341,7 +341,8 @@ describe("Conductor F2 K6: the merge receipt", () => {
     render(<WindowHarness scope="project:p1" />);
     await screen.findAllByTestId("needs-you-row");
     expect(screen.queryByTestId("room-merge-receipt")).toBeNull();
-    expect(screen.getByTestId("room-footer-receipt")).toBeTruthy();
+    // Betterment P3: the Now wing has no READ · NEXT CHECK receipt either.
+    expect(screen.queryByTestId("room-footer-receipt")).toBeNull();
   });
 });
 
@@ -394,7 +395,8 @@ describe("Honest faces: a meeting's unowned action is an OPEN HERE row with its 
       expect(rows).toHaveLength(3);
       for (const row of rows) expect(row.textContent).toContain("OWNER · UNKNOWN");
       expect(screen.queryByTestId("needs-you-empty")).toBeNull();
-      expect(screen.getByTestId("room-headline").textContent).toBe("3 open here");
+      // Betterment P3: the head says the state, never a count.
+      expect(screen.getByTestId("room-headline").textContent).not.toMatch(/open here/);
       const target = rows.find((r) => r.textContent?.includes("Shard the reconciliation job"))!;
       fireEvent.click(within(target).getByTestId("needs-you-open-action"));
       // Betterment D4: the drill opens the Needs-you window, not Today.

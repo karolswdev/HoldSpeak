@@ -12,9 +12,10 @@ A signal is ``present: True`` whenever its SOURCE has entities and
 """
 from __future__ import annotations
 
+import re
 import statistics
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Iterable
 
 
 # ── review_wait ──────────────────────────────────────────────────────
@@ -408,3 +409,105 @@ def readiness(
         "blockers_count": red_count,
         "blockers": blocker_names,
     }
+
+
+# ── Betterment P3: the risk rule and the project's state in words ────
+
+#: The words that mark a risk (the memory page "risks and disputes" uses the
+#: same family, ``holdspeak/memory/pages.py``). The update's records draft
+#: and the project window's head read this one rule.
+RISK_WORDS = re.compile(
+    r"\b(risks?|risky|at risk|blocker|blockers|blocked|blocking|concerns?|"
+    r"delay|delays|delayed|slip|slips|slipped|disputes?)\b",
+    re.IGNORECASE,
+)
+_SENTENCE_END = re.compile(r"(?<=[.!?])\s+(?=[A-Z0-9])")
+_BULLET = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+")
+_TITLE_MARK = re.compile(r"^#+\s*")
+#: A risk that stops the work (it leads the head's reason).
+_BLOCK_WORDS = re.compile(r"\b(blocked|blocker|blockers|blocking|waits? on|waiting on)\b", re.IGNORECASE)
+
+
+def risk_sentences(text: str) -> list[str]:
+    """The sentences of a meeting summary that name a risk."""
+    return [
+        sentence.strip() for sentence in _SENTENCE_END.split(" ".join(str(text or "").split()))
+        if sentence.strip() and RISK_WORDS.search(sentence)
+    ]
+
+
+def note_risk_lines(title: str, body: str, *, cap: int = 8) -> list[str]:
+    """The risk lines of a note: every list line when its title names risks,
+    otherwise the lines that name a risk."""
+    whole = bool(RISK_WORDS.search(title))
+    lines: list[str] = []
+    for raw in str(body or "").splitlines():
+        if not raw.strip() or _TITLE_MARK.match(raw):
+            continue
+        is_item = bool(_BULLET.match(raw))
+        line = " ".join(_BULLET.sub("", raw).split())
+        if line and ((whole and is_item) or RISK_WORDS.search(line)):
+            lines.append(line)
+        if len(lines) >= cap:
+            break
+    return lines
+
+
+_SEVERITY_RANK = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+
+
+def _plain(text: str) -> str:
+    """One line, no trailing full stop (the head reads it after a colon)."""
+    return " ".join(str(text or "").split()).rstrip(".")
+
+
+def project_state(
+    *,
+    risks: Iterable[dict[str, Any]] = (),
+    risk_items: Iterable[dict[str, Any]] = (),
+    overdue_owed: Iterable[dict[str, Any]] = (),
+    ci_failing: bool = False,
+    broken_dependencies: Iterable[dict[str, Any]] = (),
+) -> dict[str, Any]:
+    """The project's state and its one reason, in words (Betterment P3).
+
+    ``On track`` with no reason; ``At risk`` or ``Blocked`` with the first
+    reason in this order: a broken dependency (Blocked), a risk that stops
+    the work (a meeting or a note says "blocked" or "waits on"), an open
+    risk item (by severity), any other risk named this week, an owed item
+    past its date, a failing CI run. Each reason keeps the ref it rests on.
+
+    ``risks``: ``{text, ref}`` from this week's meetings and the notes filed
+    as sources. ``risk_items``: open ``project_items`` risks. ``overdue_owed``:
+    ``{title, owner, days, ref}``.
+    """
+    risks = [r for r in risks if _plain(r.get("text"))]
+    risk_items = sorted(
+        (i for i in risk_items if _plain(i.get("title"))),
+        key=lambda i: _SEVERITY_RANK.get(str(i.get("severity") or "").lower(), 9),
+    )
+    overdue_owed = sorted(overdue_owed, key=lambda o: -int(o.get("days") or 0))
+    broken = [d for d in broken_dependencies if _plain(d.get("title"))]
+
+    def out(state: str, reason: str | None = None, ref: str | None = None) -> dict[str, Any]:
+        return {"state": state, "reason": reason, "ref": ref}
+
+    if broken:
+        return out("blocked", _plain(broken[0]["title"]), broken[0].get("ref"))
+    stopping = [r for r in risks if _BLOCK_WORDS.search(str(r.get("text") or ""))]
+    if stopping:
+        return out("at_risk", _plain(stopping[0]["text"]), stopping[0].get("ref"))
+    if risk_items:
+        return out("at_risk", _plain(risk_items[0]["title"]), risk_items[0].get("ref"))
+    if risks:
+        return out("at_risk", _plain(risks[0]["text"]), risks[0].get("ref"))
+    if overdue_owed:
+        first = overdue_owed[0]
+        days = int(first.get("days") or 0)
+        late = f"{days} day{'' if days == 1 else 's'} late"
+        owner = str(first.get("owner") or "").strip()
+        who = f" ({owner})" if owner else ""
+        return out("at_risk", f"{_plain(first['title'])}{who} is {late}", first.get("ref"))
+    if ci_failing:
+        return out("at_risk", "CI is failing", None)
+    return out("on_track")

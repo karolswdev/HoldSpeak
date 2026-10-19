@@ -34,7 +34,22 @@ export interface ConnectionNextAction {
   label: string;
 }
 
-export interface ConnectionTool {
+/** Betterment ST2: what uses one account (a project source or a Send destination). */
+export interface AccountUse {
+  kind: string;
+  name: string;
+}
+
+/** Betterment ST2: the hub's words for a row that does not work. */
+export interface RowWords {
+  /** Why it could not be checked, in words ("gh was not run"); null when it works. */
+  reason?: string;
+  /** The CLI answered for another account. */
+  other_account?: boolean;
+  used_by?: AccountUse[];
+}
+
+export interface ConnectionTool extends RowWords {
   provider_id: string;
   state: ConnectionState;
   account?: ConnectionAccount;
@@ -52,7 +67,7 @@ export interface ConnectionTool {
   connections?: JiraSubConnection[];
 }
 
-export interface JiraSubConnection {
+export interface JiraSubConnection extends RowWords {
   connection_ref: string;
   state: ConnectionState;
   account: { site: string; email: string };
@@ -108,6 +123,20 @@ function decodeNextAction(raw: unknown): ConnectionNextAction | undefined {
   return { kind: obj.kind, label: obj.label };
 }
 
+function decodeWords(obj: Record<string, unknown>): RowWords {
+  const used = Array.isArray(obj.used_by)
+    ? obj.used_by.flatMap((u) => {
+      const r = u as Record<string, unknown> | null;
+      return r && typeof r.kind === "string" && typeof r.name === "string" ? [{ kind: r.kind, name: r.name }] : [];
+    })
+    : undefined;
+  return {
+    reason: typeof obj.reason === "string" ? obj.reason : undefined,
+    other_account: obj.other_account === true ? true : undefined,
+    used_by: used,
+  };
+}
+
 function decodeSubConnection(raw: unknown): JiraSubConnection | undefined {
   if (!raw || typeof raw !== "object") return undefined;
   const obj = raw as Record<string, unknown>;
@@ -122,6 +151,7 @@ function decodeSubConnection(raw: unknown): JiraSubConnection | undefined {
     egress_host: typeof obj.egress_host === "string" ? obj.egress_host : undefined,
     last_checked_at: typeof obj.last_checked_at === "string" ? obj.last_checked_at : undefined,
     checked_age_seconds: typeof obj.checked_age_seconds === "number" ? obj.checked_age_seconds : undefined,
+    ...decodeWords(obj),
   };
 }
 
@@ -140,6 +170,7 @@ function decodeTool(raw: unknown): ConnectionTool | undefined {
     checked_age_seconds: typeof obj.checked_age_seconds === "number" ? obj.checked_age_seconds : undefined,
     checked_by: typeof obj.checked_by === "string" ? obj.checked_by : undefined,
     egress_host: typeof obj.egress_host === "string" ? obj.egress_host : undefined,
+    ...decodeWords(obj),
     connections: Array.isArray(obj.connections)
       ? (obj.connections.map(decodeSubConnection).filter(Boolean) as JiraSubConnection[])
       : undefined,
@@ -169,6 +200,11 @@ export async function fetchConnections(): Promise<ConnectionsResponse> {
  *  checks it at once, so it never stays NEVER CHECKED. */
 export async function addAtlassianAccount(providerId: "jira" | "confluence", site: string, email: string): Promise<void> {
   await apiFetch(`/api/providers/${providerId}/connections`, { method: "POST", json: { site, email } });
+}
+
+/** Betterment ST2: remove one Jira or Confluence account from HoldSpeak (never from acli). */
+export async function removeAtlassianAccount(providerId: "jira" | "confluence", connectionRef: string): Promise<void> {
+  await apiFetch(`/api/providers/${providerId}/connections/${encodeURIComponent(connectionRef)}`, { method: "DELETE" });
 }
 
 export async function recheckProvider(providerId: string, connectionRef?: string): Promise<ConnectionTool | null> {
