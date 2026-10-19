@@ -125,6 +125,9 @@ def main() -> int:
             ("PUT", "/api/settings/heartbeat", {"muted_projects": ["{project}"]}),
             ("PUT", "/api/settings/heartbeat", {"muted_projects": []}),
         ], seed=_project),
+        # Betterment daily D8: the FINISHED WORK token pressed off (no quiet
+        # notice for a new automation result).
+        "finished": _scenario("finished", [("PUT", "/api/settings/heartbeat", {"notify_finished": False})]),
         # Quiet hours 09:00-11:00 (the face reads them against the viewer's clock).
         "quiet": _scenario("quiet", [("PUT", "/api/settings/heartbeat", {"quiet_hours": {"start": 9, "end": 11}})]),
         # HS-174-08: a remote run seen, then Runs on set to that host.

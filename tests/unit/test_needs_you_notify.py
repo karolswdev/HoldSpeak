@@ -468,6 +468,40 @@ class TestMacOSNotifier:
             assert '\\"hello\\"' in script
 
 
+    def test_a_notice_with_an_address_opens_it_through_terminal_notifier(self, monkeypatch):
+        """Betterment daily D8: osascript cannot carry a URL; with
+        terminal-notifier installed, pressing the notice opens the desk
+        address on this hub. No sound flag: the notice is quiet."""
+        from holdspeak import desktop_notify
+
+        monkeypatch.setattr(desktop_notify, "_HUB_URL", "")
+        desktop_notify.set_hub_url("http://127.0.0.1:8765/")
+        monkeypatch.setattr(desktop_notify, "_terminal_notifier", lambda: "/opt/homebrew/bin/terminal-notifier")
+        with patch("holdspeak.desktop_notify.subprocess") as mock_sp:
+            mock_sp.run.return_value = MagicMock(returncode=0)
+            assert desktop_notify._notify_macos("HoldSpeak", "4 need you", click_url="/?open=intelligence:desk")
+            argv = mock_sp.run.call_args[0][0]
+        assert argv == ["/opt/homebrew/bin/terminal-notifier", "-title", "HoldSpeak", "-message", "4 need you",
+                        "-open", "http://127.0.0.1:8765/?open=intelligence:desk"]
+        assert "-sound" not in argv
+
+    def test_without_terminal_notifier_or_an_address_the_notice_is_osascript(self, monkeypatch):
+        from holdspeak import desktop_notify
+
+        monkeypatch.setattr(desktop_notify, "_HUB_URL", "http://127.0.0.1:8765")
+        monkeypatch.setattr(desktop_notify, "_terminal_notifier", lambda: None)
+        with patch("holdspeak.desktop_notify.subprocess") as mock_sp:
+            mock_sp.run.return_value = MagicMock(returncode=0)
+            assert desktop_notify._notify_macos("HoldSpeak", "4 need you", click_url="/?open=intelligence:desk")
+            assert mock_sp.run.call_args[0][0][0] == "osascript"
+        monkeypatch.setattr(desktop_notify, "_terminal_notifier", lambda: "/opt/homebrew/bin/terminal-notifier")
+        monkeypatch.setattr(desktop_notify, "_HUB_URL", "")
+        with patch("holdspeak.desktop_notify.subprocess") as mock_sp:
+            mock_sp.run.return_value = MagicMock(returncode=0)
+            assert desktop_notify._notify_macos("HoldSpeak", "4 need you", click_url="/?open=intelligence:desk")
+            assert mock_sp.run.call_args[0][0][0] == "osascript"  # no hub address: nothing to open
+
+
 # ── HS-171-05: Cocoa child notify command ───────────────────────────
 
 

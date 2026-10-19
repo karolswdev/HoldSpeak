@@ -452,6 +452,14 @@ _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
         "run",
         1,
     ): "local osascript notification dispatch, no egress",
+    # Betterment daily D8: the same local notice through terminal-notifier,
+    # which can open a desk address on this hub when pressed. No egress.
+    (
+        "holdspeak/desktop_notify.py",
+        "_notify_terminal_notifier",
+        "run",
+        1,
+    ): "local terminal-notifier notification dispatch (opens a loopback desk address), no egress",
     (
         "holdspeak/desktop_presence_cocoa.py",
         "_cocoa_notify",

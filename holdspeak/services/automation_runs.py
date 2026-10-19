@@ -600,7 +600,31 @@ def deliver_run(db: Any, principal: Any, run: Any) -> list[dict[str, Any]]:
             log.warning("automation %s: delivery of %s failed: %s", wb.id, row["artifact_id"], exc)
             outcomes.append({"artifact_id": row["artifact_id"], "target": wb.output_target,
                              "outcome": "failed", "error": str(exc)})
+    _finished_notices(db, rows)
     return outcomes
+
+
+def _finished_notices(db: Any, rows: list[Any]) -> None:
+    """Betterment daily D8 (decision 2): a run that made a new result raises
+    one quiet notice per automation (``HeartbeatService.finished_notice``).
+    Once per run: a replayed run delivers nothing and comes not here. A
+    failed notice is logged; it never fails the run."""
+    named: dict[str, int] = {}
+    for row in rows:
+        named[str(row["workbench_id"])] = named.get(str(row["workbench_id"]), 0) + 1
+    if not named:
+        return
+    try:
+        from .heartbeat_service import HeartbeatService
+
+        heartbeat = HeartbeatService(db)
+        for workbench_id, count in named.items():
+            wb = db.workbenches.get(workbench_id, include_deleted=True)
+            if wb is None or getattr(wb, "deleted", False):
+                continue
+            heartbeat.finished_notice(workbench_id, str(wb.name or "Automation"), count)
+    except Exception as exc:
+        log.warning("automation finished notice failed: %s", exc)
 
 
 def _deliver_one(db: Any, principal: Any, wb: Any, row: dict[str, Any]) -> dict[str, Any]:
