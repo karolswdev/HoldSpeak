@@ -485,7 +485,7 @@ def _images_loaded(page: Any, scope: str = "[data-testid=desk-screen]", timeout:
 # controls, and controls) overlap.
 
 _RENDERED_TEXT_JS = """(args) => {
-  const [sel, onGlass] = Array.isArray(args) ? args : [args, false];
+  const [sel, onGlass, horizontalScroll = []] = Array.isArray(args) ? args : [args, false];
   // PHILO-13-18 (onGlass, opt-in): read what is ON THE GLASS.
   //  * A text box a vertical scroll container scrolls to is reachable, so it
   //    is not clipped there (sideways scrolling and a hidden clip still fail).
@@ -543,7 +543,15 @@ _RENDERED_TEXT_JS = """(args) => {
         // on the glass, only a box the reader can scroll sideways (auto/scroll) is "sideways";
         // a hidden overflow that pokes past by its own frame is judged by the text box alone
         const side = a.scrollWidth > a.clientWidth + 1 && (!onGlass || ['auto', 'scroll'].includes(cs.overflowX));
-        const pastX = clipX && (tr.left < ar.left - 1 || tr.right > ar.right + 1 || side);
+        // D2 deliberately scrolls the phone's filter choices in one row.
+        // Only declared strips get this exemption, and only for text within
+        // their reachable scroll range. An ordinary sideways overflow fails.
+        const reachableX = onGlass && horizontalScroll.some((s) => a.matches(s))
+          && ['auto', 'scroll'].includes(cs.overflowX)
+          && tr.width <= a.clientWidth + 1
+          && tr.left + a.scrollLeft >= ar.left - 1
+          && tr.right + a.scrollLeft <= ar.left + a.scrollWidth + 1;
+        const pastX = clipX && !reachableX && (tr.left < ar.left - 1 || tr.right > ar.right + 1 || side);
         const pastY = clipY && !(onGlass && scrollY(a, tr)) && (tr.top < ar.top - 1 || tr.bottom > ar.bottom + 1);
         // the ellipsis is drawn by the box that clips (`a`), or by the text's own box
         const es = getComputedStyle(a), hs = getComputedStyle(n.parentElement);
@@ -600,15 +608,17 @@ _RENDERED_TEXT_JS = """(args) => {
 }"""
 
 
-def _rendered_text_faults(page: Any, selector: str, *, on_glass: bool = False) -> dict[str, Any]:
+def _rendered_text_faults(page: Any, selector: str, *, on_glass: bool = False,
+                          horizontal_scroll: tuple[str, ...] = ()) -> dict[str, Any]:
     """Clipped text and overlapping text or controls inside ``selector``, as rendered.
 
     ``on_glass`` (PHILO-13-18, opt-in) reads only what is on the glass: text a
     vertical scroll container scrolls to is not clipped, a box scrolled out of
     view is not read for overlap, and a single-line ellipsis is recorded in
-    ``ellipsis``. Off, the reader is unchanged.
+    ``ellipsis``. Explicit ``horizontal_scroll`` selectors permit only reachable
+    text in a deliberately scrolling choice strip. Off, the reader is unchanged.
     """
-    return page.evaluate(_RENDERED_TEXT_JS, [selector, on_glass])
+    return page.evaluate(_RENDERED_TEXT_JS, [selector, on_glass, list(horizontal_scroll)])
 
 
 def _assert_readable(page: Any, selector: str, where: str = "") -> None:

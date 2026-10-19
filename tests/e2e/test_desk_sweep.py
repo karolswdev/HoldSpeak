@@ -960,7 +960,8 @@ class _Case:
         fail("drawn", page.evaluate(DRAWN_JS, [sel or "[data-testid=desk-screen]", list(COVERS)]))
         if self.wid:
             fail("fit", page.evaluate(FIT_JS, self.wid))
-        faults = _rendered_text_faults(page, scope, on_glass=True)
+        faults = _rendered_text_faults(page, scope, on_glass=True,
+                                       horizontal_scroll=(".needs-chip-row",))
         if not faults["scopes"]:
             fail("readable", f"no visible {scope}: nothing was read")
         fail("readable", ([f"clipped '{c['text']}' in {c['in']}" for c in faults["clipped"]]
