@@ -62,6 +62,13 @@ const FAILURE_LABEL: Record<DictationFailure, string> = {
 
 export type MicState = "idle" | "listening" | "busy" | "failed";
 
+/** Betterment C8: the menu bar's `Listening · Stop` asks the Talk that
+ *  listens to stop (the same stop as a second press on it). */
+export const TALK_STOP_EVENT = "hs:talk-stop";
+
+/** C8 words: the Talk key while it listens, on the key and its name. */
+export const LISTENING_STOP = "Listening · Stop";
+
 export function MicButton({
   onText,
   label = "Speak",
@@ -170,7 +177,15 @@ export function MicButton({
       }
     };
     document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
+    // C8: `Listening · Stop` in the menu bar stops the capture that runs.
+    const stopAsked = () => {
+      if (sessionRef.current) void stopSession();
+    };
+    window.addEventListener(TALK_STOP_EVENT, stopAsked);
+    return () => {
+      document.removeEventListener("keydown", handler);
+      window.removeEventListener(TALK_STOP_EVENT, stopAsked);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -468,7 +483,7 @@ export function MicButton({
           audioRetained
             ? "Retry retained audio"
             : listening
-              ? "Stop listening"
+              ? transport ? LISTENING_STOP : "Stop listening"
               : state === "failed"
                 ? `${label} again`
                 : label
@@ -552,7 +567,9 @@ function MicFace({ transport, state }: { transport: boolean; state: MicState }) 
           draggable={false}
         />
       </span>
-      {transport ? <span className="gadget-transport-word">Talk</span> : null}
+      {transport ? (
+        <span className="gadget-transport-word">{state === "listening" ? LISTENING_STOP : "Talk"}</span>
+      ) : null}
     </>
   );
 }

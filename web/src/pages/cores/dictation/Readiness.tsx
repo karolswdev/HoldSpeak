@@ -4,6 +4,7 @@ import { Button } from "../../../components/signal/Signal";
 import { apiFetch } from "../../../lib/api";
 import { openSurfaceOr } from "../../../desk/shell";
 import { useResource } from "../../pageSupport";
+import { useBuilderTools } from "../../../desk/builderTools";
 import type { DictationReadinessResponse } from "../core-types";
 import { egressScopeLamp } from "../../../desk/inferenceEgress";
 import { presentValue } from "../../../desk/surface/format";
@@ -33,6 +34,7 @@ export function Readiness() {
     {},
   );
   const [kbBusy, setKbBusy] = useState(false);
+  const raw = useBuilderTools((state) => state.on);
   const config = (resource.data.config ?? {}) as Record<string, unknown>;
   const target = (resource.data.target ?? {}) as Record<string, unknown>;
   const depth = (resource.data.depth ?? {}) as Record<string, unknown>;
@@ -156,9 +158,12 @@ export function Readiness() {
           and all; a raw fold that edits the wire is a lie. It now says so
           in the owner's own word (debug hides behind RAW), which is the
           same title grammar Live uses (`LiveCore.tsx` RAW · ROUTE). */}
-      <FoldGadget title="RAW · READINESS">
-        <SurfaceCode>{JSON.stringify(resource.data, null, 2)}</SurfaceCode>
-      </FoldGadget>
+      {/* Betterment C8: the wire fold is behind RAW (Builder tools). */}
+      {raw ? (
+        <FoldGadget title="RAW · READINESS">
+          <SurfaceCode>{JSON.stringify(resource.data, null, 2)}</SurfaceCode>
+        </FoldGadget>
+      ) : null}
     </SurfaceState>
   );
 }

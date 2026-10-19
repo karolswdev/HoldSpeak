@@ -16,6 +16,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FloorHeldError } from "../../../../lib/audioFloor";
 import { SpeakFace } from "../SpeakFace";
+import { useBuilderTools } from "../../../../desk/builderTools";
 
 const mocks = vi.hoisted(() => ({
   apiFetch: vi.fn(),
@@ -59,6 +60,8 @@ vi.mock("../../../../features/concierge/api", () => ({
 beforeEach(() => {
   vi.clearAllMocks();
   localStorage.clear();
+  // Betterment C8: Details and the Open mic latch are behind RAW, on here.
+  useBuilderTools.getState().setOn(true);
   mocks.phaseListener = null;
   mocks.apiFetch.mockImplementation(() => Promise.resolve({}));
   mocks.openMicListen.mockImplementation(() => Promise.resolve(undefined));

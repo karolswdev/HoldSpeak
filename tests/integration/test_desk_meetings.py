@@ -756,3 +756,91 @@ def _recorded_since(review: dict[str, Any]) -> None:
     stored = json.loads(SINCE_FIXTURE.read_text())["aftercare"]
     assert shape(stored) == shape(review), "re-record with HOLDSPEAK_WIRE_WRITE=1"
     assert set(stored["since_last_meeting"]) == set(review["since_last_meeting"]), "re-record"
+
+
+# ── Capture C7: a scheduled fire on the hub as composed ──────────────────────
+
+FIRE_TOKEN = "desk-meetings-fire"
+
+
+class _CaptureDouble:
+    """The start boundary the real fire uses: the runtime's bound ``on_start``
+    (``WebRuntimeCallbacks.on_start`` → ``web_runtime._start_meeting``), with
+    the pending-title seam ``MeetingWebServer._conductor_start_meeting`` sets
+    on its owner. It records the start, or raises what the real start raises."""
+
+    def __init__(self, raises: BaseException | None = None) -> None:
+        self.pending_title: str | None = None
+        self.pending_calendar_event_id: str | None = None
+        self.starts: list[tuple[Any, str | None]] = []
+        self.raises = raises
+
+    def start_meeting(self, principal: Any = None) -> dict[str, Any]:
+        if self.raises is not None:
+            raise self.raises
+        self.starts.append((principal, self.pending_title))
+        return {"id": "m-scheduled"}
+
+
+def _fire_now(base: str, title: str) -> dict[str, Any]:
+    """Arm a one-shot due now on the hub's OWN conductor (its composed
+    voice floor and start seam) and run one tick."""
+    from holdspeak import scheduled_recording_conductor as src
+    from holdspeak.db import get_database
+
+    conductor = src._conductor
+    assert conductor is not None, "the hub did not start the scheduled-recording conductor"
+    conductor._countdown_seconds = 0.0
+    db = get_database()
+    sched = db.scheduled_recordings.create(
+        title=title, cron_expr="0 9 * * *", one_shot=True, duration_minutes=1,
+        enabled=True, next_fire_at=time.time() - 1,
+    )
+    conductor._tick()
+    assert _wait(lambda: db.scheduled_recordings.get(sched.id).state not in ("idle", "arming"), timeout=10)
+    rows = _api(base, "GET", "/api/scheduled-recordings", token=FIRE_TOKEN)["schedules"]
+    return next(r for r in rows if r["id"] == sched.id)
+
+
+def test_a_scheduled_fire_on_a_hub_with_no_voice_session_records(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """RECON.md §6: the glass hub has no voice session, and the fire died on
+    `None.active_owner` (web_server.py's floor lambda) with no receipt. A hub
+    with no audio arbiter has no floor holder: the fire reaches the start."""
+    double = _CaptureDouble()
+    server, base = _boot(tmp_path, monkeypatch, token=FIRE_TOKEN, on_start=double.start_meeting)
+    try:
+        assert server.voice_session is None  # the rig's composition, as in the walk
+        row = _fire_now(base, "Platform design follow-up")
+        assert row["state"] == "recording", row
+        assert row["last_outcome"] == "recording_started", row
+        assert row["did_not_record"] is None, row
+        assert len(double.starts) == 1 and double.starts[0][1] == "Platform design follow-up"
+    finally:
+        _stop(server)
+
+
+@pytest.mark.parametrize("raised, words", [
+    ("floor", "Another recording is running"),
+    ("mic", "No microphone"),
+])
+def test_a_scheduled_fire_that_cannot_start_says_why_in_plain_words(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, raised: str, words: str,
+) -> None:
+    """The real start's refusals (meeting_glue's held floor, the recorder with
+    no input device) end the fire in `refused` with the plain words; the
+    exception text is never in the row."""
+    from holdspeak.meeting_recorder import MeetingRecorderError
+
+    exc = (RuntimeError("Cannot start meeting: audio floor held by 'hotkey'") if raised == "floor"
+           else MeetingRecorderError("Failed to start mic recording: Error querying device -1"))
+    double = _CaptureDouble(raises=exc)
+    server, base = _boot(tmp_path, monkeypatch, token=FIRE_TOKEN, on_start=double.start_meeting)
+    try:
+        row = _fire_now(base, "1:1 with Mira")
+        assert row["state"] == "refused" and row["last_outcome"] == "start_failed", row
+        assert row["did_not_record"]["reason"] == words, row
+        assert str(exc) not in json.dumps(row)
+    finally:
+        _stop(server)

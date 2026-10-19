@@ -109,8 +109,11 @@ async function open(): Promise<void> {
   void desk.refresh();
 }
 
-export function openNewThought(): Promise<void> {
-  startThoughtKeys();
+/** `firstWords`: the text typed before the note existed (Capture's New note
+ *  makes the record on the first character, never on the press; betterment
+ *  C8). The note field takes it, then the keys typed after it. */
+export function openNewThought(firstWords = ""): Promise<void> {
+  startThoughtKeys(firstWords);
   opening ??= open().finally(() => { opening = null; });
   return opening;
 }

@@ -1,7 +1,7 @@
 // The Chair app, The week window (HS-175-02 and its counsel C2, C5, C8, C9).
 // Betterment daily D5: The week and Brief windows retired into Today; their
 // cases are parked in __tests__/_parked/chairWeekBrief.d5.app.test.tsx. What
-// stays: the typed door rows, the NO CALENDAR offer, the NEXT clock, Schedule.
+// stays: the typed door rows, the NO CALENDAR offer, the NEXT clock, Coming up.
 //
 // The test diet (2026-10-11) moves the arrival glass rig here. The real
 // ChairHome renders with its real desk store; only `apiFetch` is mocked, and
@@ -18,11 +18,12 @@
 // a fixed Wednesday and no week edge can move a row.
 process.env.TZ = "America/Denver";
 
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError, apiFetch } from "../../lib/api";
 import { ChairHome } from "../chair/ChairHome";
 import { openChairWindows } from "../chair/__tests__/fixtures/openChairWindows";
+import { claimThoughtKeys } from "../thoughtKeys";
 import { nextWord } from "../needs/needsFace";
 import WEEK_STRIP from "./wire/door.week-strip.wire.json";
 import { unfinishedThoughts } from "../thoughts";
@@ -39,7 +40,11 @@ vi.mock("../../runtime/RuntimeBus", () => ({
 }));
 // The THOUGHTS block below swaps in the hub's recorded answer; every other test reads none.
 vi.mock("../thoughts", () => ({ unfinishedThoughts: vi.fn(async () => ({ items: [] })) }));
-vi.mock("../components/MicButton", () => ({ MicButton: () => null }));
+vi.mock("../components/MicButton", () => ({
+  MicButton: ({ label = "Speak", onText }: { label?: string; onText: (text: string) => void }) => {
+    return <button data-testid={`mock-mic-${label}`} onClick={() => onText("Words from Talk")}>{label}</button>;
+  },
+}));
 
 // Wednesday 2026-10-07 10:00 in Denver (16:00 UTC).
 const NOW = new Date("2026-10-07T16:00:00Z");
@@ -209,51 +214,60 @@ describe("The week: the viewer's local clock", () => {
 import { recordedGet } from "../../test/recordedHub";
 import BRIEF from "./fixtures/chair-brief/brief.recorded.json";
 
-// ── HS-144: the capture bar's Schedule opens the create window ────────────
-// The hub's own answers (tests/integration/test_face_wire_fences.py
-// `test_schedule_create_reads`): the create answer and the list after it.
-import { ScheduleCreateWindow } from "../components/ScheduleCreateWindow";
+// ── Capture C7: Coming up replaces the old Schedule rail ─────────────────
+// The hub's own answers (tests/unit/test_desk_chair.py:
+// test_coming_up_arms_cancels_and_names_a_failed_fire) cover the same
+// failed-fire reason and armed follow-up at the service boundary.
 import { useDesk } from "../store";
-import SCHEDULE_CREATED from "../../test/wire/scheduled-recordings.create.wire.json";
-import SCHEDULE_LIST from "../../test/wire/scheduled-recordings.list.wire.json";
+import COMING_UP from "./fixtures/coming-up/coming-up.json";
 
-describe("The capture bar: Schedule", () => {
-  it("Cancel closes the window and posts nothing; Create posts the title, closes the window and loads the saved row", async () => {
-    // replaces: tests/e2e/test_hs144_door_glass.py::test_upcoming_rail_schedule_create_round_trip_and_form_cancel
-    let saved = false;
-    const posts: Array<[string, any]> = [];
-    hub(weekStripDoor(), (path, init) => {
-      if (init?.method === "POST") posts.push([path, init]);
-      if (path === "/api/scheduled-recordings" && init?.method === "POST") {
-        saved = true;
-        return structuredClone(SCHEDULE_CREATED.wire);
+const pad2 = (n: number) => String(n).padStart(2, "0");
+const hhmm = (iso: string) => {
+  const d = new Date(iso);
+  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+};
+
+describe("Capture: Coming up in place of Schedule", () => {
+  it("shows a failed fire with Record now and an armed meeting with its cancel action", async () => {
+    vi.setSystemTime(new Date(COMING_UP._now));
+    let phase: "before" | "armed" = "before";
+    const posts: string[] = [];
+    useDesk.setState({ comingUp: null, scheduledRecordings: [] } as never);
+    hub(COMING_UP["GET /api/door (before)"] as Json, (path, init) => {
+      if (init?.method === "POST") {
+        posts.push(path);
+        if (path === "/api/scheduled-recordings") {
+          phase = "armed";
+          return structuredClone(COMING_UP["POST /api/scheduled-recordings"]);
+        }
+      }
+      if (path === "/api/door") {
+        return structuredClone(COMING_UP[phase === "armed" ? "GET /api/door (armed)" : "GET /api/door (before)"]);
       }
       if (path === "/api/scheduled-recordings") {
-        return saved ? structuredClone(SCHEDULE_LIST.wire) : { success: true, schedules: [] };
+        return structuredClone(COMING_UP["GET /api/scheduled-recordings (before)"]);
       }
       return undefined;
     });
-    useDesk.setState({ scheduleCreateWindow: null } as never);
-    render(<><ScheduleCreateWindow /><ChairHome /></>);
+    render(<ChairHome />);
+    await waitFor(() => expect(screen.getByTestId("arrival-coming-up").getAttribute("aria-busy")).toBeNull());
+    const list = screen.getByTestId("arrival-coming-up");
+    await waitFor(() => expect(within(list).getAllByRole("listitem")).toHaveLength(2));
+    const [failed, next] = within(list).getAllByRole("listitem");
+    const sync = (COMING_UP["GET /api/scheduled-recordings (before)"] as Json).schedules
+      .find((s: Json) => s.id === "rec-sync");
+    expect(failed.textContent).toContain("Payments platform sync");
+    expect(within(failed).getByTestId("coming-up-state").textContent)
+      .toBe(`Did not record · ${hhmm(sync.did_not_record.at)} · ${sync.did_not_record.reason}`);
+    expect(within(failed).getByRole("button", { name: "Record now" })).toBeTruthy();
+    expect(next.textContent).toContain("Platform design follow-up");
 
-    const createWindow = () => document.getElementById("schedule:__create__");
-    fireEvent.click(await screen.findByTestId("arrival-schedule"));
-    await waitFor(() => expect(createWindow()).not.toBeNull());
-    fireEvent.click(within(createWindow()!).getByRole("button", { name: "Cancel" }));
-    await waitFor(() => expect(createWindow()).toBeNull());
-    expect(posts).toEqual([]);
-
-    fireEvent.click(screen.getByTestId("arrival-schedule"));
-    await waitFor(() => expect(createWindow()).not.toBeNull());
-    fireEvent.change(within(createWindow()!).getByRole("textbox", { name: "Title" }), {
-      target: { value: "Rail form recording" },
-    });
-    fireEvent.click(within(createWindow()!).getByTestId("schedule-create-submit"));
-    await waitFor(() => expect(createWindow()).toBeNull());
-    expect(posts.map(([p]) => p)).toEqual(["/api/scheduled-recordings"]);
-    expect(posts[0][1].json.title).toBe("Rail form recording");
-    await waitFor(() =>
-      expect(useDesk.getState().scheduledRecordings.map((r) => r.title)).toEqual(["Rail form recording"]));
+    fireEvent.click(within(next).getByRole("button", { name: "Record Platform design follow-up when it starts" }));
+    await waitFor(() => expect(within(list).getAllByTestId("coming-up-state")[1]?.textContent ?? "").toMatch(/^Records at /));
+    const armed = (COMING_UP["GET /api/door (armed)"] as Json).upcoming.find((r: Json) => r.id === "ev-followup");
+    expect(within(list).getAllByTestId("coming-up-state")[1].textContent).toBe(`Records at ${hhmm(armed.armed.arms_at)}`);
+    expect(within(list).getByRole("button", { name: "Cancel the recording of Platform design follow-up" })).toBeTruthy();
+    expect(posts).toEqual(["/api/scheduled-recordings"]);
   });
 });
 
@@ -261,3 +275,134 @@ describe("The capture bar: Schedule", () => {
 // lists an unfinished thought in THOUGHTS, and has no THOUGHTS section with
 // none. The hub's own answers to GET /api/thoughts?state=unfinished&limit=3
 // before and after one typed thought (tests/integration/test_face_wire_fences.py).
+
+// ── Betterment capture C8: Capture in plain words ─────────────────────────
+// The hub's own answers: GET /api/setup/local-ai with no speech model
+// (test/wire/setup-local-ai.wire.json), POST /api/notes
+// (test/wire/notes-create.wire.json) and the note's thought open
+// (test/wire/note.one-note.wire.json), all from
+// tests/integration/test_face_wire_fences.py / tests/unit/test_desk_note.py.
+import LOCAL_AI_WIRE from "../../test/wire/setup-local-ai.wire.json";
+import NOTE_CREATED from "../../test/wire/notes-create.wire.json";
+import ONE_NOTE from "../../test/wire/note.one-note.wire.json";
+
+function captureHub(posts: Array<[string, any]>) {
+  hub(weekStripDoor(), (path, init) => {
+    if (init?.method && init.method !== "GET") posts.push([path, init]);
+    if (path === "/api/setup/local-ai") return structuredClone(LOCAL_AI_WIRE.wire);
+    if (path === "/api/notes" && init?.method === "POST") return structuredClone(NOTE_CREATED.wire);
+    if (path === "/api/thoughts/open-note" && init?.method === "POST") return structuredClone(ONE_NOTE.open);
+    return undefined;
+  });
+}
+
+function readySpeechWire(): Json {
+  const ready = structuredClone(LOCAL_AI_WIRE.wire) as Json;
+  ready.files = (ready.files as Json[]).map((file) =>
+    file.key === "whisper" ? { ...file, on_device: true } : file,
+  );
+  ready.speech = { ...ready.speech, ready: true, state: "on_device" };
+  return ready;
+}
+
+describe("C8: Capture — three large verbs, the one Talk rule, New note on the first character", () => {
+  it("Talk, New note, Record from the top; no `Write a thought`, no `Record meeting`", async () => {
+    captureHub([]);
+    render(<ChairHome />);
+    const bar = await screen.findByTestId("arrival-capture-bar");
+    await within(bar).findByTestId("arrival-talk-setup-key");
+    const big = Array.from(bar.querySelectorAll(".arrival-capture-big")).map((el) => el.textContent?.trim());
+    expect(big).toEqual(["Talk", "New note", "Record"]);
+    expect(bar.textContent).not.toMatch(/Write a thought|Record meeting/);
+  });
+
+  it("no speech model: Capture's Talk and the floor TALK open the same Set up speech in place", async () => {
+    captureHub([]);
+    // The Chair draws the floor (desk/screen/Screen.tsx) with its TALK.
+    render(<ChairHome />);
+    const bar = await screen.findByTestId("arrival-capture-bar");
+    const capture = await within(bar).findByTestId("arrival-talk-setup-key");
+    const floor = await within(await screen.findByTestId("desk-screen-talk")).findByTestId("desk-screen-talk-setup-key");
+    for (const key of [capture, floor]) expect(key).not.toBeDisabled();
+    fireEvent.click(capture);
+    fireEvent.click(floor);
+    const verbs = [
+      await within(bar).findByTestId("arrival-talk-setup-verb"),
+      await within(screen.getByTestId("desk-screen-talk")).findByTestId("desk-screen-talk-setup-verb"),
+    ];
+    for (const verb of verbs) expect(verb.textContent?.trim()).toMatch(/^Set up speech · 144 MB$/);
+    // Pressing Talk asks nothing of the hub: setup waits for its own press.
+    expect(wire.paths.filter(([, init]) => (init as any)?.method === "POST")).toEqual([]);
+  });
+
+  async function spokenWordsReachNote(surface: "capture" | "floor") {
+    const posts: Array<[string, any]> = [];
+    hub(weekStripDoor(), (path, init) => {
+      if (init?.method && init.method !== "GET") posts.push([path, init]);
+      if (path === "/api/setup/local-ai") return readySpeechWire();
+      if (path === "/api/notes" && init?.method === "POST") return structuredClone(NOTE_CREATED.wire);
+      if (path === "/api/thoughts/open-note" && init?.method === "POST") return structuredClone(ONE_NOTE.open);
+      return undefined;
+    });
+    useDesk.setState({ pullouts: [], items: { note: [] } } as never);
+    let received = "";
+    const releaseKeys = claimThoughtKeys(String(NOTE_CREATED.wire.note.id), (text) => {
+      received = text;
+    });
+    render(<ChairHome />);
+    try {
+      const host = surface === "capture"
+        ? within(await screen.findByTestId("arrival-capture-bar"))
+        : within(await screen.findByTestId("desk-screen-talk"));
+      await act(async () => {
+        fireEvent.click(await host.findByTestId("mock-mic-Talk"));
+      });
+      await waitFor(() => expect(received).toBe("Words from Talk"));
+      expect(posts.map(([path]) => path)).toContain("/api/notes");
+      expect(posts.find(([path]) => path === "/api/notes")?.[1].json).toEqual({
+        title: "Thought",
+        body_markdown: "",
+        tags: [],
+      });
+    } finally {
+      releaseKeys();
+    }
+  }
+
+  it("spoken Capture words reach the New note editor handoff", async () => {
+    await spokenWordsReachNote("capture");
+  });
+
+  it("spoken floor Talk words reach the New note editor handoff", async () => {
+    await spokenWordsReachNote("floor");
+  });
+
+  it("New note: a press with no typing leaves no record; the first character makes it and opens it", async () => {
+    const posts: Array<[string, any]> = [];
+    captureHub(posts);
+    useDesk.setState({ pullouts: [] } as never);
+    render(<ChairHome />);
+    const press = await screen.findByTestId("arrival-develop-thought");
+    fireEvent.click(press);
+    const note = await screen.findByTestId("arrival-new-note");
+    const words = within(note).getByRole("textbox", { name: "New note" });
+    expect(words).toHaveValue("");
+    // Escape folds it; a press again unfolds it. Nothing was written.
+    fireEvent.keyDown(words, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByTestId("arrival-new-note")).toBeNull());
+    fireEvent.click(press);
+    fireEvent.click(press);
+    await waitFor(() => expect(screen.queryByTestId("arrival-new-note")).toBeNull());
+    expect(posts.filter(([p]) => p === "/api/notes")).toEqual([]);
+
+    fireEvent.click(press);
+    fireEvent.change(within(await screen.findByTestId("arrival-new-note")).getByRole("textbox", { name: "New note" }), {
+      target: { value: "P" },
+    });
+    await waitFor(() => expect(posts.filter(([p]) => p === "/api/notes")).toHaveLength(1));
+    expect(posts.find(([p]) => p === "/api/notes")![1].json).toEqual({ title: "Thought", body_markdown: "", tags: [] });
+    await waitFor(() =>
+      expect(JSON.stringify(useDesk.getState().pullouts)).toContain(NOTE_CREATED.wire.note.id));
+    expect(screen.queryByTestId("arrival-new-note")).toBeNull();
+  });
+});

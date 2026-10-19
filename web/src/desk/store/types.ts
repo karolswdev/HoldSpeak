@@ -97,6 +97,31 @@ export interface ScheduledRecording {
   next_fire_at: string | null;
   last_outcome: string | null;
   created_at: string;
+  /** Capture C7: the schedule's calendar event (empty: no link). */
+  calendar_event_id?: string;
+  /** Capture C7: its last fire did not record (`{at, reason}`), from that
+   *  fire's receipt; null otherwise. */
+  did_not_record?: { at: string | null; reason: string } | null;
+}
+
+/** Capture C7: one row of the Door's `upcoming` (a calendar event, with its
+ *  arm when armed, or a scheduled recording), as `/api/door` serves it. */
+export interface UpcomingRow {
+  id: string;
+  source: string;
+  title?: string;
+  starts_at: string;
+  ends_at?: string | null;
+  state?: string;
+  armed?: { recording_id: string; arms_at?: string | null; state?: string } | null;
+  armed_schedule_id?: string;
+}
+
+/** Capture C7: Coming up, the one list Today, Meetings ▸ Record and Capture
+ *  arm from. */
+export interface ComingUpRead {
+  rows: UpcomingRow[];
+  calendar: boolean;
 }
 
 /** Context for a recording started from an exact calendar event. */
@@ -227,6 +252,8 @@ export interface DeskState {
   scheduledArming: ScheduledArmingState | null;
   /** HS-136-03: the schedule-create window (DeskWindow, no modal). */
   scheduleCreateWindow: { origin: { x: number; y: number } | null } | null;
+  /** Capture C7: Coming up (the Door's upcoming); null until first read. */
+  comingUp: ComingUpRead | null;
   /** Zone tray widths in px (resized zones only). */
   zoneWidths: Record<string, number>;
   /** Desk-window geometry per panel id (moved/resized panels only). */
@@ -438,6 +465,11 @@ export interface DeskState {
   cancelArmedSchedule(id: string): Promise<CancelArmedResult>;
   /** HS-147-02: one-tap arm of a calendar event via POST {calendar_event_id}. */
   armEventRecording(eventId: string): Promise<boolean>;
+  /** Capture C7: read Coming up (`/api/door` upcoming) into the store. */
+  loadComingUp(): Promise<void>;
+  /** Capture C7: Cancel on a scheduled recording that is not linked to an
+   *  event (the hub refuses `cancel` for it): it is turned off. */
+  disableSchedule(id: string): Promise<boolean>;
   /** HS-136-03: apply a scheduled_recording broadcast event. */
   applyScheduledRecordingEvent(type: string, data: Record<string, unknown>): void;
   /** HS-136-03: open/close the schedule-create window. */

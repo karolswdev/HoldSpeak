@@ -1,0 +1,413 @@
+{
+  "GET /api/door (armed)": {
+    "board": {
+      "active": [],
+      "now": [],
+      "overdue": [],
+      "unassigned": [],
+      "waiting": []
+    },
+    "calendar_configured": true,
+    "counts": {
+      "active": 0,
+      "now": 0,
+      "overdue": 0,
+      "upcoming_today": 2,
+      "waiting": 0
+    },
+    "upcoming": [
+      {
+        "armed": {
+          "arms_at": "2026-10-19T13:48:00Z",
+          "recording_id": "sr_5f1e9ef75a9a",
+          "state": "idle"
+        },
+        "armed_schedule_id": "sr_5f1e9ef75a9a",
+        "ends_at": "2026-10-19T14:34:00+00:00",
+        "id": "ev-followup",
+        "location": null,
+        "meeting_url": null,
+        "source": "calendar_event",
+        "source_id": "src-work",
+        "source_label": "WORK",
+        "starts_at": "2026-10-19T13:49:00+00:00",
+        "state": "scheduled",
+        "target_ref": "calendar_event:ev-followup",
+        "title": "Platform design follow-up",
+        "uid": "uid-ev-followup"
+      },
+      {
+        "ends_at": "2026-10-19T15:19:00+00:00",
+        "id": "ev-mira",
+        "location": null,
+        "meeting_url": null,
+        "source": "calendar_event",
+        "source_id": "src-work",
+        "source_label": "WORK",
+        "starts_at": "2026-10-19T14:49:00+00:00",
+        "state": "scheduled",
+        "target_ref": "calendar_event:ev-mira",
+        "title": "1:1 with Mira",
+        "uid": "uid-ev-mira"
+      },
+      {
+        "ends_at": "2026-10-20T13:49:00+00:00",
+        "id": "ev-review",
+        "location": null,
+        "meeting_url": null,
+        "source": "calendar_event",
+        "source_id": "src-work",
+        "source_label": "WORK",
+        "starts_at": "2026-10-20T12:49:00+00:00",
+        "state": "scheduled",
+        "target_ref": "calendar_event:ev-review",
+        "title": "Architecture review",
+        "uid": "uid-ev-review"
+      }
+    ],
+    "week": {
+      "days": [
+        {
+          "count": 3,
+          "date": "2026-10-19",
+          "dow": "MON"
+        },
+        {
+          "count": 1,
+          "date": "2026-10-20",
+          "dow": "TUE"
+        },
+        {
+          "count": 0,
+          "date": "2026-10-21",
+          "dow": "WED"
+        },
+        {
+          "count": 0,
+          "date": "2026-10-22",
+          "dow": "THU"
+        },
+        {
+          "count": 0,
+          "date": "2026-10-23",
+          "dow": "FRI"
+        },
+        {
+          "count": 0,
+          "date": "2026-10-24",
+          "dow": "SAT"
+        },
+        {
+          "count": 0,
+          "date": "2026-10-25",
+          "dow": "SUN"
+        }
+      ],
+      "ends_at": "2026-10-26T06:00:00+00:00",
+      "has_calendar": true,
+      "starts_at": "2026-10-19T06:00:00+00:00",
+      "total": 4
+    }
+  },
+  "GET /api/door (before)": {
+    "board": {
+      "active": [],
+      "now": [],
+      "overdue": [],
+      "unassigned": [],
+      "waiting": []
+    },
+    "calendar_configured": true,
+    "counts": {
+      "active": 0,
+      "now": 0,
+      "overdue": 0,
+      "upcoming_today": 2,
+      "waiting": 0
+    },
+    "upcoming": [
+      {
+        "ends_at": "2026-10-19T14:34:00+00:00",
+        "id": "ev-followup",
+        "location": null,
+        "meeting_url": null,
+        "source": "calendar_event",
+        "source_id": "src-work",
+        "source_label": "WORK",
+        "starts_at": "2026-10-19T13:49:00+00:00",
+        "state": "scheduled",
+        "target_ref": "calendar_event:ev-followup",
+        "title": "Platform design follow-up",
+        "uid": "uid-ev-followup"
+      },
+      {
+        "ends_at": "2026-10-19T15:19:00+00:00",
+        "id": "ev-mira",
+        "location": null,
+        "meeting_url": null,
+        "source": "calendar_event",
+        "source_id": "src-work",
+        "source_label": "WORK",
+        "starts_at": "2026-10-19T14:49:00+00:00",
+        "state": "scheduled",
+        "target_ref": "calendar_event:ev-mira",
+        "title": "1:1 with Mira",
+        "uid": "uid-ev-mira"
+      },
+      {
+        "ends_at": "2026-10-20T13:49:00+00:00",
+        "id": "ev-review",
+        "location": null,
+        "meeting_url": null,
+        "source": "calendar_event",
+        "source_id": "src-work",
+        "source_label": "WORK",
+        "starts_at": "2026-10-20T12:49:00+00:00",
+        "state": "scheduled",
+        "target_ref": "calendar_event:ev-review",
+        "title": "Architecture review",
+        "uid": "uid-ev-review"
+      }
+    ],
+    "week": {
+      "days": [
+        {
+          "count": 3,
+          "date": "2026-10-19",
+          "dow": "MON"
+        },
+        {
+          "count": 1,
+          "date": "2026-10-20",
+          "dow": "TUE"
+        },
+        {
+          "count": 0,
+          "date": "2026-10-21",
+          "dow": "WED"
+        },
+        {
+          "count": 0,
+          "date": "2026-10-22",
+          "dow": "THU"
+        },
+        {
+          "count": 0,
+          "date": "2026-10-23",
+          "dow": "FRI"
+        },
+        {
+          "count": 0,
+          "date": "2026-10-24",
+          "dow": "SAT"
+        },
+        {
+          "count": 0,
+          "date": "2026-10-25",
+          "dow": "SUN"
+        }
+      ],
+      "ends_at": "2026-10-26T06:00:00+00:00",
+      "has_calendar": true,
+      "starts_at": "2026-10-19T06:00:00+00:00",
+      "total": 4
+    }
+  },
+  "GET /api/door (cancelled)": {
+    "board": {
+      "active": [],
+      "now": [],
+      "overdue": [],
+      "unassigned": [],
+      "waiting": []
+    },
+    "calendar_configured": true,
+    "counts": {
+      "active": 0,
+      "now": 0,
+      "overdue": 0,
+      "upcoming_today": 2,
+      "waiting": 0
+    },
+    "upcoming": [
+      {
+        "ends_at": "2026-10-19T14:34:00+00:00",
+        "id": "ev-followup",
+        "location": null,
+        "meeting_url": null,
+        "source": "calendar_event",
+        "source_id": "src-work",
+        "source_label": "WORK",
+        "starts_at": "2026-10-19T13:49:00+00:00",
+        "state": "scheduled",
+        "target_ref": "calendar_event:ev-followup",
+        "title": "Platform design follow-up",
+        "uid": "uid-ev-followup"
+      },
+      {
+        "ends_at": "2026-10-19T15:19:00+00:00",
+        "id": "ev-mira",
+        "location": null,
+        "meeting_url": null,
+        "source": "calendar_event",
+        "source_id": "src-work",
+        "source_label": "WORK",
+        "starts_at": "2026-10-19T14:49:00+00:00",
+        "state": "scheduled",
+        "target_ref": "calendar_event:ev-mira",
+        "title": "1:1 with Mira",
+        "uid": "uid-ev-mira"
+      },
+      {
+        "ends_at": "2026-10-20T13:49:00+00:00",
+        "id": "ev-review",
+        "location": null,
+        "meeting_url": null,
+        "source": "calendar_event",
+        "source_id": "src-work",
+        "source_label": "WORK",
+        "starts_at": "2026-10-20T12:49:00+00:00",
+        "state": "scheduled",
+        "target_ref": "calendar_event:ev-review",
+        "title": "Architecture review",
+        "uid": "uid-ev-review"
+      }
+    ],
+    "week": {
+      "days": [
+        {
+          "count": 3,
+          "date": "2026-10-19",
+          "dow": "MON"
+        },
+        {
+          "count": 1,
+          "date": "2026-10-20",
+          "dow": "TUE"
+        },
+        {
+          "count": 0,
+          "date": "2026-10-21",
+          "dow": "WED"
+        },
+        {
+          "count": 0,
+          "date": "2026-10-22",
+          "dow": "THU"
+        },
+        {
+          "count": 0,
+          "date": "2026-10-23",
+          "dow": "FRI"
+        },
+        {
+          "count": 0,
+          "date": "2026-10-24",
+          "dow": "SAT"
+        },
+        {
+          "count": 0,
+          "date": "2026-10-25",
+          "dow": "SUN"
+        }
+      ],
+      "ends_at": "2026-10-26T06:00:00+00:00",
+      "has_calendar": true,
+      "starts_at": "2026-10-19T06:00:00+00:00",
+      "total": 4
+    }
+  },
+  "GET /api/scheduled-recordings (before)": {
+    "schedules": [
+      {
+        "armed_at": null,
+        "born_from": "calendar_event",
+        "calendar_event_id": "ev-sync",
+        "calendar_source_id": "src-work",
+        "calendar_starts_at": "",
+        "calendar_uid": "uid-ev-sync",
+        "created_at": "2026-10-19T12:49:07Z",
+        "cron_expr": "0 10 * * 1",
+        "deadline_at": null,
+        "delegation_receipt_id": "",
+        "did_not_record": {
+          "at": "2026-10-19T12:33:00Z",
+          "reason": "Something went wrong"
+        },
+        "duration_minutes": 60,
+        "enabled": false,
+        "id": "rec-sync",
+        "last_fired_at": "2026-10-19T12:33:00Z",
+        "last_outcome": "fire_failed",
+        "last_receipt_id": "sr_rcpt_a1ee78ed2c63",
+        "next_fire_at": null,
+        "one_shot": true,
+        "owner_cancelled_at": null,
+        "revision": 1,
+        "state": "refused",
+        "title": "Payments platform sync",
+        "tz": "UTC"
+      }
+    ],
+    "success": true
+  },
+  "POST /api/scheduled-recordings": {
+    "schedule": {
+      "armed_at": null,
+      "born_from": "",
+      "calendar_event_id": "ev-followup",
+      "calendar_source_id": "src-work",
+      "calendar_starts_at": "",
+      "calendar_uid": "uid-ev-followup",
+      "created_at": "2026-10-19T12:49:08Z",
+      "cron_expr": "0 0 1 1 *",
+      "deadline_at": null,
+      "delegation_receipt_id": "sr_rcpt_ec82d7aa17d6",
+      "duration_minutes": 45,
+      "enabled": true,
+      "id": "sr_5f1e9ef75a9a",
+      "last_fired_at": null,
+      "last_outcome": "",
+      "last_receipt_id": "",
+      "next_fire_at": "2026-10-19T13:48:00Z",
+      "one_shot": true,
+      "owner_cancelled_at": null,
+      "receipt_id": "sr_rcpt_7631cd898480",
+      "revision": 1,
+      "state": "idle",
+      "title": "Platform design follow-up",
+      "tz": "MDT"
+    },
+    "success": true
+  },
+  "POST /api/scheduled-recordings/<id>/cancel": {
+    "armed_at": null,
+    "born_from": "",
+    "calendar_event_id": "ev-followup",
+    "calendar_source_id": "src-work",
+    "calendar_starts_at": "",
+    "calendar_uid": "uid-ev-followup",
+    "cancelled": true,
+    "created_at": "2026-10-19T12:49:08Z",
+    "cron_expr": "0 0 1 1 *",
+    "deadline_at": null,
+    "delegation_receipt_id": "sr_rcpt_ec82d7aa17d6",
+    "duration_minutes": 45,
+    "enabled": false,
+    "id": "sr_5f1e9ef75a9a",
+    "last_fired_at": null,
+    "last_outcome": "owner_cancelled",
+    "last_receipt_id": "sr_rcpt_53d102449832",
+    "next_fire_at": null,
+    "one_shot": true,
+    "owner_cancelled_at": null,
+    "receipt_id": "sr_rcpt_53d102449832",
+    "revision": 1,
+    "state": "cancelled",
+    "success": true,
+    "title": "Platform design follow-up",
+    "tz": "MDT"
+  },
+  "_now": "2026-10-19T12:49:00Z",
+  "_source": "Recorded from the real routes and DoorService by tests/unit/test_desk_chair.py::test_coming_up_arms_cancels_and_names_a_failed_fire. HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads."
+}
