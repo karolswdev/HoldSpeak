@@ -163,7 +163,7 @@ function NoteWindowRouter({ o, pulloutId, origin }: { o: WorldObject; pulloutId:
   }, [o.id]);
 
   if (thought) return <ThoughtWorkspaceWindow object={o} pulloutId={pulloutId} thought={thought} origin={origin} onClose={close} />;
-  return <PulloutFrame o={o} pulloutId={pulloutId} origin={origin} overrideContent={<div className="desk-pullout-body desk-surface-body thought-workspace-opening" aria-busy={!failed}>{failed ? <><p>Could not open this note on this hub. The note is unchanged. Try again.</p><Button variant="primary" onClick={load}>Try again</Button></> : <span>Opening note…</span>}</div>} />;
+  return <PulloutFrame o={o} pulloutId={pulloutId} origin={origin} overrideContent={<div className="desk-pullout-body desk-surface-body thought-workspace-opening" aria-busy={!failed}>{failed ? <><span>The note did not open. It is unchanged. Try again.</span><Button variant="primary" onClick={load}>Try again</Button></> : <span>Opening note…</span>}</div>} />;
 }
 
 export function Pullout({

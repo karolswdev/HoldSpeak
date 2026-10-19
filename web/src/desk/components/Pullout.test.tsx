@@ -50,7 +50,7 @@ describe("Pullout: every note opens in the one note window (Betterment Q8)", () 
     vi.mocked(openNoteThought).mockRejectedValueOnce(new Error("offline")).mockResolvedValueOnce(thought);
     render(<Pullout o={object} />);
 
-    expect(await screen.findByText("Could not open this note on this hub. The note is unchanged. Try again.")).toBeInTheDocument();
+    expect(await screen.findByText("The note did not open. It is unchanged. Try again.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByRole("region", { name: "Thought Workbench" })).toHaveTextContent("Owned Note");
   });
