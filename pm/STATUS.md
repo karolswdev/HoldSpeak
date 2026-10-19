@@ -4,13 +4,13 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (Q11/Q12 verified; AG13 deployed)
+**Last updated:** 2026-10-19 (MCP tape repairs; Q11/Q12 deployed)
 
 ## Current phase
 
 **Betterment recovery: 82/117 recipe implementations merged.** Codex owns
 recovery and delivery at the owner's request. The desk is currently on
-backend `241495745`, frontend `10fa662b5db1b4ac`, PID 38630 (#1374).
+backend `1dfd11fe0`, frontend `9f09358c6ae28b6d`, PID 49677 (#1375).
 Four HTTP checks pass and the actual desk renders at 1440/393. These are
 delivery observations; owner acceptance remains separate. All three baseline non-browser
 regression shards passed: 16,784 checks, 27 skips and one expected failure.
@@ -20,7 +20,12 @@ by #1370 and #1371. That run was superseded before browser shard four, with
 all results retained. A fresh full tape runs at low priority in
 `wt-desk-betterment-20261019-notes`, pinned to `ec3dde784`. It is incomplete. Its non-browser shards found four failures: two producer
 wires are fixed in D10; the curated MCP resource and launched-helper census
-checks are assigned for repair. The populated Projects sweep also found rows
+checks are now repaired. The parked New knowledge verb is no longer published.
+The census requires the five helper tools to refuse an unlaunched principal
+with launch_only and HTTP 403; a valid launched principal still dispatches.
+Focused checks: 63 pass. Required quick check: 247 affected pytest, 110 sweep,
+27 canon and 1,116 repo guards pass. This fixes the identified cases; the
+pinned full tape does not cover subsequent main revisions. The populated Projects sweep also found rows
 moving as independent status reads finish; its regression fails before the
 atomic first-read repair. After the repair, 4,090 web checks, 110 sweep cases,
 27 canon checks and 1,116 repo guards pass.
@@ -44,7 +49,10 @@ both directions, and one source press opens her actual 1:1 transcript. These
 use deterministic model boundaries; live-model quality is unobserved.
 Focused producer/page checks: 82; recall-order checks: two. Final quick check:
 4,098 web, 1,083 affected pytest, 110 sweep, 27 canon and 1,116 repo guards.
-Q11/Q12 delivery follows merge.
+Q11/Q12 #1375 is on the running desk. Its two existing pages render at
+1440/393 without page errors. Both remain stale with ten new sources; a
+fresh live-model page write is not observed. A separate check is tracing
+whether the selected Memory assignment also determines physical dispatch.
 
 P5/P6 remains held: pasted Jira/Confluence links discarded the site and could
 select another connected account. Exact site binding and declared preview
