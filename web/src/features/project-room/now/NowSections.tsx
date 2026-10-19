@@ -3,8 +3,8 @@
  *
  * Waiting on: other people's owed items, one line per person, no verbs on
  * the row (Nudge comes with P6; "Hand to coder" never sits on someone
- * else's work). This week: Decided (from the decision records, the one store
- * the face shows; a line opens its decision), Risks and Changed (the
+ * else's work). This week: Open, Decided (from the decision records, the one
+ * store the face shows; a line opens its decision), Risks and Changed (the
  * background pages when they are served; Risks falls back to the risks the
  * hub read from this week's meetings and notes). Each line keeps the source
  * it rests on. A block with nothing to say is not drawn. */
@@ -57,7 +57,7 @@ function pageLines(pages: StandingPageWire[], slug: string): Line[] {
   return (page?.sentences ?? []).map((s, i) => ({ key: `${slug}:${i}`, text: s.text, refs: s.refs }));
 }
 
-/** The three groups, in the design's order; an empty group is left out. */
+/** The groups, in the design's order; an empty group is left out. */
 export function thisWeekGroups(now: RoomNowData | null, pages: StandingPageWire[]): { title: string; lines: Line[] }[] {
   const decided: Line[] = (now?.decided ?? []).map((d) => ({
     key: `decided:${d.id}`,
@@ -65,6 +65,7 @@ export function thisWeekGroups(now: RoomNowData | null, pages: StandingPageWire[
     refs: d.sourceRef ? [{ ref: d.sourceRef, token: d.source || "MTG", opens: true }] : [],
     decisionId: d.id,
   }));
+  const open = pageLines(pages, "what-is-open");
   const pageRisks = pageLines(pages, "risks-and-disputes");
   const risks: Line[] = pageRisks.length ? pageRisks : (now?.risks ?? []).map((r, i) => ({
     key: `risk:${i}`,
@@ -73,6 +74,7 @@ export function thisWeekGroups(now: RoomNowData | null, pages: StandingPageWire[
   }));
   const changed = pageLines(pages, "what-changed-this-week");
   return [
+    { title: "Open", lines: open },
     { title: "Decided", lines: decided },
     { title: "Risks", lines: risks },
     { title: "Changed", lines: changed },

@@ -224,9 +224,16 @@ function ThisWeek({ days }: { days: readonly WeekCount[] }) {
   );
 }
 
-function TodayOwe() {
-  const owe = useStandingPages("desk").filter((page) => page.slug === "what-i-owe");
-  return owe.length ? <div data-testid="today-owe"><StandingPagesSection pages={owe} presentation="questions" /></div> : null;
+function TodayMemoryPages({ now }: { now: Date }) {
+  const pages = useStandingPages("desk");
+  const owe = pages.filter((page) => page.slug === "what-i-owe");
+  const changed = now.getDay() === 1 ? pages.filter((page) => page.slug === "what-changed-this-week") : [];
+  return (
+    <>
+      {owe.length ? <div data-testid="today-owe"><StandingPagesSection pages={owe} presentation="questions" /></div> : null}
+      {changed.length ? <div data-testid="today-changed"><StandingPagesSection pages={changed} presentation="questions" /></div> : null}
+    </>
+  );
 }
 
 export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
@@ -622,7 +629,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
             {finishNodes}
           </ol>
         </div>
-        <TodayOwe />
+        <TodayMemoryPages now={now} />
         <SinceYesterday brief={brief} failed={failed.brief} now={now} openRequest={sinceRequest} onRetry={retry} />
         <ThisWeek days={week} />
       </div>

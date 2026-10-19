@@ -169,7 +169,10 @@ export const createDeskSlice: SliceCreator<DeskSlice> = (set, get) => ({
   },
   askQuestion(question) {
     const nonce = (get().askThread?.nonce ?? 0) + 1;
-    set({ askThread: { threadId: null, nonce, question, run: true } });
+    // A typed question from the Memory desk is whole-desk scope.  Clear any
+    // older selection as well as an About thread so Ask cannot retain a
+    // project/person context from the previous question.
+    set({ selectedIds: [], askThread: { threadId: null, nonce, question, run: true } });
     get().openAsk();
   },
   askAbout(about, options) {

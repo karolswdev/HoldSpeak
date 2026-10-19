@@ -7,12 +7,12 @@
     "question": "What do I owe?",
     "sentences": [
      {
-      "text": "Feedback for Mira is due.",
+      "text": "You owe Mira feedback on her cutover design doc by Friday is due.",
       "refs": [
        {
-        "ref": "note:n-owe",
+        "ref": "meeting:m-mira-1on1",
         "opens": true,
-        "token": "NOTE 10-19"
+        "token": "MTG 09-19 · 10:00"
        }
       ]
      },
@@ -37,7 +37,7 @@
       ]
      }
     ],
-    "built_at": "2026-10-19T13:17:35+00:00",
+    "built_at": "2026-10-19T20:39:43+00:00",
     "stale": false,
     "new_sources": 0,
     "model": "pages",
@@ -48,12 +48,12 @@
     "question": "What do others owe me?",
     "sentences": [
      {
-      "text": "Feedback for Mira is due.",
+      "text": "You owe Mira feedback on her cutover design doc by Friday is due.",
       "refs": [
        {
-        "ref": "note:n-owe",
+        "ref": "meeting:m-mira-1on1",
         "opens": true,
-        "token": "NOTE 10-19"
+        "token": "MTG 09-19 · 10:00"
        }
       ]
      },
@@ -78,7 +78,7 @@
       ]
      }
     ],
-    "built_at": "2026-10-19T13:17:35+00:00",
+    "built_at": "2026-10-19T20:39:43+00:00",
     "stale": false,
     "new_sources": 0,
     "model": "pages",
@@ -89,12 +89,12 @@
     "question": "What changed this week?",
     "sentences": [
      {
-      "text": "Feedback for Mira is due.",
+      "text": "You owe Mira feedback on her cutover design doc by Friday is due.",
       "refs": [
        {
-        "ref": "note:n-owe",
+        "ref": "meeting:m-mira-1on1",
         "opens": true,
-        "token": "NOTE 10-19"
+        "token": "MTG 09-19 · 10:00"
        }
       ]
      },
@@ -113,16 +113,6 @@
       "refs": [
        {
         "ref": "note:n-owed",
-        "opens": true,
-        "token": "NOTE 10-19"
-       }
-      ]
-     },
-     {
-      "text": "Note n-owe Feedback for Mira is due. You owe Mira feedback on her cutover design doc by Friday.",
-      "refs": [
-       {
-        "ref": "note:n-owe",
         "opens": true,
         "token": "NOTE 10-19"
        }
@@ -149,7 +139,7 @@
       ]
      }
     ],
-    "built_at": "2026-10-19T13:17:35+00:00",
+    "built_at": "2026-10-19T20:39:43+00:00",
     "stale": false,
     "new_sources": 0,
     "model": "pages",

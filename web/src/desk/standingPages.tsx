@@ -139,8 +139,8 @@ export function useStandingPagesRead(scope: "desk" | "project", projectId?: stri
   };
 }
 
-/* Betterment Q11 (Memory where he looks): a person's two pages, What you owe
- * her and What she owes you. They are the sentences of the desk's "What do I
+/* Betterment Q11 (Memory where he looks): a person's two pages, What I owe
+ * her and What she owes me. They are the sentences of the desk's "What do I
  * owe?" and "What do others owe me?" that name the person (her full name or
  * her first name, as a word), so her window reads them with no Ask and no
  * People id is ever written beside a page. */
@@ -163,7 +163,7 @@ export function personPages(pages: StandingPageWire[], displayName: string): Sta
     const sentences = (page?.sentences ?? []).filter((s) => mentions(s.text, who));
     return page && sentences.length ? [{ ...page, slug: `person:${slug}`, question, sentences }] : [];
   };
-  return [...pick("what-i-owe", `What you owe ${first}`), ...pick("what-they-owe-me", `What ${first} owes you`)];
+  return [...pick("what-i-owe", `What I owe ${first}`), ...pick("what-they-owe-me", `What ${first} owes me`)];
 }
 
 /** Betterment Q11: the Room leads with What is open, then What we decided. */

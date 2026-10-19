@@ -352,8 +352,8 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
       eyebrow: "Long memory",
       minW: 800,
       load: () =>
-        import("../pages/cores/ProjectMemoryCore").then((module) => ({
-          default: module.ProjectMemoryCore,
+        import("../pages/cores/MemoryCore").then((module) => ({
+          default: module.MemoryCore,
         })),
     },
   },

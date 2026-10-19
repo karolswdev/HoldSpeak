@@ -690,7 +690,7 @@ export function PersonWindowBody({ relationshipId, onClose }: { relationshipId: 
         <Button dense variant="ghost" onClick={() => void read()}>Try again</Button>
       </span>
     ) : null}
-    {/* Betterment Q11: what you owe her and what she owes you, first, from
+    {/* Betterment Q11: What I owe her and What she owes me, first, from
         the desk's memory pages (no Ask). */}
     {detail ? <PersonPages displayName={detail.display_name} /> : null}
     {detail ? (

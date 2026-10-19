@@ -31,7 +31,7 @@ from holdspeak.services.inference_assignment_service import InferenceAssignmentS
 from holdspeak.services.memory_service import MemoryService
 
 from tests.unit.test_batteries_default import mark_made_by_holdspeak
-from tests.unit.test_memory_slice4_observations import _desk, _filed_note
+from tests.unit.test_memory_slice4_observations import _desk, _filed_note, _meeting
 from tests.unit.test_memory_slice5_pages import Pages, _built
 from tests.unit.test_phase143_inference_assignments import OWNER, _profile
 
@@ -89,18 +89,30 @@ def test_the_desk_says_what_others_owe_him_and_the_read_serves_it(tmp_path: Path
 
     assert [s.slug for s in PAGE_SET["desk"]] == ["what-i-owe", "what-they-owe-me", "what-changed-this-week"]
     db = _desk(tmp_path)
-    # (The scripted extractor learns "X is Y." facts; the second sentence of
-    # each note rides in its recall chunk, as slice 5's own desk pages do.)
-    _filed_note(db, "n-owe", "Feedback for Mira is due. You owe Mira feedback on her cutover design doc by Friday.", None)
+    # The 1:1 is a real meeting producer.  Its source ref must survive the
+    # page write so the person window can open the evidence in one press.
+    meeting_ref = _meeting(
+        db, "m-mira-1on1",
+        "You owe Mira feedback on her cutover design doc by Friday is due.",
+        day=19, project=None,
+    )
+    db.meetings.update_meeting_metadata("m-mira-1on1", "1:1 with Mira", [])
     _filed_note(db, "n-owed", "Runbook from Mira is due. Mira owes you the rollback runbook by Thursday.", None)
     _filed_note(db, "n-theo", "Handbook for Theo is due. Theo owns the on-call handbook.", None)
-    _built(db, Pages())
+    build_report = _built(db, Pages())
+    assert build_report["calls"] == len(PAGE_SET["desk"]) and build_report["more"] == 0
     owe = read(db, "desk", "", "what-i-owe")
     owed = read(db, "desk", "", "what-they-owe-me")
     assert owe is not None and owed is not None
     pages = MemoryService(db).standing_pages(Principal(PrincipalKind.OWNER, "pages-owner"), scope="desk")
     slugs = [page["slug"] for page in pages["pages"]]
     assert "what-i-owe" in slugs and "what-they-owe-me" in slugs
+    owe_page = next(page for page in pages["pages"] if page["slug"] == "what-i-owe")
+    assert any(
+        "You owe Mira feedback on her cutover design doc by Friday" in sentence["text"]
+        and any(ref["ref"] == meeting_ref and ref["opens"] for ref in sentence["refs"])
+        for sentence in owe_page["sentences"]
+    )
     # No People id is written beside a page: the scope is the desk.
     with db._connection() as conn:
         scopes = {(row[0], row[1]) for row in conn.execute("SELECT scope_kind, scope_id FROM memory_pages")}
