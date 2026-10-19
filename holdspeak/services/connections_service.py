@@ -10,6 +10,7 @@ No credential ever crosses the response (Article III).
 """
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 from typing import Any, Callable
 
@@ -86,11 +87,89 @@ def _age_seconds(checked_at: str | None) -> int | None:
     return max(0, int((datetime.now(timezone.utc) - then).total_seconds()))
 
 
+_PREFIX = re.compile(
+    r"^(acli auth (switch|status)( failed| non-zero)?|gh auth probe failed|acli)\s*:\s*", re.IGNORECASE,
+)
+
+
+def _reason(cli: str, error_code: str | None, detail: str | None) -> str | None:
+    """Betterment ST2: why a row could not be checked, in words (``None`` when it works).
+
+    A refused CLI (the test guard) says ``gh was not run``, never
+    Unreachable; a missing CLI says it is not installed; otherwise the CLI's
+    own first line (already redacted when stored).
+    """
+    text = str(detail or "").strip()
+    low = text.lower()
+    if not text and not error_code:
+        return None
+    if "real_cli_refused_in_tests" in low:
+        return f"{cli} was not run"
+    if "not installed" in low:
+        return f"{cli} is not installed"
+    if "timed out" in low or "timeoutexpired" in low:
+        return f"{cli} did not answer"
+    first = next((ln.strip() for ln in _PREFIX.sub("", text).splitlines() if ln.strip()), "")
+    return first[:120] or f"{cli} gave no answer"
+
+
+def _used_by(provider: str, ref: str) -> list[dict[str, str]]:
+    """Betterment ST2: what uses one account: project sources and Send destinations (a stored read)."""
+    used: list[dict[str, str]] = []
+    try:
+        from ..db import get_database
+
+        db = get_database()
+        with db._connection() as conn:
+            if provider in ("jira", "confluence"):
+                rows = conn.execute(
+                    "SELECT DISTINCT p.name FROM connector_watches w JOIN projects p ON p.id = w.project_id "
+                    "WHERE w.connector_id = ? AND json_extract(w.query_json, '$.connection_ref') = ? "
+                    "AND COALESCE(p.is_archived, 0) = 0 ORDER BY p.name",
+                    (provider, ref),
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    "SELECT DISTINCT p.name FROM connector_watches w JOIN projects p ON p.id = w.project_id "
+                    "WHERE w.connector_id = 'gh' AND COALESCE(p.is_archived, 0) = 0 ORDER BY p.name",
+                ).fetchall()
+            used += [{"kind": "project", "name": str(r[0])} for r in rows]
+            site, email = _split_ref(ref) if provider in ("jira", "confluence") else ("", "")
+            for r in conn.execute(
+                "SELECT name, account_json FROM channel_destinations WHERE channel = ? AND parked_at IS NULL "
+                "ORDER BY name",
+                (provider,),
+            ).fetchall():
+                if provider in ("jira", "confluence"):
+                    import json
+
+                    account = json.loads(r[1] or "{}")
+                    if (str(account.get("site") or ""), str(account.get("email") or "").lower()) != (site, email):
+                        continue
+                used.append({"kind": "destination", "name": str(r[0])})
+    except Exception:
+        return used
+    return used
+
+
 def _split_ref(ref: str) -> tuple[str, str]:
     if "|" in ref:
         site, email = ref.split("|", 1)
         return site, email
     return "", ""
+
+
+def _row_words(provider: str, ref: str, display: str, row: dict[str, Any]) -> dict[str, Any]:
+    """Betterment ST2: an Atlassian row's reason, its other-account flag and what uses it."""
+    code = str(row.get("last_error_code") or "") or None
+    detail = str(row.get("last_error_detail") or "") or None
+    other = display == DISPLAY_DEGRADED and code == "scope_denied"
+    return {
+        "reason": _reason("acli", code, detail) if display in (DISPLAY_DEGRADED, DISPLAY_UNAVAILABLE) and not other
+        else None,
+        "other_account": other,
+        "used_by": _used_by(provider, ref),
+    }
 
 
 # Aggregate order for a provider with several rows: the best row names the card.
@@ -259,6 +338,9 @@ class ConnectionsService:
             "next_action": _next_action_for_state(display_state, "github"),
             "recovery_hint": recovery_hint,
             "error_detail": status.get("error_detail") if display_state not in (DISPLAY_CONNECTED,) else None,
+            "reason": _reason("gh", status.get("error_code"), status.get("error_detail"))
+            if display_state in (DISPLAY_DEGRADED, DISPLAY_UNAVAILABLE) else None,
+            "used_by": _used_by("github", ""),
             "last_checked_at": checked_at,
             "checked_age_seconds": _age_seconds(checked_at),
             "egress_host": "github.com",
@@ -329,6 +411,7 @@ class ConnectionsService:
                     "next_action": {"kind": "install", "label": "Install"},
                     "recovery_hint": "pip install acli",
                     "error_detail": "Atlassian CLI (acli) is not installed",
+                    "reason": "acli is not installed",
                     "last_checked_at": None,
                     "checked_age_seconds": None,
                     "egress_host": None,
@@ -362,6 +445,7 @@ class ConnectionsService:
                 "account": {"site": site, "email": email},
                 "recovery_hint": recovery,
                 "error_detail": (c.get("last_error_detail") or None) if display == DISPLAY_DEGRADED else None,
+                **_row_words("jira", ref, display, c),
                 "last_checked_at": checked_at,
                 "checked_age_seconds": _age_seconds(checked_at),
                 "egress_host": site,
@@ -435,6 +519,7 @@ class ConnectionsService:
                 "account": {"site": site, "email": email},
                 "recovery_hint": f"acli confluence auth login --site {site} --email {email} --token",
                 "error_detail": (conn.get("last_error_detail") or None) if display == DISPLAY_DEGRADED else None,
+                **_row_words("confluence", ref, display, conn),
                 "last_checked_at": checked_at,
                 "checked_age_seconds": _age_seconds(checked_at),
                 "egress_host": site,

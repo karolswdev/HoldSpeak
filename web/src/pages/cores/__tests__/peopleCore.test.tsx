@@ -623,7 +623,10 @@ describe("PeopleCore HS-149-04 Prep lens", () => {
     expect(await screen.findByTestId("people-prep-lens")).toBeTruthy();
     // Verify the Prep tab is selected
     // Betterment D7: the prep is the page; every fold under it starts closed.
-    for (const fold of ["Context", "History", "Info"]) expect(screen.getByRole("button", { name: fold }).getAttribute("aria-expanded")).toBe("false");
+    for (const fold of ["Context", "History", "Info"]) {
+      // Folds appear after Prep completes its first asynchronous read.
+      expect((await screen.findByRole("button", { name: fold })).getAttribute("aria-expanded")).toBe("false");
+    }
   });
 });
 

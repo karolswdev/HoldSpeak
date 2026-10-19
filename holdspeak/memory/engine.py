@@ -185,8 +185,11 @@ def _assignment_head(conn: Any, capability: str = MEMORY_EMBED_CAPABILITY) -> Op
       background``, then ``global``), when every model in it runs on this
       machine (lamp ``local``) OR the owner made it (no
       ``inference.default_assigned`` receipt names that revision).  A
-      non-local wider head HoldSpeak made keeps the job dark: the planner
-      would route there, so nothing is called.
+      non-local wider head HoldSpeak made is skipped, never used (owner
+      ruling 2026-10-05).  Betterment Q11: the search then goes on to the
+      next wider head (it stopped there and kept the job dark, so an
+      Everything-else engine the owner chose never wrote a page while a
+      HoldSpeak-made LAN default held Background work).
 
     The value changes when the head changes, so an engine bound to it stops
     at once (``live()``)."""
@@ -203,7 +206,7 @@ def _assignment_head(conn: Any, capability: str = MEMORY_EMBED_CAPABILITY) -> Op
             continue
         local = assignment_lamp(conn, str(wider[0]), int(wider[1])) == "local"
         if not local and made_by_holdspeak(conn, str(wider[0]), int(wider[1])):
-            return None
+            continue
         return f"{wider[0]}@{wider[1]}"
     return None
 

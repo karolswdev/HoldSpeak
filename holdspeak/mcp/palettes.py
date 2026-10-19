@@ -159,7 +159,7 @@ ASK = "ASK"
 
 _ASK_TOOLS: frozenset[str] = frozenset({
     # the desk: notes, decisions, drawers (desk.create of a decision is a proposal)
-    "desk.list", "desk.get", "desk.create", "desk.update", "desk.snapshot", "desk.needs_you",
+    "desk.list", "desk.get", "desk.create", "desk.update", "desk.snapshot", "desk.needs_you", "today.get",
     "zone.list_members", "zone.file",
     # memory pages first, then recall
     "memory.page", "memory.search",

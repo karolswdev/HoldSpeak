@@ -1408,12 +1408,12 @@ MEMORY_PAGE_READ = OperationDescriptor(
     version=1,
     # Slice 6: the words are short on purpose.  The thread palettes carry
     # this schema, and admission counts one token per byte of it.
-    description="Read a memory page: a standing answer, with refs. Read only.",
+    description="Read a memory page with source refs.",
     args_schema={
         "type": "object",
         "properties": {
             "slug": {"type": "string", "enum": ["what-we-decided", "what-is-open", "risks-and-disputes",
-                                                 "what-changed-this-week", "what-i-owe"]},
+                                                 "what-changed-this-week", "what-i-owe", "what-they-owe-me"]},
             "project_id": {"type": ["string", "null"]},
             "scope": {"type": ["string", "null"], "enum": ["desk", "project", None],
                       "description": "Default: project when project_id is set."},
@@ -1995,6 +1995,17 @@ DESK_NEEDS_YOU = OperationDescriptor(
     admission=_ROOM_READ,
 )
 
+TODAY_GET = OperationDescriptor(
+    name="today.get", version=1,
+    description="Read Today: Needs you, the day, Since yesterday and Prepared.",
+    args_schema={"type": "object", "properties": {}, "additionalProperties": False},
+    principal=_ROOM_PRINCIPAL, effect="read",
+    result="{needs_you, day, since_yesterday, prepared}",
+    refusals=_CONTRACT_REFUSALS, completion="synchronous",
+    exposure=("mcp:today.get",), service="today_service", method="get",
+    held=("ops", "door_service", "workbenches"), admission=_ROOM_READ,
+)
+
 PROJECT_ITEM_LIST = OperationDescriptor(
     name="project.item.list",
     version=1,
@@ -2390,7 +2401,7 @@ DESCRIPTORS: tuple[OperationDescriptor, ...] = (
     DECISION_DELETE, DECISION_STATUS, DECISION_SUPERSEDE,
     KERNEL_RECEIPT_READ, MEMORY_OBSERVATIONS_READ, MEMORY_PAGE_READ,
 ) + ROOM_OPERATIONS + STEWARD_CONNECTOR_OPERATIONS + CHANNEL_OPERATIONS + ONBOARDING_OPERATIONS + AGENT_OPERATIONS \
-    + DESK_WINDOW_OPERATIONS + NOTE_OUTCOME_OPERATIONS
+    + DESK_WINDOW_OPERATIONS + NOTE_OUTCOME_OPERATIONS + (TODAY_GET,)
 
 #: The RuntimeServices / WebContext fields the catalogue binds to.
 BOUND_SERVICES: tuple[str, ...] = tuple(dict.fromkeys(d.service for d in DESCRIPTORS))

@@ -20,12 +20,14 @@ import {
 } from "../../../desk/surface";
 import { Button } from "../../../components/signal/Signal";
 import type {
+  AccountUse,
   ConnectionTool,
   ConnectionsResponse,
   ConnectionState,
   JiraSubConnection,
 } from "./api";
-import { ACCOUNTS_CHANGED, addAtlassianAccount, fetchConnections, recheckProvider } from "./api";
+import { ACCOUNTS_CHANGED, addAtlassianAccount, fetchConnections, recheckProvider, removeAtlassianAccount } from "./api";
+import { PROVIDER_NAME, useConnectionsStep, type ConnectionCandidate } from "../../../desk/firstrun/connectionsStep";
 import "./connections.css";
 import { CalendarCard as CalendarSetupCard } from "../../../desk/firstrun/CalendarCard";
 import { useCalendarStep } from "../../../desk/firstrun/calendarStep";
@@ -52,18 +54,26 @@ export function notSignedIn(state: ConnectionState): boolean {
   return state === "owner_action_required";
 }
 
-export function chipLabel(state: ConnectionState, providerId: string): string {
+/** Betterment ST2: a row's state in words: Works, Not signed in, Signed in
+ *  as another account, Could not check: <reason>.  The reason is the hub's
+ *  own words (`reason`); the face never reads the error text. */
+export function chipLabel(
+  state: ConnectionState,
+  providerId: string,
+  words: { reason?: string; other_account?: boolean } = {},
+): string {
+  const cli = providerId === "jira" || providerId === "confluence" ? "acli" : "gh";
   switch (state) {
-    case "connected": return "Connected";
+    case "connected": return "Works";
     case "owner_action_required": return "Not signed in";
-    case "unavailable":
-      if (providerId === "jira" || providerId === "confluence") return "acli missing";
-      return "gh missing";
-    case "degraded": return "Unreachable";
+    case "unavailable": return `Could not check: ${words.reason ?? `${cli} is not installed`}`;
+    case "degraded":
+      if (words.other_account) return "Signed in as another account";
+      return `Could not check: ${words.reason ?? `${cli} gave no answer`}`;
     case "not_configured":
       if (providerId === "jira" || providerId === "confluence") return "Not set up";
       return "Off";
-    case "never_checked": return "Never checked";
+    case "never_checked": return "Not checked";
     case "signed_in": return "Signed in";
   }
 }
@@ -93,9 +103,12 @@ export function checkedAgo(
 export function stateWords(
   state: ConnectionState,
   providerId: string,
-  row: { last_checked_at?: string; checked_age_seconds?: number; account?: { login?: string } | object },
+  row: {
+    last_checked_at?: string; checked_age_seconds?: number; account?: { login?: string } | object;
+    reason?: string; other_account?: boolean;
+  },
 ): string {
-  const label = chipLabel(state, providerId);
+  const label = chipLabel(state, providerId, row);
   if (state === "never_checked") return label;
   // PHILO-15 B31 (Astra r1): a sign-in read from gh's config is no check:
   // it names its source and carries no time.
@@ -103,11 +116,6 @@ export function stateWords(
   if (state === "signed_in") return [label, login, "From gh config"].filter(Boolean).join(" · ");
   const age = checkedAgo(row.last_checked_at, row.checked_age_seconds);
   return age ? `${label} · ${age}` : label;
-}
-
-/** A producer-named sign-in or missing tool opens its details on request. */
-function needsDetails(state: ConnectionState): boolean {
-  return state === "owner_action_required" || state === "unavailable";
 }
 
 function formatTime(iso: string | undefined | null): string {
@@ -202,7 +210,7 @@ export function SignInWell({
           {hints.map((hint) => <CommandWell key={hint} hint={hint} />)}
           <div className="connections-fold-actions">
             <Button dense variant="secondary" onClick={onRecheck} loading={busy} data-testid={`signin-recheck-${provider}`}>
-              Recheck
+              Check
             </Button>
           </div>
         </>
@@ -213,25 +221,57 @@ export function SignInWell({
 
 /* ── Tool cards ── */
 
-function GitHubCard({ tool, onRecheck, busy, blocked, lead = false }: {
+/** Betterment ST2: what a pressed row unfolds: what uses the account, Sign in
+ *  again (today's command, until ST8) and, for Jira and Confluence, Remove. */
+function AccountUnfold({ usedBy, hint, signInLabel, onRemove, testid, commandOpen = false }: {
+  usedBy: AccountUse[] | undefined; hint: string; signInLabel: string; onRemove?: () => void; testid: string;
+  /** A row that is not signed in opens with its command shown. */
+  commandOpen?: boolean;
+}) {
+  const [signIn, setSignIn] = useState(commandOpen);
+  const uses = usedBy ?? [];
+  return <SurfaceWell>
+    <div className="connections-unfold" data-testid={testid}>
+      <div className="connections-unfold-uses">
+        <span className="connections-field-label-text">Used by</span>
+        {uses.length ? uses.map((u) => <span key={`${u.kind}:${u.name}`} className="connections-tool-summary">{u.kind === "destination" ? "Send to" : "Project"} · {u.name}</span>)
+          : <span className="connections-tool-summary">Nothing yet</span>}
+      </div>
+      <div className="connections-fold-actions">
+        <Button dense variant="secondary" aria-expanded={signIn} onClick={() => setSignIn((v) => !v)}>{signInLabel}</Button>
+        {onRemove ? <Button dense variant="ghost" onClick={onRemove}>Remove</Button> : null}
+      </div>
+      {signIn ? <CommandWell hint={hint}/> : null}
+    </div>
+  </SurfaceWell>;
+}
+
+/** The words of a row's fix verb: Sign in, Install <cli>, or Sign in again. */
+function fixLabel(state: ConnectionState, cli: "gh" | "acli"): string {
+  if (state === "unavailable") return `Install ${cli}`;
+  return notSignedIn(state) ? "Sign in" : "Sign in again";
+}
+
+/** A row that cannot work until he acts shows its fix verb next to Check. */
+function needsFix(state: ConnectionState): boolean {
+  return state === "owner_action_required" || state === "unavailable";
+}
+
+function GitHubCard({ tool, onRecheck, busy, blocked, lead = false, open, onToggle }: {
   tool: ConnectionTool; onRecheck: () => void; busy: boolean; blocked: boolean; lead?: boolean;
+  open: boolean; onToggle: () => void;
 }) {
   const state = tool.state;
-  const details = needsDetails(state);
-  const hint = tool.recovery_hint ?? "gh auth login";
-  const [shown, setShown] = useState(false);
-  const [copy, setCopy] = useState("Copy command");
-  const copyHint = async () => {
-    try { await navigator.clipboard.writeText(hint); setCopy("Copied"); }
-    catch { setCopy("Copy failed"); }
-  };
-  const check = <span className="connections-check-action"><EgressChip label="GITHUB.COM" scope="cloud"/><Button dense variant={lead ? "primary" : "secondary"} onClick={onRecheck} loading={busy} disabled={blocked && !busy}>{state === "degraded" ? "Retry" : "Recheck"}</Button></span>;
-  return <SurfaceLedgerRow data-testid="connections-github" wrap expands={false} open={details && shown}
+  const hint = tool.state === "unavailable" ? (tool.recovery_hint ?? "brew install gh") : "gh auth login";
+  const host = tool.egress_host ?? "github.com";
+  const check = <span className="connections-check-action"><EgressChip label={host.toUpperCase()} scope="cloud"/><Button dense variant={lead && !needsFix(state) ? "primary" : "secondary"} onClick={onRecheck} loading={busy} disabled={blocked && !busy}>Check</Button></span>;
+  return <SurfaceLedgerRow data-testid="connections-github" wrap open={open} onToggle={onToggle} lineLabel="GitHub"
     lead={<span className="connections-tool-emblem">GH</span>}
-    primary={<span className="connections-tool-identity"><strong className="connections-tool-label">GitHub</strong>{tool.account?.login ? <span className="connections-tool-summary">{tool.account.login}</span> : null}</span>}
+    primary={<span className="connections-tool-identity"><strong className="connections-tool-label">GitHub</strong>{tool.account?.login ? <span className="connections-tool-summary">{tool.account.login}</span> : null}<span className="connections-tool-summary">{host}</span></span>}
     cells={<span className="surface-ledger-cells connections-tool-chips" title={state === "degraded" ? tool.error_detail : undefined}><StateChip wrap state={chipState(state)} label={stateWords(state, "github", tool)}/></span>}
-    trailing={details ? <Button dense variant={lead ? "primary" : "secondary"} aria-expanded={shown} onClick={() => setShown(value => !value)} data-testid="connections-github-show">{shown ? "Close" : state === "owner_action_required" ? "Sign in" : "Details"}</Button> : check}>
-    <SurfaceWell><div className="connections-well-head"><strong>{state === "unavailable" ? "Install gh" : "Sign in to GitHub"}</strong></div><div className="connections-command-row"><code className="connections-command-code" data-testid="connections-github-command">{hint}</code><Button dense variant="secondary" onClick={() => void copyHint()} data-testid="connections-github-copy">{copy}</Button></div><div className="connections-fold-actions">{check}</div></SurfaceWell>
+    trailing={<span className="connections-tool-actions">{needsFix(state) ? <Button dense variant={lead ? "primary" : "secondary"} aria-expanded={open} onClick={onToggle} data-testid="connections-github-show">{open ? "Close" : fixLabel(state, "gh")}</Button> : null}{check}</span>}>
+    {open ? <AccountUnfold testid="connections-github-unfold" usedBy={tool.used_by} hint={hint}
+      signInLabel={fixLabel(state, "gh")} commandOpen={needsFix(state)}/> : null}
   </SurfaceLedgerRow>;
 }
 
@@ -244,25 +284,28 @@ function AccountEmail({ email }: { email: string }) {
   return <span className="connections-tool-summary">{at < 0 ? email : <>{email.slice(0, at + 1)}<wbr/>{email.slice(at + 1)}</>}</span>;
 }
 
-function AtlassianConnectionRow({ provider, conn, onRecheck, busy, blocked, open, onToggle, addAction, addWell, addOpen = false }: {
-  provider: "jira" | "confluence"; conn: JiraSubConnection; onRecheck: () => void; busy: boolean; blocked: boolean; open: boolean; onToggle: () => void;
+function AtlassianConnectionRow({ provider, conn, onRecheck, onRemove, busy, blocked, open, onToggle, addAction, addWell, addOpen = false }: {
+  provider: "jira" | "confluence"; conn: JiraSubConnection; onRecheck: () => void; onRemove: () => void; busy: boolean; blocked: boolean; open: boolean; onToggle: () => void;
   addAction?: ReactNode; addWell?: ReactNode; addOpen?: boolean;
 }) {
   const state = conn.state;
-  const details = needsDetails(state);
   const name = provider === "jira" ? "Jira" : "Confluence";
-  const hint = conn.recovery_hint ?? `acli ${provider} auth login --site ${conn.account.site} --email ${conn.account.email} --token`;
-  const check = <span className="connections-check-action"><HostChip site={conn.account.site}/><Button dense variant="secondary" onClick={onRecheck} loading={busy} disabled={blocked && !busy}>{state === "degraded" ? "Retry" : "Recheck"}</Button></span>;
-  const shown = (details && open) || addOpen;
+  const hint = state === "unavailable" ? "brew tap atlassian/homebrew-acli && brew install acli"
+    : conn.recovery_hint ?? `acli ${provider} auth login --site ${conn.account.site} --email ${conn.account.email} --token`;
+  const check = <span className="connections-check-action"><HostChip site={conn.account.site}/><Button dense variant="secondary" onClick={onRecheck} loading={busy} disabled={blocked && !busy}>Check</Button></span>;
   // The Add form keeps its pending/refusal state through sign-in detours.
-  return <SurfaceLedgerRow data-testid={`connections-${provider}-conn-${conn.connection_ref}`} wrap expands={false} open={shown || Boolean(addWell)}
+  return <SurfaceLedgerRow data-testid={`connections-${provider}-conn-${conn.connection_ref}`} wrap onToggle={onToggle} lineLabel={`${name} ${conn.account.site}`}
+    // The last row keeps the Add form mounted (its draft and refusal survive a
+    // sign-in detour), so it claims no aria-expanded of its own.
+    open={open || addOpen || Boolean(addWell)} expands={!addWell}
     lead={<span className="connections-tool-emblem">{name[0]}</span>}
-    primary={<span className="connections-tool-identity"><strong className="connections-tool-label">{name}</strong><AccountEmail email={conn.account.email}/>{details && !open ? <span className="connections-tool-summary">{conn.account.site}</span> : null}</span>}
+    primary={<span className="connections-tool-identity"><strong className="connections-tool-label">{name}</strong><AccountEmail email={conn.account.email}/><span className="connections-tool-summary connections-site">{conn.account.site}</span></span>}
     cells={<span className="surface-ledger-cells connections-tool-chips"><StateChip wrap state={chipState(state)} label={stateWords(state, provider, conn)}/></span>}
-    trailing={<span className="connections-tool-actions">{details ? <Button dense variant="secondary" aria-expanded={open} onClick={onToggle}>{open ? "Close" : state === "owner_action_required" ? "Sign in" : "Details"}</Button> : check}{addAction}</span>}>
-    <div className="connections-account-wells" hidden={!shown}>
+    trailing={<span className="connections-tool-actions">{needsFix(state) ? <Button dense variant="secondary" aria-expanded={open} onClick={onToggle}>{open ? "Close" : fixLabel(state, "acli")}</Button> : null}{check}{addAction}</span>}>
+    <div className="connections-account-wells" hidden={!(open || addOpen)}>
       {addWell ? <div hidden={!addOpen}>{addWell}</div> : null}
-      {details && open ? <SurfaceWell><div className="connections-well-head"><strong>{state === "unavailable" ? "Install acli" : `Sign in to ${name}`}</strong></div><CommandWell hint={hint}/><div className="connections-fold-actions">{check}</div></SurfaceWell> : null}
+      {open ? <AccountUnfold testid={`connections-${provider}-unfold-${conn.connection_ref}`} usedBy={conn.used_by} hint={hint} onRemove={onRemove}
+        signInLabel={fixLabel(state, "acli")} commandOpen={needsFix(state)}/> : null}
     </div>
   </SurfaceLedgerRow>;
 }
@@ -335,9 +378,10 @@ export function AddAccountFields({
   );
 }
 
-function AtlassianCards({ tool, onRecheck, onAddAccount, busyRef }: {
+function AtlassianCards({ tool, onRecheck, onAddAccount, onRemove, busyRef }: {
   tool: ConnectionTool; onRecheck: (ref?: string) => void;
-  onAddAccount: (site: string, email: string) => void | Promise<void>; busyRef: string | null;
+  onAddAccount: (site: string, email: string) => void | Promise<void>;
+  onRemove: (conn: JiraSubConnection) => void; busyRef: string | null;
 }) {
   const provider = tool.provider_id as "jira" | "confluence";
   const name = provider === "jira" ? "Jira" : "Confluence";
@@ -356,7 +400,8 @@ function AtlassianCards({ tool, onRecheck, onAddAccount, busyRef }: {
       const last = index === connections.length - 1;
       return <AtlassianConnectionRow
         key={conn.connection_ref} provider={provider} conn={conn}
-        onRecheck={() => onRecheck(conn.connection_ref)} busy={busyRef === conn.connection_ref} blocked={busyRef !== null}
+        onRecheck={() => onRecheck(conn.connection_ref)} onRemove={() => onRemove(conn)}
+        busy={busyRef === conn.connection_ref} blocked={busyRef !== null}
         open={well === conn.connection_ref}
         onToggle={() => setWell(value => value === conn.connection_ref ? null : conn.connection_ref)}
         addAction={last ? addButton : undefined} addWell={last ? form : undefined}
@@ -429,6 +474,12 @@ export function ConnectionsPane({
   const loadGeneration = useRef(0);
   const actionPending = useRef(false);
   const [calendarOpen, setCalendarOpen] = useState(focusProvider === "calendar");
+  // Betterment ST2: the pressed row (one open at a time), and the Undo of a Remove.
+  const [openRow, setOpenRow] = useState<string | null>(null);
+  const [removed, setRemoved] = useState<{ provider: "jira" | "confluence"; site: string; email: string } | null>(null);
+  const [removeFailed, setRemoveFailed] = useState(false);
+  const found = useConnectionsStep();
+  const readFound = found.read;
   useEffect(() => { if (focusProvider === "calendar") setCalendarOpen(true); }, [focusProvider]);
 
   const load = useCallback(async () => {
@@ -524,6 +575,35 @@ export function ConnectionsPane({
     }
   }, [load]);
 
+  // Betterment ST2: Remove takes the row out of HoldSpeak (never out of acli);
+  // Undo adds it again for 8 s and checks it.
+  const handleRemove = useCallback(async (provider: "jira" | "confluence", conn: JiraSubConnection) => {
+    setRemoveFailed(false);
+    try {
+      await removeAtlassianAccount(provider, conn.connection_ref);
+      setRemoved({ provider, site: conn.account.site, email: conn.account.email });
+      setOpenRow(null);
+    } catch { setRemoveFailed(true); }
+    window.dispatchEvent(new Event(ACCOUNTS_CHANGED));
+    void readFound();
+  }, [readFound]);
+  useEffect(() => {
+    if (!removed) return;
+    const timer = window.setTimeout(() => setRemoved(null), 8000);
+    return () => window.clearTimeout(timer);
+  }, [removed]);
+  const undoRemove = useCallback(async () => {
+    if (!removed) return;
+    const { provider, site, email } = removed;
+    setRemoved(null);
+    try { await handleAddAccount(provider, site, email); } catch { setRemoveFailed(true); }
+    void readFound();
+  }, [removed, handleAddAccount, readFound]);
+  const useFound = useCallback(async (candidate: ConnectionCandidate) => {
+    await found.use(candidate);
+    window.dispatchEvent(new Event(ACCOUNTS_CHANGED));
+  }, [found]);
+
   if (loading && !data) {
     return <SurfaceState loading={true} onRetry={load} />;
   }
@@ -537,12 +617,22 @@ export function ConnectionsPane({
   const jira = tools.find((t) => t.provider_id === "jira");
   const confluence = tools.find((t) => t.provider_id === "confluence");
   const calendar = tools.find((t) => t.provider_id === "calendar");
+  // Found on this Mac: accounts in gh's and acli's own files that HoldSpeak
+  // does not use yet, each with Use.  Absent when there is none.
+  const usedRefs = new Set<string>([
+    ...(jira?.connections ?? []).map((c) => `jira:${c.connection_ref}`),
+    ...(confluence?.connections ?? []).map((c) => `confluence:${c.connection_ref}`),
+  ]);
+  const githubLogin = github?.account?.login ?? "";
+  const foundRows = found.rows.filter((row) => row.verb && !row.connected && !usedRefs.has(row.id)
+    && !(row.provider === "github" && githubLogin && (githubLogin === row.account || githubLogin === `${row.site}:${row.account}`)));
+  const toggle = (key: string) => setOpenRow((value) => value === key ? null : key);
 
   return (
     <div className="connections-pane prefs-column">
       <span ref={anchorRef} hidden />
       {error ? <SurfaceState error={error} onRetry={() => void load()} /> : null}
-      {checkFailed ? <div className="connections-check-failed" role="alert"><span>{checkFailed.providerId === "github" ? "GitHub" : checkFailed.providerId === "jira" ? "Jira" : "Confluence"}</span><StateChip wrap state="failure" label="Check failed" /><Button dense variant="secondary" disabled={recheckBusy !== null} onClick={() => void handleRecheck(checkFailed.providerId, checkFailed.subRef)}>Retry</Button></div> : null}
+      {checkFailed ? <div className="connections-check-failed" role="alert"><span>{checkFailed.providerId === "github" ? "GitHub" : checkFailed.providerId === "jira" ? "Jira" : "Confluence"}</span><StateChip wrap state="failure" label="Check failed" /><Button dense variant="secondary" disabled={recheckBusy !== null} onClick={() => void handleRecheck(checkFailed.providerId, checkFailed.subRef)}>Check</Button></div> : null}
       <SurfaceSection label="Services"><SurfaceLedger cols="accounts"><ul className="surface-ledger-rows connections-services">
       {github ? (
         <GitHubCard
@@ -551,6 +641,8 @@ export function ConnectionsPane({
           busy={recheckBusy === "github"}
           blocked={recheckBusy !== null}
           lead={github.state !== "connected" && github.state !== "signed_in"}
+          open={openRow === "github"}
+          onToggle={() => toggle("github")}
         />
       ) : null}
       {jira ? (
@@ -558,6 +650,7 @@ export function ConnectionsPane({
           tool={jira}
           onRecheck={(ref) => void handleRecheck("jira", ref)}
           onAddAccount={(site, email) => handleAddAccount("jira", site, email)}
+          onRemove={(conn) => void handleRemove("jira", conn)}
           busyRef={recheckBusy}
         />
       ) : null}
@@ -566,10 +659,23 @@ export function ConnectionsPane({
           tool={confluence}
           onRecheck={(ref) => void handleRecheck("confluence", ref)}
           onAddAccount={(site, email) => handleAddAccount("confluence", site, email)}
+          onRemove={(conn) => void handleRemove("confluence", conn)}
           busyRef={recheckBusy}
         />
       ) : null}
       </ul></SurfaceLedger></SurfaceSection>
+      {removed ? <div className="connections-check-failed" data-testid="connections-removed"><span>{removed.provider === "jira" ? "Jira" : "Confluence"} · {removed.site}</span><StateChip wrap state="idle" label="Removed"/><Button dense variant="secondary" onClick={() => void undoRemove()}>Undo</Button></div> : null}
+      {removeFailed ? <div className="connections-check-failed" role="alert"><StateChip wrap state="failure" label="Not removed"/></div> : null}
+      {foundRows.length ? <SurfaceSection label="Found on this Mac"><SurfaceLedger cols="accounts"><ul className="surface-ledger-rows" data-testid="connections-found">
+        {foundRows.map((row) => {
+          const st = found.states[row.id];
+          return <SurfaceLedgerRow key={row.id} data-testid={`connections-found-${row.id}`} wrap expands={false}
+            lead={<span className="connections-tool-emblem">{PROVIDER_NAME[row.provider][0]}</span>}
+            primary={<span className="connections-tool-identity"><strong className="connections-tool-label">{PROVIDER_NAME[row.provider]}</strong><AccountEmail email={row.account}/><span className="connections-tool-summary connections-site">{row.site}</span></span>}
+            cells={st?.kind === "refused" ? <span className="surface-ledger-cells connections-tool-chips"><StateChip wrap state="failure" label={`Does not work: ${st.reason}`}/></span> : undefined}
+            trailing={<span className="connections-check-action"><HostChip site={row.egress_host}/><Button dense variant="secondary" loading={st?.kind === "busy"} onClick={() => void useFound(row)}>Use</Button></span>}/>;
+        })}
+      </ul></SurfaceLedger></SurfaceSection> : null}
       <SurfaceSection label="Calendar"><SurfaceLedger cols="accounts"><ul className="surface-ledger-rows">
       <CalendarCard
         tool={calendar}

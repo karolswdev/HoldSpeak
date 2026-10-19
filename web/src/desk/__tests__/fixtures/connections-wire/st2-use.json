@@ -1,0 +1,72 @@
+{
+  "candidate": "jira:gamma.atlassian.net|owner@example.com",
+  "egress_host": "gamma.atlassian.net",
+  "entry": {
+    "account": {
+      "email": "owner@example.com",
+      "site": "alpha.atlassian.net"
+    },
+    "checked_age_seconds": 0,
+    "connections": [
+      {
+        "account": {
+          "email": "owner@example.com",
+          "site": "alpha.atlassian.net"
+        },
+        "checked_age_seconds": 0,
+        "connection_ref": "alpha.atlassian.net|owner@example.com",
+        "egress_host": "alpha.atlassian.net",
+        "error_detail": null,
+        "last_checked_at": "2026-10-19T03:52:22.421955+00:00",
+        "other_account": false,
+        "reason": null,
+        "recovery_hint": null,
+        "state": "connected",
+        "used_by": []
+      },
+      {
+        "account": {
+          "email": "owner@example.com",
+          "site": "beta.atlassian.net"
+        },
+        "checked_age_seconds": 0,
+        "connection_ref": "beta.atlassian.net|owner@example.com",
+        "egress_host": "beta.atlassian.net",
+        "error_detail": null,
+        "last_checked_at": "2026-10-19T03:52:22.432721+00:00",
+        "other_account": false,
+        "reason": null,
+        "recovery_hint": null,
+        "state": "connected",
+        "used_by": []
+      },
+      {
+        "account": {
+          "email": "owner@example.com",
+          "site": "gamma.atlassian.net"
+        },
+        "checked_age_seconds": 0,
+        "connection_ref": "gamma.atlassian.net|owner@example.com",
+        "egress_host": "gamma.atlassian.net",
+        "error_detail": null,
+        "last_checked_at": "2026-10-19T03:52:22.458118+00:00",
+        "other_account": false,
+        "reason": null,
+        "recovery_hint": null,
+        "state": "connected",
+        "used_by": []
+      }
+    ],
+    "egress_host": "alpha.atlassian.net",
+    "error_detail": null,
+    "last_checked_at": "2026-10-19T03:52:22.458118+00:00",
+    "next_action": {
+      "kind": "recheck",
+      "label": "Recheck"
+    },
+    "provider_id": "jira",
+    "recovery_hint": null,
+    "state": "connected"
+  },
+  "provider": "jira"
+}

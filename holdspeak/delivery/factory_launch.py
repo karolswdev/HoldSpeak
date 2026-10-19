@@ -501,6 +501,12 @@ def execute_worktree_create(
         )
     run = runner or _default_git_runner
     argv = ["git", "-C", str(repo), "worktree", "add", str(resolved), "-b", branch]
+    # Betterment AG11: a helper's worktree starts at its parent's branch.
+    start_point = str(payload.get("start_point") or "")
+    if start_point:
+        if not valid_branch(start_point):
+            return _audited({"status": "branch_invalid", "detail": f"invalid start point: {start_point!r}"})
+        argv.append(start_point)
     try:
         completed = run(argv)
     except (OSError, subprocess.TimeoutExpired) as exc:
@@ -1108,6 +1114,7 @@ class LaunchService:
                 "branch": branch,
                 "repo_path": str(primary),
                 "path": str(candidate),
+                **({"start_point": str(spec["start_point"])} if spec.get("start_point") else {}),
             }
         raise LaunchRefused("worktree_mode_invalid", "worktree.mode must be existing|new")
 
@@ -1135,7 +1142,10 @@ class LaunchService:
             from .. import coder_gate
 
             settings_path = coder_gate.write_spawn_settings()
-            argv = [*argv, "--settings", str(settings_path)]
+            # Claude's documented ``--add-dir`` discovery loads skills from
+            # the private launch directory. ``--settings`` remains the hook
+            # document; neither flag edits the user's Claude config.
+            argv = [*argv, "--settings", str(settings_path), "--add-dir", str(settings_path.parent)]
             # Conductor K6: the HoldSpeak MCP, from the launch's credential.
             mcp_config = agent_mcp.write_mcp_config(launch_id, self._mcp_config_dir)
             allowed: tuple[str, ...] = ("Bash",) if parent_operation_id else ()
@@ -1149,6 +1159,10 @@ class LaunchService:
 
             # Conductor R3: every Codex launch runs in its own process with the
             # rider and gate hooks (inert unless the gate holds this worktree).
+            from .. import agent_skill
+
+            launch_settings_dir = coder_gate.spawn_settings_path().parent
+            agent_skill.install_launch_skills(launch_settings_dir)
             argv = [*argv, *coder_gate.codex_spawn_args()]
             # The approval and sandbox flags need the worktree's git folder:
             # added once the worktree exists (before the spawn).
@@ -1276,6 +1290,8 @@ class LaunchService:
             "branch": str((pending_create or {}).get("branch") or "") or self._again_branch(request),
             "story_ref": {"project": project, "story_id": story_id},
             "origin_ref": origin_ref,
+            # Betterment AG11: a helper names the launch that started it.
+            "helper_of": str(request.get("helper_of") or "") or None,
             "session": session_name,
             "target": None,
             "attempt_id": None,
@@ -1318,6 +1334,14 @@ class LaunchService:
 
         # 2. spawn through the envelope: the node launch receipt.
         if executable == "codex":
+            from .. import agent_skill
+
+            # Codex discovers repository skills from ``.agents/skills`` below
+            # its CWD/repository root. The private settings folder above
+            # carries the launch artifact, while this repo-native copy makes
+            # the skill visible to the actual Codex process without changing
+            # the user's CODEX_HOME or auth configuration.
+            agent_skill.install_codex_repo_skill(Path(worktree_path))
             argv = [*argv, *self._codex_mode_args(argv, mode, worktree_path), *codex_tail]
         command = self.compose_command(
             argv, worktree_path, f"{project}/{story_id}",
@@ -1465,6 +1489,7 @@ class LaunchService:
         self, request: Mapping[str, Any], instruction: str, principal: Any,
         *,
         after_registration: bool = False,
+        parent_operation_id: str = "",
     ) -> dict[str, Any]:
         """Admit, approve and execute one ``process.spawn`` owner gesture.
 
@@ -1500,6 +1525,8 @@ class LaunchService:
             "arguments": {"launch_id": launch_id, **dict(request)},
             "placement": f"node:{self._local_node_id}",
         }
+        if parent_operation_id:
+            raw["parent_operation_id"] = str(parent_operation_id)
         handle = self._kernel.submit(raw, principal)
         if handle.get("state") == "refused":
             raise LaunchRefused(str((handle.get("receipt") or {}).get("outcome") or "kernel_refused"))
@@ -1670,6 +1697,9 @@ class LaunchService:
         composed = self._agent_argv(executable, [executable, *profile["args"]], launch_id, mode, parent)
         argv = composed["argv"]
         if executable == "codex":
+            from .. import agent_skill
+
+            agent_skill.install_codex_repo_skill(Path(worktree_path))
             argv = [*argv, *self._codex_mode_args(argv, mode, worktree_path), *composed["codex_tail"]]
         argv = resume_argv(executable, argv, session_id)
         story = record.get("story_ref") or {}

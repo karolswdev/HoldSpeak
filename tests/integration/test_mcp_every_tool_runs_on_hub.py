@@ -101,12 +101,18 @@ KNOWN_MESSAGE = re.compile(
 # answered "'x'", project.open_review answered "FOREIGN KEY constraint failed")
 # now refuse an unknown id with the typed ``not_found``.
 KNOWN_BY_TOOL: dict[str, str] = {}
+HELPER_TOOLS = frozenset({"agent.start_helper", "agent.prompt", "agent.wait", "agent.read", "agent.answer"})
 
 
 def _refusal_is_known(name: str, payload: Any) -> bool:
     if not isinstance(payload, dict):
         return False
     code, message = payload.get("code"), payload.get("error")
+    # Helper authority is deliberately launch-only. The global owner sweep
+    # must call these tools as an owner and record that named refusal; accepting
+    # every 403 would hide a broken authority boundary.
+    if name in HELPER_TOOLS and code == "launch_only" and payload.get("status") == 403:
+        return True
     if isinstance(code, str) and KNOWN_CODE.search(code):
         return True
     if not isinstance(message, str):

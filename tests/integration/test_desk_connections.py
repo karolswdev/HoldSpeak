@@ -162,3 +162,275 @@ def test_the_recheck_and_signed_in_wire_fixtures_carry_no_invented_field(
         assert path.exists(), f"missing fixture {name}; write it with HOLDSPEAK_WRITE_WIRE_FIXTURES=1"
         problems += [f"{name}: {p}" for p in _invented(json.loads(path.read_text()), body)]
     assert not problems, "a Connections vitest fixture carries a field the hub does not send: " + ", ".join(problems)
+
+
+# ── Betterment ST2: Check leaves acli where it was; state words; Found ──
+
+ACLI_YAML = """\
+version: 1
+current_profile: "{current}"
+profiles:
+  - site: alpha.atlassian.net
+    cloud_id: c1
+    account_id: a1
+    display_name: Owner
+    email: owner@example.com
+    auth_type: token
+  - site: beta.atlassian.net
+    cloud_id: c2
+    account_id: a1
+    display_name: Owner
+    email: owner@example.com
+    auth_type: token
+{extra}"""
+THIRD = """\
+  - site: gamma.atlassian.net
+    cloud_id: c3
+    account_id: a1
+    display_name: Owner
+    email: owner@example.com
+    auth_type: token
+"""
+PROFILE_KEY = {ALPHA: "c1:a1", BETA: "c2:a1", "gamma.atlassian.net": "c3:a1"}
+
+
+class StubAcli:
+    """acli as it behaves on disk: ``auth switch`` rewrites ``current_profile``
+    in its own registry file; ``auth status`` reads it back."""
+
+    def __init__(self, home: Path) -> None:
+        self.home = home
+        self.calls: list[list[str]] = []
+
+    def path(self, product: str) -> Path:
+        return self.home / ".config" / "acli" / f"{product}_config.yaml"
+
+    def write(self, product: str, current: str, extra: str = "") -> None:
+        self.path(product).parent.mkdir(parents=True, exist_ok=True)
+        self.path(product).write_text(ACLI_YAML.format(current=PROFILE_KEY[current], extra=extra), encoding="utf-8")
+
+    def current(self, product: str) -> str:
+        text = self.path(product).read_text(encoding="utf-8")
+        key = text.split('current_profile: "', 1)[1].split('"', 1)[0]
+        return next(site for site, k in PROFILE_KEY.items() if k == key)
+
+    def __call__(self, argv: list[str], **_: Any):
+        import subprocess
+
+        self.calls.append(list(argv))
+        product = argv[1]
+        if argv[2:4] == ["auth", "switch"]:
+            site = argv[argv.index("--site") + 1]
+            text = self.path(product).read_text(encoding="utf-8")
+            old = text.split('current_profile: "', 1)[1].split('"', 1)[0]
+            self.path(product).write_text(text.replace(old, PROFILE_KEY[site], 1), encoding="utf-8")
+            return subprocess.CompletedProcess(argv, 0, stdout="switched\n", stderr="")
+        if argv[2:4] == ["auth", "status"]:
+            out = f"✓ Authenticated\n  Site: {self.current(product)}\n  Email: {EMAIL}\n  Authentication Type: token\n"
+            return subprocess.CompletedProcess(argv, 0, stdout=out, stderr="")
+        return subprocess.CompletedProcess(argv, 1, stdout="", stderr="unexpected call")
+
+
+@pytest.fixture
+def acli_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    from holdspeak.db import reset_database
+    from tests.unit.test_philo9_b1_connections import _boot as boot_hub
+
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("GH_CONFIG_DIR", str(home / ".config" / "gh"))
+    monkeypatch.setattr(shutil, "which", _which(True))
+    acli = StubAcli(home)
+    acli.write("jira", ALPHA)
+    acli.write("confluence", ALPHA)
+
+    def boot(gh: Any = None):
+        return boot_hub(tmp_path, monkeypatch, gh or CountingRunner(), acli)
+
+    yield boot, acli
+    reset_database()
+    composition.install(composition.bare(label="pytest"))
+
+
+@pytest.mark.parametrize("product", ["jira", "confluence"])
+def test_check_on_the_second_site_leaves_acli_on_the_first(acli_home, product: str) -> None:
+    """Check on beta switches acli to beta to read its status, then back to alpha."""
+    boot, acli = acli_home
+    hub = boot()
+    for site in (ALPHA, BETA):
+        assert hub.client.post(f"/api/providers/{product}/connections",
+                               json={"site": site, "email": EMAIL}).status_code == 200
+    resp = hub.client.post(f"/api/connections/{product}/recheck", json={"ref": f"{BETA}|{EMAIL}"})
+    assert resp.status_code == 200, resp.text
+    rows = {c["account"]["site"]: c for c in resp.json()["connections"]}
+    assert rows[BETA]["state"] == "connected", rows[BETA]
+    assert acli.current(product) == ALPHA, "the Check left acli on the checked account"
+    switches = [c[c.index("--site") + 1] for c in acli.calls if c[2:4] == ["auth", "switch"]]
+    assert switches == [BETA, ALPHA], acli.calls
+
+
+def test_a_check_of_the_current_account_does_not_switch_back(acli_home) -> None:
+    boot, acli = acli_home
+    hub = boot()
+    hub.client.post("/api/providers/jira/connections", json={"site": ALPHA, "email": EMAIL})
+    assert hub.client.post("/api/connections/jira/recheck", json={"ref": f"{ALPHA}|{EMAIL}"}).status_code == 200
+    assert [c for c in acli.calls if c[2:4] == ["auth", "switch"]] == [
+        ["acli", "jira", "auth", "switch", "--site", ALPHA, "--email", EMAIL]]
+    assert acli.current("jira") == ALPHA
+
+
+@pytest.mark.parametrize("product", ["jira", "confluence"])
+@pytest.mark.parametrize("failure", ["exit", "exception"])
+def test_check_reports_when_acli_cannot_restore_the_previous_account(
+    acli_home, monkeypatch: pytest.MonkeyPatch, product: str, failure: str,
+) -> None:
+    import subprocess
+
+    boot, acli = acli_home
+    hub = boot()
+    hub.client.post(f"/api/providers/{product}/connections", json={"site": BETA, "email": EMAIL})
+    original = StubAcli.__call__
+
+    def cannot_restore(self: StubAcli, argv: list[str], **kw: Any):
+        if argv[2:4] == ["auth", "switch"] and argv[argv.index("--site") + 1] == ALPHA:
+            self.calls.append(list(argv))
+            if failure == "exception":
+                raise subprocess.TimeoutExpired(argv, 10)
+            return subprocess.CompletedProcess(argv, 1, stdout="", stderr="profile unavailable")
+        return original(self, argv, **kw)
+
+    monkeypatch.setattr(StubAcli, "__call__", cannot_restore)
+    response = hub.client.post(f"/api/connections/{product}/recheck", json={"ref": f"{BETA}|{EMAIL}"})
+    assert response.status_code == 200, response.text
+    row = next(c for c in response.json()["connections"] if c["account"]["site"] == BETA)
+    assert acli.current(product) == BETA
+    assert row["state"] == "degraded", row
+    assert row["reason"] == "acli could not restore the previous account", row
+    stored = next(c for c in _tools(hub)[product]["connections"] if c["account"]["site"] == BETA)
+    assert stored["state"] == "degraded" and stored["reason"] == row["reason"]
+
+
+def test_a_new_profile_in_acli_is_found_and_use_connects_it(acli_home) -> None:
+    """A third profile in acli's file shows under Found (not connected); one Use connects it."""
+    boot, acli = acli_home
+    acli.write("jira", ALPHA, extra=THIRD)
+    hub = boot()
+    for site in (ALPHA, BETA):
+        hub.client.post("/api/providers/jira/connections", json={"site": site, "email": EMAIL})
+        hub.client.post("/api/connections/jira/recheck", json={"ref": f"{site}|{EMAIL}"})
+    found = hub.client.get("/api/onboarding/connections").json()["candidates"]
+    jira = {c["site"]: c for c in found if c["provider"] == "jira"}
+    assert jira[ALPHA]["connected"] and jira[BETA]["connected"]
+    gamma = jira["gamma.atlassian.net"]
+    assert gamma["connected"] is False and gamma["verb"], gamma
+    used = hub.client.post("/api/onboarding/connections/use", json={"id": gamma["id"]})
+    assert used.status_code == 200, used.text
+    rows = {c["account"]["site"]: c for c in used.json()["entry"]["connections"]}
+    assert rows["gamma.atlassian.net"]["state"] == "connected"
+    assert acli.current("jira") == ALPHA, "Use moved his terminal's acli account"
+
+
+def test_state_words_a_refused_gh_says_it_was_not_run(rig) -> None:
+    """A refused CLI (the test guard) reads ``gh was not run``, never a bare degraded."""
+    from holdspeak.cli_guard import RealCliRefusedInTests
+
+    hub, _gh, _acli = rig(True)
+
+    def refused(argv: list[str], **_: Any):
+        raise RealCliRefusedInTests("real_cli_refused_in_tests: gh at /opt/homebrew/bin/gh; inject a runner")
+
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.github_provider import GitHubProviderAdapter
+
+    # The hub's own adapter class on the hub's database, with the runner the
+    # guard puts in front of a real gh: the stored row is what the list reads.
+    GitHubProviderAdapter(db=hub.db, runner=refused).connection_status(
+        Principal(PrincipalKind.OWNER, "st2-owner"))
+    github = _tools(hub)["github"]
+    assert github["state"] == "degraded"
+    assert github["reason"] == "gh was not run", github
+
+
+def test_state_words_another_account_and_what_uses_it(acli_home) -> None:
+    """A read-back naming another account is flagged; a destination on the row is listed under used_by."""
+    import subprocess
+
+    boot, acli = acli_home
+    hub = boot()
+    hub.client.post("/api/providers/jira/connections", json={"site": BETA, "email": EMAIL})
+    original = StubAcli.__call__
+
+    def other(self: StubAcli, argv: list[str], **kw: Any):
+        if argv[2:4] == ["auth", "status"]:
+            self.calls.append(list(argv))
+            out = f"✓ Authenticated\n  Site: {BETA}\n  Email: someone.else@example.com\n  Authentication Type: token\n"
+            return subprocess.CompletedProcess(argv, 0, stdout=out, stderr="")
+        return original(self, argv, **kw)
+
+    StubAcli.__call__ = other  # type: ignore[method-assign]
+    try:
+        hub.client.post("/api/connections/jira/recheck", json={"ref": f"{BETA}|{EMAIL}"})
+    finally:
+        StubAcli.__call__ = original  # type: ignore[method-assign]
+    row = _tools(hub)["jira"]["connections"][0]
+    assert row["state"] == "degraded" and row["other_account"] is True and row["reason"] is None, row
+    assert acli.current("jira") == ALPHA
+
+    with hub.db._connection() as conn:
+        conn.execute(
+            "INSERT INTO channel_destinations (id, name, channel, account_json, target_json, target_digest, created_at)"
+            " VALUES ('d1', 'Team Jira', 'jira', ?, '{}', 'x', '2026-10-18T00:00:00Z')",
+            (json.dumps({"site": BETA, "email": EMAIL}),),
+        )
+    row = _tools(hub)["jira"]["connections"][0]
+    assert row["used_by"] == [{"kind": "destination", "name": "Team Jira"}], row
+
+
+def test_remove_drops_the_row_and_add_again_brings_it_back(acli_home) -> None:
+    boot, acli = acli_home
+    hub = boot()
+    hub.client.post("/api/providers/confluence/connections", json={"site": ALPHA, "email": EMAIL})
+    resp = hub.client.delete(f"/api/providers/confluence/connections/{ALPHA}|{EMAIL}")
+    assert resp.status_code == 200, resp.text
+    assert _tools(hub)["confluence"]["connections"] == []
+    assert hub.client.delete(f"/api/providers/confluence/connections/{ALPHA}|{EMAIL}").status_code == 404
+    assert hub.client.post("/api/providers/confluence/connections", json={"site": ALPHA, "email": EMAIL}).status_code == 200
+    assert len(_tools(hub)["confluence"]["connections"]) == 1
+    assert acli.calls == [], "Remove and Add run no acli"
+
+
+def test_the_st2_wire_fixtures_are_the_hubs_own(acli_home) -> None:
+    """Two Jira sites checked, a third only in acli's file (Found), and its Use: the hub's own answers.
+
+    The vitest doubles of ``connections-pane.test.tsx`` (Betterment ST2).
+    Write them again with ``HOLDSPEAK_WRITE_WIRE_FIXTURES=1``.
+    """
+    boot, acli = acli_home
+    acli.write("jira", ALPHA, extra=THIRD)
+    hub = boot()
+    for site in (ALPHA, BETA):
+        hub.client.post("/api/providers/jira/connections", json={"site": site, "email": EMAIL})
+        hub.client.post("/api/connections/jira/recheck", json={"ref": f"{site}|{EMAIL}"})
+    wire: dict[str, Any] = {
+        "st2-connections.json": json.loads(hub.client.get("/api/connections").text),
+        "st2-found.json": json.loads(hub.client.get("/api/onboarding/connections").text),
+    }
+    gamma = next(c for c in wire["st2-found.json"]["candidates"] if c["site"] == "gamma.atlassian.net")
+    used = hub.client.post("/api/onboarding/connections/use", json={"id": gamma["id"]})
+    assert used.status_code == 200, used.text
+    wire["st2-use.json"] = used.json()
+    wire["st2-connections-after-use.json"] = json.loads(hub.client.get("/api/connections").text)
+    wire["st2-found-after-use.json"] = json.loads(hub.client.get("/api/onboarding/connections").text)
+    removed = hub.client.delete(f"/api/providers/jira/connections/{BETA}|{EMAIL}")
+    assert removed.status_code == 200, removed.text
+    wire["st2-remove.json"] = removed.json()
+    if os.environ.get("HOLDSPEAK_WRITE_WIRE_FIXTURES") == "1":
+        for name, body in wire.items():
+            (FIXTURES / name).write_text(json.dumps(body, indent=2, sort_keys=True) + "\n")
+    problems: list[str] = []
+    for name, body in wire.items():
+        path = FIXTURES / name
+        assert path.exists(), f"missing fixture {name}; write it with HOLDSPEAK_WRITE_WIRE_FIXTURES=1"
+        problems += [f"{name}: {p}" for p in _invented(json.loads(path.read_text()), body)]
+    assert not problems, "an ST2 vitest fixture carries a field the hub does not send: " + ", ".join(problems)

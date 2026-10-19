@@ -54,8 +54,12 @@ if TYPE_CHECKING:
 # thread reads results through workbench.get, and the Desk palette (27,679
 # of 27,680 bytes) does not grow.
 # Betterment AG7: coder.explain (why an agent has its state) is for agents
-# over MCP; the thread palettes do not grow.
-_MCP_ONLY: frozenset[str] = frozenset({"people.suggestions", "workbench.results", "coder.explain"})
+# over MCP; the thread palettes do not grow. Today and launched agents'
+# helper tools stay out of the bounded seeded Thread palettes.
+_MCP_ONLY: frozenset[str] = frozenset({
+    "people.suggestions", "workbench.results", "coder.explain", "today.get",
+    "agent.start_helper", "agent.prompt", "agent.wait", "agent.read", "agent.answer",
+})
 
 
 def _thread_side(name: str) -> bool:

@@ -17,6 +17,18 @@ from typing import Optional, Sequence
 FAST_VERBS = (("agent-hook", "ingest"), ("gate", "hook"))
 
 
+def _skill(argv: Sequence[str]) -> Optional[int]:
+    """Print the skill shipped by this installed HoldSpeak version."""
+
+    if tuple(argv) != ("--skill",):
+        return None
+    from .agent_skill import skill_text
+
+    text = skill_text()
+    print(text, end="" if text.endswith("\n") else "\n")
+    return 0
+
+
 def _fast(argv: Sequence[str]) -> Optional[int]:
     if len(argv) < 2 or (argv[0], argv[1]) not in FAST_VERBS:
         return None
@@ -34,6 +46,9 @@ def _fast(argv: Sequence[str]) -> Optional[int]:
 
 
 def main() -> None:
+    code = _skill(sys.argv[1:])
+    if code is not None:
+        raise SystemExit(code)
     code = _fast(sys.argv[1:])
     if code is not None:
         raise SystemExit(code)

@@ -4,17 +4,150 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (AG10 #1367 delivered; Q9 #1365 and ST1 #1347 merged)
+**Last updated:** 2026-10-19 (MCP tape repairs; Q11/Q12 deployed)
 
 ## Current phase
 
-**Betterment recovery: 71/117 recipe implementations merged.** Codex owns
+**Betterment recovery: 82/117 recipe implementations merged.** Codex owns
 recovery and delivery at the owner's request. The desk is currently on
-backend `bfe8bf5dd`, frontend `bedf96ae4c253a4c`, PID 46690 (AG10 #1367).
+backend `1dfd11fe0`, frontend `9f09358c6ae28b6d`, PID 49677 (#1375).
 Four HTTP checks pass and the actual desk renders at 1440/393. These are
-delivery observations; owner acceptance remains separate. Full post-merge
-regression shards are queued with the low-priority machine lock at
-`wt-betterment-tape-20261019`, pinned to `bd3acff8f`.
+delivery observations; owner acceptance remains separate. All three baseline non-browser
+regression shards passed: 16,784 checks, 27 skips and one expected failure.
+The original baseline remains at `wt-betterment-tape-20261019`, pinned to
+`bd3acff8f`; its three browser shards exposed six stale controls now covered
+by #1370 and #1371. That run was superseded before browser shard four, with
+all results retained. A fresh full tape runs at low priority in
+`wt-desk-betterment-20261019-notes`, pinned to `ec3dde784`. It is incomplete. Its non-browser shards found four failures: two producer
+wires are fixed in D10; the curated MCP resource and launched-helper census
+checks are now repaired. The parked New knowledge verb is no longer published.
+The census requires the five helper tools to refuse an unlaunched principal
+with launch_only and HTTP 403; a valid launched principal still dispatches.
+Focused checks: 63 pass. Required quick check: 247 affected pytest, 110 sweep,
+27 canon and 1,116 repo guards pass. This fixes the identified cases; the
+pinned full tape does not cover subsequent main revisions. The populated Projects sweep also found rows
+moving as independent status reads finish; its regression fails before the
+atomic first-read repair. After the repair, 4,090 web checks, 110 sweep cases,
+27 canon checks and 1,116 repo guards pass.
+
+Accounts follow-up remains open: an isolated `acli` check with no known
+prior active profile switches to the checked account and cannot restore it.
+The reproduction uses a fake CLI; the owner’s auth state was not changed.
+A known-prior profile is restored by ST2; the unknown-prior case still needs
+a truthful read or a no-switch fallback.
+
+Q11/Q12 make Memory an answer desk and put the two directions of what is owed
+first in a person’s window. Pages have their own pass budget and continue past
+a HoldSpeak-made LAN default to the owner’s chosen Everything-else engine.
+Why uses source-linked beliefs; project and People links remain independent.
+Whole-desk Ask clears the prior About scope, and Recall keeps the current
+decision before its predecessor. The existing tool-palette limit stays fixed.
+Root corrected an over-generous deterministic writer and recorded distinct
+answers through the real extraction, consolidation, page and read producers.
+The recorded Person consumer passes. At 1440/393, Go opens Memory, Mira shows
+both directions, and one source press opens her actual 1:1 transcript. These
+use deterministic model boundaries; live-model quality is unobserved.
+Focused producer/page checks: 82; recall-order checks: two. Final quick check:
+4,098 web, 1,083 affected pytest, 110 sweep, 27 canon and 1,116 repo guards.
+Q11/Q12 #1375 is on the running desk. Its two existing pages render at
+1440/393 without page errors. Both remain stale with ten new sources; a
+fresh live-model page write is not observed. A separate check is tracing
+whether the selected Memory assignment also determines physical dispatch.
+
+P5/P6 remains held: pasted Jira/Confluence links discarded the site and could
+select another connected account. Exact site binding and declared preview
+admission are being repaired before this lane ships.
+
+AG13 #1374 packages the HoldSpeak skill and prints it with `holdspeak --skill`.
+Claude launches discover the private copy through `--add-dir`; Codex launches
+discover the repository-native copy without changing CODEX_HOME or auth.
+Connect preserves foreign settings and installs user skills in their native
+roots. An offline native Codex probe finds the skill without a model call.
+The wheel contains the text. Required quick check: 1,305 affected pytest,
+110 sweep, 27 canon and 1,116 repo guards pass. Existing hooks-only readiness
+upgrades remain ST6. AG13 is deployed. Its real terminal wrapper prints the exact packaged
+18-line skill; source import, database ownership and four HTTP checks pass.
+
+Projects repair #1373 is deployed. Its actual list is observed at 1440/393
+without page errors after the atomic first read.
+
+D10 #1372 makes `today.get` a declared read composed from the same Needs you,
+day, Since yesterday and Prepared producers as the Today face. Its real-hub
+MCP parity check passes. The agent palette can read it; owner decisions and
+sends keep their existing authority. Cadence attention names the real action,
+uses a qualified artifact source before a meeting fallback, and opens that
+source directly. It no longer shows a generic Cadence summary. The owner
+has two valid automation-attention rows; neither was dropped to change the
+number. Current Accounts and scheduled-recording wires were recorded from
+their producers. Quick check: 5,931 affected pytest (four skipped), 106 sweep,
+27 canon and 1,116 repo guards; the first-run consumer passes 31 web checks.
+The service inventory is split out of runtime composition within its existing
+line budget. D10 is on the running desk. Its real Cadence popup is observed
+at 1440/393 without page errors: both valid rows remain, the source opens
+directly, and no generic summary appears.
+
+#1371 updates the browser checks to the adopted Q8 note
+window. The real saved body, direct footer verbs and keyboard focus ring are
+checked at 1440/393. The uncertain-send check now opens Send… from that footer;
+it still proves one send and one result after an uncertain response and retry.
+The two affected browser files pass 14 checks. The retired formatting-rail
+case is parked. This closes the six known browser failures in baseline shards
+one through three together with #1370; the remaining baseline shards are open.
+
+P4 #1349 puts Projects and Decisions in Go and offers Write update for the
+chosen project in Search. Project rows retain the Now state and reason;
+a failed read says Not read. Root inspected Blocked, At risk and a deliberately
+unread project on the actual isolated hub at 1440/393. Focused producer/face
+checks passed 22 pytest and 47 web checks. Broad recovery checks passed
+4,104 web and found an asynchronous focus assertion; its corrected file passes
+8 checks. Browser recovery now opens Plan, checks the adopted Now head, and
+holds two populated active folds rather than the retired Files fold. Final
+quick check: 8 web, 36 browser, 110 sweep, 27 canon and 1,116 repo guards.
+The earlier affected non-browser checks passed unchanged. P4 is on the running
+desk; Projects is observed at 1440/393 without page errors.
+
+AG11 #1369 gives launched agents one owned helper with prompt, wait, read and
+question-only answer tools. The owner can Allow a Secure helper from Needs you;
+other agents cannot allow it. Recovery reproduced two stale-wait races and
+binds delivery to the helper's actual session and question episode. A real-hub
+fake builder starts a helper, prompts it, waits for Done and reads its result;
+root inspected the nested rows at 1440/393. Real Claude/Codex execution remains
+unobserved. Final quick check: 4,055 web, 188 affected pytest (one skipped),
+106 sweep, 27 canon and 1,116 repo guards. After integrating Capture and the
+People fix, the shared Needs you seams pass 43 web and 19 pytest checks.
+AG11 is on the running desk; identity and four HTTP checks pass.
+
+Recovery follow-up #1370 fixes two reproduced People-store defects: optional SQLite
+journals can disappear during the permission check, and setup/readiness held
+connections until garbage collection. The journal race fails twice before the
+fix; three retained-connection checks fail before explicit closure. All 12
+People-store checks pass after both fixes. The required quick check passed
+285 affected pytest, 106 sweep, 27 canon and 1,116 repo guards; the three
+additional connection checks ran as a separate focused red/green proof.
+The two stale compact-agent browser assertions now check the full question,
+wrapping and drawer geometry; both pass. Six closed follow-up rows are parked
+in FOLLOWUPS-RESOLVED-2026-10-19.md. These repairs do not establish that every
+historic People 503 has the same cause. #1370 is on the running desk; identity
+and four HTTP checks pass.
+
+The owner's Record home is observed at 1440/393, without page errors, after
+C7/C8 deployment. The terminal wrapper now imports that deployed source;
+15 existing Claude/Codex hook commands follow the wrapper. Previous files
+are parked beside their originals. New sessions use the updated commands;
+existing sessions can retain their startup hook configuration. The MCP
+sidecar remains a live-hub proxy. User-scope MCP/skill setup remains ST6.
+
+C7/C8 #1363 gives Meetings its Record wing, durable failed/missed occurrence
+words, and a Needs you Record now press that starts the named calendar
+meeting. Talk receipts use plain words; Capture speech reaches the saved
+note handoff. Root inspected the real-hub fixture at 1440/393. Focused worker
+checks passed 81 pytest and 172 web checks. Broad recovery checks found
+three old receipt/settings assertions and one window-focus browser case;
+the assertions now follow the current face and use the actual Go press.
+The final quick check is green: 21 web, 18 browser, 106 sweep, 27 canon and
+1,116 repo guards. Hardware microphone/recording use remains unobserved.
+C7/C8 is on the running desk. The owner's existing drawer and its three
+members were observed read-only at both sizes after Q8/Q10, without page errors.
 
 ST1 #1347 gives Rhythm, Wallpaper and Calendar one Settings home, preserves
 old doors and unifies quiet hours. Recovery fixed a real phone defect: two
@@ -23,18 +156,53 @@ fails on the old CSS and passes after the fix, including a saved Increase
 press. The initial broad check passed 4,062 related web and 1,383 affected
 pytest checks but found two stale browser selectors. After updating the
 Engines navigation assertion, the final incremental quick check is green:
-18 browser, 106 sweep, 27 canon and 1,116 repo guards. ST1 is not yet on the
-owner's running desk.
+18 browser, 106 sweep, 27 canon and 1,116 repo guards. ST1 is on the
+owner's running desk; Rhythm is observed at 1440/393 without page errors.
 
 Q9 follow-up #1365 uses declared operations through HTTP and MCP, with Edit
 and Dismiss before Confirm. Dismissed rows stay dismissed. Quick check:
 118 related web, 6,457 affected pytest (7 skipped), 106 sweep, 27 canon,
-1,116 repo guards. Q9 is not yet on the owner's running desk.
+1,116 repo guards. Q9 is on the owner's running desk.
 
 AG10 #1367 recovers the local fixes absent from superseded #1364. A real-hub
 fake-agent walk reads a meeting through MCP, commits a file and shows Done,
 one file changed, branch and Looked at at 1440/393. Quick check: 142 related
 web, 243 affected pytest, 106 sweep, 27 canon, 1,116 repo guards.
+
+P3 #1350 gives the project Now wing its state and reason, head facts,
+owner actions, Waiting on by person and This week with source links.
+Recovery carries each confirmed decision's source meeting through the wire
+and renders its chip. Current isolated-hub shots show the populated head
+facts at 1440/393; the original recovered seed also shows owed items and the
+confirmed decision. Broad check: 4,083 web passed with one old People test
+checking folds before Prep completed, 2,233 pytest passed (2 skipped),
+106 sweep, 27 canon and 1,116 repo guards. The asynchronous assertion now
+waits for the folds; final incremental check is green: 40 web, 106 sweep,
+27 canon and 1,116 repo guards. P3 is on the owner's running desk; runtime identity and four HTTP checks pass.
+
+ST2 #1346 recovers truthful Accounts states, Found on this Mac, Use and
+Remove/Undo. Check restores the previous Jira/Confluence acli profile. Four
+recovery tests failed before the fix when restoration returned nonzero or
+raised; the service now persists and returns the plain restoration failure.
+Provider behavior is exercised with an isolated stub. Broad check: 4,069
+web and 385 pytest passed; the sweep hit an intermittent People brief 503.
+The final incremental quick check passed 335 pytest, 106 sweep, 27 canon
+and 1,116 repo guards. The People 503 remains open; this retry does not
+prove it fixed. ST2 is on the owner's running desk; runtime identity and four HTTP checks pass.
+
+Q8/Q10 #1368 recovers the phone note footer and existing Knowledge
+collections as named drawers, including members, About chips and the
+Filed strip. The old New Knowledge verb is parked; stored data and tools
+stay. The old menu-doc PR #1355 is incorporated and WEB_DESK.md now describes
+the current desk. Broad check: 4,241 web, 547 pytest, 106 sweep and 27 canon
+passed; one stale atlas guard failed. After updating the mutable cases and
+filing vocabulary, final incremental check passed 194 web, 106 sweep,
+27 canon and 1,116 repo guards. Four real-hub atlas walks pass at 1440/393:
+find an existing drawer, and add/remove a decision without removing the
+decision. Populated drawer and About-chip shots were also inspected at both
+widths. After merging delivered P3/ST2, the final merge check is green:
+106 sweep, 27 canon and 1,116 repo guards. Q10 awaits deployment;
+live-engine answers remain unverified.
 
 **Initial recovery snapshot — owner ruling 2026-10-19.**
 Batch seven stopped at Claude's usage limit. At recovery, main had 69 of
@@ -1074,6 +1242,18 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 | Runs on (16c): a per-object wire on the board (thought/workbench/agent/recipe/project overrides; the parked AssignmentEditor sheet edited them; the contextual atom now only reads them and opens Runs on); FOUND model files and an unrecorded Whisper (add-to-library needs a detected_artifact_id detect does not carry); Try it through the route for jobs other than Thoughts & notes (route_probe accepts only ask.answer); the phone list cannot pin an inherited engine as a job's own; 25 atlas cases still drive the Concierge flow (Add = use for summaries; the window closes) | — | — |
 
 ## Last merged (newest first)
+
+- **#1372 — D10:** Today through the shared operation registry and the actual attention source; merged and deployed at `3b90f077a`.
+- **#1371 — note regressions:** current editor/footer, keyboard focus and exact uncertain-send retry; merged and deployed at `ec3dde784`.
+
+
+- #1349 — Projects P4: Projects/Decisions in Go, project state and reason, scoped Write update and withheld dead verbs.
+
+- #1369 — Agents AG11: owned helpers, pinned question delivery, Secure Allow and nested results.
+
+- #1370 — People readiness closes SQLite connections and tolerates journal cleanup; full-question agent browser checks and follow-up reconciliation.
+
+- #1363 — Capture C7/C8: one recording home, truthful failed occurrences, direct Record now and saved speech handoff.
 
 - **#1214 — Useful attention and dismissal.** Dictation journal entries stay
   out of Qlippy. Visible-only Dismiss closes old popup backlog, with exact

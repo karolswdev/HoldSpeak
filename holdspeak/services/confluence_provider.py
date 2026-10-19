@@ -32,6 +32,7 @@ import shutil
 import subprocess
 from collections.abc import Callable
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 from holdspeak.db.automations import redact_source_error
@@ -68,6 +69,8 @@ from holdspeak.services.jira_provider import (
     _parse_acli_auth_status,
     _parse_connection_ref,
     connection_ref,
+    current_acli_profile,
+    switch_back_acli,
 )
 
 _log = logging.getLogger(__name__)
@@ -113,9 +116,13 @@ class ConfluenceProviderAdapter:
         db: Any = None,
         *,
         runner: Runner | None = None,
+        registry_path: Path | None = None,
     ) -> None:
         self._db = db
         self._runner = runner
+        # Betterment ST2: acli's own registry file names the current profile,
+        # so a Check can switch back to it.
+        self._registry_path = registry_path or Path.home() / ".config" / "acli" / "confluence_config.yaml"
 
     # -- Manifest (PROV-001, PROV-007) ---------------------------------
 
@@ -224,6 +231,22 @@ class ConfluenceProviderAdapter:
         )
         return repo.get_provider_connection(cid) or {}
 
+    def remove_connection(self, principal: Principal, connection_ref_str: str) -> bool:
+        """Betterment ST2: remove a Confluence connection row (not the acli profile).
+
+        Returns True if deleted, False if absent.
+        """
+        if self._db is None:
+            return False
+        site, email = _parse_connection_ref(connection_ref_str)
+        cid = self._connection_id(connection_ref(site, email))
+        repo = self._db.automations
+        if not repo.get_provider_connection(cid):
+            return False
+        with repo._connection() as conn:
+            conn.execute("DELETE FROM watch_provider_connections WHERE id=?", (cid,))
+        return True
+
     # -- Connection status (PROV-003, PROV-004) -------------------------
 
     def connection_status(
@@ -267,7 +290,16 @@ class ConfluenceProviderAdapter:
             return result
 
         with _ACLI_LOCK:
-            return self._probe_under_lock(principal, site, email, canonical_ref)
+            # Betterment ST2: a Check never moves his terminal's acli account.
+            before = current_acli_profile(self._registry_path)
+            try:
+                result = self._probe_under_lock(principal, site, email, canonical_ref)
+            finally:
+                restore_error = switch_back_acli(self._run_acli, principal, "confluence", before, site, email)
+            if restore_error:
+                result.update(state=STATE_DEGRADED, error_code=CODE_UNAVAILABLE, error_detail=restore_error)
+                self._persist_connection(canonical_ref, result)
+            return result
 
     def _probe_under_lock(
         self,

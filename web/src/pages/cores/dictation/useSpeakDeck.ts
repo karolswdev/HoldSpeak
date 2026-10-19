@@ -16,12 +16,13 @@ import type {
   DictationDryRunResponse,
   DictationReadinessResponse,
 } from "../core-types";
-import type { MicState } from "../../../desk/components/MicButton";
+import { TALK_STOP_EVENT, type MicState } from "../../../desk/components/MicButton";
 import type { SpokenRunFacts } from "../../../lib/micStreamSession";
 import {
   subscribeMicPhase,
   micCaptureSupported,
   micCaptureReason,
+  openMicRunning,
   type MicPhase,
 } from "../../../lib/micSession";
 import { FloorHeldError } from "../../../lib/audioFloor";
@@ -29,7 +30,6 @@ import { openMicDrop, openMicListen } from "../../../lib/openMic";
 import { presentValue } from "../../../desk/surface/format";
 import {
   AIM_KEY,
-  AIM_FACT,
   CORRECTION_FIELDS,
   teachReceiptFor,
   truncateSpan,
@@ -38,6 +38,11 @@ import {
   refusalCode,
   newDeliveryId,
 } from "./shared";
+
+const AIM_RECEIPT_LABEL: Record<string, string> = {
+  focused: "the app in front",
+  agent: "an agent",
+};
 
 export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => void) {
   const {
@@ -66,9 +71,12 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
   const [micState, setMicState] = useState<MicState>("idle");
   const [level, setLevel] = useState(0);
   // HS-112-02 — the delivery half of the deck.
-  const [aim, setAim] = useState(
-    () => localStorage.getItem(AIM_KEY) ?? "focused",
-  );
+  // Betterment C8: `This field` left the aim (Try it here does that job);
+  // a kept `field` reads as the app in front.
+  const [aim, setAim] = useState(() => {
+    const kept = localStorage.getItem(AIM_KEY);
+    return kept && kept !== "field" ? kept : "focused";
+  });
   const [rehearse, setRehearse] = useState(false);
   const [phase, setPhase] = useState<"idle" | "busy" | "landed" | "refused">(
     "idle",
@@ -237,7 +245,7 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
         }),
       );
       setPhase("idle");
-      announce("REHEARSED · NOT DELIVERED");
+      announce("Preview ready · not sent");
       localStorage.setItem("holdspeak.projectRootOverride", projectRoot);
     } catch (reason) {
       const category = dictationFailure(reason);
@@ -316,7 +324,7 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
       const took = Math.round(performance.now() - since);
       setLandedMs(took);
       setPhase("landed");
-      announce(`LANDED ${took} MS -> ${AIM_FACT[aim]}`);
+      announce(`Sent to ${AIM_RECEIPT_LABEL[aim] ?? "the app in front"} · ${took} ms`);
     } catch (reason) {
       const code = refusalCode(reason);
       if (code) {
@@ -354,12 +362,22 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
   useEffect(() => subscribeMicPhase(setMicPhase), []);
   // Leaving the room drops the stream: no grant outlives the deck.
   useEffect(() => () => openMicDrop(), []);
+  // Betterment C8: the menu bar's `Listening · Stop` ends the open mic too.
+  useEffect(() => {
+    const stop = () => {
+      if (!openMicRunning()) return;
+      openMicDrop();
+      setOpenMic(false);
+    };
+    window.addEventListener(TALK_STOP_EVENT, stop);
+    return () => window.removeEventListener(TALK_STOP_EVENT, stop);
+  }, []);
 
   const toggleOpenMic = async () => {
     if (openMic) {
       openMicDrop();
       setOpenMic(false);
-      announce("OPEN MIC CLOSED");
+      announce("Stopped listening");
       return;
     }
     try {
@@ -390,11 +408,11 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
           setError(DICTATION_FAILURES[category].message);
           setPhase("refused");
           setRefusal(category);
-          announce("OPEN MIC CLOSED. CLICK TO SPEAK AGAIN", "warn");
+          announce("Stopped listening · Press Talk to start again", "warn");
         },
       });
       setOpenMic(true);
-      announce("OPEN MIC LISTENING");
+      announce("Listening");
     } catch (reason) {
       setOpenMic(false);
       // A floor refusal names its owner ("FLOOR HELD MEETING"); anything
