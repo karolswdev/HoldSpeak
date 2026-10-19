@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-19T10:15:06.396034Z",
+  "captured_at": "2026-10-19T10:20:29.737131Z",
   "wire": {
     "count": 0,
     "flights": [
@@ -12,7 +12,7 @@
         "id": "m-ag7-a0",
         "kind": "action",
         "launch_id": "launch_ag7_held",
-        "launched_at": "2026-10-19T10:10:02.007884Z",
+        "launched_at": "2026-10-19T10:15:25.351607Z",
         "merged_at": null,
         "new": false,
         "origin_ref": "action:m-ag7-a0",
@@ -20,7 +20,7 @@
         "project_id": "",
         "project_name": "",
         "screen": {
-          "at": "2026-10-19T10:15:06.055093Z",
+          "at": "2026-10-19T10:20:29.394828Z",
           "choices": [
             {
               "label": "Yes",
@@ -34,7 +34,7 @@
           "command": "rm -rf build/ && make release\nClean the build and release",
           "rule": "bash_permission_prompt",
           "said": null,
-          "since": "2026-10-19T10:15:03.987861Z",
+          "since": "2026-10-19T10:20:27.330234Z",
           "state": "approve",
           "turn_id": null,
           "wait": "approve"
@@ -55,7 +55,7 @@
         "id": "m-ag7-a1",
         "kind": "action",
         "launch_id": "launch_ag7_asks",
-        "launched_at": "2026-10-19T10:10:02.007884Z",
+        "launched_at": "2026-10-19T10:15:25.351607Z",
         "merged_at": null,
         "new": false,
         "origin_ref": "action:m-ag7-a1",
@@ -63,14 +63,14 @@
         "project_id": "",
         "project_name": "",
         "screen": {
-          "at": "2026-10-19T10:15:06.055093Z",
+          "at": "2026-10-19T10:20:29.394828Z",
           "choices": [],
           "command": null,
           "rule": "live_prompt_box",
           "said": "I found two places for the rollback flag. Should it live in config/flags.yaml (shared with staging ) or in an env var (per host)? Answer 1 for config, 2 for env.",
-          "since": "2026-10-19T10:15:06.055093Z",
+          "since": "2026-10-19T10:20:29.394828Z",
           "state": "asks",
-          "turn_id": "screen:2026-10-19T10:15:06.055093Z",
+          "turn_id": "screen:2026-10-19T10:20:29.394828Z",
           "wait": null
         },
         "session_cleanup": null,
@@ -89,7 +89,7 @@
         "id": "m-ag7-a2",
         "kind": "action",
         "launch_id": "launch_ag7_done",
-        "launched_at": "2026-10-19T10:10:02.007884Z",
+        "launched_at": "2026-10-19T10:15:25.351607Z",
         "merged_at": null,
         "new": true,
         "origin_ref": "action:m-ag7-a2",
@@ -97,14 +97,14 @@
         "project_id": "",
         "project_name": "",
         "screen": {
-          "at": "2026-10-19T10:15:06.055093Z",
+          "at": "2026-10-19T10:20:29.394828Z",
           "choices": [],
           "command": null,
           "rule": "live_prompt_box",
           "said": "Done. The rollback flag now lives in the place you chose, with a test. Branch is ready for review; I did not open a PR.",
-          "since": "2026-10-19T10:15:06.055093Z",
+          "since": "2026-10-19T10:20:29.394828Z",
           "state": "done",
-          "turn_id": "screen:2026-10-19T10:15:06.055093Z",
+          "turn_id": "screen:2026-10-19T10:20:29.394828Z",
           "wait": null
         },
         "session_cleanup": null,
@@ -113,7 +113,7 @@
         "state_source": "screen",
         "title": "Add the rollback test",
         "turn_end": "done",
-        "turn_id": "screen:2026-10-19T10:15:06.055093Z"
+        "turn_id": "screen:2026-10-19T10:20:29.394828Z"
       }
     ],
     "history": [],

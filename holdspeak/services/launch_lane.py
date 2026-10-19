@@ -321,9 +321,7 @@ def _session_view(session: Optional[Mapping[str, Any]]) -> Optional[dict[str, An
         "model": session.get("model"),
         "last_tool_name": session.get("last_tool_name"),
         # Betterment AG10: the agent's last words (its Result leads with them).
-        # The Stop's words are kept as the session's (secret-filtered)
-        # ``question`` when no transcript is captured: the same words.
-        "last_assistant_text": session.get("last_assistant_text") or session.get("question"),
+        "last_assistant_text": session.get("last_assistant_text"),
     }
 
 
@@ -523,11 +521,23 @@ def launch_lane(
         # Betterment AG10: what the agent read, wrote and prepared on the desk
         # with its launch credential (the hub's own log of its MCP calls).
         "used": _part("used", lambda: _used(db, str(record.get("launch_id") or launch_id))),
+        # The agent's last words: its newest Stop's message (the event log).
+        "last_words": _part("last words", lambda: _last_words(db, key)) if key else None,
     }
     if control is not None:
         # PHILO-14 C2: how the lane may act now; scrubbed with the rest.
         lane["control"] = _part("control", lambda: control(key))
     return _scrub(lane)
+
+
+def _last_words(db: Any, key: str) -> Optional[str]:
+    with db._connection() as conn:
+        row = conn.execute(
+            "SELECT text FROM agent_session_events WHERE session_key=? AND event='Stop' "
+            "AND COALESCE(text, '') != '' ORDER BY id DESC LIMIT 1",
+            (key,),
+        ).fetchone()
+    return str(row[0]) if row else None
 
 
 def _used(db: Any, launch_id: str) -> dict[str, Any]:
