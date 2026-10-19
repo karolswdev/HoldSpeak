@@ -4,7 +4,7 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (Projects P5/P6 verified)
+**Last updated:** 2026-10-19 (Memory physical routing verified)
 
 ## Current phase
 
@@ -59,8 +59,12 @@ Focused producer/page checks: 82; recall-order checks: two. Final quick check:
 4,098 web, 1,083 affected pytest, 110 sweep, 27 canon and 1,116 repo guards.
 Q11/Q12 #1375 is on the running desk. Its two existing pages render at
 1440/393 without page errors. Both remain stale with ten new sources; a
-fresh live-model page write is not observed. A separate check is tracing
-whether the selected Memory assignment also determines physical dispatch.
+fresh live-model page write is not observed. The routing follow-up now carries
+the selected Memory head through the real page writer and physical runner.
+LAN and cloud doubles prove that the owner-selected fallback determines the
+physical revision and receipt; clearing that head refuses another call. The
+model leaf is doubled; no new owner page was written. Focused routing checks
+pass; the required quick check runs 102 affected pytest and 110 sweep cases.
 
 P5/P6 #1377 preserves provider sites through paste, validation, preview and saved
 watches. Matching uses provider, site and scope; an unknown site or ambiguous
