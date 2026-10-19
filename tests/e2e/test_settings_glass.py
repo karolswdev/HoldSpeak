@@ -131,8 +131,12 @@ def test_summary_controls_own_the_row_height(tmp_path: Path, monkeypatch: pytest
             page.screenshot(path=str(out / f"settings-meetings-{width}.png"))
             assert geometry["next"]["top"] >= geometry["row"]["bottom"], geometry
             assert all(child["bottom"] <= geometry["row"]["bottom"] + 1 for child in geometry["children"]), geometry
-            choose = page.get_by_test_id("settings-choose-model")
-            _pointer_owned(page, choose, f"Choose model at {width}")
+            engines = page.get_by_test_id("settings-engines-link")
+            _pointer_owned(page, engines, f"Engines at {width}")
+            engines.click()
+            engine_home = page.locator("#surface-settings [data-settings-view=models]")
+            engine_home.get_by_test_id("runson-root").wait_for()
+            engine_home.get_by_test_id("runson-fact").filter(has_text="No engine yet").wait_for()
             assert errors == [], errors
             browser.close()
     finally:

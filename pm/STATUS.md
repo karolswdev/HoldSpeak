@@ -4,9 +4,28 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (betterment delivery recovered; current main `eef501294`, desk `b8908dc72`)
+**Last updated:** 2026-10-19 (AG10 #1367 delivered at `bfe8bf5dd`; ST1 #1347 recovered)
 
 ## Current phase
+
+**Betterment recovery: AG10 delivered, ST1 merged.** Agent Result #1367
+recovers the local fixes absent from #1364 (now superseded). The real-hub
+fake-agent walk reads a meeting through MCP, commits a file and shows Done,
+one file changed, the branch and Looked at, at 1440 and 393. Its quick check
+is green (142 related web, 243 affected pytest, 106 sweep, 27 canon,
+1,116 repo guards). The owner's running desk reports backend `bfe8bf5dd`,
+frontend `bedf96ae4c253a4c`, PID 46690; four HTTP checks pass. Actual desk
+observations exist at both widths; these are delivery observations, not the
+owner's acceptance. Post-merge full regression shards are queued under the
+low-priority test lock in `wt-betterment-tape-20261019` at `bd3acff8f`.
+
+ST1 #1347 consolidates Rhythm, Wallpaper and Calendar into Settings, with
+one quiet-hours store and preserved old doors. The recovered face exposed a
+real phone bug: two 44 px stepper arrows left zero pixels for the value.
+The narrow CSS fix uses the value column. A real browser check fails on
+the old CSS and passes at 1440/393, including an Increase press saved by the
+hub. ST1 has not yet been observed on the owner's desk. Tracker: 71/117
+merged implementations; outstanding recipe and live checks remain explicit.
 
 **Betterment delivery — Codex takes delivery, owner ruling 2026-10-19.**
 Batch seven stopped at Claude's usage limit. Main has 69 of 117 slice
