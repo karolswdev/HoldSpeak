@@ -4,13 +4,22 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (Memory physical routing verified)
+**Last updated:** 2026-10-19 (Capture callback queue verified)
 
 ## Current phase
 
-**Betterment recovery: 84/117 recipe implementations merged.** Codex owns
+C9 moves PCM admission into a bounded queue and writes the buffer/journal on
+one writer thread. Stop seals admission, aborts native streams, flushes accepted
+items, then snapshots. Queue refusal and writer failure survive into the saved
+Meeting and recoverable journal marker; Stop does not claim complete capture.
+Focused callback/durability checks: 32 pass, including the blocked journal and
+same-ID PCM recovery. Required quick: 160 affected, 110 sweep, 27 canon and
+1,116 repo guards pass. Capture shots pass at 1440/393. Native
+hardware is not exercised; C10’s child-process boundary remains in progress.
+
+**Betterment recovery: 85/117 recipe implementations merged.** Codex owns
 recovery and delivery at the owner's request. The desk is currently on
-backend `bc0c2fc74`, frontend `17244ee6934f6d61`, PID 97008 (#1377).
+backend `adc8638bc`, frontend `17244ee6934f6d61`, PID 17616 (#1378).
 Four HTTP checks pass and the actual desk renders at 1440/393. These are
 delivery observations; owner acceptance remains separate. All three baseline non-browser
 regression shards passed: 16,784 checks, 27 skips and one expected failure.
