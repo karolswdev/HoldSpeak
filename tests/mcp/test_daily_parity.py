@@ -25,6 +25,9 @@ def hub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 def test_today_get_matches_the_faces_on_the_real_hub(hub) -> None:
     """Today returns the same Needs-you, day, brief, and Prepared reads."""
     seed(hub, engine=True)
+    root = composition.current()
+    assert root.operations.descriptor("today.get").effect == "read"
+    assert root.operations.target("today.get") is root.today_service
     is_error, today = hub.mcp("today.get", {})
     assert not is_error, today
 

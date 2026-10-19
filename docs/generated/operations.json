@@ -6729,6 +6729,42 @@
         "arguments": [],
         "enforced": true
       }
+    },
+    {
+      "name": "today.get",
+      "version": 1,
+      "description": "Read Today: Needs you, the day, Since yesterday and Prepared.",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "read",
+      "result": "{needs_you, day, since_yesterday, prepared}",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments"
+      ],
+      "completion": "synchronous",
+      "exposure": [
+        "mcp:today.get"
+      ],
+      "held": [
+        "ops",
+        "door_service",
+        "workbenches"
+      ],
+      "owner_only": false,
+      "blocking_io": false,
+      "owner_press": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A read: computation without effect (Article XI.5).",
+        "arguments": [],
+        "enforced": true
+      }
     }
   ]
 }
