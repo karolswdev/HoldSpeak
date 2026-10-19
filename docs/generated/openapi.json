@@ -3460,6 +3460,46 @@
         "summary": "Api Agent Hand Preview"
       }
     },
+    "/api/agent/hand/queue/{queue_id}": {
+      "delete": {
+        "description": "Betterment AG8 (AG5 follow-up): Cancel a hand that waits for a free\nagent. It leaves the queue and never starts; nothing else changes.\n404 when the queue holds no such hand (it started, or was cancelled).",
+        "operationId": "api_agent_hand_queue_cancel_api_agent_hand_queue__queue_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "queue_id",
+            "required": true,
+            "schema": {
+              "title": "Queue Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Agent Hand Queue Cancel Api Agent Hand Queue  Queue Id  Delete"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Agent Hand Queue Cancel"
+      }
+    },
     "/api/agent/launches/{launch_id}": {
       "get": {
         "description": "One launch's delivery, read from the launch ledger (no driver, no\nreconcile): the launch sheet's receipt follows it until the brief is\nsent, held or refused.",

@@ -30,7 +30,9 @@ export const LANE_PAGE = 200;
  * well that made it closes or the wait it answered clears. */
 export interface LaneReceipt {
   word: "SENT" | "NOT SENT" | "NOT CONFIRMED" | "ARMED" | "STOPPED" | "NOT STOPPED" | "ARM FIRST" | "QUEUED" | "TAKEN BACK" | "NOT TAKEN BACK"
-    | "APPROVED" | "DENIED" | "NOT DECIDED" | "RESUMING" | "NOT RESUMED";
+    | "APPROVED" | "DENIED" | "NOT DECIDED" | "RESUMING" | "NOT RESUMED"
+    // Betterment AG8: a queued hand he cancelled could not leave the queue.
+    | "NOT CANCELLED";
   at: number;
   text: string;
   tone: "ok" | "fail" | "warn";

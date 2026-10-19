@@ -1,0 +1,18 @@
+{
+  "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
+  "captured_at": "2026-10-19T04:24:50.365109Z",
+  "wire": {
+    "note": {
+      "body_markdown": "Add a rollback test",
+      "created_at": "2026-10-19T04:24:50Z",
+      "deleted": false,
+      "id": "note_ae0c5412d796",
+      "last_modified": "2026-10-19T04:24:50Z",
+      "tags": [
+        "agent"
+      ],
+      "title": "Add a rollback test",
+      "updated_at": "2026-10-19T04:24:50Z"
+    }
+  }
+}

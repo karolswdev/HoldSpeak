@@ -113,9 +113,11 @@ export function useHeldCall(member: ConductorMember): {
  * parse are parked in desk/_parked/agents/paneParse.ts: the hub's screen
  * rules read the command and the choices (member.screen). */
 
-/** `Asked 6 min ago`; `Asks` with no age. */
-function askedWord(when: string | undefined): string {
+/** `Asked just now` (under a minute), `Asked 6 min ago`; `Asks` with no
+ *  age. Betterment AG8: "1 min ago" ten seconds after the ask was a lie. */
+export function askedWord(when: string | undefined, whenSort?: number, now: number = Date.now()): string {
   if (!when) return "Asks";
+  if (whenSort != null && now - whenSort < 60_000) return "Asked just now";
   if (/^\d+ (MIN|H)$/.test(when)) return `Asked ${when.toLowerCase()} ago`;
   return `Asked ${when.charAt(0)}${when.slice(1).toLowerCase()}`;
 }
@@ -274,7 +276,7 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
     >
       <header className="cw-ask-bar">
         <span className="cw-ask-label">{held ? "Wants to run" : "Asks you"}</span>
-        <span className="cw-ask-age">{askedWord(member.when)}</span>
+        <span className="cw-ask-age">{askedWord(member.when, member.whenSort)}</span>
       </header>
       <div className="cw-ask-body">
         <span className="cw-plate-sprite" aria-hidden="true">
