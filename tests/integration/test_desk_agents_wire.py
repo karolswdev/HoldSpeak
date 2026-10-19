@@ -1019,6 +1019,18 @@ def test_the_agents_read_states_from_the_screen_when_no_hook_speaks(
         assert any("Do you want to proceed?" in line for line in why["screen"]["evidence"])
         _keep("agents-ag7", "explain.held", why, tmp_path, hub)
         _keep("agents-ag7", "lane.held", _get(hub, "/api/agent/launches/launch_ag7_held/lane"), tmp_path, hub)
+        # Gaps: his Allow reaches the screen prompt of an agent with no hook
+        # (the real pane gets Enter); a stale prompt token sends nothing.
+        from tests.e2e.agents_lane_rig import TOKEN, _http
+
+        status, stale = _http(hub, "POST", "/api/agent/launches/launch_ag7_held/answer", TOKEN,
+                              {"since": "2026-01-01T00:00:00Z", "keys": ["Enter"]})
+        stale = stale if isinstance(stale, dict) else json.loads(stale)
+        assert status == 409 and stale["code"] == "wait_not_current", (status, stale)
+        status, sent = _http(hub, "POST", "/api/agent/launches/launch_ag7_held/answer", TOKEN,
+                             {"since": held["screen"]["since"], "keys": ["Enter"]})
+        assert status == 200 and sent["status"] == "delivered", (status, sent)
+        _keep("agents-ag7", "answer.held", sent, tmp_path, hub)
     finally:
         for launch_id in AG7_TASKS:
             subprocess.run(["tmux", "kill-session", "-t", f"hs-{launch_id}"], capture_output=True, timeout=10)
@@ -1166,3 +1178,44 @@ def test_the_agents_read_is_the_fleet(hub: str, tmp_path: Path) -> None:
     assert status == 404, (status, again)
     after = _get(hub, "/api/coders/sessions?include_ended=false")
     assert not any(f.get("queue_id") == queued["queue_id"] for f in after["flights"])
+
+
+# ── Betterment AG10: the Result of a turn ──────────────────────────────
+
+
+def test_the_lane_serves_the_result_of_a_done_turn(hub: str, tmp_path: Path) -> None:
+    """Betterment AG10 (the hub half): a finished agent (the AG0 seed's
+    Done) read a note on the desk with its launch credential; the lane read
+    serves its last words and Looked at. Recorded for agents.app.test.tsx
+    (fixtures/agents-ag10)."""
+    import urllib.request
+
+    from holdspeak import coder_factory
+    from holdspeak.mcp.palettes import CONDUCTOR, resolve_palette
+    from holdspeak.principals import agent_credentials
+    from tests.e2e.agents_lane_rig import TOKEN, _http
+
+    _ag0_seed(tmp_path / "home")
+    status, made = _http(hub, "POST", "/api/notes", TOKEN, {"title": "Platform sync notes", "body_markdown": "The flag moves."})
+    assert status == 201, made
+    note_id = made["note"].get("note_id") or made["note"]["id"]
+    credential = agent_credentials.issue(
+        coder_factory.launch_identity("launch_ag0_done"), palette=resolve_palette(CONDUCTOR),
+        palette_name=CONDUCTOR, launch_id="launch_ag0_done",
+    )
+    try:
+        request = urllib.request.Request(
+            f"{hub}/api/mcp", method="POST",
+            data=json.dumps({"jsonrpc": "2.0", "id": 1, "method": "tools/call",
+                             "params": {"name": "desk.get", "arguments": {"kind": "notes", "id": note_id}}}).encode(),
+            headers={"Authorization": f"Bearer {credential.token}", "Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(request, timeout=20) as response:
+            answer = json.loads(response.read())
+        assert answer["result"]["isError"] is False, answer
+    finally:
+        agent_credentials.revoke(credential.principal.identity)
+    lane = _get(hub, "/api/agent/launches/launch_ag0_done/lane")
+    assert lane["last_words"] == AG0_DONE
+    assert [row["ref"] for row in lane["used"]["looked_at"]] == [f"note:{note_id}"], lane["used"]
+    _keep("agents-ag10", "lane.done", lane, tmp_path, hub)

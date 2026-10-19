@@ -1,12 +1,12 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-19T04:23:09.654518Z",
+  "captured_at": "2026-10-19T10:27:41.653723Z",
   "wire": {
     "answers": [],
     "attempt_events": [
       {
         "from": null,
-        "occurred_at": "2026-10-19T04:23:09.602502Z",
+        "occurred_at": "2026-10-19T10:27:41.605930Z",
         "reason": "created:launch",
         "to": "working"
       }
@@ -27,7 +27,7 @@
         "id": 1,
         "text": "The runbook needs a rollback owner. Jordan or Avery?",
         "tool": null,
-        "ts": "2026-10-19T04:23:09.600556Z"
+        "ts": "2026-10-19T10:27:41.603520Z"
       }
     ],
     "events_next_after": null,
@@ -40,9 +40,10 @@
       "pr_state": null
     },
     "gated": [],
+    "last_words": null,
     "launch": {
       "agent": "claude",
-      "attempt_id": "att_4c28bf6cf4f3400d",
+      "attempt_id": "att_fb4acff62b9644af",
       "branch": "hs/action-m-cutover-a0",
       "brief_sent_at": null,
       "brief_text": null,
@@ -51,7 +52,7 @@
       "gate": "gated",
       "instruction_state": "sent",
       "launch_id": "launch_c4_runbook",
-      "launched_at": "2026-10-19T03:53:09.602470Z",
+      "launched_at": "2026-10-19T09:57:41.605901Z",
       "origin_ref": {
         "id": "m-cutover-a0",
         "kind": "action"
@@ -68,28 +69,34 @@
       "worktree_path": null
     },
     "session": {
-      "created_at": "2026-10-19T04:23:09.600556Z",
+      "created_at": "2026-10-19T10:27:41.603520Z",
       "event_count": 1,
+      "last_assistant_text": null,
       "last_tool_name": null,
       "lifecycle": "waiting",
       "model": null,
       "state": "waiting",
-      "updated_at": "2026-10-19T04:23:09.600556Z"
+      "updated_at": "2026-10-19T10:27:41.603520Z"
     },
     "usage": null,
+    "used": {
+      "looked_at": [],
+      "prepared": [],
+      "wrote": []
+    },
     "wait": {
       "answer_state": null,
       "draft": null,
       "kind": "TO ANSWER",
       "question": "The runbook needs a rollback owner. Jordan or Avery?",
-      "started": "2026-10-19T04:23:09.600556Z",
+      "started": "2026-10-19T10:27:41.603520Z",
       "turn_end": "asks",
-      "wait_id": "2026-10-19T04:23:09.600556Z#1",
+      "wait_id": "2026-10-19T10:27:41.603520Z#1",
       "wait_kind": "answer"
     },
     "worktree": {
       "not_read": "the launch has no worktree",
-      "read_at": 1792383789.652622
+      "read_at": 1792405661.65215
     }
   }
 }

@@ -334,3 +334,12 @@
 }
 .desk-next .cw-start-none { font: 500 13px / 1.4 var(--font-sans); color: var(--wb-muted); }
 .desk-next .cw-start-verbs { display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap; }
+/* Gaps: the project and agent pickers take their column (an uppercase face
+   clipped "CLAUDE CODE" in a select sized to its option at 393). */
+.desk-next .cw-start .gadget-cycle,
+.desk-next .cw-start .gadget-cycle select { width: 100%; }
+/* Gaps: a row whose verb is wide (Connect Claude Code) wraps the verb under
+   its words in a narrow window, never over its pill. */
+.desk-next .cw-row { flex-wrap: wrap; }
+.desk-next .cw-row > .cw-row-text { flex: 1 1 150px; }
+.desk-next .cw-row > .btn { margin-left: auto; }

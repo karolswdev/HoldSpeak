@@ -444,9 +444,16 @@ class AgentHandService:
                     spec, source, None, kind, item_id, project_id, self._control_mode(),
                     resumed=True,
                 )
-            raise AgentHandRefused(
-                "worktree_duplicate", f"worktree {spec['name']!r} already exists"
-            )
+            again_of = _hand_again_of(existing)
+            if again_of is None:
+                raise AgentHandRefused(
+                    "worktree_duplicate", f"worktree {spec['name']!r} already exists"
+                )
+            # Betterment AG7 gaps, Hand again: the earlier agent of this item
+            # stopped (a restart, a failed Resume, his Stop, or it ended); a
+            # new agent continues in the same worktree, on its branch.
+            spec = {"mode": "existing", "worktree_id": again_of[1], "again_of": again_of[0],
+                    "name": spec["name"], "branch": spec["branch"]}
         working = len(working_launches(launcher, self._db))
         limit = self.working_at_once
         if working >= limit:
@@ -856,6 +863,28 @@ def codex_hooks_installed(path: Optional[Path] = None) -> bool:
         return AGENT_HOOK_COMMAND_MARKER in target.read_text(encoding="utf-8")
     except OSError:
         return False
+
+
+#: Launch states whose agent no longer runs: its worktree takes Hand again.
+_STOPPED_LAUNCH_STATES = frozenset({
+    "stopped_by_restart", "stopped_by_owner", "resume_failed", "complete", "ended_undelivered",
+    "failed_to_register",
+})
+
+
+def _hand_again_of(existing: Optional[Mapping[str, Any]]) -> Optional[tuple[str, str]]:
+    """``(launch_id, worktree_id)`` of the item's earlier launch when its
+    agent stopped and its worktree is known; else ``None``."""
+    if not existing:
+        return None
+    state = str(existing.get("state") or "")
+    resume = existing.get("resume") or {}
+    if isinstance(resume, Mapping) and resume.get("state") == "resuming":
+        return None
+    if state not in _STOPPED_LAUNCH_STATES and not (isinstance(resume, Mapping) and resume.get("outcome") == "failed"):
+        return None
+    launch_id, worktree_id = str(existing.get("launch_id") or ""), str(existing.get("worktree_id") or "")
+    return (launch_id, worktree_id) if launch_id and worktree_id else None
 
 
 def _launch_for_origin(launcher: Any, kind: str, item_id: str) -> Optional[dict[str, Any]]:

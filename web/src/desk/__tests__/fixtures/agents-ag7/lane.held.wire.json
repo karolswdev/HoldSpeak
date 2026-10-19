@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-19T04:23:10.074607Z",
+  "captured_at": "2026-10-19T10:27:46.525410Z",
   "wire": {
     "answers": [],
     "attempt_events": [],
@@ -21,6 +21,7 @@
       "pr_state": null
     },
     "gated": [],
+    "last_words": null,
     "launch": {
       "agent": "claude",
       "attempt_id": null,
@@ -32,7 +33,7 @@
       "gate": "gated",
       "instruction_state": "sent",
       "launch_id": "launch_ag7_held",
-      "launched_at": "2026-10-19T04:18:05.647290Z",
+      "launched_at": "2026-10-19T10:22:42.113991Z",
       "origin_ref": {
         "id": "m-ag7-a0",
         "kind": "action"
@@ -50,10 +51,15 @@
     },
     "session": null,
     "usage": null,
+    "used": {
+      "looked_at": [],
+      "prepared": [],
+      "wrote": []
+    },
     "wait": null,
     "worktree": {
       "not_read": "the launch has no worktree",
-      "read_at": 1792383790.073791
+      "read_at": 1792405666.524512
     }
   }
 }

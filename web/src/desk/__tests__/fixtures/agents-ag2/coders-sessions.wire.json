@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-19T04:23:17.254425Z",
+  "captured_at": "2026-10-19T10:27:42.183858Z",
   "wire": {
     "count": 3,
     "flights": [
@@ -12,7 +12,7 @@
         "id": "m-platform-a0",
         "kind": "action",
         "launch_id": "launch_ag0_done",
-        "launched_at": "2026-10-19T04:13:17.189001Z",
+        "launched_at": "2026-10-19T10:17:42.126817Z",
         "merged_at": null,
         "new": true,
         "origin_ref": "action:m-platform-a0",
@@ -26,7 +26,7 @@
         "state_source": "hook",
         "title": "Draft test scaffolding for flags",
         "turn_end": "done",
-        "turn_id": "2026-10-19T04:23:17.174167Z#4"
+        "turn_id": "2026-10-19T10:27:42.114289Z#4"
       },
       {
         "agent": "claude",
@@ -36,7 +36,7 @@
         "id": "m-platform-a1",
         "kind": "action",
         "launch_id": "launch_ag0_ghost",
-        "launched_at": "2026-10-19T04:13:17.189001Z",
+        "launched_at": "2026-10-19T10:17:42.126817Z",
         "merged_at": null,
         "new": false,
         "origin_ref": "action:m-platform-a1",
@@ -78,7 +78,7 @@
           "agent": "claude",
           "awaiting_response": false,
           "capture_messages": false,
-          "created_at": "2026-10-19T04:23:17.190291Z",
+          "created_at": "2026-10-19T10:27:42.128261Z",
           "cwd": "/tmp/rig/home/dev/platform",
           "done_id": null,
           "event_count": 4,
@@ -105,9 +105,9 @@
           "tmux_window": null,
           "transcript_path": null,
           "turn_prompted": true,
-          "updated_at": "2026-10-19T04:23:17.219093Z",
-          "wait_id": "2026-10-19T04:23:17.219093Z#4",
-          "wait_started_at": "2026-10-19T04:23:17.219093Z"
+          "updated_at": "2026-10-19T10:27:42.152648Z",
+          "wait_id": "2026-10-19T10:27:42.152648Z#4",
+          "wait_started_at": "2026-10-19T10:27:42.152648Z"
         }
       },
       {
@@ -120,7 +120,7 @@
           "id": "m-platform-a1",
           "kind": "action",
           "launch_id": "launch_ag0_ghost",
-          "launched_at": "2026-10-19T04:13:17.189001Z",
+          "launched_at": "2026-10-19T10:17:42.126817Z",
           "merged_at": null,
           "new": false,
           "origin_ref": "action:m-platform-a1",
@@ -153,9 +153,9 @@
           "agent": "claude",
           "awaiting_response": true,
           "capture_messages": false,
-          "created_at": "2026-10-19T04:23:17.174797Z",
+          "created_at": "2026-10-19T10:27:42.114899Z",
           "cwd": "/tmp/rig/home/dev/platform",
-          "done_id": "2026-10-19T04:23:17.188305Z#4",
+          "done_id": "2026-10-19T10:27:42.126113Z#4",
           "event_count": 4,
           "hook_event_name": "Stop",
           "last_assistant_text": null,
@@ -180,9 +180,9 @@
           "tmux_window": null,
           "transcript_path": null,
           "turn_prompted": false,
-          "updated_at": "2026-10-19T04:23:17.188305Z",
-          "wait_id": "2026-10-19T04:23:17.188305Z#4",
-          "wait_started_at": "2026-10-19T04:23:17.188305Z"
+          "updated_at": "2026-10-19T10:27:42.126113Z",
+          "wait_id": "2026-10-19T10:27:42.126113Z#4",
+          "wait_started_at": "2026-10-19T10:27:42.126113Z"
         }
       },
       {
@@ -195,7 +195,7 @@
           "id": "m-platform-a0",
           "kind": "action",
           "launch_id": "launch_ag0_done",
-          "launched_at": "2026-10-19T04:13:17.189001Z",
+          "launched_at": "2026-10-19T10:17:42.126817Z",
           "merged_at": null,
           "new": true,
           "origin_ref": "action:m-platform-a0",
@@ -209,7 +209,7 @@
           "state_source": "hook",
           "title": "Draft test scaffolding for flags",
           "turn_end": "done",
-          "turn_id": "2026-10-19T04:23:17.174167Z#4"
+          "turn_id": "2026-10-19T10:27:42.114289Z#4"
         },
         "identity": {
           "agent_label": "Claude",
@@ -228,9 +228,9 @@
           "agent": "claude",
           "awaiting_response": false,
           "capture_messages": false,
-          "created_at": "2026-10-19T04:23:17.172069Z",
+          "created_at": "2026-10-19T10:27:42.112184Z",
           "cwd": "/tmp/rig/home/dev/platform",
-          "done_id": "2026-10-19T04:23:17.174167Z#4",
+          "done_id": "2026-10-19T10:27:42.114289Z#4",
           "event_count": 4,
           "hook_event_name": "Stop",
           "last_assistant_text": null,
@@ -255,7 +255,7 @@
           "tmux_window": null,
           "transcript_path": null,
           "turn_prompted": false,
-          "updated_at": "2026-10-19T04:23:17.174167Z",
+          "updated_at": "2026-10-19T10:27:42.114289Z",
           "wait_id": null,
           "wait_started_at": null
         }

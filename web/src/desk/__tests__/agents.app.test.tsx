@@ -33,6 +33,11 @@ import { fromWireFlight, fromWireSessionRow, useAgentFlights } from "../agentFli
 import { ConductorWindow } from "../conductor/ConductorWindow";
 import { agentsTileOf } from "../conductor/fleetTile";
 import { askedWord } from "../agents/AgentRow";
+import { AgentLine } from "../components/AgentLine";
+import { NeedRow } from "../needs/NeedsDrawer";
+import { ResultBlock, filesWords } from "../lane/ResultBlock";
+import type { LaneWire } from "../lane/laneWire";
+import type { NeedFace } from "../needs/needsFace";
 import { __resetConductor } from "../conductor/store";
 import { useSteering } from "../steering";
 
@@ -574,6 +579,40 @@ describe("one press to answer and to allow (Betterment AG2)", () => {
   });
 });
 
+describe("Needs you: an agent's ask is the Agents row (Betterment AG9)", () => {
+  it("one row for the piece of work, with the question, its choices and Answer inline", async () => {
+    const SESSIONS = ag2<{ sessions: unknown[]; flights: unknown[] }>("coders-sessions");
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(SESSIONS.captured_at));
+    serve({ "/api/agent/launches/": { gated: [], wait: null } });
+    useAgentFlights.setState({
+      sessions: SESSIONS.wire.sessions.map(fromWireSessionRow), flights: SESSIONS.wire.flights.map(fromWireFlight), loaded: true,
+    });
+    const face = { id: "action:x", kind: "action", name: "Write the on-call note", fact: "", askOf: "claude:ag0-ghost",
+      lamp: { label: "ASKS", tone: "ask" }, group: "agents", verbs: { kind: "none" } } as unknown as NeedFace;
+    render(<ul><NeedRow face={face} primary projects={false} /></ul>);
+    const row = await screen.findByTestId("needs-agent-row");
+    expect(row.querySelector(".cw-ask-label")?.textContent).toBe("Asks you");
+    expect(within(row).getAllByTestId("agent-row-choice").map((b) => b.textContent)).toEqual(["1 · config", "2 · env"]);
+    expect(within(row).getByRole("button", { name: "Answer" })).toBeTruthy();
+  });
+});
+
+describe("the Result of a turn (Betterment AG10)", () => {
+  it("leads with the agent's last words and what it looked at on the desk", () => {
+    const LANE = hubWire<LaneWire>("../fixtures/agents-ag10/lane.done");
+    render(<ResultBlock lane={LANE.wire} />);
+    expect(screen.getByTestId("lane-result-said").textContent).toContain("The rollback flag now lives in the place you chose");
+    expect(screen.getByText("Looked at: Platform sync notes")).toBeTruthy();
+    expect(within(screen.getByTestId("lane-result-looked")).getAllByRole("listitem").map((li) => li.textContent))
+      .toEqual(["Platform sync notes"]);
+    expect(screen.queryByTestId("lane-result-wrote")).toBeNull();
+    expect(filesWords(1)).toBe("1 file changed");
+    expect(filesWords(3)).toBe("3 files changed");
+    expect(filesWords(0)).toBe("");
+  });
+});
+
 describe("the choices a question offers (Betterment AG2)", () => {
   it("reads 'Answer 1 for …, 2 for …' in the question; a plain question has none", () => {
     expect(questionChoices("Ship it now? Answer 1 for yes, 2 for no, 3 for later.").map((c) => `${c.n} · ${c.label}`))
@@ -595,6 +634,7 @@ function ag7<T = unknown>(name: string): { captured_at: string; wire: T } {
 describe("the screen says the state when no hook speaks (Betterment AG7)", () => {
   const SESSIONS = ag7<{ flights: Array<Record<string, unknown>> }>("coders-sessions");
   const WHY = ag7<ExplainWire>("explain.held");
+  const ANSWERED = ag7("answer.held");
 
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ["Date"] });
@@ -604,19 +644,26 @@ describe("the screen says the state when no hook speaks (Betterment AG7)", () =>
     serve({
       "/api/coders/sessions": SESSIONS.wire,
       "/api/onboarding/agents": DETECT.wire,
+      "/api/agent/launches/launch_ag7_held/answer": ANSWERED.wire,
       "/api/agent/launches/": { gated: [], wait: null },
     });
   });
 
-  it("Wants to run shows the command the rules read; with no hook to answer, Terminal leads", async () => {
+  it("Wants to run shows the command the rules read; Allow sends Enter to its screen prompt (no hook)", async () => {
     render(<ConductorWindow />);
     await screen.findByRole("button", { name: "Release the rollback build" });
     const held = within(screen.getByTestId("conductor-asks")).getAllByTestId("conductor-ask-row")
       .find((row) => row.dataset.objectId === "launch:launch_ag7_held")!;
     expect(held.querySelector(".cw-ask-label")?.textContent).toBe("Wants to run");
     expect(within(held).getByTestId("agent-row-command").textContent).toMatch(/^rm -rf build\/ && make release/);
-    expect(within(held).getByTestId("agent-row-terminal").textContent).toBe("Terminal");
-    expect(within(held).queryByRole("button", { name: "Allow" })).toBeNull();
+    const flight = SESSIONS.wire.flights.find((f) => f.launch_id === "launch_ag7_held") as { screen: { since: string } };
+    await act(async () => {
+      fireEvent.click(within(held).getByRole("button", { name: "Allow" }));
+    });
+    const posts = api.fetch.mock.calls.filter(([, init]) => (init as { method?: string } | undefined)?.method === "POST");
+    expect(posts.map(([url, init]) => [url, (init as { json?: unknown }).json])).toEqual([
+      ["/api/agent/launches/launch_ag7_held/answer", { since: flight.screen.since, keys: ["Enter"] }],
+    ]);
   });
 
   it("Asks you shows the agent's last words and their choices; Done is New", async () => {
@@ -748,6 +795,17 @@ describe("the Agents list is the fleet (Betterment AG8)", () => {
       fireEvent.click(cancel);
     });
     expect(calls).toEqual([expect.stringMatching(/^\/api\/agent\/hand\/queue\/queue_/)]);
+  });
+
+  it("a desk object wears its agent's line; one press opens the agent's window", () => {
+    const flights = SESSIONS.wire.flights.map(fromWireFlight);
+    useAgentFlights.setState({ flights, sessions: [], loaded: true });
+    const done = flights.find((f) => f.launchId === "launch_ag8_new")!;
+    const { unmount } = render(<AgentLine objectRef={`action:${done.id}`} />);
+    expect(screen.getByTestId("desk-agent-line").textContent).toBe("Claude Code · Done · New");
+    unmount();
+    const { container } = render(<AgentLine objectRef="action:no-agent-here" />);
+    expect(container.textContent).toBe("");
   });
 
   it("an ask ten seconds old says Asked just now (not 1 min ago)", () => {

@@ -973,6 +973,49 @@ class HeartbeatService:
             receipt["sessionKey"] = session_key
         return receipt
 
+    # ── Betterment AG9: an agent finished (decision 2) ─────────────────
+
+    def notify_agent_done(
+        self, *, launch_id: str, agent: str, title: str, turn_id: str,
+        _notifier: Any = None, now: datetime | None = None,
+    ) -> dict[str, Any]:
+        """A finished agent raises ONE quiet notification (decision 2, the
+        owner's "yes"): never while Notify is off, in quiet hours, or while
+        that agent's own window is in front. Done stays out of Needs you, so
+        this is the only notice a finished turn makes. Each decision is kept
+        in ``agent_done_notices.json`` (the newest 50)."""
+        from holdspeak.desktop_notify import notify
+
+        receipt: dict[str, Any] = {
+            "kind": "agent.done.notify", "launch_id": launch_id, "turn_id": turn_id,
+            "at": _now_iso(),
+        }
+        settings = self.get_settings()
+        if settings.get("notify", _DEFAULT_NOTIFY) == "off":
+            receipt["outcome"] = "off"
+        elif self.in_quiet_hours(now):
+            receipt["outcome"] = "held_quiet_hours"
+        elif self._agent_window_in_front(launch_id):
+            receipt["outcome"] = "held_in_front"
+        else:
+            name = {"claude": "Claude Code", "codex": "Codex", "pi": "pi"}.get(agent, agent or "An agent")
+            sent = notify("Agent finished", f"{name} finished {title or 'its work'}",
+                          click_url="/conductor", _notifier=_notifier)
+            receipt["outcome"] = "sent" if sent else "not_posted"
+        _record_agent_done_notice(receipt)
+        return receipt
+
+    def _agent_window_in_front(self, launch_id: str) -> bool:
+        """The agent's own window (the lane on this launch) is the desk's front."""
+        try:
+            from holdspeak.services.desk_window_service import DeskWindowService
+
+            windows = DeskWindowService(self._db).list().get("windows") or []
+        except Exception:
+            return False
+        front = next((w for w in windows if w.get("front")), None)
+        return bool(front and front.get("id") == "lane" and front.get("object_ref") == f"launch:{launch_id}")
+
     # ── D3 notification decision (wired from run_sweep) ────────────────
 
     def _run_notification_decision(
@@ -1524,3 +1567,25 @@ class HeartbeatService:
                 "held": self.in_quiet_hours(),
             },
         }
+
+
+def agent_done_notices_path() -> "Path":
+    from pathlib import Path
+
+    from holdspeak.delivery import factory_launch
+
+    return Path(factory_launch.DEFAULT_LAUNCHES_PATH).with_name("agent_done_notices.json")
+
+
+def _record_agent_done_notice(receipt: dict[str, Any]) -> None:
+    """Betterment AG9: keep each Done notice decision (the newest 50)."""
+    import json
+
+    path = agent_done_notices_path()
+    try:
+        rows = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
+        rows = [*(rows if isinstance(rows, list) else []), receipt][-50:]
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(rows, indent=1) + "\n", encoding="utf-8")
+    except Exception as exc:
+        log.warning("agent done notice not recorded: %s", exc)
