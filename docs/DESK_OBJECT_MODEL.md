@@ -60,19 +60,18 @@ A state badge needs a named live field.
 The menus, the command palette, context menus, window head menus, and dock menus all derive from it.
 Each verb has an ID, a label, a menu, an optional key, a `ghost` check, and a `run` function.
 A `ghost` check returns the reason a verb is unavailable.
-The menu shows an unavailable verb dimmed, with that reason.
+The menu hides a verb when it cannot run for the current selection.
 
 | Menu | Verbs |
 | --- | --- |
-| **Desk** | **New Note**, **Write a thought**, **New Decision**, **New Knowledge**, **New Automation**, **New Thread**, **New Project**, **Hide the menus** (Settle in). **Reset layout**, **Reset to seed…** and **Refresh from hub** are in the command palette only. |
-| **Object** | **Open**, **Get Info**, **Ask this project**, **Ask AI**, **Continue in thread**, **Edit**, **Rename**, **Duplicate**, **Move to Zone**, **Delete**, **Focus** (Zone) |
-| **Go** | **Open Today**, **Open People**, and one entry for each tool in `DESK_APPLICATIONS`. An open window gets focus instead of a second copy. |
-| **Window** | **Close window**, **Iconify**, **Cycle windows**, **Cycle windows (reverse)**, **Snap left**, **Snap right**, **Zoom**, **To back**, and the four Chair windows |
+| **Desk** | **New Note**, **New Decision**, **New Automation**, **New Thread**, **New Project**, **Hide the menus** (Settle in). **Reset layout**, **Reset to seed…** and **Refresh from hub** are in Search. |
+| **Object** | **Open**, **Get Info**, **Ask about this**, **Draft update**, **Hand to agent**, **Edit**, **Rename**, **Duplicate**, **Move to Zone**, **Delete**. The selected object determines which verbs appear. |
+| **Go** | Apps from `DESK_APPLICATIONS`, grouped by their `go` entries, plus projects and drawers. An open window gets focus instead of a second copy. |
+| **Window** | **Close window**, **Iconify**, **Cycle windows**, **Cycle windows (reverse)**, **Snap left**, **Snap right**, **Zoom**, **To back**, and the current-work windows |
 | System | **Search**, **Keyboard shortcuts** |
-| Thread slash commands | **Keep as note**, **Fork from here**, **Stop generation**, **New thread**, **Switch mode**, **Insert prompt**, **Show tools**, **Add todo**, **Compact thread**, **Toggle guardrail** |
 
 **Reset to seed…** opens Settings. You confirm the reset there. The menu never resets by itself.
-The composer runs the Thread slash commands.
+New Thread opens Ask. The separate Thread window is parked.
 
 ### Keys
 
@@ -88,14 +87,14 @@ The old `⌘` keys stay bound. They work where the browser sends them to the pag
 | --- | --- |
 | `⌃N` | **New Note** |
 | `⌃⇧N` | **New Decision** |
-| `⌃T` | **Write a thought** |
+| `⌃T` | **New Note** |
 | `⌘⇧F` | Settle in |
 | `⌃↑` | **Overview** |
 | `F2` | **Rename** |
 | `Delete` | **Delete** (Backspace on a Mac) |
-| `⌘I` | **Ask AI** |
+| `⌘I` | **Ask** |
 | `⌃1` to `⌃4` | Speak, Meetings, Agents, Settings |
-| `⌘⇧P` | Change places |
+| `⌘⇧P` | Wallpaper in Settings |
 | `⌃W` | **Close window** |
 | `⌃M` | **Iconify** |
 | `⌘⇧Z` | **Zoom** |
