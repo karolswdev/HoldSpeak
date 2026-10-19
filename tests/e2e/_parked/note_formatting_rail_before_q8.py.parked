@@ -1,0 +1,71 @@
+# Q8 routes every note to the one note window; the old form rail is parked.
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width,height", [(1440, 900), (393, 852)])
+    def test_the_editor_rail(self, width: int, height: int) -> None:
+        """The note editor's formatting rail: eleven verbs, one species."""
+        from playwright.sync_api import sync_playwright
+
+        H1_SHOTS.mkdir(parents=True, exist_ok=True)
+        tag = str(width)
+        errors: list[str] = []
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            page = browser.new_page(viewport={"width": width, "height": height})
+            page.on("pageerror", lambda err: errors.append(str(err)))
+
+            _arrive(page, self.base)
+            # An ORDINARY note: the rail rides the note editor
+            # (`NoteEditor.tsx:143`). The thought workspace deliberately
+            # hides it (`ThoughtDocumentPane.tsx:57 showToolbar={false}`),
+            # so the thought door is the wrong door for this subject.
+            _api(
+                page, "POST", "/api/notes",
+                {"title": NOTE_TITLE, "body": "The rail is the library."},
+                token=H1_TOKEN,
+            )
+            notes = _api(page, "GET", "/api/notes", token=H1_TOKEN)["notes"]
+            note_id = str(
+                next(n for n in notes if n.get("title") == NOTE_TITLE)["id"]
+            )
+
+            # The product's own door to a saved note: ⌘K, then Enter.
+            page.locator(".desk-tools-launch").click()
+            shelf = page.get_by_role("region", name="Tools and Desk search", exact=True)
+            field = shelf.get_by_role(
+                "combobox", name="Search tools and Desk items", exact=True
+            )
+            field.fill(NOTE_TITLE)
+            target = shelf.locator(f'[id="desk-palette-option-note:{note_id}"]')
+            target.wait_for(timeout=10_000)
+            field.press("Enter")
+            note = page.get_by_role("region", name=NOTE_TITLE, exact=True)
+            note.wait_for(timeout=15_000)
+            # The note opens READ-first; its own verb opens the editor
+            # (`NotePullout.tsx:434 onAction={() => openEditor(o.id)}`).
+            note.get_by_role("button", name="Start writing", exact=True).click()
+            rail = page.locator(".desk-editor-toolbar")
+            rail.first.wait_for(timeout=20_000)
+            _settle(page)
+
+            rows = _library_species(
+                page, ".desk-editor-toolbar button", subject="the editor's rail",
+                chrome_only=True,
+            )
+            assert len(rows) >= 11, f"the rail lost verbs: {len(rows)}"
+            _shot(page, f"editor-rail-{tag}.png")
+
+            # The rail is a toolbar of real buttons: each one focuses and
+            # draws a ring (the raw markup did too; nothing moved).
+            # PHILO-13-11 (slice two): the Chair's four windows carry close
+            # gadgets too and come first in the DOM; the walk starts at the
+            # editor window's own close gadget, as it always meant to.
+            ring = _tab_into(
+                page, ".desk-editor-toolbar",
+                start=".desk-window-shell:has(.desk-editor-toolbar) .desk-gadget-close", limit=20,
+            )
+            assert ring["outlineWidth"] > 0, f"no focus ring on the rail: {ring}"
+            assert ring["inRail"], ring
+
+            real_errors = [e for e in errors if "ResizeObserver" not in e]
+            assert not real_errors, real_errors
+            browser.close()
