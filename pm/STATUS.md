@@ -62,7 +62,7 @@ Q11/Q12 #1375 is on the running desk. Its two existing pages render at
 fresh live-model page write is not observed. A separate check is tracing
 whether the selected Memory assignment also determines physical dispatch.
 
-P5/P6 preserves provider sites through paste, validation, preview and saved
+P5/P6 #1377 preserves provider sites through paste, validation, preview and saved
 watches. Matching uses provider, site and scope; an unknown site or ambiguous
 bare key names the problem without selecting another account. Preview is an
 admitted owner HTTP operation. Found meetings and notes can be added together

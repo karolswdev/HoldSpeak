@@ -93,8 +93,8 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | P2 | Leave 1:1s out of updates | Done · #1276 |  |
 | P3 | The Now wing: where it stands in ten seconds | Done · #1350 | Recovered meeting source chips; populated head facts and Now sections observed on an isolated hub at 1440/393. |
 | P4 | Projects and Decisions in Go; withhold dead verbs | Done · #1349 | State/reason in Projects, truthful Not read, scoped Write update in Search. |
-| P5 | Sources in one go | Done | Paste keeps exact site/account; Found adds meetings and notes together; existing-project sources use the same Door. |
-| P6 | Nudge and Ask, in their homes | Done | Exact destination and stored action feed Send; shared Ask keeps project scope. |
+| P5 | Sources in one go | Done · #1377 | Paste keeps exact site/account; Found adds meetings and notes together; existing-project sources use the same Door. |
+| P6 | Nudge and Ask, in their homes | Done · #1377 | Exact destination and stored action feed Send; shared Ask keeps project scope. |
 | P7 | The update is an automation; the steward folds in | Open |  |
 | P8 | The agent writes the update | Open |  |
 | P9 | One decision record | Open |  |
