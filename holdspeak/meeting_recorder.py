@@ -11,6 +11,7 @@ import sys
 import threading
 import time
 from dataclasses import dataclass, field
+from queue import Empty, Full, Queue
 from typing import Callable, Optional, TYPE_CHECKING
 
 import numpy as np
@@ -40,6 +41,8 @@ log = get_logger("meeting")
 
 # Native CoreAudio teardown can wait forever. Saving accepted audio must not.
 _NATIVE_STOP_TIMEOUT_SECONDS = 1.0
+_CAPTURE_QUEUE_MAX_CHUNKS = 64
+_CAPTURE_QUEUE_POLL_SECONDS = 0.05
 
 
 class MeetingRecorderError(HoldSpeakError):
@@ -180,8 +183,14 @@ class MeetingRecorder:
         self._lock = threading.Lock()
         self._recording = False
         self.device_cleanup_error: Optional[str] = None
+        # A queue refusal is a capture failure, not an accepted chunk.  Keep
+        # this separate from native device cleanup so callers can report the
+        # actual audio loss without claiming that Stop saved it.
+        self.capture_failure: Optional[str] = None
         self._start_time: Optional[float] = None
         self._buffer = DualStreamBuffer()
+        self._capture_queue: Queue[AudioChunk] = Queue(maxsize=_CAPTURE_QUEUE_MAX_CHUNKS)
+        self._writer_thread: Optional[threading.Thread] = None
         # Phase 14: registered AIPI-Lite-class device streams.
         # Each maps device_id → (source, label, last_drain_monotonic).
         # The recorder doesn't capture device audio itself; the
@@ -317,6 +326,15 @@ class MeetingRecorder:
             self._recording = True
             self._start_time = time.time()
             self._buffer.clear()
+            self.capture_failure = None
+            if self._writer_thread is None or not self._writer_thread.is_alive():
+                self._capture_queue = Queue(maxsize=_CAPTURE_QUEUE_MAX_CHUNKS)
+                self._writer_thread = threading.Thread(
+                    target=self._drain_capture_queue,
+                    name="meeting-audio-writer",
+                    daemon=True,
+                )
+                self._writer_thread.start()
 
         log.info("Starting meeting recording")
 
@@ -326,6 +344,7 @@ class MeetingRecorder:
         except Exception as e:
             with self._lock:
                 self._recording = False
+            self._wait_for_writer()
             raise MeetingRecorderError(f"Failed to start mic recording: {e}") from e
 
         # Start system capture (if available). Prefer PortAudio, fall back to ffmpeg PulseAudio monitor.
@@ -377,14 +396,15 @@ class MeetingRecorder:
             if not self._recording:
                 raise MeetingRecorderError("Not recording")
             self._recording = False
-            # Commit and snapshot use this same lock, so an admitted callback
-            # finishes its buffer/journal write before capture is sealed.
-            mic_chunks, system_chunks = self._buffer.get_all_chunks()
 
         log.info("Stopping meeting recording")
 
-        # Stop streams
+        # Abort streams so native teardown does not wait for queued buffers.
         self._stop_streams()
+        # An admitted queue item is part of the capture contract.  Wait for
+        # the writer to finish its journal callback before taking the snapshot.
+        self._wait_for_writer()
+        mic_chunks, system_chunks = self._buffer.get_all_chunks()
 
         log.info(f"Recording stopped: {len(mic_chunks)} mic chunks, {len(system_chunks)} system chunks")
 
@@ -487,18 +507,73 @@ class MeetingRecorder:
         return result
 
     def _commit_audio_chunk(self, chunk: np.ndarray, timestamp: float, source: str) -> bool:
-        """Accept PCM and its journal write atomically with the Stop cutoff."""
+        """Admit a copied PCM chunk without doing disk work on the callback."""
         duration = len(chunk) / self.sample_rate
+        # sounddevice owns its callback buffer after return.  The callbacks
+        # already copy their input; this copy also protects direct producers
+        # that use this seam in tests or the ffmpeg reader.
+        accepted = AudioChunk(
+            np.asarray(chunk, dtype=np.float32).copy(), timestamp, source, duration
+        )
+        self._ensure_writer_started()
+        overflow = False
         with self._lock:
             if not self._recording:
                 return False
-            if source == "mic":
-                self._buffer.add_mic_chunk(chunk, timestamp, duration)
-            else:
-                self._buffer.add_system_chunk(chunk, timestamp, duration)
-            if self.on_audio_chunk is not None:
-                self.on_audio_chunk(AudioChunk(chunk, timestamp, source, duration))
+            try:
+                self._capture_queue.put_nowait(accepted)
+            except Full:
+                self.capture_failure = (
+                    "Audio capture queue overflow: chunk refused; Stop cannot claim it"
+                )
+                overflow = True
+        if overflow:
+            # Keep logging out of the callback's cutoff lock.  The refusal is
+            # already recorded in capture_failure before this diagnostic runs.
+            log.error(self.capture_failure)
+            return False
         return True
+
+    def _ensure_writer_started(self) -> None:
+        """Start the queue writer for direct callback seam tests as well as start()."""
+        with self._lock:
+            if self._writer_thread is not None and self._writer_thread.is_alive():
+                return
+            self._writer_thread = threading.Thread(
+                target=self._drain_capture_queue,
+                name="meeting-audio-writer",
+                daemon=True,
+            )
+            self._writer_thread.start()
+
+    def _drain_capture_queue(self) -> None:
+        """Move admitted chunks to memory and the journal off the audio thread."""
+        while True:
+            try:
+                item = self._capture_queue.get(timeout=_CAPTURE_QUEUE_POLL_SECONDS)
+            except Empty:
+                with self._lock:
+                    if not self._recording and self._capture_queue.empty():
+                        return
+                continue
+
+            try:
+                if item.source == "mic":
+                    self._buffer.add_mic_chunk(item.audio, item.timestamp, item.duration)
+                else:
+                    self._buffer.add_system_chunk(item.audio, item.timestamp, item.duration)
+                if self.on_audio_chunk is not None:
+                    self.on_audio_chunk(item)
+            except Exception as exc:
+                self.capture_failure = f"Audio capture writer failed: {exc}"
+                log.error(self.capture_failure)
+            finally:
+                self._capture_queue.task_done()
+
+    def _wait_for_writer(self) -> None:
+        writer = self._writer_thread
+        if writer is not None and writer is not threading.current_thread():
+            writer.join()
 
     def _start_mic_stream(self) -> None:
         """Start the microphone input stream."""
@@ -624,10 +699,20 @@ class MeetingRecorder:
 
             def cleanup(stream=stream, name=name, done=done, result=result):
                 try:
-                    try:
-                        stream.stop()
-                    except Exception as exc:
-                        log.debug("Error stopping %s stream: %s", name, exc)
+                    abort = getattr(stream, "abort", None)
+                    if callable(abort):
+                        try:
+                            abort()
+                        except Exception as exc:
+                            log.debug("Error aborting %s stream: %s", name, exc)
+                    else:
+                        # Compatibility for old test doubles and alternate
+                        # stream implementations. Real sounddevice streams
+                        # take the abort branch above.
+                        try:
+                            stream.stop()
+                        except Exception as exc:
+                            log.debug("Error stopping %s stream: %s", name, exc)
                     try:
                         stream.close()
                     except Exception as exc:

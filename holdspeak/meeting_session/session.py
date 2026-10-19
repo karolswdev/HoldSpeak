@@ -681,10 +681,12 @@ class MeetingSession(
         # Seal capture promptly; native teardown has its own bounded wait. Do
         # not keep accepting audio during the transcription/intelligence joins.
         mic_chunks, system_chunks, device_chunks = [], [], {}
+        capture_failure = None
         if recorder is not None:
             try:
                 mic_chunks, system_chunks = recorder.stop()
                 self.device_cleanup_error = getattr(recorder, "device_cleanup_error", None)
+                capture_failure = getattr(recorder, "capture_failure", None)
                 device_chunks = recorder.get_pending_device_chunks()
             except Exception as exc:
                 log.error("Error stopping recorder: %s", exc)
@@ -774,8 +776,8 @@ class MeetingSession(
 
             # Mark as ended
             self._state.ended_at = local_wall()
-            self._state.capture_status = "finalized"
-            self._state.capture_failure = None
+            self._state.capture_status = "recoverable" if capture_failure else "finalized"
+            self._state.capture_failure = capture_failure
             self._state.capture_checkpoint_at = local_wall()
             self._state.capture_checkpoint_seconds = self._state.duration
             final_state = self._state
@@ -784,6 +786,11 @@ class MeetingSession(
 
         # Stop is itself a durable checkpoint; the later compatibility JSON and
         # aftercare work may fail without losing or duplicating the Meeting.
+        if capture_failure and self._capture_journal is not None:
+            try:
+                self._capture_journal.mark_recoverable(capture_failure)
+            except Exception as marker_error:
+                log.error("Could not publish capture failure marker: %s", marker_error)
         if journal_error is not None:
             with self._lock:
                 final_state.capture_status = "recoverable"
@@ -809,7 +816,7 @@ class MeetingSession(
                 except Exception as marker_error:
                     log.error("Could not publish capture recovery marker: %s", marker_error)
         else:
-            if journal_error is None and self._capture_journal is not None:
+            if journal_error is None and not capture_failure and self._capture_journal is not None:
                 try:
                     self._capture_journal.finalize()
                 except Exception as exc:
