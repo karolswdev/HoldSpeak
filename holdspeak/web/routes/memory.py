@@ -27,7 +27,7 @@ def build_memory_router(ctx: WebContext) -> APIRouter:
             # Off the event loop: a search reads the database and may wait
             # (a bounded time) for the question's embedding.
             return JSONResponse(await run_in_threadpool(
-                service.search, request.state.principal, query, kind=kind,
+                service.search_for_desk, request.state.principal, query, kind=kind,
                 project_id=project_id, time_from=time_from, time_to=time_to,
                 limit=limit, offset=offset,
             ))

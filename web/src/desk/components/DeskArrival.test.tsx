@@ -180,11 +180,12 @@ describe("Phase 93 Desk arrival", () => {
       name: "Search tools and Desk items",
     });
     fireEvent.change(reopenedSearch, { target: { value: "Slack" } });
-    expect(screen.getByRole("option", { name: /Slack/ })).toBeInTheDocument();
+    // Betterment Q3: the Ask "…" row also names the text; the object row is the other one.
+    expect(screen.getByRole("option", { name: (n) => /Slack/.test(n) && !n.includes("Ask \"") })).toBeInTheDocument();
     fireEvent.change(reopenedSearch, { target: { value: "This device" } });
-    expect(screen.getByRole("option", { name: /This device/ })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: (n) => /This device/.test(n) && !n.includes("Ask \"") })).toBeInTheDocument();
     fireEvent.change(reopenedSearch, { target: { value: "Qwen local" } });
-    expect(screen.getByRole("option", { name: /Qwen local/ })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: (n) => /Qwen local/.test(n) && !n.includes("Ask \"") })).toBeInTheDocument();
     unregisterProject();
   });
 

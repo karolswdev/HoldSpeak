@@ -273,3 +273,73 @@ def standing_pages(db: Any, scope_kind: str, project_id: str = "") -> list[dict[
 
 
 __all__ = ["belief_cards", "day", "recall_beliefs", "ref_tokens", "standing_pages"]
+
+
+# ── Search on the Desk (Betterment Q3, "Search asks") ──
+#
+# ⌘K draws each hit as plain text: no markdown marks, no empty `[]`, and no
+# thread that holds only a question (an Ask with no answer is not a thing he
+# can find again).  The server's own ``<mark>`` grammar and ``[redacted]``
+# stay.
+
+_MD_LINK = re.compile(r"!?\[([^\]\n]*)\]\([^)\s]*\)")
+_MD_EMPTY_BOX = re.compile(r"\[\s?[xX]?\s?\]")
+_MD_STRONG = re.compile(r"(\*\*|__|~~)")
+_MD_CODE = re.compile(r"`+")
+_MD_LINE_HEAD = re.compile(r"(^|\n)[ \t]*(?:#{1,6}[ \t]+|>[ \t]?|[-*+][ \t]+(?=\S))")
+_MD_EMPHASIS = re.compile(r"(?<![\w*])\*(?=\S)([^*\n]+?)(?<=\S)\*(?![\w*])")
+_MD_DASH_LIST = re.compile(r"(?<=:)([ \t]+)[-*+][ \t]+(?=\S)")
+_SPACES = re.compile(r"[ \t]{2,}")
+
+
+def plain_snippet(text: Any) -> str:
+    """A memory snippet or title as plain words: the markdown marks
+    (``**``, ``__``, ``~~``, backticks, headings, quotes, list dashes and
+    link syntax) and empty check boxes ``[]`` go; ``<mark>`` and
+    ``[redacted]`` stay."""
+    value = str(text or "")
+    if not value:
+        return ""
+    value = _MD_LINK.sub(lambda m: m.group(1), value)
+    value = _MD_EMPTY_BOX.sub("", value)
+    value = _MD_STRONG.sub("", value)
+    value = _MD_CODE.sub("", value)
+    value = _MD_LINE_HEAD.sub(lambda m: m.group(1), value)
+    value = _MD_EMPHASIS.sub(lambda m: m.group(1), value)
+    value = _MD_DASH_LIST.sub(lambda m: m.group(1), value)
+    value = _SPACES.sub(" ", value)
+    return value.strip()
+
+
+def _answered_threads(db: Any, thread_ids: set[str]) -> set[str]:
+    """The threads among ``thread_ids`` that hold an answer (a live
+    assistant message)."""
+    if not thread_ids:
+        return set()
+    with db._connection() as conn:
+        rows = conn.execute(
+            "SELECT DISTINCT thread_id FROM thread_messages"
+            " WHERE thread_id IN (SELECT value FROM json_each(?))"
+            " AND role='assistant' AND deleted_at IS NULL AND aborted_at IS NULL",
+            (json.dumps(sorted(thread_ids)),),
+        ).fetchall()
+    return {str(row[0]) for row in rows}
+
+
+def search_face(db: Any, result: dict[str, Any]) -> dict[str, Any]:
+    """The search answer as ⌘K draws it: plain snippets and titles, and no
+    thread without an answer."""
+    hits = list(result.get("hits") or [])
+
+    def thread_id(hit: dict[str, Any]) -> str:
+        ref = str(hit.get("source_ref") or "")
+        return ref.split("#", 1)[0][len("thread:"):] if ref.startswith("thread:") else ""
+
+    answered = _answered_threads(db, {tid for tid in map(thread_id, hits) if tid})
+    kept: list[dict[str, Any]] = []
+    for hit in hits:
+        tid = thread_id(hit)
+        if tid and tid not in answered:
+            continue
+        kept.append({**hit, "snippet": plain_snippet(hit.get("snippet")), "title": plain_snippet(hit.get("title"))})
+    return {**result, "hits": kept}

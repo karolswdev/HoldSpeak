@@ -62,6 +62,13 @@ class MemoryService:
         except ValueError as exc:
             raise ValidationError(str(exc)) from exc
 
+    def search_for_desk(self, principal: Principal, query: str, **kwargs: Any) -> dict[str, Any]:
+        """``search`` as the Desk's Search draws it (Betterment Q3): plain
+        snippets and titles, and no thread that holds no answer."""
+        from .memory_faces import search_face
+
+        return search_face(self._db, self.search(principal, query, **kwargs))
+
     def observations(
         self,
         principal: Principal,

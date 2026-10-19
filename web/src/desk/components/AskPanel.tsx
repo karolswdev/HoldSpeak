@@ -302,13 +302,21 @@ export function AskPanel() {
   }, [startNew]);
 
   // The store asks for a thread (or a new Ask): follow each request once.
+  // Betterment Q3: a new Ask can carry its question; `run` asks it once the
+  // window shows it (Search's Ask row: one Enter, one answer).
   const handledNonce = useRef(0);
+  const [autoRun, setAutoRun] = useState<string | null>(null);
   useEffect(() => {
     if (!askThread || askThread.nonce === handledNonce.current) return;
     handledNonce.current = askThread.nonce;
     if (askThread.threadId) void loadThread(askThread.threadId);
     else startNew();
-  }, [askThread, loadThread, startNew]);
+    const question = askThread.question?.trim();
+    if (!askThread.threadId && question) {
+      setPrompt(question);
+      setAutoRun(askThread.run ? question : null);
+    }
+  }, [askThread, loadThread, startNew, setPrompt]);
 
   // The newest answer stays in view.
   useEffect(() => {
@@ -467,6 +475,14 @@ export function AskPanel() {
     };
     return run(snapshot);
   };
+
+  // The seeded question runs once, on the render that shows it.
+  useEffect(() => {
+    if (!autoRun || threadId || prompt.trim() !== autoRun) return;
+    setAutoRun(null);
+    void ask();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoRun, prompt, threadId]);
 
   /** Stop ends the wait and tells the hub; the question stays, marked
    *  stopped, with Ask again. */
