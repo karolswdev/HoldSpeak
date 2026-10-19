@@ -10,7 +10,7 @@
  *  This window is where agents live: the Agents application and the
  *  Arrival's AGENTS section fold into it (PROPOSAL §3, Movement C).
  */
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import {
   AppHead,
@@ -401,12 +401,13 @@ export function ConductorWindow() {
   // Betterment AG4: a hand opens Agents on its new agent: that row is
   // selected and in view once the read draws it.
   const focus = useConductor((s) => s.focus);
+  const bodyRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!focus || !members.some((m) => m.id === focus)) return;
     setSelectedId(focus);
     useConductor.getState().clearFocus();
     window.requestAnimationFrame(() => {
-      document.querySelector(`.conductor-window [data-object-id="${CSS.escape(focus)}"]`)?.scrollIntoView?.({ block: "nearest" });
+      bodyRef.current?.querySelector(`[data-object-id="${CSS.escape(focus)}"]`)?.scrollIntoView?.({ block: "nearest" });
     });
   }, [focus, members]);
   useEffect(() => {
@@ -477,7 +478,7 @@ export function ConductorWindow() {
       lamp={head.ask > 0 ? "ask" : undefined}
       onClose={() => useConductor.getState().closeWindow()}
     >
-      <div className="desk-pullout-body drawer-body" data-testid="conductor-window">
+      <div ref={bodyRef} className="desk-pullout-body drawer-body" data-testid="conductor-window">
         <div className="drawer-scroll cw">
           <div className="cw-head">
             <AppHead fact={headFact(head, members)} className="cw-apphead" data-testid="conductor-head">

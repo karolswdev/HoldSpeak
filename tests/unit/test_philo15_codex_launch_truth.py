@@ -326,7 +326,10 @@ def test_the_codex_launch_mounts_the_conductor_palette_with_its_mutators() -> No
           "automation.create", "automation.update", "automation.delete",
           "automation.results", "automation.cancel"}
     assert m3 <= palette
-    assert len(palette) == 138 + 6 + 1 + len(m3)
+    # Betterment MCP M6 (#1331): + provider.github_pr_get (a WORK read: the
+    # review starter's agent reads the PR it is about).
+    assert "provider.github_pr_get" in palette
+    assert len(palette) == 138 + 6 + 1 + len(m3) + 1
 
 
 # ── 6. Astra r2 on #996: the wait episode, the FIFO, expiry, provenance ──

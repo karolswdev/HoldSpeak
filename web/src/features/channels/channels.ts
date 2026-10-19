@@ -190,9 +190,11 @@ const REFUSED: Record<string, string> = {
   slack_key_ref_invalid: "KEY NAME NOT VALID",
   slack_key_store_locked: "KEY STORE LOCKED",
   slack_key_store_not_native: "NO SAFE KEY STORE",
+  slack_key_store_unavailable: "NO KEY STORE",
   email_key_ref_invalid: "KEY NAME NOT VALID",
   email_key_store_locked: "KEY STORE LOCKED",
   email_key_store_not_native: "NO SAFE KEY STORE",
+  email_key_store_unavailable: "NO KEY STORE",
   email_provider_unknown: "PROVIDER NOT KNOWN",
   email_recipient_duplicate: "ADDRESS TWICE",
   email_recipients_missing: "NO RECIPIENT",
@@ -271,6 +273,7 @@ const FAILED: Record<string, string> = {
   email_key_missing: "NO KEY",
   email_key_store_locked: "KEY STORE LOCKED",
   email_key_store_not_native: "NO SAFE KEY STORE",
+  email_key_store_unavailable: "NO KEY STORE",
   url_not_admitted: "ADDRESS NOT PERMITTED",
   connect_refused: "CONNECTION REFUSED",
   dns_failed: "HOST NOT FOUND",
@@ -287,6 +290,7 @@ const FAILED: Record<string, string> = {
   slack_webhook_invalid: "WEBHOOK NOT VALID",
   slack_key_store_locked: "KEY STORE LOCKED",
   slack_key_store_not_native: "NO SAFE KEY STORE",
+  slack_key_store_unavailable: "NO KEY STORE",
 };
 /** A failure code with a variable part: its word by prefix (none today). */
 const FAILED_PREFIX: [string, string][] = [
@@ -315,6 +319,7 @@ const UNKNOWN: Record<string, string> = {
   email_key_missing: "NO KEY",
   email_key_store_locked: "KEY STORE LOCKED",
   email_key_store_not_native: "NO SAFE KEY STORE",
+  email_key_store_unavailable: "NO KEY STORE",
   url_not_admitted: "ADDRESS NOT PERMITTED",
   connect_refused: "CONNECTION REFUSED",
   dns_failed: "HOST NOT FOUND",
@@ -328,6 +333,7 @@ const UNKNOWN: Record<string, string> = {
   slack_webhook_invalid: "WEBHOOK NOT VALID",
   slack_key_store_locked: "KEY STORE LOCKED",
   slack_key_store_not_native: "NO SAFE KEY STORE",
+  slack_key_store_unavailable: "NO KEY STORE",
 };
 /** An UNKNOWN code with a variable part: the file channel's unpinned OS
  *  errors (`create_<errno>`, `write_<errno>`), an effect that raised, a CLI's

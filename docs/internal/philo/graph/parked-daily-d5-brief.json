@@ -1,0 +1,994 @@
+{
+  "parked": "2026-10-18, Betterment daily D5 (#1336): atlas cases that drove the retired Brief window (its Generate press and headline). Live ids stay in atlas.json: the two Generate-again face cases as not_applicable with the successor in `reason`; generated_empty and route_generate_again.same_day_same_id now go through Today. These are the declarations as they stood.",
+  "source_commit": "f6b0c1be0",
+  "cases": [
+    {
+      "id": "case.j10.arrival_generate_again.same_day_idempotent",
+      "job": "j10",
+      "edge_ids": [
+        "edge.face.arrival_brief_generate_again"
+      ],
+      "state_id": "state.briefs.same_day_idempotent",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME with NOTHING material in the window, so the first brief is empty; the case then adds one decision through the real route and presses Generate again (PHILO-15-09: the press regenerates).",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "chair-desk"
+          },
+          "observe_at": "[data-testid=chair-desk]",
+          "why": "the desk is really past the first-value gate; PHILO-13-11 (slice two): read on the Chair screen [data-testid=chair-desk], which renders only past the gate; at 393 the headline is in the Needs-you window, one window at a time"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-brief-headline"
+          },
+          "observe_at": "[data-testid=arrival-brief-headline]",
+          "why": "RETAINED: after the reload the first brief's own headline is on the face (ChairHome.tsx:1163), read back from GET /api/brief/latest, before the second POST"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "boundary",
+          "label": "recorded meeting intelligence provider",
+          "substitute": "engine_reply",
+          "reply": "tests/fixtures/philo11_documents/meeting_summary_reply.json",
+          "adapter": "hub-engine-boundary",
+          "why": "a loopback provider edge for the engine definition; the brief producer calls no engine. since the one needs-you rule (holdspeak/services/monday_brief_service.py:594) a brief on a HOME with no summary engine carries the blocker 'No engine for summaries', so it is not empty; the case pins the summary engine first, the product's way, and the window is then empty"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "body": {
+            "base_url": "{replay_provider_url}"
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "why": "discover the recorded model at the rig loopback provider edge"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "body": {
+            "draft": {
+              "request_id": "j10-brief-model",
+              "profile_id": "j10-recorded-engine",
+              "expected_profile_revision": 0,
+              "label": "Recorded loopback provider",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "{replay_provider_url}",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "why": "define the immutable replay engine profile"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/concierge/summary-selection",
+          "body": {
+            "commandId": "j10-brief-summary",
+            "expectedAssignmentRevision": 0,
+            "profileId": "{profile_id}",
+            "profileRevision": 1
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "the summary engine is chosen: no meeting-path blocker is in the window"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Brief']",
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[data-testid=arrival-brief-generate]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=arrival-brief-receipt]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=arrival-brief-headline]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "body": null,
+          "capture_as": "first_brief_id",
+          "capture_path": "id",
+          "adapter": "http-route",
+          "why": "the RETAINED brief's id, read after the reload and before the second POST, so the observation carries it beside the id the second POST returns"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "body": null,
+          "capture_as": "first_generated_at",
+          "capture_path": "generated_at",
+          "adapter": "http-route",
+          "why": "PHILO-15-09: the first brief's GENERATED time, read before the new work and the second press"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Adopt the j10 regenerate check",
+            "status": "accepted"
+          },
+          "expect_status": 201,
+          "adapter": "http-route",
+          "why": "PHILO-15-09: new work after the morning brief, through the real route (the owner decides)"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "selector": "[data-testid=arrival-brief-generate]",
+        "adapter": "ui-pointer",
+        "trigger_route": {
+          "method": "POST",
+          "path": "/api/brief/generate"
+        }
+      },
+      "expected": {
+        "predicate": {
+          "kind": "text_contains",
+          "value": "Decision made: Adopt the j10 regenerate check"
+        },
+        "observe_at": "[data-testid=arrival-brief]",
+        "words": "same-day Generate makes the brief again from the current desk: the work added after the first brief is on the face (PHILO-15-09); the smoke fence reads the press's own answer for the same id and a newer generated_at",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/brief/latest"
+          }
+        ]
+      },
+      "completion_bound_s": 180,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.j10.arrival_generate_again.retained_after_reload",
+      "job": "j10",
+      "edge_ids": [
+        "edge.face.arrival_load"
+      ],
+      "state_id": "state.briefs.reload_persisted",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME with NOTHING material in the window, so the generated brief is empty and the Chair draws its own 'Generate again' verb (ChairHome.tsx:1136-1157). With untriaged items the Chair draws NO second verb at all (:1114) and this recipe cannot run.",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "chair-desk"
+          },
+          "observe_at": "[data-testid=chair-desk]",
+          "why": "the desk is really past the first-value gate; PHILO-13-11 (slice two): read on the Chair screen [data-testid=chair-desk], which renders only past the gate; at 393 the headline is in the Needs-you window, one window at a time"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-brief-headline"
+          },
+          "observe_at": "[data-testid=arrival-brief-headline]",
+          "why": "RETAINED: after the reload the first brief's own headline is on the face (ChairHome.tsx:1163), read back from GET /api/brief/latest, before the second POST"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "boundary",
+          "label": "recorded meeting intelligence provider",
+          "substitute": "engine_reply",
+          "reply": "tests/fixtures/philo11_documents/meeting_summary_reply.json",
+          "adapter": "hub-engine-boundary",
+          "why": "a loopback provider edge for the engine definition; the brief producer calls no engine. since the one needs-you rule (holdspeak/services/monday_brief_service.py:594) a brief on a HOME with no summary engine carries the blocker 'No engine for summaries', so it is not empty; the case pins the summary engine first, the product's way, and the window is then empty"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "body": {
+            "base_url": "{replay_provider_url}"
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "why": "discover the recorded model at the rig loopback provider edge"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "body": {
+            "draft": {
+              "request_id": "j10-brief-model",
+              "profile_id": "j10-recorded-engine",
+              "expected_profile_revision": 0,
+              "label": "Recorded loopback provider",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "{replay_provider_url}",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "why": "define the immutable replay engine profile"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/concierge/summary-selection",
+          "body": {
+            "commandId": "j10-brief-summary",
+            "expectedAssignmentRevision": 0,
+            "profileId": "{profile_id}",
+            "profileRevision": 1
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "the summary engine is chosen: no meeting-path blocker is in the window"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Brief']",
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[data-testid=arrival-brief-generate]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=arrival-brief-receipt]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=arrival-brief-headline]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[data-testid=arrival-brief-generate]",
+          "adapter": "ui-pointer",
+          "why": "the second Generate again, the owner's own verb"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=arrival-brief-receipt]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "body": null,
+          "capture_as": "second_headline",
+          "capture_path": "headline",
+          "adapter": "http-route",
+          "why": "the headline of the brief the second generate left in the store, read BEFORE the final reload; a store that already lost it blocks here (no value to capture), never passes"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "reload",
+        "adapter": "ui-navigation",
+        "why": "ANOTHER reload after the second generate: the owner's J10 retention (story table J10)",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "click",
+            "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+            "at_width": 1440,
+            "adapter": "ui-pointer",
+            "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+            "at_width": 1440,
+            "adapter": "ui-pointer",
+            "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+            "at_width": 1440,
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
+            "at_width": 1440,
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+            "at_width": 1440,
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+            "at_width": 393,
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+            "at_width": 393,
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-pointer",
+            "selector": ".desk-window-shell.chair-window[aria-label='Brief']",
+            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "text_contains",
+          "value": "{second_headline}"
+        },
+        "observe_at": "[data-testid=arrival-brief-headline]",
+        "words": "ASTRA round 4: retention across ANOTHER reload after the second Generate again (story table J10). After the reload the face must draw the headline of the brief the second generate returned (ChairHome.tsx:1163, loaded from GET /api/brief/latest at :469). Zero headline elements after the reload is a FAIL: a store that lost the brief behind a same-id, same-headline response is exactly what this case catches. The id half is the protocol sibling case.j10.route_generate_again.retained_after_reload [the audit's stated observation location: face: [data-testid=arrival-brief-headline] after the final reload]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/brief/latest"
+          }
+        ]
+      },
+      "completion_bound_s": 60,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.j10.arrival_generate_brief.generated_empty",
+      "job": "j10",
+      "edge_ids": [
+        "edge.face.arrival_brief_generate"
+      ],
+      "state_id": "state.briefs.generated_empty",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        "nothing in the window",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "chair-desk"
+          },
+          "observe_at": "[data-testid=chair-desk]",
+          "why": "the desk is really past the first-value gate; PHILO-13-11 (slice two): read on the Chair screen [data-testid=chair-desk], which renders only past the gate; at 393 the headline is in the Needs-you window, one window at a time"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "boundary",
+          "label": "recorded meeting intelligence provider",
+          "substitute": "engine_reply",
+          "reply": "tests/fixtures/philo11_documents/meeting_summary_reply.json",
+          "adapter": "hub-engine-boundary",
+          "why": "a loopback provider edge for the engine definition; the brief producer calls no engine. since the one needs-you rule (holdspeak/services/monday_brief_service.py:594) a brief on a HOME with no summary engine carries the blocker 'No engine for summaries', so it is not empty; the case pins the summary engine first, the product's way, and the window is then empty"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "body": {
+            "base_url": "{replay_provider_url}"
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "why": "discover the recorded model at the rig loopback provider edge"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "body": {
+            "draft": {
+              "request_id": "j10-brief-model",
+              "profile_id": "j10-recorded-engine",
+              "expected_profile_revision": 0,
+              "label": "Recorded loopback provider",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "{replay_provider_url}",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "why": "define the immutable replay engine profile"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/concierge/summary-selection",
+          "body": {
+            "commandId": "j10-brief-summary",
+            "expectedAssignmentRevision": 0,
+            "profileId": "{profile_id}",
+            "profileRevision": 1
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "the summary engine is chosen: no meeting-path blocker is in the window"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Brief']",
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "selector": "[data-testid=arrival-brief-generate]",
+        "action": "click",
+        "adapter": "ui-pointer"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "text_contains",
+          "value": "No changes"
+        },
+        "observe_at": "[data-testid=arrival-brief-headline]",
+        "words": "ASTRA round 2: the receipt only says a POST happened. The producer's own empty headline is 'No changes' (holdspeak/services/monday_brief_service.py:341; ratified PHILO-4-01 ask 5, it replaces 'Nothing material changed.') and the Chair draws it at [data-testid=arrival-brief-headline] (ChairHome.tsx:1336). || ASTRA (A): the empty brief must SAY it happened. briefReceipt states 'Brief ready' with no count of zero (briefEgress.ts:51-54); the no-brief branch would say 'No brief yet'. || the brief exists with is_empty true and the face SAYS so ('No changes'); it does not fall back to the no-brief branch - this is the owner's sitting defect 2 [the audit's stated observation location: face: [data-testid=arrival-brief]]"
+      },
+      "completion_bound_s": 120,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.j10.route_generate_again.same_day_same_id",
+      "job": "j10",
+      "edge_ids": [
+        "edge.route.brief_generate"
+      ],
+      "state_id": "state.briefs.same_day_idempotent",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME with NOTHING material in the window, so the first brief is empty; the case then adds one decision through the real route and presses Generate again (PHILO-15-09: the press regenerates).",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "chair-desk"
+          },
+          "observe_at": "[data-testid=chair-desk]",
+          "why": "the desk is really past the first-value gate; PHILO-14 A1 (#939): read on the Chair screen [data-testid=chair-desk], which renders only past the gate (the headline is in the Needs you window, closed on arrival)"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-brief-headline"
+          },
+          "observe_at": "[data-testid=arrival-brief-headline]",
+          "why": "RETAINED: after the reload the first brief's own headline is on the face (ChairHome.tsx:1163), read back from GET /api/brief/latest, before the second POST"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "boundary",
+          "label": "recorded meeting intelligence provider",
+          "substitute": "engine_reply",
+          "reply": "tests/fixtures/philo11_documents/meeting_summary_reply.json",
+          "adapter": "hub-engine-boundary",
+          "why": "a loopback provider edge for the engine definition; the brief producer calls no engine. since the one needs-you rule (holdspeak/services/monday_brief_service.py:594) a brief on a HOME with no summary engine carries the blocker 'No engine for summaries', so it is not empty; the case pins the summary engine first, the product's way, and the window is then empty"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "body": {
+            "base_url": "{replay_provider_url}"
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "why": "discover the recorded model at the rig loopback provider edge"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "body": {
+            "draft": {
+              "request_id": "j10-brief-model",
+              "profile_id": "j10-recorded-engine",
+              "expected_profile_revision": 0,
+              "label": "Recorded loopback provider",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "{replay_provider_url}",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "why": "define the immutable replay engine profile"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/concierge/summary-selection",
+          "body": {
+            "commandId": "j10-brief-summary",
+            "expectedAssignmentRevision": 0,
+            "profileId": "{profile_id}",
+            "profileRevision": 1
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "the summary engine is chosen: no meeting-path blocker is in the window"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
+          "at_width": 1440,
+          "adapter": "ui-pointer",
+          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+          "at_width": 1440,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+          "at_width": 393,
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Brief']",
+          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[data-testid=arrival-brief-generate]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=arrival-brief-receipt]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=arrival-brief-headline]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "body": null,
+          "capture_as": "first_brief_id",
+          "capture_path": "id",
+          "adapter": "http-route",
+          "why": "the RETAINED brief's id, read after the reload and before the second POST, so the observation carries it beside the id the second POST returns"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "body": null,
+          "capture_as": "first_generated_at",
+          "capture_path": "generated_at",
+          "adapter": "http-route",
+          "why": "PHILO-15-09: the first brief's GENERATED time, read before the new work and the second press"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Adopt the j10 regenerate check",
+            "status": "accepted"
+          },
+          "expect_status": 201,
+          "adapter": "http-route",
+          "why": "PHILO-15-09: new work after the morning brief, through the real route (the owner decides)"
+        }
+      ],
+      "trigger": {
+        "kind": "api",
+        "method": "POST",
+        "path": "/api/brief/generate",
+        "body": null,
+        "adapter": "http-route",
+        "why": "the same producer entry the Chair's Generate again verb calls (ChairHome.tsx:559)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "protocol_status",
+          "method": "POST",
+          "path": "/api/brief/generate",
+          "status": 200,
+          "body_contains": "{first_brief_id}"
+        },
+        "observe_at": "protocol: GET /api/brief/latest",
+        "words": "same-day generation keeps the brief identity and makes its body again from the current desk (PHILO-15-09: same id, newer generated_at, fresh items)",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/brief/latest"
+          }
+        ]
+      },
+      "completion_bound_s": 60,
+      "viewports": []
+    }
+  ]
+}

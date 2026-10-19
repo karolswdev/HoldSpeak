@@ -87,6 +87,9 @@ KNOWN_CODE = re.compile(
 )
 KNOWN_MESSAGE = re.compile(
     r"^people_store_unavailable$"  # no People keystore on a fresh HOME
+    # With the rig's file key store the People tools run: placeholder ids are
+    # refused as not found (the People service names the code in ``error``).
+    r"|^people_[a-z_]+_not_found$"
     r"|must be qualified as kind:id|^parent_operation_unknown$|not allowlisted for MCP"
     r"|is retired|live capture controller|not found: x$|^Unknown shelf state: x$"
     # workbench.update / automation.update with only the id (Betterment M3:
@@ -113,7 +116,15 @@ def _refusal_is_known(name: str, payload: Any) -> bool:
 
 class _Hub:
     def __init__(self, home: Path, mode: str = "real") -> None:
-        env = dict(os.environ, HOME=str(home), HF_HUB_OFFLINE="1")
+        # The rig law: the key stores live inside HOME (a file store), as
+        # every rig hub sets them (tests/e2e/glass_infra.py _boot). A scratch
+        # HOME has no keychain, so the native stores refuse with
+        # *_key_store_unavailable (#1328) before any tool can run.
+        env = dict(
+            os.environ, HOME=str(home), HF_HUB_OFFLINE="1",
+            HOLDSPEAK_PEOPLE_KEYSTORE_FILE=str(home / "people.key"),
+            HOLDSPEAK_CHANNEL_KEYSTORE_FILE=str(home / "channel-keys.json"),
+        )
         env.pop("HOLDSPEAK_ALLOW_REAL_HOME", None)
         self.proc = subprocess.Popen(
             [sys.executable, "-c", _CHILD, TOKEN, mode],
