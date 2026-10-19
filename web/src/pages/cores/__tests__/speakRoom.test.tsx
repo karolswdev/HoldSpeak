@@ -131,7 +131,7 @@ describe("Speak delivers for real (HS-112-02)", () => {
     expect(callsTo("/api/dictation/dry-run")).toHaveLength(0);
   });
 
-  it("shows release-to-landed latency on the receipt and details", async () => {
+  it("shows delivery latency in the plain receipt", async () => {
     mockRoutes({
       "/api/dictation/remote": () =>
         Promise.resolve({ success: true, delivered: true, final_text: "ship it friday" }),
@@ -140,11 +140,11 @@ describe("Speak delivers for real (HS-112-02)", () => {
 
     await clickToggle(talk);
 
-    const receipt = await screen.findByText(/^LANDED \d+ MS -> APP IN FRONT$/);
+    const receipt = await screen.findByText(/^Sent to the app in front · \d+ ms$/);
     expect(receipt).toBeVisible();
-    // The LANDS IN row shows the latency token
+    // The receipt retains the measured delivery latency.
     await waitFor(() => {
-      const latencyTokens = screen.getAllByText(/\d+ MS/);
+      const latencyTokens = screen.getAllByText(/\d+ ms/);
       expect(latencyTokens.length).toBeGreaterThan(0);
     });
   });
@@ -229,7 +229,7 @@ describe("Speak REHEARSE stays explicit (betterment C8: Try it here)", () => {
     await waitFor(() => expect(callsTo("/api/dictation/dry-run")).toHaveLength(1));
     expect(callsTo("/api/dictation/dry-run")[0].json.utterance).toBe("ship it friday");
     expect(callsTo("/api/dictation/remote")).toHaveLength(0);
-    expect(await screen.findByText("REHEARSED · NOT DELIVERED")).toBeVisible();
+    expect(await screen.findByText("Preview ready · not sent")).toBeVisible();
   });
 
   it("Try it here is on the Types into row, waits for words, and there is no DRY RUN latch", async () => {

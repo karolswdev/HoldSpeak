@@ -4,18 +4,30 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (ST2 #1346 delivered; Q8/Q10 #1368 merged)
+**Last updated:** 2026-10-19 (C7/C8 #1363 recovered; delivery follows merge)
 
 ## Current phase
 
-**Betterment recovery: 74/117 recipe implementations merged.** Codex owns
+**Betterment recovery: 76/117 recipe implementations merged.** Codex owns
 recovery and delivery at the owner's request. The desk is currently on
-backend `1420b1b0c`, frontend `665e187d47b63165`, PID 50011 (ST2).
+backend `5fcb0e8f2`, frontend `9aa4aa4562561fb8`, PID 58304 (Q8/Q10).
 Four HTTP checks pass and the actual desk renders at 1440/393. These are
 delivery observations; owner acceptance remains separate. All three baseline non-browser
 regression shards passed: 16,784 checks, 27 skips and one expected failure.
 Remaining browser shards use the low-priority machine lock at
 `wt-betterment-tape-20261019`, pinned to `bd3acff8f`.
+
+C7/C8 #1363 gives Meetings its Record wing, durable failed/missed occurrence
+words, and a Needs you Record now press that starts the named calendar
+meeting. Talk receipts use plain words; Capture speech reaches the saved
+note handoff. Root inspected the real-hub fixture at 1440/393. Focused worker
+checks passed 81 pytest and 172 web checks. Broad recovery checks found
+three old receipt/settings assertions and one window-focus browser case;
+the assertions now follow the current face and use the actual Go press.
+The final quick check is green: 21 web, 18 browser, 106 sweep, 27 canon and
+1,116 repo guards. Hardware microphone/recording use remains unobserved.
+Delivery follows this merge. The owner's existing drawer and its three
+members were observed read-only at both sizes after Q8/Q10, without page errors.
 
 ST1 #1347 gives Rhythm, Wallpaper and Calendar one Settings home, preserves
 old doors and unifies quiet hours. Recovery fixed a real phone defect: two
@@ -1110,6 +1122,8 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 | Runs on (16c): a per-object wire on the board (thought/workbench/agent/recipe/project overrides; the parked AssignmentEditor sheet edited them; the contextual atom now only reads them and opens Runs on); FOUND model files and an unrecorded Whisper (add-to-library needs a detected_artifact_id detect does not carry); Try it through the route for jobs other than Thoughts & notes (route_probe accepts only ask.answer); the phone list cannot pin an inherited engine as a job's own; 25 atlas cases still drive the Concierge flow (Add = use for summaries; the window closes) | — | — |
 
 ## Last merged (newest first)
+
+- #1363 — Capture C7/C8: one recording home, truthful failed occurrences, direct Record now and saved speech handoff.
 
 - **#1214 — Useful attention and dismissal.** Dictation journal entries stay
   out of Qlippy. Visible-only Dismiss closes old popup backlog, with exact

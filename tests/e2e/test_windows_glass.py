@@ -1775,10 +1775,12 @@ class TestCloseMeansGone:
                 _close_control(page, width, "Today").wait_for()
                 self._close_and_prove(page, width, "Today", "dock-intelligence")
 
-                # 3. Write a thought: `note:<id>` (newThought.ts) → the Thought window.
-                # PHILO-13-11 (slice two, R2): at 393 Capture opens from the Speak AppIcon.
-                if width <= 720:
-                    open_chair_window(page, "Capture")
+                # 3. New note: Go raises Capture even when it is already
+                # visible behind another window. The generic helper is a
+                # no-op for a shown window, so it cannot do this preparation.
+                page.locator(".desk-verbbar-item[data-menu-id='go'] button").click()
+                page.locator(".desk-verbbar-menu [role^='menuitem']").filter(
+                    has=page.locator(".desk-menu-label", has_text=re.compile(r"^Capture$"))).click()
                 self._press(page, page.get_by_test_id("arrival-develop-thought"), width)
                 # Betterment C8: the press unfolds an empty note under the
                 # verbs; the first character makes the record and opens its
