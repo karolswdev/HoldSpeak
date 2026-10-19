@@ -1,0 +1,105 @@
+{
+ "_source": "The hub's own answers, captured by tests/unit/test_desk_note_outcomes.py::test_the_answers_are_recorded_for_the_face (MeetingWebServer + TestClient, isolated HOME, the browser rigs' seeds). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
+ "note_id": "note_987d67947d53",
+ "title": "Jun and the cutover weekend",
+ "before": {
+  "note_id": "note_987d67947d53",
+  "rows": []
+ },
+ "found": {
+  "note_id": "note_987d67947d53",
+  "rows": [
+   {
+    "id": "no_5995e2bdb4c14f79",
+    "kind": "task",
+    "text": "Pair Jun with Mira on call for the cutover weekend",
+    "owner": "Me",
+    "person_id": "",
+    "due": "",
+    "rationale": "",
+    "state": "proposed",
+    "made_ref": "",
+    "found_at": "2026-10-19T04:44:38.679066+00:00",
+    "model": "qwen3.8-27b"
+   },
+   {
+    "id": "no_a408b73f886248f8",
+    "kind": "task",
+    "text": "Write the on-call handbook",
+    "owner": "Theo Park",
+    "person_id": "fae6bc5e-621f-4830-979d-2a8d2ee022de",
+    "due": "",
+    "rationale": "",
+    "state": "proposed",
+    "made_ref": "",
+    "found_at": "2026-10-19T04:44:38.679066+00:00",
+    "model": "qwen3.8-27b"
+   },
+   {
+    "id": "no_12d2b332997949b6",
+    "kind": "decision",
+    "text": "Theo owns the on-call handbook",
+    "owner": "",
+    "person_id": "",
+    "due": "",
+    "rationale": "to write it first before the cutover",
+    "state": "proposed",
+    "made_ref": "",
+    "found_at": "2026-10-19T04:44:38.679066+00:00",
+    "model": "qwen3.8-27b"
+   }
+  ]
+ },
+ "confirm_row": "no_a408b73f886248f8",
+ "confirmed": {
+  "note_id": "note_987d67947d53",
+  "rows": [
+   {
+    "id": "no_5995e2bdb4c14f79",
+    "kind": "task",
+    "text": "Pair Jun with Mira on call for the cutover weekend",
+    "owner": "Me",
+    "person_id": "",
+    "due": "",
+    "rationale": "",
+    "state": "proposed",
+    "made_ref": "",
+    "found_at": "2026-10-19T04:44:38.679066+00:00",
+    "model": "qwen3.8-27b"
+   },
+   {
+    "id": "no_a408b73f886248f8",
+    "kind": "task",
+    "text": "Write the on-call handbook",
+    "owner": "Theo Park",
+    "person_id": "fae6bc5e-621f-4830-979d-2a8d2ee022de",
+    "due": "",
+    "rationale": "",
+    "state": "confirmed",
+    "made_ref": "action_item:ai_47b1d6c37d3b49579faf8225d52aeada",
+    "found_at": "2026-10-19T04:44:38.679066+00:00",
+    "model": "qwen3.8-27b"
+   },
+   {
+    "id": "no_12d2b332997949b6",
+    "kind": "decision",
+    "text": "Theo owns the on-call handbook",
+    "owner": "",
+    "person_id": "",
+    "due": "",
+    "rationale": "to write it first before the cutover",
+    "state": "proposed",
+    "made_ref": "",
+    "found_at": "2026-10-19T04:44:38.679066+00:00",
+    "model": "qwen3.8-27b"
+   }
+  ]
+ },
+ "refused": {
+  "status": 422,
+  "body": {
+   "error": "note_empty",
+   "message": "The note has no words yet."
+  }
+ }
+}

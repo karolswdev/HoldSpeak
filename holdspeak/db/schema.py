@@ -5146,4 +5146,26 @@ CREATE TABLE IF NOT EXISTS agent_run_calls (
     called_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_agent_run_calls_run ON agent_run_calls(run_id, id);
+-- Betterment Q9 (Find the tasks): the outcome rows the meeting's extraction
+-- found in one note (a task with its owner and date, or a proposed decision).
+-- They stay with the note: a new Find replaces the rows still proposed and
+-- keeps the confirmed ones, each with the task or decision it made
+-- (`made_ref`).
+CREATE TABLE IF NOT EXISTS note_outcomes (
+    id TEXT PRIMARY KEY,
+    note_id TEXT NOT NULL,
+    ordinal INTEGER NOT NULL,
+    kind TEXT NOT NULL,
+    text TEXT NOT NULL,
+    owner TEXT NOT NULL DEFAULT '',
+    person_id TEXT NOT NULL DEFAULT '',
+    due TEXT NOT NULL DEFAULT '',
+    rationale TEXT NOT NULL DEFAULT '',
+    state TEXT NOT NULL DEFAULT 'proposed',
+    made_ref TEXT NOT NULL DEFAULT '',
+    model TEXT NOT NULL DEFAULT '',
+    found_at TEXT NOT NULL,
+    confirmed_at TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS idx_note_outcomes_note ON note_outcomes(note_id, ordinal);
 """

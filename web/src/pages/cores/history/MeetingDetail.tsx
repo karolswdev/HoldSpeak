@@ -30,6 +30,7 @@ import {
   type MeetingDecision,
 } from "./useMeetingData";
 import { MeetingHeader, meetingOutcomeFact, meetingPipelineActive } from "./MeetingHeader";
+import { OutcomeLedger, type OutcomeRow } from "./OutcomeLedger";
 import { CaptureSlab } from "./CaptureSlab";
 import { DraftReady, PreparedResults, resultServing } from "./PreparedResults";
 import { MeetingSendWellLazy as MeetingSendWell } from "../../../meetings/MeetingSendWellLazy";
@@ -50,27 +51,6 @@ import { openSourceRef } from "../../../desk/surface/citations";
 /** PHILO-17: the meeting window's foot asks its record to open the
  *  transcript fold (`detail`: the meeting id). */
 export const MEETING_TRANSCRIPT_OPEN = "holdspeak:meeting-transcript-open";
-
-/** One row of the meeting's outcomes ledgers. */
-type OutcomeRow = {
-  key: string;
-  plate: "DEC" | "ACT";
-  text: string;
-  meta: string;
-  tone?: "ask" | "ok";
-  actionItemId?: string;
-  proposalId?: string;
-  actionStatus?: string | null;
-  owner?: string;
-  due?: string;
-  projectId?: string | null;
-  personRelationshipId?: string | null;
-  segmentIndex?: number | null;
-  gap?: boolean;
-  deferredUntil?: string | null;
-  verbs?: ReactNode;
-  children?: ReactNode;
-};
 
 function deferredToken(value: unknown): string {
   const stamp = String(value ?? "").trim();
@@ -214,31 +194,6 @@ export function meetingOutcomes(
     });
   }
   return { decisions, commitments };
-}
-
-function OutcomeLedger({ label, rows, testId, controls }: { label: string; rows: OutcomeRow[]; testId: string; controls?: ReactNode }) {
-  if (!rows.length) return null;
-  return (
-    <SurfaceSection label={label} count={rows.length || null} data-testid={testId} className="meeting-outcome-section">
-      <SurfaceLedger label={label} cols="meeting-outcomes" controls={controls}>
-        <ul className="surface-ledger-rows">
-          {rows.map((row) => (
-            <SurfaceLedgerRow
-              key={row.key}
-              data-testid={`${testId}-row`}
-              primary={row.text}
-              meta={row.meta}
-              metaTone={row.tone}
-              trailing={row.verbs}
-              wrap
-              open={Boolean(row.children)}
-              expands={false}
-            >{row.children}</SurfaceLedgerRow>
-          ))}
-        </ul>
-      </SurfaceLedger>
-    </SurfaceSection>
-  );
 }
 
 export function MeetingOutcomes({ data, meeting }: { data: MeetingData; meeting: Record<string, unknown> }) {

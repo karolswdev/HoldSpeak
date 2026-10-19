@@ -178,7 +178,7 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     expect(screen.queryByRole("textbox", { name: "Your answer" })).toBeNull();
   });
 
-  it("keeps an idle note plain: the foot is Ask about this, Send… and Done, and Done is the one primary", async () => {
+  it("keeps an idle note plain: the foot is Ask about this, Find the tasks, Send… and Done, and Done is the one primary", async () => {
     vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
     render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
 
@@ -191,7 +191,7 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     // Betterment Q8: Add a note (the Reads well), Copy, Task, Finish and
     // Resume left the face; no engine line for a note that is not running.
     const foot = [...document.querySelectorAll(".thought-note-foot button")].map((button) => button.textContent);
-    expect(foot).toEqual(["Ask about this", "Send…", "Done"]);
+    expect(foot).toEqual(["Ask about this", "Find the tasks", "Send…", "Done"]);
     expect(screen.queryByText(/Reads:/)).not.toBeInTheDocument();
     expect(screen.queryByText(/^Attached/)).not.toBeInTheDocument();
 
