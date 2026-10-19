@@ -440,6 +440,7 @@ def install_from_web_context(
     from holdspeak.db.core import get_database, get_observer
     from holdspeak.services.primitive_service import PrimitiveService
     from holdspeak.services.workbench_service import WorkbenchService
+    from holdspeak.services.setup_service import SetupService
 
     resolved_db = db if db is not None else get_database()
     resolved_observer = observer if observer is not None else get_observer()
@@ -513,6 +514,12 @@ def install_from_web_context(
         "memory_service": lambda: MemoryService(resolved_db, observer=resolved_observer),
         # The Conductor K1: agent_hooks.install binds to it (the hub composes its own).
         "onboarding_service": _bare_onboarding,
+        "setup_service": lambda: SetupService(
+            resolved_db, observer=resolved_observer,
+            onboarding_service=services.onboarding_service,
+            people_service=getattr(ctx, "people_service", None),
+            local_ai_setup_service=getattr(ctx, "local_ai_setup_service", None),
+        ),
         # Conductor K2: agent.hand binds to it (the one shared launch driver).
         "agent_hand_service": lambda: default_agent_hand_service(
             resolved_db, delivery_service=getattr(ctx, "delivery_service", None)

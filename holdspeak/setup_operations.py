@@ -101,7 +101,7 @@ SETUP_LAN_SCAN = OperationDescriptor(
     args_schema={"type": "object", "properties": {}, "additionalProperties": False},
     principal=_PRINCIPAL,
     effect="read",
-    result="{rows: [{id, name, model, host, base_url}], checkedAt, disabled?}",
+    result="{rows: [{id, name, model, host, base_url}], checkedAt}; disabled=true when scanning is off",
     refusals=_SETUP_REFUSALS,
     completion="synchronous; the answering servers are returned as Setup found rows",
     exposure=("http:POST /api/setup/lan",),

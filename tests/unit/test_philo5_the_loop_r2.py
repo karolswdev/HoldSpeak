@@ -770,6 +770,28 @@ def _p_today_get(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     return result
 
 
+def _p_setup_found(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    response = hub.client.get("/api/setup/found")
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
+def _p_setup_people(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    response = hub.client.post("/api/setup/people", json={"names": "Theo Lindqvist"})
+    assert response.status_code == 201, response.text
+    return response.json()
+
+
+def _p_setup_lan(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    service = hub.root.operations.target("setup.lan.scan")
+    # Replace only network discovery; the admitted registry and receipt run.
+    monkeypatch.setattr(service, "_lan_scanner", lambda **_kwargs: {"engines": []})
+    monkeypatch.setenv("HOLDSPEAK_SETUP_LAN_SCAN", "on")
+    response = hub.client.post("/api/setup/lan", json={})
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
 PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "meeting.list": _p_meeting_list,
     "meeting.import": _p_meeting_import,
@@ -833,6 +855,9 @@ PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "note.outcome.dismiss": _p_note_outcome("dismiss"),
     "note.outcome.confirm": _p_note_outcome("confirm"),
     "today.get": _p_today_get,
+    "setup.found": _p_setup_found,
+    "setup.people.add": _p_setup_people,
+    "setup.lan.scan": _p_setup_lan,
 }
 
 

@@ -6071,7 +6071,7 @@
       },
       "principal": "derived by the transport (the HTTP auth middleware); owner only",
       "effect": "read",
-      "result": "{rows: [{id, name, model, host, base_url}], checkedAt, disabled?}",
+      "result": "{rows: [{id, name, model, host, base_url}], checkedAt}; disabled=true when scanning is off",
       "refusals": [
         "unknown_operation",
         "invalid_arguments",

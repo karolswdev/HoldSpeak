@@ -1,6 +1,7 @@
 """First-run setup surface routes (HS-42-01)."""
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from fastapi import APIRouter, Request
