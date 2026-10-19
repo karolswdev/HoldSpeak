@@ -1,25 +1,15 @@
-/* Betterment P4 (projects): the Projects window. The name is the press that
-   opens the project (the words, underlined on hover; a 44 px target). */
-.projects-name.btn {
-  min-height: 44px;
-  height: auto;
-  padding: 0;
-  border: 0;
-  background: none;
-  box-shadow: none;
-  justify-content: flex-start;
-  text-align: left;
+/* Betterment P4 (projects): the Projects window. A row is the press that
+   opens the project (the ledger line); the name, then its facts under it. */
+.projects-name {
+  display: block;
   white-space: normal;
-  cursor: pointer;
-}
-.projects-name.btn:hover .surface-primary,
-.projects-name.btn:focus-visible .surface-primary {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
 }
 .projects-facts {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 4px 8px;
+  margin-top: 4px;
+  white-space: normal;
 }

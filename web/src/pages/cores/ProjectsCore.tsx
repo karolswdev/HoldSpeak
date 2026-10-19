@@ -110,7 +110,7 @@ export function ProjectsCore(_props: CoreProps) {
     <>
       <SurfaceVerbs>{newProject}</SurfaceVerbs>
       <SurfaceSection>
-        <SurfaceLedger cols="kit" label="Projects">
+        <SurfaceLedger label="Projects">
           <ul className="surface-ledger-rows" data-testid="projects-list">
             {rows.map(({ p, read, room, health }) => {
               const reason = room?.health.state === "ok" && health?.word === "AT RISK"
@@ -126,26 +126,25 @@ export function ProjectsCore(_props: CoreProps) {
                   kindTitle="PROJECT"
                   wrap
                   expands={false}
+                  lineLabel={`Open ${p.name}`}
+                  onToggle={() => openProjectRoom(p.id)}
                   primary={
-                    <Button variant="chrome" className="projects-name" data-testid="projects-open"
-                      aria-label={`Open ${p.name}`} onClick={() => openProjectRoom(p.id)}>
-                      <span className="surface-primary">{p.name}</span>
-                    </Button>
-                  }
-                  cells={
-                    <span className="projects-facts">
-                      {read === "failed" ? (
-                        <span className="surface-token" data-testid="projects-not-read">Not read</span>
-                      ) : health ? (
-                        <span className="kit-pill" data-tone={tone} data-dot="" data-testid="projects-state">
-                          {health.word === "AT RISK" ? "At risk" : health.word === "NEW" ? "New" : "On track"}
-                        </span>
-                      ) : null}
-                      {reason ? <span className="surface-token" data-tone="danger" data-testid="projects-reason">{reason}</span> : null}
-                      {next ? <span className="surface-token" data-tone={next.late ? "danger" : undefined} data-testid="projects-next">{next.words}</span> : null}
-                      {update?.fresh ? <span className="kit-pill" data-tone="accent" data-testid="projects-new-update">New update</span> : null}
-                      {update ? <span className="surface-token" data-testid="projects-update">{update.words}</span> : null}
-                    </span>
+                    <>
+                      <span className="projects-name" data-testid="projects-open">{p.name}</span>
+                      <span className="projects-facts">
+                        {read === "failed" ? (
+                          <span className="surface-token" data-testid="projects-not-read">Not read</span>
+                        ) : health ? (
+                          <span className="kit-pill" data-tone={tone} data-dot="" data-testid="projects-state">
+                            {health.word === "AT RISK" ? "At risk" : health.word === "NEW" ? "New" : "On track"}
+                          </span>
+                        ) : null}
+                        {reason ? <span className="surface-token" data-tone="danger" data-testid="projects-reason">{reason}</span> : null}
+                        {next ? <span className="surface-token" data-tone={next.late ? "danger" : undefined} data-testid="projects-next">{next.words}</span> : null}
+                        {update?.fresh ? <span className="kit-pill" data-tone="accent" data-testid="projects-new-update">New update</span> : null}
+                        {update ? <span className="surface-token" data-testid="projects-update">{update.words}</span> : null}
+                      </span>
+                    </>
                   }
                 />
               );
