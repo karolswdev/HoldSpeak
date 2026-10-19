@@ -717,6 +717,11 @@ class MeetingWebServer:
         from .principals import agent_credentials
 
         agent_credentials.set_hub_url(f"http://{self.host}:{self.port}")
+        # Betterment daily D8: a notice opens the desk on this hub.
+        from .desktop_notify import set_hub_url as set_notice_hub_url
+
+        notice_host = "127.0.0.1" if self.host in {"0.0.0.0", "::", ""} else self.host
+        set_notice_hub_url(f"http://{notice_host}:{self.port}")
         # PHILO-17 redact: uvicorn's own log lines pass the redactor too.
         from .logging_config import install_log_redaction
 
