@@ -28,6 +28,7 @@ import { meetingRowState } from "../../../pages/cores/history/helpers";
 import { useSummaryRun } from "../../../pages/cores/history/useSummaryRun";
 import { executedReceipt, readPlannedRoute, readRunReceipt, routeReady } from "../../../meetings/summaryRoute";
 import { RouteDisclosure, RunAttempts } from "../../../meetings/RouteDisclosure";
+import { StandingPagesSection, useStandingPages } from "../../standingPages";
 import { useAgentFlights, useAgentFlightsLive, type AgentFlight } from "../../agentFlights";
 import { conductorMembers, fleetCounts } from "../../conductor/members";
 import { AGENT_NAME, type AgentId } from "../../firstrun/agentsStep";
@@ -220,6 +221,18 @@ function ThisWeek({ days }: { days: readonly WeekCount[] }) {
         </div>
       ) : null}
     </section>
+  );
+}
+
+function TodayMemoryPages({ now }: { now: Date }) {
+  const pages = useStandingPages("desk");
+  const owe = pages.filter((page) => page.slug === "what-i-owe");
+  const changed = now.getDay() === 1 ? pages.filter((page) => page.slug === "what-changed-this-week") : [];
+  return (
+    <>
+      {owe.length ? <div data-testid="today-owe"><StandingPagesSection pages={owe} presentation="questions" /></div> : null}
+      {changed.length ? <div data-testid="today-changed"><StandingPagesSection pages={changed} presentation="questions" /></div> : null}
+    </>
   );
 }
 
@@ -616,6 +629,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
             {finishNodes}
           </ol>
         </div>
+        <TodayMemoryPages now={now} />
         <SinceYesterday brief={brief} failed={failed.brief} now={now} openRequest={sinceRequest} onRetry={retry} />
         <ThisWeek days={week} />
       </div>

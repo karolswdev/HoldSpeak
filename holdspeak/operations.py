@@ -1408,12 +1408,12 @@ MEMORY_PAGE_READ = OperationDescriptor(
     version=1,
     # Slice 6: the words are short on purpose.  The thread palettes carry
     # this schema, and admission counts one token per byte of it.
-    description="Read a memory page: a standing answer, with refs. Read only.",
+    description="Read a memory page with source refs.",
     args_schema={
         "type": "object",
         "properties": {
             "slug": {"type": "string", "enum": ["what-we-decided", "what-is-open", "risks-and-disputes",
-                                                 "what-changed-this-week", "what-i-owe"]},
+                                                 "what-changed-this-week", "what-i-owe", "what-they-owe-me"]},
             "project_id": {"type": ["string", "null"]},
             "scope": {"type": ["string", "null"], "enum": ["desk", "project", None],
                       "description": "Default: project when project_id is set."},
