@@ -34,6 +34,8 @@ import { ConductorWindow } from "../conductor/ConductorWindow";
 import { agentsTileOf } from "../conductor/fleetTile";
 import { askedWord } from "../agents/AgentRow";
 import { AgentLine } from "../components/AgentLine";
+import { NeedRow } from "../needs/NeedsDrawer";
+import type { NeedFace } from "../needs/needsFace";
 import { __resetConductor } from "../conductor/store";
 import { useSteering } from "../steering";
 
@@ -572,6 +574,25 @@ describe("one press to answer and to allow (Betterment AG2)", () => {
     });
     expect(posts()).toEqual([["/api/coders/claude%3Aag2-held/keys",
       { keys: ["Escape"], kind: "answer", wait_id: waitOf("ag2-held") }]]);
+  });
+});
+
+describe("Needs you: an agent's ask is the Agents row (Betterment AG9)", () => {
+  it("one row for the piece of work, with the question, its choices and Answer inline", async () => {
+    const SESSIONS = ag2<{ sessions: unknown[]; flights: unknown[] }>("coders-sessions");
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(SESSIONS.captured_at));
+    serve({ "/api/agent/launches/": { gated: [], wait: null } });
+    useAgentFlights.setState({
+      sessions: SESSIONS.wire.sessions.map(fromWireSessionRow), flights: SESSIONS.wire.flights.map(fromWireFlight), loaded: true,
+    });
+    const face = { id: "action:x", kind: "action", name: "Write the on-call note", fact: "", askOf: "claude:ag0-ghost",
+      lamp: { label: "ASKS", tone: "ask" }, group: "agents", verbs: { kind: "none" } } as unknown as NeedFace;
+    render(<ul><NeedRow face={face} primary projects={false} /></ul>);
+    const row = await screen.findByTestId("needs-agent-row");
+    expect(row.querySelector(".cw-ask-label")?.textContent).toBe("Asks you");
+    expect(within(row).getAllByTestId("agent-row-choice").map((b) => b.textContent)).toEqual(["1 · config", "2 · env"]);
+    expect(within(row).getByRole("button", { name: "Answer" })).toBeTruthy();
   });
 });
 
