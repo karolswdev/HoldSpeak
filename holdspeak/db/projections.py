@@ -631,9 +631,28 @@ class ProjectionRepository(BaseRepository):
                 subject_ref = f"coder_session:{source_id}"
             elif source_type == "meeting_action":
                 action = conn.execute(
-                    "SELECT meeting_id FROM action_items WHERE id=?", (source_id,)
+                    "SELECT meeting_id, source_ref, task FROM action_items WHERE id=?", (source_id,)
                 ).fetchone()
-                subject_ref = f"meeting:{action['meeting_id']}" if action else f"action_item:{source_id}"
+                # Automation results can deliberately land in Needs you without
+                # belonging to a meeting.  Keep the result's qualified source
+                # as the door when it is present; otherwise use the meeting
+                # identity, then the action item itself.  The old
+                # ``meeting:None`` projection was an unusable door for this
+                # case.
+                source_ref = ""
+                if action:
+                    try:
+                        from .relationships import qualified_ref
+
+                        source_ref = qualified_ref(action["source_ref"])
+                    except (ValueError, TypeError):
+                        source_ref = ""
+                if source_ref:
+                    subject_ref = source_ref
+                elif action and action["meeting_id"]:
+                    subject_ref = f"meeting:{action['meeting_id']}"
+                else:
+                    subject_ref = f"action_item:{source_id}"
             elif source_type == "proposal":
                 proposal = conn.execute(
                     "SELECT meeting_id,target FROM actuator_proposals WHERE id=?", (source_id,)
@@ -645,19 +664,25 @@ class ProjectionRepository(BaseRepository):
                 )
             else:
                 subject_ref = f"{source_type}:{source_id}"
+            meeting_action = source_type == "meeting_action"
+            action_title = str(action["task"] or "").strip() if meeting_action and action else ""
             result.append(DeskProjection(
                 id=f"cadence:{row['id']}:{status}",
                 projection_kind="attention" if actionable else "receipt",
-                subject_ref=subject_ref, subject_label=str(row["title"]),
-                title="Cadence loop needs you" if actionable else f"Cadence loop {status}",
-                summary="Open Cadence for evidence and the prepared next action.",
+                subject_ref=subject_ref,
+                subject_label=action_title if meeting_action and action_title else str(row["title"]),
+                title=("Needs you" if actionable else "Resolved") if meeting_action else (
+                    "Cadence loop needs you" if actionable else f"Cadence loop {status}"
+                ),
+                summary="" if meeting_action else "Open Cadence for evidence and the prepared next action.",
                 reason_code=f"cadence_{status}", decision_kind="attention",
                 attention_state="needs_attention" if actionable else "resolved",
                 actual_destination="this_machine", authority_basis="cadence_policy",
                 attempt=int(row["nudge_count"]), outcome=status, timestamp=str(row["updated_at"]),
                 correlation_id=f"cadence:{row['id']}", source_kind="cadence_loop",
                 source_id=str(row["id"]), source_api=f"/api/cadence/loops/{row['id']}",
-                detail_url="/cadence", severity="warning" if row["priority"] in {"high", "urgent"} else "normal",
+                detail_url=f"/?open={subject_ref}" if meeting_action else "/cadence",
+                severity="warning" if row["priority"] in {"high", "urgent"} else "normal",
             ))
         return result
 

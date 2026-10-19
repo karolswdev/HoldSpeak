@@ -121,6 +121,7 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "concierge.apply":    ("effect_proposal", False),
     "concierge.download": ("effect_proposal", False),
     "desk.needs_you":     ("evidence_read",   False),
+    "today.get":         ("evidence_read",   False),
     "meeting.run_intelligence": ("effect_proposal", False),
     # --- coder family ---
     "coder.list":   ("evidence_read",     False),

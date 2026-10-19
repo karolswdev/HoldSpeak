@@ -145,7 +145,7 @@ HoldSpeak is built from parts you can add to. You do not need to fork it.
 
 **MCP, first-class.** One service layer declares every operation. The web app, the MCP server, and the tests all reach the same operation, with the same authority checks.
 
-- **The MCP sidecar** gives Claude Code, Cursor, or any MCP client 256 tools across 45 families. It acts with your owner authority on this machine.
+- **The MCP sidecar** gives Claude Code, Cursor, or any MCP client 283 tools across 48 families. It acts with your owner authority on this machine.
 - **Reach** lets a remote agent connect over Streamable HTTP with a scoped credential: a tool palette and a time limit, shown once.
 - **Every consequential write leaves a Receipt.** Control modes (**Secure**, **Normal**, **YOLO**) set how much runs without asking you.
 
