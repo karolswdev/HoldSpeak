@@ -132,3 +132,25 @@ describe("P4: the Projects window", () => {
     expect(opened.surfaces).toEqual(["project-setup"]);
   });
 });
+
+describe("Projects first read", () => {
+  it("shows ranked rows together after independently delayed status reads", async () => {
+    let finishPayments!: (value: unknown) => void;
+    let finishVendor!: (value: unknown) => void;
+    const paymentsRead = new Promise((resolve) => { finishPayments = resolve; });
+    const vendorRead = new Promise((resolve) => { finishVendor = resolve; });
+    apiFetch.mockImplementation((path: string) => path === `/api/projects/${WIRE.payments}/room`
+      ? paymentsRead : path === `/api/projects/${WIRE.vendor}/room` ? vendorRead
+      : Promise.reject(new TypeError("Failed to fetch")));
+    useDesk.setState({ projects: projects.map((p) => ({ id: p.id, name: p.name })) } as never);
+    render(<ProjectsCore />);
+    expect(screen.getByTestId("projects-new")).toBeTruthy();
+    expect(screen.queryAllByTestId("projects-row")).toEqual([]);
+    // The first result must not place a row that the slower result will move.
+    await act(async () => { finishVendor(structuredClone(gets[`/api/projects/${WIRE.vendor}/room`])); });
+    expect(screen.queryAllByTestId("projects-row")).toEqual([]);
+    await act(async () => { finishPayments(structuredClone(gets[`/api/projects/${WIRE.payments}/room`])); });
+    expect(rows().map((row) => within(row).getByTestId("projects-open").textContent))
+      .toEqual([projects.find((p) => p.id === WIRE.payments)!.name, projects.find((p) => p.id === WIRE.vendor)!.name]);
+  });
+});

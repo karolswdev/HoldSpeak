@@ -4,13 +4,13 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (D10 #1372 verified; delivery follows merge)
+**Last updated:** 2026-10-19 (Projects first-read repair; D10 deployed)
 
 ## Current phase
 
 **Betterment recovery: 79/117 recipe implementations merged.** Codex owns
 recovery and delivery at the owner's request. The desk is currently on
-backend `ec3dde784`, frontend `03f75c9d51aaedaf`, PID 67593 (#1371).
+backend `3b90f077a`, frontend `b3e721200c71a964`, PID 76702 (#1372).
 Four HTTP checks pass and the actual desk renders at 1440/393. These are
 delivery observations; owner acceptance remains separate. All three baseline non-browser
 regression shards passed: 16,784 checks, 27 skips and one expected failure.
@@ -18,7 +18,18 @@ The original baseline remains at `wt-betterment-tape-20261019`, pinned to
 `bd3acff8f`; its three browser shards exposed six stale controls now covered
 by #1370 and #1371. That run was superseded before browser shard four, with
 all results retained. A fresh full tape runs at low priority in
-`wt-desk-betterment-20261019-notes`, pinned to `ec3dde784`. It is incomplete.
+`wt-desk-betterment-20261019-notes`, pinned to `ec3dde784`. It is incomplete. Its non-browser shards found four failures: two producer
+wires are fixed in D10; the curated MCP resource and launched-helper census
+checks are assigned for repair. The populated Projects sweep also found rows
+moving as independent status reads finish; its regression fails before the
+atomic first-read repair. After the repair, 4,090 web checks, 110 sweep cases,
+27 canon checks and 1,116 repo guards pass.
+
+Accounts follow-up remains open: an isolated `acli` check with no known
+prior active profile switches to the checked account and cannot restore it.
+The reproduction uses a fake CLI; the owner’s auth state was not changed.
+A known-prior profile is restored by ST2; the unknown-prior case still needs
+a truthful read or a no-switch fallback.
 
 D10 #1372 makes `today.get` a declared read composed from the same Needs you,
 day, Since yesterday and Prepared producers as the Today face. Its real-hub
@@ -31,7 +42,9 @@ number. Current Accounts and scheduled-recording wires were recorded from
 their producers. Quick check: 5,931 affected pytest (four skipped), 106 sweep,
 27 canon and 1,116 repo guards; the first-run consumer passes 31 web checks.
 The service inventory is split out of runtime composition within its existing
-line budget. D10 delivery follows merge; the source popup observation is pending.
+line budget. D10 is on the running desk. Its real Cadence popup is observed
+at 1440/393 without page errors: both valid rows remain, the source opens
+directly, and no generic summary appears.
 
 #1371 updates the browser checks to the adopted Q8 note
 window. The real saved body, direct footer verbs and keyboard focus ring are
@@ -1190,7 +1203,7 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 
 ## Last merged (newest first)
 
-- **#1372 — D10:** Today through the shared operation registry and the actual attention source; verified, merge/deploy follows.
+- **#1372 — D10:** Today through the shared operation registry and the actual attention source; merged and deployed at `3b90f077a`.
 - **#1371 — note regressions:** current editor/footer, keyboard focus and exact uncertain-send retry; merged and deployed at `ec3dde784`.
 
 
