@@ -321,7 +321,9 @@ def _session_view(session: Optional[Mapping[str, Any]]) -> Optional[dict[str, An
         "model": session.get("model"),
         "last_tool_name": session.get("last_tool_name"),
         # Betterment AG10: the agent's last words (its Result leads with them).
-        "last_assistant_text": session.get("last_assistant_text"),
+        # The Stop's words are kept as the session's (secret-filtered)
+        # ``question`` when no transcript is captured: the same words.
+        "last_assistant_text": session.get("last_assistant_text") or session.get("question"),
     }
 
 
