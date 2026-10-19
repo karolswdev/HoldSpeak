@@ -87,6 +87,21 @@ def build_intel_router(ctx: WebContext) -> APIRouter:
             if isinstance(exc, ConflictError):
                 return _conflict_response(_svc(ctx), meeting_id, exc)
             return _error(exc, "Failed to retry intel job")
+    @router.post("/api/meetings/{meeting_id}/prepare")
+    async def api_prepare_meeting_result(meeting_id: str, request: Request) -> Any:
+        """Betterment capture C5b: Prepare… and Write again (one draft)."""
+        try:
+            body = await _json_body(request)
+            result = operations.for_context(ctx, meeting_intel_service=lambda: _svc(ctx)).invoke(
+                _principal(request), "meeting.result.prepare",
+                {"meeting_id": meeting_id, "plugin_id": body.get("plugin_id"),
+                 "expected_selection_hash": body.get("expected_selection_hash")},
+            )
+            return JSONResponse(result)
+        except ConflictError as exc:
+            return _conflict_response(_svc(ctx), meeting_id, exc)
+        except Exception as exc:
+            return _error(exc, "Failed to prepare the draft")
     @router.post("/api/meetings/{meeting_id}/intelligence/run")
     async def api_run_meeting_intelligence(meeting_id: str, request: Request) -> Any:
         """HS-170-04: enqueue a fresh intelligence job for a meeting.

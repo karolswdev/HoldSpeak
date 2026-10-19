@@ -286,6 +286,40 @@ class MeetingIntelService:
             "planned_route": job.planned_route if job and job.planned_route is not None else route,
             "run_receipt": job.run_receipt if job else self._db.intel.get_run_receipt(meeting_id),
         }
+    def prepare_result(self, principal: Principal, meeting_id: str, *, plugin_id: str,
+                       expected_selection_hash: str | None = None) -> dict[str, Any]:
+        """Betterment capture C5b: write one more Result (Prepare…) or write a
+        failed one again (Write again) on a meeting, as a drafts-only job.
+
+        It runs on the Meeting summaries route he was shown (the same
+        selection-hash fence as Run summary) and never rewrites the summary.
+        """
+        from ..meeting_plugins import PREPARABLE_PLUGINS
+
+        meeting = self._db.meetings.get_meeting(meeting_id)
+        if meeting is None:
+            raise NotFound("meeting", meeting_id)
+        clean = str(plugin_id or "").strip()
+        if clean not in PREPARABLE_PLUGINS:
+            raise ValidationError(f"Not a draft this meeting can prepare: {clean or 'none'}.")
+        route = self._route_for_gesture(meeting_id, expected_selection_hash)
+        outcome = self._db.intel.request_prepared_results(meeting_id, [clean], planned_route=route)
+        if outcome == "missing":
+            raise NotFound("meeting", meeting_id)
+        if outcome == "empty":
+            raise self._conflict(meeting_id, "Meeting has no transcript", code="empty", planned_route=route)
+        if outcome == "running":
+            raise self._conflict(meeting_id, "This meeting is still being written. Try again when it is done.",
+                                 code="running", planned_route=route)
+        self._broadcast_queue()
+        try:
+            from ..intel_queue_conductor import wake_intel_queue_conductor
+
+            wake_intel_queue_conductor()
+        except Exception:
+            pass
+        return {"meeting_id": meeting_id, "plugin_id": clean, "state": "queued", "planned_route": route}
+
     def get_recovery(self, principal: Principal | None, meeting_id: str) -> dict[str, Any]:
         meeting = self._db.meetings.get_meeting(meeting_id)
         if meeting is None: raise NotFound("meeting", meeting_id)

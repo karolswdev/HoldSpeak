@@ -20,6 +20,7 @@ from urllib import request as urlrequest
 from urllib.parse import urlsplit
 
 from .db import get_database
+from .db.intel import is_prepare_work
 from .kernel.external_egress import run_external_egress
 from .logging_config import get_logger
 
@@ -592,6 +593,20 @@ def _process_bound_intel_job(
         transcript = "\n".join(str(segment) for segment in meeting.segments)
         if not lease.held():
             return False
+        # Betterment capture C5b: a drafts-only job (Prepare…, Write again)
+        # runs only its frozen draft members under this same parent and
+        # bundle. It writes no summary, no receipt and no meeting state.
+        if is_prepare_work(json.dumps(list(job.displaced_work or ()))):
+            from .meeting_plugins import run_bound_meeting_plugin_chain
+
+            run_bound_meeting_plugin_chain(db, meeting, bound=bound, job=job)
+            if not lease.held():
+                return False
+            if not db.intel.complete_bound_intel_job(job):
+                lease.mark_lost()
+                return False
+            outcome = "succeeded"
+            return True
         # HS-200-42 (counsel P1-2, Article III): re-state the row's model host
         # from the route this bound job ACTUALLY egresses through, before any
         # transcript material reaches a provider. The enqueue-time value was an
@@ -826,7 +841,9 @@ def _process_bound_intel_job(
         log.error("Bound deferred intel failed for meeting %s: %s: %s", job.meeting_id, type(exc).__name__, getattr(exc, "code", str(exc)))
         return True
     finally:
-        if getattr(job, "planned_route", None) and db.intel.get_run_receipt_for_job(str(job.job_id)) is None:
+        if (getattr(job, "planned_route", None)
+                and not is_prepare_work(json.dumps(list(job.displaced_work or ())))
+                and db.intel.get_run_receipt_for_job(str(job.job_id)) is None):
             # Refusals before route execution still need a durable, empty
             # attempt list. Once bound execution has admitted a route, recover
             # its controller evidence so a provider contact remains visible if
