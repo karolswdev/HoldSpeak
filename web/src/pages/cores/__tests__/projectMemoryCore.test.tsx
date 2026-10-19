@@ -231,8 +231,9 @@ describe("Project Memory", () => {
   // This test now asserts the Room renders its headline and ask well.
   it("renders the Room headline and ask well (was: timeline)", async () => {
     render(<WindowHarness />);
+    // Betterment P3: the headline is the project's state.
     const headline = await screen.findByTestId("room-headline");
-    expect(headline.textContent).toBe("Clear here");
+    expect(headline.textContent).toMatch(/^(On track|New)$/);
     expect(screen.getByTestId("room-ask-well")).toBeTruthy();
   });
 
@@ -248,7 +249,7 @@ describe("Project Memory", () => {
     });
     render(<WindowHarness />);
     const headline = await screen.findByTestId("room-headline");
-    expect(headline.textContent).toBe("Clear here");
+    expect(headline.textContent).toMatch(/^(On track|New)$/);
   });
 
   // HS-169-03 SELECTOR EDIT: Search wing → removed. Search lives in HISTORY.

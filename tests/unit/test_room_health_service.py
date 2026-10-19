@@ -639,3 +639,40 @@ class TestNeedsYouReviewBottleneck:
             n for n in needs["items"] if n.get("kind") == "review_bottleneck"
         ]
         assert len(bottleneck_items) == 0
+
+
+# ── Betterment P3: the project's state and its one reason, in words ──
+
+
+def test_p3_a_risk_that_stops_the_work_leads_the_reason():
+    from holdspeak.services.room_health_service import project_state
+
+    state = project_state(
+        risks=[{"text": "Rollback runbook is still a draft.", "ref": "note:n1"},
+               {"text": "Card tokenization is blocked on the HSM key ceremony.", "ref": "meeting:m1"}],
+        overdue_owed=[{"title": "Review the runbook", "owner": "Theo", "days": 2, "ref": "action_item:a1"}],
+        ci_failing=True,
+    )
+    assert state == {"state": "at_risk", "reason": "Card tokenization is blocked on the HSM key ceremony",
+                     "ref": "meeting:m1"}
+
+
+def test_p3_the_order_after_the_risks_is_risk_items_then_owed_then_ci():
+    from holdspeak.services.room_health_service import project_state
+
+    items = [{"title": "Vendor exit", "severity": "low", "ref": "project_item:1"},
+             {"title": "Key rotation", "severity": "high", "ref": "project_item:2"}]
+    assert project_state(risk_items=items)["reason"] == "Key rotation"
+    owed = project_state(overdue_owed=[{"title": "Review PLAT-212", "owner": "Mira", "days": 1, "ref": "x"}])
+    assert owed["reason"] == "Review PLAT-212 (Mira) is 1 day late"
+    assert project_state(ci_failing=True) == {"state": "at_risk", "reason": "CI is failing", "ref": None}
+    broken = project_state(broken_dependencies=[{"title": "Payments API v3", "ref": "project_item:3"}],
+                           ci_failing=True)
+    assert broken["state"] == "blocked" and broken["reason"] == "Payments API v3"
+
+
+def test_p3_nothing_named_is_on_track_with_no_reason():
+    from holdspeak.services.room_health_service import project_state
+
+    assert project_state() == {"state": "on_track", "reason": None, "ref": None}
+    assert project_state(risks=[{"text": "  ", "ref": "x"}])["state"] == "on_track"
