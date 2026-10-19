@@ -1,7 +1,8 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../../lib/api";
 import { PersonPages, personPages, type StandingPageWire } from "../../../desk/standingPages";
+import WIRE from "../../../test/wire/memory.desk-pages.wire.json";
 
 vi.mock("../../../lib/api", async (original) => ({
   ...await original<typeof import("../../../lib/api")>(),
@@ -60,5 +61,18 @@ describe("Q11 person memory pages", () => {
     expect(within(face).getByText("Mira owes you the rollback runbook by Thursday.")).toBeTruthy();
     expect(within(face).queryByRole("searchbox")).toBeNull();
     await waitFor(() => expect(within(face).getAllByTestId("memory-ref")).toHaveLength(2));
+  });
+
+  it("keeps the real producer's two directions and opens the cited 1:1", async () => {
+    vi.mocked(apiFetch).mockResolvedValue(WIRE.pages);
+    const open = vi.fn();
+    render(<PersonPages displayName="Mira Kovacs" onOpenRef={open} />);
+    const face = await screen.findByTestId("person-pages");
+    const answers = within(face).getAllByTestId("standing-page");
+    expect(answers[0].textContent).toContain("You owe Mira feedback on the cutover design document, due Friday.");
+    expect(answers[1].textContent).toContain("Mira owes you the rollback runbook, due Thursday.");
+    expect(answers[1].textContent).not.toContain("You owe Mira");
+    fireEvent.click(within(answers[0]).getByTestId("memory-ref"));
+    expect(open).toHaveBeenCalledWith("meeting:m-mira-1on1");
   });
 });

@@ -1408,7 +1408,7 @@ MEMORY_PAGE_READ = OperationDescriptor(
     version=1,
     # Slice 6: the words are short on purpose.  The thread palettes carry
     # this schema, and admission counts one token per byte of it.
-    description="Read a memory page: a standing answer, with refs. Read only.",
+    description="Read a memory page with source refs.",
     args_schema={
         "type": "object",
         "properties": {

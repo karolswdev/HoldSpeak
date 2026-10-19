@@ -174,7 +174,7 @@ function MemoryHome() {
 function SurfaceStateEmpty({ engine }: { engine: ReturnType<typeof useEngine> }) {
   return (
     <div className="memory-home-empty" data-testid="memory-empty">
-      <p>Not written yet. Memory needs an engine for background work.</p>
+      <p>Not written yet.</p>
       <EngineLine
         engine={engine}
         onChoose={() => openSurfaceOr("open-concierge", "/models", "background")}

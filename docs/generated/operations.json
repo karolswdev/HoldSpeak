@@ -2075,7 +2075,7 @@
     {
       "name": "memory.page.read",
       "version": 1,
-      "description": "Read a memory page: a standing answer, with refs. Read only.",
+      "description": "Read a memory page with source refs.",
       "args_schema": {
         "type": "object",
         "properties": {

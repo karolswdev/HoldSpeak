@@ -143,8 +143,8 @@ describe("Q12 Memory", () => {
     });
     render(<MemoryCore />);
     const empty = await screen.findByTestId("memory-empty");
-    expect(empty.textContent).toContain("Not written yet. Memory needs an engine for background work.");
-    expect(screen.getAllByText("Not written yet. Memory needs an engine for background work.")).toHaveLength(1);
+    expect(empty.textContent).toContain("Not written yet.");
+    expect(screen.getAllByText("Not written yet.")).toHaveLength(1);
     fireEvent.click(within(empty).getByRole("button", { name: "Choose engine" }));
     await waitFor(() => expect(vi.mocked(openSurfaceOr)).toHaveBeenCalledWith("open-concierge", "/models", "background"));
   });

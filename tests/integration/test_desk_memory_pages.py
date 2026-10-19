@@ -25,17 +25,63 @@ from typing import Any
 from holdspeak import memory_conductor
 from holdspeak.db import Database
 from holdspeak.memory.engine import _assignment_head
-from holdspeak.memory.pages import PAGE_CAPABILITY, PAGE_SET, read
+from holdspeak.memory.pages import PAGE_CAPABILITY, PAGE_SET, read, write_pending
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.inference_assignment_service import InferenceAssignmentService
 from holdspeak.services.memory_service import MemoryService
 
 from tests.unit.test_batteries_default import mark_made_by_holdspeak
 from tests.unit.test_memory_slice4_observations import _desk, _filed_note, _meeting
-from tests.unit.test_memory_slice5_pages import Pages, _built
+from tests.unit.test_memory_slice5_pages import Pages
+from tests.unit.test_memory_slice3_facts import F, Scripted
+from tests.unit.test_memory_slice4_observations import Rules
+from holdspeak.memory.extract import extract_pending
+from holdspeak.memory.consolidate import consolidate_pending
+from holdspeak.memory.retain import sweep
 from tests.unit.test_phase143_inference_assignments import OWNER, _profile
 
 WIRE = Path(__file__).resolve().parents[2] / "web" / "src" / "test" / "wire"
+
+
+def desk_question_writer() -> Pages:
+    """Deterministic replies at the model seam, honoring each real question.
+
+    The general slice-5 writer echoes every input. Here the two directions
+    must be distinct so recorded faces cannot hide an I-owe/they-owe mix-up.
+    """
+    writer = Pages()
+
+    def answer(payload: dict[str, Any]) -> dict[str, Any]:
+        question = next(line for line in payload["user_prompt"].splitlines() if line.startswith("Question:"))
+        selected = []
+        for label, text in Pages.lines(payload).items():
+            if not label.startswith("o"):
+                continue
+            if "What do I owe?" in question and "you owe" not in text.lower():
+                continue
+            if "What do others owe me?" in question and "owes you" not in text.lower():
+                continue
+            selected.append({"text": text, "refs": [label]})
+        return {"sentences": selected}
+
+    writer.answer = answer
+    return writer
+
+
+def build_desk_answers(db: Database) -> dict[str, Any]:
+    """Real memory pipeline, with deterministic models at its three seams."""
+    sentences = [
+        "You owe Mira feedback on the cutover design document, due Friday.",
+        "Mira owes you the rollback runbook, due Thursday.",
+        "You owe Theo the on-call handbook, due Friday.",
+    ]
+    sweep(db)
+    extraction = extract_pending(db, Scripted([(text, [F(text, text)]) for text in sentences]))
+    assert extraction["facts"] == len(sentences), extraction
+    rules = Rules()
+    rules.echo = True
+    consolidate_pending(db, rules)
+    return write_pending(db, desk_question_writer())
 
 
 def _set(db: Database, command: str, scope: dict[str, Any], profile: str) -> dict[str, Any]:
@@ -93,23 +139,25 @@ def test_the_desk_says_what_others_owe_him_and_the_read_serves_it(tmp_path: Path
     # page write so the person window can open the evidence in one press.
     meeting_ref = _meeting(
         db, "m-mira-1on1",
-        "You owe Mira feedback on her cutover design doc by Friday is due.",
+        "You owe Mira feedback on the cutover design document, due Friday.",
         day=19, project=None,
     )
     db.meetings.update_meeting_metadata("m-mira-1on1", "1:1 with Mira", [])
-    _filed_note(db, "n-owed", "Runbook from Mira is due. Mira owes you the rollback runbook by Thursday.", None)
-    _filed_note(db, "n-theo", "Handbook for Theo is due. Theo owns the on-call handbook.", None)
-    build_report = _built(db, Pages())
+    _filed_note(db, "n-owed", "Mira owes you the rollback runbook, due Thursday.", None)
+    _filed_note(db, "n-theo", "You owe Theo the on-call handbook, due Friday.", None)
+    build_report = build_desk_answers(db)
     assert build_report["calls"] == len(PAGE_SET["desk"]) and build_report["more"] == 0
     owe = read(db, "desk", "", "what-i-owe")
     owed = read(db, "desk", "", "what-they-owe-me")
     assert owe is not None and owed is not None
+    assert any("Mira owes you the rollback runbook" in sentence["text"] for sentence in owed["sentences"])
+    assert all("You owe Mira" not in sentence["text"] for sentence in owed["sentences"])
     pages = MemoryService(db).standing_pages(Principal(PrincipalKind.OWNER, "pages-owner"), scope="desk")
     slugs = [page["slug"] for page in pages["pages"]]
     assert "what-i-owe" in slugs and "what-they-owe-me" in slugs
     owe_page = next(page for page in pages["pages"] if page["slug"] == "what-i-owe")
     assert any(
-        "You owe Mira feedback on her cutover design doc by Friday" in sentence["text"]
+        "You owe Mira feedback on the cutover design document, due Friday" in sentence["text"]
         and any(ref["ref"] == meeting_ref and ref["opens"] for ref in sentence["refs"])
         for sentence in owe_page["sentences"]
     )

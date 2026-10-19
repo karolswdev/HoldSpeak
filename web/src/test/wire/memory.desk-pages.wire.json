@@ -7,17 +7,7 @@
     "question": "What do I owe?",
     "sentences": [
      {
-      "text": "You owe Mira feedback on her cutover design doc by Friday is due.",
-      "refs": [
-       {
-        "ref": "meeting:m-mira-1on1",
-        "opens": true,
-        "token": "MTG 09-19 · 10:00"
-       }
-      ]
-     },
-     {
-      "text": "Handbook for Theo is due.",
+      "text": "You owe Theo the on-call handbook, due Friday.",
       "refs": [
        {
         "ref": "note:n-theo",
@@ -27,17 +17,17 @@
       ]
      },
      {
-      "text": "Runbook from Mira is due.",
+      "text": "You owe Mira feedback on the cutover design document, due Friday.",
       "refs": [
        {
-        "ref": "note:n-owed",
+        "ref": "meeting:m-mira-1on1",
         "opens": true,
-        "token": "NOTE 10-19"
+        "token": "MTG 09-19 · 10:00"
        }
       ]
      }
     ],
-    "built_at": "2026-10-19T20:39:43+00:00",
+    "built_at": "2026-10-19T21:59:48+00:00",
     "stale": false,
     "new_sources": 0,
     "model": "pages",
@@ -48,27 +38,7 @@
     "question": "What do others owe me?",
     "sentences": [
      {
-      "text": "You owe Mira feedback on her cutover design doc by Friday is due.",
-      "refs": [
-       {
-        "ref": "meeting:m-mira-1on1",
-        "opens": true,
-        "token": "MTG 09-19 · 10:00"
-       }
-      ]
-     },
-     {
-      "text": "Handbook for Theo is due.",
-      "refs": [
-       {
-        "ref": "note:n-theo",
-        "opens": true,
-        "token": "NOTE 10-19"
-       }
-      ]
-     },
-     {
-      "text": "Runbook from Mira is due.",
+      "text": "Mira owes you the rollback runbook, due Thursday.",
       "refs": [
        {
         "ref": "note:n-owed",
@@ -78,7 +48,7 @@
       ]
      }
     ],
-    "built_at": "2026-10-19T20:39:43+00:00",
+    "built_at": "2026-10-19T21:59:48+00:00",
     "stale": false,
     "new_sources": 0,
     "model": "pages",
@@ -89,7 +59,27 @@
     "question": "What changed this week?",
     "sentences": [
      {
-      "text": "You owe Mira feedback on her cutover design doc by Friday is due.",
+      "text": "You owe Theo the on-call handbook, due Friday.",
+      "refs": [
+       {
+        "ref": "note:n-theo",
+        "opens": true,
+        "token": "NOTE 10-19"
+       }
+      ]
+     },
+     {
+      "text": "Mira owes you the rollback runbook, due Thursday.",
+      "refs": [
+       {
+        "ref": "note:n-owed",
+        "opens": true,
+        "token": "NOTE 10-19"
+       }
+      ]
+     },
+     {
+      "text": "You owe Mira feedback on the cutover design document, due Friday.",
       "refs": [
        {
         "ref": "meeting:m-mira-1on1",
@@ -97,49 +87,9 @@
         "token": "MTG 09-19 · 10:00"
        }
       ]
-     },
-     {
-      "text": "Handbook for Theo is due.",
-      "refs": [
-       {
-        "ref": "note:n-theo",
-        "opens": true,
-        "token": "NOTE 10-19"
-       }
-      ]
-     },
-     {
-      "text": "Runbook from Mira is due.",
-      "refs": [
-       {
-        "ref": "note:n-owed",
-        "opens": true,
-        "token": "NOTE 10-19"
-       }
-      ]
-     },
-     {
-      "text": "Note n-owed Runbook from Mira is due. Mira owes you the rollback runbook by Thursday.",
-      "refs": [
-       {
-        "ref": "note:n-owed",
-        "opens": true,
-        "token": "NOTE 10-19"
-       }
-      ]
-     },
-     {
-      "text": "Note n-theo Handbook for Theo is due. Theo owns the on-call handbook.",
-      "refs": [
-       {
-        "ref": "note:n-theo",
-        "opens": true,
-        "token": "NOTE 10-19"
-       }
-      ]
      }
     ],
-    "built_at": "2026-10-19T20:39:43+00:00",
+    "built_at": "2026-10-19T21:59:48+00:00",
     "stale": false,
     "new_sources": 0,
     "model": "pages",
