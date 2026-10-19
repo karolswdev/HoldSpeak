@@ -97,7 +97,7 @@ describe("Q12 Memory", () => {
     });
     render(<MemoryCore />);
     const home = await screen.findByTestId("memory-home");
-    expect(within(home).getAllByTestId("standing-page").map((page) => page.getAttribute("aria-label"))).toEqual([
+    expect((await within(home).findAllByTestId("standing-page")).map((page) => page.getAttribute("aria-label"))).toEqual([
       "What I owe", "What changed this week",
     ]);
     expect(within(home).queryByText("Recent work")).toBeNull();

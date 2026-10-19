@@ -6,8 +6,7 @@ PR that fixes it merges. The recovery reconciliation is retained in
 
 | Found in | Follow-up | Goes to |
 |---|---|---|
-| Full recovery tape at ec3dde784 | `test_chair_glass` Capture returns 140px below its prior seat; `test_kit_glass` sees a 1px Button. Reproduce on current main and fix or name the retired expectation; neither is closed by the earlier quick sweeps. | Shell geometry / scoped regression repair |
-| Full recovery tape at ec3dde784 | Five graph-walk expectations still target the retired Rhythm host and three Conductor cases target retired lane rails or loose session icons. Update current cases and preserve the real receipt, keys and session effects. | Scoped regression repair |
+| Full recovery tape at ec3dde784 | `test_chair_glass` Capture returns 140px below its prior seat. Its temporary Coming-up height pins the initial top edge; preserve the CSS seat until the owner moves or sizes it. | Shell geometry / scoped regression repair |
 | C7 recovery #1363 | After a failed scheduled fire, the current Needs you read uses the saved failure until the occurrence expires. Verify that a successful manual Record now resolves this attention row while keeping the failed occurrence in recording history; hardware success is not yet observed. | Capture C10 / recording follow-through |
 | Q0 (#1260) | Interview's answer-only pass puts a system message after the user message, which Qwen's template rejects. | Asking Q4, or a small fix |
 | Q0 (#1260) | "Engine not reachable" is shown as "No engine for answers" (`ask_service.py` reason mapping). | Asking Q1 |
