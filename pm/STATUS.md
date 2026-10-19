@@ -4,16 +4,17 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (AG10 #1367 delivered; Q9 #1365 and ST1 #1347 merged)
+**Last updated:** 2026-10-19 (P3 #1350 delivered; ST2 #1346 merged)
 
 ## Current phase
 
-**Betterment recovery: 71/117 recipe implementations merged.** Codex owns
+**Betterment recovery: 73/117 recipe implementations merged.** Codex owns
 recovery and delivery at the owner's request. The desk is currently on
-backend `bfe8bf5dd`, frontend `bedf96ae4c253a4c`, PID 46690 (AG10 #1367).
+backend `50e7502a7`, frontend `e78bdddb6ee00c5d`, PID 44875 (P3).
 Four HTTP checks pass and the actual desk renders at 1440/393. These are
-delivery observations; owner acceptance remains separate. Full post-merge
-regression shards are queued with the low-priority machine lock at
+delivery observations; owner acceptance remains separate. All three baseline non-browser
+regression shards passed: 16,784 checks, 27 skips and one expected failure.
+Remaining browser shards use the low-priority machine lock at
 `wt-betterment-tape-20261019`, pinned to `bd3acff8f`.
 
 ST1 #1347 gives Rhythm, Wallpaper and Calendar one Settings home, preserves
@@ -23,18 +24,39 @@ fails on the old CSS and passes after the fix, including a saved Increase
 press. The initial broad check passed 4,062 related web and 1,383 affected
 pytest checks but found two stale browser selectors. After updating the
 Engines navigation assertion, the final incremental quick check is green:
-18 browser, 106 sweep, 27 canon and 1,116 repo guards. ST1 is not yet on the
-owner's running desk.
+18 browser, 106 sweep, 27 canon and 1,116 repo guards. ST1 is on the
+owner's running desk; Rhythm is observed at 1440/393 without page errors.
 
 Q9 follow-up #1365 uses declared operations through HTTP and MCP, with Edit
 and Dismiss before Confirm. Dismissed rows stay dismissed. Quick check:
 118 related web, 6,457 affected pytest (7 skipped), 106 sweep, 27 canon,
-1,116 repo guards. Q9 is not yet on the owner's running desk.
+1,116 repo guards. Q9 is on the owner's running desk.
 
 AG10 #1367 recovers the local fixes absent from superseded #1364. A real-hub
 fake-agent walk reads a meeting through MCP, commits a file and shows Done,
 one file changed, branch and Looked at at 1440/393. Quick check: 142 related
 web, 243 affected pytest, 106 sweep, 27 canon, 1,116 repo guards.
+
+P3 #1350 gives the project Now wing its state and reason, head facts,
+owner actions, Waiting on by person and This week with source links.
+Recovery carries each confirmed decision's source meeting through the wire
+and renders its chip. Current isolated-hub shots show the populated head
+facts at 1440/393; the original recovered seed also shows owed items and the
+confirmed decision. Broad check: 4,083 web passed with one old People test
+checking folds before Prep completed, 2,233 pytest passed (2 skipped),
+106 sweep, 27 canon and 1,116 repo guards. The asynchronous assertion now
+waits for the folds; final incremental check is green: 40 web, 106 sweep,
+27 canon and 1,116 repo guards. P3 is on the owner's running desk; runtime identity and four HTTP checks pass.
+
+ST2 #1346 recovers truthful Accounts states, Found on this Mac, Use and
+Remove/Undo. Check restores the previous Jira/Confluence acli profile. Four
+recovery tests failed before the fix when restoration returned nonzero or
+raised; the service now persists and returns the plain restoration failure.
+Provider behavior is exercised with an isolated stub. Broad check: 4,069
+web and 385 pytest passed; the sweep hit an intermittent People brief 503.
+The final incremental quick check passed 335 pytest, 106 sweep, 27 canon
+and 1,116 repo guards. The People 503 remains open; this retry does not
+prove it fixed. ST2 awaits deployment.
 
 **Initial recovery snapshot — owner ruling 2026-10-19.**
 Batch seven stopped at Claude's usage limit. At recovery, main had 69 of

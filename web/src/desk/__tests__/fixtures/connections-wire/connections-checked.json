@@ -7,14 +7,16 @@
       "checked_age_seconds": 0,
       "egress_host": "github.com",
       "error_detail": null,
-      "last_checked_at": "2026-10-11T15:32:11.150155+00:00",
+      "last_checked_at": "2026-10-19T03:52:22.194615+00:00",
       "next_action": {
         "kind": "recheck",
         "label": "Recheck"
       },
       "provider_id": "github",
+      "reason": null,
       "recovery_hint": null,
-      "state": "connected"
+      "state": "connected",
+      "used_by": []
     },
     {
       "account": {
@@ -32,9 +34,12 @@
           "connection_ref": "alpha.atlassian.net|owner@example.com",
           "egress_host": "alpha.atlassian.net",
           "error_detail": null,
-          "last_checked_at": "2026-10-11T13:27:11.158443+00:00",
+          "last_checked_at": "2026-10-19T01:47:22.207266+00:00",
+          "other_account": false,
+          "reason": null,
           "recovery_hint": null,
-          "state": "connected"
+          "state": "connected",
+          "used_by": []
         },
         {
           "account": {
@@ -46,13 +51,16 @@
           "egress_host": "beta.atlassian.net",
           "error_detail": null,
           "last_checked_at": null,
+          "other_account": false,
+          "reason": null,
           "recovery_hint": null,
-          "state": "never_checked"
+          "state": "never_checked",
+          "used_by": []
         }
       ],
       "egress_host": "alpha.atlassian.net",
       "error_detail": null,
-      "last_checked_at": "2026-10-11T13:27:11.158443+00:00",
+      "last_checked_at": "2026-10-19T01:47:22.207266+00:00",
       "next_action": {
         "kind": "recheck",
         "label": "Recheck"

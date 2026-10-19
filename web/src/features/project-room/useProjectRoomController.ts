@@ -19,7 +19,7 @@ import * as api from "./api";
 
 // HS-169-03: two wings only — ROOM (home) and HISTORY.
 const WINGS = [
-  { id: "room", label: "Room" },
+  { id: "room", label: "Now" },
   { id: "history", label: "History" },
 ];
 

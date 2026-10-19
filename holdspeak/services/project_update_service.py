@@ -73,6 +73,8 @@ from ..project_contracts import (
 from ..refs import format as format_ref, parse as parse_ref
 from .meeting_kind import is_one_on_one, meeting_speakers, title_says_one_on_one
 from .memory_grounding import memory_for, project_pages
+# Betterment P3: one risk rule for the update and the project window's head.
+from .room_health_service import note_risk_lines as _note_risk_lines, risk_sentences as _risk_sentences
 
 #: The marked block the project's memory travels in, inside the draft prompt.
 MEMORY_BLOCK_HEADING = "PROJECT MEMORY"
@@ -3427,42 +3429,7 @@ def _append_week_sources(
 
 # ── Betterment P1: risks and coverage from the records ──────────────
 
-#: The words that mark a risk (the memory page "risks and disputes" uses the
-#: same family, ``holdspeak/memory/pages.py``).
-_RISK_WORDS = _re.compile(
-    r"\b(risks?|risky|at risk|blocker|blockers|blocked|blocking|concerns?|"
-    r"delay|delays|delayed|slip|slips|slipped|disputes?)\b",
-    _re.IGNORECASE,
-)
-_SENTENCE_END = _re.compile(r"(?<=[.!?])\s+(?=[A-Z0-9])")
-_BULLET = _re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+")
-_TITLE_MARK = _re.compile(r"^#+\s*")
-
 _PROVIDER_WORDS = {"github": "GitHub", "jira": "Jira", "confluence": "Confluence"}
-
-
-def _risk_sentences(text: str) -> list[str]:
-    return [
-        sentence.strip() for sentence in _SENTENCE_END.split(" ".join(str(text or "").split()))
-        if sentence.strip() and _RISK_WORDS.search(sentence)
-    ]
-
-
-def _note_risk_lines(title: str, body: str, *, cap: int = 8) -> list[str]:
-    """The risk lines of a note: every list line when its title names risks,
-    otherwise the lines that name a risk."""
-    whole = bool(_RISK_WORDS.search(title))
-    lines: list[str] = []
-    for raw in str(body or "").splitlines():
-        if not raw.strip() or _TITLE_MARK.match(raw):
-            continue
-        is_item = bool(_BULLET.match(raw))
-        line = " ".join(_BULLET.sub("", raw).split())
-        if line and ((whole and is_item) or _RISK_WORDS.search(line)):
-            lines.append(line)
-        if len(lines) >= cap:
-            break
-    return lines
 
 
 def _outside_sources(room: dict[str, Any]) -> list[dict[str, str]]:

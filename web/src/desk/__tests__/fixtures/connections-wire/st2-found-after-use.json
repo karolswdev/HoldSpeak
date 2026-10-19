@@ -1,0 +1,74 @@
+{
+  "candidates": [
+    {
+      "account": "owner@example.com",
+      "active": true,
+      "connected": true,
+      "egress_host": "alpha.atlassian.net",
+      "id": "jira:alpha.atlassian.net|owner@example.com",
+      "label": "Owner",
+      "lamp": "cloud",
+      "provider": "jira",
+      "site": "alpha.atlassian.net",
+      "verb": "Use it"
+    },
+    {
+      "account": "owner@example.com",
+      "active": false,
+      "connected": true,
+      "egress_host": "beta.atlassian.net",
+      "id": "jira:beta.atlassian.net|owner@example.com",
+      "label": "Owner",
+      "lamp": "cloud",
+      "provider": "jira",
+      "site": "beta.atlassian.net",
+      "verb": "Use it"
+    },
+    {
+      "account": "owner@example.com",
+      "active": false,
+      "connected": true,
+      "egress_host": "gamma.atlassian.net",
+      "id": "jira:gamma.atlassian.net|owner@example.com",
+      "label": "Owner",
+      "lamp": "cloud",
+      "provider": "jira",
+      "site": "gamma.atlassian.net",
+      "verb": "Use it"
+    },
+    {
+      "account": "owner@example.com",
+      "active": true,
+      "connected": false,
+      "egress_host": "alpha.atlassian.net",
+      "id": "confluence:alpha.atlassian.net|owner@example.com",
+      "label": "Owner",
+      "lamp": "cloud",
+      "provider": "confluence",
+      "site": "alpha.atlassian.net",
+      "verb": "Use it"
+    },
+    {
+      "account": "owner@example.com",
+      "active": false,
+      "connected": false,
+      "egress_host": "beta.atlassian.net",
+      "id": "confluence:beta.atlassian.net|owner@example.com",
+      "label": "Owner",
+      "lamp": "cloud",
+      "provider": "confluence",
+      "site": "beta.atlassian.net",
+      "verb": "Use it"
+    }
+  ],
+  "tools": {
+    "acli": {
+      "detected_from": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-5257/popen-gw4/test_the_st2_wire_fixtures_are0/home/.config/acli",
+      "installed": true
+    },
+    "gh": {
+      "detected_from": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-5257/popen-gw4/test_the_st2_wire_fixtures_are0/home/.config/gh/hosts.yml",
+      "installed": true
+    }
+  }
+}

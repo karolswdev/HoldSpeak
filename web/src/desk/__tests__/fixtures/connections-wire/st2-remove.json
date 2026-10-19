@@ -1,0 +1,5 @@
+{
+  "connection_ref": "beta.atlassian.net|owner@example.com",
+  "provider": "jira",
+  "removed": true
+}
