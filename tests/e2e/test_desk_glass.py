@@ -839,14 +839,14 @@ class TestDeskDebtsGlass:
     def test_the_thread_composer_selection_is_readable(self, width: int) -> None:
         """replaces: tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_thread_composer_selection_is_readable (moved whole: the ::selection colours, computed)."""
         """Finding 1's census: the thread composer's textarea (the draft
-        field; row menu > Continue in thread) takes the same pair."""
+        field; row menu > Ask about this, Betterment Q5) takes the same pair."""
         from playwright.sync_api import sync_playwright
 
         with sync_playwright() as pw:
             browser, page, errors = self._open(pw, width)
             try:
                 self._note_object_menu(page).get_by_role(
-                    "menuitem", name="Continue in thread", exact=True).click()
+                    "menuitem", name="Ask about this", exact=True).click()
                 area = page.locator("textarea").first
                 area.wait_for(timeout=T)
                 area.fill("Ask Priya about the cutover date")

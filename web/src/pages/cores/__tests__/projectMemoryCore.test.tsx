@@ -168,9 +168,9 @@ describe("Project Memory", () => {
     expect(kindInfo("project").footprint(project, { ...EMPTY_ITEMS })).toBe(
       "2 meetings",
     );
-    expect(VERBS.find((verb) => verb.id === "object.ask-project")?.label).toBe(
-      "Ask this project",
-    );
+    // Betterment Q5: Ask this project is Ask about this.
+    expect(VERBS.find((verb) => verb.id === "object.ask-project")).toBeUndefined();
+    expect(VERBS.some((verb) => verb.id === "object.ask-about")).toBe(true);
   });
 
   it("interleaves meetings, decisions, and only promoted artifacts newest-down", () => {

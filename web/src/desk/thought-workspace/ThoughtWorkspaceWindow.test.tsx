@@ -217,7 +217,8 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     expect(screen.queryByRole("region", { name: "Ask about this note" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Ask about this note" }));
     await waitFor(() => expect(useDesk.getState().askOpen).toBe(true));
-    expect(useDesk.getState().selectedIds).toEqual(["note:note-1"]);
+    // Betterment Q5: Ask about this puts the note in About.
+    expect(useDesk.getState().askThread?.about?.map((chip) => chip.ref)).toEqual(["note:note-1"]);
   });
 
   it("carries an exact non-first-line selection into Task and posts the note source", async () => {
@@ -289,7 +290,8 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     fireEvent.click(screen.getByRole("button", { name: "Ask about this note" }));
 
     await waitFor(() => expect(useDesk.getState().askOpen).toBe(true));
-    expect(useDesk.getState().selectedIds).toEqual(["note:note-1"]);
+    // Betterment Q5: Ask about this puts the note in About.
+    expect(useDesk.getState().askThread?.about?.map((chip) => chip.ref)).toEqual(["note:note-1"]);
     expect(takeAskSelection()).toEqual({ noteRef: "note:note-1", text: "Ask about this exact passage", source: { id: "note-1", kind: "note", ref: "note:note-1", title: saved.working_note.title || "Note" } });
   });
 

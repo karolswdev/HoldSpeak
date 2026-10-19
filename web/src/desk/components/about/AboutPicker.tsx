@@ -26,8 +26,12 @@ export interface AboutCandidate {
   kind: AboutKind;
   /** The name he reads on the chip. */
   label: string;
-  /** More words that find it (a drawer's own name). */
+  /** More words that find it (a drawer's own name, a meeting's people). */
   terms?: string;
+  /** When it happened or last changed (ISO): a group lists newest first. */
+  at?: string;
+  /** Betterment Q6: offered before he types (each person, each project). */
+  shortcut?: boolean;
 }
 
 /** The relative sets (the hub reads them when a run starts). */
@@ -62,10 +66,15 @@ export function aboutCandidates(
     out.push({ ref: qualifiedRef("directory", zone.id), kind: "zone", label: `Notes in ${zone.name}`, terms: zone.name });
   }
   for (const meeting of items.meeting ?? []) {
-    out.push({ ref: qualifiedRef("meeting", meeting.id), kind: "meeting", label: meeting.title || "Meeting with no title" });
+    // Betterment Q6: a meeting is found by the people in it, too ("Mira").
+    const people = (meeting.attendees ?? []).filter((name) => typeof name === "string").join(" ");
+    out.push({
+      ref: qualifiedRef("meeting", meeting.id), kind: "meeting", label: meeting.title || "Meeting with no title",
+      terms: people || undefined, at: meeting.startedAt || undefined,
+    });
   }
   for (const note of items.note ?? []) {
-    out.push({ ref: qualifiedRef("note", note.id), kind: "note", label: note.title || "Untitled note" });
+    out.push({ ref: qualifiedRef("note", note.id), kind: "note", label: note.title || "Untitled note", at: note.createdAt || undefined });
   }
   for (const project of items.project ?? []) {
     out.push({ ref: qualifiedRef("project", project.id), kind: "project", label: project.name || "Project" });
@@ -76,12 +85,14 @@ export function aboutCandidates(
   return out;
 }
 
-/** The matches for `query`, best first (the palette's ranking). An empty
- *  query offers the relative sets. */
-export function aboutMatches(candidates: AboutCandidate[], query: string, limit = 6): AboutCandidate[] {
+/** The matches for `query`: the best `limit` by the palette's ranking, then
+ *  grouped by kind (the group of the best match first) and, inside a group,
+ *  newest first (Betterment Q6). An empty query offers the shortcuts: the
+ *  relative sets, and each candidate marked `shortcut`. */
+export function aboutMatches(candidates: AboutCandidate[], query: string, limit = 8): AboutCandidate[] {
   const asked = query.trim().toLocaleLowerCase();
-  if (!asked) return candidates.filter((c) => c.kind === "set").slice(0, limit);
-  return candidates
+  if (!asked) return candidates.filter((c) => c.kind === "set" || c.shortcut).slice(0, Math.max(limit, 12));
+  const best = candidates
     .map((candidate, index) => ({
       candidate,
       index,
@@ -89,8 +100,18 @@ export function aboutMatches(candidates: AboutCandidate[], query: string, limit 
     }))
     .filter((row) => row.score > 0)
     .sort((a, b) => b.score - a.score || a.index - b.index)
-    .slice(0, limit)
-    .map((row) => row.candidate);
+    .slice(0, limit);
+  const groups = new Map<string, typeof best>();
+  for (const row of best) {
+    const group = groups.get(row.candidate.kind);
+    if (group) group.push(row);
+    else groups.set(row.candidate.kind, [row]);
+  }
+  const newest = (a: (typeof best)[number], b: (typeof best)[number]) => {
+    const at = String(b.candidate.at ?? "").localeCompare(String(a.candidate.at ?? ""));
+    return at || b.score - a.score || a.index - b.index;
+  };
+  return [...groups.values()].flatMap((group) => [...group].sort(newest)).map((row) => row.candidate);
 }
 
 export function AboutPicker({

@@ -10,6 +10,7 @@
  *
  * Ghosting over hiding: a verb that cannot run now stays visible with
  * its reason - the system admits what it can do. */
+import { aboutTarget, askAboutLabel, askAboutRef } from "./askAbout";
 import { useDesk } from "./store";
 import { openIntelligence } from "./intelligenceNavigation";
 import { openSurfaceOr } from "./shell";
@@ -431,24 +432,18 @@ export const VERBS: Verb[] = [
       if (o) useDesk.getState().openInfoWindow(ctx.selectedRef as string);
     },
   },
+  // Betterment Q5: one verb, Ask about this, on every object (a person:
+  // "Ask about Mira"). It replaces Ask AI, Ask this project and Continue in
+  // thread: Ask opens with the object in About and an empty question.
   {
-    id: "object.ask-project",
-    label: "Ask this project",
+    id: "object.ask-about",
+    label: (ctx) => askAboutLabel(aboutTarget(ctx.selectedRef)),
     menu: "object",
     scope: "object",
     glyph: "✦",
-    ghost: (ctx) => {
-      const o = selected(ctx);
-      if (!o) return "Select a Project";
-      return o.kind === "project" ? null : "Select a Project";
-    },
-    run: (ctx) => {
-      const o = selected(ctx);
-      if (o?.kind !== "project") return;
-      const desk = useDesk.getState();
-      desk.setSelected([`project:${o.id}`]);
-      desk.openAsk();
-    },
+    keywords: ["ask", "ai", "question", "thread", "chat", "conversation", "project"],
+    ghost: (ctx) => (aboutTarget(ctx.selectedRef) ? null : "Select an object"),
+    run: (ctx) => { askAboutRef(ctx.selectedRef); },
   },
   {
     id: "object.draft-update",
@@ -464,25 +459,6 @@ export const VERBS: Verb[] = [
     run: (ctx) => {
       const o = selected(ctx);
       if (o?.kind === "project") openProjectUpdates(o.id);
-    },
-  },
-  {
-    id: "object.ask",
-    label: "Ask AI",
-    menu: "object",
-    scope: "object",
-    glyph: "✦",
-    ghost: (ctx) => {
-      const o = selected(ctx);
-      if (!o) return "Select an object";
-      return primitiveCan(o.kind, "ask") ? null : "Ask unavailable";
-    },
-    run: (ctx) => {
-      const o = selected(ctx);
-      if (!o || !primitiveCan(o.kind, "ask")) return;
-      const desk = useDesk.getState();
-      desk.setSelected([`${o.kind}:${o.id}`]);
-      desk.openAsk();
     },
   },
   {
@@ -505,29 +481,6 @@ export const VERBS: Verb[] = [
       const kind = o ? handKindOf(o.kind) : null;
       if (!o || !kind || !primitiveCan(o.kind, "hand")) return;
       openHand({ kind, id: o.id, title: String(o.title ?? "") || o.id });
-    },
-  },
-  {
-    id: "object.continue-in-thread",
-    label: "Continue in thread",
-    menu: "object",
-    scope: "object",
-    glyph: KIND_GLYPH.thread,
-    keywords: ["chat", "thread", "conversation"],
-    ghost: (ctx) => {
-      const o = selected(ctx);
-      if (!o) return "Select an object";
-      const threadable = new Set(["meeting", "note", "artifact", "decision", "recipe", "people"]);
-      return threadable.has(o.kind) ? null : "Not threadable";
-    },
-    // Betterment Q4: Ask with the object in About (Q5 renames this verb
-    // Ask about this).
-    run: (ctx) => {
-      const o = selected(ctx);
-      if (!o) return;
-      const desk = useDesk.getState();
-      desk.setSelected([`${o.kind}:${o.id}`]);
-      desk.openAskThread(null);
     },
   },
   {

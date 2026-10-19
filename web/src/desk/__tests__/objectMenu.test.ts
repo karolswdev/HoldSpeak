@@ -46,10 +46,15 @@ describe("objectMenuEntries (registry-derived, parallel list #4 dead)", () => {
     );
     expect(byId["object.open"].ghost).toBeNull();
     expect(byId["object.edit"].ghost).toBeNull();
-    expect(byId["object.ask"].ghost).toBeNull();
+    // Betterment Q5: one verb, Ask about this, opens Ask with the note in About.
+    expect(byId["object.ask-about"].label).toBe("Ask about this");
+    expect(byId["object.ask-about"].ghost).toBeNull();
+    expect(byId["object.ask"]).toBeUndefined();
     expect(byId["object.ask-project"]).toBeUndefined();
-    byId["object.ask"].onSelect();
-    expect(useDesk.getState().selectedIds).toEqual(["note:n1"]);
+    expect(byId["object.continue-in-thread"]).toBeUndefined();
+    byId["object.ask-about"].onSelect();
+    expect(useDesk.getState().askThread?.about?.map((chip) => chip.ref)).toEqual(["note:n1"]);
+    expect(useDesk.getState().askThread?.question).toBeUndefined();
     expect(useDesk.getState().openAsk).toHaveBeenCalledOnce();
     byId["object.open"].onSelect();
     expect(useDesk.getState().openPullout).toHaveBeenCalledWith("note:n1", undefined);
@@ -68,7 +73,7 @@ describe("objectMenuEntries (registry-derived, parallel list #4 dead)", () => {
     expect(entries.filter((entry) => entry.type === "item").map((entry) => entry.id)).toEqual([
       "object.open",
       "object.info",
-      "object.ask-project",
+      "object.ask-about",
       "object.draft-update",
       "object.rename",
       "object.file",

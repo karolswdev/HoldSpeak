@@ -559,8 +559,9 @@ function WorkspaceReady({
         text: selected && selected.text.trim() && selected.body === note.body_markdown ? selected.text : "",
         source: { id: note.id, kind: "note", ref: noteRef, title: note.title || "Note" },
       });
-      useDesk.getState().setSelected([noteRef]);
-      useDesk.getState().openAsk();
+      // Betterment Q5: Ask about this, with the note in About and its
+      // selected text quoted in the question.
+      useDesk.getState().askAbout([{ id: note.id, kind: "note", ref: noteRef, title: note.title || "Note" }]);
       say("Ask opened");
     } catch (cause) { sayFault(cause); }
     finally { writer.release(); setBusy(false); }

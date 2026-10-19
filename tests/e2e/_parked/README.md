@@ -459,3 +459,7 @@ face have no subject. The Ask window's facts are in
 
 - `test_askai_glass.py`: the Thread window's slash completion, guardrail row,
   annotation popover, refused send and ref chip.
+
+# Parked with the Room's own Ask (Betterment Q5, 2026-10-18)
+
+- `test_room_unfinished_glass.py`: the Room's UNFINISHED list (the 393 container rule, the rows rove on a list that mounted empty, five rows leave the Room standing). The Room's Ask field now opens the one Ask window (web/src/features/project-room/__tests__/room.app.test.tsx, Betterment Q5).

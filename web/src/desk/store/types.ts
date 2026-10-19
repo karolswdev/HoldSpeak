@@ -195,7 +195,14 @@ export interface DeskState {
    * (`threadId`) or a new Ask (`null`). `nonce` changes on every request,
    * so the open window follows it. Betterment Q3: a new Ask can carry its
    * `question`, and `run` asks it at once (Search's Ask row). */
-  askThread: { threadId: string | null; nonce: number; question?: string; run?: boolean } | null;
+  askThread: {
+    threadId: string | null;
+    nonce: number;
+    question?: string;
+    run?: boolean;
+    /** Betterment Q5: what a new Ask is about (Ask about this). */
+    about?: Array<{ id: string; kind: string; title: string; ref: string }>;
+  } | null;
   /** HS-83-02 -- the persona whose CONVERSATION is open (null = none). */
   chatPersonaId: string | null;
   /** Non-document Desk tool/resource shown in the shared inspector. */
@@ -373,6 +380,12 @@ export interface DeskState {
   openAskThread(threadId: string | null): void;
   /** Betterment Q3: open a new Ask on `question` and run it. */
   askQuestion(question: string): void;
+  /** Betterment Q5: open a new Ask about these objects (the About chips),
+   * with an empty question, or with `question` (and `run` to ask it). */
+  askAbout(
+    about: Array<{ id: string; kind: string; title: string; ref: string }>,
+    options?: { question?: string; run?: boolean },
+  ): void;
   openChat(personaId: string): void;
   closeChat(): void;
   openToolInspector(
