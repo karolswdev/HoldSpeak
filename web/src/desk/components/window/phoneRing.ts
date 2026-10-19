@@ -2,7 +2,7 @@
 // the phone's ring of open windows. At 393 one window fills the work area;
 // a horizontal touch swipe on it moves to the next open window (finger to
 // the left) or back (to the right). Go is the current visible navigator. The ring: the open Chair windows in the Chair's order
-// (Needs you, The week, then Capture once it opened at 393), then
+// (Needs you, then Capture once it opened at 393), then
 // the open desk windows in the order they opened. It wraps.
 // A Chair window takes the work area the way Go ▸ Chair does
 // (openChairWindow: the desk window in front iconifies, never closes).
@@ -31,8 +31,7 @@ export function phoneRing(): RingWindow[] {
   const cw = useChairWindows.getState();
   const chair = CHAIR_WINDOWS.filter(
     (w) =>
-      // Phone Brief is a view in Today, not the retired Chair Brief pane.
-      w.id !== "chair:brief" && !cw.closed[w.id] &&
+      !cw.closed[w.id] &&
       (w.phone || (w.id === "chair:capture" && (cw.captureInRing || cw.phone === w.id))),
   ).map((w) => ({ id: w.id, label: w.title, chair: true }));
   // The order the windows opened: their opening sequence, never the

@@ -18049,7 +18049,7 @@
           "claim": "GET /api/brief/latest answers null when no brief exists"
         },
         {
-          "path": "web/src/desk/chair/ChairHome.tsx",
+          "path": "web/src/desk/chair/_parked/ArrivalSections.tsx",
           "symbol": "!briefLoading && !brief",
           "claim": "the Chair draws 'No brief yet' and Generate only when the read ANSWERED null (a failed read takes the branch above it, PHILO-3-03)"
         }
@@ -18067,7 +18067,7 @@
       "phase1_refs": [],
       "sources": [
         {
-          "path": "web/src/desk/chair/ChairHome.tsx",
+          "path": "web/src/desk/chair/_parked/ArrivalSections.tsx",
           "symbol": "const [briefLoading, setBriefLoading] = useState(true);",
           "claim": "the Chair starts with briefLoading true"
         },
@@ -18095,7 +18095,7 @@
           "claim": "the pull-out's verb reads Generating... while the POST is in flight"
         },
         {
-          "path": "web/src/desk/chair/ChairHome.tsx",
+          "path": "web/src/desk/chair/_parked/ArrivalSections.tsx",
           "symbol": "const [generating, setGenerating] = useState(false);",
           "claim": "the Chair's head Generate is disabled and GENERATING\u2026 holds the status slot in flight (PHILO-4-01)"
         }
@@ -18131,7 +18131,7 @@
       "phase1_refs": [],
       "sources": [
         {
-          "path": "web/src/desk/chair/ChairHome.tsx",
+          "path": "web/src/desk/chair/_parked/ArrivalSections.tsx",
           "symbol": "const [generateFailed, setGenerateFailed] = useState<string | null>(null);",
           "claim": "the Chair names a failed generation BRIEF DID NOT GENERATE \u00b7 <cause> in the status slot, no Retry (PHILO-4-01)"
         }
@@ -18182,7 +18182,7 @@
           "claim": "is_empty is a field of the brief record"
         },
         {
-          "path": "web/src/desk/chair/ChairHome.tsx",
+          "path": "web/src/desk/chair/_parked/ArrivalSections.tsx",
           "symbol": "const briefItems: BriefItem[] = brief && !brief.is_empty",
           "claim": "the Chair reads items only from a brief that is not empty"
         }
@@ -18201,7 +18201,7 @@
       "phase1_refs": [],
       "sources": [
         {
-          "path": "web/src/desk/chair/ChairHome.tsx",
+          "path": "web/src/desk/chair/_parked/ArrivalSections.tsx",
           "symbol": "<span className=\"arrival-brief-headline\" data-testid=\"arrival-brief-headline\">",
           "claim": "a brief with nothing untriaged keeps its own section, headline and Generate after a reload (the quiet branch)"
         }
@@ -18226,7 +18226,7 @@
           "claim": "an absent shelf key is untouched work"
         },
         {
-          "path": "web/src/desk/chair/ChairHome.tsx",
+          "path": "web/src/desk/chair/_parked/ArrivalSections.tsx",
           "symbol": "const briefShelf = brief?.shelf ?? {};",
           "claim": "the Chair's untriaged list is the items with no shelf key"
         }
@@ -18621,7 +18621,7 @@
           "claim": "a meeting with at least one segment passes the empty gate"
         },
         {
-          "path": "web/src/desk/chair/ChairHome.tsx",
+          "path": "web/src/desk/chair/_parked/ArrivalSections.tsx",
           "symbol": "const hasTranscript =",
           "claim": "the Chair draws Run summary only over a meeting with transcript words"
         }
@@ -20215,12 +20215,12 @@
       ],
       "sources": [
         {
-          "path": "web/src/desk/chair/ChairHome.tsx",
+          "path": "web/src/desk/chair/_parked/ArrivalSections.tsx",
           "symbol": "// re-reads on the hub's `desk_changed` frame (the burst is debounced,",
           "claim": "the Chair is a face that re-reads on arrival"
         },
         {
-          "path": "web/src/desk/chair/ChairHome.tsx",
+          "path": "web/src/desk/chair/_parked/ArrivalSections.tsx",
           "symbol": "import { ApiError, apiFetch, readableError } from \"../../lib/api\";",
           "claim": "the brief read is one of those re-reads"
         }

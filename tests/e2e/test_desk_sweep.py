@@ -236,12 +236,12 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
         # Not applications, opened the same way: the Chair's Needs-you window
         # (its seed rows: accepted requests, a failed summary) ...
         ("needs", "chair:needs", None),
-        # ... the Chair's other three windows (the 12 px floor walk of
+        # ... the Chair's other window (the 12 px floor walk of
         # PHILO-13-18 read them; tests/e2e/_parked/test_philo13_18_type_floor_glass.py) ...
         # Betterment D4: Today's Since-yesterday fold, unfolded (the Brief
-        # wing it replaced is parked).
+        # wing it replaced is parked). Betterment D5: The week retired into
+        # Today (its case is gone with it).
         ("brief", "pullout:intelligence:desk", None),
-        ("week", "chair:week", None),
         ("capture", "chair:capture", None),
         # ... and the ⌘K palette, open on a query that hits several sections.
         ("palette", "desk-tool-shelf", PALETTE_QUERY),

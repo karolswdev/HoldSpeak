@@ -253,7 +253,8 @@ describe.each([[1440, false], [393, true]] as const)("S1: Go at %i is the manife
     useDesk.setState({ items: { ...EMPTY_ITEMS }, projects: [] } as never);
   });
 
-  const DAILY_WORK = ["Today", "Needs you", "Brief", "The week", "Capture", "Meetings", "People", "Projects", "Agents", "Ask AI", "Speak",
+  // Betterment daily D5: Brief and The week retired into Today.
+  const DAILY_WORK = ["Today", "Needs you", "Capture", "Meetings", "People", "Projects", "Agents", "Ask AI", "Speak",
     "Automations", "Memory", "Voice commands"];
 
   it("Go shows Daily then Work; Builder ▸ only when Builder tools is on, with eight rows", () => {
@@ -288,20 +289,24 @@ describe.each([[1440, false], [393, true]] as const)("S1: Go at %i is the manife
       expect(row, w.title).toBeTruthy();
       expect(row!.getAttribute("aria-disabled"), w.title).not.toBe("true");
     }
+    // Betterment daily D5: no Go row offers the retired Brief or The week.
+    expect(top(menu)).not.toContain("Brief");
+    expect(top(menu)).not.toContain("The week");
     // The desktop row opens the Chair window itself.
     if (!isPhone) {
-      const week = Array.from(menu.querySelectorAll<HTMLElement>("[role^=menuitem]")).find(
-        (el) => el.querySelector(".desk-menu-label")?.textContent?.trim() === "The week")!;
-      fireEvent.click(week);
-      expect(useChairWindows.getState().closed["chair:week"]).toBe(false);
+      const capture = Array.from(menu.querySelectorAll<HTMLElement>("[role^=menuitem]")).find(
+        (el) => el.querySelector(".desk-menu-label")?.textContent?.trim() === "Capture")!;
+      fireEvent.click(capture);
+      expect(useChairWindows.getState().closed["chair:capture"]).toBe(false);
     }
   });
 
   it("every Go row comes from goRows (no hand list)", () => {
     phone(isPhone);
     const fromManifest = GO_GROUPS.flatMap(goRows).length;
-    // Daily: eight plus the Chair's Brief, The week and Capture.
-    expect(fromManifest).toBe(11 + 4 + 8);
+    // Daily: Today, Needs you, Capture and six applications (daily D5
+    // retired Brief and The week into Today).
+    expect(fromManifest).toBe(9 + 4 + 8);
   });
 });
 

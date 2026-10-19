@@ -1,3 +1,7 @@
+// Parked by Betterment daily D5: this file tests the Chair's Brief or The week
+// window, retired into Today (the sections: chair/_parked/ArrivalSections.tsx).
+// Not run (vitest excludes _parked).
+
 // PHILO-6-01 round 2 — the complete Arrival row of a failed import names the
 // IMPORT as what failed (Astra's check on built, finding 2).
 //

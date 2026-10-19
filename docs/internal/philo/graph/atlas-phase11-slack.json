@@ -9486,7 +9486,7 @@
           "claim": "The meeting window renders the same well: its body is the Meetings record (PHILO-17, one window per meeting)."
         },
         {
-          "path": "web/src/desk/chair/ChairHome.tsx",
+          "path": "web/src/desk/chair/_parked/ArrivalSections.tsx",
           "symbol": "import { MeetingSendWellLazy } from \"../../meetings/MeetingSendWellLazy\";",
           "claim": "The unfolded Chair meeting row renders the well."
         },
@@ -9610,7 +9610,7 @@
           "claim": "The well keeps a named preview refusal with size facts on its face."
         },
         {
-          "path": "web/src/desk/chair/ChairHome.tsx",
+          "path": "web/src/desk/chair/_parked/ArrivalSections.tsx",
           "symbol": "{brief ? <BriefSendWells key=\"brief-send\" brief={brief} /> : null}",
           "claim": "The Chair keeps the same brief SEND well across the last-item branch."
         }

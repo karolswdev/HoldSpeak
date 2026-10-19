@@ -117,17 +117,17 @@ describe("B2: every open window returns after a reload", () => {
 
   it("a closed Chair window stays closed; the phone's window returns", async () => {
     const chair = await import("../chair/chairWindows");
-    chair.openChairWindow("chair:week");
-    chair.closeChairWindow("chair:brief");
+    chair.openChairWindow("chair:needs");
+    chair.closeChairWindow("chair:capture");
     // PHILO-14 A1: a fresh desk opens with every Chair window closed (the
     // screen of objects); the one he opened stays open, the rest closed.
-    expect(stored().chair).toEqual({ closed: ["chair:needs", "chair:brief", "chair:capture"], phone: "chair:week" });
+    expect(stored().chair).toEqual({ closed: ["chair:capture"], phone: "chair:needs" });
 
     vi.resetModules();
     const fresh = await import("../chair/chairWindows");
-    expect(fresh.isChairWindowOpen("chair:brief")).toBe(false);
-    expect(fresh.isChairWindowOpen("chair:week")).toBe(true);
-    expect(fresh.useChairWindows.getState().phone).toBe("chair:week");
+    expect(fresh.isChairWindowOpen("chair:capture")).toBe(false);
+    expect(fresh.isChairWindowOpen("chair:needs")).toBe(true);
+    expect(fresh.useChairWindows.getState().phone).toBe("chair:needs");
   });
 
   // PHILO-17 (owner 2026-10-10, "everything must become one desk"): the

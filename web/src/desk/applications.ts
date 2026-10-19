@@ -532,12 +532,9 @@ export type GoExtra =
 
 export const GO_EXTRA_ROWS: readonly (GoExtra & { go: { group: GoGroup; order: number } })[] = [
   { kind: "verb", verbId: "chair.window.needs", label: "Needs you", go: { group: "daily", order: 1 } },
-  // The Chair's other windows: S0 left the Window menu with one line on an
-  // empty desk, so Go is their door (PLAN: no app is reachable only by a
-  // detour). Brief and The week stay until daily D5 retires them into
-  // Today. On the phone, Brief is Today's Brief view (`phoneVerbId`).
-  { kind: "verb", verbId: "chair.window.brief", label: "Brief", phoneVerbId: "desk.intelligence-brief", go: { group: "daily", order: 1.2 } },
-  { kind: "verb", verbId: "chair.window.week", label: "The week", go: { group: "daily", order: 1.4 } },
+  // The Chair's other window: S0 left the Window menu with one line on an
+  // empty desk, so Go is its door (PLAN: no app is reachable only by a
+  // detour). Daily D5: Brief and The week retired into Today.
   { kind: "verb", verbId: "chair.window.capture", label: "Capture", go: { group: "daily", order: 1.6 } },
   { kind: "projects", go: { group: "daily", order: 4 } },
   { kind: "drawers", go: { group: "work", order: 3 } },

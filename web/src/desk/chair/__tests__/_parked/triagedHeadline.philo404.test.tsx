@@ -1,3 +1,7 @@
+// Parked by Betterment daily D5: this file tests the Chair's Brief or The week
+// window, retired into Today (the sections: chair/_parked/ArrivalSections.tsx).
+// Not run (vitest excludes _parked).
+
 /* PHILO-4-04 — the saved brief headline and current Arrival triage state
  * occupy two durable facts. The six-row values below are the day-one
  * fixture from story 01's `compose_headline.py`, which runs the real

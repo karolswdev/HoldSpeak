@@ -23,7 +23,7 @@ import { registrySnapshot } from "../components/window/windowRegistry";
 import type { ComponentType } from "react";
 import { NeedsDrawer } from "../needs/NeedsDrawer";
 
-export type ChairWindowKey = "needs" | "brief" | "week" | "capture";
+export type ChairWindowKey = "needs" | "capture";
 
 export interface ChairWindowSpec {
   key: ChairWindowKey;
@@ -35,10 +35,15 @@ export interface ChairWindowSpec {
 
 export const CHAIR_WINDOWS: readonly ChairWindowSpec[] = [
   { key: "needs", id: "chair:needs", title: "Needs you", phone: true },
-  { key: "brief", id: "chair:brief", title: "Brief", phone: true },
-  { key: "week", id: "chair:week", title: "The week", phone: true },
   { key: "capture", id: "chair:capture", title: "Capture", phone: false },
 ];
+
+/** Betterment daily D5: the Brief and The week windows are retired into
+ * Today (one place for the start of the day). A desk that still has one open
+ * (a hub row, an agent's open) closes it and opens Today in its place, once
+ * (compositor/hubWindows.ts). Their sections are parked in
+ * `_parked/ArrivalSections.tsx`. */
+export const TODAY_REPLACES: readonly string[] = ["chair:brief", "chair:week"];
 
 /** PHILO-14 A5: a Chair window whose body is an object face of its own
  * (the Needs-you smart drawer), in place of the Chair's section. */
@@ -110,7 +115,7 @@ function compactNow(): boolean {
 }
 
 export function isChairWindowOpen(id: string): boolean {
-  return !useChairWindows.getState().closed[id];
+  return Boolean(chairWindowSpec(id)) && !useChairWindows.getState().closed[id];
 }
 
 /** Open a Chair window (or bring an open one to the front). At 393 it takes

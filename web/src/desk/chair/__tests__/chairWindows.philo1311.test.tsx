@@ -2,12 +2,13 @@
 // canvas (2026-10-02: "Ratify, build it"; Capture "Yes"). Red on bbf7e9a4
 // (the Chair was one scrolling page), green after.
 //
-//   1. Four DeskWindowFrame windows — Needs you, Brief, The week, Capture —
-//      each holding its sections; registered (front window, screen title)
+//   1. DeskWindowFrame windows — Needs you, Capture (Betterment daily D5:
+//      Brief and The week retired into Today) — each holding its body;
+//      registered (front window, screen title)
 //      with no Dock chip; Needs you is the front Chair window.
 //   2. The work first (R3): the Needs-you window leads with the headline and
 //      the actions; SETUP is below the actions.
-//   3. R1: Close closes; Window ▸ Chair lists the four with a check on the
+//   3. R1: Close closes; Window ▸ Chair lists them with a check on the
 //      open ones. PHILO-14 A1 (board A-1): the Chair is the screen of
 //      objects, so a closed window leaves the screen, not a reopen Button.
 //   4. R2 (393): one window at a time, Needs you first; the Speak AppIcon's
@@ -105,9 +106,11 @@ afterEach(() => {
 });
 
 describe("PHILO-13-11 slice two — the Chair as windows", () => {
-  it("renders four windows, each holding its sections", async () => {
+  it("renders two windows, Needs you and Capture, each holding its body (no Brief, no The week)", async () => {
     render(<ChairHome />);
-    for (const name of ["Needs you", "Brief", "The week", "Capture"]) {
+    expect(region("Brief")).toBeNull();
+    expect(region("The week")).toBeNull();
+    for (const name of ["Needs you", "Capture"]) {
       const win = region(name);
       expect(win, name).toBeTruthy();
       expect(win!.classList.contains("desk-window-shell")).toBe(true);
@@ -118,14 +121,13 @@ describe("PHILO-13-11 slice two — the Chair as windows", () => {
     }
     // PHILO-14 A5: the Needs-you window body is the smart drawer.
     expect(within(region("Needs you")!).getByTestId("needs-drawer")).toBeTruthy();
-    expect(within(region("Brief")!).getByTestId("arrival-brief")).toBeTruthy();
     expect(within(region("Capture")!).getByTestId("arrival-capture-bar")).toBeTruthy();
     expect(within(region("Capture")!).getByRole("button", { name: "Write a thought" })).toBeTruthy();
     expect(within(region("Capture")!).getByRole("button", { name: "Record meeting" })).toBeTruthy();
     expect(within(region("Capture")!).getByRole("button", { name: "Schedule" })).toBeTruthy();
     // registered for the front and the screen title; no Dock chip until iconified
     const ids = registrySnapshot.map((w) => w.id);
-    for (const id of ["chair:needs", "chair:brief", "chair:week", "chair:capture"]) {
+    for (const id of ["chair:needs", "chair:capture"]) {
       expect(ids).toContain(id);
       expect(dockSnapshot.map((w) => w.id)).not.toContain(id);
     }
@@ -151,15 +153,15 @@ describe("PHILO-13-11 slice two — the Chair as windows", () => {
 
   it("Close closes; the screen stands where it was; Window ▸ Chair checks the open ones", async () => {
     render(<><DeskMenuBar /><ChairHome /></>);
-    fireEvent.click(within(region("Brief")!).getByRole("button", { name: "Close Brief" }));
-    await waitFor(() => expect(region("Brief")).toBeNull());
-    expect(registrySnapshot.map((w) => w.id)).not.toContain("chair:brief");
+    fireEvent.click(within(region("Capture")!).getByRole("button", { name: "Close Capture" }));
+    await waitFor(() => expect(region("Capture")).toBeNull());
+    expect(registrySnapshot.map((w) => w.id)).not.toContain("chair:capture");
     // PHILO-14 A1: no reopen Button; the screen of objects is the Chair.
-    expect(screen.queryByTestId("chair-reopen-brief")).toBeNull();
+    expect(screen.queryByTestId("chair-reopen-capture")).toBeNull();
     expect(screen.getByTestId("desk-screen")).toBeTruthy();
 
     // the verbs behind Window ▸ Chair
-    expect(verbById("chair.window.brief")!.checked!({ selectedRef: null })).toBe(false);
+    expect(verbById("chair.window.capture")!.checked!({ selectedRef: null })).toBe(false);
     expect(verbById("chair.window.needs")!.checked!({ selectedRef: null })).toBe(true);
     // the menu face: Window holds ONE Chair submenu
     const title = screen.getByRole("button", { name: "Window" });
@@ -168,10 +170,10 @@ describe("PHILO-13-11 slice two — the Chair as windows", () => {
     expect(labels.filter((t) => /^Desk\b/.test(t))).toHaveLength(1);
     fireEvent.keyDown(document, { key: "Escape" });
 
-    act(() => verbById("chair.window.brief")!.run({ selectedRef: null }));
-    await waitFor(() => expect(region("Brief")).toBeTruthy());
-    expect(frontWindowId()).toBe("chair:brief");
-    expect(screen.queryByTestId("chair-reopen-brief")).toBeNull();
+    act(() => verbById("chair.window.capture")!.run({ selectedRef: null }));
+    await waitFor(() => expect(region("Capture")).toBeTruthy());
+    expect(frontWindowId()).toBe("chair:capture");
+    expect(screen.queryByTestId("chair-reopen-capture")).toBeNull();
 
     // PHILO-14 A1: the screen's Needs you drawer opens the Needs you window
     fireEvent.click(within(region("Needs you")!).getByRole("button", { name: "Close Needs you" }));
@@ -183,17 +185,17 @@ describe("PHILO-13-11 slice two — the Chair as windows", () => {
 
   it("Iconify falls to a Dock chip; Window ▸ Chair brings it back", async () => {
     render(<ChairHome />);
-    fireEvent.click(within(region("Brief")!).getByRole("button", { name: "Iconify Brief" }));
-    await waitFor(() => expect(useDesk.getState().panelMin).toContain("chair:brief"));
-    expect(dockSnapshot.map((w) => w.id)).toContain("chair:brief");
+    fireEvent.click(within(region("Capture")!).getByRole("button", { name: "Iconify Capture" }));
+    await waitFor(() => expect(useDesk.getState().panelMin).toContain("chair:capture"));
+    expect(dockSnapshot.map((w) => w.id)).toContain("chair:capture");
     expect(dockSnapshot.map((w) => w.id)).not.toContain("chair:needs");
     // iconified is still open: checked in Window ▸ Chair, no reopen Button
-    expect(verbById("chair.window.brief")!.checked!({ selectedRef: null })).toBe(true);
-    expect(screen.queryByTestId("chair-reopen-brief")).toBeNull();
-    act(() => verbById("chair.window.brief")!.run({ selectedRef: null }));
-    await waitFor(() => expect(useDesk.getState().panelMin).not.toContain("chair:brief"));
-    expect(dockSnapshot.map((w) => w.id)).not.toContain("chair:brief");
-    expect(frontWindowId()).toBe("chair:brief");
+    expect(verbById("chair.window.capture")!.checked!({ selectedRef: null })).toBe(true);
+    expect(screen.queryByTestId("chair-reopen-capture")).toBeNull();
+    act(() => verbById("chair.window.capture")!.run({ selectedRef: null }));
+    await waitFor(() => expect(useDesk.getState().panelMin).not.toContain("chair:capture"));
+    expect(dockSnapshot.map((w) => w.id)).not.toContain("chair:capture");
+    expect(frontWindowId()).toBe("chair:capture");
   });
 
   it("393: one window at a time, Needs you first; the Dock's Speak opens Capture, Go ▸ Speak does not", async () => {
@@ -231,162 +233,41 @@ describe("PHILO-13-11 slice two — the Chair as windows", () => {
     // with every Chair window closed, the screen of objects (PHILO-14 A1;
     // board A-1-393), not a reopen list
     fireEvent.click(within(region("Needs you")!).getByRole("button", { name: "Back from Needs you" }));
-    await waitFor(() => expect(region("Brief")).toBeTruthy());
-    fireEvent.click(within(region("Brief")!).getByRole("button", { name: "Back from Brief" }));
-    await waitFor(() => expect(region("The week")).toBeTruthy());
-    fireEvent.click(within(region("The week")!).getByRole("button", { name: "Back from The week" }));
     await waitFor(() => expect(screen.getByTestId("chair-desk").getAttribute("data-phone-shown")).toBeNull());
     expect(screen.queryByTestId("chair-reopen-list")).toBeNull();
     expect(screen.getByTestId("desk-screen").getAttribute("data-layout")).toBe("grid");
   });
 
-  it("no Run summary beside SUMMARY STORED (the stored fact drives the verb)", async () => {
-    useDesk.setState({
-      items: {
-        meeting: [{
-          kind: "meeting", id: "m-1", title: "Census standup",
-          startedAt: "2026-09-19T09:00:00Z", endedAt: "2026-09-19T09:30:00Z",
-          durationSeconds: 1800, intelStatus: "disabled", transcriptWords: 1204,
-          hasSummary: true, plannedRoute: ROUTE, runReceipt: null,
-        }],
-      } as never,
-    });
-    render(<ChairHome />);
-    const row = await screen.findByTestId("arrival-meeting-row");
-    expect(within(row).getByTestId("arrival-meeting-badge").textContent).toBe("SUMMARY STORED");
-    expect(within(row).queryByTestId("arrival-run-intel")).toBeNull();
-    expect(within(row).getByRole("button", { name: "Open" })).toBeTruthy();
-  });
-
-  it("the ledger row: SUMMARY STORED from the detail read had a Run summary beside it", async () => {
-    useDesk.setState({
-      items: {
-        meeting: [{
-          kind: "meeting", id: "m-2", title: "Ledger cutover sync",
-          startedAt: "2026-09-19T09:00:00Z", endedAt: "2026-09-19T09:30:00Z",
-          durationSeconds: 1800, intelStatus: "disabled", transcriptWords: 40,
-          plannedRoute: ROUTE, runReceipt: null,
-        }],
-      } as never,
-    });
-    const base = vi.mocked(apiFetch).getMockImplementation()!;
-    vi.mocked(apiFetch).mockImplementation(asHub(async (path: string, init?: unknown) => {
-      if (String(path) === "/api/meetings/m-2")
-        return {
-          id: "m-2", title: "Ledger cutover sync", started_at: "2026-09-19T09:00:00Z",
-          ended_at: "2026-09-19T09:30:00Z", duration_seconds: 1800, intel_status: "disabled",
-          transcriptWords: 40, planned_route: ROUTE,
-          intel: { summary: "Dual-write is stable.", topics: [] },
-          segments: [{ text: "Dual-write is stable.", speaker: "Me", start_time: 1 }],
-        };
-      return (base as (p: string, i?: unknown) => Promise<unknown>)(path, init);
-    }));
-    render(<ChairHome />);
-    await waitFor(() => expect(screen.getByTestId("arrival-meeting-badge").textContent).toBe("SUMMARY STORED"));
-    const row = screen.getByTestId("arrival-meeting-row");
-    expect(row).toHaveTextContent("Dual-write is stable.");
-    expect(row.closest("li")).not.toHaveAttribute("data-open");
-    expect(screen.queryByTestId("meeting-send-well")).toBeNull();
-    expect(within(row).queryByTestId("arrival-run-intel")).toBeNull();
-    expect(within(row).getByRole("button", { name: "Open" })).toBeTruthy();
-  });
 });
 
 // PHILO-15-09 (B16): Window ▸ Chair ▸ Brief opened the Brief BEHIND the
 // Models and Settings windows ("Nothing happened"). A window the owner's
 // gesture opens comes to the front, also when the Chair mounts after it.
 describe("PHILO-15-09 B16 — a window he opens comes to the front", () => {
-  it("Window ▸ Chair ▸ Brief stays in front when the Chair mounts after the pick", async () => {
+  it("Window ▸ Desk ▸ Capture stays in front when the Chair mounts after the pick", async () => {
     const { openChairWindow } = await import("../chairWindows");
     useChairWindows.setState({
-      closed: { "chair:brief": true, "chair:week": true, "chair:capture": true },
+      closed: { "chair:capture": true },
       phone: "chair:needs",
     });
     useDesk.setState({ panelOrder: ["chair:needs", "settings", "models"] });
-    openChairWindow("chair:brief");
+    openChairWindow("chair:capture");
     render(<ChairHome />);
-    await screen.findByRole("region", { name: "Brief" });
-    await waitFor(() => expect(useDesk.getState().panelOrder.at(-1)).toBe("chair:brief"));
-    expect(frontWindowId()).toBe("chair:brief");
+    await screen.findByRole("region", { name: "Capture" });
+    await waitFor(() => expect(useDesk.getState().panelOrder.at(-1)).toBe("chair:capture"));
+    expect(frontWindowId()).toBe("chair:capture");
   });
 
-  it("an open Brief behind other windows comes to the front from the menu", async () => {
+  it("an open Capture behind other windows comes to the front from the menu", async () => {
     const { openChairWindow } = await import("../chairWindows");
     render(<ChairHome />);
-    await screen.findByRole("region", { name: "Brief" });
+    await screen.findByRole("region", { name: "Capture" });
     act(() => {
       useDesk.getState().focusPanel("settings");
       useDesk.getState().focusPanel("models");
     });
-    act(() => openChairWindow("chair:brief"));
-    expect(useDesk.getState().panelOrder.at(-1)).toBe("chair:brief");
-  });
-});
-
-// PHILO-15-09 (B07): The week is never an empty window. With no calendar it
-// shows what the desk knows for this week and one row that offers Connect.
-describe("PHILO-15-09 B07 — The week is never empty", () => {
-  it("a fresh desk with no calendar: one NO CALENDAR row with Connect", async () => {
-    render(<ChairHome />);
-    const week = await screen.findByRole("region", { name: "The week" });
-    const row = await within(week).findByTestId("week-no-calendar");
-    expect(row.textContent).toContain("NO CALENDAR");
-    expect(within(row).getByRole("button", { name: "Connect calendar" }).textContent).toBe("Connect");
-    expect(within(week).getByTestId("chair-window-body-week").children.length).toBeGreaterThan(0);
-  });
-
-  it("lists this week's decisions and the action items due by its end", async () => {
-    const now = new Date();
-    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-    useDesk.setState({
-      items: {
-        meeting: [],
-        decision: [{
-          kind: "decision", id: "decision_sqlite", title: "Use SQLite for the local meeting ledger",
-          status: "accepted", deciders: [], contextMarkdown: "", decisionMarkdown: "", alternatives: [],
-          consequencesMarkdown: "", tags: [], createdAt: now.toISOString(),
-        }],
-      } as never,
-    });
-    vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => {
-      const p = String(path);
-      if (p.startsWith("/api/desk/needs-you")) return NEEDS;
-      if (p.startsWith("/api/door")) return {
-        board: { now: [{ id: "ai-plan", source: "action_item", target_ref: "action_item:ai-plan", title: "Write the migration plan", due: today }] },
-        counts: {}, upcoming: [], calendar_configured: false,
-      };
-      return null;
-    }));
-    render(<ChairHome />);
-    const week = await screen.findByRole("region", { name: "The week" });
-    const decision = await within(week).findByTestId("week-decision-row");
-    expect(decision.textContent).toContain("Use SQLite for the local meeting ledger");
-    expect(decision.textContent).toContain("DECIDED");
-    const due = await within(week).findByTestId("week-due-row");
-    expect(due.textContent).toContain("Write the migration plan");
-    expect(within(week).getByTestId("week-no-calendar")).toBeTruthy();
-  });
-});
-
-// PHILO-15-09 (B04, Astra r1): the Brief window wears the brief's own dated
-// title; its name (aria, Window ▸ Chair) stays "Brief".
-describe("PHILO-15-09 B04 — the Brief window title is dated", () => {
-  it("renders `Brief · Wednesday 7 Oct 2026` in the title bar", async () => {
-    vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => {
-      const p = String(path);
-      if (p.startsWith("/api/desk/needs-you")) return NEEDS;
-      if (p.startsWith("/api/door")) return { board: {}, counts: {}, upcoming: [], calendar_configured: false };
-      if (p === "/api/brief/latest") return {
-        id: "brief-1", headline: "No changes", sections: {}, is_empty: true,
-        generated_at: "2026-10-07T10:50:00-06:00", period_label: "OCT 06-07",
-        title: "Brief · Wednesday 7 Oct 2026",
-      };
-      return null;
-    }));
-    render(<ChairHome />);
-    const win = await screen.findByRole("region", { name: "Brief" });
-    await waitFor(() =>
-      expect(win.querySelector(".desk-window-title")?.textContent).toBe("Brief · Wednesday 7 Oct 2026"));
+    act(() => openChairWindow("chair:capture"));
+    expect(useDesk.getState().panelOrder.at(-1)).toBe("chair:capture");
   });
 });
 
@@ -400,7 +281,7 @@ describe("PHILO-17 briefcover — hidden is not closed", () => {
   async function chairAndMeetings() {
     const { DeskWindowFrame } = await import("../../components/DeskWindow");
     const view = render(<ChairHome />);
-    await screen.findByRole("region", { name: "Brief" });
+    await screen.findByRole("region", { name: "Capture" });
     render(<DeskWindowFrame id="surface-meetings" title="Meetings" open onClose={() => {}}>m</DeskWindowFrame>);
     act(() => useDesk.getState().focusPanel("surface-meetings"));
     return view;
@@ -411,7 +292,7 @@ describe("PHILO-17 briefcover — hidden is not closed", () => {
     act(() => useDesk.getState().focusPanel("surface-meetings"));
     render(<DeskWindowFrame id="surface-meetings" title="Meetings" open onClose={() => {}}>m</DeskWindowFrame>);
     render(<ChairHome />);
-    await screen.findByRole("region", { name: "Brief" });
+    await screen.findByRole("region", { name: "Capture" });
     await waitFor(() => expect(order().at(-1)).toBe("surface-meetings"));
     expect(frontWindowId()).toBe("surface-meetings");
     // Among the Chair's own planes Needs you leads.
@@ -425,54 +306,54 @@ describe("PHILO-17 briefcover — hidden is not closed", () => {
     expect(before.at(-1)).toBe("surface-meetings");
     setCompact(true);
     view.rerender(<ChairHome />);
-    await waitFor(() => expect(region("Brief")).toBeNull());
+    await waitFor(() => expect(region("Capture")).toBeNull());
     expect(order()).toEqual(before);
     setCompact(false);
     view.rerender(<ChairHome />);
-    await screen.findByRole("region", { name: "Brief" });
+    await screen.findByRole("region", { name: "Capture" });
     expect(order()).toEqual(before);
   });
 
   it("iconify, then close from the Dock: the close retires it and forgets the unsaved rect; a saved rect stays", async () => {
     const { closeChairWindow } = await import("../chairWindows");
     render(<ChairHome />);
-    await screen.findByRole("region", { name: "Brief" });
+    await screen.findByRole("region", { name: "Capture" });
     const rect = { x: 700, y: 60, w: 500, h: 400 };
     act(() => {
-      useDesk.getState().setPanelRect("chair:brief", rect); // the first seat: unsaved
-      useDesk.getState().setPanelRect("chair:week", rect, true); // his arrangement: saved
+      useDesk.getState().setPanelRect("chair:capture", rect); // the first seat: unsaved
+      useDesk.getState().setPanelRect("chair:needs", rect, true); // his arrangement: saved
     });
-    fireEvent.click(within(region("Brief")!).getByRole("button", { name: "Iconify Brief" }));
-    fireEvent.click(within(region("The week")!).getByRole("button", { name: "Iconify The week" }));
-    await waitFor(() => expect(useDesk.getState().panelMin).toEqual(expect.arrayContaining(["chair:brief", "chair:week"])));
-    expect(order()).toEqual(expect.arrayContaining(["chair:brief", "chair:week"]));
+    fireEvent.click(within(region("Capture")!).getByRole("button", { name: "Iconify Capture" }));
+    fireEvent.click(within(region("Needs you")!).getByRole("button", { name: "Iconify Needs you" }));
+    await waitFor(() => expect(useDesk.getState().panelMin).toEqual(expect.arrayContaining(["chair:capture", "chair:needs"])));
+    expect(order()).toEqual(expect.arrayContaining(["chair:capture", "chair:needs"]));
     act(() => {
-      closeChairWindow("chair:brief");
-      closeChairWindow("chair:week");
+      closeChairWindow("chair:capture");
+      closeChairWindow("chair:needs");
     });
     const s = useDesk.getState();
-    expect(s.panelDepth).not.toHaveProperty("chair:brief");
-    expect(s.panelDepth).not.toHaveProperty("chair:week");
-    expect(s.panelRects["chair:brief"]).toBeUndefined();
-    expect(s.panelRects["chair:week"]).toEqual(rect);
+    expect(s.panelDepth).not.toHaveProperty("chair:capture");
+    expect(s.panelDepth).not.toHaveProperty("chair:needs");
+    expect(s.panelRects["chair:capture"]).toBeUndefined();
+    expect(s.panelRects["chair:needs"]).toEqual(rect);
   });
 
   it("393: a window hidden by the ring, then closed, leaves the order", async () => {
     const { closeChairWindow } = await import("../chairWindows");
     const view = render(<ChairHome />);
-    await screen.findByRole("region", { name: "Brief" });
+    await screen.findByRole("region", { name: "Capture" });
     setCompact(true);
     view.rerender(<ChairHome />);
-    await waitFor(() => expect(region("Brief")).toBeNull());
-    expect(order()).toContain("chair:brief");
-    act(() => closeChairWindow("chair:brief"));
-    expect(order()).not.toContain("chair:brief");
+    await waitFor(() => expect(region("Capture")).toBeNull());
+    expect(order()).toContain("chair:capture");
+    act(() => closeChairWindow("chair:capture"));
+    expect(order()).not.toContain("chair:capture");
   });
 
   it("with the hub: a resize sends no raise, and a hidden window shows another view's raise", async () => {
     const { createHubWindows } = await import("../../compositor/hubWindows");
     const view = await chairAndMeetings();
-    const ids = ["chair:needs", "chair:week", "chair:capture", "chair:brief", "surface-meetings"];
+    const ids = ["chair:needs", "chair:capture", "surface-meetings"];
     const local = order();
     let revision = 10;
     const rows = new Map(ids.map((id) => [id, {
@@ -512,18 +393,18 @@ describe("PHILO-17 briefcover — hidden is not closed", () => {
       calls.length = 0;
       setCompact(true);
       view.rerender(<ChairHome />);
-      await waitFor(() => expect(region("Brief")).toBeNull());
-      // Another view raises Brief while it is hidden here.
-      rows.set("chair:brief", { ...rows.get("chair:brief")!, depth: 99, revision: ++revision });
-      hub.onFrame({ kind: "windows", id: "chair:brief" });
+      await waitFor(() => expect(region("Capture")).toBeNull());
+      // Another view raises Capture while it is hidden here.
+      rows.set("chair:capture", { ...rows.get("chair:capture")!, depth: 99, revision: ++revision });
+      hub.onFrame({ kind: "windows", id: "chair:capture" });
       await hub.idle();
       setCompact(false);
       view.rerender(<ChairHome />);
-      await screen.findByRole("region", { name: "Brief" });
+      await screen.findByRole("region", { name: "Capture" });
       hub.sync();
       await hub.idle();
       expect(calls.filter((c) => c.startsWith("raise"))).toEqual([]);
-      expect(order().at(-1)).toBe("chair:brief");
+      expect(order().at(-1)).toBe("chair:capture");
     } finally {
       hub.stop();
     }

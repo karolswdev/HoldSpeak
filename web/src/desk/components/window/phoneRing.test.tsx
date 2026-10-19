@@ -68,7 +68,7 @@ describe("Q1 the ring and the swipe", () => {
   it("orders the Chair windows, then the desk windows as they opened", () => {
     openDeskWindow("surface-meetings", "Meetings");
     openDeskWindow("pullout:intelligence:desk", "Today");
-    expect(ids()).toEqual(["Needs you", "The week", "Meetings", "Today"]);
+    expect(ids()).toEqual(["Needs you", "Meetings", "Today"]);
   });
 
   it("walks the current open panes, wraps, and comes back", () => {
@@ -76,8 +76,8 @@ describe("Q1 the ring and the swipe", () => {
     openDeskWindow("pullout:intelligence:desk", "Today");
     act(() => openChairWindow("chair:needs"));
     const seen: (string | null)[] = [];
-    for (let i = 0; i < 4; i++) act(() => void seen.push(stepRing(1)));
-    expect(seen).toEqual(["chair:week", "surface-meetings", "pullout:intelligence:desk", "chair:needs"]);
+    for (let i = 0; i < 3; i++) act(() => void seen.push(stepRing(1)));
+    expect(seen).toEqual(["surface-meetings", "pullout:intelligence:desk", "chair:needs"]);
     act(() => void stepRing(-1));
     expect(phoneCurrent()).toBe("pullout:intelligence:desk");
   });
@@ -99,6 +99,8 @@ describe("Q1 the ring and the swipe", () => {
   });
 
   it("a touch drag on the front window moves to the next one; on a field it does not", () => {
+    act(() => openChairWindow("chair:capture"));
+    act(() => openChairWindow("chair:needs"));
     const { unmount } = render(<DeskChrome />);
     const shell = document.createElement("div");
     shell.className = "desk-window-shell";
@@ -113,7 +115,7 @@ describe("Q1 the ring and the swipe", () => {
       el.dispatchEvent(e);
     };
     act(() => { touch(shell, "touchstart", 300); touch(shell, "touchend", 120); });
-    expect(phoneCurrent()).toBe("chair:week");
+    expect(phoneCurrent()).toBe("chair:capture");
     act(() => { touch(shell, "touchstart", 120); touch(shell, "touchend", 300); });
     expect(phoneCurrent()).toBe("chair:needs");
     act(() => { touch(field, "touchstart", 300); touch(field, "touchend", 120); });
@@ -136,16 +138,15 @@ describe("Q1 the ring and the swipe", () => {
     expect(phoneCurrent()).toBe("chair:needs");
   });
 
-  it("lists Today once as the canonical Brief host, with no retired Chair Brief", () => {
+  it("lists Today once; Brief and The week are part of it (daily D5)", () => {
     openDeskWindow("pullout:intelligence:desk", "Today");
-    expect(ids()).toEqual(["Needs you", "The week", "Today"]);
+    expect(ids()).toEqual(["Needs you", "Today"]);
     act(() => openChairWindow("chair:needs"));
     act(() => void stepRing(-1));
     expect(phoneCurrent()).toBe("pullout:intelligence:desk");
   });
 
   it("depth on the only open Chair pane restores Today from its seat", () => {
-    useChairWindows.setState({ closed: { "chair:week": true, "chair:brief": true } });
     openDeskWindow("pullout:intelligence:desk", "Today");
     act(() => openChairWindow("chair:needs"));
     expect(useDesk.getState().panelMin).toContain("pullout:intelligence:desk");
@@ -153,47 +154,6 @@ describe("Q1 the ring and the swipe", () => {
     expect(phoneCurrent()).toBe("pullout:intelligence:desk");
     expect(useDesk.getState().panelMin).not.toContain("pullout:intelligence:desk");
     expect(useChairWindows.getState().closed["chair:needs"]).toBe(false);
-  });
-
-  it("depth on a restored legacy Chair Brief restores Today before other ring panes", () => {
-    openDeskWindow("surface-meetings", "Meetings");
-    openDeskWindow("pullout:intelligence:desk", "Today");
-    act(() => openChairWindow("chair:brief"));
-    expect(phoneCurrent()).toBe("chair:brief");
-    expect(phoneRing().map((entry) => entry.id)).not.toContain("chair:brief");
-    expect(useDesk.getState().panelMin).toContain("pullout:intelligence:desk");
-
-    act(() => sendWindowToBack("chair:brief"));
-
-    expect(phoneCurrent()).toBe("pullout:intelligence:desk");
-    expect(useDesk.getState().panelMin).not.toContain("pullout:intelligence:desk");
-    expect(useDesk.getState().panelOrder.at(-1)).toBe("pullout:intelligence:desk");
-    expect(useDesk.getState().panelMin).toContain("surface-meetings");
-    expect(useChairWindows.getState().closed["chair:brief"]).toBe(false);
-  });
-
-  it("depth on a restored legacy Chair Brief uses the first ring pane when Today is absent", () => {
-    openDeskWindow("surface-meetings", "Meetings");
-    act(() => openChairWindow("chair:brief"));
-    expect(phoneCurrent()).toBe("chair:brief");
-
-    act(() => sendWindowToBack("chair:brief"));
-
-    expect(phoneCurrent()).toBe("chair:needs");
-    expect(useChairWindows.getState().closed["chair:brief"]).toBe(false);
-    expect(useDesk.getState().panelMin).toContain("surface-meetings");
-  });
-
-  it("depth on a restored legacy Chair Brief leaves it open when the canonical ring is empty", () => {
-    useChairWindows.setState({ closed: { "chair:needs": true, "chair:week": true, "chair:capture": true } });
-    act(() => openChairWindow("chair:brief"));
-    expect(phoneRing()).toEqual([]);
-
-    act(() => sendWindowToBack("chair:brief"));
-
-    expect(phoneCurrent()).toBe("chair:brief");
-    expect(useChairWindows.getState().closed["chair:brief"]).toBe(false);
-    expect(phoneRing()).toEqual([]);
   });
 });
 
@@ -206,7 +166,7 @@ describe("Astra r1 #751: the ring keeps the opening order", () => {
     retractWindow("surface-project-memory");
     announceWindow("surface-project-memory", "Payments ledger cutover", "", () => {});
     await Promise.resolve();
-    expect(ids().slice(2)).toEqual(["Payments ledger cutover", "Meetings", "Today"]);
+    expect(ids().slice(1)).toEqual(["Payments ledger cutover", "Meetings", "Today"]);
   });
 
   it("a window really closed and opened again is the newest", async () => {
@@ -215,7 +175,7 @@ describe("Astra r1 #751: the ring keeps the opening order", () => {
     retractWindow("surface-meetings");
     await Promise.resolve();
     openDeskWindow("surface-meetings", "Meetings");
-    expect(ids().slice(2)).toEqual(["Today", "Meetings"]);
+    expect(ids().slice(1)).toEqual(["Today", "Meetings"]);
   });
 });
 
@@ -223,7 +183,7 @@ describe("Q4b Capture stays in the ring until it is closed", () => {
   it("joins when it opens at 393, survives a swipe away, leaves on Close", () => {
     expect(ids()).not.toContain("Capture");
     act(() => openChairWindow("chair:capture"));
-    expect(ids()).toEqual(["Needs you", "The week", "Capture"]);
+    expect(ids()).toEqual(["Needs you", "Capture"]);
     act(() => void stepRing(1)); // wraps to Needs you
     expect(phoneCurrent()).toBe("chair:needs");
     expect(ids()).toContain("Capture");
@@ -237,21 +197,21 @@ describe("Q4b Capture stays in the ring until it is closed", () => {
 describe("Q2 the switcher in the screen title", () => {
   it("draws `<window> ▾` with the ▾ as its own mark, and reaches any window in 2 taps", () => {
     openDeskWindow("surface-meetings", "Meetings");
-    act(() => openChairWindow("chair:week"));
-    render(<ScreenSwitcher name="The week" />);
+    act(() => openChairWindow("chair:capture"));
+    render(<ScreenSwitcher name="Capture" />);
     const button = screen.getByTestId("desk-screen-switcher");
-    expect(button).toHaveAccessibleName("Windows: The week");
+    expect(button).toHaveAccessibleName("Windows: Capture");
     const mark = screen.getByTestId("desk-screen-switcher-mark");
     expect(mark.closest(".desk-screen-name")).toBeNull();
     // This parked compatibility component keeps its isolated behavior;
     // the mounted DeskChrome owns current phone swipe/navigation.
     // The ▾ is painted by CSS, so the title's text stays the window's name.
-    expect(screen.getByTestId("desk-screen-title").textContent).toBe("The week");
+    expect(screen.getByTestId("desk-screen-title").textContent).toBe("Capture");
     fireEvent.pointerDown(button, { button: 0 }); // tap 1
     const menu = screen.getByRole("menu", { name: "Open windows" });
     const rows = within(menu).getAllByRole("menuitemcheckbox");
     expect(rows.map((r) => r.textContent?.replace("✓", "").trim())).toEqual(
-      ["Needs you", "The week", "Meetings"]);
+      ["Needs you", "Capture", "Meetings"]);
     expect(rows.map((r) => r.getAttribute("aria-checked"))).toEqual(["false", "true", "false"]);
     act(() => fireEvent.click(rows[0])); // tap 2
     expect(phoneCurrent()).toBe("chair:needs");
@@ -277,7 +237,7 @@ describe("Go at 393 is the manifest's Go groups (betterment shell S1)", () => {
     const words = (out: WorkMenuEntry[]) => out.map((e) => (e.type === "sep" ? "—" : e.type === "note" ? e.label : e.label));
     const out = phoneGo({ row, projects: [{ id: "p-1", name: "Ledger cutover" }], openProject: () => {} });
     expect(words(out)).toEqual([
-      "Today", "Needs you", "Brief", "The week", "Capture", "Meetings", "People", "Projects", "Agents", "Ask AI", "Speak", "—",
+      "Today", "Needs you", "Capture", "Meetings", "People", "Projects", "Agents", "Ask AI", "Speak", "—",
       "Automations", "Memory", "Voice commands", "—", "New"]);
     const nu = out[out.length - 1] as Extract<WorkMenuEntry, { type: "sub" }>;
     expect(nu.entries.map((e) => (e.type === "item" ? e.label : "—"))).toEqual(["Note", "Meeting", "Project", "Person"]);

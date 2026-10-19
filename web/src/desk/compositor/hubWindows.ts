@@ -22,7 +22,8 @@
 import { ApiError, apiFetch } from "../../lib/api";
 import { SURFACE_APPLICATIONS } from "../applications";
 import { meetingOfScope } from "../objectWindows";
-import { CHAIR_WINDOW_IDS, closeChairWindow, openChairWindowFromHub, useChairWindows } from "../chair/chairWindows";
+import { CHAIR_WINDOW_IDS, TODAY_REPLACES, closeChairWindow, openChairWindowFromHub, useChairWindows } from "../chair/chairWindows";
+import { openIntelligence } from "../intelligenceNavigation";
 import { workBand } from "../components/window/windowGeometry";
 import { CONDUCTOR_WINDOW_ID, useConductor } from "../conductor/store";
 import { useLane } from "../lane/laneStore";
@@ -365,6 +366,8 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
   });
 
   const retiredReason = (id: string): string | undefined => {
+    // Betterment daily D5: Brief and The week are part of Today.
+    if (TODAY_REPLACES.includes(id)) return "part of Today";
     const retired = registry?.retired;
     if (!retired) return undefined;
     if (retired[id]) return retired[id];
@@ -444,6 +447,9 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
   const retireTries = new Map<string, number>();
   /** Migrated rows whose meeting window this view opened (PHILO-17). */
   const migratedOpen = new Set<string>();
+  /** Betterment daily D5: this view opened Today for a retired Brief or
+   * The week row. */
+  let todayOpened = false;
   /** The meeting windows this view opened for a migrated row: this view's
    * own opens (they go to the hub), never closed as stale cache. */
   const migratedTo = new Set<string>();
@@ -499,6 +505,14 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
       // The hub close is authoritative; this view also drops the old local
       // presentation so a parked face cannot remain over the live surface.
       if (migratedMeeting(r) !== null || retiredReason(r.id)) adapterFor(r.id)?.close();
+      // Betterment daily D5: a Brief or The week row closes and Today opens
+      // in its place, once per view (a refused close never reopens it).
+      if (TODAY_REPLACES.includes(r.id) && !todayOpened && !retiredDone.has(r.id)
+        && (retireTries.get(r.id) ?? 0) < RETIRE_TRIES) {
+        todayOpened = true;
+        useDesk.getState().retirePanel(r.id);
+        openIntelligence({ view: "today" });
+      }
       retire(r);
     }
     if (retired.length) list = { ...list, windows: list.windows.filter((r) => !retired.includes(r)) };

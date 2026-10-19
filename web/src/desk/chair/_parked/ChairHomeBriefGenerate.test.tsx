@@ -1,3 +1,6 @@
+// Parked by Betterment daily D5: the Brief window's Generate recovery, retired
+// into Today (Since yesterday generates on read). Not run.
+
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../lib/api";

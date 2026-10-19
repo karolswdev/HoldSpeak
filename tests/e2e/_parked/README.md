@@ -463,3 +463,10 @@ face have no subject. The Ask window's facts are in
 # Parked with the Room's own Ask (Betterment Q5, 2026-10-18)
 
 - `test_room_unfinished_glass.py`: the Room's UNFINISHED list (the 393 container rule, the rows rove on a list that mounted empty, five rows leave the Room standing). The Room's Ask field now opens the one Ask window (web/src/features/project-room/__tests__/room.app.test.tsx, Betterment Q5).
+
+# Parked by Betterment daily D5 (2026-10-18)
+
+The Brief and The week windows retired into Today; one place for the start of
+the day. `test_chair_brief_week_d5_glass.py` keeps the fences whose subject
+was those windows: the Brief's rows after the scheduled write, the four Chair
+windows, and The week's meeting wells.

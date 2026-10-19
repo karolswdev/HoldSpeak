@@ -61,7 +61,10 @@ STATIC_WINDOWS: dict[str, str] = {
     "surface-commands": "configure-commands",
     "surface-people": "open-people",
     "surface-calendar-snapshot": "review-calendar-snapshot",
-    # The Chair's four windows (chair/chairWindows.ts).
+    # The Chair's windows (chair/chairWindows.ts). Betterment daily D5:
+    # chair:brief and chair:week retired into Today; the ids stay known so a
+    # saved row still closes (the browser closes it and opens Today once,
+    # compositor/hubWindows.ts).
     "chair:needs": "chair",
     "chair:brief": "chair",
     "chair:week": "chair",

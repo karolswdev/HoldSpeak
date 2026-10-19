@@ -58,15 +58,16 @@ describe("Chair app: the fresh arrival", () => {
     expect(screen.getByTestId("desk-screen")).toBeTruthy();
   });
 
-  it("1440: with a window open, Window ▸ Chair reaches Needs you, Brief, The week and Capture; Needs you names the No engine SETUP row", async () => {
+  it("1440: with a window open, Window ▸ Desk reaches Today, Needs you and Capture (no Brief, no The week); Needs you names the No engine SETUP row", async () => {
     vi.resetModules();
     const { ChairHome } = await import("../chair/ChairHome");
     const { DeskMenuBar } = await import("../components/DeskMenuBar");
     const { isChairWindowOpen } = await import("../chair/chairWindows");
+    const { useDesk } = await import("../store");
     render(<><DeskMenuBar /><ChairHome /></>);
     expect(document.querySelectorAll(".desk-window-shell.chair-window")).toHaveLength(0);
 
-    const pick = async (name: string) => {
+    const pick = async (name: string, opened: () => unknown = () => region(name)) => {
       fireEvent.click(screen.getByRole("button", { name: "Window" }), { detail: 0 });
       const menu = screen.getByRole("menu", { name: "Window menu" });
       const chair = within(menu).getAllByRole("menuitem")
@@ -75,12 +76,13 @@ describe("Chair app: the fresh arrival", () => {
       fireEvent.click(chair!);
       const rows = within(menu).getAllByRole("menuitemcheckbox")
         .map((h) => h.querySelector(".desk-menu-label")?.textContent?.trim());
-      const four = ["Needs you", "Brief", "The week", "Capture"];
-      expect(rows.filter((label) => four.includes(label ?? ""))).toEqual(four);
+      // Betterment daily D5: Today, Needs you, Capture; never Brief or The week.
+      expect(rows.filter((label) => ["Today", "Needs you", "Brief", "The week", "Capture"].includes(label ?? "")))
+        .toEqual(["Today", "Needs you", "Capture"]);
       const row = within(menu).getAllByRole("menuitemcheckbox")
         .find((h) => h.querySelector(".desk-menu-label")?.textContent?.trim() === name)!;
       act(() => void fireEvent.click(row));
-      await waitFor(() => expect(region(name), name).toBeTruthy());
+      await waitFor(() => expect(opened(), name).toBeTruthy());
     };
 
     // Betterment shell S0: with no window open, the Window menu is one line.
@@ -93,7 +95,7 @@ describe("Chair app: the fresh arrival", () => {
     const { verbById } = await import("../verbRegistry");
     act(() => verbById("chair.window.needs")!.run({ selectedRef: null }));
     await waitFor(() => expect(region("Needs you"), "Needs you").toBeTruthy());
-    // ... and with a window open, Window ▸ Desk reaches all four.
+    // ... and with a window open, Window ▸ Desk reaches the three.
     await pick("Needs you");
     expect(isChairWindowOpen("chair:needs")).toBe(true);
     const setup = await waitFor(() => {
@@ -105,9 +107,7 @@ describe("Chair app: the fresh arrival", () => {
     expect(setup.textContent).toContain("No engine for summaries");
     expect(setup.textContent).toContain("Choose an engine");
 
-    await pick("Brief");
-    expect(within(region("Brief")!).getByTestId("arrival-brief")).toBeTruthy();
-    await pick("The week");
+    await pick("Today", () => useDesk.getState().pullouts.some((w) => w.id === "intelligence:desk"));
     await pick("Capture");
     expect(within(region("Capture")!).getByTestId("arrival-capture-bar")).toBeTruthy();
   });
@@ -164,10 +164,12 @@ function replay(steps: Step[], posted: string[]) {
 }
 
 describe("Chair app: a Default for AI work asks nothing about summaries", () => {
+  // Betterment daily D5: the Brief window's half (Generate draws the brief
+  // with no false row) is parked in __tests__/_parked/needsChairBrief.d5.app.test.tsx.
   it.each([
-    ["the LAN model is the global default", "lanDefault", "No changes"],
-    ["summaries are off over an imported meeting", "summariesOff", "Meeting recorded: Imported vendor call"],
-  ] as const)("%s: Needs you draws no SETUP row; Generate draws the brief with no false row", async (_name, key, drawn) => {
+    ["the LAN model is the global default", "lanDefault"],
+    ["summaries are off over an imported meeting", "summariesOff"],
+  ] as const)("%s: Needs you draws no SETUP row", async (_name, key) => {
     // replaces: tests/e2e/test_philo15_01_default_clears_summaries_glass.py::TestDefaultClearsSummaries::test_needs_you_and_brief_draw_no_false_row (the face half)
     // replaces: tests/e2e/test_philo15_01_default_clears_summaries_glass.py::TestSummariesOff::test_off_reads_off_and_asks_nothing (the face half; the Meetings headline is meetingsHeadlineDefault.philo1501.test.ts)
     const steps = (RECORDED as unknown as Record<string, { steps: Step[] }>)[key].steps;
@@ -183,13 +185,7 @@ describe("Chair app: a Default for AI work asks nothing about summaries", () => 
     expect(needs.querySelectorAll('[data-object-id^="blocker:"]')).toHaveLength(0);
     expect(needs.textContent).not.toContain(FALSE_ROW);
     expect(needs.textContent).not.toContain("Summary failed");
-
-    const brief = region("Brief")!;
-    fireEvent.click(within(brief).getByTestId("arrival-brief-generate"));
-    await waitFor(() => expect(region("Brief")!.textContent).toContain(drawn), { timeout: 3000 });
-    expect(posted).toEqual(["/api/brief/generate"]);
-    expect(document.body.textContent).not.toContain(FALSE_ROW);
-    expect(document.body.textContent).not.toContain("Summary failed");
+    expect(posted).toEqual([]);
   });
 });
 

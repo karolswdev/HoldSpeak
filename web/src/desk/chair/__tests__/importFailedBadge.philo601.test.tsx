@@ -46,17 +46,6 @@ describe("PHILO-6-01 a failed import reads FAILED, never SAVED", () => {
     expect(fromWireMeeting(wire.detail)?.intelStatus).toBe("import_failed");
   });
 
-  it("the Arrival row of the producer's failed import shows the FAILED badge", async () => {
-    const meeting = fromWireMeeting(wire.list_row);
-    expect(meeting).not.toBeNull();
-    useDesk.setState({ items: { ...EMPTY_ITEMS, meeting: [meeting] } as never });
-    render(<ChairHome />);
-    const badge = await screen.findByTestId("arrival-meeting-badge");
-    await waitFor(() => expect(badge.textContent).toBe("FAILED"));
-    expect(badge.getAttribute("data-badge")).toBe("failed");
-    expect(screen.getByTestId("arrival-meeting-row").textContent).not.toContain("SAVED");
-  });
-
   it("names the states the badge covers; the failure states are FAILED", () => {
     // The producer's writes (holdspeak/db/intel.py, meeting_session/*,
     // services/meeting_service.py) with the badge each one reads as.

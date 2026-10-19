@@ -23,21 +23,21 @@ afterEach(() => {
 
 describe("zoom keeps a Chair window's tile place", () => {
   it("writes no rect for a Chair window at its tile place, and unzoom returns to the tile", () => {
-    shellAt("chair:brief", { x: 728, y: 42, w: 698, h: 483 });
-    zoomWindow("chair:brief");
-    expect(useDesk.getState().panelMax).toContain("chair:brief");
-    expect(useDesk.getState().panelRects["chair:brief"]).toBeUndefined();
-    zoomWindow("chair:brief");
-    expect(useDesk.getState().panelMax).not.toContain("chair:brief");
-    expect(useDesk.getState().panelRects["chair:brief"]).toBeUndefined();
+    shellAt("chair:capture", { x: 728, y: 42, w: 698, h: 483 });
+    zoomWindow("chair:capture");
+    expect(useDesk.getState().panelMax).toContain("chair:capture");
+    expect(useDesk.getState().panelRects["chair:capture"]).toBeUndefined();
+    zoomWindow("chair:capture");
+    expect(useDesk.getState().panelMax).not.toContain("chair:capture");
+    expect(useDesk.getState().panelRects["chair:capture"]).toBeUndefined();
   });
 
   it("keeps a Chair window's arranged rect", () => {
     const moved = { x: 300, y: 120, w: 600, h: 400 };
-    useDesk.setState({ panelRects: { "chair:brief": moved } });
-    shellAt("chair:brief", moved);
-    zoomWindow("chair:brief");
-    expect(useDesk.getState().panelRects["chair:brief"]).toEqual(moved);
+    useDesk.setState({ panelRects: { "chair:capture": moved } });
+    shellAt("chair:capture", moved);
+    zoomWindow("chair:capture");
+    expect(useDesk.getState().panelRects["chair:capture"]).toEqual(moved);
   });
 
   it("still keeps the normal rect of any other window on its first zoom (PR #731)", () => {

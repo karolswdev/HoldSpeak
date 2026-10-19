@@ -1,3 +1,6 @@
+// Parked by Betterment daily D5: The week window's meeting rows, retired into
+// Today (the sections: chair/_parked/ArrivalSections.tsx). Not run.
+
 // HS-201-04 — the Chair's Run verb and the Chair's Open.
 //
 //   1. Run POSTs `expected_selection_hash` from the route the row
