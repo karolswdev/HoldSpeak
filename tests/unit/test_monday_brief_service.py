@@ -1562,7 +1562,9 @@ def test_the_scheduled_brief_holds_the_same_items_as_the_owners_generate(tmp_pat
     assert scheduled is not None
     assert _items(scheduled) == _items(owners), (scheduled.headline, owners.headline)
     # The work the r1 scheduled Brief hid: the blocker and the unowned item.
-    assert _items(scheduled)["waiting"] == ["No engine yet", "Unassigned: Write the rollback runbook"]
+    # Betterment daily D8: no meeting waits for a summary, so the blocker is
+    # speech alone ("No engine for summaries" asks only when one waits).
+    assert _items(scheduled)["waiting"] == ["No engine for speech", "Unassigned: Write the rollback runbook"]
     assert scheduled.headline == owners.headline
     assert scheduled.headline != "No changes"
     assert not any(text.startswith("NOT READ") for texts in _items(scheduled).values() for text in texts)
@@ -1652,8 +1654,9 @@ def test_a_failed_door_read_is_a_not_read_row_and_keeps_the_rest(tmp_path: Path,
     assert "NOT READ · Door" in texts, texts
     # PARTIAL: the face reads any not_read row (BriefView.briefIsPartial).
     assert any(str(item.source_ref).startswith(NOT_READ_REF) for item in waiting)
-    # The rule's other rows stay: the engine blocker is not lost.
-    assert "No engine yet" in texts, texts
+    # The rule's other rows stay: the engine blocker is not lost (D8: speech
+    # alone, since no meeting waits for a summary).
+    assert "No engine for speech" in texts, texts
     assert "source not read" in brief.headline and brief.headline != "No changes", brief.headline
 
 
@@ -2891,8 +2894,9 @@ def test_walk_empty_window_is_honest(db_brief: Database) -> None:
     # An empty window on a hub with no summary engine: the one needs-you rule
     # has one member (the meeting-path blocker, the same one the bell counts),
     # and the brief says exactly that. No row is invented for the window.
+    # Betterment daily D8: no meeting waits for a summary, so it is speech.
     assert brief.headline == "1 thing waiting."
-    assert [item.source_ref for item in brief.sections["waiting"]] == ["blocker:engines"]
+    assert [item.source_ref for item in brief.sections["waiting"]] == ["blocker:speech"]
     assert not any(brief.sections[name] for name in ("this_week", "changed", "broke", "decisions"))
 
 

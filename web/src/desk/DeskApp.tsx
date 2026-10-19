@@ -9,6 +9,7 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../components/signal/Signal";
 import { useDesk } from "./store";
+import { useDeskPresence } from "./presence";
 import { DeskReceiptRow } from "./components/DeskReceiptRow";
 import { useCompactViewport } from "./useCompactViewport";
 import { ChairHome } from "./chair"; import { ReturningWindows } from "./returningWindows"; // PHILO-13-07 (B2)
@@ -92,6 +93,8 @@ export default function DeskApp() {
 }
 
 function DeskFaces() {
+  // Betterment daily D8: the hub knows which window is in front of him.
+  useDeskPresence();
   const compact = useCompactViewport();
   const items = useDesk((s) => s.items);
   const updatedAt = useDesk((s) => s.updatedAt);

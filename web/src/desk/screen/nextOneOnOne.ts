@@ -18,9 +18,10 @@ function wireRows<T>(body: unknown, key: string): T[] {
   return Array.isArray(rows) ? rows as T[] : [];
 }
 
-type PeopleReadinessState = "unconfigured" | "locked" | "key_unavailable" | "corrupt" | "unavailable" | "ready";
+type PeopleReadinessState = "unconfigured" | "locked" | "key_unavailable" | "corrupt" | "unavailable" | "no_key_store" | "ready";
 const PEOPLE_READINESS_STATES: readonly PeopleReadinessState[] = [
   "unconfigured",
+  "no_key_store",
   "locked",
   "key_unavailable",
   "corrupt",

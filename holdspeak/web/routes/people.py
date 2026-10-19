@@ -41,7 +41,7 @@ def _failure(exc: PeopleServiceError) -> HTTPException:
         _log_unavailable(code)
     if code == "people_owner_required":
         return HTTPException(status_code=403, detail=code)
-    if code == "people_plaintext_unavailable":
+    if code in {"people_plaintext_unavailable", "people_key_store_unavailable"}:
         return HTTPException(status_code=503, detail=code)
     if code in {"people_store_unavailable", "people_store_write_failed"}:
         return HTTPException(status_code=503, detail="people_store_unavailable")

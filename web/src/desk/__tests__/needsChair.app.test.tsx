@@ -132,7 +132,9 @@ describe("Chair app: the cold roster through meetingPathBlockers", () => {
       { key: "summary", label: "No engine for summaries", verb: "Choose an engine" },
     ]);
     // The hub's own answer on the same HOME says the same.
-    expect(RECORDED.cold.gets["/api/desk/needs-you?fresh=1"].blockers).toEqual(meetingPathBlockers(roster as never));
+    // (The hub's rows also name their direction, Betterment D0.)
+    const hubRows = RECORDED.cold.gets["/api/desk/needs-you?fresh=1"].blockers as Array<Record<string, string>>;
+    expect(hubRows.map(({ key, label, verb }) => ({ key, label, verb }))).toEqual(meetingPathBlockers(roster as never));
   });
 });
 

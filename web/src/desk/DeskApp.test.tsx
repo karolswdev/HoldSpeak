@@ -78,6 +78,8 @@ vi.mock("./chair", () => ({
   ),
 }));
 vi.mock("./gl/Atmosphere", () => ({ Atmosphere: marker("atmosphere") }));
+// Betterment daily D8: the presence report reads the real store; this file mocks it.
+vi.mock("./presence", () => ({ useDeskPresence: () => undefined }));
 vi.mock("./components/DeskChrome", () => ({ DeskChrome: marker("desk-chrome") }));
 vi.mock("./components/RecordOrb", () => ({ RecordOrb: marker("record-orb") }));
 vi.mock("./hooks/useChatImport", () => ({ useChatImport: () => ({ receipt: "" }) }));

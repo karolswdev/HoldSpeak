@@ -62,6 +62,9 @@ export type MeetingPathBlocker = {
 export function meetingPathBlockers(
   summary: AssignmentSummary | null,
   read: AssignmentRead = "ok",
+  // Betterment daily D8 (the twin of the hub's `summary_waits`): false when
+  // no meeting waits for a summary; then the summary row does not ask.
+  summaryWaits = true,
 ): MeetingPathBlocker[] {
   if (read === "pending") return [];
   if (read === "failed" || !summary) {
@@ -80,7 +83,7 @@ export function meetingPathBlockers(
     ? (analysis.queue ? analysis.queue.status : analysis.effective?.status)
     : undefined;
   const summaryMissing =
-    Boolean(analysis) && summaryStatus !== "assigned" && summaryStatus !== "off";
+    summaryWaits && Boolean(analysis) && summaryStatus !== "assigned" && summaryStatus !== "off";
 
   if (speechMissing && summaryMissing) {
     return [{ key: "engines", label: "No engine yet", verb }];

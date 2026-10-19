@@ -552,8 +552,14 @@ class TestNotificationTransitions:
         assert _sweep(svc, _agg([_row("a"), _row("z")]))["outcome"] == "held_quiet_hours"
         assert not calls
         clock.at = datetime(2026, 9, 8, 8, 15, tzinfo=timezone.utc)
-        assert _sweep(svc, _agg([_row("a"), _row("z")]))["outcome"] == "sent"
-        assert calls == [("HoldSpeak", "2 need you · 1 new")]
+        morning = _sweep(svc, _agg([_row("a"), _row("z")]))
+        assert morning["outcome"] == "sent" and morning["morning"] is True, morning
+        # Betterment daily D8: the first decision after the night is ONE
+        # morning notice ("N need you", then the first meeting when the
+        # calendar has one) in place of the backlog.
+        assert calls == [("HoldSpeak", "2 need you")]
+        calls.clear()
+        assert _sweep(svc, _agg([_row("a"), _row("z")]))["outcome"] == "held_no_edge" and not calls
 
     def test_mute_silences_a_room_and_unmute_renotifies_only_what_arrived_meanwhile(self, db: Database) -> None:
         calls: list[tuple[str, str]] = []

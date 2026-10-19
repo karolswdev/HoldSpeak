@@ -27,6 +27,10 @@ class PeopleReadiness(StrEnum):
     UNAVAILABLE = "unavailable"
     CORRUPT = "corrupt"
     UNSAFE_PERMISSIONS = "unsafe_permissions"
+    #: Betterment daily D8: this Mac has no key store People can use (a HOME
+    #: with no login keychain). Not an error to retry: People is not set up
+    #: on this Mac.
+    NO_KEY_STORE = "no_key_store"
 
 
 class PeopleStoreError(RuntimeError):
@@ -90,6 +94,9 @@ class EncryptedPeopleStore:
 
     def readiness(self) -> PeopleReadiness:
         if not self.path.exists():
+            usable = getattr(self.key_store, "usable", None)
+            if callable(usable) and not usable():
+                return PeopleReadiness.NO_KEY_STORE
             return PeopleReadiness.UNCONFIGURED
         try:
             self._require_private_files()
@@ -107,6 +114,8 @@ class EncryptedPeopleStore:
             return exc.readiness
         except PeopleKeyError as exc:
             # A sidecar with no usable native key is never an empty new ledger.
+            if str(exc) == "people_key_store_unavailable":
+                return PeopleReadiness.NO_KEY_STORE
             return PeopleReadiness.KEY_UNAVAILABLE if str(exc) == "people_key_missing" else PeopleReadiness.LOCKED
         except PeopleCryptoError:
             # AES-GCM cannot distinguish a substituted key from tampering.  Do

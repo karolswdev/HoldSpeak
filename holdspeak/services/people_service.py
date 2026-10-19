@@ -104,7 +104,11 @@ class PeopleService:
             state = self._store.readiness()
         except Exception as exc:  # Store errors intentionally contain no content.
             raise PeopleUnavailable("people_store_unavailable") from exc
-        return self._readiness_view(state)
+        view = self._readiness_view(state)
+        path = getattr(self._store, "path", None)
+        if view["state"] == "no_key_store" and path is not None and not path.exists():
+            view["store"] = "absent"  # Betterment daily D8: nothing was ever stored here
+        return view
 
     def setup(self, principal: Any) -> dict[str, str]:
         """The one deliberate owner gesture that can create an encrypted sidecar."""
@@ -114,7 +118,12 @@ class PeopleService:
             if runner is None:
                 from ..kernel.people_store_setup import run_people_store_setup
                 runner = run_people_store_setup
+            if self.readiness_state() == "no_key_store":
+                # Betterment daily D8: no keychain here; asking would only fail.
+                raise PeopleUnavailable("people_key_store_unavailable")
             state = runner(initialize=self._store.initialize, principal=principal)
+        except PeopleUnavailable:
+            raise
         except Exception as exc:
             raise PeopleUnavailable("people_store_unavailable") from exc
         return self._readiness_view(state)
@@ -122,6 +131,12 @@ class PeopleService:
     def list_relationships(
         self, principal: Any, *, include_archived: bool = False, with_counts: bool = False,
     ) -> list[dict[str, Any]]:
+        # Betterment daily D8 (the D6 503 log, reproduced on an isolated hub):
+        # a desk with no People store yet has nobody, which is not a failed
+        # read. Faces that list people on a fresh desk got a 503 here.
+        self._require_reader(principal)
+        if self.readiness_state() in ("unconfigured", "no_key_store"):
+            return []
         self._require_ready_owner(principal, read=True)
         if not with_counts:
             return [self._relationship_view(item) for item in self._list("relationship", active_only=not include_archived)]
@@ -1754,6 +1769,8 @@ class PeopleService:
 
         self._require_reader(principal)
         state = self.readiness_state()
+        if state == "no_key_store":
+            return []  # Betterment daily D8: no one can be added on this Mac
         if state not in {"ready", "unconfigured"} or not people_reads_allowed():
             raise PeopleUnavailable("people_store_unavailable")
         if db is None:
@@ -1820,6 +1837,9 @@ class PeopleService:
     def _ensure_store(self, principal: Any) -> None:
         """The owner's first write creates the encrypted store (no Set up step)."""
         self._require_owner(principal)
+        if self.readiness_state() == "no_key_store":
+            # Betterment daily D8: this Mac cannot hold the People key.
+            raise PeopleUnavailable("people_key_store_unavailable")
         if self.readiness_state() == "unconfigured":
             self.setup(principal)
         self._require_ready_owner(principal)

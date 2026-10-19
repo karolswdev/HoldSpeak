@@ -714,12 +714,16 @@ def owner_names(extra: Iterable[Any] = ()) -> list[str]:
 
 
 def meeting_path_blockers(
-    summary: dict[str, Any] | None, read: str = "ok",
+    summary: dict[str, Any] | None, read: str = "ok", *, summary_waits: bool = True,
 ) -> list[dict[str, str]]:
     """Every meeting-path blocker the assignment roster states, in path order.
 
     ``read`` is ``ok``, ``failed`` or ``pending``. A failed read is one
     ``unknown`` row; a pending read is no row.
+
+    Betterment daily D8: ``summary_waits`` is False when no meeting waits for
+    a summary; then "No engine for summaries" does not ask (a fresh desk has
+    nothing for it to summarize).
     """
     if read == "pending":
         return []
@@ -742,7 +746,7 @@ def meeting_path_blockers(
     # global heads).  A roster without it falls back to the owner chain.
     # ``off`` is the owner's own choice: no summary runs, and no row asks.
     queue = analysis.get("queue") if analysis is not None else None
-    summary_missing = analysis is not None and (
+    summary_missing = summary_waits and analysis is not None and (
         (queue.get("status") if isinstance(queue, dict) else status(analysis))
         not in ("assigned", "off")
     )
@@ -788,6 +792,35 @@ def meeting_summary_badge(meeting: dict[str, Any]) -> str:
 
 def meeting_needs_you(meeting: dict[str, Any]) -> bool:
     return meeting_summary_badge(meeting) in ("FAILED", "RETRYING")
+
+
+def _a_meeting_waits_for_summary(db: Any) -> bool:
+    """Betterment daily D8: True when a kept meeting waits for a summary: its
+    summary is queued, running or failed, or it has words and no summary yet
+    (and its summary is not skipped). On a read that fails, True: the row
+    asks rather than hides."""
+    try:
+        with db._connection() as conn:
+            row = conn.execute(
+                """SELECT 1 FROM meetings m
+                   WHERE m.parked = 0
+                     AND (
+                       LOWER(TRIM(COALESCE(m.intel_status, ''))) IN
+                         ('pending', 'queued', 'running', 'error', 'failed', 'import_failed')
+                       OR (
+                         LOWER(TRIM(COALESCE(m.intel_status, ''))) NOT IN ('skipped', 'complete', 'ready')
+                         AND EXISTS (SELECT 1 FROM segments s WHERE s.meeting_id = m.id AND TRIM(s.text) != '')
+                         AND NOT EXISTS (
+                             SELECT 1 FROM intel_snapshots i
+                             WHERE i.meeting_id = m.id AND TRIM(COALESCE(i.summary, '')) != '')
+                       )
+                     )
+                   LIMIT 1""",
+            ).fetchone()
+        return row is not None
+    except Exception as exc:
+        log.warning("needs-you: the waiting-meeting read failed: %s", exc)
+        return True
 
 
 # ── the rule ──────────────────────────────────────────────────────────
@@ -948,6 +981,7 @@ def compute_needs_you(
     known_people: Iterable[str] | None = None,
     now: datetime | None = None,
     dedup: Callable[[list[dict[str, Any]], datetime], list[dict[str, Any]]] = dedup_items,
+    summary_waits: bool = True,
 ) -> dict[str, Any]:
     """The pure R1-R5 rule. Mirrors ``computeNeedsYou`` line for line.
 
@@ -1072,6 +1106,7 @@ def compute_needs_you(
         {**blocker, "direction": "setup"}
         for blocker in meeting_path_blockers(
             None if assignment_read == "failed" else assignments, assignment_read,
+            summary_waits=summary_waits,
         )
     ]
     failed_meetings = [
@@ -1602,6 +1637,7 @@ def compose(
         meetings=meetings,
         decisions=decisions,
         coders=coders,
+        summary_waits=_a_meeting_waits_for_summary(db),
         gate_holds=gate_holds,
         flights=flights,
         self_names=names,

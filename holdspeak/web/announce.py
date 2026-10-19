@@ -70,6 +70,9 @@ QUIET_ROUTES: dict[tuple[str, str], str] = {
     ("POST", "/api/desk/windows/{window_id}/{verb}"): "the window service announces (kind windows)",
     ("POST", "/api/desk/windows/arrange"): "the window service announces (kind windows)",
     ("POST", "/api/desk/windows/stage-shelf"): "the window service announces (kind windows)",
+    # Betterment daily D8: the desk says which window is in front (memory
+    # only, once a minute); nothing is stored and no window shows it.
+    ("POST", "/api/desk/presence"): "noise: the desk's front window, in memory",
 }
 
 _KIND = {"people": "person", "all_action_items": "action_item"}

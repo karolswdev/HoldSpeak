@@ -73,6 +73,21 @@ def build_desk_windows_router(
             return {}
         return body if isinstance(body, dict) else {}
 
+    @router.post("/api/desk/presence")
+    async def desk_presence(request: Request) -> Any:
+        """Betterment daily D8: the window in front of the owner (memory only).
+        The heartbeat raises no notice about the window he is looking at."""
+        from ... import desk_presence
+
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+        body = body if isinstance(body, dict) else {}
+        front = body.get("front")
+        desk_presence.report(str(front)[:200] if front else None, bool(body.get("visible")))
+        return {"ok": True}
+
     @router.get("/api/desk/windows")
     async def api_desk_windows(request: Request) -> Any:
         return await _run(lambda: make().list(), "Failed to read the desk's windows")

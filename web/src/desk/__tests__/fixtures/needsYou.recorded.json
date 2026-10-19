@@ -5501,19 +5501,20 @@
     "arming": [],
     "blockers": [
      {
+      "direction": "setup",
       "key": "summary",
       "label": "No engine for summaries",
       "verb": "Choose an engine"
      }
     ],
     "complete": true,
-    "computedAt": "2026-10-11T16:31:02.574022-06:00",
+    "computedAt": "2026-10-18T18:59:55.004093-06:00",
     "count": 1,
     "coverage": [
      {
       "kind": "coder",
       "label": "Agents",
-      "observed_at": "2026-10-11T22:31:02.585855+00:00",
+      "observed_at": "2026-10-19T00:59:55.018653+00:00",
       "project_id": "",
       "reason": null,
       "repair": null,
@@ -5567,9 +5568,9 @@
     "upcoming": [],
     "week": {
      "days": [],
-     "ends_at": "2026-10-12T06:00:00+00:00",
+     "ends_at": "2026-10-19T06:00:00+00:00",
      "has_calendar": false,
-     "starts_at": "2026-10-05T06:00:00+00:00",
+     "starts_at": "2026-10-12T06:00:00+00:00",
      "total": 0
     }
    },
@@ -6462,7 +6463,7 @@
      {
       "effective": {
        "assignment": {
-        "created_at": "2026-10-11T22:31:02.305064Z",
+        "created_at": "2026-10-19T00:59:54.671012Z",
         "effective_retry_policy_id": "retry.audio.transcription",
         "entries": [
          {
@@ -6475,7 +6476,7 @@
           "readiness": "unavailable"
          }
         ],
-        "id": "ia_9d62d7007b30424ca1dd3a8061d8170f",
+        "id": "ia_91e653c6f1e441009d4c12c2f9ddc340",
         "issues": [
          {
           "code": "binding_not_ready",
@@ -6492,7 +6493,7 @@
          "capability_id": "speech.transcribe",
          "kind": "capability"
         },
-        "sha256": "sha256:bc27f6a58f48ff6746578839b74e9cb0a16c9ca1d6efe2eb7678dc9b2dfa88a4"
+        "sha256": "sha256:b67c3b5ffb2e7e0194534a8e0ac8d2f2eafcaec814317f0f372b1b04b8ca3de5"
        },
        "capability_id": "speech.transcribe",
        "inherited_from": "capability",
@@ -6567,7 +6568,7 @@
       "has_override": false,
       "id": "workbench.item",
       "issues": [],
-      "label": "Workbench item",
+      "label": "Automation item",
       "queue": null
      },
      {

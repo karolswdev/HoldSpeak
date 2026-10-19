@@ -89,6 +89,7 @@ class HeartbeatMixin:
         self.runtime_stop_event.wait(10)
 
         while not self.runtime_stop_event.is_set():
+            settings: dict = {}
             try:
                 db = get_database()
                 obs = get_observer()
@@ -135,6 +136,14 @@ class HeartbeatMixin:
             except Exception as exc:
                 # Independent failure boundary: log and continue.
                 log.error("heartbeat loop error: %s", exc)
+
+            # Betterment daily D8: 10 minutes before a 1:1, "Prep ready". The
+            # minute tick reads the calendar; a sweep runs every 15 minutes.
+            try:
+                if settings.get("runs_on", "local") == "local":
+                    HeartbeatService(get_database(), observer=get_observer()).prep_notices()
+            except Exception as exc:
+                log.error("heartbeat prep notice error: %s", exc)
 
             # Sleep until next tick (or until stop is signaled)
             self.runtime_stop_event.wait(TICK_SECONDS)

@@ -37,12 +37,12 @@ import { renderHeroSlot } from "./core-layout";
 import { useOwnerName } from "../../desk/firstrun/ownerName";
 import { nudgeText } from "../../desk/needs/NeedsDrawer";
 import { NoteSendWells } from "../../desk/documentSendsLazy";
-import { PeopleReadFailed } from "../../desk/people/PeopleReadFailed";
+import { PeopleNotHere, PeopleReadFailed } from "../../desk/people/PeopleReadFailed";
 import { useWindowTitle } from "../../desk/surface/title";
 import "./people.css";
 import { openProjectRoom } from "../../desk/shell";
 
-type ReadinessState = "unconfigured" | "locked" | "key_unavailable" | "corrupt" | "unavailable" | "ready";
+type ReadinessState = "unconfigured" | "locked" | "key_unavailable" | "corrupt" | "unavailable" | "no_key_store" | "ready";
 type Visibility = "shared_intent" | "leader_private";
 type RelationshipKind = "direct_report" | "peer" | "extended";
 type Lens = "now" | "prep" | "one-on-ones" | "context" | "history" | "info";
@@ -162,6 +162,8 @@ function readinessForError(cause: unknown): Readiness {
       : "",
   );
   if (cause.status === 423 || code === "people_key_store_locked") return { readiness: "locked" };
+  // Betterment daily D8: no keychain on this Mac; not a failure to retry.
+  if (code === "people_key_store_unavailable") return { readiness: "no_key_store" };
   if (code.startsWith("people_key_")) return { readiness: "key_unavailable" };
   if (cause.status === 503 || code.startsWith("people_store_")) return { readiness: "unavailable" };
   return { readiness: "corrupt" };
@@ -433,6 +435,8 @@ export function PeopleCore({ hero, scope }: CoreProps) {
   if (loading) return <SurfaceState loading />;
   if (unavailable) {
     const state = stateOf(readiness);
+    // Betterment daily D8: People cannot hold a key on this Mac: one line, no verb.
+    if (state === "no_key_store") return <PeopleNotHere />;
     // Betterment D6: a People read that failed is one line in place.
     if (state === "unavailable" || state === "locked") return <PeopleReadFailed onRetry={() => void load()} detail={error} />;
     const face = readinessFace(state);
