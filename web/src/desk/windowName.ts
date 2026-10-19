@@ -62,13 +62,13 @@ export function windowName(subject: WindowSubject, id?: string | null): string {
       // words of the kept note are a title the save rule gave, not the owner.
       const own = title && title !== NEW_THOUGHT_TITLE
         && (subject.keptBody == null || title !== firstWords(subject.keptBody));
-      return own ? title : firstWords(subject.body ?? "") || "New thought";
+      return own ? title : firstWords(subject.body ?? "") || "New note";
     }
     case "note": {
       // A note that holds the stored word `Thought` is a thought with no
       // title of its own: the word is not a name.
       if (text(subject.title) === NEW_THOUGHT_TITLE)
-        return firstWords(subject.body ?? "") || "New thought";
+        return firstWords(subject.body ?? "") || "New note";
       return named(subject.title) || firstWords(subject.body ?? "") || "New note";
     }
     case "thread":

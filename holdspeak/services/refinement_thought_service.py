@@ -224,8 +224,6 @@ class RefinementThoughtService:
                     conn, thought_id=record["id"], create_request_id=request_id
                 )
                 return self._dto_in_transaction(conn, record), receipt
-            if conn.execute("SELECT 1 FROM directories WHERE id=? AND deleted=0", (INBOX_DIRECTORY_ID,)).fetchone() is None:
-                raise ValidationError("Inbox is unavailable", code="inbox_unavailable")
             note = conn.execute("SELECT * FROM notes WHERE id=?", (note_id,)).fetchone()
             if note is None:
                 raise NotFound("note", note_id)
@@ -242,29 +240,72 @@ class RefinementThoughtService:
                 assert current is not None
                 raise ConflictError("note changed before adoption", code="note_adoption_conflict", context={"note": current,
                     "source_precondition": {"content_sha256": actual, "last_modified": current["last_modified"]}})
-            raw = str(note["body_markdown"]).encode("utf-8", "strict")
-            now, thought_id = _now(), _id("thought")
-            attachment_hash = RefinementThoughtRepository.empty_attachment_hash(thought_id)
-            resume_order = RefinementThoughtRepository.next_resume_order(conn)
-            conn.execute("""INSERT INTO refinement_thoughts (id,create_request_id,create_payload_sha256,raw_utf8,raw_sha256,
-                raw_source_kind,raw_source_ref,raw_captured_at,working_note_id,working_revision,lifecycle_revision,attachment_revision,
-                attachment_sha256,aggregate_revision,resume_order,state,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,1,1,0,?,1,?,'working',?,?)""",
-                (thought_id, request_id, request_digest, raw, hashlib.sha256(raw).hexdigest(), "note", f"note:{note_id}", now, note_id, attachment_hash, resume_order, now, now))
-            record = self._record(conn.execute("SELECT * FROM refinement_thoughts WHERE id=?", (thought_id,)).fetchone())
-            working_hash = self._insert_revision(conn, thought_id, 1, str(note["title"]), str(note["body_markdown"]), tags, now)
-            life_hash = RefinementThoughtRepository.insert_lifecycle(conn, thought_id=thought_id, lifecycle_revision=1, aggregate_revision=1,
-                prior_state=None, state="working", command="adopt_note", occurred_at=now)
-            RefinementThoughtRepository.insert_command(conn, record, command_kind="adopt_note", prior_working_revision=0,
-                prior_lifecycle_revision=0, prior_attachment_revision=0, working_sha256=working_hash, lifecycle_sha256=life_hash, accepted_at=now)
-            conn.execute("""INSERT INTO directory_memberships (primitive_id,directory_id,created_at,last_modified,deleted)
-                VALUES (?,?,?,?,0) ON CONFLICT(primitive_id) DO UPDATE SET directory_id=excluded.directory_id,last_modified=excluded.last_modified,deleted=0""",
-                (f"note:{note_id}", INBOX_DIRECTORY_ID, now, now))
-            from .refinement_context_service import RefinementContextService
-            record, receipt = RefinementContextService(self._db).apply_default_at_birth_in_transaction(
-                conn, thought=record, create_request_id=request_id,
-                working_sha256=working_hash, occurred_at=now,
-            )
-            return self._dto_in_transaction(conn, record), receipt
+            return self._adopt_in_transaction(conn, note, request_id=request_id, request_digest=request_digest)
+
+    def _adopt_in_transaction(self, conn: Any, note: Any, *, request_id: str,
+                              request_digest: str) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Claim one existing Note as a working thought, inside the caller's
+        IMMEDIATE transaction.
+
+        Betterment Q8 (one note): adoption never files the note. A note stays
+        in the drawer he put it in (or on the desk); before, adoption moved
+        it into Inbox, so "Develop this thought" took a note off his desk.
+        """
+        note_id = str(note["id"])
+        tags = json.loads(note["tags_json"])
+        raw = str(note["body_markdown"]).encode("utf-8", "strict")
+        now, thought_id = _now(), _id("thought")
+        attachment_hash = RefinementThoughtRepository.empty_attachment_hash(thought_id)
+        resume_order = RefinementThoughtRepository.next_resume_order(conn)
+        conn.execute("""INSERT INTO refinement_thoughts (id,create_request_id,create_payload_sha256,raw_utf8,raw_sha256,
+            raw_source_kind,raw_source_ref,raw_captured_at,working_note_id,working_revision,lifecycle_revision,attachment_revision,
+            attachment_sha256,aggregate_revision,resume_order,state,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,1,1,0,?,1,?,'working',?,?)""",
+            (thought_id, request_id, request_digest, raw, hashlib.sha256(raw).hexdigest(), "note", f"note:{note_id}", now, note_id, attachment_hash, resume_order, now, now))
+        record = self._record(conn.execute("SELECT * FROM refinement_thoughts WHERE id=?", (thought_id,)).fetchone())
+        working_hash = self._insert_revision(conn, thought_id, 1, str(note["title"]), str(note["body_markdown"]), tags, now)
+        life_hash = RefinementThoughtRepository.insert_lifecycle(conn, thought_id=thought_id, lifecycle_revision=1, aggregate_revision=1,
+            prior_state=None, state="working", command="adopt_note", occurred_at=now)
+        RefinementThoughtRepository.insert_command(conn, record, command_kind="adopt_note", prior_working_revision=0,
+            prior_lifecycle_revision=0, prior_attachment_revision=0, working_sha256=working_hash, lifecycle_sha256=life_hash, accepted_at=now)
+        from .refinement_context_service import RefinementContextService
+        record, receipt = RefinementContextService(self._db).apply_default_at_birth_in_transaction(
+            conn, thought=record, create_request_id=request_id,
+            working_sha256=working_hash, occurred_at=now,
+        )
+        return self._dto_in_transaction(conn, record), receipt
+
+    def open_note(self, principal: Principal, note_id: str) -> dict[str, Any]:
+        """Betterment Q8 (one note): the thought that opens any note in the
+        one note window (the sticky).
+
+        A plain note is adopted here, in one transaction, so opening a note
+        needs no "Develop" press and no precondition round trip. A finished
+        thought is resumed: Done only closes the window, so no note is ever
+        locked as finished. The note's drawer never changes.
+        """
+        self._require_product_owner(principal)
+        if not isinstance(note_id, str) or not note_id.strip():
+            raise ValidationError("note_id is required", code="note_open_request_invalid")
+        note_id = note_id.strip()
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            note = conn.execute("SELECT * FROM notes WHERE id=?", (note_id,)).fetchone()
+            if note is None or note["deleted"]:
+                raise NotFound("note", note_id)
+            owned = conn.execute("SELECT * FROM refinement_thoughts WHERE working_note_id=?", (note_id,)).fetchone()
+            if owned is None:
+                tags = json.loads(note["tags_json"])
+                request_id = _id("open_note")
+                request_digest = hashlib.sha256(canonical_json({"kind": "adopt_note", "request_id": request_id, "note_id": note_id,
+                    "expected_source_content_sha256": RefinementThoughtRepository.content_hash(str(note["title"]), str(note["body_markdown"]), tags),
+                    "expected_source_last_modified": str(note["last_modified"] or "")})).hexdigest()
+                thought, _receipt = self._adopt_in_transaction(conn, note, request_id=request_id, request_digest=request_digest)
+                return thought
+            record = self._record(owned)
+            if record["state"] != "completed":
+                return self._dto_in_transaction(conn, record)
+        return self.resume(principal, record["id"], expected_aggregate_revision=record["aggregate_revision"],
+                           expected_lifecycle_revision=record["lifecycle_revision"])
 
     def get(self, principal: Principal, thought_id: str, *, include_raw: bool = False) -> dict[str, Any]:
         self._require_product_owner(principal)

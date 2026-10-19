@@ -1,4 +1,4 @@
-import { NEW_THOUGHT_TITLE } from "../thoughtTitle";
+import { firstWords, NEW_THOUGHT_TITLE } from "../thoughtTitle";
 import { useEffect, useRef } from "react";
 import { EditInPlace } from "../surface";
 import { MicButton } from "../components/MicButton";
@@ -13,6 +13,13 @@ import { claimThoughtKeys } from "../thoughtKeys";
    original capture stay in the Note pullout (`desk/pullouts/NotePullout`),
    the kept state moved to the window foot.  The mic is the note field's own
    (it writes at the cursor), never a button beside the field. */
+/** A title of his own: not the untitled name, and not the first words of the
+ *  note (the name the save rule gives an untitled note). */
+export function ownTitle(title: string, body: string): boolean {
+  const clean = title.trim();
+  return Boolean(clean) && clean !== NEW_THOUGHT_TITLE && clean !== firstWords(body);
+}
+
 export function ThoughtDocumentPane({
   noteId,
   draft,
@@ -51,17 +58,19 @@ export function ThoughtDocumentPane({
   }, [noteId]);
 
   return <section className="thought-note-document" aria-label="Note">
-    <EditInPlace
+    {/* Betterment Q8 (one note): the title shows once, in the title bar. A
+        heading that only repeats the note's first line (an untitled note,
+        named by its first words, thoughtTitle.ts) left the window. A title
+        of his own, which the first line does not say, stays editable here
+        (Object ▸ Rename opens this window). */}
+    {ownTitle(draft.title, draft.body) ? <EditInPlace
       className="thought-note-title"
       label="Title"
-      // A thought with no title of its own has an empty title field: the
-      // stored word `Thought` is not a name (windowName.ts).
-      value={draft.title.trim() === NEW_THOUGHT_TITLE ? "" : draft.title}
-      placeholder="New thought"
+      value={draft.title}
       multiline
       disabledReason={lockedReason}
       onCommit={(next) => onEdit({ title: next })}
-    />
+    /> : null}
     <div className="thought-note-field">
       <DeskEditor
         ref={bodyRef}

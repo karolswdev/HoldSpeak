@@ -6462,6 +6462,16 @@
       ]
     },
     {
+      "path": "/api/thoughts/open-note",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/thoughts/{thought_id}",
       "methods": [
         "GET"

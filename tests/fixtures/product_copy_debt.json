@@ -16,11 +16,6 @@
       "text": "For headless provisioning, remains an environment fallback for the identified model profile."
     },
     {
-      "path": "web/src/desk/components/Pullout.tsx",
-      "rule_id": "failure-missing-facts",
-      "text": "Could not check this Note on this hub."
-    },
-    {
       "path": "web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
       "rule_id": "failure-missing-facts",
       "text": "Could not open. Note unchanged."

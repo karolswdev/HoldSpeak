@@ -5,34 +5,24 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
 import { ApiError, readableError } from "../../lib/api";
 import { spriteUrl } from "../sprites";
 import { useDesk } from "../store";
-import { openSurfaceOr } from "../shell";
-import { onReturnToTask, rememberTaskFocus } from "../returnToTask";
+import { onReturnToTask } from "../returnToTask";
 import {
   actOnReview,
-  completeThought,
-  detachThoughtContext,
-  refineThought,
-  refreshThoughtContext,
-  resumeThought,
+  NOTE_GREW_EVENT,
   stopRefinement,
   type Thought,
   type ThoughtAppendEffect,
-  type ThoughtAttachment,
   type ThoughtWorkspaceProjection,
 } from "../thoughts";
 import type { WorldObject } from "../world";
 import { Button } from "../../components/signal/Signal";
-import { EgressChip, EngineLine, PadGadget, ScrollHint, SurfaceFooter } from "../surface";
-import { refreshEngine, useEngine } from "../hooks/useEngine";
+import { PadGadget, ScrollHint, SurfaceFooter } from "../surface";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { ThoughtSaveFault, useThoughtNoteWriter } from "../pullouts/editors/useThoughtNoteWriter";
 import { ThoughtDocumentPane } from "./ThoughtDocumentPane";
 import { latchAskSelection } from "../ask";
-import { ThoughtReadsWell, type ReadsResult } from "./ThoughtReadsWell";
-import { TaskWell } from "./TaskWell";
 import { ProjectWell } from "./ProjectWell";
 import { useThoughtWorkspaceController } from "./useThoughtWorkspaceController";
-import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { NoteSendWells } from "../documentSendsLazy";
 import { SEND_OPEN, useAnnounceWindowDocument } from "../windowSend";
 import { useWindowId } from "../components/window/windowIdContext";
@@ -86,21 +76,6 @@ async function verifiedReveal(thought: Thought, effect?: ThoughtAppendEffect): P
   return start === null || end === null ? null : { start, end };
 }
 
-/* HS-201-12 — the engine the ask would reach, read from the projection
-   BEFORE dispatch (design condition 4).  `same_device` is the deployment
-   revision's word for "here"; every other boundary names its own target,
-   never a raw wire token (162's no-raw-ids law). */
-function engineEgress(placement: ThoughtWorkspaceProjection["inference"]["intended_placement"]):
-  { label: string; scope: "local" | "cloud" } | null {
-  if (!placement) return null;
-  if (placement.boundary === "same_device" || placement.target_kind === "this_device") {
-    return { label: "THIS DEVICE", scope: "local" };
-  }
-  const name = (placement.target_name || "").trim();
-  if (!name) return null;
-  return { label: name.toUpperCase(), scope: placement.boundary === "private_network" ? "local" : "cloud" };
-}
-
 type WorkspaceMutation = {
   thought: Thought;
   workbench?: ThoughtWorkspaceProjection;
@@ -123,6 +98,7 @@ function WorkspaceReady({
   registerClose,
   sending,
   setSending,
+  onDone,
 }: {
   initialThought: Thought;
   projection: ThoughtWorkspaceProjection;
@@ -131,8 +107,9 @@ function WorkspaceReady({
   registerClose: (handler: () => Promise<boolean>) => () => void;
   sending: boolean;
   setSending: (sending: boolean) => void;
+  /** Betterment Q8: Done closes the window (it saves first); nothing else. */
+  onDone: () => void;
 }) {
-  const thoughtEngine = useEngine("thought.interview");
   const [documentThought, setDocumentThought] = useState(projection.thought || initialThought);
   const [answer, setAnswer] = useState("");
   const [busy, setBusy] = useState(false);
@@ -143,20 +120,17 @@ function WorkspaceReady({
   /* PHILO-3-04 — the writer's own refusal is stated by the foot (DID NOT
      SAVE / CHANGED ELSEWHERE), never again as prose on the message line. */
   const sayFault = (cause: unknown) => say(cause instanceof ThoughtSaveFault ? "" : readableError(cause));
-  const [reads, setReads] = useState(false);
-  const [actionWell, setActionWell] = useState<"task" | "project" | null>(null);
+  const [actionWell, setActionWell] = useState<"project" | null>(null);
   const [selectedPassage, setSelectedPassage] = useState<{ from: number; to: number; text: string; body: string } | null>(null);
   const [actionPassage, setActionPassage] = useState<string | null>(null);
   const ignoreSelectionAfterEdit = useRef(false);
   const hasProjects = useDesk((state) => state.projects.some((project) => !project.is_archived));
-  const { copy, receipt: copyReceipt } = useCopyReceipt();
   const winId = useWindowId();
   const [revealRange, setRevealRange] = useState<{ start: number; end: number; focus?: boolean } | null>(null);
   /* HS-176-04 — the answer well is a PadGadget (the voice law): the ref
      holds its <label> and the focus reaches the textarea inside it. */
   const answerRef = useRef<HTMLLabelElement | null>(null);
   const focusAnswer = () => answerRef.current?.querySelector("textarea")?.focus();
-  const readsRef = useRef<HTMLButtonElement | null>(null);
   const sendRef = useRef<HTMLButtonElement | null>(null);
   const noteWindowRef = useRef<HTMLDivElement | null>(null);
   const sendScrollRef = useRef<HTMLDivElement | null>(null);
@@ -196,8 +170,6 @@ function WorkspaceReady({
     flush: () => writer.flush(),
   };
   const draftNoteId = documentThought.working_note.id;
-  const taskText = writer.draft.body.trim().split(/\r?\n/, 1)[0]
-    || (writer.draft.title.trim() !== NEW_THOUGHT_TITLE ? writer.draft.title.trim() : "");
   useEffect(() => {
     setSelectedPassage((current) => current && current.body === writer.draft.body ? current : null);
   }, [writer.draft.body]);
@@ -222,6 +194,20 @@ function WorkspaceReady({
     };
     window.addEventListener(SEND_OPEN, onOpen);
     return () => window.removeEventListener(SEND_OPEN, onOpen);
+  });
+
+  /* Betterment Q8: Ask ▸ Add to note grew this note. A window with no
+     unsaved words reads it again; one with unsaved words keeps them, and its
+     next save shows CHANGED ELSEWHERE with Reload. */
+  const reloadNoteRef = useRef<() => Promise<void>>(async () => undefined);
+  useEffect(() => {
+    const onGrew = (event: Event) => {
+      if ((event as CustomEvent<{ noteId?: string }>).detail?.noteId !== draftNoteId) return;
+      if (writer.dirty || writer.pending || writer.saving) return;
+      void reloadNoteRef.current();
+    };
+    window.addEventListener(NOTE_GREW_EVENT, onGrew);
+    return () => window.removeEventListener(NOTE_GREW_EVENT, onGrew);
   });
 
   useEffect(() => {
@@ -357,42 +343,6 @@ function WorkspaceReady({
     }
   };
 
-  const ask = () => afterFlush(async (latest) => {
-    const key = `hs.thought.refine.${latest.id}`;
-    const result = await refineThought(latest, stableId(key), writer.getWorkspaceCursor() ?? projection.workspace_cursor);
-    clearStableId(key);
-    return result;
-  });
-
-  const keep = (fresh?: ThoughtWorkspaceProjection | null) => afterFlush(async (latest) => {
-    /* The answer that just landed advanced BOTH the revisions and the
-       workspace cursor; completing against the stale pair is the 409
-       `workspace_cursor_conflict` Astra's probe recorded (finding 2). */
-    const source = fresh?.thought ?? latest;
-    const key = `hs.thought.complete.${source.id}`;
-    const result = await completeThought({
-      thought: source,
-      request_id: stableId(key),
-      workspace_cursor: fresh?.workspace_cursor ?? writer.getWorkspaceCursor() ?? projection.workspace_cursor,
-    });
-    clearStableId(key);
-    return result;
-  });
-
-  /* HS-201-12 (design condition 2) — Finish keeps in ONE gesture: a typed
-     answer that is not in the note yet joins it first, then the Thought is
-     kept.  No prompt, no second press. */
-  const finish = async () => {
-    if (!(question && answer.trim())) {
-      await keep();
-      return;
-    }
-    if (!await addAnswer()) return;
-    await keep(await reload(false).catch(() => null));
-  };
-
-  const resume = () => afterFlush(async (latest) => ({ thought: await resumeThought(latest, writer.getWorkspaceCursor() ?? projection.workspace_cursor) }));
-
   const stop = async () => {
     if (!projection.thought.continuity?.invocation_id || busy) return;
     setBusy(true); say("");
@@ -407,78 +357,16 @@ function WorkspaceReady({
     finally { writer.resume(); setBusy(false); }
   };
 
-  const repair = (attachment: ThoughtAttachment) => afterFlush(async (latest) => {
-    const action = attachment.state === "missing" ? "detach" : "refresh";
-    const key = `hs.thought.context.${action}.${latest.id}.${attachment.ref}`;
-    const result = action === "detach"
-      ? await detachThoughtContext(latest, attachment.ref, stableId(key), writer.getWorkspaceCursor() ?? projection.workspace_cursor)
-      : await refreshThoughtContext(latest, attachment.ref, stableId(key), writer.getWorkspaceCursor() ?? projection.workspace_cursor);
-    clearStableId(key);
-    return result;
-  });
-
-  const setupAI = () => {
-    // HS-200-41: remember the verb he left before the handoff, so the
-    // Apply on the other side can send focus back here (design D2(a)).
-    rememberTaskFocus();
-    openSurfaceOr("configure-runs-on", "/settings", "thought.interview");
-  };
-
-  const attachments = documentThought.attachments || [];
-  const stale = attachments.find((attachment) => attachment.state !== "current") || null;
   const completed = documentThought.state === "completed" || projection.workspace_state === "completed";
   const running = ["reserved", "in_flight", "awaiting_projection"].includes(projection.workspace_state);
-  const placement = projection.inference.intended_placement;
-  const engine = engineEgress(placement);
-  const remoteEngine = Boolean(placement && placement.target_kind !== "this_device" && placement.boundary !== "same_device");
-  const projectionReady = projection.inference.availability === "ready";
-  // The Thought assignment is authoritative once its shared roster read has
-  // completed. While that read is still unread, the workbench projection is
-  // the only useful destination hint available to this window; it must not
-  // override an explicit none/failed roster state.
-  const thoughtConfigured = thoughtEngine.state === "set";
-  const rosterUnread = thoughtEngine.state === "unread";
-  const ready = rosterUnread ? projectionReady : thoughtConfigured;
-  // The assignment gives the pre-run model and place. A remote destination
-  // still comes from the projection's host, so the face does not replace a
-  // LAN/cloud egress with a local model badge.
-  const visibleEngine = (rosterUnread || thoughtConfigured || remoteEngine) ? engine : null;
+  /* Betterment Q8 (one note): "develop" is Ask about this, in the one Ask
+     window. The band is left only for what an older thought still holds: a
+     running turn (Stop), or its open question or draft (Add to note). */
+  const askRow: { token: string; label: string; act: () => void } | null = !completed && running
+    ? { token: "WORKING", label: "Stop", act: () => void stop() }
+    : null;
   const open = Boolean(question || draftBody);
-
-  // Band 3 owns only an active continuation or a live run. An idle note's
-  // Ask action belongs in the foot; EngineLine owns engine setup.
-  const askRow: { token: string; label: string; act: () => void } | null = completed
-    ? null
-    : running
-      ? { token: "WORKING", label: "Stop", act: () => void stop() }
-      : projection.workspace_state === "stale" && stale
-        ? { token: stale.state === "missing" ? "CONTEXT MISSING" : "CONTEXT CHANGED", label: stale.state === "missing" ? "Remove it" : "Update it", act: () => void repair(stale) }
-        : !ready
-          /* The no-engine reason belongs to EngineLine. These two states
-             remain the run's truthful target states when a route exists. */
-          ? placement?.readiness === "ready"
-            ? { token: "ENGINE BUSY", label: "Try again", act: () => void ask() }
-            : remoteEngine
-              ? { token: "ENGINE NOT REACHABLE", label: "Check", act: setupAI }
-              : null
-          : projection.workspace_state === "named_failure"
-            /* PHILO-15 10 (Astra r2, finding 1): a named failure says what
-               failed and on which engine (STRUCTURED RESULT · NOT USABLE ·
-               192.168.1.43:8080), from the hub's own terminal token. */
-            ? {
-                token: projection.terminal_status?.token
-                  ? [projection.terminal_status.token, visibleEngine?.label].filter(Boolean).join(" · ")
-                  : "",
-                label: projection.terminal_status?.retryable === false ? "Ask" : "Try again",
-                act: () => void ask(),
-              }
-            : open
-              ? null
-              : null;
-
-  const readsToken = attachments.length ? attachments.map((item) => item.title).join(" · ") : null;
-  const engineNeedsSetup = thoughtEngine.state === "none" || thoughtEngine.state === "failed";
-  const showAskBand = !completed && Boolean(open || askRow || engineNeedsSetup);
+  const showAskBand = !completed && Boolean(open || askRow);
 
   const writeLine = thoughtWriteLine(writer);
   const unsaved = Boolean(writer.pending || writer.saving || writer.failed || writer.conflicted);
@@ -508,32 +396,20 @@ function WorkspaceReady({
       reloading.current = false;
     }
   };
-  /* The well writes against the workspace cursor, so the sole writer drains
-     first — a dirty note under an attach is a cursor conflict (HS-141-05). */
-  const openReads = async () => {
-    if (reads) { setReads(false); return; }
-    if (busy) return;
-    setBusy(true); say("");
-    try {
-      await writer.flush({ fence: true });
-      setReads(true);
-    } catch (cause) { sayFault(cause); }
-    finally { writer.release(); setBusy(false); }
-  };
+  reloadNoteRef.current = reloadNote;
   /* The well sends the stored note, so the sole writer saves first. */
   const openSend = async () => {
     if (busy) return;
     setBusy(true); say("");
     try {
       await writer.flush({ fence: true });
-      setReads(false);
       setActionWell(null);
       setActionPassage(null);
       setSending(true);
     } catch (cause) { sayFault(cause); }
     finally { writer.release(); setBusy(false); }
   };
-  const openActionWell = async (kind: "task" | "project") => {
+  const openActionWell = async (kind: "project") => {
     if (busy) return;
     setBusy(true); say("");
     try {
@@ -566,14 +442,6 @@ function WorkspaceReady({
     } catch (cause) { sayFault(cause); }
     finally { writer.release(); setBusy(false); }
   };
-  const readsResult = (result: ReadsResult) => {
-    setSelectedPassage(null);
-    setActionPassage(null);
-    setDocumentThought(result.thought);
-    if (result.workbench) install(result.workbench);
-    else void reload();
-  };
-
   return <div ref={noteWindowRef} className="thought-note-window" onKeyDown={(event) => {
     if (sending) return;
     if (!(event.metaKey || event.ctrlKey) || event.nativeEvent.isComposing) return;
@@ -588,8 +456,7 @@ function WorkspaceReady({
     if (busy) return;
     if (question && answer.trim()) { void addAnswer(); return; }
     if (draftBody) { void addDraft(); return; }
-    if (askRow) { askRow.act(); return; }
-    void finish();
+    onDone();
   }}>
     {!sending ? <>
     <ThoughtDocumentPane
@@ -622,18 +489,6 @@ function WorkspaceReady({
     {showAskBand ? <section className="thought-note-ask" aria-label="Ask about this note">
       <div className="thought-note-ask-row">
         {askRow?.token ? <span className="surface-token" data-chip>{askRow.token}</span> : null}
-        {/* The destination before dispatch (A.9) — and never beside the
-            no-engine token, which already says there is nowhere to go. */}
-        {visibleEngine && visibleEngine.label !== "THIS DEVICE" && (ready || remoteEngine) ? <EgressChip
-          label={visibleEngine.label}
-          scope={visibleEngine.scope}
-          title={`The ask reaches ${visibleEngine.label}.`}
-        /> : null}
-        {!completed ? <EngineLine
-          engine={thoughtEngine}
-          onChoose={setupAI}
-          onRetry={() => void refreshEngine("thought.interview")}
-        /> : null}
         {askRow ? <Button dense disabled={busy} onClick={askRow.act}>{askRow.label}</Button> : null}
       </div>
       {projection.workspace_state === "named_failure" && projection.terminal_status?.message
@@ -659,20 +514,7 @@ function WorkspaceReady({
       {messageVerb === "reload" ? <Button dense disabled={busy} onClick={() => void reloadNote()}>Reload</Button> : null}
     </p> : null}
 
-    {reads ? <ThoughtReadsWell
-      thought={documentThought}
-      cursor={projection.workspace_cursor}
-      disabled={busy}
-      onApplied={readsResult}
-      onClose={() => { setReads(false); requestAnimationFrame(() => focusDoor(readsRef)); }}
-    /> : null}
-
-    {actionWell === "task" ? <TaskWell
-      noteId={draftNoteId}
-      initialText={actionPassage || taskText}
-      onAdded={say}
-      onClose={() => { setActionWell(null); setActionPassage(null); }}
-    /> : actionWell === "project" ? <ProjectWell
+    {actionWell === "project" ? <ProjectWell
       noteId={draftNoteId}
       onAdded={say}
       onClose={() => { setActionWell(null); setActionPassage(null); }}
@@ -680,27 +522,24 @@ function WorkspaceReady({
 
     <SurfaceFooter
       className="thought-note-foot"
-      egress={readsToken ? <span className="thought-note-reads" title={`Reads: ${readsToken}`}>Reads: {readsToken}</span> : null}
       receipt={<>
         {/* PHILO-3-04: the receipt keeps its whole words and wraps; the
             library's wrap token ([data-wrap], surface-footer.css) lifts the
             one-line clip a plain foot receipt wears (B27). */}
         {writeLine ? <span className="surface-footer-receipt-line" role="status" data-wrap="" data-tone={writeLine.danger ? "danger" : undefined}>{writeLine.text}</span> : null}
-        {copyReceipt}
       </>}
       verbs={<span className="surface-footer-verbs-group">
         {writer.conflicted
           ? <Button dense disabled={busy} onClick={() => void reloadNote()}>Reload</Button>
           : writer.failed ? <Button dense onClick={writer.retry}>Retry</Button> : null}
-        <Button ref={readsRef} dense aria-expanded={reads} disabled={busy} onClick={() => void openReads()}>Add a note</Button>
-        <Button dense disabled={!writer.draft.body.trim()} onClick={() => void copy(writer.draft.body)}>Copy</Button>
-        {!open && !completed ? <Button dense aria-label="Ask about this note" disabled={busy} onClick={() => void askFromNote()}>Ask</Button> : null}
-        <Button dense disabled={busy || !taskText} aria-expanded={actionWell === "task"} onClick={() => void openActionWell("task")}>Task</Button>
-        {hasProjects ? <Button dense disabled={busy} aria-expanded={actionWell === "project"} onClick={() => void openActionWell("project")}>Project</Button> : null}
-        <Button ref={sendRef} dense disabled={busy} onClick={() => void openSend()}>Send</Button>
-        {completed
-          ? <Button variant="primary" className="thought-note-primary" disabled={busy} onClick={() => void resume()}>Resume</Button>
-          : <Button variant="primary" className="thought-note-primary" disabled={busy} onClick={() => void finish()}>Finish</Button>}
+        {/* Betterment Q8 (one note): the foot is Ask about this, Project ▾,
+            Send… and Done. Add a note, Copy, Task (a paste of the whole
+            note) and Finish / Resume left the face; Find the tasks joins
+            with Q9. */}
+        <Button dense disabled={busy} onClick={() => void askFromNote()}>Ask about this</Button>
+        {hasProjects ? <Button dense disabled={busy} aria-expanded={actionWell === "project"} onClick={() => void openActionWell("project")}>Project ▾</Button> : null}
+        <Button ref={sendRef} dense disabled={busy} onClick={() => void openSend()}>Send…</Button>
+        <Button variant="primary" className="thought-note-primary" disabled={busy} onClick={onDone}>Done</Button>
       </span>}
     />
     </> : <>
@@ -753,6 +592,11 @@ export function ThoughtWorkspaceWindow({
     closeHandler.current = handler;
     return () => { if (closeHandler.current === handler) closeHandler.current = async () => true; };
   }, []);
+  /* Betterment Q8: Done saves the note (the close guard) and closes the
+     window. It changes no other state. */
+  const done = async () => {
+    if (await closeHandler.current()) onClose();
+  };
   useEffect(() => {
     if (useDesk.getState().editingId === thought.working_note.id) useDesk.getState().closeEditor();
   }, [thought.working_note.id]);
@@ -769,7 +613,7 @@ export function ThoughtWorkspaceWindow({
     id={`pullout:${pulloutId ?? object.id}`}
     glyph="▤"
     label={name}
-    kindWord="Thought"
+    kindWord="Note"
     icon={<img src={spriteUrl("note", object.id)} alt="" width={24} height={24} />}
     title={name}
     className={`desk-pullout thought-workspace-window${sending ? " is-sending" : ""}`}
@@ -784,11 +628,11 @@ export function ThoughtWorkspaceWindow({
     onClose={onClose}
     onBack={sending ? () => setSending(false) : undefined}
   >
-    {controller.opening ? <div className="thought-workspace-opening" aria-busy="true"><span>Opening Thought…</span></div> : controller.error || !controller.projection ? <div className="thought-workspace-opening" role="alert"><span className="surface-token">Could not open. Note unchanged.</span><Button variant="primary" onClick={() => void controller.reload(true)}>Try again</Button></div> : <>
+    {controller.opening ? <div className="thought-workspace-opening" aria-busy="true"><span>Opening note…</span></div> : controller.error || !controller.projection ? <div className="thought-workspace-opening" role="alert"><span className="surface-token">Could not open. Note unchanged.</span><Button variant="primary" onClick={() => void controller.reload(true)}>Try again</Button></div> : <>
       <div className="thought-workspace-preserved" inert={controller.restartDetected} aria-hidden={controller.restartDetected || undefined}>
-        <WorkspaceReady key={thought.id} initialThought={thought} projection={controller.projection} install={controller.install} reload={controller.reload} registerClose={registerClose} sending={sending} setSending={setSending} />
+        <WorkspaceReady key={thought.id} initialThought={thought} projection={controller.projection} install={controller.install} reload={controller.reload} registerClose={registerClose} sending={sending} setSending={setSending} onDone={() => void done()} />
       </div>
-      {controller.restartDetected ? <div className="thought-workspace-opening thought-workspace-restart" role="alert"><span className="surface-token">Hub restarted. Reload to continue.</span><Button variant="primary" onClick={() => void controller.reload(true)}>Reload Thought</Button></div> : null}
+      {controller.restartDetected ? <div className="thought-workspace-opening thought-workspace-restart" role="alert"><span className="surface-token">Hub restarted. Reload to continue.</span><Button variant="primary" onClick={() => void controller.reload(true)}>Reload note</Button></div> : null}
     </>}
   </DeskWindowFrame>;
 }

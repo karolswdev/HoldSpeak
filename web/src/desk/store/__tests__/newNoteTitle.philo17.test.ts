@@ -24,7 +24,7 @@ describe("createPrimitive('note') — no placeholder title", () => {
     useDesk.setState({ refresh: vi.fn(() => Promise.resolve()), editingId: null });
   });
 
-  it("posts an empty title and opens the editor", async () => {
+  it("posts an empty title and opens the note's one window (the sticky, Betterment Q8)", async () => {
     vi.mocked(apiRequest).mockImplementation(() =>
       Promise.resolve({
         ok: true,
@@ -38,7 +38,8 @@ describe("createPrimitive('note') — no placeholder title", () => {
       .mock.calls.filter(([url, init]) => url === "/api/notes" && init?.method === "POST")
       .map(([, init]) => JSON.parse(String(init!.body)));
     expect(posts).toEqual([{ title: "", body_markdown: "" }]);
-    expect(useDesk.getState().editingId).toBe("note_new");
+    expect(useDesk.getState().editingId).toBeNull();
+    expect(useDesk.getState().pullouts.map((p) => p.id)).toContain("note:note_new");
   });
 
   it("an untitled note is still named on the desk (shown, not kept)", () => {

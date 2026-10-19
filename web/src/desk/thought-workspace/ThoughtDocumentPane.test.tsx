@@ -10,7 +10,7 @@ import { ThoughtDocumentPane } from "./ThoughtDocumentPane";
 describe("ThoughtDocumentPane — bands 1 and 2", () => {
   const draft = { title: "Well, there's just a little bit of misunderstanding here", body: "Yeah, I have it that way and what about you?", tags: "team" };
 
-  it("is the title and the note — no rail, no tag row, no Info, no orphan mic", () => {
+  it("is the title of his own and the note — no rail, no tag row, no Info, no orphan mic", () => {
     render(<ThoughtDocumentPane draft={draft} onEdit={vi.fn()} disabled={false} />);
 
     expect(screen.getByRole("button", { name: "Edit Title" })).toHaveTextContent(draft.title);
@@ -25,10 +25,11 @@ describe("ThoughtDocumentPane — bands 1 and 2", () => {
     expect(mic.closest(".thought-note-field")).not.toBeNull();
   });
 
-  it("names why a finished note cannot be edited instead of dying silently", () => {
-    render(<ThoughtDocumentPane draft={draft} onEdit={vi.fn()} disabled lockedReason="FINISHED" />);
-
+  it("Betterment Q8: no heading repeats the first line; the title bar names the note", () => {
+    const body = "Jun is nervous about the cutover weekend.\nMaybe pair him with Mira on call.";
+    const { rerender } = render(<ThoughtDocumentPane draft={{ title: "Jun is nervous about the cutover weekend.", body, tags: "" }} onEdit={vi.fn()} disabled={false} />);
     expect(screen.queryByRole("button", { name: "Edit Title" })).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Title: FINISHED")).toHaveTextContent(draft.title);
+    rerender(<ThoughtDocumentPane draft={{ title: "Thought", body: "", tags: "" }} onEdit={vi.fn()} disabled={false} />);
+    expect(screen.queryByRole("button", { name: "Edit Title" })).not.toBeInTheDocument();
   });
 });

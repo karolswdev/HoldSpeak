@@ -109,6 +109,13 @@ export const createDeskSlice: SliceCreator<DeskSlice> = (set, get) => ({
   // HS-129-08 — an open pullout keeps its editor in-world; otherwise the
   // editor takes a regular window from the invoking object.
   openEditor(id, origin) {
+    // Betterment Q8 (one note): a note has one window, the sticky. Its form
+    // editor left the face, so Edit, Rename and a new note open the sticky.
+    const noteId = id.startsWith("note:") ? id.slice("note:".length) : id;
+    if ((get().items.note ?? []).some((note) => note.id === noteId)) {
+      get().openPullout(`note:${noteId}`, origin ?? undefined);
+      return;
+    }
     set({ editingId: id, editorOrigin: origin ?? null, toolInspector: null });
   },
   closeEditor() {

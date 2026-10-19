@@ -59,7 +59,7 @@ describe("the shared cause: an empty title from the hub", () => {
       note_624495deb1f5: "Check the queue depth",
       note_096c07e82f35: "New note",
       note_f050942fc320: "Ask Priya about the freeze",
-      note_3eba286de7ff: "New thought",
+      note_3eba286de7ff: "New note",
       th_9f8a7b6c5d4e: "New thread",
       kb_12ab34cd56ef: "New knowledge base",
       m_0a1b2c3d4e5f: "Meeting, Oct 3, 21:06",
