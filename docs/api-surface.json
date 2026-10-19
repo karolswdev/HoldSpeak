@@ -4337,6 +4337,32 @@
       ]
     },
     {
+      "path": "/api/notes/{note_id}/outcomes",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.note_outcomes",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/notes/{note_id}/outcomes/find",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.note_outcomes",
+      "consumers": []
+    },
+    {
+      "path": "/api/notes/{note_id}/outcomes/{row_id}/confirm",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.note_outcomes",
+      "consumers": []
+    },
+    {
       "path": "/api/nudges/{step_id}/dismiss",
       "methods": [
         "POST"
