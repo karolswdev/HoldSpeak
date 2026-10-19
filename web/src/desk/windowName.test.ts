@@ -2,13 +2,13 @@ import { describe, expect, it } from "vitest";
 import { kindWord, looksLikeId, shownNames, windowName } from "./windowName";
 
 describe("windowName: the name of the thing in the window", () => {
-  it("thought: the owner's title, else its first words, else New thought", () => {
+  it("thought: the owner's title, else its first words, else New note (Betterment Q8: one kind, one name)", () => {
     expect(windowName({ kind: "thought", title: "Ledger cutover: rollback plan", body: "Other words" }))
       .toBe("Ledger cutover: rollback plan");
     expect(windowName({ kind: "thought", title: "Thought", body: "# Ask Priya whether the ledger is frozen\nmore" }))
       .toBe("Ask Priya whether the ledger is frozen");
-    expect(windowName({ kind: "thought", title: "", body: "" })).toBe("New thought");
-    expect(windowName({ kind: "thought", title: "Thought", body: "" })).toBe("New thought");
+    expect(windowName({ kind: "thought", title: "", body: "" })).toBe("New note");
+    expect(windowName({ kind: "thought", title: "Thought", body: "" })).toBe("New note");
   });
 
   it("thought: the title follows the draft while the kept title is only the kept first words", () => {

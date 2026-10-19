@@ -416,9 +416,15 @@ describe("store split: desk interaction slice", () => {
   });
 
   it("openEditor keeps an existing object's pullout as its in-world host", () => {
-    useDesk.setState({ pullouts: [{ id: "n1", origin: null }] });
+    useDesk.setState({ pullouts: [{ id: "wb1", origin: null }] });
+    useDesk.getState().openEditor("wb1");
+    expect(useDesk.getState().editingId).toBe("wb1");
+    expect(useDesk.getState().pullouts).toEqual([{ id: "wb1", origin: null }]);
+  });
+
+  it("Betterment Q8: openEditor on a note opens its one window (the sticky), never the form editor", () => {
     useDesk.getState().openEditor("n1");
-    expect(useDesk.getState().editingId).toBe("n1");
-    expect(useDesk.getState().pullouts).toEqual([{ id: "n1", origin: null }]);
+    expect(useDesk.getState().editingId).toBeNull();
+    expect(useDesk.getState().pullouts.map((p) => p.id)).toEqual(["note:n1"]);
   });
 });

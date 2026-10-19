@@ -558,10 +558,10 @@ describe("PHILO-17 objverbs — the Chair has the desk's one selection", () => {
     expect(keyContext()).toEqual({ selectedRef: "note:n-2" });
     expect(rename.ghost(keyContext())).toBeNull();
     expect(verbById("object.open")!.ghost(keyContext())).toBeNull();
-    // F2 runs Rename: the note's editor opens.
+    // F2 runs Rename: the note's one window (the sticky) opens (Betterment Q8).
     const ran = dispatchKey(new KeyboardEvent("keydown", { key: "F2", bubbles: true, cancelable: true }));
     expect(ran?.id).toBe("object.rename");
-    expect(useDesk.getState().editingId).toBe("n-2");
+    expect(useDesk.getState().pullouts.map((p) => p.id)).toContain("note:n-2");
   });
 
   it("the rubber band and a press on empty glass write the store too", async () => {
@@ -583,7 +583,7 @@ describe("PHILO-17 objverbs — the Chair has the desk's one selection", () => {
     const item = within(menu).getByRole("menuitem", { name: /^Rename/ });
     expect(item.getAttribute("aria-disabled")).not.toBe("true");
     fireEvent.click(item);
-    expect(useDesk.getState().editingId).toBe("n-2");
+    expect(useDesk.getState().pullouts.map((p) => p.id)).toContain("note:n-2");
   });
 
   it("a drawer with no desk object opens no menu", async () => {

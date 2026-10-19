@@ -530,6 +530,12 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                     print("PASS:", name, "menu content loaded")
                     page.keyboard.press("Escape")
 
+            # The actual New Note command; no pre-seeded note can satisfy this
+            # proof. Betterment Q8: the Capture door below opens the same
+            # sticky as New Note, and New Note uses an empty note again, so
+            # the count starts before both.
+            before_notes = {note["id"] for note in _api(page, "GET", "/api/notes", token=TOKEN)["notes"]}
+
             # Job 3: the named door must lead to a place that keeps a thought.
             _desk(page, base, capture=True)
             thought = page.get_by_test_id("arrival-develop-thought")
@@ -544,11 +550,9 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                 assert note_editor.get_attribute("contenteditable") == "true"
             check("thought-door",
                   note_editor.count() == 1 and note_editor.is_visible(),
-                  "Write a thought opens a note authoring surface")
+                  "New note opens a note authoring surface")
             _desk(page, base)
 
-            # The actual New Note command; no pre-seeded note can satisfy this proof.
-            before_notes = {note["id"] for note in _api(page, "GET", "/api/notes", token=TOKEN)["notes"]}
             desk_menu = page.locator(".desk-verbbar").get_by_role("button", name="Desk", exact=True, include_hidden=True)
             if width <= 720:
                 # PHILO-15 11 (B21): New Note left the phone Go (New ▸ is four
@@ -571,23 +575,26 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                 assert "menu-Desk" in failures
                 print("RECOVERY: use New Note keyboard command after the recorded menu failure.")
                 page.keyboard.press("Meta+n")
-            editor = page.locator(".desk-editor-window")
+            # Betterment Q8 (one note): New Note opens the sticky, never the
+            # form editor. Its first line names it (thoughtTitle.ts).
+            editor = page.locator(".desk-window.thought-workspace-window")
             _loaded(editor.get_by_role("button", name="Done", exact=True))
-            # This new note has no earlier autosave. The editor's own Saved
+            # This new note has no earlier autosave. The window's own Saved
             # receipt must appear for this edit, not elsewhere on the desk.
             receipt = editor.get_by_role("status").filter(has_text=re.compile(r"^Saved "))
             assert receipt.count() == 0, "New note already has a Saved receipt before typing"
             editor_id = editor.get_attribute("id")
-            assert editor_id and editor_id.startswith("editor:note:")
-            with page.expect_response(lambda response: "/api/notes/" in response.url
-                                      and response.request.method == "PUT"
-                                      and response.request.post_data_json.get("body_markdown") == NOTE_BODY) as persisted:
-                editor.get_by_role("textbox", name="Title", exact=True).fill(NOTE_TITLE)
-                editor.locator(".cm-content").fill(NOTE_BODY)
+            assert editor_id and editor_id.startswith("pullout:note:")
+            typed = f"{NOTE_TITLE}\n{NOTE_BODY}"
+            with page.expect_response(lambda response: "/api/thoughts/" in response.url
+                                      and response.url.endswith("/working")
+                                      and response.request.method == "PATCH"
+                                      and (response.request.post_data_json or {}).get("body_markdown") == typed) as persisted:
+                editor.locator(".thought-note-body .cm-content").fill(typed)
             assert persisted.value.ok, persisted.value.text()
             notes = _api(page, "GET", "/api/notes", token=TOKEN)["notes"]
             created = [n for n in notes if n["id"] not in before_notes and n["title"] == NOTE_TITLE]
-            assert len(created) == 1 and created[0]["body_markdown"] == NOTE_BODY, {"before": before_notes, "notes": notes}
+            assert len(created) == 1 and created[0]["body_markdown"] == typed, {"before": before_notes, "notes": notes}
             note_id = created[0]["id"]
             # The editor autosaves; Done flushes and closes it. Require the
             # fresh keep on glass before the close removes its status node.
@@ -600,7 +607,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             editor.get_by_role("button", name="Done", exact=True).click()
             editor.wait_for(state="detached")
             saved = _api(page, "GET", "/api/notes/" + note_id, token=TOKEN)["note"]
-            assert saved["title"] == NOTE_TITLE and saved["body_markdown"] == NOTE_BODY
+            assert saved["title"] == NOTE_TITLE and saved["body_markdown"] == typed
 
             # Job 2: actual file import, transcript, planned host, admitted run.
             _desk(page, base)

@@ -1,7 +1,7 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { useEffect, useRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { thoughtForNote, type Thought } from "../thoughts";
+import { openNoteThought, type Thought } from "../thoughts";
 import { useDesk } from "../store";
 import { Pullout } from "./Pullout";
 import type { RegisterCloseGuard } from "../pullouts/types";
@@ -21,10 +21,9 @@ vi.mock("../pullouts", () => ({ PULLOUT_CONTENT: { note: () => null, workflow: (
   useEffect(() => editing ? registerClose?.(editorGuard) : undefined, [editing, registerClose]);
   return <div>Workflow editor</div>;
 } } }));
-vi.mock("../pullouts/NotePullout", () => ({ NotePullout: () => <div>Ordinary Note editor</div> }));
 vi.mock("../thought-workspace/ThoughtWorkspaceWindow", () => ({ ThoughtWorkspaceWindow: ({ thought }: { thought: Thought }) => <section aria-label="Thought Workbench">{thought.working_note.title}</section> }));
 vi.mock("../sprites", () => ({ spriteUrl: () => "note.png", refAgent: () => undefined }));
-vi.mock("../thoughts", async (importOriginal) => ({ ...(await importOriginal<typeof import("../thoughts")>()), thoughtForNote: vi.fn() }));
+vi.mock("../thoughts", async (importOriginal) => ({ ...(await importOriginal<typeof import("../thoughts")>()), openNoteThought: vi.fn() }));
 
 const thought: Thought = {
   id: "thought-1", source: { kind: "typed" }, raw_captured_at: "now", state: "working",
@@ -35,28 +34,25 @@ const object = { kind: "note" as const, id: "note-1", title: "Owned Note", ref: 
 
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
-describe("Pullout Thought ownership routing", () => {
-  it("routes a Thought-owned Note to exactly one dedicated Workbench", async () => {
+describe("Pullout: every note opens in the one note window (Betterment Q8)", () => {
+  it("routes a note to exactly one sticky, with the thought the hub gives", async () => {
     useDesk.setState({ profiles: [], closePullout: vi.fn() });
-    vi.mocked(thoughtForNote).mockResolvedValue({ ownership: "thought", thought });
+    vi.mocked(openNoteThought).mockResolvedValue(thought);
     render(<Pullout o={object} />);
 
     expect(await screen.findByRole("region", { name: "Thought Workbench" })).toHaveTextContent("Owned Note");
     expect(screen.getAllByRole("region", { name: "Thought Workbench" })).toHaveLength(1);
-    expect(screen.queryByText("Ordinary Note editor")).not.toBeInTheDocument();
+    expect(openNoteThought).toHaveBeenCalledWith("note-1");
   });
 
-  it("leaves an ordinary Note in the ordinary editor", async () => {
+  it("says so in words, with Try again, when the hub does not answer; the note is unchanged", async () => {
     useDesk.setState({ profiles: [], closePullout: vi.fn() });
-    vi.mocked(thoughtForNote).mockResolvedValue({
-      ownership: "ordinary",
-      note: { id: "note-1", title: "Owned Note", body_markdown: "Body", tags: [] },
-      source_precondition: { content_sha256: "sha-note-1", last_modified: "now" },
-    });
+    vi.mocked(openNoteThought).mockRejectedValueOnce(new Error("offline")).mockResolvedValueOnce(thought);
     render(<Pullout o={object} />);
 
-    expect(await screen.findByText("Ordinary Note editor")).toBeInTheDocument();
-    expect(screen.queryByRole("region", { name: "Thought Workbench" })).not.toBeInTheDocument();
+    expect(await screen.findByText("Could not open this note on this hub. The note is unchanged.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(await screen.findByRole("region", { name: "Thought Workbench" })).toHaveTextContent("Owned Note");
   });
 });
 

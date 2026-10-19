@@ -1,0 +1,1011 @@
+/* PARKED (Betterment Q8 "One note", 2026-10-18): the sticky's tests as they
+ * were before Q8. Q8 took Add a note (the Reads well), Copy, Task, Finish /
+ * Resume and the thought engine band (Develop) off the face; the live file
+ * (../ThoughtWorkspaceWindow.test.tsx) keeps every test that still holds.
+ * Not compiled or run (tsconfig and vitest exclude _parked). */
+// @ts-nocheck
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ApiError } from "../../lib/api";
+import { useDesk } from "../store";
+import { openSurfaceOr } from "../shell";
+import {
+  actOnReview,
+  completeThought,
+  refineThought,
+  saveThoughtWorkingInWorkspace,
+  stopRefinement,
+  thoughtWorkbench,
+  type Thought,
+  type ThoughtWorkspaceProjection,
+} from "../thoughts";
+import { ThoughtWorkspaceWindow } from "./ThoughtWorkspaceWindow";
+import { latchAskSelection, takeAskSelection } from "../ask";
+
+/* HS-201-12 — doctrine (a) for the tests this file lost.
+ *
+ * The settled design of story 12 gives band 3 ONE verb ("Add to note"), so
+ * the chained turn ("Add & ask next", `answer_and_continue`) and its
+ * admission-race recovery left THIS window; the service and its idempotent
+ * composite are untouched (`desk/thoughts.ts:answerAndContinue`) and the
+ * Note pullout still drives them. The 393 tab nav ("Note" / "Interview 1")
+ * left with the two-pane composition — at 393 the same four bands stack, so
+ * the mobile proxy tests describe a face that no longer exists. Nothing was
+ * papered over: every test below runs against the real reducer.
+ */
+
+vi.mock("../components/DeskWindow", async () => {
+  const { useState } = await import("react");
+  const { FootSlotContext } = await import("../surface/foot");
+  return {
+    DeskWindowFrame: ({ children, onClose, beforeClose, onBack, label, minH, className }: { children: React.ReactNode; onClose: () => void; beforeClose?: () => Promise<boolean>; onBack?: () => void; label?: string; minH?: number; className?: string }) => {
+      const [foot, setFoot] = useState<HTMLElement | null>(null);
+      return <section aria-label="Thought" className={className} data-window-name={label} data-frame-min-height={minH} data-frame-close-guard={Boolean(beforeClose)}>
+        <button onClick={() => { void (async () => { if (!beforeClose || await beforeClose()) onClose(); })(); }}>Close window</button>
+        {onBack ? <button onClick={onBack}>Frame Back</button> : null}
+        <FootSlotContext.Provider value={foot}>{children}</FootSlotContext.Provider>
+        <footer ref={setFoot} className="surface-footer" data-testid="frame-foot" />
+      </section>;
+    },
+  };
+});
+vi.mock("./ThoughtDocumentPane", () => ({
+  ThoughtDocumentPane: ({ draft, onEdit, onSelectionChange, lockedReason }: { draft: { title: string; body: string }; onEdit: (patch: { body: string }) => void; onSelectionChange?: (selection: { from: number; to: number; text: string }) => void; lockedReason?: string }) => <section aria-label="Note"><span data-testid="note-title">{draft.title}</span>{lockedReason ? <span data-testid="note-locked">{lockedReason}</span> : null}<textarea aria-label="Note body" value={draft.body} onChange={(event) => { onEdit({ body: event.target.value }); onSelectionChange?.({ from: 0, to: 0, text: "" }); }} /><button type="button" data-testid="select-second-line" onClick={() => { const text = draft.body.split(/\r?\n/)[1] || draft.body.split(/\r?\n/)[0] || ""; const from = draft.body.indexOf(text); onSelectionChange?.({ from, to: from + text.length, text }); }}>Select second line</button></section>,
+}));
+vi.mock("./ThoughtReadsWell", () => ({
+  ThoughtReadsWell: ({ thought, onClose }: { thought: Thought; onClose: () => void }) => <div role="region" aria-label="Add notes">{thought.working_note.body_markdown}<button onClick={onClose}>Close reads</button></div>,
+}));
+vi.mock("../documentSendsLazy", () => ({
+  NoteSendWells: ({ id, title, version }: { id: string; title?: string; version?: number }) => <div data-testid="send-well" data-doc={`note:${id}`} data-title={title} data-version={String(version)} />,
+}));
+vi.mock("../sprites", () => ({ spriteUrl: () => "note.png" }));
+vi.mock("../shell", () => ({ openSurfaceOr: vi.fn() }));
+vi.mock("../hooks/useEngine", () => engineMock);
+vi.mock("../thoughts", async (importOriginal) => {
+  const original = await importOriginal<typeof import("../thoughts")>();
+  return {
+    ...original,
+    thoughtWorkbench: vi.fn(),
+    saveThoughtWorking: vi.fn(),
+    saveThoughtWorkingInWorkspace: vi.fn(),
+    refineThought: vi.fn(),
+    actOnReview: vi.fn(),
+    completeThought: vi.fn(),
+    resumeThought: vi.fn(),
+    stopRefinement: vi.fn(),
+    detachThoughtContext: vi.fn(),
+    refreshThoughtContext: vi.fn(),
+  };
+});
+
+const context = { ref: "knowledge:everyday", kind: "knowledge" as const, title: "Everyday context", leaf_count: 5, state: "current" as const, leaves: [] };
+
+const thought: Thought = {
+  id: "thought-1",
+  source: { kind: "voice" },
+  raw_captured_at: "2026-08-19T00:00:00Z",
+  state: "working",
+  aggregate_revision: 3,
+  lifecycle_revision: 1,
+  working_revision: 2,
+  attachment_revision: 1,
+  attachments: [context],
+  working_note: { id: "note-1", title: "Well, there's just a little bit of misunderstanding here", body_markdown: "Yeah, I have it that way and what about you?", tags: [] },
+  filing_status: "filed",
+};
+
+const cursor = { hub_id: "hub-1", thought_id: thought.id, aggregate_revision: 3, continuity_revision: 4 };
+const originalMatchMedia = window.matchMedia;
+const engineMock = vi.hoisted(() => ({ useEngine: vi.fn(), refreshEngine: vi.fn() }));
+
+function projection(overrides: Partial<ThoughtWorkspaceProjection> = {}): ThoughtWorkspaceProjection {
+  return {
+    schema_version: 1,
+    process_scope: { kind: "hub_local", hub_id: "hub-1", state: "available" },
+    workspace_cursor: cursor,
+    thought,
+    workspace_state: "idle",
+    actions: { primary: { kind: "refine" }, state: [{ kind: "refine" }], ambient: ["update_working", "attach_context", "complete"] },
+    review: null,
+    context_status: { summary: "Everyday context", state: "current", repair_ref: null },
+    inference: { availability: "ready", continuation_admission: "ready", intended_placement: { target_id: "this_machine", target_name: "This device", target_kind: "this_device", boundary: "same_device", readiness: "ready" } },
+    terminal_status: null,
+    ...overrides,
+  };
+}
+
+function questionProjection(question: string, id = "review-1"): ThoughtWorkspaceProjection {
+  return projection({
+    workspace_state: "question",
+    actions: { primary: { kind: "answer_review", review_result_id: id }, state: [{ kind: "answer_review", review_result_id: id }], ambient: ["update_working", "attach_context", "complete"] },
+    review: { id, kind: "question", question, frozen_aggregate_revision: 3, frozen_working_revision: 2, frozen_attachment_revision: 1 },
+  });
+}
+
+const object = { id: "note-1", kind: "note", title: "Thought", ref: { kind: "note", bodyMarkdown: thought.working_note.body_markdown } } as never;
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((done) => { resolve = done; });
+  return { promise, resolve };
+}
+
+beforeEach(() => {
+  // clearAllMocks keeps unused once responses. Each projection scenario
+  // must start with its own response queue, even after an async reread.
+  vi.mocked(thoughtWorkbench).mockReset();
+  sessionStorage.clear();
+  latchAskSelection(null);
+  useDesk.setState({ editingId: null, closeEditor: vi.fn(), askOpen: false, selectedIds: [] });
+  engineMock.useEngine.mockReturnValue({ state: "unread", model: "", place: "" });
+});
+afterEach(() => {
+  latchAskSelection(null);
+  cleanup();
+  if (vi.isFakeTimers()) {
+    vi.clearAllTimers();
+    vi.useRealTimers();
+  }
+  vi.clearAllMocks();
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+  Object.defineProperty(window, "matchMedia", { configurable: true, writable: true, value: originalMatchMedia });
+});
+
+describe("ThoughtWorkspaceWindow — the four bands", () => {
+  it.each(["getItem", "setItem"] as const)("keeps the active answer retry identity when storage %s refuses", async (method) => {
+    const answered = { ...thought, aggregate_revision: 4, working_revision: 3, working_note: { ...thought.working_note, body_markdown: "Mina owns launch." } };
+    const accepted = projection({ thought: answered, workspace_cursor: { ...cursor, aggregate_revision: 4, continuity_revision: 5 } });
+    vi.mocked(thoughtWorkbench).mockResolvedValue(questionProjection("Who owns launch?", `active-storage-${method}`));
+    vi.mocked(actOnReview).mockRejectedValueOnce(new ApiError(503, "Connection lost", {})).mockResolvedValueOnce({ thought: answered, workbench: accepted });
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()}/>);
+    const answer = await screen.findByRole("textbox", { name: "Your answer" });
+    fireEvent.change(answer, { target: { value: "Mina owns launch." } });
+    vi.spyOn(Storage.prototype, method).mockImplementation(() => { throw new Error("Storage denied"); });
+    fireEvent.click(screen.getByRole("button", { name: "Add to note" }));
+    await waitFor(() => expect(actOnReview).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Add to note" })).toBeEnabled());
+    expect(answer).toHaveValue("Mina owns launch.");
+    const id = vi.mocked(actOnReview).mock.calls[0][0].request_id;
+    fireEvent.click(screen.getByRole("button", { name: "Add to note" }));
+    await waitFor(() => expect(screen.getByRole("textbox", { name: "Note body" })).toHaveValue("Mina owns launch."));
+    expect(vi.mocked(actOnReview).mock.calls[1][0].request_id).toBe(id);
+  });
+
+  it("installs the accepted active answer when request cleanup refuses", async () => {
+    const answered = { ...thought, aggregate_revision: 4, working_revision: 3, working_note: { ...thought.working_note, body_markdown: "Accepted active answer" } };
+    vi.mocked(thoughtWorkbench).mockResolvedValue(questionProjection("Who owns launch?", "active-storage-remove"));
+    vi.mocked(actOnReview).mockResolvedValue({ thought: answered, workbench: projection({ thought: answered, workspace_cursor: { ...cursor, aggregate_revision: 4, continuity_revision: 5 } }) });
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()}/>);
+    fireEvent.change(await screen.findByRole("textbox", { name: "Your answer" }), { target: { value: "Mina" } });
+    vi.spyOn(Storage.prototype, "removeItem").mockImplementation(() => { throw new Error("Storage denied"); });
+    fireEvent.click(screen.getByRole("button", { name: "Add to note" }));
+    await waitFor(() => expect(screen.getByRole("textbox", { name: "Note body" })).toHaveValue("Accepted active answer"));
+    expect(screen.queryByText(/Storage denied/)).toBeNull();
+    expect(screen.queryByRole("textbox", { name: "Your answer" })).toBeNull();
+  });
+
+  it("keeps an idle note plain, says the context once, and holds one filled primary", async () => {
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    const ask = await screen.findByRole("button", { name: "Ask about this note" });
+    expect(screen.queryByRole("region", { name: "Ask about this note" })).not.toBeInTheDocument();
+    expect(screen.queryByText("ONE QUESTION")).not.toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "Your answer" })).not.toBeInTheDocument();
+    expect(ask).not.toHaveClass("btn--primary");
+
+    // The context fact is stated ONCE, in the Reads line of the foot.
+    expect(screen.getAllByText(/Everyday context/)).toHaveLength(1);
+    expect(screen.getByText("Reads: Everyday context")).toBeInTheDocument();
+    expect(screen.queryByText(/^Attached/)).not.toBeInTheDocument();
+
+    // One filled primary, and it is Finish. The foot has no filing line.
+    const primaries = document.querySelectorAll(".btn--primary");
+    expect(primaries).toHaveLength(1);
+    expect(primaries[0]).toHaveTextContent("Finish");
+    expect(screen.queryByText(/IN A DRAWER|NOT IN A DRAWER|FINISHED/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Filed|Saved/)).not.toBeInTheDocument();
+
+    // The window that was two features is one: no tabs, no rail, no rack.
+    expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Interview/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Interview" })).not.toBeInTheDocument();
+  });
+
+  it("keeps an idle ready note plain and puts Ask in the foot", async () => {
+    engineMock.useEngine.mockReturnValue({ state: "set", model: "Thought Qwen", place: "LAN" });
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    expect(await screen.findByRole("button", { name: "Ask about this note" })).toBeEnabled();
+    expect(screen.queryByRole("region", { name: "Ask about this note" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Ask about this note" }));
+    await waitFor(() => expect(useDesk.getState().askOpen).toBe(true));
+    // Betterment Q5: Ask about this puts the note in About.
+    expect(useDesk.getState().askThread?.about?.map((chip) => chip.ref)).toEqual(["note:note-1"]);
+  });
+
+  it("carries an exact non-first-line selection into Task and posts the note source", async () => {
+    const body = "First line\nSend the exact second line";
+    const selected = { ...thought, working_note: { ...thought.working_note, body_markdown: "First line" } };
+    const saved = { ...selected, aggregate_revision: 4, working_revision: 3, working_note: { ...selected.working_note, body_markdown: body } };
+    const savedCursor = { ...cursor, aggregate_revision: 4, continuity_revision: 5 };
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection({ thought: selected }));
+    vi.mocked(saveThoughtWorkingInWorkspace).mockImplementation(async (current, patch) => ({ thought: { ...current, ...saved, working_note: { ...current.working_note, ...saved.working_note, body_markdown: patch.body_markdown ?? current.working_note.body_markdown } }, workbench: projection({ thought: saved, workspace_cursor: savedCursor }) }));
+    const requests: Array<{ url: string; init?: RequestInit }> = [];
+    vi.stubGlobal("fetch", vi.fn((url: string, init?: RequestInit) => {
+      requests.push({ url, init });
+      const payload = url.endsWith("/api/people/relationships") ? { relationships: [] } : { item: { id: "task-1" } };
+      return Promise.resolve({ ok: true, status: 200, headers: { get: () => "application/json" }, json: () => Promise.resolve(payload), text: () => Promise.resolve(JSON.stringify(payload)) } as unknown as Response);
+    }));
+    render(<ThoughtWorkspaceWindow object={object} thought={selected} onClose={vi.fn()} />);
+
+    const noteBody = await screen.findByRole("textbox", { name: "Note body" });
+    fireEvent.change(noteBody, { target: { value: body } });
+    fireEvent.click(screen.getByTestId("select-second-line"));
+    fireEvent.click(screen.getByRole("button", { name: "Task" }));
+
+    await screen.findByTestId("thought-task-well");
+    expect(screen.getByRole("textbox", { name: "Task" })).toHaveValue("Send the exact second line");
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    await waitFor(() => expect(requests.some((request) => request.url.endsWith("/api/door/items"))).toBe(true));
+    const addRequest = requests.find((request) => request.url.endsWith("/api/door/items"));
+    expect(addRequest?.init?.method).toBe("POST");
+    expect(JSON.parse(String(addRequest?.init?.body))).toMatchObject({
+      task: "Send the exact second line",
+      source_type: "thought",
+      source_ref: "note:note-1",
+    });
+    await waitFor(() => expect(screen.queryByTestId("thought-task-well")).toBeNull());
+  });
+
+  it("opens neither action well when the authoritative Note save fails", async () => {
+    const body = "First line\nA selected passage";
+    const selected = { ...thought, working_note: { ...thought.working_note, body_markdown: "First line" } };
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection({ thought: selected }));
+    vi.mocked(saveThoughtWorkingInWorkspace).mockRejectedValue(new Error("offline"));
+    render(<ThoughtWorkspaceWindow object={object} thought={selected} onClose={vi.fn()} />);
+
+    const noteBody = await screen.findByRole("textbox", { name: "Note body" });
+    fireEvent.change(noteBody, { target: { value: body } });
+    fireEvent.click(screen.getByTestId("select-second-line"));
+    fireEvent.click(screen.getByRole("button", { name: "Task" }));
+    await waitFor(() => expect(saveThoughtWorkingInWorkspace).toHaveBeenCalledTimes(1));
+    expect(screen.queryByTestId("thought-task-well")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Ask about this note" }));
+    await waitFor(() => expect(useDesk.getState().askOpen).toBe(false));
+    expect(saveThoughtWorkingInWorkspace).toHaveBeenCalledTimes(1);
+    expect(useDesk.getState().askOpen).toBe(false);
+    expect(screen.queryByTestId("thought-task-well")).toBeNull();
+  });
+
+  it("hands Ask the canonical Note and the selected passage after a successful save", async () => {
+    const body = "First line\nAsk about this exact passage";
+    const selected = { ...thought, working_note: { ...thought.working_note, body_markdown: "First line" } };
+    const saved = { ...selected, aggregate_revision: 4, working_revision: 3, working_note: { ...selected.working_note, body_markdown: body } };
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection({ thought: selected }));
+    vi.mocked(saveThoughtWorkingInWorkspace).mockImplementation(async (current, patch) => ({ thought: { ...current, ...saved, working_note: { ...current.working_note, ...saved.working_note, body_markdown: patch.body_markdown ?? current.working_note.body_markdown } }, workbench: projection({ thought: saved }) }));
+    render(<ThoughtWorkspaceWindow object={object} thought={selected} onClose={vi.fn()} />);
+
+    const noteBody = await screen.findByRole("textbox", { name: "Note body" });
+    fireEvent.change(noteBody, { target: { value: body } });
+    fireEvent.click(screen.getByTestId("select-second-line"));
+    fireEvent.click(screen.getByRole("button", { name: "Ask about this note" }));
+
+    await waitFor(() => expect(useDesk.getState().askOpen).toBe(true));
+    // Betterment Q5: Ask about this puts the note in About.
+    expect(useDesk.getState().askThread?.about?.map((chip) => chip.ref)).toEqual(["note:note-1"]);
+    expect(takeAskSelection()).toEqual({ noteRef: "note:note-1", text: "Ask about this exact passage", source: { id: "note-1", kind: "note", ref: "note:note-1", title: saved.working_note.title || "Note" } });
+  });
+
+  it("hands Ask the saved Note source when no passage is selected", async () => {
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Ask about this note" }));
+    await waitFor(() => expect(useDesk.getState().askOpen).toBe(true));
+    expect(takeAskSelection()).toEqual({
+      noteRef: `note:${thought.working_note.id}`,
+      text: "",
+      source: { id: thought.working_note.id, kind: "note", ref: `note:${thought.working_note.id}`, title: thought.working_note.title || "Note" },
+    });
+  });
+
+  it("never renders a heading over an empty question", async () => {
+    vi.mocked(thoughtWorkbench).mockResolvedValue(questionProjection("   "));
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    await screen.findByRole("region", { name: "Note" });
+    // The defect the owner shot: a kicker over an h2 that renders nothing.
+    const headings = [...document.querySelectorAll("h1, h2, h3, h4, h5, h6")];
+    expect(headings.filter((node) => !node.textContent?.trim())).toHaveLength(0);
+    expect(headings).toHaveLength(0);
+    expect(screen.queryByRole("region", { name: "Ask about this note" })).not.toBeInTheDocument();
+    const texts = document.querySelectorAll(".thought-note-ask-text");
+    expect(texts).toHaveLength(0);
+    for (const node of document.querySelectorAll(".thought-note-ask *")) {
+      expect(node.textContent?.trim().length === 0 && node.children.length === 0 && node.tagName !== "IMG").toBe(false);
+    }
+  });
+
+  it("names the thought engine before the ask and shows the question with one verb", async () => {
+    vi.mocked(thoughtWorkbench).mockResolvedValue(questionProjection("Who is misunderstanding what?"));
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    const band = await screen.findByRole("region", { name: "Ask about this note" });
+    expect(band).toHaveTextContent("Who is misunderstanding what?");
+    expect(band.querySelector(".gadget-chip-egress")).toBeNull();
+    expect(engineMock.useEngine).toHaveBeenCalledWith("thought.interview");
+    expect(screen.getByRole("textbox", { name: "Your answer" })).toBeVisible();
+    expect(screen.getAllByRole("button", { name: "Add to note" })).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: /ask next/i })).not.toBeInTheDocument();
+    expect(document.querySelectorAll(".btn--primary")).toHaveLength(1);
+  });
+
+  it("uses the thought assignment when Ask has a different engine", async () => {
+    engineMock.useEngine.mockImplementation((capability: string) => capability === "thought.interview"
+      ? { state: "set", model: "Thought Qwen", place: "LAN" }
+      : { state: "set", model: "Ask Cloud", place: "CLOUD" });
+    vi.mocked(thoughtWorkbench).mockResolvedValue(questionProjection("Which engine should continue this note?"));
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    const band = await screen.findByRole("region", { name: "Ask about this note" });
+    expect(band).toHaveTextContent("Thought Qwen · LAN");
+    expect(band).not.toHaveTextContent("Ask Cloud");
+    expect(engineMock.useEngine).toHaveBeenCalledWith("thought.interview");
+  });
+
+  it("keeps the answer and reuses one request id when Add to note fails", async () => {
+    vi.mocked(thoughtWorkbench).mockResolvedValue(questionProjection("Who owns launch?"));
+    vi.mocked(actOnReview).mockRejectedValue(new ApiError(503, "Connection lost", {}));
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    const answer = await screen.findByRole("textbox", { name: "Your answer" });
+    fireEvent.change(answer, { target: { value: "Mina owns it." } });
+    fireEvent.click(screen.getByRole("button", { name: "Add to note" }));
+    await waitFor(() => expect(actOnReview).toHaveBeenCalledTimes(1));
+    expect(answer).toHaveValue("Mina owns it.");
+    await waitFor(() => expect(answer).toHaveFocus());
+
+    fireEvent.click(screen.getByRole("button", { name: "Add to note" }));
+    await waitFor(() => expect(actOnReview).toHaveBeenCalledTimes(2));
+    const [first, second] = vi.mocked(actOnReview).mock.calls;
+    expect(second[0].request_id).toBe(first[0].request_id);
+    expect(second[0].answer).toBe("Mina owns it.");
+  });
+
+  it("adds a typed answer, then keeps against the cursor that answer advanced", async () => {
+    // Astra finding 2: completing against the pre-answer cursor is the 409
+    // `workspace_cursor_conflict` her isolated-hub probe recorded.
+    const answered = { ...thought, aggregate_revision: 4, working_revision: 3 };
+    const answeredCursor = { ...cursor, aggregate_revision: 4, continuity_revision: 6 };
+    const afterAnswer = projection({ thought: answered, workspace_cursor: answeredCursor });
+    vi.mocked(thoughtWorkbench)
+      .mockResolvedValueOnce(questionProjection("Who owns launch?"))
+      .mockResolvedValue(afterAnswer);
+    vi.mocked(actOnReview).mockResolvedValue({ thought: answered, workbench: afterAnswer });
+    vi.mocked(completeThought).mockResolvedValue({
+      thought: { ...answered, state: "completed" },
+      receipt: { id: "receipt-1", kind: "thought_completed", thought_id: thought.id, note_ref: "note:note-1", aggregate_revision: 5, lifecycle_revision: 2, created_at: "2026-09-20T09:50:00Z" },
+      workbench: projection({ thought: { ...answered, state: "completed" }, workspace_state: "completed" }),
+    });
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    fireEvent.change(await screen.findByRole("textbox", { name: "Your answer" }), { target: { value: "Mina owns it." } });
+    fireEvent.click(screen.getByRole("button", { name: "Finish" }));
+
+    await waitFor(() => expect(completeThought).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(actOnReview).mock.calls[0][0].answer).toBe("Mina owns it.");
+    expect(vi.mocked(actOnReview).mock.invocationCallOrder[0])
+      .toBeLessThan(vi.mocked(completeThought).mock.invocationCallOrder[0]);
+    const completion = vi.mocked(completeThought).mock.calls[0][0];
+    expect(completion.workspace_cursor).toEqual(answeredCursor);
+    expect(completion.thought.aggregate_revision).toBe(4);
+    expect(completion.thought.working_revision).toBe(3);
+  });
+
+  it("finishes a note edit against the cursor returned by that edit", async () => {
+    const saved = { ...thought, aggregate_revision: 4, working_revision: 3, working_note: { ...thought.working_note, body_markdown: "The latest words" } };
+    const savedCursor = { ...cursor, aggregate_revision: 4, continuity_revision: 7 };
+    const savedProjection = projection({ thought: saved, workspace_cursor: savedCursor });
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
+    vi.mocked(saveThoughtWorkingInWorkspace).mockResolvedValue({ thought: saved, workbench: savedProjection });
+    vi.mocked(completeThought).mockResolvedValue({
+      thought: { ...saved, state: "completed" },
+      receipt: { id: "receipt-saved", kind: "thought_completed", thought_id: thought.id, note_ref: "note:note-1", aggregate_revision: 5, lifecycle_revision: 2, created_at: "2026-09-20T09:50:00Z" },
+      workbench: savedProjection,
+    });
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    fireEvent.change(await screen.findByRole("textbox", { name: "Note body" }), { target: { value: "The latest words" } });
+    fireEvent.click(screen.getByRole("button", { name: "Finish" }));
+
+    await waitFor(() => expect(completeThought).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(completeThought).mock.calls[0][0].workspace_cursor).toEqual(savedCursor);
+  });
+
+  it("appends a returned draft to the note instead of replacing it", async () => {
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection({
+      workspace_state: "synthesis",
+      actions: { primary: { kind: "accept_review", review_result_id: "review-draft" }, state: [{ kind: "accept_review", review_result_id: "review-draft" }], ambient: ["complete"] },
+      review: { id: "review-draft", kind: "synthesis", title: "A tidier title", body_markdown: "Mina owns the launch date.", frozen_aggregate_revision: 3, frozen_working_revision: 2, frozen_attachment_revision: 1 },
+    }));
+    vi.mocked(saveThoughtWorkingInWorkspace).mockImplementation(async (current, patch) => ({
+      thought: { ...current, aggregate_revision: current.aggregate_revision + 1, working_revision: current.working_revision + 1, working_note: { ...current.working_note, title: patch.title ?? current.working_note.title, body_markdown: patch.body_markdown ?? current.working_note.body_markdown } },
+      workbench: projection(),
+    }));
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    const band = await screen.findByRole("region", { name: "Ask about this note" });
+    expect(band).toHaveTextContent("A draft from your note");
+    expect(band).toHaveTextContent("Mina owns the launch date.");
+    expect(screen.queryByRole("textbox", { name: "Your answer" })).not.toBeInTheDocument();
+    expect(document.querySelectorAll("h1, h2, h3, h4")).toHaveLength(0);
+    const add = screen.getAllByRole("button", { name: "Add to note" });
+    expect(add).toHaveLength(1);
+    fireEvent.click(add[0]);
+
+    // The hub's `accept` REPLACES title, body and tags — this window must
+    // never call it; the draft joins the note through the sole writer.
+    await waitFor(() => expect(saveThoughtWorkingInWorkspace).toHaveBeenCalledTimes(1));
+    expect(actOnReview).not.toHaveBeenCalled();
+    const patch = vi.mocked(saveThoughtWorkingInWorkspace).mock.calls[0][1];
+    expect(patch.body_markdown).toBe(`${thought.working_note.body_markdown}\n\nMina owns the launch date.`);
+    expect(patch.title).toBe(thought.working_note.title);
+  });
+
+  it("offers Reload — not a dead Try again — when the note changed elsewhere", async () => {
+    // `writer.retry` returns during a conflict (useThoughtNoteWriter.ts:238),
+    // so the conflict recovery verb must re-read the note and work.
+    const elsewhere = { ...thought, aggregate_revision: 9, working_revision: 7, working_note: { ...thought.working_note, body_markdown: "The version the hub holds" } };
+    vi.mocked(thoughtWorkbench).mockResolvedValueOnce(projection()).mockResolvedValue(projection({ thought: elsewhere }));
+    vi.mocked(saveThoughtWorkingInWorkspace).mockRejectedValue(new ApiError(409, "conflict", { context: { current: elsewhere } }));
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    const body = await screen.findByRole("textbox", { name: "Note body" });
+    fireEvent.change(body, { target: { value: "My own edit" } });
+    await waitFor(() => expect(saveThoughtWorkingInWorkspace).toHaveBeenCalled());
+    await screen.findByText("CHANGED ELSEWHERE");
+    expect(screen.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Reload" }));
+    await waitFor(() => expect(body).toHaveValue("The version the hub holds"));
+    await waitFor(() => expect(screen.queryByText("CHANGED ELSEWHERE")).not.toBeInTheDocument());
+  });
+
+  it("says a save failure once, in the foot, with its own Retry", async () => {
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
+    vi.mocked(saveThoughtWorkingInWorkspace).mockRejectedValue(new Error("offline"));
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    fireEvent.change(await screen.findByRole("textbox", { name: "Note body" }), { target: { value: "An edit that cannot land" } });
+    await waitFor(() => expect(saveThoughtWorkingInWorkspace).toHaveBeenCalled());
+    const line = await screen.findByText("DID NOT SAVE · THE HUB DID NOT ANSWER");
+    expect(line.closest(".surface-footer")).not.toBeNull();
+    expect(screen.getAllByText("DID NOT SAVE · THE HUB DID NOT ANSWER")).toHaveLength(1);
+    expect(screen.queryByText(/^KEPT/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(saveThoughtWorkingInWorkspace).toHaveBeenCalledTimes(2));
+  });
+
+  it("reopens a finished note with the reason it cannot be edited and Resume", async () => {
+    const finished = { ...thought, state: "completed" as const };
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection({ thought: finished, workspace_state: "completed", actions: { primary: { kind: "resume" }, state: [{ kind: "resume" }], ambient: [] } }));
+    render(<ThoughtWorkspaceWindow object={object} thought={finished} onClose={vi.fn()} />);
+
+    expect(await screen.findByTestId("note-title")).toHaveTextContent(thought.working_note.title);
+    expect(screen.getByTestId("note-locked")).toHaveTextContent("FINISHED");
+    expect(screen.queryByText(/IN A DRAWER|NOT IN A DRAWER/)).not.toBeInTheDocument();
+    const primaries = document.querySelectorAll(".btn--primary");
+    expect(primaries).toHaveLength(1);
+    expect(primaries[0]).toHaveTextContent("Resume");
+    expect(screen.queryByRole("region", { name: "Ask about this note" })).not.toBeInTheDocument();
+  });
+
+  it("separates no engine at all from an engine that cannot be reached", async () => {
+    engineMock.useEngine.mockReturnValue({ state: "none", model: "", place: "" });
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection({
+      actions: { primary: { kind: "configure_ai" }, state: [{ kind: "configure_ai" }], ambient: ["update_working", "attach_context", "complete"] },
+      inference: { availability: "unavailable", continuation_admission: "unavailable", intended_placement: null },
+    }));
+    const { unmount } = render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+    const band = await screen.findByRole("region", { name: "Ask about this note" });
+    expect(band).toHaveTextContent("No engine");
+    expect(band).not.toHaveTextContent("NO ENGINE YET");
+    expect(band.querySelector(".gadget-chip-egress")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Choose engine" }));
+    expect(openSurfaceOr).toHaveBeenCalledWith("configure-runs-on", "/settings", "thought.interview");
+    expect(screen.getAllByRole("button", { name: "Choose engine" })).toHaveLength(1);
+    expect(document.querySelectorAll(".btn--primary")).toHaveLength(1);
+    unmount();
+
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection({
+      actions: { primary: { kind: "configure_ai" }, state: [{ kind: "configure_ai" }], ambient: ["update_working", "attach_context", "complete"] },
+      inference: { availability: "unavailable", continuation_admission: "unavailable", intended_placement: { target_id: "lan", target_name: "Workstation", target_kind: "lan_host", boundary: "private_network", readiness: "unreachable" } },
+    }));
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+    expect(await screen.findByRole("button", { name: "Check" })).toBeEnabled();
+    expect(screen.getByRole("region", { name: "Ask about this note" })).toHaveTextContent("ENGINE NOT REACHABLE");
+    expect(screen.getByText("WORKSTATION")).toBeInTheDocument();
+    // …and no destination chip stands beside "no engine yet" (nowhere to go).
+    expect(document.querySelectorAll(".gadget-chip-egress")).toHaveLength(1);
+  });
+
+  it("does not call a ready engine missing when the coordinator is the blocker", async () => {
+    // refinement_application_service.py:80 — inference_available is
+    // (coordinator accepting) AND (target ready); a ready target with
+    // unavailable inference is a BUSY coordinator, not an absent engine.
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection({
+      actions: { primary: { kind: "refine" }, state: [{ kind: "refine" }], ambient: ["complete"] },
+      inference: {
+        availability: "unavailable",
+        continuation_admission: "unavailable",
+        intended_placement: { target_id: "this_machine", target_name: "This device", target_kind: "this_device", boundary: "same_device", readiness: "ready" },
+      },
+    }));
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    const band = await screen.findByRole("region", { name: "Ask about this note" });
+    expect(band).toHaveTextContent("ENGINE BUSY");
+    expect(band).not.toHaveTextContent("NO ENGINE YET");
+    expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "Choose engine" })).not.toBeInTheDocument();
+  });
+
+  it("rechecks the engine after Settings saves", async () => {
+    engineMock.useEngine.mockReturnValue({ state: "none", model: "", place: "" });
+    vi.mocked(thoughtWorkbench)
+      .mockResolvedValueOnce(projection({
+        actions: { primary: { kind: "configure_ai" }, state: [{ kind: "configure_ai" }], ambient: ["complete"] },
+        inference: { availability: "unavailable", continuation_admission: "unavailable", intended_placement: null },
+      }))
+      .mockResolvedValueOnce(projection());
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+    await screen.findByRole("button", { name: "Choose engine" });
+    window.dispatchEvent(new Event("holdspeak:settings-updated"));
+    await waitFor(() => expect(thoughtWorkbench).toHaveBeenCalledTimes(2));
+    expect(await screen.findByRole("button", { name: "Ask about this note" })).toBeEnabled();
+  });
+
+  // PHILO-15 10 (Astra r2, finding 1): the hub's REAL terminal projection
+  // (refinement_thought_service._terminal_status) carries code, category,
+  // retryable and, for a named failure, a token. It never sends `message`;
+  // this test used to invent one.
+  it("offers Try again beside Finish for a plain failed ask", async () => {
+    engineMock.useEngine.mockReturnValue({ state: "set", model: "Thought Qwen", place: "" });
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection({
+      workspace_state: "named_failure",
+      actions: { primary: { kind: "refine" }, state: [{ kind: "refine" }], ambient: ["complete"] },
+      terminal_status: { category: "retryable", code: "failed", retryable: true },
+    }));
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    expect(await screen.findByRole("button", { name: "Try again" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Finish" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Ask about this note" })).toBeInTheDocument();
+  });
+
+  it("names a malformed structured result and the engine it came from", async () => {
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection({
+      workspace_state: "named_failure",
+      actions: { primary: { kind: "refine" }, state: [{ kind: "refine" }], ambient: ["complete"] },
+      terminal_status: {
+        category: "retryable", code: "structured_result_unusable", retryable: true,
+        token: "STRUCTURED RESULT · NOT USABLE",
+      },
+    }));
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    expect(await screen.findByRole("button", { name: "Try again" })).toBeEnabled();
+    const region = screen.getByRole("region", { name: "Ask about this note" });
+    expect(region).toHaveTextContent(/STRUCTURED RESULT · NOT USABLE · \S/);
+  });
+
+  it("keeps a stale context visible in the Reads line with its repair verb", async () => {
+    const staleThought = { ...thought, attachments: [{ ...context, state: "stale" as const }] };
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection({
+      thought: staleThought,
+      workspace_state: "stale",
+      actions: { primary: { kind: "refresh_context" }, state: [{ kind: "refresh_context" }], ambient: ["complete"] },
+      context_status: { summary: "Everyday context", state: "stale", repair_ref: context.ref },
+    }));
+    render(<ThoughtWorkspaceWindow object={object} thought={staleThought} onClose={vi.fn()} />);
+
+    expect(await screen.findByText("Reads: Everyday context")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Update it" })).toBeEnabled();
+  });
+
+  it("keeps the mounted workspace behind a restart gate until explicit hub adoption", async () => {
+    const foreignThought = { ...thought, aggregate_revision: 4, working_revision: 3, working_note: { ...thought.working_note, body_markdown: "Foreign authority" } };
+    const foreign = projection({ thought: foreignThought, workspace_cursor: { ...cursor, hub_id: "hub-2", aggregate_revision: 4, continuity_revision: 1 } });
+    vi.mocked(thoughtWorkbench).mockResolvedValueOnce(projection({
+      workspace_state: "named_failure",
+      terminal_status: { category: "retryable", code: "failed", retryable: true },
+    }));
+    vi.mocked(refineThought).mockResolvedValue({
+      thought: foreignThought,
+      continuity: { state: "reserved", invocation_id: "rinv-foreign" },
+      workbench: foreign,
+    });
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Try again" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Hub restarted");
+    expect(screen.getByRole("textbox", { name: "Note body", hidden: true })).toHaveValue(thought.working_note.body_markdown);
+    vi.mocked(thoughtWorkbench).mockResolvedValueOnce(foreign);
+    fireEvent.click(screen.getByRole("button", { name: "Reload Thought" }));
+    await waitFor(() => expect(screen.getByRole("textbox", { name: "Note body" })).toHaveValue("Foreign authority"));
+  });
+
+  it("scopes Mod-Enter to the focused window when two Thoughts are open", async () => {
+    const second = { ...thought, id: "thought-2", working_note: { ...thought.working_note, id: "note-2", title: "Second thought" } };
+    const questionFor = (item: Thought): ThoughtWorkspaceProjection => ({
+      ...questionProjection(`Question for ${item.id}?`, `review-${item.id}`),
+      thought: item,
+      workspace_cursor: { ...cursor, thought_id: item.id },
+    });
+    vi.mocked(thoughtWorkbench).mockImplementation(async (id) => questionFor(id === second.id ? second : thought));
+    vi.mocked(actOnReview).mockRejectedValue(new ApiError(503, "offline", {}));
+    const secondObject = { id: "note-2", kind: "note", title: "Second thought", ref: { kind: "note", bodyMarkdown: second.working_note.body_markdown } } as never;
+    render(<><ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} /><ThoughtWorkspaceWindow object={secondObject} thought={second} onClose={vi.fn()} /></>);
+
+    const answers = await screen.findAllByRole("textbox", { name: "Your answer" });
+    fireEvent.change(answers[0], { target: { value: "First" } });
+    fireEvent.change(answers[1], { target: { value: "Second" } });
+    answers[1].focus();
+    fireEvent.keyDown(answers[1], { key: "Enter", metaKey: true });
+
+    await waitFor(() => expect(actOnReview).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(actOnReview).mock.calls[0][0].thought.id).toBe("thought-2");
+  });
+
+  it.each([{ metaKey: true }, { ctrlKey: true }])("uses $metaKey/$ctrlKey Mod-S to drain only the focused window", async (modifier) => {
+    const second = { ...thought, id: "thought-save-2", working_note: { ...thought.working_note, id: "note-save-2", title: "Second thought" } };
+    vi.mocked(thoughtWorkbench).mockImplementation(async (id) => projection({ thought: id === second.id ? second : thought, workspace_cursor: { ...cursor, thought_id: id } }));
+    vi.mocked(saveThoughtWorkingInWorkspace).mockImplementation(async (current, _patch, currentCursor) => ({ thought: current, workbench: projection({ thought: current, workspace_cursor: currentCursor! }) }));
+    const secondObject = { id: "note-save-2", kind: "note", title: "Second thought", ref: { kind: "note", bodyMarkdown: second.working_note.body_markdown } } as never;
+    render(<><ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} /><ThoughtWorkspaceWindow object={secondObject} thought={second} onClose={vi.fn()} /></>);
+    const bodies = await screen.findAllByRole("textbox", { name: "Note body" });
+    fireEvent.change(bodies[0], { target: { value: "First dirty" } });
+    fireEvent.change(bodies[1], { target: { value: "Second dirty" } });
+    fireEvent.keyDown(bodies[1], { key: "s", ...modifier });
+
+    await waitFor(() => expect(saveThoughtWorkingInWorkspace).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(saveThoughtWorkingInWorkspace).mock.calls[0][0].id).toBe(second.id);
+  });
+
+  it("vetoes close when the dirty Note cannot flush and keeps the draft", async () => {
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
+    vi.mocked(saveThoughtWorkingInWorkspace).mockRejectedValue(new Error("offline"));
+    const onClose = vi.fn();
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={onClose} />);
+
+    const body = await screen.findByRole("textbox", { name: "Note body" });
+    fireEvent.change(body, { target: { value: "Unsaved owner detail" } });
+    fireEvent.click(screen.getByRole("button", { name: "Close window" }));
+
+    await waitFor(() => expect(saveThoughtWorkingInWorkspace).toHaveBeenCalledTimes(1));
+    expect(onClose).not.toHaveBeenCalled();
+    expect(body).toHaveValue("Unsaved owner detail");
+    expect(await screen.findByRole("status")).toBeInTheDocument();
+  });
+
+  it("drains the sole writer before the Reads well opens on the latest note", async () => {
+    const saved = { ...thought, aggregate_revision: 4, working_revision: 3, working_note: { ...thought.working_note, body_markdown: "Saved before context" } };
+    const nextCursor = { ...cursor, aggregate_revision: 4, continuity_revision: 5 };
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
+    vi.mocked(saveThoughtWorkingInWorkspace).mockResolvedValue({ thought: saved, workbench: projection({ thought: saved, workspace_cursor: nextCursor }) });
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    fireEvent.change(await screen.findByRole("textbox", { name: "Note body" }), { target: { value: "Saved before context" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add a note" }));
+
+    expect(await screen.findByRole("region", { name: "Add notes" })).toHaveTextContent("Saved before context");
+    expect(saveThoughtWorkingInWorkspace).toHaveBeenCalledWith(thought, expect.objectContaining({ body_markdown: "Saved before context" }), cursor);
+  });
+
+  it("stops only the live process while preserving a dirty Note draft", async () => {
+    const liveThought = { ...thought, continuity: { invocation_id: "invocation-1" } } as Thought;
+    const live = projection({
+      thought: liveThought,
+      workspace_state: "in_flight",
+      actions: { primary: { kind: "stop_refinement" }, state: [{ kind: "stop_refinement" }], ambient: ["update_working"] },
+    });
+    const stopped = projection({ thought: liveThought, workspace_state: "idle" });
+    vi.mocked(thoughtWorkbench).mockResolvedValueOnce(live).mockResolvedValueOnce(stopped);
+    vi.mocked(stopRefinement).mockResolvedValue(liveThought);
+    render(<ThoughtWorkspaceWindow object={object} thought={liveThought} onClose={vi.fn()} />);
+
+    const body = await screen.findByRole("textbox", { name: "Note body" });
+    fireEvent.change(body, { target: { value: "Dirty while AI runs" } });
+    fireEvent.click(screen.getByRole("button", { name: "Stop" }));
+
+    await waitFor(() => expect(stopRefinement).toHaveBeenCalledWith(liveThought, "invocation-1", cursor));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Ask about this note" })).toBeEnabled());
+    expect(body).toHaveValue("Dirty while AI runs");
+  });
+
+  it("fences the dirty-Note debounce until Stop has completed", async () => {
+    vi.useFakeTimers();
+    const liveThought = { ...thought, continuity: { invocation_id: "invocation-slow" } } as Thought;
+    const live = projection({
+      thought: liveThought,
+      workspace_state: "in_flight",
+      actions: { primary: { kind: "stop_refinement" }, state: [{ kind: "stop_refinement" }], ambient: ["update_working"] },
+    });
+    const stopped = deferred<Thought>();
+    vi.mocked(thoughtWorkbench).mockResolvedValue(live);
+    vi.mocked(stopRefinement).mockReturnValue(stopped.promise);
+    render(<ThoughtWorkspaceWindow object={object} thought={liveThought} onClose={vi.fn()} />);
+    await act(async () => { await Promise.resolve(); });
+
+    const body = screen.getByRole("textbox", { name: "Note body" });
+    fireEvent.change(body, { target: { value: "Dirty during slow Stop" } });
+    fireEvent.click(screen.getByRole("button", { name: "Stop" }));
+    fireEvent.keyDown(body, { key: "s", ctrlKey: true });
+    await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+
+    expect(stopRefinement).toHaveBeenCalledTimes(1);
+    expect(saveThoughtWorkingInWorkspace).not.toHaveBeenCalled();
+    expect(body).toHaveValue("Dirty during slow Stop");
+    await act(async () => { stopped.resolve(liveThought); await Promise.resolve(); });
+  });
+
+  it("waits for an in-flight save before Stop without flushing the queued edit", async () => {
+    vi.useFakeTimers();
+    const liveThought = { ...thought, continuity: { invocation_id: "invocation-ordered" } } as Thought;
+    const live = projection({ thought: liveThought, workspace_state: "in_flight", actions: { primary: { kind: "stop_refinement" }, state: [{ kind: "stop_refinement" }], ambient: ["update_working"] } });
+    const save = deferred<{ thought: Thought; workbench: ThoughtWorkspaceProjection }>();
+    const stopped = deferred<Thought>();
+    const savedThought = { ...liveThought, aggregate_revision: 4, working_revision: 3, working_note: { ...liveThought.working_note, body_markdown: "A" } };
+    const savedCursor = { ...cursor, aggregate_revision: 4, continuity_revision: 5 };
+    vi.mocked(thoughtWorkbench).mockResolvedValue(live);
+    vi.mocked(saveThoughtWorkingInWorkspace).mockReturnValue(save.promise);
+    vi.mocked(stopRefinement).mockReturnValue(stopped.promise);
+    render(<ThoughtWorkspaceWindow object={object} thought={liveThought} onClose={vi.fn()} />);
+    await act(async () => { await Promise.resolve(); });
+
+    const body = screen.getByRole("textbox", { name: "Note body" });
+    fireEvent.change(body, { target: { value: "A" } });
+    await act(async () => { await vi.advanceTimersByTimeAsync(450); });
+    fireEvent.change(body, { target: { value: "B queued" } });
+    fireEvent.click(screen.getByRole("button", { name: "Stop" }));
+    expect(stopRefinement).not.toHaveBeenCalled();
+
+    await act(async () => {
+      save.resolve({ thought: savedThought, workbench: projection({ thought: savedThought, workspace_cursor: savedCursor, workspace_state: "in_flight" }) });
+      await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
+    });
+    expect(stopRefinement).toHaveBeenCalledWith(savedThought, "invocation-ordered", savedCursor);
+    expect(saveThoughtWorkingInWorkspace).toHaveBeenCalledTimes(1);
+    expect(body).toHaveValue("B queued");
+    await act(async () => { stopped.resolve(savedThought); await Promise.resolve(); });
+  });
+});
+
+/* The window's name follows the draft at once, ALSO after an autosave
+ * (Astra, #821): the save gives the thought the title `Ask Priya` (its first
+ * words); the owner types on, and the name must follow. The fence renders the
+ * real window and the real writer; the hub's save is the double. */
+describe("ThoughtWorkspaceWindow: the name follows the draft across a save", () => {
+  it("type, save, type again: the name is the first words each time", async () => {
+    vi.useFakeTimers();
+    const fresh = { ...thought, working_note: { ...thought.working_note, title: "Thought", body_markdown: "" } } as Thought;
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection({ thought: fresh }));
+    vi.mocked(saveThoughtWorkingInWorkspace).mockImplementation(async (current, patch) => {
+      const saved = { ...current, aggregate_revision: current.aggregate_revision + 1, working_revision: current.working_revision + 1,
+        working_note: { ...current.working_note, title: patch.title ?? current.working_note.title, body_markdown: patch.body_markdown ?? "" } } as Thought;
+      return { thought: saved, workbench: projection({ thought: saved, workspace_cursor: { ...cursor, aggregate_revision: saved.aggregate_revision } }) };
+    });
+    render(<ThoughtWorkspaceWindow object={object} thought={fresh} onClose={vi.fn()} />);
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    const name = () => screen.getByRole("region", { name: "Thought" }).getAttribute("data-window-name");
+    expect(name()).toBe("New thought");
+
+    const body = screen.getByRole("textbox", { name: "Note body" });
+    fireEvent.change(body, { target: { value: "Ask Priya" } });
+    expect(name()).toBe("Ask Priya");
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(600); await Promise.resolve(); await Promise.resolve(); });
+    expect(saveThoughtWorkingInWorkspace).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(saveThoughtWorkingInWorkspace).mock.calls[0][1].title).toBe("Ask Priya");
+    expect(screen.getByTestId("note-title")).toHaveTextContent("Ask Priya");
+    expect(name()).toBe("Ask Priya");
+
+    // The owner types on BEFORE the next save: the name follows at once.
+    fireEvent.change(body, { target: { value: "Ask Priya about the freeze window" } });
+    expect(saveThoughtWorkingInWorkspace).toHaveBeenCalledTimes(1);
+    expect(name()).toBe("Ask Priya about the freeze window");
+  });
+});
+
+describe("ThoughtWorkspaceWindow — PHILO-17 U08: the thought is sendable", () => {
+  it("lets Send own the body and returns through Back to the same note and Send focus", async () => {
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    const send = await screen.findByRole("button", { name: "Send" });
+    expect(screen.queryByTestId("send-well")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Copy" }));
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(thought.working_note.body_markdown));
+    expect(await screen.findByText("COPIED")).toBeInTheDocument();
+
+    fireEvent.click(send);
+    const well = await screen.findByTestId("send-well");
+    expect(well).toHaveAttribute("data-doc", "note:note-1");
+    expect(well).toHaveAttribute("data-version", "2");
+    expect(screen.queryByRole("textbox", { name: "Note body" })).not.toBeInTheDocument();
+    expect(document.querySelector(".thought-note-foot")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Finish" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Copy" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Send" })).not.toBeInTheDocument();
+    expect(document.querySelector(".thought-send-foot")).toHaveTextContent("Back");
+    expect(screen.getByRole("region", { name: "Thought" })).toHaveAttribute("data-frame-min-height", "520");
+    expect(well.closest(".thought-send-body")).not.toHaveAttribute("inert");
+
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    await waitFor(() => expect(screen.queryByTestId("send-well")).not.toBeInTheDocument());
+    expect(screen.getByRole("textbox", { name: "Note body" })).toHaveValue(thought.working_note.body_markdown);
+    expect(screen.getByRole("region", { name: "Thought" })).toHaveAttribute("data-frame-min-height", "360");
+    await waitFor(() => expect(screen.getByRole("button", { name: "Send" })).toHaveFocus());
+  });
+
+  it("Back, edit, reopen waits for the saved revision before mounting the send body", async () => {
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
+    const save = deferred<Awaited<ReturnType<typeof saveThoughtWorkingInWorkspace>>>();
+    vi.mocked(saveThoughtWorkingInWorkspace).mockImplementation(() => save.promise);
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Send" }));
+    const well = await screen.findByTestId("send-well");
+    expect(well).toHaveAttribute("data-version", "2");
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+
+    fireEvent.change(screen.getByRole("textbox", { name: "Note body" }), { target: { value: "The revised words" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await waitFor(() => expect(saveThoughtWorkingInWorkspace).toHaveBeenCalledTimes(1));
+    expect(screen.queryByTestId("send-well")).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Note body" })).toHaveValue("The revised words");
+
+    await act(async () => {
+      save.resolve({ thought: { ...thought, aggregate_revision: 4, working_revision: 3, working_note: { ...thought.working_note, body_markdown: "The revised words" } } });
+    });
+    expect(await screen.findByTestId("send-well")).toHaveAttribute("data-version", "3");
+    expect(screen.getByTestId("send-well").closest(".thought-send-body")).not.toHaveAttribute("inert");
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(screen.getByRole("textbox", { name: "Note body" })).toHaveValue("The revised words");
+  });
+
+  it("a failed save refuses Send and Close while keeping the draft and repair verb", async () => {
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
+    vi.mocked(saveThoughtWorkingInWorkspace).mockRejectedValue(new Error("offline"));
+    const onClose = vi.fn();
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={onClose} />);
+    expect(screen.getByRole("button", { name: "Close window" }).closest("section")).toHaveAttribute("data-frame-close-guard", "true");
+
+    fireEvent.click(await screen.findByRole("button", { name: "Send" }));
+    await screen.findByTestId("send-well");
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Note body" }), { target: { value: "An edit that cannot land" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await screen.findByRole("button", { name: "Retry" });
+    expect(screen.queryByTestId("send-well")).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Note body" })).toHaveValue("An edit that cannot land");
+    fireEvent.click(screen.getByRole("button", { name: "Close window" }));
+    expect(onClose).not.toHaveBeenCalled();
+    expect(saveThoughtWorkingInWorkspace).toHaveBeenCalledTimes(1);
+  });
+
+  it("keyboard Send focuses its region without firing hidden Note commands", async () => {
+    const user = userEvent.setup();
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    (await screen.findByRole("button", { name: "Send" })).focus();
+    await user.keyboard("{Enter}");
+    const send = await screen.findByRole("region", { name: "Send note" });
+    await waitFor(() => expect(send).toHaveFocus());
+    expect(screen.queryByRole("textbox", { name: "Note body" })).not.toBeInTheDocument();
+    await user.keyboard("{Meta>}{Enter}{/Meta}");
+    expect(completeThought).not.toHaveBeenCalled();
+    expect(refineThought).not.toHaveBeenCalled();
+    expect(send).toHaveFocus();
+  });
+
+  it("frame Back returns from Send without closing or firing hidden Note shortcuts", async () => {
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
+    const onClose = vi.fn();
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={onClose} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Send" }));
+    const well = await screen.findByTestId("send-well");
+    fireEvent.keyDown(well, { key: "Enter", metaKey: true });
+    expect(completeThought).not.toHaveBeenCalled();
+    expect(refineThought).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Frame Back" }));
+    expect(await screen.findByRole("textbox", { name: "Note body" })).toHaveValue(thought.working_note.body_markdown);
+    expect(onClose).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.getByRole("button", { name: "Send" })).toHaveFocus());
+
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await screen.findByTestId("send-well");
+    fireEvent.click(screen.getByRole("button", { name: "Close window" }));
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+  });
+
+  it("Send replaces open context and Task wells and does not restore them on Back", async () => {
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, status: 200, headers: { get: () => "application/json" }, json: async () => ({ relationships: [] }) }));
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Add a note" }));
+    await screen.findByRole("region", { name: "Add notes" });
+    fireEvent.click(screen.getByRole("button", { name: "Task" }));
+    await screen.findByTestId("thought-task-well");
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await screen.findByTestId("send-well");
+    expect(screen.queryByRole("region", { name: "Add notes" })).not.toBeInTheDocument();
+    expect(screen.queryByTestId("thought-task-well")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(screen.queryByRole("region", { name: "Add notes" })).not.toBeInTheDocument();
+    expect(screen.queryByTestId("thought-task-well")).not.toBeInTheDocument();
+  });
+
+  it("unmounts engine and answer bands during Send and retains the answer on Back", async () => {
+    engineMock.useEngine.mockReturnValue({ state: "set", model: "Thought Qwen", place: "LAN" });
+    vi.mocked(thoughtWorkbench).mockResolvedValue(questionProjection("Which report?"));
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+
+    fireEvent.change(await screen.findByRole("textbox", { name: "Your answer" }), { target: { value: "Tuesday report" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await screen.findByTestId("send-well");
+    expect(screen.queryByRole("textbox", { name: "Your answer" })).not.toBeInTheDocument();
+    expect(document.querySelector(".thought-note-ask")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(screen.getByRole("textbox", { name: "Your answer" })).toHaveValue("Tuesday report");
+  });
+
+  it("phone frame Back finds the portaled More door and returns with its Send menu closed", async () => {
+    vi.stubGlobal("matchMedia", () => ({ matches: true, media: "(max-width: 720px)", addEventListener: () => {}, removeEventListener: () => {} }));
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
+    const onClose = vi.fn();
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={onClose} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "More actions" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Send" }));
+    await screen.findByTestId("send-well");
+    expect(screen.queryByRole("button", { name: "Finish" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Frame Back" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "More actions" })).toHaveFocus());
+    expect(screen.getByRole("button", { name: "More actions" }).closest(".thought-note-window")).toBeNull();
+    expect(screen.getByTestId("frame-foot")).toContainElement(screen.getByRole("button", { name: "More actions" }));
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "More actions" })).toHaveAttribute("aria-expanded", "false");
+    expect(onClose).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "More actions" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Add a note" }));
+    await screen.findByRole("region", { name: "Add notes" });
+    fireEvent.click(screen.getByRole("button", { name: "Close reads" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "More actions" })).toHaveFocus());
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  });
+
+  it("a finished thought keeps Copy and Send beside Resume", async () => {
+    const done = { ...thought, state: "completed" as const };
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection({ thought: done, workspace_state: "completed" }));
+    render(<ThoughtWorkspaceWindow object={object} thought={done} onClose={vi.fn()} />);
+
+    await screen.findByRole("button", { name: "Resume" });
+    expect(screen.getByRole("button", { name: "Copy" })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    expect(await screen.findByTestId("send-well")).toHaveAttribute("data-doc", "note:note-1");
+    expect(screen.queryByRole("button", { name: "Resume" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(screen.getByRole("button", { name: "Resume" })).toBeInTheDocument();
+  });
+});

@@ -16,8 +16,7 @@ import { PULLOUT_CONTENT } from "../pullouts";
 import { PULLOUT_SIZE } from "../pullouts/size";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import type { RegisterCloseGuard } from "../pullouts/types";
-import { thoughtForNote, type NoteThoughtStatus, type Thought } from "../thoughts";
-import { NotePullout } from "../pullouts/NotePullout";
+import { openNoteThought, type Thought } from "../thoughts";
 import { ThoughtWorkspaceWindow } from "../thought-workspace/ThoughtWorkspaceWindow";
 import { FootSlotContext, TitleSlotContext, WingSlotContext } from "../surface";
 
@@ -25,8 +24,6 @@ function PulloutFrame({
   o,
   pulloutId,
   origin,
-  noteStatus,
-  onThoughtOwned,
   overrideContent,
 }: {
   o: WorldObject;
@@ -36,8 +33,6 @@ function PulloutFrame({
   pulloutId: string;
   /** The client point the open gesture happened at (spatial motion). */
   origin?: { x: number; y: number } | null;
-  noteStatus?: NoteThoughtStatus;
-  onThoughtOwned?: (thought: Thought) => void;
   overrideContent?: ReactNode;
 }) {
   const profiles = useDesk((s) => s.profiles);
@@ -142,31 +137,33 @@ function PulloutFrame({
           </div>
           <footer ref={setFoot} className="desk-surface-foot surface-footer" />
         </FootSlotContext.Provider>
-      ) : overrideContent ?? (o.kind === "note"
-        ? <NotePullout object={o} onClose={() => void close()} registerClose={registerClose} initialStatus={noteStatus} onThoughtOwned={onThoughtOwned} />
-        : <Content object={o} onClose={() => void close()} registerClose={registerClose} />)}
+      ) : overrideContent ?? <Content object={o} onClose={() => void close()} registerClose={registerClose} />}
     </DeskWindowFrame>
   );
 }
 
+/** Betterment Q8 (one note): every note opens in the one note window (the
+ *  sticky). The hub gives the note's thought: it adopts a plain note and
+ *  resumes a finished one, so no note needs a "Develop" press to open, and
+ *  no note moves to another drawer. The ordinary note face (NotePullout) and
+ *  its form editor are no longer reached from here. */
 function NoteWindowRouter({ o, pulloutId, origin }: { o: WorldObject; pulloutId: string; origin?: { x: number; y: number } | null }) {
-  const [status, setStatus] = useState<NoteThoughtStatus | null>(null);
+  const [thought, setThought] = useState<Thought | null>(null);
   const [failed, setFailed] = useState(false);
   const close = () => useDesk.getState().closePullout(pulloutId);
   const load = () => {
     setFailed(false);
-    void thoughtForNote(o.id).then(setStatus).catch(() => setFailed(true));
+    void openNoteThought(o.id).then(setThought).catch(() => setFailed(true));
   };
   useEffect(() => {
     let live = true;
-    setStatus(null); setFailed(false);
-    void thoughtForNote(o.id).then((next) => { if (live) setStatus(next); }).catch(() => { if (live) setFailed(true); });
+    setThought(null); setFailed(false);
+    void openNoteThought(o.id).then((next) => { if (live) setThought(next); }).catch(() => { if (live) setFailed(true); });
     return () => { live = false; };
   }, [o.id]);
 
-  if (status?.ownership === "thought") return <ThoughtWorkspaceWindow object={o} pulloutId={pulloutId} thought={status.thought} origin={origin} onClose={close} />;
-  if (status?.ownership === "ordinary") return <PulloutFrame o={o} pulloutId={pulloutId} origin={origin} noteStatus={status} onThoughtOwned={(thought) => setStatus({ ownership: "thought", thought })} />;
-  return <PulloutFrame o={o} pulloutId={pulloutId} origin={origin} overrideContent={<div className="desk-pullout-body desk-surface-body thought-workspace-opening" aria-busy={!failed}>{failed ? <><p>Could not check this Note on this hub.</p><Button variant="primary" onClick={load}>Try again</Button></> : <span>Opening Note…</span>}</div>} />;
+  if (thought) return <ThoughtWorkspaceWindow object={o} pulloutId={pulloutId} thought={thought} origin={origin} onClose={close} />;
+  return <PulloutFrame o={o} pulloutId={pulloutId} origin={origin} overrideContent={<div className="desk-pullout-body desk-surface-body thought-workspace-opening" aria-busy={!failed}>{failed ? <><p>Could not open this note on this hub. The note is unchanged.</p><Button variant="primary" onClick={load}>Try again</Button></> : <span>Opening note…</span>}</div>} />;
 }
 
 export function Pullout({

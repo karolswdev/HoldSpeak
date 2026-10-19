@@ -38,6 +38,10 @@ class RefinementApplicationService:
         )
         return {"thought": thought, "default_context_receipt": receipt}
 
+    def open_note(self, principal: Principal, *, note_id: str) -> dict[str, Any]:
+        """Betterment Q8: the thought that opens any note in the one note window."""
+        return {"thought": self._thoughts.open_note(principal, note_id)}
+
     def get_default_context(self, principal: Principal) -> dict[str, Any]:
         return self._context.get_default_context(principal)
 
