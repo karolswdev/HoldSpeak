@@ -58,6 +58,7 @@ import { rankRow } from "../searchRank";
 export { DESK_TOOLS, KIND_LABEL };
 
 const SECTIONS = [
+  "ASK",
   "PROJECTS",
   "PEOPLE",
   "OBJECTS",
@@ -214,6 +215,39 @@ export function stableDeck<T extends { id: string }>(
   const kept = drawn.flatMap((id) => (candidates.has(id) ? [candidates.get(id)!] : []));
   const drawnIds = new Set(drawn);
   return [...kept, ...fresh.filter((row) => !drawnIds.has(row.id))];
+}
+
+/** Betterment Q3: each kind is one section. The ranked rows are grouped by
+ *  section, in the order each section first appears; inside a section the
+ *  rows keep their order (OBJECTS and MEETINGS were drawn twice when their
+ *  rows were ranked between other sections). */
+export function oneBandPerSection<T extends { section: string }>(rows: readonly T[]): T[] {
+  const bands = new Map<string, T[]>();
+  for (const row of rows) {
+    const band = bands.get(row.section);
+    if (band) band.push(row);
+    else bands.set(row.section, [row]);
+  }
+  return [...bands.values()].flat();
+}
+
+const QUESTION_WORDS = new Set([
+  "who", "what", "when", "why", "how", "which", "did", "do", "does", "is", "are",
+]);
+
+/** Betterment Q3: the text reads like a question (ends in "?" or starts with
+ *  a question word). Then Search offers Ask first. */
+export function readsLikeQuestion(text: string): boolean {
+  const words = text.trim();
+  if (!words) return false;
+  if (words.endsWith("?")) return true;
+  const first = words.split(/\s+/, 1)[0].toLocaleLowerCase().replace(/[^\p{L}]/gu, "");
+  return QUESTION_WORDS.has(first);
+}
+
+/** A title that is an id (`th_28a810d95cf5`, `note:note_c29…`) is never a row label. */
+function isRawId(text: string): boolean {
+  return /^(?:[a-z_]+:)?[a-z]{1,8}[_-][0-9a-f]{8,}$/i.test(text.trim());
 }
 
 /* ── MEMORY: content search (inventory gap 9) ── */
@@ -780,11 +814,12 @@ export function DeskToolShelf() {
       if (!opener || shown.has(base) || shown.has(`memory:${base}`)) continue;
       shown.add(`memory:${base}`);
       const kind = String(hit.kind ?? base.split(":", 1)[0]);
-      const named = String(hit.title ?? "").trim();
+      const rawTitle = String(hit.title ?? "").trim();
+      const named = isRawId(rawTitle) ? "" : rawTitle;
       const parts = snippetParts(hit.snippet, normalized, named);
       const detail = snippetText(parts);
       const title = named || detail;
-      if (!title) continue;
+      if (!title || isRawId(title)) continue;
       out.push({
         id: `memory:${base}`,
         section: "MEMORY",
@@ -796,6 +831,7 @@ export function DeskToolShelf() {
           parts: detail && detail !== title ? parts : [],
           origin: hit.retrieval_origin,
           at: hit.occurred_at,
+          kind,
         },
         // The hit can be older than its desk list (24 meetings, 24
         // artifacts, ...): hold its object so the next load reads it by id,
@@ -822,10 +858,25 @@ export function DeskToolShelf() {
   const rows: DeckRow[] = useMemo(() => {
     const drawn = drawnRef.current;
     const same = ranked && drawn.ids !== null && drawn.open === open && drawn.query === normalized && !prompt;
-    const next = stableDeck(same ? drawn.ids : null, [...localRows, ...memoryRows], [...localCapped, ...memoryRows]);
+    const next = oneBandPerSection(
+      stableDeck(same ? drawn.ids : null, [...localRows, ...memoryRows], [...localCapped, ...memoryRows]),
+    );
     drawnRef.current = { query: normalized, open, ids: ranked ? next.map((r) => r.id) : null };
-    return next;
-  }, [localRows, localCapped, memoryRows, normalized, open, prompt, ranked]);
+    // Betterment Q3: Ask "…" — first when the text reads like a question,
+    // else last. Enter on it opens Ask with the text and runs it.
+    const asked = query.trim();
+    if (prompt || asked.length < MEMORY_MIN_QUERY) return next;
+    const askRow: DeckRow = {
+      id: "ask.question",
+      section: "ASK",
+      glyph: "✦",
+      label: `Ask "${asked}"`,
+      kind: "ASK",
+      wrap: true,
+      run: () => useDesk.getState().askQuestion(asked),
+    };
+    return readsLikeQuestion(asked) ? [askRow, ...next] : [...next, askRow];
+  }, [localRows, localCapped, memoryRows, normalized, open, prompt, query, ranked]);
 
   // The runnable list the selection index walks (ghosts stay visible
   // but are never selected, never run).
@@ -840,7 +891,9 @@ export function DeskToolShelf() {
     ? runnable.findIndex((row) => row.name?.toLocaleLowerCase() === normalized)
     : -1;
   const firstObject = runnable.findIndex((row) => FIRST_PRESS_OBJECT_SECTIONS.has(row.section));
-  const defaultIndex = exactNamed >= 0 ? exactNamed : firstObject >= 0 ? firstObject : 0;
+  // A question's first press is Ask (Betterment Q3).
+  const askFirst = runnable[0]?.id === "ask.question";
+  const defaultIndex = askFirst ? 0 : exactNamed >= 0 ? exactNamed : firstObject >= 0 ? firstObject : 0;
   const selectedIndex = sel < 0 ? defaultIndex : Math.min(sel, runnable.length - 1);
   const selected = runnable.length ? runnable[selectedIndex] : null;
   const activeId = selected ? `desk-palette-option-${selected.id}` : undefined;
@@ -855,7 +908,7 @@ export function DeskToolShelf() {
 
   const runRow = (row: DeckRow) => {
     if (row.ghost) return;
-    recordRecent(row.id);
+    if (row.section !== "ASK") recordRecent(row.id);
     close();
     row.run();
   };
@@ -968,8 +1021,9 @@ export function DeskToolShelf() {
                   role="listbox"
                 >
                   {rows.map((row) => {
+                    // The Ask row needs no band: its words say what it is.
                     const band =
-                      row.section !== lastSection ? row.section : null;
+                      row.section !== lastSection && row.section !== "ASK" ? row.section : null;
                     lastSection = row.section;
                     const isSel = selected?.id === row.id;
                     return (
@@ -992,8 +1046,11 @@ export function DeskToolShelf() {
                           data-meeting={!!row.meetingMeta || undefined}
                           aria-current={isSel || undefined}
                           onClick={() => runRow(row)}
-                          onPointerEnter={() => {
-                            if (row.ghost) return;
+                          onPointerEnter={(event) => {
+                            // Betterment Q3: only a mouse moves the selection.
+                            // On a phone a tap's pointerenter redrew the row
+                            // under the finger and the tap did not open it.
+                            if (row.ghost || event.pointerType === "touch" || event.pointerType === "pen") return;
                             const at = runnable.findIndex(
                               (r) => r.id === row.id,
                             );

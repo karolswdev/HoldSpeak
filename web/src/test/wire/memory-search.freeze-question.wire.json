@@ -1,0 +1,140 @@
+{
+  "_": "The hub's own answer, captured by tests/unit/test_desk_search.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
+  "captured_at": "2026-10-19T00:04:37.574002Z",
+  "wire": {
+    "hits": [
+      {
+        "bm25": -1.65e-06,
+        "graph_score": 0.0,
+        "kind": "note",
+        "kind_rank": 1,
+        "normalized_score": 1.0,
+        "occurred_at": "2026-10-19T00:04:37Z",
+        "project_id": null,
+        "rank": 1,
+        "related_to": null,
+        "relationship": null,
+        "retrieval_origin": "lexical",
+        "snippet": "<mark>Freeze</mark>\n<mark>Freeze</mark> the old ledger on Nov 5 \nsee the runbook",
+        "source_ref": "note:note_66630af8dcd9",
+        "title": "Freeze plan"
+      },
+      {
+        "bm25": -1.0,
+        "graph_score": 0.0,
+        "kind": "decision_record",
+        "kind_rank": 1,
+        "normalized_score": 1.0,
+        "occurred_at": "2026-10-19T00:04:37.524915+00:00",
+        "project_id": null,
+        "rank": 2,
+        "related_to": null,
+        "relationship": null,
+        "retrieval_origin": "lexical",
+        "snippet": "Agreed in the meeting.",
+        "source_ref": "decision_record:record-fba402e791cb427f8f8b8bdfff690c83",
+        "title": "Freeze the old ledger on Nov 5"
+      },
+      {
+        "bm25": -1.2903225806451614e-06,
+        "graph_score": 0.0,
+        "kind": "thread",
+        "kind_rank": 1,
+        "normalized_score": 1.0,
+        "occurred_at": "2026-10-19 00:04:37",
+        "project_id": null,
+        "rank": 3,
+        "related_to": null,
+        "relationship": null,
+        "retrieval_origin": "lexical",
+        "snippet": "Why the <mark>freeze</mark>?",
+        "source_ref": "thread:th_6c083fac0484#tm_4c3be6e55b98",
+        "title": "Why the freeze?"
+      },
+      {
+        "bm25": -8.105263157894737e-07,
+        "graph_score": 0.0,
+        "kind": "decision",
+        "kind_rank": 1,
+        "normalized_score": 1.0,
+        "occurred_at": "2026-10-18T22:04:37+00:00",
+        "project_id": "p-ledger",
+        "rank": 4,
+        "related_to": null,
+        "relationship": null,
+        "retrieval_origin": "lexical",
+        "snippet": "<mark>Freeze</mark> the old ledger on Nov 5",
+        "source_ref": "decision:dec-f8738b5fff192d014a06",
+        "title": "Freeze the old ledger on Nov 5"
+      },
+      {
+        "bm25": 0.0,
+        "graph_score": 0.95,
+        "kind": "artifact",
+        "kind_rank": 1,
+        "normalized_score": 0.95,
+        "occurred_at": "2026-10-19T00:04:37.523492+00:00",
+        "project_id": null,
+        "rank": 5,
+        "related_to": "decision:dec-f8738b5fff192d014a06",
+        "relationship": "source_artifact",
+        "retrieval_origin": "relationship",
+        "snippet": "",
+        "source_ref": "artifact:m-standup-decisions",
+        "title": "Meeting decisions"
+      },
+      {
+        "bm25": -1.0,
+        "graph_score": 0.0,
+        "kind": "meeting",
+        "kind_rank": 1,
+        "normalized_score": 1.0,
+        "occurred_at": "2026-10-17T22:04:37+00:00",
+        "project_id": "p-ledger",
+        "rank": 6,
+        "related_to": null,
+        "relationship": null,
+        "retrieval_origin": "lexical",
+        "snippet": "Dual-write is stable. The team agreed to freeze the old ledger on Nov 5. cutover",
+        "source_ref": "meeting:m-arch",
+        "title": "Architecture review: tracing"
+      },
+      {
+        "bm25": -1.0,
+        "graph_score": 0.0,
+        "kind": "meeting",
+        "kind_rank": 2,
+        "normalized_score": 1.0,
+        "occurred_at": "2026-10-18T22:04:37+00:00",
+        "project_id": "p-ledger",
+        "rank": 7,
+        "related_to": null,
+        "relationship": null,
+        "retrieval_origin": "lexical",
+        "snippet": "Dual-write is stable. The team agreed to freeze the old ledger on Nov 5. cutover",
+        "source_ref": "meeting:m-standup",
+        "title": "Ledger cutover sync"
+      }
+    ],
+    "page": {
+      "count": 8,
+      "limit": 12,
+      "offset": 0,
+      "total": 8
+    },
+    "ranking": {
+      "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+      "method": "per_kind_bm25_interleave",
+      "normalization": "min_max_within_kind",
+      "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+      "relationship_expansion": {
+        "expanded_count": 1,
+        "lexical_count": 7,
+        "max_neighbours_per_seed": 2,
+        "max_results": 64,
+        "max_seeds": 32,
+        "method": "authoritative_typed_one_hop"
+      }
+    }
+  }
+}

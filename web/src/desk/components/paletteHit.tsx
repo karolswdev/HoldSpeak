@@ -9,7 +9,7 @@
 // words of the question it holds. A `[redacted]` marker is never marked and
 // never cut by a mark.
 import { Fragment } from "react";
-import { FoundBy, foundByDay, foundByWord } from "../surface/patterns/FoundBy";
+import { foundByDay } from "../surface/patterns/FoundBy";
 
 export const REDACTED = "[redacted]";
 
@@ -135,11 +135,27 @@ export interface PaletteHit {
   parts: SnippetPart[];
   origin?: string;
   at?: string;
+  /** The hit's kind (`meeting`, `note`, ...): it names where a word was found. */
+  kind?: string;
 }
 
-/** The second line of a MEMORY row: the snippet, then FoundBy and the day. */
+/** Betterment Q3: how a memory hit was found, in plain words. Only three:
+ *  a word in a meeting's transcript, a word in a note, or by meaning. Any
+ *  other way (a name, a link, a time) shows nothing. */
+export function foundByPlain(origin: unknown, kind: unknown): string {
+  const by = String(origin ?? "");
+  const what = String(kind ?? "");
+  if (by === "vector") return "by meaning";
+  if (by !== "lexical") return "";
+  if (what === "meeting" || what === "transcript" || what === "transcript_segment") return "in the transcript";
+  if (what === "note") return "in a note";
+  return "";
+}
+
+/** The second line of a MEMORY row: the snippet, then how it was found and the day. */
 export function PaletteHitLine({ hit }: { hit: PaletteHit }) {
   const day = foundByDay(hit.at);
+  const found = foundByPlain(hit.origin, hit.kind);
   return (
     <span className="desk-deck-hit">
       {hit.parts.length ? (
@@ -156,9 +172,9 @@ export function PaletteHitLine({ hit }: { hit: PaletteHit }) {
           )}
         </span>
       ) : null}
-      {foundByWord(hit.origin) || day ? (
+      {found || day ? (
         <span className="desk-deck-hit-meta">
-          <FoundBy origin={hit.origin} />
+          {found ? <span className="desk-deck-found" data-found={found}>{found}</span> : null}
           {day ? <span className="surface-token desk-deck-day">{day}</span> : null}
         </span>
       ) : null}

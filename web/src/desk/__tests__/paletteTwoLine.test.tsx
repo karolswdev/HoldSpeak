@@ -83,7 +83,9 @@ describe("⌘K two-line hit", () => {
     expect(option.textContent).not.toContain("<mark>");
     expect(option.textContent).not.toContain(" · Priya");
     const meta = line.querySelector(".desk-deck-hit-meta") as HTMLElement;
-    expect(meta.querySelector(".surface-foundby")?.textContent).toBe("KEYWORD");
+    // Betterment Q3: how it was found, in plain words (no chip).
+    expect(meta.querySelector(".desk-deck-found")?.textContent).toBe("in the transcript");
+    expect(meta.querySelector(".surface-foundby")).toBeNull();
     expect(meta.querySelector(".desk-deck-day")?.textContent).toBe("10-01");
     expect(option.getAttribute("data-wrap")).not.toBeNull();
   });
@@ -133,19 +135,24 @@ describe("⌘K two-line hit", () => {
     expect(snippetParts("Atlas weeklyish plan", "zz", "Atlas weekly").map((p) => p.text).join("")).toBe("Atlas weeklyish plan");
   });
 
+  // Betterment Q3: only three ways read as words; any other shows nothing.
   it.each([
-    ["lexical", "KEYWORD"],
-    ["vector", "MEANING"],
-    ["time", "TIME"],
-    ["entity", "NAME"],
-    ["relationship", "LINK"],
-  ])("FoundBy: %s shows %s", async (origin, word) => {
-    hits = [{ kind: "note", source_ref: "note:n-3", title: "Cutover", snippet: "go back to the old cluster",
+    ["lexical", "meeting", "meeting:m-3", ["in the transcript"]],
+    ["lexical", "note", "note:n-3", ["in a note"]],
+    ["vector", "note", "note:n-3", ["by meaning"]],
+    ["vector", "meeting", "meeting:m-3", ["by meaning"]],
+    ["lexical", "decision", "decision:d-3", []],
+    ["time", "note", "note:n-3", []],
+    ["entity", "note", "note:n-3", []],
+    ["relationship", "note", "note:n-3", []],
+  ])("found by %s in a %s shows %j", async (origin, kind, ref, words) => {
+    hits = [{ kind, source_ref: ref, title: "Cutover", snippet: "go back to the old cluster",
       retrieval_origin: origin, occurred_at: `${YEAR}-09-29` }];
     await search("rollback");
-    const tokens = [...row(/Cutover/).querySelectorAll(".surface-foundby")];
-    expect(tokens.map((t) => t.textContent)).toEqual([word]);
-    expect(tokens[0].getAttribute("data-by")).toBe(word);
+    const option = row(/Cutover/);
+    expect([...option.querySelectorAll(".desk-deck-found")].map((t) => t.textContent)).toEqual(words);
+    expect(option.querySelector(".surface-foundby")).toBeNull();
+    expect(option.textContent).not.toMatch(/KEYWORD|MEANING|LINK|NAME/);
   });
 
   it("an origin with no word shows no token (never a guess)", async () => {
@@ -178,8 +185,9 @@ describe("⌘K two-line hit", () => {
     hits = [];
     await search("rollback");
     expect([...document.querySelectorAll(".desk-deck-band")].map((b) => b.textContent)).not.toContain("MEMORY");
-    expect(document.querySelector(".surface-foundby")).toBeNull();
-    expect(screen.getByText("No matching tools or Desk items.")).toBeTruthy();
+    expect(document.querySelector(".desk-deck-found")).toBeNull();
+    // Betterment Q3: with nothing found, Search still offers to ask.
+    expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual(['✦Ask "rollback"ASK']);
   });
 });
 

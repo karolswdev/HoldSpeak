@@ -182,7 +182,7 @@ describe("the palette finds a word inside a meeting", () => {
     await type(input, "quokka");
     expect(searches).toEqual(["quokka"]);
     expect(bands()).not.toContain("MEMORY");
-    expect(screen.getByText("No matching tools or Desk items.")).toBeTruthy();
+    expect(options()).toEqual(['✦Ask "quokka"ASK']);
   });
 
   it("a hit that opens nothing is left out; old hits never show under a new query", async () => {

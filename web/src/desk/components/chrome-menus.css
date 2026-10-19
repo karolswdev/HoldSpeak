@@ -517,6 +517,14 @@
   align-items: center;
   gap: 6px;
 }
+/* Betterment Q3: how a hit was found, as plain words (no chip). */
+.desk-next .desk-deck-found {
+  color: var(--text-muted);
+  font: 400 12px/1.4 var(--font-sans);
+}
+.desk-next .desk-deck-row.is-selected .desk-deck-found,
+.desk-next .desk-deck-row:hover:not(.is-ghost) .desk-deck-found,
+.desk-next .desk-deck-row:focus-visible:not(.is-ghost) .desk-deck-found,
 .desk-next .desk-deck-row.is-selected .desk-deck-snippet,
 .desk-next .desk-deck-row.is-selected .desk-deck-day,
 .desk-next .desk-deck-row:hover:not(.is-ghost) .desk-deck-snippet,

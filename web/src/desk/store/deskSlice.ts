@@ -68,6 +68,7 @@ export type DeskSlice = Pick<
   | "clearSelection"
   | "openAsk"
   | "openAskThread"
+  | "askQuestion"
   | "closeAsk"
   | "openChat"
   | "closeChat"
@@ -156,6 +157,11 @@ export const createDeskSlice: SliceCreator<DeskSlice> = (set, get) => ({
   openAskThread(threadId) {
     const nonce = (get().askThread?.nonce ?? 0) + 1;
     set({ askThread: { threadId, nonce } });
+    get().openAsk();
+  },
+  askQuestion(question) {
+    const nonce = (get().askThread?.nonce ?? 0) + 1;
+    set({ askThread: { threadId: null, nonce, question, run: true } });
     get().openAsk();
   },
   closeAsk() {
