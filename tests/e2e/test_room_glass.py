@@ -90,10 +90,13 @@ ENDS = ["end to end.", "cutover sync).", "Due: 2026-10-06.", "Due: 2026-10-07."]
 
 
 def _open_update_history(page: Any, project_id: str) -> None:
-    """The palette's project command opens saved updates without drafting."""
+    """The palette's project command opens saved updates without drafting.
+
+    Betterment P4: `Write update for <project>` writes a draft now; the saved
+    updates have their own row, `Saved updates of <project>`."""
     page.locator("[aria-controls=desk-tool-shelf]:visible").click()
-    page.locator("[aria-controls=desk-palette-listbox]").fill("Draft update for")
-    page.locator(f"[id='desk-palette-option-week.draft-update.{project_id}']").click()
+    page.locator("[aria-controls=desk-palette-listbox]").fill("Saved updates of")
+    page.locator(f"[id='desk-palette-option-week.updates.{project_id}']").click()
     page.get_by_test_id("update-list").wait_for(timeout=20_000)
 
 

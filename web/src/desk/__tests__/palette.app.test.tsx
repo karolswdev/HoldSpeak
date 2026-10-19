@@ -548,3 +548,53 @@ describe("Betterment AG1: Search \"agent\" finds Agents and Hand to agent, never
     expect(persona?.textContent).toContain("MODE");
   });
 });
+
+/* ── Betterment P4 (projects): Write update, no dead verb, modes after projects ──
+ * The hub's own recipe list (the seeded "Project" mode is in it). */
+import { takeRoomWriteRequest } from "../openObject";
+
+describe("Betterment P4: Search writes the update and lists only verbs that work", () => {
+  const seedModes = () => hubWire<{ recipes: unknown[] }>("recipes.seed").wire.recipes
+    .map((r) => fromWireRecipe(r)).filter((r): r is Persona => r !== null);
+
+  it("\"draft update\" lists one row, Write update for the project; Enter writes it in the Room", async () => {
+    useDesk.setState({ projects: [{ id: "p-pay", name: "Payments migration" }] as never,
+      items: { ...EMPTY_ITEMS, recipe: seedModes() } });
+    const input = await deck();
+    await type(input, "draft update");
+    const shown = rows().map((o) => o.textContent ?? "");
+    // Every row but the Ask row (Q3: Ask "<what he typed>") that names an update.
+    expect(shown.filter((t) => /update/i.test(t) && !t.endsWith("ASK")))
+      .toEqual([expect.stringContaining("Write update for Payments migration")]);
+    for (const t of shown) expect(t).not.toMatch(/Select a Project|No Room has two windows|Draft update/);
+    expect(top()?.id).toBe("desk-palette-option-week.draft-update.p-pay");
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(openProjectRoom).toHaveBeenCalledWith("p-pay");
+    expect(takeRoomWriteRequest("p-pay")).toBe(true);
+    expect(takeRoomWriteRequest("p-pay")).toBe(false);
+  });
+
+  it("\"gather\" and \"ask this project\" list no dead row", async () => {
+    useDesk.setState({ projects: [{ id: "p-pay", name: "Payments migration" }] as never });
+    const input = await deck();
+    for (const q of ["gather", "ask this project"]) {
+      await type(input, q);
+      for (const o of rows()) {
+        expect(o.textContent, q).not.toMatch(/Select a Project|No Room has two windows/);
+        expect(o.getAttribute("aria-disabled"), q).not.toBe("true");
+      }
+    }
+  });
+
+  it("\"project\": his projects stand above the saved Project mode", async () => {
+    useDesk.setState({ projects: [{ id: "p-pay", name: "Payments migration" }] as never,
+      items: { ...EMPTY_ITEMS, recipe: seedModes() } });
+    const input = await deck();
+    await type(input, "project");
+    const ids = rows().map((o) => o.id.replace("desk-palette-option-", ""));
+    const mode = rows().findIndex((o) => (o.textContent ?? "").includes("MODE"));
+    expect(mode).toBeGreaterThan(-1);
+    expect(ids.indexOf("project.open.p-pay")).toBeGreaterThan(-1);
+    expect(ids.indexOf("project.open.p-pay")).toBeLessThan(mode);
+  });
+});

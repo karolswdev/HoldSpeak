@@ -1554,3 +1554,35 @@ describe("Betterment Q5: the Room's Ask field opens Ask with the project in Abou
     expect(well).toHaveValue("");
   });
 });
+
+/* ── Betterment P4: `Write update for <project>` (⌘K, the Object menu) ──
+ * The palette row and the Object menu verb ask the Room to press its own
+ * Write update (openObject.writeProjectUpdate). The Room takes the request
+ * once the engine roster is read and writes the records draft, with no
+ * press of his on the Room: the same outcome as the head's Button. */
+import { takeRoomWriteRequest, writeProjectUpdate } from "../../../desk/openObject";
+
+describe("Betterment P4: the palette's Write update writes in the Room", () => {
+  const w = W1 as unknown as W1;
+
+  it("a request from ⌘K opens the Room and writes the records draft once", async () => {
+    const { pid } = w;
+    const records = (w.records.answer as { update: { id: string } }).update.id;
+    replay({ ...w.gets, ...w.after }, {
+      [`POST /api/projects/${pid}/updates/draft`]: () => w.records.answer,
+      [`POST /api/updates/${records}/engine-pass`]: () => w.start.answer,
+      [`GET /api/update-jobs/${(w.start.answer as { job: { id: string } }).job.id}`]: () => w.polls[0].answer,
+    }, true);
+    clearEngineCache();
+    writeProjectUpdate(pid);
+    render(<WindowHarness scope={`project:${pid}`} />);
+    await screen.findByTestId("update-plain-text");
+    const drafts = calls.filter((c) => c.key === `POST /api/projects/${pid}/updates/draft`);
+    expect(drafts).toHaveLength(1);
+    expect(drafts[0].json?.generator).toBe("deterministic");
+    expect((screen.getByTestId("update-plain-text") as HTMLTextAreaElement).value)
+      .toContain("blocked on the security team's HSM key ceremony");
+    // The request is taken once: a reload of the Room never writes again.
+    expect(takeRoomWriteRequest(pid)).toBe(false);
+  }, 15000);
+});

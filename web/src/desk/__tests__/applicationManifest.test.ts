@@ -93,7 +93,7 @@ describe("DeskOS application manifest", () => {
     const names = (group: (typeof GO_GROUPS)[number]) =>
       goRows(group).map((r) => (r.kind === "app" || r.kind === "launcher" ? r.label : r.kind === "verb" ? r.label ?? r.verbId : r.kind));
     expect(names("daily")).toEqual([
-      "Today", "Needs you", "Capture", "Meetings", "People", "projects", "Agents", "Ask AI", "Speak",
+      "Today", "Needs you", "Capture", "Meetings", "People", "projects", "Decisions", "Agents", "Ask AI", "Speak",
     ]);
     expect(names("work")).toEqual(["Automations", "Memory", "Voice commands", "drawers"]);
     expect(names("builder")).toEqual([
@@ -108,8 +108,9 @@ describe("DeskOS application manifest", () => {
     // Every live, windowed application with a door to open is in Go, or is a
     // setup row of the HoldSpeak menu, or is opened by its own verb.
     const inGo = new Set(GO_GROUPS.flatMap(goRows).flatMap((r) => (r.kind === "app" ? [r.app.action] : [])));
+    // Betterment P4: Projects (the window) is Go ▸ Projects ▸ All projects.
     const elsewhere = new Set(["configure-settings", "configure-setup", "configure-cadence", "change-places",
-      "record-live", "project-setup"]);
+      "record-live", "project-setup", "open-projects"]);
     for (const application of DESK_APPLICATIONS) {
       if (application.parked) continue;
       expect(inGo.has(application.action) || elsewhere.has(application.action), application.action).toBe(true);

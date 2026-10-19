@@ -254,8 +254,9 @@ describe.each([[1440, false], [393, true]] as const)("S1: Go at %i is the manife
   });
 
   // Betterment daily D5: Brief and The week retired into Today.
-  const DAILY_WORK = ["Today", "Needs you", "Capture", "Meetings", "People", "Projects", "Agents", "Ask AI", "Speak",
-    "Automations", "Memory", "Voice commands"];
+  // Betterment P4 (projects): Projects ▸ (All projects, then each) and Decisions.
+  const DAILY_WORK = ["Today", "Needs you", "Capture", "Meetings", "People", "Projects", "Decisions", "Agents",
+    "Ask AI", "Speak", "Automations", "Memory", "Voice commands"];
 
   it("Go shows Daily then Work; Builder ▸ only when Builder tools is on, with eight rows", () => {
     phone(isPhone);
@@ -304,9 +305,39 @@ describe.each([[1440, false], [393, true]] as const)("S1: Go at %i is the manife
   it("every Go row comes from goRows (no hand list)", () => {
     phone(isPhone);
     const fromManifest = GO_GROUPS.flatMap(goRows).length;
-    // Daily: Today, Needs you, Capture and six applications (daily D5
-    // retired Brief and The week into Today).
-    expect(fromManifest).toBe(9 + 4 + 8);
+    // Daily: Today, Needs you, Capture, Projects ▸ and six applications
+    // (daily D5 retired Brief and The week into Today; P4 added Decisions).
+    expect(fromManifest).toBe(10 + 4 + 8);
+  });
+
+  // Betterment P4 (projects): Projects and Decisions are one press from Go,
+  // also on a desk with no project yet (the old Projects ▸ was not drawn).
+  it("Projects ▸ All projects and Decisions open their own windows, also with no project on the desk", () => {
+    phone(isPhone);
+    useDesk.setState({ items: { ...EMPTY_ITEMS }, projects: [] } as never);
+    const opened: string[] = [];
+    const offs = ["open-projects", "open-decisions"].map((action) =>
+      registerSurface(action, () => opened.push(action)));
+    render(<DeskMenuBar />);
+    let menu = goMenu();
+    expect(top(menu)).toEqual(expect.arrayContaining(["Projects", "Decisions"]));
+    fireEvent.click(within(menu).getByRole("menuitem", { name: /^Projects\W*$/ }));
+    const projects = screen.getAllByRole("menu").at(-1)!;
+    expect(labels(projects).filter((l) => l !== "Projects")).toEqual(["All projects"]);
+    fireEvent.click(within(projects).getByRole("menuitem", { name: /All projects/ }));
+    menu = screen.queryByRole("menu", { name: "Go menu" }) ?? goMenu();
+    fireEvent.click(within(menu).getByRole("menuitem", { name: /^Decisions/ }));
+    expect(opened).toEqual(["open-projects", "open-decisions"]);
+    offs.forEach((off) => off());
+  });
+
+  it("Projects ▸ is All projects, then each project; a project opens its own window", () => {
+    phone(isPhone);
+    render(<DeskMenuBar />);
+    const menu = goMenu();
+    fireEvent.click(within(menu).getByRole("menuitem", { name: /^Projects\W*$/ }));
+    const projects = screen.getAllByRole("menu").at(-1)!;
+    expect(labels(projects).filter((l) => l !== "Projects")).toEqual(["All projects", "Ledger migration"]);
   });
 });
 

@@ -237,7 +237,7 @@ describe("Go at 393 is the manifest's Go groups (betterment shell S1)", () => {
     const words = (out: WorkMenuEntry[]) => out.map((e) => (e.type === "sep" ? "—" : e.type === "note" ? e.label : e.label));
     const out = phoneGo({ row, projects: [{ id: "p-1", name: "Ledger cutover" }], openProject: () => {} });
     expect(words(out)).toEqual([
-      "Today", "Needs you", "Capture", "Meetings", "People", "Projects", "Agents", "Ask AI", "Speak", "—",
+      "Today", "Needs you", "Capture", "Meetings", "People", "Projects", "Decisions", "Agents", "Ask AI", "Speak", "—",
       "Automations", "Memory", "Voice commands", "—", "New"]);
     const nu = out[out.length - 1] as Extract<WorkMenuEntry, { type: "sub" }>;
     expect(nu.entries.map((e) => (e.type === "item" ? e.label : "—"))).toEqual(["Note", "Meeting", "Project", "Person"]);
@@ -249,8 +249,9 @@ describe("Go at 393 is the manifest's Go groups (betterment shell S1)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Go" }), { detail: 0 });
     const menu = screen.getByRole("menu", { name: "Go menu" });
     const heads = within(menu).getAllByRole("menuitem").filter((h) => h.getAttribute("aria-haspopup") === "menu");
-    expect(heads.map((h) => h.querySelector(".desk-menu-label")?.textContent?.trim())).toEqual(["New"]);
-    fireEvent.click(heads[0]);
+    // Betterment P4: Projects ▸ (All projects) is drawn on an empty desk too.
+    expect(heads.map((h) => h.querySelector(".desk-menu-label")?.textContent?.trim())).toEqual(["Projects", "New"]);
+    fireEvent.click(heads[1]);
     expect(within(menu).getByRole("menuitem", { name: /Note/ })).toBeInTheDocument();
   });
 
