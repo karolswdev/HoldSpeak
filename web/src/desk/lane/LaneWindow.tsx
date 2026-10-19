@@ -194,15 +194,16 @@ function LaneFrame({ launchId }: { launchId: string }) {
       onClose={() => useLane.getState().close()}
     >
       <LaneBody lane={lane} error={error} raw={raw} agent={agent} compact={compact} itemTitle={flight?.title ?? ""}
-        done={flight?.state === "done"} />
+        done={flight?.state === "done"} screenSaid={flight?.screen?.said ?? null} />
       {lane ? <LaneFooter lane={lane} /> : null}
     </DeskWindowFrame>
   );
 }
 
 function LaneBody({
-  lane, error, raw, agent, compact, itemTitle, done = false,
+  lane, error, raw, agent, compact, itemTitle, done = false, screenSaid = null,
 }: {
+  screenSaid?: string | null;
   /** Betterment AG10: the turn is done; its Result leads the Story. */
   done?: boolean;
   lane: LaneWire | null;
@@ -274,7 +275,7 @@ function LaneBody({
   return (
     <div className="desk-pullout-body lw-body" data-testid="lane-body" ref={bodyRef} onScroll={onScroll}>
       <LaneHead lane={lane} agent={agent} itemTitle={itemTitle} />
-      {done && !raw ? <ResultBlock lane={lane} /> : null}
+      {done && !raw ? <ResultBlock lane={lane} screenSaid={screenSaid} /> : null}
       {unreadParts(lane).map(([part, reason]) => (
         <NotReadLine key={part} part={part} reason={reason} testId={`lane-not-read-${part.toLowerCase()}`} />
       ))}

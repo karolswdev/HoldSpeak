@@ -28,13 +28,17 @@ function names(rows: readonly LaneUseRow[] | undefined): string[] {
   return (rows ?? []).map((row) => row.label || row.title || row.ref).filter(Boolean);
 }
 
-export function ResultBlock({ lane }: { lane: LaneWire }) {
+export function ResultBlock({ lane, screenSaid }: {
+  lane: LaneWire;
+  /** An agent with no hook: its last words as its screen showed them. */
+  screenSaid?: string | null;
+}) {
   const worktree = lane.worktree;
   const files = isNotRead(worktree) ? null : worktree.files.length;
   const branch = branchFace(lane.launch.branch ?? (isNotRead(worktree) ? null : worktree.branch)) || "";
   const session = (lane.session && typeof lane.session === "object" ? lane.session : {}) as { last_assistant_text?: string | null };
   const lastWords = (lane as LaneWire & { last_words?: string | null | { not_read: string } }).last_words;
-  const said = String((typeof lastWords === "string" ? lastWords : "") || session.last_assistant_text || "").trim();
+  const said = String((typeof lastWords === "string" ? lastWords : "") || session.last_assistant_text || screenSaid || "").trim();
   const used = (lane as LaneWire & { used?: LaneUsed | { not_read: string } }).used;
   const use = used && !("not_read" in used) ? used : null;
   const pr = lane.follow_through?.pr;
