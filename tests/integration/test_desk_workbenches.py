@@ -1064,7 +1064,7 @@ def test_a_starter_makes_one_automation_and_the_friday_walk_reads_a_result(tmp_p
     start = _record_gets("starters", client, ["/api/workbench-templates", "/api/workbenches"], "", tmp_path)
     starters = start["/api/workbench-templates"]["templates"]
     assert [s["id"] for s in starters] == [
-        "friday-team-update", "meeting-follow-ups", "one-on-one-prep", "summarize-a-drawer"]
+        "friday-team-update", "meeting-follow-ups", "one-on-one-prep", "summarize-a-drawer", "morning-prep"]
     friday = starters[0]
     assert (friday["schedule"], friday["sources"], friday["output_target"], friday["blanks"]) == (
         "0 15 * * 5", ["meetings:this_week", "notes:this_week"], "inbox", {})

@@ -295,3 +295,75 @@ describe("Today names an automation's NEW result (Betterment A6)", () => {
     expect(screen.queryByTestId("today-new-result")).toBeNull();
   });
 });
+
+// ── Betterment daily D9: Morning prep fills Today's Prepared block ─────────
+// fixtures/daily-week/today-prepared.json holds a real hub's reads after
+// Prepare now ran Morning prep on the recon's week (the 1:1 with Mira in 90
+// minutes), with Claude Code (the fake CLI replaying its tool plan over MCP)
+// as the engine: tests/integration/test_desk_morning_prep.py.
+import PREPARED from "./fixtures/daily-week/today-prepared.json";
+
+describe("Today's Prepared block (Betterment daily D9), on the recorded run", () => {
+  const gets = PREPARED.gets as Gets;
+  const read = gets["/api/automations/prepared"] as { prepared: { engine: string; workbench_id: string } };
+
+  it("shows the block with the engine's name, a card for the 1:1 with Mira, and what it looked at", async () => {
+    vi.setSystemTime(new Date(String(PREPARED.recordedAt)));
+    replay(gets);
+    render(<TodayView />);
+    const block = await screen.findByTestId("today-prepared");
+    expect(read.prepared.engine).toBeTruthy();
+    expect(within(block).getByTestId("today-prepared-by").textContent).toContain(read.prepared.engine);
+    expect(within(block).getByTestId("today-prepared-new")).toHaveTextContent("NEW");
+    const cards = within(block).getAllByTestId("today-prepared-card");
+    const mira = cards.find((card) => card.textContent?.includes("1:1 with Mira"))!;
+    expect(mira).toBeTruthy();
+    expect(mira.textContent).toContain(String(PREPARED.miraAt));
+    expect(mira.textContent).toContain("Mira owes: Draft the rollback runbook");
+    // Her card opens her prep (the event on the calendar names her).
+    expect(within(mira).getByRole("button", { name: "Prep" })).toBeTruthy();
+    expect(within(block).getByTestId("today-prepared-mine").textContent).toContain("Email Dana about the cutover window");
+    expect(within(block).getByTestId("today-prepared-nudges").textContent).toContain("Theo:");
+    expect(within(block).getByTestId("today-prepared-looked").textContent).toContain("Payments platform sync");
+    // Prepare now runs it once more.
+    expect(screen.getByTestId("today-prepare-now")).toBeTruthy();
+  });
+
+  it("Add on a suggested point puts it on Mira's 1:1 agenda (the prep's own writes)", async () => {
+    vi.setSystemTime(new Date(String(PREPARED.recordedAt)));
+    const { posts } = replay(gets);
+    api.fetch.mockImplementation(async (url: string, init?: { method?: string; json?: unknown }) => {
+      if (init?.method && init.method !== "GET") {
+        posts.push({ url: String(url), json: init.json });
+        return String(url).endsWith("/one-on-ones") ? { one_on_one: { id: "1on1-new" } } : {};
+      }
+      return recordedGet(gets, String(url));
+    });
+    render(<TodayView />);
+    const raise = (await screen.findAllByTestId("today-prepared-raise"))[0];
+    expect(raise.textContent).toContain("Suggested");
+    await act(async () => { fireEvent.click(within(raise).getByRole("button", { name: /^Add to the agenda:/ })); });
+    await waitFor(() => expect(posts.some((p) => p.url.endsWith("/agenda"))).toBe(true));
+    const agenda = posts.find((p) => p.url.endsWith("/agenda"))!;
+    expect(agenda.url).toMatch(/^\/api\/people\/one-on-ones\/[^/]+\/agenda$/);
+    expect(agenda.json).toEqual(expect.objectContaining({ body: "Who owns read-only vs archive for the old ledger?", state: "open" }));
+    expect(await within(raise).findByText("On the agenda")).toBeTruthy();
+  });
+
+  it("Prepare now runs Morning prep (Run now on its automation)", async () => {
+    vi.setSystemTime(new Date(String(PREPARED.recordedAt)));
+    const { posts } = replay(gets);
+    render(<TodayView />);
+    const prepare = await screen.findByTestId("today-prepare-now");
+    await act(async () => { fireEvent.click(prepare); });
+    await waitFor(() => expect(posts.map((p) => p.url)).toContain(`/api/workbenches/${read.prepared.workbench_id}/run`));
+  });
+
+  it("with no Morning prep result there is no block (the recorded week before any run)", async () => {
+    replay();
+    render(<TodayView />);
+    await screen.findByTestId("today-needs-count");
+    expect(screen.queryByTestId("today-prepared")).toBeNull();
+    expect(screen.queryByTestId("today-prepare-now")).toBeNull();
+  });
+});

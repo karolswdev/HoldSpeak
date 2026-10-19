@@ -664,7 +664,7 @@ describe("A7: home, New automation and starters", () => {
     // The starter reads in words: never cron, never "Agent".
     expect(friday).toHaveTextContent("Every Friday at 15:00 · My Inbox");
     expect(chooser.textContent).not.toMatch(/\* \* \*|0 15|Agent|TODO|Triage|Morning Brief/);
-    expect(within(chooser).getAllByRole("button").filter((b) => b.className.includes("automation-starter"))).toHaveLength(5);
+    expect(within(chooser).getAllByRole("button").filter((b) => b.className.includes("automation-starter"))).toHaveLength(6);
 
     hub.afterCreate = [withStarters(fridayNew)];
     fireEvent.click(friday); presses += 1;
@@ -803,7 +803,7 @@ describe("A6: Put it in", () => {
     const editor = await screen.findByTestId("automation-put-editor");
     const choices = () => within(editor).getAllByTestId("automation-put-choice");
     await waitFor(() => expect(choices().map((c) => c.querySelector(".automation-engine-name")?.textContent))
-      .toEqual(["My Inbox", "Needs you", FOLDER.name]));
+      .toEqual(["My Inbox", "Needs you", "Today", FOLDER.name]));
     expect(choices()[0]).toHaveTextContent("In use");
     // A destination only prepares the send: the words say he presses Send.
     expect(editor).toHaveTextContent("Prepare a send (you press Send)");

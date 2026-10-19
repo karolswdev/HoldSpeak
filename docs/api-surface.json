@@ -728,6 +728,16 @@
       "consumers": []
     },
     {
+      "path": "/api/automations/prepared",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/automations/presets",
       "methods": [
         "GET"

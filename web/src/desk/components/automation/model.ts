@@ -190,6 +190,7 @@ export function lessonWords(count: number): string | undefined {
 export function putWords(target: string | null | undefined, destinationName?: string | null): string {
   const value = String(target ?? "inbox");
   if (value === "needs_you") return "Needs you";
+  if (value === "today") return "Today";
   if (value.startsWith("destination:")) {
     const name = String(destinationName ?? "").trim();
     return name ? `${name} (you press Send)` : "A saved destination (you press Send)";
