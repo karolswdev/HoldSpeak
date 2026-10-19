@@ -34,6 +34,7 @@ import hs172 from "./fixtures/meetings-hub/hs172.json";
 import p17t from "./fixtures/meetings-hub/p17t.json";
 import p17tReady from "./fixtures/meetings-hub/p17t-ready.json";
 import lookedAt from "./fixtures/meetings-hub/looked-at.json";
+import sinceLast from "./fixtures/meetings-hub/since-last.json";
 
 vi.mock("../shell", async (original) => ({
   ...(await original<typeof import("../shell")>()),
@@ -570,5 +571,40 @@ describe("what the summary read (betterment/capture C2)", () => {
     render(<Shell><MeetingRecord meetingId="m-ran" onClose={() => undefined} /></Shell>);
     await screen.findByTestId("meeting-decisions");
     expect(screen.queryByRole("button", { name: /Looked at/ })).toBeNull();
+  });
+});
+
+describe("Since last time (betterment/capture C6)", () => {
+  /* Friday's aftercare as the hub served it
+   * (fixtures/meetings-hub/since-last.json, recorded by
+   * tests/integration/test_desk_meetings.py), on the HS-172 record. */
+  const since = sinceLast.aftercare.since_last_meeting;
+  it("one folded line under the summary names the sync and its day; unfolded, closed, still open and new, each a link", async () => {
+    at(hs172 as Fixture);
+    hub(hs172 as Fixture, { "/api/meetings/m-ran/aftercare": sinceLast.aftercare });
+    render(<Shell><MeetingRecord meetingId="m-ran" onClose={() => undefined} /></Shell>);
+    const fold = await screen.findByRole("button", { name: "Since Payments platform sync, Thu 15 Oct: 1 closed · 2 still open · 2 new" });
+    const decisions = screen.getByTestId("meeting-decisions");
+    expect(fold.compareDocumentPosition(decisions) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByTestId("meeting-since")).toBeNull();
+    fireEvent.click(fold);
+    const body = await screen.findByTestId("meeting-since");
+    expect(within(screen.getByTestId("meeting-since-closed")).getByText(since.closed_actions[0].task)).toBeTruthy();
+    const open = screen.getByTestId("meeting-since-open");
+    expect(open.textContent).toContain("Profile the reconciliation job");
+    expect(open.textContent).toContain("Draft the rollback runbook for the cutover");
+    expect(screen.getByTestId("meeting-since-new").textContent).toContain("Write the ADR for idempotent retries");
+    fireEvent.click(within(open).getByRole("button", { name: "Profile the reconciliation job" }));
+    expect(openSurfaceOr).toHaveBeenCalledWith("review-meetings", "/history", `meeting:${since.previous_meeting.id}`);
+    expect(body.textContent).not.toMatch(/\b0 /);
+    expect(rawButtons()).toEqual([]);
+  });
+
+  it("no previous meeting of the same kind: no line", async () => {
+    at(hs172 as Fixture);
+    hub(hs172 as Fixture, { "/api/meetings/m-ran/aftercare": { ...sinceLast.aftercare, since_last_meeting: null } });
+    render(<Shell><MeetingRecord meetingId="m-ran" onClose={() => undefined} /></Shell>);
+    await screen.findByTestId("meeting-decisions");
+    expect(screen.queryByRole("button", { name: /^Since / })).toBeNull();
   });
 });

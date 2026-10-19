@@ -1,0 +1,16 @@
+Me: Okay, let's start. This is the payments platform sync. Three things today: the ledger cutover date, the duplicate charge incidents, and on-call.
+Mira: On the cutover, the ledger migration dry run passed on staging Tuesday night. Forty-one million rows, no drift. I want to freeze schema changes on the ledger from Monday.
+Me: Any objections to the schema freeze from Monday? No? Then we freeze ledger schema changes from Monday until the cutover is done.
+Theo: The reconciliation job is the slow part. It took three hours on staging. I think the batch size is wrong. I will profile it this week.
+Me: Theo, can you have the profile results by Thursday?
+Theo: Thursday works.
+Jun: The duplicate charges. We had two more last week. Both were client retries after a gateway timeout. The gateway charged twice.
+Mira: We keep talking about idempotent retries. We have not decided anything. There are two options: a dedupe key in the client, or a dedupe table on the server.
+Me: I don't want to decide that here. Let's take it to the architecture review on Friday with both options written down. Jun, can you write the two options in one page before Friday?
+Jun: Yes, I'll write the options page by Thursday evening.
+Mira: I also need the rollback runbook for the cutover. I'll draft it.
+Me: Mira, draft the rollback runbook by Tuesday please.
+Theo: On call. I am on call next week and I have not had the alert rule changes reviewed.
+Me: I'll review Theo's alert rule changes tomorrow.
+Jun: One more risk: the bank file format changes on November first. If the cutover slips past that, we have to support both formats.
+Me: Noted. That's a risk on the cutover date. Okay, thanks everyone.
