@@ -64,9 +64,9 @@ The menu shows an unavailable verb dimmed, with that reason.
 
 | Menu | Verbs |
 | --- | --- |
-| **Desk** | **New Note**, **Write a thought**, **New Decision**, **New Knowledge**, **New Automation**, **New Thread**, **New Project**, **Hide the menus** (Settle in), **List view** or **Spatial view**, **Arrange desk**, **Overview**, **Reset layout**, **Reset to seed…**, **Refresh from hub**, **Open Intelligence**, **Open People** |
+| **Desk** | **New Note**, **Write a thought**, **New Decision**, **New Knowledge**, **New Automation**, **New Thread**, **New Project**, **Hide the menus** (Settle in). **Reset layout**, **Reset to seed…** and **Refresh from hub** are in the command palette only. |
 | **Object** | **Open**, **Get Info**, **Ask this project**, **Ask AI**, **Continue in thread**, **Edit**, **Rename**, **Duplicate**, **Move to Zone**, **Delete**, **Focus** (Zone) |
-| **Go** | One entry for each tool in `DESK_APPLICATIONS`. An open window gets focus instead of a second copy. |
+| **Go** | **Open Today**, **Open People**, and one entry for each tool in `DESK_APPLICATIONS`. An open window gets focus instead of a second copy. |
 | **Window** | **Close window**, **Iconify**, **Cycle windows**, **Cycle windows (reverse)**, **Snap left**, **Snap right**, **Zoom**, **To back**, and the four Chair windows |
 | System | **Search**, **Keyboard shortcuts** |
 | Thread slash commands | **Keep as note**, **Fork from here**, **Stop generation**, **New thread**, **Switch mode**, **Insert prompt**, **Show tools**, **Add todo**, **Compact thread**, **Toggle guardrail** |
