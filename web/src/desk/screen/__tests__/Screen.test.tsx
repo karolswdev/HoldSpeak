@@ -229,11 +229,10 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     for (const filed of ["meeting:m-standup", "decision:d-freeze", "people:p-jordan"]) expect(keys()).not.toContain(filed);
     // a loose object Needs you lists wears a lamp
     expect(icon(/^Vendor call, MEETING, NEEDS YOU/).querySelector(".desk-icon-lamp")?.getAttribute("data-tone")).toBe("warn");
-    // the agents: `<Agent>: <item short name>`, the lamp by state
-    const asks = icon(/^Claude Code: rollback runbook, AGENT, ASKS/);
-    expect(asks.querySelector(".desk-icon-lamp")?.getAttribute("data-tone")).toBe("ask");
-    const works = icon(/^Codex: reconciliation job, AGENT, WORKS/);
-    expect(works.querySelector(".desk-icon-lamp")?.getAttribute("data-tone")).toBe("info");
+    // Betterment AG8: no per-agent icon on the floor (the Agents drawer,
+    // its Dock tile and Needs you carry the agents).
+    expect(screen.queryByRole("button", { name: /^Claude Code: rollback runbook/ })).toBeNull();
+    expect(keys().filter((k) => k.startsWith("coder:"))).toEqual([]);
     // no chips on the screen: only lamps and count notches
     expect(document.querySelector(".desk-screen .state-chip, .desk-screen .surface-token")).toBeNull();
   });
@@ -252,7 +251,6 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     expect(at(/^Agents/)).toEqual({ x: 20, y: 300 });
     expect(at(/^Needs you/)).toEqual({ x: 1300, y: 12 });
     expect(at(/^Archive/)).toEqual({ x: 1300, y: 660 });
-    expect(at(/^Claude Code: rollback runbook/)).toEqual({ x: 1170, y: 12 });
     expect(at(/^Vendor call/).x).toBe(210);
   });
 
@@ -312,8 +310,6 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     // PHILO-17 (2b): a person icon opens THAT person, in their own window.
     expect(shell.openPrimitive).toHaveBeenCalledWith("people:p-avery");
     expect(shell.openSurfaceOr).not.toHaveBeenCalledWith("open-people", "/", "people:p-avery");
-    fireEvent.keyDown(icon(/^Claude Code: rollback runbook/), { key: "Enter" });
-    expect(shell.openCoderSession).toHaveBeenCalledWith("claude:c1");
   });
 
   it("Astra's P1: a failed membership read keeps a filed object off the screen; Retry rereads only it", async () => {

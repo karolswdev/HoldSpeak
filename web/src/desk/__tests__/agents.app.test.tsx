@@ -680,12 +680,15 @@ describe("the Agents list is the fleet (Betterment AG8)", () => {
     const groups = screen.getAllByTestId("conductor-project");
     expect(groups.map((g) => g.getAttribute("aria-label"))).toEqual(["Ledger", "Platform"]);
     expect(groups.map((g) => g.querySelector(".kit-pill")?.textContent)).toEqual(["Needs you", "Needs you"]);
+    // The hand that waits for a free agent stands after the working one.
     expect(order(groups[0])).toEqual(["launch:launch_ag8_held", "launch:launch_ag8_work", expect.stringMatching(/^queue:/)]);
     expect(order(groups[1])).toEqual(["launch:launch_ag8_ask", "launch:launch_ag8_new", "launch:launch_ag8_quiet"]);
     const pills = within(groups[1]).getAllByTestId("conductor-pill").map((el) => el.textContent);
     expect(pills).toEqual(["Done · New", "Quiet"]);
-    // Every Mac agent is connected in this rig: no "On this Mac" section.
-    expect(screen.queryByTestId("conductor-coders")).toBeNull();
+    // The rig's agents lack their hooks: "On this Mac" shows (it shows only
+    // when something is missing), each with Connect.
+    expect(within(screen.getByTestId("conductor-coders")).getAllByTestId("conductor-pill").map((el) => el.textContent))
+      .toEqual(["Not connected", "Not connected", "Not connected"]);
   });
 
   it("the Dock tile carries the worst lamp, the mark for New and the count that needs him", () => {

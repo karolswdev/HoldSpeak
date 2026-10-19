@@ -78,8 +78,8 @@ describe("Agents in the Conductor (HS-100-09, re-anchored by PHILO-14 C4)", () =
     // interior kit, canvas window "Conductor"): `1 at work` is the AppHead's
     // big fact in sentence case; the ask is a lamp on the StatusStrip.
     const head = screen.getByTestId("conductor-head").textContent ?? "";
-    expect(head).toContain("1 at work");
-    expect(head).toContain("1 ASK");
+    // Betterment AG8: the fact counts only what is there.
+    expect(head).toContain("1 needs you · 1 working");
   });
 
   it("never says Personas", async () => {

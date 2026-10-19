@@ -422,6 +422,9 @@ export function fleetOrder(members: readonly ConductorMember[]): ConductorMember
     .sort(([a, ai], [b, bi]) => {
       const rank = fleetRank(a) - fleetRank(b);
       if (rank) return rank;
+      // A hand that waits for a free agent stands after the working ones.
+      const waits = Number(a.live === "queued") - Number(b.live === "queued");
+      if (waits) return waits;
       const at = a.whenSort ?? 0;
       const bt = b.whenSort ?? 0;
       if (at !== bt) return fleetRank(a) === 0 ? at - bt : bt - at;

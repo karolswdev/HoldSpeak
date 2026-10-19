@@ -409,6 +409,16 @@
       ]
     },
     {
+      "path": "/api/agent/hand/queue/{queue_id}",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.agent_hand",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/agent/launches/{launch_id}",
       "methods": [
         "GET"

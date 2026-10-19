@@ -360,10 +360,10 @@ describe("PHILO-14 C4 the Conductor window", () => {
     const missing = { ...DETECT, agents: [{ ...DETECT.agents[0], hooks: "missing" }, DETECT.agents[1]] };
     detectReply = () => missing;
     render(<ConductorWindow />);
-    // A coder that needs a fix keeps the coders on this Mac open.
-    await screen.findByRole("button", { name: "Codex" });
-    expect(pillOf("Codex")).toBe("Not installed");
-    expect(within(rowOf("Codex")).getByRole("button", { name: "Copy install: Codex" })).toBeTruthy();
+    // Betterment AG8: "On this Mac" lists only what is missing: Claude Code
+    // is not connected; Codex (not installed) is not his agent here.
+    await screen.findByRole("button", { name: "Claude Code" });
+    expect(screen.queryByRole("button", { name: "Codex" })).toBeNull();
     expect(pillOf("Claude Code")).toBe("Not connected");
     detectReply = () => DETECT;
     await act(async () => {
@@ -438,8 +438,8 @@ describe("PHILO-14 C4 the Conductor window", () => {
     expect(notRead.textContent).toContain("NOT READ");
     expect(screen.queryByText("No agent found")).toBeNull();
     expect(screen.queryByText(/No sessions/i)).toBeNull();
-    // The ready agents still show; no live agent is claimed gone.
-    expect(await screen.findByRole("button", { name: "Claude Code" })).toBeTruthy();
+    // No live agent is claimed gone.
+    expect(screen.queryByTestId("conductor-empty")).toBeNull();
     sessionsReply = () => SESSIONS;
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     await screen.findByRole("button", { name: "Write the rollback runbook" });
