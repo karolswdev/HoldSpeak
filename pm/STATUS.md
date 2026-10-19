@@ -8,7 +8,7 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
-C9 moves PCM admission into a bounded queue and writes the buffer/journal on
+C9 #1379 moves PCM admission into a bounded queue and writes the buffer/journal on
 one writer thread. Stop seals admission, aborts native streams, flushes accepted
 items, then snapshots. Queue refusal and writer failure survive into the saved
 Meeting and recoverable journal marker; Stop does not claim complete capture.
