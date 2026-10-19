@@ -296,6 +296,16 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
                         run_trace.run_id_of(cred.principal.identity),
                         str(call.get("name") or ""), call.get("arguments"), response,
                     )
+                elif cred is not None and body.get("method") == "tools/call":
+                    # Betterment AG10: a launched agent's call, against its
+                    # launch (Looked at / Wrote / Prepared on its Result).
+                    from ...services import run_trace
+
+                    launch_key = run_trace.launch_key_of(cred.principal.identity)
+                    if launch_key:
+                        run_trace.record_call(
+                            launch_key, str(call.get("name") or ""), call.get("arguments"), response,
+                        )
                 return response
             finally:
                 _origin.reset(origin_token)

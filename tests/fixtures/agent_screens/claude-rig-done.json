@@ -1,0 +1,8 @@
+{
+  "agent": "claude",
+  "title": "✳ fake-claude",
+  "expected_state": "idle",
+  "rule_at_capture": "live_prompt_box",
+  "source": "rig: docs/internal/betterment/agents/rig/fake_claude.py in tmux (hooks off)",
+  "captured_at": "2026-10-19T03:39:37.232817+00:00"
+}

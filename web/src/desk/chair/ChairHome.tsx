@@ -162,7 +162,8 @@ function CaptureBar() {
         onClick={() => void openNewThought()}
         data-testid="arrival-develop-thought"
       >
-        Write a thought
+        {/* Betterment Q8 (one note): one kind, one name. */}
+        New note
       </Button>
       <Button
         variant="ghost"

@@ -141,7 +141,9 @@ def test_adopt_note_snapshots_existing_note_without_overwrite_and_is_idempotent(
     assert adopted["working_note"]["id"] == "ordinary"
     assert service.get(OWNER, adopted["id"], include_raw=True)["raw_text"] == "exact\nbody"
     assert db.notes.get("ordinary").to_dict()["body_markdown"] == "exact\nbody"
-    assert db.directory_memberships.get("note:ordinary").directory_id == INBOX_DIRECTORY_ID
+    # Betterment Q8 (one note): adoption never files the note; an unfiled
+    # note stays unfiled (before, it moved into Inbox).
+    assert db.directory_memberships.get("note:ordinary") is None
     assert db.refinement_thoughts.commands(adopted["id"])[0]["command_kind"] == "adopt_note"
     retry = service.adopt_note(OWNER, request_id="adopt-1", note_id="ordinary",
         expected_source_content_sha256=source["source_precondition"]["content_sha256"],

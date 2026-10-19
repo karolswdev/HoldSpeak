@@ -1,4 +1,7 @@
-/* HS-202-02 job 3 — `Write a thought` opens a place to write a thought.
+/* Betterment Q8 (one note): New Note (⌃N, and ⌃T) opens this. `Write a
+ * thought` left the Desk menu; the history below keeps its old name.
+ *
+ * HS-202-02 job 3 — `Write a thought` opens a place to write a thought.
  *
  * It opened the Speak dictation router instead (`LANDS IN · Codex CLI`,
  * `DICTATION · ⚠ NOT SET`, no verb that keeps anything), and the real door
@@ -35,7 +38,7 @@
 import { apiFetch } from "../lib/api";
 import { useDesk } from "./store";
 import { reportWriteFailure, clearWriteFailure } from "./hooks/useWriteReceipt";
-import { adoptThought, thoughtForNote, type NoteThoughtStatus } from "./thoughts";
+import { openNoteThought, thoughtForNote } from "./thoughts";
 import { NEW_THOUGHT_TITLE } from "./thoughtTitle";
 import { sendThoughtKeysTo, startThoughtKeys, stopThoughtKeys } from "./thoughtKeys";
 import { keepOpenThoughts, thoughtDraftHasWords } from "./thoughtDrafts";
@@ -46,15 +49,6 @@ let opening: Promise<void> | null = null;
 const noWords = (title: string, body: string) =>
   title.trim() === NEW_THOUGHT_TITLE && !body.trim();
 
-async function adopt(noteId: string, status: NoteThoughtStatus): Promise<void> {
-  if (status.ownership !== "ordinary") return;
-  await adoptThought({
-    request_id: crypto.randomUUID(),
-    note_id: noteId,
-    expected_source_content_sha256: status.source_precondition.content_sha256,
-    expected_source_last_modified: status.source_precondition.last_modified,
-  });
-}
 
 /** The newest thought that still has no words, by the hub's own record (the
  * store's copy of a note can be older than its last save). */
@@ -98,15 +92,16 @@ async function open(): Promise<void> {
          desk's failure channel and the owner pressed a verb that did
          nothing, with no line and no retry. */
       stopThoughtKeys();
-      reportWriteFailure("Write a thought", cause, () => void openNewThought());
+      reportWriteFailure("New Note", cause, () => void openNewThought());
       return;
     }
     if (!noteId) { stopThoughtKeys(); return; }
     try {
-      await adopt(noteId, await thoughtForNote(noteId));
+      // Betterment Q8: the hub gives the new note its thought (the window
+      // asks again on open, so a refusal here only costs one more read).
+      await openNoteThought(noteId);
     } catch {
-      // The note exists and is the owner's. It opens on the ordinary note
-      // face, where `Develop` can adopt it when the hub answers again.
+      // The note exists and is the owner's. The window asks again when it opens.
     }
   }
   desk.openPullout(`note:${noteId}`);

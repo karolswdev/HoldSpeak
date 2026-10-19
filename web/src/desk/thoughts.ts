@@ -284,6 +284,18 @@ export async function thoughtForNote(noteId: string): Promise<NoteThoughtStatus>
   return apiFetch<NoteThoughtStatus>(`/api/thoughts/for-note/${encodeURIComponent(noteId)}`);
 }
 
+/** Betterment Q8: a note grew from elsewhere (Ask ▸ Add to note). Its open
+ *  sticky reads the note again. */
+export const NOTE_GREW_EVENT = "hs:note-grew";
+
+/** Betterment Q8 (one note): the thought that opens any note in the one note
+ *  window. The hub adopts a plain note and resumes a finished one; the note's
+ *  drawer never changes. */
+export async function openNoteThought(noteId: string): Promise<Thought> {
+  const response = await apiFetch<{ thought: Thought }>("/api/thoughts/open-note", { method: "POST", json: { note_id: noteId } });
+  return response.thought;
+}
+
 export async function thoughtWorkbench(thoughtId: string, signal?: AbortSignal): Promise<ThoughtWorkspaceProjection> {
   return apiFetch<ThoughtWorkspaceProjection>(
     `/api/thoughts/${encodeURIComponent(thoughtId)}/workbench`,

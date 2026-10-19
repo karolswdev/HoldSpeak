@@ -747,3 +747,18 @@
     z-index: 2;
   }
 }
+/* Betterment AG8: the Agents tile's lamp, its fleet's worst state: needs
+   you (the ask colour), New (a dot in the ok colour), working (calm). */
+.desk-next .desk-dock-launch .desk-dock-fleet {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  width: 8px;
+  height: 8px;
+  border: 1px solid var(--wb-ink);
+  border-radius: 50%;
+  background: var(--wb-paper);
+}
+.desk-next .desk-dock-launch .desk-dock-fleet[data-tone="ask"] { background: var(--lamp-ask); }
+.desk-next .desk-dock-launch .desk-dock-fleet[data-tone="new"] { background: var(--lamp-ok); }
+.desk-next .desk-dock-launch .desk-dock-fleet[data-tone="work"] { background: var(--lamp-info); }

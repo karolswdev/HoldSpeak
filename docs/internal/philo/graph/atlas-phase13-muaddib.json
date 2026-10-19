@@ -3828,8 +3828,8 @@
       "sources": [
         {
           "path": "web/src/desk/verbRegistry.ts",
-          "symbol": "id: \"desk.new-thought\",",
-          "claim": "one registered verb with the key ⌃T, in the Desk menu"
+          "symbol": "altKeys: [\"⌘N\", \"⌃T\"],",
+          "claim": "one registered verb with the key ⌃T, in the Desk menu (Betterment Q8: New Note takes ⌃T; Write a thought is parked)"
         },
         {
           "path": "web/src/desk/thoughtTitle.ts",

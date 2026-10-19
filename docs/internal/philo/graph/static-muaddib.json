@@ -37532,7 +37532,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_history_artifactslibrary_tsx.l85.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/history/ArtifactsLibrary.tsx:85 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/history/_parked/ArtifactsLibrary.tsx:85 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -37542,7 +37542,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/history/ArtifactsLibrary.tsx",
+     "path": "web/src/pages/cores/history/_parked/ArtifactsLibrary.tsx",
      "line": 85,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"

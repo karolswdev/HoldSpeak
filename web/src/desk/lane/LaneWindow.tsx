@@ -19,6 +19,8 @@ import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { useDurableDraft } from "../../lib/durableDraft";
 import { markLaunchSeen, useAgentFlights } from "../agentFlights";
+import { WhyThisState } from "../agents/WhyThisState";
+import { ResultBlock } from "./ResultBlock";
 import { AgentWords, cutAtWord } from "../components/AgentWords";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { ArmStrip, KeyPalette, PANE_STATE_LABEL } from "../components/SessionPullout";
@@ -182,7 +184,7 @@ function LaneFrame({ launchId }: { launchId: string }) {
           aria-pressed={raw}
           aria-label={raw ? "Story" : "Terminal"}
           data-testid="lane-raw"
-          disabled={!sessionKey}
+          disabled={!sessionKey && flight?.stateSource !== "screen"}
           onClick={() => useLane.getState().setRaw(!raw)}
         >
           {raw ? "Story" : "Terminal"}
@@ -191,15 +193,19 @@ function LaneFrame({ launchId }: { launchId: string }) {
       open
       onClose={() => useLane.getState().close()}
     >
-      <LaneBody lane={lane} error={error} raw={raw} agent={agent} compact={compact} itemTitle={flight?.title ?? ""} />
+      <LaneBody lane={lane} error={error} raw={raw} agent={agent} compact={compact} itemTitle={flight?.title ?? ""}
+        done={flight?.state === "done"} screenSaid={flight?.screen?.said ?? null} />
       {lane ? <LaneFooter lane={lane} /> : null}
     </DeskWindowFrame>
   );
 }
 
 function LaneBody({
-  lane, error, raw, agent, compact, itemTitle,
+  lane, error, raw, agent, compact, itemTitle, done = false, screenSaid = null,
 }: {
+  screenSaid?: string | null;
+  /** Betterment AG10: the turn is done; its Result leads the Story. */
+  done?: boolean;
   lane: LaneWire | null;
   error: string | null;
   raw: boolean;
@@ -250,7 +256,19 @@ function LaneBody({
   ) : (
     <FilesChanged data-testid="lane-files" files={worktree.files.map((f) => ({ path: f.path }))} />
   );
-  const rail = (
+  // AG10 face: a lane whose only entry is the brief (an agent with no hook
+  // reports no events) shows the brief as a plain fold, not a one-row rail.
+  const onlyBrief = laneEntries(lane, events).every((entry) => entry.kind === "brief") && !eventsNotRead && !more;
+  const rail = onlyBrief ? (
+    <div className="lw-col">
+      {isNotRead(lane.gated) ? <NotReadLine part="HELD" reason={lane.gated.not_read} /> : null}
+      {lane.launch.brief_text ? (
+        <FoldGadget title="Brief" className="lw-brief-fold">
+          <pre className="lw-brief" data-testid="lane-brief-text">{lane.launch.brief_text}</pre>
+        </FoldGadget>
+      ) : null}
+    </div>
+  ) : (
     <div className="lw-col">
       {eventsNotRead ? <NotReadLine part="TIMELINE" reason={eventsNotRead} testId="lane-events-not-read" /> : null}
       {isNotRead(lane.gated) ? <NotReadLine part="HELD" reason={lane.gated.not_read} /> : null}
@@ -268,7 +286,8 @@ function LaneBody({
 
   return (
     <div className="desk-pullout-body lw-body" data-testid="lane-body" ref={bodyRef} onScroll={onScroll}>
-      <LaneHead lane={lane} agent={agent} itemTitle={itemTitle} />
+      <LaneHead lane={lane} agent={agent} itemTitle={itemTitle} done={done} />
+      {done && !raw ? <ResultBlock lane={lane} screenSaid={screenSaid} /> : null}
       {unreadParts(lane).map(([part, reason]) => (
         <NotReadLine key={part} part={part} reason={reason} testId={`lane-not-read-${part.toLowerCase()}`} />
       ))}
@@ -604,9 +623,12 @@ export function approveShowing(lane: LaneWire): boolean {
 }
 
 /** PHILO-17 THE REFIT: what the coder does now, as the lane's one headline. */
-export function laneDoing(lane: LaneWire, agent: string): { word: string; tone: "ok" | "warn" | "info" | "idle" } {
+export function laneDoing(lane: LaneWire, agent: string, done = false): { word: string; tone: "ok" | "warn" | "info" | "idle" } {
   const name = agent || "The agent";
   if (lane.launch.stopped) return { word: "Stopped by you", tone: "idle" };
+  // Betterment AG10: the flight knows the turn is done (also from a screen,
+  // with no hook to say it); the head never says "working" then.
+  if (done) return { word: `${name} is done`, tone: "ok" };
   const wait = isNotRead(lane.wait) ? null : lane.wait;
   if (heldNow(lane) || wait?.kind === "TO APPROVE") return { word: `${name} wants to run`, tone: "warn" };
   if (wait?.question && wait.kind === "TO ANSWER") return { word: `${name} asks you`, tone: "warn" };
@@ -619,8 +641,8 @@ export function laneDoing(lane: LaneWire, agent: string): { word: string; tone: 
   return { word: `${name} is working`, tone: "info" };
 }
 
-function LaneHead({ lane, agent, itemTitle }: { lane: LaneWire; agent: string; itemTitle: string }) {
-  const doing = laneDoing(lane, agent);
+function LaneHead({ lane, agent, itemTitle, done = false }: { lane: LaneWire; agent: string; itemTitle: string; done?: boolean }) {
+  const doing = laneDoing(lane, agent, done);
   return (
     <div className="lw-head" data-testid="lane-head">
       <span className="lw-head-sprite" aria-hidden="true">
@@ -807,6 +829,7 @@ function RawHeldCall({ call }: { call: LaneGated }) {
 
 function RawPane() {
   const lane = useLane((s) => s.lane);
+  const launchId = useLane((s) => s.launchId);
   const gated = lane && Array.isArray(lane.gated) ? lane.gated : [];
   const cut = gated.filter((g) => g.args_cut && (g.state === "held" || g.state === "pending"));
   const paneStatus = useSteering((s) => s.paneStatus);
@@ -818,8 +841,17 @@ function RawPane() {
   const paneChangedAt = useSteering((s) => s.paneChangedAt);
   const armed = useSteering((s) => s.armed);
   const postureAuthorized = useSteering((s) => s.postureAuthorized);
+  // Betterment AG10: Terminal opens at the bottom: the prompt line, the
+  // newest output (the well itself follows the tail).
+  const rawRef = useRef<HTMLDivElement>(null);
+  const live = paneStatus === "live";
+  useEffect(() => {
+    if (live) rawRef.current?.querySelector(".terminal-well")?.scrollIntoView?.({ block: "end" });
+  }, [live]);
   return (
-    <div className="lw-raw" data-testid="lane-raw-pane">
+    <div className="lw-raw" data-testid="lane-raw-pane" ref={rawRef}>
+      {/* Betterment AG7: the hook or the screen rule behind the state. */}
+      {launchId ? <WhyThisState launchId={launchId} /> : null}
       {cut.map((call) => (
         <RawHeldCall key={call.id} call={call} />
       ))}

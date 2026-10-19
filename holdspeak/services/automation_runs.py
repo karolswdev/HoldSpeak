@@ -11,7 +11,9 @@ runs that one item; its artifact starts ``new`` (decision 5) and becomes
 - ``inbox`` (the default): one Note, filed in the Inbox, with a link back;
 - ``needs_you``: one Door item owned by the owner and due today, so Needs
   you counts it;
-- ``destination:<id>``: ``channel.prepare`` only. He presses Send.
+- ``destination:<id>``: ``channel.prepare`` only. He presses Send;
+- ``today`` (Betterment daily D9): nothing is filed. The newest result is
+  Today's Prepared block (``prepared_for_today``).
 
 An automation with no instruction keeps the old queue run.
 """
@@ -35,7 +37,7 @@ OCCURRENCE = "occurrence"
 HTTP_ITEM_SECONDS = 60.0
 #: The Inbox zone (``holdspeak/seeds/fresh-desk.yaml``).
 INBOX_DIRECTORY_ID = "hs-seed-inbox"
-OUTPUT_TARGETS = ("inbox", "needs_you")
+OUTPUT_TARGETS = ("inbox", "needs_you", "today")
 DESTINATION_PREFIX = "destination:"
 #: A plain prompt for an automation that has an instruction and no agent.
 PLAIN_SYSTEM_PROMPT = (
@@ -91,7 +93,7 @@ def clean_sources(value: Any) -> list[str]:
 
 
 def clean_output_target(db: Any, value: Any) -> str:
-    """``inbox`` | ``needs_you`` | ``destination:<saved destination id>``."""
+    """``inbox`` | ``needs_you`` | ``today`` | ``destination:<saved destination id>``."""
     target = str(value or "inbox").strip()
     if target in OUTPUT_TARGETS:
         return target
@@ -100,7 +102,7 @@ def clean_output_target(db: Any, value: Any) -> str:
         if destination_id and db.channel_destinations.get(destination_id) is not None:
             return DESTINATION_PREFIX + destination_id
         raise ValidationError(f"Unknown destination: {destination_id or '(none)'}")
-    raise ValidationError("output_target must be inbox, needs_you or destination:<id>")
+    raise ValidationError("output_target must be inbox, needs_you, today or destination:<id>")
 
 
 def effective_instruction(db: Any, wb: Any) -> tuple[str, str]:
@@ -440,6 +442,102 @@ def new_results(db: Any) -> list[dict[str, Any]]:
     } for row in rows]
 
 
+def prepared_for_today(db: Any, principal: Any) -> Optional[dict[str, Any]]:
+    """Betterment daily D9: Today's Prepared block, or None.
+
+    The newest done result of a live automation whose Put it in is Today
+    (Morning prep), with its automation's name, the engine it runs on (the
+    With line's name) and what its agent looked at. None when no such
+    automation has a done result: Today then draws no block at all."""
+    with db._connection() as conn:
+        row = conn.execute(
+            """SELECT w.id AS workbench_id FROM workbench_items i
+               JOIN workbenches w ON w.id = i.workbench_id
+               WHERE w.deleted = 0 AND w.output_target = 'today' AND i.parked = 0 AND i.status = 'done'
+                 AND json_extract(i.context_json, '$.occurrence') = 1
+               ORDER BY COALESCE(i.completed_at, i.created_at) DESC, i.id DESC LIMIT 1""",
+        ).fetchone()
+    if row is None:
+        return None
+    workbench_id = str(row["workbench_id"])
+    wb = db.workbenches.get(workbench_id)
+    result = next((r for r in results_of(db, workbench_id, limit=5) if r["status"] == "done"), None)
+    if wb is None or result is None:
+        return None
+    return {
+        "workbench_id": workbench_id,
+        "name": str(wb.name or "Morning prep"),
+        "engine": engine_name(db, principal, workbench_id) or result.get("model") or "",
+        "result": result,
+    }
+
+
+def engine_name(db: Any, principal: Any, workbench_id: str) -> str:
+    """The name of the engine an automation runs on ('' when none resolves)."""
+    from ..principals import Principal, PrincipalKind
+    from .inference_assignment_service import InferenceAssignmentService
+
+    owner = principal if getattr(principal, "kind", None) is PrincipalKind.OWNER else Principal(
+        PrincipalKind.OWNER, "local-automation-conductor")
+    try:
+        effective = InferenceAssignmentService(db).resolve_effective(
+            owner, capability_id="workbench.item", subject_kind="workbench", subject_id=workbench_id)
+    except Exception:
+        return ""
+    entries = (effective.get("assignment") or {}).get("entries") or []
+    return str(entries[0].get("label") or "") if entries else ""
+
+
+def tool_engine_profile(db: Any) -> str:
+    """The profile id of the automations' engine when it is an agent CLI (it
+    gets the desk's tools, MCP M1), else ''. An HTTP engine's tool support is
+    a network check (``ask_desk.server_takes_tools``); it is not asked here."""
+    from ..principals import Principal, PrincipalKind
+    from .inference_assignment_service import InferenceAssignmentService
+
+    try:
+        effective = InferenceAssignmentService(db).resolve_effective(
+            Principal(PrincipalKind.OWNER, "local-automation-conductor"), capability_id="workbench.item")
+    except Exception:
+        return ""
+    entries = (effective.get("assignment") or {}).get("entries") or []
+    profile_id = str(entries[0].get("profile_id") or "") if entries else ""
+    if not profile_id:
+        return ""
+    with db._connection() as conn:
+        return profile_id if cli_endpoint_of(conn, profile_id) else ""
+
+
+def ensure_morning_prep(db: Any) -> Optional[str]:
+    """Betterment daily D9, owner decision 3: once an engine with the desk's
+    tools exists, the Morning prep automation is made, On, weekdays 07:30.
+
+    Once only: it has a stable id, and a row with that id (live, turned off,
+    or deleted) means it was made, so it is never made again. Returns the id
+    when it was made now, else None. Called by the workbench conductor's tick."""
+    from holdspeak.workbench_templates import MORNING_PREP_ID, MORNING_PREP_STARTER, get_starter
+
+    if db.workbenches.get(MORNING_PREP_ID, include_deleted=True) is not None:
+        return None
+    if not tool_engine_profile(db):
+        return None
+    from ..principals import Principal, PrincipalKind
+    from .workbench_service import WorkbenchService
+
+    owner = Principal(PrincipalKind.OWNER, "local-automation-conductor")
+    service = WorkbenchService(db)
+    starter = get_starter(MORNING_PREP_STARTER)
+    assert starter is not None
+    service.make_from_starter(owner, starter, workbench_id=MORNING_PREP_ID)
+    try:
+        service.set_when(owner, MORNING_PREP_ID, dict(starter["when"]))
+    except Exception as exc:  # the automation stays, its schedule off
+        log.warning("Morning prep: the schedule stays off: %s", exc)
+    _changed("workbench", MORNING_PREP_ID)
+    log.info("Morning prep made, weekdays 07:30")
+    return MORNING_PREP_ID
+
+
 def result_note_id(artifact_id: str) -> str:
     """The Inbox note one result makes (``_to_inbox``): stable per result."""
     return "note_result_" + hashlib.sha256(str(artifact_id).encode()).hexdigest()[:16]
@@ -600,7 +698,31 @@ def deliver_run(db: Any, principal: Any, run: Any) -> list[dict[str, Any]]:
             log.warning("automation %s: delivery of %s failed: %s", wb.id, row["artifact_id"], exc)
             outcomes.append({"artifact_id": row["artifact_id"], "target": wb.output_target,
                              "outcome": "failed", "error": str(exc)})
+    _finished_notices(db, rows)
     return outcomes
+
+
+def _finished_notices(db: Any, rows: list[Any]) -> None:
+    """Betterment daily D8 (decision 2): a run that made a new result raises
+    one quiet notice per automation (``HeartbeatService.finished_notice``).
+    Once per run: a replayed run delivers nothing and comes not here. A
+    failed notice is logged; it never fails the run."""
+    named: dict[str, int] = {}
+    for row in rows:
+        named[str(row["workbench_id"])] = named.get(str(row["workbench_id"]), 0) + 1
+    if not named:
+        return
+    try:
+        from .heartbeat_service import HeartbeatService
+
+        heartbeat = HeartbeatService(db)
+        for workbench_id, count in named.items():
+            wb = db.workbenches.get(workbench_id, include_deleted=True)
+            if wb is None or getattr(wb, "deleted", False):
+                continue
+            heartbeat.finished_notice(workbench_id, str(wb.name or "Automation"), count)
+    except Exception as exc:
+        log.warning("automation finished notice failed: %s", exc)
 
 
 def _deliver_one(db: Any, principal: Any, wb: Any, row: dict[str, Any]) -> dict[str, Any]:
@@ -608,6 +730,9 @@ def _deliver_one(db: Any, principal: Any, wb: Any, row: dict[str, Any]) -> dict[
     artifact_id = str(row["artifact_id"])
     if target == "needs_you":
         return _to_needs_you(db, principal, wb, row)
+    if target == "today":
+        # Betterment daily D9: Today reads the newest result itself.
+        return {"artifact_id": artifact_id, "target": "today", "outcome": "shown"}
     if target.startswith(DESTINATION_PREFIX):
         return _to_destination(db, principal, target[len(DESTINATION_PREFIX):], artifact_id)
     return _to_inbox(db, wb, row)

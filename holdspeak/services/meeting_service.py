@@ -960,6 +960,14 @@ class MeetingService:
         artifacts = self._db.plugins.list_artifacts(meeting_id, limit=limit)
         return {"meeting_id": meeting_id, "artifacts": [{"id": artifact.id, "meeting_id": artifact.meeting_id, "artifact_type": artifact.artifact_type, "title": artifact.title, "body_markdown": artifact.body_markdown, "structured_json": artifact.structured_json, "confidence": artifact.confidence, "status": artifact.status, "plugin_id": artifact.plugin_id, "plugin_version": artifact.plugin_version, "sources": artifact.sources, "created_at": artifact.created_at.isoformat(), "updated_at": artifact.updated_at.isoformat(), "origin": artifact.origin} for artifact in artifacts]}
 
+    def prepared_results(self, principal: Principal, meeting_id: str) -> dict[str, Any]:
+        """Betterment capture C5: the Results this meeting prepared."""
+        if self._db.meetings.get_meeting(meeting_id) is None:
+            raise NotFound("meeting", meeting_id)
+        from ..meeting_plugins import prepared_results
+
+        return prepared_results(self._db, meeting_id)
+
     def facets(self, principal: Principal, filters: dict[str, Any] | None = None) -> dict[str, Any]:
         """Return archive facet values from the same durable meeting store."""
         return self._db.meetings.list_facet_values()

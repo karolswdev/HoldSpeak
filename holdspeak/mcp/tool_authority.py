@@ -113,6 +113,7 @@ TOOL_AUTHORITY: dict[str, str] = {
     "coder.list": WORK,
     "coder.get": WORK,
     "coder.audit": WORK,
+    "coder.explain": WORK,
     "cadence.status": WORK,
     "cadence.loops": WORK,
     "cadence.get_loop": WORK,

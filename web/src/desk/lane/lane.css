@@ -221,3 +221,14 @@
 .desk-next .is-lane .lane-rail-code { font-size: 12px; }
 .desk-next .is-lane .lane-rail-body { gap: 4px; }
 .desk-next .is-lane .lw-keys { flex: none; }
+
+/* Betterment AG7: Why this state (behind Terminal). */
+.lw-why { display: flex; flex-direction: column; gap: 6px; padding: 6px 0; }
+.lw-why-line { font: 12px/1.5 var(--font-ui, inherit); color: var(--text); overflow-wrap: anywhere; }
+.lw-why-evidence { max-height: 180px; }
+
+/* Betterment AG10: the Result of a turn leads the Story. */
+.desk-next .is-lane .desk-pullout-body section.lw-result { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border: 1px solid var(--wb-ink); background: var(--alive-paper, #f8f5ee); box-shadow: var(--wb-sunken); min-width: 0; }
+.desk-next .is-lane .lw-result-cap, .lw-result-cap { margin: 0; font: 800 12px / 1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--wb-muted); }
+.lw-result-facts { font: 600 12px / 1.4 var(--font-mono); color: var(--text); overflow-wrap: anywhere; }
+.lw-result-list { margin: 0; padding-left: 18px; font: 500 13px / 1.4 var(--font-sans); color: var(--text); }

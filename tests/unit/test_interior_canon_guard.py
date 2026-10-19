@@ -90,27 +90,17 @@ def test_ask_panel_never_regresses_to_a_pre_box_or_section_stack() -> None:
     assert source.count("<PadGadget") == 1, "Ask has one library question pad"
 
 
-def test_history_core_artifacts_wing_is_the_library() -> None:
-    """HS-102-04 — the Meetings Artifacts wing is the library
-    composition (SurfaceLibrary/SurfaceLibraryTile, the artifact body
-    as the tile face), never a Disclosure+SurfaceCode dump. `Disclosure`
-    and `SurfaceCode` stay legal elsewhere in this file (the Outcomes
-    routing receipt, round 6, out of scope) — this pins the POSITIVE
-    shape rather than banning either import outright."""
+def test_history_core_artifacts_wing_stays_parked() -> None:
+    """Betterment capture C5 parked the Meetings Artifacts wing (HS-102-04's
+    library composition lives on in ``history/_parked/ArtifactsLibrary.tsx``):
+    a meeting's Results show under Outcomes ▸ Prepared. No live history file
+    may bring the wing or its library dump back."""
     history_dir = WEB_SRC / "pages" / "cores" / "history"
-    parts = [(WEB_SRC / "pages" / "cores" / "HistoryCore.tsx").read_text(
-        encoding="utf-8"
-    )]
-    parts.extend(
-        file.read_text(encoding="utf-8")
-        for file in sorted(history_dir.glob("*.tsx"))
-    )
-    source = "\n".join(parts)
-    assert "SurfaceLibrary" in source and "SurfaceLibraryTile" in source, (
-        "HS-102-04 regression: the Artifacts wing must compose through "
-        "SurfaceLibrary/SurfaceLibraryTile, matching the Blocks wing "
-        "(DictationCore.tsx) — not a second library shape."
-    )
+    assert (history_dir / "_parked" / "ArtifactsLibrary.tsx").exists(), "parked, never deleted"
+    live = "\n".join(file.read_text(encoding="utf-8") for file in sorted(history_dir.glob("*.tsx")))
+    assert "<ArtifactsLibrary" not in live and 'from "./ArtifactsLibrary"' not in live, (
+        "the Artifacts wing is parked (capture C5)")
+    assert "PreparedResults" in live, "the meeting's Results are drawn under Outcomes ▸ Prepared"
 
 
 def test_runs_on_room_stays_folded_into_the_models_module() -> None:

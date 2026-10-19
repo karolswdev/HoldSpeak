@@ -329,7 +329,9 @@ def test_the_codex_launch_mounts_the_conductor_palette_with_its_mutators() -> No
     # Betterment MCP M6 (#1331): + provider.github_pr_get (a WORK read: the
     # review starter's agent reads the PR it is about).
     assert "provider.github_pr_get" in palette
-    assert len(palette) == 138 + 6 + 1 + len(m3) + 1
+    # Betterment AG7: + coder.explain (a WORK read: why an agent has its state).
+    assert "coder.explain" in palette
+    assert len(palette) == 138 + 6 + 1 + len(m3) + 1 + 1
 
 
 # ── 6. Astra r2 on #996: the wait episode, the FIFO, expiry, provenance ──

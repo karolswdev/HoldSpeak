@@ -79,8 +79,9 @@ def _parse_aware(value: Any) -> datetime | None:
     return parsed if parsed.tzinfo is not None else parsed.replace(tzinfo=timezone.utc)
 
 
-#: Betterment daily D8: the morning notice opens Today.
-TODAY_URL = "/intelligence"
+#: Betterment daily D8: the morning notice opens Today (the desk opens the
+#: window a ``?open=`` link names; ``/intelligence`` is not a desk address).
+TODAY_URL = "/?open=intelligence:desk"
 
 
 def _notify_default(title: str, body: str, *, click_url: str | None = None) -> bool:
@@ -318,6 +319,9 @@ class HeartbeatService:
             # Conductor R4: read every Room repository's merged PRs, so the
             # weekly update reports merges no agent made. ON by default.
             "report_merged_prs": bool(config.get("report_merged_prs", True)),
+            # Betterment daily D8 (decision 2): a quiet notice when an
+            # automation has a new result. ON by default.
+            "notify_finished": bool(config.get("notify_finished", True)),
         }
 
     def update_settings(self, patch: dict[str, Any]) -> dict[str, Any]:
@@ -357,6 +361,8 @@ class HeartbeatService:
             current["runs_on"] = val if val else "local"
         if "report_merged_prs" in patch:
             current["report_merged_prs"] = bool(patch["report_merged_prs"])
+        if "notify_finished" in patch:
+            current["notify_finished"] = bool(patch["notify_finished"])
         self._persist(current)
         return current
 
@@ -380,6 +386,7 @@ class HeartbeatService:
             "remote_hosts": self._compute_remote_hosts(),
             "last_remote_run_at": self._last_remote_run_at(),
             "report_merged_prs": True,
+            "notify_finished": True,
         }
 
     def _persist(self, settings: dict[str, Any]) -> None:
@@ -403,6 +410,7 @@ class HeartbeatService:
             "runs_on": settings.get("runs_on", "local"),
             # Conductor R4
             "report_merged_prs": bool(settings.get("report_merged_prs", True)),
+            "notify_finished": bool(settings.get("notify_finished", True)),
         }
         self._db.cadence.upsert_policy(CadencePolicy(
             id=_HEARTBEAT_POLICY_ID,
@@ -965,6 +973,49 @@ class HeartbeatService:
             receipt["sessionKey"] = session_key
         return receipt
 
+    # ── Betterment AG9: an agent finished (decision 2) ─────────────────
+
+    def notify_agent_done(
+        self, *, launch_id: str, agent: str, title: str, turn_id: str,
+        _notifier: Any = None, now: datetime | None = None,
+    ) -> dict[str, Any]:
+        """A finished agent raises ONE quiet notification (decision 2, the
+        owner's "yes"): never while Notify is off, in quiet hours, or while
+        that agent's own window is in front. Done stays out of Needs you, so
+        this is the only notice a finished turn makes. Each decision is kept
+        in ``agent_done_notices.json`` (the newest 50)."""
+        from holdspeak.desktop_notify import notify
+
+        receipt: dict[str, Any] = {
+            "kind": "agent.done.notify", "launch_id": launch_id, "turn_id": turn_id,
+            "at": _now_iso(),
+        }
+        settings = self.get_settings()
+        if settings.get("notify", _DEFAULT_NOTIFY) == "off":
+            receipt["outcome"] = "off"
+        elif self.in_quiet_hours(now):
+            receipt["outcome"] = "held_quiet_hours"
+        elif self._agent_window_in_front(launch_id):
+            receipt["outcome"] = "held_in_front"
+        else:
+            name = {"claude": "Claude Code", "codex": "Codex", "pi": "pi"}.get(agent, agent or "An agent")
+            sent = notify("Agent finished", f"{name} finished {title or 'its work'}",
+                          click_url="/conductor", _notifier=_notifier)
+            receipt["outcome"] = "sent" if sent else "not_posted"
+        _record_agent_done_notice(receipt)
+        return receipt
+
+    def _agent_window_in_front(self, launch_id: str) -> bool:
+        """The agent's own window (the lane on this launch) is the desk's front."""
+        try:
+            from holdspeak.services.desk_window_service import DeskWindowService
+
+            windows = DeskWindowService(self._db).list().get("windows") or []
+        except Exception:
+            return False
+        front = next((w for w in windows if w.get("front")), None)
+        return bool(front and front.get("id") == "lane" and front.get("object_ref") == f"launch:{launch_id}")
+
     # ── D3 notification decision (wired from run_sweep) ────────────────
 
     def _run_notification_decision(
@@ -1332,7 +1383,7 @@ class HeartbeatService:
             at = f"{start.astimezone(now_local.tzinfo):%H:%M}" if start else ""
             body = f"{str(event.get('title') or '1:1').strip()} at {at} · Prep ready"
             notifier = self._notifier or _notify_default
-            notifier("HoldSpeak", body, click_url=f"/people?person={event['person_relationship_id']}")
+            notifier("HoldSpeak", body, click_url=f"/?open=people:{event['person_relationship_id']}")
             fired.append(body)
         if fired or told != list(settings.get("prep_notified") or []):
             settings["prep_notified"] = told[-50:]
@@ -1340,6 +1391,41 @@ class HeartbeatService:
         receipt = {"kind": "heartbeat.prep", "outcome": "sent" if fired else "held_no_edge", "bodies": fired}
         if fired:
             self._write_notify_receipt(receipt)
+        return receipt
+
+    def finished_notice(self, workbench_id: str, name: str, new_count: int = 1) -> dict[str, Any]:
+        """Betterment daily D8 (decision 2): an automation run made a new
+        result. One quiet notice (no sound), "<name> has a new result", that
+        opens the automation window. Today shows the same line until he opens
+        the result (``automation_runs.new_results``); it never counts in Needs
+        you. Not raised with Notify off or "Finished work" off, in quiet hours
+        (the line in Today waits for him), or while the automation window or
+        Today is in front of him."""
+        from holdspeak import desk_presence
+
+        count = max(1, int(new_count or 1))
+        body = f"{name or 'Automation'} has {'a new result' if count == 1 else f'{count} new results'}"
+        receipt: dict[str, Any] = {"kind": "heartbeat.finished", "workbench_id": workbench_id, "body": body}
+        settings = self.get_settings()
+        if settings.get("notify") == "off" or not settings.get("notify_finished", True):
+            return {**receipt, "outcome": "off"}
+        if self.in_quiet_hours(self._now_local()):
+            return {**receipt, "outcome": "held_quiet_hours"}
+        if desk_presence.front_window() in {f"pullout:workbench:{workbench_id}", "pullout:intelligence:desk"}:
+            receipt["outcome"] = "held_front_window"
+            self._write_notify_receipt(receipt)
+            return receipt
+        notifier = self._notifier or _notify_default
+        fired = bool(notifier("HoldSpeak", body, click_url=f"/?open=workbench:{workbench_id}"))
+        if fired:
+            receipt["outcome"] = "sent"
+        elif self._notifier is None and not _desktop_on():
+            from holdspeak.desktop_notify import NOT_POSTED_REASON
+
+            receipt["outcome"] = NOT_POSTED_REASON
+        else:
+            receipt["outcome"] = "dispatch_failed"
+        self._write_notify_receipt(receipt)
         return receipt
 
     def _write_notify_receipt(self, receipt: dict[str, Any]) -> None:
@@ -1481,3 +1567,25 @@ class HeartbeatService:
                 "held": self.in_quiet_hours(),
             },
         }
+
+
+def agent_done_notices_path() -> "Path":
+    from pathlib import Path
+
+    from holdspeak.delivery import factory_launch
+
+    return Path(factory_launch.DEFAULT_LAUNCHES_PATH).with_name("agent_done_notices.json")
+
+
+def _record_agent_done_notice(receipt: dict[str, Any]) -> None:
+    """Betterment AG9: keep each Done notice decision (the newest 50)."""
+    import json
+
+    path = agent_done_notices_path()
+    try:
+        rows = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
+        rows = [*(rows if isinstance(rows, list) else []), receipt][-50:]
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(rows, indent=1) + "\n", encoding="utf-8")
+    except Exception as exc:
+        log.warning("agent done notice not recorded: %s", exc)

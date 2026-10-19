@@ -1,0 +1,426 @@
+{
+ "_source": "The hub's own answers, captured by tests/unit/test_desk_note.py::test_add_to_note_appends_and_undo_restores_recorded_for_the_face (MeetingWebServer + TestClient, isolated HOME, the browser rigs' seeds). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
+ "note_id": "note_8d0d28e764bf",
+ "title": "Jun and the cutover weekend",
+ "answer": "You owe Mira feedback on her cutover design doc, due Friday.",
+ "open": {
+  "thought": {
+   "id": "thought_dc4ac0142ddf",
+   "raw_id": "thought_dc4ac0142ddf",
+   "raw_sha256": "baa574a8d0c96da19d3dbdb55af110088c452f5b29054bb9318a2b0b6aee3ed7",
+   "source": {
+    "kind": "note"
+   },
+   "raw_captured_at": "2026-10-19T03:50:26Z",
+   "state": "working",
+   "aggregate_revision": 1,
+   "lifecycle_revision": 1,
+   "working_revision": 1,
+   "attachment_revision": 0,
+   "attachment_sha256": "57d42cb82b7b36ef84448d38d5b0a31236fbf8d1fb265277523363eda0129831",
+   "attachments": [],
+   "working_note": {
+    "id": "note_8d0d28e764bf",
+    "title": "Jun and the cutover weekend",
+    "body_markdown": "Jun is nervous about the cutover weekend. Maybe pair him with Mira on call, and write the on-call handbook first.\nTheo could own the handbook.",
+    "tags": [],
+    "deleted": false,
+    "last_modified": "2026-10-19T03:50:26Z"
+   },
+   "filing_status": "filed",
+   "continuity": {
+    "state": "idle",
+    "code": ""
+   },
+   "directory_id": "d-work",
+   "directory_name": "Work"
+  }
+ },
+ "workbench": {
+  "schema_version": 1,
+  "process_scope": {
+   "kind": "hub_local",
+   "hub_id": "hub_7c4196407bfb75201643bcc4f87a5735",
+   "state": "unavailable"
+  },
+  "workspace_cursor": {
+   "hub_id": "hub_7c4196407bfb75201643bcc4f87a5735",
+   "thought_id": "thought_dc4ac0142ddf",
+   "aggregate_revision": 1,
+   "continuity_revision": 0
+  },
+  "thought": {
+   "id": "thought_dc4ac0142ddf",
+   "raw_id": "thought_dc4ac0142ddf",
+   "raw_sha256": "baa574a8d0c96da19d3dbdb55af110088c452f5b29054bb9318a2b0b6aee3ed7",
+   "source": {
+    "kind": "note"
+   },
+   "raw_captured_at": "2026-10-19T03:50:26Z",
+   "state": "working",
+   "aggregate_revision": 1,
+   "lifecycle_revision": 1,
+   "working_revision": 1,
+   "attachment_revision": 0,
+   "attachment_sha256": "57d42cb82b7b36ef84448d38d5b0a31236fbf8d1fb265277523363eda0129831",
+   "attachments": [],
+   "working_note": {
+    "id": "note_8d0d28e764bf",
+    "title": "Jun and the cutover weekend",
+    "body_markdown": "Jun is nervous about the cutover weekend. Maybe pair him with Mira on call, and write the on-call handbook first.\nTheo could own the handbook.",
+    "tags": [],
+    "deleted": false,
+    "last_modified": "2026-10-19T03:50:26Z"
+   },
+   "filing_status": "filed",
+   "continuity": {
+    "state": "idle",
+    "code": ""
+   },
+   "directory_id": "d-work",
+   "directory_name": "Work"
+  },
+  "workspace_state": "idle",
+  "actions": {
+   "primary": {
+    "kind": "configure_ai"
+   },
+   "state": [
+    {
+     "kind": "configure_ai"
+    }
+   ],
+   "ambient": [
+    "update_working",
+    "attach_context",
+    "complete"
+   ]
+  },
+  "review": null,
+  "context_status": {
+   "summary": "",
+   "state": "empty",
+   "repair_ref": null
+  },
+  "inference": {
+   "availability": "unavailable",
+   "continuation_admission": "unavailable",
+   "intended_placement": {
+    "target_id": "this_machine",
+    "target_name": "This device",
+    "target_kind": "this_device",
+    "boundary": "same_device",
+    "readiness": "unavailable"
+   }
+  },
+  "terminal_status": null
+ },
+ "add": {
+  "open": {
+   "thought": {
+    "id": "thought_dc4ac0142ddf",
+    "raw_id": "thought_dc4ac0142ddf",
+    "raw_sha256": "baa574a8d0c96da19d3dbdb55af110088c452f5b29054bb9318a2b0b6aee3ed7",
+    "source": {
+     "kind": "note"
+    },
+    "raw_captured_at": "2026-10-19T03:50:26Z",
+    "state": "working",
+    "aggregate_revision": 1,
+    "lifecycle_revision": 1,
+    "working_revision": 1,
+    "attachment_revision": 0,
+    "attachment_sha256": "57d42cb82b7b36ef84448d38d5b0a31236fbf8d1fb265277523363eda0129831",
+    "attachments": [],
+    "working_note": {
+     "id": "note_8d0d28e764bf",
+     "title": "Jun and the cutover weekend",
+     "body_markdown": "Jun is nervous about the cutover weekend. Maybe pair him with Mira on call, and write the on-call handbook first.\nTheo could own the handbook.",
+     "tags": [],
+     "deleted": false,
+     "last_modified": "2026-10-19T03:50:26Z"
+    },
+    "filing_status": "filed",
+    "continuity": {
+     "state": "idle",
+     "code": ""
+    },
+    "directory_id": "d-work",
+    "directory_name": "Work"
+   }
+  },
+  "request": {
+   "expected_aggregate_revision": 1,
+   "expected_working_revision": 1,
+   "title": "Jun and the cutover weekend",
+   "body_markdown": "Jun is nervous about the cutover weekend. Maybe pair him with Mira on call, and write the on-call handbook first.\nTheo could own the handbook.\n\nYou owe Mira feedback on her cutover design doc, due Friday.",
+   "tags": []
+  },
+  "answer": {
+   "thought": {
+    "id": "thought_dc4ac0142ddf",
+    "raw_id": "thought_dc4ac0142ddf",
+    "raw_sha256": "baa574a8d0c96da19d3dbdb55af110088c452f5b29054bb9318a2b0b6aee3ed7",
+    "source": {
+     "kind": "note"
+    },
+    "raw_captured_at": "2026-10-19T03:50:26Z",
+    "state": "working",
+    "aggregate_revision": 2,
+    "lifecycle_revision": 1,
+    "working_revision": 2,
+    "attachment_revision": 0,
+    "attachment_sha256": "57d42cb82b7b36ef84448d38d5b0a31236fbf8d1fb265277523363eda0129831",
+    "attachments": [],
+    "working_note": {
+     "id": "note_8d0d28e764bf",
+     "title": "Jun and the cutover weekend",
+     "body_markdown": "Jun is nervous about the cutover weekend. Maybe pair him with Mira on call, and write the on-call handbook first.\nTheo could own the handbook.\n\nYou owe Mira feedback on her cutover design doc, due Friday.",
+     "tags": [],
+     "deleted": false,
+     "last_modified": "2026-10-19T03:50:26Z"
+    },
+    "filing_status": "filed",
+    "continuity": {
+     "state": "idle",
+     "code": ""
+    },
+    "directory_id": "d-work",
+    "directory_name": "Work"
+   },
+   "workbench": {
+    "schema_version": 1,
+    "process_scope": {
+     "kind": "hub_local",
+     "hub_id": "hub_7c4196407bfb75201643bcc4f87a5735",
+     "state": "unavailable"
+    },
+    "workspace_cursor": {
+     "hub_id": "hub_7c4196407bfb75201643bcc4f87a5735",
+     "thought_id": "thought_dc4ac0142ddf",
+     "aggregate_revision": 2,
+     "continuity_revision": 1
+    },
+    "thought": {
+     "id": "thought_dc4ac0142ddf",
+     "raw_id": "thought_dc4ac0142ddf",
+     "raw_sha256": "baa574a8d0c96da19d3dbdb55af110088c452f5b29054bb9318a2b0b6aee3ed7",
+     "source": {
+      "kind": "note"
+     },
+     "raw_captured_at": "2026-10-19T03:50:26Z",
+     "state": "working",
+     "aggregate_revision": 2,
+     "lifecycle_revision": 1,
+     "working_revision": 2,
+     "attachment_revision": 0,
+     "attachment_sha256": "57d42cb82b7b36ef84448d38d5b0a31236fbf8d1fb265277523363eda0129831",
+     "attachments": [],
+     "working_note": {
+      "id": "note_8d0d28e764bf",
+      "title": "Jun and the cutover weekend",
+      "body_markdown": "Jun is nervous about the cutover weekend. Maybe pair him with Mira on call, and write the on-call handbook first.\nTheo could own the handbook.\n\nYou owe Mira feedback on her cutover design doc, due Friday.",
+      "tags": [],
+      "deleted": false,
+      "last_modified": "2026-10-19T03:50:26Z"
+     },
+     "filing_status": "filed",
+     "continuity": {
+      "state": "idle",
+      "code": ""
+     },
+     "directory_id": "d-work",
+     "directory_name": "Work"
+    },
+    "workspace_state": "idle",
+    "actions": {
+     "primary": {
+      "kind": "configure_ai"
+     },
+     "state": [
+      {
+       "kind": "configure_ai"
+      }
+     ],
+     "ambient": [
+      "update_working",
+      "attach_context",
+      "complete"
+     ]
+    },
+    "review": null,
+    "context_status": {
+     "summary": "",
+     "state": "empty",
+     "repair_ref": null
+    },
+    "inference": {
+     "availability": "unavailable",
+     "continuation_admission": "unavailable",
+     "intended_placement": {
+      "target_id": "this_machine",
+      "target_name": "This device",
+      "target_kind": "this_device",
+      "boundary": "same_device",
+      "readiness": "unavailable"
+     }
+    },
+    "terminal_status": null
+   }
+  }
+ },
+ "undo": {
+  "open": {
+   "thought": {
+    "id": "thought_dc4ac0142ddf",
+    "raw_id": "thought_dc4ac0142ddf",
+    "raw_sha256": "baa574a8d0c96da19d3dbdb55af110088c452f5b29054bb9318a2b0b6aee3ed7",
+    "source": {
+     "kind": "note"
+    },
+    "raw_captured_at": "2026-10-19T03:50:26Z",
+    "state": "working",
+    "aggregate_revision": 2,
+    "lifecycle_revision": 1,
+    "working_revision": 2,
+    "attachment_revision": 0,
+    "attachment_sha256": "57d42cb82b7b36ef84448d38d5b0a31236fbf8d1fb265277523363eda0129831",
+    "attachments": [],
+    "working_note": {
+     "id": "note_8d0d28e764bf",
+     "title": "Jun and the cutover weekend",
+     "body_markdown": "Jun is nervous about the cutover weekend. Maybe pair him with Mira on call, and write the on-call handbook first.\nTheo could own the handbook.\n\nYou owe Mira feedback on her cutover design doc, due Friday.",
+     "tags": [],
+     "deleted": false,
+     "last_modified": "2026-10-19T03:50:26Z"
+    },
+    "filing_status": "filed",
+    "continuity": {
+     "state": "idle",
+     "code": ""
+    },
+    "directory_id": "d-work",
+    "directory_name": "Work"
+   }
+  },
+  "request": {
+   "expected_aggregate_revision": 2,
+   "expected_working_revision": 2,
+   "title": "Jun and the cutover weekend",
+   "body_markdown": "Jun is nervous about the cutover weekend. Maybe pair him with Mira on call, and write the on-call handbook first.\nTheo could own the handbook.",
+   "tags": []
+  },
+  "answer": {
+   "thought": {
+    "id": "thought_dc4ac0142ddf",
+    "raw_id": "thought_dc4ac0142ddf",
+    "raw_sha256": "baa574a8d0c96da19d3dbdb55af110088c452f5b29054bb9318a2b0b6aee3ed7",
+    "source": {
+     "kind": "note"
+    },
+    "raw_captured_at": "2026-10-19T03:50:26Z",
+    "state": "working",
+    "aggregate_revision": 3,
+    "lifecycle_revision": 1,
+    "working_revision": 3,
+    "attachment_revision": 0,
+    "attachment_sha256": "57d42cb82b7b36ef84448d38d5b0a31236fbf8d1fb265277523363eda0129831",
+    "attachments": [],
+    "working_note": {
+     "id": "note_8d0d28e764bf",
+     "title": "Jun and the cutover weekend",
+     "body_markdown": "Jun is nervous about the cutover weekend. Maybe pair him with Mira on call, and write the on-call handbook first.\nTheo could own the handbook.",
+     "tags": [],
+     "deleted": false,
+     "last_modified": "2026-10-19T03:50:26Z"
+    },
+    "filing_status": "filed",
+    "continuity": {
+     "state": "idle",
+     "code": ""
+    },
+    "directory_id": "d-work",
+    "directory_name": "Work"
+   },
+   "workbench": {
+    "schema_version": 1,
+    "process_scope": {
+     "kind": "hub_local",
+     "hub_id": "hub_7c4196407bfb75201643bcc4f87a5735",
+     "state": "unavailable"
+    },
+    "workspace_cursor": {
+     "hub_id": "hub_7c4196407bfb75201643bcc4f87a5735",
+     "thought_id": "thought_dc4ac0142ddf",
+     "aggregate_revision": 3,
+     "continuity_revision": 2
+    },
+    "thought": {
+     "id": "thought_dc4ac0142ddf",
+     "raw_id": "thought_dc4ac0142ddf",
+     "raw_sha256": "baa574a8d0c96da19d3dbdb55af110088c452f5b29054bb9318a2b0b6aee3ed7",
+     "source": {
+      "kind": "note"
+     },
+     "raw_captured_at": "2026-10-19T03:50:26Z",
+     "state": "working",
+     "aggregate_revision": 3,
+     "lifecycle_revision": 1,
+     "working_revision": 3,
+     "attachment_revision": 0,
+     "attachment_sha256": "57d42cb82b7b36ef84448d38d5b0a31236fbf8d1fb265277523363eda0129831",
+     "attachments": [],
+     "working_note": {
+      "id": "note_8d0d28e764bf",
+      "title": "Jun and the cutover weekend",
+      "body_markdown": "Jun is nervous about the cutover weekend. Maybe pair him with Mira on call, and write the on-call handbook first.\nTheo could own the handbook.",
+      "tags": [],
+      "deleted": false,
+      "last_modified": "2026-10-19T03:50:26Z"
+     },
+     "filing_status": "filed",
+     "continuity": {
+      "state": "idle",
+      "code": ""
+     },
+     "directory_id": "d-work",
+     "directory_name": "Work"
+    },
+    "workspace_state": "idle",
+    "actions": {
+     "primary": {
+      "kind": "configure_ai"
+     },
+     "state": [
+      {
+       "kind": "configure_ai"
+      }
+     ],
+     "ambient": [
+      "update_working",
+      "attach_context",
+      "complete"
+     ]
+    },
+    "review": null,
+    "context_status": {
+     "summary": "",
+     "state": "empty",
+     "repair_ref": null
+    },
+    "inference": {
+     "availability": "unavailable",
+     "continuation_admission": "unavailable",
+     "intended_placement": {
+      "target_id": "this_machine",
+      "target_name": "This device",
+      "target_kind": "this_device",
+      "boundary": "same_device",
+      "readiness": "unavailable"
+     }
+    },
+    "terminal_status": null
+   }
+  }
+ }
+}

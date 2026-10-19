@@ -1,0 +1,28 @@
+╭─────────────────────────────────────────╮
+│ ✻ FAKE Claude Code (betterment walk rig) │
+╰─────────────────────────────────────────╯
+cwd: /repo
+● Read: the brief and the repo
+  ⎿  done
+● Bash: git status
+  ⎿  done
+● Bash: rg rollback
+  ⎿  done
+● I found two places for the rollback flag. Should it live in config/flags.yaml (shared with staging
+) or in an env var (per host)? Answer 1 for config, 2 for env.
+● Got it: 1
+● Edit: config/flags.yaml
+  ⎿  done
+● Bash: pytest -q tests/test_rollback.py
+  ⎿  done
+───────────────────────────────────────────────────────────────────────────────────────────────────
+ Bash command
+
+   rm -rf build/ && make release
+   Clean the build and release
+
+ Do you want to proceed?
+ ❯ 1. Yes
+   2. No, and tell Claude what to do differently (esc)
+
+ Esc to cancel

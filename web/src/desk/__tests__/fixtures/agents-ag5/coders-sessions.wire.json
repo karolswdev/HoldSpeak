@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-18T15:58:53.321430Z",
+  "captured_at": "2026-10-19T10:27:41.653612Z",
   "wire": {
     "count": 2,
     "flights": [
@@ -12,19 +12,21 @@
         "id": "m-platform-a0",
         "kind": "action",
         "launch_id": "launch_ag0_done",
-        "launched_at": "2026-10-18T15:48:53.284926Z",
+        "launched_at": "2026-10-19T10:17:41.618805Z",
         "merged_at": null,
         "new": true,
         "origin_ref": "action:m-platform-a0",
         "pr": null,
         "project_id": "",
         "project_name": "",
+        "screen": null,
         "session_cleanup": null,
         "session_key": "claude:ag0-done",
         "state": "done",
+        "state_source": "hook",
         "title": "Draft test scaffolding for flags",
         "turn_end": "done",
-        "turn_id": "2026-10-18T15:58:53.270834Z#4"
+        "turn_id": "2026-10-19T10:27:41.604575Z#4"
       },
       {
         "agent": "claude",
@@ -34,16 +36,18 @@
         "id": "m-platform-a1",
         "kind": "action",
         "launch_id": "launch_ag0_ghost",
-        "launched_at": "2026-10-18T15:48:53.284926Z",
+        "launched_at": "2026-10-19T10:17:41.618805Z",
         "merged_at": null,
         "new": false,
         "origin_ref": "action:m-platform-a1",
         "pr": null,
         "project_id": "",
         "project_name": "",
+        "screen": null,
         "session_cleanup": null,
         "session_key": "claude:ag0-ghost",
         "state": "waiting",
+        "state_source": "hook",
         "title": "Write the on-call note",
         "turn_end": "asks",
         "turn_id": null
@@ -62,8 +66,8 @@
         "pr": null,
         "project_id": "",
         "project_name": "",
-        "queue_id": "queue_7fc937830360",
-        "queued_at": "2026-10-18T15:58:53.287167Z",
+        "queue_id": "queue_3cc787c1bdd0",
+        "queued_at": "2026-10-19T10:27:41.620783Z",
         "session_cleanup": null,
         "session_key": null,
         "state": "queued",
@@ -88,19 +92,21 @@
           "id": "m-platform-a0",
           "kind": "action",
           "launch_id": "launch_ag0_done",
-          "launched_at": "2026-10-18T15:48:53.284926Z",
+          "launched_at": "2026-10-19T10:17:41.618805Z",
           "merged_at": null,
           "new": true,
           "origin_ref": "action:m-platform-a0",
           "pr": null,
           "project_id": "",
           "project_name": "",
+          "screen": null,
           "session_cleanup": null,
           "session_key": "claude:ag0-done",
           "state": "done",
+          "state_source": "hook",
           "title": "Draft test scaffolding for flags",
           "turn_end": "done",
-          "turn_id": "2026-10-18T15:58:53.270834Z#4"
+          "turn_id": "2026-10-19T10:27:41.604575Z#4"
         },
         "identity": {
           "agent_label": "Claude",
@@ -114,13 +120,14 @@
           "target_transport": "unknown",
           "tmux_label": null
         },
+        "screen": null,
         "session": {
           "agent": "claude",
           "awaiting_response": false,
           "capture_messages": false,
-          "created_at": "2026-10-18T15:58:53.267319Z",
+          "created_at": "2026-10-19T10:27:41.601267Z",
           "cwd": "/tmp/rig/home/dev/platform",
-          "done_id": "2026-10-18T15:58:53.270834Z#4",
+          "done_id": "2026-10-19T10:27:41.604575Z#4",
           "event_count": 5,
           "hook_event_name": "Notification",
           "last_assistant_text": null,
@@ -145,9 +152,9 @@
           "tmux_window": null,
           "transcript_path": null,
           "turn_prompted": false,
-          "updated_at": "2026-10-18T15:58:53.287453Z",
-          "wait_id": "2026-10-18T15:58:53.287453Z#5",
-          "wait_started_at": "2026-10-18T15:58:53.287453Z"
+          "updated_at": "2026-10-19T10:27:41.621071Z",
+          "wait_id": "2026-10-19T10:27:41.621071Z#5",
+          "wait_started_at": "2026-10-19T10:27:41.621071Z"
         }
       },
       {
@@ -160,16 +167,18 @@
           "id": "m-platform-a1",
           "kind": "action",
           "launch_id": "launch_ag0_ghost",
-          "launched_at": "2026-10-18T15:48:53.284926Z",
+          "launched_at": "2026-10-19T10:17:41.618805Z",
           "merged_at": null,
           "new": false,
           "origin_ref": "action:m-platform-a1",
           "pr": null,
           "project_id": "",
           "project_name": "",
+          "screen": null,
           "session_cleanup": null,
           "session_key": "claude:ag0-ghost",
           "state": "waiting",
+          "state_source": "hook",
           "title": "Write the on-call note",
           "turn_end": "asks",
           "turn_id": null
@@ -186,13 +195,14 @@
           "target_transport": "tmux",
           "tmux_label": "%4242"
         },
+        "screen": null,
         "session": {
           "agent": "claude",
           "awaiting_response": true,
           "capture_messages": false,
-          "created_at": "2026-10-18T15:58:53.271528Z",
+          "created_at": "2026-10-19T10:27:41.605502Z",
           "cwd": "/tmp/rig/home/dev/platform",
-          "done_id": "2026-10-18T15:58:53.284139Z#4",
+          "done_id": "2026-10-19T10:27:41.617809Z#4",
           "event_count": 4,
           "hook_event_name": "Stop",
           "last_assistant_text": null,
@@ -217,9 +227,9 @@
           "tmux_window": null,
           "transcript_path": null,
           "turn_prompted": false,
-          "updated_at": "2026-10-18T15:58:53.284139Z",
-          "wait_id": "2026-10-18T15:58:53.284139Z#4",
-          "wait_started_at": "2026-10-18T15:58:53.284139Z"
+          "updated_at": "2026-10-19T10:27:41.617809Z",
+          "wait_id": "2026-10-19T10:27:41.617809Z#4",
+          "wait_started_at": "2026-10-19T10:27:41.617809Z"
         }
       }
     ]

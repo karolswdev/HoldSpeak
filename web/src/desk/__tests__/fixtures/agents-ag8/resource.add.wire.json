@@ -1,0 +1,37 @@
+{
+  "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
+  "captured_at": "2026-10-19T10:27:47.236442Z",
+  "wire": {
+    "operation_id": "op_0894f6d4fea6489980716bac1512f68c",
+    "receipt": {
+      "actor_identity": "owner-session",
+      "actor_kind": "owner",
+      "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+      "created_at": 1792405667.235483,
+      "delegator_identity": "",
+      "delegator_kind": "",
+      "operation_id": "op_0894f6d4fea6489980716bac1512f68c",
+      "outcome": "succeeded",
+      "receipt_id": "rcpt_92fad497887f40e5b46f5a0d00c60901",
+      "result_ref": "project:p-platform",
+      "state": "succeeded",
+      "target_ref": "project:p-platform"
+    },
+    "resource": {
+      "changed_refs": [
+        "project:p-platform"
+      ],
+      "confidence": 1.0,
+      "created_at": "2026-10-19T10:27:47.235182+00:00",
+      "deleted": false,
+      "id": "p-platform|note:note_5773a81f748a",
+      "last_modified": "2026-10-19T10:27:47.235182+00:00",
+      "project_id": "p-platform",
+      "project_revision": 1,
+      "relationship": "member",
+      "resource_ref": "note:note_5773a81f748a",
+      "result_kind": "linked",
+      "source": "manual"
+    }
+  }
+}

@@ -13,6 +13,11 @@ retired as starters: Today and cadence do that work. They stay below, hidden
 """
 from __future__ import annotations
 
+#: Betterment daily D9: the Morning prep starter, and the stable id of the one
+#: automation the hub makes from it (``automation_runs.ensure_morning_prep``).
+MORNING_PREP_STARTER = "morning-prep"
+MORNING_PREP_ID = "workbench-morning-prep"
+
 #: Betterment A7: the four starters, in the order New automation shows them.
 #: ``when`` is a When choice (``WorkbenchService.set_when``'s shape); a
 #: schedule is stored and stays Off until he turns it On (a starter is not a
@@ -68,6 +73,32 @@ STARTERS = [
         "when": {"kind": "manual"},
         "output_target": "inbox",
         "blanks": {"about": "which drawer?"},
+    },
+    {
+        # Betterment daily D9 (owner decision 3): the day, prepared before he
+        # arrives. Its result is Today's Prepared block (Put it in: Today).
+        # The answer form below is what the block reads: one card per
+        # "## HH:MM <meeting>" section, a "- Raise:" line is a suggested point.
+        "id": MORNING_PREP_STARTER,
+        "name": "Morning prep",
+        "description": "Prepares your day before you arrive: each meeting, what is yours, what to nudge.",
+        "instruction": (
+            "Prepare my day: for each meeting today, what each side owes and what to raise; "
+            "list what is mine and due today or late; draft a nudge for each thing that is late "
+            "from someone else. Use the desk's tools: today's calendar, Needs you, People and "
+            "this week's meetings and notes.\n\n"
+            "Answer in this form. One section per meeting today, in time order:\n"
+            "## HH:MM <meeting title>\n"
+            "- <name> owes: <item> (due <day>)\n"
+            "- I owe: <item>\n"
+            "- Raise: <one point to raise>\n"
+            "Then \"## Mine today\" with one line per item, and \"## Nudges\" with one line per "
+            "drafted nudge (\"- <name>: <message>\"). Write \"- Nothing\" under a section with nothing."
+        ),
+        "sources": ["meetings:this_week", "notes:this_week"],
+        "when": {"kind": "schedule", "every": "weekday", "time": "07:30"},
+        "output_target": "today",
+        "blanks": {},
     },
 ]
 

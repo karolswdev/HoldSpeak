@@ -302,6 +302,14 @@
   gap: 0;
   border: 1px solid var(--line);
 }
+/* Betterment Q6 follow-up: at 393 every library Button reserves a block
+   margin for its 44 px touch halo (styles/global.css, max-width 420px).
+   Inside a chip that margin made the chip's frame a tall empty box around
+   its Buttons. The chip's Buttons are painted at the touch height there,
+   so the halo needs no reserved room: the chip hugs them. */
+.desk-ask-about-chip > .btn {
+  margin-block: 0;
+}
 .desk-ask-about-set {
   font: 400 13px / 1.5 var(--font-sans);
   padding-inline: 8px;

@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 786 (plus static mounts). iOS-consumed: 89. Web-consumed: 617.
+Routes: 796 (plus static mounts). iOS-consumed: 89. Web-consumed: 625.
 
 ## device_audio_ws
 
@@ -105,8 +105,11 @@ Routes: 786 (plus static mounts). iOS-consumed: 89. Web-consumed: 617.
 |---|---|---|
 | POST | `/api/agent/hand` | web |
 | POST | `/api/agent/hand/preview` | web |
+| DELETE | `/api/agent/hand/queue/{queue_id}` | web |
 | GET | `/api/agent/launches/{launch_id}` | web |
+| POST | `/api/agent/launches/{launch_id}/answer` | web |
 | POST | `/api/agent/launches/{launch_id}/deliver` | server only |
+| GET | `/api/agent/launches/{launch_id}/explain` | web |
 | GET | `/api/agent/launches/{launch_id}/lane` | web |
 | POST | `/api/agent/launches/{launch_id}/rebrief` | web |
 | POST | `/api/agent/launches/{launch_id}/rebrief/{press_id}/take-back` | web |
@@ -551,6 +554,7 @@ Routes: 786 (plus static mounts). iOS-consumed: 89. Web-consumed: 617.
 | GET | `/api/meetings/{meeting_id}/artifacts` | web |
 | GET | `/api/meetings/{meeting_id}/intent-timeline` | web |
 | GET | `/api/meetings/{meeting_id}/plugin-runs` | server only |
+| GET | `/api/meetings/{meeting_id}/prepared` | web |
 
 ## web.routes.meetings.intel
 
@@ -564,6 +568,7 @@ Routes: 786 (plus static mounts). iOS-consumed: 89. Web-consumed: 617.
 | POST | `/api/meetings/{meeting_id}/intel-recovery/retry` | web |
 | POST | `/api/meetings/{meeting_id}/intel-recovery/skip` | web |
 | POST | `/api/meetings/{meeting_id}/intelligence/run` | web |
+| POST | `/api/meetings/{meeting_id}/prepare` | web |
 
 ## web.routes.meetings.live
 
@@ -802,6 +807,14 @@ Routes: 786 (plus static mounts). iOS-consumed: 89. Web-consumed: 617.
 | POST | `/api/model-profiles/{profile_id}/probe` | server only |
 | POST | `/api/model-profiles/{profile_id}/revisions` | server only |
 
+## web.routes.primitives.note_outcomes
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/notes/{note_id}/outcomes` | web |
+| POST | `/api/notes/{note_id}/outcomes/find` | server only |
+| POST | `/api/notes/{note_id}/outcomes/{row_id}/confirm` | server only |
+
 ## web.routes.primitives.notes
 
 | Method | Path | Consumers |
@@ -852,6 +865,7 @@ Routes: 786 (plus static mounts). iOS-consumed: 89. Web-consumed: 617.
 | GET | `/api/thoughts/default-context` | web |
 | PUT | `/api/thoughts/default-context` | web |
 | GET | `/api/thoughts/for-note/{note_id}` | web |
+| POST | `/api/thoughts/open-note` | web |
 | GET | `/api/thoughts/{thought_id}` | web |
 | POST | `/api/thoughts/{thought_id}/complete` | web |
 | GET | `/api/thoughts/{thought_id}/context` | web |
@@ -872,6 +886,7 @@ Routes: 786 (plus static mounts). iOS-consumed: 89. Web-consumed: 617.
 | Method | Path | Consumers |
 |---|---|---|
 | GET | `/api/automations/new` | web |
+| GET | `/api/automations/prepared` | web |
 | GET | `/api/skills` | web |
 | POST | `/api/skills` | web |
 | DELETE | `/api/skills/{skill_id}` | web |

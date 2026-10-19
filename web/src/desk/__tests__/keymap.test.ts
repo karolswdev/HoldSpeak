@@ -5,6 +5,9 @@ import { dispatchKey, matchKey, parseKey } from "../keymap";
 import { useDesk } from "../store";
 import { VERBS } from "../verbRegistry";
 import { usePalette, useShortcutSheet } from "../chromeState";
+import { openNewThought } from "../newThought";
+
+vi.mock("../newThought", () => ({ openNewThought: vi.fn().mockResolvedValue(undefined) }));
 
 const kd = (init: KeyboardEventInit) => new KeyboardEvent("keydown", init);
 
@@ -83,11 +86,13 @@ describe("dispatchKey runs registry verbs", () => {
     expect(useDesk.getState().openAsk).toHaveBeenCalledOnce();
   });
 
-  it("⌘N creates a note and ⌘⇧N creates a decision", () => {
+  it("⌘N opens a new note (the sticky) and ⌘⇧N creates a decision", async () => {
     expect(dispatchKey(kd({ key: "n", metaKey: true }))?.id).toBe(
       "desk.new-note",
     );
-    expect(useDesk.getState().createPrimitive).toHaveBeenCalledWith("note");
+    // Betterment Q8 (one note): New Note opens the sticky, never the form editor.
+    await vi.waitFor(() => expect(openNewThought).toHaveBeenCalledTimes(1));
+    expect(useDesk.getState().createPrimitive).not.toHaveBeenCalledWith("note");
     expect(
       dispatchKey(kd({ key: "N", metaKey: true, shiftKey: true }))?.id,
     ).toBe("desk.new-decision");

@@ -36,6 +36,18 @@ TOOLS: list[dict[str, Any]] = [
         },
     },
     {
+        "name": "coder.explain",
+        "description": "Why an agent has its state: hook or screen rule, rule id, evidence lines, age.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "target": {"type": "string", "description": "launch:<id>, a launch id, or agent:session_id."},
+            },
+            "required": ["target"],
+            "additionalProperties": False,
+        },
+    },
+    {
         "name": "coder.audit",
         "description": "Read the bounded steering audit trail for coder sessions.",
         "inputSchema": {
@@ -52,8 +64,20 @@ TOOLS: list[dict[str, Any]] = [
 
 def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     """Route a tool call.  Raises LookupError for unowned names."""
-    if name not in ("coder.list", "coder.get", "coder.audit"):
+    if name not in ("coder.list", "coder.get", "coder.audit", "coder.explain"):
         raise LookupError(name)
+
+    if name == "coder.explain":
+        # Betterment AG7: the hook or the screen rule behind the state.
+        from holdspeak.services.agent_flights import explain_agent
+
+        target = str(arguments.get("target") or "")
+        answer = explain_agent(db_or(get_database), target)
+        if answer is None:
+            from holdspeak.services.errors import NotFound
+
+            raise NotFound("agent", target)
+        return answer
 
     svc = CoderService(db=db_or(get_database), reply_sender=None, observer=observer_or(get_observer))
 

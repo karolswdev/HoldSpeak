@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-11T20:37:24.513886Z",
+  "captured_at": "2026-10-19T10:27:41.648302Z",
   "wire": {
     "agents": [
       {
@@ -14,7 +14,7 @@
         "signed_in": "not_read",
         "signed_in_from": null,
         "verb": "Use it",
-        "version": "2.1.288"
+        "version": "2.1.302"
       },
       {
         "hooks": "missing",
@@ -27,7 +27,7 @@
         "signed_in": "not_read",
         "signed_in_from": null,
         "verb": "Use it",
-        "version": "0.161.0"
+        "version": "0.163.0"
       },
       {
         "hooks": "not_read",

@@ -409,9 +409,29 @@
       ]
     },
     {
+      "path": "/api/agent/hand/queue/{queue_id}",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.agent_hand",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/agent/launches/{launch_id}",
       "methods": [
         "GET"
+      ],
+      "module": "web.routes.agent_hand",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/agent/launches/{launch_id}/answer",
+      "methods": [
+        "POST"
       ],
       "module": "web.routes.agent_hand",
       "consumers": [
@@ -425,6 +445,16 @@
       ],
       "module": "web.routes.agent_hand",
       "consumers": []
+    },
+    {
+      "path": "/api/agent/launches/{launch_id}/explain",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.agent_hand",
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/agent/launches/{launch_id}/lane",
@@ -726,6 +756,16 @@
       ],
       "module": "web.routes.automations",
       "consumers": []
+    },
+    {
+      "path": "/api/automations/prepared",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/automations/presets",
@@ -3900,6 +3940,26 @@
       "consumers": []
     },
     {
+      "path": "/api/meetings/{meeting_id}/prepare",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.meetings.intel",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/meetings/{meeting_id}/prepared",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.meetings.insights",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/meetings/{meeting_id}/projects",
       "methods": [
         "GET"
@@ -4325,6 +4385,32 @@
       "consumers": [
         "web"
       ]
+    },
+    {
+      "path": "/api/notes/{note_id}/outcomes",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.note_outcomes",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/notes/{note_id}/outcomes/find",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.note_outcomes",
+      "consumers": []
+    },
+    {
+      "path": "/api/notes/{note_id}/outcomes/{row_id}/confirm",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.note_outcomes",
+      "consumers": []
     },
     {
       "path": "/api/nudges/{step_id}/dismiss",
@@ -6435,6 +6521,16 @@
       "path": "/api/thoughts/for-note/{note_id}",
       "methods": [
         "GET"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/thoughts/open-note",
+      "methods": [
+        "POST"
       ],
       "module": "web.routes.primitives.thoughts",
       "consumers": [
