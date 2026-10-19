@@ -62,7 +62,7 @@ def build_note_outcomes_router(ctx: WebContext) -> APIRouter:
     @router.post("/api/notes/{note_id}/outcomes/find")
     def find(note_id: str, request: Request) -> Any:
         # A plain def: the engine call runs off the event loop (blocking_io).
-        return call(request, "note.outcomes.find", {"note_id": note_id})
+        return call(request, "note.find_tasks", {"note_id": note_id})
 
     @router.post("/api/notes/{note_id}/outcomes/{row_id}/edit")
     async def edit(note_id: str, row_id: str, request: Request) -> Any:

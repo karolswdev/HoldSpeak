@@ -2268,7 +2268,7 @@ NOTE_OUTCOMES_READ = OperationDescriptor(
 )
 
 NOTE_OUTCOMES_FIND = OperationDescriptor(
-    name="note.outcomes.find",
+    name="note.find_tasks",
     version=1,
     description=(
         "Find the tasks in one note: the meeting's extraction over the note, on the meeting-analysis "

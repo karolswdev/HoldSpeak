@@ -56,6 +56,13 @@ class NoteOutcomesService:
         self._people = people_service
         self._door = door_service
 
+    @classmethod
+    def composed(cls, db: Any, services: Any, ctx: Any) -> "NoteOutcomesService":
+        """The hub's one instance (runtime/composition.py): the note.outcome*
+        operations bind to it, over HTTP and MCP alike."""
+        return cls(db, people_service=getattr(services, "people_service", None) or getattr(ctx, "people_service", None),
+                   door_service=getattr(services, "door_service", None) or getattr(ctx, "door_service", None))
+
     # ── reads ─────────────────────────────────────────────────────────
 
     def _note(self, note_id: str) -> Any:
@@ -68,10 +75,13 @@ class NoteOutcomesService:
         """The note's rows; a dismissed row only when asked (Find reads it so
         it never proposes that row again)."""
         with self._db._connection() as conn:
-            rows = conn.execute(
-                "SELECT * FROM note_outcomes WHERE note_id=?"
-                + ("" if dismissed else " AND state<>'dismissed'") + " ORDER BY ordinal", (note_id,)
-            ).fetchall()
+            if dismissed:
+                rows = conn.execute(
+                    "SELECT * FROM note_outcomes WHERE note_id=? ORDER BY ordinal", (note_id,)).fetchall()
+            else:
+                rows = conn.execute(
+                    "SELECT * FROM note_outcomes WHERE note_id=? AND state<>'dismissed' ORDER BY ordinal",
+                    (note_id,)).fetchall()
         return [{
             "id": row["id"], "kind": row["kind"], "text": row["text"],
             "owner": row["owner"], "due": row["due"],

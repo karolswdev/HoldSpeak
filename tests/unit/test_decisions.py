@@ -826,7 +826,7 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
         "windows.list", "windows.open", "windows.close", "windows.raise", "windows.arrange",
         "windows.seat",
         # Betterment Q9: Find the tasks on a note (the note.* MCP tools).
-        "note.outcomes.read", "note.outcomes.find", "note.outcome.edit", "note.outcome.dismiss",
+        "note.outcomes.read", "note.find_tasks", "note.outcome.edit", "note.outcome.dismiss",
         "note.outcome.confirm",
     ]
     # decision.list takes the empty object; its one optional argument is the

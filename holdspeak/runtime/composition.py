@@ -565,12 +565,7 @@ def install_from_web_context(
         ),
         # PHILO-16 16b: the windows.* rows bind to it (the MCP family).
         "desk_window_service": lambda: DeskWindowService(resolved_db),
-        # Betterment Q9: the note.outcome* rows bind to it (HTTP and MCP).
-        "note_outcomes_service": lambda: NoteOutcomesService(
-            resolved_db,
-            people_service=services.people_service or getattr(ctx, "people_service", None),
-            door_service=services.door_service or getattr(ctx, "door_service", None),
-        ),
+        "note_outcomes_service": lambda: NoteOutcomesService.composed(resolved_db, services, ctx),
     }
     for name, build in builders.items():
         instance = getattr(services, name, None)

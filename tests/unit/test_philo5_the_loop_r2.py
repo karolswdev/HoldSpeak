@@ -731,6 +731,38 @@ def _p_agent_hand(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     return resp.json()
 
 
+# ── Betterment Q9: Find the tasks on a note ──────────────────────────────
+
+
+def _note_with_rows(hub: Hub, monkeypatch: Any) -> tuple[str, dict[str, Any]]:
+    from tests.unit.test_desk_note_outcomes import REPLY, wire_recorded_engine
+
+    wire_recorded_engine(hub, monkeypatch)
+    note = hub.client.post("/api/notes", json={"title": "Jun", "body_markdown": REPLY["note"], "tags": []}).json()["note"]
+    found = hub.root.operations.invoke(OWNER, "note.find_tasks", {"note_id": note["id"]})
+    return note["id"], found
+
+
+def _p_note_outcomes_read(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    note_id, _found = _note_with_rows(hub, monkeypatch)
+    return hub.root.operations.invoke(OWNER, "note.outcomes.read", {"note_id": note_id})
+
+
+def _p_note_find_tasks(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    return _note_with_rows(hub, monkeypatch)[1]
+
+
+def _p_note_outcome(verb: str) -> Callable[[Hub, Any, Path], Any]:
+    def produce(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+        note_id, found = _note_with_rows(hub, monkeypatch)
+        task = next(row for row in found["rows"] if row["kind"] == "task")
+        args = {"note_id": note_id, "row_id": task["id"]}
+        if verb == "edit":
+            args["due"] = "Friday"
+        return hub.root.operations.invoke(OWNER, f"note.outcome.{verb}", args)
+    return produce
+
+
 PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "meeting.list": _p_meeting_list,
     "meeting.import": _p_meeting_import,
@@ -787,6 +819,12 @@ PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "windows.raise": _p_windows_raise,
     "windows.arrange": _p_windows_arrange,
     "windows.seat": _p_windows_seat,
+    # Betterment Q9: Find the tasks on a note.
+    "note.outcomes.read": _p_note_outcomes_read,
+    "note.find_tasks": _p_note_find_tasks,
+    "note.outcome.edit": _p_note_outcome("edit"),
+    "note.outcome.dismiss": _p_note_outcome("dismiss"),
+    "note.outcome.confirm": _p_note_outcome("confirm"),
 }
 
 

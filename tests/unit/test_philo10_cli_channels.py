@@ -817,7 +817,7 @@ def test_the_sends_are_egress_owner_presses_and_blocking_io_in_the_one_table() -
     blocking = {d.name for d in operations.DESCRIPTORS if d.blocking_io}
     assert blocking == {"channel.send", "channel.save_destination", "nudge.send", "connection.recheck",
                         "channel.save_email_key", "channel.save_slack_webhook", "channel.check_destination",
-                        "agent.hand"}
+                        "agent.hand", "note.find_tasks"}
     # The secret saves are HTTP only, in no MCP palette, and config by their
     # declarations: the owner's press, owner only, with transport-held secrets.
     by_name = {d.name: d for d in operations.DESCRIPTORS}

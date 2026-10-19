@@ -14,7 +14,7 @@ from holdspeak.principals import Principal
 #: Each tool and the declared operation it is.
 _OPERATION_TOOLS: dict[str, str] = {
     "note.outcomes": "note.outcomes.read",
-    "note.find_tasks": "note.outcomes.find",
+    "note.find_tasks": "note.find_tasks",
     "note.outcome.edit": "note.outcome.edit",
     "note.outcome.dismiss": "note.outcome.dismiss",
     "note.outcome.confirm": "note.outcome.confirm",

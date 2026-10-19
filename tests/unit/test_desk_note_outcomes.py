@@ -50,8 +50,8 @@ def _ok(response: Any, status: int = 200) -> Any:
     return response.json()
 
 
-@pytest.fixture
-def desk(hub, monkeypatch):  # noqa: F811
+def wire_recorded_engine(hub, monkeypatch) -> _RecordedEngine:
+    """The meeting-analysis engine answers with the recorded LAN reply."""
     from holdspeak.inference_capabilities import process_inference_capability_registry
     from holdspeak.kernel.runtime import _configure
     from tests.unit.test_phase143_inference_assignments import _profile
@@ -63,6 +63,12 @@ def desk(hub, monkeypatch):  # noqa: F811
     schema = process_inference_capability_registry().require("meeting.deferred_analysis")
     _profile(hub.db, "lan-engine", claims=("language", f"result_schema:{schema.output_schema_sha256}"))
     _assign(hub.db, "meeting.deferred_analysis", ["lan-engine"])
+    return engine
+
+
+@pytest.fixture
+def desk(hub, monkeypatch):  # noqa: F811
+    engine = wire_recorded_engine(hub, monkeypatch)
     _ok(hub.client.post("/api/people/setup"))
     theo = _ok(hub.client.post("/api/people/relationships", json={"display_name": "Theo Park"}), 201)["relationship"]
     note = _ok(hub.client.post("/api/notes", json={"title": TITLE, "body_markdown": REPLY["note"], "tags": []}), 201)["note"]
