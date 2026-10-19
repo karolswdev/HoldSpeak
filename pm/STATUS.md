@@ -17,7 +17,7 @@ regression shards passed: 16,784 checks, 27 skips and one expected failure.
 Remaining browser shards use the low-priority machine lock at
 `wt-betterment-tape-20261019`, pinned to `bd3acff8f`.
 
-Recovery follow-up fixes two reproduced People-store defects: optional SQLite
+Recovery follow-up #1370 fixes two reproduced People-store defects: optional SQLite
 journals can disappear during the permission check, and setup/readiness held
 connections until garbage collection. The journal race fails twice before the
 fix; three retained-connection checks fail before explicit closure. All 12
@@ -1141,6 +1141,8 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 | Runs on (16c): a per-object wire on the board (thought/workbench/agent/recipe/project overrides; the parked AssignmentEditor sheet edited them; the contextual atom now only reads them and opens Runs on); FOUND model files and an unrecorded Whisper (add-to-library needs a detected_artifact_id detect does not carry); Try it through the route for jobs other than Thoughts & notes (route_probe accepts only ask.answer); the phone list cannot pin an inherited engine as a job's own; 25 atlas cases still drive the Concierge flow (Add = use for summaries; the window closes) | — | — |
 
 ## Last merged (newest first)
+
+- #1370 — People readiness closes SQLite connections and tolerates journal cleanup; full-question agent browser checks and follow-up reconciliation.
 
 - #1363 — Capture C7/C8: one recording home, truthful failed occurrences, direct Record now and saved speech handoff.
 
