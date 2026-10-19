@@ -98,5 +98,3 @@ def _today_read(
         "since_yesterday": _today_brief(ops, db, principal),
         "prepared": workbenches.prepared_for_today(principal),
     }
-
-
