@@ -406,7 +406,7 @@ def _plan_installed_plugin_members(
     # ADR, a stakeholder update, a diagram) ride the same chain after the
     # routed plugins, on the same route rules.  ``prepared`` names them, so a
     # failed draft never holds the summary (``intel_queue``).
-    from ..meeting_plugins import PREPARABLE_PLUGINS, prepared_plan
+    from ..meeting_plugins import PREPARABLE_PLUGINS
 
     if only is not None:
         # Capture C5b: a drafts-only job plans exactly the drafts it was
@@ -416,11 +416,11 @@ def _plan_installed_plugin_members(
             raise ValueError("a drafts-only job names no preparable draft")
         decision["plugin_chain"] = list(prepared)
     else:
-        prepared = [
-            plugin_id for plugin_id in prepared_plan(transcript)
-            if plugin_id not in (decision.get("plugin_chain") or [])
-        ]
-        decision["plugin_chain"] = [*(decision.get("plugin_chain") or []), *prepared]
+        # Capture C5c: the summary job plans no drafts. They are written by a
+        # drafts-only job queued when the summary is published
+        # (intel_queue._queue_prepared_after_summary), so a slow engine
+        # never delays the summary.
+        prepared = []
     registry = process_inference_capability_registry()
     members: list[dict[str, Any]] = []
     skipped: list[dict[str, str]] = []

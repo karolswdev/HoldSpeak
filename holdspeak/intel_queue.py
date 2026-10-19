@@ -527,6 +527,7 @@ def _finish_bound_publication(db, job, bound, lease, broker, *, on_meeting_ready
             lease.mark_lost()
         return changed, "failed", True
     _on_intel_complete(db, job.meeting_id, job, bridge=False)
+    _queue_prepared_after_summary(db, job)
     db.meetings.mark_ready_unseen(job.meeting_id)
     if on_meeting_ready is not None:
         try:
@@ -534,6 +535,30 @@ def _finish_bound_publication(db, job, bound, lease, broker, *, on_meeting_ready
         except Exception as exc:
             log.debug("on_meeting_ready observer failed: %s", type(exc).__name__)
     return True, "succeeded", False
+
+
+def _queue_prepared_after_summary(db, job) -> None:
+    """Betterment capture C5c: the summary is published; now queue the drafts
+    this meeting asked for by name (an ADR, an update, a diagram) as one
+    drafts-only job on the same disclosed route. Never raises: a draft that
+    is not queued shows as not run on the meeting, with Write again."""
+    try:
+        from .meeting_plugins import prepared_plan
+
+        meeting = db.meetings.get_meeting(job.meeting_id)
+        transcript = "\n".join(
+            f"{getattr(s, 'speaker', '') or ''}: {getattr(s, 'text', '') or ''}"
+            for s in (getattr(meeting, "segments", None) or [])
+        )
+        wanted = prepared_plan(transcript)
+        if not wanted:
+            return
+        outcome = db.intel.request_prepared_results(
+            job.meeting_id, wanted, planned_route=getattr(job, "planned_route", None),
+        )
+        log.info("Prepared drafts for %s after the summary: %s", job.meeting_id, outcome)
+    except Exception as exc:  # pragma: no cover - a draft never blocks the summary
+        log.warning("Prepared drafts were not queued for %s: %s", job.meeting_id, type(exc).__name__)
 
 
 def _process_bound_intel_job(
