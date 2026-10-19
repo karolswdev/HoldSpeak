@@ -227,8 +227,8 @@ describe("Memory on the Desk: standing pages where the work lives", () => {
     render(<ProjectMemoryCore scope="project:atlas" />);
     const section = await screen.findByTestId("room-this-week");
     const groups = within(section).getAllByTestId("this-week-group");
-    expect(groups.map((g) => g.getAttribute("aria-label"))).toEqual(["Risks", "Changed"]);
-    const changed = within(groups[1]).getAllByTestId("this-week-line");
+    expect(groups.map((g) => g.getAttribute("aria-label"))).toEqual(["Open", "Risks", "Changed"]);
+    const changed = within(groups[2]).getAllByTestId("this-week-line");
     expect(changed).toHaveLength(4);
     const cutover = changed.find((l) => l.textContent?.includes("Cutover date is 10-17"))!;
     expect(within(cutover).getByTestId("memory-ref").textContent).toBe("NOTE 10-11");

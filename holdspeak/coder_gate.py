@@ -982,7 +982,22 @@ def write_spawn_settings(
         json.dumps(spawn_settings(prefix), indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
+    # The launch directory is private to HoldSpeak. It carries the skill for
+    # both supported agents without changing either user's config directory.
+    from .agent_skill import install_launch_skills
+
+    install_launch_skills(target.parent)
     return target
+
+
+def spawn_settings_path(
+    path: Path | None = None, *, project_root: Path | None = None
+) -> Path:
+    """Return the private settings path without writing the settings file."""
+
+    root = (project_root or Path(__file__).resolve().parents[1]).resolve()
+    root_key = hashlib.sha256(str(root).encode("utf-8")).hexdigest()[:16]
+    return path or Path.home() / ".holdspeak" / "gate-spawn-settings" / f"{root_key}.json"
 
 
 def spawn_settings(prefix: str) -> dict[str, Any]:

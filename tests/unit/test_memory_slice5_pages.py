@@ -143,7 +143,8 @@ def test_the_fixed_page_set() -> None:
     assert [s.slug for s in PAGE_SET["project"]] == [
         "what-we-decided", "what-is-open", "risks-and-disputes", CHANGED,
     ]
-    assert [s.slug for s in PAGE_SET["desk"]] == ["what-i-owe", CHANGED]
+    # Betterment Q11: what others owe him, the source of a person's two pages.
+    assert [s.slug for s in PAGE_SET["desk"]] == ["what-i-owe", "what-they-owe-me", CHANGED]
     assert set(PAGE_SET) == {"project", "desk"}  # no person pages (see MEMORY-DESIGN.md)
     with pytest.raises(ValueError):
         spec_for("person", "what-i-owe-them")
@@ -884,7 +885,7 @@ def _due_pages(tmp_path: Path) -> Database:
     _filed_note(db, "nh", "Harbor budget is 40k.", "harbor")
     _filed_note(db, "nd", "Desk lunch is noon.", None)
     _learn(db)
-    assert len(pending_pages(db)) == 4 + 4 + 2
+    assert len(pending_pages(db)) == 4 + 4 + 3  # Betterment Q11: + what-they-owe-me
     return db
 
 
@@ -906,7 +907,9 @@ def test_the_budget_counts_every_attempted_call_bad_answers_too(tmp_path: Path) 
     assert writer.calls == 3 == stats["calls"] == budget.calls and stats["failed"] == 3 and stats["more"] == 1
 
 
-def test_pages_share_the_pass_budget_in_the_conductor(tmp_path: Path, monkeypatch) -> None:
+def test_pages_have_their_own_pass_budget_in_the_conductor(tmp_path: Path, monkeypatch) -> None:
+    """Betterment Q11: pages had the calls extraction left, so a backlog
+    starved them; now they have their own (PAGE_CALLS_PER_PASS)."""
     from holdspeak.memory import consolidate as consolidate_module
 
     db = _desk(tmp_path)
@@ -922,11 +925,12 @@ def test_pages_share_the_pass_budget_in_the_conductor(tmp_path: Path, monkeypatc
     extract, consolidate = memory_conductor._model_steps(db, SimpleNamespace(), None)
     pages = consolidate["pages"]
     assert facts.calls == extract["calls"] == 2 and rules.calls == consolidate["calls"] == 2
-    assert writer.calls == pages["calls"] == 1 and pages["more"] == 1  # 2 + 2 + 1 = the budget of 5
+    assert writer.calls == pages["calls"] == memory_conductor.PAGE_CALLS_PER_PASS and pages["more"] == 1
     # The conductor's yield check runs before every page call.
     monkeypatch.setattr(memory_conductor, "live_work", lambda *_a: "a meeting is recording")
     report = memory_conductor._page_step(db, SimpleNamespace(), None, CallBudget(24))
-    assert report["calls"] == 0 and report["yielded"] == "a meeting is recording" and writer.calls == 1
+    assert report["calls"] == 0 and report["yielded"] == "a meeting is recording"
+    assert writer.calls == memory_conductor.PAGE_CALLS_PER_PASS
 
 
 # ── custody ─────────────────────────────────────────────────────────────

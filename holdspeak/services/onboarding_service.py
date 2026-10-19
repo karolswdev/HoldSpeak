@@ -539,13 +539,19 @@ class OnboardingService:
                 f"HoldSpeak cannot read {path}. Fix the JSON and try again.", code="agent_settings_unreadable",
             ) from exc
         log.info("agent hooks installed for %s at %s (%s)", agent, path, ", ".join(result["installed_events"]))
+        from ..agent_skill import install_skill
+
+        # Each CLI discovers user skills in its native root. Codex hooks
+        # still follow CODEX_HOME; skills follow HOME/.agents.
+        skill_root = self._home() / ".agents" if agent == "codex" else path.parent
+        skill = install_skill(skill_root, agent)
         if agent == "codex":
             result = {**result, "trust": trust_codex_hooks(
                 executable=str(self._which("codex")), env=home_scoped_env({**os.environ, **self._env()}),
                 home=self._home(),
                 hooks_json=path,
             )}
-        return {**self.agents_detect(principal), "used": {"agent": agent, **result}}
+        return {**self.agents_detect(principal), "used": {"agent": agent, "skill": str(skill), **result}}
 
 
 def _require_owner(principal: Any) -> None:

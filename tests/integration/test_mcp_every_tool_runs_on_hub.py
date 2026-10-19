@@ -111,7 +111,7 @@ def _refusal_is_known(name: str, payload: Any) -> bool:
     # Helper authority is deliberately launch-only. The global owner sweep
     # must call these tools as an owner and record that named refusal; accepting
     # every 403 would hide a broken authority boundary.
-    if name in HELPER_TOOLS and code == "launch_only":
+    if name in HELPER_TOOLS and code == "launch_only" and payload.get("status") == 403:
         return True
     if isinstance(code, str) and KNOWN_CODE.search(code):
         return True

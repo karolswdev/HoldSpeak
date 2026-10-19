@@ -63,6 +63,13 @@ describe("PHILO-15 16 Add to Project ▸", () => {
     expect(refresh).toHaveBeenCalled();
   });
 
+  it("autoOpen opens the same picker for a Meeting More action", async () => {
+    render(<AddToProject meetingId="m-sync" autoOpen />);
+    const menu = await screen.findByRole("menu", { name: "Add to Project" });
+    expect(within(menu).getByText("Payments ledger cutover")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add to Project ▸" })).toHaveAttribute("aria-expanded", "true");
+  });
+
   it("a Project the meeting is in carries a check, and a second pick writes nothing", async () => {
     linked = ["p-ledger"];
     render(<AddToProject meetingId="m-sync" />);

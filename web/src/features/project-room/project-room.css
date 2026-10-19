@@ -501,15 +501,30 @@
 }
 .room-nudge-card-pr {
   margin-bottom: 6px;
+  min-width: 0;
+  max-width: 100%;
 }
 .room-nudge-pr-link {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
   color: var(--accent, #a86e4a);
   text-decoration: none;
   font-size: var(--desk-surface-detail-size);
   font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
 }
 .room-nudge-pr-link:hover {
   text-decoration: underline;
+}
+/* Room fact tokens stay on one line by default. PR titles are prose inside
+   the Nudge well and must wrap at both phone and desktop widths. */
+.surface-ledger[data-cols="room"] .surface-token.room-nudge-pr-link:not([data-wrap]) {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .room-nudge-pr-list {
   display: flex;
@@ -521,6 +536,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
+  max-width: 100%;
 }
 .room-nudge-card-text {
   margin-bottom: 8px;
@@ -584,6 +601,10 @@
     display: flex;
     gap: 4px;
     margin-top: 4px;
+  }
+  .room-main .room-why-token {
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 }
 

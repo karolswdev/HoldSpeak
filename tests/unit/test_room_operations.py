@@ -41,6 +41,7 @@ ADMISSION_TABLE: dict[str, tuple[str, tuple[str, ...]]] = {
     "project.get_delta": ("exempt", ()), "project.list_updates": ("exempt", ()), "desk.needs_you": ("exempt", ()),
     "project.item.list": ("exempt", ()), "project.resource.list": ("exempt", ()),
     "project.create": ("exempt", ()),
+    "project.door.preview": ("admitted", ()),
     "project.door.create": ("admitted_if", ("sources",)),
     "project.update": ("exempt", ()),
     "project.archive": ("admitted", ()),
@@ -58,6 +59,7 @@ ADMISSION_TABLE: dict[str, tuple[str, tuple[str, ...]]] = {
 BINDING: dict[str, tuple[str, str]] = {
     "project.list": ("project_service", "list_projects"), "project.get": ("project_service", "get_project"),
     "project.get_room": ("project_service", "room"), "project.create": ("project_service", "create_project"),
+    "project.door.preview": ("project_door_service", "preview"),
     "project.door.create": ("project_door_service", "create"),
     "project.update": ("project_service", "update_project"), "project.archive": ("project_service", "archive_project"),
     "project.restore": ("project_service", "restore_project"), "project.link": ("project_service", "associate_meeting"),
@@ -122,6 +124,12 @@ def test_the_door_create_is_admitted_only_with_sources() -> None:
     assert admission.admits({"outcome": "x", "sources": [{"provider": "github", "scope": "o/r"}]}) is True
 
 
+def test_the_door_preview_is_admitted_for_provider_validation() -> None:
+    admission = _row("project.door.preview").admission
+    assert admission is not None
+    assert admission.admits({"outcome": "x", "pasted": "https://acme.atlassian.net/browse/KAN-1"}) is True
+
+
 @pytest.mark.parametrize("name", sorted(BINDING))
 def test_each_row_is_bound_to_the_hubs_one_instance(hub: Hub, name: str) -> None:
     field, method = BINDING[name]
@@ -181,6 +189,7 @@ def test_every_mcp_tool_and_http_route_of_the_slice_reaches_the_one_registry(hub
         ("GET", f"/api/projects/{pid}/updates", None, "project.list_updates"),
         ("PUT", f"/api/updates/{update}", {"body_md": "Text"}, "project.update_draft"),
         ("POST", f"/api/updates/{update}/publish", {}, "project.publish_update"),
+        ("POST", "/api/projects/door/preview", {"outcome": "Reach", "pasted": ""}, "project.door.preview"),
         ("GET", "/api/desk/needs-you?fresh=1", None, "desk.needs_you"),
     ]
     for method, path, body, name in http:
@@ -214,6 +223,16 @@ def _agent(hub: Hub, palette: str) -> Any:
     client.headers.pop("x-holdspeak-token", None)
     client.headers.update({"Authorization": f"Bearer {issued.json()['token']}"})
     return client
+
+
+def test_preview_route_requires_owner_project_admission(hub: Hub) -> None:
+    agent = _agent(hub, "PROJECT")
+    refused = agent.post("/api/projects/door/preview", json={"outcome": "x", "pasted": ""})
+    assert refused.status_code == 403, refused.text
+    body = refused.json()
+    assert body.get("code") == "project_delegation_required" or body.get("error") in {
+        "owner_required", "principal_right_required",
+    }, body
 
 
 def test_the_project_palette_refuses_outside_and_admits_the_new_tools_through_dispatch(hub: Hub) -> None:

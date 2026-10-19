@@ -118,11 +118,19 @@ _I_OWE = PageSpec(
     "what-i-owe", "What do I owe?",
     kinds=("action",), words=("owe", "owes", "due", "will", "action"),
 )
+#: Betterment Q11 (MEMORY-DESIGN.md §3.4, the person pages): the desk's
+#: answer to what others owe him. A person's window draws the sentences of
+#: this page and of "What do I owe?" that name that person (no person scope:
+#: observations have none, and no People id is written in plaintext).
+_THEY_OWE = PageSpec(
+    "what-they-owe-me", "What do others owe me?",
+    kinds=("action",), words=("owe", "owes", "due", "will", "waiting", "promised", "action"),
+)
 
 #: The fixed page set (§3.4).  No page editor, no custom questions.
 PAGE_SET: dict[str, tuple[PageSpec, ...]] = {
     "project": (_DECIDED, _OPEN, _RISKS, _CHANGED),
-    "desk": (_I_OWE, _CHANGED),
+    "desk": (_I_OWE, _THEY_OWE, _CHANGED),
 }
 
 _OUTPUT_ITEM = {

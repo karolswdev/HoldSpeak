@@ -1252,7 +1252,10 @@ class LaunchService:
             if read_only:
                 argv = _claude_read_only_argv(argv)
             settings_path = coder_gate.write_spawn_settings()
-            argv = [*argv, "--settings", str(settings_path)]
+            # Claude's documented ``--add-dir`` discovery loads skills from
+            # the private launch directory. ``--settings`` remains the hook
+            # document; neither flag edits the user's Claude config.
+            argv = [*argv, "--settings", str(settings_path), "--add-dir", str(settings_path.parent)]
             # Conductor K6: the HoldSpeak MCP, from the launch's credential.
             mcp_config = agent_mcp.write_mcp_config(launch_id, self._mcp_config_dir)
             allowed: tuple[str, ...] = () if read_only else (("Bash",) if parent_operation_id else ())
@@ -1274,6 +1277,10 @@ class LaunchService:
 
             # Conductor R3: every Codex launch runs in its own process with the
             # rider and gate hooks (inert unless the gate holds this worktree).
+            from .. import agent_skill
+
+            launch_settings_dir = coder_gate.spawn_settings_path().parent
+            agent_skill.install_launch_skills(launch_settings_dir)
             argv = [*argv, *coder_gate.codex_spawn_args()]
             # The approval and sandbox flags need the worktree's git folder:
             # added once the worktree exists (before the spawn).
@@ -1459,6 +1466,14 @@ class LaunchService:
 
         # 2. spawn through the envelope: the node launch receipt.
         if executable == "codex":
+            from .. import agent_skill
+
+            # Codex discovers repository skills from ``.agents/skills`` below
+            # its CWD/repository root. The private settings folder above
+            # carries the launch artifact, while this repo-native copy makes
+            # the skill visible to the actual Codex process without changing
+            # the user's CODEX_HOME or auth configuration.
+            agent_skill.install_codex_repo_skill(Path(worktree_path))
             argv = [*argv, *self._codex_mode_args(argv, mode, worktree_path, read_only=read_only), *codex_tail]
         command = self.compose_command(
             argv, worktree_path, f"{project}/{story_id}",
@@ -1821,6 +1836,9 @@ class LaunchService:
         )
         argv = composed["argv"]
         if executable == "codex":
+            from .. import agent_skill
+
+            agent_skill.install_codex_repo_skill(Path(worktree_path))
             argv = [*argv, *self._codex_mode_args(argv, mode, worktree_path, read_only=read_only), *composed["codex_tail"]]
         argv = resume_argv(executable, argv, session_id)
         story = record.get("story_ref") or {}

@@ -348,7 +348,9 @@ def _model_steps(db: Any, broker: Any, should_stop: Any) -> tuple[dict[str, Any]
         consolidate["pages"] = {"engine": "", "calls": 0, "more": 1,
                                 "yielded": consolidate.get("yielded", ""), "error": ""}
         return extract, consolidate
-    consolidate["pages"] = _page_step(db, broker, should_stop, budget)
+    # Betterment Q11: pages have their own calls. On the shared budget an
+    # extraction backlog spent every call each pass, and no page was written.
+    consolidate["pages"] = _page_step(db, broker, should_stop, CallBudget(PAGE_CALLS_PER_PASS))
     return extract, consolidate
 
 
