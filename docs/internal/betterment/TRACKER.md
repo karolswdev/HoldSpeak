@@ -5,19 +5,19 @@ file in the same PR as `pm/STATUS.md`, after each batch. "Done" means
 merged to main. "On his desk" is the backend commit in `pm/STATUS.md`.
 Open work that is not a slice is in `FOLLOWUPS.md`.
 
-**Last updated:** 2026-10-18, main `87e1f742c` (batch five on his desk).
+**Last updated:** 2026-10-18, main `b8908dc72` (batch six on his desk).
 
-**Total: 52 of 117 slices done.**
+**Total: 60 of 117 slices done** (D8 counted as part).
 
 | Cluster | Folder | Done |
 |---|---|---|
 | Automations | `workbench/` | 11 of 11 |
 | Engines | `engines/` | 8 of 8 |
-| The desk's tools (MCP) | `mcp/` | 5 of 7 |
-| Ask | `asking/` | 5 of 13 |
+| The desk's tools (MCP) | `mcp/` | 7 of 7 |
+| Ask | `asking/` | 8 of 13 |
 | Projects | `projects/` | 3 of 11 |
-| Agents | `agents/` | 5 of 16 |
-| Daily and Needs you | `daily/` | 7 of 11 |
+| Agents | `agents/` | 7 of 16 |
+| Daily and Needs you | `daily/` | 8 of 11 |
 | Setup and Settings | `setup/` | 1 of 10 |
 | Desk shell | `shell/` | 2 of 10 |
 | Send | `send/` | 1 of 8 |
@@ -52,7 +52,7 @@ Open work that is not a slice is in `FOLLOWUPS.md`.
 | E6 | One name | Done · #1320 |  |
 | E7 | pi and Gemini CLI presets | Done · #1323 |  |
 
-## The desk's tools (MCP) (`mcp/RECIPE.md`): 5 of 7
+## The desk's tools (MCP) (`mcp/RECIPE.md`): 7 of 7
 
 | Slice | What | State | Note |
 |---|---|---|---|
@@ -61,20 +61,20 @@ Open work that is not a slice is in `FOLLOWUPS.md`.
 | M2 | Looked at, Wrote, Prepared | Done · #1301 |  |
 | M3 | Automations on MCP | Done · #1319 |  |
 | M4 | Engines on MCP | Done · #1321 |  |
-| M5 | Tools for HTTP engines that accept tool calls | Open |  |
-| M6 | A GitHub pull-request read | Open |  |
+| M5 | Tools for HTTP engines that accept tool calls | Done · #1330 |  |
+| M6 | A GitHub pull-request read | Done · #1331 |  |
 
-## Ask (`asking/RECIPE.md`): 5 of 13
+## Ask (`asking/RECIPE.md`): 8 of 13
 
 | Slice | What | State | Note |
 |---|---|---|---|
 | Q0 | Threads tell the truth | Done · #1260 |  |
 | Q1 | The Room's Ask tells the truth | Done · #1267 |  |
 | Q2 | Ask goes first | Done · #1269 |  |
-| Q3 | Search asks | Open |  |
+| Q3 | Search asks | Done · #1332 |  |
 | Q4 | One Ask window | Done · #1302 |  |
-| Q5 | Ask about this, from everywhere | Open |  |
-| Q6 | The About picker | Part | the shared About picker was built in A5 #1309; Ask uses it. The rest of Q6 is open. |
+| Q5 | Ask about this, from everywhere | Done · #1335 |  |
+| Q6 | The About picker | Done · #1335 | shared picker from A5 #1309; shortcuts, chips, drop on Ask in #1335. Phone chips look rough (FOLLOWUPS). |
 | Q7 | Ask my whole desk | Done · #1305 |  |
 | Q8 | One note | Open |  |
 | Q9 | Find the tasks | Open |  |
@@ -98,15 +98,15 @@ Open work that is not a slice is in `FOLLOWUPS.md`.
 | P9 | One decision record | Open |  |
 | P10 | Watches tell the truth underneath | Open |  |
 
-## Agents (`agents/RECIPE.md`): 5 of 16
+## Agents (`agents/RECIPE.md`): 7 of 16
 
 | Slice | What | State | Note |
 |---|---|---|---|
 | AG0 | Tell the truth about state | Done · #1262 |  |
 | AG1 | One name: Agents; park the other faces | Done · #1292 |  |
 | AG2 | One press to answer and to allow | Done · #1295 |  |
-| AG3 | The desk's own answers are visible and in the right form | Open |  |
-| AG4 | Hand to agent from where the work is | Open |  |
+| AG3 | The desk's own answers are visible and in the right form | Done · #1333 |  |
+| AG4 | Hand to agent from where the work is | Done · #1334 |  |
 | AG5 | Working at once, and a queue | Done · #1308 |  |
 | AG6 | Resume after a restart | Done · #1310 |  |
 | AG7 | Screen rules (the herdr port) | Open |  |
@@ -119,7 +119,7 @@ Open work that is not a slice is in `FOLLOWUPS.md`.
 | AG14 | Automations that hand work to agents | Open |  |
 | AG15 | Agents he started himself (decision 1) | Open |  |
 
-## Daily and Needs you (`daily/RECIPE.md`): 7 of 11
+## Daily and Needs you (`daily/RECIPE.md`): 8 of 11
 
 | Slice | What | State | Note |
 |---|---|---|---|
@@ -128,10 +128,10 @@ Open work that is not a slice is in `FOLLOWUPS.md`.
 | D2 | Needs you: the filters and one verb per row | Done · #1291 |  |
 | D3 | Promises from a meeting (owner decision 1) | Done · #1296 |  |
 | D4 | Today is one page | Done · #1303 |  |
-| D5 | Retire the Brief and The week windows | Open |  |
+| D5 | Retire the Brief and The week windows | Done · #1336 |  |
 | D6 | People from his work | Done · #1312 |  |
 | D7 | The 1:1 prep | Done · #1313 |  |
-| D8 | Notices only for what needs him (owner decision 2) | Open |  |
+| D8 | Notices only for what needs him (owner decision 2) | Part · #1337 | finished-automation quiet notice + Today NEW line not built (FOLLOWUPS). |
 | D9 | Morning prep (after Automations A2–A6 and MCP M1; owner decision 3) | Open |  |
 | D10 | MCP parity | Open |  |
 

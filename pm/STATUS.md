@@ -4,9 +4,28 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-18 (betterment batch five delivered at `87e1f742c`)
+**Last updated:** 2026-10-18 (betterment batch six delivered at `b8908dc72`)
 
 ## Current phase
+
+**Betterment batch six — delivered 2026-10-18 (main `b8908dc72`).** The
+desk's tools are complete (7 of 7): M5 #1330 (HTTP engines get the Ask
+palette, at most 10 passes), M6 #1331 (`provider.github_pr_get`, MCP only).
+Ask: Q3 #1332 (Search asks; one section per kind; plain memory rows),
+Q5+Q6 #1335 (one verb, Ask about this; the Room's field asks in Ask; About
+shortcuts, chips, drop on Ask; Send… under an answer). Agents: AG3 #1333
+(the desk's answers visible, a choice typed as the bare number), AG4 #1334
+(hand from the front window, Needs you More and Search; a sentence; branch
+from the title). Daily: D5 #1336 (Brief and The week windows retired; old
+desks reopen on Today), D8 #1337 (notices only for what needs him; morning
+notice; 1:1 prep notice; held while Today/Needs you is in front; People
+503 on an empty store fixed; "People is not set up on this Mac"). The
+owner's first real automation on a real engine worked. Reds on `f6b0c1be0`
+(FAST 6, browser 4 + 2 import errors) fixed forward in #1338: three real
+defects (stale MCP verb catalogue, missing face words, a global
+`document.querySelector`), the rest stale. Web baseline green. Desk hub
+restarted from `wt-desk-betterment-20261018d`; 4 checks 200; backend
+`b8908dc72`. Slices: 60 of 117 (`docs/internal/betterment/TRACKER.md`).
 
 **Betterment batch five — delivered 2026-10-18 (main `87e1f742c`).** Automations,
 Engines and the desk's tools are complete as designed. A6 #1322 (Put it in;
