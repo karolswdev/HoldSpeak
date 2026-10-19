@@ -1,15 +1,15 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-19T04:23:09.230194Z",
+  "captured_at": "2026-10-19T10:27:45.229552Z",
   "wire": {
     "agent": "agent",
     "args_head": "{\"command\":\"cd /private/var/folders/q7/T/hs-r2/.holdspeak/repositories/karolswdev/holdspeak-dayone-rehearsal-1558 && pwd",
     "args_sha256": "106188038c037af70e98daa80b5a0804946d49452357ea9b5917b7ec9926af90",
-    "created_at": 1792383789.032875,
+    "created_at": 1792405665.078519,
     "cwd": "/tmp/rig/home/dev/wt/hs-action-runbook",
-    "decided_at": 1792383789.227363,
+    "decided_at": 1792405665.227438,
     "decided_by": "owner-session",
-    "expires_at": 1792387389.032875,
+    "expires_at": 1792409265.078519,
     "id": "toolu_cut_1440",
     "operation": {
       "actor": "agent",
@@ -23,8 +23,8 @@
       "effect_class": "agent/tool_call_hold",
       "family": "tool_gate",
       "fixed_destination": true,
-      "kernel_operation_id": "op_c201845088a24cfca747342f1152cb10",
-      "operation_id": "op_c201845088a24cfca747342f1152cb10",
+      "kernel_operation_id": "op_d7553f9a46154c239714b249f72fb382",
+      "operation_id": "op_d7553f9a46154c239714b249f72fb382",
       "project_scope": null,
       "resource_scope": "Bash",
       "tool_call": {
