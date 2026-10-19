@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 785 (plus static mounts). iOS-consumed: 89. Web-consumed: 616.
+Routes: 786 (plus static mounts). iOS-consumed: 89. Web-consumed: 617.
 
 ## device_audio_ws
 
@@ -1062,6 +1062,7 @@ Routes: 785 (plus static mounts). iOS-consumed: 89. Web-consumed: 616.
 | GET | `/api/providers/jira/discover` | server only |
 | POST | `/api/providers/jira/search` | server only |
 | POST | `/api/providers/jira/validate-scope` | server only |
+| DELETE | `/api/providers/{provider}/connections/{ref}` | web |
 | POST | `/api/watches/{watch_id}/evaluate` | web |
 
 ## web.routes.repositories

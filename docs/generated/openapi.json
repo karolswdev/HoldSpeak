@@ -24753,6 +24753,58 @@
         ]
       }
     },
+    "/api/providers/{provider}/connections/{ref}": {
+      "delete": {
+        "description": "Remove one Jira or Confluence connection row.",
+        "operationId": "atlassian_remove_connection_api_providers__provider__connections__ref__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "title": "Provider",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "ref",
+            "required": true,
+            "schema": {
+              "title": "Ref",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Atlassian Remove Connection Api Providers  Provider  Connections  Ref  Delete"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Atlassian Remove Connection",
+        "tags": [
+          "providers"
+        ]
+      }
+    },
     "/api/recipes": {
       "get": {
         "operationId": "api_list_recipes_api_recipes_get",

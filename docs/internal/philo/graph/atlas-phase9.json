@@ -2214,7 +2214,7 @@
       "sources": [
         {
           "path": "web/src/pages/cores/connections/ConnectionsPane.tsx",
-          "symbol": "case \"never_checked\": return \"Never checked\";",
+          "symbol": "case \"never_checked\": return \"Not checked\";",
           "claim": "the chip's words for a provider never checked"
         }
       ],

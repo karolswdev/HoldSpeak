@@ -55,22 +55,23 @@ describe("each card shows its own check age", () => {
     }
     render(<ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} />);
     const ghCard = await screen.findByTestId("connections-github");
-    expect(chipWords(ghCard)).toBe("Connected · Checked now");
+    expect(chipWords(ghCard)).toBe("Works · Checked now");
     const alphaRef = tool("jira").connections.find((c: Json) => c.account.site === "alpha.atlassian.net").connection_ref;
     const betaRef = tool("jira").connections.find((c: Json) => c.account.site === "beta.atlassian.net").connection_ref;
-    expect(chipWords(screen.getByTestId(`connections-jira-conn-${alphaRef}`))).toBe("Connected · Checked 2 h ago");
-    expect(chipWords(screen.getByTestId(`connections-jira-conn-${betaRef}`))).toBe("Never checked");
-    expect(chipWords(screen.getByTestId("connections-confluence"))).toBe("Never checked");
+    expect(chipWords(screen.getByTestId(`connections-jira-conn-${alphaRef}`))).toBe("Works · Checked 2 h ago");
+    expect(chipWords(screen.getByTestId(`connections-jira-conn-${betaRef}`))).toBe("Not checked");
+    expect(chipWords(screen.getByTestId("connections-confluence"))).toBe("Not checked");
     expect(chipWords(screen.getByTestId("connections-calendar"))).toBe("Not set up");
     expect(chipWords(screen.getByTestId("connections-models"))).not.toContain("Checked");
-    expect(reads).toEqual(["GET /api/connections"]);
+    // Betterment ST2: plus the Found read (gh and acli files only, no CLI).
+    expect([...reads].sort()).toEqual(["GET /api/connections", "GET /api/onboarding/connections"]);
   });
 });
 
 describe("the empty Jira card says the tool's own state", () => {
   it.each([
-    ["acli on PATH", "never_checked", "Never checked"],
-    ["acli missing", "unavailable", "acli missing"],
+    ["acli on PATH", "never_checked", "Not checked"],
+    ["acli missing", "unavailable", "Could not check: acli is not installed"],
   ])("%s: %s", async (_name, state, words) => {
     // replaces: tests/e2e/test_philo9_b1_connections_glass.py::test_the_empty_jira_card_shows_its_own_state
     // The two states are the hub's own answers for an empty Jira
@@ -91,9 +92,9 @@ import recheckGithubWire from "./fixtures/connections-wire/recheck-github.json";
 import signedInWire from "./fixtures/connections-wire/connections-signed-in.json";
 
 describe("Recheck asks the hub and the card shows its answer", () => {
-  it("a never-checked GitHub card: Recheck posts the route and the card reads Connected · Checked now", async () => {
+  it("a never-checked GitHub card: Check posts the route and the card reads Works · Checked now", async () => {
     // replaces: tests/e2e/test_hs168_connections_glass.py::test_connections_recheck_updates_card
-    // (the hub half, a probe that reads Connected: tests/unit/test_philo9_b1_connections.py::test_each_remote_row_returns_its_own_stored_time)
+    // (the hub half, a probe that reads Works: tests/unit/test_philo9_b1_connections.py::test_each_remote_row_returns_its_own_stored_time)
     wire = clone(coldWire);
     const answer = clone(recheckGithubWire) as Json;
     answer.last_checked_at = new Date().toISOString();
@@ -112,10 +113,10 @@ describe("Recheck asks the hub and the card shows its answer", () => {
     const onFooterUpdate = vi.fn();
     render(<ConnectionsPane onFooterUpdate={onFooterUpdate} onOpenModule={vi.fn()} />);
     const card = await screen.findByTestId("connections-github");
-    expect(chipWords(card)).toBe("Never checked");
-    fireEvent.click(within(card).getByRole("button", { name: /Recheck/ }));
-    await screen.findByText(/Connected · Checked now/);
-    expect(chipWords(screen.getByTestId("connections-github"))).toBe("Connected · Checked now");
+    expect(chipWords(card)).toBe("Not checked");
+    fireEvent.click(within(card).getByRole("button", { name: "Check" }));
+    await screen.findByText(/Works · Checked now/);
+    expect(chipWords(screen.getByTestId("connections-github"))).toBe("Works · Checked now");
     expect(reads).toContain("POST /api/connections/github/recheck");
     expect(reads.filter((read) => read === "GET /api/connections")).toHaveLength(2);
     const foot = onFooterUpdate.mock.calls.at(-1)?.[0];
@@ -143,7 +144,7 @@ describe("a sign-in read from gh's config", () => {
 });
 
 describe("the cold Connections face", () => {
-  it("an isolated HOME with no gh sign-in draws the GitHub, Calendar and Models cards, GitHub Never checked with its Recheck", async () => {
+  it("an isolated HOME with no gh sign-in draws the GitHub, Calendar and Models cards, GitHub Not checked with its Check", async () => {
     // replaces: tests/e2e/test_hs168_connections_glass.py::test_connections_cold_at_both_widths (the cards; the 1440/393 page-error fence is the sweep's surface-settings@integration:destinations case)
     // replaces: tests/e2e/test_hs168_connections_glass.py::test_connections_fold_sign_in_state (an empty GH_CONFIG_DIR: the GitHub card is drawn)
     // The hub's own cold answer (connections-cold.json, recorded and fenced by
@@ -151,14 +152,15 @@ describe("the cold Connections face", () => {
     wire = clone(coldWire);
     render(<ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} />);
     const gh = await screen.findByTestId("connections-github");
-    expect(chipWords(gh)).toBe("Never checked");
-    expect(within(gh).getByRole("button", { name: /Recheck/ })).toBeTruthy();
+    expect(chipWords(gh)).toBe("Not checked");
+    expect(within(gh).getByRole("button", { name: "Check" })).toBeTruthy();
     for (const id of ["connections-calendar", "connections-models", "connections-jira", "connections-confluence"])
       expect(screen.getByTestId(id), id).toBeTruthy();
     expect(screen.getByTestId("connections-add-open-jira").closest(".surface-ledger-row"))
       .toBe(screen.getByTestId("connections-jira").closest(".surface-ledger-row"));
     expect(chipWords(screen.getByTestId("connections-calendar"))).toBe("Not set up");
-    expect(reads).toEqual(["GET /api/connections"]);
+    // Betterment ST2: plus the Found read (gh and acli files only, no CLI).
+    expect([...reads].sort()).toEqual(["GET /api/connections", "GET /api/onboarding/connections"]);
   });
 });
 
@@ -206,7 +208,7 @@ describe("account rows keep their status and actions together", () => {
     const add = screen.getByTestId("connections-add-open-jira");
     expect(add.closest(".surface-ledger-row")).toBe(last.closest(".surface-ledger-row"));
     expect(within(first).queryByRole("button", { name: "Add Jira account" })).toBeNull();
-    expect(within(last).getByRole("button", { name: "Recheck" })).toBeTruthy();
+    expect(within(last).getByRole("button", { name: "Check" })).toBeTruthy();
     expect(document.querySelector(".connections-add-account")).toBeNull();
   });
 
@@ -237,7 +239,8 @@ describe("account rows keep their status and actions together", () => {
     expect(screen.getByTestId("connections-add-jira")).toBe(form);
     expect(form).toBeVisible();
     expect((within(form).getByRole("textbox", { name: "Email" }) as HTMLInputElement).value).toBe("draft@example.com");
-    expect(reads).toEqual(["GET /api/connections"]);
+    // Betterment ST2: plus the Found read (gh and acli files only, no CLI).
+    expect([...reads].sort()).toEqual(["GET /api/connections", "GET /api/onboarding/connections"]);
   });
 });
 
@@ -260,11 +263,11 @@ describe("account writers retain their existing routes and results", () => {
     const rows = tool("jira").connections;
     const first = await screen.findByTestId(`connections-jira-conn-${rows[0].connection_ref}`);
     const last = screen.getByTestId(`connections-jira-conn-${rows.at(-1).connection_ref}`);
-    const recheck = within(last).getByRole("button", { name: "Recheck" }) as HTMLButtonElement;
+    const recheck = within(last).getByRole("button", { name: "Check" }) as HTMLButtonElement;
     fireEvent.click(recheck);
     expect(recheck.disabled).toBe(true);
     expect(recheck).toHaveAttribute("aria-busy", "true");
-    const peer = within(first).getByRole("button", { name: "Recheck" });
+    const peer = within(first).getByRole("button", { name: "Check" });
     expect(peer).toBeDisabled();
     expect(peer).not.toHaveAttribute("aria-busy", "true");
     fireEvent.click(peer);
@@ -349,11 +352,11 @@ describe("account writers retain their existing routes and results", () => {
     }));
     render(<ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} />);
     const card = await screen.findByTestId("connections-github");
-    fireEvent.click(within(card).getByRole("button", { name: "Recheck" }));
+    fireEvent.click(within(card).getByRole("button", { name: "Check" }));
     const alert = await screen.findByRole("alert");
     expect(within(alert).getByText("Check failed")).toBeTruthy();
-    fireEvent.click(within(alert).getByRole("button", { name: "Retry" }));
-    await screen.findByText("Connected · Checked now");
+    fireEvent.click(within(alert).getByRole("button", { name: "Check" }));
+    await screen.findByText("Works · Checked now");
     expect(screen.queryByRole("alert")).toBeNull();
     expect(attempts).toBe(2);
   });
