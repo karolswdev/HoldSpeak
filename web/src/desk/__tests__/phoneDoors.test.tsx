@@ -97,10 +97,11 @@ describe("the phone menu bar has one door that carries every verb", () => {
     expect(screen.getByRole("menuitem", { name: "Ask AI" })).toBeTruthy();
     expect(screen.getByRole("menuitem", { name: "Note" })).toBeTruthy();
     // Betterment shell S1: the manifest's Go groups, as at 1440, then New.
-    expect(screen.getAllByRole("heading").map((heading) => heading.textContent)).toEqual(["Apps", "Work", "New"]);
+    // Betterment P4: Projects is drawn on an empty desk too (All projects).
+    expect(screen.getAllByRole("heading").map((heading) => heading.textContent)).toEqual(["Apps", "Projects", "Work", "New"]);
     expect(screen.getByRole("menu", { name: "Go menu" })).toHaveClass("desk-menu-list");
     expect(screen.getAllByRole("menuitem").map((row) => row.querySelector(".desk-menu-label")?.textContent)).toEqual([
-      "Today", "Needs you", "Capture", "Meetings", "People", "Agents", "Ask AI", "Speak",
+      "Today", "Needs you", "Capture", "Meetings", "People", "All projects", "Decisions", "Agents", "Ask AI", "Speak",
       "Automations", "Memory", "Voice commands", "Note", "Meeting", "Project", "Person",
     ]);
   });
@@ -134,7 +135,7 @@ describe("the phone menu bar has one door that carries every verb", () => {
     expect(document.querySelector(".is-ghost,[aria-disabled='true']")).toBeNull();
   });
 
-  it("shows Projects only when present and opens the exact project id", async () => {
+  it("shows each project under All projects and opens the exact project id", async () => {
     compact = true;
     const user = userEvent.setup();
     const open = vi.spyOn(shell, "openProjectRoom").mockImplementation(() => {});

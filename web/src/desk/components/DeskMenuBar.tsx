@@ -151,16 +151,20 @@ export function goEntries(inputs: GoInputs): WorkMenuEntry[] {
         return row(applicationVerbId(r.app), r.label);
       case "verb":
         return row(phone && r.phoneVerbId ? r.phoneVerbId : r.verbId, r.label);
-      case "projects":
-        return projects.length
-          ? {
-              type: "sub", id: "go-projects", label: "Projects",
-              entries: projects.map((p) => ({
-                type: "item" as const, id: `go-project-${p.id}`, label: p.name,
-                glyph: KIND_GLYPH.project, onSelect: () => openProject(p.id),
-              })),
-            }
-          : null;
+      case "projects": {
+        // Betterment P4 (projects): All projects (the Projects window: each
+        // project's state, next date and newest update) leads, then each
+        // project, one press to its window. Drawn with no project too.
+        const all = row("go.open-projects", "All projects");
+        const each: WorkMenuEntry[] = projects.map((p) => ({
+          type: "item" as const, id: `go-project-${p.id}`, label: p.name,
+          glyph: KIND_GLYPH.project, onSelect: () => openProject(p.id),
+        }));
+        const entries: WorkMenuEntry[] = all
+          ? (each.length ? [all, { type: "sep", id: "go-projects-sep" }, ...each] : [all])
+          : each;
+        return entries.length ? { type: "sub", id: "go-projects", label: "Projects", entries } : null;
+      }
       case "drawers":
         return drawers.length && openDrawer
           ? {

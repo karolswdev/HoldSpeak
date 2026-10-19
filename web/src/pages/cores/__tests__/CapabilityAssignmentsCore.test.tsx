@@ -166,7 +166,8 @@ describe("CapabilityAssignmentsCore", () => {
     render(<CapabilityAssignmentsCore />);
     const opener = await openFirst();
     const close = screen.getByRole("button", { name: "Close" });
-    expect(close).toHaveFocus();
+    // The editor sets focus in its mount effect, after the heading renders.
+    await waitFor(() => expect(close).toHaveFocus());
     const primary = screen.getByRole("button", { name: "Save assignment" });
     primary.focus();
     fireEvent.keyDown(primary, { key: "Tab" });

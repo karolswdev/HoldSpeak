@@ -446,6 +446,49 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
         })),
     },
   },
+  // Betterment P4 (projects): every project in one list (where each stands,
+  // its next date, its newest update), and the decisions in their one home.
+  {
+    action: "open-projects",
+    windowId: "surface-projects",
+    label: "Projects",
+    description: "Every project: where it stands, its next date, its newest update.",
+    glyph: "▣",
+    href: "/",
+    group: "app",
+    // Its Go door is the first row of Go ▸ Projects ▸ ("All projects"),
+    // above each project (GO_EXTRA_ROWS `projects`, DeskMenuBar goEntries).
+    surface: {
+      eyebrow: "Work in flight",
+      minW: 480,
+      defaultW: 640,
+      defaultH: 520,
+      load: () =>
+        import("../pages/cores/ProjectsCore").then((module) => ({
+          default: module.ProjectsCore,
+        })),
+    },
+  },
+  {
+    action: "open-decisions",
+    windowId: "surface-decisions",
+    label: "Decisions",
+    description: "Every decision, why it was made and what replaced it.",
+    glyph: "◈",
+    href: "/",
+    group: "app",
+    go: { group: "daily", order: 4.5 },
+    surface: {
+      eyebrow: "Decided",
+      minW: 520,
+      defaultW: 680,
+      defaultH: 600,
+      load: () =>
+        import("../pages/cores/DecisionsCore").then((module) => ({
+          default: module.DecisionsCore,
+        })),
+    },
+  },
   {
     action: "review-calendar-snapshot",
     windowId: "surface-calendar-snapshot",
@@ -547,6 +590,8 @@ export const GO_EXTRA_ROWS: readonly (GoExtra & { go: { group: GoGroup; order: n
   // empty desk, so Go is its door (PLAN: no app is reachable only by a
   // detour). Daily D5: Brief and The week retired into Today.
   { kind: "verb", verbId: "chair.window.capture", label: "Capture", go: { group: "daily", order: 1.6 } },
+  // Betterment P4 (projects): Projects ▸ opens with All projects (the
+  // Projects window), then each project; it is drawn on an empty desk too.
   { kind: "projects", go: { group: "daily", order: 4 } },
   { kind: "drawers", go: { group: "work", order: 3 } },
   { kind: "launcher", launcherId: "delivery-board", label: "Delivery board", glyph: "▤", go: { group: "builder", order: 5 } },

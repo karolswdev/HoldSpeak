@@ -4,18 +4,38 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (AG11 #1369 verified; delivery follows merge)
+**Last updated:** 2026-10-19 (note editor and uncertain-send regression recovery)
 
 ## Current phase
 
-**Betterment recovery: 77/117 recipe implementations merged.** Codex owns
+**Betterment recovery: 78/117 recipe implementations merged.** Codex owns
 recovery and delivery at the owner's request. The desk is currently on
-backend `f40fda091`, frontend `b077f49ff9648551`, PID 15622 (People fix).
+backend `f33270e06`, frontend `03f75c9d51aaedaf`, PID 32793 (P4).
 Four HTTP checks pass and the actual desk renders at 1440/393. These are
 delivery observations; owner acceptance remains separate. All three baseline non-browser
 regression shards passed: 16,784 checks, 27 skips and one expected failure.
 Remaining browser shards use the low-priority machine lock at
 `wt-betterment-tape-20261019`, pinned to `bd3acff8f`.
+
+Note regression recovery updates the browser checks to the adopted Q8 note
+window. The real saved body, direct footer verbs and keyboard focus ring are
+checked at 1440/393. The uncertain-send check now opens Send… from that footer;
+it still proves one send and one result after an uncertain response and retry.
+The two affected browser files pass 14 checks. The retired formatting-rail
+case is parked. This closes the six known browser failures in baseline shards
+one through three together with #1370; the remaining baseline shards are open.
+
+P4 #1349 puts Projects and Decisions in Go and offers Write update for the
+chosen project in Search. Project rows retain the Now state and reason;
+a failed read says Not read. Root inspected Blocked, At risk and a deliberately
+unread project on the actual isolated hub at 1440/393. Focused producer/face
+checks passed 22 pytest and 47 web checks. Broad recovery checks passed
+4,104 web and found an asynchronous focus assertion; its corrected file passes
+8 checks. Browser recovery now opens Plan, checks the adopted Now head, and
+holds two populated active folds rather than the retired Files fold. Final
+quick check: 8 web, 36 browser, 110 sweep, 27 canon and 1,116 repo guards.
+The earlier affected non-browser checks passed unchanged. P4 is on the running
+desk; Projects is observed at 1440/393 without page errors.
 
 AG11 #1369 gives launched agents one owned helper with prompt, wait, read and
 question-only answer tools. The owner can Allow a Secure helper from Needs you;
@@ -26,7 +46,7 @@ root inspected the nested rows at 1440/393. Real Claude/Codex execution remains
 unobserved. Final quick check: 4,055 web, 188 affected pytest (one skipped),
 106 sweep, 27 canon and 1,116 repo guards. After integrating Capture and the
 People fix, the shared Needs you seams pass 43 web and 19 pytest checks.
-Delivery follows this merge.
+AG11 is on the running desk; identity and four HTTP checks pass.
 
 Recovery follow-up #1370 fixes two reproduced People-store defects: optional SQLite
 journals can disappear during the permission check, and setup/readiness held
@@ -1153,6 +1173,8 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 | Runs on (16c): a per-object wire on the board (thought/workbench/agent/recipe/project overrides; the parked AssignmentEditor sheet edited them; the contextual atom now only reads them and opens Runs on); FOUND model files and an unrecorded Whisper (add-to-library needs a detected_artifact_id detect does not carry); Try it through the route for jobs other than Thoughts & notes (route_probe accepts only ask.answer); the phone list cannot pin an inherited engine as a job's own; 25 atlas cases still drive the Concierge flow (Add = use for summaries; the window closes) | — | — |
 
 ## Last merged (newest first)
+
+- #1349 — Projects P4: Projects/Decisions in Go, project state and reason, scoped Write update and withheld dead verbs.
 
 - #1369 — Agents AG11: owned helpers, pinned question delivery, Secure Allow and nested results.
 

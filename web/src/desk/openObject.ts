@@ -49,6 +49,27 @@ export function openProjectUpdates(projectId: string): void {
   }
 }
 
+/** Betterment P4 (projects) — `Write update for <project>` (the palette and
+ * the Object menu): the Room opens and presses its own Write update, the
+ * same press as the Room head's Button. The Room takes the request once. */
+export const ROOM_WRITE_EVENT = "holdspeak:room-write-update";
+const roomWrites = new Set<string>();
+
+export function writeProjectUpdate(projectId: string): void {
+  const id = projectId.trim();
+  if (!id) return;
+  roomWrites.add(id);
+  openProjectRoom(id);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent<string>(ROOM_WRITE_EVENT, { detail: id }));
+  }
+}
+
+/** True once for each request to write an update in `projectId`'s Room. */
+export function takeRoomWriteRequest(projectId: string | null | undefined): boolean {
+  return !!projectId && roomWrites.delete(projectId);
+}
+
 /** PHILO-17 words: a Project's Rename verb opens its Room and focuses the
  * existing name field. The Room consumes this request once after mounting. */
 export const ROOM_RENAME_EVENT = "holdspeak:room-rename";
