@@ -422,7 +422,9 @@ function NeedVerbsView({ face, primary, onWell, well }: {
           {v.failed ? (
             <Button dense variant="secondary" aria-label={named("Record now")}
               data-testid="needs-row-verb" data-verb="record"
-              onClick={() => openSurfaceOr("review-meetings", "/history", "record")}>Record now</Button>
+              onClick={() => void useDesk.getState().startRecording(
+                v.calendarEventId ? { calendarEventId: v.calendarEventId } : undefined,
+              )}>Record now</Button>
           ) : (
             <Button dense variant="danger" aria-label={named(v.refused ? "Retry cancel" : "Cancel")}
               data-testid="needs-row-verb" data-verb={v.refused ? "retry" : "cancel"}
@@ -915,7 +917,7 @@ export function useNeedFaces() {
       : []),
     ...hubArming.map((row) => ({
       ...armingFace(
-        { scheduleId: row.scheduleId, title: row.title },
+        { scheduleId: row.scheduleId, title: row.title, calendarEventId: row.calendarEventId },
         0,
         null,
         row.didNotRecord,

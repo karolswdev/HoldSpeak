@@ -1424,6 +1424,7 @@ def _read_arming(db: Any, now: datetime | None = None) -> list[dict[str, Any]]:
                 "title": str(rec.title or ""),
                 "armedAt": None,
                 "didNotRecord": failed,
+                "calendarEventId": str(getattr(rec, "calendar_event_id", "") or ""),
             })
     return rows
 

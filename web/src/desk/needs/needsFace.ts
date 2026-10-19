@@ -50,7 +50,7 @@ export type NeedVerbs =
   | { kind: "open"; ref: string }
   /** PHILO-15 B61: `watchIds` are the Watches Retry re-checks. */
   | { kind: "repair"; verb: string; href: string; projectId: string; watchIds?: string[]; host?: string; provider?: string }
-  | { kind: "arming"; scheduleId: string; refused: boolean; failed?: boolean }
+  | { kind: "arming"; scheduleId: string; refused: boolean; failed?: boolean; calendarEventId?: string }
   | { kind: "calendar" }
   | { kind: "none" };
 
@@ -763,7 +763,7 @@ export function armsWord(seconds: number): string {
 
 /** A scheduled recording about to start: first while it is live. */
 export function armingFace(
-  arming: { scheduleId: string; title: string },
+  arming: { scheduleId: string; title: string; calendarEventId?: string },
   secondsLeft: number,
   refusal?: string | null,
   didNotRecord?: { at: string | null; reason: string } | null,
@@ -785,7 +785,7 @@ export function armingFace(
     lamp: { label: failed ? "FAILED" : `ARMS · ${word}`, tone: failed || refusal ? "fail" : "ask" },
     kindWord: "MEETING",
     group: "agents",
-    verbs: { kind: "arming", scheduleId: arming.scheduleId, refused: Boolean(refusal), failed },
+    verbs: { kind: "arming", scheduleId: arming.scheduleId, refused: Boolean(refusal), failed, calendarEventId: arming.calendarEventId },
   };
 }
 

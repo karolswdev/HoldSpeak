@@ -183,6 +183,7 @@ export interface NeedsYouArming {
   scheduleId: string;
   title: string;
   armedAt?: string | null;
+  calendarEventId?: string;
   didNotRecord?: { at: string | null; reason: string } | null;
 }
 
@@ -887,6 +888,7 @@ export function readNeedsYouAnswer(answer: NeedsYouAnswer | null | undefined): N
       scheduleId: String(row.scheduleId),
       title: String(row.title ?? ""),
       armedAt: row.armedAt == null ? null : String(row.armedAt),
+      calendarEventId: String(row.calendarEventId ?? ""),
       didNotRecord: row.didNotRecord && typeof row.didNotRecord === "object"
         ? {
           at: row.didNotRecord.at == null ? null : String(row.didNotRecord.at),

@@ -129,6 +129,7 @@ const ANSWER = {
   complete: true,
 };
 
+const REAL_START = useDesk.getState().startRecording;
 let gateCalls: Array<{ path: string; json: unknown }> = [];
 const REAL_CANCEL = useDesk.getState().cancelArmedSchedule;
 let DOOR: Record<string, unknown> = { upcoming: [], calendar_configured: true };
@@ -139,7 +140,7 @@ beforeEach(() => {
   useDropped.getState().set(null);
   gateCalls = [];
   DOOR = { upcoming: [], calendar_configured: true };
-  useDesk.setState({ scheduledArming: null, cancelArmedSchedule: REAL_CANCEL } as never);
+  useDesk.setState({ scheduledArming: null, cancelArmedSchedule: REAL_CANCEL, startRecording: REAL_START } as never);
   useArmingOutcome.setState({ refusal: null, receipt: null, busy: false });
   (globalThis as { __resetNeedsYou?: () => void }).__resetNeedsYou?.();
   useAgentFlights.setState({ flights: [FLIGHT, WORKING], sessions: [] } as never);
@@ -355,13 +356,16 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     expect(cancel).toHaveBeenCalledWith("sch-1");
   });
 
-  it("a failed fire stays in Needs you with its reason and Record now", async () => {
+  it("a failed fire stays in Needs you and Record now starts its calendar meeting", async () => {
+    const start = vi.fn().mockResolvedValue(undefined);
+    useDesk.setState({ startRecording: start });
     vi.mocked(apiFetch).mockImplementation(async (path: string) => {
       if (String(path).startsWith("/api/desk/needs-you")) {
         return {
           ...ANSWER,
           arming: [{
             scheduleId: "sch-failed",
+            calendarEventId: "event-ledger",
             title: "Ledger cutover sync",
             didNotRecord: { at: "2026-10-07T16:00:00Z", reason: "No microphone" },
           }],
@@ -377,7 +381,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     expect(failed?.querySelector(".needs-row-fact")?.textContent).toContain("No microphone");
     expect(face(failed!).verbs).toEqual(["Record now", "Open meetings"]);
     fireEvent.click(failed!.querySelector("[data-verb='record']")!);
-    expect(openSurfaceOr).toHaveBeenCalledWith("review-meetings", "/history", "record");
+    expect(start).toHaveBeenCalledWith({ calendarEventId: "event-ledger" });
   });
 
   it("NEXT is a quiet footer line; no calendar is an offer in the foot, never a row (PHILO-15-09 B11)", async () => {

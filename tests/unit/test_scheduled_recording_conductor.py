@@ -75,6 +75,7 @@ def create_schedule(
     duration_minutes: int = 60,
     enabled: bool = True,
     next_fire_at: Optional[float] = None,
+    calendar_event_id: str = "",
 ) -> Any:
     sched = db.scheduled_recordings.create(
         title=title,
@@ -83,6 +84,7 @@ def create_schedule(
         duration_minutes=duration_minutes,
         enabled=enabled,
         next_fire_at=next_fire_at,
+        calendar_event_id=calendar_event_id,
     )
     return sched
 
@@ -727,7 +729,7 @@ def test_a_fire_that_raises_writes_a_failed_receipt_and_leaves_arming(tmp_path):
     conductor = make_conductor(
         db, clock, start_meeting_fn=start_fn, voice_floor_fn=no_voice_session, countdown_seconds=0.0,
     )
-    sched = create_schedule(db, cron_expr="0 9 * * *", one_shot=True, next_fire_at=clock() - 1)
+    sched = create_schedule(db, cron_expr="0 9 * * *", one_shot=True, next_fire_at=clock() - 1, calendar_event_id="ledger-event")
 
     conductor._tick()
     deadline = time.monotonic() + 5
@@ -752,6 +754,13 @@ def test_a_fire_that_raises_writes_a_failed_receipt_and_leaves_arming(tmp_path):
     said = next(s for s in listed if s["id"] == sched.id)["did_not_record"]
     assert said["reason"] == "Something went wrong"
     assert said["at"] == "2001-09-09T01:46:40Z"
+
+    from holdspeak.services.needs_you_membership import _read_arming
+    rows = _read_arming(db, datetime.fromtimestamp(clock(), timezone.utc))
+    failed = next(row for row in rows if row["scheduleId"] == sched.id)
+    assert failed["calendarEventId"] == "ledger-event"
+    assert failed["didNotRecord"] == said
+    assert _read_arming(db, datetime.fromtimestamp(clock() + 3601, timezone.utc)) == []
 
 
 def test_deadline_persisted_before_start(tmp_path):
