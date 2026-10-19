@@ -828,6 +828,7 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
         # Betterment Q9: Find the tasks on a note (the note.* MCP tools).
         "note.outcomes.read", "note.find_tasks", "note.outcome.edit", "note.outcome.dismiss",
         "note.outcome.confirm",
+        "today.get",
     ]
     # decision.list takes the empty object; its one optional argument is the
     # HTTP limit (round two: it passes through instead of slicing 500 rows).

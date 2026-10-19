@@ -25,7 +25,7 @@ application drawn loaded, and fit, in the desk sweep.
 Also here (lane e2e-high-1):
 
 The shared chrome strips in a real browser: the keys on the menus, the
-Dock, the wing strips and the editor rail.
+Dock, the wing strips and the current note footer.
 
 Kept by the test diet (push 2, 2026-10-12), one file for the menus and the
 strips they share. Was tests/e2e/test_hs202_03_species_glass.py (whole: each
@@ -55,7 +55,7 @@ Escape", and both were overclaims):
      Tab order equals its DOM order and each of those stops computes a
      non-zero outline; ArrowDown/ArrowUp rove the open menu and Escape
      closes it; the wing strip holds exactly one Tab stop and ArrowRight
-     moves the selected wing; one rail stop computes a non-zero outline.
+     moves the selected wing; one note-footer stop computes a non-zero outline.
      At 393 it also measures the two strips 03 owns: every row of the dock
      and of the wing bar has a bounding height of at least 44px, and no two
      rows overlap (story 05's ruling — a plated Button owns 44px through a
@@ -769,8 +769,8 @@ class TestSharedControlsAreSpecies:
 
     @pytest.mark.e2e
     @pytest.mark.parametrize("width,height", [(1440, 900), (393, 852)])
-    def test_the_editor_rail(self, width: int, height: int) -> None:
-        """The note editor's formatting rail: eleven verbs, one species."""
+    def test_the_note_editor_and_footer_use_the_library(self, width: int, height: int) -> None:
+        """The one note window has its direct editor and library footer verbs."""
         from playwright.sync_api import sync_playwright
 
         H1_SHOTS.mkdir(parents=True, exist_ok=True)
@@ -782,13 +782,11 @@ class TestSharedControlsAreSpecies:
             page.on("pageerror", lambda err: errors.append(str(err)))
 
             _arrive(page, self.base)
-            # An ORDINARY note: the rail rides the note editor
-            # (`NoteEditor.tsx:143`). The thought workspace deliberately
-            # hides it (`ThoughtDocumentPane.tsx:57 showToolbar={false}`),
-            # so the thought door is the wrong door for this subject.
+            # Q8 adopts ordinary notes into the one note window. Seed the
+            # real body field so the current editor must preserve its words.
             _api(
                 page, "POST", "/api/notes",
-                {"title": NOTE_TITLE, "body": "The rail is the library."},
+                {"title": NOTE_TITLE, "body_markdown": "The note uses the library."},
                 token=H1_TOKEN,
             )
             notes = _api(page, "GET", "/api/notes", token=H1_TOKEN)["notes"]
@@ -808,31 +806,26 @@ class TestSharedControlsAreSpecies:
             field.press("Enter")
             note = page.get_by_role("region", name=NOTE_TITLE, exact=True)
             note.wait_for(timeout=15_000)
-            # The note opens READ-first; its own verb opens the editor
-            # (`NotePullout.tsx:434 onAction={() => openEditor(o.id)}`).
-            note.get_by_role("button", name="Start writing", exact=True).click()
-            rail = page.locator(".desk-editor-toolbar")
-            rail.first.wait_for(timeout=20_000)
-            _settle(page)
-
+            editor = note.locator(".cm-content[contenteditable=true]")
+            editor.wait_for(state="visible", timeout=15000)
+            assert editor.inner_text().strip() == "The note uses the library."
+            assert note.locator(".desk-editor-toolbar").count() == 0
             rows = _library_species(
-                page, ".desk-editor-toolbar button", subject="the editor's rail",
-                chrome_only=True,
+                page, ".thought-workspace-window .surface-footer-verbs-group button",
+                subject="the note footer",
             )
-            assert len(rows) >= 11, f"the rail lost verbs: {len(rows)}"
-            _shot(page, f"editor-rail-{tag}.png")
-
-            # The rail is a toolbar of real buttons: each one focuses and
-            # draws a ring (the raw markup did too; nothing moved).
-            # PHILO-13-11 (slice two): the Chair's four windows carry close
-            # gadgets too and come first in the DOM; the walk starts at the
-            # editor window's own close gadget, as it always meant to.
+            expected = {"Ask about this", "Find the tasks", "Send…"}
+            if width > 720:
+                expected.add("Done")
+            assert {row["label"] for row in rows} == expected, rows
+            assert note.get_by_role("button", name="Done", exact=True).count() == 1
+            _shot(page, f"note-editor-{tag}.png")
             ring = _tab_into(
-                page, ".desk-editor-toolbar",
-                start=".desk-window-shell:has(.desk-editor-toolbar) .desk-gadget-close", limit=20,
+                page, ".thought-workspace-window .surface-footer-verbs-group",
+                start=".thought-workspace-window [aria-label='Speak the note']", limit=12,
             )
-            assert ring["outlineWidth"] > 0, f"no focus ring on the rail: {ring}"
-            assert ring["inRail"], ring
+            assert ring["outlineWidth"] > 0, f"no keyboard focus ring on the footer: {ring}"
+            assert page.evaluate("() => Boolean(document.activeElement?.closest('.surface-footer-verbs-group'))")
 
             real_errors = [e for e in errors if "ResizeObserver" not in e]
             assert not real_errors, real_errors

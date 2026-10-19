@@ -5,9 +5,9 @@ file in the same PR as `pm/STATUS.md`, after each batch. "Done" means
 merged to main. "On his desk" is the backend commit in `pm/STATUS.md`.
 Open work that is not a slice is in `FOLLOWUPS.md`.
 
-**Last updated:** 2026-10-19, P4 #1349 recovered and verified; running-desk identity is in `pm/STATUS.md`.
+**Last updated:** 2026-10-19, D10 #1372 verified; running-desk identity is in `pm/STATUS.md`.
 
-**Total: 78 of 117 slices merged**, with Send S7 still partial.
+**Total: 79 of 117 slices merged**, with Send S7 still partial.
 Merged means implementation on main; delivery and owner acceptance are tracked separately in `pm/STATUS.md`.
 Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-19.md` for the interrupted worktrees and PRs.
 
@@ -19,7 +19,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | Ask | `asking/` | 11 of 13 |
 | Projects | `projects/` | 5 of 11 |
 | Agents | `agents/` | 12 of 16 |
-| Daily and Needs you | `daily/` | 10 of 11 |
+| Daily and Needs you | `daily/` | 11 of 11 |
 | Setup and Settings | `setup/` | 3 of 10 |
 | Desk shell | `shell/` | 2 of 10 |
 | Send | `send/` | 1 of 8 |
@@ -121,7 +121,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | AG14 | Automations that hand work to agents | Open |  |
 | AG15 | Agents he started himself (decision 1) | Open |  |
 
-## Daily and Needs you (`daily/RECIPE.md`): 10 of 11
+## Daily and Needs you (`daily/RECIPE.md`): 11 of 11
 
 | Slice | What | State | Note |
 |---|---|---|---|
@@ -135,7 +135,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | D7 | The 1:1 prep | Done · #1313 |  |
 | D8 | Notices only for what needs him (owner decision 2) | Done · #1340 | Initial notice work #1337; remaining notice work #1340. |
 | D9 | Morning prep (after Automations A2–A6 and MCP M1; owner decision 3) | Done · #1342 |  |
-| D10 | MCP parity | Open |  |
+| D10 | MCP parity | Done · #1372 | Declared Today read composes the face producers; Decide and People writes retain owner authority. |
 
 ## Setup and Settings (`setup/RECIPE.md`): 3 of 10
 
