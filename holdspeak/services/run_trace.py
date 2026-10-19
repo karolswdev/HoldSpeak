@@ -22,6 +22,11 @@ engine's runs are linked by the Ask's trace key (:func:`ask_trace`, set with
 (``thread_service``) records each call it serves with :func:`record_value`
 under that key as the run id. :func:`use_by_trace` reads both.
 
+MCP M5: an automation item on an HTTP engine whose server takes tool calls
+runs the hub's tool loop (``services/engine_tool_loop``), which records each
+call under the item's trace key (:func:`item_trace`); :func:`use_by_item`
+reads those rows beside the CLI runs' rows.
+
 A write here never breaks a call: a failed write is logged.
 """
 from __future__ import annotations
@@ -90,11 +95,19 @@ _TOOL_REF_KINDS = {"door.add_item": "action_item"}
 _UNDO_OPS = {("action_item", "add_item")}
 
 ASK_TRACE_PREFIX = "ask:"
+ITEM_TRACE_PREFIX = "item:"
 
 
 def ask_trace(invocation_id: str) -> str:
     """The trace key of one Ask (its invocation id), for its tool calls."""
     return ASK_TRACE_PREFIX + str(invocation_id or "")
+
+
+def item_trace(item_id: str) -> str:
+    """The trace key of one automation item run on an HTTP engine (MCP M5):
+    the hub's tool loop (``services/engine_tool_loop``) records its calls
+    under it, and :func:`use_by_item` reads them with the CLI runs' calls."""
+    return ITEM_TRACE_PREFIX + str(item_id or "")
 
 
 def _effect(name: str) -> str:
@@ -280,14 +293,18 @@ def use_by_item(db: Any, item_ids: list[str]) -> dict[str, dict[str, list[dict[s
     ids = [str(i) for i in item_ids if str(i or "").strip()]
     if not ids or db is None:
         return {}
+    traces = [item_trace(i) for i in ids]
     try:
         with db._connection() as conn:
             rows = conn.execute(
-                """SELECT r.item_id, c.effect, c.ref, c.title, c.detail_json
-                   FROM agent_run_calls c JOIN cli_engine_runs r ON r.run_id = c.run_id
-                   WHERE r.item_id IN (SELECT value FROM json_each(?)) AND c.ref != ''
+                """SELECT COALESCE(r.item_id, substr(c.run_id, ?)) AS item_id,
+                          c.effect, c.ref, c.title, c.detail_json
+                   FROM agent_run_calls c LEFT JOIN cli_engine_runs r ON r.run_id = c.run_id
+                   WHERE c.ref != '' AND (
+                     r.item_id IN (SELECT value FROM json_each(?))
+                     OR c.run_id IN (SELECT value FROM json_each(?)))
                    ORDER BY c.id""",
-                (json.dumps(ids),),
+                (len(ITEM_TRACE_PREFIX) + 1, json.dumps(ids), json.dumps(traces)),
             ).fetchall()
     except Exception as exc:
         log.info(f"agent run calls not read: {exc}")
@@ -328,6 +345,6 @@ def run_id_of(identity: Optional[str]) -> str:
 
 
 __all__ = [
-    "PREPARE", "READ", "WRITE", "ask_trace", "current_item", "for_item", "record_call", "record_value",
+    "PREPARE", "READ", "WRITE", "ask_trace", "current_item", "for_item", "item_trace", "record_call", "record_value",
     "run_id_of", "use_by_item", "use_by_trace",
 ]
