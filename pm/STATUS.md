@@ -4,13 +4,13 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (AG13 verified; Projects first-read repair deployed)
+**Last updated:** 2026-10-19 (Q11/Q12 verified; AG13 deployed)
 
 ## Current phase
 
-**Betterment recovery: 80/117 recipe implementations merged.** Codex owns
+**Betterment recovery: 82/117 recipe implementations merged.** Codex owns
 recovery and delivery at the owner's request. The desk is currently on
-backend `989957590`, frontend `10fa662b5db1b4ac`, PID 34377 (#1373).
+backend `241495745`, frontend `10fa662b5db1b4ac`, PID 38630 (#1374).
 Four HTTP checks pass and the actual desk renders at 1440/393. These are
 delivery observations; owner acceptance remains separate. All three baseline non-browser
 regression shards passed: 16,784 checks, 27 skips and one expected failure.
@@ -31,14 +31,34 @@ The reproduction uses a fake CLI; the owner’s auth state was not changed.
 A known-prior profile is restored by ST2; the unknown-prior case still needs
 a truthful read or a no-switch fallback.
 
-AG13 packages the HoldSpeak skill and prints it with `holdspeak --skill`.
+Q11/Q12 make Memory an answer desk and put the two directions of what is owed
+first in a person’s window. Pages have their own pass budget and continue past
+a HoldSpeak-made LAN default to the owner’s chosen Everything-else engine.
+Why uses source-linked beliefs; project and People links remain independent.
+Whole-desk Ask clears the prior About scope, and Recall keeps the current
+decision before its predecessor. The existing tool-palette limit stays fixed.
+Root corrected an over-generous deterministic writer and recorded distinct
+answers through the real extraction, consolidation, page and read producers.
+The recorded Person consumer passes. At 1440/393, Go opens Memory, Mira shows
+both directions, and one source press opens her actual 1:1 transcript. These
+use deterministic model boundaries; live-model quality is unobserved.
+Focused producer/page checks: 82; recall-order checks: two. Final quick check:
+4,098 web, 1,083 affected pytest, 110 sweep, 27 canon and 1,116 repo guards.
+Q11/Q12 delivery follows merge.
+
+P5/P6 remains held: pasted Jira/Confluence links discarded the site and could
+select another connected account. Exact site binding and declared preview
+admission are being repaired before this lane ships.
+
+AG13 #1374 packages the HoldSpeak skill and prints it with `holdspeak --skill`.
 Claude launches discover the private copy through `--add-dir`; Codex launches
 discover the repository-native copy without changing CODEX_HOME or auth.
 Connect preserves foreign settings and installs user skills in their native
 roots. An offline native Codex probe finds the skill without a model call.
 The wheel contains the text. Required quick check: 1,305 affected pytest,
 110 sweep, 27 canon and 1,116 repo guards pass. Existing hooks-only readiness
-upgrades remain ST6. AG13 delivery follows merge.
+upgrades remain ST6. AG13 is deployed. Its real terminal wrapper prints the exact packaged
+18-line skill; source import, database ownership and four HTTP checks pass.
 
 Projects repair #1373 is deployed. Its actual list is observed at 1440/393
 without page errors after the atomic first read.
