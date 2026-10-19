@@ -35,6 +35,8 @@ import { agentsTileOf } from "../conductor/fleetTile";
 import { askedWord } from "../agents/AgentRow";
 import { AgentLine } from "../components/AgentLine";
 import { NeedRow } from "../needs/NeedsDrawer";
+import { ResultBlock, filesWords } from "../lane/ResultBlock";
+import type { LaneWire } from "../lane/laneWire";
 import type { NeedFace } from "../needs/needsFace";
 import { __resetConductor } from "../conductor/store";
 import { useSteering } from "../steering";
@@ -593,6 +595,21 @@ describe("Needs you: an agent's ask is the Agents row (Betterment AG9)", () => {
     expect(row.querySelector(".cw-ask-label")?.textContent).toBe("Asks you");
     expect(within(row).getAllByTestId("agent-row-choice").map((b) => b.textContent)).toEqual(["1 · config", "2 · env"]);
     expect(within(row).getByRole("button", { name: "Answer" })).toBeTruthy();
+  });
+});
+
+describe("the Result of a turn (Betterment AG10)", () => {
+  it("leads with the agent's last words and what it looked at on the desk", () => {
+    const LANE = hubWire<LaneWire>("../fixtures/agents-ag10/lane.done");
+    render(<ResultBlock lane={LANE.wire} />);
+    expect(screen.getByTestId("lane-result-said").textContent).toContain("The rollback flag now lives in the place you chose");
+    expect(screen.getByText("Looked at: Platform sync notes")).toBeTruthy();
+    expect(within(screen.getByTestId("lane-result-looked")).getAllByRole("listitem").map((li) => li.textContent))
+      .toEqual(["Platform sync notes"]);
+    expect(screen.queryByTestId("lane-result-wrote")).toBeNull();
+    expect(filesWords(1)).toBe("1 file changed");
+    expect(filesWords(3)).toBe("3 files changed");
+    expect(filesWords(0)).toBe("");
   });
 });
 

@@ -320,6 +320,8 @@ def _session_view(session: Optional[Mapping[str, Any]]) -> Optional[dict[str, An
         "event_count": session.get("event_count"),
         "model": session.get("model"),
         "last_tool_name": session.get("last_tool_name"),
+        # Betterment AG10: the agent's last words (its Result leads with them).
+        "last_assistant_text": session.get("last_assistant_text"),
     }
 
 
@@ -516,11 +518,22 @@ def launch_lane(
         ) if record.get("attempt_id") else [],
         "worktree": worktree_facts(launch_id, path, runner=runner),
         "usage": _part("usage", lambda: db.gate.usage_for(key)) if key else None,
+        # Betterment AG10: what the agent read, wrote and prepared on the desk
+        # with its launch credential (the hub's own log of its MCP calls).
+        "used": _part("used", lambda: _used(db, str(record.get("launch_id") or launch_id))),
     }
     if control is not None:
         # PHILO-14 C2: how the lane may act now; scrubbed with the rest.
         lane["control"] = _part("control", lambda: control(key))
     return _scrub(lane)
+
+
+def _used(db: Any, launch_id: str) -> dict[str, Any]:
+    """Looked at, Wrote and Prepared for one launch (``run_trace``)."""
+    from . import run_trace
+
+    key = f"launch:{launch_id}"
+    return run_trace.use_by_trace(db, [key]).get(key) or {"looked_at": [], "wrote": [], "prepared": []}
 
 
 def _launch_for_session(ledger: Any, db: Any, key: str) -> Optional[dict[str, Any]]:
