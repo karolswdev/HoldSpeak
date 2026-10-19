@@ -3,7 +3,6 @@
  *  (a note, an action, a decision), its window says so in one press:
  *  "Claude Code · Working", "Claude Code · Done · New". The press opens the
  *  agent's window. Nothing shows when no agent holds the object. */
-import { useEffect } from "react";
 import { Button } from "../../components/signal/Signal";
 import { flightForItem, useAgentFlights, type AgentFlight } from "../agentFlights";
 import { AGENT_NAME, type AgentId } from "../firstrun/agentsStep";
@@ -34,11 +33,8 @@ export function agentLineWord(flight: AgentFlight): string {
 }
 
 export function AgentLine({ objectRef }: { objectRef: string | null | undefined }) {
+  // The desk keeps the flights store live (ChairHome); a window only reads it.
   const flights = useAgentFlights((s) => s.flights);
-  const loaded = useAgentFlights((s) => s.loaded);
-  useEffect(() => {
-    if (!loaded) void useAgentFlights.getState().load();
-  }, [loaded]);
   const flight = objectRef ? flightForItem(flights, { ref: objectRef }) : null;
   if (!flight || !flight.launchId) return null;
   const launchId = flight.launchId;
