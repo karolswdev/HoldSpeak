@@ -126,6 +126,10 @@ RETIRED_APPS: dict[str, str] = {
 RETIRED_WINDOWS: dict[str, str] = {
     "surface-concierge": "Engines is a section of Settings (PHILO-17)",
     "surface-companion": "the old Agents application is unmapped; Agents is the Conductor window (Betterment AG1)",
+    # Betterment setup ST1: one home each. A saved row closes and the
+    # browser opens Settings at the section in its place (hubWindows.ts).
+    "surface-cadence": "Rhythm is a section of Settings (Betterment ST1)",
+    "surface-places": "Wallpaper is a section of Settings (Betterment ST1)",
 }
 
 _WINDOW_ID = re.compile(r"^[A-Za-z0-9:_-]{1,200}$")

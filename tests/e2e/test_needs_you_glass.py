@@ -360,8 +360,8 @@ class TestAttentionGlass:
 # the hub restarts on that database. The Chair head and the bell show the
 # same number; Done on a row (a tap at 393) moves both, and the Dock carries
 # no copy, within 1 s and with no reload; no visible "need(s) you" carries
-# another number; Meetings never says "needs you"; the Room counts its own
-# `n open here`. (The Meetings headline cases are
+# another number; Meetings never says "needs you"; the Room's NEEDS YOU is
+# its project's filter, with no number (Betterment P3). (The Meetings headline cases are
 # web/src/pages/cores/history/__tests__/meetingsHeadline.philo1303.test.ts.)
 
 ONE_TOKEN = "philo13-03-needs-you"
@@ -559,14 +559,15 @@ class TestOneNeedsYou:
                 assert all(n == 5 for n in _numbers_said(meetings["said"])), meetings["said"]
                 self._shot(page, "a2w-meetings", width)
 
-                # ── the Room counts its own open items ──
+                # ── the Room says where the project stands ──
                 self._staged_open(page, "open-project-memory", f"project:{self.week['ids']['project']}")
                 head = page.locator("[data-testid='room-headline']")
                 head.wait_for(timeout=15_000)
                 _settle(page)
                 room_head = head.inner_text().strip()
                 record["room"] = {"headline": room_head}
-                assert re.fullmatch(r"\d+ open here|Clear here", room_head), room_head
+                # Betterment P3: the Room's head says where the project stands.
+                assert re.fullmatch(r"On track|New|Not all read|(?:At risk|Blocked)(?:: .+)?", room_head), room_head
                 room = page.evaluate(READERS)
                 record["room"]["said"] = room["said"]
                 assert all(n == 5 for n in _numbers_said(room["said"])), room["said"]
@@ -574,8 +575,9 @@ class TestOneNeedsYou:
                     "xpath=ancestor::*[contains(@class,'desk-surface-window') or contains(@class,'desk-window-shell')][1]")
                 if room_window.count():
                     text = room_window.first.inner_text()
-                    record["room"]["open_here"] = bool(re.search(r"OPEN HERE", text))
-                    assert not re.search(r"NEEDS YOU", text), text[:400]
+                    # Betterment P3: the project's own filter of the one Needs
+                    # you list is named NEEDS YOU (DESIGN.md "The words").
+                    record["room"]["needs_you"] = bool(re.search(r"NEEDS YOU", text))
                 self._shot(page, "a2w-room", width)
 
                 record["page_errors"] = errors

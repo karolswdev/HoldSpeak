@@ -20,7 +20,7 @@
  *
  * One transport (the hub's HTTP routes and its one bus); no second store. */
 import { ApiError, apiFetch } from "../../lib/api";
-import { SURFACE_APPLICATIONS } from "../applications";
+import { DESK_APPLICATIONS, SURFACE_APPLICATIONS, parkedSettingsWing } from "../applications";
 import { meetingOfScope } from "../objectWindows";
 import { CHAIR_WINDOW_IDS, TODAY_REPLACES, closeChairWindow, openChairWindowFromHub, useChairWindows } from "../chair/chairWindows";
 import { openIntelligence } from "../intelligenceNavigation";
@@ -124,6 +124,15 @@ export function migratedMeeting(row: { id: string; object_ref: string | null }):
 export const RETIRED_PREFIX = "zone:";
 /** How many closes one retired row gets (a refused close re-reads first). */
 export const RETIRE_TRIES = 3;
+/** Betterment setup ST1: a retired window whose application Settings now
+ * hosts (`parked: "settings:<section>"`) opens Settings at that section in
+ * its place: Rhythm, Change places (Wallpaper), the old Engines window. */
+export const SETTINGS_HOMES: Readonly<Record<string, string>> = Object.fromEntries(
+  DESK_APPLICATIONS.flatMap((application) => {
+    const section = parkedSettingsWing(application);
+    return section && application.windowId !== "surface-settings" ? [[application.windowId, section] as const] : [];
+  }).reverse(),
+);
 
 // ---- the local families: how a hub row opens and closes here ---------------
 
@@ -450,6 +459,8 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
   /** Betterment daily D5: this view opened Today for a retired Brief or
    * The week row. */
   let todayOpened = false;
+  /** Betterment setup ST1: the retired rows this view opened Settings for. */
+  const settingsOpened = new Set<string>();
   /** The meeting windows this view opened for a migrated row: this view's
    * own opens (they go to the hub), never closed as stale cache. */
   const migratedTo = new Set<string>();
@@ -512,6 +523,15 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
         todayOpened = true;
         useDesk.getState().retirePanel(r.id);
         openIntelligence({ view: "today" });
+      }
+      // Betterment setup ST1: a saved Rhythm or Change places window opens
+      // Settings at its section, once per row and view.
+      const home = SETTINGS_HOMES[r.id];
+      if (home && !settingsOpened.has(r.id) && !retiredDone.has(r.id)
+        && (retireTries.get(r.id) ?? 0) < RETIRE_TRIES) {
+        settingsOpened.add(r.id);
+        migratedTo.add("surface-settings");
+        useDesk.getState().openSurfaceWindow("configure-settings", home);
       }
       retire(r);
     }

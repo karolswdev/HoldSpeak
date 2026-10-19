@@ -31,12 +31,7 @@ import {
   type ObjectSort,
   type ObjectSortKey,
 } from "../../desk/surface";
-import { useDrawerMembers } from "../../desk/drawer/useDrawerData";
-import { memberOpens, openMember } from "../../desk/drawer/open";
-import { useDrawers } from "../../desk/drawer/store";
-import { ParkReceipt, RunLine, restoreFailedOutcome, restoredOutcome } from "../../desk/surface";
-import { restoreMeeting } from "../../desk/api";
-import { HandConfirmSlot, drawerHost, handOriginOfRef, handSourceProps } from "../../desk/hand";
+import { RunLine } from "../../desk/surface";
 import { useCompactViewport } from "../../desk/useCompactViewport";
 import {
   PENDING_PLACE, ROOM_READS_CAP_MS, RoomReadsContext, RoomSlotContext, placeResolved, unresolvedSlots,
@@ -52,21 +47,21 @@ import {
 import { onReturnToTask, rememberTaskFocus } from "../../desk/returnToTask";
 import { useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
 import { useEngine } from "../../desk/hooks/useEngine";
-import { StandingPagesSection, useStandingPagesRead } from "../../desk/standingPages";
+import { useStandingPagesRead } from "../../desk/standingPages";
 import { apiFetch } from "../../lib/api";
 import type { InferenceTarget } from "../../desk/api";
-import { openPrimitive, openSurfaceOr } from "../../desk/shell";
+import { openSurfaceOr } from "../../desk/shell";
 import { ROOM_AT_EVENT, ROOM_PROPOSAL_EVENT, ROOM_UPDATES_EVENT, ROOM_WRITE_EVENT, refOpener, takeRoomAtRequest, takeRoomProposalRequest, takeRoomUpdatesRequest, takeRoomWriteRequest, type RoomPlace } from "../../desk/openObject";
 import { useDesk } from "../../desk/store";
 import type { CoreProps } from "../../pages/cores/core-types";
 import type {
   RoomSnapshot,
   RoomHealthData,
-  RoomTargetData,
   RoomSourceItem,
   RoomChangeRow,
   RoomReviewData,
   RoomNeedsYouItem,
+  RoomNowData,
   RoomProposalItem,
   RoomSuggestedSourceItem,
   RoomHealthPerson,
@@ -74,7 +69,7 @@ import type {
   NudgeLocal,
   NudgeCardAction,
 } from "./model";
-import { lifecycleLabel, roomHealthWord, resolveHealthRows, nudgeCardReducer, initialNudgeCard, formatDays, healthReasonWords, needsYouWhyWords } from "./model";
+import { lifecycleLabel, nudgeCardReducer, initialNudgeCard, formatDays, needsYouWhyWords } from "./model";
 import { StringGadget, CycleGadget, FoldGadget } from "../../desk/surface/gadgets";
 import { egressFor, egressForEvent, receiptFace, receiptLabel, refusalWord } from "../../desk/surface/egress";
 import { useProjectRoomController } from "./useProjectRoomController";
@@ -85,15 +80,15 @@ import { UpdatePosture } from "./update/UpdatePosture";
 import { useStewardController } from "./steward/useStewardController";
 import { StewardPosture } from "./steward/StewardPosture";
 import { pluralize } from "./steward/model";
-import { usePrepareController, type PrepareController } from "./prepare/usePrepareController";
+import { usePrepareController } from "./prepare/usePrepareController";
 import { PreparePosture, RESULT_OPTIONS } from "./prepare/PreparePosture";
-import { coverageToken, clockToken } from "./prepare/model";
 import * as api from "./api";
 import { RoomPeopleSection, monogram } from "./RoomPeopleSection";
 import { AddSourcesWell } from "./door/DoorCore";
 import "./project-room.css";
 import { RecallFace } from "./recall/RecallFace";
-import { DecisionRecordPreparedChip, DecisionRecordSendWells } from "../../desk/documentSendsLazy";
+import { ThisWeekSection, WaitingOnSection } from "./now/NowSections";
+import { headFacts, isMine, stateLine, type StateLine } from "./now/model";
 import { fetchUpdate, fetchUpdates } from "./update/api";
 import { Unreadable } from "../../desk/surface/send";
 import { retryRoomLink, useRoomSendLink } from "../../desk/windowSend";
@@ -193,12 +188,6 @@ function formatTimeShort(iso: string | null): string {
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function formatTargetDate(iso: string): string {
-  const d = wireDate(iso);
-  if (!d) return iso;
-  const months = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
-  return `${months[d.getMonth()]} ${d.getDate()}`;
-}
 
 /** Format a due date as a short day name (FRI) when within ~7 days, else MMM DD. */
 function formatDueShort(iso: string): string {
@@ -299,62 +288,47 @@ export function kindToPhrase(kind: string): string {
   return last.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
 }
 
-/* ── the Room headline ── */
+/* ── the head (Betterment P3: where it stands in ten seconds) ── */
 
-function RoomHeadline({
-  count,
-  isAccent,
-  unread,
-}: {
-  count: number;
-  isAccent: boolean;
-  /** A Room read failed: the Room cannot say it is clear. */
-  unread: boolean;
-}) {
+/** The head's one big fact: the state and its reason, in his words
+ *  ("At risk: tokenization waits on the HSM ceremony"). The reason's source
+ *  opens from it. */
+function RoomHeadline({ line }: { line: StateLine }) {
+  const open = line.ref ? refOpener(line.ref) : null;
   return (
-    <span
-      className="surface-display room-headline"
-      data-testid="room-headline"
-      data-accent={isAccent || undefined}
-    >
-      {/* PHILO-13-03 (canvas C1-4a): a Room counts its own open items, a
-          narrower set than the Desk's one "needs you" number. */}
-      {count > 0 ? `${count} open here` : unread ? "Not all read" : "Clear here"}
+    <span className="surface-display room-headline" data-testid="room-headline" data-tone={line.tone}>
+      {open ? (
+        <Button variant="chrome" className="room-headline-open" data-testid="room-headline-open"
+          aria-label={`${line.text}. Open the source`} onClick={open}>
+          {line.text}
+        </Button>
+      ) : line.text}
     </span>
   );
 }
 
-/* ── the Room head ── */
-
-/** PHILO-17 refit: the health word in plain case (the pill says it). */
-const HEALTH_PLAIN: Record<string, string> = { "AT RISK": "At risk", "ON TRACK": "On track", NEW: "New" };
-
 function RoomHead({
   room,
-  ctrl,
   updateCtrl,
   reviewCtrl,
   pendingCount,
   quiet = false,
-  lateItems = null,
 }: {
   room: RoomSnapshot;
-  ctrl: ReturnType<typeof useProjectRoomController>;
   updateCtrl: ReturnType<typeof useUpdateController>;
   reviewCtrl: ReturnType<typeof useReviewController>;
   pendingCount: number;
   /** PHILO-17: another well holds the face's one primary (Add source's Add). */
   quiet?: boolean;
-  /** PHILO-17 refit: the late milestones (null while the items read is out). */
-  lateItems?: ItemRow[] | null;
 }) {
   const updateEngine = useEngine("project.update_draft");
-  const health = room.health.state === "ok" ? (room.health as RoomHealthData & { state: "ok" }) : null;
-  const healthWord = roomHealthWord(room);
-  const target = room.target.state === "ok" ? (room.target as RoomTargetData & { state: "ok" }) : null;
-  const needsYouCount = room.needsYou.state === "ok" ? room.needsYou.count : 0;
   const sources = room.sources.state === "ok" ? room.sources.items : [];
   const sourceWord = sourcesWord(sources, room.sources.state === "ok" ? room.sources.quietUntil : null);
+  const now = room.now?.state === "ok" ? (room.now as RoomNowData & { state: "ok" }) : null;
+  const facts = headFacts(now);
+  // PHILO-15 B69/B60: a STALE source, or quiet hours holding the sweep, is
+  // said on the head (a plain CHECKED time is not: the window reads itself).
+  const sourceFact = sourceWord && !/^CHECKED /.test(sourceWord.word) ? sourceWord : null;
 
   const nameRef = useRef<HTMLSpanElement>(null);
   const [showOutcome, setShowOutcome] = useState(false);
@@ -372,50 +346,18 @@ function RoomHead({
     return () => ro.disconnect();
   }, [room.project.name, room.project.outcomeText]);
 
-  const lateCount = lateItems?.length ?? 0;
   const draftRun = updateCtrl.draftRun;
-  const healthTone = healthWord ? (healthWord.tone === "fail" ? "danger" : healthWord.tone === "info" ? "info" : "ok") : null;
-  const targetWord = target?.targetAt
-    ? target.passed
-      ? (target.daysLeft ? `Overdue by ${pluralize(Math.abs(target.daysLeft), "day", "days")}` : "Overdue today")
-      : `Target ${formatTargetDate(target.targetAt)}${target.daysLeft ? ` · ${pluralize(target.daysLeft, "day", "days")} left` : " · today"}`
-    : null;
 
   return (
     <div className="room-head" data-testid="room-head">
       <span ref={nameRef} className="room-head-name-measure" aria-hidden="true">
         {room.project.name}
       </span>
-      {/* PHILO-17 refit: the head is the Today head: the one fact, its
-          state pill, the plain facts in mono, the one filled verb. */}
       <div className="room-head-line">
-        <RoomHeadline
-          count={needsYouCount}
-          isAccent={needsYouCount > 0}
-          // PHILO-15 B69: a STALE source is not read: never "Clear here".
-          unread={room.health.state === "degraded" || room.needsYou.state === "degraded" || Boolean(sourceWord?.stale)}
-        />
-        {healthWord && healthTone ? (
-          // PHILO-15 lane 12 (B25): an empty Project reads NEW (no health
-          // claim with nothing to judge).
-          <span className="kit-pill" data-tone={healthTone} data-dot="" data-testid="room-health-word">
-            {HEALTH_PLAIN[healthWord.word]}
-          </span>
-        ) : null}
+        <RoomHeadline line={stateLine(room, Boolean(sourceWord?.stale))} />
         {room.project.isArchived ? (
           <span className="kit-pill" data-tone="danger" data-dot="">ARCHIVED</span>
         ) : null}
-        <span className="room-head-strip" data-testid="room-head-chips">
-          {health?.reason ? (
-            <span data-tone={healthTone === "danger" ? "danger" : undefined} data-testid="room-health-reason">{healthReasonWords(health)}</span>
-          ) : lateCount ? <span data-tone="danger" data-testid="room-late-count"><b>{lateCount}</b> late</span> : null}
-          {targetWord ? (
-            <span data-testid="room-target-chip" data-tone={target?.passed ? "danger" : undefined}>{targetWord}</span>
-          ) : null}
-          {sourceWord ? (
-            <span data-testid="room-sources-word" data-tone={sourceWord.stale ? "warn" : undefined}>{sourceWord.word}</span>
-          ) : null}
-        </span>
         <span className="room-head-trailing surface-verbs-actions">
           {pendingCount > 0 ? <Button dense variant={quiet ? "secondary" : "primary"}
             loading={reviewCtrl.loading} onClick={() => void reviewCtrl.enterReview()} data-testid="room-head-review">
@@ -434,6 +376,14 @@ function RoomHead({
           </Button>
         </span>
       </div>
+      {facts.length || sourceFact ? (
+        <p className="room-now-facts" data-testid="room-head-facts">
+          {facts.map((fact) => <span key={fact}>{fact}</span>)}
+          {sourceFact ? (
+            <span data-testid="room-sources-word" data-tone={sourceFact.stale ? "warn" : undefined}>{sourceFact.word}</span>
+          ) : null}
+        </p>
+      ) : null}
       {/* P0 (betterment/projects): the draft's run where he pressed it.
           The Update posture draws its own line once it is open. */}
       {updateCtrl.posture === "off" && (draftRun.phase === "running" || draftRun.phase === "failure") ? (
@@ -469,68 +419,19 @@ function RoomHead({
   );
 }
 
-/* ── HS-173: HEALTH section ── */
-
-function healthToneToState(tone: "green" | "amber" | "red"): "success" | "warning" | "failure" {
-  if (tone === "red") return "failure";
-  if (tone === "amber") return "warning";
-  return "success";
-}
-
-function HealthSection({ room, onRetry }: { room: RoomSnapshot; onRetry: () => void }) {
-  // A failed health read is named, with Retry. It is never drawn as "no
-  // health rows" (the same species as ITEMS UNAVAILABLE).
-  if (room.health.state === "degraded") {
-    return (
-      <SurfaceSection
-        label="HEALTH"
-        actions={
-          <Button dense variant="ghost" onClick={onRetry} data-testid="health-retry">
-            Retry
-          </Button>
-        }
-      >
-        <span data-testid="health-not-read">
-          <StateChip state="unreachable" label="HEALTH NOT READ" />
-        </span>
-      </SurfaceSection>
-    );
-  }
-  const health = room.health.state === "ok"
-    ? (room.health as RoomHealthData & { state: "ok" }) : null;
-  if (!health?.signals) return null;
-
-  const rows = resolveHealthRows(health.signals, health.mergeQueueDepth);
-  if (rows.length === 0) return null;
-
-  // CHECKED N MIN AGO on the plate's caption (addendum P2-8: one token, not per row)
-  const checkedToken = health.checkedAt ? `CHECKED ${humanTime(health.checkedAt)}` : null;
-  const tone = (t: "green" | "amber" | "red") => (t === "red" ? "danger" : t === "amber" ? "warn" : "ok");
-
-  // PHILO-17 refit: the signals on a raised steel plate beside the plan:
-  // a lamp, the plain name, the facts in mono.
+/* A failed health read is named, with Retry (the head then says "Not all
+ * read"; it never claims a state it could not read). Betterment P3 keeps
+ * this from the parked SIGNALS plate. */
+function HealthNotRead({ onRetry }: { onRetry: () => void }) {
   return (
-    <section className="room-plate" data-testid="room-health">
-      <header className="room-plate-cap">
-        <span>SIGNALS</span>
-        {checkedToken ? <span className="room-plate-when" data-testid="health-checked">{checkedToken}</span> : null}
-      </header>
-      <ul className="room-signals">
-        {rows.map((row) => (
-          <li key={row.key} className="room-signal" data-tone={tone(row.tone)} data-testid={`health-row-${row.key}`}>
-            <span className="room-signal-lamp" data-state={healthToneToState(row.tone)} aria-hidden="true" />
-            <span className="room-signal-name">{plainWord(row.label)}</span>
-            <span className="room-signal-facts">
-              {row.tokens.map((tok, ti) => (
-                <span key={ti} data-testid={`health-token-${row.key}-${ti}`}>
-                  {tok}{ti < row.tokens.length - 1 ? " ·" : ""}
-                </span>
-              ))}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </section>
+    <SurfaceSection
+      label="HEALTH"
+      actions={<Button dense variant="ghost" onClick={onRetry} data-testid="health-retry">Retry</Button>}
+    >
+      <span data-testid="health-not-read">
+        <StateChip state="unreachable" label="HEALTH NOT READ" />
+      </span>
+    </SurfaceSection>
   );
 }
 
@@ -902,7 +803,7 @@ function ProposalRow({
   );
 }
 
-/* ── OPEN HERE section (PHILO-13-03: was NEEDS YOU) ── */
+/* ── NEEDS YOU (Betterment P3: his own rows; was OPEN HERE) ── */
 
 function NeedsYouSection({
   room,
@@ -918,14 +819,9 @@ function NeedsYouSection({
   selectedProposalId?: string;
 }) {
   if (room.needsYou.state !== "ok") return null;
-  const { items, count } = room.needsYou;
-
-  const nextCheck = room.sources.state === "ok" ? room.sources.nextCheckAt : null;
-  // PHILO-15 B69: while quiet hours hold the sweep, the next check is the quiet end.
-  const quietUntil = room.sources.state === "ok" ? room.sources.quietUntil : null;
-  const nextWords = quietUntil
-    ? ` · quiet until ${formatTimeShort(quietUntil)}`
-    : nextCheck ? ` · next check ${formatTimeShort(nextCheck)}` : "";
+  // Betterment P3: Needs you holds his own rows only (proposals to Confirm,
+  // what he owes, what waits on his review); what others owe is Waiting on.
+  const items = room.needsYou.items.filter(isMine);
 
   // HS-173: build a map of relationship_id -> health person for nudge state
   const health = room.health.state === "ok"
@@ -967,14 +863,9 @@ function NeedsYouSection({
     </Button>
   ) : undefined;
 
+  // Absent when empty (no counters of zero); a Review still has its verb.
   if (items.length === 0) {
-    return (
-      <SurfaceSection label="OPEN HERE" actions={reviewAction}>
-        <p className="room-empty-line" data-testid="needs-you-empty">
-          {room.health.state === "degraded" ? "Not all read" : "Nothing open"}{nextWords}
-        </p>
-      </SurfaceSection>
-    );
+    return reviewAction ? <SurfaceSection label="NEEDS YOU" actions={reviewAction} /> : null;
   }
 
   // Build a lookup from proposalId to the full proposal data
@@ -988,7 +879,9 @@ function NeedsYouSection({
     [0]?.proposalId || "";
 
   return (
-    <SurfaceSection label={`OPEN HERE ${count}`} actions={reviewAction}>
+    // No count: "needs you" with a number is the desk's one number
+    // (PHILO-13-03); the project's filter says the rows themselves.
+    <SurfaceSection label="NEEDS YOU" actions={reviewAction} data-testid="room-needs-you">
       <SurfaceLedger count="" cols="room">
         <ul className="surface-ledger-rows">
           {items.map((item, i) => {
@@ -1643,97 +1536,6 @@ function SourcesSection({
 
 /* ── FILES section (PHILO-17 U30: the drawer's objects, in the Room) ── */
 
-function RoomFilesSection({ ctrl }: { ctrl: ReturnType<typeof useProjectRoomController> }) {
-  const projectId = ctrl.projectId ?? "";
-  const { members, failed, retry, settled } = useDrawerMembers(projectId, ctrl);
-  useRoomRead("files", settled);
-  const [sort, setSort] = useState<ObjectSort>({ key: "name", dir: "asc" });
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const selected = members.find((m) => m.id === selectedId) ?? null;
-  // The Room names its own failed read; FILES names the reads only it makes
-  // (A.10: a failed read is never an empty or a complete list).
-  const unread = failed.filter((read) => read === "PEOPLE" || read === "RESOURCES");
-  // Astra r2 on #1068: Park from Get Info leaves its receipt and Restore HERE
-  // (the drawer that drew it is parked), also when FILES is left empty.
-  const receipt = useDrawers((s) => s.receipts[projectId]);
-  const restore = async (ids: string[]) => {
-    const store = useDrawers.getState();
-    try {
-      for (const id of ids) await restoreMeeting(id);
-      store.setReceipt(projectId, restoredOutcome(ids));
-      store.changed();
-      void useDesk.getState().refresh();
-    } catch {
-      store.setReceipt(projectId, restoreFailedOutcome(ids));
-    }
-  };
-  // A filed object drags onto an agent (the hand), as the drawer's icons did;
-  // no drag at 393 (the hand there is a press on a Room row).
-  const compact = useCompactViewport();
-  const host = drawerHost(projectId);
-  const rowProps = (row: { id: string }) => {
-    const member = members.find((m) => m.id === row.id);
-    const origin = member && !compact ? handOriginOfRef(member.ref, member.name, projectId) : null;
-    return origin && member
-      ? handSourceProps({ origin, source: { kind: member.kind, id: member.id, sprite: member.sprite }, host })
-      : {};
-  };
-  // A zero is never said (UX-CANON A.8): no files, nothing failed, no receipt: no section.
-  if (!members.length && !unread.length && !receipt) return null;
-  const open = (id: string | null) => {
-    const member = members.find((m) => m.id === id);
-    if (member && memberOpens(member)) openMember(member);
-  };
-  const onSort = (key: ObjectSortKey) =>
-    setSort((now) => (now.key === key ? { key, dir: now.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
-  return (
-    <SurfaceSection
-      label={countLabel("FILES", members.length)}
-      data-testid="room-files"
-      actions={
-        <>
-          {unread.length ? (
-            <Button dense variant="ghost" onClick={retry} data-testid="room-files-retry">
-              Retry
-            </Button>
-          ) : null}
-          <Button dense variant="ghost" disabled={!selected} onClick={() => selected && useDrawers.getState().openInfo(selected, projectId)} data-testid="room-files-info">
-            Get Info
-          </Button>
-          <Button dense variant="ghost" disabled={!selected || !memberOpens(selected)} onClick={() => open(selectedId)} data-testid="room-files-open">
-            Open
-          </Button>
-        </>
-      }
-    >
-      {receipt ? (
-        <ParkReceipt outcome={receipt} onRestore={(ids) => void restore(ids)} data-testid="room-files-park-receipt" />
-      ) : null}
-      <HandConfirmSlot host={host} />
-      {unread.length ? (
-        <div className="room-files-unread" data-testid="room-files-not-read">
-          {unread.map((read) => <StateChip key={read} state="failure" label={`${read} · NOT READ`} />)}
-          {members.length ? <StateChip state="warning" label="PARTIAL" /> : null}
-        </div>
-      ) : null}
-      {members.length ? (
-        <ObjectList
-          label="Files"
-          rows={members}
-          sort={sort}
-          onSort={onSort}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
-          onOpen={open}
-          rowProps={rowProps}
-        />
-      ) : null}
-    </SurfaceSection>
-  );
-}
-
-/* ── RECEIPTS section (HS-174-04: pipeline event receipts with origin badge) ── */
-
 function ReceiptsSection({ room }: { room: RoomSnapshot }) {
   if (room.receipts.state !== "ok") return null;
   const { items } = room.receipts;
@@ -1788,207 +1590,6 @@ function ReceiptsSection({ room }: { room: RoomSnapshot }) {
 }
 
 /* ── SINCE YOU LOOKED section ── */
-
-function SinceYouLookedSection({ room }: { room: RoomSnapshot }) {
-  if (room.sinceRead.state !== "ok") return null;
-  const { readAt, groups } = room.sinceRead;
-  const caption = readAt ? "SINCE YOU LOOKED" : "SINCE CREATED";
-  const readLabel = readAt ? formatReadAt(readAt) : null;
-
-  if (groups.length === 0) {
-    return (
-      <SurfaceSection
-        label={caption}
-        actions={readLabel ? <span className="surface-token room-chip-faint">{readLabel}</span> : undefined}
-      >
-        <p className="room-empty-line" data-testid="since-read-empty">
-          {readAt ? `Nothing since ${formatTimeShort(readAt)}` : "Created just now"}
-        </p>
-      </SurfaceSection>
-    );
-  }
-
-  return (
-    <SurfaceSection
-      label={caption}
-      actions={readLabel ? <span className="surface-token room-chip-faint">{readLabel}</span> : undefined}
-    >
-      {groups.map((group, gi) => (
-        <div key={gi} className="room-since-group" data-testid="since-read-group">
-          {/* S-2: the design's line is "GitHub · 2 opened · 1 merged" */}
-          <p className="room-since-group-head surface-primary">
-            {group.source}{group.summary ? ` · ${group.summary}` : ""}
-          </p>
-          <ul className="room-since-entries">
-            {group.entries.map((entry, ei) => (
-              <li key={ei} className="room-since-entry">
-                <span className="room-since-phrase">{entry.phrase}</span>
-                {entry.at ? (
-                  <span className="room-since-time">{" · "}{humanTime(entry.at)}</span>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
-    </SurfaceSection>
-  );
-}
-
-/* ── DECISIONS & COMMITMENTS section ── */
-
-/** PHILO-11-05a (canvas B4, B4b): a decision row is a decision RECORD
- *  (design 6a), also when it is marked `source="meeting"`. The row unfolds
- *  in place and holds the record's SEND well (the seat); it carries
- *  PREPARED ×K when a send waits. Its `Open` opened nothing for a record
- *  (G1, ledgered), so it is withheld; a row with a real URL keeps its Open. */
-function RoomDecisionRow({ dec, cells, ...rest }: React.ComponentProps<typeof SurfaceLedgerRow> & {
-  dec: { id: string; text: string; kind?: string };
-}) {
-  const [open, setOpen] = useState(false);
-  // PHILO-15 08 (Astra #983 r2): a confirmed ACTION's record is the anchor
-  // of its commitment, not a decision: it reads "Action:", says ACTION, and
-  // carries no decision Send well.
-  if (dec.kind === "action") {
-    return (
-      <SurfaceLedgerRow {...rest} lineLabel={`Action: ${dec.text}`}
-        cells={<><span className="surface-token" data-testid="room-row-kind">ACTION</span>{cells}</>} />
-    );
-  }
-  return (
-    <SurfaceLedgerRow {...rest} open={open} onToggle={() => setOpen((o) => !o)}
-      lineLabel={`Decision: ${dec.text}`}
-      cells={<>{cells}<DecisionRecordPreparedChip id={dec.id} /></>}>
-      {open ? <DecisionRecordSendWells id={dec.id} text={dec.text} /> : null}
-    </SurfaceLedgerRow>
-  );
-}
-
-function DecisionsCommitmentsSection({ room }: { room: RoomSnapshot }) {
-  const decisionItems = room.decisions.state === "ok" ? room.decisions.items : [];
-  const commitmentItems = room.commitments.state === "ok" ? room.commitments.items : [];
-
-  // HS-172-03: fold commitments into their decision row when the decision
-  // carries a commitmentId that matches a commitment's id. The merged row
-  // shows OWNER + BY DUE + CONFIRMED; the commitment is not listed separately.
-  const foldedCommitmentIds = new Set<string>();
-  const commitmentById = new Map(commitmentItems.map((c) => [c.id, c]));
-  for (const dec of decisionItems) {
-    if (dec.commitmentId && commitmentById.has(dec.commitmentId)) {
-      foldedCommitmentIds.add(dec.commitmentId);
-    }
-  }
-  const unfoldedCommitments = commitmentItems.filter((c) => !foldedCommitmentIds.has(c.id));
-
-  const total = decisionItems.length + unfoldedCommitments.length;
-  if (total === 0) return null;
-
-  return (
-    <SurfaceSection label={`DECISIONS & COMMITMENTS ${total}`}>
-      <SurfaceLedger count="" cols="room">
-        <ul className="surface-ledger-rows">
-          {decisionItems.map((dec) => {
-            // HS-172-03: proposal-derived decisions carry source=meeting
-            const isProposal = dec.source === "meeting";
-            const confirmedTime = dec.confirmedAt ? formatTimeShort(dec.confirmedAt) : "";
-            const foldedCommitment = dec.commitmentId ? commitmentById.get(dec.commitmentId) : undefined;
-
-            // Build WAS tokens from changed fields only (F5 ruling)
-            const wasParts: string[] = [];
-            if (dec.was) {
-              if (dec.was.text) {
-                const truncated = dec.was.text.length > 40
-                  ? `${dec.was.text.slice(0, 40)}...`
-                  : dec.was.text;
-                wasParts.push(`WAS "${truncated}"`);
-              }
-              if (dec.was.due) wasParts.push(`WAS BY ${dec.was.due.toUpperCase()}`);
-              if (dec.was.owner) wasParts.push(`WAS ${dec.was.owner}`);
-            }
-
-            if (isProposal) {
-              // Merged caption: OWNER MAREK · BY FRI · CONFIRMED 09:15 + WAS tokens
-              const ownerName = foldedCommitment?.owner;
-              const dueDateRaw = foldedCommitment?.dueAt;
-              // Format due as short day name (FRI) when within ~7 days, else date
-              const dueLabel = dueDateRaw ? formatDueShort(dueDateRaw) : "";
-
-              return (
-                <RoomDecisionRow
-                  dec={dec}
-                  key={`dec-${dec.id}`}
-                  data-testid="decision-row"
-                  lead="MTG"
-                  primary={<span className="surface-primary">{dec.text}</span>}
-                  wrap
-                  cells={
-                    <>
-                      {ownerName ? (
-                        <span className="surface-token">OWNER {ownerName.toUpperCase()}</span>
-                      ) : null}
-                      {dueLabel ? (
-                        <span className="surface-token">BY {dueLabel.toUpperCase()}</span>
-                      ) : null}
-                      {dec.done ? (
-                        // PHILO-15 B70: a done action reads DONE, not CONFIRMED.
-                        <span className="surface-token room-confirmed-token" data-testid="done-state">
-                          {dec.doneAt ? `DONE · ${formatTimeShort(dec.doneAt)}` : "DONE"}
-                        </span>
-                      ) : (
-                        <span className="surface-token room-confirmed-token" data-testid="confirmed-state">
-                          CONFIRMED {confirmedTime}
-                        </span>
-                      )}
-                      {wasParts.map((w, wi) => (
-                        <span key={wi} className="surface-token room-was-token">{w}</span>
-                      ))}
-                    </>
-                  }
-                />
-              );
-            }
-
-            return (
-              <RoomDecisionRow
-                dec={dec}
-                key={`dec-${dec.id}`}
-                data-testid="decision-row"
-                primary={
-                  <>
-                    <span className="room-dc-verb">Decided</span>
-                    {" · "}{dec.text}{" · "}{humanTime(dec.at)}
-                  </>
-                }
-                wrap
-                trailing={
-                  dec.url ? (
-                    <Button dense variant="ghost" onClick={() => window.open(dec.url!, "_blank", "noopener")}>Open source</Button>
-                  ) : undefined
-                }
-              />
-            );
-          })}
-          {unfoldedCommitments.map((c) => (
-            <SurfaceLedgerRow
-              key={`com-${c.id}`}
-              primary={
-                <>
-                  <span className="room-dc-verb">You owe</span>
-                  {" · "}{c.text}
-                  {c.dueAt ? <>{" · by "}{humanTime(c.dueAt)}</> : null}
-                </>
-              }
-              wrap
-              trailing={
-                <Button dense variant="ghost" onClick={() => openPrimitive(`commitment:${c.id}`)}>Open commitment</Button>
-              }
-            />
-          ))}
-        </ul>
-      </SurfaceLedger>
-    </SurfaceSection>
-  );
-}
 
 /* ── Ask well ── */
 
@@ -2091,49 +1692,6 @@ export function useRoomAsk(projectId: string, projectName: string) {
 }
 
 export type RoomAsk = ReturnType<typeof useRoomAsk>;
-
-/** BRIEFS — the kept preparation briefs, attached to this Project (HS-200-11
- *  AC4).  Absent at zero (A.8). */
-function RoomBriefsSection({ prepare }: { prepare: PrepareController }) {
-  const { kept } = prepare;
-  if (kept.length === 0) return null;
-  return (
-    <SurfaceSection label={countLabel("BRIEFS", kept.length)}>
-      <SurfaceLedger count="" cols="room">
-        <ul className="surface-ledger-rows" data-testid="room-briefs">
-          {kept.map((brief) => {
-            const coverage = coverageToken(brief.manifest.coverage);
-            const keptAt = clockToken("KEPT", brief.keptAt);
-            return (
-              <SurfaceLedgerRow
-                key={brief.id}
-                data-testid="room-brief-row"
-                lead={<span className="prepare-emblem" aria-hidden="true">BRF</span>}
-                primary={<span className="surface-primary">{brief.purpose}</span>}
-                cells={
-                  <span className="prepare-source-cells">
-                    {keptAt ? <span className="surface-token" data-chip>{keptAt}</span> : null}
-                    {coverage ? (
-                      <StateChip state={brief.manifest.coverage.complete ? "success" : "warning"} label={coverage} />
-                    ) : null}
-                  </span>
-                }
-                trailing={
-                  <Button dense variant="ghost" aria-label={`Open: ${brief.purpose}`} data-testid="room-brief-open" onClick={() => void prepare.openBrief(brief)}>
-                    Open
-                  </Button>
-                }
-                wrap
-                open
-                expands={false}
-              />
-            );
-          })}
-        </ul>
-      </SurfaceLedger>
-    </SurfaceSection>
-  );
-}
 
 /** The Room's ask (Phase 16: the kit's AskWell: the sunken paper well with
  *  the mic on its right edge, the model's egress chip beside it). The
@@ -2484,6 +2042,8 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
   const ctrl = useProjectRoomController(scope, scopeLabel);
   const [addingSources, setAddingSources] = useState(false);
   useAgentFlightsLive();
+  // Betterment P3: on the phone This week shows each group's first line.
+  const compact = useCompactViewport();
   const agentFlights = useAgentFlights((s) => s.flights);
   const loading = ctrl.loadStatus === "loading";
   // A write in another window (a meeting filed, an update published, an
@@ -2812,10 +2372,6 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
 
   const sourceCount = ctrl.room?.sources.state === "ok"
     ? ctrl.room.sources.items.filter((x) => !x.suggested).length : 0;
-  const decisionCount = (ctrl.room?.decisions.state === "ok" ? ctrl.room.decisions.items.length : 0)
-    + (ctrl.room?.commitments.state === "ok" ? ctrl.room.commitments.items.length : 0);
-  const readReceipt = ctrl.readAt ? `READ ${formatTimeShort(ctrl.readAt)}` : "";
-  const nextCheck = ctrl.room?.sources.state === "ok" ? ctrl.room.sources.nextCheckAt : null;
 
   // S-1: footer receipt omits zero parts — "Nothing today" / "Nothing this week"
   const historyReceipt = (() => {
@@ -2839,20 +2395,12 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
     <span className="surface-footer-receipt-line" role="status" data-testid="room-footer-receipt">
       {historyReceipt}
     </span>
-  ) : (
-    <span className="surface-footer-receipt-line" role="status" data-testid="room-footer-receipt">
-      {/* PHILO-17 (the desk sweep): the read receipt is said with the body
-          it reads for: drawn while the reads land, its centred line moved
-          51 px under the Pause and Choose verbs. */}
-      {shown ? readReceipt : ""}
-      {shown && readReceipt && nextCheck ? " · " : ""}
-      {shown && nextCheck ? `NEXT CHECK ${formatTimeShort(nextCheck)}` : ""}
-    </span>
-  );
+  ) : null;
+  // Betterment P3: the Now wing has no READ · NEXT CHECK receipt and no
+  // Refresh (the window refreshes itself on every desk change).
 
   return (
     <>
-      {hero ? hero(<Button dense variant="ghost" onClick={handleRefresh}>Refresh</Button>) : null}
       {ctrl.room ? (
         <RoomReadsContext.Provider value={reportRead}>
         <div className="room-body" data-testid="room-body" ref={roomBodyRef}
@@ -2865,19 +2413,18 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
               <div className="room-section-rise" style={{ animationDelay: "0ms" }}>
                 <RoomHead
                   room={ctrl.room}
-                  ctrl={ctrl}
                   updateCtrl={updateCtrl}
                   reviewCtrl={reviewCtrl}
                   pendingCount={pendingCount}
                   quiet={addingSources}
-                  lateItems={lateOf(itemsRead.items)}
                 />
               </div>
-              {/* PHILO-17 refit: the two things he reads here first (what is
-                  open, the plan with what is late) in the main column; the
-                  signals beside them; everything else folded below. */}
-              <div className="room-grid">
-                <div className="room-main">
+              {ctrl.room.health.state === "degraded" ? <HealthNotRead onRetry={handleRefresh} /> : null}
+              {/* Betterment P3, the Now wing: what needs him and who he waits
+                  on beside what happened this week; on the phone, one column
+                  in that order. */}
+              <div className="room-now-grid" data-testid="room-now">
+                <div className="room-now-col room-main">
                   <RoomSlot id="needs" place={place("needs")} own={{ extras: extrasRead }} delay="40ms">
                     <NeedsYouSection
                       room={ctrl.room}
@@ -2887,19 +2434,24 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
                       pendingCount={pendingCount}
                     />
                   </RoomSlot>
-                  {/* PHILO-9-03 (the Q3 ruling): the plan he reads after what needs him. */}
-                  <RoomSlot id="items" place={place("items")} delay="60ms" data-section="items">
-                    <ItemsSection read={itemsRead} />
+                  {ctrl.room.needsYou.state === "ok" ? (
+                    <div className="room-section-rise" style={{ animationDelay: "50ms" }}>
+                      <WaitingOnSection items={ctrl.room.needsYou.items} />
+                    </div>
+                  ) : null}
+                </div>
+                <div className="room-now-col">
+                  <RoomSlot id="pages" place={place("pages")} own={{ pages: pagesLoaded }} delay="60ms">
+                    <ThisWeekSection
+                      now={ctrl.room.now?.state === "ok" ? (ctrl.room.now as RoomNowData & { state: "ok" }) : null}
+                      pages={standingPages}
+                      compact={compact}
+                    />
                   </RoomSlot>
                 </div>
-                <aside className="room-side" aria-label="Signals">
-                  <div className="room-section-rise" style={{ animationDelay: "20ms" }}>
-                    <HealthSection room={ctrl.room} onRetry={handleRefresh} />
-                  </div>
-                </aside>
               </div>
               {/* PHILO-17 refit: the ask is in the flow under what he reads
-                  first (no longer a sticky foot that rows scroll under). */}
+                  first (Betterment Q5: it opens the one Ask window). */}
               <div className="room-section-rise room-ask-container" style={{ animationDelay: "70ms" }}>
                 <RoomAskWell
                   ask={askCtrl}
@@ -2908,43 +2460,22 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
                   onPrepare={(purpose) => prepareCtrl.enterPrepare(purpose)}
                 />
               </div>
+              {/* Betterment P3: the Sources line (it unfolds in place), People and the
+                  plan; the other folds left the Now wing (_parked/nowWingFolds.tsx). */}
               <div className="room-folds" data-testid="room-folds">
                 <RoomSlot id="sources" place={place("sources")} own={{ extras: extrasRead }} delay="80ms">
                   <RoomFold title="Sources" token={sourceCount || undefined} open={addingSources || undefined} testId="room-fold-sources">
                     <SourcesSection room={ctrl.room} onReload={() => ctrl.load()} stewardCtrl={stewardCtrl} ctrl={ctrl} onAdding={setAddingSources} />
                   </RoomFold>
                 </RoomSlot>
-                <RoomSlot id="pages" place={place("pages")} own={{ pages: pagesLoaded }}
-                  empty={!standingPages.length} delay="85ms">
-                  {standingPages.length ? (
-                    <RoomFold title="Pages" token={standingPages.length || undefined} testId="room-fold-pages">
-                      <StandingPagesSection pages={standingPages} />
-                    </RoomFold>
-                  ) : null}
-                </RoomSlot>
-                <div className="room-section-rise" style={{ animationDelay: "90ms" }}>
-                  <RoomFold title="Decisions and owed" token={decisionCount || undefined} testId="room-fold-decisions">
-                    <DecisionsCommitmentsSection room={ctrl.room} />
-                  </RoomFold>
-                </div>
-                <div className="room-section-rise" style={{ animationDelay: "95ms" }}>
-                  <RoomFold title="Since you looked" testId="room-fold-since">
-                    <SinceYouLookedSection room={ctrl.room} />
-                  </RoomFold>
-                </div>
-                <RoomSlot id="files" place={place("files")} delay="100ms">
-                  <RoomFold title="Files" testId="room-fold-files">
-                    <RoomFilesSection ctrl={ctrl} />
-                  </RoomFold>
-                </RoomSlot>
-                <RoomSlot id="people" place={place("people")} delay="105ms">
+                <RoomSlot id="people" place={place("people")} delay="83ms">
                   <RoomFold title="People" testId="room-fold-people">
                     <RoomPeopleSection projectId={ctrl.projectId} />
                   </RoomFold>
                 </RoomSlot>
-                <RoomSlot id="briefs" place={place("briefs")} own={{ briefs: prepareCtrl.keptRead }} delay="110ms">
-                  <RoomFold title="Briefs" token={prepareCtrl.kept.length || undefined} testId="room-fold-briefs">
-                    <RoomBriefsSection prepare={prepareCtrl} />
+                <RoomSlot id="items" place={place("items")} delay="85ms" data-section="items">
+                  <RoomFold title="Plan" token={itemsRead.items?.length || undefined} testId="room-fold-plan">
+                    <ItemsSection read={itemsRead} />
                   </RoomFold>
                 </RoomSlot>
               </div>
@@ -2974,17 +2505,14 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
           <Button dense variant="primary" onClick={handleRefresh} data-testid="room-load-retry">Try again</Button>
         </div>
       ) : null}
-      <SurfaceFooter
-        receipt={footerReceipt}
-        verbs={
-          <>
-            {ctrl.view !== "history" && merged ? (
-              <FlightVerbs flight={merged} title={merged.pr?.title || merged.title} />
-            ) : null}
-            <Button dense variant="ghost" onClick={handleRefresh} data-testid="room-refresh">Refresh</Button>
-          </>
-        }
-      />
+      {footerReceipt ? (
+        <SurfaceFooter
+          receipt={footerReceipt}
+          verbs={ctrl.view !== "history" && merged ? (
+            <FlightVerbs flight={merged} title={merged.pr?.title || merged.title} />
+          ) : undefined}
+        />
+      ) : null}
     </>
   );
 }

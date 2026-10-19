@@ -30,8 +30,11 @@ import C200 from "./room-wires/claims200.json";
 import N10 from "./room-wires/nudge10.json";
 import H175 from "./room-wires/hs175.json";
 import S17 from "./room-wires/sources17.json";
-import F17 from "./room-wires/files17.json";
 import R174 from "./room-wires/receipts174.json";
+// Recorded by tests/integration/test_desk_project_room.py::
+// test_the_now_wing_says_where_it_stands_from_this_weeks_meetings_and_notes
+// (HOLDSPEAK_WIRE_WRITE=1): the RECON seed through the real hub's /room.
+import P3 from "./room-wires/nowP3.json";
 // Betterment Q1: Ask this project on an engine that does not answer, then Ask
 // again (tests/unit/test_desk_room_ask.py records it from the real routes).
 import Q1 from "./room-wires/roomAskQ1.json";
@@ -192,7 +195,7 @@ afterEach(() => {
 
 /* ── HS-172-03/06: proposals, Edit, Confirm, suggested sources ───────── */
 
-describe("HS-172: proposals in OPEN HERE, Confirm into DECISIONS, suggested sources", () => {
+describe("HS-172: proposals in NEEDS YOU, Confirm, suggested sources", () => {
   // replaces: tests/e2e/test_hs172_room_glass.py::TestRoomProposalsGlass::test_proposals_1440
   // replaces: tests/e2e/test_hs172_room_glass.py::TestRoomProposalsGlass::test_proposals_393
   // replaces: tests/e2e/test_hs172_room_glass.py::TestRoomProposalsGlass::test_suggested_1440
@@ -228,7 +231,7 @@ describe("HS-172: proposals in OPEN HERE, Confirm into DECISIONS, suggested sour
   });
 
   // replaces: tests/e2e/test_hs172_room_glass.py::TestRoomProposalsGlass::test_confirmed_1440
-  it("Confirm posts to the proposal's confirm route and the Room re-reads: the decision row is there", async () => {
+  it("Confirm posts to the proposal's confirm route and the Room re-reads: the proposal leaves Needs you", async () => {
     let confirmed = false;
     wire({
       ...table(),
@@ -240,14 +243,16 @@ describe("HS-172: proposals in OPEN HERE, Confirm into DECISIONS, suggested sour
     });
     render(<WindowHarness scope={`project:${pid}`} />);
     await waitFor(() => expect(screen.getAllByTestId("proposal-row")).toHaveLength(2));
-    expect(screen.queryByTestId("decision-row")).toBeNull();
     const first = screen.getAllByTestId("proposal-row")
       .find((r) => r.textContent?.includes("Marek owns the PostgreSQL migration"))!;
     fireEvent.click(within(first.closest("li") ?? first).getByTestId("proposal-confirm"));
-    const row = await screen.findByTestId("decision-row");
+    // Betterment P3: the Decisions fold left the Now wing; the confirmed
+    // proposal is no longer a proposal on the re-read.
+    await waitFor(() => expect(screen.getAllByTestId("proposal-row")).toHaveLength(1));
     expect(confirmed).toBe(true);
-    expect(row.textContent).toContain("Marek owns the PostgreSQL migration");
-    expect(screen.getAllByTestId("proposal-row")).toHaveLength(1);
+    // It stays as what it is now: an owed item (WAITING ON MAREK), not a proposal.
+    expect(screen.getAllByTestId("proposal-row").map((r) => r.textContent).join(" "))
+      .not.toContain("Marek owns the PostgreSQL migration");
   });
 });
 
@@ -336,46 +341,6 @@ function roomWith(sections: Record<string, unknown>) {
   return { ...clone(BARE_ROOM), ...clone(sections) };
 }
 
-describe("HS-173-03: HEALTH rows carry the wire's tones and tokens", () => {
-  const pid = BARE_ROOM.project_id;
-
-  // replaces: tests/e2e/test_hs173_health_glass.py::test_health_rows_1440
-  // replaces: tests/e2e/test_hs173_health_glass.py::test_health_rows_393
-  it("REVIEW WAIT, ISSUE AGING, CI and RELEASE with their tokens and the CHECKED caption", async () => {
-    wire({ [room(pid)]: () => roomWith({ health: HEALTH_RED }) });
-    render(<WindowHarness scope={`project:${pid}`} />);
-    const review = await screen.findByTestId("health-row-review_wait");
-    expect(review.textContent).toMatch(/review wait/i);
-    expect(review.textContent).toContain("2.5 D MEDIAN");
-    expect(review.textContent).toContain("2 WAITING");
-    expect(screen.getByTestId("health-row-issue_aging").textContent).toMatch(/issue aging/i);
-    expect(screen.getByTestId("health-row-issue_aging").textContent).toContain("1 > 14 D");
-    expect(screen.getByTestId("health-row-ci").textContent).toContain("1 FLAKY");
-    expect(screen.getByTestId("health-row-ci").textContent).toContain("QUEUE 2");
-    expect(screen.getByTestId("health-row-release").textContent).toMatch(/release/i);
-    expect(screen.getByTestId("health-row-release").textContent).toContain("1 BLOCKER");
-    const lead = (k: string) => screen.getByTestId(`health-row-${k}`).querySelector(".room-signal-lamp")?.getAttribute("data-state");
-    expect([lead("review_wait"), lead("issue_aging"), lead("ci"), lead("release")])
-      .toEqual(["failure", "warning", "warning", "failure"]);
-    expect(screen.getByTestId("health-checked").textContent).toMatch(/^CHECKED /);
-    const body = screen.getByTestId("room-body");
-    expect(rawButtons(body)).toEqual([]);
-    expect(body.textContent).not.toMatch(/\b0\s+(?:NEEDS|SOURCES|DECISIONS|WAITING|FLAKY|QUEUE|BLOCKERS)/);
-  });
-
-  // replaces: tests/e2e/test_hs173_health_glass.py::test_health_ready_1440
-  // replaces: tests/e2e/test_hs173_health_glass.py::test_health_ready_393
-  it("all green says CLEAR, PASSING and READY, never a zero", async () => {
-    wire({ [room(pid)]: () => roomWith({ health: HEALTH_GREEN }) });
-    render(<WindowHarness scope={`project:${pid}`} />);
-    expect((await screen.findByTestId("health-row-issue_aging")).textContent).toContain("CLEAR");
-    expect(screen.getByTestId("health-row-ci").textContent).toContain("PASSING");
-    expect(screen.getByTestId("health-row-release").textContent).toContain("READY");
-    const body = screen.getByTestId("room-body");
-    expect(rawButtons(body)).toEqual([]);
-    expect(body.textContent).not.toMatch(/\b0\s+(?:NEEDS|SOURCES|DECISIONS|WAITING|FLAKY|QUEUE|BLOCKERS)/);
-  });
-});
 
 /* ── HS-173-04: the nudge card and its receipt ─────────────────────── */
 
@@ -572,45 +537,6 @@ describe("PHILO-17 sources: the Room's SOURCES on a bare project", () => {
   });
 });
 
-describe("PHILO-17 sources: Park from FILES leaves PARKED · <name> with Restore in the Room", () => {
-  // replaces: tests/e2e/test_philo17_sources_glass.py::test_park_from_files_leaves_its_receipt_and_restore_in_the_room
-  it("Get Info ▸ Park: the receipt and Restore stay in the Room; Restore brings the meeting back", async () => {
-    const { DrawerInfoWindow } = await import("../../../desk/drawer/InfoWindow");
-    const { useDrawers } = await import("../../../desk/drawer/store");
-    useDesk.setState({ refresh: vi.fn(() => Promise.resolve()) } as never);
-    let parked = false;
-    wire({
-      [room("p-lone")]: () => clone(LONE_ROOM),
-      "GET /api/projects/p-lone/meetings": () => (parked ? { meetings: [] } : clone(LONE_MEETINGS)),
-      "GET /api/projects/p-lone/repository": () => ({ ...clone(BARE_REPOSITORY), project_id: "p-lone" }),
-      "DELETE /api/meetings/m-lone": () => { parked = true; return clone(PARK_DELETE); },
-      "POST /api/meetings/m-lone/restore": () => { parked = false; return clone(RESTORE); },
-    });
-    function Desk() {
-      const infos = useDrawers((s) => s.infos);
-      return (
-        <>
-          <WindowHarness scope="project:p-lone" />
-          {infos.map((info) => <DrawerInfoWindow key={info.ref} info={info} />)}
-        </>
-      );
-    }
-    render(<Desk />);
-    const files = await screen.findByTestId("room-files");
-    fireEvent.click(await within(files).findByRole("button", { name: /^Vendor call,/ }));
-    fireEvent.click(within(files).getByTestId("room-files-info"));
-    fireEvent.click(await screen.findByRole("button", { name: "Park" }), { detail: 1 });
-    const receipt = await within(screen.getByTestId("room-files")).findByTestId("room-files-park-receipt");
-    expect(receipt.querySelector("[role=status]")?.textContent).toBe("PARKED · Vendor call");
-    expect(calls.some((c) => c.key === "DELETE /api/meetings/m-lone")).toBe(true);
-    // The row leaving FILES rides the desk's refresh (stubbed here): that leg stays the browser's.
-    fireEvent.click(within(receipt).getByRole("button", { name: "Restore" }));
-    await waitFor(() => expect(calls.some((c) => c.key === "POST /api/meetings/m-lone/restore")).toBe(true));
-    await waitFor(() => expect(screen.getByTestId("room-files-park-receipt").querySelector("[role=status]")?.textContent)
-      .toMatch(/RESTORED/));
-    useDrawers.getState().setReceipt("p-lone", null);
-  });
-});
 
 describe("PHILO-17 sources: an older project registers its repository in the Room", () => {
   // replaces: tests/e2e/test_philo17_sources_glass.py::test_an_older_project_registers_its_repository_in_the_room
@@ -700,7 +626,7 @@ describe("PHILO-14 A5b: a proposal request over the Room", () => {
   for (const away of ["history", "update"] as const) {
     // replaces: tests/e2e/test_philo14_a2b_paths_glass.py::TestA2bPathsGlass::test_a_proposal_reopened_over_history_is_revealed
     // (the row's on-screen box is the one geometric leg; here: the wing, the selection and the scroll call)
-    it(`the same proposal asked for again over ${away} returns to the ROOM wing, selected, scrolled into view`, async () => {
+    it(`the same proposal asked for again over ${away} returns to the NOW wing, selected, scrolled into view`, async () => {
       const { openProjectProposal } = await import("../../../desk/openObject");
       const scrolled: Element[] = [];
       const original = Element.prototype.scrollIntoView;
@@ -727,7 +653,7 @@ describe("PHILO-14 A5b: a proposal request over the Room", () => {
         act(() => openProjectProposal(pid, proposalId));
         await waitFor(() => expect(selected()).not.toBeNull());
         expect(selected()!.textContent).toContain("cut-over on the 12th");
-        expect(within(screen.getByTestId("wing-slot")).getByRole("tab", { name: "Room" }).getAttribute("aria-selected")).toBe("true");
+        expect(within(screen.getByTestId("wing-slot")).getByRole("tab", { name: "Now" }).getAttribute("aria-selected")).toBe("true");
         // The row's own mount scrolls it (nearest) and the Room's request
         // reveal scrolls it (center): every scroll is the selected row.
         await waitFor(() => expect(scrolled.length).toBeGreaterThan(0));
@@ -1232,53 +1158,6 @@ describe("PHILO-17 sources: Add a repository in the Room", () => {
   });
 });
 
-describe("PHILO-17 sources: a parked meeting leaves FILES on the hub's own frame", () => {
-  // replaces: tests/e2e/test_philo17_sources_glass.py::test_park_from_files_leaves_its_receipt_and_restore_in_the_room
-  //   (the leg the earlier successor left to the browser: the row leaving FILES and coming back; the hub
-  //   half is tests/integration/test_desk_project_room.py::test_park_from_files_parks_the_meeting_and_restore_brings_it_back_to_the_room)
-  const { pid, before, park, park_frames, parked, restore, restore_frames, restored } = F17;
-  const deliver = (frames: Array<{ type: string; data: unknown }>) =>
-    act(() => { for (const f of frames) for (const h of bus.handlers.get(f.type) ?? []) h(f); });
-  const row = () => screen.getByTestId("room-files").querySelector("[data-object-id='meeting:m-lone']");
-
-  it("Park: PARKED · Vendor call, and the hub's desk_changed takes the row out; Restore and its frame bring it back", async () => {
-    const { DrawerInfoWindow } = await import("../../../desk/drawer/InfoWindow");
-    const { useDrawers } = await import("../../../desk/drawer/store");
-    useDesk.setState({ refresh: vi.fn(() => Promise.resolve()) } as never);
-    replay(before, {
-      "DELETE /api/meetings/m-lone": () => { hubGets = parked; return park.answer; },
-      "POST /api/meetings/m-lone/restore": () => { hubGets = restored; return restore.answer; },
-    });
-    function Desk() {
-      const infos = useDrawers((s) => s.infos);
-      return (
-        <>
-          <WindowHarness scope={`project:${pid}`} />
-          {infos.map((info) => <DrawerInfoWindow key={info.ref} info={info} />)}
-        </>
-      );
-    }
-    render(<Desk />);
-    const files = await screen.findByTestId("room-files");
-    fireEvent.click(await within(files).findByRole("button", { name: /^Vendor call,/ }));
-    fireEvent.click(within(files).getByTestId("room-files-info"));
-    fireEvent.click(await screen.findByRole("button", { name: "Park" }), { detail: 1 });
-    const receipt = await within(screen.getByTestId("room-files")).findByTestId("room-files-park-receipt");
-    expect(receipt.querySelector("[role=status]")?.textContent).toBe("PARKED · Vendor call");
-    expect(row()).not.toBeNull(); // nothing re-read yet: the hub's frame has not come
-    deliver(park_frames);
-    await waitFor(() => expect(row()).toBeNull(), { timeout: 3000 });
-    expect(screen.getByTestId("room-files-park-receipt").querySelector("[role=status]")?.textContent).toBe("PARKED · Vendor call");
-
-    fireEvent.click(within(screen.getByTestId("room-files-park-receipt")).getByRole("button", { name: "Restore" }));
-    await waitFor(() => expect(screen.getByTestId("room-files-park-receipt").querySelector("[role=status]")?.textContent)
-      .toMatch(/RESTORED/));
-    deliver(restore_frames);
-    await waitFor(() => expect(row()).not.toBeNull(), { timeout: 3000 });
-    expect(misses).toEqual([]);
-    useDrawers.getState().setReceipt(pid, null);
-  });
-});
 
 describe("HS-174-04: the Room's writes under History carry egress where egress happened", () => {
   // replaces: tests/e2e/test_hs174_receipts_glass.py::test_room_receipts_1440
@@ -1585,4 +1464,62 @@ describe("Betterment P4: the palette's Write update writes in the Room", () => {
     // The request is taken once: a reload of the Room never writes again.
     expect(takeRoomWriteRequest(pid)).toBe(false);
   }, 15000);
+});
+
+/* ── Betterment P3: the Now wing (where it stands in ten seconds) ────── */
+
+
+describe("Betterment P3: the Now wing says where the project stands", () => {
+  const pid = (P3.room as { project_id: string }).project_id;
+  const table = (): Record<string, Answer> => ({
+    [room(pid)]: () => clone(P3.room),
+    [`GET /api/projects/${pid}/proposals`]: () => clone(P3.proposals),
+  });
+
+  it("the head says At risk and why; Needs you holds his rows; Waiting on groups the others' by person", async () => {
+    wire(table());
+    render(<WindowHarness scope={`project:${pid}`} />);
+    const head = await screen.findByTestId("room-headline");
+    expect(head.textContent).toBe("At risk: Card tokenization is blocked on the HSM key ceremony");
+    const needs = await screen.findByTestId("room-needs-you");
+    expect(needs.textContent).toContain("Put Mira on the guild agenda (Nov)");
+    expect(needs.textContent).toContain("Kafka for ledger events");
+    expect(needs.textContent).not.toContain("Review PLAT-212");
+    expect(needs.textContent).not.toContain("Write the ledger ADR");
+    const people = screen.getAllByTestId("waiting-on-row").map((row) => [
+      within(row).getByTestId("waiting-on-person").textContent,
+      within(row).getByTestId("waiting-on-items").children.length,
+    ]);
+    expect(Object.fromEntries(people)).toEqual({ Theo: 2, Jun: 2, Mira: 1 });
+    // No Hand to coder on someone else's work.
+    expect(within(screen.getByTestId("room-waiting-on")).queryAllByRole("button")).toEqual([]);
+    expect(rawButtons(screen.getByTestId("room-body"))).toEqual([]);
+  });
+
+  it("This week shows the decision and the risks with their sources; the folds and the footer receipt are gone", async () => {
+    wire(table());
+    render(<WindowHarness scope={`project:${pid}`} />);
+    const week = await screen.findByTestId("room-this-week");
+    const groups = within(week).getAllByTestId("this-week-group").map((g) => g.getAttribute("aria-label"));
+    expect(groups).toEqual(["Decided", "Risks"]);
+    expect(within(week).getByTestId("this-week-decided").textContent).toBe("Keep the old ledger read-only for 30 days");
+    const runbook = within(week).getAllByTestId("this-week-line")
+      .find((l) => l.textContent?.includes("Rollback runbook is still a draft"))!;
+    expect(within(runbook).getByTestId("memory-ref").textContent).toBe("NOTE");
+    expect(week.textContent).not.toContain("burnout");
+    for (const gone of ["room-fold-decisions", "room-fold-since", "room-fold-files",
+      "room-fold-briefs", "room-fold-pages", "room-refresh", "room-footer-receipt", "room-health"]) {
+      expect(screen.queryByTestId(gone)).toBeNull();
+    }
+    expect(screen.getByTestId("room-fold-sources")).toBeTruthy();
+    expect(screen.getByTestId("wing-slot").textContent).toContain("Now");
+  });
+
+  it("a Decided line opens its decision (the record's own route)", async () => {
+    const recordId = (P3.room as { now: { decided: { id: string }[] } }).now.decided[0].id;
+    wire({ ...table(), [`GET /api/decision-records/${recordId}`]: () => ({ source_type: "meeting", source_id: "d1" }) });
+    render(<WindowHarness scope={`project:${pid}`} />);
+    fireEvent.click(await screen.findByTestId("this-week-decided"));
+    await waitFor(() => expect(calls.map((c) => c.key)).toContain(`GET /api/decision-records/${recordId}`));
+  });
 });

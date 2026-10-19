@@ -117,6 +117,19 @@ describe("DeskOS application manifest", () => {
     }
   });
 
+  it("Betterment setup ST1: Rhythm and Change places are parked; their keys, Search words and ⌘⇧P open Settings at Rhythm and at Wallpaper", () => {
+    const rhythm = DESK_APPLICATIONS.find((a) => a.action === "configure-cadence");
+    const places = DESK_APPLICATIONS.find((a) => a.action === "change-places");
+    // The ids stay (a saved desk names them); the windows are parked.
+    expect(rhythm).toMatchObject({ windowId: "surface-cadence", label: "Rhythm", parked: "settings:rhythm" });
+    expect(places).toMatchObject({ windowId: "surface-places", label: "Change places", parked: "settings:wallpaper", shortcut: "⌘⇧P" });
+    expect(DESK_APPLICATION_ALIASES["configure-cadence"]).toEqual({ target: "configure-settings", scope: "rhythm" });
+    expect(DESK_APPLICATION_ALIASES["change-places"]).toEqual({ target: "configure-settings", scope: "wallpaper" });
+    // Search keeps their words (a grouped application is a Search row).
+    for (const action of ["configure-cadence", "change-places"])
+      expect(DESK_TOOLS.some((tool) => tool.action === action), action).toBe(true);
+  });
+
   it("betterment shell S1: Today, People and Components have a group, so Search lists them", () => {
     for (const action of ["open-intelligence", "open-people", "design-components"])
       expect(DESK_TOOLS.some((tool) => tool.action === action), action).toBe(true);

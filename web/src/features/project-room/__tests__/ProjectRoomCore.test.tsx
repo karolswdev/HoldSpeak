@@ -273,15 +273,9 @@ describe("ProjectRoomCore — room head (was: orientation band, WEB-NOW-001)", (
   it("renders the headline (was: Project name in orientation band)", async () => {
     render(<WindowHarness scope="project:p1" />);
     // HS-169-03: the headline replaces the SurfaceIdentity name
+    // Betterment P3: the headline is the state ("On track": no risk inputs).
     const headline = await screen.findByTestId("room-headline");
-    expect(headline.textContent).toBe("Clear here");
-  });
-
-  it("renders health chip when health data is present", async () => {
-    render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("room-head-chips");
-    // ON TRACK because the fixture has no risk inputs
-    expect(screen.getByText("On track")).toBeTruthy();
+    expect(headline.textContent).toBe("On track");
   });
 
   // HS-169-03 SELECTOR EDIT: REV chip is gone (D1 cut).
@@ -329,11 +323,11 @@ describe("ProjectRoomCore — NEEDS YOU (was: focus block)", () => {
     expect(screen.getByText("PR needs review")).toBeTruthy();
   });
 
-  it("shows empty state text when nothing needs you (was: 'No material yet.')", async () => {
+  it("is absent when nothing needs you (Betterment P3: no empty line)", async () => {
     render(<WindowHarness scope="project:p1" />);
     await screen.findByTestId("room-body");
-    // The fixture has empty needs-you
-    expect(screen.getByTestId("needs-you-empty")).toBeTruthy();
+    expect(screen.queryByTestId("room-needs-you")).toBeNull();
+    expect(screen.queryByTestId("needs-you-empty")).toBeNull();
   });
 });
 
@@ -358,7 +352,7 @@ describe("ProjectRoomCore: a failed health read is named", () => {
   // tests/unit/test_phase200_continuity.py::test_a_failed_health_read_is_a_named_degraded_section).
   const DEGRADED_HEALTH = { state: "degraded", error_code: "health_read_failed" };
 
-  it("draws HEALTH NOT READ with Retry, and no Clear here / Nothing open", async () => {
+  it("draws HEALTH NOT READ with Retry, and no On track / Nothing open", async () => {
     let roomReads = 0;
     apiFetch.mockImplementation((url: string) => {
       if (url.includes("/room/read")) return Promise.resolve({ read_at: new Date().toISOString() });
@@ -374,7 +368,7 @@ describe("ProjectRoomCore: a failed health read is named", () => {
 
     expect(screen.getByTestId("health-not-read").textContent).toContain("HEALTH NOT READ");
     expect(screen.getByTestId("room-headline").textContent).toBe("Not all read");
-    expect(screen.getByTestId("needs-you-empty").textContent).toContain("Not all read");
+    expect(screen.queryByText("On track")).toBeNull();
     expect(screen.queryByText("Clear here")).toBeNull();
     expect(screen.queryByText(/Nothing open/)).toBeNull();
 
@@ -383,10 +377,10 @@ describe("ProjectRoomCore: a failed health read is named", () => {
     await waitFor(() => expect(roomReads).toBeGreaterThan(before));
   });
 
-  it("a health read that succeeded still says Clear here", async () => {
+  it("a health read that succeeded says the state", async () => {
     render(<WindowHarness scope="project:p1" />);
     await screen.findByTestId("room-body");
-    expect(screen.getByTestId("room-headline").textContent).toBe("Clear here");
+    expect(screen.getByTestId("room-headline").textContent).toBe("On track");
     expect(screen.queryByTestId("health-not-read")).toBeNull();
   });
 });
@@ -415,14 +409,14 @@ describe("ProjectRoomCore — no right rail (was: R2 desktop composition)", () =
 // The old tests may have asserted the four WINGS array.
 // The 169 Room has exactly ROOM · HISTORY.
 describe("ProjectRoomCore — two wings (was: four wings)", () => {
-  it("renders exactly ROOM and HISTORY tabs", async () => {
+  it("renders exactly NOW and HISTORY tabs", async () => {
     render(<WindowHarness scope="project:p1" />);
     await screen.findByTestId("room-body");
 
     const wingSlot = screen.getByTestId("wing-slot");
     const tabs = wingSlot.querySelectorAll("[role='tab']");
     expect(tabs.length).toBe(2);
-    expect(tabs[0].textContent).toBe("Room");
+    expect(tabs[0].textContent).toBe("Now");
     expect(tabs[1].textContent).toBe("History");
   });
 });
@@ -504,24 +498,3 @@ describe("ProjectRoomCore — name said once (was: identity dedup)", () => {
 
 // PHILO-17 U30 (Astra r1 on #1068): FILES names a failed read with Retry, as
 // the drawer did; a failure is never an empty or a complete list (A.10).
-describe("ProjectRoomCore — FILES names its failed read", () => {
-  it("draws RESOURCES · NOT READ with Retry, and Retry reads again", async () => {
-    let resourceReads = 0;
-    apiFetch.mockImplementation((url: string) => {
-      if (url.endsWith("/api/projects/p1/resources")) {
-        resourceReads += 1;
-        return resourceReads === 1
-          ? Promise.reject(new Error("read failed"))
-          : Promise.resolve({ resources: [] });
-      }
-      return Promise.resolve(response(url));
-    });
-    render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("room-body");
-    const unread = await screen.findByTestId("room-files-not-read");
-    expect(unread.textContent).toContain("RESOURCES · NOT READ");
-    screen.getByTestId("room-files-retry").click();
-    await waitFor(() => expect(resourceReads).toBeGreaterThan(1));
-    await waitFor(() => expect(screen.queryByTestId("room-files-not-read")).toBeNull());
-  });
-});

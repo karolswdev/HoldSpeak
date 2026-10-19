@@ -1,4 +1,9 @@
-// The Rhythm app (CadenceCore). The Brief detail it named (the Brief wing)
+// The Rhythm app (CadenceCore). Betterment setup ST1: the Rhythm WINDOW is
+// parked; Rhythm's one home is Settings ▸ Rhythm, which reads Notify and
+// quiet hours from the heartbeat (settings.app.test.tsx, "Settings › Rhythm")
+// and embeds this face under its Advanced fold (`embedded`: no headline, no
+// Notify row, no foot). The face's own behaviour is fenced here.
+// The Brief detail it named (the Brief wing)
 // is parked by Betterment daily D4: _parked/rhythmBriefWing.app.test.tsx.
 // The test diet (2026-10-11) moves tests/e2e/test_hs175_rhythm_brief_glass.py
 // and the Rhythm leg of tests/e2e/test_times_local_zone_glass.py here.
@@ -318,6 +323,26 @@ describe("Rhythm (recorded hub): Runs on", () => {
     await act(async () => { fireEvent.change(gadget, { target: { value: "192.168.1.43" } }); });
     await waitFor(() => expect(screen.getByTestId("rhythm-runs-on-caption").textContent).toBe("WHILE THIS MAC IS AWAKE"));
     expect(screen.getByTestId("rhythm-runs-on-facts").textContent).toContain("LAST RUN");
+    expect(presses).toEqual(["PUT /api/settings/heartbeat"]);
+  });
+});
+
+describe("Rhythm embedded in Settings ▸ Rhythm (Betterment setup ST1)", () => {
+  beforeEach(() => clockAt(12));
+  afterEach(() => vi.useRealTimers());
+
+  it("keeps the sweep, Run now, Where it runs and the mutes; leaves the headline, Notify and the foot to Settings", async () => {
+    const presses = replay(RHYTHM.mute.steps as Step[]);
+    render(<CadenceCore embedded />);
+    await screen.findByTestId("rhythm-sweep-row");
+    expect(screen.getByTestId("rhythm-run-now").textContent).toBe("Run now");
+    expect(screen.getByTestId("rhythm-runs-on-row")).toBeTruthy();
+    expect(screen.queryByTestId("rhythm-headline")).toBeNull();
+    expect(screen.queryByTestId("rhythm-notify-row")).toBeNull();
+    expect(document.querySelector(".surface-footer-layout")).toBeNull();
+    const token = await screen.findByRole("checkbox", { name: "Q4 PLATFORM" });
+    fireEvent.click(token);
+    await waitFor(() => expect((screen.getByRole("checkbox", { name: "Q4 PLATFORM" }) as HTMLInputElement).checked).toBe(false));
     expect(presses).toEqual(["PUT /api/settings/heartbeat"]);
   });
 });

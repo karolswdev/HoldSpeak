@@ -167,7 +167,11 @@ function fmtEpoch(epoch: number | null | undefined): string | null {
  *  Room's cap, roomReads.ts ROOM_READS_CAP_MS). */
 const RHYTHM_READS_CAP_MS = 8000;
 
-export function CadenceCore({ hero }: CoreProps) {
+/** Betterment setup ST1: the Rhythm window is parked; Settings ▸ Rhythm
+ *  embeds this face under its Advanced fold. `embedded` leaves out what the
+ *  section already says (the headline, Notify) and the window's hero and
+ *  foot (Settings owns its foot). */
+export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?: boolean }) {
   // ── Heartbeat resources ──
   const heartbeat = useResource<HeartbeatSettings>("/api/settings/heartbeat", {
     sweep_every_minutes: 15,
@@ -339,21 +343,21 @@ export function CadenceCore({ hero }: CoreProps) {
 
   return (
     <>
-      {renderHeroSlot(hero, null, null)}
+      {embedded ? null : renderHeroSlot(hero, null, null)}
       <div className="cadence-body" data-settling={shown ? undefined : "true"} aria-busy={shown ? undefined : true}>
       {shown ? null : <div className="cadence-settling-line"><SurfaceState loading /></div>}
       {saveError ? <SurfaceState error={saveError} onRetry={async () => { if (await heartbeat.reload()) setSaveError(""); }} /> : null}
       {heartbeat.error ? <SurfaceState error={`Rhythm settings not loaded · ${heartbeat.error}`} onRetry={() => void heartbeat.reload()} /> : null}
 
       {/* Display headline: accent when the sweep runs, muted when not */}
-      <span
+      {embedded ? null : <span
         className="surface-display"
         data-testid="rhythm-headline"
         data-tone={settings.sweep_every_minutes > 0 ? "accent" : undefined}
         data-muted={settings.sweep_every_minutes <= 0 || undefined}
       >
         {settings.sweep_every_minutes > 0 ? sweepLabel : "Not running"}
-      </span>
+      </span>}
 
       {/* ── SWEEP row ──────────────────────────────────────────── */}
       <div className="rhythm-section">
@@ -549,7 +553,7 @@ export function CadenceCore({ hero }: CoreProps) {
 
       {/* ── NOTIFY row ─────────────────────────────────────────── */}
       <div className="rhythm-section">
-      <SurfaceLedger count="" cols="hub">
+      {embedded ? null : <SurfaceLedger count="" cols="hub">
         <SurfaceLedgerRow
           primary="Notify"
           expands={false}
@@ -583,7 +587,7 @@ export function CadenceCore({ hero }: CoreProps) {
             ) : null
           }
         />
-      </SurfaceLedger>
+      </SurfaceLedger>}
       {/* Project mute toggles */}
       {projects.length > 0 ? (
         <div className="rhythm-mutes" data-testid="rhythm-mute-toggles">
@@ -695,14 +699,14 @@ export function CadenceCore({ hero }: CoreProps) {
 
       </div>
       {/* ── Footer ─────────────────────────────────────────────── */}
-      <SurfaceFooter
+      {embedded ? null : <SurfaceFooter
         egress={<EgressChip />}
         receipt={saving || saveError || writtenAt ? (
           <span className="surface-token" data-chip data-muted={!saveError || undefined} data-tone={saveError ? "fail" : undefined} role="status">
             {saving ? "Saving" : saveError ? "Unconfirmed" : `Saved ${fmtEpoch(writtenAt)}`}
           </span>
         ) : null}
-      />
+      />}
     </>
   );
 }
