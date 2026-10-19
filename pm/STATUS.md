@@ -4,13 +4,13 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (P3 #1350 merged; desk last checked at `80ecb1add`)
+**Last updated:** 2026-10-19 (P3 #1350 delivered; ST2 #1346 merged)
 
 ## Current phase
 
-**Betterment recovery: 72/117 recipe implementations merged.** Codex owns
+**Betterment recovery: 73/117 recipe implementations merged.** Codex owns
 recovery and delivery at the owner's request. The desk is currently on
-backend `80ecb1add`, frontend `908e1b3120889940`, PID 82982 (ST1 and Q9).
+backend `50e7502a7`, frontend `e78bdddb6ee00c5d`, PID 44875 (P3).
 Four HTTP checks pass and the actual desk renders at 1440/393. These are
 delivery observations; owner acceptance remains separate. All three baseline non-browser
 regression shards passed: 16,784 checks, 27 skips and one expected failure.
@@ -46,7 +46,17 @@ confirmed decision. Broad check: 4,083 web passed with one old People test
 checking folds before Prep completed, 2,233 pytest passed (2 skipped),
 106 sweep, 27 canon and 1,116 repo guards. The asynchronous assertion now
 waits for the folds; final incremental check is green: 40 web, 106 sweep,
-27 canon and 1,116 repo guards. P3 awaits deployment.
+27 canon and 1,116 repo guards. P3 is on the owner's running desk; runtime identity and four HTTP checks pass.
+
+ST2 #1346 recovers truthful Accounts states, Found on this Mac, Use and
+Remove/Undo. Check restores the previous Jira/Confluence acli profile. Four
+recovery tests failed before the fix when restoration returned nonzero or
+raised; the service now persists and returns the plain restoration failure.
+Provider behavior is exercised with an isolated stub. Broad check: 4,069
+web and 385 pytest passed; the sweep hit an intermittent People brief 503.
+The final incremental quick check passed 335 pytest, 106 sweep, 27 canon
+and 1,116 repo guards. The People 503 remains open; this retry does not
+prove it fixed. ST2 awaits deployment.
 
 **Initial recovery snapshot — owner ruling 2026-10-19.**
 Batch seven stopped at Claude's usage limit. At recovery, main had 69 of
