@@ -4,6 +4,7 @@ from holdspeak.services.observer import NullObserver, PipelineObserver, observe_
 
 import os
 import shutil
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -35,6 +36,7 @@ class SetupService:
         onboarding_service: Any = None,
         local_ai_setup_service: Any = None,
         inference_default_service: Any = None,
+        inference_assignment_service: Any = None,
         model_library_service: Any = None,
         people_service: Any = None,
         lan_scanner: Any = None,
@@ -50,6 +52,7 @@ class SetupService:
         self._onboarding = onboarding_service
         self._local_ai = local_ai_setup_service
         self._defaults = inference_default_service
+        self._assignments = inference_assignment_service
         self._model_library = model_library_service
         self._people = people_service
         self._lan_scanner = lan_scanner
@@ -63,6 +66,7 @@ class SetupService:
         onboarding_service: Any = None,
         local_ai_setup_service: Any = None,
         inference_default_service: Any = None,
+        inference_assignment_service: Any = None,
         model_library_service: Any = None,
         people_service: Any = None,
     ) -> None:
@@ -70,6 +74,7 @@ class SetupService:
         self._onboarding = onboarding_service or self._onboarding
         self._local_ai = local_ai_setup_service or self._local_ai
         self._defaults = inference_default_service or self._defaults
+        self._assignments = inference_assignment_service or self._assignments
         self._model_library = model_library_service or self._model_library
         self._people = people_service or self._people
 
@@ -354,23 +359,28 @@ class SetupService:
         if value.startswith("engine:"):
             if self._defaults is None:
                 raise ServiceError("setup_unavailable", "Engine setup is not available.", context={"status": 503})
-            return self._defaults.use_proposal(principal, value.split(":", 1)[1])
+            result = self._defaults.use_proposal(principal, value.split(":", 1)[1])
+            return {**result, "state": "ready"}
         if value.startswith("connection:") and self._onboarding is not None:
             return self._onboarding.connections_use(principal, {"id": value.split(":", 1)[1]})
         if value.startswith("calendar:") and self._onboarding is not None:
-            return self._onboarding.calendar_use(principal, {"id": value.split(":", 1)[1], "label": body.get("label", "")})
+            result = self._onboarding.calendar_use(principal, {"id": value.split(":", 1)[1], "label": body.get("label", "")})
+            return {**result, "state": "ready"}
         if value.startswith("agent-engine:") and self._model_library is not None:
             preset = value.split(":", 1)[1]
-            return self._model_library.connect_cli_engine(principal, {
+            self._require_engine_assignment()
+            result = self._model_library.connect_cli_engine(principal, {
                 "request_id": f"setup-agent-{preset}", "profile_id": f"agent-{preset}",
                 "expected_profile_revision": 0, "preset": preset,
             })
+            return self._use_engine(principal, result)
         if value.startswith("lan:") and self._model_library is not None:
             endpoint = str(body.get("base_url") or body.get("baseUrl") or "").strip()
             model = str(body.get("model") or body.get("name") or "").strip()
             if not endpoint or not model:
                 raise ValidationError("The network engine has no model address.")
-            return self._model_library.define_endpoint(principal, {
+            self._require_engine_assignment()
+            result = self._model_library.define_endpoint(principal, {
                 "request_id": f"setup-lan-{value.split(':', 1)[1]}",
                 "profile_id": f"lan-{value.split(':', 1)[1]}"[:96],
                 "expected_profile_revision": 0,
@@ -380,7 +390,34 @@ class SetupService:
                 "requires_key": False,
                 "endpoint": endpoint,
             })
+            return self._use_engine(principal, result)
         raise ValidationError("Setup row cannot be used here.")
+
+    def _require_engine_assignment(self) -> None:
+        if self._assignments is None:
+            raise ServiceError("setup_unavailable", "Engine selection is not available.", context={"status": 503})
+
+    def _use_engine(self, principal: Principal, result: dict[str, Any]) -> dict[str, Any]:
+        """The Setup Use gesture adds the engine and selects Everything else.
+
+        Model Library deliberately leaves assignments unchanged. Setup owns
+        this second, explicit part of its gesture; speech never inherits the
+        global chat assignment.
+        """
+        provider = result["provider"]
+        scope = {"kind": "global"}
+        try:
+            current = self._assignments.get_assignment(principal, scope)
+            revision = int(current["revision"])
+        except NotFound:
+            revision = 0
+        assignment = self._assignments.set_assignment(principal, {
+            "command_id": f"setup-engine-{uuid.uuid4().hex}",
+            "expected_revision": revision,
+            "scope": scope,
+            "entries": [{"profile_id": provider["profile_id"], "profile_revision": provider["profile_revision"]}],
+        })
+        return {"library": result, "assignment": assignment, "state": "ready"}
 
     # Kept as a small compatibility seam for the service-level callers that
     # existed before ST3's operation descriptor was added. The web route uses

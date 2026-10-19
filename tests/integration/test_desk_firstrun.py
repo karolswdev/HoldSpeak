@@ -299,3 +299,29 @@ def test_a_denied_calendar_has_a_way_forward(tmp_path: Path, monkeypatch: pytest
         assert mac.opens == 1, "a read never opens System Settings"
     finally:
         server.stop()
+
+
+def test_setup_lan_use_saves_the_real_default_and_never_assigns_speech(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, tools_engine: str,
+) -> None:
+    """The Setup gesture runs the real library and assignment producers."""
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    try:
+        before = _ok(base, "GET", "/api/inference/assignments")
+        speech_before = next(row for row in before["rows"] if row["id"] == "speech_recognition")
+        answer = _ok(base, "POST", "/api/setup/use", {
+            "id": "lan:setup-proof",
+            "payload": {"base_url": tools_engine, "model": TOOLS_MODEL},
+        })
+        assert answer["result"]["state"] == "ready", answer
+        provider = answer["result"]["library"]["provider"]
+        after = _ok(base, "GET", "/api/inference/assignments")
+        global_row = next(row for row in after["rows"] if row["id"] == "global")
+        assert global_row["status"] == "assigned", global_row
+        assert global_row["assignment"]["entries"][0]["profile_id"] == provider["profile_id"], global_row
+        speech_after = next(row for row in after["rows"] if row["id"] == "speech_recognition")
+        assert speech_after == speech_before
+        # A reread must report the saved choice, rather than a transient UI lamp.
+        assert _ok(base, "GET", "/api/inference/assignments")["rows"] == after["rows"]
+    finally:
+        server.stop()

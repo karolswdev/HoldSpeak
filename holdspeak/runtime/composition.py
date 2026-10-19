@@ -519,6 +519,9 @@ def install_from_web_context(
             onboarding_service=services.onboarding_service,
             people_service=getattr(ctx, "people_service", None),
             local_ai_setup_service=getattr(ctx, "local_ai_setup_service", None),
+            inference_default_service=getattr(ctx, "inference_default_service", None),
+            model_library_service=getattr(ctx, "model_library_service", None),
+            inference_assignment_service=getattr(ctx, "inference_assignment_service", None),
         ),
         # Conductor K2: agent.hand binds to it (the one shared launch driver).
         "agent_hand_service": lambda: default_agent_hand_service(

@@ -1616,6 +1616,7 @@ class MeetingWebServer:
             onboarding_service=web_ctx.onboarding_service,
             local_ai_setup_service=web_ctx.local_ai_setup_service,
             inference_default_service=web_ctx.inference_default_service,
+            inference_assignment_service=web_ctx.inference_assignment_service,
             model_library_service=web_ctx.model_library_service,
             people_service=web_ctx.people_service,
         )

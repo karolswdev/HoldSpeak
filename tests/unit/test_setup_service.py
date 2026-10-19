@@ -132,7 +132,7 @@ def test_found_projects_existing_readers_and_keeps_use_as_owner_action(tmp_path:
     assert answer["people"][0]["display_name"] == "Mira Okafor"
     assert answer["suggestions"][0]["name"] == "Theo Lindqvist"
 
-    assert service.use_found(OWNER, "engine:small") == {"used": "small"}
+    assert service.use_found(OWNER, "engine:small") == {"used": "small", "state": "ready"}
     assert defaults.used == ["small"]
     result = service.add_people(OWNER, "Theo Lindqvist, Ada Lovelace")
     assert [item["display_name"] for item in people.created] == ["Theo Lindqvist", "Ada Lovelace"]
