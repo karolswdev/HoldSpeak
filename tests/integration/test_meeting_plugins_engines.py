@@ -438,3 +438,69 @@ def _recorded_prepared(db: Any, meeting_id: str, *, writing: dict[str, Any]) -> 
         }, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     stored = json.loads(PREPARED_FIXTURE.read_text(encoding="utf-8"))["/api/meetings/c5-review/prepared"]
     assert shape(stored) == shape(live), "re-record with HOLDSPEAK_WIRE_WRITE=1"
+
+
+# ── Capture C5b: Write again and Prepare… are drafts-only jobs ───────────────
+
+
+def test_write_again_runs_only_the_draft_and_never_the_summary(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The ADR drafter failed on the summary run. Write again queues a
+    drafts-only job on the route he was shown: the ADR is written, the summary,
+    its run receipt and the meeting's summary state stay exactly as they were,
+    and the engine is asked for no second summary."""
+    from holdspeak.intel_queue import process_next_intel_job
+    from holdspeak.meeting_plugins import prepared_results
+    from holdspeak.services.errors import ConflictError, ValidationError
+    from holdspeak.services.meeting_intel_service import MeetingIntelService
+
+    monkeypatch.setenv("HOLDSPEAK_FAULT", "intel.plugin:adr_drafter")
+    db, replies = _lan_rig(tmp_path, monkeypatch)
+    meeting_id = _import(db)
+    _drain(db, meeting_id)
+    monkeypatch.delenv("HOLDSPEAK_FAULT")
+    before = db.meetings.get_meeting(meeting_id)
+    receipt_before = db.intel.get_run_receipt(meeting_id)
+    summary_job = db.intel.get_latest_intel_job(meeting_id)
+    rows = {row["kind"]: row for row in prepared_results(db, meeting_id)["results"]}
+    assert rows["adr"]["state"] == "failed" and rows["adr"]["retry"] is True, rows["adr"]
+    summaries = replies.calls.count("summary")
+
+    service = MeetingIntelService(db)
+    route = project_route(db, invocation_id=f"meeting:{meeting_id}")
+    with pytest.raises(ValidationError):
+        service.prepare_result(OWNER, meeting_id, plugin_id="decision_capture",
+                               expected_selection_hash=route["selection_hash"])
+    queued = service.prepare_result(OWNER, meeting_id, plugin_id="adr_drafter",
+                                    expected_selection_hash=route["selection_hash"])
+    assert queued["state"] == "queued", queued
+    with pytest.raises(ConflictError):  # one live job per meeting
+        service.prepare_result(OWNER, meeting_id, plugin_id="risk_heatmap",
+                               expected_selection_hash=route["selection_hash"])
+    writing = {row["kind"]: row for row in prepared_results(db, meeting_id)["results"]}
+    assert writing["adr"]["state"] == "writing", writing["adr"]
+    # The meeting's summary state is not the drafts job's.
+    assert db.meetings.get_meeting(meeting_id).intel_status == before.intel_status == "ready"
+    assert db.intel.get_latest_intel_job(meeting_id).job_id == summary_job.job_id
+
+    assert process_next_intel_job() is True
+    after = db.meetings.get_meeting(meeting_id)
+    rows = {row["kind"]: row for row in prepared_results(db, meeting_id)["results"]}
+    assert rows["adr"]["state"] == "ready", rows["adr"]
+    assert "idempot" in rows["adr"]["body_markdown"].lower()
+    assert after.intel_status == "ready"
+    assert after.intel.summary == before.intel.summary
+    assert db.intel.get_run_receipt(meeting_id) == receipt_before
+    assert db.intel.get_latest_intel_job(meeting_id).job_id == summary_job.job_id
+    assert replies.calls.count("summary") == summaries, "the summary was written again"
+    jobs = db.intel.list_prepare_jobs(meeting_id)
+    assert jobs and jobs[0].status == "succeeded", [(j.job_id, j.status, j.last_error) for j in jobs]
+
+    # The Send document is the clean draft (no synthesis frame).
+    from holdspeak.services.document_sources import render_document
+
+    doc = render_document(db, f"artifact:{rows['adr']['artifact_id']}")
+    body = str(getattr(doc, "body_md", None) or getattr(doc, "markdown", None) or doc)
+    assert "Adr Drafter" not in body and "Source windows" not in body and "ADR(s)" not in body, body[:300]
+    assert body.startswith("# ADR: "), body[:120]

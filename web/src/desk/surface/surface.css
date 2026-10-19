@@ -953,11 +953,13 @@ button.surface-edit-in-place:hover {
 }
 /* betterment/capture C6 — Since last time: the line wraps at 393 (never
    clipped); groups of linked rows. */
-.desk-surface-body .meetings-since-fold .surface-disclosure-trigger {
+.desk-surface-body .meetings-since-fold .surface-disclosure-trigger,
+.desk-surface-body .meetings-looked-at-fold .surface-disclosure-trigger {
   max-width: 100%;
   text-align: left;
 }
-.desk-surface-body .meetings-since-fold .surface-disclosure-label {
+.desk-surface-body .meetings-since-fold .surface-disclosure-label,
+.desk-surface-body .meetings-looked-at-fold .surface-disclosure-label {
   white-space: normal;
   overflow-wrap: anywhere;
 }
@@ -981,14 +983,14 @@ button.surface-edit-in-place:hover {
 }
 /* betterment/capture C5 — Prepared: a Result's verbs, its draft, its failure. */
 .desk-surface-body .meeting-prepared-verbs {
-  display: flex;
+  display: inline-flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: flex-end;
   gap: 6px;
-  padding: 0 0 8px;
 }
-.desk-surface-body .meeting-prepared-verbs > .send-fold {
-  flex: 1 1 100%;
+.desk-surface-body .meeting-prepared-send {
+  padding: 0 0 8px;
   min-width: 0;
 }
 .desk-surface-body .meeting-prepared-draft {

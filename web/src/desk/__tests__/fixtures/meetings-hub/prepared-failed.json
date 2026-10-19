@@ -1,10 +1,37 @@
 {
   "_source": "Recorded from the hub's Prepared read by tests/integration/test_meeting_plugins_engines.py::test_a_failed_draft_never_holds_the_summary (the ADR drafter failed at the hub's declared plugin fault point). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
   "prepared": {
+    "can_prepare": [
+      {
+        "kind": "diagram",
+        "label": "Architecture diagram",
+        "plugin_id": "mermaid_architecture"
+      },
+      {
+        "kind": "incident_timeline",
+        "label": "Incident timeline",
+        "plugin_id": "incident_timeline"
+      },
+      {
+        "kind": "requirements",
+        "label": "Requirements list",
+        "plugin_id": "requirements_extractor"
+      },
+      {
+        "kind": "risk_register",
+        "label": "Risks",
+        "plugin_id": "risk_heatmap"
+      },
+      {
+        "kind": "milestone_plan",
+        "label": "Milestones",
+        "plugin_id": "milestone_planner"
+      }
+    ],
     "meeting_id": "c5-review",
     "results": [
       {
-        "body_markdown": "# Follow-up: Architecture review: idempotent retries\n2026-10-16\n\n## What we decided\n- Adopt idempotent retries using a client-sent dedupe key (Option A); do not build a server-side dedupe table.. Why: Option B would incorrectly block two legitimate payments of the same amount within the window; the gateway already supports an idempotency-key header so only clients need to change.\n- Jun will write the ADR for the idempotent-retry decision by Wednesday.\n- Theo will update the reconciliation job to read the dedupe key.\n- Rollout order: web client first, then the mobile client in the release after next; Mira owns the rollout plan.\n- Notify the support team that duplicate charges will stop after the mobile release; the meeting lead will write the stakeholder update.\n\n## Open items\n- Jun: Write the ADR for the idempotent retries decision (Option A) (due 2026-10-21)\n- Jun: Write the ADR for the idempotent retries decision (due 2026-10-21)\n- Me: Write the stakeholder update informing the support team that duplicate charges will stop after the mobile release\n- Me: Write the stakeholder update telling the support team that duplicate charges will stop after the mobile release\n- Mira: Create the rollout plan (web client first, then mobile client in the release after next)\n- Mira: Own the rollout plan (web client first, then mobile client in the release after next)\n- Theo: Update the reconciliation job to read the dedupe key",
+        "body_markdown": "# Follow-up: Architecture review: idempotent retries\n2026-10-16\n\n## What we decided\n- Adopt idempotent retries using a client-sent dedupe key (Option A); do not build the server-side dedupe table (Option B).. Why: Option B would incorrectly block two legitimate payments of the same amount within the time window (Mira's concern).\n- Theo will update the reconciliation job to read the dedupe key.\n- Jun will write the ADR for the idempotent-retry decision by Wednesday.\n- Rollout order: web client first, then the mobile client in the release after next. Mira owns the rollout plan.\n- The support team will be informed that duplicate charges will stop after the mobile release; the speaker will write the stakeholder update.\n\n## Open items\n- Jun: Write the ADR for the idempotent retries decision (Option A) (due 2026-10-21)\n- Jun: Write the ADR for the idempotent retries decision (due 2026-10-21)\n- Me: Write the stakeholder update to the support team that duplicate charges will stop after the mobile release\n- Me: Write the stakeholder update to the support team about duplicate charges stopping after the mobile release\n- Mira: Create the rollout plan (web client first, then mobile client in the release after next)\n- Mira: Own the rollout plan (web client first, then mobile client in the release after next)\n- Theo: Update the reconciliation job to read the dedupe key",
         "document_ref": "meeting_followup:c5-review",
         "kind": "followup",
         "label": "Follow-up",
@@ -18,22 +45,23 @@
         "label": "ADR draft",
         "plugin_id": "adr_drafter",
         "reason": "The engine did not finish this draft.",
+        "retry": true,
         "serves": [
-          "action-ea346ec755ba4792",
-          "action_573e5c7c278dc3c5976aff18"
+          "action-a7514c50066c42f1",
+          "action_ee984f1baac0ef5ab7bd5a2a"
         ],
         "state": "failed"
       },
       {
-        "artifact_id": "art-cf4d227efc58e7cd0d48",
-        "body_markdown": "**Architecture review: adopt client-side idempotent retries (dedupe key) for payment requests; server dedupe table rejected**\n\n**Highlights**\n- Decision locked in on Option A: clients send a dedupe key with every payment request; gateway rejects duplicates for 24 h\n- Gateway already supports the idempotency-key header, so no gateway-side changes are required\n- Server-side dedupe table explicitly ruled out, avoiding false-positive blocks on legitimate same-amount payments\n- Rollout sequenced: web client first, mobile client in the release after next\n\n**Risks**\n- All four clients must be updated to send the key; mobile client ships on a two-week cadence, extending the window in which duplicate charges can still occur\n- Support team will continue to see duplicate-charge tickets until the mobile release lands\n\n**Next steps**\n- Jun to write the ADR documenting the idempotent-retry decision by Wednesday\n- Mira to own and publish the rollout plan (web \u2192 mobile)\n- Theo to update the reconciliation job to read the dedupe key\n- Speaker to draft the stakeholder update notifying the support team that duplicate charges will stop after the mobile release",
+        "artifact_id": "art-f42eb0c97bbe324621b1",
+        "body_markdown": "**Team adopts client-side idempotent retries (dedupe key) for payment requests; server dedupe table dropped**\n\n**Highlights**\n- Decision locked in: Option A (client sends a dedupe key; gateway rejects duplicates for 24 h). No server-side dedupe table will be built.\n- Gateway already supports the idempotency-key header, so no gateway-side changes are required.\n- Rollout sequence agreed: web client first, then the mobile client in the release after next.\n- Reconciliation job will be updated to read the dedupe key (Theo).\n\n**Risks**\n- All four clients must be modified to send the dedupe key; the mobile client ships on a two-week release cadence, constraining rollout timing.\n- Duplicate charges will continue until the mobile client release ships.\n- Option B (server dedupe table) was rejected because it could block legitimate same-amount payments within the window \u2014 a correctness risk with money.\n\n**Next steps**\n- Jun to write the ADR documenting the idempotent-retry decision by Wednesday.\n- Mira to own and publish the rollout plan (web \u2192 mobile).\n- Theo to update the reconciliation job to consume the dedupe key.\n- Speaker to draft a stakeholder/support-team update noting that duplicate charges will stop after the mobile release.",
         "kind": "stakeholder_update",
         "label": "Update for stakeholders",
         "plugin_id": "stakeholder_update_drafter",
-        "seconds": 6,
+        "seconds": 7,
         "serves": [
-          "action-70fa0d19208547d7",
-          "action_97c0413b62c5d608c2211a89"
+          "action-221e6174109c4e2a",
+          "action_a420f3281ba5a7ec0eff1b4d"
         ],
         "state": "ready",
         "title": "Update for stakeholders"

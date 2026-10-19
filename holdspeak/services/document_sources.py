@@ -557,6 +557,22 @@ class _ArtifactSource:
         if artifact is None:
             raise _document_not_found("artifact", source_id)
 
+        # Betterment capture C5b: a meeting's prepared draft (an ADR, an
+        # update) is sent as the draft itself: its own title, no synthesis
+        # frame (no "### Adr Drafter", no count line, no source lines).
+        from ..meeting_plugins import PREPARED_KINDS, _draft_body, _draft_title
+
+        kind = next((k for k in PREPARED_KINDS if k["plugin_id"] == str(artifact.plugin_id or "")), None)
+        draft = _draft_body(artifact) if kind is not None else ""
+        if kind is not None and draft:
+            title = _draft_title(artifact, kind["label"])
+            return _make_document(
+                ref=f"{self.kind}:{source_id}",
+                title=title,
+                body_md=f"# {title}\n\n{draft}\n",
+                slug=_slug(title, "artifact"),
+                label=kind["label"].upper(),
+            )
         title = str(artifact.title or "Artifact").strip() or "Artifact"
         artifact_type = str(artifact.artifact_type or "plugin_output").strip()
         type_label = artifact_type.replace("_", " ").upper() or "PLUGIN OUTPUT"

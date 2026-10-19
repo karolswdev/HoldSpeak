@@ -764,7 +764,14 @@ PREPARED_KINDS: tuple[dict[str, str], ...] = (
     {"plugin_id": "stakeholder_update_drafter", "artifact_type": "stakeholder_update",
      "label": "Update for stakeholders"},
     {"plugin_id": "mermaid_architecture", "artifact_type": "diagram", "label": "Architecture diagram"},
+    # Capture C5b: kinds a meeting prepares only when he asks (Prepare…).
+    {"plugin_id": "incident_timeline", "artifact_type": "incident_timeline", "label": "Incident timeline"},
+    {"plugin_id": "requirements_extractor", "artifact_type": "requirements", "label": "Requirements list"},
+    {"plugin_id": "risk_heatmap", "artifact_type": "risk_register", "label": "Risks"},
+    {"plugin_id": "milestone_planner", "artifact_type": "milestone_plan", "label": "Milestones"},
 )
+#: The drafts a drafts-only job may run (``db/intel.py``).
+PREPARABLE_PLUGINS = frozenset(kind["plugin_id"] for kind in PREPARED_KINDS)
 _KIND_BY_PLUGIN = {kind["plugin_id"]: kind for kind in PREPARED_KINDS}
 _ACTIVE_JOB = frozenset({"reserved", "queued", "claimed", "running"})
 
@@ -820,14 +827,16 @@ def _failure_reason(error: str | None) -> str:
 
 
 def prepared_results(db: Any, meeting_id: str) -> dict[str, Any]:
-    """The meeting's Prepared Results, for the meeting window (C5).
+    """The meeting's Prepared Results, for the meeting window (C5, C5b).
 
     ``results``: the follow-up first (when the meeting has anything to follow
-    up), then each drafter the summary job planned, in ``PREPARED_KINDS``
-    order, with its state: ``writing`` (the job is still running, with
-    ``since``), ``ready`` (its artifact), or ``failed`` (a reason in words).
-    ``serves`` names the action items whose words ask for that Result (the
-    face's *Draft ready*).
+    up), then each draft the meeting planned (the summary job's ``prepared``)
+    or he asked for (a drafts-only job), in ``PREPARED_KINDS`` order, with its
+    state: ``writing`` (a job that will write it is live; ``since``),
+    ``ready`` (its artifact, a clean draft), or ``failed`` (a reason in words;
+    ``retry`` when *Write again* can run it). ``serves`` names the action
+    items whose words ask for that Result. ``can_prepare`` lists the kinds
+    *Prepare…* offers: those not shown yet.
     """
     from .meeting_aftercare import build_followup_draft, compute_meeting_aftercare
     from .plugins.router import action_triggered_plugins
@@ -835,7 +844,7 @@ def prepared_results(db: Any, meeting_id: str) -> dict[str, Any]:
     results: list[dict[str, Any]] = []
     digest = compute_meeting_aftercare(db, meeting_id)
     if digest is None:
-        return {"meeting_id": meeting_id, "results": []}
+        return {"meeting_id": meeting_id, "results": [], "can_prepare": []}
     items = db.meetings.list_action_items(include_completed=True, meeting_id=meeting_id)
     live_items = [item for item in items if str(item.status or "").lower() != "dismissed"]
 
@@ -854,13 +863,23 @@ def prepared_results(db: Any, meeting_id: str) -> dict[str, Any]:
                        or "follow up" in str(item.task).lower()],
         })
 
-    job = db.intel.get_latest_intel_job(meeting_id)
-    route = dict(getattr(job, "frozen_plugin_route", {}) or {}) if job is not None else {}
+    summary_job = db.intel.get_latest_intel_job(meeting_id)
+    route = dict(getattr(summary_job, "frozen_plugin_route", {}) or {}) if summary_job is not None else {}
     planned = [str(p) for p in route.get("prepared") or [] if str(p) in _KIND_BY_PLUGIN]
+    summary_active = summary_job is not None and str(summary_job.status) in _ACTIVE_JOB
     skipped = {
         str(item.get("plugin_id")): str(item.get("reason") or "")
         for item in route.get("plugin_chain_skipped") or [] if isinstance(item, Mapping)
     }
+    # Drafts-only jobs (Prepare…, Write again), newest first.
+    asked: dict[str, Any] = {}
+    for job in db.intel.list_prepare_jobs(meeting_id):
+        frozen = dict(getattr(job, "frozen_plugin_route", {}) or {})
+        for plugin_id in frozen.get("prepared") or []:
+            asked.setdefault(str(plugin_id), job)
+        for item in frozen.get("plugin_chain_skipped") or []:
+            if isinstance(item, Mapping) and asked.get(str(item.get("plugin_id"))) is job:
+                skipped[str(item.get("plugin_id"))] = str(item.get("reason") or "")
     window_id = f"{meeting_id}:{FULL_WINDOW_SUFFIX}"
     runs: dict[str, Any] = {}
     for run in db.plugins.list_plugin_runs(meeting_id, window_id=window_id, limit=5000):
@@ -868,12 +887,14 @@ def prepared_results(db: Any, meeting_id: str) -> dict[str, Any]:
         if prior is None or (run.updated_at, run.id) > (prior.updated_at, prior.id):
             runs[run.plugin_id] = run
     artifacts = db.plugins.list_artifacts(meeting_id, limit=500)
-    active = job is not None and str(job.status) in _ACTIVE_JOB
 
+    shown: set[str] = set()
     for kind in PREPARED_KINDS:
         plugin_id = kind["plugin_id"]
-        if plugin_id not in planned:
+        job = asked.get(plugin_id)
+        if plugin_id not in planned and job is None:
             continue
+        shown.add(plugin_id)
         row: dict[str, Any] = {
             "kind": kind["artifact_type"],
             "plugin_id": plugin_id,
@@ -882,7 +903,13 @@ def prepared_results(db: Any, meeting_id: str) -> dict[str, Any]:
         }
         made = [a for a in artifacts if a.plugin_id == plugin_id and str(a.body_markdown or "").strip()]
         run = runs.get(plugin_id)
-        if made:
+        job_active = job is not None and str(job.status) in _ACTIVE_JOB
+        if job_active:
+            row.update({"state": "writing", "since": job.requested_at.isoformat()})
+        elif summary_active and plugin_id in planned and job is None:
+            row.update({"state": "writing", "since": summary_job.updated_at.isoformat()})
+        elif made and not (run is not None and str(run.status).lower() == "error"
+                           and run.updated_at > max(a.updated_at for a in made)):
             artifact = max(made, key=lambda a: (a.updated_at, a.id))
             row.update({
                 "state": "ready", "artifact_id": artifact.id,
@@ -892,16 +919,20 @@ def prepared_results(db: Any, meeting_id: str) -> dict[str, Any]:
             })
         elif plugin_id in skipped:
             row.update({"state": "failed", "reason": _failure_reason(skipped[plugin_id]),
-                        "error": skipped[plugin_id]})
+                        "error": skipped[plugin_id], "retry": True})
         elif run is not None and str(run.status).lower() == "error":
-            row.update({"state": "failed", "reason": _failure_reason(run.error), "error": run.error})
-        elif run is None and active:
-            row.update({"state": "writing", "since": job.updated_at.isoformat()})
+            row.update({"state": "failed", "reason": _failure_reason(run.error), "error": run.error,
+                        "retry": True})
         elif run is not None and str(run.status).lower() in COMPLETED_PLUGIN_STATUSES:
             # The engine answered but wrote nothing to keep (an empty draft).
             row.update({"state": "failed", "reason": "The engine wrote no draft from this meeting.",
-                        "error": run.error})
+                        "error": run.error, "retry": False})
         else:
-            row.update({"state": "failed", "reason": "This draft did not run.", "error": None})
+            row.update({"state": "failed", "reason": "This draft did not run.", "error": None,
+                        "retry": True})
         results.append(row)
-    return {"meeting_id": meeting_id, "results": results}
+    can_prepare = [
+        {"plugin_id": kind["plugin_id"], "kind": kind["artifact_type"], "label": kind["label"]}
+        for kind in PREPARED_KINDS if kind["plugin_id"] not in shown
+    ]
+    return {"meeting_id": meeting_id, "results": results, "can_prepare": can_prepare}

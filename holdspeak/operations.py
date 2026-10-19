@@ -483,6 +483,30 @@ MEETING_SUMMARY_RUN = OperationDescriptor(
     method="run_intelligence",
 )
 
+MEETING_RESULT_PREPARE = OperationDescriptor(
+    name="meeting.result.prepare",
+    version=1,
+    description="Write one Result of a meeting (an ADR draft, an update for stakeholders, a diagram, an incident timeline, a requirements list, risks, milestones) as a drafts-only job on the Meeting summaries route, with the selection hash read from meeting.read. The summary is never written again. Prepare… and Write again on the meeting window.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "meeting_id": {"type": "string"},
+            "plugin_id": {"type": "string", "description": "The draft's plugin, from the meeting's prepared read (can_prepare, or a failed row)."},
+            "expected_selection_hash": {"description": "planned_route.selection_hash from meeting.read."},
+        },
+        "required": ["meeting_id", "plugin_id"],
+        "additionalProperties": False,
+    },
+    principal=_OWNER_PRINCIPAL,
+    effect="write",
+    result="{meeting_id, plugin_id, state: queued, planned_route}",
+    refusals=_CONTRACT_REFUSALS + ("NotFound: unknown meeting", "ValidationError: not a preparable draft", "ConflictError: empty | stale selection hash | summaries_off | running"),
+    completion="asynchronous; one runtime_queue frame when queued; read GET /api/meetings/{meeting_id}/prepared for the draft's state",
+    exposure=("http:POST /api/meetings/{meeting_id}/prepare",),
+    service="meeting_intel_service",
+    method="prepare_result",
+)
+
 _EMPTY = {"type": "object", "properties": {}, "additionalProperties": False}
 
 BRIEF_GENERATE = OperationDescriptor(
@@ -2211,7 +2235,7 @@ from holdspeak.desk_window_operations import DESK_WINDOW_OPERATIONS  # noqa: E40
 #: The whole catalogue, in export order.
 DESCRIPTORS: tuple[OperationDescriptor, ...] = (
     DECISION_CREATE, DECISION_UPDATE, DECISION_READ, DECISION_LIST,
-    MEETING_LIST, MEETING_READ, MEETING_IMPORT, MEETING_TRANSCRIBE, MEETING_SUMMARY_RUN,
+    MEETING_LIST, MEETING_READ, MEETING_IMPORT, MEETING_TRANSCRIBE, MEETING_SUMMARY_RUN, MEETING_RESULT_PREPARE,
     BRIEF_GENERATE, BRIEF_LATEST, BRIEF_SHELF_WRITE, BRIEF_SHELF_READ,
     THOUGHT_CREATE, THOUGHT_SAVE, THOUGHT_READ, THOUGHT_WORKBENCH_READ, THOUGHT_LIST,
     NOTE_CREATE, NOTE_READ, NOTE_UPDATE, NOTE_DELETE, NOTE_LIST,

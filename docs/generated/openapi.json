@@ -17193,6 +17193,46 @@
         "summary": "Api Get Meeting Plugin Runs"
       }
     },
+    "/api/meetings/{meeting_id}/prepare": {
+      "post": {
+        "description": "Betterment capture C5b: Prepare\u2026 and Write again (one draft).",
+        "operationId": "api_prepare_meeting_result_api_meetings__meeting_id__prepare_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "meeting_id",
+            "required": true,
+            "schema": {
+              "title": "Meeting Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Prepare Meeting Result Api Meetings  Meeting Id  Prepare Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Prepare Meeting Result"
+      }
+    },
     "/api/meetings/{meeting_id}/prepared": {
       "get": {
         "operationId": "api_get_meeting_prepared_api_meetings__meeting_id__prepared_get",

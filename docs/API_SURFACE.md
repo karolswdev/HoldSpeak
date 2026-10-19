@@ -567,6 +567,7 @@ Routes: 793 (plus static mounts). iOS-consumed: 89. Web-consumed: 622.
 | POST | `/api/meetings/{meeting_id}/intel-recovery/retry` | web |
 | POST | `/api/meetings/{meeting_id}/intel-recovery/skip` | web |
 | POST | `/api/meetings/{meeting_id}/intelligence/run` | web |
+| POST | `/api/meetings/{meeting_id}/prepare` | web |
 
 ## web.routes.meetings.live
 
