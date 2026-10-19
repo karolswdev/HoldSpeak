@@ -44,11 +44,16 @@ class CadenceService:
             self._seeded = True
 
     def _scheduler_config(self) -> SchedulerConfig:
+        from holdspeak.services.heartbeat_service import read_quiet_hours
+
         c = self._config
+        # Betterment setup ST1: quiet hours have one store, the heartbeat
+        # policy Settings ▸ Rhythm writes (``cadence.quiet_hours_*`` retired).
+        quiet_start, quiet_end = read_quiet_hours(self._db)
         return SchedulerConfig(
             pressure=getattr(c, "pressure", "normal"),
-            quiet_hours_start=getattr(c, "quiet_hours_start", 22),
-            quiet_hours_end=getattr(c, "quiet_hours_end", 8),
+            quiet_hours_start=quiet_start,
+            quiet_hours_end=quiet_end,
             max_nudges_per_day=getattr(c, "max_nudges_per_day", 12),
         )
 

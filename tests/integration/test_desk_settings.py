@@ -39,6 +39,8 @@ COLD_ROUTES = {
     "remote-off.json": "/api/settings/remote",
     "system-identity.json": "/api/system/identity",
     "projects.json": "/api/projects",
+    # Betterment setup ST1: Settings ▸ Rhythm reads Notify and quiet hours here.
+    "heartbeat.json": "/api/settings/heartbeat",
 }
 
 
@@ -264,7 +266,26 @@ def _live_wire(hub: Any, tmp_path: Path) -> dict[str, Any]:
     put = hub.client.put("/api/settings", json={"owner": {"name": "Karl", "aliases": []}})
     assert put.status_code == 200, put.text
     wire["settings-put.json"] = put.json()
+    # Betterment setup ST1: Settings ▸ Rhythm changes quiet hours in the one store.
+    quiet = hub.client.put("/api/settings/heartbeat", json={"quiet_hours": {"start": 21}})
+    assert quiet.status_code == 200, quiet.text
+    wire["heartbeat-put.json"] = quiet.json()
     return wire
+
+
+def test_quiet_hours_set_in_settings_are_what_the_heartbeat_and_cadence_read(hub: Any) -> None:
+    """Betterment setup ST1: one quiet-hours store. The Settings row writes
+    the heartbeat policy; the sweep's hold and ``cadence.status`` read it; a
+    stale write of the retired ``cadence.quiet_hours_*`` keys changes nothing."""
+    resp = hub.client.put("/api/settings/heartbeat", json={"quiet_hours": {"start": 9, "end": 11}})
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["quiet_hours"] == {"start": 9, "end": 11}
+    assert _get(hub, "/api/settings/heartbeat")["quiet_hours"] == {"start": 9, "end": 11}
+    assert _get(hub, "/api/cadence/status")["quiet_hours"] == {"start": 9, "end": 11}
+    stale = hub.client.put("/api/settings", json={"cadence": {"quiet_hours_start": 1, "quiet_hours_end": 2}})
+    assert stale.status_code == 200, stale.text
+    assert _get(hub, "/api/cadence/status")["quiet_hours"] == {"start": 9, "end": 11}
+    assert _get(hub, "/api/settings/heartbeat")["quiet_hours"] == {"start": 9, "end": 11}
 
 
 def test_the_settings_wire_fixtures_carry_no_invented_field(hub: Any, tmp_path: Path) -> None:
@@ -501,7 +522,12 @@ def test_rhythm_telegram_and_device_name_settings_persist_without_changing_secre
     assert response.status_code == 200, response.text
     saved = response.json()["settings"]
     persisted = Config.load()
-    assert saved["cadence"] == persisted.to_dict()["cadence"] == {**before.to_dict()["cadence"], **patch["cadence"]}
+    # Betterment setup ST1: quiet hours have one store (the heartbeat); the
+    # retired cadence.quiet_hours_* keys stay in the file, a write is dropped.
+    kept = {k: v for k, v in patch["cadence"].items() if not k.startswith("quiet_hours_")}
+    assert saved["cadence"] == persisted.to_dict()["cadence"] == {**before.to_dict()["cadence"], **kept}
+    assert (persisted.cadence.quiet_hours_start, persisted.cadence.quiet_hours_end) == (
+        before.cadence.quiet_hours_start, before.cadence.quiet_hours_end)
     assert saved["cadence_telegram"]["enabled"] is True
     assert persisted.cadence_telegram.allowed_chat_ids == ["123", "456"]
     assert persisted.cadence_telegram.bot_token == "isolated-existing-token"
