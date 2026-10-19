@@ -707,6 +707,24 @@ TOOLS: list[dict[str, Any]] = [
             "additionalProperties": False,
         },
     },
+    {
+        "name": "provider.github_pr_get",
+        "description": (
+            "Read one GitHub pull request: its title, body, changed files with their line counts, "
+            "and the reviews it asks for. Name it by its URL, or by owner_repo and number. Read only."
+        ),
+        "inputSchema": {
+            "$id": "holdspeak://mcp/provider.github_pr_get@1",
+            "type": "object",
+            "properties": {
+                "url": {"type": "string", "description": "The pull request's URL (https://github.com/owner/name/pull/123)."},
+                "owner_repo": {"type": "string", "description": "GitHub owner/repo (e.g. 'octocat/Hello-World')."},
+                "number": {"type": "integer", "minimum": 1, "description": "The pull request's number."},
+            },
+            "required": [],
+            "additionalProperties": False,
+        },
+    },
     # ── Jira provider driver tools (HS-166-01) ─────────────────────
     {
         "name": "provider.jira_connections",
@@ -1383,6 +1401,23 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         if not owner_repo:
             raise ValidationError("owner_repo is required")
         return adapter.validate_repo(principal, owner_repo)
+
+    if name == "provider.github_pr_get":
+        # Betterment MCP M6: MCP only (the review starter's agent reads the
+        # PR it is about). Service seam: GitHubProviderAdapter.pr_get
+        adapter = _github_adapter()
+        if adapter is None:
+            raise ServiceError(
+                "provider_not_configured",
+                "GitHub provider is not configured",
+                context={"status": 404},
+            )
+        return adapter.pr_get(
+            principal,
+            owner_repo=str(arguments.get("owner_repo") or ""),
+            number=arguments.get("number"),
+            url=str(arguments.get("url") or ""),
+        )
 
     # ── Jira provider driver tools (HS-166-01) ──────────────────────
     # Mirrors: holdspeak/web/routes/providers.py Jira routes.

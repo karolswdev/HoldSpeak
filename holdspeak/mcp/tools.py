@@ -988,7 +988,7 @@ READ_VERBS: frozenset[str] = frozenset({
     "resolve_grounding", "preview_use_default", "export", "proposals",
     "summary", "audit", "editor", "receipt", "detect", "probe", "results",
     "confluence_connections", "confluence_discover", "confluence_validate_space",
-    "github_connection", "github_discover", "github_validate_repo",
+    "github_connection", "github_discover", "github_validate_repo", "github_pr_get",
     "jira_connection", "jira_connections", "jira_discover", "jira_search",
     "jira_validate_scope",
 })

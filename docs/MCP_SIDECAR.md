@@ -1,7 +1,7 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-270 tools across 46 families. Any MCP client (Claude Code, Cursor, a
+271 tools across 46 families. Any MCP client (Claude Code, Cursor, a
 custom script) can read and drive the desk without the web UI.
 
 This page is the MCP transport reference. Each tool description in the
@@ -207,8 +207,10 @@ Provider tools only read. HoldSpeak makes no provider writes through MCP.
 A tool refuses with a typed error when its adapter is absent
 (`provider_not_configured`).
 
-- **GitHub:** `provider.github_connection`, `provider.github_discover` and
-  `provider.github_validate_repo`. These use the `gh` CLI.
+- **GitHub:** `provider.github_connection`, `provider.github_discover`,
+  `provider.github_validate_repo` and `provider.github_pr_get` (one pull
+  request: its title, body, changed files and review requests). These use the
+  `gh` CLI.
 - **Jira:** `provider.jira_connections`, `provider.jira_add_connection`,
   `provider.jira_connection`, `provider.jira_discover`,
   `provider.jira_search` and `provider.jira_validate_scope`. These use the
@@ -367,7 +369,7 @@ database, FTS index or Cadence.
 
 <!-- BEGIN MCP TOOL ROSTER (machine-generated -- do not edit) -->
 
-**Registry totals:** 270 tools across 46 families.
+**Registry totals:** 271 tools across 46 families.
 
 #### agent (1)
 
@@ -664,13 +666,14 @@ database, FTS index or Cadence.
 - `proposal.confirm`
 - `proposal.dismiss`
 
-#### provider (13)
+#### provider (14)
 
 - `provider.confluence_connections`
 - `provider.confluence_discover`
 - `provider.confluence_validate_space`
 - `provider.github_connection`
 - `provider.github_discover`
+- `provider.github_pr_get`
 - `provider.github_validate_repo`
 - `provider.jira_add_connection`
 - `provider.jira_connection`
@@ -875,13 +878,13 @@ An unknown id refuses with a typed error.
 
 ## The project palette
 
-The project family ships a `PROJECT_PALETTE`: a frozen set of the 65
+The project family ships a `PROJECT_PALETTE`: a frozen set of the 66
 project.*, provider.* and connection.* tool names. Two functions in the MCP layer
 use it.
 
 `tools_for_palette(palette)` returns only the tools in the palette. A
-client that lists tools through this filter sees 65 tools
-instead of 270.
+client that lists tools through this filter sees 66 tools
+instead of 271.
 
 `dispatch_for_palette(name, arguments, principal, palette)` runs a tool
 only if `name` is in the palette. A name outside the palette gets a typed
